@@ -1,0 +1,32 @@
+From 123df7a8075ee82f5e8988c77bc5e17c06078506 Mon Sep 17 00:00:00 2001
+From: Derek Chow <derekjchow@google.com>
+Date: Mon, 24 Jul 2023 17:09:47 -0700
+Subject: [PATCH 2/2] SystemC support for verilator.
+
+---
+ dependency_support/verilator/verilator.BUILD | 2 ++
+ 1 file changed, 2 insertions(+)
+
+diff --git dependency_support/verilator/verilator.BUILD dependency_support/verilator/verilator.BUILD
+index 371a1dd..3fc5aa1 100644
+--- dependency_support/verilator/verilator.BUILD
++++ dependency_support/verilator/verilator.BUILD
+@@ -200,6 +200,7 @@ cc_library(
+         "include/verilated_imp.h",
+         "include/verilated_syms.h",
+         "include/verilated_vcd_c.cpp",
++        "include/verilated_vcd_sc.cpp",
+     ],
+     hdrs = [
+         "include/verilated.h",
+@@ -215,6 +216,7 @@ cc_library(
+         # Needed for verilated_vcd_c.cpp and verilated_fst_c.cpp
+         "include/verilated_trace_imp.h",
+         "include/verilated_vcd_c.h",
++        "include/verilated_vcd_sc.h",
+         "include/verilatedos.h",
+         "include/verilated_types.h",
+         "include/verilated_funcs.h",
+-- 
+2.41.0.487.g6d72f3e995-goog
+
