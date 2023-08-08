@@ -21,8 +21,8 @@ def kelvin_repos():
             "https://github.com/hdl/bazel_rules_hdl/archive/b58d34add60108ae20d273ee480193b25e96d000.tar.gz",
         ],
         patches = [
-            "0001-Update-version-of-Googletest-for-bazel-compatitibili.patch",
-            "0002-SystemC-support-for-verilator.patch",
+            "@kelvin_hw//external:0001-Update-version-of-Googletest-for-bazel-compatitibili.patch",
+            "@kelvin_hw//external:0002-SystemC-support-for-verilator.patch",
         ],
     )
 
