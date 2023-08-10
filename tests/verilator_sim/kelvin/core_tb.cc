@@ -1,3 +1,5 @@
+// Copyright 2023 Google LLC
+
 #include "tests/verilator_sim/sysc_tb.h"
 
 #include "VCore.h"
@@ -21,7 +23,7 @@ struct Core_tb : Sysc_tb {
 
 static void Core_run(const char* name, const char* bin, const bool trace) {
   VCore core(name);
-  Core_tb tb("Core_tb", 100000000, random);
+  Core_tb tb("Core_tb", 100000000, /* random= */ false);
   Core_if mif("Core_if", bin);
   Debug_if dbg("Debug_if", &mif);
 

@@ -1,14 +1,12 @@
+// Copyright 2023 Google LLC.
+
 #ifndef TESTS_VERILATOR_SIM_KELVIN_KELVIN_CFG_H_
 #define TESTS_VERILATOR_SIM_KELVIN_KELVIN_CFG_H_
 
 #ifndef KELVIN_SIMD
 #error KELVIN_SIMD must be defined in Environment or Makefile.
-#elif KELVIN_SIMD == 128
-constexpr int kVector = 128;
-#elif KELVIN_SIMD == 256
-constexpr int kVector = 256;
-#elif KELVIN_SIMD == 512
-constexpr int kVector = 512;
+#elif (KELVIN_SIMD == 128) || (KELVIN_SIMD == 256) || (KELVIN_SIMD == 512)
+constexpr int kVector = KELVIN_SIMD;
 #else
 #error KELVIN_SIMD unsupported configuration.
 #endif

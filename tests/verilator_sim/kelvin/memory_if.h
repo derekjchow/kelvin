@@ -1,8 +1,13 @@
+// Copyright 2023 Google LLC
+
 #ifndef TESTS_VERILATOR_SIM_KELVIN_MEMORY_IF_H_
 #define TESTS_VERILATOR_SIM_KELVIN_MEMORY_IF_H_
 
 #include <stdint.h>
 #include <stdio.h>
+
+#include <algorithm>
+#include <map>
 
 #include "tests/verilator_sim/sysc_module.h"
 
@@ -29,7 +34,7 @@ struct Memory_if : Sysc_module {
     fclose(f);
 
     if (limit > 0 && fsize > limit) {
-      printf("***ERROR Memory_if limit exceeded [%d > %d]\n", fsize, limit);
+      printf("***ERROR Memory_if limit exceeded [%ld > %d]\n", fsize, limit);
       exit(-1);
     }
 
@@ -68,7 +73,7 @@ struct Memory_if : Sysc_module {
       addr += len;
       data += len;
       bytes -= len;
-      assert (bytes >= 0);
+      assert(bytes >= 0);
     }
   }
 
@@ -99,11 +104,11 @@ struct Memory_if : Sysc_module {
       addr += len;
       data += len;
       bytes -= len;
-      assert (bytes >= 0);
+      assert(bytes >= 0);
     }
   }
 
-protected:
+ protected:
   void ReadSwizzle(const uint32_t addr, const int bytes, uint8_t* data) {
     const int mask = bytes - 1;
     const int alignment = (bytes - (addr & mask)) & mask;  // left shuffle
@@ -136,7 +141,7 @@ protected:
     }
   }
 
-private:
+ private:
   std::map<uint32_t, memory_page_t> page_;
 
   bool HasPage(const uint32_t addr) {

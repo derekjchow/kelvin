@@ -24,8 +24,8 @@ cc_binary(
         "kelvin/core_tb.cc",
     ],
     deps = [
-        ":sim_libs",
         ":kelvin_if",
+        ":sim_libs",
         "//hdl/chisel:core_cc_library",
         "@accellera_systemc//:systemc",
     ],
@@ -123,8 +123,7 @@ cc_binary(
     ],
 )
 
-# TODO(derekjchow): Fix broken test
-cc_binary(
+cc_test(
     name = "vconvctrl_tb",
     srcs = [
         "kelvin/vconvctrl_tb.cc",
@@ -138,8 +137,7 @@ cc_binary(
     ],
 )
 
-# TODO(derekjchow): Fix broken test
-cc_binary(
+cc_test(
     name = "vdecodeinstruction_tb",
     srcs = [
         "kelvin/vdecodeinstruction_tb.cc",
@@ -153,8 +151,7 @@ cc_binary(
     ],
 )
 
-# TODO(derekjchow): Fix broken test
-cc_binary(
+cc_test(
     name = "vdecode_tb",
     srcs = [
         "kelvin/vdecode_tb.cc",

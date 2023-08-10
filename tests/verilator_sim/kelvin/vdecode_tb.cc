@@ -1,3 +1,5 @@
+// Copyright 2023 Google LLC.
+
 #include "VVDecode.h"
 #include "tests/verilator_sim/sysc_tb.h"
 #include "tests/verilator_sim/kelvin/vdecode.h"
@@ -400,7 +402,7 @@ struct VDecode_tb : Sysc_tb {
           i, ref[i].op, dut[i].op, ref[i].inst, ref[i].addr, ref[i].data,     \
           InstStr(ref[i].inst).c_str());                                      \
       Print(ref[i], dut[i]);                                                  \
-      check(false, "vdecodeinstrucion mismatch");                             \
+      check(false, "vdecode mismatch");                                       \
     }                                                                         \
   }
 
@@ -442,9 +444,9 @@ struct VDecode_tb : Sysc_tb {
 
     if (ref_vrfsbset[0] != dut_vrfsbset[0] ||
         ref_vrfsbset[1] != dut_vrfsbset[1]) {
-      printf("Error::Vrfsb %08x:%08x:%08x:%08x\n", ref_vrfsbset[1] >> 32,
+      printf("Error::Vrfsb %08lx:%08lx:%08lx:%08lx\n", ref_vrfsbset[1] >> 32,
              ref_vrfsbset[1], ref_vrfsbset[0] >> 32, ref_vrfsbset[0]);
-      printf("             %08x:%08x:%08x:%08x\n", dut_vrfsbset[1] >> 32,
+      printf("             %08lx:%08lx:%08lx:%08lx\n", dut_vrfsbset[1] >> 32,
              dut_vrfsbset[1], dut_vrfsbset[0] >> 32, dut_vrfsbset[0]);
       check(false, "io.vrfsb.set.bits");
     }
