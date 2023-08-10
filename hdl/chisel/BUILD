@@ -1,9 +1,4 @@
-load("@io_bazel_rules_scala//scala:scala.bzl", "scala_library", "scala_binary")
-load("@kelvin_hw//rules:chisel.bzl", "chisel_binary",
-                                     "chisel_library",
-                                     "chisel_cc_library")
-load("@rules_hdl//verilog:providers.bzl", "verilog_library")
-load("@rules_hdl//verilator:defs.bzl", "verilator_cc_library")
+load("@kelvin_hw//rules:chisel.bzl", "chisel_cc_library", "chisel_library")
 
 chisel_library(
     name = "common",
@@ -15,7 +10,7 @@ chisel_library(
     srcs = glob(["src/kelvin/**/*.scala"]),
     deps = [
         ":common",
-    ]
+    ],
 )
 
 chisel_cc_library(
