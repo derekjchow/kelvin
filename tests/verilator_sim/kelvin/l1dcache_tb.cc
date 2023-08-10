@@ -1,3 +1,4 @@
+// Copyright 2023 Google LLC
 #include "tests/verilator_sim/sysc_tb.h"
 
 #ifndef L1DCACHEBANK
@@ -55,6 +56,8 @@ struct L1DCache_tb : Sysc_tb
   sc_in<bool> io_axi_write_resp_ready;
   sc_out<sc_bv<2> > io_axi_write_resp_bits_resp;
   sc_out<sc_bv<kL1DAxiId - kDBusBankAdj> > io_axi_write_resp_bits_id;
+
+  sc_in<bool> io_volt_sel;
 
   using Sysc_tb::Sysc_tb;
 
@@ -321,8 +324,8 @@ private:
 
   bool dbus_active_ = false;
   bool dbus_resp_pipeline_ = false;
-  uint32_t dbus_resp_addr_;
-  uint32_t dbus_resp_size_;
+  uint32_t dbus_resp_addr_ = 0;
+  uint32_t dbus_resp_size_ = 0;
   uint8_t dbus_resp_data_[kVector / 8];
   fifo_t<response_t> resp_;
   fifo_t<history_t> history_;
@@ -446,6 +449,8 @@ static void L1DCache_test(char* name, int loops, bool trace) {
   sc_signal<sc_bv<2> > io_axi_write_resp_bits_resp;
   sc_signal<sc_bv<kL1DAxiId - kDBusBankAdj> > io_axi_write_resp_bits_id;
 
+  sc_signal<bool> io_volt_sel;
+
   L1DCache_tb tb("L1DCache_tb", loops, true /*random*/);
 #ifdef L1DCACHEBANK
   VL1DCacheBank l1dcache(name);
@@ -500,6 +505,8 @@ static void L1DCache_test(char* name, int loops, bool trace) {
   BIND2(tb, l1dcache, io_axi_write_resp_ready);
   BIND2(tb, l1dcache, io_axi_write_resp_bits_resp);
   BIND2(tb, l1dcache, io_axi_write_resp_bits_id);
+
+  BIND2(tb, l1dcache, io_volt_sel);
 
   tb.start();
 }

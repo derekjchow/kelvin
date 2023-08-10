@@ -1,10 +1,13 @@
+// Copyright 2023 Google LLC
+
 module Sram_1rw_256x256(
   input          clock,
   input          valid,
   input          write,
   input  [7:0]   addr,
   input  [255:0] wdata,
-  output [255:0] rdata
+  output [255:0] rdata,
+  input          volt_sel
 );
 
   reg [255:0] mem [0:255];

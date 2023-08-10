@@ -1,3 +1,4 @@
+// Copyright 2023 Google LLC
 #include "tests/verilator_sim/sysc_tb.h"
 
 #include "VL1ICache.h"
@@ -21,6 +22,7 @@ struct L1ICache_tb : Sysc_tb
   sc_out<sc_bv<2> > io_axi_read_data_bits_resp;
   sc_out<sc_bv<kL1IAxiId> > io_axi_read_data_bits_id;
   sc_out<sc_bv<kL1IAxiBits> > io_axi_read_data_bits_data;
+  sc_in<bool> io_volt_sel;
 
   using Sysc_tb::Sysc_tb;
 
@@ -115,7 +117,7 @@ private:
   int timeout_ = 0;
 
   bool ibus_resp_pipeline_ = false;
-  uint32_t ibus_resp_data_;
+  uint32_t ibus_resp_data_ = 0;
   fifo_t<command_t> history_;
   fifo_t<response_t> resp_;
 };
@@ -136,6 +138,7 @@ static void L1ICache_test(char* name, int loops, bool trace) {
   sc_signal<sc_bv<2> > io_axi_read_data_bits_resp;
   sc_signal<sc_bv<kL1IAxiId> > io_axi_read_data_bits_id;
   sc_signal<sc_bv<kL1IAxiBits> > io_axi_read_data_bits_data;
+  sc_signal<bool> io_volt_sel;
 
   L1ICache_tb tb("L1ICache_tb", loops, true /*random*/);
   VL1ICache l1icache(name);
@@ -161,6 +164,7 @@ static void L1ICache_test(char* name, int loops, bool trace) {
   BIND2(tb, l1icache, io_axi_read_data_bits_data);
   BIND2(tb, l1icache, io_axi_read_data_bits_id);
   BIND2(tb, l1icache, io_axi_read_data_bits_resp);
+  BIND2(tb, l1icache, io_volt_sel);
 
   tb.start();
 }

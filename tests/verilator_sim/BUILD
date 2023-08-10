@@ -235,3 +235,18 @@ cc_binary(
         "@accellera_systemc//:systemc",
     ],
 )
+
+cc_binary(
+    name = "kelvin_tb",
+    srcs = [
+        "matcha/kelvin_tb.cc",
+        "matcha/kelvin_if.h",
+    ],
+    deps = [
+        ":kelvin_if",
+        ":sim_libs",
+        "//hdl/chisel:kelvin_cc_library",
+        "@accellera_systemc//:systemc",
+    ]
+)
+

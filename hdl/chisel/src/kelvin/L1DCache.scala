@@ -1,3 +1,4 @@
+// Copyright 2023 Google LLC
 package kelvin
 
 import chisel3._
@@ -22,6 +23,7 @@ class L1DCache(p: Parameters) extends Module {
     val dbus = Flipped(new DBusIO(p))
     val axi = new AxiMasterIO(p.axi1AddrBits, p.axi1DataBits, p.axi1IdBits)
     val flush = Flipped(new DFlushIO(p))
+    val volt_sel = Input(Bool())
   })
 
   assert(p.axi1IdBits == 4)
@@ -236,6 +238,10 @@ class L1DCache(p: Parameters) extends Module {
   bank1.io.flush.clean := io.flush.clean
 
   io.flush.ready := bank0.io.flush.ready && bank1.io.flush.ready
+
+  // Voltage Selection
+  bank0.io.volt_sel    := io.volt_sel
+  bank1.io.volt_sel    := io.volt_sel
 }
 
 class L1DCacheBank(p: Parameters) extends Module {
@@ -254,6 +260,7 @@ class L1DCacheBank(p: Parameters) extends Module {
     val dbus = Flipped(new DBusIO(p, true))
     val axi = new AxiMasterIO(p.axi1AddrBits - 1, p.axi1DataBits, p.axi1IdBits - 1)
     val flush = Flipped(new DFlushIO(p))
+    val volt_sel = Input(Bool())
   })
 
   // AXI memory consistency, maintain per-byte strobes.
@@ -298,13 +305,14 @@ class L1DCacheBank(p: Parameters) extends Module {
 
   class Sram_1rwm_256x288 extends BlackBox {
     val io = IO(new Bundle {
-      val clock = Input(Clock())
-      val valid = Input(Bool())
-      val write = Input(Bool())
-      val addr  = Input(UInt(slotBits.W))
-      val wdata = Input(UInt((p.axi1DataBits * 9 / 8).W))
-      val wmask = Input(UInt((p.axi1DataBits * 1 / 8).W))
-      val rdata = Output(UInt((p.axi1DataBits * 9 / 8).W))
+      val clock     = Input(Clock())
+      val valid     = Input(Bool())
+      val write     = Input(Bool())
+      val addr      = Input(UInt(slotBits.W))
+      val wdata     = Input(UInt((p.axi1DataBits * 9 / 8).W))
+      val wmask     = Input(UInt((p.axi1DataBits * 1 / 8).W))
+      val rdata     = Output(UInt((p.axi1DataBits * 9 / 8).W))
+      val volt_sel  = Input(Bool())
     })
   }
 
@@ -654,13 +662,16 @@ class L1DCacheBank(p: Parameters) extends Module {
   val wmbits = p.axi1DataBits / 8
   val id = io.axi.read.data.bits.id
   val rsel = axirdataready
-  mem.io.clock := clock
-  mem.io.valid := busread || buswrite || axiread || axiwrite
-  mem.io.write := rsel && !axiwrite || io.dbus.valid && io.dbus.write && !ractive
-  mem.io.addr  := Mux(rsel || axiwrite, replaceIdReg, foundId)
-  mem.io.wmask := Mux(rsel, ~0.U(wmbits.W), io.dbus.wmask)
-  mem.io.wdata := Mux(rsel, Mem8to9(io.axi.read.data.bits.data, 0.U(wmbits.W)),
+
+  mem.io.clock    := clock
+  mem.io.valid    := busread || buswrite || axiread || axiwrite
+  mem.io.write    := rsel && !axiwrite || io.dbus.valid && io.dbus.write && !ractive
+  mem.io.addr     := Mux(rsel || axiwrite, replaceIdReg, foundId)
+  mem.io.wmask    := Mux(rsel, ~0.U(wmbits.W), io.dbus.wmask)
+  mem.io.wdata    := Mux(rsel, Mem8to9(io.axi.read.data.bits.data, 0.U(wmbits.W)),
                             Mem8to9(io.dbus.wdata, ~0.U(wmbits.W)))
+  mem.io.volt_sel := io.volt_sel
+
 
   assert(PopCount(busread +& buswrite +& axiread) <= 1.U)
 }

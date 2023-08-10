@@ -1,3 +1,4 @@
+# Copyright 2023 Google LLC
 load("@kelvin_hw//rules:chisel.bzl", "chisel_cc_library", "chisel_library")
 
 chisel_library(
@@ -11,6 +12,27 @@ chisel_library(
     deps = [
         ":common",
     ],
+)
+
+chisel_library(
+    name = "matcha",
+    srcs = glob(["src/matcha/**/*.scala"]),
+    deps = [
+        ":common",
+        ":kelvin",
+    ]
+)
+
+chisel_cc_library(
+    name = "kelvin_cc_library",
+    chisel_lib = ":matcha",
+    emit_class = "matcha.EmitKelvin",
+    module_name = "Kelvin",
+    verilog_deps = [
+        "//hdl/verilog:clock_gate",
+        "//hdl/verilog:sram_1rw_256x256",
+        "//hdl/verilog:sram_1rw_256x288",
+    ]
 )
 
 chisel_cc_library(

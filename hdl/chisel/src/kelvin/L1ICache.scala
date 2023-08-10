@@ -1,3 +1,4 @@
+// Copyright 2023 Google LLC
 package kelvin
 
 import chisel3._
@@ -31,6 +32,7 @@ class L1ICache(p: Parameters) extends Module {
     val axi = new Bundle {
       val read = new AxiMasterReadIO(p.axi0AddrBits, p.axi0DataBits, p.axi0IdBits)
     }
+    val volt_sel = Input(Bool())
   })
 
   assert(assoc == 2 ||  assoc == 4 || assoc == 8 || assoc == 16 || assoc == slots)
@@ -42,12 +44,13 @@ class L1ICache(p: Parameters) extends Module {
 
   class Sram_1rw_256x256 extends BlackBox {
     val io = IO(new Bundle {
-      val clock = Input(Clock())
-      val valid = Input(Bool())
-      val write = Input(Bool())
-      val addr  = Input(UInt(slotBits.W))
-      val wdata = Input(UInt(p.axi0DataBits.W))
-      val rdata = Output(UInt(p.axi0DataBits.W))
+      val clock    = Input(Clock())
+      val valid    = Input(Bool())
+      val write    = Input(Bool())
+      val addr     = Input(UInt(slotBits.W))
+      val wdata    = Input(UInt(p.axi0DataBits.W))
+      val rdata    = Output(UInt(p.axi0DataBits.W))
+      val volt_sel = Input(Bool())
     })
   }
 
@@ -242,12 +245,13 @@ class L1ICache(p: Parameters) extends Module {
   // ---------------------------------------------------------------------------
   // Memory controls.
   val memwrite = io.axi.read.data.valid && io.axi.read.data.ready
-  val memread = io.ibus.valid && !axivalid && !axiready
-  mem.io.clock := clock
-  mem.io.valid := memread || memwrite
-  mem.io.write := axiready
-  mem.io.addr  := Mux(axiready, replaceIdReg, readId)
-  mem.io.wdata := io.axi.read.data.bits.data
+  val memread  = io.ibus.valid && !axivalid && !axiready
+  mem.io.clock    := clock
+  mem.io.valid    := memread || memwrite
+  mem.io.write    := axiready
+  mem.io.addr     := Mux(axiready, replaceIdReg, readId)
+  mem.io.wdata    := io.axi.read.data.bits.data
+  mem.io.volt_sel := io.volt_sel
 }
 
 object EmitL1ICache extends App {
