@@ -1,3 +1,5 @@
+// Copyright 2023 Google LLC
+
 #include "VVConvAlu.h"
 #include "tests/verilator_sim/kelvin/kelvin_cfg.h"
 #include "tests/verilator_sim/sysc_tb.h"

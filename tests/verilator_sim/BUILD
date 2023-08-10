@@ -1,3 +1,5 @@
+# Copyright 2023 Google LLC
+
 cc_library(
     name = "sim_libs",
     hdrs = [

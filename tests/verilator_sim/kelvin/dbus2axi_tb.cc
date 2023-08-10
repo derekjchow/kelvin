@@ -1,3 +1,5 @@
+// Copyright 2023 Google LLC
+
 #include "VDBus2Axi.h"
 #include "tests/verilator_sim/sysc_tb.h"
 

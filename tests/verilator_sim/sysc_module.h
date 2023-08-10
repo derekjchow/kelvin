@@ -1,3 +1,5 @@
+// Copyright 2023 Google LLC
+
 #ifndef TESTS_VERILATOR_SIM_SYSC_MODULE_H_
 #define TESTS_VERILATOR_SIM_SYSC_MODULE_H_
 

@@ -1,4 +1,5 @@
 // Copyright 2023 Google LLC
+
 #include "tests/verilator_sim/sysc_tb.h"
 
 #include "VL1ICache.h"

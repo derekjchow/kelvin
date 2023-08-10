@@ -1,3 +1,5 @@
+// Copyright 2023 Google LLC
+
 #include "VVRegfile.h"
 
 #include "tests/verilator_sim/kelvin/kelvin_cfg.h"

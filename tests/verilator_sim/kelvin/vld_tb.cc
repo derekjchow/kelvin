@@ -1,3 +1,5 @@
+// Copyright 2023 Google LLC
+
 #include "VVLd.h"
 
 #include "tests/verilator_sim/kelvin/core_if.h"

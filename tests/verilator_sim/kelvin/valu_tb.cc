@@ -1,3 +1,5 @@
+// Copyright 2023 Google LLC
+
 #include "VVAlu.h"
 #include "sysc_tb.h"
 #include "valu.h"
