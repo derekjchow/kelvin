@@ -1,3 +1,4 @@
+// Copyright 2023 Google LLC
 package common
 
 import chisel3._
