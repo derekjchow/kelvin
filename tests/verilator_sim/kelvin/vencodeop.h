@@ -1,10 +1,12 @@
+// Copyright 2023 Google LLC.
+
 #ifndef TESTS_VERILATOR_SIM_KELVIN_VENCODEOP_H_
 #define TESTS_VERILATOR_SIM_KELVIN_VENCODEOP_H_
 
 namespace encode {
 
 constexpr int kOpBits = 7;
-constexpr int kOpEntries = 101;
+constexpr int kOpEntries = 72;
 
 enum VEncodeOp {
   undef,
@@ -56,8 +58,6 @@ enum VEncodeOp {
   vdmulh2,
   vmulw,
   vmadd,
-  vdiv,
-  vrem,
   vadds,
   vsubs,
   vaddw,
@@ -67,32 +67,6 @@ enum VEncodeOp {
   vpsub,
   vhadd,
   vhsub,
-  vfadd,
-  vfsub,
-  vfmul,
-  vfabsd,
-  vfmadd,
-  vfmsub,
-  vfnmsub,
-  vfnmadd,
-  vfdiv,
-  vfrdiv,
-  vfsqrt,
-  vfsgnj,
-  vfsgnjn,
-  vfsgnjx,
-  vfmin,
-  vfmax,
-  vfcvt_s_w,
-  vfcvt_s_wu,
-  vfcvt_w_s,
-  vfcvt_wu_s,
-  vflt,
-  vfle,
-  vfgt,
-  vfge,
-  vfeq,
-  vfne,
   vslidevn,
   vslidehn,
   vslidehn2,
@@ -104,7 +78,6 @@ enum VEncodeOp {
   vodd,
   vevnodd,
   vzip,
-  vfmadd4,
   aconv,
   vdwconv,
   adwconv,

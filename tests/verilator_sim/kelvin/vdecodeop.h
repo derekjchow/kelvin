@@ -1,3 +1,5 @@
+// Copyright 2023 Google LLC.
+
 #ifndef TESTS_VERILATOR_SIM_KELVIN_VDECODEOP_H_
 #define TESTS_VERILATOR_SIM_KELVIN_VDECODEOP_H_
 
@@ -81,8 +83,6 @@ enum VDecodeOp {
   vdmulh = 16,
   vmacc = 20,
   vmadd = 21,
-  vdiv = 24,
-  vrem = 26,
 
   // Format4
   vadds = 0,
@@ -94,34 +94,6 @@ enum VDecodeOp {
   vpsub = 14,
   vhadd = 16,
   vhsub = 20,
-
-  // Format5
-  vfadd = 0,
-  vfsub = 1,
-  vfmul = 2,
-  vfabsd = 3,
-  vfmadd = 4,
-  vfmsub = 5,
-  vfnmsub = 6,
-  vfnmadd = 7,
-  vfdiv = 8,
-  vfrdiv = 9,
-  vfsqrt = 10,
-  vfsgnj = 11,
-  vfsgnjn = 12,
-  vfsgnjx = 13,
-  vfmin = 14,
-  vfmax = 15,
-  vfcvt_s_w = 16,
-  vfcvt_s_wu = 17,
-  vfcvt_w_s = 18,
-  vfcvt_wu_s = 19,
-  vflt = 24,
-  vfle = 25,
-  vfgt = 26,
-  vfge = 27,
-  vfeq = 28,
-  vfne = 29,
 
   // Format6
   vsliden = 0,
@@ -137,7 +109,6 @@ enum VDecodeOp {
   vzip = 28,
 
   // FormatVVV
-  vfmadd4 = 0,
   aconv = 8,
   vdwconv = 10,
 };

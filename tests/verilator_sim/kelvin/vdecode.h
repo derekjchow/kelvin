@@ -1,7 +1,11 @@
+// Copyright 2023 Google LLC.
+
 #ifndef TESTS_VERILATOR_SIM_KELVIN_VDECODE_H_
 #define TESTS_VERILATOR_SIM_KELVIN_VDECODE_H_
 
 #include <stdint.h>
+
+#include <string>
 
 #include "tests/verilator_sim/kelvin/kelvin_cfg.h"
 #include "tests/verilator_sim/kelvin/vdecodeop.h"
@@ -15,9 +19,7 @@
 #define VFMT2   "xxxxxx_xxxxxx_xxxxxx_xx_xxxxxx_x_010_x0"
 #define VFMT3   "xxxxxx_xxxxxx_xxxxxx_xx_xxxxxx_x_011_x0"
 #define VFMT4   "xxxxxx_xxxxxx_xxxxxx_xx_xxxxxx_x_100_x0"
-#define VFMT5   "xxxxxx_xxxxxx_xxxxxx_10_xxxxxx_x_101_x0"
 #define VFMT6   "xxxxxx_xxxxxx_xxxxxx_xx_xxxxxx_x_110_x0"
-#define VFMADD4 "xxxxxx_xxxxxx_xxxxxx_00_xxxxxx_x_00_x01"
 #define ACONV   "xxxxxx_1xxxxx_xxxxxx_10_xxxxxx_0_00_101"
 #define VDWCONV "xxxxxx_0xxxxx_xxxxxx_10_xxxxxx_x_10_101"
 #define ADWCONV "xxxxxx_1xxxxx_xxxxxx_10_xxxxxx_x_10_101"
@@ -221,7 +223,7 @@ static void Print(const vdecode_out_t& a, const vdecode_out_t& b) {
 #define printH32(t, f) \
   if (a.f != b.f) printf("  %s %08x  %08x\n", t, a.f, b.f)
 #define printH64(t, f) \
-  if (a.f != b.f) printf("  %s %016llx  %016llx\n", t, a.f, b.f)
+  if (a.f != b.f) printf("  %s %016lx  %016lx\n", t, a.f, b.f)
 
   printInt("op          ", op);
   printInt("f2          ", f2);
@@ -279,7 +281,7 @@ static const std::string InstStr(const uint32_t inst) {
   for (int i = 31; i >= 0; --i) {
     s += (inst >> i) & 1 ? '1' : '0';
     if (i == 26 || i == 20 || i == 14 || i == 12 || i == 6 || i == 5 ||
-        i == 3 && vvv || i == 2 && !vvv) {
+        (i == 3 && vvv) || (i == 2 && !vvv)) {
       s += '_';
     }
   }
@@ -346,7 +348,6 @@ static uint64_t Active4(int v, bool m, bool active = true) {
   r = m ? r << 12 : r << 3;
   return r;
 }
-
 
 static void DualIssue(const vdecode_in_t& in, vdecode_out_t& out) {
   const uint8_t vd = in.vd();
@@ -419,7 +420,7 @@ static uint32_t rand_vfmt2(const uint32_t v) {
 }
 
 static uint32_t rand_vfmt3(const uint32_t v) {
-  uint8_t ft[] = {0, 2, 4, 8, 9, 16, 20, 20, 21, 24, 26};
+  uint8_t ft[] = {0, 2, 4, 8, 9, 16, 20, 20, 21};
   uint32_t r = v & (encode::mask::vt | encode::mask::vs | encode::mask::vd);
   uint32_t f = ft[v % sizeof(ft)] << 26;
   uint32_t u = ((v >> 8) & 1) << 26;
@@ -435,15 +436,6 @@ static uint32_t rand_vfmt4(const uint32_t v) {
   uint32_t u = ((v >> 8) & 1) << 26;
   uint32_t d = ((v >> 9) & 3) << 27;
   r |= f | u | d;
-  return r;
-}
-
-static uint32_t rand_vfmt5(const uint32_t v) {
-  uint8_t ft[] = {0,  1,  2,  3,  4,  5,  6,  7,  8,  9,  10, 11, 12,
-                  13, 14, 15, 16, 17, 18, 19, 24, 25, 26, 27, 28, 29};
-  uint32_t r = v & (encode::mask::vt | encode::mask::vs | encode::mask::vd);
-  uint32_t f = ft[v % sizeof(ft)] << 26;
-  r |= f;
   return r;
 }
 
@@ -602,8 +594,16 @@ static void vfmt1(const vdecode_in_t& in, vdecode_out_t& out) {
     case decode::vcpop: op = encode::vcpop; break;
     case decode::vmv:   op = encode::vmv;   break;
     case decode::vmvp:  op = encode::vmvp;  break;
-    case decode::acset: if (!in.xt() || in.m() || in.vt() != 0) return; op = encode::acset; break;
-    case decode::actr:  if (!in.xt() || in.m() || in.vt() != 0) return; op = encode::actr; break;
+    case decode::acset: {
+      if (!in.xt() || in.m() || in.vt() != 0) return;
+      op = encode::acset;
+      }
+      break;
+    case decode::actr:  {
+      if (!in.xt() || in.m() || in.vt() != 0) return;
+      op = encode::actr;
+      }
+      break;
     case decode::adwinit: op = encode::adwinit; break;
     default: return;
   }
@@ -633,8 +633,7 @@ static void vfmt1(const vdecode_in_t& in, vdecode_out_t& out) {
   out.sv.addr = in.saddr();
   out.sv.data = in.sdata();
   out.cmdq.alu = true;
-  out.ractive = Active(in.vs(), in.m()) |
-                Active(in.vt(), in.m(), !in.xt());
+  out.ractive = Active(in.vs(), in.m()) | Active(in.vt(), in.m(), !in.xt());
   out.wactive = Active(in.vd(), in.m());
 
   if (vmv2) {
@@ -648,12 +647,12 @@ static void vfmt1(const vdecode_in_t& in, vdecode_out_t& out) {
   }
 
   if (acset) {
-    constexpr uint64_t mask = kVector == 128 ? 0xfull :
-                              kVector == 256 ? 0xffull :
-                              0xffffull;
-    constexpr uint8_t rsel = kVector == 128 ? 0x3c :
-                              kVector == 256 ? 0x38 :
-                              0x30;
+    constexpr uint64_t mask = kVector == 128   ? 0xfull
+                              : kVector == 256 ? 0xffull
+                                               : 0xffffull;
+    constexpr uint8_t rsel = kVector == 128   ? 0x3c
+                             : kVector == 256 ? 0x38
+                                              : 0x30;
 
     out.ractive |= (mask << (in.vs() & rsel));
 
@@ -668,11 +667,10 @@ static void vfmt1(const vdecode_in_t& in, vdecode_out_t& out) {
   }
 
   if (actr) {
-    constexpr uint64_t mask = kVector == 128 ? 0xfull :
-                              kVector == 256 ? 0xffull :
-                              0xffffull;
+    constexpr uint64_t mask = kVector == 128   ? 0xfull
+                              : kVector == 256 ? 0xffull
+                                               : 0xffffull;
     constexpr uint8_t rsel = 0x30;
-    constexpr uint8_t wsel = 0x30;
     out.vd.valid = false;
     out.vs.valid = false;
     out.sv.valid = false;
@@ -772,10 +770,8 @@ static void vfmt2(const vdecode_in_t& in, vdecode_out_t& out) {
     out.vy.addr = vt;
     out.vz.addr = vs + m4 * 3;
 
-    out.ractive = Active(in.vs(), in.m()) |
-                  Active2(in.vs(), in.m()) |
-                  Active3(in.vs(), in.m()) |
-                  Active4(in.vs(), in.m()) |
+    out.ractive = Active(in.vs(), in.m()) | Active2(in.vs(), in.m()) |
+                  Active3(in.vs(), in.m()) | Active4(in.vs(), in.m()) |
                   Active(in.vt(), in.m(), !in.xt());
     out.wactive = Active(in.vd(), in.m());
   }
@@ -800,10 +796,6 @@ static void vfmt3(const vdecode_in_t& in, vdecode_out_t& out) {
     case decode::vdmulh: op = encode::vdmulh; break;
     case decode::vmacc:  op = encode::vmadd; break;
     case decode::vmadd:  op = encode::vmadd;  break;
-    case decode::vdiv | decode::u:
-    case decode::vdiv:   op = encode::vdiv;   break;
-    case decode::vrem | decode::u:
-    case decode::vrem:   op = encode::vrem;   break;
     default: return;
   }
   // clang-format on
@@ -912,59 +904,6 @@ static void vfmt4(const vdecode_in_t& in, vdecode_out_t& out) {
       Active(in.vd(), in.m()) | Active2(in.vd(), in.m(), out.ve.valid);
 }
 
-static void vfmt5(const vdecode_in_t& in, vdecode_out_t& out) {
-  uint32_t op;
-  // clang-format off
-  switch (in.func2()) {
-    case decode::vfadd:   op = encode::vfadd;   break;
-    case decode::vfsub:   op = encode::vfsub;   break;
-    case decode::vfmul:   op = encode::vfmul;   break;
-    case decode::vfabsd:  op = encode::vfabsd;  break;
-    case decode::vfmadd:  op = encode::vfmadd;  break;
-    case decode::vfmsub:  op = encode::vfmsub;  break;
-    case decode::vfnmsub: op = encode::vfnmsub; break;
-    case decode::vfnmadd: op = encode::vfnmadd; break;
-    case decode::vfdiv:   op = encode::vfdiv;   break;
-    case decode::vfrdiv:  op = encode::vfrdiv;  break;
-    case decode::vfsqrt:  op = encode::vfsqrt;  break;
-    case decode::vfsgnj:  op = encode::vfsgnj;  break;
-    case decode::vfsgnjn: op = encode::vfsgnjn; break;
-    case decode::vfsgnjx: op = encode::vfsgnjx; break;
-    case decode::vfmin:   op = encode::vfmin;   break;
-    case decode::vfmax:   op = encode::vfmax;   break;
-    case decode::vfcvt_s_w:  op = encode::vfcvt_s_w;  break;
-    case decode::vfcvt_s_wu: op = encode::vfcvt_s_wu; break;
-    case decode::vfcvt_w_s:  op = encode::vfcvt_w_s;  break;
-    case decode::vfcvt_wu_s: op = encode::vfcvt_wu_s; break;
-    case decode::vflt: op = encode::vflt; break;
-    case decode::vfle: op = encode::vfle; break;
-    case decode::vfgt: op = encode::vfgt; break;
-    case decode::vfge: op = encode::vfge; break;
-    case decode::vfeq: op = encode::vfeq; break;
-    case decode::vfne: op = encode::vfne; break;
-    default: return;
-  }
-  // clang-format on
-
-  out.op = op;
-  out.f2 = in.f2();
-  out.sz = in.sz();
-  out.m = in.m();
-  out.vd.valid = true;
-  out.vs.valid = true;
-  out.vt.valid = !in.xt();
-  out.sv.valid = in.xt();
-  out.vd.addr = in.vd();
-  out.vs.addr = in.vs();
-  out.vt.addr = in.vt();
-  out.vu.addr = in.vd();
-  out.sv.addr = in.saddr();
-  out.sv.data = in.sdata();
-  out.cmdq.alu = true;
-  out.ractive = Active(in.vs(), in.m()) | Active(in.vt(), in.m(), !in.xt());
-  out.wactive = Active(in.vd(), in.m());
-}
-
 static void vfmt6(const vdecode_in_t& in, vdecode_out_t& out) {
   uint32_t op;
   // clang-format off
@@ -976,7 +915,9 @@ static void vfmt6(const vdecode_in_t& in, vdecode_out_t& out) {
     case decode::vslidehn | decode::n1:
     case decode::vslidehn | decode::n2:
     case decode::vslidehn | decode::n3:
-    case decode::vslidehn | decode::n4: op = !in.m() ? encode::vslidehn : encode::vslidehn2; break;
+    case decode::vslidehn | decode::n4:
+      op = !in.m() ? encode::vslidehn : encode::vslidehn2;
+      break;
     case decode::vslidevp | decode::n1:
     case decode::vslidevp | decode::n2:
     case decode::vslidevp | decode::n3:
@@ -984,7 +925,9 @@ static void vfmt6(const vdecode_in_t& in, vdecode_out_t& out) {
     case decode::vslidehp | decode::n1:
     case decode::vslidehp | decode::n2:
     case decode::vslidehp | decode::n3:
-    case decode::vslidehp | decode::n4: op = !in.m() ? encode::vslidehp : encode::vslidehp2; break;
+    case decode::vslidehp | decode::n4:
+      op = !in.m() ? encode::vslidehp : encode::vslidehp2;
+      break;
     case decode::vsel: op = encode::vsel; break;
     case decode::vevn: op = encode::vevn;    break;
     case decode::vodd: op = encode::vodd;    break;
@@ -1022,8 +965,7 @@ static void vfmt6(const vdecode_in_t& in, vdecode_out_t& out) {
   out.sv.addr = in.saddr();
   out.sv.data = in.sdata();
   out.cmdq.alu = true;
-  out.ractive = Active(in.vs(), in.m()) |
-                Active(in.vt(), in.m(), !in.xt());
+  out.ractive = Active(in.vs(), in.m()) | Active(in.vt(), in.m(), !in.xt());
   out.wactive =
       Active(in.vd(), in.m()) | Active2(in.vd(), in.m(), out.ve.valid);
 
@@ -1058,7 +1000,8 @@ static void vfmt6(const vdecode_in_t& in, vdecode_out_t& out) {
 
       out.ractive = Active(out.vs.addr, false) | Active(out.vt.addr, false) |
                     Active(out.vu.addr, false) | Active(out.vx.addr, false) |
-                    Active(out.vy.addr, false) | Active(out.vz.addr, false, !in.xt());
+                    Active(out.vy.addr, false) |
+                    Active(out.vz.addr, false, !in.xt());
     } else {
       out.vs.addr = vs + 3;
       out.vt.addr = vt;
@@ -1067,9 +1010,12 @@ static void vfmt6(const vdecode_in_t& in, vdecode_out_t& out) {
       out.vy.addr = vt + 2;
       out.vz.addr = vt + 3;
 
-      out.ractive = Active(out.vs.addr, false) | Active(out.vt.addr, false, !in.xt()) |
-                    Active(out.vu.addr, false, !in.xt()) | Active(out.vx.addr, false, !in.xt()) |
-                    Active(out.vy.addr, false, !in.xt()) | Active(out.vz.addr, false, !in.xt());
+      out.ractive = Active(out.vs.addr, false) |
+                    Active(out.vt.addr, false, !in.xt()) |
+                    Active(out.vu.addr, false, !in.xt()) |
+                    Active(out.vx.addr, false, !in.xt()) |
+                    Active(out.vy.addr, false, !in.xt()) |
+                    Active(out.vz.addr, false, !in.xt());
     }
 
     out.wactive = Active(in.vd(), true);
@@ -1078,31 +1024,6 @@ static void vfmt6(const vdecode_in_t& in, vdecode_out_t& out) {
   if (vzip) {
     out.ve.addr = out.vd.addr + 1;
   }
-}
-
-static void vfmadd4(const vdecode_in_t& in, vdecode_out_t& out) {
-  if ((in.inst & (1u << 2)) && (in.inst & (1u << 25))) return;
-  bool xt = (in.inst >> 2) & 1;
-  out.op = encode::vfmadd4;
-  out.f2 = in.f2();
-  out.sz = in.sz();
-  out.m = in.m();
-  out.vd.valid = true;
-  out.vs.valid = true;
-  out.vt.valid = !xt;
-  out.vu.valid = true;
-  out.sv.valid = xt;
-  out.vd.addr = in.vd();
-  out.ve.addr = in.ve();
-  out.vs.addr = in.vs();
-  out.vt.addr = in.vt();
-  out.vu.addr = in.vu();
-  out.sv.addr = in.saddr();
-  out.sv.data = in.sdata();
-  out.cmdq.alu = true;
-  out.ractive = Active(in.vs(), in.m()) | Active(in.vt(), in.m(), !xt) |
-                Active(in.vu(), in.m());
-  out.wactive = Active(in.vd(), in.m());
 }
 
 static void aconv(const vdecode_in_t& in, vdecode_out_t& out) {
@@ -1126,14 +1047,13 @@ static void aconv(const vdecode_in_t& in, vdecode_out_t& out) {
   out.sv.data = in.sdata();
   out.cmdq.conv = true;
 
-  constexpr uint64_t mask = kVector == 128 ? 0xfull :
-                            kVector == 256 ? 0xffull :
-                            0xffffull;
+  constexpr uint64_t mask = kVector == 128   ? 0xfull
+                            : kVector == 256 ? 0xffull
+                                             : 0xffffull;
   constexpr uint8_t rsel1 = 0x30;
-  constexpr uint8_t rsel2 = kVector == 128 ? 0x3c :
-                            kVector == 256 ? 0x38 :
-                            0x30;
-  constexpr uint8_t wsel  = 0x30;
+  constexpr uint8_t rsel2 = kVector == 128   ? 0x3c
+                            : kVector == 256 ? 0x38
+                                             : 0x30;
 
   out.ractive |= (mask << (in.vs() & rsel1));
   out.ractive |= (mask << (in.vu() & rsel2));
@@ -1142,8 +1062,6 @@ static void aconv(const vdecode_in_t& in, vdecode_out_t& out) {
 }
 
 static void vdwconv(const vdecode_in_t& in, vdecode_out_t& out) {
-  bool pipeline = 0;
-
   uint8_t regbase = (in.data >> 4) & 15;
   uint8_t vstlb[] = {0, 1, 2, 3, 4, 5, 6, 1, 1, 3, 5, 7, 2, 4, 6, 8};
   uint8_t vttlb[] = {1, 2, 3, 4, 5, 6, 7, 0, 2, 4, 6, 8, 0, 0, 0, 0};
@@ -1250,8 +1168,6 @@ static vencode_inst_t op_[] = {
     {vfmt3,  MM(VFMT3),  rand_vfmt3},  // vdmulh2
     {vfmt3,  MM(VFMT3),  rand_vfmt3},  // vmulw
     {vfmt3,  MM(VFMT3),  rand_vfmt3},  // vmadd
-    {vfmt3,  MM(VFMT3),  rand_vfmt3},  // vdiv
-    {vfmt3,  MM(VFMT3),  rand_vfmt3},  // vrem
     // Format4
     {vfmt4,  MM(VFMT4),  rand_vfmt4},  // vadds
     {vfmt4,  MM(VFMT4),  rand_vfmt4},  // vsubs
@@ -1262,33 +1178,6 @@ static vencode_inst_t op_[] = {
     {vfmt4,  MM(VFMT4),  rand_vfmt4},  // vpsub
     {vfmt4,  MM(VFMT4),  rand_vfmt4},  // vhadd
     {vfmt4,  MM(VFMT4),  rand_vfmt4},  // vhsub
-    // Format5
-    {vfmt5,  MM(VFMT5),  rand_vfmt5},  // vfadd
-    {vfmt5,  MM(VFMT5),  rand_vfmt5},  // vfsub
-    {vfmt5,  MM(VFMT5),  rand_vfmt5},  // vfmul
-    {vfmt5,  MM(VFMT5),  rand_vfmt5},  // vfabsd
-    {vfmt5,  MM(VFMT5),  rand_vfmt5},  // vfmadd
-    {vfmt5,  MM(VFMT5),  rand_vfmt5},  // vfmsub
-    {vfmt5,  MM(VFMT5),  rand_vfmt5},  // vfnmsub
-    {vfmt5,  MM(VFMT5),  rand_vfmt5},  // vfnmadd
-    {vfmt5,  MM(VFMT5),  rand_vfmt5},  // vfdiv
-    {vfmt5,  MM(VFMT5),  rand_vfmt5},  // vfrdiv
-    {vfmt5,  MM(VFMT5),  rand_vfmt5},  // vfsqrt
-    {vfmt5,  MM(VFMT5),  rand_vfmt5},  // vfsgnj
-    {vfmt5,  MM(VFMT5),  rand_vfmt5},  // vfsgnjn
-    {vfmt5,  MM(VFMT5),  rand_vfmt5},  // vfsgnjx
-    {vfmt5,  MM(VFMT5),  rand_vfmt5},  // vfmin
-    {vfmt5,  MM(VFMT5),  rand_vfmt5},  // vfmax
-    {vfmt5,  MM(VFMT5),  rand_vfmt5},  // vfcvt_s_w
-    {vfmt5,  MM(VFMT5),  rand_vfmt5},  // vfcvt_s_wu
-    {vfmt5,  MM(VFMT5),  rand_vfmt5},  // vfcvt_w_s
-    {vfmt5,  MM(VFMT5),  rand_vfmt5},  // vfcvt_wu_s
-    {vfmt5,  MM(VFMT5),  rand_vfmt5},  // vflt
-    {vfmt5,  MM(VFMT5),  rand_vfmt5},  // vfle
-    {vfmt5,  MM(VFMT5),  rand_vfmt5},  // vfgt
-    {vfmt5,  MM(VFMT5),  rand_vfmt5},  // vfge
-    {vfmt5,  MM(VFMT5),  rand_vfmt5},  // vfeq
-    {vfmt5,  MM(VFMT5),  rand_vfmt5},  // vfne
     // Format6
     {vfmt6,  MM(VFMT6),  rand_vfmt6},  // vslidevn
     {vfmt6,  MM(VFMT6),  rand_vfmt6},  // vslidehn
@@ -1302,7 +1191,6 @@ static vencode_inst_t op_[] = {
     {vfmt6,  MM(VFMT6),  rand_vfmt6},  // vevnodd
     {vfmt6,  MM(VFMT6),  rand_vfmt6},  // vzip
     // FormatVVV
-    {vfmadd4,  MM(VFMADD4), rand_vfmtv},
     {aconv,    MM(ACONV),   rand_vfmtv},
     {vdwconv,  MM(VDWCONV), rand_vfmtv},
     {vdwconv,  MM(ADWCONV), rand_vfmtv},

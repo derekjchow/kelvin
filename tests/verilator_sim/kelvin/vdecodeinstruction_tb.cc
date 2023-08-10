@@ -1,3 +1,5 @@
+// Copyright 2023 Google LLC.
+
 #include "VVDecodeInstruction.h"
 #include "tests/verilator_sim/sysc_tb.h"
 #include "tests/verilator_sim/kelvin/vdecode.h"
@@ -151,7 +153,7 @@ struct VDecodeInstruction_tb : Sysc_tb {
              ref_in.op, dut.op, ref_in.inst, ref_in.addr, ref_in.data,
              InstStr(ref_in.inst).c_str());
       Print(ref, dut);
-      check(false, "vdecodeinstrucion mismatch");
+      check(false, "vdecodeinstruction mismatch");
     }
   }
 
