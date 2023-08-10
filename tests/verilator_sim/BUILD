@@ -167,7 +167,7 @@ cc_test(
     ],
 )
 
-cc_binary(
+cc_test(
     name = "vldst_tb",
     srcs = [
         "kelvin/vldst_tb.cc",
@@ -181,7 +181,7 @@ cc_binary(
     ],
 )
 
-cc_binary(
+cc_test(
     name = "vld_tb",
     srcs = [
         "kelvin/vld_tb.cc",
@@ -221,7 +221,7 @@ cc_binary(
     ],
 )
 
-cc_binary(
+cc_test(
     name = "vst_tb",
     srcs = [
         "kelvin/vst_tb.cc",
@@ -248,4 +248,3 @@ cc_binary(
         "@accellera_systemc//:systemc",
     ]
 )
-

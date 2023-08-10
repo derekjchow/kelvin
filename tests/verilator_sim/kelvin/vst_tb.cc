@@ -213,22 +213,35 @@ struct VSt_tb : Sysc_tb {
     io_axi_resp_bits_resp = 0;
     io_axi_resp_bits_id = w.id;
 
-#define IN_READ(idx)                                          \
-    Input(io_in_bits_##idx##_bits_m,                          \
-          io_in_bits_##idx##_bits_op.read().get_word(0),      \
-          io_in_bits_##idx##_bits_f2.read().get_word(0),      \
-          io_in_bits_##idx##_bits_sz.read().get_word(0),      \
-          io_in_bits_##idx##_bits_vs_valid,                   \
-          io_in_bits_##idx##_bits_vs_addr.read().get_word(0), \
-          io_in_bits_##idx##_bits_vs_tag.read().get_word(0),  \
-          io_in_bits_##idx##_bits_sv_addr.read().get_word(0), \
-          io_in_bits_##idx##_bits_sv_data.read().get_word(0));
+#define IN_READ(idx)                                                     \
+  {                                                                      \
+    Input(io_in_bits_##idx##_bits_m,                                     \
+          io_in_bits_##idx##_bits_op.read().get_word(0),                 \
+          io_in_bits_##idx##_bits_f2.read().get_word(0),                 \
+          io_in_bits_##idx##_bits_sz.read().get_word(0),                 \
+          io_in_bits_##idx##_bits_vs_valid,                              \
+          io_in_bits_##idx##_bits_vs_addr.read().get_word(0),            \
+          io_in_bits_##idx##_bits_vs_tag.read().get_word(0),             \
+          io_in_bits_##idx##_bits_sv_addr.read().get_word(0),            \
+          io_in_bits_##idx##_bits_sv_data.read().get_word(0));           \
+    cmd_count_ +=                                                        \
+        (io_in_bits_##idx##_bits_m ? 4 : 1) *                            \
+        (io_in_bits_##idx##_bits_op.read().get_word(0) == vstq ? 4 : 1); \
+  }
 
     if (io_in_valid && io_in_ready) {
-      if (io_in_bits_0_valid) { IN_READ(0); cmd_count_ += (io_in_bits_0_bits_m ? 4 : 1) * (io_in_bits_0_bits_op.read().get_word(0) == vstq ? 4 : 1); }
-      if (io_in_bits_1_valid) { IN_READ(1); cmd_count_ += (io_in_bits_1_bits_m ? 4 : 1) * (io_in_bits_1_bits_op.read().get_word(0) == vstq ? 4 : 1); }
-      if (io_in_bits_2_valid) { IN_READ(2); cmd_count_ += (io_in_bits_2_bits_m ? 4 : 1) * (io_in_bits_2_bits_op.read().get_word(0) == vstq ? 4 : 1); }
-      if (io_in_bits_3_valid) { IN_READ(3); cmd_count_ += (io_in_bits_3_bits_m ? 4 : 1) * (io_in_bits_3_bits_op.read().get_word(0) == vstq ? 4 : 1); }
+      if (io_in_bits_0_valid) {
+        IN_READ(0);
+      }
+      if (io_in_bits_1_valid) {
+        IN_READ(1);
+      }
+      if (io_in_bits_2_valid) {
+        IN_READ(2);
+      }
+      if (io_in_bits_3_valid) {
+        IN_READ(3);
+      }
     }
 
 #define IN_RAND(idx)                                                    \
@@ -238,11 +251,10 @@ struct VSt_tb : Sysc_tb {
     const bool m = rand_bool();                                         \
     const int vs_addr = rand_uint32() & (m ? 60 : 63);                  \
     const int vs_tag = rand_uint32();                                   \
-    const bool vs_valid = op == vst || op == vstq;                      \
     const uint8_t f2 = rand_int(0, 7);                                  \
     const bool stride = (f2 >> 1) & 1;                                  \
-    const uint32_t mask = ~(op == vst ? (1u << kAlignedLsb) - 1 :       \
-                          (1u << (kAlignedLsb - 2)) - 1);               \
+    const uint32_t mask = ~(op == vst ? (1u << kAlignedLsb) - 1         \
+                                      : (1u << (kAlignedLsb - 2)) - 1); \
     uint32_t addr = (rand_uint32() & mask) | 0x80000000u;               \
     uint32_t data = rand_uint32() >> rand_int(0, 32);                   \
     data = std::min(((0xffffffffu - addr) / 64), data);                 \
@@ -293,7 +305,7 @@ struct VSt_tb : Sysc_tb {
       }
 
       sc_bv<kVector> rbits;
-      const uint32_t* src = (const uint32_t*)r.data;
+      const uint32_t* src = reinterpret_cast<const uint32_t*>(r.data);
       for (int i = 0; i < kVector / 32; ++i) {
         rbits.set_word(i, src[i]);
       }
@@ -306,7 +318,7 @@ struct VSt_tb : Sysc_tb {
       waxi_count_++;
       dut.addr = io_axi_addr_bits_addr.read().get_word(0);
       dut.id   = io_axi_addr_bits_id.read().get_word(0);
-      uint32_t* dst = (uint32_t*)dut.data;
+      uint32_t* dst = reinterpret_cast<uint32_t*>(dut.data);
       for (int i = 0; i < kVector / 32; ++i) {
         dst[i] = io_axi_data_bits_data.read().get_word(i);
       }
@@ -325,7 +337,7 @@ struct VSt_tb : Sysc_tb {
     }
   }
 
-private:
+ private:
   struct waxi_t {
     uint32_t addr;
     uint32_t id;
@@ -371,8 +383,6 @@ private:
 
   void Input(bool m, uint8_t op, uint8_t f2, uint8_t sz, bool vs_valid,
              uint8_t vs_addr, uint8_t vs_tag, uint32_t addr, uint32_t data) {
-    rreg_t r;
-
     const bool stride = (f2 >> 1) & 1;
     const bool length = (f2 >> 0) & 1;
 
@@ -410,7 +420,7 @@ private:
       if (vs_valid) {
         r.addr = vs_addr;
         r.tag = vs_tag >> (vs_addr & 3);
-        uint32_t* dst = (uint32_t*)r.data;
+        uint32_t* dst = reinterpret_cast<uint32_t*>(r.data);
         for (int i = 0; i < kVector / 32; ++i) {
           dst[i] = rand_uint32();
         }
@@ -441,19 +451,19 @@ private:
     const uint32_t lsb_addr = addr & ((kVector / 8) - 1);
     const uint32_t vstq_quad = step;
     const uint32_t vstq_offset = vstq_quad << (kAlignedLsb - 2);
-    const uint8_t* src = (const uint8_t*)r.data;
+    const uint8_t* src = reinterpret_cast<const uint8_t*>(r.data);
 
     waxi_t w;
     w.addr = addr & ~0x80000000 & ~(VLENB - 1);  // align to line
     w.size = std::min(remain, is_vstq ? VLENB / 4 : VLENB);
     w.id   = r.addr;
 
-    uint8_t* dst = (uint8_t*)w.data;
+    uint8_t* dst = reinterpret_cast<uint8_t*>(w.data);
 
     for (int i = 0; i < kVector / 8; ++i) {
       const int idx0 = (i + lsb_addr) % (kVector / 8);
       const int idx1 = is_vstq ? (i % (kVector / 8 / 4)) + vstq_offset : i;
-      w.strb[idx0] = i < w.size;
+      w.strb[idx0] = static_cast<uint8_t>(static_cast<uint32_t>(i) < w.size);
       dst[i] = src[idx1];
     }
 

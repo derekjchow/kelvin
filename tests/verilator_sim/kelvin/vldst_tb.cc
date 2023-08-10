@@ -201,8 +201,6 @@ struct VLdSt_tb : Sysc_tb {
     const int vd_addr = rand_uint32() & (m ? 60 : 63);                     \
     const int vs_addr = rand_uint32() & (m ? 60 : 63);                     \
     const int vs_tag = rand_uint32();                                      \
-    const bool vd_valid = op == vld;                                       \
-    const bool vs_valid = op == vst || op == vstq;                         \
     uint32_t sv_addr = std::min(rand_uint32() & ~0x80000000, 0x7fffff00u); \
     uint32_t sv_data = (rand_uint32() >> rand_int(0, 31));                 \
     sv_data = std::min(((0x80000000u - sv_addr) / 64), sv_data);           \
@@ -281,7 +279,7 @@ struct VLdSt_tb : Sysc_tb {
       wreg_t ref, dut;
       check(wreg_.read(ref), "wreg empty");
       dut.addr = io_write_addr.read().get_word(0);
-      uint32_t* dst = (uint32_t*)dut.data;
+      uint32_t* dst = reinterpret_cast<uint32_t*>(dut.data);
       for (int i = 0; i < kVector / 32; ++i) {
         dst[i] = io_write_data.read().get_word(i);
       }
@@ -301,7 +299,7 @@ struct VLdSt_tb : Sysc_tb {
       dut.size = io_dbus_size.read().get_word(0);
       dut.last = io_last;
       dut.write = io_dbus_write;
-      uint32_t* dst = (uint32_t*)dut.wdata;
+      uint32_t* dst = reinterpret_cast<uint32_t*>(dut.wdata);
       for (int i = 0; i < kVector / 32; ++i) {
         dst[i] = io_dbus_wdata.read().get_word(i);
       }
@@ -409,8 +407,6 @@ struct VLdSt_tb : Sysc_tb {
     assert(!(op == vstq && (vd_valid || !vs_valid)));
     assert(!(op == vld && (!vd_valid || vs_valid)));
 
-    rreg_t r;
-
     const bool stride = (f2 >> 1) & 1;
     const bool length = (f2 >> 0) & 1;
 
@@ -448,7 +444,7 @@ struct VLdSt_tb : Sysc_tb {
       if (vs_valid) {
         r.addr = vs_addr;
         r.tag = vs_tag >> (vs_addr & 3);
-        uint32_t* dst = (uint32_t*)r.data;
+        uint32_t* dst = reinterpret_cast<uint32_t*>(r.data);
         for (int i = 0; i < kVector / 32; ++i) {
           dst[i] = rand_uint32();
         }
@@ -457,7 +453,7 @@ struct VLdSt_tb : Sysc_tb {
       wreg_t w;
       if (vd_valid) {
         w.addr = vd_addr;
-        uint32_t* dst = (uint32_t*)w.data;
+        uint32_t* dst = reinterpret_cast<uint32_t*>(w.data);
         for (int i = 0; i < kVector / 32; ++i) {
           dst[i] = rand_uint32();
         }
@@ -479,7 +475,7 @@ struct VLdSt_tb : Sysc_tb {
 
       // Write register lane zeroing.
       if (vd_valid) {
-        uint8_t* src = (uint8_t*)w.data;
+        uint8_t* src = reinterpret_cast<uint8_t*>(w.data);
         for (int i = 0; i < kVector / 8; ++i) {
           if (i < n) continue;
           src[i] = 0;
@@ -510,16 +506,16 @@ struct VLdSt_tb : Sysc_tb {
 
     if (d.write) {
       const uint8_t* src = (const uint8_t*)r.data;
-      uint8_t* dst = (uint8_t*)d.wdata;
+      uint8_t* dst = reinterpret_cast<uint8_t*>(d.wdata);
       for (int i = 0; i < kVector / 8; ++i) {
         const int idx0 = (i + lsb_addr) % (kVector / 8);
         const int idx1 = (i + lsb_ashf) % (kVector / 8);
-        d.wmask[idx0] = i < d.size;
+        d.wmask[idx0] = static_cast<uint8_t>(static_cast<uint32_t>(i) < d.size);
         dst[idx1] = src[i];
       }
     } else {
       const uint8_t* src = (const uint8_t*)w.data;
-      uint8_t* dst = (uint8_t*)d.rdata;
+      uint8_t* dst = reinterpret_cast<uint8_t*>(d.rdata);
       for (int i = 0; i < kVector / 8; ++i) {
         const int idx = (i + lsb_addr) % (kVector / 8);
         dst[idx] = src[i];
