@@ -10,7 +10,12 @@ case class Parameters() {
     val big = 2
   }
 
-  val core = sys.env.get("KELVIN_SIMD").getOrElse("256").toInt match {
+  // Vector Length (register-file and compute).
+  // 128 = faster builds, but not production(?).
+  val vectorBits = sys.env.get("KELVIN_SIMD").getOrElse("256").toInt
+  assert(vectorBits == 512 || vectorBits == 256 || vectorBits == 128)
+
+  val core = vectorBits match {
     case 128 => Core.tiny
     case 256 => Core.little
     case 512 => Core.big
@@ -21,16 +26,7 @@ case class Parameters() {
   val instructionBits = 32
   val instructionLanes = 4
 
-  // Vector Length (register-file and compute).
-  val vectorBits = core match {
-    case Core.tiny   => 128
-    case Core.little => 256
-    case Core.big    => 512
-  }
-
   val vectorCountBits = log2Ceil(vectorBits / 8) + 1 + 2  // +2 stripmine
-  assert(vectorBits == 512 || vectorBits == 256
-      || vectorBits == 128)  // 128 = faster builds, but not production(?).
 
   // Vector queue.
   val vectorFifoDepth = 16
