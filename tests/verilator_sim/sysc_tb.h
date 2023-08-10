@@ -1,15 +1,20 @@
+// Copyright 2023 Google LLC
+
 #ifndef TESTS_VERILATOR_SIM_SYSC_TB_H_
 #define TESTS_VERILATOR_SIM_SYSC_TB_H_
 
 // A SystemC baseclass for constrained random testing of Verilated RTL.
+#include <systemc.h>
 
-#include <systemc>
-using namespace sc_core;
-using sc_dt::sc_bv;
 #include <iostream>
+#include <string>
 
-#include "fifo.h"
-#include "verilated_vcd_c.h"
+#include "tests/verilator_sim/fifo.h"
+// sc_core needs to be included before verilator header
+using namespace sc_core;      // NOLINT(build/namespaces)
+#include "verilated_vcd_c.h"  // NOLINT(build/include_subdir): From verilator.
+
+using sc_dt::sc_bv;
 
 const char *vcd_path_ = "/tmp/kelvin/vcd";
 
@@ -97,8 +102,8 @@ struct Sysc_tb : public sc_module {
         clock("clock", 1, SC_NS),
         reset("reset"),
         resetn("resetn"),
-        loops_(loops),
-        random_(random) {
+        random_(random),
+        loops_(loops) {
     loop_ = 0;
     error_ = false;
 
@@ -168,9 +173,9 @@ struct Sysc_tb : public sc_module {
   }
 
  protected:
-  virtual void init(){};
-  virtual void posedge(){};
-  virtual void negedge(){};
+  virtual void init() {}
+  virtual void posedge() {}
+  virtual void negedge() {}
 
   bool check(bool v, const char *s = "") {
     const char *KRED = "\x1B[31m";
@@ -191,15 +196,17 @@ struct Sysc_tb : public sc_module {
 
   bool rand_bool() {
     // Do not allow any 'io_in_valid' controls to be set during reset.
-    return !reset && (!random_ || (rand() & 1));
+    return !reset &&
+           (!random_ || (rand() & 1));  // NOLINT(runtime/threadsafe_fn)
   }
 
   int rand_int(int min = 0, int max = (1 << 31)) {
-    return (rand() % (max - min + 1)) + min;
+    return (rand() % (max - min + 1)) + min;  // NOLINT(runtime/threadsafe_fn)
   }
 
   uint32_t rand_uint32(uint32_t min = 0, uint32_t max = 0xffffffffu) {
-    uint32_t r = (rand() & 0xffff) | (rand() << 16);
+    uint32_t r = (rand() & 0xffff) |  // NOLINT(runtime/threadsafe_fn)
+                 (rand() << 16);      // NOLINT(runtime/threadsafe_fn)
     if (min == 0 && max == 0xffffffff) return r;
     return (r % (max - min + 1)) + min;
   }

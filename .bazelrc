@@ -1,1 +1,4 @@
 build --cxxopt=-std=c++17
+
+# Disable the low signal-to-noise ratio warnings
+build --copt=-Wno-unused-function

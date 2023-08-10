@@ -128,9 +128,6 @@ cc_test(
     srcs = [
         "kelvin/vconvctrl_tb.cc",
     ],
-    copts = [
-        "-Wno-unused-function",
-    ],
     deps = [
         ":kelvin_if",
         ":sim_libs",

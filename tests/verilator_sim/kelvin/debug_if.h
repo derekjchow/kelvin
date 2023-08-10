@@ -1,3 +1,5 @@
+// Copyright 2023 Google LLC
+
 #ifndef TESTS_VERILATOR_SIM_KELVIN_DEBUG_IF_H_
 #define TESTS_VERILATOR_SIM_KELVIN_DEBUG_IF_H_
 
@@ -46,7 +48,7 @@ struct Debug_if : Sysc_module {
     }
   }
 
-private:
+ private:
 #ifndef TIME_DISABLE
   const char* KNRM = "\x1B[0m";
   const char* KRED = "\x1B[31m";
@@ -83,13 +85,12 @@ private:
       char buf[BUFFERLIMIT];
       char sbuf[ARGMAX * BUFFERLIMIT];
 
-      mm_->Read(data, BUFFERLIMIT, (uint8_t*) buf);
+      mm_->Read(data, BUFFERLIMIT, reinterpret_cast<uint8_t*>(buf));
       buf[sizeof(buf) - 1] = '\0';
 
-      sprintf(sbuf, buf, arg_[0], arg_[1], arg_[2], arg_[3],
-              arg_[4], arg_[5], arg_[6], arg_[7],
-              arg_[8], arg_[9], arg_[10], arg_[11],
-              arg_[12], arg_[13], arg_[14], arg_[15]);  // ARGMAX
+      snprintf(sbuf, sizeof(sbuf), buf, arg_[0], arg_[1], arg_[2], arg_[3],
+               arg_[4], arg_[5], arg_[6], arg_[7], arg_[8], arg_[9], arg_[10],
+               arg_[11], arg_[12], arg_[13], arg_[14], arg_[15]);  // ARGMAX
 
       int len = strlen(sbuf);
 #ifndef TIME_DISABLE
@@ -140,9 +141,7 @@ private:
       }
     } else if (cmd == KLOG) {
       arg_[argpos_] = (uint64_t) str_[argpos_];
-      uint8_t *buf = str_[argpos_];
-      char c = 0;
-      int pos = 0;
+      uint8_t* buf = str_[argpos_];
       mm_->Read(data, BUFFERLIMIT, buf);
       argpos_++;
     } else {
