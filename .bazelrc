@@ -2,3 +2,8 @@ build --cxxopt=-std=c++17
 
 # Disable the low signal-to-noise ratio warnings
 build --copt=-Wno-unused-function
+
+# Disable tool build warnings. The tools are fetched/generated from OSS repos
+build --host_copt=-Wno-unused-variable
+build --host_copt=-Wno-unused-value
+build --host_copt=-Wno-uninitialized
