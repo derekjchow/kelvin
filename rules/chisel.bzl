@@ -2,10 +2,11 @@ load("@io_bazel_rules_scala//scala:scala.bzl", "scala_binary", "scala_library")
 load("@rules_hdl//verilog:providers.bzl", "VerilogInfo", "verilog_library")
 load("@kelvin_hw//rules:verilator.bzl", "verilator_cc_library")
 
-def chisel_library(name,
-                   srcs = [],
-                   deps = [],
-                   visibility = None):
+def chisel_library(
+        name,
+        srcs = [],
+        deps = [],
+        visibility = None):
     scala_library(
         name = name,
         srcs = srcs,
@@ -20,11 +21,12 @@ def chisel_library(name,
         visibility = visibility,
     )
 
-def chisel_binary(name,
-                  main_class,
-                  srcs = [],
-                  deps = [],
-                  visibility = None):
+def chisel_binary(
+        name,
+        main_class,
+        srcs = [],
+        deps = [],
+        visibility = None):
     scala_binary(
         name = name,
         srcs = srcs,
@@ -40,15 +42,16 @@ def chisel_binary(name,
         visibility = visibility,
     )
 
-def chisel_cc_library(name,
-                      chisel_lib,
-                      emit_class,
-                      module_name,
-                      verilog_deps=[]):
+def chisel_cc_library(
+        name,
+        chisel_lib,
+        emit_class,
+        module_name,
+        verilog_deps = []):
     gen_binary_name = name + "_emit_verilog_binary"
     chisel_binary(
         name = gen_binary_name,
-        deps = [ chisel_lib ],
+        deps = [chisel_lib],
         main_class = emit_class,
     )
 
