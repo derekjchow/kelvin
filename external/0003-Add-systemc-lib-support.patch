@@ -1,0 +1,39 @@
+From 5e8abbacdc9d25cf5c7405ec9fdfb3b2645de829 Mon Sep 17 00:00:00 2001
+From: Cindy Liu <hcindyl@google.com>
+Date: Sun, 13 Aug 2023 10:26:17 -0700
+Subject: [PATCH] Add systemc lib support
+
+Set libverilator to build based on the OSS accellera_systemc not the
+system installed libsystemc-dev
+---
+ dependency_support/verilator/verilator.BUILD | 7 +++++++--
+ 1 file changed, 6 insertions(+), 1 deletions(-)
+
+diff --git dependency_support/verilator/verilator.BUILD dependency_support/verilator/verilator.BUILD
+index 371a1dd..0bc3c71 100644
+--- dependency_support/verilator/verilator.BUILD
++++ dependency_support/verilator/verilator.BUILD
+@@ -221,7 +221,11 @@ cc_library(
+     ],
+     # TODO: Remove these once upstream fixes these warnings
+     copts = ["-Wno-unused-const-variable"],
+-    includes = ["include"],
++    includes = [
++        "include",
++        # include systemc header
++        "systemc/include",
++    ],
+     strip_include_prefix = "include/",
+     textual_hdrs = [
+         "include/gtkwave/fastlz.c",
+@@ -230,6 +234,7 @@ cc_library(
+     ],
+     visibility = ["//visibility:public"],
+     deps = [
++        "@accellera_systemc//:systemc",
+         "@net_zlib//:zlib",
+     ],
+ )
+-- 
+2.41.0.640.ga95def55d0-goog
+

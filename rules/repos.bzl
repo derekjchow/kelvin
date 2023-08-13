@@ -23,6 +23,7 @@ def kelvin_repos():
         patches = [
             "@kelvin_hw//external:0001-Update-version-of-Googletest-for-bazel-compatitibili.patch",
             "@kelvin_hw//external:0002-SystemC-support-for-verilator.patch",
+            "@kelvin_hw//external:0003-Add-systemc-lib-support.patch",
         ],
     )
 

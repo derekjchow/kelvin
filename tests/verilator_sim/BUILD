@@ -7,6 +7,12 @@ cc_library(
         "sysc_module.h",
         "sysc_tb.h",
     ],
+    includes = [
+        "systemc/include",
+    ],
+    deps = [
+        "@accellera_systemc//:systemc",
+    ],
 )
 
 cc_library(
@@ -29,7 +35,6 @@ cc_binary(
         ":kelvin_if",
         ":sim_libs",
         "//hdl/chisel:core_cc_library",
-        "@accellera_systemc//:systemc",
     ],
 )
 
@@ -41,7 +46,6 @@ cc_binary(
     deps = [
         ":sim_libs",
         "//hdl/chisel:dbus2axi_cc_library",
-        "@accellera_systemc//:systemc",
     ],
 )
 
@@ -54,7 +58,6 @@ cc_binary(
         ":kelvin_if",
         ":sim_libs",
         "//hdl/chisel:l1dcache_cc_library",
-        "@accellera_systemc//:systemc",
     ],
 )
 
@@ -67,7 +70,6 @@ cc_binary(
         ":kelvin_if",
         ":sim_libs",
         "//hdl/chisel:l1icache_cc_library",
-        "@accellera_systemc//:systemc",
     ],
 )
 
@@ -108,7 +110,6 @@ cc_binary(
         ":sim_libs",
         ":vencodeop",
         "//hdl/chisel:vcmdq_cc_library",
-        "@accellera_systemc//:systemc",
     ],
 )
 
@@ -121,7 +122,6 @@ cc_binary(
         ":kelvin_if",
         ":sim_libs",
         "//hdl/chisel:vconvalu_cc_library",
-        "@accellera_systemc//:systemc",
     ],
 )
 
@@ -135,7 +135,6 @@ cc_test(
         ":sim_libs",
         ":vencodeop",
         "//hdl/chisel:vconvctrl_cc_library",
-        "@accellera_systemc//:systemc",
     ],
 )
 
@@ -149,7 +148,6 @@ cc_test(
         ":sim_libs",
         ":vdecode",
         "//hdl/chisel:vdecodeinstruction_cc_library",
-        "@accellera_systemc//:systemc",
     ],
 )
 
@@ -163,7 +161,6 @@ cc_test(
         ":sim_libs",
         ":vdecode",
         "//hdl/chisel:vdecode_cc_library",
-        "@accellera_systemc//:systemc",
     ],
 )
 
@@ -177,7 +174,6 @@ cc_test(
         ":sim_libs",
         ":vencodeop",
         "//hdl/chisel:vldst_cc_library",
-        "@accellera_systemc//:systemc",
     ],
 )
 
@@ -191,7 +187,6 @@ cc_test(
         ":sim_libs",
         ":vencodeop",
         "//hdl/chisel:vld_cc_library",
-        "@accellera_systemc//:systemc",
     ],
 )
 
@@ -204,7 +199,6 @@ cc_binary(
         ":kelvin_if",
         ":sim_libs",
         "//hdl/chisel:vregfilesegment_cc_library",
-        "@accellera_systemc//:systemc",
     ],
 )
 
@@ -217,7 +211,6 @@ cc_binary(
         ":kelvin_if",
         ":sim_libs",
         "//hdl/chisel:vregfile_cc_library",
-        "@accellera_systemc//:systemc",
     ],
 )
 
@@ -231,20 +224,18 @@ cc_test(
         ":sim_libs",
         ":vencodeop",
         "//hdl/chisel:vst_cc_library",
-        "@accellera_systemc//:systemc",
     ],
 )
 
 cc_binary(
     name = "kelvin_tb",
     srcs = [
-        "matcha/kelvin_tb.cc",
         "matcha/kelvin_if.h",
+        "matcha/kelvin_tb.cc",
     ],
     deps = [
         ":kelvin_if",
         ":sim_libs",
         "//hdl/chisel:kelvin_cc_library",
-        "@accellera_systemc//:systemc",
-    ]
+    ],
 )
