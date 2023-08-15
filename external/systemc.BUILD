@@ -1,3 +1,5 @@
+# Copyright 2023 Google LLC
+
 load("@rules_foreign_cc//foreign_cc:defs.bzl", "cmake")
 
 filegroup(
@@ -5,7 +7,6 @@ filegroup(
     srcs = glob(["**"]),
 )
 
-# TODO(derekjchow): Set isystem for systemc headers.
 cmake(
     name = "systemc",
     cache_entries = {
@@ -18,5 +19,6 @@ cmake(
     install = True,
     lib_source = "@accellera_systemc//:all_srcs",
     out_static_libs = ["libsystemc.a"],
+    targets = ["systemc"],
     visibility = ["//visibility:public"],
 )
