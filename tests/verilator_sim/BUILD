@@ -39,7 +39,21 @@ cc_binary(
 )
 
 cc_binary(
+    name = "kelvin_tb",
+    srcs = [
+        "matcha/kelvin_if.h",
+        "matcha/kelvin_tb.cc",
+    ],
+    deps = [
+        ":kelvin_if",
+        ":sim_libs",
+        "//hdl/chisel:kelvin_cc_library",
+    ],
+)
+
+cc_test(
     name = "dbus2axi_tb",
+    size = "small",
     srcs = [
         "kelvin/dbus2axi_tb.cc",
     ],
@@ -61,8 +75,9 @@ cc_binary(
     ],
 )
 
-cc_binary(
+cc_test(
     name = "l1icache_tb",
+    size = "small",
     srcs = [
         "kelvin/l1icache_tb.cc",
     ],
@@ -100,8 +115,9 @@ cc_library(
     ],
 )
 
-cc_binary(
+cc_test(
     name = "vcmdq_tb",
+    size = "small",
     srcs = [
         "kelvin/vcmdq_tb.cc",
     ],
@@ -113,8 +129,9 @@ cc_binary(
     ],
 )
 
-cc_binary(
+cc_test(
     name = "vconvalu_tb",
+    size = "small",
     srcs = [
         "kelvin/vconvalu_tb.cc",
     ],
@@ -127,6 +144,7 @@ cc_binary(
 
 cc_test(
     name = "vconvctrl_tb",
+    size = "small",
     srcs = [
         "kelvin/vconvctrl_tb.cc",
     ],
@@ -140,6 +158,7 @@ cc_test(
 
 cc_test(
     name = "vdecodeinstruction_tb",
+    size = "small",
     srcs = [
         "kelvin/vdecodeinstruction_tb.cc",
     ],
@@ -153,6 +172,7 @@ cc_test(
 
 cc_test(
     name = "vdecode_tb",
+    size = "small",
     srcs = [
         "kelvin/vdecode_tb.cc",
     ],
@@ -166,6 +186,7 @@ cc_test(
 
 cc_test(
     name = "vldst_tb",
+    size = "small",
     srcs = [
         "kelvin/vldst_tb.cc",
     ],
@@ -179,6 +200,7 @@ cc_test(
 
 cc_test(
     name = "vld_tb",
+    size = "small",
     srcs = [
         "kelvin/vld_tb.cc",
     ],
@@ -190,8 +212,9 @@ cc_test(
     ],
 )
 
-cc_binary(
+cc_test(
     name = "vregfilesegment_tb",
+    size = "small",
     srcs = [
         "kelvin/vregfilesegment_tb.cc",
     ],
@@ -202,7 +225,7 @@ cc_binary(
     ],
 )
 
-cc_binary(
+cc_test(
     name = "vregfile_tb",
     srcs = [
         "kelvin/vregfile_tb.cc",
@@ -216,6 +239,7 @@ cc_binary(
 
 cc_test(
     name = "vst_tb",
+    size = "small",
     srcs = [
         "kelvin/vst_tb.cc",
     ],
@@ -224,18 +248,5 @@ cc_test(
         ":sim_libs",
         ":vencodeop",
         "//hdl/chisel:vst_cc_library",
-    ],
-)
-
-cc_binary(
-    name = "kelvin_tb",
-    srcs = [
-        "matcha/kelvin_if.h",
-        "matcha/kelvin_tb.cc",
-    ],
-    deps = [
-        ":kelvin_if",
-        ":sim_libs",
-        "//hdl/chisel:kelvin_cc_library",
     ],
 )
