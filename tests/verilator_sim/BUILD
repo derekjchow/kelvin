@@ -63,7 +63,7 @@ cc_test(
     ],
 )
 
-cc_binary(
+cc_test(
     name = "l1dcache_tb",
     srcs = [
         "kelvin/l1dcache_tb.cc",

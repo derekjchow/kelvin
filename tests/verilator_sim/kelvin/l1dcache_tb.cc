@@ -14,11 +14,12 @@ constexpr int kDBusBankAdj = 1;
 constexpr int kLineSize = kVector / 8;
 constexpr int kLineBase = ~(kLineSize - 1);
 constexpr int kLineOffset = kLineSize - 1;
+constexpr int kVLenB = kVector / 8;
+constexpr int kVLenW = kVLenB / sizeof(int32_t);
 
-struct L1DCache_tb : Sysc_tb
-{
+struct L1DCache_tb : Sysc_tb {
   sc_out<bool> io_flush_valid;
-  sc_in<bool>  io_flush_ready;
+  sc_in<bool> io_flush_ready;
   sc_out<bool> io_flush_all;
   sc_out<bool> io_flush_clean;
 
@@ -69,12 +70,13 @@ struct L1DCache_tb : Sysc_tb
     if (dbus_resp_pipeline_) {
       dbus_resp_pipeline_ = false;
       uint32_t addr = dbus_resp_addr_;
-      int size = dbus_resp_size_;
-      for (int i = 0; i < vlenb_ && size; ++i) {
+      uint32_t size = dbus_resp_size_;
+      for (uint32_t i = 0; i < kVLenB && size; ++i) {
         uint8_t ref = dbus_resp_data_[i];
         uint8_t dut = io_dbus_rdata.read().get_word(i / 4) >> (8 * i);
         if (ref != dut) {
-          printf("DDD(%d) %08x : %02x %02x\n", i, (addr & ~(vlenb_ - 1)) + i, ref, dut);
+          printf("DDD(%u) %08x : %02x %02x\n", i, (addr & ~(kVLenB - 1)) + i,
+                 ref, dut);
         }
         check(ref == dut, "dbus read data");
       }
@@ -83,9 +85,9 @@ struct L1DCache_tb : Sysc_tb
     if (dbus_resp_pipeline_) {
       dbus_resp_pipeline_ = false;
       uint32_t addr = dbus_resp_addr_;
-      int size = dbus_resp_size_;
-      for (int j = addr; j < addr + size; ++j) {
-        int i = j & (vlenb_ - 1);
+      uint32_t size = dbus_resp_size_;
+      for (uint32_t j = addr; j < addr + size; ++j) {
+        uint32_t i = j & (kVLenB - 1);
         uint8_t ref = dbus_resp_data_[i];
         uint8_t dut = io_dbus_rdata.read().get_word(i / 4) >> (8 * i);
         check(ref == dut, "dbus read data");
@@ -99,9 +101,9 @@ struct L1DCache_tb : Sysc_tb
       dbus_resp_addr_ = io_dbus_addr.read().get_word(0);
       dbus_resp_size_ = io_dbus_size.read().get_word(0);
 #ifdef L1DCACHEBANK
-      ReadBus(dbus_resp_addr_ & kLineBase, vlenb_, dbus_resp_data_);
+      ReadBus(dbus_resp_addr_ & kLineBase, kVLenB, dbus_resp_data_);
 #else
-      ReadBus(dbus_resp_addr_, vlenb_, dbus_resp_data_);
+      ReadBus(dbus_resp_addr_, kVLenB, dbus_resp_data_);
 #endif
       history_t cmd({dbus_resp_addr_});
       history_.write(cmd);
@@ -115,17 +117,17 @@ struct L1DCache_tb : Sysc_tb
 
       uint32_t addr = io_dbus_addr.read().get_word(0);
       int size = io_dbus_size.read().get_word(0);
-      uint8_t wdata[vlenb_];
-      uint32_t* p_wdata = (uint32_t*) wdata;
-      for (int i = 0; i < vlenw_; ++i) {
+      uint8_t wdata[kVLenB];
+      uint32_t* p_wdata = reinterpret_cast<uint32_t*>(wdata);
+      for (int i = 0; i < kVLenW; ++i) {
         p_wdata[i] = io_dbus_wdata.read().get_word(i);
       }
-      const uint32_t linemask = vlenb_ - 1;
-      const uint32_t linebase = addr & ~linemask;
+      const uint32_t linemask = kVLenB - 1;
       for (int i = 0; i < size; ++i, ++addr) {
         const uint32_t lineoffset = addr & linemask;
         if (io_dbus_wmask.read().get_bit(lineoffset)) {
 #ifdef L1DCACHEBANK
+          const uint32_t linebase = addr & ~linemask;
           WriteBus(linebase + lineoffset, wdata[lineoffset]);
 #else
           WriteBus(addr, wdata[lineoffset]);
@@ -144,12 +146,12 @@ struct L1DCache_tb : Sysc_tb
       // Flush controls must not change during handshake.
       flush_count_ = 0;
       flush_valid_ = true;
-      flush_all_   = rand_bool();
+      flush_all_ = rand_bool();
       flush_clean_ = rand_bool();
     }
 
     io_flush_valid = flush_valid_;
-    io_flush_all   = flush_all_;
+    io_flush_all = flush_all_;
     io_flush_clean = flush_clean_;
 
     history_t dbus;
@@ -157,8 +159,10 @@ struct L1DCache_tb : Sysc_tb
       bool valid = rand_bool() && !flush_valid_;
       bool write = rand_int(0, 3) == 0;
       bool newaddr = rand_int(0, 3) == 0 || !history_.rand(dbus);
-      uint32_t addr = newaddr ? rand_uint32() : (dbus.addr + rand_int(-vlenb_, vlenb_));
-      addr = std::min(0xffffff00u, addr);  // TODO: avoids a raxi() crash.
+      uint32_t addr =
+          newaddr ? rand_uint32() : (dbus.addr + rand_int(-kVLenB, kVLenB));
+      // TODO(b/295973540): avoids a raxi() crash.
+      addr = std::min(0xffffff00u, addr);
       if (kDBusBankAdj) {
         addr &= 0x7fffffff;
       }
@@ -166,14 +170,14 @@ struct L1DCache_tb : Sysc_tb
         addr &= 0x3fff;
       }
 #ifdef L1DCACHEBANK
-      int size = rand_int(1, vlenb_);
+      int size = rand_int(1, kVLenB);
 #else
-      int size = rand_int(0, vlenb_);
+      int size = rand_int(0, kVLenB);
 #endif
       io_dbus_valid = valid;
       io_dbus_write = write;
       io_dbus_addr = addr;
-      io_dbus_adrx = addr + vlenb_;
+      io_dbus_adrx = addr + kVLenB;
       io_dbus_size = size;
       if (valid) {
         dbus_active_ = true;
@@ -184,10 +188,10 @@ struct L1DCache_tb : Sysc_tb
       sc_bv<kVector / 8> wmask = 0;
 
       if (write) {
-        for (int i = 0; i < vlenw_; ++i) {
+        for (int i = 0; i < kVLenW; ++i) {
           wdata.set_word(i, rand_uint32());
         }
-        const uint32_t linemask = vlenb_ - 1;
+        const uint32_t linemask = kVLenB - 1;
         const uint32_t lineoffset = addr & linemask;
         const bool all = rand_bool();
         for (int i = 0; i < size; ++i) {
@@ -232,7 +236,7 @@ struct L1DCache_tb : Sysc_tb
       sc_bv<kL1DAxiBits> out;
       for (int i = 0; i < axiw_; ++i) {
         uint32_t data;
-        ReadAxi(addr, 4, (uint8_t*) &data);
+        ReadAxi(addr, 4, reinterpret_cast<uint8_t*>(&data));
         out.set_word(i, data);
         addr += 4;
       }
@@ -256,7 +260,7 @@ struct L1DCache_tb : Sysc_tb
 
     if (io_axi_write_data_valid && io_axi_write_data_ready) {
       axiwdata_t p;
-      uint32_t* ptr = (uint32_t*) p.data;
+      uint32_t* ptr = reinterpret_cast<uint32_t*>(p.data);
       for (int i = 0; i < axiw_; ++i, ++ptr) {
         ptr[0] = io_axi_write_data_bits_data.read().get_word(i);
       }
@@ -292,7 +296,7 @@ struct L1DCache_tb : Sysc_tb
     }
   }
 
-private:
+ private:
   struct history_t {
     uint32_t addr;
   };
@@ -309,11 +313,9 @@ private:
 
   struct axiwdata_t {
     uint8_t data[kL1DAxiBits / 8];
-    bool    mask[kL1DAxiBits / 8];
+    bool mask[kL1DAxiBits / 8];
   };
 
-  const int vlenb_ = kVector / 8;
-  const int vlenw_ = kVector / 32;
   const int axib_ = kL1DAxiBits / 8;
   const int axiw_ = kL1DAxiBits / 32;
 
@@ -334,7 +336,6 @@ private:
   fifo_t<axiwdata_t> wdata_;
   fifo_t<axiwaddr_t> wresp_;
 
-private:
   std::map<uint32_t, uint8_t[kLineSize]> mem_bus_;
   std::map<uint32_t, uint8_t[kLineSize]> mem_axi_;
 
@@ -342,10 +343,9 @@ private:
     const uint32_t paddr = addr & kLineBase;
     if (mem_bus_.find(paddr) == mem_bus_.end()) {
       uint8_t data[kLineSize];
-      uint32_t* p_data = (uint32_t*) data;
+      uint32_t* p_data = reinterpret_cast<uint32_t*>(data);
       for (int i = 0; i < kLineSize / 4; ++i) {
-        p_data[i] = rand();
-        // p_data[i] = paddr + 4 * i;  // debug
+        p_data[i] = rand();  // NOLINT(runtime/threadsafe_fn)
       }
       memcpy(mem_bus_[paddr], data, kLineSize);
       memcpy(mem_axi_[paddr], data, kLineSize);
@@ -354,11 +354,10 @@ private:
 
   void CheckAddr(uint32_t addr, uint8_t size) {
     _CheckAddr(addr, size);
-    // if ((addr & kLineBase) == ((addr + size) & kLineBase)) return;
     _CheckAddr(addr + kLineSize, size);
   }
 
-  template<int outsz>
+  template <int outsz>
   void _Read(uint32_t addr, uint8_t size, uint8_t* data,
              std::map<uint32_t, uint8_t[kLineSize]>& m) {
     const uint32_t laddr = addr & kLineBase;
@@ -396,13 +395,9 @@ private:
     _Read<4>(addr, size, data, mem_axi_);
   }
 
-  void WriteBus(uint32_t addr, uint8_t data) {
-    _Write(addr, data, mem_bus_);
-  }
+  void WriteBus(uint32_t addr, uint8_t data) { _Write(addr, data, mem_bus_); }
 
-  void WriteAxi(uint32_t addr, uint8_t data) {
-    _Write(addr, data, mem_axi_);
-  }
+  void WriteAxi(uint32_t addr, uint8_t data) { _Write(addr, data, mem_axi_); }
 };
 
 static void L1DCache_test(char* name, int loops, bool trace) {
@@ -512,7 +507,7 @@ static void L1DCache_test(char* name, int loops, bool trace) {
   tb.start();
 }
 
-int sc_main(int argc, char *argv[]) {
+int sc_main(int argc, char* argv[]) {
   L1DCache_test(Sysc_tb::get_name(argv[0]), 1000000, false);
   return 0;
 }
