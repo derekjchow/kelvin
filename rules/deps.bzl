@@ -15,7 +15,7 @@ def kelvin_deps():
 
     http_archive(
         name = "accellera_systemc",
-        build_file = "systemc.BUILD",
+        build_file = "@kelvin_hw//external:systemc.BUILD",
         sha256 = "bfb309485a8ad35a08ee78827d1647a451ec5455767b25136e74522a6f41e0ea",
         strip_prefix = "systemc-2.3.4",
         urls = [
