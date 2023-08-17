@@ -20,7 +20,7 @@ chisel_library(
     deps = [
         ":common",
         ":kelvin",
-    ]
+    ],
 )
 
 chisel_cc_library(
@@ -32,7 +32,7 @@ chisel_cc_library(
         "//hdl/verilog:clock_gate",
         "//hdl/verilog:sram_1rw_256x256",
         "//hdl/verilog:sram_1rw_256x288",
-    ]
+    ],
 )
 
 chisel_cc_library(
@@ -67,6 +67,13 @@ chisel_cc_library(
     verilog_deps = [
         "//hdl/verilog:sram_1rw_256x256",
     ],
+)
+
+chisel_cc_library(
+    name = "valu_cc_library",
+    chisel_lib = ":kelvin",
+    emit_class = "kelvin.EmitVAlu",
+    module_name = "VAlu",
 )
 
 chisel_cc_library(

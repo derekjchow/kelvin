@@ -88,7 +88,21 @@ cc_test(
     ],
 )
 
-# TODO(derekjchow): Add valu and valuint test benches
+cc_test(
+    name = "valu_tb",
+    size = "large",
+    srcs = [
+        "kelvin/alu_ref.h",
+        "kelvin/valu.h",
+        "kelvin/valu_tb.cc",
+    ],
+    deps = [
+        ":kelvin_if",
+        ":sim_libs",
+        ":vencodeop",
+        "//hdl/chisel:valu_cc_library",
+    ],
+)
 
 cc_library(
     name = "vdecode",

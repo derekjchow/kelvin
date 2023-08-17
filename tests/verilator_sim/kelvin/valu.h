@@ -3,15 +3,13 @@
 #ifndef TESTS_VERILATOR_SIM_KELVIN_VALU_H_
 #define TESTS_VERILATOR_SIM_KELVIN_VALU_H_
 
-#include "tools/iss/alu.h"  // Modified
+#include "tests/verilator_sim/kelvin/alu_ref.h"
 #include "tests/verilator_sim/kelvin/kelvin_cfg.h"
 #include "tests/verilator_sim/kelvin/vencodeop.h"
 
 constexpr int kLanes = kVector / 32;
 constexpr int kReadPorts = 7;
 constexpr int kWritePorts = 4;
-
-using namespace encode;
 
 struct valu_t {
   uint8_t op : 7;
@@ -98,7 +96,7 @@ struct valu_t {
     x = func(uint32_t(a));                                           \
   }
 
-#define VOP1PU(func)                                                  \
+#define VOP1PU(func)                                                 \
   if (sz == 1) {                                                     \
     v = 1;                                                           \
     w = 1;                                                           \
@@ -691,9 +689,9 @@ template <typename T>
 void VSlidevn(valu_t& op) {
   constexpr int n = kLanes * 4 / sizeof(T);
   const int shfamt = (op.f2 & 3) + 1;
-  const T* in0 = (const T*)op.in[0].data;
-  const T* in1 = (const T*)op.in[1].data;
-  T* out = (T*)op.out[0].data;
+  const T* in0 = reinterpret_cast<const T*>(op.in[0].data);
+  const T* in1 = reinterpret_cast<const T*>(op.in[1].data);
+  T* out = reinterpret_cast<T*>(op.out[0].data);
   for (int i = 0; i < n; ++i) {
     out[i] = i + shfamt < n ? in0[i + shfamt] : in1[i + shfamt - n];
   }
@@ -704,9 +702,9 @@ template <typename T>
 void VSlidevp(valu_t& op) {
   constexpr int n = kLanes * 4 / sizeof(T);
   const int shfamt = (op.f2 & 3) + 1;
-  const T* in0 = (const T*)op.in[0].data;
-  const T* in1 = (const T*)op.in[1].data;
-  T* out = (T*)op.out[0].data;
+  const T* in0 = reinterpret_cast<const T*>(op.in[0].data);
+  const T* in1 = reinterpret_cast<const T*>(op.in[1].data);
+  T* out = reinterpret_cast<T*>(op.out[0].data);
   for (int i = 0; i < n; ++i) {
     out[i] = i - shfamt < 0 ? in0[n - shfamt + i] : in1[i - shfamt];
   }
@@ -717,11 +715,11 @@ template <typename T>
 void VSlidehn2(valu_t& op) {
   constexpr int n = kLanes * 4 / sizeof(T);
   const int shfamt = (op.f2 & 3) + 1;
-  const T* in0 = (const T*)op.in[0].data;
-  const T* in1 = (const T*)op.in[1].data;
-  const T* in2 = (const T*)op.in[2].data;
-  T* out0 = (T*)op.out[0].data;
-  T* out1 = (T*)op.out[1].data;
+  const T* in0 = reinterpret_cast<const T*>(op.in[0].data);
+  const T* in1 = reinterpret_cast<const T*>(op.in[1].data);
+  const T* in2 = reinterpret_cast<const T*>(op.in[2].data);
+  T* out0 = reinterpret_cast<T*>(op.out[0].data);
+  T* out1 = reinterpret_cast<T*>(op.out[1].data);
   for (int i = 0; i < n; ++i) {
     out0[i] = i + shfamt < n ? in0[i + shfamt] : in1[i + shfamt - n];
   }
@@ -736,11 +734,11 @@ template <typename T>
 void VSlidehp2(valu_t& op) {
   constexpr int n = kLanes * 4 / sizeof(T);
   const int shfamt = (op.f2 & 3) + 1;
-  const T* in0 = (const T*)op.in[0].data;
-  const T* in1 = (const T*)op.in[1].data;
-  const T* in2 = (const T*)op.in[2].data;
-  T* out0 = (T*)op.out[0].data;
-  T* out1 = (T*)op.out[1].data;
+  const T* in0 = reinterpret_cast<const T*>(op.in[0].data);
+  const T* in1 = reinterpret_cast<const T*>(op.in[1].data);
+  const T* in2 = reinterpret_cast<const T*>(op.in[2].data);
+  T* out0 = reinterpret_cast<T*>(op.out[0].data);
+  T* out1 = reinterpret_cast<T*>(op.out[1].data);
   for (int i = 0; i < n; ++i) {
     out0[i] = i - shfamt < 0 ? in0[n - shfamt + i] : in1[i - shfamt];
   }
@@ -798,11 +796,10 @@ static void VSlidehp2(valu_t& op) {
 template <typename T>
 void VSel(valu_t& op) {
   constexpr int n = kLanes * 4 / sizeof(T);
-  const int shfamt = (op.f2 & 3) + 1;
-  const T* in0 = (const T*)op.in[0].data;
-  const T* in1 = (const T*)op.in[1].data;
-  const T* in2 = (const T*)op.in[2].data;
-  T* out = (T*)op.out[0].data;
+  const T* in0 = reinterpret_cast<const T*>(op.in[0].data);
+  const T* in1 = reinterpret_cast<const T*>(op.in[1].data);
+  const T* in2 = reinterpret_cast<const T*>(op.in[2].data);
+  T* out = reinterpret_cast<T*>(op.out[0].data);
   for (int i = 0; i < n; ++i) {
     out[i] = in0[i] & 1 ? in2[i] : in1[i];
   }
@@ -823,10 +820,9 @@ static void VSel(valu_t& op) {
 template <typename T>
 void VEvn(valu_t& op) {
   constexpr int n = kLanes * 4 / sizeof(T);
-  constexpr int h = n / 2;
-  const T* in0 = (const T*)op.in[0].data;
-  const T* in1 = (const T*)op.in[1].data;
-  T* out0 = (T*)op.out[0].data;
+  const T* in0 = reinterpret_cast<const T*>(op.in[0].data);
+  const T* in1 = reinterpret_cast<const T*>(op.in[1].data);
+  T* out0 = reinterpret_cast<T*>(op.out[0].data);
   for (int i = 0; i < n; ++i) {
     out0[i] = i < n / 2 ? in0[2 * i + 0] : in1[2 * (i - n / 2) + 0];
   }
@@ -836,10 +832,9 @@ void VEvn(valu_t& op) {
 template <typename T>
 void VOdd(valu_t& op) {
   constexpr int n = kLanes * 4 / sizeof(T);
-  constexpr int h = n / 2;
-  const T* in0 = (const T*)op.in[0].data;
-  const T* in1 = (const T*)op.in[1].data;
-  T* out1 = (T*)op.out[1].data;
+  const T* in0 = reinterpret_cast<const T*>(op.in[0].data);
+  const T* in1 = reinterpret_cast<const T*>(op.in[1].data);
+  T* out1 = reinterpret_cast<T*>(op.out[1].data);
   for (int i = 0; i < n; ++i) {
     out1[i] = i < n / 2 ? in0[2 * i + 1] : in1[2 * (i - n / 2) + 1];
   }
@@ -889,10 +884,10 @@ template <typename T>
 void VZip(valu_t& op) {
   constexpr int n = kLanes * 4 / sizeof(T);
   constexpr int h = n / 2;
-  const T* in0 = (const T*)op.in[0].data;
-  const T* in1 = (const T*)op.in[1].data;
-  T* out0 = (T*)op.out[0].data;
-  T* out1 = (T*)op.out[1].data;
+  const T* in0 = reinterpret_cast<const T*>(op.in[0].data);
+  const T* in1 = reinterpret_cast<const T*>(op.in[1].data);
+  T* out0 = reinterpret_cast<T*>(op.out[0].data);
+  T* out1 = reinterpret_cast<T*>(op.out[1].data);
   for (int i = 0; i < n; ++i) {
     const int j = i / 2;
     out0[i] = i & 1 ? in1[j + 0] : in0[j + 0];
@@ -937,29 +932,29 @@ static void VDwconv(const uint32_t adata[6], const uint32_t bdata[6],
 }
 
 static void VDwconv(valu_t& op) {
-  const uint32_t* in0 = (const uint32_t*)op.in[0].data;
-  const uint32_t* in1 = (const uint32_t*)op.in[1].data;
-  const uint32_t* in2 = (const uint32_t*)op.in[2].data;
-  const uint32_t* in3 = (const uint32_t*)op.in[3].data;
-  const uint32_t* in4 = (const uint32_t*)op.in[4].data;
-  const uint32_t* in5 = (const uint32_t*)op.in[5].data;
-  uint32_t* out0 = (uint32_t*)op.out[0].data;
-  uint32_t* out1 = (uint32_t*)op.out[1].data;
-  uint32_t* out2 = (uint32_t*)op.out[2].data;
-  uint32_t* out3 = (uint32_t*)op.out[3].data;
+  const uint32_t* in0 = reinterpret_cast<const uint32_t*>(op.in[0].data);
+  const uint32_t* in1 = reinterpret_cast<const uint32_t*>(op.in[1].data);
+  const uint32_t* in2 = reinterpret_cast<const uint32_t*>(op.in[2].data);
+  const uint32_t* in3 = reinterpret_cast<const uint32_t*>(op.in[3].data);
+  const uint32_t* in4 = reinterpret_cast<const uint32_t*>(op.in[4].data);
+  const uint32_t* in5 = reinterpret_cast<const uint32_t*>(op.in[5].data);
+  uint32_t* out0 = reinterpret_cast<uint32_t*>(op.out[0].data);
+  uint32_t* out1 = reinterpret_cast<uint32_t*>(op.out[1].data);
+  uint32_t* out2 = reinterpret_cast<uint32_t*>(op.out[2].data);
+  uint32_t* out3 = reinterpret_cast<uint32_t*>(op.out[3].data);
 
   struct vdwconv_u8_t {
-    uint32_t mode : 2;      // 1:0
-    uint32_t sparsity : 2;  // 3:2
-    uint32_t regbase : 4;   // 7:4
-    uint32_t rsvd : 4;      // 11:8
-    uint32_t abias : 9;     // 20:12
-    uint32_t asign : 1;     // 21
-    uint32_t bbias : 9;     // 30:22
-    uint32_t bsign : 1;     // 31
+    uint32_t mode : 2;      // 31:30
+    uint32_t sparsity : 2;  // 29:28
+    uint32_t regbase : 4;   // 27:24
+    uint32_t rsvd : 4;      // 23:20
+    uint32_t abias : 9;     // 19:11
+    uint32_t asign : 1;     // 10
+    uint32_t bbias : 9;     // 9:1
+    uint32_t bsign : 1;     // 0
   } cmd;
 
-  uint32_t* p_cmd = (uint32_t*)&cmd;
+  uint32_t* p_cmd = reinterpret_cast<uint32_t*>(&cmd);
   *p_cmd = op.sv.data;
   assert(cmd.mode == 0);
   assert(cmd.rsvd == 0);
@@ -970,7 +965,8 @@ static void VDwconv(valu_t& op) {
   const bool bsign = cmd.bsign;
 
   constexpr int n = kVector / 32;
-  uint32_t sparse[n + 2];
+  constexpr int kSparseSize = n + 2;
+  uint32_t sparse[kSparseSize];
   if (cmd.sparsity == 1) {
     sparse[0] = in0[n - 1];
     for (int i = 0; i < kVector / 32; ++i) {
@@ -1009,18 +1005,18 @@ static void VDwconv(valu_t& op) {
 static void VAlu(valu_t& op) {
   // clang-format off
   switch (op.op) {
-    case vslidevn: VSlidevn(op); return;
-    case vslidevp: VSlidevp(op); return;
-    case vslidehn: VSlidevn(op); return;
-    case vslidehp: VSlidevp(op); return;
-    case vslidehn2: VSlidehn2(op); return;
-    case vslidehp2: VSlidehp2(op); return;
-    case vsel: VSel(op); return;
-    case vevn: VEvn(op); return;
-    case vodd: VOdd(op); return;
-    case vevnodd: VEvnOdd(op); return;
-    case vzip: VZip(op); return;
-    case vdwconv: VDwconv(op); return;
+    case encode::vslidevn: VSlidevn(op); return;
+    case encode::vslidevp: VSlidevp(op); return;
+    case encode::vslidehn: VSlidevn(op); return;
+    case encode::vslidehp: VSlidevp(op); return;
+    case encode::vslidehn2: VSlidehn2(op); return;
+    case encode::vslidehp2: VSlidehp2(op); return;
+    case encode::vsel: VSel(op); return;
+    case encode::vevn: VEvn(op); return;
+    case encode::vodd: VOdd(op); return;
+    case encode::vevnodd: VEvnOdd(op); return;
+    case encode::vzip: VZip(op); return;
+    case encode::vdwconv: VDwconv(op); return;
   }
   // clang-format on
 
@@ -1031,72 +1027,70 @@ static void VAlu(valu_t& op) {
     const uint32_t b = op.in[1].data[i];
     const uint32_t c = op.in[2].data[i];
     const uint32_t d = op.in[3].data[i];
-    const uint32_t e = op.in[4].data[i];
     const uint32_t f = op.in[5].data[i];
-    const uint32_t g = op.in[6].data[i];
     bool v = false;
     bool w = false;
     uint32_t x = 0;
     uint32_t y = 0;
 
-    const bool f2_negative =
-        ((f2 >> 0) & 1) && (op.op == vdmulh || op.op == vdmulh2);
+    const bool f2_negative = ((f2 >> 0) & 1) && (op.op == encode::vdmulh ||
+                                                 op.op == encode::vdmulh2);
     const bool f2_round = (f2 >> 1) & 1;
     const bool f2_signed =
-        !((f2 >> 0) & 1) || op.op == vdmulh || op.op == vdmulh2;
+        !((f2 >> 0) & 1) || op.op == encode::vdmulh || op.op == encode::vdmulh2;
 
     // clang-format off
     switch (op.op) {
-      case vdup:    VOPXU(dup); break;
-      case vadd:    VOP2U(add); break;
-      case vsub:    VOP2U(sub); break;
-      case vrsub:   VOP2U(rsub); break;
-      case veq:     VOP2U(cmp_eq); break;
-      case vne:     VOP2U(cmp_ne); break;
-      case vlt:     VOP2(cmp_lt); break;
-      case vle:     VOP2(cmp_le); break;
-      case vgt:     VOP2(cmp_gt); break;
-      case vge:     VOP2(cmp_ge); break;
-      case vabsd:   VOP2(absd); break;
-      case vmax:    VOP2(max); break;
-      case vmin:    VOP2(min); break;
-      case vadd3:   VOP3U(add3); break;
-      case vand:    VOP2U(log_and); break;
-      case vor:     VOP2U(log_or); break;
-      case vxor:    VOP2U(log_xor); break;
-      case vnot:    VOP1U(log_not); break;
-      case vrev:    VOP2U(log_rev); break;
-      case vror:    VOP2U(log_ror); break;
-      case vclb:    VOP1U(log_clb); break;
-      case vclz:    VOP1U(log_clz); break;
-      case vcpop:   VOP1U(log_cpop); break;
-      case vmv:     VOP1U(mv); break;
-      case vmv2:    VOP1PU(mv); break;
-      case vmvp:    VOP2M(mvp); break;
-      case vshl:    VOP2U(shl); break;
-      case vshr:    VOP2(shr); break;
-      case vshf:    VOP2_R(shf, f2_round); break;
-      case vsrans:  VOP3NS_R_U(srans, f2_round, !f2_signed); break;
-      case vsraqs:  VOP3QS_R_U(srans, f2_round, !f2_signed); break;
-      case vmul:    VOP2S(mul); break;
-      case vmul2:   VOP2PS(mul); break;
-      case vmuls:   VOP2(muls); break;
-      case vmuls2:  VOP2P(muls); break;
-      case vmulw:   WOP2(mulw); break;
-      case vmulh:   VOP2_R(mulh, f2_round); break;
-      case vmulh2:  VOP2P_R(mulh, f2_round); break;
-      case vdmulh:  VOP2_R_X(dmulh, f2_round, f2_negative); break;
-      case vdmulh2: VOP2P_R_X(dmulh, f2_round, f2_negative); break;
-      case vmadd:   VOP3(madd); break;
-      case vadds:   VOP2(adds); break;
-      case vsubs:   VOP2(subs); break;
-      case vaddw:   WOP2(addw); break;
-      case vsubw:   WOP2(subw); break;
-      case vacc:    WOPA(acc); break;
-      case vpadd:   VOPP(padd); break;
-      case vpsub:   VOPP(psub); break;
-      case vhadd:   VOP2_R(hadd, f2_round); break;
-      case vhsub:   VOP2_R(hsub, f2_round); break;
+      case encode::vdup:    VOPXU(dup); break;
+      case encode::vadd:    VOP2U(add); break;
+      case encode::vsub:    VOP2U(sub); break;
+      case encode::vrsub:   VOP2U(rsub); break;
+      case encode::veq:     VOP2U(cmp_eq); break;
+      case encode::vne:     VOP2U(cmp_ne); break;
+      case encode::vlt:     VOP2(cmp_lt); break;
+      case encode::vle:     VOP2(cmp_le); break;
+      case encode::vgt:     VOP2(cmp_gt); break;
+      case encode::vge:     VOP2(cmp_ge); break;
+      case encode::vabsd:   VOP2(absd); break;
+      case encode::vmax:    VOP2(max); break;
+      case encode::vmin:    VOP2(min); break;
+      case encode::vadd3:   VOP3U(add3); break;
+      case encode::vand:    VOP2U(log_and); break;
+      case encode::vor:     VOP2U(log_or); break;
+      case encode::vxor:    VOP2U(log_xor); break;
+      case encode::vnot:    VOP1U(log_not); break;
+      case encode::vrev:    VOP2U(log_rev); break;
+      case encode::vror:    VOP2U(log_ror); break;
+      case encode::vclb:    VOP1U(log_clb); break;
+      case encode::vclz:    VOP1U(log_clz); break;
+      case encode::vcpop:   VOP1U(log_cpop); break;
+      case encode::vmv:     VOP1U(mv); break;
+      case encode::vmv2:    VOP1PU(mv); break;
+      case encode::vmvp:    VOP2M(mvp); break;
+      case encode::vshl:    VOP2U(shl); break;
+      case encode::vshr:    VOP2(shr); break;
+      case encode::vshf:    VOP2_R(shf, f2_round); break;
+      case encode::vsrans:  VOP3NS_R_U(srans, f2_round, !f2_signed); break;
+      case encode::vsraqs:  VOP3QS_R_U(srans, f2_round, !f2_signed); break;
+      case encode::vmul:    VOP2S(mul); break;
+      case encode::vmul2:   VOP2PS(mul); break;
+      case encode::vmuls:   VOP2(muls); break;
+      case encode::vmuls2:  VOP2P(muls); break;
+      case encode::vmulw:   WOP2(mulw); break;
+      case encode::vmulh:   VOP2_R(mulh, f2_round); break;
+      case encode::vmulh2:  VOP2P_R(mulh, f2_round); break;
+      case encode::vdmulh:  VOP2_R_X(dmulh, f2_round, f2_negative); break;
+      case encode::vdmulh2: VOP2P_R_X(dmulh, f2_round, f2_negative); break;
+      case encode::vmadd:   VOP3(madd); break;
+      case encode::vadds:   VOP2(adds); break;
+      case encode::vsubs:   VOP2(subs); break;
+      case encode::vaddw:   WOP2(addw); break;
+      case encode::vsubw:   WOP2(subw); break;
+      case encode::vacc:    WOPA(acc); break;
+      case encode::vpadd:   VOPP(padd); break;
+      case encode::vpsub:   VOPP(psub); break;
+      case encode::vhadd:   VOP2_R(hadd, f2_round); break;
+      case encode::vhsub:   VOP2_R(hsub, f2_round); break;
     }
     // clang-format on
 

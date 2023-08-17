@@ -1,8 +1,8 @@
 // Copyright 2023 Google LLC
 
 #include "VVAlu.h"
-#include "sysc_tb.h"
-#include "valu.h"
+#include "tests/verilator_sim/kelvin/valu.h"
+#include "tests/verilator_sim/sysc_tb.h"
 
 struct VAlu_tb : Sysc_tb {
   sc_in<bool> io_in_ready;
@@ -431,7 +431,7 @@ struct VAlu_tb : Sysc_tb {
     bool valid = rand_int(0, 3);
     inputs_t in;
 
-    in.op = rand_int(0, kOpEntries - 1);
+    in.op = rand_int(0, encode::kOpEntries - 1);
     in.f2 = rand_int(0, 7);
     in.sz = 1u << rand_int(0, 2);
     in.m = rand_int(0, 7) == 0;
@@ -440,14 +440,15 @@ struct VAlu_tb : Sysc_tb {
     in.sv.addr = rand_uint32();
     in.sv.data = rand_uint32();
 
-    if (in.op == vevn || in.op == vevnodd || in.op == vodd) {
+    if (in.op == encode::vevn || in.op == encode::vevnodd ||
+        in.op == encode::vodd) {
       // Disallow even/odd in CRT.
-      in.op = vadd;
+      in.op = encode::vadd;
     }
 
-    if (in.op == vdwconv) {
+    if (in.op == encode::vdwconv) {
       // Disallow DW in CRT.
-      in.op = vadd;
+      in.op = encode::vadd;
     }
 
     // Assign random values to inactive read addr/tag.
@@ -464,69 +465,69 @@ struct VAlu_tb : Sysc_tb {
     }
 
     switch (in.op) {
-      case vabsd:
-      case vadd:
-      case vadds:
-      case vhadd:
-      case vhsub:
-      case vmax:
-      case vmin:
-      case vrsub:
-      case vsub:
-      case vsubs:
-      case veq:
-      case vne:
-      case vlt:
-      case vle:
-      case vgt:
-      case vge:
-      case vand:
-      case vclb:
-      case vclz:
-      case vcpop:
-      case vevn:
-      case vor:
-      case vrev:
-      case vror:
-      case vxor:
-      case vdmulh:
-      case vmul:
-      case vmulh:
-      case vmuls:
-      case vshl:
-      case vshr:
-      case vshf:
+      case encode::vabsd:
+      case encode::vadd:
+      case encode::vadds:
+      case encode::vhadd:
+      case encode::vhsub:
+      case encode::vmax:
+      case encode::vmin:
+      case encode::vrsub:
+      case encode::vsub:
+      case encode::vsubs:
+      case encode::veq:
+      case encode::vne:
+      case encode::vlt:
+      case encode::vle:
+      case encode::vgt:
+      case encode::vge:
+      case encode::vand:
+      case encode::vclb:
+      case encode::vclz:
+      case encode::vcpop:
+      case encode::vevn:
+      case encode::vor:
+      case encode::vrev:
+      case encode::vror:
+      case encode::vxor:
+      case encode::vdmulh:
+      case encode::vmul:
+      case encode::vmulh:
+      case encode::vmuls:
+      case encode::vshl:
+      case encode::vshr:
+      case encode::vshf:
         in.r[0].valid = true;
         in.r[1].valid = true;
         in.w[0].valid = true;
         break;
-      case vaddw:
-      case vevnodd:
-      case vsubw:
-      case vmulw:
-      case vmvp:
-      case vzip:
+      case encode::vaddw:
+      case encode::vevnodd:
+      case encode::vsubw:
+      case encode::vmulw:
+      case encode::vmvp:
+      case encode::vzip:
         in.r[0].valid = true;
         in.r[1].valid = true;
         in.w[0].valid = true;
         in.w[1].valid = true;
         break;
-      case vacc:
+      case encode::vacc:
         in.r[0].valid = true;
         in.r[1].valid = true;
         in.r[2].valid = true;
         in.w[0].valid = true;
         in.w[1].valid = true;
         break;
-      case vadd3:
-      case vmadd:
-      case vsrans:
+      case encode::vadd3:
+      case encode::vmadd:
+      case encode::vsrans:
         in.r[0].valid = true;
         in.r[1].valid = true;
         in.r[2].valid = true;
         in.w[0].valid = true;
         break;
-      case vsraqs:
+      case encode::vsraqs:
         in.r[0].valid = true;
         in.r[1].valid = true;
         in.r[2].valid = true;
@@ -535,22 +536,22 @@ struct VAlu_tb : Sysc_tb {
         in.w[0].valid = true;
         in.cmdsync = true;
         break;
-      case vdup:
+      case encode::vdup:
         in.r[1].valid = true;
         in.w[0].valid = true;
         break;
-      case vmv:
-      case vpadd:
-      case vpsub:
+      case encode::vmv:
+      case encode::vpadd:
+      case encode::vpsub:
         in.r[0].valid = true;
         in.w[0].valid = true;
         break;
-      case vodd:
+      case encode::vodd:
         in.r[0].valid = true;
         in.r[1].valid = true;
         in.w[1].valid = true;
         break;
-      case vdwconv:
+      case encode::vdwconv:
         in.r[0].valid = true;
         in.r[1].valid = true;
         in.r[2].valid = true;
@@ -580,7 +581,7 @@ struct VAlu_tb : Sysc_tb {
     }
 
     // Assign inactive write addresses.
-    if (in.op == vzip) {
+    if (in.op == encode::vzip) {
       int addr = 0;
       valid = valid && FindInactiveWriteAddr2(in.m, wactive, addr);
       in.w[0].valid = valid;
@@ -637,7 +638,7 @@ struct VAlu_tb : Sysc_tb {
         for (int i = 0; i < kWritePorts; ++i) {
           if (alu.w[i].valid) {
             wactive |= 1ull << waddr[i];
-            if (in.op == vzip) {
+            if (in.op == encode::vzip) {
               waddr[i] += 2;
             } else {
               waddr[i]++;  // stripmine update
@@ -697,10 +698,10 @@ struct VAlu_tb : Sysc_tb {
   void ProcessInputs(const int idx) {
     // clang-format off
     if (!(io_in_valid && io_in_ready) ||
-        idx == 0 && !io_in_bits_0_valid ||
-        idx == 1 && !io_in_bits_1_valid ||
-        idx == 2 && !io_in_bits_2_valid ||
-        idx == 3 && !io_in_bits_3_valid) {
+        (idx == 0 && !io_in_bits_0_valid) ||
+        (idx == 1 && !io_in_bits_1_valid) ||
+        (idx == 2 && !io_in_bits_2_valid) ||
+        (idx == 3 && !io_in_bits_3_valid)) {
       cmdq_[idx].clear();
       return;
     }
@@ -741,10 +742,10 @@ struct VAlu_tb : Sysc_tb {
 
   void ProcessOutputs(const int idx) {
     // clang-format off
-    if (idx == 0 && !io_write_0_valid ||
-        idx == 1 && !io_write_1_valid ||
-        idx == 2 && !io_write_2_valid ||
-        idx == 3 && !io_write_3_valid) {
+    if ((idx == 0 && !io_write_0_valid) ||
+        (idx == 1 && !io_write_1_valid) ||
+        (idx == 2 && !io_write_2_valid) ||
+        (idx == 3 && !io_write_3_valid)) {
       return;
     }
     // clang-format on
@@ -771,8 +772,8 @@ struct VAlu_tb : Sysc_tb {
 
     if (memcmp(dut, ref, kLanes * 4)) {
       char s[100];
-      sprintf(s, "valu op=%d f2=%d sz=%d", write_[addr].op, write_[addr].f2,
-              write_[addr].sz);
+      snprintf(s, sizeof(s), "valu op=%d f2=%d sz=%d", write_[addr].op,
+               write_[addr].f2, write_[addr].sz);
       printf("ref[%2d]  ", addr);
       for (int i = 0; i < kLanes; ++i) {
         printf(" %08x", ref[i]);
