@@ -7,3 +7,8 @@ build --copt=-Wno-unused-function
 build --host_copt=-Wno-unused-variable
 build --host_copt=-Wno-unused-value
 build --host_copt=-Wno-uninitialized
+
+# This lets us generate key/value pairs for the workspace which can be used to
+# generate the version information.
+
+build --workspace_status_command=utils/get_workspace_status.sh
