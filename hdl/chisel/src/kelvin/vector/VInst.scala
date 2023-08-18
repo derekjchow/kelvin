@@ -118,7 +118,7 @@ class VInst(p: Parameters) extends Module {
   // ---------------------------------------------------------------------------
   // Vector Interface.
   val vvalid = RegInit(false.B)
-  val vinstValid = Reg(Vec(4, Bool()))
+  val vinstValid = RegInit(VecInit(Seq.fill(4)(false.B)))
   val vinstInst = Reg(Vec(4, UInt(32.W)))
   val nxtVinstValid = Wire(Vec(4, Bool()))
 
