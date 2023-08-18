@@ -20,5 +20,6 @@ bazel build //hdl/chisel:core_cc_library_emit_verilog
 Verilog source for the Matcha SoC can be generated using:
 
 ```bash
-bazel build //hdl/chisel:kelvin_cc_library_emit_verilog
+bazel clean --expunge  # To generate the ToT sha
+bazel build //hdl/chisel:matcha_kelvin_verilog
 ```

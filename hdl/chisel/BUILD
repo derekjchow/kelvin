@@ -145,3 +145,15 @@ chisel_cc_library(
     emit_class = "kelvin.EmitVSt",
     module_name = "VSt",
 )
+
+genrule(
+    name = "matcha_kelvin_verilog",
+    srcs = [":Kelvin.v"],
+    outs = ["kelvin.v"],
+    cmd = """
+    echo "// SHA: $$(awk '/KELVIN_BUILD_GIT_VERSION/ { print $$2 }' \
+      bazel-out/volatile-status.txt)" > $@
+    cat $< >> $@
+    """,
+    stamp = 1,  # this provides volatile-status.txt
+)
