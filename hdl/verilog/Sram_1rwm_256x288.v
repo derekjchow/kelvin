@@ -11,12 +11,11 @@ module Sram_1rwm_256x288(
   input          volt_sel
 );
 
+`ifdef FPGA
 reg [287:0] mem [0:255];
 reg [7:0] raddr;
 
 assign rdata = mem[raddr];
-
-`ifdef FPGA
 
 always @(posedge clock) begin
   for (int i = 0; i < 32; i++) begin
