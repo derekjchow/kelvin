@@ -1,12 +1,12 @@
 // Copyright 2023 Google LLC
 
-#include "VVAluInt.h"
-#include "sysc_tb.h"
-#include "valu.h"
+#include "VVAluInt.h"  // Generated.
+#include "tests/verilator_sim/kelvin/valu.h"
+#include "tests/verilator_sim/sysc_tb.h"
 
 struct VAluInt_tb : Sysc_tb {
   sc_out<bool> io_in_valid;
-  sc_out<sc_bv<kOpBits> > io_in_op;
+  sc_out<sc_bv<encode::kOpBits> > io_in_op;
   sc_out<sc_bv<3> > io_in_f2;
   sc_out<sc_bv<3> > io_in_sz;
   sc_out<sc_bv<6> > io_in_vd_addr;
@@ -41,15 +41,15 @@ struct VAluInt_tb : Sysc_tb {
     const uint8_t ve_addr = rand_int(0, 63);
     uint32_t sv_data = 0;
 
-    uint8_t op = rand_int(0, kOpEntries - 1);
+    uint8_t op = rand_int(0, encode::kOpEntries - 1);
 
     // Inputs.
     valu_t r = {0};
     r_.read(r);
 
-    if (op == vdwconv) {
+    if (op == encode::vdwconv) {
       // Disallow DW in CRT.
-      op = 0;  // TODO
+      op = 0;
     }
 
     io_in_valid = valid;
@@ -142,7 +142,7 @@ struct VAluInt_tb : Sysc_tb {
 
 static void VAluInt_test(char* name, int loops, bool trace) {
   sc_signal<bool> io_in_valid;
-  sc_signal<sc_bv<kOpBits> > io_in_op;
+  sc_signal<sc_bv<encode::kOpBits> > io_in_op;
   sc_signal<sc_bv<3> > io_in_f2;
   sc_signal<sc_bv<3> > io_in_sz;
   sc_signal<sc_bv<6> > io_in_vd_addr;

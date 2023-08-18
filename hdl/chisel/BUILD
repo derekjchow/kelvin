@@ -77,6 +77,13 @@ chisel_cc_library(
 )
 
 chisel_cc_library(
+    name = "valuint_cc_library",
+    chisel_lib = ":kelvin",
+    emit_class = "kelvin.EmitVAluInt",
+    module_name = "VAluInt",
+)
+
+chisel_cc_library(
     name = "vcmdq_cc_library",
     chisel_lib = ":kelvin",
     emit_class = "kelvin.EmitVCmdq",

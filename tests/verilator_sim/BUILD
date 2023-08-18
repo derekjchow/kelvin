@@ -88,19 +88,41 @@ cc_test(
     ],
 )
 
+cc_library(
+    name = "valu",
+    hdrs = [
+        "kelvin/alu_ref.h",
+        "kelvin/valu.h",
+    ],
+    deps = [
+        ":vencodeop",
+    ],
+)
+
 cc_test(
     name = "valu_tb",
     size = "large",
     srcs = [
-        "kelvin/alu_ref.h",
-        "kelvin/valu.h",
         "kelvin/valu_tb.cc",
     ],
     deps = [
         ":kelvin_if",
         ":sim_libs",
-        ":vencodeop",
+        ":valu",
         "//hdl/chisel:valu_cc_library",
+    ],
+)
+
+cc_test(
+    name = "valuint_tb",
+    srcs = [
+        "kelvin/valuint_tb.cc",
+    ],
+    deps = [
+        ":kelvin_if",
+        ":sim_libs",
+        ":valu",
+        "//hdl/chisel:valuint_cc_library",
     ],
 )
 
