@@ -422,9 +422,7 @@ T subs(T a, T b) {
                           std::numeric_limits<T>::max());
     return m;
   }
-  uint64_t m = static_cast<uint64_t>(a) - static_cast<uint64_t>(b);
-  m = std::min<uint64_t>(m, std::numeric_limits<T>::max());
-  return m;
+  return a < b ? 0 : a - b;
 }
 
 template <typename T>

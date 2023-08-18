@@ -971,7 +971,7 @@ class VAluIntLane extends Module {
       val satsubsel =
         Cat( signed && satsubmsb === 2.U,  // vsub.s -ve
              signed && satsubmsb === 1.U,  // vsub.s +ve
-            !signed && satsubmsb(1))       // vsub.su +ve
+            !signed && satsubmsb(1))       // vsub.su 0
       assert(PopCount(satsubsel) <= 1.U)
 
       val rsubtr = rsub_b(m,l) - rsub_a(m,l)
@@ -1330,7 +1330,7 @@ class VAluIntLane extends Module {
 
       val sub = MuxOR(satsubsel(2) && io.op.sub.subs, Cat(1.U(1.W), 0.U((size - 1).W))) |
                 MuxOR(satsubsel(1) && io.op.sub.subs, ~0.U((size - 1).W)) |
-                MuxOR(satsubsel(0) && io.op.sub.subs, ~0.U(size.W)) |
+                MuxOR(satsubsel(0) && io.op.sub.subs, 0.U(size.W)) |
                 MuxOR(satsubsel === 0.U && io.op.sub.subs || io.op.sub.sub, subtr(size - 1, 0)) |
                 MuxOR(io.op.sub.hsub, subtr(size, 1))
 
