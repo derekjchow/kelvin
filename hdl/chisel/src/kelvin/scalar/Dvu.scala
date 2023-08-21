@@ -75,7 +75,7 @@ class Dvu(p: Parameters) extends Module {
   val signed2r = Reg(Bool())
   val divide2  = Reg(Bool())
 
-  val count = Reg(UInt(6.W))
+  val count  = RegInit(0.U(6.W))
 
   val divide = Reg(UInt(32.W))
   val remain = Reg(UInt(32.W))
