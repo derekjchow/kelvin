@@ -77,7 +77,6 @@ cc_test(
 
 cc_test(
     name = "l1icache_tb",
-    size = "small",
     srcs = [
         "kelvin/l1icache_tb.cc",
     ],
@@ -115,6 +114,7 @@ cc_test(
 
 cc_test(
     name = "valuint_tb",
+    size="large",
     srcs = [
         "kelvin/valuint_tb.cc",
     ],
@@ -153,7 +153,6 @@ cc_library(
 
 cc_test(
     name = "vcmdq_tb",
-    size = "small",
     srcs = [
         "kelvin/vcmdq_tb.cc",
     ],
@@ -167,7 +166,6 @@ cc_test(
 
 cc_test(
     name = "vconvalu_tb",
-    size = "small",
     srcs = [
         "kelvin/vconvalu_tb.cc",
     ],
@@ -208,7 +206,6 @@ cc_test(
 
 cc_test(
     name = "vdecode_tb",
-    size = "small",
     srcs = [
         "kelvin/vdecode_tb.cc",
     ],
@@ -222,7 +219,6 @@ cc_test(
 
 cc_test(
     name = "vldst_tb",
-    size = "small",
     srcs = [
         "kelvin/vldst_tb.cc",
     ],
@@ -275,7 +271,6 @@ cc_test(
 
 cc_test(
     name = "vst_tb",
-    size = "small",
     srcs = [
         "kelvin/vst_tb.cc",
     ],
