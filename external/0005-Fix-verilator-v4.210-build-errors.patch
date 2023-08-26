@@ -1,0 +1,57 @@
+From 1539a55b29ec39a16c474b87ed2716ede01781f4 Mon Sep 17 00:00:00 2001
+From: Cindy Liu <hcindyl@google.com>
+Date: Fri, 25 Aug 2023 23:05:15 -0700
+Subject: [PATCH] Fix verilator v4.210 build errors
+
+---
+ include/verilated.h | 6 +++---
+ src/V3Const.cpp     | 2 ++
+ 2 files changed, 5 insertions(+), 3 deletions(-)
+
+diff --git include/verilated.h include/verilated.h
+index cb375d27c..554083d43 100644
+--- include/verilated.h
++++ include/verilated.h
+@@ -2640,7 +2640,7 @@ static inline WDataOutP VL_SHIFTRS_WWW(int obits, int lbits, int rbits, WDataOut
+                                        WDataInP const lwp, WDataInP const rwp) VL_MT_SAFE {
+     EData overshift = 0;  // Huge shift 1>>32 or more
+     for (int i = 1; i < VL_WORDS_I(rbits); ++i) overshift |= rwp[i];
+-    if (VL_UNLIKELY(overshift || rwp[0] >= obits)) {
++    if (VL_UNLIKELY(overshift || rwp[0] >= static_cast<IData>(obits))) {
+         const int lmsw = VL_WORDS_I(obits) - 1;
+         const EData sign = VL_SIGNONES_E(lbits, lwp[lmsw]);
+         for (int j = 0; j <= lmsw; ++j) owp[j] = sign;
+@@ -2659,7 +2659,7 @@ static inline IData VL_SHIFTRS_IIW(int obits, int lbits, int rbits, IData lhs,
+                                    WDataInP const rwp) VL_MT_SAFE {
+     EData overshift = 0;  // Huge shift 1>>32 or more
+     for (int i = 1; i < VL_WORDS_I(rbits); ++i) overshift |= rwp[i];
+-    if (VL_UNLIKELY(overshift || rwp[0] >= obits)) {
++    if (VL_UNLIKELY(overshift || rwp[0] >= static_cast<IData>(obits))) {
+         const IData sign = -(lhs >> (lbits - 1));  // ffff_ffff if negative
+         return VL_CLEAN_II(obits, obits, sign);
+     }
+@@ -2669,7 +2669,7 @@ static inline QData VL_SHIFTRS_QQW(int obits, int lbits, int rbits, QData lhs,
+                                    WDataInP const rwp) VL_MT_SAFE {
+     EData overshift = 0;  // Huge shift 1>>32 or more
+     for (int i = 1; i < VL_WORDS_I(rbits); ++i) overshift |= rwp[i];
+-    if (VL_UNLIKELY(overshift || rwp[0] >= obits)) {
++    if (VL_UNLIKELY(overshift || rwp[0] >= static_cast<IData>(obits))) {
+         const QData sign = -(lhs >> (lbits - 1));  // ffff_ffff if negative
+         return VL_CLEAN_QQ(obits, obits, sign);
+     }
+diff --git src/V3Const.cpp src/V3Const.cpp
+index 49dc1a377..9f316d290 100644
+--- src/V3Const.cpp
++++ src/V3Const.cpp
+@@ -20,6 +20,8 @@
+ //          If operands are constant, replace this node with constant.
+ //*************************************************************************
+ 
++#include <memory>
++
+ #include "config_build.h"
+ #include "verilatedos.h"
+ 
+-- 
+2.42.0.rc2.253.gd59a3bf2b4-goog
+

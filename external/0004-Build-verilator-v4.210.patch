@@ -1,0 +1,94 @@
+From b5db9a82ba3557a08c9d4ff27aaa068fc6acb5c4 Mon Sep 17 00:00:00 2001
+From: Cindy Liu <hcindyl@google.com>
+Date: Fri, 25 Aug 2023 23:41:55 -0700
+Subject: [PATCH] Build verilator v4.210
+
+---
+ dependency_support/verilator/verilator.BUILD | 9 ++-------
+ dependency_support/verilator/verilator.bzl   | 5 +++--
+ 2 files changed, 5 insertions(+), 9 deletions(-)
+
+diff --git dependency_support/verilator/verilator.BUILD dependency_support/verilator/verilator.BUILD
+index 00fd758..596fd90 100644
+--- dependency_support/verilator/verilator.BUILD
++++ dependency_support/verilator/verilator.BUILD
+@@ -49,7 +49,6 @@ genrule(
+         "V3Ast__gen_report.txt",
+         "V3Ast__gen_types.h",
+         "V3Ast__gen_visitor.h",
+-        "V3Ast__gen_yystype.h",
+         "V3AstNodes__gen_macros.h",
+     ],
+     cmd = """
+@@ -59,7 +58,6 @@ genrule(
+     cp V3Ast__gen_report.txt $(@D)
+     cp V3Ast__gen_types.h $(@D)
+     cp V3Ast__gen_visitor.h $(@D)
+-    cp V3Ast__gen_yystype.h $(@D)
+     cp V3AstNodes__gen_macros.h $(@D)
+     """,
+ )
+@@ -150,12 +148,11 @@ cc_library(
+             "src/V3Const.cpp",
+         ],
+     ) + [
++        ":V3AstNodes__gen_macros.h",
+         ":V3Ast__gen_classes.h",
+         ":V3Ast__gen_impl.h",
+         ":V3Ast__gen_types.h",
+         ":V3Ast__gen_visitor.h",
+-        ":V3AstNodes__gen_macros.h",
+-        ":V3Ast__gen_yystype.h",
+         ":V3Const__gen.cpp",
+         ":V3ParseBison.h",
+     ],
+@@ -214,12 +211,9 @@ cc_library(
+         "include/verilated_trace.h",
+         "include/verilated_trace_defs.h",
+         # Needed for verilated_vcd_c.cpp and verilated_fst_c.cpp
+-        "include/verilated_trace_imp.h",
+         "include/verilated_vcd_c.h",
+         "include/verilated_vcd_sc.h",
+         "include/verilatedos.h",
+-        "include/verilated_types.h",
+-        "include/verilated_funcs.h",
+     ],
+     # TODO: Remove these once upstream fixes these warnings
+     copts = ["-Wno-unused-const-variable"],
+@@ -233,6 +227,7 @@ cc_library(
+         "include/gtkwave/fastlz.c",
+         "include/gtkwave/fstapi.c",
+         "include/gtkwave/lz4.c",
++        "include/verilated_trace_imp.cpp",
+     ],
+     visibility = ["//visibility:public"],
+     deps = [
+diff --git dependency_support/verilator/verilator.bzl dependency_support/verilator/verilator.bzl
+index 76893b7..8f98905 100644
+--- dependency_support/verilator/verilator.bzl
++++ dependency_support/verilator/verilator.bzl
+@@ -23,6 +23,7 @@ def _verilator_repository_impl(ctx):
+         stripPrefix = "verilator-{}".format(ctx.attr.version),
+     )
+ 
++    ctx.patch(Label("@kelvin_hw//external:0005-Fix-verilator-v4.210-build-errors.patch"))
+     ctx.file("WORKSPACE", "workspace(name = {name})\n".format(name = repr(ctx.name)))
+     ctx.symlink(ctx.attr._buildfile, "BUILD")
+ 
+@@ -56,11 +57,11 @@ verilator_repository = repository_rule(
+         ),
+         "version": attr.string(
+             doc = "The version of verilator to use.",
+-            default = "4.224",
++            default = "4.210",
+         ),
+         "sha256": attr.string(
+             doc = "The sha256 hash for this version of verilator",
+-            default = "010ff2b5c76d4dbc2ed4a3278a5599ba35c8ed4c05690e57296d6b281591367b",
++            default = "3a2e6f27a5d80116a268ba054a3be61aca924bc54c5556ea25e75ee974201abb",
+         ),
+     },
+ )
+-- 
+2.42.0.rc2.253.gd59a3bf2b4-goog
+
