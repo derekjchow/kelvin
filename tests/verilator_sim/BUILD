@@ -35,6 +35,9 @@ cc_binary(
         ":kelvin_if",
         ":sim_libs",
         "//hdl/chisel:core_cc_library",
+        "@com_google_absl//absl/flags:flag",
+        "@com_google_absl//absl/flags:parse",
+        "@com_google_absl//absl/flags:usage",
     ],
 )
 
@@ -114,7 +117,7 @@ cc_test(
 
 cc_test(
     name = "valuint_tb",
-    size="large",
+    size = "large",
     srcs = [
         "kelvin/valuint_tb.cc",
     ],

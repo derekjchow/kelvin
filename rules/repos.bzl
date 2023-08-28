@@ -44,3 +44,10 @@ def kelvin_repos():
         strip_prefix = "rules_foreign_cc-0.9.0",
         url = "https://github.com/bazelbuild/rules_foreign_cc/archive/refs/tags/0.9.0.tar.gz",
     )
+
+    http_archive(
+        name = "com_google_absl",
+        sha256 = "3ea49a7d97421b88a8c48a0de16c16048e17725c7ec0f1d3ea2683a2a75adc21",
+        strip_prefix = "abseil-cpp-20230125.0",
+        urls = ["https://github.com/abseil/abseil-cpp/archive/refs/tags/20230125.0.tar.gz"],
+    )

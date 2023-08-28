@@ -1,13 +1,16 @@
 // Copyright 2023 Google LLC
 
-#include "tests/verilator_sim/sysc_tb.h"
-
-#include "VCore.h"
-
+#include "VCore.h"  // Generated
+#include "absl/flags/flag.h"
+#include "absl/flags/parse.h"
+#include "absl/flags/usage.h"
 #include "tests/verilator_sim/kelvin/core_if.h"
 #include "tests/verilator_sim/kelvin/debug_if.h"
 #include "tests/verilator_sim/kelvin/kelvin_cfg.h"
+#include "tests/verilator_sim/sysc_tb.h"
 
+ABSL_FLAG(int, cycles, 100000000, "Simulation cycles");
+ABSL_FLAG(bool, trace, false, "Dump VCD trace");
 
 struct Core_tb : Sysc_tb {
   sc_in<bool> io_halted;
@@ -21,9 +24,10 @@ struct Core_tb : Sysc_tb {
   }
 };
 
-static void Core_run(const char* name, const char* bin, const bool trace) {
+static void Core_run(const char* name, const char* bin, const int cycles,
+                     const bool trace) {
   VCore core(name);
-  Core_tb tb("Core_tb", 100000000, /* random= */ false);
+  Core_tb tb("Core_tb", cycles, /* random= */ false);
   Core_if mif("Core_if", bin);
   Debug_if dbg("Debug_if", &mif);
 
@@ -209,7 +213,9 @@ static void Core_run(const char* name, const char* bin, const bool trace) {
   dbg.io_slog_addr(io_slog_addr);
   dbg.io_slog_data(io_slog_data);
 
-#define BINDAXI(a) core.a(a); mif.a(a)
+#define BINDAXI(a) \
+  core.a(a);       \
+  mif.a(a)
   BINDAXI(io_axi0_write_addr_ready);
   BINDAXI(io_axi0_write_addr_valid);
   BINDAXI(io_axi0_write_addr_bits_addr);
@@ -261,12 +267,17 @@ static void Core_run(const char* name, const char* bin, const bool trace) {
 }
 
 int sc_main(int argc, char *argv[]) {
-  if (argc <= 1) {
-    printf("Expected binary file argument\n");
-    return -1;
+  absl::SetProgramUsageMessage("Kelvin SystemC simulation tool");
+  auto out_args = absl::ParseCommandLine(argc, argv);
+  argc = out_args.size();
+  argv = &out_args[0];
+  if (argc != 2) {
+    fprintf(stderr, "Need one binary input file\n");
+    return 1;
   }
-
   const char* path = argv[1];
-  Core_run(Sysc_tb::get_name(argv[0]), path, false);
+
+  Core_run(Sysc_tb::get_name(argv[0]), path, absl::GetFlag(FLAGS_cycles),
+           absl::GetFlag(FLAGS_trace));
   return 0;
 }

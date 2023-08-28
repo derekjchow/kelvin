@@ -16,7 +16,7 @@ using namespace sc_core;      // NOLINT(build/namespaces)
 
 using sc_dt::sc_bv;
 
-const char *vcd_path_ = "/tmp/kelvin/vcd";
+const char *vcd_path_ = "/tmp";
 
 #define BIND(a, b) a.b(b)
 #define BIND2(a, b, c) \
