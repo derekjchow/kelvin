@@ -68,6 +68,7 @@ cc_test(
 
 cc_test(
     name = "l1dcache_tb",
+    size = "large",
     srcs = [
         "kelvin/l1dcache_tb.cc",
     ],

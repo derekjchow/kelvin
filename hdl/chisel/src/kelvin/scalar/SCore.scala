@@ -197,10 +197,6 @@ class SCore(p: Parameters) extends Module {
   mlu.io.rs2(2) := regfile.io.readData(5)
   mlu.io.rs2(3) := regfile.io.readData(7)
 
-  // On taken branches, multicycle MLU execute must be masked
-  val mluInvalidate = RegInit(false.B)
-  mluInvalidate := branchTaken
-
   // ---------------------------------------------------------------------------
   // Divide Unit
   dvu.io.req <> decode(0).io.dvu
@@ -265,7 +261,6 @@ class SCore(p: Parameters) extends Module {
                                      bru(1).io.taken.valid
   regfile.io.writeMask(3).valid := regfile.io.writeMask(2).valid ||
                                      bru(2).io.taken.valid
-  regfile.io.writeMask(4).valid := mluInvalidate
 
   // ---------------------------------------------------------------------------
   // Vector Extension

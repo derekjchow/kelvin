@@ -148,7 +148,7 @@ class Decode(p: Parameters, pipeline: Int) extends Module {
                     io.scoreboard.comb(rs2Addr) && (isStore || vldst))
 
   // Interlock mul, only one lane accepted.
-  val mulEn = !isMul || !io.serializeIn.mul
+  val mulEn = (!isMul || !io.serializeIn.mul) && !io.serializeIn.brcond
 
 
   // Vector extension interlock.
@@ -350,7 +350,6 @@ class Decode(p: Parameters, pipeline: Int) extends Module {
                                              io.inst.inst(11,7) === 0.U)
 
   // SB,SH,SW   0100011
-  // FSW        0100111 //TODO(hoangm)
   val storeSelect = io.inst.inst(6,3) === 4.U && io.inst.inst(1,0) === 3.U
   io.busRead.immen := !d.io.flushat
   io.busRead.immed := Cat(d.io.imm12(31,5),

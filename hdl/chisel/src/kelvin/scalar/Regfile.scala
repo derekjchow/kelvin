@@ -72,7 +72,7 @@ class Regfile(p: Parameters) extends Module {
     // Execute cycle.
     val readData = Vec(8, new RegfileReadDataIO)
     val writeData = Vec(6, new RegfileWriteDataIO)
-    val writeMask = Vec(5, new Bundle {val valid = Input(Bool())})
+    val writeMask = Vec(4, new Bundle {val valid = Input(Bool())})
     val scoreboard = new Bundle {
       val regd = Output(UInt(32.W))
       val comb = Output(UInt(32.W))
@@ -141,8 +141,7 @@ class Regfile(p: Parameters) extends Module {
 
   for (i <- 1 until 32) {
     val valid = Cat(io.writeData(5).valid && io.writeData(5).addr === i.U,
-                    io.writeData(4).valid && io.writeData(4).addr === i.U &&
-                      !io.writeMask(4).valid,
+                    io.writeData(4).valid && io.writeData(4).addr === i.U,
                     io.writeData(3).valid && io.writeData(3).addr === i.U &&
                       !io.writeMask(3).valid,
                     io.writeData(2).valid && io.writeData(2).addr === i.U &&
