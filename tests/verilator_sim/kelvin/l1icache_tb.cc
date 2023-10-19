@@ -6,8 +6,7 @@
 
 #include "tests/verilator_sim/kelvin/kelvin_cfg.h"
 
-struct L1ICache_tb : Sysc_tb
-{
+struct L1ICache_tb : Sysc_tb {
   sc_out<bool> io_flush_valid;
   sc_in<bool> io_flush_ready;
   sc_out<bool> io_ibus_valid;
@@ -100,7 +99,7 @@ struct L1ICache_tb : Sysc_tb
     }
   }
 
-private:
+ private:
   struct command_t {
     uint32_t addr;
   };

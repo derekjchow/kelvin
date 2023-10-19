@@ -175,93 +175,94 @@ struct DBus2Axi_tb : Sysc_tb {
 
 
  private:
-   struct axi_read_addr_t {
-     uint32_t addr;
-     uint32_t id : 7;
+  struct axi_read_addr_t {
+    uint32_t addr;
+    uint32_t id : 7;
 
-     bool operator!=(const axi_read_addr_t& rhs) const {
-       if (addr != rhs.addr) return true;
-       if (id != rhs.id) return true;
-       return false;
-     }
+    bool operator!=(const axi_read_addr_t& rhs) const {
+      if (addr != rhs.addr) return true;
+      if (id != rhs.id) return true;
+      return false;
+    }
 
-     void print(const char* name) {
-       printf("[%s]: id=%x addr=%08x\n", name, id, addr);
-     }
-   };
+    void print(const char* name) {
+      printf("[%s]: id=%x addr=%08x\n", name, id, addr);
+    }
+  };
 
-   struct axi_read_data_t {
-     uint32_t id : 7;
-     uint32_t resp : 7;
-     sc_bv<256> data;
+  struct axi_read_data_t {
+    uint32_t id : 7;
+    uint32_t resp : 7;
+    sc_bv<256> data;
 
-     bool operator!=(const axi_read_data_t& rhs) const {
-       if (id != rhs.id) return true;
-       if (data != rhs.data) return true;
-       return false;
-     }
+    bool operator!=(const axi_read_data_t& rhs) const {
+      if (id != rhs.id) return true;
+      if (data != rhs.data) return true;
+      return false;
+    }
 
-     void print(const char* name) {
-       printf("[%s]: id=%x data=", name, id);
-       for (int i = 0; i < 256 / 32; ++i) {
-         printf("%08x ", data.get_word(i));
-       }
-       printf("\n");
-     }
-   };
+    void print(const char* name) {
+      printf("[%s]: id=%x data=", name, id);
+      for (int i = 0; i < 256 / 32; ++i) {
+        printf("%08x ", data.get_word(i));
+      }
+      printf("\n");
+    }
+  };
 
-   struct axi_write_addr_t {
-     uint32_t addr;
-     uint32_t id : 7;
-     sc_bv<256> data;
-     sc_bv<32> strb;
+  struct axi_write_addr_t {
+    uint32_t addr;
+    uint32_t id : 7;
+    sc_bv<256> data;
+    sc_bv<32> strb;
 
-     bool operator!=(const axi_write_addr_t& rhs) const {
-       if (addr != rhs.addr) return true;
-       if (id != rhs.id) return true;
-       if (strb != rhs.strb) return true;
-       if (data != rhs.data) return true;
-       return false;
-     }
+    bool operator!=(const axi_write_addr_t& rhs) const {
+      if (addr != rhs.addr) return true;
+      if (id != rhs.id) return true;
+      if (strb != rhs.strb) return true;
+      if (data != rhs.data) return true;
+      return false;
+    }
 
-     void print(const char* name) {
-       printf("[%s]: id=%x addr=%08x strb=%08x data=", name, id, addr, strb.get_word(0));
-       for (int i = 0; i < 256 / 32; ++i) {
-         printf("%08x ", data.get_word(0));
-       }
-       printf("\n");
-     }
-   };
+    void print(const char* name) {
+      printf("[%s]: id=%x addr=%08x strb=%08x data=", name, id, addr,
+             strb.get_word(0));
+      for (int i = 0; i < 256 / 32; ++i) {
+        printf("%08x ", data.get_word(0));
+      }
+      printf("\n");
+    }
+  };
 
-   struct axi_write_resp_t {
-     uint32_t id : 7;
-     uint32_t resp : 2;
-   };
+  struct axi_write_resp_t {
+    uint32_t id : 7;
+    uint32_t resp : 2;
+  };
 
-   struct dbus_read_data_t {
-     sc_bv<256> data;
+  struct dbus_read_data_t {
+    sc_bv<256> data;
 
-     bool operator!=(const dbus_read_data_t& rhs) const {
-       if (data != rhs.data) return true;
-       return false;
-     }
+    bool operator!=(const dbus_read_data_t& rhs) const {
+      if (data != rhs.data) return true;
+      return false;
+    }
 
-     void print(const char* name) {
-       printf("[%s]: data=", name);
-       for (int i = 0; i < 256 / 32; ++i) {
-         printf("%08x ", data.get_word(i));
-       }
-       printf("\n");
-     }
-   };
+    void print(const char* name) {
+      printf("[%s]: data=", name);
+      for (int i = 0; i < 256 / 32; ++i) {
+        printf("%08x ", data.get_word(i));
+      }
+      printf("\n");
+    }
+  };
 
-   bool dbus_read_ready_ = false;
-   bool dbus_read_active_ = false;
-   fifo_t<axi_read_addr_t> axi_read_addr_;
-   fifo_t<axi_read_data_t> axi_read_data_;
-   fifo_t<axi_write_addr_t> axi_write_addr_;
-   fifo_t<axi_write_resp_t> axi_write_resp_;
-   fifo_t<dbus_read_data_t> dbus_read_data_;
+  bool dbus_read_ready_ = false;
+  bool dbus_read_active_ = false;
+  fifo_t<axi_read_addr_t> axi_read_addr_;
+  fifo_t<axi_read_data_t> axi_read_data_;
+  fifo_t<axi_write_addr_t> axi_write_addr_;
+  fifo_t<axi_write_resp_t> axi_write_resp_;
+  fifo_t<dbus_read_data_t> dbus_read_data_;
 };
 
 static void DBus2Axi_test(char* name, int loops, bool trace) {

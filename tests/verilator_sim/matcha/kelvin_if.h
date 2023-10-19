@@ -45,7 +45,7 @@ struct Kelvin_if : Memory_if {
       sc_bv<kBusBits> rdata;
       uint32_t addr = io_bus_caddr.read().get_word(0);
       uint32_t words[kBusBits / 32];
-      Read(addr, kBusBits / 8, (uint8_t*) words);
+      Read(addr, kBusBits / 8, reinterpret_cast<uint8_t*>(words));
 
       for (int i = 0; i < kBusBits / 32; ++i) {
         rdata.set_word(i, words[i]);
@@ -78,7 +78,7 @@ struct Kelvin_if : Memory_if {
     if (io_bus_cvalid && io_bus_cready && io_bus_cwrite) {
       uint8_t wdata[kBusBits / 8];
       uint32_t addr = io_bus_caddr.read().get_word(0);
-      uint32_t* p_wdata = (uint32_t*) wdata;
+      uint32_t* p_wdata = reinterpret_cast<uint32_t*>(wdata);
 
       for (int i = 0; i < kBusBits / 32; ++i) {
         p_wdata[i] = io_bus_wdata.read().get_word(i);
@@ -92,7 +92,7 @@ struct Kelvin_if : Memory_if {
     }
   }
 
-private:
+ private:
   uint32_t cycle_ = 0;
 
   struct resp_t {

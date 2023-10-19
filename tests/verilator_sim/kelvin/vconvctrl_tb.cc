@@ -317,7 +317,8 @@ struct VConvCtrl_tb : Sysc_tb {
           "addr1=%d addr2=%d index=%d asign=%d bsign=%d "
           "abias=%d "
           "bbias=%d\n",
-          name, conv, tran, wclr, addr1, addr2, index, asign, bsign, abias, bbias);
+          name, conv, tran, wclr, addr1, addr2, index, asign, bsign, abias,
+          bbias);
     }
   };
 

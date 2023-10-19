@@ -2,6 +2,8 @@
 #ifndef TESTS_VERILATOR_SIM_FIFO_H_
 #define TESTS_VERILATOR_SIM_FIFO_H_
 
+#include <vector>
+
 // A SystemC CRT transaction queue.
 
 template <typename T>

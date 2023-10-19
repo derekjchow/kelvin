@@ -1,13 +1,20 @@
 load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
-load("@io_bazel_rules_scala//scala:scala_maven_import_external.bzl",
-     "scala_maven_import_external")
-load("@io_bazel_rules_scala//scala:scala_cross_version.bzl",
-     "default_maven_server_urls")
-load("@rules_foreign_cc//foreign_cc:repositories.bzl",
-     "rules_foreign_cc_dependencies")
-load("@rules_hdl//dependency_support:dependency_support.bzl",
-     rules_hdl_dependency_support = "dependency_support")
-
+load(
+    "@io_bazel_rules_scala//scala:scala_maven_import_external.bzl",
+    "scala_maven_import_external",
+)
+load(
+    "@io_bazel_rules_scala//scala:scala_cross_version.bzl",
+    "default_maven_server_urls",
+)
+load(
+    "@rules_foreign_cc//foreign_cc:repositories.bzl",
+    "rules_foreign_cc_dependencies",
+)
+load(
+    "@rules_hdl//dependency_support:dependency_support.bzl",
+    rules_hdl_dependency_support = "dependency_support",
+)
 
 def kelvin_deps():
     rules_foreign_cc_dependencies()

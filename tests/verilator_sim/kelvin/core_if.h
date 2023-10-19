@@ -146,7 +146,7 @@ struct Core_if : Memory_if {
         sc_bv<256> rdata;
         uint32_t addr = io_ibus_addr.read().get_word(0);
         uint32_t words[256 / 32];
-        Read(addr, 256 / 8, (uint8_t*) words);
+        Read(addr, 256 / 8, reinterpret_cast<uint8_t*>(words));
 
         for (int i = 0; i < 256 / 32; ++i) {
           rdata.set_word(i, words[i]);
@@ -162,8 +162,8 @@ struct Core_if : Memory_if {
         uint32_t words[kVector / 32] = {0};
         memset(words, 0xcc, sizeof(words));
         int bytes = io_dbus_size.read().get_word(0);
-        Read(addr, bytes, (uint8_t*) words);
-        ReadSwizzle(addr, kVector / 8, (uint8_t*) words);
+        Read(addr, bytes, reinterpret_cast<uint8_t*>(words));
+        ReadSwizzle(addr, kVector / 8, reinterpret_cast<uint8_t*>(words));
         for (int i = 0; i < kVector / 32; ++i) {
           rdata.set_word(i, words[i]);
         }
@@ -179,8 +179,8 @@ struct Core_if : Memory_if {
         for (int i = 0; i < kVector / 32; ++i) {
           words[i] = wdata.get_word(i);
         }
-        WriteSwizzle(addr, kVector / 8, (uint8_t*) words);
-        Write(addr, bytes, (uint8_t*) words);
+        WriteSwizzle(addr, kVector / 8, reinterpret_cast<uint8_t*>(words));
+        Write(addr, bytes, reinterpret_cast<uint8_t*>(words));
       }
 
       rtcm_t tcm_read;
@@ -190,7 +190,7 @@ struct Core_if : Memory_if {
       if (io_axi0_read_addr_valid && io_axi0_read_addr_ready) {
         uint32_t addr = io_axi0_read_addr_bits_addr.read().get_word(0);
         uint32_t words[kUncBits / 32];
-        Read(addr, kUncBits / 8, (uint8_t*) words);
+        Read(addr, kUncBits / 8, reinterpret_cast<uint8_t*>(words));
 
         tcm_read.cycle = cycle_;
         tcm_read.id = io_axi0_read_addr_bits_id.read().get_word(0);
@@ -217,7 +217,7 @@ struct Core_if : Memory_if {
         assert(io_axi0_write_data_valid && io_axi0_write_data_valid);
         uint8_t wdata[kUncBits / 8];
         uint32_t addr = io_axi0_write_addr_bits_addr.read().get_word(0);
-        uint32_t* p_wdata = (uint32_t*) wdata;
+        uint32_t* p_wdata = reinterpret_cast<uint32_t*>(wdata);
 
         for (int i = 0; i < kUncBits / 32; ++i) {
           p_wdata[i] = io_axi0_write_data_bits_data.read().get_word(i);
@@ -239,7 +239,7 @@ struct Core_if : Memory_if {
       if (io_axi1_read_addr_valid && io_axi1_read_addr_ready) {
         uint32_t addr = io_axi1_read_addr_bits_addr.read().get_word(0);
         uint32_t words[kUncBits / 32];
-        Read(addr, kUncBits / 8, (uint8_t*) words);
+        Read(addr, kUncBits / 8, reinterpret_cast<uint8_t*>(words));
 
         tcm_read.cycle = cycle_;
         tcm_read.id = io_axi1_read_addr_bits_id.read().get_word(0);
@@ -266,7 +266,7 @@ struct Core_if : Memory_if {
         assert(io_axi1_write_data_valid && io_axi1_write_data_valid);
         uint8_t wdata[kUncBits / 8];
         uint32_t addr = io_axi1_write_addr_bits_addr.read().get_word(0);
-        uint32_t* p_wdata = (uint32_t*) wdata;
+        uint32_t* p_wdata = reinterpret_cast<uint32_t*>(wdata);
 
         for (int i = 0; i < kUncBits / 32; ++i) {
           p_wdata[i] = io_axi1_write_data_bits_data.read().get_word(i);
@@ -286,7 +286,7 @@ struct Core_if : Memory_if {
     }
   }
 
-private:
+ private:
   uint32_t cycle_ = 0;
 
   struct rtcm_t {
