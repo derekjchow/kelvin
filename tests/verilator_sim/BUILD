@@ -80,6 +80,21 @@ cc_test(
 )
 
 cc_test(
+    name = "l1dcachebank_tb",
+    srcs = [
+        "kelvin/l1dcache_tb.cc",
+    ],
+    defines = [
+        "L1DCACHEBANK",
+    ],
+    deps = [
+        ":kelvin_if",
+        ":sim_libs",
+        "//hdl/chisel:l1dcachebank_cc_library",
+    ],
+)
+
+cc_test(
     name = "l1icache_tb",
     srcs = [
         "kelvin/l1icache_tb.cc",

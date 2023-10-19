@@ -60,6 +60,16 @@ chisel_cc_library(
 )
 
 chisel_cc_library(
+    name = "l1dcachebank_cc_library",
+    chisel_lib = ":kelvin",
+    emit_class = "kelvin.EmitL1DCacheBank",
+    module_name = "L1DCacheBank",
+    verilog_deps = [
+        "//hdl/verilog:sram_1rw_256x288",
+    ],
+)
+
+chisel_cc_library(
     name = "l1icache_cc_library",
     chisel_lib = ":kelvin",
     emit_class = "kelvin.EmitL1ICache",

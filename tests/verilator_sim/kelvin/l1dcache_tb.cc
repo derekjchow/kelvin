@@ -18,6 +18,7 @@
 #include "VL1DCache.h"
 constexpr int kDBusBankAdj = 0;
 #else
+#include "VL1DCacheBank.h"
 constexpr int kDBusBankAdj = 1;
 #endif
 
@@ -135,11 +136,13 @@ struct L1DCache_tb : Sysc_tb {
         p_wdata[i] = io_dbus_wdata.read().get_word(i);
       }
       const uint32_t linemask = kVLenB - 1;
+#ifdef L1DCACHEBANK
+      const uint32_t linebase = addr & ~linemask;
+#endif
       for (int i = 0; i < size; ++i, ++addr) {
         const uint32_t lineoffset = addr & linemask;
         if (io_dbus_wmask.read().get_bit(lineoffset)) {
 #ifdef L1DCACHEBANK
-          const uint32_t linebase = addr & ~linemask;
           WriteBus(linebase + lineoffset, wdata[lineoffset]);
 #else
           WriteBus(addr, wdata[lineoffset]);
@@ -375,10 +378,12 @@ struct L1DCache_tb : Sysc_tb {
     const uint32_t laddr = addr & kLineBase;
     const uint32_t loffset = addr & kLineOffset;
     const uint32_t doffset = addr & (outsz - 1);
+#ifndef L1DCACHEBANK
     uint32_t start = addr;
     uint32_t end = std::min(addr + size, laddr + kLineSize);
     int size0 = end - start;
     int size1 = size - size0;
+#endif
 
     memset(data, 0xCC, outsz);
 #ifdef L1DCACHEBANK
