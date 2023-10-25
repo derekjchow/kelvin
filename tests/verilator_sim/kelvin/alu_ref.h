@@ -357,7 +357,8 @@ T1 srans(T2 a, T1 b, bool r, bool u) {
   constexpr int n = sizeof(T2) * 8;
   constexpr int m = sizeof(T1) * 8;
   b &= (n - 1);
-  int64_t s = (static_cast<int64_t>(a) + (b && r ? (1ll << (b - 1)) : 0)) >> b;
+  int64_t pad_a = u ? (int64_t(a) & ((1ll << n) - 1)) : int64_t(a);
+  int64_t s = (pad_a + (b && r ? (1ll << (b - 1)) : 0)) >> b;
   int64_t neg_max = !u ? -1ll << (m - 1) : 0;
   int64_t pos_max = !u ? (1ll << (m - 1)) - 1 : (1ull << m) - 1;
   bool neg_sat = s < neg_max;

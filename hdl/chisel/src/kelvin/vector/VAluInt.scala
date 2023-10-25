@@ -1083,28 +1083,29 @@ class VAluIntLane extends Module {
 
         val shamt = b(log2Ceil(s * size) - 1, 0)
         val srl = a >> shamt
-        val srs = MuxOR(a(s * size - 1), ((~0.U((s * size).W)) << ((s * size - 1).U - shamt))(s * size - 1, 0))
+        // Signed MSB padding for negative input a. Otherwise it should always
+        // pad with zeros.
+        val srs = MuxOR(a(s * size - 1) && signed,
+                        ((~0.U((s * size).W)) << ((s * size - 1).U - shamt))(s * size - 1, 0))
         val sra = srs | srl
         assert(srl.getWidth == (s * size))
         assert(srs.getWidth == (s * size))
         val rbit = Cat(a(s * size - 2, 0), 0.U(1.W))(shamt)
         assert(rbit.getWidth == 1)
 
-        val umax = ((1 << size) - 1).S((s * size).W)
-        val umin = 0.S((s * size).W)
+        val umax = ((1 << size) - 1).U((s * size).W)
         val smax = ((1 << (size - 1)) - 1).S((s * size).W)
         val smin = -(1 << (size - 1)).S((s * size).W)
         val rshf = Mux(round && rbit, sra + 1.U, sra)
 
-        val is_umax = !signed && (rshf.asSInt > umax)
-        val is_umin = !signed && (rshf.asSInt < umin)
+        val is_umax = !signed && (rshf.asUInt > umax)
+        // No unsigned negative capping because it's always >=0.
         val is_smax =  signed && (rshf.asSInt > smax)
         val is_smin =  signed && (rshf.asSInt < smin)
-        val is_norm = !(is_umax || is_umin || is_smax || is_smin)
-        assert(PopCount(Cat(is_umax, is_umin, is_smax, is_smin, is_norm)) <= 1.U)
+        val is_norm = !(is_umax || is_smax || is_smin)
+        assert(PopCount(Cat(is_umax, is_smax, is_smin, is_norm)) <= 1.U)
 
         val r = MuxOR(is_umax, umax.asUInt(size - 1, 0)) |
-                MuxOR(is_umin, umin.asUInt(size - 1, 0)) |
                 MuxOR(is_smax, smax.asUInt(size - 1, 0)) |
                 MuxOR(is_smin, smin.asUInt(size - 1, 0)) |
                 MuxOR(is_norm, rshf(size - 1, 0))
