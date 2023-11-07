@@ -12,6 +12,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+
+// Fetch Unit: 4 way fetcher that directly feeds the 4 decoders.
+// The fetcher itself has a partial decoder to identify branches, where backwards
+// branches are assumed taken and forward branches assumed not taken.
+
 package kelvin
 
 import chisel3._

@@ -79,30 +79,9 @@ class Alu(p: Parameters) extends Module {
     op := io.req.op
   }
 
-  // val rs1 = MuxOR(valid, io.rs1.data)
-  // val rs2 = MuxOR(valid, io.rs2.data)
   val rs1 = io.rs1.data
   val rs2 = io.rs2.data
   val shamt = rs2(4,0)
-
-  // TODO: should we be masking like this for energy?
-  // TODO: a single addsub for add/sub/slt/sltu
-  // val add  = MuxOR(op(alu.ADD), rs1) +  MuxOR(op(alu.ADD), rs2)
-  // val sub  = MuxOR(op(alu.SUB), rs1) -  MuxOR(op(alu.SUB), rs2)
-  // val sll  = MuxOR(op(alu.SLL), rs1) << MuxOR(op(alu.SLL), shamt)
-  // val srl  = MuxOR(op(alu.SRL), rs1) >> MuxOR(op(alu.SRL), shamt)
-  // val sra  = (MuxOR(op(alu.SRA), rs1.asSInt, 0.S) >> MuxOR(op(alu.SRA), shamt)).asUInt
-  // val slt  = MuxOR(op(alu.SLT), rs1.asSInt, 0.S) < MuxOR(op(alu.SLT), rs2.asSInt, 0.S)
-  // val sltu = MuxOR(op(alu.SLTU), rs1) < MuxOR(op(alu.SLTU), rs2)
-  // val and  = MuxOR(op(alu.AND), rs1) &  MuxOR(op(alu.AND), rs2)
-  // val or   = MuxOR(op(alu.OR), rs1) |  MuxOR(op(alu.OR), rs2)
-  // val xor  = MuxOR(op(alu.XOR), rs1) ^  MuxOR(op(alu.XOR), rs2)
-  // val lui  = MuxOR(op(alu.LUI), rs2)
-  // val clz  = MuxOR(op(alu.CLZ), CLZ(rs1))
-  // val ctz  = MuxOR(op(alu.CTZ), CTZ(rs1))
-  // val pcnt = MuxOR(op(alu.PCNT), PopCount(rs1))
-
-  // io.rd.data := add | sub | sll | srl | sra | slt | sltu | and | or | xor | lui
 
   io.rd.valid := valid
   io.rd.addr  := addr

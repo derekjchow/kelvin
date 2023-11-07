@@ -26,13 +26,13 @@ object L1ICache {
 
 class L1ICache(p: Parameters) extends Module {
   // A relatively simple cache block. Only one transaction may post at a time.
-  // 2^8 * 256  / 8 = 8KiB    4-way  Tag[31,12] + Index[11,6] + Data[5,0]
+  // 2^8 * 256  / 8 = 8KiB    4-way  Tag[31,11] + Index[10,5] + Data[4,0]
   assert(p.axi0IdBits == 4)
   assert(p.axi0DataBits == 256)
 
   val slots = p.l1islots
   val slotBits = log2Ceil(slots)
-  val assoc = 4  // 2, 4, 8, 16, slots
+  val assoc = 4
   val sets = slots / assoc
   val setLsb = log2Ceil(p.fetchDataBits / 8)
   val setMsb = log2Ceil(sets) + setLsb - 1
@@ -71,7 +71,6 @@ class L1ICache(p: Parameters) extends Module {
   // CAM state.
   val valid = RegInit(VecInit(Seq.fill(slots)(false.B)))
   val camaddr = Reg(Vec(slots, UInt(32.W)))
-  // val mem = Mem1RW(slots, UInt(p.axi0DataBits.W))
   val mem = Module(new Sram_1rw_256x256())
 
   val history = Reg(Vec(slots / assoc, Vec(assoc, UInt(log2Ceil(assoc).W))))

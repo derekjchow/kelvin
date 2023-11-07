@@ -25,7 +25,7 @@ case class Parameters() {
   }
 
   // Vector Length (register-file and compute).
-  // 128 = faster builds, but not production(?).
+  // 128 = faster builds, but not production.
   val vectorBits = sys.env.get("KELVIN_SIMD").getOrElse("256").toInt
   assert(vectorBits == 512 || vectorBits == 256 || vectorBits == 128)
 
@@ -46,9 +46,7 @@ case class Parameters() {
   val vectorFifoDepth = 16
 
   // L0ICache Fetch unit.
-  // val fetchCacheBytes = 2048
   val fetchCacheBytes = 1024
-  // val fetchCacheBytes = 128
 
   // Scalar Core Fetch bus.
   val fetchAddrBits = 32   // do not change

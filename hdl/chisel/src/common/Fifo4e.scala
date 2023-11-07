@@ -100,16 +100,6 @@ class Fifo4e[T <: Data](t: T, n: Int) extends Module {
                     in1pos === i.U && in1valid(1),
                     in0pos === i.U && in0valid(0))
 
-    // Couldn't get the following to work properly.
-    //
-    // val data = MuxOR(valid(0), io.in.bits(0).bits.asUInt) |
-    //            MuxOR(valid(1), io.in.bits(1).bits.asUInt) |
-    //            MuxOR(valid(2), io.in.bits(2).bits.asUInt) |
-    //            MuxOR(valid(3), io.in.bits(3).bits.asUInt)
-    //
-    // when (ivalid && valid =/= 0.U) {
-    //   mem(i) := data.asTypeOf(t)
-    // }
     when (ivalid) {
       when (valid(0)) {
         mem(i) := io.in.bits(0).bits

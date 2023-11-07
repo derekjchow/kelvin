@@ -26,12 +26,6 @@ object VCore {
   }
 }
 
-// object VCore {
-//   def apply(p: Parameters): VCoreEmpty = {
-//     return Module(new VCoreEmpty(p))
-//   }
-// }
-
 class VCoreIO(p: Parameters) extends Bundle {
   // Decode cycle.
   val vinst = Vec(4, new VInstIO)
@@ -310,51 +304,3 @@ class VCore(p: Parameters) extends Module {
                       vld.io.nempty || vst.io.nempty
 }
 
-class VCoreEmpty(p: Parameters) extends Module {
-  val io = IO(new Bundle {
-    // Score <> VCore
-    val score = new VCoreIO(p)
-
-    // Data bus interface.
-    val dbus = new DBusIO(p)
-    val last = Output(Bool())
-
-    // AXI interface.
-    val ld = new AxiMasterReadIO(p.axi2AddrBits, p.axi2DataBits, p.axi2IdBits)
-    val st = new AxiMasterWriteIO(p.axi2AddrBits, p.axi2DataBits, p.axi2IdBits)
-  })
-
-  io.score.undef := io.score.vinst(0).valid || io.score.vinst(1).valid ||
-                    io.score.vinst(2).valid || io.score.vinst(3).valid
-
-  io.score.mactive := false.B
-
-  io.dbus.valid := false.B
-  io.dbus.write := false.B
-  io.dbus.size := 0.U
-  io.dbus.addr := 0.U
-  io.dbus.adrx := 0.U
-  io.dbus.wdata := 0.U
-  io.dbus.wmask := 0.U
-  io.last := false.B
-
-  for (i <- 0 until 4) {
-    io.score.vinst(i).ready := true.B
-    io.score.rd(i).valid := false.B
-    io.score.rd(i).addr := 0.U
-    io.score.rd(i).data := 0.U
-  }
-
-  io.ld.addr.valid := false.B
-  io.ld.addr.bits.addr := 0.U
-  io.ld.addr.bits.id := 0.U
-  io.ld.data.ready := false.B
-
-  io.st.addr.valid := false.B
-  io.st.addr.bits.addr := 0.U
-  io.st.addr.bits.id := 0.U
-  io.st.data.valid := false.B
-  io.st.data.bits.data := 0.U
-  io.st.data.bits.strb := 0.U
-  io.st.resp.ready := false.B
-}

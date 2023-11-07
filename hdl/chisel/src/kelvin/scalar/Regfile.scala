@@ -12,6 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+// Regfile: 32 entry scalar register file with 8 read ports and 6
+// write ports. Houses a global scoreboard that informs of interlock
+// deps inside the decoders.
+
 package kelvin
 
 import chisel3._
@@ -92,11 +96,8 @@ class Regfile(p: Parameters) extends Module {
     }
   })
 
-  // 8R6W
-  // 8 read ports
-  // 6 write ports
 
-  // The scalar registers, integer (and float todo).
+  // The scalar registers.
   val regfile = Reg(Vec(32, UInt(32.W)))
 
   // ***************************************************************************

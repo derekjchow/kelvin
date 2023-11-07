@@ -2,6 +2,11 @@
 
 Kelvin is a RISC-V32IM core with a custom instruction set.
 
+![Kelvin block diagram](doc/images/arch.png)
+
+More information on the design can be found in the
+[overview](doc/overview.md).
+
 ## Building
 
 Kelvin uses [bazel](https://bazel.build/) as it's build system. The Verilated

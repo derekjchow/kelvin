@@ -262,7 +262,7 @@ class L1DCacheBank(p: Parameters) extends Module {
   // 2^8 * 256  / 8 = 8KiB    4-way  Tag[31,12] + Index[11,6] + Data[5,0]
   val slots = p.l1dslots
   val slotBits = log2Ceil(slots)
-  val assoc = 4  // 2, 4, 8, 16, slots
+  val assoc = 4
   val sets = slots / assoc
   val setLsb = log2Ceil(p.lsuDataBits / 8)
   val setMsb = log2Ceil(sets) + setLsb - 1
@@ -342,7 +342,6 @@ class L1DCacheBank(p: Parameters) extends Module {
   val valid = RegInit(VecInit(Seq.fill(slots)(false.B)))
   val dirty = RegInit(VecInit(Seq.fill(slots)(false.B)))
   val camaddr = Reg(Vec(slots, UInt(32.W)))
-  // val mem = Mem1RWM(slots, p.lsuDataBits * 9 / 8, 9)
   val mem = Module(new Sram_1rwm_256x288())
 
   val history = Reg(Vec(slots / assoc, Vec(assoc, UInt(log2Ceil(assoc).W))))
