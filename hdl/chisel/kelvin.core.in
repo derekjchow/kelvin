@@ -1,0 +1,37 @@
+CAPI=2:
+# Copyright 2023 Google LLC
+# Licensed under the Apache License, Version 2.0, see LICENSE for details.
+# SPDX-License-Identifier: Apache-2.0
+name: "google:ip:kelvin:0.1"
+description: "Kelvin Core Level"
+filesets:
+  files_rtl:
+    files:
+      - kelvin.v
+      - ClockGate.v
+      - Sram_1rw_256x256.v
+      - Sram_1rwm_256x288.v
+    file_type: systemVerilogSource
+
+parameters:
+  SYNTHESIS:
+    datatype: bool
+    paramtype: vlogdefine
+
+
+targets:
+  default: &default_target
+    filesets:
+      - files_rtl
+    toplevel: kelvin
+
+  lint:
+    <<: *default_target
+    default_tool: verilator
+    parameters:
+      - SYNTHESIS=true
+    tools:
+      verilator:
+        mode: lint-only
+        verilator_options:
+          - "-Wall"

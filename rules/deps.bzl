@@ -12,14 +12,16 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+"""Kelvin HW dependent repositories."""
+
 load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
-load(
-    "@io_bazel_rules_scala//scala:scala_maven_import_external.bzl",
-    "scala_maven_import_external",
-)
 load(
     "@io_bazel_rules_scala//scala:scala_cross_version.bzl",
     "default_maven_server_urls",
+)
+load(
+    "@io_bazel_rules_scala//scala:scala_maven_import_external.bzl",
+    "scala_maven_import_external",
 )
 load(
     "@rules_foreign_cc//foreign_cc:repositories.bzl",
@@ -30,19 +32,8 @@ load(
     rules_hdl_dependency_support = "dependency_support",
 )
 
-def kelvin_deps():
-    rules_foreign_cc_dependencies()
-    rules_hdl_dependency_support()
-
-    http_archive(
-        name = "accellera_systemc",
-        build_file = "@kelvin_hw//external:systemc.BUILD",
-        sha256 = "bfb309485a8ad35a08ee78827d1647a451ec5455767b25136e74522a6f41e0ea",
-        strip_prefix = "systemc-2.3.4",
-        urls = [
-            "https://github.com/accellera-official/systemc/archive/refs/tags/2.3.4.tar.gz",
-        ],
-    )
+def kelvin_chisel_deps():
+    """Dependent repositories to build chisel"""
 
     # paranamer
     scala_maven_import_external(
@@ -140,4 +131,23 @@ def kelvin_deps():
         artifact = "edu.berkeley.cs:chisel3-plugin_2.13.6:%s" % "3.5.1",
         server_urls = default_maven_server_urls(),
         licenses = ["notice"],
+    )
+
+def kelvin_deps():
+    """Full kelvin dependent repositories
+
+    Including chisel and systemC test code
+    """
+    rules_foreign_cc_dependencies()
+    rules_hdl_dependency_support()
+    kelvin_chisel_deps()
+
+    http_archive(
+        name = "accellera_systemc",
+        build_file = "@kelvin_hw//external:systemc.BUILD",
+        sha256 = "bfb309485a8ad35a08ee78827d1647a451ec5455767b25136e74522a6f41e0ea",
+        strip_prefix = "systemc-2.3.4",
+        urls = [
+            "https://github.com/accellera-official/systemc/archive/refs/tags/2.3.4.tar.gz",
+        ],
     )

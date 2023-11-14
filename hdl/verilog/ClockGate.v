@@ -17,24 +17,22 @@ module ClockGate(
   input         enable,  // '1' passthrough, '0' disable.
   output        clk_o
 );
-
-`ifndef CLOCKGATE_ENABLE
-
+// Note: Bypass clock gate for now. It causes FPGA build failures and
+// simulation issues
 assign clk_o = clk_i;
-
-`else
-
+/*
 reg clk_en;
+`ifdef FPGA
+    assign clk_o = clk_i;
+`else
+    // Capture 'enable' during low phase of the clock.
+    always @(clk_i or enable)
+    begin
+      if (~clk_i)
+      clk_en = enable;
+    end
 
-// Capture 'enable' during low phase of the clock.
-always_latch begin
-  if (~clk_i) begin
-    clk_en <= enable;
-  end
-end
-
-assign clk_o = clk_i & clk_en;
-
+  assign clk_o = clk_i & clk_en;
 `endif
-
+*/
 endmodule  // ClockGate

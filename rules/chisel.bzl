@@ -12,9 +12,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+"""chisel build rules"""
+
 load("@io_bazel_rules_scala//scala:scala.bzl", "scala_binary", "scala_library")
-load("@rules_hdl//verilog:providers.bzl", "VerilogInfo", "verilog_library")
 load("@kelvin_hw//rules:verilator.bzl", "verilator_cc_library")
+load("@rules_hdl//verilog:providers.bzl", "verilog_library")
 
 def chisel_library(
         name,

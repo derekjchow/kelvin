@@ -12,7 +12,16 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-load("@rules_hdl//verilog:providers.bzl", "VerilogInfo", "verilog_library")
+load("@rules_hdl//verilog:providers.bzl", "verilog_library")
+
+exports_files(
+    srcs = [
+        "ClockGate.v",
+        "Sram_1rw_256x256.v",
+        "Sram_1rwm_256x288.v",
+    ],
+    visibility = ["//visibility:public"],
+)
 
 verilog_library(
     name = "clock_gate",
