@@ -129,12 +129,26 @@ class Csr(p: Parameters) extends Module {
   val mscratch  = RegInit(0.U(32.W))
   val mepc      = RegInit(0.U(32.W))
 
+  val mhartid   = RegInit(0.U(32.W))
+  // 32-bit MXLEN, I,M,X extensions
+  val misa      = RegInit(0x40801100.U(32.W))
+  // Kelvin-specific ISA register.
+  val kisa      = RegInit(0.U(32.W))
+
+  // 0x426 - Google's Vendor ID
+  val mvendorid = RegInit(0x426.U(32.W))
+
+  // Unimplemented -- explicitly return zero.
+  val marchid   = RegInit(0.U(1.W))
+  val mimpid    = RegInit(0.U(1.W))
+
   val fcsr = Cat(frm, fflags)
 
   // Decode the Index.
   val fflagsEn    = index === 0x001.U
   val frmEn       = index === 0x002.U
   val fcsrEn      = index === 0x003.U
+  val misaEn      = index === 0x301.U
   val mieEn       = index === 0x304.U
   val mtvecEn     = index === 0x305.U
   val mscratchEn  = index === 0x340.U
@@ -151,6 +165,12 @@ class Csr(p: Parameters) extends Module {
   val mcontext7En = index === 0x7C7.U
   val mpcEn       = index === 0x7E0.U
   val mspEn       = index === 0x7E1.U
+  val mvendoridEn = index === 0xF11.U
+  val marchidEn   = index === 0xF12.U
+  val mimpidEn    = index === 0xF13.U
+  val mhartidEn   = index === 0xF14.U
+  // Start of custom CSRs.
+  val kisaEn      = index === 0xFC0.U
 
   // Control registers.
   when (io.req.valid) {
@@ -185,6 +205,7 @@ class Csr(p: Parameters) extends Module {
   val rdata = MuxOR(fflagsEn,     fflags) |
               MuxOR(frmEn,        frm) |
               MuxOR(fcsrEn,       fcsr) |
+              MuxOR(misaEn,       misa) |
               MuxOR(mieEn,        mie) |
               MuxOR(mtvecEn,      mtvec) |
               MuxOR(mscratchEn,   mscratch) |
@@ -200,7 +221,12 @@ class Csr(p: Parameters) extends Module {
               MuxOR(mcontext6En,  mcontext6) |
               MuxOR(mcontext7En,  mcontext7) |
               MuxOR(mpcEn,        mpc) |
-              MuxOR(mspEn,        msp)
+              MuxOR(mspEn,        msp) |
+              MuxOR(mvendoridEn,  mvendorid) |
+              MuxOR(marchidEn,    marchid) |
+              MuxOR(mimpidEn,     mimpid) |
+              MuxOR(mhartidEn,    mhartid) |
+              MuxOR(kisaEn,       kisa)
 
   val wdata = MuxOR(op(csr.CSRRW), rs1) |
               MuxOR(op(csr.CSRRS), rdata | rs1) |
