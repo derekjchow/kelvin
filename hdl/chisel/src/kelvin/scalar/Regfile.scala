@@ -21,6 +21,7 @@ package kelvin
 import chisel3._
 import chisel3.util._
 import common._
+import _root_.circt.stage.ChiselStage
 
 object Regfile {
   def apply(p: Parameters): Regfile = {
@@ -265,5 +266,5 @@ class Regfile(p: Parameters) extends Module {
 
 object EmitRegfile extends App {
   val p = new Parameters
-  (new chisel3.stage.ChiselStage).emitVerilog(new Regfile(p), args)
+  ChiselStage.emitSystemVerilogFile(new Regfile(p), args)
 }

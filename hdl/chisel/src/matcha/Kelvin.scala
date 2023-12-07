@@ -17,6 +17,7 @@ package matcha
 import chisel3._
 import chisel3.util._
 import common._
+import _root_.circt.stage.ChiselStage
 
 object Kelvin {
   def apply(p: kelvin.Parameters): Kelvin = {
@@ -67,7 +68,7 @@ class Kelvin(p: kelvin.Parameters) extends RawModule {
   // This hybrid design allows for interfaces to reset immediately on reset
   // assertion while ensuring all internal state will eventually be reset
   // correctly before usage.
-  val rst_i = (!rst_ni.asBool() || ml_reset).asAsyncReset()
+  val rst_i = (!rst_ni.asBool || ml_reset).asAsyncReset
   val rst_core = Wire(Bool())
 
   withClockAndReset(clk_i, rst_i) {
@@ -80,7 +81,7 @@ class Kelvin(p: kelvin.Parameters) extends RawModule {
 
   // ---------------------------------------------------------------------------
   // Connect clock and reset.
-  withClockAndReset(clk_g, rst_core.asAsyncReset()) {
+  withClockAndReset(clk_g, rst_core.asAsyncReset) {
     assert(p.vectorBits == 256)
 
     val core = kelvin.Core(p)
@@ -140,5 +141,5 @@ class Kelvin(p: kelvin.Parameters) extends RawModule {
 
 object EmitKelvin extends App {
   val p = new kelvin.Parameters()
-  (new chisel3.stage.ChiselStage).emitVerilog(new Kelvin(p), args)
+  ChiselStage.emitSystemVerilogFile(new Kelvin(p), args)
 }

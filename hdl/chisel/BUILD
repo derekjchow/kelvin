@@ -179,13 +179,13 @@ chisel_cc_library(
 genrule(
     name = "matcha_kelvin_verilog",
     srcs = [
-        ":Kelvin.v",
+        ":Kelvin.sv",
         "//hdl/verilog:ClockGate.v",
         "//hdl/verilog:Sram_1rw_256x256.v",
         "//hdl/verilog:Sram_1rwm_256x288.v",
     ],
     outs = [
-        "kelvin.v",
+        "kelvin.sv",
         "ClockGate.v",
         "Sram_1rw_256x256.v",
         "Sram_1rwm_256x288.v",
@@ -195,8 +195,8 @@ genrule(
     cmd = """
     echo "\\`define STOP_COND 0
 \\`define PRINTF_COND 0
-" > $(location kelvin.v)
-    cat $(location Kelvin.v) >> $(location kelvin.v)
+" > $(location kelvin.sv)
+    cat $(location Kelvin.sv) >> $(location kelvin.sv)
     cp -f $(location //hdl/verilog:ClockGate.v) $(location ClockGate.v)
     cp -f $(location //hdl/verilog:Sram_1rw_256x256.v) $(location Sram_1rw_256x256.v)
     cp -f $(location //hdl/verilog:Sram_1rwm_256x288.v) $(location Sram_1rwm_256x288.v)

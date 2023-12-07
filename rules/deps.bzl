@@ -35,6 +35,14 @@ load(
 def kelvin_chisel_deps():
     """Dependent repositories to build chisel"""
 
+    # scala-reflect
+    scala_maven_import_external(
+        name = "org_scala_lang_scala_reflect",
+        artifact = "org.scala-lang:scala-reflect:%s" % "2.13.11",
+        server_urls = default_maven_server_urls(),
+        licenses = ["notice"],
+    )
+
     # paranamer
     scala_maven_import_external(
         name = "com_thoughtworks_paranamer",
@@ -46,25 +54,25 @@ def kelvin_chisel_deps():
     # json4s
     scala_maven_import_external(
         name = "org_json4s_json4s_ast",
-        artifact = "org.json4s:json4s-ast_2.13:%s" % "3.6.12",
+        artifact = "org.json4s:json4s-ast_2.13:%s" % "4.0.6",
         server_urls = default_maven_server_urls(),
         licenses = ["notice"],
     )
     scala_maven_import_external(
         name = "org_json4s_json4s_scalap",
-        artifact = "org.json4s:json4s-scalap_2.13:%s" % "3.6.12",
+        artifact = "org.json4s:json4s-scalap_2.13:%s" % "4.0.6",
         server_urls = default_maven_server_urls(),
         licenses = ["notice"],
     )
     scala_maven_import_external(
         name = "org_json4s_json4s_core",
-        artifact = "org.json4s:json4s-core_2.13:%s" % "3.6.12",
+        artifact = "org.json4s:json4s-core_2.13:%s" % "4.0.6",
         server_urls = default_maven_server_urls(),
         licenses = ["notice"],
     )
     scala_maven_import_external(
         name = "org_json4s_json4s_native",
-        artifact = "org.json4s:json4s-native_2.13:%s" % "3.6.12",
+        artifact = "org.json4s:json4s-native_2.13:%s" % "4.0.6",
         server_urls = default_maven_server_urls(),
         licenses = ["notice"],
     )
@@ -78,7 +86,7 @@ def kelvin_chisel_deps():
     )
     scala_maven_import_external(
         name = "org_apache_commons_commons_text",
-        artifact = "org.apache.commons:commons-text:%s" % "1.9",
+        artifact = "org.apache.commons:commons-text:%s" % "1.10.0",
         server_urls = default_maven_server_urls(),
         licenses = ["notice"],
     )
@@ -99,36 +107,48 @@ def kelvin_chisel_deps():
         licenses = ["notice"],
     )
 
-    # FIRRTL
+    # data-class
     scala_maven_import_external(
-        name = "edu_berkeley_cs_firrtl",
-        artifact = "edu.berkeley.cs:firrtl_2.13:%s" % "1.5.1",
+        name = "io_github_alexarchambault_data_class",
+        artifact = "io.github.alexarchambault:data-class_2.13:%s" % "0.2.5",
+        server_urls = default_maven_server_urls(),
+        licenses = ["notice"],
+    )
+
+    # os-lib
+    scala_maven_import_external(
+        name = "com_lihaoyi_os_lib",
+        artifact = "com.lihaoyi:os-lib_2.13:%s" % "0.8.1",
+        server_urls = default_maven_server_urls(),
+        licenses = ["notice"],
+    )
+
+    # geny
+    scala_maven_import_external(
+        name = "com_lihaoyi_geny",
+        artifact = "com.lihaoyi:geny_2.13:%s" % "0.7.1",
+        server_urls = default_maven_server_urls(),
+        licenses = ["notice"],
+    )
+
+    # upickle
+    scala_maven_import_external(
+        name = "com_lihaoyi_upickle",
+        artifact = "com.lihaoyi:upickle_2.13:%s" % "2.0.0",
         server_urls = default_maven_server_urls(),
         licenses = ["notice"],
     )
 
     # Chisel3
     scala_maven_import_external(
-        name = "edu_berkeley_cs_chisel3",
-        artifact = "edu.berkeley.cs:chisel3_2.13:%s" % "3.5.1",
+        name = "org_chipsalliance_chisel",
+        artifact = "org.chipsalliance:chisel_2.13:%s" % "5.1.0",
         server_urls = default_maven_server_urls(),
         licenses = ["notice"],
     )
     scala_maven_import_external(
-        name = "edu_berkeley_cs_chisel3_core",
-        artifact = "edu.berkeley.cs:chisel3-core_2.13:%s" % "3.5.1",
-        server_urls = default_maven_server_urls(),
-        licenses = ["notice"],
-    )
-    scala_maven_import_external(
-        name = "edu_berkeley_cs_chisel3_macros",
-        artifact = "edu.berkeley.cs:chisel3-macros_2.13:%s" % "3.5.1",
-        server_urls = default_maven_server_urls(),
-        licenses = ["notice"],
-    )
-    scala_maven_import_external(
-        name = "edu_berkeley_cs_chisel3_plugin",
-        artifact = "edu.berkeley.cs:chisel3-plugin_2.13.6:%s" % "3.5.1",
+        name = "org_chipsalliance_chisel_plugin",
+        artifact = "org.chipsalliance:chisel-plugin_2.13.6:%s" % "5.1.0",
         server_urls = default_maven_server_urls(),
         licenses = ["notice"],
     )

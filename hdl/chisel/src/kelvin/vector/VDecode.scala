@@ -19,6 +19,7 @@ package kelvin
 import chisel3._
 import chisel3.util._
 import common.Fifo4x4
+import _root_.circt.stage.ChiselStage
 
 object VDecode {
   def apply(p: Parameters): VDecode = {
@@ -452,5 +453,5 @@ class SData extends Bundle {
 
 object EmitVDecode extends App {
   val p = new Parameters
-  (new chisel3.stage.ChiselStage).emitVerilog(new VDecode(p), args)
+  ChiselStage.emitSystemVerilogFile(new VDecode(p), args)
 }

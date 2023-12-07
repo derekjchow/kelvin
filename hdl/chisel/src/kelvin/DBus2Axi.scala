@@ -17,6 +17,7 @@ package kelvin
 import chisel3._
 import chisel3.util._
 import common._
+import _root_.circt.stage.ChiselStage
 
 object DBus2Axi {
   def apply(p: Parameters): DBus2Axi = {
@@ -75,5 +76,5 @@ class DBus2Axi(p: Parameters) extends Module {
 
 object EmitDBus2Axi extends App {
   val p = new Parameters
-  (new chisel3.stage.ChiselStage).emitVerilog(new DBus2Axi(p), args)
+  ChiselStage.emitSystemVerilogFile(new DBus2Axi(p), args)
 }

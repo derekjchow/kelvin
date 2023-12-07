@@ -38,15 +38,15 @@ def kelvin_repos():
             "@kelvin_hw//external:0001-Update-version-of-Googletest-for-bazel-compatitibili.patch",
             "@kelvin_hw//external:0002-SystemC-support-for-verilator.patch",
             "@kelvin_hw//external:0003-Add-systemc-lib-support.patch",
-            "@kelvin_hw//external:0004-Build-verilator-v4.210.patch",
+            "@kelvin_hw//external:0004-Build-verilator-v4.226.patch",
         ],
     )
 
     # See https://github.com/bazelbuild/rules_scala/releases for up to date version information.
-    rules_scala_version = "c711b4d1f0d1cc386c63ef748c9df14d2f3a187e"
+    rules_scala_version = "73719cbf88134d5c505daf6c913fe4baefd46917"
     http_archive(
         name = "io_bazel_rules_scala",
-        sha256 = "556677f505634da64efc41912d280895e61f5da109d82bdee41cde4120a190a1",
+        sha256 = "48124dfd3387c72fd13d3d954b246a5c34eb83646c0c04a727c9a1ba98e876a6",
         strip_prefix = "rules_scala-%s" % rules_scala_version,
         type = "zip",
         url = "https://github.com/bazelbuild/rules_scala/archive/%s.zip" % rules_scala_version,
@@ -64,4 +64,19 @@ def kelvin_repos():
         sha256 = "3ea49a7d97421b88a8c48a0de16c16048e17725c7ec0f1d3ea2683a2a75adc21",
         strip_prefix = "abseil-cpp-20230125.0",
         urls = ["https://github.com/abseil/abseil-cpp/archive/refs/tags/20230125.0.tar.gz"],
+    )
+
+    http_archive(
+        name = "glibc-2.37",
+        sha256 = "811f19f9200118ff94ede28a6e12307584152cdcbf3d366cd729ea2f855db255",
+        strip_prefix = "glibc-2.37",
+        urls = ["https://ftp.gnu.org/gnu/glibc/glibc-2.37.tar.gz"],
+        build_file = "@kelvin_hw//third_party/glibc-2.37:BUILD.bazel",
+    )
+
+    http_archive(
+        name = "llvm_firtool",
+        sha256 = "d22a894f2f8652b6c26e1d2a66551a7f015ce46e48f2bcdd785b01b9c8739277",
+        urls = ["https://repo1.maven.org/maven2/org/chipsalliance/llvm-firtool/1.52.0/llvm-firtool-1.52.0.jar"],
+        build_file = "@kelvin_hw//third_party/llvm-firtool:BUILD.bazel",
     )

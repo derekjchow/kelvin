@@ -18,6 +18,7 @@ package kelvin
 
 import chisel3._
 import chisel3.util._
+import _root_.circt.stage.ChiselStage
 
 class VRegfileSegment(p: Parameters) extends Module {
   val readPorts = 7
@@ -115,5 +116,5 @@ class VRegfileSegment(p: Parameters) extends Module {
 
 object EmitVRegfileSegment extends App {
   val p = new Parameters
-  (new chisel3.stage.ChiselStage).emitVerilog(new VRegfileSegment(p), args)
+  ChiselStage.emitSystemVerilogFile(new VRegfileSegment(p), args)
 }

@@ -19,6 +19,7 @@ package kelvin
 import chisel3._
 import chisel3.util._
 import common._
+import _root_.circt.stage.ChiselStage
 
 // A queue of commands, reducing VDecodeBits to just the necessary fields.
 // <fin> retains just the needed fields or modifications.
@@ -179,5 +180,5 @@ object EmitVCmdq extends App {
     active
   }
 
-  (new chisel3.stage.ChiselStage).emitVerilog(new VCmdq(8, new VCmdqTestBundle, VCmdqTestFin, VCmdqTestFout, VCmdqTestFactive), args)
+  ChiselStage.emitSystemVerilogFile(new VCmdq(8, new VCmdqTestBundle, VCmdqTestFin, VCmdqTestFout, VCmdqTestFactive), args)
 }

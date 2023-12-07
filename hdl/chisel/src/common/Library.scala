@@ -19,7 +19,7 @@ import chisel3.util._
 
 object MuxOR {
   def apply(valid: Bool, data: UInt): UInt = {
-    Mux(valid, data, 0.U(data.getWidth))
+    Mux(valid, data, 0.U(data.getWidth.W))
   }
 
   def apply(valid: Bool, data: Bool): Bool = {

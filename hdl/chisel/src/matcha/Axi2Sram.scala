@@ -17,6 +17,7 @@ package matcha
 import chisel3._
 import chisel3.util._
 import common._
+import _root_.circt.stage.ChiselStage
 
 object Axi2Sram {
   def apply(p: kelvin.Parameters): Axi2Sram = {
@@ -267,5 +268,5 @@ class Axi2Sram(p: kelvin.Parameters) extends Module {
 
 object EmitAxi2Sram extends App {
   val p = new kelvin.Parameters
-  (new chisel3.stage.ChiselStage).emitVerilog(new Axi2Sram(p), args)
+  ChiselStage.emitSystemVerilogFile(new Axi2Sram(p), args)
 }

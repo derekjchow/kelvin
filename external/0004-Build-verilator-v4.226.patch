@@ -1,0 +1,52 @@
+diff --git dependency_support/verilator/verilator.BUILD dependency_support/verilator/verilator.BUILD
+index 00fd758..5c93a65 100644
+--- dependency_support/verilator/verilator.BUILD
++++ dependency_support/verilator/verilator.BUILD
+@@ -48,7 +48,8 @@ genrule(
+         "V3Ast__gen_impl.h",
+         "V3Ast__gen_report.txt",
+         "V3Ast__gen_types.h",
+-        "V3Ast__gen_visitor.h",
++        "V3Ast__gen_visitor_decls.h",
++        "V3Ast__gen_visitor_defns.h",
+         "V3Ast__gen_yystype.h",
+         "V3AstNodes__gen_macros.h",
+     ],
+@@ -58,7 +59,8 @@ genrule(
+     cp V3Ast__gen_impl.h $(@D)
+     cp V3Ast__gen_report.txt $(@D)
+     cp V3Ast__gen_types.h $(@D)
+-    cp V3Ast__gen_visitor.h $(@D)
++    cp V3Ast__gen_visitor_decls.h $(@D)
++    cp V3Ast__gen_visitor_defns.h $(@D)
+     cp V3Ast__gen_yystype.h $(@D)
+     cp V3AstNodes__gen_macros.h $(@D)
+     """,
+@@ -153,7 +155,8 @@ cc_library(
+         ":V3Ast__gen_classes.h",
+         ":V3Ast__gen_impl.h",
+         ":V3Ast__gen_types.h",
+-        ":V3Ast__gen_visitor.h",
++        ":V3Ast__gen_visitor_decls.h",
++        ":V3Ast__gen_visitor_defns.h",
+         ":V3AstNodes__gen_macros.h",
+         ":V3Ast__gen_yystype.h",
+         ":V3Const__gen.cpp",
+diff --git dependency_support/verilator/verilator.bzl dependency_support/verilator/verilator.bzl
+index 76893b7..1dd2d5e 100644
+--- dependency_support/verilator/verilator.bzl
++++ dependency_support/verilator/verilator.bzl
+@@ -56,11 +56,11 @@ verilator_repository = repository_rule(
+         ),
+         "version": attr.string(
+             doc = "The version of verilator to use.",
+-            default = "4.224",
++            default = "4.226",
+         ),
+         "sha256": attr.string(
+             doc = "The sha256 hash for this version of verilator",
+-            default = "010ff2b5c76d4dbc2ed4a3278a5599ba35c8ed4c05690e57296d6b281591367b",
++            default = "70bc941d86e4810253d51aa94898b0802d916ab76296a398f8ceb8798122c9be",
+         ),
+     },
+ )

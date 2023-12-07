@@ -18,6 +18,17 @@ load("@io_bazel_rules_scala//scala:scala.bzl", "scala_binary", "scala_library")
 load("@kelvin_hw//rules:verilator.bzl", "verilator_cc_library")
 load("@rules_hdl//verilog:providers.bzl", "verilog_library")
 
+SCALA_COPTS = [
+    "-Ymacro-annotations",
+    "-Xplugin:$(execpath @org_chipsalliance_chisel_plugin//jar)",
+    "-explaintypes",
+    "-feature",
+    "-language:reflectiveCalls",
+    "-unchecked",
+    "-Xcheckinit",
+    "-Xlint:infer-any",
+]
+
 def chisel_library(
         name,
         srcs = [],
@@ -28,12 +39,9 @@ def chisel_library(
         srcs = srcs,
         deps = [
             "@kelvin_hw//lib:chisel_lib",
-            "@edu_berkeley_cs_chisel3_plugin//jar",
+            "@org_chipsalliance_chisel_plugin//jar",
         ] + deps,
-        scalacopts = [
-            "-Xplugin:$(execpath @edu_berkeley_cs_chisel3_plugin//jar)",
-            "-P:chiselplugin:genBundleElements",
-        ],
+        scalacopts = SCALA_COPTS,
         visibility = visibility,
     )
 
@@ -49,12 +57,9 @@ def chisel_binary(
         main_class = main_class,
         deps = [
             "@kelvin_hw//lib:chisel_lib",
-            "@edu_berkeley_cs_chisel3_plugin//jar",
+            "@org_chipsalliance_chisel_plugin//jar",
         ] + deps,
-        scalacopts = [
-            "-Xplugin:$(execpath @edu_berkeley_cs_chisel3_plugin//jar)",
-            "-P:chiselplugin:genBundleElements",
-        ],
+        scalacopts = SCALA_COPTS,
         visibility = visibility,
     )
 
@@ -74,14 +79,17 @@ def chisel_cc_library(
     native.genrule(
         name = name + "_emit_verilog",
         srcs = [],
-        outs = [module_name + ".v"],
-        cmd = "./$(location " + gen_binary_name + ") --target-dir $(RULEDIR)",
-        tools = [":{}".format(gen_binary_name)],
+        outs = [module_name + ".sv"],
+        cmd = "PATH=$$(dirname $(execpath @kelvin_hw//third_party/llvm-firtool:firtool)):$$PATH ./$(location " + gen_binary_name + ") --target-dir $(RULEDIR)",
+        tools = [
+            ":{}".format(gen_binary_name),
+            "@kelvin_hw//third_party/llvm-firtool:firtool",
+        ],
     )
 
     verilog_library(
         name = name + "_verilog",
-        srcs = [module_name + ".v"],
+        srcs = [module_name + ".sv"],
         deps = verilog_deps,
     )
 

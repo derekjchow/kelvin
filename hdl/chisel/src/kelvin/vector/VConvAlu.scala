@@ -18,6 +18,7 @@ package kelvin
 
 import chisel3._
 import chisel3.util._
+import _root_.circt.stage.ChiselStage
 
 object VConvAlu {
   def apply(p: Parameters): VConvAlu = {
@@ -121,5 +122,5 @@ class VConvAlu(p: Parameters) extends Module {
 
 object EmitVConvAlu extends App {
   val p = new Parameters
-  (new chisel3.stage.ChiselStage).emitVerilog(new VConvAlu(p), args)
+  ChiselStage.emitSystemVerilogFile(new VConvAlu(p), args)
 }

@@ -18,6 +18,7 @@ package kelvin
 
 import chisel3._
 import chisel3.util._
+import _root_.circt.stage.ChiselStage
 
 class VDecodeInstruction(p: Parameters) extends Module {
   val dec = new VDecodeOp()
@@ -635,5 +636,5 @@ class VDecodeInstruction(p: Parameters) extends Module {
 
 object EmitVDecodeInstruction extends App {
   val p = new Parameters
-  (new chisel3.stage.ChiselStage).emitVerilog(new VDecodeInstruction(p), args)
+  ChiselStage.emitSystemVerilogFile(new VDecodeInstruction(p), args)
 }

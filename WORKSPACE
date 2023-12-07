@@ -5,7 +5,7 @@ kelvin_repos()
 
 # Scala setup
 load("@io_bazel_rules_scala//:scala_config.bzl", "scala_config")
-scala_config(scala_version = "2.13.6")
+scala_config(scala_version = "2.13.11")
 load("@io_bazel_rules_scala//scala:scala.bzl", "rules_scala_setup", "rules_scala_toolchain_deps_repositories")
 rules_scala_setup()
 rules_scala_toolchain_deps_repositories(fetch_sources = True)
