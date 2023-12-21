@@ -89,6 +89,47 @@ module Sram_1rw_256x9(
   input          volt_sel
 );
 
+
+
+`ifdef GF22_ML_CACHE
+logic [1:0] ma_sawl;
+logic [1:0] ma_wras;
+logic       ma_wrasd;
+
+  always_comb begin
+    if(volt_sel)begin
+     ma_sawl = 2'b11;
+     ma_wras = 2'b10;
+     ma_wrasd = 1'b0;
+    end
+    else begin
+     ma_sawl = 2'b00;
+     ma_wras = 2'b00;
+     ma_wrasd = 1'b1;
+    end
+  end
+
+  begin
+   MBH_ZSNL_IN22FDX_S1PL_NFLG_W00256B009M16C128  u_gf22_ml_dcache
+   (
+    .clk(clock),
+    .cen(~valid),
+    .rdwen(~write),
+    .deepsleep(1'b0),
+    .powergate(1'b0),
+    .MA_SAWL0(ma_sawl[0]),
+    .MA_SAWL1(ma_sawl[1]),
+    .MA_WRAS0(ma_wras[0]),
+    .MA_WRAS1(ma_wras[1]),
+    .MA_WRASD(ma_wrasd),
+    .a(addr),
+    .d(wdata),
+    .bw({9{1'b1}}),
+    .q(rdata)
+    );
+  end
+`else
+
   reg [8:0] mem [0:255];
   reg [7:0] raddr;
 
@@ -102,6 +143,7 @@ module Sram_1rw_256x9(
       raddr <= addr;
     end
   end
+`endif // GF22_ML_CACHE
 endmodule  // Sram_1rw_256x9
 
 `endif  // FPGA
