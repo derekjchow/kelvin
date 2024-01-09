@@ -130,6 +130,9 @@ class Csr(p: Parameters) extends Module {
   val mepc      = RegInit(0.U(32.W))
 
   val mhartid   = RegInit(0.U(32.W))
+
+  val mcycle    = RegInit(0.U(64.W))
+
   // 32-bit MXLEN, I,M,X extensions
   val misa      = RegInit(0x40801100.U(32.W))
   // Kelvin-specific ISA register.
@@ -165,6 +168,10 @@ class Csr(p: Parameters) extends Module {
   val mcontext7En = index === 0x7C7.U
   val mpcEn       = index === 0x7E0.U
   val mspEn       = index === 0x7E1.U
+  // M-mode performance CSRs.
+  val mcycleEn    = index === 0xB00.U
+  val mcyclehEn   = index === 0xB80.U
+  // M-mode information CSRs.
   val mvendoridEn = index === 0xF11.U
   val marchidEn   = index === 0xF12.U
   val mimpidEn    = index === 0xF13.U
@@ -222,6 +229,8 @@ class Csr(p: Parameters) extends Module {
               MuxOR(mcontext7En,  mcontext7) |
               MuxOR(mpcEn,        mpc) |
               MuxOR(mspEn,        msp) |
+              MuxOR(mcycleEn,     mcycle(31,0)) |
+              MuxOR(mcyclehEn,    mcycle(63,32)) |
               MuxOR(mvendoridEn,  mvendorid) |
               MuxOR(marchidEn,    marchid) |
               MuxOR(mimpidEn,     mimpid) |
@@ -254,6 +263,16 @@ class Csr(p: Parameters) extends Module {
     when (mcontext6En)  { mcontext6 := wdata }
     when (mcontext7En)  { mcontext7 := wdata }
   }
+
+  // mcycle implementation
+  // If one of the enable signals for
+  // the register are true, overwrite the enabled half
+  // of the register.
+  // Increment the value of mcycle by 1.
+  val mcycle_th = Mux(mcyclehEn, wdata, mcycle(63,32))
+  val mcycle_tl = Mux(mcycleEn, wdata, mcycle(31,0))
+  val mcycle_t = Cat(mcycle_th, mcycle_tl)
+  mcycle := Mux(valid, mcycle_t, mcycle) + 1.U
 
   when (io.bru.in.mode.valid) {
     mode := io.bru.in.mode.bits
