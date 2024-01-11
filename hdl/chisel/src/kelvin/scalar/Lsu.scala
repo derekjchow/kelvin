@@ -107,6 +107,8 @@ class Lsu(p: Parameters) extends Module {
 
     // Vector switch.
     val vldst = Output(Bool())
+
+    val storeCount = Output(UInt(2.W))
   })
 
   val lsu = new LsuOp()
@@ -221,6 +223,11 @@ class Lsu(p: Parameters) extends Module {
   assert(!(io.ubus.valid && !ctrl.io.out.bits.addr(31)))
   assert(!(io.ubus.valid && io.dbus.addr(31)))
   assert(!(io.ubus.valid && io.dbus.adrx(31)))
+
+  io.storeCount := PopCount(Cat(
+    io.dbus.valid && io.dbus.write,
+    io.ubus.valid && io.ubus.write
+  ))
 
   io.flush.valid  := ctrl.io.out.valid && (ctrl.io.out.bits.fencei || ctrl.io.out.bits.flushat || ctrl.io.out.bits.flushall)
   io.flush.all    := ctrl.io.out.bits.fencei || ctrl.io.out.bits.flushall

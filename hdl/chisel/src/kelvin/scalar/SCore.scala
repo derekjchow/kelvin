@@ -172,6 +172,13 @@ class SCore(p: Parameters) extends Module {
 
   io.iflush.valid := iflush
 
+  // Instruction counters
+  csr.io.counters.rfwriteCount := regfile.io.rfwriteCount
+  csr.io.counters.storeCount := lsu.io.storeCount
+  csr.io.counters.branchCount := bru(0).io.taken.valid
+  csr.io.counters.vrfwriteCount := io.vcore.vrfwriteCount
+  csr.io.counters.vstoreCount := io.vcore.vstoreCount
+
   // ---------------------------------------------------------------------------
   // Control Status Unit
   csr.io.csr <> io.csr

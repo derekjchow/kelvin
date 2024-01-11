@@ -92,6 +92,7 @@ struct VSt_tb : Sysc_tb {
   sc_in<bool> io_axi_resp_ready;
   sc_out<bool> io_axi_resp_valid;
   sc_in<bool> io_nempty;
+  sc_in<bool> io_vstoreCount;
   sc_out<sc_bv<7> > io_in_bits_0_bits_op;
   sc_out<sc_bv<3> > io_in_bits_0_bits_f2;
   sc_out<sc_bv<3> > io_in_bits_0_bits_sz;
@@ -572,6 +573,7 @@ static void VSt_test(char* name, int loops, bool trace) {
   sc_signal<bool> io_axi_resp_ready;
   sc_signal<bool> io_axi_resp_valid;
   sc_signal<bool> io_nempty;
+  sc_signal<bool> io_vstoreCount;
   sc_signal<sc_bv<7> > io_in_bits_0_bits_op;
   sc_signal<sc_bv<3> > io_in_bits_0_bits_f2;
   sc_signal<sc_bv<3> > io_in_bits_0_bits_sz;
@@ -741,6 +743,7 @@ static void VSt_test(char* name, int loops, bool trace) {
   BIND2(tb, st, io_axi_resp_ready);
   BIND2(tb, st, io_axi_resp_valid);
   BIND2(tb, st, io_nempty);
+  BIND2(tb, st, io_vstoreCount);
   BIND2(tb, st, io_in_bits_0_bits_op);
   BIND2(tb, st, io_in_bits_0_bits_f2);
   BIND2(tb, st, io_in_bits_0_bits_sz);

@@ -44,6 +44,14 @@ class CsrInOutIO(p: Parameters) extends Bundle {
   val out = new CsrOutIO(p)
 }
 
+class CsrCounters(p: Parameters) extends Bundle {
+  val rfwriteCount = UInt(3.W)
+  val storeCount = UInt(2.W)
+  val branchCount = UInt(1.W)
+  val vrfwriteCount = UInt(3.W)
+  val vstoreCount = UInt(2.W)
+}
+
 class CsrBruIO(p: Parameters) extends Bundle {
   val in = new Bundle {
     val mode   = Valid(Bool())
@@ -87,6 +95,8 @@ class Csr(p: Parameters) extends Module {
 
     // Vector core.
     val vcore = Input(new Bundle { val undef = Bool() })
+
+    val counters = Input(new CsrCounters(p))
 
     // Pipeline Control.
     val halted = Output(Bool())
@@ -132,6 +142,7 @@ class Csr(p: Parameters) extends Module {
   val mhartid   = RegInit(0.U(32.W))
 
   val mcycle    = RegInit(0.U(64.W))
+  val minstret  = RegInit(0.U(64.W))
 
   // 32-bit MXLEN, I,M,X extensions
   val misa      = RegInit(0x40801100.U(32.W))
@@ -170,7 +181,9 @@ class Csr(p: Parameters) extends Module {
   val mspEn       = index === 0x7E1.U
   // M-mode performance CSRs.
   val mcycleEn    = index === 0xB00.U
+  val minstretEn  = index === 0xB02.U
   val mcyclehEn   = index === 0xB80.U
+  val minstrethEn = index === 0xB82.U
   // M-mode information CSRs.
   val mvendoridEn = index === 0xF11.U
   val marchidEn   = index === 0xF12.U
@@ -231,6 +244,8 @@ class Csr(p: Parameters) extends Module {
               MuxOR(mspEn,        msp) |
               MuxOR(mcycleEn,     mcycle(31,0)) |
               MuxOR(mcyclehEn,    mcycle(63,32)) |
+              MuxOR(minstretEn,   minstret(31,0)) |
+              MuxOR(minstrethEn,  minstret(63,32)) |
               MuxOR(mvendoridEn,  mvendorid) |
               MuxOR(marchidEn,    marchid) |
               MuxOR(mimpidEn,     mimpid) |
@@ -273,6 +288,17 @@ class Csr(p: Parameters) extends Module {
   val mcycle_tl = Mux(mcycleEn, wdata, mcycle(31,0))
   val mcycle_t = Cat(mcycle_th, mcycle_tl)
   mcycle := Mux(valid, mcycle_t, mcycle) + 1.U
+
+
+  val minstret_th = Mux(minstrethEn, wdata, minstret(63,32))
+  val minstret_tl = Mux(minstretEn, wdata, minstret(31,0))
+  val minstret_t = Cat(minstret_th, minstret_tl)
+  minstret := Mux(valid, minstret_t, minstret) +
+    io.counters.rfwriteCount +
+    io.counters.storeCount +
+    io.counters.branchCount +
+    io.counters.vrfwriteCount +
+    io.counters.vstoreCount
 
   when (io.bru.in.mode.valid) {
     mode := io.bru.in.mode.bits

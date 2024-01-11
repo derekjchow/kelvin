@@ -125,6 +125,7 @@ class VRegfile(p: Parameters) extends Module {
     val conv = Flipped(new VRegfileConvIO(p))
     val transpose = Flipped(new VRegfileTransposeIO(p))
     val vrfsb = Flipped(new VRegfileScoreboardIO)
+    val vrfwriteCount = Output(UInt(3.W))
   })
 
   val segcnt = p.vectorBits / 32
@@ -175,6 +176,8 @@ class VRegfile(p: Parameters) extends Module {
       writebitsReg(i).data := io.write(i).data
     }
   }
+
+  io.vrfwriteCount := writevalid(0)
 
   // ---------------------------------------------------------------------------
   // Write ports.

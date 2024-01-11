@@ -42,6 +42,8 @@ class VSt(p: Parameters) extends Module {
 
     // Status.
     val nempty = Output(Bool())
+
+    val vstoreCount = Output(UInt(1.W))
   })
 
   // A usable depth of outstanding commands.
@@ -298,6 +300,8 @@ class VSt(p: Parameters) extends Module {
 
   assert(io.axi.addr.valid === io.axi.data.valid)
   assert(io.axi.addr.ready === io.axi.data.ready)
+
+  io.vstoreCount := ctrl.io.out.valid
 
   // ---------------------------------------------------------------------------
   // Active.

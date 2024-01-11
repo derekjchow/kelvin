@@ -95,6 +95,8 @@ class Regfile(p: Parameters) extends Module {
       val regd = Output(UInt(32.W))
       val comb = Output(UInt(32.W))
     }
+
+    val rfwriteCount = Output(UInt(6.W))
   })
 
 
@@ -176,6 +178,17 @@ class Regfile(p: Parameters) extends Module {
       regfile(i) := writeData(i)
     }
   }
+
+  // We care if someone tried to write x0 (e.g. nop is encoded this way), but want
+  // it separate for above mentioned optimization.
+  val x0 =
+    (0 until 4).map(x =>
+      io.writeData(x).valid &&
+      io.writeData(x).addr === 0.U &&
+      !io.writeMask(x).valid) ++
+    (4 until 6).map(x => io.writeData(x).valid && io.writeData(x).addr === 0.U)
+
+  io.rfwriteCount := PopCount(writeValid) - writeValid(0) + PopCount(x0)
 
   // ***************************************************************************
   // Read ports with write forwarding.

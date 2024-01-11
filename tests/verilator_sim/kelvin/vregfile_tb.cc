@@ -97,6 +97,7 @@ struct VRegfile_tb : Sysc_tb {
   sc_out<bool> io_vrfsb_set_valid;
   sc_out<sc_bv<128> > io_vrfsb_set_bits;
   sc_in<sc_bv<128> > io_vrfsb_data;
+  sc_in<sc_bv<3> > io_vrfwriteCount;
 
   using Sysc_tb::Sysc_tb;
 
@@ -594,6 +595,7 @@ static void VRegfile_test(char* name, int loops, bool trace) {
   sc_signal<sc_bv<128> > io_vrfsb_set_bits;
   sc_signal<sc_bv<128> > io_vrfsb_data;
   sc_signal<bool> io_vrfsb_set_valid;
+  sc_signal<sc_bv<3> > io_vrfwriteCount;
 
   VRegfile_tb tb("VRegfile_tb", loops, true /*random*/);
   VVRegfile vrf(name);
@@ -684,6 +686,7 @@ static void VRegfile_test(char* name, int loops, bool trace) {
   BIND2(tb, vrf, io_vrfsb_set_valid);
   BIND2(tb, vrf, io_vrfsb_set_bits);
   BIND2(tb, vrf, io_vrfsb_data);
+  BIND2(tb, vrf, io_vrfwriteCount);
 
   tb.start();
 }

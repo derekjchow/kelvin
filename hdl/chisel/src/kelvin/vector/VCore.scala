@@ -39,6 +39,9 @@ class VCoreIO(p: Parameters) extends Bundle {
 
   // Faults.
   val undef = Output(Bool())
+
+  val vrfwriteCount = Output(UInt(3.W))
+  val vstoreCount = Output(UInt(2.W))
 }
 
 class VCore(p: Parameters) extends Module {
@@ -71,6 +74,9 @@ class VCore(p: Parameters) extends Module {
   val vld    = VLd(p)
   val vst    = VSt(p)
   val vrf    = VRegfile(p)
+
+  io.score.vrfwriteCount := vrf.io.vrfwriteCount
+  io.score.vstoreCount := vst.io.vstoreCount + vldst.io.vstoreCount
 
   vinst.io.in <> io.score.vinst
   vinst.io.rs <> io.score.rs

@@ -41,7 +41,10 @@ class VLdSt(p: Parameters) extends Module {
     // Bus.
     val dbus = new DBusIO(p)
     val last = Output(Bool())
+
+    val vstoreCount = Output(UInt(1.W))
   })
+
 
   // A usable amount of outstanding transactions.
   val cmdqDepth = 8
@@ -253,6 +256,7 @@ class VLdSt(p: Parameters) extends Module {
   ctrl.io.in.bits.write := q.io.out.bits.IsStore()
   ctrl.io.in.bits.widx  := q.io.out.bits.vd.addr
   assert(!(ctrl.io.in.valid && !ctrl.io.in.ready))
+  io.vstoreCount := ctrl.io.in.valid && ctrl.io.in.ready;
 
   data.io.in.valid := rdataEn
   data.io.in.bits.wdata := Swizzle(false, 8, rdataAshf, io.read.data)
