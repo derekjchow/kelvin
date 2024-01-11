@@ -46,7 +46,7 @@ cc_binary(
     deps = [
         ":kelvin_if",
         ":sim_libs",
-        "//hdl/chisel:core_cc_library",
+        "//hdl/chisel/src/kelvin:core_cc_library",
         "@com_google_absl//absl/flags:flag",
         "@com_google_absl//absl/flags:parse",
         "@com_google_absl//absl/flags:usage",
@@ -62,7 +62,7 @@ cc_binary(
     deps = [
         ":kelvin_if",
         ":sim_libs",
-        "//hdl/chisel:kelvin_cc_library",
+        "//hdl/chisel/src/matcha:kelvin_cc_library",
     ],
 )
 
@@ -74,7 +74,7 @@ cc_test(
     ],
     deps = [
         ":sim_libs",
-        "//hdl/chisel:dbus2axi_cc_library",
+        "//hdl/chisel/src/kelvin:dbus2axi_cc_library",
     ],
 )
 
@@ -87,7 +87,7 @@ cc_test(
     deps = [
         ":kelvin_if",
         ":sim_libs",
-        "//hdl/chisel:l1dcache_cc_library",
+        "//hdl/chisel/src/kelvin:l1dcache_cc_library",
     ],
 )
 
@@ -102,7 +102,7 @@ cc_test(
     deps = [
         ":kelvin_if",
         ":sim_libs",
-        "//hdl/chisel:l1dcachebank_cc_library",
+        "//hdl/chisel/src/kelvin:l1dcachebank_cc_library",
     ],
 )
 
@@ -114,7 +114,7 @@ cc_test(
     deps = [
         ":kelvin_if",
         ":sim_libs",
-        "//hdl/chisel:l1icache_cc_library",
+        "//hdl/chisel/src/kelvin:l1icache_cc_library",
     ],
 )
 
@@ -139,7 +139,7 @@ cc_test(
         ":kelvin_if",
         ":sim_libs",
         ":valu",
-        "//hdl/chisel:valu_cc_library",
+        "//hdl/chisel/src/kelvin:valu_cc_library",
     ],
 )
 
@@ -153,7 +153,7 @@ cc_test(
         ":kelvin_if",
         ":sim_libs",
         ":valu",
-        "//hdl/chisel:valuint_cc_library",
+        "//hdl/chisel/src/kelvin:valuint_cc_library",
     ],
 )
 
@@ -191,7 +191,7 @@ cc_test(
         ":kelvin_if",
         ":sim_libs",
         ":vencodeop",
-        "//hdl/chisel:vcmdq_cc_library",
+        "//hdl/chisel/src/kelvin:vcmdq_cc_library",
     ],
 )
 
@@ -203,7 +203,7 @@ cc_test(
     deps = [
         ":kelvin_if",
         ":sim_libs",
-        "//hdl/chisel:vconvalu_cc_library",
+        "//hdl/chisel/src/kelvin:vconvalu_cc_library",
     ],
 )
 
@@ -217,7 +217,7 @@ cc_test(
         ":kelvin_if",
         ":sim_libs",
         ":vencodeop",
-        "//hdl/chisel:vconvctrl_cc_library",
+        "//hdl/chisel/src/kelvin:vconvctrl_cc_library",
     ],
 )
 
@@ -231,7 +231,7 @@ cc_test(
         ":kelvin_if",
         ":sim_libs",
         ":vdecode",
-        "//hdl/chisel:vdecodeinstruction_cc_library",
+        "//hdl/chisel/src/kelvin:vdecodeinstruction_cc_library",
     ],
 )
 
@@ -244,7 +244,7 @@ cc_test(
         ":kelvin_if",
         ":sim_libs",
         ":vdecode",
-        "//hdl/chisel:vdecode_cc_library",
+        "//hdl/chisel/src/kelvin:vdecode_cc_library",
     ],
 )
 
@@ -257,7 +257,7 @@ cc_test(
         ":kelvin_if",
         ":sim_libs",
         ":vencodeop",
-        "//hdl/chisel:vldst_cc_library",
+        "//hdl/chisel/src/kelvin:vldst_cc_library",
     ],
 )
 
@@ -271,7 +271,7 @@ cc_test(
         ":kelvin_if",
         ":sim_libs",
         ":vencodeop",
-        "//hdl/chisel:vld_cc_library",
+        "//hdl/chisel/src/kelvin:vld_cc_library",
     ],
 )
 
@@ -284,7 +284,7 @@ cc_test(
     deps = [
         ":kelvin_if",
         ":sim_libs",
-        "//hdl/chisel:vregfilesegment_cc_library",
+        "//hdl/chisel/src/kelvin:vregfilesegment_cc_library",
     ],
 )
 
@@ -296,7 +296,7 @@ cc_test(
     deps = [
         ":kelvin_if",
         ":sim_libs",
-        "//hdl/chisel:vregfile_cc_library",
+        "//hdl/chisel/src/kelvin:vregfile_cc_library",
     ],
 )
 
@@ -309,6 +309,6 @@ cc_test(
         ":kelvin_if",
         ":sim_libs",
         ":vencodeop",
-        "//hdl/chisel:vst_cc_library",
+        "//hdl/chisel/src/kelvin:vst_cc_library",
     ],
 )
