@@ -17,6 +17,7 @@ package kelvin
 import chisel3._
 import chisel3.util._
 import common._
+import _root_.circt.stage.ChiselStage
 
 object Dvu {
   def apply(p: Parameters): Dvu = {
@@ -155,5 +156,5 @@ class Dvu(p: Parameters) extends Module {
 
 object EmitDvu extends App {
   val p = new Parameters
-  (new chisel3.stage.ChiselStage).emitVerilog(new Dvu(p), args)
+  ChiselStage.emitSystemVerilogFile(new Dvu(p), args)
 }

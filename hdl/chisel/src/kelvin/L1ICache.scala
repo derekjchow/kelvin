@@ -17,6 +17,7 @@ package kelvin
 import chisel3._
 import chisel3.util._
 import common._
+import _root_.circt.stage.ChiselStage
 
 object L1ICache {
   def apply(p: Parameters): L1ICache = {
@@ -268,5 +269,5 @@ class L1ICache(p: Parameters) extends Module {
 
 object EmitL1ICache extends App {
   val p = new Parameters
-  (new chisel3.stage.ChiselStage).emitVerilog(new L1ICache(p), args)
+  ChiselStage.emitSystemVerilogFile(new L1ICache(p), args)
 }

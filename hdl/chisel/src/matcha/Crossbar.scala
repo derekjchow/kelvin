@@ -16,6 +16,7 @@ package matcha
 
 import chisel3._
 import chisel3.util._
+import _root_.circt.stage.ChiselStage
 
 object Crossbar {
   def apply(ports: Int, addrbits: Int, databits: Int, idbits: Int) = {
@@ -69,7 +70,7 @@ class Crossbar(ports: Int, addrbits: Int, databits: Int, idbits: Int) extends Mo
   val amsb = addrbits - 1
   val indexbits = addrbits - alsb
 
-  withReset(reset.asAsyncReset()) {
+  withReset(reset.asAsyncReset) {
     // ---------------------------------------------------------------------------
     // Arbitrate.
     val csel0 = RegInit(1.U(ports.W))
@@ -207,5 +208,5 @@ class Crossbar(ports: Int, addrbits: Int, databits: Int, idbits: Int) extends Mo
 
 object EmitCrossbar extends App {
   // 4MB = 2^22 = 2^17 * 256/8
-  (new chisel3.stage.ChiselStage).emitVerilog(new Crossbar(4, 22, 256, 8), args)
+  ChiselStage.emitSystemVerilogFile(new Crossbar(4, 22, 256, 8), args)
 }

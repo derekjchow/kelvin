@@ -18,6 +18,7 @@ package kelvin
 
 import chisel3._
 import chisel3.util._
+import _root_.circt.stage.ChiselStage
 
 // VAluInt is foremost an ML depthwise and activiation unit with pipelining
 // behaviors optimized to this functionality. All operations are pipelined with
@@ -994,7 +995,7 @@ class VAluIntLane extends Module {
 
       val xeq = cmp_a(m,l) === cmp_b(m,l)
       val xne = cmp_a(m,l) =/= cmp_b(m,l)
-      val slt = cmp_a(m,l).asSInt() < cmp_b(m,l).asSInt()
+      val slt = cmp_a(m,l).asSInt < cmp_b(m,l).asSInt
       val ult = cmp_a(m,l) < cmp_b(m,l)
       val sle = slt || xeq
       val ule = ult || xeq
@@ -1542,5 +1543,5 @@ class VAluIntLane extends Module {
 
 object EmitVAluInt extends App {
   val p = new Parameters
-  (new chisel3.stage.ChiselStage).emitVerilog(new VAluInt(p, 0), args)
+  ChiselStage.emitSystemVerilogFile(new VAluInt(p, 0), args)
 }

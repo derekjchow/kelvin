@@ -1,0 +1,40 @@
+load("@rules_foreign_cc//foreign_cc:defs.bzl", "configure_make")
+
+package(default_visibility = ["//visibility:public"])
+
+filegroup(
+    name = "all_srcs",
+    srcs = glob(["**"]),
+)
+
+configure_make(
+    name = "glibc-2.37",
+    args = ["-j"],
+    copts = [
+        "-O2",
+    ],
+    lib_source = "@glibc-2.37//:all_srcs",
+    out_shared_libs = [
+        "ld-linux-x86-64.so.2",
+        "libanl.so.1",
+        "libBrokenLocale.so.1",
+        "libc_malloc_debug.so.0",
+        "libcrypt.so.1",
+        "libc.so.6",
+        "libdl.so.2",
+        "libm.so.6",
+        "libmvec.so.1",
+        "libnsl.so.1",
+        "libnss_compat.so.2",
+        "libnss_db.so.2",
+        "libnss_dns.so.2",
+        "libnss_files.so.2",
+        "libnss_hesiod.so.2",
+        "libpthread.so.0",
+        "libresolv.so.2",
+        "librt.so.1",
+        "libthread_db.so.1",
+        "libutil.so.1",
+    ],
+    targets = ["all", "install"],
+)

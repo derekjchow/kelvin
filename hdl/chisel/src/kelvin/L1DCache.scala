@@ -18,6 +18,7 @@ import chisel3._
 import chisel3.util._
 import chisel3.experimental.ChiselEnum
 import common._
+import _root_.circt.stage.ChiselStage
 
 object L1DCache {
   def apply(p: Parameters): L1DCache = {
@@ -690,10 +691,10 @@ class L1DCacheBank(p: Parameters) extends Module {
 
 object EmitL1DCache extends App {
   val p = new Parameters
-  (new chisel3.stage.ChiselStage).emitVerilog(new L1DCache(p), args)
+  ChiselStage.emitSystemVerilogFile(new L1DCache(p), args)
 }
 
 object EmitL1DCacheBank extends App {
   val p = new Parameters
-  (new chisel3.stage.ChiselStage).emitVerilog(new L1DCacheBank(p), args)
+  ChiselStage.emitSystemVerilogFile(new L1DCacheBank(p), args)
 }

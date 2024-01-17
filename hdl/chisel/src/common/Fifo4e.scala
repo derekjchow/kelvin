@@ -16,6 +16,7 @@ package common
 
 import chisel3._
 import chisel3.util._
+import _root_.circt.stage.ChiselStage
 
 // Fifo4 with entry output and no output registration stage.
 
@@ -143,5 +144,5 @@ class Fifo4e[T <: Data](t: T, n: Int) extends Module {
 }
 
 object EmitFifo4e extends App {
-  (new chisel3.stage.ChiselStage).emitVerilog(new Fifo4e(UInt(8.W), 10), args)
+  ChiselStage.emitSystemVerilogFile(new Fifo4e(UInt(8.W), 10), args)
 }

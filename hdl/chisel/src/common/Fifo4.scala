@@ -16,6 +16,7 @@ package common
 
 import chisel3._
 import chisel3.util._
+import _root_.circt.stage.ChiselStage
 
 object Fifo4 {
   def apply[T <: Data](t: T, n: Int) = {
@@ -188,5 +189,5 @@ class Fifo4[T <: Data](t: T, n: Int) extends Module {
 }
 
 object EmitFifo4 extends App {
-  (new chisel3.stage.ChiselStage).emitVerilog(new Fifo4(UInt(8.W), 11), args)
+  ChiselStage.emitSystemVerilogFile(new Fifo4(UInt(8.W), 11), args)
 }

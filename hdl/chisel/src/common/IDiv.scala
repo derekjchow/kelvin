@@ -17,6 +17,7 @@ package common
 import chisel3._
 import chisel3.util._
 import common._
+import _root_.circt.stage.ChiselStage
 
 // An integer divide unit, to be fused with fdiv.
 
@@ -185,5 +186,5 @@ object IDivComb3 {
 }
 
 object EmitIDiv extends App {
-  (new chisel3.stage.ChiselStage).emitVerilog(new IDiv(1), args)
+  ChiselStage.emitSystemVerilogFile(new IDiv(1), args)
 }

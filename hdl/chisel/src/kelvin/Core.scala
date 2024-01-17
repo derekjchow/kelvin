@@ -17,6 +17,7 @@ package kelvin
 import chisel3._
 import chisel3.util._
 import common._
+import _root_.circt.stage.ChiselStage
 
 object Core {
   def apply(p: Parameters): Core = {
@@ -86,5 +87,5 @@ class Core(p: Parameters) extends Module {
 
 object EmitCore extends App {
   val p = new Parameters
-  (new chisel3.stage.ChiselStage).emitVerilog(new Core(p), args)
+  ChiselStage.emitSystemVerilogFile(new Core(p), args)
 }

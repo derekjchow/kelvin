@@ -16,6 +16,7 @@ package common
 
 import chisel3._
 import chisel3.util._
+import _root_.circt.stage.ChiselStage
 
 object Slice {
   def apply[T <: Data](t: T, doubleBuffered: Boolean = true,
@@ -110,33 +111,33 @@ class Slice[T <: Data](t: T, doubleBuffered: Boolean,
 }
 
 object EmitSlice extends App {
-  (new chisel3.stage.ChiselStage).emitVerilog(new Slice(UInt(32.W), false, false, false), args)
+  ChiselStage.emitSystemVerilogFile(new Slice(UInt(32.W), false, false, false), args)
 }
 
 object EmitSlice_1 extends App {
-  (new chisel3.stage.ChiselStage).emitVerilog(new Slice(UInt(32.W), false, false, true), args)
+  ChiselStage.emitSystemVerilogFile(new Slice(UInt(32.W), false, false, true), args)
 }
 
 object EmitSlice_2 extends App {
-  (new chisel3.stage.ChiselStage).emitVerilog(new Slice(UInt(32.W), false, true, false), args)
+  ChiselStage.emitSystemVerilogFile(new Slice(UInt(32.W), false, true, false), args)
 }
 
 object EmitSlice_3 extends App {
-  (new chisel3.stage.ChiselStage).emitVerilog(new Slice(UInt(32.W), false, true, true), args)
+  ChiselStage.emitSystemVerilogFile(new Slice(UInt(32.W), false, true, true), args)
 }
 
 object EmitSlice_4 extends App {
-  (new chisel3.stage.ChiselStage).emitVerilog(new Slice(UInt(32.W), true, false, false), args)
+  ChiselStage.emitSystemVerilogFile(new Slice(UInt(32.W), true, false, false), args)
 }
 
 object EmitSlice_5 extends App {
-  (new chisel3.stage.ChiselStage).emitVerilog(new Slice(UInt(32.W), true, false, true), args)
+  ChiselStage.emitSystemVerilogFile(new Slice(UInt(32.W), true, false, true), args)
 }
 
 object EmitSlice_6 extends App {
-  (new chisel3.stage.ChiselStage).emitVerilog(new Slice(UInt(32.W), true, true, false), args)
+  ChiselStage.emitSystemVerilogFile(new Slice(UInt(32.W), true, true, false), args)
 }
 
 object EmitSlice_7 extends App {
-  (new chisel3.stage.ChiselStage).emitVerilog(new Slice(UInt(32.W), true, true, true), args)
+  ChiselStage.emitSystemVerilogFile(new Slice(UInt(32.W), true, true, true), args)
 }

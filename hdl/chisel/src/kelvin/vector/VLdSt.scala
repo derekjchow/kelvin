@@ -19,6 +19,7 @@ package kelvin
 import chisel3._
 import chisel3.util._
 import common._
+import _root_.circt.stage.ChiselStage
 
 object VLdSt {
   def apply(p: Parameters): VLdSt = {
@@ -314,5 +315,5 @@ class VLdSt(p: Parameters) extends Module {
 
 object EmitVLdSt extends App {
   val p = new Parameters
-  (new chisel3.stage.ChiselStage).emitVerilog(new VLdSt(p), args)
+  ChiselStage.emitSystemVerilogFile(new VLdSt(p), args)
 }
