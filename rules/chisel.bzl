@@ -14,7 +14,7 @@
 
 """chisel build rules"""
 
-load("@io_bazel_rules_scala//scala:scala.bzl", "scala_binary", "scala_library")
+load("@io_bazel_rules_scala//scala:scala.bzl", "scala_binary", "scala_library", "scala_test")
 load("@kelvin_hw//rules:verilator.bzl", "verilator_cc_library")
 load("@rules_hdl//verilog:providers.bzl", "verilog_library")
 
@@ -58,6 +58,25 @@ def chisel_binary(
         deps = [
             "@kelvin_hw//lib:chisel_lib",
             "@org_chipsalliance_chisel_plugin//jar",
+        ] + deps,
+        scalacopts = SCALA_COPTS,
+        visibility = visibility,
+    )
+
+def chisel_test(
+        name,
+        srcs = [],
+        deps = [],
+        visibility = None):
+    scala_test(
+        name = name,
+        srcs = srcs,
+        deps = [
+            "@kelvin_hw//lib:chisel_lib",
+            "@org_chipsalliance_chisel_plugin//jar",
+            "@org_scalatest_scalatest//jar",
+            "@edu_berkeley_cs_firrtl//jar",
+            "@edu_berkeley_cs_chiseltest//jar",
         ] + deps,
         scalacopts = SCALA_COPTS,
         visibility = visibility,

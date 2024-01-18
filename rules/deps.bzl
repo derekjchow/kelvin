@@ -153,6 +153,26 @@ def kelvin_chisel_deps():
         licenses = ["notice"],
     )
 
+    # Chiseltest
+    scala_maven_import_external(
+        name = "edu_berkeley_cs_firrtl",
+        artifact = "edu.berkeley.cs:firrtl_2.13:%s" % "5.0.0",
+        server_urls = default_maven_server_urls(),
+        licenses = ["notice"],
+    )
+    scala_maven_import_external(
+        name = "org_scalatest_scalatest",
+        artifact = "org.scalatest:scalatest_3:%s" % "3.2.16",
+        server_urls = default_maven_server_urls(),
+        licenses = ["notice"],
+    )
+    scala_maven_import_external(
+        name = "edu_berkeley_cs_chiseltest",
+        artifact = "edu.berkeley.cs:chiseltest_2.13:%s" % "5.0.2",
+        server_urls = default_maven_server_urls(),
+        licenses = ["notice"],
+    )
+
 def kelvin_deps():
     """Full kelvin dependent repositories
 
