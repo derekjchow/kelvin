@@ -31,6 +31,7 @@ genrule(
     cmd = """
     echo "\\`define STOP_COND 0
 \\`define PRINTF_COND 0
+\\`define ASSERT_VERBOSE_COND 0
 " > $(location kelvin.sv)
     cat $(location //hdl/chisel/src/matcha:Kelvin.sv) >> $(location kelvin.sv)
     cp -f $(location //hdl/verilog:ClockGate.v) $(location ClockGate.v)
