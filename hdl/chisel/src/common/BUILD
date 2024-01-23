@@ -45,3 +45,24 @@ chisel_test(
         ":fp",
     ],
 )
+
+chisel_library(
+    name = "fpu",
+    srcs = [
+        "Fpu.scala",
+    ],
+    deps = [
+        ":fp",
+    ],
+)
+
+chisel_test(
+    name = "fpu_test",
+    srcs = [
+        "FpuTest.scala",
+    ],
+    deps = [
+        ":fp",
+        ":fpu",
+    ],
+)
