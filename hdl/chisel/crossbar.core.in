@@ -1,0 +1,34 @@
+CAPI=2:
+# Copyright 2023 Google LLC
+# Licensed under the Apache License, Version 2.0, see LICENSE for details.
+# SPDX-License-Identifier: Apache-2.0
+name: "google:ip:crossbar:0.1"
+description: "Kelvin SRAM Crossbar"
+filesets:
+  files_rtl:
+    files:
+      - crossbar.sv
+    file_type: systemVerilogSource
+
+parameters:
+  SYNTHESIS:
+    datatype: bool
+    paramtype: vlogdefine
+
+
+targets:
+  default: &default_target
+    filesets:
+      - files_rtl
+    toplevel: crossbar
+
+  lint:
+    <<: *default_target
+    default_tool: verilator
+    parameters:
+      - SYNTHESIS=true
+    tools:
+      verilator:
+        mode: lint-only
+        verilator_options:
+          - "-Wall"

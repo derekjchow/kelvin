@@ -16,12 +16,14 @@ genrule(
     name = "matcha_kelvin_verilog",
     srcs = [
         "//hdl/chisel/src/matcha:Kelvin.sv",
+        "//hdl/chisel/src/matcha:Crossbar.sv",
         "//hdl/verilog:ClockGate.v",
         "//hdl/verilog:Sram_1rw_256x256.v",
         "//hdl/verilog:Sram_1rwm_256x288.v",
     ],
     outs = [
         "kelvin.sv",
+        "crossbar.sv",
         "ClockGate.v",
         "Sram_1rw_256x256.v",
         "Sram_1rwm_256x288.v",
@@ -34,6 +36,11 @@ genrule(
 \\`define ASSERT_VERBOSE_COND 0
 " > $(location kelvin.sv)
     cat $(location //hdl/chisel/src/matcha:Kelvin.sv) >> $(location kelvin.sv)
+    echo "\\`define STOP_COND 0
+\\`define PRINTF_COND 0
+\\`define ASSERT_VERBOSE_COND 0
+" > $(location crossbar.sv)
+    cat $(location //hdl/chisel/src/matcha:Crossbar.sv) >> $(location crossbar.sv)
     cp -f $(location //hdl/verilog:ClockGate.v) $(location ClockGate.v)
     cp -f $(location //hdl/verilog:Sram_1rw_256x256.v) $(location Sram_1rw_256x256.v)
     cp -f $(location //hdl/verilog:Sram_1rwm_256x288.v) $(location Sram_1rwm_256x288.v)
@@ -46,10 +53,17 @@ genrule(
 genrule(
     name = "kelvin_core",
     srcs = [
+        "crossbar.core.in",
         "kelvin.core.in",
         "matcha_kelvin_verilog",
     ],
-    outs = ["kelvin.core"],
-    cmd = "cp -f $(location kelvin.core.in) $@",
+    outs = [
+        "crossbar.core",
+        "kelvin.core",
+    ],
+    cmd = """
+    cp -f $(location kelvin.core.in) $(location kelvin.core)
+    cp -f $(location crossbar.core.in) $(location crossbar.core)
+    """,
     visibility = ["//visibility:public"],
 )

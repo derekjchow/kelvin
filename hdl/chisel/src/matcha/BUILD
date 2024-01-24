@@ -40,3 +40,10 @@ chisel_cc_library(
         "//hdl/verilog:sram_1rw_256x288",
     ],
 )
+
+chisel_cc_library(
+    name = "crossbar_cc_library",
+    chisel_lib = ":matcha",
+    emit_class = "matcha.EmitCrossbar",
+    module_name = "Crossbar",
+)
