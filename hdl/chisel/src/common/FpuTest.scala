@@ -24,20 +24,26 @@ class FpuTester extends Module {
   val io = IO(new Bundle {
     val ina    = Input(UInt(32.W))
     val inb    = Input(UInt(32.W))
-    val op     = Input(FpuOp())
+    val inc    = Input(UInt(32.W))
+    val state1 = Output(new FpuState1)
+    val state2 = Output(new FpuState2)
     val out    = Output(new Fp32)
   })
 
   val fp_a = Fp32.fromWord(io.ina)
   val fp_b = Fp32.fromWord(io.inb)
+  val fp_c = Fp32.fromWord(io.inc)
 
   val cmd = Wire(new FpuCmd)
   cmd.ina := fp_a
   cmd.inb := fp_b
-  cmd.op := io.op
+  cmd.inc := fp_c
 
   val stage1 = Fpu.FpuStage1(cmd)
-  io.out := Fpu.FpuStage2(stage1)
+  val stage2 = Fpu.FpuStage2(stage1)
+  io.state1 := stage1
+  io.state2 := stage2
+  io.out := Fpu.FpuStage3(stage2)
 }
 
 class FpuSpec extends AnyFreeSpec with ChiselScalatestTester {
@@ -50,80 +56,157 @@ class FpuSpec extends AnyFreeSpec with ChiselScalatestTester {
     int
   }
 
-  "Zero" in {
+  def GetFloat(exponent: Int, mantissa: Int): Float = {
+    val int_val = (exponent << 23) + mantissa
+    java.lang.Float.intBitsToFloat(int_val)
+  }
+
+  "Mul Zero" in {
     test(new FpuTester()) { dut =>
-      dut.io.op.poke(FpuOp.FpuMul)
       dut.io.ina.poke(Float2BigInt(0))
       dut.io.inb.poke(Float2BigInt(42))
+      dut.io.inc.poke(Float2BigInt(0))
       assertResult(0) { dut.io.out.sign.peekInt() }
       assertResult(0) { dut.io.out.exponent.peekInt() }
       assertResult(0) { dut.io.out.mantissa.peekInt() }
     }
   }
 
-  "Identity" in {
+  "Mul Identity" in {
     test(new FpuTester()) { dut =>
-      dut.io.op.poke(FpuOp.FpuMul)
       dut.io.ina.poke(Float2BigInt(1))
       dut.io.inb.poke(Float2BigInt(42))
+      dut.io.inc.poke(Float2BigInt(0))
       assertResult(0) { dut.io.out.sign.peekInt() }
       assertResult(132) { dut.io.out.exponent.peekInt() }
       assertResult(2621440) { dut.io.out.mantissa.peekInt() }
     }
   }
 
-  "Negative" in {
+  "Mul Negative" in {
     test(new FpuTester()) { dut =>
-      dut.io.op.poke(FpuOp.FpuMul)
       dut.io.ina.poke(Float2BigInt(-1.0f))
       dut.io.inb.poke(Float2BigInt(42))
+      dut.io.inc.poke(Float2BigInt(0))
       assertResult(1) { dut.io.out.sign.peekInt() }
       assertResult(132) { dut.io.out.exponent.peekInt() }
       assertResult(2621440) { dut.io.out.mantissa.peekInt() }
     }
   }
 
-  "Half" in {
+  "Mul Half" in {
     test(new FpuTester()) { dut =>
-      dut.io.op.poke(FpuOp.FpuMul)
       dut.io.ina.poke(Float2BigInt(0.5f))
       dut.io.inb.poke(Float2BigInt(42))
+      dut.io.inc.poke(Float2BigInt(0))
       assertResult(0) { dut.io.out.sign.peekInt() }
       assertResult(131) { dut.io.out.exponent.peekInt() }
       assertResult(2621440) { dut.io.out.mantissa.peekInt() }
     }
   }
 
-  "Overflow" in {
+  "Mul Overflow" in {
     test(new FpuTester()) { dut =>
-      dut.io.op.poke(FpuOp.FpuMul)
       dut.io.ina.poke(Float2BigInt(2e30f))
       dut.io.inb.poke(Float2BigInt(2e30f))
+      dut.io.inc.poke(Float2BigInt(0))
       assertResult(0) { dut.io.out.sign.peekInt() }
       assertResult(255) { dut.io.out.exponent.peekInt() }
       assertResult(0) { dut.io.out.mantissa.peekInt() }
     }
   }
 
-  "Rounds to Zero" in {
+  "Mul Rounds to Zero" in {
     test(new FpuTester()) { dut =>
-      dut.io.op.poke(FpuOp.FpuMul)
       dut.io.ina.poke(Float2BigInt(1e-30f))
       dut.io.inb.poke(Float2BigInt(1e-30f))
+      dut.io.inc.poke(Float2BigInt(0))
       assertResult(0) { dut.io.out.sign.peekInt() }
       assertResult(0) { dut.io.out.exponent.peekInt() }
       assertResult(0) { dut.io.out.mantissa.peekInt() }
     }
   }
 
-  "NaN" in {
+  "Mul NaN" in {
     test(new FpuTester()) { dut =>
-      dut.io.op.poke(FpuOp.FpuMul)
       dut.io.ina.poke(Float2BigInt(Float.NaN))
       dut.io.inb.poke(Float2BigInt(4.0f))
+      dut.io.inc.poke(Float2BigInt(0))
       assertResult(0) { dut.io.out.sign.peekInt() }
       assertResult(255) { dut.io.out.exponent.peekInt() }
       assert(dut.io.out.mantissa.peekInt() != 0)
+    }
+  }
+
+  "Fma" in {
+    test(new FpuTester()) { dut =>
+      dut.io.ina.poke(Float2BigInt(2.0f))
+      dut.io.inb.poke(Float2BigInt(1.5f))
+      dut.io.inc.poke(Float2BigInt(6.0f))
+
+      assertResult(0) { dut.io.out.sign.peekInt() }
+      assertResult(130) { dut.io.out.exponent.peekInt() }
+      assertResult(1048576) { dut.io.out.mantissa.peekInt() }
+    }
+  }
+
+  "Fms" in {
+    test(new FpuTester()) { dut =>
+      dut.io.ina.poke(Float2BigInt(2.0f))
+      dut.io.inb.poke(Float2BigInt(1.5f))
+      dut.io.inc.poke(Float2BigInt(-6.0f))
+
+      assertResult(1) { dut.io.out.sign.peekInt() }
+      assertResult(128) { dut.io.out.exponent.peekInt() }
+      assertResult(4194304) { dut.io.out.mantissa.peekInt() }
+    }
+  }
+
+  "Fnma" in {
+    test(new FpuTester()) { dut =>
+      dut.io.ina.poke(Float2BigInt(-2.0f))
+      dut.io.inb.poke(Float2BigInt(1.5f))
+      dut.io.inc.poke(Float2BigInt(13.5f))
+
+      assertResult(0) { dut.io.out.sign.peekInt() }
+      assertResult(130) { dut.io.out.exponent.peekInt() }
+      assertResult(2621440) { dut.io.out.mantissa.peekInt() }
+    }
+  }
+
+  "Fnms" in {
+    test(new FpuTester()) { dut =>
+      dut.io.ina.poke(Float2BigInt(-2.0f))
+      dut.io.inb.poke(Float2BigInt(1.5f))
+      dut.io.inc.poke(Float2BigInt(-13.5f))
+
+      assertResult(1) { dut.io.out.sign.peekInt() }
+      assertResult(131) { dut.io.out.exponent.peekInt() }
+      assertResult(262144) { dut.io.out.mantissa.peekInt() }
+    }
+  }
+
+  "Add" in {
+    test(new FpuTester()) { dut =>
+      dut.io.ina.poke(Float2BigInt(9000.0f))
+      dut.io.inb.poke(Float2BigInt(1.0f))
+      dut.io.inc.poke(Float2BigInt(1.0f))
+
+      assertResult(0) { dut.io.out.sign.peekInt() }
+      assertResult(140) { dut.io.out.exponent.peekInt() }
+      assertResult(828416) { dut.io.out.mantissa.peekInt() }
+    }
+  }
+
+  "Sub" in {
+    test(new FpuTester()) { dut =>
+      dut.io.ina.poke(Float2BigInt(15.0f))
+      dut.io.inb.poke(Float2BigInt(1.0f))
+      dut.io.inc.poke(Float2BigInt(-100.0f))
+
+      assertResult(1) { dut.io.out.sign.peekInt() }
+      assertResult(133) { dut.io.out.exponent.peekInt() }
+      assertResult(2752512) { dut.io.out.mantissa.peekInt() }
     }
   }
 }

@@ -38,9 +38,10 @@ class Fp32 extends Bundle {
     (exponent === "b11111111".U) && (mantissa =/= 0.U)
   }
 
-  // The mantissa is generally the fractional component of significand.
+  // The mantissa is the fractional component of significand.
+  // There is a leading 1, except for subnormal numbers.
   def significand(): UInt = {
-    Cat(1.U(1.W), mantissa)
+    Cat(exponent.orR, mantissa)
   }
 }
 

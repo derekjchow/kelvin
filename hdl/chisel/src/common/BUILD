@@ -24,6 +24,7 @@ chisel_library(
         "Fifo.scala",
         "IDiv.scala",
         "Library.scala",
+        "MathUtil.scala",
         "Slice.scala",
     ],
     visibility = ["//visibility:public"],
@@ -52,6 +53,7 @@ chisel_library(
         "Fpu.scala",
     ],
     deps = [
+        ":common",
         ":fp",
     ],
 )
