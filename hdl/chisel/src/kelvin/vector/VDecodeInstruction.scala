@@ -77,19 +77,19 @@ class VDecodeInstruction(p: Parameters) extends Module {
 
   def RActiveVsVt(i: Int): UInt = {
     assert(i == 2 || i == 3)
-    val vs  = OneHot(vsbits, 64)
-    val vsm = MuxOR(m, ToM(OneHot(vsbits(5,2), 16)))
+    val vs  = UIntToOH(vsbits, 64)
+    val vsm = MuxOR(m, ToM(UIntToOH(vsbits(5,2), 16)))
     val vt =
       if (i == 2) {
-        MuxOR(!x, OneHot(vtbits, 64))
+        MuxOR(!x, UIntToOH(vtbits, 64))
       } else {
-        MuxOR(!x3, OneHot(vtbits, 64))
+        MuxOR(!x3, UIntToOH(vtbits, 64))
       }
     val vtm =
       if (i == 2) {
-        MuxOR(m && !x, ToM(OneHot(vtbits(5,2), 16)))
+        MuxOR(m && !x, ToM(UIntToOH(vtbits(5,2), 16)))
       } else {
-        MuxOR(m && !x3, ToM(OneHot(vtbits(5,2), 16)))
+        MuxOR(m && !x3, ToM(UIntToOH(vtbits(5,2), 16)))
       }
     assert(vs.getWidth == 64)
     assert(vt.getWidth == 64)
@@ -100,8 +100,8 @@ class VDecodeInstruction(p: Parameters) extends Module {
 
   def RActiveVs1(): UInt = {
     // {vs+1} or {vsm+4}
-    val vs  = Cat(OneHot(vsbits, 64), 0.U(1.W))(63,0)
-    val vsm = MuxOR(m, Cat(ToM(OneHot(vsbits(5,2), 16)), 0.U(4.W))(63,0))
+    val vs  = Cat(UIntToOH(vsbits, 64), 0.U(1.W))(63,0)
+    val vsm = MuxOR(m, Cat(ToM(UIntToOH(vsbits(5,2), 16)), 0.U(4.W))(63,0))
     assert(vs.getWidth == 64)
     assert(vsm.getWidth == 64)
     vs | vsm
@@ -109,8 +109,8 @@ class VDecodeInstruction(p: Parameters) extends Module {
 
   def RActiveVs2(): UInt = {
     // {vs+2} or {vsm+8}
-    val vs  = Cat(OneHot(vsbits, 64), 0.U(2.W))(63,0)
-    val vsm = MuxOR(m, Cat(ToM(OneHot(vsbits(5,2), 16)), 0.U(8.W))(63,0))
+    val vs  = Cat(UIntToOH(vsbits, 64), 0.U(2.W))(63,0)
+    val vsm = MuxOR(m, Cat(ToM(UIntToOH(vsbits(5,2), 16)), 0.U(8.W))(63,0))
     assert(vs.getWidth == 64)
     assert(vsm.getWidth == 64)
     vs | vsm
@@ -118,32 +118,32 @@ class VDecodeInstruction(p: Parameters) extends Module {
 
   def RActiveVs3(): UInt = {
     // {vs+3} or {vsm+12}
-    val vs  = Cat(OneHot(vsbits, 64), 0.U(3.W))(63,0)
-    val vsm = MuxOR(m, Cat(ToM(OneHot(vsbits(5,2), 16)), 0.U(12.W))(63,0))
+    val vs  = Cat(UIntToOH(vsbits, 64), 0.U(3.W))(63,0)
+    val vsm = MuxOR(m, Cat(ToM(UIntToOH(vsbits(5,2), 16)), 0.U(12.W))(63,0))
     assert(vs.getWidth == 64)
     assert(vsm.getWidth == 64)
     vs | vsm
   }
 
   def RActiveVd(): UInt = {
-    val vd  = OneHot(vdbits, 64)
-    val vdm = MuxOR(m, ToM(OneHot(vdbits(5,2), 16)))
+    val vd  = UIntToOH(vdbits, 64)
+    val vdm = MuxOR(m, ToM(UIntToOH(vdbits(5,2), 16)))
     assert(vd.getWidth == 64)
     assert(vdm.getWidth == 64)
     vd | vdm
   }
 
   def RActiveVu(): UInt = {
-    val vu  = OneHot(vubits, 64)
-    val vum = MuxOR(m, ToM(OneHot(vubits(5,2), 16)))
+    val vu  = UIntToOH(vubits, 64)
+    val vum = MuxOR(m, ToM(UIntToOH(vubits(5,2), 16)))
     assert(vu.getWidth == 64)
     assert(vum.getWidth == 64)
     vu | vum
   }
 
   def WActiveVd(): UInt = {
-    val vd  = OneHot(vdbits, 64)
-    val vdm = MuxOR(m, ToM(OneHot(vdbits(5,2), 16)))
+    val vd  = UIntToOH(vdbits, 64)
+    val vdm = MuxOR(m, ToM(UIntToOH(vdbits(5,2), 16)))
     assert(vd.getWidth == 64)
     assert(vdm.getWidth == 64)
     vd | vdm
@@ -151,8 +151,8 @@ class VDecodeInstruction(p: Parameters) extends Module {
 
   def WActiveVd1(): UInt = {
     // {vd+1} or {vdm+4}
-    val vd  = Cat(OneHot(vdbits, 64), 0.U(1.W))(63,0)
-    val vdm = MuxOR(m, Cat(ToM(OneHot(vdbits(5,2), 16)), 0.U(4.W))(63,0))
+    val vd  = Cat(UIntToOH(vdbits, 64), 0.U(1.W))(63,0)
+    val vdm = MuxOR(m, Cat(ToM(UIntToOH(vdbits(5,2), 16)), 0.U(4.W))(63,0))
     assert(vd.getWidth == 64)
     assert(vdm.getWidth == 64)
     vd | vdm
@@ -179,15 +179,15 @@ class VDecodeInstruction(p: Parameters) extends Module {
     assert(vy.getWidth == 6)
     assert(vz.getWidth == 6)
 
-    val ra_vs  = OneHot(vs, 64)
-    val ra_vt  = OneHot(vt, 64)
-    val ra_vu  = OneHot(vu, 64)
-    val ra_vx  = OneHot(vx, 64)
-    val ra_vy  = OneHot(vy, 64)
-    val ra_vz  = OneHot(vz, 64)
-    val ra_vxm = MuxOR(m, ToM(OneHot(vx(5,2), 16)))
-    val ra_vym = MuxOR(m, ToM(OneHot(vy(5,2), 16)))
-    val ra_vzm = MuxOR(m, ToM(OneHot(vz(5,2), 16)))
+    val ra_vs  = UIntToOH(vs, 64)
+    val ra_vt  = UIntToOH(vt, 64)
+    val ra_vu  = UIntToOH(vu, 64)
+    val ra_vx  = UIntToOH(vx, 64)
+    val ra_vy  = UIntToOH(vy, 64)
+    val ra_vz  = UIntToOH(vz, 64)
+    val ra_vxm = MuxOR(m, ToM(UIntToOH(vx(5,2), 16)))
+    val ra_vym = MuxOR(m, ToM(UIntToOH(vy(5,2), 16)))
+    val ra_vzm = MuxOR(m, ToM(UIntToOH(vz(5,2), 16)))
     assert(ra_vs.getWidth == 64)
     assert(ra_vt.getWidth == 64)
     assert(ra_vu.getWidth == 64)
@@ -219,12 +219,12 @@ class VDecodeInstruction(p: Parameters) extends Module {
     assert(vy.getWidth == 6)
     assert(vz.getWidth == 6)
 
-    val ra_vs  =                 OneHot(vs, 64)
-    val ra_vt  = MuxOR(!x || !s, OneHot(vt, 64))
-    val ra_vu  = MuxOR(!x || !s, OneHot(vu, 64))
-    val ra_vx  = MuxOR(!x || !s, OneHot(vx, 64))
-    val ra_vy  = MuxOR(!x || !s, OneHot(vy, 64))
-    val ra_vz  = MuxOR(!x,       OneHot(vz, 64))
+    val ra_vs  =                 UIntToOH(vs, 64)
+    val ra_vt  = MuxOR(!x || !s, UIntToOH(vt, 64))
+    val ra_vu  = MuxOR(!x || !s, UIntToOH(vu, 64))
+    val ra_vx  = MuxOR(!x || !s, UIntToOH(vx, 64))
+    val ra_vy  = MuxOR(!x || !s, UIntToOH(vy, 64))
+    val ra_vz  = MuxOR(!x,       UIntToOH(vz, 64))
     assert(ra_vs.getWidth == 64)
     assert(ra_vt.getWidth == 64)
     assert(ra_vu.getWidth == 64)
@@ -493,8 +493,8 @@ class VDecodeInstruction(p: Parameters) extends Module {
   // Depthwise read.
   val (vsdw, vtdw, vudw, vxdw, vydw, vzdw, ractivedw) = DepthwiseRead()
 
-  val ractivedi = ToM(OneHot(vsbits(5,2), 16))
-  val wactivedw = ToM(OneHot(vdbits(5,2), 16))
+  val ractivedi = ToM(UIntToOH(vsbits(5,2), 16))
+  val wactivedw = ToM(UIntToOH(vdbits(5,2), 16))
 
   // Slide composite read.
   val (vssl, vtsl, vusl, vxsl, vysl, vzsl, ractivesl) = SlideRead()

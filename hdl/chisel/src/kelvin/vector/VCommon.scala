@@ -26,7 +26,7 @@ object RegActive {
     assert(regnum.getWidth == 6)
     assert(step <= 4.U)
 
-    val oh = OneHot(regnum(5,2), 16)
+    val oh = UIntToOH(regnum(5,2), 16)
 
     val oh0 = Cat(0.U(3.W), oh(15),
                   0.U(3.W), oh(14),

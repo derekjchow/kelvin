@@ -410,8 +410,8 @@ class VRegfile(p: Parameters) extends Module {
     if (i < writePorts) {
       val wvalid = io.write(i).valid
       val hvalid = if (i < whintPorts) io.whint(i).valid else false.B
-      val woh = MuxOR(io.write(i).valid, OneHot(io.write(i).addr, 64))
-      val hoh = if (i < whintPorts) MuxOR(io.whint(i).valid, OneHot(io.whint(i).addr, 64)) else 0.U
+      val woh = MuxOR(io.write(i).valid, UIntToOH(io.write(i).addr, 64))
+      val hoh = if (i < whintPorts) MuxOR(io.whint(i).valid, UIntToOH(io.whint(i).addr, 64)) else 0.U
       val whoh = woh | hoh
       val whdata = Cat(whoh, whoh)
       assert(whdata.getWidth == 128)

@@ -225,7 +225,7 @@ class Fetch(p: Parameters) extends Module {
   }
 
   when (readDataEn) {
-    val bits = OneHot(readIdx, indices)
+    val bits = UIntToOH(readIdx, indices)
     l0validSet := bits
     l0reqClr   := bits
   }
@@ -237,7 +237,7 @@ class Fetch(p: Parameters) extends Module {
   }
 
   when (aslice.io.in.valid && aslice.io.in.ready) {
-    l0reqSet := OneHot(aslice.io.in.bits(indexMsb, indexLsb), indices)
+    l0reqSet := UIntToOH(aslice.io.in.bits(indexMsb, indexLsb), indices)
   }
 
   when (l0validClr =/= 0.U || l0validSet =/= 0.U) {

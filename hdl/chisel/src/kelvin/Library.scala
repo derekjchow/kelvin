@@ -215,21 +215,6 @@ object WiredOR {
   }
 }
 
-object OneHot {
-  def apply(bits: UInt, count: Int): UInt = {
-    // // UIntToOH(bits, count)
-    // val bools = Wire(Vec(count, Bool()))
-    // for (i <- 0 until count) {
-    //   bools(i) := bits === i.U
-    // }
-    // val r = bools.asUInt
-    // assert(r.getWidth == count)
-    // r
-
-    UIntToOH(bits, count)
-  }
-}
-
 // Page mask for two address ranges, factoring unaligned address overflow.
 object PageMaskShift {
   def apply(address: UInt, length: UInt): UInt = {

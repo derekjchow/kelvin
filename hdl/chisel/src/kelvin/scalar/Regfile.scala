@@ -109,19 +109,11 @@ class Regfile(p: Parameters) extends Module {
   // The write Addr:Data contract is against speculated opcodes. If an opcode
   // is in the shadow of a taken branch it will still Set:Clr the scoreboard,
   // but the actual write will be Masked.
-  val scoreboard_set =
-    MuxOR(io.writeAddr(0).valid, OneHot(io.writeAddr(0).addr, 32)) |
-    MuxOR(io.writeAddr(1).valid, OneHot(io.writeAddr(1).addr, 32)) |
-    MuxOR(io.writeAddr(2).valid, OneHot(io.writeAddr(2).addr, 32)) |
-    MuxOR(io.writeAddr(3).valid, OneHot(io.writeAddr(3).addr, 32))
+  val scoreboard_set = io.writeAddr
+      .map(x => MuxOR(x.valid, UIntToOH(x.addr, 32))).reduce(_|_)
 
-  val scoreboard_clr0 =
-    MuxOR(io.writeData(0).valid, OneHot(io.writeData(0).addr, 32)) |
-    MuxOR(io.writeData(1).valid, OneHot(io.writeData(1).addr, 32)) |
-    MuxOR(io.writeData(2).valid, OneHot(io.writeData(2).addr, 32)) |
-    MuxOR(io.writeData(3).valid, OneHot(io.writeData(3).addr, 32)) |
-    MuxOR(io.writeData(4).valid, OneHot(io.writeData(4).addr, 32)) |
-    MuxOR(io.writeData(5).valid, OneHot(io.writeData(5).addr, 32))
+  val scoreboard_clr0 = io.writeData
+      .map(x => MuxOR(x.valid, UIntToOH(x.addr, 32))).reduce(_|_)
 
   val scoreboard_clr = Cat(scoreboard_clr0(31,1), 0.U(1.W))
 

@@ -353,8 +353,8 @@ class Decode(p: Parameters, pipeline: Int) extends Module {
       d.io.getvl || d.io.getmaxvl || vldst_wb ||
       bruValid && (bruOp(bru.JAL) || bruOp(bru.JALR)) && rdAddr =/= 0.U
 
-  // val scoreboard_spec = Mux(rdMark_valid || d.io.vst, OneHot(rdAddr, 32), 0.U)  // TODO: why was d.io.vst included?
-  val scoreboard_spec = Mux(rdMark_valid, OneHot(rdAddr, 32), 0.U)
+  // val scoreboard_spec = Mux(rdMark_valid || d.io.vst, UIntToOH(rdAddr, 32), 0.U)  // TODO: why was d.io.vst included?
+  val scoreboard_spec = Mux(rdMark_valid, UIntToOH(rdAddr, 32), 0.U)
   io.scoreboard.spec := Cat(scoreboard_spec(31,1), 0.U(1.W))
 
   io.rdMark.valid := decodeEn && rdMark_valid
