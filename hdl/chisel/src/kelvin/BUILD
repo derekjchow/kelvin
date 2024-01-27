@@ -65,8 +65,6 @@ chisel_library(
     ],
 )
 
-
-
 chisel_cc_library(
     name = "core_cc_library",
     chisel_lib = ":kelvin",

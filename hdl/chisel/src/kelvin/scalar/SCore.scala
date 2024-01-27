@@ -59,8 +59,7 @@ class SCore(p: Parameters) extends Module {
   val dvu = Dvu(p)
 
   // Wire up the core.
-  val branchTaken = bru(0).io.taken.valid || bru(1).io.taken.valid ||
-                    bru(2).io.taken.valid || bru(3).io.taken.valid
+  val branchTaken = bru.map(x => x.io.taken.valid).reduce(_||_)
 
   // ---------------------------------------------------------------------------
   // IFlush
@@ -96,11 +95,7 @@ class SCore(p: Parameters) extends Module {
 
   // ---------------------------------------------------------------------------
   // Decode
-  val mask = VecInit(true.B,
-                     decode(0).io.inst.ready,
-                     decode(0).io.inst.ready && decode(1).io.inst.ready,
-                     decode(0).io.inst.ready && decode(1).io.inst.ready &&
-                       decode(2).io.inst.ready)
+  val mask = VecInit(decode.map(_.io.inst.ready).scan(true.B)(_ && _))
 
   for (i <- 0 until 4) {
     decode(i).io.inst.valid := fetch.io.inst.lanes(i).valid && mask(i)
@@ -126,22 +121,11 @@ class SCore(p: Parameters) extends Module {
   decode(3).io.serializeIn := decode(2).io.serializeOut
 
   // In decode update multi-issue scoreboard state.
-  val scoreboard_spec1 = decode(0).io.scoreboard.spec
-  val scoreboard_spec2 = decode(1).io.scoreboard.spec | scoreboard_spec1
-  val scoreboard_spec3 = decode(2).io.scoreboard.spec | scoreboard_spec2
-  assert(scoreboard_spec1.getWidth == 32)
-  assert(scoreboard_spec2.getWidth == 32)
-  assert(scoreboard_spec3.getWidth == 32)
-
-  decode(0).io.scoreboard.comb := regfile.io.scoreboard.comb
-  decode(0).io.scoreboard.regd := regfile.io.scoreboard.regd
-  decode(1).io.scoreboard.comb := regfile.io.scoreboard.comb | scoreboard_spec1
-  decode(1).io.scoreboard.regd := regfile.io.scoreboard.regd | scoreboard_spec1
-  decode(2).io.scoreboard.comb := regfile.io.scoreboard.comb | scoreboard_spec2
-  decode(2).io.scoreboard.regd := regfile.io.scoreboard.regd | scoreboard_spec2
-  decode(3).io.scoreboard.comb := regfile.io.scoreboard.comb | scoreboard_spec3
-  decode(3).io.scoreboard.regd := regfile.io.scoreboard.regd | scoreboard_spec3
-
+  val scoreboard_spec = decode.map(_.io.scoreboard.spec).scan(0.U)(_|_)
+  for (i <- 0 until 4) {
+    decode(i).io.scoreboard.comb := regfile.io.scoreboard.comb | scoreboard_spec(i)
+    decode(i).io.scoreboard.regd := regfile.io.scoreboard.regd | scoreboard_spec(i)
+  }
 
   decode(0).io.mactive := io.vcore.mactive
   decode(1).io.mactive := false.B
@@ -207,18 +191,11 @@ class SCore(p: Parameters) extends Module {
 
   // ---------------------------------------------------------------------------
   // Multiplier Unit
-  mlu.io.req(0) := decode(0).io.mlu
-  mlu.io.req(1) := decode(1).io.mlu
-  mlu.io.req(2) := decode(2).io.mlu
-  mlu.io.req(3) := decode(3).io.mlu
-  mlu.io.rs1(0) := regfile.io.readData(0)
-  mlu.io.rs1(1) := regfile.io.readData(2)
-  mlu.io.rs1(2) := regfile.io.readData(4)
-  mlu.io.rs1(3) := regfile.io.readData(6)
-  mlu.io.rs2(0) := regfile.io.readData(1)
-  mlu.io.rs2(1) := regfile.io.readData(3)
-  mlu.io.rs2(2) := regfile.io.readData(5)
-  mlu.io.rs2(3) := regfile.io.readData(7)
+  for (i <- 0 until 4) {
+    mlu.io.req(i) := decode(i).io.mlu
+    mlu.io.rs1(i) := regfile.io.readData(2 * i)
+    mlu.io.rs2(i) := regfile.io.readData((2 * i) + 1)
+  }
 
   // ---------------------------------------------------------------------------
   // Divide Unit
@@ -277,13 +254,10 @@ class SCore(p: Parameters) extends Module {
   regfile.io.writeData(5).addr  := lsu.io.rd.addr
   regfile.io.writeData(5).data  := lsu.io.rd.data
 
-  regfile.io.writeMask(0).valid := false.B
-  regfile.io.writeMask(1).valid := regfile.io.writeMask(0).valid ||
-                                     bru(0).io.taken.valid
-  regfile.io.writeMask(2).valid := regfile.io.writeMask(1).valid ||
-                                     bru(1).io.taken.valid
-  regfile.io.writeMask(3).valid := regfile.io.writeMask(2).valid ||
-                                     bru(2).io.taken.valid
+  val writeMask = bru.map(_.io.taken.valid).scan(false.B)(_||_)
+  for (i <- 0 until 4) {
+    regfile.io.writeMask(i).valid := writeMask(i)
+  }
 
   // ---------------------------------------------------------------------------
   // Vector Extension
@@ -342,14 +316,10 @@ class SCore(p: Parameters) extends Module {
                  fetch.io.inst.lanes(1).valid && fetch.io.inst.lanes(1).ready && !branchTaken,
                  fetch.io.inst.lanes(0).valid && fetch.io.inst.lanes(0).ready && !branchTaken)
 
-  debugAddr(0) := fetch.io.inst.lanes(0).addr
-  debugAddr(1) := fetch.io.inst.lanes(1).addr
-  debugAddr(2) := fetch.io.inst.lanes(2).addr
-  debugAddr(3) := fetch.io.inst.lanes(3).addr
-  debugInst(0) := fetch.io.inst.lanes(0).inst
-  debugInst(1) := fetch.io.inst.lanes(1).inst
-  debugInst(2) := fetch.io.inst.lanes(2).inst
-  debugInst(3) := fetch.io.inst.lanes(3).inst
+  for (i <- 0 until 4) {
+    debugAddr(i) := fetch.io.inst.lanes(i).addr
+    debugInst(i) := fetch.io.inst.lanes(i).inst
+  }
 
   io.debug.en := debugEn & ~debugBrch
 

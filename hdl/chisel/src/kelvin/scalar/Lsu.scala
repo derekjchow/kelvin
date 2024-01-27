@@ -124,10 +124,9 @@ class Lsu(p: Parameters) extends Module {
                       ctrl.io.count <= (n - 2).U,
                       ctrl.io.count <= (n - 1).U)
 
-  io.req(0).ready := ctrlready(0) && data.io.in.ready
-  io.req(1).ready := ctrlready(1) && data.io.in.ready
-  io.req(2).ready := ctrlready(2) && data.io.in.ready
-  io.req(3).ready := ctrlready(3) && data.io.in.ready
+  for (i <- 0 until 4) {
+    io.req(i).ready := ctrlready(i) && data.io.in.ready
+  }
 
   // Address phase must use simple logic to resolve mask for unaligned address.
   val linebit = log2Ceil(p.lsuDataBits / 8)
@@ -135,8 +134,7 @@ class Lsu(p: Parameters) extends Module {
 
   // ---------------------------------------------------------------------------
   // Control Port Inputs.
-  ctrl.io.in.valid := io.req(0).valid || io.req(1).valid ||
-                      io.req(2).valid || io.req(3).valid
+  ctrl.io.in.valid := io.req.map(_.valid).reduce(_||_)
 
   for (i <- 0 until 4) {
     val uncached = io.busPort.addr(i)(31)

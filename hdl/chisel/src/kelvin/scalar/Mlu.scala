@@ -64,8 +64,7 @@ class Mlu(p: Parameters) extends Module {
   val addr2 = Reg(UInt(5.W))
   val sel = Reg(UInt(4.W))
 
-  valid1 := io.req(0).valid || io.req(1).valid ||
-            io.req(2).valid || io.req(3).valid
+  valid1 := io.req.map(_.valid).reduce(_||_)
   valid2 := valid1
 
   when (io.req(0).valid) {

@@ -60,8 +60,7 @@ class Fifo4e[T <: Data](t: T, n: Int) extends Module {
   val iactive = Cat(io.in.bits(3).valid, io.in.bits(2).valid,
                     io.in.bits(1).valid, io.in.bits(0).valid).asUInt
 
-  val icount = io.in.bits(0).valid +& io.in.bits(1).valid +
-               io.in.bits(2).valid +& io.in.bits(3).valid
+  val icount = PopCount(iactive)
 
   // ---------------------------------------------------------------------------
   // Fifo Control.

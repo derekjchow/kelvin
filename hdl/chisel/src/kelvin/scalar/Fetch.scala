@@ -265,40 +265,10 @@ class Fetch(p: Parameters) extends Module {
                  fetchEn(0) && !fetchEn(1) && !fetchEn(2) && !fetchEn(3),
                  !fetchEn(0) && !fetchEn(1) && !fetchEn(2) && !fetchEn(3))
 
-  val nxtInstAddr0 = instAddr(0)          // 0
-  val nxtInstAddr1 = instAddr(1)          // 4
-  val nxtInstAddr2 = instAddr(2)          // 8
-  val nxtInstAddr3 = instAddr(3)          // 12
-  val nxtInstAddr4 = instAddr(0) + 16.U   // 16
-  val nxtInstAddr5 = instAddr(1) + 16.U   // 20
-  val nxtInstAddr6 = instAddr(2) + 16.U   // 24
-  val nxtInstAddr7 = instAddr(3) + 16.U   // 28
-
-  val nxtInstAddr = Wire(Vec(4, UInt(p.instructionBits.W)))
-
-  nxtInstAddr(0) := Mux(fsel(4), nxtInstAddr4, 0.U) |
-                    Mux(fsel(3), nxtInstAddr3, 0.U) |
-                    Mux(fsel(2), nxtInstAddr2, 0.U) |
-                    Mux(fsel(1), nxtInstAddr1, 0.U) |
-                    Mux(fsel(0), nxtInstAddr0, 0.U)
-
-  nxtInstAddr(1) := Mux(fsel(4), nxtInstAddr5, 0.U) |
-                    Mux(fsel(3), nxtInstAddr4, 0.U) |
-                    Mux(fsel(2), nxtInstAddr3, 0.U) |
-                    Mux(fsel(1), nxtInstAddr2, 0.U) |
-                    Mux(fsel(0), nxtInstAddr1, 0.U)
-
-  nxtInstAddr(2) := Mux(fsel(4), nxtInstAddr6, 0.U) |
-                    Mux(fsel(3), nxtInstAddr5, 0.U) |
-                    Mux(fsel(2), nxtInstAddr4, 0.U) |
-                    Mux(fsel(1), nxtInstAddr3, 0.U) |
-                    Mux(fsel(0), nxtInstAddr2, 0.U)
-
-  nxtInstAddr(3) := Mux(fsel(4), nxtInstAddr7, 0.U) |
-                    Mux(fsel(3), nxtInstAddr6, 0.U) |
-                    Mux(fsel(2), nxtInstAddr5, 0.U) |
-                    Mux(fsel(1), nxtInstAddr4, 0.U) |
-                    Mux(fsel(0), nxtInstAddr3, 0.U)
+  val nxtInstAddrOffset = instAddr.map(x => x) ++ instAddr.map(x => x + 16.U)
+  val nxtInstAddr = (0 until 4).map(i =>
+      (0 until 5).map(
+          j => MuxOR(fsel(j), nxtInstAddrOffset(j + i))).reduce(_|_))
 
   val nxtInstIndex0 = nxtInstAddr(0)(indexMsb, indexLsb)
   val nxtInstIndex1 = nxtInstAddr(3)(indexMsb, indexLsb)

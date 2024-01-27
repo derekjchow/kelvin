@@ -160,12 +160,7 @@ class Regfile(p: Parameters) extends Module {
                     io.writeData(0).valid && io.writeData(0).addr === i.U &&
                       !io.writeMask(0).valid)
 
-    val data  = MuxOR(valid(0), io.writeData(0).data) |
-                MuxOR(valid(1), io.writeData(1).data) |
-                MuxOR(valid(2), io.writeData(2).data) |
-                MuxOR(valid(3), io.writeData(3).data) |
-                MuxOR(valid(4), io.writeData(4).data) |
-                MuxOR(valid(5), io.writeData(5).data)
+    val data  = (0 until 6).map(x => MuxOR(valid(x), io.writeData(x).data)).reduce(_|_)
 
     writeValid(i) := valid =/= 0.U
     writeData(i)  := data
