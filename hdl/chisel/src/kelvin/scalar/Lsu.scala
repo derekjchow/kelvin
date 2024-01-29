@@ -136,8 +136,10 @@ class Lsu(p: Parameters) extends Module {
   // Control Port Inputs.
   ctrl.io.in.valid := io.req.map(_.valid).reduce(_||_)
 
+  val uncacheable = p.m.filter(x => !x.cacheable)
   for (i <- 0 until 4) {
-    val uncached = io.busPort.addr(i)(31)
+    val uncached = io.busPort.addr(i)(31) ||
+      (if (uncacheable.length > 0) uncacheable.map(x => (io.busPort.addr(i) >= x.memStart.U) && (io.busPort.addr(i) < (x.memStart + x.memSize).U)).reduce(_||_) else false.B)
 
     val opstore = io.req(i).op(lsu.SW) || io.req(i).op(lsu.SH) || io.req(i).op(lsu.SB)
     val opiload = io.req(i).op(lsu.LW) || io.req(i).op(lsu.LH) || io.req(i).op(lsu.LB) || io.req(i).op(lsu.LHU) || io.req(i).op(lsu.LBU)
@@ -218,7 +220,6 @@ class Lsu(p: Parameters) extends Module {
   io.ubus.size  := ctrl.io.out.bits.size
   io.ubus.wdata := wdata
   io.ubus.wmask := wmask
-  assert(!(io.ubus.valid && !ctrl.io.out.bits.addr(31)))
   assert(!(io.ubus.valid && io.dbus.addr(31)))
   assert(!(io.ubus.valid && io.dbus.adrx(31)))
 

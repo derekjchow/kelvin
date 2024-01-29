@@ -144,6 +144,6 @@ class Kelvin(p: kelvin.Parameters) extends RawModule {
 }
 
 object EmitKelvin extends App {
-  val p = new kelvin.Parameters()
+  val p = new kelvin.Parameters(Seq())
   ChiselStage.emitSystemVerilogFile(new Kelvin(p), args)
 }

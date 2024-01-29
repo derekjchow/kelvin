@@ -88,6 +88,8 @@ def kelvin_repos():
         urls = ["https://github.com/lowrisc/opentitan/archive/f243e6802143374741739d2c164c4f2f61697669.zip"],
         patches = [
             "@kelvin_hw//third_party/ip/lowrisc:0001-Add-BUILD.bazel.patch",
+            "@kelvin_hw//third_party/ip/lowrisc:0002-Modify-TLUL-and-SRAM-adapter-for-ChAI.patch",
+            "@kelvin_hw//third_party/ip/lowrisc:0003-Modify-UART-for-ChAI.patch",
         ],
         patch_args = ["-p1"],
     )

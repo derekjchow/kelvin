@@ -140,10 +140,16 @@ def _verilator_cc_library(ctx):
     args.add("--Mdir", verilator_output.path)
     args.add("--top-module", ctx.attr.module_top)
     args.add("--prefix", prefix)
+    verilog_dirs = dict()
+    for file in verilog_files:
+        verilog_dirs[file.dirname] = None
+    for vdir in verilog_dirs:
+        args.add("-I" + vdir)
     if ctx.attr.trace:
         args.add("--trace")
     for verilog_file in verilog_files:
         args.add(verilog_file.path)
+    args.add("-Wno-UNOPTFLAT")
     args.add_all(ctx.attr.vopts, expand_directories = False)
 
     ctx.actions.run(

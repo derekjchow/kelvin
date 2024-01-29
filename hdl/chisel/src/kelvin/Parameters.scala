@@ -17,7 +17,21 @@ package kelvin
 import chisel3._
 import chisel3.util._
 
-case class Parameters() {
+class MemoryRegion(
+  val memStart: Int,
+  val memSize: Int,
+  val cacheable: Boolean,
+  val dataWidthBits: Int,
+) {
+
+def contains(addr: UInt): Bool = {
+  val addrWidth = addr.getWidth.W
+  (addr >= memStart.U(addrWidth)) && (addr < memStart.U(addrWidth) + memSize.U(addrWidth))
+}
+
+}
+
+case class Parameters(m: Seq[MemoryRegion] = Seq()) {
   case object Core {
     val tiny = 0
     val little = 1

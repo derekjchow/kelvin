@@ -28,6 +28,7 @@ chisel_library(
         "L1ICache.scala",
         "Library.scala",
         "Parameters.scala",
+        "TileLinkUL.scala",
         "scalar/Alu.scala",
         "scalar/Bru.scala",
         "scalar/Csr.scala",
