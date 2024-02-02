@@ -17,13 +17,13 @@ package common
 import chisel3._
 import chisel3.util._
 
-class FpuCmd extends Bundle {
+class FmaCmd extends Bundle {
   val ina = new Fp32
   val inb = new Fp32
   val inc = new Fp32
 }
 
-class FpuState1 extends Bundle {
+class FmaState1 extends Bundle {
   // Multiply variables
   val ab_inf      = Bool()
   val ab_sign     = Bool()
@@ -39,7 +39,7 @@ class FpuState1 extends Bundle {
   val nan           = Bool()
 }
 
-class FpuState2 extends Bundle {
+class FmaState2 extends Bundle {
   val ab_inf      = Bool()
   val c_inf       = Bool()
   val sign        = Bool()
@@ -49,13 +49,13 @@ class FpuState2 extends Bundle {
   val nan           = Bool()
 }
 
-object Fpu {
-  def apply(cmd: FpuCmd): Fp32 = {
-    FpuStage3(FpuStage2(FpuStage1(cmd)))
+object Fma {
+  def apply(cmd: FmaCmd): Fp32 = {
+    FmaStage3(FmaStage2(FmaStage1(cmd)))
   }
 
-  def FpuStage1(cmd: FpuCmd): FpuState1 = {
-    val state = Wire(new FpuState1)
+  def FmaStage1(cmd: FmaCmd): FmaState1 = {
+    val state = Wire(new FmaState1)
 
     val ab_zero = cmd.ina.isZero() || cmd.inb.isZero()
     val ab_inf = cmd.ina.isInf() || cmd.inb.isInf()
@@ -93,8 +93,8 @@ object Fpu {
     state
   }
 
-  def FpuStage2(state1: FpuState1): FpuState2 = {
-    val state2 = Wire(new FpuState2)
+  def FmaStage2(state1: FmaState1): FmaState2 = {
+    val state2 = Wire(new FmaState2)
 
     // Variables to forward to next cycle.
     state2.ab_inf := state1.ab_inf
@@ -124,7 +124,7 @@ object Fpu {
     state2
   }
 
-  def FpuStage3(state: FpuState2): Fp32 = {
+  def FmaStage3(state: FmaState2): Fp32 = {
     // Compute mantissa
     val left_shamt =
         PriorityEncoder(Cat(1.U(1.W), Reverse(state.significand)))(5,0)

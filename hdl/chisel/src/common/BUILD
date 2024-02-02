@@ -49,9 +49,9 @@ chisel_test(
 )
 
 chisel_library(
-    name = "fpu",
+    name = "fma",
     srcs = [
-        "Fpu.scala",
+        "Fma.scala",
     ],
     deps = [
         ":common",
@@ -61,12 +61,12 @@ chisel_library(
 )
 
 chisel_test(
-    name = "fpu_test",
+    name = "fma_test",
     srcs = [
-        "FpuTest.scala",
+        "FmaTest.scala",
     ],
     deps = [
         ":fp",
-        ":fpu",
+        ":fma",
     ],
 )

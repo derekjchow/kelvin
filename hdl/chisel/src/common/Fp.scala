@@ -43,6 +43,14 @@ class Fp32 extends Bundle {
   def significand(): UInt = {
     Cat(exponent.orR, mantissa)
   }
+
+  def negate(): Fp32 = {
+    val negated = Wire(new Fp32)
+    negated.sign := ~sign
+    negated.exponent := exponent
+    negated.mantissa := mantissa
+    negated
+  }
 }
 
 object Fp32 {

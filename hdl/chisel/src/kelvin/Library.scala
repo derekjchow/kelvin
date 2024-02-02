@@ -328,3 +328,36 @@ object DecodeBits {
     }
   }
 }
+
+/** A bundle that extends Data with an addr field. The lifted Data type will be
+  * contained in the "bits" field.
+  * @param width The bit-width of the addr field.
+  * @param gen The type of data to wrap.
+  */
+class WithAddr[+T <: Data](width: Int, gen: T) extends Bundle {
+  val addr = UInt(width.W)
+  val bits = gen
+}
+
+object WithAddr {
+  def apply[T <: Data](width: Int, gen: T): WithAddr[T] = new WithAddr(width, gen)
+
+  def create[T <: Data](addr: UInt, bits: T) = {
+    val result = Wire(WithAddr(addr.getWidth, chiselTypeOf(bits)))
+    result.addr := addr
+    result.bits := bits
+    result
+  }
+}
+
+/** A transformation that lifts a function f = (x => y) to a new function
+  * f = (WithAddr[x] => WithAddr[y]). The addr field of the lifted function
+  * is preserved between the inputs and outputs.
+  * @param width The bit-width of the addr field.
+  * @param f The function to lift.
+  */
+object LiftAddr {
+  def apply[X <: Data, Y <: Data](width: Int, f: X => Y) = {
+    (x: WithAddr[X]) => WithAddr.create(x.addr, f(x.bits))
+  }
+}

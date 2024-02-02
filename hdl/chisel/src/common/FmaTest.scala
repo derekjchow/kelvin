@@ -20,13 +20,13 @@ import chiseltest._
 import org.scalatest.freespec.AnyFreeSpec
 import chisel3.experimental.BundleLiterals._
 
-class FpuTester extends Module {
+class FmaTester extends Module {
   val io = IO(new Bundle {
     val ina    = Input(UInt(32.W))
     val inb    = Input(UInt(32.W))
     val inc    = Input(UInt(32.W))
-    val state1 = Output(new FpuState1)
-    val state2 = Output(new FpuState2)
+    val state1 = Output(new FmaState1)
+    val state2 = Output(new FmaState2)
     val out    = Output(new Fp32)
   })
 
@@ -34,19 +34,19 @@ class FpuTester extends Module {
   val fp_b = Fp32.fromWord(io.inb)
   val fp_c = Fp32.fromWord(io.inc)
 
-  val cmd = Wire(new FpuCmd)
+  val cmd = Wire(new FmaCmd)
   cmd.ina := fp_a
   cmd.inb := fp_b
   cmd.inc := fp_c
 
-  val stage1 = Fpu.FpuStage1(cmd)
-  val stage2 = Fpu.FpuStage2(stage1)
+  val stage1 = Fma.FmaStage1(cmd)
+  val stage2 = Fma.FmaStage2(stage1)
   io.state1 := stage1
   io.state2 := stage2
-  io.out := Fpu.FpuStage3(stage2)
+  io.out := Fma.FmaStage3(stage2)
 }
 
-class FpuSpec extends AnyFreeSpec with ChiselScalatestTester {
+class FmaSpec extends AnyFreeSpec with ChiselScalatestTester {
   def Float2BigInt(x: Float): BigInt = {
     val abs = x.abs
     var int = BigInt(java.lang.Float.floatToIntBits(abs))
@@ -62,7 +62,7 @@ class FpuSpec extends AnyFreeSpec with ChiselScalatestTester {
   }
 
   "Mul Zero" in {
-    test(new FpuTester()) { dut =>
+    test(new FmaTester()) { dut =>
       dut.io.ina.poke(Float2BigInt(0))
       dut.io.inb.poke(Float2BigInt(42))
       dut.io.inc.poke(Float2BigInt(0))
@@ -73,7 +73,7 @@ class FpuSpec extends AnyFreeSpec with ChiselScalatestTester {
   }
 
   "Mul Identity" in {
-    test(new FpuTester()) { dut =>
+    test(new FmaTester()) { dut =>
       dut.io.ina.poke(Float2BigInt(1))
       dut.io.inb.poke(Float2BigInt(42))
       dut.io.inc.poke(Float2BigInt(0))
@@ -84,7 +84,7 @@ class FpuSpec extends AnyFreeSpec with ChiselScalatestTester {
   }
 
   "Mul Negative" in {
-    test(new FpuTester()) { dut =>
+    test(new FmaTester()) { dut =>
       dut.io.ina.poke(Float2BigInt(-1.0f))
       dut.io.inb.poke(Float2BigInt(42))
       dut.io.inc.poke(Float2BigInt(0))
@@ -95,7 +95,7 @@ class FpuSpec extends AnyFreeSpec with ChiselScalatestTester {
   }
 
   "Mul Half" in {
-    test(new FpuTester()) { dut =>
+    test(new FmaTester()) { dut =>
       dut.io.ina.poke(Float2BigInt(0.5f))
       dut.io.inb.poke(Float2BigInt(42))
       dut.io.inc.poke(Float2BigInt(0))
@@ -106,7 +106,7 @@ class FpuSpec extends AnyFreeSpec with ChiselScalatestTester {
   }
 
   "Mul Overflow" in {
-    test(new FpuTester()) { dut =>
+    test(new FmaTester()) { dut =>
       dut.io.ina.poke(Float2BigInt(2e30f))
       dut.io.inb.poke(Float2BigInt(2e30f))
       dut.io.inc.poke(Float2BigInt(0))
@@ -117,7 +117,7 @@ class FpuSpec extends AnyFreeSpec with ChiselScalatestTester {
   }
 
   "Mul Rounds to Zero" in {
-    test(new FpuTester()) { dut =>
+    test(new FmaTester()) { dut =>
       dut.io.ina.poke(Float2BigInt(1e-30f))
       dut.io.inb.poke(Float2BigInt(1e-30f))
       dut.io.inc.poke(Float2BigInt(0))
@@ -128,7 +128,7 @@ class FpuSpec extends AnyFreeSpec with ChiselScalatestTester {
   }
 
   "Mul NaN" in {
-    test(new FpuTester()) { dut =>
+    test(new FmaTester()) { dut =>
       dut.io.ina.poke(Float2BigInt(Float.NaN))
       dut.io.inb.poke(Float2BigInt(4.0f))
       dut.io.inc.poke(Float2BigInt(0))
@@ -139,7 +139,7 @@ class FpuSpec extends AnyFreeSpec with ChiselScalatestTester {
   }
 
   "Fma" in {
-    test(new FpuTester()) { dut =>
+    test(new FmaTester()) { dut =>
       dut.io.ina.poke(Float2BigInt(2.0f))
       dut.io.inb.poke(Float2BigInt(1.5f))
       dut.io.inc.poke(Float2BigInt(6.0f))
@@ -151,7 +151,7 @@ class FpuSpec extends AnyFreeSpec with ChiselScalatestTester {
   }
 
   "Fms" in {
-    test(new FpuTester()) { dut =>
+    test(new FmaTester()) { dut =>
       dut.io.ina.poke(Float2BigInt(2.0f))
       dut.io.inb.poke(Float2BigInt(1.5f))
       dut.io.inc.poke(Float2BigInt(-6.0f))
@@ -163,7 +163,7 @@ class FpuSpec extends AnyFreeSpec with ChiselScalatestTester {
   }
 
   "Fnma" in {
-    test(new FpuTester()) { dut =>
+    test(new FmaTester()) { dut =>
       dut.io.ina.poke(Float2BigInt(-2.0f))
       dut.io.inb.poke(Float2BigInt(1.5f))
       dut.io.inc.poke(Float2BigInt(13.5f))
@@ -175,7 +175,7 @@ class FpuSpec extends AnyFreeSpec with ChiselScalatestTester {
   }
 
   "Fnms" in {
-    test(new FpuTester()) { dut =>
+    test(new FmaTester()) { dut =>
       dut.io.ina.poke(Float2BigInt(-2.0f))
       dut.io.inb.poke(Float2BigInt(1.5f))
       dut.io.inc.poke(Float2BigInt(-13.5f))
@@ -187,7 +187,7 @@ class FpuSpec extends AnyFreeSpec with ChiselScalatestTester {
   }
 
   "Add" in {
-    test(new FpuTester()) { dut =>
+    test(new FmaTester()) { dut =>
       dut.io.ina.poke(Float2BigInt(9000.0f))
       dut.io.inb.poke(Float2BigInt(1.0f))
       dut.io.inc.poke(Float2BigInt(1.0f))
@@ -199,7 +199,7 @@ class FpuSpec extends AnyFreeSpec with ChiselScalatestTester {
   }
 
   "Sub" in {
-    test(new FpuTester()) { dut =>
+    test(new FmaTester()) { dut =>
       dut.io.ina.poke(Float2BigInt(15.0f))
       dut.io.inb.poke(Float2BigInt(1.0f))
       dut.io.inc.poke(Float2BigInt(-100.0f))

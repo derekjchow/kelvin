@@ -20,9 +20,12 @@ package(default_visibility = ["//visibility:public"])
 chisel_library(
     name = "kelvin_float",
     srcs = [
+        "scalar/Fpu.scala",
         "scalar/FRegfile.scala",
     ],
     deps = [
+        ":kelvin",
+        "//hdl/chisel/src/common:fma",
         "//hdl/chisel/src/common:fp",
     ],
 )
@@ -30,11 +33,13 @@ chisel_library(
 chisel_test(
     name = "kelvin_float_tests",
     srcs = [
+        "scalar/FpuTest.scala",
         "scalar/FRegfileTest.scala",
     ],
     deps = [
-        "//hdl/chisel/src/common:fp",
+        ":kelvin",
         ":kelvin_float",
+        "//hdl/chisel/src/common:fp",
     ],
 )
 
