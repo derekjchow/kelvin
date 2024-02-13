@@ -77,6 +77,7 @@ def chisel_test(
             "@org_scalatest_scalatest//jar",
             "@edu_berkeley_cs_firrtl//jar",
             "@edu_berkeley_cs_chiseltest//jar",
+            "@org_antlr_antlr4_runtime//jar",
         ] + deps,
         scalacopts = SCALA_COPTS,
         visibility = visibility,

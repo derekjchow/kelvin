@@ -173,6 +173,14 @@ def kelvin_chisel_deps():
         licenses = ["notice"],
     )
 
+    # Antlr4
+    scala_maven_import_external(
+        name = "org_antlr_antlr4_runtime",
+        artifact = "org.antlr:antlr4-runtime:%s" % "4.13.1",
+        server_urls = default_maven_server_urls(),
+        licenses = ["notice"],
+    )
+
 def kelvin_deps():
     """Full kelvin dependent repositories
 
