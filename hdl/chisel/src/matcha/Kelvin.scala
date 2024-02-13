@@ -19,6 +19,19 @@ import chisel3.util._
 import common._
 import _root_.circt.stage.ChiselStage
 
+class KelvinMemIO(p: kelvin.Parameters) extends Bundle {
+  val cvalid = (Output(Bool()))
+  val cready = (Input(Bool()))
+  val cwrite = (Output(Bool()))
+  val caddr  = (Output(UInt(p.axiSysAddrBits.W)))
+  val cid    = (Output(UInt(p.axiSysIdBits.W)))
+  val wdata  = (Output(UInt(p.axiSysDataBits.W)))
+  val wmask  = (Output(UInt((p.axiSysDataBits / 8).W)))
+  val rvalid = (Input(Bool()))
+  val rid    = (Input(UInt(p.axiSysIdBits.W)))
+  val rdata  = (Input(UInt(p.axiSysDataBits.W)))
+}
+
 object Kelvin {
   def apply(p: kelvin.Parameters): Kelvin = {
     return Module(new Kelvin(p))
@@ -30,16 +43,7 @@ class Kelvin(p: kelvin.Parameters) extends RawModule {
   val clk_i  = IO(Input(Clock()))
   val rst_ni = IO(Input(AsyncReset()))
 
-  val cvalid = IO(Output(Bool()))
-  val cready = IO(Input(Bool()))
-  val cwrite = IO(Output(Bool()))
-  val caddr  = IO(Output(UInt(p.axiSysAddrBits.W)))
-  val cid    = IO(Output(UInt(p.axiSysIdBits.W)))
-  val wdata  = IO(Output(UInt(p.axiSysDataBits.W)))
-  val wmask  = IO(Output(UInt((p.axiSysDataBits / 8).W)))
-  val rvalid = IO(Input(Bool()))
-  val rid    = IO(Input(UInt(p.axiSysIdBits.W)))
-  val rdata  = IO(Input(UInt(p.axiSysDataBits.W)))
+  val mem = IO(new KelvinMemIO(p))
 
   val clk_freeze = IO(Input(Bool()))
   val ml_reset   = IO(Input(Bool()))
@@ -118,16 +122,16 @@ class Kelvin(p: kelvin.Parameters) extends RawModule {
 
     // -------------------------------------------------------------------------
     // SRAM bridge.
-    cvalid := bus.io.out.cvalid
-    bus.io.out.cready := cready
-    cwrite := bus.io.out.cwrite
-    caddr  := bus.io.out.caddr
-    cid    := bus.io.out.cid
-    wdata  := bus.io.out.wdata
-    wmask  := bus.io.out.wmask
-    bus.io.out.rvalid := rvalid
-    bus.io.out.rid := rid
-    bus.io.out.rdata := rdata
+    mem.cvalid := bus.io.out.cvalid
+    bus.io.out.cready := mem.cready
+    mem.cwrite := bus.io.out.cwrite
+    mem.caddr  := bus.io.out.caddr
+    mem.cid    := bus.io.out.cid
+    mem.wdata  := bus.io.out.wdata
+    mem.wmask  := bus.io.out.wmask
+    bus.io.out.rvalid := mem.rvalid
+    bus.io.out.rid := mem.rid
+    bus.io.out.rdata := mem.rdata
 
     // -------------------------------------------------------------------------
     // Command interface.

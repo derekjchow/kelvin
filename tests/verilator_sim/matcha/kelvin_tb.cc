@@ -78,16 +78,16 @@ static void Kelvin_run(const char* name, const char* bin, const bool trace) {
   core.slog_addr(slog_addr);
   core.slog_data(slog_data);
 
-  core.cvalid(cvalid);
-  core.cready(cready);
-  core.cwrite(cwrite);
-  core.caddr(caddr);
-  core.cid(cid);
-  core.wdata(wdata);
-  core.wmask(wmask);
-  core.rvalid(rvalid);
-  core.rid(rid);
-  core.rdata(rdata);
+  core.mem_cvalid(cvalid);
+  core.mem_cready(cready);
+  core.mem_cwrite(cwrite);
+  core.mem_caddr(caddr);
+  core.mem_cid(cid);
+  core.mem_wdata(wdata);
+  core.mem_wmask(wmask);
+  core.mem_rvalid(rvalid);
+  core.mem_rid(rid);
+  core.mem_rdata(rdata);
 
   mif.clock(tb.clock);
   mif.reset(tb.reset);
