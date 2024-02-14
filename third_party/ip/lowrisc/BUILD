@@ -1,4 +1,4 @@
-# Copyright 2023 Google LLC
+# Copyright 2024 Google LLC
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -14,32 +14,32 @@
 
 load("@rules_hdl//verilog:providers.bzl", "verilog_library")
 
-exports_files(
+verilog_library(
+    name = "prim_generic",
     srcs = [
-        "ClockGate.sv",
-        "Sram_1rw_256x256.v",
-        "Sram_1rwm_256x288.v",
+        "@lowrisc_opentitan//hw/ip/prim_generic:rtl/prim_generic_clock_gating.sv",
     ],
     visibility = ["//visibility:public"],
 )
 
 verilog_library(
-    name = "clock_gate",
-    srcs = ["ClockGate.sv"],
+    name = "prim_xilinx",
+    srcs = [
+        "@lowrisc_opentitan//hw/ip/prim_xilinx:rtl/prim_xilinx_clock_gating.sv",
+    ],
+    visibility = ["//visibility:public"],
+)
+
+verilog_library(
+    name = "prim",
+    # Do not sort: "*_pkg" comes first.
+    srcs = [
+        "@lowrisc_opentitan//hw:vendor/lowrisc_ibex/dv/uvm/core_ibex/common/prim/prim_pkg.sv",
+        "@lowrisc_opentitan//hw:vendor/lowrisc_ibex/dv/uvm/core_ibex/common/prim/prim_clock_gating.sv",
+    ],
     deps = [
-        "//third_party/ip/lowrisc:prim",
+        ":prim_generic",
+        ":prim_xilinx",
     ],
-    visibility = ["//visibility:public"],
-)
-
-verilog_library(
-    name = "sram_1rw_256x256",
-    srcs = ["Sram_1rw_256x256.v"],
-    visibility = ["//visibility:public"],
-)
-
-verilog_library(
-    name = "sram_1rw_256x288",
-    srcs = ["Sram_1rwm_256x288.v"],
     visibility = ["//visibility:public"],
 )

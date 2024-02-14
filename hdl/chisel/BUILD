@@ -17,14 +17,14 @@ genrule(
     srcs = [
         "//hdl/chisel/src/matcha:Kelvin.sv",
         "//hdl/chisel/src/matcha:Crossbar.sv",
-        "//hdl/verilog:ClockGate.v",
+        "//hdl/verilog:ClockGate.sv",
         "//hdl/verilog:Sram_1rw_256x256.v",
         "//hdl/verilog:Sram_1rwm_256x288.v",
     ],
     outs = [
         "kelvin.sv",
         "crossbar.sv",
-        "ClockGate.v",
+        "ClockGate.sv",
         "Sram_1rw_256x256.v",
         "Sram_1rwm_256x288.v",
     ],
@@ -41,7 +41,7 @@ genrule(
 \\`define ASSERT_VERBOSE_COND 0
 " > $(location crossbar.sv)
     cat $(location //hdl/chisel/src/matcha:Crossbar.sv) >> $(location crossbar.sv)
-    cp -f $(location //hdl/verilog:ClockGate.v) $(location ClockGate.v)
+    cp -f $(location //hdl/verilog:ClockGate.sv) $(location ClockGate.sv)
     cp -f $(location //hdl/verilog:Sram_1rw_256x256.v) $(location Sram_1rw_256x256.v)
     cp -f $(location //hdl/verilog:Sram_1rwm_256x288.v) $(location Sram_1rwm_256x288.v)
     """,

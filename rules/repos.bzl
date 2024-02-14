@@ -80,3 +80,14 @@ def kelvin_repos():
         urls = ["https://repo1.maven.org/maven2/org/chipsalliance/llvm-firtool/1.52.0/llvm-firtool-1.52.0.jar"],
         build_file = "@kelvin_hw//third_party/llvm-firtool:BUILD.bazel",
     )
+
+    http_archive(
+        name = "lowrisc_opentitan",
+        sha256 = "cffed2c3c9c026ecb0b14a48b6cc300aa145bb2a316903dcb4cb7976ca8857af",
+        strip_prefix = "opentitan-f243e6802143374741739d2c164c4f2f61697669",
+        urls = ["https://github.com/lowrisc/opentitan/archive/f243e6802143374741739d2c164c4f2f61697669.zip"],
+        patches = [
+            "@kelvin_hw//third_party/ip/lowrisc:0001-Add-BUILD.bazel.patch",
+        ],
+        patch_args = ["-p1"],
+    )
