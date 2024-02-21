@@ -35,6 +35,7 @@ chisel_library(
     srcs = [
         "Fp.scala",
     ],
+    visibility = ["//visibility:public"],
 )
 
 chisel_test(
@@ -56,6 +57,7 @@ chisel_library(
         ":common",
         ":fp",
     ],
+    visibility = ["//visibility:public"],
 )
 
 chisel_test(

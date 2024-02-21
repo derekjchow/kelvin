@@ -12,9 +12,31 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-load("@kelvin_hw//rules:chisel.bzl", "chisel_cc_library", "chisel_library")
+load("@kelvin_hw//rules:chisel.bzl", "chisel_cc_library", "chisel_library",
+     "chisel_test")
 
 package(default_visibility = ["//visibility:public"])
+
+chisel_library(
+    name = "kelvin_float",
+    srcs = [
+        "scalar/FRegfile.scala",
+    ],
+    deps = [
+        "//hdl/chisel/src/common:fp",
+    ],
+)
+
+chisel_test(
+    name = "kelvin_float_tests",
+    srcs = [
+        "scalar/FRegfileTest.scala",
+    ],
+    deps = [
+        "//hdl/chisel/src/common:fp",
+        ":kelvin_float",
+    ],
+)
 
 chisel_library(
     name = "kelvin",
