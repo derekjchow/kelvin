@@ -30,6 +30,7 @@ class Core(p: Parameters) extends Module {
     val csr = new CsrInOutIO(p)
     val halted = Output(Bool())
     val fault = Output(Bool())
+    val debug_req = Input(Bool())
 
     val ibus = new IBusIO(p)
     val dbus = new DBusIO(p)

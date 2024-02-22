@@ -139,7 +139,7 @@ class Csr(p: Parameters) extends Module {
   val mscratch  = RegInit(0.U(32.W))
   val mepc      = RegInit(0.U(32.W))
 
-  val mhartid   = RegInit(0.U(32.W))
+  val mhartid   = RegInit(p.hartId)
 
   val mcycle    = RegInit(0.U(64.W))
   val minstret  = RegInit(0.U(64.W))

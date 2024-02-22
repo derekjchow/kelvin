@@ -31,7 +31,7 @@ def contains(addr: UInt): Bool = {
 
 }
 
-case class Parameters(m: Seq[MemoryRegion] = Seq()) {
+case class Parameters(m: Seq[MemoryRegion] = Seq(), hartId: UInt = 0.U(32.W)) {
   case object Core {
     val tiny = 0
     val little = 1

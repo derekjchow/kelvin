@@ -49,6 +49,7 @@ class Kelvin(p: kelvin.Parameters) extends RawModule {
   val ml_reset   = IO(Input(Bool()))
   val pc_start   = IO(Input(UInt(32.W)))
   val volt_sel   = IO(Input(Bool()))
+  val debug_req  = IO(Input(Bool()))
 
   val finish   = IO(Output(Bool()))
   val host_req = IO(Output(Bool()))
@@ -104,6 +105,10 @@ class Kelvin(p: kelvin.Parameters) extends RawModule {
     slog   := core.io.slog
 
     // -------------------------------------------------------------------------
+    // Debug Request.
+    core.io.debug_req   := debug_req
+
+    // -------------------------------------------------------------------------
     // L1Cache.
     l1d.io.dbus     <> core.io.dbus
     l1d.io.flush    <> core.io.dflush
@@ -144,6 +149,6 @@ class Kelvin(p: kelvin.Parameters) extends RawModule {
 }
 
 object EmitKelvin extends App {
-  val p = new kelvin.Parameters(Seq())
+  val p = new kelvin.MatchaParameters
   ChiselStage.emitSystemVerilogFile(new Kelvin(p), args)
 }
