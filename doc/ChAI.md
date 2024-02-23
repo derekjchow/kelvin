@@ -4,6 +4,26 @@ ChAI is a reference implementation of an embedded system, build around the Kelvi
 It is intended as a starting point for either building out a more complete system, or integrating
 into an existing system
 
+## Building ChAI RTL
+
+The SystemVerilog for ChAI can be built with the following command:
+
+```
+bazel build //hdl/chisel/src/chai:chai_cc_library_emit_verilog
+```
+
+The generated file will be in `bazel-bin/hdl/chisel/src/chai/ChAI.sv`
+
+## Running a simulating ChAI
+
+You can run program on the ChAI verilator sim with:
+
+```
+bazel run //tests/verilator_sim:chai_sim -- \
+    --cycles 2000 \
+    /path/to/program.bin
+```
+
 ## Components
 - Kelvin CPU
 - TileLink-UL crossbar
