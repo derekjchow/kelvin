@@ -26,3 +26,12 @@ object MuxOR {
     Mux(valid, data, false.B)
   }
 }
+
+object MakeValid {
+  def apply[T <: Data](valid: Bool, bits: T): ValidIO[T] = {
+    val result = Wire(Valid(chiselTypeOf(bits)))
+    result.valid := valid
+    result.bits := bits
+    result
+  }
+}

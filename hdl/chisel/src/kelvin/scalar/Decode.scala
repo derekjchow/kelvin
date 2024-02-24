@@ -186,7 +186,7 @@ class Decode(p: Parameters, pipeline: Int) extends Module {
     val busRead = Flipped(new RegfileBusAddrIO)
 
     // ALU interface.
-    val alu = Flipped(new AluIO(p))
+    val alu = Valid(new AluCmd)
 
     // Branch interface.
     val bru = Flipped(new BruIO(p))
@@ -274,31 +274,29 @@ class Decode(p: Parameters, pipeline: Int) extends Module {
   val fenceEn = !(d.fence && io.mactive)
 
   // ALU opcode.
-  val alu = new AluOp()
-  val aluOp = Wire(Vec(alu.Entries, Bool()))
-  val aluValid = WiredOR(io.alu.op)  // used without decodeEn
-  io.alu.valid := decodeEn && aluValid
-  io.alu.addr := rdAddr
-  io.alu.op := aluOp.asUInt
-
-  aluOp(alu.ADD)  := d.auipc || d.addi || d.add
-  aluOp(alu.SUB)  := d.sub
-  aluOp(alu.SLT)  := d.slti || d.slt
-  aluOp(alu.SLTU) := d.sltiu || d.sltu
-  aluOp(alu.XOR)  := d.xori || d.xor
-  aluOp(alu.OR)   := d.ori || d.or
-  aluOp(alu.AND)  := d.andi || d.and
-  aluOp(alu.SLL)  := d.slli || d.sll
-  aluOp(alu.SRL)  := d.srli || d.srl
-  aluOp(alu.SRA)  := d.srai || d.sra
-  aluOp(alu.LUI)  := d.lui
-  aluOp(alu.CLZ)  := d.clz
-  aluOp(alu.CTZ)  := d.ctz
-  aluOp(alu.PCNT) := d.pcnt
-  aluOp(alu.MIN)  := d.min
-  aluOp(alu.MINU) := d.minu
-  aluOp(alu.MAX)  := d.max
-  aluOp(alu.MAXU) := d.maxu
+  val alu = MuxCase(MakeValid(false.B, AluOp.ADD), Seq(
+    (d.auipc || d.addi || d.add) -> MakeValid(true.B, AluOp.ADD),
+    d.sub                        -> MakeValid(true.B, AluOp.SUB),
+    (d.slti || d.slt)            -> MakeValid(true.B, AluOp.SLT),
+    (d.sltiu || d.sltu)          -> MakeValid(true.B, AluOp.SLTU),
+    (d.xori || d.xor)            -> MakeValid(true.B, AluOp.XOR),
+    (d.ori || d.or)              -> MakeValid(true.B, AluOp.OR),
+    (d.andi || d.and)            -> MakeValid(true.B, AluOp.AND),
+    (d.slli || d.sll)            -> MakeValid(true.B, AluOp.SLL),
+    (d.srli || d.srl)            -> MakeValid(true.B, AluOp.SRL),
+    (d.srai || d.sra)            -> MakeValid(true.B, AluOp.SRA),
+    d.lui                        -> MakeValid(true.B, AluOp.LUI),
+    d.clz                        -> MakeValid(true.B, AluOp.CLZ),
+    d.ctz                        -> MakeValid(true.B, AluOp.CTZ),
+    d.pcnt                       -> MakeValid(true.B, AluOp.PCNT),
+    d.min                        -> MakeValid(true.B, AluOp.MIN),
+    d.minu                       -> MakeValid(true.B, AluOp.MINU),
+    d.max                        -> MakeValid(true.B, AluOp.MAX),
+    d.maxu                       -> MakeValid(true.B, AluOp.MAXU)
+  ))
+  io.alu.valid := decodeEn && alu.valid
+  io.alu.bits.addr := rdAddr
+  io.alu.bits.op := alu.bits
 
   // Branch conditional opcode.
   val bru = new BruOp()
@@ -443,7 +441,7 @@ class Decode(p: Parameters, pipeline: Int) extends Module {
   // Register file write address ports. We speculate without knowing the decode
   // enable status to improve timing, and under a branch is ignored anyway.
   val rdMark_valid =
-      aluValid || csrValid || mluValid || dvuValid && io.dvu.ready ||
+      alu.valid || csrValid || mluValid || dvuValid && io.dvu.ready ||
       lsuValid && d.isLoad() ||
       d.getvl || d.getmaxvl || vldst_wb ||
       bruValid && (bruOp(bru.JAL) || bruOp(bru.JALR)) && rdAddr =/= 0.U
