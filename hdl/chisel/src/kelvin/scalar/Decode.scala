@@ -46,6 +46,125 @@ class DecodeSerializeIO extends Bundle {
   }
 }
 
+class DecodedInstruction extends Bundle {
+  // Immediates
+  val imm12  = UInt(32.W)
+  val imm20  = UInt(32.W)
+  val immjal = UInt(32.W)
+  val immbr  = UInt(32.W)
+  val immcsr = UInt(32.W)
+  val immst  = UInt(32.W)
+
+  // RV32I
+  val lui   = Bool()
+  val auipc = Bool()
+  val jal   = Bool()
+  val jalr  = Bool()
+  val beq   = Bool()
+  val bne   = Bool()
+  val blt   = Bool()
+  val bge   = Bool()
+  val bltu  = Bool()
+  val bgeu  = Bool()
+  val csrrw = Bool()
+  val csrrs = Bool()
+  val csrrc = Bool()
+  val lb    = Bool()
+  val lh    = Bool()
+  val lw    = Bool()
+  val lbu   = Bool()
+  val lhu   = Bool()
+  val sb    = Bool()
+  val sh    = Bool()
+  val sw    = Bool()
+  val fence = Bool()
+  val addi  = Bool()
+  val slti  = Bool()
+  val sltiu = Bool()
+  val xori  = Bool()
+  val ori   = Bool()
+  val andi  = Bool()
+  val slli  = Bool()
+  val srli  = Bool()
+  val srai  = Bool()
+  val add   = Bool()
+  val sub   = Bool()
+  val slt   = Bool()
+  val sltu  = Bool()
+  val xor   = Bool()
+  val or    = Bool()
+  val and   = Bool()
+  val sll   = Bool()
+  val srl   = Bool()
+  val sra   = Bool()
+
+  // RV32M
+  val mul     = Bool()
+  val mulh    = Bool()
+  val mulhsu  = Bool()
+  val mulhu   = Bool()
+  val mulhr   = Bool()
+  val mulhsur = Bool()
+  val mulhur  = Bool()
+  val dmulh   = Bool()
+  val dmulhr  = Bool()
+  val div     = Bool()
+  val divu    = Bool()
+  val rem     = Bool()
+  val remu    = Bool()
+
+  // RV32B
+  val clz  = Bool()
+  val ctz  = Bool()
+  val pcnt = Bool()
+  val min  = Bool()
+  val minu = Bool()
+  val max  = Bool()
+  val maxu = Bool()
+
+  // Vector instructions.
+  val getvl = Bool()
+  val getmaxvl = Bool()
+  val vld = Bool()
+  val vst = Bool()
+  val viop = Bool()
+
+  // Core controls.
+  val ebreak = Bool()
+  val ecall  = Bool()
+  val eexit  = Bool()
+  val eyield = Bool()
+  val ectxsw = Bool()
+  val mpause = Bool()
+  val mret   = Bool()
+  val undef  = Bool()
+
+  // Fences.
+  val fencei = Bool()
+  val flushat = Bool()
+  val flushall = Bool()
+
+  // Scalar logging.
+  val slog = Bool()
+
+  def isAluImm(): Bool = {
+      addi || slti || sltiu || xori || ori || andi || slli || srli || srai
+  }
+  def isAluReg(): Bool = {
+      add || sub || slt || sltu || xor || or || and || sll || srl || sra
+  }
+  def isAlu1Bit(): Bool = { clz || ctz || pcnt }
+  def isAlu2Bit(): Bool = { min || minu || max || maxu }
+  def isCsr(): Bool = { csrrw || csrrs || csrrc }
+  def isCondBr(): Bool = { beq || bne || blt || bge || bltu || bgeu }
+  def isLoad(): Bool = { lb || lh || lw || lbu || lhu }
+  def isStore(): Bool = { sb || sh || sw }
+  def isLsu(): Bool = { isLoad() || isStore() || vld || vst || flushat || flushall }
+  def isMul(): Bool = { mul || mulh || mulhsu || mulhu || mulhr || mulhsur || mulhur || dmulh || dmulhr }
+  def isDvu(): Bool = { div || divu || rem || remu }
+  def isVector(): Bool = { vld || vst || viop || getvl || getmaxvl }
+}
+
 class Decode(p: Parameters, pipeline: Int) extends Module {
   val io = IO(new Bundle {
     // Core controls.
@@ -69,25 +188,25 @@ class Decode(p: Parameters, pipeline: Int) extends Module {
     val busRead = Flipped(new RegfileBusAddrIO)
 
     // ALU interface.
-    val alu = Flipped(new AluIO(p))
+    val alu = Valid(new AluCmd)
 
     // Branch interface.
     val bru = Flipped(new BruIO(p))
 
     // CSR interface.
-    val csr = Flipped(new CsrIO(p))
+    val csr = Valid(new CsrCmd)
 
     // LSU interface.
-    val lsu = Flipped(new LsuIO(p))
+    val lsu = Decoupled(new LsuCmd)
 
     // Multiplier interface.
-    val mlu = Flipped(new MluIO(p))
+    val mlu = Valid(new MluCmd)
 
     // Divide interface.
-    val dvu = Flipped(new DvuIO(p))
+    val dvu = Decoupled(new DvuCmd)
 
     // Vector interface.
-    val vinst = Flipped(new VInstIO)
+    val vinst = Decoupled(new VInstCmd)
 
     // Branch status.
     val branchTaken = Input(Bool())
@@ -104,11 +223,9 @@ class Decode(p: Parameters, pipeline: Int) extends Module {
   val decodeEn = io.inst.valid && io.inst.ready && !io.branchTaken
 
   // The decode logic.
-  val d = Module(new DecodedInstruction(p, pipeline))
-  d.io.addr := io.inst.addr
-  d.io.inst := io.inst.inst
+  val d = DecodeInstruction(pipeline, io.inst.addr, io.inst.inst)
 
-  val vldst = d.io.vld || d.io.vst
+  val vldst = d.vld || d.vst
   val vldst_wb = vldst && io.inst.inst(28)
 
   val rdAddr  = Mux(vldst, io.inst.inst(19,15), io.inst.inst(11,7))
@@ -116,94 +233,71 @@ class Decode(p: Parameters, pipeline: Int) extends Module {
   val rs2Addr = io.inst.inst(24,20)
   val rs3Addr = io.inst.inst(31,27)
 
-  val isAluImm = d.io.addi || d.io.slti || d.io.sltiu || d.io.xori ||
-                 d.io.ori || d.io.andi || d.io.slli || d.io.srli || d.io.srai
+  val isCsrImm = d.isCsr() &&  io.inst.inst(14)
+  val isCsrReg = d.isCsr() && !io.inst.inst(14)
 
-  val isAluReg = d.io.add || d.io.sub || d.io.slt || d.io.sltu || d.io.xor ||
-                 d.io.or || d.io.and || d.io.sll || d.io.srl || d.io.sra
-
-  val isAlu1Bit = d.io.clz || d.io.ctz || d.io.pcnt
-  val isAlu2Bit = d.io.min || d.io.minu || d.io.max || d.io.maxu
-
-  val isCondBr = d.io.beq || d.io.bne || d.io.blt || d.io.bge ||
-                 d.io.bltu || d.io.bgeu
-
-  val isCsr = d.io.csrrw || d.io.csrrs || d.io.csrrc
-  val isCsrImm = isCsr &&  io.inst.inst(14)
-  val isCsrReg = isCsr && !io.inst.inst(14)
-
-  val isLoad = d.io.lb || d.io.lh || d.io.lw || d.io.lbu || d.io.lhu
-  val isStore = d.io.sb || d.io.sh || d.io.sw
-  val isLsu = isLoad || isStore || d.io.vld || d.io.vst || d.io.flushat || d.io.flushall
-
-  val isMul = d.io.mul || d.io.mulh || d.io.mulhsu || d.io.mulhu || d.io.mulhr || d.io.mulhsur || d.io.mulhur || d.io.dmulh || d.io.dmulhr
-
-  val isDvu = d.io.div || d.io.divu || d.io.rem || d.io.remu
-
-  val isVIop = io.vinst.op(new VInstOp().VIOP)
+  val isVIop = (io.vinst.bits.op === VInstOp.VIOP)
 
   val isVIopVs1 = isVIop
   val isVIopVs2 = isVIop && io.inst.inst(1,0) === 0.U  // exclude: .vv
   val isVIopVs3 = isVIop && io.inst.inst(2,0) === 1.U  // exclude: .vvv
 
   // Use the forwarded scoreboard to interlock on multicycle operations.
-  val aluRdEn  = !io.scoreboard.comb(rdAddr)  || isVIopVs1 || isStore || isCondBr
-  val aluRs1En = !io.scoreboard.comb(rs1Addr) || isVIopVs1 || isLsu || d.io.auipc
-  val aluRs2En = !io.scoreboard.comb(rs2Addr) || isVIopVs2 || isLsu || d.io.auipc || isAluImm || isAlu1Bit
+  val aluRdEn  = !io.scoreboard.comb(rdAddr)  || isVIopVs1 || d.isStore() || d.isCondBr()
+  val aluRs1En = !io.scoreboard.comb(rs1Addr) || isVIopVs1 || d.isLsu() || d.auipc
+  val aluRs2En = !io.scoreboard.comb(rs2Addr) || isVIopVs2 || d.isLsu() || d.auipc || d.isAluImm() || d.isAlu1Bit()
   // val aluRs3En = !io.scoreboard.comb(rs3Addr) || isVIopVs3
   // val aluEn = aluRdEn && aluRs1En && aluRs2En && aluRs3En  // TODO: is aluRs3En needed?
   val aluEn = aluRdEn && aluRs1En && aluRs2En
 
   // Interlock jalr but special case return.
-  val bruEn = !d.io.jalr || !io.scoreboard.regd(rs1Addr) ||
+  val bruEn = !d.jalr || !io.scoreboard.regd(rs1Addr) ||
               io.inst.inst(31,20) === 0.U
 
   // Require interlock on address generation as there is no write forwarding.
-  val lsuEn = !isLsu ||
+  val lsuEn = !d.isLsu() ||
               !io.serializeIn.lsu && io.lsu.ready &&
-              (!isLsu || !io.serializeIn.brcond) &&  // TODO: can this line be removed?
+              (!d.isLsu() || !io.serializeIn.brcond) &&  // TODO: can this line be removed?
               !(Mux(io.busRead.bypass, io.scoreboard.comb(rs1Addr),
                     io.scoreboard.regd(rs1Addr)) ||
-                    io.scoreboard.comb(rs2Addr) && (isStore || vldst))
+                    io.scoreboard.comb(rs2Addr) && (d.isStore() || vldst))
 
   // Interlock mul, only one lane accepted.
-  val mulEn = (!isMul || !io.serializeIn.mul) && !io.serializeIn.brcond
+  val mulEn = (!d.isMul() || !io.serializeIn.mul) && !io.serializeIn.brcond
 
 
   // Vector extension interlock.
   val vinstEn = !(io.serializeIn.vinst || isVIop && io.serializeIn.brcond) &&
-                !(io.vinst.op =/= 0.U && !io.vinst.ready)
+                !(d.isVector() && !io.vinst.ready)
 
   // Fence interlock.
   // Input mactive used passthrough, prefer to avoid registers in Decode.
-  val fenceEn = !(d.io.fence && io.mactive)
+  val fenceEn = !(d.fence && io.mactive)
 
   // ALU opcode.
-  val alu = new AluOp()
-  val aluOp = Wire(Vec(alu.Entries, Bool()))
-  val aluValid = WiredOR(io.alu.op)  // used without decodeEn
-  io.alu.valid := decodeEn && aluValid
-  io.alu.addr := rdAddr
-  io.alu.op := aluOp.asUInt
-
-  aluOp(alu.ADD)  := d.io.auipc || d.io.addi || d.io.add
-  aluOp(alu.SUB)  := d.io.sub
-  aluOp(alu.SLT)  := d.io.slti || d.io.slt
-  aluOp(alu.SLTU) := d.io.sltiu || d.io.sltu
-  aluOp(alu.XOR)  := d.io.xori || d.io.xor
-  aluOp(alu.OR)   := d.io.ori || d.io.or
-  aluOp(alu.AND)  := d.io.andi || d.io.and
-  aluOp(alu.SLL)  := d.io.slli || d.io.sll
-  aluOp(alu.SRL)  := d.io.srli || d.io.srl
-  aluOp(alu.SRA)  := d.io.srai || d.io.sra
-  aluOp(alu.LUI)  := d.io.lui
-  aluOp(alu.CLZ)  := d.io.clz
-  aluOp(alu.CTZ)  := d.io.ctz
-  aluOp(alu.PCNT) := d.io.pcnt
-  aluOp(alu.MIN)  := d.io.min
-  aluOp(alu.MINU) := d.io.minu
-  aluOp(alu.MAX)  := d.io.max
-  aluOp(alu.MAXU) := d.io.maxu
+  val alu = MuxCase(MakeValid(false.B, AluOp.ADD), Seq(
+    (d.auipc || d.addi || d.add) -> MakeValid(true.B, AluOp.ADD),
+    d.sub                        -> MakeValid(true.B, AluOp.SUB),
+    (d.slti || d.slt)            -> MakeValid(true.B, AluOp.SLT),
+    (d.sltiu || d.sltu)          -> MakeValid(true.B, AluOp.SLTU),
+    (d.xori || d.xor)            -> MakeValid(true.B, AluOp.XOR),
+    (d.ori || d.or)              -> MakeValid(true.B, AluOp.OR),
+    (d.andi || d.and)            -> MakeValid(true.B, AluOp.AND),
+    (d.slli || d.sll)            -> MakeValid(true.B, AluOp.SLL),
+    (d.srli || d.srl)            -> MakeValid(true.B, AluOp.SRL),
+    (d.srai || d.sra)            -> MakeValid(true.B, AluOp.SRA),
+    d.lui                        -> MakeValid(true.B, AluOp.LUI),
+    d.clz                        -> MakeValid(true.B, AluOp.CLZ),
+    d.ctz                        -> MakeValid(true.B, AluOp.CTZ),
+    d.pcnt                       -> MakeValid(true.B, AluOp.PCNT),
+    d.min                        -> MakeValid(true.B, AluOp.MIN),
+    d.minu                       -> MakeValid(true.B, AluOp.MINU),
+    d.max                        -> MakeValid(true.B, AluOp.MAX),
+    d.maxu                       -> MakeValid(true.B, AluOp.MAXU)
+  ))
+  io.alu.valid := decodeEn && alu.valid
+  io.alu.bits.addr := rdAddr
+  io.alu.bits.op := alu.bits
 
   // Branch conditional opcode.
   val bru = new BruOp()
@@ -213,122 +307,109 @@ class Decode(p: Parameters, pipeline: Int) extends Module {
   io.bru.fwd := io.inst.brchFwd
   io.bru.op := bruOp.asUInt
   io.bru.pc := io.inst.addr
-  io.bru.target := io.inst.addr + Mux(io.inst.inst(2), d.io.immjal, d.io.immbr)
+  io.bru.target := io.inst.addr + Mux(io.inst.inst(2), d.immjal, d.immbr)
   io.bru.link := rdAddr
 
-  bruOp(bru.JAL)  := d.io.jal
-  bruOp(bru.JALR) := d.io.jalr
-  bruOp(bru.BEQ)  := d.io.beq
-  bruOp(bru.BNE)  := d.io.bne
-  bruOp(bru.BLT)  := d.io.blt
-  bruOp(bru.BGE)  := d.io.bge
-  bruOp(bru.BLTU) := d.io.bltu
-  bruOp(bru.BGEU) := d.io.bgeu
-  bruOp(bru.EBREAK) := d.io.ebreak
-  bruOp(bru.ECALL)  := d.io.ecall
-  bruOp(bru.EEXIT)  := d.io.eexit
-  bruOp(bru.EYIELD) := d.io.eyield
-  bruOp(bru.ECTXSW) := d.io.ectxsw
-  bruOp(bru.MPAUSE) := d.io.mpause
-  bruOp(bru.MRET)   := d.io.mret
-  bruOp(bru.FENCEI) := d.io.fencei
-  bruOp(bru.UNDEF)  := d.io.undef
+  bruOp(bru.JAL)  := d.jal
+  bruOp(bru.JALR) := d.jalr
+  bruOp(bru.BEQ)  := d.beq
+  bruOp(bru.BNE)  := d.bne
+  bruOp(bru.BLT)  := d.blt
+  bruOp(bru.BGE)  := d.bge
+  bruOp(bru.BLTU) := d.bltu
+  bruOp(bru.BGEU) := d.bgeu
+  bruOp(bru.EBREAK) := d.ebreak
+  bruOp(bru.ECALL)  := d.ecall
+  bruOp(bru.EEXIT)  := d.eexit
+  bruOp(bru.EYIELD) := d.eyield
+  bruOp(bru.ECTXSW) := d.ectxsw
+  bruOp(bru.MPAUSE) := d.mpause
+  bruOp(bru.MRET)   := d.mret
+  bruOp(bru.FENCEI) := d.fencei
+  bruOp(bru.UNDEF)  := d.undef
 
   // CSR opcode.
-  val csr = new CsrOp()
-  val csrOp = Wire(Vec(csr.Entries, Bool()))
-  val csrValid = WiredOR(io.csr.op)  // used without decodeEn
-  io.csr.valid := decodeEn && csrValid
-  io.csr.addr := rdAddr
-  io.csr.index := io.inst.inst(31,20)
-  io.csr.op := csrOp.asUInt
-
-  csrOp(csr.CSRRW) := d.io.csrrw
-  csrOp(csr.CSRRS) := d.io.csrrs
-  csrOp(csr.CSRRC) := d.io.csrrc
+  val csr = MuxCase(MakeValid(false.B, CsrOp.CSRRW), Seq(
+    d.csrrw -> MakeValid(true.B, CsrOp.CSRRW),
+    d.csrrs -> MakeValid(true.B, CsrOp.CSRRS),
+    d.csrrc -> MakeValid(true.B, CsrOp.CSRRC)
+  ))
+  io.csr.valid := decodeEn && csr.valid
+  io.csr.bits.addr := rdAddr
+  io.csr.bits.index := io.inst.inst(31,20)
+  io.csr.bits.op := csr.bits
 
   // LSU opcode.
-  val lsu = new LsuOp()
-  val lsuOp = Wire(Vec(lsu.Entries, Bool()))
-  val lsuValid = WiredOR(io.lsu.op)  // used without decodeEn
-  io.lsu.valid := decodeEn && lsuValid
-  io.lsu.store := io.inst.inst(5)
-  io.lsu.addr := rdAddr
-  io.lsu.op := lsuOp.asUInt
-
-  lsuOp(lsu.LB)  := d.io.lb
-  lsuOp(lsu.LH)  := d.io.lh
-  lsuOp(lsu.LW)  := d.io.lw
-  lsuOp(lsu.LBU) := d.io.lbu
-  lsuOp(lsu.LHU) := d.io.lhu
-  lsuOp(lsu.SB)  := d.io.sb
-  lsuOp(lsu.SH)  := d.io.sh
-  lsuOp(lsu.SW)  := d.io.sw
-  lsuOp(lsu.FENCEI)   := d.io.fencei
-  lsuOp(lsu.FLUSHAT)  := d.io.flushat
-  lsuOp(lsu.FLUSHALL) := d.io.flushall
-
-  lsuOp(lsu.VLDST) := d.io.vld || d.io.vst
+  val lsu = MuxCase(MakeValid(false.B, LsuOp.LB), Seq(
+    d.lb             -> MakeValid(true.B, LsuOp.LB),
+    d.lh             -> MakeValid(true.B, LsuOp.LH),
+    d.lw             -> MakeValid(true.B, LsuOp.LW),
+    d.lbu            -> MakeValid(true.B, LsuOp.LBU),
+    d.lhu            -> MakeValid(true.B, LsuOp.LHU),
+    d.sb             -> MakeValid(true.B, LsuOp.SB),
+    d.sh             -> MakeValid(true.B, LsuOp.SH),
+    d.sw             -> MakeValid(true.B, LsuOp.SW),
+    d.fencei         -> MakeValid(true.B, LsuOp.FENCEI),
+    d.flushat        -> MakeValid(true.B, LsuOp.FLUSHAT),
+    d.flushall       -> MakeValid(true.B, LsuOp.FLUSHALL),
+    (d.vld || d.vst) -> MakeValid(true.B, LsuOp.VLDST),
+  ))
+  io.lsu.valid := decodeEn && lsu.valid
+  io.lsu.bits.store := io.inst.inst(5)
+  io.lsu.bits.addr := rdAddr
+  io.lsu.bits.op := lsu.bits
 
   // MLU opcode.
-  val mlu = new MluOp()
-  val mluOp = Wire(Vec(mlu.Entries, Bool()))
-  val mluValid = WiredOR(io.mlu.op)  // used without decodeEn
-  io.mlu.valid := decodeEn && mluValid
-  io.mlu.addr := rdAddr
-  io.mlu.op := mluOp.asUInt
-
-  mluOp(mlu.MUL)     := d.io.mul
-  mluOp(mlu.MULH)    := d.io.mulh
-  mluOp(mlu.MULHSU)  := d.io.mulhsu
-  mluOp(mlu.MULHU)   := d.io.mulhu
-  mluOp(mlu.MULHR)   := d.io.mulhr
-  mluOp(mlu.MULHSUR) := d.io.mulhsur
-  mluOp(mlu.MULHUR)  := d.io.mulhur
-  mluOp(mlu.DMULH)   := d.io.dmulh
-  mluOp(mlu.DMULHR)  := d.io.dmulhr
+  val mlu = MuxCase(MakeValid(false.B, MluOp.MUL), Seq(
+    d.mul     -> MakeValid(true.B, MluOp.MUL),
+    d.mulh    -> MakeValid(true.B, MluOp.MULH),
+    d.mulhsu  -> MakeValid(true.B, MluOp.MULHSU),
+    d.mulhu   -> MakeValid(true.B, MluOp.MULHU),
+    d.mulhr   -> MakeValid(true.B, MluOp.MULHR),
+    d.mulhsur -> MakeValid(true.B, MluOp.MULHSUR),
+    d.mulhur  -> MakeValid(true.B, MluOp.MULHUR),
+    d.dmulh   -> MakeValid(true.B, MluOp.DMULH),
+    d.dmulhr  -> MakeValid(true.B, MluOp.DMULHR),
+  ))
+  io.mlu.valid := decodeEn && mlu.valid
+  io.mlu.bits.addr := rdAddr
+  io.mlu.bits.op := mlu.bits
 
   // DIV opcode.
-  val dvu = new DvuOp()
-  val dvuOp = Wire(Vec(dvu.Entries, Bool()))
-  val dvuValid = WiredOR(io.dvu.op)  // used without decodeEn
-  io.dvu.valid := decodeEn && dvuValid
-  io.dvu.addr := rdAddr
-  io.dvu.op := dvuOp.asUInt
-
-  dvuOp(dvu.DIV)  := d.io.div
-  dvuOp(dvu.DIVU) := d.io.divu
-  dvuOp(dvu.REM)  := d.io.rem
-  dvuOp(dvu.REMU) := d.io.remu
-
-  val dvuEn = WiredOR(io.dvu.op) === 0.U || io.dvu.ready
+  val dvu = MuxCase(MakeValid(false.B, DvuOp.DIV), Seq(
+    d.div  -> MakeValid(true.B, DvuOp.DIV),
+    d.divu -> MakeValid(true.B, DvuOp.DIVU),
+    d.rem  -> MakeValid(true.B, DvuOp.REM),
+    d.remu -> MakeValid(true.B, DvuOp.REMU)
+  ))
+  io.dvu.valid := decodeEn && dvu.valid
+  io.dvu.bits.addr := rdAddr
+  io.dvu.bits.op := dvu.bits
+  val dvuEn = !dvu.valid || io.dvu.ready
 
   // Vector instructions.
-  val vinst = new VInstOp()
-  val vinstOp = Wire(Vec(vinst.Entries, Bool()))
-  val vinstValid = WiredOR(vinstOp)  // used without decodeEn
-
-  io.vinst.valid := decodeEn && vinstValid
-  io.vinst.addr := rdAddr
-  io.vinst.inst := io.inst.inst
-  io.vinst.op := vinstOp.asUInt
-
-  vinstOp(vinst.VLD) := d.io.vld
-  vinstOp(vinst.VST) := d.io.vst
-  vinstOp(vinst.VIOP) := d.io.viop
-  vinstOp(vinst.GETVL) := d.io.getvl
-  vinstOp(vinst.GETMAXVL) := d.io.getmaxvl
+  val vinst = MuxCase(MakeValid(false.B, VInstOp.VLD), Seq(
+    d.vld      -> MakeValid(true.B, VInstOp.VLD),
+    d.vst      -> MakeValid(true.B, VInstOp.VST),
+    d.viop     -> MakeValid(true.B, VInstOp.VIOP),
+    d.getvl    -> MakeValid(true.B, VInstOp.GETVL),
+    d.getmaxvl -> MakeValid(true.B, VInstOp.GETMAXVL),
+  ))
+  io.vinst.valid := decodeEn && vinst.valid
+  io.vinst.bits.addr := rdAddr
+  io.vinst.bits.inst := io.inst.inst
+  io.vinst.bits.op := vinst.bits
 
   // Scalar logging.
-  io.slog := decodeEn && d.io.slog
+  io.slog := decodeEn && d.slog
 
   // Register file read ports.
-  io.rs1Read.valid := decodeEn && (isCondBr || isAluReg || isAluImm || isAlu1Bit || isAlu2Bit ||
-                      isCsrImm || isCsrReg || isMul || isDvu || d.io.slog ||
-                      d.io.getvl || d.io.vld || d.io.vst)
-  io.rs2Read.valid := decodeEn && (isCondBr || isAluReg || isAlu2Bit || isStore ||
-                      isCsrReg || isMul || isDvu || d.io.slog || d.io.getvl ||
-                      d.io.vld || d.io.vst || d.io.viop)
+  io.rs1Read.valid := decodeEn && (d.isCondBr() || d.isAluReg() || d.isAluImm() || d.isAlu1Bit() || d.isAlu2Bit() ||
+                      isCsrImm || isCsrReg || d.isMul() || d.isDvu() || d.slog ||
+                      d.getvl || d.vld || d.vst)
+  io.rs2Read.valid := decodeEn && (d.isCondBr() || d.isAluReg() || d.isAlu2Bit() || d.isStore() ||
+                      isCsrReg || d.isMul() || d.isDvu() || d.slog || d.getvl ||
+                      d.vld || d.vst || d.viop)
 
   // rs1 is on critical path to busPortAddr.
   io.rs1Read.addr := Mux(io.inst.inst(0), rs1Addr, rs3Addr)
@@ -337,20 +418,20 @@ class Decode(p: Parameters, pipeline: Int) extends Module {
   io.rs2Read.addr := rs2Addr
 
   // Register file set ports.
-  io.rs1Set.valid := decodeEn && (d.io.auipc || isCsrImm)
-  io.rs2Set.valid := io.rs1Set.valid || decodeEn && (isAluImm || isAlu1Bit || d.io.lui)
+  io.rs1Set.valid := decodeEn && (d.auipc || isCsrImm)
+  io.rs2Set.valid := io.rs1Set.valid || decodeEn && (d.isAluImm() || d.isAlu1Bit() || d.lui)
 
-  io.rs1Set.value := Mux(isCsr, d.io.immcsr, io.inst.addr)  // Program Counter (PC)
+  io.rs1Set.value := Mux(d.isCsr, d.immcsr, io.inst.addr)  // Program Counter (PC)
 
-  io.rs2Set.value := MuxCase(d.io.imm12,
-                     IndexedSeq((d.io.auipc || d.io.lui) -> d.io.imm20))
+  io.rs2Set.value := MuxCase(d.imm12,
+                     IndexedSeq((d.auipc || d.lui) -> d.imm20))
 
   // Register file write address ports. We speculate without knowing the decode
   // enable status to improve timing, and under a branch is ignored anyway.
   val rdMark_valid =
-      aluValid || csrValid || mluValid || dvuValid && io.dvu.ready ||
-      lsuValid && isLoad ||
-      d.io.getvl || d.io.getmaxvl || vldst_wb ||
+      alu.valid || csr.valid || mlu.valid || dvu.valid && io.dvu.ready ||
+      lsu.valid && d.isLoad() ||
+      d.getvl || d.getmaxvl || vldst_wb ||
       bruValid && (bruOp(bru.JAL) || bruOp(bru.JALR)) && rdAddr =/= 0.U
 
   // val scoreboard_spec = Mux(rdMark_valid || d.io.vst, UIntToOH(rdAddr, 32), 0.U)  // TODO: why was d.io.vst included?
@@ -363,317 +444,205 @@ class Decode(p: Parameters, pipeline: Int) extends Module {
   // Register file bus address port.
   // Pointer chasing bypass if immediate is zero.
   // Load/Store immediate selection keys off bit5, and RET off bit6.
-  io.busRead.valid := lsuValid
+  io.busRead.valid := lsu.valid
   io.busRead.bypass := io.inst.inst(31,25) === 0.U &&
     Mux(!io.inst.inst(5) || io.inst.inst(6), io.inst.inst(24,20) === 0.U,
                                              io.inst.inst(11,7) === 0.U)
 
   // SB,SH,SW   0100011
   val storeSelect = io.inst.inst(6,3) === 4.U && io.inst.inst(1,0) === 3.U
-  io.busRead.immen := !d.io.flushat
-  io.busRead.immed := Cat(d.io.imm12(31,5),
-                          Mux(storeSelect, d.io.immst(4,0), d.io.imm12(4,0)))
+  io.busRead.immen := !d.flushat
+  io.busRead.immed := Cat(d.imm12(31,5),
+                          Mux(storeSelect, d.immst(4,0), d.imm12(4,0)))
 
   // Decode ready signalling to fetch.
   // This must not factor branchTaken, which will be done directly in the
   // fetch unit. Note above decodeEn resolves for branch for execute usage.
   io.inst.ready := aluEn && bruEn && lsuEn && mulEn && dvuEn && vinstEn && fenceEn &&
                    !io.serializeIn.jump && !io.halted && !io.interlock &&
-                   (pipeline.U === 0.U || !d.io.undef)
+                   (pipeline.U === 0.U || !d.undef)
 
   // Serialize Interface.
-  // io.serializeOut.lsu  := io.serializeIn.lsu || lsuValid || vldst  // vldst interlock for address generation cycle in vinst
+  // io.serializeOut.lsu  := io.serializeIn.lsu || lsu.valid || vldst  // vldst interlock for address generation cycle in vinst
   // io.serializeOut.lsu  := io.serializeIn.lsu || vldst  // vldst interlock for address generation cycle in vinst
   io.serializeOut.lsu  := io.serializeIn.lsu
-  io.serializeOut.mul  := io.serializeIn.mul || mluValid
-  io.serializeOut.jump := io.serializeIn.jump || d.io.jal || d.io.jalr ||
-                          d.io.ebreak || d.io.ecall || d.io.eexit ||
-                          d.io.eyield || d.io.ectxsw || d.io.mpause || d.io.mret
+  io.serializeOut.mul  := io.serializeIn.mul || mlu.valid
+  io.serializeOut.jump := io.serializeIn.jump || d.jal || d.jalr ||
+                          d.ebreak || d.ecall || d.eexit ||
+                          d.eyield || d.ectxsw || d.mpause || d.mret
   io.serializeOut.brcond := io.serializeIn.brcond |
-      d.io.beq || d.io.bne || d.io.blt || d.io.bge || d.io.bltu || d.io.bgeu
+      d.beq || d.bne || d.blt || d.bge || d.bltu || d.bgeu
   io.serializeOut.vinst := io.serializeIn.vinst
 }
 
-class DecodedInstruction(p: Parameters, pipeline: Int) extends Module {
-  val io = IO(new Bundle {
-    val addr = Input(UInt(32.W))
-    val inst = Input(UInt(32.W))
+object DecodeInstruction {
+  def apply(pipeline: Int, addr: UInt, op: UInt): DecodedInstruction = {
+    val d = Wire(new DecodedInstruction)
 
     // Immediates
-    val imm12  = Output(UInt(32.W))
-    val imm20  = Output(UInt(32.W))
-    val immjal = Output(UInt(32.W))
-    val immbr  = Output(UInt(32.W))
-    val immcsr = Output(UInt(32.W))
-    val immst  = Output(UInt(32.W))
+    d.imm12  := Cat(Fill(20, op(31)), op(31,20))
+    d.imm20  := Cat(op(31,12), 0.U(12.W))
+    d.immjal := Cat(Fill(12, op(31)), op(19,12), op(20), op(30,21), 0.U(1.W))
+    d.immbr  := Cat(Fill(20, op(31)), op(7), op(30,25), op(11,8), 0.U(1.W))
+    d.immcsr := op(19,15)
+    d.immst  := Cat(Fill(20, op(31)), op(31,25), op(11,7))
 
     // RV32I
-    val lui   = Output(Bool())
-    val auipc = Output(Bool())
-    val jal   = Output(Bool())
-    val jalr  = Output(Bool())
-    val beq   = Output(Bool())
-    val bne   = Output(Bool())
-    val blt   = Output(Bool())
-    val bge   = Output(Bool())
-    val bltu  = Output(Bool())
-    val bgeu  = Output(Bool())
-    val csrrw = Output(Bool())
-    val csrrs = Output(Bool())
-    val csrrc = Output(Bool())
-    val lb    = Output(Bool())
-    val lh    = Output(Bool())
-    val lw    = Output(Bool())
-    val lbu   = Output(Bool())
-    val lhu   = Output(Bool())
-    val sb    = Output(Bool())
-    val sh    = Output(Bool())
-    val sw    = Output(Bool())
-    val fence = Output(Bool())
-    val addi  = Output(Bool())
-    val slti  = Output(Bool())
-    val sltiu = Output(Bool())
-    val xori  = Output(Bool())
-    val ori   = Output(Bool())
-    val andi  = Output(Bool())
-    val slli  = Output(Bool())
-    val srli  = Output(Bool())
-    val srai  = Output(Bool())
-    val add   = Output(Bool())
-    val sub   = Output(Bool())
-    val slt   = Output(Bool())
-    val sltu  = Output(Bool())
-    val xor   = Output(Bool())
-    val or    = Output(Bool())
-    val and   = Output(Bool())
-    val sll   = Output(Bool())
-    val srl   = Output(Bool())
-    val sra   = Output(Bool())
+    d.lui   := DecodeBits(op, "xxxxxxxxxxxxxxxxxxxx_xxxxx_0110111")
+    d.auipc := DecodeBits(op, "xxxxxxxxxxxxxxxxxxxx_xxxxx_0010111")
+    d.jal   := DecodeBits(op, "xxxxxxxxxxxxxxxxxxxx_xxxxx_1101111")
+    d.jalr  := DecodeBits(op, "xxxxxxxxxxxx_xxxxx_000_xxxxx_1100111")
+    d.beq   := DecodeBits(op, "xxxxxxx_xxxxx_xxxxx_000_xxxxx_1100011")
+    d.bne   := DecodeBits(op, "xxxxxxx_xxxxx_xxxxx_001_xxxxx_1100011")
+    d.blt   := DecodeBits(op, "xxxxxxx_xxxxx_xxxxx_100_xxxxx_1100011")
+    d.bge   := DecodeBits(op, "xxxxxxx_xxxxx_xxxxx_101_xxxxx_1100011")
+    d.bltu  := DecodeBits(op, "xxxxxxx_xxxxx_xxxxx_110_xxxxx_1100011")
+    d.bgeu  := DecodeBits(op, "xxxxxxx_xxxxx_xxxxx_111_xxxxx_1100011")
+    d.csrrw := DecodeBits(op, "xxxxxxxxxxxx_xxxxx_x01_xxxxx_1110011")
+    d.csrrs := DecodeBits(op, "xxxxxxxxxxxx_xxxxx_x10_xxxxx_1110011")
+    d.csrrc := DecodeBits(op, "xxxxxxxxxxxx_xxxxx_x11_xxxxx_1110011")
+    d.lb    := DecodeBits(op, "xxxxxxxxxxxx_xxxxx_000_xxxxx_0000011")
+    d.lh    := DecodeBits(op, "xxxxxxxxxxxx_xxxxx_001_xxxxx_0000011")
+    d.lw    := DecodeBits(op, "xxxxxxxxxxxx_xxxxx_010_xxxxx_0000011")
+    d.lbu   := DecodeBits(op, "xxxxxxxxxxxx_xxxxx_100_xxxxx_0000011")
+    d.lhu   := DecodeBits(op, "xxxxxxxxxxxx_xxxxx_101_xxxxx_0000011")
+    d.sb    := DecodeBits(op, "xxxxxxxxxxxx_xxxxx_000_xxxxx_0100011")
+    d.sh    := DecodeBits(op, "xxxxxxxxxxxx_xxxxx_001_xxxxx_0100011")
+    d.sw    := DecodeBits(op, "xxxxxxxxxxxx_xxxxx_010_xxxxx_0100011")
+    d.fence := DecodeBits(op, "0000_xxxx_xxxx_00000_000_00000_0001111")
+    d.addi  := DecodeBits(op, "xxxxxxxxxxxx_xxxxx_000_xxxxx_0010011")
+    d.slti  := DecodeBits(op, "xxxxxxxxxxxx_xxxxx_010_xxxxx_0010011")
+    d.sltiu := DecodeBits(op, "xxxxxxxxxxxx_xxxxx_011_xxxxx_0010011")
+    d.xori  := DecodeBits(op, "xxxxxxxxxxxx_xxxxx_100_xxxxx_0010011")
+    d.ori   := DecodeBits(op, "xxxxxxxxxxxx_xxxxx_110_xxxxx_0010011")
+    d.andi  := DecodeBits(op, "xxxxxxxxxxxx_xxxxx_111_xxxxx_0010011")
+    d.slli  := DecodeBits(op, "0000000_xxxxx_xxxxx_001_xxxxx_0010011")
+    d.srli  := DecodeBits(op, "0000000_xxxxx_xxxxx_101_xxxxx_0010011")
+    d.srai  := DecodeBits(op, "0100000_xxxxx_xxxxx_101_xxxxx_0010011")
+    d.add   := DecodeBits(op, "0000000_xxxxx_xxxxx_000_xxxxx_0110011")
+    d.sub   := DecodeBits(op, "0100000_xxxxx_xxxxx_000_xxxxx_0110011")
+    d.slt   := DecodeBits(op, "0000000_xxxxx_xxxxx_010_xxxxx_0110011")
+    d.sltu  := DecodeBits(op, "0000000_xxxxx_xxxxx_011_xxxxx_0110011")
+    d.xor   := DecodeBits(op, "0000000_xxxxx_xxxxx_100_xxxxx_0110011")
+    d.or    := DecodeBits(op, "0000000_xxxxx_xxxxx_110_xxxxx_0110011")
+    d.and   := DecodeBits(op, "0000000_xxxxx_xxxxx_111_xxxxx_0110011")
+    d.sll   := DecodeBits(op, "0000000_xxxxx_xxxxx_001_xxxxx_0110011")
+    d.srl   := DecodeBits(op, "0000000_xxxxx_xxxxx_101_xxxxx_0110011")
+    d.sra   := DecodeBits(op, "0100000_xxxxx_xxxxx_101_xxxxx_0110011")
 
     // RV32M
-    val mul     = Output(Bool())
-    val mulh    = Output(Bool())
-    val mulhsu  = Output(Bool())
-    val mulhu   = Output(Bool())
-    val mulhr   = Output(Bool())
-    val mulhsur = Output(Bool())
-    val mulhur  = Output(Bool())
-    val dmulh   = Output(Bool())
-    val dmulhr  = Output(Bool())
-    val div     = Output(Bool())
-    val divu    = Output(Bool())
-    val rem     = Output(Bool())
-    val remu    = Output(Bool())
+    d.mul     := DecodeBits(op, "0000_001_xxxxx_xxxxx_000_xxxxx_0110011")
+    d.mulh    := DecodeBits(op, "0000_001_xxxxx_xxxxx_001_xxxxx_0110011")
+    d.mulhsu  := DecodeBits(op, "0000_001_xxxxx_xxxxx_010_xxxxx_0110011")
+    d.mulhu   := DecodeBits(op, "0000_001_xxxxx_xxxxx_011_xxxxx_0110011")
+    d.mulhr   := DecodeBits(op, "0010_001_xxxxx_xxxxx_001_xxxxx_0110011")
+    d.mulhsur := DecodeBits(op, "0010_001_xxxxx_xxxxx_010_xxxxx_0110011")
+    d.mulhur  := DecodeBits(op, "0010_001_xxxxx_xxxxx_011_xxxxx_0110011")
+    d.dmulh   := DecodeBits(op, "0000_010_xxxxx_xxxxx_001_xxxxx_0110011")
+    d.dmulhr  := DecodeBits(op, "0010_010_xxxxx_xxxxx_001_xxxxx_0110011")
+    d.div     := DecodeBits(op, "0000_001_xxxxx_xxxxx_100_xxxxx_0110011")
+    d.divu    := DecodeBits(op, "0000_001_xxxxx_xxxxx_101_xxxxx_0110011")
+    d.rem     := DecodeBits(op, "0000_001_xxxxx_xxxxx_110_xxxxx_0110011")
+    d.remu    := DecodeBits(op, "0000_001_xxxxx_xxxxx_111_xxxxx_0110011")
 
     // RV32B
-    val clz  = Output(Bool())
-    val ctz  = Output(Bool())
-    val pcnt = Output(Bool())
-    val min  = Output(Bool())
-    val minu = Output(Bool())
-    val max  = Output(Bool())
-    val maxu = Output(Bool())
+    d.clz  := DecodeBits(op, "0110000_00000_xxxxx_001_xxxxx_0010011")
+    d.ctz  := DecodeBits(op, "0110000_00001_xxxxx_001_xxxxx_0010011")
+    d.pcnt := DecodeBits(op, "0110000_00010_xxxxx_001_xxxxx_0010011")
+    d.min  := DecodeBits(op, "0000101_xxxxx_xxxxx_100_xxxxx_0110011")
+    d.minu := DecodeBits(op, "0000101_xxxxx_xxxxx_101_xxxxx_0110011")
+    d.max  := DecodeBits(op, "0000101_xxxxx_xxxxx_110_xxxxx_0110011")
+    d.maxu := DecodeBits(op, "0000101_xxxxx_xxxxx_111_xxxxx_0110011")
+
+    // Decode scalar log.
+    val slog = DecodeBits(op, "01111_00_00000_xxxxx_0xx_00000_11101_11")
+
+    // Vector length.
+    d.getvl    := DecodeBits(op, "0001x_xx_xxxxx_xxxxx_000_xxxxx_11101_11") && op(26,25) =/= 3.U && (op(24,20) =/= 0.U || op(19,15) =/= 0.U)
+    d.getmaxvl := DecodeBits(op, "0001x_xx_00000_00000_000_xxxxx_11101_11") && op(26,25) =/= 3.U
+
+    // Vector load/store.
+    d.vld := DecodeBits(op, "000xxx_0xxxxx_xxxxx0_xx_xxxxxx_x_111_11")     // vld
+
+    d.vst := DecodeBits(op, "001xxx_0xxxxx_xxxxx0_xx_xxxxxx_x_111_11") ||  // vst
+             DecodeBits(op, "011xxx_0xxxxx_xxxxx0_xx_xxxxxx_x_111_11")     // vstq
+
+    // Convolution transfer accumulators to vregs. Also decodes acset/actr ops.
+    val vconv = DecodeBits(op, "010100_000000_000000_xx_xxxxxx_x_111_11")
+
+    // Duplicate
+    val vdup = DecodeBits(op, "01000x_0xxxxx_000000_xx_xxxxxx_x_111_11") && op(13,12) <= 2.U
+    val vdupi = vdup && op(26) === 0.U
 
     // Vector instructions.
-    val getvl = Output(Bool())
-    val getmaxvl = Output(Bool())
-    val vld = Output(Bool())
-    val vst = Output(Bool())
-    val viop = Output(Bool())
+    d.viop := op(0) === 0.U ||     // .vv .vx
+              op(1,0) === 1.U ||  // .vvv .vxv
+              vconv || vdupi
 
-    // Core controls.
-    val ebreak = Output(Bool())
-    val ecall  = Output(Bool())
-    val eexit  = Output(Bool())
-    val eyield = Output(Bool())
-    val ectxsw = Output(Bool())
-    val mpause = Output(Bool())
-    val mret   = Output(Bool())
-    val undef  = Output(Bool())
+    // [extensions] Core controls.
+    d.ebreak := DecodeBits(op, "000000000001_00000_000_00000_11100_11")
+    d.ecall  := DecodeBits(op, "000000000000_00000_000_00000_11100_11")
+    d.eexit  := DecodeBits(op, "000000100000_00000_000_00000_11100_11")
+    d.eyield := DecodeBits(op, "000001000000_00000_000_00000_11100_11")
+    d.ectxsw := DecodeBits(op, "000001100000_00000_000_00000_11100_11")
+    d.mpause := DecodeBits(op, "000010000000_00000_000_00000_11100_11")
+    d.mret   := DecodeBits(op, "001100000010_00000_000_00000_11100_11")
 
     // Fences.
-    val fencei = Output(Bool())
-    val flushat = Output(Bool())
-    val flushall = Output(Bool())
+    d.fencei   := DecodeBits(op, "0000_0000_0000_00000_001_00000_0001111")
+    d.flushat  := DecodeBits(op, "0010x_xx_00000_xxxxx_000_00000_11101_11") && op(19,15) =/= 0.U
+    d.flushall := DecodeBits(op, "0010x_xx_00000_00000_000_00000_11101_11")
 
-    // Scalar logging.
-    val slog = Output(Bool())
-  })
+    // [extensions] Scalar logging.
+    d.slog := slog
 
-  val op = io.inst
+    // Stub out decoder state not used beyond pipeline0.
+    if (pipeline > 0) {
+      d.csrrw := false.B
+      d.csrrs := false.B
+      d.csrrc := false.B
 
-  // Immediates
-  io.imm12  := Cat(Fill(20, op(31)), op(31,20))
-  io.imm20  := Cat(op(31,12), 0.U(12.W))
-  io.immjal := Cat(Fill(12, op(31)), op(19,12), op(20), op(30,21), 0.U(1.W))
-  io.immbr  := Cat(Fill(20, op(31)), op(7), op(30,25), op(11,8), 0.U(1.W))
-  io.immcsr := op(19,15)
-  io.immst  := Cat(Fill(20, op(31)), op(31,25), op(11,7))
+      d.div := false.B
+      d.divu := false.B
+      d.rem := false.B
+      d.remu := false.B
 
-  // RV32I
-  io.lui   := DecodeBits(op, "xxxxxxxxxxxxxxxxxxxx_xxxxx_0110111")
-  io.auipc := DecodeBits(op, "xxxxxxxxxxxxxxxxxxxx_xxxxx_0010111")
-  io.jal   := DecodeBits(op, "xxxxxxxxxxxxxxxxxxxx_xxxxx_1101111")
-  io.jalr  := DecodeBits(op, "xxxxxxxxxxxx_xxxxx_000_xxxxx_1100111")
-  io.beq   := DecodeBits(op, "xxxxxxx_xxxxx_xxxxx_000_xxxxx_1100011")
-  io.bne   := DecodeBits(op, "xxxxxxx_xxxxx_xxxxx_001_xxxxx_1100011")
-  io.blt   := DecodeBits(op, "xxxxxxx_xxxxx_xxxxx_100_xxxxx_1100011")
-  io.bge   := DecodeBits(op, "xxxxxxx_xxxxx_xxxxx_101_xxxxx_1100011")
-  io.bltu  := DecodeBits(op, "xxxxxxx_xxxxx_xxxxx_110_xxxxx_1100011")
-  io.bgeu  := DecodeBits(op, "xxxxxxx_xxxxx_xxxxx_111_xxxxx_1100011")
-  io.csrrw := DecodeBits(op, "xxxxxxxxxxxx_xxxxx_x01_xxxxx_1110011")
-  io.csrrs := DecodeBits(op, "xxxxxxxxxxxx_xxxxx_x10_xxxxx_1110011")
-  io.csrrc := DecodeBits(op, "xxxxxxxxxxxx_xxxxx_x11_xxxxx_1110011")
-  io.lb    := DecodeBits(op, "xxxxxxxxxxxx_xxxxx_000_xxxxx_0000011")
-  io.lh    := DecodeBits(op, "xxxxxxxxxxxx_xxxxx_001_xxxxx_0000011")
-  io.lw    := DecodeBits(op, "xxxxxxxxxxxx_xxxxx_010_xxxxx_0000011")
-  io.lbu   := DecodeBits(op, "xxxxxxxxxxxx_xxxxx_100_xxxxx_0000011")
-  io.lhu   := DecodeBits(op, "xxxxxxxxxxxx_xxxxx_101_xxxxx_0000011")
-  io.sb    := DecodeBits(op, "xxxxxxxxxxxx_xxxxx_000_xxxxx_0100011")
-  io.sh    := DecodeBits(op, "xxxxxxxxxxxx_xxxxx_001_xxxxx_0100011")
-  io.sw    := DecodeBits(op, "xxxxxxxxxxxx_xxxxx_010_xxxxx_0100011")
-  io.fence := DecodeBits(op, "0000_xxxx_xxxx_00000_000_00000_0001111")
-  io.addi  := DecodeBits(op, "xxxxxxxxxxxx_xxxxx_000_xxxxx_0010011")
-  io.slti  := DecodeBits(op, "xxxxxxxxxxxx_xxxxx_010_xxxxx_0010011")
-  io.sltiu := DecodeBits(op, "xxxxxxxxxxxx_xxxxx_011_xxxxx_0010011")
-  io.xori  := DecodeBits(op, "xxxxxxxxxxxx_xxxxx_100_xxxxx_0010011")
-  io.ori   := DecodeBits(op, "xxxxxxxxxxxx_xxxxx_110_xxxxx_0010011")
-  io.andi  := DecodeBits(op, "xxxxxxxxxxxx_xxxxx_111_xxxxx_0010011")
-  io.slli  := DecodeBits(op, "0000000_xxxxx_xxxxx_001_xxxxx_0010011")
-  io.srli  := DecodeBits(op, "0000000_xxxxx_xxxxx_101_xxxxx_0010011")
-  io.srai  := DecodeBits(op, "0100000_xxxxx_xxxxx_101_xxxxx_0010011")
-  io.add   := DecodeBits(op, "0000000_xxxxx_xxxxx_000_xxxxx_0110011")
-  io.sub   := DecodeBits(op, "0100000_xxxxx_xxxxx_000_xxxxx_0110011")
-  io.slt   := DecodeBits(op, "0000000_xxxxx_xxxxx_010_xxxxx_0110011")
-  io.sltu  := DecodeBits(op, "0000000_xxxxx_xxxxx_011_xxxxx_0110011")
-  io.xor   := DecodeBits(op, "0000000_xxxxx_xxxxx_100_xxxxx_0110011")
-  io.or    := DecodeBits(op, "0000000_xxxxx_xxxxx_110_xxxxx_0110011")
-  io.and   := DecodeBits(op, "0000000_xxxxx_xxxxx_111_xxxxx_0110011")
-  io.sll   := DecodeBits(op, "0000000_xxxxx_xxxxx_001_xxxxx_0110011")
-  io.srl   := DecodeBits(op, "0000000_xxxxx_xxxxx_101_xxxxx_0110011")
-  io.sra   := DecodeBits(op, "0100000_xxxxx_xxxxx_101_xxxxx_0110011")
+      d.ebreak := false.B
+      d.ecall  := false.B
+      d.eexit  := false.B
+      d.eyield := false.B
+      d.ectxsw := false.B
+      d.mpause := false.B
+      d.mret   := false.B
 
-  // RV32M
-  io.mul     := DecodeBits(op, "0000_001_xxxxx_xxxxx_000_xxxxx_0110011")
-  io.mulh    := DecodeBits(op, "0000_001_xxxxx_xxxxx_001_xxxxx_0110011")
-  io.mulhsu  := DecodeBits(op, "0000_001_xxxxx_xxxxx_010_xxxxx_0110011")
-  io.mulhu   := DecodeBits(op, "0000_001_xxxxx_xxxxx_011_xxxxx_0110011")
-  io.mulhr   := DecodeBits(op, "0010_001_xxxxx_xxxxx_001_xxxxx_0110011")
-  io.mulhsur := DecodeBits(op, "0010_001_xxxxx_xxxxx_010_xxxxx_0110011")
-  io.mulhur  := DecodeBits(op, "0010_001_xxxxx_xxxxx_011_xxxxx_0110011")
-  io.dmulh   := DecodeBits(op, "0000_010_xxxxx_xxxxx_001_xxxxx_0110011")
-  io.dmulhr  := DecodeBits(op, "0010_010_xxxxx_xxxxx_001_xxxxx_0110011")
-  io.div     := DecodeBits(op, "0000_001_xxxxx_xxxxx_100_xxxxx_0110011")
-  io.divu    := DecodeBits(op, "0000_001_xxxxx_xxxxx_101_xxxxx_0110011")
-  io.rem     := DecodeBits(op, "0000_001_xxxxx_xxxxx_110_xxxxx_0110011")
-  io.remu    := DecodeBits(op, "0000_001_xxxxx_xxxxx_111_xxxxx_0110011")
+      d.fence    := false.B
+      d.fencei   := false.B
+      d.flushat  := false.B
+      d.flushall := false.B
 
-  // RV32B
-  io.clz  := DecodeBits(op, "0110000_00000_xxxxx_001_xxxxx_0010011")
-  io.ctz  := DecodeBits(op, "0110000_00001_xxxxx_001_xxxxx_0010011")
-  io.pcnt := DecodeBits(op, "0110000_00010_xxxxx_001_xxxxx_0010011")
-  io.min  := DecodeBits(op, "0000101_xxxxx_xxxxx_100_xxxxx_0110011")
-  io.minu := DecodeBits(op, "0000101_xxxxx_xxxxx_101_xxxxx_0110011")
-  io.max  := DecodeBits(op, "0000101_xxxxx_xxxxx_110_xxxxx_0110011")
-  io.maxu := DecodeBits(op, "0000101_xxxxx_xxxxx_111_xxxxx_0110011")
+      d.slog := false.B
+    }
 
-  // Decode scalar log.
-  val slog = DecodeBits(op, "01111_00_00000_xxxxx_0xx_00000_11101_11")
+    // Generate the undefined opcode.
+    val decoded = Cat(d.lui, d.auipc,
+                      d.jal, d.jalr,
+                      d.beq, d.bne, d.blt, d.bge, d.bltu, d.bgeu,
+                      d.csrrw, d.csrrs, d.csrrc,
+                      d.lb, d.lh, d.lw, d.lbu, d.lhu,
+                      d.sb, d.sh, d.sw, d.fence,
+                      d.addi, d.slti, d.sltiu, d.xori, d.ori, d.andi,
+                      d.add, d.sub, d.slt, d.sltu, d.xor, d.or, d.and,
+                      d.slli, d.srli, d.srai, d.sll, d.srl, d.sra,
+                      d.mul, d.mulh, d.mulhsu, d.mulhu, d.mulhr, d.mulhsur, d.mulhur, d.dmulh, d.dmulhr,
+                      d.div, d.divu, d.rem, d.remu,
+                      d.clz, d.ctz, d.pcnt, d.min, d.minu, d.max, d.maxu,
+                      d.viop, d.vld, d.vst,
+                      d.getvl, d.getmaxvl,
+                      d.ebreak, d.ecall, d.eexit, d.eyield, d.ectxsw,
+                      d.mpause, d.mret, d.fencei, d.flushat, d.flushall, d.slog)
 
-  // Vector length.
-  io.getvl    := DecodeBits(op, "0001x_xx_xxxxx_xxxxx_000_xxxxx_11101_11") && op(26,25) =/= 3.U && (op(24,20) =/= 0.U || op(19,15) =/= 0.U)
-  io.getmaxvl := DecodeBits(op, "0001x_xx_00000_00000_000_xxxxx_11101_11") && op(26,25) =/= 3.U
+    d.undef := !WiredOR(decoded)
 
-  // Vector load/store.
-  io.vld := DecodeBits(op, "000xxx_0xxxxx_xxxxx0_xx_xxxxxx_x_111_11")     // vld
-
-  io.vst := DecodeBits(op, "001xxx_0xxxxx_xxxxx0_xx_xxxxxx_x_111_11") ||  // vst
-            DecodeBits(op, "011xxx_0xxxxx_xxxxx0_xx_xxxxxx_x_111_11")     // vstq
-
-  // Convolution transfer accumulators to vregs. Also decodes acset/actr ops.
-  val vconv = DecodeBits(op, "010100_000000_000000_xx_xxxxxx_x_111_11")
-
-  // Duplicate
-  val vdup = DecodeBits(op, "01000x_0xxxxx_000000_xx_xxxxxx_x_111_11") && op(13,12) <= 2.U
-  val vdupi = vdup && op(26) === 0.U
-
-  // Vector instructions.
-  io.viop := op(0) === 0.U ||     // .vv .vx
-             op(1,0) === 1.U ||  // .vvv .vxv
-             vconv || vdupi
-
-  // [extensions] Core controls.
-  io.ebreak := DecodeBits(op, "000000000001_00000_000_00000_11100_11")
-  io.ecall  := DecodeBits(op, "000000000000_00000_000_00000_11100_11")
-  io.eexit  := DecodeBits(op, "000000100000_00000_000_00000_11100_11")
-  io.eyield := DecodeBits(op, "000001000000_00000_000_00000_11100_11")
-  io.ectxsw := DecodeBits(op, "000001100000_00000_000_00000_11100_11")
-  io.mpause := DecodeBits(op, "000010000000_00000_000_00000_11100_11")
-  io.mret   := DecodeBits(op, "001100000010_00000_000_00000_11100_11")
-
-  // Fences.
-  io.fencei   := DecodeBits(op, "0000_0000_0000_00000_001_00000_0001111")
-  io.flushat  := DecodeBits(op, "0010x_xx_00000_xxxxx_000_00000_11101_11") && op(19,15) =/= 0.U
-  io.flushall := DecodeBits(op, "0010x_xx_00000_00000_000_00000_11101_11")
-
-  // [extensions] Scalar logging.
-  io.slog := slog
-
-  // Stub out decoder state not used beyond pipeline0.
-  if (pipeline > 0) {
-    io.csrrw := false.B
-    io.csrrs := false.B
-    io.csrrc := false.B
-
-    io.div := false.B
-    io.divu := false.B
-    io.rem := false.B
-    io.remu := false.B
-
-    io.ebreak := false.B
-    io.ecall  := false.B
-    io.eexit  := false.B
-    io.eyield := false.B
-    io.ectxsw := false.B
-    io.mpause := false.B
-    io.mret   := false.B
-
-    io.fence    := false.B
-    io.fencei   := false.B
-    io.flushat  := false.B
-    io.flushall := false.B
-
-    io.slog := false.B
-  }
-
-  // Generate the undefined opcode.
-  val decoded = Cat(io.lui, io.auipc,
-                    io.jal, io.jalr,
-                    io.beq, io.bne, io.blt, io.bge, io.bltu, io.bgeu,
-                    io.csrrw, io.csrrs, io.csrrc,
-                    io.lb, io.lh, io.lw, io.lbu, io.lhu,
-                    io.sb, io.sh, io.sw, io.fence,
-                    io.addi, io.slti, io.sltiu, io.xori, io.ori, io.andi,
-                    io.add, io.sub, io.slt, io.sltu, io.xor, io.or, io.and,
-                    io.slli, io.srli, io.srai, io.sll, io.srl, io.sra,
-                    io.mul, io.mulh, io.mulhsu, io.mulhu, io.mulhr, io.mulhsur, io.mulhur, io.dmulh, io.dmulhr,
-                    io.div, io.divu, io.rem, io.remu,
-                    io.clz, io.ctz, io.pcnt, io.min, io.minu, io.max, io.maxu,
-                    io.viop, io.vld, io.vst,
-                    io.getvl, io.getmaxvl,
-                    io.ebreak, io.ecall, io.eexit, io.eyield, io.ectxsw,
-                    io.mpause, io.mret, io.fencei, io.flushat, io.flushall, io.slog)
-
-  io.undef := !WiredOR(decoded)
-
-  // Delay the assert until the next cycle, so that logs appear on console.
-  val onehot_failed = RegInit(false.B)
-  assert(!onehot_failed)
-
-  val onehot_decode = PopCount(decoded)
-  when ((onehot_decode + io.undef) =/= 1.U) {
-    onehot_failed := true.B
-    printf("[FAIL] decode  inst=%x  addr=%x  decoded=0b%b  pipeline=%d\n",
-      io.inst, io.addr, decoded, pipeline.U)
+    d
   }
 }

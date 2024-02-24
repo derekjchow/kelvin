@@ -25,25 +25,22 @@ object Dvu {
   }
 }
 
-case class DvuOp() {
-  val DIV  = 0
-  val DIVU = 1
-  val REM  = 2
-  val REMU = 3
-  val Entries = 4
+object DvuOp extends ChiselEnum {
+  val DIV  = Value
+  val DIVU = Value
+  val REM  = Value
+  val REMU = Value
 }
 
-class DvuIO(p: Parameters) extends Bundle {
-  val valid = Input(Bool())
-  val ready = Output(Bool())
-  val addr = Input(UInt(5.W))
-  val op = Input(UInt(new DvuOp().Entries.W))
+class DvuCmd extends Bundle {
+  val addr = UInt(5.W)
+  val op = DvuOp()
 }
 
 class Dvu(p: Parameters) extends Module {
   val io = IO(new Bundle {
     // Decode cycle.
-    val req = new DvuIO(p)
+    val req = Flipped(Decoupled(new DvuCmd))
 
     // Execute cycle.
     val rs1 = Flipped(new RegfileReadDataIO)
@@ -58,7 +55,6 @@ class Dvu(p: Parameters) extends Module {
 
   // This implemention differs to common::idiv by supporting early termination,
   // and only performs one bit per cycle.
-  val dvu = new DvuOp()
 
   def Divide(prvDivide: UInt, prvRemain: UInt, denom: UInt): (UInt, UInt) = {
     val shfRemain = Cat(prvRemain(30,0), prvDivide(31))
@@ -116,9 +112,9 @@ class Dvu(p: Parameters) extends Module {
   compute := active
 
   when (io.req.valid && io.req.ready) {
-    addr1   := io.req.addr
-    signed1 := io.req.op(dvu.DIV) || io.req.op(dvu.REM)
-    divide1 := io.req.op(dvu.DIV) || io.req.op(dvu.DIVU)
+    addr1   := io.req.bits.addr
+    signed1 := io.req.bits.op.isOneOf(DvuOp.DIV, DvuOp.REM)
+    divide1 := io.req.bits.op.isOneOf(DvuOp.DIV, DvuOp.DIVU)
   }
 
   when (active && !compute) {

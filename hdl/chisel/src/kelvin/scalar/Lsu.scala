@@ -38,28 +38,25 @@ class DBusIO(p: Parameters, bank: Boolean = false) extends Bundle {
   val rdata = Input(UInt(p.lsuDataBits.W))
 }
 
-case class LsuOp() {
-  val LB  = 0
-  val LH  = 1
-  val LW  = 2
-  val LBU = 3
-  val LHU = 4
-  val SB  = 5
-  val SH  = 6
-  val SW  = 7
-  val FENCEI = 8
-  val FLUSHAT = 9
-  val FLUSHALL = 10
-  val VLDST = 11
-  val Entries = 12
+object LsuOp extends ChiselEnum {
+  val LB  = Value
+  val LH  = Value
+  val LW  = Value
+  val LBU = Value
+  val LHU = Value
+  val SB  = Value
+  val SH  = Value
+  val SW  = Value
+  val FENCEI = Value
+  val FLUSHAT = Value
+  val FLUSHALL = Value
+  val VLDST = Value
 }
 
-class LsuIO(p: Parameters) extends Bundle {
-  val valid = Input(Bool())
-  val ready = Output(Bool())
-  val store = Input(Bool())
-  val addr = Input(UInt(5.W))
-  val op = Input(UInt(new LsuOp().Entries.W))
+class LsuCmd extends Bundle {
+  val store = Bool()
+  val addr = UInt(5.W)
+  val op = LsuOp()
 }
 
 class LsuCtrl(p: Parameters) extends Bundle {
@@ -92,7 +89,7 @@ class LsuReadData(p: Parameters) extends Bundle {
 class Lsu(p: Parameters) extends Module {
   val io = IO(new Bundle {
     // Decode cycle.
-    val req = Vec(p.instructionLanes, new LsuIO(p))
+    val req = Vec(p.instructionLanes, Flipped(Decoupled(new LsuCmd)))
     val busPort = Flipped(new RegfileBusPortIO(p))
 
     // Execute cycle(s).
@@ -110,8 +107,6 @@ class Lsu(p: Parameters) extends Module {
 
     val storeCount = Output(UInt(2.W))
   })
-
-  val lsu = new LsuOp()
 
   // AXI Queues.
   val n = 8
@@ -143,25 +138,25 @@ class Lsu(p: Parameters) extends Module {
     val uncached = io.busPort.addr(i)(31) ||
       (if (uncacheable.length > 0) uncacheable.map(x => (io.busPort.addr(i) >= x.memStart.U) && (io.busPort.addr(i) < (x.memStart + x.memSize).U)).reduce(_||_) else false.B)
 
-    val opstore = io.req(i).op(lsu.SW) || io.req(i).op(lsu.SH) || io.req(i).op(lsu.SB)
-    val opiload = io.req(i).op(lsu.LW) || io.req(i).op(lsu.LH) || io.req(i).op(lsu.LB) || io.req(i).op(lsu.LHU) || io.req(i).op(lsu.LBU)
+    val opstore = io.req(i).bits.op.isOneOf(LsuOp.SW, LsuOp.SH, LsuOp.SB)
+    val opiload = io.req(i).bits.op.isOneOf(LsuOp.LW, LsuOp.LH, LsuOp.LB, LsuOp.LHU, LsuOp.LBU)
     val opload  = opiload
-    val opfencei   = io.req(i).op(lsu.FENCEI)
-    val opflushat  = io.req(i).op(lsu.FLUSHAT)
-    val opflushall = io.req(i).op(lsu.FLUSHALL)
+    val opfencei   = (io.req(i).bits.op === LsuOp.FENCEI)
+    val opflushat  = (io.req(i).bits.op === LsuOp.FLUSHAT)
+    val opflushall = (io.req(i).bits.op === LsuOp.FLUSHALL)
     val opsldst = opstore || opload
-    val opvldst = io.req(i).op(lsu.VLDST)
-    val opsext = io.req(i).op(lsu.LB) || io.req(i).op(lsu.LH)
-    val opsize = Cat(io.req(i).op(lsu.LW) || io.req(i).op(lsu.SW),
-                     io.req(i).op(lsu.LH) || io.req(i).op(lsu.LHU) || io.req(i).op(lsu.SH),
-                     io.req(i).op(lsu.LB) || io.req(i).op(lsu.LBU) || io.req(i).op(lsu.SB))
+    val opvldst = (io.req(i).bits.op === LsuOp.VLDST)
+    val opsext = io.req(i).bits.op.isOneOf(LsuOp.LB, LsuOp.LH)
+    val opsize = Cat(io.req(i).bits.op.isOneOf(LsuOp.LW, LsuOp.SW),
+                     io.req(i).bits.op.isOneOf(LsuOp.LH, LsuOp.LHU, LsuOp.SH),
+                     io.req(i).bits.op.isOneOf(LsuOp.LB, LsuOp.LBU, LsuOp.SB))
 
     ctrl.io.in.bits(i).valid := io.req(i).valid && ctrlready(i) && !(opvldst && uncached)
 
     ctrl.io.in.bits(i).bits.addr := io.busPort.addr(i)
     ctrl.io.in.bits(i).bits.adrx := io.busPort.addr(i) + lineoffset.U
     ctrl.io.in.bits(i).bits.data := io.busPort.data(i)
-    ctrl.io.in.bits(i).bits.index := io.req(i).addr
+    ctrl.io.in.bits(i).bits.index := io.req(i).bits.addr
     ctrl.io.in.bits(i).bits.sext := opsext
     ctrl.io.in.bits(i).bits.size := opsize
     ctrl.io.in.bits(i).bits.iload := opiload

@@ -26,22 +26,18 @@ object VInst {
   }
 }
 
-case class VInstOp() {
-  val GETVL = 0
-  val GETMAXVL = 1
-  val VLD = 2
-  val VST = 3
-  val VIOP = 4
-  val Entries = 5
-  val Bits = log2Ceil(Entries)
+object VInstOp extends ChiselEnum {
+  val GETVL = Value
+  val GETMAXVL = Value
+  val VLD = Value
+  val VST = Value
+  val VIOP = Value
 }
 
-class VInstIO extends Bundle {
-  val valid = Input(Bool())
-  val ready = Output(Bool())
-  val addr = Input(UInt(5.W))
-  val inst = Input(UInt(32.W))
-  val op = Input(UInt(new VInstOp().Entries.W))
+class VInstCmd extends Bundle {
+  val addr = UInt(5.W)
+  val inst = UInt(32.W)
+  val op = VInstOp()
 }
 
 class VectorInstructionIO(p: Parameters) extends Bundle {
@@ -68,7 +64,7 @@ class VAddressActive extends Bundle {
 class VInst(p: Parameters) extends Module {
   val io = IO(new Bundle {
     // Decode cycle.
-    val in = Vec(p.instructionLanes, new VInstIO)
+    val in = Vec(p.instructionLanes, Flipped(Decoupled(new VInstCmd)))
 
     // Execute cycle.
     val rs = Vec(p.instructionLanes * 2, Flipped(new RegfileReadDataIO))
@@ -80,8 +76,6 @@ class VInst(p: Parameters) extends Module {
     // Status.
     val nempty = Output(Bool())
   })
-
-  val vinst = new VInstOp()
 
   val maxvlb  = (p.vectorBits / 8).U(p.vectorCountBits.W)
   val maxvlh  = (p.vectorBits / 16).U(p.vectorCountBits.W)
@@ -98,7 +92,7 @@ class VInst(p: Parameters) extends Module {
   }), true)
 
   val reqvalid = VecInit(io.in.map(x => x.valid && x.ready))
-  val reqaddr = VecInit(io.in.map(x => x.inst(19,15)))
+  val reqaddr = VecInit(io.in.map(_.bits.inst(19,15)))
 
   // ---------------------------------------------------------------------------
   // Response to Decode.
@@ -120,7 +114,7 @@ class VInst(p: Parameters) extends Module {
 
   for (i <- 0 until p.instructionLanes) {
     when (reqvalid(i)) {
-      rdAddr(i) := io.in(i).addr
+      rdAddr(i) := io.in(i).bits.addr
     }
   }
 
@@ -134,23 +128,23 @@ class VInst(p: Parameters) extends Module {
   vvalid := nxtVinstValid.asUInt =/= 0.U
 
   for (i <- 0 until p.instructionLanes) {
-    nxtVinstValid(i) := reqvalid(i) && (io.in(i).op(vinst.VLD) ||
-                                        io.in(i).op(vinst.VST) ||
-                                        io.in(i).op(vinst.VIOP))
+    nxtVinstValid(i) := reqvalid(i) && io.in(i).bits.op.isOneOf(
+            VInstOp.VLD, VInstOp.VST, VInstOp.VIOP)
     vinstValid(i) := nxtVinstValid(i)
-    vinstInst(i) := io.in(i).inst
+    vinstInst(i) := io.in(i).bits.inst
   }
 
   for (i <- 0 until p.instructionLanes) {
-    val p = io.in(i).inst(28)  // func2
-    val q = io.in(i).inst(30)  // func2
-    vld_o(i) := reqvalid(i) && io.in(i).op(vinst.VLD) && !p
-    vld_u(i) := reqvalid(i) && io.in(i).op(vinst.VLD) &&  p
-    vst_o(i) := reqvalid(i) && io.in(i).op(vinst.VST) && !p
-    vst_u(i) := reqvalid(i) && io.in(i).op(vinst.VST) &&  p && !q
-    vst_q(i) := reqvalid(i) && io.in(i).op(vinst.VST) &&  p &&  q
-    getvl(i) := reqvalid(i) && io.in(i).op(vinst.GETVL)
-    getmaxvl(i) := reqvalid(i) && io.in(i).op(vinst.GETMAXVL)
+    val p = io.in(i).bits.inst(28)  // func2
+    val q = io.in(i).bits.inst(30)  // func2
+    val op = io.in(i).bits.op
+    vld_o(i) := reqvalid(i) && (op === VInstOp.VLD) && !p
+    vld_u(i) := reqvalid(i) && (op === VInstOp.VLD) &&  p
+    vst_o(i) := reqvalid(i) && (op === VInstOp.VST) && !p
+    vst_u(i) := reqvalid(i) && (op === VInstOp.VST) &&  p && !q
+    vst_q(i) := reqvalid(i) && (op === VInstOp.VST) &&  p &&  q
+    getvl(i) := reqvalid(i) && (op === VInstOp.GETVL)
+    getmaxvl(i) := reqvalid(i) && (op === VInstOp.GETMAXVL)
   }
 
   // ---------------------------------------------------------------------------

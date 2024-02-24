@@ -24,11 +24,10 @@ object Csr {
   }
 }
 
-case class CsrOp() {
-  val CSRRW = 0
-  val CSRRS = 1
-  val CSRRC = 2
-  val Entries = 3
+object CsrOp extends ChiselEnum {
+  val CSRRW = Value
+  val CSRRS = Value
+  val CSRRC = Value
 }
 
 class CsrInIO(p: Parameters) extends Bundle {
@@ -73,11 +72,10 @@ class CsrBruIO(p: Parameters) extends Bundle {
   }
 }
 
-class CsrIO(p: Parameters) extends Bundle {
-  val valid = Input(Bool())
-  val addr = Input(UInt(5.W))
-  val index = Input(UInt(12.W))
-  val op = Input(UInt(new CsrOp().Entries.W))
+class CsrCmd extends Bundle {
+  val addr = UInt(5.W)
+  val index = UInt(12.W)
+  val op = CsrOp()
 }
 
 class Csr(p: Parameters) extends Module {
@@ -86,7 +84,7 @@ class Csr(p: Parameters) extends Module {
     val csr = new CsrInOutIO(p)
 
     // Decode cycle.
-    val req = new CsrIO(p)
+    val req = Flipped(Valid(new CsrCmd))
 
     // Execute cycle.
     val rs1 = Flipped(new RegfileReadDataIO)
@@ -103,12 +101,8 @@ class Csr(p: Parameters) extends Module {
     val fault  = Output(Bool())
   })
 
-  val csr = new CsrOp()
-
-  val valid = RegInit(false.B)
-  val addr = Reg(UInt(5.W))
-  val index = Reg(UInt(12.W))
-  val op = RegInit(0.U(csr.Entries.W))
+  // Control registers.
+  val req = Pipe(io.req)
 
   // Pipeline Control.
   val halted = RegInit(false.B)
@@ -159,51 +153,38 @@ class Csr(p: Parameters) extends Module {
   val fcsr = Cat(frm, fflags)
 
   // Decode the Index.
-  val fflagsEn    = index === 0x001.U
-  val frmEn       = index === 0x002.U
-  val fcsrEn      = index === 0x003.U
-  val misaEn      = index === 0x301.U
-  val mieEn       = index === 0x304.U
-  val mtvecEn     = index === 0x305.U
-  val mscratchEn  = index === 0x340.U
-  val mepcEn      = index === 0x341.U
-  val mcauseEn    = index === 0x342.U
-  val mtvalEn     = index === 0x343.U
-  val mcontext0En = index === 0x7C0.U
-  val mcontext1En = index === 0x7C1.U
-  val mcontext2En = index === 0x7C2.U
-  val mcontext3En = index === 0x7C3.U
-  val mcontext4En = index === 0x7C4.U
-  val mcontext5En = index === 0x7C5.U
-  val mcontext6En = index === 0x7C6.U
-  val mcontext7En = index === 0x7C7.U
-  val mpcEn       = index === 0x7E0.U
-  val mspEn       = index === 0x7E1.U
+  val fflagsEn    = req.bits.index === 0x001.U
+  val frmEn       = req.bits.index === 0x002.U
+  val fcsrEn      = req.bits.index === 0x003.U
+  val misaEn      = req.bits.index === 0x301.U
+  val mieEn       = req.bits.index === 0x304.U
+  val mtvecEn     = req.bits.index === 0x305.U
+  val mscratchEn  = req.bits.index === 0x340.U
+  val mepcEn      = req.bits.index === 0x341.U
+  val mcauseEn    = req.bits.index === 0x342.U
+  val mtvalEn     = req.bits.index === 0x343.U
+  val mcontext0En = req.bits.index === 0x7C0.U
+  val mcontext1En = req.bits.index === 0x7C1.U
+  val mcontext2En = req.bits.index === 0x7C2.U
+  val mcontext3En = req.bits.index === 0x7C3.U
+  val mcontext4En = req.bits.index === 0x7C4.U
+  val mcontext5En = req.bits.index === 0x7C5.U
+  val mcontext6En = req.bits.index === 0x7C6.U
+  val mcontext7En = req.bits.index === 0x7C7.U
+  val mpcEn       = req.bits.index === 0x7E0.U
+  val mspEn       = req.bits.index === 0x7E1.U
   // M-mode performance CSRs.
-  val mcycleEn    = index === 0xB00.U
-  val minstretEn  = index === 0xB02.U
-  val mcyclehEn   = index === 0xB80.U
-  val minstrethEn = index === 0xB82.U
+  val mcycleEn    = req.bits.index === 0xB00.U
+  val minstretEn  = req.bits.index === 0xB02.U
+  val mcyclehEn   = req.bits.index === 0xB80.U
+  val minstrethEn = req.bits.index === 0xB82.U
   // M-mode information CSRs.
-  val mvendoridEn = index === 0xF11.U
-  val marchidEn   = index === 0xF12.U
-  val mimpidEn    = index === 0xF13.U
-  val mhartidEn   = index === 0xF14.U
+  val mvendoridEn = req.bits.index === 0xF11.U
+  val marchidEn   = req.bits.index === 0xF12.U
+  val mimpidEn    = req.bits.index === 0xF13.U
+  val mhartidEn   = req.bits.index === 0xF14.U
   // Start of custom CSRs.
-  val kisaEn      = index === 0xFC0.U
-
-  // Control registers.
-  when (io.req.valid) {
-    valid := io.req.valid
-    addr := io.req.addr
-    index := io.req.index
-    op := io.req.op
-  } .elsewhen (valid) {
-    valid := false.B
-    addr := 0.U
-    index := 0.U
-    op := 0.U
-  }
+  val kisaEn      = req.bits.index === 0xFC0.U
 
   // Pipeline Control.
   when (io.bru.in.halt || io.vcore.undef) {
@@ -252,11 +233,13 @@ class Csr(p: Parameters) extends Module {
               MuxOR(mhartidEn,    mhartid) |
               MuxOR(kisaEn,       kisa)
 
-  val wdata = MuxOR(op(csr.CSRRW), rs1) |
-              MuxOR(op(csr.CSRRS), rdata | rs1) |
-              MuxOR(op(csr.CSRRC), rdata & ~rs1)
+  val wdata = MuxLookup(req.bits.op, 0.U)(Seq(
+      CsrOp.CSRRW -> rs1,
+      CsrOp.CSRRS -> (rdata | rs1),
+      CsrOp.CSRRC -> (rdata & ~rs1)
+  ))
 
-  when (valid) {
+  when (req.valid) {
     when (fflagsEn)     { fflags    := wdata }
     when (frmEn)        { frm       := wdata }
     when (fcsrEn)       { fflags    := wdata(4,0)
@@ -287,13 +270,13 @@ class Csr(p: Parameters) extends Module {
   val mcycle_th = Mux(mcyclehEn, wdata, mcycle(63,32))
   val mcycle_tl = Mux(mcycleEn, wdata, mcycle(31,0))
   val mcycle_t = Cat(mcycle_th, mcycle_tl)
-  mcycle := Mux(valid, mcycle_t, mcycle) + 1.U
+  mcycle := Mux(req.valid, mcycle_t, mcycle) + 1.U
 
 
   val minstret_th = Mux(minstrethEn, wdata, minstret(63,32))
   val minstret_tl = Mux(minstretEn, wdata, minstret(31,0))
   val minstret_t = Cat(minstret_th, minstret_tl)
-  minstret := Mux(valid, minstret_t, minstret) +
+  minstret := Mux(req.valid, minstret_t, minstret) +
     io.counters.rfwriteCount +
     io.counters.storeCount +
     io.counters.branchCount +
@@ -349,10 +332,10 @@ class Csr(p: Parameters) extends Module {
   io.csr.out.value(7) := mcontext3
 
   // Write port.
-  io.rd.valid := valid
-  io.rd.addr  := addr
+  io.rd.valid := req.valid
+  io.rd.addr  := req.bits.addr
   io.rd.data  := rdata
 
   // Assertions.
-  assert(!(valid && !io.rs1.valid))
+  assert(!(req.valid && !io.rs1.valid))
 }

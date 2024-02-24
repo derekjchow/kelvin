@@ -25,29 +25,28 @@ object Mlu {
   }
 }
 
-case class MluOp() {
-  val MUL = 0
-  val MULH = 1
-  val MULHSU = 2
-  val MULHU = 3
-  val MULHR = 4
-  val MULHSUR = 5
-  val MULHUR = 6
-  val DMULH = 7
-  val DMULHR = 8
-  val Entries = 9
+object MluOp extends ChiselEnum {
+  val MUL = Value
+  val MULH = Value
+  val MULHSU = Value
+  val MULHU = Value
+  val MULHR = Value
+  val MULHSUR = Value
+  val MULHUR = Value
+  val DMULH = Value
+  val DMULHR = Value
+  val Entries = Value
 }
 
-class MluIO(p: Parameters) extends Bundle {
-  val valid = Input(Bool())
-  val addr = Input(UInt(5.W))
-  val op = Input(UInt(new MluOp().Entries.W))
+class MluCmd extends Bundle {
+  val addr = UInt(5.W)
+  val op = MluOp()
 }
 
 class Mlu(p: Parameters) extends Module {
   val io = IO(new Bundle {
     // Decode cycle.
-    val req = Vec(p.instructionLanes, new MluIO(p))
+    val req = Flipped(Vec(p.instructionLanes, Valid(new MluCmd)))
 
     // Execute cycle.
     val rs1 = Vec(p.instructionLanes, Flipped(new RegfileReadDataIO))
@@ -55,9 +54,7 @@ class Mlu(p: Parameters) extends Module {
     val rd  = Flipped(new RegfileWriteDataIO)
   })
 
-  val mlu = new MluOp()
-
-  val op = RegInit(0.U(mlu.Entries.W))
+  val op = Reg(MluOp())
   val valid1 = RegInit(false.B)
   val valid2 = RegInit(false.B)
   val addr1 = Reg(UInt(5.W))
@@ -71,12 +68,9 @@ class Mlu(p: Parameters) extends Module {
 
   when (valids.reduce(_||_)) {
     val idx = PriorityEncoder(valids)
-    op := io.req(idx).op
-    addr1 := io.req(idx).addr
+    op := io.req(idx).bits.op
+    addr1 := io.req(idx).bits.addr
     sel := (1.U << idx)
-  } .otherwise {
-    op := 0.U
-    sel := 0.U
   }
 
   val rs1 = (0 until p.instructionLanes).map(x => MuxOR(valid1 & sel(x), io.rs1(x).data)).reduce(_ | _)
@@ -87,22 +81,22 @@ class Mlu(p: Parameters) extends Module {
   val round2 = Reg(UInt(1.W))
 
   when (valid1) {
-    val rs2signed = op(mlu.MULH) || op(mlu.MULHR) || op(mlu.DMULH) || op(mlu.DMULHR)
-    val rs1signed = op(mlu.MULHSU) || op(mlu.MULHSUR) || rs2signed
+    val rs2signed = op.isOneOf(MluOp.MULH, MluOp.MULHR, MluOp.DMULH, MluOp.DMULHR)
+    val rs1signed = op.isOneOf(MluOp.MULHSU, MluOp.MULHSUR) || rs2signed
     val rs1s = Cat(rs1signed && rs1(31), rs1).asSInt
     val rs2s = Cat(rs2signed && rs2(31), rs2).asSInt
     val prod = rs1s.asSInt * rs2s.asSInt
     assert(prod.getWidth == 66)
 
     addr2 := addr1
-    round2 := prod(30) && op(mlu.DMULHR) ||
-              prod(31) && (op(mlu.MULHR) || op(mlu.MULHSUR) || op(mlu.MULHUR))
+    round2 := prod(30) && op.isOneOf(MluOp.DMULHR) ||
+              prod(31) && (op.isOneOf(MluOp.MULHR, MluOp.MULHSUR, MluOp.MULHUR))
 
-    when (op(mlu.MUL)) {
+    when (op === MluOp.MUL) {
       mul2 := prod(31,0)
-    } .elsewhen (op(mlu.MULH) || op(mlu.MULHSU) || op(mlu.MULHU) || op(mlu.MULHR) || op(mlu.MULHSUR) || op(mlu.MULHUR)) {
+    } .elsewhen (op.isOneOf(MluOp.MULH, MluOp.MULHSU, MluOp.MULHU, MluOp.MULHR, MluOp.MULHSUR, MluOp.MULHUR)) {
       mul2 := prod(63,32)
-    } .elsewhen (op(mlu.DMULH) || op(mlu.DMULHR)) {
+    } .elsewhen (op.isOneOf(MluOp.DMULH, MluOp.DMULHR)) {
       val maxneg = 2.U(2.W)
       val halfneg = 1.U(2.W)
       val sat = rs1(29,0) === 0.U && rs2(29,0) === 0.U &&

@@ -24,38 +24,36 @@ object Alu {
   }
 }
 
-case class AluOp() {
-  val ADD  = 0
-  val SUB  = 1
-  val SLT  = 2
-  val SLTU = 3
-  val XOR  = 4
-  val OR   = 5
-  val AND  = 6
-  val SLL  = 7
-  val SRL  = 8
-  val SRA  = 9
-  val LUI  = 10
-  val CLZ  = 11
-  val CTZ  = 12
-  val PCNT = 13
-  val MIN  = 14
-  val MINU = 15
-  val MAX  = 16
-  val MAXU = 17
-  val Entries = 18
+object AluOp extends ChiselEnum {
+  val ADD  = Value
+  val SUB  = Value
+  val SLT  = Value
+  val SLTU = Value
+  val XOR  = Value
+  val OR   = Value
+  val AND  = Value
+  val SLL  = Value
+  val SRL  = Value
+  val SRA  = Value
+  val LUI  = Value
+  val CLZ  = Value
+  val CTZ  = Value
+  val PCNT = Value
+  val MIN  = Value
+  val MINU = Value
+  val MAX  = Value
+  val MAXU = Value
 }
 
-class AluIO(p: Parameters) extends Bundle {
-  val valid = Input(Bool())
-  val addr = Input(UInt(5.W))
-  val op = Input(UInt(new AluOp().Entries.W))
+class AluCmd extends Bundle {
+  val addr = UInt(5.W)
+  val op = AluOp()
 }
 
 class Alu(p: Parameters) extends Module {
   val io = IO(new Bundle {
     // Decode cycle.
-    val req = new AluIO(p)
+    val req = Flipped(Valid(new AluCmd))
 
     // Execute cycle.
     val rs1 = Flipped(new RegfileReadDataIO)
@@ -63,11 +61,9 @@ class Alu(p: Parameters) extends Module {
     val rd  = Flipped(new RegfileWriteDataIO)
   })
 
-  val alu = new AluOp()
-
   val valid = RegInit(false.B)
   val addr = Reg(UInt(5.W))
-  val op = RegInit(0.U(alu.Entries.W))
+  val op = RegInit(AluOp.ADD)
 
   // Pulse the cycle after the decoded request.
   valid := io.req.valid
@@ -75,8 +71,8 @@ class Alu(p: Parameters) extends Module {
   // Avoid output toggles by not updating state between uses.
   // The Regfile has the same behavior, leaving read ports unchanged.
   when (io.req.valid) {
-    addr := io.req.addr
-    op := io.req.op
+    addr := io.req.bits.addr
+    op := io.req.bits.op
   }
 
   val rs1 = io.rs1.data
@@ -85,26 +81,29 @@ class Alu(p: Parameters) extends Module {
 
   io.rd.valid := valid
   io.rd.addr  := addr
-  io.rd.data  := MuxOR(op(alu.ADD),  rs1 + rs2) |
-                 MuxOR(op(alu.SUB),  rs1 - rs2) |
-                 MuxOR(op(alu.SLT),  rs1.asSInt < rs2.asSInt) |
-                 MuxOR(op(alu.SLTU), rs1 < rs2) |
-                 MuxOR(op(alu.XOR),  rs1 ^ rs2) |
-                 MuxOR(op(alu.OR),   rs1 | rs2) |
-                 MuxOR(op(alu.AND),  rs1 & rs2) |
-                 MuxOR(op(alu.SLL),  rs1 << shamt) |
-                 MuxOR(op(alu.SRL),  rs1 >> shamt) |
-                 MuxOR(op(alu.SRA),  (rs1.asSInt >> shamt).asUInt) |
-                 MuxOR(op(alu.LUI),  rs2) |
-                 MuxOR(op(alu.CLZ),  Clz(rs1)) |
-                 MuxOR(op(alu.CTZ),  Ctz(rs1)) |
-                 MuxOR(op(alu.PCNT), PopCount(rs1)) |
-                 MuxOR(op(alu.MIN),  Mux(rs1.asSInt < rs2.asSInt, rs1, rs2)) |
-                 MuxOR(op(alu.MAX),  Mux(rs1.asSInt > rs2.asSInt, rs1, rs2)) |
-                 MuxOR(op(alu.MINU), Mux(rs1 < rs2, rs1, rs2)) |
-                 MuxOR(op(alu.MAXU), Mux(rs1 > rs2, rs1, rs2))
+
+  io.rd.data  := MuxLookup(op, 0.U)(Seq(
+      AluOp.ADD  -> (rs1 + rs2),
+      AluOp.SUB  -> (rs1 - rs2),
+      AluOp.SLT  -> (rs1.asSInt < rs2.asSInt),
+      AluOp.SLTU -> (rs1 < rs2),
+      AluOp.XOR  -> (rs1 ^ rs2),
+      AluOp.OR   -> (rs1 | rs2),
+      AluOp.AND  -> (rs1 & rs2),
+      AluOp.SLL  -> (rs1 << shamt),
+      AluOp.SRL  -> (rs1 >> shamt),
+      AluOp.SRA  -> (rs1.asSInt >> shamt).asUInt,
+      AluOp.LUI  -> rs2,
+      AluOp.CLZ  -> Clz(rs1),
+      AluOp.CTZ  -> Ctz(rs1),
+      AluOp.PCNT -> PopCount(rs1),
+      AluOp.MIN  -> Mux(rs1.asSInt < rs2.asSInt, rs1, rs2),
+      AluOp.MAX  -> Mux(rs1.asSInt > rs2.asSInt, rs1, rs2),
+      AluOp.MINU -> Mux(rs1 < rs2, rs1, rs2),
+      AluOp.MAXU -> Mux(rs1 > rs2, rs1, rs2)
+  ))
 
   // Assertions.
-  assert(!(valid && !io.rs1.valid && !op(alu.LUI)))
+  assert(!(valid && !io.rs1.valid && !op.isOneOf(AluOp.LUI)))
   assert(!(valid && !io.rs2.valid))
 }

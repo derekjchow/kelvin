@@ -180,14 +180,7 @@ class SCore(p: Parameters) extends Module {
   // ---------------------------------------------------------------------------
   // Load/Store Unit
   lsu.io.busPort := regfile.io.busPort
-
-  for (i <- 0 until p.instructionLanes) {
-    lsu.io.req(i).valid := decode(i).io.lsu.valid
-    lsu.io.req(i).store := decode(i).io.lsu.store
-    lsu.io.req(i).addr  := decode(i).io.lsu.addr
-    lsu.io.req(i).op    := decode(i).io.lsu.op
-    decode(i).io.lsu.ready := lsu.io.req(i).ready
-  }
+  lsu.io.req <> decode.map(_.io.lsu)
 
   // ---------------------------------------------------------------------------
   // Multiplier Unit
