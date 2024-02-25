@@ -192,7 +192,7 @@ class Decode(p: Parameters, pipeline: Int) extends Module {
     val bru = Flipped(new BruIO(p))
 
     // CSR interface.
-    val csr = Flipped(new CsrIO(p))
+    val csr = Valid(new CsrCmd)
 
     // LSU interface.
     val lsu = Flipped(new LsuIO(p))
@@ -328,17 +328,15 @@ class Decode(p: Parameters, pipeline: Int) extends Module {
   bruOp(bru.UNDEF)  := d.undef
 
   // CSR opcode.
-  val csr = new CsrOp()
-  val csrOp = Wire(Vec(csr.Entries, Bool()))
-  val csrValid = WiredOR(io.csr.op)  // used without decodeEn
-  io.csr.valid := decodeEn && csrValid
-  io.csr.addr := rdAddr
-  io.csr.index := io.inst.inst(31,20)
-  io.csr.op := csrOp.asUInt
-
-  csrOp(csr.CSRRW) := d.csrrw
-  csrOp(csr.CSRRS) := d.csrrs
-  csrOp(csr.CSRRC) := d.csrrc
+  val csr = MuxCase(MakeValid(false.B, CsrOp.CSRRW), Seq(
+    d.csrrw -> MakeValid(true.B, CsrOp.CSRRW),
+    d.csrrs -> MakeValid(true.B, CsrOp.CSRRS),
+    d.csrrc -> MakeValid(true.B, CsrOp.CSRRC)
+  ))
+  io.csr.valid := decodeEn && csr.valid
+  io.csr.bits.addr := rdAddr
+  io.csr.bits.index := io.inst.inst(31,20)
+  io.csr.bits.op := csr.bits
 
   // LSU opcode.
   val lsu = new LsuOp()
@@ -439,7 +437,7 @@ class Decode(p: Parameters, pipeline: Int) extends Module {
   // Register file write address ports. We speculate without knowing the decode
   // enable status to improve timing, and under a branch is ignored anyway.
   val rdMark_valid =
-      alu.valid || csrValid || mlu.valid || dvuValid && io.dvu.ready ||
+      alu.valid || csr.valid || mlu.valid || dvuValid && io.dvu.ready ||
       lsuValid && d.isLoad() ||
       d.getvl || d.getmaxvl || vldst_wb ||
       bruValid && (bruOp(bru.JAL) || bruOp(bru.JALR)) && rdAddr =/= 0.U
