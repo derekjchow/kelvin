@@ -198,7 +198,7 @@ class Decode(p: Parameters, pipeline: Int) extends Module {
     val lsu = Flipped(new LsuIO(p))
 
     // Multiplier interface.
-    val mlu = Flipped(new MluIO(p))
+    val mlu = Valid(new MluCmd)
 
     // Divide interface.
     val dvu = Flipped(new DvuIO(p))
@@ -364,22 +364,20 @@ class Decode(p: Parameters, pipeline: Int) extends Module {
   lsuOp(lsu.VLDST) := d.vld || d.vst
 
   // MLU opcode.
-  val mlu = new MluOp()
-  val mluOp = Wire(Vec(mlu.Entries, Bool()))
-  val mluValid = WiredOR(io.mlu.op)  // used without decodeEn
-  io.mlu.valid := decodeEn && mluValid
-  io.mlu.addr := rdAddr
-  io.mlu.op := mluOp.asUInt
-
-  mluOp(mlu.MUL)     := d.mul
-  mluOp(mlu.MULH)    := d.mulh
-  mluOp(mlu.MULHSU)  := d.mulhsu
-  mluOp(mlu.MULHU)   := d.mulhu
-  mluOp(mlu.MULHR)   := d.mulhr
-  mluOp(mlu.MULHSUR) := d.mulhsur
-  mluOp(mlu.MULHUR)  := d.mulhur
-  mluOp(mlu.DMULH)   := d.dmulh
-  mluOp(mlu.DMULHR)  := d.dmulhr
+  val mlu = MuxCase(MakeValid(false.B, MluOp.MUL), Seq(
+    d.mul     -> MakeValid(true.B, MluOp.MUL),
+    d.mulh    -> MakeValid(true.B, MluOp.MULH),
+    d.mulhsu  -> MakeValid(true.B, MluOp.MULHSU),
+    d.mulhu   -> MakeValid(true.B, MluOp.MULHU),
+    d.mulhr   -> MakeValid(true.B, MluOp.MULHR),
+    d.mulhsur -> MakeValid(true.B, MluOp.MULHSUR),
+    d.mulhur  -> MakeValid(true.B, MluOp.MULHUR),
+    d.dmulh   -> MakeValid(true.B, MluOp.DMULH),
+    d.dmulhr  -> MakeValid(true.B, MluOp.DMULHR),
+  ))
+  io.mlu.valid := decodeEn && mlu.valid
+  io.mlu.bits.addr := rdAddr
+  io.mlu.bits.op := mlu.bits
 
   // DIV opcode.
   val dvu = new DvuOp()
@@ -441,7 +439,7 @@ class Decode(p: Parameters, pipeline: Int) extends Module {
   // Register file write address ports. We speculate without knowing the decode
   // enable status to improve timing, and under a branch is ignored anyway.
   val rdMark_valid =
-      alu.valid || csrValid || mluValid || dvuValid && io.dvu.ready ||
+      alu.valid || csrValid || mlu.valid || dvuValid && io.dvu.ready ||
       lsuValid && d.isLoad() ||
       d.getvl || d.getmaxvl || vldst_wb ||
       bruValid && (bruOp(bru.JAL) || bruOp(bru.JALR)) && rdAddr =/= 0.U
@@ -478,7 +476,7 @@ class Decode(p: Parameters, pipeline: Int) extends Module {
   // io.serializeOut.lsu  := io.serializeIn.lsu || lsuValid || vldst  // vldst interlock for address generation cycle in vinst
   // io.serializeOut.lsu  := io.serializeIn.lsu || vldst  // vldst interlock for address generation cycle in vinst
   io.serializeOut.lsu  := io.serializeIn.lsu
-  io.serializeOut.mul  := io.serializeIn.mul || mluValid
+  io.serializeOut.mul  := io.serializeIn.mul || mlu.valid
   io.serializeOut.jump := io.serializeIn.jump || d.jal || d.jalr ||
                           d.ebreak || d.ecall || d.eexit ||
                           d.eyield || d.ectxsw || d.mpause || d.mret
