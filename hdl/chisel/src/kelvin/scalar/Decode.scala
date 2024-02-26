@@ -195,7 +195,7 @@ class Decode(p: Parameters, pipeline: Int) extends Module {
     val csr = Valid(new CsrCmd)
 
     // LSU interface.
-    val lsu = Flipped(new LsuIO(p))
+    val lsu = Decoupled(new LsuCmd)
 
     // Multiplier interface.
     val mlu = Valid(new MluCmd)
@@ -339,27 +339,24 @@ class Decode(p: Parameters, pipeline: Int) extends Module {
   io.csr.bits.op := csr.bits
 
   // LSU opcode.
-  val lsu = new LsuOp()
-  val lsuOp = Wire(Vec(lsu.Entries, Bool()))
-  val lsuValid = WiredOR(io.lsu.op)  // used without decodeEn
-  io.lsu.valid := decodeEn && lsuValid
-  io.lsu.store := io.inst.inst(5)
-  io.lsu.addr := rdAddr
-  io.lsu.op := lsuOp.asUInt
-
-  lsuOp(lsu.LB)  := d.lb
-  lsuOp(lsu.LH)  := d.lh
-  lsuOp(lsu.LW)  := d.lw
-  lsuOp(lsu.LBU) := d.lbu
-  lsuOp(lsu.LHU) := d.lhu
-  lsuOp(lsu.SB)  := d.sb
-  lsuOp(lsu.SH)  := d.sh
-  lsuOp(lsu.SW)  := d.sw
-  lsuOp(lsu.FENCEI)   := d.fencei
-  lsuOp(lsu.FLUSHAT)  := d.flushat
-  lsuOp(lsu.FLUSHALL) := d.flushall
-
-  lsuOp(lsu.VLDST) := d.vld || d.vst
+  val lsu = MuxCase(MakeValid(false.B, LsuOp.LB), Seq(
+    d.lb             -> MakeValid(true.B, LsuOp.LB),
+    d.lh             -> MakeValid(true.B, LsuOp.LH),
+    d.lw             -> MakeValid(true.B, LsuOp.LW),
+    d.lbu            -> MakeValid(true.B, LsuOp.LBU),
+    d.lhu            -> MakeValid(true.B, LsuOp.LHU),
+    d.sb             -> MakeValid(true.B, LsuOp.SB),
+    d.sh             -> MakeValid(true.B, LsuOp.SH),
+    d.sw             -> MakeValid(true.B, LsuOp.SW),
+    d.fencei         -> MakeValid(true.B, LsuOp.FENCEI),
+    d.flushat        -> MakeValid(true.B, LsuOp.FLUSHAT),
+    d.flushall       -> MakeValid(true.B, LsuOp.FLUSHALL),
+    (d.vld || d.vst) -> MakeValid(true.B, LsuOp.VLDST),
+  ))
+  io.lsu.valid := decodeEn && lsu.valid
+  io.lsu.bits.store := io.inst.inst(5)
+  io.lsu.bits.addr := rdAddr
+  io.lsu.bits.op := lsu.bits
 
   // MLU opcode.
   val mlu = MuxCase(MakeValid(false.B, MluOp.MUL), Seq(
@@ -435,7 +432,7 @@ class Decode(p: Parameters, pipeline: Int) extends Module {
   // enable status to improve timing, and under a branch is ignored anyway.
   val rdMark_valid =
       alu.valid || csr.valid || mlu.valid || dvu.valid && io.dvu.ready ||
-      lsuValid && d.isLoad() ||
+      lsu.valid && d.isLoad() ||
       d.getvl || d.getmaxvl || vldst_wb ||
       bruValid && (bruOp(bru.JAL) || bruOp(bru.JALR)) && rdAddr =/= 0.U
 
@@ -449,7 +446,7 @@ class Decode(p: Parameters, pipeline: Int) extends Module {
   // Register file bus address port.
   // Pointer chasing bypass if immediate is zero.
   // Load/Store immediate selection keys off bit5, and RET off bit6.
-  io.busRead.valid := lsuValid
+  io.busRead.valid := lsu.valid
   io.busRead.bypass := io.inst.inst(31,25) === 0.U &&
     Mux(!io.inst.inst(5) || io.inst.inst(6), io.inst.inst(24,20) === 0.U,
                                              io.inst.inst(11,7) === 0.U)
@@ -468,7 +465,7 @@ class Decode(p: Parameters, pipeline: Int) extends Module {
                    (pipeline.U === 0.U || !d.undef)
 
   // Serialize Interface.
-  // io.serializeOut.lsu  := io.serializeIn.lsu || lsuValid || vldst  // vldst interlock for address generation cycle in vinst
+  // io.serializeOut.lsu  := io.serializeIn.lsu || lsu.valid || vldst  // vldst interlock for address generation cycle in vinst
   // io.serializeOut.lsu  := io.serializeIn.lsu || vldst  // vldst interlock for address generation cycle in vinst
   io.serializeOut.lsu  := io.serializeIn.lsu
   io.serializeOut.mul  := io.serializeIn.mul || mlu.valid
