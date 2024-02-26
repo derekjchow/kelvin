@@ -201,7 +201,7 @@ class Decode(p: Parameters, pipeline: Int) extends Module {
     val mlu = Valid(new MluCmd)
 
     // Divide interface.
-    val dvu = Flipped(new DvuIO(p))
+    val dvu = Decoupled(new DvuCmd)
 
     // Vector interface.
     val vinst = Flipped(new VInstIO)
@@ -378,19 +378,16 @@ class Decode(p: Parameters, pipeline: Int) extends Module {
   io.mlu.bits.op := mlu.bits
 
   // DIV opcode.
-  val dvu = new DvuOp()
-  val dvuOp = Wire(Vec(dvu.Entries, Bool()))
-  val dvuValid = WiredOR(io.dvu.op)  // used without decodeEn
-  io.dvu.valid := decodeEn && dvuValid
-  io.dvu.addr := rdAddr
-  io.dvu.op := dvuOp.asUInt
-
-  dvuOp(dvu.DIV)  := d.div
-  dvuOp(dvu.DIVU) := d.divu
-  dvuOp(dvu.REM)  := d.rem
-  dvuOp(dvu.REMU) := d.remu
-
-  val dvuEn = WiredOR(io.dvu.op) === 0.U || io.dvu.ready
+  val dvu = MuxCase(MakeValid(false.B, DvuOp.DIV), Seq(
+    d.div  -> MakeValid(true.B, DvuOp.DIV),
+    d.divu -> MakeValid(true.B, DvuOp.DIVU),
+    d.rem  -> MakeValid(true.B, DvuOp.REM),
+    d.remu -> MakeValid(true.B, DvuOp.REMU)
+  ))
+  io.dvu.valid := decodeEn && dvu.valid
+  io.dvu.bits.addr := rdAddr
+  io.dvu.bits.op := dvu.bits
+  val dvuEn = dvu.valid || io.dvu.ready
 
   // Vector instructions.
   val vinst = new VInstOp()
@@ -437,7 +434,7 @@ class Decode(p: Parameters, pipeline: Int) extends Module {
   // Register file write address ports. We speculate without knowing the decode
   // enable status to improve timing, and under a branch is ignored anyway.
   val rdMark_valid =
-      alu.valid || csr.valid || mlu.valid || dvuValid && io.dvu.ready ||
+      alu.valid || csr.valid || mlu.valid || dvu.valid && io.dvu.ready ||
       lsuValid && d.isLoad() ||
       d.getvl || d.getmaxvl || vldst_wb ||
       bruValid && (bruOp(bru.JAL) || bruOp(bru.JALR)) && rdAddr =/= 0.U
