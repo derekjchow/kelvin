@@ -56,6 +56,8 @@ case class Parameters(m: Seq[MemoryRegion] = Seq(), hartId: UInt = 0.U(32.W)) {
 
   val vectorCountBits = log2Ceil(vectorBits / 8) + 1 + 2  // +2 stripmine
 
+  // Enable Vector
+  val enableVector = true
   val vectorAluCount = 2
   val vectorReadPorts = (vectorAluCount * 3) + 1
   val vectorWritePorts = 6
@@ -112,12 +114,16 @@ object EmitParametersHeader extends App {
 
   println("#ifndef KELVIN_PARAMETERS_H_")
   println("#define KELVIN_PARAMETERS_H_")
+  println("")
+  println("#include <stdbool.h>")
+  println("")
   fields.foreach { x =>
     val fieldMirror = instanceMirror.reflectField(x.asTerm)
     val fieldType = x.asTerm.typeSignature
     val value = fieldMirror.get
     val ctype = fieldType match {
       case t if t =:= ru.typeOf[Int] => Some("int")
+      case t if t =:= ru.typeOf[Boolean] => Some("bool")
       case _ => None
     }
     if (ctype != None) {
