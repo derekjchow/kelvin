@@ -47,8 +47,12 @@ class CsrCounters(p: Parameters) extends Bundle {
   val rfwriteCount = UInt(3.W)
   val storeCount = UInt(2.W)
   val branchCount = UInt(1.W)
-  val vrfwriteCount = UInt(3.W)
-  val vstoreCount = UInt(2.W)
+  val vrfwriteCount = if (p.enableVector) {
+    Some(UInt(3.W))
+  } else { None }
+  val vstoreCount = if (p.enableVector) {
+    Some(UInt(2.W))
+  } else { None }
 }
 
 class CsrBruIO(p: Parameters) extends Bundle {
@@ -92,7 +96,9 @@ class Csr(p: Parameters) extends Module {
     val bru = Flipped(new CsrBruIO(p))
 
     // Vector core.
-    val vcore = Input(new Bundle { val undef = Bool() })
+    val vcore = (if (p.enableVector) {
+      Some(Input(new Bundle { val undef = Bool() }))
+    } else { None })
 
     val counters = Input(new CsrCounters(p))
 
@@ -187,13 +193,15 @@ class Csr(p: Parameters) extends Module {
   val kisaEn      = req.bits.index === 0xFC0.U
 
   // Pipeline Control.
-  when (io.bru.in.halt || io.vcore.undef) {
+  val vcoreUndef = if (p.enableVector) { io.vcore.get.undef } else { false.B }
+  when (io.bru.in.halt || vcoreUndef) {
     halted := true.B
   }
 
-  when (io.bru.in.fault || io.vcore.undef) {
+  when (io.bru.in.fault || vcoreUndef) {
     fault := true.B
   }
+  
 
   io.halted := halted
   io.fault  := fault
@@ -280,8 +288,10 @@ class Csr(p: Parameters) extends Module {
     io.counters.rfwriteCount +
     io.counters.storeCount +
     io.counters.branchCount +
-    io.counters.vrfwriteCount +
-    io.counters.vstoreCount
+    (if (p.enableVector) {
+      io.counters.vrfwriteCount.get +
+      io.counters.vstoreCount.get
+    } else { 0.U })
 
   when (io.bru.in.mode.valid) {
     mode := io.bru.in.mode.bits

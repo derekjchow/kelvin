@@ -98,6 +98,7 @@ static void Core_run(const char* name, const char* bin, const int cycles,
   sc_signal<sc_bv<32> > io_debug_inst2;
   sc_signal<sc_bv<32> > io_debug_inst3;
   sc_signal<sc_bv<32> > io_debug_cycles;
+#if 1
   sc_signal<bool> io_axi0_write_addr_ready;
   sc_signal<bool> io_axi0_write_addr_valid;
   sc_signal<sc_bv<32> > io_axi0_write_addr_bits_addr;
@@ -119,6 +120,7 @@ static void Core_run(const char* name, const char* bin, const int cycles,
   sc_signal<sc_bv<2> > io_axi0_read_data_bits_resp;
   sc_signal<sc_bv<kUncId> > io_axi0_read_data_bits_id;
   sc_signal<sc_bv<kUncBits> > io_axi0_read_data_bits_data;
+#endif  // TODO: Disable if no VCore
   sc_signal<bool> io_axi1_write_addr_ready;
   sc_signal<bool> io_axi1_write_addr_valid;
   sc_signal<sc_bv<32> > io_axi1_write_addr_bits_addr;
@@ -230,6 +232,7 @@ static void Core_run(const char* name, const char* bin, const int cycles,
 #define BINDAXI(a) \
   core.a(a);       \
   mif.a(a)
+#if 1
   BINDAXI(io_axi0_write_addr_ready);
   BINDAXI(io_axi0_write_addr_valid);
   BINDAXI(io_axi0_write_addr_bits_addr);
@@ -251,6 +254,7 @@ static void Core_run(const char* name, const char* bin, const int cycles,
   BINDAXI(io_axi0_read_data_bits_resp);
   BINDAXI(io_axi0_read_data_bits_id);
   BINDAXI(io_axi0_read_data_bits_data);
+#endif  // TODO: Disable if no VCore
   BINDAXI(io_axi1_write_addr_ready);
   BINDAXI(io_axi1_write_addr_valid);
   BINDAXI(io_axi1_write_addr_bits_addr);
