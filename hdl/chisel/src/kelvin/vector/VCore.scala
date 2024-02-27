@@ -28,7 +28,7 @@ object VCore {
 
 class VCoreIO(p: Parameters) extends Bundle {
   // Decode cycle.
-  val vinst = Vec(4, new VInstIO)
+  val vinst = Vec(p.instructionLanes, Flipped(Decoupled(new VInstCmd)))
 
   // Execute cycle.
   val rs = Vec(8, Flipped(new RegfileReadDataIO))

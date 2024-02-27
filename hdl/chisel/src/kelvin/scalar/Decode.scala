@@ -161,6 +161,7 @@ class DecodedInstruction extends Bundle {
   def isLsu(): Bool = { isLoad() || isStore() || vld || vst || flushat || flushall }
   def isMul(): Bool = { mul || mulh || mulhsu || mulhu || mulhr || mulhsur || mulhur || dmulh || dmulhr }
   def isDvu(): Bool = { div || divu || rem || remu }
+  def isVector(): Bool = { vld || vst || viop || getvl || getmaxvl }
 }
 
 class Decode(p: Parameters, pipeline: Int) extends Module {
@@ -204,7 +205,7 @@ class Decode(p: Parameters, pipeline: Int) extends Module {
     val dvu = Decoupled(new DvuCmd)
 
     // Vector interface.
-    val vinst = Flipped(new VInstIO)
+    val vinst = Decoupled(new VInstCmd)
 
     // Branch status.
     val branchTaken = Input(Bool())
@@ -235,7 +236,7 @@ class Decode(p: Parameters, pipeline: Int) extends Module {
   val isCsrImm = isCsr &&  io.inst.inst(14)
   val isCsrReg = isCsr && !io.inst.inst(14)
 
-  val isVIop = io.vinst.op(new VInstOp().VIOP)
+  val isVIop = (io.vinst.bits.op === VInstOp.VIOP)
 
   val isVIopVs1 = isVIop
   val isVIopVs2 = isVIop && io.inst.inst(1,0) === 0.U  // exclude: .vv
@@ -267,7 +268,7 @@ class Decode(p: Parameters, pipeline: Int) extends Module {
 
   // Vector extension interlock.
   val vinstEn = !(io.serializeIn.vinst || isVIop && io.serializeIn.brcond) &&
-                !(io.vinst.op =/= 0.U && !io.vinst.ready)
+                !(d.isVector() && !io.vinst.ready)
 
   // Fence interlock.
   // Input mactive used passthrough, prefer to avoid registers in Decode.
@@ -387,20 +388,17 @@ class Decode(p: Parameters, pipeline: Int) extends Module {
   val dvuEn = dvu.valid || io.dvu.ready
 
   // Vector instructions.
-  val vinst = new VInstOp()
-  val vinstOp = Wire(Vec(vinst.Entries, Bool()))
-  val vinstValid = WiredOR(vinstOp)  // used without decodeEn
-
-  io.vinst.valid := decodeEn && vinstValid
-  io.vinst.addr := rdAddr
-  io.vinst.inst := io.inst.inst
-  io.vinst.op := vinstOp.asUInt
-
-  vinstOp(vinst.VLD) := d.vld
-  vinstOp(vinst.VST) := d.vst
-  vinstOp(vinst.VIOP) := d.viop
-  vinstOp(vinst.GETVL) := d.getvl
-  vinstOp(vinst.GETMAXVL) := d.getmaxvl
+  val vinst = MuxCase(MakeValid(false.B, VInstOp.VLD), Seq(
+    d.vld      -> MakeValid(true.B, VInstOp.VLD),
+    d.vst      -> MakeValid(true.B, VInstOp.VST),
+    d.viop     -> MakeValid(true.B, VInstOp.VIOP),
+    d.getvl    -> MakeValid(true.B, VInstOp.GETVL),
+    d.getmaxvl -> MakeValid(true.B, VInstOp.GETMAXVL),
+  ))
+  io.vinst.valid := decodeEn && vinst.valid
+  io.vinst.bits.addr := rdAddr
+  io.vinst.bits.inst := io.inst.inst
+  io.vinst.bits.op := vinst.bits
 
   // Scalar logging.
   io.slog := decodeEn && d.slog
