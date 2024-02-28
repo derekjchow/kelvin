@@ -44,11 +44,11 @@ class VInstIO extends Bundle {
   val op = Input(UInt(new VInstOp().Entries.W))
 }
 
-class VectorInstructionIO extends Bundle {
+class VectorInstructionIO(p: Parameters) extends Bundle {
   val valid = Output(Bool())
   val ready = Input(Bool())
   val stall = Input(Bool())
-  val lane = Vec(4, Valid(new VectorInstructionLane))
+  val lane = Vec(p.instructionLanes, Valid(new VectorInstructionLane))
 }
 
 class VectorInstructionLane extends Bundle {
@@ -68,14 +68,14 @@ class VAddressActive extends Bundle {
 class VInst(p: Parameters) extends Module {
   val io = IO(new Bundle {
     // Decode cycle.
-    val in = Vec(4, new VInstIO)
+    val in = Vec(p.instructionLanes, new VInstIO)
 
     // Execute cycle.
-    val rs = Vec(8, Flipped(new RegfileReadDataIO))
-    val rd = Vec(4, Flipped(new RegfileWriteDataIO))
+    val rs = Vec(p.instructionLanes * 2, Flipped(new RegfileReadDataIO))
+    val rd = Vec(p.instructionLanes, Flipped(new RegfileWriteDataIO))
 
     // Vector interface.
-    val out = new VectorInstructionIO
+    val out = new VectorInstructionIO(p)
 
     // Status.
     val nempty = Output(Bool())
@@ -91,41 +91,34 @@ class VInst(p: Parameters) extends Module {
   val maxvlwm = (p.vectorBits * 4 / 32).U(p.vectorCountBits.W)
   assert(maxvlw >= 4.U)
 
-  val slice = Slice(Vec(4, new Bundle {
+  val slice = Slice(Vec(p.instructionLanes, new Bundle {
     val vld = Output(Bool())
     val vst = Output(Bool())
     val lane = Valid(new VectorInstructionLane)
   }), true)
 
-  val reqvalid = VecInit(io.in(0).valid && io.in(0).ready,
-                         io.in(1).valid && io.in(1).ready,
-                         io.in(2).valid && io.in(2).ready,
-                         io.in(3).valid && io.in(3).ready)
-
-  val reqaddr = VecInit(io.in(0).inst(19,15),
-                        io.in(1).inst(19,15),
-                        io.in(2).inst(19,15),
-                        io.in(3).inst(19,15))
+  val reqvalid = VecInit(io.in.map(x => x.valid && x.ready))
+  val reqaddr = VecInit(io.in.map(x => x.inst(19,15)))
 
   // ---------------------------------------------------------------------------
   // Response to Decode.
-  for (i <- 0 until 4) {
+  for (i <- 0 until p.instructionLanes) {
     io.in(i).ready := !io.out.stall
   }
 
   // ---------------------------------------------------------------------------
   // Controls.
-  val vld_o = RegInit(VecInit(Seq.fill(4)(false.B)))
-  val vld_u = RegInit(VecInit(Seq.fill(4)(false.B)))
-  val vst_o = RegInit(VecInit(Seq.fill(4)(false.B)))
-  val vst_u = RegInit(VecInit(Seq.fill(4)(false.B)))
-  val vst_q = RegInit(VecInit(Seq.fill(4)(false.B)))
-  val getvl = RegInit(VecInit(Seq.fill(4)(false.B)))
-  val getmaxvl = RegInit(VecInit(Seq.fill(4)(false.B)))
+  val vld_o = RegInit(VecInit(Seq.fill(p.instructionLanes)(false.B)))
+  val vld_u = RegInit(VecInit(Seq.fill(p.instructionLanes)(false.B)))
+  val vst_o = RegInit(VecInit(Seq.fill(p.instructionLanes)(false.B)))
+  val vst_u = RegInit(VecInit(Seq.fill(p.instructionLanes)(false.B)))
+  val vst_q = RegInit(VecInit(Seq.fill(p.instructionLanes)(false.B)))
+  val getvl = RegInit(VecInit(Seq.fill(p.instructionLanes)(false.B)))
+  val getmaxvl = RegInit(VecInit(Seq.fill(p.instructionLanes)(false.B)))
 
-  val rdAddr = Reg(Vec(4, UInt(5.W)))
+  val rdAddr = Reg(Vec(p.instructionLanes, UInt(5.W)))
 
-  for (i <- 0 until 4) {
+  for (i <- 0 until p.instructionLanes) {
     when (reqvalid(i)) {
       rdAddr(i) := io.in(i).addr
     }
@@ -134,13 +127,13 @@ class VInst(p: Parameters) extends Module {
   // ---------------------------------------------------------------------------
   // Vector Interface.
   val vvalid = RegInit(false.B)
-  val vinstValid = RegInit(VecInit(Seq.fill(4)(false.B)))
-  val vinstInst = Reg(Vec(4, UInt(32.W)))
-  val nxtVinstValid = Wire(Vec(4, Bool()))
+  val vinstValid = RegInit(VecInit(Seq.fill(p.instructionLanes)(false.B)))
+  val vinstInst = Reg(Vec(p.instructionLanes, UInt(32.W)))
+  val nxtVinstValid = Wire(Vec(p.instructionLanes, Bool()))
 
   vvalid := nxtVinstValid.asUInt =/= 0.U
 
-  for (i <- 0 until 4) {
+  for (i <- 0 until p.instructionLanes) {
     nxtVinstValid(i) := reqvalid(i) && (io.in(i).op(vinst.VLD) ||
                                         io.in(i).op(vinst.VST) ||
                                         io.in(i).op(vinst.VIOP))
@@ -148,7 +141,7 @@ class VInst(p: Parameters) extends Module {
     vinstInst(i) := io.in(i).inst
   }
 
-  for (i <- 0 until 4) {
+  for (i <- 0 until p.instructionLanes) {
     val p = io.in(i).inst(28)  // func2
     val q = io.in(i).inst(30)  // func2
     vld_o(i) := reqvalid(i) && io.in(i).op(vinst.VLD) && !p
@@ -162,11 +155,11 @@ class VInst(p: Parameters) extends Module {
 
   // ---------------------------------------------------------------------------
   // Register write port.
-  val lsuAdder = Wire(Vec(4, UInt(32.W)))
-  val getvlValue = Wire(Vec(4, UInt(p.vectorCountBits.W)))  // bytes
-  val getmaxvlValue = Wire(Vec(4, UInt(p.vectorCountBits.W)))  // bytes
+  val lsuAdder = Wire(Vec(p.instructionLanes, UInt(32.W)))
+  val getvlValue = Wire(Vec(p.instructionLanes, UInt(p.vectorCountBits.W)))  // bytes
+  val getmaxvlValue = Wire(Vec(p.instructionLanes, UInt(p.vectorCountBits.W)))  // bytes
 
-  for (i <- 0 until 4) {
+  for (i <- 0 until p.instructionLanes) {
     val rs1 = io.rs(2 * i + 0).data
     val rs2 = io.rs(2 * i + 1).data
     val m  = vinstInst(i)(5)
@@ -220,7 +213,7 @@ class VInst(p: Parameters) extends Module {
     lsuAdder(i) := rs1 + offset
   }
 
-  for (i <- 0 until 4) {
+  for (i <- 0 until p.instructionLanes) {
     val len = Wire(UInt(p.vectorCountBits.W))  // bytes
     val rs1 = io.rs(2 * i + 0).data
     val rs2 = io.rs(2 * i + 1).data
@@ -247,7 +240,7 @@ class VInst(p: Parameters) extends Module {
     getmaxvlValue(i) := maxvl
   }
 
-  for (i <- 0 until 4) {
+  for (i <- 0 until p.instructionLanes) {
     io.rd(i).valid := getvl(i) || getmaxvl(i) || vld_u(i) || vst_u(i) || vst_q(i)
     io.rd(i).addr := rdAddr(i)
 
@@ -267,7 +260,7 @@ class VInst(p: Parameters) extends Module {
   // Resolve back-pressure with stall to io.in in decode.
   assert(!(slice.io.in.valid && !slice.io.in.ready))
 
-  for (i <- 0 until 4) {
+  for (i <- 0 until p.instructionLanes) {
     slice.io.in.bits(i).vld := vld_o(i) || vld_u(i)
     slice.io.in.bits(i).vst := vst_o(i) || vst_u(i) || vst_q(i)
     slice.io.in.bits(i).lane.valid := vinstValid(i)
@@ -276,7 +269,7 @@ class VInst(p: Parameters) extends Module {
     slice.io.in.bits(i).lane.bits.data := io.rs(2 * i + 1).data
   }
 
-  for (i <- 0 until 4) {
+  for (i <- 0 until p.instructionLanes) {
     io.out.lane(i) := slice.io.out.bits(i).lane
   }
 
@@ -290,8 +283,7 @@ class VInst(p: Parameters) extends Module {
   val nempty = RegInit(false.B)
 
   // Simple implementation, will overlap downstream units redundantly.
-  nempty := io.in(0).valid || io.in(1).valid || io.in(2).valid ||
-            io.in(3).valid || vvalid || io.out.valid
+  nempty := io.in.map(x => x.valid).reduce(_ || _) || vvalid || io.out.valid
 
   io.nempty := nempty
 }

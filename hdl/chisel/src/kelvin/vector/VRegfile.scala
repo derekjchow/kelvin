@@ -113,13 +113,14 @@ class VRegfileScoreboardIO extends Bundle {
 }
 
 class VRegfile(p: Parameters) extends Module {
-  val readPorts = 7
-  val writePorts = 6
-  val whintPorts = 4
+  val readPorts = p.vectorReadPorts
+  val scalarPorts = p.vectorScalarPorts
+  val writePorts = p.vectorWritePorts
+  val whintPorts = p.vectorWhintPorts
 
   val io = IO(new Bundle {
     val read = Vec(readPorts, Flipped(new VRegfileReadIO(p)))
-    val scalar = Vec(readPorts / 3, Flipped(new VRegfileScalarIO(p)))
+    val scalar = Vec(scalarPorts, Flipped(new VRegfileScalarIO(p)))
     val write = Vec(writePorts, Flipped(new VRegfileWrintIO(p)))
     val whint = Vec(whintPorts, Flipped(new VRegfileWhintIO(p)))
     val conv = Flipped(new VRegfileConvIO(p))

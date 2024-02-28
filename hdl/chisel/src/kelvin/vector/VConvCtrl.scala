@@ -30,7 +30,7 @@ object VConvCtrl {
 class VConvCtrl(p: Parameters) extends Module {
   val io = IO(new Bundle {
     // Instructions.
-    val in = Flipped(Decoupled(Vec(4, Valid(new VDecodeBits))))
+    val in = Flipped(Decoupled(Vec(p.instructionLanes, Valid(new VDecodeBits))))
     val active = Output(UInt(64.W))
 
     // RegisterFile.
@@ -160,7 +160,7 @@ class VConvCtrl(p: Parameters) extends Module {
     active
   }
 
-  val q = VCmdq(cmdqDepth, new VConvCtrlCmdq, Fin, Fout, Factive)
+  val q = VCmdq(p, cmdqDepth, new VConvCtrlCmdq, Fin, Fout, Factive)
 
   q.io.in <> io.in
 

@@ -30,15 +30,15 @@ object VAlu {
 class VAlu(p: Parameters) extends Module {
   val io = IO(new Bundle {
     // Instructions.
-    val in = Flipped(Decoupled(Vec(4, Valid(new VDecodeBits))))
+    val in = Flipped(Decoupled(Vec(p.instructionLanes, Valid(new VDecodeBits))))
     val active = Output(UInt(64.W))
 
     // VRegfile.
     val vrfsb = Input(UInt(128.W))
-    val read  = Vec(7, new VRegfileReadIO(p))
-    val write = Vec(4, new VRegfileWriteIO(p))
-    val whint = Vec(4, new VRegfileWhintIO(p))
-    val scalar = Vec(2, new VRegfileScalarIO(p))
+    val read  = Vec(p.vectorReadPorts, new VRegfileReadIO(p))
+    val write = Vec(p.vectorWritePorts - 2, new VRegfileWriteIO(p))
+    val whint = Vec(p.vectorWhintPorts, new VRegfileWhintIO(p))
+    val scalar = Vec(p.vectorScalarPorts, new VRegfileScalarIO(p))
 
     // Testbench signals.
     val read_0_ready = Output(Bool())
@@ -56,26 +56,26 @@ class VAlu(p: Parameters) extends Module {
 
   // ---------------------------------------------------------------------------
   // Tie-offs.
-  for (i <- 0 until 7) {
+  for (i <- 0 until io.read.length) {
     io.read(i).valid := false.B
     io.read(i).addr := 0.U
     io.read(i).tag  := 0.U
   }
 
-  for (i <- 0 until 4) {
+  for (i <- 0 until io.write.length) {
     io.write(i).valid := false.B
     io.write(i).addr := 0.U
     io.write(i).data := 0.U
   }
 
-  for (i <- 0 until 4) {
+  for (i <- 0 until io.whint.length) {
     io.whint(i).valid := false.B
     io.whint(i).addr := 0.U
   }
 
   // ---------------------------------------------------------------------------
   // Opcode checks.
-  for (i <- 0 until 4) {
+  for (i <- 0 until io.in.bits.length) {
     when (io.in.valid && io.in.ready) {
       when (io.in.bits(i).valid) {
         val op = io.in.bits(i).bits.op
@@ -254,8 +254,8 @@ class VAlu(p: Parameters) extends Module {
     active
   }
 
-  val q0 = VCmdq(cmdqDepth, new VAluCmdq, Fin0, Fout, Factive)
-  val q1 = VCmdq(cmdqDepth, new VAluCmdq, Fin1, Fout, Factive)
+  val q0 = VCmdq(p, cmdqDepth, new VAluCmdq, Fin0, Fout, Factive)
+  val q1 = VCmdq(p, cmdqDepth, new VAluCmdq, Fin1, Fout, Factive)
 
   q0.io.in.valid := io.in.valid && q1.io.in.ready
   q1.io.in.valid := io.in.valid && q0.io.in.ready
@@ -278,20 +278,19 @@ class VAlu(p: Parameters) extends Module {
   // ---------------------------------------------------------------------------
   // ALU Selection interleaving.
   val alureg = RegInit(false.B)
-  val alusel = Wire(Vec(5, Bool()))
+  val alusel = Wire(Vec(p.instructionLanes + 1, Bool()))
 
   // Toggle if previous was valid and was not a synchronized dual command.
   alusel(0) := alureg
-  alusel(1) := Mux(io.in.bits(0).valid && !io.in.bits(0).bits.cmdsync, !alusel(0), alusel(0))
-  alusel(2) := Mux(io.in.bits(1).valid && !io.in.bits(1).bits.cmdsync, !alusel(1), alusel(1))
-  alusel(3) := Mux(io.in.bits(2).valid && !io.in.bits(2).bits.cmdsync, !alusel(2), alusel(2))
-  alusel(4) := Mux(io.in.bits(3).valid && !io.in.bits(3).bits.cmdsync, !alusel(3), alusel(3))
-
-  when (io.in.valid && io.in.ready) {
-    alureg := alusel(4)
+  for (i <- 0 until p.instructionLanes) {
+    alusel(i + 1) := Mux(io.in.bits(i).valid && !io.in.bits(i).bits.cmdsync, !alusel(i), alusel(i))
   }
 
-  for (i <- 0 until 4) {
+  when (io.in.valid && io.in.ready) {
+    alureg := alusel(alusel.length - 1)
+  }
+
+  for (i <- 0 until p.instructionLanes) {
     q0.io.in.bits(i).valid := io.in.bits(i).valid && (alusel(i) === 0.U || io.in.bits(i).bits.cmdsync)
     q1.io.in.bits(i).valid := io.in.bits(i).valid && (alusel(i) === 1.U || io.in.bits(i).bits.cmdsync)
   }

@@ -92,8 +92,8 @@ class LsuReadData(p: Parameters) extends Bundle {
 class Lsu(p: Parameters) extends Module {
   val io = IO(new Bundle {
     // Decode cycle.
-    val req = Vec(4, new LsuIO(p))
-    val busPort = Flipped(new RegfileBusPortIO)
+    val req = Vec(p.instructionLanes, new LsuIO(p))
+    val busPort = Flipped(new RegfileBusPortIO(p))
 
     // Execute cycle(s).
     val rd = Flipped(new RegfileWriteDataIO)
@@ -115,16 +115,18 @@ class Lsu(p: Parameters) extends Module {
 
   // AXI Queues.
   val n = 8
-  val ctrl = Fifo4(new LsuCtrl(p), n)
+  val ctrl = FifoX(new LsuCtrl(p), p.instructionLanes, n)
   val data = Slice(new LsuReadData(p), true, true)
 
   // Match and mask.
-  val ctrlready = Cat(ctrl.io.count <= (n - 4).U,
-                      ctrl.io.count <= (n - 3).U,
-                      ctrl.io.count <= (n - 2).U,
-                      ctrl.io.count <= (n - 1).U)
+  val ctrlready = (1 to p.instructionLanes).reverse.map(x => ctrl.io.count <= (n - x).U)
+  // val ctrlready = Cat(
+  //   (1 to p.instructionLanes).reverse.map(
+  //     x => ctrl.io.count <= (n - x).U
+  //   )
+  // )
 
-  for (i <- 0 until 4) {
+  for (i <- 0 until p.instructionLanes) {
     io.req(i).ready := ctrlready(i) && data.io.in.ready
   }
 
@@ -137,7 +139,7 @@ class Lsu(p: Parameters) extends Module {
   ctrl.io.in.valid := io.req.map(_.valid).reduce(_||_)
 
   val uncacheable = p.m.filter(x => !x.cacheable)
-  for (i <- 0 until 4) {
+  for (i <- 0 until p.instructionLanes) {
     val uncached = io.busPort.addr(i)(31) ||
       (if (uncacheable.length > 0) uncacheable.map(x => (io.busPort.addr(i) >= x.memStart.U) && (io.busPort.addr(i) < (x.memStart + x.memSize).U)).reduce(_||_) else false.B)
 

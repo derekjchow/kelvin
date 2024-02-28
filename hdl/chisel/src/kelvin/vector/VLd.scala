@@ -30,7 +30,7 @@ object VLd {
 class VLd(p: Parameters) extends Module {
   val io = IO(new Bundle {
     // Instructions.
-    val in = Flipped(Decoupled(Vec(4, Valid(new VDecodeBits))))
+    val in = Flipped(Decoupled(Vec(p.instructionLanes, Valid(new VDecodeBits))))
 
     // VRegfile.
     val write = new VRegfileWriteIO(p)
@@ -131,7 +131,7 @@ class VLd(p: Parameters) extends Module {
     0.U
   }
 
-  val q = VCmdq(cmdqDepth, new VLdCmdq, Fin, Fout, Factive)
+  val q = VCmdq(p, cmdqDepth, new VLdCmdq, Fin, Fout, Factive)
 
   q.io.in <> io.in
 

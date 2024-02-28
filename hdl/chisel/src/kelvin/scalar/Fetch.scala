@@ -56,7 +56,7 @@ class Fetch(p: Parameters) extends Module {
     val csr = new CsrInIO(p)
     val ibus = new IBusIO(p)
     val inst = new FetchIO(p)
-    val branch = Flipped(Vec(4, new BranchTakenIO(p)))
+    val branch = Flipped(Vec(p.instructionLanes, new BranchTakenIO(p)))
     val linkPort = Flipped(new RegfileLinkPortIO)
     val iflush = Flipped(new IFlushIO(p))
   })
@@ -103,9 +103,9 @@ class Fetch(p: Parameters) extends Module {
   val l0data  = Reg(Vec(indices, UInt(p.fetchDataBits.W)))
 
   // Instruction outputs.
-  val instValid = RegInit(VecInit(Seq.fill(4)(false.B)))
-  val instAddr  = Reg(Vec(4, UInt(p.instructionBits.W)))
-  val instBits  = Reg(Vec(4, UInt(p.instructionBits.W)))
+  val instValid = RegInit(VecInit(Seq.fill(p.instructionLanes)(false.B)))
+  val instAddr  = Reg(Vec(p.instructionLanes, UInt(p.instructionBits.W)))
+  val instBits  = Reg(Vec(p.instructionLanes, UInt(p.instructionBits.W)))
 
   val instAligned0 = Cat(instAddr(0)(31, indexLsb), 0.U(indexLsb.W))
   val instAligned1 = instAligned0 + Cat(1.U, 0.U(indexLsb.W))
@@ -135,71 +135,48 @@ class Fetch(p: Parameters) extends Module {
     (jal, target)
   }
 
-  val (preBranchTaken0, preBranchTarget0) =
-      Predecode(instAddr(0), instBits(0))
-  val (preBranchTaken1, preBranchTarget1) =
-      Predecode(instAddr(1), instBits(1))
-  val (preBranchTaken2, preBranchTarget2) =
-      Predecode(instAddr(2), instBits(2))
-  val (preBranchTaken3, preBranchTarget3) =
-      Predecode(instAddr(3), instBits(3))
+  val preBranch = (0 until p.instructionLanes).map(x => Predecode(instAddr(x), instBits(x)))
+  val preBranchTakens = preBranch.map { case (taken, target) => taken }
+  val preBranchTargets = preBranch.map { case (taken, target) => target }
 
-  val preBranchTaken = io.inst.lanes(0).valid && preBranchTaken0 ||
-                       io.inst.lanes(1).valid && preBranchTaken1 ||
-                       io.inst.lanes(2).valid && preBranchTaken2 ||
-                       io.inst.lanes(3).valid && preBranchTaken3
+  val preBranchTaken = (0 until p.instructionLanes).map(i =>
+    io.inst.lanes(i).valid && preBranchTakens(i)).reduce(_ || _)
 
-  val preBranchTarget = Mux(preBranchTaken0, preBranchTarget0,
-                        Mux(preBranchTaken1, preBranchTarget1,
-                        Mux(preBranchTaken2, preBranchTarget2,
-                            preBranchTarget3)))
+  val preBranchTarget = MuxCase(
+    preBranchTargets(p.instructionLanes - 1),
+    (0 until p.instructionLanes - 1).map(i => preBranchTakens(i) -> preBranchTargets(i))
+  )
 
   val preBranchTag = preBranchTarget(tagMsb, tagLsb)
   val preBranchIndex = preBranchTarget(indexMsb, indexLsb)
 
-  val branchTag0 = io.branch(0).value(tagMsb, tagLsb)
-  val branchTag1 = io.branch(1).value(tagMsb, tagLsb)
-  val branchTag2 = io.branch(2).value(tagMsb, tagLsb)
-  val branchTag3 = io.branch(3).value(tagMsb, tagLsb)
-  val branchIndex0 = io.branch(0).value(indexMsb, indexLsb)
-  val branchIndex1 = io.branch(1).value(indexMsb, indexLsb)
-  val branchIndex2 = io.branch(2).value(indexMsb, indexLsb)
-  val branchIndex3 = io.branch(3).value(indexMsb, indexLsb)
+  val branchTags = io.branch.map(x => x.value(tagMsb, tagLsb))
+  val branchIndices = io.branch.map(x => x.value(indexMsb, indexLsb))
 
-  val l0validB0 = l0valid(branchIndex0)
-  val l0validB1 = l0valid(branchIndex1)
-  val l0validB2 = l0valid(branchIndex2)
-  val l0validB3 = l0valid(branchIndex3)
+  val l0valids = (0 until p.instructionLanes).map(x => l0valid(branchIndices(x)))
   val l0validP  = l0valid(preBranchIndex)
 
-  val l0tagB0 = VecAt(l0tag, branchIndex0)
-  val l0tagB1 = VecAt(l0tag, branchIndex1)
-  val l0tagB2 = VecAt(l0tag, branchIndex2)
-  val l0tagB3 = VecAt(l0tag, branchIndex3)
+  val l0tags = (0 until p.instructionLanes).map(x => VecAt(l0tag, branchIndices(x)))
   val l0tagP  = VecAt(l0tag, preBranchIndex)
 
-  val reqB0 = io.branch(0).valid && !l0req(branchIndex0) &&
-      (branchTag0 =/= l0tagB0 || !l0validB0)
-  val reqB1 = io.branch(1).valid && !l0req(branchIndex1) &&
-      (branchTag1 =/= l0tagB1 || !l0validB1) &&
-      !io.branch(0).valid
-  val reqB2 = io.branch(2).valid && !l0req(branchIndex2) &&
-      (branchTag2 =/= l0tagB2 || !l0validB2) &&
-      !io.branch(0).valid && !io.branch(1).valid
-  val reqB3 = io.branch(3).valid && !l0req(branchIndex3) &&
-      (branchTag3 =/= l0tagB3 || !l0validB3) &&
-      !io.branch(0).valid && !io.branch(1).valid && !io.branch(2).valid
+  val reqBValid = (0 until p.instructionLanes).map(x =>
+      io.branch(x).valid && !l0req(branchIndices(x)) &&
+      (branchTags(x) =/= l0tags(x) || !l0valids(x)))
+  val prevValid = io.branch.map(_.valid).scan(false.B)(_||_)
+  val reqs = (0 until p.instructionLanes).map(x => reqBValid(x) && !prevValid(x))
+
   val reqP = preBranchTaken && !l0req(preBranchIndex) && (preBranchTag =/= l0tagP || !l0validP)
   val req0 = !match0 && !l0req(instIndex0)
   val req1 = !match1 && !l0req(instIndex1)
 
-  aslice.io.in.valid := (reqB0 || reqB1 || reqB2 || reqB3 || reqP || req0 || req1) && !io.iflush.valid
-  aslice.io.in.bits  := Mux(reqB0, Cat(io.branch(0).value(31,indexLsb), 0.U(indexLsb.W)),
-                        Mux(reqB1, Cat(io.branch(1).value(31,indexLsb), 0.U(indexLsb.W)),
-                        Mux(reqB2, Cat(io.branch(2).value(31,indexLsb), 0.U(indexLsb.W)),
-                        Mux(reqB3, Cat(io.branch(3).value(31,indexLsb), 0.U(indexLsb.W)),
-                        Mux(reqP,  Cat(preBranchTarget(31,indexLsb), 0.U(indexLsb.W)),
-                        Mux(req0, instAligned0, instAligned1))))))
+  aslice.io.in.valid := (reqs ++ Seq(reqP, req0, req1)).reduce(_ || _) && !io.iflush.valid
+  aslice.io.in.bits := MuxCase(instAligned1,
+    (0 until p.instructionLanes).map(x => reqs(x) -> Cat(io.branch(x).value(31,indexLsb), 0.U(indexLsb.W))) ++
+    Array(
+      reqP -> Cat(preBranchTarget(31,indexLsb), 0.U(indexLsb.W)),
+      req0 -> instAligned0,
+    )
+  )
 
   when (readAddrEn) {
     readAddr := io.ibus.addr
@@ -253,25 +230,27 @@ class Fetch(p: Parameters) extends Module {
   // creates excessive timing pressure. We know that the match is either on
   // the old line or the next line, so can late mux on lookups of prior.
   // Widen the arithmetic paths and select from results.
-  val fetchEn = Wire(Vec(4, Bool()))
+  val fetchEn = Wire(Vec(p.instructionLanes, Bool()))
 
-  for (i <- 0 until 4) {
+  for (i <- 0 until p.instructionLanes) {
     fetchEn(i) := io.inst.lanes(i).valid && io.inst.lanes(i).ready
   }
 
-  val fsel = Cat(fetchEn(3),
-                 fetchEn(2) && !fetchEn(3),
-                 fetchEn(1) && !fetchEn(2) && !fetchEn(3),
-                 fetchEn(0) && !fetchEn(1) && !fetchEn(2) && !fetchEn(3),
-                 !fetchEn(0) && !fetchEn(1) && !fetchEn(2) && !fetchEn(3))
+  val fsela = Cat((0 until p.instructionLanes).reverse.map(x =>
+    (x until p.instructionLanes).map(y =>
+      (if (y == x) { fetchEn(y) } else { !fetchEn(y) })
+    ).reduce(_ && _)
+  ))
+  val fselb = (0 until p.instructionLanes).map(x => !fetchEn(x)).reduce(_ && _)
+  val fsel = Cat(fsela, fselb)
 
-  val nxtInstAddrOffset = instAddr.map(x => x) ++ instAddr.map(x => x + 16.U)
-  val nxtInstAddr = (0 until 4).map(i =>
-      (0 until 5).map(
+  val nxtInstAddrOffset = instAddr.map(x => x) ++ instAddr.map(x => x + (p.instructionLanes * 4).U)
+  val nxtInstAddr = (0 until p.instructionLanes).map(i =>
+      (0 until (p.instructionLanes + 1)).map(
           j => MuxOR(fsel(j), nxtInstAddrOffset(j + i))).reduce(_|_))
 
   val nxtInstIndex0 = nxtInstAddr(0)(indexMsb, indexLsb)
-  val nxtInstIndex1 = nxtInstAddr(3)(indexMsb, indexLsb)
+  val nxtInstIndex1 = nxtInstAddr(p.instructionLanes - 1)(indexMsb, indexLsb)
 
   val readFwd0 =
       readDataEn && readAddr(31,indexLsb) === instAligned0(31,indexLsb)
@@ -286,7 +265,7 @@ class Fetch(p: Parameters) extends Module {
   val nxtMatch1 =
       Mux(instIndex0(0) === nxtInstIndex1(0), nxtMatch0Fwd, nxtMatch1Fwd)
 
-  val nxtInstValid = Wire(Vec(4, Bool()))
+  val nxtInstValid = Wire(Vec(p.instructionLanes, Bool()))
 
   val nxtInstBits0 = Mux(readFwd0, readData, VecAt(l0data, instIndex0))
   val nxtInstBits1 = Mux(readFwd1, readData, VecAt(l0data, instIndex1))
@@ -301,23 +280,18 @@ class Fetch(p: Parameters) extends Module {
   def BranchMatchDe(valid: Bool, value: UInt):
       (Bool, UInt, Vec[UInt], Vec[UInt]) = {
 
-    val addr = VecInit(value,
-                       value + 4.U,
-                       value + 8.U,
-                       value + 12.U)
+    val addr = VecInit((0 until p.instructionLanes).map(x => value + (x * 4).U))
 
     val match0 = l0valid(addr(0)(indexMsb,indexLsb)) &&
         addr(0)(tagMsb,tagLsb) === VecAt(l0tag, addr(0)(indexMsb,indexLsb))
-    val match1 = l0valid(addr(3)(indexMsb,indexLsb)) &&
-        addr(3)(tagMsb,tagLsb) === VecAt(l0tag, addr(3)(indexMsb,indexLsb))
+    val match1 = l0valid(addr(p.instructionLanes - 1)(indexMsb,indexLsb)) &&
+        addr(p.instructionLanes - 1)(tagMsb,tagLsb) === VecAt(l0tag, addr(p.instructionLanes - 1)(indexMsb,indexLsb))
 
-    val vvalid = VecInit(Mux(addr(0)(4,2) <= 7.U, match0, match1),
-                         Mux(addr(0)(4,2) <= 6.U, match0, match1),
-                         Mux(addr(0)(4,2) <= 5.U, match0, match1),
-                         Mux(addr(0)(4,2) <= 4.U, match0, match1))
+    val vvalid = VecInit((0 until p.instructionLanes).reverse.map(x =>
+      Mux(addr(0)(2 + log2Ceil(p.instructionLanes),2) <= (4+x).U, match0, match1)))
 
     val muxbits0 = VecAt(l0data, addr(0)(indexMsb,indexLsb))
-    val muxbits1 = VecAt(l0data, addr(3)(indexMsb,indexLsb))
+    val muxbits1 = VecAt(l0data, addr(p.instructionLanes - 1)(indexMsb,indexLsb))
     val muxbits = Wire(Vec(16, UInt(p.instructionBits.W)))
 
     for (i <- 0 until 8) {
@@ -326,8 +300,8 @@ class Fetch(p: Parameters) extends Module {
       muxbits(i + 8) := muxbits1(31 + offset, offset)
     }
 
-    val bits = Wire(Vec(4, UInt(p.instructionBits.W)))
-    for (i <- 0 until 4) {
+    val bits = Wire(Vec(p.instructionLanes, UInt(p.instructionBits.W)))
+    for (i <- 0 until p.instructionLanes) {
       val idx = Cat(addr(0)(5) =/= addr(i)(5), addr(i)(4,2))
       bits(i) := VecAt(muxbits, idx)
     }
@@ -337,38 +311,26 @@ class Fetch(p: Parameters) extends Module {
 
   def BranchMatchEx(branch: Vec[BranchTakenIO]):
       (Bool, UInt, Vec[UInt], Vec[UInt]) = {
-    val valid = branch(0).valid || branch(1).valid ||
-                branch(2).valid || branch(3).valid
+    val valid = branch.map(x => x.valid).reduce(_ || _)
 
-    val addr = VecInit(Mux(branch(0).valid, branch(0).value,
-                       Mux(branch(1).valid, branch(1).value,
-                       Mux(branch(2).valid, branch(2).value,
-                                            branch(3).value))),
-                       Mux(branch(0).valid, branch(0).value + 4.U,
-                       Mux(branch(1).valid, branch(1).value + 4.U,
-                       Mux(branch(2).valid, branch(2).value + 4.U,
-                                            branch(3).value + 4.U))),
-                       Mux(branch(0).valid, branch(0).value + 8.U,
-                       Mux(branch(1).valid, branch(1).value + 8.U,
-                       Mux(branch(2).valid, branch(2).value + 8.U,
-                                            branch(3).value + 8.U))),
-                       Mux(branch(0).valid, branch(0).value + 12.U,
-                       Mux(branch(1).valid, branch(1).value + 12.U,
-                       Mux(branch(2).valid, branch(2).value + 12.U,
-                                            branch(3).value + 12.U))))
+
+    val addr = VecInit((0 until branch.length).map(x =>
+      MuxCase(branch(branch.length - 1).value + (x * 4).U, (
+        (0 until branch.length - 1).map(y =>
+          branch(y).valid -> (branch(y).value + (x * 4).U)
+        )
+      ))))
 
     val match0 = l0valid(addr(0)(indexMsb,indexLsb)) &&
         addr(0)(tagMsb,tagLsb) === VecAt(l0tag, addr(0)(indexMsb,indexLsb))
-    val match1 = l0valid(addr(3)(indexMsb,indexLsb)) &&
-        addr(3)(tagMsb,tagLsb) === VecAt(l0tag, addr(3)(indexMsb,indexLsb))
+    val match1 = l0valid(addr(branch.length - 1)(indexMsb,indexLsb)) &&
+        addr(branch.length - 1)(tagMsb,tagLsb) === VecAt(l0tag, addr(branch.length - 1)(indexMsb,indexLsb))
 
-    val vvalid = VecInit(Mux(addr(0)(4,2) <= 7.U, match0, match1),
-                         Mux(addr(0)(4,2) <= 6.U, match0, match1),
-                         Mux(addr(0)(4,2) <= 5.U, match0, match1),
-                         Mux(addr(0)(4,2) <= 4.U, match0, match1))
+    val vvalid = VecInit((0 until branch.length).reverse.map(x =>
+      Mux(addr(0)(2 + log2Ceil(branch.length),2) <= (4 + x).U, match0, match1)))
 
     val muxbits0 = VecAt(l0data, addr(0)(indexMsb,indexLsb))
-    val muxbits1 = VecAt(l0data, addr(3)(indexMsb,indexLsb))
+    val muxbits1 = VecAt(l0data, addr(branch.length - 1)(indexMsb,indexLsb))
     val muxbits = Wire(Vec(16, UInt(p.instructionBits.W)))
 
     for (i <- 0 until 8) {
@@ -377,8 +339,8 @@ class Fetch(p: Parameters) extends Module {
       muxbits(i + 8) := muxbits1(31 + offset, offset)
     }
 
-    val bits = Wire(Vec(4, UInt(p.instructionBits.W)))
-    for (i <- 0 until 4) {
+    val bits = Wire(Vec(branch.length, UInt(p.instructionBits.W)))
+    for (i <- 0 until branch.length) {
       val idx = Cat(addr(0)(5) =/= addr(i)(5), addr(i)(4,2))
       bits(i) := VecAt(muxbits, idx)
     }
@@ -399,21 +361,17 @@ class Fetch(p: Parameters) extends Module {
     (jal || ret || bxx, target)
   }
 
-  val (brchTakenDe0, brchTargetDe0) = PredecodeDe(instAddr(0), instBits(0))
-  val (brchTakenDe1, brchTargetDe1) = PredecodeDe(instAddr(1), instBits(1))
-  val (brchTakenDe2, brchTargetDe2) = PredecodeDe(instAddr(2), instBits(2))
-  val (brchTakenDe3, brchTargetDe3) = PredecodeDe(instAddr(3), instBits(3))
+  val brchDe = (0 until p.instructionLanes).map(x => PredecodeDe(instAddr(x), instBits(x)))
+  val brchTakensDe = brchDe.map { case (taken, target) => taken }
+  val brchTargetsDe = brchDe.map { case (taken, target) => target }
 
-  val brchTakenDeOr =
-      io.inst.lanes(0).valid && io.inst.lanes(0).ready && brchTakenDe0 ||
-      io.inst.lanes(1).valid && io.inst.lanes(1).ready && brchTakenDe1 ||
-      io.inst.lanes(2).valid && io.inst.lanes(2).ready && brchTakenDe2 ||
-      io.inst.lanes(3).valid && io.inst.lanes(3).ready && brchTakenDe3
+  val brchTakenDeOr = (0 until p.instructionLanes).map(x =>
+    io.inst.lanes(x).ready && io.inst.lanes(x).valid && brchTakensDe(x)
+  ).reduce(_ || _)
 
-  val brchTargetDe = Mux(brchTakenDe0, brchTargetDe0,
-                     Mux(brchTakenDe1, brchTargetDe1,
-                     Mux(brchTakenDe2, brchTargetDe2,
-                         brchTargetDe3)))
+  val brchTargetDe = MuxCase(brchTargetsDe(p.instructionLanes - 1),
+    (0 until p.instructionLanes - 1).map(x => brchTakensDe(x) -> brchTargetsDe(x))
+  )
 
   val (brchTakenDe, brchValidDe, brchAddrDe, brchBitsDe) =
       BranchMatchDe(brchTakenDeOr, brchTargetDe)
@@ -421,21 +379,27 @@ class Fetch(p: Parameters) extends Module {
   val (brchTakenEx, brchValidEx, brchAddrEx, brchBitsEx) =
       BranchMatchEx(io.branch)
 
+
   val brchValidDeMask =
-      Cat(!brchTakenDe0 && !brchTakenDe1 && !brchTakenDe2,
-          !brchTakenDe0 && !brchTakenDe1,
-          !brchTakenDe0,
-          true.B)
+      Cat((0 until p.instructionLanes).reverse.map(x =>
+        if (x == 0) { true.B } else {
+          (0 until x).map(y =>
+            !brchTakensDe(y)
+          ).reduce(_ && _)
+        }
+      ))
 
-  val brchFwd = Cat(
-      brchTakenDe3 && !brchTakenDe0 && !brchTakenDe1 && !brchTakenDe2,
-      brchTakenDe2 && !brchTakenDe0 && !brchTakenDe1,
-      brchTakenDe1 && !brchTakenDe0,
-      brchTakenDe0)
+  val brchFwd =
+    Cat((0 until p.instructionLanes).reverse.map(x =>
+      brchTakensDe(x) && (if (x == 0) { true.B } else { (0 until x).map(y => !brchTakensDe(y)).reduce(_ && _) })
+    ))
 
-  for (i <- 0 until 4) {
+  for (i <- 0 until p.instructionLanes) {
     // 1, 11, 111, ...
-    nxtInstValid(i) := Mux(nxtInstAddr(0)(4,2) <= (7 - i).U, nxtMatch0, nxtMatch1)
+    nxtInstValid(i) := Mux(
+      nxtInstAddr(0)(4,2) <= (7 - i).U,
+      nxtMatch0,
+      nxtMatch1)
 
     val nxtInstValidUInt = nxtInstValid.asUInt
     instValid(i) := Mux(brchTakenEx, brchValidEx(i,0) === ~0.U((i+1).W),
@@ -457,14 +421,11 @@ class Fetch(p: Parameters) extends Module {
   // This pattern of separate when() blocks requires resets after the data.
   when (reset.asBool) {
     val addr = Cat(io.csr.value(0)(31,2), 0.U(2.W))
-    instAddr(0) := addr
-    instAddr(1) := addr + 4.U
-    instAddr(2) := addr + 8.U
-    instAddr(3) := addr + 12.U
+    instAddr := (0 until p.instructionLanes).map(i => addr + (4 * i).U)
   }
 
   // Outputs
-  for (i <- 0 until 4) {
+  for (i <- 0 until p.instructionLanes) {
     io.inst.lanes(i).valid := instValid(i) & brchValidDeMask(i)
     io.inst.lanes(i).addr  := instAddr(i)
     io.inst.lanes(i).inst  := instBits(i)
@@ -472,23 +433,19 @@ class Fetch(p: Parameters) extends Module {
   }
 
   // Assertions.
-  assert(instAddr(0) + 4.U === instAddr(1))
-  assert(instAddr(0) + 8.U === instAddr(2))
-  assert(instAddr(0) + 12.U === instAddr(3))
+  for (i <- 1 until p.instructionLanes) {
+    assert(instAddr(0) + (4 * i).U === instAddr(i))
+  }
 
-  assert(fsel.getWidth == 5)
+  assert(fsel.getWidth == (p.instructionLanes + 1))
   assert(PopCount(fsel) <= 1.U)
 
   val instValidUInt = instValid.asUInt
-  assert(!(!instValidUInt(0) && (instValidUInt(3,1) =/= 0.U)))
-  assert(!(!instValidUInt(1) && (instValidUInt(3,2) =/= 0.U)))
-  assert(!(!instValidUInt(2) && (instValidUInt(3,3) =/= 0.U)))
-
-  val instLanesReady = Cat(io.inst.lanes(3).ready, io.inst.lanes(2).ready,
-                           io.inst.lanes(1).ready, io.inst.lanes(0).ready)
-  assert(!(!instLanesReady(0) && (instLanesReady(3,1) =/= 0.U)))
-  assert(!(!instLanesReady(1) && (instLanesReady(3,2) =/= 0.U)))
-  assert(!(!instLanesReady(2) && (instLanesReady(3,3) =/= 0.U)))
+  val instLanesReady = Cat((0 until p.instructionLanes).reverse.map(x => io.inst.lanes(x).ready))
+  for (i <- 0 until p.instructionLanes - 1) {
+    assert(!(!instValidUInt(i) && (instValidUInt(p.instructionLanes - 1, i + 1) =/= 0.U)))
+    assert(!(!instLanesReady(i) && (instLanesReady(p.instructionLanes - 1, i + 1) =/= 0.U)))
+  }
 }
 
 object EmitFetch extends App {

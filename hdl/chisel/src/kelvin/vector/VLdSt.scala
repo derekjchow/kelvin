@@ -30,7 +30,7 @@ object VLdSt {
 class VLdSt(p: Parameters) extends Module {
   val io = IO(new Bundle {
     // Instructions.
-    val in = Flipped(Decoupled(Vec(4, Valid(new VDecodeBits))))
+    val in = Flipped(Decoupled(Vec(p.instructionLanes, Valid(new VDecodeBits))))
     val active = Output(UInt(64.W))
 
     // VRegfile.
@@ -180,7 +180,7 @@ class VLdSt(p: Parameters) extends Module {
     active
   }
 
-  val q = VCmdq(cmdqDepth, new VLdStCmdq, Fin, Fout, Factive)
+  val q = VCmdq(p, cmdqDepth, new VLdStCmdq, Fin, Fout, Factive)
 
   q.io.in <> io.in
 

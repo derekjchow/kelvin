@@ -18,17 +18,17 @@ import chisel3._
 import chisel3.util._
 import _root_.circt.stage.ChiselStage
 
-// Fifo4 with entry output and no output registration stage.
+// FifoX with entry output and no output registration stage.
 
-object Fifo4e {
-  def apply[T <: Data](t: T, n: Int) = {
-    Module(new Fifo4e(t, n))
+object FifoXe {
+  def apply[T <: Data](t: T, x: Int, n: Int) = {
+    Module(new FifoXe(t, x, n))
   }
 }
 
-class Fifo4e[T <: Data](t: T, n: Int) extends Module {
+class FifoXe[T <: Data](t: T, x:Int, n: Int) extends Module {
   val io = IO(new Bundle {
-    val in  = Flipped(Decoupled(Vec(4, Valid(t))))
+    val in  = Flipped(Decoupled(Vec(x, Valid(t))))
     val out = Decoupled(t)
     val count = Output(UInt(log2Ceil(n+1).W))
     val entry = Output(Vec(n, Valid(t)))
@@ -43,10 +43,7 @@ class Fifo4e[T <: Data](t: T, n: Int) extends Module {
 
   val mem = Mem(n, t)
 
-  val in0pos = RegInit(0.U(log2Ceil(n).W))
-  val in1pos = RegInit(1.U(log2Ceil(n).W))
-  val in2pos = RegInit(2.U(log2Ceil(n).W))
-  val in3pos = RegInit(3.U(log2Ceil(n).W))
+  val inxpos = RegInit(VecInit((0 until x).map(x => x.U((log2Ceil(n) + 1).W))))
   val outpos = RegInit(0.U(log2Ceil(n).W))
   val mcount = RegInit(0.U(log2Ceil(n+1).W))
   val nempty = RegInit(false.B)
@@ -57,18 +54,16 @@ class Fifo4e[T <: Data](t: T, n: Int) extends Module {
   val ivalid = io.in.valid && io.in.ready
   val ovalid = io.out.valid && io.out.ready
 
-  val iactive = Cat(io.in.bits(3).valid, io.in.bits(2).valid,
-                    io.in.bits(1).valid, io.in.bits(0).valid).asUInt
+  val iactive = Cat((0 until x).reverse.map(x => io.in.bits(x).valid))
 
   val icount = PopCount(iactive)
 
   // ---------------------------------------------------------------------------
   // Fifo Control.
   when (ivalid) {
-    in0pos := Increment(in0pos, icount)
-    in1pos := Increment(in1pos, icount)
-    in2pos := Increment(in2pos, icount)
-    in3pos := Increment(in3pos, icount)
+    for (i <- 0 until x) {
+      inxpos(i) := Increment(inxpos(i), icount)
+    }
   }
 
   when (ovalid) {
@@ -86,30 +81,24 @@ class Fifo4e[T <: Data](t: T, n: Int) extends Module {
 
   // ---------------------------------------------------------------------------
   // Fifo Input.
-  val (in0valid, in1valid, in2valid, in3valid) = Fifo4Valid(iactive)
+  val inxvalid = FifoXValid(iactive)
 
   for (i <- 0 until n) {
-    val valid = Cat(in0pos === i.U && in0valid(3) ||
-                    in1pos === i.U && in1valid(3) ||
-                    in2pos === i.U && in2valid(3) ||
-                    in3pos === i.U && in3valid(3),
-                    in0pos === i.U && in0valid(2) ||
-                    in1pos === i.U && in1valid(2) ||
-                    in2pos === i.U && in2valid(2),
-                    in0pos === i.U && in0valid(1) ||
-                    in1pos === i.U && in1valid(1),
-                    in0pos === i.U && in0valid(0))
+    val valid = Cat(
+      (0 until x).reverse.map(q =>
+        if (q == 0) { inxpos(0) === i.U && inxvalid(0)(0) } else {
+          (0 to q).map(y =>
+            inxpos(y) === i.U && inxvalid(y)(q)
+          ).reduce(_ || _)
+        }
+      )
+    )
 
     when (ivalid) {
-      when (valid(0)) {
-        mem(i) := io.in.bits(0).bits
-      } .elsewhen (valid(1)) {
-        mem(i) := io.in.bits(1).bits
-      } .elsewhen (valid(2)) {
-        mem(i) := io.in.bits(2).bits
-      } .elsewhen (valid(3)) {
-        mem(i) := io.in.bits(3).bits
-      }
+     when (PopCount(valid) >= 1.U) {
+      val idx = PriorityEncoder(valid)
+      mem(i) := io.in.bits(idx).bits
+     }
     }
   }
 
@@ -118,8 +107,8 @@ class Fifo4e[T <: Data](t: T, n: Int) extends Module {
   val active = RegInit(0.U(n.W))
 
   val activeSet = MuxOR(ivalid,
-      ((icount >= 1.U) << in0pos) | ((icount >= 2.U) << in1pos) |
-      ((icount >= 3.U) << in2pos) | ((icount >= 4.U) << in3pos))
+    (0 until x).map(i => (icount >= (i + 1).U) << inxpos(i)).reduce(_ | _)
+  )
 
   val activeClr = MuxOR(io.out.valid && io.out.ready, 1.U << outpos)
 
@@ -142,6 +131,6 @@ class Fifo4e[T <: Data](t: T, n: Int) extends Module {
   }
 }
 
-object EmitFifo4e extends App {
-  ChiselStage.emitSystemVerilogFile(new Fifo4e(UInt(8.W), 10), args)
+object EmitFifoXe extends App {
+  ChiselStage.emitSystemVerilogFile(new FifoXe(UInt(8.W), 4, 10), args)
 }

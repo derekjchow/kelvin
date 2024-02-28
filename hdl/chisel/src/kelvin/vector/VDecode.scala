@@ -18,7 +18,7 @@ package kelvin
 
 import chisel3._
 import chisel3.util._
-import common.Fifo4x4
+import common.FifoIxO
 import _root_.circt.stage.ChiselStage
 
 object VDecode {
@@ -29,10 +29,10 @@ object VDecode {
 
 class VDecode(p: Parameters) extends Module {
   val io = IO(new Bundle {
-    val in = Flipped(Decoupled(Vec(4, Valid(new VectorInstructionLane))))
-    val out = Vec(4, Decoupled(new VDecodeBits))
-    val cmdq = Vec(4, Output(new VDecodeCmdq))
-    val actv = Vec(4, Output(new VDecodeActive))  // used in testbench
+    val in = Flipped(Decoupled(Vec(p.instructionLanes, Valid(new VectorInstructionLane))))
+    val out = Vec(p.instructionLanes, Decoupled(new VDecodeBits))
+    val cmdq = Vec(p.instructionLanes, Output(new VDecodeCmdq))
+    val actv = Vec(p.instructionLanes, Output(new VDecodeActive))  // used in testbench
     val stall = Output(Bool())
     val active = Input(UInt(64.W))
     val vrfsb = new VRegfileScoreboardIO
@@ -45,27 +45,24 @@ class VDecode(p: Parameters) extends Module {
 
   val enc = new VEncodeOp()
 
-  val f = Fifo4x4(new VectorInstructionLane, depth)
+  val f = FifoIxO(new VectorInstructionLane, p.instructionLanes, p.instructionLanes, depth)
 
-  val d = Seq(Module(new VDecodeInstruction(p)),
-              Module(new VDecodeInstruction(p)),
-              Module(new VDecodeInstruction(p)),
-              Module(new VDecodeInstruction(p)))
+  val d = Seq.fill(p.instructionLanes)(Module(new VDecodeInstruction(p)))
 
-  val e = Wire(Vec(4, new VDecodeBits))
+  val e = Wire(Vec(p.instructionLanes, new VDecodeBits))
 
-  val valid = RegInit(VecInit(Seq.fill(4)(false.B)))
-  val data = Reg(Vec(4, new VDecodeBits))
-  val cmdq = Reg(Vec(4, new VDecodeCmdq))
-  val actv = Wire(Vec(4, new VDecodeActive))
-  val actv2 = Reg(Vec(4, new VDecodeActive2))
-  val dataNxt = Wire(Vec(4, new VDecodeBits))
-  val cmdqNxt = Wire(Vec(4, new VDecodeCmdq))
-  val actvNxt = Wire(Vec(4, new VDecodeActive2))
+  val valid = RegInit(VecInit(Seq.fill(p.instructionLanes)(false.B)))
+  val data = Reg(Vec(p.instructionLanes, new VDecodeBits))
+  val cmdq = Reg(Vec(p.instructionLanes, new VDecodeCmdq))
+  val actv = Wire(Vec(p.instructionLanes, new VDecodeActive))
+  val actv2 = Reg(Vec(p.instructionLanes, new VDecodeActive2))
+  val dataNxt = Wire(Vec(p.instructionLanes, new VDecodeBits))
+  val cmdqNxt = Wire(Vec(p.instructionLanes, new VDecodeCmdq))
+  val actvNxt = Wire(Vec(p.instructionLanes, new VDecodeActive2))
 
   // ---------------------------------------------------------------------------
   // Decode.
-  for (i <- 0 until 4) {
+  for (i <- 0 until p.instructionLanes) {
     d(i).io.in := f.io.out(i).bits
   }
 
@@ -75,24 +72,11 @@ class VDecode(p: Parameters) extends Module {
   // write the read usage is occurring on.
   val tagReg = RegInit(0.U(64.W))
 
-  val tag0 = tagReg
-  val tag1 = tag0 ^ d(0).io.actv.wactive
-  val tag2 = tag1 ^ d(1).io.actv.wactive
-  val tag3 = tag2 ^ d(2).io.actv.wactive
-  val tag4 = tag3 ^ d(3).io.actv.wactive
-
-  val tags = Seq(tag0, tag1, tag2, tag3, tag4)
+  val tags = (0 until p.instructionLanes).map(x => d(x).io.actv.wactive).scan(tagReg)(_ ^ _)
+  assert(tags.length == p.instructionLanes + 1)
 
   // f.io.out is ordered, so can use a priority tree.
-  when(f.io.out(3).valid && f.io.out(3).ready) {
-    tagReg := tag4
-  } .elsewhen(f.io.out(2).valid && f.io.out(2).ready) {
-    tagReg := tag3
-  } .elsewhen(f.io.out(1).valid && f.io.out(1).ready) {
-    tagReg := tag2
-  } .elsewhen(f.io.out(0).valid && f.io.out(0).ready) {
-    tagReg := tag1
-  }
+  tagReg := MuxCase(tags(0), (0 until p.instructionLanes).reverse.map(x => (f.io.out(x).valid && f.io.out(x).ready) -> tags(x + 1)))
 
   def TagAddr(tag: UInt, v: VAddrTag): VAddrTag = {
     assert(tag.getWidth == 64)
@@ -111,7 +95,7 @@ class VDecode(p: Parameters) extends Module {
     r
   }
 
-  for (i <- 0 until 4) {
+  for (i <- 0 until p.instructionLanes) {
     e(i) := d(i).io.out
     e(i).vs := TagAddr(tags(i), d(i).io.out.vs)
     e(i).vt := TagAddr(tags(i), d(i).io.out.vt)
@@ -123,34 +107,27 @@ class VDecode(p: Parameters) extends Module {
 
   // ---------------------------------------------------------------------------
   // Undef.  (io.in.ready ignored to signal as early as possible)
-  io.undef := io.in.valid && (d(0).io.undef || d(1).io.undef || d(2).io.undef || d(3).io.undef)
+  io.undef := io.in.valid && d.map(x => x.io.undef).reduce(_ || _)
 
   // ---------------------------------------------------------------------------
   // Fifo.
   f.io.in <> io.in
 
-  val icount = MuxOR(io.in.valid, PopCount(Cat(io.in.bits(0).valid, io.in.bits(1).valid, io.in.bits(2).valid, io.in.bits(3).valid)))
-  assert(icount.getWidth == 3)
+  val icount = MuxOR(io.in.valid,
+    PopCount(io.in.bits.map(_.valid))
+  )
 
-  val ocount = PopCount(Cat(valid(0) && !(io.out(0).valid && io.out(0).ready),
-                            valid(1) && !(io.out(1).valid && io.out(1).ready),
-                            valid(2) && !(io.out(2).valid && io.out(2).ready),
-                            valid(3) && !(io.out(3).valid && io.out(3).ready)))
-  assert(ocount.getWidth == 3)
+  val ocount = PopCount((0 until p.instructionLanes).map(x => valid(x) && !(io.out(x).valid && io.out(x).ready)))
 
-  for (i <- 0 until 4) {
-    f.io.out(i).ready := (i.U + ocount) < 4.U
+  for (i <- 0 until p.instructionLanes) {
+    f.io.out(i).ready := (i.U + ocount) < p.instructionLanes.U
   }
 
   // ---------------------------------------------------------------------------
   // Valid.
-  val fcount = PopCount(Cat(f.io.out(0).valid && f.io.out(0).ready,
-                            f.io.out(1).valid && f.io.out(1).ready,
-                            f.io.out(2).valid && f.io.out(2).ready,
-                            f.io.out(3).valid && f.io.out(3).ready))
-  assert(fcount.getWidth == 3)
+  val fcount = PopCount(f.io.out.map(x => x.valid && x.ready))
 
-  for (i <- 0 until 4) {
+  for (i <- 0 until p.instructionLanes) {
     valid(i) := (ocount + fcount) > i.U
   }
 
@@ -159,41 +136,30 @@ class VDecode(p: Parameters) extends Module {
   io.stall := (f.io.count + icount) > (depth - guard).U
 
   // ---------------------------------------------------------------------------
-  // Dependencies.
-  val depends = Wire(Vec(4, Bool()))
-
   // Writes must not proceed past any outstanding reads or writes,
   // or past any dispatching writes.
-  val wactive0 = io.vrfsb.data(63, 0) | io.vrfsb.data(127, 64) | io.active
-  val wactive1 = actv(0).ractive | actv(0).wactive | wactive0
-  val wactive2 = actv(1).ractive | actv(1).wactive | wactive1
-  val wactive3 = actv(2).ractive | actv(2).wactive | wactive2
-  val wactive = VecInit(wactive0, wactive1, wactive2, wactive3)
+  val wactive = VecInit((0 until p.instructionLanes).map(x => actv(x).ractive | actv(x).wactive).scan(io.vrfsb.data(63,0) | io.vrfsb.data(127,64) | io.active)(_ | _))
 
   // Reads must not proceed past any dispatching writes.
-  val ractive0 = 0.U(64.W)
-  val ractive1 = actv(0).wactive | ractive0
-  val ractive2 = actv(1).wactive | ractive1
-  val ractive3 = actv(2).wactive | ractive2
-  val ractive = VecInit(ractive0, ractive1, ractive2, ractive3)
+  val ractive = VecInit((0 until p.instructionLanes).map(x => actv(x).wactive).scan(0.U(64.W))(_ | _))
 
-  for (i <- 0 until 4) {
-    depends(i) := (wactive(i) & actv(i).wactive) =/= 0.U ||
-                  (ractive(i) & actv(i).ractive) =/= 0.U
-  }
+  // Dependencies.
+  val depends = VecInit((0 until p.instructionLanes).map(i =>
+    (wactive(i) & actv(i).wactive) =/= 0.U ||
+    (ractive(i) & actv(i).ractive) =/= 0.U
+  ))
 
   // ---------------------------------------------------------------------------
   // Data.
-  val fvalid = VecInit(f.io.out(0).valid, f.io.out(1).valid,
-                       f.io.out(2).valid, f.io.out(3).valid).asUInt
-  assert(!(fvalid(1) && fvalid(0,0) =/= 1.U))
-  assert(!(fvalid(2) && fvalid(1,0) =/= 3.U))
-  assert(!(fvalid(3) && fvalid(2,0) =/= 7.U))
+  val fvalid = VecInit(f.io.out.map(_.valid)).asUInt
+  for (i <- 0 until p.instructionLanes) {
+    assert(!(fvalid(i) && PopCount(fvalid(i,0)) =/= (i + 1).U))
+  }
 
   // Register is updated when fifo has state or contents are active.
   val dataEn = fvalid(0) || valid.asUInt =/= 0.U
 
-  for (i <- 0 until 4) {
+  for (i <- 0 until p.instructionLanes) {
     when (dataEn) {
       data(i) := dataNxt(i)
       cmdq(i) := cmdqNxt(i)
@@ -201,14 +167,14 @@ class VDecode(p: Parameters) extends Module {
     }
   }
 
-  for (i <- 0 until 4) {
+  for (i <- 0 until p.instructionLanes) {
     actv(i).ractive := actv2(i).ractive
     actv(i).wactive := actv2(i).wactive(63, 0) | actv2(i).wactive(127, 64)
   }
 
   // Tag the decode wactive.
-  val dactv = Wire(Vec(4, new VDecodeActive2))
-  for (i <- 0 until 4) {
+  val dactv = Wire(Vec(p.instructionLanes, new VDecodeActive2))
+  for (i <- 0 until p.instructionLanes) {
     val w0 = d(i).io.actv.wactive & ~tags(i + 1)
     val w1 = d(i).io.actv.wactive &  tags(i + 1)
     dactv(i).ractive := d(i).io.actv.ractive
@@ -216,155 +182,51 @@ class VDecode(p: Parameters) extends Module {
   }
 
   // Data multiplexor of current values and fifo+decode output.
-  val dataMux = VecInit(data(0), data(1), data(2), data(3),
-                        e(0), e(1), e(2), e(3))
+  val dataMux = VecInit(data ++ e)
+  val cmdqMux = VecInit(cmdq ++ d.map(x => x.io.cmdq))
+  val actvMux = VecInit(actv2 ++ dactv)
 
-  val cmdqMux = VecInit(cmdq(0), cmdq(1), cmdq(2), cmdq(3),
-                        d(0).io.cmdq, d(1).io.cmdq, d(2).io.cmdq, d(3).io.cmdq)
-
-  val actvMux = VecInit(actv2(0), actv2(1), actv2(2), actv2(3),
-                        dactv(0), dactv(1), dactv(2), dactv(3))
-
+  def GenerateMarked(start: Int, count: Int): Seq[UInt] = {
+    (0 until count).map(x => Wire(UInt((start + x).W)))
+  }
   // Mark the multiplexor entries that need to be kept.
-  val marked0 = Wire(UInt(5.W))
-  val marked1 = Wire(UInt(6.W))
-  val marked2 = Wire(UInt(7.W))
+  val marked = GenerateMarked((p.instructionLanes + 1), p.instructionLanes - 1)
+  val output = Cat((0 until p.instructionLanes).reverse.map(x => io.out(x).valid && io.out(x).ready))
+  val validNotOutput = (0 until (p.instructionLanes * 2) - 1).map(x =>
+    if (x < valid.length) { valid(x) && !output(x) } else { true.B })
+  val prevMarked = (0 until p.instructionLanes).map(x =>
+    if (x == 0) { None } else { Some(marked(x - 1)) }
+  )
 
-  assert((marked1 & marked0) === marked0)
-  assert((marked2 & marked0) === marked0)
-  assert((marked2 & marked1) === marked1)
-
-  val output = Cat(io.out(3).valid && io.out(3).ready,
-                   io.out(2).valid && io.out(2).ready,
-                   io.out(1).valid && io.out(1).ready,
-                   io.out(0).valid && io.out(0).ready)
-
-  when (valid(0) && !output(0)) {
-    dataNxt(0) := dataMux(0)
-    cmdqNxt(0) := cmdqMux(0)
-    actvNxt(0) := actvMux(0)
-    marked0 := 0x01.U
-  } .elsewhen (valid(1) && !output(1)) {
-    dataNxt(0) := dataMux(1)
-    cmdqNxt(0) := cmdqMux(1)
-    actvNxt(0) := actvMux(1)
-    marked0 := 0x03.U
-  } .elsewhen (valid(2) && !output(2)) {
-    dataNxt(0) := dataMux(2)
-    cmdqNxt(0) := cmdqMux(2)
-    actvNxt(0) := actvMux(2)
-    marked0 := 0x07.U
-  } .elsewhen (valid(3) && !output(3)) {
-    dataNxt(0) := dataMux(3)
-    cmdqNxt(0) := cmdqMux(3)
-    actvNxt(0) := actvMux(3)
-    marked0 := 0x0f.U
-  } .otherwise {
-    dataNxt(0) := dataMux(4)
-    cmdqNxt(0) := cmdqMux(4)
-    actvNxt(0) := actvMux(4)
-    marked0 := 0x1f.U
-  }
-
-  when (!marked0(1) && valid(1) && !output(1)) {
-    dataNxt(1) := dataMux(1)
-    cmdqNxt(1) := cmdqMux(1)
-    actvNxt(1) := actvMux(1)
-    marked1 := 0x03.U
-  } .elsewhen (!marked0(2) && valid(2) && !output(2)) {
-    dataNxt(1) := dataMux(2)
-    cmdqNxt(1) := cmdqMux(2)
-    actvNxt(1) := actvMux(2)
-    marked1 := 0x07.U
-  } .elsewhen (!marked0(3) && valid(3) && !output(3)) {
-    dataNxt(1) := dataMux(3)
-    cmdqNxt(1) := cmdqMux(3)
-    actvNxt(1) := actvMux(3)
-    marked1 := 0x0f.U
-  } .elsewhen (!marked0(4)) {
-    dataNxt(1) := dataMux(4)
-    cmdqNxt(1) := cmdqMux(4)
-    actvNxt(1) := actvMux(4)
-    marked1 := 0x1f.U
-  } .otherwise {
-    dataNxt(1) := dataMux(5)
-    cmdqNxt(1) := cmdqMux(5)
-    actvNxt(1) := actvMux(5)
-    marked1 := 0x3f.U
-  }
-
-  when (!marked1(2) && valid(2) && !output(2)) {
-    dataNxt(2) := dataMux(2)
-    cmdqNxt(2) := cmdqMux(2)
-    actvNxt(2) := actvMux(2)
-    marked2 := 0x07.U
-  } .elsewhen (!marked1(3) && valid(3) && !output(3)) {
-    dataNxt(2) := dataMux(3)
-    cmdqNxt(2) := cmdqMux(3)
-    actvNxt(2) := actvMux(3)
-    marked2 := 0x0f.U
-  } .elsewhen (!marked1(4)) {
-    dataNxt(2) := dataMux(4)
-    cmdqNxt(2) := cmdqMux(4)
-    actvNxt(2) := actvMux(4)
-    marked2 := 0x1f.U
-  } .elsewhen (!marked1(5)) {
-    dataNxt(2) := dataMux(5)
-    cmdqNxt(2) := cmdqMux(5)
-    actvNxt(2) := actvMux(5)
-    marked2 := 0x3f.U
-  } .otherwise {
-    dataNxt(2) := dataMux(6)
-    cmdqNxt(2) := cmdqMux(6)
-    actvNxt(2) := actvMux(6)
-    marked2 := 0x7f.U
-  }
-
-  when (!marked2(3) && valid(3) && !output(3)) {
-    dataNxt(3) := dataMux(3)
-    cmdqNxt(3) := cmdqMux(3)
-    actvNxt(3) := actvMux(3)
-  } .elsewhen (!marked2(4)) {
-    dataNxt(3) := dataMux(4)
-    cmdqNxt(3) := cmdqMux(4)
-    actvNxt(3) := actvMux(4)
-  } .elsewhen (!marked2(5)) {
-    dataNxt(3) := dataMux(5)
-    cmdqNxt(3) := cmdqMux(5)
-    actvNxt(3) := actvMux(5)
-  } .elsewhen (!marked2(6)) {
-    dataNxt(3) := dataMux(6)
-    cmdqNxt(3) := cmdqMux(6)
-    actvNxt(3) := actvMux(6)
-  } .otherwise {
-    dataNxt(3) := dataMux(7)
-    cmdqNxt(3) := cmdqMux(7)
-    actvNxt(3) := actvMux(7)
+  for (i <- 0 until p.instructionLanes) {
+    val idx = MuxCase((i + p.instructionLanes).U, (i until p.instructionLanes + i).map(x =>
+      (!prevMarked(i).getOrElse(false.B)(x) && validNotOutput(x)) -> (x).U
+    ))
+    dataNxt(i) := dataMux(idx)
+    cmdqNxt(i) := cmdqMux(idx)
+    actvNxt(i) := actvMux(idx)
+    if (i < marked.length) {
+      val width = marked(i).getWidth
+      marked(i) := ~0.U(width.W) >> ((width - 1).U - idx)
+    }
   }
 
   // ---------------------------------------------------------------------------
   // Scoreboard.
-  io.vrfsb.set.valid := output(0) || output(1) || output(2) || output(3)
+  // io.vrfsb.set.valid := output(0) || output(1) || output(2) || output(3)
+  io.vrfsb.set.valid := output =/= 0.U
 
-  io.vrfsb.set.bits := (MuxOR(output(0), actv2(0).wactive) |
-                        MuxOR(output(1), actv2(1).wactive) |
-                        MuxOR(output(2), actv2(2).wactive) |
-                        MuxOR(output(3), actv2(3).wactive))
+  io.vrfsb.set.bits := (0 until p.instructionLanes).map(x => MuxOR(output(x), actv2(x).wactive)).reduce(_ | _)
 
   assert((io.vrfsb.set.bits(63, 0) & io.vrfsb.set.bits(127, 64)) === 0.U)
   assert(((io.vrfsb.data(63, 0) | io.vrfsb.data(127, 64)) & (io.vrfsb.set.bits(63, 0) | io.vrfsb.set.bits(127, 64))) === 0.U)
 
   // ---------------------------------------------------------------------------
   // Outputs.
-  val outvalid = Wire(Vec(4, Bool()))
-  val cmdsync = Wire(Vec(4, Bool()))
+  val outvalid = VecInit((0 until p.instructionLanes).map(i => valid(i) && !depends(i)))
+  val cmdsync = VecInit((0 until p.instructionLanes).map(i => data(i).cmdsync))
 
-  for (i <- 0 until 4) {
-    outvalid(i) := valid(i) && !depends(i)
-    cmdsync(i) := data(i).cmdsync
-  }
-
-  for (i <- 0 until 4) {
+  for (i <- 0 until p.instructionLanes) {
     // Synchronize commands at cmdsync instance or if found in history.
     // Note: {vdwinit, vdwconv, vdmulh}, vdmulh must not issue before vdwconv.
     val synchronize = cmdsync.asUInt(i,0) =/= 0.U

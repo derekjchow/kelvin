@@ -195,14 +195,14 @@ static void Core_run(const char* name, const char* bin, const int cycles,
   core.io_slog_addr(io_slog_addr);
   core.io_slog_data(io_slog_data);
   core.io_debug_en(io_debug_en);
-  core.io_debug_addr0(io_debug_addr0);
-  core.io_debug_addr1(io_debug_addr1);
-  core.io_debug_addr2(io_debug_addr2);
-  core.io_debug_addr3(io_debug_addr3);
-  core.io_debug_inst0(io_debug_inst0);
-  core.io_debug_inst1(io_debug_inst1);
-  core.io_debug_inst2(io_debug_inst2);
-  core.io_debug_inst3(io_debug_inst3);
+  core.io_debug_addr_0(io_debug_addr0);
+  core.io_debug_addr_1(io_debug_addr1);
+  core.io_debug_addr_2(io_debug_addr2);
+  core.io_debug_addr_3(io_debug_addr3);
+  core.io_debug_inst_0(io_debug_inst0);
+  core.io_debug_inst_1(io_debug_inst1);
+  core.io_debug_inst_2(io_debug_inst2);
+  core.io_debug_inst_3(io_debug_inst3);
   core.io_debug_cycles(io_debug_cycles);
 
   mif.clock(tb.clock);

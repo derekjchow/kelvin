@@ -56,6 +56,12 @@ case class Parameters(m: Seq[MemoryRegion] = Seq(), hartId: UInt = 0.U(32.W)) {
 
   val vectorCountBits = log2Ceil(vectorBits / 8) + 1 + 2  // +2 stripmine
 
+  val vectorAluCount = 2
+  val vectorReadPorts = (vectorAluCount * 3) + 1
+  val vectorWritePorts = 6
+  val vectorWhintPorts = 4
+  val vectorScalarPorts = 2
+
   // Vector queue.
   val vectorFifoDepth = 16
 

@@ -21,8 +21,8 @@ import chisel3.util._
 import _root_.circt.stage.ChiselStage
 
 class VRegfileSegment(p: Parameters) extends Module {
-  val readPorts = 7
-  val writePorts = 6
+  val readPorts = p.vectorReadPorts
+  val writePorts = p.vectorWritePorts
   val tcnt = 16.min(p.vectorBits / 32)
 
   val io = IO(new Bundle {

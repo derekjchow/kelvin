@@ -18,9 +18,9 @@ load("@kelvin_hw//rules:chisel.bzl",
 chisel_library(
     name = "common",
     srcs = [
-        "Fifo4e.scala",
-        "Fifo4.scala",
-        "Fifo4x4.scala",
+        "FifoXe.scala",
+        "FifoX.scala",
+        "FifoIxO.scala",
         "Fifo.scala",
         "IDiv.scala",
         "Library.scala",

@@ -47,11 +47,11 @@ class MluIO(p: Parameters) extends Bundle {
 class Mlu(p: Parameters) extends Module {
   val io = IO(new Bundle {
     // Decode cycle.
-    val req = Vec(4, new MluIO(p))
+    val req = Vec(p.instructionLanes, new MluIO(p))
 
     // Execute cycle.
-    val rs1 = Vec(4, Flipped(new RegfileReadDataIO))
-    val rs2 = Vec(4, Flipped(new RegfileReadDataIO))
+    val rs1 = Vec(p.instructionLanes, Flipped(new RegfileReadDataIO))
+    val rs2 = Vec(p.instructionLanes, Flipped(new RegfileReadDataIO))
     val rd  = Flipped(new RegfileWriteDataIO)
   })
 
@@ -62,41 +62,25 @@ class Mlu(p: Parameters) extends Module {
   val valid2 = RegInit(false.B)
   val addr1 = Reg(UInt(5.W))
   val addr2 = Reg(UInt(5.W))
-  val sel = Reg(UInt(4.W))
+  val sel = Reg(UInt(p.instructionLanes.W))
 
+  val valids = io.req.map(_.valid)
+  assert(valids.length == p.instructionLanes)
   valid1 := io.req.map(_.valid).reduce(_||_)
   valid2 := valid1
 
-  when (io.req(0).valid) {
-    op := io.req(0).op
-    addr1 := io.req(0).addr
-    sel := 1.U
-  } .elsewhen (io.req(1).valid) {
-    op := io.req(1).op
-    addr1 := io.req(1).addr
-    sel := 2.U
-  } .elsewhen (io.req(2).valid) {
-    op := io.req(2).op
-    addr1 := io.req(2).addr
-    sel := 4.U
-  } .elsewhen (io.req(3).valid) {
-    op := io.req(3).op
-    addr1 := io.req(3).addr
-    sel := 8.U
+  when (valids.reduce(_||_)) {
+    val idx = PriorityEncoder(valids)
+    op := io.req(idx).op
+    addr1 := io.req(idx).addr
+    sel := (1.U << idx)
   } .otherwise {
     op := 0.U
     sel := 0.U
   }
 
-  val rs1 = MuxOR(valid1 & sel(0), io.rs1(0).data) |
-            MuxOR(valid1 & sel(1), io.rs1(1).data) |
-            MuxOR(valid1 & sel(2), io.rs1(2).data) |
-            MuxOR(valid1 & sel(3), io.rs1(3).data)
-
-  val rs2 = MuxOR(valid1 & sel(0), io.rs2(0).data) |
-            MuxOR(valid1 & sel(1), io.rs2(1).data) |
-            MuxOR(valid1 & sel(2), io.rs2(2).data) |
-            MuxOR(valid1 & sel(3), io.rs2(3).data)
+  val rs1 = (0 until p.instructionLanes).map(x => MuxOR(valid1 & sel(x), io.rs1(x).data)).reduce(_ | _)
+  val rs2 = (0 until p.instructionLanes).map(x => MuxOR(valid1 & sel(x), io.rs2(x).data)).reduce(_ | _)
 
   // Multiplier has a registered output.
   val mul2 = Reg(UInt(32.W))
@@ -142,7 +126,7 @@ class Mlu(p: Parameters) extends Module {
   io.rd.data  := mul2 + round2
 
   // Assertions.
-  for (i <- 0 until 4) {
+  for (i <- 0 until p.instructionLanes) {
     assert(!(valid1 && sel(i) && !io.rs1(i).valid))
     assert(!(valid1 && sel(i) && !io.rs2(i).valid))
   }

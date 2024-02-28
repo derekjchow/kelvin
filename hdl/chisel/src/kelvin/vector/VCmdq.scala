@@ -27,14 +27,14 @@ import _root_.circt.stage.ChiselStage
 // <factive> returns the activation status for decode dependencies.
 
 object VCmdq {
-  def apply[T <: Data](n: Int, t: T, fin: (VDecodeBits) => T, fout: (T, Bool, UInt, Bool) => (T, Bool), factive: (T, Bool, UInt) => UInt) = {
-    Module(new VCmdq(n, t, fin, fout, factive))
+  def apply[T <: Data](p: Parameters, n: Int, t: T, fin: (VDecodeBits) => T, fout: (T, Bool, UInt, Bool) => (T, Bool), factive: (T, Bool, UInt) => UInt) = {
+    Module(new VCmdq(p, n, t, fin, fout, factive))
   }
 }
 
-class VCmdq[T <: Data](n: Int, t: T, fin: (VDecodeBits) => T, fout: (T, Bool, UInt, Bool) => (T, Bool), factive: (T, Bool, UInt) => UInt) extends Module {
+class VCmdq[T <: Data](p: Parameters, n: Int, t: T, fin: (VDecodeBits) => T, fout: (T, Bool, UInt, Bool) => (T, Bool), factive: (T, Bool, UInt) => UInt) extends Module {
   val io = IO(new Bundle {
-    val in  = Flipped(Decoupled(Vec(4, Valid(new VDecodeBits))))
+    val in  = Flipped(Decoupled(Vec(p.instructionLanes, Valid(new VDecodeBits))))
     val out = Decoupled(t)
     val active = Output(UInt(64.W))
     val nempty = Output(Bool())
@@ -45,7 +45,7 @@ class VCmdq[T <: Data](n: Int, t: T, fin: (VDecodeBits) => T, fout: (T, Bool, UI
     val m = Output(Bool())  // stripmine
   }
 
-  val f = Fifo4e(new VCmdqWrapper, n)
+  val f = FifoXe(new VCmdqWrapper, p.instructionLanes, n)
 
   val active = RegInit(0.U(64.W))
 
@@ -65,7 +65,7 @@ class VCmdq[T <: Data](n: Int, t: T, fin: (VDecodeBits) => T, fout: (T, Bool, UI
   f.io.in.valid := io.in.valid
   io.in.ready := f.io.in.ready
 
-  for (i <- 0 until 4) {
+  for (i <- 0 until p.instructionLanes) {
     f.io.in.bits(i).valid := io.in.bits(i).valid
     f.io.in.bits(i).bits.tin := fin(io.in.bits(i).bits)
     f.io.in.bits(i).bits.m := io.in.bits(i).bits.m
@@ -118,14 +118,10 @@ class VCmdq[T <: Data](n: Int, t: T, fin: (VDecodeBits) => T, fout: (T, Bool, UI
 
   when (io.in.valid && io.in.ready || io.out.valid && io.out.ready) {
     val fvalid = MuxOR(f.io.in.valid && f.io.in.ready,
-                 Cat(f.io.in.bits(3).valid, f.io.in.bits(2).valid,
-                     f.io.in.bits(1).valid, f.io.in.bits(0).valid))
+                 Cat((0 until p.instructionLanes).reverse.map(x => f.io.in.bits(x).valid)))
 
-    active :=
-      MuxOR(fvalid(0), factive(f.io.in.bits(0).bits.tin, f.io.in.bits(0).bits.m, step0)) |
-      MuxOR(fvalid(1), factive(f.io.in.bits(1).bits.tin, f.io.in.bits(1).bits.m, step0)) |
-      MuxOR(fvalid(2), factive(f.io.in.bits(2).bits.tin, f.io.in.bits(2).bits.m, step0)) |
-      MuxOR(fvalid(3), factive(f.io.in.bits(3).bits.tin, f.io.in.bits(3).bits.m, step0)) |
+    active := (0 until p.instructionLanes).map(x =>
+      MuxOR(fvalid(x), factive(f.io.in.bits(x).bits.tin, f.io.in.bits(x).bits.m, step0))).reduce(_|_) |
       ValueActive()
   }
 
@@ -180,5 +176,6 @@ object EmitVCmdq extends App {
     active
   }
 
-  ChiselStage.emitSystemVerilogFile(new VCmdq(8, new VCmdqTestBundle, VCmdqTestFin, VCmdqTestFout, VCmdqTestFactive), args)
+  val p = kelvin.Parameters()
+  ChiselStage.emitSystemVerilogFile(new VCmdq(p, 8, new VCmdqTestBundle, VCmdqTestFin, VCmdqTestFout, VCmdqTestFactive), args)
 }

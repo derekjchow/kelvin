@@ -28,11 +28,11 @@ object VCore {
 
 class VCoreIO(p: Parameters) extends Bundle {
   // Decode cycle.
-  val vinst = Vec(4, new VInstIO)
+  val vinst = Vec(p.instructionLanes, new VInstIO)
 
   // Execute cycle.
-  val rs = Vec(8, Flipped(new RegfileReadDataIO))
-  val rd = Vec(4, Flipped(new RegfileWriteDataIO))
+  val rs = Vec(p.instructionLanes * 2, Flipped(new RegfileReadDataIO))
+  val rd = Vec(p.instructionLanes, Flipped(new RegfileWriteDataIO))
 
   // Status.
   val mactive = Output(Bool())
@@ -97,7 +97,7 @@ class VCore(p: Parameters) extends Module {
 
   vinst.io.out.stall := vdec.io.stall  // decode backpressure
 
-  for (i <- 0 until 4) {
+  for (i <- 0 until p.instructionLanes) {
     vdec.io.in.bits(i) := vinst.io.out.lane(i)
   }
 
@@ -105,24 +105,24 @@ class VCore(p: Parameters) extends Module {
 
   // ---------------------------------------------------------------------------
   // VRegfile.
-  for (i <- 0 until 7) {
+  for (i <- 0 until vrf.readPorts) {
     vrf.io.read(i).valid := false.B
     vrf.io.read(i).addr := 0.U
     vrf.io.read(i).tag := 0.U
   }
 
-  for (i <- 0 until 6) {
+  for (i <- 0 until vrf.writePorts) {
     vrf.io.write(i).valid := false.B
     vrf.io.write(i).addr := 0.U
     vrf.io.write(i).data := 0.U
   }
 
-  for (i <- 0 until 4) {
+  for (i <- 0 until vrf.whintPorts) {
     vrf.io.whint(i).valid := false.B
     vrf.io.whint(i).addr := 0.U
   }
 
-  for (i <- 0 until 2) {
+  for (i <- 0 until vrf.scalarPorts) {
     vrf.io.scalar(i).valid := false.B
     vrf.io.scalar(i).data := 0.U
   }
@@ -133,43 +133,38 @@ class VCore(p: Parameters) extends Module {
 
   // ---------------------------------------------------------------------------
   // VALU.
-  val aluvalid = Cat(vdec.io.out(3).valid && vdec.io.cmdq(3).alu,
-                     vdec.io.out(2).valid && vdec.io.cmdq(2).alu,
-                     vdec.io.out(1).valid && vdec.io.cmdq(1).alu,
-                     vdec.io.out(0).valid && vdec.io.cmdq(0).alu)
+  val aluvalid = (0 until p.instructionLanes).map(x => vdec.io.out(x).valid && vdec.io.cmdq(x).alu)
+  val aluready = (0 until p.instructionLanes).map(x => valu.io.in.ready && vdec.io.cmdq(x).alu)
 
-  val aluready = Cat(valu.io.in.ready && vdec.io.cmdq(3).alu,
-                     valu.io.in.ready && vdec.io.cmdq(2).alu,
-                     valu.io.in.ready && vdec.io.cmdq(1).alu,
-                     valu.io.in.ready && vdec.io.cmdq(0).alu)
+  valu.io.in.valid := aluvalid.reduce(_ || _)
 
-  valu.io.in.valid := aluvalid =/= 0.U
-
-  for (i <- 0 until 4) {
+  for (i <- 0 until p.instructionLanes) {
     valu.io.in.bits(i).valid := aluvalid(i)
     valu.io.in.bits(i).bits := vdec.io.out(i).bits
   }
 
-  for (i <- 0 until 7) {
+  for (i <- 0 until vrf.readPorts) {
     vrf.io.read(i).valid := valu.io.read(i).valid
     vrf.io.read(i).addr := valu.io.read(i).addr
     vrf.io.read(i).tag  := valu.io.read(i).tag
   }
 
-  for (i <- 0 until 7) {
+  for (i <- 0 until vrf.readPorts) {
     valu.io.read(i).data := vrf.io.read(i).data
   }
 
-  for (i <- 0 until 4) {
+  for (i <- 0 until vrf.writePorts - 2) {
     vrf.io.write(i).valid := valu.io.write(i).valid
     vrf.io.write(i).addr := valu.io.write(i).addr
     vrf.io.write(i).data := valu.io.write(i).data
+  }
 
+  for (i <- 0 until vrf.whintPorts) {
     vrf.io.whint(i).valid := valu.io.whint(i).valid
     vrf.io.whint(i).addr := valu.io.whint(i).addr
   }
 
-  for (i <- 0 until 2) {
+  for (i <- 0 until vrf.scalarPorts) {
     vrf.io.scalar(i).valid := valu.io.scalar(i).valid
     vrf.io.scalar(i).data := valu.io.scalar(i).data
   }
@@ -178,19 +173,12 @@ class VCore(p: Parameters) extends Module {
 
   // ---------------------------------------------------------------------------
   // VCONV.
-  val convvalid = Cat(vdec.io.out(3).valid && vdec.io.cmdq(3).conv,
-                      vdec.io.out(2).valid && vdec.io.cmdq(2).conv,
-                      vdec.io.out(1).valid && vdec.io.cmdq(1).conv,
-                      vdec.io.out(0).valid && vdec.io.cmdq(0).conv)
+  val convvalid = (0 until p.instructionLanes).map(x => vdec.io.out(x).valid && vdec.io.cmdq(x).conv)
+  val convready = (0 until p.instructionLanes).map(x => vconv.io.in.ready && vdec.io.cmdq(x).conv)
 
-  val convready = Cat(vconv.io.in.ready && vdec.io.cmdq(3).conv,
-                      vconv.io.in.ready && vdec.io.cmdq(2).conv,
-                      vconv.io.in.ready && vdec.io.cmdq(1).conv,
-                      vconv.io.in.ready && vdec.io.cmdq(0).conv)
+  vconv.io.in.valid := convvalid.reduce(_ || _)
 
-  vconv.io.in.valid := convvalid =/= 0.U
-
-  for (i <- 0 until 4) {
+  for (i <- 0 until p.instructionLanes) {
     vconv.io.in.bits(i).valid := convvalid(i)
     vconv.io.in.bits(i).bits := vdec.io.out(i).bits
   }
@@ -201,25 +189,18 @@ class VCore(p: Parameters) extends Module {
 
   // ---------------------------------------------------------------------------
   // VLdSt.
-  val ldstvalid = Cat(vdec.io.out(3).valid && vdec.io.cmdq(3).ldst,
-                      vdec.io.out(2).valid && vdec.io.cmdq(2).ldst,
-                      vdec.io.out(1).valid && vdec.io.cmdq(1).ldst,
-                      vdec.io.out(0).valid && vdec.io.cmdq(0).ldst)
+  val ldstvalid = (0 until p.instructionLanes).map(x => vdec.io.out(x).valid && vdec.io.cmdq(x).ldst)
+  val ldstready = (0 until p.instructionLanes).map(x => vldst.io.in.ready && vdec.io.cmdq(x).ldst)
 
-  val ldstready = Cat(vldst.io.in.ready && vdec.io.cmdq(3).ldst,
-                      vldst.io.in.ready && vdec.io.cmdq(2).ldst,
-                      vldst.io.in.ready && vdec.io.cmdq(1).ldst,
-                      vldst.io.in.ready && vdec.io.cmdq(0).ldst)
+  vldst.io.in.valid := ldstvalid.reduce(_ || _)
 
-  vldst.io.in.valid := ldstvalid =/= 0.U
-
-  for (i <- 0 until 4) {
+  for (i <- 0 until p.instructionLanes) {
     vldst.io.in.bits(i).valid := ldstvalid(i)
     vldst.io.in.bits(i).bits := vdec.io.out(i).bits
   }
 
   vldst.io.read.ready := !vst.io.read.valid
-  vldst.io.read.data := vrf.io.read(6).data
+  vldst.io.read.data := vrf.io.read(vrf.readPorts - 1).data
 
   vldst.io.vrfsb := vrf.io.vrfsb.data
 
@@ -228,22 +209,12 @@ class VCore(p: Parameters) extends Module {
 
   // ---------------------------------------------------------------------------
   // VLd.
-  val ldvalid = Wire(UInt(4.W))
-  val ldready = Wire(UInt(4.W))
+  val ldvalid = (0 until p.instructionLanes).map(x => vdec.io.cmdq(x).ld && vdec.io.out(x).valid)
+  val ldready = (0 until p.instructionLanes).map(x => vdec.io.cmdq(x).ld && vld.io.in.ready)
 
-  ldvalid := Cat(vdec.io.cmdq(3).ld && vdec.io.out(3).valid,
-                 vdec.io.cmdq(2).ld && vdec.io.out(2).valid,
-                 vdec.io.cmdq(1).ld && vdec.io.out(1).valid,
-                 vdec.io.cmdq(0).ld && vdec.io.out(0).valid)
+  vld.io.in.valid := ldvalid.reduce(_ || _)
 
-  ldready := Cat(vdec.io.cmdq(3).ld && vld.io.in.ready,
-                 vdec.io.cmdq(2).ld && vld.io.in.ready,
-                 vdec.io.cmdq(1).ld && vld.io.in.ready,
-                 vdec.io.cmdq(0).ld && vld.io.in.ready)
-
-  vld.io.in.valid := ldvalid =/= 0.U
-
-  for (i <- 0 until 4) {
+  for (i <- 0 until p.instructionLanes) {
     vld.io.in.bits(i).valid := ldvalid(i)
     vld.io.in.bits(i).bits := vdec.io.out(i).bits
   }
@@ -252,22 +223,12 @@ class VCore(p: Parameters) extends Module {
 
   // ---------------------------------------------------------------------------
   // VSt.
-  val stvalid = Wire(UInt(4.W))
-  val stready = Wire(UInt(4.W))
+  val stvalid = (0 until p.instructionLanes).map(x => vdec.io.out(x).valid && vdec.io.cmdq(x).st)
+  val stready = (0 until p.instructionLanes).map(x => vst.io.in.ready && vdec.io.cmdq(x).st)
 
-  stvalid := Cat(vdec.io.out(3).valid && vdec.io.cmdq(3).st,
-                 vdec.io.out(2).valid && vdec.io.cmdq(2).st,
-                 vdec.io.out(1).valid && vdec.io.cmdq(1).st,
-                 vdec.io.out(0).valid && vdec.io.cmdq(0).st)
+  vst.io.in.valid := stvalid.reduce(_ || _)
 
-  stready := Cat(vst.io.in.ready && vdec.io.cmdq(3).st,
-                 vst.io.in.ready && vdec.io.cmdq(2).st,
-                 vst.io.in.ready && vdec.io.cmdq(1).st,
-                 vst.io.in.ready && vdec.io.cmdq(0).st)
-
-  vst.io.in.valid := stvalid =/= 0.U
-
-  for (i <- 0 until 4) {
+  for (i <- 0 until p.instructionLanes) {
     vst.io.in.bits(i).valid := stvalid(i)
     vst.io.in.bits(i).bits := vdec.io.out(i).bits
   }
@@ -277,29 +238,29 @@ class VCore(p: Parameters) extends Module {
   vst.io.vrfsb := vrf.io.vrfsb.data
 
   vst.io.read.ready := true.B
-  vst.io.read.data := vrf.io.read(6).data
+  vst.io.read.data := vrf.io.read(vrf.readPorts - 1).data
 
   // ---------------------------------------------------------------------------
   // Load write.
-  vrf.io.write(4).valid := vldst.io.write.valid
-  vrf.io.write(4).addr := vldst.io.write.addr
-  vrf.io.write(4).data := vldst.io.write.data
+  vrf.io.write(vrf.readPorts - 3).valid := vldst.io.write.valid
+  vrf.io.write(vrf.readPorts - 3).addr := vldst.io.write.addr
+  vrf.io.write(vrf.readPorts - 3).data := vldst.io.write.data
 
-  vrf.io.write(5).valid := vld.io.write.valid
-  vrf.io.write(5).addr := vld.io.write.addr
-  vrf.io.write(5).data := vld.io.write.data
+  vrf.io.write(vrf.readPorts - 2).valid := vld.io.write.valid
+  vrf.io.write(vrf.readPorts - 2).addr := vld.io.write.addr
+  vrf.io.write(vrf.readPorts - 2).data := vld.io.write.data
 
   // ---------------------------------------------------------------------------
   // Store read.
-  vrf.io.read(6).valid := vst.io.read.valid || vldst.io.read.valid
-  vrf.io.read(6).addr := Mux(vst.io.read.valid, vst.io.read.addr,
+  vrf.io.read(vrf.readPorts - 1).valid := vst.io.read.valid || vldst.io.read.valid
+  vrf.io.read(vrf.readPorts - 1).addr := Mux(vst.io.read.valid, vst.io.read.addr,
                              vldst.io.read.addr)
-  vrf.io.read(6).tag := Mux(vst.io.read.valid, vst.io.read.tag,
+  vrf.io.read(vrf.readPorts - 1).tag := Mux(vst.io.read.valid, vst.io.read.tag,
                             vldst.io.read.tag)
 
   // ---------------------------------------------------------------------------
   // VDecode.
-  for (i <- 0 until 4) {
+  for (i <- 0 until p.instructionLanes) {
     vdec.io.out(i).ready := aluready(i) || convready(i) || ldstready(i) ||
                             ldready(i) || stready(i)
   }
