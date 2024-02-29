@@ -42,6 +42,7 @@ static void Kelvin_run(const char* name, const char* bin, const bool trace) {
   sc_signal<bool> clk_freeze;
   sc_signal<bool> ml_reset;
   sc_signal<bool> volt_sel;
+  sc_signal<bool> debug_req;
   sc_signal<bool> slog_valid;
   sc_signal<sc_bv<5> > slog_addr;
   sc_signal<sc_bv<32> > slog_data;
@@ -61,6 +62,7 @@ static void Kelvin_run(const char* name, const char* bin, const bool trace) {
   clk_freeze = 0;
   pc_start = 0x00000000;
   volt_sel = 0;
+  debug_req = 0;
 
   tb.io_halted(finish);
   tb.io_fault(fault);
@@ -74,6 +76,7 @@ static void Kelvin_run(const char* name, const char* bin, const bool trace) {
   core.finish(finish);
   core.fault(fault);
   core.host_req(host_req);
+  core.host_req(debug_req);
   core.slog_valid(slog_valid);
   core.slog_addr(slog_addr);
   core.slog_data(slog_data);

@@ -22,6 +22,7 @@ chisel_library(
         "Axi2Sram.scala",
         "Crossbar.scala",
         "Kelvin.scala",
+        "MatchaParameters.scala",
     ],
     deps = [
         "//hdl/chisel/src/common:common",

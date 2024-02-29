@@ -70,6 +70,7 @@ class ChAI(p: Parameters) extends RawModule {
   u_kelvin.ml_reset := 0.U
   u_kelvin.pc_start := 0.U
   u_kelvin.volt_sel := 0.U
+  u_kelvin.debug_req := 0.U
 
   io.finish := u_kelvin.finish
   io.fault := u_kelvin.fault
