@@ -34,6 +34,7 @@ cc_library(
         "kelvin/debug_if.h",
         "kelvin/kelvin_cfg.h",
         "kelvin/memory_if.h",
+        "@kelvin_hw//hdl/chisel/src/kelvin:kelvin_parameters.h",
     ],
     defines = ["KELVIN_SIMD=256"],
 )

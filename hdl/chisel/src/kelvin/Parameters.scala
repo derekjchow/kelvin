@@ -52,7 +52,7 @@ case class Parameters(m: Seq[MemoryRegion] = Seq(), hartId: UInt = 0.U(32.W)) {
   // Machine.
   val programCounterBits = 32
   val instructionBits = 32
-  val instructionLanes = 4
+  val instructionLanes = 8
 
   val vectorCountBits = log2Ceil(vectorBits / 8) + 1 + 2  // +2 stripmine
 
@@ -97,4 +97,34 @@ case class Parameters(m: Seq[MemoryRegion] = Seq(), hartId: UInt = 0.U(32.W)) {
   val axi2IdBits = 6
   val axi2AddrBits = 32
   val axi2DataBits = vectorBits
+}
+
+import scala.reflect.runtime.{universe => ru}
+object EmitParametersHeader extends App {
+  val p = new Parameters
+  val mirror = ru.runtimeMirror(ru.getClass.getClassLoader)
+  val instanceMirror = mirror.reflect(p)
+  val symbol = instanceMirror.symbol
+  val typeSym = symbol.toType
+  val fields = typeSym.decls.collect {
+    case t: (ru.TermSymbol @unchecked) if t.isVal || t.isVar => t
+  }
+
+  println("#ifndef KELVIN_PARAMETERS_H_")
+  println("#define KELVIN_PARAMETERS_H_")
+  fields.foreach { x =>
+    val fieldMirror = instanceMirror.reflectField(x.asTerm)
+    val fieldType = x.asTerm.typeSignature
+    val value = fieldMirror.get
+    val ctype = fieldType match {
+      case t if t =:= ru.typeOf[Int] => Some("int")
+      case _ => None
+    }
+    if (ctype != None) {
+      val ctypeStr = ctype.get
+      println(s"#define KP_${x.name} ${value}")
+      // println(s"${ctypeStr} KP_${x.name} = ${value};")
+    }
+  }
+  println("#endif")
 }

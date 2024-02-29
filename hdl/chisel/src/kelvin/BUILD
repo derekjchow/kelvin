@@ -12,8 +12,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-load("@kelvin_hw//rules:chisel.bzl", "chisel_cc_library", "chisel_library",
-     "chisel_test")
+load("@kelvin_hw//rules:chisel.bzl",
+    "chisel_binary",
+    "chisel_cc_library",
+    "chisel_library",
+    "chisel_test")
 
 package(default_visibility = ["//visibility:public"])
 
@@ -219,4 +222,22 @@ chisel_cc_library(
     chisel_lib = ":kelvin",
     emit_class = "kelvin.EmitVSt",
     module_name = "VSt",
+)
+
+chisel_binary(
+    name = "emit_parameters_header",
+    deps = [
+        ":kelvin",
+    ],
+    main_class = "kelvin.EmitParametersHeader",
+)
+
+genrule(
+    name = "parameters_header",
+    outs = [
+        "kelvin_parameters.h",
+    ],
+    tools = [":emit_parameters_header"],
+    cmd = "$(location :emit_parameters_header) > $(location kelvin_parameters.h)",
+    visibility = ["//visibility:public"],
 )
