@@ -52,7 +52,7 @@ case class Parameters(m: Seq[MemoryRegion] = Seq(), hartId: UInt = 0.U(32.W)) {
   // Machine.
   val programCounterBits = 32
   val instructionBits = 32
-  val instructionLanes = 8
+  val instructionLanes = 4
 
   val vectorCountBits = log2Ceil(vectorBits / 8) + 1 + 2  // +2 stripmine
 
