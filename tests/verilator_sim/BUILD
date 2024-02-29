@@ -13,6 +13,13 @@
 # limitations under the License.
 
 cc_library(
+    name = "util",
+    hdrs = [
+        "util.h",
+    ],
+)
+
+cc_library(
     name = "sim_libs",
     hdrs = [
         "fifo.h",
@@ -47,6 +54,7 @@ cc_binary(
     deps = [
         ":kelvin_if",
         ":sim_libs",
+        ":util",
         "//hdl/chisel/src/kelvin:core_cc_library",
         "@com_google_absl//absl/flags:flag",
         "@com_google_absl//absl/flags:parse",
@@ -158,6 +166,7 @@ cc_test(
     deps = [
         ":kelvin_if",
         ":sim_libs",
+        ":util",
         ":valu",
         "//hdl/chisel/src/kelvin:valu_cc_library",
     ],
@@ -210,6 +219,7 @@ cc_test(
     deps = [
         ":kelvin_if",
         ":sim_libs",
+        ":util",
         ":vencodeop",
         "//hdl/chisel/src/kelvin:vcmdq_cc_library",
     ],
@@ -236,6 +246,7 @@ cc_test(
     deps = [
         ":kelvin_if",
         ":sim_libs",
+        ":util",
         ":vencodeop",
         "//hdl/chisel/src/kelvin:vconvctrl_cc_library",
     ],
@@ -263,6 +274,7 @@ cc_test(
     deps = [
         ":kelvin_if",
         ":sim_libs",
+        ":util",
         ":vdecode",
         "//hdl/chisel/src/kelvin:vdecode_cc_library",
     ],
@@ -276,6 +288,7 @@ cc_test(
     deps = [
         ":kelvin_if",
         ":sim_libs",
+        ":util",
         ":vencodeop",
         "//hdl/chisel/src/kelvin:vldst_cc_library",
     ],
@@ -290,6 +303,7 @@ cc_test(
     deps = [
         ":kelvin_if",
         ":sim_libs",
+        ":util",
         ":vencodeop",
         "//hdl/chisel/src/kelvin:vld_cc_library",
     ],
@@ -328,6 +342,7 @@ cc_test(
     deps = [
         ":kelvin_if",
         ":sim_libs",
+        ":util",
         ":vencodeop",
         "//hdl/chisel/src/kelvin:vst_cc_library",
     ],

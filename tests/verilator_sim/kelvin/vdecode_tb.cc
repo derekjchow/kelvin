@@ -13,221 +13,84 @@
 // limitations under the License.
 
 #include "VVDecode.h"
-#include "tests/verilator_sim/sysc_tb.h"
+#include "hdl/chisel/src/kelvin/kelvin_parameters.h"
 #include "tests/verilator_sim/kelvin/vdecode.h"
+#include "tests/verilator_sim/sysc_tb.h"
+#include "tests/verilator_sim/util.h"
 
 struct VDecode_tb : Sysc_tb {
   sc_in<bool> io_in_ready;
   sc_out<bool> io_in_valid;
-  sc_out<bool> io_in_bits_0_valid;
-  sc_out<bool> io_in_bits_1_valid;
-  sc_out<bool> io_in_bits_2_valid;
-  sc_out<bool> io_in_bits_3_valid;
-  sc_out<sc_bv<32> > io_in_bits_0_bits_inst;
-  sc_out<sc_bv<32> > io_in_bits_0_bits_addr;
-  sc_out<sc_bv<32> > io_in_bits_0_bits_data;
-  sc_out<sc_bv<32> > io_in_bits_1_bits_inst;
-  sc_out<sc_bv<32> > io_in_bits_1_bits_addr;
-  sc_out<sc_bv<32> > io_in_bits_1_bits_data;
-  sc_out<sc_bv<32> > io_in_bits_2_bits_inst;
-  sc_out<sc_bv<32> > io_in_bits_2_bits_addr;
-  sc_out<sc_bv<32> > io_in_bits_2_bits_data;
-  sc_out<sc_bv<32> > io_in_bits_3_bits_inst;
-  sc_out<sc_bv<32> > io_in_bits_3_bits_addr;
-  sc_out<sc_bv<32> > io_in_bits_3_bits_data;
   sc_in<bool> io_stall;
   sc_in<bool> io_undef;
   sc_in<bool> io_nempty;
-  sc_out<bool> io_out_0_ready;
-  sc_in<bool> io_out_0_valid;
-  sc_in<bool> io_out_0_bits_m;
-  sc_in<bool> io_out_0_bits_vd_valid;
-  sc_in<bool> io_out_0_bits_ve_valid;
-  sc_in<bool> io_out_0_bits_vf_valid;
-  sc_in<bool> io_out_0_bits_vg_valid;
-  sc_in<bool> io_out_0_bits_vs_valid;
-  sc_in<bool> io_out_0_bits_vt_valid;
-  sc_in<bool> io_out_0_bits_vu_valid;
-  sc_in<bool> io_out_0_bits_vx_valid;
-  sc_in<bool> io_out_0_bits_vy_valid;
-  sc_in<bool> io_out_0_bits_vz_valid;
-  sc_in<bool> io_out_0_bits_sv_valid;
-  sc_in<bool> io_cmdq_0_alu;
-  sc_in<bool> io_cmdq_0_conv;
-  sc_in<bool> io_cmdq_0_ldst;
-  sc_in<bool> io_cmdq_0_ld;
-  sc_in<bool> io_cmdq_0_st;
-  sc_in<bool> io_out_0_bits_cmdsync;
-  sc_out<bool> io_out_1_ready;
-  sc_in<bool> io_out_1_valid;
-  sc_in<bool> io_out_1_bits_m;
-  sc_in<bool> io_out_1_bits_vd_valid;
-  sc_in<bool> io_out_1_bits_ve_valid;
-  sc_in<bool> io_out_1_bits_vf_valid;
-  sc_in<bool> io_out_1_bits_vg_valid;
-  sc_in<bool> io_out_1_bits_vs_valid;
-  sc_in<bool> io_out_1_bits_vt_valid;
-  sc_in<bool> io_out_1_bits_vu_valid;
-  sc_in<bool> io_out_1_bits_vx_valid;
-  sc_in<bool> io_out_1_bits_vy_valid;
-  sc_in<bool> io_out_1_bits_vz_valid;
-  sc_in<bool> io_out_1_bits_sv_valid;
-  sc_in<bool> io_cmdq_1_alu;
-  sc_in<bool> io_cmdq_1_conv;
-  sc_in<bool> io_cmdq_1_ldst;
-  sc_in<bool> io_cmdq_1_ld;
-  sc_in<bool> io_cmdq_1_st;
-  sc_in<bool> io_out_1_bits_cmdsync;
-  sc_out<bool> io_out_2_ready;
-  sc_in<bool> io_out_2_valid;
-  sc_in<bool> io_out_2_bits_m;
-  sc_in<bool> io_out_2_bits_vd_valid;
-  sc_in<bool> io_out_2_bits_ve_valid;
-  sc_in<bool> io_out_2_bits_vf_valid;
-  sc_in<bool> io_out_2_bits_vg_valid;
-  sc_in<bool> io_out_2_bits_vs_valid;
-  sc_in<bool> io_out_2_bits_vt_valid;
-  sc_in<bool> io_out_2_bits_vu_valid;
-  sc_in<bool> io_out_2_bits_vx_valid;
-  sc_in<bool> io_out_2_bits_vy_valid;
-  sc_in<bool> io_out_2_bits_vz_valid;
-  sc_in<bool> io_out_2_bits_sv_valid;
-  sc_in<bool> io_cmdq_2_alu;
-  sc_in<bool> io_cmdq_2_conv;
-  sc_in<bool> io_cmdq_2_ldst;
-  sc_in<bool> io_cmdq_2_ld;
-  sc_in<bool> io_cmdq_2_st;
-  sc_in<bool> io_out_2_bits_cmdsync;
-  sc_out<bool> io_out_3_ready;
-  sc_in<bool> io_out_3_valid;
-  sc_in<bool> io_out_3_bits_m;
-  sc_in<bool> io_out_3_bits_vd_valid;
-  sc_in<bool> io_out_3_bits_ve_valid;
-  sc_in<bool> io_out_3_bits_vf_valid;
-  sc_in<bool> io_out_3_bits_vg_valid;
-  sc_in<bool> io_out_3_bits_vs_valid;
-  sc_in<bool> io_out_3_bits_vt_valid;
-  sc_in<bool> io_out_3_bits_vu_valid;
-  sc_in<bool> io_out_3_bits_vx_valid;
-  sc_in<bool> io_out_3_bits_vy_valid;
-  sc_in<bool> io_out_3_bits_vz_valid;
-  sc_in<bool> io_out_3_bits_sv_valid;
-  sc_in<bool> io_cmdq_3_alu;
-  sc_in<bool> io_cmdq_3_conv;
-  sc_in<bool> io_cmdq_3_ldst;
-  sc_in<bool> io_cmdq_3_ld;
-  sc_in<bool> io_cmdq_3_st;
-  sc_in<bool> io_out_3_bits_cmdsync;
-  sc_in<sc_bv<7> > io_out_0_bits_op;
-  sc_in<sc_bv<3> > io_out_0_bits_f2;
-  sc_in<sc_bv<3> > io_out_0_bits_sz;
-  sc_in<sc_bv<6> > io_out_0_bits_vd_addr;
-  sc_in<sc_bv<6> > io_out_0_bits_ve_addr;
-  sc_in<sc_bv<6> > io_out_0_bits_vf_addr;
-  sc_in<sc_bv<6> > io_out_0_bits_vg_addr;
-  sc_in<sc_bv<6> > io_out_0_bits_vs_addr;
-  sc_in<sc_bv<6> > io_out_0_bits_vt_addr;
-  sc_in<sc_bv<6> > io_out_0_bits_vu_addr;
-  sc_in<sc_bv<6> > io_out_0_bits_vx_addr;
-  sc_in<sc_bv<6> > io_out_0_bits_vy_addr;
-  sc_in<sc_bv<6> > io_out_0_bits_vz_addr;
-  sc_in<sc_bv<4> > io_out_0_bits_vs_tag;
-  sc_in<sc_bv<4> > io_out_0_bits_vt_tag;
-  sc_in<sc_bv<4> > io_out_0_bits_vu_tag;
-  sc_in<sc_bv<4> > io_out_0_bits_vx_tag;
-  sc_in<sc_bv<4> > io_out_0_bits_vy_tag;
-  sc_in<sc_bv<4> > io_out_0_bits_vz_tag;
-  sc_in<sc_bv<32> > io_out_0_bits_sv_addr;
-  sc_in<sc_bv<32> > io_out_0_bits_sv_data;
-  sc_in<sc_bv<64> > io_actv_0_ractive;
-  sc_in<sc_bv<64> > io_actv_0_wactive;
-  sc_in<sc_bv<7> > io_out_1_bits_op;
-  sc_in<sc_bv<3> > io_out_1_bits_f2;
-  sc_in<sc_bv<3> > io_out_1_bits_sz;
-  sc_in<sc_bv<6> > io_out_1_bits_vd_addr;
-  sc_in<sc_bv<6> > io_out_1_bits_ve_addr;
-  sc_in<sc_bv<6> > io_out_1_bits_vf_addr;
-  sc_in<sc_bv<6> > io_out_1_bits_vg_addr;
-  sc_in<sc_bv<6> > io_out_1_bits_vs_addr;
-  sc_in<sc_bv<6> > io_out_1_bits_vt_addr;
-  sc_in<sc_bv<6> > io_out_1_bits_vu_addr;
-  sc_in<sc_bv<6> > io_out_1_bits_vx_addr;
-  sc_in<sc_bv<6> > io_out_1_bits_vy_addr;
-  sc_in<sc_bv<6> > io_out_1_bits_vz_addr;
-  sc_in<sc_bv<4> > io_out_1_bits_vs_tag;
-  sc_in<sc_bv<4> > io_out_1_bits_vt_tag;
-  sc_in<sc_bv<4> > io_out_1_bits_vu_tag;
-  sc_in<sc_bv<4> > io_out_1_bits_vx_tag;
-  sc_in<sc_bv<4> > io_out_1_bits_vy_tag;
-  sc_in<sc_bv<4> > io_out_1_bits_vz_tag;
-  sc_in<sc_bv<32> > io_out_1_bits_sv_addr;
-  sc_in<sc_bv<32> > io_out_1_bits_sv_data;
-  sc_in<sc_bv<64> > io_actv_1_ractive;
-  sc_in<sc_bv<64> > io_actv_1_wactive;
-  sc_in<sc_bv<7> > io_out_2_bits_op;
-  sc_in<sc_bv<3> > io_out_2_bits_f2;
-  sc_in<sc_bv<3> > io_out_2_bits_sz;
-  sc_in<sc_bv<6> > io_out_2_bits_vd_addr;
-  sc_in<sc_bv<6> > io_out_2_bits_ve_addr;
-  sc_in<sc_bv<6> > io_out_2_bits_vf_addr;
-  sc_in<sc_bv<6> > io_out_2_bits_vg_addr;
-  sc_in<sc_bv<6> > io_out_2_bits_vs_addr;
-  sc_in<sc_bv<6> > io_out_2_bits_vt_addr;
-  sc_in<sc_bv<6> > io_out_2_bits_vu_addr;
-  sc_in<sc_bv<6> > io_out_2_bits_vx_addr;
-  sc_in<sc_bv<6> > io_out_2_bits_vy_addr;
-  sc_in<sc_bv<6> > io_out_2_bits_vz_addr;
-  sc_in<sc_bv<4> > io_out_2_bits_vs_tag;
-  sc_in<sc_bv<4> > io_out_2_bits_vt_tag;
-  sc_in<sc_bv<4> > io_out_2_bits_vu_tag;
-  sc_in<sc_bv<4> > io_out_2_bits_vx_tag;
-  sc_in<sc_bv<4> > io_out_2_bits_vy_tag;
-  sc_in<sc_bv<4> > io_out_2_bits_vz_tag;
-  sc_in<sc_bv<32> > io_out_2_bits_sv_addr;
-  sc_in<sc_bv<32> > io_out_2_bits_sv_data;
-  sc_in<sc_bv<64> > io_actv_2_ractive;
-  sc_in<sc_bv<64> > io_actv_2_wactive;
-  sc_in<sc_bv<7> > io_out_3_bits_op;
-  sc_in<sc_bv<3> > io_out_3_bits_f2;
-  sc_in<sc_bv<3> > io_out_3_bits_sz;
-  sc_in<sc_bv<6> > io_out_3_bits_vd_addr;
-  sc_in<sc_bv<6> > io_out_3_bits_ve_addr;
-  sc_in<sc_bv<6> > io_out_3_bits_vf_addr;
-  sc_in<sc_bv<6> > io_out_3_bits_vg_addr;
-  sc_in<sc_bv<6> > io_out_3_bits_vs_addr;
-  sc_in<sc_bv<6> > io_out_3_bits_vt_addr;
-  sc_in<sc_bv<6> > io_out_3_bits_vu_addr;
-  sc_in<sc_bv<6> > io_out_3_bits_vx_addr;
-  sc_in<sc_bv<6> > io_out_3_bits_vy_addr;
-  sc_in<sc_bv<6> > io_out_3_bits_vz_addr;
-  sc_in<sc_bv<4> > io_out_3_bits_vs_tag;
-  sc_in<sc_bv<4> > io_out_3_bits_vt_tag;
-  sc_in<sc_bv<4> > io_out_3_bits_vu_tag;
-  sc_in<sc_bv<4> > io_out_3_bits_vx_tag;
-  sc_in<sc_bv<4> > io_out_3_bits_vy_tag;
-  sc_in<sc_bv<4> > io_out_3_bits_vz_tag;
-  sc_in<sc_bv<32> > io_out_3_bits_sv_addr;
-  sc_in<sc_bv<32> > io_out_3_bits_sv_data;
-  sc_in<sc_bv<64> > io_actv_3_ractive;
-  sc_in<sc_bv<64> > io_actv_3_wactive;
   sc_in<bool> io_vrfsb_set_valid;
   sc_in<sc_bv<128> > io_vrfsb_set_bits;
   sc_out<sc_bv<128> > io_vrfsb_data;
   sc_out<sc_bv<64> > io_active;
+#define IO_BITS(x)                               \
+  sc_out<bool> io_in_bits_##x##_valid;           \
+  sc_out<sc_bv<32> > io_in_bits_##x##_bits_inst; \
+  sc_out<sc_bv<32> > io_in_bits_##x##_bits_addr; \
+  sc_out<sc_bv<32> > io_in_bits_##x##_bits_data; \
+  sc_out<bool> io_out_##x##_ready;               \
+  sc_in<bool> io_out_##x##_valid;                \
+  sc_in<bool> io_out_##x##_bits_m;               \
+  sc_in<bool> io_out_##x##_bits_vd_valid;        \
+  sc_in<bool> io_out_##x##_bits_ve_valid;        \
+  sc_in<bool> io_out_##x##_bits_vf_valid;        \
+  sc_in<bool> io_out_##x##_bits_vg_valid;        \
+  sc_in<bool> io_out_##x##_bits_vs_valid;        \
+  sc_in<bool> io_out_##x##_bits_vt_valid;        \
+  sc_in<bool> io_out_##x##_bits_vu_valid;        \
+  sc_in<bool> io_out_##x##_bits_vx_valid;        \
+  sc_in<bool> io_out_##x##_bits_vy_valid;        \
+  sc_in<bool> io_out_##x##_bits_vz_valid;        \
+  sc_in<bool> io_out_##x##_bits_sv_valid;        \
+  sc_in<bool> io_cmdq_##x##_alu;                 \
+  sc_in<bool> io_cmdq_##x##_conv;                \
+  sc_in<bool> io_cmdq_##x##_ldst;                \
+  sc_in<bool> io_cmdq_##x##_ld;                  \
+  sc_in<bool> io_cmdq_##x##_st;                  \
+  sc_in<bool> io_out_##x##_bits_cmdsync;         \
+  sc_in<sc_bv<7> > io_out_##x##_bits_op;         \
+  sc_in<sc_bv<3> > io_out_##x##_bits_f2;         \
+  sc_in<sc_bv<3> > io_out_##x##_bits_sz;         \
+  sc_in<sc_bv<6> > io_out_##x##_bits_vd_addr;    \
+  sc_in<sc_bv<6> > io_out_##x##_bits_ve_addr;    \
+  sc_in<sc_bv<6> > io_out_##x##_bits_vf_addr;    \
+  sc_in<sc_bv<6> > io_out_##x##_bits_vg_addr;    \
+  sc_in<sc_bv<6> > io_out_##x##_bits_vs_addr;    \
+  sc_in<sc_bv<6> > io_out_##x##_bits_vt_addr;    \
+  sc_in<sc_bv<6> > io_out_##x##_bits_vu_addr;    \
+  sc_in<sc_bv<6> > io_out_##x##_bits_vx_addr;    \
+  sc_in<sc_bv<6> > io_out_##x##_bits_vy_addr;    \
+  sc_in<sc_bv<6> > io_out_##x##_bits_vz_addr;    \
+  sc_in<sc_bv<4> > io_out_##x##_bits_vs_tag;     \
+  sc_in<sc_bv<4> > io_out_##x##_bits_vt_tag;     \
+  sc_in<sc_bv<4> > io_out_##x##_bits_vu_tag;     \
+  sc_in<sc_bv<4> > io_out_##x##_bits_vx_tag;     \
+  sc_in<sc_bv<4> > io_out_##x##_bits_vy_tag;     \
+  sc_in<sc_bv<4> > io_out_##x##_bits_vz_tag;     \
+  sc_in<sc_bv<32> > io_out_##x##_bits_sv_addr;   \
+  sc_in<sc_bv<32> > io_out_##x##_bits_sv_data;   \
+  sc_in<sc_bv<64> > io_actv_##x##_ractive;       \
+  sc_in<sc_bv<64> > io_actv_##x##_wactive;
+  REPEAT(IO_BITS, KP_instructionLanes);
+#undef IO_BITS
 
   using Sysc_tb::Sysc_tb;
 
   void posedge() {
     // Inputs.
     io_in_valid = rand_bool();
-    io_in_bits_0_valid = rand_bool();
-    io_in_bits_1_valid = rand_bool();
-    io_in_bits_2_valid = rand_bool();
-    io_in_bits_3_valid = rand_bool();
-    io_out_0_ready = rand_bool();
-    io_out_1_ready = rand_bool();
-    io_out_2_ready = rand_bool();
-    io_out_3_ready = rand_bool();
+
+#define RAND_IO(x)                      \
+  io_in_bits_##x##_valid = rand_bool(); \
+  io_out_##x##_ready = rand_bool();
+
+    REPEAT(RAND_IO, KP_instructionLanes);
+#undef RAND_IO
 
     int n = rand_int(0, 8);
     sc_bv<64> active = 0;
@@ -243,12 +106,12 @@ struct VDecode_tb : Sysc_tb {
     }
     io_vrfsb_data = vrfsb_data;
 
-    uint32_t inst[4];
-    uint32_t addr[4];
-    uint32_t data[4];
-    uint32_t index[4];
+    uint32_t inst[KP_instructionLanes];
+    uint32_t addr[KP_instructionLanes];
+    uint32_t data[KP_instructionLanes];
+    uint32_t index[KP_instructionLanes];
 
-    for (int i = 0; i < 4; ++i) {
+    for (int i = 0; i < KP_instructionLanes; ++i) {
       inst[i] = rand_uint32();
       addr[i] = rand_uint32();
       data[i] = rand_uint32();
@@ -268,18 +131,13 @@ struct VDecode_tb : Sysc_tb {
       }
     }
 
-    io_in_bits_0_bits_inst = inst[0];
-    io_in_bits_1_bits_inst = inst[1];
-    io_in_bits_2_bits_inst = inst[2];
-    io_in_bits_3_bits_inst = inst[3];
-    io_in_bits_0_bits_addr = addr[0];
-    io_in_bits_1_bits_addr = addr[1];
-    io_in_bits_2_bits_addr = addr[2];
-    io_in_bits_3_bits_addr = addr[3];
-    io_in_bits_0_bits_data = data[0];
-    io_in_bits_1_bits_data = data[1];
-    io_in_bits_2_bits_data = data[2];
-    io_in_bits_3_bits_data = data[3];
+#define INST_BITS(x)                    \
+  io_in_bits_##x##_bits_inst = inst[x]; \
+  io_in_bits_##x##_bits_addr = addr[x]; \
+  io_in_bits_##x##_bits_data = data[x];
+
+    REPEAT(INST_BITS, KP_instructionLanes);
+#undef INST_BITS
 
     check(count_ >= 0, "count");
 
@@ -288,37 +146,21 @@ struct VDecode_tb : Sysc_tb {
     check(!(io_stall && count_ <= ((depth - 8) + 4)), "io.stall");
 
     if (io_in_valid && io_in_ready) {
-      for (int i = 0; i < 4; ++i) {
+      for (int i = 0; i < KP_instructionLanes; ++i) {
         bool valid = false;
         vdecode_in_t in;
-        if (i == 0 && io_in_bits_0_valid) {
-          valid = true;
-          count_++;
-          in = {io_in_bits_0_bits_inst.read().get_word(0),
-                io_in_bits_0_bits_addr.read().get_word(0),
-                io_in_bits_0_bits_data.read().get_word(0)};
-        }
-        if (i == 1 && io_in_bits_1_valid) {
-          valid = true;
-          count_++;
-          in = {io_in_bits_1_bits_inst.read().get_word(0),
-                io_in_bits_1_bits_addr.read().get_word(0),
-                io_in_bits_1_bits_data.read().get_word(0)};
-        }
-        if (i == 2 && io_in_bits_2_valid) {
-          valid = true;
-          count_++;
-          in = {io_in_bits_2_bits_inst.read().get_word(0),
-                io_in_bits_2_bits_addr.read().get_word(0),
-                io_in_bits_2_bits_data.read().get_word(0)};
-        }
-        if (i == 3 && io_in_bits_3_valid) {
-          valid = true;
-          count_++;
-          in = {io_in_bits_3_bits_inst.read().get_word(0),
-                io_in_bits_3_bits_addr.read().get_word(0),
-                io_in_bits_3_bits_data.read().get_word(0)};
-        }
+
+#define GET_WORDS(x)                                      \
+  if (i == x && io_in_bits_##x##_valid) {                 \
+    valid = true;                                         \
+    count_++;                                             \
+    in = {io_in_bits_##x##_bits_inst.read().get_word(0),  \
+          io_in_bits_##x##_bits_addr.read().get_word(0),  \
+          io_in_bits_##x##_bits_data.read().get_word(0)}; \
+  }
+
+        REPEAT(GET_WORDS, KP_instructionLanes);
+#undef GET_WORDS
 
         if (valid) {
           vdecode_out_t out;
@@ -335,29 +177,25 @@ struct VDecode_tb : Sysc_tb {
     }
 
     // Outputs.
-    vdecode_out_t ref[4], dut[4];
-    bool dut_active[4];
-    bool ref_read[4];
+    vdecode_out_t ref[KP_instructionLanes], dut[KP_instructionLanes];
+    bool dut_active[KP_instructionLanes];
+    bool ref_read[KP_instructionLanes];
 
-    for (int i = 0; i < 4; ++i) {
+    for (int i = 0; i < KP_instructionLanes; ++i) {
       ref_read[i] = inst_.next(ref[i], i);
     }
 
-    dut_active[0] = io_out_0_valid && io_out_0_ready;
-    dut_active[1] = io_out_1_valid && io_out_1_ready;
-    dut_active[2] = io_out_2_valid && io_out_2_ready;
-    dut_active[3] = io_out_3_valid && io_out_3_ready;
+#define DUT_ACTIVE(x)                                       \
+  dut_active[x] = io_out_##x##_valid && io_out_##x##_ready; \
+  check(!(dut_active[x] && !ref_read[x]), "instruction fifo[" STRINGIFY(x) "]");
 
-    check(!(dut_active[0] && !ref_read[0]), "instruction fifo[0]");
-    check(!(dut_active[1] && !ref_read[1]), "instruction fifo[1]");
-    check(!(dut_active[2] && !ref_read[2]), "instruction fifo[2]");
-    check(!(dut_active[3] && !ref_read[3]), "instruction fifo[3]");
+    REPEAT(DUT_ACTIVE, KP_instructionLanes);
+#undef DUT_ACTIVE
 
     // Entries are not ordered, remove in reverse order so that index correct.
-    if (dut_active[3]) inst_.remove(3);
-    if (dut_active[2]) inst_.remove(2);
-    if (dut_active[1]) inst_.remove(1);
-    if (dut_active[0]) inst_.remove(0);
+    for (int i = KP_instructionLanes - 1; i >= 0; --i) {
+      if (dut_active[i]) inst_.remove(i);
+    }
 
 #define DUT_OUT(i)                                                            \
   if (io_out_##i##_valid && io_out_##i##_ready) {                             \
@@ -418,10 +256,8 @@ struct VDecode_tb : Sysc_tb {
     }                                                                         \
   }
 
-    DUT_OUT(0);
-    DUT_OUT(1);
-    DUT_OUT(2);
-    DUT_OUT(3);
+    REPEAT(DUT_OUT, KP_instructionLanes);
+#undef DUT_OUT
 
     // Scoreboard Set.
     bool ref_vrfsbvalid = false;
@@ -444,10 +280,8 @@ struct VDecode_tb : Sysc_tb {
     dut_vrfsbset[1] = io_vrfsb_set_bits.read().get_word(2) |
                       (uint64_t(io_vrfsb_set_bits.read().get_word(3)) << 32);
 
-    VRFSB_OUT(0);
-    VRFSB_OUT(1);
-    VRFSB_OUT(2);
-    VRFSB_OUT(3);
+    REPEAT(VRFSB_OUT, KP_instructionLanes);
+#undef VRFSB_OUT
 
     if (ref_vrfsbvalid != dut_vrfsbvalid) {
       printf("Error:Vrfsb %d %d\n", ref_vrfsbvalid, dut_vrfsbvalid);
@@ -470,9 +304,10 @@ struct VDecode_tb : Sysc_tb {
                        (uint64_t(io_vrfsb_data.read().get_word(3)) << 32) |
                        io_active.read().get_word(0) |
                        uint64_t(io_active.read().get_word(1)) << 32;
-    bool wdepends[4] = {false, false, false, false};
+    // bool wdepends[4] = {false, false, false, false};
+    bool wdepends[KP_instructionLanes] = {};
 
-    for (int i = 0; i < 4; ++i) {
+    for (int i = 0; i < KP_instructionLanes; ++i) {
       wdepends[i] = ref[i].wactive & wactive;
       if (ref_read[i]) {
         wactive |= ref[i].ractive;
@@ -480,26 +315,28 @@ struct VDecode_tb : Sysc_tb {
       }
     }
 
-    check(!(io_out_0_valid && wdepends[0]), "write dependency[0]");
-    check(!(io_out_1_valid && wdepends[1]), "write dependency[1]");
-    check(!(io_out_2_valid && wdepends[2]), "write dependency[2]");
-    check(!(io_out_3_valid && wdepends[3]), "write dependency[3]");
+#define WDEPEND(x)                            \
+  check(!(io_out_##x##_valid && wdepends[x]), \
+        "write dependency[" STRINGIFY(x) "]");
+    REPEAT(WDEPEND, KP_instructionLanes);
+#undef WDEPEND
 
     // Reads must not dispatch past previous write dispatch.
     uint64_t ractive = 0;
-    bool rdepends[4] = {false, false, false, false};
+    bool rdepends[KP_instructionLanes] = {};
 
-    for (int i = 0; i < 4; ++i) {
+    for (int i = 0; i < KP_instructionLanes; ++i) {
       rdepends[i] = ref[i].ractive & ractive;
       if (ref_read[i]) {
         ractive |= ref[i].wactive;
       }
     }
 
-    check(!(io_out_0_valid && rdepends[0]), "read dependency[0]");
-    check(!(io_out_1_valid && rdepends[1]), "read dependency[1]");
-    check(!(io_out_2_valid && rdepends[2]), "read dependency[2]");
-    check(!(io_out_3_valid && rdepends[3]), "read dependency[3]");
+#define RDEPEND(x)                            \
+  check(!(io_out_##x##_valid && rdepends[x]), \
+        "read dependency[" STRINGIFY(x) "]");
+    REPEAT(RDEPEND, KP_instructionLanes);
+#undef RDEPEND
   }
 
  private:
@@ -537,201 +374,63 @@ struct VDecode_tb : Sysc_tb {
 static void VDecode_test(char* name, int loops, bool trace) {
   sc_signal<bool> io_in_ready;
   sc_signal<bool> io_in_valid;
-  sc_signal<bool> io_in_bits_0_valid;
-  sc_signal<bool> io_in_bits_1_valid;
-  sc_signal<bool> io_in_bits_2_valid;
-  sc_signal<bool> io_in_bits_3_valid;
-  sc_signal<sc_bv<32> > io_in_bits_0_bits_inst;
-  sc_signal<sc_bv<32> > io_in_bits_0_bits_addr;
-  sc_signal<sc_bv<32> > io_in_bits_0_bits_data;
-  sc_signal<sc_bv<32> > io_in_bits_1_bits_inst;
-  sc_signal<sc_bv<32> > io_in_bits_1_bits_addr;
-  sc_signal<sc_bv<32> > io_in_bits_1_bits_data;
-  sc_signal<sc_bv<32> > io_in_bits_2_bits_inst;
-  sc_signal<sc_bv<32> > io_in_bits_2_bits_addr;
-  sc_signal<sc_bv<32> > io_in_bits_2_bits_data;
-  sc_signal<sc_bv<32> > io_in_bits_3_bits_inst;
-  sc_signal<sc_bv<32> > io_in_bits_3_bits_addr;
-  sc_signal<sc_bv<32> > io_in_bits_3_bits_data;
   sc_signal<bool> io_stall;
   sc_signal<bool> io_undef;
   sc_signal<bool> io_nempty;
-  sc_signal<bool> io_out_0_ready;
-  sc_signal<bool> io_out_0_valid;
-  sc_signal<bool> io_out_0_bits_m;
-  sc_signal<bool> io_out_0_bits_vd_valid;
-  sc_signal<bool> io_out_0_bits_ve_valid;
-  sc_signal<bool> io_out_0_bits_vf_valid;
-  sc_signal<bool> io_out_0_bits_vg_valid;
-  sc_signal<bool> io_out_0_bits_vs_valid;
-  sc_signal<bool> io_out_0_bits_vt_valid;
-  sc_signal<bool> io_out_0_bits_vu_valid;
-  sc_signal<bool> io_out_0_bits_vx_valid;
-  sc_signal<bool> io_out_0_bits_vy_valid;
-  sc_signal<bool> io_out_0_bits_vz_valid;
-  sc_signal<bool> io_out_0_bits_sv_valid;
-  sc_signal<bool> io_cmdq_0_alu;
-  sc_signal<bool> io_cmdq_0_conv;
-  sc_signal<bool> io_cmdq_0_ldst;
-  sc_signal<bool> io_cmdq_0_ld;
-  sc_signal<bool> io_cmdq_0_st;
-  sc_signal<bool> io_out_0_bits_cmdsync;
-  sc_signal<bool> io_out_1_ready;
-  sc_signal<bool> io_out_1_valid;
-  sc_signal<bool> io_out_1_bits_m;
-  sc_signal<bool> io_out_1_bits_vd_valid;
-  sc_signal<bool> io_out_1_bits_ve_valid;
-  sc_signal<bool> io_out_1_bits_vf_valid;
-  sc_signal<bool> io_out_1_bits_vg_valid;
-  sc_signal<bool> io_out_1_bits_vs_valid;
-  sc_signal<bool> io_out_1_bits_vt_valid;
-  sc_signal<bool> io_out_1_bits_vu_valid;
-  sc_signal<bool> io_out_1_bits_vx_valid;
-  sc_signal<bool> io_out_1_bits_vy_valid;
-  sc_signal<bool> io_out_1_bits_vz_valid;
-  sc_signal<bool> io_out_1_bits_sv_valid;
-  sc_signal<bool> io_cmdq_1_alu;
-  sc_signal<bool> io_cmdq_1_conv;
-  sc_signal<bool> io_cmdq_1_ldst;
-  sc_signal<bool> io_cmdq_1_ld;
-  sc_signal<bool> io_cmdq_1_st;
-  sc_signal<bool> io_out_1_bits_cmdsync;
-  sc_signal<bool> io_out_2_ready;
-  sc_signal<bool> io_out_2_valid;
-  sc_signal<bool> io_out_2_bits_m;
-  sc_signal<bool> io_out_2_bits_vd_valid;
-  sc_signal<bool> io_out_2_bits_ve_valid;
-  sc_signal<bool> io_out_2_bits_vf_valid;
-  sc_signal<bool> io_out_2_bits_vg_valid;
-  sc_signal<bool> io_out_2_bits_vs_valid;
-  sc_signal<bool> io_out_2_bits_vt_valid;
-  sc_signal<bool> io_out_2_bits_vu_valid;
-  sc_signal<bool> io_out_2_bits_vx_valid;
-  sc_signal<bool> io_out_2_bits_vy_valid;
-  sc_signal<bool> io_out_2_bits_vz_valid;
-  sc_signal<bool> io_out_2_bits_sv_valid;
-  sc_signal<bool> io_cmdq_2_alu;
-  sc_signal<bool> io_cmdq_2_conv;
-  sc_signal<bool> io_cmdq_2_ldst;
-  sc_signal<bool> io_cmdq_2_ld;
-  sc_signal<bool> io_cmdq_2_st;
-  sc_signal<bool> io_out_2_bits_cmdsync;
-  sc_signal<bool> io_out_3_ready;
-  sc_signal<bool> io_out_3_valid;
-  sc_signal<bool> io_out_3_bits_m;
-  sc_signal<bool> io_out_3_bits_vd_valid;
-  sc_signal<bool> io_out_3_bits_ve_valid;
-  sc_signal<bool> io_out_3_bits_vf_valid;
-  sc_signal<bool> io_out_3_bits_vg_valid;
-  sc_signal<bool> io_out_3_bits_vs_valid;
-  sc_signal<bool> io_out_3_bits_vt_valid;
-  sc_signal<bool> io_out_3_bits_vu_valid;
-  sc_signal<bool> io_out_3_bits_vx_valid;
-  sc_signal<bool> io_out_3_bits_vy_valid;
-  sc_signal<bool> io_out_3_bits_vz_valid;
-  sc_signal<bool> io_out_3_bits_sv_valid;
-  sc_signal<bool> io_cmdq_3_alu;
-  sc_signal<bool> io_cmdq_3_conv;
-  sc_signal<bool> io_cmdq_3_ldst;
-  sc_signal<bool> io_cmdq_3_ld;
-  sc_signal<bool> io_cmdq_3_st;
-  sc_signal<bool> io_out_3_bits_cmdsync;
-  sc_signal<sc_bv<7> > io_out_0_bits_op;
-  sc_signal<sc_bv<3> > io_out_0_bits_f2;
-  sc_signal<sc_bv<3> > io_out_0_bits_sz;
-  sc_signal<sc_bv<6> > io_out_0_bits_vd_addr;
-  sc_signal<sc_bv<6> > io_out_0_bits_ve_addr;
-  sc_signal<sc_bv<6> > io_out_0_bits_vf_addr;
-  sc_signal<sc_bv<6> > io_out_0_bits_vg_addr;
-  sc_signal<sc_bv<6> > io_out_0_bits_vs_addr;
-  sc_signal<sc_bv<6> > io_out_0_bits_vt_addr;
-  sc_signal<sc_bv<6> > io_out_0_bits_vu_addr;
-  sc_signal<sc_bv<6> > io_out_0_bits_vx_addr;
-  sc_signal<sc_bv<6> > io_out_0_bits_vy_addr;
-  sc_signal<sc_bv<6> > io_out_0_bits_vz_addr;
-  sc_signal<sc_bv<4> > io_out_0_bits_vs_tag;
-  sc_signal<sc_bv<4> > io_out_0_bits_vt_tag;
-  sc_signal<sc_bv<4> > io_out_0_bits_vu_tag;
-  sc_signal<sc_bv<4> > io_out_0_bits_vx_tag;
-  sc_signal<sc_bv<4> > io_out_0_bits_vy_tag;
-  sc_signal<sc_bv<4> > io_out_0_bits_vz_tag;
-  sc_signal<sc_bv<32> > io_out_0_bits_sv_addr;
-  sc_signal<sc_bv<32> > io_out_0_bits_sv_data;
-  sc_signal<sc_bv<64> > io_actv_0_ractive;
-  sc_signal<sc_bv<64> > io_actv_0_wactive;
-  sc_signal<sc_bv<7> > io_out_1_bits_op;
-  sc_signal<sc_bv<3> > io_out_1_bits_f2;
-  sc_signal<sc_bv<3> > io_out_1_bits_sz;
-  sc_signal<sc_bv<6> > io_out_1_bits_vd_addr;
-  sc_signal<sc_bv<6> > io_out_1_bits_ve_addr;
-  sc_signal<sc_bv<6> > io_out_1_bits_vf_addr;
-  sc_signal<sc_bv<6> > io_out_1_bits_vg_addr;
-  sc_signal<sc_bv<6> > io_out_1_bits_vs_addr;
-  sc_signal<sc_bv<6> > io_out_1_bits_vt_addr;
-  sc_signal<sc_bv<6> > io_out_1_bits_vu_addr;
-  sc_signal<sc_bv<6> > io_out_1_bits_vx_addr;
-  sc_signal<sc_bv<6> > io_out_1_bits_vy_addr;
-  sc_signal<sc_bv<6> > io_out_1_bits_vz_addr;
-  sc_signal<sc_bv<4> > io_out_1_bits_vs_tag;
-  sc_signal<sc_bv<4> > io_out_1_bits_vt_tag;
-  sc_signal<sc_bv<4> > io_out_1_bits_vu_tag;
-  sc_signal<sc_bv<4> > io_out_1_bits_vx_tag;
-  sc_signal<sc_bv<4> > io_out_1_bits_vy_tag;
-  sc_signal<sc_bv<4> > io_out_1_bits_vz_tag;
-  sc_signal<sc_bv<32> > io_out_1_bits_sv_addr;
-  sc_signal<sc_bv<32> > io_out_1_bits_sv_data;
-  sc_signal<sc_bv<64> > io_actv_1_ractive;
-  sc_signal<sc_bv<64> > io_actv_1_wactive;
-  sc_signal<sc_bv<7> > io_out_2_bits_op;
-  sc_signal<sc_bv<3> > io_out_2_bits_f2;
-  sc_signal<sc_bv<3> > io_out_2_bits_sz;
-  sc_signal<sc_bv<6> > io_out_2_bits_vd_addr;
-  sc_signal<sc_bv<6> > io_out_2_bits_ve_addr;
-  sc_signal<sc_bv<6> > io_out_2_bits_vf_addr;
-  sc_signal<sc_bv<6> > io_out_2_bits_vg_addr;
-  sc_signal<sc_bv<6> > io_out_2_bits_vs_addr;
-  sc_signal<sc_bv<6> > io_out_2_bits_vt_addr;
-  sc_signal<sc_bv<6> > io_out_2_bits_vu_addr;
-  sc_signal<sc_bv<6> > io_out_2_bits_vx_addr;
-  sc_signal<sc_bv<6> > io_out_2_bits_vy_addr;
-  sc_signal<sc_bv<6> > io_out_2_bits_vz_addr;
-  sc_signal<sc_bv<4> > io_out_2_bits_vs_tag;
-  sc_signal<sc_bv<4> > io_out_2_bits_vt_tag;
-  sc_signal<sc_bv<4> > io_out_2_bits_vu_tag;
-  sc_signal<sc_bv<4> > io_out_2_bits_vx_tag;
-  sc_signal<sc_bv<4> > io_out_2_bits_vy_tag;
-  sc_signal<sc_bv<4> > io_out_2_bits_vz_tag;
-  sc_signal<sc_bv<32> > io_out_2_bits_sv_addr;
-  sc_signal<sc_bv<32> > io_out_2_bits_sv_data;
-  sc_signal<sc_bv<64> > io_actv_2_ractive;
-  sc_signal<sc_bv<64> > io_actv_2_wactive;
-  sc_signal<sc_bv<7> > io_out_3_bits_op;
-  sc_signal<sc_bv<3> > io_out_3_bits_f2;
-  sc_signal<sc_bv<3> > io_out_3_bits_sz;
-  sc_signal<sc_bv<6> > io_out_3_bits_vd_addr;
-  sc_signal<sc_bv<6> > io_out_3_bits_ve_addr;
-  sc_signal<sc_bv<6> > io_out_3_bits_vf_addr;
-  sc_signal<sc_bv<6> > io_out_3_bits_vg_addr;
-  sc_signal<sc_bv<6> > io_out_3_bits_vs_addr;
-  sc_signal<sc_bv<6> > io_out_3_bits_vt_addr;
-  sc_signal<sc_bv<6> > io_out_3_bits_vu_addr;
-  sc_signal<sc_bv<6> > io_out_3_bits_vx_addr;
-  sc_signal<sc_bv<6> > io_out_3_bits_vy_addr;
-  sc_signal<sc_bv<6> > io_out_3_bits_vz_addr;
-  sc_signal<sc_bv<4> > io_out_3_bits_vs_tag;
-  sc_signal<sc_bv<4> > io_out_3_bits_vt_tag;
-  sc_signal<sc_bv<4> > io_out_3_bits_vu_tag;
-  sc_signal<sc_bv<4> > io_out_3_bits_vx_tag;
-  sc_signal<sc_bv<4> > io_out_3_bits_vy_tag;
-  sc_signal<sc_bv<4> > io_out_3_bits_vz_tag;
-  sc_signal<sc_bv<32> > io_out_3_bits_sv_addr;
-  sc_signal<sc_bv<32> > io_out_3_bits_sv_data;
-  sc_signal<sc_bv<64> > io_actv_3_ractive;
-  sc_signal<sc_bv<64> > io_actv_3_wactive;
   sc_signal<bool> io_vrfsb_set_valid;
   sc_signal<sc_bv<128> > io_vrfsb_set_bits;
   sc_signal<sc_bv<128> > io_vrfsb_data;
   sc_signal<sc_bv<64> > io_active;
+#define IO_BITS(x)                                  \
+  sc_signal<bool> io_in_bits_##x##_valid;           \
+  sc_signal<sc_bv<32> > io_in_bits_##x##_bits_inst; \
+  sc_signal<sc_bv<32> > io_in_bits_##x##_bits_addr; \
+  sc_signal<sc_bv<32> > io_in_bits_##x##_bits_data; \
+  sc_signal<bool> io_out_##x##_ready;               \
+  sc_signal<bool> io_out_##x##_valid;               \
+  sc_signal<bool> io_out_##x##_bits_m;              \
+  sc_signal<bool> io_out_##x##_bits_vd_valid;       \
+  sc_signal<bool> io_out_##x##_bits_ve_valid;       \
+  sc_signal<bool> io_out_##x##_bits_vf_valid;       \
+  sc_signal<bool> io_out_##x##_bits_vg_valid;       \
+  sc_signal<bool> io_out_##x##_bits_vs_valid;       \
+  sc_signal<bool> io_out_##x##_bits_vt_valid;       \
+  sc_signal<bool> io_out_##x##_bits_vu_valid;       \
+  sc_signal<bool> io_out_##x##_bits_vx_valid;       \
+  sc_signal<bool> io_out_##x##_bits_vy_valid;       \
+  sc_signal<bool> io_out_##x##_bits_vz_valid;       \
+  sc_signal<bool> io_out_##x##_bits_sv_valid;       \
+  sc_signal<bool> io_cmdq_##x##_alu;                \
+  sc_signal<bool> io_cmdq_##x##_conv;               \
+  sc_signal<bool> io_cmdq_##x##_ldst;               \
+  sc_signal<bool> io_cmdq_##x##_ld;                 \
+  sc_signal<bool> io_cmdq_##x##_st;                 \
+  sc_signal<bool> io_out_##x##_bits_cmdsync;        \
+  sc_signal<sc_bv<7> > io_out_##x##_bits_op;        \
+  sc_signal<sc_bv<3> > io_out_##x##_bits_f2;        \
+  sc_signal<sc_bv<3> > io_out_##x##_bits_sz;        \
+  sc_signal<sc_bv<6> > io_out_##x##_bits_vd_addr;   \
+  sc_signal<sc_bv<6> > io_out_##x##_bits_ve_addr;   \
+  sc_signal<sc_bv<6> > io_out_##x##_bits_vf_addr;   \
+  sc_signal<sc_bv<6> > io_out_##x##_bits_vg_addr;   \
+  sc_signal<sc_bv<6> > io_out_##x##_bits_vs_addr;   \
+  sc_signal<sc_bv<6> > io_out_##x##_bits_vt_addr;   \
+  sc_signal<sc_bv<6> > io_out_##x##_bits_vu_addr;   \
+  sc_signal<sc_bv<6> > io_out_##x##_bits_vx_addr;   \
+  sc_signal<sc_bv<6> > io_out_##x##_bits_vy_addr;   \
+  sc_signal<sc_bv<6> > io_out_##x##_bits_vz_addr;   \
+  sc_signal<sc_bv<4> > io_out_##x##_bits_vs_tag;    \
+  sc_signal<sc_bv<4> > io_out_##x##_bits_vt_tag;    \
+  sc_signal<sc_bv<4> > io_out_##x##_bits_vu_tag;    \
+  sc_signal<sc_bv<4> > io_out_##x##_bits_vx_tag;    \
+  sc_signal<sc_bv<4> > io_out_##x##_bits_vy_tag;    \
+  sc_signal<sc_bv<4> > io_out_##x##_bits_vz_tag;    \
+  sc_signal<sc_bv<32> > io_out_##x##_bits_sv_addr;  \
+  sc_signal<sc_bv<32> > io_out_##x##_bits_sv_data;  \
+  sc_signal<sc_bv<64> > io_actv_##x##_ractive;      \
+  sc_signal<sc_bv<64> > io_actv_##x##_wactive;
+  REPEAT(IO_BITS, KP_instructionLanes);
+#undef IO_BITS
 
   VDecode_tb tb("VDecode_tb", loops, true);
   VVDecode d(name);
@@ -741,201 +440,63 @@ static void VDecode_test(char* name, int loops, bool trace) {
 
   BIND2(tb, d, io_in_ready);
   BIND2(tb, d, io_in_valid);
-  BIND2(tb, d, io_in_bits_0_valid);
-  BIND2(tb, d, io_in_bits_1_valid);
-  BIND2(tb, d, io_in_bits_2_valid);
-  BIND2(tb, d, io_in_bits_3_valid);
-  BIND2(tb, d, io_in_bits_0_bits_inst);
-  BIND2(tb, d, io_in_bits_0_bits_addr);
-  BIND2(tb, d, io_in_bits_0_bits_data);
-  BIND2(tb, d, io_in_bits_1_bits_inst);
-  BIND2(tb, d, io_in_bits_1_bits_addr);
-  BIND2(tb, d, io_in_bits_1_bits_data);
-  BIND2(tb, d, io_in_bits_2_bits_inst);
-  BIND2(tb, d, io_in_bits_2_bits_addr);
-  BIND2(tb, d, io_in_bits_2_bits_data);
-  BIND2(tb, d, io_in_bits_3_bits_inst);
-  BIND2(tb, d, io_in_bits_3_bits_addr);
-  BIND2(tb, d, io_in_bits_3_bits_data);
   BIND2(tb, d, io_stall);
   BIND2(tb, d, io_undef);
   BIND2(tb, d, io_nempty);
-  BIND2(tb, d, io_out_0_ready);
-  BIND2(tb, d, io_out_0_valid);
-  BIND2(tb, d, io_out_0_bits_m);
-  BIND2(tb, d, io_out_0_bits_vd_valid);
-  BIND2(tb, d, io_out_0_bits_ve_valid);
-  BIND2(tb, d, io_out_0_bits_vf_valid);
-  BIND2(tb, d, io_out_0_bits_vg_valid);
-  BIND2(tb, d, io_out_0_bits_vs_valid);
-  BIND2(tb, d, io_out_0_bits_vt_valid);
-  BIND2(tb, d, io_out_0_bits_vu_valid);
-  BIND2(tb, d, io_out_0_bits_vx_valid);
-  BIND2(tb, d, io_out_0_bits_vy_valid);
-  BIND2(tb, d, io_out_0_bits_vz_valid);
-  BIND2(tb, d, io_out_0_bits_sv_valid);
-  BIND2(tb, d, io_cmdq_0_alu);
-  BIND2(tb, d, io_cmdq_0_conv);
-  BIND2(tb, d, io_cmdq_0_ldst);
-  BIND2(tb, d, io_cmdq_0_ld);
-  BIND2(tb, d, io_cmdq_0_st);
-  BIND2(tb, d, io_out_0_bits_cmdsync);
-  BIND2(tb, d, io_out_1_ready);
-  BIND2(tb, d, io_out_1_valid);
-  BIND2(tb, d, io_out_1_bits_m);
-  BIND2(tb, d, io_out_1_bits_vd_valid);
-  BIND2(tb, d, io_out_1_bits_ve_valid);
-  BIND2(tb, d, io_out_1_bits_vf_valid);
-  BIND2(tb, d, io_out_1_bits_vg_valid);
-  BIND2(tb, d, io_out_1_bits_vs_valid);
-  BIND2(tb, d, io_out_1_bits_vt_valid);
-  BIND2(tb, d, io_out_1_bits_vu_valid);
-  BIND2(tb, d, io_out_1_bits_vx_valid);
-  BIND2(tb, d, io_out_1_bits_vy_valid);
-  BIND2(tb, d, io_out_1_bits_vz_valid);
-  BIND2(tb, d, io_out_1_bits_sv_valid);
-  BIND2(tb, d, io_cmdq_1_alu);
-  BIND2(tb, d, io_cmdq_1_conv);
-  BIND2(tb, d, io_cmdq_1_ldst);
-  BIND2(tb, d, io_cmdq_1_ld);
-  BIND2(tb, d, io_cmdq_1_st);
-  BIND2(tb, d, io_out_1_bits_cmdsync);
-  BIND2(tb, d, io_out_2_ready);
-  BIND2(tb, d, io_out_2_valid);
-  BIND2(tb, d, io_out_2_bits_m);
-  BIND2(tb, d, io_out_2_bits_vd_valid);
-  BIND2(tb, d, io_out_2_bits_ve_valid);
-  BIND2(tb, d, io_out_2_bits_vf_valid);
-  BIND2(tb, d, io_out_2_bits_vg_valid);
-  BIND2(tb, d, io_out_2_bits_vs_valid);
-  BIND2(tb, d, io_out_2_bits_vt_valid);
-  BIND2(tb, d, io_out_2_bits_vu_valid);
-  BIND2(tb, d, io_out_2_bits_vx_valid);
-  BIND2(tb, d, io_out_2_bits_vy_valid);
-  BIND2(tb, d, io_out_2_bits_vz_valid);
-  BIND2(tb, d, io_out_2_bits_sv_valid);
-  BIND2(tb, d, io_cmdq_2_alu);
-  BIND2(tb, d, io_cmdq_2_conv);
-  BIND2(tb, d, io_cmdq_2_ldst);
-  BIND2(tb, d, io_cmdq_2_ld);
-  BIND2(tb, d, io_cmdq_2_st);
-  BIND2(tb, d, io_out_2_bits_cmdsync);
-  BIND2(tb, d, io_out_3_ready);
-  BIND2(tb, d, io_out_3_valid);
-  BIND2(tb, d, io_out_3_bits_m);
-  BIND2(tb, d, io_out_3_bits_vd_valid);
-  BIND2(tb, d, io_out_3_bits_ve_valid);
-  BIND2(tb, d, io_out_3_bits_vf_valid);
-  BIND2(tb, d, io_out_3_bits_vg_valid);
-  BIND2(tb, d, io_out_3_bits_vs_valid);
-  BIND2(tb, d, io_out_3_bits_vt_valid);
-  BIND2(tb, d, io_out_3_bits_vu_valid);
-  BIND2(tb, d, io_out_3_bits_vx_valid);
-  BIND2(tb, d, io_out_3_bits_vy_valid);
-  BIND2(tb, d, io_out_3_bits_vz_valid);
-  BIND2(tb, d, io_out_3_bits_sv_valid);
-  BIND2(tb, d, io_cmdq_3_alu);
-  BIND2(tb, d, io_cmdq_3_conv);
-  BIND2(tb, d, io_cmdq_3_ldst);
-  BIND2(tb, d, io_cmdq_3_ld);
-  BIND2(tb, d, io_cmdq_3_st);
-  BIND2(tb, d, io_out_3_bits_cmdsync);
-  BIND2(tb, d, io_out_0_bits_op);
-  BIND2(tb, d, io_out_0_bits_f2);
-  BIND2(tb, d, io_out_0_bits_sz);
-  BIND2(tb, d, io_out_0_bits_vd_addr);
-  BIND2(tb, d, io_out_0_bits_ve_addr);
-  BIND2(tb, d, io_out_0_bits_vf_addr);
-  BIND2(tb, d, io_out_0_bits_vg_addr);
-  BIND2(tb, d, io_out_0_bits_vs_addr);
-  BIND2(tb, d, io_out_0_bits_vt_addr);
-  BIND2(tb, d, io_out_0_bits_vu_addr);
-  BIND2(tb, d, io_out_0_bits_vx_addr);
-  BIND2(tb, d, io_out_0_bits_vy_addr);
-  BIND2(tb, d, io_out_0_bits_vz_addr);
-  BIND2(tb, d, io_out_0_bits_vs_tag);
-  BIND2(tb, d, io_out_0_bits_vt_tag);
-  BIND2(tb, d, io_out_0_bits_vu_tag);
-  BIND2(tb, d, io_out_0_bits_vx_tag);
-  BIND2(tb, d, io_out_0_bits_vy_tag);
-  BIND2(tb, d, io_out_0_bits_vz_tag);
-  BIND2(tb, d, io_out_0_bits_sv_addr);
-  BIND2(tb, d, io_out_0_bits_sv_data);
-  BIND2(tb, d, io_actv_0_ractive);
-  BIND2(tb, d, io_actv_0_wactive);
-  BIND2(tb, d, io_out_1_bits_op);
-  BIND2(tb, d, io_out_1_bits_f2);
-  BIND2(tb, d, io_out_1_bits_sz);
-  BIND2(tb, d, io_out_1_bits_vd_addr);
-  BIND2(tb, d, io_out_1_bits_ve_addr);
-  BIND2(tb, d, io_out_1_bits_vf_addr);
-  BIND2(tb, d, io_out_1_bits_vg_addr);
-  BIND2(tb, d, io_out_1_bits_vs_addr);
-  BIND2(tb, d, io_out_1_bits_vt_addr);
-  BIND2(tb, d, io_out_1_bits_vu_addr);
-  BIND2(tb, d, io_out_1_bits_vx_addr);
-  BIND2(tb, d, io_out_1_bits_vy_addr);
-  BIND2(tb, d, io_out_1_bits_vz_addr);
-  BIND2(tb, d, io_out_1_bits_vs_tag);
-  BIND2(tb, d, io_out_1_bits_vt_tag);
-  BIND2(tb, d, io_out_1_bits_vu_tag);
-  BIND2(tb, d, io_out_1_bits_vx_tag);
-  BIND2(tb, d, io_out_1_bits_vy_tag);
-  BIND2(tb, d, io_out_1_bits_vz_tag);
-  BIND2(tb, d, io_out_1_bits_sv_addr);
-  BIND2(tb, d, io_out_1_bits_sv_data);
-  BIND2(tb, d, io_actv_1_ractive);
-  BIND2(tb, d, io_actv_1_wactive);
-  BIND2(tb, d, io_out_2_bits_op);
-  BIND2(tb, d, io_out_2_bits_f2);
-  BIND2(tb, d, io_out_2_bits_sz);
-  BIND2(tb, d, io_out_2_bits_vd_addr);
-  BIND2(tb, d, io_out_2_bits_ve_addr);
-  BIND2(tb, d, io_out_2_bits_vf_addr);
-  BIND2(tb, d, io_out_2_bits_vg_addr);
-  BIND2(tb, d, io_out_2_bits_vs_addr);
-  BIND2(tb, d, io_out_2_bits_vt_addr);
-  BIND2(tb, d, io_out_2_bits_vu_addr);
-  BIND2(tb, d, io_out_2_bits_vx_addr);
-  BIND2(tb, d, io_out_2_bits_vy_addr);
-  BIND2(tb, d, io_out_2_bits_vz_addr);
-  BIND2(tb, d, io_out_2_bits_sv_addr);
-  BIND2(tb, d, io_out_2_bits_sv_data);
-  BIND2(tb, d, io_out_2_bits_vs_tag);
-  BIND2(tb, d, io_out_2_bits_vt_tag);
-  BIND2(tb, d, io_out_2_bits_vu_tag);
-  BIND2(tb, d, io_out_2_bits_vx_tag);
-  BIND2(tb, d, io_out_2_bits_vy_tag);
-  BIND2(tb, d, io_out_2_bits_vz_tag);
-  BIND2(tb, d, io_actv_2_ractive);
-  BIND2(tb, d, io_actv_2_wactive);
-  BIND2(tb, d, io_out_3_bits_op);
-  BIND2(tb, d, io_out_3_bits_f2);
-  BIND2(tb, d, io_out_3_bits_sz);
-  BIND2(tb, d, io_out_3_bits_vd_addr);
-  BIND2(tb, d, io_out_3_bits_ve_addr);
-  BIND2(tb, d, io_out_3_bits_vf_addr);
-  BIND2(tb, d, io_out_3_bits_vg_addr);
-  BIND2(tb, d, io_out_3_bits_vs_addr);
-  BIND2(tb, d, io_out_3_bits_vt_addr);
-  BIND2(tb, d, io_out_3_bits_vu_addr);
-  BIND2(tb, d, io_out_3_bits_vx_addr);
-  BIND2(tb, d, io_out_3_bits_vy_addr);
-  BIND2(tb, d, io_out_3_bits_vz_addr);
-  BIND2(tb, d, io_out_3_bits_vs_tag);
-  BIND2(tb, d, io_out_3_bits_vt_tag);
-  BIND2(tb, d, io_out_3_bits_vu_tag);
-  BIND2(tb, d, io_out_3_bits_vx_tag);
-  BIND2(tb, d, io_out_3_bits_vy_tag);
-  BIND2(tb, d, io_out_3_bits_vz_tag);
-  BIND2(tb, d, io_out_3_bits_sv_addr);
-  BIND2(tb, d, io_out_3_bits_sv_data);
-  BIND2(tb, d, io_actv_3_ractive);
-  BIND2(tb, d, io_actv_3_wactive);
   BIND2(tb, d, io_vrfsb_set_valid);
   BIND2(tb, d, io_vrfsb_set_bits);
   BIND2(tb, d, io_vrfsb_data);
   BIND2(tb, d, io_active);
+#define IO_BIND(x)                          \
+  BIND2(tb, d, io_in_bits_##x##_valid);     \
+  BIND2(tb, d, io_in_bits_##x##_bits_inst); \
+  BIND2(tb, d, io_in_bits_##x##_bits_addr); \
+  BIND2(tb, d, io_in_bits_##x##_bits_data); \
+  BIND2(tb, d, io_out_##x##_ready);         \
+  BIND2(tb, d, io_out_##x##_valid);         \
+  BIND2(tb, d, io_out_##x##_bits_m);        \
+  BIND2(tb, d, io_out_##x##_bits_vd_valid); \
+  BIND2(tb, d, io_out_##x##_bits_ve_valid); \
+  BIND2(tb, d, io_out_##x##_bits_vf_valid); \
+  BIND2(tb, d, io_out_##x##_bits_vg_valid); \
+  BIND2(tb, d, io_out_##x##_bits_vs_valid); \
+  BIND2(tb, d, io_out_##x##_bits_vt_valid); \
+  BIND2(tb, d, io_out_##x##_bits_vu_valid); \
+  BIND2(tb, d, io_out_##x##_bits_vx_valid); \
+  BIND2(tb, d, io_out_##x##_bits_vy_valid); \
+  BIND2(tb, d, io_out_##x##_bits_vz_valid); \
+  BIND2(tb, d, io_out_##x##_bits_sv_valid); \
+  BIND2(tb, d, io_cmdq_##x##_alu);          \
+  BIND2(tb, d, io_cmdq_##x##_conv);         \
+  BIND2(tb, d, io_cmdq_##x##_ldst);         \
+  BIND2(tb, d, io_cmdq_##x##_ld);           \
+  BIND2(tb, d, io_cmdq_##x##_st);           \
+  BIND2(tb, d, io_out_##x##_bits_cmdsync);  \
+  BIND2(tb, d, io_out_##x##_bits_op);       \
+  BIND2(tb, d, io_out_##x##_bits_f2);       \
+  BIND2(tb, d, io_out_##x##_bits_sz);       \
+  BIND2(tb, d, io_out_##x##_bits_vd_addr);  \
+  BIND2(tb, d, io_out_##x##_bits_ve_addr);  \
+  BIND2(tb, d, io_out_##x##_bits_vf_addr);  \
+  BIND2(tb, d, io_out_##x##_bits_vg_addr);  \
+  BIND2(tb, d, io_out_##x##_bits_vs_addr);  \
+  BIND2(tb, d, io_out_##x##_bits_vt_addr);  \
+  BIND2(tb, d, io_out_##x##_bits_vu_addr);  \
+  BIND2(tb, d, io_out_##x##_bits_vx_addr);  \
+  BIND2(tb, d, io_out_##x##_bits_vy_addr);  \
+  BIND2(tb, d, io_out_##x##_bits_vz_addr);  \
+  BIND2(tb, d, io_out_##x##_bits_vs_tag);   \
+  BIND2(tb, d, io_out_##x##_bits_vt_tag);   \
+  BIND2(tb, d, io_out_##x##_bits_vu_tag);   \
+  BIND2(tb, d, io_out_##x##_bits_vx_tag);   \
+  BIND2(tb, d, io_out_##x##_bits_vy_tag);   \
+  BIND2(tb, d, io_out_##x##_bits_vz_tag);   \
+  BIND2(tb, d, io_out_##x##_bits_sv_addr);  \
+  BIND2(tb, d, io_out_##x##_bits_sv_data);  \
+  BIND2(tb, d, io_actv_##x##_ractive);      \
+  BIND2(tb, d, io_actv_##x##_wactive);
+  REPEAT(IO_BIND, KP_instructionLanes);
+#undef IO_BIND
 
   if (trace) {
     tb.trace(d);

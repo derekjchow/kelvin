@@ -16,10 +16,12 @@
 #include "absl/flags/flag.h"
 #include "absl/flags/parse.h"
 #include "absl/flags/usage.h"
+#include "hdl/chisel/src/kelvin/kelvin_parameters.h"
 #include "tests/verilator_sim/kelvin/core_if.h"
 #include "tests/verilator_sim/kelvin/debug_if.h"
 #include "tests/verilator_sim/kelvin/kelvin_cfg.h"
 #include "tests/verilator_sim/sysc_tb.h"
+#include "tests/verilator_sim/util.h"
 
 ABSL_FLAG(int, cycles, 100000000, "Simulation cycles");
 ABSL_FLAG(bool, trace, false, "Dump VCD trace");
@@ -89,14 +91,6 @@ static void Core_run(const char* name, const char* bin, const int cycles,
   sc_signal<sc_bv<5> > io_slog_addr;
   sc_signal<sc_bv<32> > io_slog_data;
   sc_signal<sc_bv<4> > io_debug_en;
-  sc_signal<sc_bv<32> > io_debug_addr0;
-  sc_signal<sc_bv<32> > io_debug_addr1;
-  sc_signal<sc_bv<32> > io_debug_addr2;
-  sc_signal<sc_bv<32> > io_debug_addr3;
-  sc_signal<sc_bv<32> > io_debug_inst0;
-  sc_signal<sc_bv<32> > io_debug_inst1;
-  sc_signal<sc_bv<32> > io_debug_inst2;
-  sc_signal<sc_bv<32> > io_debug_inst3;
   sc_signal<sc_bv<32> > io_debug_cycles;
   sc_signal<bool> io_axi0_write_addr_ready;
   sc_signal<bool> io_axi0_write_addr_valid;
@@ -140,6 +134,12 @@ static void Core_run(const char* name, const char* bin, const int cycles,
   sc_signal<sc_bv<2> > io_axi1_read_data_bits_resp;
   sc_signal<sc_bv<kUncId> > io_axi1_read_data_bits_id;
   sc_signal<sc_bv<kUncBits> > io_axi1_read_data_bits_data;
+
+#define IO_DEBUG(x)                       \
+  sc_signal<sc_bv<32> > io_debug_addr##x; \
+  sc_signal<sc_bv<32> > io_debug_inst##x;
+  REPEAT(IO_DEBUG, KP_instructionLanes);
+#undef IO_DEBUG
 
   io_iflush_ready = 1;
   io_dflush_ready = 1;
@@ -195,15 +195,13 @@ static void Core_run(const char* name, const char* bin, const int cycles,
   core.io_slog_addr(io_slog_addr);
   core.io_slog_data(io_slog_data);
   core.io_debug_en(io_debug_en);
-  core.io_debug_addr_0(io_debug_addr0);
-  core.io_debug_addr_1(io_debug_addr1);
-  core.io_debug_addr_2(io_debug_addr2);
-  core.io_debug_addr_3(io_debug_addr3);
-  core.io_debug_inst_0(io_debug_inst0);
-  core.io_debug_inst_1(io_debug_inst1);
-  core.io_debug_inst_2(io_debug_inst2);
-  core.io_debug_inst_3(io_debug_inst3);
   core.io_debug_cycles(io_debug_cycles);
+
+#define BIND_DEBUG(x)                       \
+  core.io_debug_addr_##x(io_debug_addr##x); \
+  core.io_debug_inst_##x(io_debug_inst##x);
+  REPEAT(BIND_DEBUG, KP_instructionLanes);
+#undef BIND_DEBUG
 
   mif.clock(tb.clock);
   mif.reset(tb.reset);
