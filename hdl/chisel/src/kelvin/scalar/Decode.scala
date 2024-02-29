@@ -191,7 +191,7 @@ class Decode(p: Parameters, pipeline: Int) extends Module {
     val alu = Valid(new AluCmd)
 
     // Branch interface.
-    val bru = Flipped(new BruIO(p))
+    val bru = Valid(new BruCmd(p))
 
     // CSR interface.
     val csr = Valid(new CsrCmd)
@@ -306,33 +306,31 @@ class Decode(p: Parameters, pipeline: Int) extends Module {
   io.alu.bits.op := alu.bits
 
   // Branch conditional opcode.
-  val bru = new BruOp()
-  val bruOp = Wire(Vec(bru.Entries, Bool()))
-  val bruValid = WiredOR(io.bru.op)  // used without decodeEn
-  io.bru.valid := decodeEn && bruValid
-  io.bru.fwd := io.inst.brchFwd
-  io.bru.op := bruOp.asUInt
-  io.bru.pc := io.inst.addr
-  io.bru.target := io.inst.addr + Mux(io.inst.inst(2), d.immjal, d.immbr)
-  io.bru.link := rdAddr
-
-  bruOp(bru.JAL)  := d.jal
-  bruOp(bru.JALR) := d.jalr
-  bruOp(bru.BEQ)  := d.beq
-  bruOp(bru.BNE)  := d.bne
-  bruOp(bru.BLT)  := d.blt
-  bruOp(bru.BGE)  := d.bge
-  bruOp(bru.BLTU) := d.bltu
-  bruOp(bru.BGEU) := d.bgeu
-  bruOp(bru.EBREAK) := d.ebreak
-  bruOp(bru.ECALL)  := d.ecall
-  bruOp(bru.EEXIT)  := d.eexit
-  bruOp(bru.EYIELD) := d.eyield
-  bruOp(bru.ECTXSW) := d.ectxsw
-  bruOp(bru.MPAUSE) := d.mpause
-  bruOp(bru.MRET)   := d.mret
-  bruOp(bru.FENCEI) := d.fencei
-  bruOp(bru.UNDEF)  := d.undef
+  val bru = MuxCase(MakeValid(false.B, BruOp.JAL), Seq(
+    d.jal    -> MakeValid(true.B, BruOp.JAL),
+    d.jalr   -> MakeValid(true.B, BruOp.JALR),
+    d.beq    -> MakeValid(true.B, BruOp.BEQ),
+    d.bne    -> MakeValid(true.B, BruOp.BNE),
+    d.blt    -> MakeValid(true.B, BruOp.BLT),
+    d.bge    -> MakeValid(true.B, BruOp.BGE),
+    d.bltu   -> MakeValid(true.B, BruOp.BLTU),
+    d.bgeu   -> MakeValid(true.B, BruOp.BGEU),
+    d.ebreak -> MakeValid(true.B, BruOp.EBREAK),
+    d.ecall  -> MakeValid(true.B, BruOp.ECALL),
+    d.eexit  -> MakeValid(true.B, BruOp.EEXIT),
+    d.eyield -> MakeValid(true.B, BruOp.EYIELD),
+    d.ectxsw -> MakeValid(true.B, BruOp.ECTXSW),
+    d.mpause -> MakeValid(true.B, BruOp.MPAUSE),
+    d.mret   -> MakeValid(true.B, BruOp.MRET),
+    d.fencei -> MakeValid(true.B, BruOp.FENCEI),
+    d.undef  -> MakeValid(true.B, BruOp.UNDEF),
+  ))
+  io.bru.valid := decodeEn && bru.valid
+  io.bru.bits.fwd := io.inst.brchFwd
+  io.bru.bits.op := bru.bits
+  io.bru.bits.pc := io.inst.addr
+  io.bru.bits.target := io.inst.addr + Mux(io.inst.inst(2), d.immjal, d.immbr)
+  io.bru.bits.link := rdAddr
 
   // CSR opcode.
   val csr = MuxCase(MakeValid(false.B, CsrOp.CSRRW), Seq(
@@ -440,7 +438,7 @@ class Decode(p: Parameters, pipeline: Int) extends Module {
       alu.valid || csr.valid || mlu.valid || dvu.valid && io.dvu.ready ||
       lsu.valid && d.isLoad() ||
       d.getvl || d.getmaxvl || vldst_wb ||
-      bruValid && (bruOp(bru.JAL) || bruOp(bru.JALR)) && rdAddr =/= 0.U
+      bru.valid && (bru.bits.isOneOf(BruOp.JAL, BruOp.JALR)) && rdAddr =/= 0.U
 
   // val scoreboard_spec = Mux(rdMark_valid || d.io.vst, UIntToOH(rdAddr, 32), 0.U)  // TODO: why was d.io.vst included?
   val scoreboard_spec = Mux(rdMark_valid, UIntToOH(rdAddr, 32), 0.U)
