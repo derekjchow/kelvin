@@ -34,9 +34,7 @@ class Core(p: Parameters) extends Module {
 
     val ibus = new IBusIO(p)
     val dbus = new DBusIO(p)
-    val axi0 = if(p.enableVector) {
-      Some(new AxiMasterIO(p.axi2AddrBits, p.axi2DataBits, p.axi2IdBits))
-    } else { None }
+    val axi0 = new AxiMasterIO(p.axi2AddrBits, p.axi2DataBits, p.axi2IdBits)
     val axi1 = new AxiMasterIO(p.axi2AddrBits, p.axi2DataBits, p.axi2IdBits)
 
     val iflush = new IFlushIO(p)
@@ -47,7 +45,8 @@ class Core(p: Parameters) extends Module {
   })
 
   val score = SCore(p)
-  val vcore = if (p.enableVector) { Some(VCore(p)) } else { None }
+  val vcore = VCore(p)
+  val dbusmux = DBusMux(p)
 
   // ---------------------------------------------------------------------------
   // Scalar Core outputs.
@@ -62,22 +61,17 @@ class Core(p: Parameters) extends Module {
 
   // ---------------------------------------------------------------------------
   // Vector core.
-  if (p.enableVector) {
-    score.io.vcore.get <> vcore.get.io.score
-  }
+  score.io.vcore <> vcore.io.score
 
   // ---------------------------------------------------------------------------
   // Local Data Bus Port
-  if (p.enableVector) {
-    val dbusmux = DBusMux(p)
-    dbusmux.io.vldst := score.io.vldst.get
-    dbusmux.io.vlast := vcore.get.io.last
-    dbusmux.io.vcore <> vcore.get.io.dbus
-    dbusmux.io.score <> score.io.dbus
-    io.dbus <> dbusmux.io.dbus
-  } else {
-    io.dbus <> score.io.dbus
-  }
+  dbusmux.io.vldst := score.io.vldst
+  dbusmux.io.vlast := vcore.io.last
+
+  dbusmux.io.vcore <> vcore.io.dbus
+  dbusmux.io.score <> score.io.dbus
+
+  io.dbus <> dbusmux.io.dbus
 
   // ---------------------------------------------------------------------------
   // Scalar DBus to AXI.
@@ -86,10 +80,8 @@ class Core(p: Parameters) extends Module {
 
   // ---------------------------------------------------------------------------
   // AXI ports.
-  if (p.enableVector) {
-    io.axi0.get.read  <> vcore.get.io.ld
-    io.axi0.get.write <> vcore.get.io.st
-  }
+  io.axi0.read  <> vcore.io.ld
+  io.axi0.write <> vcore.io.st
 
   io.axi1 <> dbus2axi.io.axi
 }

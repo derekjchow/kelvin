@@ -206,9 +206,7 @@ class Decode(p: Parameters, pipeline: Int) extends Module {
     val dvu = Decoupled(new DvuCmd)
 
     // Vector interface.
-    val vinst = if (p.enableVector) {
-      Some(Decoupled(new VInstCmd))
-    } else { None }
+    val vinst = Decoupled(new VInstCmd)
 
     // Branch status.
     val branchTaken = Input(Bool())
@@ -225,7 +223,7 @@ class Decode(p: Parameters, pipeline: Int) extends Module {
   val decodeEn = io.inst.valid && io.inst.ready && !io.branchTaken
 
   // The decode logic.
-  val d = DecodeInstruction(p, pipeline, io.inst.addr, io.inst.inst)
+  val d = DecodeInstruction(pipeline, io.inst.addr, io.inst.inst)
 
   val vldst = d.vld || d.vst
   val vldst_wb = vldst && io.inst.inst(28)
@@ -238,9 +236,7 @@ class Decode(p: Parameters, pipeline: Int) extends Module {
   val isCsrImm = d.isCsr() &&  io.inst.inst(14)
   val isCsrReg = d.isCsr() && !io.inst.inst(14)
 
-  val isVIop = if (p.enableVector) {
-    io.vinst.get.bits.op === VInstOp.VIOP
-  } else { false.B }
+  val isVIop = (io.vinst.bits.op === VInstOp.VIOP)
 
   val isVIopVs1 = isVIop
   val isVIopVs2 = isVIop && io.inst.inst(1,0) === 0.U  // exclude: .vv
@@ -271,10 +267,8 @@ class Decode(p: Parameters, pipeline: Int) extends Module {
 
 
   // Vector extension interlock.
-  val vinstEn = if (p.enableVector) {
-      !(io.serializeIn.vinst || isVIop && io.serializeIn.brcond) &&
-      !(d.isVector() && !io.vinst.get.ready)
-  } else { false.B }
+  val vinstEn = !(io.serializeIn.vinst || isVIop && io.serializeIn.brcond) &&
+                !(d.isVector() && !io.vinst.ready)
 
   // Fence interlock.
   // Input mactive used passthrough, prefer to avoid registers in Decode.
@@ -401,12 +395,10 @@ class Decode(p: Parameters, pipeline: Int) extends Module {
     d.getvl    -> MakeValid(true.B, VInstOp.GETVL),
     d.getmaxvl -> MakeValid(true.B, VInstOp.GETMAXVL),
   ))
-  if (p.enableVector) {
-    io.vinst.get.valid := decodeEn && vinst.valid
-    io.vinst.get.bits.addr := rdAddr
-    io.vinst.get.bits.inst := io.inst.inst
-    io.vinst.get.bits.op := vinst.bits
-  }
+  io.vinst.valid := decodeEn && vinst.valid
+  io.vinst.bits.addr := rdAddr
+  io.vinst.bits.inst := io.inst.inst
+  io.vinst.bits.op := vinst.bits
 
   // Scalar logging.
   io.slog := decodeEn && d.slog
@@ -484,7 +476,7 @@ class Decode(p: Parameters, pipeline: Int) extends Module {
 }
 
 object DecodeInstruction {
-  def apply(p: Parameters, pipeline: Int, addr: UInt, op: UInt): DecodedInstruction = {
+  def apply(pipeline: Int, addr: UInt, op: UInt): DecodedInstruction = {
     val d = Wire(new DecodedInstruction)
 
     // Immediates
@@ -565,35 +557,27 @@ object DecodeInstruction {
     // Decode scalar log.
     val slog = DecodeBits(op, "01111_00_00000_xxxxx_0xx_00000_11101_11")
 
-    if (p.enableVector) {
-      // Vector length.
-      d.getvl    := DecodeBits(op, "0001x_xx_xxxxx_xxxxx_000_xxxxx_11101_11") && op(26,25) =/= 3.U && (op(24,20) =/= 0.U || op(19,15) =/= 0.U)
-      d.getmaxvl := DecodeBits(op, "0001x_xx_00000_00000_000_xxxxx_11101_11") && op(26,25) =/= 3.U
+    // Vector length.
+    d.getvl    := DecodeBits(op, "0001x_xx_xxxxx_xxxxx_000_xxxxx_11101_11") && op(26,25) =/= 3.U && (op(24,20) =/= 0.U || op(19,15) =/= 0.U)
+    d.getmaxvl := DecodeBits(op, "0001x_xx_00000_00000_000_xxxxx_11101_11") && op(26,25) =/= 3.U
 
-      // Vector load/store.
-      d.vld := DecodeBits(op, "000xxx_0xxxxx_xxxxx0_xx_xxxxxx_x_111_11")     // vld
+    // Vector load/store.
+    d.vld := DecodeBits(op, "000xxx_0xxxxx_xxxxx0_xx_xxxxxx_x_111_11")     // vld
 
-      d.vst := DecodeBits(op, "001xxx_0xxxxx_xxxxx0_xx_xxxxxx_x_111_11") ||  // vst
-               DecodeBits(op, "011xxx_0xxxxx_xxxxx0_xx_xxxxxx_x_111_11")     // vstq
+    d.vst := DecodeBits(op, "001xxx_0xxxxx_xxxxx0_xx_xxxxxx_x_111_11") ||  // vst
+             DecodeBits(op, "011xxx_0xxxxx_xxxxx0_xx_xxxxxx_x_111_11")     // vstq
 
-      // Convolution transfer accumulators to vregs. Also decodes acset/actr ops.
-      val vconv = DecodeBits(op, "010100_000000_000000_xx_xxxxxx_x_111_11")
+    // Convolution transfer accumulators to vregs. Also decodes acset/actr ops.
+    val vconv = DecodeBits(op, "010100_000000_000000_xx_xxxxxx_x_111_11")
 
-      // Duplicate
-      val vdup = DecodeBits(op, "01000x_0xxxxx_000000_xx_xxxxxx_x_111_11") && op(13,12) <= 2.U
-      val vdupi = vdup && op(26) === 0.U
+    // Duplicate
+    val vdup = DecodeBits(op, "01000x_0xxxxx_000000_xx_xxxxxx_x_111_11") && op(13,12) <= 2.U
+    val vdupi = vdup && op(26) === 0.U
 
-      // Vector instructions.
-      d.viop := op(0) === 0.U ||     // .vv .vx
-                op(1,0) === 1.U ||  // .vvv .vxv
-                vconv || vdupi
-    } else {
-      d.getvl    := false.B
-      d.getmaxvl := false.B
-      d.vld      := false.B
-      d.vst      := false.B
-      d.viop     := false.B
-    }
+    // Vector instructions.
+    d.viop := op(0) === 0.U ||     // .vv .vx
+              op(1,0) === 1.U ||  // .vvv .vxv
+              vconv || vdupi
 
     // [extensions] Core controls.
     d.ebreak := DecodeBits(op, "000000000001_00000_000_00000_11100_11")

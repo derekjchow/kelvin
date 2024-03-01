@@ -36,11 +36,9 @@ class SCore(p: Parameters) extends Module {
     val ibus = new IBusIO(p)
     val dbus = new DBusIO(p)
     val ubus = new DBusIO(p)
+    val vldst = Output(Bool())
 
-    val vldst = if (p.enableVector) { Some(Output(Bool())) } else { None }
-    val vcore = if (p.enableVector) {
-        Some(Flipped(new VCoreIO(p)))
-    } else { None }
+    val vcore = Flipped(new VCoreIO(p))
 
     val iflush = new IFlushIO(p)
     val dflush = new DFlushIO(p)
@@ -129,7 +127,7 @@ class SCore(p: Parameters) extends Module {
     decode(i).io.scoreboard.regd := regfile.io.scoreboard.regd | scoreboard_spec(i)
   }
 
-  decode(0).io.mactive := (if (p.enableVector) { io.vcore.get.mactive } else { false.B })
+  decode(0).io.mactive := io.vcore.mactive
   for (i <- 1 until p.instructionLanes) {
     decode(i).io.mactive := false.B
   }
@@ -162,10 +160,8 @@ class SCore(p: Parameters) extends Module {
   csr.io.counters.rfwriteCount := regfile.io.rfwriteCount
   csr.io.counters.storeCount := lsu.io.storeCount
   csr.io.counters.branchCount := bru(0).io.taken.valid
-  if (p.enableVector) {
-    csr.io.counters.vrfwriteCount.get := io.vcore.get.vrfwriteCount
-    csr.io.counters.vstoreCount.get := io.vcore.get.vstoreCount
-  }
+  csr.io.counters.vrfwriteCount := io.vcore.vrfwriteCount
+  csr.io.counters.vstoreCount := io.vcore.vstoreCount
 
   // ---------------------------------------------------------------------------
   // Control Status Unit
@@ -174,9 +170,7 @@ class SCore(p: Parameters) extends Module {
   csr.io.req <> decode(0).io.csr
   csr.io.rs1 := regfile.io.readData(0)
 
-  if (p.enableVector) {
-    csr.io.vcore.get.undef := io.vcore.get.undef
-  }
+  csr.io.vcore.undef := io.vcore.undef
 
   // ---------------------------------------------------------------------------
   // Status
@@ -225,35 +219,23 @@ class SCore(p: Parameters) extends Module {
 
     regfile.io.writeData(i).valid := csr0Valid ||
                                      alu(i).io.rd.valid || bru(i).io.rd.valid ||
-                                     (if (p.enableVector) {
-                                        io.vcore.get.rd(i).valid
-                                      } else { false.B })
+                                     io.vcore.rd(i).valid
 
     regfile.io.writeData(i).addr :=
         MuxOR(csr0Valid, csr0Addr) |
         MuxOR(alu(i).io.rd.valid, alu(i).io.rd.addr) |
         MuxOR(bru(i).io.rd.valid, bru(i).io.rd.addr) |
-        (if (p.enableVector) {
-           MuxOR(io.vcore.get.rd(i).valid, io.vcore.get.rd(i).addr)
-         } else { false.B })
-        
+        MuxOR(io.vcore.rd(i).valid, io.vcore.rd(i).addr)
 
     regfile.io.writeData(i).data :=
         MuxOR(csr0Valid, csr0Data) |
         MuxOR(alu(i).io.rd.valid, alu(i).io.rd.data) |
         MuxOR(bru(i).io.rd.valid, bru(i).io.rd.data) |
-        (if (p.enableVector) {
-           MuxOR(io.vcore.get.rd(i).valid, io.vcore.get.rd(i).data)
-         } else { false.B })
+        MuxOR(io.vcore.rd(i).valid, io.vcore.rd(i).data)
 
-    if (p.enableVector) {
-      assert((csr0Valid +&
-              alu(i).io.rd.valid +& bru(i).io.rd.valid +&
-              io.vcore.get.rd(i).valid) <= 1.U)
-    } else {
-      assert((csr0Valid +&
-              alu(i).io.rd.valid +& bru(i).io.rd.valid) <= 1.U)
-    }
+    assert((csr0Valid +&
+            alu(i).io.rd.valid +& bru(i).io.rd.valid +&
+            io.vcore.rd(i).valid) <= 1.U)
   }
 
   val mluDvuOffset = p.instructionLanes
@@ -274,9 +256,12 @@ class SCore(p: Parameters) extends Module {
 
   // ---------------------------------------------------------------------------
   // Vector Extension
-  if (p.enableVector) {
-    io.vcore.get.vinst <> decode.map(_.io.vinst.get)
-    io.vcore.get.rs := regfile.io.readData
+  for (i <- 0 until p.instructionLanes) {
+    io.vcore.vinst(i) <> decode(i).io.vinst
+  }
+
+  for (i <- 0 until p.instructionLanes * 2) {
+    io.vcore.rs(i) := regfile.io.readData(i)
   }
 
   // ---------------------------------------------------------------------------
@@ -288,9 +273,7 @@ class SCore(p: Parameters) extends Module {
   io.dbus <> lsu.io.dbus
   io.ubus <> lsu.io.ubus
 
-  if (p.enableVector) {
-    io.vldst.get := lsu.io.vldst
-  }
+  io.vldst := lsu.io.vldst
 
   // ---------------------------------------------------------------------------
   // Scalar logging interface
