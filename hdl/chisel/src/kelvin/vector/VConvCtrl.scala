@@ -39,7 +39,7 @@ class VConvCtrl(p: Parameters) extends Module {
   })
 
   // A usable depth of outstanding commands.
-  val cmdqDepth = 4
+  val cmdqDepth = p.instructionLanes
 
   val e = new VEncodeOp()
 
