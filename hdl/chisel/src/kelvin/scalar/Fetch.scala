@@ -287,8 +287,8 @@ class Fetch(p: Parameters) extends Module {
     val match1 = l0valid(addr(p.instructionLanes - 1)(indexMsb,indexLsb)) &&
         addr(p.instructionLanes - 1)(tagMsb,tagLsb) === VecAt(l0tag, addr(p.instructionLanes - 1)(indexMsb,indexLsb))
 
-    val vvalid = VecInit((0 until p.instructionLanes).reverse.map(x =>
-      Mux(addr(0)(2 + log2Ceil(p.instructionLanes),2) <= (4+x).U, match0, match1)))
+    val vvalid = VecInit((0 until p.instructionLanes).map(x =>
+      Mux(addr(0)(4,2) <= (7 - x).U, match0, match1)))
 
     val muxbits0 = VecAt(l0data, addr(0)(indexMsb,indexLsb))
     val muxbits1 = VecAt(l0data, addr(p.instructionLanes - 1)(indexMsb,indexLsb))
@@ -314,20 +314,16 @@ class Fetch(p: Parameters) extends Module {
     val valid = branch.map(x => x.valid).reduce(_ || _)
 
 
-    val addr = VecInit((0 until branch.length).map(x =>
-      MuxCase(branch(branch.length - 1).value + (x * 4).U, (
-        (0 until branch.length - 1).map(y =>
-          branch(y).valid -> (branch(y).value + (x * 4).U)
-        )
-      ))))
+    val addrBase = MuxCase(branch(branch.length - 1).value, (0 until branch.length - 1).map(x => branch(x).valid -> branch(x).value))
+    val addr = VecInit((0 until branch.length).map(x => addrBase + (x * 4).U))
 
     val match0 = l0valid(addr(0)(indexMsb,indexLsb)) &&
         addr(0)(tagMsb,tagLsb) === VecAt(l0tag, addr(0)(indexMsb,indexLsb))
     val match1 = l0valid(addr(branch.length - 1)(indexMsb,indexLsb)) &&
         addr(branch.length - 1)(tagMsb,tagLsb) === VecAt(l0tag, addr(branch.length - 1)(indexMsb,indexLsb))
 
-    val vvalid = VecInit((0 until branch.length).reverse.map(x =>
-      Mux(addr(0)(2 + log2Ceil(branch.length),2) <= (4 + x).U, match0, match1)))
+    val vvalid = VecInit((0 until branch.length).map(x =>
+      Mux(addr(0)(4,2) <= (7 - x).U, match0, match1)))
 
     val muxbits0 = VecAt(l0data, addr(0)(indexMsb,indexLsb))
     val muxbits1 = VecAt(l0data, addr(branch.length - 1)(indexMsb,indexLsb))
