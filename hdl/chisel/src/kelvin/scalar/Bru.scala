@@ -105,13 +105,13 @@ class Bru(p: Parameters) extends Module {
   io.interlock := interlock
 
   // Assign state
-  val mode = io.csr.out.mode  // (0) machine, (1) user
+  val mode = io.csr.out.mode
 
   val pcDe  = io.req.bits.pc
   val pc4De = io.req.bits.pc + 4.U
 
-  val mret = (io.req.bits.op === BruOp.MRET) && !mode
-  val call = ((io.req.bits.op === BruOp.MRET) && mode) ||
+  val mret = (io.req.bits.op === BruOp.MRET) && mode === CsrMode.Machine
+  val call = ((io.req.bits.op === BruOp.MRET) && mode === CsrMode.User) ||
       io.req.bits.op.isOneOf(BruOp.EBREAK, BruOp.ECALL, BruOp.EEXIT,
                              BruOp.EYIELD, BruOp.ECTXSW, BruOp.MPAUSE)
 
@@ -152,13 +152,13 @@ class Bru(p: Parameters) extends Module {
   val op = stateReg.bits.op
 
   io.taken.valid := stateReg.valid && MuxLookup(op, false.B)(Seq(
-    BruOp.EBREAK -> mode,
-    BruOp.ECALL  -> mode,
-    BruOp.EEXIT  -> mode,
-    BruOp.EYIELD -> mode,
-    BruOp.ECTXSW -> mode,
-    BruOp.MPAUSE -> mode,  // fault
-    BruOp.MRET   -> true.B,  // fault if user mode.
+    BruOp.EBREAK -> (mode === CsrMode.User),
+    BruOp.ECALL  -> (mode === CsrMode.User),
+    BruOp.EEXIT  -> (mode === CsrMode.User),
+    BruOp.EYIELD -> (mode === CsrMode.User),
+    BruOp.ECTXSW -> (mode === CsrMode.User),
+    BruOp.MPAUSE -> (mode === CsrMode.User),
+    BruOp.MRET   -> (mode === CsrMode.Machine),
     BruOp.FENCEI -> true.B,
     BruOp.JAL    -> (true.B =/= stateReg.bits.fwd),
     BruOp.JALR   -> (true.B =/= stateReg.bits.fwd),
@@ -180,24 +180,25 @@ class Bru(p: Parameters) extends Module {
 
   // Usage Fault.
   val usageFault = stateReg.valid && Mux(
-      mode, op.isOneOf(BruOp.MPAUSE, BruOp.MRET),
+            (mode === CsrMode.User),
+            op.isOneOf(BruOp.MPAUSE, BruOp.MRET),
             op.isOneOf(BruOp.EBREAK, BruOp.ECALL, BruOp.EEXIT, BruOp.EYIELD,
                        BruOp.ECTXSW))
 
   io.csr.in.mode.valid := stateReg.valid && Mux(
-      mode, op.isOneOf(BruOp.EBREAK, BruOp.ECALL, BruOp.EEXIT, BruOp.EYIELD,
+      (mode === CsrMode.User), op.isOneOf(BruOp.EBREAK, BruOp.ECALL, BruOp.EEXIT, BruOp.EYIELD,
                        BruOp.ECTXSW, BruOp.MPAUSE, BruOp.MRET),
             (op === BruOp.MRET))
-  io.csr.in.mode.bits := ((op === BruOp.MRET) && !mode)
+  io.csr.in.mode.bits := Mux(((op === BruOp.MRET) && (mode === CsrMode.Machine)), CsrMode.Machine, CsrMode.User)
 
-  io.csr.in.mepc.valid := stateReg.valid && mode &&
+  io.csr.in.mepc.valid := stateReg.valid && (mode === CsrMode.User) &&
       op.isOneOf(BruOp.EBREAK, BruOp.ECALL, BruOp.EEXIT, BruOp.EYIELD,
                  BruOp.ECTXSW, BruOp.MPAUSE, BruOp.MRET)
   io.csr.in.mepc.bits := Mux(op === BruOp.EYIELD, stateReg.bits.linkData,
                                                   stateReg.bits.pcEx)
 
   io.csr.in.mcause.valid := stateReg.valid && (undefFault || usageFault ||
-      (mode && op.isOneOf(BruOp.EBREAK, BruOp.ECALL, BruOp.EEXIT, BruOp.EYIELD,
+      ((mode === CsrMode.User) && op.isOneOf(BruOp.EBREAK, BruOp.ECALL, BruOp.EEXIT, BruOp.EYIELD,
                           BruOp.ECTXSW)))
 
   val faultMsb = 1.U << 31
@@ -217,9 +218,9 @@ class Bru(p: Parameters) extends Module {
   io.iflush := stateReg.valid && (op === BruOp.FENCEI)
 
   // Pipeline will be halted.
-  io.csr.in.halt := (stateReg.valid && (op === BruOp.MPAUSE) && !mode) ||
+  io.csr.in.halt := (stateReg.valid && (op === BruOp.MPAUSE) && (mode === CsrMode.Machine)) ||
                     io.csr.in.fault
-  io.csr.in.fault := (undefFault && !mode) || (usageFault && !mode)
+  io.csr.in.fault := (undefFault && (mode === CsrMode.Machine)) || (usageFault && (mode === CsrMode.Machine))
 
   // Assertions.
   val ignore = op.isOneOf(BruOp.JAL, BruOp.JALR, BruOp.EBREAK, BruOp.ECALL,

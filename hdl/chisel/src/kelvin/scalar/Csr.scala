@@ -30,6 +30,11 @@ object CsrOp extends ChiselEnum {
   val CSRRC = Value
 }
 
+object CsrMode extends ChiselEnum {
+  val Machine = Value(0.U(1.W))
+  val User = Value(1.U(1.W))
+}
+
 class CsrInIO(p: Parameters) extends Bundle {
   val value = Input(Vec(12, UInt(32.W)))
 }
@@ -57,7 +62,7 @@ class CsrCounters(p: Parameters) extends Bundle {
 
 class CsrBruIO(p: Parameters) extends Bundle {
   val in = new Bundle {
-    val mode   = Valid(Bool())
+    val mode   = Valid(CsrMode())
     val mcause = Valid(UInt(32.W))
     val mepc   = Valid(UInt(32.W))
     val mtval  = Valid(UInt(32.W))
@@ -65,12 +70,12 @@ class CsrBruIO(p: Parameters) extends Bundle {
     val fault  = Output(Bool())
   }
   val out = new Bundle {
-    val mode  = Input(Bool())
+    val mode  = Input(CsrMode())
     val mepc  = Input(UInt(32.W))
     val mtvec = Input(UInt(32.W))
   }
   def defaults() = {
-    out.mode := false.B
+    out.mode := CsrMode.Machine
     out.mepc := 0.U
     out.mtvec := 0.U
   }
@@ -115,7 +120,7 @@ class Csr(p: Parameters) extends Module {
   val fault = RegInit(false.B)
 
   // Machine(0)/User(1) Mode.
-  val mode = RegInit(false.B)
+  val mode = RegInit(CsrMode.Machine)
 
   // CSRs parallel loaded when(reset).
   val mpc       = Reg(UInt(32.W))
