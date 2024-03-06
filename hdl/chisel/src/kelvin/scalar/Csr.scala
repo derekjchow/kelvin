@@ -301,13 +301,14 @@ class Csr(p: Parameters) extends Module {
     mode := io.bru.in.mode.bits
   }
 
-  val firstFault = !mcause(31)
+  // High bit of mcause is set for an external interrupt.
+  val interrupt = mcause(31)
 
-  when (io.bru.in.mcause.valid && firstFault) {
+  when (io.bru.in.mcause.valid) {
     mcause := io.bru.in.mcause.bits
   }
 
-  when (io.bru.in.mtval.valid && firstFault) {
+  when (io.bru.in.mtval.valid) {
     mtval := io.bru.in.mtval.bits
   }
 
@@ -333,8 +334,8 @@ class Csr(p: Parameters) extends Module {
 
   // Forwarding.
   io.bru.out.mode  := mode
-  io.bru.out.mepc  := Mux(mepcEn, wdata, mepc)
-  io.bru.out.mtvec := Mux(mtvecEn, wdata, mtvec)
+  io.bru.out.mepc  := Mux(mepcEn && req.valid, wdata, mepc)
+  io.bru.out.mtvec := Mux(mtvecEn && req.valid, wdata, mtvec)
 
   io.csr.out.value(0) := mpc
   io.csr.out.value(1) := msp

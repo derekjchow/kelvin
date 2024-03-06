@@ -111,8 +111,9 @@ class Bru(p: Parameters) extends Module {
   val pc4De = io.req.bits.pc + 4.U
 
   val mret = (io.req.bits.op === BruOp.MRET) && mode === CsrMode.Machine
+  val ecall = io.req.bits.op === BruOp.ECALL
   val call = ((io.req.bits.op === BruOp.MRET) && mode === CsrMode.User) ||
-      io.req.bits.op.isOneOf(BruOp.EBREAK, BruOp.ECALL, BruOp.EEXIT,
+      io.req.bits.op.isOneOf(BruOp.EBREAK, BruOp.EEXIT,
                              BruOp.EYIELD, BruOp.ECTXSW, BruOp.MPAUSE)
 
   val stateReg = RegInit(MakeValid(false.B, BranchState.default(p)))
@@ -129,6 +130,7 @@ class Bru(p: Parameters) extends Module {
 
   nextState.target := MuxCase(io.req.bits.target, Seq(
       mret -> io.csr.out.mepc,
+      ecall -> Cat(io.csr.out.mtvec(31,1), 0.U(1.W)),
       call -> io.csr.out.mepc,
       (io.req.bits.fwd || (io.req.bits.op === BruOp.FENCEI)) -> pc4De,
       (io.req.bits.op === BruOp.JALR) -> io.target.data,
@@ -153,7 +155,8 @@ class Bru(p: Parameters) extends Module {
 
   io.taken.valid := stateReg.valid && MuxLookup(op, false.B)(Seq(
     BruOp.EBREAK -> (mode === CsrMode.User),
-    BruOp.ECALL  -> (mode === CsrMode.User),
+    // Any mode can execute `ecall`, but the value of `mcause` will be different.
+    BruOp.ECALL  -> true.B,
     BruOp.EEXIT  -> (mode === CsrMode.User),
     BruOp.EYIELD -> (mode === CsrMode.User),
     BruOp.ECTXSW -> (mode === CsrMode.User),
@@ -182,7 +185,7 @@ class Bru(p: Parameters) extends Module {
   val usageFault = stateReg.valid && Mux(
             (mode === CsrMode.User),
             op.isOneOf(BruOp.MPAUSE, BruOp.MRET),
-            op.isOneOf(BruOp.EBREAK, BruOp.ECALL, BruOp.EEXIT, BruOp.EYIELD,
+            op.isOneOf(BruOp.EBREAK, BruOp.EEXIT, BruOp.EYIELD,
                        BruOp.ECTXSW))
 
   io.csr.in.mode.valid := stateReg.valid && Mux(
@@ -191,25 +194,29 @@ class Bru(p: Parameters) extends Module {
             (op === BruOp.MRET))
   io.csr.in.mode.bits := Mux(((op === BruOp.MRET) && (mode === CsrMode.Machine)), CsrMode.Machine, CsrMode.User)
 
-  io.csr.in.mepc.valid := stateReg.valid && (mode === CsrMode.User) &&
-      op.isOneOf(BruOp.EBREAK, BruOp.ECALL, BruOp.EEXIT, BruOp.EYIELD,
-                 BruOp.ECTXSW, BruOp.MPAUSE, BruOp.MRET)
-  io.csr.in.mepc.bits := Mux(op === BruOp.EYIELD, stateReg.bits.linkData,
-                                                  stateReg.bits.pcEx)
+  io.csr.in.mepc.valid := stateReg.valid && op === BruOp.ECALL
+  io.csr.in.mepc.bits := stateReg.bits.pcEx
 
   io.csr.in.mcause.valid := stateReg.valid && (undefFault || usageFault ||
-      ((mode === CsrMode.User) && op.isOneOf(BruOp.EBREAK, BruOp.ECALL, BruOp.EEXIT, BruOp.EYIELD,
-                          BruOp.ECTXSW)))
+    op.isOneOf(BruOp.ECALL) ||
+    ((mode === CsrMode.User) &&
+          /* user mode mcause triggers */
+          op.isOneOf(BruOp.EBREAK,
+                     BruOp.EEXIT, BruOp.EYIELD,
+                     BruOp.ECTXSW),
+    )
+  )
 
-  val faultMsb = 1.U << 31
   io.csr.in.mcause.bits := MuxCase(0.U, Seq(
-      undefFault        -> (2.U  | faultMsb),
-      usageFault        -> (16.U | faultMsb),
-      (op === BruOp.EBREAK) -> 1.U,
-      (op === BruOp.ECALL)  -> 2.U,
-      (op === BruOp.EEXIT)  -> 3.U,
-      (op === BruOp.EYIELD) -> 4.U,
-      (op === BruOp.ECTXSW) -> 5.U,
+      (op === BruOp.EBREAK) -> 3.U,
+      (op === BruOp.ECALL && mode === CsrMode.Machine)  -> 11.U,
+      (op === BruOp.ECALL && mode === CsrMode.User)  -> 8.U,
+      // Kelvin-specific things, use the custom reserved region of the encoding space.
+      undefFault            -> (24 + 0).U,
+      usageFault            -> (24 + 1).U,
+      (op === BruOp.EEXIT)  -> (24 + 2).U,
+      (op === BruOp.EYIELD) -> (24 + 3).U,
+      (op === BruOp.ECTXSW) -> (24 + 4).U,
   ))
 
   io.csr.in.mtval.valid := stateReg.valid && (undefFault || usageFault)
