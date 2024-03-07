@@ -12,19 +12,21 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-load("@kelvin_hw//rules:chisel.bzl",
+load(
+    "@kelvin_hw//rules:chisel.bzl",
     "chisel_binary",
     "chisel_cc_library",
     "chisel_library",
-    "chisel_test")
+    "chisel_test",
+)
 
 package(default_visibility = ["//visibility:public"])
 
 chisel_library(
     name = "kelvin_float",
     srcs = [
-        "scalar/Fpu.scala",
         "scalar/FRegfile.scala",
+        "scalar/Fpu.scala",
     ],
     deps = [
         ":kelvin",
@@ -36,13 +38,23 @@ chisel_library(
 chisel_test(
     name = "kelvin_float_tests",
     srcs = [
-        "scalar/FpuTest.scala",
         "scalar/FRegfileTest.scala",
+        "scalar/FpuTest.scala",
     ],
     deps = [
         ":kelvin",
         ":kelvin_float",
         "//hdl/chisel/src/common:fp",
+    ],
+)
+
+chisel_test(
+    name = "kelvin_scalar_tests",
+    srcs = [
+        "scalar/MluTest.scala",
+    ],
+    deps = [
+        ":kelvin",
     ],
 )
 
@@ -72,16 +84,16 @@ chisel_library(
         "scalar/Regfile.scala",
         "scalar/SCore.scala",
         "scalar/SLog.scala",
-        "vector/VAluInt.scala",
         "vector/VAlu.scala",
+        "vector/VAluInt.scala",
         "vector/VCmdq.scala",
         "vector/VCommon.scala",
         "vector/VConvAlu.scala",
         "vector/VConvCtrl.scala",
         "vector/VCore.scala",
+        "vector/VDecode.scala",
         "vector/VDecodeInstruction.scala",
         "vector/VDecodeOp.scala",
-        "vector/VDecode.scala",
         "vector/VDot.scala",
         "vector/VEncodeOp.scala",
         "vector/VInst.scala",
@@ -92,7 +104,7 @@ chisel_library(
         "vector/VSt.scala",
     ],
     deps = [
-        "//hdl/chisel/src/common:common",
+        "//hdl/chisel/src/common",
     ],
 )
 
@@ -226,10 +238,10 @@ chisel_cc_library(
 
 chisel_binary(
     name = "emit_parameters_header",
+    main_class = "kelvin.EmitParametersHeader",
     deps = [
         ":kelvin",
     ],
-    main_class = "kelvin.EmitParametersHeader",
 )
 
 genrule(
@@ -237,7 +249,7 @@ genrule(
     outs = [
         "kelvin_parameters.h",
     ],
-    tools = [":emit_parameters_header"],
     cmd = "$(location :emit_parameters_header) > $(location kelvin_parameters.h)",
+    tools = [":emit_parameters_header"],
     visibility = ["//visibility:public"],
 )
