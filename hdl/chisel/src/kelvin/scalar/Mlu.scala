@@ -43,86 +43,94 @@ class MluCmd extends Bundle {
   val op = MluOp()
 }
 
+class MluStage1(p: Parameters) extends Bundle {
+  val rd = UInt(5.W)
+  val op = MluOp()
+  val sel = UInt(p.instructionLanes.W)
+}
+
+class MluStage2(p: Parameters) extends Bundle {
+  val rd = UInt(5.W)
+  val mul = UInt(32.W)
+  val round = UInt(1.W)
+}
+
 class Mlu(p: Parameters) extends Module {
   val io = IO(new Bundle {
     // Decode cycle.
-    val req = Flipped(Vec(p.instructionLanes, Valid(new MluCmd)))
+    val req = Vec(p.instructionLanes, Flipped(Decoupled(new MluCmd)))
 
     // Execute cycle.
     val rs1 = Vec(p.instructionLanes, Flipped(new RegfileReadDataIO))
     val rs2 = Vec(p.instructionLanes, Flipped(new RegfileReadDataIO))
-    val rd  = Valid(Flipped(new RegfileWriteDataIO))
+    val rd  = Decoupled(Flipped(new RegfileWriteDataIO))
   })
 
-  val op = Reg(MluOp())
-  val valid1 = RegInit(false.B)
-  val valid2 = RegInit(false.B)
-  val addr1 = Reg(UInt(5.W))
-  val addr2 = Reg(UInt(5.W))
-  val sel = Reg(UInt(p.instructionLanes.W))
+  // Stage 1 select and decode instruction
+  val arb = Module(new Arbiter(new MluCmd, p.instructionLanes))
+  arb.io.in <> io.req
 
-  val valids = io.req.map(_.valid)
-  assert(valids.length == p.instructionLanes)
-  valid1 := io.req.map(_.valid).reduce(_||_)
-  valid2 := valid1
+  val stage1 = Wire(Decoupled(new MluStage1(p)))
+  stage1.valid := arb.io.out.valid
+  stage1.bits.rd := arb.io.out.bits.addr
+  stage1.bits.op := arb.io.out.bits.op
+  stage1.bits.sel := UIntToOH(arb.io.chosen)
+  arb.io.out.ready := stage1.ready
+  val stage2Input = Queue(stage1, 1, true)
 
-  when (valids.reduce(_||_)) {
-    val idx = PriorityEncoder(valids)
-    op := io.req(idx).bits.op
-    addr1 := io.req(idx).bits.addr
-    sel := (1.U << idx)
-  }
+  // Stage 2 do multiplication
+  val valid2in = stage2Input.valid
+  val op2in = stage2Input.bits.op
+  val addr2in = stage2Input.bits.rd
+  val sel2in = stage2Input.bits.sel
 
-  val rs1 = (0 until p.instructionLanes).map(x => MuxOR(valid1 & sel(x), io.rs1(x).data)).reduce(_ | _)
-  val rs2 = (0 until p.instructionLanes).map(x => MuxOR(valid1 & sel(x), io.rs2(x).data)).reduce(_ | _)
 
+  val rs1 = (0 until p.instructionLanes).map(x => MuxOR(valid2in & sel2in(x), io.rs1(x).data)).reduce(_ | _)
+  val rs2 = (0 until p.instructionLanes).map(x => MuxOR(valid2in & sel2in(x), io.rs2(x).data)).reduce(_ | _)
+
+  val rs2signed = op2in.isOneOf(MluOp.MULH, MluOp.MULHR, MluOp.DMULH, MluOp.DMULHR)
+  val rs1signed = op2in.isOneOf(MluOp.MULHSU, MluOp.MULHSUR) || rs2signed
+  val rs1s = Cat(rs1signed && rs1(31), rs1).asSInt
+  val rs2s = Cat(rs2signed && rs2(31), rs2).asSInt
+  val prod = rs1s * rs2s
+  assert(prod.getWidth == 66)
+
+  val round = prod(30) && op2in.isOneOf(MluOp.DMULHR) ||
+              prod(31) && (op2in.isOneOf(MluOp.MULHR, MluOp.MULHSUR, MluOp.MULHUR))
+
+  val maxneg = 2.U(2.W)
+  val halfneg = 1.U(2.W)
+  val sat = rs1(29,0) === 0.U && rs2(29,0) === 0.U &&
+            (rs1(31,30) === maxneg && rs2(31,30) === maxneg ||
+              rs1(31,30) === maxneg && rs2(31,30) === halfneg ||
+              rs2(31,30) === maxneg && rs1(31,30) === halfneg)
+
+  val mul = MuxCase(0.U(32.W), Seq(
+    (op2in === MluOp.MUL) -> prod(31, 0),
+    op2in.isOneOf(MluOp.MULH, MluOp.MULHSU, MluOp.MULHU, MluOp.MULHR, MluOp.MULHSUR, MluOp.MULHUR) -> prod(63,32),
+    op2in.isOneOf(MluOp.DMULH, MluOp.DMULHR) -> Mux(sat, Mux(prod(65), 0x7fffffff.U(32.W), Cat(1.U(1.W), 0.U(31.W))), prod(62,31))
+  ))
+
+  val stage2 = Wire(Decoupled(new MluStage2(p)))
+  stage2.valid := valid2in
+  stage2.bits.rd := addr2in
+  stage2.bits.mul := mul
+  stage2.bits.round := round
+  stage2Input.ready := stage2.ready
+  val stage3 = Queue(stage2, 1, true)
+
+  // Stage 3 output result
   // Multiplier has a registered output.
-  val mul2 = Reg(UInt(32.W))
-  val round2 = Reg(UInt(1.W))
+  stage3.ready := io.rd.ready
 
-  when (valid1) {
-    val rs2signed = op.isOneOf(MluOp.MULH, MluOp.MULHR, MluOp.DMULH, MluOp.DMULHR)
-    val rs1signed = op.isOneOf(MluOp.MULHSU, MluOp.MULHSUR) || rs2signed
-    val rs1s = Cat(rs1signed && rs1(31), rs1).asSInt
-    val rs2s = Cat(rs2signed && rs2(31), rs2).asSInt
-    val prod = rs1s.asSInt * rs2s.asSInt
-    assert(prod.getWidth == 66)
-
-    addr2 := addr1
-    round2 := prod(30) && op.isOneOf(MluOp.DMULHR) ||
-              prod(31) && (op.isOneOf(MluOp.MULHR, MluOp.MULHSUR, MluOp.MULHUR))
-
-    when (op === MluOp.MUL) {
-      mul2 := prod(31,0)
-    } .elsewhen (op.isOneOf(MluOp.MULH, MluOp.MULHSU, MluOp.MULHU, MluOp.MULHR, MluOp.MULHSUR, MluOp.MULHUR)) {
-      mul2 := prod(63,32)
-    } .elsewhen (op.isOneOf(MluOp.DMULH, MluOp.DMULHR)) {
-      val maxneg = 2.U(2.W)
-      val halfneg = 1.U(2.W)
-      val sat = rs1(29,0) === 0.U && rs2(29,0) === 0.U &&
-                (rs1(31,30) === maxneg && rs2(31,30) === maxneg ||
-                 rs1(31,30) === maxneg && rs2(31,30) === halfneg ||
-                 rs2(31,30) === maxneg && rs1(31,30) === halfneg)
-      when (sat) {
-        when (prod(65)) {
-          mul2 := 0x7fffffff.U(32.W)
-        } .otherwise {
-          mul2 := Cat(1.U(1.W), 0.U(31.W))
-        }
-      } .otherwise {
-        mul2 := prod(62,31)
-      }
-    }
-  }
-
-  io.rd.valid := valid2
-  io.rd.bits.addr  := addr2
-  io.rd.bits.data  := mul2 + round2
+  io.rd.valid     := stage3.valid
+  io.rd.bits.addr := stage3.bits.rd
+  io.rd.bits.data := stage3.bits.mul + stage3.bits.round
 
   // Assertions.
   for (i <- 0 until p.instructionLanes) {
-    assert(!(valid1 && sel(i) && !io.rs1(i).valid))
-    assert(!(valid1 && sel(i) && !io.rs2(i).valid))
+    assert(!(valid2in && sel2in(i) && !io.rs1(i).valid))
+    assert(!(valid2in && sel2in(i) && !io.rs2(i).valid))
   }
 }
 

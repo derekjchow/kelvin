@@ -47,6 +47,7 @@ class MluSpec extends AnyFreeSpec with ChiselScalatestTester {
 
         dut.clock.step()
         dut.io.req(0).valid.poke(false.B)
+        dut.io.rd.ready.poke(true.B)
 
         dut.clock.step()
         assertResult(1) { dut.io.rd.valid.peekInt() }
@@ -55,6 +56,7 @@ class MluSpec extends AnyFreeSpec with ChiselScalatestTester {
 
         dut.clock.step()
         assertResult(0) { dut.io.rd.valid.peekInt() }
+        dut.io.rd.ready.poke(false.B)
     }
   }
 }

@@ -191,7 +191,7 @@ class SCore(p: Parameters) extends Module {
   // ---------------------------------------------------------------------------
   // Multiplier Unit
   for (i <- 0 until p.instructionLanes) {
-    mlu.io.req(i) := decode(i).io.mlu
+    mlu.io.req(i) <> decode(i).io.mlu
     mlu.io.rs1(i) := regfile.io.readData(2 * i)
     mlu.io.rs2(i) := regfile.io.readData((2 * i) + 1)
   }
@@ -256,10 +256,13 @@ class SCore(p: Parameters) extends Module {
   }
 
   val mluDvuOffset = p.instructionLanes
-  regfile.io.writeData(mluDvuOffset).valid := mlu.io.rd.valid || dvu.io.rd.valid
-  regfile.io.writeData(mluDvuOffset).bits.addr := Mux(mlu.io.rd.valid, mlu.io.rd.bits.addr, dvu.io.rd.bits.addr)
-  regfile.io.writeData(mluDvuOffset).bits.data := Mux(mlu.io.rd.valid, mlu.io.rd.bits.data, dvu.io.rd.bits.data)
-  assert(!(mlu.io.rd.valid && (dvu.io.rd.valid && dvu.io.rd.ready)))  // TODO: stall dvu on mlu write
+  val arb = Module(new Arbiter(new RegfileWriteDataIO, 2))
+  arb.io.in(0) <> mlu.io.rd
+  arb.io.in(1) <> dvu.io.rd
+  arb.io.out.ready := true.B
+  regfile.io.writeData(mluDvuOffset).valid := arb.io.out.valid
+  regfile.io.writeData(mluDvuOffset).bits.addr := arb.io.out.bits.addr
+  regfile.io.writeData(mluDvuOffset).bits.data := arb.io.out.bits.data
 
   val lsuOffset = p.instructionLanes + 1
   regfile.io.writeData(lsuOffset).valid := lsu.io.rd.valid

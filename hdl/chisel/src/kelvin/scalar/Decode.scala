@@ -200,7 +200,7 @@ class Decode(p: Parameters, pipeline: Int) extends Module {
     val lsu = Decoupled(new LsuCmd)
 
     // Multiplier interface.
-    val mlu = Valid(new MluCmd)
+    val mlu = Decoupled(new MluCmd)
 
     // Divide interface.
     val dvu = Decoupled(new DvuCmd)
