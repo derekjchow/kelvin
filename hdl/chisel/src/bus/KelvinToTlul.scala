@@ -12,29 +12,31 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package chai
+package bus
 
 import chisel3._
 import chisel3.util._
+
+import bus._
 
 object KelvinToTlul {
   object State extends ChiselEnum {
     val sIdle, sWaitForReady, sWaitForResponse = Value
   }
 
-  def apply(tlul_p: kelvin.TLULParameters, kelvin_p: kelvin.Parameters): KelvinToTlul = {
+  def apply(tlul_p: TLULParameters, kelvin_p: kelvin.Parameters): KelvinToTlul = {
     return Module(new KelvinToTlul(tlul_p, kelvin_p))
   }
 }
 
-class KelvinToTlul(tlul_p: kelvin.TLULParameters, kelvin_p: kelvin.Parameters) extends Module {
+class KelvinToTlul(tlul_p: TLULParameters, kelvin_p: kelvin.Parameters) extends Module {
   import KelvinToTlul.State
   import KelvinToTlul.State._
 
   val io = IO(new Bundle {
-    val tl_i = Input(new _root_.kelvin.TileLinkULIO_D2H(tlul_p))
-    val tl_o = Output(new _root_.kelvin.TileLinkULIO_H2D(tlul_p))
-    val kelvin = Flipped(new matcha.KelvinMemIO(kelvin_p))
+    val tl_i = Input(new TileLinkULIO_D2H(tlul_p))
+    val tl_o = Output(new TileLinkULIO_H2D(tlul_p))
+    val kelvin = Flipped(new KelvinMemIO(kelvin_p))
   })
   val state = RegInit(sIdle)
 
@@ -43,7 +45,7 @@ class KelvinToTlul(tlul_p: kelvin.TLULParameters, kelvin_p: kelvin.Parameters) e
     .map(x => Mux(io.kelvin.wmask(x), 0xff.U(wmask_width.W) << (x * 8).U, 0.U(wmask_width.W)))
     .reduce(_ | _)
 
-  io.tl_o := 0.U.asTypeOf(new kelvin.TileLinkULIO_H2D(tlul_p))
+  io.tl_o := 0.U.asTypeOf(new TileLinkULIO_H2D(tlul_p))
   io.tl_o.a_user.instr_type := 9.U
   io.tl_o.a_source := 0.U
   io.tl_o.d_ready := true.B
@@ -68,7 +70,7 @@ class KelvinToTlul(tlul_p: kelvin.TLULParameters, kelvin_p: kelvin.Parameters) e
         io.tl_o.a_valid := true.B
         io.tl_o.a_address := io.kelvin.caddr
         val cwrite = io.kelvin.cwrite
-        io.tl_o.a_opcode := Mux(cwrite, kelvin.TLULOpcodesA.PutFullData.asUInt, kelvin.TLULOpcodesA.Get.asUInt)
+        io.tl_o.a_opcode := Mux(cwrite, TLULOpcodesA.PutFullData.asUInt, TLULOpcodesA.Get.asUInt)
         io.tl_o.a_data := Mux(cwrite, io.kelvin.wdata & wmask_bits, 0.U)
         state := Mux(io.tl_i.a_ready, sWaitForResponse, sWaitForReady)
       }
@@ -81,26 +83,26 @@ class KelvinToTlul(tlul_p: kelvin.TLULParameters, kelvin_p: kelvin.Parameters) e
     is(sWaitForResponse) {
       io.tl_o.a_valid := false.B
       when(io.tl_i.d_valid) {
-        val (value, valid) = kelvin.TLULOpcodesD.safe(io.tl_i.d_opcode)
-        val valid2 = valid && (value =/= kelvin.TLULOpcodesD.End)
+        val (value, valid) = TLULOpcodesD.safe(io.tl_i.d_opcode)
+        val valid2 = valid && (value =/= TLULOpcodesD.End)
         assert(valid2, "Received invalid TLUL-D opcode\n")
 
         val rdata = chisel3.util.MuxLookup(value, 0.U(32.W))(
           Array(
-            kelvin.TLULOpcodesD.AccessAck -> 0.U,
-            kelvin.TLULOpcodesD.AccessAckData -> io.tl_i.d_data
+            TLULOpcodesD.AccessAck -> 0.U,
+            TLULOpcodesD.AccessAckData -> io.tl_i.d_data
           )
         )
         val rvalid = chisel3.util.MuxLookup(value, false.B)(
           Array(
-            kelvin.TLULOpcodesD.AccessAck -> false.B,
-            kelvin.TLULOpcodesD.AccessAckData -> true.B
+            TLULOpcodesD.AccessAck -> false.B,
+            TLULOpcodesD.AccessAckData -> true.B
           )
         )
         val rid = chisel3.util.MuxLookup(value, 0.U)(
           Array(
-            kelvin.TLULOpcodesD.AccessAck -> 0.U,
-            kelvin.TLULOpcodesD.AccessAckData -> io.kelvin.cid
+            TLULOpcodesD.AccessAck -> 0.U,
+            TLULOpcodesD.AccessAckData -> io.kelvin.cid
           )
         )
         io.kelvin.rvalid := rvalid

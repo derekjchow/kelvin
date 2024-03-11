@@ -18,6 +18,8 @@ package kelvin
 
 import chisel3._
 import chisel3.util._
+
+import bus._
 import common._
 
 object VCore {

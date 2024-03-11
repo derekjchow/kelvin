@@ -17,13 +17,15 @@ package chai
 import chisel3._
 import chisel3.util._
 
-class Uart(tlul_p: kelvin.TLULParameters) extends BlackBox {
+import bus._
+
+class Uart(tlul_p: TLULParameters) extends BlackBox {
   val io = IO(new Bundle {
     val clk_i = Input(Clock())
     val rst_ni = Input(AsyncReset())
 
-    val tl_i = Input(new kelvin.TileLinkULIO_H2D(tlul_p))
-    val tl_o = Output(new kelvin.TileLinkULIO_D2H(tlul_p))
+    val tl_i = Input(new TileLinkULIO_H2D(tlul_p))
+    val tl_o = Output(new TileLinkULIO_D2H(tlul_p))
 
     // These have some alert_{rx|tx}_t types.
     val alert_rx_i = Input(UInt(4.W))

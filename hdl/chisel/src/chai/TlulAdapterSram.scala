@@ -17,6 +17,8 @@ package chai
 import chisel3._
 import chisel3.util._
 
+import bus._
+
 package object sram_params {
   val SramAw = 17
   val SramDw = 256
@@ -27,14 +29,14 @@ package object sram_params {
 }
 
 class TlulAdapterSram extends BlackBox {
-  val tlul_p = new kelvin.TLULParameters()
+  val tlul_p = new TLULParameters()
   val io = IO(new Bundle {
     val clk_i = Input(Clock())
     val rst_ni = Input(AsyncReset())
 
     // TL-UL
-    val tl_i = Input(new kelvin.TileLinkULIO_H2D(tlul_p))
-    val tl_o = Output(new kelvin.TileLinkULIO_D2H(tlul_p))
+    val tl_i = Input(new TileLinkULIO_H2D(tlul_p))
+    val tl_o = Output(new TileLinkULIO_D2H(tlul_p))
 
     // control
     val en_ifetch_i = Input(UInt(4.W)) // mubi4_t

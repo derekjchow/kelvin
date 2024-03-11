@@ -25,6 +25,7 @@ chisel_library(
         "MatchaParameters.scala",
     ],
     deps = [
+        "//hdl/chisel/src/bus:bus",
         "//hdl/chisel/src/common:common",
         "//hdl/chisel/src/kelvin:kelvin",
     ],

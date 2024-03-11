@@ -61,7 +61,6 @@ chisel_test(
 chisel_library(
     name = "kelvin",
     srcs = [
-        "Axi.scala",
         "ClockGate.scala",
         "Core.scala",
         "DBus2Axi.scala",
@@ -70,7 +69,6 @@ chisel_library(
         "L1ICache.scala",
         "Library.scala",
         "Parameters.scala",
-        "TileLinkUL.scala",
         "scalar/Alu.scala",
         "scalar/Bru.scala",
         "scalar/Csr.scala",
@@ -104,7 +102,17 @@ chisel_library(
         "vector/VSt.scala",
     ],
     deps = [
+        "//hdl/chisel/src/bus",
         "//hdl/chisel/src/common",
+    ],
+)
+
+chisel_library(
+    name = "kelvin_params",
+    srcs = [
+        "Parameters.scala",
+    ],
+    deps = [
     ],
 )
 

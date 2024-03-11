@@ -16,6 +16,8 @@ package chai
 
 import chisel3._
 import chisel3.util._
+
+import bus._
 import _root_.circt.stage.ChiselStage
 
 case class Parameters() {
@@ -76,8 +78,8 @@ class ChAI(p: Parameters) extends RawModule {
   io.fault := u_kelvin.fault
 
   withClockAndReset(io.clk_i, rst_i) {
-    val tlul_p = new kelvin.TLULParameters()
-    val kelvin_to_tlul = chai.KelvinToTlul(tlul_p, kelvin_p)
+    val tlul_p = new TLULParameters()
+    val kelvin_to_tlul = KelvinToTlul(tlul_p, kelvin_p)
     kelvin_to_tlul.io.kelvin <> u_kelvin.mem
 
     val tlul_sram =
@@ -104,7 +106,7 @@ class ChAI(p: Parameters) extends RawModule {
     io.uart_tx := uart.io.cio_tx_o
 
     val crossbar =
-      Module(new kelvin.TileLinkUL(tlul_p, kelvin_p.m, /* hosts= */ 1))
+      Module(new TileLinkUL(tlul_p, kelvin_p.m, /* hosts= */ 1))
     crossbar.io.hosts_a(0) <> kelvin_to_tlul.io.tl_o
     crossbar.io.hosts_d(0) <> kelvin_to_tlul.io.tl_i
     crossbar.io.devices_a(0) <> tlul_adapter_sram.io.tl_i

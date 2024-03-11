@@ -12,34 +12,22 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-load("@kelvin_hw//rules:chisel.bzl", "chisel_cc_library", "chisel_library")
+load(
+    "@kelvin_hw//rules:chisel.bzl",
+    "chisel_library",
+)
 
 package(default_visibility = ["//visibility:public"])
 
 chisel_library(
-    name = "chai",
+    name = "bus",
     srcs = [
-        "ChAI.scala",
-        "TlulAdapterSram.scala",
-        "Uart.scala",
+        "Axi.scala",
+        "KelvinMemIO.scala",
+        "KelvinToTlul.scala",
+        "TileLinkUL.scala",
     ],
     deps = [
-        "//hdl/chisel/src/bus:bus",
-        "//hdl/chisel/src/kelvin:kelvin",
-        "//hdl/chisel/src/matcha:matcha",
-    ],
-)
-
-chisel_cc_library(
-    name = "chai_cc_library",
-    chisel_lib = ":chai",
-    emit_class = "chai.EmitChAI",
-    module_name = "ChAI",
-    verilog_deps = [
-        "//hdl/verilog:clock_gate",
-        "//hdl/verilog:sram_1rw_256x256",
-        "//hdl/verilog:sram_1rw_256x288",
-        "//hdl/verilog:tlul_adapter_sram",
-        "//hdl/verilog:uart",
+        "//hdl/chisel/src/kelvin:kelvin_params",
     ],
 )

@@ -16,21 +16,10 @@ package matcha
 
 import chisel3._
 import chisel3.util._
+
+import bus.KelvinMemIO
 import common._
 import _root_.circt.stage.ChiselStage
-
-class KelvinMemIO(p: kelvin.Parameters) extends Bundle {
-  val cvalid = (Output(Bool()))
-  val cready = (Input(Bool()))
-  val cwrite = (Output(Bool()))
-  val caddr  = (Output(UInt(p.axiSysAddrBits.W)))
-  val cid    = (Output(UInt(p.axiSysIdBits.W)))
-  val wdata  = (Output(UInt(p.axiSysDataBits.W)))
-  val wmask  = (Output(UInt((p.axiSysDataBits / 8).W)))
-  val rvalid = (Input(Bool()))
-  val rid    = (Input(UInt(p.axiSysIdBits.W)))
-  val rdata  = (Input(UInt(p.axiSysDataBits.W)))
-}
 
 object Kelvin {
   def apply(p: kelvin.Parameters): Kelvin = {
@@ -105,7 +94,7 @@ class Kelvin(p: kelvin.Parameters) extends RawModule {
     slog   := core.io.slog
 
     // -------------------------------------------------------------------------
-    // Debug Request.
+    // Debug Interface.
     core.io.debug_req   := debug_req
 
     // -------------------------------------------------------------------------

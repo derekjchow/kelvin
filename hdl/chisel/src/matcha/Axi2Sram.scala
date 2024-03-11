@@ -16,7 +16,10 @@ package matcha
 
 import chisel3._
 import chisel3.util._
+
+import bus._
 import common._
+import kelvin._
 import _root_.circt.stage.ChiselStage
 
 object Axi2Sram {
@@ -29,14 +32,14 @@ object Axi2Sram {
 class Axi2Sram(p: kelvin.Parameters) extends Module {
   val io = IO(new Bundle {
     // Vector TCM
-    val in0 = Flipped(new kelvin.AxiMasterIO(p.axiSysAddrBits, p.axiSysDataBits, p.axiSysIdBits))
+    val in0 = Flipped(new AxiMasterIO(p.axiSysAddrBits, p.axiSysDataBits, p.axiSysIdBits))
     // Scalar DBus
-    val in1 = Flipped(new kelvin.AxiMasterIO(p.axiSysAddrBits, p.axiSysDataBits, p.axiSysIdBits))
+    val in1 = Flipped(new AxiMasterIO(p.axiSysAddrBits, p.axiSysDataBits, p.axiSysIdBits))
     // L1DCache
-    val in2 = Flipped(new kelvin.AxiMasterIO(p.axiSysAddrBits, p.axiSysDataBits, p.axiSysIdBits))
+    val in2 = Flipped(new AxiMasterIO(p.axiSysAddrBits, p.axiSysDataBits, p.axiSysIdBits))
     // L1ICache
     val in3 = new Bundle {
-      val read = Flipped(new kelvin.AxiMasterReadIO(p.axiSysAddrBits, p.axiSysDataBits, p.axiSysIdBits))
+      val read = Flipped(new AxiMasterReadIO(p.axiSysAddrBits, p.axiSysDataBits, p.axiSysIdBits))
     }
     // SRAM port
     val out = new CrossbarIO(p.axiSysAddrBits, p.axiSysDataBits, p.axiSysIdBits)
