@@ -39,6 +39,7 @@ def kelvin_repos():
             "@kelvin_hw//external:0002-SystemC-support-for-verilator.patch",
             "@kelvin_hw//external:0003-Add-systemc-lib-support.patch",
             "@kelvin_hw//external:0004-Build-verilator-v4.226.patch",
+            "@kelvin_hw//external:0006-Update-flex-release-URL.patch",
         ],
     )
 
