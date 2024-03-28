@@ -34,7 +34,7 @@ class VCoreIO(p: Parameters) extends Bundle {
 
   // Execute cycle.
   val rs = Vec(p.instructionLanes * 2, Flipped(new RegfileReadDataIO))
-  val rd = Vec(p.instructionLanes, Flipped(new RegfileWriteDataIO))
+  val rd = Vec(p.instructionLanes, Valid(Flipped(new RegfileWriteDataIO)))
 
   // Status.
   val mactive = Output(Bool())

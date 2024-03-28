@@ -90,7 +90,7 @@ class Bru(p: Parameters) extends Module {
     val csr = new CsrBruIO(p)
     val rs1 = Input(new RegfileReadDataIO)
     val rs2 = Input(new RegfileReadDataIO)
-    val rd  = Flipped(new RegfileWriteDataIO)
+    val rd  = Valid(Flipped(new RegfileWriteDataIO))
     val taken = new BranchTakenIO(p)
     val target = Flipped(new RegfileBranchTargetIO)
     val interlock = Output(Bool())
@@ -175,8 +175,8 @@ class Bru(p: Parameters) extends Module {
   io.taken.value := stateReg.bits.target
 
   io.rd.valid := stateReg.valid && stateReg.bits.linkValid
-  io.rd.addr := stateReg.bits.linkAddr
-  io.rd.data := stateReg.bits.linkData
+  io.rd.bits.addr := stateReg.bits.linkAddr
+  io.rd.bits.data := stateReg.bits.linkData
 
   // Undefined Fault.
   val undefFault = stateReg.valid && (op === BruOp.UNDEF)

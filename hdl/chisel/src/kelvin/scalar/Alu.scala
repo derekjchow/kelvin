@@ -58,7 +58,7 @@ class Alu(p: Parameters) extends Module {
     // Execute cycle.
     val rs1 = Flipped(new RegfileReadDataIO)
     val rs2 = Flipped(new RegfileReadDataIO)
-    val rd  = Flipped(new RegfileWriteDataIO)
+    val rd  = Valid(Flipped(new RegfileWriteDataIO))
   })
 
   val valid = RegInit(false.B)
@@ -80,9 +80,9 @@ class Alu(p: Parameters) extends Module {
   val shamt = rs2(4,0)
 
   io.rd.valid := valid
-  io.rd.addr  := addr
+  io.rd.bits.addr  := addr
 
-  io.rd.data  := MuxLookup(op, 0.U)(Seq(
+  io.rd.bits.data  := MuxLookup(op, 0.U)(Seq(
       AluOp.ADD  -> (rs1 + rs2),
       AluOp.SUB  -> (rs1 - rs2),
       AluOp.SLT  -> (rs1.asSInt < rs2.asSInt),

@@ -97,7 +97,7 @@ class Csr(p: Parameters) extends Module {
 
     // Execute cycle.
     val rs1 = Flipped(new RegfileReadDataIO)
-    val rd  = Flipped(new RegfileWriteDataIO)
+    val rd  = Valid(Flipped(new RegfileWriteDataIO))
     val bru = Flipped(new CsrBruIO(p))
 
     // Vector core.
@@ -348,8 +348,8 @@ class Csr(p: Parameters) extends Module {
 
   // Write port.
   io.rd.valid := req.valid
-  io.rd.addr  := req.bits.addr
-  io.rd.data  := rdata
+  io.rd.bits.addr  := req.bits.addr
+  io.rd.bits.data  := rdata
 
   // Assertions.
   assert(!(req.valid && !io.rs1.valid))

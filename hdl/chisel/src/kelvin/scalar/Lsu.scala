@@ -93,7 +93,7 @@ class Lsu(p: Parameters) extends Module {
     val busPort = Flipped(new RegfileBusPortIO(p))
 
     // Execute cycle(s).
-    val rd = Flipped(new RegfileWriteDataIO)
+    val rd = Valid(Flipped(new RegfileWriteDataIO))
 
     // Cached interface.
     val dbus = new DBusIO(p)
@@ -297,8 +297,8 @@ class Lsu(p: Parameters) extends Module {
 
   // pass-through
   io.rd.valid := rvalid && data.io.out.bits.iload
-  io.rd.addr  := data.io.out.bits.index
-  io.rd.data  := rdata
+  io.rd.bits.addr  := data.io.out.bits.index
+  io.rd.bits.data  := rdata
 
   assert(!ctrl.io.out.valid || PopCount(Cat(ctrl.io.out.bits.sldst, ctrl.io.out.bits.vldst, ctrl.io.out.bits.suncd)) <= 1.U)
   assert(!data.io.out.valid || PopCount(Cat(data.io.out.bits.sldst, data.io.out.bits.suncd)) <= 1.U)

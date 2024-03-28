@@ -45,12 +45,7 @@ class Dvu(p: Parameters) extends Module {
     // Execute cycle.
     val rs1 = Flipped(new RegfileReadDataIO)
     val rs2 = Flipped(new RegfileReadDataIO)
-    val rd  = new Bundle {  // RegfileWriteDataIO
-      val valid = Output(Bool())
-      val ready = Input(Bool())
-      val addr  = Output(UInt(5.W))
-      val data  = Output(UInt(32.W))
-    }
+    val rd  = Decoupled(new RegfileWriteDataIO)
   })
 
   // This implemention differs to common::idiv by supporting early termination,
@@ -146,8 +141,8 @@ class Dvu(p: Parameters) extends Module {
   val rem = Mux(signed2r, ~remain + 1.U, remain)
 
   io.rd.valid := count(5)
-  io.rd.addr := addr2
-  io.rd.data := Mux(divide2, div, rem)
+  io.rd.bits.addr := addr2
+  io.rd.bits.data := Mux(divide2, div, rem)
 }
 
 object EmitDvu extends App {

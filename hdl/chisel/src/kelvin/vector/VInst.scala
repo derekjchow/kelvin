@@ -68,7 +68,7 @@ class VInst(p: Parameters) extends Module {
 
     // Execute cycle.
     val rs = Vec(p.instructionLanes * 2, Flipped(new RegfileReadDataIO))
-    val rd = Vec(p.instructionLanes, Flipped(new RegfileWriteDataIO))
+    val rd = Vec(p.instructionLanes, Valid(Flipped(new RegfileWriteDataIO)))
 
     // Vector interface.
     val out = new VectorInstructionIO(p)
@@ -236,9 +236,9 @@ class VInst(p: Parameters) extends Module {
 
   for (i <- 0 until p.instructionLanes) {
     io.rd(i).valid := getvl(i) || getmaxvl(i) || vld_u(i) || vst_u(i) || vst_q(i)
-    io.rd(i).addr := rdAddr(i)
+    io.rd(i).bits.addr := rdAddr(i)
 
-    io.rd(i).data :=
+    io.rd(i).bits.data :=
         MuxOR(getvl(i), getvlValue(i)) |
         MuxOR(getmaxvl(i), getmaxvlValue(i)) |
         MuxOR(vld_u(i) || vst_u(i) || vst_q(i), lsuAdder(i))

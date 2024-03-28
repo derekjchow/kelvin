@@ -50,7 +50,6 @@ class RegfileWriteAddrIO extends Bundle {
 }
 
 class RegfileWriteDataIO extends Bundle {
-  val valid = Input(Bool())
   val addr  = Input(UInt(5.W))
   val data  = Input(UInt(32.W))
 }
@@ -89,7 +88,10 @@ class Regfile(p: Parameters) extends Module {
 
     // Execute cycle.
     val readData = Vec(p.instructionLanes * 2, new RegfileReadDataIO)
-    val writeData = Vec(p.instructionLanes + 2, new RegfileWriteDataIO)
+    val writeData = Vec(p.instructionLanes + 2, new Bundle {
+      val valid = Input(Bool())
+      val bits = new RegfileWriteDataIO
+    })
     val writeMask = Vec(p.instructionLanes, new Bundle {val valid = Input(Bool())})
     val scoreboard = new Bundle {
       val regd = Output(UInt(32.W))
@@ -115,7 +117,7 @@ class Regfile(p: Parameters) extends Module {
       .map(x => MuxOR(x.valid, UIntToOH(x.addr, 32))).reduce(_|_)
 
   val scoreboard_clr0 = io.writeData
-      .map(x => MuxOR(x.valid, UIntToOH(x.addr, 32))).reduce(_|_)
+      .map(x => MuxOR(x.valid, UIntToOH(x.bits.addr, 32))).reduce(_|_)
 
   val scoreboard_clr = Cat(scoreboard_clr0(31,1), 0.U(1.W))
 
@@ -150,12 +152,12 @@ class Regfile(p: Parameters) extends Module {
 
   for (i <- 1 until 32) {
     val valid = Cat(
-      Array(io.writeData(p.instructionLanes + 1).valid && io.writeData(p.instructionLanes + 1).addr === i.U,
-            io.writeData(p.instructionLanes).valid && io.writeData(p.instructionLanes).addr === i.U) ++
-            (0 until p.instructionLanes).reverse.map(x => io.writeData(x).valid && io.writeData(x).addr === i.U && !io.writeMask(x).valid)
+      Array(io.writeData(p.instructionLanes + 1).valid && io.writeData(p.instructionLanes + 1).bits.addr === i.U,
+            io.writeData(p.instructionLanes).valid && io.writeData(p.instructionLanes).bits.addr === i.U) ++
+            (0 until p.instructionLanes).reverse.map(x => io.writeData(x).valid && io.writeData(x).bits.addr === i.U && !io.writeMask(x).valid)
     )
 
-    val data  = (0 until p.instructionLanes + 2).map(x => MuxOR(valid(x), io.writeData(x).data)).reduce(_|_)
+    val data  = (0 until p.instructionLanes + 2).map(x => MuxOR(valid(x), io.writeData(x).bits.data)).reduce(_|_)
 
     writeValid(i) := valid =/= 0.U
     writeData(i)  := data
@@ -174,9 +176,9 @@ class Regfile(p: Parameters) extends Module {
   val x0 =
     (0 until p.instructionLanes).map(x =>
       io.writeData(x).valid &&
-      io.writeData(x).addr === 0.U &&
+      io.writeData(x).bits.addr === 0.U &&
       !io.writeMask(x).valid) ++
-    (p.instructionLanes until p.instructionLanes + 2).map(x => io.writeData(x).valid && io.writeData(x).addr === 0.U)
+    (p.instructionLanes until p.instructionLanes + 2).map(x => io.writeData(x).valid && io.writeData(x).bits.addr === 0.U)
 
   io.rfwriteCount := PopCount(writeValid) - writeValid(0) + PopCount(x0)
 
@@ -247,8 +249,8 @@ class Regfile(p: Parameters) extends Module {
       // Delay the failure a cycle for debugging purposes.
       val write_fail = RegInit(false.B)
       write_fail := io.writeData(i).valid && io.writeData(j).valid &&
-                    io.writeData(i).addr === io.writeData(j).addr &&
-                    io.writeData(i).addr =/= 0.U
+                    io.writeData(i).bits.addr === io.writeData(j).bits.addr &&
+                    io.writeData(i).bits.addr =/= 0.U
       assert(!write_fail)
     }
   }

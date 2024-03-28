@@ -219,8 +219,8 @@ class SCore(p: Parameters) extends Module {
     regfile.io.busAddr(i) := decode(i).io.busRead
 
     val csr0Valid = if (i == 0) csr.io.rd.valid else false.B
-    val csr0Addr  = if (i == 0) csr.io.rd.addr else 0.U
-    val csr0Data  = if (i == 0) csr.io.rd.data else 0.U
+    val csr0Addr  = if (i == 0) csr.io.rd.bits.addr else 0.U
+    val csr0Data  = if (i == 0) csr.io.rd.bits.data else 0.U
 
 
     regfile.io.writeData(i).valid := csr0Valid ||
@@ -229,20 +229,20 @@ class SCore(p: Parameters) extends Module {
                                         io.vcore.get.rd(i).valid
                                       } else { false.B })
 
-    regfile.io.writeData(i).addr :=
+    regfile.io.writeData(i).bits.addr :=
         MuxOR(csr0Valid, csr0Addr) |
-        MuxOR(alu(i).io.rd.valid, alu(i).io.rd.addr) |
-        MuxOR(bru(i).io.rd.valid, bru(i).io.rd.addr) |
+        MuxOR(alu(i).io.rd.valid, alu(i).io.rd.bits.addr) |
+        MuxOR(bru(i).io.rd.valid, bru(i).io.rd.bits.addr) |
         (if (p.enableVector) {
-           MuxOR(io.vcore.get.rd(i).valid, io.vcore.get.rd(i).addr)
+           MuxOR(io.vcore.get.rd(i).valid, io.vcore.get.rd(i).bits.addr)
          } else { false.B })
 
-    regfile.io.writeData(i).data :=
+    regfile.io.writeData(i).bits.data :=
         MuxOR(csr0Valid, csr0Data) |
-        MuxOR(alu(i).io.rd.valid, alu(i).io.rd.data) |
-        MuxOR(bru(i).io.rd.valid, bru(i).io.rd.data) |
+        MuxOR(alu(i).io.rd.valid, alu(i).io.rd.bits.data) |
+        MuxOR(bru(i).io.rd.valid, bru(i).io.rd.bits.data) |
         (if (p.enableVector) {
-           MuxOR(io.vcore.get.rd(i).valid, io.vcore.get.rd(i).data)
+           MuxOR(io.vcore.get.rd(i).valid, io.vcore.get.rd(i).bits.data)
          } else { false.B })
 
     if (p.enableVector) {
@@ -257,14 +257,14 @@ class SCore(p: Parameters) extends Module {
 
   val mluDvuOffset = p.instructionLanes
   regfile.io.writeData(mluDvuOffset).valid := mlu.io.rd.valid || dvu.io.rd.valid
-  regfile.io.writeData(mluDvuOffset).addr := Mux(mlu.io.rd.valid, mlu.io.rd.addr, dvu.io.rd.addr)
-  regfile.io.writeData(mluDvuOffset).data := Mux(mlu.io.rd.valid, mlu.io.rd.data, dvu.io.rd.data)
+  regfile.io.writeData(mluDvuOffset).bits.addr := Mux(mlu.io.rd.valid, mlu.io.rd.bits.addr, dvu.io.rd.bits.addr)
+  regfile.io.writeData(mluDvuOffset).bits.data := Mux(mlu.io.rd.valid, mlu.io.rd.bits.data, dvu.io.rd.bits.data)
   assert(!(mlu.io.rd.valid && (dvu.io.rd.valid && dvu.io.rd.ready)))  // TODO: stall dvu on mlu write
 
   val lsuOffset = p.instructionLanes + 1
   regfile.io.writeData(lsuOffset).valid := lsu.io.rd.valid
-  regfile.io.writeData(lsuOffset).addr  := lsu.io.rd.addr
-  regfile.io.writeData(lsuOffset).data  := lsu.io.rd.data
+  regfile.io.writeData(lsuOffset).bits.addr  := lsu.io.rd.bits.addr
+  regfile.io.writeData(lsuOffset).bits.data  := lsu.io.rd.bits.data
 
   val writeMask = bru.map(_.io.taken.valid).scan(false.B)(_||_)
   for (i <- 0 until p.instructionLanes) {

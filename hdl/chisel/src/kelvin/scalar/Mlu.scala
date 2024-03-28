@@ -51,7 +51,7 @@ class Mlu(p: Parameters) extends Module {
     // Execute cycle.
     val rs1 = Vec(p.instructionLanes, Flipped(new RegfileReadDataIO))
     val rs2 = Vec(p.instructionLanes, Flipped(new RegfileReadDataIO))
-    val rd  = Flipped(new RegfileWriteDataIO)
+    val rd  = Valid(Flipped(new RegfileWriteDataIO))
   })
 
   val op = Reg(MluOp())
@@ -116,8 +116,8 @@ class Mlu(p: Parameters) extends Module {
   }
 
   io.rd.valid := valid2
-  io.rd.addr  := addr2
-  io.rd.data  := mul2 + round2
+  io.rd.bits.addr  := addr2
+  io.rd.bits.data  := mul2 + round2
 
   // Assertions.
   for (i <- 0 until p.instructionLanes) {

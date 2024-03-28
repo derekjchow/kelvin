@@ -50,8 +50,8 @@ class MluSpec extends AnyFreeSpec with ChiselScalatestTester {
 
         dut.clock.step()
         assertResult(1) { dut.io.rd.valid.peekInt() }
-        assertResult(13) { dut.io.rd.addr.peekInt() }
-        assertResult(4) { dut.io.rd.data.peekInt() }
+        assertResult(13) { dut.io.rd.bits.addr.peekInt() }
+        assertResult(4) { dut.io.rd.bits.data.peekInt() }
 
         dut.clock.step()
         assertResult(0) { dut.io.rd.valid.peekInt() }
