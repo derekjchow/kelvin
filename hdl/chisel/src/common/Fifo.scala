@@ -34,7 +34,7 @@ class Fifo[T <: Data](t: T, n: Int, passReady: Boolean) extends Module {
   // An (n-1) queue with a registered output stage.
   val m = n - 1  // n = Mem(n-1) + Out
 
-  val mem = Mem(m, t)
+  val mem = RegInit(VecInit(Seq.fill(n)(0.U(t.getWidth.W).asTypeOf(t))))
   val rdata = Reg(t)
 
   val rvalid = RegInit(false.B)

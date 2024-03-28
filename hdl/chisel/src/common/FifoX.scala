@@ -57,7 +57,7 @@ class FifoX[T <: Data](t: T, x: Int, n: Int) extends Module {
     d
   }
 
-  val mem = Mem(m, t)
+  val mem = RegInit(VecInit(Seq.fill(n)(0.U(t.getWidth.W).asTypeOf(t))))
   val mslice = Slice(t, false, true)
 
   val inxpos = RegInit(VecInit((0 until x).map(x => x.U(log2Ceil(m).W))))

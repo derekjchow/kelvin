@@ -41,7 +41,7 @@ class FifoXe[T <: Data](t: T, x:Int, n: Int) extends Module {
     d
   }
 
-  val mem = Mem(n, t)
+  val mem = RegInit(VecInit(Seq.fill(n)(0.U(t.getWidth.W).asTypeOf(t))))
 
   val inxpos = RegInit(VecInit((0 until x).map(x => x.U((log2Ceil(n) + 1).W))))
   val outpos = RegInit(0.U(log2Ceil(n).W))

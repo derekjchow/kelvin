@@ -46,7 +46,7 @@ class FifoIxO[T <: Data](t: T, i: Int, o: Int, n: Int /* depth */) extends Modul
     d
   }
 
-  val mem = Reg(Vec(n, t))
+  val mem = RegInit(VecInit(Seq.fill(n)(0.U(t.getWidth.W).asTypeOf(t))))
 
   val inpos  = Reg(Vec(i, UInt(mb.W)))  // reset below
   val outpos = Reg(Vec(o, UInt(mb.W)))  // reset below
