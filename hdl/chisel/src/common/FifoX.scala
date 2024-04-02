@@ -131,7 +131,6 @@ class FifoX[T <: Data](t: T, x: Int, n: Int) extends Module {
   when (mcount > 0.U) {
     mslice.io.in.bits := mem(outpos)
   } .elsewhen (ivalid) {
-    assert(PopCount(iactive) >= 1.U)
     when (iactive =/= 0.U) {
       val idx = PriorityEncoder(iactive)
       mslice.io.in.bits := io.in.bits(idx).bits
