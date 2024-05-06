@@ -73,6 +73,36 @@ object Fp32 {
     fp
   }
 
+  /** "static_cast" an integer into a fp32 number.
+    * @param word The integer to convert.
+    * @param sign If the integer is signed.
+    * @return The converted floating point number.
+    */
+  def fromInteger(int: UInt, sign: Bool): Fp32 = {
+    val intLength = int.getWidth
+    assert(intLength == 32, "fromInteger currently only supports 32-bit ints")
+    val floatSign = sign & int(intLength - 1)
+    val absInt = Mux(floatSign, (~int) + 1.U, int)
+
+    val preround = Wire(UInt(25.W))
+    val leadingZeros = Clz(absInt)
+    if (intLength >= 25) {
+      preround := (absInt << leadingZeros)(intLength - 1, intLength - 25)
+    } else {
+      val shift = (25 - intLength).U + leadingZeros
+      preround := (absInt << leadingZeros)(24, 0)
+    }
+
+    val zero = (preround === 0.U)
+    // TODO(derekjchow): Rounding mode
+    val rounded = preround +& (~floatSign) // 26 bits
+    val mantissa = Mux(rounded(25), rounded(24, 2), rounded(23, 1))
+    val exponent = Mux(
+        zero, 0.U(8.W), (intLength + 127 - 1).U(8.W) - leadingZeros)
+
+    Fp32(floatSign, exponent, mantissa)
+  }
+
   def Zero(sign: Bool): Fp32 = {
     val fp = Wire(new Fp32)
     fp.mantissa := 0.U

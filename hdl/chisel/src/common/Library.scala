@@ -35,3 +35,9 @@ object MakeValid {
     result
   }
 }
+
+object Clz {
+  def apply(bits: UInt): UInt = {
+    PriorityEncoder(Cat(1.U(1.W), Reverse(bits)))
+  }
+}

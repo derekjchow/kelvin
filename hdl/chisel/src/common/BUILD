@@ -16,6 +16,14 @@ load("@kelvin_hw//rules:chisel.bzl",
      "chisel_cc_library", "chisel_library", "chisel_test")
 
 chisel_library(
+    name = "library",
+    srcs = [
+        "Library.scala",
+    ],
+    visibility = ["//visibility:public"],
+)
+
+chisel_library(
     name = "common",
     srcs = [
         "FifoXe.scala",
@@ -23,9 +31,11 @@ chisel_library(
         "FifoIxO.scala",
         "Fifo.scala",
         "IDiv.scala",
-        "Library.scala",
         "MathUtil.scala",
         "Slice.scala",
+    ],
+    deps = [
+        ":library",
     ],
     visibility = ["//visibility:public"],
 )
@@ -34,6 +44,21 @@ chisel_library(
     name = "fp",
     srcs = [
         "Fp.scala",
+    ],
+    deps = [
+        ":library",
+    ],
+    visibility = ["//visibility:public"],
+)
+
+chisel_library(
+    name = "fp_test_utils",
+    srcs = [
+        "FpTestUtils.scala",
+    ],
+    deps = [
+        "@edu_berkeley_cs_chiseltest//jar",
+        ":fp",
     ],
     visibility = ["//visibility:public"],
 )
@@ -45,6 +70,7 @@ chisel_test(
     ],
     deps = [
         ":fp",
+        ":fp_test_utils",
     ],
 )
 

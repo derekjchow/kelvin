@@ -34,6 +34,24 @@ class Fp32Tester extends Module {
   io.is_nan := fp.isNan()
 }
 
+class Fp32CvtuTester extends Module {
+  val io = IO(new Bundle {
+    val int  = Input(UInt(32.W))
+    val fp = Output(new Fp32)
+  })
+
+  io.fp := Fp32.fromInteger(io.int, false.B)
+}
+
+class Fp32CvtTester extends Module {
+  val io = IO(new Bundle {
+    val int  = Input(SInt(32.W))
+    val fp = Output(new Fp32)
+  })
+
+  io.fp := Fp32.fromInteger(io.int.asUInt, true.B)
+}
+
 class FpSpec extends AnyFreeSpec with ChiselScalatestTester {
   "Zero" in {
     test(new Fp32Tester()) { dut =>
@@ -73,6 +91,26 @@ class FpSpec extends AnyFreeSpec with ChiselScalatestTester {
       assert(dut.io.is_zero.peekInt() == 0)
       assert(dut.io.is_inf.peekInt() == 0)
       assert(dut.io.is_nan.peekInt() == 1)
+    }
+  }
+
+  "Convert UInt to Float" in {
+    test(new Fp32CvtuTester) { dut =>
+      for (i <- 0 until 20000000 by 3000) {
+        dut.io.int.poke(i)
+        dut.clock.step()
+        assertResult(i.toFloat) { PeekFloat(dut.io.fp) }
+      }
+    }
+  }
+
+  "Convert SInt to Float" in {
+    test(new Fp32CvtTester) { dut =>
+      for (i <- -20000001 until 20000000 by 3000) {
+        dut.io.int.poke(i)
+        dut.clock.step()
+        assertResult(i.toFloat) { PeekFloat(dut.io.fp) }
+      }
     }
   }
 }
