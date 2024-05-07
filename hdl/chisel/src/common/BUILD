@@ -37,6 +37,9 @@ chisel_library(
     deps = [
         ":library",
     ],
+    exports = [
+        ":library",
+    ],
     visibility = ["//visibility:public"],
 )
 

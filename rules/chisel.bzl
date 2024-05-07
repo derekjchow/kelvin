@@ -33,6 +33,7 @@ def chisel_library(
         name,
         srcs = [],
         deps = [],
+        exports = [],
         visibility = None):
     scala_library(
         name = name,
@@ -41,6 +42,7 @@ def chisel_library(
             "@kelvin_hw//lib:chisel_lib",
             "@org_chipsalliance_chisel_plugin//jar",
         ] + deps,
+        exports = exports,
         scalacopts = SCALA_COPTS,
         visibility = visibility,
     )
