@@ -62,17 +62,6 @@ class VAlu(p: Parameters) extends Module {
     io.read(i).tag  := 0.U
   }
 
-  for (i <- 0 until io.write.length) {
-    io.write(i).valid := false.B
-    io.write(i).addr := 0.U
-    io.write(i).data := 0.U
-  }
-
-  for (i <- 0 until io.whint.length) {
-    io.whint(i).valid := false.B
-    io.whint(i).addr := 0.U
-  }
-
   // ---------------------------------------------------------------------------
   // Opcode checks.
   for (i <- 0 until io.in.bits.length) {
@@ -352,19 +341,11 @@ class VAlu(p: Parameters) extends Module {
   alu0.io.read(5).data := io.read(5).data
   alu0.io.read(6).data := io.read(6).data
 
-  io.write(0).valid := alu0.io.write(0).valid
-  io.write(0).addr := alu0.io.write(0).addr
-  io.write(0).data := alu0.io.write(0).data
+  io.write(0) := alu0.io.write(0)
+  io.write(1) := alu0.io.write(1)
 
-  io.write(1).valid := alu0.io.write(1).valid
-  io.write(1).addr := alu0.io.write(1).addr
-  io.write(1).data := alu0.io.write(1).data
-
-  io.whint(0).valid := alu0.io.whint(0).valid
-  io.whint(0).addr := alu0.io.whint(0).addr
-
-  io.whint(1).valid := alu0.io.whint(1).valid
-  io.whint(1).addr := alu0.io.whint(1).addr
+  io.whint(0) := alu0.io.whint(0)
+  io.whint(1) := alu0.io.whint(1)
 
   // ---------------------------------------------------------------------------
   // Alu1.
@@ -386,19 +367,11 @@ class VAlu(p: Parameters) extends Module {
   alu1.io.read(5).data := io.read(2).data
   alu1.io.read(6).data := io.read(6).data
 
-  io.write(2).valid := alu1.io.write(0).valid
-  io.write(2).addr := alu1.io.write(0).addr
-  io.write(2).data := alu1.io.write(0).data
+  io.write(2) := alu1.io.write(0)
+  io.write(3) := alu1.io.write(1)
 
-  io.write(3).valid := alu1.io.write(1).valid
-  io.write(3).addr := alu1.io.write(1).addr
-  io.write(3).data := alu1.io.write(1).data
-
-  io.whint(2).valid := alu1.io.whint(0).valid
-  io.whint(2).addr := alu1.io.whint(0).addr
-
-  io.whint(3).valid := alu1.io.whint(1).valid
-  io.whint(3).addr := alu1.io.whint(1).addr
+  io.whint(2) := alu1.io.whint(0)
+  io.whint(3) := alu1.io.whint(1)
 
   // ---------------------------------------------------------------------------
   // Active.

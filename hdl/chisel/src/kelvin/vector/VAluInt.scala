@@ -43,15 +43,8 @@ class VAluInt(p: Parameters, aluid: Int) extends Module {
     val read = Vec(7, Input(new Bundle {
       val data = UInt(p.vectorBits.W)
     }))
-    val write = Vec(2, Output(new Bundle {
-      val valid = Bool()
-      val addr = UInt(6.W)
-      val data = UInt(p.vectorBits.W)
-    }))
-    val whint = Vec(2, Output(new Bundle {
-      val valid = Bool()
-      val addr = UInt(6.W)
-    }))
+    val write = Vec(2, new VRegfileWriteIO(p))
+    val whint = Vec(2, new VRegfileWhintIO(p))
   })
 
   class AluAddr extends Bundle {
