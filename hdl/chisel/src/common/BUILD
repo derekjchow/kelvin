@@ -12,8 +12,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-load("@kelvin_hw//rules:chisel.bzl",
-     "chisel_cc_library", "chisel_library", "chisel_test")
+load(
+    "@kelvin_hw//rules:chisel.bzl",
+    "chisel_cc_library",
+    "chisel_library",
+    "chisel_test",
+)
 
 chisel_library(
     name = "library",
@@ -26,21 +30,21 @@ chisel_library(
 chisel_library(
     name = "common",
     srcs = [
-        "FifoXe.scala",
-        "FifoX.scala",
-        "FifoIxO.scala",
         "Fifo.scala",
+        "FifoIxO.scala",
+        "FifoX.scala",
+        "FifoXe.scala",
         "IDiv.scala",
         "MathUtil.scala",
         "Slice.scala",
     ],
-    deps = [
-        ":library",
-    ],
+    visibility = ["//visibility:public"],
     exports = [
         ":library",
     ],
-    visibility = ["//visibility:public"],
+    deps = [
+        ":library",
+    ],
 )
 
 chisel_library(
@@ -48,10 +52,10 @@ chisel_library(
     srcs = [
         "Fp.scala",
     ],
+    visibility = ["//visibility:public"],
     deps = [
         ":library",
     ],
-    visibility = ["//visibility:public"],
 )
 
 chisel_library(
@@ -59,11 +63,11 @@ chisel_library(
     srcs = [
         "FpTestUtils.scala",
     ],
-    deps = [
-        "@edu_berkeley_cs_chiseltest//jar",
-        ":fp",
-    ],
     visibility = ["//visibility:public"],
+    deps = [
+        ":fp",
+        "@edu_berkeley_cs_chiseltest//jar",
+    ],
 )
 
 chisel_test(
@@ -77,16 +81,27 @@ chisel_test(
     ],
 )
 
+chisel_test(
+    name = "library_test",
+    srcs = [
+        "LibraryTest.scala",
+    ],
+    deps = [
+        ":library",
+        # ":fp_test_utils",
+    ],
+)
+
 chisel_library(
     name = "fma",
     srcs = [
         "Fma.scala",
     ],
+    visibility = ["//visibility:public"],
     deps = [
         ":common",
         ":fp",
     ],
-    visibility = ["//visibility:public"],
 )
 
 chisel_test(
@@ -95,7 +110,7 @@ chisel_test(
         "FmaTest.scala",
     ],
     deps = [
-        ":fp",
         ":fma",
+        ":fp",
     ],
 )

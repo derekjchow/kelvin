@@ -36,6 +36,17 @@ object MakeValid {
   }
 }
 
+// Gate the bits of an interface based on it's validity bit. This prevents
+// invalid data from propagating down stream, thus reducing dynamic power
+object ForceZero {
+  def apply[T <: Data](input: ValidIO[T]): ValidIO[T] = {
+    val result = Wire(chiselTypeOf(input))
+    result.valid := input.valid
+    result.bits  := Mux(input.valid, input.bits, 0.U.asTypeOf(input).bits)
+    result
+  }
+}
+
 object Clz {
   def apply(bits: UInt): UInt = {
     PriorityEncoder(Cat(1.U(1.W), Reverse(bits)))
