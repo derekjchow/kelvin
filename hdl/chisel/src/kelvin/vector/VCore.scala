@@ -107,26 +107,10 @@ class VCore(p: Parameters) extends Module {
 
   // ---------------------------------------------------------------------------
   // VRegfile.
-  for (i <- 0 until vrf.readPorts) {
-    vrf.io.read(i).valid := false.B
-    vrf.io.read(i).addr := 0.U
-    vrf.io.read(i).tag := 0.U
-  }
-
   for (i <- 0 until vrf.writePorts) {
     vrf.io.write(i).valid := false.B
     vrf.io.write(i).addr := 0.U
     vrf.io.write(i).data := 0.U
-  }
-
-  for (i <- 0 until vrf.whintPorts) {
-    vrf.io.whint(i).valid := false.B
-    vrf.io.whint(i).addr := 0.U
-  }
-
-  for (i <- 0 until vrf.scalarPorts) {
-    vrf.io.scalar(i).valid := false.B
-    vrf.io.scalar(i).data := 0.U
   }
 
   vrf.io.transpose.valid := false.B
@@ -145,31 +129,13 @@ class VCore(p: Parameters) extends Module {
     valu.io.in.bits(i).bits := vdec.io.out(i).bits
   }
 
-  for (i <- 0 until vrf.readPorts) {
-    vrf.io.read(i).valid := valu.io.read(i).valid
-    vrf.io.read(i).addr := valu.io.read(i).addr
-    vrf.io.read(i).tag  := valu.io.read(i).tag
-  }
-
-  for (i <- 0 until vrf.readPorts) {
-    valu.io.read(i).data := vrf.io.read(i).data
-  }
-
+  vrf.io.read <> valu.io.read
   for (i <- 0 until vrf.writePorts - 2) {
-    vrf.io.write(i).valid := valu.io.write(i).valid
-    vrf.io.write(i).addr := valu.io.write(i).addr
-    vrf.io.write(i).data := valu.io.write(i).data
+    vrf.io.write(i) := valu.io.write(i)
   }
 
-  for (i <- 0 until vrf.whintPorts) {
-    vrf.io.whint(i).valid := valu.io.whint(i).valid
-    vrf.io.whint(i).addr := valu.io.whint(i).addr
-  }
-
-  for (i <- 0 until vrf.scalarPorts) {
-    vrf.io.scalar(i).valid := valu.io.scalar(i).valid
-    vrf.io.scalar(i).data := valu.io.scalar(i).data
-  }
+  vrf.io.whint := valu.io.whint
+  vrf.io.scalar := valu.io.scalar
 
   valu.io.vrfsb := vrf.io.vrfsb.data
 
@@ -244,13 +210,8 @@ class VCore(p: Parameters) extends Module {
 
   // ---------------------------------------------------------------------------
   // Load write.
-  vrf.io.write(vrf.readPorts - 3).valid := vldst.io.write.valid
-  vrf.io.write(vrf.readPorts - 3).addr := vldst.io.write.addr
-  vrf.io.write(vrf.readPorts - 3).data := vldst.io.write.data
-
-  vrf.io.write(vrf.readPorts - 2).valid := vld.io.write.valid
-  vrf.io.write(vrf.readPorts - 2).addr := vld.io.write.addr
-  vrf.io.write(vrf.readPorts - 2).data := vld.io.write.data
+  vrf.io.write(vrf.readPorts - 3) := vldst.io.write
+  vrf.io.write(vrf.readPorts - 2) := vld.io.write
 
   // ---------------------------------------------------------------------------
   // Store read.

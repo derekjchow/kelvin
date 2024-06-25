@@ -178,19 +178,11 @@ class VAlu(p: Parameters) extends Module {
     out.f2 := in.f2
     out.sz := in.sz
     out.cmdsync := in.cmdsync
-    when ((alu == 0).B || !in.cmdsync) {
-      out.vd := in.vd
-      out.ve := in.ve
-      out.vs := in.vs
-      out.vt := in.vt
-      out.vu := in.vu
-    } .otherwise {
-      out.vd := in.vf
-      out.ve := in.vg
-      out.vs := in.vx
-      out.vt := in.vy
-      out.vu := in.vz
-    }
+    out.vd := Mux((alu == 0).B || !in.cmdsync, in.vd, in.vf)
+    out.ve := Mux((alu == 0).B || !in.cmdsync, in.ve, in.vg)
+    out.vs := Mux((alu == 0).B || !in.cmdsync, in.vs, in.vx)
+    out.vt := Mux((alu == 0).B || !in.cmdsync, in.vt, in.vy)
+    out.vu := Mux((alu == 0).B || !in.cmdsync, in.vu, in.vz)
     out.sv := in.sv
     out
   }
@@ -286,32 +278,23 @@ class VAlu(p: Parameters) extends Module {
 
   // ---------------------------------------------------------------------------
   // Read ports.
-  io.read(0).valid := q0.io.out.bits.vs.valid
-  io.read(1).valid := q0.io.out.bits.vt.valid
-  io.read(2).valid := q0.io.out.bits.vu.valid
-  io.read(3).valid := q1.io.out.bits.vs.valid
-  io.read(4).valid := q1.io.out.bits.vt.valid
-  io.read(5).valid := q1.io.out.bits.vu.valid
+  def MapAddrTag(port: VRegfileReadIO, addrTag: VAddrTag) = {
+    port.valid := addrTag.valid
+    port.addr := addrTag.addr
+    port.tag := OutTag(addrTag)
+  }
 
-  io.read(0).addr := q0.io.out.bits.vs.addr
-  io.read(1).addr := q0.io.out.bits.vt.addr
-  io.read(2).addr := q0.io.out.bits.vu.addr
-  io.read(3).addr := q1.io.out.bits.vs.addr
-  io.read(4).addr := q1.io.out.bits.vt.addr
-  io.read(5).addr := q1.io.out.bits.vu.addr
-
-  io.read(0).tag := OutTag(q0.io.out.bits.vs)
-  io.read(1).tag := OutTag(q0.io.out.bits.vt)
-  io.read(2).tag := OutTag(q0.io.out.bits.vu)
-  io.read(3).tag := OutTag(q1.io.out.bits.vs)
-  io.read(4).tag := OutTag(q1.io.out.bits.vt)
-  io.read(5).tag := OutTag(q1.io.out.bits.vu)
+  MapAddrTag(io.read(0), q0.io.out.bits.vs)
+  MapAddrTag(io.read(1), q0.io.out.bits.vt)
+  MapAddrTag(io.read(2), q0.io.out.bits.vu)
+  MapAddrTag(io.read(3), q1.io.out.bits.vs)
+  MapAddrTag(io.read(4), q1.io.out.bits.vt)
+  MapAddrTag(io.read(5), q1.io.out.bits.vu)
 
   io.scalar(0).valid := q0.io.out.bits.sv.valid
+  io.scalar(0).data  := q0.io.out.bits.sv.data
   io.scalar(1).valid := q1.io.out.bits.sv.valid
-
-  io.scalar(0).data := q0.io.out.bits.sv.data
-  io.scalar(1).data := q1.io.out.bits.sv.data
+  io.scalar(1).data  := q1.io.out.bits.sv.data
 
   io.read_0_ready := io.read(0).valid && q0.io.out.ready
   io.read_1_ready := io.read(1).valid && q0.io.out.ready
@@ -333,13 +316,9 @@ class VAlu(p: Parameters) extends Module {
   alu0.io.in.ve.addr := q0.io.out.bits.ve.addr
   alu0.io.in.sv.data := q0.io.out.bits.sv.data
 
-  alu0.io.read(0).data := io.read(0).data
-  alu0.io.read(1).data := io.read(1).data
-  alu0.io.read(2).data := io.read(2).data
-  alu0.io.read(3).data := io.read(3).data
-  alu0.io.read(4).data := io.read(4).data
-  alu0.io.read(5).data := io.read(5).data
-  alu0.io.read(6).data := io.read(6).data
+  for (i <- 0 until 7) {
+    alu0.io.read(i).data := io.read(i).data
+  }
 
   io.write(0) := alu0.io.write(0)
   io.write(1) := alu0.io.write(1)
