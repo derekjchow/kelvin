@@ -29,6 +29,17 @@ class ForceZeroTester extends Module {
   io.out := ForceZero(io.in)
 }
 
+class Zip32Tester extends Module {
+  val io = IO(new Bundle {
+    val sz  = Input(UInt(3.W))
+    val a   = Input(UInt(32.W))
+    val b   = Input(UInt(32.W))
+    val out = Output(UInt(64.W))
+  })
+
+  io.out := Zip32(io.sz, io.a, io.b)
+}
+
 class LibrarySpec extends AnyFreeSpec with ChiselScalatestTester {
   "ForceZero when invalid" in {
     test(new ForceZeroTester) { dut =>
@@ -45,6 +56,37 @@ class LibrarySpec extends AnyFreeSpec with ChiselScalatestTester {
       dut.io.in.valid.poke(1)
       dut.clock.step()
       assertResult(9001) { dut.io.out.bits.peekInt() }
+    }
+  }
+
+  "Zip32 Words" in {
+    test(new Zip32Tester) { dut =>
+      dut.io.sz.poke(4)
+      dut.io.a.poke(5)
+      dut.io.b.poke(3163)
+      assertResult((3163L << 32L) | 5) { dut.io.out.peekInt() }
+    }
+  }
+
+  "Zip32 Halves" in {
+    test(new Zip32Tester) { dut =>
+      dut.io.sz.poke(2)
+      dut.io.a.poke((7L << 16L) | 3)
+      dut.io.b.poke((11L << 16L) | 5)
+      assertResult((11L << 48L) | (7L << 32L) | (5L << 16L) | 3L) {
+        dut.io.out.peekInt()
+      }
+    }
+  }
+
+  "Zip32 Bytes" in {
+    test(new Zip32Tester) { dut =>
+      dut.io.sz.poke(1)
+      dut.io.a.poke((37L << 16L) | (7L << 8L) | 3)
+      dut.io.b.poke((43L << 16L) | (11L << 8L) | 5)
+      assertResult((43L << 40L) | (37L << 32L) | (11L << 24L) | (7L << 16L) | (5L << 8L) | 3L) {
+        dut.io.out.peekInt()
+      }
     }
   }
 }

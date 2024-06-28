@@ -19,6 +19,7 @@ package kelvin
 import chisel3._
 import chisel3.util._
 import _root_.circt.stage.ChiselStage
+import common._
 
 // VAluInt is foremost an ML depthwise and activiation unit with pipelining
 // behaviors optimized to this functionality. All operations are pipelined with
@@ -680,43 +681,13 @@ class VAluInt(p: Parameters, aluid: Int) extends Module {
 
   // ---------------------------------------------------------------------------
   // VZip.
-  def VZip(sz: Int, a: UInt, b: UInt): (UInt, UInt) = {
-    val size = 8 << sz
-    assert(sz == 0 || sz == 1 || sz == 2)
-    assert(size == 8 || size == 16 || size == 32)
-
-    val cnt = a.getWidth / size
-    val h = a.getWidth / 2
-    val zip0 = Wire(Vec(cnt, UInt(size.W)))
-    val zip1 = Wire(Vec(cnt, UInt(size.W)))
-
-    for (i <- 0 until cnt) {
-      val j = i / 2
-      val l = j * size      // lsb
-      val m = l + size - 1  // msb
-      if ((i & 1) == 0) {
-        zip0(i) := a(m+0,l+0)
-        zip1(i) := a(m+h,l+h)
-      } else {
-        zip0(i) := b(m+0,l+0)
-        zip1(i) := b(m+h,l+h)
-      }
-    }
-
-    val out0 = zip0.asUInt
-    val out1 = zip1.asUInt
-    assert(out0.getWidth == a.getWidth)
-    assert(out1.getWidth == a.getWidth)
-
-    (out0, out1)
-  }
-
-  val (zipb0, zipb1) = VZip(0, MuxOR(zip && sz(0), io.read(0).data), MuxOR(zip && sz(0), io.read(1).data))
-  val (ziph0, ziph1) = VZip(1, MuxOR(zip && sz(1), io.read(0).data), MuxOR(zip && sz(1), io.read(1).data))
-  val (zipw0, zipw1) = VZip(2, MuxOR(zip && sz(2), io.read(0).data), MuxOR(zip && sz(2), io.read(1).data))
-
-  val zip0 = zipb0 | ziph0 | zipw0
-  val zip1 = zipb1 | ziph1 | zipw1
+  val zipIn0 = MuxOR(zip, io.read(0).data)
+  val zipIn1 = MuxOR(zip, io.read(1).data)
+  val zips = (0 until 8).map(x => Zip32(MuxOR(zip, sz),
+                                        zipIn0(31 + (32 * x), (32 * x)),
+                                        zipIn1(31 + (32 * x), (32 * x))))
+  val zip0 = Cat(zips(3), zips(2), zips(1), zips(0))
+  val zip1 = Cat(zips(7), zips(6), zips(5), zips(4))
 
   // ---------------------------------------------------------------------------
   // Depthwise.

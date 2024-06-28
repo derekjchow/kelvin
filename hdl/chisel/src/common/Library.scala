@@ -52,3 +52,28 @@ object Clz {
     PriorityEncoder(Cat(1.U(1.W), Reverse(bits)))
   }
 }
+
+// Zip bytes/half-words in a pair of words.
+object Zip32 {
+  def apply(sz: UInt, a0: UInt, b0: UInt): UInt = {
+    assert(sz.getWidth == 3)
+    assert(a0.getWidth == 32)
+    assert(b0.getWidth == 32)
+
+    // Zip half-words
+    val zipHalf = sz(0) | sz(1)
+    val a1 = Cat(Mux(zipHalf, b0(15, 0), a0(31, 16)), a0(15, 0))
+    val b1 = Cat(b0(31, 16), Mux(zipHalf, a0(31, 16), b0(15, 0)))
+
+    // Zip bytes
+    val zipBytes = sz(0)
+    val a2 = Cat(a1(31, 24),
+                 Mux(zipBytes, Cat(a1(15, 8), a1(23, 16)), a1(23, 8)),
+                 a1(7, 0))
+    val b2 = Cat(b1(31, 24),
+                 Mux(zipBytes, Cat(b1(15, 8), b1(23, 16)), b1(23, 8)),
+                 b1(7, 0))
+
+    Cat(b2, a2)
+  }
+}
