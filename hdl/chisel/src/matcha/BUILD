@@ -32,6 +32,23 @@ chisel_library(
 )
 
 chisel_cc_library(
+    name = "kelvin_scalar_cc_library",
+    chisel_lib = ":matcha",
+    emit_class = "matcha.EmitKelvin",
+    module_name = "Kelvin",
+    verilog_deps = [
+        "//hdl/verilog:clock_gate",
+        "//hdl/verilog:sram_1rw_256x256",
+        "//hdl/verilog:sram_1rw_256x288",
+    ],
+    verilog_file_path = "KelvinScalar.sv",
+    gen_flags = [
+        "--enableVector=False",
+        "--moduleName=KelvinScalar",
+    ],
+)
+
+chisel_cc_library(
     name = "kelvin_cc_library",
     chisel_lib = ":matcha",
     emit_class = "matcha.EmitKelvin",

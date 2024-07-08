@@ -23,11 +23,13 @@ import _root_.circt.stage.ChiselStage
 
 object Kelvin {
   def apply(p: kelvin.Parameters): Kelvin = {
-    return Module(new Kelvin(p))
+    return Module(new Kelvin(p, "Kelvin"))
   }
 }
 
-class Kelvin(p: kelvin.Parameters) extends RawModule {
+class Kelvin(p: kelvin.Parameters, name: String) extends RawModule {
+  override val desiredName = name
+
   // IO ports. (RawModule removes default[clock, reset])
   val clk_i  = IO(Input(Clock()))
   val rst_ni = IO(Input(AsyncReset()))
@@ -110,7 +112,7 @@ class Kelvin(p: kelvin.Parameters) extends RawModule {
     // -------------------------------------------------------------------------
     // Bus Mux.
     if (p.enableVector) {
-      bus.io.in0 <> core.io.axi0.get
+      bus.io.in0.get <> core.io.axi0.get
     }
     bus.io.in1 <> core.io.axi1
     bus.io.in2 <> l1d.io.axi
@@ -140,6 +142,18 @@ class Kelvin(p: kelvin.Parameters) extends RawModule {
 }
 
 object EmitKelvin extends App {
-  val p = new kelvin.MatchaParameters
-  ChiselStage.emitSystemVerilogFile(new Kelvin(p), args)
+  var p = new kelvin.MatchaParameters
+  var moduleName = "Kelvin"
+  var chiselArgs = List[String]()
+  for (arg <- args) {
+    if (arg.startsWith("--enableVector")) {
+      p.enableVector = arg.split("=")(1).toBoolean
+    } else if (arg.startsWith("--moduleName")) {
+      moduleName = arg.split("=")(1)
+    } else {
+      chiselArgs = chiselArgs :+ arg
+    }
+  }
+  ChiselStage.emitSystemVerilogFile(
+      new Kelvin(p, moduleName), chiselArgs.toArray)
 }
