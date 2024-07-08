@@ -88,19 +88,19 @@ class KelvinToTlul(tlul_p: TLULParameters, kelvin_p: kelvin.Parameters) extends 
         assert(valid2, "Received invalid TLUL-D opcode\n")
 
         val rdata = chisel3.util.MuxLookup(value, 0.U(32.W))(
-          Array(
+          Seq(
             TLULOpcodesD.AccessAck -> 0.U,
             TLULOpcodesD.AccessAckData -> io.tl_i.d_data
           )
         )
         val rvalid = chisel3.util.MuxLookup(value, false.B)(
-          Array(
+          Seq(
             TLULOpcodesD.AccessAck -> false.B,
             TLULOpcodesD.AccessAckData -> true.B
           )
         )
         val rid = chisel3.util.MuxLookup(value, 0.U)(
-          Array(
+          Seq(
             TLULOpcodesD.AccessAck -> 0.U,
             TLULOpcodesD.AccessAckData -> io.kelvin.cid
           )

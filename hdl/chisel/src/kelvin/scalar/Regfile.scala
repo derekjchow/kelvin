@@ -152,9 +152,9 @@ class Regfile(p: Parameters) extends Module {
 
   for (i <- 1 until 32) {
     val valid = Cat(
-      Array(io.writeData(p.instructionLanes + 1).valid && io.writeData(p.instructionLanes + 1).bits.addr === i.U,
-            io.writeData(p.instructionLanes).valid && io.writeData(p.instructionLanes).bits.addr === i.U) ++
-            (0 until p.instructionLanes).reverse.map(x => io.writeData(x).valid && io.writeData(x).bits.addr === i.U && !io.writeMask(x).valid)
+      Seq(io.writeData(p.instructionLanes + 1).valid && io.writeData(p.instructionLanes + 1).bits.addr === i.U,
+          io.writeData(p.instructionLanes).valid && io.writeData(p.instructionLanes).bits.addr === i.U) ++
+          (0 until p.instructionLanes).reverse.map(x => io.writeData(x).valid && io.writeData(x).bits.addr === i.U && !io.writeMask(x).valid)
     )
 
     val data  = (0 until p.instructionLanes + 2).map(x => MuxOR(valid(x), io.writeData(x).bits.data)).reduce(_|_)

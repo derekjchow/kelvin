@@ -427,7 +427,7 @@ class Decode(p: Parameters, pipeline: Int) extends Module {
   io.rs1Set.valid := decodeEn && (d.auipc || isCsrImm)
   io.rs2Set.valid := io.rs1Set.valid || decodeEn && (d.isAluImm() || d.isAlu1Bit() || d.lui)
 
-  io.rs1Set.value := Mux(d.isCsr, d.immcsr, io.inst.addr)  // Program Counter (PC)
+  io.rs1Set.value := Mux(d.isCsr(), d.immcsr, io.inst.addr)  // Program Counter (PC)
 
   io.rs2Set.value := MuxCase(d.imm12,
                      IndexedSeq((d.auipc || d.lui) -> d.imm20))
