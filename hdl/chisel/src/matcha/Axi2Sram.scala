@@ -108,68 +108,115 @@ class Axi2Sram(p: kelvin.Parameters) extends Module {
     val rdata  = UInt(p.axiSysDataBits.W)
   }, true)
 
-  val readInterfaces = Seq(
-    io.in0.read, io.in1.read, io.in2.read, io.in3.read)
-  val writeInterfaces = Seq(
-    io.in0.write, io.in1.write, io.in2.write)
-  val readCv = readInterfaces.map(_.addr.valid)
-  val writeCv = writeInterfaces.map(_.addr.valid)
-  val readValid = readCv.reduce(_ || _)
-  val writeValid = writeCv.reduce(_ || _)
+  val cv0 = io.in0.read.addr.valid
+  val cv1 = io.in1.read.addr.valid
+  val cv2 = io.in2.read.addr.valid
+  val cv3 = io.in3.read.addr.valid
+  val cv4 = io.in0.write.addr.valid
+  val cv5 = io.in1.write.addr.valid
+  val cv6 = io.in2.write.addr.valid
 
-  cctrl.io.in.valid := readValid || writeValid
+  cctrl.io.in.valid := cv0 || cv1 || cv2 || cv3 || cv4 || cv5 || cv6
 
-  cctrl.io.in.bits.cwrite := writeValid && !readValid
+  cctrl.io.in.bits.cwrite := (cv4 || cv5 || cv6) && !(cv0 || cv1 || cv2 || cv3)
 
   wdata.io.in.valid := cctrl.io.in.bits.cwrite && cctrl.io.in.ready
 
-  cctrl.io.in.bits.caddr :=
-      MuxCase(0.U, readInterfaces.map(x => x.addr.valid -> x.addr.bits.addr) ++
-                   writeInterfaces.map(x => x.addr.valid -> x.addr.bits.addr))
-  cctrl.io.in.bits.cid :=
-      MuxCase(0.U, readInterfaces.map(x => x.addr.valid -> x.addr.bits.id))
-  wdata.io.in.bits.wdata :=
-      MuxCase(0.U, writeInterfaces.map(x => x.addr.valid -> x.data.bits.data))
-  wdata.io.in.bits.wmask :=
-      MuxCase(0.U, writeInterfaces.map(x => x.addr.valid -> x.data.bits.strb))
+  cctrl.io.in.bits.caddr := Mux(cv0, io.in0.read.addr.bits.addr,
+                            Mux(cv1, io.in1.read.addr.bits.addr,
+                            Mux(cv2, io.in2.read.addr.bits.addr,
+                            Mux(cv3, io.in3.read.addr.bits.addr,
+                            Mux(cv4, io.in0.write.addr.bits.addr,
+                            Mux(cv5, io.in1.write.addr.bits.addr,
+                                     io.in2.write.addr.bits.addr))))))
 
-  val allCv = readCv ++ writeCv
-  val prevCv = allCv.scan(false.B)(_ || _)
-  for (i <- 0 until readInterfaces.length) {
-    readInterfaces(i).addr.ready := cctrl.io.in.ready && !prevCv(i)
-  }
-  for (i <- 0 until writeInterfaces.length) {
-    writeInterfaces(i).addr.ready :=
-        cctrl.io.in.ready && !prevCv(i + readInterfaces.length)
-  }
-  writeInterfaces.foreach(x => x.data.ready := x.addr.ready)
+  cctrl.io.in.bits.cid := Mux(cv0, Encode(0, io.in0.read.addr.bits.id),
+                          Mux(cv1, Encode(1, io.in1.read.addr.bits.id),
+                          Mux(cv2, Encode(2, io.in2.read.addr.bits.id),
+                          Mux(cv3, Encode(3, io.in3.read.addr.bits.id),
+                                   0.U))))
+
+  wdata.io.in.bits.wdata := Mux(cv4, io.in0.write.data.bits.data,
+                            Mux(cv5, io.in1.write.data.bits.data,
+                                     io.in2.write.data.bits.data))
+
+  wdata.io.in.bits.wmask := Mux(cv4, io.in0.write.data.bits.strb,
+                            Mux(cv5, io.in1.write.data.bits.strb,
+                                     io.in2.write.data.bits.strb))
+
+  io.in0.read.addr.ready  := cctrl.io.in.ready
+  io.in1.read.addr.ready  := cctrl.io.in.ready && !(cv0)
+  io.in2.read.addr.ready  := cctrl.io.in.ready && !(cv0 || cv1)
+  io.in3.read.addr.ready  := cctrl.io.in.ready && !(cv0 || cv1 || cv2)
+  io.in0.write.addr.ready := cctrl.io.in.ready && !(cv0 || cv1 || cv2 || cv3)
+  io.in1.write.addr.ready := cctrl.io.in.ready && !(cv0 || cv1 || cv2 || cv3 || cv4)
+  io.in2.write.addr.ready := cctrl.io.in.ready && !(cv0 || cv1 || cv2 || cv3 || cv4 || cv5)
+  io.in0.write.data.ready := io.in0.write.addr.ready
+  io.in1.write.data.ready := io.in1.write.addr.ready
+  io.in2.write.data.ready := io.in2.write.addr.ready
 
   // ---------------------------------------------------------------------------
   // Response Multiplexor.
-  val rs = (0 until readInterfaces.length).map(Decode(_, rdata.io.out.bits.rid))
-  rdata.io.out.ready := (0 until readInterfaces.length).map(i =>
-      rs(i) && readInterfaces(i).data.ready).reduce(_||_)
-  for (i <- 0 until readInterfaces.length) {
-    readInterfaces(i).data.valid := rs(i) && rdata.io.out.valid
-    readInterfaces(i).data.bits.data := rdata.io.out.bits.rdata
-    readInterfaces(i).data.bits.id := rdata.io.out.bits.rid
-    readInterfaces(i).data.bits.resp := 0.U
-  }
+  val rs0 = Decode(0, rdata.io.out.bits.rid)
+  val rs1 = Decode(1, rdata.io.out.bits.rid)
+  val rs2 = Decode(2, rdata.io.out.bits.rid)
+  val rs3 = Decode(3, rdata.io.out.bits.rid)
+
+  rdata.io.out.ready := rs0 && io.in0.read.data.ready ||
+                        rs1 && io.in1.read.data.ready ||
+                        rs2 && io.in2.read.data.ready ||
+                        rs3 && io.in3.read.data.ready
+
+  io.in0.read.data.valid := rs0 && rdata.io.out.valid
+  io.in1.read.data.valid := rs1 && rdata.io.out.valid
+  io.in2.read.data.valid := rs2 && rdata.io.out.valid
+  io.in3.read.data.valid := rs3 && rdata.io.out.valid
+
+  io.in0.read.data.bits.data := rdata.io.out.bits.rdata
+  io.in1.read.data.bits.data := rdata.io.out.bits.rdata
+  io.in2.read.data.bits.data := rdata.io.out.bits.rdata
+  io.in3.read.data.bits.data := rdata.io.out.bits.rdata
+
+  io.in0.read.data.bits.id := rdata.io.out.bits.rid
+  io.in1.read.data.bits.id := rdata.io.out.bits.rid
+  io.in2.read.data.bits.id := rdata.io.out.bits.rid
+  io.in3.read.data.bits.id := rdata.io.out.bits.rid
+
+  io.in0.read.data.bits.resp := 0.U
+  io.in1.read.data.bits.resp := 0.U
+  io.in2.read.data.bits.resp := 0.U
+  io.in3.read.data.bits.resp := 0.U
 
   // ---------------------------------------------------------------------------
   // Write response.
-  val wrespvalid = RegInit(VecInit.fill(writeInterfaces.length)(false.B))
+  val wrespvalid0 = RegInit(false.B)
+  val wrespvalid1 = RegInit(false.B)
+  val wrespvalid2 = RegInit(false.B)
   val wrespid = Reg(UInt(p.axiSysIdBits.W))
-  val writeFire = writeInterfaces.map(x => x.addr.valid && x.addr.ready)
-  wrespvalid := writeFire
-  wrespid := MuxCase(0.U, (0 until writeInterfaces.length).map(
-    i => writeFire(i) -> writeInterfaces(i).addr.bits.id))
 
-  for (i <- 0 until writeInterfaces.length) {
-    writeInterfaces(i).resp.valid := wrespvalid(i)
-    writeInterfaces(i).resp.bits.id := wrespid
-    writeInterfaces(i).resp.bits.resp := 0.U
+  wrespvalid0 := io.in0.write.addr.valid && io.in0.write.addr.ready
+  wrespvalid1 := io.in1.write.addr.valid && io.in1.write.addr.ready
+  wrespvalid2 := io.in2.write.addr.valid && io.in2.write.addr.ready
+
+  when (io.in0.write.addr.valid && io.in0.write.addr.ready) {
+    wrespid := io.in0.write.addr.bits.id
+  } .elsewhen (io.in1.write.addr.valid && io.in1.write.addr.ready) {
+    wrespid := io.in1.write.addr.bits.id
+  } .elsewhen (io.in2.write.addr.valid && io.in2.write.addr.ready) {
+    wrespid := io.in2.write.addr.bits.id
   }
+
+  io.in0.write.resp.valid := wrespvalid0
+  io.in1.write.resp.valid := wrespvalid1
+  io.in2.write.resp.valid := wrespvalid2
+
+  io.in0.write.resp.bits.id := wrespid
+  io.in1.write.resp.bits.id := wrespid
+  io.in2.write.resp.bits.id := wrespid
+
+  io.in0.write.resp.bits.resp := 0.U
+  io.in1.write.resp.bits.resp := 0.U
+  io.in2.write.resp.bits.resp := 0.U
 
   // ---------------------------------------------------------------------------
   // SRAM interface.
@@ -189,26 +236,37 @@ class Axi2Sram(p: kelvin.Parameters) extends Module {
 
   // ---------------------------------------------------------------------------
   // Assertions.
-  val allInterfacesFire = readInterfaces.map(x => x.addr.valid && x.addr.ready) ++
-      writeInterfaces.map(x => x.addr.valid && x.addr.ready)
-  assert(PopCount(allInterfacesFire) <= 1.U)
+  assert(PopCount(Cat(io.in0.read.addr.valid && io.in0.read.addr.ready,
+                      io.in1.read.addr.valid && io.in1.read.addr.ready,
+                      io.in2.read.addr.valid && io.in2.read.addr.ready,
+                      io.in3.read.addr.valid && io.in3.read.addr.ready,
+                      io.in0.write.addr.valid && io.in0.write.addr.ready,
+                      io.in1.write.addr.valid && io.in1.write.addr.ready,
+                      io.in2.write.addr.valid && io.in2.write.addr.ready)) <= 1.U)
 
-  for (x <- writeInterfaces) {
-    assert(x.addr.valid === x.data.valid)
-    assert(x.addr.ready === x.data.ready)
-    assert(!(x.resp.valid && !x.resp.ready))
-  }
+  assert(io.in0.write.addr.valid === io.in0.write.data.valid)
+  assert(io.in1.write.addr.valid === io.in1.write.data.valid)
+  assert(io.in2.write.addr.valid === io.in2.write.data.valid)
 
-  for (x <- readInterfaces) {
-    assert(!(x.data.valid && !x.data.ready))
-  }
+  assert(io.in0.write.addr.ready === io.in0.write.data.ready)
+  assert(io.in1.write.addr.ready === io.in1.write.data.ready)
+  assert(io.in2.write.addr.ready === io.in2.write.data.ready)
+
+  assert(!(io.in0.read.data.valid && !io.in0.read.data.ready))
+  assert(!(io.in1.read.data.valid && !io.in1.read.data.ready))
+  assert(!(io.in2.read.data.valid && !io.in2.read.data.ready))
+  assert(!(io.in3.read.data.valid && !io.in3.read.data.ready))
+
+  assert(!(io.in0.write.resp.valid && !io.in0.write.resp.ready))
+  assert(!(io.in1.write.resp.valid && !io.in1.write.resp.ready))
+  assert(!(io.in2.write.resp.valid && !io.in2.write.resp.ready))
 
   assert(!(cctrl.io.in.valid && cctrl.io.in.ready && cctrl.io.in.bits.cwrite && !wdata.io.in.valid))
   assert(!(cctrl.io.in.valid && cctrl.io.in.ready && cctrl.io.in.bits.cwrite && !wdata.io.in.ready))
 
   assert(!(rdata.io.in.valid && !rdata.io.in.ready))
 
-  assert(PopCount(rs) <= 1.U)
+  assert(PopCount(Cat(rs0, rs1, rs2, rs3)) <= 1.U)
 }
 
 object EmitAxi2Sram extends App {
