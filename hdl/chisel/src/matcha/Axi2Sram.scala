@@ -32,11 +32,7 @@ object Axi2Sram {
 class Axi2Sram(p: kelvin.Parameters) extends Module {
   val io = IO(new Bundle {
     // Vector TCM
-    val in0 = if(p.enableVector) {
-        Some(Flipped(new AxiMasterIO(p.axiSysAddrBits, p.axiSysDataBits, p.axiSysIdBits)))
-    } else {
-      None
-    }
+    val in0 = Flipped(new AxiMasterIO(p.axiSysAddrBits, p.axiSysDataBits, p.axiSysIdBits))
     // Scalar DBus
     val in1 = Flipped(new AxiMasterIO(p.axiSysAddrBits, p.axiSysDataBits, p.axiSysIdBits))
     // L1DCache
@@ -112,16 +108,10 @@ class Axi2Sram(p: kelvin.Parameters) extends Module {
     val rdata  = UInt(p.axiSysDataBits.W)
   }, true)
 
-  val readInterfaces = if (p.enableVector) {
-    Seq(io.in0.get.read, io.in1.read, io.in2.read, io.in3.read)
-  } else {
-    Seq(io.in1.read, io.in2.read, io.in3.read)
-  }
-  val writeInterfaces = if (p.enableVector) {
-    Seq(io.in0.get.write, io.in1.write, io.in2.write)
-  } else {
-    Seq(io.in1.write, io.in2.write)
-  }
+  val readInterfaces = Seq(
+    io.in0.read, io.in1.read, io.in2.read, io.in3.read)
+  val writeInterfaces = Seq(
+    io.in0.write, io.in1.write, io.in2.write)
   val readCv = readInterfaces.map(_.addr.valid)
   val writeCv = writeInterfaces.map(_.addr.valid)
   val readValid = readCv.reduce(_ || _)
