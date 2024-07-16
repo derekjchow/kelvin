@@ -82,11 +82,14 @@ class Alu(p: Parameters) extends Module {
   io.rd.valid := valid
   io.rd.bits.addr  := addr
 
+  val r2IsGreater = rs1.asSInt < rs2.asSInt
+  val r2IsGreaterU = rs1 < rs2
+
   io.rd.bits.data  := MuxLookup(op, 0.U)(Seq(
       AluOp.ADD  -> (rs1 + rs2),
       AluOp.SUB  -> (rs1 - rs2),
-      AluOp.SLT  -> (rs1.asSInt < rs2.asSInt),
-      AluOp.SLTU -> (rs1 < rs2),
+      AluOp.SLT  -> (r2IsGreater),
+      AluOp.SLTU -> (r2IsGreaterU),
       AluOp.XOR  -> (rs1 ^ rs2),
       AluOp.OR   -> (rs1 | rs2),
       AluOp.AND  -> (rs1 & rs2),
@@ -97,10 +100,10 @@ class Alu(p: Parameters) extends Module {
       AluOp.CLZ  -> Clz(rs1),
       AluOp.CTZ  -> Ctz(rs1),
       AluOp.PCNT -> PopCount(rs1),
-      AluOp.MIN  -> Mux(rs1.asSInt < rs2.asSInt, rs1, rs2),
-      AluOp.MAX  -> Mux(rs1.asSInt > rs2.asSInt, rs1, rs2),
-      AluOp.MINU -> Mux(rs1 < rs2, rs1, rs2),
-      AluOp.MAXU -> Mux(rs1 > rs2, rs1, rs2)
+      AluOp.MIN  -> Mux(r2IsGreater,  rs1, rs2),
+      AluOp.MAX  -> Mux(r2IsGreater,  rs2, rs1),
+      AluOp.MINU -> Mux(r2IsGreaterU, rs1, rs2),
+      AluOp.MAXU -> Mux(r2IsGreaterU, rs2, rs1)
   ))
 
   // Assertions.
