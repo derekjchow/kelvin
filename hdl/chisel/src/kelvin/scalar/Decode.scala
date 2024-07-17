@@ -171,7 +171,7 @@ class Decode(p: Parameters, pipeline: Int) extends Module {
     val halted = Input(Bool())
 
     // Decode input interface.
-    val inst = Flipped(new FetchInstruction(p))
+    val inst = Flipped(Decoupled(new FetchInstruction(p)))
     val scoreboard = new Bundle {
       val regd = Input(UInt(32.W))
       val comb = Input(UInt(32.W))
@@ -225,26 +225,26 @@ class Decode(p: Parameters, pipeline: Int) extends Module {
   val decodeEn = io.inst.valid && io.inst.ready && !io.branchTaken
 
   // The decode logic.
-  val d = DecodeInstruction(p, pipeline, io.inst.addr, io.inst.inst)
+  val d = DecodeInstruction(p, pipeline, io.inst.bits.addr, io.inst.bits.inst)
 
   val vldst = d.vld || d.vst
-  val vldst_wb = vldst && io.inst.inst(28)
+  val vldst_wb = vldst && io.inst.bits.inst(28)
 
-  val rdAddr  = Mux(vldst, io.inst.inst(19,15), io.inst.inst(11,7))
-  val rs1Addr = io.inst.inst(19,15)
-  val rs2Addr = io.inst.inst(24,20)
-  val rs3Addr = io.inst.inst(31,27)
+  val rdAddr  = Mux(vldst, io.inst.bits.inst(19,15), io.inst.bits.inst(11,7))
+  val rs1Addr = io.inst.bits.inst(19,15)
+  val rs2Addr = io.inst.bits.inst(24,20)
+  val rs3Addr = io.inst.bits.inst(31,27)
 
-  val isCsrImm = d.isCsr() &&  io.inst.inst(14)
-  val isCsrReg = d.isCsr() && !io.inst.inst(14)
+  val isCsrImm = d.isCsr() &&  io.inst.bits.inst(14)
+  val isCsrReg = d.isCsr() && !io.inst.bits.inst(14)
 
   val isVIop = if (p.enableVector) {
     io.vinst.get.bits.op === VInstOp.VIOP
   } else { false.B }
 
   val isVIopVs1 = isVIop
-  val isVIopVs2 = isVIop && io.inst.inst(1,0) === 0.U  // exclude: .vv
-  val isVIopVs3 = isVIop && io.inst.inst(2,0) === 1.U  // exclude: .vvv
+  val isVIopVs2 = isVIop && io.inst.bits.inst(1,0) === 0.U  // exclude: .vv
+  val isVIopVs3 = isVIop && io.inst.bits.inst(2,0) === 1.U  // exclude: .vvv
 
   // Use the forwarded scoreboard to interlock on multicycle operations.
   val aluRdEn  = !io.scoreboard.comb(rdAddr)  || isVIopVs1 || d.isStore() || d.isCondBr()
@@ -256,7 +256,7 @@ class Decode(p: Parameters, pipeline: Int) extends Module {
 
   // Interlock jalr but special case return.
   val bruEn = !d.jalr || !io.scoreboard.regd(rs1Addr) ||
-              io.inst.inst(31,20) === 0.U
+              io.inst.bits.inst(31,20) === 0.U
 
   // Require interlock on address generation as there is no write forwarding.
   val lsuEn = !d.isLsu() ||
@@ -326,10 +326,11 @@ class Decode(p: Parameters, pipeline: Int) extends Module {
     d.undef  -> MakeValid(true.B, BruOp.UNDEF),
   ))
   io.bru.valid := decodeEn && bru.valid
-  io.bru.bits.fwd := io.inst.brchFwd
+  io.bru.bits.fwd := io.inst.bits.brchFwd
   io.bru.bits.op := bru.bits
-  io.bru.bits.pc := io.inst.addr
-  io.bru.bits.target := io.inst.addr + Mux(io.inst.inst(2), d.immjal, d.immbr)
+  io.bru.bits.pc := io.inst.bits.addr
+  io.bru.bits.target := io.inst.bits.addr + Mux(
+      io.inst.bits.inst(2), d.immjal, d.immbr)
   io.bru.bits.link := rdAddr
 
   // CSR opcode.
@@ -340,7 +341,7 @@ class Decode(p: Parameters, pipeline: Int) extends Module {
   ))
   io.csr.valid := decodeEn && csr.valid
   io.csr.bits.addr := rdAddr
-  io.csr.bits.index := io.inst.inst(31,20)
+  io.csr.bits.index := io.inst.bits.inst(31,20)
   io.csr.bits.op := csr.bits
 
   // LSU opcode.
@@ -359,7 +360,7 @@ class Decode(p: Parameters, pipeline: Int) extends Module {
     (d.vld || d.vst) -> MakeValid(true.B, LsuOp.VLDST),
   ))
   io.lsu.valid := decodeEn && lsu.valid
-  io.lsu.bits.store := io.inst.inst(5)
+  io.lsu.bits.store := io.inst.bits.inst(5)
   io.lsu.bits.addr := rdAddr
   io.lsu.bits.op := lsu.bits
 
@@ -402,7 +403,7 @@ class Decode(p: Parameters, pipeline: Int) extends Module {
   if (p.enableVector) {
     io.vinst.get.valid := decodeEn && vinst.valid
     io.vinst.get.bits.addr := rdAddr
-    io.vinst.get.bits.inst := io.inst.inst
+    io.vinst.get.bits.inst := io.inst.bits.inst
     io.vinst.get.bits.op := vinst.bits
   }
 
@@ -418,7 +419,7 @@ class Decode(p: Parameters, pipeline: Int) extends Module {
                       d.vld || d.vst || d.viop)
 
   // rs1 is on critical path to busPortAddr.
-  io.rs1Read.addr := Mux(io.inst.inst(0), rs1Addr, rs3Addr)
+  io.rs1Read.addr := Mux(io.inst.bits.inst(0), rs1Addr, rs3Addr)
 
   // rs2 is used for the vector operation scalar value.
   io.rs2Read.addr := rs2Addr
@@ -427,7 +428,7 @@ class Decode(p: Parameters, pipeline: Int) extends Module {
   io.rs1Set.valid := decodeEn && (d.auipc || isCsrImm)
   io.rs2Set.valid := io.rs1Set.valid || decodeEn && (d.isAluImm() || d.isAlu1Bit() || d.lui)
 
-  io.rs1Set.value := Mux(d.isCsr(), d.immcsr, io.inst.addr)  // Program Counter (PC)
+  io.rs1Set.value := Mux(d.isCsr(), d.immcsr, io.inst.bits.addr)  // Program Counter (PC)
 
   io.rs2Set.value := MuxCase(d.imm12,
                      IndexedSeq((d.auipc || d.lui) -> d.imm20))
@@ -451,12 +452,13 @@ class Decode(p: Parameters, pipeline: Int) extends Module {
   // Pointer chasing bypass if immediate is zero.
   // Load/Store immediate selection keys off bit5, and RET off bit6.
   io.busRead.valid := lsu.valid
-  io.busRead.bypass := io.inst.inst(31,25) === 0.U &&
-    Mux(!io.inst.inst(5) || io.inst.inst(6), io.inst.inst(24,20) === 0.U,
-                                             io.inst.inst(11,7) === 0.U)
+  io.busRead.bypass := io.inst.bits.inst(31,25) === 0.U &&
+    Mux(!io.inst.bits.inst(5) || io.inst.bits.inst(6),
+        io.inst.bits.inst(24,20) === 0.U,
+         io.inst.bits.inst(11,7) === 0.U)
 
   // SB,SH,SW   0100011
-  val storeSelect = io.inst.inst(6,3) === 4.U && io.inst.inst(1,0) === 3.U
+  val storeSelect = io.inst.bits.inst(6,3) === 4.U && io.inst.bits.inst(1,0) === 3.U
   io.busRead.immen := !d.flushat
   io.busRead.immed := Cat(d.imm12(31,5),
                           Mux(storeSelect, d.immst(4,0), d.imm12(4,0)))
