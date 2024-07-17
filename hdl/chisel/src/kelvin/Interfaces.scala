@@ -62,6 +62,18 @@ class CsrInOutIO(p: Parameters) extends Bundle {
   val out = new CsrOutIO(p)
 }
 
+class BranchTakenIO(p: Parameters) extends Bundle {
+  val valid = Output(Bool())
+  val value = Output(UInt(p.programCounterBits.W))
+}
+
+class RegfileLinkPortIO extends Bundle {
+  val valid = Output(Bool())
+  val value = Output(UInt(32.W))
+}
+
+// When `valid` as asserted, `addr` must remain constant
+// until `ready` is fired.
 class IBusIO(p: Parameters) extends Bundle {
   // Control Phase.
   val valid = Output(Bool())
@@ -79,6 +91,17 @@ class FetchInstruction(p: Parameters) extends Bundle {
 
 class FetchIO(p: Parameters) extends Bundle {
   val lanes = Vec(p.instructionLanes, Decoupled(new FetchInstruction(p)))
+}
+
+abstract class FetchUnit(p: Parameters) extends Module {
+  val io = IO(new Bundle {
+    val csr = new CsrInIO(p)
+    val ibus = new IBusIO(p)
+    val inst = new FetchIO(p)
+    val branch = Flipped(Vec(p.instructionLanes, new BranchTakenIO(p)))
+    val linkPort = Flipped(new RegfileLinkPortIO)
+    val iflush = Flipped(new IFlushIO(p))
+  })
 }
 
 class DBusIO(p: Parameters, bank: Boolean = false) extends Bundle {

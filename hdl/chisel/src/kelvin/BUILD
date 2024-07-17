@@ -61,6 +61,19 @@ chisel_test(
     ],
 )
 
+chisel_test(
+    name = "kelvin_uncached_fetch_tests",
+    srcs = [
+        "scalar/UncachedFetchTest.scala",
+    ],
+    deps = [
+        ":kelvin_base",
+        ":kelvin_scalar",
+        "//hdl/chisel/src/common",
+        "//hdl/chisel/src/common:instruction_buffer",
+    ],
+)
+
 chisel_library(
     name = "kelvin_base",
     srcs = [
@@ -124,6 +137,7 @@ chisel_library(
         "scalar/Regfile.scala",
         "scalar/SCore.scala",
         "scalar/SLog.scala",
+        "scalar/UncachedFetch.scala",
     ],
     deps = [
         ":kelvin_base",
@@ -143,6 +157,7 @@ chisel_library(
         ":kelvin_vector",
         "//hdl/chisel/src/bus",
         "//hdl/chisel/src/common",
+        "//hdl/chisel/src/common:instruction_buffer",
     ],
 )
 
@@ -160,6 +175,18 @@ chisel_cc_library(
     chisel_lib = ":kelvin",
     emit_class = "kelvin.EmitCore",
     module_name = "Core",
+)
+
+chisel_cc_library(
+    name = "core_mini_cc_library",
+    chisel_lib = ":kelvin",
+    emit_class = "kelvin.EmitCore",
+    module_name = "CoreMini",
+    verilog_file_path = "CoreMini.sv",
+    gen_flags = [
+        "--enableFetchL0=False",
+        "--moduleName=CoreMini",
+    ],
 )
 
 chisel_cc_library(

@@ -51,7 +51,8 @@ class SCore(p: Parameters) extends Module {
 
   // The functional units that make up the core.
   val regfile = Regfile(p)
-  val fetch = Fetch(p)
+  val fetch = if (p.enableFetchL0) { Fetch(p) } else { Module(new UncachedFetch(p)) }
+
   val decode = (0 until p.instructionLanes).map(x => Seq(Decode(p, x))).reduce(_ ++ _)
   val alu = Seq.fill(p.instructionLanes)(Alu(p))
   val bru = Seq.fill(p.instructionLanes)(Bru(p))

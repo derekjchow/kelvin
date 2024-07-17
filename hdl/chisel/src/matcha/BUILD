@@ -45,6 +45,23 @@ chisel_cc_library(
 )
 
 chisel_cc_library(
+    name = "kelvin_mini_cc_library",
+    chisel_lib = ":matcha",
+    emit_class = "matcha.EmitKelvin",
+    module_name = "KelvinMini",
+    verilog_deps = [
+        "//hdl/verilog:clock_gate",
+        "//hdl/verilog:sram_1rw_256x256",
+        "//hdl/verilog:sram_1rw_256x288",
+    ],
+    verilog_file_path = "KelvinMini.sv",
+    gen_flags = [
+        "--enableFetchL0=False",
+        "--moduleName=KelvinMini",
+    ],
+)
+
+chisel_cc_library(
     name = "crossbar_cc_library",
     chisel_lib = ":matcha",
     emit_class = "matcha.EmitCrossbar",

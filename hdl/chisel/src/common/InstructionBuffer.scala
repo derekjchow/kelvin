@@ -95,7 +95,11 @@ class InstructionBufferSlice[T <: Data](
   // Withdraw elements from buffer
   val remainderValid = Wire(Vec(n, Bool()))
   for (i <- 0 until n) {
-    io.out(i).valid := buffer(i).valid
+    if (hasFlush) {
+      io.out(i).valid := buffer(i).valid && !io.flush.get
+    } else {
+      io.out(i).valid := buffer(i).valid
+    }
     io.out(i).bits := buffer(i).bits
 
     remainderValid(i) := buffer(i).valid && !io.out(i).ready

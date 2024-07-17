@@ -52,11 +52,6 @@ class BruCmd(p: Parameters) extends Bundle {
   val link = UInt(5.W)
 }
 
-class BranchTakenIO(p: Parameters) extends Bundle {
-  val valid = Output(Bool())
-  val value = Output(UInt(p.programCounterBits.W))
-}
-
 class BranchState(p: Parameters) extends Bundle {
   val fwd = Bool()
   val op = BruOp()

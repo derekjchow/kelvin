@@ -51,6 +51,9 @@ cc_binary(
     srcs = [
         "kelvin/core_tb.cc",
     ],
+    defines = [
+        "VERILATOR_MODEL=VCore",
+    ],
     deps = [
         ":kelvin_if",
         ":sim_libs",
@@ -63,15 +66,59 @@ cc_binary(
 )
 
 cc_binary(
+    name = "core_mini_sim",
+    srcs = [
+        "kelvin/core_tb.cc",
+    ],
+    defines = [
+        "VERILATOR_MODEL=VCoreMini",
+    ],
+    deps = [
+        ":kelvin_if",
+        ":sim_libs",
+        ":util",
+        "//hdl/chisel/src/kelvin:core_mini_cc_library",
+        "@com_google_absl//absl/flags:flag",
+        "@com_google_absl//absl/flags:parse",
+        "@com_google_absl//absl/flags:usage",
+    ],
+)
+
+cc_binary(
     name = "kelvin_tb",
     srcs = [
         "matcha/kelvin_if.h",
         "matcha/kelvin_tb.cc",
     ],
+    defines = [
+        "VERILATOR_MODEL=VKelvin",
+    ],
     deps = [
         ":kelvin_if",
         ":sim_libs",
         "//hdl/chisel/src/matcha:kelvin_cc_library",
+        "@com_google_absl//absl/flags:flag",
+        "@com_google_absl//absl/flags:parse",
+        "@com_google_absl//absl/flags:usage",
+    ],
+)
+
+cc_binary(
+    name = "kelvin_mini_tb",
+    srcs = [
+        "matcha/kelvin_if.h",
+        "matcha/kelvin_tb.cc",
+    ],
+    defines = [
+        "VERILATOR_MODEL=VKelvinMini",
+    ],
+    deps = [
+        "kelvin_if",
+        ":sim_libs",
+        "//hdl/chisel/src/matcha:kelvin_mini_cc_library",
+        "@com_google_absl//absl/flags:flag",
+        "@com_google_absl//absl/flags:parse",
+        "@com_google_absl//absl/flags:usage",
     ],
 )
 

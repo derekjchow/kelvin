@@ -23,11 +23,12 @@ import _root_.circt.stage.ChiselStage
 
 object Core {
   def apply(p: Parameters): Core = {
-    return Module(new Core(p))
+    return Module(new Core(p, "Core"))
   }
 }
 
-class Core(p: Parameters) extends Module {
+class Core(p: Parameters, moduleName: String) extends Module {
+  override val desiredName = moduleName
   val io = IO(new Bundle {
     val csr = new CsrInOutIO(p)
     val halted = Output(Bool())
@@ -98,5 +99,17 @@ class Core(p: Parameters) extends Module {
 
 object EmitCore extends App {
   val p = new Parameters
-  ChiselStage.emitSystemVerilogFile(new Core(p), args)
+  var moduleName = "Core"
+  var chiselArgs = List[String]()
+  for (arg <- args) {
+    if (arg.startsWith("--enableFetchL0")) {
+      p.enableFetchL0 = arg.split("=")(1).toBoolean
+    } else if (arg.startsWith("--moduleName")) {
+      moduleName = arg.split("=")(1)
+    } else {
+      chiselArgs = chiselArgs :+ arg
+    }
+  }
+  ChiselStage.emitSystemVerilogFile(
+    new Core(p, moduleName), chiselArgs.toArray)
 }

@@ -56,11 +56,6 @@ class RegfileBusPortIO(p: Parameters) extends Bundle {
   val data = Output(Vec(p.instructionLanes, UInt(32.W)))
 }
 
-class RegfileLinkPortIO extends Bundle {
-  val valid = Output(Bool())
-  val value = Output(UInt(32.W))
-}
-
 class RegfileBranchTargetIO extends Bundle {
   val data = Output(UInt(32.W))
 }

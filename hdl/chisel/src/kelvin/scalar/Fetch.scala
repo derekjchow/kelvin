@@ -30,17 +30,8 @@ object Fetch {
   }
 }
 
-
-class Fetch(p: Parameters) extends Module {
-  val io = IO(new Bundle {
-    val csr = new CsrInIO(p)
-    val ibus = new IBusIO(p)
-    val inst = new FetchIO(p)
-    val branch = Flipped(Vec(p.instructionLanes, new BranchTakenIO(p)))
-    val linkPort = Flipped(new RegfileLinkPortIO)
-    val iflush = Flipped(new IFlushIO(p))
-  })
-
+// Instruction fetch unit, with an integrated L0 cache
+class Fetch(p: Parameters) extends FetchUnit(p) {
   // This is the only compiled and tested configuration (at this time).
   assert(p.fetchAddrBits == 32)
   assert(p.fetchDataBits == 256)

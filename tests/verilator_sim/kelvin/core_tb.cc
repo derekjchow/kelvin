@@ -12,7 +12,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "VCore.h"  // Generated
+#define STRINGIZE(x) #x
+#define STR(x) STRINGIZE(x)
+#define MODEL_HEADER_SUFFIX .h
+#define MODEL_HEADER STR(VERILATOR_MODEL MODEL_HEADER_SUFFIX)
+#include MODEL_HEADER
+
 #include "absl/flags/flag.h"
 #include "absl/flags/parse.h"
 #include "absl/flags/usage.h"
@@ -40,7 +45,7 @@ struct Core_tb : Sysc_tb {
 
 static void Core_run(const char* name, const char* bin, const int cycles,
                      const bool trace) {
-  VCore core(name);
+  VERILATOR_MODEL core(name);
   Core_tb tb("Core_tb", cycles, /* random= */ false);
   Core_if mif("Core_if", bin);
   Debug_if dbg("Debug_if", &mif);

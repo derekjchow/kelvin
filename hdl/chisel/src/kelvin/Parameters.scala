@@ -68,6 +68,7 @@ case class Parameters(m: Seq[MemoryRegion] = Seq(), hartId: UInt = 0.U(32.W)) {
   val vectorFifoDepth = 16
 
   // L0ICache Fetch unit.
+  var enableFetchL0 = true
   val fetchCacheBytes = 1024
 
   // Scalar Core Fetch bus.

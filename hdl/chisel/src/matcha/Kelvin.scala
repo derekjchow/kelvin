@@ -23,11 +23,12 @@ import _root_.circt.stage.ChiselStage
 
 object Kelvin {
   def apply(p: kelvin.Parameters): Kelvin = {
-    return Module(new Kelvin(p))
+    return Module(new Kelvin(p, moduleName = "Kelvin"))
   }
 }
 
-class Kelvin(p: kelvin.Parameters) extends RawModule {
+class Kelvin(p: kelvin.Parameters, moduleName: String) extends RawModule {
+  override val desiredName = moduleName
   // IO ports. (RawModule removes default[clock, reset])
   val clk_i  = IO(Input(Clock()))
   val rst_ni = IO(Input(AsyncReset()))
@@ -141,5 +142,17 @@ class Kelvin(p: kelvin.Parameters) extends RawModule {
 
 object EmitKelvin extends App {
   val p = new kelvin.MatchaParameters
-  ChiselStage.emitSystemVerilogFile(new Kelvin(p), args)
+  var moduleName = "Kelvin"
+  var chiselArgs = List[String]()
+  for (arg <- args) {
+    if (arg.startsWith("--enableFetchL0")) {
+      p.enableFetchL0 = arg.split("=")(1).toBoolean
+    } else if (arg.startsWith("--moduleName")) {
+      moduleName = arg.split("=")(1)
+    } else {
+      chiselArgs = chiselArgs :+ arg
+    }
+  }
+  ChiselStage.emitSystemVerilogFile(
+    new Kelvin(p, moduleName), chiselArgs.toArray)
 }
