@@ -70,6 +70,17 @@ chisel_library(
     ],
 )
 
+chisel_library(
+    name = "instruction_buffer",
+    srcs = [
+        "InstructionBuffer.scala",
+    ],
+    visibility = ["//visibility:public"],
+    deps = [
+        ":library",
+    ],
+)
+
 chisel_test(
     name = "fp_test",
     srcs = [
@@ -82,13 +93,22 @@ chisel_test(
 )
 
 chisel_test(
+    name = "instruction_buffer_test",
+    srcs = [
+        "InstructionBufferTest.scala",
+    ],
+    deps = [
+        ":instruction_buffer",
+    ],
+)
+
+chisel_test(
     name = "library_test",
     srcs = [
         "LibraryTest.scala",
     ],
     deps = [
         ":library",
-        # ":fp_test_utils",
     ],
 )
 
