@@ -601,7 +601,7 @@ static void VRegfile_test(char* name, int loops, bool trace) {
   VVRegfile vrf(name);
 
   if (trace) {
-    tb.trace(vrf);
+    tb.trace(&vrf);
   }
 
   vrf.clock(tb.clock);

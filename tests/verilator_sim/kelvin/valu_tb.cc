@@ -808,7 +808,7 @@ static void VAlu_test(char* name, int loops, bool trace) {
   VVAlu valu(name);
 
   if (trace) {
-    tb.trace(valu);
+    tb.trace(&valu);
   }
 
   valu.clock(tb.clock);

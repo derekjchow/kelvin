@@ -182,7 +182,7 @@ static void VAluInt_test(char* name, int loops, bool trace) {
   VVAluInt valuint(name);
 
   if (trace) {
-    tb.trace(valuint);
+    tb.trace(&valuint);
   }
 
   valuint.clock(tb.clock);

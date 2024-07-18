@@ -472,7 +472,7 @@ static void L1DCache_test(char* name, int loops, bool trace) {
 #endif
 
   if (trace) {
-    tb.trace(l1dcache);
+    tb.trace(&l1dcache);
   }
 
   l1dcache.clock(tb.clock);

@@ -436,7 +436,7 @@ static void VLd_test(char* name, int loops, bool trace) {
 #undef IO_BIND
 
   if (trace) {
-    tb.trace(ld);
+    tb.trace(&ld);
   }
 
   tb.start();

@@ -449,7 +449,7 @@ static void VConvCtrl_test(char* name, int loops, bool trace) {
 #undef IO_BIND
 
   if (trace) {
-    tb.trace(conv);
+    tb.trace(&conv);
   }
 
   tb.start();

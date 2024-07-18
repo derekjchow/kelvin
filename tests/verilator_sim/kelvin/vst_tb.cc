@@ -523,7 +523,7 @@ static void VSt_test(char* name, int loops, bool trace) {
 #undef IO_BIND
 
   if (trace) {
-    tb.trace(st);
+    tb.trace(&st);
   }
 
   tb.start();

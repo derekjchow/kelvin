@@ -320,7 +320,7 @@ static void VRegfileSegment_test(char* name, int loops, bool trace) {
   VVRegfileSegment vrf(name);
 
   if (trace) {
-    tb.trace(vrf);
+    tb.trace(&vrf);
   }
 
   vrf.clock(tb.clock);

@@ -276,7 +276,7 @@ static void Core_run(const char* name, const char* bin, const int cycles,
   BINDAXI(io_axi1_read_data_bits_data);
 
   if (trace) {
-    tb.trace(core);
+    tb.trace(&core);
   }
 
   tb.start();

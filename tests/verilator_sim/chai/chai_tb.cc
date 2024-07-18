@@ -222,7 +222,7 @@ void ChAI_run(const char* name, const char* path, const int cycles,
   uart.tx(uart_rx);
 
   if (trace) {
-    tb.trace(chai);
+    tb.trace(&chai);
   }
 
   tb.start();

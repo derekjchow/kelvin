@@ -149,6 +149,7 @@ struct Sysc_tb : public sc_module {
     reset = 0;
     resetn = 1;
 
+    started_ = true;
     sc_start();
 
     if (tf_) {
@@ -160,12 +161,19 @@ struct Sysc_tb : public sc_module {
   }
 
   template <typename T>
-  void trace(T &design, const char *name = "") {
+  void trace(T* design, const char *name = "") {
     if (!strlen(name)) {
-      name = design.name();
+      name = design->name();
     }
     std::string path = std::string(vcd_path_) + "/" + name;
-    design.trace(tf_, 99);
+
+    reset = 1;
+    resetn = 0;
+    sc_start(SC_ZERO_TIME);
+    reset = 0;
+    resetn = 1;
+
+    design->trace(tf_, 99);
     path += ".vcd";
     Verilated::traceEverOn(true);
     tf_->open(path.c_str());
@@ -238,6 +246,7 @@ struct Sysc_tb : public sc_module {
   const int loops_;
   int loop_;
   bool error_;
+  bool started_;
 
   sc_in<bool> clock_;
 
@@ -245,13 +254,13 @@ struct Sysc_tb : public sc_module {
   VerilatedVcdC *tf_ = nullptr;
 
   void tb_posedge() {
-    if (tf_) tf_->dump(sim_time_++);
+    if (tf_ && started_) tf_->dump(sim_time_++);
     if (reset) return;
     posedge();
   }
 
   void tb_negedge() {
-    if (tf_) tf_->dump(sim_time_++);
+    if (tf_ && started_) tf_->dump(sim_time_++);
     if (reset) return;
     negedge();
   }

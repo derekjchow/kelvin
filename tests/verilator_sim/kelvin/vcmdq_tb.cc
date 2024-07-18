@@ -371,7 +371,7 @@ static void VCmdq_test(char* name, int loops, bool random, bool trace) {
 #undef IO_BIND
 
   if (trace) {
-    tb.trace(cmdq);
+    tb.trace(&cmdq);
   }
 
   tb.start();

@@ -112,7 +112,7 @@ static void Kelvin_run(const char* name, const char* bin, const bool trace) {
   dbg.io_slog_data(slog_data);
 
   if (trace) {
-    tb.trace(core);
+    tb.trace(&core);
   }
 
   tb.start();

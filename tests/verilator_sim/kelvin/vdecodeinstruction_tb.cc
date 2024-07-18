@@ -274,7 +274,7 @@ static void VDecodeInstruction_test(char* name, int loops, bool trace) {
   BIND2(tb, d, io_actv_wactive);
 
   if (trace) {
-    tb.trace(d);
+    tb.trace(&d);
   }
 
   tb.start();

@@ -346,7 +346,7 @@ static void DBus2Axi_test(char* name, int loops, bool trace) {
   BIND2(tb, d2a, io_axi_read_data_bits_data);
 
   if (trace) {
-    tb.trace(d2a);
+    tb.trace(&d2a);
   }
 
   tb.start();

@@ -589,7 +589,7 @@ static void VLdSt_test(char* name, int loops, bool trace) {
 #undef IO_BIND
 
   if (trace) {
-    tb.trace(ldst);
+    tb.trace(&ldst);
   }
 
   tb.start();

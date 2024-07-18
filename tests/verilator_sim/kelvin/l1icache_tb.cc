@@ -156,7 +156,7 @@ static void L1ICache_test(char* name, int loops, bool trace) {
   VL1ICache l1icache(name);
 
   if (trace) {
-    tb.trace(l1icache);
+    tb.trace(&l1icache);
   }
 
   l1icache.clock(tb.clock);

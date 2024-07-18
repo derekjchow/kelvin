@@ -278,7 +278,7 @@ static void VConvAlu_test(char* name, int loops, bool trace) {
 #endif
 
   if (trace) {
-    tb.trace(conv);
+    tb.trace(&conv);
   }
 
   tb.start();

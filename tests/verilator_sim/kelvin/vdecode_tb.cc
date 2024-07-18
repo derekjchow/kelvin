@@ -499,7 +499,7 @@ static void VDecode_test(char* name, int loops, bool trace) {
 #undef IO_BIND
 
   if (trace) {
-    tb.trace(d);
+    tb.trace(&d);
   }
 
   tb.start();
