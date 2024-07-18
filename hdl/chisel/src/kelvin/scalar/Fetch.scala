@@ -40,15 +40,13 @@ class IBusIO(p: Parameters) extends Bundle {
 }
 
 class FetchInstruction(p: Parameters) extends Bundle {
-  val valid = Output(Bool())
-  val ready = Input(Bool())
-  val addr = Output(UInt(p.programCounterBits.W))
-  val inst = Output(UInt(p.instructionBits.W))
-  val brchFwd = Output(Bool())
+  val addr = UInt(p.programCounterBits.W)
+  val inst = UInt(p.instructionBits.W)
+  val brchFwd = Bool()
 }
 
 class FetchIO(p: Parameters) extends Bundle {
-  val lanes = Vec(p.instructionLanes, new FetchInstruction(p))
+  val lanes = Vec(p.instructionLanes, Decoupled(new FetchInstruction(p)))
 }
 
 class Fetch(p: Parameters) extends Module {
@@ -423,9 +421,9 @@ class Fetch(p: Parameters) extends Module {
   // Outputs
   for (i <- 0 until p.instructionLanes) {
     io.inst.lanes(i).valid := instValid(i) & brchValidDeMask(i)
-    io.inst.lanes(i).addr  := instAddr(i)
-    io.inst.lanes(i).inst  := instBits(i)
-    io.inst.lanes(i).brchFwd := brchFwd(i)
+    io.inst.lanes(i).bits.addr  := instAddr(i)
+    io.inst.lanes(i).bits.inst  := instBits(i)
+    io.inst.lanes(i).bits.brchFwd := brchFwd(i)
   }
 
   // Assertions.

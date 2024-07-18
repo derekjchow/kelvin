@@ -102,9 +102,9 @@ class SCore(p: Parameters) extends Module {
   for (i <- 0 until p.instructionLanes) {
     decode(i).io.inst.valid := fetch.io.inst.lanes(i).valid && mask(i)
     fetch.io.inst.lanes(i).ready := decode(i).io.inst.ready && mask(i)
-    decode(i).io.inst.addr := fetch.io.inst.lanes(i).addr
-    decode(i).io.inst.inst := fetch.io.inst.lanes(i).inst
-    decode(i).io.inst.brchFwd := fetch.io.inst.lanes(i).brchFwd
+    decode(i).io.inst.bits.addr := fetch.io.inst.lanes(i).bits.addr
+    decode(i).io.inst.bits.inst := fetch.io.inst.lanes(i).bits.inst
+    decode(i).io.inst.bits.brchFwd := fetch.io.inst.lanes(i).bits.brchFwd
 
     decode(i).io.branchTaken := branchTaken
     decode(i).io.halted := csr.io.halted
@@ -302,7 +302,7 @@ class SCore(p: Parameters) extends Module {
 
   slogValid := slogEn
   when (slogEn) {
-    slogAddr := decode(0).io.inst.inst(14,12)
+    slogAddr := decode(0).io.inst.bits.inst(14,12)
   }
 
   io.slog.valid := slogValid
@@ -324,8 +324,8 @@ class SCore(p: Parameters) extends Module {
   debugEn := Cat(fetch.io.inst.lanes.map(x => x.valid && x.ready && !branchTaken))
 
   for (i <- 0 until p.instructionLanes) {
-    debugAddr(i) := fetch.io.inst.lanes(i).addr
-    debugInst(i) := fetch.io.inst.lanes(i).inst
+    debugAddr(i) := fetch.io.inst.lanes(i).bits.addr
+    debugInst(i) := fetch.io.inst.lanes(i).bits.inst
   }
 
   io.debug.en := debugEn & ~debugBrch
