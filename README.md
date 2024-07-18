@@ -19,7 +19,7 @@ bazel build //tests/verilator_sim:core_sim
 The verilog source for the Kelvin core can be generated using:
 
 ```bash
-bazel build //hdl/chisel:core_cc_library_emit_verilog
+bazel build //hdl/chisel/src/kelvin:core_cc_library_emit_verilog
 ```
 
 Verilog source for the Matcha SoC can be generated using:
