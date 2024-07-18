@@ -146,6 +146,23 @@ class InstructionBufferSpec extends AnyFreeSpec with ChiselScalatestTester {
     }
   }
 
+  "InstructionBufferSlice Flush" in {
+    test(new InstructionBufferSlice(UInt(16.W), 4, true)) { dut =>
+      dut.io.feedOut.nReady.poke(0)
+      dut.io.feedIn.nValid.poke(4)
+      for (i <- 0 until 4) {
+        dut.io.feedIn.bits(i).poke(30 + i)
+      }
+      dut.clock.step()
+      dut.io.feedIn.nValid.poke(0)
+      dut.io.flush.get.poke(1)
+      dut.clock.step()
+      for (i <- 0 until 4) {
+          assertResult(0) { dut.io.out(i).valid.peekInt() }
+      }
+    }
+  }
+
   "InstructionBuffer Fill" in {
     test(new InstructionBuffer(UInt(16.W), 4, 12)) { dut =>
       dut.io.feedIn.nValid.poke(4)
@@ -319,6 +336,28 @@ class InstructionBufferSpec extends AnyFreeSpec with ChiselScalatestTester {
       assertResult(101) { dut.io.out(9).bits.peekInt() }
       assertResult(102) { dut.io.out(10).bits.peekInt() }
       assertResult(103) { dut.io.out(11).bits.peekInt() }
+    }
+  }
+
+  "InstructionBuffer Flush" in {
+    test(new InstructionBuffer(UInt(16.W), 4, 12, true)) { dut =>
+      dut.io.feedIn.nValid.poke(4)
+      dut.io.feedIn.bits(0).poke(500)
+      dut.io.feedIn.bits(1).poke(501)
+      dut.io.feedIn.bits(2).poke(502)
+      dut.io.feedIn.bits(3).poke(503)
+      dut.clock.step()
+      dut.io.feedIn.nValid.poke(3)
+      dut.io.feedIn.bits(0).poke(900)
+      dut.io.feedIn.bits(1).poke(301)
+      dut.io.feedIn.bits(2).poke(102)
+      dut.clock.step()
+
+      dut.io.flush.get.poke(1)
+      dut.clock.step()
+      for (i <- 0 until 12) {
+        assertResult(0) { dut.io.out(i).valid.peekInt() }
+      }
     }
   }
 }

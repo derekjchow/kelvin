@@ -43,7 +43,8 @@ object PrioritySelect {
 }
 
 /** A FIFO queue that enqueues/dequeues multiple elements a cycle, but also
-  * contains a bypass interface that allows dequeuing elements out of order.
+  * contains a bypass interface that allows dequeuing elements out of order and
+  * optional flush.
   * The general structure of this module looks as follows:
   *
   *                       Out
@@ -81,12 +82,13 @@ object PrioritySelect {
   * feedIn -| InstructionBufferSlice | -> | InstructionBufferSlice | -> feedOut
   *         +------------------------+    +------------------------+
   */
-class InstructionBufferSlice[T <: Data](val gen: T,
-                                        val n: Int) extends Module {
+class InstructionBufferSlice[T <: Data](
+    val gen: T, val n: Int, val hasFlush: Boolean = false) extends Module {
   val io = IO(new Bundle {
     val feedIn = Flipped(DecoupledVectorIO(gen, n))
     val feedOut = DecoupledVectorIO(gen, n)
     val out = Vec(n, Decoupled(gen))
+    val flush = if (hasFlush) { Some(Input(Bool())) } else { None }
   })
   val buffer = RegInit(VecInit.fill(n)(MakeValid(false.B, 0.U.asTypeOf(gen))))
 
@@ -145,7 +147,13 @@ class InstructionBufferSlice[T <: Data](val gen: T,
     nextBuffer(i).valid := valid
     nextBuffer(i).bits := Mux(valid, available(idx), 0.U.asTypeOf(gen))
   }
-  buffer := nextBuffer
+  if (hasFlush) {
+    buffer := Mux(io.flush.get,
+                  VecInit.fill(n)(MakeValid(false.B, 0.U.asTypeOf(gen))),
+                  nextBuffer)
+  } else {
+    buffer := nextBuffer
+  }
 }
 
 /** A data structure where elements are inserted in order, but can be removed
@@ -160,20 +168,25 @@ class InstructionBufferSlice[T <: Data](val gen: T,
   */
 class InstructionBuffer[T <: Data](val gen: T,
                                    val n: Int,
-                                   val window: Int) extends Module {
+                                   val window: Int,
+                                   val hasFlush: Boolean = false) extends Module {
   val slices: Int = window / n
   assert(window % n == 0)
   assert(slices > 0)
   val io = IO(new Bundle {
     val feedIn = Flipped(DecoupledVectorIO(gen, n))
     val out = Vec(window, Decoupled(gen))
+    val flush = if (hasFlush) { Some(Input(Bool())) } else { None }
   })
 
   // Compose InstructionBufferSlices
   var feedIn = io.feedIn
   var outputs: Seq[DecoupledIO[T]] = Seq()
   for (s <- 0 until slices) {
-    val slice = Module(new InstructionBufferSlice(gen, n))
+    val slice = Module(new InstructionBufferSlice(gen, n, hasFlush))
+    if (hasFlush) {
+      slice.io.flush.get := io.flush.get
+    }
     slice.io.feedIn <> feedIn
     feedIn = slice.io.feedOut
     outputs = slice.io.out ++ outputs
