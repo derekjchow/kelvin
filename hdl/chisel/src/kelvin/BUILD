@@ -30,6 +30,7 @@ chisel_library(
     ],
     deps = [
         ":kelvin",
+        ":kelvin_base",
         "//hdl/chisel/src/common:fma",
         "//hdl/chisel/src/common:fp",
     ],
@@ -43,6 +44,7 @@ chisel_test(
     ],
     deps = [
         ":kelvin",
+        ":kelvin_base",
         ":kelvin_float",
         "//hdl/chisel/src/common:fp",
     ],
@@ -54,34 +56,32 @@ chisel_test(
         "scalar/MluTest.scala",
     ],
     deps = [
-        ":kelvin",
+        ":kelvin_base",
+        ":kelvin_scalar",
     ],
 )
 
 chisel_library(
-    name = "kelvin",
+    name = "kelvin_base",
     srcs = [
         "ClockGate.scala",
-        "Core.scala",
         "DBus2Axi.scala",
         "DBusMux.scala",
+        "Interfaces.scala",
         "L1DCache.scala",
         "L1ICache.scala",
         "Library.scala",
         "Parameters.scala",
-        "scalar/Alu.scala",
-        "scalar/Bru.scala",
-        "scalar/Csr.scala",
-        "scalar/Debug.scala",
-        "scalar/Decode.scala",
-        "scalar/Dvu.scala",
-        "scalar/Fetch.scala",
-        "scalar/Flush.scala",
-        "scalar/Lsu.scala",
-        "scalar/Mlu.scala",
-        "scalar/Regfile.scala",
-        "scalar/SCore.scala",
-        "scalar/SLog.scala",
+    ],
+    deps = [
+        "//hdl/chisel/src/bus",
+        "//hdl/chisel/src/common",
+    ],
+)
+
+chisel_library(
+    name = "kelvin_vector",
+    srcs = [
         "vector/VAlu.scala",
         "vector/VAluInt.scala",
         "vector/VCmdq.scala",
@@ -102,6 +102,45 @@ chisel_library(
         "vector/VSt.scala",
     ],
     deps = [
+        ":kelvin_base",
+        "//hdl/chisel/src/bus",
+        "//hdl/chisel/src/common",
+    ],
+)
+
+chisel_library(
+    name = "kelvin_scalar",
+    srcs = [
+        "scalar/Alu.scala",
+        "scalar/Bru.scala",
+        "scalar/Csr.scala",
+        "scalar/Debug.scala",
+        "scalar/Decode.scala",
+        "scalar/Dvu.scala",
+        "scalar/Fetch.scala",
+        "scalar/Flush.scala",
+        "scalar/Lsu.scala",
+        "scalar/Mlu.scala",
+        "scalar/Regfile.scala",
+        "scalar/SCore.scala",
+        "scalar/SLog.scala",
+    ],
+    deps = [
+        ":kelvin_base",
+        "//hdl/chisel/src/common",
+        "//hdl/chisel/src/common:instruction_buffer",
+    ],
+)
+
+chisel_library(
+    name = "kelvin",
+    srcs = [
+        "Core.scala",
+    ],
+    deps = [
+        ":kelvin_base",
+        ":kelvin_scalar",
+        ":kelvin_vector",
         "//hdl/chisel/src/bus",
         "//hdl/chisel/src/common",
     ],

@@ -35,19 +35,6 @@ object CsrMode extends ChiselEnum {
   val User = Value(1.U(1.W))
 }
 
-class CsrInIO(p: Parameters) extends Bundle {
-  val value = Input(Vec(12, UInt(32.W)))
-}
-
-class CsrOutIO(p: Parameters) extends Bundle {
-  val value = Output(Vec(8, UInt(32.W)))
-}
-
-class CsrInOutIO(p: Parameters) extends Bundle {
-  val in  = new CsrInIO(p)
-  val out = new CsrOutIO(p)
-}
-
 class CsrCounters(p: Parameters) extends Bundle {
   val rfwriteCount = UInt(3.W)
   val storeCount = UInt(2.W)

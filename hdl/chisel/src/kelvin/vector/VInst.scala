@@ -26,20 +26,6 @@ object VInst {
   }
 }
 
-object VInstOp extends ChiselEnum {
-  val GETVL = Value
-  val GETMAXVL = Value
-  val VLD = Value
-  val VST = Value
-  val VIOP = Value
-}
-
-class VInstCmd extends Bundle {
-  val addr = UInt(5.W)
-  val inst = UInt(32.W)
-  val op = VInstOp()
-}
-
 class VectorInstructionIO(p: Parameters) extends Bundle {
   val valid = Output(Bool())
   val ready = Input(Bool())

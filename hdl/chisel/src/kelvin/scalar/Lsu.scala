@@ -24,20 +24,6 @@ object Lsu {
   }
 }
 
-class DBusIO(p: Parameters, bank: Boolean = false) extends Bundle {
-  // Control Phase.
-  val valid = Output(Bool())
-  val ready = Input(Bool())
-  val write = Output(Bool())
-  val addr = Output(UInt((p.lsuAddrBits - (if (bank) 1 else 0)).W))
-  val adrx = Output(UInt((p.lsuAddrBits - (if (bank) 1 else 0)).W))
-  val size = Output(UInt((log2Ceil(p.lsuDataBits / 8) + 1).W))
-  val wdata = Output(UInt(p.lsuDataBits.W))
-  val wmask = Output(UInt((p.lsuDataBits / 8).W))
-  // Read Phase.
-  val rdata = Input(UInt(p.lsuDataBits.W))
-}
-
 object LsuOp extends ChiselEnum {
   val LB  = Value
   val LH  = Value

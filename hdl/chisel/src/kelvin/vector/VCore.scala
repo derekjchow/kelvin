@@ -28,24 +28,6 @@ object VCore {
   }
 }
 
-class VCoreIO(p: Parameters) extends Bundle {
-  // Decode cycle.
-  val vinst = Vec(p.instructionLanes, Flipped(Decoupled(new VInstCmd)))
-
-  // Execute cycle.
-  val rs = Vec(p.instructionLanes * 2, Flipped(new RegfileReadDataIO))
-  val rd = Vec(p.instructionLanes, Valid(Flipped(new RegfileWriteDataIO)))
-
-  // Status.
-  val mactive = Output(Bool())
-
-  // Faults.
-  val undef = Output(Bool())
-
-  val vrfwriteCount = Output(UInt(3.W))
-  val vstoreCount = Output(UInt(2.W))
-}
-
 class VCore(p: Parameters) extends Module {
   val io = IO(new Bundle {
     // Score <> VCore

@@ -18,10 +18,3 @@ import chisel3._
 import chisel3.util._
 import common._
 
-// Debug signals for HDL development.
-class DebugIO(p: Parameters) extends Bundle {
-  val en = Output(UInt(4.W))
-  val addr = Vec(p.instructionLanes, UInt(32.W))
-  val inst = Vec(p.instructionLanes, UInt(32.W))
-  val cycles = Output(UInt(32.W))
-}

@@ -30,24 +30,6 @@ object Fetch {
   }
 }
 
-class IBusIO(p: Parameters) extends Bundle {
-  // Control Phase.
-  val valid = Output(Bool())
-  val ready = Input(Bool())
-  val addr = Output(UInt(p.fetchAddrBits.W))
-  // Read Phase.
-  val rdata = Input(UInt(p.fetchDataBits.W))
-}
-
-class FetchInstruction(p: Parameters) extends Bundle {
-  val addr = UInt(p.programCounterBits.W)
-  val inst = UInt(p.instructionBits.W)
-  val brchFwd = Bool()
-}
-
-class FetchIO(p: Parameters) extends Bundle {
-  val lanes = Vec(p.instructionLanes, Decoupled(new FetchInstruction(p)))
-}
 
 class Fetch(p: Parameters) extends Module {
   val io = IO(new Bundle {

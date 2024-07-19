@@ -39,19 +39,9 @@ class RegfileReadSetIO extends Bundle {
   val value = Input(UInt(32.W))
 }
 
-class RegfileReadDataIO extends Bundle {
-  val valid = Output(Bool())
-  val data  = Output(UInt(32.W))
-}
-
 class RegfileWriteAddrIO extends Bundle {
   val valid = Input(Bool())
   val addr  = Input(UInt(5.W))
-}
-
-class RegfileWriteDataIO extends Bundle {
-  val addr  = Input(UInt(5.W))
-  val data  = Input(UInt(32.W))
 }
 
 class RegfileBusAddrIO extends Bundle {

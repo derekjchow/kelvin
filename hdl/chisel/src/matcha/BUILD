@@ -28,6 +28,7 @@ chisel_library(
         "//hdl/chisel/src/bus:bus",
         "//hdl/chisel/src/common:common",
         "//hdl/chisel/src/kelvin:kelvin",
+        "//hdl/chisel/src/kelvin:kelvin_base",
     ],
 )
 

@@ -26,6 +26,7 @@ chisel_library(
     deps = [
         "//hdl/chisel/src/bus:bus",
         "//hdl/chisel/src/kelvin:kelvin",
+        "//hdl/chisel/src/kelvin:kelvin_params",
         "//hdl/chisel/src/matcha:matcha",
     ],
 )
