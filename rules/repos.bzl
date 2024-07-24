@@ -69,14 +69,6 @@ def kelvin_repos():
     )
 
     http_archive(
-        name = "glibc-2.37",
-        sha256 = "811f19f9200118ff94ede28a6e12307584152cdcbf3d366cd729ea2f855db255",
-        strip_prefix = "glibc-2.37",
-        urls = ["https://ftp.gnu.org/gnu/glibc/glibc-2.37.tar.gz"],
-        build_file = "@kelvin_hw//third_party/glibc-2.37:BUILD.bazel",
-    )
-
-    http_archive(
         name = "llvm_firtool",
         sha256 = "d22a894f2f8652b6c26e1d2a66551a7f015ce46e48f2bcdd785b01b9c8739277",
         urls = ["https://repo1.maven.org/maven2/org/chipsalliance/llvm-firtool/1.52.0/llvm-firtool-1.52.0.jar"],

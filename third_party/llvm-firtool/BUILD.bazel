@@ -21,6 +21,5 @@ sh_binary(
     srcs = [":firtool.sh"],
     data = [
         "@llvm_firtool//:org.chipsalliance/llvm-firtool/linux-x64/bin/firtool",
-        "@glibc-2.37//:glibc-2.37",
     ]
 )
