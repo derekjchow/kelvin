@@ -42,6 +42,9 @@ chisel_cc_library(
         "//hdl/verilog:sram_1rw_256x256",
         "//hdl/verilog:sram_1rw_256x288",
     ],
+    extra_outs = [
+        "VKelvin_parameters.h",
+    ],
 )
 
 chisel_cc_library(
@@ -59,6 +62,9 @@ chisel_cc_library(
         "--enableVector=False",
         "--moduleName=KelvinScalar",
     ],
+    extra_outs = [
+        "VKelvinScalar_parameters.h",
+    ],
 )
 
 chisel_cc_library(
@@ -74,7 +80,13 @@ chisel_cc_library(
     verilog_file_path = "KelvinMini.sv",
     gen_flags = [
         "--enableFetchL0=False",
+        "--fetchDataBits=128",
+        "--lsuDataBits=128",
+        "--enableVector=False",
         "--moduleName=KelvinMini",
+    ],
+    extra_outs = [
+        "VKelvinMini_parameters.h",
     ],
 )
 

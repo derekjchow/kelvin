@@ -90,13 +90,13 @@ static void Core_run(const char* name, const char* bin, const int cycles,
   sc_signal<sc_bv<32> > io_csr_out_value_6;
   sc_signal<sc_bv<32> > io_csr_out_value_7;
   sc_signal<sc_bv<32> > io_ibus_addr;
-  sc_signal<sc_bv<256> > io_ibus_rdata;
+  sc_signal<sc_bv<KP_fetchDataBits> > io_ibus_rdata;
   sc_signal<sc_bv<32> > io_dbus_addr;
   sc_signal<sc_bv<32> > io_dbus_adrx;
-  sc_signal<sc_bv<kDbusBits> > io_dbus_size;
-  sc_signal<sc_bv<kVector> > io_dbus_wdata;
-  sc_signal<sc_bv<kVector / 8> > io_dbus_wmask;
-  sc_signal<sc_bv<kVector> > io_dbus_rdata;
+  sc_signal<sc_bv<KP_dbusSize> > io_dbus_size;
+  sc_signal<sc_bv<KP_lsuDataBits> > io_dbus_wdata;
+  sc_signal<sc_bv<KP_lsuDataBits / 8> > io_dbus_wmask;
+  sc_signal<sc_bv<KP_lsuDataBits> > io_dbus_rdata;
   sc_signal<sc_bv<5> > io_slog_addr;
   sc_signal<sc_bv<32> > io_slog_data;
   sc_signal<sc_bv<4> > io_debug_en;
@@ -108,8 +108,8 @@ static void Core_run(const char* name, const char* bin, const int cycles,
   sc_signal<sc_bv<kUncId> > io_axi0_write_addr_bits_id;
   sc_signal<bool> io_axi0_write_data_ready;
   sc_signal<bool> io_axi0_write_data_valid;
-  sc_signal<sc_bv<kUncBits> > io_axi0_write_data_bits_data;
-  sc_signal<sc_bv<kUncStrb> > io_axi0_write_data_bits_strb;
+  sc_signal<sc_bv<KP_lsuDataBits> > io_axi0_write_data_bits_data;
+  sc_signal<sc_bv<KP_lsuDataBits/8> > io_axi0_write_data_bits_strb;
   sc_signal<bool> io_axi0_write_resp_ready;
   sc_signal<bool> io_axi0_write_resp_valid;
   sc_signal<sc_bv<kUncId> > io_axi0_write_resp_bits_id;
@@ -122,7 +122,7 @@ static void Core_run(const char* name, const char* bin, const int cycles,
   sc_signal<bool> io_axi0_read_data_valid;
   sc_signal<sc_bv<2> > io_axi0_read_data_bits_resp;
   sc_signal<sc_bv<kUncId> > io_axi0_read_data_bits_id;
-  sc_signal<sc_bv<kUncBits> > io_axi0_read_data_bits_data;
+  sc_signal<sc_bv<KP_lsuDataBits> > io_axi0_read_data_bits_data;
 #endif  // KP_enableVector
   sc_signal<bool> io_axi1_write_addr_ready;
   sc_signal<bool> io_axi1_write_addr_valid;
@@ -130,8 +130,8 @@ static void Core_run(const char* name, const char* bin, const int cycles,
   sc_signal<sc_bv<kUncId> > io_axi1_write_addr_bits_id;
   sc_signal<bool> io_axi1_write_data_ready;
   sc_signal<bool> io_axi1_write_data_valid;
-  sc_signal<sc_bv<kUncBits> > io_axi1_write_data_bits_data;
-  sc_signal<sc_bv<kUncStrb> > io_axi1_write_data_bits_strb;
+  sc_signal<sc_bv<KP_lsuDataBits> > io_axi1_write_data_bits_data;
+  sc_signal<sc_bv<KP_lsuDataBits/8> > io_axi1_write_data_bits_strb;
   sc_signal<bool> io_axi1_write_resp_ready;
   sc_signal<bool> io_axi1_write_resp_valid;
   sc_signal<sc_bv<kUncId> > io_axi1_write_resp_bits_id;
@@ -144,7 +144,7 @@ static void Core_run(const char* name, const char* bin, const int cycles,
   sc_signal<bool> io_axi1_read_data_valid;
   sc_signal<sc_bv<2> > io_axi1_read_data_bits_resp;
   sc_signal<sc_bv<kUncId> > io_axi1_read_data_bits_id;
-  sc_signal<sc_bv<kUncBits> > io_axi1_read_data_bits_data;
+  sc_signal<sc_bv<KP_lsuDataBits> > io_axi1_read_data_bits_data;
 
 #define IO_DEBUG(x)                       \
   sc_signal<sc_bv<32> > io_debug_addr##x; \

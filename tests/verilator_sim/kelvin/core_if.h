@@ -62,17 +62,17 @@ struct Core_if : Memory_if {
   sc_in<bool>         io_ibus_valid;
   sc_out<bool>        io_ibus_ready;
   sc_in<sc_bv<32> >   io_ibus_addr;
-  sc_out<sc_bv<256> > io_ibus_rdata;
+  sc_out<sc_bv<KP_fetchDataBits> > io_ibus_rdata;
 
   sc_in<bool> io_dbus_valid;
   sc_out<bool> io_dbus_ready;
   sc_in<bool> io_dbus_write;
   sc_in<sc_bv<32> > io_dbus_addr;
   sc_in<sc_bv<32> > io_dbus_adrx;
-  sc_in<sc_bv<kDbusBits> > io_dbus_size;
-  sc_in<sc_bv<kVector> > io_dbus_wdata;
-  sc_in<sc_bv<kVector / 8> > io_dbus_wmask;
-  sc_out<sc_bv<kVector> > io_dbus_rdata;
+  sc_in<sc_bv<KP_dbusSize> > io_dbus_size;
+  sc_in<sc_bv<KP_lsuDataBits> > io_dbus_wdata;
+  sc_in<sc_bv<KP_lsuDataBits / 8> > io_dbus_wmask;
+  sc_out<sc_bv<KP_lsuDataBits> > io_dbus_rdata;
 
 #if KP_enableVector
   sc_out<bool> io_axi0_write_addr_ready;
@@ -81,8 +81,8 @@ struct Core_if : Memory_if {
   sc_in<sc_bv<kUncId> > io_axi0_write_addr_bits_id;
   sc_out<bool> io_axi0_write_data_ready;
   sc_in<bool> io_axi0_write_data_valid;
-  sc_in<sc_bv<kUncBits> > io_axi0_write_data_bits_data;
-  sc_in<sc_bv<kUncStrb> > io_axi0_write_data_bits_strb;
+  sc_in<sc_bv<KP_lsuDataBits> > io_axi0_write_data_bits_data;
+  sc_in<sc_bv<KP_lsuDataBits/8> > io_axi0_write_data_bits_strb;
   sc_in<bool> io_axi0_write_resp_ready;
   sc_out<bool> io_axi0_write_resp_valid;
   sc_out<sc_bv<kUncId> > io_axi0_write_resp_bits_id;
@@ -95,7 +95,7 @@ struct Core_if : Memory_if {
   sc_out<bool> io_axi0_read_data_valid;
   sc_out<sc_bv<2> > io_axi0_read_data_bits_resp;
   sc_out<sc_bv<kUncId> > io_axi0_read_data_bits_id;
-  sc_out<sc_bv<kUncBits> > io_axi0_read_data_bits_data;
+  sc_out<sc_bv<KP_lsuDataBits> > io_axi0_read_data_bits_data;
 #endif  // KP_enableVector
   sc_out<bool> io_axi1_write_addr_ready;
   sc_in<bool> io_axi1_write_addr_valid;
@@ -103,8 +103,8 @@ struct Core_if : Memory_if {
   sc_in<sc_bv<kUncId> > io_axi1_write_addr_bits_id;
   sc_out<bool> io_axi1_write_data_ready;
   sc_in<bool> io_axi1_write_data_valid;
-  sc_in<sc_bv<kUncBits> > io_axi1_write_data_bits_data;
-  sc_in<sc_bv<kUncStrb> > io_axi1_write_data_bits_strb;
+  sc_in<sc_bv<KP_lsuDataBits> > io_axi1_write_data_bits_data;
+  sc_in<sc_bv<KP_lsuDataBits/8> > io_axi1_write_data_bits_strb;
   sc_in<bool> io_axi1_write_resp_ready;
   sc_out<bool> io_axi1_write_resp_valid;
   sc_out<sc_bv<kUncId> > io_axi1_write_resp_bits_id;
@@ -117,10 +117,10 @@ struct Core_if : Memory_if {
   sc_out<bool> io_axi1_read_data_valid;
   sc_out<sc_bv<2> > io_axi1_read_data_bits_resp;
   sc_out<sc_bv<kUncId> > io_axi1_read_data_bits_id;
-  sc_out<sc_bv<kUncBits> > io_axi1_read_data_bits_data;
+  sc_out<sc_bv<KP_lsuDataBits> > io_axi1_read_data_bits_data;
 
   Core_if(sc_module_name n, const char* bin) : Memory_if(n, bin) {
-    for (int i = 0; i < kUncBits / 32; ++i) {
+    for (int i = 0; i < KP_lsuDataBits / 32; ++i) {
       runused_.set_word(i, 0);
     }
   }
@@ -177,14 +177,14 @@ struct Core_if : Memory_if {
 
       // Data bus read.
       if (io_dbus_valid && io_dbus_ready && !io_dbus_write) {
-        sc_bv<kVector> rdata;
+        sc_bv<KP_lsuDataBits> rdata;
         uint32_t addr = io_dbus_addr.read().get_word(0);
-        uint32_t words[kVector / 32] = {0};
+        uint32_t words[KP_lsuDataBits / 32] = {0};
         memset(words, 0xcc, sizeof(words));
         int bytes = io_dbus_size.read().get_word(0);
         Read(addr, bytes, reinterpret_cast<uint8_t*>(words));
-        ReadSwizzle(addr, kVector / 8, reinterpret_cast<uint8_t*>(words));
-        for (int i = 0; i < kVector / 32; ++i) {
+        ReadSwizzle(addr, KP_lsuDataBits / 8, reinterpret_cast<uint8_t*>(words));
+        for (int i = 0; i < KP_lsuDataBits / 32; ++i) {
           rdata.set_word(i, words[i]);
         }
         io_dbus_rdata = rdata;
@@ -192,30 +192,30 @@ struct Core_if : Memory_if {
 
       // Data bus write.
       if (io_dbus_valid && io_dbus_ready && io_dbus_write) {
-        sc_bv<kVector> wdata = io_dbus_wdata;
+        sc_bv<KP_lsuDataBits> wdata = io_dbus_wdata;
         uint32_t addr = io_dbus_addr.read().get_word(0);
-        uint32_t words[kVector / 32];
+        uint32_t words[KP_lsuDataBits / 32];
         int bytes = io_dbus_size.read().get_word(0);
-        for (int i = 0; i < kVector / 32; ++i) {
+        for (int i = 0; i < KP_lsuDataBits / 32; ++i) {
           words[i] = wdata.get_word(i);
         }
-        WriteSwizzle(addr, kVector / 8, reinterpret_cast<uint8_t*>(words));
+        WriteSwizzle(addr, KP_lsuDataBits / 8, reinterpret_cast<uint8_t*>(words));
         Write(addr, bytes, reinterpret_cast<uint8_t*>(words));
       }
 
       rtcm_t tcm_read;
-      sc_bv<kUncBits> rdata;
+      sc_bv<KP_lsuDataBits> rdata;
 
 #if KP_enableVector
       // axi0 read.
       if (io_axi0_read_addr_valid && io_axi0_read_addr_ready) {
         uint32_t addr = io_axi0_read_addr_bits_addr.read().get_word(0);
-        uint32_t words[kUncBits / 32];
-        Read(addr, kUncBits / 8, reinterpret_cast<uint8_t*>(words));
+        uint32_t words[KP_lsuDataBits / 32];
+        Read(addr, KP_lsuDataBits / 8, reinterpret_cast<uint8_t*>(words));
 
         tcm_read.cycle = cycle_;
         tcm_read.id = io_axi0_read_addr_bits_id.read().get_word(0);
-        for (int i = 0; i < kUncBits / 32; ++i) {
+        for (int i = 0; i < KP_lsuDataBits / 32; ++i) {
           tcm_read.data.set_word(i, words[i]);
         }
         rtcm_[0].write(tcm_read);
@@ -236,15 +236,15 @@ struct Core_if : Memory_if {
       // axi0 write.
       if (io_axi0_write_addr_valid && io_axi0_write_addr_ready) {
         assert(io_axi0_write_data_valid && io_axi0_write_data_valid);
-        uint8_t wdata[kUncBits / 8];
+        uint8_t wdata[KP_lsuDataBits / 8];
         uint32_t addr = io_axi0_write_addr_bits_addr.read().get_word(0);
         uint32_t* p_wdata = reinterpret_cast<uint32_t*>(wdata);
 
-        for (int i = 0; i < kUncBits / 32; ++i) {
+        for (int i = 0; i < KP_lsuDataBits / 32; ++i) {
           p_wdata[i] = io_axi0_write_data_bits_data.read().get_word(i);
         }
 
-        for (int i = 0; i < kUncBits / 8; ++i) {
+        for (int i = 0; i < KP_lsuDataBits / 8; ++i) {
           if (io_axi0_write_data_bits_strb.read().get_bit(i) != 0) {
             Write(addr + i, 1, wdata + i);
           }
@@ -260,12 +260,12 @@ struct Core_if : Memory_if {
       // axi1 read.
       if (io_axi1_read_addr_valid && io_axi1_read_addr_ready) {
         uint32_t addr = io_axi1_read_addr_bits_addr.read().get_word(0);
-        uint32_t words[kUncBits / 32];
-        Read(addr, kUncBits / 8, reinterpret_cast<uint8_t*>(words));
+        uint32_t words[KP_lsuDataBits / 32];
+        Read(addr, KP_lsuDataBits / 8, reinterpret_cast<uint8_t*>(words));
 
         tcm_read.cycle = cycle_;
         tcm_read.id = io_axi1_read_addr_bits_id.read().get_word(0);
-        for (int i = 0; i < kUncBits / 32; ++i) {
+        for (int i = 0; i < KP_lsuDataBits / 32; ++i) {
           tcm_read.data.set_word(i, words[i]);
         }
         rtcm_[1].write(tcm_read);
@@ -286,15 +286,15 @@ struct Core_if : Memory_if {
       // axi1 write.
       if (io_axi1_write_addr_valid && io_axi1_write_addr_ready) {
         assert(io_axi1_write_data_valid && io_axi1_write_data_valid);
-        uint8_t wdata[kUncBits / 8];
+        uint8_t wdata[KP_lsuDataBits / 8];
         uint32_t addr = io_axi1_write_addr_bits_addr.read().get_word(0);
         uint32_t* p_wdata = reinterpret_cast<uint32_t*>(wdata);
 
-        for (int i = 0; i < kUncBits / 32; ++i) {
+        for (int i = 0; i < KP_lsuDataBits / 32; ++i) {
           p_wdata[i] = io_axi1_write_data_bits_data.read().get_word(i);
         }
 
-        for (int i = 0; i < kUncBits / 8; ++i) {
+        for (int i = 0; i < KP_lsuDataBits / 8; ++i) {
           if (io_axi1_write_data_bits_strb.read().get_bit(i) != 0) {
             Write(addr + i, 1, wdata + i);
           }
@@ -314,11 +314,11 @@ struct Core_if : Memory_if {
   struct rtcm_t {
     uint32_t cycle;
     uint32_t id : 7;
-    sc_bv<kUncBits> data;
+    sc_bv<KP_lsuDataBits> data;
   };
 
   fifo_t<rtcm_t> rtcm_[2];
-  sc_bv<kUncBits> runused_;
+  sc_bv<KP_lsuDataBits> runused_;
 };
 
 #endif  // TESTS_VERILATOR_SIM_KELVIN_CORE_IF_H_

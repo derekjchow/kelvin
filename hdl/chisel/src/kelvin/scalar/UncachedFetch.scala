@@ -21,7 +21,7 @@ import _root_.circt.stage.ChiselStage
 
 class PredecodeOutput(p: Parameters) extends Bundle {
     val addr = UInt(p.fetchAddrBits.W)
-    val inst = Vec(8, UInt(p.instructionBits.W))
+    val inst = Vec(p.fetchInstrSlots, UInt(p.instructionBits.W))
     val startIdx = UInt(3.W)
     val count = UInt(4.W)
     val nextPc = UInt(p.instructionBits.W)
@@ -29,7 +29,7 @@ class PredecodeOutput(p: Parameters) extends Bundle {
 
 class FetchResponse(p: Parameters) extends Bundle {
     val addr = UInt(p.fetchAddrBits.W)
-    val inst = Vec(8, UInt(p.instructionBits.W))
+    val inst = Vec(p.fetchInstrSlots, UInt(p.instructionBits.W))
 }
 
 class Instruction(p: Parameters) extends Bundle {
@@ -56,7 +56,7 @@ class Fetcher(p: Parameters) extends Module {
   io.fetch.valid := ibusCmd.valid
   io.fetch.bits.addr := Mux(ibusCmd.valid, ibusCmd.bits, 0.U)
   val data = Mux(ibusCmd.valid, io.ibus.rdata, 0.U)
-  for (i <- 0 until 8) {
+  for (i <- 0 until p.fetchInstrSlots) {
     val offset = p.instructionBits * i
     io.fetch.bits.inst(i) := data(offset + p.instructionBits - 1, offset)
   }
@@ -67,7 +67,8 @@ class Fetcher(p: Parameters) extends Module {
   ctrlAddr := Mux(io.ctrl.valid || ctrlValid && !io.ibus.ready,
     ctrlAddr, io.ctrl.bits
   )
-  val lsb = log2Ceil(p.fetchAddrBits)
+  val lsb = log2Ceil(p.fetchDataBits / 8)
+  assert((p.fetchDataBits == 128 && lsb == 4) || (p.fetchDataBits == 256 && lsb == 5))
   io.ibus.valid := io.ctrl.valid
   io.ibus.addr := Cat(io.ctrl.bits(p.fetchAddrBits - 1, lsb), 0.U(lsb.W))
   io.ctrl.ready := io.ibus.ready
@@ -87,7 +88,7 @@ class FetchControl(p: Parameters) extends Module {
         val ibusFired = Input(Bool())
 
         val fetchAddr = Decoupled(UInt(p.fetchAddrBits.W))
-        val bufferRequest = DecoupledVectorIO(new FetchInstruction(p), 8)
+        val bufferRequest = DecoupledVectorIO(new FetchInstruction(p), p.fetchInstrSlots)
     })
 
     def PredictJump(addr: UInt, inst: UInt): ValidIO[UInt] = {
@@ -106,12 +107,13 @@ class FetchControl(p: Parameters) extends Module {
     }
 
     def Predecode(fetchResponse: FetchResponse): (PredecodeOutput, Vec[Bool]) = {
-      val insts = (0 until 8).map(i => fetchResponse.inst(i))
+      val insts = (0 until p.fetchInstrSlots).map(i => fetchResponse.inst(i))
       val addr = fetchResponse.addr
-      val lsb = log2Ceil(p.fetchAddrBits)
+      val lsb = log2Ceil(p.fetchDataBits / 8)
+      assert((p.fetchDataBits == 128 && lsb == 4) || (p.fetchDataBits == 256 && lsb == 5))
       val baseAddr = addr(p.fetchAddrBits - 1, lsb)
-      val startElem = addr(lsb - 1, lsb - 3)
-      val addrs = (0 until 8).map(i => Cat(baseAddr, i.U(3.W), 0.U(2.W)))
+      val startElem = addr(lsb - 1, lsb - log2Ceil(p.fetchInstrSlots))
+      val addrs = (0 until p.fetchInstrSlots).map(i => Cat(baseAddr, i.U((lsb - 2).W), 0.U(2.W)))
 
       val branchTargets = (addrs zip insts).map {
           case (addr, inst) => {
@@ -120,23 +122,23 @@ class FetchControl(p: Parameters) extends Module {
           }
       }
 
-      val jumped = Wire(Vec(8, Bool()))
-      for (i <- 0 until 8) {
+      val jumped = Wire(Vec(p.fetchInstrSlots, Bool()))
+      for (i <- 0 until p.fetchInstrSlots) {
         val validInst = i.U >= startElem
         jumped(i) := validInst && branchTargets(i).valid
       }
 
-      val lastInstIdx = MuxCase(8.U, (0 until 8).map(i => jumped(i) -> i.U))
+      val lastInstIdx = MuxCase(p.fetchInstrSlots.U, (0 until p.fetchInstrSlots).map(i => jumped(i) -> i.U))
       val nextFetchPc = MuxCase(Cat(baseAddr + 1.U, 0.U(lsb.W)),
-          (0 until 8).map(i => jumped(i) -> branchTargets(i).bits))
+          (0 until p.fetchInstrSlots).map(i => jumped(i) -> branchTargets(i).bits))
 
-      val startElemW = Wire(UInt(3.W))
+      val startElemW = Wire(UInt(log2Ceil(p.fetchInstrSlots).W))
       startElemW := startElem
       val result = Wire(new PredecodeOutput(p))
       result.addr := Cat(baseAddr, 0.U(lsb.W))
       result.inst := insts
       result.startIdx := startElemW
-      result.count := Mux(lastInstIdx === 8.U,
+      result.count := Mux(lastInstIdx === p.fetchInstrSlots.U,
                           lastInstIdx - startElem,
                           lastInstIdx + 1.U - startElem)
       result.nextPc := nextFetchPc
@@ -147,29 +149,29 @@ class FetchControl(p: Parameters) extends Module {
     val pc = Reg(Valid(UInt(p.fetchAddrBits.W)))
 
     val (predecode, jumped) = Predecode(io.fetchData.bits)
-    var predecodeValids = (0 until 8).map(i =>
+    var predecodeValids = (0 until p.fetchInstrSlots).map(i =>
         i.U >= predecode.startIdx && i.U < (predecode.startIdx +& predecode.count)
     )
-    for (i <- 0 until 8) {
+    for (i <- 0 until p.fetchInstrSlots) {
         val selectHot = PrioritySelect(predecodeValids)
         io.bufferRequest.bits(i).addr :=
           MuxCase(0.U(p.fetchAddrBits.W),
-                  (0 until 8).map(x => selectHot(x) -> (predecode.addr + (4 * x).U)))
+                  (0 until p.fetchInstrSlots).map(x => selectHot(x) -> (predecode.addr + (4 * x).U)))
         io.bufferRequest.bits(i).inst :=
           MuxCase(0.U(p.instructionBits.W),
-                  (0 until 8).map(x => selectHot(x) -> predecode.inst(x)))
+                  (0 until p.fetchInstrSlots).map(x => selectHot(x) -> predecode.inst(x)))
         io.bufferRequest.bits(i).brchFwd :=
           MuxCase(false.B,
-                  (0 until 8).map(x => selectHot(x) -> jumped(x)))
+                  (0 until p.fetchInstrSlots).map(x => selectHot(x) -> jumped(x)))
         predecodeValids = VecInit((predecodeValids zip selectHot).map({case (p, s) => p && !s}))
     }
 
-    // We can fill up to 8 elements in the instruction buffer from each ibus
+    // We can fill up to p.fetchInstrSlots elements in the instruction buffer from each ibus
     // request. Use number of elements ready as a back-pressure signal.
     val fetchValid = !io.branch.valid &&
                           !reset.asBool &&
                           pc.valid &&
-                          (io.bufferRequest.nReady >= 8.U)
+                          (io.bufferRequest.nReady >= p.fetchInstrSlots.U)
     val fetch = Reg(Valid(UInt(p.fetchAddrBits.W)))
     fetch := Mux(io.ibusFired,
                  MakeValid(false.B, 0.U(p.fetchAddrBits.W)),
@@ -225,7 +227,7 @@ class UncachedFetch(p: Parameters) extends FetchUnit(p) {
 
   val window = 16
   val instructionBuffer = Module(new InstructionBuffer(
-      new FetchInstruction(p), 8, window, true))
+      new FetchInstruction(p), p.fetchInstrSlots, window, true))
   instructionBuffer.io.feedIn <> ctrl.io.bufferRequest
   io.inst.lanes <> instructionBuffer.io.out.take(4)
   instructionBuffer.io.flush.get := io.iflush.valid || branch.valid

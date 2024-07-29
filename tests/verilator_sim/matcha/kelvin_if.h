@@ -18,12 +18,17 @@
 #include "tests/verilator_sim/kelvin/memory_if.h"
 #include "tests/verilator_sim/kelvin/kelvin_cfg.h"
 
+#define PARAMS_HEADER_PREFIX hdl/chisel/src/matcha/
+#define PARAMS_HEADER_SUFFIX _parameters.h
+#define PARAMS_HEADER STR(PARAMS_HEADER_PREFIX VERILATOR_MODEL PARAMS_HEADER_SUFFIX)
+#include PARAMS_HEADER
+
 //     [Bus]  addr
 // 1cc [SRAM] addr
 // 2cc [SRAM] rdata
 //     [Bus]  rdata
 constexpr int kWaitState = 2;
-constexpr int kBusBits = 256;
+constexpr int kBusBits = KP_lsuDataBits;
 
 struct Kelvin_if : Memory_if {
   sc_in<bool> io_bus_cvalid;
@@ -32,7 +37,7 @@ struct Kelvin_if : Memory_if {
   sc_in<sc_bv<7> > io_bus_cid;
   sc_in<sc_bv<32> > io_bus_caddr;
   sc_in<sc_bv<kBusBits> > io_bus_wdata;
-  sc_in<sc_bv<32> > io_bus_wmask;
+  sc_in<sc_bv<kBusBits / 8> > io_bus_wmask;
 
   sc_out<bool> io_bus_rvalid;
   sc_out<sc_bv<7> > io_bus_rid;

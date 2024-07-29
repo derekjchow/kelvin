@@ -110,6 +110,7 @@ cc_binary(
     srcs = [
         "matcha/kelvin_if.h",
         "matcha/kelvin_tb.cc",
+        "@kelvin_hw//hdl/chisel/src/matcha:VKelvin_parameters.h",
     ],
     defines = [
         "VERILATOR_MODEL=VKelvin",
@@ -129,6 +130,7 @@ cc_binary(
     srcs = [
         "matcha/kelvin_if.h",
         "matcha/kelvin_tb.cc",
+        "@kelvin_hw//hdl/chisel/src/matcha:VKelvinScalar_parameters.h",
     ],
     defines = [
         "VERILATOR_MODEL=VKelvinScalar",
@@ -148,6 +150,7 @@ cc_binary(
     srcs = [
         "matcha/kelvin_if.h",
         "matcha/kelvin_tb.cc",
+        "@kelvin_hw//hdl/chisel/src/matcha:VKelvinMini_parameters.h",
     ],
     defines = [
         "VERILATOR_MODEL=VKelvinMini",

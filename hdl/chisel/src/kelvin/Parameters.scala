@@ -32,7 +32,16 @@ def contains(addr: UInt): Bool = {
 
 }
 
-case class Parameters(m: Seq[MemoryRegion] = Seq(), hartId: UInt = 0.U(32.W)) {
+object Parameters {
+  def apply(): Parameters = {
+    return new Parameters()
+  }
+  def apply(m: Seq[MemoryRegion]): Parameters = {
+    return new Parameters(m)
+  }
+}
+
+class Parameters(val m: Seq[MemoryRegion] = Seq(), val hartId: Int = 0) {
   case object Core {
     val tiny = 0
     val little = 1
@@ -75,32 +84,40 @@ case class Parameters(m: Seq[MemoryRegion] = Seq(), hartId: UInt = 0.U(32.W)) {
   // Scalar Core Fetch bus.
   val fetchAddrBits = 32   // do not change
   var fetchDataBits = 256  // do not change
+  def fetchInstrSlots: Int = {
+    assert(fetchDataBits % 32 == 0)
+    assert(instructionBits % 32 == 0)
+    assert(fetchDataBits % instructionBits == 0)
+    fetchDataBits / instructionBits
+  }
 
   // Scalar Core Load Store Unit bus.
   val lsuAddrBits = 32  // do not change
-  val lsuDataBits = vectorBits
+  var lsuDataBits = vectorBits
+  def dbusSize: Int = { log2Ceil(lsuDataBits / 8) + 1 }
 
   // [External] Core AXI interface.
   val axiSysIdBits = 7
   val axiSysAddrBits = 32
-  val axiSysDataBits = vectorBits
+  def axiSysDataBits: Int = { lsuDataBits }
 
   // [Internal] L1ICache interface.
   val l1islots = 256
+  val l1iassoc = 4
   val axi0IdBits = 4  // (1x banks, 4 bits unused)
   val axi0AddrBits = 32
-  val axi0DataBits = fetchDataBits
+  def axi0DataBits: Int = { fetchDataBits }
 
   // [Internal] L1DCache interface.
   val l1dslots = 256  // (x2 banks)
   val axi1IdBits = 4  // (x2 banks, 3 bits unused)
   val axi1AddrBits = 32
-  val axi1DataBits = vectorBits
+  def axi1DataBits: Int = { lsuDataBits } /* axiSysDataBits */ /* vectorBits */
 
   // [Internal] TCM[Vector,Scalar] interface.
   val axi2IdBits = 6
   val axi2AddrBits = 32
-  val axi2DataBits = vectorBits
+  def axi2DataBits: Int = { lsuDataBits } // vectorBits
 }
 
 import scala.reflect.runtime.{universe => ru}
@@ -134,6 +151,9 @@ object EmitParametersHeader {
         builder = builder.append(s"#define KP_${x.name} ${value}\n")
       }
     }
+    // TODO(atv): See if we can improve the reflection above to execute
+    // the methods for our dynamic parameters.
+    builder = builder.append(s"#define KP_dbusSize ${p.dbusSize}\n")
     builder = builder.append("#endif\n")
     builder.result()
   }

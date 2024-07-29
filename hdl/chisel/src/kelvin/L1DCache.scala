@@ -42,7 +42,7 @@ class L1DCache(p: Parameters) extends Module {
   })
 
   assert(p.axi1IdBits == 4)
-  assert(p.axi1DataBits == 256)
+  assert(p.axi1DataBits == 256 || p.axi1DataBits == 128)
 
   val bank0 = Module(new L1DCacheBank(p))
   val bank1 = Module(new L1DCacheBank(p))
@@ -282,8 +282,8 @@ class L1DCacheBank(p: Parameters) extends Module {
   val bytes = p.lsuDataBits / 8
 
   def Mem8to9(d: UInt, m: UInt): UInt = {
-    assert(d.getWidth == p.lsuDataBits)
-    assert(m.getWidth == p.lsuDataBits / 8)
+    assert(d.getWidth == 256)
+    assert(m.getWidth == 256 / 8)
     val data = Wire(Vec(bytes, UInt(9.W)))
     for (i <- 0 until bytes) {
       data(i) := Cat(m(i), d(7 + i * 8, 0 + i * 8))
@@ -292,7 +292,7 @@ class L1DCacheBank(p: Parameters) extends Module {
   }
 
   def Mem9to8(d: UInt): UInt = {
-    assert(d.getWidth == p.lsuDataBits * 9 / 8)
+    assert(d.getWidth == 256 * 9 / 8)
     val data = Wire(Vec(bytes, UInt(8.W)))
     for (i <- 0 until bytes) {
       data(i) := d(7 + i * 9, 0 + i * 9)
@@ -301,7 +301,7 @@ class L1DCacheBank(p: Parameters) extends Module {
   }
 
   def Mem9to1(d: UInt): UInt = {
-    assert(d.getWidth == p.lsuDataBits * 9 / 8)
+    assert(d.getWidth == 256 * 9 / 8)
     val data = Wire(Vec(bytes, UInt(1.W)))
     for (i <- 0 until bytes) {
       data(i) := Cat(d(8 + i * 9))
@@ -324,9 +324,9 @@ class L1DCacheBank(p: Parameters) extends Module {
       val valid     = Input(Bool())
       val write     = Input(Bool())
       val addr      = Input(UInt(slotBits.W))
-      val wdata     = Input(UInt((p.axi1DataBits * 9 / 8).W))
-      val wmask     = Input(UInt((p.axi1DataBits * 1 / 8).W))
-      val rdata     = Output(UInt((p.axi1DataBits * 9 / 8).W))
+      val wdata     = Input(UInt((256 * 9 / 8).W))
+      val wmask     = Input(UInt((256 * 1 / 8).W))
+      val rdata     = Output(UInt((256 * 9 / 8).W))
       val volt_sel  = Input(Bool())
     })
   }
@@ -682,8 +682,14 @@ class L1DCacheBank(p: Parameters) extends Module {
   mem.io.write    := rsel && !axiwrite || io.dbus.valid && io.dbus.write && !ractive
   mem.io.addr     := Mux(rsel || axiwrite, replaceIdReg, foundId)
   mem.io.wmask    := Mux(rsel, ~0.U(wmbits.W), io.dbus.wmask)
-  mem.io.wdata    := Mux(rsel, Mem8to9(io.axi.read.data.bits.data, 0.U(wmbits.W)),
-                            Mem8to9(io.dbus.wdata, ~0.U(wmbits.W)))
+  mem.io.wdata    :=
+    Mux(rsel,
+      Mem8to9(
+        Cat(0.U((256 - io.axi.read.data.bits.data.getWidth).W), io.axi.read.data.bits.data),
+        Cat(0.U((32 - wmbits).W), 0.U(wmbits.W))),
+      Mem8to9(
+        Cat(0.U((256 - io.dbus.wdata.getWidth).W), io.dbus.wdata),
+        Cat(0.U((32 - wmbits).W), ~0.U(wmbits.W))))
   mem.io.volt_sel := io.volt_sel
 
 

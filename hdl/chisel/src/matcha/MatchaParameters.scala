@@ -18,7 +18,7 @@ import chisel3._
 import chisel3.util._
 
 class MatchaParameters(m: Seq[MemoryRegion] = Seq(),
-        hartId: UInt = 2.U(32.W)) extends Parameters(m) {
+        hartId: Int = 2) extends Parameters(m, hartId) {
 
   // Debug
   // tl_main_pkg::ADDR_SPACE_DBG + dm::HaltAddress

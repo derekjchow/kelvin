@@ -21,6 +21,11 @@
 #define MODEL_HEADER STR(VERILATOR_MODEL MODEL_HEADER_SUFFIX)
 #include MODEL_HEADER
 
+#define PARAMS_HEADER_PREFIX hdl/chisel/src/matcha/
+#define PARAMS_HEADER_SUFFIX _parameters.h
+#define PARAMS_HEADER STR(PARAMS_HEADER_PREFIX VERILATOR_MODEL PARAMS_HEADER_SUFFIX)
+#include PARAMS_HEADER
+
 #include "absl/flags/flag.h"
 #include "absl/flags/parse.h"
 #include "absl/flags/usage.h"
@@ -65,11 +70,11 @@ static void Kelvin_run(const char* name, const char* bin, const int cycles,
   sc_signal<bool> cwrite;
   sc_signal<sc_bv<32> > caddr;
   sc_signal<sc_bv<7> > cid;
-  sc_signal<sc_bv<256> > wdata;
-  sc_signal<sc_bv<32> > wmask;
+  sc_signal<sc_bv<KP_lsuDataBits> > wdata;
+  sc_signal<sc_bv<KP_lsuDataBits / 8> > wmask;
   sc_signal<bool> rvalid;
   sc_signal<sc_bv<7> > rid;
-  sc_signal<sc_bv<256> > rdata;
+  sc_signal<sc_bv<KP_lsuDataBits> > rdata;
 
   ml_reset = 0;
   clk_freeze = 0;

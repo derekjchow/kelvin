@@ -111,7 +111,7 @@ class DBusIO(p: Parameters, bank: Boolean = false) extends Bundle {
   val write = Output(Bool())
   val addr = Output(UInt((p.lsuAddrBits - (if (bank) 1 else 0)).W))
   val adrx = Output(UInt((p.lsuAddrBits - (if (bank) 1 else 0)).W))
-  val size = Output(UInt((log2Ceil(p.lsuDataBits / 8) + 1).W))
+  val size = Output(UInt(p.dbusSize.W))
   val wdata = Output(UInt(p.lsuDataBits.W))
   val wmask = Output(UInt((p.lsuDataBits / 8).W))
   // Read Phase.

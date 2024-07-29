@@ -38,12 +38,12 @@ class Axi2Sram(p: kelvin.Parameters) extends Module {
       None
     }
     // Scalar DBus
-    val in1 = Flipped(new AxiMasterIO(p.axiSysAddrBits, p.axiSysDataBits, p.axiSysIdBits))
+    val in1 = Flipped(new AxiMasterIO(p.axiSysAddrBits, p.axi2DataBits, p.axiSysIdBits))
     // L1DCache
-    val in2 = Flipped(new AxiMasterIO(p.axiSysAddrBits, p.axiSysDataBits, p.axiSysIdBits))
+    val in2 = Flipped(new AxiMasterIO(p.axiSysAddrBits, p.axi1DataBits, p.axiSysIdBits))
     // L1ICache
     val in3 = new Bundle {
-      val read = Flipped(new AxiMasterReadIO(p.axiSysAddrBits, p.axiSysDataBits, p.axiSysIdBits))
+      val read = Flipped(new AxiMasterReadIO(p.axiSysAddrBits, p.axi0DataBits, p.axiSysIdBits))
     }
     // SRAM port
     val out = new CrossbarIO(p.axiSysAddrBits, p.axiSysDataBits, p.axiSysIdBits)
@@ -51,11 +51,11 @@ class Axi2Sram(p: kelvin.Parameters) extends Module {
 
   assert(p.axiSysIdBits == 7)
   assert(p.axiSysAddrBits == 32)
-  assert(p.axiSysDataBits == 256)
+  assert(p.axiSysDataBits == 256 || p.axiSysDataBits == 128)
   assert(p.vectorBits == 256)
-  assert(p.axi0DataBits == 256)
-  assert(p.axi1DataBits == 256)
-  assert(p.axi2DataBits == 256)
+  assert(p.axi0DataBits == 256 || p.axi0DataBits == 128)
+  assert(p.axi1DataBits == 256 || p.axi1DataBits == 128)
+  assert(p.axi2DataBits == 256 || p.axi2DataBits == 128)
 
   def Decode(i: Int, id: UInt): Bool = {
     assert(id.getWidth == 7)
@@ -221,7 +221,7 @@ class Axi2Sram(p: kelvin.Parameters) extends Module {
   }
 
   for (x <- readInterfaces) {
-    assert(!(x.data.valid && !x.data.ready))
+    assert(!x.data.valid || x.data.ready)
   }
 
   assert(!(cctrl.io.in.valid && cctrl.io.in.ready && cctrl.io.in.bits.cwrite && !wdata.io.in.valid))

@@ -19,6 +19,8 @@ import chisel3.util._
 
 import bus.KelvinMemIO
 import common._
+import java.nio.file.{Paths, Files, StandardOpenOption}
+import java.nio.charset.{StandardCharsets}
 import _root_.circt.stage.ChiselStage
 
 object Kelvin {
@@ -142,19 +144,50 @@ class Kelvin(p: kelvin.Parameters, moduleName: String) extends RawModule {
 
 object EmitKelvin extends App {
   val p = new kelvin.MatchaParameters
+  val core_p = new kelvin.Parameters
   var moduleName = "Kelvin"
   var chiselArgs = List[String]()
+  var targetDir: Option[String] = None
+  var nextIsTargetDir = false
   for (arg <- args) {
+    if (nextIsTargetDir) {
+      nextIsTargetDir = false
+      chiselArgs = chiselArgs :+ arg
+      targetDir = Some(arg)
+    }
     if (arg.startsWith("--enableFetchL0")) {
-      p.enableFetchL0 = arg.split("=")(1).toBoolean
+      val argval = arg.split("=")(1).toBoolean
+      p.enableFetchL0 = argval
+      core_p.enableFetchL0 = argval
     } else if (arg.startsWith("--moduleName")) {
       moduleName = arg.split("=")(1)
     } else if (arg.startsWith("--enableVector")) {
-      p.enableVector = arg.split("=")(1).toBoolean
+      val argval = arg.split("=")(1).toBoolean
+      p.enableVector = argval
+      core_p.enableVector = argval
+    } else if (arg.startsWith("--fetchDataBits")) {
+      val argval = arg.split("=")(1).toInt
+      p.fetchDataBits = argval
+      core_p.fetchDataBits = argval
+    } else if (arg.startsWith("--lsuDataBits")) {
+      val argval = arg.split("=")(1).toInt
+      p.lsuDataBits = argval
+      core_p.lsuDataBits = argval
+    } else if (arg.startsWith("--target-dir")) {
+      nextIsTargetDir = true
+      chiselArgs = chiselArgs :+ arg
     } else {
       chiselArgs = chiselArgs :+ arg
     }
   }
   ChiselStage.emitSystemVerilogFile(
     new Kelvin(p, moduleName), chiselArgs.toArray)
+  val header_str = kelvin.EmitParametersHeader(core_p)
+  targetDir match {
+    case Some(targetDir) => {
+      var ret = Files.write(Paths.get(targetDir + "/V" + moduleName + "_parameters.h"), header_str.getBytes(StandardCharsets.UTF_8), StandardOpenOption.CREATE)
+      ()
+    }
+    case None => ()
+  }
 }

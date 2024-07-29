@@ -31,11 +31,11 @@ class L1ICache(p: Parameters) extends Module {
   // A relatively simple cache block. Only one transaction may post at a time.
   // 2^8 * 256  / 8 = 8KiB    4-way  Tag[31,11] + Index[10,5] + Data[4,0]
   assert(p.axi0IdBits == 4)
-  assert(p.axi0DataBits == 256)
+  assert(p.axi0DataBits == 256 || p.axi0DataBits == 128)
 
   val slots = p.l1islots
   val slotBits = log2Ceil(slots)
-  val assoc = 4
+  val assoc = p.l1iassoc
   val sets = slots / assoc
   val setLsb = log2Ceil(p.fetchDataBits / 8)
   val setMsb = log2Ceil(sets) + setLsb - 1
@@ -52,10 +52,10 @@ class L1ICache(p: Parameters) extends Module {
   })
 
   assert(assoc == 2 ||  assoc == 4 || assoc == 8 || assoc == 16 || assoc == slots)
-  assert(assoc != 2 ||  setLsb == 5 && setMsb == 11 && tagLsb == 12)
-  assert(assoc != 4 ||  setLsb == 5 && setMsb == 10 && tagLsb == 11)
-  assert(assoc != 8 ||  setLsb == 5 && setMsb == 9  && tagLsb == 10)
-  assert(assoc != 16 || setLsb == 5 && setMsb == 8  && tagLsb == 9)
+  assert(assoc != 2 || (setLsb == 5 && setMsb == 11 && tagLsb == 12) || (setLsb == 4 && setMsb == 10 && tagLsb == 11))
+  assert(assoc != 4 || (setLsb == 5 && setMsb == 10 && tagLsb == 11) || (setLsb == 4 && setMsb == 9 && tagLsb == 10))
+  assert(assoc != 8 || (setLsb == 5 && setMsb == 9  && tagLsb == 10) || (setLsb == 4 && setMsb == 8 && tagLsb == 9))
+  assert(assoc != 16 || (setLsb == 5 && setMsb == 8  && tagLsb == 9) || (setLsb == 4 && setMsb == 7 && tagLsb == 8))
   assert(assoc != slots || tagLsb == 5)
 
   class Sram_1rw_256x256 extends BlackBox {
@@ -64,8 +64,8 @@ class L1ICache(p: Parameters) extends Module {
       val valid    = Input(Bool())
       val write    = Input(Bool())
       val addr     = Input(UInt(slotBits.W))
-      val wdata    = Input(UInt(p.axi0DataBits.W))
-      val rdata    = Output(UInt(p.axi0DataBits.W))
+      val wdata    = Input(UInt(256.W))
+      val rdata    = Output(UInt(256.W))
       val volt_sel = Input(Bool())
     })
   }
@@ -265,7 +265,7 @@ class L1ICache(p: Parameters) extends Module {
   mem.io.valid    := memread || memwrite
   mem.io.write    := axiready
   mem.io.addr     := Mux(axiready, replaceIdReg, readId)
-  mem.io.wdata    := io.axi.read.data.bits.data
+  mem.io.wdata    := Cat(0.U((256 - p.axi0DataBits).W), io.axi.read.data.bits.data)
   mem.io.volt_sel := io.volt_sel
 }
 

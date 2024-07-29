@@ -203,6 +203,9 @@ chisel_cc_library(
     verilog_file_path = "CoreMini.sv",
     gen_flags = [
         "--enableFetchL0=False",
+        "--fetchDataBits=128",
+        "--lsuDataBits=128",
+        "--enableVector=False",
         "--moduleName=CoreMini",
     ],
     extra_outs = [
