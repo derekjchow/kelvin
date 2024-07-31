@@ -74,6 +74,7 @@ struct Core_if : Memory_if {
   sc_in<sc_bv<kVector / 8> > io_dbus_wmask;
   sc_out<sc_bv<kVector> > io_dbus_rdata;
 
+#if KP_enableVector
   sc_out<bool> io_axi0_write_addr_ready;
   sc_in<bool> io_axi0_write_addr_valid;
   sc_in<sc_bv<32> > io_axi0_write_addr_bits_addr;
@@ -95,6 +96,7 @@ struct Core_if : Memory_if {
   sc_out<sc_bv<2> > io_axi0_read_data_bits_resp;
   sc_out<sc_bv<kUncId> > io_axi0_read_data_bits_id;
   sc_out<sc_bv<kUncBits> > io_axi0_read_data_bits_data;
+#endif  // KP_enableVector
   sc_out<bool> io_axi1_write_addr_ready;
   sc_in<bool> io_axi1_write_addr_valid;
   sc_in<sc_bv<32> > io_axi1_write_addr_bits_addr;
@@ -126,11 +128,13 @@ struct Core_if : Memory_if {
   void eval() {
     if (reset) {
       io_ibus_ready = false;
+#if KP_enableVector
       io_axi0_read_addr_ready = false;
       io_axi0_read_data_valid = false;
       io_axi0_write_addr_ready = false;
       io_axi0_write_data_ready = false;
       io_axi0_write_resp_valid = false;
+#endif  // KP_enableVector
       io_axi1_read_addr_ready = false;
       io_axi1_read_data_valid = false;
       io_axi1_write_addr_ready = false;
@@ -139,15 +143,19 @@ struct Core_if : Memory_if {
     } else if (clock->posedge()) {
       cycle_++;
 
+#if KP_enableVector
       const bool axi0_write_ready = rand_bool_axi_w();
+#endif
       const bool axi1_write_ready = rand_bool_axi_w();
 
       io_ibus_ready = rand_bool_ibus();
       io_dbus_ready = rand_bool_dbus();
+#if KP_enableVector
       io_axi0_read_addr_ready = true;
       io_axi0_write_addr_ready = axi0_write_ready;
       io_axi0_write_data_ready = axi0_write_ready;
       io_axi0_write_resp_valid = false;
+#endif  // KP_enableVector
       io_axi1_read_addr_ready = true;
       io_axi1_write_addr_ready = axi1_write_ready;
       io_axi1_write_data_ready = axi1_write_ready;
@@ -198,6 +206,7 @@ struct Core_if : Memory_if {
       rtcm_t tcm_read;
       sc_bv<kUncBits> rdata;
 
+#if KP_enableVector
       // axi0 read.
       if (io_axi0_read_addr_valid && io_axi0_read_addr_ready) {
         uint32_t addr = io_axi0_read_addr_bits_addr.read().get_word(0);
@@ -246,6 +255,7 @@ struct Core_if : Memory_if {
         io_axi0_write_resp_valid = true;
         io_axi0_write_resp_bits_id = io_axi0_write_addr_bits_id;
       }
+#endif  // KP_enableVector
 
       // axi1 read.
       if (io_axi1_read_addr_valid && io_axi1_read_addr_ready) {

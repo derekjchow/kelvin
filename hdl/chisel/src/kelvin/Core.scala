@@ -19,6 +19,8 @@ import chisel3.util._
 
 import bus.AxiMasterIO
 import common._
+import java.nio.file.{Paths, Files, StandardOpenOption}
+import java.nio.charset.{StandardCharsets}
 import _root_.circt.stage.ChiselStage
 
 object Core {
@@ -101,15 +103,37 @@ object EmitCore extends App {
   val p = new Parameters
   var moduleName = "Core"
   var chiselArgs = List[String]()
+  var targetDir: Option[String] = None
+  var nextIsTargetDir = false
   for (arg <- args) {
+    if (nextIsTargetDir) {
+      nextIsTargetDir = false
+      chiselArgs = chiselArgs :+ arg
+      targetDir = Some(arg)
+    }
     if (arg.startsWith("--enableFetchL0")) {
       p.enableFetchL0 = arg.split("=")(1).toBoolean
     } else if (arg.startsWith("--moduleName")) {
       moduleName = arg.split("=")(1)
+    } else if (arg.startsWith("--fetchDataBits")) {
+      p.fetchDataBits = arg.split("=")(1).toInt
+    } else if (arg.startsWith("--enableVector")) {
+      p.enableVector = arg.split("=")(1).toBoolean
+    } else if (arg.startsWith("--target-dir")) {
+      nextIsTargetDir = true
+      chiselArgs = chiselArgs :+ arg
     } else {
       chiselArgs = chiselArgs :+ arg
     }
   }
   ChiselStage.emitSystemVerilogFile(
     new Core(p, moduleName), chiselArgs.toArray)
+  val header_str = EmitParametersHeader(p)
+  targetDir match {
+    case Some(targetDir) => {
+      var ret = Files.write(Paths.get(targetDir + "/V" + moduleName + "_parameters.h"), header_str.getBytes(StandardCharsets.UTF_8), StandardOpenOption.CREATE)
+      ()
+    }
+    case None => ()
+  }
 }

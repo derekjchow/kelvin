@@ -41,7 +41,6 @@ cc_library(
         "kelvin/debug_if.h",
         "kelvin/kelvin_cfg.h",
         "kelvin/memory_if.h",
-        "@kelvin_hw//hdl/chisel/src/kelvin:kelvin_parameters.h",
     ],
     defines = ["KELVIN_SIMD=256"],
 )
@@ -50,6 +49,7 @@ cc_binary(
     name = "core_sim",
     srcs = [
         "kelvin/core_tb.cc",
+        "@kelvin_hw//hdl/chisel/src/kelvin:VCore_parameters.h",
     ],
     defines = [
         "VERILATOR_MODEL=VCore",
@@ -66,9 +66,30 @@ cc_binary(
 )
 
 cc_binary(
+    name = "core_scalar_sim",
+    srcs = [
+        "kelvin/core_tb.cc",
+        "@kelvin_hw//hdl/chisel/src/kelvin:VCoreScalar_parameters.h",
+    ],
+    defines = [
+        "VERILATOR_MODEL=VCoreScalar",
+    ],
+    deps = [
+        ":kelvin_if",
+        ":sim_libs",
+        ":util",
+        "//hdl/chisel/src/kelvin:core_scalar_cc_library",
+        "@com_google_absl//absl/flags:flag",
+        "@com_google_absl//absl/flags:parse",
+        "@com_google_absl//absl/flags:usage",
+    ],
+)
+
+cc_binary(
     name = "core_mini_sim",
     srcs = [
         "kelvin/core_tb.cc",
+        "@kelvin_hw//hdl/chisel/src/kelvin:VCoreMini_parameters.h",
     ],
     defines = [
         "VERILATOR_MODEL=VCoreMini",
@@ -97,6 +118,25 @@ cc_binary(
         ":kelvin_if",
         ":sim_libs",
         "//hdl/chisel/src/matcha:kelvin_cc_library",
+        "@com_google_absl//absl/flags:flag",
+        "@com_google_absl//absl/flags:parse",
+        "@com_google_absl//absl/flags:usage",
+    ],
+)
+
+cc_binary(
+    name = "kelvin_scalar_tb",
+    srcs = [
+        "matcha/kelvin_if.h",
+        "matcha/kelvin_tb.cc",
+    ],
+    defines = [
+        "VERILATOR_MODEL=VKelvinScalar",
+    ],
+    deps = [
+        ":kelvin_if",
+        ":sim_libs",
+        "//hdl/chisel/src/matcha:kelvin_scalar_cc_library",
         "@com_google_absl//absl/flags:flag",
         "@com_google_absl//absl/flags:parse",
         "@com_google_absl//absl/flags:usage",
@@ -209,6 +249,7 @@ cc_test(
     size = "large",
     srcs = [
         "kelvin/valu_tb.cc",
+        "@kelvin_hw//hdl/chisel/src/kelvin:VCore_parameters.h",
     ],
     deps = [
         ":kelvin_if",
@@ -262,6 +303,7 @@ cc_test(
     name = "vcmdq_tb",
     srcs = [
         "kelvin/vcmdq_tb.cc",
+        "@kelvin_hw//hdl/chisel/src/kelvin:VCore_parameters.h",
     ],
     deps = [
         ":kelvin_if",
@@ -289,6 +331,7 @@ cc_test(
     size = "small",
     srcs = [
         "kelvin/vconvctrl_tb.cc",
+        "@kelvin_hw//hdl/chisel/src/kelvin:VCore_parameters.h",
     ],
     deps = [
         ":kelvin_if",
@@ -317,6 +360,7 @@ cc_test(
     name = "vdecode_tb",
     srcs = [
         "kelvin/vdecode_tb.cc",
+        "@kelvin_hw//hdl/chisel/src/kelvin:VCore_parameters.h",
     ],
     deps = [
         ":kelvin_if",
@@ -331,6 +375,7 @@ cc_test(
     name = "vldst_tb",
     srcs = [
         "kelvin/vldst_tb.cc",
+        "@kelvin_hw//hdl/chisel/src/kelvin:VCore_parameters.h",
     ],
     deps = [
         ":kelvin_if",
@@ -346,6 +391,7 @@ cc_test(
     size = "small",
     srcs = [
         "kelvin/vld_tb.cc",
+        "@kelvin_hw//hdl/chisel/src/kelvin:VCore_parameters.h",
     ],
     deps = [
         ":kelvin_if",
@@ -385,6 +431,7 @@ cc_test(
     name = "vst_tb",
     srcs = [
         "kelvin/vst_tb.cc",
+        "@kelvin_hw//hdl/chisel/src/kelvin:VCore_parameters.h",
     ],
     deps = [
         ":kelvin_if",

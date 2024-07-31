@@ -16,6 +16,7 @@ package kelvin
 
 import chisel3._
 import chisel3.util._
+import scala.collection.mutable.StringBuilder
 
 class MemoryRegion(
   val memStart: Int,
@@ -57,7 +58,7 @@ case class Parameters(m: Seq[MemoryRegion] = Seq(), hartId: UInt = 0.U(32.W)) {
   val vectorCountBits = log2Ceil(vectorBits / 8) + 1 + 2  // +2 stripmine
 
   // Enable Vector
-  val enableVector = true
+  var enableVector = true
   val vectorAluCount = 2
   val vectorReadPorts = (vectorAluCount * 3) + 1
   val vectorWritePorts = 6
@@ -73,7 +74,7 @@ case class Parameters(m: Seq[MemoryRegion] = Seq(), hartId: UInt = 0.U(32.W)) {
 
   // Scalar Core Fetch bus.
   val fetchAddrBits = 32   // do not change
-  val fetchDataBits = 256  // do not change
+  var fetchDataBits = 256  // do not change
 
   // Scalar Core Load Store Unit bus.
   val lsuAddrBits = 32  // do not change
@@ -103,35 +104,37 @@ case class Parameters(m: Seq[MemoryRegion] = Seq(), hartId: UInt = 0.U(32.W)) {
 }
 
 import scala.reflect.runtime.{universe => ru}
-object EmitParametersHeader extends App {
-  val p = new Parameters
-  val mirror = ru.runtimeMirror(ru.getClass.getClassLoader)
-  val instanceMirror = mirror.reflect(p)
-  val symbol = instanceMirror.symbol
-  val typeSym = symbol.toType
-  val fields = typeSym.decls.collect {
-    case t: (ru.TermSymbol @unchecked) if t.isVal || t.isVar => t
-  }
+object EmitParametersHeader {
+  def apply(p: Parameters): String = {
+    val mirror = ru.runtimeMirror(ru.getClass.getClassLoader)
+    val instanceMirror = mirror.reflect(p)
+    val symbol = instanceMirror.symbol
+    val typeSym = symbol.toType
+    val fields = typeSym.decls.collect {
+      case t: (ru.TermSymbol @unchecked) if t.isVal || t.isVar => t
+    }
 
-  println("#ifndef KELVIN_PARAMETERS_H_")
-  println("#define KELVIN_PARAMETERS_H_")
-  println("")
-  println("#include <stdbool.h>")
-  println("")
-  fields.foreach { x =>
-    val fieldMirror = instanceMirror.reflectField(x.asTerm)
-    val fieldType = x.asTerm.typeSignature
-    val value = fieldMirror.get
-    val ctype = fieldType match {
-      case t if t =:= ru.typeOf[Int] => Some("int")
-      case t if t =:= ru.typeOf[Boolean] => Some("bool")
-      case _ => None
+    var builder = new StringBuilder()
+    builder = builder.append("#ifndef KELVIN_PARAMETERS_H_\n")
+    builder = builder.append("#define KELVIN_PARAMETERS_H_\n")
+    builder = builder.append("\n")
+    builder = builder.append("#include <stdbool.h>\n")
+    builder = builder.append("\n")
+    fields.foreach { x =>
+      val fieldMirror = instanceMirror.reflectField(x.asTerm)
+      val fieldType = x.asTerm.typeSignature
+      val value = fieldMirror.get
+      val ctype = fieldType match {
+        case t if t =:= ru.typeOf[Int] => Some("int")
+        case t if t =:= ru.typeOf[Boolean] => Some("bool")
+        case _ => None
+      }
+      if (ctype != None) {
+        val ctypeStr = ctype.get
+        builder = builder.append(s"#define KP_${x.name} ${value}\n")
+      }
     }
-    if (ctype != None) {
-      val ctypeStr = ctype.get
-      println(s"#define KP_${x.name} ${value}")
-      // println(s"${ctypeStr} KP_${x.name} = ${value};")
-    }
+    builder = builder.append("#endif\n")
+    builder.result()
   }
-  println("#endif")
 }

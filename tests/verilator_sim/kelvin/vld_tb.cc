@@ -13,7 +13,7 @@
 // limitations under the License.
 
 #include "VVLd.h"
-#include "hdl/chisel/src/kelvin/kelvin_parameters.h"
+#include "hdl/chisel/src/kelvin/VCore_parameters.h"
 #include "tests/verilator_sim/kelvin/core_if.h"
 #include "tests/verilator_sim/kelvin/vencodeop.h"
 #include "tests/verilator_sim/sysc_tb.h"

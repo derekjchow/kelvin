@@ -18,10 +18,14 @@
 #define MODEL_HEADER STR(VERILATOR_MODEL MODEL_HEADER_SUFFIX)
 #include MODEL_HEADER
 
+#define PARAMS_HEADER_PREFIX hdl/chisel/src/kelvin/
+#define PARAMS_HEADER_SUFFIX _parameters.h
+#define PARAMS_HEADER STR(PARAMS_HEADER_PREFIX VERILATOR_MODEL PARAMS_HEADER_SUFFIX)
+#include PARAMS_HEADER
+
 #include "absl/flags/flag.h"
 #include "absl/flags/parse.h"
 #include "absl/flags/usage.h"
-#include "hdl/chisel/src/kelvin/kelvin_parameters.h"
 #include "tests/verilator_sim/kelvin/core_if.h"
 #include "tests/verilator_sim/kelvin/debug_if.h"
 #include "tests/verilator_sim/kelvin/kelvin_cfg.h"

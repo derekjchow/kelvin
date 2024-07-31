@@ -92,7 +92,8 @@ def chisel_cc_library(
         module_name,
         verilog_deps = [],
         verilog_file_path = "",
-        gen_flags = []):
+        gen_flags = [],
+        extra_outs = []):
     gen_binary_name = name + "_emit_verilog_binary"
     chisel_binary(
         name = gen_binary_name,
@@ -106,7 +107,7 @@ def chisel_cc_library(
     native.genrule(
         name = name + "_emit_verilog",
         srcs = [],
-        outs = [verilog_file_path],
+        outs = [verilog_file_path] + extra_outs,
         cmd = "PATH=$$(dirname $(execpath @kelvin_hw//third_party/llvm-firtool:firtool)):$$PATH ./$(location " + gen_binary_name + ") --target-dir $(RULEDIR) " + gen_flags,
         tools = [
             ":{}".format(gen_binary_name),

@@ -111,7 +111,7 @@ class Kelvin(p: kelvin.Parameters, moduleName: String) extends RawModule {
     // -------------------------------------------------------------------------
     // Bus Mux.
     if (p.enableVector) {
-      bus.io.in0 <> core.io.axi0.get
+      bus.io.in0.get <> core.io.axi0.get
     }
     bus.io.in1 <> core.io.axi1
     bus.io.in2 <> l1d.io.axi
@@ -149,6 +149,8 @@ object EmitKelvin extends App {
       p.enableFetchL0 = arg.split("=")(1).toBoolean
     } else if (arg.startsWith("--moduleName")) {
       moduleName = arg.split("=")(1)
+    } else if (arg.startsWith("--enableVector")) {
+      p.enableVector = arg.split("=")(1).toBoolean
     } else {
       chiselArgs = chiselArgs :+ arg
     }

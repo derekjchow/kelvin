@@ -175,6 +175,24 @@ chisel_cc_library(
     chisel_lib = ":kelvin",
     emit_class = "kelvin.EmitCore",
     module_name = "Core",
+    extra_outs = [
+        "VCore_parameters.h",
+    ],
+)
+
+chisel_cc_library(
+    name = "core_scalar_cc_library",
+    chisel_lib = ":kelvin",
+    emit_class = "kelvin.EmitCore",
+    module_name = "CoreScalar",
+    verilog_file_path = "CoreScalar.sv",
+    gen_flags = [
+        "--enableVector=False",
+        "--moduleName=CoreScalar",
+    ],
+    extra_outs = [
+        "VCoreScalar_parameters.h",
+    ],
 )
 
 chisel_cc_library(
@@ -186,6 +204,9 @@ chisel_cc_library(
     gen_flags = [
         "--enableFetchL0=False",
         "--moduleName=CoreMini",
+    ],
+    extra_outs = [
+        "VCoreMini_parameters.h",
     ],
 )
 
@@ -308,22 +329,4 @@ chisel_cc_library(
     chisel_lib = ":kelvin",
     emit_class = "kelvin.EmitVSt",
     module_name = "VSt",
-)
-
-chisel_binary(
-    name = "emit_parameters_header",
-    main_class = "kelvin.EmitParametersHeader",
-    deps = [
-        ":kelvin",
-    ],
-)
-
-genrule(
-    name = "parameters_header",
-    outs = [
-        "kelvin_parameters.h",
-    ],
-    cmd = "$(location :emit_parameters_header) > $(location kelvin_parameters.h)",
-    tools = [":emit_parameters_header"],
-    visibility = ["//visibility:public"],
 )

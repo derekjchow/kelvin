@@ -274,7 +274,11 @@ class Decode(p: Parameters, pipeline: Int) extends Module {
   val vinstEn = if (p.enableVector) {
       !(io.serializeIn.vinst || isVIop && io.serializeIn.brcond) &&
       !(d.isVector() && !io.vinst.get.ready)
-  } else { false.B }
+  } else {
+    // When vector is disabled, we never want to interlock due to it.
+    // Thus, always return true in that case.
+    true.B
+  }
 
   // Fence interlock.
   // Input mactive used passthrough, prefer to avoid registers in Decode.

@@ -13,7 +13,7 @@
 // limitations under the License.
 
 #include "VVDecode.h"
-#include "hdl/chisel/src/kelvin/kelvin_parameters.h"
+#include "hdl/chisel/src/kelvin/VCore_parameters.h"
 #include "tests/verilator_sim/kelvin/vdecode.h"
 #include "tests/verilator_sim/sysc_tb.h"
 #include "tests/verilator_sim/util.h"
