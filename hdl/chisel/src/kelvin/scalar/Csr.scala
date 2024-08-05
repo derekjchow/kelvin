@@ -137,7 +137,7 @@ class Csr(p: Parameters) extends Module {
   val minstret  = RegInit(0.U(64.W))
 
   // 32-bit MXLEN, I,M,X extensions
-  val misa      = RegInit(0x40801100.U(32.W))
+  val misa      = RegInit(((0x40001100 | (if (p.enableVector) { 1 << 23 /* 'X' */ } else { 0 })).U)(32.W))
   // Kelvin-specific ISA register.
   val kisa      = RegInit(0.U(32.W))
 
