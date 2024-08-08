@@ -80,6 +80,7 @@ chisel_library(
         "ClockGate.scala",
         "DBus2Axi.scala",
         "DBusMux.scala",
+        "IBus2Axi.scala",
         "Interfaces.scala",
         "L1DCache.scala",
         "L1ICache.scala",
@@ -150,6 +151,7 @@ chisel_library(
     name = "kelvin",
     srcs = [
         "Core.scala",
+        "CoreAxi.scala",
     ],
     deps = [
         ":kelvin_base",
@@ -210,6 +212,25 @@ chisel_cc_library(
     ],
     extra_outs = [
         "VCoreMini_parameters.h",
+    ],
+)
+
+chisel_cc_library(
+    name = "core_mini_axi_cc_library",
+    chisel_lib = ":kelvin",
+    emit_class = "kelvin.EmitCore",
+    module_name = "CoreMiniAxi",
+    verilog_file_path = "CoreMiniAxi.sv",
+    gen_flags = [
+        "--enableFetchL0=False",
+        "--fetchDataBits=128",
+        "--lsuDataBits=128",
+        "--enableVector=False",
+        "--moduleName=CoreMini",
+        "--useAxi",
+    ],
+    extra_outs = [
+        "VCoreMiniAxi_parameters.h",
     ],
 )
 

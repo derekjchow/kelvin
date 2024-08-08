@@ -27,6 +27,9 @@ object Core {
   def apply(p: Parameters): Core = {
     return Module(new Core(p, "Core"))
   }
+  def apply(p: Parameters, moduleName: String): Core = {
+    return Module(new Core(p, moduleName))
+  }
 }
 
 class Core(p: Parameters, moduleName: String) extends Module {
@@ -39,7 +42,7 @@ class Core(p: Parameters, moduleName: String) extends Module {
 
     val ibus = new IBusIO(p)
     val dbus = new DBusIO(p)
-    val axi0 = if(p.enableVector) {
+    val axi0 = if (p.enableVector) {
       Some(new AxiMasterIO(p.axi2AddrBits, p.axi2DataBits, p.axi2IdBits))
     } else { None }
     val axi1 = new AxiMasterIO(p.axi2AddrBits, p.axi2DataBits, p.axi2IdBits)
@@ -105,6 +108,7 @@ object EmitCore extends App {
   var chiselArgs = List[String]()
   var targetDir: Option[String] = None
   var nextIsTargetDir = false
+  var useAxi = false
   for (arg <- args) {
     if (nextIsTargetDir) {
       nextIsTargetDir = false
@@ -121,6 +125,8 @@ object EmitCore extends App {
       p.enableVector = arg.split("=")(1).toBoolean
     } else if (arg.startsWith("--lsuDataBits")) {
       p.lsuDataBits = arg.split("=")(1).toInt
+    } else if (arg.startsWith("--useAxi")) {
+      useAxi = true
     } else if (arg.startsWith("--target-dir")) {
       nextIsTargetDir = true
       chiselArgs = chiselArgs :+ arg
@@ -129,11 +135,19 @@ object EmitCore extends App {
     }
   }
   ChiselStage.emitSystemVerilogFile(
-    new Core(p, moduleName), chiselArgs.toArray)
+    // We create the core module directly here instead of assigning to a val
+    // outside, otherwise we run into errors about the wrong context.
+    if (useAxi) { new CoreAxi(p, moduleName) } else { new Core(p, moduleName) },
+    chiselArgs.toArray)
   val header_str = EmitParametersHeader(p)
+  val axiModuleSuffix = if (useAxi) { "Axi" } else { "" }
   targetDir match {
     case Some(targetDir) => {
-      var ret = Files.write(Paths.get(targetDir + "/V" + moduleName + "_parameters.h"), header_str.getBytes(StandardCharsets.UTF_8), StandardOpenOption.CREATE)
+      var ret = Files.write(
+        Paths.get(targetDir +
+                  "/V" + moduleName + axiModuleSuffix + "_parameters.h"
+                 ),
+        header_str.getBytes(StandardCharsets.UTF_8), StandardOpenOption.CREATE)
       ()
     }
     case None => ()
