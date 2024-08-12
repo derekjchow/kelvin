@@ -17,55 +17,50 @@ package bus
 import chisel3._
 import chisel3.util._
 
-case object AxiResponse {
-  val okay = 0
-  val rsvd = 1
-  val slverr = 2
-  val mmuerr = 3
-}
-
-// case object AxiBurst {
-//   val fixed = 0
-//   val incr = 1
-//   val wrap = 2
-// }
-
-// case object AxiSize {
-//   val bytes1 = 0
-//   val bytes2 = 1
-//   val bytes4 = 2
-//   val bytes8 = 3
-//   val bytes16 = 4
-//   val bytes32 = 5
-//   val bytes64 = 6
-//   val bytes128 = 7
-// }
-
-class AxiAddress(addrWidthBits: Int, idBits: Int) extends Bundle {
-  val addr  = UInt(addrWidthBits.W)
-  val id    = UInt(idBits.W)
-  // val burst = UInt(2.W)
-  // val size  = UInt(3.W)
+// ARM IHI 0022E, A2.2 / A2.5
+class AxiAddress(addrWidthBits: Int, dataWidthBits: Int, idBits: Int) extends Bundle {
+  // "Required"
+  val addr   = UInt(addrWidthBits.W)
+  val prot   = UInt(3.W)
+  // "Optional"
+  val id     = UInt(idBits.W)
+  val len    = UInt(8.W)
+  val size   = UInt(3.W)
+  val burst  = UInt(2.W)
+  val lock   = UInt(2.W)
+  val cache  = UInt(4.W)
+  val qos    = UInt(4.W)
+  val region = UInt(4.W)
 
   def defaults() = {
-    addr  := 0.U
-    id    := 0.U
-    // burst := new AxiBurst().fixed
-    // size  := new AxiSize().bytes4
+    id     := 0.U
+    len    := 0.U
+    size   := log2Ceil(dataWidthBits).U
+    burst  := 1.U
+    lock   := 0.U
+    cache  := 0.U
+    qos    := 0.U
+    region := 0.U
   }
 }
 
-class AxiWriteData(dataWidthBits: Int) extends Bundle {
+// ARM IHI 0022E, A2.3
+class AxiWriteData(dataWidthBits: Int, idBits: Int) extends Bundle {
+  // "Required"
+  val id   = UInt(idBits.W)
   val data = UInt(dataWidthBits.W)
+  val last = Bool()
+  // "Optional"
   val strb = UInt((dataWidthBits/8).W)
 
   def defaults() = {
-    data := 0.U
     strb := ((1 << (dataWidthBits/8)) - 1).U
   }
 }
 
+// ARM IHI 0022E, A2.4
 class AxiWriteResponse(idBits: Int) extends Bundle {
+  // "Optional"
   val id   = UInt(idBits.W)
   val resp = UInt(2.W)
 
@@ -75,22 +70,27 @@ class AxiWriteResponse(idBits: Int) extends Bundle {
   }
 
   def defaultsFlipped() = {
-    id   := 0.U
-    resp := 0.U
+    defaults()
   }
 }
 
+// ARM IHI 0022E, A2.6
 class AxiReadData(dataWidthBits: Int, idBits: Int) extends Bundle {
-  val resp = UInt(2.W)
-  val id   = UInt(idBits.W)
+  // "Required"
   val data = UInt(dataWidthBits.W)
-  // val last = Bool()
+  // "Optional"
+  val id   = UInt(idBits.W)
+  val resp = UInt(2.W)
+  val last = Bool()
+
+  def defaults() = {
+    id   := 0.U
+    resp := 0.U
+    last := false.B
+  }
 
   def defaultsFlipped() = {
-    resp := 0.U
-    id := 0.U
-    data := 0.U
-    // last := false.B
+    defaults()
   }
 }
 
@@ -127,8 +127,8 @@ class AxiMasterIO(addrWidthBits: Int, dataWidthBits: Int, idBits: Int)
 
 class AxiMasterWriteIO(addrWidthBits: Int, dataWidthBits: Int, idBits: Int)
     extends Bundle {
-  val addr = Decoupled(new AxiAddress(addrWidthBits, idBits))
-  val data = Decoupled(new AxiWriteData(dataWidthBits))
+  val addr = Decoupled(new AxiAddress(addrWidthBits, dataWidthBits, idBits))
+  val data = Decoupled(new AxiWriteData(dataWidthBits, idBits))
   val resp = Flipped(Decoupled(new AxiWriteResponse(idBits)))
 
   def defaults() = {
@@ -149,7 +149,7 @@ class AxiMasterWriteIO(addrWidthBits: Int, dataWidthBits: Int, idBits: Int)
 
 class AxiMasterReadIO(addrWidthBits: Int, dataWidthBits: Int, idBits: Int)
     extends Bundle {
-  val addr = Decoupled(new AxiAddress(addrWidthBits, idBits))
+  val addr = Decoupled(new AxiAddress(addrWidthBits, dataWidthBits, idBits))
   val data = Flipped(Decoupled(new AxiReadData(dataWidthBits, idBits)))
 
   def defaults() = {

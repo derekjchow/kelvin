@@ -175,6 +175,7 @@ class Axi2Sram(p: kelvin.Parameters) extends Module {
     readInterfaces(i).data.bits.data := rdata.io.out.bits.rdata
     readInterfaces(i).data.bits.id := rdata.io.out.bits.rid
     readInterfaces(i).data.bits.resp := 0.U
+    readInterfaces(i).data.bits.last := true.B
   }
 
   // ---------------------------------------------------------------------------

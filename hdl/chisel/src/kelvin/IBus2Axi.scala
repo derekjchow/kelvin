@@ -32,6 +32,7 @@ class IBus2Axi(p: Parameters) extends Module {
     val ibus = Flipped(new IBusIO(p))
     val axi = new AxiMasterReadIO(p.axi2AddrBits, p.axi2DataBits, p.axi2IdBits)
   })
+  io.axi.defaults()
 
   val linebit = log2Ceil(p.lsuDataBits / 8)
 
@@ -60,6 +61,7 @@ class IBus2Axi(p: Parameters) extends Module {
   io.axi.addr.valid := io.ibus.valid && !sraddrActive
   io.axi.addr.bits.addr := saddr
   io.axi.addr.bits.id := 0.U
+  io.axi.addr.bits.prot := 2.U
 
   io.axi.data.ready := true.B
 }

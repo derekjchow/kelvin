@@ -237,6 +237,7 @@ class L1ICache(p: Parameters) extends Module {
   io.axi.read.addr.valid := axivalid
   io.axi.read.addr.bits.addr := axiaddr
   io.axi.read.addr.bits.id := 0.U
+  io.axi.read.addr.bits.prot := 2.U
   io.axi.read.data.ready := axiready
 
   io.flush.ready := true.B

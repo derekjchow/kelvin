@@ -40,6 +40,7 @@ class L1DCache(p: Parameters) extends Module {
     val flush = Flipped(new DFlushIO(p))
     val volt_sel = Input(Bool())
   })
+  io.axi.defaults()
 
   assert(p.axi1IdBits == 4)
   assert(p.axi1DataBits == 256 || p.axi1DataBits == 128)
@@ -165,6 +166,7 @@ class L1DCache(p: Parameters) extends Module {
   io.axi.read.addr.bits.addr := Mux(raxi0, BankOutAddress(bank0.io.axi.read.addr.bits.addr, 0),
                                            BankOutAddress(bank1.io.axi.read.addr.bits.addr, 1))
   io.axi.read.addr.bits.id   := Mux(raxi0, Cat(0.U(1.W), bank0.io.axi.read.addr.bits.id), Cat(1.U(1.W), bank1.io.axi.read.addr.bits.id))
+  io.axi.read.addr.bits.prot := 2.U
 
   bank0.io.axi.read.addr.ready := io.axi.read.addr.ready && raxi0
   bank1.io.axi.read.addr.ready := io.axi.read.addr.ready && raxi1
@@ -218,6 +220,7 @@ class L1DCache(p: Parameters) extends Module {
                                             BankOutAddress(bank1.io.axi.write.addr.bits.addr, 1))
   io.axi.write.addr.bits.id := Mux(waxi0, Cat(0.U(1.W), bank0.io.axi.write.addr.bits.id),
                                           Cat(1.U(1.W), bank1.io.axi.write.addr.bits.id))
+  io.axi.write.addr.bits.prot := 2.U
 
   io.axi.write.data.valid := bank0.io.axi.write.data.valid && waxi0 ||
                              bank1.io.axi.write.data.valid && waxi1
@@ -277,6 +280,7 @@ class L1DCacheBank(p: Parameters) extends Module {
     val flush = Flipped(new DFlushIO(p))
     val volt_sel = Input(Bool())
   })
+  io.axi.defaults()
 
   // AXI memory consistency, maintain per-byte strobes.
   val bytes = p.lsuDataBits / 8
@@ -544,16 +548,20 @@ class L1DCacheBank(p: Parameters) extends Module {
   io.axi.read.addr.valid := axiraddrvalid
   io.axi.read.addr.bits.addr := axiraddr
   io.axi.read.addr.bits.id := 0.U
+  io.axi.read.addr.bits.prot := 2.U
   io.axi.read.data.ready := axirdataready
   assert(!(io.axi.read.data.valid && !io.axi.read.data.ready))
 
   io.axi.write.addr.valid     := axiwaddrvalid
   io.axi.write.addr.bits.id   := 0.U
+  io.axi.write.addr.bits.prot   := 2.U
   io.axi.write.addr.bits.addr := axiwaddr
 
   io.axi.write.resp.ready     := true.B
 
   io.axi.write.data.valid     := axiwdatavalid
+  io.axi.write.data.bits.id := 0.U
+  io.axi.write.data.bits.last := true.B
   io.axi.write.data.bits.data := axiwdatabuf.asUInt
   io.axi.write.data.bits.strb := axiwstrbbuf.asUInt
 

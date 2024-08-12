@@ -43,6 +43,7 @@ class VLd(p: Parameters) extends Module {
     // Status.
     val nempty = Output(Bool())
   })
+  io.axi.defaults()
 
   // Loads do not zero out-of-size lanes, all ALU lanes will be populated.
   // Memory may be initially zeroed so that one half of operation is zero.
@@ -142,6 +143,7 @@ class VLd(p: Parameters) extends Module {
   io.axi.addr.valid := q.io.out.valid
   io.axi.addr.bits.addr := Cat(0.U(1.W), q.io.out.bits.addr(30,0))
   io.axi.addr.bits.id := q.io.out.bits.vd.addr
+  io.axi.addr.bits.prot := 2.U
   assert(!(q.io.out.valid && !q.io.out.bits.addr(31)))
   assert(!(io.axi.addr.valid && io.axi.addr.bits.addr(31)))
 

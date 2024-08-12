@@ -44,8 +44,18 @@ struct VSt_tb : Sysc_tb {
   sc_out<sc_bv<kVector> > io_read_data;
   sc_in<sc_bv<32> > io_axi_addr_bits_addr;
   sc_in<sc_bv<6> > io_axi_addr_bits_id;
+  sc_in<sc_bv<4> > io_axi_addr_bits_region;
+  sc_in<sc_bv<4> > io_axi_addr_bits_qos;
+  sc_in<sc_bv<3> > io_axi_addr_bits_prot;
+  sc_in<sc_bv<4> > io_axi_addr_bits_cache;
+  sc_in<sc_bv<2> > io_axi_addr_bits_lock;
+  sc_in<sc_bv<2> > io_axi_addr_bits_burst;
+  sc_in<sc_bv<3> > io_axi_addr_bits_size;
+  sc_in<sc_bv<8> > io_axi_addr_bits_len;
   sc_in<sc_bv<kVector> > io_axi_data_bits_data;
   sc_in<sc_bv<kUncStrb> > io_axi_data_bits_strb;
+  sc_in<sc_bv<6> > io_axi_data_bits_id;
+  sc_in<bool> io_axi_data_bits_last;
   sc_out<sc_bv<6> > io_axi_resp_bits_id;
   sc_out<sc_bv<2> > io_axi_resp_bits_resp;
 #define IO_BITS(x)                                  \
@@ -411,8 +421,18 @@ static void VSt_test(char* name, int loops, bool trace) {
   sc_signal<sc_bv<kVector> > io_read_data;
   sc_signal<sc_bv<32> > io_axi_addr_bits_addr;
   sc_signal<sc_bv<6> > io_axi_addr_bits_id;
+  sc_signal<sc_bv<4> > io_axi_addr_bits_region;
+  sc_signal<sc_bv<4> > io_axi_addr_bits_qos;
+  sc_signal<sc_bv<3> > io_axi_addr_bits_prot;
+  sc_signal<sc_bv<4> > io_axi_addr_bits_cache;
+  sc_signal<sc_bv<2> > io_axi_addr_bits_lock;
+  sc_signal<sc_bv<2> > io_axi_addr_bits_burst;
+  sc_signal<sc_bv<3> > io_axi_addr_bits_size;
+  sc_signal<sc_bv<8> > io_axi_addr_bits_len;
   sc_signal<sc_bv<kVector> > io_axi_data_bits_data;
   sc_signal<sc_bv<kUncStrb> > io_axi_data_bits_strb;
+  sc_signal<sc_bv<6> > io_axi_data_bits_id;
+  sc_signal<bool> io_axi_data_bits_last;
   sc_signal<sc_bv<6> > io_axi_resp_bits_id;
   sc_signal<sc_bv<2> > io_axi_resp_bits_resp;
 #define IO_BITS(x)                                     \
@@ -479,8 +499,18 @@ static void VSt_test(char* name, int loops, bool trace) {
   BIND2(tb, st, io_read_data);
   BIND2(tb, st, io_axi_addr_bits_addr);
   BIND2(tb, st, io_axi_addr_bits_id);
+  BIND2(tb, st, io_axi_addr_bits_region);
+  BIND2(tb, st, io_axi_addr_bits_qos);
+  BIND2(tb, st, io_axi_addr_bits_prot);
+  BIND2(tb, st, io_axi_addr_bits_cache);
+  BIND2(tb, st, io_axi_addr_bits_lock);
+  BIND2(tb, st, io_axi_addr_bits_burst);
+  BIND2(tb, st, io_axi_addr_bits_size);
+  BIND2(tb, st, io_axi_addr_bits_len);
   BIND2(tb, st, io_axi_data_bits_data);
   BIND2(tb, st, io_axi_data_bits_strb);
+  BIND2(tb, st, io_axi_data_bits_id);
+  BIND2(tb, st, io_axi_data_bits_last);
   BIND2(tb, st, io_axi_resp_bits_id);
   BIND2(tb, st, io_axi_resp_bits_resp);
 #define IO_BIND(x)                               \

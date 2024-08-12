@@ -32,6 +32,7 @@ class DBus2Axi(p: Parameters) extends Module {
     val dbus = Flipped(new DBusIO(p))
     val axi = new AxiMasterIO(p.axi2AddrBits, p.axi2DataBits, p.axi2IdBits)
   })
+  io.axi.defaults()
 
   val linebit = log2Ceil(p.lsuDataBits / 8)
 
@@ -62,16 +63,20 @@ class DBus2Axi(p: Parameters) extends Module {
   io.axi.write.addr.valid := io.dbus.valid && io.dbus.write
   io.axi.write.addr.bits.addr := saddr
   io.axi.write.addr.bits.id := 0.U
+  io.axi.write.addr.bits.prot := 2.U
 
   io.axi.write.data.valid := io.dbus.valid && io.dbus.write
+  io.axi.write.data.bits.id := 0.U
   io.axi.write.data.bits.strb := io.dbus.wmask
   io.axi.write.data.bits.data := io.dbus.wdata
+  io.axi.write.data.bits.last := true.B
 
   io.axi.write.resp.ready := true.B
 
   io.axi.read.addr.valid := io.dbus.valid && !io.dbus.write && !sraddrActive
   io.axi.read.addr.bits.addr := saddr
   io.axi.read.addr.bits.id := 0.U
+  io.axi.read.addr.bits.prot := 2.U
 
   io.axi.read.data.ready := true.B
 }

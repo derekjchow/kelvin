@@ -47,6 +47,7 @@ class VSt(p: Parameters) extends Module {
 
     val vstoreCount = Output(UInt(1.W))
   })
+  io.axi.defaults()
 
   // A usable depth of outstanding commands.
   val cmdqDepth = 8
@@ -73,10 +74,13 @@ class VSt(p: Parameters) extends Module {
   io.axi.addr.valid := false.B
   io.axi.addr.bits.addr := 0.U
   io.axi.addr.bits.id := 0.U
+  io.axi.addr.bits.prot := 2.U
 
   io.axi.data.valid := false.B
   io.axi.data.bits.strb := 0.U
   io.axi.data.bits.data := 0.U
+  io.axi.data.bits.id := 0.U
+  io.axi.data.bits.last := true.B
 
   io.axi.resp.ready := false.B
 
