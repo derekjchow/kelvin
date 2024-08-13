@@ -138,7 +138,8 @@ object EmitCore extends App {
     // We create the core module directly here instead of assigning to a val
     // outside, otherwise we run into errors about the wrong context.
     if (useAxi) { new CoreAxi(p, moduleName) } else { new Core(p, moduleName) },
-    chiselArgs.toArray)
+    chiselArgs.toArray
+  )
   val header_str = EmitParametersHeader(p)
   val axiModuleSuffix = if (useAxi) { "Axi" } else { "" }
   targetDir match {
