@@ -1,7 +1,17 @@
-diff --git dependency_support/verilator/verilator.BUILD dependency_support/verilator/verilator.BUILD
-index 00fd758..5c93a65 100644
---- dependency_support/verilator/verilator.BUILD
-+++ dependency_support/verilator/verilator.BUILD
+From a5832b43c32e5aa747fe0af5821650d629641594 Mon Sep 17 00:00:00 2001
+From: Alex Van Damme <atv@google.com>
+Date: Thu, 15 Aug 2024 16:47:26 -0700
+Subject: [PATCH 4/5] Build verilator v4.226
+
+---
+ dependency_support/verilator/verilator.BUILD | 9 ++++++---
+ dependency_support/verilator/verilator.bzl   | 4 ++--
+ 2 files changed, 8 insertions(+), 5 deletions(-)
+
+diff --git a/dependency_support/verilator/verilator.BUILD b/dependency_support/verilator/verilator.BUILD
+index b2a82a2..c21b8fd 100644
+--- a/dependency_support/verilator/verilator.BUILD
++++ b/dependency_support/verilator/verilator.BUILD
 @@ -48,7 +48,8 @@ genrule(
          "V3Ast__gen_impl.h",
          "V3Ast__gen_report.txt",
@@ -32,10 +42,10 @@ index 00fd758..5c93a65 100644
          ":V3AstNodes__gen_macros.h",
          ":V3Ast__gen_yystype.h",
          ":V3Const__gen.cpp",
-diff --git dependency_support/verilator/verilator.bzl dependency_support/verilator/verilator.bzl
+diff --git a/dependency_support/verilator/verilator.bzl b/dependency_support/verilator/verilator.bzl
 index 76893b7..1dd2d5e 100644
---- dependency_support/verilator/verilator.bzl
-+++ dependency_support/verilator/verilator.bzl
+--- a/dependency_support/verilator/verilator.bzl
++++ b/dependency_support/verilator/verilator.bzl
 @@ -56,11 +56,11 @@ verilator_repository = repository_rule(
          ),
          "version": attr.string(
@@ -50,3 +60,6 @@ index 76893b7..1dd2d5e 100644
          ),
      },
  )
+-- 
+2.46.0.184.g6999bdac58-goog
+

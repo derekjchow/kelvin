@@ -146,7 +146,7 @@ def _verilator_cc_library(ctx):
     for vdir in verilog_dirs:
         args.add("-I" + vdir)
     if ctx.attr.trace:
-        args.add("--trace")
+        args.add("--trace-fst")
     for verilog_file in verilog_files:
         args.add(verilog_file.path)
     args.add("-Wno-UNOPTFLAT")
@@ -177,6 +177,7 @@ def _verilator_cc_library(ctx):
 
     # Do actual compile
     defines = ["VM_TRACE"] if ctx.attr.trace else []
+    defines += ["VM_SC"]
     deps = [ctx.attr._verilator_lib, ctx.attr._zlib, ctx.attr._verilator_svdpi]
 
     return cc_compile_and_link_static_library(

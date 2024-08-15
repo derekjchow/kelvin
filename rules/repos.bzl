@@ -41,6 +41,7 @@ def kelvin_repos():
             "@kelvin_hw//external:0004-Build-verilator-v4.226.patch",
             "@kelvin_hw//external:0006-Update-flex-release-URL.patch",
         ],
+        patch_args = ["-p1"],
     )
 
     # See https://github.com/bazelbuild/rules_scala/releases for up to date version information.

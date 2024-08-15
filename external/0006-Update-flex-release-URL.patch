@@ -1,16 +1,16 @@
-From 829fc85690342da860948372a023a54a558b56d5 Mon Sep 17 00:00:00 2001
-From: Cindy Liu <hcindyl@google.com>
-Date: Tue, 12 Mar 2024 18:56:36 -0700
-Subject: [PATCH] Update flex release URL
+From ad1245d8341c0cfe983a6ced8972cdf7c4ede73b Mon Sep 17 00:00:00 2001
+From: Alex Van Damme <atv@google.com>
+Date: Thu, 15 Aug 2024 16:47:37 -0700
+Subject: [PATCH 5/5] Update flex release URL
 
 ---
  .../com_github_westes_flex/com_github_westes_flex.bzl           | 2 +-
  1 file changed, 1 insertion(+), 1 deletion(-)
 
-diff --git dependency_support/com_github_westes_flex/com_github_westes_flex.bzl dependency_support/com_github_westes_flex/com_github_westes_flex.bzl
+diff --git a/dependency_support/com_github_westes_flex/com_github_westes_flex.bzl b/dependency_support/com_github_westes_flex/com_github_westes_flex.bzl
 index 3a13bed..48c78f0 100644
---- dependency_support/com_github_westes_flex/com_github_westes_flex.bzl
-+++ dependency_support/com_github_westes_flex/com_github_westes_flex.bzl
+--- a/dependency_support/com_github_westes_flex/com_github_westes_flex.bzl
++++ b/dependency_support/com_github_westes_flex/com_github_westes_flex.bzl
 @@ -22,7 +22,7 @@ def com_github_westes_flex():
          http_archive,
          name = "com_github_westes_flex",
@@ -20,5 +20,6 @@ index 3a13bed..48c78f0 100644
          ],
          strip_prefix = "flex-2.6.4",
          sha256 = "e87aae032bf07c26f85ac0ed3250998c37621d95f8bd748b31f15b33c45ee995",
---
-2.44.0.278.ge034bb2e1d-goog
+-- 
+2.46.0.184.g6999bdac58-goog
+
