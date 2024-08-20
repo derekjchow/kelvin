@@ -1,0 +1,17 @@
+$name?="kelvin"
+using sysbus
+
+mach create $name
+
+EnsureTypeIsLoaded "Antmicro.Renode.Peripherals.CPU.RiscV32"
+EnsureTypeIsLoaded "Antmicro.Renode.Peripherals.Verilated.VerilatedPeripheral"
+
+$repl_file ?= @tests/renode/kelvin-verilator.repl
+machine LoadPlatformDescription $repl_file
+
+$core_mini_axi_file ?= @/tmp/libVtop.so
+core_mini_axi SimulationFilePathLinux $core_mini_axi_file
+
+showAnalyzer "uart0-analyzer" sysbus.uart0 Antmicro.Renode.Analyzers.LoggingUartAnalyzer
+
+rv_core IsHalted true

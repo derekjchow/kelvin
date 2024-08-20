@@ -238,6 +238,7 @@ chisel_cc_library(
     emit_class = "kelvin.EmitCore",
     module_name = "CoreMiniAxi",
     verilog_file_path = "CoreMiniAxi.sv",
+    systemc = False,
     gen_flags = [
         "--enableFetchL0=False",
         "--fetchDataBits=128",

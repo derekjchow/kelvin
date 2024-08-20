@@ -22,3 +22,5 @@ rules_proto_toolchains()
 load("//rules:deps.bzl", "kelvin_deps")
 kelvin_deps()
 
+load("//rules:repos.bzl", "renode_repos")
+renode_repos()

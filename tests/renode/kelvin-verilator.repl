@@ -1,0 +1,12 @@
+core_mini_axi: Verilated.VerilatedPeripheral @ sysbus <0x70000000, +0x10000>
+    maxWidth: 128
+
+rv_core: CPU.RiscV32 @ sysbus
+    hartId: 0
+    cpuType: "rv32im"
+    allowUnalignedAccesses: true
+
+rv_memory: Memory.MappedMemory @ sysbus 0x20000000
+    size: 0x400000
+
+uart0: Antmicro.Renode.Peripherals.UART.TrivialUart @ sysbus 0x54000000

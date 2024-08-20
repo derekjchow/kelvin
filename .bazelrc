@@ -13,3 +13,5 @@ build --host_copt=-O3
 # generate the version information.
 
 build --workspace_status_command=utils/get_workspace_status.sh
+
+build --experimental_cc_shared_library

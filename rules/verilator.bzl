@@ -135,7 +135,10 @@ def _verilator_cc_library(ctx):
     prefix = "V" + ctx.attr.module_top
 
     args = ctx.actions.args()
-    args.add("--sc")
+    if ctx.attr.systemc:
+        args.add("--sc")
+    else:
+        args.add("--cc")
     args.add("--pins-bv", "2")
     args.add("--Mdir", verilator_output.path)
     args.add("--top-module", ctx.attr.module_top)
@@ -209,6 +212,10 @@ verilator_cc_library = rule(
         "vopts": attr.string_list(
             doc = "Additional command line options to pass to Verilator",
             default = ["-Wall"],
+        ),
+        "systemc": attr.bool(
+            doc = "Enable SystemC support",
+            default = True,
         ),
         "_cc_toolchain": attr.label(
             doc = "CC compiler.",

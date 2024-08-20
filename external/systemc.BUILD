@@ -10,6 +10,7 @@ filegroup(
 cmake(
     name = "systemc",
     cache_entries = {
+        "CMAKE_POSITION_INDEPENDENT_CODE": "ON",
         "CMAKE_CXX_STANDARD": "17",
         "BUILD_SHARED_LIBS": "False",
     },

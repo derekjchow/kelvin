@@ -95,3 +95,16 @@ def kelvin_repos():
         ],
         patch_args = ["-p1"],
     )
+
+def renode_repos():
+    http_archive(
+        name = "renode",
+        sha256 = "ca98b8df2ed09e225b72f35c616c85207e451d8a4b00d96594064e5065493cf1",
+        strip_prefix = "renode_1.15.2_source",
+        urls = ["https://github.com/renode/renode/releases/download/v1.15.2/renode_1.15.2_source.tar.xz"],
+        build_file = "@kelvin_hw//third_party/renode:BUILD.bazel",
+        patches = [
+            "@kelvin_hw//third_party/renode:core_axi_mini-renode.patch",
+        ],
+        patch_args = ["-p1"],
+    )
