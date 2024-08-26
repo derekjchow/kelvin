@@ -139,28 +139,25 @@ class AxiSlave2ChiselSRAM(p: Parameters, sramAddressWidth: Int) extends Module {
 class CoreAxi(p: Parameters, coreModuleName: String) extends RawModule {
   override val desiredName = coreModuleName + "Axi"
   val io = IO(new Bundle {
-    val csr = new CsrInOutIO(p)
-    val halted = Output(Bool())
-    val fault = Output(Bool())
-    val debug_req = Input(Bool())
-
-    val axi0 = if (p.enableVector) {
-      Some(new AxiMasterIO(p.axi2AddrBits, p.axi2DataBits, p.axi2IdBits))
-    } else { None }
-    val axi1 = new AxiMasterIO(p.axi2AddrBits, p.axi2DataBits, p.axi2IdBits)
-
     // AXI
     val aclk = Input(Clock())
     val aresetn = Input(AsyncReset())
-    val axi_to_itcm = Flipped(new AxiMasterIO(p.axi2AddrBits, p.axi2DataBits, p.axi2IdBits))
-
-    val iflush = new IFlushIO(p)
-    val dflush = new DFlushIO(p)
-    val slog = new SLogIO(p)
-
+    // ITCM, DTCM, CSR
+    val axi_slave = Flipped(new AxiMasterIO(p.axi2AddrBits, p.axi2DataBits, p.axi2IdBits))
+    val axi_master = new AxiMasterIO(p.axi2AddrBits, p.axi2DataBits, p.axi2IdBits)
+    // Clock for Core (gated externally)
+    val clock_gate = Input(Clock())
+    // Incoming interrupts
+    val intr = Vec(16, Bool())
+    // Core status interrupts
+    val halted = Output(Bool())
+    val fault = Output(Bool())
+    // Debug data interface
     val debug = new DebugIO(p)
+    // String logging interface
+    val slog = new SLogIO(p)
   })
-
+  dontTouch(io)
 
   withClockAndReset(io.aclk, io.aresetn) {
     val itcmSizeBytes = 8 * 1024 // 8 kB
@@ -194,7 +191,7 @@ class CoreAxi(p: Parameters, coreModuleName: String) extends RawModule {
 
     val bridge = Module(new AxiSlave2ChiselSRAM(p, log2Ceil(itcmEntries)))
     dontTouch(bridge.io)
-    bridge.io.axi <> io.axi_to_itcm
+    bridge.io.axi <> io.axi_slave
 
     itcmArbiter.io.in(0).bits.readwritePorts(0).address := bridge.io.sramAddress
     itcmArbiter.io.in(0).bits.readwritePorts(0).enable := bridge.io.sramEnable
@@ -226,14 +223,9 @@ class CoreAxi(p: Parameters, coreModuleName: String) extends RawModule {
     core.io.ibus.ready := core.io.ibus.valid && itcmArbiter.io.chosen === 1.U
 
     bridge.io.periBusy := core.io.ibus.valid
-    io.csr <> core.io.csr
     io.halted := core.io.halted
     io.fault := core.io.fault
-    core.io.debug_req := io.debug_req
-    if (p.enableVector) {
-      io.axi0.get <> core.io.axi0.get
-    }
-    io.axi1 <> core.io.axi1
+    core.io.debug_req := true.B
 
     dtcm.readwritePorts(0).address := core.io.dbus.addr
     dtcm.readwritePorts(0).enable := core.io.dbus.valid
@@ -243,9 +235,15 @@ class CoreAxi(p: Parameters, coreModuleName: String) extends RawModule {
     dtcm.readwritePorts(0).mask.get := core.io.dbus.wmask.asBools
     core.io.dbus.ready := true.B
 
-    io.iflush <> core.io.iflush
-    io.dflush <> core.io.dflush
     io.slog <> core.io.slog
     io.debug <> core.io.debug
+
+    // Tie-offs
+    io.axi_master <> 0.U.asTypeOf(io.axi_master)
+    io.intr <> 0.U.asTypeOf(io.intr)
+    core.io.csr <> 0.U.asTypeOf(core.io.csr)
+    core.io.axi1 <> 0.U.asTypeOf(core.io.axi1)
+    core.io.dflush.ready := true.B
+    core.io.iflush.ready := true.B
   }
 }
