@@ -162,7 +162,7 @@ class CoreAxi(p: Parameters, coreModuleName: String) extends RawModule {
   withClockAndReset(io.aclk, io.aresetn) {
     val itcmSizeBytes = 8 * 1024 // 8 kB
     val itcmWidth = p.axi2DataBits
-    val itcmEntries = itcmSizeBytes / itcmWidth
+    val itcmEntries = itcmSizeBytes / (itcmWidth / 8)
     val itcmSubEntryWidth = 8
     val itcmSubEntries = itcmWidth / itcmSubEntryWidth
     val itcm =
@@ -180,7 +180,7 @@ class CoreAxi(p: Parameters, coreModuleName: String) extends RawModule {
 
     val dtcmSizeBytes = 32 * 1024 // 32 kB
     val dtcmWidth = p.axi2DataBits
-    val dtcmEntries = dtcmSizeBytes / dtcmWidth
+    val dtcmEntries = dtcmSizeBytes / (dtcmWidth / 8)
     val dtcmSubEntryWidth = 8
     val dtcmSubEntries = dtcmWidth / dtcmSubEntryWidth
     val dtcm =
