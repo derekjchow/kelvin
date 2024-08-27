@@ -51,6 +51,30 @@ chisel_test(
     ],
 )
 
+chisel_library(
+    name = "kelvin_rvv",
+    srcs = [
+        "rvv/RvvAlu.scala",
+        "rvv/RvvDecode.scala",
+    ],
+    deps = [
+        "//hdl/chisel/src/common:library",
+    ],
+)
+
+chisel_test(
+    name = "kelvin_rvv_tests",
+    srcs = [
+        "rvv/RvvDecodeTest.scala",
+    ],
+    deps = [
+        ":kelvin_rvv",
+    ],
+    args = [
+        "-P",  # Allows parallel tests. This target has lots of small test cases.
+    ],
+)
+
 chisel_test(
     name = "kelvin_scalar_tests",
     srcs = [

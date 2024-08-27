@@ -69,6 +69,8 @@ def chisel_test(
         name,
         srcs = [],
         deps = [],
+        args = [],
+        size = "small",
         visibility = None):
     scala_test(
         name = name,
@@ -81,6 +83,8 @@ def chisel_test(
             "@edu_berkeley_cs_chiseltest//jar",
             "@org_antlr_antlr4_runtime//jar",
         ] + deps,
+        args = args,
+        size = size,
         scalacopts = SCALA_COPTS,
         visibility = visibility,
     )
