@@ -148,7 +148,7 @@ class CoreAxi(p: Parameters, coreModuleName: String) extends RawModule {
     // Clock for Core (gated externally)
     val clock_gate = Input(Clock())
     // Incoming interrupts
-    val intr = Vec(16, Bool())
+    val intr = Input(Vec(16, Bool()))
     // Core status interrupts
     val halted = Output(Bool())
     val fault = Output(Bool())
@@ -240,7 +240,6 @@ class CoreAxi(p: Parameters, coreModuleName: String) extends RawModule {
 
     // Tie-offs
     io.axi_master <> 0.U.asTypeOf(io.axi_master)
-    io.intr <> 0.U.asTypeOf(io.intr)
     core.io.csr <> 0.U.asTypeOf(core.io.csr)
     core.io.axi1 <> 0.U.asTypeOf(core.io.axi1)
     core.io.dflush.ready := true.B
