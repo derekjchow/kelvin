@@ -34,6 +34,19 @@ object MakeValid {
     result.bits := bits
     result
   }
+
+  def apply[T <: Data](bits: T): ValidIO[T] = {
+    apply(true.B, bits)
+  }
+}
+
+object MakeInvalid {
+  def apply[T <: Data](gen: T): ValidIO[T] = {
+    val result = Wire(Valid(gen))
+      result.valid := false.B
+      result.bits := 0.U.asTypeOf(gen)
+      result
+  }
 }
 
 // Gate the bits of an interface based on it's validity bit. This prevents

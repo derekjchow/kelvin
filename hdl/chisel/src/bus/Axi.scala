@@ -80,7 +80,7 @@ class AxiReadData(dataWidthBits: Int, idBits: Int) extends Bundle {
   val data = UInt(dataWidthBits.W)
   // "Optional"
   val id   = UInt(idBits.W)
-  val resp = UInt(2.W)
+  val resp = UInt(2.W)  // 00 = Okay, 01 = ExOkay, 10 = SlvErr, 11 = DecErr
   val last = Bool()
 
   def defaults() = {
