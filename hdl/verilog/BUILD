@@ -17,6 +17,7 @@ load("@rules_hdl//verilog:providers.bzl", "verilog_library")
 exports_files(
     srcs = [
         "ClockGate.sv",
+        "Sram_12ffcp_128x128.v",
         "Sram_1rw_256x256.v",
         "Sram_1rwm_256x288.v",
         "TlulAdapterSram.sv",
@@ -28,15 +29,21 @@ exports_files(
 verilog_library(
     name = "clock_gate",
     srcs = ["ClockGate.sv"],
+    visibility = ["//visibility:public"],
     deps = [
         "//third_party/ip/lowrisc:prim",
     ],
-    visibility = ["//visibility:public"],
 )
 
 verilog_library(
     name = "sram_1rw_256x256",
     srcs = ["Sram_1rw_256x256.v"],
+    visibility = ["//visibility:public"],
+)
+
+verilog_library(
+    name = "Sram_12ffcp_128x128",
+    srcs = ["Sram_12ffcp_128x128.v"],
     visibility = ["//visibility:public"],
 )
 
@@ -49,18 +56,18 @@ verilog_library(
 verilog_library(
     name = "tlul_adapter_sram",
     srcs = ["TlulAdapterSram.sv"],
+    visibility = ["//visibility:public"],
     deps = [
         "//third_party/ip/lowrisc:prim",
         "//third_party/ip/lowrisc:tlul_adapter_sram",
     ],
-    visibility = ["//visibility:public"],
 )
 
 verilog_library(
     name = "uart",
     srcs = ["Uart.sv"],
+    visibility = ["//visibility:public"],
     deps = [
         "//third_party/ip/lowrisc:uart",
     ],
-    visibility = ["//visibility:public"],
 )

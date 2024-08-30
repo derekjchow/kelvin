@@ -13,19 +13,20 @@
 // limitations under the License.
 
 #include <verilated.h>
+
 #include "VCoreMiniAxi.h"
+#include "src/buses/axi-slave.h"
 #include "src/buses/axi.h"
 #include "src/buses/axilite.h"
-#include "src/buses/axi-slave.h"
 #if VM_TRACE
-# include <verilated_fst_c.h>
+#include <verilated_fst_c.h>
 #endif
 
 RenodeAgent* kelvin;
 VCoreMiniAxi* top = new VCoreMiniAxi;
 
 uint8_t uint8_dummy;
-VerilatedFstC *tfp;
+VerilatedFstC* tfp;
 vluint64_t main_time = 0;
 
 void axiSlaveEval() {

@@ -194,6 +194,8 @@ chisel_library(
         "CoreAxi.scala",
         "CoreAxiCSR.scala",
         "CoreAxiSlaveMux.scala",
+        "TCM.scala",
+        "Sram_12ffcp_128x128.scala",
     ],
     deps = [
         ":kelvin_base",
@@ -218,33 +220,34 @@ chisel_cc_library(
     name = "core_cc_library",
     chisel_lib = ":kelvin",
     emit_class = "kelvin.EmitCore",
-    module_name = "Core",
     extra_outs = [
         "VCore_parameters.h",
     ],
+    module_name = "Core",
 )
 
 chisel_cc_library(
     name = "core_scalar_cc_library",
     chisel_lib = ":kelvin",
     emit_class = "kelvin.EmitCore",
-    module_name = "CoreScalar",
-    verilog_file_path = "CoreScalar.sv",
+    extra_outs = [
+        "VCoreScalar_parameters.h",
+    ],
     gen_flags = [
         "--enableVector=False",
         "--moduleName=CoreScalar",
     ],
-    extra_outs = [
-        "VCoreScalar_parameters.h",
-    ],
+    module_name = "CoreScalar",
+    verilog_file_path = "CoreScalar.sv",
 )
 
 chisel_cc_library(
     name = "core_mini_cc_library",
     chisel_lib = ":kelvin",
     emit_class = "kelvin.EmitCore",
-    module_name = "CoreMini",
-    verilog_file_path = "CoreMini.sv",
+    extra_outs = [
+        "VCoreMini_parameters.h",
+    ],
     gen_flags = [
         "--enableFetchL0=False",
         "--fetchDataBits=128",
@@ -252,18 +255,17 @@ chisel_cc_library(
         "--enableVector=False",
         "--moduleName=CoreMini",
     ],
-    extra_outs = [
-        "VCoreMini_parameters.h",
-    ],
+    module_name = "CoreMini",
+    verilog_file_path = "CoreMini.sv",
 )
 
 chisel_cc_library(
     name = "core_mini_axi_cc_library",
     chisel_lib = ":kelvin",
     emit_class = "kelvin.EmitCore",
-    module_name = "CoreMiniAxi",
-    verilog_file_path = "CoreMiniAxi.sv",
-    systemc = False,
+    extra_outs = [
+        "VCoreMiniAxi_parameters.h",
+    ],
     gen_flags = [
         "--enableFetchL0=False",
         "--fetchDataBits=128",
@@ -272,12 +274,13 @@ chisel_cc_library(
         "--moduleName=CoreMini",
         "--useAxi",
     ],
-    extra_outs = [
-        "VCoreMiniAxi_parameters.h",
-    ],
+    module_name = "CoreMiniAxi",
+    systemc = False,
     verilog_deps = [
+        "//hdl/verilog:Sram_12ffcp_128x128",
         "//hdl/verilog:clock_gate",
     ],
+    verilog_file_path = "CoreMiniAxi.sv",
 )
 
 verilog_zip_bundle(

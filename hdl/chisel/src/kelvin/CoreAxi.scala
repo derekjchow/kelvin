@@ -43,19 +43,18 @@ class CoreAxi(p: Parameters, coreModuleName: String) extends RawModule {
   })
   dontTouch(io)
 
+
   withClockAndReset(io.aclk, io.aresetn) {
     val itcmSizeBytes = 8 * 1024 // 8 kB
+    val itcmSubEntryWidth = 8
     val itcmWidth = p.axi2DataBits
     val itcmEntries = itcmSizeBytes / (itcmWidth / 8)
-    val itcmSubEntryWidth = 8
     val itcmSubEntries = itcmWidth / itcmSubEntryWidth
-    val itcm =
-      if (p.itcmMemoryFile == "") {
-        SRAM.masked(itcmEntries, Vec(itcmSubEntries, UInt(itcmSubEntryWidth.W)), 0, 0, 1)
-      } else {
-        SRAM.masked(itcmEntries, Vec(itcmSubEntries, UInt(itcmSubEntryWidth.W)), 0, 0, 1,
-                    new HexMemoryFile(p.itcmMemoryFile))
-      }
+
+    //TODO(stefanhall@): add support for HexMemoryFile
+    val itcm = Module(new TCM(p, itcmSizeBytes, itcmSubEntryWidth))
+
+    dontTouch(itcm.io)
     val itcmArbiter =
       Module(new Arbiter(
         new SRAMInterface(itcmEntries, Vec(itcmSubEntries, UInt(itcmSubEntryWidth.W)), 0, 0, 1, true),
@@ -66,8 +65,8 @@ class CoreAxi(p: Parameters, coreModuleName: String) extends RawModule {
     val dtcmEntries = dtcmSizeBytes / (dtcmWidth / 8)
     val dtcmSubEntryWidth = 8
     val dtcmSubEntries = dtcmWidth / dtcmSubEntryWidth
-    val dtcm =
-      SRAM.masked(dtcmEntries, Vec(dtcmSubEntries, UInt(dtcmSubEntryWidth.W)), 0, 0, 1/*, new HexMemoryFile("/usr/local/google/home/atv/src/shodan/hw/kelvin/kelvin-dtcm.mem")*/)
+    val dtcm = Module(new TCM(p, dtcmSizeBytes, dtcmSubEntryWidth))
+
     val dtcmArbiter =
       Module(new Arbiter(
         new SRAMInterface(dtcmEntries, Vec(dtcmSubEntries, UInt(dtcmSubEntryWidth.W)), 0, 0, 1, true),
@@ -87,7 +86,7 @@ class CoreAxi(p: Parameters, coreModuleName: String) extends RawModule {
     itcmArbiter.io.in(0).bits.readwritePorts(0).isWrite := itcmBridge.io.sramIsWrite
     itcmArbiter.io.in(0).bits.readwritePorts(0).writeData := itcmBridge.io.sramWriteData
     itcmArbiter.io.in(0).bits.readwritePorts(0).mask.get := itcmBridge.io.sramMask
-    itcmArbiter.io.in(0).bits.readwritePorts(0).readData := itcm.readwritePorts(0).readData
+    itcmArbiter.io.in(0).bits.readwritePorts(0).readData := itcm.io.rdata
     itcmBridge.io.sramReadData := itcmArbiter.io.in(0).bits.readwritePorts(0).readData
 
     val lsb = log2Ceil(p.axi2DataBits / 8)
@@ -96,14 +95,14 @@ class CoreAxi(p: Parameters, coreModuleName: String) extends RawModule {
     itcmArbiter.io.in(1).bits.readwritePorts(0).isWrite := false.B
     itcmArbiter.io.in(1).bits.readwritePorts(0).writeData := 0.U.asTypeOf(itcmArbiter.io.in(1).bits.readwritePorts(0).writeData)
     itcmArbiter.io.in(1).bits.readwritePorts(0).mask.get := -1.S.asTypeOf(itcmArbiter.io.in(1).bits.readwritePorts(0).mask.get)
-    itcmArbiter.io.in(1).bits.readwritePorts(0).readData := itcm.readwritePorts(0).readData.reverse
+    itcmArbiter.io.in(1).bits.readwritePorts(0).readData := itcm.io.rdata
     core.io.ibus.rdata := Cat(itcmArbiter.io.in(1).bits.readwritePorts(0).readData)
 
-    itcm.readwritePorts(0).address := itcmArbiter.io.out.bits.readwritePorts(0).address
-    itcm.readwritePorts(0).enable := itcmArbiter.io.out.bits.readwritePorts(0).enable
-    itcm.readwritePorts(0).isWrite := itcmArbiter.io.out.bits.readwritePorts(0).isWrite
-    itcm.readwritePorts(0).writeData := itcmArbiter.io.out.bits.readwritePorts(0).writeData
-    itcm.readwritePorts(0).mask.get := itcmArbiter.io.out.bits.readwritePorts(0).mask.get
+    itcm.io.addr := itcmArbiter.io.out.bits.readwritePorts(0).address
+    itcm.io.enable := itcmArbiter.io.out.bits.readwritePorts(0).enable
+    itcm.io.write := itcmArbiter.io.out.bits.readwritePorts(0).isWrite
+    itcm.io.wdata := itcmArbiter.io.out.bits.readwritePorts(0).writeData
+    itcm.io.wmask := itcmArbiter.io.out.bits.readwritePorts(0).mask.get
 
     itcmArbiter.io.in(0).valid := itcmBridge.io.txnInProgress
     itcmArbiter.io.in(1).valid := core.io.ibus.valid
@@ -125,7 +124,7 @@ class CoreAxi(p: Parameters, coreModuleName: String) extends RawModule {
     dtcmArbiter.io.in(0).bits.readwritePorts(0).isWrite := dtcmBridge.io.sramIsWrite
     dtcmArbiter.io.in(0).bits.readwritePorts(0).writeData := dtcmBridge.io.sramWriteData
     dtcmArbiter.io.in(0).bits.readwritePorts(0).mask.get := dtcmBridge.io.sramMask
-    dtcmArbiter.io.in(0).bits.readwritePorts(0).readData := dtcm.readwritePorts(0).readData
+    dtcmArbiter.io.in(0).bits.readwritePorts(0).readData := dtcm.io.rdata
     dtcmBridge.io.sramReadData := dtcmArbiter.io.in(0).bits.readwritePorts(0).readData
 
     dtcmArbiter.io.in(1).bits.readwritePorts(0).address := core.io.dbus.addr(log2Ceil(dtcmEntries) + lsb - 1, lsb)
@@ -133,13 +132,14 @@ class CoreAxi(p: Parameters, coreModuleName: String) extends RawModule {
     dtcmArbiter.io.in(1).bits.readwritePorts(0).isWrite := core.io.dbus.write
     dtcmArbiter.io.in(1).bits.readwritePorts(0).writeData := UIntToVec(core.io.dbus.wdata, 8)
     dtcmArbiter.io.in(1).bits.readwritePorts(0).mask.get := core.io.dbus.wmask.asBools
-    dtcmArbiter.io.in(1).bits.readwritePorts(0).readData := dtcm.readwritePorts(0).readData.reverse
+    dtcmArbiter.io.in(1).bits.readwritePorts(0).readData := dtcm.io.rdata
 
-    dtcm.readwritePorts(0).address := dtcmArbiter.io.out.bits.readwritePorts(0).address
-    dtcm.readwritePorts(0).enable := dtcmArbiter.io.out.bits.readwritePorts(0).enable
-    dtcm.readwritePorts(0).isWrite := dtcmArbiter.io.out.bits.readwritePorts(0).isWrite
-    dtcm.readwritePorts(0).writeData := dtcmArbiter.io.out.bits.readwritePorts(0).writeData
-    dtcm.readwritePorts(0).mask.get := dtcmArbiter.io.out.bits.readwritePorts(0).mask.get
+    dtcm.io.addr := dtcmArbiter.io.out.bits.readwritePorts(0).address
+    dtcm.io.enable := dtcmArbiter.io.out.bits.readwritePorts(0).enable
+    dtcm.io.write := dtcmArbiter.io.out.bits.readwritePorts(0).isWrite
+    dtcm.io.wdata := dtcmArbiter.io.out.bits.readwritePorts(0).writeData
+    dtcm.io.wmask := dtcmArbiter.io.out.bits.readwritePorts(0).mask.get
+
     core.io.dbus.rdata := Cat(dtcmArbiter.io.out.bits.readwritePorts(0).readData)
     core.io.dbus.ready := core.io.dbus.valid && dtcmArbiter.io.chosen === 1.U
 
