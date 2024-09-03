@@ -74,6 +74,20 @@ chisel_test(
     ],
 )
 
+chisel_test(
+    name = "kelvin_core_axi_tests",
+    srcs = [
+        "AxiSlave2ChiselSRAMTest.scala",
+        "CoreAxiCSRTest.scala",
+        "CoreAxiSlaveMuxTest.scala",
+    ],
+    deps = [
+        ":kelvin",
+        ":kelvin_base",
+        "//hdl/chisel/src/bus",
+    ],
+)
+
 chisel_library(
     name = "kelvin_base",
     srcs = [
@@ -150,8 +164,11 @@ chisel_library(
 chisel_library(
     name = "kelvin",
     srcs = [
+        "AxiSlave2ChiselSRAM.scala",
         "Core.scala",
         "CoreAxi.scala",
+        "CoreAxiCSR.scala",
+        "CoreAxiSlaveMux.scala",
     ],
     deps = [
         ":kelvin_base",
@@ -231,6 +248,9 @@ chisel_cc_library(
     ],
     extra_outs = [
         "VCoreMiniAxi_parameters.h",
+    ],
+    verilog_deps = [
+        "//hdl/verilog:clock_gate",
     ],
 )
 

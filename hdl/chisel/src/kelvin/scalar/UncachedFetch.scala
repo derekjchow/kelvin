@@ -146,7 +146,7 @@ class FetchControl(p: Parameters) extends Module {
       (result, jumped)
     }
 
-    val pc = Reg(Valid(UInt(p.fetchAddrBits.W)))
+    val pc = RegInit(MakeValid(true.B, Cat(io.csr.value(0)(31,2), 0.U(2.W))))
 
     val (predecode, jumped) = Predecode(io.fetchData.bits)
     var predecodeValids = (0 until p.fetchInstrSlots).map(i =>
@@ -225,11 +225,15 @@ class UncachedFetch(p: Parameters) extends FetchUnit(p) {
   fetcher.io.ibus <> io.ibus
   ctrl.io.ibusFired := fetcher.io.ibusFired
 
-  val window = 16
+  val window = p.fetchInstrSlots * 2
   val instructionBuffer = Module(new InstructionBuffer(
       new FetchInstruction(p), p.fetchInstrSlots, window, true))
   instructionBuffer.io.feedIn <> ctrl.io.bufferRequest
   io.inst.lanes <> instructionBuffer.io.out.take(4)
   instructionBuffer.io.flush.get := io.iflush.valid || branch.valid
   instructionBuffer.io.out.takeRight(window - 4).foreach(x => x.ready := false.B)
+
+  val pc = RegInit(0.U(p.fetchAddrBits.W))
+  pc := Mux(instructionBuffer.io.out(0).valid, instructionBuffer.io.out(0).bits.addr, pc)
+  io.pc := pc
 }

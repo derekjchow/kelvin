@@ -122,6 +122,9 @@ class Parameters(val m: Seq[MemoryRegion] = Seq(), val hartId: Int = 0) {
   // If set, itcmMemoryFile should contain a path to a Verilog mem file.
   // NB: Only used by CoreAxi
   val itcmMemoryFile = ""
+
+  val csrInCount = 13
+  val csrOutCount = 8
 }
 
 import scala.reflect.runtime.{universe => ru}

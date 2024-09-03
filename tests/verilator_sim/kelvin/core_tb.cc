@@ -81,6 +81,7 @@ static void Core_run(const char* name, const char* bin, const int cycles,
   sc_signal<sc_bv<32> > io_csr_in_value_9;
   sc_signal<sc_bv<32> > io_csr_in_value_10;
   sc_signal<sc_bv<32> > io_csr_in_value_11;
+  sc_signal<sc_bv<32> > io_csr_in_value_12;
   sc_signal<sc_bv<32> > io_csr_out_value_0;
   sc_signal<sc_bv<32> > io_csr_out_value_1;
   sc_signal<sc_bv<32> > io_csr_out_value_2;
@@ -225,6 +226,7 @@ static void Core_run(const char* name, const char* bin, const int cycles,
   core.io_csr_in_value_9(io_csr_in_value_9);
   core.io_csr_in_value_10(io_csr_in_value_10);
   core.io_csr_in_value_11(io_csr_in_value_11);
+  core.io_csr_in_value_12(io_csr_in_value_12);
   core.io_csr_out_value_0(io_csr_out_value_0);
   core.io_csr_out_value_1(io_csr_out_value_1);
   core.io_csr_out_value_2(io_csr_out_value_2);

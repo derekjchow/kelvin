@@ -171,6 +171,7 @@ class SCore(p: Parameters) extends Module {
   // ---------------------------------------------------------------------------
   // Control Status Unit
   csr.io.csr <> io.csr
+  csr.io.csr.in.value(12) := fetch.io.pc
 
   csr.io.req <> decode(0).io.csr
   csr.io.rs1 := regfile.io.readData(0)
@@ -312,9 +313,7 @@ class SCore(p: Parameters) extends Module {
 
   // ---------------------------------------------------------------------------
   // DEBUG
-  val cycles = RegInit(0.U(32.W))
-  cycles := cycles + 1.U
-  io.debug.cycles := cycles
+  io.debug.cycles := csr.io.csr.out.value(4)
 
   val debugEn = RegInit(0.U(p.instructionLanes.W))
   val debugAddr = Reg(Vec(p.instructionLanes, UInt(32.W)))

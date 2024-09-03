@@ -50,11 +50,11 @@ class VCoreIO(p: Parameters) extends Bundle {
 }
 
 class CsrInIO(p: Parameters) extends Bundle {
-  val value = Input(Vec(12, UInt(32.W)))
+  val value = Input(Vec(p.csrInCount, UInt(32.W)))
 }
 
 class CsrOutIO(p: Parameters) extends Bundle {
-  val value = Output(Vec(8, UInt(32.W)))
+  val value = Output(Vec(p.csrOutCount, UInt(32.W)))
 }
 
 class CsrInOutIO(p: Parameters) extends Bundle {
@@ -101,6 +101,7 @@ abstract class FetchUnit(p: Parameters) extends Module {
     val branch = Flipped(Vec(p.instructionLanes, new BranchTakenIO(p)))
     val linkPort = Flipped(new RegfileLinkPortIO)
     val iflush = Flipped(new IFlushIO(p))
+    val pc = UInt(p.fetchAddrBits.W)
   })
 }
 

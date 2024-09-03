@@ -324,14 +324,14 @@ class Csr(p: Parameters) extends Module {
   io.bru.out.mepc  := Mux(mepcEn && req.valid, wdata, mepc)
   io.bru.out.mtvec := Mux(mtvecEn && req.valid, wdata, mtvec)
 
-  io.csr.out.value(0) := mpc
-  io.csr.out.value(1) := msp
-  io.csr.out.value(2) := mcause
-  io.csr.out.value(3) := mtval
-  io.csr.out.value(4) := mcontext0
-  io.csr.out.value(5) := mcontext1
-  io.csr.out.value(6) := mcontext2
-  io.csr.out.value(7) := mcontext3
+  io.csr.out.value(0) := io.csr.in.value(12)
+  io.csr.out.value(1) := mepc
+  io.csr.out.value(2) := mtval
+  io.csr.out.value(3) := mcause
+  io.csr.out.value(4) := mcycle(31,0)
+  io.csr.out.value(5) := mcycle(63,32)
+  io.csr.out.value(6) := minstret(31,0)
+  io.csr.out.value(7) := minstret(63,32)
 
   // Write port.
   io.rd.valid := req.valid

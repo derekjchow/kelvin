@@ -32,7 +32,7 @@ object Core {
   }
 }
 
-class Core(p: Parameters, moduleName: String) extends Module {
+class Core(p: Parameters, moduleName: String) extends Module with RequireSyncReset {
   override val desiredName = moduleName
   val io = IO(new Bundle {
     val csr = new CsrInOutIO(p)

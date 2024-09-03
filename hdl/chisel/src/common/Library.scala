@@ -90,3 +90,12 @@ object Zip32 {
     Cat(b2, a2)
   }
 }
+
+object UIntToVec {
+  def apply(in: UInt, elemWidth: Int): Vec[UInt] = {
+    assert((in.getWidth % elemWidth) == 0)
+    VecInit((0 until in.getWidth by elemWidth).map(
+      x => in(x + elemWidth - 1, x)
+    ))
+  }
+}
