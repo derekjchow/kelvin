@@ -19,6 +19,7 @@ load(
     "chisel_library",
     "chisel_test",
 )
+load("@kelvin_hw//rules:verilog.bzl", "verilog_zip_bundle")
 
 package(default_visibility = ["//visibility:public"])
 
@@ -253,6 +254,11 @@ chisel_cc_library(
     verilog_deps = [
         "//hdl/verilog:clock_gate",
     ],
+)
+
+verilog_zip_bundle(
+    name = "core_mini_axi_bundle",
+    lib = ":core_mini_axi_cc_library_verilog",
 )
 
 chisel_cc_library(
