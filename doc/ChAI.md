@@ -38,12 +38,12 @@ bazel run //tests/verilator_sim:chai_sim -- \
 In ChAI.scala, add a new entry to the memoryRegions table for your peripheral:
 ```scala
   val memoryRegions = Seq(
-    new kelvin.MemoryRegion(0, 4 * 1024 * 1024, true, 256), // SRAM
-    new kelvin.MemoryRegion(4 * 1024 * 1024, 4 * 1024 * 1024, false, 256) // UART
-    new kelvin.MemoryRegion(8 * 1024 * 1024, 1 * 1024 * 1024, false, 256) // My New Peripheral
+    new kelvin.MemoryRegion(0, 4 * 1024 * 1024, MemoryType.DMEM), // SRAM
+    new kelvin.MemoryRegion(4 * 1024 * 1024, 4 * 1024 * 1024, MemoryType.Peripheral) // UART
+    new kelvin.MemoryRegion(8 * 1024 * 1024, 1 * 1024 * 1024, MemoryType.Peripheral) // My New Peripheral
   )
 ```
-A MemoryRegion consists of a starting address (in bytes), a size (in bytes), whether or not the region is cacheable (likely only to be true for a memory peripheral), and an access size (ignored today, all accesses are 256-bit)
+A MemoryRegion consists of a starting address (in bytes), a size (in bytes), and the region type (IMEM, DMEM, Peripheral).
 
 In ChAI.scala, connect your device's TileLink I/O to the crossbar:
 ```scala

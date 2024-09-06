@@ -1,3 +1,7 @@
+/* Copyright 2024 Google LLC. */
+/* Licensed under the Apache License, Version 2.0, see LICENSE for details. */
+/* SPDX-License-Identifier: Apache-2.0 */
+
 MEMORY {
     RAM(rwx) : ORIGIN = 0x20000000, LENGTH = 0x400000
 }

@@ -110,6 +110,8 @@ class Kelvin(p: kelvin.Parameters, moduleName: String) extends RawModule {
     l1i.io.flush    <> core.io.iflush
     l1i.io.volt_sel := volt_sel
 
+    core.io.ebus <> 0.U.asTypeOf(core.io.ebus)
+
     // -------------------------------------------------------------------------
     // Bus Mux.
     if (p.enableVector) {

@@ -18,11 +18,17 @@ import chisel3._
 import chisel3.util._
 import scala.collection.mutable.StringBuilder
 
+object MemoryRegionType extends ChiselEnum {
+  val IMEM = Value
+  val DMEM = Value
+  val Peripheral = Value
+  val External = Value
+}
+
 class MemoryRegion(
   val memStart: Int,
   val memSize: Int,
-  val cacheable: Boolean,
-  val dataWidthBits: Int,
+  val memType: MemoryRegionType.Type,
 ) {
 
 def contains(addr: UInt): Bool = {
@@ -41,7 +47,7 @@ object Parameters {
   }
 }
 
-class Parameters(val m: Seq[MemoryRegion] = Seq(), val hartId: Int = 0) {
+class Parameters(var m: Seq[MemoryRegion] = Seq(), val hartId: Int = 0) {
   case object Core {
     val tiny = 0
     val little = 1

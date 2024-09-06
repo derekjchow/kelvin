@@ -60,6 +60,7 @@ class LsuCtrl(p: Parameters) extends Bundle {
   val sldst = Bool()  // scalar load/store cached
   val vldst = Bool()  // vector load/store
   val suncd = Bool()  // scalar load/store uncached
+  val regionType = MemoryRegionType()
 }
 
 class LsuReadData(p: Parameters) extends Bundle {
@@ -70,6 +71,7 @@ class LsuReadData(p: Parameters) extends Bundle {
   val iload = Bool()
   val sldst = Bool()
   val suncd = Bool()
+  val regionType = MemoryRegionType()
 }
 
 class Lsu(p: Parameters) extends Module {
@@ -82,11 +84,17 @@ class Lsu(p: Parameters) extends Module {
     val rd = Valid(Flipped(new RegfileWriteDataIO))
 
     // Cached interface.
+    val ibus = new IBusIO(p)
     val dbus = new DBusIO(p)
     val flush = new DFlushFenceiIO(p)
 
     // Uncached interface.
     val ubus = new DBusIO(p)
+
+    // DBus that will eventually reach an external bus.
+    // Intended for sending a transaction to an external
+    // peripheral, likely on TileLink or AXI.
+    val ebus = new DBusIO(p)
 
     // Vector switch.
     val vldst = Output(Bool())
@@ -119,10 +127,25 @@ class Lsu(p: Parameters) extends Module {
   // Control Port Inputs.
   ctrl.io.in.valid := io.req.map(_.valid).reduce(_||_)
 
-  val uncacheable = p.m.filter(x => !x.cacheable)
+  // NB: Plan to remove uncacheable in the near future,
+  // but for now, preserve the uncached behaviour on Peripheral types
+  // to preserve the function of things like ChAI.
+  val uncacheable = p.m.filter(_.memType == MemoryRegionType.Peripheral)
   for (i <- 0 until p.instructionLanes) {
     val uncached = io.busPort.addr(i)(31) ||
       (if (uncacheable.length > 0) uncacheable.map(x => (io.busPort.addr(i) >= x.memStart.U) && (io.busPort.addr(i) < (x.memStart + x.memSize).U)).reduce(_||_) else false.B)
+
+    val itcm = p.m.filter(_.memType == MemoryRegionType.IMEM)
+                  .map(_.contains(io.busPort.addr(i))).reduceOption(_ || _).getOrElse(false.B)
+    val dtcm = p.m.filter(_.memType == MemoryRegionType.DMEM)
+                  .map(_.contains(io.busPort.addr(i))).reduceOption(_ || _).getOrElse(true.B)
+    val peri = p.m.filter(_.memType == MemoryRegionType.Peripheral)
+                  .map(_.contains(io.busPort.addr(i))).reduceOption(_ || _).getOrElse(false.B)
+    val external = !(itcm || dtcm || peri)
+    assert(PopCount(Cat(itcm | dtcm | peri)) <= 1.U)
+    // NB: Should raise a load/store exception here.
+    assert(!(peri && io.req(i).valid && ctrlready(i)),
+           "Accessing internal peripherals via the memory interface is unsupported!")
 
     val opstore = io.req(i).bits.op.isOneOf(LsuOp.SW, LsuOp.SH, LsuOp.SB)
     val opiload = io.req(i).bits.op.isOneOf(LsuOp.LW, LsuOp.LH, LsuOp.LB, LsuOp.LHU, LsuOp.LBU)
@@ -153,6 +176,11 @@ class Lsu(p: Parameters) extends Module {
     ctrl.io.in.bits(i).bits.vldst := opvldst
     ctrl.io.in.bits(i).bits.suncd := opsldst && uncached
     ctrl.io.in.bits(i).bits.write := !opload
+    ctrl.io.in.bits(i).bits.regionType := MuxCase(MemoryRegionType.External, Array(
+      dtcm -> MemoryRegionType.DMEM,
+      itcm -> MemoryRegionType.IMEM,
+      peri -> MemoryRegionType.Peripheral,
+    ))
   }
 
   // ---------------------------------------------------------------------------
@@ -185,16 +213,30 @@ class Lsu(p: Parameters) extends Module {
     assert(false)
   }
 
-  io.dbus.valid := ctrl.io.out.valid && ctrl.io.out.bits.sldst
+  io.dbus.valid := ctrl.io.out.valid && ctrl.io.out.bits.sldst && (ctrl.io.out.bits.regionType === MemoryRegionType.DMEM)
   io.dbus.write := ctrl.io.out.bits.write
   io.dbus.addr  := Cat(0.U(1.W), ctrl.io.out.bits.addr(30,0))
   io.dbus.adrx  := Cat(0.U(1.W), ctrl.io.out.bits.adrx(30,0))
   io.dbus.size  := ctrl.io.out.bits.size
   io.dbus.wdata := wdata
   io.dbus.wmask := wmask
+
   assert(!(io.dbus.valid && ctrl.io.out.bits.addr(31)))
   assert(!(io.dbus.valid && io.dbus.addr(31)))
   assert(!(io.dbus.valid && io.dbus.adrx(31)))
+
+  io.ebus.valid := ctrl.io.out.valid && ctrl.io.out.bits.sldst && (ctrl.io.out.bits.regionType === MemoryRegionType.External)
+  io.ebus.write := ctrl.io.out.bits.write
+  io.ebus.addr := ctrl.io.out.bits.addr
+  io.ebus.adrx := ctrl.io.out.bits.adrx
+  io.ebus.size := ctrl.io.out.bits.size
+  io.ebus.wdata := wdata
+  io.ebus.wmask := wmask
+
+  io.ibus.valid := ctrl.io.out.valid && ctrl.io.out.bits.sldst && (ctrl.io.out.bits.regionType === MemoryRegionType.IMEM)
+  // TODO(atv): This should actually raise some sort of error, and trigger a store fault
+  assert(!(io.ibus.valid && (ctrl.io.out.bits.regionType === MemoryRegionType.IMEM) && ctrl.io.out.bits.write))
+  io.ibus.addr := ctrl.io.out.bits.addr
 
   io.ubus.valid := ctrl.io.out.valid && ctrl.io.out.bits.suncd
   io.ubus.write := ctrl.io.out.bits.write
@@ -218,6 +260,8 @@ class Lsu(p: Parameters) extends Module {
 
   ctrl.io.out.ready := io.flush.valid && io.flush.ready ||
                        io.dbus.valid && io.dbus.ready ||
+                       io.ebus.valid && io.ebus.ready ||
+                       io.ibus.valid && io.ibus.ready ||
                        io.ubus.valid && io.ubus.ready ||
                        ctrl.io.out.bits.vldst && io.dbus.ready
 
@@ -226,6 +270,8 @@ class Lsu(p: Parameters) extends Module {
   // ---------------------------------------------------------------------------
   // Load response.
   data.io.in.valid := io.dbus.valid && io.dbus.ready && !io.dbus.write ||
+                      io.ebus.valid && io.ebus.ready && !io.ebus.write ||
+                      io.ibus.valid && io.ibus.ready ||
                       io.ubus.valid && io.ubus.ready && !io.ubus.write
 
   data.io.in.bits.addr  := ctrl.io.out.bits.addr
@@ -235,6 +281,7 @@ class Lsu(p: Parameters) extends Module {
   data.io.in.bits.iload := ctrl.io.out.bits.iload
   data.io.in.bits.sldst := ctrl.io.out.bits.sldst
   data.io.in.bits.suncd := ctrl.io.out.bits.suncd
+  data.io.in.bits.regionType := ctrl.io.out.bits.regionType
 
   data.io.out.ready := true.B
 
@@ -278,7 +325,13 @@ class Lsu(p: Parameters) extends Module {
     }
   }
 
-  val rdata = RotSignExt(MuxOR(data.io.out.bits.sldst, io.dbus.rdata) |
+  val regionType = data.io.out.bits.regionType
+  val srdata = MuxLookup(regionType, 0.U.asTypeOf(io.dbus.rdata))(Seq(
+    MemoryRegionType.DMEM -> io.dbus.rdata,
+    MemoryRegionType.IMEM -> io.ibus.rdata,
+    MemoryRegionType.External -> io.ebus.rdata,
+  ))
+  val rdata = RotSignExt(MuxOR(data.io.out.bits.sldst, srdata) |
                          MuxOR(data.io.out.bits.suncd, io.ubus.rdata))
 
   // pass-through

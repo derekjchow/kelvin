@@ -14,7 +14,9 @@
  * limitations under the License.
  */
 
-#pragma once
-
-extern unsigned char kelvin_hello_world_cc_bin[];
-extern unsigned int kelvin_hello_world_cc_bin_len;
+.globl _start
+_start:
+    la sp, __stack_end__
+    la ra, main
+    jalr ra
+    .word 0x08000073 # mpause

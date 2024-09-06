@@ -24,6 +24,12 @@ import _root_.circt.stage.ChiselStage
 
 class CoreAxi(p: Parameters, coreModuleName: String) extends RawModule {
   override val desiredName = coreModuleName + "Axi"
+  val memoryRegions = Seq(
+    new MemoryRegion(0x0000, 0x2000, MemoryRegionType.IMEM), // ITCM
+    new MemoryRegion(0x8000, 0x8000, MemoryRegionType.DMEM), // DTCM
+    new MemoryRegion(0x2000, 0x2000, MemoryRegionType.Peripheral), // CSR
+  )
+  p.m = memoryRegions
   val io = IO(new Bundle {
     // AXI
     val aclk = Input(Clock())
@@ -157,11 +163,10 @@ class CoreAxi(p: Parameters, coreModuleName: String) extends RawModule {
     dtcmArbiter.io.in(1).valid := core.io.dbus.valid
     dtcmArbiter.io.out.ready := true.B
 
-    val memoryRegions = Seq(
-      new MemoryRegion(0x0000, 0x2000, false, p.axi2DataBits), // ITCM
-      new MemoryRegion(0x8000, 0x8000, false, p.axi2DataBits), // DTCM
-      new MemoryRegion(0x2000, 0x2000, false, p.axi2DataBits), // CSR
-    )
+    val ebus2axi = DBus2Axi(p)
+    ebus2axi.io.axi <> io.axi_master
+    ebus2axi.io.dbus <> core.io.ebus
+
     val axi_mux = Module(new CoreAxiSlaveMux(p, memoryRegions))
     axi_mux.io.axi_slave <> io.axi_slave
     axi_mux.io.ports(0) <> itcmBridge.io.axi
@@ -175,7 +180,6 @@ class CoreAxi(p: Parameters, coreModuleName: String) extends RawModule {
     io.debug <> core.io.debug
 
     // Tie-offs
-    io.axi_master <> 0.U.asTypeOf(io.axi_master)
     core.io.axi1 <> 0.U.asTypeOf(core.io.axi1)
     core.io.dflush.ready := true.B
     core.io.iflush.ready := false.B

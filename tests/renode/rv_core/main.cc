@@ -1,9 +1,27 @@
+/*
+ * Copyright 2024 Google LLC
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 #include <cstdint>
 
 #include "kelvin_hello_world_cc.h"
 
-uint32_t* uart0 = (uint32_t*)0x54000000L;
-void putc(char ch) { *uart0 = ch; }
+volatile uint32_t* uart0 = (uint32_t*)0x54000000L;
+void putc(char ch) {
+    *uart0 = ch;
+}
 
 char hex[] = {
     '0', '1', '2', '3', '4', '5', '6', '7',
@@ -25,11 +43,11 @@ void print_string(const char* s) {
 }
 
 void main(void) {
-  uint8_t* kelvin_itcm = (uint8_t*)0x70000000L;
+  volatile uint8_t* kelvin_itcm = (uint8_t*)0x70000000L;
   for (int i = 0; i < kelvin_hello_world_cc_bin_len; ++i) {
-    kelvin_itcm[i] = kelvin_hello_world_cc_bin[i];
+      kelvin_itcm[i] = kelvin_hello_world_cc_bin[i];
   }
-  uint32_t* kelvin_reset_csr = (uint32_t*)0x70002000L;
+  volatile uint32_t* kelvin_reset_csr = (uint32_t*)0x70002000L;
   // Disable clock gate
   *kelvin_reset_csr = 1;
 
@@ -41,21 +59,29 @@ void main(void) {
   // Release reset
   *kelvin_reset_csr = 0;
 
-  uint32_t* kelvin_status_csr = (uint32_t*)0x70002008L;
-  while (true) {
-    uint32_t status = *kelvin_status_csr;
-    if ((status & 3) == 3) {
-      print_string("FAIL\n");
-      break;
-    } else if ((status & 1) == 1) {
-      print_string("PASS\n");
-      break;
-    }
+  // Spin a while to let Kelvin execute.
+  for (volatile int i = 0; i < 2; ++i) {
+      for (int i = 0; i < 100; i++) {
+          asm volatile ("nop");
+      }
   }
 
-  uint32_t* kelvin_csrs = (uint32_t*)0x70002100L;
+  volatile uint32_t* kelvin_status_csr = (uint32_t*)0x70002008L;
+  while (true) {
+    uint32_t status = *kelvin_status_csr;
+    if (status) break;
+  }
+
+  volatile uint32_t* kelvin_csrs = (uint32_t*)0x70002100L;
   for (int i = 0; i < 8; ++i) {
     print_uint32(*(kelvin_csrs + i));
+  }
+
+  uint32_t status = *kelvin_status_csr;
+  if ((status & 3) == 3) {
+    print_string("FAIL\n");
+  } else if ((status & 1) == 1) {
+    print_string("PASS\n");
   }
 
   *kelvin_reset_csr = 3;

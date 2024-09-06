@@ -36,6 +36,7 @@ class SCore(p: Parameters) extends Module {
     val ibus = new IBusIO(p)
     val dbus = new DBusIO(p)
     val ubus = new DBusIO(p)
+    val ebus = new DBusIO(p)
 
     val vldst = if (p.enableVector) { Some(Output(Bool())) } else { None }
     val vcore = if (p.enableVector) {
@@ -285,12 +286,22 @@ class SCore(p: Parameters) extends Module {
 
   // ---------------------------------------------------------------------------
   // Fetch Bus
-  io.ibus <> fetch.io.ibus
+  // Mux valid
+  io.ibus.valid := Mux(lsu.io.ibus.valid, lsu.io.ibus.valid, fetch.io.ibus.valid)
+  // Mux addr
+  io.ibus.addr := Mux(lsu.io.ibus.valid, lsu.io.ibus.addr, fetch.io.ibus.addr)
+  // Arbitrate ready
+  lsu.io.ibus.ready := Mux(lsu.io.ibus.valid, io.ibus.ready, false.B)
+  fetch.io.ibus.ready := Mux(lsu.io.ibus.valid, false.B, io.ibus.ready)
+  // Broadcast rdata
+  lsu.io.ibus.rdata := io.ibus.rdata
+  fetch.io.ibus.rdata := io.ibus.rdata
 
   // ---------------------------------------------------------------------------
   // Local Data Bus Port
   io.dbus <> lsu.io.dbus
   io.ubus <> lsu.io.ubus
+  io.ebus <> lsu.io.ebus
 
   if (p.enableVector) {
     io.vldst.get := lsu.io.vldst

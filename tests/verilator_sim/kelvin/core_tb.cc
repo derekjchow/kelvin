@@ -62,6 +62,9 @@ static void Core_run(const char* name, const char* bin, const int cycles,
   sc_signal<bool> io_dbus_valid;
   sc_signal<bool> io_dbus_ready;
   sc_signal<bool> io_dbus_write;
+  sc_signal<bool> io_ebus_valid;
+  sc_signal<bool> io_ebus_ready;
+  sc_signal<bool> io_ebus_write;
   sc_signal<bool> io_iflush_valid;
   sc_signal<bool> io_iflush_ready;
   sc_signal<bool> io_dflush_valid;
@@ -98,6 +101,12 @@ static void Core_run(const char* name, const char* bin, const int cycles,
   sc_signal<sc_bv<KP_lsuDataBits> > io_dbus_wdata;
   sc_signal<sc_bv<KP_lsuDataBits / 8> > io_dbus_wmask;
   sc_signal<sc_bv<KP_lsuDataBits> > io_dbus_rdata;
+  sc_signal<sc_bv<32> > io_ebus_addr;
+  sc_signal<sc_bv<32> > io_ebus_adrx;
+  sc_signal<sc_bv<KP_dbusSize> > io_ebus_size;
+  sc_signal<sc_bv<KP_lsuDataBits> > io_ebus_wdata;
+  sc_signal<sc_bv<KP_lsuDataBits / 8> > io_ebus_wmask;
+  sc_signal<sc_bv<KP_lsuDataBits> > io_ebus_rdata;
   sc_signal<sc_bv<5> > io_slog_addr;
   sc_signal<sc_bv<32> > io_slog_data;
   sc_signal<sc_bv<4> > io_debug_en;
@@ -207,6 +216,9 @@ static void Core_run(const char* name, const char* bin, const int cycles,
   core.io_dbus_valid(io_dbus_valid);
   core.io_dbus_ready(io_dbus_ready);
   core.io_dbus_write(io_dbus_write);
+  core.io_ebus_valid(io_ebus_valid);
+  core.io_ebus_ready(io_ebus_ready);
+  core.io_ebus_write(io_ebus_write);
   core.io_iflush_valid(io_iflush_valid);
   core.io_iflush_ready(io_iflush_ready);
   core.io_dflush_valid(io_dflush_valid);
@@ -243,6 +255,12 @@ static void Core_run(const char* name, const char* bin, const int cycles,
   core.io_dbus_wdata(io_dbus_wdata);
   core.io_dbus_wmask(io_dbus_wmask);
   core.io_dbus_rdata(io_dbus_rdata);
+  core.io_ebus_addr(io_ebus_addr);
+  core.io_ebus_adrx(io_ebus_adrx);
+  core.io_ebus_size(io_ebus_size);
+  core.io_ebus_wdata(io_ebus_wdata);
+  core.io_ebus_wmask(io_ebus_wmask);
+  core.io_ebus_rdata(io_ebus_rdata);
   core.io_slog_addr(io_slog_addr);
   core.io_slog_data(io_slog_data);
   core.io_debug_en(io_debug_en);

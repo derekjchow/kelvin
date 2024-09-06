@@ -54,8 +54,8 @@ class DBus2Axi(p: Parameters) extends Module {
   }
 
   io.dbus.ready := Mux(io.dbus.write,
-                       io.axi.write.addr.valid && io.axi.write.addr.ready,
-                       io.axi.read.data.valid && sraddrActive)
+                       io.axi.write.data.ready,
+                       io.axi.read.data.valid && io.axi.read.data.ready)
   io.dbus.rdata := sdata
 
   val saddr = Cat(io.dbus.addr(31, linebit), 0.U(linebit.W))

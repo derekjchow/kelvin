@@ -12,22 +12,24 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-core_mini_axi_slave: Verilated.VerilatedPeripheral @ sysbus <0x70000000, +0x10000>
-    maxWidth: 128
-    address: "127.0.0.1"
-    limitBuffer: 10000
+syntax = "proto3";
 
-core_mini_axi_master: Verilated.VerilatedPeripheral @ sysbus <0x80000000, +0x10000>
-    maxWidth: 128
-    address: "127.0.0.1"
-    limitBuffer: 10000
+package kelvin;
 
-rv_core: CPU.RiscV32 @ sysbus
-    hartId: 0
-    cpuType: "rv32im"
-    allowUnalignedAccesses: true
+service Kelvin {
+    rpc StartAgent (StartAgentRequest) returns (StartAgentResponse) {}
+}
 
-rv_memory: Memory.MappedMemory @ sysbus 0x20000000
-    size: 0x400000
+enum AgentType {
+    Slave = 0;
+    Master = 1;
+}
 
-uart0: Antmicro.Renode.Peripherals.UART.TrivialUart @ sysbus 0x54000000
+message StartAgentRequest {
+    AgentType type = 1;
+    int32 receiverPort = 2;
+    int32 senderPort = 3;
+    string address = 4;
+}
+
+message StartAgentResponse {}

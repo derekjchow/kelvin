@@ -62,13 +62,6 @@ def kelvin_repos():
     )
 
     http_archive(
-        name = "com_google_absl",
-        sha256 = "3ea49a7d97421b88a8c48a0de16c16048e17725c7ec0f1d3ea2683a2a75adc21",
-        strip_prefix = "abseil-cpp-20230125.0",
-        urls = ["https://github.com/abseil/abseil-cpp/archive/refs/tags/20230125.0.tar.gz"],
-    )
-
-    http_archive(
         name = "llvm_firtool",
         sha256 = "d22a894f2f8652b6c26e1d2a66551a7f015ce46e48f2bcdd785b01b9c8739277",
         urls = ["https://repo1.maven.org/maven2/org/chipsalliance/llvm-firtool/1.52.0/llvm-firtool-1.52.0.jar"],
@@ -88,6 +81,15 @@ def kelvin_repos():
         patch_args = ["-p1"],
     )
 
+    http_archive(
+        name = "com_github_grpc_grpc",
+        urls = [
+            "https://github.com/grpc/grpc/archive/v1.58.0.tar.gz",
+        ],
+        strip_prefix = "grpc-1.58.0",
+        sha256 = "ec64fdab22726d50fc056474dd29401d914cc616f53ab8f2fe4866772881d581"
+    )
+
 def renode_repos():
     http_archive(
         name = "renode",
@@ -96,7 +98,8 @@ def renode_repos():
         urls = ["https://github.com/renode/renode/releases/download/v1.15.2/renode_1.15.2_source.tar.xz"],
         build_file = "@kelvin_hw//third_party/renode:BUILD.bazel",
         patches = [
-            "@kelvin_hw//third_party/renode:core_axi_mini-renode.patch",
+            "@kelvin_hw//third_party/renode:0001-Tweaks-to-AXI.patch",
+            "@kelvin_hw//third_party/renode:0002-AXI-S-fixups.patch",
             "@kelvin_hw//third_party/renode:0003-Invert-AXI-reset-polarity.patch",
         ],
         patch_args = ["-p1"],

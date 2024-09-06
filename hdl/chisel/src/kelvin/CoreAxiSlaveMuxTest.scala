@@ -24,10 +24,10 @@ class CoreAxiSlaveMuxSpec extends AnyFreeSpec with ChiselScalatestTester {
   p.enableVector = false
 
   val memoryRegions = Seq(
-    new MemoryRegion(0x0000, 0x2000, false, p.axi2DataBits),
-    new MemoryRegion(0x2000, 0x2000, false, p.axi2DataBits),
+    new MemoryRegion(0x0000, 0x2000, MemoryRegionType.IMEM),
+    new MemoryRegion(0x2000, 0x2000, MemoryRegionType.Peripheral),
     // Hole from 0x4000-0x8000
-    new MemoryRegion(0x8000, 0x8000, false, p.axi2DataBits),
+    new MemoryRegion(0x8000, 0x8000, MemoryRegionType.DMEM),
   )
 
   "Initialization" in {

@@ -59,8 +59,8 @@ class ChAI(p: Parameters) extends RawModule {
 
   // TODO(atv): Compute that we don't have any overlaps in regions.
   val memoryRegions = Seq(
-    new kelvin.MemoryRegion(0, 4 * 1024 * 1024, true, 256), // SRAM
-    new kelvin.MemoryRegion(4 * 1024 * 1024, 4 * 1024 * 1024, false, 256) // UART
+    new kelvin.MemoryRegion(0, 4 * 1024 * 1024, kelvin.MemoryRegionType.DMEM), // SRAM
+    new kelvin.MemoryRegion(4 * 1024 * 1024, 4 * 1024 * 1024, kelvin.MemoryRegionType.Peripheral) // UART
   )
   val kelvin_p = kelvin.Parameters(memoryRegions)
   val rst_i = (!io.rst_ni.asBool).asAsyncReset

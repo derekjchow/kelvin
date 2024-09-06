@@ -42,8 +42,13 @@ class Core(p: Parameters, moduleName: String) extends Module with RequireSyncRes
     val fault = Output(Bool())
     val debug_req = Input(Bool())
 
+    // Bus between core and instruction memories.
     val ibus = new IBusIO(p)
+    // Bus between core and data memories.
     val dbus = new DBusIO(p)
+    // Bus between core and and external memories or peripherals.
+    val ebus = new DBusIO(p)
+
     val axi0 = if (p.enableVector) {
       Some(new AxiMasterIO(p.axi2AddrBits, p.axi2DataBits, p.axi2IdBits))
     } else { None }
@@ -63,6 +68,7 @@ class Core(p: Parameters, moduleName: String) extends Module with RequireSyncRes
   // Scalar Core outputs.
   io.csr    <> score.io.csr
   io.ibus   <> score.io.ibus
+  io.ebus   <> score.io.ebus
   io.halted := score.io.halted
   io.fault  := score.io.fault
   io.iflush <> score.io.iflush

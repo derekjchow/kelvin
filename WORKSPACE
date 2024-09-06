@@ -3,6 +3,11 @@ workspace(name="kelvin_hw")
 load("//rules:repos.bzl", "kelvin_repos")
 kelvin_repos()
 
+load("@com_github_grpc_grpc//bazel:grpc_deps.bzl", "grpc_deps")
+grpc_deps()
+load("@com_github_grpc_grpc//bazel:grpc_extra_deps.bzl", "grpc_extra_deps")
+grpc_extra_deps()
+
 # Scala setup
 load("@io_bazel_rules_scala//:scala_config.bzl", "scala_config")
 scala_config(scala_version = "2.13.11")
@@ -24,3 +29,4 @@ kelvin_deps()
 
 load("//rules:repos.bzl", "renode_repos")
 renode_repos()
+

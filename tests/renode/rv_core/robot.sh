@@ -1,3 +1,5 @@
+#!/bin/bash
+#
 # Copyright 2024 Google LLC
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,18 +14,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-$name?="kelvin"
-using sysbus
+set -e
 
-mach create $name
+# Export our own PATH so renode-test finds the fake stty binary.
+# Real stty causes hangs due to the process being detached.
+export PATH=tests/renode:$PATH
 
-EnsureTypeIsLoaded "Antmicro.Renode.Peripherals.CPU.RiscV32"
-EnsureTypeIsLoaded "Antmicro.Renode.Peripherals.Verilated.VerilatedPeripheral"
-EnsureTypeIsLoaded "Antmicro.Renode.Peripherals.Verilated.VerilatedCPU"
+# Force using Python-interpreted protobuf for compatbility.
+export PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION=python
 
-$repl_file ?= @tests/renode/kelvin-verilator.repl
-machine LoadPlatformDescription $repl_file
-
-showAnalyzer "uart0-analyzer" sysbus.uart0 Antmicro.Renode.Analyzers.LoggingUartAnalyzer
-
-rv_core IsHalted true
+`which renode-test` tests/renode/rv_core/rv_core.robot
