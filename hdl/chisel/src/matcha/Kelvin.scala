@@ -148,13 +148,7 @@ object EmitKelvin extends App {
   var moduleName = "Kelvin"
   var chiselArgs = List[String]()
   var targetDir: Option[String] = None
-  var nextIsTargetDir = false
   for (arg <- args) {
-    if (nextIsTargetDir) {
-      nextIsTargetDir = false
-      chiselArgs = chiselArgs :+ arg
-      targetDir = Some(arg)
-    }
     if (arg.startsWith("--enableFetchL0")) {
       val argval = arg.split("=")(1).toBoolean
       p.enableFetchL0 = argval
@@ -174,18 +168,34 @@ object EmitKelvin extends App {
       p.lsuDataBits = argval
       core_p.lsuDataBits = argval
     } else if (arg.startsWith("--target-dir")) {
-      nextIsTargetDir = true
-      chiselArgs = chiselArgs :+ arg
+      targetDir = Some(arg.split("=")(1))
     } else {
       chiselArgs = chiselArgs :+ arg
     }
   }
-  ChiselStage.emitSystemVerilogFile(
-    new Kelvin(p, moduleName), chiselArgs.toArray)
+  // The core module must be created in the ChiselStage context. Use lazy here
+  // so it's created in ChiselStage, but referencable afterwards.
+  lazy val core = new Kelvin(p, moduleName)
+  val systemVerilogSource = ChiselStage.emitSystemVerilog(
+    core, chiselArgs.toArray)
+  // CIRCT adds a little extra data to the sv file at the end. Remove it as we
+  // don't want it (it prevents the sv from being verilated).
+  val resourcesSeparator =
+      "// ----- 8< ----- FILE \"firrtl_black_box_resource_files.f\" ----- 8< -----"
+  val strippedVerilogSource = systemVerilogSource.split(resourcesSeparator)(0)
+
+
   val header_str = kelvin.EmitParametersHeader(core_p)
   targetDir match {
     case Some(targetDir) => {
-      var ret = Files.write(Paths.get(targetDir + "/V" + moduleName + "_parameters.h"), header_str.getBytes(StandardCharsets.UTF_8), StandardOpenOption.CREATE)
+      var headerRet = Files.write(
+          Paths.get(targetDir + "/V" + moduleName + "_parameters.h"),
+          header_str.getBytes(StandardCharsets.UTF_8),
+          StandardOpenOption.CREATE)
+      var svRet = Files.write(
+          Paths.get(targetDir + "/" + core.name + ".sv"),
+          strippedVerilogSource.getBytes(StandardCharsets.UTF_8),
+          StandardOpenOption.CREATE)
       ()
     }
     case None => ()

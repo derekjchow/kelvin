@@ -43,7 +43,6 @@ class CoreAxi(p: Parameters, coreModuleName: String) extends RawModule {
   })
   dontTouch(io)
 
-
   withClockAndReset(io.aclk, io.aresetn) {
     val itcmSizeBytes = 8 * 1024 // 8 kB
     val itcmSubEntryWidth = 8
@@ -52,7 +51,7 @@ class CoreAxi(p: Parameters, coreModuleName: String) extends RawModule {
     val itcmSubEntries = itcmWidth / itcmSubEntryWidth
 
     //TODO(stefanhall@): add support for HexMemoryFile
-    val itcm = Module(new TCM(p, itcmSizeBytes, itcmSubEntryWidth))
+    val itcm = Module(new TCM128(itcmSizeBytes, itcmSubEntryWidth))
 
     dontTouch(itcm.io)
     val itcmArbiter =
@@ -65,7 +64,7 @@ class CoreAxi(p: Parameters, coreModuleName: String) extends RawModule {
     val dtcmEntries = dtcmSizeBytes / (dtcmWidth / 8)
     val dtcmSubEntryWidth = 8
     val dtcmSubEntries = dtcmWidth / dtcmSubEntryWidth
-    val dtcm = Module(new TCM(p, dtcmSizeBytes, dtcmSubEntryWidth))
+    val dtcm = Module(new TCM128(dtcmSizeBytes, dtcmSubEntryWidth))
 
     val dtcmArbiter =
       Module(new Arbiter(

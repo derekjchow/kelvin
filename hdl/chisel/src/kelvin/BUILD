@@ -187,6 +187,17 @@ chisel_library(
 )
 
 chisel_library(
+    name = "srams",
+    srcs = [
+        "Sram_12ffcp_128x128.scala",
+        "SramNx128.scala",
+    ],
+    resources = [
+        "//hdl/verilog:Sram_12ffcp_128x128.v",
+    ],
+)
+
+chisel_library(
     name = "kelvin",
     srcs = [
         "AxiSlave2ChiselSRAM.scala",
@@ -195,12 +206,12 @@ chisel_library(
         "CoreAxiCSR.scala",
         "CoreAxiSlaveMux.scala",
         "TCM.scala",
-        "Sram_12ffcp_128x128.scala",
     ],
     deps = [
         ":kelvin_base",
         ":kelvin_scalar",
         ":kelvin_vector",
+        ":srams",
         "//hdl/chisel/src/bus",
         "//hdl/chisel/src/common",
         "//hdl/chisel/src/common:instruction_buffer",
@@ -277,7 +288,6 @@ chisel_cc_library(
     module_name = "CoreMiniAxi",
     systemc = False,
     verilog_deps = [
-        "//hdl/verilog:Sram_12ffcp_128x128",
         "//hdl/verilog:clock_gate",
     ],
     verilog_file_path = "CoreMiniAxi.sv",

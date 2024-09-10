@@ -107,14 +107,8 @@ object EmitCore extends App {
   var moduleName = "Core"
   var chiselArgs = List[String]()
   var targetDir: Option[String] = None
-  var nextIsTargetDir = false
   var useAxi = false
   for (arg <- args) {
-    if (nextIsTargetDir) {
-      nextIsTargetDir = false
-      chiselArgs = chiselArgs :+ arg
-      targetDir = Some(arg)
-    }
     if (arg.startsWith("--enableFetchL0")) {
       p.enableFetchL0 = arg.split("=")(1).toBoolean
     } else if (arg.startsWith("--moduleName")) {
@@ -128,27 +122,42 @@ object EmitCore extends App {
     } else if (arg.startsWith("--useAxi")) {
       useAxi = true
     } else if (arg.startsWith("--target-dir")) {
-      nextIsTargetDir = true
-      chiselArgs = chiselArgs :+ arg
+      targetDir = Some(arg.split("=")(1))
     } else {
       chiselArgs = chiselArgs :+ arg
     }
   }
-  ChiselStage.emitSystemVerilogFile(
-    // We create the core module directly here instead of assigning to a val
-    // outside, otherwise we run into errors about the wrong context.
-    if (useAxi) { new CoreAxi(p, moduleName) } else { new Core(p, moduleName) },
-    chiselArgs.toArray
-  )
+
+  // The core module must be created in the ChiselStage context. Use lazy here
+  // so it's created in ChiselStage, but referencable afterwards.
+  lazy val core = if (useAxi) {
+    new CoreAxi(p, moduleName)
+  } else {
+    new Core(p, moduleName)
+  }
+
+  val systemVerilogSource = ChiselStage.emitSystemVerilog(
+    core, chiselArgs.toArray)
+  // CIRCT adds a little extra data to the sv file at the end. Remove it as we
+  // don't want it (it prevents the sv from being verilated).
+  val resourcesSeparator =
+      "// ----- 8< ----- FILE \"firrtl_black_box_resource_files.f\" ----- 8< -----"
+  val strippedVerilogSource = systemVerilogSource.split(resourcesSeparator)(0)
+
   val header_str = EmitParametersHeader(p)
-  val axiModuleSuffix = if (useAxi) { "Axi" } else { "" }
+
+
   targetDir match {
     case Some(targetDir) => {
-      var ret = Files.write(
-        Paths.get(targetDir +
-                  "/V" + moduleName + axiModuleSuffix + "_parameters.h"
-                 ),
-        header_str.getBytes(StandardCharsets.UTF_8), StandardOpenOption.CREATE)
+      var headerRet = Files.write(
+          Paths.get(targetDir + "/V" + core.name + "_parameters.h"),
+          header_str.getBytes(StandardCharsets.UTF_8),
+          StandardOpenOption.CREATE)
+      var svRet = Files.write(
+          Paths.get(targetDir + "/" + core.name + ".sv"),
+          strippedVerilogSource.getBytes(StandardCharsets.UTF_8),
+          StandardOpenOption.CREATE)
+
       ()
     }
     case None => ()

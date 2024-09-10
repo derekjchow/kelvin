@@ -34,6 +34,8 @@ def chisel_library(
         srcs = [],
         deps = [],
         exports = [],
+        resources = [],
+        resource_strip_prefix = "",
         visibility = None):
     scala_library(
         name = name,
@@ -42,6 +44,8 @@ def chisel_library(
             "@kelvin_hw//lib:chisel_lib",
             "@org_chipsalliance_chisel_plugin//jar",
         ] + deps,
+        resources = resources,
+        resource_strip_prefix = resource_strip_prefix,
         exports = exports,
         scalacopts = SCALA_COPTS,
         visibility = visibility,
@@ -113,7 +117,7 @@ def chisel_cc_library(
         name = name + "_emit_verilog",
         srcs = [],
         outs = [verilog_file_path] + extra_outs,
-        cmd = "PATH=$$(dirname $(execpath @kelvin_hw//third_party/llvm-firtool:firtool)):$$PATH ./$(location " + gen_binary_name + ") --target-dir $(RULEDIR) " + gen_flags,
+        cmd = "PATH=$$(dirname $(execpath @kelvin_hw//third_party/llvm-firtool:firtool)):$$PATH ./$(location " + gen_binary_name + ") --target-dir=$(RULEDIR) " + gen_flags,
         tools = [
             ":{}".format(gen_binary_name),
             "@kelvin_hw//third_party/llvm-firtool:firtool",

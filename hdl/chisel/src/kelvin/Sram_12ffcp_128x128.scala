@@ -17,7 +17,7 @@ package kelvin
 import chisel3._
 import chisel3.util._
 
-class Sram_12ffcp_128x128 extends BlackBox {
+class Sram_12ffcp_128x128 extends BlackBox with HasBlackBoxResource {
   val io = IO(new Bundle {
     val clock    = Input(Clock())
     val enable   = Input(Bool())
@@ -27,4 +27,5 @@ class Sram_12ffcp_128x128 extends BlackBox {
     val wmask    = Input(UInt(16.W))
     val rdata    = Output(UInt(128.W))
   })
+  addResource("hdl/verilog/Sram_12ffcp_128x128.v")
 }
