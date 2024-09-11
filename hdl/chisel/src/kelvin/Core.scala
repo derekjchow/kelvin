@@ -19,6 +19,8 @@ import chisel3.util._
 
 import bus.AxiMasterIO
 import common._
+import java.io.{File, FileOutputStream}
+import java.util.zip._
 import java.nio.file.{Paths, Files, StandardOpenOption}
 import java.nio.charset.{StandardCharsets}
 import _root_.circt.stage.ChiselStage
@@ -143,12 +145,33 @@ object EmitCore extends App {
   val resourcesSeparator =
       "// ----- 8< ----- FILE \"firrtl_black_box_resource_files.f\" ----- 8< -----"
   val strippedVerilogSource = systemVerilogSource.split(resourcesSeparator)(0)
+  val coreName = core.name
 
   val header_str = EmitParametersHeader(p)
 
-
   targetDir match {
     case Some(targetDir) => {
+      {
+        lazy val core2 = if (useAxi) {
+          new CoreAxi(p, moduleName)
+        } else {
+          new Core(p, moduleName)
+        }
+
+        ChiselStage.emitSystemVerilogFile(
+            core2, chiselArgs.toArray ++ Array(
+                "--split-verilog", "--target-dir", targetDir))
+        val files = (new File(targetDir)).listFiles
+        val zip = new ZipOutputStream(new FileOutputStream(
+            targetDir + "/" + coreName + ".zip"))
+        files.foreach { name =>
+          zip.putNextEntry(new ZipEntry(name.getName()))
+          Files.copy(Paths.get(name.getPath), zip)
+          zip.closeEntry()
+        }
+        zip.close()
+      }
+
       var headerRet = Files.write(
           Paths.get(targetDir + "/V" + core.name + "_parameters.h"),
           header_str.getBytes(StandardCharsets.UTF_8),

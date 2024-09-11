@@ -276,6 +276,7 @@ chisel_cc_library(
     emit_class = "kelvin.EmitCore",
     extra_outs = [
         "VCoreMiniAxi_parameters.h",
+        "CoreMiniAxi.zip",
     ],
     gen_flags = [
         "--enableFetchL0=False",
