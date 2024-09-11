@@ -43,6 +43,9 @@ object AluOp extends ChiselEnum {
   val MINU = Value
   val MAX  = Value
   val MAXU = Value
+  val SEXTB = Value
+  val SEXTH = Value
+  val ZEXTH = Value
 }
 
 class AluCmd extends Bundle {
@@ -85,28 +88,42 @@ class Alu(p: Parameters) extends Module {
   val r2IsGreater = rs1.asSInt < rs2.asSInt
   val r2IsGreaterU = rs1 < rs2
 
+  val rsWidth  = 32
+  val rsWidthH = 32/2
+
+  def SignExtend(x: UInt, length: Int): UInt = {
+    val ext = Wire(SInt(length.W))
+    ext := x.asSInt
+    ext.asUInt
+  }
+
   io.rd.bits.data  := MuxLookup(op, 0.U)(Seq(
-      AluOp.ADD  -> (rs1 + rs2),
-      AluOp.SUB  -> (rs1 - rs2),
-      AluOp.SLT  -> (r2IsGreater),
-      AluOp.SLTU -> (r2IsGreaterU),
-      AluOp.XOR  -> (rs1 ^ rs2),
-      AluOp.OR   -> (rs1 | rs2),
-      AluOp.AND  -> (rs1 & rs2),
-      AluOp.SLL  -> (rs1 << shamt),
-      AluOp.SRL  -> (rs1 >> shamt),
-      AluOp.SRA  -> (rs1.asSInt >> shamt).asUInt,
-      AluOp.LUI  -> rs2,
-      AluOp.CLZ  -> Clz(rs1),
-      AluOp.CTZ  -> Ctz(rs1),
-      AluOp.PCNT -> PopCount(rs1),
-      AluOp.MIN  -> Mux(r2IsGreater,  rs1, rs2),
-      AluOp.MAX  -> Mux(r2IsGreater,  rs2, rs1),
-      AluOp.MINU -> Mux(r2IsGreaterU, rs1, rs2),
-      AluOp.MAXU -> Mux(r2IsGreaterU, rs2, rs1)
+    AluOp.ADD  -> (rs1 + rs2),
+    AluOp.SUB  -> (rs1 - rs2),
+    AluOp.SLT  -> (r2IsGreater),
+    AluOp.SLTU -> (r2IsGreaterU),
+    AluOp.XOR  -> (rs1 ^ rs2),
+    AluOp.OR   -> (rs1 | rs2),
+    AluOp.AND  -> (rs1 & rs2),
+    AluOp.SLL  -> (rs1 << shamt),
+    AluOp.SRL  -> (rs1 >> shamt),
+    AluOp.SRA  -> (rs1.asSInt >> shamt).asUInt,
+    AluOp.LUI  -> rs2,
+    AluOp.CLZ  -> Clz(rs1),
+    AluOp.CTZ  -> Ctz(rs1),
+    AluOp.PCNT -> PopCount(rs1),
+    AluOp.MIN  -> Mux(r2IsGreater,  rs1, rs2),
+    AluOp.MAX  -> Mux(r2IsGreater,  rs2, rs1),
+    AluOp.MINU -> Mux(r2IsGreaterU, rs1, rs2),
+    AluOp.MAXU -> Mux(r2IsGreaterU, rs2, rs1),
+    AluOp.SEXTB -> SignExtend(rs1(7, 0), rsWidth),
+    AluOp.SEXTH -> SignExtend(rs1(rsWidthH-1,0), rsWidth),
+    AluOp.ZEXTH -> rs1(rsWidthH - 1, 0)
   ))
 
+
   // Assertions.
+  val rs1Only = op.isOneOf(AluOp.CLZ, AluOp.CTZ, AluOp.PCNT, AluOp.ZEXTH, AluOp.SEXTH, AluOp.SEXTB)
   assert(!(valid && !io.rs1.valid && !op.isOneOf(AluOp.LUI)))
-  assert(!(valid && !io.rs2.valid))
+  assert(!(valid && !io.rs2.valid && !rs1Only))
 }

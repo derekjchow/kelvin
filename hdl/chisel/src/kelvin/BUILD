@@ -79,6 +79,7 @@ chisel_test(
     name = "kelvin_scalar_tests",
     srcs = [
         "scalar/MluTest.scala",
+        "scalar/AluTest.scala"
     ],
     deps = [
         ":kelvin_base",

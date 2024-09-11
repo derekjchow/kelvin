@@ -121,6 +121,9 @@ class DecodedInstruction extends Bundle {
   val minu = Bool()
   val max  = Bool()
   val maxu = Bool()
+  val sextb = Bool()
+  val sexth = Bool()
+  val zexth = Bool()
 
   // Vector instructions.
   val getvl = Bool()
@@ -154,7 +157,7 @@ class DecodedInstruction extends Bundle {
   def isAluReg(): Bool = {
       add || sub || slt || sltu || xor || or || and || sll || srl || sra
   }
-  def isAlu1Bit(): Bool = { clz || ctz || pcnt }
+  def isAlu1Bit(): Bool = { clz || ctz || pcnt || sextb || sexth || zexth }
   def isAlu2Bit(): Bool = { min || minu || max || maxu }
   def isCsr(): Bool = { csrrw || csrrs || csrrc }
   def isCondBr(): Bool = { beq || bne || blt || bge || bltu || bgeu }
@@ -304,7 +307,10 @@ class Decode(p: Parameters, pipeline: Int) extends Module {
     d.min                        -> MakeValid(true.B, AluOp.MIN),
     d.minu                       -> MakeValid(true.B, AluOp.MINU),
     d.max                        -> MakeValid(true.B, AluOp.MAX),
-    d.maxu                       -> MakeValid(true.B, AluOp.MAXU)
+    d.maxu                       -> MakeValid(true.B, AluOp.MAXU),
+    d.sextb                      -> MakeValid(true.B, AluOp.SEXTB),
+    d.sexth                      -> MakeValid(true.B, AluOp.SEXTH),
+    d.zexth                      -> MakeValid(true.B, AluOp.ZEXTH)
   ))
   io.alu.valid := decodeEn && alu.valid
   io.alu.bits.addr := rdAddr
@@ -560,13 +566,16 @@ object DecodeInstruction {
     d.remu    := DecodeBits(op, "0000_001_xxxxx_xxxxx_111_xxxxx_0110011")
 
     // RV32B
-    d.clz  := DecodeBits(op, "0110000_00000_xxxxx_001_xxxxx_0010011")
-    d.ctz  := DecodeBits(op, "0110000_00001_xxxxx_001_xxxxx_0010011")
-    d.pcnt := DecodeBits(op, "0110000_00010_xxxxx_001_xxxxx_0010011")
-    d.min  := DecodeBits(op, "0000101_xxxxx_xxxxx_100_xxxxx_0110011")
-    d.minu := DecodeBits(op, "0000101_xxxxx_xxxxx_101_xxxxx_0110011")
-    d.max  := DecodeBits(op, "0000101_xxxxx_xxxxx_110_xxxxx_0110011")
-    d.maxu := DecodeBits(op, "0000101_xxxxx_xxxxx_111_xxxxx_0110011")
+    d.clz   := DecodeBits(op, "0110000_00000_xxxxx_001_xxxxx_0010011")
+    d.ctz   := DecodeBits(op, "0110000_00001_xxxxx_001_xxxxx_0010011")
+    d.pcnt  := DecodeBits(op, "0110000_00010_xxxxx_001_xxxxx_0010011")
+    d.min   := DecodeBits(op, "0000101_xxxxx_xxxxx_100_xxxxx_0110011")
+    d.minu  := DecodeBits(op, "0000101_xxxxx_xxxxx_101_xxxxx_0110011")
+    d.max   := DecodeBits(op, "0000101_xxxxx_xxxxx_110_xxxxx_0110011")
+    d.maxu  := DecodeBits(op, "0000101_xxxxx_xxxxx_111_xxxxx_0110011")
+    d.sextb := DecodeBits(op, "0110000_00100_xxxxx_001_xxxxx_0010011")
+    d.sexth := DecodeBits(op, "0110000_00101_xxxxx_001_xxxxx_0010011")
+    d.zexth := DecodeBits(op, "0000100_00000_xxxxx_100_xxxxx_0110011")
 
     // Decode scalar log.
     val slog = DecodeBits(op, "01111_00_00000_xxxxx_0xx_00000_11101_11")
@@ -660,6 +669,7 @@ object DecodeInstruction {
                       d.mul, d.mulh, d.mulhsu, d.mulhu, d.mulhr, d.mulhsur, d.mulhur, d.dmulh, d.dmulhr,
                       d.div, d.divu, d.rem, d.remu,
                       d.clz, d.ctz, d.pcnt, d.min, d.minu, d.max, d.maxu,
+                      d.sextb, d.sexth, d.zexth,
                       d.viop, d.vld, d.vst,
                       d.getvl, d.getmaxvl,
                       d.ebreak, d.ecall, d.eexit, d.eyield, d.ectxsw, d.wfi,
