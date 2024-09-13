@@ -138,6 +138,7 @@ class DecodedInstruction extends Bundle {
   val mpause = Bool()
   val mret   = Bool()
   val undef  = Bool()
+  val wfi    = Bool()
 
   // Fences.
   val fencei = Bool()
@@ -361,6 +362,7 @@ class Decode(p: Parameters, pipeline: Int) extends Module {
     d.fencei         -> MakeValid(true.B, LsuOp.FENCEI),
     d.flushat        -> MakeValid(true.B, LsuOp.FLUSHAT),
     d.flushall       -> MakeValid(true.B, LsuOp.FLUSHALL),
+    d.wfi            -> MakeValid(true.B, LsuOp.FENCEI),
     (d.vld || d.vst) -> MakeValid(true.B, LsuOp.VLDST),
   ))
   io.lsu.valid := decodeEn && lsu.valid
@@ -607,6 +609,7 @@ object DecodeInstruction {
     d.ectxsw := DecodeBits(op, "000001100000_00000_000_00000_11100_11")
     d.mpause := DecodeBits(op, "000010000000_00000_000_00000_11100_11")
     d.mret   := DecodeBits(op, "001100000010_00000_000_00000_11100_11")
+    d.wfi    := DecodeBits(op, "000100000101_00000_000_00000_11100_11")
 
     // Fences.
     d.fencei   := DecodeBits(op, "0000_0000_0000_00000_001_00000_0001111")
@@ -634,6 +637,7 @@ object DecodeInstruction {
       d.ectxsw := false.B
       d.mpause := false.B
       d.mret   := false.B
+      d.wfi    := false.B
 
       d.fence    := false.B
       d.fencei   := false.B
@@ -658,7 +662,7 @@ object DecodeInstruction {
                       d.clz, d.ctz, d.pcnt, d.min, d.minu, d.max, d.maxu,
                       d.viop, d.vld, d.vst,
                       d.getvl, d.getmaxvl,
-                      d.ebreak, d.ecall, d.eexit, d.eyield, d.ectxsw,
+                      d.ebreak, d.ecall, d.eexit, d.eyield, d.ectxsw, d.wfi,
                       d.mpause, d.mret, d.fencei, d.flushat, d.flushall, d.slog)
 
     d.undef := !WiredOR(decoded)
