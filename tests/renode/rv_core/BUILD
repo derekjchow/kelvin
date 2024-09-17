@@ -32,8 +32,6 @@ genrule(
     """,
     executable = False,
     local = True,
-    # TODO(atv): Remove manual when CI can build this.
-    tags = ["manual"],
 )
 
 sh_test(
@@ -53,6 +51,4 @@ sh_test(
         "//tests/renode/rv_core:rv_core.robot",
     ],
     local = True,
-    # TODO(atv): Remove manual when CI can execute this.
-    tags = ["manual"],
 )
