@@ -97,6 +97,7 @@ def renode_repos():
         build_file = "@kelvin_hw//third_party/renode:BUILD.bazel",
         patches = [
             "@kelvin_hw//third_party/renode:core_axi_mini-renode.patch",
+            "@kelvin_hw//third_party/renode:0003-Invert-AXI-reset-polarity.patch",
         ],
         patch_args = ["-p1"],
     )
