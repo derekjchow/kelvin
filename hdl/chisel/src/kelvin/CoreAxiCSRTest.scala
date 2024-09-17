@@ -17,7 +17,13 @@ package kelvin
 import chisel3._
 import chisel3.util._
 import chiseltest._
+import chiseltest.experimental.expose
 import org.scalatest.freespec.AnyFreeSpec
+
+class CoreAxiCSRWrapper(p: Parameters) extends CoreAxiCSR(p) {
+  val testResetReg = expose(resetReg)
+  val testPcStartReg = expose(pcStartReg)
+}
 
 class CoreAxiCSRSpec extends AnyFreeSpec with ChiselScalatestTester {
   var p = new Parameters
@@ -59,7 +65,11 @@ class CoreAxiCSRSpec extends AnyFreeSpec with ChiselScalatestTester {
   }
 
   "Write" in {
-    test(new CoreAxiCSR(p)) { dut =>
+    test(new CoreAxiCSRWrapper(p)) { dut =>
+      // Check initial values.
+      assertResult(3) { dut.testResetReg.peekInt() }
+      assertResult(0) { dut.testPcStartReg.peekInt() }
+
       // Configure write address
       dut.io.axi.write.addr.valid.poke(true.B)
       dut.io.axi.write.addr.bits.addr.poke(0x4)
@@ -86,6 +96,10 @@ class CoreAxiCSRSpec extends AnyFreeSpec with ChiselScalatestTester {
       dut.clock.step()
       dut.io.axi.write.resp.ready.poke(false.B)
       assertResult(1) { dut.io.axi.write.addr.ready.peekInt() }
+
+      // Check that only pcStartReg changed.
+      assertResult(3) { dut.testResetReg.peekInt() }
+      assertResult(0x20000000) { dut.testPcStartReg.peekInt() }
     }
   }
 }

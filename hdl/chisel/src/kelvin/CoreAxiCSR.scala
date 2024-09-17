@@ -120,6 +120,6 @@ class CoreAxiCSR(p: Parameters) extends Module {
   io.axi.write.resp.bits.id := Mux(doWrite, writeAddr.bits.id, 0.U.asTypeOf(io.axi.write.resp.bits.id))
 
   // TODO(atv): What bits are allowed to change in these? Add a mask or something.
-  resetReg := Mux(doWrite, writeData.bits.data(31,0), resetReg)
-  pcStartReg := Mux(doWrite, writeData.bits.data(31,0), pcStartReg)
+  resetReg := Mux(doWrite && writeAddr.bits.addr === 0x0.U, writeData.bits.data(31,0), resetReg)
+  pcStartReg := Mux(doWrite && writeAddr.bits.addr === 0x4.U, writeData.bits.data(31,0), pcStartReg)
 }
