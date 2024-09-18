@@ -42,3 +42,6 @@ Memory accesses to Kelvin are defined as follows:
 |  ITCM  | 0x0000 -  0x1FFF |   8kB  |  4 bytes  | ITCM storage for code executed by Kelvin.     |
 |  CSR   | 0x2000 -   TBD   |   TBD  |  4 bytes  | CSR interface used to query/control Kelvin.   |
 |  DTCM  | 0x8000 - 0x1FFFF |  32kB  |  1 byte   | DTCM storage for data used by Kelvin.         |
+
+### Reset Considerations
+Kelvin uses a synchronous reset strategy -- to ensure proper reset behavior, ensure that the clock runs for a cycle with reset active, before enabling either the internal clock gate (via CSR) or gating externally.
