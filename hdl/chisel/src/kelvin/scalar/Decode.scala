@@ -94,6 +94,9 @@ class DecodedInstruction extends Bundle {
   val xor   = Bool()
   val or    = Bool()
   val and   = Bool()
+  val xnor  = Bool()
+  val orn   = Bool()
+  val andn  = Bool()
   val sll   = Bool()
   val srl   = Bool()
   val sra   = Bool()
@@ -155,7 +158,7 @@ class DecodedInstruction extends Bundle {
       addi || slti || sltiu || xori || ori || andi || slli || srli || srai
   }
   def isAluReg(): Bool = {
-      add || sub || slt || sltu || xor || or || and || sll || srl || sra
+      add || sub || slt || sltu || xor || or || and || xnor || orn || andn || sll || srl || sra
   }
   def isAlu1Bit(): Bool = { clz || ctz || pcnt || sextb || sexth || zexth }
   def isAlu2Bit(): Bool = { min || minu || max || maxu }
@@ -299,6 +302,9 @@ class Decode(p: Parameters, pipeline: Int) extends Module {
     (d.xori || d.xor)            -> MakeValid(true.B, AluOp.XOR),
     (d.ori || d.or)              -> MakeValid(true.B, AluOp.OR),
     (d.andi || d.and)            -> MakeValid(true.B, AluOp.AND),
+    d.xnor                       -> MakeValid(true.B, AluOp.XNOR),
+    d.orn                        -> MakeValid(true.B, AluOp.ORN),
+    d.andn                       -> MakeValid(true.B, AluOp.ANDN),
     (d.slli || d.sll)            -> MakeValid(true.B, AluOp.SLL),
     (d.srli || d.srl)            -> MakeValid(true.B, AluOp.SRL),
     (d.srai || d.sra)            -> MakeValid(true.B, AluOp.SRA),
@@ -552,6 +558,9 @@ object DecodeInstruction {
     d.sll   := DecodeBits(op, "0000000_xxxxx_xxxxx_001_xxxxx_0110011")
     d.srl   := DecodeBits(op, "0000000_xxxxx_xxxxx_101_xxxxx_0110011")
     d.sra   := DecodeBits(op, "0100000_xxxxx_xxxxx_101_xxxxx_0110011")
+    d.xnor  := DecodeBits(op, "0100000_xxxxx_xxxxx_100_xxxxx_0110011")
+    d.orn   := DecodeBits(op, "0100000_xxxxx_xxxxx_110_xxxxx_0110011")
+    d.andn  := DecodeBits(op, "0100000_xxxxx_xxxxx_111_xxxxx_0110011")
 
     // RV32M
     d.mul     := DecodeBits(op, "0000_001_xxxxx_xxxxx_000_xxxxx_0110011")
@@ -667,7 +676,7 @@ object DecodeInstruction {
                       d.lb, d.lh, d.lw, d.lbu, d.lhu,
                       d.sb, d.sh, d.sw, d.fence,
                       d.addi, d.slti, d.sltiu, d.xori, d.ori, d.andi,
-                      d.add, d.sub, d.slt, d.sltu, d.xor, d.or, d.and,
+                      d.add, d.sub, d.slt, d.sltu, d.xor, d.or, d.and, d.xnor, d.orn, d.andn,
                       d.slli, d.srli, d.srai, d.sll, d.srl, d.sra,
                       d.mul, d.mulh, d.mulhsu, d.mulhu, d.mulhr, d.mulhsur, d.mulhur, d.dmulh, d.dmulhr,
                       d.div, d.divu, d.rem, d.remu,

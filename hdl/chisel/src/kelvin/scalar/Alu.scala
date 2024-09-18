@@ -32,6 +32,9 @@ object AluOp extends ChiselEnum {
   val XOR  = Value
   val OR   = Value
   val AND  = Value
+  val XNOR = Value
+  val ORN  = Value
+  val ANDN = Value
   val SLL  = Value
   val SRL  = Value
   val SRA  = Value
@@ -105,6 +108,9 @@ class Alu(p: Parameters) extends Module {
     AluOp.XOR  -> (rs1 ^ rs2),
     AluOp.OR   -> (rs1 | rs2),
     AluOp.AND  -> (rs1 & rs2),
+    AluOp.XNOR -> ~(rs1 ^ rs2),
+    AluOp.ORN  -> ~(rs1 | rs2),
+    AluOp.ANDN -> ~(rs1 & rs2),
     AluOp.SLL  -> (rs1 << shamt),
     AluOp.SRL  -> (rs1 >> shamt),
     AluOp.SRA  -> (rs1.asSInt >> shamt).asUInt,
