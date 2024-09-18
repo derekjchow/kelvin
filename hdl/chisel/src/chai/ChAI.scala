@@ -18,6 +18,8 @@ import chisel3._
 import chisel3.util._
 
 import bus._
+import java.nio.file.{Paths, Files, StandardOpenOption}
+import java.nio.charset.{StandardCharsets}
 import _root_.circt.stage.ChiselStage
 
 case class Parameters() {
@@ -118,5 +120,33 @@ class ChAI(p: Parameters) extends RawModule {
 
 object EmitChAI extends App {
   val p = new Parameters()
-  ChiselStage.emitSystemVerilogFile(new ChAI(p), args)
+  var chiselArgs = List[String]()
+  var targetDir: Option[String] = None
+  for (arg <- args) {
+    if (arg.startsWith("--target-dir")) {
+      targetDir = Some(arg.split("=")(1))
+    } else {
+      chiselArgs = chiselArgs :+ arg
+    }
+  }
+
+  lazy val core = new ChAI(p)
+  val systemVerilogSource = ChiselStage.emitSystemVerilog(
+    core, chiselArgs.toArray)
+  // CIRCT adds a little extra data to the sv file at the end. Remove it as we
+  // don't want it (it prevents the sv from being verilated).
+  val resourcesSeparator =
+      "// ----- 8< ----- FILE \"firrtl_black_box_resource_files.f\" ----- 8< -----"
+  val strippedVerilogSource = systemVerilogSource.split(resourcesSeparator)(0)
+
+  targetDir match {
+    case Some(targetDir) => {
+      var svRet = Files.write(
+          Paths.get(targetDir + "/" + core.name + ".sv"),
+          strippedVerilogSource.getBytes(StandardCharsets.UTF_8),
+          StandardOpenOption.CREATE)
+      ()
+    }
+    case None => ()
+  }
 }

@@ -37,7 +37,6 @@ chisel_cc_library(
     emit_class = "chai.EmitChAI",
     module_name = "ChAI",
     verilog_deps = [
-        "//hdl/verilog:clock_gate",
         "//hdl/verilog:sram_1rw_256x256",
         "//hdl/verilog:sram_1rw_256x288",
         "//hdl/verilog:tlul_adapter_sram",

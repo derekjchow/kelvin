@@ -31,7 +31,7 @@ verilog_library(
     srcs = ["ClockGate.sv"],
     visibility = ["//visibility:public"],
     deps = [
-        "//third_party/ip/lowrisc:prim",
+        "//third_party/ip/lowrisc:prim_clock_gate",
     ],
 )
 

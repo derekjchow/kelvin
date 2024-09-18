@@ -27,6 +27,7 @@ chisel_library(
     deps = [
         "//hdl/chisel/src/bus:bus",
         "//hdl/chisel/src/common:common",
+        "//hdl/chisel/src/kelvin:clock_gate",
         "//hdl/chisel/src/kelvin:kelvin",
         "//hdl/chisel/src/kelvin:kelvin_base",
     ],
@@ -38,7 +39,6 @@ chisel_cc_library(
     emit_class = "matcha.EmitKelvin",
     module_name = "Kelvin",
     verilog_deps = [
-        "//hdl/verilog:clock_gate",
         "//hdl/verilog:sram_1rw_256x256",
         "//hdl/verilog:sram_1rw_256x288",
     ],
@@ -53,7 +53,6 @@ chisel_cc_library(
     emit_class = "matcha.EmitKelvin",
     module_name = "KelvinScalar",
     verilog_deps = [
-        "//hdl/verilog:clock_gate",
         "//hdl/verilog:sram_1rw_256x256",
         "//hdl/verilog:sram_1rw_256x288",
     ],
@@ -73,7 +72,6 @@ chisel_cc_library(
     emit_class = "matcha.EmitKelvin",
     module_name = "KelvinMini",
     verilog_deps = [
-        "//hdl/verilog:clock_gate",
         "//hdl/verilog:sram_1rw_256x256",
         "//hdl/verilog:sram_1rw_256x288",
     ],

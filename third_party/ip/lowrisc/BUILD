@@ -14,6 +14,25 @@
 
 load("@rules_hdl//verilog:providers.bzl", "verilog_library")
 
+exports_files(
+    [
+        "prim_clock_gating.sv",
+        "prim_generic_clock_gating.sv",
+        "prim_xilinx_clock_gating.sv",
+    ],
+    visibility = ["//visibility:public"],
+)
+
+verilog_library(
+    name = "prim_clock_gate",
+    srcs = [
+        "prim_clock_gating.sv",
+        "prim_generic_clock_gating.sv",
+        "prim_xilinx_clock_gating.sv",
+    ],
+    visibility = ["//visibility:public"],
+)
+
 verilog_library(
     name = "prim_generic",
     srcs = [

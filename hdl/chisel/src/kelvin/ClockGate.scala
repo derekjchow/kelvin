@@ -16,12 +16,15 @@ package kelvin
 
 import chisel3._
 import chisel3.util._
-import common._
 
-class ClockGate extends BlackBox {
+class ClockGate extends BlackBox with HasBlackBoxResource {
   val io = IO(new Bundle {
     val clk_i  = Input(Clock())
     val enable = Input(Bool())  // '1' passthrough, '0' disable.
     val clk_o  = Output(Clock())
   })
+  addResource("ClockGate.sv")
+  addResource("lowrisc/prim_clock_gating.sv")
+  addResource("lowrisc/prim_generic_clock_gating.sv")
+  addResource("lowrisc/prim_xilinx_clock_gating.sv")
 }

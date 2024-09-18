@@ -18,7 +18,7 @@ module ClockGate(
   output        clk_o
 );
 
-prim_clock_gating u_cg(
+lowrisc_prim_clock_gating u_cg(
   .clk_i(clk_i),
   .en_i(enable),
   .test_en_i('0),
