@@ -86,11 +86,16 @@ def chisel_test(
             "@edu_berkeley_cs_firrtl//jar",
             "@edu_berkeley_cs_chiseltest//jar",
             "@org_antlr_antlr4_runtime//jar",
+            "@net_java_dev_jna//jar",
         ] + deps,
         args = args,
         size = size,
         scalacopts = SCALA_COPTS,
         visibility = visibility,
+        env = {
+            # Stop verilator from using ccache, this causes CI issues.
+            "OBJCACHE": "",
+        },
     )
 
 def chisel_cc_library(

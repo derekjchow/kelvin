@@ -181,6 +181,13 @@ def kelvin_chisel_deps():
         licenses = ["notice"],
     )
 
+    scala_maven_import_external(
+        name = "net_java_dev_jna",
+        artifact = "net.java.dev.jna:jna:%s" % "5.14.0",
+        server_urls = default_maven_server_urls(),
+        licenses = ["notice"],
+    )
+
 def kelvin_deps():
     """Full kelvin dependent repositories
 

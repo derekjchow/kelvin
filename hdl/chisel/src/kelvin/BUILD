@@ -142,6 +142,17 @@ chisel_library(
     ],
 )
 
+chisel_test(
+    name = "clock_gate_test",
+    srcs = [
+        "ClockGateTest.scala",
+    ],
+    deps = [
+        ":kelvin_base",
+        ":clock_gate",
+    ],
+)
+
 chisel_library(
     name = "kelvin_base",
     srcs = [

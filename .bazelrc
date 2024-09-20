@@ -17,3 +17,4 @@ build --host_copt=-O3
 build --workspace_status_command=utils/get_workspace_status.sh
 
 build --experimental_cc_shared_library
+run --java_runtime_version=remotejdk_11
