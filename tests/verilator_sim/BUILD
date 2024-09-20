@@ -66,6 +66,25 @@ cc_binary(
 )
 
 cc_binary(
+    name = "core_mini_axi_sim",
+    srcs = [
+        "kelvin/core_mini_axi_sim.cc",
+        "@kelvin_hw//hdl/chisel/src/kelvin:VCoreMiniAxi_parameters.h",
+    ],
+    deps = [
+        ":sim_libs",
+        ":util",
+        "//hdl/chisel/src/kelvin:core_mini_axi_cc_library",
+        "@com_google_absl//absl/flags:flag",
+        "@com_google_absl//absl/flags:parse",
+        "@com_google_absl//absl/flags:usage",
+        "@com_google_absl//absl/log:check",
+        "@com_google_absl//absl/log:log",
+        "@libsystemctlm_soc//:libsystemctlm_soc",
+    ],
+)
+
+cc_binary(
     name = "core_scalar_sim",
     srcs = [
         "kelvin/core_tb.cc",

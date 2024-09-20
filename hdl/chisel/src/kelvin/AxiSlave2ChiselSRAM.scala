@@ -44,19 +44,9 @@ class AxiSlave2ChiselSRAM(p: Parameters, sramAddressWidth: Int) extends Module {
 
   val readValid = RegInit(false.B)
   val doRead = readAddr.valid && !readValid
-  val readDataFired = RegInit(false.B)
-  val readDataFired2 = RegInit(false.B)
   readValid := doRead
   io.axi.read.data.valid := readValid
   when (io.axi.read.data.fire) {
-    readDataFired := true.B
-  }
-  when (readDataFired) {
-    readDataFired := false.B
-    readDataFired2 := true.B
-  }
-  when (readDataFired2) {
-    readDataFired2 := false.B
     readAddr := MakeValid(false.B, 0.U.asTypeOf(io.axi.read.addr.bits))
   }
 
@@ -87,7 +77,7 @@ class AxiSlave2ChiselSRAM(p: Parameters, sramAddressWidth: Int) extends Module {
     writeRespFired := false.B
     writeData := MakeValid(false.B, 0.U.asTypeOf(io.axi.write.data.bits))
   }
-  val readData = Cat(io.sramReadData.reverse)
+  val readData = Cat(io.sramReadData)
   val readDataRightShift = readData >> (readAddr.bits.addr(3,0) << 3)
 
   val maxSize = log2Ceil(p.axi2DataBits / 8)

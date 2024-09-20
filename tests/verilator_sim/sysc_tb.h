@@ -135,6 +135,12 @@ struct Sysc_tb : public sc_module {
   }
 
   ~Sysc_tb() {
+    if (tf_) {
+      tf_->dump(sim_time_);  // last falling edge
+      tf_->close();
+      delete tf_;
+      tf_ = nullptr;
+    }
     if (error_) {
       exit(23);
     }
@@ -254,13 +260,13 @@ struct Sysc_tb : public sc_module {
   VerilatedFstC *tf_ = nullptr;
 
   void tb_posedge() {
-    if (tf_ && started_) tf_->dump(sim_time_++);
+    if (tf_ && started_) { tf_->dump(sim_time_++); tf_->flush(); }
     if (reset) return;
     posedge();
   }
 
   void tb_negedge() {
-    if (tf_ && started_) tf_->dump(sim_time_++);
+    if (tf_ && started_) { tf_->dump(sim_time_++); tf_->flush(); }
     if (reset) return;
     negedge();
   }

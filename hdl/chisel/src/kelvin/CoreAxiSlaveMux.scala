@@ -51,17 +51,7 @@ class CoreAxiSlaveMux(p: Parameters, regions: Seq[MemoryRegion]) extends Module 
     }
   }
 
-  val readDataFired = RegInit(false.B)
-  val readDataFired2 = RegInit(false.B)
   when (io.axi_slave.read.data.fire) {
-    readDataFired := true.B
-  }
-  when (readDataFired) {
-    readDataFired := false.B
-    readDataFired2 := true.B
-  }
-  when (readDataFired2) {
-    readDataFired2 := false.B
     readTarget := 0.U(portCount.W)
   }
 

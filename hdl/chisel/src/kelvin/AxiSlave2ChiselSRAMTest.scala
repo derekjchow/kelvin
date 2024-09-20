@@ -48,14 +48,13 @@ class AxiSlave2ChiselSRAMSpec extends AnyFreeSpec with ChiselScalatestTester {
       assertResult(0) { dut.io.axi.read.addr.ready.peekInt() }
       dut.clock.step()
       // Setup SRAM response, and read data response
-      dut.io.sramReadData(0).poke(0xB0.U)
+      dut.io.sramReadData((p.fetchDataBits / 8) - 1).poke(0xB0.U)
       dut.io.axi.read.data.ready.poke(true.B)
       assertResult(1) { dut.io.sramEnable.peekInt() }
       assertResult(1) { dut.io.axi.read.data.valid.peekInt() }
       assertResult(0) { dut.io.sramIsWrite.peekInt() }
       assertResult(0xB0) { dut.io.axi.read.data.bits.data.peekInt() }
       assertResult(1) { dut.io.axi.read.data.bits.last.peekInt() }
-      // TODO(atv): Fix this, isn't right for != 128 bit
       assertResult((32 * 8) / p.fetchDataBits) { dut.io.sramAddress.peekInt() }
       dut.clock.step()
       dut.io.axi.read.data.ready.poke(false.B)

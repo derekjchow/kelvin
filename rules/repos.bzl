@@ -90,6 +90,16 @@ def kelvin_repos():
         sha256 = "ec64fdab22726d50fc056474dd29401d914cc616f53ab8f2fe4866772881d581"
     )
 
+    http_archive(
+        name = "libsystemctlm_soc",
+        urls = [
+            "https://github.com/Xilinx/libsystemctlm-soc/archive/79d624f3c7300a2ead97ca35e683c38f0b6f5021.zip",
+        ],
+        strip_prefix = "libsystemctlm-soc-79d624f3c7300a2ead97ca35e683c38f0b6f5021",
+        sha256 = "5c9d08bd33eb6738e3b4a0dda81e24a6d30067e8149bada6ae05aedcab5b786c",
+        build_file = "@kelvin_hw//third_party/libsystemctlm-soc:BUILD.bazel",
+    )
+
 def renode_repos():
     http_archive(
         name = "renode",

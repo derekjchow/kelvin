@@ -19,7 +19,7 @@
 #include <stddef.h>
 #include <stdint.h>
 
-volatile uint32_t* uart0 = (uint32_t*)0x54000000L;
+volatile uint8_t* uart0 = (uint8_t*)0x54000000L;
 void putc(char ch) {
   *uart0 = ch;
 }

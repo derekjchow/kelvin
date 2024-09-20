@@ -53,23 +53,14 @@ class CoreAxiCSR(p: Parameters) extends Module {
 
   val readValid = RegInit(false.B)
   val doRead = readAddr.valid && !readValid
-  val readDataFired = RegInit(false.B)
-  val readDataFired2 = RegInit(false.B)
   readValid := doRead
   io.axi.read.data.valid := readValid
   when (io.axi.read.data.fire) {
-    readDataFired := true.B
-  }
-  when (readDataFired) {
-    readDataFired := false.B
-    readDataFired2 := true.B
-  }
-  when (readDataFired2) {
-    readDataFired2 := false.B
     readAddr := MakeValid(false.B, 0.U.asTypeOf(io.axi.read.addr.bits))
   }
 
-  io.axi.read.data.bits.data := Mux(readValid,
+  val alignedAddr = (io.axi.read.addr.bits.addr >> io.axi.read.addr.bits.size) << io.axi.read.addr.bits.size
+  val readData =
     MuxCase(0.U, Array(
       (readAddr.bits.addr === 0x0.U) -> resetReg,
       (readAddr.bits.addr === 0x4.U) -> pcStartReg,
@@ -82,8 +73,9 @@ class CoreAxiCSR(p: Parameters) extends Module {
       (readAddr.bits.addr === 0x114.U) -> io.kelvin_csr.value(5),
       (readAddr.bits.addr === 0x118.U) -> io.kelvin_csr.value(6),
       (readAddr.bits.addr === 0x11C.U) -> io.kelvin_csr.value(7),
-    )),
-    0.U)
+    ))
+  val readDataShift = ((io.axi.read.addr.bits.addr - alignedAddr) << 3.U)(8,0)
+  io.axi.read.data.bits.data := Mux(readValid, (readData << readDataShift), 0.U)
   io.axi.read.data.bits.id := Mux(readAddr.valid, readAddr.bits.id, 0.U)
   io.axi.read.data.bits.resp := 0.U
   io.axi.read.data.bits.last := true.B
