@@ -79,7 +79,6 @@ class VSt(p: Parameters) extends Module {
   io.axi.data.valid := false.B
   io.axi.data.bits.strb := 0.U
   io.axi.data.bits.data := 0.U
-  io.axi.data.bits.id := 0.U
   io.axi.data.bits.last := true.B
 
   io.axi.resp.ready := false.B

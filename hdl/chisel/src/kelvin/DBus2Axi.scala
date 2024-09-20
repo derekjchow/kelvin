@@ -66,7 +66,6 @@ class DBus2Axi(p: Parameters) extends Module {
   io.axi.write.addr.bits.prot := 2.U
 
   io.axi.write.data.valid := io.dbus.valid && io.dbus.write
-  io.axi.write.data.bits.id := 0.U
   io.axi.write.data.bits.strb := io.dbus.wmask
   io.axi.write.data.bits.data := io.dbus.wdata
   io.axi.write.data.bits.last := true.B

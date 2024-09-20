@@ -83,7 +83,6 @@ struct L1DCache_tb : Sysc_tb {
   sc_out<bool> io_axi_write_data_ready;
   sc_in<sc_bv<kL1DAxiStrb> > io_axi_write_data_bits_strb;
   sc_in<sc_bv<kL1DAxiBits> > io_axi_write_data_bits_data;
-  sc_in<sc_bv<kL1DAxiId - kDBusBankAdj> > io_axi_write_data_bits_id;
   sc_in<bool> io_axi_write_data_bits_last;
 
   sc_out<bool> io_axi_write_resp_valid;
@@ -492,7 +491,6 @@ static void L1DCache_test(char* name, int loops, bool trace) {
   sc_signal<bool> io_axi_write_data_ready;
   sc_signal<sc_bv<kL1DAxiStrb> > io_axi_write_data_bits_strb;
   sc_signal<sc_bv<kL1DAxiBits> > io_axi_write_data_bits_data;
-  sc_signal<sc_bv<kL1DAxiId - kDBusBankAdj> > io_axi_write_data_bits_id;
   sc_signal<bool> io_axi_write_data_bits_last;
 
   sc_signal<bool> io_axi_write_resp_valid;
@@ -568,7 +566,6 @@ static void L1DCache_test(char* name, int loops, bool trace) {
   BIND2(tb, l1dcache, io_axi_write_data_ready);
   BIND2(tb, l1dcache, io_axi_write_data_bits_strb);
   BIND2(tb, l1dcache, io_axi_write_data_bits_data);
-  BIND2(tb, l1dcache, io_axi_write_data_bits_id);
   BIND2(tb, l1dcache, io_axi_write_data_bits_last);
 
   BIND2(tb, l1dcache, io_axi_write_resp_valid);

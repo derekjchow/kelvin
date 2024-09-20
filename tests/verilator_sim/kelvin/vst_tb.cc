@@ -54,7 +54,6 @@ struct VSt_tb : Sysc_tb {
   sc_in<sc_bv<8> > io_axi_addr_bits_len;
   sc_in<sc_bv<kVector> > io_axi_data_bits_data;
   sc_in<sc_bv<kUncStrb> > io_axi_data_bits_strb;
-  sc_in<sc_bv<6> > io_axi_data_bits_id;
   sc_in<bool> io_axi_data_bits_last;
   sc_out<sc_bv<6> > io_axi_resp_bits_id;
   sc_out<sc_bv<2> > io_axi_resp_bits_resp;
@@ -431,7 +430,6 @@ static void VSt_test(char* name, int loops, bool trace) {
   sc_signal<sc_bv<8> > io_axi_addr_bits_len;
   sc_signal<sc_bv<kVector> > io_axi_data_bits_data;
   sc_signal<sc_bv<kUncStrb> > io_axi_data_bits_strb;
-  sc_signal<sc_bv<6> > io_axi_data_bits_id;
   sc_signal<bool> io_axi_data_bits_last;
   sc_signal<sc_bv<6> > io_axi_resp_bits_id;
   sc_signal<sc_bv<2> > io_axi_resp_bits_resp;
@@ -509,7 +507,6 @@ static void VSt_test(char* name, int loops, bool trace) {
   BIND2(tb, st, io_axi_addr_bits_len);
   BIND2(tb, st, io_axi_data_bits_data);
   BIND2(tb, st, io_axi_data_bits_strb);
-  BIND2(tb, st, io_axi_data_bits_id);
   BIND2(tb, st, io_axi_data_bits_last);
   BIND2(tb, st, io_axi_resp_bits_id);
   BIND2(tb, st, io_axi_resp_bits_resp);

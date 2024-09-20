@@ -560,7 +560,6 @@ class L1DCacheBank(p: Parameters) extends Module {
   io.axi.write.resp.ready     := true.B
 
   io.axi.write.data.valid     := axiwdatavalid
-  io.axi.write.data.bits.id := 0.U
   io.axi.write.data.bits.last := true.B
   io.axi.write.data.bits.data := axiwdatabuf.asUInt
   io.axi.write.data.bits.strb := axiwstrbbuf.asUInt

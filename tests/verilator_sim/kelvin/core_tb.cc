@@ -128,7 +128,6 @@ static void Core_run(const char* name, const char* bin, const int cycles,
   sc_signal<bool> io_axi0_write_data_valid;
   sc_signal<sc_bv<KP_lsuDataBits> > io_axi0_write_data_bits_data;
   sc_signal<sc_bv<KP_lsuDataBits/8> > io_axi0_write_data_bits_strb;
-  sc_signal<sc_bv<6> > io_axi0_write_data_bits_id;
   sc_signal<bool> io_axi0_write_data_bits_last;
   sc_signal<bool> io_axi0_write_resp_ready;
   sc_signal<bool> io_axi0_write_resp_valid;
@@ -169,7 +168,6 @@ static void Core_run(const char* name, const char* bin, const int cycles,
   sc_signal<bool> io_axi1_write_data_valid;
   sc_signal<sc_bv<KP_lsuDataBits> > io_axi1_write_data_bits_data;
   sc_signal<sc_bv<KP_lsuDataBits/8> > io_axi1_write_data_bits_strb;
-  sc_signal<sc_bv<6> > io_axi1_write_data_bits_id;
   sc_signal<bool> io_axi1_write_data_bits_last;
   sc_signal<bool> io_axi1_write_resp_ready;
   sc_signal<bool> io_axi1_write_resp_valid;
@@ -314,7 +312,6 @@ static void Core_run(const char* name, const char* bin, const int cycles,
   BINDAXI(io_axi0_write_data_valid);
   BINDAXI(io_axi0_write_data_bits_data);
   BINDAXI(io_axi0_write_data_bits_strb);
-  BINDAXI(io_axi0_write_data_bits_id);
   BINDAXI(io_axi0_write_data_bits_last);
   BINDAXI(io_axi0_write_resp_ready);
   BINDAXI(io_axi0_write_resp_valid);
@@ -355,7 +352,6 @@ static void Core_run(const char* name, const char* bin, const int cycles,
   BINDAXI(io_axi1_write_data_valid);
   BINDAXI(io_axi1_write_data_bits_data);
   BINDAXI(io_axi1_write_data_bits_strb);
-  BINDAXI(io_axi1_write_data_bits_id);
   BINDAXI(io_axi1_write_data_bits_last);
   BINDAXI(io_axi1_write_resp_ready);
   BINDAXI(io_axi1_write_resp_valid);

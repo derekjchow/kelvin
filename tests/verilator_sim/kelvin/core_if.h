@@ -91,7 +91,6 @@ struct Core_if : Memory_if {
   sc_in<bool> io_axi0_write_data_valid;
   sc_in<sc_bv<KP_lsuDataBits> > io_axi0_write_data_bits_data;
   sc_in<sc_bv<KP_lsuDataBits/8> > io_axi0_write_data_bits_strb;
-  sc_in<sc_bv<6> > io_axi0_write_data_bits_id;
   sc_in<bool> io_axi0_write_data_bits_last;
   sc_in<bool> io_axi0_write_resp_ready;
   sc_out<bool> io_axi0_write_resp_valid;
@@ -132,7 +131,6 @@ struct Core_if : Memory_if {
   sc_in<bool> io_axi1_write_data_valid;
   sc_in<sc_bv<KP_lsuDataBits> > io_axi1_write_data_bits_data;
   sc_in<sc_bv<KP_lsuDataBits/8> > io_axi1_write_data_bits_strb;
-  sc_in<sc_bv<6> > io_axi1_write_data_bits_id;
   sc_in<bool> io_axi1_write_data_bits_last;
   sc_in<bool> io_axi1_write_resp_ready;
   sc_out<bool> io_axi1_write_resp_valid;

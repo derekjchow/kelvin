@@ -47,7 +47,6 @@ class AxiAddress(addrWidthBits: Int, dataWidthBits: Int, idBits: Int) extends Bu
 // ARM IHI 0022E, A2.3
 class AxiWriteData(dataWidthBits: Int, idBits: Int) extends Bundle {
   // "Required"
-  val id   = UInt(idBits.W)
   val data = UInt(dataWidthBits.W)
   val last = Bool()
   // "Optional"
