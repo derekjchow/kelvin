@@ -2,6 +2,7 @@
 // Licensed under the Apache License, Version 2.0, see LICENSE for details.
 // SPDX-License-Identifier: Apache-2.0
 
+`ifdef FPGA_XILINX
 module lowrisc_prim_xilinx_clock_gating #(
   parameter bit NoFpgaGate = 1'b0,
   parameter bit FpgaBufGlobal = 1'b1
@@ -38,7 +39,5 @@ module lowrisc_prim_xilinx_clock_gating #(
       );
     end
   end
-
-
-
 endmodule
+`endif

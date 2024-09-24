@@ -17,12 +17,20 @@ parameters:
     datatype: bool
     paramtype: vlogdefine
 
+  FPGA_XILINX:
+    datatype: bool
+    description: Identifies Xilinx FPGA targets to set DSP pragmas for performance counters.
+    default: false
+    paramtype: vlogdefine
+
 
 targets:
   default: &default_target
     filesets:
       - files_rtl
     toplevel: kelvin
+    parameters:
+      - tool_vivado ? (FPGA_XILINX=true)
 
   lint:
     <<: *default_target

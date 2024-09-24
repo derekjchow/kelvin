@@ -30,13 +30,17 @@ module lowrisc_prim_clock_gating (
   parameter lowrisc_prim_pkg::impl_e Impl = `LOWRISC_PRIM_DEFAULT_IMPL;
 
   if (Impl == lowrisc_prim_pkg::ImplGeneric) begin : gen_generic
+`ifndef SYNTHESIS
     lowrisc_prim_generic_clock_gating u_impl_generic (
       .*
     );
+`endif
   end else if (Impl == lowrisc_prim_pkg::ImplXilinx) begin : gen_xilinx
+`ifdef FPGA_XILINX
     lowrisc_prim_xilinx_clock_gating u_impl_xilinx (
       .*
     );
+`endif
   end else begin : gen_failure
     // TODO: Find code that works across tools and causes a compile failure
   end
