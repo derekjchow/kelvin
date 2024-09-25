@@ -18,7 +18,11 @@ package lowrisc_prim_pkg;
 endpackage : lowrisc_prim_pkg
 
 `ifndef LOWRISC_PRIM_DEFAULT_IMPL
-  `define LOWRISC_PRIM_DEFAULT_IMPL lowrisc_prim_pkg::ImplGeneric
+  `ifdef FPGA_XILINX
+    `define LOWRISC_PRIM_DEFAULT_IMPL lowrisc_prim_pkg::ImplXilinx
+  `else
+    `define LOWRISC_PRIM_DEFAULT_IMPL lowrisc_prim_pkg::ImplGeneric
+  `endif
 `endif
 
 module lowrisc_prim_clock_gating (

@@ -23,6 +23,10 @@ parameters:
     default: false
     paramtype: vlogdefine
 
+  LOWRISC_PRIM_DEFAULT_IMPL:
+    datatype: str
+    paramtype: vlogdefine
+    description: lowRISC primitives implementation to use, e.g. "lowrisc_prim_pkg::ImplGeneric"
 
 targets:
   default: &default_target
@@ -31,6 +35,15 @@ targets:
     toplevel: kelvin
     parameters:
       - tool_vivado ? (FPGA_XILINX=true)
+
+  synth:
+    default_tool: vivado
+    filesets:
+      - files_rtl
+    toplevel: kelvin
+    parameters:
+      - tool_vivado ? (FPGA_XILINX=true)
+      - LOWRISC_PRIM_DEFAULT_IMPL=lowrisc_prim_pkg::ImplXilinx
 
   lint:
     <<: *default_target
