@@ -32,6 +32,7 @@ genrule(
     """,
     executable = False,
     local = True,
+    tags = ["renode"],
 )
 
 sh_test(
@@ -51,4 +52,5 @@ sh_test(
         "//tests/renode/rv_core:rv_core.robot",
     ],
     local = True,
+    tags = ["renode"],
 )

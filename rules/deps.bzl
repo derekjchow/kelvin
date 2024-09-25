@@ -39,6 +39,7 @@ def kelvin_chisel_deps():
     scala_maven_import_external(
         name = "org_scala_lang_scala_reflect",
         artifact = "org.scala-lang:scala-reflect:%s" % "2.13.11",
+        artifact_sha256 = "6a46ed9b333857e8b5ea668bb254ed8e47dacd1116bf53ade9467aa4ae8f1818",
         server_urls = default_maven_server_urls(),
         licenses = ["notice"],
     )
@@ -47,6 +48,7 @@ def kelvin_chisel_deps():
     scala_maven_import_external(
         name = "com_thoughtworks_paranamer",
         artifact = "com.thoughtworks.paranamer:paranamer:%s" % "2.8",
+        artifact_sha256 = "688cb118a6021d819138e855208c956031688be4b47a24bb615becc63acedf07",
         server_urls = default_maven_server_urls(),
         licenses = ["notice"],
     )
@@ -55,24 +57,28 @@ def kelvin_chisel_deps():
     scala_maven_import_external(
         name = "org_json4s_json4s_ast",
         artifact = "org.json4s:json4s-ast_2.13:%s" % "4.0.6",
+        artifact_sha256 = "c9fa3c4799615ebf299f616e4817efd16dcff341e1ee04e51e741d8add68bb43",
         server_urls = default_maven_server_urls(),
         licenses = ["notice"],
     )
     scala_maven_import_external(
         name = "org_json4s_json4s_scalap",
         artifact = "org.json4s:json4s-scalap_2.13:%s" % "4.0.6",
+        artifact_sha256 = "4ff2f359e2a6595d7b709ca1de43ed6da8c2cf67fe8b78f334e10f27c21c4361",
         server_urls = default_maven_server_urls(),
         licenses = ["notice"],
     )
     scala_maven_import_external(
         name = "org_json4s_json4s_core",
         artifact = "org.json4s:json4s-core_2.13:%s" % "4.0.6",
+        artifact_sha256 = "7f7a6b7802a05d75a7612d0f5c54832bd473a7c60118192713f45d80d1d51e71",
         server_urls = default_maven_server_urls(),
         licenses = ["notice"],
     )
     scala_maven_import_external(
         name = "org_json4s_json4s_native",
         artifact = "org.json4s:json4s-native_2.13:%s" % "4.0.6",
+        artifact_sha256 = "f7089df299f43c6f76cfa2876d3a9cf9fd4d983e952f6ecfe11ed4b5f129e0c6",
         server_urls = default_maven_server_urls(),
         licenses = ["notice"],
     )
@@ -81,12 +87,14 @@ def kelvin_chisel_deps():
     scala_maven_import_external(
         name = "org_apache_commons_commons_lang3",
         artifact = "org.apache.commons:commons-lang3:%s" % "3.11",
+        artifact_sha256 = "4ee380259c068d1dbe9e84ab52186f2acd65de067ec09beff731fca1697fdb16",
         server_urls = default_maven_server_urls(),
         licenses = ["notice"],
     )
     scala_maven_import_external(
         name = "org_apache_commons_commons_text",
         artifact = "org.apache.commons:commons-text:%s" % "1.10.0",
+        artifact_sha256 = "770cd903fa7b604d1f7ef7ba17f84108667294b2b478be8ed1af3bffb4ae0018",
         server_urls = default_maven_server_urls(),
         licenses = ["notice"],
     )
@@ -95,6 +103,7 @@ def kelvin_chisel_deps():
     scala_maven_import_external(
         name = "com_github_scopt",
         artifact = "com.github.scopt:scopt_2.13:%s" % "3.7.1",
+        artifact_sha256 = "6592cd15368f6e26d1d73f81ed5bc93cf0dea713b8b2936a8f2f0edd3b392820",
         server_urls = default_maven_server_urls(),
         licenses = ["notice"],
     )
@@ -103,6 +112,7 @@ def kelvin_chisel_deps():
     scala_maven_import_external(
         name = "net_jcazevedo_moultingyaml",
         artifact = "net.jcazevedo:moultingyaml_2.13:%s" % "0.4.2",
+        artifact_sha256 = "a304da2389f760f1a36513d8b10ba546d50243cf0b94415ea2a76906114d7197",
         server_urls = default_maven_server_urls(),
         licenses = ["notice"],
     )
@@ -111,6 +121,7 @@ def kelvin_chisel_deps():
     scala_maven_import_external(
         name = "io_github_alexarchambault_data_class",
         artifact = "io.github.alexarchambault:data-class_2.13:%s" % "0.2.5",
+        artifact_sha256 = "debdf4eca3430173c5af8300276e194437b2c6c6608aca3a285fd3d98be54ce7",
         server_urls = default_maven_server_urls(),
         licenses = ["notice"],
     )
@@ -119,6 +130,7 @@ def kelvin_chisel_deps():
     scala_maven_import_external(
         name = "com_lihaoyi_os_lib",
         artifact = "com.lihaoyi:os-lib_2.13:%s" % "0.8.1",
+        artifact_sha256 = "5036c31a889a702a107f30124efb5fd8ca462818723db001e96494c4360ff96f",
         server_urls = default_maven_server_urls(),
         licenses = ["notice"],
     )
@@ -127,6 +139,7 @@ def kelvin_chisel_deps():
     scala_maven_import_external(
         name = "com_lihaoyi_geny",
         artifact = "com.lihaoyi:geny_2.13:%s" % "0.7.1",
+        artifact_sha256 = "fc01dab696f7b84ba5ac28bbf2e60d8bcbd9ab96717e50fdbeb4e8acf3452a56",
         server_urls = default_maven_server_urls(),
         licenses = ["notice"],
     )
@@ -135,6 +148,7 @@ def kelvin_chisel_deps():
     scala_maven_import_external(
         name = "com_lihaoyi_upickle",
         artifact = "com.lihaoyi:upickle_2.13:%s" % "2.0.0",
+        artifact_sha256 = "e372ec234360a794eca87124a52a7bfbea4c13556ba3c5eada5243733b6bb77f",
         server_urls = default_maven_server_urls(),
         licenses = ["notice"],
     )
@@ -143,12 +157,14 @@ def kelvin_chisel_deps():
     scala_maven_import_external(
         name = "org_chipsalliance_chisel",
         artifact = "org.chipsalliance:chisel_2.13:%s" % "5.1.0",
+        artifact_sha256 = "b83c466d73cf38ec85f7bc2358ccf2fc4f3aac27e78ec4fbd848b7827a59dd57",
         server_urls = default_maven_server_urls(),
         licenses = ["notice"],
     )
     scala_maven_import_external(
         name = "org_chipsalliance_chisel_plugin",
         artifact = "org.chipsalliance:chisel-plugin_2.13.6:%s" % "5.1.0",
+        artifact_sha256 = "d4fd477fa5368c1dddd40d76526d5ba265e37e7d42f3d051279b957d12b40f2b",
         server_urls = default_maven_server_urls(),
         licenses = ["notice"],
     )
@@ -157,18 +173,21 @@ def kelvin_chisel_deps():
     scala_maven_import_external(
         name = "edu_berkeley_cs_firrtl",
         artifact = "edu.berkeley.cs:firrtl_2.13:%s" % "5.0.0",
+        artifact_sha256 = "7e42b367bbf050cd41658957d25a1f27a73c92e55d3612a9b41d63d0feba50b3",
         server_urls = default_maven_server_urls(),
         licenses = ["notice"],
     )
     scala_maven_import_external(
         name = "org_scalatest_scalatest",
         artifact = "org.scalatest:scalatest_3:%s" % "3.2.16",
+        artifact_sha256 = "594c3c68d5fccf9bf57f3eef012652c2d66d58d42e6335517ec71fdbeb427352",
         server_urls = default_maven_server_urls(),
         licenses = ["notice"],
     )
     scala_maven_import_external(
         name = "edu_berkeley_cs_chiseltest",
         artifact = "edu.berkeley.cs:chiseltest_2.13:%s" % "5.0.2",
+        artifact_sha256 = "283bb75b71f65b58dccadb7678a00795e8a39a611c459744d62b84307d58c2f9",
         server_urls = default_maven_server_urls(),
         licenses = ["notice"],
     )
@@ -177,6 +196,7 @@ def kelvin_chisel_deps():
     scala_maven_import_external(
         name = "org_antlr_antlr4_runtime",
         artifact = "org.antlr:antlr4-runtime:%s" % "4.13.1",
+        artifact_sha256 = "54665d2838cc66458343468efc539e454fc95b46a8a04b13c6ac43fc9be63505",
         server_urls = default_maven_server_urls(),
         licenses = ["notice"],
     )
@@ -184,6 +204,7 @@ def kelvin_chisel_deps():
     scala_maven_import_external(
         name = "net_java_dev_jna",
         artifact = "net.java.dev.jna:jna:%s" % "5.14.0",
+        artifact_sha256 = "34ed1e1f27fa896bca50dbc4e99cf3732967cec387a7a0d5e3486c09673fe8c6",
         server_urls = default_maven_server_urls(),
         licenses = ["notice"],
     )

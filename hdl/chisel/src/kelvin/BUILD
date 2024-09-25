@@ -151,6 +151,7 @@ chisel_test(
         ":kelvin_base",
         ":clock_gate",
     ],
+    tags = ["verilator"],
 )
 
 chisel_library(

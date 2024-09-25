@@ -18,3 +18,8 @@ build --workspace_status_command=utils/get_workspace_status.sh
 
 build --experimental_cc_shared_library
 run --java_runtime_version=remotejdk_11
+test --java_runtime_version=remotejdk_11
+
+build --repo_env BAZEL_JVM_FETCH_SOURCES=false
+run --repo_env BAZEL_JVM_FETCH_SOURCES=false
+test --repo_env BAZEL_JVM_FETCH_SOURCES=false

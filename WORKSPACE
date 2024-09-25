@@ -5,8 +5,21 @@ kelvin_repos()
 
 load("@com_github_grpc_grpc//bazel:grpc_deps.bzl", "grpc_deps")
 grpc_deps()
-load("@com_github_grpc_grpc//bazel:grpc_extra_deps.bzl", "grpc_extra_deps")
-grpc_extra_deps()
+
+# Minimal set from grpc_extra_deps
+load("@com_google_protobuf//:protobuf_deps.bzl", "protobuf_deps")
+protobuf_deps()
+load("@build_bazel_rules_apple//apple:repositories.bzl", "apple_rules_dependencies")
+apple_rules_dependencies(ignore_version_differences = False)
+load("@com_google_googleapis//:repository_rules.bzl", "switched_rules_by_language")
+switched_rules_by_language(
+    name = "com_google_googleapis_imports",
+    cc = True,
+    grpc = True,
+    python = True,
+)
+load("@io_bazel_rules_go//go:deps.bzl", "go_register_toolchains", "go_rules_dependencies")
+go_rules_dependencies()
 
 # Scala setup
 load("@io_bazel_rules_scala//:scala_config.bzl", "scala_config")
