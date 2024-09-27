@@ -223,22 +223,11 @@ struct CoreMiniAxi_tb : Sysc_tb {
     close(fd);
 
     // Transaction to fill ITCM with the provided binary.
-    unsigned i = 0;
-    auto KP_lsuDataBytes = KP_lsuDataBits / 8;
     uint8_t* data8 = reinterpret_cast<uint8_t*>(file_data_);
-    DataTransferVec bin_txn;
-    for (i = 0; i < file_size_ && (i + KP_lsuDataBytes < file_size_);
-         i += KP_lsuDataBytes) {
-      bin_txn.push_back(utils::Write(0 + i, data8 + i, KP_lsuDataBytes));
-      bin_txn.push_back(utils::Read(0 + i, KP_lsuDataBytes));
-      bin_txn.push_back(utils::Expect(data8 + i, KP_lsuDataBytes));
-    }
-    if (i < file_size_) {
-      bin_txn.push_back(utils::Write(0 + i, data8 + i, file_size_ - i));
-      bin_txn.push_back(utils::Read(0 + i, file_size_ - i));
-      bin_txn.push_back(utils::Expect(data8 + i, file_size_ - i));
-    }
-    bin_transfer_ = std::make_unique<TrafficDesc>(utils::merge(bin_txn));
+    bin_transfer_ =
+        std::make_unique<TrafficDesc>(utils::merge(std::vector<DataTransfer>(
+            {utils::Write(0, data8, file_size_), utils::Read(0, file_size_),
+             utils::Expect(data8, file_size_)})));
 
     // Transaction to disable the internal clock gate.
     disable_cg_transfer_ =

@@ -47,7 +47,12 @@ class AxiSlave2ChiselSRAM(p: Parameters, sramAddressWidth: Int) extends Module {
   readValid := doRead
   io.axi.read.data.valid := readValid
   when (io.axi.read.data.fire) {
-    readAddr := MakeValid(false.B, 0.U.asTypeOf(io.axi.read.addr.bits))
+    when (io.axi.read.data.bits.last) {
+      readAddr := MakeValid(false.B, 0.U.asTypeOf(io.axi.read.addr.bits))
+    } .otherwise {
+      readAddr.bits.addr := readAddr.bits.addr +  (1.U << readAddr.bits.size)
+      readAddr.bits.len := readAddr.bits.len - 1.U
+    }
   }
 
   val writeAddr = RegInit(MakeValid(false.B, 0.U.asTypeOf(io.axi.write.addr.bits)))
@@ -58,24 +63,23 @@ class AxiSlave2ChiselSRAM(p: Parameters, sramAddressWidth: Int) extends Module {
   }
 
   val writeData = RegInit(MakeValid(false.B, 0.U.asTypeOf(io.axi.write.data.bits)))
-  io.axi.write.data.ready := !writeData.valid
+  io.axi.write.data.ready := !writeData.valid && !io.periBusy
   val canWriteData = !writeData.valid && io.axi.write.data.valid
   when (canWriteData) {
     writeData := MakeValid(true.B, io.axi.write.data.bits)
   }
+  when (writeData.valid) {
+    writeData := MakeValid(false.B, 0.U.asTypeOf(io.axi.write.data.bits))
+    writeAddr.bits.addr := writeAddr.bits.addr + (1.U << writeAddr.bits.size)
+    writeAddr.bits.len := writeAddr.bits.len - 1.U
+  }
 
   val doWrite = writeData.valid && writeAddr.valid
   val writeRespValid = RegInit(false.B)
-  val writeRespFired = RegInit(false.B)
-  writeRespValid := doWrite && !writeRespFired
+  writeRespValid := writeAddr.valid && writeData.valid && writeAddr.bits.len === 0.U && writeData.bits.last
   io.axi.write.resp.valid := writeRespValid
   when (io.axi.write.resp.fire) {
-    writeRespFired := true.B
     writeAddr := MakeValid(false.B, 0.U.asTypeOf(io.axi.write.addr.bits))
-  }
-  when (writeRespFired) {
-    writeRespFired := false.B
-    writeData := MakeValid(false.B, 0.U.asTypeOf(io.axi.write.data.bits))
   }
   val readData = Cat(io.sramReadData)
   val readDataRightShift = readData >> (readAddr.bits.addr(3,0) << 3)
@@ -93,7 +97,7 @@ class AxiSlave2ChiselSRAM(p: Parameters, sramAddressWidth: Int) extends Module {
     0.U.asTypeOf(io.axi.read.data.bits.data))
   io.axi.read.data.bits.id := Mux(readValid, readAddr.bits.id, 0.U.asTypeOf(io.axi.read.data.bits.id))
   io.axi.read.data.bits.resp := 0.U
-  io.axi.read.data.bits.last := true.B
+  io.axi.read.data.bits.last := Mux(readValid, readAddr.bits.len === 0.U, false.B)
 
   io.axi.write.resp.bits.resp := 0.U
   io.axi.write.resp.bits.id := Mux(doWrite, writeAddr.bits.id, 0.U.asTypeOf(io.axi.write.resp.bits.id))

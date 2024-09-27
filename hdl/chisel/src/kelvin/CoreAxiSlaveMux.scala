@@ -51,7 +51,7 @@ class CoreAxiSlaveMux(p: Parameters, regions: Seq[MemoryRegion]) extends Module 
     }
   }
 
-  when (io.axi_slave.read.data.fire) {
+  when (io.axi_slave.read.data.fire && io.axi_slave.read.data.bits.last) {
     readTarget := 0.U(portCount.W)
   }
 
