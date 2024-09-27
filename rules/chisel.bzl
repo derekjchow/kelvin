@@ -108,8 +108,7 @@ def chisel_cc_library(
         verilog_deps = [],
         verilog_file_path = "",
         gen_flags = [],
-        extra_outs = [],
-        systemc = True):
+        extra_outs = []):
     gen_binary_name = name + "_emit_verilog_binary"
     chisel_binary(
         name = gen_binary_name,
@@ -137,17 +136,27 @@ def chisel_cc_library(
         deps = verilog_deps,
     )
 
+    # Most use cases seem to be SystemC - so let's
+    # give that the unmodified name.
     verilator_cc_library(
-        name = name,
+        name = "{}".format(name),
         module = ":{}_verilog".format(name),
         module_top = module_name,
         visibility = ["//visibility:public"],
         # TODO(derekjchow): Re-enable the default -Wall?
         vopts = [],
-        # Control whether Verilator's output requires SystemC,
-        # or is standalone.
-        # For most testbenches, SystemC is used.
-        # In particular, for interfacing with Renode, SystemC should
-        # be disabled.
-        systemc = systemc,
+        systemc = True,
+    )
+
+    # Regular C++ Verilator output.
+    # Append _cc to the library name to differentiate
+    # from SystemC.
+    verilator_cc_library(
+        name = "{}_cc".format(name),
+        module = ":{}_verilog".format(name),
+        module_top = module_name,
+        visibility = ["//visibility:public"],
+        # TODO(derekjchow): Re-enable the default -Wall?
+        vopts = [],
+        systemc = False,
     )

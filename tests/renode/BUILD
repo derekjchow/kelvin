@@ -81,7 +81,7 @@ cc_library(
     deps = [
         ":kelvin_grpc_cc",
         "@com_github_grpc_grpc//:grpc++",
-        "@kelvin_hw//hdl/chisel/src/kelvin:core_mini_axi_cc_library",
+        "@kelvin_hw//hdl/chisel/src/kelvin:core_mini_axi_cc_library_cc",
         "@renode//:VerilatorIntegrationLibrary",
         "@verilator//:libverilator",
     ],
@@ -91,7 +91,7 @@ cc_binary(
     name = "Vtop_bin",
     deps = [
         ":Vtop_internal",
-        "@kelvin_hw//hdl/chisel/src/kelvin:core_mini_axi_cc_library",
+        "@kelvin_hw//hdl/chisel/src/kelvin:core_mini_axi_cc_library_cc",
         "@renode//:VerilatorIntegrationLibrary",
         "@verilator//:libverilator",
     ],

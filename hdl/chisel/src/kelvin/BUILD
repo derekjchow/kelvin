@@ -329,7 +329,6 @@ chisel_cc_library(
         "--useAxi",
     ],
     module_name = "CoreMiniAxi",
-    systemc = False,
     verilog_file_path = "CoreMiniAxi.sv",
 )
 
