@@ -30,117 +30,65 @@ class AluSpec extends AnyFreeSpec with ChiselScalatestTester {
     }
   }
 
-  "Sign Extend Byte" in {
-    test(new Alu(p)) { dut =>
-        dut.io.req.bits.addr.poke(13)
-        dut.io.req.bits.op.poke(AluOp.SEXTB)
-        dut.io.req.valid.poke(true.B)
-
-        // Confirm that if top bit of lower byte is unset, value is unchanged
-        dut.io.rs1.valid.poke(true.B)
-        dut.io.rs1.data.poke(BigInt(0x0000007F))
-
-        dut.clock.step()
-        dut.io.req.valid.poke(false.B)
-        assertResult(1) { dut.io.rd.valid.peekInt() }
-        var compareValue = BigInt(0x0000007F)
-        assertResult(compareValue) { dut.io.rd.bits.data.peekInt() }
-
-        dut.clock.step()
-        assertResult(0) { dut.io.rd.valid.peekInt() }
-        assertResult(13) { dut.io.rd.bits.addr.peekInt() }
-
-        // Confirm sign extends if top bit of lower byte is set
-        dut.io.req.valid.poke(true.B)
-
-        dut.io.rs1.valid.poke(true.B)
-        dut.io.rs1.data.poke(BigInt(0x00000080))
-
-        dut.clock.step()
-        dut.io.req.valid.poke(false.B)
-        assertResult(1) { dut.io.rd.valid.peekInt() }
-        compareValue = BigInt(0xFFFFFF80)
-        assertResult(compareValue) { dut.io.rd.bits.data.peekInt().toInt }
-
-        dut.clock.step()
-        assertResult(0) { dut.io.rd.valid.peekInt() }
-        assertResult(13) { dut.io.rd.bits.addr.peekInt() }
-
+  private def test_unary_op(
+      dut: Alu,
+      addr: UInt,
+      op: AluOp.Type,
+      // Long because Scala has no unsigned int.
+      cases: Seq[(Long, Long)]) = {
+    val good = cases.map { case (rs1, exp_rd) =>
+      dut.io.req.poke(chiselTypeOf(dut.io.req).Lit(
+        _.valid -> true.B,
+        _.bits.addr -> addr,
+        _.bits.op -> op,
+      ))
+      dut.io.rs1.poke(chiselTypeOf(dut.io.rs1).Lit(
+        _.valid -> true.B,
+        _.data -> rs1.U,
+      ))
+      dut.clock.step()
+      val good1 = assertPartial[Valid[RegfileWriteDataIO]](
+        dut.io.rd.peek(),
+        s"rs1=$rs1, cycle=1",
+        _.valid -> true.B,
+        _.bits.data -> exp_rd.U,
+      )
+      dut.io.req.pokePartial(chiselTypeOf(dut.io.req).Lit(
+        _.valid -> false.B,
+      ))
+      dut.clock.step()
+      val good2 = assertPartial[Valid[RegfileWriteDataIO]](
+        dut.io.rd.peek(),
+        s"rs1=$rs1, cycle=2",
+        _.valid -> false.B,
+        _.bits.addr -> addr,
+      )
+      good1 & good2
     }
+    processResults(good)
   }
+
+  "Sign Extend Byte" in {
+    val test_cases = Seq(
+      (0x0000007FL, 0x0000007FL),
+      (0x00000080L, 0xFFFFFF80L),
+    )
+    test(new Alu(p))(test_unary_op(_, 13.U, AluOp.SEXTB, test_cases))
+  }
+
   "Sign Extend Half Word" in {
-    test(new Alu(p)) { dut =>
-        dut.io.req.bits.addr.poke(13)
-        dut.io.req.bits.op.poke(AluOp.SEXTH)
-        dut.io.req.valid.poke(true.B)
-
-        // Confirm that if top bit of lower half-word is unset, value is unchanged
-        dut.io.rs1.valid.poke(true.B)
-        dut.io.rs1.data.poke(BigInt(0x00007FFF))
-
-        dut.clock.step()
-        dut.io.req.valid.poke(false.B)
-        assertResult(1) { dut.io.rd.valid.peekInt() }
-        var compareValue = BigInt(0x00007FFF)
-        assertResult(compareValue) { dut.io.rd.bits.data.peekInt() }
-
-        dut.clock.step()
-        assertResult(0) { dut.io.rd.valid.peekInt() }
-        assertResult(13) { dut.io.rd.bits.addr.peekInt() }
-
-        // Confirm sign extends if top bit of lower half-word is set
-        dut.io.req.valid.poke(true.B)
-
-        dut.io.rs1.valid.poke(true.B)
-        dut.io.rs1.data.poke(BigInt(0x00008000))
-
-        dut.clock.step()
-        dut.io.req.valid.poke(false.B)
-        assertResult(1) { dut.io.rd.valid.peekInt() }
-        compareValue = BigInt(0xFFFF8000)
-        assertResult(compareValue) { dut.io.rd.bits.data.peekInt().toInt }
-
-        dut.clock.step()
-        assertResult(0) { dut.io.rd.valid.peekInt() }
-        assertResult(13) { dut.io.rd.bits.addr.peekInt() }
-    }
+    val test_cases = Seq(
+      (0x00007FFFL, 0x00007FFFL),
+      (0x00008000L, 0xFFFF8000L),
+    )
+    test(new Alu(p))(test_unary_op(_, 13.U, AluOp.SEXTH, test_cases))
   }
   "Zero Extend Half Word" in {
-    test(new Alu(p)) { dut =>
-        dut.io.req.bits.addr.poke(13)
-        dut.io.req.bits.op.poke(AluOp.ZEXTH)
-        dut.io.req.valid.poke(true.B)
-
-        // Confirm that if top bit of lower half-word is unset, value is unchanged
-        dut.io.rs1.valid.poke(true.B)
-        dut.io.rs1.data.poke(BigInt(0x00007FFF))
-
-        dut.clock.step()
-        dut.io.req.valid.poke(false.B)
-        assertResult(1) { dut.io.rd.valid.peekInt() }
-        var compareValue = BigInt(0x00007FFF)
-        assertResult(compareValue) { dut.io.rd.bits.data.peekInt() }
-
-        dut.clock.step()
-        assertResult(0) { dut.io.rd.valid.peekInt() }
-        assertResult(13) { dut.io.rd.bits.addr.peekInt() }
-
-        // Confirm that if top bit of lower half-word is set, value remains unchanged
-        dut.io.req.valid.poke(true.B)
-
-        dut.io.rs1.valid.poke(true.B)
-        dut.io.rs1.data.poke(BigInt(0x00008000))
-
-        dut.clock.step()
-        dut.io.req.valid.poke(false.B)
-        assertResult(1) { dut.io.rd.valid.peekInt() }
-        compareValue = BigInt(0x00008000)
-        assertResult(compareValue) { dut.io.rd.bits.data.peekInt().toInt }
-
-        dut.clock.step()
-        assertResult(0) { dut.io.rd.valid.peekInt() }
-        assertResult(13) { dut.io.rd.bits.addr.peekInt() }
-    }
+    val test_cases = Seq(
+      (0x00007FFFL, 0x00007FFFL),
+      (0x00008000L, 0x00008000L),
+    )
+    test(new Alu(p))(test_unary_op(_, 13.U, AluOp.ZEXTH, test_cases))
   }
 
   // TODO(davidgao): move to somewhere else.

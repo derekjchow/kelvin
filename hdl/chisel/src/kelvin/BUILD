@@ -72,7 +72,7 @@ chisel_test(
         ":kelvin_rvv",
     ],
     args = [
-        "-P",  # Allows parallel tests. This target has lots of small test cases.
+        "-P",  # Allows parallel tests.
     ],
 )
 
@@ -85,6 +85,9 @@ chisel_test(
     deps = [
         ":kelvin_base",
         ":kelvin_scalar",
+    ],
+    args = [
+        "-P",  # Allows parallel tests.
     ],
 )
 
