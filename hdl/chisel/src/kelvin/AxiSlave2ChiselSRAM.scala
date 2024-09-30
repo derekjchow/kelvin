@@ -17,7 +17,7 @@ package kelvin
 import chisel3._
 import chisel3.util._
 
-import bus.AxiMasterIO
+import bus.{AxiBurstType, AxiMasterIO}
 import common._
 
 class AxiSlave2ChiselSRAM(p: Parameters, sramAddressWidth: Int) extends Module {
@@ -36,10 +36,13 @@ class AxiSlave2ChiselSRAM(p: Parameters, sramAddressWidth: Int) extends Module {
   })
 
   val readAddr = RegInit(MakeValid(false.B, 0.U.asTypeOf(io.axi.read.addr.bits)))
+  val readBaseAddr = RegInit(0.U.asTypeOf(io.axi.read.addr.bits.addr))
   io.axi.read.addr.ready := !readAddr.valid && !io.periBusy
   val canRead = !readAddr.valid && io.axi.read.addr.valid && !io.periBusy
   when (canRead) {
     readAddr := MakeValid(true.B, io.axi.read.addr.bits)
+    val readMask = VecInit((0 until io.axi.read.addr.bits.addr.getWidth).map(x => !(x.U < io.axi.read.addr.bits.size)))
+    readBaseAddr := io.axi.read.addr.bits.addr & readMask.asUInt;
   }
 
   val readValid = RegInit(false.B)
@@ -50,16 +53,28 @@ class AxiSlave2ChiselSRAM(p: Parameters, sramAddressWidth: Int) extends Module {
     when (io.axi.read.data.bits.last) {
       readAddr := MakeValid(false.B, 0.U.asTypeOf(io.axi.read.addr.bits))
     } .otherwise {
-      readAddr.bits.addr := readAddr.bits.addr +  (1.U << readAddr.bits.size)
-      readAddr.bits.len := readAddr.bits.len - 1.U
+      val (burst, burstValid) = AxiBurstType.safe(readAddr.bits.burst)
+      readAddr.bits.addr := MuxOR(burstValid, MuxLookup(burst, 0.U)(Seq(
+        AxiBurstType.FIXED -> readAddr.bits.addr,
+        AxiBurstType.INCR -> (readAddr.bits.addr +  (1.U << readAddr.bits.size)),
+        AxiBurstType.WRAP -> {
+          val newAddr = readAddr.bits.addr + (1.U << readAddr.bits.size)
+          val newAddrWrapped = Mux(newAddr >= readBaseAddr + (p.axi2DataBits / 8).U, readBaseAddr, newAddr)
+          newAddrWrapped(31,0)
+        }
+      )))
+      readAddr.bits.len := MuxOR(burstValid, (readAddr.bits.len - 1.U))
     }
   }
 
   val writeAddr = RegInit(MakeValid(false.B, 0.U.asTypeOf(io.axi.write.addr.bits)))
+  val writeBaseAddr = RegInit(0.U.asTypeOf(io.axi.write.addr.bits.addr))
   io.axi.write.addr.ready := !writeAddr.valid && !io.periBusy
   val canWrite = !writeAddr.valid && io.axi.write.addr.valid
   when (canWrite) {
     writeAddr := MakeValid(true.B, io.axi.write.addr.bits)
+    val writeMask = VecInit((0 until io.axi.write.addr.bits.addr.getWidth).map(x => !(x.U < io.axi.write.addr.bits.size)))
+    writeBaseAddr := io.axi.write.addr.bits.addr & writeMask.asUInt
   }
 
   val writeData = RegInit(MakeValid(false.B, 0.U.asTypeOf(io.axi.write.data.bits)))
@@ -70,8 +85,17 @@ class AxiSlave2ChiselSRAM(p: Parameters, sramAddressWidth: Int) extends Module {
   }
   when (writeData.valid) {
     writeData := MakeValid(false.B, 0.U.asTypeOf(io.axi.write.data.bits))
-    writeAddr.bits.addr := writeAddr.bits.addr + (1.U << writeAddr.bits.size)
-    writeAddr.bits.len := writeAddr.bits.len - 1.U
+    val (burst, burstValid) = AxiBurstType.safe(writeAddr.bits.burst)
+    writeAddr.bits.addr := MuxOR(burstValid, MuxLookup(burst, 0.U)(Seq(
+      AxiBurstType.FIXED -> writeAddr.bits.addr,
+      AxiBurstType.INCR -> (writeAddr.bits.addr + (1.U << writeAddr.bits.size)),
+      AxiBurstType.WRAP -> {
+        val newAddr = writeAddr.bits.addr + (1.U << writeAddr.bits.size)
+        val newAddrWrapped = Mux(newAddr >= writeBaseAddr + (p.axi2DataBits / 8).U, writeBaseAddr, newAddr)
+        newAddrWrapped(31,0)
+      },
+    )))
+    writeAddr.bits.len := MuxOR(burstValid, (writeAddr.bits.len - 1.U))
   }
 
   val doWrite = writeData.valid && writeAddr.valid
@@ -80,6 +104,7 @@ class AxiSlave2ChiselSRAM(p: Parameters, sramAddressWidth: Int) extends Module {
   io.axi.write.resp.valid := writeRespValid
   when (io.axi.write.resp.fire) {
     writeAddr := MakeValid(false.B, 0.U.asTypeOf(io.axi.write.addr.bits))
+    writeBaseAddr := 0.U.asTypeOf(io.axi.write.addr.bits.addr)
   }
   val readData = Cat(io.sramReadData)
   val readDataRightShift = readData >> (readAddr.bits.addr(3,0) << 3)

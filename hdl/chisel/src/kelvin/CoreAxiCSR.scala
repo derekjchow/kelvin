@@ -17,7 +17,7 @@ package kelvin
 import chisel3._
 import chisel3.util._
 
-import bus.AxiMasterIO
+import bus.{AxiBurstType, AxiMasterIO}
 import common._
 
 class CoreAxiCSR(p: Parameters) extends Module {
@@ -45,10 +45,13 @@ class CoreAxiCSR(p: Parameters) extends Module {
   statusReg := Cat(io.fault, io.halted)
 
   val readAddr = RegInit(MakeValid(false.B, 0.U.asTypeOf(io.axi.read.addr.bits)))
+  val readBaseAddr = RegInit(0.U.asTypeOf(io.axi.read.addr.bits.addr))
   io.axi.read.addr.ready := !readAddr.valid
   val canRead = !readAddr.valid && io.axi.read.addr.valid
   when (canRead) {
     readAddr := MakeValid(true.B, io.axi.read.addr.bits)
+    val readMask = VecInit((0 until io.axi.read.addr.bits.addr.getWidth).map(x => !(x.U < io.axi.read.addr.bits.size)))
+    readBaseAddr := io.axi.read.addr.bits.addr & readMask.asUInt;
   }
 
   val readValid = RegInit(false.B)
@@ -56,7 +59,21 @@ class CoreAxiCSR(p: Parameters) extends Module {
   readValid := doRead
   io.axi.read.data.valid := readValid
   when (io.axi.read.data.fire) {
-    readAddr := MakeValid(false.B, 0.U.asTypeOf(io.axi.read.addr.bits))
+    when (io.axi.read.data.bits.last) {
+      readAddr := MakeValid(false.B, 0.U.asTypeOf(io.axi.read.addr.bits))
+    } .otherwise {
+      val (burst, burstValid) = AxiBurstType.safe(readAddr.bits.burst)
+      readAddr.bits.addr := MuxOR(burstValid, MuxLookup(burst, 0.U)(Seq(
+        AxiBurstType.FIXED -> readAddr.bits.addr,
+        AxiBurstType.INCR -> (readAddr.bits.addr +  (1.U << readAddr.bits.size)),
+        AxiBurstType.WRAP -> {
+          val newAddr = readAddr.bits.addr + (1.U << readAddr.bits.size)
+          val newAddrWrapped = Mux(newAddr >= readBaseAddr + (p.axi2DataBits / 8).U, readBaseAddr, newAddr)
+          newAddrWrapped(31,0)
+        }
+      )))
+      readAddr.bits.len := MuxOR(burstValid, readAddr.bits.len - 1.U)
+    }
   }
 
   val alignedAddr = (io.axi.read.addr.bits.addr >> io.axi.read.addr.bits.size) << io.axi.read.addr.bits.size
@@ -78,13 +95,16 @@ class CoreAxiCSR(p: Parameters) extends Module {
   io.axi.read.data.bits.data := Mux(readValid, (readData << readDataShift), 0.U)
   io.axi.read.data.bits.id := Mux(readAddr.valid, readAddr.bits.id, 0.U)
   io.axi.read.data.bits.resp := 0.U
-  io.axi.read.data.bits.last := true.B
+  io.axi.read.data.bits.last := Mux(readAddr.valid, readAddr.bits.len === 0.U, false.B)
 
   val writeAddr = RegInit(MakeValid(false.B, 0.U.asTypeOf(io.axi.write.addr.bits)))
+  val writeBaseAddr = RegInit(0.U.asTypeOf(io.axi.write.addr.bits.addr))
   io.axi.write.addr.ready := !writeAddr.valid
   val canWrite = !writeAddr.valid && io.axi.write.addr.valid
   when (canWrite) {
     writeAddr := MakeValid(true.B, io.axi.write.addr.bits)
+    val writeMask = VecInit((0 until io.axi.write.addr.bits.addr.getWidth).map(x => !(x.U < io.axi.write.addr.bits.size)))
+    writeBaseAddr := io.axi.write.addr.bits.addr & writeMask.asUInt
   }
 
   val writeData = RegInit(MakeValid(false.B, 0.U.asTypeOf(io.axi.write.data.bits)))
@@ -93,19 +113,28 @@ class CoreAxiCSR(p: Parameters) extends Module {
   when (canWriteData) {
     writeData := MakeValid(true.B, io.axi.write.data.bits)
   }
+  when (writeData.valid) {
+    writeData := MakeValid(false.B, 0.U.asTypeOf(io.axi.write.data.bits))
+    val (burst, burstValid) = AxiBurstType.safe(writeAddr.bits.burst)
+    writeAddr.bits.addr := MuxOR(burstValid, MuxLookup(burst, 0.U)(Seq(
+      AxiBurstType.FIXED -> writeAddr.bits.addr,
+      AxiBurstType.INCR -> (writeAddr.bits.addr + (1.U << writeAddr.bits.size)),
+      AxiBurstType.WRAP -> {
+        val newAddr = writeAddr.bits.addr + (1.U << writeAddr.bits.size)
+        val newAddrWrapped = Mux(newAddr >= writeBaseAddr + (p.axi2DataBits / 8).U, writeBaseAddr, newAddr)
+        newAddrWrapped(31,0)
+      },
+    )))
+    writeAddr.bits.len := MuxOR(burstValid, writeAddr.bits.len - 1.U)
+  }
 
   val doWrite = writeData.valid && writeAddr.valid
   val writeRespValid = RegInit(false.B)
-  val writeRespFired = RegInit(false.B)
-  writeRespValid := doWrite && !writeRespFired
+  writeRespValid := writeAddr.valid && writeData.valid && writeAddr.bits.len === 0.U && writeData.bits.last
   io.axi.write.resp.valid := writeRespValid
   when (io.axi.write.resp.fire) {
-    writeRespFired := true.B
     writeAddr := MakeValid(false.B, 0.U.asTypeOf(io.axi.write.addr.bits))
-  }
-  when (writeRespFired) {
-    writeRespFired := false.B
-    writeData := MakeValid(false.B, 0.U.asTypeOf(io.axi.write.data.bits))
+    writeBaseAddr := 0.U.asTypeOf(io.axi.write.addr.bits.addr)
   }
 
   io.axi.write.resp.bits.resp := 0.U

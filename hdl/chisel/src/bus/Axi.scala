@@ -17,6 +17,12 @@ package bus
 import chisel3._
 import chisel3.util._
 
+object AxiBurstType extends ChiselEnum {
+  val FIXED = Value(0.U)
+  val INCR = Value(1.U)
+  val WRAP = Value(2.U)
+}
+
 // ARM IHI 0022E, A2.2 / A2.5
 class AxiAddress(addrWidthBits: Int, dataWidthBits: Int, idBits: Int) extends Bundle {
   // "Required"

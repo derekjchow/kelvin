@@ -73,6 +73,7 @@ class CoreAxiCSRSpec extends AnyFreeSpec with ChiselScalatestTester {
       // Configure write address
       dut.io.axi.write.addr.valid.poke(true.B)
       dut.io.axi.write.addr.bits.addr.poke(0x4)
+      dut.io.axi.write.addr.bits.len.poke(0.U)
       assertResult(1) { dut.io.axi.write.addr.ready.peekInt() }
       dut.clock.step()
       dut.io.axi.write.addr.valid.poke(false.B)
@@ -81,6 +82,7 @@ class CoreAxiCSRSpec extends AnyFreeSpec with ChiselScalatestTester {
       // Configure write data
       dut.io.axi.write.data.bits.data.poke(0x20000000.U)
       dut.io.axi.write.data.bits.strb.poke(4.U)
+      dut.io.axi.write.data.bits.last.poke(true.B)
       dut.io.axi.write.data.valid.poke(true.B)
       dut.clock.step()
 
