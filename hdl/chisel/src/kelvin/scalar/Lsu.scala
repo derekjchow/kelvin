@@ -59,7 +59,6 @@ class LsuCtrl(p: Parameters) extends Bundle {
   val flushall = Bool()
   val sldst = Bool()  // scalar load/store cached
   val vldst = Bool()  // vector load/store
-  val suncd = Bool()  // scalar load/store uncached
   val regionType = MemoryRegionType()
 }
 
@@ -70,7 +69,6 @@ class LsuReadData(p: Parameters) extends Bundle {
   val sext = Bool()
   val iload = Bool()
   val sldst = Bool()
-  val suncd = Bool()
   val regionType = MemoryRegionType()
 }
 
@@ -87,9 +85,6 @@ class Lsu(p: Parameters) extends Module {
     val ibus = new IBusIO(p)
     val dbus = new DBusIO(p)
     val flush = new DFlushFenceiIO(p)
-
-    // Uncached interface.
-    val ubus = new DBusIO(p)
 
     // DBus that will eventually reach an external bus.
     // Intended for sending a transaction to an external
@@ -109,11 +104,6 @@ class Lsu(p: Parameters) extends Module {
 
   // Match and mask.
   val ctrlready = (1 to p.instructionLanes).reverse.map(x => ctrl.io.count <= (n - x).U)
-  // val ctrlready = Cat(
-  //   (1 to p.instructionLanes).reverse.map(
-  //     x => ctrl.io.count <= (n - x).U
-  //   )
-  // )
 
   for (i <- 0 until p.instructionLanes) {
     io.req(i).ready := ctrlready(i) && data.io.in.ready
@@ -127,14 +117,7 @@ class Lsu(p: Parameters) extends Module {
   // Control Port Inputs.
   ctrl.io.in.valid := io.req.map(_.valid).reduce(_||_)
 
-  // NB: Plan to remove uncacheable in the near future,
-  // but for now, preserve the uncached behaviour on Peripheral types
-  // to preserve the function of things like ChAI.
-  val uncacheable = p.m.filter(_.memType == MemoryRegionType.Peripheral)
   for (i <- 0 until p.instructionLanes) {
-    val uncached = io.busPort.addr(i)(31) ||
-      (if (uncacheable.length > 0) uncacheable.map(x => (io.busPort.addr(i) >= x.memStart.U) && (io.busPort.addr(i) < (x.memStart + x.memSize).U)).reduce(_||_) else false.B)
-
     val itcm = p.m.filter(_.memType == MemoryRegionType.IMEM)
                   .map(_.contains(io.busPort.addr(i))).reduceOption(_ || _).getOrElse(false.B)
     val dtcm = p.m.filter(_.memType == MemoryRegionType.DMEM)
@@ -160,7 +143,7 @@ class Lsu(p: Parameters) extends Module {
                      io.req(i).bits.op.isOneOf(LsuOp.LH, LsuOp.LHU, LsuOp.SH),
                      io.req(i).bits.op.isOneOf(LsuOp.LB, LsuOp.LBU, LsuOp.SB))
 
-    ctrl.io.in.bits(i).valid := io.req(i).valid && ctrlready(i) && !(opvldst && uncached)
+    ctrl.io.in.bits(i).valid := io.req(i).valid && ctrlready(i)
 
     ctrl.io.in.bits(i).bits.addr := io.busPort.addr(i)
     ctrl.io.in.bits(i).bits.adrx := io.busPort.addr(i) + lineoffset.U
@@ -172,9 +155,8 @@ class Lsu(p: Parameters) extends Module {
     ctrl.io.in.bits(i).bits.fencei   := opfencei
     ctrl.io.in.bits(i).bits.flushat  := opflushat
     ctrl.io.in.bits(i).bits.flushall := opflushall
-    ctrl.io.in.bits(i).bits.sldst := opsldst && !uncached
+    ctrl.io.in.bits(i).bits.sldst := opsldst
     ctrl.io.in.bits(i).bits.vldst := opvldst
-    ctrl.io.in.bits(i).bits.suncd := opsldst && uncached
     ctrl.io.in.bits(i).bits.write := !opload
     ctrl.io.in.bits(i).bits.regionType := MuxCase(MemoryRegionType.External, Array(
       dtcm -> MemoryRegionType.DMEM,
@@ -238,19 +220,10 @@ class Lsu(p: Parameters) extends Module {
   assert(!(io.ibus.valid && (ctrl.io.out.bits.regionType === MemoryRegionType.IMEM) && ctrl.io.out.bits.write))
   io.ibus.addr := ctrl.io.out.bits.addr
 
-  io.ubus.valid := ctrl.io.out.valid && ctrl.io.out.bits.suncd
-  io.ubus.write := ctrl.io.out.bits.write
-  io.ubus.addr  := Cat(0.U(1.W), ctrl.io.out.bits.addr(30,0))
-  io.ubus.adrx  := Cat(0.U(1.W), ctrl.io.out.bits.adrx(30,0))
-  io.ubus.size  := ctrl.io.out.bits.size
-  io.ubus.wdata := wdata
-  io.ubus.wmask := wmask
-  assert(!(io.ubus.valid && io.dbus.addr(31)))
-  assert(!(io.ubus.valid && io.dbus.adrx(31)))
 
   io.storeCount := PopCount(Cat(
     io.dbus.valid && io.dbus.write,
-    io.ubus.valid && io.ubus.write
+    io.ebus.valid && io.ebus.write
   ))
 
   io.flush.valid  := ctrl.io.out.valid && (ctrl.io.out.bits.fencei || ctrl.io.out.bits.flushat || ctrl.io.out.bits.flushall)
@@ -262,7 +235,6 @@ class Lsu(p: Parameters) extends Module {
                        io.dbus.valid && io.dbus.ready ||
                        io.ebus.valid && io.ebus.ready ||
                        io.ibus.valid && io.ibus.ready ||
-                       io.ubus.valid && io.ubus.ready ||
                        ctrl.io.out.bits.vldst && io.dbus.ready
 
   io.vldst := ctrl.io.out.valid && ctrl.io.out.bits.vldst
@@ -271,8 +243,7 @@ class Lsu(p: Parameters) extends Module {
   // Load response.
   data.io.in.valid := io.dbus.valid && io.dbus.ready && !io.dbus.write ||
                       io.ebus.valid && io.ebus.ready && !io.ebus.write ||
-                      io.ibus.valid && io.ibus.ready ||
-                      io.ubus.valid && io.ubus.ready && !io.ubus.write
+                      io.ibus.valid && io.ibus.ready
 
   data.io.in.bits.addr  := ctrl.io.out.bits.addr
   data.io.in.bits.index := ctrl.io.out.bits.index
@@ -280,7 +251,6 @@ class Lsu(p: Parameters) extends Module {
   data.io.in.bits.size  := ctrl.io.out.bits.size
   data.io.in.bits.iload := ctrl.io.out.bits.iload
   data.io.in.bits.sldst := ctrl.io.out.bits.sldst
-  data.io.in.bits.suncd := ctrl.io.out.bits.suncd
   data.io.in.bits.regionType := ctrl.io.out.bits.regionType
 
   data.io.out.ready := true.B
@@ -331,14 +301,13 @@ class Lsu(p: Parameters) extends Module {
     MemoryRegionType.IMEM -> io.ibus.rdata,
     MemoryRegionType.External -> io.ebus.rdata,
   ))
-  val rdata = RotSignExt(MuxOR(data.io.out.bits.sldst, srdata) |
-                         MuxOR(data.io.out.bits.suncd, io.ubus.rdata))
+  val rdata = RotSignExt(MuxOR(data.io.out.bits.sldst, srdata))
 
   // pass-through
   io.rd.valid := rvalid && data.io.out.bits.iload
   io.rd.bits.addr  := data.io.out.bits.index
   io.rd.bits.data  := rdata
 
-  assert(!ctrl.io.out.valid || PopCount(Cat(ctrl.io.out.bits.sldst, ctrl.io.out.bits.vldst, ctrl.io.out.bits.suncd)) <= 1.U)
-  assert(!data.io.out.valid || PopCount(Cat(data.io.out.bits.sldst, data.io.out.bits.suncd)) <= 1.U)
+  assert(!ctrl.io.out.valid || PopCount(Cat(ctrl.io.out.bits.sldst, ctrl.io.out.bits.vldst)) <= 1.U)
+  assert(!data.io.out.valid || PopCount(Cat(data.io.out.bits.sldst)) <= 1.U)
 }

@@ -189,11 +189,9 @@ chisel_library(
         "vector/VDot.scala",
         "vector/VEncodeOp.scala",
         "vector/VInst.scala",
-        "vector/VLd.scala",
         "vector/VLdSt.scala",
         "vector/VRegfile.scala",
         "vector/VRegfileSegment.scala",
-        "vector/VSt.scala",
     ],
     deps = [
         ":kelvin_base",
@@ -432,13 +430,6 @@ chisel_cc_library(
 )
 
 chisel_cc_library(
-    name = "vld_cc_library",
-    chisel_lib = ":kelvin",
-    emit_class = "kelvin.EmitVLd",
-    module_name = "VLd",
-)
-
-chisel_cc_library(
     name = "vregfile_cc_library",
     chisel_lib = ":kelvin",
     emit_class = "kelvin.EmitVRegfile",
@@ -450,11 +441,4 @@ chisel_cc_library(
     chisel_lib = ":kelvin",
     emit_class = "kelvin.EmitVRegfileSegment",
     module_name = "VRegfileSegment",
-)
-
-chisel_cc_library(
-    name = "vst_cc_library",
-    chisel_lib = ":kelvin",
-    emit_class = "kelvin.EmitVSt",
-    module_name = "VSt",
 )

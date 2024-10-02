@@ -31,18 +31,10 @@ object Axi2Sram {
 // AXI Bridge.
 class Axi2Sram(p: kelvin.Parameters) extends Module {
   val io = IO(new Bundle {
-    // Vector TCM
-    val in0 = if (p.enableVector) {
-      Some(Flipped(new AxiMasterIO(p.axiSysAddrBits, p.axiSysDataBits, p.axiSysIdBits)))
-    } else {
-      None
-    }
-    // Scalar DBus
-    val in1 = Flipped(new AxiMasterIO(p.axiSysAddrBits, p.axi2DataBits, p.axiSysIdBits))
     // L1DCache
-    val in2 = Flipped(new AxiMasterIO(p.axiSysAddrBits, p.axi1DataBits, p.axiSysIdBits))
+    val l1d = Flipped(new AxiMasterIO(p.axiSysAddrBits, p.axi1DataBits, p.axiSysIdBits))
     // L1ICache
-    val in3 = new Bundle {
+    val l1i = new Bundle {
       val read = Flipped(new AxiMasterReadIO(p.axiSysAddrBits, p.axi0DataBits, p.axiSysIdBits))
     }
     // SRAM port
@@ -112,23 +104,9 @@ class Axi2Sram(p: kelvin.Parameters) extends Module {
     val rdata  = UInt(p.axiSysDataBits.W)
   }, true)
 
-  val readInterfaces = if (p.enableVector) {
-    Seq(io.in0.get.read, io.in1.read, io.in2.read, io.in3.read)
-  } else {
-    Seq(io.in1.read, io.in2.read, io.in3.read)
-  }
-
-  val readIds = if (p.enableVector) {
-    Seq(0, 1, 2, 3)
-  } else {
-    Seq(0, 1, 2)
-  }
-
-  val writeInterfaces = if (p.enableVector) {
-    Seq(io.in0.get.write, io.in1.write, io.in2.write)
-  } else {
-    Seq(io.in1.write, io.in2.write)
-  }
+  val readInterfaces = Seq(io.l1d.read, io.l1i.read)
+  val readIds = Seq(0, 1)
+  val writeInterfaces = Seq(io.l1d.write)
   val readCv = readInterfaces.map(_.addr.valid)
   val writeCv = writeInterfaces.map(_.addr.valid)
   val readValid = readCv.reduce(_ || _)

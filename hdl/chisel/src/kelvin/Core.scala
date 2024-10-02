@@ -49,11 +49,6 @@ class Core(p: Parameters, moduleName: String) extends Module with RequireSyncRes
     // Bus between core and and external memories or peripherals.
     val ebus = new DBusIO(p)
 
-    val axi0 = if (p.enableVector) {
-      Some(new AxiMasterIO(p.axi2AddrBits, p.axi2DataBits, p.axi2IdBits))
-    } else { None }
-    val axi1 = new AxiMasterIO(p.axi2AddrBits, p.axi2DataBits, p.axi2IdBits)
-
     val iflush = new IFlushIO(p)
     val dflush = new DFlushIO(p)
     val slog = new SLogIO(p)
@@ -94,20 +89,6 @@ class Core(p: Parameters, moduleName: String) extends Module with RequireSyncRes
   } else {
     io.dbus <> score.io.dbus
   }
-
-  // ---------------------------------------------------------------------------
-  // Scalar DBus to AXI.
-  val dbus2axi = DBus2Axi(p)
-  dbus2axi.io.dbus <> score.io.ubus
-
-  // ---------------------------------------------------------------------------
-  // AXI ports.
-  if (p.enableVector) {
-    io.axi0.get.read  <> vcore.get.io.ld
-    io.axi0.get.write <> vcore.get.io.st
-  }
-
-  io.axi1 <> dbus2axi.io.axi
 }
 
 object EmitCore extends App {

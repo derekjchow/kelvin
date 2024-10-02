@@ -55,8 +55,6 @@ class VDecodeInstruction(p: Parameters) extends Module {
 
   val quad = m && x  // dual issue across ALUs
 
-  val uncached = addr(31)
-
   def DecodeFmt(f1: Int, f2: Int, mask: Int = 0): Bool = {
     assert(inst.getWidth == 32)
     val m2 = ~mask.U(6.W)  // unsigned, rounding, ...
@@ -604,9 +602,9 @@ class VDecodeInstruction(p: Parameters) extends Module {
 
   io.cmdq.alu  := vdup || vfmt0 || vfmt1 || vfmt2 || vfmt3 || vfmt4 || vfmt6 || vadwconv || adwinit
   io.cmdq.conv := aconv || vcget || acset || actr
-  io.cmdq.ldst := vldst && !uncached
-  io.cmdq.ld := vld && uncached
-  io.cmdq.st := (vst || vstq) && uncached
+  io.cmdq.ldst := vldst
+  io.cmdq.ld := false.B
+  io.cmdq.st := false.B
 
   val cmdqchk = Cat(io.undef, io.cmdq.alu, io.cmdq.conv, io.cmdq.ldst, io.cmdq.ld, io.cmdq.st)
   assert(PopCount(cmdqchk) === 1.U)

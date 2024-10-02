@@ -35,7 +35,6 @@ class SCore(p: Parameters) extends Module {
 
     val ibus = new IBusIO(p)
     val dbus = new DBusIO(p)
-    val ubus = new DBusIO(p)
     val ebus = new DBusIO(p)
 
     val vldst = if (p.enableVector) { Some(Output(Bool())) } else { None }
@@ -300,7 +299,6 @@ class SCore(p: Parameters) extends Module {
   // ---------------------------------------------------------------------------
   // Local Data Bus Port
   io.dbus <> lsu.io.dbus
-  io.ubus <> lsu.io.ubus
   io.ebus <> lsu.io.ebus
 
   if (p.enableVector) {

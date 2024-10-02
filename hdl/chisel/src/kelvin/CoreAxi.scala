@@ -180,7 +180,6 @@ class CoreAxi(p: Parameters, coreModuleName: String) extends RawModule {
     io.debug <> core.io.debug
 
     // Tie-offs
-    core.io.axi1 <> 0.U.asTypeOf(core.io.axi1)
     core.io.dflush.ready := true.B
     core.io.iflush.ready := false.B
   }

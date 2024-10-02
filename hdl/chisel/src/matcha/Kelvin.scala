@@ -114,12 +114,8 @@ class Kelvin(p: kelvin.Parameters, moduleName: String) extends RawModule {
 
     // -------------------------------------------------------------------------
     // Bus Mux.
-    if (p.enableVector) {
-      bus.io.in0.get <> core.io.axi0.get
-    }
-    bus.io.in1 <> core.io.axi1
-    bus.io.in2 <> l1d.io.axi
-    bus.io.in3.read <> l1i.io.axi.read
+    bus.io.l1d <> l1d.io.axi
+    bus.io.l1i.read <> l1i.io.axi.read
 
     // -------------------------------------------------------------------------
     // SRAM bridge.

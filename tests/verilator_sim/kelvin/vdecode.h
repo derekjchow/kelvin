@@ -107,8 +107,6 @@ struct vdecode_in_t {
     }
     return 0;
   }
-
-  uint8_t is_uncached() const { return ::is_uncached(addr); }
 };
 
 struct vdecode_out_t {
@@ -534,9 +532,9 @@ static void vldst(const vdecode_in_t& in, vdecode_out_t& out) {
   out.m = in.m();
   out.sv.addr = in.saddr();
   out.sv.data = in.data;
-  out.cmdq.ldst = !in.is_uncached();
-  out.cmdq.ld = vld && in.is_uncached();
-  out.cmdq.st = vst && in.is_uncached();
+  out.cmdq.ldst = true;
+  out.cmdq.ld = false;
+  out.cmdq.st = false;
   out.ractive = Active(in.vd(), in.m(), vst);
   out.wactive = Active(in.vd(), in.m(), vld);
 }

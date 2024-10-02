@@ -90,21 +90,3 @@ simplify software support. In an embedded setting, the L1Dcache provides half of
 the memory bandwidth to the ML outer-product engine when only a single external
 memory port is provided. Line and all entry flushing is supported where the core
 stalls until completion to simplify the contract.
-
-A shared VLdSt unit exists for cached accesses.
-
-## Uncached
-
-Note: It is not recommended to use intentional uncached accesses as
-`mmap_uncached` has been seen to be buggy.
-
-Memory may be accessed as uncached through the setting of a high address bit.
-This is for simple fine grain control over how load/store units are to access
-memory directly or through the L1 cache. We only allow aligned accesses of
-native register size (eg. scalar=32b, simd=256b) via uncached accesses direct to
-memory. This simplifies the hardware which is required to support a large window
-of outstanding read operations, but does impose complications on the software.
-The code must assume C `__restrict__` attributes for any memory accessed in this
-way.
-
-Separate VLd and VSt units exist for uncached accesses.

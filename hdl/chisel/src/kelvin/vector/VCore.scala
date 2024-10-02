@@ -36,10 +36,6 @@ class VCore(p: Parameters) extends Module {
     // Data bus interface.
     val dbus = new DBusIO(p)
     val last = Output(Bool())
-
-    // AXI interface.
-    val ld = new AxiMasterReadIO(p.axi2AddrBits, p.axi2DataBits, p.axi2IdBits)
-    val st = new AxiMasterWriteIO(p.axi2AddrBits, p.axi2DataBits, p.axi2IdBits)
   })
 
   // Decode    : VInst.in
@@ -55,25 +51,22 @@ class VCore(p: Parameters) extends Module {
   val valu   = VAlu(p)
   val vconv  = VConvCtrl(p)
   val vldst  = VLdSt(p)
-  val vld    = VLd(p)
-  val vst    = VSt(p)
   val vrf    = VRegfile(p)
 
   io.score.vrfwriteCount := vrf.io.vrfwriteCount
-  io.score.vstoreCount := vst.io.vstoreCount + vldst.io.vstoreCount
+  io.score.vstoreCount := vldst.io.vstoreCount
 
   vinst.io.in <> io.score.vinst
   vinst.io.rs <> io.score.rs
   vinst.io.rd <> io.score.rd
 
-  assert(PopCount(Cat(vst.io.read.valid && vst.io.read.ready,
-                      vldst.io.read.valid && vldst.io.read.ready)) <= 1.U)
+  assert(PopCount(Cat(vldst.io.read.valid && vldst.io.read.ready)) <= 1.U)
 
   // ---------------------------------------------------------------------------
   // VDecode.
   vdec.io.vrfsb <> vrf.io.vrfsb
 
-  vdec.io.active := valu.io.active | vconv.io.active | vldst.io.active | vst.io.active
+  vdec.io.active := valu.io.active | vconv.io.active | vldst.io.active
 
   vdec.io.in.valid := vinst.io.out.valid
   vinst.io.out.ready := vdec.io.in.ready
@@ -149,7 +142,7 @@ class VCore(p: Parameters) extends Module {
     vldst.io.in.bits(i).bits := vdec.io.out(i).bits
   }
 
-  vldst.io.read.ready := !vst.io.read.valid
+  vldst.io.read.ready := true.B
   vldst.io.read.data := vrf.io.read(vrf.readPorts - 1).data
 
   vldst.io.vrfsb := vrf.io.vrfsb.data
@@ -157,62 +150,25 @@ class VCore(p: Parameters) extends Module {
   io.dbus <> vldst.io.dbus
   io.last := vldst.io.last
 
-  // ---------------------------------------------------------------------------
-  // VLd.
-  val ldvalid = (0 until p.instructionLanes).map(x => vdec.io.cmdq(x).ld && vdec.io.out(x).valid)
-  val ldready = (0 until p.instructionLanes).map(x => vdec.io.cmdq(x).ld && vld.io.in.ready)
-
-  vld.io.in.valid := ldvalid.reduce(_ || _)
-
-  for (i <- 0 until p.instructionLanes) {
-    vld.io.in.bits(i).valid := ldvalid(i)
-    vld.io.in.bits(i).bits := vdec.io.out(i).bits
-  }
-
-  io.ld <> vld.io.axi
-
-  // ---------------------------------------------------------------------------
-  // VSt.
-  val stvalid = (0 until p.instructionLanes).map(x => vdec.io.out(x).valid && vdec.io.cmdq(x).st)
-  val stready = (0 until p.instructionLanes).map(x => vst.io.in.ready && vdec.io.cmdq(x).st)
-
-  vst.io.in.valid := stvalid.reduce(_ || _)
-
-  for (i <- 0 until p.instructionLanes) {
-    vst.io.in.bits(i).valid := stvalid(i)
-    vst.io.in.bits(i).bits := vdec.io.out(i).bits
-  }
-
-  io.st <> vst.io.axi
-
-  vst.io.vrfsb := vrf.io.vrfsb.data
-
-  vst.io.read.ready := true.B
-  vst.io.read.data := vrf.io.read(vrf.readPorts - 1).data
 
   // ---------------------------------------------------------------------------
   // Load write.
   vrf.io.write(vrf.readPorts - 3) := vldst.io.write
-  vrf.io.write(vrf.readPorts - 2) := vld.io.write
 
   // ---------------------------------------------------------------------------
   // Store read.
-  vrf.io.read(vrf.readPorts - 1).valid := vst.io.read.valid || vldst.io.read.valid
-  vrf.io.read(vrf.readPorts - 1).addr := Mux(vst.io.read.valid, vst.io.read.addr,
-                             vldst.io.read.addr)
-  vrf.io.read(vrf.readPorts - 1).tag := Mux(vst.io.read.valid, vst.io.read.tag,
-                            vldst.io.read.tag)
+  vrf.io.read(vrf.readPorts - 1).valid := vldst.io.read.valid
+  vrf.io.read(vrf.readPorts - 1).addr := vldst.io.read.addr
+  vrf.io.read(vrf.readPorts - 1).tag := vldst.io.read.tag
 
   // ---------------------------------------------------------------------------
   // VDecode.
   for (i <- 0 until p.instructionLanes) {
-    vdec.io.out(i).ready := aluready(i) || convready(i) || ldstready(i) ||
-                            ldready(i) || stready(i)
+    vdec.io.out(i).ready := aluready(i) || convready(i) || ldstready(i)
   }
 
   // ---------------------------------------------------------------------------
   // Memory active status.
-  io.score.mactive := vinst.io.nempty || vdec.io.nempty ||
-                      vld.io.nempty || vst.io.nempty
+  io.score.mactive := vinst.io.nempty || vdec.io.nempty
 }
 

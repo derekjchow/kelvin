@@ -65,12 +65,6 @@ constexpr int kUncBits = kVector;
 constexpr int kUncStrb = kVector / 8;
 constexpr int kUncId = 6;
 
-// Transaction is uncached (and bus width aligned).
-static uint8_t is_uncached(const uint32_t addr) {
-  // bit31==1 (0x80000000)
-  return (addr & (1u << 31)) != 0;
-}
-
 constexpr int kAlignedLsb = ctz(kVector / 8);
 
 #endif  // TESTS_VERILATOR_SIM_KELVIN_KELVIN_CFG_H_

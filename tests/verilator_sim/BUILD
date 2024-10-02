@@ -409,22 +409,6 @@ cc_test(
 )
 
 cc_test(
-    name = "vld_tb",
-    size = "small",
-    srcs = [
-        "kelvin/vld_tb.cc",
-        "@kelvin_hw//hdl/chisel/src/kelvin:VCore_parameters.h",
-    ],
-    deps = [
-        ":kelvin_if",
-        ":sim_libs",
-        ":util",
-        ":vencodeop",
-        "//hdl/chisel/src/kelvin:vld_cc_library",
-    ],
-)
-
-cc_test(
     name = "vregfilesegment_tb",
     size = "small",
     srcs = [
@@ -446,20 +430,5 @@ cc_test(
         ":kelvin_if",
         ":sim_libs",
         "//hdl/chisel/src/kelvin:vregfile_cc_library",
-    ],
-)
-
-cc_test(
-    name = "vst_tb",
-    srcs = [
-        "kelvin/vst_tb.cc",
-        "@kelvin_hw//hdl/chisel/src/kelvin:VCore_parameters.h",
-    ],
-    deps = [
-        ":kelvin_if",
-        ":sim_libs",
-        ":util",
-        ":vencodeop",
-        "//hdl/chisel/src/kelvin:vst_cc_library",
     ],
 )
