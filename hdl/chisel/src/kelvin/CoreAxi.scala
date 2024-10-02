@@ -95,15 +95,15 @@ class CoreAxi(p: Parameters, coreModuleName: String) extends RawModule {
     val core = withClockAndReset(cg.io.clk_o, csr.io.reset) { Core(p, coreModuleName) }
     csr.io.kelvin_csr := core.io.csr.out
 
-    val itcmBridge = Module(new AxiSlave2ChiselSRAM(p, log2Ceil(itcmEntries)))
+    val itcmBridge = Module(new AxiSlave2SRAM(p, log2Ceil(itcmEntries)))
 
-    itcmArbiter.io.in(0).bits.readwritePorts(0).address := itcmBridge.io.sramAddress
-    itcmArbiter.io.in(0).bits.readwritePorts(0).enable := itcmBridge.io.sramEnable
-    itcmArbiter.io.in(0).bits.readwritePorts(0).isWrite := itcmBridge.io.sramIsWrite
-    itcmArbiter.io.in(0).bits.readwritePorts(0).writeData := itcmBridge.io.sramWriteData
-    itcmArbiter.io.in(0).bits.readwritePorts(0).mask.get := itcmBridge.io.sramMask
+    itcmArbiter.io.in(0).bits.readwritePorts(0).address := itcmBridge.io.sram.address
+    itcmArbiter.io.in(0).bits.readwritePorts(0).enable := itcmBridge.io.sram.enable
+    itcmArbiter.io.in(0).bits.readwritePorts(0).isWrite := itcmBridge.io.sram.isWrite
+    itcmArbiter.io.in(0).bits.readwritePorts(0).writeData := itcmBridge.io.sram.writeData
+    itcmArbiter.io.in(0).bits.readwritePorts(0).mask.get := itcmBridge.io.sram.mask
     itcmArbiter.io.in(0).bits.readwritePorts(0).readData := itcm.io.rdata
-    itcmBridge.io.sramReadData := itcmArbiter.io.in(0).bits.readwritePorts(0).readData
+    itcmBridge.io.sram.readData := itcmArbiter.io.in(0).bits.readwritePorts(0).readData
 
     val lsb = log2Ceil(p.axi2DataBits / 8)
     itcmArbiter.io.in(1).bits.readwritePorts(0).address := core.io.ibus.addr(log2Ceil(itcmEntries) + lsb - 1, lsb)
@@ -132,16 +132,16 @@ class CoreAxi(p: Parameters, coreModuleName: String) extends RawModule {
     csr.io.fault := core.io.fault
     core.io.debug_req := true.B
 
-    val dtcmBridge = Module(new AxiSlave2ChiselSRAM(p, log2Ceil(dtcmEntries)))
+    val dtcmBridge = Module(new AxiSlave2SRAM(p, log2Ceil(dtcmEntries)))
     dtcmBridge.io.periBusy := core.io.dbus.valid
 
-    dtcmArbiter.io.in(0).bits.readwritePorts(0).address := dtcmBridge.io.sramAddress
-    dtcmArbiter.io.in(0).bits.readwritePorts(0).enable := dtcmBridge.io.sramEnable
-    dtcmArbiter.io.in(0).bits.readwritePorts(0).isWrite := dtcmBridge.io.sramIsWrite
-    dtcmArbiter.io.in(0).bits.readwritePorts(0).writeData := dtcmBridge.io.sramWriteData
-    dtcmArbiter.io.in(0).bits.readwritePorts(0).mask.get := dtcmBridge.io.sramMask
+    dtcmArbiter.io.in(0).bits.readwritePorts(0).address := dtcmBridge.io.sram.address
+    dtcmArbiter.io.in(0).bits.readwritePorts(0).enable := dtcmBridge.io.sram.enable
+    dtcmArbiter.io.in(0).bits.readwritePorts(0).isWrite := dtcmBridge.io.sram.isWrite
+    dtcmArbiter.io.in(0).bits.readwritePorts(0).writeData := dtcmBridge.io.sram.writeData
+    dtcmArbiter.io.in(0).bits.readwritePorts(0).mask.get := dtcmBridge.io.sram.mask
     dtcmArbiter.io.in(0).bits.readwritePorts(0).readData := dtcm.io.rdata
-    dtcmBridge.io.sramReadData := dtcmArbiter.io.in(0).bits.readwritePorts(0).readData
+    dtcmBridge.io.sram.readData := dtcmArbiter.io.in(0).bits.readwritePorts(0).readData
 
     dtcmArbiter.io.in(1).bits.readwritePorts(0).address := core.io.dbus.addr(log2Ceil(dtcmEntries) + lsb - 1, lsb)
     dtcmArbiter.io.in(1).bits.readwritePorts(0).enable := core.io.dbus.ready

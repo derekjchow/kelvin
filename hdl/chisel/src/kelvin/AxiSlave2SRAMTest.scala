@@ -19,25 +19,25 @@ import chisel3.util._
 import chiseltest._
 import org.scalatest.freespec.AnyFreeSpec
 
-class AxiSlave2ChiselSRAMSpec extends AnyFreeSpec with ChiselScalatestTester {
+class AxiSlave2SRAMSpec extends AnyFreeSpec with ChiselScalatestTester {
   var p = new Parameters
   p.enableVector = false
 
   "Initialization" in {
-    test(new AxiSlave2ChiselSRAM(p, 4)) { dut =>
+    test(new AxiSlave2SRAM(p, 4)) { dut =>
       assertResult(1) { dut.io.axi.read.addr.ready.peekInt() }
       assertResult(0) { dut.io.axi.read.data.valid.peekInt() }
       assertResult(1) { dut.io.axi.write.addr.ready.peekInt() }
       assertResult(1) { dut.io.axi.write.data.ready.peekInt() }
       assertResult(0) { dut.io.axi.write.resp.valid.peekInt() }
 
-      assertResult(0) { dut.io.sramEnable.peekInt() }
+      assertResult(0) { dut.io.sram.enable.peekInt() }
       assertResult(0) { dut.io.txnInProgress.peekInt() }
     }
   }
 
   "Read" in {
-    test (new AxiSlave2ChiselSRAM(p, 4)) { dut =>
+    test (new AxiSlave2SRAM(p, 4)) { dut =>
       // Configure Read Address
       dut.io.periBusy.poke(false.B)
       dut.io.axi.read.addr.valid.poke(true.B)
@@ -48,14 +48,14 @@ class AxiSlave2ChiselSRAMSpec extends AnyFreeSpec with ChiselScalatestTester {
       assertResult(0) { dut.io.axi.read.addr.ready.peekInt() }
       dut.clock.step()
       // Setup SRAM response, and read data response
-      dut.io.sramReadData((p.fetchDataBits / 8) - 1).poke(0xB0.U)
+      dut.io.sram.readData((p.fetchDataBits / 8) - 1).poke(0xB0.U)
       dut.io.axi.read.data.ready.poke(true.B)
-      assertResult(1) { dut.io.sramEnable.peekInt() }
+      assertResult(1) { dut.io.sram.enable.peekInt() }
       assertResult(1) { dut.io.axi.read.data.valid.peekInt() }
-      assertResult(0) { dut.io.sramIsWrite.peekInt() }
+      assertResult(0) { dut.io.sram.isWrite.peekInt() }
       assertResult(0xB0) { dut.io.axi.read.data.bits.data.peekInt() }
       assertResult(1) { dut.io.axi.read.data.bits.last.peekInt() }
-      assertResult((32 * 8) / p.fetchDataBits) { dut.io.sramAddress.peekInt() }
+      assertResult((32 * 8) / p.fetchDataBits) { dut.io.sram.address.peekInt() }
       dut.clock.step()
       dut.io.axi.read.data.ready.poke(false.B)
       dut.clock.step()
@@ -66,7 +66,7 @@ class AxiSlave2ChiselSRAMSpec extends AnyFreeSpec with ChiselScalatestTester {
   }
 
   "Write" in {
-    test (new AxiSlave2ChiselSRAM(p, 4)) { dut =>
+    test (new AxiSlave2SRAM(p, 4)) { dut =>
       // Configure write address
       dut.io.periBusy.poke(false.B)
       dut.io.axi.write.addr.valid.poke(true.B)
@@ -86,10 +86,10 @@ class AxiSlave2ChiselSRAMSpec extends AnyFreeSpec with ChiselScalatestTester {
       dut.clock.step()
       assertResult(0) { dut.io.axi.write.data.ready.peekInt() }
       dut.io.axi.write.data.valid.poke(false.B)
-      assertResult(1) { dut.io.sramEnable.peekInt() }
-      assertResult(1) { dut.io.sramIsWrite.peekInt() }
-      assertResult(0xB0) { dut.io.sramWriteData(0).peekInt() }
-      assertResult(1) { dut.io.sramMask(0).peekInt() }
+      assertResult(1) { dut.io.sram.enable.peekInt() }
+      assertResult(1) { dut.io.sram.isWrite.peekInt() }
+      assertResult(0xB0) { dut.io.sram.writeData(0).peekInt() }
+      assertResult(1) { dut.io.sram.mask(0).peekInt() }
 
       // Write response phase
       dut.io.axi.write.resp.ready.poke(true.B)

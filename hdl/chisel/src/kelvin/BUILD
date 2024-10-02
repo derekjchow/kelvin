@@ -103,7 +103,7 @@ chisel_test(
 chisel_test(
     name = "kelvin_core_axi_tests",
     srcs = [
-        "AxiSlave2ChiselSRAMTest.scala",
+        "AxiSlave2SRAMTest.scala",
         "CoreAxiCSRTest.scala",
         "CoreAxiSlaveMuxTest.scala",
     ],
@@ -241,7 +241,8 @@ chisel_library(
 chisel_library(
     name = "kelvin",
     srcs = [
-        "AxiSlave2ChiselSRAM.scala",
+        "AxiSlave.scala",
+        "AxiSlave2SRAM.scala",
         "Core.scala",
         "CoreAxi.scala",
         "CoreAxiCSR.scala",

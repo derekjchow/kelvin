@@ -21,8 +21,8 @@ import chiseltest.experimental.expose
 import org.scalatest.freespec.AnyFreeSpec
 
 class CoreAxiCSRWrapper(p: Parameters) extends CoreAxiCSR(p) {
-  val testResetReg = expose(resetReg)
-  val testPcStartReg = expose(pcStartReg)
+  val testResetReg = expose(csr.resetReg)
+  val testPcStartReg = expose(csr.pcStartReg)
 }
 
 class CoreAxiCSRSpec extends AnyFreeSpec with ChiselScalatestTester {

@@ -18,20 +18,16 @@ import chisel3._
 import chisel3.util._
 
 import bus.{AxiBurstType, AxiMasterIO}
+
 import common._
 
-class AxiSlave2ChiselSRAM(p: Parameters, sramAddressWidth: Int) extends Module {
+class AxiSlave(p: Parameters) extends Module {
   val io = IO(new Bundle{
     val axi = Flipped(new AxiMasterIO(p.axi2AddrBits, p.axi2DataBits, p.axi2IdBits))
-    val sramAddress = Output(UInt(sramAddressWidth.W))
-    val sramEnable = Output(Bool())
-    val sramIsWrite = Output(Bool())
-    val sramReadData = Input(Vec(p.axi2DataBits / 8, UInt(8.W)))
-    val sramWriteData = Output(Vec(p.axi2DataBits / 8, UInt(8.W)))
-    val sramMask = Output(Vec(p.axi2DataBits / 8, Bool()))
-    // Output indicating a transaction is progress (to force arbiter lock)
+    val fabric = new FabricIO(p)
+    // Output indicating that a transaction is in progress
     val txnInProgress = Output(Bool())
-    // Input to indicate that the arbiter is elsewhere -- gate our ready signals
+    // Input indicating that the peripheral is busy -- do not accept AXI transactions
     val periBusy = Input(Bool())
   })
 
@@ -63,9 +59,20 @@ class AxiSlave2ChiselSRAM(p: Parameters, sramAddressWidth: Int) extends Module {
           newAddrWrapped(31,0)
         }
       )))
-      readAddr.bits.len := MuxOR(burstValid, (readAddr.bits.len - 1.U))
+      readAddr.bits.len := MuxOR(burstValid, readAddr.bits.len - 1.U)
     }
   }
+  io.fabric.readDataAddr := MakeValid(readAddr.valid, readAddr.bits.addr)
+
+  val alignedAddrMask = VecInit((0 until io.axi.read.addr.bits.addr.getWidth).map(
+    x => !(x.U < io.axi.read.addr.bits.size)
+  ))
+  val alignedAddr = io.axi.read.addr.bits.addr & alignedAddrMask.asUInt
+  val readDataShift = ((io.axi.read.addr.bits.addr - alignedAddr) << 3.U)(8,0)
+  io.axi.read.data.bits.data := io.fabric.readData << readDataShift
+  io.axi.read.data.bits.id := Mux(readAddr.valid, readAddr.bits.id, 0.U)
+  io.axi.read.data.bits.resp := 0.U
+  io.axi.read.data.bits.last := Mux(readAddr.valid, readAddr.bits.len === 0.U, false.B)
 
   val writeAddr = RegInit(MakeValid(false.B, 0.U.asTypeOf(io.axi.write.addr.bits)))
   val writeBaseAddr = RegInit(0.U.asTypeOf(io.axi.write.addr.bits.addr))
@@ -95,8 +102,11 @@ class AxiSlave2ChiselSRAM(p: Parameters, sramAddressWidth: Int) extends Module {
         newAddrWrapped(31,0)
       },
     )))
-    writeAddr.bits.len := MuxOR(burstValid, (writeAddr.bits.len - 1.U))
+    writeAddr.bits.len := MuxOR(burstValid, writeAddr.bits.len - 1.U)
   }
+  io.fabric.writeDataAddr := MakeValid(writeData.valid, writeAddr.bits.addr)
+  io.fabric.writeDataBits := writeData.bits.data
+  io.fabric.writeDataStrb := writeData.bits.strb
 
   val doWrite = writeData.valid && writeAddr.valid
   val writeRespValid = RegInit(false.B)
@@ -106,42 +116,8 @@ class AxiSlave2ChiselSRAM(p: Parameters, sramAddressWidth: Int) extends Module {
     writeAddr := MakeValid(false.B, 0.U.asTypeOf(io.axi.write.addr.bits))
     writeBaseAddr := 0.U.asTypeOf(io.axi.write.addr.bits.addr)
   }
-  val readData = Cat(io.sramReadData)
-  val readDataRightShift = readData >> (readAddr.bits.addr(3,0) << 3)
-
-  val maxSize = log2Ceil(p.axi2DataBits / 8)
-  val readDataMask = Cat(
-    Cat((1 to maxSize).reverse.map(x => {
-      val width = (scala.math.pow(2, (x - 1)).toInt) * 8
-      (Mux(readAddr.bits.size >= x.U, -1.S(width.W).asUInt, 0.U(width.W)))
-    })),
-    "xFF".U(8.W)
-  )
-  io.axi.read.data.bits.data := Mux(readValid,
-    readDataRightShift & readDataMask,
-    0.U.asTypeOf(io.axi.read.data.bits.data))
-  io.axi.read.data.bits.id := Mux(readValid, readAddr.bits.id, 0.U.asTypeOf(io.axi.read.data.bits.id))
-  io.axi.read.data.bits.resp := 0.U
-  io.axi.read.data.bits.last := Mux(readValid, readAddr.bits.len === 0.U, false.B)
 
   io.axi.write.resp.bits.resp := 0.U
   io.axi.write.resp.bits.id := Mux(doWrite, writeAddr.bits.id, 0.U.asTypeOf(io.axi.write.resp.bits.id))
-
-  val lsb = log2Ceil(p.axi2DataBits / 8)
-  io.sramAddress := MuxCase(0.U, Array(
-    doWrite -> writeAddr.bits.addr(sramAddressWidth + lsb - 1, lsb),
-    readAddr.valid -> readAddr.bits.addr(sramAddressWidth + lsb - 1, lsb)
-  ))
-  io.sramEnable := (readAddr.valid || writeAddr.valid)
-  io.sramIsWrite := (writeAddr.valid && writeData.valid)
-  val dummyWriteData = RegInit(VecInit.fill(writeData.bits.data.getWidth / 8)(0.U(8.W)))
-  val writeDataLeftShift = (writeData.bits.data << (writeAddr.bits.addr(3,0) << 3))(writeData.bits.data.getWidth - 1,0)
-  val writeDataVec = UIntToVec(writeDataLeftShift, 8)
-  val writeStrbLeftShift = (writeData.bits.strb << (writeAddr.bits.addr(3,0)))(writeData.bits.strb.getWidth - 1,0)
-  val writeMaskData = VecInit(writeStrbLeftShift.asBools)
-  io.sramWriteData := Mux(doWrite, writeDataVec, dummyWriteData)
-  val readMaskData = RegInit(VecInit(Seq.fill(writeData.bits.data.getWidth / 8)(true.B)))
-  val maskData = Mux(doWrite, writeMaskData, readMaskData)
-  io.sramMask := maskData
   io.txnInProgress := readAddr.valid || writeAddr.valid
 }
