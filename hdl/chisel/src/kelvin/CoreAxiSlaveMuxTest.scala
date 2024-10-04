@@ -31,42 +31,42 @@ class CoreAxiSlaveMuxSpec extends AnyFreeSpec with ChiselScalatestTester {
   )
 
   "Initialization" in {
-    test(new CoreAxiSlaveMux(p, memoryRegions)) { dut =>
-      assertResult(0) { dut.io.axi_slave.read.addr.ready.peekInt() }
-      assertResult(0) { dut.io.axi_slave.read.data.valid.peekInt() }
-      assertResult(0) { dut.io.axi_slave.write.addr.ready.peekInt() }
-      assertResult(0) { dut.io.axi_slave.write.data.ready.peekInt() }
-      assertResult(0) { dut.io.axi_slave.write.resp.valid.peekInt() }
+    test(new CoreAxiSlaveMux(p, memoryRegions, 1)) { dut =>
+      assertResult(0) { dut.io.axi_slave(0).read.addr.ready.peekInt() }
+      assertResult(0) { dut.io.axi_slave(0).read.data.valid.peekInt() }
+      assertResult(0) { dut.io.axi_slave(0).write.addr.ready.peekInt() }
+      assertResult(0) { dut.io.axi_slave(0).write.data.ready.peekInt() }
+      assertResult(0) { dut.io.axi_slave(0).write.resp.valid.peekInt() }
     }
   }
 
   "Read" in {
-    test(new CoreAxiSlaveMux(p, memoryRegions)) { dut =>
-      dut.io.axi_slave.read.addr.valid.poke(true.B)
-      dut.io.axi_slave.read.addr.bits.addr.poke(0x2000.U)
+    test(new CoreAxiSlaveMux(p, memoryRegions, 1)) { dut =>
+      dut.io.axi_slave(0).read.addr.valid.poke(true.B)
+      dut.io.axi_slave(0).read.addr.bits.addr.poke(0x2000.U)
       dut.clock.step()
       assertResult(1) { dut.io.ports(1).read.addr.valid.peekInt() }
       dut.io.ports(1).read.addr.ready.poke(true.B)
-      assertResult(1) { dut.io.axi_slave.read.addr.ready.peekInt() }
+      assertResult(1) { dut.io.axi_slave(0).read.addr.ready.peekInt() }
       dut.clock.step()
-      dut.io.axi_slave.read.addr.valid.poke(false.B)
+      dut.io.axi_slave(0).read.addr.valid.poke(false.B)
       dut.clock.step()
-      assertResult(0) { dut.io.axi_slave.read.addr.valid.peekInt() }
+      assertResult(0) { dut.io.axi_slave(0).read.addr.valid.peekInt() }
     }
   }
 
   "Write" in {
-    test(new CoreAxiSlaveMux(p, memoryRegions)) { dut =>
-      dut.io.axi_slave.write.addr.valid.poke(true.B)
-      dut.io.axi_slave.write.addr.bits.addr.poke(0x2000.U)
+    test(new CoreAxiSlaveMux(p, memoryRegions, 1)) { dut =>
+      dut.io.axi_slave(0).write.addr.valid.poke(true.B)
+      dut.io.axi_slave(0).write.addr.bits.addr.poke(0x2000.U)
       dut.clock.step()
       assertResult(1) { dut.io.ports(1).write.addr.valid.peekInt() }
       dut.io.ports(1).write.addr.ready.poke(true.B)
-      assertResult(1) { dut.io.axi_slave.write.addr.ready.peekInt() }
+      assertResult(1) { dut.io.axi_slave(0).write.addr.ready.peekInt() }
       dut.clock.step()
-      dut.io.axi_slave.write.addr.valid.poke(false.B)
+      dut.io.axi_slave(0).write.addr.valid.poke(false.B)
       dut.clock.step()
-      assertResult(0) { dut.io.axi_slave.write.addr.valid.peekInt() }
+      assertResult(0) { dut.io.axi_slave(0).write.addr.valid.peekInt() }
     }
   }
 }

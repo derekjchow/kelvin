@@ -68,7 +68,8 @@ class AxiSlave(p: Parameters) extends Module {
     x => !(x.U < io.axi.read.addr.bits.size)
   ))
   val alignedAddr = io.axi.read.addr.bits.addr & alignedAddrMask.asUInt
-  val readDataShift = ((io.axi.read.addr.bits.addr - alignedAddr) << 3.U)(8,0)
+  val msb = log2Ceil(p.axi2DataBits) - 1
+  val readDataShift = ((io.axi.read.addr.bits.addr - alignedAddr) << 3.U)(msb,0)
   io.axi.read.data.bits.data := io.fabric.readData << readDataShift
   io.axi.read.data.bits.id := Mux(readAddr.valid, readAddr.bits.id, 0.U)
   io.axi.read.data.bits.resp := 0.U

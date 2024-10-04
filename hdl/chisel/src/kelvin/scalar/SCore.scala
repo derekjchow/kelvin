@@ -35,7 +35,7 @@ class SCore(p: Parameters) extends Module {
 
     val ibus = new IBusIO(p)
     val dbus = new DBusIO(p)
-    val ebus = new DBusIO(p)
+    val ebus = new EBusIO(p)
 
     val vldst = if (p.enableVector) { Some(Output(Bool())) } else { None }
     val vcore = if (p.enableVector) {

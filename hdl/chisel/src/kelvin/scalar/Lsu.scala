@@ -89,7 +89,7 @@ class Lsu(p: Parameters) extends Module {
     // DBus that will eventually reach an external bus.
     // Intended for sending a transaction to an external
     // peripheral, likely on TileLink or AXI.
-    val ebus = new DBusIO(p)
+    val ebus = new EBusIO(p)
 
     // Vector switch.
     val vldst = Output(Bool())
@@ -126,9 +126,6 @@ class Lsu(p: Parameters) extends Module {
                   .map(_.contains(io.busPort.addr(i))).reduceOption(_ || _).getOrElse(false.B)
     val external = !(itcm || dtcm || peri)
     assert(PopCount(Cat(itcm | dtcm | peri)) <= 1.U)
-    // NB: Should raise a load/store exception here.
-    assert(!(peri && io.req(i).valid && ctrlready(i)),
-           "Accessing internal peripherals via the memory interface is unsupported!")
 
     val opstore = io.req(i).bits.op.isOneOf(LsuOp.SW, LsuOp.SH, LsuOp.SB)
     val opiload = io.req(i).bits.op.isOneOf(LsuOp.LW, LsuOp.LH, LsuOp.LB, LsuOp.LHU, LsuOp.LBU)
@@ -207,13 +204,15 @@ class Lsu(p: Parameters) extends Module {
   assert(!(io.dbus.valid && io.dbus.addr(31)))
   assert(!(io.dbus.valid && io.dbus.adrx(31)))
 
-  io.ebus.valid := ctrl.io.out.valid && ctrl.io.out.bits.sldst && (ctrl.io.out.bits.regionType === MemoryRegionType.External)
-  io.ebus.write := ctrl.io.out.bits.write
-  io.ebus.addr := ctrl.io.out.bits.addr
-  io.ebus.adrx := ctrl.io.out.bits.adrx
-  io.ebus.size := ctrl.io.out.bits.size
-  io.ebus.wdata := wdata
-  io.ebus.wmask := wmask
+  io.ebus.dbus.valid := ctrl.io.out.valid && ctrl.io.out.bits.sldst &&
+    ((ctrl.io.out.bits.regionType === MemoryRegionType.External) || (ctrl.io.out.bits.regionType === MemoryRegionType.Peripheral))
+  io.ebus.dbus.write := ctrl.io.out.bits.write
+  io.ebus.dbus.addr := ctrl.io.out.bits.addr
+  io.ebus.dbus.adrx := ctrl.io.out.bits.adrx
+  io.ebus.dbus.size := ctrl.io.out.bits.size
+  io.ebus.dbus.wdata := wdata
+  io.ebus.dbus.wmask := wmask
+  io.ebus.internal := ctrl.io.out.bits.regionType === MemoryRegionType.Peripheral
 
   io.ibus.valid := ctrl.io.out.valid && ctrl.io.out.bits.sldst && (ctrl.io.out.bits.regionType === MemoryRegionType.IMEM)
   // TODO(atv): This should actually raise some sort of error, and trigger a store fault
@@ -223,7 +222,7 @@ class Lsu(p: Parameters) extends Module {
 
   io.storeCount := PopCount(Cat(
     io.dbus.valid && io.dbus.write,
-    io.ebus.valid && io.ebus.write
+    io.ebus.dbus.valid && io.ebus.dbus.write
   ))
 
   io.flush.valid  := ctrl.io.out.valid && (ctrl.io.out.bits.fencei || ctrl.io.out.bits.flushat || ctrl.io.out.bits.flushall)
@@ -233,7 +232,7 @@ class Lsu(p: Parameters) extends Module {
 
   ctrl.io.out.ready := io.flush.valid && io.flush.ready ||
                        io.dbus.valid && io.dbus.ready ||
-                       io.ebus.valid && io.ebus.ready ||
+                       io.ebus.dbus.valid && io.ebus.dbus.ready ||
                        io.ibus.valid && io.ibus.ready ||
                        ctrl.io.out.bits.vldst && io.dbus.ready
 
@@ -242,7 +241,7 @@ class Lsu(p: Parameters) extends Module {
   // ---------------------------------------------------------------------------
   // Load response.
   data.io.in.valid := io.dbus.valid && io.dbus.ready && !io.dbus.write ||
-                      io.ebus.valid && io.ebus.ready && !io.ebus.write ||
+                      io.ebus.dbus.valid && io.ebus.dbus.ready && !io.ebus.dbus.write ||
                       io.ibus.valid && io.ibus.ready
 
   data.io.in.bits.addr  := ctrl.io.out.bits.addr
@@ -299,7 +298,8 @@ class Lsu(p: Parameters) extends Module {
   val srdata = MuxLookup(regionType, 0.U.asTypeOf(io.dbus.rdata))(Seq(
     MemoryRegionType.DMEM -> io.dbus.rdata,
     MemoryRegionType.IMEM -> io.ibus.rdata,
-    MemoryRegionType.External -> io.ebus.rdata,
+    MemoryRegionType.External -> io.ebus.dbus.rdata,
+    MemoryRegionType.Peripheral -> io.ebus.dbus.rdata,
   ))
   val rdata = RotSignExt(MuxOR(data.io.out.bits.sldst, srdata))
 

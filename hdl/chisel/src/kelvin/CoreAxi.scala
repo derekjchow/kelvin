@@ -18,7 +18,7 @@ import chisel3._
 import chisel3.util._
 import chisel3.util.experimental.decode._
 
-import bus.{AxiAddress, AxiMasterIO, AxiMasterReadIO, AxiWriteData}
+import bus._
 import common._
 import _root_.circt.stage.ChiselStage
 
@@ -164,11 +164,26 @@ class CoreAxi(p: Parameters, coreModuleName: String) extends RawModule {
     dtcmArbiter.io.out.ready := true.B
 
     val ebus2axi = DBus2Axi(p)
-    ebus2axi.io.axi <> io.axi_master
-    ebus2axi.io.dbus <> core.io.ebus
+    ebus2axi.io.dbus <> core.io.ebus.dbus
+    ebus2axi.io.axi <> 0.U.asTypeOf(ebus2axi.io.axi)
 
-    val axi_mux = Module(new CoreAxiSlaveMux(p, memoryRegions))
-    axi_mux.io.axi_slave <> io.axi_slave
+    val axi_mux = Module(new CoreAxiSlaveMux(p, memoryRegions, 2))
+    axi_mux.io.axi_slave(0) <> io.axi_slave
+    axi_mux.io.axi_slave(1) <> 0.U.asTypeOf(axi_mux.io.axi_slave(1))
+
+    io.axi_master <> 0.U.asTypeOf(io.axi_master)
+
+    // If an internal transaction is issued on the EBUS,
+    // connect the AXI master interface to the internal
+    // peripheral mux.
+    when (core.io.ebus.internal) {
+      axi_mux.io.axi_slave(1) <> ebus2axi.io.axi
+      io.axi_master <> 0.U.asTypeOf(io.axi_master)
+    } .otherwise {
+      axi_mux.io.axi_slave(1) <> 0.U.asTypeOf(axi_mux.io.axi_slave(1))
+      io.axi_master <> ebus2axi.io.axi
+    }
+
     axi_mux.io.ports(0) <> itcmBridge.io.axi
     axi_mux.io.ports(1) <> dtcmBridge.io.axi
     axi_mux.io.ports(2) <> csr.io.axi

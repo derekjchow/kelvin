@@ -20,10 +20,10 @@ import chisel3.util._
 import bus.AxiMasterIO
 import common._
 
-class CoreAxiSlaveMux(p: Parameters, regions: Seq[MemoryRegion]) extends Module {
+class CoreAxiSlaveMux(p: Parameters, regions: Seq[MemoryRegion], sourceCount: Int) extends Module {
   val portCount = regions.length
   val io = IO(new Bundle {
-    val axi_slave = Flipped(new AxiMasterIO(p.axi2AddrBits, p.axi2DataBits, p.axi2IdBits))
+    val axi_slave = Vec(sourceCount, Flipped(new AxiMasterIO(p.axi2AddrBits, p.axi2DataBits, p.axi2IdBits)))
     val ports = Vec(portCount, new AxiMasterIO(p.axi2AddrBits, p.axi2DataBits, p.axi2IdBits))
   })
 
@@ -33,41 +33,51 @@ class CoreAxiSlaveMux(p: Parameters, regions: Seq[MemoryRegion]) extends Module 
   // gap: (base + 0x4000, base + 0x8000)
   // DTCM: (base + 0x8000, base + 0x10000)
   val portTieOff = 0.U.asTypeOf(io.ports(0))
+  val sourceTieOff = 0.U.asTypeOf(io.axi_slave(0))
   val readTarget = RegInit(0.U(portCount.W))
-  when (io.axi_slave.read.addr.valid && !readTarget.orR) {
-    val contains = VecInit(regions.map(_.contains(io.axi_slave.read.addr.bits.addr))).asUInt
+  val readSource = RegInit(0.U(sourceCount.W))
+  val readAddrValids = VecInit(io.axi_slave.map(_.read.addr.valid)).asUInt
+  when (readAddrValids.orR && !readTarget.orR) {
+    val source = PriorityEncoderOH(readAddrValids)
+    readSource := source
+    val contains = VecInit(regions.map(_.contains(io.axi_slave(OHToUInt(source)).read.addr.bits.addr))).asUInt
     assert(PopCount(contains) <= 1.U)
     readTarget := contains
   }
 
   for (i <- 0 until portCount) {
     when (readTarget(i)) {
-      io.ports(i).read.addr <> io.axi_slave.read.addr
-      io.ports(i).read.addr.bits.addr := io.axi_slave.read.addr.bits.addr & ~regions(i).memStart.U(p.fetchAddrBits.W)
-      io.axi_slave.read.data <> io.ports(i).read.data
+      io.ports(i).read.addr <> io.axi_slave(OHToUInt(readSource)).read.addr
+      io.ports(i).read.addr.bits.addr := io.axi_slave(OHToUInt(readSource)).read.addr.bits.addr & ~regions(i).memStart.U(p.fetchAddrBits.W)
+      io.axi_slave(OHToUInt(readSource)).read.data <> io.ports(i).read.data
     } .otherwise {
       io.ports(i).read.addr <> portTieOff.read.addr
       portTieOff.read.data <> io.ports(i).read.data
     }
   }
 
-  when (io.axi_slave.read.data.fire && io.axi_slave.read.data.bits.last) {
+  when (io.axi_slave(OHToUInt(readSource)).read.data.fire && io.axi_slave(OHToUInt(readSource)).read.data.bits.last) {
     readTarget := 0.U(portCount.W)
+    readSource := 0.U(sourceCount.W)
   }
 
   val writeTarget = RegInit(0.U(portCount.W))
-  when (io.axi_slave.write.addr.valid && !writeTarget.orR) {
-    val contains = VecInit(regions.map(_.contains(io.axi_slave.write.addr.bits.addr))).asUInt
+  val writeSource = RegInit(0.U(sourceCount.W))
+  val writeAddrValids = VecInit(io.axi_slave.map(_.write.addr.valid)).asUInt
+  when (writeAddrValids.orR && !writeTarget.orR) {
+    val source = PriorityEncoderOH(writeAddrValids)
+    writeSource := source
+    val contains = VecInit(regions.map(_.contains(io.axi_slave(OHToUInt(source)).write.addr.bits.addr))).asUInt
     assert(PopCount(contains) <= 1.U)
     writeTarget := contains
   }
 
   for (i <- 0 until portCount) {
     when (writeTarget(i)) {
-      io.ports(i).write.addr <> io.axi_slave.write.addr
-      io.ports(i).write.addr.bits.addr := io.axi_slave.write.addr.bits.addr & ~regions(i).memStart.U(p.fetchAddrBits.W)
-      io.ports(i).write.data <> io.axi_slave.write.data
-      io.axi_slave.write.resp <> io.ports(i).write.resp
+      io.ports(i).write.addr <> io.axi_slave(OHToUInt(writeSource)).write.addr
+      io.ports(i).write.addr.bits.addr := io.axi_slave(OHToUInt(writeSource)).write.addr.bits.addr & ~regions(i).memStart.U(p.fetchAddrBits.W)
+      io.ports(i).write.data <> io.axi_slave(OHToUInt(writeSource)).write.data
+      io.axi_slave(OHToUInt(writeSource)).write.resp <> io.ports(i).write.resp
     } .otherwise {
       io.ports(i).write.addr <> portTieOff.write.addr
       io.ports(i).write.data <> portTieOff.write.data
@@ -75,28 +85,39 @@ class CoreAxiSlaveMux(p: Parameters, regions: Seq[MemoryRegion]) extends Module 
     }
   }
 
-  when (io.axi_slave.write.resp.fire) {
+  when (io.axi_slave(OHToUInt(writeSource)).write.resp.fire) {
     writeTarget := 0.U(portCount.W)
+    writeSource := 0.U(sourceCount.W)
   }
 
-  io.axi_slave.write.addr.ready :=
-    Mux(writeTarget.orR, io.ports(OHToUInt(writeTarget)).write.addr.ready, false.B)
+  for (i <- 0 until sourceCount) {
+    io.axi_slave(i).write.addr.ready :=
+      Mux(writeTarget.orR && OHToUInt(writeSource) === i.U,
+          io.ports(OHToUInt(writeTarget)).write.addr.ready, false.B)
 
-  io.axi_slave.write.data.ready :=
-    Mux(writeTarget.orR, io.ports(OHToUInt(writeTarget)).write.data.ready, false.B)
+    io.axi_slave(i).write.data.ready :=
+      Mux(writeTarget.orR && OHToUInt(writeSource) === i.U,
+          io.ports(OHToUInt(writeTarget)).write.data.ready, false.B)
 
-  io.axi_slave.write.resp.valid :=
-    Mux(writeTarget.orR, io.ports(OHToUInt(writeTarget)).write.resp.valid, false.B)
-  io.axi_slave.write.resp.bits.id :=
-    Mux(writeTarget.orR, io.ports(OHToUInt(writeTarget)).write.resp.bits.id, 0.U)
-  io.axi_slave.write.resp.bits.resp :=
-    Mux(writeTarget.orR, io.ports(OHToUInt(writeTarget)).write.resp.bits.resp, 0.U)
+    io.axi_slave(i).write.resp.valid :=
+      Mux(writeTarget.orR && OHToUInt(writeSource) === i.U,
+          io.ports(OHToUInt(writeTarget)).write.resp.valid, false.B)
+    io.axi_slave(i).write.resp.bits.id :=
+      Mux(writeTarget.orR && OHToUInt(writeSource) === i.U,
+          io.ports(OHToUInt(writeTarget)).write.resp.bits.id, 0.U)
+    io.axi_slave(i).write.resp.bits.resp :=
+      Mux(writeTarget.orR && OHToUInt(writeSource) === i.U,
+          io.ports(OHToUInt(writeTarget)).write.resp.bits.resp, 0.U)
 
-  io.axi_slave.read.addr.ready :=
-    Mux(readTarget.orR, io.ports(OHToUInt(readTarget)).read.addr.ready, false.B)
+    io.axi_slave(i).read.addr.ready :=
+      Mux(readTarget.orR && OHToUInt(readSource) === i.U,
+          io.ports(OHToUInt(readTarget)).read.addr.ready, false.B)
 
-  io.axi_slave.read.data.valid :=
-    Mux(readTarget.orR, io.ports(OHToUInt(readTarget)).read.data.valid, false.B)
-  io.axi_slave.read.data.bits :=
-    Mux(readTarget.orR, io.ports(OHToUInt(readTarget)).read.data.bits, 0.U.asTypeOf(io.axi_slave.read.data.bits))
+    io.axi_slave(i).read.data.valid :=
+      Mux(readTarget.orR && OHToUInt(readSource) === i.U,
+          io.ports(OHToUInt(readTarget)).read.data.valid, false.B)
+    io.axi_slave(i).read.data.bits :=
+      Mux(readTarget.orR && OHToUInt(readSource) === i.U,
+          io.ports(OHToUInt(readTarget)).read.data.bits, 0.U.asTypeOf(io.axi_slave(i).read.data.bits))
+  }
 }

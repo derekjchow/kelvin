@@ -47,7 +47,7 @@ class Core(p: Parameters, moduleName: String) extends Module with RequireSyncRes
     // Bus between core and data memories.
     val dbus = new DBusIO(p)
     // Bus between core and and external memories or peripherals.
-    val ebus = new DBusIO(p)
+    val ebus = new EBusIO(p)
 
     val iflush = new IFlushIO(p)
     val dflush = new DFlushIO(p)

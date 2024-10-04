@@ -119,6 +119,11 @@ class DBusIO(p: Parameters, bank: Boolean = false) extends Bundle {
   val rdata = Input(UInt(p.lsuDataBits.W))
 }
 
+class EBusIO(p: Parameters) extends Bundle {
+  val dbus = new DBusIO(p)
+  val internal = Output(Bool())
+}
+
 class IFlushIO(p: Parameters) extends Bundle {
   val valid = Output(Bool())
   val ready = Input(Bool())
