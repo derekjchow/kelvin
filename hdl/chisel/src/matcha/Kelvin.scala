@@ -91,6 +91,7 @@ class Kelvin(p: kelvin.Parameters, moduleName: String) extends RawModule {
     finish   := core.io.halted
     host_req := false.B
     fault    := core.io.fault
+    core.io.irq := false.B
 
     // -------------------------------------------------------------------------
     // Scalar Core logging.

@@ -32,6 +32,8 @@ class SCore(p: Parameters) extends Module {
     val csr = new CsrInOutIO(p)
     val halted = Output(Bool())
     val fault = Output(Bool())
+    val wfi = Output(Bool())
+    val irq = Input(Bool())
 
     val ibus = new IBusIO(p)
     val dbus = new DBusIO(p)
@@ -108,7 +110,7 @@ class SCore(p: Parameters) extends Module {
     decode(i).io.inst.bits.brchFwd := fetch.io.inst.lanes(i).bits.brchFwd
 
     decode(i).io.branchTaken := branchTaken
-    decode(i).io.halted := csr.io.halted
+    decode(i).io.halted := csr.io.halted || csr.io.wfi
   }
 
   // Interlock based on regfile write port dependencies.
@@ -184,6 +186,8 @@ class SCore(p: Parameters) extends Module {
   // Status
   io.halted := csr.io.halted
   io.fault  := csr.io.fault
+  io.wfi    := csr.io.wfi
+  csr.io.irq := io.irq
 
   // ---------------------------------------------------------------------------
   // Load/Store Unit

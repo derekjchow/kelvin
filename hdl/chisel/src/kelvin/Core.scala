@@ -40,6 +40,8 @@ class Core(p: Parameters, moduleName: String) extends Module with RequireSyncRes
     val csr = new CsrInOutIO(p)
     val halted = Output(Bool())
     val fault = Output(Bool())
+    val wfi = Output(Bool())
+    val irq = Input(Bool())
     val debug_req = Input(Bool())
 
     // Bus between core and instruction memories.
@@ -66,6 +68,8 @@ class Core(p: Parameters, moduleName: String) extends Module with RequireSyncRes
   io.ebus   <> score.io.ebus
   io.halted := score.io.halted
   io.fault  := score.io.fault
+  io.wfi    := score.io.wfi
+  score.io.irq := io.irq
   io.iflush <> score.io.iflush
   io.dflush <> score.io.dflush
   io.slog   := score.io.slog

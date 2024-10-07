@@ -42,6 +42,8 @@ class CoreAxi(p: Parameters, coreModuleName: String) extends RawModule {
     // Core status interrupts
     val halted = Output(Bool())
     val fault = Output(Bool())
+    val wfi = Output(Bool())
+    val irqn = Input(Bool())
     // Debug data interface
     val debug = new DebugIO(p)
     // String logging interface
@@ -91,8 +93,8 @@ class CoreAxi(p: Parameters, coreModuleName: String) extends RawModule {
     val csr = Module(new CoreAxiCSR(p))
     val cg = Module(new ClockGate())
     cg.io.clk_i := io.aclk
-    cg.io.enable := !csr.io.cg
     val core = withClockAndReset(cg.io.clk_o, csr.io.reset) { Core(p, coreModuleName) }
+    cg.io.enable := !io.irqn || (!csr.io.cg && !core.io.wfi)
     csr.io.kelvin_csr := core.io.csr.out
 
     val itcmBridge = Module(new AxiSlave2SRAM(p, log2Ceil(itcmEntries)))
@@ -128,6 +130,8 @@ class CoreAxi(p: Parameters, coreModuleName: String) extends RawModule {
     itcmBridge.io.periBusy := core.io.ibus.valid
     io.halted := core.io.halted
     io.fault := core.io.fault
+    io.wfi := core.io.wfi
+    core.io.irq := !io.irqn
     csr.io.halted := core.io.halted
     csr.io.fault := core.io.fault
     core.io.debug_req := true.B
@@ -196,6 +200,6 @@ class CoreAxi(p: Parameters, coreModuleName: String) extends RawModule {
 
     // Tie-offs
     core.io.dflush.ready := true.B
-    core.io.iflush.ready := false.B
+    core.io.iflush.ready := true.B
   }
 }

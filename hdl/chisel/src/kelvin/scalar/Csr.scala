@@ -55,6 +55,7 @@ class CsrBruIO(p: Parameters) extends Bundle {
     val mtval  = Valid(UInt(32.W))
     val halt   = Output(Bool())
     val fault  = Output(Bool())
+    val wfi    = Output(Bool())
   }
   val out = new Bundle {
     val mode  = Input(CsrMode())
@@ -97,6 +98,8 @@ class Csr(p: Parameters) extends Module {
     // Pipeline Control.
     val halted = Output(Bool())
     val fault  = Output(Bool())
+    val wfi    = Output(Bool())
+    val irq    = Input(Bool())
   })
 
   // Control registers.
@@ -104,7 +107,8 @@ class Csr(p: Parameters) extends Module {
 
   // Pipeline Control.
   val halted = RegInit(false.B)
-  val fault = RegInit(false.B)
+  val fault  = RegInit(false.B)
+  val wfi    = RegInit(false.B)
 
   // Machine(0)/User(1) Mode.
   val mode = RegInit(CsrMode.Machine)
@@ -194,10 +198,13 @@ class Csr(p: Parameters) extends Module {
     fault := true.B
   }
 
+  wfi := Mux(wfi, !io.irq, io.bru.in.wfi)
+
   io.halted := halted
   io.fault  := fault
+  io.wfi    := wfi
 
-  assert(!(io.fault && !io.halted))
+  assert(!(io.fault && !io.halted && !io.wfi))
 
   // Register state.
   val rs1 = io.rs1.data

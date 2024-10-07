@@ -231,6 +231,8 @@ class Decode(p: Parameters, pipeline: Int) extends Module {
   // The decode logic.
   val d = DecodeInstruction(p, pipeline, io.inst.bits.addr, io.inst.bits.inst)
 
+  val wfi = d.wfi
+
   val vldst = d.vld || d.vst
   val vldst_wb = vldst && io.inst.bits.inst(28)
 
@@ -334,6 +336,7 @@ class Decode(p: Parameters, pipeline: Int) extends Module {
     d.mpause -> MakeValid(true.B, BruOp.MPAUSE),
     d.mret   -> MakeValid(true.B, BruOp.MRET),
     d.fencei -> MakeValid(true.B, BruOp.FENCEI),
+    d.wfi    -> MakeValid(true.B, BruOp.WFI),
     d.undef  -> MakeValid(true.B, BruOp.UNDEF),
   ))
   io.bru.valid := decodeEn && bru.valid
@@ -365,10 +368,10 @@ class Decode(p: Parameters, pipeline: Int) extends Module {
     d.sb             -> MakeValid(true.B, LsuOp.SB),
     d.sh             -> MakeValid(true.B, LsuOp.SH),
     d.sw             -> MakeValid(true.B, LsuOp.SW),
+    d.wfi            -> MakeValid(true.B, LsuOp.FENCEI),
     d.fencei         -> MakeValid(true.B, LsuOp.FENCEI),
     d.flushat        -> MakeValid(true.B, LsuOp.FLUSHAT),
     d.flushall       -> MakeValid(true.B, LsuOp.FLUSHALL),
-    d.wfi            -> MakeValid(true.B, LsuOp.FENCEI),
     (d.vld || d.vst) -> MakeValid(true.B, LsuOp.VLDST),
   ))
   io.lsu.valid := decodeEn && lsu.valid

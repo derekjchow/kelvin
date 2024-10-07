@@ -56,6 +56,8 @@ static void Core_run(const char* name, const char* bin, const int cycles,
 
   sc_signal<bool> io_halted;
   sc_signal<bool> io_fault;
+  sc_signal<bool> io_wfi;
+  sc_signal<bool> io_irq;
   sc_signal<bool> io_debug_req;
   sc_signal<bool> io_ibus_valid;
   sc_signal<bool> io_ibus_ready;
@@ -129,6 +131,8 @@ static void Core_run(const char* name, const char* bin, const int cycles,
   core.reset(tb.reset);
   core.io_halted(io_halted);
   core.io_fault(io_fault);
+  core.io_wfi(io_wfi);
+  core.io_irq(io_irq);
   core.io_debug_req(io_debug_req);
   core.io_ibus_valid(io_ibus_valid);
   core.io_ibus_ready(io_ibus_ready);

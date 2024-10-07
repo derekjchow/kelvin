@@ -41,6 +41,7 @@ object BruOp extends ChiselEnum {
   val MPAUSE = Value
   val MRET = Value
   val FENCEI = Value
+  val WFI = Value
   val UNDEF = Value
 }
 
@@ -127,7 +128,7 @@ class Bru(p: Parameters) extends Module {
       mret -> io.csr.out.mepc,
       ecall -> Cat(io.csr.out.mtvec(31,1), 0.U(1.W)),
       call -> io.csr.out.mepc,
-      (io.req.bits.fwd || (io.req.bits.op === BruOp.FENCEI)) -> pc4De,
+      (io.req.bits.fwd || (io.req.bits.op === BruOp.FENCEI) || (io.req.bits.op === BruOp.WFI)) -> pc4De,
       (io.req.bits.op === BruOp.JALR) -> io.target.data,
   ))
   stateReg.valid := io.req.valid
@@ -166,6 +167,7 @@ class Bru(p: Parameters) extends Module {
     BruOp.BGE    -> (ge  =/= stateReg.bits.fwd),
     BruOp.BLTU   -> (ltu =/= stateReg.bits.fwd),
     BruOp.BGEU   -> (geu =/= stateReg.bits.fwd),
+    BruOp.WFI    -> true.B,
   ))
   io.taken.value := stateReg.bits.target
 
@@ -217,17 +219,18 @@ class Bru(p: Parameters) extends Module {
   io.csr.in.mtval.valid := stateReg.valid && (undefFault || usageFault)
   io.csr.in.mtval.bits := stateReg.bits.pcEx
 
-  io.iflush := stateReg.valid && (op === BruOp.FENCEI)
+  io.iflush := stateReg.valid && op.isOneOf(BruOp.FENCEI, BruOp.WFI)
 
   // Pipeline will be halted.
   io.csr.in.halt := (stateReg.valid && (op === BruOp.MPAUSE) && (mode === CsrMode.Machine)) ||
                     io.csr.in.fault
   io.csr.in.fault := (undefFault && (mode === CsrMode.Machine)) || (usageFault && (mode === CsrMode.Machine))
+  io.csr.in.wfi := stateReg.valid && (op === BruOp.WFI)
 
   // Assertions.
   val ignore = op.isOneOf(BruOp.JAL, BruOp.JALR, BruOp.EBREAK, BruOp.ECALL,
                           BruOp.EEXIT, BruOp.EYIELD, BruOp.ECTXSW, BruOp.MPAUSE,
-                          BruOp.MRET, BruOp.FENCEI, BruOp.UNDEF)
+                          BruOp.MRET, BruOp.FENCEI, BruOp.UNDEF, BruOp.WFI)
 
   assert(!(stateReg.valid && !io.rs1.valid) || ignore)
   assert(!(stateReg.valid && !io.rs2.valid) || ignore)

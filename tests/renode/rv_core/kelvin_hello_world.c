@@ -54,6 +54,7 @@ int main(int argc, char *argv[]) {
   print_uint32(*our_pc_csr);
   print_string("beefb0ba\n");
   print_uint32(0xb0bacafeL);
+  asm volatile("wfi");
   asm volatile(".word 0x26000077");  // flushall
   return 0;
 }
