@@ -17,7 +17,7 @@ package kelvin
 import chisel3._
 import chisel3.util._
 
-import bus.{AxiBurstType, AxiMasterIO}
+import bus.{AxiBurstType, AxiMasterIO, AxiResponseType}
 
 import common._
 
@@ -70,9 +70,10 @@ class AxiSlave(p: Parameters) extends Module {
   val alignedAddr = io.axi.read.addr.bits.addr & alignedAddrMask.asUInt
   val msb = log2Ceil(p.axi2DataBits) - 1
   val readDataShift = ((io.axi.read.addr.bits.addr - alignedAddr) << 3.U)(msb,0)
-  io.axi.read.data.bits.data := io.fabric.readData << readDataShift
+  io.axi.read.data.bits.data := io.fabric.readData.bits << readDataShift
   io.axi.read.data.bits.id := Mux(readAddr.valid, readAddr.bits.id, 0.U)
-  io.axi.read.data.bits.resp := 0.U
+  // If readData is valid, return AXI OK. Otherwise, return AXI SLVERR.
+  io.axi.read.data.bits.resp := Mux(io.fabric.readData.valid, AxiResponseType.OKAY.asUInt, AxiResponseType.SLVERR.asUInt);
   io.axi.read.data.bits.last := Mux(readAddr.valid, readAddr.bits.len === 0.U, false.B)
 
   val writeAddr = RegInit(MakeValid(false.B, 0.U.asTypeOf(io.axi.write.addr.bits)))
@@ -112,13 +113,16 @@ class AxiSlave(p: Parameters) extends Module {
   val doWrite = writeData.valid && writeAddr.valid
   val writeRespValid = RegInit(false.B)
   writeRespValid := writeAddr.valid && writeData.valid && writeAddr.bits.len === 0.U && writeData.bits.last
+  val writeResp = RegInit(false.B)
+  writeResp := io.fabric.writeResp
   io.axi.write.resp.valid := writeRespValid
+  // If writeResp is true, return AXI OK. Otherwise, return AXI SLVERR.
+  io.axi.write.resp.bits.resp := Mux(writeResp, AxiResponseType.OKAY.asUInt, AxiResponseType.SLVERR.asUInt)
   when (io.axi.write.resp.fire) {
     writeAddr := MakeValid(false.B, 0.U.asTypeOf(io.axi.write.addr.bits))
     writeBaseAddr := 0.U.asTypeOf(io.axi.write.addr.bits.addr)
   }
 
-  io.axi.write.resp.bits.resp := 0.U
   io.axi.write.resp.bits.id := Mux(doWrite, writeAddr.bits.id, 0.U.asTypeOf(io.axi.write.resp.bits.id))
   io.txnInProgress := readAddr.valid || writeAddr.valid
 }

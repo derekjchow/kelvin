@@ -70,7 +70,7 @@ class AxiSlave2SRAMSpec extends AnyFreeSpec with ChiselScalatestTester {
       // Configure write address
       dut.io.periBusy.poke(false.B)
       dut.io.axi.write.addr.valid.poke(true.B)
-      dut.io.axi.write.addr.bits.addr.poke(32)
+      dut.io.axi.write.addr.bits.addr.poke(0)
       dut.io.axi.write.addr.bits.len.poke(0.U)
       assertResult(1) { dut.io.axi.write.addr.ready.peekInt() }
       dut.clock.step()

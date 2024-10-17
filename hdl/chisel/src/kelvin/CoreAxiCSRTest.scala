@@ -104,4 +104,45 @@ class CoreAxiCSRSpec extends AnyFreeSpec with ChiselScalatestTester {
       assertResult(0x20000000) { dut.testPcStartReg.peekInt() }
     }
   }
+
+  "WriteInvalid" in {
+    test(new CoreAxiCSRWrapper(p)) { dut =>
+      // Check initial values.
+      assertResult(3) { dut.testResetReg.peekInt() }
+      assertResult(0) { dut.testPcStartReg.peekInt() }
+
+      // Configure write address
+      dut.io.axi.write.addr.valid.poke(true.B)
+      dut.io.axi.write.addr.bits.addr.poke(0x104)
+      dut.io.axi.write.addr.bits.len.poke(0.U)
+      assertResult(1) { dut.io.axi.write.addr.ready.peekInt() }
+      dut.clock.step()
+      dut.io.axi.write.addr.valid.poke(false.B)
+      assertResult(0) { dut.io.axi.write.addr.ready.peekInt() }
+      assertResult(1) { dut.io.axi.write.data.ready.peekInt() }
+      // Configure write data
+      dut.io.axi.write.data.bits.data.poke(0x20000000.U)
+      dut.io.axi.write.data.bits.strb.poke(4.U)
+      dut.io.axi.write.data.bits.last.poke(true.B)
+      dut.io.axi.write.data.valid.poke(true.B)
+      dut.clock.step()
+
+      assertResult(0) { dut.io.axi.write.data.ready.peekInt() }
+      dut.io.axi.write.data.valid.poke(false.B)
+      dut.io.axi.write.resp.ready.poke(true.B)
+      dut.clock.step()
+      assertResult(0) { dut.io.pcStart.peekInt() }
+
+      // Write response phase
+      assertResult(1) { dut.io.axi.write.resp.valid.peekInt() }
+      assertResult(2) { dut.io.axi.write.resp.bits.resp.peekInt() }
+      dut.clock.step()
+      dut.io.axi.write.resp.ready.poke(false.B)
+      assertResult(1) { dut.io.axi.write.addr.ready.peekInt() }
+
+      // Check that no register changed.
+      assertResult(3) { dut.testResetReg.peekInt() }
+      assertResult(0) { dut.testPcStartReg.peekInt() }
+    }
+  }
 }

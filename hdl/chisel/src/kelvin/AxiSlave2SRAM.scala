@@ -42,8 +42,9 @@ class SRAM(p: Parameters, sramAddressWidth: Int) extends Module {
   ))
 
   val readData = Cat(io.sram.readData)
-  io.fabric.readData := Mux(
-      io.fabric.readDataAddr.valid, readData, 0.U.asTypeOf(io.fabric.readData))
+  io.fabric.readData.bits := Mux(
+      io.fabric.readDataAddr.valid, readData, 0.U.asTypeOf(io.fabric.readData.bits))
+  io.fabric.readData.valid := io.fabric.readDataAddr.valid
 
   io.sram.enable := (io.fabric.readDataAddr.valid || io.fabric.writeDataAddr.valid)
   io.sram.isWrite := io.fabric.writeDataAddr.valid
@@ -55,6 +56,7 @@ class SRAM(p: Parameters, sramAddressWidth: Int) extends Module {
   val readMaskData = RegInit(VecInit(Seq.fill(io.fabric.writeDataBits.getWidth / 8)(true.B)))
   val maskData = Mux(io.fabric.writeDataAddr.valid, writeMaskData, readMaskData)
   io.sram.mask := maskData
+  io.fabric.writeResp := true.B
 }
 
 class AxiSlave2SRAM(p: Parameters, sramAddressWidth: Int) extends Module {

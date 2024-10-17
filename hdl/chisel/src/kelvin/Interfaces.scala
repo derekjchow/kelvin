@@ -162,8 +162,9 @@ class RegfileWriteDataIO extends Bundle {
 
 class FabricIO(p: Parameters) extends Bundle {
     val readDataAddr = Output(Valid(UInt(p.axi2AddrBits.W)))
-    val readData = Input(UInt(p.axi2DataBits.W))
+    val readData = Input(Valid(UInt(p.axi2DataBits.W)))
     val writeDataAddr = Output(Valid(UInt(p.axi2AddrBits.W)))
     val writeDataBits = Output(UInt(p.axi2DataBits.W))
     val writeDataStrb = Output(UInt((p.axi2DataBits / 8).W))
+    val writeResp = Input(Bool())
 }

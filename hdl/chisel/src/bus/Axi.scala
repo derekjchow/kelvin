@@ -17,6 +17,13 @@ package bus
 import chisel3._
 import chisel3.util._
 
+object AxiResponseType extends ChiselEnum {
+  val OKAY = Value(0.U(2.W))
+  val EXOKAY = Value(1.U(2.W))
+  val SLVERR = Value(2.U(2.W))
+  val DECERR = Value(3.U(2.W))
+}
+
 object AxiBurstType extends ChiselEnum {
   val FIXED = Value(0.U)
   val INCR = Value(1.U)

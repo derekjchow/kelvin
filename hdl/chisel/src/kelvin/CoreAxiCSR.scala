@@ -39,12 +39,20 @@ class CoreCSR(p: Parameters) extends Module {
   val pcStartReg = RegInit(0.U(p.fetchAddrBits.W))
   val statusReg = RegInit(0.U(p.fetchAddrBits.W))
 
-  io.fabric.readData := MuxOR(io.fabric.readDataAddr.valid,
+  val readData =
     MuxLookup(io.fabric.readDataAddr.bits, 0.U)(Seq(
       0x0.U -> resetReg,
       0x4.U -> pcStartReg,
       0x8.U -> statusReg,
-    ) ++ ((0 until p.csrOutCount).map(x => ((0x100 + 4*x).U -> io.kelvin_csr.value(x))))))
+    ) ++ ((0 until p.csrOutCount).map(x => ((0x100 + 4*x).U -> io.kelvin_csr.value(x)))))
+  val readDataValid =
+    MuxLookup(io.fabric.readDataAddr.bits, false.B)(Seq(
+      0x0.U -> true.B,
+      0x4.U -> true.B,
+      0x8.U -> true.B,
+    ) ++ ((0 until p.csrOutCount).map(x => ((0x100 + 4*x).U -> true.B))))
+  io.fabric.readData.valid := readDataValid
+  io.fabric.readData.bits := readData
 
   io.reset := resetReg(0)
   io.cg := resetReg(1)
@@ -54,6 +62,10 @@ class CoreCSR(p: Parameters) extends Module {
   // TODO(atv): What bits are allowed to change in these? Add a mask or something.
   resetReg := Mux(io.fabric.writeDataAddr.valid && io.fabric.writeDataAddr.bits === 0x0.U, io.fabric.writeDataBits(31,0), resetReg)
   pcStartReg := Mux(io.fabric.writeDataAddr.valid && io.fabric.writeDataAddr.bits === 0x4.U, io.fabric.writeDataBits(31,0), pcStartReg)
+  io.fabric.writeResp := io.fabric.writeDataAddr.valid && MuxLookup(io.fabric.writeDataAddr.bits, false.B)(Seq(
+    0x0.U -> true.B,
+    0x4.U -> true.B,
+  ))
 }
 
 class CoreAxiCSR(p: Parameters) extends Module {
