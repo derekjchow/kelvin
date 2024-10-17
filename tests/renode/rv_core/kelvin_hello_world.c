@@ -50,7 +50,7 @@ void print_string(const char* s) {
 int main(int argc, char *argv[]) {
   uint32_t* rv_core_memory = (uint32_t*)0x20000000L;
   print_uint32(*rv_core_memory);
-  uint32_t* our_pc_csr = (uint32_t*)0x2110L;
+  uint32_t* our_pc_csr = (uint32_t*)0x30110L;
   print_uint32(*our_pc_csr);
   print_string("beefb0ba\n");
   print_uint32(0xb0bacafeL);

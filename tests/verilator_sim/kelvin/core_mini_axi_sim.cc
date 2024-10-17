@@ -234,19 +234,19 @@ struct CoreMiniAxi_tb : Sysc_tb {
     // Transaction to disable the internal clock gate.
     disable_cg_transfer_ =
         std::make_unique<TrafficDesc>(utils::merge(std::vector<DataTransfer>(
-            {utils::Write(0x2000, DATA(1, 0, 0, 0)), utils::Read(0x2000, 4),
+            {utils::Write(csr_addr_, DATA(1, 0, 0, 0)), utils::Read(csr_addr_, 4),
              utils::Expect(DATA(1, 0, 0, 0), 4)})));
 
     // Transaction to release the reset signal.
     release_reset_transfer_ =
         std::make_unique<TrafficDesc>(utils::merge(std::vector<DataTransfer>(
-            {utils::Write(0x2000, DATA(0, 0, 0, 0)), utils::Read(0x2000, 4),
+            {utils::Write(csr_addr_, DATA(0, 0, 0, 0)), utils::Read(csr_addr_, 4),
              utils::Expect(DATA(0, 0, 0, 0), 4)})));
 
     // Transaction to read the status register.
     status_read_transfer_ =
         std::make_unique<TrafficDesc>(utils::merge(std::vector<DataTransfer>(
-            {utils::Read(0x2008, 4), utils::Expect(DATA(1, 0, 0, 0), 4)})));
+            {utils::Read(csr_addr_ + 0x8, 4), utils::Expect(DATA(1, 0, 0, 0), 4)})));
 
     DataTransfer wrap_write, wrap_read, wrap_expect;
     /* WRAP */
@@ -402,6 +402,7 @@ struct CoreMiniAxi_tb : Sysc_tb {
 
   static CoreMiniAxi_tb* singleton_;
   static CoreMiniAxi_tb* getSingleton() { return singleton_; }
+  static constexpr uint32_t csr_addr_ = 0x30000;
 };
 CoreMiniAxi_tb* CoreMiniAxi_tb::singleton_ = nullptr;
 

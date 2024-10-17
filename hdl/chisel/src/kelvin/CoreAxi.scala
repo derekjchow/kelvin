@@ -26,8 +26,8 @@ class CoreAxi(p: Parameters, coreModuleName: String) extends RawModule {
   override val desiredName = coreModuleName + "Axi"
   val memoryRegions = Seq(
     new MemoryRegion(0x0000, 0x2000, MemoryRegionType.IMEM), // ITCM
-    new MemoryRegion(0x8000, 0x8000, MemoryRegionType.DMEM), // DTCM
-    new MemoryRegion(0x2000, 0x2000, MemoryRegionType.Peripheral), // CSR
+    new MemoryRegion(0x20000, 0x8000, MemoryRegionType.DMEM), // DTCM
+    new MemoryRegion(0x30000, 0x2000, MemoryRegionType.Peripheral), // CSR
   )
   p.m = memoryRegions
   val io = IO(new Bundle {

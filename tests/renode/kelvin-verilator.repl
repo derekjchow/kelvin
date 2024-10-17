@@ -12,12 +12,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-core_mini_axi_slave: Verilated.VerilatedPeripheral @ sysbus <0x70000000, +0x10000>
+core_mini_axi_slave: Verilated.VerilatedPeripheral @ sysbus <0x70000000, +0x40000>
     maxWidth: 128
     address: "127.0.0.1"
     limitBuffer: 10000
 
-core_mini_axi_master: Verilated.VerilatedPeripheral @ sysbus <0x80000000, +0x10000>
+core_mini_axi_master: Verilated.VerilatedPeripheral @ sysbus <0x80000000, +0x40000>
     maxWidth: 128
     address: "127.0.0.1"
     limitBuffer: 10000

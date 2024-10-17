@@ -27,11 +27,6 @@ class CoreAxiSlaveMux(p: Parameters, regions: Seq[MemoryRegion], sourceCount: In
     val ports = Vec(portCount, new AxiMasterIO(p.axi2AddrBits, p.axi2DataBits, p.axi2IdBits))
   })
 
-  // Today's map:
-  // ITCM: (base + 0x0, base + 0x2000)
-  // CSR: (base + 0x2000, base + 0x4000)
-  // gap: (base + 0x4000, base + 0x8000)
-  // DTCM: (base + 0x8000, base + 0x10000)
   val portTieOff = 0.U.asTypeOf(io.ports(0))
   val sourceTieOff = 0.U.asTypeOf(io.axi_slave(0))
   val readTarget = RegInit(0.U(portCount.W))

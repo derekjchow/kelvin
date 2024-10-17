@@ -47,7 +47,7 @@ void main(void) {
   for (int i = 0; i < kelvin_hello_world_cc_bin_len; ++i) {
       kelvin_itcm[i] = kelvin_hello_world_cc_bin[i];
   }
-  volatile uint32_t* kelvin_reset_csr = (uint32_t*)0x70002000L;
+  volatile uint32_t* kelvin_reset_csr = (uint32_t*)0x70030000L;
   // Disable clock gate
   *kelvin_reset_csr = 1;
 
@@ -66,13 +66,13 @@ void main(void) {
       }
   }
 
-  volatile uint32_t* kelvin_status_csr = (uint32_t*)0x70002008L;
+  volatile uint32_t* kelvin_status_csr = (uint32_t*)0x70030008L;
   while (true) {
     uint32_t status = *kelvin_status_csr;
     if (status) break;
   }
 
-  volatile uint32_t* kelvin_csrs = (uint32_t*)0x70002100L;
+  volatile uint32_t* kelvin_csrs = (uint32_t*)0x70030100L;
   for (int i = 0; i < 8; ++i) {
     print_uint32(*(kelvin_csrs + i));
   }
