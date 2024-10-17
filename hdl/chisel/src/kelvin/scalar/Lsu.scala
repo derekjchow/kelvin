@@ -304,9 +304,14 @@ class Lsu(p: Parameters) extends Module {
   val rdata = RotSignExt(MuxOR(data.io.out.bits.sldst, srdata))
 
   // pass-through
-  io.rd.valid := rvalid && data.io.out.bits.iload
-  io.rd.bits.addr  := data.io.out.bits.index
-  io.rd.bits.data  := rdata
+  val io_rd_pre_pipe = Wire(Valid(Flipped(new RegfileWriteDataIO)))
+  io_rd_pre_pipe.valid := rvalid && data.io.out.bits.iload
+  io_rd_pre_pipe.bits.addr  := data.io.out.bits.index
+  io_rd_pre_pipe.bits.data  := rdata
+
+  // Add one cycle pipeline delay to io.rd passthrough for timing
+  val io_rd_pipe = Pipe(io_rd_pre_pipe, p.lsuDelayPipelineLen)
+  io.rd := io_rd_pipe
 
   assert(!ctrl.io.out.valid || PopCount(Cat(ctrl.io.out.bits.sldst, ctrl.io.out.bits.vldst)) <= 1.U)
   assert(!data.io.out.valid || PopCount(Cat(data.io.out.bits.sldst)) <= 1.U)
