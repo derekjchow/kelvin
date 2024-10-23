@@ -26,7 +26,8 @@ The interfaces to Kelvin are defined as follows:
 |      reset       | The active-low reset signal for the AXI Bus/Kelvin core.  |
 |      s_axi       | An AXI slave interface that can be used to write TCMs or touch Kelvin CSRs. |
 |      m_axi       | An AXI master interface used by Kelvin to read/write to memories/CSRs. |
-|       intr       | Interrupt lines to the Kelvin core. Can be triggered by peripherals or other host processor. |
+|       irqn       | Active-low interrupt to the Kelvin core. Can be triggered by peripherals or other host processor. |
+|       wfi        | Active-high signal from the Kelvin core, indicating that the core is waiting for an interrupt. While this is active, Kelvin is clock-gated. |
 |      debug       | Debug interface to monitor Kelvin instructions execution. This interface is typically only used for simulation. |
 |      s_log       | Debug interface to handle SLOG instruction. This interface is typically only used for simulation. |
 |      halted      | Output interface informing if the Core is running or not. Can be ignored. |
@@ -40,7 +41,7 @@ Memory accesses to Kelvin are defined as follows:
 | Region |      Range        |  Size  | Alignment |                 Description                   |
 | ------ | ----------------  | ------ | --------- | --------------------------------------------- |
 |  ITCM  | 0x0000 -  0x1FFF  |   8kB  |  4 bytes  | ITCM storage for code executed by Kelvin.     |
-|  DTCM  | 0x20000 - 0x27FFF |  32kB  |  1 byte   | DTCM storage for data used by Kelvin.         |
+|  DTCM  | 0x10000 - 0x17FFF |  32kB  |  1 byte   | DTCM storage for data used by Kelvin.         |
 |  CSR   | 0x30000 - TBD     |   TBD  |  4 bytes  | CSR interface used to query/control Kelvin.   |
 
 ### Reset Considerations

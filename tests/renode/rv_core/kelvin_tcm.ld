@@ -4,7 +4,7 @@
 
 MEMORY {
     ITCM(rx): ORIGIN = 0x00000000, LENGTH = 8K
-    DTCM(rw): ORIGIN = 0x00020000, LENGTH = 32K
+    DTCM(rw): ORIGIN = 0x00010000, LENGTH = 32K
 }
 
 STACK_SIZE = DEFINED(__stack_size__) ? __stack_size__ : 0x80;

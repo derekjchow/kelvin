@@ -26,7 +26,7 @@ class CoreAxi(p: Parameters, coreModuleName: String) extends RawModule {
   override val desiredName = coreModuleName + "Axi"
   val memoryRegions = Seq(
     new MemoryRegion(0x0000, 0x2000, MemoryRegionType.IMEM), // ITCM
-    new MemoryRegion(0x20000, 0x8000, MemoryRegionType.DMEM), // DTCM
+    new MemoryRegion(0x10000, 0x8000, MemoryRegionType.DMEM), // DTCM
     new MemoryRegion(0x30000, 0x2000, MemoryRegionType.Peripheral), // CSR
   )
   p.m = memoryRegions
@@ -37,8 +37,6 @@ class CoreAxi(p: Parameters, coreModuleName: String) extends RawModule {
     // ITCM, DTCM, CSR
     val axi_slave = Flipped(new AxiMasterIO(p.axi2AddrBits, p.axi2DataBits, p.axi2IdBits))
     val axi_master = new AxiMasterIO(p.axi2AddrBits, p.axi2DataBits, p.axi2IdBits)
-    // Incoming interrupts
-    val intr = Input(Vec(16, Bool()))
     // Core status interrupts
     val halted = Output(Bool())
     val fault = Output(Bool())

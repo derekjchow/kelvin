@@ -535,12 +535,6 @@ static void run(const char* name, const std::string binary, const int cycles,
   core.io_axi_slave_write_resp_bits_id(tb.tlm2axi_signals()->bid);
   core.io_axi_slave_write_resp_bits_resp(tb.tlm2axi_signals()->bresp);
 
-#define IO_INTR(x)          \
-  sc_signal<bool> intr_##x; \
-  core.io_intr_##x(intr_##x);
-  REPEAT(IO_INTR, 16);
-#undef IO_INTR
-
   if (trace) {
     tb.trace(&core);
   }
