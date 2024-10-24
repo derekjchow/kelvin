@@ -39,7 +39,7 @@ class Slice[T <: Data](t: T, doubleBuffered: Boolean,
   val ipos = RegInit(0.U(size.W))
   val opos = RegInit(0.U(size.W))
   val count = RegInit(0.U(size.W))
-  val mem = Reg(Vec(size, t))
+  val mem = RegInit(VecInit(Seq.fill(size)(0.U(t.getWidth.W).asTypeOf(t))))
 
   val empty = ipos === opos
   val bypass = if (passValid) io.in.valid && io.out.ready && empty else false.B
