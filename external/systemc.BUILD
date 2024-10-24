@@ -13,6 +13,7 @@ cmake(
         "CMAKE_POSITION_INDEPENDENT_CODE": "ON",
         "CMAKE_CXX_STANDARD": "17",
         "BUILD_SHARED_LIBS": "False",
+        "CMAKE_INSTALL_LIBDIR": "lib",
     },
     generate_args = [
         "-G Ninja",
