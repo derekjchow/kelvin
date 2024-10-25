@@ -46,3 +46,51 @@ Memory accesses to Kelvin are defined as follows:
 
 ### Reset Considerations
 Kelvin uses a synchronous reset strategy -- to ensure proper reset behavior, ensure that the clock runs for a cycle with reset active, before enabling either the internal clock gate (via CSR) or gating externally.
+
+## Booting Kelvin
+A note first -- in these examples, Kelvin is located in the overall system memory map at 0x70000000.
+
+1. The instruction memory of Kelvin must be initialized.
+```c
+volatile uint8_t* kelvin_itcm = (uint8_t*)0x70000000L;
+for (int i = 0; i < kelvin_binary_len; ++i) {
+    kelvin_itcm[i] = kelvin_binary[i];
+}
+```
+
+If something like a DMA engine is present in your system, that is probably a better option for initializing the ITCM.
+
+2. Program the start PC
+If your program is linked such that the starting address is 0, you may skip this.
+
+```c
+volatile uint32_t* kelvin_pc_csr = (uint32_t*)0x70030004L;
+*kelvin_pc_csr = start_addr;
+```
+
+3. Release clock gate
+```c
+volatile uint32_t* kelvin_reset_csr = (uint32_t*)0x70030000L;
+*kelvin_reset_csr = 1;
+```
+
+After this, ensure you wait a cycle to allow Kelvin's reset to occur.
+If you want to configure something like an interrupt that is connected to Kelvin's
+fault or halted outputs, this is a good time.
+
+4. Release reset
+```c
+volatile uint32_t* kelvin_reset_csr = (uint32_t*)0x70030000L;
+*kelvin_reset_csr = 0;
+```
+
+At this point, Kelvin will begin executing at the PC programmed in step 2.
+
+5. Monitor for `io_halted`
+The status of Kelvin's execution can be checked by reading the status CSR:
+```c
+volatile uint32_t* kelvin_status_csr = (uint32_t*)0x70030008L;
+uint32_t status = *kelvin_status_csr;
+bool halted = status & 1;
+bool fault = status & 2;
+```
