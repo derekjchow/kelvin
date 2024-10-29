@@ -34,8 +34,34 @@ class RvvS1DecodeInstructionSpec extends AnyFreeSpec with ChiselScalatestTester 
     io.out := RvvS1DecodeInstruction(io.inst)
   }
 
+  class TesterCompressed extends Module {
+    val io = IO(new Bundle {
+      val inst  = Input(UInt(32.W))
+      val out = Output(Valid(new RvvS1DecodedInstruction()))
+    })
+
+    io.out := RvvS1DecodeCompressedInstruction(
+        RvvCompressedInstruction.from_uncompressed(io.inst))
+  }
+
   private def test_decode(
       dut: Tester,
+      // Long because Scala has no unsigned int.
+      cases: Seq[(Long, RvvAluOp.Type)]) = {
+    val good = cases.map {case (inst, op) =>
+      dut.io.inst.poke(inst)
+      AssertPartial[Valid[RvvS1DecodedInstruction]](
+        dut.io.out.peek(),
+        s"inst=$inst",
+        _.valid -> true.B,
+        _.bits.op -> op
+      )
+    }
+    if (!ProcessTestResults(good)) fail
+  }
+
+  private def test_decode_compressed(
+      dut: TesterCompressed,
       // Long because Scala has no unsigned int.
       cases: Seq[(Long, RvvAluOp.Type)]) = {
     val good = cases.map {case (inst, op) =>
@@ -161,6 +187,7 @@ class RvvS1DecodeInstructionSpec extends AnyFreeSpec with ChiselScalatestTester 
       (0xbe003057L, RvvAluOp.VNCLIP),  // vnclip.wi v0, v0, 0
     )
     test(new Tester)(test_decode(_, test_cases))
+    test(new TesterCompressed)(test_decode_compressed(_, test_cases))
   }
 
   "Decode VAlu ops (with mask) correctly" in {
@@ -289,6 +316,7 @@ class RvvS1DecodeInstructionSpec extends AnyFreeSpec with ChiselScalatestTester 
       (0xbc1030d7L, RvvAluOp.VNCLIP),  // vnclip.wi v1, v1, 0, v0.t
     )
     test(new Tester)(test_decode(_, test_cases))
+    test(new TesterCompressed)(test_decode_compressed(_, test_cases))
   }
 
   "Errata 1: Decode VAlu ops with vd=vm" in {
@@ -403,5 +431,6 @@ class RvvS1DecodeInstructionSpec extends AnyFreeSpec with ChiselScalatestTester 
       (0xbc003057L, RvvAluOp.VNCLIP),  // vnclip.wi v0, v0, 0, v0.t
     )
     test(new Tester)(test_decode(_, test_cases))
+    test(new TesterCompressed)(test_decode_compressed(_, test_cases))
   }
 }

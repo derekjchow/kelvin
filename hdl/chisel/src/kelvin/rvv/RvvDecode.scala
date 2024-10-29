@@ -19,7 +19,37 @@ import chisel3.util._
 import common.{ForceZero, MakeInvalid, MakeValid}
 
 
-object RvvS1DecodeInstruction {
+object RvvCompressedOpcode extends ChiselEnum {
+  val RVVLOAD = Value(0.U)
+  val RVVSTORE = Value(1.U)
+  val RVVALU = Value(2.U)
+}
+
+
+class RvvCompressedInstruction extends Bundle {
+  val opcode = RvvCompressedOpcode()
+  val bits = UInt(25.W)
+}
+
+object RvvCompressedInstruction {
+  def from_uncompressed(inst: UInt): Valid[RvvCompressedInstruction] = {
+    val old_opcode = inst(6, 0)
+    val bits = inst(31, 7)
+
+    val new_opcode = MuxLookup(old_opcode, MakeInvalid(RvvCompressedOpcode()))(Seq(
+      "b0000111".U -> MakeValid(RvvCompressedOpcode.RVVLOAD),
+      "b0100111".U -> MakeValid(RvvCompressedOpcode.RVVSTORE),
+      "b1010111".U -> MakeValid(RvvCompressedOpcode.RVVALU),
+    ))
+    val compressed = Wire(new RvvCompressedInstruction)
+    compressed.opcode := new_opcode.bits
+    compressed.bits := bits
+    MakeValid(new_opcode.valid, compressed)
+  }
+}
+
+
+class RvvS1DecodeInstructionBase {
   def invalid() = MakeInvalid(new RvvS1DecodedInstruction)
 
   private def s1decode_opivv(f6vm: UInt, vs2: UInt, vs1: UInt, vd: UInt): Valid[RvvS1DecodedInstruction] = {
@@ -198,7 +228,7 @@ object RvvS1DecodeInstruction {
     ForceZero(MakeValid(op.valid, d))
   }
 
-  private def s1decode_opv(bits: UInt): Valid[RvvS1DecodedInstruction] = {
+  protected def s1decode_opv(bits: UInt): Valid[RvvS1DecodedInstruction] = {
     // 7 LSB have already been consumed, 25 bits left.
     val vd = bits(4, 0)  // Or rd where applicable.
     val mode = bits(7, 5)
@@ -213,7 +243,9 @@ object RvvS1DecodeInstruction {
       "b100".U -> s1decode_opivx(f6vm, vs2, vs1, vd),
     ))
   }
+}
 
+object RvvS1DecodeInstruction extends RvvS1DecodeInstructionBase {
   // RVV is an extension and does not directly handle undefined (illegal)
   // instructions.
   def apply(inst: UInt): Valid[RvvS1DecodedInstruction] = {
@@ -225,5 +257,25 @@ object RvvS1DecodeInstruction {
       "b0000111".U -> invalid(),  // TODO LOAD-FP
       "b0100111".U -> invalid(),  // TODO STORE-FP
     ))
+  }
+}
+
+
+object RvvS1DecodeCompressedInstruction extends RvvS1DecodeInstructionBase {
+  // RVV is an extension and does not directly handle undefined (illegal)
+  // instructions. This compressed format is only used within some of our
+  // cores, and never exposed to sw.
+  def apply(inst: RvvCompressedInstruction): Valid[RvvS1DecodedInstruction] = {
+    // All instructions are 2-bit opcode plus 25 bits for further decoding.
+    MuxLookup(inst.opcode, invalid())(Seq(
+      RvvCompressedOpcode.RVVLOAD -> invalid(),  // TODO: implement this
+      RvvCompressedOpcode.RVVSTORE -> invalid(),  // TODO: implement this
+      RvvCompressedOpcode.RVVALU -> s1decode_opv(inst.bits),
+    ))
+  }
+
+  def apply(inst: Valid[RvvCompressedInstruction]): Valid[RvvS1DecodedInstruction] = {
+    // Wrapper to emit invalid output for invalid input.
+    Mux(inst.valid, apply(inst.bits), MakeInvalid(new RvvS1DecodedInstruction))
   }
 }
