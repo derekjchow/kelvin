@@ -43,7 +43,7 @@ class Sram_Nx128(tcmEntries: Int) extends Module {
   for (i <- 0 until nSramModules) {
     sramModules(i).io.clock := clock
     sramModules(i).io.addr := io.addr(6, 0)
-    sramModules(i).io.enable := (selectedSram === i.U)
+    sramModules(i).io.enable := (selectedSram === i.U) && io.enable
     sramModules(i).io.write := io.write
     sramModules(i).io.wdata := io.wdata
     sramModules(i).io.wmask := io.wmask
