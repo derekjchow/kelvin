@@ -144,6 +144,8 @@ class Csr(p: Parameters) extends Module {
   val misa      = RegInit(((0x40001100 | (if (p.enableVector) { 1 << 23 /* 'X' */ } else { 0 })).U)(32.W))
   // Kelvin-specific ISA register.
   val kisa      = RegInit(0.U(32.W))
+  // SCM Revision (spread over 5 indices)
+  val kscm      = RegInit(((new ScmInfo).revision).U(160.W))
 
   // 0x426 - Google's Vendor ID
   val mvendorid = RegInit(0x426.U(32.W))
@@ -187,6 +189,11 @@ class Csr(p: Parameters) extends Module {
   val mhartidEn   = req.bits.index === 0xF14.U
   // Start of custom CSRs.
   val kisaEn      = req.bits.index === 0xFC0.U
+  val kscm0En     = req.bits.index === 0xFC4.U
+  val kscm1En     = req.bits.index === 0xFC8.U
+  val kscm2En     = req.bits.index === 0xFCC.U
+  val kscm3En     = req.bits.index === 0xFD0.U
+  val kscm4En     = req.bits.index === 0xFD4.U
 
   // Pipeline Control.
   val vcoreUndef = if (p.enableVector) { io.vcore.get.undef } else { false.B }
@@ -237,7 +244,12 @@ class Csr(p: Parameters) extends Module {
               MuxOR(marchidEn,    marchid) |
               MuxOR(mimpidEn,     mimpid) |
               MuxOR(mhartidEn,    mhartid) |
-              MuxOR(kisaEn,       kisa)
+              MuxOR(kisaEn,       kisa) |
+              MuxOR(kscm0En,      kscm(31,0)) |
+              MuxOR(kscm1En,      kscm(63,32)) |
+              MuxOR(kscm2En,      kscm(95,64)) |
+              MuxOR(kscm3En,      kscm(127,96)) |
+              MuxOR(kscm4En,      kscm(159,128))
 
   val wdata = MuxLookup(req.bits.op, 0.U)(Seq(
       CsrOp.CSRRW -> rs1,

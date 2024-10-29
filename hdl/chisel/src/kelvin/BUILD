@@ -20,6 +20,7 @@ load(
     "chisel_test",
 )
 load("@kelvin_hw//rules:verilog.bzl", "verilog_zip_bundle")
+load("@kelvin_hw//rules:autogen.bzl", "autogen_scm_info")
 
 package(default_visibility = ["//visibility:public"])
 
@@ -154,6 +155,8 @@ chisel_test(
     tags = ["verilator"],
 )
 
+autogen_scm_info(name = "KelvinScmInfo")
+
 chisel_library(
     name = "kelvin_base",
     srcs = [
@@ -220,6 +223,7 @@ chisel_library(
     ],
     deps = [
         ":kelvin_base",
+        ":KelvinScmInfo",
         "//hdl/chisel/src/common",
         "//hdl/chisel/src/common:instruction_buffer",
     ],
