@@ -233,10 +233,17 @@ chisel_library(
     name = "srams",
     srcs = [
         "Sram_12ffcp_128x128.scala",
+        "Sram_12ffcp_512x128.scala",
+        "Sram_12ffcp_2048x128.scala",
         "SramNx128.scala",
+    ],
+    deps = [
+        ":kelvin_base",
     ],
     resources = [
         "//hdl/verilog:Sram_12ffcp_128x128.v",
+        "//hdl/verilog:Sram_12ffcp_512x128.v",
+        "//hdl/verilog:Sram_12ffcp_2048x128.v",
     ],
 )
 
@@ -331,6 +338,7 @@ chisel_cc_library(
         "--moduleName=CoreMini",
         "--useAxi",
     ],
+    vopts = ["-DUSE_GENERIC_SRAM"],
     module_name = "CoreMiniAxi",
     verilog_file_path = "CoreMiniAxi.sv",
 )

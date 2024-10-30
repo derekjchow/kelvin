@@ -107,6 +107,7 @@ def chisel_cc_library(
         module_name,
         verilog_deps = [],
         verilog_file_path = "",
+        vopts = [],
         gen_flags = [],
         extra_outs = []):
     gen_binary_name = name + "_emit_verilog_binary"
@@ -144,7 +145,7 @@ def chisel_cc_library(
         module_top = module_name,
         visibility = ["//visibility:public"],
         # TODO(derekjchow): Re-enable the default -Wall?
-        vopts = [],
+        vopts = vopts,
         systemc = True,
     )
 
@@ -157,6 +158,6 @@ def chisel_cc_library(
         module_top = module_name,
         visibility = ["//visibility:public"],
         # TODO(derekjchow): Re-enable the default -Wall?
-        vopts = [],
+        vopts = vopts,
         systemc = False,
     )

@@ -32,6 +32,7 @@ class TCM128(tcmSizeBytes: Int, tcmSubEntryWidth: Int) extends Module {
     val rdata = Output(Vec(tcmSubEntries, UInt(tcmSubEntryWidth.W)))
   })
 
+
   val sram = Module(new Sram_Nx128(tcmEntries))
   sram.io.addr := io.addr
   sram.io.enable := io.enable

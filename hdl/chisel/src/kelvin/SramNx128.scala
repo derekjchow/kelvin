@@ -21,8 +21,6 @@ import scala.math.{ceil}
 class Sram_Nx128(tcmEntries: Int) extends Module {
   override val desiredName = "SRAM_" + tcmEntries + "x128"
   val addrBits = log2Ceil(tcmEntries)
-  val sramSelectBits = addrBits - 7
-  assert(sramSelectBits > 0)
   val io = IO(new Bundle {
     val addr = Input(UInt(addrBits.W))
     val enable = Input(Bool())
@@ -33,16 +31,39 @@ class Sram_Nx128(tcmEntries: Int) extends Module {
   })
 
   // Setup SRAM modules
-  val nSramModules = ceil(tcmEntries / 128.0).toInt
+  val mod512 = (tcmEntries % 512) == 0
+  val mod2048 = (tcmEntries % 2048) == 0
+  assert((tcmEntries % 128) == 0)
+
+  val sramAddrBits = (mod2048, mod512) match {
+     case (true, _) => 11
+     case (_, true) => 9
+     case (false, false) => 7
+  }
+
+  val sramSelectBits = addrBits - sramAddrBits
+  assert(sramSelectBits >= 0)
+
+  val nSramModules = (mod2048, mod512) match {
+     case (true, _) => tcmEntries / 2048
+     case (_, true) => tcmEntries / 512
+     case (false, false) => tcmEntries / 128
+  }
+
   val sramModules = (0 until nSramModules).map(x =>
-      Module(new Sram_12ffcp_128x128))
-  val selectedSram = io.addr(addrBits - 1, 7)
+        (mod2048, mod512) match {
+           case (true, _) => Module(new Sram_12ffcp_2048x128)
+           case (_, true) => Module(new Sram_12ffcp_512x128)
+           case (false, false) => Module(new Sram_12ffcp_128x128)
+        }
+      )
+  val selectedSram = if (sramSelectBits == 0) { 0.U(sramSelectBits.W) } else { io.addr(addrBits - 1, sramAddrBits) }
   assert(selectedSram.getWidth == sramSelectBits)
 
   // Hook in inputs
   for (i <- 0 until nSramModules) {
     sramModules(i).io.clock := clock
-    sramModules(i).io.addr := io.addr(6, 0)
+    sramModules(i).io.addr := io.addr(sramAddrBits - 1, 0)
     sramModules(i).io.enable := (selectedSram === i.U) && io.enable
     sramModules(i).io.write := io.write
     sramModules(i).io.wdata := io.wdata
@@ -51,6 +72,6 @@ class Sram_Nx128(tcmEntries: Int) extends Module {
 
   // Mux read output
   val selectedSramRead = RegNext(selectedSram)
-  io.rdata := MuxLookup(selectedSramRead, 0.U(7.W))(
+  io.rdata := MuxLookup(selectedSramRead, 0.U(sramAddrBits.W))(
       (0 until nSramModules).map(i => i.U -> sramModules(i).io.rdata))
 }

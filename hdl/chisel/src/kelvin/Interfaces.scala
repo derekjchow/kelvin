@@ -105,6 +105,18 @@ abstract class FetchUnit(p: Parameters) extends Module {
   })
 }
 
+abstract class SRAM128(addrWidth: Int) extends BlackBox {
+  val io = IO(new Bundle {
+    val clock    = Input(Clock())
+    val enable   = Input(Bool())
+    val write    = Input(Bool())
+    val addr     = Input(UInt(addrWidth.W))
+    val wdata    = Input(UInt(128.W))
+    val wmask    = Input(UInt(16.W))
+    val rdata    = Output(UInt(128.W))
+  })
+}
+
 class DBusIO(p: Parameters, bank: Boolean = false) extends Bundle {
   // Control Phase.
   val valid = Output(Bool())

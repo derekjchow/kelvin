@@ -12,11 +12,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-module Sram_12ffcp_128x128(
+module Sram_12ffcp_2048x128(
   input          clock,
   input          enable,
   input          write,
-  input  [6:0]   addr,
+  input  [10:0]   addr,
   input  [127:0] wdata,
   input  [15:0] wmask,
   output [127:0] rdata
@@ -30,7 +30,7 @@ module Sram_12ffcp_128x128(
         assign nwmask[8*i +: 8] = {8{~wmask[i]}};
       end
     endgenerate
-    TS1N12FFCLLSBLVTC128X128M4SWBSHO u_12ffcp_sram
+    TS1N12FFCLLMBLVTD2048X128M4SWBSHO u_12ffcp_sram
     (
       // Mode Control
       .BIST(1'b0),          // Built-In Self-Test (active high)
@@ -41,7 +41,7 @@ module Sram_12ffcp_128x128(
       .CLK(clock),          // Clock
       .CEB(~enable),        // Chip Enable Bar (active low en)
       .WEB(~write),         // Write Enable Bar (active low WE)
-      .A(addr),             // Address                               (input [6:0] DM)
+      .A(addr),             // Address                               (input [10:0] DM)
       .D(wdata),            // Data                                  (input [127:0] DM)
       .BWEB(nwmask),        // Bit Write Enable Bar (active low BW)  (input [127:0])
 
@@ -49,7 +49,7 @@ module Sram_12ffcp_128x128(
       // BIST Mode Input
       .CEBM(1'b0),          // Chip Enable Bar for BIST Mode
       .WEBM(1'b0),          // Write Enable Bar for BIST Mode
-      .AM(6'b0),            // Address for BIST Mode               (input [6:0])
+      .AM(11'b0),           // Address for BIST Mode               (input [10:0])
       .DM(128'b0),          // Data Input for BIST Mode            (input [127:0] DM)
       .BWEBM({128{1'b1}}),  // Bit Write Enable Bar for BIST Mode  (input [127:0] DM)
 
@@ -63,8 +63,8 @@ module Sram_12ffcp_128x128(
      );
 
 `else
-  reg [127:0] mem [0:127];
-  reg [6:0] raddr;
+  reg [127:0] mem [0:2047];
+  reg [10:0] raddr;
 
   assign rdata = mem[raddr];
 
