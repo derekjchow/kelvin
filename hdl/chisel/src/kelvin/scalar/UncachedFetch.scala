@@ -146,7 +146,7 @@ class FetchControl(p: Parameters) extends Module {
       (result, jumped)
     }
 
-    val pc = RegInit(MakeValid(true.B, Cat(io.csr.value(0)(31,2), 0.U(2.W))))
+    val pc = RegInit(MakeValid(false.B, 0.U(32.W)))
 
     val (predecode, jumped) = Predecode(io.fetchData.bits)
     var predecodeValids = (0 until p.fetchInstrSlots).map(i =>
@@ -172,7 +172,7 @@ class FetchControl(p: Parameters) extends Module {
                           !reset.asBool &&
                           pc.valid &&
                           (io.bufferRequest.nReady >= p.fetchInstrSlots.U)
-    val fetch = Reg(Valid(UInt(p.fetchAddrBits.W)))
+    val fetch = RegInit(MakeInvalid(UInt(p.fetchAddrBits.W)))
     fetch := Mux(io.ibusFired,
                  MakeValid(false.B, 0.U(p.fetchAddrBits.W)),
                  Mux(fetch.valid,
@@ -189,11 +189,11 @@ class FetchControl(p: Parameters) extends Module {
     }
 
     pc := MuxCase(MakeValid(false.B, 0x0badd00d.U(p.fetchAddrBits.W)), Array(
-        reset.asBool -> MakeValid(true.B, Cat(io.csr.value(0)(31,2), 0.U(2.W))),
         io.branch.valid -> MakeValid(true.B, io.branch.bits),
         branchLatch.valid -> MakeValid(true.B, branchLatch.bits),
         io.fetchData.valid -> MakeValid(true.B, predecode.nextPc),
         pc.valid -> Mux(io.fetchAddr.ready && io.fetchAddr.valid, MakeValid(false.B, 0.U(p.fetchAddrBits.W)), pc),
+        !pc.valid -> MakeValid(true.B, Cat(io.csr.value(0)(31,2), 0.U(2.W))),
     ))
 
     io.fetchAddr.valid := fetch.valid

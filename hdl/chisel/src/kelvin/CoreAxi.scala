@@ -91,7 +91,7 @@ class CoreAxi(p: Parameters, coreModuleName: String) extends RawModule {
     val csr = Module(new CoreAxiCSR(p))
     val cg = Module(new ClockGate())
     cg.io.clk_i := io.aclk
-    val core = withClockAndReset(cg.io.clk_o, csr.io.reset) { Core(p, coreModuleName) }
+    val core = withClockAndReset(cg.io.clk_o, csr.io.reset.asAsyncReset) { Core(p, coreModuleName) }
     cg.io.enable := !io.irqn || (!csr.io.cg && !core.io.wfi)
     csr.io.kelvin_csr := core.io.csr.out
 

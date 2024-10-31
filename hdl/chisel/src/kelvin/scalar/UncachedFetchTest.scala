@@ -41,6 +41,7 @@ class FetchControlSpec extends AnyFreeSpec with ChiselScalatestTester {
       assertResult(0) { dut.io.fetchAddr.valid.peekInt() }
       dut.reset.poke(false.B)
       dut.clock.step()
+      dut.clock.step()
       assertResult(1) { dut.io.fetchAddr.valid.peekInt() }
       assertResult(0x20000000) { dut.io.fetchAddr.bits.peekInt() }
     }

@@ -78,7 +78,7 @@ class Kelvin(p: kelvin.Parameters, moduleName: String) extends RawModule {
 
   // ---------------------------------------------------------------------------
   // Connect clock and reset.
-  withClockAndReset(clk_g, rst_core) {
+  withClockAndReset(clk_g, rst_core.asAsyncReset) {
     assert(p.vectorBits == 256)
 
     val core = kelvin.Core(p)
