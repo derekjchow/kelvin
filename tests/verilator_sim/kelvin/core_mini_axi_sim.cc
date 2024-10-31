@@ -181,7 +181,7 @@ struct CoreMiniAxi_tb : Sysc_tb {
   sc_in<bool> io_halted;
   sc_in<bool> io_fault;
   sc_in<bool> io_wfi;
-  sc_out<bool> io_irqn;
+  sc_out<bool> io_irq;
 
   CoreMiniAxi_tb(sc_module_name n, int loops, bool random, std::string binary)
       : Sysc_tb(n, loops, random),
@@ -339,13 +339,13 @@ struct CoreMiniAxi_tb : Sysc_tb {
 
     static bool wfi_seen = false;
     if (io_wfi && !wfi_seen) {
-      io_irqn = false;
+      io_irq = true;
       wfi_seen = true;
-    } else if (wfi_seen) {
-      io_irqn = true;
+    } else if (!io_wfi && wfi_seen) {
+      io_irq = false;
       wfi_seen = false;
     } else {
-      io_irqn = true;
+      io_irq = false;
     }
   }
 
@@ -437,18 +437,18 @@ static void run(const char* name, const std::string binary, const int cycles,
   sc_signal<bool> io_halted;
   sc_signal<bool> io_fault;
   sc_signal<bool> io_wfi;
-  sc_signal<bool> io_irqn;
+  sc_signal<bool> io_irq;
   tb.io_halted(io_halted);
   tb.io_fault(io_fault);
   tb.io_wfi(io_wfi);
-  tb.io_irqn(io_irqn);
+  tb.io_irq(io_irq);
 
   core.io_aclk(tb.clock);
   core.io_aresetn(tb.resetn);
   core.io_halted(io_halted);
   core.io_fault(io_fault);
   core.io_wfi(io_wfi);
-  core.io_irqn(io_irqn);
+  core.io_irq(io_irq);
 
   SlogIO slog;
   core.io_slog_valid(slog.valid);

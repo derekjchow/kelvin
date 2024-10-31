@@ -41,7 +41,7 @@ class CoreAxi(p: Parameters, coreModuleName: String) extends RawModule {
     val halted = Output(Bool())
     val fault = Output(Bool())
     val wfi = Output(Bool())
-    val irqn = Input(Bool())
+    val irq = Input(Bool())
     // Debug data interface
     val debug = new DebugIO(p)
     // String logging interface
@@ -92,7 +92,7 @@ class CoreAxi(p: Parameters, coreModuleName: String) extends RawModule {
     val cg = Module(new ClockGate())
     cg.io.clk_i := io.aclk
     val core = withClockAndReset(cg.io.clk_o, csr.io.reset.asAsyncReset) { Core(p, coreModuleName) }
-    cg.io.enable := !io.irqn || (!csr.io.cg && !core.io.wfi)
+    cg.io.enable := io.irq || (!csr.io.cg && !core.io.wfi)
     csr.io.kelvin_csr := core.io.csr.out
 
     val itcmBridge = Module(new AxiSlave2SRAM(p, log2Ceil(itcmEntries)))
@@ -129,7 +129,7 @@ class CoreAxi(p: Parameters, coreModuleName: String) extends RawModule {
     io.halted := core.io.halted
     io.fault := core.io.fault
     io.wfi := core.io.wfi
-    core.io.irq := !io.irqn
+    core.io.irq := io.irq
     csr.io.halted := core.io.halted
     csr.io.fault := core.io.fault
     core.io.debug_req := true.B

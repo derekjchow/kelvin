@@ -47,7 +47,7 @@ void tick() {
 
   // First cycle, always evaluate regardless of what role asked.
   if (main_time == 0) {
-    top->io_irqn = true;
+    top->io_irq = false;
     top->eval();
     main_time++;
     return;
@@ -59,16 +59,16 @@ void tick() {
   } else {
     // On rising-edges, check if the core is in WFI.
     // If so, generate an interrupt pulse to wake it.
-    static bool irqn_state = true;
+    static bool irq_state = false;
     if (top->io_aclk) {
-      if (top->io_wfi && irqn_state) {
-        irqn_state = false;
+      if (top->io_wfi && !irq_state) {
+        irq_state = true;
       }
-      if (!top->io_wfi && !irqn_state) {
-        irqn_state = true;
+      if (!top->io_wfi && irq_state) {
+        irq_state = false;
       }
     }
-    top->io_irqn = irqn_state;
+    top->io_irq = irq_state;
     top->eval();
     last_tick = main_time;
     main_time++;
