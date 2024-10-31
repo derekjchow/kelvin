@@ -59,7 +59,10 @@ class SRAM(p: Parameters, sramAddressWidth: Int) extends Module {
   io.fabric.writeResp := true.B
 }
 
-class AxiSlave2SRAM(p: Parameters, sramAddressWidth: Int) extends Module {
+class AxiSlave2SRAM(p: Parameters,
+                    sramAddressWidth: Int,
+                    axiReadAddrDelay: Int = 0,
+                    axiReadDataDelay: Int = 0) extends Module {
   val io = IO(new Bundle{
     val axi = Flipped(new AxiMasterIO(p.axi2AddrBits, p.axi2DataBits, p.axi2IdBits))
     val sram = new SRAMIO(p, sramAddressWidth)
@@ -70,7 +73,11 @@ class AxiSlave2SRAM(p: Parameters, sramAddressWidth: Int) extends Module {
   })
 
   val axi = Module(new AxiSlave(p))
-  axi.io.axi <> io.axi
+  io.axi.write <> axi.io.axi.write
+  // Optionally delay AXI read channel. This helps break up a long timing path
+  // from SRAM.
+  axi.io.axi.read.addr <> Queue(io.axi.read.addr, axiReadAddrDelay)
+  io.axi.read.data <> Queue(axi.io.axi.read.data, axiReadDataDelay)
   axi.io.periBusy := io.periBusy
   io.txnInProgress := axi.io.txnInProgress
 

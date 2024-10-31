@@ -68,7 +68,9 @@ class CoreCSR(p: Parameters) extends Module {
   ))
 }
 
-class CoreAxiCSR(p: Parameters) extends Module {
+class CoreAxiCSR(p: Parameters,
+                    axiReadAddrDelay: Int = 0,
+                    axiReadDataDelay: Int = 0) extends Module {
   val io = IO(new Bundle {
     val axi = Flipped(new AxiMasterIO(p.axi2AddrBits, p.axi2DataBits, p.axi2IdBits))
 
@@ -81,7 +83,11 @@ class CoreAxiCSR(p: Parameters) extends Module {
   })
 
   val axi = Module(new AxiSlave(p))
-  axi.io.axi <> io.axi
+  // Optionally delay AXI read channel. This helps break up single cycle read path into into multi cycle as necessary to meet timing
+  io.axi.write <> axi.io.axi.write
+  axi.io.axi.read.addr <> Queue(io.axi.read.addr, axiReadAddrDelay)
+  io.axi.read.data <> Queue(axi.io.axi.read.data, axiReadDataDelay)
+
   axi.io.periBusy := false.B
 
   val csr = Module(new CoreCSR(p))

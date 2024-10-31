@@ -82,14 +82,15 @@ class CoreAxi(p: Parameters, coreModuleName: String) extends RawModule {
         new SRAMInterface(dtcmEntries, Vec(dtcmSubEntries, UInt(dtcmSubEntryWidth.W)), 0, 0, 1, true),
       2))
 
-    val csr = Module(new CoreAxiCSR(p))
+    val csr = Module(new CoreAxiCSR(p, axiReadAddrDelay=1, axiReadDataDelay=0))
     val cg = Module(new ClockGate())
     cg.io.clk_i := rst_sync.io.clk_o
     val core = withClockAndReset(cg.io.clk_o, csr.io.reset.asAsyncReset) { Core(p, coreModuleName) }
     cg.io.enable := io.irq || (!csr.io.cg && !core.io.wfi)
     csr.io.kelvin_csr := core.io.csr.out
 
-    val itcmBridge = Module(new AxiSlave2SRAM(p, log2Ceil(itcmEntries)))
+    val itcmBridge = Module(new AxiSlave2SRAM(
+        p, log2Ceil(itcmEntries), axiReadAddrDelay=1, axiReadDataDelay=1))
 
     itcmArbiter.io.in(0).bits.readwritePorts(0).address := itcmBridge.io.sram.address
     itcmArbiter.io.in(0).bits.readwritePorts(0).enable := itcmBridge.io.sram.enable
@@ -128,7 +129,8 @@ class CoreAxi(p: Parameters, coreModuleName: String) extends RawModule {
     csr.io.fault := core.io.fault
     core.io.debug_req := true.B
 
-    val dtcmBridge = Module(new AxiSlave2SRAM(p, log2Ceil(dtcmEntries)))
+    val dtcmBridge = Module(new AxiSlave2SRAM(
+        p, log2Ceil(dtcmEntries), axiReadAddrDelay=1, axiReadDataDelay=1))
     dtcmBridge.io.periBusy := core.io.dbus.valid
 
     dtcmArbiter.io.in(0).bits.readwritePorts(0).address := dtcmBridge.io.sram.address
