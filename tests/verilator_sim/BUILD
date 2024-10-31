@@ -13,6 +13,19 @@
 # limitations under the License.
 
 cc_library(
+    name = "elf",
+    srcs = [
+        "elf.cc",
+    ],
+    hdrs = [
+        "elf.h",
+    ],
+    deps = [
+        "@com_google_absl//absl/status",
+    ],
+)
+
+cc_library(
     name = "util",
     hdrs = [
         "util.h",
@@ -72,6 +85,7 @@ cc_binary(
         "@kelvin_hw//hdl/chisel/src/kelvin:VCoreMiniAxi_parameters.h",
     ],
     deps = [
+        ":elf",
         ":sim_libs",
         ":util",
         "//hdl/chisel/src/kelvin:core_mini_axi_cc_library",

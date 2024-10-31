@@ -15,6 +15,7 @@
 #include <fcntl.h>
 #include <sys/mman.h>
 #include <sys/stat.h>
+#include <elf.h>
 
 #include <string>
 
@@ -23,6 +24,7 @@
 #include "absl/flags/usage.h"
 #include "absl/log/check.h"
 #include "absl/log/log.h"
+#include "tests/verilator_sim/elf.h"
 #include "tests/verilator_sim/sysc_tb.h"
 #include "tests/verilator_sim/util.h"
 
@@ -224,12 +226,32 @@ struct CoreMiniAxi_tb : Sysc_tb {
     CHECK(file_data_ != MAP_FAILED);
     close(fd);
 
-    // Transaction to fill ITCM with the provided binary.
+    uint32_t elf_magic = 0x464c457f;
     uint8_t* data8 = reinterpret_cast<uint8_t*>(file_data_);
-    bin_transfer_ =
-        std::make_unique<TrafficDesc>(utils::merge(std::vector<DataTransfer>(
-            {utils::Write(0, data8, file_size_), utils::Read(0, file_size_),
-             utils::Expect(data8, file_size_)})));
+    if (memcmp(file_data_, &elf_magic, sizeof(elf_magic)) == 0) {
+      std::vector<DataTransfer> elf_transfers;
+      const Elf32_Ehdr* elf_header = reinterpret_cast<Elf32_Ehdr*>(file_data_);
+      elf_transfers.reserve(3 * elf_header->e_phnum);
+      CHECK_OK(LoadElf(data8, [&elf_transfers](void* dest, const void* src, size_t count){
+        elf_transfers.push_back(utils::Write(
+          reinterpret_cast<uint64_t>(dest),
+          reinterpret_cast<uint8_t*>(const_cast<void*>(src)), count));
+        elf_transfers.push_back(utils::Read(
+          reinterpret_cast<uint64_t>(dest), count
+        ));
+        elf_transfers.push_back(utils::Expect(
+          reinterpret_cast<uint8_t*>(const_cast<void*>(src)), count
+        ));
+        return dest;
+      }));
+      bin_transfer_ = std::make_unique<TrafficDesc>(utils::merge(elf_transfers));
+    } else {
+      // Transaction to fill ITCM with the provided binary.
+      bin_transfer_ =
+          std::make_unique<TrafficDesc>(utils::merge(std::vector<DataTransfer>(
+              {utils::Write(0, data8, file_size_), utils::Read(0, file_size_),
+               utils::Expect(data8, file_size_)})));
+    }
 
     // Transaction to disable the internal clock gate.
     disable_cg_transfer_ =
