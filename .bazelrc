@@ -23,3 +23,22 @@ test --java_runtime_version=remotejdk_11
 build --repo_env BAZEL_JVM_FETCH_SOURCES=false
 run --repo_env BAZEL_JVM_FETCH_SOURCES=false
 test --repo_env BAZEL_JVM_FETCH_SOURCES=false
+
+# Skip VCS by default as most workstations will not have licenses.
+# Skip renode by default until dependencies can be sandboxed appropriately.
+build --build_tag_filters="-vcs,-renode,-verilator"
+build --action_env=VCS_HOME
+build --action_env=LM_LICENSE_FILE
+test --build_tag_filters="-vcs,-renode,-verilator"
+test --test_tag_filters="-vcs,-renode,-verilator"
+test --action_env=VCS_HOME
+test --action_env=LM_LICENSE_FILE
+run --action_env=VCS_HOME
+run --action_env=LM_LICENSE_FILE
+
+# Add config to enable VCS targets.
+build:vcs --build_tag_filters="vcs"
+test:vcs --build_tag_filters="vcs"
+test:vcs --test_tag_filters="vcs"
+run:vcs --build_tag_filters="vcs"
+run:vcs --test_tag_filters="vcs"
