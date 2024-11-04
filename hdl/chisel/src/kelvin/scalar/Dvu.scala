@@ -72,19 +72,19 @@ class Dvu(p: Parameters) extends Module {
   val active = RegInit(false.B)
   val compute = RegInit(false.B)
 
-  val addr1    = Reg(UInt(5.W))
-  val signed1  = Reg(Bool())
-  val divide1  = Reg(Bool())
-  val addr2    = Reg(UInt(5.W))
-  val signed2d = Reg(Bool())
-  val signed2r = Reg(Bool())
-  val divide2  = Reg(Bool())
+  val addr1    = RegInit(0.U(5.W))
+  val signed1  = RegInit(false.B)
+  val divide1  = RegInit(false.B)
+  val addr2    = RegInit(0.U(5.W))
+  val signed2d = RegInit(false.B)
+  val signed2r = RegInit(false.B)
+  val divide2  = RegInit(false.B)
 
   val count  = RegInit(0.U(6.W))
 
-  val divide = Reg(UInt(32.W))
-  val remain = Reg(UInt(32.W))
-  val denom  = Reg(UInt(32.W))
+  val divide = RegInit(0.U(32.W))
+  val remain = RegInit(0.U(32.W))
+  val denom  = RegInit(0.U(32.W))
 
   val divByZero = io.rs2.data === 0.U
 

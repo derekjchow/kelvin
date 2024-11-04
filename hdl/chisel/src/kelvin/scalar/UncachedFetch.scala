@@ -61,8 +61,8 @@ class Fetcher(p: Parameters) extends Module {
     io.fetch.bits.inst(i) := data(offset + p.instructionBits - 1, offset)
   }
 
-  val ctrlValid = Reg(Bool())
-  val ctrlAddr = Reg(UInt(p.fetchAddrBits.W))
+  val ctrlValid = RegInit(false.B)
+  val ctrlAddr = RegInit(0.U(p.fetchAddrBits.W))
   ctrlValid := io.ctrl.valid || ctrlValid && !io.ibus.ready
   ctrlAddr := Mux(io.ctrl.valid || ctrlValid && !io.ibus.ready,
     ctrlAddr, io.ctrl.bits
@@ -181,7 +181,7 @@ class FetchControl(p: Parameters) extends Module {
                 )
              )
 
-    val branchLatch = Reg(Valid(UInt(p.fetchAddrBits.W)))
+    val branchLatch = RegInit(MakeValid(false.B, 0.U(p.fetchAddrBits.W)))
     when (io.branch.valid && fetch.valid) {
       branchLatch := io.branch
     } .elsewhen (!fetch.valid) {

@@ -312,7 +312,7 @@ class SCore(p: Parameters) extends Module {
   // ---------------------------------------------------------------------------
   // Scalar logging interface
   val slogValid = RegInit(false.B)
-  val slogAddr = Reg(UInt(2.W))
+  val slogAddr = RegInit(0.U(2.W))
   val slogEn = decode(0).io.slog
 
   slogValid := slogEn
@@ -329,8 +329,8 @@ class SCore(p: Parameters) extends Module {
   io.debug.cycles := csr.io.csr.out.value(4)
 
   val debugEn = RegInit(0.U(p.instructionLanes.W))
-  val debugAddr = Reg(Vec(p.instructionLanes, UInt(32.W)))
-  val debugInst = Reg(Vec(p.instructionLanes, UInt(32.W)))
+  val debugAddr = RegInit(VecInit.fill(p.instructionLanes)(0.U(32.W)))
+  val debugInst = RegInit(VecInit.fill(p.instructionLanes)(0.U(32.W)))
 
   val debugBrch = Cat(bru.map(_.io.taken.valid).scanRight(false.B)(_ || _))
 

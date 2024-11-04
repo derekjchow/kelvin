@@ -50,7 +50,7 @@ class CoreAxi(p: Parameters, coreModuleName: String) extends RawModule {
   dontTouch(io)
 
   // Reset inverter and synchronizer
-  val areset = !io.aresetn.asBool
+  val areset = (!io.aresetn.asBool).asAsyncReset
   val rst_core = Wire(Bool())
   withClockAndReset(io.aclk, areset) {
     val rst_q1 = RegInit(true.B)
@@ -60,7 +60,7 @@ class CoreAxi(p: Parameters, coreModuleName: String) extends RawModule {
     rst_core := rst_q2
   }
 
-  withClockAndReset(io.aclk, rst_core) {
+  withClockAndReset(io.aclk, rst_core.asAsyncReset) {
     val itcmSizeBytes = 8 * 1024 // 8 kB
     val itcmSubEntryWidth = 8
     val itcmWidth = p.axi2DataBits

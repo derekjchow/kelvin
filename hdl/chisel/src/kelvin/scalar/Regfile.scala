@@ -88,7 +88,7 @@ class Regfile(p: Parameters) extends Module {
 
 
   // The scalar registers.
-  val regfile = Reg(Vec(32, UInt(32.W)))
+  val regfile = RegInit(VecInit.fill(32)(0.U(32.W)))
 
   // ***************************************************************************
   // The scoreboard.
@@ -118,7 +118,7 @@ class Regfile(p: Parameters) extends Module {
   // The read port response.
   // ***************************************************************************
   val readDataReady = RegInit(VecInit(Seq.fill(p.instructionLanes * 2){false.B}))
-  val readDataBits  = Reg(Vec(p.instructionLanes * 2, UInt(32.W)))
+  val readDataBits  = RegInit(VecInit.fill(p.instructionLanes * 2)(0.U(32.W)))
   val nxtReadDataBits = Wire(Vec(p.instructionLanes * 2, UInt(32.W)))
 
   for (i <- 0 until (p.instructionLanes * 2)) {

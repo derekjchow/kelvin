@@ -68,7 +68,7 @@ class Alu(p: Parameters) extends Module {
   })
 
   val valid = RegInit(false.B)
-  val addr = Reg(UInt(5.W))
+  val addr = RegInit(0.U(5.W))
   val op = RegInit(AluOp.ADD)
 
   // Pulse the cycle after the decoded request.

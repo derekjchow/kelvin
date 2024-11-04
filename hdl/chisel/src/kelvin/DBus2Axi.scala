@@ -37,7 +37,7 @@ class DBus2Axi(p: Parameters) extends Module {
   val linebit = log2Ceil(p.lsuDataBits / 8)
 
   val sraddrActive = RegInit(false.B)
-  val sdata = Reg(UInt(p.axi2DataBits.W))
+  val sdata = RegInit(0.U(p.axi2DataBits.W))
 
   when (io.axi.read.data.valid && io.axi.read.data.ready) {
     sraddrActive := false.B
