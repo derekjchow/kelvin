@@ -50,8 +50,9 @@ class AluSpec extends AnyFreeSpec with ChiselScalatestTester {
       ))
       dut.clock.step()
       val good1 = AssertPartial[Valid[RegfileWriteDataIO]](
-        dut.io.rd.peek(),
-        s"rs1=$rs1, cycle=1",
+        act = dut.io.rd.peek(),
+        hint = s"rs1=$rs1, cycle=1",
+        printfn = info(_),
         _.valid -> true.B,
         _.bits.data -> exp_rd.U,
       )
@@ -60,14 +61,15 @@ class AluSpec extends AnyFreeSpec with ChiselScalatestTester {
       ))
       dut.clock.step()
       val good2 = AssertPartial[Valid[RegfileWriteDataIO]](
-        dut.io.rd.peek(),
-        s"rs1=$rs1, cycle=2",
+        act = dut.io.rd.peek(),
+        hint = s"rs1=$rs1, cycle=2",
+        printfn = info(_),
         _.valid -> false.B,
         _.bits.addr -> addr,
       )
       good1 & good2
     }
-    if (!ProcessTestResults(good)) fail
+    if (!ProcessTestResults(good, printfn = info(_))) fail
   }
 
   "Sign Extend Byte" in {
@@ -115,14 +117,15 @@ class AluSpec extends AnyFreeSpec with ChiselScalatestTester {
       ))
       dut.clock.step()
       AssertPartial[Valid[RegfileWriteDataIO]](
-        dut.io.rd.peek(),
-        s"rs1=$rs1, rs2=$rs2",
+        act = dut.io.rd.peek(),
+        hint = s"rs1=$rs1, rs2=$rs2",
+        printfn = info(_),
         _.bits.addr -> addr,
         _.valid -> true.B,
         _.bits.data -> exp_rd.U,
       )
     }
-    if (!ProcessTestResults(good)) fail
+    if (!ProcessTestResults(good, printfn = info(_))) fail
   }
 
   "XNOR(Not XOR)" in {

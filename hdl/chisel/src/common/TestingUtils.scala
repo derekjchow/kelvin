@@ -22,7 +22,7 @@ import chisel3.experimental.BundleLiterals._
 // - Prints a summary in case of failure.
 // - Returns the result. It does not throw anything.
 object AssertPartial {
-  def apply[T <: Bundle](act: T, hint: String, exp: T => (Data, Data)*): Boolean = {
+  def apply[T <: Bundle](act: T, hint: String, printfn: String => Unit, exp: T => (Data, Data)*): Boolean = {
     val good = exp.map { e =>
       val (x, y) = e(act)
       x.litValue == y.litValue
@@ -30,9 +30,9 @@ object AssertPartial {
     val all_pass = good.fold(true)((x, y) => x & y)
     if (!all_pass) {
       val exp_bundle = chiselTypeOf(act).Lit(exp:_*)
-      println(s"- Assertion failure: $hint")
-      println(s"  - Expected: $exp_bundle")
-      println(s"  - Actual: $act")
+      printfn(s"Assertion failure: $hint")
+      printfn(s"Expected: $exp_bundle")
+      printfn(s"Actual: $act")
     }
     all_pass
   }
@@ -41,10 +41,10 @@ object AssertPartial {
 // Prints a summary from a sequence of test results, and returns
 // whether all cases are good.
 object ProcessTestResults {
-  def apply(good: Seq[Boolean]) = {
+  def apply(good: Seq[Boolean], printfn: String => Unit) = {
     val good_count = good.count(x => x)
     val count = good.length
-    println(s"- $good_count / $count passed")
+    printfn(s"$good_count / $count passed")
     good_count == good.length
   }
 }

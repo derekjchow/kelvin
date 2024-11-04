@@ -51,13 +51,14 @@ class RvvS1DecodeInstructionSpec extends AnyFreeSpec with ChiselScalatestTester 
     val good = cases.map {case (inst, op) =>
       dut.io.inst.poke(inst)
       AssertPartial[Valid[RvvS1DecodedInstruction]](
-        dut.io.out.peek(),
-        s"inst=$inst",
+        act = dut.io.out.peek(),
+        hint = s"inst=$inst",
+        printfn = info(_),
         _.valid -> true.B,
         _.bits.op -> op
       )
     }
-    if (!ProcessTestResults(good)) fail
+    if (!ProcessTestResults(good, printfn = info(_))) fail
   }
 
   private def test_decode_compressed(
@@ -67,13 +68,14 @@ class RvvS1DecodeInstructionSpec extends AnyFreeSpec with ChiselScalatestTester 
     val good = cases.map {case (inst, op) =>
       dut.io.inst.poke(inst)
       AssertPartial[Valid[RvvS1DecodedInstruction]](
-        dut.io.out.peek(),
-        s"inst=$inst",
+        act = dut.io.out.peek(),
+        hint = s"inst=$inst",
+        printfn = info(_),
         _.valid -> true.B,
         _.bits.op -> op
       )
     }
-    if (!ProcessTestResults(good)) fail
+    if (!ProcessTestResults(good, printfn = info(_))) fail
   }
 
   "Decode VAlu ops (no mask) correctly" in {
