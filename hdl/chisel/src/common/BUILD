@@ -134,3 +134,11 @@ chisel_test(
         ":fp",
     ],
 )
+
+chisel_library(
+    name = "testing",
+    srcs = [
+        "TestingUtils.scala",
+    ],
+    visibility = ["//visibility:public"],
+)

@@ -85,6 +85,7 @@ chisel_test(
     deps = [
         ":kelvin_base",
         ":kelvin_scalar",
+        "//hdl/chisel/src/common:testing",
     ],
     args = [
         "-P",  # Allows parallel tests.

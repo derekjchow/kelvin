@@ -15,10 +15,12 @@
 package kelvin
 
 import chisel3._
+import chisel3.experimental.BundleLiterals._
 import chisel3.util._
 import chiseltest._
 import org.scalatest.freespec.AnyFreeSpec
-import chisel3.experimental.BundleLiterals._
+
+import common.{AssertPartial, ProcessTestResults}
 
 
 class AluSpec extends AnyFreeSpec with ChiselScalatestTester {
@@ -47,7 +49,7 @@ class AluSpec extends AnyFreeSpec with ChiselScalatestTester {
         _.data -> rs1.U,
       ))
       dut.clock.step()
-      val good1 = assertPartial[Valid[RegfileWriteDataIO]](
+      val good1 = AssertPartial[Valid[RegfileWriteDataIO]](
         dut.io.rd.peek(),
         s"rs1=$rs1, cycle=1",
         _.valid -> true.B,
@@ -57,7 +59,7 @@ class AluSpec extends AnyFreeSpec with ChiselScalatestTester {
         _.valid -> false.B,
       ))
       dut.clock.step()
-      val good2 = assertPartial[Valid[RegfileWriteDataIO]](
+      val good2 = AssertPartial[Valid[RegfileWriteDataIO]](
         dut.io.rd.peek(),
         s"rs1=$rs1, cycle=2",
         _.valid -> false.B,
@@ -65,7 +67,7 @@ class AluSpec extends AnyFreeSpec with ChiselScalatestTester {
       )
       good1 & good2
     }
-    processResults(good)
+    if (!ProcessTestResults(good)) fail
   }
 
   "Sign Extend Byte" in {
@@ -91,36 +93,6 @@ class AluSpec extends AnyFreeSpec with ChiselScalatestTester {
     test(new Alu(p))(test_unary_op(_, 13.U, AluOp.ZEXTH, test_cases))
   }
 
-  // TODO(davidgao): move to somewhere else.
-  // Performs a (partial) assertion on a bundle as part of a test.
-  // - Accepts same input as bundle literals.
-  // - Prints a summary in case of failure.
-  // - Returns the result. It does not throw anything.
-  private def assertPartial[T <: Bundle](act: T, hint: String, exp: T => (Data, Data)*): Boolean = {
-    val good = exp.map { e =>
-      val (x, y) = e(act)
-      x.litValue == y.litValue
-    }
-    val all_pass = good.fold(true)((x, y) => x & y)
-    if (!all_pass) {
-      val exp_bundle = chiselTypeOf(act).Lit(exp:_*)
-      println(s"- Assertion failure: $hint")
-      println(s"  - Expected: $exp_bundle")
-      println(s"  - Actual: $act")
-    }
-    all_pass
-  }
-
-  // TODO(davidgao): move to somewhere else.
-  // Prints a summary from a sequence of test results, and triggers
-  // a failure if it contains any failure(s).
-  private def processResults(good: Seq[Boolean]) = {
-    val good_count = good.count(x => x)
-    val count = good.length
-    println(s"- $good_count / $count passed")
-    if (good_count != good.length) fail
-  }
-
   private def testBinaryOp(
       dut: Alu,
       addr: UInt,
@@ -142,7 +114,7 @@ class AluSpec extends AnyFreeSpec with ChiselScalatestTester {
         _.data -> rs2.U,
       ))
       dut.clock.step()
-      assertPartial[Valid[RegfileWriteDataIO]](
+      AssertPartial[Valid[RegfileWriteDataIO]](
         dut.io.rd.peek(),
         s"rs1=$rs1, rs2=$rs2",
         _.bits.addr -> addr,
@@ -150,7 +122,7 @@ class AluSpec extends AnyFreeSpec with ChiselScalatestTester {
         _.bits.data -> exp_rd.U,
       )
     }
-    processResults(good)
+    if (!ProcessTestResults(good)) fail
   }
 
   "XNOR(Not XOR)" in {
