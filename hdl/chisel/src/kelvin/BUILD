@@ -70,6 +70,7 @@ chisel_test(
     ],
     deps = [
         ":kelvin_rvv",
+        "//hdl/chisel/src/common:testing",
     ],
     args = [
         "-P",  # Allows parallel tests.

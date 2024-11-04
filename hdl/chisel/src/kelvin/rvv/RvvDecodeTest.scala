@@ -15,11 +15,13 @@
 package kelvin
 
 import chisel3._
+import chisel3.experimental.BundleLiterals._
 import chisel3.util._
 import chiseltest._
 import org.scalatest.ParallelTestExecution
 import org.scalatest.freespec.AnyFreeSpec
-import chisel3.experimental.BundleLiterals._
+
+import common.{AssertPartial, ProcessTestResults}
 
 
 class RvvS1DecodeInstructionSpec extends AnyFreeSpec with ChiselScalatestTester with ParallelTestExecution {
@@ -30,6 +32,22 @@ class RvvS1DecodeInstructionSpec extends AnyFreeSpec with ChiselScalatestTester 
     })
 
     io.out := RvvS1DecodeInstruction(io.inst)
+  }
+
+  private def test_decode(
+      dut: Tester,
+      // Long because Scala has no unsigned int.
+      cases: Seq[(Long, RvvAluOp.Type)]) = {
+    val good = cases.map {case (inst, op) =>
+      dut.io.inst.poke(inst)
+      AssertPartial[Valid[RvvS1DecodedInstruction]](
+        dut.io.out.peek(),
+        s"inst=$inst",
+        _.valid -> true.B,
+        _.bits.op -> op
+      )
+    }
+    if (!ProcessTestResults(good)) fail
   }
 
   "Decode VAlu ops (no mask) correctly" in {
@@ -142,13 +160,7 @@ class RvvS1DecodeInstructionSpec extends AnyFreeSpec with ChiselScalatestTester 
       (0xbe004057L, RvvAluOp.VNCLIP),  // vnclip.wx v0, v0, x0
       (0xbe003057L, RvvAluOp.VNCLIP),  // vnclip.wi v0, v0, 0
     )
-    test(new Tester) { t =>
-      test_cases.foreach { case (inst, op) =>
-        t.io.inst.poke(inst)
-        // TODO(davidgao): this could be more informative.
-        t.io.out.expect(chiselTypeOf(t.io.out).Lit(_.valid -> true.B, _.bits.op -> op))
-      }
-    }
+    test(new Tester)(test_decode(_, test_cases))
   }
 
   "Decode VAlu ops (with mask) correctly" in {
@@ -276,13 +288,7 @@ class RvvS1DecodeInstructionSpec extends AnyFreeSpec with ChiselScalatestTester 
       (0xbc1040d7L, RvvAluOp.VNCLIP),  // vnclip.wx v1, v1, x0, v0.t
       (0xbc1030d7L, RvvAluOp.VNCLIP),  // vnclip.wi v1, v1, 0, v0.t
     )
-    test(new Tester) { t =>
-      test_cases.foreach { case (inst, op) =>
-        t.io.inst.poke(inst)
-        // TODO(davidgao): this could be more informative.
-        t.io.out.expect(chiselTypeOf(t.io.out).Lit(_.valid -> true.B, _.bits.op -> op))
-      }
-    }
+    test(new Tester)(test_decode(_, test_cases))
   }
 
   "Errata 1: Decode VAlu ops with vd=vm" in {
@@ -396,12 +402,6 @@ class RvvS1DecodeInstructionSpec extends AnyFreeSpec with ChiselScalatestTester 
       (0xbc004057L, RvvAluOp.VNCLIP),  // vnclip.wx v0, v0, x0, v0.t
       (0xbc003057L, RvvAluOp.VNCLIP),  // vnclip.wi v0, v0, 0, v0.t
     )
-    test(new Tester) { t =>
-      test_cases.foreach { case (inst, op) =>
-        t.io.inst.poke(inst)
-        // TODO(davidgao): this could be more informative.
-        t.io.out.expect(chiselTypeOf(t.io.out).Lit(_.valid -> true.B, _.bits.op -> op))
-      }
-    }
+    test(new Tester)(test_decode(_, test_cases))
   }
 }
