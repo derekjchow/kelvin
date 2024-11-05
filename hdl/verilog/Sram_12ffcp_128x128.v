@@ -22,7 +22,7 @@ module Sram_12ffcp_128x128(
   output [127:0] rdata
 );
 
-`ifndef USE_GENERIC_SRAM
+`ifndef USE_GENERIC
     wire [127:0] nwmask;
     genvar i;
     generate

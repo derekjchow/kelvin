@@ -1,4 +1,4 @@
-// Copyright 2023 Google LLC
+// Copyright 2024 Google LLC
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -12,27 +12,19 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-module ClockGate(
-  input         clk_i,
-  input         enable,  // '1' passthrough, '0' disable.
-  output        clk_o
-);
+package kelvin
 
-`ifndef USE_GENERIC
-CKLNQD10BWP16P90LVT u_cg(
-  .TE(1'b0),
-  .E(enable),
-  .CP(clk_i),
-  .Q(clk_o)
-);
+import chisel3._
+import chisel3.util._
 
-`else
-lowrisc_prim_clock_gating u_cg(
-  .clk_i(clk_i),
-  .en_i(enable),
-  .test_en_i('0),
-  .clk_o(clk_o)
-);
-`endif
+class RstSync extends BlackBox with HasBlackBoxResource {
+    val io = IO(new Bundle {
+        val clk_i = Input(Clock())
+        val rstn_i = Input(AsyncReset())
+        val clk_en = Input(Bool())
 
-endmodule  // ClockGate
+        val clk_o = Output(Clock())
+        val rstn_o = Output(AsyncReset())
+    })
+    addResource("RstSync.sv")
+}

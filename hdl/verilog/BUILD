@@ -22,6 +22,7 @@ exports_files(
         "Sram_12ffcp_2048x128.v",
         "Sram_1rw_256x256.v",
         "Sram_1rwm_256x288.v",
+        "RstSync.sv",
         "TlulAdapterSram.sv",
         "Uart.sv",
     ],
@@ -35,6 +36,15 @@ verilog_library(
     deps = [
         "//third_party/ip/lowrisc:prim_clock_gate",
     ],
+)
+
+verilog_library(
+    name = "RstSync",
+    srcs = ["RstSync.sv"],
+    visibility = ["//visibility:public"],
+    deps = [
+        ":clock_gate",
+    ]
 )
 
 verilog_library(

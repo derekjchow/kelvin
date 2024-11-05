@@ -160,6 +160,17 @@ chisel_test(
     tags = ["verilator"],
 )
 
+chisel_library(
+    name = "RstSync",
+    srcs = [
+        "RstSync.scala",
+    ],
+    resources = [
+        "//hdl/verilog:RstSync.sv",
+    ],
+    resource_strip_prefix = "hdl/verilog",
+)
+
 autogen_scm_info(name = "KelvinScmInfo")
 
 chisel_library(
@@ -268,6 +279,7 @@ chisel_library(
         ":kelvin_base",
         ":kelvin_scalar",
         ":kelvin_vector",
+        ":RstSync",
         ":srams",
         "//hdl/chisel/src/bus",
         "//hdl/chisel/src/common",
@@ -343,7 +355,9 @@ chisel_cc_library(
         "--moduleName=CoreMini",
         "--useAxi",
     ],
-    vopts = ["-DUSE_GENERIC_SRAM"],
+    vopts = [
+        "-DUSE_GENERIC",
+    ],
     module_name = "CoreMiniAxi",
     verilog_file_path = "CoreMiniAxi.sv",
 )

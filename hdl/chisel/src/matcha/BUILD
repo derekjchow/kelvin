@@ -45,6 +45,9 @@ chisel_cc_library(
     extra_outs = [
         "VKelvin_parameters.h",
     ],
+    vopts = [
+        "-DUSE_GENERIC",
+    ],
 )
 
 chisel_cc_library(
@@ -63,6 +66,9 @@ chisel_cc_library(
     ],
     extra_outs = [
         "VKelvinScalar_parameters.h",
+    ],
+    vopts = [
+        "-DUSE_GENERIC",
     ],
 )
 
@@ -85,6 +91,9 @@ chisel_cc_library(
     ],
     extra_outs = [
         "VKelvinMini_parameters.h",
+    ],
+    vopts = [
+        "-DUSE_GENERIC",
     ],
 )
 

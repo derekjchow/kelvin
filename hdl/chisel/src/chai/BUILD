@@ -42,4 +42,7 @@ chisel_cc_library(
         "//hdl/verilog:tlul_adapter_sram",
         "//hdl/verilog:uart",
     ],
+    vopts = [
+        "-DUSE_GENERIC",
+    ],
 )

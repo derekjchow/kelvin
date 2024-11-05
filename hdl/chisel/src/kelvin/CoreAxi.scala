@@ -49,18 +49,12 @@ class CoreAxi(p: Parameters, coreModuleName: String) extends RawModule {
   })
   dontTouch(io)
 
-  // Reset inverter and synchronizer
-  val areset = (!io.aresetn.asBool).asAsyncReset
-  val rst_core = Wire(Bool())
-  withClockAndReset(io.aclk, areset) {
-    val rst_q1 = RegInit(true.B)
-    val rst_q2 = RegInit(true.B)
-    rst_q1 := false.B
-    rst_q2 := rst_q1
-    rst_core := rst_q2
-  }
+  val rst_sync = Module(new RstSync())
+  rst_sync.io.clk_i := io.aclk
+  rst_sync.io.rstn_i := io.aresetn
+  rst_sync.io.clk_en := true.B
 
-  withClockAndReset(io.aclk, rst_core.asAsyncReset) {
+  withClockAndReset(rst_sync.io.clk_o, (!rst_sync.io.rstn_o.asBool).asAsyncReset) {
     val itcmSizeBytes = 8 * 1024 // 8 kB
     val itcmSubEntryWidth = 8
     val itcmWidth = p.axi2DataBits
@@ -90,7 +84,7 @@ class CoreAxi(p: Parameters, coreModuleName: String) extends RawModule {
 
     val csr = Module(new CoreAxiCSR(p))
     val cg = Module(new ClockGate())
-    cg.io.clk_i := io.aclk
+    cg.io.clk_i := rst_sync.io.clk_o
     val core = withClockAndReset(cg.io.clk_o, csr.io.reset.asAsyncReset) { Core(p, coreModuleName) }
     cg.io.enable := io.irq || (!csr.io.cg && !core.io.wfi)
     csr.io.kelvin_csr := core.io.csr.out
