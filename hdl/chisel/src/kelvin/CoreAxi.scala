@@ -182,9 +182,11 @@ class CoreAxi(p: Parameters, coreModuleName: String) extends RawModule {
     when (core.io.ebus.internal) {
       axi_mux.io.axi_slave(1) <> ebus2axi.io.axi
       io.axi_master <> 0.U.asTypeOf(io.axi_master)
+      csr.io.internal := true.B
     } .otherwise {
       axi_mux.io.axi_slave(1) <> 0.U.asTypeOf(axi_mux.io.axi_slave(1))
       io.axi_master <> ebus2axi.io.axi
+      csr.io.internal := false.B
     }
 
     axi_mux.io.ports(0) <> itcmBridge.io.axi

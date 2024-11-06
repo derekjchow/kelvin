@@ -23,6 +23,8 @@ import common._
 class CoreCSR(p: Parameters) extends Module {
   val io = IO(new Bundle {
     val fabric = Flipped(new FabricIO(p))
+    // Input indicating that the transaction is coming from inside Kelvin.
+    val internal = Input(Bool())
 
     val reset = Output(Bool())
     val cg = Output(Bool())
@@ -60,8 +62,8 @@ class CoreCSR(p: Parameters) extends Module {
   statusReg := Cat(io.fault, io.halted)
 
   // TODO(atv): What bits are allowed to change in these? Add a mask or something.
-  resetReg := Mux(io.fabric.writeDataAddr.valid && io.fabric.writeDataAddr.bits === 0x0.U, io.fabric.writeDataBits(31,0), resetReg)
-  pcStartReg := Mux(io.fabric.writeDataAddr.valid && io.fabric.writeDataAddr.bits === 0x4.U, io.fabric.writeDataBits(31,0), pcStartReg)
+  resetReg := Mux(io.fabric.writeDataAddr.valid && io.fabric.writeDataAddr.bits === 0x0.U && !io.internal, io.fabric.writeDataBits(31,0), resetReg)
+  pcStartReg := Mux(io.fabric.writeDataAddr.valid && io.fabric.writeDataAddr.bits === 0x4.U && !io.internal, io.fabric.writeDataBits(31,0), pcStartReg)
   io.fabric.writeResp := io.fabric.writeDataAddr.valid && MuxLookup(io.fabric.writeDataAddr.bits, false.B)(Seq(
     0x0.U -> true.B,
     0x4.U -> true.B,
@@ -73,6 +75,8 @@ class CoreAxiCSR(p: Parameters,
                     axiReadDataDelay: Int = 0) extends Module {
   val io = IO(new Bundle {
     val axi = Flipped(new AxiMasterIO(p.axi2AddrBits, p.axi2DataBits, p.axi2IdBits))
+    // Input indicating that the transaction is coming from inside Kelvin.
+    val internal = Input(Bool())
 
     val reset = Output(Bool())
     val cg = Output(Bool())
@@ -92,6 +96,7 @@ class CoreAxiCSR(p: Parameters,
 
   val csr = Module(new CoreCSR(p))
   csr.io.fabric <> axi.io.fabric
+  csr.io.internal := io.internal
 
   io.reset := csr.io.reset
   io.cg := csr.io.cg
