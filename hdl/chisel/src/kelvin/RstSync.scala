@@ -22,6 +22,7 @@ class RstSync extends BlackBox with HasBlackBoxResource {
         val clk_i = Input(Clock())
         val rstn_i = Input(AsyncReset())
         val clk_en = Input(Bool())
+        val te     = Input(Bool())
 
         val clk_o = Output(Clock())
         val rstn_o = Output(AsyncReset())

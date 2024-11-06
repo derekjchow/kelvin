@@ -15,12 +15,13 @@
 module ClockGate(
   input         clk_i,
   input         enable,  // '1' passthrough, '0' disable.
+  input         te,      // test enable
   output        clk_o
 );
 
 `ifndef USE_GENERIC
 CKLNQD10BWP16P90LVT u_cg(
-  .TE(1'b0),
+  .TE(te),
   .E(enable),
   .CP(clk_i),
   .Q(clk_o)
@@ -30,7 +31,7 @@ CKLNQD10BWP16P90LVT u_cg(
 lowrisc_prim_clock_gating u_cg(
   .clk_i(clk_i),
   .en_i(enable),
-  .test_en_i('0),
+  .test_en_i(te),
   .clk_o(clk_o)
 );
 `endif

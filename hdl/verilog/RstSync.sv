@@ -26,6 +26,7 @@ module RstSync
         // is 1, and we are out of reset
         // clk_en is assumed to be synchronous to clk_o or clk_i
         input clk_en,
+        input te,
 
         // Output clock
         output clk_o,
@@ -52,5 +53,6 @@ module RstSync
 
   ClockGate icg(.clk_i(clk_i),
                 .enable(clk_en_int),
+                .te(te),
                 .clk_o(clk_o));
 endmodule

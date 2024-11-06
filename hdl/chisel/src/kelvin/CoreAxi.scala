@@ -46,6 +46,7 @@ class CoreAxi(p: Parameters, coreModuleName: String) extends RawModule {
     val debug = new DebugIO(p)
     // String logging interface
     val slog = new SLogIO(p)
+    val te = Input(Bool())
   })
   dontTouch(io)
 
@@ -53,8 +54,10 @@ class CoreAxi(p: Parameters, coreModuleName: String) extends RawModule {
   rst_sync.io.clk_i := io.aclk
   rst_sync.io.rstn_i := io.aresetn
   rst_sync.io.clk_en := true.B
+  rst_sync.io.te := io.te
 
-  withClockAndReset(rst_sync.io.clk_o, (!rst_sync.io.rstn_o.asBool).asAsyncReset) {
+  val global_reset = (!Mux(io.te, io.aresetn, rst_sync.io.rstn_o).asBool).asAsyncReset
+  withClockAndReset(rst_sync.io.clk_o, global_reset) {
     val itcmSizeBytes = 8 * 1024 // 8 kB
     val itcmSubEntryWidth = 8
     val itcmWidth = p.axi2DataBits
@@ -85,7 +88,9 @@ class CoreAxi(p: Parameters, coreModuleName: String) extends RawModule {
     val csr = Module(new CoreAxiCSR(p, axiReadAddrDelay=1, axiReadDataDelay=0))
     val cg = Module(new ClockGate())
     cg.io.clk_i := rst_sync.io.clk_o
-    val core = withClockAndReset(cg.io.clk_o, csr.io.reset.asAsyncReset) { Core(p, coreModuleName) }
+    cg.io.te := io.te
+    val core_reset = Mux(io.te, (!io.aresetn.asBool).asAsyncReset, csr.io.reset.asAsyncReset)
+    val core = withClockAndReset(cg.io.clk_o, core_reset) { Core(p, coreModuleName) }
     cg.io.enable := io.irq || (!csr.io.cg && !core.io.wfi)
     csr.io.kelvin_csr := core.io.csr.out
 

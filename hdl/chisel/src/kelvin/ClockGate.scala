@@ -21,6 +21,7 @@ class ClockGate extends BlackBox with HasBlackBoxResource {
   val io = IO(new Bundle {
     val clk_i  = Input(Clock())
     val enable = Input(Bool())  // '1' passthrough, '0' disable.
+    val te     = Input(Bool())
     val clk_o  = Output(Clock())
   })
   addResource("ClockGate.sv")

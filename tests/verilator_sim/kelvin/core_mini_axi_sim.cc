@@ -182,6 +182,7 @@ struct CoreMiniAxi_tb : Sysc_tb {
   sc_in<bool> io_fault;
   sc_in<bool> io_wfi;
   sc_out<bool> io_irq;
+  sc_out<bool> io_te;
 
   CoreMiniAxi_tb(sc_module_name n, int loops, bool random, std::string binary)
       : Sysc_tb(n, loops, random),
@@ -438,10 +439,12 @@ static void run(const char* name, const std::string binary, const int cycles,
   sc_signal<bool> io_fault;
   sc_signal<bool> io_wfi;
   sc_signal<bool> io_irq;
+  sc_signal<bool> io_te;
   tb.io_halted(io_halted);
   tb.io_fault(io_fault);
   tb.io_wfi(io_wfi);
   tb.io_irq(io_irq);
+  tb.io_te(io_te);
 
   core.io_aclk(tb.clock);
   core.io_aresetn(tb.resetn);
@@ -449,6 +452,7 @@ static void run(const char* name, const std::string binary, const int cycles,
   core.io_fault(io_fault);
   core.io_wfi(io_wfi);
   core.io_irq(io_irq);
+  core.io_te(io_te);
 
   SlogIO slog;
   core.io_slog_valid(slog.valid);

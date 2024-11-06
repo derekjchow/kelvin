@@ -54,6 +54,7 @@ class Kelvin(p: kelvin.Parameters, moduleName: String) extends RawModule {
   val cg = Module(new kelvin.ClockGate())
   cg.io.clk_i  := clk_i
   cg.io.enable := !clk_freeze
+  cg.io.te := false.B
   val clk_g = cg.io.clk_o
 
   // ---------------------------------------------------------------------------
