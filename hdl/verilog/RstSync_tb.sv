@@ -111,6 +111,7 @@ module RstSync_tb;
   RstSync dut(.clk_i,
               .rstn_i,
               .clk_en,
+              .te(1'b0),
 
               .clk_o,
               .rstn_o);

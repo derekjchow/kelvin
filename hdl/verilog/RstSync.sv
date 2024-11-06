@@ -41,9 +41,7 @@ module RstSync
     if (~rstn_i)
       rst_delay_reg <= '0;
     else
-      /* verilator lint_off WIDTH */
-      rst_delay_reg <= {rst_delay_reg[RST_DELAY + CLK_DELAY - 1 : 0], 1'b1};
-    /* verilator lint_on WIDTH */
+      rst_delay_reg <= {rst_delay_reg[RST_DELAY + CLK_DELAY - 2 : 0], 1'b1};
   end
 
   assign rstn_o = rst_delay_reg[RST_DELAY - 1];
@@ -55,4 +53,11 @@ module RstSync
                 .enable(clk_en_int),
                 .te(te),
                 .clk_o(clk_o));
+
+`ifndef SYNTHESIS
+  initial begin
+    assert (RST_DELAY >= 2);
+    assert (CLK_DELAY >= 2);
+  end
+`endif
 endmodule
