@@ -120,20 +120,6 @@ chisel_test(
     ],
 )
 
-# Dependencies for `clock_gate` target. This resources need to be in their own
-# target so resource_strip_prefix can be set correctly.
-chisel_library(
-    name = "clock_gate_deps",
-    srcs = [],
-    resources = [
-        "//third_party/ip/lowrisc:prim_clock_gating.sv",
-        "//third_party/ip/lowrisc:prim_generic_clock_gating.sv",
-        "//third_party/ip/lowrisc:prim_xilinx_clock_gating.sv",
-    ],
-    resource_strip_prefix = "third_party/ip",
-    visibility = ["//visibility:private"],
-)
-
 chisel_library(
     name = "clock_gate",
     srcs = [
@@ -143,9 +129,6 @@ chisel_library(
         "//hdl/verilog:ClockGate.sv",
     ],
     resource_strip_prefix = "hdl/verilog",
-    deps = [
-        ":clock_gate_deps",
-    ],
 )
 
 chisel_test(

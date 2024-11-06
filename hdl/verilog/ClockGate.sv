@@ -12,6 +12,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+// A ClockGate module. The underlying implementation varies based on
+// preprocessor.
+// Default: ASIC implementation
+// USE_GENERIC default: Verilator implementation (adapted from OpenTitan)
+// USE_GENERIC and FPGA_XILINX: UltraScale Plus specific clockgate.
 module ClockGate(
   input         clk_i,
   input         enable,  // '1' passthrough, '0' disable.
@@ -26,14 +31,26 @@ CKLNQD10BWP16P90LVT u_cg(
   .CP(clk_i),
   .Q(clk_o)
 );
-
 `else
-lowrisc_prim_clock_gating u_cg(
-  .clk_i(clk_i),
-  .en_i(enable),
-  .test_en_i(te),
-  .clk_o(clk_o)
-);
-`endif
+
+`ifdef FPGA_XILINX
+  BUFGCE #(
+    .SIM_DEVICE("ULTRASCALE_PLUS")
+  ) u_bufgce (
+    .I (clk_i),
+    .CE(enable | te),
+    .O (clk_o)
+  );
+`else
+  logic en_latch /* verilator clock_enable */;
+  always_latch begin
+    if (!clk_i) begin
+      en_latch = enable | te;
+    end
+  end
+  assign clk_o = en_latch & clk_i;
+`endif  // FPGA_XILINX
+
+`endif  // USE_GENERIC
 
 endmodule  // ClockGate

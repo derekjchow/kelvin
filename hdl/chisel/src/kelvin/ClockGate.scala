@@ -25,7 +25,4 @@ class ClockGate extends BlackBox with HasBlackBoxResource {
     val clk_o  = Output(Clock())
   })
   addResource("ClockGate.sv")
-  addResource("lowrisc/prim_clock_gating.sv")
-  addResource("lowrisc/prim_generic_clock_gating.sv")
-  addResource("lowrisc/prim_xilinx_clock_gating.sv")
 }

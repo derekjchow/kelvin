@@ -86,7 +86,7 @@ class CoreAxi(p: Parameters, coreModuleName: String) extends RawModule {
       2))
 
     val csr = Module(new CoreAxiCSR(p, axiReadAddrDelay=1, axiReadDataDelay=0))
-    val cg = Module(new ClockGate())
+    val cg = Module(new ClockGate)
     cg.io.clk_i := rst_sync.io.clk_o
     cg.io.te := io.te
     val core_reset = Mux(io.te, (!io.aresetn.asBool).asAsyncReset, csr.io.reset.asAsyncReset)
