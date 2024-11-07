@@ -15,6 +15,14 @@
 load("@rules_hdl//verilog:providers.bzl", "verilog_library")
 load("//rules:vcs.bzl", "vcs_testbench_test")
 
+exports_files(
+    srcs = [
+        "interfaces.sv",
+        "RvvCore.sv",
+    ],
+    visibility = ["//visibility:public"],
+)
+
 verilog_library(
     name = "aligner",
     srcs = [
@@ -28,4 +36,23 @@ vcs_testbench_test(
     srcs = ["Aligner_tb.sv"],
     module = "Aligner_tb",
     deps = ":aligner",
+)
+
+verilog_library(
+    name = "interfaces",
+    srcs = [
+        "interfaces.sv",
+    ],
+    visibility = ["//visibility:public"],
+)
+
+verilog_library(
+    name = "rvv_core",
+    srcs = [
+        "RvvCore.sv",
+    ],
+    deps = [
+        ":interfaces",
+    ],
+    visibility = ["//visibility:public"],
 )

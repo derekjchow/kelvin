@@ -83,6 +83,9 @@ class Parameters(var m: Seq[MemoryRegion] = Seq(), val hartId: Int = 0) {
   // Vector queue.
   val vectorFifoDepth = 16
 
+  // Enable RVV. This differs from Vector in that it conforms to the RVV1.0 spec
+  var enableRvv = false
+
   // L0ICache Fetch unit.
   var enableFetchL0 = true
   val fetchCacheBytes = 1024

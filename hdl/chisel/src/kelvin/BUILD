@@ -56,9 +56,16 @@ chisel_library(
     name = "kelvin_rvv",
     srcs = [
         "rvv/RvvAlu.scala",
+        "rvv/RvvCore.scala",
         "rvv/RvvDecode.scala",
+        "rvv/RvvInterface.scala",
+    ],
+    resources = [
+        "//hdl/verilog/rvv:interfaces.sv",
+        "//hdl/verilog/rvv:RvvCore.sv",
     ],
     deps = [
+        ":kelvin_base",
         "//hdl/chisel/src/common:library",
     ],
 )
@@ -222,6 +229,7 @@ chisel_library(
     ],
     deps = [
         ":kelvin_base",
+        ":kelvin_rvv",
         ":KelvinScmInfo",
         "//hdl/chisel/src/common",
         "//hdl/chisel/src/common:instruction_buffer",
@@ -261,6 +269,7 @@ chisel_library(
         ":clock_gate",
         ":kelvin_base",
         ":kelvin_scalar",
+        ":kelvin_rvv",
         ":kelvin_vector",
         ":RstSync",
         ":srams",
@@ -343,6 +352,30 @@ chisel_cc_library(
     ],
     module_name = "CoreMiniAxi",
     verilog_file_path = "CoreMiniAxi.sv",
+)
+
+chisel_cc_library(
+    name = "rvv_core_mini_axi_cc_library",
+    chisel_lib = ":kelvin",
+    emit_class = "kelvin.EmitCore",
+    extra_outs = [
+        "VRvvCoreMiniAxi_parameters.h",
+        "RvvCoreMiniAxi.zip",
+    ],
+    gen_flags = [
+        "--enableFetchL0=False",
+        "--fetchDataBits=128",
+        "--lsuDataBits=128",
+        "--enableVector=False",
+        "--enableRvv=True",
+        "--moduleName=RvvCoreMini",
+        "--useAxi",
+    ],
+    vopts = [
+        "-DUSE_GENERIC",
+    ],
+    module_name = "RvvCoreMiniAxi",
+    verilog_file_path = "RvvCoreMiniAxi.sv",
 )
 
 verilog_zip_bundle(
