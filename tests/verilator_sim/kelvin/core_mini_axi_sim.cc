@@ -309,6 +309,48 @@ struct CoreMiniAxi_tb : Sysc_tb {
                           32),
         })));
 
+    uint32_t dummy_data = 0x1234abcd;
+    DataTransfer write32;
+    write32.addr = 0;
+    write32.cmd = DataTransfer::WRITE;
+    write32.data = reinterpret_cast<uint8_t*>(&dummy_data);
+    write32.length = 4;
+    write32.byte_enable = nullptr;
+    write32.byte_enable_length = 0;
+    write32.streaming_width = 4;
+    write32.ext.gen_attr.enabled = true;
+    write32.ext.gen_attr.burst_width = 4;
+
+    DataTransfer read32;
+    read32.addr = 0;
+    read32.cmd = DataTransfer::READ;
+    read32.data = reinterpret_cast<uint8_t*>(&dummy_data);
+    read32.length = 4;
+    read32.byte_enable = nullptr;
+    read32.byte_enable_length = 0;
+    read32.streaming_width = 4;
+    read32.ext.gen_attr.enabled = true;
+    read32.ext.gen_attr.burst_width = 4;
+
+    std::vector<DataTransfer> narrow_transfers;
+    narrow_transfers.push_back(write32);
+    narrow_transfers.push_back(read32);
+    narrow_transfers.push_back(utils::Expect(reinterpret_cast<uint8_t*>(&dummy_data), 4));
+
+    write32.addr = 4;
+    read32.addr = 4;
+    narrow_transfers.push_back(write32);
+    narrow_transfers.push_back(read32);
+    narrow_transfers.push_back(utils::Expect(reinterpret_cast<uint8_t*>(&dummy_data), 4));
+
+    write32.addr = 8;
+    read32.addr = 8;
+    narrow_transfers.push_back(write32);
+    narrow_transfers.push_back(read32);
+    narrow_transfers.push_back(utils::Expect(reinterpret_cast<uint8_t*>(&dummy_data), 4));
+    narrow_transfer_ =
+      std::make_unique<TrafficDesc>(utils::merge(narrow_transfers));
+
     tg_.setStartDelay(sc_time(5, SC_US));
     tg_.addTransfers(bin_transfer_.get(), 0,
                      CoreMiniAxi_tb::bin_transfer_done_cb);
@@ -375,6 +417,9 @@ struct CoreMiniAxi_tb : Sysc_tb {
   static void wrap_transfer_done_cb(TLMTrafficGenerator* gen, int threadId) {
     getSingleton()->wrap_transfer_done_cb_(gen, threadId);
   }
+  static void narrow_transfer_done_cb(TLMTrafficGenerator* gen, int threadId) {
+    getSingleton()->narrow_transfer_done_cb_(gen, threadId);
+  }
 
  private:
   std::string file_name_;
@@ -420,6 +465,12 @@ struct CoreMiniAxi_tb : Sysc_tb {
 
   std::unique_ptr<TrafficDesc> wrap_transfer_;
   void wrap_transfer_done_cb_(TLMTrafficGenerator* gen, int threadId) {
+    tg_.addTransfers(narrow_transfer_.get(), 0,
+                     CoreMiniAxi_tb::narrow_transfer_done_cb);
+  }
+
+  std::unique_ptr<TrafficDesc> narrow_transfer_;
+  void narrow_transfer_done_cb_(TLMTrafficGenerator* gen, int threadId) {
     sc_stop();
   }
 

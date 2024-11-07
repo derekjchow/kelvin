@@ -48,10 +48,8 @@ class SRAM(p: Parameters, sramAddressWidth: Int) extends Module {
 
   io.sram.enable := (io.fabric.readDataAddr.valid || io.fabric.writeDataAddr.valid)
   io.sram.isWrite := io.fabric.writeDataAddr.valid
-  val writeDataLeftShift = (io.fabric.writeDataBits << (io.fabric.writeDataAddr.bits(3,0) << 3))(io.fabric.writeDataBits.getWidth - 1,0)
-  val writeDataVec = UIntToVec(writeDataLeftShift, 8)
-  val writeStrbLeftShift = (io.fabric.writeDataStrb << (io.fabric.writeDataAddr.bits(3,0)))(io.fabric.writeDataStrb.getWidth - 1,0)
-  val writeMaskData = VecInit(writeStrbLeftShift.asBools)
+  val writeDataVec = UIntToVec(io.fabric.writeDataBits, 8)
+  val writeMaskData = VecInit(io.fabric.writeDataStrb.asBools)
   io.sram.writeData := Mux(io.fabric.writeDataAddr.valid, writeDataVec, 0.U.asTypeOf(writeDataVec))
   val readMaskData = RegInit(VecInit(Seq.fill(io.fabric.writeDataBits.getWidth / 8)(true.B)))
   val maskData = Mux(io.fabric.writeDataAddr.valid, writeMaskData, readMaskData)

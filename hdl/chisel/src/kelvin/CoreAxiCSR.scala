@@ -43,9 +43,9 @@ class CoreCSR(p: Parameters) extends Module {
 
   val readData =
     MuxLookup(io.fabric.readDataAddr.bits, 0.U)(Seq(
-      0x0.U -> resetReg,
-      0x4.U -> pcStartReg,
-      0x8.U -> statusReg,
+      0x0.U -> Cat(0.U(96.W), resetReg),
+      0x4.U -> Cat(0.U(64.W), pcStartReg, 0.U(32.W)),
+      0x8.U -> Cat(0.U(32.W), statusReg, 0.U(64.W)),
     ) ++ ((0 until p.csrOutCount).map(x => ((0x100 + 4*x).U -> io.kelvin_csr.value(x)))))
   val readDataValid =
     MuxLookup(io.fabric.readDataAddr.bits, false.B)(Seq(
