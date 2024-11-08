@@ -16,7 +16,7 @@ package kelvin
 
 import chisel3._
 import chisel3.util._
-import common.{ForceZero, MakeInvalid, MakeValid}
+import common.{ForceZero, MakeInvalid, MakeValid, MakeWireBundle}
 
 
 object RvvCompressedOpcode extends ChiselEnum {
@@ -41,10 +41,14 @@ object RvvCompressedInstruction {
       "b0100111".U -> MakeValid(RvvCompressedOpcode.RVVSTORE),
       "b1010111".U -> MakeValid(RvvCompressedOpcode.RVVALU),
     ))
-    val compressed = Wire(new RvvCompressedInstruction)
-    compressed.opcode := new_opcode.bits
-    compressed.bits := bits
-    MakeValid(new_opcode.valid, compressed)
+
+    // Fancy way to MakeValid.
+    MakeWireBundle[ValidIO[RvvCompressedInstruction]](
+      Valid(new RvvCompressedInstruction),
+      _.valid -> new_opcode.valid,
+      _.bits.opcode -> new_opcode.bits,
+      _.bits.bits -> bits,
+    )
   }
 }
 
@@ -104,10 +108,11 @@ class RvvS1DecodeInstructionBase {
       (f6vm === BitPat("b101111_?")) -> MakeValid(RvvAluOp.VNCLIP),
     ))
 
-    val d = Wire(new RvvS1DecodedInstruction())
-    d.op := op.bits
-
-    ForceZero(MakeValid(op.valid, d))
+    ForceZero(MakeWireBundle[ValidIO[RvvS1DecodedInstruction]](
+      Valid(new RvvS1DecodedInstruction),
+      _.valid -> op.valid,
+      _.bits.op -> op.bits,
+    ))
   }
 
   private def s1decode_opivx(f6vm: UInt, vs2: UInt, rs1: UInt, vd: UInt): Valid[RvvS1DecodedInstruction] = {
@@ -161,10 +166,11 @@ class RvvS1DecodeInstructionBase {
       (f6vm === BitPat("b101111_?")) -> MakeValid(RvvAluOp.VNCLIP),
     ))
 
-    val d = Wire(new RvvS1DecodedInstruction())
-    d.op := op.bits
-
-    ForceZero(MakeValid(op.valid, d))
+    ForceZero(MakeWireBundle[ValidIO[RvvS1DecodedInstruction]](
+      Valid(new RvvS1DecodedInstruction),
+      _.valid -> op.valid,
+      _.bits.op -> op.bits,
+    ))
   }
 
   private def s1decode_opivi(f6vm: UInt, vs2: UInt, imm5: UInt, vd: UInt): Valid[RvvS1DecodedInstruction] = {
@@ -222,10 +228,11 @@ class RvvS1DecodeInstructionBase {
       (f6vm === BitPat("b101111_?")) -> MakeValid(RvvAluOp.VNCLIP),
     ))
 
-    val d = Wire(new RvvS1DecodedInstruction())
-    d.op := op.bits
-
-    ForceZero(MakeValid(op.valid, d))
+    ForceZero(MakeWireBundle[ValidIO[RvvS1DecodedInstruction]](
+      Valid(new RvvS1DecodedInstruction),
+      _.valid -> op.valid,
+      _.bits.op -> op.bits,
+    ))
   }
 
   protected def s1decode_opv(bits: UInt): Valid[RvvS1DecodedInstruction] = {

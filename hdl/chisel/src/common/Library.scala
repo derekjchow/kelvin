@@ -27,12 +27,36 @@ object MuxOR {
   }
 }
 
+// An easy way to build a Wire(T) and (partially) connect some of its
+// contents.
+// This is essentially somewhere between WireDefault (which does not like
+// bundle members) and bundle literals (which only likes literals)
+// See MakeValid for usage example.
+// TODO: add more examples for advanced usage:
+// - _.member1.member2 on LHS
+// - _.something on RHS (only, or both)
+// - _ (no member) on LHS
+// TODO: add tests
+object MakeWireBundle {
+  def apply[T <: Bundle](gen: T, exp: T => (Data, Data)*): T = {
+    val ret = Wire(gen)
+    exp.foreach { e =>
+      val (x, y) = e(ret)
+      x := y
+    }
+    ret
+  }
+}
+
 object MakeValid {
   def apply[T <: Data](valid: Bool, bits: T): ValidIO[T] = {
-    val result = Wire(Valid(chiselTypeOf(bits)))
-    result.valid := valid
-    result.bits := bits
-    result
+    // Explicitly stating the type here allows the function types to be
+    // inferred.
+    MakeWireBundle[ValidIO[T]](
+      Valid(chiselTypeOf(bits)),
+      _.valid -> valid,
+      _.bits -> bits,
+    )
   }
 
   def apply[T <: Data](bits: T): ValidIO[T] = {
@@ -41,23 +65,21 @@ object MakeValid {
 }
 
 object MakeInvalid {
-  def apply[T <: Data](gen: T): ValidIO[T] = {
-    val result = Wire(Valid(gen))
-      result.valid := false.B
-      result.bits := 0.U.asTypeOf(gen)
-      result
-  }
+  def apply[T <: Data](gen: T): ValidIO[T] = MakeWireBundle[ValidIO[T]](
+    Valid(gen),
+    _.valid -> false.B,
+    _.bits -> 0.U.asTypeOf(gen),
+  )
 }
 
 // Gate the bits of an interface based on it's validity bit. This prevents
 // invalid data from propagating down stream, thus reducing dynamic power
 object ForceZero {
-  def apply[T <: Data](input: ValidIO[T]): ValidIO[T] = {
-    val result = Wire(chiselTypeOf(input))
-    result.valid := input.valid
-    result.bits  := Mux(input.valid, input.bits, 0.U.asTypeOf(input).bits)
-    result
-  }
+  def apply[T <: Data](input: ValidIO[T]): ValidIO[T] = MakeWireBundle[ValidIO[T]](
+    chiselTypeOf(input),
+    _.valid -> input.valid,
+    _.bits  -> Mux(input.valid, input.bits, 0.U.asTypeOf(input).bits),
+  )
 }
 
 object Clz {
