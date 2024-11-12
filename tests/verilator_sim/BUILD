@@ -20,9 +20,7 @@ cc_library(
     hdrs = [
         "elf.h",
     ],
-    deps = [
-        "@com_google_absl//absl/status",
-    ],
+    visibility = ["//visibility:public"],
 )
 
 cc_library(
@@ -88,6 +86,7 @@ cc_binary(
         ":elf",
         ":sim_libs",
         ":util",
+        "//tests/systemc:Xbar",
         "//hdl/chisel/src/kelvin:core_mini_axi_cc_library",
         "@com_google_absl//absl/flags:flag",
         "@com_google_absl//absl/flags:parse",

@@ -1,0 +1,109 @@
+#port                               width   Verilog     SystemC
+io_aclk                             1       bit         sc_clock
+io_halted                           1       bit         sc_logic
+io_fault                            1       bit         sc_logic
+io_wfi                              1       bit         sc_logic
+io_irq                              1       bit         sc_logic
+
+io_slog_valid                       1       bit         sc_logic
+io_slog_addr                        5       bit_vector  sc_lv
+io_slog_data                        32      bit_vector  sc_lv
+
+io_debug_en                         4       bit_vector  sc_lv
+io_debug_cycles                     32      bit_vector  sc_lv
+io_debug_addr_0                     32      bit_vector  sc_lv
+io_debug_addr_1                     32      bit_vector  sc_lv
+io_debug_addr_2                     32      bit_vector  sc_lv
+io_debug_addr_3                     32      bit_vector  sc_lv
+io_debug_inst_0                     32      bit_vector  sc_lv
+io_debug_inst_1                     32      bit_vector  sc_lv
+io_debug_inst_2                     32      bit_vector  sc_lv
+io_debug_inst_3                     32      bit_vector  sc_lv
+
+io_axi_slave_write_addr_ready       1       bit         sc_logic
+io_axi_slave_write_addr_valid       1       bit         sc_logic
+io_axi_slave_write_addr_bits_addr   32      bit_vector  sc_lv
+io_axi_slave_write_addr_bits_prot   3       bit_vector  sc_lv
+io_axi_slave_write_addr_bits_id     6       bit_vector  sc_lv
+io_axi_slave_write_addr_bits_len    8       bit_vector  sc_lv
+io_axi_slave_write_addr_bits_size   3       bit_vector  sc_lv
+io_axi_slave_write_addr_bits_burst  2       bit_vector  sc_lv
+io_axi_slave_write_addr_bits_lock   2       bit_vector  sc_lv
+io_axi_slave_write_addr_bits_cache  4       bit_vector  sc_lv
+io_axi_slave_write_addr_bits_qos    4       bit_vector  sc_lv
+io_axi_slave_write_addr_bits_region 4       bit_vector  sc_lv
+
+io_axi_slave_write_data_ready       1       bit         sc_logic
+io_axi_slave_write_data_valid       1       bit         sc_logic
+io_axi_slave_write_data_bits_data   128     bit_vector  sc_lv
+io_axi_slave_write_data_bits_last   1       bit         sc_logic
+io_axi_slave_write_data_bits_strb   16      bit_vector  sc_lv
+
+io_axi_slave_write_resp_ready      1       bit         sc_logic
+io_axi_slave_write_resp_valid      1       bit         sc_logic
+io_axi_slave_write_resp_bits_id    6       bit_vector  sc_lv
+io_axi_slave_write_resp_bits_resp  2       bit_vector  sc_lv
+
+io_axi_slave_read_addr_ready       1       bit         sc_logic
+io_axi_slave_read_addr_valid       1       bit         sc_logic
+io_axi_slave_read_addr_bits_addr   32      bit_vector  sc_lv
+io_axi_slave_read_addr_bits_prot   3       bit_vector  sc_lv
+io_axi_slave_read_addr_bits_id     6       bit_vector  sc_lv
+io_axi_slave_read_addr_bits_len    8       bit_vector  sc_lv
+io_axi_slave_read_addr_bits_size   3       bit_vector  sc_lv
+io_axi_slave_read_addr_bits_burst  2       bit_vector  sc_lv
+io_axi_slave_read_addr_bits_lock   2       bit_vector  sc_lv
+io_axi_slave_read_addr_bits_cache  4       bit_vector  sc_lv
+io_axi_slave_read_addr_bits_qos    4       bit_vector  sc_lv
+io_axi_slave_read_addr_bits_region 4       bit_vector  sc_lv
+
+io_axi_slave_read_data_ready       1       bit         sc_logic
+io_axi_slave_read_data_valid       1       bit         sc_logic
+io_axi_slave_read_data_bits_data   128     bit_vector  sc_lv
+io_axi_slave_read_data_bits_id     6       bit_vector  sc_lv
+io_axi_slave_read_data_bits_resp   2       bit_vector  sc_lv
+io_axi_slave_read_data_bits_last   1       bit         sc_logic
+
+io_axi_master_write_addr_ready       1       bit         sc_logic
+io_axi_master_write_addr_valid       1       bit         sc_logic
+io_axi_master_write_addr_bits_addr   32      bit_vector  sc_lv
+io_axi_master_write_addr_bits_prot   3       bit_vector  sc_lv
+io_axi_master_write_addr_bits_id     6       bit_vector  sc_lv
+io_axi_master_write_addr_bits_len    8       bit_vector  sc_lv
+io_axi_master_write_addr_bits_size   3       bit_vector  sc_lv
+io_axi_master_write_addr_bits_burst  2       bit_vector  sc_lv
+io_axi_master_write_addr_bits_lock   2       bit_vector  sc_lv
+io_axi_master_write_addr_bits_cache  4       bit_vector  sc_lv
+io_axi_master_write_addr_bits_qos    4       bit_vector  sc_lv
+io_axi_master_write_addr_bits_region 4       bit_vector  sc_lv
+
+io_axi_master_write_data_ready       1       bit         sc_logic
+io_axi_master_write_data_valid       1       bit         sc_logic
+io_axi_master_write_data_bits_data   128     bit_vector  sc_lv
+io_axi_master_write_data_bits_last   1       bit         sc_logic
+io_axi_master_write_data_bits_strb   16      bit_vector  sc_lv
+
+io_axi_master_write_resp_ready      1       bit         sc_logic
+io_axi_master_write_resp_valid      1       bit         sc_logic
+io_axi_master_write_resp_bits_id    6       bit_vector  sc_lv
+io_axi_master_write_resp_bits_resp  2       bit_vector  sc_lv
+
+io_axi_master_read_addr_ready       1       bit         sc_logic
+io_axi_master_read_addr_valid       1       bit         sc_logic
+io_axi_master_read_addr_bits_addr   32      bit_vector  sc_lv
+io_axi_master_read_addr_bits_prot   3       bit_vector  sc_lv
+io_axi_master_read_addr_bits_id     6       bit_vector  sc_lv
+io_axi_master_read_addr_bits_len    8       bit_vector  sc_lv
+io_axi_master_read_addr_bits_size   3       bit_vector  sc_lv
+io_axi_master_read_addr_bits_burst  2       bit_vector  sc_lv
+io_axi_master_read_addr_bits_lock   2       bit_vector  sc_lv
+io_axi_master_read_addr_bits_cache  4       bit_vector  sc_lv
+io_axi_master_read_addr_bits_qos    4       bit_vector  sc_lv
+io_axi_master_read_addr_bits_region 4       bit_vector  sc_lv
+
+io_axi_master_read_data_ready       1       bit         sc_logic
+io_axi_master_read_data_valid       1       bit         sc_logic
+io_axi_master_read_data_bits_data   128     bit_vector  sc_lv
+io_axi_master_read_data_bits_id     6       bit_vector  sc_lv
+io_axi_master_read_data_bits_resp   2       bit_vector  sc_lv
+io_axi_master_read_data_bits_last   1       bit         sc_logic

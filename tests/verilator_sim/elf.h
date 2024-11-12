@@ -15,13 +15,12 @@
 #ifndef TESTS_VERILATOR_SIM_UTIL_H_
 #define TESTS_VERILATOR_SIM_UTIL_H_
 
+#include <cstdint>
 #include <functional>
-
-#include "absl/status/status.h"
 
 typedef std::function<void*(void* /* dest */, const void* /* src */,
                             size_t /* count */)>
     CopyFn;
-absl::Status LoadElf(uint8_t* data, CopyFn copy_fn);
+void LoadElf(uint8_t* data, CopyFn copy_fn);
 
 #endif  // TESTS_VERILATOR_SIM_UTIL_H_

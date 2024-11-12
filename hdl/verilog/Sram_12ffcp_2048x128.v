@@ -58,8 +58,13 @@ module Sram_12ffcp_2048x128(
       .PUDELAY(),           // Power-Up Delay - Connect for tuning timing in late stage design
 
       // Test Mode
+`ifndef SIMULATION
       .RTSEL(2'b0),         // Read Test Select                (input [1:0])
       .WTSEL(2'b0)          // Write Test Select               (input [1:0])
+`else
+      .RTSEL(2'b1),         // Read Test Select                (input [1:0])
+      .WTSEL(2'b1)          // Write Test Select               (input [1:0])
+`endif
      );
 
 `else

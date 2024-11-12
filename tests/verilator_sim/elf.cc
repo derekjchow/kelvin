@@ -16,7 +16,7 @@
 
 #include <elf.h>
 
-absl::Status LoadElf(uint8_t* data, CopyFn copy_fn) {
+void LoadElf(uint8_t* data, CopyFn copy_fn) {
   const Elf32_Ehdr* elf_header = reinterpret_cast<Elf32_Ehdr*>(data);
   for (int i = 0; i < elf_header->e_phnum; ++i) {
     const Elf32_Phdr* program_header = reinterpret_cast<Elf32_Phdr*>(
@@ -31,5 +31,4 @@ absl::Status LoadElf(uint8_t* data, CopyFn copy_fn) {
             reinterpret_cast<void*>(data + program_header->p_offset),
             program_header->p_filesz);
   }
-  return absl::OkStatus();
 }

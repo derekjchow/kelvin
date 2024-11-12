@@ -15,31 +15,30 @@ ENTRY(_start)
 SECTIONS {
     /* ITCM data here */
     . = ORIGIN(ITCM);
-    .text : ALIGN(4) {
+    .text : ALIGN(16) {
         *(._init)
         *(.text)
         *(.text.*)
-        . = ALIGN(4);
+        . = ALIGN(16);
     } > ITCM
 
-    .init.array : ALIGN(4) {
+    .init.array : ALIGN(16) {
       __init_array_start = .;
       *(.init_array)
       *(.init_array.*)
-      . = ALIGN(4);
+      . = ALIGN(16);
       __init_array_end = .;
     } > ITCM
 
-    .rodata : ALIGN(4) {
+    .rodata : ALIGN(16) {
       *(.srodata)
       *(.srodata.*)
       *(.rodata)
       *(.rodata.*)
-      . = ALIGN(4);
+      . = ALIGN(16);
     } > ITCM
 
-    /* TODO(atv): This would be good in DTCM. But needs a proper ELF loader. */
-    .data : ALIGN(4) {
+    .data : ALIGN(16) {
       __data_start__ = .;
       /**
       * This will get loaded into `gp`, and the linker will use that register for
@@ -53,13 +52,13 @@ SECTIONS {
       *(.sdata.*)
       *(.data)
       *(.data.*)
-      . = ALIGN(4);
+      . = ALIGN(16);
         __data_end__ = .;
-    } > ITCM
+    } > DTCM
 
     /* DTCM data here */
     . = ORIGIN(DTCM);
-    .bss : ALIGN(4) {
+    .bss : ALIGN(16) {
       __bss_start__ = .;
       *(.sbss)
       *(.sbss.*)
@@ -68,13 +67,13 @@ SECTIONS {
       __bss_end__ = .;
     } > DTCM
 
-    .heap : ALIGN(4) {
+    .heap : ALIGN(16) {
       __heap_start__ = .;
       . += HEAP_SIZE;
       __heap_end__ = .;
     } > DTCM
 
-    .stack : ALIGN(4) {
+    .stack : ALIGN(16) {
       __stack_start__ = .;
       . += STACK_SIZE;
       __stack_end__ = .;
