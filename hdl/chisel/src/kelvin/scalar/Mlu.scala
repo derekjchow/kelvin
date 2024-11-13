@@ -30,11 +30,6 @@ object MluOp extends ChiselEnum {
   val MULH = Value
   val MULHSU = Value
   val MULHU = Value
-  val MULHR = Value
-  val MULHSUR = Value
-  val MULHUR = Value
-  val DMULH = Value
-  val DMULHR = Value
   val Entries = Value
 }
 
@@ -53,8 +48,6 @@ class MluStage2(p: Parameters) extends Bundle {
   val rd = UInt(5.W)
   val op = MluOp()
   val prod = SInt(66.W)
-  val rs1 = UInt(32.W)
-  val rs2 = UInt(32.W)
 }
 
 class Mlu(p: Parameters) extends Module {
@@ -89,8 +82,8 @@ class Mlu(p: Parameters) extends Module {
   val rs1 = (0 until p.instructionLanes).map(x => MuxOR(valid2in & sel2in(x), io.rs1(x).data)).reduce(_ | _)
   val rs2 = (0 until p.instructionLanes).map(x => MuxOR(valid2in & sel2in(x), io.rs2(x).data)).reduce(_ | _)
 
-  val rs2signed = op2in.isOneOf(MluOp.MULH, MluOp.MULHR, MluOp.DMULH, MluOp.DMULHR)
-  val rs1signed = op2in.isOneOf(MluOp.MULHSU, MluOp.MULHSUR) || rs2signed
+  val rs2signed = op2in.isOneOf(MluOp.MULH)
+  val rs1signed = op2in.isOneOf(MluOp.MULHSU) || rs2signed
   val rs1s = Cat(rs1signed && rs1(31), rs1).asSInt
   val rs2s = Cat(rs2signed && rs2(31), rs2).asSInt
   val prod = rs1s * rs2s
@@ -101,31 +94,16 @@ class Mlu(p: Parameters) extends Module {
   stage2.bits.rd := addr2in
   stage2.bits.op := op2in
   stage2.bits.prod := prod
-  stage2.bits.rs1 := rs1
-  stage2.bits.rs2 := rs2
   stage2Input.ready := stage2.ready
 
   val stage3Input = Queue(stage2, 1, true)
   val op3in = stage3Input.bits.op
   val prod3in = stage3Input.bits.prod
-  val rs1_3in = stage3Input.bits.rs1
-  val rs2_3in = stage3Input.bits.rs2
-
-  val maxneg = 2.U(2.W)
-  val halfneg = 1.U(2.W)
-  val sat = rs1_3in(29,0) === 0.U && rs2_3in(29,0) === 0.U &&
-            (rs1_3in(31,30) === maxneg && rs2_3in(31,30) === maxneg ||
-              rs1_3in(31,30) === maxneg && rs2_3in(31,30) === halfneg ||
-              rs2_3in(31,30) === maxneg && rs1_3in(31,30) === halfneg)
 
   val mul = MuxCase(0.U(32.W), Seq(
     (op3in === MluOp.MUL) -> prod3in(31, 0),
-    op3in.isOneOf(MluOp.MULH, MluOp.MULHSU, MluOp.MULHU, MluOp.MULHR, MluOp.MULHSUR, MluOp.MULHUR) -> prod3in(63,32),
-    op3in.isOneOf(MluOp.DMULH, MluOp.DMULHR) -> Mux(sat, Mux(prod3in(65), 0x7fffffff.U(32.W), Cat(1.U(1.W), 0.U(31.W))), prod3in(62,31))
+    op3in.isOneOf(MluOp.MULH, MluOp.MULHSU, MluOp.MULHU) -> prod3in(63,32),
   ))
-
-  val round = prod3in(30) && op3in.isOneOf(MluOp.DMULHR) ||
-              prod3in(31) && (op3in.isOneOf(MluOp.MULHR, MluOp.MULHSUR, MluOp.MULHUR))
 
   // Stage 3 output result
   // Multiplier has a registered output.
@@ -133,7 +111,7 @@ class Mlu(p: Parameters) extends Module {
 
   io.rd.valid     := stage3Input.valid
   io.rd.bits.addr := stage3Input.bits.rd
-  io.rd.bits.data := mul + round
+  io.rd.bits.data := mul
 
   // Assertions.
   for (i <- 0 until p.instructionLanes) {

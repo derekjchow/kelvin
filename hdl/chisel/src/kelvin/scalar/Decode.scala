@@ -106,11 +106,6 @@ class DecodedInstruction extends Bundle {
   val mulh    = Bool()
   val mulhsu  = Bool()
   val mulhu   = Bool()
-  val mulhr   = Bool()
-  val mulhsur = Bool()
-  val mulhur  = Bool()
-  val dmulh   = Bool()
-  val dmulhr  = Bool()
   val div     = Bool()
   val divu    = Bool()
   val rem     = Bool()
@@ -167,7 +162,7 @@ class DecodedInstruction extends Bundle {
   def isLoad(): Bool = { lb || lh || lw || lbu || lhu }
   def isStore(): Bool = { sb || sh || sw }
   def isLsu(): Bool = { isLoad() || isStore() || vld || vst || flushat || flushall }
-  def isMul(): Bool = { mul || mulh || mulhsu || mulhu || mulhr || mulhsur || mulhur || dmulh || dmulhr }
+  def isMul(): Bool = { mul || mulh || mulhsu || mulhu }
   def isDvu(): Bool = { div || divu || rem || remu }
   def isVector(): Bool = { vld || vst || viop || getvl || getmaxvl }
 }
@@ -391,11 +386,6 @@ class Decode(p: Parameters, pipeline: Int) extends Module {
     d.mulh    -> MakeValid(true.B, MluOp.MULH),
     d.mulhsu  -> MakeValid(true.B, MluOp.MULHSU),
     d.mulhu   -> MakeValid(true.B, MluOp.MULHU),
-    d.mulhr   -> MakeValid(true.B, MluOp.MULHR),
-    d.mulhsur -> MakeValid(true.B, MluOp.MULHSUR),
-    d.mulhur  -> MakeValid(true.B, MluOp.MULHUR),
-    d.dmulh   -> MakeValid(true.B, MluOp.DMULH),
-    d.dmulhr  -> MakeValid(true.B, MluOp.DMULHR),
   ))
   io.mlu.valid := decodeEn && mlu.valid
   io.mlu.bits.addr := rdAddr
@@ -567,11 +557,6 @@ object DecodeInstruction {
     d.mulh    := DecodeBits(op, "0000_001_xxxxx_xxxxx_001_xxxxx_0110011")
     d.mulhsu  := DecodeBits(op, "0000_001_xxxxx_xxxxx_010_xxxxx_0110011")
     d.mulhu   := DecodeBits(op, "0000_001_xxxxx_xxxxx_011_xxxxx_0110011")
-    d.mulhr   := DecodeBits(op, "0010_001_xxxxx_xxxxx_001_xxxxx_0110011")
-    d.mulhsur := DecodeBits(op, "0010_001_xxxxx_xxxxx_010_xxxxx_0110011")
-    d.mulhur  := DecodeBits(op, "0010_001_xxxxx_xxxxx_011_xxxxx_0110011")
-    d.dmulh   := DecodeBits(op, "0000_010_xxxxx_xxxxx_001_xxxxx_0110011")
-    d.dmulhr  := DecodeBits(op, "0010_010_xxxxx_xxxxx_001_xxxxx_0110011")
     d.div     := DecodeBits(op, "0000_001_xxxxx_xxxxx_100_xxxxx_0110011")
     d.divu    := DecodeBits(op, "0000_001_xxxxx_xxxxx_101_xxxxx_0110011")
     d.rem     := DecodeBits(op, "0000_001_xxxxx_xxxxx_110_xxxxx_0110011")
@@ -678,7 +663,7 @@ object DecodeInstruction {
                       d.addi, d.slti, d.sltiu, d.xori, d.ori, d.andi,
                       d.add, d.sub, d.slt, d.sltu, d.xor, d.or, d.and, d.xnor, d.orn, d.andn,
                       d.slli, d.srli, d.srai, d.sll, d.srl, d.sra,
-                      d.mul, d.mulh, d.mulhsu, d.mulhu, d.mulhr, d.mulhsur, d.mulhur, d.dmulh, d.dmulhr,
+                      d.mul, d.mulh, d.mulhsu, d.mulhu,
                       d.div, d.divu, d.rem, d.remu,
                       d.clz, d.ctz, d.pcnt, d.min, d.minu, d.max, d.maxu,
                       d.sextb, d.sexth, d.zexth,
