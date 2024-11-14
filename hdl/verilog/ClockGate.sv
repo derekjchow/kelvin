@@ -25,7 +25,7 @@ module ClockGate(
 );
 
 `ifndef USE_GENERIC
-CKLNQD10BWP16P90LVT u_cg(
+CKLNQD10BWP6T20P96CPDLVT u_cg(
   .TE(te),
   .E(enable),
   .CP(clk_i),
