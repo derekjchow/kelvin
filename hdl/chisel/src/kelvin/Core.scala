@@ -151,7 +151,8 @@ object EmitCore extends App {
 
         ChiselStage.emitSystemVerilogFile(
             core2, chiselArgs.toArray ++ Array(
-                "--split-verilog", "--target-dir", targetDir))
+                "--split-verilog", "--target-dir", targetDir),
+                Array("--lowering-options=disallowLocalVariables"))
         val files = (new File(targetDir)).listFiles
         val zip = new ZipOutputStream(new FileOutputStream(
             targetDir + "/" + coreName + ".zip"))
