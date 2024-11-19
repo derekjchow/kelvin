@@ -4,16 +4,16 @@
 // IF stage, RVS to Command Queue
 //
 typedef struct packed {
-    logic   [`VTYPE_VILL-1:0]       vill,       // 0:not illegal, 1:illegal
-    logic   [`VTYPE_VMA-1:0]        vma,        // 0:inactive element undisturbed, 1:inactive element agnostic
-    logic   [`VTYPE_VTA-1:0]        vta,        // 0:tail undisturbed, 1:tail agnostic
-    logic   [`VTYPE_VSEW-1:0]       vsew,       // support: 000:SEW8, 001:SEW16, 010:SEW32
-    logic   [`VTYPE_VLMUL-1:0]      vlmul       // support: 110:LMUL1/4, 111:LMUL1/2, 000:LMUL1, 001:LMUL2, 010:LMUL4, 011:LMUL8  
+    logic   [`VTYPE_VILL_WIDTH-1:0]       vill,       // 0:not illegal, 1:illegal
+    logic   [`VTYPE_VMA_WIDTH-1:0]        vma,        // 0:inactive element undisturbed, 1:inactive element agnostic
+    logic   [`VTYPE_VTA_WIDTH-1:0]        vta,        // 0:tail undisturbed, 1:tail agnostic
+    logic   [`VTYPE_VSEW_WIDTH-1:0]       vsew,       // support: 000:SEW8, 001:SEW16, 010:SEW32
+    logic   [`VTYPE_VLMUL_WIDTH-1:0]      vlmul       // support: 110:LMUL1/4, 111:LMUL1/2, 000:LMUL1, 001:LMUL2, 010:LMUL4, 011:LMUL8  
 } VTYPE_t;
 
 typedef struct packed {
-    logic   [`VCSR_VXRM-1:0]        vxrm,       
-    logic   [`VCSR_VXSAT-1:0]       vxsat            
+    logic   [`VCSR_VXRM_WIDTH-1:0]        vxrm,       
+    logic   [`VCSR_VXSAT_WIDTH-1:0]       vxsat            
 } VCSR_t;
 
 typedef struct packed {
@@ -36,8 +36,7 @@ typedef struct packed {
 // It is used to distinguish which execute units that VVV/VVX/VX uop is dispatch to, based on inst_encoding[6:0]
 typedef enum logic [2:0] {
     ALU,
-    PMT,
-    RDT,
+    PMTRDT,
     MUL,
     MAC,
     LSU
@@ -229,10 +228,10 @@ typedef union packed {
 
 // uop classification used for dispatch rule
 typedef enum logic [1:0] {
-    VVV,        // this uop will use 2 read ports of VRF
-    VVX,        // this uop will use 1 read ports of VRF
-    VX,         // this uop will use 0 read ports of VRF
-    MACV        // this uop will use 3 read ports of VRF
+    VV,        // this uop will use 2 read ports of VRF
+    VX,        // this uop will use 1 read ports of VRF
+    X,         // this uop will use 0 read ports of VRF
+    VVV        // this uop will use 3 read ports of VRF
 } UOP_CLASS_e;
 
 // Effective Element Width
@@ -274,6 +273,31 @@ typedef struct packed {
 //
 // DP stage, 
 //
+// VRF struct
+typedef struct packed {
+    logic                               dp2vrf_vr0_valid;
+    logic [`REGFILE_INDEX_WIDTH-1:0]    dp2vrf_vr0_addr;
+    logic                               dp2vrf_vr1_valid;
+    logic [`REGFILE_INDEX_WIDTH-1:0]    dp2vrf_vr1_addr;
+    logic                               dp2vrf_vr2_valid;
+    logic [`REGFILE_INDEX_WIDTH-1:0]    dp2vrf_vr2_addr;
+    logic                               dp2vrf_vr3_valid;
+    logic [`REGFILE_INDEX_WIDTH-1:0]    dp2vrf_vr3_addr;
+}DP2VRF_t;
+
+typedef struct packed {
+    logic                               vrf2mux_rd0_valid;
+    logic [`VLEN-1:0]                   vrf2mux_rd0_data;
+    logic                               vrf2mux_rd1_valid;
+    logic [`VLEN-1:0]                   vrf2mux_rd1_data;
+    logic                               vrf2mux_rd2_valid;
+    logic [`VLEN-1:0]                   vrf2mux_rd2_data;
+    logic                               vrf2mux_rd3_valid;
+    logic [`VLEN-1:0]                   vrf2mux_rd3_data;
+    logic                               vrf2mux_v0_valid;
+    logic [`VLEN-1:0]                   vrf2mux_v0_data;
+}VRF2MUX_t;
+
 // specify whether the current byte belongs to 'prestart' or 'body-inactive' or 'body-active' or 'tail'
 typedef enum logic [1:0] {
     NOT_CHANGE,         // the byte is not changed, which may belong to 'prestart' or superfluous element in widening/narrowing uop
