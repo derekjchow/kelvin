@@ -34,3 +34,36 @@
 `define VTYPE_VLMUL             3
 `define VCSR_VXRM               2
 `define VCSR_VXSAT              1
+// Instruction encoding
+`define FUNCT6_WIDTH            6
+`define VM_WIDTH                1
+`define VS2_WIDTH               5
+`define UMOP_WIDTH              5
+`define VS1_WIDTH               5
+`define IMM_WIDTH               5
+`define FUNCT3_WIDTH            3
+`define VD_WIDTH                5
+`define RD_WIDTH                5
+`define OPCODE_WIDTH            7
+
+// Reservation Station data width
+`define ALU_RS_WIDTH            $bits(ALU_RS_t)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

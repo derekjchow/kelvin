@@ -1,245 +1,288 @@
-/*
-description: 
-1. It will get uops from ALU Reservation station and execute this uop.
-
-feature list:
-1. All alu uop is executed and submit to ROB in 1 cycle.
-2. Reuse arithmetic logic as much as possible.
-3. Low-power design.
-*/
+// description: 
+// 1. It will get uops from ALU Reservation station and execute this uop.
+//
+// feature list:
+// 1. All are combinatorial logic.
+// 2. All alu uop is executed and submit to ROB in 1 cycle.
+// 3. Reuse arithmetic logic as much as possible.
+// 4. Low-power design.
 
 `include 'rvv.svh'
 
 module rvv_alu_unit
 (
-    clk,
-    rstn,
-    
-    alu_uop_valid,
-    alu_uop,
-    result_alu2rob_valid,
-    result_alu2rob
+  alu_uop_valid,
+  alu_uop,
+  result_valid_ex2rob,
+  result_ex2rob
 );
 //
 // interface signals
 //
-    // global signals
-    input   logic                   clk;
-    input   logic                   rstn;
+  // ALU RS handshake signals
+  input   logic                   alu_uop_valid;
+  input   ALU_RS_t                alu_uop;
 
-    // ALU RS handshake signals
-    input   logic                   alu_uop_valid;
-    input   ALU_RS_t                alu_uop;
-
-    // ALU send result signals to ROB
-    output  logic                   result_alu2rob_valid;
-    output  ALU2ROB_t               result_alu2rob;
+  // ALU send result signals to ROB
+  output  logic                   result_valid_ex2rob;
+  output  ALU2ROB_t               result_ex2rob;
 
 //
 // internal signals
 //
-    // ALU_RS_t struct signals
-    logic   [`ROB_DEPTH_WIDTH-1:0]  rob_entry;
-    FUNCT_u                         uop_funct;
-    EXE_OPCODE_e                    uop_opcode;
-    logic   [`VSTART_WIDTH-1:0]     vstart;
-    logic                           vm;       
-    logic   [`VCSR_VXRM-1:0]        vxrm;              
-    logic   [`VLENB-1:0]            v0_data;           
-    logic   [`VLEN-1:0]             vd_data;           
-    logic   [`VLEN-1:0]             vs1_data;           
-    EEW_e                           vs1_eew;
-    logic                           vs1_data_valid; 
-    ELE_TYPE_t                      vs1_type; 
-    logic   [`VLEN-1:0]             vs2_data;	        
-    EEW_e                           vs2_eew;
-    logic                           vs2_data_valid;  
-    ELE_TYPE_t                      vs2_type; 
-    logic   [`XLEN-1:0] 	          rs1_data;        
-    logic        	                  rs1_data_valid;
+  // ALU_RS_t struct signals
+  logic   [`ROB_DEPTH_WIDTH-1:0]  rob_entry;
+  FUNCT6_u                        uop_funct6
+  EXE_FUNCT3_e                    uop_funct3;
+  logic   [`VSTART_WIDTH-1:0]     vstart;
+  logic                           vm;       
+  logic   [`VCSR_VXRM-1:0]        vxrm;              
+  logic   [`VLENB-1:0]            v0_data;           
+  logic   [`VLEN-1:0]             vd_data;           
+  logic   [`VLEN-1:0]             vs1_data;           
+  EEW_e                           vs1_eew;
+  logic                           vs1_data_valid; 
+  ELE_TYPE_t                      vs1_type; 
+  logic   [`VLEN-1:0]             vs2_data;	        
+  EEW_e                           vs2_eew;
+  logic                           vs2_data_valid;  
+  ELE_TYPE_t                      vs2_type; 
+  logic   [`XLEN-1:0] 	          rs1_data;        
+  logic        	                  rs1_data_valid;
 
-    // execute 
-    logic   [`VLEN-1:0]             src2_vdata_mask_logic;
-    logic   [`VLEN-1:0]             src1_vdata_mask_logic;
-    logic                           result_valid_mask_logic;
-    logic   [`VLEN-1:0]             result_vdata_mask_logic;
+  // execute 
+  logic   [`VLEN-1:0]             src2_vdata_mask_logic;
+  logic   [`VLEN-1:0]             src1_vdata_mask_logic;
+  logic                           result_valid_mask_logic;
+  logic   [`VLEN-1:0]             result_vdata_mask_logic;
 
-    // ALU2ROB_t struct signals
-    logic   [`VLEN-1:0]             w_data;             // when w_type=XRF, w_data[`XLEN-1:0] will store the scalar result
-    W_DATA_TYPE_t                   w_type;
-    logic                           w_valid; 
-    logic   [`VCSR_VXSAT-1:0]       vxsat;     
-    logic                           ignore_vta_vma;
-    
-    //
-    integer                         i;
+  // ALU2ROB_t struct signals
+  logic   [`VLEN-1:0]             w_data;             // when w_type=XRF, w_data[`XLEN-1:0] will store the scalar result
+  W_DATA_TYPE_t                   w_type;
+  logic                           w_valid; 
+  logic   [`VCSR_VXSAT-1:0]       vxsat;     
+  logic                           ignore_vta_vma;
+  
+  //
+  integer                         i;
 //
-// execute uop
+// prepare source data to calculate    
 //
-    // split ALU_RS_t struct
-    assign  rob_entry       = alu_uop.rob_entry;
-    assign  uop_funct       = alu_uop.uop_funct;
-    assign  uop_opcode      = alu_uop.uop_opcode;
-    assign  vstart          = alu_uop.vstart;
-    assign  vm              = alu_uop.vm;
-    assign  vxrm            = alu_uop.vxrm;
-    assign  v0_data         = alu_uop.vs3_data.v0_data;
-    assign  vd_data         = alu_uop.vs3_data.vd_data;
-    assign  vs1             = alu_uop.vs1;
-    assign  vs1_data        = alu_uop.vs1_data;
-    assign  vs1_eew         = alu_uop.vs1_eew;
-    assign  vs1_data_valid  = alu_uop.vs1_data_valid;
-    assign  vs1_type        = alu_uop.vs1_type;
-    assign  vs2_data        = alu_uop.vs2_data;
-    assign  vs2_eew         = alu_uop.vs2_eew;
-    assign  vs2_data_valid  = alu_uop.vs2_data_valid;
-    assign  vs2_type        = alu_uop.vs2_type;
-    assign  rs1_data        = alu_uop.rs1_data;
-    assign  rs1_data_valid  = alu_uop.rs1_data_valid;
-    
-    // prepare source data to calculate    
-    always_comb begin
-      // initial the data
-      src2_vdata_mask_logic     = 'b0;
-      src1_vdata_mask_logic     = 'b0;
-      result_valid_mask_logic   = 'b0;
+  // split ALU_RS_t struct
+  assign  rob_entry       = alu_uop.rob_entry;
+  assign  uop_funct6      = alu_uop.uop_funct6;
+  assign  uop_funct3      = alu_uop.uop_funct3;
+  assign  vstart          = alu_uop.vstart;
+  assign  vm              = alu_uop.vm;
+  assign  vxrm            = alu_uop.vxrm;
+  assign  v0_data         = alu_uop.vs3_data.v0_data;
+  assign  vd_data         = alu_uop.vs3_data.vd_data;
+  assign  vs1             = alu_uop.vs1;
+  assign  vs1_data        = alu_uop.vs1_data;
+  assign  vs1_eew         = alu_uop.vs1_eew;
+  assign  vs1_data_valid  = alu_uop.vs1_data_valid;
+  assign  vs1_type        = alu_uop.vs1_type;
+  assign  vs2_data        = alu_uop.vs2_data;
+  assign  vs2_eew         = alu_uop.vs2_eew;
+  assign  vs2_data_valid  = alu_uop.vs2_data_valid;
+  assign  vs2_type        = alu_uop.vs2_type;
+  assign  rs1_data        = alu_uop.rs1_data;
+  assign  rs1_data_valid  = alu_uop.rs1_data_valid;
+  
+  // prepare source data  
+  always_comb begin
+    // initial the data
+    src2_vdata_mask_logic     = 'b0;
+    src1_vdata_mask_logic     = 'b0;
+    result_valid_mask_logic   = 'b0;
 
-      // prepare source data
-      case({alu_uop_valid,uop_opcode}) 
-        
-        {1'b1,OPIVV},
-        {1'b1,OPIVX},
-        {1'b1,OPIVI}: begin
-          case(uop_funct.opi_funct)
+    // prepare source data
+    case({alu_uop_valid,uop_funct3}) 
+      
+      {1'b1,OPIVV},
+      {1'b1,OPIVX},
+      {1'b1,OPIVI}: begin
+        case(uop_funct6.opi_funct)
+          
+          default: begin
+            `ifdef ASSERT_ON
+            $error("Unsupported uop_funct6.opi_funct=%s, rob_entry=%d.\n",uop_funct6.opi_funct,rob_entry);
+            `endif
+          end
+        endcase
+      end
+
+      {1'b1,OPMVV}, 
+      {1'b1,OPMVX}: begin
+        case(uop_funct6.opm_funct)
             
-            default: begin
+          VMANDN,
+          VMAND,
+          VMOR,
+          VMXOR,
+          VMORN,
+          VMNAND,
+          VMNOR,
+          VMXNOR: begin
+            if((vs1_data_valid&vs2_data_valid)&(vm==1'b1)) begin
+              src2_vdata_mask_logic     = vs2_data;
+              src1_vdata_vmask_logic    = vs1_data;
+              result_valid_vmask_logic  = 1'b1;
+            end else begin
+              src2_vdata_mask_logic     = 'b0;
+              src1_vdata_mask_logic     = 'b0;
+              result_valid_mask_logic   = 'b0;
               `ifdef ASSERT_ON
-              // ("unsupported uop_funct.opi_funct. uop_opcode=%s, uop_funct=%s, rob_entry=%d.\n",uop_opcode,uop_funct.opi_funct,rob_entry);
+              `rvv_expect((vs1_data_valid&vs2_data_valid&vm)==1'b1) 
+                else $error("%s uop: rob_entry=%d, unsupported vs1_data_valid&vs2_data_valid&vm.\n",uop_funct6.opm_funct,rob_entry);
               `endif
             end
-          endcase
-        end
+          end
 
-        {1'b1,OPMVV}, 
-        {1'b1,OPMVX}: begin
-          case(uop_funct.opm_funct)
-              
-            VMANDN: begin
-              if((vs1_data_valid&vs2_data_valid)&(vm==1'b1)) begin
-                src2_vdata_mask_logic     = vs2_data;
-                src1_vdata_vmask_logic    = vs1_data;
-                result_valid_vmask_logic  = 1'b1;
-              end else begin
-                src2_vdata_mask_logic     = 'b0;
-                src1_vdata_mask_logic     = 'b0;
-                result_valid_mask_logic   = 'b0;
-                `ifdef ASSERT_ON
-                // assertion("%s uop: rob_entry=%d, vs1_data_valid(should be 1)=%d, vs2_data_valid(should be 1)=%d, vm(should be 1)=%d.\n",uop_funct.opm_funct,rob_entry,vs1_data_valid,vs2_data_valid,vm);
-                `endif
-              end
-            end
-
-            default: begin
+          default: begin
             `ifdef ASSERT_ON
-            // ("unsupported uop_funct.opi_funct. uop_opcode=%s, uop_funct=%s, rob_entry=%d.\n",uop_opcode,uop_funct.opm_funct,rob_entry);
+            $error("Unsupported uop_funct6.opm_funct=%s, rob_entry=%d.\n",uop_funct6.opm_funct,rob_entry);
             `endif
-            end
-          endcase
-        end
-        
-        default: begin
-          `ifdef ASSERT_ON
-          // when alu_uop_valid=1, ("unsupported uop_opcode. uop_opcode=%s, rob_entry=%d.\n",uop_opcode,rob_entry);
-          `endif
-        end
-      endcase
-    end
-    
-    // calculate the result
-    always_comb begin
-      // initial the data
-      result_vdata_mask_logic   = 'b0; 
+          end
+        endcase
+      end
+      
+      default: begin
+        `ifdef ASSERT_ON
+        `rvv_expect(alu_uop_valid==1'b0)
+          else $error("unsupported uop_funct3=%s, rob_entry=%d.\n",uop_funct3,rob_entry);
+        `endif
+      end
+    endcase
+  end
 
-      // calculate result data
-      case({alu_uop_valid,uop_opcode}) 
-        
-        {1'b1,OPIVV},
-        {1'b1,OPIVX},
-        {1'b1,OPIVI}: begin
-          case(uop_funct.opi_funct)
-            
-          endcase
-        end
+//    
+// calculate the result
+//
+  always_comb begin
+    // initial the data
+    result_vdata_mask_logic   = 'b0; 
+ 
+    // calculate result data
+    case({alu_uop_valid,uop_funct3}) 
+      
+      {1'b1,OPIVV},
+      {1'b1,OPIVX},
+      {1'b1,OPIVI}: begin
+        case(uop_funct6.opi_funct)
+          
+        endcase
+      end
+ 
+      {1'b1,OPMVV}, 
+      {1'b1,OPMVX}: begin
+        case(uop_funct6.opm_funct)
+          
+          VMANDN: begin
+            result_vdata_mask_logic   = f_vmandn(src2_vdata_mask_logic,src1_vdata_maska_logic);  
+          end
+          
+          VMAND: begin
+            result_vdata_mask_logic   = f_vmand(src2_vdata_mask_logic,src1_vdata_maska_logic);  
+          end
+ 
+          VMOR: begin
+            result_vdata_mask_logic   = f_vmor(src2_vdata_mask_logic,src1_vdata_maska_logic);  
+          end
+ 
+          VMXOR: begin
+            result_vdata_mask_logic   = f_vmxor(src2_vdata_mask_logic,src1_vdata_maska_logic);  
+          end
+ 
+          VMORN: begin
+            result_vdata_mask_logic   = f_vmorn(src2_vdata_mask_logic,src1_vdata_maska_logic);  
+          end
+ 
+          VMNAND: begin
+            result_vdata_mask_logic   = f_vmnand(src2_vdata_mask_logic,src1_vdata_maska_logic);  
+          end
+ 
+          VMNOR: begin
+            result_vdata_mask_logic   = f_vmnor(src2_vdata_mask_logic,src1_vdata_maska_logic);  
+          end
+ 
+          VMXNOR: begin
+            result_vdata_mask_logic   = f_vmxnor(src2_vdata_mask_logic,src1_vdata_maska_logic);  
+          end
+ 
+        endcase
+      end
 
-        {1'b1,OPMVV}, 
-        {1'b1,OPMVX}: begin
-          case(uop_funct.opm_funct)
-            
-            VMANDN: begin
-              result_vdata_mask_logic   = f_vmandn(src2_vdata_mask_logic,src1_vdata_maska_logic);  
-            end
+      default: begin
 
-          endcase
-        end
-
-      endcase
-    end
+      end
+    endcase
+  end
 
 //
-// submit resutl to ROB
+// submit result to ROB
 //
-    // assign ALU2ROB_t struct signals
-    assign  result_alu2rob.rob_entry      = rob_entry;
-    assign  result_alu2rob.w_data         = w_data;
-    assign  result_alu2rob.w_type         = w_type;
-    assign  result_alu2rob.w_valid        = w_valid;
-    assign  result_alu2rob.vxsat          = vxsat;
-    assign  result_alu2rob.ignore_vta_vma = ignore_vta_vma;
+  // assign ALU2ROB_t struct signals
+  assign  result_ex2rob.rob_entry      = rob_entry;
+  assign  result_ex2rob.w_data         = w_data;
+  assign  result_ex2rob.w_type         = w_type;
+  assign  result_ex2rob.w_valid        = w_valid;
+  assign  result_ex2rob.vxsat          = vxsat;
+  assign  result_ex2rob.ignore_vta_vma = ignore_vta_vma;
 
-    // combine the signals to result_alu2rob struct and submit
-    always_comb begin
-    // initial
-      result_alu2rob_valid  = 'b0;
-      w_data                = 'b0;
-      w_tpye                = 'b0;
-      w_valid               = 'b0;
-      vxsat                 = 'b0;
-      ignore_vta_vma        = 'b0;
-    // submit
-      case({alu_uop_valid,uop_opcode}) 
-       
-        {1'b1,OPIVV},
-        {1'b1,OPIVX},
-        {1'b1,OPIVI}: begin
-          case(uop_funct.opi_funct)
-            
-          endcase
-        end
+  // combine the signals to result_ex2rob struct and submit
+  always_comb begin
+  // initial
+    result_valid_ex2rob  = 'b0;
+    w_data                = 'b0;
+    w_tpye                = 'b0;
+    w_valid               = 'b0;
+    vxsat                 = 'b0;
+    ignore_vta_vma        = 'b0;
+  // submit
+    case({alu_uop_valid,uop_funct3}) 
+     
+      {1'b1,OPIVV},
+      {1'b1,OPIVX},
+      {1'b1,OPIVI}: begin
+        case(uop_funct6.opi_funct)
+          
+        endcase
+      end
 
-        {1'b1,OPMVV}, 
-        {1'b1,OPMVX}: begin
-          case(uop_funct.opm_funct)
-            
-            VMANDN: begin
-              for (i=0;i<`VLEN;i=i+1) 
-              begin
-                if (i<vstart)
-                  w_data[i]         = vd_data[i];
-                else
-                  w_data[i]         = result_vdata_mask_logic[i];
-              end
-              result_alu2rob_valid  = result_valid_mask_logic;
-              w_type                = VRF;
-              w_valid               = 1'b1;
-              vxsat                 = 1'b0;
-              ignore_vta_vma        = 1'b1;
+      {1'b1,OPMVV}, 
+      {1'b1,OPMVX}: begin
+        case(uop_funct6.opm_funct)
+          
+          VMANDN,
+          VMAND,
+          VMOR,
+          VMXOR,
+          VMORN,
+          VMNAND,
+          VMNOR,
+          VMXNOR: begin
+            for (i=0;i<`VLEN;i=i+1) begin
+              if (i<vstart)
+                w_data[i]         = vd_data[i];
+              else
+                w_data[i]         = result_vdata_mask_logic[i];
             end
+            result_valid_ex2rob   = result_valid_mask_logic;
+            w_type                = VRF;
+            w_valid               = 1'b1;
+            vxsat                 = 1'b0;
+            ignore_vta_vma        = 1'b1;
+          end
 
-          endcase
-        end
+        endcase
+      end
+      
+      default: begin
 
-      endcase
-    end
+      end
+    endcase
+  end
 
 //
 // function unit
@@ -250,6 +293,62 @@ module rvv_alu_unit
     input logic [`VLEN-1:0] vs1_data;
 
     f_vmandn = vs2_data & (~vs1_data);
+  endfunction
+
+  // OPMVV-vmand function unit
+  function [`VLEN-1:0] f_vmand;
+    input logic [`VLEN-1:0] vs2_data;
+    input logic [`VLEN-1:0] vs1_data;
+
+    f_vmand = vs2_data & vs1_data;
+  endfunction
+
+  // OPMVV-vmor function unit
+  function [`VLEN-1:0] f_vmor;
+    input logic [`VLEN-1:0] vs2_data;
+    input logic [`VLEN-1:0] vs1_data;
+
+    f_vmor = vs2_data | vs1_data;
+  endfunction
+
+  // OPMVV-vmxor function unit
+  function [`VLEN-1:0] f_vmxor;
+    input logic [`VLEN-1:0] vs2_data;
+    input logic [`VLEN-1:0] vs1_data;
+
+    f_vmxor = vs2_data ^ vs1_data;
+  endfunction
+
+  // OPMVV-vmorn function unit
+  function [`VLEN-1:0] f_vmorn;
+    input logic [`VLEN-1:0] vs2_data;
+    input logic [`VLEN-1:0] vs1_data;
+
+    f_vmorn = vs2_data | (~vs1_data);
+  endfunction
+
+  // OPMVV-vmnand function unit
+  function [`VLEN-1:0] f_vmnand;
+    input logic [`VLEN-1:0] vs2_data;
+    input logic [`VLEN-1:0] vs1_data;
+
+    f_vmnand = ~(vs2_data & vs1_data);
+  endfunction
+
+  // OPMVV-vmnor function unit
+  function [`VLEN-1:0] f_vmnor;
+    input logic [`VLEN-1:0] vs2_data;
+    input logic [`VLEN-1:0] vs1_data;
+
+    f_vmnor = ~(vs2_data | vs1_data);
+  endfunction
+  
+  // OPMVV-vmxnor function unit
+  function [`VLEN-1:0] f_vmxnor;
+    input logic [`VLEN-1:0] vs2_data;
+    input logic [`VLEN-1:0] vs1_data;
+
+    f_vmxnor = ~(vs2_data ^ vs1_data);
   endfunction
 
 

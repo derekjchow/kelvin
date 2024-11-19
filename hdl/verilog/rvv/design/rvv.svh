@@ -31,7 +31,7 @@ typedef struct packed {
 } INST_t; 
 
 //
-// ID stage, Uops Queue to Dispatch unit
+// DE stage, Uops Queue to Dispatch unit
 //
 // It is used to distinguish which execute units that VVV/VVX/VX uop is dispatch to, based on inst_encoding[6:0]
 typedef enum logic [2:0] {
@@ -53,7 +53,7 @@ typedef enum logic [2:0] {
     OPFVF,      // vs2,      rs1, vd. float, not support
     OPMVX,      // vs2,      rs1, vd/rd.
     OPCFG       // vset* instructions        
-} EXE_OPCODE_e;
+} EXE_FUNCT3_e;
 
 // when EXE_UNIT_e is not LSU, it identifys what instruction, vadd or vmacc or ..? based on inst_encoding[31:26]
 typedef enum logic [5:0] {
@@ -217,7 +217,7 @@ typedef union packed {
     OPI_TYPE_e          opi_funct,
     OPM_TYPE_e          opm_funct,
     LSU_TYPE_t          lsu_funct
-} FUNCT_u;
+} FUNCT6_u;
 
 // vs1 field
 typedef union packed {
@@ -247,8 +247,8 @@ typedef enum logic [1:0] {
 typedef struct packed {
     logic   [`PC_WIDTH-1:0]             uop_pc,
     EXE_UNIT_e                          uop_exe_unit, 
-    EXE_OPCODE_e                        uop_opcode, 
-    FUNCT_u                             uop_funct,
+    EXE_FUNCT3_e                        uop_funct3, 
+    FUNCT6_u                            uop_funct6,
     UOP_CLASS_e                         uop_class,   
     VECTOR_CSR_t                        vector_csr,     
 
@@ -293,11 +293,11 @@ typedef union packed {
 
 typedef struct packed {
     logic   [`ROB_DEPTH_WIDTH-1:0]      rob_entry,
-    FUNCT_e                             uop_funct,  
-    EXE_OPCODE_e                        uop_opcode,
+    FUNCT6_u                            uop_funct6,  
+    EXE_FUNCT3_e                        uop_funct3,
     logic   [`VSTART_WIDTH-1:0]         vstart,
-    // vm field can be used to identify vmadc.v?m/vmadc.v? uop in the same uop_funct(6'b010000).
-    // vm field can be used to identify vmsbc.v?m/vmsbc.v? uop in the same uop_funct(6'b010011).   
+    // vm field can be used to identify vmadc.v?m/vmadc.v? uop in the same uop_funct6(6'b010000).
+    // vm field can be used to identify vmsbc.v?m/vmsbc.v? uop in the same uop_funct6(6'b010011).   
     logic                               vm,               
     // rounding mode 
     logic   [`VCSR_VXRM-1:0]            vxrm,              
@@ -323,8 +323,8 @@ typedef struct packed {
 // DIV reservation station struct
 typedef struct packed {
     logic   [`ROB_DEPTH_WIDTH-1:0]      rob_entry,
-    FUNCT_e                             uop_funct,  
-    EXE_OPCODE_e                        uop_opcode,
+    FUNCT6_u                            uop_funct6,  
+    EXE_FUNCT3_e                        uop_funct3,
     // when vs1_data_valid=1, vs1_data is valid as a vector operand
     logic   [`VLEN-1:0]                 vs1_data,           
     EEW_e                               vs1_eew,
@@ -342,8 +342,8 @@ typedef struct packed {
 // MUL and MAC reservation station struct
 typedef struct packed {   
     logic   [`ROB_DEPTH_WIDTH-1:0]      rob_entry,
-    FUNCT_e                             uop_func,
-    EXE_OPCODE_e                        uop_opcode,
+    FUNCT6_u                            uop_funct6,
+    EXE_FUNCT3_e                        uop_funct3,
     logic   [`VCSR_VXRM-1:0]            vxrm,               // rounding mode 
  
     logic   [`VLEN-1:0]                 vs1_data,           
@@ -366,9 +366,9 @@ typedef struct packed {
 // PMT and RDT reservation station struct
 typedef struct packed {   
     logic   [`ROB_DEPTH_WIDTH-1:0]      rob_entry,
-    FUNCT_e                             uop_func,
-    EXE_OPCODE_e                        uop_opcode,
-    // Identify vmerge and vmv in the same uop_funct(6'b010111).
+    FUNCT6_u                            uop_funct6,
+    EXE_FUNCT3_e                        uop_funct3,
+    // Identify vmerge and vmv in the same uop_funct6(6'b010111).
     logic                               vm,               
     // when vs1_data_valid=0, vs1 field is valid and used to decode some OPMVV uops
     // when vs1_data_valid=1, vs1_data is valid as a vector operand
@@ -391,7 +391,7 @@ typedef struct packed {
 typedef struct packed {   
     logic   [`PC_WIDTH-1:0]             uop_pc,
     logic   [`ROB_DEPTH_WIDTH-1:0]      uop_id,
-    LSU_TYPE_t                          uop_funct,  
+    LSU_TYPE_t                          uop_funct6,  
 
     logic                               vidx_valid, 
     logic   [`REGFILE_INDEX_WIDTH-1:0]  vidx_addr,
