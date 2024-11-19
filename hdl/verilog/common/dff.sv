@@ -2,7 +2,7 @@
 //   Order of ports is:  q, clk, [rst_n], [e], d
 //   E.g.  DFF #(4) qsig (qsig, clk, rst_n, dsig);
 
-module dffr ( q, clk, rst_n, d ) ; // FF with async rst_n;  
+module dff ( q, clk, rst_n, d ) ; // FF with async rst_n;  
   parameter WIDTH = 1 ;
   input 	clk ;
   input 	rst_n ;
