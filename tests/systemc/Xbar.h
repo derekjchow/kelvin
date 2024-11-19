@@ -53,14 +53,31 @@ class Xbar : sc_core::sc_module {
     unsigned char* ptr = trans.get_data_ptr();
     unsigned int len = trans.get_data_length();
     unsigned int streaming_width = trans.get_streaming_width();
+    unsigned char* be = trans.get_byte_enable_ptr();
     unsigned int be_len = trans.get_byte_enable_length();
     if (streaming_width == 0) {
       streaming_width = len;
     }
     if (be_len || streaming_width != len) {
-      trans.set_response_status(tlm::TLM_BYTE_ENABLE_ERROR_RESPONSE);
-      SC_REPORT_FATAL("Memory", "BE unsupported\n");
-      return;
+      for (unsigned int pos = 0; pos < len; ++pos) {
+        bool do_access = true;
+        if (be_len) {
+          do_access = be[pos % be_len] == TLM_BYTE_ENABLED;
+        }
+        if (do_access) {
+          if ((addr + (pos % streaming_width)) >= sc_dt::uint64(kMemorySizeBytes)) {
+            trans.set_response_status(tlm::TLM_ADDRESS_ERROR_RESPONSE);
+            SC_REPORT_FATAL("Memory", "Bad address\n");
+            return;
+          }
+
+          if (trans.is_read()) {
+            ptr[pos] = memory_[addr + pos];
+          } else {
+            memory_[addr + pos] = ptr[pos];
+          }
+        }
+      }
     } else {
       if ((addr + len) > sc_dt::uint64(kMemorySizeBytes)) {
         trans.set_response_status(tlm::TLM_ADDRESS_ERROR_RESPONSE);
@@ -78,6 +95,7 @@ class Xbar : sc_core::sc_module {
         return;
       }
     }
+    trans.set_response_status(tlm::TLM_OK_RESPONSE);
   }
 
   void uart_b_transport_(tlm::tlm_generic_payload& trans, sc_core::sc_time& delay) {
@@ -121,8 +139,8 @@ class Xbar : sc_core::sc_module {
           uart_buffer_.push_back(ptr[pos]);
         }
       }
-
     }
+    trans.set_response_status(tlm::TLM_OK_RESPONSE);
   }
 
   static constexpr uint32_t kMemoryAddr = 0x20000000;

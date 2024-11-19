@@ -113,6 +113,10 @@ class CoreAxi(p: Parameters, coreModuleName: String) extends RawModule {
     itcmArbiter.io.in(1).bits.readwritePorts(0).mask.get := -1.S.asTypeOf(itcmArbiter.io.in(1).bits.readwritePorts(0).mask.get)
     itcmArbiter.io.in(1).bits.readwritePorts(0).readData := itcm.io.rdata
     core.io.ibus.rdata := Cat(itcmArbiter.io.in(1).bits.readwritePorts(0).readData)
+    core.io.ibus.fault.valid := core.io.ibus.addr(31, (log2Ceil(itcmEntries) + lsb)) =/= 0.U
+    core.io.ibus.fault.bits.write := false.B
+    core.io.ibus.fault.bits.addr := 0.U
+    core.io.ibus.fault.bits.epc := core.io.ibus.addr
 
     itcm.io.addr := itcmArbiter.io.out.bits.readwritePorts(0).address
     itcm.io.enable := itcmArbiter.io.out.bits.readwritePorts(0).enable
@@ -169,6 +173,7 @@ class CoreAxi(p: Parameters, coreModuleName: String) extends RawModule {
     val ebus2axi = DBus2Axi(p)
     ebus2axi.io.dbus <> core.io.ebus.dbus
     ebus2axi.io.axi <> 0.U.asTypeOf(ebus2axi.io.axi)
+    ebus2axi.io.fault <> core.io.ebus.fault
 
     val axi_mux = Module(new CoreAxiSlaveMux(p, memoryRegions, 2))
     axi_mux.io.axi_slave(0) <> io.axi_slave

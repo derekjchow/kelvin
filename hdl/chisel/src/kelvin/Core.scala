@@ -126,6 +126,10 @@ object EmitCore extends App {
   lazy val core = if (useAxi) {
     new CoreAxi(p, moduleName)
   } else {
+    // "Matcha" memory layout
+    p.m = Seq(
+      new MemoryRegion(0x0, 0x400000, MemoryRegionType.DMEM),
+    )
     new Core(p, moduleName)
   }
 

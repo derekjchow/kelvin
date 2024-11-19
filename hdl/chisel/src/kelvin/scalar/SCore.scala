@@ -125,6 +125,17 @@ class SCore(p: Parameters) extends Module {
     decode(i).io.serializeIn := decode(i - 1).io.serializeOut
   }
 
+  // Connect fault signaling from IBUS/LSU to BRU.
+  bru(0).io.fault := MuxCase(MakeInvalid(new FaultInfo(p)), Array(
+    io.ibus.fault.valid -> io.ibus.fault,
+    lsu.io.fault.valid -> lsu.io.fault,
+  ))
+  bru(0).io.ibus_fault := io.ibus.fault.valid
+  for (i <- 1 until p.instructionLanes) {
+    bru(i).io.fault := 0.U.asTypeOf(bru(i).io.fault)
+    bru(i).io.ibus_fault := 0.U.asTypeOf(bru(i).io.ibus_fault)
+  }
+
   // In decode update multi-issue scoreboard state.
   val scoreboard_spec = decode.map(_.io.scoreboard.spec).scan(0.U)(_|_)
   for (i <- 0 until p.instructionLanes) {
@@ -299,6 +310,9 @@ class SCore(p: Parameters) extends Module {
   // Broadcast rdata
   lsu.io.ibus.rdata := io.ibus.rdata
   fetch.io.ibus.rdata := io.ibus.rdata
+
+  fetch.io.ibus.fault := MakeInvalid(new FaultInfo(p))
+  lsu.io.ibus.fault := MakeInvalid(new FaultInfo(p))
 
   // ---------------------------------------------------------------------------
   // Local Data Bus Port

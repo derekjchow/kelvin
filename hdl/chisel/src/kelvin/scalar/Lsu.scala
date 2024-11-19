@@ -43,9 +43,11 @@ class LsuCmd extends Bundle {
   val store = Bool()
   val addr = UInt(5.W)
   val op = LsuOp()
+  val pc = UInt(32.W)
 }
 
 class LsuCtrl(p: Parameters) extends Bundle {
+  val pc = UInt(32.W)
   val addr = UInt(32.W)
   val adrx = UInt(32.W)
   val data = UInt(32.W)
@@ -85,6 +87,7 @@ class Lsu(p: Parameters) extends Module {
     val ibus = new IBusIO(p)
     val dbus = new DBusIO(p)
     val flush = new DFlushFenceiIO(p)
+    val fault = Valid(new FaultInfo(p))
 
     // DBus that will eventually reach an external bus.
     // Intended for sending a transaction to an external
@@ -141,7 +144,7 @@ class Lsu(p: Parameters) extends Module {
                      io.req(i).bits.op.isOneOf(LsuOp.LB, LsuOp.LBU, LsuOp.SB))
 
     ctrl.io.in.bits(i).valid := io.req(i).valid && ctrlready(i)
-
+    ctrl.io.in.bits(i).bits.pc := io.req(i).bits.pc
     ctrl.io.in.bits(i).bits.addr := io.busPort.addr(i)
     ctrl.io.in.bits(i).bits.adrx := io.busPort.addr(i) + lineoffset.U
     ctrl.io.in.bits(i).bits.data := io.busPort.data(i)
@@ -199,6 +202,7 @@ class Lsu(p: Parameters) extends Module {
   io.dbus.size  := ctrl.io.out.bits.size
   io.dbus.wdata := wdata
   io.dbus.wmask := wmask
+  io.dbus.pc := ctrl.io.out.bits.pc
 
   assert(!(io.dbus.valid && ctrl.io.out.bits.addr(31)))
   assert(!(io.dbus.valid && io.dbus.addr(31)))
@@ -212,13 +216,37 @@ class Lsu(p: Parameters) extends Module {
   io.ebus.dbus.size := ctrl.io.out.bits.size
   io.ebus.dbus.wdata := wdata
   io.ebus.dbus.wmask := wmask
+  io.ebus.dbus.pc := ctrl.io.out.bits.pc
   io.ebus.internal := ctrl.io.out.bits.regionType === MemoryRegionType.Peripheral
 
-  io.ibus.valid := ctrl.io.out.valid && ctrl.io.out.bits.sldst && (ctrl.io.out.bits.regionType === MemoryRegionType.IMEM)
-  // TODO(atv): This should actually raise some sort of error, and trigger a store fault
-  assert(!(io.ibus.valid && (ctrl.io.out.bits.regionType === MemoryRegionType.IMEM) && ctrl.io.out.bits.write))
+  io.ibus.valid :=
+    ctrl.io.out.valid && ctrl.io.out.bits.sldst &&
+    (ctrl.io.out.bits.regionType === MemoryRegionType.IMEM) &&
+    !ctrl.io.out.bits.write
   io.ibus.addr := ctrl.io.out.bits.addr
 
+  // All stores to IMEM are disallowed.
+  val imem_store_fault =
+    (ctrl.io.out.valid && ctrl.io.out.bits.sldst &&
+    (ctrl.io.out.bits.regionType === MemoryRegionType.IMEM) &&
+    ctrl.io.out.bits.write)
+  val ebus_fault = io.ebus.fault.valid
+  io.fault := MuxCase(MakeInvalid(new FaultInfo(p)), Array(
+    imem_store_fault -> (MakeWireBundle[ValidIO[FaultInfo]](
+      Valid(new FaultInfo(p)),
+      _.valid -> true.B,
+      _.bits.write -> true.B,
+      _.bits.addr -> ctrl.io.out.bits.addr,
+      _.bits.epc -> ctrl.io.out.bits.pc,
+    )),
+    ebus_fault -> (MakeWireBundle[ValidIO[FaultInfo]](
+      Valid(new FaultInfo(p)),
+      _.valid -> true.B,
+      _.bits.write -> io.ebus.fault.bits.write,
+      _.bits.addr -> io.ebus.fault.bits.addr,
+      _.bits.epc -> io.ebus.fault.bits.epc,
+    )),
+  ))
 
   io.storeCount := PopCount(Cat(
     io.dbus.valid && io.dbus.write,

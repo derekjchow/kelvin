@@ -274,6 +274,7 @@ class VLdSt(p: Parameters) extends Module {
   io.dbus.size := ctrl.io.out.bits.size
   io.dbus.wdata := data.io.out.bits.wdata
   io.dbus.wmask := data.io.out.bits.wmask
+  io.dbus.pc := 0.U.asTypeOf(io.dbus.pc)
   assert(!(ctrl.io.out.valid && ctrl.io.out.bits.addr(31)))
   assert(!(ctrl.io.out.valid && ctrl.io.out.bits.adrx(31)))
   assert(!(io.dbus.valid && io.dbus.addr(31)))

@@ -48,6 +48,11 @@ struct Core_if : Memory_if {
   sc_in<sc_bv<32> >   io_ibus_addr;
   sc_out<sc_bv<KP_fetchDataBits> > io_ibus_rdata;
 
+  sc_out<bool> io_ibus_fault_valid;
+  sc_out<bool> io_ibus_fault_bits_write;
+  sc_out<sc_bv<32>> io_ibus_fault_bits_addr;
+  sc_out<sc_bv<32>> io_ibus_fault_bits_epc;
+
   sc_in<bool> io_dbus_valid;
   sc_out<bool> io_dbus_ready;
   sc_in<bool> io_dbus_write;
@@ -78,13 +83,18 @@ struct Core_if : Memory_if {
         sc_bv<256> rdata;
         uint32_t addr = io_ibus_addr.read().get_word(0);
         uint32_t words[256 / 32];
-        Read(addr, 256 / 8, reinterpret_cast<uint8_t*>(words));
+        if (Read(addr, 256 / 8, reinterpret_cast<uint8_t*>(words))) {
+          for (int i = 0; i < 256 / 32; ++i) {
+            rdata.set_word(i, words[i]);
+          }
 
-        for (int i = 0; i < 256 / 32; ++i) {
-          rdata.set_word(i, words[i]);
+          io_ibus_rdata = rdata;
+        } else {
+          io_ibus_fault_valid = true;
+          io_ibus_fault_bits_write = false;
+          io_ibus_fault_bits_addr = 0;
+          io_ibus_fault_bits_epc = addr;
         }
-
-        io_ibus_rdata = rdata;
       }
 
       // Data bus read.
@@ -94,12 +104,15 @@ struct Core_if : Memory_if {
         uint32_t words[KP_lsuDataBits / 32] = {0};
         memset(words, 0xcc, sizeof(words));
         int bytes = io_dbus_size.read().get_word(0);
-        Read(addr, bytes, reinterpret_cast<uint8_t*>(words));
-        ReadSwizzle(addr, KP_lsuDataBits / 8, reinterpret_cast<uint8_t*>(words));
-        for (int i = 0; i < KP_lsuDataBits / 32; ++i) {
-          rdata.set_word(i, words[i]);
+        if (Read(addr, bytes, reinterpret_cast<uint8_t*>(words))) {
+          ReadSwizzle(addr, KP_lsuDataBits / 8, reinterpret_cast<uint8_t*>(words));
+          for (int i = 0; i < KP_lsuDataBits / 32; ++i) {
+            rdata.set_word(i, words[i]);
+          }
+          io_dbus_rdata = rdata;
+        } else {
+          assert(false);
         }
-        io_dbus_rdata = rdata;
       }
 
       // Data bus write.
@@ -112,7 +125,9 @@ struct Core_if : Memory_if {
           words[i] = wdata.get_word(i);
         }
         WriteSwizzle(addr, KP_lsuDataBits / 8, reinterpret_cast<uint8_t*>(words));
-        Write(addr, bytes, reinterpret_cast<uint8_t*>(words));
+        if (!Write(addr, bytes, reinterpret_cast<uint8_t*>(words))) {
+          assert(false);
+        }
       }
 
       rtcm_t tcm_read;

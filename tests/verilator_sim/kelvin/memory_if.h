@@ -50,15 +50,21 @@ struct Memory_if : Sysc_module {
       exit(-1);
     }
 
-    for (int addr = 0; addr < fsize; addr += kPageSize) {
+    int addr = 0;
+    for (; addr < fsize; addr += kPageSize) {
       const int64_t size = std::min(fsize - addr, int64_t(kPageSize));
       AddPage(addr, size, fdata + addr);
+    }
+    // Create pages for the rest of our memory space, that was not created
+    // for inserting the binary.
+    for (; addr < 0x400000; addr += kPageSize) {
+      AddPage(addr, kPageSize, nullptr);
     }
 
     delete [] fdata;
   }
 
-  void Read(uint32_t addr, int bytes, uint8_t* data) {
+  bool Read(uint32_t addr, int bytes, uint8_t* data) {
     while (bytes > 0) {
       const uint32_t maddr = addr & kPageMask;
       const uint32_t offset = addr - maddr;
@@ -66,10 +72,7 @@ struct Memory_if : Sysc_module {
       const int len = std::min(bytes, limit);
 
       if (!HasPage(maddr)) {
-#ifdef PRINT_ADD_PAGE
-        printf("MemoryModel::Read add_page %08x\n", addr);
-#endif
-        AddPage(maddr, kPageSize);
+        return false;
       }
 
       auto& p = page_[maddr];
@@ -87,9 +90,10 @@ struct Memory_if : Sysc_module {
       bytes -= len;
       assert(bytes >= 0);
     }
+    return true;
   }
 
-  void Write(uint32_t addr, int bytes, const uint8_t* data) {
+  bool Write(uint32_t addr, int bytes, const uint8_t* data) {
     while (bytes > 0) {
       const uint32_t maddr = addr & kPageMask;
       const uint32_t offset = addr - maddr;
@@ -97,10 +101,7 @@ struct Memory_if : Sysc_module {
       const int len = std::min(bytes, limit);
 
       if (!HasPage(maddr)) {
-#ifdef PRINT_ADD_PAGE
-        printf("MemoryModel::Write add_page %08x\n", addr);
-#endif
-        AddPage(maddr, kPageSize);
+        return false;
       }
 
       auto& p = page_[maddr];
@@ -118,6 +119,7 @@ struct Memory_if : Sysc_module {
       bytes -= len;
       assert(bytes >= 0);
     }
+    return true;
   }
 
  protected:

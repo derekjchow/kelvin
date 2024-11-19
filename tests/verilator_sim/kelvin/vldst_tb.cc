@@ -46,6 +46,7 @@ struct VLdSt_tb : Sysc_tb {
   sc_in<sc_bv<kVector> > io_dbus_wdata;
   sc_in<sc_bv<kVector / 8> > io_dbus_wmask;
   sc_out<sc_bv<kVector> > io_dbus_rdata;
+  sc_in<sc_bv<32> > io_dbus_pc;
   sc_in<bool> io_last;
   sc_in<bool> io_vstoreCount;
 #define IO_BITS(x)                                  \
@@ -479,6 +480,7 @@ static void VLdSt_test(char* name, int loops, bool trace) {
   sc_signal<sc_bv<kVector> > io_dbus_wdata;
   sc_signal<sc_bv<kVector / 8> > io_dbus_wmask;
   sc_signal<sc_bv<kVector> > io_dbus_rdata;
+  sc_signal<sc_bv<32>> io_dbus_pc;
   sc_signal<bool> io_last;
   sc_signal<bool> io_vstoreCount;
 #define IO_BITS(x)                                     \
@@ -547,6 +549,7 @@ static void VLdSt_test(char* name, int loops, bool trace) {
   BIND2(tb, ldst, io_dbus_wdata);
   BIND2(tb, ldst, io_dbus_wmask);
   BIND2(tb, ldst, io_dbus_rdata);
+  BIND2(tb, ldst, io_dbus_pc);
   BIND2(tb, ldst, io_last);
   BIND2(tb, ldst, io_vstoreCount);
 #define IO_BIND(x)                                 \

@@ -51,6 +51,7 @@ class BruCmd(p: Parameters) extends Bundle {
   val pc = UInt(p.programCounterBits.W)
   val target = UInt(p.programCounterBits.W)
   val link = UInt(5.W)
+  val inst = UInt(32.W)
 }
 
 class BranchState(p: Parameters) extends Bundle {
@@ -61,6 +62,7 @@ class BranchState(p: Parameters) extends Bundle {
   val linkAddr = UInt(5.W)
   val linkData = UInt(p.programCounterBits.W)
   val pcEx = UInt(32.W)
+  val inst = UInt(32.W)
 }
 
 object BranchState {
@@ -73,6 +75,7 @@ object BranchState {
     result.linkAddr := 0.U
     result.linkData := 0.U
     result.pcEx := 0.U
+    result.inst := 0.U
     result
   }
 }
@@ -81,6 +84,8 @@ class Bru(p: Parameters) extends Module {
   val io = IO(new Bundle {
     // Decode cycle.
     val req = Flipped(Valid(new BruCmd(p)))
+    val fault = Flipped(Valid(new FaultInfo(p)))
+    val ibus_fault = Input(Bool())
 
     // Execute cycle.
     val csr = new CsrBruIO(p)
@@ -123,14 +128,22 @@ class Bru(p: Parameters) extends Module {
   nextState.linkAddr := io.req.bits.link
   nextState.linkData := pc4De
   nextState.pcEx := pcDe
+  nextState.inst := io.req.bits.inst
 
   nextState.target := MuxCase(io.req.bits.target, Seq(
       mret -> io.csr.out.mepc,
-      ecall -> Cat(io.csr.out.mtvec(31,1), 0.U(1.W)),
+      ecall -> Cat(io.csr.out.mtvec(31,2), 0.U(2.W)),
       call -> io.csr.out.mepc,
       (io.req.bits.fwd || (io.req.bits.op === BruOp.FENCEI) || (io.req.bits.op === BruOp.WFI)) -> pc4De,
       (io.req.bits.op === BruOp.JALR) -> io.target.data,
   ))
+  val jalr_fault = io.req.valid && (io.req.bits.op === BruOp.JALR) && ((io.target.data & 0x3.U) =/= 0.U)
+  val mret_fault = io.req.valid && mret && ((io.csr.out.mepc & 0x3.U) =/= 0.U)
+  val jal_fault = io.req.valid && (io.req.bits.op === BruOp.JAL) && ((io.req.bits.target & 0x3.U) =/= 0.U)
+  val bxx_fault =
+    io.req.valid &&
+    (io.req.bits.op.isOneOf(BruOp.BEQ, BruOp.BNE, BruOp.BLT, BruOp.BGE, BruOp.BLTU, BruOp.BGEU) &&
+    ((io.req.bits.target & 0x3.U) =/= 0.U))
   stateReg.valid := io.req.valid
   stateReg.bits := nextState
 
@@ -179,11 +192,11 @@ class Bru(p: Parameters) extends Module {
   val undefFault = stateReg.valid && (op === BruOp.UNDEF)
 
   // Usage Fault.
-  val usageFault = stateReg.valid && Mux(
+  val usageFault = (stateReg.valid && Mux(
             (mode === CsrMode.User),
             op.isOneOf(BruOp.MPAUSE, BruOp.MRET),
             op.isOneOf(BruOp.EBREAK, BruOp.EEXIT, BruOp.EYIELD,
-                       BruOp.ECTXSW))
+                       BruOp.ECTXSW)))
 
   io.csr.in.mode.valid := stateReg.valid && Mux(
       (mode === CsrMode.User), op.isOneOf(BruOp.EBREAK, BruOp.ECALL, BruOp.EEXIT, BruOp.EYIELD,
@@ -191,40 +204,78 @@ class Bru(p: Parameters) extends Module {
             (op === BruOp.MRET))
   io.csr.in.mode.bits := Mux(((op === BruOp.MRET) && (mode === CsrMode.Machine)), CsrMode.Machine, CsrMode.User)
 
-  io.csr.in.mepc.valid := stateReg.valid && op === BruOp.ECALL
-  io.csr.in.mepc.bits := stateReg.bits.pcEx
+  io.csr.in.mepc.valid :=
+    (stateReg.valid && (op === BruOp.ECALL)) ||
+    io.fault.valid ||
+    jalr_fault ||
+    mret_fault ||
+    jal_fault ||
+    bxx_fault ||
+    undefFault
+  io.csr.in.mepc.bits := MuxCase(stateReg.bits.pcEx, Array(
+    io.fault.valid -> io.fault.bits.epc,
+    jalr_fault -> pcDe,
+    mret_fault -> io.csr.out.mepc,
+    jal_fault -> pcDe,
+    bxx_fault -> pcDe,
+    undefFault -> stateReg.bits.pcEx,
+  ))
 
-  io.csr.in.mcause.valid := stateReg.valid && (undefFault || usageFault ||
+  io.csr.in.mcause.valid := (stateReg.valid &&
+    (undefFault || usageFault ||
     op.isOneOf(BruOp.ECALL) ||
     ((mode === CsrMode.User) &&
           /* user mode mcause triggers */
           op.isOneOf(BruOp.EBREAK,
                      BruOp.EEXIT, BruOp.EYIELD,
                      BruOp.ECTXSW),
-    )
+    )) || io.fault.valid || jalr_fault || mret_fault || jal_fault || bxx_fault
   )
 
   io.csr.in.mcause.bits := MuxCase(0.U, Seq(
+      // RISC-V standard exceptions, in priority order.
       (op === BruOp.EBREAK) -> 3.U,
+      (io.fault.valid && io.ibus_fault) -> 1.U,
+      jalr_fault            -> 0.U,
+      mret_fault            -> 0.U,
+      jal_fault             -> 0.U,
+      bxx_fault             -> 0.U,
+      undefFault            -> 2.U,
       (op === BruOp.ECALL && mode === CsrMode.Machine)  -> 11.U,
       (op === BruOp.ECALL && mode === CsrMode.User)  -> 8.U,
+      (io.fault.valid && io.fault.bits.write) -> 7.U,
+      (io.fault.valid && !io.fault.bits.write) -> 5.U,
       // Kelvin-specific things, use the custom reserved region of the encoding space.
-      undefFault            -> (24 + 0).U,
       usageFault            -> (24 + 1).U,
       (op === BruOp.EEXIT)  -> (24 + 2).U,
       (op === BruOp.EYIELD) -> (24 + 3).U,
       (op === BruOp.ECTXSW) -> (24 + 4).U,
   ))
 
-  io.csr.in.mtval.valid := stateReg.valid && (undefFault || usageFault)
-  io.csr.in.mtval.bits := stateReg.bits.pcEx
+  io.csr.in.mtval.valid :=
+    (stateReg.valid && (undefFault || usageFault)) ||
+    io.fault.valid ||
+    jalr_fault ||
+    mret_fault ||
+    jal_fault || bxx_fault
+  io.csr.in.mtval.bits := MuxCase(stateReg.bits.pcEx, Array(
+    io.fault.valid -> io.fault.bits.addr,
+    jalr_fault -> 0.U,
+    mret_fault -> 0.U,
+    jal_fault -> 0.U,
+    bxx_fault -> 0.U,
+    undefFault -> stateReg.bits.inst,
+  ))
 
   io.iflush := stateReg.valid && op.isOneOf(BruOp.FENCEI, BruOp.WFI)
 
   // Pipeline will be halted.
   io.csr.in.halt := (stateReg.valid && (op === BruOp.MPAUSE) && (mode === CsrMode.Machine)) ||
                     io.csr.in.fault
-  io.csr.in.fault := (undefFault && (mode === CsrMode.Machine)) || (usageFault && (mode === CsrMode.Machine))
+  io.csr.in.fault :=
+    (undefFault && (mode === CsrMode.Machine)) || (usageFault && (mode === CsrMode.Machine)) ||
+    io.fault.valid ||
+    jalr_fault || mret_fault || jal_fault || bxx_fault
   io.csr.in.wfi := stateReg.valid && (op === BruOp.WFI)
 
   // Assertions.

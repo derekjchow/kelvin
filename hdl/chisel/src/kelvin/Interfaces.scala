@@ -81,6 +81,8 @@ class IBusIO(p: Parameters) extends Bundle {
   val addr = Output(UInt(p.fetchAddrBits.W))
   // Read Phase.
   val rdata = Input(UInt(p.fetchDataBits.W))
+  // Fault information.
+  val fault = Input(Valid(new FaultInfo(p)))
 }
 
 class FetchInstruction(p: Parameters) extends Bundle {
@@ -117,11 +119,18 @@ abstract class SRAM128(addrWidth: Int) extends BlackBox {
   })
 }
 
+class FaultInfo(p: Parameters) extends Bundle {
+  val write = Bool()
+  val addr = UInt(p.programCounterBits.W)
+  val epc  = UInt(p.programCounterBits.W)
+}
+
 class DBusIO(p: Parameters, bank: Boolean = false) extends Bundle {
   // Control Phase.
   val valid = Output(Bool())
   val ready = Input(Bool())
   val write = Output(Bool())
+  val pc   = Output(UInt(32.W))
   val addr = Output(UInt((p.lsuAddrBits - (if (bank) 1 else 0)).W))
   val adrx = Output(UInt((p.lsuAddrBits - (if (bank) 1 else 0)).W))
   val size = Output(UInt(p.dbusSize.W))
@@ -134,6 +143,7 @@ class DBusIO(p: Parameters, bank: Boolean = false) extends Bundle {
 class EBusIO(p: Parameters) extends Bundle {
   val dbus = new DBusIO(p)
   val internal = Output(Bool())
+  val fault = Flipped(Valid(new FaultInfo(p)))
 }
 
 class IFlushIO(p: Parameters) extends Bundle {

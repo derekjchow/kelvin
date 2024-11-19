@@ -43,6 +43,7 @@ struct L1DCache_tb : Sysc_tb {
   sc_out<sc_bv<32 - kDBusBankAdj> > io_dbus_addr;
   sc_out<sc_bv<32 - kDBusBankAdj> > io_dbus_adrx;
   sc_in<sc_bv<kVector> > io_dbus_rdata;
+  sc_in<sc_bv<32> > io_dbus_pc;
   sc_out<sc_bv<kVector> > io_dbus_wdata;
   sc_out<sc_bv<kVector / 8> > io_dbus_wmask;
 
@@ -451,6 +452,7 @@ static void L1DCache_test(char* name, int loops, bool trace) {
   sc_signal<sc_bv<32 - kDBusBankAdj> > io_dbus_addr;
   sc_signal<sc_bv<32 - kDBusBankAdj> > io_dbus_adrx;
   sc_signal<sc_bv<kVector> > io_dbus_rdata;
+  sc_signal<sc_bv<32> > io_dbus_pc;
   sc_signal<sc_bv<kVector> > io_dbus_wdata;
   sc_signal<sc_bv<kVector / 8> > io_dbus_wmask;
 
@@ -526,6 +528,7 @@ static void L1DCache_test(char* name, int loops, bool trace) {
   BIND2(tb, l1dcache, io_dbus_addr);
   BIND2(tb, l1dcache, io_dbus_adrx);
   BIND2(tb, l1dcache, io_dbus_rdata);
+  BIND2(tb, l1dcache, io_dbus_pc);
   BIND2(tb, l1dcache, io_dbus_wdata);
   BIND2(tb, l1dcache, io_dbus_wmask);
 

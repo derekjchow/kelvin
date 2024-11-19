@@ -38,11 +38,16 @@ ABSL_FLAG(bool, trace, false, "Dump VCD trace");
 struct Core_tb : Sysc_tb {
   sc_in<bool> io_halted;
   sc_in<bool> io_fault;
+  sc_in<bool> io_ebus_dbus_valid;
+  sc_out<bool> io_ebus_fault_valid;
 
   using Sysc_tb::Sysc_tb;  // constructor
 
   void posedge() {
     check(!io_fault, "io_fault");
+    if (io_ebus_dbus_valid) {
+      io_ebus_fault_valid = true;
+    }
     if (io_halted) sc_stop();
   }
 };
@@ -61,12 +66,16 @@ static void Core_run(const char* name, const char* bin, const int cycles,
   sc_signal<bool> io_debug_req;
   sc_signal<bool> io_ibus_valid;
   sc_signal<bool> io_ibus_ready;
+  sc_signal<bool> io_ibus_fault_valid;
+  sc_signal<bool> io_ibus_fault_bits_write;
   sc_signal<bool> io_dbus_valid;
   sc_signal<bool> io_dbus_ready;
   sc_signal<bool> io_dbus_write;
   sc_signal<bool> io_ebus_dbus_valid;
   sc_signal<bool> io_ebus_dbus_ready;
   sc_signal<bool> io_ebus_dbus_write;
+  sc_signal<bool> io_ebus_fault_valid;
+  sc_signal<bool> io_ebus_fault_bits_write;
   sc_signal<bool> io_iflush_valid;
   sc_signal<bool> io_iflush_ready;
   sc_signal<bool> io_dflush_valid;
@@ -97,14 +106,20 @@ static void Core_run(const char* name, const char* bin, const int cycles,
   sc_signal<sc_bv<32> > io_csr_out_value_7;
   sc_signal<sc_bv<32> > io_ibus_addr;
   sc_signal<sc_bv<KP_fetchDataBits> > io_ibus_rdata;
+  sc_signal<sc_bv<32>> io_ibus_fault_bits_epc;
+  sc_signal<sc_bv<32>> io_ibus_fault_bits_addr;
   sc_signal<sc_bv<32> > io_dbus_addr;
   sc_signal<sc_bv<32> > io_dbus_adrx;
+  sc_signal<sc_bv<32> > io_dbus_pc;
   sc_signal<sc_bv<KP_dbusSize> > io_dbus_size;
   sc_signal<sc_bv<KP_lsuDataBits> > io_dbus_wdata;
   sc_signal<sc_bv<KP_lsuDataBits / 8> > io_dbus_wmask;
   sc_signal<sc_bv<KP_lsuDataBits> > io_dbus_rdata;
   sc_signal<sc_bv<32> > io_ebus_dbus_addr;
   sc_signal<sc_bv<32> > io_ebus_dbus_adrx;
+  sc_signal<sc_bv<32> > io_ebus_dbus_pc;
+  sc_signal<sc_bv<32>> io_ebus_fault_bits_epc;
+  sc_signal<sc_bv<32>> io_ebus_fault_bits_addr;
   sc_signal<sc_bv<KP_dbusSize> > io_ebus_dbus_size;
   sc_signal<sc_bv<KP_lsuDataBits> > io_ebus_dbus_wdata;
   sc_signal<sc_bv<KP_lsuDataBits / 8> > io_ebus_dbus_wmask;
@@ -126,6 +141,8 @@ static void Core_run(const char* name, const char* bin, const int cycles,
 
   tb.io_halted(io_halted);
   tb.io_fault(io_fault);
+  tb.io_ebus_dbus_valid(io_ebus_dbus_valid);
+  tb.io_ebus_fault_valid(io_ebus_fault_valid);
 
   core.clock(tb.clock);
   core.reset(tb.reset);
@@ -136,12 +153,20 @@ static void Core_run(const char* name, const char* bin, const int cycles,
   core.io_debug_req(io_debug_req);
   core.io_ibus_valid(io_ibus_valid);
   core.io_ibus_ready(io_ibus_ready);
+  core.io_ibus_fault_valid(io_ibus_fault_valid);
+  core.io_ibus_fault_bits_write(io_ibus_fault_bits_write);
+  core.io_ibus_fault_bits_addr(io_ibus_fault_bits_addr);
+  core.io_ibus_fault_bits_epc(io_ibus_fault_bits_epc);
   core.io_dbus_valid(io_dbus_valid);
   core.io_dbus_ready(io_dbus_ready);
   core.io_dbus_write(io_dbus_write);
   core.io_ebus_dbus_valid(io_ebus_dbus_valid);
   core.io_ebus_dbus_ready(io_ebus_dbus_ready);
   core.io_ebus_dbus_write(io_ebus_dbus_write);
+  core.io_ebus_fault_valid(io_ebus_fault_valid);
+  core.io_ebus_fault_bits_write(io_ebus_fault_bits_write);
+  core.io_ebus_fault_bits_addr(io_ebus_fault_bits_addr);
+  core.io_ebus_fault_bits_epc(io_ebus_fault_bits_epc);
   core.io_iflush_valid(io_iflush_valid);
   core.io_iflush_ready(io_iflush_ready);
   core.io_dflush_valid(io_dflush_valid);
@@ -174,12 +199,14 @@ static void Core_run(const char* name, const char* bin, const int cycles,
   core.io_ibus_rdata(io_ibus_rdata);
   core.io_dbus_addr(io_dbus_addr);
   core.io_dbus_adrx(io_dbus_adrx);
+  core.io_dbus_pc(io_dbus_pc);
   core.io_dbus_size(io_dbus_size);
   core.io_dbus_wdata(io_dbus_wdata);
   core.io_dbus_wmask(io_dbus_wmask);
   core.io_dbus_rdata(io_dbus_rdata);
   core.io_ebus_dbus_addr(io_ebus_dbus_addr);
   core.io_ebus_dbus_adrx(io_ebus_dbus_adrx);
+  core.io_ebus_dbus_pc(io_ebus_dbus_pc);
   core.io_ebus_dbus_size(io_ebus_dbus_size);
   core.io_ebus_dbus_wdata(io_ebus_dbus_wdata);
   core.io_ebus_dbus_wmask(io_ebus_dbus_wmask);
@@ -211,6 +238,10 @@ static void Core_run(const char* name, const char* bin, const int cycles,
   mif.io_dbus_wdata(io_dbus_wdata);
   mif.io_dbus_wmask(io_dbus_wmask);
   mif.io_dbus_rdata(io_dbus_rdata);
+  mif.io_ibus_fault_valid(io_ibus_fault_valid);
+  mif.io_ibus_fault_bits_write(io_ibus_fault_bits_write);
+  mif.io_ibus_fault_bits_addr(io_ibus_fault_bits_addr);
+  mif.io_ibus_fault_bits_epc(io_ibus_fault_bits_epc);
 
   dbg.clock(tb.clock);
   dbg.reset(tb.reset);

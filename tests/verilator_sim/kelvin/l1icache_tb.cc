@@ -25,6 +25,10 @@ struct L1ICache_tb : Sysc_tb {
   sc_in<bool> io_ibus_ready;
   sc_out<sc_bv<32> > io_ibus_addr;
   sc_in<sc_bv<kL1IAxiBits> > io_ibus_rdata;
+  sc_in<bool> io_ibus_fault_valid;
+  sc_in<bool> io_ibus_fault_bits_write;
+  sc_in<sc_bv<32>> io_ibus_fault_bits_addr;
+  sc_in<sc_bv<32>> io_ibus_fault_bits_epc;
   sc_in<bool> io_axi_read_addr_valid;
   sc_out<bool> io_axi_read_addr_ready;
   sc_in<sc_bv<kL1IAxiId> > io_axi_read_addr_bits_id;
@@ -150,6 +154,10 @@ static void L1ICache_test(char* name, int loops, bool trace) {
   sc_signal<bool> io_ibus_ready;
   sc_signal<sc_bv<32> > io_ibus_addr;
   sc_signal<sc_bv<kL1IAxiBits> > io_ibus_rdata;
+  sc_signal<bool> io_ibus_fault_valid;
+  sc_signal<bool> io_ibus_fault_bits_write;
+  sc_signal<sc_bv<32>> io_ibus_fault_bits_addr;
+  sc_signal<sc_bv<32>> io_ibus_fault_bits_epc;
   sc_signal<bool> io_axi_read_addr_valid;
   sc_signal<bool> io_axi_read_addr_ready;
   sc_signal<sc_bv<kL1IAxiId> > io_axi_read_addr_bits_id;
@@ -185,6 +193,10 @@ static void L1ICache_test(char* name, int loops, bool trace) {
   BIND2(tb, l1icache, io_ibus_ready);
   BIND2(tb, l1icache, io_ibus_addr);
   BIND2(tb, l1icache, io_ibus_rdata);
+  BIND2(tb, l1icache, io_ibus_fault_valid);
+  BIND2(tb, l1icache, io_ibus_fault_bits_write);
+  BIND2(tb, l1icache, io_ibus_fault_bits_addr);
+  BIND2(tb, l1icache, io_ibus_fault_bits_epc);
   BIND2(tb, l1icache, io_axi_read_addr_valid);
   BIND2(tb, l1icache, io_axi_read_addr_ready);
   BIND2(tb, l1icache, io_axi_read_addr_bits_id);

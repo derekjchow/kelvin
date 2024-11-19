@@ -347,6 +347,7 @@ class Decode(p: Parameters, pipeline: Int) extends Module {
   io.bru.bits.target := io.inst.bits.addr + Mux(
       io.inst.bits.inst(2), d.immjal, d.immbr)
   io.bru.bits.link := rdAddr
+  io.bru.bits.inst := io.inst.bits.inst
 
   // CSR opcode.
   val csr = MuxCase(MakeValid(false.B, CsrOp.CSRRW), Seq(
@@ -379,6 +380,7 @@ class Decode(p: Parameters, pipeline: Int) extends Module {
   io.lsu.bits.store := io.inst.bits.inst(5)
   io.lsu.bits.addr := rdAddr
   io.lsu.bits.op := lsu.bits
+  io.lsu.bits.pc := io.inst.bits.addr
 
   // MLU opcode.
   val mlu = MuxCase(MakeValid(false.B, MluOp.MUL), Seq(

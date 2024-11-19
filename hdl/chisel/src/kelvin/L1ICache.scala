@@ -50,6 +50,7 @@ class L1ICache(p: Parameters) extends Module {
     }
     val volt_sel = Input(Bool())
   })
+  io.ibus.fault := MakeInvalid(new FaultInfo(p))
 
   assert(assoc == 2 ||  assoc == 4 || assoc == 8 || assoc == 16 || assoc == slots)
   assert(assoc != 2 || (setLsb == 5 && setMsb == 11 && tagLsb == 12) || (setLsb == 4 && setMsb == 10 && tagLsb == 11))

@@ -41,6 +41,7 @@ class DBusMux(p: Parameters) extends Module {
   io.dbus.size  := Mux(io.vldst, io.vcore.size,  io.score.size)
   io.dbus.wdata := Mux(io.vldst, io.vcore.wdata, io.score.wdata)
   io.dbus.wmask := Mux(io.vldst, io.vcore.wmask, io.score.wmask)
+  io.dbus.pc := 0.U.asTypeOf(io.dbus.pc)
 
   io.score.rdata := io.dbus.rdata
   io.vcore.rdata := io.dbus.rdata
