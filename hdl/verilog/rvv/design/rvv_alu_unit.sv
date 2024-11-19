@@ -106,7 +106,7 @@ module rvv_alu_unit
           
           default: begin
             `ifdef ASSERT_ON
-            $error("Unsupported uop_funct6.opi_funct=%s, rob_entry=%d.\n",uop_funct6.opi_funct,rob_entry);
+            $error("rob_entry=%d. Unsupported uop_funct6.opi_funct=%s.\n",rob_entr,yuop_funct6.opi_funct);
             `endif
           end
         endcase
@@ -129,19 +129,16 @@ module rvv_alu_unit
               src1_vdata_vmask_logic    = vs1_data;
               result_valid_vmask_logic  = 1'b1;
             end else begin
-              src2_vdata_mask_logic     = 'b0;
-              src1_vdata_mask_logic     = 'b0;
-              result_valid_mask_logic   = 'b0;
               `ifdef ASSERT_ON
               `rvv_expect((vs1_data_valid&vs2_data_valid&vm)==1'b1) 
-                else $error("%s uop: rob_entry=%d, unsupported vs1_data_valid&vs2_data_valid&vm.\n",uop_funct6.opm_funct,rob_entry);
+                else $error("%s uop: rob_entry=%d. Unsupported vs1_data_valid(%d)&vs2_data_valid(%d)&vm(%d) should be 1'b1.\n",uop_funct6.opm_funct,rob_entry,vs1_data_valid,vs2_data_valid,vm);
               `endif
             end
           end
 
           default: begin
             `ifdef ASSERT_ON
-            $error("Unsupported uop_funct6.opm_funct=%s, rob_entry=%d.\n",uop_funct6.opm_funct,rob_entry);
+            $error("rob_entry=%d. Unsupported uop_funct6.opm_funct=%s.\n",rob_entry,uop_funct6.opm_funct);
             `endif
           end
         endcase
@@ -150,7 +147,7 @@ module rvv_alu_unit
       default: begin
         `ifdef ASSERT_ON
         `rvv_expect(alu_uop_valid==1'b0)
-          else $error("unsupported uop_funct3=%s, rob_entry=%d.\n",uop_funct3,rob_entry);
+          else $error("rob_entry=%d. Unsupported uop_funct3=%s.\n",rob_entry,uop_funct3);
         `endif
       end
     endcase
@@ -233,7 +230,7 @@ module rvv_alu_unit
   // combine the signals to result_ex2rob struct and submit
   always_comb begin
   // initial
-    result_valid_ex2rob  = 'b0;
+    result_valid_ex2rob   = 'b0;
     w_data                = 'b0;
     w_tpye                = 'b0;
     w_valid               = 'b0;

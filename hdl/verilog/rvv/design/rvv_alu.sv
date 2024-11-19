@@ -85,9 +85,9 @@ module rvv_alu
 
 `ifdef ASSERT_ON
   `rvv_forbid(alu_uop0_valid_rs2ex&(!result0_valid_ex2rob)) 
-    else $error("Something wrong in alu_unit0 decoding and execution. rob_entry:%d.\n",alu_uop0_rs2ex.rob_entry);
+    else $error("rob_entry=%d. Something wrong in alu_unit0 decoding and execution.\n",alu_uop0_rs2ex.rob_entry);
 
   `rvv_forbid(alu_uop1_valid_rs2ex&(!result1_valid_ex2rob)) 
-    else $error("Something wrong in alu_unit1 decoding and execution. rob_entry:%d.\n",alu_uop1_rs2ex.rob_entry);
+    else $error("rob_entry=%d. Something wrong in alu_unit1 decoding and execution.\n",alu_uop1_rs2ex.rob_entry);
 `endif
 endmodule
