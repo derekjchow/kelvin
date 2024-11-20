@@ -21,7 +21,7 @@ vcs_systemc_binary(
     verilog_srcs = [
         "//internal:syn/libs/tsmc12ffc/ts1n12ffcllsblvtd512x128m4swbsho_130b/VERILOG/ts1n12ffcllsblvtd512x128m4swbsho_130b.v",
         "//internal:syn/libs/tsmc12ffc/ts1n12ffcllmblvtd2048x128m4swbsho_130d/VERILOG/ts1n12ffcllmblvtd2048x128m4swbsho_130d.v",
-        "//internal:syn/libs/tsmc12ffc/tcbn12ffcllbwp16p90lvt.v",
+        "//internal:syn/libs/tsmc12ffc/tcbn12ffcllbwp6t20p96cpdlvt.v",
     ],
     systemc_srcs = [
         "top.cc",
