@@ -48,7 +48,7 @@ class AxiAddress(addrWidthBits: Int, dataWidthBits: Int, idBits: Int) extends Bu
   def defaults() = {
     id     := 0.U
     len    := 0.U
-    size   := log2Ceil(dataWidthBits).U
+    size   := log2Ceil(dataWidthBits / 8).U
     burst  := 1.U
     lock   := 0.U
     cache  := 0.U
