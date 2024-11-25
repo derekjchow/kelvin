@@ -1,6 +1,6 @@
 `include "rvv.svh"
 
-module rvv
+module RvvBackend
 (
 	clk,
 	rstn,
