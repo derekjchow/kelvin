@@ -1,3 +1,6 @@
+`ifndef HDL_VERILOG_RVV_DESIGN_RVV_DEFINE_SVH
+`define HDL_VERILOG_RVV_DESIGN_RVV_DEFINE_SVH
+
 // number of scalar core issue lane
 `define ISSUE_LANE              4
 
@@ -64,7 +67,7 @@
 `define SEW16                   3'b001
 `define SEW32                   3'b010
 
-// instruction opcode 
+// instruction opcode
 `define OPCODE_LOAD             2'b00
 `define OPCODE_STORE            2'b01
 `define OPCODE_ARITH            2'b00
@@ -72,21 +75,4 @@
 // Reservation Station data width
 `define ALU_RS_WIDTH            $bits(ALU_RS_t)
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+`endif  // HDL_VERILOG_RVV_DESIGN_RVV_DEFINE_SVH
