@@ -1,3 +1,6 @@
+`ifndef HDL_VERILOG_RVV_DESIGN_RVV_DEFINE_SVH
+`define HDL_VERILOG_RVV_DESIGN_RVV_DEFINE_SVH
+
 // number of scalar core issue lane
 `define ISSUE_LANE              4
 
@@ -72,7 +75,7 @@
 // Reservation Station data width
 `define ALU_RS_WIDTH            $bits(ALU_RS_t)
 
-
+`endif  // HDL_VERILOG_RVV_DESIGN_RVV_DEFINE_SVH
 
 
 
