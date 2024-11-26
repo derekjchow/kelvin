@@ -23,6 +23,7 @@ import java.io.{File, FileOutputStream}
 import java.util.zip._
 import java.nio.file.{Paths, Files, StandardOpenOption}
 import java.nio.charset.{StandardCharsets}
+import kelvin.rvv.RvvCore
 import _root_.circt.stage.ChiselStage
 
 object Core {
@@ -60,6 +61,10 @@ class Core(p: Parameters, moduleName: String) extends Module with RequireAsyncRe
 
   val score = SCore(p)
   val vcore = if (p.enableVector) { Some(VCore(p)) } else { None }
+  val rvvCore = if (p.enableRvv) { Some(RvvCore(p)) } else { None }
+  if (p.enableRvv) {
+    rvvCore.get.io <> score.io.rvvcore.get
+  }
 
   // ---------------------------------------------------------------------------
   // Scalar Core outputs.
@@ -110,6 +115,8 @@ object EmitCore extends App {
       p.fetchDataBits = arg.split("=")(1).toInt
     } else if (arg.startsWith("--enableVector")) {
       p.enableVector = arg.split("=")(1).toBoolean
+    } else if (arg.startsWith("--enableRvv")) {
+      p.enableRvv = arg.split("=")(1).toBoolean
     } else if (arg.startsWith("--lsuDataBits")) {
       p.lsuDataBits = arg.split("=")(1).toInt
     } else if (arg.startsWith("--useAxi")) {

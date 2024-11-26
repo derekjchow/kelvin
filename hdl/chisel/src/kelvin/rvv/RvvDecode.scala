@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package kelvin
+package kelvin.rvv
 
 import chisel3._
 import chisel3.util._
@@ -25,10 +25,28 @@ object RvvCompressedOpcode extends ChiselEnum {
   val RVVALU = Value(2.U)
 }
 
-
 class RvvCompressedInstruction extends Bundle {
   val opcode = RvvCompressedOpcode()
   val bits = UInt(25.W)
+
+  def readsRs1(): Bool = {
+    val form = bits(7, 5)
+    (opcode =/= RvvCompressedOpcode.RVVALU) ||
+        (bits(7) && (bits(24, 23) =/= "0b11".U))
+  }
+
+  def rdScoreboard(): UInt = {
+    val rd = bits(4, 0)
+    val mode = bits(7, 5)
+    val writesRd =
+        (opcode === RvvCompressedOpcode.RVVALU && mode === "0b111".U)
+
+    Mux(writesRd, UIntToOH(rd, 32), 0.U(32.W))
+  }
+
+  override def toPrintable: Printable = {
+    cf"[opcode=$opcode, bits=$bits%b]"
+  }
 }
 
 object RvvCompressedInstruction {

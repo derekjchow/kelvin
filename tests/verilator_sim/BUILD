@@ -98,6 +98,30 @@ cc_binary(
 )
 
 cc_binary(
+    name = "rvv_core_mini_axi_sim",
+    srcs = [
+        "kelvin/core_mini_axi_sim.cc",
+        "@kelvin_hw//hdl/chisel/src/kelvin:VRvvCoreMiniAxi_parameters.h",
+    ],
+    defines = [
+       "VERILATOR_MODEL=VRvvCore",
+    ],
+    deps = [
+        ":elf",
+        ":sim_libs",
+        ":util",
+        "//hdl/chisel/src/kelvin:rvv_core_mini_axi_cc_library",
+        "//tests/systemc:Xbar",
+        "@com_google_absl//absl/flags:flag",
+        "@com_google_absl//absl/flags:parse",
+        "@com_google_absl//absl/flags:usage",
+        "@com_google_absl//absl/log:check",
+        "@com_google_absl//absl/log:log",
+        "@libsystemctlm_soc//:libsystemctlm_soc",
+    ],
+)
+
+cc_binary(
     name = "core_scalar_sim",
     srcs = [
         "kelvin/core_tb.cc",

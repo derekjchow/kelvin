@@ -19,6 +19,7 @@ package kelvin
 import chisel3._
 import chisel3.util._
 import common._
+import kelvin.rvv.{RvvCoreIO}
 import _root_.circt.stage.ChiselStage
 
 object SCore {
@@ -44,12 +45,25 @@ class SCore(p: Parameters) extends Module {
         Some(Flipped(new VCoreIO(p)))
     } else { None }
 
+    val rvvcore = if (p.enableRvv) {
+        Some(Flipped(new RvvCoreIO(p)))
+    } else { None }
+
     val iflush = new IFlushIO(p)
     val dflush = new DFlushIO(p)
     val slog = new SLogIO(p)
 
     val debug = new DebugIO(p)
   })
+
+  if (p.enableRvv) {
+    for (i <- 0 until p.instructionLanes) {
+      io.rvvcore.get.rs(2*i).valid := false.B
+      io.rvvcore.get.rs(2*i).data := 0.U
+      io.rvvcore.get.rs(2*i + 1).valid := false.B
+      io.rvvcore.get.rs(2*i + 1).data := 0.U
+    }
+  }
 
   // The functional units that make up the core.
   val regfile = Regfile(p)
@@ -212,6 +226,16 @@ class SCore(p: Parameters) extends Module {
   // TODO: make port conditional on pipeline index.
   for (i <- 1 until p.instructionLanes) {
     decode(i).io.dvu.ready := false.B
+  }
+
+  // ---------------------------------------------------------------------------
+  // RVV Unit
+  if (p.enableRvv) {
+    for (i <- 0 until p.instructionLanes) {
+      decode(i).io.rvv.get <> io.rvvcore.get.inst(i)
+    }
+    // TODO(Fix tie-off)
+    io.rvvcore.get.async_rd.ready := false.B
   }
 
   // ---------------------------------------------------------------------------
