@@ -182,18 +182,14 @@ class Regfile(p: Parameters) extends Module {
   }
 
   for (i <- 0 until (p.instructionLanes * 2)) {
-    val setValid = io.readSet(i).valid
-    val setValue = io.readSet(i).value
+    nxtReadDataBits(i) := Mux(
+        io.readSet(i).valid, io.readSet(i).value, rwdata(i))
 
-    val nxtReadDataReady = io.readAddr(i).valid || setValid
-
-    readDataReady(i) := nxtReadDataReady
-
-    nxtReadDataBits(i) := Mux(setValid, setValue, rwdata(i))
-
-    when (nxtReadDataReady) {
-      readDataBits(i) := nxtReadDataBits(i)
-    }
+    readDataReady(i) := io.readAddr(i).valid || io.readSet(i).valid
+    readDataBits(i) := MuxCase(readDataBits(i), Seq(
+        io.readSet(i).valid -> io.readSet(i).value,
+        io.readAddr(i).valid -> rwdata(i)
+    ))
   }
 
   // Bus port priority encoded address.
