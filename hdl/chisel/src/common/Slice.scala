@@ -68,11 +68,11 @@ class Slice[T <: Data](t: T, doubleBuffered: Boolean,
 
     when (ovalid && full) {
       mem(0) := mem(1)
-    }
-
-    when (ivalid && !ovalid && empty ||
+    } .elsewhen (ivalid && !ovalid && empty ||
           ivalid && ovalid && !full) {
       mem(0) := io.in.bits
+    } .otherwise {
+      mem(0) := mem(0)
     }
 
     when (ivalid && !ovalid && !empty ||
@@ -93,6 +93,8 @@ class Slice[T <: Data](t: T, doubleBuffered: Boolean,
 
     when (ivalid) {
       mem(0) := io.in.bits
+    } .otherwise {
+      mem(0) := mem(0)
     }
 
     io.value(0).valid := !empty
