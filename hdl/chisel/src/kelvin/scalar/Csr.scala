@@ -69,6 +69,10 @@ class CsrBruIO(p: Parameters) extends Bundle {
   }
 }
 
+class CsrRvvIO extends Bundle {
+  // TODO(derekjchow): Finish me
+}
+
 class CsrCmd extends Bundle {
   val addr = UInt(5.W)
   val index = UInt(12.W)
@@ -135,6 +139,14 @@ class Csr(p: Parameters) extends Module {
   val mscratch  = RegInit(0.U(32.W))
   val mepc      = RegInit(0.U(32.W))
 
+  // TODO(derekjchow): Check initialization
+  val vstart = Option.when(p.enableRvv)(RegInit(0.U(log2Ceil(p.rvvVlen).W)))
+  val vxsat  = Option.when(p.enableRvv)(RegInit(0.U(1.W)))
+  val vxrm   = Option.when(p.enableRvv)(RegInit(0.U(2.W)))
+  // val vcsr   = Option.when(p.enableRvv)(RegInit(0.U(32.W)))
+  // TODO(derekjchow): Read only CSRs
+
+
   val mhartid   = RegInit(p.hartId.U(32.W))
 
   val mcycle    = RegInit(0.U(64.W))
@@ -160,6 +172,12 @@ class Csr(p: Parameters) extends Module {
   val fflagsEn    = req.bits.index === 0x001.U
   val frmEn       = req.bits.index === 0x002.U
   val fcsrEn      = req.bits.index === 0x003.U
+
+  val vstartEn = if (p.enableRvv) { req.bits.index === 0x08.U } else { false.B }
+  val vxsatEn  = if (p.enableRvv) { req.bits.index === 0x09.U } else { false.B }
+  val vxrmEn   = if (p.enableRvv) { req.bits.index === 0x0A.U } else { false.B }
+  val vcsrEn   = if (p.enableRvv) { req.bits.index === 0x0F.U } else { false.B }
+
   val misaEn      = req.bits.index === 0x301.U
   val mieEn       = req.bits.index === 0x304.U
   val mtvecEn     = req.bits.index === 0x305.U
@@ -196,7 +214,8 @@ class Csr(p: Parameters) extends Module {
   val kscm4En     = req.bits.index === 0xFD4.U
 
   // Pipeline Control.
-  val vcoreUndef = if (p.enableVector) { io.vcore.get.undef } else { false.B }
+  // val vcoreUndef = if (p.enableVector) { io.vcore.get.undef } else { false.B }
+  val vcoreUndef = io.vcore.map(_.undef).getOrElse(false.B)
   when (io.bru.in.halt || vcoreUndef) {
     halted := true.B
   }
@@ -216,40 +235,47 @@ class Csr(p: Parameters) extends Module {
   // Register state.
   val rs1 = io.rs1.data
 
-  val rdata = MuxOR(fflagsEn,     fflags) |
-              MuxOR(frmEn,        frm) |
-              MuxOR(fcsrEn,       fcsr) |
-              MuxOR(misaEn,       misa) |
-              MuxOR(mieEn,        mie) |
-              MuxOR(mtvecEn,      mtvec) |
-              MuxOR(mscratchEn,   mscratch) |
-              MuxOR(mepcEn,       mepc) |
-              MuxOR(mcauseEn,     mcause) |
-              MuxOR(mtvalEn,      mtval) |
-              MuxOR(mcontext0En,  mcontext0) |
-              MuxOR(mcontext1En,  mcontext1) |
-              MuxOR(mcontext2En,  mcontext2) |
-              MuxOR(mcontext3En,  mcontext3) |
-              MuxOR(mcontext4En,  mcontext4) |
-              MuxOR(mcontext5En,  mcontext5) |
-              MuxOR(mcontext6En,  mcontext6) |
-              MuxOR(mcontext7En,  mcontext7) |
-              MuxOR(mpcEn,        mpc) |
-              MuxOR(mspEn,        msp) |
-              MuxOR(mcycleEn,     mcycle(31,0)) |
-              MuxOR(mcyclehEn,    mcycle(63,32)) |
-              MuxOR(minstretEn,   minstret(31,0)) |
-              MuxOR(minstrethEn,  minstret(63,32)) |
-              MuxOR(mvendoridEn,  mvendorid) |
-              MuxOR(marchidEn,    marchid) |
-              MuxOR(mimpidEn,     mimpid) |
-              MuxOR(mhartidEn,    mhartid) |
-              MuxOR(kisaEn,       kisa) |
-              MuxOR(kscm0En,      kscm(31,0)) |
-              MuxOR(kscm1En,      kscm(63,32)) |
-              MuxOR(kscm2En,      kscm(95,64)) |
-              MuxOR(kscm3En,      kscm(127,96)) |
-              MuxOR(kscm4En,      kscm(159,128))
+  val rdata = MuxCase(0.U, Seq(
+      fflagsEn    -> fflags,
+      frmEn       -> frm,
+      fcsrEn      -> fcsr,
+      misaEn      -> misa,
+      mieEn       -> mie,
+      mtvecEn     -> mtvec,
+      mscratchEn  -> mscratch,
+      mepcEn      -> mepc,
+      mcauseEn    -> mcause,
+      mtvalEn     -> mtval,
+      mcontext0En -> mcontext0,
+      mcontext1En -> mcontext1,
+      mcontext2En -> mcontext2,
+      mcontext3En -> mcontext3,
+      mcontext4En -> mcontext4,
+      mcontext5En -> mcontext5,
+      mcontext6En -> mcontext6,
+      mcontext7En -> mcontext7,
+      mpcEn       -> mpc,
+      mspEn       -> msp,
+      mcycleEn    -> mcycle(31,0),
+      mcyclehEn   -> mcycle(63,32),
+      minstretEn  -> minstret(31,0),
+      minstrethEn -> minstret(63,32),
+      mvendoridEn -> mvendorid,
+      marchidEn   -> marchid,
+      mimpidEn    -> mimpid,
+      mhartidEn   -> mhartid,
+      kisaEn      -> kisa,
+      kscm0En     -> kscm(31,0),
+      kscm1En     -> kscm(63,32),
+      kscm2En     -> kscm(95,64),
+      kscm3En     -> kscm(127,96),
+      kscm4En     -> kscm(159,128),
+  ) ++ (if (p.enableRvv) { Seq(
+      vstartEn -> vstart.get,
+      vxsatEn  -> vxsat.get,
+      vxrmEn   -> vxrm.get,
+      vcsrEn   -> Cat(vxrm.get, vxsat.get),
+  )} else { Seq() }))
 
   val wdata = MuxLookup(req.bits.op, 0.U)(Seq(
       CsrOp.CSRRW -> rs1,
@@ -278,6 +304,11 @@ class Csr(p: Parameters) extends Module {
     when (mcontext5En)  { mcontext5 := wdata }
     when (mcontext6En)  { mcontext6 := wdata }
     when (mcontext7En)  { mcontext7 := wdata }
+    if (p.enableRvv) {
+      when (vstartEn) { vstart.get := wdata }
+      when (vxsatEn)  { vxsat.get  := wdata }
+      when (vxrmEn)   { vxrm.get   := wdata }
+    }
   }
 
   // mcycle implementation

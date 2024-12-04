@@ -30,8 +30,13 @@
 #include "tests/verilator_sim/util.h"
 
 // Headers for our Verilator model.
+#if VERILATOR_MODEL == VRvvCore
+#include "VRvvCoreMiniAxi.h"
+#include "hdl/chisel/src/kelvin/VRvvCoreMiniAxi_parameters.h"
+#else
 #include "VCoreMiniAxi.h"
 #include "hdl/chisel/src/kelvin/VCoreMiniAxi_parameters.h"
+#endif  // VERILATOR_MODEL == VRvvCore
 
 /* clang-format off */
 #include <systemc>
@@ -127,6 +132,7 @@ struct CoreMiniAxi_tb : Sysc_tb {
     uint32_t elf_magic = 0x464c457f;
     uint8_t* data8 = reinterpret_cast<uint8_t*>(file_data_);
     if (memcmp(file_data_, &elf_magic, sizeof(elf_magic)) == 0) {
+      LOG(ERROR) << "Loading Elf";
       std::vector<DataTransfer> elf_transfers;
       const Elf32_Ehdr* elf_header = reinterpret_cast<Elf32_Ehdr*>(file_data_);
       elf_transfers.reserve(3 * elf_header->e_phnum);
@@ -379,9 +385,13 @@ CoreMiniAxi_tb* CoreMiniAxi_tb::singleton_ = nullptr;
 
 static void run(const char* name, const std::string binary, const int cycles,
                 const bool trace) {
+#if VERILATOR_MODEL == VRvvCore
+  VRvvCoreMiniAxi core(name);
+  CoreMiniAxi_tb tb("RvvCoreMiniAxi_tb", cycles, /* random= */ false, binary);
+#else
   VCoreMiniAxi core(name);
-
   CoreMiniAxi_tb tb("CoreMiniAxi_tb", cycles, /* random= */ false, binary);
+#endif  // VERILATOR_MODEL == VRvvCore
 
   sc_signal<bool> io_halted;
   sc_signal<bool> io_fault;

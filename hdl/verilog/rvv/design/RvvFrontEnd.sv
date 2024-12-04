@@ -27,6 +27,10 @@ module RvvFrontEnd#(parameter N = 4,
   input clk,
   input rstn,
 
+  input logic [`VSTART_WIDTH-1:0]     vstart_i,
+  input logic [`VCSR_VXRM_WIDTH-1:0]  vxrm_i,
+  input logic [`VCSR_VXSAT_WIDTH-1:0] vxsat_i,
+
   // Instruction input.
   input logic [N-1:0] inst_valid_i,
   input RVVInstruction [N-1:0] inst_data_i,
@@ -157,15 +161,15 @@ module RvvFrontEnd#(parameter N = 4,
       unaligned_cmd_data[i].insts_pc = inst_q[i].pc;
       unaligned_cmd_data[i].opcode = inst_q[i].opcode;
       unaligned_cmd_data[i].bits = inst_q[i].bits;
-      unaligned_cmd_data[i].vector_csr.vstart = 0;  // TODO(derekjchow): Set me
+      unaligned_cmd_data[i].vector_csr.vstart = vstart_i;
       unaligned_cmd_data[i].vector_csr.vl = inst_config_state[i].vl;
       unaligned_cmd_data[i].vector_csr.vtype.vill = 0;  // TODO(derekjchow): Set me
       unaligned_cmd_data[i].vector_csr.vtype.vma = inst_config_state[i].ma;
       unaligned_cmd_data[i].vector_csr.vtype.vta = inst_config_state[i].ta;
       unaligned_cmd_data[i].vector_csr.vtype.vsew = inst_config_state[i].sew;
       unaligned_cmd_data[i].vector_csr.vtype.vlmul = inst_config_state[i].lmul;
-      unaligned_cmd_data[i].vector_csr.vcsr.vxrm = 0;  // TODO(derekjchow): Set me
-      unaligned_cmd_data[i].vector_csr.vcsr.vxsat = 0;  // TODO(derekjchow): Set me
+      unaligned_cmd_data[i].vector_csr.vcsr.vxrm = vxrm_i;
+      unaligned_cmd_data[i].vector_csr.vcsr.vxsat = vxsat_i;
       // TODO: Handle rs propagation for loads/stores
       unaligned_cmd_data[i].rs1_data =
           inst_q[i].bits[7] ? reg_read_data_i[2*i] : 0;

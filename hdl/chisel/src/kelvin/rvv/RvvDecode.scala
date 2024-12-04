@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package kelvin
+package kelvin.rvv
 
 import chisel3._
 import chisel3.util._
@@ -25,14 +25,37 @@ object RvvCompressedOpcode extends ChiselEnum {
   val RVVALU = Value(2.U)
 }
 
-
 class RvvCompressedInstruction extends Bundle {
+  val pc = UInt(32.W)
   val opcode = RvvCompressedOpcode()
   val bits = UInt(25.W)
+
+  def funct6(): UInt = {
+    bits(24, 19)
+  }
+
+  def funct3(): UInt = {
+    bits(7, 5)
+  }
+
+  def readsRs1(): Bool = {
+    (opcode =/= RvvCompressedOpcode.RVVALU) ||
+        (bits(7) && (bits(24, 23) =/= "b11".U))
+  }
+
+  def writesRd(): Bool = {
+    // TODO(derekjchow): Finish me
+    (opcode === RvvCompressedOpcode.RVVALU && funct3 === "b111".U) ||
+    (opcode === RvvCompressedOpcode.RVVALU && funct3 === "b010".U && funct6 === "b010000".U)
+  }
+
+  override def toPrintable: Printable = {
+    cf"[opcode=$opcode, bits=$bits%b]"
+  }
 }
 
 object RvvCompressedInstruction {
-  def from_uncompressed(inst: UInt): Valid[RvvCompressedInstruction] = {
+  def from_uncompressed(inst: UInt, pc: UInt): Valid[RvvCompressedInstruction] = {
     val old_opcode = inst(6, 0)
     val bits = inst(31, 7)
 
@@ -47,6 +70,7 @@ object RvvCompressedInstruction {
       Valid(new RvvCompressedInstruction),
       _.valid -> new_opcode.valid,
       _.bits.opcode -> new_opcode.bits,
+      _.bits.pc -> pc,
       _.bits.bits -> bits,
     )
   }

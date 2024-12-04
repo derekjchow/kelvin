@@ -17,10 +17,12 @@ load("//rules:vcs.bzl", "vcs_testbench_test")
 
 exports_files(
     srcs = [
+        "rvv_backend.sv",
         "rvv_define.svh",
         "rvv.svh",
         "Aligner.sv",
         "MultiFifo.sv",
+        "RvvCore.sv",
         "RvvFrontEnd.sv",
     ],
     visibility = ["//visibility:public"],
