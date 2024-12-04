@@ -106,11 +106,11 @@ class Dvu(p: Parameters) extends Module {
   // Compute is delayed by one cycle.
   compute := active
 
-  when (io.req.valid && io.req.ready) {
-    addr1   := io.req.bits.addr
-    signed1 := io.req.bits.op.isOneOf(DvuOp.DIV, DvuOp.REM)
-    divide1 := io.req.bits.op.isOneOf(DvuOp.DIV, DvuOp.DIVU)
-  }
+  addr1   := Mux(io.req.fire, io.req.bits.addr, addr1)
+  signed1 := Mux(
+      io.req.fire, io.req.bits.op.isOneOf(DvuOp.DIV, DvuOp.REM), signed1)
+  divide1 := Mux(
+      io.req.fire, io.req.bits.op.isOneOf(DvuOp.DIV, DvuOp.DIVU), divide1)
 
   when (active && !compute) {
     addr2    := addr1
