@@ -15,6 +15,17 @@
 load("@rules_hdl//verilog:providers.bzl", "verilog_library")
 load("//rules:vcs.bzl", "vcs_testbench_test")
 
+exports_files(
+    srcs = [
+        "rvv_define.svh",
+        "rvv.svh",
+        "Aligner.sv",
+        "MultiFifo.sv",
+        "RvvFrontEnd.sv",
+    ],
+    visibility = ["//visibility:public"],
+)
+
 verilog_library(
     name = "aligner",
     srcs = [
@@ -28,4 +39,19 @@ vcs_testbench_test(
     srcs = ["Aligner_tb.sv"],
     module = "Aligner_tb",
     deps = ":aligner",
+)
+
+verilog_library(
+    name = "multififo",
+    srcs = [
+        "MultiFifo.sv",
+    ],
+    visibility = ["//visibility:public"],
+)
+
+vcs_testbench_test(
+    name = "multififo_tb",
+    srcs = ["MultiFifo_tb.sv"],
+    module = "MultiFifo_tb",
+    deps = ":multififo",
 )
