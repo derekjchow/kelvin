@@ -77,26 +77,46 @@ def chisel_test(
         tags = [],
         size = "small",
         visibility = None):
+    scalatest_name = name + "_scalatest"
     scala_test(
-        name = name,
+        name = scalatest_name,
         srcs = srcs,
         deps = [
             "@kelvin_hw//lib:chisel_lib",
             "@org_chipsalliance_chisel_plugin//jar",
             "@org_scalatest_scalatest//jar",
             "@edu_berkeley_cs_firrtl//jar",
-            "@edu_berkeley_cs_chiseltest//jar",
             "@org_antlr_antlr4_runtime//jar",
             "@net_java_dev_jna//jar",
         ] + deps,
-        args = args,
-        tags = tags,
-        size = size,
-        scalacopts = SCALA_COPTS,
-        visibility = visibility,
+        data = [
+            "@kelvin_hw//third_party/llvm-firtool:firtool",
+        ],
         env = {
             # Stop verilator from using ccache, this causes CI issues.
             "OBJCACHE": "",
+            "CHISEL_FIRTOOL_PATH": "third_party/llvm-firtool",
+        },
+        args = args,
+        tags = tags + ["manual"],
+        size = size,
+        scalacopts = SCALA_COPTS,
+        visibility = visibility,
+    )
+
+    native.sh_test(
+        name = name,
+        srcs = ["@kelvin_hw//rules:chisel_test_runner.sh"],
+        data = [
+            ":{}".format(scalatest_name),
+            "@verilator//:verilator_bin",
+            "@verilator//:verilator_lib",
+            "@kelvin_hw//third_party/llvm-firtool:firtool",
+        ],
+        env = {
+            # Stop verilator from using ccache, this causes CI issues.
+            "OBJCACHE": "",
+            "CHISEL_FIRTOOL_PATH": "third_party/llvm-firtool",
         },
     )
 
@@ -124,7 +144,7 @@ def chisel_cc_library(
         name = name + "_emit_verilog",
         srcs = [],
         outs = [verilog_file_path] + extra_outs,
-        cmd = "PATH=$$(dirname $(execpath @kelvin_hw//third_party/llvm-firtool:firtool)):$$PATH ./$(location " + gen_binary_name + ") --target-dir=$(RULEDIR) " + gen_flags,
+        cmd = "CHISEL_FIRTOOL_PATH=$$(dirname $(execpath @kelvin_hw//third_party/llvm-firtool:firtool)) ./$(location " + gen_binary_name + ") --target-dir=$(RULEDIR) " + gen_flags,
         tools = [
             ":{}".format(gen_binary_name),
             "@kelvin_hw//third_party/llvm-firtool:firtool",

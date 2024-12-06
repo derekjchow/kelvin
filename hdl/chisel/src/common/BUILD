@@ -64,7 +64,6 @@ chisel_test(
     srcs = [
         "AlignerTest.scala",
     ],
-    tags = ["verilator"],
     deps = [
         ":aligner",
     ],
@@ -97,7 +96,6 @@ chisel_library(
     visibility = ["//visibility:public"],
     deps = [
         ":fp",
-        "@edu_berkeley_cs_chiseltest//jar",
     ],
 )
 

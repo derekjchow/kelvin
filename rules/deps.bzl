@@ -156,18 +156,41 @@ def kelvin_chisel_deps():
     # Chisel3
     scala_maven_import_external(
         name = "org_chipsalliance_chisel",
-        artifact = "org.chipsalliance:chisel_2.13:%s" % "5.1.0",
-        artifact_sha256 = "b83c466d73cf38ec85f7bc2358ccf2fc4f3aac27e78ec4fbd848b7827a59dd57",
+        artifact = "org.chipsalliance:chisel_2.13:%s" % "7.0.0-RC1",
+        artifact_sha256 = "2d807710cd655b4a9adfeb5211f1b288558e09707d912817d320a16ecae5630b",
         server_urls = default_maven_server_urls(),
         licenses = ["notice"],
     )
     scala_maven_import_external(
         name = "org_chipsalliance_chisel_plugin",
-        artifact = "org.chipsalliance:chisel-plugin_2.13.6:%s" % "5.1.0",
-        artifact_sha256 = "d4fd477fa5368c1dddd40d76526d5ba265e37e7d42f3d051279b957d12b40f2b",
+        artifact = "org.chipsalliance:chisel-plugin_2.13.6:%s" % "7.0.0-RC1",
+        artifact_sha256 = "f8ba4dea4cfcd28927bff4249758d690a85e3c59abf05c1b0105b2e7c692606a",
         server_urls = default_maven_server_urls(),
         licenses = ["notice"],
     )
+    scala_maven_import_external(
+        name = "org_chipsalliance_firtool_resolver",
+        artifact = "org.chipsalliance:firtool-resolver_2.13:%s" % "2.0.0",
+        artifact_sha256 = "dab7354296f5b39de45c5b300fba33061ee70b9cae6f8994ad1ce00afa9a6f3d",
+        server_urls = default_maven_server_urls(),
+        licenses = ["notice"],
+    )
+
+    scala_maven_import_external(
+        name = "com_outr_moduload",
+        artifact = "com.outr:moduload_2.13:%s" % "1.1.7",
+        artifact_sha256 = "53bdf91631e018b2cbb3a96151d34576d8c7551288a398444fc4ce6e1fbdbea1",
+        server_urls = default_maven_server_urls(),
+        licenses = ["notice"],
+    )
+    scala_maven_import_external(
+        name = "com_outr_scribe",
+        artifact = "com.outr:scribe_2.13:%s" % "3.15.2",
+        artifact_sha256 = "d65a5e43cb562ea93f32663f0512e21bc6f4118467003c1c146016e456784898",
+        server_urls = default_maven_server_urls(),
+        licenses = ["notice"],
+    )
+
 
     # Chiseltest
     scala_maven_import_external(
@@ -181,13 +204,6 @@ def kelvin_chisel_deps():
         name = "org_scalatest_scalatest",
         artifact = "org.scalatest:scalatest_3:%s" % "3.2.16",
         artifact_sha256 = "594c3c68d5fccf9bf57f3eef012652c2d66d58d42e6335517ec71fdbeb427352",
-        server_urls = default_maven_server_urls(),
-        licenses = ["notice"],
-    )
-    scala_maven_import_external(
-        name = "edu_berkeley_cs_chiseltest",
-        artifact = "edu.berkeley.cs:chiseltest_2.13:%s" % "5.0.2",
-        artifact_sha256 = "283bb75b71f65b58dccadb7678a00795e8a39a611c459744d62b84307d58c2f9",
         server_urls = default_maven_server_urls(),
         licenses = ["notice"],
     )

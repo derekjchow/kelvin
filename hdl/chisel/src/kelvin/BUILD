@@ -52,6 +52,7 @@ chisel_test(
         "scalar/FRegfileTest.scala",
         "scalar/FpuTest.scala",
     ],
+    size = "medium",
     deps = [
         ":kelvin",
         ":kelvin_base",
@@ -155,6 +156,7 @@ chisel_test(
     args = [
         "-P",  # Allows parallel tests.
     ],
+    size = "medium",
     deps = [
         ":kelvin_base",
         ":kelvin_scalar",
@@ -167,6 +169,7 @@ chisel_test(
     srcs = [
         "scalar/UncachedFetchTest.scala",
     ],
+    size = "medium",
     deps = [
         ":kelvin_base",
         ":kelvin_scalar",
@@ -179,9 +182,7 @@ chisel_test(
     name = "kelvin_core_axi_tests",
     size = "medium",
     srcs = [
-        "AxiSlave2SRAMTest.scala",
         "CoreAxiCSRTest.scala",
-        "CoreAxiSlaveMuxTest.scala",
         "DBus2AxiTest.scala",
         "FabricTest.scala",
     ],
@@ -208,7 +209,6 @@ chisel_test(
     srcs = [
         "ClockGateTest.scala",
     ],
-    tags = ["verilator"],
     deps = [
         ":clock_gate",
         ":kelvin_base",
@@ -327,13 +327,12 @@ chisel_library(
     name = "kelvin",
     srcs = [
         "AxiSlave.scala",
-        "AxiSlave2SRAM.scala",
         "Core.scala",
         "CoreAxi.scala",
         "CoreAxiCSR.scala",
-        "CoreAxiSlaveMux.scala",
         "Fabric.scala",
         "TCM.scala",
+        "SRAM.scala",
     ],
     deps = [
         ":RstSync",

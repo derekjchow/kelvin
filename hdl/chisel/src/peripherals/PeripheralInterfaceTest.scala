@@ -15,8 +15,8 @@
 package peripheral
 
 import chisel3._
+import chisel3.simulator.scalatest.ChiselSim
 import chisel3.util._
-import chiseltest._
 import org.scalatest.freespec.AnyFreeSpec
 import chisel3.experimental.BundleLiterals._
 
@@ -72,46 +72,46 @@ class CounterAxiPeripheral extends Module { //extends AxiCsrInterface(3) {
 
 
 
-class PeripheralInterfaceSpec extends AnyFreeSpec with ChiselScalatestTester {
+class PeripheralInterfaceSpec extends AnyFreeSpec with ChiselSim {
   "Does Nothing" in {
-    test(new CounterAxiPeripheral) { dut =>
+    simulate(new CounterAxiPeripheral) { dut =>
       for (i <- 0 until 32) {
-        assertResult(0) { dut.io.count.peekInt() }
+        dut.io.count.expect(0)
         dut.clock.step()
       }
     }
   }
 
   "Read" in {
-    test(new CounterAxiPeripheral) { dut =>
+    simulate(new CounterAxiPeripheral) { dut =>
       dut.io.axi.read.data.ready.poke(1)
       dut.io.axi.read.addr.valid.poke(1)
 
       // Read limit
       dut.io.axi.read.addr.bits.addr.poke(4)
       dut.clock.step()
-      assertResult(1) { dut.io.axi.read.data.valid.peekInt() }
-      assertResult(256) { dut.io.axi.read.data.bits.data.peekInt() }
-      assertResult(0) { dut.io.axi.read.data.bits.resp.peekInt() }
+      dut.io.axi.read.data.valid.expect(1)
+      dut.io.axi.read.data.bits.data.expect(256)
+      dut.io.axi.read.data.bits.resp.expect(0)
 
       // Read count
       dut.io.axi.read.addr.bits.addr.poke(0)
       dut.clock.step()
-      assertResult(1) { dut.io.axi.read.data.valid.peekInt() }
-      assertResult(0) { dut.io.axi.read.data.bits.data.peekInt() }
-      assertResult(0) { dut.io.axi.read.data.bits.resp.peekInt() }
+      dut.io.axi.read.data.valid.expect(1)
+      dut.io.axi.read.data.bits.data.expect(0)
+      dut.io.axi.read.data.bits.resp.expect(0)
 
       // Read read invalid address
       dut.io.axi.read.addr.bits.addr.poke(3)
       dut.clock.step()
-      assertResult(1) { dut.io.axi.read.data.valid.peekInt() }
-      assertResult(0) { dut.io.axi.read.data.bits.data.peekInt() }
-      assertResult(2) { dut.io.axi.read.data.bits.resp.peekInt() }
+      dut.io.axi.read.data.valid.expect(1)
+      dut.io.axi.read.data.bits.data.expect(0)
+      dut.io.axi.read.data.bits.resp.expect(2)
     }
   }
 
   "Write" in {
-    test(new CounterAxiPeripheral) { dut =>
+    simulate(new CounterAxiPeripheral) { dut =>
       dut.io.axi.write.addr.valid.poke(1)
       dut.io.axi.write.data.valid.poke(1)
       dut.io.axi.write.resp.ready.poke(1)
@@ -120,22 +120,22 @@ class PeripheralInterfaceSpec extends AnyFreeSpec with ChiselScalatestTester {
       dut.io.axi.write.addr.bits.addr.poke(0)
       dut.io.axi.write.data.bits.data.poke(64)
       dut.clock.step()
-      assertResult(1) { dut.io.axi.write.resp.valid.peekInt() }
-      assertResult(0) { dut.io.axi.write.resp.bits.resp.peekInt() }
+      dut.io.axi.write.resp.valid.expect(1)
+      dut.io.axi.write.resp.bits.resp.expect(0)
 
       // Write limit
       dut.io.axi.write.addr.bits.addr.poke(4)
       dut.io.axi.write.data.bits.data.poke(2048)
       dut.clock.step()
-      assertResult(1) { dut.io.axi.write.resp.valid.peekInt() }
-      assertResult(0) { dut.io.axi.write.resp.bits.resp.peekInt() }
+      dut.io.axi.write.resp.valid.expect(1)
+      dut.io.axi.write.resp.bits.resp.expect(0)
 
       // Write invalid
       dut.io.axi.write.addr.bits.addr.poke(6)
       dut.io.axi.write.data.bits.data.poke(9001)
       dut.clock.step()
-      assertResult(1) { dut.io.axi.write.resp.valid.peekInt() }
-      assertResult(2) { dut.io.axi.write.resp.bits.resp.peekInt() }
+      dut.io.axi.write.resp.valid.expect(1)
+      dut.io.axi.write.resp.bits.resp.expect(2)
 
       dut.io.axi.write.addr.valid.poke(0)
       dut.io.axi.write.data.valid.poke(0)
@@ -147,21 +147,21 @@ class PeripheralInterfaceSpec extends AnyFreeSpec with ChiselScalatestTester {
       // Read count
       dut.io.axi.read.addr.bits.addr.poke(0)
       dut.clock.step()
-      assertResult(1) { dut.io.axi.read.data.valid.peekInt() }
-      assertResult(64) { dut.io.axi.read.data.bits.data.peekInt() }
-      assertResult(0) { dut.io.axi.read.data.bits.resp.peekInt() }
+      dut.io.axi.read.data.valid.expect(1)
+      dut.io.axi.read.data.bits.data.expect(64)
+      dut.io.axi.read.data.bits.resp.expect(0)
 
       // Read limit
       dut.io.axi.read.addr.bits.addr.poke(4)
       dut.clock.step()
-      assertResult(1) { dut.io.axi.read.data.valid.peekInt() }
-      assertResult(2048) { dut.io.axi.read.data.bits.data.peekInt() }
-      assertResult(0) { dut.io.axi.read.data.bits.resp.peekInt() }
+      dut.io.axi.read.data.valid.expect(1)
+      dut.io.axi.read.data.bits.data.expect(2048)
+      dut.io.axi.read.data.bits.resp.expect(0)
     }
   }
 
   "Enable" in {
-    test(new CounterAxiPeripheral) { dut =>
+    simulate(new CounterAxiPeripheral) { dut =>
       dut.io.axi.write.addr.valid.poke(1)
       dut.io.axi.write.data.valid.poke(1)
       dut.io.axi.write.resp.ready.poke(1)
@@ -170,14 +170,14 @@ class PeripheralInterfaceSpec extends AnyFreeSpec with ChiselScalatestTester {
       dut.io.axi.write.addr.bits.addr.poke(8)
       dut.io.axi.write.data.bits.data.poke(1)
       dut.clock.step()
-      assertResult(1) { dut.io.axi.write.resp.valid.peekInt() }
-      assertResult(0) { dut.io.axi.write.resp.bits.resp.peekInt() }
+      dut.io.axi.write.resp.valid.expect(1)
+      dut.io.axi.write.resp.bits.resp.expect(0)
       dut.io.axi.write.addr.valid.poke(0)
       dut.io.axi.write.data.valid.poke(0)
 
       for (i <- 0 until 64) {
         dut.clock.step()
-        assertResult(i) { dut.io.count.peekInt() }
+        dut.io.count.expect(i)
       }
     }
   }

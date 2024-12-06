@@ -15,17 +15,16 @@
 package kelvin
 
 import chisel3._
+import chisel3.simulator.scalatest.ChiselSim
 import chisel3.util._
-import chiseltest._
-import chiseltest.experimental.expose
 import org.scalatest.freespec.AnyFreeSpec
 
-class FabricArbiterSpec extends AnyFreeSpec with ChiselScalatestTester {
+class FabricArbiterSpec extends AnyFreeSpec with ChiselSim {
   var p = new Parameters
   p.enableVector = false
 
   "Kelvin Read - AXI Slave Any" in {
-    test(new FabricArbiter(p)) { dut =>
+    simulate(new FabricArbiter(p)) { dut =>
       dut.io.source(0).readDataAddr.valid.poke(true.B)
       dut.io.source(0).readDataAddr.bits.poke(0x8080.U)
       dut.io.source(0).writeDataAddr.valid.poke(false.B)
@@ -48,24 +47,24 @@ class FabricArbiterSpec extends AnyFreeSpec with ChiselScalatestTester {
         }
 
         // Check read command is accurate
-        assertResult(1) { dut.io.fabricBusy.peekInt() }
-        assertResult(1) { dut.io.port.readDataAddr.valid.peekInt() }
-        assertResult(0) { dut.io.port.writeDataAddr.valid.peekInt() }
-        assertResult(0x8080) { dut.io.port.readDataAddr.bits.peekInt() }
+        dut.io.fabricBusy.expect(1)
+        dut.io.port.readDataAddr.valid.expect(1)
+        dut.io.port.writeDataAddr.valid.expect(0)
+        dut.io.port.readDataAddr.bits.expect(0x8080)
 
         dut.clock.step()
 
         // Check response is propagated back to source 0
         dut.io.port.readData.valid.poke(true.B)
         dut.io.port.readData.bits.poke(300 + i)
-        assertResult(1) { dut.io.source(0).readData.valid.peekInt() }
-        assertResult(300 + i) { dut.io.source(0).readData.bits.peekInt() }
+        dut.io.source(0).readData.valid.expect(1)
+        dut.io.source(0).readData.bits.expect(300 + i)
       }
     }
   }
 
   "Kelvin Write - AXI Slave Any" in {
-    test(new FabricArbiter(p)) { dut =>
+    simulate(new FabricArbiter(p)) { dut =>
       dut.io.source(0).readDataAddr.valid.poke(false.B)
       dut.io.source(0).writeDataAddr.valid.poke(true.B)
       dut.io.source(0).writeDataAddr.bits.poke(0x80B0.U)
@@ -90,18 +89,18 @@ class FabricArbiterSpec extends AnyFreeSpec with ChiselScalatestTester {
         }
 
         // Check write command is accurate
-        assertResult(1) { dut.io.fabricBusy.peekInt() }
-        assertResult(0) { dut.io.port.readDataAddr.valid.peekInt() }
-        assertResult(1) { dut.io.port.writeDataAddr.valid.peekInt() }
-        assertResult(0x80B0) { dut.io.port.writeDataAddr.bits.peekInt() }
-        assertResult(0x50B0) { dut.io.port.writeDataBits.peekInt() }
-        assertResult(0xF) { dut.io.port.writeDataStrb.peekInt() }
+        dut.io.fabricBusy.expect(1)
+        dut.io.port.readDataAddr.valid.expect(0)
+        dut.io.port.writeDataAddr.valid.expect(1)
+        dut.io.port.writeDataAddr.bits.expect(0x80B0)
+        dut.io.port.writeDataBits.expect(0x50B0)
+        dut.io.port.writeDataStrb.expect(0xF)
       }
     }
   }
 
   "Kelvin None - AXI Slave Read" in {
-    test(new FabricArbiter(p)) { dut =>
+    simulate(new FabricArbiter(p)) { dut =>
       dut.io.source(0).readDataAddr.valid.poke(false.B)
       dut.io.source(0).writeDataAddr.valid.poke(false.B)
 
@@ -109,22 +108,22 @@ class FabricArbiterSpec extends AnyFreeSpec with ChiselScalatestTester {
       dut.io.source(1).readDataAddr.bits.poke(0x40B0.U)
       dut.io.source(1).writeDataAddr.valid.poke(false.B)
 
-      assertResult(0) { dut.io.fabricBusy.peekInt() }
-      assertResult(1) { dut.io.port.readDataAddr.valid.peekInt() }
-      assertResult(0x40B0) { dut.io.port.readDataAddr.bits.peekInt() }
-      assertResult(0) { dut.io.port.writeDataAddr.valid.peekInt() }
+      dut.io.fabricBusy.expect(0)
+      dut.io.port.readDataAddr.valid.expect(1)
+      dut.io.port.readDataAddr.bits.expect(0x40B0)
+      dut.io.port.writeDataAddr.valid.expect(0)
 
       dut.clock.step()
 
       dut.io.port.readData.valid.poke(true.B)
       dut.io.port.readData.bits.poke(777)
-      assertResult(1) { dut.io.source(1).readData.valid.peekInt() }
-      assertResult(777) { dut.io.source(1).readData.bits.peekInt() }
+      dut.io.source(1).readData.valid.expect(1)
+      dut.io.source(1).readData.bits.expect(777)
     }
   }
 
   "Kelvin None - AXI Slave Write" in {
-    test(new FabricArbiter(p)) { dut =>
+    simulate(new FabricArbiter(p)) { dut =>
       dut.io.source(0).readDataAddr.valid.poke(false.B)
       dut.io.source(0).writeDataAddr.valid.poke(false.B)
 
@@ -134,29 +133,28 @@ class FabricArbiterSpec extends AnyFreeSpec with ChiselScalatestTester {
       dut.io.source(1).writeDataBits.poke(0xA0B0.U)
       dut.io.source(1).writeDataStrb.poke(0xA.U)
 
-    
-      assertResult(0) { dut.io.fabricBusy.peekInt() }
-      assertResult(0) { dut.io.port.readDataAddr.valid.peekInt() }
-      assertResult(1) { dut.io.port.writeDataAddr.valid.peekInt() }
-      assertResult(0xB0B0) { dut.io.port.writeDataAddr.bits.peekInt() }
+      dut.io.fabricBusy.expect(0)
+      dut.io.port.readDataAddr.valid.expect(0)
+      dut.io.port.writeDataAddr.valid.expect(1)
+      dut.io.port.writeDataAddr.bits.expect(0xB0B0)
     }
   }
 
   "Both None" in {
-    test(new FabricArbiter(p)) { dut =>
+    simulate(new FabricArbiter(p)) { dut =>
       dut.io.source(0).readDataAddr.valid.poke(false.B)
       dut.io.source(0).writeDataAddr.valid.poke(false.B)
       dut.io.source(1).readDataAddr.valid.poke(false.B)
       dut.io.source(1).writeDataAddr.valid.poke(false.B)
-    
-      assertResult(0) { dut.io.fabricBusy.peekInt() }
-      assertResult(0) { dut.io.port.readDataAddr.valid.peekInt() }
-      assertResult(0) { dut.io.port.writeDataAddr.valid.peekInt() }
+
+      dut.io.fabricBusy.expect(0)
+      dut.io.port.readDataAddr.valid.expect(0)
+      dut.io.port.writeDataAddr.valid.expect(0)
     }
   }
 }
 
-class FabricMuxSpec extends AnyFreeSpec with ChiselScalatestTester {
+class FabricMuxSpec extends AnyFreeSpec with ChiselSim {
   var p = new Parameters
   p.enableVector = false
 
@@ -167,7 +165,7 @@ class FabricMuxSpec extends AnyFreeSpec with ChiselScalatestTester {
   )
 
   "Writes" in {
-    test(new FabricMux(p, memoryRegions)) { dut =>
+    simulate(new FabricMux(p, memoryRegions)) { dut =>
       val inputAddrs = Seq(0x10, 0x10020, 0x30004)
       val outputAddrs = Seq(0x10, 0x20, 0x4)
       for (i <- 0 until memoryRegions.length) {
@@ -178,23 +176,22 @@ class FabricMuxSpec extends AnyFreeSpec with ChiselScalatestTester {
         dut.io.source.writeDataStrb.poke((21 + i).U)
 
         for (j <- 0 until memoryRegions.length) {
-          assertResult(0) { dut.io.ports(j).readDataAddr.valid.peekInt() }
+          dut.io.ports(j).readDataAddr.valid.expect(0)
           if (i == j) {
-            assertResult(1) { dut.io.ports(j).writeDataAddr.valid.peekInt() }
-            assertResult(outputAddrs(i)) {
-                dut.io.ports(j).writeDataAddr.bits.peekInt() }
-            assertResult(123 + i) { dut.io.ports(j).writeDataBits.peekInt() }
-            assertResult(21 + i) { dut.io.ports(j).writeDataStrb.peekInt() }
+            dut.io.ports(j).writeDataAddr.valid.expect(1)
+            dut.io.ports(j).writeDataAddr.bits.expect(outputAddrs(i))
+            dut.io.ports(j).writeDataBits.expect(123 + i)
+            dut.io.ports(j).writeDataStrb.expect(21 + i)
           } else {
-            assertResult(0) { dut.io.ports(j).writeDataAddr.valid.peekInt() }
+            dut.io.ports(j).writeDataAddr.valid.expect(0)
           }
         }
 
         // Check periBusy gets forwarded correctly
         dut.io.periBusy(i).poke(true.B)
-        assertResult(1) { dut.io.fabricBusy.peekInt() }
+        dut.io.fabricBusy.expect(1)
         dut.io.periBusy(i).poke(false.B)
-        assertResult(0) { dut.io.fabricBusy.peekInt() }
+        dut.io.fabricBusy.expect(0)
       }
 
       // Invalid write
@@ -202,14 +199,14 @@ class FabricMuxSpec extends AnyFreeSpec with ChiselScalatestTester {
       dut.io.source.writeDataBits.poke(1123.U)
       dut.io.source.writeDataStrb.poke(11.U)
       for (j <- 0 until memoryRegions.length) {
-        assertResult(0) { dut.io.ports(j).readDataAddr.valid.peekInt() }
-        assertResult(0) { dut.io.ports(j).writeDataAddr.valid.peekInt() }
+        dut.io.ports(j).readDataAddr.valid.expect(0)
+        dut.io.ports(j).writeDataAddr.valid.expect(0)
       }
     }
   }
 
   "Reads" in {
-    test(new FabricMux(p, memoryRegions)) { dut =>
+    simulate(new FabricMux(p, memoryRegions)) { dut =>
       val inputAddrs = Seq(0x10, 0x10020, 0x30004)
       val outputAddrs = Seq(0x10, 0x20, 0x4)
       for (i <- 0 until memoryRegions.length) {
@@ -219,21 +216,20 @@ class FabricMuxSpec extends AnyFreeSpec with ChiselScalatestTester {
 
         // Check command was forwarded correctly
         for (j <- 0 until memoryRegions.length) {
-          assertResult(0) { dut.io.ports(j).writeDataAddr.valid.peekInt() }
+          dut.io.ports(j).writeDataAddr.valid.expect(0)
           if (i == j) {
-            assertResult(1) { dut.io.ports(j).readDataAddr.valid.peekInt() }
-            assertResult(outputAddrs(i)) {
-                dut.io.ports(j).readDataAddr.bits.peekInt() }
+            dut.io.ports(j).readDataAddr.valid.expect(1)
+            dut.io.ports(j).readDataAddr.bits.expect(outputAddrs(i))
           } else {
-            assertResult(0) { dut.io.ports(j).readDataAddr.valid.peekInt() }
+            dut.io.ports(j).readDataAddr.valid.expect(0)
           }
         }
 
         // Check periBusy gets forwarded correctly
         dut.io.periBusy(i).poke(true.B)
-        assertResult(1) { dut.io.fabricBusy.peekInt() }
+        dut.io.fabricBusy.expect(1)
         dut.io.periBusy(i).poke(false.B)
-        assertResult(0) { dut.io.fabricBusy.peekInt() }
+        dut.io.fabricBusy.expect(0)
 
         dut.clock.step()
 
@@ -243,8 +239,8 @@ class FabricMuxSpec extends AnyFreeSpec with ChiselScalatestTester {
           dut.io.ports(j).readData.bits.poke((800 + j).U)
         }
         dut.io.ports(i).readData.valid.poke(true.B)
-        assertResult(1) { dut.io.source.readData.valid.peekInt() }
-        assertResult(800 + i) { dut.io.source.readData.bits.peekInt() }
+        dut.io.source.readData.valid.expect(1)
+        dut.io.source.readData.bits.expect(800 + i)
       }
 
       // Invalid read
@@ -252,7 +248,7 @@ class FabricMuxSpec extends AnyFreeSpec with ChiselScalatestTester {
       dut.io.source.readDataAddr.bits.poke(0x90000.U)
       dut.io.source.writeDataAddr.valid.poke(false.B)
       for (i <- 0 until memoryRegions.length) {
-        assertResult(0) { dut.io.ports(i).readDataAddr.valid.peekInt() }
+        dut.io.ports(i).readDataAddr.valid.expect(0)
       }
     }
   }

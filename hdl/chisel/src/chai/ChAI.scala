@@ -20,7 +20,8 @@ import chisel3.util._
 import bus._
 import java.nio.file.{Paths, Files, StandardOpenOption}
 import java.nio.charset.{StandardCharsets}
-import _root_.circt.stage.ChiselStage
+import _root_.circt.stage.{ChiselStage,FirtoolOption}
+import chisel3.stage.ChiselGeneratorAnnotation
 
 case class Parameters() {
   val sramReadPorts = 1
@@ -131,8 +132,11 @@ object EmitChAI extends App {
   }
 
   lazy val core = new ChAI(p)
+  val firtoolOpts = Array(
+      "-enable-layers=Verification",
+  )
   val systemVerilogSource = ChiselStage.emitSystemVerilog(
-    core, chiselArgs.toArray)
+    core, chiselArgs.toArray, firtoolOpts)
   // CIRCT adds a little extra data to the sv file at the end. Remove it as we
   // don't want it (it prevents the sv from being verilated).
   val resourcesSeparator =

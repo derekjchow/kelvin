@@ -17,7 +17,8 @@ package kelvin
 import chisel3._
 import chisel3.util._
 import common._
-import _root_.circt.stage.ChiselStage
+import _root_.circt.stage.{ChiselStage,FirtoolOption}
+import chisel3.stage.ChiselGeneratorAnnotation
 
 object Alu {
   def apply(p: Parameters): Alu = {
@@ -160,5 +161,8 @@ class Alu(p: Parameters) extends Module {
 
 object EmitAlu extends App {
   val p = new Parameters
-  ChiselStage.emitSystemVerilogFile(new Alu(p), args)
+  (new ChiselStage).execute(
+    Array("--target", "systemverilog") ++ args,
+    Seq(ChiselGeneratorAnnotation(() => new Alu(p))) ++ Seq(FirtoolOption("-enable-layers=Verification"))
+  )
 }

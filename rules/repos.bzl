@@ -64,9 +64,9 @@ def kelvin_repos():
 
     http_archive(
         name = "llvm_firtool",
-        sha256 = "d22a894f2f8652b6c26e1d2a66551a7f015ce46e48f2bcdd785b01b9c8739277",
-        urls = ["https://repo1.maven.org/maven2/org/chipsalliance/llvm-firtool/1.52.0/llvm-firtool-1.52.0.jar"],
+        urls = ["https://repo1.maven.org/maven2/org/chipsalliance/llvm-firtool/1.114.0/llvm-firtool-1.114.0.jar"],
         build_file = "@kelvin_hw//third_party/llvm-firtool:BUILD.bazel",
+        sha256 = "f93a831e6b5696df2e3327626df3cc183e223bf0c9c0fddf9ae9e51f502d0492",
     )
 
     http_archive(

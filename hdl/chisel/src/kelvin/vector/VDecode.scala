@@ -19,7 +19,8 @@ package kelvin
 import chisel3._
 import chisel3.util._
 import common.FifoIxO
-import _root_.circt.stage.ChiselStage
+import _root_.circt.stage.{ChiselStage,FirtoolOption}
+import chisel3.stage.ChiselGeneratorAnnotation
 
 object VDecode {
   def apply(p: Parameters): VDecode = {
@@ -315,5 +316,8 @@ class SData extends Bundle {
 
 object EmitVDecode extends App {
   val p = new Parameters
-  ChiselStage.emitSystemVerilogFile(new VDecode(p), args)
+  (new ChiselStage).execute(
+    Array("--target", "systemverilog") ++ args,
+    Seq(ChiselGeneratorAnnotation(() => new VDecode(p))) ++ Seq(FirtoolOption("-enable-layers=Verification"))
+  )
 }

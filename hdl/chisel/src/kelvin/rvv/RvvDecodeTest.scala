@@ -15,33 +15,41 @@
 package kelvin.rvv
 
 import chisel3._
+import chisel3.simulator.scalatest.ChiselSim
 import chisel3.experimental.BundleLiterals._
 import chisel3.util._
-import chiseltest._
 import org.scalatest.ParallelTestExecution
 import org.scalatest.freespec.AnyFreeSpec
 
 import common.{AssertPartial, ProcessTestResults}
 
 
-class RvvS1DecodeInstructionSpec extends AnyFreeSpec with ChiselScalatestTester with ParallelTestExecution {
+class RvvS1DecodeInstructionSpec extends AnyFreeSpec with ChiselSim with ParallelTestExecution {
   class Tester extends Module {
     val io = IO(new Bundle {
       val inst  = Input(UInt(32.W))
-      val out = Output(Valid(new RvvS1DecodedInstruction()))
+      val out_valid = Output(Bool())
+      val out_op = Output(UInt(RvvAluOp.getWidth.W))
     })
 
-    io.out := RvvS1DecodeInstruction(io.inst)
+    val out = Wire(Valid(new RvvS1DecodedInstruction()))
+    out := RvvS1DecodeInstruction(io.inst)
+    io.out_valid := out.valid
+    io.out_op := out.bits.op.asUInt
   }
 
   class TesterCompressed extends Module {
     val io = IO(new Bundle {
       val inst  = Input(UInt(32.W))
-      val out = Output(Valid(new RvvS1DecodedInstruction()))
+      val out_valid = Output(Bool())
+      val out_op = Output(UInt(RvvAluOp.getWidth.W))
     })
 
-    io.out := RvvS1DecodeCompressedInstruction(
+    val out = Wire(Valid(new RvvS1DecodedInstruction()))
+    out := RvvS1DecodeCompressedInstruction(
         RvvCompressedInstruction.from_uncompressed(io.inst, 0.U))
+    io.out_valid := out.valid
+    io.out_op := out.bits.op.asUInt
   }
 
   private def test_decode(
@@ -50,13 +58,7 @@ class RvvS1DecodeInstructionSpec extends AnyFreeSpec with ChiselScalatestTester 
       cases: Seq[(Long, RvvAluOp.Type)]) = {
     val good = cases.map {case (inst, op) =>
       dut.io.inst.poke(inst)
-      AssertPartial[Valid[RvvS1DecodedInstruction]](
-        act = dut.io.out.peek(),
-        hint = s"inst=$inst",
-        printfn = info(_),
-        _.valid -> true.B,
-        _.bits.op -> op
-      )
+      ((dut.io.out_valid.peek().litValue == 1) && (dut.io.out_op.peek().litValue == op.litValue))
     }
     if (!ProcessTestResults(good, printfn = info(_))) fail
   }
@@ -67,19 +69,13 @@ class RvvS1DecodeInstructionSpec extends AnyFreeSpec with ChiselScalatestTester 
       cases: Seq[(Long, RvvAluOp.Type)]) = {
     val good = cases.map {case (inst, op) =>
       dut.io.inst.poke(inst)
-      AssertPartial[Valid[RvvS1DecodedInstruction]](
-        act = dut.io.out.peek(),
-        hint = s"inst=$inst",
-        printfn = info(_),
-        _.valid -> true.B,
-        _.bits.op -> op
-      )
+      ((dut.io.out_valid.peek().litValue == 1) && (dut.io.out_op.peek().litValue == op.litValue))
     }
     if (!ProcessTestResults(good, printfn = info(_))) fail
   }
 
   "Doesn't decode float load/store" in {
-    test(new Tester) { dut =>
+    simulate(new Tester) { dut =>
       val testCases = Seq(
         0x00052507L, // flw f10, 0(x10)
         0x00a52027L, // fsw f10, 0(x10)
@@ -87,7 +83,7 @@ class RvvS1DecodeInstructionSpec extends AnyFreeSpec with ChiselScalatestTester 
 
       for (t <- testCases) {
         dut.io.inst.poke(t)
-        assertResult (0) { dut.io.out.valid.peekInt() }
+        dut.io.out_valid.expect(0)
       }
     }
   }
@@ -202,8 +198,8 @@ class RvvS1DecodeInstructionSpec extends AnyFreeSpec with ChiselScalatestTester 
       (0xbe004057L, RvvAluOp.VNCLIP),  // vnclip.wx v0, v0, x0
       (0xbe003057L, RvvAluOp.VNCLIP),  // vnclip.wi v0, v0, 0
     )
-    test(new Tester)(test_decode(_, test_cases))
-    test(new TesterCompressed)(test_decode_compressed(_, test_cases))
+    simulate(new Tester)(test_decode(_, test_cases))
+    simulate(new TesterCompressed)(test_decode_compressed(_, test_cases))
   }
 
   "Decode VAlu ops (with mask) correctly" in {
@@ -331,8 +327,8 @@ class RvvS1DecodeInstructionSpec extends AnyFreeSpec with ChiselScalatestTester 
       (0xbc1040d7L, RvvAluOp.VNCLIP),  // vnclip.wx v1, v1, x0, v0.t
       (0xbc1030d7L, RvvAluOp.VNCLIP),  // vnclip.wi v1, v1, 0, v0.t
     )
-    test(new Tester)(test_decode(_, test_cases))
-    test(new TesterCompressed)(test_decode_compressed(_, test_cases))
+    simulate(new Tester)(test_decode(_, test_cases))
+    simulate(new TesterCompressed)(test_decode_compressed(_, test_cases))
   }
 
   "Errata 1: Decode VAlu ops with vd=vm" in {
@@ -446,7 +442,7 @@ class RvvS1DecodeInstructionSpec extends AnyFreeSpec with ChiselScalatestTester 
       (0xbc004057L, RvvAluOp.VNCLIP),  // vnclip.wx v0, v0, x0, v0.t
       (0xbc003057L, RvvAluOp.VNCLIP),  // vnclip.wi v0, v0, 0, v0.t
     )
-    test(new Tester)(test_decode(_, test_cases))
-    test(new TesterCompressed)(test_decode_compressed(_, test_cases))
+    simulate(new Tester)(test_decode(_, test_cases))
+    simulate(new TesterCompressed)(test_decode_compressed(_, test_cases))
   }
 }

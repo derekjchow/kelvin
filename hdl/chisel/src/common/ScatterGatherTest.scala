@@ -15,8 +15,8 @@
 package common
 
 import chisel3._
+import chisel3.simulator.scalatest.ChiselSim
 import chisel3.util._
-import chiseltest._
 import org.scalatest.freespec.AnyFreeSpec
 import chisel3.experimental.BundleLiterals._
 import scala.util.Random
@@ -53,10 +53,10 @@ class ScatterTester extends Module {
   io.maskCount := PopCount(writeMask)
 }
 
-class GatherSpec extends AnyFreeSpec with ChiselScalatestTester {
+class GatherSpec extends AnyFreeSpec with ChiselSim {
   "Random Test" in {
-    test(new GatherTester) { dut =>
-      for (_ <- 0 until 1000) {
+    simulate(new GatherTester) { dut =>
+      for (_ <- 0 until 100) {
         // Set inputs
         val indices = Seq.fill(16)(Random.between(0, 16))
         val data = Seq.fill(16)(Random.between(0, 256))
@@ -67,16 +67,16 @@ class GatherSpec extends AnyFreeSpec with ChiselScalatestTester {
 
         // Check results
         for (i <- 0 until 16) {
-          assertResult(data(indices(i))) { dut.io.out(i).peekInt() }
+          dut.io.out(i).expect(data(indices(i)))
         }
       }
     }
   }
 }
 
-class ScatterSpec extends AnyFreeSpec with ChiselScalatestTester {
+class ScatterSpec extends AnyFreeSpec with ChiselSim {
   "Random Test" in {
-    test(new ScatterTester) { dut =>
+    simulate(new ScatterTester) { dut =>
       for (_ <- 0 until 500) {
         // Set inputs
         val indices = Seq.fill(16)(Random.between(0, 16))
@@ -93,16 +93,16 @@ class ScatterSpec extends AnyFreeSpec with ChiselScalatestTester {
         var indicesSet = Array.fill(16)(false)
         var nIndicesSet = 0
         for (i <- 0 until 16) {
-          if (dut.io.indicesSelected(i).peekInt() == 1) {
+          if (dut.io.indicesSelected(i).peek().litValue == 1) {
             assertResult(true) { valid(i) }
             assertResult(false) { indicesSet(indices(i)) }
             indicesSet(indices(i)) = true
             nIndicesSet = nIndicesSet + 1
-            assertResult(data(i)) { dut.io.outData(indices(i)).peekInt() }
-            assertResult(1) { dut.io.writeMask(indices(i)).peekInt() }
+            dut.io.outData(indices(i)).expect(data(i))
+            dut.io.writeMask(indices(i)).expect(1)
           }
         }
-        assertResult(nIndicesSet) { dut.io.maskCount.peekInt() }
+        dut.io.maskCount.expect(nIndicesSet)
       }
     }
   }

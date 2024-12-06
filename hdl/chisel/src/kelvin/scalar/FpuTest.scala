@@ -15,13 +15,13 @@
 package kelvin
 
 import chisel3._
+import chisel3.simulator.scalatest.ChiselSim
 import chisel3.util._
-import chiseltest._
 import org.scalatest.freespec.AnyFreeSpec
 import chisel3.experimental.BundleLiterals._
 import common.Fp32
 
-class FpuSpec extends AnyFreeSpec with ChiselScalatestTester {
+class FpuSpec extends AnyFreeSpec with ChiselSim {
   def Float2Bits(x: Float): (Boolean, Int, Int) = {
     val abs = x.abs
     var int = java.lang.Float.floatToIntBits(abs)
@@ -53,42 +53,42 @@ class FpuSpec extends AnyFreeSpec with ChiselScalatestTester {
   }
 
   def GetFloat(fpu: Fpu): Float = {
-    val sign = fpu.io.output.bits.bits.sign.peekInt().toInt
-    val exponent = fpu.io.output.bits.bits.exponent.peekInt().toInt
-    val mantissa = fpu.io.output.bits.bits.mantissa.peekInt().toInt
-    val int_val = (exponent << 23) + mantissa
+    val sign = fpu.io.output.bits.bits.sign.peek().litValue
+    val exponent = fpu.io.output.bits.bits.exponent.peek().litValue
+    val mantissa = fpu.io.output.bits.bits.mantissa.peek().litValue
+    val int_val = ((exponent << 23) + mantissa).toInt
     val negate = if (sign == 1) -1.0f else 1.0f
 
     negate * java.lang.Float.intBitsToFloat(int_val)
   }
-    
+
   "Pipeline" in {
-    test(new Fpu) { dut =>
+    simulate(new Fpu) { dut =>
       dut.io.output.ready.poke(1)
       EnqueueValid(dut, FpuOptype.FpuAdd, 1.0f, 0.0f, 1.0f, 1)
       dut.clock.step()
       EnqueueValid(dut, FpuOptype.FpuSub, 1.0f, 0.0f, -1.0f, 2)
       dut.clock.step()
 
-      assertResult(1) { dut.io.output.valid.peekInt() }
-      assertResult(1) { dut.io.output.bits.addr.peekInt() }
+      dut.io.output.valid.expect(1)
+      dut.io.output.bits.addr.expect(1)
       assertResult(2.0f) { GetFloat(dut) }
       EnqueueValid(dut, FpuOptype.FpuMul, 1.0f, 1.0f, 0.0f, 3)
       dut.clock.step()
 
-      assertResult(1) { dut.io.output.valid.peekInt() }
-      assertResult(2) { dut.io.output.bits.addr.peekInt() }
+      dut.io.output.valid.expect(1)
+      dut.io.output.bits.addr.expect(2)
       assertResult(2.0f) { GetFloat(dut) }
       dut.io.cmd.valid.poke(0)
       dut.clock.step()
 
 
-      assertResult(1) { dut.io.output.valid.peekInt() }
-      assertResult(3) { dut.io.output.bits.addr.peekInt() }
+      dut.io.output.valid.expect(1)
+      dut.io.output.bits.addr.expect(3)
       assertResult(1.0f) { GetFloat(dut) }
       dut.clock.step()
 
-      assertResult(0) { dut.io.output.valid.peekInt() }
+      dut.io.output.valid.expect(0)
     }
   }
 }

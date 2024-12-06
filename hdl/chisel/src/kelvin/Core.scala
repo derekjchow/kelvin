@@ -25,6 +25,7 @@ import java.nio.file.{Paths, Files, StandardOpenOption}
 import java.nio.charset.{StandardCharsets}
 import kelvin.rvv.{RvvCore}
 import _root_.circt.stage.ChiselStage
+import scala.collection.mutable.Stack
 
 object Core {
   def apply(p: Parameters): Core = {
@@ -163,6 +164,7 @@ object EmitCore extends App {
   val firtoolOpts = Array(
       // Disable `automatic logic =`, Suppress location comments
       "--lowering-options=disallowLocalVariables,locationInfoStyle=none",
+      "-enable-layers=Verification",
   )
   val systemVerilogSource = ChiselStage.emitSystemVerilog(
     core, chiselArgs.toArray, firtoolOpts)
@@ -187,13 +189,23 @@ object EmitCore extends App {
         ChiselStage.emitSystemVerilogFile(
             core2, chiselArgs.toArray ++ Array(
                 "--split-verilog", "--target-dir", targetDir), firtoolOpts)
-        val files = (new File(targetDir)).listFiles
         val zip = new ZipOutputStream(new FileOutputStream(
             targetDir + "/" + coreName + ".zip"))
-        files.foreach { name =>
-          zip.putNextEntry(new ZipEntry(name.getName()))
-          Files.copy(Paths.get(name.getPath), zip)
-          zip.closeEntry()
+        val dirStack = new Stack[File](1)
+        dirStack.push(new File(targetDir))
+        println(s"target: ${targetDir}")
+        while (!dirStack.isEmpty) {
+          val dir = dirStack.pop()
+          val files = dir.listFiles
+          files.foreach { name =>
+            if (name.isDirectory()) {
+              dirStack.push(name)
+            } else {
+              val zipName = name.getPath().replace(targetDir + "/", "")
+              zip.putNextEntry(new ZipEntry(zipName))
+              zip.closeEntry()
+            }
+          }
         }
         zip.close()
       }

@@ -15,41 +15,41 @@
 package kelvin
 
 import chisel3._
+import chisel3.simulator.scalatest.ChiselSim
 import chisel3.util._
-import chiseltest._
 import common._
 import org.scalatest.freespec.AnyFreeSpec
 import chisel3.experimental.BundleLiterals._
 
 
-class FetchControlSpec extends AnyFreeSpec with ChiselScalatestTester {
+class FetchControlSpec extends AnyFreeSpec with ChiselSim {
   val p = new Parameters
 
   "Initialization" in {
-    test(new FetchControl(p)) { dut =>
-      assertResult(0) { dut.io.fetchAddr.valid.peekInt() }
+    simulate(new FetchControl(p)) { dut =>
+      dut.io.fetchAddr.valid.expect(0)
     }
   }
 
   "ResetPC" in {
-    test (new FetchControl(p)) { dut =>
+    simulate(new FetchControl(p)) { dut =>
       dut.io.bufferRequest.nReady.poke(8.U)  // Upstream can accept 8 buffers
       dut.io.csr.value(0).poke(0x20000000.U)
       dut.io.fetchAddr.ready.poke(true.B)
       dut.reset.poke(true.B)
       dut.clock.step()
-      assertResult(0) { dut.io.fetchAddr.valid.peekInt() }
+      dut.io.fetchAddr.valid.expect(0)
       dut.reset.poke(false.B)
       dut.clock.step()
       dut.clock.step()
-      assertResult(1) { dut.io.fetchAddr.valid.peekInt() }
-      assertResult(0x20000000) { dut.io.fetchAddr.bits.peekInt() }
+      dut.io.fetchAddr.valid.expect(1)
+      dut.io.fetchAddr.bits.expect(0x20000000)
     }
   }
 
   "Branch" in {
-    test (new FetchControl(p)) { dut =>
-      assertResult(0) { dut.io.fetchAddr.valid.peekInt() }
+    simulate(new FetchControl(p)) { dut =>
+      dut.io.fetchAddr.valid.expect(0)
       dut.io.bufferRequest.nReady.poke(8.U)  // Upstream can accept 8 buffers
       dut.io.branch.valid.poke(true.B)
       dut.io.branch.bits.poke(0x30000000.U)
@@ -57,15 +57,15 @@ class FetchControlSpec extends AnyFreeSpec with ChiselScalatestTester {
       dut.clock.step()
       dut.io.branch.valid.poke(false.B)
       dut.clock.step()
-      assertResult(1) { dut.io.fetchAddr.valid.peekInt() }
-      assertResult(0x30000000) { dut.io.fetchAddr.bits.peekInt() }
+      dut.io.fetchAddr.valid.expect(1)
+      dut.io.fetchAddr.bits.expect(0x30000000)
     }
   }
 
   "FetchAligned" in {
-    test (new FetchControl(p)) { dut =>
-      assertResult(0) { dut.io.fetchAddr.valid.peekInt() }
-      assertResult(0) { dut.io.fetchData.valid.peekInt() }
+    simulate(new FetchControl(p)) { dut =>
+      dut.io.fetchAddr.valid.expect(0)
+      dut.io.fetchData.valid.expect(0)
       dut.io.fetchData.valid.poke(true.B)
       dut.io.fetchData.bits.addr.poke(0x20000000)
       for (i <- 0 until dut.io.fetchData.bits.inst.length) {
@@ -74,14 +74,14 @@ class FetchControlSpec extends AnyFreeSpec with ChiselScalatestTester {
       dut.clock.step()
       dut.clock.step()
       dut.clock.step()
-      assertResult(0x20000020) { dut.io.fetchAddr.bits.peekInt() }
+      dut.io.fetchAddr.bits.expect(0x20000020)
     }
   }
 
   "FetchWithBranch" in {
-    test (new FetchControl(p)) { dut =>
-      assertResult(0) { dut.io.fetchAddr.valid.peekInt() }
-      assertResult(0) { dut.io.fetchData.valid.peekInt() }
+    simulate(new FetchControl(p)) { dut =>
+      dut.io.fetchAddr.valid.expect(0)
+      dut.io.fetchData.valid.expect(0)
       dut.io.fetchData.valid.poke(true.B)
       dut.io.fetchData.bits.addr.poke(0x20000000)
       for (i <- 0 until dut.io.fetchData.bits.inst.length) {
@@ -91,13 +91,13 @@ class FetchControlSpec extends AnyFreeSpec with ChiselScalatestTester {
       dut.clock.step()
       dut.clock.step()
       dut.clock.step()
-      assertResult(0x2000000c) { dut.io.fetchAddr.bits.peekInt() }
+      dut.io.fetchAddr.bits.expect(0x2000000c)
     }
   }
 
   "Backpressure" in {
-    test (new FetchControl(p)) { dut =>
-      assertResult(0) { dut.io.fetchAddr.valid.peekInt() }
+    simulate(new FetchControl(p)) { dut =>
+      dut.io.fetchAddr.valid.expect(0)
       dut.io.csr.value(0).poke(0x20000000.U)
       dut.io.fetchAddr.ready.poke(true.B)
       dut.reset.poke(true.B)
@@ -105,41 +105,41 @@ class FetchControlSpec extends AnyFreeSpec with ChiselScalatestTester {
       dut.reset.poke(false.B)
       dut.io.bufferRequest.nReady.poke(4)  // Upstream accepts < 8 buffers
       dut.clock.step()
-      assertResult(0) { dut.io.fetchAddr.valid.peekInt() }
+      dut.io.fetchAddr.valid.expect(0)
       dut.io.bufferRequest.nReady.poke(9)
       dut.clock.step()
-      assertResult(1) { dut.io.fetchAddr.valid.peekInt() }
+      dut.io.fetchAddr.valid.expect(1)
     }
   }
 }
 
 
-class FetcherSpec extends AnyFreeSpec with ChiselScalatestTester {
+class FetcherSpec extends AnyFreeSpec with ChiselSim {
   val p = new Parameters
 
   "Initialization" in {
-    test (new Fetcher(p)) { dut =>
-      assertResult(0) { dut.io.fetch.valid.peekInt() }
+    simulate(new Fetcher(p)) { dut =>
+      dut.io.fetch.valid.expect(0)
     }
   }
 
   "Fetch" in {
-    test (new Fetcher(p)) { dut =>
+    simulate(new Fetcher(p)) { dut =>
       dut.io.ctrl.bits.poke(32.U)
       dut.io.ctrl.valid.poke(true.B)
       dut.clock.step()
-      assertResult(1) { dut.io.ibus.valid.peekInt() }
-      assertResult(0) { dut.io.ibus.ready.peekInt() }
-      assertResult(0) { dut.io.fetch.valid.peekInt() }
+      dut.io.ibus.valid.expect(1)
+      dut.io.ibus.ready.expect(0)
+      dut.io.fetch.valid.expect(0)
       dut.io.ibus.ready.poke(true.B)
       dut.io.ibus.rdata.poke("x0012d678000000000012d687".U(256.W))
       dut.clock.step()
-      assertResult(1) { dut.io.ctrl.ready.peekInt() }
-      assertResult(1) { dut.io.fetch.valid.peekInt() }
-      assertResult(32) { dut.io.fetch.bits.addr.peekInt() }
-      assertResult(1234567) { dut.io.fetch.bits.inst(0).peekInt() }
-      assertResult(0) { dut.io.fetch.bits.inst(1).peekInt() }
-      assertResult(1234552) { dut.io.fetch.bits.inst(2).peekInt() }
+      dut.io.ctrl.ready.expect(1)
+      dut.io.fetch.valid.expect(1)
+      dut.io.fetch.bits.addr.expect(32)
+      dut.io.fetch.bits.inst(0).expect(1234567)
+      dut.io.fetch.bits.inst(1).expect(0)
+      dut.io.fetch.bits.inst(2).expect(1234552)
     }
   }
 }

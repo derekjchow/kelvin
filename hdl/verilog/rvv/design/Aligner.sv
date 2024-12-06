@@ -26,6 +26,8 @@ module Aligner#(type T=logic [7:0], parameter N = 8)
   output logic [N-1:0] valid_out,
   output T [N-1:0] data_out
 );
+/* verilator lint_off WIDTHEXPAND */
+/* verilator lint_off WIDTHTRUNC */
   localparam COUNTBITS = $clog2(N);
   typedef logic [COUNTBITS-1:0] count_t;
 
@@ -54,5 +56,7 @@ module Aligner#(type T=logic [7:0], parameter N = 8)
       data_out[o] = data_in[valid_idx[o]];
     end
   end
+/* verilator lint_on WIDTHTRUNC */
+/* verilator lint_on WIDTHEXPAND */
 
 endmodule

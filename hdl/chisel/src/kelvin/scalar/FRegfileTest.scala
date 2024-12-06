@@ -15,30 +15,30 @@
 package kelvin
 
 import chisel3._
+import chisel3.simulator.scalatest.ChiselSim
 import chisel3.util._
-import chiseltest._
 import org.scalatest.freespec.AnyFreeSpec
 import chisel3.experimental.BundleLiterals._
 
 import common.Fp32
 
-class FRegfileSpec extends AnyFreeSpec with ChiselScalatestTester {
+class FRegfileSpec extends AnyFreeSpec with ChiselSim {
   val p = new Parameters
   "Initialization" in {
-    test(new FRegfile(p, 1, 1)) { dut =>
-      assertResult(0) { dut.io.scoreboard.peekInt() }
+    simulate(new FRegfile(p, 1, 1)) { dut =>
+      dut.io.scoreboard.expect(0)
       for (i <- 0 until 32) {
         dut.io.read_ports(0).valid.poke(true.B)
         dut.io.read_ports(0).addr.poke(i)
-        assertResult(0) { dut.io.read_ports(0).data.sign.peekInt() }
-        assertResult(0) { dut.io.read_ports(0).data.exponent.peekInt() }
-        assertResult(0) { dut.io.read_ports(0).data.mantissa.peekInt() }
+        dut.io.read_ports(0).data.sign.expect(0)
+        dut.io.read_ports(0).data.exponent.expect(0)
+        dut.io.read_ports(0).data.mantissa.expect(0)
       }
     }
   }
 
   "Basic read/write" in {
-    test(new FRegfile(p, 1, 1)) { dut =>
+    simulate(new FRegfile(p, 1, 1)) { dut =>
       for (i <- 0 until 32) {
         dut.io.scoreboard_set.poke((BigInt(1) << i).U)
         dut.clock.step()
@@ -53,15 +53,15 @@ class FRegfileSpec extends AnyFreeSpec with ChiselScalatestTester {
       for (i <- 0 until 32) {
         dut.io.read_ports(0).valid.poke(true.B)
         dut.io.read_ports(0).addr.poke(i)
-        assertResult(0) { dut.io.read_ports(0).data.sign.peekInt() }
-        assertResult(i+127) { dut.io.read_ports(0).data.exponent.peekInt() }
-        assertResult(0) { dut.io.read_ports(0).data.mantissa.peekInt() }
+        dut.io.read_ports(0).data.sign.expect(0)
+        dut.io.read_ports(0).data.exponent.expect(i+127)
+        dut.io.read_ports(0).data.mantissa.expect(0)
       }
     }
   }
 
   "Multiread" in {
-    test(new FRegfile(p, 2, 1)) { dut =>
+    simulate(new FRegfile(p, 2, 1)) { dut =>
       for (i <- 0 until 32) {
         dut.io.scoreboard_set.poke((BigInt(1) << i).U)
         dut.clock.step()
@@ -77,20 +77,20 @@ class FRegfileSpec extends AnyFreeSpec with ChiselScalatestTester {
 
       dut.io.read_ports(0).valid.poke(true.B)
       dut.io.read_ports(0).addr.poke(0)
-      assertResult(0) { dut.io.read_ports(0).data.sign.peekInt() }
-      assertResult(127) { dut.io.read_ports(0).data.exponent.peekInt() }
-      assertResult(0) { dut.io.read_ports(0).data.mantissa.peekInt() }
+      dut.io.read_ports(0).data.sign.expect(0)
+      dut.io.read_ports(0).data.exponent.expect(127)
+      dut.io.read_ports(0).data.mantissa.expect(0)
 
       dut.io.read_ports(1).valid.poke(true.B)
       dut.io.read_ports(1).addr.poke(20)
-      assertResult(0) { dut.io.read_ports(1).data.sign.peekInt() }
-      assertResult(147) { dut.io.read_ports(1).data.exponent.peekInt() }
-      assertResult(0) { dut.io.read_ports(1).data.mantissa.peekInt() }
+      dut.io.read_ports(1).data.sign.expect(0)
+      dut.io.read_ports(1).data.exponent.expect(147)
+      dut.io.read_ports(1).data.mantissa.expect(0)
     }
   }
 
   "Multiwrite" in {
-    test(new FRegfile(p, 2, 2)) { dut =>
+    simulate(new FRegfile(p, 2, 2)) { dut =>
       for (i <- 0 until 32) {
         dut.io.scoreboard_set.poke((BigInt(1) << i).U)
         dut.clock.step()
@@ -122,24 +122,24 @@ class FRegfileSpec extends AnyFreeSpec with ChiselScalatestTester {
 
       dut.io.read_ports(0).valid.poke(true.B)
       dut.io.read_ports(0).addr.poke(3)
-      assertResult(0) { dut.io.read_ports(0).data.sign.peekInt() }
-      assertResult(37) { dut.io.read_ports(0).data.exponent.peekInt() }
-      assertResult(44) { dut.io.read_ports(0).data.mantissa.peekInt() }
+      dut.io.read_ports(0).data.sign.expect(0)
+      dut.io.read_ports(0).data.exponent.expect(37)
+      dut.io.read_ports(0).data.mantissa.expect(44)
 
       dut.io.read_ports(1).valid.poke(true.B)
       dut.io.read_ports(1).addr.poke(12)
-      assertResult(0) { dut.io.read_ports(1).data.sign.peekInt() }
-      assertResult(14) { dut.io.read_ports(1).data.exponent.peekInt() }
-      assertResult(560) { dut.io.read_ports(1).data.mantissa.peekInt() }
+      dut.io.read_ports(1).data.sign.expect(0)
+      dut.io.read_ports(1).data.exponent.expect(14)
+      dut.io.read_ports(1).data.mantissa.expect(560)
     }
   }
 
   "Scoreboard" in {
-    test(new FRegfile(p, 1, 2)) { dut =>
-      assertResult(0) { dut.io.scoreboard.peekInt() }
+    simulate(new FRegfile(p, 1, 2)) { dut =>
+      dut.io.scoreboard.expect(0)
       dut.io.scoreboard_set.poke(31)
       dut.clock.step()
-      assertResult(31) { dut.io.scoreboard.peekInt() }
+      dut.io.scoreboard.expect(31)
 
       // Clear the two LSBs
       dut.io.scoreboard_set.poke(0)
@@ -148,7 +148,7 @@ class FRegfileSpec extends AnyFreeSpec with ChiselScalatestTester {
       dut.io.write_ports(1).valid.poke(true.B)
       dut.io.write_ports(1).addr.poke(1)
       dut.clock.step()
-      assertResult(28) { dut.io.scoreboard.peekInt() }
+      dut.io.scoreboard.expect(28)
 
       // Clear the two entries and set 1 in the same cycle
       dut.io.scoreboard_set.poke(1)
@@ -157,12 +157,12 @@ class FRegfileSpec extends AnyFreeSpec with ChiselScalatestTester {
       dut.io.write_ports(1).valid.poke(true.B)
       dut.io.write_ports(1).addr.poke(3)
       dut.clock.step()
-      assertResult(17) { dut.io.scoreboard.peekInt() }
+      dut.io.scoreboard.expect(17)
     }
   }
 
   "Multiwrite Exception" in {
-    test(new FRegfile(p, 2, 2)) { dut =>
+    simulate(new FRegfile(p, 2, 2)) { dut =>
       for (i <- 0 until 32) {
         dut.io.scoreboard_set.poke((BigInt(1) << i).U)
         dut.clock.step()
@@ -186,7 +186,7 @@ class FRegfileSpec extends AnyFreeSpec with ChiselScalatestTester {
       dut.io.write_ports(1).data.exponent.poke(14)
       dut.io.write_ports(1).data.mantissa.poke(560)
 
-      assertResult(1) { dut.io.exception.peekInt() }
+      dut.io.exception.expect(1)
     }
   }
 }

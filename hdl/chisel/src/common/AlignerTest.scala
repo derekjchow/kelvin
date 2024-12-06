@@ -15,8 +15,8 @@
 package common
 
 import chisel3._
+import chisel3.simulator.scalatest.ChiselSim
 import chisel3.util._
-import chiseltest._
 import org.scalatest.freespec.AnyFreeSpec
 import scala.util.Random
 
@@ -35,17 +35,12 @@ class AlignerTester[T <: Data](t: T, n: Int) extends Module {
     }
 }
 
-class AlignerSpec extends AnyFreeSpec with ChiselScalatestTester {
+class AlignerSpec extends AnyFreeSpec with ChiselSim {
     "Basic" in {
         val n = 4
-        test (new AlignerTester(UInt(32.W), n))
-        .withAnnotations(
-            Seq(
-                VerilatorBackendAnnotation,
-            )
-        ) { dut =>
+        simulate (new AlignerTester(UInt(32.W), n)) { dut =>
             for (i <- 0 until 1000) {
-                var valid_in_count = 0
+                var valid_in_count: BigInt = 0
                 for (i <- 0 until n) {
                     val valid_in = Random.between(0, 2)
                     dut.io.in(i).valid.poke(valid_in)
@@ -55,17 +50,17 @@ class AlignerSpec extends AnyFreeSpec with ChiselScalatestTester {
                     dut.io.in(i).bits.poke(data_in)
                 }
 
-                var valid_out_count = 0
+                var valid_out_count: BigInt = 0
                 for (i <- 0 until n) {
-                    valid_out_count += dut.io.out(i).valid.peekInt().toInt
+                    valid_out_count += dut.io.out(i).valid.peek().litValue
                 }
                 assertResult(true) { valid_in_count == valid_out_count }
 
                 var outIdx = 0
                 for (i <- 0 until n) {
-                    val valid_in = dut.io.in(i).valid.peekInt()
-                    val data_in = dut.io.in(i).bits.peekInt()
-                    val data_out = dut.io.out(outIdx).bits.peekInt()
+                    val valid_in = dut.io.in(i).valid.peek().litValue
+                    val data_in = dut.io.in(i).bits.peek().litValue
+                    val data_out = dut.io.out(outIdx).bits.peek().litValue
                     if (valid_in == 1) {
                         assertResult(true) { data_in == data_out }
                         outIdx = outIdx + 1
@@ -82,14 +77,9 @@ class AlignerSpec extends AnyFreeSpec with ChiselScalatestTester {
             val b = UInt(5.W)
             val c = UInt(12.W)
         }
-        test (new AlignerTester(new bundleT, n))
-        .withAnnotations(
-            Seq(
-                VerilatorBackendAnnotation,
-            )
-        ) { dut =>
+        simulate (new AlignerTester(new bundleT, n)) { dut =>
             for (i <- 0 until 1000) {
-                var valid_in_count = 0
+                var valid_in_count: BigInt = 0
                 for (i <- 0 until n) {
                     val valid_in = Random.between(0, 2)
                     dut.io.in(i).valid.poke(valid_in)
@@ -100,19 +90,19 @@ class AlignerSpec extends AnyFreeSpec with ChiselScalatestTester {
                     dut.io.in(i).bits.c.poke(Random.between(0, Math.pow(2, dut.io.in(i).bits.c.getWidth)).toInt)
                 }
 
-                var valid_out_count = 0
+                var valid_out_count: BigInt = 0
                 for (i <- 0 until n) {
-                    valid_out_count += dut.io.out(i).valid.peekInt().toInt
+                    valid_out_count += dut.io.out(i).valid.peek().litValue
                 }
                 assertResult(true) { valid_in_count == valid_out_count }
 
                 var outIdx = 0
                 for (i <- 0 until n) {
-                    val valid_in = dut.io.in(i).valid.peekInt()
+                    val valid_in = dut.io.in(i).valid.peek().litValue
                     if (valid_in == 1) {
-                        assertResult(dut.io.in(i).bits.a.peekInt()) { dut.io.out(outIdx).bits.a.peekInt() }
-                        assertResult(dut.io.in(i).bits.b.peekInt()) { dut.io.out(outIdx).bits.b.peekInt() }
-                        assertResult(dut.io.in(i).bits.c.peekInt()) { dut.io.out(outIdx).bits.c.peekInt() }
+                        assertResult(dut.io.in(i).bits.a.peek().litValue) { dut.io.out(outIdx).bits.a.peek().litValue }
+                        assertResult(dut.io.in(i).bits.b.peek().litValue) { dut.io.out(outIdx).bits.b.peek().litValue }
+                        assertResult(dut.io.in(i).bits.c.peek().litValue) { dut.io.out(outIdx).bits.c.peek().litValue }
                         outIdx = outIdx + 1
                     }
                 }

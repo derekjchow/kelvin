@@ -15,15 +15,15 @@
 package common
 
 import chisel3._
+import chisel3.simulator.scalatest.ChiselSim
 import chisel3.util._
-import chiseltest._
 import org.scalatest.freespec.AnyFreeSpec
 import chisel3.experimental.BundleLiterals._
 
-class CircularBufferMultiSpec extends AnyFreeSpec with ChiselScalatestTester {
+class CircularBufferMultiSpec extends AnyFreeSpec with ChiselSim {
   "Basic" in {
-    test(new CircularBufferMulti(UInt(32.W), 4, 16)) { dut =>
-      assertResult(0) { dut.io.nEnqueued.peekInt() }
+    simulate(new CircularBufferMulti(UInt(32.W), 4, 16)) { dut =>
+      dut.io.nEnqueued.expect(0)
       dut.io.flush.poke(false)
 
       dut.io.enqValid.poke(2)
@@ -31,33 +31,33 @@ class CircularBufferMultiSpec extends AnyFreeSpec with ChiselScalatestTester {
       dut.io.enqData(1).poke(5)
       dut.clock.step()
 
-      assertResult(2) { dut.io.nEnqueued.peekInt() }
-      assertResult(3) { dut.io.dataOut(0).peekInt() }
-      assertResult(5) { dut.io.dataOut(1).peekInt() }
+      dut.io.nEnqueued.expect(2)
+      dut.io.dataOut(0).expect(3)
+      dut.io.dataOut(1).expect(5)
 
       dut.io.enqValid.poke(1)
       dut.io.enqData(0).poke(9001)
       dut.io.enqData(1).poke(0)
       dut.clock.step()
 
-      assertResult(3) { dut.io.nEnqueued.peekInt() }
-      assertResult(3) { dut.io.dataOut(0).peekInt() }
-      assertResult(5) { dut.io.dataOut(1).peekInt() }
-      assertResult(9001) { dut.io.dataOut(2).peekInt() }
+      dut.io.nEnqueued.expect(3)
+      dut.io.dataOut(0).expect(3)
+      dut.io.dataOut(1).expect(5)
+      dut.io.dataOut(2).expect(9001)
 
       dut.io.enqValid.poke(0)
       dut.io.deqReady.poke(1)
       dut.clock.step()
 
-      assertResult(2) { dut.io.nEnqueued.peekInt() }
-      assertResult(5) { dut.io.dataOut(0).peekInt() }
-      assertResult(9001) { dut.io.dataOut(1).peekInt() }
+      dut.io.nEnqueued.expect(2)
+      dut.io.dataOut(0).expect(5)
+      dut.io.dataOut(1).expect(9001)
     }
   }
 
   "Write n" in {
-    test(new CircularBufferMulti(UInt(32.W), 4, 16)) { dut =>
-      assertResult(0) { dut.io.nEnqueued.peekInt() }
+    simulate(new CircularBufferMulti(UInt(32.W), 4, 16)) { dut =>
+      dut.io.nEnqueued.expect(0)
       dut.io.flush.poke(false)
 
       for (n <- 0 until 4) {
@@ -66,17 +66,17 @@ class CircularBufferMultiSpec extends AnyFreeSpec with ChiselScalatestTester {
       dut.io.enqValid.poke(4)
       dut.clock.step()
 
-      assertResult(4) { dut.io.nEnqueued.peekInt() }
+      dut.io.nEnqueued.expect(4)
 
       for (n <- 0 until 4) {
-        assertResult(n) { dut.io.dataOut(n).peekInt() }
+        dut.io.dataOut(n).expect(n)
       }
     }
   }
 
   "Fill Buffer" in {
-    test(new CircularBufferMulti(UInt(32.W), 4, 16)) { dut =>
-      assertResult(0) { dut.io.nEnqueued.peekInt() }
+    simulate(new CircularBufferMulti(UInt(32.W), 4, 16)) { dut =>
+      dut.io.nEnqueued.expect(0)
       dut.io.flush.poke(false)
 
       // Fill buffer completely
@@ -88,14 +88,14 @@ class CircularBufferMultiSpec extends AnyFreeSpec with ChiselScalatestTester {
         dut.io.enqValid.poke(4)
         dut.clock.step()
         // Confirm nEnqueued increments the amount corresponding to #enqValid each cycle
-        assertResult((writeCount+1)*4) { dut.io.nEnqueued.peekInt() }
+        dut.io.nEnqueued.expect((writeCount+1)*4)
       }
     }
   }
 
   "Fill and Empty Buffer" in {
-    test(new CircularBufferMulti(UInt(32.W), 4, 16)) { dut =>
-      assertResult(0) { dut.io.nEnqueued.peekInt() }
+    simulate(new CircularBufferMulti(UInt(32.W), 4, 16)) { dut =>
+      dut.io.nEnqueued.expect(0)
       dut.io.flush.poke(false)
 
       // Fill buffer completely
@@ -108,24 +108,24 @@ class CircularBufferMultiSpec extends AnyFreeSpec with ChiselScalatestTester {
         dut.clock.step()
       }
       dut.io.enqValid.poke(0)
-      assertResult(16) { dut.io.nEnqueued.peekInt() }
+      dut.io.nEnqueued.expect(16)
 
       // Empty buffer completely
       for (writeCount <- 0 until 4) {
         for (nIndex <- 0 until 4) {
           var outdata = writeCount*4 + nIndex
-          assertResult(outdata) { dut.io.dataOut(nIndex).peekInt() }
+          dut.io.dataOut(nIndex).expect(outdata)
         }
         dut.io.deqReady.poke(4)
         dut.clock.step()
       }
       dut.io.deqReady.poke(0)
-      assertResult(0) { dut.io.nEnqueued.peekInt() }
+      dut.io.nEnqueued.expect(0)
     }
   }
   "Fill, Remove 4 items, and fill back to the top" in {
-    test(new CircularBufferMulti(UInt(32.W), 4, 16)) { dut =>
-      assertResult(0) { dut.io.nEnqueued.peekInt() }
+    simulate(new CircularBufferMulti(UInt(32.W), 4, 16)) { dut =>
+      dut.io.nEnqueued.expect(0)
       dut.io.flush.poke(false)
 
       // Fill buffer completely
@@ -139,19 +139,19 @@ class CircularBufferMultiSpec extends AnyFreeSpec with ChiselScalatestTester {
         dut.clock.step()
       }
       dut.io.enqValid.poke(0)
-      assertResult(16) { dut.io.nEnqueued.peekInt() }
+      dut.io.nEnqueued.expect(16)
 
       // Remove 4x items
       for (writeCount <- 0 until 1) {
         for (nIndex <- 0 until 4) {
           var outdata = writeCount*4 + nIndex
-          assertResult(outdata) { dut.io.dataOut(nIndex).peekInt() }
+          dut.io.dataOut(nIndex).expect(outdata)
         }
         dut.io.deqReady.poke(4)
         dut.clock.step()
       }
       dut.io.deqReady.poke(0)
-      assertResult(12) { dut.io.nEnqueued.peekInt() }
+      dut.io.nEnqueued.expect(12)
 
       // Add back n=4 items
       for (writeCount <- 4 until 5) {
@@ -163,23 +163,23 @@ class CircularBufferMultiSpec extends AnyFreeSpec with ChiselScalatestTester {
         dut.clock.step()
       }
       dut.io.enqValid.poke(0)
-      assertResult(16) { dut.io.nEnqueued.peekInt() }
+      dut.io.nEnqueued.expect(16)
       // Remove 4x items
       for (writeCount <- 1 until 2) {
         for (nIndex <- 0 until 4) {
           var outdata = writeCount*4 + nIndex
-          assertResult(outdata) { dut.io.dataOut(nIndex).peekInt() }
+          dut.io.dataOut(nIndex).expect(outdata)
         }
         dut.io.deqReady.poke(4)
         dut.clock.step()
       }
-      assertResult(12) { dut.io.nEnqueued.peekInt() }
+      dut.io.nEnqueued.expect(12)
     }
   }
 
   "Flush Test" in {
-    test(new CircularBufferMulti(UInt(32.W), 4, 16)) { dut =>
-      assertResult(0) { dut.io.nEnqueued.peekInt() }
+    simulate(new CircularBufferMulti(UInt(32.W), 4, 16)) { dut =>
+      dut.io.nEnqueued.expect(0)
       dut.io.flush.poke(false)
 
       // Fill buffer completely and flush
@@ -193,12 +193,12 @@ class CircularBufferMultiSpec extends AnyFreeSpec with ChiselScalatestTester {
       }
       dut.io.enqValid.poke(0)
 
-      assertResult(16) { dut.io.nEnqueued.peekInt() }
+      dut.io.nEnqueued.expect(16)
 
       dut.io.flush.poke(true)
       dut.clock.step()
       dut.clock.step()
-      assertResult(0) { dut.io.nEnqueued.peekInt() }
+      dut.io.nEnqueued.expect(0)
       dut.io.flush.poke(false)
 
       // Add 4x items and flush
@@ -212,19 +212,19 @@ class CircularBufferMultiSpec extends AnyFreeSpec with ChiselScalatestTester {
       }
       dut.io.enqValid.poke(0)
 
-      assertResult(4) { dut.io.nEnqueued.peekInt() }
+      dut.io.nEnqueued.expect(4)
 
       dut.io.flush.poke(true)
       dut.clock.step()
       dut.clock.step()
-      assertResult(0) { dut.io.nEnqueued.peekInt() }
+      dut.io.nEnqueued.expect(0)
       dut.io.flush.poke(false)
       }
     }
 
   "Read and Write Buffer on Same Cycle" in {
-    test(new CircularBufferMulti(UInt(32.W), 4, 16)) { dut =>
-      assertResult(0) { dut.io.nEnqueued.peekInt() }
+    simulate(new CircularBufferMulti(UInt(32.W), 4, 16)) { dut =>
+      dut.io.nEnqueued.expect(0)
       dut.io.flush.poke(false)
 
       // Use 2x transactions of n=4 items to fill up to size 8, incrementing each transaction
@@ -237,7 +237,7 @@ class CircularBufferMultiSpec extends AnyFreeSpec with ChiselScalatestTester {
         dut.clock.step()
       }
       dut.io.enqValid.poke(0)
-      assertResult(8) { dut.io.nEnqueued.peekInt() }
+      dut.io.nEnqueued.expect(8)
 
       // Enque and Deque on same cycle
       dut.io.enqValid.poke(3)
@@ -250,13 +250,13 @@ class CircularBufferMultiSpec extends AnyFreeSpec with ChiselScalatestTester {
       dut.clock.step()
       dut.io.deqReady.poke(0)
       dut.io.enqValid.poke(0)
-      assertResult(7) { dut.io.nEnqueued.peekInt() }
+      dut.io.nEnqueued.expect(7)
 
       // Flush
       dut.io.flush.poke(true)
       dut.clock.step()
       dut.clock.step()
-      assertResult(0) { dut.io.nEnqueued.peekInt() }
+      dut.io.nEnqueued.expect(0)
       dut.io.flush.poke(false)
       dut.clock.step()
 
@@ -269,7 +269,7 @@ class CircularBufferMultiSpec extends AnyFreeSpec with ChiselScalatestTester {
         dut.io.enqValid.poke(4)
         dut.clock.step()
       }
-      assertResult(12) { dut.io.nEnqueued.peekInt() }
+      dut.io.nEnqueued.expect(12)
 
       // Fill buffer completely and dequeue on same cycle
       for (nIndex <- 0 until 4) {
@@ -282,7 +282,7 @@ class CircularBufferMultiSpec extends AnyFreeSpec with ChiselScalatestTester {
       dut.io.enqValid.poke(0)
       dut.io.deqReady.poke(0)
 
-      assertResult(12) { dut.io.nEnqueued.peekInt() }
+      dut.io.nEnqueued.expect(12)
     }
   }
 

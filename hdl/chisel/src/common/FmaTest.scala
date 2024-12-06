@@ -15,8 +15,8 @@
 package common
 
 import chisel3._
+import chisel3.simulator.scalatest.ChiselSim
 import chisel3.util._
-import chiseltest._
 import org.scalatest.freespec.AnyFreeSpec
 import chisel3.experimental.BundleLiterals._
 
@@ -46,7 +46,7 @@ class FmaTester extends Module {
   io.out := Fma.FmaStage3(stage2)
 }
 
-class FmaSpec extends AnyFreeSpec with ChiselScalatestTester {
+class FmaSpec extends AnyFreeSpec with ChiselSim {
   def Float2BigInt(x: Float): BigInt = {
     val abs = x.abs
     var int = BigInt(java.lang.Float.floatToIntBits(abs))
@@ -62,151 +62,151 @@ class FmaSpec extends AnyFreeSpec with ChiselScalatestTester {
   }
 
   "Mul Zero" in {
-    test(new FmaTester()) { dut =>
+    simulate(new FmaTester()) { dut =>
       dut.io.ina.poke(Float2BigInt(0))
       dut.io.inb.poke(Float2BigInt(42))
       dut.io.inc.poke(Float2BigInt(0))
-      assertResult(0) { dut.io.out.sign.peekInt() }
-      assertResult(0) { dut.io.out.exponent.peekInt() }
-      assertResult(0) { dut.io.out.mantissa.peekInt() }
+      dut.io.out.sign.expect(0)
+      dut.io.out.exponent.expect(0)
+      dut.io.out.mantissa.expect(0)
     }
   }
 
   "Mul Identity" in {
-    test(new FmaTester()) { dut =>
+    simulate(new FmaTester()) { dut =>
       dut.io.ina.poke(Float2BigInt(1))
       dut.io.inb.poke(Float2BigInt(42))
       dut.io.inc.poke(Float2BigInt(0))
-      assertResult(0) { dut.io.out.sign.peekInt() }
-      assertResult(132) { dut.io.out.exponent.peekInt() }
-      assertResult(2621440) { dut.io.out.mantissa.peekInt() }
+      dut.io.out.sign.expect(0)
+      dut.io.out.exponent.expect(132)
+      dut.io.out.mantissa.expect(2621440)
     }
   }
 
   "Mul Negative" in {
-    test(new FmaTester()) { dut =>
+    simulate(new FmaTester()) { dut =>
       dut.io.ina.poke(Float2BigInt(-1.0f))
       dut.io.inb.poke(Float2BigInt(42))
       dut.io.inc.poke(Float2BigInt(0))
-      assertResult(1) { dut.io.out.sign.peekInt() }
-      assertResult(132) { dut.io.out.exponent.peekInt() }
-      assertResult(2621440) { dut.io.out.mantissa.peekInt() }
+      dut.io.out.sign.expect(1)
+      dut.io.out.exponent.expect(132)
+      dut.io.out.mantissa.expect(2621440)
     }
   }
 
   "Mul Half" in {
-    test(new FmaTester()) { dut =>
+    simulate(new FmaTester()) { dut =>
       dut.io.ina.poke(Float2BigInt(0.5f))
       dut.io.inb.poke(Float2BigInt(42))
       dut.io.inc.poke(Float2BigInt(0))
-      assertResult(0) { dut.io.out.sign.peekInt() }
-      assertResult(131) { dut.io.out.exponent.peekInt() }
-      assertResult(2621440) { dut.io.out.mantissa.peekInt() }
+      dut.io.out.sign.expect(0)
+      dut.io.out.exponent.expect(131)
+      dut.io.out.mantissa.expect(2621440)
     }
   }
 
   "Mul Overflow" in {
-    test(new FmaTester()) { dut =>
+    simulate(new FmaTester()) { dut =>
       dut.io.ina.poke(Float2BigInt(2e30f))
       dut.io.inb.poke(Float2BigInt(2e30f))
       dut.io.inc.poke(Float2BigInt(0))
-      assertResult(0) { dut.io.out.sign.peekInt() }
-      assertResult(255) { dut.io.out.exponent.peekInt() }
-      assertResult(0) { dut.io.out.mantissa.peekInt() }
+      dut.io.out.sign.expect(0)
+      dut.io.out.exponent.expect(255)
+      dut.io.out.mantissa.expect(0)
     }
   }
 
   "Mul Rounds to Zero" in {
-    test(new FmaTester()) { dut =>
+    simulate(new FmaTester()) { dut =>
       dut.io.ina.poke(Float2BigInt(1e-30f))
       dut.io.inb.poke(Float2BigInt(1e-30f))
       dut.io.inc.poke(Float2BigInt(0))
-      assertResult(0) { dut.io.out.sign.peekInt() }
-      assertResult(0) { dut.io.out.exponent.peekInt() }
-      assertResult(0) { dut.io.out.mantissa.peekInt() }
+      dut.io.out.sign.expect(0)
+      dut.io.out.exponent.expect(0)
+      dut.io.out.mantissa.expect(0)
     }
   }
 
   "Mul NaN" in {
-    test(new FmaTester()) { dut =>
+    simulate(new FmaTester()) { dut =>
       dut.io.ina.poke(Float2BigInt(Float.NaN))
       dut.io.inb.poke(Float2BigInt(4.0f))
       dut.io.inc.poke(Float2BigInt(0))
-      assertResult(0) { dut.io.out.sign.peekInt() }
-      assertResult(255) { dut.io.out.exponent.peekInt() }
-      assert(dut.io.out.mantissa.peekInt() != 0)
+      dut.io.out.sign.expect(0)
+      dut.io.out.exponent.expect(255)
+      assert(dut.io.out.mantissa.peek().litValue != 0)
     }
   }
 
   "Fma" in {
-    test(new FmaTester()) { dut =>
+    simulate(new FmaTester()) { dut =>
       dut.io.ina.poke(Float2BigInt(2.0f))
       dut.io.inb.poke(Float2BigInt(1.5f))
       dut.io.inc.poke(Float2BigInt(6.0f))
 
-      assertResult(0) { dut.io.out.sign.peekInt() }
-      assertResult(130) { dut.io.out.exponent.peekInt() }
-      assertResult(1048576) { dut.io.out.mantissa.peekInt() }
+      dut.io.out.sign.expect(0)
+      dut.io.out.exponent.expect(130)
+      dut.io.out.mantissa.expect(1048576)
     }
   }
 
   "Fms" in {
-    test(new FmaTester()) { dut =>
+    simulate(new FmaTester()) { dut =>
       dut.io.ina.poke(Float2BigInt(2.0f))
       dut.io.inb.poke(Float2BigInt(1.5f))
       dut.io.inc.poke(Float2BigInt(-6.0f))
 
-      assertResult(1) { dut.io.out.sign.peekInt() }
-      assertResult(128) { dut.io.out.exponent.peekInt() }
-      assertResult(4194304) { dut.io.out.mantissa.peekInt() }
+      dut.io.out.sign.expect(1)
+      dut.io.out.exponent.expect(128)
+      dut.io.out.mantissa.expect(4194304)
     }
   }
 
   "Fnma" in {
-    test(new FmaTester()) { dut =>
+    simulate(new FmaTester()) { dut =>
       dut.io.ina.poke(Float2BigInt(-2.0f))
       dut.io.inb.poke(Float2BigInt(1.5f))
       dut.io.inc.poke(Float2BigInt(13.5f))
 
-      assertResult(0) { dut.io.out.sign.peekInt() }
-      assertResult(130) { dut.io.out.exponent.peekInt() }
-      assertResult(2621440) { dut.io.out.mantissa.peekInt() }
+      dut.io.out.sign.expect(0)
+      dut.io.out.exponent.expect(130)
+      dut.io.out.mantissa.expect(2621440)
     }
   }
 
   "Fnms" in {
-    test(new FmaTester()) { dut =>
+    simulate(new FmaTester()) { dut =>
       dut.io.ina.poke(Float2BigInt(-2.0f))
       dut.io.inb.poke(Float2BigInt(1.5f))
       dut.io.inc.poke(Float2BigInt(-13.5f))
 
-      assertResult(1) { dut.io.out.sign.peekInt() }
-      assertResult(131) { dut.io.out.exponent.peekInt() }
-      assertResult(262144) { dut.io.out.mantissa.peekInt() }
+      dut.io.out.sign.expect(1)
+      dut.io.out.exponent.expect(131)
+      dut.io.out.mantissa.expect(262144)
     }
   }
 
   "Add" in {
-    test(new FmaTester()) { dut =>
+    simulate(new FmaTester()) { dut =>
       dut.io.ina.poke(Float2BigInt(9000.0f))
       dut.io.inb.poke(Float2BigInt(1.0f))
       dut.io.inc.poke(Float2BigInt(1.0f))
 
-      assertResult(0) { dut.io.out.sign.peekInt() }
-      assertResult(140) { dut.io.out.exponent.peekInt() }
-      assertResult(828416) { dut.io.out.mantissa.peekInt() }
+      dut.io.out.sign.expect(0)
+      dut.io.out.exponent.expect(140)
+      dut.io.out.mantissa.expect(828416)
     }
   }
 
   "Sub" in {
-    test(new FmaTester()) { dut =>
+    simulate(new FmaTester()) { dut =>
       dut.io.ina.poke(Float2BigInt(15.0f))
       dut.io.inb.poke(Float2BigInt(1.0f))
       dut.io.inc.poke(Float2BigInt(-100.0f))
 
-      assertResult(1) { dut.io.out.sign.peekInt() }
-      assertResult(133) { dut.io.out.exponent.peekInt() }
-      assertResult(2752512) { dut.io.out.mantissa.peekInt() }
+      dut.io.out.sign.expect(1)
+      dut.io.out.exponent.expect(133)
+      dut.io.out.mantissa.expect(2752512)
     }
   }
 }

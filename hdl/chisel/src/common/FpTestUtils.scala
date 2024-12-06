@@ -16,7 +16,6 @@ package common
 
 import chisel3._
 import chisel3.util._
-import chiseltest._
 
 /** Effectively "reinterpret_casts" a float32 into a BigInt. BigInt is used
   * because there's no easy uint32 type in scala, but BigInt works well enough
@@ -63,9 +62,9 @@ object PokeFloat {
     val mantissa = int & 0x7FFFFF
     val exponent = (int >> 23) & 0xFF
 
-    dut.sign.poke(sign)
-    dut.mantissa.poke(mantissa)
-    dut.exponent.poke(exponent)
+    dut.sign := sign
+    dut.mantissa := mantissa.U
+    dut.exponent := exponent.U
   }
 }
 
@@ -74,12 +73,8 @@ object PokeFloat {
   * @param f A scala float.
   */
 object PeekFloat {
-  def apply(dut: Fp32): Float = {
-    val sign = dut.sign.peekInt().toInt
-    val exponent = dut.exponent.peekInt().toInt
-    val mantissa = dut.mantissa.peekInt().toInt
-
+  def apply(sign: Int, exponent: Int, mantissa: Int): Float = {
     val i = (sign << 31) + (exponent << 23) + mantissa
-    java.lang.Float.intBitsToFloat(i)
+    java.lang.Float.intBitsToFloat(i.toInt)
   }
 }

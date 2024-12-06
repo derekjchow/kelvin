@@ -1,7 +1,10 @@
 #!/bin/bash
 
 SCRIPT_DIR="$(dirname "$BASH_SOURCE")"
-RUNFILES_DIR=$SCRIPT_DIR/firtool.runfiles
+ROOTDIR=${SCRIPT_DIR}/../../
 
-${RUNFILES_DIR}/llvm_firtool/org.chipsalliance/llvm-firtool/linux-x64/bin/firtool $*
+FIRTOOL_EXE=$(find ${ROOTDIR} -name 'firtool' -ipath '*linux-x64*' -print -quit)
+
+${FIRTOOL_EXE} $*
+
 exit $?

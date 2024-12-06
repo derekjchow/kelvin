@@ -15,8 +15,8 @@
 package common
 
 import chisel3._
+import chisel3.simulator.scalatest.ChiselSim
 import chisel3.util._
-import chiseltest._
 import org.scalatest.freespec.AnyFreeSpec
 import chisel3.experimental.BundleLiterals._
 import scala.util.Random
@@ -61,58 +61,54 @@ class RotateVectorRightTester extends Module {
   io.out := RotateVectorRight(io.in, io.shift)
 }
 
-class LibrarySpec extends AnyFreeSpec with ChiselScalatestTester {
+class LibrarySpec extends AnyFreeSpec with ChiselSim {
   "ForceZero when invalid" in {
-    test(new ForceZeroTester) { dut =>
+    simulate(new ForceZeroTester) { dut =>
       dut.io.in.bits.poke(9001)
       dut.io.in.valid.poke(0)
       dut.clock.step()
-      assertResult(0) { dut.io.out.bits.peekInt() }
+      dut.io.out.bits.expect(0)
     }
   }
 
   "ForceZeroForceZero propogates when valid" in {
-    test(new ForceZeroTester) { dut =>
+    simulate(new ForceZeroTester) { dut =>
       dut.io.in.bits.poke(9001)
       dut.io.in.valid.poke(1)
       dut.clock.step()
-      assertResult(9001) { dut.io.out.bits.peekInt() }
+      dut.io.out.bits.expect(9001)
     }
   }
 
   "Zip32 Words" in {
-    test(new Zip32Tester) { dut =>
+    simulate(new Zip32Tester) { dut =>
       dut.io.sz.poke(4)
       dut.io.a.poke(5)
       dut.io.b.poke(3163)
-      assertResult((3163L << 32L) | 5) { dut.io.out.peekInt() }
+      dut.io.out.expect((3163L << 32L) | 5)
     }
   }
 
   "Zip32 Halves" in {
-    test(new Zip32Tester) { dut =>
+    simulate(new Zip32Tester) { dut =>
       dut.io.sz.poke(2)
       dut.io.a.poke((7L << 16L) | 3)
       dut.io.b.poke((11L << 16L) | 5)
-      assertResult((11L << 48L) | (7L << 32L) | (5L << 16L) | 3L) {
-        dut.io.out.peekInt()
-      }
+      dut.io.out.expect((11L << 48L) | (7L << 32L) | (5L << 16L) | 3L)
     }
   }
 
   "Zip32 Bytes" in {
-    test(new Zip32Tester) { dut =>
+    simulate(new Zip32Tester) { dut =>
       dut.io.sz.poke(1)
       dut.io.a.poke((37L << 16L) | (7L << 8L) | 3)
       dut.io.b.poke((43L << 16L) | (11L << 8L) | 5)
-      assertResult((43L << 40L) | (37L << 32L) | (11L << 24L) | (7L << 16L) | (5L << 8L) | 3L) {
-        dut.io.out.peekInt()
-      }
+      dut.io.out.expect((43L << 40L) | (37L << 32L) | (11L << 24L) | (7L << 16L) | (5L << 8L) | 3L)
     }
   }
 
   "RotateVectorLeft" in {
-    test(new RotateVectorLeftTester) { dut =>
+    simulate(new RotateVectorLeftTester) { dut =>
       val valids = Seq.fill(16)(Random.between(0, 2))
       val data = Seq.fill(16)(Random.between(0, 2147483647))
       for (i <- 0 until 16) {
@@ -128,15 +124,15 @@ class LibrarySpec extends AnyFreeSpec with ChiselScalatestTester {
           if (targetIndex >= 16) {
             targetIndex = targetIndex - 16
           }
-          assertResult(valids(o)) {dut.io.out(targetIndex).valid.peekInt()}
-          assertResult(data(o)) {dut.io.out(targetIndex).bits.peekInt()}
+          dut.io.out(targetIndex).valid.expect(valids(o))
+          dut.io.out(targetIndex).bits.expect(data(o))
         }
       }
     }
   }
 
   "RotateVectorRight" in {
-    test(new RotateVectorRightTester) { dut =>
+    simulate(new RotateVectorRightTester) { dut =>
       val valids = Seq.fill(16)(Random.between(0, 2))
       val data = Seq.fill(16)(Random.between(0, 2147483647))
       for (i <- 0 until 16) {
@@ -152,8 +148,8 @@ class LibrarySpec extends AnyFreeSpec with ChiselScalatestTester {
           if (targetIndex < 0) {
             targetIndex = targetIndex + 16
           }
-          assertResult(valids(o)) {dut.io.out(targetIndex).valid.peekInt()}
-          assertResult(data(o)) {dut.io.out(targetIndex).bits.peekInt()}
+          dut.io.out(targetIndex).valid.expect(valids(o))
+          dut.io.out(targetIndex).bits.expect(data(o))
         }
       }
     }

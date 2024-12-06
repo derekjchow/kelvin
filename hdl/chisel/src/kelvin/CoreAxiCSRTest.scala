@@ -15,32 +15,26 @@
 package kelvin
 
 import chisel3._
+import chisel3.simulator.scalatest.ChiselSim
 import chisel3.util._
-import chiseltest._
-import chiseltest.experimental.expose
 import org.scalatest.freespec.AnyFreeSpec
 
-class CoreAxiCSRWrapper(p: Parameters) extends CoreAxiCSR(p) {
-  val testResetReg = expose(csr.resetReg)
-  val testPcStartReg = expose(csr.pcStartReg)
-}
-
-class CoreAxiCSRSpec extends AnyFreeSpec with ChiselScalatestTester {
+class CoreAxiCSRSpec extends AnyFreeSpec with ChiselSim {
   var p = new Parameters
   p.enableVector = false
 
   "Initialization" in {
-    test(new CoreAxiCSR(p)) { dut =>
-      assertResult(1) { dut.io.axi.read.addr.ready.peekInt() }
-      assertResult(0) { dut.io.axi.read.data.valid.peekInt() }
-      assertResult(1) { dut.io.axi.write.addr.ready.peekInt() }
-      assertResult(1) { dut.io.axi.write.data.ready.peekInt() }
-      assertResult(0) { dut.io.axi.write.resp.valid.peekInt() }
+    simulate(new CoreAxiCSR(p)) { dut =>
+      dut.io.axi.read.addr.ready.expect(1)
+      dut.io.axi.read.data.valid.expect(0)
+      dut.io.axi.write.addr.ready.expect(1)
+      dut.io.axi.write.data.ready.expect(1)
+      dut.io.axi.write.resp.valid.expect(0)
     }
   }
 
   "Read" in {
-    test(new CoreAxiCSR(p)) { dut =>
+    simulate(new CoreAxiCSR(p)) { dut =>
       dut.io.internal.poke(false.B)
       dut.io.halted.poke(false.B)
       dut.io.fault.poke(false.B)
@@ -49,59 +43,61 @@ class CoreAxiCSRSpec extends AnyFreeSpec with ChiselScalatestTester {
       // Send read request
       dut.io.axi.read.addr.valid.poke(true.B)
       dut.io.axi.read.addr.bits.addr.poke(0x100.U)
-      assertResult(1) { dut.io.axi.read.addr.ready.peekInt() }
+      dut.io.axi.read.addr.ready.expect(1)
       dut.clock.step()
       dut.io.axi.read.addr.valid.poke(false.B)
 
       // Wait for response
-      while (dut.io.axi.read.data.valid.peekInt() != 1) {
+      while (dut.io.axi.read.data.valid.peek().litValue != 1) {
         dut.clock.step()
       }
-      assertResult(1) { dut.io.axi.read.data.valid.peekInt() }
-      assertResult(3405689018L) { dut.io.axi.read.data.bits.data.peekInt() }
-      assertResult(1) { dut.io.axi.read.data.bits.last.peekInt() }
-      assertResult(0) { dut.io.axi.read.data.bits.resp.peekInt() }
+      dut.io.axi.read.data.valid.expect(1)
+      dut.io.axi.read.data.bits.data.expect(3405689018L)
+      dut.io.axi.read.data.bits.last.expect(1)
+      dut.io.axi.read.data.bits.resp.expect(0)
 
       // Accept response, check that no requests were made after.
       dut.io.axi.read.data.ready.poke(true.B)
       for (i <- 0 until 10) {
-        dut.io.axi.read.data.valid.peekInt()
+        dut.io.axi.read.data.valid.peek()
       }
     }
   }
 
   "Write" in {
-    test(new CoreAxiCSRWrapper(p)) { dut =>
+    simulate(new CoreAxiCSR(p)) { dut =>
       dut.io.internal.poke(false.B)
       dut.io.halted.poke(false.B)
       dut.io.fault.poke(false.B)
 
       // Check initial values.
-      assertResult(3) { dut.testResetReg.peekInt() }
-      assertResult(0) { dut.testPcStartReg.peekInt() }
+      dut.io.cg.expect(1)
+      dut.io.reset.expect(1)
+      dut.io.pcStart.expect(0)
 
       // Configure write address and write data
       dut.io.axi.write.addr.valid.poke(true.B)
       dut.io.axi.write.addr.bits.addr.poke(0x4)
       dut.io.axi.write.addr.bits.len.poke(0.U)
       dut.io.axi.write.addr.bits.size.poke(2.U)
-      assertResult(1) { dut.io.axi.write.addr.ready.peekInt() }
+      dut.io.axi.write.addr.ready.expect(1)
       dut.io.axi.write.data.bits.data.poke((BigInt(0x20000000) << 32).U)
       dut.io.axi.write.data.bits.strb.poke(0xFF00.U)
       dut.io.axi.write.data.bits.last.poke(true.B)
       dut.io.axi.write.data.valid.poke(true.B)
-      assertResult(1) { dut.io.axi.write.data.ready.peekInt() }
+      dut.io.axi.write.data.ready.expect(1)
       dut.clock.step()
       dut.io.axi.write.addr.valid.poke(false.B)
       dut.io.axi.write.data.valid.poke(false.B)
 
       // Wait for response
-      while (dut.io.axi.write.resp.valid.peekInt() != 1) {
+      while (dut.io.axi.write.resp.valid.peek().litValue != 1) {
         dut.clock.step()
       }
       // Check that only pcStartReg changed.
-      assertResult(3) { dut.testResetReg.peekInt() }
-      assertResult(0x20000000) { dut.testPcStartReg.peekInt() }
+      dut.io.cg.expect(1)
+      dut.io.reset.expect(1)
+      dut.io.pcStart.expect(0x20000000)
 
       // Accept write response
       dut.io.axi.write.resp.ready.poke(true.B)
@@ -110,9 +106,10 @@ class CoreAxiCSRSpec extends AnyFreeSpec with ChiselScalatestTester {
       for (i <- 0 until 10) {
         dut.clock.step()
         // Check that only pcStartReg changed.
-        assertResult(3) { dut.testResetReg.peekInt() }
-        assertResult(0x20000000) { dut.testPcStartReg.peekInt() }
-        assertResult(0) { dut.io.axi.write.resp.valid.peekInt() }
+        dut.io.cg.expect(1)
+        dut.io.reset.expect(1)
+        dut.io.pcStart.expect(0x20000000)
+        dut.io.axi.write.resp.valid.expect(0)
       }
 
       // Check write result via AXI, as well
@@ -120,62 +117,64 @@ class CoreAxiCSRSpec extends AnyFreeSpec with ChiselScalatestTester {
       dut.io.axi.read.addr.bits.addr.poke(0x4)
       dut.io.axi.read.addr.bits.size.poke(2.U)
       dut.io.axi.read.addr.bits.len.poke(0.U)
-      while (dut.io.axi.read.addr.ready.peekInt() != 1) {
+      while (dut.io.axi.read.addr.ready.peek().litValue != 1) {
         dut.clock.step()
       }
       dut.clock.step()
       dut.io.axi.read.addr.valid.poke(false.B)
 
       // Wait for read data
-      while (dut.io.axi.read.data.valid.peekInt() != 1) {
+      while (dut.io.axi.read.data.valid.peek().litValue != 1) {
         dut.clock.step()
       }
-      assertResult(BigInt(0x20000000) << 32) { dut.io.axi.read.data.bits.data.peekInt() }
-      assertResult(1) { dut.io.axi.read.data.bits.last.peekInt() }
-      assertResult(0) { dut.io.axi.read.data.bits.resp.peekInt() }
+      dut.io.axi.read.data.bits.data.expect(BigInt(0x20000000) << 32)
+      dut.io.axi.read.data.bits.last.expect(1)
+      dut.io.axi.read.data.bits.resp.expect(0)
 
       // Accept read result, no pending read
       dut.io.axi.read.data.ready.poke(true.B)
       dut.clock.step()
-      assertResult(0) { dut.io.axi.read.data.valid.peekInt() }
+      dut.io.axi.read.data.valid.expect(0)
       dut.io.axi.read.data.ready.poke(false.B)
     }
   }
 
   "WriteInvalid" in {
-    test(new CoreAxiCSRWrapper(p)) { dut =>
+    simulate(new CoreAxiCSR(p)) { dut =>
       dut.io.internal.poke(false.B)
       dut.io.halted.poke(false.B)
       dut.io.fault.poke(false.B)
 
       // Check initial values.
-      assertResult(3) { dut.testResetReg.peekInt() }
-      assertResult(0) { dut.testPcStartReg.peekInt() }
+      dut.io.cg.expect(1)
+      dut.io.reset.expect(1)
+      dut.io.pcStart.expect(0)
 
       // Configure write address and write data
       dut.io.axi.write.addr.valid.poke(true.B)
       dut.io.axi.write.addr.bits.addr.poke(0x104)
       dut.io.axi.write.addr.bits.len.poke(0.U)
       dut.io.axi.write.addr.bits.size.poke(2.U)
-      assertResult(1) { dut.io.axi.write.addr.ready.peekInt() }
+      dut.io.axi.write.addr.ready.expect(1)
       dut.io.axi.write.data.bits.data.poke((BigInt(0x20000000) << 32).U)
       dut.io.axi.write.data.bits.strb.poke(0xFF00.U)
       dut.io.axi.write.data.bits.last.poke(true.B)
       dut.io.axi.write.data.valid.poke(true.B)
-      assertResult(1) { dut.io.axi.write.data.ready.peekInt() }
+      dut.io.axi.write.data.ready.expect(1)
       dut.clock.step()
       dut.io.axi.write.addr.valid.poke(false.B)
       dut.io.axi.write.data.valid.poke(false.B)
 
       // Wait for response
-      while (dut.io.axi.write.resp.valid.peekInt() != 1) {
+      while (dut.io.axi.write.resp.valid.peek().litValue != 1) {
         dut.clock.step()
       }
       // Check error was raised in response
-      assertResult(2) { dut.io.axi.write.resp.bits.resp.peekInt() }
+      dut.io.axi.write.resp.bits.resp.expect(2)
       // Check that no register changed.
-      assertResult(3) { dut.testResetReg.peekInt() }
-      assertResult(0) { dut.testPcStartReg.peekInt() }
+      dut.io.cg.expect(1)
+      dut.io.reset.expect(1)
+      dut.io.pcStart.expect(0)
 
       // Accept write response
       dut.io.axi.write.resp.ready.poke(true.B)
@@ -183,8 +182,9 @@ class CoreAxiCSRSpec extends AnyFreeSpec with ChiselScalatestTester {
       dut.io.axi.write.resp.ready.poke(false.B)
 
       // Check that no register changed.
-      assertResult(3) { dut.testResetReg.peekInt() }
-      assertResult(0) { dut.testPcStartReg.peekInt() }
+      dut.io.cg.expect(1)
+      dut.io.reset.expect(1)
+      dut.io.pcStart.expect(0)
     }
   }
 }

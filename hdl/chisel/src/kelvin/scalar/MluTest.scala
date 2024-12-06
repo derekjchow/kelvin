@@ -15,23 +15,23 @@
 package kelvin
 
 import chisel3._
+import chisel3.simulator.scalatest.ChiselSim
 import chisel3.util._
-import chiseltest._
 import org.scalatest.freespec.AnyFreeSpec
 import chisel3.experimental.BundleLiterals._
 
 
-class MluSpec extends AnyFreeSpec with ChiselScalatestTester {
+class MluSpec extends AnyFreeSpec with ChiselSim {
   val p = new Parameters
 
   "Initialization" in {
-    test(new Mlu(p)) { dut =>
-      assertResult(0) { dut.io.rd.valid.peekInt() }
+    simulate(new Mlu(p)) { dut =>
+      dut.io.rd.valid.expect(0)
     }
   }
 
   "Multiply" in {
-    test(new Mlu(p)) { dut =>
+    simulate(new Mlu(p)) { dut =>
         dut.io.req(0).bits.addr.poke(13)
         dut.io.req(0).bits.op.poke(MluOp.MUL)
         dut.io.req(0).valid.poke(true.B)
@@ -50,12 +50,12 @@ class MluSpec extends AnyFreeSpec with ChiselScalatestTester {
         dut.io.rd.ready.poke(true.B)
 
         dut.clock.step()
-        assertResult(1) { dut.io.rd.valid.peekInt() }
-        assertResult(13) { dut.io.rd.bits.addr.peekInt() }
-        assertResult(4) { dut.io.rd.bits.data.peekInt() }
+        dut.io.rd.valid.expect(1)
+        dut.io.rd.bits.addr.expect(13)
+        dut.io.rd.bits.data.expect(4)
 
         dut.clock.step()
-        assertResult(0) { dut.io.rd.valid.peekInt() }
+        dut.io.rd.valid.expect(0)
         dut.io.rd.ready.poke(false.B)
     }
   }

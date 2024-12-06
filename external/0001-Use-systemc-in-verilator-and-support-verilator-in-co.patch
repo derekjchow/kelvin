@@ -1,15 +1,15 @@
-From e625bad7c5bb1fcf1243fb69782f4e3f77776198 Mon Sep 17 00:00:00 2001
+From ac5b44270399e2bccd9d9d5f34c19494e1cfd833 Mon Sep 17 00:00:00 2001
 From: Alex Van Damme <atv@google.com>
 Date: Wed, 5 Feb 2025 13:40:42 -0800
-Subject: [PATCH] Use systemc in verilator and support verilator in cocotb
+Subject: [PATCH 1/2] Use systemc in verilator and support verilator in cocotb
 
 ---
  BUILD                                         |  11 +-
  cocotb/cocotb.bzl                             |  32 ++++-
  cocotb/cocotb_wrapper.py                      |   1 +
- .../verilator/verilator.BUILD.bazel           | 110 +++++++++++++++++-
+ .../verilator/verilator.BUILD.bazel           | 112 +++++++++++++++++-
  verilator/defs.bzl                            |  22 ++--
- 5 files changed, 161 insertions(+), 15 deletions(-)
+ 5 files changed, 163 insertions(+), 15 deletions(-)
 
 diff --git a/BUILD b/BUILD
 index bf28dd5..a6fe964 100644
@@ -131,10 +131,10 @@ index ba37573..03d0dbc 100644
  
  
 diff --git a/dependency_support/verilator/verilator.BUILD.bazel b/dependency_support/verilator/verilator.BUILD.bazel
-index f958490..3fadcca 100644
+index f958490..3c6f975 100644
 --- a/dependency_support/verilator/verilator.BUILD.bazel
 +++ b/dependency_support/verilator/verilator.BUILD.bazel
-@@ -81,6 +81,44 @@ verilator_build_template(
+@@ -81,6 +81,45 @@ verilator_build_template(
      version = ":version",
  )
  
@@ -144,6 +144,7 @@ index f958490..3fadcca 100644
 +    substitutions = {
 +        "@AR@": "$${VERILATOR_AR}",
 +        "@CXX@": "$${VERILATOR_CXX}",
++        "@PYTHON3@": "$${VERILATOR_PYTHON3}",
 +        "@OBJCACHE@": "",
 +        "@PERL@": "perl",
 +        "@CFG_WITH_CCWARN@": "no",
@@ -179,7 +180,7 @@ index f958490..3fadcca 100644
  verilator_astgen(
      name = "verilator_astgen",
      srcs = [
-@@ -287,7 +325,7 @@ cc_library(
+@@ -287,7 +326,7 @@ cc_library(
  )
  
  cc_library(
@@ -188,7 +189,7 @@ index f958490..3fadcca 100644
      srcs = [
          "include/gtkwave/fastlz.h",
          "include/gtkwave/fst_config.h",
-@@ -295,10 +333,12 @@ cc_library(
+@@ -295,10 +334,12 @@ cc_library(
          "include/gtkwave/lz4.h",
          "include/gtkwave/wavealloca.h",
          "include/verilated_fst_c.cpp",
@@ -201,7 +202,7 @@ index f958490..3fadcca 100644
          "include/verilated_vpi.cpp",
          "include/verilated.cpp",
      ],
-@@ -309,14 +349,17 @@ cc_library(
+@@ -309,14 +350,17 @@ cc_library(
          "include/verilated_funcs.h",
          "include/verilated_intrinsics.h",
          "include/verilated_sc.h",
@@ -219,7 +220,7 @@ index f958490..3fadcca 100644
          "include/verilated_vpi.h",
          "include/verilated.h",
          "include/verilatedos.h",
-@@ -327,7 +370,12 @@ cc_library(
+@@ -327,7 +371,12 @@ cc_library(
          "-std=c++17",
          "-ffp-contract=off",
      ],
@@ -233,7 +234,7 @@ index f958490..3fadcca 100644
      linkopts = [
          "-lpthread",
      ],
-@@ -339,6 +387,7 @@ cc_library(
+@@ -339,6 +388,7 @@ cc_library(
      ],
      visibility = ["//visibility:public"],
      deps = [
@@ -241,7 +242,7 @@ index f958490..3fadcca 100644
          "@net_zlib//:zlib",
          ":vltstd",
      ],
-@@ -349,7 +398,7 @@ cc_library(
+@@ -349,7 +399,7 @@ cc_library(
  # output name.
  alias(
      name = "libverilator",
@@ -250,7 +251,7 @@ index f958490..3fadcca 100644
      visibility = ["//visibility:public"],
  )
  
-@@ -376,3 +425,58 @@ cc_binary(
+@@ -376,3 +426,59 @@ cc_binary(
      visibility = ["//visibility:public"],
      deps = [":verilator_libV3"],
  )
@@ -269,6 +270,7 @@ index f958490..3fadcca 100644
 +    visibility = ["//visibility:public"],
 +    deps = [":verilator_libV3"],
 +    data = [
++        "bin/verilator_includer",
 +        "include/verilated.cpp",
 +        "include/verilated_dpi.cpp",
 +        "include/verilated_dpi.h",
@@ -377,5 +379,5 @@ index c3e26d5..fc8af53 100644
              doc = "CC compiler.",
              default = Label("@bazel_tools//tools/cpp:current_cc_toolchain"),
 -- 
-2.49.0.504.g3bcea36a83-goog
+2.50.0.rc0.642.g800a2b2222-goog
 

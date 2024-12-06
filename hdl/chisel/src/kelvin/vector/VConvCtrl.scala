@@ -19,7 +19,8 @@ package kelvin
 import chisel3._
 import chisel3.util._
 import common._
-import _root_.circt.stage.ChiselStage
+import _root_.circt.stage.{ChiselStage,FirtoolOption}
+import chisel3.stage.ChiselGeneratorAnnotation
 
 object VConvCtrl {
   def apply(p: Parameters): VConvCtrl = {
@@ -210,5 +211,8 @@ class VConvCtrl(p: Parameters) extends Module {
 
 object EmitVConvCtrl extends App {
   val p = new Parameters
-  ChiselStage.emitSystemVerilogFile(new VConvCtrl(p), args)
+  (new ChiselStage).execute(
+    Array("--target", "systemverilog") ++ args,
+    Seq(ChiselGeneratorAnnotation(() => new VConvCtrl(p))) ++ Seq(FirtoolOption("-enable-layers=Verification"))
+  )
 }

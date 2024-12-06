@@ -19,7 +19,8 @@ import chisel3.util._
 
 import bus.{AxiAddress, AxiMasterIO, AxiResponseType, AxiWriteData}
 import common._
-import _root_.circt.stage.ChiselStage
+import _root_.circt.stage.{ChiselStage,FirtoolOption}
+import chisel3.stage.ChiselGeneratorAnnotation
 
 object DBus2Axi {
   def apply(p: Parameters): DBus2Axi = {
@@ -303,5 +304,8 @@ class DBus2AxiV2(p: Parameters) extends DBus2Axi(p) {
 
 object EmitDBus2Axi extends App {
   val p = new Parameters
-  ChiselStage.emitSystemVerilogFile(new DBus2AxiV1(p), args)
+  (new ChiselStage).execute(
+    Array("--target", "systemverilog") ++ args,
+    Seq(ChiselGeneratorAnnotation(() => new DBus2AxiV1(p))) ++ Seq(FirtoolOption("-enable-layers=Verification"))
+  )
 }

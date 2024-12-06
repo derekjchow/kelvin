@@ -126,6 +126,8 @@ template_rule(
         "-debug_access+all",
         "-cm",
         "line+cond+tgl+branch+assert",
+        "-cm_hier",
+        "../tests/cocotb/coverage_exclude.cfg",
     ],
     test_args = [
         "+vcs+fsdbon",
@@ -136,7 +138,9 @@ template_rule(
         "//kelvin_test_utils:core_mini_axi_sim_interface",
         requirement("tqdm"),
     ],
-    data = COCOTB_TEST_BINARY_TARGETS,
+    data = COCOTB_TEST_BINARY_TARGETS + [
+        ":coverage_exclude.cfg",
+    ],
 )
 
 RVV_TEST_BINARY_TARGETS = [

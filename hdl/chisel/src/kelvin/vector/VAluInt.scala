@@ -18,8 +18,9 @@ package kelvin
 
 import chisel3._
 import chisel3.util._
-import _root_.circt.stage.ChiselStage
 import common._
+import _root_.circt.stage.{ChiselStage,FirtoolOption}
+import chisel3.stage.ChiselGeneratorAnnotation
 
 // VAluInt is foremost an ML depthwise and activiation unit with pipelining
 // behaviors optimized to this functionality. All operations are pipelined with
@@ -1507,5 +1508,8 @@ class VAluIntLane extends Module {
 
 object EmitVAluInt extends App {
   val p = new Parameters
-  ChiselStage.emitSystemVerilogFile(new VAluInt(p, 0), args)
+  (new ChiselStage).execute(
+    Array("--target", "systemverilog") ++ args,
+    Seq(ChiselGeneratorAnnotation(() => new VAluInt(p, 0))) ++ Seq(FirtoolOption("-enable-layers=Verification"))
+  )
 }

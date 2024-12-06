@@ -15,20 +15,20 @@
 package kelvin
 
 import chisel3._
+import chisel3.simulator.scalatest.ChiselSim
 import chisel3.experimental.BundleLiterals._
 import chisel3.util._
-import chiseltest._
 import org.scalatest.freespec.AnyFreeSpec
 
 import common.{AssertPartial, ProcessTestResults}
 
 
-class AluSpec extends AnyFreeSpec with ChiselScalatestTester {
+class AluSpec extends AnyFreeSpec with ChiselSim {
   val p = new Parameters
 
   "Initialization" in {
-    test(new Alu(p)) { dut =>
-      assertResult(0) { dut.io.rd.valid.peekInt() }
+    simulate(new Alu(p)) { dut =>
+      dut.io.rd.valid.expect(0)
     }
   }
 
@@ -39,34 +39,20 @@ class AluSpec extends AnyFreeSpec with ChiselScalatestTester {
       // Long because Scala has no unsigned int.
       cases: Seq[(Long, Long)]) = {
     val good = cases.map { case (rs1, exp_rd) =>
-      dut.io.req.poke(chiselTypeOf(dut.io.req).Lit(
-        _.valid -> true.B,
-        _.bits.addr -> addr,
-        _.bits.op -> op,
-      ))
-      dut.io.rs1.poke(chiselTypeOf(dut.io.rs1).Lit(
-        _.valid -> true.B,
-        _.data -> rs1.U,
-      ))
+      dut.io.req.valid.poke(true)
+      dut.io.req.bits.addr.poke(addr)
+      dut.io.req.bits.op.poke(op)
+      dut.io.rs1.valid.poke(true)
+      dut.io.rs1.data.poke(rs1)
       dut.clock.step()
-      val good1 = AssertPartial[Valid[RegfileWriteDataIO]](
-        act = dut.io.rd.peek(),
-        hint = s"rs1=$rs1, cycle=1",
-        printfn = info(_),
-        _.valid -> true.B,
-        _.bits.data -> exp_rd.U,
-      )
-      dut.io.req.pokePartial(chiselTypeOf(dut.io.req).Lit(
-        _.valid -> false.B,
-      ))
+      val good1 = {
+        (dut.io.rd.valid.peek().litValue == 1) && (dut.io.rd.bits.data.peek().litValue == exp_rd)
+      }
+      dut.io.req.valid.poke(true)
       dut.clock.step()
-      val good2 = AssertPartial[Valid[RegfileWriteDataIO]](
-        act = dut.io.rd.peek(),
-        hint = s"rs1=$rs1, cycle=2",
-        printfn = info(_),
-        _.valid -> false.B,
-        _.bits.addr -> addr,
-      )
+      val good2 = {
+        (dut.io.rd.valid.peek().litValue == 1) && (dut.io.rd.bits.addr.peek().litValue == addr.litValue)
+      }
       good1 & good2
     }
     if (!ProcessTestResults(good, printfn = info(_))) fail
@@ -77,7 +63,7 @@ class AluSpec extends AnyFreeSpec with ChiselScalatestTester {
       (0x0000007FL, 0x0000007FL),
       (0x00000080L, 0xFFFFFF80L),
     )
-    test(new Alu(p))(test_unary_op(_, 13.U, AluOp.SEXTB, test_cases))
+    simulate(new Alu(p))(test_unary_op(_, 13.U, AluOp.SEXTB, test_cases))
   }
 
   "Sign Extend Half Word" in {
@@ -85,14 +71,14 @@ class AluSpec extends AnyFreeSpec with ChiselScalatestTester {
       (0x00007FFFL, 0x00007FFFL),
       (0x00008000L, 0xFFFF8000L),
     )
-    test(new Alu(p))(test_unary_op(_, 13.U, AluOp.SEXTH, test_cases))
+    simulate(new Alu(p))(test_unary_op(_, 13.U, AluOp.SEXTH, test_cases))
   }
   "Zero Extend Half Word" in {
     val test_cases = Seq(
       (0x00007FFFL, 0x00007FFFL),
       (0x00008000L, 0x00008000L),
     )
-    test(new Alu(p))(test_unary_op(_, 13.U, AluOp.ZEXTH, test_cases))
+    simulate(new Alu(p))(test_unary_op(_, 13.U, AluOp.ZEXTH, test_cases))
   }
 
   "CLZ" in {
@@ -111,7 +97,7 @@ class AluSpec extends AnyFreeSpec with ChiselScalatestTester {
       (0x0000000EL, 28L),
       (0x20401341L, 2L),
     )
-    test(new Alu(p))(test_unary_op(_, 13.U, AluOp.CLZ, test_cases))
+    simulate(new Alu(p))(test_unary_op(_, 13.U, AluOp.CLZ, test_cases))
   }
 
   "CTZ" in {
@@ -130,7 +116,7 @@ class AluSpec extends AnyFreeSpec with ChiselScalatestTester {
       (0x0000000eL, 1L),
       (0x20401341L, 0L),
     )
-    test(new Alu(p))(test_unary_op(_, 13.U, AluOp.CTZ, test_cases))
+    simulate(new Alu(p))(test_unary_op(_, 13.U, AluOp.CTZ, test_cases))
   }
 
   "CPOP" in {
@@ -149,7 +135,7 @@ class AluSpec extends AnyFreeSpec with ChiselScalatestTester {
       (0x0000000eL, 3L),
       (0x20401341L, 7L),
     )
-    test(new Alu(p))(test_unary_op(_, 13.U, AluOp.CPOP, test_cases))
+    simulate(new Alu(p))(test_unary_op(_, 13.U, AluOp.CPOP, test_cases))
   }
 
   "ORCB" in {
@@ -169,7 +155,7 @@ class AluSpec extends AnyFreeSpec with ChiselScalatestTester {
       (0x0000000EL, 0x000000FFL),
       (0x20401341L, 0xffffffffL),
     )
-    test(new Alu(p))(test_unary_op(_, 13.U, AluOp.ORCB, test_cases))
+    simulate(new Alu(p))(test_unary_op(_, 13.U, AluOp.ORCB, test_cases))
   }
 
   "REV8" in {
@@ -187,7 +173,7 @@ class AluSpec extends AnyFreeSpec with ChiselScalatestTester {
       (0x0000000eL, 0x0e000000L),
       (0x20401341L, 0x41134020L),
     )
-    test(new Alu(p))(test_unary_op(_, 13.U, AluOp.REV8, test_cases))
+    simulate(new Alu(p))(test_unary_op(_, 13.U, AluOp.REV8, test_cases))
   }
 
   private def testBinaryOp(
@@ -196,29 +182,16 @@ class AluSpec extends AnyFreeSpec with ChiselScalatestTester {
       op: AluOp.Type,
       // Long because Scala has no unsigned int.
       cases: Seq[(Long, Long, Long)]) = {
-    dut.io.req.poke(chiselTypeOf(dut.io.req).Lit(
-      _.valid -> true.B,
-      _.bits.addr -> addr,
-      _.bits.op -> op,
-    ))
+    dut.io.req.valid.poke(true)
+    dut.io.req.bits.addr.poke(addr)
+    dut.io.req.bits.op.poke(op)
     val good = cases.map { case (rs1, rs2, exp_rd) =>
-      dut.io.rs1.poke(chiselTypeOf(dut.io.rs1).Lit(
-        _.valid -> true.B,
-        _.data -> rs1.U,
-      ))
-      dut.io.rs2.poke(chiselTypeOf(dut.io.rs2).Lit(
-        _.valid -> true.B,
-        _.data -> rs2.U,
-      ))
+      dut.io.rs1.valid.poke(true)
+      dut.io.rs1.data.poke(rs1)
+      dut.io.rs2.valid.poke(true)
+      dut.io.rs2.data.poke(rs2)
       dut.clock.step()
-      AssertPartial[Valid[RegfileWriteDataIO]](
-        act = dut.io.rd.peek(),
-        hint = s"rs1=$rs1, rs2=$rs2",
-        printfn = info(_),
-        _.bits.addr -> addr,
-        _.valid -> true.B,
-        _.bits.data -> exp_rd.U,
-      )
+      (dut.io.rd.valid.peek().litValue == 1) && (dut.io.rd.bits.data.peek().litValue == exp_rd) && (dut.io.rd.bits.addr.peek().litValue == addr.litValue)
     }
     if (!ProcessTestResults(good, printfn = info(_))) fail
   }
@@ -235,7 +208,7 @@ class AluSpec extends AnyFreeSpec with ChiselScalatestTester {
       (0xFFFFFFFFL, 0x12345678L, 0x12345678L),
       (0xFFFFFFFFL, 0xFFFFFFFFL, 0xFFFFFFFFL),
     )
-    test(new Alu(p))(testBinaryOp(_, 13.U, AluOp.XNOR, test_cases))
+    simulate(new Alu(p))(testBinaryOp(_, 13.U, AluOp.XNOR, test_cases))
   }
 
   "ORN(Not OR)" in {
@@ -250,7 +223,7 @@ class AluSpec extends AnyFreeSpec with ChiselScalatestTester {
       (0xFFFFFFFFL, 0x12345678L, 0xFFFFFFFFL),
       (0xFFFFFFFFL, 0xFFFFFFFFL, 0xFFFFFFFFL),
     )
-    test(new Alu(p))(testBinaryOp(_, 13.U, AluOp.ORN, test_cases))
+    simulate(new Alu(p))(testBinaryOp(_, 13.U, AluOp.ORN, test_cases))
   }
 
   "ANDN(Not AND)" in {
@@ -265,7 +238,7 @@ class AluSpec extends AnyFreeSpec with ChiselScalatestTester {
       (0xFFFFFFFFL, 0x12345678L, 0xEDCBA987L),
       (0xFFFFFFFFL, 0xFFFFFFFFL, 0x00000000L),
     )
-    test(new Alu(p))(testBinaryOp(_, 13.U, AluOp.ANDN, test_cases))
+    simulate(new Alu(p))(testBinaryOp(_, 13.U, AluOp.ANDN, test_cases))
   }
 
   "MAX" in {
@@ -283,7 +256,7 @@ class AluSpec extends AnyFreeSpec with ChiselScalatestTester {
       (0xffffffffL, 0x00000001L, 0x00000001L),
       (0x00000001L, 0xffffffffL, 0x00000001L),
     )
-    test(new Alu(p))(testBinaryOp(_, 13.U, AluOp.MAX, test_cases))
+    simulate(new Alu(p))(testBinaryOp(_, 13.U, AluOp.MAX, test_cases))
   }
 
   "MAXU" in {
@@ -301,7 +274,7 @@ class AluSpec extends AnyFreeSpec with ChiselScalatestTester {
       (0xffffffffL, 0x00000001L, 0xffffffffL),
       (0x00000001L, 0xffffffffL, 0xffffffffL),
     )
-    test(new Alu(p))(testBinaryOp(_, 13.U, AluOp.MAXU, test_cases))
+    simulate(new Alu(p))(testBinaryOp(_, 13.U, AluOp.MAXU, test_cases))
   }
 
   "MIN" in {
@@ -319,7 +292,7 @@ class AluSpec extends AnyFreeSpec with ChiselScalatestTester {
       (0xffffffffL, 0x00000001L, 0xffffffffL),
       (0x00000001L, 0xffffffffL, 0xffffffffL),
     )
-    test(new Alu(p))(testBinaryOp(_, 13.U, AluOp.MIN, test_cases))
+    simulate(new Alu(p))(testBinaryOp(_, 13.U, AluOp.MIN, test_cases))
   }
 
   "MINU" in {
@@ -337,7 +310,7 @@ class AluSpec extends AnyFreeSpec with ChiselScalatestTester {
       (0xffffffffL, 0x00000001L, 0x00000001L),
       (0x00000001L, 0xffffffffL, 0x00000001L),
     )
-    test(new Alu(p))(testBinaryOp(_, 13.U, AluOp.MINU, test_cases))
+    simulate(new Alu(p))(testBinaryOp(_, 13.U, AluOp.MINU, test_cases))
   }
 
   "ROL" in {
@@ -358,7 +331,7 @@ class AluSpec extends AnyFreeSpec with ChiselScalatestTester {
       (0x21212121L, 0x0000000EL, 0x48484848L),
       (0x21212121L, 0x0000001FL, 0x90909090L),
     )
-    test(new Alu(p))(testBinaryOp(_, 13.U, AluOp.ROL, test_cases))
+    simulate(new Alu(p))(testBinaryOp(_, 13.U, AluOp.ROL, test_cases))
   }
 
   "ROR" in {
@@ -379,6 +352,6 @@ class AluSpec extends AnyFreeSpec with ChiselScalatestTester {
       (0x21212121L, 0x0000000EL, 0x84848484L),
       (0x21212121L, 0x0000001FL, 0x42424242L),
     )
-    test(new Alu(p))(testBinaryOp(_, 13.U, AluOp.ROR, test_cases))
+    simulate(new Alu(p))(testBinaryOp(_, 13.U, AluOp.ROR, test_cases))
   }
 }

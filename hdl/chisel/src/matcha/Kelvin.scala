@@ -21,7 +21,8 @@ import bus.KelvinMemIO
 import common._
 import java.nio.file.{Paths, Files, StandardOpenOption}
 import java.nio.charset.{StandardCharsets}
-import _root_.circt.stage.ChiselStage
+import _root_.circt.stage.{ChiselStage,FirtoolOption}
+import chisel3.stage.ChiselGeneratorAnnotation
 
 object Kelvin {
   def apply(p: kelvin.Parameters): Kelvin = {
@@ -112,7 +113,11 @@ class Kelvin(p: kelvin.Parameters, moduleName: String) extends RawModule {
     l1i.io.flush    <> core.io.iflush
     l1i.io.volt_sel := volt_sel
 
-    core.io.ebus <> 0.U.asTypeOf(core.io.ebus)
+    // core.io.ebus <> 0.U.asTypeOf(core.io.ebus)
+    core.io.ebus.dbus.ready := false.B
+    core.io.ebus.dbus.rdata := 0.U.asTypeOf(core.io.ebus.dbus.rdata)
+    core.io.ebus.fault.valid := false.B
+    core.io.ebus.fault.bits := 0.U.asTypeOf(core.io.ebus.fault.bits)
 
     // -------------------------------------------------------------------------
     // Bus Mux.
@@ -176,8 +181,11 @@ object EmitKelvin extends App {
   // The core module must be created in the ChiselStage context. Use lazy here
   // so it's created in ChiselStage, but referencable afterwards.
   lazy val core = new Kelvin(p, moduleName)
+  val firtoolOpts = Array(
+      "-enable-layers=Verification",
+  )
   val systemVerilogSource = ChiselStage.emitSystemVerilog(
-    core, chiselArgs.toArray)
+    core, chiselArgs.toArray, firtoolOpts)
   // CIRCT adds a little extra data to the sv file at the end. Remove it as we
   // don't want it (it prevents the sv from being verilated).
   val resourcesSeparator =

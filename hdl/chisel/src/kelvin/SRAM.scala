@@ -58,30 +58,3 @@ class SRAM(p: Parameters, sramAddressWidth: Int) extends Module {
   io.sram.mask := maskData
   io.fabric.writeResp := true.B
 }
-
-class AxiSlave2SRAM(p: Parameters,
-                    sramAddressWidth: Int,
-                    axiReadAddrDelay: Int = 0,
-                    axiReadDataDelay: Int = 0) extends Module {
-  val io = IO(new Bundle{
-    val axi = Flipped(new AxiMasterIO(p.axi2AddrBits, p.axi2DataBits, p.axi2IdBits))
-    val sram = new SRAMIO(p, sramAddressWidth)
-    // Output indicating a transaction is progress (to force arbiter lock)
-    val txnInProgress = Output(Bool())
-    // Input to indicate that the arbiter is elsewhere -- gate our ready signals
-    val periBusy = Input(Bool())
-  })
-
-  val axi = Module(new AxiSlave(p))
-  io.axi.write <> axi.io.axi.write
-  // Optionally delay AXI read channel. This helps break up a long timing path
-  // from SRAM.
-  axi.io.axi.read.addr <> Queue(io.axi.read.addr, axiReadAddrDelay)
-  io.axi.read.data <> Queue(axi.io.axi.read.data, axiReadDataDelay)
-  axi.io.periBusy := io.periBusy
-  io.txnInProgress := axi.io.txnInProgress
-
-  val sram = Module(new SRAM(p, sramAddressWidth))
-  sram.io.fabric <> axi.io.fabric
-  sram.io.sram <> io.sram
-}

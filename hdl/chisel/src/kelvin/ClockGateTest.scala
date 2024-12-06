@@ -1,12 +1,15 @@
 package kelvin
 
 import chisel3._
+import chisel3.simulator.scalatest.ChiselSim
+import chisel3.simulator.scalatest.HasCliOptions
+import svsim.CommonSettingsModifications
+import svsim.CommonCompilationSettings
+import svsim.CommonCompilationSettings.VerilogPreprocessorDefine
 import chisel3.util._
-import chiseltest._
-import chiseltest.experimental.expose
 import org.scalatest.freespec.AnyFreeSpec
 
-class ClockGateTester extends Module {
+class ClockGateTester extends Module with RequireAsyncReset {
   val io = IO(new Bundle {
     val enable = Input(Bool())  // '1' passthrough, '0' disable.
     val counter = Output(UInt(32.W))
@@ -14,6 +17,7 @@ class ClockGateTester extends Module {
   val cg = Module(new ClockGate())
   cg.io.clk_i := clock
   cg.io.enable := io.enable
+  cg.io.te := false.B
 
   withClock(cg.io.clk_o) {
     val counter = RegInit(0.U(32.W))
@@ -22,19 +26,24 @@ class ClockGateTester extends Module {
   }
 }
 
-class ClockGateSpec extends AnyFreeSpec with ChiselScalatestTester {
+trait UseGeneric { this: HasCliOptions =>
+  override implicit def commonSettingsModifications: svsim.CommonSettingsModifications = (original: CommonCompilationSettings) =>
+  {
+    original.copy(
+      verilogPreprocessorDefines = original.verilogPreprocessorDefines :+ VerilogPreprocessorDefine("USE_GENERIC", "1")
+    )
+  }
+}
+
+class ClockGateSpec extends AnyFreeSpec with ChiselSim with UseGeneric {
   "Counting" in {
-    test(new ClockGateTester)
-    .withAnnotations(
-        Seq(
-            VerilatorBackendAnnotation,
-        )) { dut =>
-        dut.io.enable.poke(false.B)
+    simulate(new ClockGateTester) { dut =>
+        dut.io.enable.poke(false)
         dut.clock.step()
-        assertResult(0) { dut.io.counter.peekInt() }
-        dut.io.enable.poke(true.B)
+        dut.io.counter.expect(0)
+        dut.io.enable.poke(true)
         dut.clock.step()
-        assertResult(1) { dut.io.counter.peekInt() }
+        dut.io.counter.expect(1)
     }
   }
 }

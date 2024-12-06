@@ -68,7 +68,7 @@ class CircularBufferMulti[T <: Data](t: T, n: Int, capacity: Int) extends Module
     enqPtr := 0.U
     deqPtr := 0.U
     nEnqueued := 0.U
-  } otherwise {
+  } .otherwise {
     enqPtr := enqPtr + io.enqValid
     deqPtr := deqPtr + io.deqReady
     nEnqueued := nEnqueued + io.enqValid - io.deqReady

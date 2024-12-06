@@ -15,8 +15,8 @@
 package common
 
 import chisel3._
+import chisel3.simulator.scalatest.ChiselSim
 import chisel3.util._
-import chiseltest._
 import org.scalatest.freespec.AnyFreeSpec
 import chisel3.experimental.BundleLiterals._
 
@@ -37,79 +37,101 @@ class Fp32Tester extends Module {
 class Fp32CvtuTester extends Module {
   val io = IO(new Bundle {
     val int  = Input(UInt(32.W))
-    val fp = Output(new Fp32)
+    val fp_sign = Output(Bool())
+    val fp_mantissa = Output(UInt(23.W))
+    val fp_exponent = Output(UInt(8.W))
   })
 
-  io.fp := Fp32.fromInteger(io.int, false.B)
+  val fp = Wire(new Fp32)
+  fp := Fp32.fromInteger(io.int, false.B)
+  io.fp_sign := fp.sign
+  io.fp_mantissa := fp.mantissa
+  io.fp_exponent := fp.exponent
 }
 
 class Fp32CvtTester extends Module {
   val io = IO(new Bundle {
     val int  = Input(SInt(32.W))
-    val fp = Output(new Fp32)
+    val fp_sign = Output(Bool())
+    val fp_mantissa = Output(UInt(23.W))
+    val fp_exponent = Output(UInt(8.W))
   })
 
-  io.fp := Fp32.fromInteger(io.int.asUInt, true.B)
+  val fp = Wire(new Fp32)
+  fp := Fp32.fromInteger(io.int.asUInt, true.B)
+  io.fp_sign := fp.sign
+  io.fp_mantissa := fp.mantissa
+  io.fp_exponent := fp.exponent
 }
 
-class FpSpec extends AnyFreeSpec with ChiselScalatestTester {
+class FpSpec extends AnyFreeSpec with ChiselSim {
   "Zero" in {
-    test(new Fp32Tester()) { dut =>
+    simulate(new Fp32Tester()) { dut =>
       dut.io.in.poke(0.U)
-      assert(dut.io.is_zero.peekInt() == 1)
-      assert(dut.io.is_inf.peekInt() == 0)
-      assert(dut.io.is_nan.peekInt() == 0)
+      dut.io.is_zero.expect(1)
+      dut.io.is_inf.expect(0)
+      dut.io.is_nan.expect(0)
     }
   }
 
   "Inf" in {
-    test(new Fp32Tester()) { dut =>
+    simulate(new Fp32Tester()) { dut =>
       dut.io.in.poke(BigInt(
           "0" + "11111111" + "00000000000000000000000", 2))
-      assert(dut.io.is_zero.peekInt() == 0)
-      assert(dut.io.is_inf.peekInt() == 1)
-      assert(dut.io.is_nan.peekInt() == 0)
+      dut.io.is_zero.expect(0)
+      dut.io.is_inf.expect(1)
+      dut.io.is_nan.expect(0)
 
       dut.io.in.poke(BigInt(
           "1" + "11111111" + "00000000000000000000000", 2))
-      assert(dut.io.is_zero.peekInt() == 0)
-      assert(dut.io.is_inf.peekInt() == 1)
-      assert(dut.io.is_nan.peekInt() == 0)
+      dut.io.is_zero.expect(0)
+      dut.io.is_inf.expect(1)
+      dut.io.is_nan.expect(0)
     }
   }
 
   "Nan" in {
-    test(new Fp32Tester()) { dut =>
+    simulate(new Fp32Tester()) { dut =>
       dut.io.in.poke(BigInt(
           "0" + "11111111" + "00011000011000111000100", 2))
-      assert(dut.io.is_zero.peekInt() == 0)
-      assert(dut.io.is_inf.peekInt() == 0)
-      assert(dut.io.is_nan.peekInt() == 1)
+      dut.io.is_zero.expect(0)
+      dut.io.is_inf.expect(0)
+      dut.io.is_nan.expect(1)
 
       dut.io.in.poke(BigInt(
           "1" + "11111111" + "00011000011000111000100", 2))
-      assert(dut.io.is_zero.peekInt() == 0)
-      assert(dut.io.is_inf.peekInt() == 0)
-      assert(dut.io.is_nan.peekInt() == 1)
+      dut.io.is_zero.expect(0)
+      dut.io.is_inf.expect(0)
+      dut.io.is_nan.expect(1)
     }
   }
 
   "Convert UInt to Float" in {
-    test(new Fp32CvtuTester) { dut =>
+    simulate(new Fp32CvtuTester) { dut =>
       for (i <- 0 until 20000000 by 3000) {
         dut.io.int.poke(i)
         dut.clock.step()
-        assertResult(i.toFloat) { PeekFloat(dut.io.fp) }
+        assertResult(i.toFloat) {
+          PeekFloat(
+            dut.io.fp_sign.peek().litValue.toInt,
+            dut.io.fp_exponent.peek().litValue.toInt,
+            dut.io.fp_mantissa.peek().litValue.toInt)
+          }
       }
     }
   }
 
   "Convert SInt to Float" in {
-    test(new Fp32CvtTester) { dut =>
+    simulate(new Fp32CvtTester) { dut =>
       for (i <- -20000001 until 20000000 by 3000) {
         dut.io.int.poke(i)
         dut.clock.step()
-        assertResult(i.toFloat) { PeekFloat(dut.io.fp) }
+        assertResult(i.toFloat) {
+          PeekFloat(
+            dut.io.fp_sign.peek().litValue.toInt,
+            dut.io.fp_exponent.peek().litValue.toInt,
+            dut.io.fp_mantissa.peek().litValue.toInt)
+          }
       }
     }
   }

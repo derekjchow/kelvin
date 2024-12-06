@@ -19,7 +19,8 @@ import chisel3.util._
 
 import bus.AxiMasterIO
 import common._
-import _root_.circt.stage.ChiselStage
+import _root_.circt.stage.{ChiselStage,FirtoolOption}
+import chisel3.stage.ChiselGeneratorAnnotation
 
 object L1DCache {
   def apply(p: Parameters): L1DCache = {
@@ -707,10 +708,16 @@ class L1DCacheBank(p: Parameters) extends Module {
 
 object EmitL1DCache extends App {
   val p = new Parameters
-  ChiselStage.emitSystemVerilogFile(new L1DCache(p), args)
+  (new ChiselStage).execute(
+    Array("--target", "systemverilog") ++ args,
+    Seq(ChiselGeneratorAnnotation(() => new L1DCache(p))) ++ Seq(FirtoolOption("-enable-layers=Verification"))
+  )
 }
 
 object EmitL1DCacheBank extends App {
   val p = new Parameters
-  ChiselStage.emitSystemVerilogFile(new L1DCacheBank(p), args)
+  (new ChiselStage).execute(
+    Array("--target", "systemverilog") ++ args,
+    Seq(ChiselGeneratorAnnotation(() => new L1DCacheBank(p))) ++ Seq(FirtoolOption("-enable-layers=Verification"))
+  )
 }

@@ -15,12 +15,11 @@
 package kelvin
 
 import chisel3._
+import chisel3.simulator.scalatest.ChiselSim
 import chisel3.util._
-import chiseltest._
-import chiseltest.experimental.expose
 import org.scalatest.freespec.AnyFreeSpec
 
-class DBus2AxiSpec extends AnyFreeSpec with ChiselScalatestTester {
+class DBus2AxiSpec extends AnyFreeSpec with ChiselSim {
   var p = new Parameters
 
   def rotateLeft(num: BigInt, shift: Int, width: Int): BigInt = {
@@ -48,7 +47,7 @@ class DBus2AxiSpec extends AnyFreeSpec with ChiselScalatestTester {
 
   class Case(val addr: Int, val size: Int, val data: BigInt, val mask: Long) {}
   "Unaligned Write then Read" in {
-    test(new DBus2AxiV1(p)) { dut =>
+    simulate(new DBus2AxiV1(p)) { dut =>
       val cases = Array(
         new Case(0x00000001, 4, 0x11223344, 0x0000001EL),
         new Case(0x00000002, 4, 0x11223344, 0x0000003CL),
@@ -112,13 +111,13 @@ class DBus2AxiSpec extends AnyFreeSpec with ChiselScalatestTester {
           // Receive master write addr
           val (waddr, wsize, wlen) = {
             dut.io.axi.write.addr.ready.poke(true.B)
-            while (dut.io.axi.write.addr.valid.peekInt() != 1 || dut.io.axi.write.addr.ready.peekInt() != 1) {
+            while (dut.io.axi.write.addr.valid.peek().litValue != 1 || dut.io.axi.write.addr.ready.peek().litValue != 1) {
               dut.clock.step()
             }
             val rv = (
-              dut.io.axi.write.addr.bits.addr.peekInt(),
-              dut.io.axi.write.addr.bits.size.peekInt(),
-              dut.io.axi.write.addr.bits.len.peekInt(),
+              dut.io.axi.write.addr.bits.addr.peek().litValue,
+              dut.io.axi.write.addr.bits.size.peek().litValue,
+              dut.io.axi.write.addr.bits.len.peek().litValue,
             )
             dut.clock.step()
             dut.io.axi.write.addr.ready.poke(false.B)
@@ -132,13 +131,13 @@ class DBus2AxiSpec extends AnyFreeSpec with ChiselScalatestTester {
           // Receive master write data
           val (wdata, wstrb) = {
             dut.io.axi.write.data.ready.poke(true.B)
-            while (dut.io.axi.write.data.valid.peekInt() != 1 || dut.io.axi.write.data.ready.peekInt() != 1) {
+            while (dut.io.axi.write.data.valid.peek().litValue != 1 || dut.io.axi.write.data.ready.peek().litValue != 1) {
               dut.clock.step()
             }
-            assertResult(1) { dut.io.axi.write.data.bits.last.peekInt() }
+            dut.io.axi.write.data.bits.last.expect(1)
             val rv = (
-              dut.io.axi.write.data.bits.data.peekInt(),
-              dut.io.axi.write.data.bits.strb.peekInt(),
+              dut.io.axi.write.data.bits.data.peek().litValue,
+              dut.io.axi.write.data.bits.strb.peek().litValue,
             )
             dut.clock.step()
             dut.io.axi.write.data.ready.poke(false.B)
@@ -153,11 +152,11 @@ class DBus2AxiSpec extends AnyFreeSpec with ChiselScalatestTester {
             dut.io.axi.write.resp.valid.poke(true.B)
             dut.io.axi.write.resp.bits.id.poke(0.U)
             dut.io.axi.write.resp.bits.resp.poke(0.U)
-            while (dut.io.axi.write.resp.ready.peekInt() != 1 || dut.io.axi.write.resp.valid.peekInt() != 1) {
+            while (dut.io.axi.write.resp.ready.peek().litValue != 1 || dut.io.axi.write.resp.valid.peek().litValue != 1) {
               dut.clock.step()
             }
             if (i == 1) {
-              assertResult(1) { dut.io.dbus.ready.peekInt() }
+              assertResult(1) { dut.io.dbus.ready.peek().litValue }
             }
             dut.clock.step()
             if (i == 1) {
@@ -167,7 +166,7 @@ class DBus2AxiSpec extends AnyFreeSpec with ChiselScalatestTester {
           }
         }
 
-        assertResult(0) { dut.io.dbus.ready.peekInt() }
+        assertResult(0) { dut.io.dbus.ready.peek().litValue }
         dut.io.dbus.valid.poke(true.B)
         dut.io.dbus.addr.poke(c.addr.U)
         dut.io.dbus.write.poke(false.B)
@@ -178,15 +177,15 @@ class DBus2AxiSpec extends AnyFreeSpec with ChiselScalatestTester {
         for (txn <- 0 until readTxnCount) {
           // Receive read addr
           val (len, addr, size) = {
-            assertResult(0) { dut.io.axi.read.addr.ready.peekInt() }
+            assertResult(0) { dut.io.axi.read.addr.ready.peek().litValue }
             dut.io.axi.read.addr.ready.poke(true.B)
-            while (dut.io.axi.read.addr.valid.peekInt() != 1 || dut.io.axi.read.addr.ready.peekInt() != 1) {
+            while (dut.io.axi.read.addr.valid.peek().litValue != 1 || dut.io.axi.read.addr.ready.peek().litValue != 1) {
               dut.clock.step()
             }
             val rv = (
-              dut.io.axi.read.addr.bits.len.peekInt(),
-              dut.io.axi.read.addr.bits.addr.peekInt(),
-              dut.io.axi.read.addr.bits.size.peekInt(),
+              dut.io.axi.read.addr.bits.len.peek().litValue,
+              dut.io.axi.read.addr.bits.addr.peek().litValue,
+              dut.io.axi.read.addr.bits.size.peek().litValue,
             )
             dut.clock.step()
             dut.io.axi.read.addr.ready.poke(false.B)
@@ -199,7 +198,7 @@ class DBus2AxiSpec extends AnyFreeSpec with ChiselScalatestTester {
 
           // Transmit read data
           {
-            assertResult(0) { dut.io.axi.read.data.valid.peekInt() }
+            assertResult(0) { dut.io.axi.read.data.valid.peek().litValue }
             for (i <- 0 to (len).toInt) {
               dut.io.axi.read.data.valid.poke(true.B)
               dut.io.axi.read.data.bits.id.poke(0.U)
@@ -207,10 +206,10 @@ class DBus2AxiSpec extends AnyFreeSpec with ChiselScalatestTester {
               dut.io.axi.read.data.bits.resp.poke(0.U) // OKAY
               dut.io.axi.read.data.bits.last.poke(if (i == len) { 1 } else { 0 })
               if (i == len && txn == (readTxnCount - 1)) {
-                assertResult(1) { dut.io.dbus.ready.peekInt() }
+                assertResult(1) { dut.io.dbus.ready.peek().litValue }
               }
               dut.clock.step()
-              while (dut.io.axi.read.data.valid.peekInt() != 1 || dut.io.axi.read.data.ready.peekInt() != 1) {
+              while (dut.io.axi.read.data.valid.peek().litValue != 1 || dut.io.axi.read.data.ready.peek().litValue != 1) {
                 dut.clock.step()
               }
               if (i == len && txn == (readTxnCount - 1)) {
@@ -228,7 +227,7 @@ class DBus2AxiSpec extends AnyFreeSpec with ChiselScalatestTester {
   }
 
   "Aligned Write then Read" in {
-    test(new DBus2AxiV1(p)) { dut =>
+    simulate(new DBus2AxiV1(p)) { dut =>
       val cases = Array(
         new Case(0x00000000, 4, 0x11223344, 0x0000000fL),
         new Case(0x00000004, 4, 0x22334455, 0x000000f0L),
@@ -308,13 +307,13 @@ class DBus2AxiSpec extends AnyFreeSpec with ChiselScalatestTester {
 
         val (waddr, wsize, wlen) = {
           dut.io.axi.write.addr.ready.poke(true.B)
-          while (dut.io.axi.write.addr.valid.peekInt() != 1 || dut.io.axi.write.addr.ready.peekInt() != 1) {
+          while (dut.io.axi.write.addr.valid.peek().litValue != 1 || dut.io.axi.write.addr.ready.peek().litValue != 1) {
             dut.clock.step()
           }
           val rv = (
-            dut.io.axi.write.addr.bits.addr.peekInt(),
-            dut.io.axi.write.addr.bits.size.peekInt(),
-            dut.io.axi.write.addr.bits.len.peekInt(),
+            dut.io.axi.write.addr.bits.addr.peek().litValue,
+            dut.io.axi.write.addr.bits.size.peek().litValue,
+            dut.io.axi.write.addr.bits.len.peek().litValue,
           )
           dut.clock.step()
           dut.io.axi.write.addr.ready.poke(false.B)
@@ -327,13 +326,13 @@ class DBus2AxiSpec extends AnyFreeSpec with ChiselScalatestTester {
 
         val (wdata, wstrb) = {
           dut.io.axi.write.data.ready.poke(true.B)
-          while (dut.io.axi.write.data.valid.peekInt() != 1 || dut.io.axi.write.data.ready.peekInt() != 1) {
+          while (dut.io.axi.write.data.valid.peek().litValue != 1 || dut.io.axi.write.data.ready.peek().litValue != 1) {
             dut.clock.step()
           }
-          assertResult(1) { dut.io.axi.write.data.bits.last.peekInt() }
+          assertResult(1) { dut.io.axi.write.data.bits.last.peek().litValue }
           val rv = (
-            dut.io.axi.write.data.bits.data.peekInt(),
-            dut.io.axi.write.data.bits.strb.peekInt(),
+            dut.io.axi.write.data.bits.data.peek().litValue,
+            dut.io.axi.write.data.bits.strb.peek().litValue,
           )
           dut.clock.step()
           dut.io.axi.write.data.ready.poke(false.B)
@@ -347,16 +346,16 @@ class DBus2AxiSpec extends AnyFreeSpec with ChiselScalatestTester {
           dut.io.axi.write.resp.valid.poke(true.B)
           dut.io.axi.write.resp.bits.id.poke(0.U)
           dut.io.axi.write.resp.bits.resp.poke(0.U)
-          while (dut.io.axi.write.resp.ready.peekInt() != 1 || dut.io.axi.write.resp.valid.peekInt() != 1) {
+          while (dut.io.axi.write.resp.ready.peek().litValue != 1 || dut.io.axi.write.resp.valid.peek().litValue != 1) {
             dut.clock.step()
           }
-          assertResult(1) { dut.io.dbus.ready.peekInt() }
+          assertResult(1) { dut.io.dbus.ready.peek().litValue }
           dut.clock.step()
           dut.io.dbus.valid.poke(false.B)
           dut.io.axi.write.resp.valid.poke(false.B)
         }
 
-        assertResult(0) { dut.io.dbus.ready.peekInt() }
+        assertResult(0) { dut.io.dbus.ready.peek().litValue }
         dut.io.dbus.valid.poke(true.B)
         dut.io.dbus.addr.poke(c.addr.U)
         dut.io.dbus.write.poke(false.B)
@@ -364,15 +363,15 @@ class DBus2AxiSpec extends AnyFreeSpec with ChiselScalatestTester {
         dut.clock.step()
 
         val (len, addr, size) = {
-          assertResult(0) { dut.io.axi.read.addr.ready.peekInt() }
+          assertResult(0) { dut.io.axi.read.addr.ready.peek().litValue }
           dut.io.axi.read.addr.ready.poke(true.B)
-          while (dut.io.axi.read.addr.valid.peekInt() != 1 || dut.io.axi.read.addr.ready.peekInt() != 1) {
+          while (dut.io.axi.read.addr.valid.peek().litValue != 1 || dut.io.axi.read.addr.ready.peek().litValue != 1) {
             dut.clock.step()
           }
           val rv = (
-            dut.io.axi.read.addr.bits.len.peekInt(),
-            dut.io.axi.read.addr.bits.addr.peekInt(),
-            dut.io.axi.read.addr.bits.size.peekInt(),
+            dut.io.axi.read.addr.bits.len.peek().litValue,
+            dut.io.axi.read.addr.bits.addr.peek().litValue,
+            dut.io.axi.read.addr.bits.size.peek().litValue,
           )
           dut.clock.step()
           dut.io.axi.read.addr.ready.poke(false.B)
@@ -384,16 +383,16 @@ class DBus2AxiSpec extends AnyFreeSpec with ChiselScalatestTester {
         assertResult(addr) { c.addr }
 
         {
-          assertResult(0) { dut.io.axi.read.data.valid.peekInt() }
+          assertResult(0) { dut.io.axi.read.data.valid.peek().litValue }
           for (i <- 0 to (len).toInt) {
-            dut.io.axi.read.data.valid.poke(true.B)
-            dut.io.axi.read.data.bits.id.poke(0.U)
-            dut.io.axi.read.data.bits.data.poke(0.U)
-            dut.io.axi.read.data.bits.resp.poke(0.U) // OKAY
-            dut.io.axi.read.data.bits.last.poke(1.U)
-            assertResult(1) { dut.io.dbus.ready.peekInt() }
+            dut.io.axi.read.data.valid.poke(true)
+            dut.io.axi.read.data.bits.id.poke(0)
+            dut.io.axi.read.data.bits.data.poke(0)
+            dut.io.axi.read.data.bits.resp.poke(0) // OKAY
+            dut.io.axi.read.data.bits.last.poke(true)
+            assertResult(1) { dut.io.dbus.ready.peek().litValue }
             dut.clock.step()
-            while (dut.io.axi.read.data.valid.peekInt() != 1 || dut.io.axi.read.data.ready.peekInt() != 1) {
+            while (dut.io.axi.read.data.valid.peek().litValue != 1 || dut.io.axi.read.data.ready.peek().litValue != 1) {
               dut.clock.step()
             }
             dut.io.dbus.valid.poke(false.B)
