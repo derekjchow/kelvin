@@ -1,8 +1,8 @@
 module openFifo4_flopped_ptr(/*AUTOARG*/
    // Outputs
-   outData, full, empty, d0, d1, d2, d3, dValid, nxtRdPtr,
+   fifo_outData, fifo_full, fifo_empty, d0, d1, d2, d3, dValid, dPtr,
    // Inputs
-   clk, rst_n, inData, push, pop
+   clk, rst_n, fifo_inData, single_push, single_pop
    );
    
   parameter DWIDTH = 32,
@@ -13,111 +13,100 @@ module openFifo4_flopped_ptr(/*AUTOARG*/
   input		      clk;
   input		      rst_n;
 
-  input	 [DWIDTH-1:0] inData;
-  input		      push;
-  input		      pop;
+  input	 [DWIDTH-1:0] fifo_inData;
+  input		      single_push;
+  input		      single_pop;
 
-  output [DWIDTH-1:0] outData;
-  output	      full;
-  output	      empty;
+  output [DWIDTH-1:0] fifo_outData;
+  output	      fifo_full;
+  output	      fifo_empty;
 
-  //&perl for $i (0 .. 3) {&printl "  output [DWIDTH-1:0] d$i;\n";}
-  //Begin Perl:
   output [DWIDTH-1:0] d0;
   output [DWIDTH-1:0] d1;
   output [DWIDTH-1:0] d2;
   output [DWIDTH-1:0] d3;
-  //End Perl:
   
   output [3:0] dValid;
-  output [AWIDTH-1:0] nxtRdPtr;
+  output [AWIDTH-1:0] dPtr;
   
   // Write pointer
   wire [AWIDTH-1:0] wrPtr;
-  wire [AWIDTH-1:0] nxtWrPtr = push ? wrPtr + 1'b1 : wrPtr;
+  wire [AWIDTH-1:0] nxtWrPtr = single_push ? wrPtr + 1'b1 : wrPtr;
 
-  edff #(AWIDTH) wrPtrReg (.q(wrPtr), .clk(clk), .rst_n(rst_n), .d(nxtWrPtr), .en(push));
+  edff #(AWIDTH) wrPtrReg (.q(wrPtr), .clk(clk), .rst_n(rst_n), .d(nxtWrPtr), .en(single_push));
   // Read pointer
   wire [AWIDTH-1:0] rdPtr;
-  wire [AWIDTH-1:0] nxtRdPtr = pop ? rdPtr + 1'b1 : rdPtr;
+  wire [AWIDTH-1:0] nxtRdPtr = single_pop ? rdPtr + 1'b1 : rdPtr;
 
-  edff #(AWIDTH) rdPtrReg (.q(rdPtr), .clk(clk), .rst_n(rst_n), .d(nxtRdPtr), .en(pop));
+  edff #(AWIDTH) rdPtrReg (.q(rdPtr), .clk(clk), .rst_n(rst_n), .d(nxtRdPtr), .en(single_pop));
+
+  assign dPtr = nxtRdPtr;
   // Flag generation
-
-  wire empty;
   reg nxtLempty;
 
-  always @(pop or nxtRdPtr or nxtWrPtr or empty)
-    if ((nxtWrPtr == nxtRdPtr) & pop)
+  always @(*)
+    if ((nxtWrPtr == nxtRdPtr) & single_pop)
       nxtLempty = 1'b1;
     else if (nxtWrPtr != nxtRdPtr)
       nxtLempty = 1'b0;
     else
-      nxtLempty = empty;
+      nxtLempty = fifo_empty;
 
-  dff #(1) emptyReg (.q(empty), .clk(clk), .rst_n(rst_n), .d(nxtLempty));
+  dff #(1) emptyReg (.q(fifo_empty), .clk(clk), .rst_n(rst_n), .d(nxtLempty));
 
-  wire full;
   reg nxtLfull;
 
-  always @(push or nxtRdPtr or nxtWrPtr or full)
-    if ((nxtWrPtr == nxtRdPtr) & push)
+  always @(*)
+    if ((nxtWrPtr == nxtRdPtr) & single_push)
       nxtLfull = 1'b1;
     else if (nxtWrPtr != nxtRdPtr)
       nxtLfull = 1'b0;
     else
-      nxtLfull = full;
+      nxtLfull = fifo_full;
 
-  dff #(1) fullReg (.q(full), .clk(clk), .rst_n(rst_n), .d(nxtLfull));
+  dff #(1) fullReg (.q(fifo_full), .clk(clk), .rst_n(rst_n), .d(nxtLfull));
 
   // Write enable decodes
-
-  wire en0 = push & (wrPtr == 2'd0);
-  wire en1 = push & (wrPtr == 2'd1);
-  wire en2 = push & (wrPtr == 2'd2);
-  wire en3 = push & (wrPtr == 2'd3);
+  wire en0 = single_push & (wrPtr == 2'd0);
+  wire en1 = single_push & (wrPtr == 2'd1);
+  wire en2 = single_push & (wrPtr == 2'd2);
+  wire en3 = single_push & (wrPtr == 2'd3);
 
   // Data registers
-
   wire [DWIDTH-1:0] d0;
   wire [DWIDTH-1:0] d1;
   wire [DWIDTH-1:0] d2;
   wire [DWIDTH-1:0] d3;
 
-  edff #(DWIDTH) d0Reg (.q(d0), .clk(clk), .rst_n(rst_n), .en(en0), .d(inData));
-  edff #(DWIDTH) d1Reg (.q(d1), .clk(clk), .rst_n(rst_n), .en(en1), .d(inData));
-  edff #(DWIDTH) d2Reg (.q(d2), .clk(clk), .rst_n(rst_n), .en(en2), .d(inData));
-  edff #(DWIDTH) d3Reg (.q(d3), .clk(clk), .rst_n(rst_n), .en(en3), .d(inData));
+  edff #(DWIDTH) d0Reg (.q(d0), .clk(clk), .rst_n(rst_n), .en(en0), .d(fifo_inData));
+  edff #(DWIDTH) d1Reg (.q(d1), .clk(clk), .rst_n(rst_n), .en(en1), .d(fifo_inData));
+  edff #(DWIDTH) d2Reg (.q(d2), .clk(clk), .rst_n(rst_n), .en(en2), .d(fifo_inData));
+  edff #(DWIDTH) d3Reg (.q(d3), .clk(clk), .rst_n(rst_n), .en(en3), .d(fifo_inData));
 
   // Read output
+  reg [DWIDTH-1:0] fifo_outData;
 
-  reg [DWIDTH-1:0] outData;
-
-  always @(rdPtr or d0 or d1 or d2 or d3)
+  always @(*)
     case (rdPtr)
-      2'd0 : outData = d0;
-      2'd1 : outData = d1;
-      2'd2 : outData = d2;
-      2'd3 : outData = d3;
-      default : outData = ZERO;
+      2'd0 : fifo_outData = d0;
+      2'd1 : fifo_outData = d1;
+      2'd2 : fifo_outData = d2;
+      2'd3 : fifo_outData = d3;
+      default : fifo_outData = ZERO;
     endcase
 
   
   // Valid signal per data
-  //&dren_reg 16,0 w-dValid r-dValidN w-updateDValid
-  //Begin Perl:
-  wire [4-1:0] dValid;
   reg  [4-1:0] dValidN;
   wire updateDValid;
   edff  #(4) dValidReg (.q(dValid), .clk(clk), .d(dValidN), .rst_n(rst_n), .en(updateDValid));
-  //End Perl:
   
-  assign updateDValid = push | pop;
+  assign updateDValid = single_push | single_pop;
   
-  always @(/*AUTOSENSE*/dValid or pop or push or rdPtr or wrPtr) begin
+  always @(*) begin
     dValidN = dValid;
-    if (push) dValidN[wrPtr] = 1'b1;
-    if (pop)  dValidN[rdPtr] = 1'b0;
+    if (single_push) dValidN[wrPtr] = 1'b1;
+    if (single_pop)  dValidN[rdPtr] = 1'b0;
   end
 
 
@@ -128,10 +117,10 @@ module openFifo4_flopped_ptr(/*AUTOARG*/
 `ifdef ASSERT_ON
 
   // Test for overflow
-  assert_never #(0, 0, "Fifo Overflow") fifo_overflow (clk, rst_n, push & full);
+  assert_never #(0, 0, "Fifo Overflow") fifo_overflow (clk, rst_n, single_push & fifo_full);
 
   // Test for underflow
-  assert_never #(0, 0, "Fifo Underflow") fifo_underflow (clk, rst_n, pop & empty);
+  assert_never #(0, 0, "Fifo Underflow") fifo_underflow (clk, rst_n, single_pop & fifo_empty);
 
 `endif
 

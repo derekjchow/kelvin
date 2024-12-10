@@ -1,6 +1,6 @@
-module fifo_flopped_4w2r(/*AUTOARG*/
+module fifo_flopped_4w2r(
    // Outputs
-   outData0, outData1, fifo_halfFull, fifo_full, fifo_1left_to_full,
+   outData0, outData1, fifo_full, fifo_1left_to_full,
    fifo_2left_to_full, fifo_3left_to_full, fifo_empty,
    fifo_1left_to_empty, fifo_idle,
    // Inputs
@@ -10,7 +10,7 @@ module fifo_flopped_4w2r(/*AUTOARG*/
 
 parameter DWIDTH = 32;
 parameter DEPTH = 8;
-parameter DEPTH_SUB = 4;//half of DEPTH
+parameter DEPTH_SUB = DEPTH/4;//half of DEPTH
 
 // global signal
   input clk;
@@ -31,7 +31,6 @@ parameter DEPTH_SUB = 4;//half of DEPTH
   input logic  pop1;
   output logic [DWIDTH-1:0] outData1;
 // fifo status
-  output logic fifo_halfFull;
   output logic fifo_full;
   output logic fifo_1left_to_full;
   output logic fifo_2left_to_full;
@@ -65,10 +64,6 @@ wire empty0_int;
 wire empty1_int;
 wire empty2_int;
 wire empty3_int;
-wire halfFull0_int;
-wire halfFull1_int;
-wire halfFull2_int;
-wire halfFull3_int;
 wire idle0_int;
 wire idle1_int;
 wire idle2_int;
@@ -173,7 +168,6 @@ assign fifo_3left_to_full = (!full3_int && !full2_int && !full1_int &&  full0_in
                             (!full3_int &&  full2_int && !full1_int && !full0_int) || 
                             (!full3_int && !full2_int &&  full1_int && !full0_int);
 
-assign fifo_halfFull = halfFull3_int && halfFull2_int && halfFull1_int && halfFull0_int;
 
 // Empty flag
 assign fifo_empty = empty3_int && empty2_int && empty1_int && empty0_int;
@@ -187,65 +181,61 @@ assign fifo_idle = idle3_int && idle2_int && idle1_int && idle0_int;
 // Entry 0, 4, 8, 12 ...
 fifo_flopped #(DWIDTH,DEPTH_SUB) fifo_inst0 (
   //Outputs
-  .outData(outData0_int), 
-  .full(full0_int), 
-  .empty(empty0_int), 
-  .halfFull(halfFull0_int), 
-  .idle(idle0_int),
+  .fifo_outData(outData0_int), 
+  .fifo_full(full0_int), 
+  .fifo_empty(empty0_int), 
+  .fifo_idle(idle0_int),
   //Inputs
   .clk(clk), 
   .rst_n(rst_n), 
-  .inData(inData0_int), 
-  .push(push0_int), 
-  .pop(pop0_int));
+  .fifo_inData(inData0_int), 
+  .single_push(push0_int), 
+  .single_pop(pop0_int));
 
 // Fifo inst 1
 // Entry 1, 5, 9, 13 ...
 fifo_flopped #(DWIDTH,DEPTH_SUB) fifo_inst1 (
   //Outputs
-  .outData(outData1_int), 
-  .full(full1_int), 
-  .empty(empty1_int), 
-  .halfFull(halfFull1_int), 
-  .idle(idle1_int),
+  .fifo_outData(outData1_int), 
+  .fifo_full(full1_int), 
+  .fifo_empty(empty1_int), 
+  .fifo_idle(idle1_int),
   //Inputs
   .clk(clk), 
   .rst_n(rst_n), 
-  .inData(inData1_int), 
-  .push(push1_int), 
-  .pop(pop1_int));
+  .fifo_inData(inData1_int), 
+  .single_push(push1_int), 
+  .single_pop(pop1_int));
 
 // Fifo inst 2
 // Entry 2, 6, 10, 14 ...
 fifo_flopped #(DWIDTH,DEPTH_SUB) fifo_inst2 (
   //Outputs
-  .outData(outData2_int), 
-  .full(full2_int), 
-  .empty(empty2_int), 
-  .halfFull(halfFull2_int), 
-  .idle(idle2_int),
+  .fifo_outData(outData2_int), 
+  .fifo_full(full2_int), 
+  .fifo_empty(empty2_int), 
+  .fifo_idle(idle2_int),
   //Inputs
   .clk(clk), 
   .rst_n(rst_n), 
-  .inData(inData2_int), 
-  .push(push2_int), 
-  .pop(pop2_int));
+  .fifo_inData(inData2_int), 
+  .single_push(push2_int), 
+  .single_pop(pop2_int));
 
 // Fifo inst 3
 // Entry 3, 7, 11, 15 ...
 fifo_flopped #(DWIDTH,DEPTH_SUB) fifo_inst3 (
   //Outputs
-  .outData(outData3_int), 
-  .full(full3_int), 
-  .empty(empty3_int), 
-  .halfFull(halfFull3_int), 
-  .idle(idle3_int),
+  .fifo_outData(outData3_int), 
+  .fifo_full(full3_int), 
+  .fifo_empty(empty3_int), 
+  .fifo_idle(idle3_int),
   //Inputs
   .clk(clk), 
   .rst_n(rst_n), 
-  .inData(inData3_int), 
-  .push(push3_int), 
-  .pop(pop3_int));
+  .fifo_inData(inData3_int), 
+  .single_push(push3_int), 
+  .single_pop(pop3_int));
 
 
 endmodule

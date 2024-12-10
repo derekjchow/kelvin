@@ -120,41 +120,41 @@ assign dValid = {dValid1_int[3],dValid0_int[3],
 // Entry 0, 2, 4, 6, 8, ...
 openFifo4_flopped_ptr #(DWIDTH) fifo_even (
   //Outputs
-  .outData(outData0_int), 
-  .full(full0_int), 
-  .empty(empty0_int), 
+  .fifo_outData(outData0_int), 
+  .fifo_full(full0_int), 
+  .fifo_empty(empty0_int), 
   .d0(d0_0_int),
   .d1(d1_0_int),
   .d2(d2_0_int),
   .d3(d3_0_int),
-  .nxtRdPtr(nxtRdPtr0_int),
+  .dPtr(nxtRdPtr0_int),
   .dValid(dValid0_int),
   //Inputs
   .clk(clk), 
   .rst_n(rst_n), 
-  .inData(inData0_int), 
-  .push(push0_int), 
-  .pop(pop0_int));
+  .fifo_inData(inData0_int), 
+  .single_push(push0_int), 
+  .single_pop(pop0_int));
 
 // Fifo inst odd
 // Entry 1, 3, 5, 7, 9, ...
 openFifo4_flopped_ptr #(DWIDTH) fifo_odd (
   //Outputs
-  .outData(outData1_int), 
-  .full(full1_int), 
-  .empty(empty1_int), 
+  .fifo_outData(outData1_int), 
+  .fifo_full(full1_int), 
+  .fifo_empty(empty1_int), 
   .d0(d0_1_int),
   .d1(d1_1_int),
   .d2(d2_1_int),
   .d3(d3_1_int),
-  .nxtRdPtr(nxtRdPtr1_int),
+  .dPtr(nxtRdPtr1_int),
   .dValid(dValid1_int),
   //Inputs
   .clk(clk), 
   .rst_n(rst_n), 
-  .inData(inData1_int), 
-  .push(push1_int), 
-  .pop(pop1_int));
+  .fifo_inData(inData1_int), 
+  .single_push(push1_int), 
+  .single_pop(pop1_int));
 
 
 endmodule

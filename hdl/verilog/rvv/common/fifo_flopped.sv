@@ -1,13 +1,12 @@
-module fifo_flopped(/*AUTOARG*/
+module fifo_flopped(
    // Outputs
-   outData, full, empty, halfFull, idle,
+   fifo_outData, fifo_full, fifo_empty, fifo_idle,
    // Inputs
-   clk, rst_n, inData, push, pop
+   clk, rst_n, fifo_inData, single_push, single_pop
    );
    
     parameter DWIDTH = 32;
     parameter DEPTH = 16;
-    parameter HALF_FULL = 0;
 
     function integer clogb2;
         input [31:0] depth;
@@ -23,20 +22,19 @@ module fifo_flopped(/*AUTOARG*/
     input clk;
     input rst_n;
 
-    input [DWIDTH-1:0] inData;
-    input push;
-    input pop;
+    input [DWIDTH-1:0] fifo_inData;
+    input single_push;
+    input single_pop;
 
-    output [DWIDTH-1:0] outData;
-    output full;
-    output empty;
-    output halfFull;
-    output idle;
+    output [DWIDTH-1:0] fifo_outData;
+    output fifo_full;
+    output fifo_empty;
+    output fifo_idle;
 
     // Write pointer
     wire [AWIDTH-1:0] wrPtr;
     wire [AWIDTH-1:0] nxtWrPtr;
-    assign nxtWrPtr = push 
+    assign nxtWrPtr = single_push 
                                  ? (
                                     ((wrPtr==(DEPTH-1)) && (DEPTH != 2**AWIDTH)) 
                                     ? 4'd0 
@@ -44,7 +42,7 @@ module fifo_flopped(/*AUTOARG*/
                                    ) 
                                  : wrPtr;
 
-    edff #(AWIDTH) wrPtrReg (.q(wrPtr), .clk(clk), .rst_n(rst_n), .d(nxtWrPtr), .en(push));
+    edff #(AWIDTH) wrPtrReg (.q(wrPtr), .clk(clk), .rst_n(rst_n), .d(nxtWrPtr), .en(single_push));
 
     // Read pointer
     wire [AWIDTH-1:0] rdPtr;
@@ -55,18 +53,18 @@ module fifo_flopped(/*AUTOARG*/
                                    : rdPtr + 1'b1
                                  );
     wire [AWIDTH-1:0] nxtRdPtr;
-    assign nxtRdPtr = pop ? rdPtr_p1 : rdPtr;
+    assign nxtRdPtr = single_pop ? rdPtr_p1 : rdPtr;
 
-    edff #(AWIDTH) rdPtrReg (.q(rdPtr), .clk(clk), .rst_n(rst_n), .d(nxtRdPtr), .en(pop));
+    edff #(AWIDTH) rdPtrReg (.q(rdPtr), .clk(clk), .rst_n(rst_n), .d(nxtRdPtr), .en(single_pop));
 
     // Write enable decodes
     wire [DEPTH-1:0] en;
-    assign en = push ? ({{(DEPTH-1){1'b0}},1'b1} << wrPtr) : {DEPTH{1'b0}};   
+    assign en = single_push ? ({{(DEPTH-1){1'b0}},1'b1} << wrPtr) : {DEPTH{1'b0}};   
 
     // Data registers
 
     wire [DEPTH*DWIDTH-1:0] d_in;
-    assign d_in = {DEPTH{inData}};  
+    assign d_in = {DEPTH{fifo_inData}};  
     wire [DEPTH*DWIDTH-1:0] d_out;  
     edff_2d #(
     .REGISTER_WIDTH(DWIDTH),
@@ -75,33 +73,21 @@ module fifo_flopped(/*AUTOARG*/
     dReg (.q(d_out), .clk(clk), .rst_n(rst_n), .en(en), .d(d_in));    
 
     // Read output    
+    assign fifo_outData = d_out[DWIDTH*rdPtr+DWIDTH-1 -: DWIDTH];
 
-    wire [DWIDTH-1:0] outDataCurr;
-    assign outDataCurr = d_out[DWIDTH*rdPtr+DWIDTH-1 -: DWIDTH];    
-
-    wire [DWIDTH-1:0] outData;
-    assign outData = outDataCurr;
-
-    // Idle.
+    // fifo_idle.
 
     parameter AWIDTH_PLUS1 = AWIDTH+1;
-    //&dren_reg AWIDTH_PLUS1,0 w-entryCounter w-entryCounterN w-count
-    //Begin Perl:
     wire [AWIDTH_PLUS1-1:0] entryCounter;
     wire [AWIDTH_PLUS1-1:0] entryCounterN;
     wire count;
     edff  #(AWIDTH_PLUS1,0) entryCounterReg (.q(entryCounter), .clk(clk), .d(entryCounterN), .rst_n(rst_n), .en(count));
-    //End Perl:
-    assign count = push | pop;
-    assign entryCounterN = entryCounter + push - pop;
-    wire halfFull;
-    assign halfFull = (entryCounter >= HALF_FULL);
-    wire empty;
-    assign empty = (entryCounter == {AWIDTH_PLUS1{1'b0}});
-    wire full;
-    assign full = (entryCounter == DEPTH);
-    wire idle;
-    assign idle = empty;
+    
+    assign count = single_push | single_pop;
+    assign entryCounterN = entryCounter + single_push - single_pop;
+    assign fifo_empty = (entryCounter == {AWIDTH_PLUS1{1'b0}});
+    assign fifo_full = (entryCounter == DEPTH);
+    assign fifo_idle = fifo_empty;
 
     // ****************************************************************
     // Assertions
@@ -110,10 +96,10 @@ module fifo_flopped(/*AUTOARG*/
     `ifdef ASSERT_ON
 
     // Test for overflow
-    assert_never #(0, 0, "Fifo Overflow") fifo_overflow (clk, rst_n, push & full & ~pop);
+    assert_never #(0, 0, "Fifo Overflow") fifo_overflow (clk, rst_n, single_push & fifo_full & ~single_pop);
 
     // Test for underflow
-    assert_never #(0, 0, "Fifo Underflow") fifo_underflow (clk, rst_n, pop & empty);
+    assert_never #(0, 0, "Fifo Underflow") fifo_underflow (clk, rst_n, single_pop & fifo_empty);
 
     `endif
 
