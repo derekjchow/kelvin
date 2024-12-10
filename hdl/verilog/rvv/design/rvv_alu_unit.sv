@@ -110,7 +110,7 @@ module rvv_alu_unit
           
           default: begin
             `ifdef ASSERT_ON
-            $error("rob_entry=%d. Unsupported uop_funct6.opi_funct=%s.\n",rob_entr,yuop_funct6.opi_funct);
+            $error("rob_entry=%d. Unsupported uop_funct6.opi_funct=%s.\n",rob_entr,yuop_funct6.opi_funct.name());
             `endif
           end
         endcase
@@ -135,14 +135,14 @@ module rvv_alu_unit
             end else begin
               `ifdef ASSERT_ON
               `rvv_expect((vs1_data_valid&vs2_data_valid&vm&vd_data_valid)==1'b1) 
-                else $error("%s uop: rob_entry=%d. vs1_data_valid(%d)&vs2_data_valid(%d)&vm(%d)&vd_data_valid(%d) should be 1'b1.\n",uop_funct6.opm_funct,rob_entry,vs1_data_valid,vs2_data_valid,vm,vd_data_valid);
+                else $error("%s uop: rob_entry=%d. vs1_data_valid(%d)&vs2_data_valid(%d)&vm(%d)&vd_data_valid(%d) should be 1'b1.\n",uop_funct6.opm_funct.name(),rob_entry,vs1_data_valid,vs2_data_valid,vm,vd_data_valid);
               `endif
             end
           end
 
           default: begin
             `ifdef ASSERT_ON
-            $error("rob_entry=%d. Unsupported uop_funct6.opm_funct=%s.\n",rob_entry,uop_funct6.opm_funct);
+            $error("rob_entry=%d. Unsupported uop_funct6.opm_funct=%s.\n",rob_entry,uop_funct6.opm_funct.name());
             `endif
           end
         endcase
@@ -151,7 +151,7 @@ module rvv_alu_unit
       default: begin
         `ifdef ASSERT_ON
         `rvv_expect(alu_uop_valid==1'b0)
-          else $error("rob_entry=%d. Unsupported uop_funct3=%s.\n",rob_entry,uop_funct3);
+          else $error("rob_entry=%d. Unsupported uop_funct3=%s.\n",rob_entry,uop_funct3.name());
         `endif
       end
     endcase
