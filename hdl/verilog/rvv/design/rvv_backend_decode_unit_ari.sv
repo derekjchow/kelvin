@@ -983,25 +983,7 @@ module rvv_backend_decode_unit_ari
               end
             endcase
           end
-          OPIVX: begin
-            case(vsew)
-              `VSEW8: begin
-                eew_vd      = EEW8;
-                eew_vs2     = EEW8;
-                eew_max     = EEW8;
-              end
-              `VSEW16: begin
-                eew_vd      = EEW16;
-                eew_vs2     = EEW16;
-                eew_max     = EEW16;
-              end
-              `VSEW32: begin
-                eew_vd      = EEW32;
-                eew_vs2     = EEW32;
-                eew_max     = EEW32;
-              end
-            endcase
-          end
+          OPIVX,
           OPIVI: begin
             case(vsew)
               `VSEW8: begin
@@ -1109,16 +1091,19 @@ module rvv_backend_decode_unit_ari
               `VSEW8: begin
                 eew_vd      = EEW8;
                 eew_vs2     = EEW8;
+                eew_scalar  = EEW8;
                 eew_max     = EEW8;
               end
               `VSEW16: begin
                 eew_vd      = EEW16;
                 eew_vs2     = EEW16;
+                eew_scalar  = EEW16;
                 eew_max     = EEW16;
               end
               `VSEW32: begin
                 eew_vd      = EEW32;
                 eew_vs2     = EEW32;
+                eew_scalar  = EEW32;
                 eew_max     = EEW32;
               end
             endcase
@@ -1130,25 +1115,7 @@ module rvv_backend_decode_unit_ari
       VSLIDEUP,
       VSLIDEDOWN: begin
         case(funct3_ari)
-          OPIVX: begin
-            case(vsew)
-              `VSEW8: begin
-                eew_vd      = EEW8;
-                eew_vs2     = EEW8;
-                eew_max     = EEW8;
-              end
-              `VSEW16: begin
-                eew_vd      = EEW16;
-                eew_vs2     = EEW16;
-                eew_max     = EEW16;
-              end
-              `VSEW32: begin
-                eew_vd      = EEW32;
-                eew_vs2     = EEW32;
-                eew_max     = EEW32;
-              end
-            endcase
-          end
+          OPIVX,
           OPIVI: begin
             case(vsew)
               `VSEW8: begin
@@ -1202,25 +1169,7 @@ module rvv_backend_decode_unit_ari
               end
             endcase
           end
-          OPIVX: begin
-            case(vsew)
-              `VSEW8: begin
-                eew_vd      = EEW1;
-                eew_vs2     = EEW8;
-                eew_max     = EEW8;
-              end
-              `VSEW16: begin
-                eew_vd      = EEW1;
-                eew_vs2     = EEW16;
-                eew_max     = EEW16;
-              end
-              `VSEW32: begin
-                eew_vd      = EEW1;
-                eew_vs2     = EEW32;
-                eew_max     = EEW32;
-              end
-            endcase
-          end
+          OPIVX,
           OPIVI: begin
             case(vsew)
               `VSEW8: begin
@@ -1277,16 +1226,19 @@ module rvv_backend_decode_unit_ari
               `VSEW8: begin
                 eew_vd      = EEW1;
                 eew_vs2     = EEW8;
+                eew_scalar  = EEW8;
                 eew_max     = EEW8;
               end
               `VSEW16: begin
                 eew_vd      = EEW1;
                 eew_vs2     = EEW16;
+                eew_scalar  = EEW16;
                 eew_max     = EEW16;
               end
               `VSEW32: begin
                 eew_vd      = EEW1;
                 eew_vs2     = EEW32;
+                eew_scalar  = EEW32;
                 eew_max     = EEW32;
               end
             endcase
@@ -1297,25 +1249,7 @@ module rvv_backend_decode_unit_ari
       VMSGTU,
       VMSGT: begin
         case(funct3_ari)
-          OPIVX: begin
-            case(vsew)
-              `VSEW8: begin
-                eew_vd      = EEW1;
-                eew_vs2     = EEW8;
-                eew_max     = EEW8;
-              end
-              `VSEW16: begin
-                eew_vd      = EEW1;
-                eew_vs2     = EEW16;
-                eew_max     = EEW16;
-              end
-              `VSEW32: begin
-                eew_vd      = EEW1;
-                eew_vs2     = EEW32;
-                eew_max     = EEW32;
-              end
-            endcase
-          end
+          OPIVX,
           OPIVI: begin
             case(vsew)
               `VSEW8: begin
@@ -1362,20 +1296,7 @@ module rvv_backend_decode_unit_ari
               end
             endcase
           end
-          OPIVX: begin
-            case(vsew)
-              `VSEW8: begin
-                eew_vd      = EEW8;
-                eew_vs2     = EEW16;
-                eew_max     = EEW16;
-              end
-              `VSEW16: begin
-                eew_vd      = EEW16;
-                eew_vs2     = EEW32;
-                eew_max     = EEW32;
-              end
-            endcase
-          end
+          OPIVX,
           OPIVI: begin
             case(vsew)
               `VSEW8: begin
@@ -1422,28 +1343,7 @@ module rvv_backend_decode_unit_ari
               end
             endcase
           end
-          OPIVX: begin
-            case(vsew)
-              `VSEW8: begin
-                eew_vd      = EEW8;
-                if (inst_vm=='b0)
-                  eew_vs2   = EEW8;
-                eew_max     = EEW8;
-              end
-              `VSEW16: begin
-                eew_vd      = EEW16;
-                if (inst_vm=='b0)
-                  eew_vs2   = EEW16;
-                eew_max     = EEW16;
-              end
-              `VSEW32: begin
-                eew_vd      = EEW32;
-                if (inst_vm=='b0)
-                  eew_vs2   = EEW32;
-                eew_max     = EEW32;
-              end
-            endcase
-          end
+          OPIVX,
           OPIVI: begin
             case(vsew)
               `VSEW8: begin
@@ -1550,11 +1450,13 @@ module rvv_backend_decode_unit_ari
               `VSEW8: begin
                 eew_vd      = EEW16;
                 eew_vs2     = EEW8;
+                eew_scalar  = EEW8;
                 eew_max     = EEW16;
               end
               `VSEW16: begin
                 eew_vd      = EEW32;
                 eew_vs2     = EEW16;
+                eew_scalar  = EEW16;
                 eew_max     = EEW32;
               end
             endcase
