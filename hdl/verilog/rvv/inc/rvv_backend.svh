@@ -241,7 +241,7 @@ typedef enum logic [4:0] {
     VMSIF           =   5'b00011,
     VIOTA           =   5'b10000,
     VID             =   5'b10001
-} OPM_VMXUNARY0_e;
+} OPM_VMUNARY0_e;
 
 // when EXE_UNIT_e is LSU, it identifys what LSU instruction, unit-stride load or indexed store or ..? based on inst_encoding[31:26]
 typedef enum logic [1:0] {
