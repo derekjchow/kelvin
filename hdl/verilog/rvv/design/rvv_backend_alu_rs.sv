@@ -4,7 +4,7 @@
 // feature list:
 // 1. ALU reservation station is 2 write and 2 read ports of SFIFO.
 
-`include 'rvv.svh'
+`include "rvv_backend.svh"
 
 module rvv_backend_alu_rs
 (

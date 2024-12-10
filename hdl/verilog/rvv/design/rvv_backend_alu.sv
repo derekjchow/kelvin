@@ -4,7 +4,7 @@
 // feature list:
 // 1. It will instantiate 2 rvv_backend_alu_unit.
 
-`include 'rvv_backend.svh'
+`include "rvv_backend.svh"
 
 module _alu
 (
