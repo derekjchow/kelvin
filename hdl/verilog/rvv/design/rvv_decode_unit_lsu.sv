@@ -77,13 +77,7 @@ module rvv_decode_unit_lsu
   assign rs1_data             = inst.rs1_data;
  
   // decode funct3
-  assign funct3_lsu = ((inst_valid==1'b1)&(vill==1'b0)) ? 
-                      inst_funct3 :
-                      'b0;
-  `ifdef ASSERT_ON
-    `rvv_forbid((inst_valid==1'b1)&(vill==1'b1))
-    else $error("Unsupported vtype.vill=%d.\n",vill);
-  `endif
+  assign funct3_lsu           = inst_funct3; 
 
 
 

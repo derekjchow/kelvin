@@ -1,3 +1,14 @@
+//
+// description:
+// 1. It sends instruction package to arithmetic decode unit or lsu decode unit based on instruction opcode.
+//
+// feature list:
+// 1. One instruction can be decoded to 8 uops at most.
+// 2. Decoder will push 4 uops at most into Uops Queue, so decoder only decode to 4 uops at most per cycle.
+// 3. uops_de2dp.rs1_data could be from X[rs1] and imm(inst[19:15]).
+// 4. If the instruction is in wrong encoding, it will be discarded directly without applying a trap, but take assertion in simulation.
+// 5. The vstart of the instruction will be calculated to a new value for every decoded uops.
+// 6. vmv<nr>r.v instruction will be split to <nr> vmv.v.v uops, which means funct6, funct3, vs1, vs2 fields will be modified in new uop. However, new uops' vtype.vlmul is not changed to recovery execution right when trap handling is done.
 
 `include 'rvv.svh'
 
@@ -44,32 +55,21 @@ module rvv_decode_unit
   assign vill         = inst_cq2de.vector_csr.vtype.vill;
  
   // decode opcode
-  always_comb begin 
-    // initial the data
-    valid_lsu           = 'b0;
-    valid_ari           = 'b0;
-
-    case(inst_valid_cq2de,vill,inst_opcode)
-      {1'b1,1'b0,OPCODE_LOAD},
-      {1'b1,1'b0,OPCODE_STORE}: begin
-        valid_lsu       = 1'b1;    
-      end
+  assign valid_lsu    = (inst_valid_cq2de==1'b1) &
+                        (vill==1'b0) &
+                        ((inst_opcode==OPCODE_LOAD) | (inst_opcode==OPCODE_STORE));
+  
+  assign valid_ari    = (inst_valid_cq2de==1'b1) &
+                        (vill==1'b0) &
+                        (inst_opcode==OPCODE_ARI_CFG);
+  
+  `ifdef ASSERT_ON
+    `rvv_forbid((inst_valid_cq2de==1'b1)&(vill==1'b1))
+    else $error("Illegal vtype.vill=%d.\n",vill);
     
-      {1'b1,1'b0,OPCODE_ARI_CFG}: begin
-        valid_ari      = 1'b1;
-      end  
-
-      default: begin
-        `ifdef ASSERT_ON
-        `rvv_forbid((inst_valid_cq2de==1'b1)&(vill==1'b1))
-        else $error("Illegal vtype.vill=%d.\n",vill);
-        
-        `rvv_expect((inst_valid_cq2de==1'b0)&(vill==1'b0))
-        else $error("Unsupported inst_opcode=%d.\n",inst_opcode);
-        `endif
-      end
-    endcase
-  end
+    `rvv_forbid((inst_valid_cq2de==1'b1)&(vill==1'b0)&(inst_opcode!=OPCODE_LOAD&(inst_opcode!=OPCODE_STORE)&(inst_opcode!=OPCODE_ARI_CFG)))
+    else $error("Unsupported inst_opcode=%d.\n",inst_opcode);
+  `endif
   
   // decode LSU instruction 
   rvv_decode_unit_lsu u_lsu_decode
@@ -109,7 +109,6 @@ module rvv_decode_unit
     endcase
   end
 
-  // 
   `ifdef ASSERT_ON
     `rvv_forbid((inst_valid_cq2de==1'b1)&((valid_lsu==1'b0)&(valid_ari==1'b0)))
     else $error("Unsupported instruction to decode.\n");

@@ -84,7 +84,7 @@ module rvv_decode_ctrl
   logic                                     unit1_last;
 
   // the quantity of valid 1 in unit0_uop_valid[`NUM_DE_UOP-1:0] 
-  logic [`NUM_DE_UOP_WIDTH:0]               quantity;
+  logic [`NUM_DE_UOP_WIDTH-1:0]             quantity;
   
   // fifo is ready when it has 4 free spaces at least
   logic                                     fifo_ready;
@@ -132,8 +132,8 @@ module rvv_decode_ctrl
      indata0  (1'b1),
      indata1  (1'b1),
      indata2  (1'b1),
-     indata3  (unit0_uop_de2uq[3].last_uop_valid),
-     indata4  (1'b0),
+     indata3  (1'b1),
+     indata4  (unit0_uop_de2uq[3].last_uop_valid),
      indata5  (1'b0),
      indata6  (1'b0),
      indata7  (1'b0),
@@ -175,20 +175,20 @@ module rvv_decode_ctrl
   assign uop_index_clear        = (pop0&(!pkg1_valid)) | pop1;
 
   // enable signal
-  assign uop_index_enable_unit0 = (!pop0)&pkg0_valid;       // ctroller cannot write all uops decoded by unit0
-  assign uop_index_enable_unit1 = pop0&(!pop1)&pkg1_valid;  // ctroller cannot write all uops decoded by unit1
+  assign uop_index_enable_unit0 = (!pop0)&pkg0_valid;       
+  assign uop_index_enable_unit1 = pop0&(!unit1_last)&pkg1_valid;  
   assign uop_index_enable       = uop_index_enable_unit0 | uop_index_enable_unit1;  
   
   // datain signal
   always_comb begin
     // initial
-    uop_index_din               = 'b0;    
+    uop_index_din               = uop_index_remain;    
     
     case(1'b1)
       uop_index_enable_unit0: 
-        uop_index_din           = uop_index_remain + 4;    
+        uop_index_din           = uop_index_remain + `NUM_DE_UOP_WIDTH'd4;    
       uop_index_enable_unit1:
-        uop_index_din           = 4 - quantity; 
+        uop_index_din           = `NUM_DE_UOP_WIDTH'd4 - quantity; 
     end
   end
 
