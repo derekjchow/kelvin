@@ -266,7 +266,8 @@ typedef enum logic [1:0] {
 } UOP_CLASS_e;
 
 // Effective MUL enum
-typedef enum logic [2:0] {
+typedef enum logic [3:0] {
+  EMUL_NONE,    // it means this is nut supported 
   EMUL1,
   EMUL2,
   EMUL3,
@@ -279,6 +280,7 @@ typedef enum logic [2:0] {
 
 // Effective Element Width
 typedef enum logic [1:0] {
+  EEW_NONE,    // it means this is nut supported 
   EEW1,
   EEW8, 
   EEW16,
