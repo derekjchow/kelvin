@@ -1,7 +1,0 @@
-######## Spyglass Lint ########
-1. Enter */rvv/sve
-2. Use the Makefile under sve/
-3. bs make lint TOP=<Your_Top_Module>
-4. The report can be found @sve/lint/RPT/
-!!!DO NOT DELETE filelist.f under sve/!!!
-###############################
