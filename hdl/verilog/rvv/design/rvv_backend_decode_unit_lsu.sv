@@ -25,13 +25,14 @@ module rvv_backend_decode_unit_lsu
   // split INST_t struct signals
   logic     [`PC_WIDTH-1:0]                         inst_pc;
   logic     [`FUNCT6_WIDTH-1:0]                     inst_funct6;      // inst original encoding[31:26]           
-  NFIELD_e                                          inst_nf;          // inst original encoding[17:15]
+  logic     [`NFIELD_WIDTH-1:0]                     inst_nf;          // inst original encoding[31:29]
   logic     [`VM_WIDTH-1:0]                         inst_vm;          // inst original encoding[25]      
   logic     [`VS2_WIDTH-1:0]                        inst_vs2;         // inst original encoding[24:20]
   logic     [`UMOP_WIDTH-1:0]                       inst_umop;        // inst original encoding[24:20]
   logic     [`FUNCT3_WIDTH-1:0]                     inst_funct3;      // inst original encoding[14:12]
   logic     [`VD_WIDTH-1:0]                         inst_vd;          // inst original encoding[11:7]
   RVVOpCode                                         inst_opcode;      // inst original encoding[6:0]
+
   RVVConfigState                                    vector_csr_lsu;
   logic     [`VSTART_WIDTH-1:0]                     csr_vstart;
   RVVSEW                                            csr_sew;
@@ -41,7 +42,10 @@ module rvv_backend_decode_unit_lsu
   EMUL_e                                            emul_max;          
   EEW_e                                             eew_vd;          
   EEW_e                                             eew_vs2;          
-  EEW_e                                             eew_max;          
+  EEW_e                                             eew_max;         
+  logic                                             valid_lsu;
+  logic                                             valid_lsu_opcode;
+  logic                                             valid_lsu_mop;
   logic                                             inst_encoding_correct;
   logic                                             check_special;
   logic                                             check_vd_overlap_v0;
@@ -59,23 +63,13 @@ module rvv_backend_decode_unit_lsu
   logic     [`UOP_INDEX_WIDTH-1:0]                  uop_index_max;         
    
   // convert logic to enum/union
-  FUNCT6_u                                          funct6_ari;
+  FUNCT6_u                                          funct6_lsu;
 
   // use for for-loop 
   integer                                           i;
   genvar                                            j;
   
   // local parameter
-  localparam  UNIT_STRIDE       = 3'b000;
-  localparam  UNORDERED_INDEX   = 3'b001;
-  localparam  CONSTANT_STRIDE   = 3'b010;
-  localparam  ORDERED_INDEX     = 3'b011;
-
-  localparam  US_REGULAR        = 5'b00000;
-  localparam  US_WHOLE_REGISTER = 5'b01000;
-  localparam  US_MASK           = 5'b01011;
-  localparam  US_FAULT_FIRST    = 5'b10000;
-  
   localparam  SEW_8             = 3'b000;
   localparam  SEW_16            = 3'b101;
   localparam  SEW_32            = 3'b110;
@@ -98,16 +92,22 @@ module rvv_backend_decode_unit_lsu
   assign csr_lmul       = inst.arch_state.lmul;
   
 // decode funct6
+  // valid signal
+  assign valid_lsu = valid_lsu_opcode&valid_lsu_mop&inst_valid;
+
   // identify load or store
   always_comb begin
-    funct6_ari.lsu_funct6.lsu_is_store = 'b0;
+    funct6_lsu.lsu_funct6.lsu_is_store = IS_LOAD;
+    valid_lsu_opcode                   = 'b0;
 
     case(inst_opcode)
       LOAD: begin
-        funct6_ari.lsu_funct6.lsu_is_store = IS_LOAD;
+        funct6_lsu.lsu_funct6.lsu_is_store = IS_LOAD;
+        valid_lsu_opcode                   = 1'b1;
       end
       STORE: begin
-        funct6_ari.lsu_funct6.lsu_is_store = IS_STORE;
+        funct6_lsu.lsu_funct6.lsu_is_store = IS_STORE;
+        valid_lsu_opcode                   = 1'b1;
       end
     endcase
   end
@@ -115,71 +115,81 @@ module rvv_backend_decode_unit_lsu
   // lsu_mop distinguishes unit-stride, constant-stride, unordered index, ordered index
   // lsu_umop identifies what unit-stride instruction belong to when lsu_mop=US
   always_comb begin
-    funct6_ari.lsu_funct6.lsu_mop  = 'b0;
-    funct6_ari.lsu_funct6.lsu_umop = 'b0;
+    funct6_lsu.lsu_funct6.lsu_mop  = US;
+    funct6_lsu.lsu_funct6.lsu_umop = US_US;
+    valid_lsu_mop                  = 'b0;
     
     case(inst_funct6[2:0])
       UNIT_STRIDE: begin
         case(inst_umop)
           US_REGULAR: begin          
             if (inst_nf==NF1) begin
-              funct6_ari.lsu_funct6.lsu_mop  = US;
-              funct6_ari.lsu_funct6.lsu_umop = US_US;
+              funct6_lsu.lsu_funct6.lsu_mop  = US;
+              funct6_lsu.lsu_funct6.lsu_umop = US_US;
+              valid_lsu_mop                  = 1'b1;
             end
             else begin
               // segment unit-stride instruction is implemented by constant-stride instruction
-              funct6_ari.lsu_funct6.lsu_mop  = CS;
+              funct6_lsu.lsu_funct6.lsu_mop  = CS;
+              valid_lsu_mop                  = 1'b1;
             end
           end
           US_WHOLE_REGISTER: begin
-            funct6_ari.lsu_funct6.lsu_mop  = US;
-            funct6_ari.lsu_funct6.lsu_umop = US_WR;
+            funct6_lsu.lsu_funct6.lsu_mop  = US;
+            funct6_lsu.lsu_funct6.lsu_umop = US_WR;
+            valid_lsu_mop                  = 1'b1;
           end
           US_MASK: begin
-            funct6_ari.lsu_funct6.lsu_mop  = US;
-            funct6_ari.lsu_funct6.lsu_umop = US_MK;
+            funct6_lsu.lsu_funct6.lsu_mop  = US;
+            funct6_lsu.lsu_funct6.lsu_umop = US_MK;
+            valid_lsu_mop                  = 1'b1;
           end
           US_FAULT_FIRST: begin
             // fault-only-first load will be regarded as regular unit-stride load.
             if (inst_opcode==LOAD) begin
               if (inst_nf==NF1) begin
-                funct6_ari.lsu_funct6.lsu_mop  = US;
-                funct6_ari.lsu_funct6.lsu_umop = US_US;
+                funct6_lsu.lsu_funct6.lsu_mop  = US;
+                funct6_lsu.lsu_funct6.lsu_umop = US_US;
+                valid_lsu_mop                  = 1'b1;
               end
               else begin
                 // segment unit-stride instruction is implemented by constant-stride instruction
-                funct6_ari.lsu_funct6.lsu_mop  = CS;
+                funct6_lsu.lsu_funct6.lsu_mop  = CS;
+                valid_lsu_mop                  = 1'b1;
               end
             end
           end
         endcase
       end
       UNORDERED_INDEX: begin
-        funct6_ari.lsu_funct6.lsu_mop = IU;
+        funct6_lsu.lsu_funct6.lsu_mop = IU;
+        valid_lsu_mop                 = 1'b1;
       end
       CONSTANT_STRIDE: begin
-        funct6_ari.lsu_funct6.lsu_mop = CS;
+        funct6_lsu.lsu_funct6.lsu_mop = CS;
+        valid_lsu_mop                 = 1'b1;
       end
       ORDERED_INDEX: begin
-        funct6_ari.lsu_funct6.lsu_mop = IO;
+        funct6_lsu.lsu_funct6.lsu_mop = IO;
+        valid_lsu_mop                 = 1'b1;
       end
     endcase
   end
 
   // reserved
-  assign funct6_ari.lsu_funct6.reserved = 'b0;
+  assign funct6_lsu.lsu_funct6.reserved = 'b0;
   
 // get EMUL
   always_comb begin
     // initial
-    emul_vd          = 'b0;
-    emul_vs2         = 'b0;
-    emul_max         = 'b0;
+    emul_vd  = EMUL1;
+    emul_vs2 = EMUL1;
+    emul_max = EMUL1;
 
     if (inst_valid==1'b1) begin  
-      case(funct6_ari.lsu_funct6.lsu_mop)
+      case(funct6_lsu.lsu_funct6.lsu_mop)
         US: begin
-          case(funct6_ari.lsu_funct6.lsu_umop)
+          case(funct6_lsu.lsu_funct6.lsu_umop)
             US_US: begin
               case({inst_funct3,csr_sew})
                 // 1:1
@@ -1621,14 +1631,14 @@ module rvv_backend_decode_unit_lsu
 // get EEW 
   always_comb begin
     // initial
-    eew_vd          = 'b0;
-    eew_vs2         = 'b0;
-    eew_max         = 'b0;  
+    eew_vd  = EEW1;
+    eew_vs2 = EEW1;
+    eew_max = EEW1;  
 
     if (inst_valid==1'b1) begin  
-      case(funct6_ari.lsu_funct6.lsu_mop)
+      case(funct6_lsu.lsu_funct6.lsu_mop)
         US: begin
-          case(funct6_ari.lsu_funct6.lsu_umop)
+          case(funct6_lsu.lsu_funct6.lsu_umop)
             US_US,
             US_WR: begin
               case(inst_funct3)
@@ -1729,7 +1739,7 @@ module rvv_backend_decode_unit_lsu
 //  
 // instruction encoding error check
 //
-  assign inst_encoding_correct = check_special&check_common;
+  assign inst_encoding_correct = check_special&check_common&valid_lsu;
 
   // check whether vd overlaps v0 when vm=0
   // check_vd_overlap_v0=1 means that vd does NOT overlap v0
@@ -2089,7 +2099,7 @@ module rvv_backend_decode_unit_lsu
   // update uop funct6
   always_comb begin
     for(i=0;i<`NUM_DE_UOP;i=i+1) begin: GET_UOP_FUNCT6
-      uop[i].uop_funct6           = funct6_ari;
+      uop[i].uop_funct6           = funct6_lsu;
     end
   end
 
@@ -2104,7 +2114,7 @@ module rvv_backend_decode_unit_lsu
   always_comb begin
     for(i=0;i<`NUM_DE_UOP;i=i+1) begin: GET_UOP_CLASS
       // initial 
-      uop[i].uop_class      = 'b0;
+      uop[i].uop_class      = X;
       
       case(inst_opcode) 
         LOAD:begin
@@ -2247,7 +2257,7 @@ module rvv_backend_decode_unit_lsu
   always_comb begin
     for(i=0;i<`NUM_DE_UOP;i=i+1) begin: GET_VS1
       uop[i].vs1             = 'b0;
-      uop[i].vs1_eew         = 'b0;
+      uop[i].vs1_eew         = EEW1;
       uop[i].vs1_index_valid = 'b0;
     end
   end
@@ -2265,7 +2275,7 @@ module rvv_backend_decode_unit_lsu
     for(i=0;i<`NUM_DE_UOP;i=i+1) begin: GET_VS2
       // initial
       uop[i].vs2_index        = 'b0; 
-      uop[i].vs2_eew          = 'b0; 
+      uop[i].vs2_eew          = EEW1; 
       uop[i].vs2_valid        = 'b0; 
     
       case(inst_funct6[2:0])
@@ -2358,7 +2368,7 @@ module rvv_backend_decode_unit_lsu
   always_comb begin
     for(i=0;i<`NUM_DE_UOP;i=i+1) begin: GET_RS1
       uop[i].rs1_data         = 'b0;
-      uop[i].scalar_eew       = 'b0;
+      uop[i].scalar_eew       = EEW1;
       uop[i].rs1_data_valid   = 'b0;
     end
   end

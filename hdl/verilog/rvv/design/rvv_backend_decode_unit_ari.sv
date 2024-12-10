@@ -33,14 +33,18 @@ module rvv_backend_decode_unit_ari
   logic   [`FUNCT3_WIDTH-1:0]                     inst_funct3;      // inst original encoding[14:12]
   logic   [`VD_WIDTH-1:0]                         inst_vd;          // inst original encoding[11:7]
   logic   [`RD_WIDTH-1:0]                         inst_rd;          // inst original encoding[11:7]
-  NREG_e                                          inst_nr;          // inst original encoding[17:15]
+  logic   [`NREG_WIDTH-1:0]                       inst_nr;          // inst original encoding[17:15]
+  
+  // use vs1 as opcode
+  logic   [`VS1_WIDTH-1:0]                        vs1_opcode_vwxunary;
+  logic   [`VS1_WIDTH-1:0]                        vs1_opcode_vxunary;
+  logic   [`VS1_WIDTH-1:0]                        vs1_opcode_vmunary;
+   
   RVVConfigState                                  vector_csr_ari;
   logic   [`VSTART_WIDTH-1:0]                     csr_vstart;
   RVVSEW                                          csr_sew;
   RVVLMUL                                         csr_lmul;
   logic   [`XLEN-1:0] 	                          rs1_data;
-  logic                                           valid_opi;
-  logic                                           valid_opm;
   EMUL_e                                          emul_vd;          
   EMUL_e                                          emul_vs2;          
   EMUL_e                                          emul_vs1;          
@@ -50,6 +54,8 @@ module rvv_backend_decode_unit_ari
   EEW_e                                           eew_vs1;
   EEW_e                                           eew_scalar;
   EEW_e                                           eew_max;          
+  logic                                           valid_opi;
+  logic                                           valid_opm;
   logic                                           inst_encoding_correct;
   logic                                           check_special;
   logic                                           check_vd_overlap_v0;
@@ -68,13 +74,9 @@ module rvv_backend_decode_unit_ari
   logic   [`UOP_INDEX_WIDTH-1:0]                  uop_index_base;         
   logic   [`NUM_DE_UOP-1:0][`UOP_INDEX_WIDTH-1:0] uop_index_current;   
   logic   [`UOP_INDEX_WIDTH-1:0]                  uop_index_max;         
-   
-  // convert logic to enum/union
-  EXE_FUNCT3_e                                    funct3_ari;
+  
+  // enum/union
   FUNCT6_u                                        funct6_ari;
-  OPM_VWXUNARY0_e                                 vs1_opcode_vwxunary;
-  OPM_VXUNARY0_e                                  vs1_opcode_vxunary;
-  OPM_VMUNARY0_e                                  vs1_opcode_vmunary;
 
   // use for for-loop 
   integer                                         i;
@@ -101,50 +103,152 @@ module rvv_backend_decode_unit_ari
   assign csr_sew              = inst.arch_state.sew;
   assign csr_lmul             = inst.arch_state.lmul;
   assign rs1_data             = inst.rs1;
-  
-  // decode funct3
-  assign funct3_ari           = inst_funct3;
-  
+
   // decode arithmetic instruction funct6
   always_comb begin
+    if (inst_valid)
+      funct6_ari.ari_funct6 = inst_funct6;
+    else
+      funct6_ari.ari_funct6 = 'b0;
+  end
+
+  // make sure: funct6 and funct3 are not illegal opcode
+  always_comb begin
     // initial the data
-    funct6_ari                = 'b0;
     valid_opi                 = 'b0;
     valid_opm                 = 'b0;
     
-    case(funct3_ari)
+    case(inst_funct3)
       OPIVV,
       OPIVX,
       OPIVI: begin
-        funct6_ari.opi_funct6 = inst_funct6;
-        valid_opi             = 1'b1;
+        case(funct6_ari.ari_funct6)
+          VADD,            
+          VSUB,            
+          VRSUB,           
+          VMINU,           
+          VMIN,            
+          VMAXU,           
+          VMAX,            
+          VAND,            
+          VOR,             
+          VXOR,            
+          VRGATHER,        
+          VSLIDEUP_RGATHEREI16,
+          VSLIDEDOWN,      
+          VADC,            
+          VMADC,           
+          VSBC,            
+          VMSBC,           
+          VMERGE_VMV,      
+          VMSEQ,           
+          VMSNE,           
+          VMSLTU,          
+          VMSLT,           
+          VMSLEU,          
+          VMSLE,           
+          VMSGTU,          
+          VMSGT,           
+          VSADDU,          
+          VSADD,           
+          VSSUBU,          
+          VSSUB,           
+          VSLL,            
+          VSMUL_VMVNRR,    
+          VSRL,            
+          VSRA,            
+          VSSRL,           
+          VSSRA,           
+          VNSRL,           
+          VNSRA,           
+          VNCLIPU,         
+          VNCLIP,          
+          VWREDSUMU,       
+          VWREDSUM: begin
+            valid_opi = inst_valid;
+          end
+        endcase
       end
-
       OPMVV,
       OPMVX: begin
-        funct6_ari.opm_funct6 = inst_funct6;
-        valid_opm             = 1'b1;
+        case(funct6_ari.ari_funct6)
+          VREDSUM    ,   
+          VREDAND    ,
+          VREDOR     ,
+          VREDXOR    ,
+          VREDMINU   ,
+          VREDMIN    ,
+          VREDMAXU   ,
+          VREDMAX    ,
+          VAADDU     ,
+          VAADD      ,
+          VASUBU     ,
+          VASUB      ,
+          VSLIDE1UP  ,
+          VSLIDE1DOWN,
+          VWXUNARY0  ,  // it could be vcpop.m, vfirst.m and vmv. They can be distinguished by vs1 field(inst_encoding[19:15])
+          VXUNARY0   ,  // it could be vzext.vf2, vzext.vf4, vsext.vf2, vsext.vf4. They can be distinguished by vs1 field(inst_encoding[19:15])
+          VMUNARY0   ,  // it could be vmsbf, vmsof, vmsif, viota, vid. They can be distinguished by vs1 field(inst_encoding[19:15])
+          VCOMPRESS  ,
+          VMANDN     ,
+          VMAND      ,
+          VMOR       ,
+          VMXOR      ,
+          VMORN      ,
+          VMNAND     ,
+          VMNOR      ,
+          VMXNOR     ,
+          VDIVU      ,
+          VDIV       ,
+          VREMU      ,
+          VREM       ,
+          VMULHU     ,
+          VMUL       ,
+          VMULHSU    ,
+          VMULH      ,
+          VMADD      ,
+          VNMSUB     ,
+          VMACC      ,
+          VNMSAC     ,
+          VWADDU     ,
+          VWADD      ,
+          VWSUBU     ,
+          VWSUB      ,
+          VWADDU_W   ,
+          VWADD_W    ,
+          VWSUBU_W   ,
+          VWSUB_W    ,
+          VWMULU     ,
+          VWMULSU    ,
+          VWMUL      ,
+          VWMACCU    ,
+          VWMACC     ,
+          VWMACCUS   ,
+          VWMACCSU: begin
+            valid_opm = inst_valid;
+          end
+        endcase
       end
     endcase
-  end
-
-    `ifdef ASSERT_ON
-      `rvv_forbid((inst_valid=1'b1)&(funct3_ari==OPFVV)|(funct3_ari==OPFVF)|(funct3_ari==OPCFG))
-      else $error("Unsupported funct3_ari=%s.\n",funct3_ari.name());
-    `endif
+  end 
+  
+  `ifdef ASSERT_ON
+    `rvv_forbid((inst_valid=1'b1)&(inst_opi==1'b0)&(inst_opm==1'b0))
+    else $error("Unsupported inst_encoding, inst_opi=%d, inst_opm=%d.\n",inst_opi,inst_opm);
+  `endif
 
   // get EMUL
   always_comb begin
     // initial
-    emul_vd          = 'b0;
-    emul_vs2         = 'b0;
-    emul_vs1         = 'b0;
-    emul_max         = 'b0;
+    emul_vd          = EMUL1;
+    emul_vs2         = EMUL1;
+    emul_vs1         = EMUL1;
+    emul_max         = EMUL1;
     
     case(1'b1)
       valid_opi: begin
         // OPI* instruction
-        case(funct6_ari.opi_funct6)
+        case(funct6_ari.ari_funct6)
           VADD,
           VADC,
           VAND,
@@ -158,7 +262,7 @@ module rvv_backend_decode_unit_ari
           VSSRL,
           VSSRA,
           VRGATHER: begin
-            case(funct3_ari)
+            case(inst_funct3)
               OPIVV: begin
                 case(csr_lmul)
                   LMUL1_4,
@@ -227,7 +331,7 @@ module rvv_backend_decode_unit_ari
           VMAX,
           VSSUBU,
           VSSUB: begin
-            case(funct3_ari)
+            case(inst_funct3)
               OPIVV: begin
                 case(csr_lmul)
                   LMUL1_4,
@@ -289,7 +393,7 @@ module rvv_backend_decode_unit_ari
 
           VRSUB,
           VSLIDEDOWN: begin        
-            case(funct3_ari)
+            case(inst_funct3)
               OPIVX,
               OPIVI: begin
                 case(csr_lmul)
@@ -326,7 +430,7 @@ module rvv_backend_decode_unit_ari
           VMSNE,
           VMSLEU,
           VMSLE: begin
-            case(funct3_ari)
+            case(inst_funct3)
               OPIVV: begin
                   case(csr_lmul)
                   LMUL1_4,
@@ -390,7 +494,7 @@ module rvv_backend_decode_unit_ari
           VMSBC,
           VMSLTU,
           VMSLT: begin
-            case(funct3_ari)
+            case(inst_funct3)
               OPIVV: begin
                   case(csr_lmul)
                   LMUL1_4,
@@ -455,7 +559,7 @@ module rvv_backend_decode_unit_ari
           VNSRA,
           VNCLIPU,
           VNCLIP:begin
-            case(funct3_ari)
+            case(inst_funct3)
               OPIVV: begin
                 case(csr_lmul)
                   LMUL1_4,
@@ -516,7 +620,7 @@ module rvv_backend_decode_unit_ari
           
           VMSGTU,
           VMSGT: begin
-            case(funct3_ari)
+            case(inst_funct3)
               OPIVX,
               OPIVI: begin
                 case(csr_lmul)
@@ -548,7 +652,7 @@ module rvv_backend_decode_unit_ari
           end
 
           VMERGE_VMV: begin
-            case(funct3_ari)
+            case(inst_funct3)
               OPIVV: begin
                 case(csr_lmul)
                   LMUL1_4,
@@ -618,7 +722,7 @@ module rvv_backend_decode_unit_ari
           end
 
           VSMUL_VMVNRR: begin
-            case(funct3_ari)
+            case(inst_funct3)
               OPIVV: begin
                 case(csr_lmul)
                   LMUL1_4,
@@ -706,7 +810,7 @@ module rvv_backend_decode_unit_ari
           // widening instructions
           VWREDSUMU,
           VWREDSUM: begin
-            case(funct3_ari)
+            case(inst_funct3)
               OPIVV: begin
                 case(csr_lmul)
                   LMUL1_4,
@@ -741,7 +845,7 @@ module rvv_backend_decode_unit_ari
           end
 
           VSLIDEUP_RGATHEREI16: begin        
-            case(funct3_ari)
+            case(inst_funct3)
               // VRGATHEREI16
               OPIVV: begin
                 case(csr_lmul)
@@ -876,7 +980,7 @@ module rvv_backend_decode_unit_ari
 
       valid_opm: begin
         // OPM* instruction
-        case(funct6_ari.opm_funct6)
+        case(funct6_ari.ari_funct6)
           // widening instructions: 2SEW = SEW op SEW
           VWADDU,
           VWSUBU,
@@ -888,7 +992,7 @@ module rvv_backend_decode_unit_ari
           VWMACCU,
           VWMACC,
           VWMACCSU: begin
-            case(funct3_ari)
+            case(inst_funct3)
               OPMVV: begin
                 case(csr_lmul)
                   LMUL1_4,
@@ -951,7 +1055,7 @@ module rvv_backend_decode_unit_ari
           VWSUBU_W,
           VWADD_W,
           VWSUB_W: begin
-            case(funct3_ari)
+            case(inst_funct3)
               OPMVV: begin
                 case(csr_lmul)
                   LMUL1_4,
@@ -1010,7 +1114,7 @@ module rvv_backend_decode_unit_ari
           end
 
           VXUNARY0: begin
-            case(funct3_ari)
+            case(inst_funct3)
               OPMVV: begin
                 case(vs1_opcode_vxunary) 
                   VZEXT_VF2,
@@ -1086,7 +1190,7 @@ module rvv_backend_decode_unit_ari
           VAADD,
           VASUBU,
           VASUB: begin
-            case(funct3_ari)
+            case(inst_funct3)
               OPMVV: begin
                 case(csr_lmul)
                   LMUL1_4,
@@ -1147,7 +1251,7 @@ module rvv_backend_decode_unit_ari
           end
 
           VWMACCUS: begin
-            case(funct3_ari)
+            case(inst_funct3)
               OPMVX: begin
                 case(csr_lmul)
                   LMUL1_4,
@@ -1185,7 +1289,7 @@ module rvv_backend_decode_unit_ari
           VREDAND,
           VREDOR,
           VREDXOR: begin
-            case(funct3_ari)
+            case(inst_funct3)
               OPMVV: begin
                 case(csr_lmul)
                   LMUL1_4,
@@ -1228,7 +1332,7 @@ module rvv_backend_decode_unit_ari
           VMNOR,
           VMORN,
           VMXNOR: begin
-            case(funct3_ari)
+            case(inst_funct3)
               OPMVV: begin
                 emul_vd     = EMUL1;
                 emul_vs2    = EMUL1;
@@ -1239,7 +1343,7 @@ module rvv_backend_decode_unit_ari
           end
 
           VWXUNARY0: begin
-            case(funct3_ari)
+            case(inst_funct3)
               OPMVV: begin
                 case(vs1_opcode_vwxunary)
                   VCPOP,
@@ -1258,7 +1362,7 @@ module rvv_backend_decode_unit_ari
           end
 
           VMUNARY0: begin
-            case(funct3_ari)
+            case(inst_funct3)
               OPMVV: begin
                 case(vs1_opcode_vmunary)
                   VMSBF,
@@ -1323,7 +1427,7 @@ module rvv_backend_decode_unit_ari
           
           VSLIDE1UP,
           VSLIDE1DOWN: begin
-            case(funct3_ari)
+            case(inst_funct3)
               OPMVX: begin
                 case(csr_lmul)
                   LMUL1_4,
@@ -1354,7 +1458,7 @@ module rvv_backend_decode_unit_ari
           end
 
           VCOMPRESS: begin
-            case(funct3_ari)
+            case(inst_funct3)
               OPMVV: begin
                 case(csr_lmul)
                   LMUL1_4,
@@ -1394,16 +1498,16 @@ module rvv_backend_decode_unit_ari
 // get EEW 
   always_comb begin
     // initial
-    eew_vd          = 'b0;
-    eew_vs2         = 'b0;
-    eew_vs1         = 'b0;
-    eew_scalar      = 'b0;
-    eew_max         = 'b0;
+    eew_vd          = EEW1;
+    eew_vs2         = EEW1;
+    eew_vs1         = EEW1;
+    eew_scalar      = EEW1;
+    eew_max         = EEW1;
 
     case(1'b1)
       valid_opi: begin
         // OPI* instruction
-        case(funct6_ari.opi_funct6)
+        case(funct6_ari.ari_funct6)
           VADD,
           VADC,
           VAND,
@@ -1417,7 +1521,7 @@ module rvv_backend_decode_unit_ari
           VSSRL,
           VSSRA,
           VRGATHER: begin
-            case(funct3_ari)
+            case(inst_funct3)
               OPIVV: begin
                 case(csr_sew)
                   SEW8: begin
@@ -1474,7 +1578,7 @@ module rvv_backend_decode_unit_ari
           VMAX,
           VSSUBU,
           VSSUB: begin
-            case(funct3_ari)
+            case(inst_funct3)
               OPIVV: begin
                 case(csr_sew)
                   SEW8: begin
@@ -1524,7 +1628,7 @@ module rvv_backend_decode_unit_ari
 
           VRSUB,
           VSLIDEDOWN: begin       
-            case(funct3_ari)
+            case(inst_funct3)
               OPIVX,
               OPIVI: begin
                 case(csr_sew)
@@ -1556,7 +1660,7 @@ module rvv_backend_decode_unit_ari
           VMSNE,
           VMSLEU,
           VMSLE: begin
-            case(funct3_ari)
+            case(inst_funct3)
               OPIVV: begin
                 case(csr_sew)
                   SEW8: begin
@@ -1608,7 +1712,7 @@ module rvv_backend_decode_unit_ari
           VMSBC,
           VMSLTU,
           VMSLT: begin
-            case(funct3_ari)
+            case(inst_funct3)
               OPIVV: begin
                 case(csr_sew)
                   SEW8: begin
@@ -1658,7 +1762,7 @@ module rvv_backend_decode_unit_ari
 
           VMSGTU,
           VMSGT: begin
-            case(funct3_ari)
+            case(inst_funct3)
               OPIVX,
               OPIVI: begin
                 case(csr_sew)
@@ -1689,7 +1793,7 @@ module rvv_backend_decode_unit_ari
           VNSRA,
           VNCLIPU,
           VNCLIP: begin
-            case(funct3_ari)
+            case(inst_funct3)
               OPIVV: begin
                 case(csr_sew)
                   SEW8: begin
@@ -1727,7 +1831,7 @@ module rvv_backend_decode_unit_ari
           end
 
           VMERGE_VMV: begin
-            case(funct3_ari)
+            case(inst_funct3)
               OPIVV: begin
                 case(csr_sew)
                   SEW8: begin
@@ -1783,7 +1887,7 @@ module rvv_backend_decode_unit_ari
           end
 
           VSMUL_VMVNRR: begin
-            case(funct3_ari)
+            case(inst_funct3)
               OPIVV: begin
                 case(csr_sew)
                   SEW8: begin
@@ -1852,7 +1956,7 @@ module rvv_backend_decode_unit_ari
 
           VWREDSUMU,
           VWREDSUM: begin
-            case(funct3_ari)
+            case(inst_funct3)
               OPIVV: begin
                 case(csr_sew)
                   SEW8: begin
@@ -1873,7 +1977,7 @@ module rvv_backend_decode_unit_ari
           end
           
           VSLIDEUP_RGATHEREI16: begin
-            case(funct3_ari)
+            case(inst_funct3)
               // VRGATHEREI16
               OPIVV: begin
                 case(csr_sew)
@@ -1928,7 +2032,7 @@ module rvv_backend_decode_unit_ari
 
       valid_opm: begin
         // OPM* instruction
-        case(funct6_ari.opm_funct6)
+        case(funct6_ari.ari_funct6)
           // widening instructions: 2SEW = SEW op SEW
           VWADDU,
           VWSUBU,
@@ -1940,7 +2044,7 @@ module rvv_backend_decode_unit_ari
           VWMACCU,
           VWMACC,
           VWMACCSU: begin
-            case(funct3_ari)
+            case(inst_funct3)
               OPMVV: begin
                 case(csr_sew)
                   SEW8: begin
@@ -1981,7 +2085,7 @@ module rvv_backend_decode_unit_ari
           VWSUBU_W,
           VWADD_W,
           VWSUB_W: begin
-            case(funct3_ari)
+            case(inst_funct3)
               OPMVV: begin
                 case(csr_sew)
                   SEW8: begin
@@ -2019,7 +2123,7 @@ module rvv_backend_decode_unit_ari
 
           // SEW = extend 1/2SEW or 1/4SEW
           VXUNARY0: begin
-            case(funct3_ari)
+            case(inst_funct3)
               OPMVX: begin
                 case(vs1_opcode_vxunary) 
                   VZEXT_VF2,
@@ -2069,7 +2173,7 @@ module rvv_backend_decode_unit_ari
           VAADD,
           VASUBU,
           VASUB: begin
-            case(funct3_ari)
+            case(inst_funct3)
               OPMVV: begin
                 case(csr_sew)
                   SEW8: begin
@@ -2118,7 +2222,7 @@ module rvv_backend_decode_unit_ari
           end
           
           VWMACCUS: begin
-            case(funct3_ari)
+            case(inst_funct3)
               OPMVX: begin
                 case(csr_sew)
                   SEW8: begin
@@ -2147,7 +2251,7 @@ module rvv_backend_decode_unit_ari
           VREDAND,
           VREDOR,
           VREDXOR: begin
-            case(funct3_ari)
+            case(inst_funct3)
               OPMVV: begin
                 case(csr_sew)
                   SEW8: begin
@@ -2182,7 +2286,7 @@ module rvv_backend_decode_unit_ari
           VMNOR,
           VMORN,
           VMXNOR: begin
-            case(funct3_ari)
+            case(inst_funct3)
               OPMVV: begin
                 case(csr_sew)
                   SEW8,
@@ -2199,7 +2303,7 @@ module rvv_backend_decode_unit_ari
           end
 
           VWXUNARY0: begin
-            case(funct3_ari)
+            case(inst_funct3)
               OPMVV: begin
                 case(vs1_opcode_vwxunary)
                   VCPOP,
@@ -2243,7 +2347,7 @@ module rvv_backend_decode_unit_ari
           end
 
           VMUNARY0: begin
-            case(funct3_ari)
+            case(inst_funct3)
               OPMVV: begin
                 case(vs1_opcode_vmunary)
                   VMSBF,
@@ -2301,7 +2405,7 @@ module rvv_backend_decode_unit_ari
 
           VSLIDE1UP,
           VSLIDE1DOWN: begin
-            case(funct3_ari)
+            case(inst_funct3)
               OPMVX: begin
                 case(csr_sew)
                   SEW8: begin
@@ -2325,7 +2429,7 @@ module rvv_backend_decode_unit_ari
           end
 
           VCOMPRESS: begin
-            case(funct3_ari)
+            case(inst_funct3)
               OPMVV: begin
                 case(csr_sew)
                   SEW8: begin
@@ -2538,7 +2642,7 @@ module rvv_backend_decode_unit_ari
     case(1'b1)
       valid_opi: begin
         // OPI* instruction
-        case(funct6_ari.opi_funct6)
+        case(funct6_ari.ari_funct6)
           VADD,
           VAND,
           VOR,
@@ -2551,7 +2655,7 @@ module rvv_backend_decode_unit_ari
           VSSRL,
           VSSRA,
           VSLIDEDOWN: begin
-            case(funct3_ari)
+            case(inst_funct3)
               OPIVV,
               OPIVX,
               OPIVI: begin
@@ -2559,7 +2663,7 @@ module rvv_backend_decode_unit_ari
                 
                 `ifdef ASSERT_ON
                   `rvv_expect(check_vd_overlap_v0==1'b1)
-                  else $error("vd is overlap v0 in %s instruction.\n",funct6_ari.opi_funct6.name());
+                  else $error("vd is overlap v0 in %s instruction.\n",funct6_ari.ari_funct6.name());
                 `endif
               end
             endcase
@@ -2572,35 +2676,35 @@ module rvv_backend_decode_unit_ari
           VMAX,
           VSSUBU,
           VSSUB: begin
-            case(funct3_ari)
+            case(inst_funct3)
               OPIVV,
               OPIVX: begin
                 check_special = check_vd_overlap_v0;
                 
                 `ifdef ASSERT_ON
                   `rvv_expect(check_vd_overlap_v0==1'b1)
-                  else $error("vd is overlap v0 in %s instruction.\n",funct6_ari.opi_funct6.name());
+                  else $error("vd is overlap v0 in %s instruction.\n",funct6_ari.ari_funct6.name());
                 `endif
               end
             endcase
           end
 
           VRSUB: begin
-            case(funct3_ari)
+            case(inst_funct3)
               OPIVX,
               OPIVI: begin
                 check_special = check_vd_overlap_v0;
                 
                 `ifdef ASSERT_ON
                   `rvv_expect(check_vd_overlap_v0==1'b1)
-                  else $error("vd is overlap v0 in %s instruction.\n",funct6_ari.opi_funct6.name());
+                  else $error("vd is overlap v0 in %s instruction.\n",funct6_ari.ari_funct6.name());
                 `endif
               end
             endcase
           end
 
           VADC: begin
-            case(funct3_ari)
+            case(inst_funct3)
               OPIVV,
               OPIVX,
               OPIVI: begin
@@ -2609,17 +2713,17 @@ module rvv_backend_decode_unit_ari
                 
                 `ifdef ASSERT_ON
                   `rvv_expect(inst_vm==1'b0)
-                  else $error("Unsupported inst_vm=%d in %s instruction.\n",inst_vm,funct6_ari.opi_funct6.name());
+                  else $error("Unsupported inst_vm=%d in %s instruction.\n",inst_vm,funct6_ari.ari_funct6.name());
                   
                   `rvv_forbit(inst_vd=='b0)
-                  else $error("inst_vd(%d) cannot overlap v0 in %s instruction.\n",funct6_ari.opi_funct6.name());
+                  else $error("inst_vd(%d) cannot overlap v0 in %s instruction.\n",funct6_ari.ari_funct6.name());
                 `endif
               end
             endcase
           end
 
           VMADC: begin
-            case(funct3_ari)
+            case(inst_funct3)
               OPIVV: begin
                 check_special = check_vd_part_overlap_vs2&check_vd_part_overlap_vs1;
               end
@@ -2631,7 +2735,7 @@ module rvv_backend_decode_unit_ari
           end
 
           VSBC: begin
-            case(funct3_ari)
+            case(inst_funct3)
               OPIVV,
               OPIVX: begin
                 if ((inst_vm==1'b0)&(inst_vd!='b0))
@@ -2639,17 +2743,17 @@ module rvv_backend_decode_unit_ari
                 
                 `ifdef ASSERT_ON
                   `rvv_expect(inst_vm==1'b0)
-                  else $error("Unsupported inst_vm=%d in %s instruction.\n",inst_vm,funct6_ari.opi_funct6.name());
+                  else $error("Unsupported inst_vm=%d in %s instruction.\n",inst_vm,funct6_ari.ari_funct6.name());
                   
                   `rvv_forbit(inst_vd=='b0)
-                  else $error("inst_vd(%d) cannot overlap v0 in %s instruction.\n",funct6_ari.opi_funct6.name());
+                  else $error("inst_vd(%d) cannot overlap v0 in %s instruction.\n",funct6_ari.ari_funct6.name());
                 `endif
               end
             endcase
           end
       
           VMSBC: begin
-            case(funct3_ari)
+            case(inst_funct3)
               OPIVV: begin
                 check_special = check_vd_part_overlap_vs2&check_vd_part_overlap_vs1;
               end
@@ -2663,7 +2767,7 @@ module rvv_backend_decode_unit_ari
           VNSRA,
           VNCLIPU,
           VNCLIP: begin
-            case(funct3_ari)
+            case(inst_funct3)
               OPIVV,
               OPIVX,
               OPIVI: begin
@@ -2676,7 +2780,7 @@ module rvv_backend_decode_unit_ari
           VMSNE,
           VMSLEU,
           VMSLE: begin
-            case(funct3_ari)
+            case(inst_funct3)
               OPIVV: begin
                 check_special = check_vd_part_overlap_vs2&check_vd_part_overlap_vs1;
               end
@@ -2689,7 +2793,7 @@ module rvv_backend_decode_unit_ari
 
           VMSLTU,
           VMSLT: begin
-            case(funct3_ari)
+            case(inst_funct3)
               OPIVV: begin
                 check_special = check_vd_part_overlap_vs2&check_vd_part_overlap_vs1;
               end
@@ -2701,7 +2805,7 @@ module rvv_backend_decode_unit_ari
           
           VMSGTU,
           VMSGT: begin
-            case(funct3_ari)
+            case(inst_funct3)
               OPIVX,
               OPIVI: begin
                 check_special = check_vd_part_overlap_vs2;
@@ -2710,7 +2814,7 @@ module rvv_backend_decode_unit_ari
           end
 
           VMERGE_VMV: begin
-            case(funct3_ari)
+            case(inst_funct3)
               OPIVV,
               OPIVX,
               OPIVI: begin
@@ -2720,24 +2824,24 @@ module rvv_backend_decode_unit_ari
                 
                 `ifdef ASSERT_ON
                   `rvv_expect(check_vd_overlap_v0==1'b1)
-                  else $error("vd is overlap v0 in %s instruction.\n",funct6_ari.opi_funct6.name());
+                  else $error("vd is overlap v0 in %s instruction.\n",funct6_ari.ari_funct6.name());
                   
                   `rvv_forbid((inst_vm==1'b1)&(inst_vs2!=5'b0))
-                  else $error("inst_vs2(%d) should be 0 in %s instruction.\n",inst_vm,inst_vs2,funct6_ari.opi_funct6.name());
+                  else $error("inst_vs2(%d) should be 0 in %s instruction.\n",inst_vm,inst_vs2,funct6_ari.ari_funct6.name());
                 `endif
               end
             endcase
           end
                
           VSMUL_VMVNRR: begin
-            case(funct3_ari)
+            case(inst_funct3)
               OPIVV,
               OPIVX: begin
                 check_special = check_vd_overlap_v0;
                 
                 `ifdef ASSERT_ON
                   `rvv_expect(check_vd_overlap_v0==1'b1)
-                  else $error("vd is overlap v0 in %s instruction.\n",funct6_ari.opi_funct6.name());
+                  else $error("vd is overlap v0 in %s instruction.\n",funct6_ari.ari_funct6.name());
                 `endif
               end
               OPIVI: begin
@@ -2749,7 +2853,7 @@ module rvv_backend_decode_unit_ari
 
                 `ifdef ASSERT_ON
                   `rvv_expect(inst_vm==1'b1)
-                  else $error("inst_vm(%d) should be 1 in vmv<nr>r instruction.\n",inst_vm,funct6_ari.opi_funct6.name());
+                  else $error("inst_vm(%d) should be 1 in vmv<nr>r instruction.\n",inst_vm,funct6_ari.ari_funct6.name());
 
                   `rvv_expect(inst_vs1[4:3]==2'b0)
                   else $error("inst_vs1[4:3](%d) should be 0 in vmv<nr>r instruction.\n",inst_vs1[4:3]);
@@ -2763,24 +2867,24 @@ module rvv_backend_decode_unit_ari
 
           VWREDSUMU,
           VWREDSUM: begin
-            case(funct3_ari)
+            case(inst_funct3)
               OPIVV: begin
                 if (csr_vstart=='b0) 
                   check_special = check_vd_overlap_v0&check_vs2_part_overlap_vd_2_1;        
 
                 `ifdef ASSERT_ON
                   `rvv_expect(csr_vstart=='b0)
-                  else $error("csr_vstart(%d) should be 0 in %s instruction.\n",csr_vstart,funct6_ari.opi_funct6.name());
+                  else $error("csr_vstart(%d) should be 0 in %s instruction.\n",csr_vstart,funct6_ari.ari_funct6.name());
                   
                   `rvv_expect(check_vd_overlap_v0==1'b1)
-                  else $error("vd is overlap v0 in %s instruction.\n",funct6_ari.opi_funct6.name());
+                  else $error("vd is overlap v0 in %s instruction.\n",funct6_ari.ari_funct6.name());
                 `endif
               end
             endcase
           end
 
           VSLIDEUP_RGATHEREI16: begin
-            case(funct3_ari)
+            case(inst_funct3)
               // VRGATHEREI16
               OPIVV: begin
                 // destination register group cannot overlap the source register group
@@ -2821,7 +2925,7 @@ module rvv_backend_decode_unit_ari
           end
           
           VRGATHER: begin
-            case(funct3_ari)
+            case(inst_funct3)
               OPIVV: begin
                 // destination register group cannot overlap the source register group
                 check_special   = check_vd_overlap_v0&check_vd_overlap_vs2&check_vd_overlap_vs1;
@@ -2838,7 +2942,7 @@ module rvv_backend_decode_unit_ari
 
       valid_opm: begin
         // OPM* instruction
-        case(funct6_ari.opm_funct6)
+        case(funct6_ari.ari_funct6)
           VWADDU,
           VWSUBU,
           VWADD,
@@ -2849,7 +2953,7 @@ module rvv_backend_decode_unit_ari
           VWMACCU,
           VWMACC,
           VWMACCSU: begin
-            case(funct3_ari)
+            case(inst_funct3)
               OPMVV: begin
                 // overlap constraint
                 check_special   = check_vd_overlap_v0&check_vs2_part_overlap_vd_2_1&check_vs1_part_overlap_vd_2_1;                
@@ -2865,7 +2969,7 @@ module rvv_backend_decode_unit_ari
           VWSUBU_W,
           VWADD_W,
           VWSUB_W: begin
-            case(funct3_ari)
+            case(inst_funct3)
               OPMVV: begin
                 // overlap constraint
                 check_special   = check_vd_overlap_v0&check_vs1_part_overlap_vd_2_1;                
@@ -2877,7 +2981,7 @@ module rvv_backend_decode_unit_ari
           end
           
           VXUNARY0: begin
-            case(funct3_ari)
+            case(inst_funct3)
               OPMVV: begin
                 case(vs1_opcode_vxunary) 
                   VZEXT_VF2,
@@ -2911,7 +3015,7 @@ module rvv_backend_decode_unit_ari
           VAADD,
           VASUBU,
           VASUB: begin
-            case(funct3_ari)
+            case(inst_funct3)
               OPMVV,
               OPMVX: begin
                 check_special = check_vd_overlap_v0;          
@@ -2921,7 +3025,7 @@ module rvv_backend_decode_unit_ari
 
           VWMACCUS,
           VSLIDE1DOWN: begin
-            case(funct3_ari)
+            case(inst_funct3)
               OPMVX: begin
                 check_special = check_vd_overlap_v0;          
               end
@@ -2937,14 +3041,14 @@ module rvv_backend_decode_unit_ari
           VREDAND,
           VREDOR,
           VREDXOR: begin
-            case(funct3_ari)
+            case(inst_funct3)
               OPMVV: begin
                 if(csr_vstart=='b0)
                   check_special     = 1'b1;
             
                 `ifdef ASSERT_ON
                   `rvv_expect(csr_vstart=='b0)
-                  else $error("csr_vstart(%d) should be 0 in %s instruction.\n",csr_vstart,funct6_ari.opm_funct6.name());
+                  else $error("csr_vstart(%d) should be 0 in %s instruction.\n",csr_vstart,funct6_ari.ari_funct6.name());
                 `endif
               end
             endcase
@@ -2959,21 +3063,21 @@ module rvv_backend_decode_unit_ari
           VMNOR,
           VMORN,
           VMXNOR: begin
-            case(funct3_ari)  
+            case(inst_funct3)  
               OPMVV: begin
                 if(inst_vm==1'b1)
                   check_special   = 1'b1;
             
                 `ifdef ASSERT_ON
                   `rvv_expect(inst_vm==1'b1)
-                  else $error("inst_vm(%d) should be 1 in %s instruction.\n",inst_vm,funct6_ari.opm_funct6.name());
+                  else $error("inst_vm(%d) should be 1 in %s instruction.\n",inst_vm,funct6_ari.ari_funct6.name());
                 `endif
               end
             endcase
           end
           
           VWXUNARY0: begin
-            case(funct3_ari)
+            case(inst_funct3)
               OPMVV: begin
                 case(vs1_opcode_vwxunary)
                   VCPOP,
@@ -2992,17 +3096,17 @@ module rvv_backend_decode_unit_ari
                 
                 `ifdef ASSERT_ON
                   `rvv_expect(inst_vm==1'b1)
-                  else $error("inst_vm(%d) should be 1 in %s instruction.\n",inst_vm,funct6_ari.opm_funct6.name());
+                  else $error("inst_vm(%d) should be 1 in %s instruction.\n",inst_vm,funct6_ari.ari_funct6.name());
                 
                   `rvv_expect(inst_vs2=='b0)
-                  else $error("inst_vs2(%d) should be 0 in %s instruction.\n",inst_vs2,funct6_ari.opm_funct6.name());
+                  else $error("inst_vs2(%d) should be 0 in %s instruction.\n",inst_vs2,funct6_ari.ari_funct6.name());
                 `endif
               end
             endcase
           end
 
           VMUNARY0: begin
-            case(funct3_ari)
+            case(inst_funct3)
               OPMVV: begin
                 case(vs1_opcode_vmunary)
                   VMSBF,
@@ -3021,7 +3125,7 @@ module rvv_backend_decode_unit_ari
           end
 
           VSLIDE1UP: begin
-            case(funct3_ari)
+            case(inst_funct3)
               OPMVX: begin
                 // destination register group cannot overlap the source register group
                 check_special = check_vd_overlap_v0&check_vd_overlap_vs2;
@@ -3030,7 +3134,7 @@ module rvv_backend_decode_unit_ari
           end
 
           VCOMPRESS: begin
-            case(funct3_ari)
+            case(inst_funct3)
               OPMVX: begin
                 if (csr_vstart=='b0) begin
                   // destination register group cannot overlap the source register group
@@ -3038,13 +3142,13 @@ module rvv_backend_decode_unit_ari
                 
                   `ifdef ASSERT_ON
                     `rvv_expect(csr_vstart=='b0)
-                    else $error("csr_vstart(%d) should be 0 in %s instruction.\n",csr_vstart,funct6_ari.opi_funct6.name());
+                    else $error("csr_vstart(%d) should be 0 in %s instruction.\n",csr_vstart,funct6_ari.ari_funct6.name());
                   
                     `rvv_expect(check_vd_overlap_v0==1'b1)
-                    else $error("vd is overlap v0 in %s instruction.\n",funct6_ari.opi_funct6.name());
+                    else $error("vd is overlap v0 in %s instruction.\n",funct6_ari.ari_funct6.name());
                     
                     `rvv_expect(check_vd_overlap_vs2==1'b1)
-                    else $error("vd is overlap vs2 in %s instruction.\n",funct6_ari.opi_funct6.name());
+                    else $error("vd is overlap vs2 in %s instruction.\n",funct6_ari.ari_funct6.name());
                   `endif
                 end
               end
@@ -3248,7 +3352,7 @@ module rvv_backend_decode_unit_ari
   // update uop funct3
   always_comb begin
     for(i=0;i<`NUM_DE_UOP;i=i+1) begin: GET_UOP_FUNCT3
-      uop[i].uop_funct3 = funct3_ari;
+      uop[i].uop_funct3 = inst_funct3;
     end
   end
 
@@ -3263,12 +3367,12 @@ module rvv_backend_decode_unit_ari
   always_comb begin
     for(i=0;i<`NUM_DE_UOP;i=i+1) begin: GET_UOP_EXE_UNIT
       // initial
-      uop[i].uop_exe_unit     = 'b0;
+      uop[i].uop_exe_unit     = ALU;
       
       case(1'b1)
         valid_opi: begin
           // allocate OPI* uop to execution unit
-          case(funct6_ari.opi_funct6)
+          case(funct6_ari.ari_funct6)
             VADD,
             VSUB,
             VRSUB,
@@ -3309,7 +3413,7 @@ module rvv_backend_decode_unit_ari
             end 
             
             VSMUL_VMVNRR: begin
-              case(funct3_ari)
+              case(inst_funct3)
                 OPIVV,
                 OPIVX: begin
                   uop[i].uop_exe_unit = MUL;
@@ -3332,7 +3436,7 @@ module rvv_backend_decode_unit_ari
 
         valid_opm: begin
           // allocate OPM* uop to execution unit
-          case(funct6_ari.opm_funct6)
+          case(funct6_ari.ari_funct6)
             VWADDU,
             VWSUBU,
             VWADD,
@@ -3411,12 +3515,12 @@ module rvv_backend_decode_unit_ari
   always_comb begin
     for(i=0;i<`NUM_DE_UOP;i=i+1) begin: GET_UOP_CLASS
       // initial 
-      uop[i].uop_class      = 'b0;
+      uop[i].uop_class      = X;
       
       case(1'b1)
         valid_opi: begin
           // OPI*
-          case(funct6_ari.opi_funct6)
+          case(funct6_ari.ari_funct6)
             VADD,
             VADC,
             VAND,
@@ -3435,7 +3539,7 @@ module rvv_backend_decode_unit_ari
             VNCLIPU,
             VNCLIP,
             VRGATHER: begin
-              case(funct3_ari)
+              case(inst_funct3)
                 OPIVV: begin
                   uop[i].uop_class  = VV;
                 end
@@ -3454,7 +3558,7 @@ module rvv_backend_decode_unit_ari
             VMAX,
             VSSUBU,
             VSSUB: begin
-              case(funct3_ari)
+              case(inst_funct3)
                 OPIVV: begin
                   uop[i].uop_class  = VV;
                 end
@@ -3466,7 +3570,7 @@ module rvv_backend_decode_unit_ari
 
             VRSUB,
             VSLIDEDOWN: begin
-              case(funct3_ari)
+              case(inst_funct3)
                 OPIVX,
                 OPIVI: begin
                   uop[i].uop_class  = VX;
@@ -3479,7 +3583,7 @@ module rvv_backend_decode_unit_ari
             VMSNE,
             VMSLEU,
             VMSLE: begin
-              case(funct3_ari)
+              case(inst_funct3)
                 OPIVV: begin
                   uop[i].uop_class  = VVV;
                 end
@@ -3493,7 +3597,7 @@ module rvv_backend_decode_unit_ari
             VMSBC,
             VMSLTU,
             VMSLT: begin
-              case(funct3_ari)
+              case(inst_funct3)
                 OPIVV: begin
                   uop[i].uop_class  = VVV;
                 end
@@ -3505,7 +3609,7 @@ module rvv_backend_decode_unit_ari
 
             VMSGTU,
             VMSGT: begin
-              case(funct3_ari)
+              case(inst_funct3)
                 OPIVX,
                 OPIVI: begin
                   uop[i].uop_class  = VV;
@@ -3514,7 +3618,7 @@ module rvv_backend_decode_unit_ari
             end
             
             VMERGE_VMV: begin
-              case(funct3_ari)
+              case(inst_funct3)
                 OPIVV: begin
                   if (inst_vm==1'b0)
                     uop[i].uop_class  = VV;
@@ -3533,7 +3637,7 @@ module rvv_backend_decode_unit_ari
 
             VWREDSUMU,
             VWREDSUM: begin
-              case(funct3_ari)
+              case(inst_funct3)
                 OPIVV: begin
                   uop[i].uop_class  = VV;
                 end
@@ -3541,7 +3645,7 @@ module rvv_backend_decode_unit_ari
             end
 
             VSLIDEUP_RGATHEREI16: begin
-              case(funct3_ari)
+              case(inst_funct3)
                 OPIVV: begin
                   uop[i].uop_class  = VV;
                 end
@@ -3556,7 +3660,7 @@ module rvv_backend_decode_unit_ari
 
         valid_opm: begin
           // OPM*
-          case(funct6_ari.opm_funct6)
+          case(funct6_ari.ari_funct6)
             VWADDU,
             VWSUBU,
             VWADD,
@@ -3580,7 +3684,7 @@ module rvv_backend_decode_unit_ari
             VAADD,
             VASUBU,
             VASUB: begin
-              case(funct3_ari)
+              case(inst_funct3)
                 OPMVV: begin
                   uop[i].uop_class  = VV;
                 end
@@ -3591,7 +3695,7 @@ module rvv_backend_decode_unit_ari
             end 
             
             VXUNARY0: begin
-              case(funct3_ari)
+              case(inst_funct3)
                 OPMVV: begin
                   uop[i].uop_class  = VX;
                 end
@@ -3605,7 +3709,7 @@ module rvv_backend_decode_unit_ari
             VWMACCU,
             VWMACC,
             VWMACCSU: begin
-              case(funct3_ari)
+              case(inst_funct3)
                 OPMVV: begin
                   uop[i].uop_class  = VVV;
                 end
@@ -3618,7 +3722,7 @@ module rvv_backend_decode_unit_ari
             VWMACCUS,
             VSLIDE1UP,
             VSLIDE1DOWN: begin
-              case(funct3_ari)
+              case(inst_funct3)
                 OPMVX: begin
                   uop[i].uop_class  = VV;
                 end
@@ -3635,7 +3739,7 @@ module rvv_backend_decode_unit_ari
             VREDOR,
             VREDXOR,
             VCOMPRESS: begin
-              case(funct3_ari)
+              case(inst_funct3)
                 OPMVV: begin
                   uop[i].uop_class  = VV;
                 end
@@ -3651,7 +3755,7 @@ module rvv_backend_decode_unit_ari
             VMNOR,
             VMORN,
             VMXNOR: begin
-              case(funct3_ari)
+              case(inst_funct3)
                 OPMVV: begin
                   uop[i].uop_class  = VVV;
                 end
@@ -3659,7 +3763,7 @@ module rvv_backend_decode_unit_ari
             end
           
             VWXUNARY0: begin
-              case(funct3_ari)
+              case(inst_funct3)
                 OPMVV: begin
                   uop[i].uop_class  = VX;
                 end
@@ -3670,7 +3774,7 @@ module rvv_backend_decode_unit_ari
             end
 
             VMUNARY0: begin
-              case(funct3_ari)
+              case(inst_funct3)
                 OPMVV: begin
                   case(vs1_opcode_vmunary)
                     VMSBF,
@@ -3732,11 +3836,11 @@ module rvv_backend_decode_unit_ari
       case(1'b1)
         valid_opi: begin
           // OPI*
-          case(funct6_ari.opi_funct6)
+          case(funct6_ari.ari_funct6)
             VADC,
             VMADC,
             VMERGE_VMV: begin
-              case(funct3_ari)
+              case(inst_funct3)
                 OPIVV,
                 OPIVX,
                 OPIVI: begin
@@ -3746,7 +3850,7 @@ module rvv_backend_decode_unit_ari
             end 
             VSBC,
             VMSBC: begin
-              case(funct3_ari)
+              case(inst_funct3)
                 OPIVV,
                 OPIVX: begin
                   uop[i].v0_valid   = !inst_vm;
@@ -3764,12 +3868,12 @@ module rvv_backend_decode_unit_ari
     for(i=0;i<`NUM_DE_UOP;i=i+1) begin: GET_VD
       // initial
       uop[i].vd_index = 'b0;
-      uop[i].vd_eew   = 'b0;
+      uop[i].vd_eew   = EEW1;
       uop[i].vd_valid = 'b0;
       
       case(1'b1)
         valid_opi: begin
-          case(funct6_ari.opi_funct6)
+          case(funct6_ari.ari_funct6)
             VADD,
             VADC,
             VAND,
@@ -3785,7 +3889,7 @@ module rvv_backend_decode_unit_ari
             VSSRL,
             VSSRA,
             VRGATHER: begin
-              case(funct3_ari)
+              case(inst_funct3)
                 OPIVV,
                 OPIVX,
                 OPIVI: begin  
@@ -3804,7 +3908,7 @@ module rvv_backend_decode_unit_ari
             VMAX,
             VSSUBU,
             VSSUB: begin
-              case(funct3_ari)
+              case(inst_funct3)
                 OPIVV,
                 OPIVX: begin  
                   uop[i].vd_index = inst_vd+uop_index_current[`UOP_INDEX_WIDTH-1:0];
@@ -3816,7 +3920,7 @@ module rvv_backend_decode_unit_ari
 
             VRSUB,
             VSLIDEDOWN: begin
-              case(funct3_ari)
+              case(inst_funct3)
                 OPIVX,
                 OPIVI: begin  
                   uop[i].vd_index = inst_vd+uop_index_current[`UOP_INDEX_WIDTH-1:0];
@@ -3831,7 +3935,7 @@ module rvv_backend_decode_unit_ari
             VMSNE,
             VMSLEU,
             VMSLE: begin
-              case(funct3_ari)
+              case(inst_funct3)
                 OPIVV,
                 OPIVX,
                 OPIVI: begin  
@@ -3845,7 +3949,7 @@ module rvv_backend_decode_unit_ari
             VMSBC,
             VMSLTU,
             VMSLT: begin
-              case(funct3_ari)
+              case(inst_funct3)
                 OPIVV,
                 OPIVX: begin  
                   uop[i].vd_index = inst_vd;
@@ -3857,7 +3961,7 @@ module rvv_backend_decode_unit_ari
             
             VMSGTU,
             VMSGT: begin
-              case(funct3_ari)
+              case(inst_funct3)
                 OPIVX,
                 OPIVI: begin  
                   uop[i].vd_index = inst_vd;
@@ -3871,7 +3975,7 @@ module rvv_backend_decode_unit_ari
             VNSRA,
             VNCLIPU,
             VNCLIP: begin
-              case(funct3_ari)
+              case(inst_funct3)
                 OPIVV,
                 OPIVX,
                 OPIVI: begin
@@ -3884,7 +3988,7 @@ module rvv_backend_decode_unit_ari
 
             VWREDSUMU,
             VWREDSUM: begin
-              if(funct3_ari==OPIVV) begin
+              if(inst_funct3==OPIVV) begin
                 uop[i].vd_index   = inst_vd;
                 uop[i].vd_eew     = eew_vd;
                 uop[i].vd_valid   = 1'b1;
@@ -3892,7 +3996,7 @@ module rvv_backend_decode_unit_ari
             end
 
             VSLIDEUP_RGATHEREI16: begin
-              case(funct3_ari)
+              case(inst_funct3)
                 OPIVV: begin
                   case({emul_max,emul_vd})
                     {EMUL1,EMUL1},
@@ -3925,7 +4029,7 @@ module rvv_backend_decode_unit_ari
 
         valid_opm: begin
           // OPM*
-          case(funct6_ari.opm_funct6)
+          case(funct6_ari.ari_funct6)
             VWADDU,
             VWSUBU,
             VWADD,
@@ -3956,7 +4060,7 @@ module rvv_backend_decode_unit_ari
             VAADD,
             VASUBU,
             VASUB: begin
-              case(funct3_ari)
+              case(inst_funct3)
                 OPMVV,
                 OPMVX: begin
                   uop[i].vd_index = inst_vd+uop_index_current[`UOP_INDEX_WIDTH-1:0];
@@ -3968,7 +4072,7 @@ module rvv_backend_decode_unit_ari
 
             VXUNARY0,
             VCOMPRESS: begin
-              case(funct3_ari)
+              case(inst_funct3)
                 OPMVV: begin
                   uop[i].vd_index = inst_vd+uop_index_current[`UOP_INDEX_WIDTH-1:0];
                   uop[i].vd_eew   = eew_vd;
@@ -3980,7 +4084,7 @@ module rvv_backend_decode_unit_ari
             VWMACCUS,
             VSLIDE1UP,
             VSLIDE1DOWN: begin
-              case(funct3_ari)
+              case(inst_funct3)
                 OPMVX: begin
                   uop[i].vd_index = inst_vd+uop_index_current[`UOP_INDEX_WIDTH-1:0];
                   uop[i].vd_eew   = eew_vd;
@@ -4005,7 +4109,7 @@ module rvv_backend_decode_unit_ari
             VMNOR,
             VMORN,
             VMXNOR: begin
-              case(funct3_ari)
+              case(inst_funct3)
                 OPMVV: begin
                   uop[i].vd_index = inst_vd;
                   uop[i].vd_eew   = eew_vd;
@@ -4015,7 +4119,7 @@ module rvv_backend_decode_unit_ari
             end
              
             VWXUNARY0: begin
-              case(funct3_ari)
+              case(inst_funct3)
                 OPMVX: begin
                   uop[i].vd_index = inst_vd;
                   uop[i].vd_eew   = eew_vd;
@@ -4025,7 +4129,7 @@ module rvv_backend_decode_unit_ari
             end
          
             VMUNARY0: begin
-              case(funct3_ari)
+              case(inst_funct3)
                 OPMVV: begin
                   case(vs1_opcode_vmunary)
                     VMSBF,
@@ -4060,13 +4164,13 @@ module rvv_backend_decode_unit_ari
       case(1'b1)
         valid_opi: begin
           // OPI*
-          case(funct6_ari.opi_funct6)
+          case(funct6_ari.ari_funct6)
             VMADC,
             VMSEQ,
             VMSNE,
             VMSLEU,
             VMSLE: begin
-              case(funct3_ari)
+              case(inst_funct3)
                 OPIVV,
                 OPIVX,
                 OPIVI: begin
@@ -4077,7 +4181,7 @@ module rvv_backend_decode_unit_ari
             VMSBC,
             VMSLTU,
             VMSLT: begin
-              case(funct3_ari)
+              case(inst_funct3)
                 OPIVV,
                 OPIVX: begin
                   uop[i].vs3_valid = 1'b1;
@@ -4086,7 +4190,7 @@ module rvv_backend_decode_unit_ari
             end
             VMSGTU,
             VMSGT: begin
-              case(funct3_ari)
+              case(inst_funct3)
                 OPIVX,
                 OPIVI: begin
                   uop[i].vs3_valid = 1'b1;
@@ -4098,7 +4202,7 @@ module rvv_backend_decode_unit_ari
 
         valid_opm: begin
           // OPM*
-          case(funct6_ari.opi_funct6)
+          case(funct6_ari.ari_funct6)
             VMACC,
             VNMSAC,
             VMADD,
@@ -4106,7 +4210,7 @@ module rvv_backend_decode_unit_ari
             VWMACCU,
             VWMACC,
             VWMACCSU: begin
-              case(funct3_ari)
+              case(inst_funct3)
                 OPMVV,
                 OPMVX: begin
                   uop[i].vs3_valid = 1'b1;
@@ -4115,7 +4219,7 @@ module rvv_backend_decode_unit_ari
             end
 
             VWMACCUS: begin
-              case(funct3_ari)
+              case(inst_funct3)
                 OPMVX: begin
                   uop[i].vs3_valid = 1'b1;
                 end
@@ -4130,7 +4234,7 @@ module rvv_backend_decode_unit_ari
             VMNOR,
             VMORN,
             VMXNOR: begin
-              case(funct3_ari)
+              case(inst_funct3)
                 OPMVV: begin
                   uop[i].vs3_valid = 1'b1;
                 end
@@ -4138,7 +4242,7 @@ module rvv_backend_decode_unit_ari
             end
 
             VMUNARY0: begin
-              case(funct3_ari)
+              case(inst_funct3)
                 OPMVV: begin
                   case(vs1_opcode_vmunary)
                     VMSBF,
@@ -4162,13 +4266,13 @@ module rvv_backend_decode_unit_ari
     for(i=0;i<`NUM_DE_UOP;i=i+1) begin: GET_VS1
       // initial
       uop[i].vs1             = inst_vs1;
-      uop[i].vs1_eew         = 'b0;
+      uop[i].vs1_eew         = EEW1;
       uop[i].vs1_index_valid = 'b0;
       
       case(1'b1)
         valid_opi: begin
           // OPI*
-          case(funct6_ari.opi_funct6)
+          case(funct6_ari.ari_funct6)
             VADD,
             VSUB,
             VADC,
@@ -4200,7 +4304,7 @@ module rvv_backend_decode_unit_ari
             VSSRL,
             VSSRA,
             VRGATHER: begin
-              case(funct3_ari)
+              case(inst_funct3)
                 OPIVV: begin
                   uop[i].vs1              = inst_vs1+uop_index_current[i][`UOP_INDEX_WIDTH-1:0];
                   uop[i].vs1_eew          = eew_vs1;
@@ -4213,7 +4317,7 @@ module rvv_backend_decode_unit_ari
             VNSRA,
             VNCLIPU,
             VNCLIP: begin
-              case(funct3_ari)
+              case(inst_funct3)
                 OPIVV: begin
                   uop[i].vs1              = inst_vs1+uop_index_current[i][`UOP_INDEX_WIDTH-1:1];
                   uop[i].vs1_eew          = eew_vs1;
@@ -4224,7 +4328,7 @@ module rvv_backend_decode_unit_ari
             
             VWREDSUMU,
             VWREDSUM: begin
-              case(funct3_ari)
+              case(inst_funct3)
                 OPIVV: begin
                   uop[i].vs1              = inst_vs1;
                   uop[i].vs1_eew          = eew_vs1;
@@ -4234,7 +4338,7 @@ module rvv_backend_decode_unit_ari
             end        
             
             VSLIDEUP_RGATHEREI16: begin
-              if(funct3_ari==OPIVV) begin
+              if(inst_funct3==OPIVV) begin
                 case({emul_max,emul_vs1})
                   {EMUL1,EMUL1},
                   {EMUL2,EMUL2},
@@ -4259,7 +4363,7 @@ module rvv_backend_decode_unit_ari
 
         valid_opm: begin
           // OPM*
-          case(funct6_ari.opm_funct6)
+          case(funct6_ari.ari_funct6)
             VWADDU,
             VWSUBU,
             VWADD,
@@ -4274,7 +4378,7 @@ module rvv_backend_decode_unit_ari
             VWMACCU,
             VWMACC,
             VWMACCSU: begin
-              case(funct3_ari)
+              case(inst_funct3)
                 OPMVV: begin
                   uop[i].vs1              = inst_vs1+uop_index_current[i][`UOP_INDEX_WIDTH-1:1];
                   uop[i].vs1_eew          = eew_vs1;
@@ -4286,10 +4390,10 @@ module rvv_backend_decode_unit_ari
             VXUNARY0,
             VWXUNARY0,
             VMUNARY0: begin
-              case(funct3_ari)
+              case(inst_funct3)
                 OPMVV: begin
                   uop[i].vs1              = inst_vs1; // vs1 is regarded as opcode
-                  uop[i].vs1_eew          = 'b0;
+                  uop[i].vs1_eew          = EEW1;
                   uop[i].vs1_index_valid  = 'b0;        
                 end
               endcase
@@ -4312,7 +4416,7 @@ module rvv_backend_decode_unit_ari
             VASUBU,
             VASUB,
             VCOMPRESS: begin
-              case(funct3_ari)
+              case(inst_funct3)
                 OPMVV: begin
                   uop[i].vs1              = inst_vs1+uop_index_current[i][`UOP_INDEX_WIDTH-1:0];
                   uop[i].vs1_eew          = eew_vs1;
@@ -4338,7 +4442,7 @@ module rvv_backend_decode_unit_ari
             VMNOR,
             VMORN,
             VMXNOR: begin
-              case(funct3_ari)
+              case(inst_funct3)
                 OPMVV: begin
                   uop[i].vs1              = inst_vs1;
                   uop[i].vs1_eew          = eew_vs1;
@@ -4361,9 +4465,9 @@ module rvv_backend_decode_unit_ari
       case(1'b1)
         valid_opi: begin
           // OPI*
-          case(funct6_ari.opi_funct6)
+          case(funct6_ari.ari_funct6)
             VSMUL_VMVNRR: begin
-              case(funct3_ari)
+              case(inst_funct3)
                 OPIVI: begin
                   uop[i].vs1_opcode_valid = 1'b1;   // vmvnrr.v's vs1 opcode is 5'b0, which means vmv1r.v
                 end
@@ -4374,16 +4478,16 @@ module rvv_backend_decode_unit_ari
         
         valid_opm: begin
           // OPM*
-          case(funct6_ari.opm_funct6)
+          case(funct6_ari.ari_funct6)
             VXUNARY0: begin
-              case(funct3_ari)
+              case(inst_funct3)
                 OPMVV: begin
                   uop[i].vs1_opcode_valid = 1'b1;
                 end
               endcase
             end
              VWXUNARY0: begin
-              case(funct3_ari)
+              case(inst_funct3)
                 OPMVV: begin
                   case(vs1_opcode_vwxunary)
                     VCPOP,
@@ -4396,7 +4500,7 @@ module rvv_backend_decode_unit_ari
               endcase
             end
             VMUNARY0: begin
-              case(funct3_ari)
+              case(inst_funct3)
                 OPMVV: begin
                   case(vs1_opcode_vmunary)
                     VMSBF,
@@ -4420,13 +4524,13 @@ module rvv_backend_decode_unit_ari
     for(i=0;i<`NUM_DE_UOP;i=i+1) begin: GET_VS2
       // initial
       uop[i].vs2_index        = 'b0; 
-      uop[i].vs2_eew          = 'b0; 
+      uop[i].vs2_eew          = EEW1; 
       uop[i].vs2_valid        = 'b0; 
       
       case(1'b1)
         valid_opi: begin
           // OPI*
-          case(funct6_ari.opi_funct6)
+          case(funct6_ari.ari_funct6)
             VADD,
             VADC,
             VMADC,
@@ -4450,7 +4554,7 @@ module rvv_backend_decode_unit_ari
             VNCLIPU,
             VNCLIP,
             VRGATHER: begin
-              case(funct3_ari)
+              case(inst_funct3)
                 OPIVV,
                 OPIVX,
                 OPIVI: begin
@@ -4472,7 +4576,7 @@ module rvv_backend_decode_unit_ari
             VMAX,
             VSSUBU,
             VSSUB: begin
-              case(funct3_ari)
+              case(inst_funct3)
                 OPIVV,
                 OPIVX: begin
                   uop[i].vs2_index    = inst_vs2+uop_index_current[i][`UOP_INDEX_WIDTH-1:0];
@@ -4486,7 +4590,7 @@ module rvv_backend_decode_unit_ari
             VMSGTU,
             VMSGT,
             VSLIDEDOWN: begin
-              case(funct3_ari)
+              case(inst_funct3)
                 OPIVX,
                 OPIVI: begin
                   uop[i].vs2_index    = inst_vs2+uop_index_current[i][`UOP_INDEX_WIDTH-1:0];
@@ -4497,7 +4601,7 @@ module rvv_backend_decode_unit_ari
             end
             
             VMERGE_VMV: begin
-              case(funct3_ari)
+              case(inst_funct3)
                 OPIVV,
                 OPIVX,
                 OPIVI: begin
@@ -4512,7 +4616,7 @@ module rvv_backend_decode_unit_ari
            
             VWREDSUMU,
             VWREDSUM: begin
-              case(funct3_ari)
+              case(inst_funct3)
                 OPIVV: begin
                   uop[i].vs2_index    = inst_vs2+uop_index_current[i][`UOP_INDEX_WIDTH-1:0];
                   uop[i].vs2_eew      = eew_vs2;
@@ -4522,7 +4626,7 @@ module rvv_backend_decode_unit_ari
             end
 
             VSLIDEUP_RGATHEREI16: begin
-              case(funct3_ari)
+              case(inst_funct3)
                 OPIVV: begin
                   case({emul_max,emul_vs2})
                     {EMUL1,EMUL1},
@@ -4555,7 +4659,7 @@ module rvv_backend_decode_unit_ari
 
         valid_opm: begin
           // OPM* 
-          case(funct6_ari.opm_funct6)
+          case(funct6_ari.ari_funct6)
             VWADDU,
             VWSUBU,
             VWADD,
@@ -4566,7 +4670,7 @@ module rvv_backend_decode_unit_ari
             VWMACCU,
             VWMACC,
             VWMACCSU: begin
-              case(funct3_ari)
+              case(inst_funct3)
                 OPMVV,
                 OPMVX: begin
                   uop[i].vs2_index    = inst_vs2+uop_index_current[i][`UOP_INDEX_WIDTH-1:1];
@@ -4596,7 +4700,7 @@ module rvv_backend_decode_unit_ari
             VAADD,
             VASUBU,
             VASUB: begin
-              case(funct3_ari)
+              case(inst_funct3)
                 OPMVV,
                 OPMVX: begin
                   uop[i].vs2_index    = inst_vs2+uop_index_current[i][`UOP_INDEX_WIDTH-1:0];
@@ -4607,7 +4711,7 @@ module rvv_backend_decode_unit_ari
             end
 
             VXUNARY0: begin
-              case(funct3_ari)
+              case(inst_funct3)
                 OPMVV: begin
                   case({emul_max,emul_vs2})
                     {EMUL1,EMUL1},
@@ -4630,7 +4734,7 @@ module rvv_backend_decode_unit_ari
             VWMACCUS,
             VSLIDE1UP,
             VSLIDE1DOWN: begin
-              case(funct3_ari)
+              case(inst_funct3)
                 OPMVX: begin
                   uop[i].vs2_index    = inst_vs2+uop_index_current[i][`UOP_INDEX_WIDTH-1:1];
                   uop[i].vs2_eew      = eew_vs2;
@@ -4649,7 +4753,7 @@ module rvv_backend_decode_unit_ari
             VREDXOR,
             VWXUNARY0,
             VCOMPRESS: begin
-              case(funct3_ari)
+              case(inst_funct3)
                 OPMVV: begin
                   uop[i].vs2_index    = inst_vs2+uop_index_current[i][`UOP_INDEX_WIDTH-1:0];
                   uop[i].vs2_eew      = eew_vs2;
@@ -4666,7 +4770,7 @@ module rvv_backend_decode_unit_ari
             VMNOR,
             VMORN,
             VMXNOR: begin
-              case(funct3_ari)
+              case(inst_funct3)
                 OPMVV: begin
                   uop[i].vs2_index    = inst_vs2;
                   uop[i].vs2_eew      = eew_vs2;
@@ -4676,7 +4780,7 @@ module rvv_backend_decode_unit_ari
             end
 
             VMUNARY0: begin
-              case(funct3_ari)
+              case(inst_funct3)
                 OPMVV: begin
                   case(vs1_opcode_vmunary)
                     VMSBF,
@@ -4704,9 +4808,9 @@ module rvv_backend_decode_unit_ari
       uop[i].rd_index         = 'b0;
       uop[i].rd_index_valid   = 'b0;
      
-      case(funct6_ari.opm_funct6)
+      case(funct6_ari.ari_funct6)
         VWXUNARY0: begin
-          case(funct3_ari)
+          case(inst_funct3)
             OPMVV: begin
               case(vs1_opcode_vwxunary)
                 VCPOP,
@@ -4728,13 +4832,13 @@ module rvv_backend_decode_unit_ari
     for(i=0;i<`NUM_DE_UOP;i=i+1) begin: GET_RS1
       // initial
       uop[i].rs1_data         = 'b0;
-      uop[i].scalar_eew       = 'b0;
+      uop[i].scalar_eew       = EEW1;
       uop[i].rs1_data_valid   = 'b0;
       
       case(1'b1)
         valid_opi: begin
           // OPI*
-          case(funct6_ari.opi_funct6)
+          case(funct6_ari.ari_funct6)
             VADD,
             VRSUB,
             VADC,
@@ -4750,7 +4854,7 @@ module rvv_backend_decode_unit_ari
             VMERGE_VMV,
             VSADD,
             VNCLIP: begin
-              case(funct3_ari)
+              case(inst_funct3)
                 OPIVX: begin
                   uop[i].rs1_data       = rs1_data;
                   uop[i].scalar_eew     = eew_scalar;
@@ -4775,7 +4879,7 @@ module rvv_backend_decode_unit_ari
             VSSUBU,
             VSSUB,
             VSMUL_VMVNRR: begin
-              case(funct3_ari)
+              case(inst_funct3)
                 OPIVX: begin
                   uop[i].rs1_data       = rs1_data;
                   uop[i].scalar_eew     = eew_scalar;
@@ -4798,7 +4902,7 @@ module rvv_backend_decode_unit_ari
             VSLIDEUP_RGATHEREI16,
             VSLIDEDOWN,
             VRGATHER: begin
-              case(funct3_ari)
+              case(inst_funct3)
                 OPIVX: begin
                   uop[i].rs1_data       = rs1_data;
                   uop[i].scalar_eew     = eew_scalar;
@@ -4816,7 +4920,7 @@ module rvv_backend_decode_unit_ari
         
         valid_opm: begin
           // OPM*
-          case(funct6_ari.opm_funct6)
+          case(funct6_ari.ari_funct6)
             VWADDU,
             VWSUBU,
             VWADD,
@@ -4851,7 +4955,7 @@ module rvv_backend_decode_unit_ari
             VWXUNARY0,
             VSLIDE1UP,
             VSLIDE1DOWN: begin
-              case(funct3_ari)
+              case(inst_funct3)
                 OPMVX: begin
                   uop[i].rs1_data       = rs1_data;
                   uop[i].scalar_eew     = eew_scalar;
