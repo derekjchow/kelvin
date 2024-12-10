@@ -55,7 +55,7 @@ module openFifo4_flopped_ptr(/*AUTOARG*/
     else
       nxtLempty = empty;
 
-  edff #(1) emptyReg (.q(empty), .clk(clk), .rst_n(rst_n), .d(nxtLempty));
+  dff #(1) emptyReg (.q(empty), .clk(clk), .rst_n(rst_n), .d(nxtLempty));
 
   wire full;
   reg nxtLfull;
@@ -68,7 +68,7 @@ module openFifo4_flopped_ptr(/*AUTOARG*/
     else
       nxtLfull = full;
 
-  edff #(1) fullReg (.q(full), .clk(clk), .rst_n(rst_n), .d(nxtLfull));
+  dff #(1) fullReg (.q(full), .clk(clk), .rst_n(rst_n), .d(nxtLfull));
 
   // Write enable decodes
 
@@ -84,10 +84,10 @@ module openFifo4_flopped_ptr(/*AUTOARG*/
   wire [DWIDTH-1:0] d2;
   wire [DWIDTH-1:0] d3;
 
-  edff #(DWIDTH) d0Reg (.out(d0), .clk(clk), .rst_n(rst_n), .en(en0), .in(inData));
-  edff #(DWIDTH) d1Reg (.out(d1), .clk(clk), .rst_n(rst_n), .en(en1), .in(inData));
-  edff #(DWIDTH) d2Reg (.out(d2), .clk(clk), .rst_n(rst_n), .en(en2), .in(inData));
-  edff #(DWIDTH) d3Reg (.out(d3), .clk(clk), .rst_n(rst_n), .en(en3), .in(inData));
+  edff #(DWIDTH) d0Reg (.q(d0), .clk(clk), .rst_n(rst_n), .en(en0), .d(inData));
+  edff #(DWIDTH) d1Reg (.q(d1), .clk(clk), .rst_n(rst_n), .en(en1), .d(inData));
+  edff #(DWIDTH) d2Reg (.q(d2), .clk(clk), .rst_n(rst_n), .en(en2), .d(inData));
+  edff #(DWIDTH) d3Reg (.q(d3), .clk(clk), .rst_n(rst_n), .en(en3), .d(inData));
 
   // Read output
 

@@ -1,8 +1,7 @@
 module openFifo8_flopped_2w2r(/*AUTOARG*/
    // Outputs
-   outData0, outData1, fifo_halfFull, fifo_full, fifo_1left_to_full,
-   fifo_empty, fifo_1left_to_empty, fifo_idle, d0, d1, d2, d3, d4, d5,
-   d6, d7, dPtr, dValid,
+   outData0, outData1, fifo_full, fifo_1left_to_full, fifo_empty,
+   fifo_1left_to_empty, d0, d1, d2, d3, d4, d5, d6, d7, dPtr, dValid,
    // Inputs
    clk, rst_n, push0, inData0, push1, inData1, pop0, pop1
    );
@@ -25,12 +24,10 @@ parameter DWIDTH = 32;
   output logic [DWIDTH-1:0] outData1;
 
 // fifo status
-  output logic fifo_halfFull;
   output logic fifo_full;
   output logic fifo_1left_to_full;
   output logic fifo_empty;
   output logic fifo_1left_to_empty;
-  output logic fifo_idle;
 
 // open data
   output logic [DWIDTH-1:0] d0;
@@ -58,10 +55,6 @@ wire full0_int;
 wire full1_int;
 wire empty0_int;
 wire empty1_int;
-wire halfFull0_int;
-wire halfFull1_int;
-wire idle0_int;
-wire idle1_int;
 wire [DWIDTH-1:0] d0_0_int;
 wire [DWIDTH-1:0] d1_0_int;
 wire [DWIDTH-1:0] d2_0_int;
@@ -99,12 +92,10 @@ assign {outData1,outData0} = popSwapFlag ? {outData0_int,outData1_int} : {outDat
 assign fifo_full = full0_int && full1_int;
 assign fifo_1left_to_full = (full0_int && !full1_int) || (!full0_int && full1_int);
 
-assign fifo_halfFull = halfFull1_int && halfFull0_int;
 
 // Empty flag
 assign fifo_empty = empty1_int && empty0_int;
 assign fifo_1left_to_empty = (empty0_int && !empty1_int) || (!empty0_int && empty1_int); 
-assign fifo_idle = idle1_int && idle0_int;
 
 // Open data pack
 assign d0 = d0_0_int;
@@ -132,8 +123,6 @@ openFifo4_flopped_ptr #(DWIDTH) fifo_even (
   .outData(outData0_int), 
   .full(full0_int), 
   .empty(empty0_int), 
-  .halfFull(halfFull0_int), 
-  .idle(idle0_int),
   .d0(d0_0_int),
   .d1(d1_0_int),
   .d2(d2_0_int),
@@ -154,8 +143,6 @@ openFifo4_flopped_ptr #(DWIDTH) fifo_odd (
   .outData(outData1_int), 
   .full(full1_int), 
   .empty(empty1_int), 
-  .halfFull(halfFull1_int), 
-  .idle(idle1_int),
   .d0(d0_1_int),
   .d1(d1_1_int),
   .d2(d2_1_int),
