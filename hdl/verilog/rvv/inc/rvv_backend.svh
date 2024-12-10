@@ -81,6 +81,7 @@ typedef enum logic [2:0] {
     PMTRDT,
     MUL,
     MAC,
+    DIV,
     LSU
 } EXE_UNIT_e;
 
@@ -570,6 +571,23 @@ typedef struct packed {
   logic        [`VLEN-1:0]                                     vregfile_write_data;    // vd
   BYTE_TYPE_t                         vs1_type;               // mask for vd
 } UOP_LSU_RVS2RVV_t;
+
+// send uop to ROB
+typedef struct packed {
+  logic   [`REGFILE_INDEX_WIDTH-1:0]  w_index;            //wr addr
+  BYTE_TYPE_t                         vd_type;            //wr Byte mask
+  RVVConfigState                      vector_csr;         //Receive Vstart, vlen,... And need to update vcsr when trap
+} DP2ROB_t;
+
+// send ROB info to DP
+typedef struct packed {
+  logic                               valid;              //entry valid
+  logic                               w_valid;            //vd valid
+  logic   [`REGFILE_INDEX_WIDTH-1:0]  w_index;            //vd addr
+  logic   [`VLEN-1:0]                 w_data;             //when w_type=XRF, w_data[`XLEN-1:0] will store the scalar result
+  BYTE_TYPE_t                         byte_type;            //wr Byte mask
+  RVVConfigState                      vector_csr;         //Receive Vstart, vlen,... And need to update vcsr when trap
+} ROB2DP_t;
 
 typedef struct packed {
   logic                               w_valid;            //entry valid
