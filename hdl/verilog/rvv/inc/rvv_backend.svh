@@ -279,7 +279,7 @@ typedef enum logic [3:0] {
 } EMUL_e;
 
 // Effective Element Width
-typedef enum logic [1:0] {
+typedef enum logic [2:0] {
   EEW_NONE,    // it means this is nut supported 
   EEW1,
   EEW8, 

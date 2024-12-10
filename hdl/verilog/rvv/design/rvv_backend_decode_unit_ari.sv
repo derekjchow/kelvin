@@ -70,6 +70,8 @@ module rvv_backend_decode_unit_ari
   logic                                           check_vd_align;
   logic                                           check_vs2_align;
   logic                                           check_vs1_align;
+  logic                                           check_sew;
+  logic                                           check_lmul;
   logic   [`UOP_INDEX_WIDTH-1:0]                  uop_vstart;         
   logic   [`UOP_INDEX_WIDTH-1:0]                  uop_index_base;         
   logic   [`NUM_DE_UOP-1:0][`UOP_INDEX_WIDTH-1:0] uop_index_current;   
@@ -186,9 +188,9 @@ module rvv_backend_decode_unit_ari
           VASUB      ,
           VSLIDE1UP  ,
           VSLIDE1DOWN,
-          VWXUNARY0  ,  // it could be vcpop.m, vfirst.m and vmv. They can be distinguished by vs1 field(inst_encoding[19:15])
-          VXUNARY0   ,  // it could be vzext.vf2, vzext.vf4, vsext.vf2, vsext.vf4. They can be distinguished by vs1 field(inst_encoding[19:15])
-          VMUNARY0   ,  // it could be vmsbf, vmsof, vmsif, viota, vid. They can be distinguished by vs1 field(inst_encoding[19:15])
+          VWXUNARY0  ,  
+          VXUNARY0   ,  
+          VMUNARY0   ,  
           VCOMPRESS  ,
           VMANDN     ,
           VMAND      ,
@@ -240,10 +242,10 @@ module rvv_backend_decode_unit_ari
   // get EMUL
   always_comb begin
     // initial
-    emul_vd          = EMUL1;
-    emul_vs2         = EMUL1;
-    emul_vs1         = EMUL1;
-    emul_max         = EMUL1;
+    emul_vd          = EMUL_NONE;
+    emul_vs2         = EMUL_NONE;
+    emul_vs1         = EMUL_NONE;
+    emul_max         = EMUL_NONE;
     
     case(1'b1)
       valid_opi: begin
@@ -1498,11 +1500,11 @@ module rvv_backend_decode_unit_ari
 // get EEW 
   always_comb begin
     // initial
-    eew_vd          = EEW1;
-    eew_vs2         = EEW1;
-    eew_vs1         = EEW1;
-    eew_scalar      = EEW1;
-    eew_max         = EEW1;
+    eew_vd          = EEW_NONE;
+    eew_vs2         = EEW_NONE;
+    eew_vs1         = EEW_NONE;
+    eew_scalar      = EEW_NONE;
+    eew_max         = EEW_NONE;
 
     case(1'b1)
       valid_opi: begin
@@ -2469,7 +2471,7 @@ module rvv_backend_decode_unit_ari
   assign check_vd_overlap_v0 = (((inst_vm==1'b0)&(inst_vd!='b0)) | (inst_vm==1'b1));
 
   // check whether vd partially overlaps vs2 with EEW_vd<EEW_vs2
-  // check_vd_part_overlap_vs2=1 means that vd does NOT partially overlap vs2
+  // check_vd_part_overlap_vs2=1 means that vd group does NOT overlap vs2 group partially
   always_comb begin
     check_vd_part_overlap_vs2       = 'b0;          
     
@@ -2493,7 +2495,7 @@ module rvv_backend_decode_unit_ari
   end
 
   // check whether vd partially overlaps vs1 with EEW_vd<EEW_vs1
-  // check_vd_part_overlap_vs1=1 means that vd does NOT partially overlap vs1
+  // check_vd_part_overlap_vs1=1 means that vd group does NOT overlap vs1 group partially
   always_comb begin
     check_vd_part_overlap_vs1     = 'b0;          
     
@@ -2517,7 +2519,7 @@ module rvv_backend_decode_unit_ari
   end
 
   // vd cannot overlap vs2
-  // check_vd_overlap_vs2=1 means that vd does NOT overlap vs2
+  // check_vd_overlap_vs2=1 means that vd group does NOT overlap vs2 group fully
   always_comb begin
     check_vd_overlap_vs2 = 'b0;
     
@@ -2542,7 +2544,7 @@ module rvv_backend_decode_unit_ari
   end
   
   // vd cannot overlap vs1
-  // check_vd_overlap_vs1=1 means that vd does NOT overlap vs1
+  // check_vd_overlap_vs1=1 means that vd group does NOT overlap vs1 group fully
   always_comb begin
     check_vd_overlap_vs1 = 'b0;
     
@@ -2566,7 +2568,7 @@ module rvv_backend_decode_unit_ari
     endcase
   end
 
-  // check whether vs2 partially overlaps vd for EEW_vd:EEW_vs2=2:1
+  // check whether vs2 group partially overlaps vd group for EEW_vd:EEW_vs2=2:1
   always_comb begin
     check_vs2_part_overlap_vd_2_1       = 'b0;
 
@@ -2589,7 +2591,7 @@ module rvv_backend_decode_unit_ari
     endcase
   end
   
-  // check whether vs1 partially overlaps vd for EEW_vd:EEW_vs1=2:1
+  // check whether vs1 group partially overlaps vd group for EEW_vd:EEW_vs1=2:1
   always_comb begin
     check_vs1_part_overlap_vd_2_1       = 'b0;
 
@@ -2612,7 +2614,7 @@ module rvv_backend_decode_unit_ari
     endcase
   end
 
-  // check whether vs2 partially overlaps vd for EEW_vd:EEW_vs2=4:1
+  // check whether vs2 group partially overlaps vd group for EEW_vd:EEW_vs2=4:1
   always_comb begin
     check_vs2_part_overlap_vd_4_1       = 'b0;
 
@@ -2911,7 +2913,7 @@ module rvv_backend_decode_unit_ari
                   {EMUL8,EMUL4,EMUL8},
                   {EMUL8,EMUL8,EMUL4}: begin
                     if(inst_vd[`REGFILE_INDEX_WIDTH-1:3]!=inst_vs1[`REGFILE_INDEX_WIDTH-1:3])
-                      check_special     = check_vd_overlap_v0&check_vd_overlap_vs2;          
+                      check_special = check_vd_overlap_v0&check_vd_overlap_vs2;          
                   end
                 endcase
               end
@@ -2919,7 +2921,7 @@ module rvv_backend_decode_unit_ari
               OPIVX,
               OPIVI: begin
                 // destination register group cannot overlap the source register group
-                check_special   = check_vd_overlap_v0&check_vd_overlap_vs2;
+                check_special = check_vd_overlap_v0&check_vd_overlap_vs2;
               end
             endcase
           end
@@ -2928,12 +2930,12 @@ module rvv_backend_decode_unit_ari
             case(inst_funct3)
               OPIVV: begin
                 // destination register group cannot overlap the source register group
-                check_special   = check_vd_overlap_v0&check_vd_overlap_vs2&check_vd_overlap_vs1;
+                check_special = check_vd_overlap_v0&check_vd_overlap_vs2&check_vd_overlap_vs1;
               end
               OPIVX,
               OPIVI: begin
                 // destination register group cannot overlap the source register group
-                check_special   = check_vd_overlap_v0&check_vd_overlap_vs2;
+                check_special = check_vd_overlap_v0&check_vd_overlap_vs2;
               end
             endcase
           end
@@ -2956,11 +2958,11 @@ module rvv_backend_decode_unit_ari
             case(inst_funct3)
               OPMVV: begin
                 // overlap constraint
-                check_special   = check_vd_overlap_v0&check_vs2_part_overlap_vd_2_1&check_vs1_part_overlap_vd_2_1;                
+                check_special = check_vd_overlap_v0&check_vs2_part_overlap_vd_2_1&check_vs1_part_overlap_vd_2_1;                
               end
               OPMVX: begin
                 // overlap constraint
-                check_special   = check_vd_overlap_v0&check_vs2_part_overlap_vd_2_1;                
+                check_special = check_vd_overlap_v0&check_vs2_part_overlap_vd_2_1;                
               end
             endcase
           end
@@ -2972,10 +2974,10 @@ module rvv_backend_decode_unit_ari
             case(inst_funct3)
               OPMVV: begin
                 // overlap constraint
-                check_special   = check_vd_overlap_v0&check_vs1_part_overlap_vd_2_1;                
+                check_special = check_vd_overlap_v0&check_vs1_part_overlap_vd_2_1;                
               end
               OPMVX: begin
-                check_special   = check_vd_overlap_v0;                
+                check_special = check_vd_overlap_v0;                
               end
             endcase
           end
@@ -3044,7 +3046,7 @@ module rvv_backend_decode_unit_ari
             case(inst_funct3)
               OPMVV: begin
                 if(csr_vstart=='b0)
-                  check_special     = 1'b1;
+                  check_special = check_vd_part_overlap_vs2;
             
                 `ifdef ASSERT_ON
                   `rvv_expect(csr_vstart=='b0)
@@ -3160,7 +3162,7 @@ module rvv_backend_decode_unit_ari
   end
 
   //check common requirements for all instructions
-  assign check_common = check_vd_align&check_vs2_align&check_vs1_align;
+  assign check_common = check_vd_align&check_vs2_align&check_vs1_align&check_sew&check_lmul;
 
   // check whether vd is aligned to emul_vd
   always_comb begin
@@ -3275,7 +3277,13 @@ module rvv_backend_decode_unit_ari
       end
     endcase
   end
-  
+ 
+  // check the validation of EEW
+  assign check_sew = (eew_max != EEW_NONE);
+    
+  // check the validation of EMUL
+  assign check_lmul = (emul_max != EMUL_NONE); 
+
   `ifdef ASSERT_ON
     `rvv_forbid((inst_valid==1'b1)&(inst_encoding_correct==1'b0))        
     else $error("check_special(%d) and check_common(%d) both should be 1.\n",check_special,check_common);
@@ -3367,7 +3375,7 @@ module rvv_backend_decode_unit_ari
   always_comb begin
     for(i=0;i<`NUM_DE_UOP;i=i+1) begin: GET_UOP_EXE_UNIT
       // initial
-      uop[i].uop_exe_unit     = ALU;
+      uop[i].uop_exe_unit = ALU;
       
       case(1'b1)
         valid_opi: begin
@@ -3515,7 +3523,7 @@ module rvv_backend_decode_unit_ari
   always_comb begin
     for(i=0;i<`NUM_DE_UOP;i=i+1) begin: GET_UOP_CLASS
       // initial 
-      uop[i].uop_class      = X;
+      uop[i].uop_class = X;
       
       case(1'b1)
         valid_opi: begin
@@ -3831,7 +3839,7 @@ module rvv_backend_decode_unit_ari
   always_comb begin
     for(i=0;i<`NUM_DE_UOP;i=i+1) begin: GET_UOP_V0
       // initial 
-      uop[i].v0_valid           = 'b0;
+      uop[i].v0_valid = 'b0;
        
       case(1'b1)
         valid_opi: begin
@@ -3868,7 +3876,7 @@ module rvv_backend_decode_unit_ari
     for(i=0;i<`NUM_DE_UOP;i=i+1) begin: GET_VD
       // initial
       uop[i].vd_index = 'b0;
-      uop[i].vd_eew   = EEW1;
+      uop[i].vd_eew   = EEW_NONE;
       uop[i].vd_valid = 'b0;
       
       case(1'b1)
@@ -4266,7 +4274,7 @@ module rvv_backend_decode_unit_ari
     for(i=0;i<`NUM_DE_UOP;i=i+1) begin: GET_VS1
       // initial
       uop[i].vs1             = inst_vs1;
-      uop[i].vs1_eew         = EEW1;
+      uop[i].vs1_eew         = EEW_NONE;
       uop[i].vs1_index_valid = 'b0;
       
       case(1'b1)
@@ -4524,7 +4532,7 @@ module rvv_backend_decode_unit_ari
     for(i=0;i<`NUM_DE_UOP;i=i+1) begin: GET_VS2
       // initial
       uop[i].vs2_index        = 'b0; 
-      uop[i].vs2_eew          = EEW1; 
+      uop[i].vs2_eew          = EEW_NONE; 
       uop[i].vs2_valid        = 'b0; 
       
       case(1'b1)
@@ -4832,7 +4840,7 @@ module rvv_backend_decode_unit_ari
     for(i=0;i<`NUM_DE_UOP;i=i+1) begin: GET_RS1
       // initial
       uop[i].rs1_data         = 'b0;
-      uop[i].scalar_eew       = EEW1;
+      uop[i].scalar_eew       = EEW_NONE;
       uop[i].rs1_data_valid   = 'b0;
       
       case(1'b1)
