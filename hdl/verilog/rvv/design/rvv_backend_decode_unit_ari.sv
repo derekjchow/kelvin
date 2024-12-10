@@ -2311,18 +2311,10 @@ module rvv_backend_decode_unit_ari
       VSLL,
       VSRL,
       VSRA,
-      VNSRL,
-      VNSRA,
-      VMSEQ,
-      VMSNE,
-      VMSLEU,
-      VMSLE,
       VSADDU,
       VSADD,
       VSSRL,
       VSSRA,
-      VNCLIPU,
-      VNCLIP,
       VSLIDEDOWN: begin
         case(funct3_ari)
           OPIVV,
@@ -2335,8 +2327,6 @@ module rvv_backend_decode_unit_ari
     
       VSUB,
       VMSBC,
-      VMSLTU,
-      VMSLT,
       VSSUBU,
       VSSUB,
       VMINU,
@@ -2351,9 +2341,7 @@ module rvv_backend_decode_unit_ari
         endcase
       end
 
-      VRSUB,
-      VMSGTU,
-      VMSGT: begin
+      VRSUB: begin
         case(funct3_ari)
           OPIVX,
           OPIVI: begin
@@ -2386,7 +2374,7 @@ module rvv_backend_decode_unit_ari
           OPIVV,
           OPIVX: begin
             if ((inst_vm==1'b0)&(inst_vd!='b0))
-              inst_encoding_correct          = 1'b1;          
+              inst_encoding_correct         = 1'b1;          
             
             `ifdef ASSERT_ON
               `rvv_expect(inst_vm==1'b0)
@@ -2399,13 +2387,169 @@ module rvv_backend_decode_unit_ari
         endcase
       end
     
+      VNSRL,
+      VNSRA,
+      VMSEQ,
+      VMSNE,
+      VMSLEU,
+      VMSLE,
+      VNCLIPU,
+      VNCLIP: begin
+        case(funct3_ari)
+          OPIVV: begin
+            // overlap constraint
+            case(emul_max)
+              4'd1: begin
+                inst_encoding_correct       = 1'b1;          
+              end
+              4'd2: begin
+                if((inst_vd[0]!='b0) & ((inst_vd[`REGFILE_INDEX_WIDTH-1:1]==inst_vs2[`REGFILE_INDEX_WIDTH-1:1])|(inst_vd[`REGFILE_INDEX_WIDTH-1:1]==inst_vs1[`REGFILE_INDEX_WIDTH-1:1])))
+                  inst_encoding_correct     = 1'b0;          
+                else
+                  inst_encoding_correct     = 1'b1;          
+              end
+              4'd4: begin
+                if((inst_vd[1:0]!='b0) & ((inst_vd[`REGFILE_INDEX_WIDTH-1:2]==inst_vs2[`REGFILE_INDEX_WIDTH-1:2])|(inst_vd[`REGFILE_INDEX_WIDTH-1:2]==inst_vs1[`REGFILE_INDEX_WIDTH-1:2])))
+                  inst_encoding_correct     = 1'b0;          
+                else
+                  inst_encoding_correct     = 1'b1; 
+              end
+              4'd8 : begin
+                if((inst_vd[2:0]!='b0) & ((inst_vd[`REGFILE_INDEX_WIDTH-1:3]==inst_vs2[`REGFILE_INDEX_WIDTH-1:3])|(inst_vd[`REGFILE_INDEX_WIDTH-1:3]==inst_vs1[`REGFILE_INDEX_WIDTH-1:3])))
+                  inst_encoding_correct     = 1'b0;          
+                else
+                  inst_encoding_correct     = 1'b1; 
+              end
+            endcase
+          end
+          OPIVX,
+          OPIVI: begin
+            // overlap constraint
+            case(emul_max)
+              4'd1: begin
+                inst_encoding_correct       = 1'b1;          
+              end
+              4'd2: begin
+                if((inst_vd[0]!='b0) & (inst_vd[`REGFILE_INDEX_WIDTH-1:1]==inst_vs2[`REGFILE_INDEX_WIDTH-1:1]))
+                  inst_encoding_correct     = 1'b0;          
+                else
+                  inst_encoding_correct     = 1'b1;          
+              end
+              4'd4: begin
+                if((inst_vd[1:0]!='b0) & (inst_vd[`REGFILE_INDEX_WIDTH-1:2]==inst_vs2[`REGFILE_INDEX_WIDTH-1:2]))
+                  inst_encoding_correct     = 1'b0;          
+                else
+                  inst_encoding_correct     = 1'b1; 
+              end
+              4'd8 : begin
+                if((inst_vd[2:0]!='b0) & (inst_vd[`REGFILE_INDEX_WIDTH-1:3]==inst_vs2[`REGFILE_INDEX_WIDTH-1:3]))
+                  inst_encoding_correct     = 1'b0;          
+                else
+                  inst_encoding_correct     = 1'b1; 
+              end
+            endcase        
+          end
+        endcase
+      end
+      
+      VMSLTU,
+      VMSLT: begin
+        case(funct3_ari)
+          OPIVV: begin
+            // overlap constraint
+            case(emul_max)
+              4'd1: begin
+                inst_encoding_correct       = 1'b1;          
+              end
+              4'd2: begin
+                if((inst_vd[0]!='b0) & ((inst_vd[`REGFILE_INDEX_WIDTH-1:1]==inst_vs2[`REGFILE_INDEX_WIDTH-1:1])|(inst_vd[`REGFILE_INDEX_WIDTH-1:1]==inst_vs1[`REGFILE_INDEX_WIDTH-1:1])))
+                  inst_encoding_correct     = 1'b0;          
+                else
+                  inst_encoding_correct     = 1'b1;          
+              end
+              4'd4: begin
+                if((inst_vd[1:0]!='b0) & ((inst_vd[`REGFILE_INDEX_WIDTH-1:2]==inst_vs2[`REGFILE_INDEX_WIDTH-1:2])|(inst_vd[`REGFILE_INDEX_WIDTH-1:2]==inst_vs1[`REGFILE_INDEX_WIDTH-1:2])))
+                  inst_encoding_correct     = 1'b0;          
+                else
+                  inst_encoding_correct     = 1'b1; 
+              end
+              4'd8 : begin
+                if((inst_vd[2:0]!='b0) & ((inst_vd[`REGFILE_INDEX_WIDTH-1:3]==inst_vs2[`REGFILE_INDEX_WIDTH-1:3])|(inst_vd[`REGFILE_INDEX_WIDTH-1:3]==inst_vs1[`REGFILE_INDEX_WIDTH-1:3])))
+                  inst_encoding_correct     = 1'b0;          
+                else
+                  inst_encoding_correct     = 1'b1; 
+              end
+            endcase
+          end
+          OPIVX: begin
+            // overlap constraint
+            case(emul_max)
+              4'd1: begin
+                inst_encoding_correct       = 1'b1;          
+              end
+              4'd2: begin
+                if((inst_vd[0]!='b0) & (inst_vd[`REGFILE_INDEX_WIDTH-1:1]==inst_vs2[`REGFILE_INDEX_WIDTH-1:1]))
+                  inst_encoding_correct     = 1'b0;          
+                else
+                  inst_encoding_correct     = 1'b1;          
+              end
+              4'd4: begin
+                if((inst_vd[1:0]!='b0) & (inst_vd[`REGFILE_INDEX_WIDTH-1:2]==inst_vs2[`REGFILE_INDEX_WIDTH-1:2]))
+                  inst_encoding_correct     = 1'b0;          
+                else
+                  inst_encoding_correct     = 1'b1; 
+              end
+              4'd8 : begin
+                if((inst_vd[2:0]!='b0) & (inst_vd[`REGFILE_INDEX_WIDTH-1:3]==inst_vs2[`REGFILE_INDEX_WIDTH-1:3]))
+                  inst_encoding_correct     = 1'b0;          
+                else
+                  inst_encoding_correct     = 1'b1; 
+              end
+            endcase        
+          end
+        endcase
+      end
+      
+      VMSGTU,
+      VMSGT: begin
+        case(funct3_ari)
+          OPIVX,
+          OPIVI: begin
+            // overlap constraint
+            case(emul_max)
+              4'd1: begin
+                inst_encoding_correct       = 1'b1;          
+              end
+              4'd2: begin
+                if((inst_vd[0]!='b0) & (inst_vd[`REGFILE_INDEX_WIDTH-1:1]==inst_vs2[`REGFILE_INDEX_WIDTH-1:1]))
+                  inst_encoding_correct     = 1'b0;          
+                else
+                  inst_encoding_correct     = 1'b1;          
+              end
+              4'd4: begin
+                if((inst_vd[1:0]!='b0) & (inst_vd[`REGFILE_INDEX_WIDTH-1:2]==inst_vs2[`REGFILE_INDEX_WIDTH-1:2]))
+                  inst_encoding_correct     = 1'b0;          
+                else
+                  inst_encoding_correct     = 1'b1; 
+              end
+              4'd8 : begin
+                if((inst_vd[2:0]!='b0) & (inst_vd[`REGFILE_INDEX_WIDTH-1:3]==inst_vs2[`REGFILE_INDEX_WIDTH-1:3]))
+                  inst_encoding_correct     = 1'b0;          
+                else
+                  inst_encoding_correct     = 1'b1; 
+              end
+            endcase        
+          end
+        endcase     
+      end
+
       VMERGE_VMV: begin
         case(funct3_ari)
           OPIVV,
           OPIVX,
           OPIVI: begin
             // when vm=1, it is vmv instruction and vs2_index must be 5'b0.
-            if ((inst_vm==1'b0)|((inst_vm==1'b1)&(inst_vs2==5'b0)))
+            if (((inst_vm==1'b0)&(inst_vd!='b0)) | ((inst_vm==1'b1)&(inst_vs2==5'b0)))
               inst_encoding_correct         = 1'b1;          
             `ifdef ASSERT_ON
               `rvv_forbid((inst_vm==1'b1)&(inst_vs2!=5'b0))
@@ -2419,9 +2563,33 @@ module rvv_backend_decode_unit_ari
       VWREDSUM: begin
         case(funct3_ari)
           OPIVV: begin
-            if(vstart=='b0)
-              inst_encoding_correct         = 1'b1;
-        
+            if(vstart=='b0) begin
+              // overlap constraint
+              case(emul_max)
+                4'd1: begin
+                  inst_encoding_correct       = 1'b1;          
+                end
+                4'd2: begin
+                  if((inst_vd[0]!='b0) & (inst_vd[`REGFILE_INDEX_WIDTH-1:1]==inst_vs2[`REGFILE_INDEX_WIDTH-1:1]))
+                    inst_encoding_correct     = 1'b0;          
+                  else
+                    inst_encoding_correct     = 1'b1;          
+                end
+                4'd4: begin
+                  if((inst_vd[1:0]!='b0) & (inst_vd[`REGFILE_INDEX_WIDTH-1:2]==inst_vs2[`REGFILE_INDEX_WIDTH-1:2]))
+                    inst_encoding_correct     = 1'b0;          
+                  else
+                    inst_encoding_correct     = 1'b1; 
+                end
+                4'd8 : begin
+                  if((inst_vd[2]!='b0) & (inst_vd[`REGFILE_INDEX_WIDTH-1:3]==inst_vs2[`REGFILE_INDEX_WIDTH-1:3]))
+                    inst_encoding_correct     = 1'b0;          
+                  else
+                    inst_encoding_correct     = 1'b1; 
+                end
+              endcase        
+            end
+
             `ifdef ASSERT_ON
               `rvv_expect(vstart=='b0)
               else $error("vstart(%d) should be 0 in %s instruction.\n",vstart,funct6_ari.opi_funct6.name());
@@ -2591,10 +2759,103 @@ module rvv_backend_decode_unit_ari
       VWSUBU,
       VWADD,
       VWSUB,
+      VWMUL,
+      VWMULU,
+      VWMULSU,
+      VWMACCU,
+      VWMACC,
+      VWMACCSU: begin
+        case(funct3_ari)
+          OPMVV: begin
+            // overlap constraint
+            case(emul_max)
+              4'd1: begin
+                inst_encoding_correct       = 1'b1;          
+              end
+              4'd2: begin
+                if(((inst_vd[`REGFILE_INDEX_WIDTH-1:1]==inst_vs2[`REGFILE_INDEX_WIDTH-1:1])&(inst_vs2[0]!=1'b1)) | ((inst_vd[`REGFILE_INDEX_WIDTH-1:1]==inst_vs1[`REGFILE_INDEX_WIDTH-1:1])&(inst_vs1[0]!=1'b1)))
+                  inst_encoding_correct     = 1'b0;          
+                else
+                  inst_encoding_correct     = 1'b1;          
+              end
+              4'd4: begin
+                if(((inst_vd[`REGFILE_INDEX_WIDTH-1:2]==inst_vs2[`REGFILE_INDEX_WIDTH-1:2])&(inst_vs2[1:0]!=2'b10)) | ((inst_vd[`REGFILE_INDEX_WIDTH-1:2]==inst_vs1[`REGFILE_INDEX_WIDTH-1:2])&(inst_vs1[1:0]!=2'b10)))
+                  inst_encoding_correct     = 1'b0;          
+                else
+                  inst_encoding_correct     = 1'b1; 
+               4'd8: begin
+                if(((inst_vd[`REGFILE_INDEX_WIDTH-1:3]==inst_vs2[`REGFILE_INDEX_WIDTH-1:3])&(inst_vs2[2:0]!=3'b100)) | ((inst_vd[`REGFILE_INDEX_WIDTH-1:3]==inst_vs1[`REGFILE_INDEX_WIDTH-1:3])&(inst_vs1[2:0]!=3'b100)))
+                  inst_encoding_correct     = 1'b0;          
+                else
+                  inst_encoding_correct     = 1'b1; 
+              end
+            endcase
+          end
+          OPMVX: begin
+            // overlap constraint
+            case(emul_max)
+              4'd1: begin
+                inst_encoding_correct       = 1'b1;          
+              end
+              4'd2: begin
+                if((inst_vd[`REGFILE_INDEX_WIDTH-1:1]==inst_vs2[`REGFILE_INDEX_WIDTH-1:1])&(inst_vs2[0]!=1'b1))
+                  inst_encoding_correct     = 1'b0;          
+                else
+                  inst_encoding_correct     = 1'b1;          
+              end
+              4'd4: begin
+                if((inst_vd[`REGFILE_INDEX_WIDTH-1:2]==inst_vs2[`REGFILE_INDEX_WIDTH-1:2])&(inst_vs2[1:0]!=2'b10))
+                  inst_encoding_correct     = 1'b0;          
+                else
+                  inst_encoding_correct     = 1'b1; 
+              end
+              4'd8: begin
+                if((inst_vd[`REGFILE_INDEX_WIDTH-1:3]==inst_vs2[`REGFILE_INDEX_WIDTH-1:3])&(inst_vs2[2:0]!=3'b100))
+                  inst_encoding_correct     = 1'b0;          
+                else
+                  inst_encoding_correct     = 1'b1; 
+              end
+            endcase        
+          end
+        endcase
+      end
+
       VWADDU_W,
       VWSUBU_W,
       VWADD_W,
-      VWSUB_W,
+      VWSUB_W: begin
+        case(funct3_ari)
+          OPMVV: begin
+            // overlap constraint
+            case(emul_max)
+              4'd1: begin
+                inst_encoding_correct       = 1'b1;          
+              end
+              4'd2: begin
+                if((inst_vd[`REGFILE_INDEX_WIDTH-1:1]==inst_vs1[`REGFILE_INDEX_WIDTH-1:1])&(inst_vs1[0]!=1'b1))
+                  inst_encoding_correct     = 1'b0;          
+                else
+                  inst_encoding_correct     = 1'b1;          
+              end
+              4'd4: begin
+                if((inst_vd[`REGFILE_INDEX_WIDTH-1:2]==inst_vs1[`REGFILE_INDEX_WIDTH-1:2])&(inst_vs1[1:0]!=2'b10))
+                  inst_encoding_correct     = 1'b0;          
+                else
+                  inst_encoding_correct     = 1'b1; 
+              end
+              4'd8: begin
+                if((inst_vd[`REGFILE_INDEX_WIDTH-1:3]==inst_vs1[`REGFILE_INDEX_WIDTH-1:3])&(inst_vs1[2:0]!=3'b100))
+                  inst_encoding_correct     = 1'b0;          
+                else
+                  inst_encoding_correct     = 1'b1; 
+              end
+            endcase
+          end
+          OPMVX: begin
+            inst_encoding_correct           = 1'b1;          
+        endcase
+      end
+
       VMUL,
       VMULH,
       VMULHU,
@@ -2603,16 +2864,10 @@ module rvv_backend_decode_unit_ari
       VDIV,
       VREMU,
       VREM,
-      VWMUL,
-      VWMULU,
-      VWMULSU,
       VMACC,
       VNMSAC,
       VMADD,
       VNMSUB,
-      VWMACCU,
-      VWMACC,
-      VWMACCSU,
       VAADDU,
       VAADD,
       VASUBU,
@@ -2630,10 +2885,58 @@ module rvv_backend_decode_unit_ari
           OPMVV: begin
             case(vs1_opcode_vxunary) 
               VZEXT_VF2,
-              VSEXT_VF2,
+              VSEXT_VF2: begin
+                // overlap constraint
+                case(emul_max)
+                  4'd1: begin
+                    inst_encoding_correct       = 1'b1;          
+                  end
+                  4'd2: begin
+                    if((inst_vd[`REGFILE_INDEX_WIDTH-1:1]==inst_vs2[`REGFILE_INDEX_WIDTH-1:1])&(inst_vs2[0]!=1'b1))
+                      inst_encoding_correct     = 1'b0;          
+                    else
+                      inst_encoding_correct     = 1'b1;          
+                  end
+                  4'd4: begin
+                    if((inst_vd[`REGFILE_INDEX_WIDTH-1:2]==inst_vs2[`REGFILE_INDEX_WIDTH-1:2])&(inst_vs2[1:0]!=2'b10))
+                      inst_encoding_correct     = 1'b0;          
+                    else
+                      inst_encoding_correct     = 1'b1; 
+                  end
+                  4'd8: begin
+                    if((inst_vd[`REGFILE_INDEX_WIDTH-1:3]==inst_vs2[`REGFILE_INDEX_WIDTH-1:3])&(inst_vs2[2:0]!=3'b100))
+                      inst_encoding_correct     = 1'b0;          
+                    else
+                      inst_encoding_correct     = 1'b1; 
+                  end
+                endcase
+              end
               VZEXT_VF4,
               VSEXT_VF4: begin
-                inst_encoding_correct   = 1'b1;
+                // overlap constraint
+                case(emul_max)
+                  4'd1: begin
+                    inst_encoding_correct       = 1'b1;          
+                  end
+                  4'd2: begin
+                    if((inst_vd[`REGFILE_INDEX_WIDTH-1:1]==inst_vs2[`REGFILE_INDEX_WIDTH-1:1])&(inst_vs2[0]!=1'b1))
+                      inst_encoding_correct     = 1'b0;          
+                    else
+                      inst_encoding_correct     = 1'b1;          
+                  end
+                  4'd4: begin
+                    if((inst_vd[`REGFILE_INDEX_WIDTH-1:2]==inst_vs2[`REGFILE_INDEX_WIDTH-1:2])&(inst_vs2[1:0]!=2'b11))
+                      inst_encoding_correct     = 1'b0;          
+                    else
+                      inst_encoding_correct     = 1'b1; 
+                  end
+                  4'd8: begin
+                    if((inst_vd[`REGFILE_INDEX_WIDTH-1:3]==inst_vs2[`REGFILE_INDEX_WIDTH-1:3])&(inst_vs2[2:0]!=3'b110))
+                      inst_encoding_correct     = 1'b0;          
+                    else
+                      inst_encoding_correct     = 1'b1; 
+                  end
+                endcase
               end
             endcase
           end
