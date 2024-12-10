@@ -14,9 +14,9 @@ feature list:
 4. If RVV receive a trap apply from RVS, Command Queue is NOT allowed receiving new instructions.
 */
 
-`include "rvv.svh"
+`include "rvv_backend.svh"
 
-module rvv_cmdq
+module rvv_backend_cmdq
 (
     clk,
     rstn,
