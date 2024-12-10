@@ -337,26 +337,17 @@ typedef struct packed {
 //
 // VRF struct
 typedef struct packed {
-    logic                               dp2vrf_vr0_valid;
     logic [`REGFILE_INDEX_WIDTH-1:0]    dp2vrf_vr0_addr;
-    logic                               dp2vrf_vr1_valid;
     logic [`REGFILE_INDEX_WIDTH-1:0]    dp2vrf_vr1_addr;
-    logic                               dp2vrf_vr2_valid;
     logic [`REGFILE_INDEX_WIDTH-1:0]    dp2vrf_vr2_addr;
-    logic                               dp2vrf_vr3_valid;
     logic [`REGFILE_INDEX_WIDTH-1:0]    dp2vrf_vr3_addr;
 }DP2VRF_t;
 
 typedef struct packed {
-    logic                               vrf2dp_rd0_valid;
     logic [`VLEN-1:0]                   vrf2dp_rd0_data;
-    logic                               vrf2dp_rd1_valid;
     logic [`VLEN-1:0]                   vrf2dp_rd1_data;
-    logic                               vrf2dp_rd2_valid;
     logic [`VLEN-1:0]                   vrf2dp_rd2_data;
-    logic                               vrf2dp_rd3_valid;
     logic [`VLEN-1:0]                   vrf2dp_rd3_data;
-    logic                               vrf2dp_v0_valid;
     logic [`VLEN-1:0]                   vrf2dp_v0_data;
 }VRF2DP_t;
 
