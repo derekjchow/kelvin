@@ -3,16 +3,20 @@ description:
 1. It will get retired uops from ROB, and write the results back to VRF/XRF 
 
 feature list:
-1. Decode the uop info from ROB
-2. Write back to VRF
-  2.1. Generate mask(strobe) based on vma/vta policy
-  2.2. Check vector write-after-write (WAW), and update mask to one-hot type
-  2.3. Pack data to VRF struct
-3. Write back to XRF
-  3.1. Pack data to XRF struct
-4. Check trap flag, clean the latter valid after trap uop
-5. Write VCSR when trap occurs
-7. There are 4 write ports for VRF, 4 write ports for XRF. RVS arbitrates write ports of XRF by itself.
+1. This module is all combinational logic!!!
+2. Input has 4 entries. The 4 entries have their dependency. 0(oldest) > 1 > 2 > 3(latest)
+3. This module decodes the uop info from ROB
+4. Write back to VRF
+  4.1. Generate mask(strobe) based on vma/vta policy
+    4.1.1 When ignore_vta && ignore_vma, need to retire entire 128 bit of this entry
+		      Otherwise need to generate Byte-enable locally
+  4.2. Check vector write-after-write (WAW), and update mask to one-hot type
+  4.3. Pack data to VRF struct
+5. Write back to XRF
+  5.1. Pack data to XRF struct
+6. Check trap flag, clean the latter valid after trap uop
+7. Write VCSR when trap occurs
+8. There are 4 write ports for VRF, 4 write ports for XRF. RVS arbitrates write ports of XRF by itself
 */
 
 `include "rvv_backend.svh"
@@ -24,12 +28,11 @@ module rvv_backend_retire(/*AUTOARG*/
    rt2vcsr_write_data, rt2vsat_write_valid, 
    rt2vsat_write_data,
    // Inputs
-   clk, rst_n, rob2rt_write_valid, rob2rt_write_data,
+   rob2rt_write_valid, rob2rt_write_data,
    rt2xrf_write_ready
    );
 // global signal
-    input   logic                       clk;
-    input   logic                       rst_n;
+// Pure combinational logic, thus no clk no rst_n
 
 // ROB dataout
     input   logic    [`NUM_RT_UOP-1:0]  rob2rt_write_valid;
@@ -52,81 +55,84 @@ module rvv_backend_retire(/*AUTOARG*/
     output  logic   [`VCSR_VXSAT_WIDTH-1:0]   rt2vsat_write_data;
 
 ////////////Wires & Regs  ///////////////
-wire w_type0;
-wire w_type1;
-wire w_type2;
-wire w_type3;
+wire                            w_type0;
+wire                            w_type1;
+wire                            w_type2;
+wire                            w_type3;
 
-reg [`VLENB-1:0] w_enB0_tmp;
-reg [`VLENB-1:0] w_enB1_tmp;
-reg [`VLENB-1:0] w_enB2_tmp;
-reg [`VLENB-1:0] w_enB3_tmp;
+reg [`VLENB-1:0]                w_enB0_tmp;
+reg [`VLENB-1:0]                w_enB1_tmp;
+reg [`VLENB-1:0]                w_enB2_tmp;
+reg [`VLENB-1:0]                w_enB3_tmp;
 
-wire [`VLENB-1:0] w_enB0;
-wire [`VLENB-1:0] w_enB1;
-wire [`VLENB-1:0] w_enB2;
-wire [`VLENB-1:0] w_enB3;
+wire [`VLENB-1:0]               w_enB0;
+wire [`VLENB-1:0]               w_enB1;
+wire [`VLENB-1:0]               w_enB2;
+wire [`VLENB-1:0]               w_enB3;
 
 wire [`REGFILE_INDEX_WIDTH-1:0] w_addr0;
 wire [`REGFILE_INDEX_WIDTH-1:0] w_addr1;
 wire [`REGFILE_INDEX_WIDTH-1:0] w_addr2;
 wire [`REGFILE_INDEX_WIDTH-1:0] w_addr3;
 
-wire w_valid0;
-wire w_valid1;
-wire w_valid2;
-wire w_valid3;
+wire                            w_valid0;
+wire                            w_valid1;
+wire                            w_valid2;
+wire                            w_valid3;
 
-wire [`VLEN-1:0] w_data0;
-wire [`VLEN-1:0] w_data1;
-wire [`VLEN-1:0] w_data2;
-wire [`VLEN-1:0] w_data3;
+wire [`VLEN-1:0]                w_data0;
+wire [`VLEN-1:0]                w_data1;
+wire [`VLEN-1:0]                w_data2;
+wire [`VLEN-1:0]                w_data3;
 
-wire trap_flag0;
-wire trap_flag1;
-wire trap_flag2;
-wire trap_flag3;
+wire                            trap_flag0;
+wire                            trap_flag1;
+wire                            trap_flag2;
+wire                            trap_flag3;
 
-VECTOR_CSR_t w_vcsr0;
-VECTOR_CSR_t w_vcsr1;
-VECTOR_CSR_t w_vcsr2;
-VECTOR_CSR_t w_vcsr3;
+VECTOR_CSR_t                    w_vcsr0;
+VECTOR_CSR_t                    w_vcsr1;
+VECTOR_CSR_t                    w_vcsr2;
+VECTOR_CSR_t                    w_vcsr3;
 
-wire [`VCSR_VXSAT_WIDTH-1:0] w_vxsat0;
-wire [`VCSR_VXSAT_WIDTH-1:0] w_vxsat1;
-wire [`VCSR_VXSAT_WIDTH-1:0] w_vxsat2;
-wire [`VCSR_VXSAT_WIDTH-1:0] w_vxsat3;
+wire [`VCSR_VXSAT_WIDTH-1:0]    w_vxsat0;
+wire [`VCSR_VXSAT_WIDTH-1:0]    w_vxsat1;
+wire [`VCSR_VXSAT_WIDTH-1:0]    w_vxsat2;
+wire [`VCSR_VXSAT_WIDTH-1:0]    w_vxsat3;
 
-wire ignore_vta0;
-wire ignore_vta1;
-wire ignore_vta2;
-wire ignore_vta3;
+wire                            ignore_vta0;
+wire                            ignore_vta1;
+wire                            ignore_vta2;
+wire                            ignore_vta3;
 
-wire ignore_vma0;
-wire ignore_vma1;
-wire ignore_vma2;
-wire ignore_vma3;
+wire                            ignore_vma0;
+wire                            ignore_vma1;
+wire                            ignore_vma2;
+wire                            ignore_vma3;
 
 wire dst1_eq_dst0, dst2_eq_dst1, dst3_eq_dst2;
-reg [1:0] group_req;
+reg [1:0]                       group_req;
 
-reg [`VLENB-1:0] w_enB0_waw01_int;
-reg [`VLENB-1:0] w_enB0_waw012_int;
-reg [`VLENB-1:0] w_enB1_waw012_int;
-reg [`VLENB-1:0] w_enB0_waw0123_int;
-reg [`VLENB-1:0] w_enB1_waw0123_int;
-reg [`VLENB-1:0] w_enB2_waw0123_int;
+reg [`VLENB-1:0]                w_enB0_waw01_int;
+reg [`VLENB-1:0]                w_enB0_waw012_int;
+reg [`VLENB-1:0]                w_enB1_waw012_int;
+reg [`VLENB-1:0]                w_enB0_waw0123_int;
+reg [`VLENB-1:0]                w_enB1_waw0123_int;
+reg [`VLENB-1:0]                w_enB2_waw0123_int;
 
-reg [`VLENB-1:0] w_enB0_mux;
-reg [`VLENB-1:0] w_enB1_mux;
-reg [`VLENB-1:0] w_enB2_mux;
-reg [`VLENB-1:0] w_enB3_mux;
+reg [`VLENB-1:0]                w_enB0_mux;
+reg [`VLENB-1:0]                w_enB1_mux;
+reg [`VLENB-1:0]                w_enB2_mux;
+reg [`VLENB-1:0]                w_enB3_mux;
 
-wire w_valid0_chkTrap;
-wire w_valid1_chkTrap;
-wire w_valid2_chkTrap;
-wire w_valid3_chkTrap;
+wire                            w_valid0_chkTrap;
+wire                            w_valid1_chkTrap;
+wire                            w_valid2_chkTrap;
+wire                            w_valid3_chkTrap;
+
+/////////////////////////////////
 ////////////Decode///////////////
+/////////////////////////////////
 assign w_type0 = rob2rt_write_data[0].w_type; //0:vrf 1:xrf
 assign w_type1 = rob2rt_write_data[1].w_type;
 assign w_type2 = rob2rt_write_data[2].w_type;
@@ -183,8 +189,8 @@ assign ignore_vma2 = rob2rt_write_data[2].ignore_vma;
 assign ignore_vma3 = rob2rt_write_data[3].ignore_vma;
 
 /////////////////////////////////
-
 ////////////Main  ///////////////
+/////////////////////////////////
 //1. Group VRF/XRF req
 assign dst1_eq_dst0 = ({rob2rt_write_valid[1],w_type1} == {rob2rt_write_valid[0],w_type0});
 assign dst2_eq_dst1 = ({rob2rt_write_valid[2],w_type2} == {rob2rt_write_valid[1],w_type1});
@@ -215,8 +221,8 @@ assign w_enB1 = (ignore_vta1 && ignore_vma1) ? `VLENB'b1 : w_enB1_tmp;
 assign w_enB2 = (ignore_vta2 && ignore_vma2) ? `VLENB'b1 : w_enB2_tmp;
 assign w_enB3 = (ignore_vta3 && ignore_vma3) ? `VLENB'b1 : w_enB3_tmp;
 
-//2. Write-After-Write (WAW) check
-//  2.1. WAW among entry0 entry1, for group_req=1
+//3. Write-After-Write (WAW) check
+//  3.1. WAW among entry0 entry1, for group_req=1
 always@(*) begin
   for (i=0; i<`VLENB; i=i+1) begin
     //when enB1[i]=enB0[i]=1, update enB0 to 0
@@ -224,7 +230,7 @@ always@(*) begin
   end //end for
 end
 
-//  2.2. WAW among entry0 entry1 entry2, for group_req=2
+//  3.2. WAW among entry0 entry1 entry2, for group_req=2
 always@(*) begin
   for (i=0; i<`VLENB; i=i+1) begin
     if (w_addr1 == w_addr2) begin //check waw12 first
@@ -251,7 +257,7 @@ always@(*) begin
   end//end for
 end//end always
 
-//  2.3. WAW among entry0 entry1 entry2 entry3, for group_req=3
+//  3.3. WAW among entry0 entry1 entry2 entry3, for group_req=3
 always@(*) begin
   for (i=0; i<`VLENB; i=i+1) begin
     if (w_addr2 == w_addr3) begin//check waw23 first
@@ -323,7 +329,7 @@ always@(*) begin
   end//end for
 end//end always
 
-//3. Combine group_req and WAW check
+//4. Combine group_req and WAW check
 always@(*) begin
   case (group_req)
     2'd3 : begin //0123 all to same dst
@@ -353,14 +359,14 @@ always@(*) begin
   endcase
 end
 
-//4. OutValid generation & OutData pack
-//  4.1. When trap, clean the latter valid
+//5. OutValid generation & OutData pack
+//  5.1. When trap, clean the latter valid
 assign w_valid0_chkTrap = w_valid0;
 assign w_valid1_chkTrap = !trap_flag0 && w_valid1;
 assign w_valid2_chkTrap = !(trap_flag0 || trap_flag1) && w_valid2;
 assign w_valid3_chkTrap = !(trap_flag0 || trap_flag1 || trap_flag2) && w_valid3;
 
-//  4.2. To VRF
+//  5.2. To VRF
 assign rt2vrf_write_data.rt2vrf_wr_valid[0] = w_valid0_chkTrap && !w_type0;
 assign rt2vrf_write_data.rt2vrf_wr_valid[1] = w_valid1_chkTrap && !w_type1;
 assign rt2vrf_write_data.rt2vrf_wr_valid[2] = w_valid2_chkTrap && !w_type2;
@@ -381,7 +387,7 @@ assign rt2vrf_write_data.rt2vrf_wr_data[1].rt_strobe = w_enB1_mux;
 assign rt2vrf_write_data.rt2vrf_wr_data[2].rt_strobe = w_enB2_mux;
 assign rt2vrf_write_data.rt2vrf_wr_data[3].rt_strobe = w_enB3_mux;
 
-//  4.3. To XRF
+//  5.3. To XRF
 assign rt2xrf_write_data.rt2xrf_wr_valid[0] = w_valid0_chkTrap && w_type0;
 assign rt2xrf_write_data.rt2xrf_wr_valid[1] = w_valid1_chkTrap && w_type1;
 assign rt2xrf_write_data.rt2xrf_wr_valid[2] = w_valid2_chkTrap && w_type2;
@@ -397,7 +403,7 @@ assign rt2xrf_write_data.rt2xrf_wr_data[1].rt_index = w_addr1;
 assign rt2xrf_write_data.rt2xrf_wr_data[2].rt_index = w_addr2;
 assign rt2xrf_write_data.rt2xrf_wr_data[3].rt_index = w_addr3;
 
-//  4.4. To VCSR
+//  5.4. To VCSR
 //Valid
 assign rt2vcsr_write_valid = (w_valid0 && trap_flag0) ? w_valid0 : 
                              (w_valid1 && trap_flag1) ? w_valid1 :
@@ -409,11 +415,11 @@ assign rt2vcsr_write_data =  (w_valid0 && trap_flag0) ? w_vcsr0 :
                              (w_valid2 && trap_flag2) ? w_vcsr2 :
                              (w_valid3 && trap_flag3) ? w_vcsr3 : 'b0;
 
-//  4.5. To vsat
+//  5.5. To vsat
 assign rt2vsat_write_valid = (w_valid3 && w_vxsat3) || (w_valid2 && w_vxsat2) || (w_valid1 && w_vxsat1) || (w_valid0 && w_vxsat0);
 assign rt2vsat_write_data = w_vxsat3 || w_vxsat2 || w_vxsat1 || w_vxsat0;
 
-//5. Ready generation
+//6. Ready generation
 assign rob2rt_write_ready[0] = rt2xrf_write_data.rt2xrf_wr_valid[0] ? rt2xrf_write_ready[0] : 1'b1; //to XRF use ready, otherwise ready is tied to 1
 assign rob2rt_write_ready[1] = rt2xrf_write_data.rt2xrf_wr_valid[1] ? rt2xrf_write_ready[1] : 1'b1; 
 assign rob2rt_write_ready[2] = rt2xrf_write_data.rt2xrf_wr_valid[2] ? rt2xrf_write_ready[2] : 1'b1;
