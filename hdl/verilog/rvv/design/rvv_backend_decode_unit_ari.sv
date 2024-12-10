@@ -9,7 +9,7 @@ module rvv_backend_decode_unit_ari
   uop_index_remain,
   uop_valid,
   uop
-)
+);
 //
 // interface signals
 //

@@ -19,7 +19,7 @@ module rvv_backend_decode_unit
   uop_index_remain,
   uop_valid_de2uq,
   uop_de2uq
-)
+);
 //
 // interface signals
 //

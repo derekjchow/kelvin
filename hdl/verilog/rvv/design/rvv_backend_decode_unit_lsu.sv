@@ -8,7 +8,7 @@ module rvv_backend_decode_unit_lsu
   uop_index_remain,
   uop_valid,
   uop
-)
+);
 //
 // interface signals
 //
