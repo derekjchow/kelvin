@@ -182,27 +182,7 @@ module rvv_backend_alu_unit_mask
   assign  result_ex2rob.ignore_vma     = ignore_vma;
 
   // valid signal
-  always_comb begin
-  // initial
-    result_valid_ex2rob   = 'b0;
-  
-  case({alu_uop_valid,uop_funct3})     
-      {1'b1,OPMVV}: begin
-        case(uop_funct6.ari_funct6)
-          VMANDN,
-          VMAND,
-          VMOR,
-          VMXOR,
-          VMORN,
-          VMNAND,
-          VMNOR,
-          VMXNOR: begin            
-            result_valid_ex2rob   = result_valid_mask_logic;
-          end
-        endcase
-      end
-    endcase
-  end
+  assign result_valid_ex2rob   = result_valid_mask_logic;
 
   // result data 
   always_comb begin
