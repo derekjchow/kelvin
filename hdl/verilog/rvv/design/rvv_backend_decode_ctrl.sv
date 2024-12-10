@@ -113,32 +113,33 @@ module rvv_backend_decode_ctrl
     
     case(unit0_uop_valid_de2uq[`NUM_DE_UOP-1:0])
       4'b0001:
-        quantity  = `NUM_DE_UOP_WIDTH'd1; 
+        quantity  = 'd1; 
       4'b0011:
-        quantity  = `NUM_DE_UOP_WIDTH'd2; 
+        quantity  = 'd2; 
       4'b0111:
-        quantity  = `NUM_DE_UOP_WIDTH'd3; 
+        quantity  = 'd3; 
       4'b1111:
-        quantity  = `NUM_DE_UOP_WIDTH'd4; 
+        quantity  = 'd4; 
     endcase
   end
   
   // get unit0 last uop signal
-  mux8_1 mux_unit0_last
+  mux8_1 
   #(
     .WIDTH    (1) 
   )
+  mux_unit0_last
   (
-     sel      (quantity),
-     indata0  (1'b1),
-     indata1  (1'b1),
-     indata2  (1'b1),
-     indata3  (1'b1),
-     indata4  (unit0_uop_de2uq[3].last_uop_valid),
-     indata5  (1'b0),
-     indata6  (1'b0),
-     indata7  (1'b0),
-     outdata  (unit0_last) 
+     .sel      (quantity),
+     .indata0  (1'b1),
+     .indata1  (1'b1),
+     .indata2  (1'b1),
+     .indata3  (1'b1),
+     .indata4  (unit0_uop_de2uq[3].last_uop_valid),
+     .indata5  (1'b0),
+     .indata6  (1'b0),
+     .indata7  (1'b0),
+     .outdata  (unit0_last) 
   );
   
   // get unit1 last uop signal
@@ -147,21 +148,22 @@ module rvv_backend_decode_ctrl
   assign unit1_0to3uop  = unit1_0to2uop | unit1_uop_de2uq[2].last_uop_valid;
   assign unit1_0to4uop  = unit1_0to3uop | unit1_uop_de2uq[3].last_uop_valid;
 
-  mux8_1 mux_unit1_last
+  mux8_1 
   #(
     .WIDTH    (1) 
   )
+  mux_unit1_last
   (
-     sel      (quantity),
-     indata0  (unit1_0to4uop),
-     indata1  (unit1_0to3uop),
-     indata2  (unit1_0to2uop),
-     indata3  (unit1_0to1uop),
-     indata4  (1'b0),
-     indata5  (1'b0),
-     indata6  (1'b0),
-     indata7  (1'b0),
-     outdata  (unit1_last) 
+     .sel      (quantity),
+     .indata0  (unit1_0to4uop),
+     .indata1  (unit1_0to3uop),
+     .indata2  (unit1_0to2uop),
+     .indata3  (unit1_0to1uop),
+     .indata4  (1'b0),
+     .indata5  (1'b0),
+     .indata6  (1'b0),
+     .indata7  (1'b0),
+     .outdata  (unit1_last) 
   );
   
   // get fifo_ready
@@ -187,89 +189,97 @@ module rvv_backend_decode_ctrl
     
     case(1'b1)
       uop_index_enable_unit0: 
-        uop_index_din           = uop_index_remain + `NUM_DE_UOP_WIDTH'd4;    
+        uop_index_din           = uop_index_remain + 'd4;    
       uop_index_enable_unit1:
-        uop_index_din           = `NUM_DE_UOP_WIDTH'd4 - quantity; 
-    end
+        uop_index_din           = 'd4 - quantity; 
+    endcase
   end
 
-  cdffr uop_index_cdffr
+  cdffr 
+  #(
+    .WIDTH     (`UOP_INDEX_WIDTH)
+  )
+  uop_index_cdffr
   ( 
-    clk       (clk), 
-    rst_n     (rst_n), 
-    c         (uop_index_clear), 
-    e         (uop_index_enable), 
-    d         (uop_index_din),
-    q         (uop_index_remain)
+    .clk       (clk), 
+    .rst_n     (rst_n), 
+    .c         (uop_index_clear), 
+    .e         (uop_index_enable), 
+    .d         (uop_index_din),
+    .q         (uop_index_remain)
   ); 
   
   // push signal for Uops Queue
-  mux8_1 mux_push_valid0 
+  mux8_1 
   #(
     .WIDTH    (1) 
   )
+  mux_push_valid0 
   (
-     sel      (quantity),
-     indata0  (unit1_uop_valid_de2uq[0]),
-     indata1  (unit0_uop_valid_de2uq[0]),
-     indata2  (unit0_uop_valid_de2uq[0]),
-     indata3  (unit0_uop_valid_de2uq[0]),
-     indata4  (unit0_uop_valid_de2uq[0]),
-     indata5  ('b0),
-     indata6  ('b0),
-     indata7  ('b0),
-     outdata  (push_valid0) 
+     .sel      (quantity),
+     .indata0  (unit1_uop_valid_de2uq[0]),
+     .indata1  (unit0_uop_valid_de2uq[0]),
+     .indata2  (unit0_uop_valid_de2uq[0]),
+     .indata3  (unit0_uop_valid_de2uq[0]),
+     .indata4  (unit0_uop_valid_de2uq[0]),
+     .indata5  (1'b0),
+     .indata6  (1'b0),
+     .indata7  (1'b0),
+     .outdata  (push_valid0) 
   );
   
-  mux8_1 mux_push_valid1 
+  mux8_1 
   #(
     .WIDTH    (1) 
   )
+  mux_push_valid1 
   (
-     sel      (quantity),
-     indata0  (unit1_uop_valid_de2uq[1]),
-     indata1  (unit1_uop_valid_de2uq[0]),
-     indata2  (unit0_uop_valid_de2uq[1]),
-     indata3  (unit0_uop_valid_de2uq[1]),
-     indata4  (unit0_uop_valid_de2uq[1]),
-     indata5  ('b0),
-     indata6  ('b0),
-     indata7  ('b0),
-     outdata  (push_valid1) 
+     .sel      (quantity),
+     .indata0  (unit1_uop_valid_de2uq[1]),
+     .indata1  (unit1_uop_valid_de2uq[0]),
+     .indata2  (unit0_uop_valid_de2uq[1]),
+     .indata3  (unit0_uop_valid_de2uq[1]),
+     .indata4  (unit0_uop_valid_de2uq[1]),
+     .indata5  (1'b0),
+     .indata6  (1'b0),
+     .indata7  (1'b0),
+     .outdata  (push_valid1) 
   );
 
-mux8_1 mux_push_valid2
+mux8_1 
   #(
     .WIDTH    (1) 
   )
+  mux_push_valid2
   (
-     sel      (quantity),
-     indata0  (unit1_uop_valid_de2uq[2]),
-     indata1  (unit1_uop_valid_de2uq[1]),
-     indata2  (unit1_uop_valid_de2uq[0]),
-     indata3  (unit0_uop_valid_de2uq[2]),
-     indata4  (unit0_uop_valid_de2uq[2]),
-     indata5  ('b0),
-     indata6  ('b0),
-     indata7  ('b0),
-     outdata  (push_valid2) 
+     .sel      (quantity),
+     .indata0  (unit1_uop_valid_de2uq[2]),
+     .indata1  (unit1_uop_valid_de2uq[1]),
+     .indata2  (unit1_uop_valid_de2uq[0]),
+     .indata3  (unit0_uop_valid_de2uq[2]),
+     .indata4  (unit0_uop_valid_de2uq[2]),
+     .indata5  (1'b0),
+     .indata6  (1'b0),
+     .indata7  (1'b0),
+     .outdata  (push_valid2) 
   );
 
-mux8_1 mux_push_valid3 
+mux8_1 
   #(
     .WIDTH    (1) 
   )
+  mux_push_valid3 
   (
-     sel      (quantity),
-     indata0  (unit1_uop_valid_de2uq[3]),
-     indata1  (unit1_uop_valid_de2uq[2]),
-     indata2  (unit1_uop_valid_de2uq[1]),
-     indata3  (unit1_uop_valid_de2uq[0]),
-     indata4  (unit0_uop_valid_de2uq[3]),
-     indata5  ('b0),
-     indata6  ('b0),
-     indata7  ('b0),
-     outdata  (push_valid3) 
+     .sel      (quantity),
+     .indata0  (unit1_uop_valid_de2uq[3]),
+     .indata1  (unit1_uop_valid_de2uq[2]),
+     .indata2  (unit1_uop_valid_de2uq[1]),
+     .indata3  (unit1_uop_valid_de2uq[0]),
+     .indata4  (unit0_uop_valid_de2uq[3]),
+     .indata5  (1'b0),
+     .indata6  (1'b0),
+     .indata7  (1'b0),
+     .outdata  (push_valid3) 
   );
   
   assign push0 = push_valid0&fifo_ready;
@@ -278,72 +288,76 @@ mux8_1 mux_push_valid3
   assign push3 = push_valid3&fifo_ready;
 
   // data signal for Uops Queue
-  mux8_1 mux_data0 
+  mux8_1 
   #(
     .WIDTH    (`UQ_WIDTH) 
   )
+  mux_data0
   (
-     sel      (quantity),
-     indata0  (unit1_uop_de2uq[0]),
-     indata1  (unit0_uop_de2uq[0]),
-     indata2  (unit0_uop_de2uq[0]),
-     indata3  (unit0_uop_de2uq[0]),
-     indata4  (unit0_uop_de2uq[0]),
-     indata5  ('b0),
-     indata6  ('b0),
-     indata7  ('b0),
-     outdata  (data0) 
+     .sel      (quantity),
+     .indata0  (unit1_uop_de2uq[0]),
+     .indata1  (unit0_uop_de2uq[0]),
+     .indata2  (unit0_uop_de2uq[0]),
+     .indata3  (unit0_uop_de2uq[0]),
+     .indata4  (unit0_uop_de2uq[0]),
+     .indata5  ({`UQ_WIDTH{1'b0}}),
+     .indata6  ({`UQ_WIDTH{1'b0}}),
+     .indata7  ({`UQ_WIDTH{1'b0}}),
+     .outdata  (data0) 
   );
 
-  mux8_1 mux_data1 
+  mux8_1 
   #(
     .WIDTH    (`UQ_WIDTH) 
   )
+  mux_data1
   (
-     sel      (quantity),
-     indata0  (unit1_uop_de2uq[1]),
-     indata1  (unit1_uop_de2uq[0]),
-     indata2  (unit0_uop_de2uq[1]),
-     indata3  (unit0_uop_de2uq[1]),
-     indata4  (unit0_uop_de2uq[1]),
-     indata5  ('b0),
-     indata6  ('b0),
-     indata7  ('b0),
-     outdata  (data1) 
+     .sel      (quantity),
+     .indata0  (unit1_uop_de2uq[1]),
+     .indata1  (unit1_uop_de2uq[0]),
+     .indata2  (unit0_uop_de2uq[1]),
+     .indata3  (unit0_uop_de2uq[1]),
+     .indata4  (unit0_uop_de2uq[1]),
+     .indata5  ({`UQ_WIDTH{1'b0}}),
+     .indata6  ({`UQ_WIDTH{1'b0}}),
+     .indata7  ({`UQ_WIDTH{1'b0}}),
+     .outdata  (data1) 
   );
 
-  mux8_1 mux_data2 
+  mux8_1  
   #(
     .WIDTH    (`UQ_WIDTH) 
   )
+  mux_data2
   (
-     sel      (quantity),
-     indata0  (unit1_uop_de2uq[2]),
-     indata1  (unit1_uop_de2uq[1]),
-     indata2  (unit1_uop_de2uq[0]),
-     indata3  (unit0_uop_de2uq[2]),
-     indata4  (unit0_uop_de2uq[2]),
-     indata5  ('b0),
-     indata6  ('b0),
-     indata7  ('b0),
-     outdata  (data2) 
+     .sel      (quantity),
+     .indata0  (unit1_uop_de2uq[2]),
+     .indata1  (unit1_uop_de2uq[1]),
+     .indata2  (unit1_uop_de2uq[0]),
+     .indata3  (unit0_uop_de2uq[2]),
+     .indata4  (unit0_uop_de2uq[2]),
+     .indata5  ({`UQ_WIDTH{1'b0}}),
+     .indata6  ({`UQ_WIDTH{1'b0}}),
+     .indata7  ({`UQ_WIDTH{1'b0}}),
+     .outdata  (data2) 
   );
 
-  mux8_1 mux_data3 
+  mux8_1  
   #(
     .WIDTH    (`UQ_WIDTH) 
   )
+  mux_data3
   (
-     sel      (quantity),
-     indata0  (unit1_uop_de2uq[3]),
-     indata1  (unit1_uop_de2uq[2]),
-     indata2  (unit1_uop_de2uq[1]),
-     indata3  (unit1_uop_de2uq[0]),
-     indata4  (unit0_uop_de2uq[3]),
-     indata5  ('b0),
-     indata6  ('b0),
-     indata7  ('b0),
-     outdata  (data3) 
+     .sel      (quantity),
+     .indata0  (unit1_uop_de2uq[3]),
+     .indata1  (unit1_uop_de2uq[2]),
+     .indata2  (unit1_uop_de2uq[1]),
+     .indata3  (unit1_uop_de2uq[0]),
+     .indata4  (unit0_uop_de2uq[3]),
+     .indata5  ({`UQ_WIDTH{1'b0}}),
+     .indata6  ({`UQ_WIDTH{1'b0}}),
+     .indata7  ({`UQ_WIDTH{1'b0}}),
+     .outdata  (data3) 
   );
 
 endmodule

@@ -13,40 +13,49 @@ module mux8_1
   indata7,
   outdata 
 );
-
-  parameter             WIDTH = 1;
+  parameter WIDTH = 1;
   
-  input   [2:0]         sel;
-  input   [WIDTH-1:0]   indata0;
-  input   [WIDTH-1:0]   indata1;
-  input   [WIDTH-1:0]   indata2;
-  input   [WIDTH-1:0]   indata3;
-  input   [WIDTH-1:0]   indata4;
-  input   [WIDTH-1:0]   indata5;
-  input   [WIDTH-1:0]   indata6;
-  input   [WIDTH-1:0]   indata7;
-  output  [WIDTH-1:0]   outdata;
+  input  logic [2:0]         sel;
+  input  logic [WIDTH-1:0]   indata0;
+  input  logic [WIDTH-1:0]   indata1;
+  input  logic [WIDTH-1:0]   indata2;
+  input  logic [WIDTH-1:0]   indata3;
+  input  logic [WIDTH-1:0]   indata4;
+  input  logic [WIDTH-1:0]   indata5;
+  input  logic [WIDTH-1:0]   indata6;
+  input  logic [WIDTH-1:0]   indata7;
+  output logic [WIDTH-1:0]   outdata;
+  
 
   always_comb begin
     case(sel)
-      3'd0: 
+      3'd0: begin 
         outdata = indata0;
-      3'd1: 
+      end
+      3'd1: begin 
         outdata = indata1;
-      3'd2: 
+      end
+      3'd2: begin
         outdata = indata2;
-      3'd3: 
+      end
+      3'd3: begin
         outdata = indata3;
-      3'd4: 
+      end
+      3'd4: begin
         outdata = indata4;
-      3'd5: 
+      end
+      3'd5: begin
         outdata = indata5;
-      3'd6: 
+      end
+      3'd6: begin
         outdata = indata6;
-      3'd7: 
+      end
+      3'd7: begin
         outdata = indata7;
-      default: 
+      end
+      default: begin
         outdata = 'b0;
+      end
     endcase
   end
 

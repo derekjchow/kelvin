@@ -25,7 +25,7 @@ module rvv_backend_decode_unit
 //
   // CQ to Decoder unit signals
   input   logic                         inst_valid_cq2de;
-  input   RVVcmd                        inst_cq2de;
+  input   RVVCmd                        inst_cq2de;
   input   logic [`UOP_INDEX_WIDTH-1:0]  uop_index_remain;
   
   // Decoder unit to Uops Queue signals
@@ -60,21 +60,21 @@ module rvv_backend_decode_unit
   // decode LSU instruction 
   rvv_backend_decode_unit_lsu u_lsu_decode
   (
-    inst_valid        (valid_lsu),
-    inst              (inst_cq2de),
-    uop_index_remain  (uop_index_remain),
-    uop_valid         (uop_valid_lsu),
-    uop               (uop_lsu)
+    .inst_valid        (valid_lsu),
+    .inst              (inst_cq2de),
+    .uop_index_remain  (uop_index_remain),
+    .uop_valid         (uop_valid_lsu),
+    .uop               (uop_lsu)
   );
 
   // decode arithmetic instruction
   rvv_backend_decode_unit_ari u_ari_decode
   (
-    inst_valid        (valid_ari),
-    inst              (inst_cq2de),
-    uop_index_remain  (uop_index_remain),
-    uop_valid         (uop_valid_ari),
-    uop               (uop_ari)
+    .inst_valid        (valid_ari),
+    .inst              (inst_cq2de),
+    .uop_index_remain  (uop_index_remain),
+    .uop_valid         (uop_valid_ari),
+    .uop               (uop_ari)
   );
 
   // output

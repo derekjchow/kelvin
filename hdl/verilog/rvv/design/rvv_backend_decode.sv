@@ -93,48 +93,48 @@ module rvv_backend_decode
   // decode unit
   rvv_backend_decode_unit u_decode_unit0
   (
-    inst_valid_cq2de        (pkg0_valid),
-    inst_cq2de              (inst_pkg0_cq2de),
-    uop_index_remain        (uop_index_remain),
-    uop_valid_de2uq         (unit0_uop_valid_de2uq),
-    uop_de2uq               (unit0_uop_de2uq)
+    .inst_valid_cq2de        (pkg0_valid),
+    .inst_cq2de              (inst_pkg0_cq2de),
+    .uop_index_remain        (uop_index_remain),
+    .uop_valid_de2uq         (unit0_uop_valid_de2uq),
+    .uop_de2uq               (unit0_uop_de2uq)
   );
    
   rvv_backend_decode_unit u_decode_unit1
   (
-    inst_valid_cq2de        (pkg1_valid),
-    inst_cq2de              (inst_pkg1_cq2de),
-    uop_index_remain        ('b0),
-    uop_valid_de2uq         (unit1_uop_valid_de2uq),
-    uop_de2uq               (unit1_uop_de2uq)
+    .inst_valid_cq2de        (pkg1_valid),
+    .inst_cq2de              (inst_pkg1_cq2de),
+    .uop_index_remain        ({`UOP_INDEX_WIDTH{1'b0}}),
+    .uop_valid_de2uq         (unit1_uop_valid_de2uq),
+    .uop_de2uq               (unit1_uop_de2uq)
   ); 
   
   // decode controller
   rvv_backend_decode_ctrl u_decode_ctrl
   (
-    clk                     (clk),
-    rst_n                   (rst_n),
-    pkg0_valid              (pkg0_valid),
-    unit0_uop_valid_de2uq   (unit0_uop_valid_de2uq),
-    unit0_uop_de2uq         (unit0_uop_de2uq),
-    pkg1_valid              (pkg1_valid),
-    unit1_uop_valid_de2uq   (unit1_uop_valid_de2uq),
-    unit1_uop_de2uq         (unit1_uop_de2uq),
-    uop_index_remain        (uop_index_remain),
-    pop0                    (pop0_de2cq),
-    pop1                    (pop1_de2cq),
-    push0                   (push0_de2uq),
-    data0                   (data0_de2uq),
-    push1                   (push1_de2uq),
-    data1                   (data1_de2uq),
-    push2                   (push2_de2uq),
-    data2                   (data2_de2uq),
-    push3                   (push3_de2uq),
-    data3                   (data3_de2uq),
-    fifo_full               (fifo_full_de2uq), 
-    fifo_1left_to_full      (fifo_1left_to_full_de2uq),
-    fifo_2left_to_full      (fifo_2left_to_full_de2uq), 
-    fifo_3left_to_full      (fifo_3left_to_full_de2uq)
+    .clk                     (clk),
+    .rst_n                   (rst_n),
+    .pkg0_valid              (pkg0_valid),
+    .unit0_uop_valid_de2uq   (unit0_uop_valid_de2uq),
+    .unit0_uop_de2uq         (unit0_uop_de2uq),
+    .pkg1_valid              (pkg1_valid),
+    .unit1_uop_valid_de2uq   (unit1_uop_valid_de2uq),
+    .unit1_uop_de2uq         (unit1_uop_de2uq),
+    .uop_index_remain        (uop_index_remain),
+    .pop0                    (pop0_de2cq),
+    .pop1                    (pop1_de2cq),
+    .push0                   (push0_de2uq),
+    .data0                   (data0_de2uq),
+    .push1                   (push1_de2uq),
+    .data1                   (data1_de2uq),
+    .push2                   (push2_de2uq),
+    .data2                   (data2_de2uq),
+    .push3                   (push3_de2uq),
+    .data3                   (data3_de2uq),
+    .fifo_full               (fifo_full_uq2de), 
+    .fifo_1left_to_full      (fifo_1left_to_full_uq2de),
+    .fifo_2left_to_full      (fifo_2left_to_full_uq2de), 
+    .fifo_3left_to_full      (fifo_3left_to_full_uq2de)
   );
 
 endmodule
