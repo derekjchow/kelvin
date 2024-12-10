@@ -3,10 +3,11 @@
 // 1. It will read instructions from Command Queue and decode the instructions to uops and write to Uop Queue.
 //
 // feature list:
-// 1. Decode unit can decode 2 instructions at most and write 4 uops to Uops Queue at most per cycle.
-// 2. One instruction can be decoded to 8 uops at most.
-// 3. uops_de2dp.rs1_data could be from X[rs1] and imm(inst[19:15]). If it is imm, the 5-bit imm(inst[19:15]) will be SIGN-extended or ZERO-extended to XLEN-bit. 
-// 
+// 1. One instruction can be decoded to 8 uops at most.
+// 2. Decoder will push 4 uops at most into Uops Queue, so this module only decode to 4 uops at most every time.  
+// 3. If the instruction is in wrong encoding, it will be discarded directly without applying a trap, but take assertion in simulation.
+// 4. The vstart of the instruction will be calculated to a new value for every decoded uops.
+// 5. vmv<nr>r.v instruction will be split to <nr> vmv.v.v uops, which means funct6, funct3, vs1, vs2 fields will be modified in new uop. However, new uops' vtype.vlmul is not changed to recovery execution right when trap handling is done.
 
 `include "rvv.svh"
 
