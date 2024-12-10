@@ -283,7 +283,7 @@ typedef union packed {
 typedef union packed {
     OPM_VWXUNARY0_e                     vwxunary0_funct;
     OPM_VXUNARY0_e                      vxunary0_funct;
-    OPM_VMUNARY0_e                      vxunary0_funct;
+    OPM_VMUNARY0_e                      vmunary0_funct;
     logic   [`REGFILE_INDEX_WIDTH-1:0]  vs1_index;
 } VS1_u;
 
