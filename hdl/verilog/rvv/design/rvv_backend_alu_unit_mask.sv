@@ -32,16 +32,12 @@ module rvv_backend_alu_unit_mask
   logic                           v0_data_valid;
   logic   [`VLEN-1:0]             vd_data;           
   logic                           vd_data_valid;
+  EEW_e                           vd_eew;
   logic   [`VLEN-1:0]             vs1_data;           
-  EEW_e                           vs1_eew;
   logic                           vs1_data_valid; 
-  BYTE_TYPE_t                     vs1_type; 
   logic   [`VLEN-1:0]             vs2_data;	        
-  EEW_e                           vs2_eew;
   logic                           vs2_data_valid;  
-  BYTE_TYPE_t                     vs2_type; 
   logic   [`XLEN-1:0] 	          rs1_data;        
-  EEW_e                           scalar_eew;
   logic        	                  rs1_data_valid;
   logic   [`UOP_INDEX_WIDTH-1:0]  uop_index;          
 
@@ -77,18 +73,14 @@ module rvv_backend_alu_unit_mask
   assign  v0_data_valid       = alu_uop.v0_data_valid;
   assign  vd_data             = alu_uop.vd_data;
   assign  vd_data_valid       = alu_uop.vd_data_valid;
+  assign  vd_eew              = alu_uop.vd_eew;
   assign  vs1                 = alu_uop.vs1;
   assign  vs1_data            = alu_uop.vs1_data;
-  assign  vs1_eew             = alu_uop.vs1_eew;
   assign  vs1_data_valid      = alu_uop.vs1_data_valid;
-  assign  vs1_type            = alu_uop.vs1_type;
   assign  vs2_data            = alu_uop.vs2_data;
-  assign  vs2_eew             = alu_uop.vs2_eew;
   assign  vs2_data_valid      = alu_uop.vs2_data_valid;
-  assign  vs2_type            = alu_uop.vs2_type;
   assign  rs1_data            = alu_uop.rs1_data;
   assign  rs1_data_valid      = alu_uop.rs1_data_valid;
-  assign  scalar_eew          = alu_uop.scalar_eew;
   assign  uop_index           = alu_uop.uop_index;
   
 //  
