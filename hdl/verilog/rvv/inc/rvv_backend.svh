@@ -124,7 +124,7 @@ typedef enum logic [5:0] {
     VMINU           =   6'b000_100,
     VMIN            =   6'b000_101,
     VMAXU           =   6'b000_110,
-    VMAX            =   6'b000_111,
+    VMAX             =   6'b000_111,
     VAND            =   6'b001_001,
     VOR             =   6'b001_010,
     VXOR            =   6'b001_011,
@@ -283,7 +283,7 @@ typedef union packed {
 typedef union packed {
     OPM_VWXUNARY0_e                     vwxunary0_funct;
     OPM_VXUNARY0_e                      vxunary0_funct;
-    OPM_VMUNARY0_e                      vmxunary0_funct;
+    OPM_VMUNARY0_e                      vxunary0_funct;
     logic   [`REGFILE_INDEX_WIDTH-1:0]  vs1_index;
 } VS1_u;
 
