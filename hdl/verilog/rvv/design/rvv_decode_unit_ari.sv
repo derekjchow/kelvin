@@ -1,7 +1,7 @@
 
 `include "rvv.svh"
 
-module rvv_decode_unit_ari
+module rvv_backend_decode_unit_ari
 (
   inst_valid,
   inst,
@@ -999,8 +999,7 @@ module rvv_decode_unit_ari
       
       case(funct6_ari.opi_funct6)
         VADC,
-        VMADC,
-        VMERGE_VMV: begin
+        VMADC: begin
           case(funct3_ari)
             OPIVI: begin
               uop[i].v0_valid   = !inst_vm;
@@ -1028,16 +1027,14 @@ module rvv_decode_unit_ari
         VOR,
         VXOR,
         VSLL,
-        VSMUL_VMVNRR,
         VSRL,
         VSRA,
         VMERGE_VMV,
         VSADDU,
         VSADD,
+        VSMUL_VMVNRR,
         VSSRL,
         VSSRA,
-        VNCLIPU,
-        VNCLIP,
         VSLIDEUP,
         VSLIDEDOWN,
         VRGATHER: begin
@@ -1075,6 +1072,25 @@ module rvv_decode_unit_ari
               uop[i].vd_eew   = eew_vd;
               op[i].vd_valid  = 1'b1;
             end
+          endcase
+        end
+
+        VNSRL,
+        VNSRA,
+        VNCLIPU,
+        VNCLIP: begin
+          case(funct3_ari)
+            OPIVV: begin
+
+            end
+            OPIVX: begin
+
+            end
+            OPIVI: begin  
+              uop[i].vd_index = inst_vd+{'b0,uop_index_current[`UOP_INDEX_WIDTH-1:1]};
+              uop[i].vd_eew   = eew_vd;
+              uop[i].vd_valid = 1'b1;
+            end 
           endcase
         end
       endcase
@@ -1184,12 +1200,21 @@ module rvv_decode_unit_ari
         VADD,
         VRSUB,
         VADC,
+        VMADC,
         VAND,
         VOR,
         VXOR,
         VSLL,
         VSRL,
         VSRA,
+        VNSRL,
+        VNSRA,        
+        VMSEQ,
+        VMSNE,
+        VMSLEU,
+        VMSLE,
+        VMSGTU,
+        VMSGT,
         VMERGE_VMV,
         VSADDU,
         VSADD,
@@ -1199,14 +1224,7 @@ module rvv_decode_unit_ari
         VNCLIP,
         VSLIDEUP,
         VSLIDEDOWN,
-        VRGATHER,
-        VMADC,
-        VMSEQ,
-        VMSNE,
-        VMSLEU,
-        VMSLE,
-        VMSGTU,
-        VMSGT: begin
+        VRGATHER: begin
           case(funct3_ari)
             OPIVV: begin
 
@@ -1324,6 +1342,8 @@ module rvv_decode_unit_ari
         VSLL,
         VSRL,
         VSRA,
+        VNSRL,
+        VNSRA,
         VSSRL,
         VSSRA: begin
           case(funct3_ari)
@@ -1402,12 +1422,21 @@ module rvv_decode_unit_ari
         VADD,
         VRSUB,
         VADC,
+        VMADC,
         VAND,
         VOR,
         VXOR,
         VSLL,
         VSRL,
         VSRA,
+        VNSRL,
+        VNSRA,        
+        VMSEQ,
+        VMSNE,
+        VMSLEU,
+        VMSLE,
+        VMSGTU,
+        VMSGT,
         VMERGE_VMV,
         VSADDU,
         VSADD,
@@ -1417,14 +1446,7 @@ module rvv_decode_unit_ari
         VNCLIP,
         VSLIDEUP,
         VSLIDEDOWN,
-        VRGATHER,
-        VMADC,
-        VMSEQ,
-        VMSNE,
-        VMSLEU,
-        VMSLE,
-        VMSGTU,
-        VMSGT: begin
+        VRGATHER: begin
           case(funct3_ari)
             OPIVV: begin
 

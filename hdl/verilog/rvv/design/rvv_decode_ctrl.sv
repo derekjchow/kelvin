@@ -6,9 +6,9 @@
 // 1. decode_ctrl will push data to Uops Queue only when Uops Queue has 4 free spaces at least.
 
 
-`include "rvv.svh"
+`include "rvv_backend.svh"
 
-module rvv_decode_ctrl
+module rvv_backend_decode_ctrl
 (
   clk,
   rst_n,

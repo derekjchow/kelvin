@@ -10,9 +10,9 @@
 // 5. The vstart of the instruction will be calculated to a new value for every decoded uops.
 // 6. vmv<nr>r.v instruction will be split to <nr> vmv.v.v uops, which means funct6, funct3, vs1, vs2 fields will be modified in new uop. However, new uops' vtype.vlmul is not changed to recovery execution right when trap handling is done.
 
-`include "rvv.svh"
+`include "rvv_backend.svh"
 
-module rvv_decode
+module rvv_backend_decode
 (
   clk,
   rstn,
@@ -90,7 +90,7 @@ module rvv_decode
   assign pkg1_valid = !(fifo_empty_cq2de | fifo_1left_to_empty_cq2de);
   
   // decode unit
-  rvv_decode_unit u_decode_unit0
+  rvv_backend_decode_unit u_decode_unit0
   (
     inst_valid_cq2de        (pkg0_valid),
     inst_cq2de              (inst_pkg0_cq2de),
@@ -99,7 +99,7 @@ module rvv_decode
     uop_de2uq               (unit0_uop_de2uq)
   );
    
-  rvv_decode_unit u_decode_unit1
+  rvv_backend_decode_unit u_decode_unit1
   (
     inst_valid_cq2de        (pkg1_valid),
     inst_cq2de              (inst_pkg1_cq2de),
@@ -109,7 +109,7 @@ module rvv_decode
   ); 
   
   // decode controller
-  rvv_decode_ctrl u_decode_ctrl
+  rvv_backend_decode_ctrl u_decode_ctrl
   (
     clk                     (clk),
     rst_n                   (rst_n),

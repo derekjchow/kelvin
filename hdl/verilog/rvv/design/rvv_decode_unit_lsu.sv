@@ -1,7 +1,7 @@
 
-`include "rvv.svh"
+`include "rvv_backend.svh"
 
-module rvv_decode_unit_lsu
+module rvv_backend_decode_unit_lsu
 (
   inst_valid,
   inst,
