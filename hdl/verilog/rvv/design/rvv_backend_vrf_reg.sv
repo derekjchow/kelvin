@@ -1,33 +1,33 @@
 // rvv_vrf_reg - 32 vector regsiter for V standard extention
-`include "rvv.svh"
-
+`include "rvv_backend.svh"
 module rvv_backend_vrf_reg (/*AUTOARG*/
    // Outputs
    vreg,
    // Inputs
-   wen, wdata, clk, rst_n
+   wenb, wdata, clk, rst_n
    );
 
   output logic [31:0][`VLEN-1:0]  vreg;
 
-  input  logic [31:0]             wen; // entry en
+  input  logic [31:0][`VLEN-1:0]  wenb; // bit en
   input  logic [31:0][`VLEN-1:0]  wdata;
   input  logic                    clk;
   input  logic                    rst_n;
 
 // -- 32 vector registers --------------------------------------------
-
-genvar i;
+genvar i,j;
 generate
   for (i=0; i<32; i=i+1) begin
-    edff #(128) vrf_unit128_reg (
-        .q      (vreg[i]),
-        .en     (wen[i]),
-        .d      (wdata[i]),
+    for (j=0; j<`VLEN; j=j+1) begin
+      edff #(1) vrf_unit1_reg (
+        .q      (vreg[i][j]),
+        .en     (wenb[i][j]),
+        .d      (wdata[i][j]),
         .clk    (clk),
         .rst_n  (rst_n)
-      );
-  end// end for
+        );
+    end //end for loop j
+  end //end for loop i
 endgenerate
 
 endmodule
