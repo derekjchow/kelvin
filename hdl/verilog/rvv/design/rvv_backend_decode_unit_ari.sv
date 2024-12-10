@@ -261,7 +261,6 @@ module rvv_backend_decode_unit_ari
       end
 
       VRSUB,
-      VSLIDEUP,
       VSLIDEDOWN: begin        
         case(funct3_ari)
           OPIVX,
@@ -713,8 +712,9 @@ module rvv_backend_decode_unit_ari
         endcase
       end
 
-      VRGATHEREI16: begin
+      VSLIDEUP_RGATHEREI16: begin        
         case(funct3_ari)
+          // VRGATHEREI16
           OPIVV: begin
             case(vlmul)
               `LMUL1_4: begin
@@ -810,6 +810,34 @@ module rvv_backend_decode_unit_ari
                     emul_max    = 4'd8;
                   end
                 endcase
+              end
+            endcase
+          end
+          // VSLIDEUP 
+          OPIVX,
+          OPIVI: begin
+            case(vlmul)
+              `LMUL1_4,
+              `LMUL1_2,
+              `LMUL1: begin
+                emul_vd     = 4'd1;
+                emul_vs2    = 4'd1;
+                emul_max    = 4'd1;
+              end
+              `LMUL2: begin
+                emul_vd     = 4'd2;
+                emul_vs2    = 4'd2;
+                emul_max    = 4'd2;
+              end
+              `LMUL4: begin
+                emul_vd     = 4'd4;
+                emul_vs2    = 4'd4;
+                emul_max    = 4'd4;
+              end
+              `LMUL8: begin
+                emul_vd     = 4'd8;
+                emul_vs2    = 4'd8;
+                emul_max    = 4'd8;
               end
             endcase
           end
@@ -1513,9 +1541,8 @@ module rvv_backend_decode_unit_ari
         endcase
       end
 
-      VRSUB,       
-      VSLIDEUP,
-      VSLIDEDOWN: begin
+      VRSUB,
+      VSLIDEDOWN: begin       
         case(funct3_ari)
           OPIVX,
           OPIVI: begin
@@ -1796,8 +1823,9 @@ module rvv_backend_decode_unit_ari
         endcase
       end
       
-      VRGATHEREI16: begin
+      VSLIDEUP_RGATHEREI16: begin
         case(funct3_ari)
+          // VRGATHEREI16
           OPIVV: begin
             case(vsew)
               `VSEW8: begin
@@ -1816,6 +1844,30 @@ module rvv_backend_decode_unit_ari
                 eew_vd      = EEW32;
                 eew_vs2     = EEW32;
                 eew_vs1     = EEW16;
+                eew_max     = EEW32;
+              end
+            endcase
+          end
+          // VSLIDEUP
+          OPIVX,
+          OPIVI: begin
+            case(vsew)
+              `VSEW8: begin
+                eew_vd      = EEW8;
+                eew_vs2     = EEW8;
+                eew_scalar  = EEW8;
+                eew_max     = EEW8;
+              end
+              `VSEW16: begin
+                eew_vd      = EEW16;
+                eew_vs2     = EEW16;
+                eew_scalar  = EEW16;
+                eew_max     = EEW16;
+              end
+              `VSEW32: begin
+                eew_vd      = EEW32;
+                eew_vs2     = EEW32;
+                eew_scalar  = EEW32;
                 eew_max     = EEW32;
               end
             endcase
@@ -2378,8 +2430,64 @@ module rvv_backend_decode_unit_ari
         endcase
       end
 
-      VSLIDEUP: begin
+      VSLIDEUP_RGATHEREI16: begin
         case(funct3_ari)
+          // VRGATHEREI16
+          OPIVV: begin
+            // destination register group cannot overlap the source register group
+            case(emul_max,emul_vs2,emul_vs1)
+              {4'd1,4'd1,4'd1}: begin
+                if((inst_vd!=inst_vs2)&(inst_vd!=inst_vs1))
+                  inst_encoding_correct     = 1'b1;          
+              end
+
+              {4'd1,4'd1,4'd2}: begin
+                if((inst_vd!=inst_vs2)&(inst_vd[`REGFILE_INDEX_WIDTH-1:1]!=inst_vs1[`REGFILE_INDEX_WIDTH-1:1]))
+                  inst_encoding_correct     = 1'b1;          
+              end
+
+              {4'd2,4'd2,4'd2}: begin
+                if((inst_vd[`REGFILE_INDEX_WIDTH-1:1]!=inst_vs2[`REGFILE_INDEX_WIDTH-1:1])&(inst_vd[`REGFILE_INDEX_WIDTH-1:1]!=inst_vs1[`REGFILE_INDEX_WIDTH-1:1]))
+                  inst_encoding_correct     = 1'b1;          
+              end
+
+              {4'd2,4'd2,4'd4}: begin
+                if((inst_vd[`REGFILE_INDEX_WIDTH-1:1]!=inst_vs2[`REGFILE_INDEX_WIDTH-1:1])&(inst_vd[`REGFILE_INDEX_WIDTH-1:2]!=inst_vs1[`REGFILE_INDEX_WIDTH-1:2]))
+                  inst_encoding_correct     = 1'b1;          
+              end
+
+              {4'd2,4'd2,4'd1}: begin
+                if((inst_vd[`REGFILE_INDEX_WIDTH-1:1]!=inst_vs2[`REGFILE_INDEX_WIDTH-1:1])&(inst_vd!=inst_vs1))
+                  inst_encoding_correct     = 1'b1;          
+              end
+
+              {4'd4,4'd4,4'd4}: begin
+                if((inst_vd[`REGFILE_INDEX_WIDTH-1:2]!=inst_vs2[`REGFILE_INDEX_WIDTH-1:2])&(inst_vd[`REGFILE_INDEX_WIDTH-1:2]!=inst_vs1[`REGFILE_INDEX_WIDTH-1:2]))
+                  inst_encoding_correct     = 1'b1;          
+              end
+
+              {4'd4,4'd4,4'd8}: begin
+                if((inst_vd[`REGFILE_INDEX_WIDTH-1:2]!=inst_vs2[`REGFILE_INDEX_WIDTH-1:2])&(inst_vd[`REGFILE_INDEX_WIDTH-1:3]!=inst_vs1[`REGFILE_INDEX_WIDTH-1:3]))
+                  inst_encoding_correct     = 1'b1;          
+              end
+
+              {4'd4,4'd4,4'd2}: begin
+                if((inst_vd[`REGFILE_INDEX_WIDTH-1:2]!=inst_vs2[`REGFILE_INDEX_WIDTH-1:2])&(inst_vd[`REGFILE_INDEX_WIDTH-1:1]!=inst_vs1[`REGFILE_INDEX_WIDTH-1:1]))
+                  inst_encoding_correct     = 1'b1;          
+              end
+
+              {4'd8,4'd8,4'd8}: begin
+                if((inst_vd[`REGFILE_INDEX_WIDTH-1:3]!=inst_vs2[`REGFILE_INDEX_WIDTH-1:3])&(inst_vd[`REGFILE_INDEX_WIDTH-1:3]!=inst_vs1[`REGFILE_INDEX_WIDTH-1:3]))
+                  inst_encoding_correct     = 1'b1;  
+              end
+
+              {4'd8,4'd8,4'd4}: begin
+                if((inst_vd[`REGFILE_INDEX_WIDTH-1:3]!=inst_vs2[`REGFILE_INDEX_WIDTH-1:3])&(inst_vd[`REGFILE_INDEX_WIDTH-1:2]!=inst_vs1[`REGFILE_INDEX_WIDTH-1:2]))
+                  inst_encoding_correct     = 1'b1;  
+              end
+            endcase
+          end
+          // VSLIDEUP and VSLIDEDOWN
           OPIVX,
           OPIVI: begin
             // destination register group cannot overlap the source register group
@@ -2453,65 +2561,6 @@ module rvv_backend_decode_unit_ari
         endcase
       end
       
-      VRGATHEREI16: begin
-        case(funct3_ari)
-          OPIVV: begin
-            // destination register group cannot overlap the source register group
-            case(emul_max,emul_vs2,emul_vs1)
-              {4'd1,4'd1,4'd1}: begin
-                if((inst_vd!=inst_vs2)&(inst_vd!=inst_vs1))
-                  inst_encoding_correct     = 1'b1;          
-              end
-
-              {4'd1,4'd1,4'd2}: begin
-                if((inst_vd!=inst_vs2)&(inst_vd[`REGFILE_INDEX_WIDTH-1:1]!=inst_vs1[`REGFILE_INDEX_WIDTH-1:1]))
-                  inst_encoding_correct     = 1'b1;          
-              end
-
-              {4'd2,4'd2,4'd2}: begin
-                if((inst_vd[`REGFILE_INDEX_WIDTH-1:1]!=inst_vs2[`REGFILE_INDEX_WIDTH-1:1])&(inst_vd[`REGFILE_INDEX_WIDTH-1:1]!=inst_vs1[`REGFILE_INDEX_WIDTH-1:1]))
-                  inst_encoding_correct     = 1'b1;          
-              end
-
-              {4'd2,4'd2,4'd4}: begin
-                if((inst_vd[`REGFILE_INDEX_WIDTH-1:1]!=inst_vs2[`REGFILE_INDEX_WIDTH-1:1])&(inst_vd[`REGFILE_INDEX_WIDTH-1:2]!=inst_vs1[`REGFILE_INDEX_WIDTH-1:2]))
-                  inst_encoding_correct     = 1'b1;          
-              end
-
-              {4'd2,4'd2,4'd1}: begin
-                if((inst_vd[`REGFILE_INDEX_WIDTH-1:1]!=inst_vs2[`REGFILE_INDEX_WIDTH-1:1])&(inst_vd!=inst_vs1))
-                  inst_encoding_correct     = 1'b1;          
-              end
-
-              {4'd4,4'd4,4'd4}: begin
-                if((inst_vd[`REGFILE_INDEX_WIDTH-1:2]!=inst_vs2[`REGFILE_INDEX_WIDTH-1:2])&(inst_vd[`REGFILE_INDEX_WIDTH-1:2]!=inst_vs1[`REGFILE_INDEX_WIDTH-1:2]))
-                  inst_encoding_correct     = 1'b1;          
-              end
-
-              {4'd4,4'd4,4'd8}: begin
-                if((inst_vd[`REGFILE_INDEX_WIDTH-1:2]!=inst_vs2[`REGFILE_INDEX_WIDTH-1:2])&(inst_vd[`REGFILE_INDEX_WIDTH-1:3]!=inst_vs1[`REGFILE_INDEX_WIDTH-1:3]))
-                  inst_encoding_correct     = 1'b1;          
-              end
-
-              {4'd4,4'd4,4'd2}: begin
-                if((inst_vd[`REGFILE_INDEX_WIDTH-1:2]!=inst_vs2[`REGFILE_INDEX_WIDTH-1:2])&(inst_vd[`REGFILE_INDEX_WIDTH-1:1]!=inst_vs1[`REGFILE_INDEX_WIDTH-1:1]))
-                  inst_encoding_correct     = 1'b1;          
-              end
-
-              {4'd8,4'd8,4'd8}: begin
-                if((inst_vd[`REGFILE_INDEX_WIDTH-1:3]!=inst_vs2[`REGFILE_INDEX_WIDTH-1:3])&(inst_vd[`REGFILE_INDEX_WIDTH-1:3]!=inst_vs1[`REGFILE_INDEX_WIDTH-1:3]))
-                  inst_encoding_correct     = 1'b1;  
-              end
-
-              {4'd8,4'd8,4'd4}: begin
-                if((inst_vd[`REGFILE_INDEX_WIDTH-1:3]!=inst_vs2[`REGFILE_INDEX_WIDTH-1:3])&(inst_vd[`REGFILE_INDEX_WIDTH-1:2]!=inst_vs1[`REGFILE_INDEX_WIDTH-1:2]))
-                  inst_encoding_correct     = 1'b1;  
-              end
-            endcase
-          end
-        endcase
-      end
-
       VSMUL_VMVNRR: begin
         case(funct3_ari)
           OPIVV,
@@ -2990,10 +3039,9 @@ module rvv_backend_decode_unit_ari
 
         VWREDSUMU,
         VWREDSUM,
-        VSLIDEUP,
+        VSLIDEUP_RGATHEREI16,
         VSLIDEDOWN,
-        VRGATHER,
-        VRGATHEREI16: begin
+        VRGATHER: begin
           uop[i].uop_exe_unit     = PMTRDT;
         end
       endcase
@@ -3129,7 +3177,6 @@ module rvv_backend_decode_unit_ari
         end
 
         VRSUB,
-        VSLIDEUP,
         VSLIDEDOWN: begin
           case(funct3_ari)
             OPIVX,
@@ -3179,11 +3226,22 @@ module rvv_backend_decode_unit_ari
         end
 
         VWREDSUMU,
-        VWREDSUM,
-        VRGATHEREI16: begin
+        VWREDSUM: begin
           case(funct3_ari)
             OPIVV: begin
               uop[i].uop_class  = VV;
+            end
+          endcase
+        end
+
+        VSLIDEUP_VRGATHEREI16: begin
+          case(funct3_ari)
+            OPIVV: begin
+              uop[i].uop_class  = VV;
+            end
+            OPIVX,
+            OPIVI: begin
+              uop[i].uop_class  = VX;
             end
           endcase
         end
@@ -3432,7 +3490,6 @@ module rvv_backend_decode_unit_ari
         end
 
         VRSUB,
-        VSLIDEUP,
         VSLIDEDOWN: begin
           case(funct3_ari)
             OPIVX,
@@ -3509,25 +3566,32 @@ module rvv_backend_decode_unit_ari
           end
         end
 
-        VRGATHEREI16: begin
-          if(funct3_ari==OPIVV) begin
-            case({emul_max,emul_vd})
-              {4'd1,4'd1},
-              {4'd2,4'd2},
-              {4'd4,4'd4}: begin
-                uop[i].vd_index = inst_vd+{'b0,uop_index_current[`UOP_INDEX_WIDTH-1:0]};
-                uop[i].vd_eew   = eew_vd;
-                uop[i].vd_valid = 1'b1;
-              end
-              {4'd2,4'd1},
-              {4'd4,4'd2},
-              {4'd8,4'd4}: begin
-                uop[i].vd_index = inst_vd+{'b0,uop_index_current[`UOP_INDEX_WIDTH-1:1]};
-                uop[i].vd_eew   = eew_vd;
-                uop[i].vd_valid = 1'b1;
-              end
-            endcase
-          end
+        VSLIDEUP_VRGATHEREI16: begin
+          case(funct3_ari)
+            OPIVV: begin
+              case({emul_max,emul_vd})
+                {4'd1,4'd1},
+                {4'd2,4'd2},
+                {4'd4,4'd4}: begin
+                  uop[i].vd_index = inst_vd+{'b0,uop_index_current[`UOP_INDEX_WIDTH-1:0]};
+                  uop[i].vd_eew   = eew_vd;
+                  uop[i].vd_valid = 1'b1;
+                end
+                {4'd2,4'd1},
+                {4'd4,4'd2},
+                {4'd8,4'd4}: begin
+                  uop[i].vd_index = inst_vd+{'b0,uop_index_current[`UOP_INDEX_WIDTH-1:1]};
+                  uop[i].vd_eew   = eew_vd;
+                  uop[i].vd_valid = 1'b1;
+                end
+              endcase
+            OPIVX,
+            OPIVI: begin  
+              uop[i].vd_index = inst_vd+{'b0,uop_index_current[`UOP_INDEX_WIDTH-1:0]};
+              uop[i].vd_eew   = eew_vd;
+              uop[i].vd_valid = 1'b1;
+            end 
+          endcase
         end
       endcase
      
@@ -4068,7 +4132,6 @@ module rvv_backend_decode_unit_ari
         VRSUB,
         VMSGTU,
         VMSGT,
-        VSLIDEUP,
         VSLIDEDOWN: begin
           case(funct3_ari)
             OPIVX,
@@ -4090,24 +4153,33 @@ module rvv_backend_decode_unit_ari
         end
 
         VRGATHEREI16: begin
-          if(funct3_ari==OPIVV) begin
-            case({emul_max,emul_vs2})
-              {4'd1,4'd1},
-              {4'd2,4'd2},
-              {4'd4,4'd4}: begin
-                uop[i].vs2_index  = inst_vs2+{'b0,uop_index_current[`UOP_INDEX_WIDTH-1:0]};
-                uop[i].vs2_eew    = eew_vs2;
-                uop[i].vs2_valid  = 1'b1;
-              end
-              {4'd2,4'd1},
-              {4'd4,4'd2},
-              {4'd8,4'd4}: begin
-                uop[i].vs2_index  = inst_vs2+{'b0,uop_index_current[`UOP_INDEX_WIDTH-1:1]};
-                uop[i].vs2_eew    = eew_vs2;
-                uop[i].vs2_valid  = 1'b1;
-              end
-            endcase
-          end
+          case(funct3_ari)
+            OPIVX,
+            OPIVI: begin  
+              uop[i].vd_index = inst_vd+{'b0,uop_index_current[`UOP_INDEX_WIDTH-1:0]};
+              uop[i].vd_eew   = eew_vd;
+              uop[i].vd_valid = 1'b1;
+            end 
+            OPIVV: begin
+              case({emul_max,emul_vs2})
+                {4'd1,4'd1},
+                {4'd2,4'd2},
+                {4'd4,4'd4}: begin
+                  uop[i].vs2_index  = inst_vs2+{'b0,uop_index_current[`UOP_INDEX_WIDTH-1:0]};
+                  uop[i].vs2_eew    = eew_vs2;
+                  uop[i].vs2_valid  = 1'b1;
+                end
+                {4'd2,4'd1},
+                {4'd4,4'd2},
+                {4'd8,4'd4}: begin
+                  uop[i].vs2_index  = inst_vs2+{'b0,uop_index_current[`UOP_INDEX_WIDTH-1:1]};
+                  uop[i].vs2_eew    = eew_vs2;
+                  uop[i].vs2_valid  = 1'b1;
+                end
+              endcase
+            end
+          endcase
+        end
       endcase
        
       // OPM* 
@@ -4312,12 +4384,10 @@ module rvv_backend_decode_unit_ari
         VNSRA,
         VSSRL,
         VSSRA,
-        VSLIDEUP,
-        VSLIDEDOWN,
         VRGATHER,
         VNCLIPU,
         VNCLIP,
-        VSLIDEUP,
+        VSLIDEUP_VRGATHEREI16,
         VSLIDEDOWN,
         VRGATHER: begin
           case(funct3_ari)
