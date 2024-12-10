@@ -14,18 +14,18 @@ module mux8_1
   outdata 
 );
 
-  parameter                 DATA_WIDTH = 1;
+  parameter             WIDTH = 1;
   
-  input   [2:0]             sel;
-  input   [DATA_WIDTH-1:0]  indata0;
-  input   [DATA_WIDTH-1:0]  indata1;
-  input   [DATA_WIDTH-1:0]  indata2;
-  input   [DATA_WIDTH-1:0]  indata3;
-  input   [DATA_WIDTH-1:0]  indata4;
-  input   [DATA_WIDTH-1:0]  indata5;
-  input   [DATA_WIDTH-1:0]  indata6;
-  input   [DATA_WIDTH-1:0]  indata7;
-  output  [DATA_WIDTH-1:0]  outdata;
+  input   [2:0]         sel;
+  input   [WIDTH-1:0]   indata0;
+  input   [WIDTH-1:0]   indata1;
+  input   [WIDTH-1:0]   indata2;
+  input   [WIDTH-1:0]   indata3;
+  input   [WIDTH-1:0]   indata4;
+  input   [WIDTH-1:0]   indata5;
+  input   [WIDTH-1:0]   indata6;
+  input   [WIDTH-1:0]   indata7;
+  output  [WIDTH-1:0]   outdata;
 
   always_comb begin
     case(sel)
