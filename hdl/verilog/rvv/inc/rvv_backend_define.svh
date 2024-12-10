@@ -15,6 +15,9 @@
 `define NUM_DP_UOP              2
 `define NUM_DP_VRF              `NUM_DP_UOP*2
 
+// the max number of uops can be executed in ALU per cycle
+`define NUM_ALU_UOP             2
+
 // the max number of uops are retired per cycle in WB stage
 `define NUM_RT_UOP              4
 
