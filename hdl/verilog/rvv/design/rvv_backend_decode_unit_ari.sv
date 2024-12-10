@@ -2665,7 +2665,7 @@ module rvv_backend_decode_unit_ari
                 
                 `ifdef ASSERT_ON
                   `rvv_expect(check_vd_overlap_v0==1'b1)
-                  else $error("vd is overlap v0 in %s instruction.\n",funct6_ari.ari_funct6.name());
+                  else $error("vd is overlap v0 in %d instruction.\n",funct6_ari.ari_funct6);
                 `endif
               end
             endcase
@@ -2685,7 +2685,7 @@ module rvv_backend_decode_unit_ari
                 
                 `ifdef ASSERT_ON
                   `rvv_expect(check_vd_overlap_v0==1'b1)
-                  else $error("vd is overlap v0 in %s instruction.\n",funct6_ari.ari_funct6.name());
+                  else $error("vd is overlap v0 in %d instruction.\n",funct6_ari.ari_funct6);
                 `endif
               end
             endcase
@@ -2699,7 +2699,7 @@ module rvv_backend_decode_unit_ari
                 
                 `ifdef ASSERT_ON
                   `rvv_expect(check_vd_overlap_v0==1'b1)
-                  else $error("vd is overlap v0 in %s instruction.\n",funct6_ari.ari_funct6.name());
+                  else $error("vd is overlap v0 in %d instruction.\n",funct6_ari.ari_funct6);
                 `endif
               end
             endcase
@@ -2715,10 +2715,10 @@ module rvv_backend_decode_unit_ari
                 
                 `ifdef ASSERT_ON
                   `rvv_expect(inst_vm==1'b0)
-                  else $error("Unsupported inst_vm=%d in %s instruction.\n",inst_vm,funct6_ari.ari_funct6.name());
+                  else $error("Unsupported inst_vm=%d in %d instruction.\n",inst_vm,funct6_ari.ari_funct6);
                   
                   `rvv_forbit(inst_vd=='b0)
-                  else $error("inst_vd(%d) cannot overlap v0 in %s instruction.\n",funct6_ari.ari_funct6.name());
+                  else $error("inst_vd(%d) cannot overlap v0 in %d instruction.\n",funct6_ari.ari_funct6);
                 `endif
               end
             endcase
@@ -2745,10 +2745,10 @@ module rvv_backend_decode_unit_ari
                 
                 `ifdef ASSERT_ON
                   `rvv_expect(inst_vm==1'b0)
-                  else $error("Unsupported inst_vm=%d in %s instruction.\n",inst_vm,funct6_ari.ari_funct6.name());
+                  else $error("Unsupported inst_vm=%d in %d instruction.\n",inst_vm,funct6_ari.ari_funct6);
                   
                   `rvv_forbit(inst_vd=='b0)
-                  else $error("inst_vd(%d) cannot overlap v0 in %s instruction.\n",funct6_ari.ari_funct6.name());
+                  else $error("inst_vd(%d) cannot overlap v0 in %d instruction.\n",funct6_ari.ari_funct6);
                 `endif
               end
             endcase
@@ -2826,10 +2826,10 @@ module rvv_backend_decode_unit_ari
                 
                 `ifdef ASSERT_ON
                   `rvv_expect(check_vd_overlap_v0==1'b1)
-                  else $error("vd is overlap v0 in %s instruction.\n",funct6_ari.ari_funct6.name());
+                  else $error("vd is overlap v0 in %d instruction.\n",funct6_ari.ari_funct6);
                   
                   `rvv_forbid((inst_vm==1'b1)&(inst_vs2!=5'b0))
-                  else $error("inst_vs2(%d) should be 0 in %s instruction.\n",inst_vm,inst_vs2,funct6_ari.ari_funct6.name());
+                  else $error("inst_vs2(%d) should be 0 in %d instruction.\n",inst_vm,inst_vs2,funct6_ari.ari_funct6);
                 `endif
               end
             endcase
@@ -2843,7 +2843,7 @@ module rvv_backend_decode_unit_ari
                 
                 `ifdef ASSERT_ON
                   `rvv_expect(check_vd_overlap_v0==1'b1)
-                  else $error("vd is overlap v0 in %s instruction.\n",funct6_ari.ari_funct6.name());
+                  else $error("vd is overlap v0 in %d instruction.\n",funct6_ari.ari_funct6);
                 `endif
               end
               OPIVI: begin
@@ -2855,7 +2855,7 @@ module rvv_backend_decode_unit_ari
 
                 `ifdef ASSERT_ON
                   `rvv_expect(inst_vm==1'b1)
-                  else $error("inst_vm(%d) should be 1 in vmv<nr>r instruction.\n",inst_vm,funct6_ari.ari_funct6.name());
+                  else $error("inst_vm(%d) should be 1 in vmv<nr>r instruction.\n",inst_vm,funct6_ari.ari_funct6);
 
                   `rvv_expect(inst_vs1[4:3]==2'b0)
                   else $error("inst_vs1[4:3](%d) should be 0 in vmv<nr>r instruction.\n",inst_vs1[4:3]);
@@ -2876,10 +2876,10 @@ module rvv_backend_decode_unit_ari
 
                 `ifdef ASSERT_ON
                   `rvv_expect(csr_vstart=='b0)
-                  else $error("csr_vstart(%d) should be 0 in %s instruction.\n",csr_vstart,funct6_ari.ari_funct6.name());
+                  else $error("csr_vstart(%d) should be 0 in %d instruction.\n",csr_vstart,funct6_ari.ari_funct6);
                   
                   `rvv_expect(check_vd_overlap_v0==1'b1)
-                  else $error("vd is overlap v0 in %s instruction.\n",funct6_ari.ari_funct6.name());
+                  else $error("vd is overlap v0 in %d instruction.\n",funct6_ari.ari_funct6);
                 `endif
               end
             endcase
@@ -3050,7 +3050,7 @@ module rvv_backend_decode_unit_ari
             
                 `ifdef ASSERT_ON
                   `rvv_expect(csr_vstart=='b0)
-                  else $error("csr_vstart(%d) should be 0 in %s instruction.\n",csr_vstart,funct6_ari.ari_funct6.name());
+                  else $error("csr_vstart(%d) should be 0 in %d instruction.\n",csr_vstart,funct6_ari.ari_funct6);
                 `endif
               end
             endcase
@@ -3072,7 +3072,7 @@ module rvv_backend_decode_unit_ari
             
                 `ifdef ASSERT_ON
                   `rvv_expect(inst_vm==1'b1)
-                  else $error("inst_vm(%d) should be 1 in %s instruction.\n",inst_vm,funct6_ari.ari_funct6.name());
+                  else $error("inst_vm(%d) should be 1 in %d instruction.\n",inst_vm,funct6_ari.ari_funct6);
                 `endif
               end
             endcase
@@ -3098,10 +3098,10 @@ module rvv_backend_decode_unit_ari
                 
                 `ifdef ASSERT_ON
                   `rvv_expect(inst_vm==1'b1)
-                  else $error("inst_vm(%d) should be 1 in %s instruction.\n",inst_vm,funct6_ari.ari_funct6.name());
+                  else $error("inst_vm(%d) should be 1 in %d instruction.\n",inst_vm,funct6_ari.ari_funct6);
                 
                   `rvv_expect(inst_vs2=='b0)
-                  else $error("inst_vs2(%d) should be 0 in %s instruction.\n",inst_vs2,funct6_ari.ari_funct6.name());
+                  else $error("inst_vs2(%d) should be 0 in %d instruction.\n",inst_vs2,funct6_ari.ari_funct6);
                 `endif
               end
             endcase
@@ -3144,13 +3144,13 @@ module rvv_backend_decode_unit_ari
                 
                   `ifdef ASSERT_ON
                     `rvv_expect(csr_vstart=='b0)
-                    else $error("csr_vstart(%d) should be 0 in %s instruction.\n",csr_vstart,funct6_ari.ari_funct6.name());
+                    else $error("csr_vstart(%d) should be 0 in %d instruction.\n",csr_vstart,funct6_ari.ari_funct6);
                   
                     `rvv_expect(check_vd_overlap_v0==1'b1)
-                    else $error("vd is overlap v0 in %s instruction.\n",funct6_ari.ari_funct6.name());
+                    else $error("vd is overlap v0 in %d instruction.\n",funct6_ari.ari_funct6);
                     
                     `rvv_expect(check_vd_overlap_vs2==1'b1)
-                    else $error("vd is overlap vs2 in %s instruction.\n",funct6_ari.ari_funct6.name());
+                    else $error("vd is overlap vs2 in %d instruction.\n",funct6_ari.ari_funct6);
                   `endif
                 end
               end
