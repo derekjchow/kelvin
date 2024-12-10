@@ -10,6 +10,7 @@ STD_PATH = $(PWD)/common/
 TESTBENCH_PATH = $(PWD)/sve/
 
 LINT_DIR = $(PWD)/lint_test
+LINT_SCRIPT_DIR = $(PWD)/scripts/sg_lint
 GOALS   = lint/lint_rtl
 export GOALS
 export TOP
@@ -49,7 +50,7 @@ WORKPRJ = $(TBBUILD)/$(LINTTOOL)/work.prj
 
 lint: 
 	mkdir -p $(LINT_DIR); mkdir -p $(LINT_DIR)/RPT; mkdir -p $(LINT_DIR)/CSV;
-	cp -rf $(PWD)/filelist.f $(PWD)/main_sg_lint.tcl $(LINT_DIR)/;
+	cp -rf $(LINT_SCRIPT_DIR)/filelist.f $(LINT_SCRIPT_DIR)/main_sg_lint.tcl $(LINT_DIR)/;
 	#Add inc files
 	sed -i "1i +incdir+$(PWD)/../inc" $(LINT_DIR)/filelist.f;
 	#Add all common files
@@ -57,9 +58,11 @@ lint:
 	#Add all design files
 	#ls $(PWD)/../design/* >2.txt; sed -i "2r 2.txt" $(LINT_DIR)/filelist.f; rm -rf 2.txt;
 	#Add user speficied files
-	#ls $(PWD)/../design/rvv_decode_ctrl.sv >2.txt; sed -i "2r 2.txt" $(LINT_DIR)/filelist.f; rm -rf 2.txt;
+	ls $(PWD)/../design/rvv_backend_retire.sv >2.txt; sed -i "2r 2.txt" $(LINT_DIR)/filelist.f; rm -rf 2.txt;
+	ls $(PWD)/../design/rvv_backend_vrf.sv >2.txt; sed -i "2r 2.txt" $(LINT_DIR)/filelist.f; rm -rf 2.txt;
+	ls $(PWD)/../design/rvv_backend_vrf_reg.sv >2.txt; sed -i "2r 2.txt" $(LINT_DIR)/filelist.f; rm -rf 2.txt;
 	cd $(LINT_DIR);
-	sg_shell -tcl ./main_sg_lint.tcl;  echo "Lint Done";
+	sg_shell -tcl $(LINT_DIR)/main_sg_lint.tcl;  echo "Lint Done";
 	cp -rf $(LINT_DIR)/sg_run_results/lint/consolidated_reports/$(TOP)_lint_lint_rtl/* $(LINT_DIR)/RPT/;
 
 lint_vcs: filelist

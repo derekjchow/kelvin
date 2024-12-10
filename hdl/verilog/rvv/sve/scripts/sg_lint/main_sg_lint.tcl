@@ -34,6 +34,6 @@ set_parameter check_lrm_and_natural_width yes
 set_parameter use_lrm_width yes
 
 run_goal
-#save_project
+save_project
 exit -force
 
