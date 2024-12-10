@@ -402,21 +402,18 @@ typedef struct packed {
   // when the uop is mask uop(vmandn,vmand,...), the uop will use vd_data as the third vector operand. EEW_vd=1.
   logic   [`VLEN-1:0]                 vd_data;
   logic                               vd_data_valid;
+  EEW_e                               vd_eew;
   // when vs1_data_valid=0, vs1_data is used to decode some OPMVV uops
   // when vs1_data_valid=1, vs1_data is valid as a vector operand
   logic   [`REGFILE_INDEX_WIDTH-1:0]  vs1;              
   logic   [`VLEN-1:0]                 vs1_data;           
-  EEW_e                               vs1_eew;
   logic                               vs1_data_valid; 
-  BYTE_TYPE_t                         vs1_type; 
   logic   [`VLEN-1:0]                 vs2_data;	        
-  EEW_e                               vs2_eew;
   logic                               vs2_data_valid;  
-  BYTE_TYPE_t                         vs2_type; 
   // rs1_data could be from X[rs1] and imm(inst[19:15]). If it is imm, the 5-bit imm(inst[19:15]) will be sign-extend to XLEN-bit. 
   logic   [`XLEN-1:0] 	              rs1_data;        
-  EEW_e                               scalar_eew;
   logic        	                      rs1_data_valid;                                   
+  logic   [`UOP_INDEX_WIDTH-1:0]      uop_index;      
 } ALU_RS_t;    
 
 // DIV reservation station struct
