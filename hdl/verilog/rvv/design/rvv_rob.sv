@@ -47,9 +47,10 @@ module rvv_rob
 
 // push uop infomation to ROB
 // Dispatch to ROB
-    input  logic                    rc_valid_dp2rob[`NUM_DP_RC-1:0];
-    input  RC_t                     rc_dp2rob[`NUM_DP_RC-1:0];
-    output logic                    rc_ready_rob2dp[`NUM_DP_RC-1:0];
+    input  logic                    uop_valid_dp2rob[`NUM_DP_RC-1:0];
+    input  UOP_ROB_t                uop_dp2rob[`NUM_DP_RC-1:0];
+    output logic                    uop_ready_rob2dp[`NUM_DP_RC-1:0];
+    output logic [`ROB_DEPTH_WIDTH-1:0] uop_index_rob2dp;
 
 // push uop result to ROB
 // ALU to ROB
@@ -84,6 +85,7 @@ module rvv_rob
     input   logic                   rd_ready_rob2wb[`NUM_ROB_RD-1:0];
 
 // bypass all rob entries to Dispatch unit
+// rob_entries must be in program order instead of entry_index
     output  ROB_t                   rob_entry[`ROB_DEPTH-1:0];
 
 endmodule

@@ -357,10 +357,10 @@ typedef struct packed {
 
 // specify whether the current byte belongs to 'prestart' or 'body-inactive' or 'body-active' or 'tail'
 typedef enum logic [1:0] {
-    NOT_CHANGE,         // the byte is not changed, which may belong to 'prestart' or superfluous element in widening/narrowing uop
-    BODY_INACTIVE,      // body-inactive byte
-    BODY_ACTIVE,        // body-active byte
-    TAIL                // tail byte
+    NOT_CHANGE = 2'b00,         // the byte is not changed, which may belong to 'prestart' or superfluous element in widening/narrowing uop
+    TAIL       = 2'b01,         // tail byte
+    BODY_INACTIVE = 2'b10,      // body-inactive byte
+    BODY_ACTIVE   = 2'b11       // body-active byte
 } BYTE_TYPE_e;
 
 // the max number of byte in a vector register is VLENB
