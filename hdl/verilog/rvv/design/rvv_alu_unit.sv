@@ -110,7 +110,7 @@ module rvv_alu_unit
           
           default: begin
             `ifdef ASSERT_ON
-            $error("rob_entry=%d. Unsupported uop_funct6.opi_funct=%s.\n",rob_entr,yuop_funct6.opi_funct.name());
+            $error("rob_entry=%d. Unsupported uop_funct6.opi_funct=%d.\n",rob_entr,yuop_funct6.opi_funct);
             `endif
           end
         endcase
@@ -142,7 +142,7 @@ module rvv_alu_unit
 
           default: begin
             `ifdef ASSERT_ON
-            $error("rob_entry=%d. Unsupported uop_funct6.opm_funct=%s.\n",rob_entry,uop_funct6.opm_funct.name());
+            $error("rob_entry=%d. Unsupported uop_funct6.opm_funct=%d.\n",rob_entry,uop_funct6.opm_funct);
             `endif
           end
         endcase
