@@ -105,10 +105,10 @@ wire                            ignore_vta1;
 wire                            ignore_vta2;
 wire                            ignore_vta3;
 
-wire                            ignore_vma0;
-wire                            ignore_vma1;
-wire                            ignore_vma2;
-wire                            ignore_vma3;
+//wire                            ignore_vma0;
+//wire                            ignore_vma1;
+//wire                            ignore_vma2;
+//wire                            ignore_vma3;
 
 wire dst1_eq_dst0, dst2_eq_dst1, dst3_eq_dst2;
 reg [1:0]                       group_req;
@@ -183,10 +183,10 @@ assign ignore_vta1 = rob2rt_write_data[1].ignore_vta;
 assign ignore_vta2 = rob2rt_write_data[2].ignore_vta;
 assign ignore_vta3 = rob2rt_write_data[3].ignore_vta;
 
-assign ignore_vma0 = rob2rt_write_data[0].ignore_vma;
-assign ignore_vma1 = rob2rt_write_data[1].ignore_vma;
-assign ignore_vma2 = rob2rt_write_data[2].ignore_vma;
-assign ignore_vma3 = rob2rt_write_data[3].ignore_vma;
+//assign ignore_vma0 = rob2rt_write_data[0].ignore_vma;
+//assign ignore_vma1 = rob2rt_write_data[1].ignore_vma;
+//assign ignore_vma2 = rob2rt_write_data[2].ignore_vma;
+//assign ignore_vma3 = rob2rt_write_data[3].ignore_vma;
 
 /////////////////////////////////
 ////////////Main  ///////////////
@@ -216,10 +216,10 @@ always@(*) begin
 end
 
 //2. Mask update if ignore vta/vma
-assign w_enB0 = (ignore_vta0 && ignore_vma0) ? `VLENB'b1 : w_enB0_tmp;
-assign w_enB1 = (ignore_vta1 && ignore_vma1) ? `VLENB'b1 : w_enB1_tmp;
-assign w_enB2 = (ignore_vta2 && ignore_vma2) ? `VLENB'b1 : w_enB2_tmp;
-assign w_enB3 = (ignore_vta3 && ignore_vma3) ? `VLENB'b1 : w_enB3_tmp;
+assign w_enB0 = ignore_vta0 ? `VLENB'b1 : w_enB0_tmp;
+assign w_enB1 = ignore_vta1 ? `VLENB'b1 : w_enB1_tmp;
+assign w_enB2 = ignore_vta2 ? `VLENB'b1 : w_enB2_tmp;
+assign w_enB3 = ignore_vta3 ? `VLENB'b1 : w_enB3_tmp;
 
 //3. Write-After-Write (WAW) check
 //  3.1. WAW among entry0 entry1, for group_req=1
