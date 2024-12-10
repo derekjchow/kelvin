@@ -5,6 +5,7 @@ read_file -type sourcelist filelist
 
 ##Common Options Section
 set_option projectwdir builddir
+set_option incdir myincdir
 set_option language_mode mixed
 set_option designread_enable_synthesis no
 set_option designread_disable_flatten no
