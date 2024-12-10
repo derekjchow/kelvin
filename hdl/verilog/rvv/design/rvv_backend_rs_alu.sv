@@ -11,15 +11,11 @@ module rvv_backend_alu_rs
   clk,
   rst_n,
 
-  push0_dp2rs,
-  alu_uop0_dprs,
-  pop0_ex2rs,
-  push1_dp2rs,
-  alu_uop1_dp2rs,
-  pop1_ex2rs,
+  push_dp2rs,
+  alu_uop_dprs,
+  pop_ex2rs,
 
-  alu_uop0_rs2ex,
-  alu_uop1_rs2ex,
+  alu_uop_rs2ex,
   fifo_full_rs2dp,
   fifo_1left_to_full_rs2dp, 
   fifo_halffull_rs2dp,
@@ -31,24 +27,20 @@ module rvv_backend_alu_rs
 // interface signals
 //
   // global signals
-  input logic             clk;
-  input logic             rst_n;
+  input logic                           clk;
+  input logic                           rst_n;
 
   // Dispatch to ALU RS
-  input   logic           push0_dp2rs;
-  input   ALU_RS_t        alu_uop0_dp2rs;
-  input   logic           pop0_ex2rs;
-  input   logic           push1_dp2rs;
-  input   ALU_RS_t        alu_uop1_dp2rs;
-  input   logic           pop1_ex2rs;
+  input   logic     [`NUM_ALU_UOP-1:0]  push_dp2rs;
+  input   ALU_RS_t  [`NUM_ALU_UOP-1:0]  alu_uop_dp2rs;
+  input   logic     [`NUM_ALU_UOP-1:0]  pop_ex2rs;
 
-  output  ALU_RS_t        alu_uop0_rs2ex;
-  output  ALU_RS_t        alu_uop1_rs2ex;
-  output  logic           fifo_full_rs2dp;           
-  output  logic           fifo_1left_to_full_rs2dp; 
-  output  logic           fifo_halffull_rs2dp;     
-  output  logic           fifo_empty_rs2ex;
-  output  logic           fifo_1left_to_empty_rs2ex;
+  output  ALU_RS_t  [`NUM_ALU_UOP-1:0]  alu_uop_rs2ex;
+  output  logic                         fifo_full_rs2dp;           
+  output  logic                         fifo_1left_to_full_rs2dp; 
+  output  logic                         fifo_halffull_rs2dp;     
+  output  logic                         fifo_empty_rs2ex;
+  output  logic                         fifo_1left_to_empty_rs2ex;
 
 //
 // Instantiate ALU reservation station
@@ -56,19 +48,21 @@ module rvv_backend_alu_rs
 fifo_flopped_2w2r
 #(
   .DWIDTH                   (`ALU_RS_WIDTH)
-)(
+)
+rs_alu
+(
    // Inputs
    clk                      (clk), 
    rst_n                    (rst_n), 
-   push0                    (push0_dp2rs),
-   inData0                  (alu_uop0_dp2rs), 
-   push1                    (push1_dp2rs), 
-   inData1                  (alu_uop1_dp2rs), 
-   pop0                     (pop0_ex2rs), 
-   pop1                     (pop1_ex2rs),
+   push0                    (push_dp2rs[0]),
+   inData0                  (alu_uop_dp2rs[0]), 
+   pop0                     (pop_ex2rs[0]), 
+   push1                    (push_dp2rs[1]), 
+   inData1                  (alu_uop_dp2rs[1]), 
+   pop1                     (pop_ex2rs[1]),
    // Outputs
-   outData0                 (alu_uop0_rs2ex), 
-   outData1                 (alu_uop1_rs2ex), 
+   outData0                 (alu_uop_rs2ex[0]), 
+   outData1                 (alu_uop_rs2ex[1]), 
    fifo_halfFull            (fifo_halffull_rs2dp),  
    fifo_full                (fifo_full_rs2dp), 
    fifo_1left_to_full       (fifo_1left_to_full_rs2dp),
