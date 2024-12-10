@@ -14,8 +14,8 @@
 
 module rvv_decode_unit
 (
-  insts_valid_cq2de,
-  insts_cq2de,
+  inst_valid_cq2de,
+  inst_cq2de,
   uop_index_remain,
   uop_valid_de2uq,
   uop_de2uq
@@ -24,8 +24,8 @@ module rvv_decode_unit
 // interface signals
 //
   // CQ to Decoder unit signals
-  input   logic                         insts_valid_cq2de;
-  input   INST_t                        insts_cq2de;
+  input   logic                         inst_valid_cq2de;
+  input   INST_t                        inst_cq2de;
   input   logic [`UOP_INDEX_WIDTH-1:0]  uop_index_remain;
   
   // Decoder unit to Uops Queue signals
@@ -35,7 +35,7 @@ module rvv_decode_unit
 //
 // internal signals
 //
-  logic   [`OPCODE_WIDTH-1:0]           insts_opcode;     // inst original encoding[6:0]
+  logic   [`OPCODE_WIDTH-1:0]           inst_opcode;     // inst original encoding[6:0]
   logic   [`VTYPE_VILL_WIDTH-1:0]       vill;             // 0:not illegal, 1:illegal
   logic                                 valid_ari;
   logic                                 valid_lsu;
@@ -51,8 +51,8 @@ module rvv_decode_unit
 //
 // decode
 //
-  assign insts_opcode = insts_cq2de.insts[1:0];
-  assign vill         = insts_cq2de.vector_csr.vtype.vill;
+  assign inst_opcode  = inst_cq2de.inst[1:0];
+  assign vill         = inst_cq2de.vector_csr.vtype.vill;
  
   // decode opcode
   always_comb begin 
@@ -60,7 +60,7 @@ module rvv_decode_unit
     valid_lsu           = 'b0;
     valid_ari           = 'b0;
 
-    case(insts_valid_cq2de,vill,insts_opcode)
+    case(inst_valid_cq2de,vill,inst_opcode)
       {1'b1,1'b0,OPCODE_LOAD},
       {1'b1,1'b0,OPCODE_STORE}: begin
         valid_lsu       = 1'b1;    
@@ -72,11 +72,11 @@ module rvv_decode_unit
 
       default: begin
         `ifdef ASSERT_ON
-        `rvv_forbid((insts_valid_cq2de==1'b1)&(vill==1'b1))
+        `rvv_forbid((inst_valid_cq2de==1'b1)&(vill==1'b1))
         else $error("Illegal vtype.vill=%d.\n",vill);
         
-        `rvv_expect((insts_valid_cq2de==1'b0)&(vill==1'b0))
-        else $error("Unsupported insts_opcode=%d.\n",insts_opcode);
+        `rvv_expect((inst_valid_cq2de==1'b0)&(vill==1'b0))
+        else $error("Unsupported inst_opcode=%d.\n",inst_opcode);
         `endif
       end
     endcase
@@ -85,8 +85,8 @@ module rvv_decode_unit
   // decode LSU instruction 
   rvv_decode_unit_lsu u_lsu_decode
   (
-    insts_valid       (valid_lsu),
-    insts             (insts_cq2de),
+    inst_valid        (valid_lsu),
+    inst              (inst_cq2de),
     uop_index_remain  (uop_index_remain),
     uop_valid         (uop_valid_lsu),
     uop               (uop_lsu)
@@ -95,8 +95,8 @@ module rvv_decode_unit
   // decode arithmetic instruction
   rvv_decode_unit_ari u_ari_decode
   (
-    insts_valid       (valid_ari),
-    insts             (insts_cq2de),
+    inst_valid        (valid_ari),
+    inst              (inst_cq2de),
     uop_index_remain  (uop_index_remain),
     uop_valid         (uop_valid_ari),
     uop               (uop_ari)
@@ -119,5 +119,11 @@ module rvv_decode_unit
       end
     endcase
   end
-  
+
+  // 
+  `ifdef ASSERT_ON
+    `rvv_forbid((inst_valid_cq2de==1'b1)&((valid_lsu==1'b0)&(valid_ari==1'b0)))
+    else $error("Unsupported instruction to decode.\n");
+  `endif
+
 endmodule

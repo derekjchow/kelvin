@@ -1,71 +1,137 @@
-/*
-description: 
-1. It will read instructions from Command Queue and decode the instructions to uops and write to Uops Queue.
-
-feature list:
-1. Decode unit can decode 2 instructions at most and write 4 uops to Uops Queue at most per cycle.
-2. One instruction can be decoded to 8 uops at most.
-3. uops_de2dp.rs1_data could be from X[rs1] and imm(insts[19:15]). If it is imm, the 5-bit imm(insts[19:15]) will be SIGN-extended or ZERO-extended to XLEN-bit. 
-*/
+//
+// description: 
+// 1. It will read instructions from Command Queue and decode the instructions to uops and write to Uop Queue.
+//
+// feature list:
+// 1. Decode unit can decode 2 instructions at most and write 4 uops to Uops Queue at most per cycle.
+// 2. One instruction can be decoded to 8 uops at most.
+// 3. uops_de2dp.rs1_data could be from X[rs1] and imm(inst[19:15]). If it is imm, the 5-bit imm(inst[19:15]) will be SIGN-extended or ZERO-extended to XLEN-bit. 
+// 
 
 `include "rvv.svh"
 
-module rvv_decoder
+module rvv_decode
 (
-    clk,
-    rstn,
-    insts_valid_cq2de,
-    insts_cq2de,
-    insts_ready_de2cq,
-    uops_valid_de2dp,
-    uops_de2dp,
-    uops_ready_dp2de,
-    flush_uopsq_wb2de
-);  
-// global signal
-    input   logic                   clk;
-    input   logic                   rstn;
-    
-// Command Queue to Decoder 
-    input   logic                   insts_valid_cq2de[`NUM_DE_INST-1:0];
-    input   INST_t                  insts_cq2de[`NUM_DE_INST-1:0];
-    output  logic                   insts_ready_de2cq[`NUM_DE_INST-1:0];
-    
-// Uops Queue to Dispatch unit  
-    output  logic                   uops_valid_de2dp[`NUM_DP_UOP-1:0];
-    output  UOP_QUEUE_t             uops_de2dp[`NUM_DP_UOP-1:0];
-    input   logic                   uops_ready_dp2de[`NUM_DE_INST-1:0];
-
-// Trap handler to Command Queue
-    // If RVS find some illegal instructions when complete LSU transaction, like bus error,
-    // it means a trap occurs to the instruction that is executing in RVV.
-    // So RVV will top CQ to receive new instructions and flush Command Queue and Uops Queue, 
-    // and complete the instructions in EX, ME and WB stage. And RVS need to send rob_entry of that exception instruction.
-    // After RVV retire all uops before that exception instruction, RVV response a ready signal for trap application.      
-    input   logic                   flush_uopsq_wb2de;   
-
-
-
-
-
-
-
-
-
-
-  // the start uop index of decoding instruction
-  logic   [`UOP_INDEX_WIDTH-1:0]      uop_index_reg_in;      
-  logic   [`UOP_INDEX_WIDTH-1:0]      uop_index_reg_out;     
+  clk,
+  rstn,
+  data0_cq2de, 
+  data1_cq2de,
+  fifo_empty_cq2de,
+  fifo_1left_to_empty_cq2de,
+  pop0_de2cq,
+  pop1_de2cq,
+  push0_de2uq,
+  data0_de2uq,
+  push1_de2uq,
+  data1_de2uq,
+  push2_de2uq,
+  data2_de2uq,
+  push3_de2uq,
+  data3_de2uq,
+  fifo_full_uq2de, 
+  fifo_1left_to_full_uq2de,
+  fifo_2left_to_full_uq2de,
+  fifo_3left_to_full_uq2de
+);
+//
+// interface signals
+//
+  // global signal
+  input   logic                   clk;
+  input   logic                   rst_n;
   
-  // update uop index    
-  edff #(`UOP_INDEX_WIDTH) uop_index_reg ( 
-    .clk		(clk), 
-		.rst_n	(rst_n), 
-		.e		  (1'b1), 
-		.d		  (uop_index_reg_in),
-		.q		  (uop_index_reg_out)
-	);
+  // signals from command queue
+  input   INST_t                  data0_cq2de; 
+  input   INST_t                  data1_cq2de;
+  input   logic                   fifo_empty_cq2de;
+  input   logic                   fifo_1left_to_empty_cq2de;
+  output  logic                   pop0_de2cq;
+  output  logic                   pop1_de2cq;
 
+  // signals from Uops Quue
+  output logic                    push0_de2uq;
+  output UOP_QUEUE_t              data0_de2uq;
+  output logic                    push1_de2uq;
+  output UOP_QUEUE_t              data1_de2uq;
+  output logic                    push2_de2uq;
+  output UOP_QUEUE_t              data2_de2uq;
+  output logic                    push3_de2uq;
+  output UOP_QUEUE_t              data3_de2uq;
+  input logic                     fifo_full_uq2de; 
+  input logic                     fifo_1left_to_full_uq2de;
+  input logic                     fifo_2left_to_full_uq2de; 
+  input logic                     fifo_3left_to_full_uq2de;
 
+//
+// internal signals
+//
+  // instruction struct valid signal 
+  logic                             pkg0_valid;
+  logic                             pkg1_valid;
+  
+  // the uops decoded in unit0
+  logic         [`NUM_DE_UOP-1:0]   unit0_uop_valid_de2uq;
+  UOP_QUEUE_t   [`NUM_DE_UOP-1:0]   unit0_uop_de2uq;
+  
+  // the uops decoded in unit1
+  logic         [`NUM_DE_UOP-1:0]   unit1_uop_valid_de2uq;
+  UOP_QUEUE_t   [`NUM_DE_UOP-1:0]   unit1_uop_de2uq;
+ 
+  // uop index from controller
+  logic [`UOP_INDEX_WIDTH-1:0]      uop_index_remain;
+
+//
+// decode
+//
+  // get data valid signals
+  assign pkg0_valid = !fifo_empty_cq2de;
+  assign pkg1_valid = !(fifo_empty_cq2de | fifo_1left_to_empty_cq2de);
+  
+  // decode unit
+  rvv_decode_unit u_decode_unit0
+  (
+    inst_valid_cq2de        (pkg0_valid),
+    inst_cq2de              (data0_cq2de),
+    uop_index_remain        (uop_index_remain),
+    uop_valid_de2uq         (unit0_uop_valid_de2uq),
+    uop_de2uq               (unit0_uop_de2uq)
+  );
+   
+  rvv_decode_unit u_decode_unit1
+  (
+    inst_valid_cq2de        (pkg1_valid),
+    inst_cq2de              (data1_cq2de),
+    uop_index_remain        ('b0),
+    uop_valid_de2uq         (unit1_uop_valid_de2uq),
+    uop_de2uq               (unit1_uop_de2uq)
+  ); 
+  
+  // decode controller
+  rvv_decode_ctrl u_decode_ctrl
+  (
+    clk                     (clk),
+    rst_n                   (rst_n),
+    pkg0_valid              (pkg0_valid),
+    unit0_uop_valid_de2uq   (unit0_uop_valid_de2uq),
+    unit0_uop_de2uq         (unit0_uop_de2uq),
+    pkg1_valid              (pkg1_valid),
+    unit1_uop_valid_de2uq   (unit1_uop_valid_de2uq),
+    unit1_uop_de2uq         (unit1_uop_de2uq),
+    uop_index_remain        (uop_index_remain),
+    pop0                    (pop0_de2cq),
+    pop1                    (pop1_de2cq),
+    push0                   (push0_de2uq),
+    data0                   (data0_de2uq),
+    push1                   (push1_de2uq),
+    data1                   (data1_de2uq),
+    push2                   (push2_de2uq),
+    data2                   (data2_de2uq),
+    push3                   (push3_de2uq),
+    data3                   (data3_de2uq),
+    fifo_full               (fifo_full_de2uq), 
+    fifo_1left_to_full      (fifo_1left_to_full_de2uq),
+    fifo_2left_to_full      (fifo_2left_to_full_de2uq), 
+    fifo_3left_to_full      (fifo_3left_to_full_de2uq)
+  );
 
 endmodule

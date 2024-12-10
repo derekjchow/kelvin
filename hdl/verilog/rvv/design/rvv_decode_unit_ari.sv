@@ -3,8 +3,8 @@
 
 module rvv_decode_unit_ari
 (
-  insts_valid,
-  insts,
+  inst_valid,
+  inst,
   uop_index_remain,
   uop_valid,
   uop
@@ -12,8 +12,8 @@ module rvv_decode_unit_ari
 //
 // interface signals
 //
-  input   logic                                   insts_valid;
-  input   INST_t                                  insts;
+  input   logic                                   inst_valid;
+  input   INST_t                                  inst;
   input   logic       [`UOP_INDEX_WIDTH-1:0]      uop_index_remain;
   
   output  logic       [`NUM_DE_UOP-1:0]           uop_valid;
@@ -23,15 +23,15 @@ module rvv_decode_unit_ari
 // internal signals
 //
   // split INST_t struct signals
-  logic   [`PC_WIDTH-1:0]                         insts_pc;
-  logic   [`FUNCT6_WIDTH-1:0]                     insts_funct6;     // inst original encoding[31:26]           
-  logic   [`VM_WIDTH-1:0]                         insts_vm;         // inst original encoding[25]      
-  logic   [`VS2_WIDTH-1:0]                        insts_vs2;        // inst original encoding[24:20]
-  logic   [`VS1_WIDTH-1:0]                        insts_vs1;        // inst original encoding[19:15]
-  logic   [`IMM_WIDTH-1:0]                        insts_imm;        // inst original encoding[19:15]
-  logic   [`FUNCT3_WIDTH-1:0]                     insts_funct3;     // inst original encoding[14:12]
-  logic   [`VD_WIDTH-1:0]                         insts_vd;         // inst original encoding[11:7]
-  logic   [`RD_WIDTH-1:0]                         insts_rd;         // inst original encoding[11:7]
+  logic   [`PC_WIDTH-1:0]                         inst_pc;
+  logic   [`FUNCT6_WIDTH-1:0]                     inst_funct6;      // inst original encoding[31:26]           
+  logic   [`VM_WIDTH-1:0]                         inst_vm;          // inst original encoding[25]      
+  logic   [`VS2_WIDTH-1:0]                        inst_vs2;         // inst original encoding[24:20]
+  logic   [`VS1_WIDTH-1:0]                        inst_vs1;         // inst original encoding[19:15]
+  logic   [`IMM_WIDTH-1:0]                        inst_imm;         // inst original encoding[19:15]
+  logic   [`FUNCT3_WIDTH-1:0]                     inst_funct3;      // inst original encoding[14:12]
+  logic   [`VD_WIDTH-1:0]                         inst_vd;          // inst original encoding[11:7]
+  logic   [`RD_WIDTH-1:0]                         inst_rd;          // inst original encoding[11:7]
   VECTOR_CSR_t                                    vector_csr_ari;
   logic   [`VTYPE_VILL_WIDTH-1:0]                 vill;             // 0:not illegal, 1:illegal
   logic   [`VTYPE_VSEW_WIDTH-1:0]                 vsew;             // support: 000:SEW8, 001:SEW16, 010:SEW32
@@ -47,7 +47,7 @@ module rvv_decode_unit_ari
   EEW_e                                           eew_vs2;          
   EEW_e                                           eew_vs1;
   EEW_e                                           eew_max;          
-  logic                                           insts_encoding_correct;
+  logic                                           inst_encoding_correct;
   logic   [`UOP_INDEX_WIDTH-1:0]                  uop_vstart;         
   logic   [`UOP_INDEX_WIDTH-1:0]                  uop_index_start;         
   logic   [`NUM_DE_UOP-1:0][`UOP_INDEX_WIDTH:0]   uop_index_current;         
@@ -62,24 +62,24 @@ module rvv_decode_unit_ari
 //
 // decode
 //
-  assign insts_pc             = insts.insts_pc;
-  assign insts_funct6         = insts.insts[26:21];
-  assign insts_vm             = insts.insts[20];
-  assign insts_vs2            = insts.insts[19:15];
-  assign insts_vs1            = insts.insts[14:10];
-  assign insts_imm            = insts.insts[14:10];
-  assign insts_funct3         = insts.insts[9:7];
-  assign insts_vd             = insts.insts[6:2];
-  assign insts_rd             = insts.insts[6:2];
-  assign vector_csr_ari       = insts.vector_csr;
+  assign inst_pc              = inst.inst_pc;
+  assign inst_funct6          = inst.inst[26:21];
+  assign inst_vm              = inst.inst[20];
+  assign inst_vs2             = inst.inst[19:15];
+  assign inst_vs1             = inst.inst[14:10];
+  assign inst_imm             = inst.inst[14:10];
+  assign inst_funct3          = inst.inst[9:7];
+  assign inst_vd              = inst.inst[6:2];
+  assign inst_rd              = inst.inst[6:2];
+  assign vector_csr_ari       = inst.vector_csr;
   assign vill                 = vector_csr_ari.vtype.vill;
   assign vsew                 = vector_csr_ari.vtype.vsew;
   assign vlmul                = vector_csr_ari.vtype.vlmul;
   assign vstart               = vector_csr_ari.vstart;
-  assign rs1_data             = insts.rs1_data;
+  assign rs1_data             = inst.rs1_data;
   
   // decode funct3
-  assign funct3_ari           = insts_funct3;
+  assign funct3_ari           = inst_funct3;
   
   // decode arithmetic instruction funct6
   always_comb begin
@@ -90,12 +90,12 @@ module rvv_decode_unit_ari
       OPIVV,
       OPIVX,
       OPIVI: begin
-        funct6_ari.opi_funct6 = insts_funct6;
+        funct6_ari.opi_funct6 = inst_funct6;
       end
 
       OPMVV,
       OPMVX: begin
-        funct6_ari.opm_funct6 = insts_funct6;
+        funct6_ari.opm_funct6 = inst_funct6;
       end
     endcase
   end
@@ -267,7 +267,7 @@ module rvv_decode_unit_ari
 
           end 
           OPIVI: begin
-            case(insts_vs1[2:0])
+            case(inst_vs1[2:0])
               `NREG1: begin
                   emul_vd     = 4'd1;
                   emul_vs2    = 4'd1;
@@ -459,7 +459,7 @@ module rvv_decode_unit_ari
   
   // opcode error check
   always_comb 
-    insts_encoding_correct                = 'b0;
+    inst_encoding_correct                = 'b0;
     
     //
     // check special requirements for every instructions
@@ -500,7 +500,7 @@ module rvv_decode_unit_ari
 
           end
           OPIVI: begin
-            insts_encoding_correct        = 1'b1;
+            inst_encoding_correct        = 1'b1;
           end
         endcase
       end
@@ -514,11 +514,11 @@ module rvv_decode_unit_ari
 
           end
           OPIVI: begin
-            if (insts_vm == 1'b0)
-              insts_encoding_correct          = 1'b1;          
+            if (inst_vm == 1'b0)
+              inst_encoding_correct          = 1'b1;          
             `ifdef ASSERT_ON
-              `rvv_expect(insts_vm==1'b0)
-              else $error("Unsupported insts_vm=%d in %s instruction.\n",insts_vm,funct6_ari.opi_funct6.name());
+              `rvv_expect(inst_vm==1'b0)
+              else $error("Unsupported inst_vm=%d in %s instruction.\n",inst_vm,funct6_ari.opi_funct6.name());
             `endif
           end
         endcase
@@ -534,11 +534,11 @@ module rvv_decode_unit_ari
           end
           OPIVI: begin
             // when vm=1, it is vmv instruction and vs2_index must be 5'b0.
-            if ((insts_vm==1'b0)|((insts_vm==1'b1)&(insts_vs2==5'b0)))
-              insts_encoding_correct          = 1'b1;          
+            if ((inst_vm==1'b0)|((inst_vm==1'b1)&(inst_vs2==5'b0)))
+              inst_encoding_correct          = 1'b1;          
             `ifdef ASSERT_ON
-              `rvv_expect((insts_vm==1'b0)|((insts_vm==1'b1)&(insts_vs2==5'b0)))
-              else $error("Unsupported insts_vm=%d and vs2=%d in %s instruction.\n",insts_vm,insts_vs2,funct6_ari.opi_funct6.name());
+              `rvv_expect((inst_vm==1'b0)|((inst_vm==1'b1)&(inst_vs2==5'b0)))
+              else $error("Unsupported inst_vm=%d and vs2=%d in %s instruction.\n",inst_vm,inst_vs2,funct6_ari.opi_funct6.name());
             `endif
           end
         endcase
@@ -553,20 +553,26 @@ module rvv_decode_unit_ari
 
           end
           OPIVI: begin
-            if ((insts_vm == 1'b1)&(insts_vs1[4:3]==2'b0)&((insts_vs1[2:0]==`NREG1)|(insts_vs1[2:0]==`NREG2)|(insts_vs1[2:0]==`NREG4)|(insts_vs1[2:0]==`NREG8)))
-              insts_encoding_correct          = 1'b1;          
+            if ((inst_vm == 1'b1)&(inst_vs1[4:3]==2'b0)&((inst_vs1[2:0]==`NREG1)|(inst_vs1[2:0]==`NREG2)|(inst_vs1[2:0]==`NREG4)|(inst_vs1[2:0]==`NREG8)))
+              inst_encoding_correct          = 1'b1;          
             `ifdef ASSERT_ON
-              `rvv_expect(insts_vm==1'b1)
-              else $error("Unsupported insts_vm=%d in vmv<nr>r instruction.\n",insts_vm,funct6_ari.opi_funct6.name());
+              `rvv_expect(inst_vm==1'b1)
+              else $error("Unsupported inst_vm=%d in vmv<nr>r instruction.\n",inst_vm,funct6_ari.opi_funct6.name());
 
-              `rvv_expect(insts_vs1[4:3]==2'b0)
-              else $error("insts_vs1[4:3]=%d should be 0 in vmv<nr>r instruction.\n",insts_vs1[4:3]);
+              `rvv_expect(inst_vs1[4:3]==2'b0)
+              else $error("inst_vs1[4:3]=%d should be 0 in vmv<nr>r instruction.\n",inst_vs1[4:3]);
             
-              `rvv_expect((insts_vs1[2:0]==`NREG1)|(insts_vs1[2:0]==`NREG2)|(insts_vs1[2:0]==`NREG4)|(insts_vs1[2:0]==`NREG8))
-              else $error("Unsupported insts_vs1[2:0]=%d in vmv<nr>r instruction.\n",insts_vs1[2:0]);
+              `rvv_expect((inst_vs1[2:0]==`NREG1)|(inst_vs1[2:0]==`NREG2)|(inst_vs1[2:0]==`NREG4)|(inst_vs1[2:0]==`NREG8))
+              else $error("Unsupported inst_vs1[2:0]=%d in vmv<nr>r instruction.\n",inst_vs1[2:0]);
             `endif
           end
         endcase
+      end
+
+      default: begin
+        ``ifdef ASSERT_ON
+          $error("Unsupported funct6_opi=%d.\n",funct6_ari.opi_funct6);
+        `endif
       end
     endcase
 
@@ -582,10 +588,16 @@ module rvv_decode_unit_ari
           end
         endcase
       end
+      
+      default: begin
+        ``ifdef ASSERT_ON
+          $error("Unsupported funct6_opm=%d.\n",funct6_ari.opm_funct6);
+        `endif
+      end
     endcase
 
-    `ifdef ASSERT_ON
-      `rvv_forbid((insts_encoding_correct=1'b1)&(funct3_ari==OPFVV)|(funct3_ari==OPFVF)|(funct3_ari==OPCFG))
+    ``ifdef ASSERT_ON
+      `rvv_forbid((inst_encoding_correct=1'b1)&(funct3_ari==OPFVV)|(funct3_ari==OPFVF)|(funct3_ari==OPCFG))
       else $error("Unsupported funct3_ari=%s.\n",funct3_ari.name());
     `endif
 
@@ -595,29 +607,29 @@ module rvv_decode_unit_ari
     // check whether vd is aligned to emul_vd
     case(emul_vd)
       4'd2: begin
-        if (insts_vd[0]!=1'b0)
-          insts_encoding_correct          = 'b0;
+        if (inst_vd[0]!=1'b0)
+          inst_encoding_correct          = 'b0;
         
         `ifdef ASSERT_ON
-          `rvv_forbid(insts_vd[0]!=1'b0)
+          `rvv_forbid(inst_vd[0]!=1'b0)
           else $error("vd is not aligned to emul_vd(%d).\n",emul_vd);
         `endif
       end
       4'd4: begin
-        if (insts_vd[1:0]!=2'b0)
-          insts_encoding_correct          = 'b0;
+        if (inst_vd[1:0]!=2'b0)
+          inst_encoding_correct          = 'b0;
         
         `ifdef ASSERT_ON
-          `rvv_forbid(insts_vd[1:0]!=2'b0)
+          `rvv_forbid(inst_vd[1:0]!=2'b0)
           else $error("vd is not aligned to emul_vd(%d).\n",emul_vd);
         `endif
       end
       4'd8: begin
-        if (insts_vd[2:0]!=3'b0)
-          insts_encoding_correct          = 'b0;
+        if (inst_vd[2:0]!=3'b0)
+          inst_encoding_correct          = 'b0;
        
         `ifdef ASSERT_ON
-          `rvv_forbid(insts_vd[2:0]!=3'b0)        
+          `rvv_forbid(inst_vd[2:0]!=3'b0)        
           else $error("vd is not aligned to emul_vd(%d).\n",emul_vd);
         `endif
       end
@@ -626,29 +638,29 @@ module rvv_decode_unit_ari
     // check whether vs2 is aligned to emul_vs2
     case(emul_vs2)
       4'd2: begin
-        if (insts_vs2[0]!=1'b0)
-          insts_encoding_correct          = 'b0;
+        if (inst_vs2[0]!=1'b0)
+          inst_encoding_correct          = 'b0;
         
         `ifdef ASSERT_ON
-          `rvv_forbid(insts_vs2[0]!=1'b0)
+          `rvv_forbid(inst_vs2[0]!=1'b0)
           else $error("vs2 is not aligned to emul_vs2(%d).\n",emul_vs2);
         `endif
       end
       4'd4: begin
-        if (insts_vs2[1:0]!=2'b0)
-          insts_encoding_correct          = 'b0;
+        if (inst_vs2[1:0]!=2'b0)
+          inst_encoding_correct          = 'b0;
         
         `ifdef ASSERT_ON
-          `rvv_forbid(insts_vs2[1:0]!=2'b0)
+          `rvv_forbid(inst_vs2[1:0]!=2'b0)
           else $error("vs2 is not aligned to emul_vs2(%d).\n",emul_vs2);
         `endif
       end
       4'd8: begin
-        if (insts_vs2[2:0]!=3'b0)
-          insts_encoding_correct          = 'b0;
+        if (inst_vs2[2:0]!=3'b0)
+          inst_encoding_correct          = 'b0;
        
         `ifdef ASSERT_ON
-          `rvv_forbid(insts_vs2[2:0]!=3'b0)        
+          `rvv_forbid(inst_vs2[2:0]!=3'b0)        
           else $error("vs2 is not aligned to emul_vs2(%d).\n",emul_vs2);
         `endif
       end
@@ -697,7 +709,7 @@ module rvv_decode_unit_ari
   always_comb begin        
   for(i=0;i<`NUM_DE_UOP;i=i+1) begin: GET_UOP_VALID
     if (uop_index_current[i]<emul_max) 
-      uop_valid[i]  = insts_encoding_correct&insts_valid;
+      uop_valid[i]  = inst_encoding_correct & inst_valid;
     else
       uop_valid[i]  = 'b0;
   end
@@ -705,7 +717,7 @@ module rvv_decode_unit_ari
   // assign uop pc
   always_comb
     for(i=0;i<`NUM_DE_UOP;i=i+1) begin: GET_UOP_PC
-      uop[i].uop_pc = insts_pc;
+      uop[i].uop_pc = inst_pc;
     end
   end
 
@@ -745,7 +757,7 @@ module rvv_decode_unit_ari
   always_comb
     for(i=0;i<`NUM_DE_UOP;i=i+1) begin: GET_UOP_FUNCT6
       // initial
-      uop[i].uop_funct6.opi_funct6            = insts_funct6;
+      uop[i].uop_funct6.opi_funct6            = inst_funct6;
       
       case(funct6_ari.opi_funct6)
         VSMUL_VMVNRR: begin
@@ -946,7 +958,7 @@ module rvv_decode_unit_ari
   // update vm field
   always_comb
     for(i=0;i<`NUM_DE_UOP;i=i+1) begin: GET_UOP_VM
-      uop[i].vm = insts_vm;
+      uop[i].vm = inst_vm;
     end
   end
   
@@ -961,7 +973,7 @@ module rvv_decode_unit_ari
         VMADC: begin
           case(funct3_ari)
             OPIVI: begin
-              uop[i].v0_valid   = !insts_vm;
+              uop[i].v0_valid   = !inst_vm;
             end
           endcase
         end
@@ -1007,7 +1019,7 @@ module rvv_decode_unit_ari
 
             end
             OPIVI: begin  
-              uop[i].vd_index = insts_vd+{'b0,uop_index_current[`UOP_INDEX_WIDTH-1:0]};
+              uop[i].vd_index = inst_vd+{'b0,uop_index_current[`UOP_INDEX_WIDTH-1:0]};
               uop[i].vd_eew   = eew_vd;
               uop[i].vd_valid = 1'b1;
             end 
@@ -1029,7 +1041,7 @@ module rvv_decode_unit_ari
 
             end
             OPIVI: begin  
-              uop[i].vd_index = insts_vd;
+              uop[i].vd_index = inst_vd;
               uop[i].vd_eew   = eew_vd;
               op[i].vd_valid  = 1'b1;
             end
@@ -1097,7 +1109,7 @@ module rvv_decode_unit_ari
 
             end
             OPIVI: begin
-              uop[i].vs1             = insts_vs2+{'b0,uop_index_current[`UOP_INDEX_WIDTH-1:0]};
+              uop[i].vs1             = inst_vs2+{'b0,uop_index_current[`UOP_INDEX_WIDTH-1:0]};
               uop[i].vs1_eew         = eew_vs2;
               uop[i].vs1_index_valid = 'b1;
             end
@@ -1173,7 +1185,7 @@ module rvv_decode_unit_ari
 
             end
             OPIVI: begin
-              uop[i].vs2_index    = insts_vs2+{'b0,uop_index_current[`UOP_INDEX_WIDTH-1:0]};
+              uop[i].vs2_index    = inst_vs2+{'b0,uop_index_current[`UOP_INDEX_WIDTH-1:0]};
               uop[i].vs2_eew      = eew_vs2;
               uop[i].vs2_valid    = 1'b1;
             end
@@ -1261,7 +1273,7 @@ module rvv_decode_unit_ari
             end
             OPIVI: begin
               // sign-extended
-              uop[i].rs1_data           = {{(`XLEN-`IMM_WIDTH){insts_imm[`IMM_WIDTH-1]}},insts_imm};
+              uop[i].rs1_data           = {{(`XLEN-`IMM_WIDTH){inst_imm[`IMM_WIDTH-1]}},inst_imm};
             end
           endcase
         end
@@ -1291,11 +1303,11 @@ module rvv_decode_unit_ari
             OPIVI: begin
               // zero-extended 
               if (eew_vs1==EEW8)
-                uop[i].rs1_data         = {29'b0,insts_imm[2:0]};
+                uop[i].rs1_data         = {29'b0,inst_imm[2:0]};
               else if (eew_vs1==EEW16)
-                uop[i].rs1_data         = {28'b0,insts_imm[3:0]};
+                uop[i].rs1_data         = {28'b0,inst_imm[3:0]};
               else if (eew_vs1==EEW32)
-                uop[i].rs1_data         = {27'b0,insts_imm[4:0]};
+                uop[i].rs1_data         = {27'b0,inst_imm[4:0]};
             end
           endcase
         end
@@ -1307,13 +1319,13 @@ module rvv_decode_unit_ari
 
             end
             OPIVI: begin
-              // they will zero-extend log2(2*EEW)-width insts_imm to XLEN-width
+              // they will zero-extend log2(2*EEW)-width inst_imm to XLEN-width
               if (eew_vs1==EEW8)
-                uop[i].rs1_data         = {28'b0,insts_imm[3:0]};
+                uop[i].rs1_data         = {28'b0,inst_imm[3:0]};
               else if (eew_vs1==EEW16)
-                uop[i].rs1_data         = {27'b0,insts_imm[4:0]};
+                uop[i].rs1_data         = {27'b0,inst_imm[4:0]};
               else if (eew_vs1==EEW32)
-                uop[i].rs1_data         = {26'b0,insts_imm[5:0]};
+                uop[i].rs1_data         = {26'b0,inst_imm[5:0]};
             end
           endcase
         end
@@ -1327,7 +1339,7 @@ module rvv_decode_unit_ari
             end
             OPIVI: begin
               // they will zero-extend to XLEN-width directly
-              uop[i].rs1_data         = {'b0,insts_imm};
+              uop[i].rs1_data         = {'b0,inst_imm};
             end
           endcase
         end
