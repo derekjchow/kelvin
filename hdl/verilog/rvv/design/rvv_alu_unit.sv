@@ -37,8 +37,10 @@ module rvv_alu_unit
   logic   [`VSTART_WIDTH-1:0]     vstart;
   logic                           vm;       
   logic   [`VCSR_VXRM-1:0]        vxrm;              
-  logic   [`VLENB-1:0]            v0_data;           
+  logic   [`VLENB-1:0]            v0_data;
+  logic                           v0_data_valid;
   logic   [`VLEN-1:0]             vd_data;           
+  logic                           vd_data_valid;
   logic   [`VLEN-1:0]             vs1_data;           
   EEW_e                           vs1_eew;
   logic                           vs1_data_valid; 
@@ -75,8 +77,10 @@ module rvv_alu_unit
   assign  vstart          = alu_uop.vstart;
   assign  vm              = alu_uop.vm;
   assign  vxrm            = alu_uop.vxrm;
-  assign  v0_data         = alu_uop.vs3_data.v0_data;
-  assign  vd_data         = alu_uop.vs3_data.vd_data;
+  assign  v0_data         = alu_uop.v0_data;
+  assign  v0_data_valid   = alu_uop.v0_data_valid;
+  assign  vd_data         = alu_uop.vd_data;
+  assign  vd_data_valid   = alu_uop.vd_data_valid;
   assign  vs1             = alu_uop.vs1;
   assign  vs1_data        = alu_uop.vs1_data;
   assign  vs1_eew         = alu_uop.vs1_eew;
@@ -124,14 +128,14 @@ module rvv_alu_unit
           VMNAND,
           VMNOR,
           VMXNOR: begin
-            if((vs1_data_valid&vs2_data_valid)&(vm==1'b1)) begin
+            if((vs1_data_valid&vs2_data_valid&vm&vd_data_valid)==1'b1) begin
               src2_vdata_mask_logic     = vs2_data;
               src1_vdata_vmask_logic    = vs1_data;
               result_valid_vmask_logic  = 1'b1;
             end else begin
               `ifdef ASSERT_ON
-              `rvv_expect((vs1_data_valid&vs2_data_valid&vm)==1'b1) 
-                else $error("%s uop: rob_entry=%d. Unsupported vs1_data_valid(%d)&vs2_data_valid(%d)&vm(%d) should be 1'b1.\n",uop_funct6.opm_funct,rob_entry,vs1_data_valid,vs2_data_valid,vm);
+              `rvv_expect((vs1_data_valid&vs2_data_valid&vm&vd_data_valid)==1'b1) 
+                else $error("%s uop: rob_entry=%d. vs1_data_valid(%d)&vs2_data_valid(%d)&vm(%d)&vd_data_valid(%d) should be 1'b1.\n",uop_funct6.opm_funct,rob_entry,vs1_data_valid,vs2_data_valid,vm,vd_data_valid);
               `endif
             end
           end
