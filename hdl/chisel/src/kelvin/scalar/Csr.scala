@@ -216,40 +216,42 @@ class Csr(p: Parameters) extends Module {
   // Register state.
   val rs1 = io.rs1.data
 
-  val rdata = MuxOR(fflagsEn,     fflags) |
-              MuxOR(frmEn,        frm) |
-              MuxOR(fcsrEn,       fcsr) |
-              MuxOR(misaEn,       misa) |
-              MuxOR(mieEn,        mie) |
-              MuxOR(mtvecEn,      mtvec) |
-              MuxOR(mscratchEn,   mscratch) |
-              MuxOR(mepcEn,       mepc) |
-              MuxOR(mcauseEn,     mcause) |
-              MuxOR(mtvalEn,      mtval) |
-              MuxOR(mcontext0En,  mcontext0) |
-              MuxOR(mcontext1En,  mcontext1) |
-              MuxOR(mcontext2En,  mcontext2) |
-              MuxOR(mcontext3En,  mcontext3) |
-              MuxOR(mcontext4En,  mcontext4) |
-              MuxOR(mcontext5En,  mcontext5) |
-              MuxOR(mcontext6En,  mcontext6) |
-              MuxOR(mcontext7En,  mcontext7) |
-              MuxOR(mpcEn,        mpc) |
-              MuxOR(mspEn,        msp) |
-              MuxOR(mcycleEn,     mcycle(31,0)) |
-              MuxOR(mcyclehEn,    mcycle(63,32)) |
-              MuxOR(minstretEn,   minstret(31,0)) |
-              MuxOR(minstrethEn,  minstret(63,32)) |
-              MuxOR(mvendoridEn,  mvendorid) |
-              MuxOR(marchidEn,    marchid) |
-              MuxOR(mimpidEn,     mimpid) |
-              MuxOR(mhartidEn,    mhartid) |
-              MuxOR(kisaEn,       kisa) |
-              MuxOR(kscm0En,      kscm(31,0)) |
-              MuxOR(kscm1En,      kscm(63,32)) |
-              MuxOR(kscm2En,      kscm(95,64)) |
-              MuxOR(kscm3En,      kscm(127,96)) |
-              MuxOR(kscm4En,      kscm(159,128))
+  val rdata = MuxCase(0.U, Seq(
+      fflagsEn    -> fflags,
+      frmEn       -> frm,
+      fcsrEn      -> fcsr,
+      misaEn      -> misa,
+      mieEn       -> mie,
+      mtvecEn     -> mtvec,
+      mscratchEn  -> mscratch,
+      mepcEn      -> mepc,
+      mcauseEn    -> mcause,
+      mtvalEn     -> mtval,
+      mcontext0En -> mcontext0,
+      mcontext1En -> mcontext1,
+      mcontext2En -> mcontext2,
+      mcontext3En -> mcontext3,
+      mcontext4En -> mcontext4,
+      mcontext5En -> mcontext5,
+      mcontext6En -> mcontext6,
+      mcontext7En -> mcontext7,
+      mpcEn       -> mpc,
+      mspEn       -> msp,
+      mcycleEn    -> mcycle(31,0),
+      mcyclehEn   -> mcycle(63,32),
+      minstretEn  -> minstret(31,0),
+      minstrethEn -> minstret(63,32),
+      mvendoridEn -> mvendorid,
+      marchidEn   -> marchid,
+      mimpidEn    -> mimpid,
+      mhartidEn   -> mhartid,
+      kisaEn      -> kisa,
+      kscm0En     -> kscm(31,0),
+      kscm1En     -> kscm(63,32),
+      kscm2En     -> kscm(95,64),
+      kscm3En     -> kscm(127,96),
+      kscm4En     -> kscm(159,128),
+  ))
 
   val wdata = MuxLookup(req.bits.op, 0.U)(Seq(
       CsrOp.CSRRW -> rs1,
