@@ -2704,7 +2704,8 @@ module rvv_backend_decode_unit_ari
                   inst_encoding_correct = 1'b1;
               end
               VIOTA: begin
-                inst_encoding_correct   = 1'b1;
+                if((inst_vm==1'b1)|((inst_vm==1'b0)&(inst_vd!='b0)))
+                  inst_encoding_correct = 1'b1;
               end
               VID: begin
                 if(inst_vs2=='b0)
@@ -2944,39 +2945,14 @@ module rvv_backend_decode_unit_ari
   // update uop funct3
   always_comb
     for(i=0;i<`NUM_DE_UOP;i=i+1) begin: GET_UOP_FUNCT3
-      // initial 
       uop[i].uop_funct3           = funct3_ari;
-
-      case(funct6_ari.opi_funct6)
-        VSMUL_VMVNRR: begin
-          case(funct3_ari)
-            OPIVI: begin
-              // it will be split to NREG vmv.v.v uops
-              uop[i].uop_funct3 = OPIVV; 
-            end
-          endcase 
-        end
-      endcase
     end
   end
 
   // update uop funct6
   always_comb
     for(i=0;i<`NUM_DE_UOP;i=i+1) begin: GET_UOP_FUNCT6
-      // initial
       uop[i].uop_funct6.opi_funct6            = inst_funct6;
-      
-      case(funct6_ari.opi_funct6)
-        VSMUL_VMVNRR: begin
-          case(funct3_ari)
-            OPIVI: begin
-                uop[i].uop_funct6.opi_funct6  = VMERGE_VMV; 
-            end
-          endcase 
-        end
-      endcase
-    end
-  end
 
   // allocate uop to execution unit
   always_comb
@@ -3834,7 +3810,7 @@ module rvv_backend_decode_unit_ari
   always_comb
     for(i=0;i<`NUM_DE_UOP;i=i+1) begin: GET_VS1
       // initial
-      uop[i].vs1             = 'b0;
+      uop[i].vs1             = inst_vs1;
       uop[i].vs1_eew         = 'b0;
       uop[i].vs1_index_valid = 'b0;
       
@@ -3897,11 +3873,6 @@ module rvv_backend_decode_unit_ari
               uop[i].vs1              = inst_vs1+{'b0,uop_index_current[`UOP_INDEX_WIDTH-1:0]};
               uop[i].vs1_eew          = eew_vs1;
               uop[i].vs1_index_valid  = 'b1;   
-            end
-            OPIVI: begin
-              uop[i].vs1              = inst_vs2+{'b0,uop_index_current[`UOP_INDEX_WIDTH-1:0]};
-              uop[i].vs1_eew          = eew_vs2;
-              uop[i].vs1_index_valid  = 'b1;
             end
           endcase
         end
@@ -4023,7 +3994,17 @@ module rvv_backend_decode_unit_ari
     for(i=0;i<`NUM_DE_UOP;i=i+1) begin: GET_VS1_OPCODE
       // initial
       uop[i].vs1_opcode_valid         = 'b0;
-
+      
+      // OPI*
+      case(funct6_ari.opi_funct6)
+        VSMUL_VMVNRR: begin
+          case(funct3_ari)
+            OPIVI: begin
+              uop[i].vs1_opcode_valid = 1'b1;
+            end
+          endcase
+        end
+      endcase
       // OPM*
       case(funct6_ari.opm_funct6)
         VXUNARY0: begin
@@ -4093,6 +4074,7 @@ module rvv_backend_decode_unit_ari
         VSADD,
         VSSRL,
         VSSRA,
+        VSMUL_VMVNRR,
         VNCLIPU,
         VNCLIP,
         VRGATHER: begin
@@ -4117,8 +4099,7 @@ module rvv_backend_decode_unit_ari
         VMAXU,
         VMAX,
         VSSUBU,
-        VSSUB,
-        VSMUL_VMVNRR: begin
+        VSSUB: begin
           case(funct3_ari)
             OPIVV,
             OPIVX: begin
@@ -4359,7 +4340,8 @@ module rvv_backend_decode_unit_ari
         VMSLE,
         VMSGT,
         VMERGE_VMV,
-        VSADD: begin
+        VSADD,
+        VNCLIP: begin
           case(funct3_ari)
             OPIVX: begin
               uop[i].rs1_data       = rs1_data;
@@ -4386,7 +4368,6 @@ module rvv_backend_decode_unit_ari
         VSSRA,
         VRGATHER,
         VNCLIPU,
-        VNCLIP,
         VSLIDEUP_VRGATHEREI16,
         VSLIDEDOWN,
         VRGATHER: begin

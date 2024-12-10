@@ -8,7 +8,6 @@
 // 3. uops_de2dp.rs1_data could be from X[rs1] and imm(inst[19:15]).
 // 4. If the instruction is in wrong encoding, it will be discarded directly without applying a trap, but take assertion in simulation.
 // 5. The vstart of the instruction will be calculated to a new value for every decoded uops.
-// 6. vmv<nr>r.v instruction will be split to <nr> vmv.v.v uops, which means funct6, funct3, vs1, vs2 fields will be modified in new uop. However, new uops' vtype.vlmul is not changed to recovery execution right when trap handling is done.
 
 `include "rvv_backend.svh"
 `include "rvv_backend_sva.svh"
