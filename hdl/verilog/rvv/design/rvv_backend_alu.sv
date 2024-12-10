@@ -49,22 +49,24 @@ module rvv_backend_alu
   
   // generate pop signals
   // it can pop alu_uop1 when it can also pop alu_uop0. Otherwise, it cannot pop alu_uop1.(That's in-ordered issue from RS) 
-  assign  pop_ex2rs[0] = alu_uop_valid_rs2ex[0]&result_valid_ex2rob[1]&result_ready_rob2alu[0];
+  assign  pop_ex2rs[0] = alu_uop_valid_rs2ex[0]&result_valid_ex2rob[0]&result_ready_rob2alu[0];
   assign  pop_ex2rs[1] = pop_ex2rs[0]&(alu_uop_valid_rs2ex[1]&result_valid_ex2rob[1]&result_ready_rob2alu[1]);  
 
   // instantiate
-  for (i=0;i<`NUM_ALU_UOP;i=i+1) 
-  begin: ALU_UNIT
-  rvv_backend_alu_unit u_alu_unit[i]
-    (
-      // inputs
-      .alu_uop_valid          (alu_uop_valid_rs2ex[i]),
-      .alu_uop                (alu_uop_rs2ex[i]),
-      // outputs
-      .result_ex2rob_valid    (result_valid_ex2rob[i]),
-      .result_ex2rob          (result_ex2rob[i])
-    );
-  end
+  generate
+    for (i=0;i<`NUM_ALU_UOP;i=i+1) 
+    begin: ALU_UNIT
+      rvv_backend_alu_unit u_alu_unit[i]
+        (
+          // inputs
+          .alu_uop_valid          (alu_uop_valid_rs2ex[i]),
+          .alu_uop                (alu_uop_rs2ex[i]),
+          // outputs
+          .result_ex2rob_valid    (result_valid_ex2rob[i]),
+          .result_ex2rob          (result_ex2rob[i])
+        );
+    end
+  endgenerate
 
 `ifdef ASSERT_ON
   `rvv_forbid(alu_uop_valid_rs2ex[0]&(!result_valid_ex2rob[0])) 
