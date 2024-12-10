@@ -1,4 +1,24 @@
+`ifndef RVV_DISPATCH__SVH
+`define RVV_DISPATCH__SVH
+
 `include "rvv_define.svh"
+
+// input signals for RAW check
+typedef struct packed {
+  logic [`REGFILE_INDEX_WIDTH-1:0] vs1_index;
+  logic                            vs1_valid; // set if vs1 is a source operand
+  logic [`REGFILE_INDEX_WIDTH-1:0] vs2_index;
+  logic                            vs2_valid; // set if vs2 is a source operand
+  logic [`REGFILE_INDEX_WIDTH-1:0] vd_index;
+  logic                            vs3_valid; // set if vd is a source operand
+  logic                            vm;
+} SUC_UOP_RAW_t;
+
+typedef struct packed {
+  logic [`REGFILE_INDEX_WIDTH-1:0] w_index; 
+  logic                            w_valid;
+  logic                            valid;
+} PRE_UOP_RAW_t;
 
 // RAW hazard information
 typedef struct packed {
@@ -18,6 +38,15 @@ typedef struct packed {
   logic                  vd_wait;
   logic                  v0_wait;
 } RAW_UOP_UOP_t;
+
+// Input signals for structure hazard
+typedef struct packed {
+  logic [`REGFILE_INDEX_WIDTH-1:0] vs1_index;
+  logic [`REGFILE_INDEX_WIDTH-1:0] vs2_index;
+  logic [`REGFILE_INDEX_WIDTH-1:0] vd_index;
+  EXE_UNIT_e                       uop_exe_unit;
+  UOP_CLASS_e                      uop_class;
+} STRCT_UOP_t;
 
 // Structure hazard information
 typedef struct packed {
@@ -39,3 +68,6 @@ typedef struct packed {
   BYTE_TYPE_t            vs2;
   BYTE_TYPE_t            vd;
 } UOP_OPN_BYTE_TYPE_t;
+
+
+`endif // RVV_DISPATCH__SVH

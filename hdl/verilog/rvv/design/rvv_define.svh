@@ -89,4 +89,7 @@
 // Reservation Station data width
 `define ALU_RS_WIDTH            $bits(ALU_RS_t)
 
+// V0 mask regsiter index^M
+`define V0_INDEX                5'b00000
+
 `endif  // HDL_VERILOG_RVV_DESIGN_RVV_DEFINE_SVH
