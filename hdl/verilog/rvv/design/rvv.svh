@@ -571,8 +571,8 @@ typedef struct packed {
 } RT2VRF_data_t;  
 
 typedef struct packed {
-    logic [`NUM_WB_UOP-1:0]             rt2vrf_wr_valid;
-    [`NUM_WB_UOP-1:0] RT2VRF_data_t     rt2vrf_wr_data;
+    logic [`NUM_RT_UOP-1:0]             rt2vrf_wr_valid;
+    [`NUM_RT_UOP-1:0] RT2VRF_data_t     rt2vrf_wr_data;
 }RT2VRF_t;
 
 // trap handle

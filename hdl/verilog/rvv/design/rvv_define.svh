@@ -11,7 +11,7 @@
 `define NUM_DP_UOP              2
 
 // the max number of uops are retired per cycle in WB stage
-`define NUM_WB_UOP              4
+`define NUM_RT_UOP              4
 
 `define CQ_DEPTH
 `define UQ_DEPTH
