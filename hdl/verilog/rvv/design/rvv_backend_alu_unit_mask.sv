@@ -54,9 +54,7 @@ module rvv_backend_alu_unit_mask
   logic                           w_valid; 
   logic   [`VCSR_VXSAT-1:0]       vxsat;     
   logic                           ignore_vta;
-  logic                           force_vta_agnostic;
   logic                           ignore_vma;
-  logic                           force_vma_agnostic;
   
   //
   integer                         i;
@@ -175,15 +173,13 @@ module rvv_backend_alu_unit_mask
 //
 // submit result to ROB
 //
-  assign  result_ex2rob.rob_entry          = rob_entry;
-  assign  result_ex2rob.w_data             = w_data;
-  assign  result_ex2rob.w_type             = w_type;
-  assign  result_ex2rob.w_valid            = w_valid;
-  assign  result_ex2rob.vxsat              = vxsat;
-  assign  result_ex2rob.ignore_vta         = ignore_vta;
-  assign  result_ex2rob.force_vta_agnostic = force_vta_agnostic;
-  assign  result_ex2rob.ignore_vma         = ignore_vma;
-  assign  result_ex2rob.force_vma_agnostic = force_vma_agnostic;
+  assign  result_ex2rob.rob_entry      = rob_entry;
+  assign  result_ex2rob.w_data         = w_data;
+  assign  result_ex2rob.w_type         = w_type;
+  assign  result_ex2rob.w_valid        = w_valid;
+  assign  result_ex2rob.vxsat          = vxsat;
+  assign  result_ex2rob.ignore_vta     = ignore_vta;
+  assign  result_ex2rob.ignore_vma     = ignore_vma;
 
   // valid signal
   assign result_valid_ex2rob   = result_valid_mask_logic;
@@ -247,12 +243,10 @@ module rvv_backend_alu_unit_mask
     vxsat                 = 'b0;
   end
 
-  // ignore and force vta an vma signal
+  // ignore vta an vma signal
   always_comb begin
     ignore_vta            = 'b0;
-    force_vta_agnostic    = 'b0;
     ignore_vma            = 'b0;
-    force_vma_agnostic    = 'b0;
     
     case({alu_uop_valid,uop_funct3}) 
       {1'b1,OPMVV}: begin
@@ -266,9 +260,7 @@ module rvv_backend_alu_unit_mask
           VMNOR,
           VMXNOR: begin
             ignore_vta            = 'b1;
-            force_vta_agnostic    = 'b0;
             ignore_vma            = 'b0;
-            force_vma_agnostic    = 'b0;
           end
         endcase
       end
