@@ -358,7 +358,7 @@ typedef struct packed {
     logic [`VLEN-1:0]                   vrf2mux_rd3_data;
     logic                               vrf2mux_v0_valid;
     logic [`VLEN-1:0]                   vrf2mux_v0_data;
-}VRF2MUX_t;
+}VRF2DP_t;
 
 // specify whether the current byte belongs to 'prestart' or 'body-inactive' or 'body-active' or 'tail'
 typedef enum logic [1:0] {
