@@ -48,7 +48,7 @@ module rvv_backend_retire(/*AUTOARG*/
 
 // write to update vcsr
     output  logic                       rt2vcsr_write_valid;
-    output  VECTOR_CSR_t                rt2vcsr_write_data;
+    output  RVVConfigState              rt2vcsr_write_data;
 
 // vxsat
     output  logic                       rt2vsat_write_valid;
@@ -90,10 +90,10 @@ wire                            trap_flag1;
 wire                            trap_flag2;
 wire                            trap_flag3;
 
-VECTOR_CSR_t                    w_vcsr0;
-VECTOR_CSR_t                    w_vcsr1;
-VECTOR_CSR_t                    w_vcsr2;
-VECTOR_CSR_t                    w_vcsr3;
+RVVConfigState                  w_vcsr0;
+RVVConfigState                  w_vcsr1;
+RVVConfigState                  w_vcsr2;
+RVVConfigState                  w_vcsr3;
 
 wire [`VCSR_VXSAT_WIDTH-1:0]    w_vxsat0;
 wire [`VCSR_VXSAT_WIDTH-1:0]    w_vxsat1;
