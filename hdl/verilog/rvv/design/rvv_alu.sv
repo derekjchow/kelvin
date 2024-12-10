@@ -1,12 +1,12 @@
 // description: 
-// 1. Instantiate rvv_alu_unit and connect to ALU Reservation Station and ROB.
+// 1. Instantiate rvv_backend_alu_unit and connect to ALU Reservation Station and ROB.
 //
 // feature list:
-// 1. It will instantiate 2 rvv_alu_unit.
+// 1. It will instantiate 2 rvv_backend_alu_unit.
 
-`include 'rvv.svh'
+`include 'rvv_backend.svh'
 
-module rvv_alu
+module _alu
 (
   pop0_ex2rs,
   pop1_ex2rs,
@@ -50,7 +50,7 @@ module rvv_alu
   logic                     alu_uop1_valid_rs2ex;                   
 
 //
-// Instantiate 2 rvv_alu_unit
+// Instantiate 2 rvv_backend_alu_unit
 //
   // generate valid signals
   assign  alu_uop0_valid_rs2ex = !fifo_empty_rs2ex;
@@ -62,7 +62,7 @@ module rvv_alu
   assign  pop1_ex2rs = pop0&(alu_uop1_valid_rs2ex&result1_valid_ex2rob&result1_ready_rob2alu);  
 
   // instantiate
-  rvv_alu_unit u_alu_unit0
+  rvv_backend_alu_unit u_alu_unit0
   (
     // inputs
     .alu_uop_valid          (alu_uop0_valid_rs2ex),
@@ -72,7 +72,7 @@ module rvv_alu
     .result_ex2rob          (result0_ex2rob)
   );
 
-  rvv_alu_unit u_alu_unit1
+  rvv_backend_alu_unit u_alu_unit1
   (
     // inputs
     .alu_uop_valid          (alu_uop1_valid_rs2ex),

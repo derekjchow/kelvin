@@ -9,7 +9,7 @@
 
 `include 'rvv.svh'
 
-module rvv_alu_unit
+module rvv_backend_alu_unit
 (
   alu_uop_valid,
   alu_uop,

@@ -6,7 +6,7 @@
 
 `include 'rvv.svh'
 
-module rvv_alu_rs
+module rvv_backend_alu_rs
 (
   clk,
   rst_n,
