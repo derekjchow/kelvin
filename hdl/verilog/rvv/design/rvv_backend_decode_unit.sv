@@ -11,6 +11,7 @@
 // 6. vmv<nr>r.v instruction will be split to <nr> vmv.v.v uops, which means funct6, funct3, vs1, vs2 fields will be modified in new uop. However, new uops' vtype.vlmul is not changed to recovery execution right when trap handling is done.
 
 `include "rvv_backend.svh"
+`include "rvv_backend_sva.svh"
 
 module rvv_backend_decode_unit
 (

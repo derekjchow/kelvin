@@ -7,6 +7,7 @@
 
 
 `include "rvv_backend.svh"
+`include "rvv_backend_sva.svh"
 
 module rvv_backend_decode_ctrl
 (
