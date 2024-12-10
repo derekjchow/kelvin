@@ -32,11 +32,11 @@ module rvv_backend_alu_unit_mask
   logic                           v0_data_valid;
   logic   [`VLEN-1:0]             vd_data;           
   logic                           vd_data_valid;
-  EEW_e                           vd_eew;
   logic   [`VLEN-1:0]             vs1_data;           
   logic                           vs1_data_valid; 
   logic   [`VLEN-1:0]             vs2_data;	        
   logic                           vs2_data_valid;  
+  EEW_e                           vs2_eew;
   logic   [`XLEN-1:0] 	          rs1_data;        
   logic        	                  rs1_data_valid;
   logic   [`UOP_INDEX_WIDTH-1:0]  uop_index;          
@@ -73,7 +73,7 @@ module rvv_backend_alu_unit_mask
   assign  v0_data_valid       = alu_uop.v0_data_valid;
   assign  vd_data             = alu_uop.vd_data;
   assign  vd_data_valid       = alu_uop.vd_data_valid;
-  assign  vd_eew              = alu_uop.vd_eew;
+  assign  vs2_eew             = alu_uop.vs2_eew;
   assign  vs1                 = alu_uop.vs1;
   assign  vs1_data            = alu_uop.vs1_data;
   assign  vs1_data_valid      = alu_uop.vs1_data_valid;
