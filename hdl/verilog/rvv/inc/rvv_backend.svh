@@ -402,7 +402,6 @@ typedef struct packed {
   // when the uop is mask uop(vmandn,vmand,...), the uop will use vd_data as the third vector operand. EEW_vd=1.
   logic   [`VLEN-1:0]                 vd_data;
   logic                               vd_data_valid;
-  EEW_e                               vd_eew;
   // when vs1_data_valid=0, vs1_data is used to decode some OPMVV uops
   // when vs1_data_valid=1, vs1_data is valid as a vector operand
   logic   [`REGFILE_INDEX_WIDTH-1:0]  vs1;              
@@ -410,6 +409,7 @@ typedef struct packed {
   logic                               vs1_data_valid; 
   logic   [`VLEN-1:0]                 vs2_data;	        
   logic                               vs2_data_valid;  
+  EEW_e                               vs2_eew;
   // rs1_data could be from X[rs1] and imm(inst[19:15]). If it is imm, the 5-bit imm(inst[19:15]) will be sign-extend to XLEN-bit. 
   logic   [`XLEN-1:0] 	              rs1_data;        
   logic        	                      rs1_data_valid;                                   
@@ -511,8 +511,8 @@ typedef struct packed {
   W_DATA_TYPE_e                       w_type;
   logic                               w_valid;
   logic   [`VCSR_VXSAT_WIDTH-1:0]     vxsat;
-  logic                               ignore_vta;
-  logic                               ignore_vma;
+  logic                               ignore_vta;         // all tail elements has been gotten, can use it directly regardless of vta
+  logic                               ignore_vma;         // all inactive elements has been gotten, can use it directly regardless of vma
 } ALU2ROB_t;  
 
 // send uop to LSU
