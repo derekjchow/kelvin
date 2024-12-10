@@ -41,21 +41,21 @@ parameter DEPTH_SUB = 4;//half of DEPTH
   output logic fifo_idle;
 
 // Wires & Regs
-wire push0_int;
-wire [DWIDTH-1:0] inData0_int;
-wire push1_int;
-wire [DWIDTH-1:0] inData1_int;
-wire push2_int;
-wire [DWIDTH-1:0] inData2_int;
-wire push3_int;
-wire [DWIDTH-1:0] inData3_int;
-wire pop0_int;
+reg push0_int;
+reg [DWIDTH-1:0] inData0_int;
+reg push1_int;
+reg [DWIDTH-1:0] inData1_int;
+reg push2_int;
+reg [DWIDTH-1:0] inData2_int;
+reg push3_int;
+reg [DWIDTH-1:0] inData3_int;
+reg pop0_int;
 wire [DWIDTH-1:0] outData0_int;
-wire pop1_int;
+reg pop1_int;
 wire [DWIDTH-1:0] outData1_int;
-wire pop2_int;
+reg pop2_int;
 wire [DWIDTH-1:0] outData2_int;
-wire pop3_int;
+reg pop3_int;
 wire [DWIDTH-1:0] outData3_int;
 wire full0_int;
 wire full1_int;
