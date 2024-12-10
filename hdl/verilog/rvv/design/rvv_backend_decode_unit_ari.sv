@@ -52,11 +52,14 @@ module rvv_backend_decode_unit_ari
   logic                                           inst_encoding_correct;
   logic   [`UOP_INDEX_WIDTH-1:0]                  uop_vstart;         
   logic   [`UOP_INDEX_WIDTH-1:0]                  uop_index_start;         
-  logic   [`NUM_DE_UOP-1:0][`UOP_INDEX_WIDTH:0]   uop_index_current;         
+  logic   [`NUM_DE_UOP-1:0][`UOP_INDEX_WIDTH:0]   uop_index_current;   
    
   // convert logic to enum/union
   EXE_FUNCT3_e                                    funct3_ari;
   FUNCT6_u                                        funct6_ari;
+  OPM_VWXUNARY0_e                                 vs1_opcode_vwxunary;
+  OPM_VXUNARY0_e                                  vs1_opcode_vxunary;
+  OPM_VMXUNARY0_e                                 vs1_opcode_vmxunary;
 
   // use for for-loop 
   integer                                         i;
@@ -69,6 +72,9 @@ module rvv_backend_decode_unit_ari
   assign inst_vm              = inst.inst[20];
   assign inst_vs2             = inst.inst[19:15];
   assign inst_vs1             = inst.inst[14:10];
+  assign vs1_opcode_vwxunary  = inst.inst[14:10];
+  assign vs1_opcode_vxunary   = inst.inst[14:10];
+  assign vs1_opcode_vmxunary  = inst.inst[14:10];
   assign inst_imm             = inst.inst[14:10];
   assign inst_funct3          = inst.inst[9:7];
   assign inst_vd              = inst.inst[6:2];
@@ -880,6 +886,64 @@ module rvv_backend_decode_unit_ari
         endcase
       end
       
+      VXUNARY0: begin
+        case(funct3_ari)
+          OPMVV: begin
+            case(vs1_opcode_vxunary) 
+              VZEXT_VF2,
+              VSEXT_VF2: begin
+                case(vlmul)
+                  `LMUL1_2,
+                  `LMUL1: begin
+                    emul_vd     = 4'd1;
+                    emul_vs2    = 4'd1;
+                    emul_max    = 4'd1;
+                  end
+                  `LMUL2: begin
+                    emul_vd     = 4'd2;
+                    emul_vs2    = 4'd2;
+                    emul_max    = 4'd2;
+                  end
+                  `LMUL4: begin
+                    emul_vd     = 4'd4;
+                    emul_vs2    = 4'd4;
+                    emul_max    = 4'd4;
+                  `LMUL8: begin
+                    emul_vd     = 4'd8;
+                    emul_vs2    = 4'd8;
+                    emul_max    = 4'd8;
+                  end
+                endcase
+              end
+              VZEXT_VF4,
+              VSEXT_VF4: begin
+                case(vlmul)
+                  `LMUL1: begin
+                    emul_vd     = 4'd1;
+                    emul_vs2    = 4'd1;
+                    emul_max    = 4'd1;
+                  end
+                  `LMUL2: begin
+                    emul_vd     = 4'd2;
+                    emul_vs2    = 4'd2;
+                    emul_max    = 4'd2;
+                  end
+                  `LMUL4: begin
+                    emul_vd     = 4'd4;
+                    emul_vs2    = 4'd4;
+                    emul_max    = 4'd4;
+                  `LMUL8: begin
+                    emul_vd     = 4'd8;
+                    emul_vs2    = 4'd8;
+                    emul_max    = 4'd8;
+                  end
+                endcase
+              end
+            endcase
+          end
+        endcase
+      end
+
       VWMACCUS: begin
         case(funct3_ari)
           OPMVX: begin
@@ -905,6 +969,87 @@ module rvv_backend_decode_unit_ari
                 emul_max    = 4'd8;
               end
             endcase
+          end
+        endcase
+      end
+
+      VMUNARY0: begin
+        case(funct3_ari)
+          OPMVV: begin
+            case(vs1_opcode_vmunary)
+              VMSBF,
+              VMSIF,
+              VMSOF: begin
+                emul_vd     = 4'd1;
+                emul_vs2    = 4'd1;
+                emul_max    = 4'd1;
+              end
+              VIOTA: begin
+                case(vlmul)
+                  `LMUL1_4,
+                  `LMUL1_2,
+                  `LMUL1: begin
+                    emul_vd     = 4'd1;
+                    emul_vs2    = 4'd1;
+                    emul_max    = 4'd1;
+                  end
+                  `LMUL2: begin
+                    emul_vd     = 4'd2;
+                    emul_vs2    = 4'd1;
+                    emul_max    = 4'd2;
+                  `LMUL4: begin
+                    emul_vd     = 4'd4;
+                    emul_vs2    = 4'd1;
+                    emul_max    = 4'd4;
+                  end
+                  `LMUL8: begin
+                    emul_vd     = 4'd8;
+                    emul_vs2    = 4'd1;
+                    emul_max    = 4'd8;
+                  end
+                endcase
+              end
+              VID: begin
+                case(vlmul)
+                  `LMUL1_4,
+                  `LMUL1_2,
+                  `LMUL1: begin
+                    emul_vd     = 4'd1;
+                    emul_max    = 4'd1;
+                  end
+                  `LMUL2: begin
+                    emul_vd     = 4'd2;
+                    emul_max    = 4'd2;
+                  `LMUL4: begin
+                    emul_vd     = 4'd4;
+                    emul_max    = 4'd4;
+                  end
+                  `LMUL8: begin
+                    emul_vd     = 4'd8;
+                    emul_max    = 4'd8;
+                  end
+                endcase
+              end
+            endcase
+          end
+        endcase
+      end
+
+      VWXUNARY0: begin
+        case(funct3_ari)
+          OPMVV: begin
+            case(vs1_opcode_vwxunary)
+              VCPOP,
+              VFIRST,
+              VMV_X_S: begin
+                emul_vs2  = 4'd1;
+                emul_max  = 4'd1;
+              end
+            endcase
+          end
+          OPMVX: begin
+            emul_vd     = 4'd1;
+            emul_max    = 4'd1;
           end
         endcase
       end
@@ -1106,7 +1251,68 @@ module rvv_backend_decode_unit_ari
           end
         endcase
       end
+      
+      VSLIDE1UP,
+      VSLIDE1DOWN: begin
+        case(funct3_ari)
+          OPMVX: begin
+            case(vlmul)
+              `LMUL1_4,
+              `LMUL1_2,
+              `LMUL1: begin
+                emul_vd     = 4'd1;
+                emul_vs2    = 4'd1;
+                emul_max    = 4'd1;
+              end
+              `LMUL2: begin
+                emul_vd     = 4'd1;
+                emul_vs2    = 4'd2;
+                emul_max    = 4'd2;
+              `LMUL4: begin
+                emul_vd     = 4'd1;
+                emul_vs2    = 4'd4;
+                emul_max    = 4'd4;
+              `LMUL8: begin
+                emul_vd     = 4'd1;
+                emul_vs2    = 4'd8;
+                emul_max    = 4'd8;
+              end
+            endcase
+          end
+        endcase
+      end
 
+      VCOMPRESS: begin
+        case(funct3_ari)
+          OPMVV: begin
+            case(vlmul)
+              `LMUL1_4,
+              `LMUL1_2,
+              `LMUL1: begin
+                emul_vd     = 4'd1;
+                emul_vs2    = 4'd1;
+                emul_max    = 4'd1;
+              end
+              `LMUL2: begin
+                emul_vd     = 4'd2;
+                emul_vs2    = 4'd2;
+                emul_vs1    = 4'd1;
+                emul_max    = 4'd2;
+              `LMUL4: begin
+                emul_vd     = 4'd4;
+                emul_vs2    = 4'd4;
+                emul_vs1    = 4'd1;
+                emul_max    = 4'd4;
+              `LMUL8: begin
+                emul_vd     = 4'd8;
+                emul_vs2    = 4'd8;
+                emul_vs1    = 4'd1;
+                emul_max    = 4'd8;
+              end
+            endcase
+          end
+        endcase
+      end
     endcase
   end
   
@@ -1207,7 +1413,28 @@ module rvv_backend_decode_unit_ari
               end
             endcase
           end
-          OPIVX,
+          OPIVX: begin
+            case(vsew)
+              `VSEW8: begin
+                eew_vd      = EEW8;
+                eew_vs2     = EEW8;
+                eew_scalar  = EEW8;
+                eew_max     = EEW8;
+              end
+              `VSEW16: begin
+                eew_vd      = EEW16;
+                eew_vs2     = EEW16;
+                eew_scalar  = EEW16;
+                eew_max     = EEW16;
+              end
+              `VSEW32: begin
+                eew_vd      = EEW32;
+                eew_vs2     = EEW32;
+                eew_scalar  = EEW32;
+                eew_max     = EEW32;
+              end
+            endcase
+          end
           OPIVI: begin
             case(vsew)
               `VSEW8: begin
@@ -1227,8 +1454,9 @@ module rvv_backend_decode_unit_ari
               end
             endcase
           end
+        endcase
       end
-
+      
       VSUB,
       VSBC,
       VSSUBU,
@@ -1665,6 +1893,41 @@ module rvv_backend_decode_unit_ari
           end
         endcase
       end
+      
+      // SEW = extend 1/2SEW or 1/4SEW
+      VXUNARY0: begin
+        case(funct3_ari)
+          OPMVX: begin
+            case(vs1_opcode_vxunary) 
+              VZEXT_VF2,
+              VSEXT_VF2: begin
+                case(vsew)
+                  `VSEW16: begin
+                    eew_vd      = EEW16;
+                    eew_vs2     = EEW8;
+                    eew_max     = EEW16;
+                  end
+                  `VSEW32: begin
+                    eew_vd      = EEW32;
+                    eew_vs2     = EEW16;
+                    eew_max     = EEW32;
+                  end
+                endcase
+              end
+              VZEXT_VF4,
+              VSEXT_VF4: begin
+                case(vsew)
+                  `VSEW32: begin
+                    eew_vd      = EEW32;
+                    eew_vs2     = EEW8;
+                    eew_max     = EEW32;
+                  end
+                endcase
+              end
+            endcase
+          end
+        endcase
+      end
 
       // widening instructions: 2SEW = 2SEW op SEW
       VWADDU_W,
@@ -1829,6 +2092,153 @@ module rvv_backend_decode_unit_ari
           end
         endcase
       end
+
+      VMUNARY0: begin
+        case(funct3_ari)
+          OPMVV: begin
+            case(vs1_opcode_vmunary)
+              VMSBF,
+              VMSIF,
+              VMSOF: begin
+                eew_vd          = EEW1;
+                eew_vs2         = EEW1;
+                eew_max         = EEW1;
+              end
+              VIOTA:begin
+                case(vsew)
+                  `VSEW8: begin
+                    eew_vd      = EEW8;
+                    eew_vs2     = EEW1;
+                    eew_max     = EEW8;
+                  end
+                  `VSEW16: begin
+                    eew_vd      = EEW16;
+                    eew_vs2     = EEW1;
+                    eew_max     = EEW16;
+                  end
+                  `VSEW32: begin
+                    eew_vd      = EEW32;
+                    eew_vs2     = EEW1;
+                    eew_max     = EEW32;
+                  end
+                endcase
+              end
+              VID: begin
+                case(vsew)
+                  `VSEW8: begin
+                    eew_vd      = EEW8;
+                    eew_max     = EEW8;
+                  end
+                  `VSEW16: begin
+                    eew_vd      = EEW16;
+                    eew_max     = EEW16;
+                  end
+                  `VSEW32: begin
+                    eew_vd      = EEW32;
+                    eew_max     = EEW32;
+                  end
+                endcase
+              end
+            endcase
+          end
+        endcase
+      end
+
+      VWXUNARY0: begin
+        case(funct3_ari)
+          OPMVV: begin
+            case(vs1_opcode_vwxunary)
+              VCPOP,
+              VFIRST,
+              VMV_X_S: begin
+                case(vsew)
+                  `VSEW8: begin
+                    eew_vs2     = EEW8;
+                    eew_max     = EEW8;
+                  end
+                  `VSEW16: begin
+                    eew_vs2     = EEW16;
+                    eew_max     = EEW16;
+                  end
+                  `VSEW32: begin
+                    eew_vs2     = EEW32;
+                    eew_max     = EEW32;
+                  end
+                endcase
+              end
+            endcase
+          end
+          OPMVX: begin
+            case(vsew)
+              `VSEW8: begin
+                eew_vd      = EEW8;
+                eew_max     = EEW8;
+              end
+              `VSEW16: begin
+                eew_vd      = EEW16;
+                eew_max     = EEW16;
+              end
+              `VSEW32: begin
+                eew_vd      = EEW32;
+                eew_max     = EEW32;
+              end
+            endcase
+          end
+        endcase
+      end
+
+
+      VSLIDE1UP,
+      VSLIDE1DOWN: begin
+        case(funct3_ari)
+          OPMVX: begin
+            case(vsew)
+              `VSEW8: begin
+                eew_vd      = EEW8;
+                eew_vs2     = EEW8;
+                eew_max     = EEW8;
+              end
+              `VSEW16: begin
+                eew_vd      = EEW16;
+                eew_vs2     = EEW16;
+                eew_max     = EEW16;
+              end
+              `VSEW32: begin
+                eew_vd      = EEW32;
+                eew_vs2     = EEW32;
+                eew_max     = EEW32;
+              end
+            endcase
+          end
+        endcase
+      end
+
+      VCOMPRESS: begin
+        case(funct3_ari)
+          OPMVV: begin
+            case(vsew)
+              `VSEW8: begin
+                eew_vd      = EEW8;
+                eew_vs2     = EEW8;
+                eew_vs1     = EEW1;
+                eew_max     = EEW8;
+              end
+              `VSEW16: begin
+                eew_vd      = EEW16;
+                eew_vs2     = EEW16;
+                eew_vs1     = EEW1;
+                eew_max     = EEW16;
+              end
+              `VSEW32: begin
+                eew_vd      = EEW32;
+                eew_vs2     = EEW32;
+                eew_vs1     = EEW1;
+                eew_max     = EEW32;
+              end
+            endcase
+          end
+        endcase
+      end
     endcase
   end
   
@@ -1955,13 +2365,17 @@ module rvv_backend_decode_unit_ari
       
       VWREDSUMU,
       VWREDSUM: begin
-        if((funct3_ari==OPIVV)&(vstart=='b0))
-          inst_encoding_correct             = 1'b1;
+        case(funct3_ari)
+          OPIVV: begin
+            if(vstart=='b0)
+              inst_encoding_correct         = 1'b1;
         
-        `ifdef ASSERT_ON
-          `rvv_expect((funct3_ari==OPIVV)&(vstart=='b0))
-          else $error("funct3_ari(%s) should be OPIVV, vstart(%d) should be 0 in %s instruction.\n",funct3_ari.name(),vstart,funct6_ari.opi_funct6.name());
-        `endif
+            `ifdef ASSERT_ON
+              `rvv_expect(vstart=='b0)
+              else $error("vstart(%d) should be 0 in %s instruction.\n",vstart,funct6_ari.opi_funct6.name());
+            `endif
+          end
+        endcase
       end
 
       VSLIDEUP: begin
@@ -2161,8 +2575,24 @@ module rvv_backend_decode_unit_ari
           end
         endcase
       end
+      
+      VXUNARY0: begin
+        case(funct3_ari)
+          OPMVV: begin
+            case(vs1_opcode_vxunary) 
+              VZEXT_VF2,
+              VSEXT_VF2,
+              VZEXT_VF4,
+              VSEXT_VF4: begin
+                inst_encoding_correct   = 1'b1;
+              end
+            endcase
+          end
+        endcase
+      end
 
-      VWMACCUS: begin
+      VWMACCUS,
+      VSLIDE1DOWN: begin
         case(funct3_ari)
           OPMVX: begin
             inst_encoding_correct       = 1'b1;
@@ -2179,13 +2609,17 @@ module rvv_backend_decode_unit_ari
       VREDAND,
       VREDOR,
       VREDXOR: begin
-        if ((funct3_ari==OPMVV)&(vstart=='b0))
-          inst_encoding_correct         = 1'b1;
+        case(funct3_ari)
+          OPMVV: begin
+            if(vstart=='b0)
+              inst_encoding_correct     = 1'b1;
         
-        `ifdef ASSERT_ON
-          `rvv_expect((funct3_ari==OPMVV)&(vstart=='b0))
-          else $error("funct3_ari(%s) should be OPMVV, vstart(%d) should be 0 in %s instruction.\n",funct3_ari.name(),vstart,funct6_ari.opm_funct6.name());
-        `endif
+            `ifdef ASSERT_ON
+              `rvv_expect(vstart=='b0)
+              else $error("vstart(%d) should be 0 in %s instruction.\n",vstart,funct6_ari.opm_funct6.name());
+            `endif
+          end
+        endcase
       end
 
       // mask 
@@ -2197,14 +2631,116 @@ module rvv_backend_decode_unit_ari
       VMNOR,
       VMORN,
       VMXNOR: begin
-        if ((funct3_ari==OPMVV)&(inst_vm==1'b1))
-          inst_encoding_correct         = 1'b1;
+        case(funct3_ari)  
+          OPMVV: begin
+            if(inst_vm==1'b1)
+              inst_encoding_correct   = 1'b1;
         
-        `ifdef ASSERT_ON
-          `rvv_expect((funct3_ari==OPMVV)&(inst_vm==1'b1))
-          else $error("funct3_ari(%s) should be OPMVV, inst_vm(%d) should be 1 in %s instruction.\n",funct3_ari.name(),inst_vm,funct6_ari.opm_funct6.name());
-        `endif
+            `ifdef ASSERT_ON
+              `rvv_expect(inst_vm==1'b1)
+              else $error("inst_vm(%d) should be 1 in %s instruction.\n",inst_vm,funct6_ari.opm_funct6.name());
+            `endif
+          end
+        endcase
       end
+
+      VMUNARY0: begin
+        case(funct3_ari)
+          OPMVV: begin
+            case(vs1_opcode_vmunary)
+              VMSBF,
+              VMSIF,
+              VMSOF: begin
+                if(inst_vd!=inst_vs2) & ((inst_vm==1'b1) | ((inst_vm==1'b0)&(inst_vd!='b0)))
+                  inst_encoding_correct = 1'b1;
+              end
+              VIOTA: begin
+                inst_encoding_correct   = 1'b1;
+              end
+              VID: begin
+                if(inst_vs2=='b0)
+                  inst_encoding_correct = 1'b1;
+              end
+            endcase
+          end
+        endcase
+      end
+      
+      VWXUNARY0: begin
+        case(funct3_ari)
+          OPMVV: begin
+            case(vs1_opcode_vwxunary)
+              VCPOP,
+              VFIRST: begin
+                inst_encoding_correct   = 1'b1;
+              end
+              VMV_X_S: begin
+                if(inst_vm==1'b1)
+                  inst_encoding_correct = 1'b1;
+              end
+            endcase
+          end
+          OPMVX: begin
+            if((inst_vm==1'b1)&(inst_vs2=='b0))
+              inst_encoding_correct = 1'b1;
+          end
+        endcase
+      end
+
+      VSLIDE1UP: begin
+        case(funct3_ari)
+          OPMVX: begin
+            // destination register group cannot overlap the source register group
+            case(emul_max,emul_vs2)
+              {4'd1,4'd1}: begin
+                if(inst_vd!=inst_vs2)
+                  inst_encoding_correct     = 1'b1;          
+              end
+              {4'd2,4'd2}: begin
+                if(inst_vd[`REGFILE_INDEX_WIDTH-1:1]!=inst_vs2[`REGFILE_INDEX_WIDTH-1:1])
+                  inst_encoding_correct     = 1'b1;          
+              end
+              {4'd4,4'd4}: begin
+                if(inst_vd[`REGFILE_INDEX_WIDTH-1:2]!=inst_vs2[`REGFILE_INDEX_WIDTH-1:2])
+                  inst_encoding_correct     = 1'b1;          
+              end
+              {4'd8,4'd8}: begin
+                if(inst_vd[`REGFILE_INDEX_WIDTH-1:3]!=inst_vs2[`REGFILE_INDEX_WIDTH-1:3])
+                  inst_encoding_correct     = 1'b1;          
+              end
+            endcase
+          end
+        endcase
+      end
+
+      VCOMPRESS: begin
+        case(funct3_ari)
+          OPMVX: begin
+            if ((vstart=='b0)&(inst_vm==1'b1)) begin
+              // destination register group cannot overlap the source register group
+              case(emul_max,emul_vs2)
+                {4'd1,4'd1}: begin
+                  if(inst_vd!=inst_vs2)
+                    inst_encoding_correct     = 1'b1;          
+                end
+                {4'd2,4'd2}: begin
+                  if(inst_vd[`REGFILE_INDEX_WIDTH-1:1]!=inst_vs2[`REGFILE_INDEX_WIDTH-1:1])
+                    inst_encoding_correct     = 1'b1;          
+                end
+                {4'd4,4'd4}: begin
+                  if(inst_vd[`REGFILE_INDEX_WIDTH-1:2]!=inst_vs2[`REGFILE_INDEX_WIDTH-1:2])
+                    inst_encoding_correct     = 1'b1;          
+                end
+                {4'd8,4'd8}: begin
+                  if(inst_vd[`REGFILE_INDEX_WIDTH-1:3]!=inst_vs2[`REGFILE_INDEX_WIDTH-1:3])
+                    inst_encoding_correct     = 1'b1;          
+                end
+              endcase
+            end
+          end
+        endcase
+      end
+
     endcase
 
     ``ifdef ASSERT_ON
@@ -2472,6 +3008,7 @@ module rvv_backend_decode_unit_ari
         VWSUBU_W,
         VWADD_W,
         VWSUB_W,
+        VXUNARY0,
         VAADDU,
         VAADD,
         VASUBU,
@@ -2483,7 +3020,9 @@ module rvv_backend_decode_unit_ari
         VMOR,
         VMNOR,
         VMORN,
-        VMXNOR: begin
+        VMXNOR,
+        VMUNARY0,
+        VWXUNARY0: begin
           uop[i].uop_exe_unit     = ALU;
         end
 
@@ -2523,7 +3062,10 @@ module rvv_backend_decode_unit_ari
         VREDMIN,
         VREDAND,
         VREDOR,
-        VREDXOR: begin
+        VREDXOR,
+        VSLIDE1UP,
+        VSLIDE1DOWN,
+        VCOMPRESS: begin
           uop[i].uop_exe_unit     = PMTRDT;
         end
       endcase
@@ -2681,6 +3223,14 @@ module rvv_backend_decode_unit_ari
             end
           endcase
         end 
+        
+        VXUNARY0: begin
+          case(funct3_ari)
+            OPMVV: begin
+              uop[i].uop_class  = VX;
+            end
+          endcase
+        end
 
         VMACC,
         VNMSAC,
@@ -2697,9 +3247,40 @@ module rvv_backend_decode_unit_ari
               uop[i].uop_class  = VV;
             end
           endcase
-        end 
+        end
 
-        VWMACCUS: begin
+        VMUNARY0: begin
+          case(funct3_ari)
+            OPMVV: begin
+              case(vs1_opcode_vmunary)
+                VMSBF,
+                VMSIF,
+                VMSOF,
+                VIOTA: begin
+                  uop[i].uop_class  = VV;
+                end
+                VID: begin
+                  uop[i].uop_class  = VX;
+                end
+              endcase
+            end
+          endcase
+        end
+      
+        VWXUNARY0: begin
+          case(funct3_ari)
+            OPMVV: begin
+              uop[i].uop_class  = VX;
+            end
+            OPMVX: begin
+              uop[i].uop_class  = X;
+            end
+          endcase
+        end
+
+        VWMACCUS,
+        VSLIDE1UP,
+        VSLIDE1DOWN: begin
           case(funct3_ari)
             OPMVX: begin
               uop[i].uop_class  = VV;
@@ -2715,7 +3296,8 @@ module rvv_backend_decode_unit_ari
         VREDMIN,
         VREDAND,
         VREDOR,
-        VREDXOR: begin
+        VREDXOR,
+        VCOMPRESS: begin
           case(funct3_ari)
             OPMVV: begin
               uop[i].uop_class  = VV;
@@ -2991,7 +3573,19 @@ module rvv_backend_decode_unit_ari
           endcase
         end   
 
-        VWMACCUS: begin
+        VXUNARY0: begin
+          case(funct3_ari)
+            OPMVV: begin
+              uop[i].vd_index = inst_vd+{'b0,uop_index_current[`UOP_INDEX_WIDTH-1:0]};
+              uop[i].vd_eew   = eew_vd;
+              uop[i].vd_valid = 1'b1;
+            end
+          endcase
+        end
+
+        VWMACCUS,
+        VSLIDE1UP,
+        VSLIDE1DOWN: begin
           case(funct3_ari)
             OPMVX: begin
               uop[i].vd_index = inst_vd+{'b0,uop_index_current[`UOP_INDEX_WIDTH-1:0]};
@@ -3001,7 +3595,6 @@ module rvv_backend_decode_unit_ari
           endcase
         end 
         
-        // reduction
         VREDSUM,
         VREDMAXU,
         VREDMAX,
@@ -3021,6 +3614,47 @@ module rvv_backend_decode_unit_ari
           case(funct3_ari)
             OPMVV: begin
               uop[i].vd_index = inst_vd;
+              uop[i].vd_eew   = eew_vd;
+              uop[i].vd_valid = 1'b1;
+            end
+          endcase
+        end
+        
+        VMUNARY0: begin
+          case(funct3_ari)
+            OPMVV: begin
+              case(vs1_opcode_vmunary)
+                VMSBF,
+                VMSIF,
+                VMSOF,
+                VIOTA: begin
+                  uop[i].vd_index = inst_vd;
+                  uop[i].vd_eew   = eew_vd;
+                  uop[i].vd_valid = 1'b1;
+                VID: begin
+                  uop[i].vd_index = inst_vd+{'b0,uop_index_current[`UOP_INDEX_WIDTH-1:0]};
+                  uop[i].vd_eew   = eew_vd;
+                  uop[i].vd_valid = 1'b1;
+                end
+              endcase
+            end
+          endcase
+        end
+      
+        VWXUNARY0: begin
+          case(funct3_ari)
+            OPMVX: begin
+              uop[i].vd_index = inst_vd;
+              uop[i].vd_eew   = eew_vd;
+              uop[i].vd_valid = 1'b1;
+            end
+          endcase
+        end
+
+        VCOMPRESS: begin
+          case(funct3_ari)
+            OPMVV: begin
+              uop[i].vd_index = inst_vd+{'b0,uop_index_current[`UOP_INDEX_WIDTH-1:0]};
               uop[i].vd_eew   = eew_vd;
               uop[i].vd_valid = 1'b1;
             end
@@ -3110,6 +3744,21 @@ module rvv_backend_decode_unit_ari
           case(funct3_ari)
             OPMVV: begin
               uop[i].vs3_valid = 1'b1;
+            end
+          endcase
+        end
+
+        VMUNARY0: begin
+          case(funct3_ari)
+            OPMVV: begin
+              case(vs1_opcode_vmunary)
+                VMSBF,
+                VMSIF,
+                VMSOF,
+                VIOTA: begin
+                  uop[i].vs3_valid = 1'b1;
+                end
+              endcase
             end
           endcase
         end
@@ -3291,7 +3940,8 @@ module rvv_backend_decode_unit_ari
         VMOR,
         VMNOR,
         VMORN,
-        VMXNOR:: begin
+        VMXNOR,
+        VCOMPRESS: begin
           case(funct3_ari)
             OPMVV: begin
               uop[i].vs1_index        = inst_vs1;
@@ -3308,7 +3958,45 @@ module rvv_backend_decode_unit_ari
   always_comb
     for(i=0;i<`NUM_DE_UOP;i=i+1) begin: GET_VS1_OPCODE
       // initial
-      uop[i].vs1_opcode_valid       = 'b0;
+      uop[i].vs1_opcode_valid         = 'b0;
+
+      // OPM*
+      case(funct6_ari.opm_funct6)
+        VXUNARY0: begin
+          case(funct3_ari)
+            OPMVV: begin
+              uop[i].vs1_opcode_valid = 1'b1;
+            end
+          endcase
+        end
+        VMUNARY0: begin
+          case(funct3_ari)
+            OPMVV: begin
+              case(vs1_opcode_vmunary)
+                VMSBF,
+                VMSIF,
+                VMSOF,
+                VIOTA: begin
+                  uop[i].vs1_opcode_valid = 1'b1;
+                end
+              endcase
+            end
+          endcase
+        end
+        VWXUNARY0: begin
+          case(funct3_ari)
+            OPMVV: begin
+              case(vs1_opcode_vwxunary)
+                VCPOP,
+                VFIRST,
+                VMV_X_S: begin
+                  uop[i].vs1_opcode_valid = 1'b1;
+                end
+              endcase
+            end
+          endcase
+        end
+      endcase
     end
   end
 
@@ -3444,7 +4132,19 @@ module rvv_backend_decode_unit_ari
           endcase
         end
         
-        VWMACCUS: begin
+        VXUNARY0: begin
+          case(funct3_ari)
+            OPMVV: begin
+              uop[i].vs2_index    = inst_vs2+{'b0,uop_index_current[`UOP_INDEX_WIDTH-1:0]};
+              uop[i].vs2_eew      = eew_vs2;
+              uop[i].vs2_valid    = 1'b1;
+            end
+          endcase
+        end
+
+        VWMACCUS,
+        VSLIDE1UP,
+        VSLIDE1DOWN: begin
           case(funct3_ari)
             OPMVX: begin
               uop[i].vs2_index    = inst_vs2+{'b0,uop_index_current[`UOP_INDEX_WIDTH-1:1]};
@@ -3484,7 +4184,6 @@ module rvv_backend_decode_unit_ari
           endcase
         end
 
-        // reduction
         VREDSUM,
         VREDMAXU,
         VREDMAX,
@@ -3492,7 +4191,8 @@ module rvv_backend_decode_unit_ari
         VREDMIN,
         VREDAND,
         VREDOR,
-        VREDXOR: begin
+        VREDXOR,
+        VCOMPRESS: begin
           case(funct3_ari)
             OPMVV: begin
               uop[i].vs2_index    = inst_vs2+{'b0,uop_index_current[`UOP_INDEX_WIDTH-1:0]};
@@ -3518,6 +4218,23 @@ module rvv_backend_decode_unit_ari
             end
           endcase
         end
+
+        VMUNARY0: begin
+          case(funct3_ari)
+            OPMVV: begin
+              case(vs1_opcode_vmunary)
+                VMSBF,
+                VMSIF,
+                VMSOF,
+                VIOTA: begin
+                  uop[i].vs2_index    = inst_vs2;
+                  uop[i].vs2_eew      = eew_vs2;
+                  uop[i].vs2_valid    = 1'b1;   
+                end
+              endcase
+            end
+          endcase
+        end
       endcase
     end
   end
@@ -3530,10 +4247,17 @@ module rvv_backend_decode_unit_ari
       uop[i].rd_index_valid   = 'b0;
       
       case(funct6_ari.opm_funct6)
-        : begin
+        VWXUNARY0: begin
           case(funct3_ari)
-            OPMVX: begin
-
+            OPMVV: begin
+              case(vs1_opcode_vwxunary)
+                VCPOP,
+                VFIRST,
+                VMV_X_S: begin
+                  uop[i].rd_index         = inst_rd;
+                  uop[i].rd_index_valid   = 1'b1;
+                end
+              endcase
             end
           endcase
         end
@@ -3546,6 +4270,7 @@ module rvv_backend_decode_unit_ari
     for(i=0;i<`NUM_DE_UOP;i=i+1) begin: GET_RS1
       // initial
       uop[i].rs1_data         = 'b0;
+      uop[i].scalar_eew       = 'b0;
       uop[i].rs1_data_valid   = 'b0;
       
       case(funct6_ari.opi_funct6)
@@ -3565,130 +4290,21 @@ module rvv_backend_decode_unit_ari
         VSADD: begin
           case(funct3_ari)
             OPIVX: begin
-              case(eew_scalar)
-                EEW8: begin
-                  uop[i].rs1_data       = {{29{rs1_data[2]}},rs1_data[2:0]};
-                  uop[i].rs1_data_valid = 1'b1;
-                end
-                EEW16: begin
-                  uop[i].rs1_data       = {{28{rs1_data[3]}},rs1_data[3:0]};
-                  uop[i].rs1_data_valid = 1'b1;
-                end
-                EEW32: begin
-                  uop[i].rs1_data       = {{27{rs1_data[4]}},rs1_data[4:0]};
-                  uop[i].rs1_data_valid = 1'b1;
-                end
-              endcase
+              uop[i].rs1_data       = rs1_data;
+              uop[i].scalar_eew     = eew_scalar;
+              uop[i].rs1_data_valid = 1'b1;
             end
             OPIVI: begin
-              case(eew_scalar)
-                EEW8: begin
-                  uop[i].rs1_data       = {{29{inst_imm[2]}},inst_imm[2:0]};
-                  uop[i].rs1_data_valid = 1'b1;
-                end
-                EEW16: begin
-                  uop[i].rs1_data       = {{28{inst_imm[3]}},inst_imm[3:0]};
-                  uop[i].rs1_data_valid = 1'b1;
-                end
-                EEW32: begin
-                  uop[i].rs1_data       = {{27{inst_imm[4]}},inst_imm[4:0]};
-                  uop[i].rs1_data_valid = 1'b1;
-                end
-              endcase
+              uop[i].rs1_data       = {{27{inst_imm[4]}},inst_imm[4:0]};
+              uop[i].scalar_eew     = eew_scalar;
+              uop[i].rs1_data_valid = 1'b1;
             end
           endcase
         end
         
         VMSLEU,
         VMSGTU,
-        VSADDU: begin
-          case(funct3_ari)
-            OPIVX: begin
-              case(eew_scalar)
-                EEW8: begin
-                  uop[i].rs1_data       = {'b0,rs1_data[2:0]};
-                  uop[i].rs1_data_valid = 1'b1;
-                end
-                EEW16: begin
-                  uop[i].rs1_data       = {'b0,rs1_data[3:0]};
-                  uop[i].rs1_data_valid = 1'b1;
-                end
-                EEW32: begin
-                  uop[i].rs1_data       = {'b0,rs1_data[4:0]};
-                  uop[i].rs1_data_valid = 1'b1;
-                end
-              endcase
-            end
-            OPIVI: begin
-              case(eew_scalar)
-                EEW8: begin
-                  uop[i].rs1_data       = {'b0,inst_imm[2:0]};
-                  uop[i].rs1_data_valid = 1'b1;
-                end
-                EEW16: begin
-                  uop[i].rs1_data       = {'b0,inst_imm[3:0]};
-                  uop[i].rs1_data_valid = 1'b1;
-                end
-                EEW32: begin
-                  uop[i].rs1_data       = {'b0,inst_imm[4:0]};
-                  uop[i].rs1_data_valid = 1'b1;
-                end
-              endcase
-            end
-          endcase
-        end
-
-        VSUB,
-        VMSBC,
-        VMSLT,
-        VMIN,
-        VMAX,
-        VSSUB,
-        VSMUL_VMVNRR: begin
-          case(funct3_ari)
-            OPIVX: begin
-              case(eew_scalar)
-                EEW8: begin
-                  uop[i].rs1_data       = {{29{rs1_data[2]}},rs1_data[2:0]};
-                  uop[i].rs1_data_valid = 1'b1;
-                end
-                EEW16: begin
-                  uop[i].rs1_data       = {{28{rs1_data[3]}},rs1_data[3:0]};
-                  uop[i].rs1_data_valid = 1'b1;
-                end
-                EEW32: begin
-                  uop[i].rs1_data       = {{27{rs1_data[4]}},rs1_data[4:0]};
-                  uop[i].rs1_data_valid = 1'b1;
-                end
-              endcase
-            end
-          endcase
-        end
-        
-        VMSLTU,
-        VMINU,
-        VMAXU,
-        VSSUBU: begin
-          case(funct3_ari)
-            OPIVX: begin
-              case(eew_scalar)
-                EEW8: begin
-                  uop[i].rs1_data       = {'b0,rs1_data[2:0]};
-                  uop[i].rs1_data_valid = 1'b1;
-                end
-                EEW16: begin
-                  uop[i].rs1_data       = {'b0,rs1_data[3:0]};
-                  uop[i].rs1_data_valid = 1'b1;
-                end
-                EEW32: begin
-                  uop[i].rs1_data       = {'b0,rs1_data[4:0]};
-                  uop[i].rs1_data_valid = 1'b1;
-                end
-              endcase
-            end
-          endcase
-        end
-
+        VSADDU,
         VSLL,
         VSRL,
         VSRA,
@@ -3698,84 +4314,46 @@ module rvv_backend_decode_unit_ari
         VSSRA,
         VSLIDEUP,
         VSLIDEDOWN,
+        VRGATHER,
+        VNCLIPU,
+        VNCLIP,
+        VSLIDEUP,
+        VSLIDEDOWN,
         VRGATHER: begin
           case(funct3_ari)
-            // zero-extended 
             OPIVX: begin
-              case(eew_scalar)
-                EEW8: begin
-                  uop[i].rs1_data       = {'b0,rs1_data[2:0]};
-                  uop[i].rs1_data_valid = 1'b1;
-                end
-                EEW16: begin
-                  uop[i].rs1_data       = {'b0,rs1_data[3:0]};
-                  uop[i].rs1_data_valid = 1'b1;
-                end
-                EEW32: begin
-                  uop[i].rs1_data       = {'b0,rs1_data[4:0]};
-                  uop[i].rs1_data_valid = 1'b1;
-                end
-              endcase
+              uop[i].rs1_data       = rs1_data;
+              uop[i].scalar_eew     = eew_scalar;
+              uop[i].rs1_data_valid = 1'b1;
             end
             OPIVI: begin
-              case(eew_scalar)
-                EEW8: begin
-                  uop[i].rs1_data       = {'b0,inst_imm[2:0]};
-                  uop[i].rs1_data_valid = 1'b1;
-                end
-                EEW16: begin
-                  uop[i].rs1_data       = {'b0,inst_imm[3:0]};
-                  uop[i].rs1_data_valid = 1'b1;
-                end
-                EEW32: begin
-                  uop[i].rs1_data       = {'b0,inst_imm[4:0]};
-                  uop[i].rs1_data_valid = 1'b1;
-                end
-              endcase
+              uop[i].rs1_data       = {'b0,inst_imm[4:0]};
+              uop[i].scalar_eew     = eew_scalar;
+              uop[i].rs1_data_valid = 1'b1;
             end
           endcase
         end
-        
-        VNCLIPU,
-        VNCLIP: begin
-          // they will zero-extend log2(2*EEW)-width inst_imm to XLEN-width
+
+        VSUB,
+        VMSBC,
+        VMSLT,
+        VMIN,
+        VMAX,
+        VMSLTU,
+        VMINU,
+        VMAXU,
+        VSSUBU,
+        VSSUB,
+        VSMUL_VMVNRR: begin
           case(funct3_ari)
             OPIVX: begin
-              case(eew_scalar)
-                EEW8: begin
-                  uop[i].rs1_data       = {'b0,rs1_data[3:0]};
-                  uop[i].rs1_data_valid = 1'b1;
-                end
-                EEW16: begin
-                  uop[i].rs1_data       = {'b0,rs1_data[4:0]};
-                  uop[i].rs1_data_valid = 1'b1;
-                end
-                EEW32: begin
-                  uop[i].rs1_data       = {'b0,rs1_data[5:0]};
-                  uop[i].rs1_data_valid = 1'b1;
-                end
-              endcase
-            end
-            OPIVI: begin
-              case(eew_scalar)
-                EEW8: begin
-                  uop[i].rs1_data       = {'b0,inst_imm[3:0]};
-                  uop[i].rs1_data_valid = 1'b1;
-                end
-                EEW16: begin
-                  uop[i].rs1_data       = {'b0,inst_imm[4:0]};
-                  uop[i].rs1_data_valid = 1'b1;
-                end
-                EEW32: begin
-                  uop[i].rs1_data       = {'b0,inst_imm[5:0]};
-                  uop[i].rs1_data_valid = 1'b1;
-                end
-              endcase
+              uop[i].rs1_data       = rs1_data;
+              uop[i].scalar_eew     = eew_scalar;
+              uop[i].rs1_data_valid = 1'b1;
             end
           endcase
         end
-      endcase
-      
+
       // OPM*
       case(funct6_ari.opm_funct6)
         VWADDU,
@@ -3788,27 +4366,7 @@ module rvv_backend_decode_unit_ari
         VWMULSU,
         VWMACCUS,
         VAADDU,
-        VASUBU: begin
-          case(funct3_ari)
-            OPMVX: begin
-              case(eew_scalar)
-                EEW8: begin
-                  uop[i].rs1_data       = {'b0,rs1_data[2:0]};
-                  uop[i].rs1_data_valid = 1'b1;
-                end
-                EEW16: begin
-                  uop[i].rs1_data       = {'b0,rs1_data[3:0]};
-                  uop[i].rs1_data_valid = 1'b1;
-                end
-                EEW32: begin
-                  uop[i].rs1_data       = {'b0,rs1_data[4:0]};
-                  uop[i].rs1_data_valid = 1'b1;
-                end
-              endcase
-            end
-          endcase
-        end
-
+        VASUBU,
         VWADD,
         VWSUB,
         VMUL,
@@ -3824,59 +4382,19 @@ module rvv_backend_decode_unit_ari
         VWMACC,
         VWMACCSU,
         VAADD,
-        VASUB: begin
-          case(funct3_ari)
-            OPMVX: begin
-              case(eew_scalar)
-                EEW8: begin
-                  uop[i].rs1_data       = {{29{rs1_data[2]}},rs1_data[2:0]};
-                  uop[i].rs1_data_valid = 1'b1;
-                end
-                EEW16: begin
-                  uop[i].rs1_data       = {{28{rs1_data[3]}},rs1_data[3:0]};
-                  uop[i].rs1_data_valid = 1'b1;
-                end
-                EEW32: begin
-                  uop[i].rs1_data       = {{27{rs1_data[4]}},rs1_data[4:0]};
-                  uop[i].rs1_data_valid = 1'b1;
-                end
-              endcase
-            end
-          endcase
-        end
-
+        VASUB,
         VWADDU_W,
-        VWSUBU_W: begin
-          case(funct3_ari)
-            OPMVX: begin
-              case(eew_scalar)
-                EEW8: begin
-                  uop[i].rs1_data       = {'b0,rs1_data[2:0]};
-                  uop[i].rs1_data_valid = 1'b1;
-                end
-                EEW16: begin
-                  uop[i].rs1_data       = {'b0,rs1_data[3:0]};
-                  uop[i].rs1_data_valid = 1'b1;
-                end
-              endcase
-            end
-          endcase
-        end
-        
+        VWSUBU_W,
         VWADD_W,
-        VWSUB_W: begin
+        VWSUB_W,
+        VSLIDE1UP,
+        VSLIDE1DOWN,
+        VWXUNARY0: begin
           case(funct3_ari)
             OPMVX: begin
-              case(eew_scalar)
-                EEW8: begin
-                  uop[i].rs1_data       = {{29{rs1_data[2]}},rs1_data[2:0]};
-                  uop[i].rs1_data_valid = 1'b1;
-                end
-                EEW16: begin
-                  uop[i].rs1_data       = {{28{rs1_data[3]}},rs1_data[3:0]};
-                  uop[i].rs1_data_valid = 1'b1;
-                end
-              endcase
+              uop[i].rs1_data       = rs1_data;
+              uop[i].scalar_eew     = eew_scalar;
+              uop[i].rs1_data_valid = 1'b1;
             end
           endcase
         end
