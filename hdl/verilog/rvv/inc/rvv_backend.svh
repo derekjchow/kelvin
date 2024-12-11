@@ -403,7 +403,7 @@ typedef struct packed {
   // vm field can be used to identify vmsbc.v?m/vmsbc.v? uop in the same uop_funct6(6'b010011).   
   logic                               vm;               
   // rounding mode 
-  RVVXRM                              xrm;       
+  RVVXRM                              vxrm;       
   // when the uop is vmadc.v?m/vmsbc.v?m, the uop will use v0_data as the third vector operand. EEW_v0=1.
   logic   [`VLENB-1:0]                v0_data;
   logic                               v0_data_valid;
@@ -448,7 +448,7 @@ typedef struct packed {
   logic   [`ROB_DEPTH_WIDTH-1:0]      rob_entry;
   FUNCT6_u                            uop_funct6;
   logic   [`FUNCT3_WIDTH-1:0]         uop_funct3;
-  RVVXRM                              xrm;       
+  RVVXRM                              vxrm;       
  
   logic   [`VLEN-1:0]                 vs1_data;           
   EEW_e                               vs1_eew;
