@@ -27,7 +27,7 @@ module rvv_backend_alu_unit_mask
   FUNCT6_u                        uop_funct6
   logic   [`FUNCT3_WIDTH-1:0]     uop_funct3;
   logic   [`VSTART_WIDTH-1:0]     vstart;
-  logic   [`VCSR_VXRM-1:0]        vxrm;              
+  RVVXRM                          vxrm;       
   logic   [`VLENB-1:0]            v0_data;
   logic                           v0_data_valid;
   logic   [`VLEN-1:0]             vd_data;           
