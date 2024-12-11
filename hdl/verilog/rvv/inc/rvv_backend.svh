@@ -516,7 +516,6 @@ typedef struct packed {
 typedef struct packed {
   logic   [`ROB_DEPTH_WIDTH-1:0]      rob_entry;
   logic   [`VLEN-1:0]                 w_data;             // when w_type=XRF, w_data[`XLEN-1:0] will store the scalar result
-  W_DATA_TYPE_e                       w_type;
   logic                               w_valid;
   logic   [`VCSR_VXSAT_WIDTH-1:0]     vxsat;
   logic                               ignore_vta;         // all tail elements has been gotten, can use it directly regardless of vta
