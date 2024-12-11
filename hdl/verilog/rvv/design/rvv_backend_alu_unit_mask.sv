@@ -5,8 +5,8 @@ module rvv_backend_alu_unit_mask
 (
   alu_uop_valid,
   alu_uop,
-  result_valid_ex2rob,
-  result_ex2rob
+  result_valid,
+  result
 );
 //
 // interface signals
@@ -16,48 +16,41 @@ module rvv_backend_alu_unit_mask
   input   ALU_RS_t                alu_uop;
 
   // ALU send result signals to ROB
-  output  logic                   result_valid_ex2rob;
-  output  ALU2ROB_t               result_ex2rob;
+  output  logic                   result_valid;
+  output  ALU2ROB_t               result;
 
 //
 // internal signals
 //
   // ALU_RS_t struct signals
   logic   [`ROB_DEPTH_WIDTH-1:0]  rob_entry;
-  FUNCT6_u                        uop_funct6
+  FUNCT6_u                        uop_funct6;
   logic   [`FUNCT3_WIDTH-1:0]     uop_funct3;
   logic   [`VSTART_WIDTH-1:0]     vstart;
-  RVVXRM                          vxrm;       
-  logic   [`VLENB-1:0]            v0_data;
-  logic                           v0_data_valid;
   logic   [`VLEN-1:0]             vd_data;           
   logic                           vd_data_valid;
   logic   [`VLEN-1:0]             vs1_data;           
   logic                           vs1_data_valid; 
   logic   [`VLEN-1:0]             vs2_data;	        
   logic                           vs2_data_valid;  
-  EEW_e                           vs2_eew;
-  logic   [`XLEN-1:0] 	          rs1_data;        
-  logic        	                  rs1_data_valid;
-  logic   [`UOP_INDEX_WIDTH-1:0]  uop_index;          
 
   // execute 
   // mask logic instructions
-  logic   [`VLEN-1:0]             src2_vdata_mask_logic;
-  logic   [`VLEN-1:0]             src1_vdata_mask_logic;
+  logic   [`VLEN-1:0]             src2_data_mask_logic;
+  logic   [`VLEN-1:0]             src1_data_mask_logic;
   logic                           result_valid_mask_logic;
-  logic   [`VLEN-1:0]             result_vdata_mask_logic;
+  logic   [`VLEN-1:0]             result_data_mask_logic;
 
   // ALU2ROB_t struct signals
   logic   [`VLEN-1:0]             w_data;             // when w_type=XRF, w_data[`XLEN-1:0] will store the scalar result
-  W_DATA_TYPE_t                   w_type;
   logic                           w_valid; 
-  logic   [`VCSR_VXSAT-1:0]       vxsat;     
+  logic   [`VCSR_VXSAT_WIDTH-1:0] vxsat;     
   logic                           ignore_vta;
   logic                           ignore_vma;
   
   //
   integer                         i;
+  genvar                          j;
 
 //
 // prepare source data to calculate    
@@ -68,20 +61,12 @@ module rvv_backend_alu_unit_mask
   assign  uop_funct3          = alu_uop.uop_funct3;
   assign  vstart              = alu_uop.vstart;
   assign  vm                  = alu_uop.vm;
-  assign  vxrm                = alu_uop.vxrm;
-  assign  v0_data             = alu_uop.v0_data;
-  assign  v0_data_valid       = alu_uop.v0_data_valid;
   assign  vd_data             = alu_uop.vd_data;
   assign  vd_data_valid       = alu_uop.vd_data_valid;
-  assign  vs2_eew             = alu_uop.vs2_eew;
-  assign  vs1                 = alu_uop.vs1;
   assign  vs1_data            = alu_uop.vs1_data;
   assign  vs1_data_valid      = alu_uop.vs1_data_valid;
   assign  vs2_data            = alu_uop.vs2_data;
   assign  vs2_data_valid      = alu_uop.vs2_data_valid;
-  assign  rs1_data            = alu_uop.rs1_data;
-  assign  rs1_data_valid      = alu_uop.rs1_data_valid;
-  assign  uop_index           = alu_uop.uop_index;
   
 //  
 // prepare source data 
@@ -90,8 +75,8 @@ module rvv_backend_alu_unit_mask
   always_comb begin
     // initial the data
     result_valid_mask_logic   = 'b0;
-    src2_vdata_mask_logic     = 'b0;
-    src1_vdata_mask_logic     = 'b0;
+    src2_data_mask_logic     = 'b0;
+    src1_data_mask_logic     = 'b0;
 
     // prepare source data
     case({alu_uop_valid,uop_funct3}) 
@@ -105,15 +90,24 @@ module rvv_backend_alu_unit_mask
           VMNAND,
           VMNOR,
           VMXNOR: begin
-            if((vs1_data_valid&vs2_data_valid&vm&vd_data_valid)==1'b1) begin
-              result_valid_vmask_logic  = 1'b1;
-              src2_vdata_mask_logic     = vs2_data;
-              src1_vdata_vmask_logic    = vs1_data;
+            if(vs1_data_valid&vs2_data_valid&vm&vd_data_valid) begin
+              result_valid_mask_logic = 1'b1;
+              src2_data_mask_logic    = vs2_data;
+              src1_data_mask_logic    = vs1_data;
             end 
 
             `ifdef ASSERT_ON
-            `rvv_expect((vs1_data_valid&vs2_data_valid&vm&vd_data_valid)==1'b1) 
-              else $error("rob_entry=%d. vs1_data_valid(%d)&vs2_data_valid(%d)&vm(%d)&vd_data_valid(%d) should be 1'b1.\n",rob_entry,vs1_data_valid,vs2_data_valid,vm,vd_data_valid);
+            `rvv_expect(vs1_data_valid==1'b1) 
+              else $error("rob_entry=%d. vs1_data_valid(%d) should be 1'b1.\n",rob_entry,vs1_data_valid);
+
+            `rvv_expect(vs2_data_valid==1'b1) 
+              else $error("rob_entry=%d. vs2_data_valid(%d) should be 1'b1.\n",rob_entry,vs2_data_valid);
+
+            `rvv_expect(vd_data_valid==1'b1) 
+              else $error("rob_entry=%d. vd_data_valid(%d) should be 1'b1.\n",rob_entry,vd_data_valid);
+
+            `rvv_expect(vm==1'b1) 
+              else $error("rob_entry=%d. vm(%d) should be 1'b1.\n",rob_entry,vm);
             `endif
           end
         endcase
@@ -127,7 +121,7 @@ module rvv_backend_alu_unit_mask
   // for mask logic instructions
   always_comb begin
     // initial the data
-    result_vdata_mask_logic   = 'b0; 
+    result_data_mask_logic   = 'b0; 
  
     // calculate result data
     case({alu_uop_valid,uop_funct3}) 
@@ -135,35 +129,35 @@ module rvv_backend_alu_unit_mask
         case(uop_funct6.ari_funct6)
           
           VMANDN: begin
-            result_vdata_mask_logic   = f_vmandn(src2_vdata_mask_logic,src1_vdata_maska_logic);  
+            result_data_mask_logic   = f_vmandn(src2_data_mask_logic,src1_data_mask_logic);  
           end
           
           VMAND: begin
-            result_vdata_mask_logic   = f_vmand(src2_vdata_mask_logic,src1_vdata_maska_logic);  
+            result_data_mask_logic   = f_vmand(src2_data_mask_logic,src1_data_mask_logic);  
           end
  
           VMOR: begin
-            result_vdata_mask_logic   = f_vmor(src2_vdata_mask_logic,src1_vdata_maska_logic);  
+            result_data_mask_logic   = f_vmor(src2_data_mask_logic,src1_data_mask_logic);  
           end
  
           VMXOR: begin
-            result_vdata_mask_logic   = f_vmxor(src2_vdata_mask_logic,src1_vdata_maska_logic);  
+            result_data_mask_logic   = f_vmxor(src2_data_mask_logic,src1_data_mask_logic);  
           end
  
           VMORN: begin
-            result_vdata_mask_logic   = f_vmorn(src2_vdata_mask_logic,src1_vdata_maska_logic);  
+            result_data_mask_logic   = f_vmorn(src2_data_mask_logic,src1_data_mask_logic);  
           end
  
           VMNAND: begin
-            result_vdata_mask_logic   = f_vmnand(src2_vdata_mask_logic,src1_vdata_maska_logic);  
+            result_data_mask_logic   = f_vmnand(src2_data_mask_logic,src1_data_mask_logic);  
           end
  
           VMNOR: begin
-            result_vdata_mask_logic   = f_vmnor(src2_vdata_mask_logic,src1_vdata_maska_logic);  
+            result_data_mask_logic   = f_vmnor(src2_data_mask_logic,src1_data_mask_logic);  
           end
  
           VMXNOR: begin
-            result_vdata_mask_logic   = f_vmxnor(src2_vdata_mask_logic,src1_vdata_maska_logic);  
+            result_data_mask_logic   = f_vmxnor(src2_data_mask_logic,src1_data_mask_logic);  
           end
         endcase
       end
@@ -173,51 +167,50 @@ module rvv_backend_alu_unit_mask
 //
 // submit result to ROB
 //
-  assign  result_ex2rob.rob_entry      = rob_entry;
-  assign  result_ex2rob.w_data         = w_data;
-  assign  result_ex2rob.w_type         = w_type;
-  assign  result_ex2rob.w_valid        = w_valid;
-  assign  result_ex2rob.vxsat          = vxsat;
-  assign  result_ex2rob.ignore_vta     = ignore_vta;
-  assign  result_ex2rob.ignore_vma     = ignore_vma;
+  assign  result.rob_entry  = rob_entry;
+  assign  result.w_data     = w_data;
+  assign  result.w_valid    = w_valid;
+  assign  result.vxsat      = vxsat;
+  assign  result.ignore_vta = ignore_vta;
+  assign  result.ignore_vma = ignore_vma;
 
   // valid signal
-  assign result_valid_ex2rob   = result_valid_mask_logic;
+  assign result_valid = result_valid_mask_logic;
 
-  // result data 
-  always_comb begin
-  // initial
-    w_data                = 'b0;
+  // result data
+  generate 
+    for (j=0;j<`VLEN;j++) begin: GET_W_DATA
+      always_comb begin
+        // initial
+        w_data[j] = 'b0;
 
-    case({alu_uop_valid,uop_funct3}) 
-      {1'b1,OPMVV}: begin
-        case(uop_funct6.ari_funct6)
-          VMANDN,
-          VMAND,
-          VMOR,
-          VMXOR,
-          VMORN,
-          VMNAND,
-          VMNOR,
-          VMXNOR: begin
-            for (i=0;i<`VLEN;i=i+1) begin: EXE_MASK_LOGIC
-              if (i<vstart)
-                w_data[i]         = vd_data[i];
-              else
-                w_data[i]         = result_vdata_mask_logic[i];
-            end
+        case({alu_uop_valid,uop_funct3}) 
+          {1'b1,OPMVV}: begin
+            case(uop_funct6.ari_funct6)
+              VMANDN,
+              VMAND,
+              VMOR,
+              VMXOR,
+              VMORN,
+              VMNAND,
+              VMNOR,
+              VMXNOR: begin
+                if (j<vstart)
+                  w_data[j] = vd_data[j];
+                else
+                  w_data[j] = result_data_mask_logic[j];
+              end
+            endcase
           end
-
         endcase
-      end
-    endcase
-  end
+      end   
+    end
+  endgenerate
 
-  // result type and valid signal
+  // result valid signal
   always_comb begin
   // initial
-    w_tpye                = 'b0;
-    w_valid               = 'b0;
+    w_valid = 'b0;
     
     case({alu_uop_valid,uop_funct3}) 
       {1'b1,OPMVV}: begin
@@ -230,8 +223,7 @@ module rvv_backend_alu_unit_mask
           VMNAND,
           VMNOR,
           VMXNOR: begin
-            w_type                = VRF;
-            w_valid               = 1'b1;
+            w_valid = 1'b1;
           end
         endcase
       end
@@ -239,14 +231,12 @@ module rvv_backend_alu_unit_mask
   end
 
   // saturate signal
-  always_comb begin
-    vxsat                 = 'b0;
-  end
+  assign vxsat = 'b0;
 
   // ignore vta an vma signal
   always_comb begin
-    ignore_vta            = 'b0;
-    ignore_vma            = 'b0;
+    ignore_vta = 'b0;
+    ignore_vma = 'b0;
     
     case({alu_uop_valid,uop_funct3}) 
       {1'b1,OPMVV}: begin
@@ -259,8 +249,8 @@ module rvv_backend_alu_unit_mask
           VMNAND,
           VMNOR,
           VMXNOR: begin
-            ignore_vta            = 'b1;
-            ignore_vma            = 'b0;
+            ignore_vta = 'b1;
+            ignore_vma = 'b0;
           end
         endcase
       end

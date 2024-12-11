@@ -13,8 +13,8 @@ module rvv_backend_alu_unit
 (
   alu_uop_valid,
   alu_uop,
-  result_valid_ex2rob,
-  result_ex2rob
+  result_valid,
+  result
 );
 //
 // interface signals
@@ -24,8 +24,8 @@ module rvv_backend_alu_unit
   input   ALU_RS_t                alu_uop;
 
   // ALU send result signals to ROB
-  output  logic                   result_valid_ex2rob;
-  output  ALU2ROB_t               result_ex2rob;
+  output  logic                   result_valid;
+  output  ALU2ROB_t               result;
 
 //
 // internal signals
@@ -42,16 +42,16 @@ module rvv_backend_alu_unit
   (
     .alu_uop_valid        (alu_uop_valid),
     .alu_uop              (alu_uop),
-    .result_valid_ex2rob  (result_valid_addsub),
-    .result_ex2rob        (result_addsub)
+    .result_valid         (result_valid_addsub),
+    .result               (result_addsub)
   );
 
   rvv_backend_alu_unit_mask u_alu_mask
   (
     .alu_uop_valid        (alu_uop_valid),
     .alu_uop              (alu_uop),
-    .result_valid_ex2rob  (result_valid_mask),
-    .result_ex2rob        (result_mask)
+    .result_valid         (result_valid_mask),
+    .result               (result_mask)
   );
 
 // 
@@ -59,18 +59,18 @@ module rvv_backend_alu_unit
 // 
   always_comb begin
     // initial
-    result_valid_ex2rob = 'b0;
-    result_ex2rob       = 'b0;
+    result_valid = 'b0;
+    result       = 'b0;
 
     case(1'b1)
       result_valid_addsub: begin
-        result_valid_ex2rob = 1'b1;
-        result_ex2rob       = result_addsub;
+        result_valid = 1'b1;
+        result       = result_addsub;
       end
 
       result_valid_mask: begin
-        result_valid_ex2rob = 1'b1;
-        result_ex2rob       = result_mask;
+        result_valid = 1'b1;
+        result       = result_mask;
       end
     endcase
   end

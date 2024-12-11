@@ -54,16 +54,15 @@ module rvv_backend_alu
 
   // instantiate
   generate
-    for (i=0;i<`NUM_ALU_UOP;i=i+1) 
-    begin: ALU_UNIT
-      rvv_backend_alu_unit u_alu_unit[i]
+    for (i=0;i<`NUM_ALU_UOP;i=i+1) begin: ALU_UNIT
+      rvv_backend_alu_unit u_alu_unit
         (
           // inputs
           .alu_uop_valid          (alu_uop_valid_rs2ex[i]),
           .alu_uop                (alu_uop_rs2ex[i]),
           // outputs
-          .result_ex2rob_valid    (result_valid_ex2rob[i]),
-          .result_ex2rob          (result_ex2rob[i])
+          .result_valid           (result_valid_ex2rob[i]),
+          .result                 (result_ex2rob[i])
         );
     end
   endgenerate
