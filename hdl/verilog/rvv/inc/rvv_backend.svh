@@ -31,13 +31,21 @@ typedef enum logic [2:0] {
   LMUL1_2=7  // 1/2
 } RVVLMUL;
 
+// Enum type for vtype.vxrm: rounding mode
+typedef enum logic [2:0] {
+  RNU = 0,
+  RNE = 1,
+  RDN = 2,
+  ROD = 3
+} RVVXRM;
+
 // The architectural configuration state of the RVV core.
 typedef struct packed {
   logic [`VL_WIDTH-1:0]         vl;   // Max 128, need one extra bit
   logic [`VSTART_WIDTH-1:0]     vstart;
   logic [`VTYPE_VMA_WIDTH-1:0]  ma;        // 0:inactive element undisturbed, 1:inactive element agnostic
   logic [`VTYPE_VTA_WIDTH-1:0]  ta;        // 0:tail undisturbed, 1:tail agnostic
-  logic [`VCSR_VXRM_WIDTH-1:0]  xrm;       
+  RVVXRM                        xrm;       
   logic [`VCSR_VXSAT_WIDTH-1:0] xsat;            
   RVVSEW                        sew;
   RVVLMUL                       lmul;
@@ -395,7 +403,7 @@ typedef struct packed {
   // vm field can be used to identify vmsbc.v?m/vmsbc.v? uop in the same uop_funct6(6'b010011).   
   logic                               vm;               
   // rounding mode 
-  logic   [`VCSR_VXRM_WIDTH-1:0]      vxrm;              
+  RVVXRM                              xrm;       
   // when the uop is vmadc.v?m/vmsbc.v?m, the uop will use v0_data as the third vector operand. EEW_v0=1.
   logic   [`VLENB-1:0]                v0_data;
   logic                               v0_data_valid;
@@ -440,7 +448,7 @@ typedef struct packed {
   logic   [`ROB_DEPTH_WIDTH-1:0]      rob_entry;
   FUNCT6_u                            uop_funct6;
   logic   [`FUNCT3_WIDTH-1:0]         uop_funct3;
-  logic   [`VCSR_VXRM_WIDTH-1:0]      vxrm;               // rounding mode 
+  RVVXRM                              xrm;       
  
   logic   [`VLEN-1:0]                 vs1_data;           
   EEW_e                               vs1_eew;

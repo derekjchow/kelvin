@@ -54,11 +54,6 @@
 `define VTYPE_VLMUL_WIDTH       3
 `define VCSR_VXRM_WIDTH         2
 `define VCSR_VXSAT_WIDTH        1
-// xrm: rounding mode
-`define RNU                     2'b00
-`define RNE                     2'b01
-`define RDN                     2'b10
-`define ROD                     2'b11
 
 // Instruction encoding
 `define FUNCT6_WIDTH            6
