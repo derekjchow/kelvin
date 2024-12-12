@@ -62,10 +62,8 @@ module rvv_backend_alu_unit_addsub
   logic   [`VLENB-1:0]                                subu_underoverflow;
   logic   [`VLENB-1:0]                                sub_upoverflow;
   logic   [`VLENB-1:0]                                sub_underoverflow;
-  logic   [`VLEN-1:0]                                 result_data_rg;       // regular for EEW_vd = 8b,16b,32b
-  logic   [`VLEN-1:0]                                 result_data_sp_eew8;  // special for EEW_vd = 1b and EEW_vs2=8b
-  logic   [`VLEN-1:0]                                 result_data_sp_eew16; // special for EEW_vd = 1b and EEW_vs2=16b
-  logic   [`VLEN-1:0]                                 result_data_sp_eew32; // special for EEW_vd = 1b and EEW_vs2=32b
+  logic   [`VLEN-1:0]                                 result_data_rg;  // regular for EEW_vd = 8b,16b,32b
+  logic   [`VLEN-1:0]                                 result_data_sp;  // special for EEW_vd = 1b 
   F_ADDSUB_t                                          opcode;
 
   // ALU2ROB_t struct signals
@@ -1842,37 +1840,158 @@ module rvv_backend_alu_unit_addsub
 
   // assign to result_data_sp
   always_comb begin
-    //result_data_sp_eew8 = vd_data;
-    result_data_sp_eew8 = {`BYTE_WIDTH{cout8}};
- 
-    for (i=0;i<`VLEN;i++) begin
-      if ((i<uop_index*`VLENB)|(i>uop_index*`VLENB+`VLENB-1))
-        result_data_sp_eew8[i] = vd_data[i]; 
-      //result_data_sp_eew8[uop_index*`VLENB+i] = cout8[i]; 
-    end
+    result_data_sp = 'b0; 
+
+    case(uop_index)
+      3'd0: begin
+        case(vs2_eew)
+          EEW8: begin
+            result_data_sp = {vd_data[`VLEN-1 : `VLENB], 
+                              cout8[`VLENB-1 : 0]};
+          end
+          EEW16: begin
+            result_data_sp = {vd_data[`VLEN-1 : `VLEN/`HWORD_WIDTH], 
+                              cout16[`VLEN/`HWORD_WIDTH-1 : 0]};
+          end
+          EEW32: begin
+            result_data_sp = {vd_data[`VLEN-1 : `VLEN/`WORD_WIDTH], 
+                              cout32[`VLEN/`WORD_WIDTH-1 : 0]};
+          end
+        endcase
+      end
+      3'd1: begin
+        case(vs2_eew)
+          EEW8: begin
+            result_data_sp = {vd_data[`VLEN-1 : 2*`VLENB], 
+                              cout8[`VLENB-1 : 0],
+                              vd_data[`VLENB-1 : 0]};
+          end
+          EEW16: begin
+            result_data_sp = {vd_data[`VLEN-1 : 2*`VLEN/`HWORD_WIDTH], 
+                              cout16[`VLEN/`HWORD_WIDTH-1 : 0],
+                              vd_data[`VLEN/`HWORD_WIDTH-1 : 0]};
+          end
+          EEW32: begin
+            result_data_sp = {vd_data[`VLEN-1 : 2*`VLEN/`WORD_WIDTH], 
+                              cout32[`VLEN/`WORD_WIDTH-1 : 0],
+                              vd_data[`VLEN/`WORD_WIDTH-1 : 0]};
+          end
+        endcase
+      end
+      3'd2: begin
+        case(vs2_eew)
+          EEW8: begin
+            result_data_sp = {vd_data[`VLEN-1 : 3*`VLENB], 
+                              cout8[`VLENB-1 : 0],
+                              vd_data[2*`VLENB-1 : 0]};
+          end
+          EEW16: begin
+            result_data_sp = {vd_data[`VLEN-1 : 3*`VLEN/`HWORD_WIDTH], 
+                              cout16[`VLEN/`HWORD_WIDTH-1 : 0],
+                              vd_data[2*`VLEN/`HWORD_WIDTH-1 : 0]};
+          end
+          EEW32: begin
+            result_data_sp = {vd_data[`VLEN-1 : 3*`VLEN/`WORD_WIDTH], 
+                              cout32[`VLEN/`WORD_WIDTH-1 : 0],
+                              vd_data[2*`VLEN/`WORD_WIDTH-1 : 0]};
+          end
+        endcase
+      end
+      3'd3: begin
+        case(vs2_eew)
+          EEW8: begin
+            result_data_sp = {vd_data[`VLEN-1 : 4*`VLENB], 
+                              cout8[`VLENB-1 : 0],
+                              vd_data[3*`VLENB-1 : 0]};
+          end
+          EEW16: begin
+            result_data_sp = {vd_data[`VLEN-1 : 4*`VLEN/`HWORD_WIDTH], 
+                              cout16[`VLEN/`HWORD_WIDTH-1 : 0],
+                              vd_data[3*`VLEN/`HWORD_WIDTH-1 : 0]};
+          end
+          EEW32: begin
+            result_data_sp = {vd_data[`VLEN-1 : 4*`VLEN/`WORD_WIDTH], 
+                              cout32[`VLEN/`WORD_WIDTH-1 : 0],
+                              vd_data[3*`VLEN/`WORD_WIDTH-1 : 0]};
+          end
+        endcase
+      end
+      3'd4: begin
+        case(vs2_eew)
+          EEW8: begin
+            result_data_sp = {vd_data[`VLEN-1 : 5*`VLENB], 
+                              cout8[`VLENB-1 : 0],
+                              vd_data[4*`VLENB-1 : 0]};
+          end
+          EEW16: begin
+            result_data_sp = {vd_data[`VLEN-1 : 5*`VLEN/`HWORD_WIDTH], 
+                              cout16[`VLEN/`HWORD_WIDTH-1 : 0],
+                              vd_data[4*`VLEN/`HWORD_WIDTH-1 : 0]};
+          end
+          EEW32: begin
+            result_data_sp = {vd_data[`VLEN-1 : 5*`VLEN/`WORD_WIDTH], 
+                              cout32[`VLEN/`WORD_WIDTH-1 : 0],
+                              vd_data[4*`VLEN/`WORD_WIDTH-1 : 0]};
+          end
+        endcase
+      end
+      3'd5: begin
+        case(vs2_eew)
+          EEW8: begin
+            result_data_sp = {vd_data[`VLEN-1 : 6*`VLENB], 
+                              cout8[`VLENB-1 : 0],
+                              vd_data[5*`VLENB-1 : 0]};
+          end
+          EEW16: begin
+            result_data_sp = {vd_data[`VLEN-1 : 6*`VLEN/`HWORD_WIDTH], 
+                              cout16[`VLEN/`HWORD_WIDTH-1 : 0],
+                              vd_data[5*`VLEN/`HWORD_WIDTH-1 : 0]};
+          end
+          EEW32: begin
+            result_data_sp = {vd_data[`VLEN-1 : 6*`VLEN/`WORD_WIDTH], 
+                              cout32[`VLEN/`WORD_WIDTH-1 : 0],
+                              vd_data[5*`VLEN/`WORD_WIDTH-1 : 0]};
+          end
+        endcase
+      end
+      3'd6: begin
+        case(vs2_eew)
+          EEW8: begin
+            result_data_sp = {vd_data[`VLEN-1 : 7*`VLENB], 
+                              cout8[`VLENB-1 : 0],
+                              vd_data[6*`VLENB-1 : 0]};
+          end
+          EEW16: begin
+            result_data_sp = {vd_data[`VLEN-1 : 7*`VLEN/`HWORD_WIDTH], 
+                              cout16[`VLEN/`HWORD_WIDTH-1 : 0],
+                              vd_data[6*`VLEN/`HWORD_WIDTH-1 : 0]};
+          end
+          EEW32: begin
+            result_data_sp = {vd_data[`VLEN-1 : 7*`VLEN/`WORD_WIDTH], 
+                              cout32[`VLEN/`WORD_WIDTH-1 : 0],
+                              vd_data[6*`VLEN/`WORD_WIDTH-1 : 0]};
+          end
+        endcase
+      end
+      3'd7: begin
+        case(vs2_eew)
+          EEW8: begin
+            result_data_sp = {cout8[`VLENB-1 : 0],
+                              vd_data[7*`VLENB-1 : 0]};
+          end
+          EEW16: begin
+            result_data_sp = {cout16[`VLEN/`HWORD_WIDTH-1 : 0],
+                              vd_data[7*`VLEN/`HWORD_WIDTH-1 : 0]};
+          end
+          EEW32: begin
+            result_data_sp = {cout32[`VLEN/`WORD_WIDTH-1 : 0],
+                              vd_data[7*`VLEN/`WORD_WIDTH-1 : 0]};
+          end
+        endcase
+      end
+    endcase
   end
- 
-  always_comb begin
-    //result_data_sp_eew16 = vd_data;
-    result_data_sp_eew16 = {`HWORD_WIDTH{cout16}};
- 
-    for (i=0;i<`VLEN;i++) begin
-      if ((i<uop_index*`VLEN/`HWORD_WIDTH)|(i>uop_index*`VLEN/`HWORD_WIDTH+`VLEN/`HWORD_WIDTH-1))
-        result_data_sp_eew16[i] = vd_data[i]; 
-      //result_data_sp_eew16[uop_index*`VLEN/`HWORD_WIDTH+i] = cout16[i]; 
-    end
-  end
- 
-  always_comb begin
-    //result_data_sp_eew32 = vd_data;
-    result_data_sp_eew32 = {`WORD_WIDTH{cout32}};
- 
-    for (i=0;i<`VLEN/`WORD_WIDTH;i++) begin
-      if ((i<uop_index*`VLEN/`WORD_WIDTH)|(i>uop_index*`VLEN/`WORD_WIDTH+`VLEN/`WORD_WIDTH-1))
-        result_data_sp_eew32[i] = vd_data[i]; 
-      //result_data_sp_eew32[uop_index*`VLEN/`WORD_WIDTH+i] = cout32[i]; 
-    end
-  end
+
 //
 // submit result to ROB
 //
@@ -1894,14 +2013,7 @@ module rvv_backend_alu_unit_addsub
         case(uop_funct6.ari_funct6)
           VMADC,
           VMSBC: begin
-            case(vs2_eew)
-              EEW8: 
-                w_data = result_data_sp_eew8;
-              EEW16: 
-                w_data = result_data_sp_eew16;
-              EEW32: 
-                w_data = result_data_sp_eew32;
-            endcase
+            w_data = result_data_sp;
           end
         endcase
       end
