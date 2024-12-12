@@ -27,10 +27,10 @@ module rvv_backend_decode_unit_lsu
   logic     [`FUNCT6_WIDTH-1:0]                     inst_funct6;      // inst original encoding[31:26]           
   logic     [`NFIELD_WIDTH-1:0]                     inst_nf;          // inst original encoding[31:29]
   logic     [`VM_WIDTH-1:0]                         inst_vm;          // inst original encoding[25]      
-  logic     [`VS2_WIDTH-1:0]                        inst_vs2;         // inst original encoding[24:20]
+  logic     [`REGFILE_INDEX_WIDTH-1:0]              inst_vs2;         // inst original encoding[24:20]
   logic     [`UMOP_WIDTH-1:0]                       inst_umop;        // inst original encoding[24:20]
   logic     [`FUNCT3_WIDTH-1:0]                     inst_funct3;      // inst original encoding[14:12]
-  logic     [`VD_WIDTH-1:0]                         inst_vd;          // inst original encoding[11:7]
+  logic     [`REGFILE_INDEX_WIDTH-1:0]              inst_vd;          // inst original encoding[11:7]
   RVVOpCode                                         inst_opcode;      // inst original encoding[6:0]
 
   RVVConfigState                                    vector_csr_lsu;
@@ -1674,8 +1674,8 @@ module rvv_backend_decode_unit_lsu
             US_MK: begin
               case(inst_funct3)
                 SEW_8: begin
-                  eew_vd          = EEW8;
-                  eew_max         = EEW8;
+                  eew_vd          = EEW1;
+                  eew_max         = EEW1;
                 end
               endcase
             end
@@ -2168,6 +2168,25 @@ module rvv_backend_decode_unit_lsu
           end
         endcase
       end
+    end
+  end
+  
+  // update force_vma_agnostic
+  always_comb begin
+    for(i=0;i<`NUM_DE_UOP;i=i+1) begin: GET_FORCE_VMA
+      //When source and destination registers overlap and have different EEW, the instruction is mask- and tail-agnostic.
+      uop[i].force_vma_agnostic = ((check_vd_overlap_v0==1'b0)&(eew_vd!=EEW1)) | 
+                                  ((check_vd_overlap_vs2==1'b0)&(eew_vd!=eew_vs2)&(eew_vd!=EEW_NONE)&(eew_vs2!=EEW_NONE));
+    end
+  end
+
+  // update force_vta_agnostic
+  always_comb begin
+    for(i=0;i<`NUM_DE_UOP;i=i+1) begin: GET_FORCE_VTA
+      uop[i].force_vta_agnostic = (eew_vd==EEW1) |   // Mask destination tail elements are always treated as tail-agnostic
+      //When source and destination registers overlap and have different EEW, the instruction is mask- and tail-agnostic.
+                                  ((check_vd_overlap_v0==1'b0)&(eew_vd!=EEW1)) | 
+                                  ((check_vd_overlap_vs2==1'b0)&(eew_vd!=eew_vs2)&(eew_vd!=EEW_NONE)&(eew_vs2!=EEW_NONE));
     end
   end
 
