@@ -27,18 +27,18 @@ module rvv_backend_decode_unit_ari
   logic   [`PC_WIDTH-1:0]                         inst_pc;
   logic   [`FUNCT6_WIDTH-1:0]                     inst_funct6;      // inst original encoding[31:26]           
   logic   [`VM_WIDTH-1:0]                         inst_vm;          // inst original encoding[25]      
-  logic   [`VS2_WIDTH-1:0]                        inst_vs2;         // inst original encoding[24:20]
-  logic   [`VS1_WIDTH-1:0]                        inst_vs1;         // inst original encoding[19:15]
+  logic   [`REGFILE_INDEX_WIDTH-1:0]              inst_vs2;         // inst original encoding[24:20]
+  logic   [`REGFILE_INDEX_WIDTH-1:0]              inst_vs1;         // inst original encoding[19:15]
   logic   [`IMM_WIDTH-1:0]                        inst_imm;         // inst original encoding[19:15]
   logic   [`FUNCT3_WIDTH-1:0]                     inst_funct3;      // inst original encoding[14:12]
-  logic   [`VD_WIDTH-1:0]                         inst_vd;          // inst original encoding[11:7]
-  logic   [`RD_WIDTH-1:0]                         inst_rd;          // inst original encoding[11:7]
+  logic   [`REGFILE_INDEX_WIDTH-1:0]              inst_vd;          // inst original encoding[11:7]
+  logic   [`REGFILE_INDEX_WIDTH-1:0]              inst_rd;          // inst original encoding[11:7]
   logic   [`NREG_WIDTH-1:0]                       inst_nr;          // inst original encoding[17:15]
   
   // use vs1 as opcode
-  logic   [`VS1_WIDTH-1:0]                        vs1_opcode_vwxunary;
-  logic   [`VS1_WIDTH-1:0]                        vs1_opcode_vxunary;
-  logic   [`VS1_WIDTH-1:0]                        vs1_opcode_vmunary;
+  logic   [`REGFILE_INDEX_WIDTH-1:0]              vs1_opcode_vwxunary;
+  logic   [`REGFILE_INDEX_WIDTH-1:0]              vs1_opcode_vxunary;
+  logic   [`REGFILE_INDEX_WIDTH-1:0]              vs1_opcode_vmunary;
    
   RVVConfigState                                  vector_csr_ari;
   logic   [`VSTART_WIDTH-1:0]                     csr_vstart;
@@ -2427,11 +2427,11 @@ module rvv_backend_decode_unit_ari
   assign inst_encoding_correct = check_special&check_common;
 
   // check whether vd overlaps v0 when vm=0
-  // check_vd_overlap_v0=1 means that vd does NOT overlap v0
+  // check_vd_overlap_v0=1 means check pass (vd does NOT overlap v0)
   assign check_vd_overlap_v0 = (((inst_vm==1'b0)&(inst_vd!='b0)) | (inst_vm==1'b1));
 
   // check whether vd partially overlaps vs2 with EEW_vd<EEW_vs2
-  // check_vd_part_overlap_vs2=1 means that vd group does NOT overlap vs2 group partially
+  // check_vd_part_overlap_vs2=1 means that check pass (vd group does NOT overlap vs2 group partially)
   always_comb begin
     check_vd_part_overlap_vs2       = 'b0;          
     
@@ -2455,7 +2455,7 @@ module rvv_backend_decode_unit_ari
   end
 
   // check whether vd partially overlaps vs1 with EEW_vd<EEW_vs1
-  // check_vd_part_overlap_vs1=1 means that vd group does NOT overlap vs1 group partially
+  // check_vd_part_overlap_vs1=1 means that check pass (vd group does NOT overlap vs1 group partially)
   always_comb begin
     check_vd_part_overlap_vs1     = 'b0;          
     
@@ -2479,7 +2479,7 @@ module rvv_backend_decode_unit_ari
   end
 
   // vd cannot overlap vs2
-  // check_vd_overlap_vs2=1 means that vd group does NOT overlap vs2 group fully
+  // check_vd_overlap_vs2=1 means that check pass (vd group does NOT overlap vs2 group fully)
   always_comb begin
     check_vd_overlap_vs2 = 'b0;
     
@@ -2504,7 +2504,7 @@ module rvv_backend_decode_unit_ari
   end
   
   // vd cannot overlap vs1
-  // check_vd_overlap_vs1=1 means that vd group does NOT overlap vs1 group fully
+  // check_vd_overlap_vs1=1 means that check pass (vd group does NOT overlap vs1 group fully)
   always_comb begin
     check_vd_overlap_vs1 = 'b0;
     
@@ -2832,7 +2832,7 @@ module rvv_backend_decode_unit_ari
             case(inst_funct3)
               OPIVV: begin
                 if (csr_vstart=='b0) 
-                  check_special = check_vd_overlap_v0&check_vs2_part_overlap_vd_2_1;        
+                  check_special = check_vs2_part_overlap_vd_2_1;        
 
                 `ifdef ASSERT_ON
                   `rvv_expect(csr_vstart=='b0)
@@ -3785,6 +3785,27 @@ module rvv_backend_decode_unit_ari
           end
         endcase
       end
+    end
+  end
+  
+  // update force_vma_agnostic
+  always_comb begin
+    for(i=0;i<`NUM_DE_UOP;i=i+1) begin: GET_FORCE_VMA
+      //When source and destination registers overlap and have different EEW, the instruction is mask- and tail-agnostic.
+      uop[i].force_vma_agnostic = ((check_vd_overlap_v0==1'b0)&(eew_vd!=EEW1)) | 
+                                  ((check_vd_overlap_vs2==1'b0)&(eew_vd!=eew_vs2)&(eew_vd!=EEW_NONE)&(eew_vs2!=EEW_NONE)) |
+                                  ((check_vd_overlap_vs1==1'b0)&(eew_vd!=eew_vs1)&(eew_vd!=EEW_NONE)&(eew_vs1!=EEW_NONE));
+    end
+  end
+
+  // update force_vta_agnostic
+  always_comb begin
+    for(i=0;i<`NUM_DE_UOP;i=i+1) begin: GET_FORCE_VTA
+      uop[i].force_vta_agnostic = (eew_vd==EEW1) |   // Mask destination tail elements are always treated as tail-agnostic
+      //When source and destination registers overlap and have different EEW, the instruction is mask- and tail-agnostic.
+                                  ((check_vd_overlap_v0==1'b0)&(eew_vd!=EEW1)) | 
+                                  ((check_vd_overlap_vs2==1'b0)&(eew_vd!=eew_vs2)&(eew_vd!=EEW_NONE)&(eew_vs2!=EEW_NONE)) |
+                                  ((check_vd_overlap_vs1==1'b0)&(eew_vd!=eew_vs1)&(eew_vd!=EEW_NONE)&(eew_vs1!=EEW_NONE));
     end
   end
 
@@ -4800,7 +4821,6 @@ module rvv_backend_decode_unit_ari
     for(i=0;i<`NUM_DE_UOP;i=i+1) begin: GET_RS1
       // initial
       uop[i].rs1_data         = 'b0;
-      uop[i].scalar_eew       = EEW_NONE;
       uop[i].rs1_data_valid   = 'b0;
       
       case(1'b1)
