@@ -62,8 +62,11 @@ module rvv_backend_alu_unit_addsub
   logic   [`VLENB-1:0]                                subu_underoverflow;
   logic   [`VLENB-1:0]                                sub_upoverflow;
   logic   [`VLENB-1:0]                                sub_underoverflow;
-  logic   [`VLEN-1:0]                                 result_data_rg;  // regular for EEW_vd = 8b,16b,32b
-  logic   [`VLEN-1:0]                                 result_data_sp;  // special for EEW_vd = 1b 
+  logic   [`VLEN-1:0]                                 result_data_rg;   // regular data for EEW_vd = 8b,16b,32b
+  logic   [`VLEN-1:0]                                 result_data_sp;   // special data for EEW_vd = 1b 
+  logic   [`VLEN-1:0]                                 mask_sp_bit0;     // control logic for result_data_sp 
+  logic   [`VLEN-1:0]                                 mask_sp_bit1;     // control logic for result_data_sp 
+  logic   [`VLEN-1:0]                                 mask_sp_bit2;     // control logic for result_data_sp 
   F_ADDSUB_t                                          opcode;
 
   // ALU2ROB_t struct signals
@@ -73,7 +76,7 @@ module rvv_backend_alu_unit_addsub
   logic                           ignore_vta;
   logic                           ignore_vma;
   
-  //
+  // for-loop
   integer                         i;
   genvar                          j;
 
@@ -164,7 +167,7 @@ module rvv_backend_alu_unit_addsub
 
           VMADC,
           VMSBC: begin
-            if (vs2_data_valid&vs1_data_valid&vd_data_valid) begin
+            if (vs2_data_valid&vs1_data_valid&vd_data_valid&(vm^v0_data_valid)) begin
               result_valid   = 'b1;
 
               for (i=0;i<`VLENB;i=i+1) begin
@@ -182,6 +185,9 @@ module rvv_backend_alu_unit_addsub
 
                 `rvv_expect(vd_data_valid==1'b1)
                 else $error("vd_data_valid(%d) should be 1.\n",vd_data_valid);
+
+                `rvv_expect(vm^v0_data_valid)
+                else $error("vm^v0_data_valid(%d) should be 1.\n",vm^v0_data_valid);
               `endif
             end
           end
@@ -349,7 +355,7 @@ module rvv_backend_alu_unit_addsub
 
           VMADC,
           VMSBC: begin
-            if (vs2_data_valid&rs1_data_valid&vd_data_valid) begin
+            if (vs2_data_valid&vs1_data_valid&vd_data_valid&(vm^v0_data_valid)) begin
               result_valid   = 'b1;
               
               for (i=0;i<`VLENB;i=i+1) begin
@@ -389,6 +395,9 @@ module rvv_backend_alu_unit_addsub
 
                 `rvv_expect(vd_data_valid==1'b1)
                 else $error("vd_data_valid(%d) should be 1.\n",vd_data_valid);
+
+                `rvv_expect(vm^v0_data_valid)
+                else $error("vm^v0_data_valid(%d) should be 1.\n",vm^v0_data_valid);
               `endif
             end
           end
@@ -573,7 +582,7 @@ module rvv_backend_alu_unit_addsub
           end
           
           VMADC: begin
-            if (vs2_data_valid&rs1_data_valid&vd_data_valid) begin
+            if (vs2_data_valid&vs1_data_valid&vd_data_valid&(vm^v0_data_valid)) begin
               result_valid   = 'b1;
               
               for (i=0;i<`VLENB;i=i+1) begin
@@ -613,6 +622,9 @@ module rvv_backend_alu_unit_addsub
 
                 `rvv_expect(vd_data_valid==1'b1)
                 else $error("vd_data_valid(%d) should be 1.\n",vd_data_valid);
+
+                `rvv_expect(vm^v0_data_valid)
+                else $error("vm^v0_data_valid(%d) should be 1.\n",vm^v0_data_valid);
               `endif
             end
           end
@@ -1331,7 +1343,7 @@ module rvv_backend_alu_unit_addsub
           VWADD_W,
           VAADDU,
           VAADD: begin
-            opcode = ADDSUB_VSUB;
+            opcode = ADDSUB_VADD;
           end
           VWSUBU,
           VWSUB,
@@ -1358,13 +1370,13 @@ module rvv_backend_alu_unit_addsub
   
   generate
     for (j=0;j<`VLEN/`HWORD_WIDTH;j=j+1) begin: EXE_VADDSUB_PROD16
-      assign {cout16[j],product16[j]} = {f_half_addsub8(opcode, {cout8[2*j+1],product8[2*j+1]}, cout8[2*j]), product8[2*j]};
+      assign {cout16[j],product16[j]} = {f_half_addsub8(opcode, {cout8[`HWORD_WIDTH/`BYTE_WIDTH*j+1],product8[`HWORD_WIDTH/`BYTE_WIDTH*j+1]}, cout8[`HWORD_WIDTH/`BYTE_WIDTH*j]), product8[`HWORD_WIDTH/`BYTE_WIDTH*j]};
     end
   endgenerate 
 
   generate
     for (j=0;j<`VLEN/`WORD_WIDTH;j=j+1) begin: EXE_VADDSUB_PROD32
-      assign {cout32[j],product32[j]} = {f_half_addsub16(opcode, {cout16[2*j+1],product16[2*j+1]}, cout16[2*j]), product16[2*j]};
+      assign {cout32[j],product32[j]} = {f_half_addsub16(opcode, {cout16[`WORD_WIDTH/`HWORD_WIDTH*j+1],product16[`WORD_WIDTH/`HWORD_WIDTH*j+1]}, cout16[`WORD_WIDTH/`HWORD_WIDTH*j]), product16[`WORD_WIDTH/`HWORD_WIDTH*j]};
     end
   endgenerate 
   
@@ -1379,17 +1391,17 @@ module rvv_backend_alu_unit_addsub
         case(vs2_eew)
           EEW8: begin
             for (i=0;i<`VLENB;i=i+1) begin
-              round8[i] = f_half_addsub8(ADDSUB_VADD, {{2{cout8[i]}},product8[i][`BYTE_WIDTH-1:1]}, product8[i][0]); 
+              round8[i] = f_half_addsub8(ADDSUB_VADD, {{2{product8[i][`BYTE_WIDTH-1]}},product8[i][`BYTE_WIDTH-1:1]}, product8[i][0]); 
             end
           end
           EEW16: begin
             for (i=0;i<`VLEN/`HWORD_WIDTH;i=i+1) begin
-              round16[i] = f_half_addsub16(ADDSUB_VADD, {{2{cout16[i]}},product16[i][`HWORD_WIDTH-1:1]}, product16[i][0]); 
+              round16[i] = f_half_addsub16(ADDSUB_VADD, {{2{product16[i][`HWORD_WIDTH-1]}},product16[i][`HWORD_WIDTH-1:1]}, product16[i][0]); 
             end
           end
           EEW32: begin
             for (i=0;i<`VLEN/`WORD_WIDTH;i=i+1) begin
-              round32[i] = f_half_add32({{2{cout32[i]}},product32[i][`WORD_WIDTH-1:1]}, product32[i][0]); 
+              round32[i] = f_half_add32({{2{product32[i][`WORD_WIDTH-1]}},product32[i][`WORD_WIDTH-1:1]}, product32[i][0]); 
             end
           end
         endcase
@@ -1398,17 +1410,17 @@ module rvv_backend_alu_unit_addsub
         case(vs2_eew)
           EEW8: begin
             for (i=0;i<`VLENB;i=i+1) begin
-              round8[i] = f_half_addsub8(ADDSUB_VADD, {{2{cout8[i]}},product8[i][`BYTE_WIDTH-1:1]}, (product8[i][0]&product8[i][1])); 
+              round8[i] = f_half_addsub8(ADDSUB_VADD, {{2{product8[i][`BYTE_WIDTH-1]}},product8[i][`BYTE_WIDTH-1:1]}, (product8[i][0]&product8[i][1])); 
             end
           end
           EEW16: begin
             for (i=0;i<`VLEN/`HWORD_WIDTH;i=i+1) begin
-              round16[i] = f_half_addsub16(ADDSUB_VADD, {{2{cout16[i]}},product16[i][`HWORD_WIDTH-1:1]}, (product16[i][0]&product16[i][1])); 
+              round16[i] = f_half_addsub16(ADDSUB_VADD, {{2{product16[i][`HWORD_WIDTH-1]}},product16[i][`HWORD_WIDTH-1:1]}, (product16[i][0]&product16[i][1])); 
             end
           end
           EEW32: begin
             for (i=0;i<`VLEN/`WORD_WIDTH;i=i+1) begin
-              round32[i] = f_half_add32({{2{cout32[i]}},product32[i][`WORD_WIDTH-1:1]}, (product32[i][0]&product32[i][1])); 
+              round32[i] = f_half_add32({{2{product32[i][`WORD_WIDTH-1]}},product32[i][`WORD_WIDTH-1:1]}, (product32[i][0]&product32[i][1])); 
             end
           end
         endcase
@@ -1417,17 +1429,17 @@ module rvv_backend_alu_unit_addsub
         case(vs2_eew)
           EEW8: begin
             for (i=0;i<`VLENB;i=i+1) begin
-              round8[i] = {cout8[i],product8[i][`BYTE_WIDTH-1:1]}; 
+              round8[i] = {product8[i][`BYTE_WIDTH-1],product8[i][`BYTE_WIDTH-1:1]}; 
             end
           end
           EEW16: begin
             for (i=0;i<`VLEN/`HWORD_WIDTH;i=i+1) begin
-              round16[i] = {cout16[i],product16[i][`HWORD_WIDTH-1:1]}; 
+              round16[i] = {product16[i][`HWORD_WIDTH-1],product16[i][`HWORD_WIDTH-1:1]}; 
             end
           end
           EEW32: begin
             for (i=0;i<`VLEN/`WORD_WIDTH;i=i+1) begin
-              round32[i] = {cout32[i],product32[i][`WORD_WIDTH-1:1]}; 
+              round32[i] = {product32[i][`WORD_WIDTH-1],product32[i][`WORD_WIDTH-1:1]}; 
             end
           end
         endcase
@@ -1436,17 +1448,17 @@ module rvv_backend_alu_unit_addsub
         case(vs2_eew)
           EEW8: begin
             for (i=0;i<`VLENB;i=i+1) begin
-              round8[i] = f_half_addsub8(ADDSUB_VADD, {{2{cout8[i]}},product8[i][`BYTE_WIDTH-1:1]}, ((!product8[i][1])&product8[i][0])); 
+              round8[i] = f_half_addsub8(ADDSUB_VADD, {{2{product8[i][`BYTE_WIDTH-1]}},product8[i][`BYTE_WIDTH-1:1]}, ((!product8[i][1])&product8[i][0])); 
             end
           end
           EEW16: begin
             for (i=0;i<`VLEN/`HWORD_WIDTH;i=i+1) begin
-              round16[i] = f_half_addsub16(ADDSUB_VADD, {{2{cout16[i]}},product16[i][`HWORD_WIDTH-1:1]}, ((!product16[i][1])&product16[i][0])); 
+              round16[i] = f_half_addsub16(ADDSUB_VADD, {{2{product16[i][`HWORD_WIDTH-1]}},product16[i][`HWORD_WIDTH-1:1]}, ((!product16[i][1])&product16[i][0])); 
             end
           end
           EEW32: begin
             for (i=0;i<`VLEN/`WORD_WIDTH;i=i+1) begin
-              round32[i] = f_half_add32({{2{cout32[i]}},product32[i][`WORD_WIDTH-1:1]}, ((!product32[i][1])&product32[i][0])); 
+              round32[i] = f_half_add32({{2{product32[i][`WORD_WIDTH-1]}},product32[i][`WORD_WIDTH-1:1]}, ((!product32[i][1])&product32[i][0])); 
             end
           end
         endcase
@@ -1838,156 +1850,98 @@ module rvv_backend_alu_unit_addsub
     end
   endgenerate
 
+  // mask logic for result_data_sp
+  always_comb begin
+    mask_sp_bit0 = 'b0;
+    
+    case(vs2_eew)
+      EEW8: begin
+        if (uop_index[0])
+          mask_sp_bit0 = {{(`VLEN-2*`VLENB){1'b0}}, {`VLENB{1'b1}}, {`VLENB{1'b0}}};
+        else
+          mask_sp_bit0 = {{(`VLEN-`VLENB){1'b0}}, {`VLENB{1'b1}}};
+      end
+      EEW16: begin
+        if (uop_index[0])
+          mask_sp_bit0 = {{(`VLEN-2*`VLEN/`HWORD_WIDTH){1'b0}}, {`VLEN/`HWORD_WIDTH{1'b1}}, {(`VLEN/`HWORD_WIDTH){1'b0}}};
+        else
+          mask_sp_bit0 = {{(`VLEN-`VLEN/`HWORD_WIDTH){1'b0}}, {`VLEN/`HWORD_WIDTH{1'b1}}};
+      end
+      EEW32: begin
+        if (uop_index[0])
+          mask_sp_bit0 = {{(`VLEN-2*`VLEN/`WORD_WIDTH){1'b0}}, {`VLEN/`WORD_WIDTH{1'b1}}, {(`VLEN/`WORD_WIDTH){1'b0}}};
+        else
+          mask_sp_bit0 = {{(`VLEN-`VLEN/`WORD_WIDTH){1'b0}}, {`VLEN/`WORD_WIDTH{1'b1}}};
+      end
+    endcase
+  end
+
+  always_comb begin
+    mask_sp_bit1 = mask_sp_bit0;
+    
+    case(vs2_eew)
+      EEW8: begin
+        if (uop_index[1]) begin
+          mask_sp_bit1 = {mask_sp_bit0[`VLEN-1 : 4*`VLENB], 
+                          mask_sp_bit0[0        +: 2*`VLENB], 
+                          mask_sp_bit0[2*`VLENB +: 2*`VLENB]};
+        end
+      end
+      EEW16: begin
+        if (uop_index[1]) begin
+          mask_sp_bit1 = {mask_sp_bit0[`VLEN-1 : 4*`VLEN/`HWORD_WIDTH], 
+                          mask_sp_bit0[0                    +: 2*`VLEN/`HWORD_WIDTH], 
+                          mask_sp_bit0[2*`VLEN/`HWORD_WIDTH +: 2*`VLEN/`HWORD_WIDTH]};
+        end
+      end
+      EEW32: begin
+        if (uop_index[1]) begin
+          mask_sp_bit1 = {mask_sp_bit0[`VLEN-1 : 4*`VLEN/`WORD_WIDTH], 
+                          mask_sp_bit0[0                   +: 2*`VLEN/`WORD_WIDTH], 
+                          mask_sp_bit0[2*`VLEN/`WORD_WIDTH +: 2*`VLEN/`WORD_WIDTH]};
+        end
+      end
+    endcase
+  end
+
+  always_comb begin
+    mask_sp_bit2 = mask_sp_bit1;
+    
+    case(vs2_eew)
+      EEW8: begin
+        if (uop_index[2]) begin
+          mask_sp_bit2 = {mask_sp_bit1[0      +: 4*`VLENB], 
+                          mask_sp_bit1[`VLEN-1 : 4*`VLENB]}; 
+        end
+      end
+      EEW16: begin
+        if (uop_index[1]) begin
+          mask_sp_bit2 = {mask_sp_bit1[0      +: 4*`VLEN/`HWORD_WIDTH],
+                          mask_sp_bit1[`VLEN-1 : 4*`VLEN/`HWORD_WIDTH]}; 
+        end
+      end
+      EEW32: begin
+        if (uop_index[1]) begin
+          mask_sp_bit2 = {mask_sp_bit1[0      +: 4*`VLEN/`WORD_WIDTH], 
+                          mask_sp_bit1[`VLEN-1 : 4*`VLEN/`WORD_WIDTH]};
+        end
+      end
+    endcase
+  end
+
   // assign to result_data_sp
   always_comb begin
     result_data_sp = 'b0; 
 
-    case(uop_index)
-      3'd0: begin
-        case(vs2_eew)
-          EEW8: begin
-            result_data_sp = {vd_data[`VLEN-1 : `VLENB], 
-                              cout8[`VLENB-1 : 0]};
-          end
-          EEW16: begin
-            result_data_sp = {vd_data[`VLEN-1 : `VLEN/`HWORD_WIDTH], 
-                              cout16[`VLEN/`HWORD_WIDTH-1 : 0]};
-          end
-          EEW32: begin
-            result_data_sp = {vd_data[`VLEN-1 : `VLEN/`WORD_WIDTH], 
-                              cout32[`VLEN/`WORD_WIDTH-1 : 0]};
-          end
-        endcase
+    case(vs2_eew)
+      EEW8: begin
+        result_data_sp = {`BYTE_WIDTH{cout8}}; 
       end
-      3'd1: begin
-        case(vs2_eew)
-          EEW8: begin
-            result_data_sp = {vd_data[`VLEN-1 : 2*`VLENB], 
-                              cout8[`VLENB-1 : 0],
-                              vd_data[`VLENB-1 : 0]};
-          end
-          EEW16: begin
-            result_data_sp = {vd_data[`VLEN-1 : 2*`VLEN/`HWORD_WIDTH], 
-                              cout16[`VLEN/`HWORD_WIDTH-1 : 0],
-                              vd_data[`VLEN/`HWORD_WIDTH-1 : 0]};
-          end
-          EEW32: begin
-            result_data_sp = {vd_data[`VLEN-1 : 2*`VLEN/`WORD_WIDTH], 
-                              cout32[`VLEN/`WORD_WIDTH-1 : 0],
-                              vd_data[`VLEN/`WORD_WIDTH-1 : 0]};
-          end
-        endcase
+      EEW16: begin
+        result_data_sp = {`HWORD_WIDTH{cout16}}; 
       end
-      3'd2: begin
-        case(vs2_eew)
-          EEW8: begin
-            result_data_sp = {vd_data[`VLEN-1 : 3*`VLENB], 
-                              cout8[`VLENB-1 : 0],
-                              vd_data[2*`VLENB-1 : 0]};
-          end
-          EEW16: begin
-            result_data_sp = {vd_data[`VLEN-1 : 3*`VLEN/`HWORD_WIDTH], 
-                              cout16[`VLEN/`HWORD_WIDTH-1 : 0],
-                              vd_data[2*`VLEN/`HWORD_WIDTH-1 : 0]};
-          end
-          EEW32: begin
-            result_data_sp = {vd_data[`VLEN-1 : 3*`VLEN/`WORD_WIDTH], 
-                              cout32[`VLEN/`WORD_WIDTH-1 : 0],
-                              vd_data[2*`VLEN/`WORD_WIDTH-1 : 0]};
-          end
-        endcase
-      end
-      3'd3: begin
-        case(vs2_eew)
-          EEW8: begin
-            result_data_sp = {vd_data[`VLEN-1 : 4*`VLENB], 
-                              cout8[`VLENB-1 : 0],
-                              vd_data[3*`VLENB-1 : 0]};
-          end
-          EEW16: begin
-            result_data_sp = {vd_data[`VLEN-1 : 4*`VLEN/`HWORD_WIDTH], 
-                              cout16[`VLEN/`HWORD_WIDTH-1 : 0],
-                              vd_data[3*`VLEN/`HWORD_WIDTH-1 : 0]};
-          end
-          EEW32: begin
-            result_data_sp = {vd_data[`VLEN-1 : 4*`VLEN/`WORD_WIDTH], 
-                              cout32[`VLEN/`WORD_WIDTH-1 : 0],
-                              vd_data[3*`VLEN/`WORD_WIDTH-1 : 0]};
-          end
-        endcase
-      end
-      3'd4: begin
-        case(vs2_eew)
-          EEW8: begin
-            result_data_sp = {vd_data[`VLEN-1 : 5*`VLENB], 
-                              cout8[`VLENB-1 : 0],
-                              vd_data[4*`VLENB-1 : 0]};
-          end
-          EEW16: begin
-            result_data_sp = {vd_data[`VLEN-1 : 5*`VLEN/`HWORD_WIDTH], 
-                              cout16[`VLEN/`HWORD_WIDTH-1 : 0],
-                              vd_data[4*`VLEN/`HWORD_WIDTH-1 : 0]};
-          end
-          EEW32: begin
-            result_data_sp = {vd_data[`VLEN-1 : 5*`VLEN/`WORD_WIDTH], 
-                              cout32[`VLEN/`WORD_WIDTH-1 : 0],
-                              vd_data[4*`VLEN/`WORD_WIDTH-1 : 0]};
-          end
-        endcase
-      end
-      3'd5: begin
-        case(vs2_eew)
-          EEW8: begin
-            result_data_sp = {vd_data[`VLEN-1 : 6*`VLENB], 
-                              cout8[`VLENB-1 : 0],
-                              vd_data[5*`VLENB-1 : 0]};
-          end
-          EEW16: begin
-            result_data_sp = {vd_data[`VLEN-1 : 6*`VLEN/`HWORD_WIDTH], 
-                              cout16[`VLEN/`HWORD_WIDTH-1 : 0],
-                              vd_data[5*`VLEN/`HWORD_WIDTH-1 : 0]};
-          end
-          EEW32: begin
-            result_data_sp = {vd_data[`VLEN-1 : 6*`VLEN/`WORD_WIDTH], 
-                              cout32[`VLEN/`WORD_WIDTH-1 : 0],
-                              vd_data[5*`VLEN/`WORD_WIDTH-1 : 0]};
-          end
-        endcase
-      end
-      3'd6: begin
-        case(vs2_eew)
-          EEW8: begin
-            result_data_sp = {vd_data[`VLEN-1 : 7*`VLENB], 
-                              cout8[`VLENB-1 : 0],
-                              vd_data[6*`VLENB-1 : 0]};
-          end
-          EEW16: begin
-            result_data_sp = {vd_data[`VLEN-1 : 7*`VLEN/`HWORD_WIDTH], 
-                              cout16[`VLEN/`HWORD_WIDTH-1 : 0],
-                              vd_data[6*`VLEN/`HWORD_WIDTH-1 : 0]};
-          end
-          EEW32: begin
-            result_data_sp = {vd_data[`VLEN-1 : 7*`VLEN/`WORD_WIDTH], 
-                              cout32[`VLEN/`WORD_WIDTH-1 : 0],
-                              vd_data[6*`VLEN/`WORD_WIDTH-1 : 0]};
-          end
-        endcase
-      end
-      3'd7: begin
-        case(vs2_eew)
-          EEW8: begin
-            result_data_sp = {cout8[`VLENB-1 : 0],
-                              vd_data[7*`VLENB-1 : 0]};
-          end
-          EEW16: begin
-            result_data_sp = {cout16[`VLEN/`HWORD_WIDTH-1 : 0],
-                              vd_data[7*`VLEN/`HWORD_WIDTH-1 : 0]};
-          end
-          EEW32: begin
-            result_data_sp = {cout32[`VLEN/`WORD_WIDTH-1 : 0],
-                              vd_data[7*`VLEN/`WORD_WIDTH-1 : 0]};
-          end
-        endcase
+      EEW32: begin
+        result_data_sp = {`WORD_WIDTH{cout32}}; 
       end
     endcase
   end
@@ -2013,7 +1967,7 @@ module rvv_backend_alu_unit_addsub
         case(uop_funct6.ari_funct6)
           VMADC,
           VMSBC: begin
-            w_data = result_data_sp;
+            w_data = (result_data_sp&mask_sp_bit2) | (vd_data&(~mask_sp_bit2)); 
           end
         endcase
       end
