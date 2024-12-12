@@ -129,8 +129,13 @@ object EmitCore extends App {
     new Core(p, moduleName)
   }
 
+  val firtoolOpts = Array(
+      "--lowering-options=disallowLocalVariables",
+      // Suppress location comments
+      "--lowering-options=locationInfoStyle=none",
+  )
   val systemVerilogSource = ChiselStage.emitSystemVerilog(
-    core, chiselArgs.toArray)
+    core, chiselArgs.toArray, firtoolOpts)
   // CIRCT adds a little extra data to the sv file at the end. Remove it as we
   // don't want it (it prevents the sv from being verilated).
   val resourcesSeparator =
@@ -151,8 +156,7 @@ object EmitCore extends App {
 
         ChiselStage.emitSystemVerilogFile(
             core2, chiselArgs.toArray ++ Array(
-                "--split-verilog", "--target-dir", targetDir),
-                Array("--lowering-options=disallowLocalVariables"))
+                "--split-verilog", "--target-dir", targetDir), firtoolOpts)
         val files = (new File(targetDir)).listFiles
         val zip = new ZipOutputStream(new FileOutputStream(
             targetDir + "/" + coreName + ".zip"))
