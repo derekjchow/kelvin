@@ -318,7 +318,9 @@ typedef struct packed {
   FUNCT6_u                            uop_funct6;
   EXE_UNIT_e                          uop_exe_unit; 
   UOP_CLASS_e                         uop_class;   
-  RVVConfigState                      vector_csr;     
+  RVVConfigState                      vector_csr;  
+  logic                               force_vma_agnostic; // some situation will force to mask-agnostic regardless of vtype.vma
+  logic                               force_vta_agnostic; // some situation will force to mask-agnostic regardless of vtype.vma
 
   logic                               vm;                 // Original 32bit instruction encoding: inst[25]
   logic                               v0_valid;           // when v0_valid=1, v0 will be regarded as a vector operand in this uop, not mask register. Like: vadc.vvm
@@ -338,7 +340,6 @@ typedef struct packed {
   logic   [`REGFILE_INDEX_WIDTH-1:0]  rd_index; 	        // Original 32bit instruction encoding: inst[11:7].
   logic                               rd_index_valid; 
   logic   [`XLEN-1:0] 	              rs1_data;           // rs1_data could be from X[rs1] and imm(inst[19:15]). If it is imm, the 5-bit imm(inst[19:15]) will be sign-extend or zero-extend(shift instructions...) to XLEN-bit. 
-  EEW_e                               scalar_eew;
   logic        	                      rs1_data_valid;                                
           
   logic   [`UOP_INDEX_WIDTH-1:0]      uop_index;          // used for calculate v0_start in DP stage
