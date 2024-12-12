@@ -2369,7 +2369,6 @@ module rvv_backend_decode_unit_lsu
   always_comb begin
     for(i=0;i<`NUM_DE_UOP;i=i+1) begin: GET_RS1
       uop[i].rs1_data         = 'b0;
-      uop[i].scalar_eew       = EEW_NONE;
       uop[i].rs1_data_valid   = 'b0;
     end
   end
