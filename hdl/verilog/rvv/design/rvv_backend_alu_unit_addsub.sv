@@ -126,8 +126,7 @@ module rvv_backend_alu_unit_addsub
                 src2_data[i] = {vs2_data[(i+1)*`BYTE_WIDTH-1], vs2_data[i*`BYTE_WIDTH +: `BYTE_WIDTH]};
                 src1_data[i] = {vs1_data[(i+1)*`BYTE_WIDTH-1], vs1_data[i*`BYTE_WIDTH +: `BYTE_WIDTH]};
               end
-            end
-            else begin
+
               `ifdef ASSERT_ON
                 `rvv_expect(vs2_data_valid==1'b1)
                 else $error("vs2_data_valid(%d) should be 1.\n",vs2_data_valid);
@@ -147,8 +146,7 @@ module rvv_backend_alu_unit_addsub
                 src2_data[i] = {vs2_data[(i+1)*`BYTE_WIDTH-1], vs2_data[i*`BYTE_WIDTH +: `BYTE_WIDTH]};
                 src1_data[i] = {vs1_data[(i+1)*`BYTE_WIDTH-1], vs1_data[i*`BYTE_WIDTH +: `BYTE_WIDTH]};
               end
-            end
-            else begin
+
               `ifdef ASSERT_ON
                 `rvv_expect(vs2_data_valid==1'b1)
                 else $error("vs2_data_valid(%d) should be 1.\n",vs2_data_valid);
@@ -174,8 +172,7 @@ module rvv_backend_alu_unit_addsub
                 src2_data[i] = {vs2_data[(i+1)*`BYTE_WIDTH-1], vs2_data[i*`BYTE_WIDTH +: `BYTE_WIDTH]};
                 src1_data[i] = {vs1_data[(i+1)*`BYTE_WIDTH-1], vs1_data[i*`BYTE_WIDTH +: `BYTE_WIDTH]};
               end
-            end
-            else begin
+
               `ifdef ASSERT_ON
                 `rvv_expect(vs2_data_valid==1'b1)
                 else $error("vs2_data_valid(%d) should be 1.\n",vs2_data_valid);
@@ -201,8 +198,7 @@ module rvv_backend_alu_unit_addsub
                 src2_data[i] = {1'b0, vs2_data[i*`BYTE_WIDTH +: `BYTE_WIDTH]};
                 src1_data[i] = {1'b0, vs1_data[i*`BYTE_WIDTH +: `BYTE_WIDTH]};
               end
-            end
-            else begin
+
               `ifdef ASSERT_ON
                 `rvv_expect(vs2_data_valid==1'b1)
                 else $error("vs2_data_valid(%d) should be 1.\n",vs2_data_valid);
@@ -250,8 +246,7 @@ module rvv_backend_alu_unit_addsub
                   end
                 endcase
               end
-            end
-            else begin
+
               `ifdef ASSERT_ON
                 `rvv_expect(vs2_data_valid==1'b1)
                 else $error("vs2_data_valid(%d) should be 1.\n",vs2_data_valid);
@@ -292,8 +287,7 @@ module rvv_backend_alu_unit_addsub
               for (i=0;i<`VLENB;i=i+1) begin
                 src1_data[i] = {vs2_data[(i+1)*`BYTE_WIDTH-1], vs2_data[i*`BYTE_WIDTH +: `BYTE_WIDTH]};
               end
-            end
-            else begin
+
               `ifdef ASSERT_ON
                 `rvv_expect(vs2_data_valid==1'b1)
                 else $error("vs2_data_valid(%d) should be 1.\n",vs2_data_valid);
@@ -335,8 +329,7 @@ module rvv_backend_alu_unit_addsub
                   end
                 endcase
               end
-            end
-            else begin
+
               `ifdef ASSERT_ON
                 `rvv_expect(vs2_data_valid==1'b1)
                 else $error("vs2_data_valid(%d) should be 1.\n",vs2_data_valid);
@@ -384,8 +377,7 @@ module rvv_backend_alu_unit_addsub
                   end
                 endcase
               end
-            end
-            else begin
+
               `ifdef ASSERT_ON
                 `rvv_expect(vs2_data_valid==1'b1)
                 else $error("vs2_data_valid(%d) should be 1.\n",vs2_data_valid);
@@ -433,8 +425,7 @@ module rvv_backend_alu_unit_addsub
                   end
                 endcase
               end
-            end
-            else begin
+
               `ifdef ASSERT_ON
                 `rvv_expect(vs2_data_valid==1'b1)
                 else $error("vs2_data_valid(%d) should be 1.\n",vs2_data_valid);
@@ -479,8 +470,7 @@ module rvv_backend_alu_unit_addsub
                   end
                 endcase
               end
-            end
-            else begin
+
               `ifdef ASSERT_ON
                 `rvv_expect(vs2_data_valid==1'b1)
                 else $error("vs2_data_valid(%d) should be 1.\n",vs2_data_valid);
@@ -521,8 +511,7 @@ module rvv_backend_alu_unit_addsub
               for (i=0;i<`VLENB;i=i+1) begin
                 src1_data[i] = {vs2_data[(i+1)*`BYTE_WIDTH-1], vs2_data[i*`BYTE_WIDTH +: `BYTE_WIDTH]};
               end
-            end
-            else begin
+
               `ifdef ASSERT_ON
                 `rvv_expect(vs2_data_valid==1'b1)
                 else $error("vs2_data_valid(%d) should be 1.\n",vs2_data_valid);
@@ -563,8 +552,7 @@ module rvv_backend_alu_unit_addsub
                   end
                 endcase
               end
-            end
-            else begin
+
               `ifdef ASSERT_ON
                 `rvv_expect(vs2_data_valid==1'b1)
                 else $error("vs2_data_valid(%d) should be 1.\n",vs2_data_valid);
@@ -611,8 +599,7 @@ module rvv_backend_alu_unit_addsub
                   end
                 endcase
               end
-            end
-            else begin
+
               `ifdef ASSERT_ON
                 `rvv_expect(vs2_data_valid==1'b1)
                 else $error("vs2_data_valid(%d) should be 1.\n",vs2_data_valid);
@@ -659,8 +646,7 @@ module rvv_backend_alu_unit_addsub
                   end
                 endcase
               end
-            end
-            else begin
+
               `ifdef ASSERT_ON
                 `rvv_expect(vs2_data_valid==1'b1)
                 else $error("vs2_data_valid(%d) should be 1.\n",vs2_data_valid);
@@ -732,8 +718,7 @@ module rvv_backend_alu_unit_addsub
                   end
                 endcase
               end
-            end
-            else begin
+
               `ifdef ASSERT_ON
                 `rvv_expect(vs2_data_valid==1'b1)
                 else $error("vs2_data_valid(%d) should be 1.\n",vs2_data_valid);
@@ -802,8 +787,7 @@ module rvv_backend_alu_unit_addsub
                   end
                 endcase
               end
-            end
-            else begin
+
               `ifdef ASSERT_ON
                 `rvv_expect(vs2_data_valid==1'b1)
                 else $error("vs2_data_valid(%d) should be 1.\n",vs2_data_valid);
@@ -855,8 +839,7 @@ module rvv_backend_alu_unit_addsub
                   end
                 endcase
               end
-            end
-            else begin
+
               `ifdef ASSERT_ON
                 `rvv_expect(vs2_data_valid==1'b1)
                 else $error("vs2_data_valid(%d) should be 1.\n",vs2_data_valid);
@@ -908,8 +891,7 @@ module rvv_backend_alu_unit_addsub
                   end
                 endcase
               end
-            end
-            else begin
+
               `ifdef ASSERT_ON
                 `rvv_expect(vs2_data_valid==1'b1)
                 else $error("vs2_data_valid(%d) should be 1.\n",vs2_data_valid);
@@ -929,8 +911,7 @@ module rvv_backend_alu_unit_addsub
                 src2_data[i] = {1'b0, vs2_data[i*`BYTE_WIDTH +: `BYTE_WIDTH]};
                 src1_data[i] = {1'b0, vs1_data[i*`BYTE_WIDTH +: `BYTE_WIDTH]};
               end
-            end
-            else begin
+
               `ifdef ASSERT_ON
                 `rvv_expect(vs2_data_valid==1'b1)
                 else $error("vs2_data_valid(%d) should be 1.\n",vs2_data_valid);
@@ -950,8 +931,7 @@ module rvv_backend_alu_unit_addsub
                 src2_data[i] = {vs2_data[(i+1)*`BYTE_WIDTH-1], vs2_data[i*`BYTE_WIDTH +: `BYTE_WIDTH]};
                 src1_data[i] = {vs1_data[(i+1)*`BYTE_WIDTH-1], vs1_data[i*`BYTE_WIDTH +: `BYTE_WIDTH]};
               end
-            end
-            else begin
+
               `ifdef ASSERT_ON
                 `rvv_expect(vs2_data_valid==1'b1)
                 else $error("vs2_data_valid(%d) should be 1.\n",vs2_data_valid);
@@ -1013,8 +993,7 @@ module rvv_backend_alu_unit_addsub
                   end
                 endcase
               end
-            end
-            else begin
+
               `ifdef ASSERT_ON
                 `rvv_expect(vs2_data_valid==1'b1)
                 else $error("vs2_data_valid(%d) should be 1.\n",vs2_data_valid);
@@ -1072,8 +1051,7 @@ module rvv_backend_alu_unit_addsub
                   end
                 endcase
               end
-            end
-            else begin
+
               `ifdef ASSERT_ON
                 `rvv_expect(vs2_data_valid==1'b1)
                 else $error("vs2_data_valid(%d) should be 1.\n",vs2_data_valid);
@@ -1109,8 +1087,7 @@ module rvv_backend_alu_unit_addsub
                   end
                 endcase
               end
-            end
-            else begin
+
               `ifdef ASSERT_ON
                 `rvv_expect(vs2_data_valid==1'b1)
                 else $error("vs2_data_valid(%d) should be 1.\n",vs2_data_valid);
@@ -1146,8 +1123,7 @@ module rvv_backend_alu_unit_addsub
                   end
                 endcase
               end
-            end
-            else begin
+
               `ifdef ASSERT_ON
                 `rvv_expect(vs2_data_valid==1'b1)
                 else $error("vs2_data_valid(%d) should be 1.\n",vs2_data_valid);
@@ -1189,8 +1165,7 @@ module rvv_backend_alu_unit_addsub
                   end
                 endcase
               end
-            end
-            else begin
+
               `ifdef ASSERT_ON
                 `rvv_expect(vs2_data_valid==1'b1)
                 else $error("vs2_data_valid(%d) should be 1.\n",vs2_data_valid);
@@ -1232,8 +1207,7 @@ module rvv_backend_alu_unit_addsub
                   end
                 endcase
               end
-            end
-            else begin
+
               `ifdef ASSERT_ON
                 `rvv_expect(vs2_data_valid==1'b1)
                 else $error("vs2_data_valid(%d) should be 1.\n",vs2_data_valid);
@@ -1258,10 +1232,10 @@ module rvv_backend_alu_unit_addsub
         cin[4*j+2] = 'b0;
         cin[4*j+3] = 'b0;
 
-        case({alu_uop_valid,uop_funct3}) 
-          {1'b1,OPIVV},
-          {1'b1,OPIVX},
-          {1'b1,OPIVI}: begin
+        case(uop_funct3) 
+          OPIVV,
+          OPIVX,
+          OPIVI: begin
             case(uop_funct6.ari_funct6)
               VADC,
               VMADC,
@@ -1288,8 +1262,7 @@ module rvv_backend_alu_unit_addsub
                       cin[4*j+3] = 'b0;
                     end
                   endcase
-                end
-                else begin
+
                   `ifdef ASSERT_ON
                     `rvv_expect(vm==1'b0)
                     else $error("vm(%d) should be 0.\n",vm);
@@ -1313,9 +1286,9 @@ module rvv_backend_alu_unit_addsub
 
     // prepare source data
     case({alu_uop_valid,uop_funct3}) 
-      {1'b1,OPIVV},
-      {1'b1,OPIVX},
-      {1'b1,OPIVI}: begin
+      OPIVV,
+      OPIVX,
+      OPIVI: begin
         case(uop_funct6.ari_funct6)    
           VADD,
           VADC,
@@ -1334,8 +1307,8 @@ module rvv_backend_alu_unit_addsub
           end
         endcase
       end
-      {1'b1,OPMVV},
-      {1'b1,OPMVX}: begin
+      OPMVV,
+      OPMVX: begin
         case(uop_funct6.ari_funct6)    
           VWADDU,
           VWADD,
@@ -1572,9 +1545,9 @@ module rvv_backend_alu_unit_addsub
  
         // calculate result data
         case({alu_uop_valid,uop_funct3}) 
-          {1'b1,OPIVV},
-          {1'b1,OPIVX},
-          {1'b1,OPIVI}: begin
+          OPIVV,
+          OPIVX,
+          OPIVI: begin
             case(uop_funct6.ari_funct6)
               VADD,
               VSUB,
@@ -1796,8 +1769,8 @@ module rvv_backend_alu_unit_addsub
             endcase
           end
           
-          {1'b1,OPMVV},
-          {1'b1,OPMVX}: begin
+          OPMVV,
+          OPMVX: begin
             case(uop_funct6.ari_funct6)
               VWADDU,
               VWSUBU,
@@ -1961,9 +1934,9 @@ module rvv_backend_alu_unit_addsub
     w_data = result_data_rg;
 
     case({alu_uop_valid,uop_funct3}) 
-      {1'b1,OPIVV},
-      {1'b1,OPIVX},
-      {1'b1,OPIVI}: begin
+      OPIVV,
+      OPIVX,
+      OPIVI: begin
         case(uop_funct6.ari_funct6)
           VMADC,
           VMSBC: begin
@@ -1983,9 +1956,9 @@ module rvv_backend_alu_unit_addsub
     vxsat = 'b0;
 
     case({alu_uop_valid,uop_funct3}) 
-      {1'b1,OPIVV},
-      {1'b1,OPIVX},
-      {1'b1,OPIVI}: begin
+      OPIVV,
+      OPIVX,
+      OPIVI: begin
         case(uop_funct6.ari_funct6)
           VSADDU: begin
             vxsat = (|addu_upoverflow);
@@ -2010,9 +1983,9 @@ module rvv_backend_alu_unit_addsub
     ignore_vma            = 'b0;
     
     case({alu_uop_valid,uop_funct3}) 
-      {1'b1,OPIVV},
-      {1'b1,OPIVX},
-      {1'b1,OPIVI}: begin
+      OPIVV,
+      OPIVX,
+      OPIVI: begin
         case(uop_funct6.ari_funct6)
           VMADC,
           VMSBC: begin
