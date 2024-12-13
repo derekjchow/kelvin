@@ -1285,7 +1285,7 @@ module rvv_backend_alu_unit_addsub
     opcode = ADDSUB_VADD;
 
     // prepare source data
-    case({alu_uop_valid,uop_funct3}) 
+    case(uop_funct3) 
       OPIVV,
       OPIVX,
       OPIVI: begin
@@ -1544,7 +1544,7 @@ module rvv_backend_alu_unit_addsub
         result_data_rg[j*`WORD_WIDTH +: `WORD_WIDTH] = 'b0;
  
         // calculate result data
-        case({alu_uop_valid,uop_funct3}) 
+        case(uop_funct3) 
           OPIVV,
           OPIVX,
           OPIVI: begin
@@ -1933,7 +1933,7 @@ module rvv_backend_alu_unit_addsub
   always_comb begin
     w_data = result_data_rg;
 
-    case({alu_uop_valid,uop_funct3}) 
+    case(uop_funct3) 
       OPIVV,
       OPIVX,
       OPIVI: begin
@@ -1955,7 +1955,7 @@ module rvv_backend_alu_unit_addsub
   // initial
     vxsat = 'b0;
 
-    case({alu_uop_valid,uop_funct3}) 
+    case(uop_funct3) 
       OPIVV,
       OPIVX,
       OPIVI: begin
@@ -1982,7 +1982,7 @@ module rvv_backend_alu_unit_addsub
     ignore_vta            = 'b0;
     ignore_vma            = 'b0;
     
-    case({alu_uop_valid,uop_funct3}) 
+    case(uop_funct3) 
       OPIVV,
       OPIVX,
       OPIVI: begin
