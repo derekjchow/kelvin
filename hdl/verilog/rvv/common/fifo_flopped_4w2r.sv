@@ -171,10 +171,10 @@ assign fifo_3left_to_full = (!full3_int && !full2_int && !full1_int &&  full0_in
 
 // Empty flag
 assign fifo_empty = empty3_int && empty2_int && empty1_int && empty0_int;
-assign fifo_1left_to_empty = (!empty1_int &&  empty0_int &&  empty1_int &&  empty0_int) || 
-                             ( empty1_int && !empty0_int &&  empty1_int &&  empty0_int) || 
-                             ( empty1_int &&  empty0_int && !empty1_int &&  empty0_int) || 
-                             ( empty1_int &&  empty0_int &&  empty1_int && !empty0_int); 
+assign fifo_1left_to_empty = (!empty3_int &&  empty2_int &&  empty1_int &&  empty0_int) || 
+                             ( empty3_int && !empty2_int &&  empty1_int &&  empty0_int) || 
+                             ( empty3_int &&  empty2_int && !empty1_int &&  empty0_int) || 
+                             ( empty3_int &&  empty2_int &&  empty1_int && !empty0_int); 
 assign fifo_idle = idle3_int && idle2_int && idle1_int && idle0_int;
 
 // Fifo inst 0
