@@ -1361,80 +1361,55 @@ module rvv_backend_alu_unit_addsub
 
     case(vxrm)
       RNU: begin
-        case(vs2_eew)
-          EEW8: begin
-            for (i=0;i<`VLENB;i=i+1) begin
-              round8[i] = f_half_addsub8(ADDSUB_VADD, {{2{product8[i][`BYTE_WIDTH-1]}},product8[i][`BYTE_WIDTH-1:1]}, product8[i][0]); 
-            end
-          end
-          EEW16: begin
-            for (i=0;i<`VLEN/`HWORD_WIDTH;i=i+1) begin
-              round16[i] = f_half_addsub16(ADDSUB_VADD, {{2{product16[i][`HWORD_WIDTH-1]}},product16[i][`HWORD_WIDTH-1:1]}, product16[i][0]); 
-            end
-          end
-          EEW32: begin
-            for (i=0;i<`VLEN/`WORD_WIDTH;i=i+1) begin
-              round32[i] = f_half_add32({{2{product32[i][`WORD_WIDTH-1]}},product32[i][`WORD_WIDTH-1:1]}, product32[i][0]); 
-            end
-          end
-        endcase
+        for (i=0;i<`VLENB;i=i+1) begin
+          round8[i] = f_half_addsub8(ADDSUB_VADD, {{2{product8[i][`BYTE_WIDTH-1]}},product8[i][`BYTE_WIDTH-1:1]}, product8[i][0]); 
+        end
+        
+        for (i=0;i<`VLEN/`HWORD_WIDTH;i=i+1) begin
+          round16[i] = f_half_addsub16(ADDSUB_VADD, {{2{product16[i][`HWORD_WIDTH-1]}},product16[i][`HWORD_WIDTH-1:1]}, product16[i][0]); 
+        end
+        for (i=0;i<`VLEN/`WORD_WIDTH;i=i+1) begin
+          round32[i] = f_half_add32({{2{product32[i][`WORD_WIDTH-1]}},product32[i][`WORD_WIDTH-1:1]}, product32[i][0]); 
+        end
       end
       RNE: begin
-        case(vs2_eew)
-          EEW8: begin
-            for (i=0;i<`VLENB;i=i+1) begin
-              round8[i] = f_half_addsub8(ADDSUB_VADD, {{2{product8[i][`BYTE_WIDTH-1]}},product8[i][`BYTE_WIDTH-1:1]}, (product8[i][0]&product8[i][1])); 
-            end
-          end
-          EEW16: begin
-            for (i=0;i<`VLEN/`HWORD_WIDTH;i=i+1) begin
-              round16[i] = f_half_addsub16(ADDSUB_VADD, {{2{product16[i][`HWORD_WIDTH-1]}},product16[i][`HWORD_WIDTH-1:1]}, (product16[i][0]&product16[i][1])); 
-            end
-          end
-          EEW32: begin
-            for (i=0;i<`VLEN/`WORD_WIDTH;i=i+1) begin
-              round32[i] = f_half_add32({{2{product32[i][`WORD_WIDTH-1]}},product32[i][`WORD_WIDTH-1:1]}, (product32[i][0]&product32[i][1])); 
-            end
-          end
-        endcase
+        for (i=0;i<`VLENB;i=i+1) begin
+          round8[i] = f_half_addsub8(ADDSUB_VADD, {{2{product8[i][`BYTE_WIDTH-1]}},product8[i][`BYTE_WIDTH-1:1]}, (product8[i][0]&product8[i][1])); 
+        end
+
+        for (i=0;i<`VLEN/`HWORD_WIDTH;i=i+1) begin
+          round16[i] = f_half_addsub16(ADDSUB_VADD, {{2{product16[i][`HWORD_WIDTH-1]}},product16[i][`HWORD_WIDTH-1:1]}, (product16[i][0]&product16[i][1])); 
+        end
+
+        for (i=0;i<`VLEN/`WORD_WIDTH;i=i+1) begin
+          round32[i] = f_half_add32({{2{product32[i][`WORD_WIDTH-1]}},product32[i][`WORD_WIDTH-1:1]}, (product32[i][0]&product32[i][1])); 
+        end
       end
       RDN: begin
-        case(vs2_eew)
-          EEW8: begin
-            for (i=0;i<`VLENB;i=i+1) begin
-              round8[i] = {product8[i][`BYTE_WIDTH-1],product8[i][`BYTE_WIDTH-1:1]}; 
-            end
-          end
-          EEW16: begin
-            for (i=0;i<`VLEN/`HWORD_WIDTH;i=i+1) begin
-              round16[i] = {product16[i][`HWORD_WIDTH-1],product16[i][`HWORD_WIDTH-1:1]}; 
-            end
-          end
-          EEW32: begin
-            for (i=0;i<`VLEN/`WORD_WIDTH;i=i+1) begin
-              round32[i] = {product32[i][`WORD_WIDTH-1],product32[i][`WORD_WIDTH-1:1]}; 
-            end
-          end
-        endcase
+        for (i=0;i<`VLENB;i=i+1) begin
+          round8[i] = {product8[i][`BYTE_WIDTH-1],product8[i][`BYTE_WIDTH-1:1]}; 
+        end
+
+        for (i=0;i<`VLEN/`HWORD_WIDTH;i=i+1) begin
+          round16[i] = {product16[i][`HWORD_WIDTH-1],product16[i][`HWORD_WIDTH-1:1]}; 
+        end
+
+        for (i=0;i<`VLEN/`WORD_WIDTH;i=i+1) begin
+          round32[i] = {product32[i][`WORD_WIDTH-1],product32[i][`WORD_WIDTH-1:1]}; 
+        end
       end
       ROD: begin
-        case(vs2_eew)
-          EEW8: begin
-            for (i=0;i<`VLENB;i=i+1) begin
-              round8[i] = f_half_addsub8(ADDSUB_VADD, {{2{product8[i][`BYTE_WIDTH-1]}},product8[i][`BYTE_WIDTH-1:1]}, ((!product8[i][1])&product8[i][0])); 
-            end
-          end
-          EEW16: begin
-            for (i=0;i<`VLEN/`HWORD_WIDTH;i=i+1) begin
-              round16[i] = f_half_addsub16(ADDSUB_VADD, {{2{product16[i][`HWORD_WIDTH-1]}},product16[i][`HWORD_WIDTH-1:1]}, ((!product16[i][1])&product16[i][0])); 
-            end
-          end
-          EEW32: begin
-            for (i=0;i<`VLEN/`WORD_WIDTH;i=i+1) begin
-              round32[i] = f_half_add32({{2{product32[i][`WORD_WIDTH-1]}},product32[i][`WORD_WIDTH-1:1]}, ((!product32[i][1])&product32[i][0])); 
-            end
-          end
-        endcase
+        for (i=0;i<`VLENB;i=i+1) begin
+          round8[i] = f_half_addsub8(ADDSUB_VADD, {{2{product8[i][`BYTE_WIDTH-1]}},product8[i][`BYTE_WIDTH-1:1]}, ((!product8[i][1])&product8[i][0])); 
+        end
+
+        for (i=0;i<`VLEN/`HWORD_WIDTH;i=i+1) begin
+          round16[i] = f_half_addsub16(ADDSUB_VADD, {{2{product16[i][`HWORD_WIDTH-1]}},product16[i][`HWORD_WIDTH-1:1]}, ((!product16[i][1])&product16[i][0])); 
+        end
+
+        for (i=0;i<`VLEN/`WORD_WIDTH;i=i+1) begin
+          round32[i] = f_half_add32({{2{product32[i][`WORD_WIDTH-1]}},product32[i][`WORD_WIDTH-1:1]}, ((!product32[i][1])&product32[i][0])); 
+        end
       end
     endcase
   end
