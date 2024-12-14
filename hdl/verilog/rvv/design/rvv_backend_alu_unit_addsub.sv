@@ -663,7 +663,7 @@ module rvv_backend_alu_unit_addsub
         case(uop_funct6.ari_funct6)
           VWADDU,
           VWSUBU: begin
-            if (vs2_data_valid&vs1_data_valid) begin
+            if (vs2_data_valid&vs1_data_valid&((vs2_eew==EEW8)|(vs2_eew==EEW16))) begin
               result_valid   = 'b1;
               
               for (i=0;i<`VLEN/`WORD_WIDTH;i=i+1) begin
@@ -731,7 +731,7 @@ module rvv_backend_alu_unit_addsub
 
           VWADD,
           VWSUB: begin
-            if (vs2_data_valid&vs1_data_valid) begin
+            if (vs2_data_valid&vs1_data_valid&((vs2_eew==EEW8)|(vs2_eew==EEW16))) begin
               result_valid   = 'b1;
 
               for (i=0;i<`VLEN/`WORD_WIDTH;i=i+1) begin
@@ -800,7 +800,7 @@ module rvv_backend_alu_unit_addsub
 
           VWADDU_W,
           VWSUBU_W: begin
-            if (vs2_data_valid&vs1_data_valid) begin
+            if (vs2_data_valid&vs1_data_valid&((vs2_eew==EEW16)|(vs2_eew==EEW32))) begin
               result_valid   = 'b1;
               
               for (i=0;i<`VLENB;i=i+1) begin
@@ -852,7 +852,7 @@ module rvv_backend_alu_unit_addsub
 
           VWADD_W,
           VWSUB_W: begin
-            if (vs2_data_valid&vs1_data_valid) begin
+            if (vs2_data_valid&vs1_data_valid&((vs2_eew==EEW16)|(vs2_eew==EEW32))) begin
               result_valid   = 'b1;
               
               for (i=0;i<`VLENB;i=i+1) begin
@@ -948,7 +948,7 @@ module rvv_backend_alu_unit_addsub
         case(uop_funct6.ari_funct6)
           VWADDU,
           VWSUBU: begin
-            if (vs2_data_valid&rs1_data_valid) begin
+            if (vs2_data_valid&rs1_data_valid&((vs2_eew==EEW8)|(vs2_eew==EEW16))) begin
               result_valid   = 'b1;
               
               for (i=0;i<`VLEN/`WORD_WIDTH;i=i+1) begin
@@ -1006,7 +1006,7 @@ module rvv_backend_alu_unit_addsub
 
           VWADD,
           VWSUB: begin
-            if (vs2_data_valid&rs1_data_valid) begin
+            if (vs2_data_valid&rs1_data_valid&((vs2_eew==EEW8)|(vs2_eew==EEW16))) begin
               result_valid   = 'b1;
               
               for (i=0;i<`VLEN/`WORD_WIDTH;i=i+1) begin
@@ -1064,7 +1064,7 @@ module rvv_backend_alu_unit_addsub
 
           VWADDU_W,
           VWSUBU_W: begin
-            if (vs2_data_valid&rs1_data_valid) begin
+            if (vs2_data_valid&rs1_data_valid&((vs2_eew==EEW16)|(vs2_eew==EEW32))) begin
               result_valid   = 'b1;
               
               for (i=0;i<`VLENB;i=i+1) begin
@@ -1100,7 +1100,7 @@ module rvv_backend_alu_unit_addsub
 
           VWADD_W,
           VWSUB_W: begin
-            if (vs2_data_valid&rs1_data_valid) begin
+            if (vs2_data_valid&rs1_data_valid&((vs2_eew==EEW16)|(vs2_eew==EEW32))) begin
               result_valid   = 'b1;
               
               for (i=0;i<`VLENB;i=i+1) begin
