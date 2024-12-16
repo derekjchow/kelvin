@@ -59,7 +59,7 @@ module rvv_backend_alu_unit_mask
   logic                           ignore_vta;
   logic                           ignore_vma;
   
-  //
+  // for-loop
   integer                         i;
   genvar                          j;
 
@@ -108,10 +108,10 @@ module rvv_backend_alu_unit_mask
 
             `ifdef ASSERT_ON
             `rvv_expect(vs1_data_valid==1'b1) 
-              else $error("rob_entry=%d. vs1_data_valid(%d) should be 1'b1.\n",rob_entry,vs1_data_valid);
+              else $error("vs1_data_valid(%d) should be 1'b1.\n",vs1_data_valid);
 
             `rvv_expect(vs2_data_valid==1'b1) 
-              else $error("rob_entry=%d. vs2_data_valid(%d) should be 1'b1.\n",rob_entry,vs2_data_valid);
+              else $error("vs2_data_valid(%d) should be 1'b1.\n",vs2_data_valid);
             `endif
           end
         endcase
@@ -144,10 +144,10 @@ module rvv_backend_alu_unit_mask
 
             `ifdef ASSERT_ON
             `rvv_expect(vs1_data_valid==1'b1) 
-              else $error("rob_entry=%d. vs1_data_valid(%d) should be 1'b1.\n",rob_entry,vs1_data_valid);
+              else $error("vs1_data_valid(%d) should be 1'b1.\n",vs1_data_valid);
 
             `rvv_expect(vs2_data_valid==1'b1) 
-              else $error("rob_entry=%d. vs2_data_valid(%d) should be 1'b1.\n",rob_entry,vs2_data_valid);
+              else $error("vs2_data_valid(%d) should be 1'b1.\n",vs2_data_valid);
             `endif
           end
         endcase
@@ -171,16 +171,16 @@ module rvv_backend_alu_unit_mask
 
             `ifdef ASSERT_ON
             `rvv_expect(vs1_data_valid==1'b1) 
-              else $error("rob_entry=%d. vs1_data_valid(%d) should be 1'b1.\n",rob_entry,vs1_data_valid);
+              else $error("vs1_data_valid(%d) should be 1'b1.\n",vs1_data_valid);
 
             `rvv_expect(vs2_data_valid==1'b1) 
-              else $error("rob_entry=%d. vs2_data_valid(%d) should be 1'b1.\n",rob_entry,vs2_data_valid);
+              else $error("vs2_data_valid(%d) should be 1'b1.\n",vs2_data_valid);
 
             `rvv_expect(vd_data_valid==1'b1) 
-              else $error("rob_entry=%d. vd_data_valid(%d) should be 1'b1.\n",rob_entry,vd_data_valid);
+              else $error("vd_data_valid(%d) should be 1'b1.\n",vd_data_valid);
 
             `rvv_expect(vm==1'b1) 
-              else $error("rob_entry=%d. vm(%d) should be 1'b1.\n",rob_entry,vm);
+              else $error("vm(%d) should be 1'b1.\n",vm);
             `endif
           end
         endcase
