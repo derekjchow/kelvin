@@ -134,15 +134,14 @@ module rvv_backend_alu_unit_shift
                 endcase
               end
             end
-            else begin
-              `ifdef ASSERT_ON
-                `rvv_expect(vs2_data_valid==1'b1)
-                else $error("vs2_data_valid(%d) should be 1.\n",vs2_data_valid);
 
-                `rvv_expect(vs1_data_valid==1'b1)
-                else $error("vs1_data_valid(%d) should be 1.\n",vs1_data_valid);
-              `endif
-            end
+            `ifdef ASSERT_ON
+              `rvv_expect(vs2_data_valid==1'b1)
+              else $error("vs2_data_valid(%d) should be 1.\n",vs2_data_valid);
+
+              `rvv_expect(vs1_data_valid==1'b1)
+              else $error("vs1_data_valid(%d) should be 1.\n",vs1_data_valid);
+            `endif
           end
 
           VNSRL,
@@ -166,18 +165,17 @@ module rvv_backend_alu_unit_shift
                 endcase
               end      
             end
-            else begin
-              `ifdef ASSERT_ON
-                `rvv_expect(vs2_data_valid==1'b1)
-                else $error("vs2_data_valid(%d) should be 1.\n",vs2_data_valid);
 
-                `rvv_expect(vs1_data_valid==1'b1)
-                else $error("vs1_data_valid(%d) should be 1.\n",vs1_data_valid);
+            `ifdef ASSERT_ON
+              `rvv_expect(vs2_data_valid==1'b1)
+              else $error("vs2_data_valid(%d) should be 1.\n",vs2_data_valid);
 
-                `rvv_expect((vs2_eew==EEW16)|(vs2_eew==EEW32))
-                else $error("vs2_eew(%s) is not supported.\n",vs2_eew.name());
-              `endif
-            end
+              `rvv_expect(vs1_data_valid==1'b1)
+              else $error("vs1_data_valid(%d) should be 1.\n",vs1_data_valid);
+
+              `rvv_expect((vs2_eew==EEW16)|(vs2_eew==EEW32))
+              else $error("vs2_eew(%s) is not supported.\n",vs2_eew.name());
+            `endif
           end
         endcase
       end
@@ -212,15 +210,14 @@ module rvv_backend_alu_unit_shift
                 endcase
               end          
             end
-            else begin             
-              `ifdef ASSERT_ON
-                `rvv_expect(vs2_data_valid==1'b1)
-                else $error("vs2_data_valid(%d) should be 1.\n",vs2_data_valid);
 
-                `rvv_expect(rs1_data_valid==1'b1)
-                else $error("rs1_data_valid(%d) should be 1.\n",rs1_data_valid);
-              `endif
-            end
+            `ifdef ASSERT_ON
+              `rvv_expect(vs2_data_valid==1'b1)
+              else $error("vs2_data_valid(%d) should be 1.\n",vs2_data_valid);
+
+              `rvv_expect(rs1_data_valid==1'b1)
+              else $error("rs1_data_valid(%d) should be 1.\n",rs1_data_valid);
+            `endif
           end
 
           VNSRL,
@@ -243,18 +240,17 @@ module rvv_backend_alu_unit_shift
                 endcase
               end          
             end
-            else begin              
-              `ifdef ASSERT_ON
-                `rvv_expect(vs2_data_valid==1'b1)
-                else $error("vs2_data_valid(%d) should be 1.\n",vs2_data_valid);
 
-                `rvv_expect(rs1_data_valid==1'b1)
-                else $error("rs1_data_valid(%d) should be 1.\n",rs1_data_valid);
+            `ifdef ASSERT_ON
+              `rvv_expect(vs2_data_valid==1'b1)
+              else $error("vs2_data_valid(%d) should be 1.\n",vs2_data_valid);
 
-                `rvv_expect((vs2_eew==EEW16)|(vs2_eew==EEW32))
-                else $error("vs2_eew(%s) is not supported.\n",vs2_eew.name());
-              `endif
-            end
+              `rvv_expect(rs1_data_valid==1'b1)
+              else $error("rs1_data_valid(%d) should be 1.\n",rs1_data_valid);
+
+              `rvv_expect((vs2_eew==EEW16)|(vs2_eew==EEW32))
+              else $error("vs2_eew(%s) is not supported.\n",vs2_eew.name());
+            `endif
           end
         endcase
       end
