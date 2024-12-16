@@ -32,6 +32,8 @@ module rvv_backend_alu_unit
 //   
   logic                           result_valid_addsub;
   ALU2ROB_t                       result_addsub;
+  logic                           result_valid_shift;
+  ALU2ROB_t                       result_shift;
   logic                           result_valid_mask;
   ALU2ROB_t                       result_mask;
 
@@ -46,6 +48,14 @@ module rvv_backend_alu_unit
     .result               (result_addsub)
   );
 
+  rvv_backend_alu_unit_shift u_alu_shift
+  (
+    .alu_uop_valid        (alu_uop_valid),
+    .alu_uop              (alu_uop),
+    .result_valid         (result_valid_shift),
+    .result               (result_shift)
+  );
+  
   rvv_backend_alu_unit_mask u_alu_mask
   (
     .alu_uop_valid        (alu_uop_valid),
@@ -66,6 +76,11 @@ module rvv_backend_alu_unit
       result_valid_addsub: begin
         result_valid = 1'b1;
         result       = result_addsub;
+      end
+
+      result_valid_shift: begin
+        result_valid = 1'b1;
+        result       = result_shift;
       end
 
       result_valid_mask: begin

@@ -15,7 +15,7 @@ module rvv_backend_alu
   
   result_valid_ex2rob,
   result_ex2rob,
-  result_ready_rob2alu,
+  result_ready_rob2alu
 );
 
 //
