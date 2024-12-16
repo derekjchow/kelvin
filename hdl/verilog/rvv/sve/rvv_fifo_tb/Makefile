@@ -6,7 +6,7 @@
 PROJECT_NAME = rvv_fifo
 ################################################################################
 
-DESIGN_ROOT = /home/cn9305/Desktop/RVV/kelvin_RVV/hdl/verilog/rvv
+DESIGN_ROOT = <RTL root>
 RTL_PATH = $(DESIGN_ROOT)/common
 #RTLFILES = $(shell ls ../../common/*.sv)
 RTLFILES := $(RTL_PATH)/fifo_flopped.sv \
@@ -59,7 +59,6 @@ DUT =
 #Checking the VCS version
 #VCS_VERSION = $(shell vcs -id > vcs_version ; grep "Compiler version" vcs_version | awk -F " " '{print $$5}')
 #This variable contains all the UVM-1.0 supported VCS tool versions.
-UVM10_SUPP_VCS_VERSNS = E-2011.03 
 SEED      ?= +ntb_random_seed_automatic
 TIMESCALE = -timescale=1ns/1ps
 UVM_VERBOSITY ?= UVM_LOW
