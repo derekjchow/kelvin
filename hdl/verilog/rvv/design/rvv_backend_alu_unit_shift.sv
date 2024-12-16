@@ -112,7 +112,7 @@ module rvv_backend_alu_unit_shift
           VSSRL,
           VSSRA: begin
             if (vs2_data_valid&vs1_data_valid) begin
-              result_valid   = 'b1;
+              result_valid = 'b1;
               
               src2_data = vs2_data;
 
@@ -132,8 +132,9 @@ module rvv_backend_alu_unit_shift
                     shift_amount32[i] = vs1_data[i*`WORD_WIDTH +: $clog2(`WORD_WIDTH)];
                   end
                 endcase
-              end      
-
+              end
+            end
+            else begin
               `ifdef ASSERT_ON
                 `rvv_expect(vs2_data_valid==1'b1)
                 else $error("vs2_data_valid(%d) should be 1.\n",vs2_data_valid);
@@ -149,7 +150,7 @@ module rvv_backend_alu_unit_shift
           VNCLIPU,
           VNCLIP: begin
             if (vs2_data_valid&vs1_data_valid&((vs2_eew==EEW16)|(vs2_eew==EEW32))) begin
-              result_valid   = 'b1;
+              result_valid = 'b1;
               
               src2_data = vs2_data;
 
@@ -164,12 +165,17 @@ module rvv_backend_alu_unit_shift
                   end
                 endcase
               end      
+            end
+            else begin
               `ifdef ASSERT_ON
                 `rvv_expect(vs2_data_valid==1'b1)
                 else $error("vs2_data_valid(%d) should be 1.\n",vs2_data_valid);
 
                 `rvv_expect(vs1_data_valid==1'b1)
                 else $error("vs1_data_valid(%d) should be 1.\n",vs1_data_valid);
+
+                `rvv_expect((vs2_eew==EEW16)|(vs2_eew==EEW32))
+                else $error("vs2_eew(%s) is not supported.\n",vs2_eew.name());
               `endif
             end
           end
@@ -185,7 +191,7 @@ module rvv_backend_alu_unit_shift
           VSSRL,
           VSSRA: begin
             if (vs2_data_valid&rs1_data_valid) begin
-              result_valid   = 'b1;
+              result_valid = 'b1;
               
               src2_data = vs2_data;
               for (i=0;i<`VLEN/`WORD_WIDTH;i=i+1) begin
@@ -205,7 +211,8 @@ module rvv_backend_alu_unit_shift
                   end
                 endcase
               end          
-              
+            end
+            else begin             
               `ifdef ASSERT_ON
                 `rvv_expect(vs2_data_valid==1'b1)
                 else $error("vs2_data_valid(%d) should be 1.\n",vs2_data_valid);
@@ -221,7 +228,7 @@ module rvv_backend_alu_unit_shift
           VNCLIPU,
           VNCLIP: begin
             if (vs2_data_valid&rs1_data_valid&((vs2_eew==EEW16)|(vs2_eew==EEW32))) begin
-              result_valid   = 'b1;
+              result_valid = 'b1;
               
               src2_data = vs2_data;
               for (i=0;i<`VLEN/`WORD_WIDTH;i=i+1) begin
@@ -235,13 +242,17 @@ module rvv_backend_alu_unit_shift
                   end
                 endcase
               end          
-              
+            end
+            else begin              
               `ifdef ASSERT_ON
                 `rvv_expect(vs2_data_valid==1'b1)
                 else $error("vs2_data_valid(%d) should be 1.\n",vs2_data_valid);
 
                 `rvv_expect(rs1_data_valid==1'b1)
                 else $error("rs1_data_valid(%d) should be 1.\n",rs1_data_valid);
+
+                `rvv_expect((vs2_eew==EEW16)|(vs2_eew==EEW32))
+                else $error("vs2_eew(%s) is not supported.\n",vs2_eew.name());
               `endif
             end
           end
@@ -427,24 +438,24 @@ module rvv_backend_alu_unit_shift
     for (j=0;j<`VLEN/`WORD_WIDTH;j++) begin: GET_OVERFLOW
       always_comb begin
         // initial
-        upoverflow[   j*`VLEN/`WORD_WIDTH +: `WORD_WIDTH/`BYTE_WIDTH] = 'b0;
-        underoverflow[j*`VLEN/`WORD_WIDTH +: `WORD_WIDTH/`BYTE_WIDTH] = 'b0;
+        upoverflow[   4*j +: 4] = 'b0;
+        underoverflow[4*j +: 4] = 'b0;
           
         case(vs2_eew)
           EEW16: begin
             // unsigned overflow check for vnclipu
             if (opcode == SHIFT_SRL) begin
-              upoverflow[j*`VLEN/`WORD_WIDTH +: `WORD_WIDTH/`BYTE_WIDTH] = {
+              upoverflow[4*j +: 4] = {
                 1'b0, ({cout16[2*j+1], round16[2*j+1][`BYTE_WIDTH +: `BYTE_WIDTH]}!='b0),
                 1'b0, ({cout16[2*j],   round16[2*j][  `BYTE_WIDTH +: `BYTE_WIDTH]}!='b0)};
             end
             else if (opcode == SHIFT_SRA) begin
             // signed overflow check for vnclip
-              upoverflow[j*`VLEN/`WORD_WIDTH +: `WORD_WIDTH/`BYTE_WIDTH] = {
+              upoverflow[4*j +: 4] = {
                 1'b0, ({cout16[2*j+1], round16[2*j+1][`BYTE_WIDTH +: `BYTE_WIDTH]}!='b0)&(round16[2*j+1][`BYTE_WIDTH-1]==1'b0),
                 1'b0, ({cout16[2*j],   round16[2*j][  `BYTE_WIDTH +: `BYTE_WIDTH]}!='b0)&(round16[2*j][  `BYTE_WIDTH-1]==1'b0)};
 
-              underoverflow[j*`VLEN/`WORD_WIDTH +: `WORD_WIDTH/`BYTE_WIDTH] = {
+              underoverflow[4*j +: 4] = {
                 1'b0, ((&{cout16[2*j+1], round16[2*j+1][`BYTE_WIDTH +: `BYTE_WIDTH]})!=1'b1)&(round16[2*j+1][`BYTE_WIDTH-1]==1'b1),
                 1'b0, ((&{cout16[2*j],   round16[2*j][  `BYTE_WIDTH +: `BYTE_WIDTH]})!=1'b1)&(round16[2*j][  `BYTE_WIDTH-1]==1'b1)};
             end
@@ -452,15 +463,15 @@ module rvv_backend_alu_unit_shift
           EEW32: begin
             // unsigned overflow check for vnclipu
             if (opcode == SHIFT_SRL) begin
-              upoverflow[j*`VLEN/`WORD_WIDTH +: `WORD_WIDTH/`BYTE_WIDTH] = {
+              upoverflow[4*j +: 4] = {
                 3'b0, ({cout32[j], round32[j][`HWORD_WIDTH +: `HWORD_WIDTH]}!='b0)};
             end
             else if (opcode == SHIFT_SRA) begin
             // signed overflow check for vnclip
-              upoverflow[j*`VLEN/`WORD_WIDTH +: `WORD_WIDTH/`BYTE_WIDTH] = {
+              upoverflow[4*j +: 4] = {
                 3'b0, ({cout32[j], round32[j][`HWORD_WIDTH +: `HWORD_WIDTH]}!='b0)&(round32[j][`HWORD_WIDTH-1]==1'b0)};
 
-              underoverflow[j*`VLEN/`WORD_WIDTH +: `WORD_WIDTH/`BYTE_WIDTH] = {
+              underoverflow[4*j +: 4] = {
                 3'b0, ((&{cout32[j], round32[j][`HWORD_WIDTH +: `HWORD_WIDTH]})!=1'b1)&(round32[j][`HWORD_WIDTH-1]==1'b1)};
             end
           end
@@ -686,9 +697,9 @@ module rvv_backend_alu_unit_shift
     if (opcode==SHIFT_SLL)
       f_shift8 = operand << amount;
     else if (opcode==SHIFT_SRL)
-      f_shift8 = operand << amount;
+      f_shift8 = operand >> amount;
     else if (opcode==SHIFT_SRA)
-      f_shift8 = operand <<< amount;
+      f_shift8 = operand >>> amount;
     else
       f_shift8 = 'b0;
   endfunction
@@ -701,9 +712,9 @@ module rvv_backend_alu_unit_shift
     if (opcode==SHIFT_SLL)
       f_shift16 = operand << amount;
     else if (opcode==SHIFT_SRL)
-      f_shift16 = operand << amount;
+      f_shift16 = operand >> amount;
     else if (opcode==SHIFT_SRA)
-      f_shift16 = operand <<< amount;
+      f_shift16 = operand >>> amount;
     else
       f_shift16 = 'b0;
   endfunction
@@ -716,9 +727,9 @@ module rvv_backend_alu_unit_shift
     if (opcode==SHIFT_SLL)
       f_shift32 = operand << amount;
     else if (opcode==SHIFT_SRL)
-      f_shift32 = operand << amount;
+      f_shift32 = operand >> amount;
     else if (opcode==SHIFT_SRA)
-      f_shift32 = operand <<< amount;
+      f_shift32 = operand >>> amount;
     else
       f_shift32 = 'b0;
   endfunction
