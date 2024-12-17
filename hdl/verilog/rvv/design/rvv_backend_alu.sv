@@ -46,12 +46,14 @@ module rvv_backend_alu
 //
   // generate valid signals
   assign  alu_uop_valid_rs2ex[0] = !fifo_empty_rs2ex;
-  assign  alu_uop_valid_rs2ex[1] = !(fifo_empty_rs2ex&fifo_1left_to_empty_rs2ex);
+  assign  alu_uop_valid_rs2ex[1] = !(fifo_empty_rs2ex|fifo_1left_to_empty_rs2ex);
   
   // generate pop signals
-  // it can pop alu_uop1 when it can also pop alu_uop0. Otherwise, it cannot pop alu_uop1.(That's in-ordered issue from RS) 
-  assign  pop_ex2rs[0] = alu_uop_valid_rs2ex[0]&result_valid_ex2rob[0]&result_ready_rob2alu[0];
-  assign  pop_ex2rs[1] = pop_ex2rs[0]&(alu_uop_valid_rs2ex[1]&result_valid_ex2rob[1]&result_ready_rob2alu[1]);  
+  generate
+    for (i=0;i<`NUM_ALU;i=i+1) begin: POP_ALU_RS
+      assign  pop_ex2rs[i] = alu_uop_valid_rs2ex[i]&result_valid_ex2rob[i]&result_ready_rob2alu[i];
+    end
+  endgenerate
 
   // instantiate
   generate

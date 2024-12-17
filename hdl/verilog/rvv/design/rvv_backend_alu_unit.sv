@@ -36,6 +36,8 @@ module rvv_backend_alu_unit
   PU2ROB_t                result_shift;
   logic                   result_valid_mask;
   PU2ROB_t                result_mask;
+  logic                   result_valid_other;
+  PU2ROB_t                result_other;
 
 //
 // instance
@@ -64,6 +66,14 @@ module rvv_backend_alu_unit
     .result               (result_mask)
   );
 
+  rvv_backend_alu_unit_other u_alu_other
+  (
+    .alu_uop_valid        (alu_uop_valid),
+    .alu_uop              (alu_uop),
+    .result_valid         (result_valid_other),
+    .result               (result_other)
+  );
+
 // 
 // submit to ROB
 // 
@@ -86,6 +96,11 @@ module rvv_backend_alu_unit
       result_valid_mask: begin
         result_valid = 1'b1;
         result       = result_mask;
+      end
+
+      result_valid_other: begin
+        result_valid = 1'b1;
+        result       = result_other;
       end
     endcase
   end
