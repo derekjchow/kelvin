@@ -1,0 +1,33 @@
+`ifndef RVS_INTERFACE__SV
+`define RVS_INTERFACE__SV
+
+`include "rvv_backend_define.svh"
+`include "rvv_backend.svh"
+
+interface rvs_interface (input bit clk, input bit rst_n);
+
+// vector instruction and scalar operand . 
+  logic         [`ISSUE_LANE-1:0] insts_valid_rvs2cq;
+  RVVCmd        [`ISSUE_LANE-1:0] insts_rvs2cq      ;
+  logic         [`ISSUE_LANE-1:0] insts_ready_cq2rvs;  
+
+// write back to XRF. RVS arbitrates write ports of XRF by itself.
+  RT2XRF_t      [`NUM_RT_UOP-1:0] wb_xrf_wb2rvs      ;
+  logic         [`NUM_RT_UOP-1:0] wb_xrf_valid_wb2rvs;
+  logic         [`NUM_RT_UOP-1:0] wb_xrf_ready_wb2rvs;
+
+// exception handler
+  // trap signal handshake
+  logic                           trap_valid_rvs2rvv;
+  TRAP_t                          trap_rvs2rvv;
+  logic                           trap_ready_rvv2rvs;    
+  // the vcsr of last retired uop in last cycle
+  logic                           vcsr_valid;
+  RVVConfigState                  vector_csr;
+
+// write back event (for each instruction)
+  logic         [`NUM_RT_UOP-1:0] wb_event;
+
+endinterface: rvs_interface
+
+`endif // RVS_INTERFACE__SV

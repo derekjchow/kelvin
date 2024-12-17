@@ -1,0 +1,5 @@
+`ifndef RVV_BACKEND_POKE__SHV
+`define RVV_BACKEND_POKE__SHV
+  `define VRF_PATH DUT
+  `define WB_EVENT_PATH DUT
+`endif // RVV_BACKEND_POKE__SHV
