@@ -4382,7 +4382,7 @@ module rvv_backend_decode_unit_ari
               case(inst_funct3)
                 OPMVV: begin
                   uop[i].vs1              = inst_vs1; // vs1 is regarded as opcode
-                  uop[i].vs1_eew          = EEW1;
+                  uop[i].vs1_eew          = EEW_NONE;
                   uop[i].vs1_index_valid  = 'b0;        
                 end
               endcase
