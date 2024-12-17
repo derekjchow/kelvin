@@ -106,11 +106,11 @@ module rvv_backend_alu_unit_mask
             end 
 
             `ifdef ASSERT_ON
-            `rvv_expect(vs1_data_valid==1'b1) 
-              else $error("vs1_data_valid(%d) should be 1'b1.\n",vs1_data_valid);
+              `rvv_expect(vs1_data_valid==1'b1) 
+                else $error("vs1_data_valid(%d) should be 1'b1.\n",vs1_data_valid);
 
-            `rvv_expect(vs2_data_valid==1'b1) 
-              else $error("vs2_data_valid(%d) should be 1'b1.\n",vs2_data_valid);
+              `rvv_expect(vs2_data_valid==1'b1) 
+                else $error("vs2_data_valid(%d) should be 1'b1.\n",vs2_data_valid);
             `endif
           end
         endcase
@@ -142,11 +142,11 @@ module rvv_backend_alu_unit_mask
             end 
 
             `ifdef ASSERT_ON
-            `rvv_expect(vs1_data_valid==1'b1) 
-              else $error("vs1_data_valid(%d) should be 1'b1.\n",vs1_data_valid);
+              `rvv_expect(vs1_data_valid==1'b1) 
+                else $error("vs1_data_valid(%d) should be 1'b1.\n",vs1_data_valid);
 
-            `rvv_expect(vs2_data_valid==1'b1) 
-              else $error("vs2_data_valid(%d) should be 1'b1.\n",vs2_data_valid);
+              `rvv_expect(vs2_data_valid==1'b1) 
+                else $error("vs2_data_valid(%d) should be 1'b1.\n",vs2_data_valid);
             `endif
           end
         endcase
@@ -169,17 +169,17 @@ module rvv_backend_alu_unit_mask
             end 
 
             `ifdef ASSERT_ON
-            `rvv_expect(vs1_data_valid==1'b1) 
-              else $error("vs1_data_valid(%d) should be 1'b1.\n",vs1_data_valid);
-
-            `rvv_expect(vs2_data_valid==1'b1) 
-              else $error("vs2_data_valid(%d) should be 1'b1.\n",vs2_data_valid);
-
-            `rvv_expect(vd_data_valid==1'b1) 
-              else $error("vd_data_valid(%d) should be 1'b1.\n",vd_data_valid);
-
-            `rvv_expect(vm==1'b1) 
-              else $error("vm(%d) should be 1'b1.\n",vm);
+              `rvv_expect(vs1_data_valid==1'b1) 
+                else $error("vs1_data_valid(%d) should be 1'b1.\n",vs1_data_valid);
+  
+              `rvv_expect(vs2_data_valid==1'b1) 
+                else $error("vs2_data_valid(%d) should be 1'b1.\n",vs2_data_valid);
+  
+              `rvv_expect(vd_data_valid==1'b1) 
+                else $error("vd_data_valid(%d) should be 1'b1.\n",vd_data_valid);
+  
+              `rvv_expect(vm==1'b1) 
+                else $error("vm(%d) should be 1'b1.\n",vm);
             `endif
           end
         endcase
