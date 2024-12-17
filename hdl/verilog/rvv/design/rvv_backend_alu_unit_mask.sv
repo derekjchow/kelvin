@@ -41,7 +41,6 @@ module rvv_backend_alu_unit_mask
   // mask logic instructions
   logic   [`VLEN-1:0]             src2_data;
   logic   [`VLEN-1:0]             src1_data;
-  logic                           result_valid_mask;
   logic   [`VLEN-1:0]             result_data;
   logic   [`VLEN-1:0]             result_data_andn;
   logic   [`VLEN-1:0]             result_data_and; 
@@ -88,9 +87,9 @@ module rvv_backend_alu_unit_mask
   // for mask logic instructions
   always_comb begin
     // initial the data
-    result_valid_mask = 'b0;
-    src2_data         = 'b0;
-    src1_data         = 'b0;
+    result_valid = 'b0;
+    src2_data    = 'b0;
+    src1_data    = 'b0;
 
     // prepare source data
     case({alu_uop_valid,uop_funct3})
@@ -100,7 +99,7 @@ module rvv_backend_alu_unit_mask
           VOR,
           VXOR: begin
             if(vs1_data_valid&vs2_data_valid) begin
-              result_valid_mask = 1'b1;
+              result_valid = 1'b1;
               
               src2_data = vs2_data;
               src1_data = vs1_data;
@@ -123,7 +122,7 @@ module rvv_backend_alu_unit_mask
           VOR,
           VXOR: begin
             if(rs1_data_valid&vs2_data_valid) begin
-              result_valid_mask = 1'b1;
+              result_valid = 1'b1;
               
               src2_data = vs2_data;
               
@@ -163,7 +162,7 @@ module rvv_backend_alu_unit_mask
           VMNOR,
           VMXNOR: begin
             if(vs1_data_valid&vs2_data_valid&vm&vd_data_valid) begin
-              result_valid_mask = 1'b1;
+              result_valid = 1'b1;
               
               src2_data  = vs2_data;
               src1_data  = vs1_data;
@@ -263,9 +262,6 @@ module rvv_backend_alu_unit_mask
   assign  result.ignore_vta = ignore_vta;
   assign  result.ignore_vma = ignore_vma;
 
-  // valid signal
-  assign result_valid = result_valid_mask;
-
   // result data
   generate 
     for (j=0;j<`VLEN;j++) begin: GET_W_DATA
@@ -308,7 +304,7 @@ module rvv_backend_alu_unit_mask
   endgenerate
 
   // result valid signal
-  assign w_valid = result_valid_mask;
+  assign w_valid = result_valid;
 
   // saturate signal
   assign vxsat = 'b0;
@@ -403,7 +399,5 @@ module rvv_backend_alu_unit_mask
 
     f_xnor = ~(vs2_data ^ vs1_data);
   endfunction
-
-
 
 endmodule
