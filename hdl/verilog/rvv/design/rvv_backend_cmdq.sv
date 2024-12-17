@@ -19,7 +19,7 @@ feature list:
 module rvv_backend_cmdq
 (
     clk,
-    rstn,
+    rst_n,
     insts_valid_rvs2cq,
     insts_rvs2cq,
     insts_ready_cq2rvs,
@@ -31,7 +31,7 @@ module rvv_backend_cmdq
 );  
 // global signal
     input   logic           clk;
-    input   logic           rstn;
+    input   logic           rst_n;
 
 // RVS to Command Queue
     input   logic           insts_valid_rvs2cq[`ISSUE_LANE-1:0];
