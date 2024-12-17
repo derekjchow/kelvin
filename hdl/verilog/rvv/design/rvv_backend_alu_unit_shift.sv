@@ -61,7 +61,7 @@ module rvv_backend_alu_unit_shift
   logic   [`VLENB-1:0]                                       upoverflow;
   logic   [`VLENB-1:0]                                       underoverflow;
   logic   [`VLEN-1:0]                                        result_data; 
-  F_SHIFT_e                                                  opcode;
+  SHIFT_e                                                    opcode;
 
   // PU2ROB_t  struct signals
   logic   [`VLEN-1:0]             w_data;             // when w_type=XRF, w_data[`XLEN-1:0] will store the scalar result
@@ -686,7 +686,7 @@ module rvv_backend_alu_unit_shift
 //
   // shifter function
   function [2*`BYTE_WIDTH-1:0] f_shift8;
-    input F_SHIFT_e                         opcode;
+    input SHIFT_e                           opcode;
     input logic signed [2*`BYTE_WIDTH-1:0]  operand;
     input logic [$clog2(`BYTE_WIDTH)-1:0]   amount;
 
@@ -701,7 +701,7 @@ module rvv_backend_alu_unit_shift
   endfunction
 
   function [2*`HWORD_WIDTH-1:0] f_shift16;
-    input F_SHIFT_e                          opcode;
+    input SHIFT_e                            opcode;
     input logic signed [2*`HWORD_WIDTH-1:0]  operand;
     input logic [$clog2(`HWORD_WIDTH)-1:0]   amount;
 
@@ -716,7 +716,7 @@ module rvv_backend_alu_unit_shift
   endfunction
 
   function [2*`WORD_WIDTH-1:0] f_shift32;
-    input F_SHIFT_e                         opcode;
+    input SHIFT_e                           opcode;
     input logic signed [2*`WORD_WIDTH-1:0]  operand;
     input logic [$clog2(`WORD_WIDTH)-1:0]   amount;
 

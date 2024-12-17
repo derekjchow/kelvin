@@ -67,7 +67,7 @@ module rvv_backend_alu_unit_addsub
   logic   [`VLEN-1:0]                                 mask_sp_bit0;     // control logic for result_data_sp 
   logic   [`VLEN-1:0]                                 mask_sp_bit1;     // control logic for result_data_sp 
   logic   [`VLEN-1:0]                                 mask_sp_bit2;     // control logic for result_data_sp 
-  F_ADDSUB_e                                          opcode;
+  ADDSUB_e                                            opcode;
 
   // PU2ROB_t  struct signals
   logic   [`VLEN-1:0]             w_data;             // when w_type=XRF, w_data[`XLEN-1:0] will store the scalar result
@@ -2007,7 +2007,7 @@ module rvv_backend_alu_unit_addsub
   // add and sub function
   function [`BYTE_WIDTH:0] f_full_addsub8;
     // x +/- (y+cin)
-    input F_ADDSUB_e            opcode;  
+    input ADDSUB_e              opcode;  
     input logic [`BYTE_WIDTH:0] src_x;
     input logic [`BYTE_WIDTH:0] src_y;
     input logic                 cin;
@@ -2026,7 +2026,7 @@ module rvv_backend_alu_unit_addsub
 
   function [`BYTE_WIDTH:0] f_half_addsub8;
     // x +/- cin
-    input F_ADDSUB_e            opcode;  
+    input ADDSUB_e              opcode;  
     input logic [`BYTE_WIDTH:0] src_x;
     input logic                 cin;
 
@@ -2040,7 +2040,7 @@ module rvv_backend_alu_unit_addsub
 
   function [`HWORD_WIDTH:0] f_half_addsub16;
     // x +/- cin
-    input F_ADDSUB_e             opcode;  
+    input ADDSUB_e               opcode;  
     input logic [`HWORD_WIDTH:0] src_x;
     input logic                  cin;
 
@@ -2059,4 +2059,5 @@ module rvv_backend_alu_unit_addsub
 
     f_half_add32 = src_x + cin;
   endfunction
+
 endmodule
