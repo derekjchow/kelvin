@@ -3356,14 +3356,6 @@ module rvv_backend_decode_unit_ari
             VSRA,
             VNSRL,
             VNSRA,
-            VMSEQ,
-            VMSNE,
-            VMSLTU,
-            VMSLT,
-            VMSLEU,
-            VMSLE,
-            VMSGTU,
-            VMSGT,
             VMINU,
             VMIN,
             VMAXU,
@@ -3379,7 +3371,23 @@ module rvv_backend_decode_unit_ari
             VNCLIP: begin
               uop[i].uop_exe_unit     = ALU;
             end 
-            
+           
+            VMSEQ,
+            VMSNE,
+            VMSLTU,
+            VMSLT,
+            VMSLEU,
+            VMSLE,
+            VMSGTU,
+            VMSGT,
+            VWREDSUMU,
+            VWREDSUM,
+            VSLIDEUP_RGATHEREI16,
+            VSLIDEDOWN,
+            VRGATHER: begin
+              uop[i].uop_exe_unit = PMTRDT;
+            end
+
             VSMUL_VMVNRR: begin
               case(inst_funct3)
                 OPIVV,
@@ -3390,14 +3398,6 @@ module rvv_backend_decode_unit_ari
                   uop[i].uop_exe_unit = ALU;
                 end
               endcase
-            end
-
-            VWREDSUMU,
-            VWREDSUM,
-            VSLIDEUP_RGATHEREI16,
-            VSLIDEDOWN,
-            VRGATHER: begin
-              uop[i].uop_exe_unit     = PMTRDT;
             end
           endcase
         end
@@ -4163,7 +4163,7 @@ module rvv_backend_decode_unit_ari
                 OPIVV,
                 OPIVX,
                 OPIVI: begin
-                  uop[i].vs3_valid = 1'b1;
+                  uop[i].vs3_valid = uop_index_current[i] == uop_index_max;
                 end
               endcase
             end
@@ -4173,7 +4173,7 @@ module rvv_backend_decode_unit_ari
               case(inst_funct3)
                 OPIVV,
                 OPIVX: begin
-                  uop[i].vs3_valid = 1'b1;
+                  uop[i].vs3_valid = uop_index_current[i] == uop_index_max;
                 end
               endcase
             end
@@ -4182,7 +4182,7 @@ module rvv_backend_decode_unit_ari
               case(inst_funct3)
                 OPIVX,
                 OPIVI: begin
-                  uop[i].vs3_valid = 1'b1;
+                  uop[i].vs3_valid = uop_index_current[i] == uop_index_max;
                 end
               endcase
             end
