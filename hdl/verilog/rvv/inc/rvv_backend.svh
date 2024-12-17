@@ -411,6 +411,7 @@ typedef struct packed {
   // when the uop is mask uop(vmandn,vmand,...), the uop will use vd_data as the third vector operand. EEW_vd=1.
   logic   [`VLEN-1:0]                 vd_data;
   logic                               vd_data_valid;
+  EEW_e                               vd_eew;  
   // when vs1_data_valid=0, vs1_data is used to decode some OPMVV uops
   // when vs1_data_valid=1, vs1_data is valid as a vector operand
   logic   [`REGFILE_INDEX_WIDTH-1:0]  vs1;              
