@@ -22,23 +22,24 @@ module rvv_backend_alu
 // interface signals
 //
   // ALU RS to ALU unit
-  output  logic       [`NUM_ALU_UOP-1:0]    pop_ex2rs;
-  input   ALU_RS_t    [`NUM_ALU_UOP-1:0]    alu_uop_rs2ex;
-  input   logic                             fifo_empty_rs2ex;
-  input   logic                             fifo_1left_to_empty_rs2ex;
+  output  logic       [`NUM_ALU-1:0]    pop_ex2rs;
+  input   ALU_RS_t    [`NUM_ALU-1:0]    alu_uop_rs2ex;
+  input   logic                         fifo_empty_rs2ex;
+  input   logic                         fifo_1left_to_empty_rs2ex;
 
   // submit ALU result to ROB
-  output  logic       [`NUM_ALU_UOP-1:0]    result_valid_ex2rob;
-  output  ALU2ROB_t   [`NUM_ALU_UOP-1:0]    result_ex2rob;
-  input   logic       [`NUM_ALU_UOP-1:0]    result_ready_rob2alu;
+  output  logic       [`NUM_ALU-1:0]    result_valid_ex2rob;
+  output  PU2ROB_t    [`NUM_ALU-1:0]    result_ex2rob;
+  input   logic       [`NUM_ALU-1:0]    result_ready_rob2alu;
 
 //
 // internal signals
 //
   // ALU RS to ALU unit
-  logic               [`NUM_ALU_UOP-1:0]    alu_uop_valid_rs2ex;    
-
-  genvar                                    i;
+  logic               [`NUM_ALU-1:0]    alu_uop_valid_rs2ex;    
+  
+  // for-loop
+  genvar                                i;
 
 //
 // Instantiate 2 rvv_backend_alu_unit
@@ -54,7 +55,7 @@ module rvv_backend_alu
 
   // instantiate
   generate
-    for (i=0;i<`NUM_ALU_UOP;i=i+1) begin: ALU_UNIT
+    for (i=0;i<`NUM_ALU;i=i+1) begin: ALU_UNIT
       rvv_backend_alu_unit u_alu_unit
         (
           // inputs

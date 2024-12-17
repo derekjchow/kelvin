@@ -17,7 +17,7 @@ module rvv_backend_alu_unit_mask
 
   // ALU send result signals to ROB
   output  logic                   result_valid;
-  output  ALU2ROB_t               result;
+  output  PU2ROB_t                result;
 
 //
 // internal signals
@@ -52,7 +52,7 @@ module rvv_backend_alu_unit_mask
   logic   [`VLEN-1:0]             result_data_nor; 
   logic   [`VLEN-1:0]             result_data_xnor;
 
-  // ALU2ROB_t struct signals
+  // PU2ROB_t  struct signals
   logic   [`VLEN-1:0]             w_data;             // when w_type=XRF, w_data[`XLEN-1:0] will store the scalar result
   logic                           w_valid; 
   logic   [`VCSR_VXSAT_WIDTH-1:0] vxsat;     

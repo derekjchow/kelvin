@@ -20,22 +20,22 @@ module rvv_backend_alu_unit
 // interface signals
 //
   // ALU RS handshake signals
-  input   logic                   alu_uop_valid;
-  input   ALU_RS_t                alu_uop;
+  input   logic           alu_uop_valid;
+  input   ALU_RS_t        alu_uop;
 
   // ALU send result signals to ROB
-  output  logic                   result_valid;
-  output  ALU2ROB_t               result;
+  output  logic           result_valid;
+  output  PU2ROB_t        result;
 
 //
 // internal signals
 //   
-  logic                           result_valid_addsub;
-  ALU2ROB_t                       result_addsub;
-  logic                           result_valid_shift;
-  ALU2ROB_t                       result_shift;
-  logic                           result_valid_mask;
-  ALU2ROB_t                       result_mask;
+  logic                   result_valid_addsub;
+  PU2ROB_t                result_addsub;
+  logic                   result_valid_shift;
+  PU2ROB_t                result_shift;
+  logic                   result_valid_mask;
+  PU2ROB_t                result_mask;
 
 //
 // instance
