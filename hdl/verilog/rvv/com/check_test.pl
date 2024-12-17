@@ -1,45 +1,61 @@
 #! /usr/bin/perl 
 
-my $cmd;
+use strict;
+use Term::ANSIColor;
 
-my $pass = 1;
+my $cmd  = shift;
+my $testname = shift;
+if($cmd =~ m/help/) { Usage(); }
+elsif($cmd =~ m/check/) { Check(); }
+elsif($cmd =~ m/clean/) { Clean(); }
+else  { Usage(); }
 
-if(@ARGV<2) {print "usage:\n   check_test.pl <test.log> <test_name>\n"; exit;};
+sub Check {
+  my $p_uvmFail = qr/^(UVM_ERROR|UVM_FATAL) (\S+) (@\s*\d+:) (\S+) (\[\S+\]) (.*)$/;
+  my $p_errFail = qr/Error|((?<!UVM_)ERROR)/;
+  foreach (@ARGV) {
+    open my $fh, '+<', $_ or die "Open $_ failed: $!";
 
-$cmd = `grep -s "^\s*UVM_ERROR" $ARGV[0]`;
+    my $match = grep m/$p_uvmFail|$p_errFail/g, <$fh>;
 
-$cmd =~ m/UVM_ERROR\s*:\s*(\d+)\s*$/;
-if (! defined $1 ) {$pass = 0 ;}
-if ($1 != 0)
-{
-  $pass = 0 ;
+    if($match) {
+      print color "bold red";
+      print "====FAIL==== $testname\n";
+      print $fh "====FAIL==== $testname\n";
+      print color "reset";
+    }
+    else {
+      print color "bold green";
+      print "====PASS==== $testname\n";
+      print $fh "====PASS==== $testname\n";
+      print color "reset";
+    }
+    close $fh;
+  }
 }
 
-$cmd = `grep -s "^\s*UVM_FATAL" $ARGV[0] `;
-
-$cmd =~ m/UVM_FATAL\s*:\s*(\d+)\s*$/;
-if (! defined $1 ) {$pass = 0 ;}
-
-if ($1 != 0)
-{
-  $pass = 0 ;
+sub Clean {
+  my $p_uvmInfo = qr/^(UVM_\S+) (\S+) (@\s*\d+:) (\S+) (\[\S+\]) (.*)$/;
+  #                   $1       $2:path $3:time  $4:hier $5:label  $6:info
+  foreach (@ARGV) {
+    open my $fh, '+<', $_ or die "Open $_ failed: $!";
+    my @lines = <$fh>;
+    seek($fh, 0, 0);
+    truncate($fh, 0);
+    foreach my $line (@lines) {
+      $line =~ s/$p_uvmInfo/$3 $6/g;
+      print $fh $line;
+    }
+    close $fh;
+  }
 }
 
-$cmd = `grep -s "^\s*UVM_WARNING" $ARGV[0]`;
-
-$cmd =~ m/UVM_WARNING\s*:\s*(\d+)\s*$/;
-if (! defined $1 ) {$pass = 0 ;}
-if ($1 != 0)
-{
-  $pass = 0 ;
+  
+sub Usage {
+  die <<EOU;
+  Usage:
+    perl ./check_test.pl <check|clean> <test_name> <files ...> 
+      check: check logs failures
+      clean: clean up UVM logs
+EOU
 }
-
-if(!$pass){
-   print "====failed====$ARGV[1]\n";
-   `echo "====failed====$ARGV[1]" >> $ARGV[0]`;
-}
-else {
-   print "====pass====$ARGV[1]\n";
-  `echo "====pass====$ARGV[1]" >> $ARGV[0]`;
-}
-exit;
