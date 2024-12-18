@@ -55,7 +55,6 @@ module rvv_backend_alu_unit_shift
   logic   [`VLENB-1:0][`BYTE_WIDTH-1:0]                      round8;
   logic   [`VLEN/`HWORD_WIDTH-1:0][`HWORD_WIDTH-1:0]         round16;
   logic   [`VLEN/`WORD_WIDTH-1:0][`WORD_WIDTH-1:0]           round32;
-  logic   [`VLENB-1:0]                                       cout8;
   logic   [`VLEN/`HWORD_WIDTH-1:0]                           cout16;
   logic   [`VLEN/`WORD_WIDTH-1:0]                            cout32;
   logic   [`VLENB-1:0]                                       upoverflow;
@@ -390,13 +389,12 @@ module rvv_backend_alu_unit_shift
   generate
     for (j=0;j<`VLENB;j++) begin: ROUND8
       always_comb begin
-        cout8[j]  = 'b0; 
         round8[j] = 'b0;
 
         if (opcode == SHIFT_SRL)
-          {cout8[j], round8[j]} = f_half_add8({1'b0, product8[j]}, round_increment8[j]); 
+          round8[j] = f_half_add8({1'b0, product8[j]}, round_increment8[j]); 
         else if (opcode == SHIFT_SRA)
-          {cout8[j], round8[j]} = f_half_add8({product8[j][`BYTE_WIDTH-1], product8[j]}, round_increment8[j]); 
+          round8[j] = f_half_add8({product8[j][`BYTE_WIDTH-1], product8[j]}, round_increment8[j]); 
       end
     end
   endgenerate
@@ -730,12 +728,16 @@ module rvv_backend_alu_unit_shift
       f_shift32 = 'b0;
   endfunction
 
-  function [`BYTE_WIDTH:0] f_half_add8;
+  function [`BYTE_WIDTH-1:0] f_half_add8;
     // x + cin
     input logic [`BYTE_WIDTH:0] src_x;
     input logic                 cin;
+    
+    logic [`BYTE_WIDTH:0] result;
 
-    f_half_add8 = src_x + cin;
+    result = src_x +cin;
+
+    f_half_add8 = result[`BYTE_WIDTH-1:0];
   endfunction
 
   function [`HWORD_WIDTH:0] f_half_add16;
