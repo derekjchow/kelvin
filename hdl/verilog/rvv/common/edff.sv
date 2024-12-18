@@ -11,8 +11,16 @@ module edff (q, en, d, clk, rst_n);
   input  logic             clk;
   input  logic             rst_n;
 
+`ifdef TB_SUPPORT
+  input  logic [WIDTH-1:0] init_data;
+`endif
+
   always @(posedge clk or negedge rst_n)
+`ifdef TB_SUPPORT
+    if (!rst_n)   q <= init_data;
+`else
     if (!rst_n)   q <= INIT;
+`endif
     else if (en)  q <= d;
 
 endmodule

@@ -118,12 +118,12 @@ module rvv_backend
 
   // vrf
   logic [127:0] vreg [31:0];
+  logic [127:0] vreg_init_data [31:0];
   logic [3:0] rt_event;
   always_ff @(posedge clk) begin
     if(!rst_n) begin 
-      vreg[0] <= '0;
-      for(int i=1; i<32; i++) begin
-        vreg[i] <= 128'hffff_0001_ffff_0002_ffff_0003_ffff_0000 + i;
+      for(int i=0; i<32; i++) begin
+        vreg[i] <= vreg_init_data[i];
       end
       for(int i=0; i<4; i++) begin
         rt_event[i] <= 1'b0;
