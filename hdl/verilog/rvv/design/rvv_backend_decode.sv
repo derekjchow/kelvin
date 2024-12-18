@@ -37,7 +37,7 @@ module rvv_backend_decode
   input   RVVCmd  [`NUM_DE_INST-1:0]    inst_pkg_cq2de; 
   input   logic                         fifo_empty_cq2de;
   input   logic   [`NUM_DE_INST-1:1]    fifo_almost_empty_cq2de;
-  output  logic   [`NUM_DE_INST-1:1]    pop_de2cq;
+  output  logic   [`NUM_DE_INST-1:0]    pop_de2cq;
 
   // signals from Uops Quue
   output  logic   [`NUM_DE_UOP-1:0]     push_de2uq;
