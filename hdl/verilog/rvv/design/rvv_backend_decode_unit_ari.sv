@@ -4,6 +4,10 @@
 
 module rvv_backend_decode_unit_ari
 (
+`ifdef ASSERT_ON
+  clk,
+  rst_n,
+`endif
   inst_valid,
   inst,
   uop_index_remain,
@@ -13,6 +17,12 @@ module rvv_backend_decode_unit_ari
 //
 // interface signals
 //
+  // global signal
+`ifdef ASSERT_ON
+  input   logic                   clk;
+  input   logic                   rst_n;
+`endif
+
   input   logic                                   inst_valid;
   input   RVVCmd                                  inst;
   input   logic       [`UOP_INDEX_WIDTH-1:0]      uop_index_remain;
@@ -2677,7 +2687,7 @@ module rvv_backend_decode_unit_ari
                   `rvv_expect(inst_vm==1'b0)
                   else $error("Unsupported inst_vm=%d in %d instruction.\n",inst_vm,funct6_ari.ari_funct6);
                   
-                  `rvv_forbit(inst_vd=='b0)
+                  `rvv_forbid(inst_vd=='b0)
                   else $error("inst_vd(%d) cannot overlap v0 in %d instruction.\n",funct6_ari.ari_funct6);
                 `endif
               end
@@ -2707,7 +2717,7 @@ module rvv_backend_decode_unit_ari
                   `rvv_expect(inst_vm==1'b0)
                   else $error("Unsupported inst_vm=%d in %d instruction.\n",inst_vm,funct6_ari.ari_funct6);
                   
-                  `rvv_forbit(inst_vd=='b0)
+                  `rvv_forbid(inst_vd=='b0)
                   else $error("inst_vd(%d) cannot overlap v0 in %d instruction.\n",funct6_ari.ari_funct6);
                 `endif
               end

@@ -93,6 +93,10 @@ module rvv_backend_decode
   // decode unit
   rvv_backend_decode_unit u_decode_unit0
   (
+  `ifdef ASSERT_ON
+    .clk                     (clk),
+    .rst_n                   (rst_n),
+  `endif
     .inst_valid_cq2de        (pkg0_valid),
     .inst_cq2de              (inst_pkg0_cq2de),
     .uop_index_remain        (uop_index_remain),
@@ -102,6 +106,10 @@ module rvv_backend_decode
    
   rvv_backend_decode_unit u_decode_unit1
   (
+  `ifdef ASSERT_ON
+    .clk                     (clk),
+    .rst_n                   (rst_n),
+  `endif
     .inst_valid_cq2de        (pkg1_valid),
     .inst_cq2de              (inst_pkg1_cq2de),
     .uop_index_remain        ({`UOP_INDEX_WIDTH{1'b0}}),

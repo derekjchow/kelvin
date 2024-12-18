@@ -14,6 +14,10 @@
 
 module rvv_backend_decode_unit
 (
+`ifdef ASSERT_ON
+  clk,
+  rst_n,
+`endif
   inst_valid_cq2de,
   inst_cq2de,
   uop_index_remain,
@@ -23,6 +27,12 @@ module rvv_backend_decode_unit
 //
 // interface signals
 //
+  // global signal
+`ifdef ASSERT_ON
+  input   logic                   clk;
+  input   logic                   rst_n;
+`endif
+
   // CQ to Decoder unit signals
   input   logic                         inst_valid_cq2de;
   input   RVVCmd                        inst_cq2de;

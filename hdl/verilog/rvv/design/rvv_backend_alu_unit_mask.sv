@@ -1,8 +1,13 @@
 
 `include "rvv_backend.svh"
+`include "rvv_backend_sva.svh"
 
 module rvv_backend_alu_unit_mask
 (
+`ifdef ASSERT_ON
+  clk,
+  rst_n,
+`endif
   alu_uop_valid,
   alu_uop,
   result_valid,
@@ -11,6 +16,12 @@ module rvv_backend_alu_unit_mask
 //
 // interface signals
 //
+  // global signal
+`ifdef ASSERT_ON
+  input   logic                         clk;
+  input   logic                         rst_n;
+`endif
+
   // ALU RS handshake signals
   input   logic                   alu_uop_valid;
   input   ALU_RS_t                alu_uop;
