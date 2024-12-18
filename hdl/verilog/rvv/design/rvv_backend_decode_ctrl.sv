@@ -184,7 +184,7 @@ module rvv_backend_decode_ctrl
   mux_push_valid0 
   (
      .sel      (quantity),
-     .indata0  (uop_valid_de2uq[1][0]),
+     .indata0  ('d0),
      .indata1  (uop_valid_de2uq[0][0]),
      .indata2  (uop_valid_de2uq[0][0]),
      .indata3  (uop_valid_de2uq[0][0]),
@@ -202,7 +202,7 @@ module rvv_backend_decode_ctrl
   mux_push_valid1 
   (
      .sel      (quantity),
-     .indata0  (uop_valid_de2uq[1][1]),
+     .indata0  ('d0),
      .indata1  (uop_valid_de2uq[1][0]),
      .indata2  (uop_valid_de2uq[0][1]),
      .indata3  (uop_valid_de2uq[0][1]),
@@ -220,7 +220,7 @@ mux8_1
   mux_push_valid2
   (
      .sel      (quantity),
-     .indata0  (uop_valid_de2uq[1][2]),
+     .indata0  ('d0),
      .indata1  (uop_valid_de2uq[1][1]),
      .indata2  (uop_valid_de2uq[1][0]),
      .indata3  (uop_valid_de2uq[0][2]),
@@ -238,7 +238,7 @@ mux8_1
   mux_push_valid3 
   (
      .sel      (quantity),
-     .indata0  (uop_valid_de2uq[1][3]),
+     .indata0  ('d0),
      .indata1  (uop_valid_de2uq[1][2]),
      .indata2  (uop_valid_de2uq[1][1]),
      .indata3  (uop_valid_de2uq[1][0]),
@@ -263,7 +263,7 @@ mux8_1
   mux_data0
   (
      .sel      (quantity),
-     .indata0  (uop_de2uq[1][0]),
+     .indata0  ('d0),
      .indata1  (uop_de2uq[0][0]),
      .indata2  (uop_de2uq[0][0]),
      .indata3  (uop_de2uq[0][0]),
@@ -281,7 +281,7 @@ mux8_1
   mux_data1
   (
      .sel      (quantity),
-     .indata0  (uop_de2uq[1][1]),
+     .indata0  ('d0),
      .indata1  (uop_de2uq[1][0]),
      .indata2  (uop_de2uq[0][1]),
      .indata3  (uop_de2uq[0][1]),
@@ -299,7 +299,7 @@ mux8_1
   mux_data2
   (
      .sel      (quantity),
-     .indata0  (uop_de2uq[1][2]),
+     .indata0  ('d0),
      .indata1  (uop_de2uq[1][1]),
      .indata2  (uop_de2uq[1][0]),
      .indata3  (uop_de2uq[0][2]),
@@ -317,7 +317,7 @@ mux8_1
   mux_data3
   (
      .sel      (quantity),
-     .indata0  (uop_de2uq[1][3]),
+     .indata0  ('d0),
      .indata1  (uop_de2uq[1][2]),
      .indata2  (uop_de2uq[1][1]),
      .indata3  (uop_de2uq[1][0]),
