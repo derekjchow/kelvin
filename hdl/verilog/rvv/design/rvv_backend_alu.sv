@@ -16,7 +16,7 @@ module rvv_backend_alu
   pop_ex2rs,
   alu_uop_rs2ex,
   fifo_empty_rs2ex,
-  fifo_1left_to_empty_rs2ex,
+  fifo_almost_empty_rs2ex,
   
   result_valid_ex2rob,
   result_ex2rob,
@@ -36,7 +36,7 @@ module rvv_backend_alu
   output  logic       [`NUM_ALU-1:0]    pop_ex2rs;
   input   ALU_RS_t    [`NUM_ALU-1:0]    alu_uop_rs2ex;
   input   logic                         fifo_empty_rs2ex;
-  input   logic                         fifo_1left_to_empty_rs2ex;
+  input   logic       [`NUM_ALU-1:1]    fifo_almost_empty_rs2ex;
 
   // submit ALU result to ROB
   output  logic       [`NUM_ALU-1:0]    result_valid_ex2rob;
@@ -56,8 +56,13 @@ module rvv_backend_alu
 // Instantiate 2 rvv_backend_alu_unit
 //
   // generate valid signals
-  assign  alu_uop_valid_rs2ex[0] = !fifo_empty_rs2ex;
-  assign  alu_uop_valid_rs2ex[1] = !(fifo_empty_rs2ex|fifo_1left_to_empty_rs2ex);
+  assign alu_uop_valid_rs2ex[0] = !fifo_empty_rs2ex;
+
+  generate 
+    for (i=1;i<`NUM_ALU;i=i+1) begin: GET_UOP_VALID
+      assign  alu_uop_valid_rs2ex[i] = !( fifo_empty_rs2ex || (|fifo_almost_empty_rs2ex[i:1]));
+    end
+  endgenerate
   
   // generate pop signals
   generate

@@ -5,123 +5,92 @@
 // features:
 // 1. decode_ctrl will push data to Uops Queue only when Uops Queue has 4 free spaces at least.
 
-
 `include "rvv_backend.svh"
 
 module rvv_backend_decode_ctrl
 (
   clk,
   rst_n,
-  pkg0_valid,
-  unit0_uop_valid_de2uq,
-  unit0_uop_de2uq,
-  pkg1_valid,
-  unit1_uop_valid_de2uq,
-  unit1_uop_de2uq,
+  pkg_valid,
+  uop_valid_de2uq,
+  uop_de2uq,
   uop_index_remain,
-  pop0,
-  pop1,
-  push0,
-  data0,
-  push1,
-  data1,
-  push2,
-  data2,
-  push3,
-  data3,
-  fifo_full, 
-  fifo_1left_to_full,
-  fifo_2left_to_full, 
-  fifo_3left_to_full
+  pop,
+  push,
+  dataout,
+  fifo_full_uq2de, 
+  fifo_almost_full_uq2de
 );
 //
 // interface signals
 //
   // global signals
-  input   logic                             clk;
-  input   logic                             rst_n;
+  input   logic       clk;
+  input   logic       rst_n;
 
-  // uops from decode_unit0
-  input   logic                             pkg0_valid;
-  input   logic         [`NUM_DE_UOP-1:0]   unit0_uop_valid_de2uq;
-  input   UOP_QUEUE_t   [`NUM_DE_UOP-1:0]   unit0_uop_de2uq;
-  
-  // uops from decode_unit1
-  input   logic                             pkg1_valid;
-  input   logic         [`NUM_DE_UOP-1:0]   unit1_uop_valid_de2uq;
-  input   UOP_QUEUE_t   [`NUM_DE_UOP-1:0]   unit1_uop_de2uq;
+  // decoded uops
+  input   logic       [`NUM_DE_INST-1:0]                  pkg_valid;
+  input   logic       [`NUM_DE_INST-1:0][`NUM_DE_UOP-1:0] uop_valid_de2uq;
+  input   UOP_QUEUE_t [`NUM_DE_INST-1:0][`NUM_DE_UOP-1:0] uop_de2uq;
   
   // uop_index for decode_unit
-  output  logic [`UOP_INDEX_WIDTH-1:0]      uop_index_remain;
+  output  logic       [`UOP_INDEX_WIDTH-1:0]  uop_index_remain;
   
   // pop signals for command queue
-  output  logic                             pop0;
-  output  logic                             pop1;
+  output  logic       [`NUM_DE_INST-1:0]      pop;
 
   // signals from Uops Quue
-  output logic                              push0;
-  output UOP_QUEUE_t                        data0;
-  output logic                              push1;
-  output UOP_QUEUE_t                        data1;
-  output logic                              push2;
-  output UOP_QUEUE_t                        data2;
-  output logic                              push3;
-  output UOP_QUEUE_t                        data3;
-  input logic                               fifo_full; 
-  input logic                               fifo_1left_to_full;
-  input logic                               fifo_2left_to_full; 
-  input logic                               fifo_3left_to_full;
+  output  logic       [`NUM_DE_UOP-1:0]       push;
+  output  UOP_QUEUE_t [`NUM_DE_UOP-1:0]       dataout;
+  input   logic                               fifo_full_uq2de;
+  input   logic       [`NUM_DE_UOP-1:1]       fifo_almost_full_uq2de;
 
 //
 // internal signals
 //
   // get last uop signal 
-  logic                                     unit0_last;
-  logic                                     unit1_0o01uop;
-  logic                                     unit1_0to2uop;
-  logic                                     unit1_0to3uop;
-  logic                                     unit1_0touop;
-  logic                                     unit1_last;
+  logic [`NUM_DE_INST-1:0]      last_uop_unit;
+  logic [`NUM_DE_UOP-1:1]       get_unit1_last_signal;
 
-  // the quantity of valid 1 in unit0_uop_valid[`NUM_DE_UOP-1:0] 
-  logic [`NUM_DE_UOP_WIDTH-1:0]             quantity;
+  // the quantity of valid 1 in uop_valid[0] 
+  logic [`NUM_DE_UOP_WIDTH-1:0] quantity;
   
   // fifo is ready when it has 4 free spaces at least
-  logic                                     fifo_ready;
+  logic                         fifo_ready;
   
   // signals in uop_index DFF 
-  logic                                     uop_index_clear;   
-  logic                                     uop_index_enable_unit0;
-  logic                                     uop_index_enable_unit1;
-  logic                                     uop_index_enable;
-  logic [`UOP_INDEX_WIDTH-1:0]              uop_index_din;
+  logic                         uop_index_clear;   
+  logic                         uop_index_enable_unit0;
+  logic                         uop_index_enable_unit1;
+  logic                         uop_index_enable;
+  logic [`UOP_INDEX_WIDTH-1:0]  uop_index_din;
   
   // used in getting push0-3
-  logic                                     push_valid0;
-  logic                                     push_valid1;
-  logic                                     push_valid2;
-  logic                                     push_valid3;
+  logic [`NUM_DE_UOP-1:0]       push_valid;
+  
+  // for-loop
+  genvar                        i;
 
 //
 // ctroller
 //
-  // get the quantity of valid 1 in unit0_uop_valid
+  // get the quantity of valid 1 in uop_valid[0]
   always_comb begin
     // initial
-    quantity      = 'b0;
+    quantity = 'b0;
     
-    case(unit0_uop_valid_de2uq[`NUM_DE_UOP-1:0])
+    case(uop_valid_de2uq[0][`NUM_DE_UOP-1:0])
       4'b0001:
-        quantity  = 'd1; 
+        quantity = 'd1; 
       4'b0011:
-        quantity  = 'd2; 
+        quantity = 'd2; 
       4'b0111:
-        quantity  = 'd3; 
+        quantity = 'd3; 
       4'b1111:
-        quantity  = 'd4; 
+        quantity = 'd4; 
     endcase
   end
-  
+
   // get unit0 last uop signal
   mux8_1 
   #(
@@ -130,22 +99,21 @@ module rvv_backend_decode_ctrl
   mux_unit0_last
   (
      .sel      (quantity),
-     .indata0  (1'b1),
+     .indata0  (1'b0),
      .indata1  (1'b1),
      .indata2  (1'b1),
      .indata3  (1'b1),
-     .indata4  (unit0_uop_de2uq[3].last_uop_valid),
+     .indata4  (uop_de2uq[0][`NUM_DE_UOP-1].last_uop_valid),
      .indata5  (1'b0),
      .indata6  (1'b0),
      .indata7  (1'b0),
-     .outdata  (unit0_last) 
+     .outdata  (last_uop_unit[0]) 
   );
   
   // get unit1 last uop signal
-  assign unit1_0to1uop  = (unit1_uop_valid_de2uq[`NUM_DE_UOP-1:0]=='b0) || unit1_uop_de2uq[0].last_uop_valid;
-  assign unit1_0to2uop  = unit1_0to1uop | unit1_uop_de2uq[1].last_uop_valid;
-  assign unit1_0to3uop  = unit1_0to2uop | unit1_uop_de2uq[2].last_uop_valid;
-  assign unit1_0to4uop  = unit1_0to3uop | unit1_uop_de2uq[3].last_uop_valid;
+  assign get_unit1_last_signal[3] = uop_de2uq[1][0].last_uop_valid;
+  assign get_unit1_last_signal[2] = get_unit1_last_signal[3] || uop_de2uq[1][1].last_uop_valid;
+  assign get_unit1_last_signal[1] = get_unit1_last_signal[2] || uop_de2uq[1][2].last_uop_valid;
 
   mux8_1 
   #(
@@ -154,43 +122,43 @@ module rvv_backend_decode_ctrl
   mux_unit1_last
   (
      .sel      (quantity),
-     .indata0  (unit1_0to4uop),
-     .indata1  (unit1_0to3uop),
-     .indata2  (unit1_0to2uop),
-     .indata3  (unit1_0to1uop),
+     .indata0  (1'b0),
+     .indata1  (get_unit1_last_signal[1]),
+     .indata2  (get_unit1_last_signal[2]),
+     .indata3  (get_unit1_last_signal[3]),
      .indata4  (1'b0),
      .indata5  (1'b0),
      .indata6  (1'b0),
      .indata7  (1'b0),
-     .outdata  (unit1_last) 
+     .outdata  (last_uop_unit[1]) 
   );
   
   // get fifo_ready
-  assign fifo_ready = !(fifo_full|fifo_1left_to_full|fifo_2left_to_full|fifo_3left_to_full);
+  assign fifo_ready = !(fifo_full_uq2de | (|fifo_almost_full_uq2de));
   
   // get pop signal to Command Queue
-  assign pop0 = pkg0_valid & unit0_last & fifo_ready;
-  assign pop1 = pkg1_valid & unit1_last & pop0;
+  assign pop[0] = pkg_valid[0] & last_uop_unit[0] & fifo_ready;
+  assign pop[1] = pkg_valid[1] & last_uop_unit[1] & pop[0];
   
   // instantiate cdffr for uop_index
   // clear signal
-  assign uop_index_clear        = (pop0&(!pkg1_valid)) | pop1;
+  assign uop_index_clear        = (pop[0]&(!pkg_valid[1])) | pop[1];
 
   // enable signal
-  assign uop_index_enable_unit0 = (!pop0)&pkg0_valid;       
-  assign uop_index_enable_unit1 = pop0&(!unit1_last)&pkg1_valid;  
+  assign uop_index_enable_unit0 = (!pop[0])&pkg_valid[0];       
+  assign uop_index_enable_unit1 = pop[0]&(!last_uop_unit[1])&pkg_valid[1];  
   assign uop_index_enable       = uop_index_enable_unit0 | uop_index_enable_unit1;  
   
   // datain signal
   always_comb begin
     // initial
-    uop_index_din               = uop_index_remain;    
+    uop_index_din     = uop_index_remain;    
     
     case(1'b1)
       uop_index_enable_unit0: 
-        uop_index_din           = uop_index_remain + 'd4;    
+        uop_index_din = uop_index_remain + 'd4;    
       uop_index_enable_unit1:
-        uop_index_din           = 'd4 - quantity; 
+        uop_index_din = 'd4 - quantity; 
     endcase
   end
 
@@ -216,15 +184,15 @@ module rvv_backend_decode_ctrl
   mux_push_valid0 
   (
      .sel      (quantity),
-     .indata0  (unit1_uop_valid_de2uq[0]),
-     .indata1  (unit0_uop_valid_de2uq[0]),
-     .indata2  (unit0_uop_valid_de2uq[0]),
-     .indata3  (unit0_uop_valid_de2uq[0]),
-     .indata4  (unit0_uop_valid_de2uq[0]),
+     .indata0  (uop_valid_de2uq[1][0]),
+     .indata1  (uop_valid_de2uq[0][0]),
+     .indata2  (uop_valid_de2uq[0][0]),
+     .indata3  (uop_valid_de2uq[0][0]),
+     .indata4  (uop_valid_de2uq[0][0]),
      .indata5  (1'b0),
      .indata6  (1'b0),
      .indata7  (1'b0),
-     .outdata  (push_valid0) 
+     .outdata  (push_valid[0]) 
   );
   
   mux8_1 
@@ -234,15 +202,15 @@ module rvv_backend_decode_ctrl
   mux_push_valid1 
   (
      .sel      (quantity),
-     .indata0  (unit1_uop_valid_de2uq[1]),
-     .indata1  (unit1_uop_valid_de2uq[0]),
-     .indata2  (unit0_uop_valid_de2uq[1]),
-     .indata3  (unit0_uop_valid_de2uq[1]),
-     .indata4  (unit0_uop_valid_de2uq[1]),
+     .indata0  (uop_valid_de2uq[1][1]),
+     .indata1  (uop_valid_de2uq[1][0]),
+     .indata2  (uop_valid_de2uq[0][1]),
+     .indata3  (uop_valid_de2uq[0][1]),
+     .indata4  (uop_valid_de2uq[0][1]),
      .indata5  (1'b0),
      .indata6  (1'b0),
      .indata7  (1'b0),
-     .outdata  (push_valid1) 
+     .outdata  (push_valid[1]) 
   );
 
 mux8_1 
@@ -252,15 +220,15 @@ mux8_1
   mux_push_valid2
   (
      .sel      (quantity),
-     .indata0  (unit1_uop_valid_de2uq[2]),
-     .indata1  (unit1_uop_valid_de2uq[1]),
-     .indata2  (unit1_uop_valid_de2uq[0]),
-     .indata3  (unit0_uop_valid_de2uq[2]),
-     .indata4  (unit0_uop_valid_de2uq[2]),
+     .indata0  (uop_valid_de2uq[1][2]),
+     .indata1  (uop_valid_de2uq[1][1]),
+     .indata2  (uop_valid_de2uq[1][0]),
+     .indata3  (uop_valid_de2uq[0][2]),
+     .indata4  (uop_valid_de2uq[0][2]),
      .indata5  (1'b0),
      .indata6  (1'b0),
      .indata7  (1'b0),
-     .outdata  (push_valid2) 
+     .outdata  (push_valid[2]) 
   );
 
 mux8_1 
@@ -270,21 +238,22 @@ mux8_1
   mux_push_valid3 
   (
      .sel      (quantity),
-     .indata0  (unit1_uop_valid_de2uq[3]),
-     .indata1  (unit1_uop_valid_de2uq[2]),
-     .indata2  (unit1_uop_valid_de2uq[1]),
-     .indata3  (unit1_uop_valid_de2uq[0]),
-     .indata4  (unit0_uop_valid_de2uq[3]),
+     .indata0  (uop_valid_de2uq[1][3]),
+     .indata1  (uop_valid_de2uq[1][2]),
+     .indata2  (uop_valid_de2uq[1][1]),
+     .indata3  (uop_valid_de2uq[1][0]),
+     .indata4  (uop_valid_de2uq[0][3]),
      .indata5  (1'b0),
      .indata6  (1'b0),
      .indata7  (1'b0),
-     .outdata  (push_valid3) 
+     .outdata  (push_valid[3]) 
   );
-  
-  assign push0 = push_valid0&fifo_ready;
-  assign push1 = push_valid1&fifo_ready;
-  assign push2 = push_valid2&fifo_ready;
-  assign push3 = push_valid3&fifo_ready;
+ 
+  generate 
+    for (i=0;i<`NUM_DE_UOP;i++) begin: GET_PUSH
+      assign push[i] = push_valid[i]&fifo_ready;
+    end
+  endgenerate
 
   // data signal for Uops Queue
   mux8_1 
@@ -294,15 +263,15 @@ mux8_1
   mux_data0
   (
      .sel      (quantity),
-     .indata0  (unit1_uop_de2uq[0]),
-     .indata1  (unit0_uop_de2uq[0]),
-     .indata2  (unit0_uop_de2uq[0]),
-     .indata3  (unit0_uop_de2uq[0]),
-     .indata4  (unit0_uop_de2uq[0]),
+     .indata0  (uop_de2uq[1][0]),
+     .indata1  (uop_de2uq[0][0]),
+     .indata2  (uop_de2uq[0][0]),
+     .indata3  (uop_de2uq[0][0]),
+     .indata4  (uop_de2uq[0][0]),
      .indata5  ({`UQ_WIDTH{1'b0}}),
      .indata6  ({`UQ_WIDTH{1'b0}}),
      .indata7  ({`UQ_WIDTH{1'b0}}),
-     .outdata  (data0) 
+     .outdata  (dataout[0]) 
   );
 
   mux8_1 
@@ -312,15 +281,15 @@ mux8_1
   mux_data1
   (
      .sel      (quantity),
-     .indata0  (unit1_uop_de2uq[1]),
-     .indata1  (unit1_uop_de2uq[0]),
-     .indata2  (unit0_uop_de2uq[1]),
-     .indata3  (unit0_uop_de2uq[1]),
-     .indata4  (unit0_uop_de2uq[1]),
+     .indata0  (uop_de2uq[1][1]),
+     .indata1  (uop_de2uq[1][0]),
+     .indata2  (uop_de2uq[0][1]),
+     .indata3  (uop_de2uq[0][1]),
+     .indata4  (uop_de2uq[0][1]),
      .indata5  ({`UQ_WIDTH{1'b0}}),
      .indata6  ({`UQ_WIDTH{1'b0}}),
      .indata7  ({`UQ_WIDTH{1'b0}}),
-     .outdata  (data1) 
+     .outdata  (dataout[1]) 
   );
 
   mux8_1  
@@ -330,15 +299,15 @@ mux8_1
   mux_data2
   (
      .sel      (quantity),
-     .indata0  (unit1_uop_de2uq[2]),
-     .indata1  (unit1_uop_de2uq[1]),
-     .indata2  (unit1_uop_de2uq[0]),
-     .indata3  (unit0_uop_de2uq[2]),
-     .indata4  (unit0_uop_de2uq[2]),
+     .indata0  (uop_de2uq[1][2]),
+     .indata1  (uop_de2uq[1][1]),
+     .indata2  (uop_de2uq[1][0]),
+     .indata3  (uop_de2uq[0][2]),
+     .indata4  (uop_de2uq[0][2]),
      .indata5  ({`UQ_WIDTH{1'b0}}),
      .indata6  ({`UQ_WIDTH{1'b0}}),
      .indata7  ({`UQ_WIDTH{1'b0}}),
-     .outdata  (data2) 
+     .outdata  (dataout[2]) 
   );
 
   mux8_1  
@@ -348,15 +317,15 @@ mux8_1
   mux_data3
   (
      .sel      (quantity),
-     .indata0  (unit1_uop_de2uq[3]),
-     .indata1  (unit1_uop_de2uq[2]),
-     .indata2  (unit1_uop_de2uq[1]),
-     .indata3  (unit1_uop_de2uq[0]),
-     .indata4  (unit0_uop_de2uq[3]),
+     .indata0  (uop_de2uq[1][3]),
+     .indata1  (uop_de2uq[1][2]),
+     .indata2  (uop_de2uq[1][1]),
+     .indata3  (uop_de2uq[1][0]),
+     .indata4  (uop_de2uq[0][3]),
      .indata5  ({`UQ_WIDTH{1'b0}}),
      .indata6  ({`UQ_WIDTH{1'b0}}),
      .indata7  ({`UQ_WIDTH{1'b0}}),
-     .outdata  (data3) 
+     .outdata  (dataout[3]) 
   );
 
 endmodule
