@@ -1897,13 +1897,13 @@ module rvv_backend_alu_unit_addsub
         end
       end
       EEW16: begin
-        if (uop_index[1]) begin
+        if (uop_index[2]) begin
           mask_sp_bit2 = {mask_sp_bit1[0      +: 4*`VLEN/`HWORD_WIDTH],
                           mask_sp_bit1[`VLEN-1 : 4*`VLEN/`HWORD_WIDTH]}; 
         end
       end
       EEW32: begin
-        if (uop_index[1]) begin
+        if (uop_index[2]) begin
           mask_sp_bit2 = {mask_sp_bit1[0      +: 4*`VLEN/`WORD_WIDTH], 
                           mask_sp_bit1[`VLEN-1 : 4*`VLEN/`WORD_WIDTH]};
         end
@@ -1973,13 +1973,13 @@ module rvv_backend_alu_unit_addsub
             vxsat = (|addu_upoverflow);
           end
           VSADD: begin
-            vxsat = (|add_upoverflow)|(|add_underoverflow);
+            vxsat = (|add_upoverflow) || (|add_underoverflow);
           end
           VSSUBU: begin
             vxsat = (|subu_underoverflow);
           end
           VSUB: begin
-            vxsat = (|sub_upoverflow)|(|sub_underoverflow);
+            vxsat = (|sub_upoverflow) || (|sub_underoverflow);
           end
         endcase
       end
