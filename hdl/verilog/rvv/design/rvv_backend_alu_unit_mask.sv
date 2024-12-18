@@ -314,8 +314,8 @@ module rvv_backend_alu_unit_mask
     ignore_vta = 'b0;
     ignore_vma = 'b0;
     
-    case({alu_uop_valid,uop_funct3}) 
-      {1'b1,OPMVV}: begin
+    case(uop_funct3) 
+      OPMVV: begin
         case(uop_funct6.ari_funct6)
           VMANDN,
           VMAND,
