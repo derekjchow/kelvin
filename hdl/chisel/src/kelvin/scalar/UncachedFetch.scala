@@ -169,7 +169,6 @@ class FetchControl(p: Parameters) extends Module {
     // We can fill up to p.fetchInstrSlots elements in the instruction buffer from each ibus
     // request. Use number of elements ready as a back-pressure signal.
     val fetchValid = !io.branch.valid &&
-                          !reset.asBool &&
                           pc.valid &&
                           (io.bufferRequest.nReady >= p.fetchInstrSlots.U)
     val fetch = RegInit(MakeInvalid(UInt(p.fetchAddrBits.W)))
@@ -200,7 +199,7 @@ class FetchControl(p: Parameters) extends Module {
     io.fetchAddr.bits := fetch.bits
 
     // Handle back pressure correctly
-    io.bufferRequest.nValid := Mux(reset.asBool || io.branch.valid || branchLatch.valid, 0.U, Mux(io.fetchData.valid, predecode.count, 0.U))
+    io.bufferRequest.nValid := Mux(io.branch.valid || branchLatch.valid, 0.U, Mux(io.fetchData.valid, predecode.count, 0.U))
 }
 
 class UncachedFetch(p: Parameters) extends FetchUnit(p) {
