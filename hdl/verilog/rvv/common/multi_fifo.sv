@@ -160,6 +160,7 @@ module multi_fifo
           assert property (@(posedge clk) disable iff (!rst_n) not ( pop[i] && almost_empty[i]))
             else $error("MULTI_FIFO: underflow of fifo when pop[%d] and almost_empty[%d]", i, i);
         end
+      endgenerate
   `endif
 
 endmodule

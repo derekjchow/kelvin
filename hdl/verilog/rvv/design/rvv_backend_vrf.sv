@@ -8,9 +8,10 @@ feature list:
 
 module rvv_backend_vrf(/*AUTOARG*/
    // Outputs
-   vrf2dp_rd_struct,
+   vrf2dp_rd_data, vrf2dp_v0_data,
    // Inputs
-   clk, rst_n, dp2vrf_rd_struct, rt2vrf_wr_struct
+   clk, rst_n, dp2vrf_rd_index, 
+   rt2vrf_wr_valid, rt2vrf_wr_data
    );  
 // global signal
 input   logic                   clk;
@@ -18,13 +19,15 @@ input   logic                   rst_n;
     
 // Dispatch unit to VRF unit
 // Vs_data would be return from VRF at the current cycle.
-input DP2VRF_t                  dp2vrf_rd_struct;
+input   logic     [`NUM_DP_VRF-1:0][`REGFILE_INDEX_WIDTH-1:0] dp2vrf_rd_index;
 
 // VRF to Dispatch read data
-output VRF2DP_t                 vrf2dp_rd_struct;
+output  logic     [`NUM_DP_VRF-1:0][`VLEN-1:0]  vrf2dp_rd_data;
+output  logic                      [`VLEN-1:0]  vrf2dp_v0_data;
 
 // Write back to VRF
-input   RT2VRF_t                rt2vrf_wr_struct;
+input   logic     [`NUM_RT_UOP-1:0] rt2vrf_wr_valid;
+input   RT2VRF_t  [`NUM_RT_UOP-1:0] rt2vrf_wr_data;
 
 
 // Wires & Regs
@@ -77,31 +80,31 @@ wire [31:0] [`VLEN-1:0] vrf_rd_data_full;
 
 
 // DP2VRF data unpack
-assign rd_addr0 = dp2vrf_rd_struct.dp2vrf_vr0_addr;
-assign rd_addr1 = dp2vrf_rd_struct.dp2vrf_vr1_addr;
-assign rd_addr2 = dp2vrf_rd_struct.dp2vrf_vr2_addr;
-assign rd_addr3 = dp2vrf_rd_struct.dp2vrf_vr3_addr;
+assign rd_addr0 = dp2vrf_rd_index[0];
+assign rd_addr1 = dp2vrf_rd_index[1];
+assign rd_addr2 = dp2vrf_rd_index[2];
+assign rd_addr3 = dp2vrf_rd_index[3];
 
 // RT2VRF data unpack
-assign wr_valid0 = rt2vrf_wr_struct.rt2vrf_wr_valid[0];
-assign wr_valid1 = rt2vrf_wr_struct.rt2vrf_wr_valid[1];
-assign wr_valid2 = rt2vrf_wr_struct.rt2vrf_wr_valid[2];
-assign wr_valid3 = rt2vrf_wr_struct.rt2vrf_wr_valid[3];
+assign wr_valid0 = rt2vrf_wr_valid[0];
+assign wr_valid1 = rt2vrf_wr_valid[1];
+assign wr_valid2 = rt2vrf_wr_valid[2];
+assign wr_valid3 = rt2vrf_wr_valid[3];
 
-assign wr_addr0 = rt2vrf_wr_struct.rt2vrf_wr_data[0].rt_index;
-assign wr_addr1 = rt2vrf_wr_struct.rt2vrf_wr_data[1].rt_index;
-assign wr_addr2 = rt2vrf_wr_struct.rt2vrf_wr_data[2].rt_index;
-assign wr_addr3 = rt2vrf_wr_struct.rt2vrf_wr_data[3].rt_index;
+assign wr_addr0 = rt2vrf_wr_data[0].rt_index;
+assign wr_addr1 = rt2vrf_wr_data[1].rt_index;
+assign wr_addr2 = rt2vrf_wr_data[2].rt_index;
+assign wr_addr3 = rt2vrf_wr_data[3].rt_index;
 
-assign wr_data0 = rt2vrf_wr_struct.rt2vrf_wr_data[0].rt_data;
-assign wr_data1 = rt2vrf_wr_struct.rt2vrf_wr_data[1].rt_data;
-assign wr_data2 = rt2vrf_wr_struct.rt2vrf_wr_data[2].rt_data;
-assign wr_data3 = rt2vrf_wr_struct.rt2vrf_wr_data[3].rt_data;
+assign wr_data0 = rt2vrf_wr_data[0].rt_data;
+assign wr_data1 = rt2vrf_wr_data[1].rt_data;
+assign wr_data2 = rt2vrf_wr_data[2].rt_data;
+assign wr_data3 = rt2vrf_wr_data[3].rt_data;
 
-assign wr_we0 = rt2vrf_wr_struct.rt2vrf_wr_data[0].rt_strobe;
-assign wr_we1 = rt2vrf_wr_struct.rt2vrf_wr_data[1].rt_strobe;
-assign wr_we2 = rt2vrf_wr_struct.rt2vrf_wr_data[2].rt_strobe;
-assign wr_we3 = rt2vrf_wr_struct.rt2vrf_wr_data[3].rt_strobe;
+assign wr_we0 = rt2vrf_wr_data[0].rt_strobe;
+assign wr_we1 = rt2vrf_wr_data[1].rt_strobe;
+assign wr_we2 = rt2vrf_wr_data[2].rt_strobe;
+assign wr_we3 = rt2vrf_wr_data[3].rt_strobe;
 
 assign wr_web0 = {{8{wr_we0[15]}},{8{wr_we0[14]}},{8{wr_we0[13]}},{8{wr_we0[12]}},{8{wr_we0[11]}},{8{wr_we0[10]}},{8{wr_we0[9]}},{8{wr_we0[8]}},{8{wr_we0[7]}},{8{wr_we0[6]}},{8{wr_we0[5]}},{8{wr_we0[4]}},{8{wr_we0[3]}},{8{wr_we0[2]}},{8{wr_we0[1]}},{8{wr_we0[0]}}};
 
@@ -170,11 +173,11 @@ rvv_backend_vrf_reg vrf_reg (
   .wdata(vrf_wr_data_full));
 
 // VRF2DP data pack
-assign vrf2dp_rd_struct.vrf2dp_rd0_data = vrf_rd_data_full[rd_addr0];
-assign vrf2dp_rd_struct.vrf2dp_rd1_data = vrf_rd_data_full[rd_addr1];
-assign vrf2dp_rd_struct.vrf2dp_rd2_data = vrf_rd_data_full[rd_addr2];
-assign vrf2dp_rd_struct.vrf2dp_rd3_data = vrf_rd_data_full[rd_addr3];
-assign vrf2dp_rd_struct.vrf2dp_v0_data = vrf_rd_data_full[0];
+assign vrf2dp_rd_data[0] = vrf_rd_data_full[rd_addr0];
+assign vrf2dp_rd_data[1] = vrf_rd_data_full[rd_addr1];
+assign vrf2dp_rd_data[2] = vrf_rd_data_full[rd_addr2];
+assign vrf2dp_rd_data[3] = vrf_rd_data_full[rd_addr3];
+assign vrf2dp_v0_data = vrf_rd_data_full[0];
 
 
 endmodule

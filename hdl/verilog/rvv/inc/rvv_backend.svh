@@ -350,25 +350,6 @@ typedef struct packed {
   logic                               last_uop_valid;     // one instruction may be split to many uops, this signal is used to specify the last uop in those uops of one instruction.
 } UOP_QUEUE_t;    
 
-//
-// DP stage, 
-//
-// VRF struct
-typedef struct packed {
-  logic [`REGFILE_INDEX_WIDTH-1:0]    dp2vrf_vr0_addr;
-  logic [`REGFILE_INDEX_WIDTH-1:0]    dp2vrf_vr1_addr;
-  logic [`REGFILE_INDEX_WIDTH-1:0]    dp2vrf_vr2_addr;
-  logic [`REGFILE_INDEX_WIDTH-1:0]    dp2vrf_vr3_addr;
-}DP2VRF_t;
-
-typedef struct packed {
-  logic [`VLEN-1:0]                   vrf2dp_rd0_data;
-  logic [`VLEN-1:0]                   vrf2dp_rd1_data;
-  logic [`VLEN-1:0]                   vrf2dp_rd2_data;
-  logic [`VLEN-1:0]                   vrf2dp_rd3_data;
-  logic [`VLEN-1:0]                   vrf2dp_v0_data;
-}VRF2DP_t;
-
 // specify whether the current byte belongs to 'prestart' or 'body-inactive' or 'body-active' or 'tail'
 typedef enum logic [1:0] {
   NOT_CHANGE = 2'b00,         // the byte is not changed, which may belong to 'prestart' or superfluous element in widening/narrowing uop
@@ -617,11 +598,6 @@ typedef struct packed {
 typedef struct packed {
   logic   [`REGFILE_INDEX_WIDTH-1:0]  rt_index; 
   logic   [`XLEN-1:0]                 rt_data; 
-} RT2XRF_data_t;  
-
-typedef struct packed {
-  logic [`NUM_RT_UOP-1:0]             rt2xrf_wr_valid;
-  RT2XRF_data_t [`NUM_RT_UOP-1:0]     rt2xrf_wr_data;
 }RT2XRF_t;
 
 // write back to VRF
@@ -629,11 +605,6 @@ typedef struct packed {
   logic   [`REGFILE_INDEX_WIDTH-1:0]  rt_index; 
   logic   [`VLEN-1:0]                 rt_data;
   logic   [`VLENB-1:0]                rt_strobe; 
-} RT2VRF_data_t;  
-
-typedef struct packed {
-  logic [`NUM_RT_UOP-1:0]             rt2vrf_wr_valid;
-  RT2VRF_data_t [`NUM_RT_UOP-1:0]     rt2vrf_wr_data;
 }RT2VRF_t;
 
 // trap handle

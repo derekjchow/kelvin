@@ -23,10 +23,11 @@ feature list:
 
 module rvv_backend_retire(/*AUTOARG*/
    // Outputs
-   rob2rt_write_ready, rt2xrf_write_data, 
-   rt2vrf_write_data, rt2vcsr_write_valid, 
-   rt2vcsr_write_data, rt2vsat_write_valid, 
-   rt2vsat_write_data,
+   rob2rt_write_ready, 
+   rt2xrf_write_valid, rt2xrf_write_data, 
+   rt2vrf_write_valid, rt2vrf_write_data, 
+   rt2vcsr_write_valid, rt2vcsr_write_data, 
+   rt2vsat_write_valid, rt2vsat_write_data,
    // Inputs
    rob2rt_write_valid, rob2rt_write_data,
    rt2xrf_write_ready
@@ -40,11 +41,13 @@ module rvv_backend_retire(/*AUTOARG*/
     output  logic    [`NUM_RT_UOP-1:0]  rob2rt_write_ready;
 
 // write back to XRF
-    output  RT2XRF_t                    rt2xrf_write_data;//entry valid is packed inside
+    output  logic    [`NUM_RT_UOP-1:0]  rt2xrf_write_valid;
+    output  RT2XRF_t [`NUM_RT_UOP-1:0]  rt2xrf_write_data;
     input   logic    [`NUM_RT_UOP-1:0]  rt2xrf_write_ready;
 
 // write back to VRF
-    output  RT2VRF_t                    rt2vrf_write_data;//update vrf has no ready @output
+    output  logic    [`NUM_RT_UOP-1:0]  rt2vrf_write_valid;
+    output  RT2VRF_t [`NUM_RT_UOP-1:0]  rt2vrf_write_data;//update vrf has no ready @output
 
 // write to update vcsr
     output  logic                       rt2vcsr_write_valid;
@@ -367,41 +370,41 @@ assign w_valid2_chkTrap = !(trap_flag0 || trap_flag1) && w_valid2;
 assign w_valid3_chkTrap = !(trap_flag0 || trap_flag1 || trap_flag2) && w_valid3;
 
 //  5.2. To VRF
-assign rt2vrf_write_data.rt2vrf_wr_valid[0] = w_valid0_chkTrap && !w_type0;
-assign rt2vrf_write_data.rt2vrf_wr_valid[1] = w_valid1_chkTrap && !w_type1;
-assign rt2vrf_write_data.rt2vrf_wr_valid[2] = w_valid2_chkTrap && !w_type2;
-assign rt2vrf_write_data.rt2vrf_wr_valid[3] = w_valid3_chkTrap && !w_type3;
+assign rt2vrf_write_valid[0] = w_valid0_chkTrap && !w_type0;
+assign rt2vrf_write_valid[1] = w_valid1_chkTrap && !w_type1;
+assign rt2vrf_write_valid[2] = w_valid2_chkTrap && !w_type2;
+assign rt2vrf_write_valid[3] = w_valid3_chkTrap && !w_type3;
 //Data
-assign rt2vrf_write_data.rt2vrf_wr_data[0].rt_data = w_data0;
-assign rt2vrf_write_data.rt2vrf_wr_data[1].rt_data = w_data1;
-assign rt2vrf_write_data.rt2vrf_wr_data[2].rt_data = w_data2;
-assign rt2vrf_write_data.rt2vrf_wr_data[3].rt_data = w_data3;
+assign rt2vrf_write_data[0].rt_data = w_data0;
+assign rt2vrf_write_data[1].rt_data = w_data1;
+assign rt2vrf_write_data[2].rt_data = w_data2;
+assign rt2vrf_write_data[3].rt_data = w_data3;
 //Addr
-assign rt2vrf_write_data.rt2vrf_wr_data[0].rt_index = w_addr0;
-assign rt2vrf_write_data.rt2vrf_wr_data[1].rt_index = w_addr1;
-assign rt2vrf_write_data.rt2vrf_wr_data[2].rt_index = w_addr2;
-assign rt2vrf_write_data.rt2vrf_wr_data[3].rt_index = w_addr3;
+assign rt2vrf_write_data[0].rt_index = w_addr0;
+assign rt2vrf_write_data[1].rt_index = w_addr1;
+assign rt2vrf_write_data[2].rt_index = w_addr2;
+assign rt2vrf_write_data[3].rt_index = w_addr3;
 //Byte Mask
-assign rt2vrf_write_data.rt2vrf_wr_data[0].rt_strobe = w_enB0_mux;
-assign rt2vrf_write_data.rt2vrf_wr_data[1].rt_strobe = w_enB1_mux;
-assign rt2vrf_write_data.rt2vrf_wr_data[2].rt_strobe = w_enB2_mux;
-assign rt2vrf_write_data.rt2vrf_wr_data[3].rt_strobe = w_enB3_mux;
+assign rt2vrf_write_data[0].rt_strobe = w_enB0_mux;
+assign rt2vrf_write_data[1].rt_strobe = w_enB1_mux;
+assign rt2vrf_write_data[2].rt_strobe = w_enB2_mux;
+assign rt2vrf_write_data[3].rt_strobe = w_enB3_mux;
 
 //  5.3. To XRF
-assign rt2xrf_write_data.rt2xrf_wr_valid[0] = w_valid0_chkTrap && w_type0;
-assign rt2xrf_write_data.rt2xrf_wr_valid[1] = w_valid1_chkTrap && w_type1;
-assign rt2xrf_write_data.rt2xrf_wr_valid[2] = w_valid2_chkTrap && w_type2;
-assign rt2xrf_write_data.rt2xrf_wr_valid[3] = w_valid3_chkTrap && w_type3;
+assign rt2xrf_write_valid[0] = w_valid0_chkTrap && w_type0;
+assign rt2xrf_write_valid[1] = w_valid1_chkTrap && w_type1;
+assign rt2xrf_write_valid[2] = w_valid2_chkTrap && w_type2;
+assign rt2xrf_write_valid[3] = w_valid3_chkTrap && w_type3;
 //Data
-assign rt2xrf_write_data.rt2xrf_wr_data[0].rt_data = w_data0[`XLEN-1:0];
-assign rt2xrf_write_data.rt2xrf_wr_data[1].rt_data = w_data1[`XLEN-1:0];
-assign rt2xrf_write_data.rt2xrf_wr_data[2].rt_data = w_data2[`XLEN-1:0];
-assign rt2xrf_write_data.rt2xrf_wr_data[3].rt_data = w_data3[`XLEN-1:0];
+assign rt2xrf_write_data[0].rt_data = w_data0[`XLEN-1:0];
+assign rt2xrf_write_data[1].rt_data = w_data1[`XLEN-1:0];
+assign rt2xrf_write_data[2].rt_data = w_data2[`XLEN-1:0];
+assign rt2xrf_write_data[3].rt_data = w_data3[`XLEN-1:0];
 //Addr
-assign rt2xrf_write_data.rt2xrf_wr_data[0].rt_index = w_addr0;
-assign rt2xrf_write_data.rt2xrf_wr_data[1].rt_index = w_addr1;
-assign rt2xrf_write_data.rt2xrf_wr_data[2].rt_index = w_addr2;
-assign rt2xrf_write_data.rt2xrf_wr_data[3].rt_index = w_addr3;
+assign rt2xrf_write_data[0].rt_index = w_addr0;
+assign rt2xrf_write_data[1].rt_index = w_addr1;
+assign rt2xrf_write_data[2].rt_index = w_addr2;
+assign rt2xrf_write_data[3].rt_index = w_addr3;
 
 //  5.4. To VCSR
 //Valid
@@ -423,10 +426,10 @@ assign rt2vsat_write_valid = (w_valid3_chkTrap && w_vxsat3) ||
 assign rt2vsat_write_data = w_vxsat3 || w_vxsat2 || w_vxsat1 || w_vxsat0;
 
 //6. Ready generation
-assign rob2rt_write_ready[0] = rt2xrf_write_data.rt2xrf_wr_valid[0] ? rt2xrf_write_ready[0] : 1'b1; //to XRF use ready, otherwise ready is tied to 1
-assign rob2rt_write_ready[1] = rt2xrf_write_data.rt2xrf_wr_valid[1] ? rt2xrf_write_ready[1] : 1'b1; 
-assign rob2rt_write_ready[2] = rt2xrf_write_data.rt2xrf_wr_valid[2] ? rt2xrf_write_ready[2] : 1'b1;
-assign rob2rt_write_ready[3] = rt2xrf_write_data.rt2xrf_wr_valid[3] ? rt2xrf_write_ready[3] : 1'b1;
+assign rob2rt_write_ready[0] = rt2xrf_write_valid[0] ? rt2xrf_write_ready[0] : 1'b1; //to XRF use ready, otherwise ready is tied to 1
+assign rob2rt_write_ready[1] = rt2xrf_write_valid[1] ? rt2xrf_write_ready[1] : 1'b1; 
+assign rob2rt_write_ready[2] = rt2xrf_write_valid[2] ? rt2xrf_write_ready[2] : 1'b1;
+assign rob2rt_write_ready[3] = rt2xrf_write_valid[3] ? rt2xrf_write_ready[3] : 1'b1;
 /////////////////////////////////
 
 endmodule
