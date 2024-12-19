@@ -3758,7 +3758,7 @@ module rvv_backend_decode_unit_ari
                     VMSBF,
                     VMSIF,
                     VMSOF: begin
-                      if (vm==1'b0)
+                      if (inst_vm==1'b0)
                         // need vd as vs3
                         uop[i].uop_class  = VV;
                       else
@@ -4253,7 +4253,7 @@ module rvv_backend_decode_unit_ari
                     VMSBF,
                     VMSIF,
                     VMSOF: begin
-                      if (vm==1'b0)
+                      if (inst_vm==1'b0)
                         uop[i].vs3_valid = 1'b1;
                     end
                   endcase
