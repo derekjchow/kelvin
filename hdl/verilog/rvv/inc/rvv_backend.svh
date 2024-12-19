@@ -385,6 +385,7 @@ typedef struct packed {
   FUNCT6_u                            uop_funct6;  
   logic   [`FUNCT3_WIDTH-1:0]         uop_funct3;
   logic   [`VSTART_WIDTH-1:0]         vstart;
+  logic   [`VL_WIDTH-1:0]             vl;       
   // vm field can be used to identify vmadc.v?m/vmadc.v? uop in the same uop_funct6(6'b010000).
   // vm field can be used to identify vmsbc.v?m/vmsbc.v? uop in the same uop_funct6(6'b010011).   
   logic                               vm;               
