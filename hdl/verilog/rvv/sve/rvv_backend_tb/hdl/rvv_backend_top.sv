@@ -33,9 +33,9 @@ module rvv_backend_top();
     .insts_rvs2cq             (rvs_if.insts_rvs2cq          ),
     .insts_ready_cq2rvs       (rvs_if.insts_ready_cq2rvs    ),
     
-    .rt_xrf_wb2rvs            (rvs_if.wb_xrf_wb2rvs         ),
-    .rt_xrf_valid_wb2rvs      (rvs_if.wb_xrf_valid_wb2rvs   ),
-    .rt_xrf_ready_wb2rvs      (rvs_if.wb_xrf_ready_wb2rvs   ),
+    .rt_xrf_rvv2rvs           (rvs_if.wb_xrf_wb2rvs         ),
+    .rt_xrf_valid_rvv2rvs     (rvs_if.wb_xrf_valid_wb2rvs   ),
+    .rt_xrf_ready_rvv2rvs     (rvs_if.wb_xrf_ready_wb2rvs   ),
 
     .uop_valid_lsu_rvv2rvs    (lsu_if.uop_valid_lsu_rvv2rvs ),
     .uop_lsu_rvv2rvs          (lsu_if.uop_lsu_rvv2rvs       ),
@@ -50,23 +50,27 @@ module rvv_backend_top();
     .trap_rvs2rvv             (rvs_if.trap_rvs2rvv          ),
     .trap_ready_rvv2rvs       (rvs_if.trap_ready_rvv2rvs    ), 
 
+    // TODO
+    .wr_vxsat_valid           (),
+    .wr_vxsat                 (),
+
     .vcsr_valid               (rvs_if.vcsr_valid            ),
     .vector_csr               (rvs_if.vector_csr            )
   );
 
-  assign rvs_if.wb_event = `WB_EVENT_PATH.rt_event; // FIXME
+  assign rvs_if.wb_event = `RT_EVENT_PATH.rt_event;
 
   always_comb begin: vrf_connect
     for(int i=0; i<32; i++) begin
       vrf_if.vreg[i] = `VRF_PATH.vreg[i];
+      `VRF_PATH.vreg_init_data[i] = vrf_if.vreg_init_data[i];
     end
   end: vrf_connect
 
   //Driver reset depending on rst_delay
   initial begin
       clk = 0;
-      rst_n = 1;
-   #1 rst_n = 0;
+      rst_n = 0;
       repeat (rst_delay) @(posedge clk);
       rst_n = 1'b1;
       @(clk);
