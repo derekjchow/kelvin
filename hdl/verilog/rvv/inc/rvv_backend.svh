@@ -45,12 +45,12 @@ typedef enum logic [2:0] {
 
 // The architectural configuration state of the RVV core.
 typedef struct packed {
-  logic [`VL_WIDTH-1:0]         vl;   // Max 128, need one extra bit
+  logic [`VL_WIDTH-1:0]         vl;       // Max 128, need one extra bit
   logic [`VSTART_WIDTH-1:0]     vstart;
   logic [`VTYPE_VMA_WIDTH-1:0]  ma;        // 0:inactive element undisturbed, 1:inactive element agnostic
   logic [`VTYPE_VTA_WIDTH-1:0]  ta;        // 0:tail undisturbed, 1:tail agnostic
   RVVXRM                        xrm;       
-  logic [`VCSR_VXSAT_WIDTH-1:0] xsat;            
+  //logic [`VCSR_VXSAT_WIDTH-1:0] xsat;   // rvv dont need this bit, but output this to rvs            
   RVVSEW                        sew;
   RVVLMUL                       lmul;
 } RVVConfigState;
