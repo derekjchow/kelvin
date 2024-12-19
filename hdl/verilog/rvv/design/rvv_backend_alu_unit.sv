@@ -11,10 +11,6 @@
 
 module rvv_backend_alu_unit
 (
-`ifdef ASSERT_ON
-  clk,
-  rst_n,
-`endif
   alu_uop_valid,
   alu_uop,
   result_valid,
@@ -23,11 +19,6 @@ module rvv_backend_alu_unit
 //
 // interface signals
 //
-  // global signal
-`ifdef ASSERT_ON
-  input   logic                         clk;
-  input   logic                         rst_n;
-`endif
 
   // ALU RS handshake signals
   input   logic           alu_uop_valid;
@@ -54,10 +45,6 @@ module rvv_backend_alu_unit
 //
   rvv_backend_alu_unit_addsub u_alu_addsub
   (
-  `ifdef ASSERT_ON
-    .clk                  (clk),
-    .rst_n                (rst_n),
-  `endif
     .alu_uop_valid        (alu_uop_valid),
     .alu_uop              (alu_uop),
     .result_valid         (result_valid_addsub),
@@ -66,10 +53,6 @@ module rvv_backend_alu_unit
 
   rvv_backend_alu_unit_shift u_alu_shift
   (
-  `ifdef ASSERT_ON
-    .clk                  (clk),
-    .rst_n                (rst_n),
-  `endif
     .alu_uop_valid        (alu_uop_valid),
     .alu_uop              (alu_uop),
     .result_valid         (result_valid_shift),
@@ -78,10 +61,6 @@ module rvv_backend_alu_unit
   
   rvv_backend_alu_unit_mask u_alu_mask
   (
-  `ifdef ASSERT_ON
-    .clk                  (clk),
-    .rst_n                (rst_n),
-  `endif
     .alu_uop_valid        (alu_uop_valid),
     .alu_uop              (alu_uop),
     .result_valid         (result_valid_mask),
@@ -90,10 +69,6 @@ module rvv_backend_alu_unit
 
   rvv_backend_alu_unit_other u_alu_other
   (
-  `ifdef ASSERT_ON
-    .clk                  (clk),
-    .rst_n                (rst_n),
-  `endif
     .alu_uop_valid        (alu_uop_valid),
     .alu_uop              (alu_uop),
     .result_valid         (result_valid_other),

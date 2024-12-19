@@ -9,10 +9,6 @@
 
 module rvv_backend_alu
 (
-`ifdef ASSERT_ON
-  clk,
-  rst_n,
-`endif
   pop_ex2rs,
   alu_uop_rs2ex,
   fifo_empty_rs2ex,
@@ -26,12 +22,6 @@ module rvv_backend_alu
 //
 // interface signals
 //
-  // global signal
-`ifdef ASSERT_ON
-  input   logic                         clk;
-  input   logic                         rst_n;
-`endif
-
   // ALU RS to ALU unit
   output  logic       [`NUM_ALU-1:0]    pop_ex2rs;
   input   ALU_RS_t    [`NUM_ALU-1:0]    alu_uop_rs2ex;

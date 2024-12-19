@@ -251,8 +251,8 @@ typedef enum logic [1:0] {
 
 // It identifys what inst_encoding[11:7] is used for when LSU instruction, based on inst_encoding[5]
 typedef enum logic [0:0] {
-  IS_LOAD,       // when load, inst_encoding[11:7] is seen as vs3
-  IS_STORE       // when load, inst_encoding[11:7] is seen as vd
+  IS_LOAD,       // when load, inst_encoding[11:7] is seen as vd
+  IS_STORE       // when store, inst_encoding[11:7] is seen as vs3
 } LSU_IS_STORE_e;
 
 // combine those signals to LSU_TYPE
@@ -415,7 +415,9 @@ typedef struct packed {
 // DIV reservation station struct
 typedef struct packed {
   logic   [`ROB_DEPTH_WIDTH-1:0]      rob_entry;
+  FUNCT6_u                            uop_funct6;
   logic   [`FUNCT3_WIDTH-1:0]         uop_funct3;
+  EEW_e                               vd_eew;
   // when vs1_data_valid=1, vs1_data is valid as a vector operand
   logic   [`VLEN-1:0]                 vs1_data;           
   EEW_e                               vs1_eew;
@@ -427,7 +429,6 @@ typedef struct packed {
   BYTE_TYPE_t                         vs2_type; 
   // rs1_data could be from X[rs1] and imm(inst[19:15]). If it is imm, the 5-bit imm(inst[19:15]) will be sign-extend to XLEN-bit. 
   logic   [`XLEN-1:0] 	              rs1_data;     
-  EEW_e                               scalar_eew;
   logic        	                      rs1_data_valid;                                   
 } DIV_RS_t; 
 
@@ -438,6 +439,7 @@ typedef struct packed {
   logic   [`FUNCT3_WIDTH-1:0]         uop_funct3;
   RVVXRM                              vxrm;       
  
+  EEW_e                               vd_eew;
   logic   [`VLEN-1:0]                 vs1_data;           
   EEW_e                               vs1_eew;
   logic                               vs1_data_valid; 
@@ -452,7 +454,6 @@ typedef struct packed {
   BYTE_TYPE_t                         vs3_type;
   // rs1_data could be from X[rs1] and imm(inst[19:15]). If it is imm, the 5-bit imm(inst[19:15]) will be sign-extend to XLEN-bit. 
   logic   [`XLEN-1:0] 	              rs1_data;          
-  EEW_e                               scalar_eew;
   logic          	                    rs1_data_valid;   
 } MUL_RS_t;    
 
@@ -463,6 +464,7 @@ typedef struct packed {
   logic   [`FUNCT3_WIDTH-1:0]         uop_funct3;
   // Identify vmerge and vmv in the same uop_funct6(6'b010111).
   logic                               vm;               
+  EEW_e                               vd_eew;
   // when vs1_data_valid=0; vs1 field is valid and used to decode some OPMVV uops
   // when vs1_data_valid=1, vs1_data is valid as a vector operand
   logic   [`REGFILE_INDEX_WIDTH-1:0]  vs1;              
@@ -476,7 +478,6 @@ typedef struct packed {
   BYTE_TYPE_t                         vs2_type;
   // rs1_data could be from X[rs1] and imm(inst[19:15]). If it is imm, the 5-bit imm(inst[19:15]) will be sign-extend to XLEN-bit. 
   logic   [`XLEN-1:0] 	              rs1_data;         
-  EEW_e                               scalar_eew;
   logic        	                      rs1_data_valid;
   logic                               last_uop_valid;     
 } PMT_RDT_RS_t;    

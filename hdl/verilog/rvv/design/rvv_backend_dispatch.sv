@@ -130,7 +130,7 @@ module rvv_backend_dispatch
     genvar i;
     generate
         for (i=0; i<`NUM_DP_UOP; i++) begin : gen_suc_uop
-            assign suc_uop[i].vs1_index = uop_uop2dp[i].vs1.vs1_index;
+            assign suc_uop[i].vs1_index = uop_uop2dp[i].vs1;
             assign suc_uop[i].vs1_valid = uop_uop2dp[i].vs1_index_valid;
             assign suc_uop[i].vs2_index = uop_uop2dp[i].vs2_index;
             assign suc_uop[i].vs2_valid = uop_uop2dp[i].vs2_valid;
@@ -177,7 +177,7 @@ module rvv_backend_dispatch
 // Structure hazard check and set read index for VRF
     generate
         for (i=0; i<`NUM_DP_UOP; i++) begin : gen_strct_uop
-            assign strct_uop[i].vs1_index = uop_uop2dp[i].vs1.vs1_index;
+            assign strct_uop[i].vs1_index = uop_uop2dp[i].vs1;
             assign strct_uop[i].vs2_index = uop_uop2dp[i].vs2_index;
             assign strct_uop[i].vd_index  = uop_uop2dp[i].vd_index;
             assign strct_uop[i].uop_exe_unit = uop_uop2dp[i].uop_exe_unit;
@@ -287,24 +287,23 @@ module rvv_backend_dispatch
             assign rs_dp2alu[i].v0_data_valid = uop_uop2dp[i].v0_valid;
             assign rs_dp2alu[i].vd_data       = uop_operand[i].vd;
             assign rs_dp2alu[i].vd_data_valid = uop_uop2dp[i].vs3_valid;
+            assign rs_dp2alu[i].vd_eew        = uop_uop2dp[i].vd_eew;
             assign rs_dp2alu[i].vs1           = uop_uop2dp[i].vs1;
             assign rs_dp2alu[i].vs1_data      = uop_operand[i].vs1;
-            assign rs_dp2alu[i].vs1_eew       = uop_uop2dp[i].vs1_eew;
             assign rs_dp2alu[i].vs1_data_valid= uop_uop2dp[i].vs1_index_valid;
-            assign rs_dp2alu[i].vs1_type      = uop_operand_byte_type[i].vs1;
             assign rs_dp2alu[i].vs2_data      = uop_operand[i].vs2;
-            assign rs_dp2alu[i].vs2_eew       = uop_uop2dp[i].vs2_eew;
             assign rs_dp2alu[i].vs2_data_valid= uop_uop2dp[i].vs2_valid;
-            assign rs_dp2alu[i].vs2_type      = uop_operand_byte_type[i].vs2;
+            assign rs_dp2alu[i].vs2_eew       = uop_uop2dp[i].vs2_eew;
             assign rs_dp2alu[i].rs1_data      = uop_uop2dp[i].rs1_data;
-            assign rs_dp2alu[i].scalar_eew    = uop_uop2dp[i].scalar_eew;
             assign rs_dp2alu[i].rs1_data_valid= uop_uop2dp[i].rs1_data_valid;
+            assign rs_dp2alu[i].uop_index     = uop_uop2dp[i].uop_index;
 
           // PMTRDT RS
             assign rs_dp2pmtrdt[i].rob_entry     = uop_index_rob2dp + i; 
             assign rs_dp2pmtrdt[i].uop_funct6    = uop_uop2dp[i].uop_funct6;
             assign rs_dp2pmtrdt[i].uop_funct3    = uop_uop2dp[i].uop_funct3;
             assign rs_dp2pmtrdt[i].vm            = uop_uop2dp[i].vm;
+            assign rs_dp2pmtrdt[i].vd_eew        = uop_uop2dp[i].vd_eew;
             assign rs_dp2pmtrdt[i].vs1           = uop_uop2dp[i].vs1;
             assign rs_dp2pmtrdt[i].vs1_data      = uop_operand[i].vs1;
             assign rs_dp2pmtrdt[i].vs1_eew       = uop_uop2dp[i].vs1_eew;
@@ -315,7 +314,6 @@ module rvv_backend_dispatch
             assign rs_dp2pmtrdt[i].vs2_data_valid= uop_uop2dp[i].vs2_valid;
             assign rs_dp2pmtrdt[i].vs2_type      = uop_operand_byte_type[i].vs2;
             assign rs_dp2pmtrdt[i].rs1_data      = uop_uop2dp[i].rs1_data;
-            assign rs_dp2pmtrdt[i].scalar_eew    = uop_uop2dp[i].scalar_eew;
             assign rs_dp2pmtrdt[i].rs1_data_valid= uop_uop2dp[i].rs1_data_valid;
             assign rs_dp2pmtrdt[i].last_uop_valid= uop_uop2dp[i].last_uop_valid;
             
@@ -324,6 +322,7 @@ module rvv_backend_dispatch
             assign rs_dp2mul[i].uop_funct6    = uop_uop2dp[i].uop_funct6;
             assign rs_dp2mul[i].uop_funct3    = uop_uop2dp[i].uop_funct3;
             assign rs_dp2mul[i].vxrm          = uop_uop2dp[i].vector_csr.xrm;
+            assign rs_dp2mul[i].vd_eew        = uop_uop2dp[i].vd_eew;
             assign rs_dp2mul[i].vs1_data      = uop_operand[i].vs1;
             assign rs_dp2mul[i].vs1_eew       = uop_uop2dp[i].vs1_eew;
             assign rs_dp2mul[i].vs1_data_valid= uop_uop2dp[i].vs1_index_valid;
@@ -337,13 +336,13 @@ module rvv_backend_dispatch
             assign rs_dp2mul[i].vs3_data_valid = uop_uop2dp[i].vs3_valid;
             assign rs_dp2mul[i].vs3_type       = uop_operand_byte_type[i].vd;
             assign rs_dp2mul[i].rs1_data      = uop_uop2dp[i].rs1_data;
-            assign rs_dp2mul[i].scalar_eew    = uop_uop2dp[i].scalar_eew;
             assign rs_dp2mul[i].rs1_data_valid= uop_uop2dp[i].rs1_data_valid;
 
           // DIV RS
             assign rs_dp2div[i].rob_entry     = uop_index_rob2dp + i; 
             assign rs_dp2div[i].uop_funct6    = uop_uop2dp[i].uop_funct6;
             assign rs_dp2div[i].uop_funct3    = uop_uop2dp[i].uop_funct3;
+            assign rs_dp2div[i].vd_eew        = uop_uop2dp[i].vd_eew;
             assign rs_dp2div[i].vs1_data      = uop_operand[i].vs1;
             assign rs_dp2div[i].vs1_eew       = uop_uop2dp[i].vs1_eew;
             assign rs_dp2div[i].vs1_data_valid= uop_uop2dp[i].vs1_index_valid;
@@ -353,7 +352,6 @@ module rvv_backend_dispatch
             assign rs_dp2div[i].vs2_data_valid= uop_uop2dp[i].vs2_valid;
             assign rs_dp2div[i].vs2_type      = uop_operand_byte_type[i].vs2;
             assign rs_dp2div[i].rs1_data      = uop_uop2dp[i].rs1_data;
-            assign rs_dp2div[i].scalar_eew    = uop_uop2dp[i].scalar_eew;
             assign rs_dp2div[i].rs1_data_valid= uop_uop2dp[i].rs1_data_valid;
 
           // LSU RS
@@ -370,7 +368,7 @@ module rvv_backend_dispatch
 
           // ROB
             assign uop_dp2rob[i].w_index      = uop_operand[i].vd;
-            assign uop_dp2rob[i].vd_type      = uop_operand_byte_type[i].vd;
+            assign uop_dp2rob[i].byte_type    = uop_operand_byte_type[i].vd;
             assign uop_dp2rob[i].vector_csr   = uop_uop2dp[i].vector_csr;
         end
     endgenerate
