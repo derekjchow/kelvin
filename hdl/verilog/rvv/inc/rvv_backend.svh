@@ -391,7 +391,7 @@ typedef struct packed {
   // rounding mode 
   RVVXRM                              vxrm;       
   // when the uop is vmadc.v?m/vmsbc.v?m, the uop will use v0_data as the third vector operand. EEW_v0=1.
-  logic   [`VLENB-1:0]                v0_data;
+  logic   [`VLEN-1:0]                 v0_data;
   logic                               v0_data_valid;
   // when the uop is mask uop(vmandn,vmand,...), the uop will use vd_data as the third vector operand. EEW_vd=1.
   logic   [`VLEN-1:0]                 vd_data;
