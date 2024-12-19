@@ -3757,9 +3757,15 @@ module rvv_backend_decode_unit_ari
                   case(vs1_opcode_vmunary)
                     VMSBF,
                     VMSIF,
-                    VMSOF,
+                    VMSOF: begin
+                      if (vm==1'b0)
+                        // need vd as vs3
+                        uop[i].uop_class  = VV;
+                      else
+                        uop[i].uop_class  = VX;
+                    end
                     VIOTA: begin
-                      uop[i].uop_class  = VV;
+                      uop[i].uop_class  = VX;
                     end
                     VID: begin
                       uop[i].uop_class  = X;
@@ -4246,9 +4252,9 @@ module rvv_backend_decode_unit_ari
                   case(vs1_opcode_vmunary)
                     VMSBF,
                     VMSIF,
-                    VMSOF,
-                    VIOTA: begin
-                      uop[i].vs3_valid = 1'b1;
+                    VMSOF: begin
+                      if (vm==1'b0)
+                        uop[i].vs3_valid = 1'b1;
                     end
                   endcase
                 end
