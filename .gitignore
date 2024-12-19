@@ -12,3 +12,5 @@ tests/renode/__pycache__
 novas.fsdb
 ucli.key
 internal
+*vcst*
+novas*

@@ -20,6 +20,7 @@ load(
     "chisel_library",
     "chisel_test",
 )
+load("@kelvin_hw//rules:lint.bzl", "vcstatic_lint")
 load("@kelvin_hw//rules:verilog.bzl", "verilog_zip_bundle")
 
 package(default_visibility = ["//visibility:public"])
@@ -108,6 +109,7 @@ chisel_test(
 
 chisel_test(
     name = "kelvin_core_axi_tests",
+    size = "medium",
     srcs = [
         "AxiSlave2SRAMTest.scala",
         "CoreAxiCSRTest.scala",
@@ -120,7 +122,6 @@ chisel_test(
         ":kelvin_base",
         "//hdl/chisel/src/bus",
     ],
-    size = "medium",
 )
 
 chisel_library(
@@ -254,11 +255,11 @@ chisel_library(
     srcs = [
         "AxiSlave.scala",
         "AxiSlave2SRAM.scala",
-        "Fabric.scala",
         "Core.scala",
         "CoreAxi.scala",
         "CoreAxiCSR.scala",
         "CoreAxiSlaveMux.scala",
+        "Fabric.scala",
         "TCM.scala",
     ],
     deps = [
@@ -354,6 +355,36 @@ chisel_cc_library(
     vopts = [
         "-DUSE_GENERIC",
     ],
+)
+
+CORE_MINI_AXI_BLACKBOX_DESIGNS = [
+    "CKLNQD10BWP6T20P96CPDLVT",
+    "TS1N12FFCLLMBLVTD2048X128M4SWBSHO",
+    "TS1N12FFCLLSBLVTD512X128M4SWBSHO",
+]
+
+CORE_MINI_AXI_LINT_TAGS = [
+    "STARC05-1.3.1.3",
+    "STARC05-2.7.1.3a",
+    "STARC05-2.7.1.3b",
+]
+
+vcstatic_lint(
+    name = "core_mini_axi_cc_library_lint_check",
+    blackbox_designs = CORE_MINI_AXI_BLACKBOX_DESIGNS,
+    lint_tags = CORE_MINI_AXI_LINT_TAGS,
+    module = "CoreMiniAxi",
+    package = "core_mini_axi_cc_library_verilog",
+)
+
+vcstatic_lint(
+    name = "core_mini_axi_cc_library_lint",
+    blackbox_designs = CORE_MINI_AXI_BLACKBOX_DESIGNS,
+    goal = "lint_rtl",
+    lint_tags = CORE_MINI_AXI_LINT_TAGS,
+    module = "CoreMiniAxi",
+    package = "core_mini_axi_cc_library_verilog",
+    waive_tags = ["UndrivenInTerm-ML"],
 )
 
 verilog_zip_bundle(
