@@ -540,9 +540,8 @@ typedef struct packed {
   LSU_IS_STORE_e                      uop_type;               
                                                                 
 	// Vector regfile write interface for vld
-  logic	[`REGFILE_INDEX_WIDTH-1:0] 	  vregfile_write_addr;
+  // logic	[`REGFILE_INDEX_WIDTH-1:0] 	  vregfile_write_addr;
   logic	[`VLEN-1:0] 			          	vregfile_write_data;  	// vd   
-  BYTE_TYPE_t                         vs1_type;               // mask for vd
 } UOP_LSU_RVS2RVV_t;  
 
 typedef struct packed {

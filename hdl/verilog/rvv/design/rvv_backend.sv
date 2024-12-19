@@ -17,9 +17,12 @@ module rvv_backend
     uop_lsu_rvs2rvv,
     uop_ready_rvv2rvs,
 
-    rt_xrf_wb2rvs,
-    rt_xrf_valid_wb2rvs,
-    rt_xrf_ready_wb2rvs,
+    rt_xrf_rvv2rvs,
+    rt_xrf_valid_rvv2rvs,
+    rt_xrf_ready_rvs2rvv,
+
+    wr_vxsat_valid,
+    wr_vxsat,
 
     trap_valid_rvs2rvv,
     trap_rvs2rvv,
@@ -47,10 +50,14 @@ module rvv_backend
     input   UOP_LSU_RVS2RVV_t [`NUM_DP_UOP-1:0] uop_lsu_rvs2rvv;
     output  logic   [`NUM_DP_UOP-1:0] uop_ready_rvv2rvs;
 
-// write back to XRF. RVS arbitrates write ports of XRF by itself.
-    output  RT2XRF_t [`NUM_RT_UOP-1:0] rt_xrf_wb2rvs;
-    output  logic    [`NUM_RT_UOP-1:0] rt_xrf_valid_wb2rvs;
-    input   logic    [`NUM_RT_UOP-1:0] rt_xrf_ready_wb2rvs;
+// RT to XRF. RVS arbitrates write ports of XRF by itself.
+    output  logic    [`NUM_RT_UOP-1:0] rt_xrf_valid_rvv2rvs;
+    output  RT2XRF_t [`NUM_RT_UOP-1:0] rt_xrf_rvv2rvs;
+    input   logic    [`NUM_RT_UOP-1:0] rt_xrf_ready_rvs2rvv;
+
+// RT to VCSR.vxsat
+    output  logic                            wr_vxsat_valid;
+    output  logic    [`VCSR_VXSAT_WIDTH-1:0] wr_vxsat;
 
 // exception handler
   // trap signal handshake
@@ -59,7 +66,7 @@ module rvv_backend
     output  logic                         trap_ready_rvv2rvs;    
   // the vcsr of last retired uop in last cycle
     output  logic                         vcsr_valid;
-    output  RVVConfigState                  vector_csr;
+    output  RVVConfigState                vector_csr;
 
 `ifdef TB_BRINGUP
   // inst queue
@@ -163,25 +170,15 @@ module rvv_backend
     logic                                 cq_2left_to_full;
     logic                                 cq_3left_to_full;
   // Command queue to Decode
-    logic RVVCmd                          inst_pkg0_cq2de;
-    logic RVVCmd                          inst_pkg1_cq2de;
+    RVVCmd       [`NUM_DE_INST-1:0]       inst_pkg_cq2de;
     logic                                 fifo_empty_cq2de;
-    logic                                 fifo_1left_to_empty_cq2de;
-    logic                                 pop0_de2cq;
-    logic                                 pop1_de2cq;
+    logic        [`NUM_DE_INST-1:1]       fifo_almost_empty_cq2de;
+    logic        [`NUM_DE_INST-1:0]       pop_de2cq;
   // Decode to uop queue
-    logic                                 push0_de2uq;
-    UOP_QUEUE_t                           data0_de2uq;
-    logic                                 push1_de2uq;
-    UOP_QUEUE_t                           data1_de2uq;
-    logic                                 push2_de2uq;
-    UOP_QUEUE_t                           data2_de2uq;
-    logic                                 push3_de2uq;
-    UOP_QUEUE_t                           data3_de2uq;
+    logic        [`NUM_DE_UOP-1:0]        push_de2uq;
+    UOP_QUEUE_t  [`NUM_DE_UOP-1:0]        data_de2uq;
     logic                                 fifo_full_uq2de; 
-    logic                                 fifo_1left_to_full_uq2de;
-    logic                                 fifo_2left_to_full_uq2de; 
-    logic                                 fifo_3left_to_full_uq2de;
+    logic        [`NUM_DE_UOP-1:1]        fifo_almost_full_uq2de;
   // Uop queue to dispatch
     logic                                 uq_empty;
     logic                                 uq_1left_to_empty;
@@ -225,31 +222,56 @@ module rvv_backend
     logic        [`NUM_DP_UOP-1:0]        uop_ready_rob2dp;
     logic        [`ROB_DEPTH_WIDTH-1:0]   uop_index_rob2dp;
   // ALU_RS to ALU
-    logic                                 pop0_alu2rs;
-    logic                                 pop1_alu2rs;
-    ALU_RS_t                              uop0_rs2alu;
-    ALU_RS_t                              uop1_rs2alu;
+    logic        [`NUM_ALU-1:0]           pop_alu2rs;
+    ALU_RS_t     [`NUM_ALU-1:0]           uop_rs2alu;
     logic                                 fifo_empty_rs2alu;
-    logic                                 fifo_1left_to_empty_rs2alu;
+    logic        [`NUM_ALU-1:1]           fifo_almost_empty_rs2alu;
+  // LSU_RS to LSU
+    logic        [`NUM_LSU-1:0]           pop_lsu2rs;
+    LSU_RS_t     [`NUM_LSU-1:0]           uop_rs2lsu;
+    logic                                 fifo_empty_rs2lsu;
+    logic        [`NUM_LSU-1:1]           fifo_almost_empty_rs2lsu;
   // ALU to ROB
-    logic                                 result0_valid_alu2rob;
-    ALU2ROB_t                             result0_alu2rob;
-    logic                                 result0_ready_rob2alu;
-    logic                                 result1_valid_alu2rob;
-    ALU2ROB_t                             result1_alu2rob;
-    logic                                 result1_ready_rob2alu;
-  // VRF to dispatch
+    logic        [`NUM_ALU-1:0]           wr_valid_alu2rob;
+    PU2ROB_t     [`NUM_ALU-1:0]           wr_alu2rob;
+    logic        [`NUM_ALU-1:0]           wr_ready_rob2alu;
+  // PMTRDT to ROB
+    logic        [`NUM_PMTRDT-1:0]        wr_valid_pmtrdt2rob;
+    PU2ROB_t     [`NUM_PMTRDT-1:0]        wr_pmtrdt2rob;
+    logic        [`NUM_PMTRDT-1:0]        wr_ready_rob2pmtrdt;
+  // MUL to ROB
+    logic        [`NUM_MUL-1:0]           wr_valid_mul2rob;
+    PU2ROB_t     [`NUM_MUL-1:0]           wr_mul2rob;
+    logic        [`NUM_MUL-1:0]           wr_ready_rob2mul;
+  // DIV to ROB
+    logic        [`NUM_DIV-1:0]           wr_valid_div2rob;
+    PU2ROB_t     [`NUM_DIV-1:0]           wr_div2rob;
+    logic        [`NUM_DIV-1:0]           wr_ready_rob2div;
+  // LSU to ROB
+    logic        [`NUM_LSU-1:0]           wr_valid_lsu2rob;
+    PU2ROB_t     [`NUM_LSU-1:0]           wr_lsu2rob;
+    logic        [`NUM_LSU-1:0]           wr_ready_rob2lsu;
+  // DP to VRF
     logic [`NUM_DP_VRF-1:0][`REGFILE_INDEX_WIDTH-1:0] rd_index_dp2vrf;          
     logic [`NUM_DP_VRF-1:0][`VLEN-1:0]                rd_data_vrf2dp;
     logic [`VLEN-1:0]                                 v0_mask_vrf2dp;
   // ROB to dispatch
-    ROB2DP_t     [`ROB_DEPTH-1:0]         rob_entry;
+    ROB2DP_t     [`ROB_DEPTH-1:0]         uop_rob2dp;
+  // ROB to RT
+    logic        [`NUM_RT_UOP-1:0]        rd_valid_rob2rt;
+    ROB2RT_t     [`NUM_RT_UOP-1:0]        rd_rob2rt;
+    logic        [`NUM_RT_UOP-1:0]        rd_ready_rt2rob;
+  // RT to VRF
+    logic        [`NUM_RT_UOP-1:0]        wr_valid_rt2vrf;
+    RT2VRF_t     [`NUM_RT_UOP-1:0]        wr_data_rt2vrf;
+
+    genvar i;
 
 // ---code start------------------------------------------------------
   // Command queue
     fifo_flopped_4w2r #(
         .DWIDTH     ($bits(RVVCmd)),
-        .DEPTH      (`CQ_DEPTH),
+        .DEPTH      (`CQ_DEPTH)
     ) u_command_queue (
       // global
         .clk        (clk),
@@ -264,18 +286,17 @@ module rvv_backend
         .push3      (insts_valid_rvs2cq[3] & insts_ready_cq2rvs[3]),
         .inData3    (insts_rvs2cq[3]),
       // read
-        .pop0       (pop0_de2cq),
-        .outData0   (inst_pkg0_cq2de),
-        .pop1       (pop1_de2cq),
-        .outData1   (inst_pkg1_cq2de),
+        .pop0       (pop_de2cq[0]),
+        .outData0   (inst_pkg_cq2de[0]),
+        .pop1       (pop_de2cq[1]),
+        .outData1   (inst_pkg_cq2de[1]),
       // fifo status
-        .fifo_halfFull        (),
         .fifo_full            (cq_full),
         .fifo_1left_to_full   (cq_1left_to_full),
         .fifo_2left_to_full   (cq_2left_to_full),
         .fifo_3left_to_full   (cq_3left_to_full),
         .fifo_empty           (fifo_empty_cq2de),
-        .fifo_1left_to_empty  (fifo_1left_to_empty_cq2de),
+        .fifo_1left_to_empty  (fifo_almost_empty_cq2de),
         .fifo_idle            ()
     );
 
@@ -291,55 +312,44 @@ module rvv_backend
         .clk        (clk),
         .rst_n      (rst_n),
       // cq2de
-        .inst_pkg0_cq2de      (inst_pkg0_cq2de),
-        .inst_pkg1_cq2de      (inst_pkg1_cq2de),
+        .inst_pkg_cq2de       (inst_pkg_cq2de),
         .fifo_empty_cq2de     (fifo_empty_cq2de),
-        .fifo_1left_to_empty_cq2de  (fifo_1left_to_empty_cq2de),
-        .pop0_de2cq           (pop0_de2cq),
-        .pop1_de2cq           (pop1_de2cq),
+        .fifo_almost_empty_cq2de  (fifo_almost_empty_cq2de),
+        .pop_de2cq            (pop_de2cq),
       // de2uq
-        .push0_de2uq          (push0_de2uq),
-        .data0_de2uq          (data0_de2uq),
-        .push1_de2uq          (push1_de2uq),
-        .data1_de2uq          (data1_de2uq),
-        .push2_de2uq          (push2_de2uq),
-        .data2_de2uq          (data2_de2uq),
-        .push3_de2uq          (push3_de2uq),
-        .data3_de2uq          (data3_de2uq),
+        .push_de2uq           (push_de2uq),
+        .data_de2uq           (data_de2uq),
         .fifo_full_uq2de      (fifo_full_uq2de),
-        .fifo_1left_to_full_uq2de (fifo_1left_to_full_uq2de),
-        .fifo_2left_to_full_uq2de (fifo_2left_to_full_uq2de),
-        .fifo_3left_to_full_uq2de (fifo_3left_to_full_uq2de)
+        .fifo_almost_full_uq2de (fifo_almost_full_uq2de)
     );
 
   // Uop queue
     fifo_flopped_4w2r #(
         .DWIDTH     ($bits(UOP_QUEUE_t)),
-        .DEPTH      (`UQ_DEPTH),
+        .DEPTH      (`UQ_DEPTH)
     ) u_uop_queue (
       // global
         .clk        (clk),
         .rst_n      (rst_n),
       // write
-        .push0      (push0_de2uq),
-        .inData0    (data0_de2uq),
-        .push1      (push1_de2uq),
-        .inData1    (data1_de2uq),
-        .push2      (push2_de2uq),
-        .inData2    (data2_de2uq),
-        .push3      (push3_de2uq),
-        .inData3    (data3_de2uq),
+        .push0      (push_de2uq[0]),
+        .inData0    (data_de2uq[0]),
+        .push1      (push_de2uq[1]),
+        .inData1    (data_de2uq[1]),
+        .push2      (push_de2uq[2]),
+        .inData2    (data_de2uq[2]),
+        .push3      (push_de2uq[3]),
+        .inData3    (data_de2uq[3]),
       // read
         .pop0       (uop_valid_uop2dp[0] & uop_ready_dp2uop[0]),
         .outData0   (uop_uop2dp[0]),
         .pop1       (uop_valid_uop2dp[1] & uop_ready_dp2uop[1]),
         .outData1   (uop_uop2dp[1]),
       // fifo status
-        .fifo_halfFull        (),
         .fifo_full            (fifo_full_uq2de),
-        .fifo_1left_to_full   (fifo_1left_to_full_uq2de),
-        .fifo_2left_to_full   (fifo_2left_to_full_uq2de),
-        .fifo_3left_to_full   (fifo_3left_to_full_uq2de),
+        .fifo_1left_to_full   (fifo_almost_full_uq2de[1]),
+        .fifo_2left_to_full   (fifo_almost_full_uq2de[2]),
+        .fifo_3left_to_full   (fifo_almost_full_uq2de[3]),
         .fifo_empty           (uq_empty),
         .fifo_1left_to_empty  (uq_1left_to_empty),
         .fifo_idle            ()
@@ -389,14 +399,14 @@ module rvv_backend
         .rd_data_vrf2dp     (rd_data_vrf2dp),
         .v0_mask_vrf2dp     (v0_mask_vrf2dp),
       // ROB to dispatch
-        .rob_entry          (rob_entry)
+        .rob_entry          (uop_rob2dp)
     );
 
   // RS, Reserve station
     // ALU RS
     fifo_flopped_2w2r #(
         .DWIDTH     ($bits(ALU_RS_t)),
-        .DEPTH      (`ALU_RS_DEPTH),
+        .DEPTH      (`ALU_RS_DEPTH)
     ) u_alu_rs (
       // global
         .clk        (clk),
@@ -407,16 +417,15 @@ module rvv_backend
         .push1      (rs_valid_dp2alu[1] & rs_ready_alu2dp[1]),
         .inData1    (rs_dp2alu[1]),
       // read
-        .pop0       (pop0_alu2rs),
-        .outData0   (uop0_rs2alu),
-        .pop1       (pop1_alu2rs),
-        .outData1   (uop1_rs2alu),
+        .pop0       (pop_alu2rs[0]),
+        .outData0   (uop_rs2alu[0]),
+        .pop1       (pop_alu2rs[1]),
+        .outData1   (uop_rs2alu[1]),
       // fifo status
-        .fifo_halfFull        (),
         .fifo_full            (alu_rs_full),
         .fifo_1left_to_full   (alu_rs_1left_to_full),
         .fifo_empty           (fifo_empty_rs2alu),
-        .fifo_1left_to_empty  (fifo_1left_to_empty_rs2alu),
+        .fifo_1left_to_empty  (fifo_almost_empty_rs2alu),
         .fifo_idle            ()
     );
 
@@ -426,8 +435,7 @@ module rvv_backend
     // PMTRDT RS, Permutation + Reduction
     // TODO: update once PMTRDT unit implements
     openFifo8_flopped_2w2r #(
-        .DWIDTH     ($bits(PMT_RDT_RS_t)),
-        .DEPTH      (`PMTRDT_RS_DEPTH),
+        .DWIDTH     ($bits(PMT_RDT_RS_t))
     ) u_pmtrdt_rs (
       // global
         .clk        (clk),
@@ -438,17 +446,23 @@ module rvv_backend
         .push1      (rs_valid_dp2pmtrdt[1] & rs_ready_pmtrdt2dp[1]),
         .inData1    (rs_dp2pmtrdt[1]),
       // read
-        .pop0       (),
+        .pop0       (1'b0),
         .outData0   (),
-        .pop1       (),
+        .pop1       (1'b0),
         .outData1   (),
       // fifo status
-        .fifo_halfFull        (),
         .fifo_full            (pmtrdt_rs_full),
         .fifo_1left_to_full   (pmtrdt_rs_1left_to_full),
         .fifo_empty           (),
         .fifo_1left_to_empty  (),
-        .fifo_idle            ()
+        .d0                   (),
+        .d1                   (),
+        .d2                   (),
+        .d3                   (),
+        .d4                   (),
+        .d5                   (),
+        .d6                   (),
+        .d7                   ()
     );
 
     assign rs_ready_pmtrdt2dp[0] = ~pmtrdt_rs_full;
@@ -458,7 +472,7 @@ module rvv_backend
     // TODO: update once MUL unit implements
     fifo_flopped_2w2r #(
         .DWIDTH     ($bits(MUL_RS_t)),
-        .DEPTH      (`MUL_RS_DEPTH),
+        .DEPTH      (`MUL_RS_DEPTH)
     ) u_mul_rs (
       // global
         .clk        (clk),
@@ -469,12 +483,11 @@ module rvv_backend
         .push1      (rs_valid_dp2mul[1] & rs_ready_mul2dp[1]),
         .inData1    (rs_dp2mul[1]),
       // read
-        .pop0       (),
+        .pop0       (1'b0),
         .outData0   (),
-        .pop1       (),
+        .pop1       (1'b0),
         .outData1   (),
       // fifo status
-        .fifo_halfFull        (),
         .fifo_full            (mul_rs_full),
         .fifo_1left_to_full   (mul_rs_1left_to_full),
         .fifo_empty           (),
@@ -489,7 +502,7 @@ module rvv_backend
     // TODO: update once DIV unit implements
     fifo_flopped_2w2r #(
         .DWIDTH     ($bits(DIV_RS_t)),
-        .DEPTH      (`DIV_RS_DEPTH),
+        .DEPTH      (`DIV_RS_DEPTH)
     ) u_div_rs (
       // global
         .clk        (clk),
@@ -500,12 +513,11 @@ module rvv_backend
         .push1      (rs_valid_dp2div[1] & rs_ready_div2dp[1]),
         .inData1    (rs_dp2div[1]),
       // read
-        .pop0       (),
+        .pop0       (1'b0),
         .outData0   (),
-        .pop1       (),
+        .pop1       (1'b0),
         .outData1   (),
       // fifo status
-        .fifo_halfFull        (),
         .fifo_full            (div_rs_full),
         .fifo_1left_to_full   (div_rs_1left_to_full),
         .fifo_empty           (),
@@ -519,7 +531,7 @@ module rvv_backend
     // LSU RS
     fifo_flopped_2w2r #(
         .DWIDTH     ($bits(LSU_RS_t)),
-        .DEPTH      (`LSU_RS_DEPTH),
+        .DEPTH      (`LSU_RS_DEPTH)
     ) u_lsu_rs (
       // global
         .clk        (clk),
@@ -530,74 +542,162 @@ module rvv_backend
         .push1      (rs_valid_dp2lsu[1] & rs_ready_lsu2dp[1]),
         .inData1    (rs_dp2lsu[1]),
       // read
-        .pop0       (),
-        .outData0   (),
-        .pop1       (),
-        .outData1   (),
+        .pop0       (uop_valid_lsu_rvv2rvs[0] & uop_ready_lsu_rvs2rvv[0]),
+        .outData0   (uop_rs2lsu[0]),
+        .pop1       (uop_valid_lsu_rvv2rvs[1] & uop_ready_lsu_rvs2rvv[1]),
+        .outData1   (uop_rs2lsu[1]),
       // fifo status
-        .fifo_halfFull        (),
         .fifo_full            (lsu_rs_full),
         .fifo_1left_to_full   (lsu_rs_1left_to_full),
-        .fifo_empty           (),
-        .fifo_1left_to_empty  (),
+        .fifo_empty           (fifo_empty_rs2lsu),
+        .fifo_1left_to_empty  (fifo_almost_empty_rs2lsu),
         .fifo_idle            ()
     );
   
     assign rs_ready_lsu2dp[0] = ~lsu_rs_full;
     assign rs_ready_lsu2dp[1] = ~lsu_rs_1left_to_full;
 
+    assign uop_valid_lsu_rvv2rvs[0] = ~fifo_empty_rs2lsu;
+    assign uop_valid_lsu_rvv2rvs[1] = ~fifo_almost_empty_rs2lsu;
+    assign uop_lsu_rvv2rvs = uop_rs2lsu;
+
   // PU, Process unit
     // ALU
-    rvv_alu #(
+    rvv_backend_alu #(
     ) u_alu (
       // ALU_RS to ALU
-        .pop0_ex2rs                 (pop0_alu2rs),
-        .pop1_ex2rs                 (pop1_alu2rs),
-        .alu_uop0_rs2ex             (uop0_rs2alu),
-        .alu_uop1_rs2ex             (uop1_rs2alu),
+        .pop_ex2rs                  (pop_alu2rs),
+        .alu_uop_rs2ex              (uop_rs2alu),
         .fifo_empty_rs2ex           (fifo_empty_rs2alu),
-        .fifo_1left_to_empty_rs2ex  (fifo_1left_to_empty_rs2alu),
+        .fifo_almost_empty_rs2ex    (fifo_almost_empty_rs2alu),
       // ALU to ROB  
-        .result0_valid_ex2rob       (result0_valid_alu2rob),
-        .result0_ex2rob             (result0_alu2rob),
-        .result0_ready_rob2alu      (result0_ready_rob2alu),
-        .result1_valid_ex2rob       (result1_valid_alu2rob),
-        .result1_ex2rob             (result1_alu2rob),
-        .result1_ready_rob2alu      (result1_ready_rob2alu)
+        .result_valid_ex2rob        (wr_valid_alu2rob),
+        .result_ex2rob              (wr_alu2rob),
+        .result_ready_rob2alu       (wr_ready_rob2alu)
     );
 
+    /*
     // PMTRDT
     // TODO
     rvv_pmtrdt #(
     ) u_pmtrdt (
     );
+    */
+    assign wr_valid_pmtrdt2rob = '0;
+    assign wr_pmtrdt2rob       = '0;
 
+    /*
     // MUL
     // TODO
     rvv_mul #(
     ) u_mul (
     );
+    */
+    assign wr_valid_mul2rob = '0;
+    assign wr_mul2rob       = '0;
 
+    /*
     // DIV
     // TODO
     rvv_div #(
     ) u_div (
     );
+    */
+    assign wr_valid_div2rob = '0;
+    assign wr_div2rob       = '0;
+
+    // LSU
+    generate
+        for (i=0; i<`NUM_LSU; i++) begin : gen_lsu2rob
+            assign wr_valid_lsu2rob[i] = uop_valid_lsu_rvs2rvv[i]; 
+            assign wr_lsu2rob[i].rob_entry = uop_lsu_rvs2rvv[i].uop_id;
+            assign wr_lsu2rob[i].w_data    = uop_lsu_rvs2rvv[i].vregfile_write_data;
+            assign wr_lsu2rob[i].w_valid   = ~uop_lsu_rvs2rvv[i].uop_type; // 0 for load, 1 for store
+            assign wr_lsu2rob[i].vxsat     = 1'b0;
+            assign wr_lsu2rob[i].ignore_vta = 1'b0;
+            assign wr_lsu2rob[i].ignore_vma = 1'b0;
+        end
+    endgenerate
 
   // ROB, Re-Order Buffer
-    // TODO
     rvv_backend_rob #(
     ) u_rob (
+      // global signal
+        .clk                 (clk),
+        .rst_n               (rst_n),
+      // Dispatch to ROB
+        .uop_valid_dp2rob    (uop_valid_dp2rob),
+        .uop_dp2rob          (uop_dp2rob),
+        .uop_ready_rob2dp    (uop_ready_rob2dp),
+        .uop_index_rob2dp    (uop_index_rob2dp),
+      // ALU to ROB
+        .wr_valid_alu2rob    (wr_valid_alu2rob),
+        .wr_alu2rob          (wr_alu2rob),
+        .wr_ready_rob2alu    (wr_ready_rob2alu),
+      // PMTRDT to ROB
+        .wr_valid_pmtrdt2rob (wr_valid_pmtrdt2rob),
+        .wr_pmtrdt2rob       (wr_pmtrdt2rob),
+        .wr_ready_rob2pmtrdt (wr_ready_rob2pmtrdt),
+      // MUL to ROB
+        .wr_valid_mul2rob    (wr_valid_mul2rob),
+        .wr_mul2rob          (wr_mul2rob),
+        .wr_ready_rob2mul    (wr_ready_rob2mul),
+      // DIV to ROB
+        .wr_valid_div2rob    (wr_valid_div2rob),
+        .wr_div2rob          (wr_div2rob),
+        .wr_ready_rob2div    (wr_ready_rob2div),
+      // LSU to ROB
+        .wr_valid_lsu2rob    (wr_valid_lsu2rob),
+        .wr_lsu2rob          (wr_lsu2rob),
+        .wr_ready_rob2lsu    (wr_ready_rob2lsu),
+      // ROB to RT
+        .rd_valid_rob2rt     (rd_valid_rob2rt),
+        .rd_rob2rt           (rd_rob2rt),
+        .rd_ready_rt2rob     (rd_ready_rt2rob),
+      // ROB to DP
+        .uop_rob2dp          (uop_rob2dp),
+      // Trap
+        .trap_valid_rvs2rvv  (trap_valid_rvs2rvv),
+        .trap_rvs2rvv        (trap_rvs2rvv),
+        .trap_ready_rvv2rvs  (trap_ready_rvv2rvs)
     );
 
   // RT, Retire
     rvv_backend_retire #(
     ) u_retire (
+      // ROB to RT
+        .rob2rt_write_valid  (rd_valid_rob2rt),
+        .rob2rt_write_data   (rd_rob2rt),
+        .rob2rt_write_ready  (rd_ready_rt2rob),
+      // RT to RVS.XRF
+        .rt2xrf_write_valid  (rt_xrf_valid_rvv2rvs),
+        .rt2xrf_write_data   (rt_xrf_rvv2rvs),
+        .rt2xrf_write_ready  (rt_xrf_ready_rvs2rvv),
+      // RT to VRF
+        .rt2vrf_write_valid  (wr_valid_rt2vrf),
+        .rt2vrf_write_data   (wr_data_rt2vrf),
+      // write to update vcsr
+        .rt2vcsr_write_valid (vcsr_valid),
+        .rt2vcsr_write_data  (vector_csr),
+      // update to vxsat
+        .rt2vsat_write_valid (wr_vxsat_valid),
+        .rt2vsat_write_data  (wr_vxsat)
     );
 
   // VRF, Vector Register File
     rvv_backend_vrf #(
     ) u_vrf (
+      // global signal
+        .clk             (clk),
+        .rst_n           (rst_n),
+      // DP to VRF
+        .dp2vrf_rd_index (rd_index_dp2vrf),
+      // VRF to DP
+        .vrf2dp_rd_data  (rd_data_vrf2dp),
+        .vrf2dp_v0_data  (v0_mask_vrf2dp),
+      // RT to VRF
+        .rt2vrf_wr_valid (wr_valid_rt2vrf),
+        .rt2vrf_wr_data  (wr_data_rt2vrf)
     );
 `endif // TB_BRINGUP
 
