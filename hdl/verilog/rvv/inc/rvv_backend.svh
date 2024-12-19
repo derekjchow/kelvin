@@ -558,6 +558,7 @@ typedef struct packed {
   W_DATA_TYPE_e                       w_type;             //write type: 0 for VRF, 1 for XRF
   BYTE_TYPE_t                         byte_type;          //wr Byte mask
   RVVConfigState                      vector_csr;         //Receive Vstart, vlen,... And need to update vcsr when trap
+  logic                               last_uop_valid;
 } DP2ROB_t;
 
 // send ROB info to DP
@@ -581,6 +582,7 @@ typedef struct packed {
   logic   [`VCSR_VXSAT_WIDTH-1:0]     vxsat;              //Update saturation bit
   logic                               ignore_vta;
   logic                               ignore_vma;
+  logic                               last_uop_valid;
 } ROB2RT_t;  
 
 // the rob struct stored in ROB

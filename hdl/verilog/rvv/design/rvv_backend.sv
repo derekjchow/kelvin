@@ -699,6 +699,22 @@ module rvv_backend
         .rt2vrf_wr_valid (wr_valid_rt2vrf),
         .rt2vrf_wr_data  (wr_data_rt2vrf)
     );
+
+  // testbench verification
+  `ifdef TB_SUPPORT
+    logic [`NUM_RT_UOP-1:0] rt_event;
+    generate
+      for (i=0; i<`NUM_RT_UOP; i++)
+        always_ff @(posedge clk or negedge rst_n) begin
+          if (!rst_n) 
+            rt_event[i] <= 1'b0;
+          else if (rd_valid_rob2rt[i] & rd_ready_rt2rob[i])
+            rt_event[i] <= rd_rob2rt[i].last_uop_valid;
+          else (rt_event[i])
+            rt_event[i] <= 1'b0;
+        end
+    endgenerate
+  `endif
 `endif // TB_BRINGUP
 
 endmodule
