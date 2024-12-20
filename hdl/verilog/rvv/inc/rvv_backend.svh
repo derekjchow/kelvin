@@ -438,23 +438,23 @@ typedef struct packed {
   FUNCT6_u                            uop_funct6;
   logic   [`FUNCT3_WIDTH-1:0]         uop_funct3;
   RVVXRM                              vxrm;       
- 
-  EEW_e                               vd_eew;
+  
+  EEW_e                               vs_eew; //eew for vs1, vs2, rs1
+  EEW_e                               vd_eew; //vd to ROB eew
   logic   [`VLEN-1:0]                 vs1_data;           
-  EEW_e                               vs1_eew;
   logic                               vs1_data_valid; 
   BYTE_TYPE_t                         vs1_type; 
   logic   [`VLEN-1:0]                 vs2_data;	        
-  EEW_e                               vs2_eew;
   logic                               vs2_data_valid; 
   BYTE_TYPE_t                         vs2_type; 
-  logic   [`VLEN-1:0]                 vs3_data;	        
-  EEW_e                               vs3_eew;
+  logic   [`VLEN-1:0]                 vs3_data;	//vd, source for MAC add 
+  EEW_e                               vs3_eew; //vd as source, has independent eew
   logic                               vs3_data_valid; 
   BYTE_TYPE_t                         vs3_type;
   // rs1_data could be from X[rs1] and imm(inst[19:15]). If it is imm, the 5-bit imm(inst[19:15]) will be sign-extend to XLEN-bit. 
   logic   [`XLEN-1:0] 	              rs1_data;          
   logic          	                    rs1_data_valid;   
+  logic   [`UOP_INDEX_WIDTH-1:0]      uop_index;//indicate using low/high when widen mul. 0:low, 1:high
 } MUL_RS_t;    
 
 // PMT and RDT reservation station struct
@@ -510,7 +510,6 @@ typedef struct packed {
   logic                               ignore_vta;         // all tail elements has been gotten, can use it directly regardless of vta
   logic                               ignore_vma;         // all inactive elements has been gotten, can use it directly regardless of vma
 } PU2ROB_t;  
-
 // send uop to LSU
 typedef struct packed {   
   // RVV send to uop_pc to help LSU match the vld/vst uop
