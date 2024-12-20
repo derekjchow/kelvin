@@ -57,6 +57,7 @@ module rvv_backend_alu_unit_mask
   logic   [`VLEN-1:0]                     result_data_nand;
   logic   [`VLEN-1:0]                     result_data_nor; 
   logic   [`VLEN-1:0]                     result_data_xnor;
+  logic   [`VLEN-1:0]                     result_first1;      // find first 1 from LSB
   logic   [`VLEN-1:0]                     result_data_vmsof;
   logic   [`VLEN-1:0]                     result_data_vmsif;
   logic   [`VLEN-1:0]                     result_data_vmsbf;
@@ -308,9 +309,10 @@ module rvv_backend_alu_unit_mask
   assign result_data_nand  = f_nand(src2_data,src1_data);  
   assign result_data_nor   = f_nor (src2_data,src1_data);  
   assign result_data_xnor  = f_xnor(src2_data,src1_data); 
-  assign result_data_vmsof = (src2_data==0) ? {`VLEN{1'b1}} : (~(src2_data-1))&src2_data;  // find first 1 from LSB
-  assign result_data_vmsif = (src2_data==0) ? {`VLEN{1'b1}} : (result_data_vmsof-1)^result_data_vmsof;  
-  assign result_data_vmsbf = (src2_data==0) ? {`VLEN{1'b1}} : ({1'b0,result_data_vmsof[`VLEN-1:1]}-1)^{1'b0,result_data_vmsof[`VLEN-1:1]};  
+  assign result_first1     = f_first1(src2_data);
+  assign result_data_vmsof = (src2_data==0) ? {`VLEN{1'b1}} : result_first1;
+  assign result_data_vmsif = (src2_data==0) ? {`VLEN{1'b1}} : f_vmsif(result_first1);  
+  assign result_data_vmsbf = (src2_data==0) ? {`VLEN{1'b1}} : f_vmsbf(result_first1); 
  
   // vfirst
   always_comb begin
@@ -743,6 +745,27 @@ module rvv_backend_alu_unit_mask
     input logic [`VLEN-1:0] vs1_data;
 
     f_xnor = ~(vs2_data ^ vs1_data);
+  endfunction
+
+  // find first 1 from LSB
+  function [`VLEN-1:0] f_first1;
+    input logic [`VLEN-1:0] src2;
+
+    f_first1 = (~(src2-1)) & src2;
+  endfunction
+
+  // set from [0] to [first_1_index]
+  function [`VLEN-1:0] f_vmsif;
+    input logic [`VLEN-1:0] src2;
+
+    f_vmsif = (src2-1) & src2;
+  endfunction
+
+  // set from [0] to [first_1_index-1]
+  function [`VLEN-1:0] f_vmsbf;
+    input logic [`VLEN-1:0] src2;
+
+    f_vmsbf = {1'b0, (src2[`VLEN-1:1]-1) & src2[`VLEN-1:1]};
   endfunction
 
 endmodule
