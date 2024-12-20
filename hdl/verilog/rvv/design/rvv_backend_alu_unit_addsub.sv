@@ -29,7 +29,7 @@ module rvv_backend_alu_unit_addsub
   logic   [`FUNCT3_WIDTH-1:0]     uop_funct3;
   logic                           vm;       
   RVVXRM                          vxrm;       
-  logic   [`VLENB-1:0]            v0_data;
+  logic   [`VLEN-1:0]             v0_data;
   logic                           v0_data_valid;
   logic   [`VLEN-1:0]             vd_data;           
   logic                           vd_data_valid;
@@ -44,6 +44,7 @@ module rvv_backend_alu_unit_addsub
 
   // execute 
   // add and sub instructions
+  logic   [`VLENB-1:0]                                v0_data_in_use;
   logic   [`VLENB-1:0][`BYTE_WIDTH:0]                 src2_data;
   logic   [`VLENB-1:0][`BYTE_WIDTH:0]                 src1_data;
   logic   [`VLENB-1:0][`BYTE_WIDTH-1:0]               product8;
@@ -89,6 +90,7 @@ module rvv_backend_alu_unit_addsub
   assign  uop_funct3     = alu_uop.uop_funct3;
   assign  vm             = alu_uop.vm;
   assign  vxrm           = alu_uop.vxrm;
+  assign  v0_data        = alu_uop.v0_data;
   assign  v0_data_valid  = alu_uop.v0_data_valid;
   assign  vd_data        = alu_uop.vd_data;
   assign  vd_data_valid  = alu_uop.vd_data_valid;
@@ -102,90 +104,90 @@ module rvv_backend_alu_unit_addsub
   assign  uop_index      = alu_uop.uop_index;
  
   always_comb begin
-    v0_data = 'b0;
+    v0_data_in_use = 'b0;
 
     case(vs2_eew)
       EEW8: begin
         case(uop_index)
           3'd0: begin
-            v0_data = alu_uop.v0_data[0 +: `VLENB];
+            v0_data_in_use = v0_data[0 +: `VLENB];
           end
           3'd1: begin
-            v0_data = alu_uop.v0_data[1*`VLENB +: `VLENB];
+            v0_data_in_use = v0_data[1*`VLENB +: `VLENB];
           end
           3'd2: begin
-            v0_data = alu_uop.v0_data[2*`VLENB +: `VLENB];
+            v0_data_in_use = v0_data[2*`VLENB +: `VLENB];
           end
           3'd3: begin
-            v0_data = alu_uop.v0_data[3*`VLENB +: `VLENB];
+            v0_data_in_use = v0_data[3*`VLENB +: `VLENB];
           end
           3'd4: begin
-            v0_data = alu_uop.v0_data[4*`VLENB +: `VLENB];
+            v0_data_in_use = v0_data[4*`VLENB +: `VLENB];
           end
           3'd5: begin
-            v0_data = alu_uop.v0_data[5*`VLENB +: `VLENB];
+            v0_data_in_use = v0_data[5*`VLENB +: `VLENB];
           end
           3'd6: begin
-            v0_data = alu_uop.v0_data[6*`VLENB +: `VLENB];
+            v0_data_in_use = v0_data[6*`VLENB +: `VLENB];
           end
           3'd7: begin
-            v0_data = alu_uop.v0_data[7*`VLENB +: `VLENB];
+            v0_data_in_use = v0_data[7*`VLENB +: `VLENB];
           end
         endcase
       end
       EEW16: begin
         case(uop_index)
           3'd0: begin
-            v0_data = alu_uop.v0_data[0 +: `VLENB];
+            v0_data_in_use = v0_data[0 +: `VLENB];
           end
           3'd1: begin
-            v0_data = alu_uop.v0_data[1*`VLEN/`HWORD_WIDTH +: `VLENB];
+            v0_data_in_use = v0_data[1*`VLEN/`HWORD_WIDTH +: `VLENB];
           end
           3'd2: begin
-            v0_data = alu_uop.v0_data[2*`VLEN/`HWORD_WIDTH +: `VLENB];
+            v0_data_in_use = v0_data[2*`VLEN/`HWORD_WIDTH +: `VLENB];
           end
           3'd3: begin
-            v0_data = alu_uop.v0_data[3*`VLEN/`HWORD_WIDTH +: `VLENB];
+            v0_data_in_use = v0_data[3*`VLEN/`HWORD_WIDTH +: `VLENB];
           end
           3'd4: begin
-            v0_data = alu_uop.v0_data[4*`VLEN/`HWORD_WIDTH +: `VLENB];
+            v0_data_in_use = v0_data[4*`VLEN/`HWORD_WIDTH +: `VLENB];
           end
           3'd5: begin
-            v0_data = alu_uop.v0_data[5*`VLEN/`HWORD_WIDTH +: `VLENB];
+            v0_data_in_use = v0_data[5*`VLEN/`HWORD_WIDTH +: `VLENB];
           end
           3'd6: begin
-            v0_data = alu_uop.v0_data[6*`VLEN/`HWORD_WIDTH +: `VLENB];
+            v0_data_in_use = v0_data[6*`VLEN/`HWORD_WIDTH +: `VLENB];
           end
           3'd7: begin
-            v0_data = alu_uop.v0_data[7*`VLEN/`HWORD_WIDTH +: `VLENB];
+            v0_data_in_use = v0_data[7*`VLEN/`HWORD_WIDTH +: `VLENB];
           end
         endcase
       end
       EEW32: begin
         case(uop_index)
           3'd0: begin
-            v0_data = alu_uop.v0_data[0 +: `VLENB];
+            v0_data_in_use = v0_data[0 +: `VLENB];
           end
           3'd1: begin
-            v0_data = alu_uop.v0_data[1*`VLEN/`WORD_WIDTH +: `VLENB];
+            v0_data_in_use = v0_data[1*`VLEN/`WORD_WIDTH +: `VLENB];
           end
           3'd2: begin
-            v0_data = alu_uop.v0_data[2*`VLEN/`WORD_WIDTH +: `VLENB];
+            v0_data_in_use = v0_data[2*`VLEN/`WORD_WIDTH +: `VLENB];
           end
           3'd3: begin
-            v0_data = alu_uop.v0_data[3*`VLEN/`WORD_WIDTH +: `VLENB];
+            v0_data_in_use = v0_data[3*`VLEN/`WORD_WIDTH +: `VLENB];
           end
           3'd4: begin
-            v0_data = alu_uop.v0_data[4*`VLEN/`WORD_WIDTH +: `VLENB];
+            v0_data_in_use = v0_data[4*`VLEN/`WORD_WIDTH +: `VLENB];
           end
           3'd5: begin
-            v0_data = alu_uop.v0_data[5*`VLEN/`WORD_WIDTH +: `VLENB];
+            v0_data_in_use = v0_data[5*`VLEN/`WORD_WIDTH +: `VLENB];
           end
           3'd6: begin
-            v0_data = alu_uop.v0_data[6*`VLEN/`WORD_WIDTH +: `VLENB];
+            v0_data_in_use = v0_data[6*`VLEN/`WORD_WIDTH +: `VLENB];
           end
           3'd7: begin
-            v0_data = alu_uop.v0_data[7*`VLEN/`WORD_WIDTH +: `VLENB];
+            v0_data_in_use = v0_data[7*`VLEN/`WORD_WIDTH +: `VLENB];
           end
         endcase
       end
@@ -1358,19 +1360,19 @@ module rvv_backend_alu_unit_addsub
                 if ((vm==1'b0)&v0_data_valid) begin
                   case(vs2_eew)
                     EEW8: begin                    
-                      cin[4*j]   = v0_data[4*j];
-                      cin[4*j+1] = v0_data[4*j+1];
-                      cin[4*j+2] = v0_data[4*j+2];
-                      cin[4*j+3] = v0_data[4*j+3];
+                      cin[4*j]   = v0_data_in_use[4*j];
+                      cin[4*j+1] = v0_data_in_use[4*j+1];
+                      cin[4*j+2] = v0_data_in_use[4*j+2];
+                      cin[4*j+3] = v0_data_in_use[4*j+3];
                     end
                     EEW16: begin
-                      cin[4*j]   = v0_data[2*j];
+                      cin[4*j]   = v0_data_in_use[2*j];
                       cin[4*j+1] = 'b0;
-                      cin[4*j+2] = v0_data[2*j+1];
+                      cin[4*j+2] = v0_data_in_use[2*j+1];
                       cin[4*j+3] = 'b0;
                     end
                     EEW32: begin
-                      cin[4*j]   = v0_data[j];
+                      cin[4*j]   = v0_data_in_use[j];
                       cin[4*j+1] = 'b0;
                       cin[4*j+2] = 'b0;
                       cin[4*j+3] = 'b0;
