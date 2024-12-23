@@ -1,6 +1,10 @@
 // edff - posedge ff, async rst_n, sync enable.
 
-module edff (q, en, d, clk, rst_n);
+module edff (q, en, d, clk, rst_n
+`ifdef TB_SUPPORT
+  ,init_data
+`endif
+);
   parameter WIDTH = 1;
   parameter INIT  = '0;
 

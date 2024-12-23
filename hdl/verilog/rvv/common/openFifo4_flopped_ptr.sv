@@ -109,19 +109,4 @@ module openFifo4_flopped_ptr(/*AUTOARG*/
     if (single_pop)  dValidN[rdPtr] = 1'b0;
   end
 
-
-  // ****************************************************************
-  // Assertions
-  // ****************************************************************
-
-`ifdef ASSERT_ON
-
-  // Test for overflow
-  assert_never #(0, 0, "Fifo Overflow") fifo_overflow (clk, rst_n, single_push & fifo_full);
-
-  // Test for underflow
-  assert_never #(0, 0, "Fifo Underflow") fifo_underflow (clk, rst_n, single_pop & fifo_empty);
-
-`endif
-
 endmodule

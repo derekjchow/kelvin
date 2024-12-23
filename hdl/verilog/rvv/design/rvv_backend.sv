@@ -710,7 +710,7 @@ module rvv_backend
             rt_event[i] <= 1'b0;
           else if (rd_valid_rob2rt[i] & rd_ready_rt2rob[i])
             rt_event[i] <= rd_rob2rt[i].last_uop_valid;
-          else (rt_event[i])
+          else if (rt_event[i])
             rt_event[i] <= 1'b0;
         end
     endgenerate
