@@ -61,7 +61,16 @@ endfunction: start_of_simulation_phase
 
 task lsu_driver::reset_phase(uvm_phase phase);
   super.reset_phase(phase);
-  // ToDo: Reset output signals
+  phase.raise_objection( .obj( this ) );
+  while(!lsu_if.rst_n) begin
+    for(int i=0; i<`NUM_DP_UOP; i++) begin
+      lsu_if.uop_ready_lsu_rvs2rvv[i] <= '0;
+      lsu_if.uop_valid_lsu_rvs2rvv[i] <= '0;
+      lsu_if.uop_lsu_rvs2rvv[i]       <= '0;
+    end
+    @(posedge lsu_if.clk);
+  end
+  phase.drop_objection( .obj( this ) );
 endtask: reset_phase
 
 task lsu_driver::configure_phase(uvm_phase phase);
@@ -89,6 +98,12 @@ task lsu_driver::tx_driver();
   inst_tr = new("inst_tr");
   forever begin
     @(posedge lsu_if.clk);
+    for(int i=0; i<`NUM_DP_UOP; i++) begin
+      lsu_if.uop_ready_lsu_rvs2rvv[i] <= '1;
+      // feedback
+      lsu_if.uop_valid_lsu_rvs2rvv[i] <= '0;
+      lsu_if.uop_lsu_rvs2rvv[i]       <= '0;
+    end
     /*
     if(lsu_if.rst_n) begin
       for(int i=0; i<`NUM_DP_UOP; i++) begin
@@ -122,6 +137,8 @@ task lsu_driver::tx_driver();
       end
     end
     */
+
+
 
   end
 endtask : tx_driver

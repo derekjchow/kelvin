@@ -19,6 +19,7 @@ class rvs_transaction extends uvm_sequence_item;
   rand inst_type_e inst_type;// opcode
 
   // Load/Store inst
+  rand lsu_inst_e lsu_inst;
   rand lsu_mop_e lsu_mop;
   rand lsu_umop_e lsu_umop;
   rand lsu_nf_e lsu_nf;
@@ -26,10 +27,10 @@ class rvs_transaction extends uvm_sequence_item;
 
   // Algoritm inst
   rand alu_type_e alu_type;  // func3
-  rand opi_type_e opi_type;  // func6
-  rand opm_type_e opm_type;  // func6
+  rand alu_inst_e alu_inst;  // func6
 
   rand logic vm; // Mask bit. 0 - Use v0.t
+       logic use_vm_to_cal;
 
   // Generate oprand
   rand oprand_type_e dest_type;
@@ -40,6 +41,14 @@ class rvs_transaction extends uvm_sequence_item;
   rand logic [4:0] src1_idx;
   rand logic [4:0] src2_idx;
   rand logic [4:0] src3_idx;
+       eew_e  dest_eew;
+       eew_e  src1_eew;
+       eew_e  src2_eew;
+       eew_e  src3_eew;
+       lmul_e dest_emul;
+       lmul_e src1_emul;
+       lmul_e src2_emul;
+       lmul_e src3_emul;
    
   rand logic [`XLEN-1:0] rs_data;
 
@@ -59,7 +68,6 @@ class rvs_transaction extends uvm_sequence_item;
   constraint c_normal_set {
     vtype.vill == 1'b0;
     vtype.rsv  ==  'b0;  
-    vstart == 0;
     vxsat inside {0,1,2,3};
     vxrm inside {0,1,2,3};
   }
@@ -69,14 +77,49 @@ class rvs_transaction extends uvm_sequence_item;
       vl <= (`VLENB >> (~vtype.vlmul +3'b1)) >> vtype.vsew;
     else  
       vl <= (`VLENB << vtype.vlmul) >> vtype.vsew;
+    // vstart <= vl;
+    vstart == 0;
+  }
+
+  constraint c_vm {
+    vm inside {0, 1};
+    (inst_type == ALU && alu_inst inside {VADC, VSBC})
+      -> vm == 0;
+    (inst_type == ALU && alu_inst inside {
+      VMAND, VMOR, VMXOR, VMORN, VMNAND, VMNOR, VMANDN, VMXNOR})
+      -> vm == 1;
   }
 
   constraint c_oprand {
-    dest_type inside {VRF, XRF};
-    if(inst_type == ALU && alu_type == OPI && opi_type == VADD) dest_type inside {VRF};
-    if(inst_type == ALU && alu_type == OPI && opi_type == VADD) src1_type inside {VRF, XRF, IMM};
-    if(inst_type == ALU && alu_type == OPI && opi_type == VADD) src2_type inside {VRF};
-    if(inst_type == ALU) src3_type == UNUSE;
+    (inst_type == ALU && alu_inst[7:6] == 2'b00 && !(alu_inst inside {VSBC, VMSBC})) 
+      -> (dest_type == VRF && src2_type == VRF && 
+           ((alu_type == OPIVV && src1_type == VRF) || 
+            (alu_type == OPIVX && src1_type == XRF) || 
+            (alu_type == OPIVI && src1_type == IMM)
+           )
+         );
+
+    (inst_type == ALU && alu_inst inside {VSBC, VMSBC}) 
+      -> (dest_type == VRF && src2_type == VRF && 
+           ((alu_type == OPIVV && src1_type == VRF) || 
+            (alu_type == OPIVX && src1_type == XRF) 
+           )
+         );
+
+    (inst_type == ALU && alu_inst[7:6] == 2'b01 && (alu_inst != VEXT)) 
+      -> (dest_type == VRF && src2_type == VRF && 
+           ((alu_type == OPMVV && src1_type == VRF) || 
+            (alu_type == OPMVX && src1_type == XRF) 
+           )
+         );
+
+    (inst_type == ALU && alu_inst[7:6] == 2'b01 && alu_inst == VEXT) 
+      -> (dest_type == VRF && src2_type == VRF && 
+           ((alu_type == OPMVV && src1_type == FUNC && src1_idx inside {VZEXT_VF4, VSEXT_VF4, VZEXT_VF2, VSEXT_VF2}))
+         );
+
+    (inst_type == ALU) -> (src3_type == UNUSE);
+
     solve inst_type before src3_type;
   }
 
@@ -102,8 +145,7 @@ class rvs_transaction extends uvm_sequence_item;
     `uvm_field_enum(inst_type_e,inst_type,UVM_ALL_ON)
     if(inst_type == ALU) begin
       `uvm_field_enum(alu_type_e,alu_type,UVM_ALL_ON)
-      `uvm_field_enum(opi_type_e,opi_type,UVM_ALL_ON)
-      `uvm_field_enum(opm_type_e,opm_type,UVM_ALL_ON)
+      `uvm_field_enum(alu_inst_e,alu_inst,UVM_ALL_ON)
     end
     if(inst_type == LD || inst_type == ST) begin
       `uvm_field_enum(lsu_mop_e,lsu_mop,UVM_ALL_ON)
@@ -139,8 +181,12 @@ function rvs_transaction::new(string name = "Trans");
 endfunction: new
 
 function void rvs_transaction::post_randomize();
-  // post cal
-  if(inst_type == ALU && alu_type == OPM && opm_type == VMAND) vm = 1;  
+  if(inst_type == ALU && alu_inst inside {VADC, VSBC, VMADC, VMSBC} && vm == 0)
+    use_vm_to_cal = 1;
+  else
+    use_vm_to_cal = 0;
+
+  // rs random data
   if(src1_type != XRF && src2_type != XRF) rs_data = '1;
 
   // constraint vl
@@ -158,16 +204,13 @@ function void rvs_transaction::post_randomize();
   end
 
   // gen bin_inst
+  /* func6 */
   case(inst_type)
     LD: bin_inst[31:26] = '0; //FIXME
     ST: bin_inst[31:26] = '0; //FIXME
-    ALU: begin
-      case(alu_type)
-        OPI: bin_inst[31:26] = opi_type;
-        OPM: bin_inst[31:26] = opm_type;
-      endcase
-    end
+    ALU:bin_inst[31:26] = alu_inst[6:0];
   endcase
+  /* vm */
   bin_inst[25]    = vm;
   bin_inst[24:20] = src2_idx;
   bin_inst[19:15] = src1_idx;
@@ -185,21 +228,24 @@ endfunction: post_randomize
 function void rvs_transaction::asm_string_gen();
   string inst = "nop";
   string suff = "";
+  string suf0 = "";
+  string src0 = "";
   string suf1 = "";
   string src1 = "";
   string suf2 = "";
   string src2 = "";
   string dest = "";
-  string mask = "";
   string comm = "# an example";
   case(inst_type)
     LD: ; 
     ST: ; 
-    ALU: begin
-      case(alu_type)
-        OPI: inst = this.opi_type.name();
-        OPM: inst = this.opm_type.name();
-      endcase
+    ALU: begin 
+      if(alu_inst inside {VWADDU_W, VWADD_W, VWSUBU_W, VWSUB_W}) begin
+        inst = this.alu_inst.name();
+        inst = inst.substr(0,inst.len()-3);
+      end else begin
+        inst = this.alu_inst.name();
+      end
     end
   endcase
   inst = inst.tolower();
@@ -207,24 +253,49 @@ function void rvs_transaction::asm_string_gen();
     VRF: begin suf1 = "v"; src1 = $sformatf("v%0d",this.src1_idx); end
     XRF: begin suf1 = "x"; src1 = $sformatf("x%0d",this.src1_idx); end
     IMM: begin suf1 = "i"; src1 = $sformatf("%0d",$signed(this.src1_idx)); end
+    FUNC: begin
+      if(inst_type == ALU && alu_inst == VEXT && src1_idx inside{VSEXT_VF4, VSEXT_VF4}) begin
+        suf1 = "f4"; src1 = "";
+      end
+      if(inst_type == ALU && alu_inst == VEXT && src1_idx inside{VSEXT_VF2, VSEXT_VF2}) begin
+        suf1 = "f2"; src1 = "";
+      end
+    end
+    default: begin suf1 = "?"; src1 = "?"; end
   endcase
   case(this.src2_type)
-    VRF: begin suf2 = "v"; src2 = $sformatf("v%0d",this.src2_idx); end
+    VRF: begin 
+      if(inst_type == ALU && alu_inst inside {VWADDU_W, VWADD_W, VWSUBU_W, VWSUB_W}) begin
+        suf2 = "w"; src2 = $sformatf("v%0d",this.src2_idx); 
+      end else begin
+        suf2 = "v"; src2 = $sformatf("v%0d",this.src2_idx); 
+      end
+    end
     XRF: begin suf2 = "x"; src2 = $sformatf("x%0d",this.src2_idx); end
     IMM: begin suf2 = "i"; src2 = $sformatf("%0d",$signed(this.src2_idx)); end
   endcase
-  suff = $sformatf("%s%s",suf2,suf1);
+  if(inst_type == ALU && use_vm_to_cal == 1) begin
+    suf0 = "m"; src0 = "v0";
+  end else begin
+    suf0 = "";  src0 = this.vm ? "" : "v0.t";
+  end
+  suff = $sformatf("%s%s%s",suf2,suf1,suf0);
 
   case(this.dest_type)
     VRF: dest = $sformatf("v%0d",this.dest_idx);
     XRF: dest = $sformatf("x%0d",this.dest_idx);
   endcase
-  mask = this.vm ? "" : "v0.t";
-  comm = $sformatf("# vlmul=%0s, vsew=%0s, vl=%0d", vtype.vlmul.name(), vtype.vsew.name(), vl);
+  comm = $sformatf("# vlmul=%0s, vsew=%0s, vstart=%0d, vl=%0d", vtype.vlmul.name(), vtype.vsew.name(), vstart, vl);
 
   if(this.vm) 
-    this.asm_string = $sformatf("%s.%s %s, %s, %s %s",inst, suff, dest, src2, src1, comm);
+    if(src1_type == FUNC) 
+      this.asm_string = $sformatf("%s.%s %s, %s %s",inst, suff, dest, src2,  comm);
+    else
+      this.asm_string = $sformatf("%s.%s %s, %s, %s %s",inst, suff, dest, src2, src1, comm);
   else
-    this.asm_string = $sformatf("%s.%s %s, %s, %s, %s %s",inst, suff, dest, src2, src1, mask, comm);
+    if(src1_type == FUNC) 
+      this.asm_string = $sformatf("%s.%s %s, %s, %s %s",inst, suff, dest, src2, src0, comm);
+    else
+      this.asm_string = $sformatf("%s.%s %s, %s, %s, %s %s",inst, suff, dest, src2, src1, src0, comm);
 endfunction: asm_string_gen
 `endif // RVS_TRANSACTION__SV

@@ -7,10 +7,10 @@ class rvs_agent extends uvm_agent;
   rvs_driver rvs_drv;
   rvs_monitor rvs_mon;
   vrf_monitor vrf_mon;
-  typedef virtual rvs_interface vif1;
-  typedef virtual vrf_interface vif2;
-  vif1 rvs_agt_if; 
-  vif2 vrf_agt_if; 
+  typedef virtual rvs_interface v_if1;
+  typedef virtual vrf_interface v_if3;
+  v_if1 rvs_agt_if; 
+  v_if3 vrf_agt_if; 
 
   `uvm_component_utils_begin(rvs_agent)
 	`uvm_component_utils_end
@@ -27,15 +27,16 @@ class rvs_agent extends uvm_agent;
       rvs_sqr = rvs_sequencer::type_id::create("rvs_sqr", this);
       rvs_drv = rvs_driver::type_id::create("rvs_drv", this);
     end
-    if(!uvm_config_db#(vif1)::get(this, "", "rvs_if", rvs_agt_if)) begin
+    if(!uvm_config_db#(v_if1)::get(this, "", "rvs_if", rvs_agt_if)) begin
       `uvm_fatal("AGT/NOVIF", "No virtual interface specified for this agent instance")
     end
-    if(!uvm_config_db#(vif2)::get(this, "", "vrf_if", vrf_agt_if)) begin
+    if(!uvm_config_db#(v_if3)::get(this, "", "vrf_if", vrf_agt_if)) begin
       `uvm_fatal("AGT/NOVIF", "No virtual interface specified for this agent instance")
     end
-    uvm_config_db# (vif1)::set(this,"rvs_drv","rvs_if",rvs_agt_if);
-    uvm_config_db# (vif1)::set(this,"rvs_mon","rvs_if",rvs_agt_if);
-    uvm_config_db# (vif2)::set(this,"vrf_mon","vrf_if",vrf_agt_if);
+    uvm_config_db# (v_if1)::set(this,"rvs_drv","rvs_if",rvs_agt_if);
+    uvm_config_db# (v_if1)::set(this,"rvs_mon","rvs_if",rvs_agt_if);
+    uvm_config_db# (v_if3)::set(this,"rvs_drv","vrf_if",vrf_agt_if);
+    uvm_config_db# (v_if3)::set(this,"vrf_mon","vrf_if",vrf_agt_if);
   endfunction: build_phase
 
   virtual function void connect_phase(uvm_phase phase);

@@ -35,7 +35,7 @@ module rvv_backend_top();
     
     .rt_xrf_rvv2rvs           (rvs_if.wb_xrf_wb2rvs         ),
     .rt_xrf_valid_rvv2rvs     (rvs_if.wb_xrf_valid_wb2rvs   ),
-    .rt_xrf_ready_rvv2rvs     (rvs_if.wb_xrf_ready_wb2rvs   ),
+    .rt_xrf_ready_rvs2rvv     (rvs_if.wb_xrf_ready_wb2rvs   ),
 
     .uop_valid_lsu_rvv2rvs    (lsu_if.uop_valid_lsu_rvv2rvs ),
     .uop_lsu_rvv2rvs          (lsu_if.uop_lsu_rvv2rvs       ),
@@ -59,6 +59,7 @@ module rvv_backend_top();
   );
 
   assign rvs_if.wb_event = `RT_EVENT_PATH.rt_event;
+  assign vrf_if.rt_event = `RT_EVENT_PATH.rt_event;
 
   always_comb begin: vrf_connect
     for(int i=0; i<32; i++) begin

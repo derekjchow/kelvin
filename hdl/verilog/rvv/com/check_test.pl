@@ -8,6 +8,7 @@ my $testname = shift;
 if($cmd =~ m/help/) { Usage(); }
 elsif($cmd =~ m/check/) { Check(); }
 elsif($cmd =~ m/clean/) { Clean(); }
+elsif($cmd =~ m/gen_asm/) { GenASMSource(); }
 else  { Usage(); }
 
 sub Check {
@@ -50,7 +51,7 @@ sub Clean {
   }
 }
 
-  
+
 sub Usage {
   die <<EOU;
   Usage:

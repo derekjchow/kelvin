@@ -2,6 +2,7 @@
 `define RVV_BEHAVIOR_MODEL
 
 `include "rvv_backend.svh"
+`include "inst_description.svh"
 
   `uvm_analysis_imp_decl(_inst)
 
@@ -14,6 +15,8 @@ typedef class alu_processor;
 class rvv_behavior_model extends uvm_component;
   typedef virtual rvs_interface v_if1;
   v_if1 rvs_if;  
+  typedef virtual vrf_interface v_if3;
+  v_if3 vrf_if;  
 
   bit ill_inst_en = 0;
   bit all_one_for_agn = 0;
@@ -45,7 +48,6 @@ class rvv_behavior_model extends uvm_component;
   extern virtual task reset_phase(uvm_phase phase);
   extern virtual task main_phase(uvm_phase phase);
 
-
   extern virtual task rx_mdl();
   extern virtual task tx_mdl();
   extern virtual task vrf_mdl();
@@ -74,6 +76,9 @@ endclass : rvv_behavior_model
     if(!uvm_config_db#(v_if1)::get(this, "", "rvs_if", rvs_if)) begin
       `uvm_fatal("MDL/NOVIF", "No virtual interface specified for this agent instance")
     end
+    if(!uvm_config_db#(v_if3)::get(this, "", "vrf_if", vrf_if)) begin
+      `uvm_fatal("MDL/NOVIF", "No virtual interface specified for this agent instance")
+    end
     if(uvm_config_db#(bit)::get(this, "", "ill_inst_en", ill_inst_en))begin
       if(ill_inst_en) `uvm_info(get_type_name(), "Enable operating illegal instruction in reference model!", UVM_LOW)
     end
@@ -83,17 +88,20 @@ endclass : rvv_behavior_model
   endfunction:connect_phase
 
   task rvv_behavior_model::reset_phase(uvm_phase phase);
-    super.reset_phase(phase);
-    vtype   = '0;
-    vl      = '0;
-    vstart  = '0;
-    vxrm    = '0;
-    vxsat   = '0;
-    for(int i=0; i<32; i++) begin
-      vrf[i] = 128'hffff_0001_ffff_0002_ffff_0003_ffff_0000 + i;
-      xrf[i] = '1;
+    phase.raise_objection( .obj( this ) );
+    while(!rvs_if.rst_n) begin
+      vtype   = '0;
+      vl      = '0;
+      vstart  = '0;
+      vxrm    = '0;
+      vxsat   = '0;
+      for(int i=0; i<32; i++) begin
+        vrf[i] = vrf_if.vreg_init_data[i];
+        xrf[i] = '0;
+      end
+      @(posedge rvs_if.clk);
     end
-    vrf[0] = '0;
+    phase.drop_objection( .obj( this ) );
   endtask: reset_phase
 
   task rvv_behavior_model::main_phase(uvm_phase phase);
@@ -124,15 +132,18 @@ endclass : rvv_behavior_model
     bit is_mask_inst;
     bit is_widen_inst;
     bit is_widen_vs2_inst;
-    bit is_narrow_int;
+    bit is_narrow_inst;
+    bit use_vm_to_cal;
 
     bit vm;
 
     int dest_reg_idx, dest_eew, dest_emul;
+    int src0_reg_idx, src0_eew, src0_emul;
     int src1_reg_idx, src1_eew, src1_emul;
     int src2_reg_idx, src2_eew, src2_emul;
     int src3_reg_idx, src3_eew, src3_emul;
     logic [31:0] dest;
+    logic [31:0] src0;
     logic [31:0] src1;
     logic [31:0] src2;
     logic [31:0] src3;
@@ -145,7 +156,8 @@ endclass : rvv_behavior_model
       @(posedge rvs_if.clk);
       if(rvs_if.rst_n) begin
       wb_event = rvs_if.wb_event;
-      while(wb_event[0]) begin
+      repeat(`NUM_RT_UOP) begin
+      if(wb_event[0]) begin
         // --------------------------------------------------
         // 0. Get inst and update VCSR
         if(inst_queue.size()>0) begin
@@ -173,17 +185,20 @@ endclass : rvv_behavior_model
 
         // --------------------------------------------------
         // 1. Decode - Get eew & emul
-        is_mask_inst = inst_tr.alu_type == OPM && (inst_tr.opm_type inside {VMAND});
-        is_widen_inst = inst_tr.alu_type == OPM && (inst_tr.opm_type inside {VWADD, VWADD_W});
-        is_widen_vs2_inst = inst_tr.alu_type == OPM && (inst_tr.opm_type inside {VWADD_W});
-        is_narrow_int = inst_tr.alu_type == OPM && (inst_tr.opm_type inside {VNSRL});
+        is_mask_inst = inst_tr.inst_type == ALU && (inst_tr.alu_inst inside {VMAND});
+        is_widen_inst = inst_tr.inst_type == ALU && (inst_tr.alu_inst inside {VWADDU, VWADD, VWADD_W, VWSUBU, VWSUB, VWADDU_W});
+        is_widen_vs2_inst = inst_tr.inst_type == ALU && (inst_tr.alu_inst inside {VWADD_W, VWADDU_W});
+        is_narrow_inst = inst_tr.inst_type == ALU && (inst_tr.alu_inst inside {VNSRL, VNSRA});
+        use_vm_to_cal = inst_tr.use_vm_to_cal;
 
         dest_eew = sew;
+        src0_eew = EEW1;
         src1_eew = sew;
         src2_eew = sew;
         src3_eew = sew;
 
         dest_emul = lmul;
+        src0_emul = LMUL1;
         src1_emul = lmul;
         src2_emul = lmul;
         src3_emul = lmul;
@@ -248,12 +263,44 @@ endclass : rvv_behavior_model
               end
             end
             // 1.2 Narrow
+            if(is_narrow_inst) begin
+              if(src2_eew > EEW16) begin
+                `uvm_error("MDL/INST_CHECKER", $sformatf("Illegal sew(%s) for narrow instruction.",inst_tr.vtype.vsew.name()));
+                break;
+              end else begin
+                src2_eew = src2_eew * 2;
+                src2_emul = src2_emul * 2;
+              end
+            end
+            if(inst_tr.inst_type == ALU && inst_tr.alu_inst == VEXT) begin
+              if(inst_tr.src1_idx == VSEXT_VF2 && inst_tr.src1_idx == VZEXT_VF2) begin
+                if(dest_eew == EEW8) begin
+                  `uvm_error("MDL/INST_CHECKER", $sformatf("Illegal sew(%s) for vext instruction.",inst_tr.vtype.vsew.name()));
+                  break;
+                end else begin
+                  src2_eew = src2_eew / 2;
+                  src2_emul = src2_emul / 2;
+                end
+              end
+              if(inst_tr.src1_idx == VSEXT_VF4 && inst_tr.src1_idx == VZEXT_VF4) begin
+                if(dest_eew != EEW32) begin
+                  `uvm_error("MDL/INST_CHECKER", $sformatf("Illegal sew(%s) for vext instruction.",inst_tr.vtype.vsew.name()));
+                  break;
+                end else begin
+                  src2_eew = src2_eew / 4;
+                  src2_emul = src2_emul / 4;
+                end
+              end
+            end
             // 1.3 Mask inst
             if(is_mask_inst) begin
               dest_eew = EEW1;
               src1_eew = EEW1;
               src2_eew = EEW1;
               src3_eew = EEW1;
+            end
+            if(inst_tr.inst_type == ALU && inst_tr.alu_inst inside {VMADC, VMSBC}) begin
+              dest_eew = EEW1;
             end
           end
           default: break;
@@ -267,10 +314,16 @@ endclass : rvv_behavior_model
         if(inst_tr.src1_type == IMM) begin 
           imm_data = $signed(inst_tr.src1_idx);
           `uvm_info("DEBUG", $sformatf("Got imm_data = 0x%8x(%0d) from rs1",imm_data, $signed(imm_data)), UVM_HIGH)
+        end else if (inst_tr.src1_type == UIMM) begin
+          imm_data = $unsigned(inst_tr.src1_idx);
+          `uvm_info("DEBUG", $sformatf("Got uimm_data = 0x%8x(%0d) from rs1",imm_data, $unsigned(imm_data)), UVM_HIGH)
         end
         if(inst_tr.src2_type == IMM) begin 
           imm_data = $signed(inst_tr.src2_idx);
           `uvm_info("DEBUG", $sformatf("Got imm_data = 0x%8x(%0d) from rs2",imm_data, $signed(imm_data)), UVM_HIGH)
+        end else if (inst_tr.src2_type == UIMM) begin
+          imm_data = $unsigned(inst_tr.src2_idx);
+          `uvm_info("DEBUG", $sformatf("Got uimm_data = 0x%8x(%0d) from rs2",imm_data, $unsigned(imm_data)), UVM_HIGH)
         end
           
         // 2.2 Get REG index
@@ -322,6 +375,7 @@ endclass : rvv_behavior_model
 
           // 3.1 Fetch elements data 
           dest = elm_fetch(inst_tr.dest_type, dest_reg_idx, elm_idx, dest_eew); 
+          src0 = vm == 0 ? elm_fetch(VRF, 0, elm_idx, src0_eew) : '0; 
           src1 = elm_fetch(inst_tr.src1_type, src1_reg_idx, elm_idx, src1_eew); 
           src2 = elm_fetch(inst_tr.src2_type, src2_reg_idx, elm_idx, src2_eew); 
           src3 = elm_fetch(inst_tr.src3_type, src3_reg_idx, elm_idx, src3_eew); 
@@ -340,7 +394,7 @@ endclass : rvv_behavior_model
               elm_writeback(dest, inst_tr.dest_type, dest_reg_idx, elm_idx, dest_eew);
             end else begin
             end
-          end else if(!(vm || this.vrf[0][elm_idx])) begin
+          end else if(!(vm || this.vrf[0][elm_idx] || use_vm_to_cal)) begin
             // body-inactive
             `uvm_info("DEBUG", $sformatf("elment[%2d]: body-inactive", elm_idx), UVM_HIGH)
             if(vtype.vma == AGNOSTIC) begin
@@ -357,20 +411,20 @@ endclass : rvv_behavior_model
               ST: `uvm_fatal(get_type_name(),"Store fucntion hasn't been defined.")
               ALU: begin 
                 case({dest_eew, src1_eew, src2_eew})
-                  { EEW8,  EEW8,  EEW8}: dest = alu_processor #( sew8_t,  sew8_t,  sew8_t)::exe(inst_tr, src1, src2);
-                  {EEW16, EEW16, EEW16}: dest = alu_processor #(sew16_t, sew16_t, sew16_t)::exe(inst_tr, src1, src2);
-                  {EEW32, EEW32, EEW32}: dest = alu_processor #(sew32_t, sew32_t, sew32_t)::exe(inst_tr, src1, src2);
+                  { EEW8,  EEW8,  EEW8}: dest = alu_processor #( sew8_t,  sew8_t,  sew8_t)::exe(inst_tr, src2, src1, src0);
+                  {EEW16, EEW16, EEW16}: dest = alu_processor #(sew16_t, sew16_t, sew16_t)::exe(inst_tr, src2, src1, src0);
+                  {EEW32, EEW32, EEW32}: dest = alu_processor #(sew32_t, sew32_t, sew32_t)::exe(inst_tr, src2, src1, src0);
                   // widen
-                  {EEW16,  EEW8,  EEW8}: dest = alu_processor #(sew16_t,  sew8_t,  sew8_t)::exe(inst_tr, src1, src2);
-                  {EEW16, EEW16,  EEW8}: dest = alu_processor #(sew16_t, sew16_t,  sew8_t)::exe(inst_tr, src1, src2);
-                  {EEW32, EEW16, EEW16}: dest = alu_processor #(sew32_t, sew16_t, sew16_t)::exe(inst_tr, src1, src2);
-                  {EEW32, EEW32, EEW16}: dest = alu_processor #(sew32_t, sew32_t, sew16_t)::exe(inst_tr, src1, src2);
+                  {EEW16,  EEW8,  EEW8}: dest = alu_processor #(sew16_t,  sew8_t,  sew8_t)::exe(inst_tr, src2, src1, src0);
+                  {EEW16, EEW16,  EEW8}: dest = alu_processor #(sew16_t, sew16_t,  sew8_t)::exe(inst_tr, src2, src1, src0);
+                  {EEW32, EEW16, EEW16}: dest = alu_processor #(sew32_t, sew16_t, sew16_t)::exe(inst_tr, src2, src1, src0);
+                  {EEW32, EEW32, EEW16}: dest = alu_processor #(sew32_t, sew32_t, sew16_t)::exe(inst_tr, src2, src1, src0);
                   // narrow
-                  { EEW8, EEW16, EEW16}: dest = alu_processor #( sew8_t, sew16_t, sew16_t)::exe(inst_tr, src1, src2);
-                  {EEW16, EEW32, EEW32}: dest = alu_processor #(sew16_t, sew32_t, sew32_t)::exe(inst_tr, src1, src2);
+                  { EEW8, EEW16, EEW16}: dest = alu_processor #( sew8_t, sew16_t, sew16_t)::exe(inst_tr, src2, src1, src0);
+                  {EEW16, EEW32, EEW32}: dest = alu_processor #(sew16_t, sew32_t, sew32_t)::exe(inst_tr, src2, src1, src0);
                   // mask logic
-                  { EEW1,  EEW1,  EEW1}: dest = alu_processor #( sew1_t,  sew1_t,  sew1_t)::exe(inst_tr, src1, src2);
-                  { EEW1,  EEW1,  EEW1}: dest = alu_processor #( sew1_t,  sew1_t,  sew1_t)::exe(inst_tr, src1, src2);
+                  { EEW1,  EEW1,  EEW1}: dest = alu_processor #( sew1_t,  sew1_t,  sew1_t)::exe(inst_tr, src1, src2, src3);
+                  { EEW1,  EEW1,  EEW1}: dest = alu_processor #( sew1_t,  sew1_t,  sew1_t)::exe(inst_tr, src1, src2, src3);
                   default: `uvm_error(get_type_name(), $sformatf("Unsupported EEW: dest_eew=%d, src1_eew=%d, src2_eew=%d", dest_eew, src1_eew, src2_eew))
                 endcase
                 elm_writeback(dest, inst_tr.dest_type, dest_reg_idx, elm_idx, dest_eew);
@@ -390,7 +444,8 @@ endclass : rvv_behavior_model
         `uvm_info(get_type_name(),inst_tr.sprint(),UVM_HIGH)
         wb_ap.write(inst_tr);
         wb_event = wb_event >> 1;
-      end
+      end // if(wb_event[0])
+      end // repeat 
       end // rst_n
     end // forever
   endtask
@@ -404,11 +459,11 @@ endclass : rvv_behavior_model
       VRF: begin
         reg_idx = elm_idx / (`VLEN / eew) + reg_idx;
         elm_idx = elm_idx % (`VLEN / eew);
-        `uvm_info("DEBUG", $sformatf("reg_type=%0d, reg_idx=%0d, elm_idx=%0d, eew=%0d", reg_type, reg_idx, elm_idx, eew), UVM_HIGH)
+        // `uvm_info("DEBUG", $sformatf("reg_type=%0d, reg_idx=%0d, elm_idx=%0d, eew=%0d", reg_type, reg_idx, elm_idx, eew), UVM_HIGH)
         for(int i=0; i<bit_count; i++) begin
           result[i] = this.vrf[reg_idx][elm_idx*bit_count + i];
-          `uvm_info("DEBUG", $sformatf("elm_idx*bit_count + i=%0d", elm_idx*bit_count + i), UVM_HIGH)
-          `uvm_info("DEBUG", $sformatf("result[%0d]=%0d", i, result[i]), UVM_HIGH)
+          // `uvm_info("DEBUG", $sformatf("elm_idx*bit_count + i=%0d", elm_idx*bit_count + i), UVM_HIGH)
+          // `uvm_info("DEBUG", $sformatf("result[%0d]=%0d", i, result[i]), UVM_HIGH)
         end
       end
       XRF: begin
@@ -416,7 +471,7 @@ endclass : rvv_behavior_model
           result[i] = this.xrf[reg_idx][i]; 
         end
       end
-      IMM: begin
+      UIMM,IMM: begin
         for(int i=0; i<bit_count; i++) begin
           result[i] = this.imm_data[i]; 
         end
@@ -424,7 +479,7 @@ endclass : rvv_behavior_model
       default: result = 'x;
     endcase
     elm_fetch = result;
-    `uvm_info("DEBUG", $sformatf("result=%0h", result), UVM_HIGH)
+    // `uvm_info("DEBUG", $sformatf("result=%0h", result), UVM_HIGH)
   endfunction: elm_fetch
 
   task rvv_behavior_model::elm_writeback(logic [31:0] result, oprand_type_e reg_type, int reg_idx, int elm_idx, int eew);
@@ -452,10 +507,12 @@ endclass : rvv_behavior_model
     forever begin
       @(posedge rvs_if.clk);
       if(rvs_if.rst_n) begin
-        for(int i=0; i<32; i++) begin
-            tr.vreg[i] = vrf[i];
+        if(|vrf_if.rt_event) begin
+          for(int i=0; i<32; i++) begin
+              tr.vreg[i] = vrf[i];
+          end
+          vrf_ap.write(tr);
         end
-        vrf_ap.write(tr);
       end
     end
   endtask
@@ -463,45 +520,155 @@ endclass : rvv_behavior_model
 // ALU inst part ------------------------------------------
 virtual class alu_processor#(
   type TD = sew8_t,
-  type T1 = sew8_t,
-  type T2 = sew8_t);  
+  type T2 = sew8_t,
+  type T1 = sew8_t,  
+  type T0 = sew1_t);  
 
-  static function TD exe (rvs_transaction inst_tr, T1 src1, T2 src2); //TODO ref ...
+  static bit overflow;
+  static bit underflow;
+
+  static function TD exe (rvs_transaction inst_tr, T2 src2, T1 src1, T0 src0); //TODO ref ...
     TD dest;
     // `uvm_info("DEBUG", $sformatf("sizeof(T1)=%0d, sizeof(T2)=%0d, sizeof(TD)=%0d", $size(T1), $size(T2), $size(TD)), UVM_HIGH)
-    case(inst_tr.alu_type) 
-      OPI: begin
-        case(inst_tr.opi_type)
-          VADD: dest = _vadd(src1, src2); 
-        endcase
+    case(inst_tr.alu_inst) 
+    // OPI
+      VADD: dest = _vadd(src1, src2); 
+      VSUB: dest = _vsub(src1, src2); 
+      VRSUB: dest = _vsub(src2, src1); 
+  
+      VADC : dest = _vadc(src2,src1,src0);
+      VMADC: dest = _vmadc(src2,src1,src0);
+      VSBC : dest = _vsbc(src2,src1,src0);
+      VMSBC: dest = _vmsbc(src2,src1,src0);
+
+      VAND : dest = _vmand(src1, src2); 
+      VOR  : dest = _vmor(src1, src2); 
+      VXOR : dest = _vmxor(src1, src2); 
+
+      VMINU: dest = _vminu(src1, src2); 
+      VMIN : dest = _vmin(src1, src2); 
+      VMAXU: dest = _vmaxu(src1, src2); 
+      VMAX : dest = _vmax(src1, src2); 
+
+    // OPM
+      VWADD,
+      VWADD_W:  dest = _vadd(src1, src2);
+      VWADDU,
+      VWADDU_W: dest = _vaddu(src1, src2); 
+      VWSUB, 
+      VWSUB_W:  dest = _vsub(src1, src2);
+      VWSUBU, 
+      VWSUBU_W: dest = _vsubu(src1, src2); 
+
+      VEXT: begin 
+        if(inst_tr.src1_idx == VZEXT_VF4 || inst_tr.src1_idx == VZEXT_VF2) dest = _vzext(src2); 
+        if(inst_tr.src1_idx == VSEXT_VF4 || inst_tr.src1_idx == VSEXT_VF2) dest = _vsext(src2); 
       end
-      OPM: begin
-        case(inst_tr.opm_type)
-          VWADD: dest = _vadd(src1, src2); 
-          VWADD_W: dest = _vadd(src1, src2); 
-          VMAND: dest = _vmand(src1, src2); 
-        endcase
-      end
+
+      VSLL : dest = _vsll(src1, src2);
+      VSRL : dest = _vsrl(src1, src2);
+      VSRA : dest = _vsra(src1, src2);
+      VNSRL: dest = _vsrl(src1, src2);
+      VNSRA: dest = _vsra(src1, src2);
+
+      VMAND : dest = _vmand(src1, src2); 
+      VMOR  : dest = _vmor(src1, src2); 
+      VMXOR : dest = _vmxor(src1, src2); 
+      VMORN : dest = _vmorn(src1, src2); 
+      VMNAND: dest = _vmnand(src1, src2); 
+      VMNOR : dest = _vmnor(src1, src2); 
+      VMANDN: dest = _vmandn(src1, src2); 
+      VMXNOR: dest = _vmxnor(src1, src2); 
     endcase
     exe = dest;
     // `uvm_info("DEBUG", $sformatf("dest=%0d, src1=%0d, src2=%0d", exe, src1, src2), UVM_HIGH)
   endfunction : exe
 
   static function TD _vadd(T1 src1, T2 src2);
-    _vadd = src1 + src2;
+    _vadd = $signed(src1) + $signed(src2);
   endfunction : _vadd
-
+  static function TD _vaddu(T1 src1, T2 src2);
+    _vaddu = $unsigned(src1) + $unsigned(src2);
+  endfunction : _vaddu
   static function TD _vsub(T1 src1, T2 src2);
-    _vsub = src2 - src1;
+    _vsub = $signed(src2) - $signed(src1);
   endfunction : _vsub
+  static function TD _vsubu(T1 src1, T2 src2);
+    _vsubu = $unsigned(src2) - $unsigned(src1);
+  endfunction : _vsubu
 
-  static function TD _vrsub(T1 src1, T2 src2);
-    _vrsub = src1 - src2;
-  endfunction : _vrsub
+  static function TD _vadc(T2 src2, T1 src1, T0 src0);
+    _vadc = $signed(src2) + $signed(src1) + src0;
+  endfunction : _vadc
+  static function TD _vmadc(T2 src2, T1 src1, T0 src0);
+    logic [$bits(T2):0] dest;
+    dest = $signed(src2) + $signed(src1) + src0;
+    _vmadc = dest[$bits(T2)];
+  endfunction : _vmadc
+  // FIXME : need to confirm
+  static function TD _vsbc(T2 src2, T1 src1, T0 src0);
+    _vsbc = $signed(src2) - $signed(src1) - src0;
+  endfunction : _vsbc
+  static function TD _vmsbc(T2 src2, T1 src1, T0 src0);
+    logic [$bits(T2):0] dest;
+    dest = $signed(src2) - $signed(src1) - src0;
+    _vmsbc = dest[$bits(T2)];
+  endfunction : _vmsbc
+
+  static function TD _vminu(T2 src2, T1 src1);
+    _vminu = $unsigned(src2) > $unsigned(src1) ? $unsigned(src1) : $unsigned(src2);
+  endfunction : _vminu
+  static function TD _vmin(T2 src2, T1 src1);
+    _vmin = $signed(src2) > $signed(src1) ? $signed(src1) : $signed(src2);
+  endfunction : _vmin
+  static function TD _vmaxu(T2 src2, T1 src1);
+    _vmaxu = $unsigned(src2) > $unsigned(src1) ? $unsigned(src2) : $unsigned(src1);
+  endfunction : _vmaxu
+  static function TD _vmax(T2 src2, T1 src1);
+    _vmax = $signed(src2) > $signed(src1) ? $signed(src2) : $signed(src1);
+  endfunction : _vmax
+
+  static function TD _vzext(T2 src2);
+    _vzext = $unsigned(src2);
+  endfunction : _vzext
+  static function TD _vsext(T2 src2);
+    _vsext = $signed(src2);
+  endfunction : _vsext
+  
+  static function TD _vsll(T1 src1, T2 src2);
+    _vsll = $unsigned(src2) << src1;
+  endfunction : _vsll
+  static function TD _vsrl(T1 src1, T2 src2);
+    _vsrl = $unsigned(src2) >> src1;
+  endfunction : _vsrl
+  static function TD _vsra(T1 src1, T2 src2);
+    _vsra = $signed(src2) >>> src1;
+  endfunction : _vsra
 
   static function TD _vmand(T1 src1, T2 src2);
     _vmand = src1 & src2;
   endfunction : _vmand
+  static function TD _vmor(T1 src1, T2 src2);
+    _vmor = src1 | src2;
+  endfunction : _vmor
+  static function TD _vmxor(T1 src1, T2 src2);
+    _vmxor = src1 ^ src2;
+  endfunction : _vmxor
+  static function TD _vmorn(T1 src1, T2 src2);
+    _vmorn = src1 | ~src2;
+  endfunction : _vmorn
+  static function TD _vmnand(T1 src1, T2 src2);
+    _vmnand = ~(src1 & src2);
+  endfunction : _vmnand
+  static function TD _vmnor(T1 src1, T2 src2);
+    _vmnor = ~(src1 | src2);
+  endfunction : _vmnor
+  static function TD _vmandn(T1 src1, T2 src2);
+    _vmandn = src1 & ~src2;
+  endfunction : _vmandn
+  static function TD _vmxnor(T1 src1, T2 src2);
+    _vmxnor = ~(src1 ^ src2);
+  endfunction : _vmxnor
 endclass: alu_processor
 
 // LSU inst part ------------------------------------------

@@ -18,7 +18,7 @@ class vrf_monitor extends uvm_monitor;
   extern virtual function void build_phase(uvm_phase phase);
   extern virtual function void connect_phase(uvm_phase phase);
   extern virtual task configure_phase(uvm_phase phase);
-  extern virtual task run_phase(uvm_phase phase);
+  extern virtual task main_phase(uvm_phase phase);
   extern protected virtual task vrf_monitor();
 
 endclass: vrf_monitor
@@ -43,12 +43,12 @@ task vrf_monitor::configure_phase(uvm_phase phase);
   super.configure_phase(phase);
 endtask:configure_phase
 
-task vrf_monitor::run_phase(uvm_phase phase);
-  super.run_phase(phase);
+task vrf_monitor::main_phase(uvm_phase phase);
+  super.main_phase(phase);
   fork
      vrf_monitor();
   join
-endtask: run_phase
+endtask: main_phase
 
 task vrf_monitor::vrf_monitor();
   vrf_transaction tr;
@@ -56,10 +56,12 @@ task vrf_monitor::vrf_monitor();
   forever begin
     @(posedge vrf_if.clk);
     if(vrf_if.rst_n) begin
-      for(int i=0; i<32; i++) begin
-          tr.vreg[i] = vrf_if.vreg[i];
+      if(|vrf_if.rt_event) begin
+        for(int i=0; i<32; i++) begin
+            tr.vreg[i] = vrf_if.vreg[i];
+        end
+        vrf_ap.write(tr);
       end
-      vrf_ap.write(tr);
     end
   end
 endtask: vrf_monitor
