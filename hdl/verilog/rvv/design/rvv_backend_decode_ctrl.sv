@@ -50,7 +50,7 @@ module rvv_backend_decode_ctrl
 //
   // get last uop signal 
   logic [`NUM_DE_INST-1:0]      last_uop_unit;
-  logic [`NUM_DE_UOP-1:1]       get_unit1_last_signal;
+  logic [`NUM_DE_UOP-1:0]       get_unit1_last_signal;
 
   // the quantity of valid 1 in uop_valid[0] 
   logic [`NUM_DE_UOP_WIDTH-1:0] quantity;
@@ -111,9 +111,10 @@ module rvv_backend_decode_ctrl
   );
   
   // get unit1 last uop signal
-  assign get_unit1_last_signal[3] = uop_de2uq[1][0].last_uop_valid;
+  assign get_unit1_last_signal[3] = uop_de2uq[1][0].last_uop_valid || (uop_valid_de2uq[1][`NUM_DE_UOP-1:0]=='b0);
   assign get_unit1_last_signal[2] = get_unit1_last_signal[3] || uop_de2uq[1][1].last_uop_valid;
   assign get_unit1_last_signal[1] = get_unit1_last_signal[2] || uop_de2uq[1][2].last_uop_valid;
+  assign get_unit1_last_signal[0] = get_unit1_last_signal[1] || uop_de2uq[1][3].last_uop_valid;
 
   mux8_1 
   #(
@@ -122,7 +123,7 @@ module rvv_backend_decode_ctrl
   mux_unit1_last
   (
      .sel      (quantity),
-     .indata0  (1'b0),
+     .indata0  (get_unit1_last_signal[0]),
      .indata1  (get_unit1_last_signal[1]),
      .indata2  (get_unit1_last_signal[2]),
      .indata3  (get_unit1_last_signal[3]),
@@ -184,7 +185,7 @@ module rvv_backend_decode_ctrl
   mux_push_valid0 
   (
      .sel      (quantity),
-     .indata0  (1'b0),
+     .indata0  (uop_valid_de2uq[1][0]),
      .indata1  (uop_valid_de2uq[0][0]),
      .indata2  (uop_valid_de2uq[0][0]),
      .indata3  (uop_valid_de2uq[0][0]),
@@ -202,7 +203,7 @@ module rvv_backend_decode_ctrl
   mux_push_valid1 
   (
      .sel      (quantity),
-     .indata0  (1'b0),
+     .indata0  (uop_valid_de2uq[1][1]),
      .indata1  (uop_valid_de2uq[1][0]),
      .indata2  (uop_valid_de2uq[0][1]),
      .indata3  (uop_valid_de2uq[0][1]),
@@ -220,7 +221,7 @@ mux8_1
   mux_push_valid2
   (
      .sel      (quantity),
-     .indata0  (1'b0),
+     .indata0  (uop_valid_de2uq[1][2]),
      .indata1  (uop_valid_de2uq[1][1]),
      .indata2  (uop_valid_de2uq[1][0]),
      .indata3  (uop_valid_de2uq[0][2]),
@@ -238,7 +239,7 @@ mux8_1
   mux_push_valid3 
   (
      .sel      (quantity),
-     .indata0  (1'b0),
+     .indata0  (uop_valid_de2uq[1][3]),
      .indata1  (uop_valid_de2uq[1][2]),
      .indata2  (uop_valid_de2uq[1][1]),
      .indata3  (uop_valid_de2uq[1][0]),
@@ -263,14 +264,14 @@ mux8_1
   mux_data0
   (
      .sel      (quantity),
-     .indata0  ({`UQ_WIDTH{1'b0}}),
+     .indata0  (uop_de2uq[1][0]),
      .indata1  (uop_de2uq[0][0]),
      .indata2  (uop_de2uq[0][0]),
      .indata3  (uop_de2uq[0][0]),
      .indata4  (uop_de2uq[0][0]),
-     .indata5  ({`UQ_WIDTH{1'b0}}),
-     .indata6  ({`UQ_WIDTH{1'b0}}),
-     .indata7  ({`UQ_WIDTH{1'b0}}),
+     .indata5  ('0),
+     .indata6  ('0),
+     .indata7  ('0),
      .outdata  (dataout[0]) 
   );
 
@@ -281,14 +282,14 @@ mux8_1
   mux_data1
   (
      .sel      (quantity),
-     .indata0  ({`UQ_WIDTH{1'b0}}),
+     .indata0  (uop_de2uq[1][1]),
      .indata1  (uop_de2uq[1][0]),
      .indata2  (uop_de2uq[0][1]),
      .indata3  (uop_de2uq[0][1]),
      .indata4  (uop_de2uq[0][1]),
-     .indata5  ({`UQ_WIDTH{1'b0}}),
-     .indata6  ({`UQ_WIDTH{1'b0}}),
-     .indata7  ({`UQ_WIDTH{1'b0}}),
+     .indata5  ('0),
+     .indata6  ('0),
+     .indata7  ('0),
      .outdata  (dataout[1]) 
   );
 
@@ -299,14 +300,14 @@ mux8_1
   mux_data2
   (
      .sel      (quantity),
-     .indata0  ({`UQ_WIDTH{1'b0}}),
+     .indata0  (uop_de2uq[1][2]),
      .indata1  (uop_de2uq[1][1]),
      .indata2  (uop_de2uq[1][0]),
      .indata3  (uop_de2uq[0][2]),
      .indata4  (uop_de2uq[0][2]),
-     .indata5  ({`UQ_WIDTH{1'b0}}),
-     .indata6  ({`UQ_WIDTH{1'b0}}),
-     .indata7  ({`UQ_WIDTH{1'b0}}),
+     .indata5  ('0),
+     .indata6  ('0),
+     .indata7  ('0),
      .outdata  (dataout[2]) 
   );
 
@@ -317,14 +318,14 @@ mux8_1
   mux_data3
   (
      .sel      (quantity),
-     .indata0  ({`UQ_WIDTH{1'b0}}),
+     .indata0  (uop_de2uq[1][3]),
      .indata1  (uop_de2uq[1][2]),
      .indata2  (uop_de2uq[1][1]),
      .indata3  (uop_de2uq[1][0]),
      .indata4  (uop_de2uq[0][3]),
-     .indata5  ({`UQ_WIDTH{1'b0}}),
-     .indata6  ({`UQ_WIDTH{1'b0}}),
-     .indata7  ({`UQ_WIDTH{1'b0}}),
+     .indata5  ('0),
+     .indata6  ('0),
+     .indata7  ('0),
      .outdata  (dataout[3]) 
   );
 

@@ -42,6 +42,8 @@ module rvv_backend_decode_unit_ari
    
   RVVConfigState                                  vector_csr_ari;
   logic   [`VSTART_WIDTH-1:0]                     csr_vstart;
+  logic   [`VL_WIDTH-1:0]                         csr_vl;
+  logic   [`VL_WIDTH-1:0]                         vs_evl;
   RVVSEW                                          csr_sew;
   RVVLMUL                                         csr_lmul;
   logic   [`XLEN-1:0] 	                          rs1_data;
@@ -71,6 +73,8 @@ module rvv_backend_decode_unit_ari
   logic                                           check_vs1_align;
   logic                                           check_sew;
   logic                                           check_lmul;
+  logic                                           check_evl_not_0;
+  logic                                           check_vstart_sle_evl;
   logic   [`UOP_INDEX_WIDTH-1:0]                  uop_vstart;         
   logic   [`UOP_INDEX_WIDTH-1:0]                  uop_index_base;         
   logic   [`NUM_DE_UOP-1:0][`UOP_INDEX_WIDTH-1:0] uop_index_current;   
@@ -101,6 +105,7 @@ module rvv_backend_decode_unit_ari
   assign inst_nr              = inst_vs1[`NREG_WIDTH-1:0];
   assign vector_csr_ari       = inst.arch_state;
   assign csr_vstart           = inst.arch_state.vstart;
+  assign csr_vl               = inst.arch_state.vl;
   assign csr_sew              = inst.arch_state.sew;
   assign csr_lmul             = inst.arch_state.lmul;
   assign rs1_data             = inst.rs1;
@@ -3117,7 +3122,7 @@ module rvv_backend_decode_unit_ari
   end
 
   //check common requirements for all instructions
-  assign check_common = check_vd_align&check_vs2_align&check_vs1_align&check_sew&check_lmul;
+  assign check_common = check_vd_align&check_vs2_align&check_vs1_align&check_sew&check_lmul&check_evl_not_0&check_vstart_sle_evl;
 
   // check whether vd is aligned to emul_vd
   always_comb begin
@@ -3238,11 +3243,137 @@ module rvv_backend_decode_unit_ari
     
   // check the validation of EMUL
   assign check_lmul = (emul_max != EMUL_NONE); 
+  
+  // get evl
+  always_comb begin
+    vs_evl = csr_vl;
+  
+    case(1'b1)
+      valid_opi: begin
+        // OPI* instruction
+        case(funct6_ari.ari_funct6)
+          VSMUL_VMVNRR: begin
+            case(inst_funct3)
+              OPIVI: begin
+              // vmv<nr>r.v
+                case(emul_max)
+                  EMUL1: begin
+                    case(eew_max)
+                      EEW8: begin
+                        vs_evl = 1*`VLEN/8;
+                      end
+                      EEW16: begin
+                        vs_evl = 1*`VLEN/16;
+                      end
+                      EEW32: begin
+                        vs_evl = 1*`VLEN/32;
+                      end
+                    endcase
+                  end
+                  EMUL2: begin
+                    case(eew_max)
+                      EEW8: begin
+                        vs_evl = 2*`VLEN/8;
+                      end
+                      EEW16: begin
+                        vs_evl = 2*`VLEN/16;
+                      end
+                      EEW32: begin
+                        vs_evl = 2*`VLEN/32;
+                      end
+                    endcase
+                  end
+                  EMUL4: begin
+                    case(eew_max)
+                      EEW8: begin
+                        vs_evl = 4*`VLEN/8;
+                      end
+                      EEW16: begin
+                        vs_evl = 4*`VLEN/16;
+                      end
+                      EEW32: begin
+                        vs_evl = 4*`VLEN/32;
+                      end
+                    endcase
+                  end
+                  EMUL8: begin
+                    case(eew_max)
+                      EEW8: begin
+                        vs_evl = 8*`VLEN/8;
+                      end
+                      EEW16: begin
+                        vs_evl = 8*`VLEN/16;
+                      end
+                      EEW32: begin
+                        vs_evl = 8*`VLEN/32;
+                      end
+                    endcase
+                  end
+                endcase
+              end
+            endcase
+          end
+        endcase
+      end
+      valid_opm: begin
+        // OPM* instruction
+        case(funct6_ari.ari_funct6)
+          VWXUNARY0: begin
+            case(inst_funct3)
+              OPMVX: begin
+              // vmv.s.x
+              vs_evl = 'b1;
+              end
+            endcase
+          end
+        endcase
+      end
+    endcase
+  end
 
-  `ifdef ASSERT_ON
-    `rvv_expect((inst_valid==1'b1)&(inst_encoding_correct==1'b0))
-      else $error("check_special(%d) and check_common(%d) both should be 1.\n",check_special,check_common);
-  `endif
+  // check evl is not 0
+  always_comb begin
+    check_evl_not_0 = vs_evl!='b0;
+    
+    // Instructions that write an x register or f register do so even when vstart >= vl, including when vl=0.
+    case({valid_opm,funct6_ari.ari_funct6})
+      {1'b1,VWXUNARY0}: begin
+        case(inst_funct3)
+          OPMVV: begin
+            case(vs1_opcode_vwxunary)
+              VCPOP,
+              VFIRST,
+              VMV_X_S: begin
+                check_evl_not_0 = 'b1;
+              end
+            endcase
+          end
+        endcase
+      end
+    endcase
+  end
+
+  // check vstart < evl
+  always_comb begin
+    check_vstart_sle_evl = {1'b0,csr_vstart} < vs_evl;
+    
+    // Instructions that write an x register or f register do so even when vstart >= vl, including when vl=0.
+    case({valid_opm,funct6_ari.ari_funct6})
+      {1'b1,VWXUNARY0}: begin
+        case(inst_funct3)
+          OPMVV: begin
+            case(vs1_opcode_vwxunary)
+              VCPOP,
+              VFIRST,
+              VMV_X_S: begin
+                check_vstart_sle_evl = 'b1;
+              end
+            endcase
+          end
+        endcase
+      end
+    endcase
+  end
 
   // get the start number of uop_index
   always_comb begin
@@ -3786,6 +3917,13 @@ module rvv_backend_decode_unit_ari
           end
         endcase
       end
+    end
+  end
+
+  // update vs_ecl
+  always_comb begin
+    for(i=0;i<`NUM_DE_UOP;i=i+1) begin: GET_UOP_EVL
+      uop[i].vs_evl = vs_evl;
     end
   end
   

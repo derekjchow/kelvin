@@ -323,6 +323,7 @@ typedef struct packed {
   EXE_UNIT_e                          uop_exe_unit; 
   UOP_CLASS_e                         uop_class;   
   RVVConfigState                      vector_csr;  
+  logic   [`VL_WIDTH-1:0]             vs_evl;                // effective vl
   logic                               force_vma_agnostic; // some situation will force to mask-agnostic regardless of vtype.vma
   logic                               force_vta_agnostic; // some situation will force to mask-agnostic regardless of vtype.vma
 

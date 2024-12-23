@@ -24,45 +24,49 @@ module rvv_backend_decode_unit_lsu
 // internal signals
 //
   // split INST_t struct signals
-  logic     [`PC_WIDTH-1:0]                         inst_pc;
-  logic     [`FUNCT6_WIDTH-1:0]                     inst_funct6;      // inst original encoding[31:26]           
-  logic     [`NFIELD_WIDTH-1:0]                     inst_nf;          // inst original encoding[31:29]
-  logic     [`VM_WIDTH-1:0]                         inst_vm;          // inst original encoding[25]      
-  logic     [`REGFILE_INDEX_WIDTH-1:0]              inst_vs2;         // inst original encoding[24:20]
-  logic     [`UMOP_WIDTH-1:0]                       inst_umop;        // inst original encoding[24:20]
-  logic     [`FUNCT3_WIDTH-1:0]                     inst_funct3;      // inst original encoding[14:12]
-  logic     [`REGFILE_INDEX_WIDTH-1:0]              inst_vd;          // inst original encoding[11:7]
-  RVVOpCode                                         inst_opcode;      // inst original encoding[6:0]
+  logic   [`PC_WIDTH-1:0]                         inst_pc;
+  logic   [`FUNCT6_WIDTH-1:0]                     inst_funct6;      // inst original encoding[31:26]           
+  logic   [`NFIELD_WIDTH-1:0]                     inst_nf;          // inst original encoding[31:29]
+  logic   [`VM_WIDTH-1:0]                         inst_vm;          // inst original encoding[25]      
+  logic   [`REGFILE_INDEX_WIDTH-1:0]              inst_vs2;         // inst original encoding[24:20]
+  logic   [`UMOP_WIDTH-1:0]                       inst_umop;        // inst original encoding[24:20]
+  logic   [`FUNCT3_WIDTH-1:0]                     inst_funct3;      // inst original encoding[14:12]
+  logic   [`REGFILE_INDEX_WIDTH-1:0]              inst_vd;          // inst original encoding[11:7]
+  RVVOpCode                                       inst_opcode;      // inst original encoding[6:0]
 
-  RVVConfigState                                    vector_csr_lsu;
-  logic     [`VSTART_WIDTH-1:0]                     csr_vstart;
-  RVVSEW                                            csr_sew;
-  RVVLMUL                                           csr_lmul;
-  EMUL_e                                            emul_vd;          
-  EMUL_e                                            emul_vs2;          
-  EMUL_e                                            emul_max;          
-  EEW_e                                             eew_vd;          
-  EEW_e                                             eew_vs2;          
-  EEW_e                                             eew_max;         
-  logic                                             valid_lsu;
-  logic                                             valid_lsu_opcode;
-  logic                                             valid_lsu_mop;
-  logic                                             inst_encoding_correct;
-  logic                                             check_special;
-  logic                                             check_vd_overlap_v0;
-  logic                                             check_vd_part_overlap_vs2;
-  logic                                             check_vd_overlap_vs2;
-  logic                                             check_vs2_part_overlap_vd_2_1;
-  logic                                             check_vs2_part_overlap_vd_4_1;
-  logic                                             check_common;
-  logic                                             check_vd_align;
-  logic                                             check_vs2_align;
-  logic                                             check_sew;
-  logic                                             check_lmul;
-  logic     [`UOP_INDEX_WIDTH-1:0]                  uop_vstart;         
-  logic     [`UOP_INDEX_WIDTH-1:0]                  uop_index_base;         
-  logic     [`NUM_DE_UOP-1:0][`UOP_INDEX_WIDTH-1:0] uop_index_current;   
-  logic     [`UOP_INDEX_WIDTH-1:0]                  uop_index_max;         
+  RVVConfigState                                  vector_csr_lsu;
+  logic   [`VSTART_WIDTH-1:0]                     csr_vstart;
+  logic   [`VL_WIDTH-1:0]                         csr_vl;
+  logic   [`VL_WIDTH-1:0]                         vs_evl;
+  RVVSEW                                          csr_sew;
+  RVVLMUL                                         csr_lmul;
+  EMUL_e                                          emul_vd;          
+  EMUL_e                                          emul_vs2;          
+  EMUL_e                                          emul_max;          
+  EEW_e                                           eew_vd;          
+  EEW_e                                           eew_vs2;          
+  EEW_e                                           eew_max;         
+  logic                                           valid_lsu;
+  logic                                           valid_lsu_opcode;
+  logic                                           valid_lsu_mop;
+  logic                                           inst_encoding_correct;
+  logic                                           check_special;
+  logic                                           check_vd_overlap_v0;
+  logic                                           check_vd_part_overlap_vs2;
+  logic                                           check_vd_overlap_vs2;
+  logic                                           check_vs2_part_overlap_vd_2_1;
+  logic                                           check_vs2_part_overlap_vd_4_1;
+  logic                                           check_common;
+  logic                                           check_vd_align;
+  logic                                           check_vs2_align;
+  logic                                           check_sew;
+  logic                                           check_lmul;
+  logic                                           check_evl_not_0;
+  logic                                           check_vstart_sle_evl;
+  logic   [`UOP_INDEX_WIDTH-1:0]                  uop_vstart;         
+  logic   [`UOP_INDEX_WIDTH-1:0]                  uop_index_base;         
+  logic   [`NUM_DE_UOP-1:0][`UOP_INDEX_WIDTH-1:0] uop_index_current;   
+  logic   [`UOP_INDEX_WIDTH-1:0]                  uop_index_max;         
    
   // convert logic to enum/union
   FUNCT6_u                                          funct6_lsu;
@@ -90,6 +94,7 @@ module rvv_backend_decode_unit_lsu
   assign inst_opcode    = inst.opcode;
   assign vector_csr_lsu = inst.arch_state;
   assign csr_vstart     = inst.arch_state.vstart;
+  assign csr_vl         = inst.arch_state.vl;
   assign csr_sew        = inst.arch_state.sew;
   assign csr_lmul       = inst.arch_state.lmul;
   
@@ -1934,7 +1939,7 @@ module rvv_backend_decode_unit_lsu
   end
 
   //check common requirements for all instructions
-  assign check_common = check_vd_align&check_vs2_align&check_sew&check_lmul;
+  assign check_common = check_vd_align&check_vs2_align&check_sew&check_lmul&check_evl_not_0&check_vstart_sle_evl;
 
   // check whether vd is aligned to emul_vd
   always_comb begin
@@ -2017,6 +2022,85 @@ module rvv_backend_decode_unit_lsu
     
   // check the validation of EMUL
   assign check_lmul = (emul_max != EMUL_NONE);
+
+  // get evl
+  always_comb begin
+    vs_evl = csr_vl;
+    
+    case(inst_funct6[2:0])
+      UNIT_STRIDE: begin
+        case(inst_umop)
+          US_WHOLE_REGISTER: begin
+            // evl = NFIELD*VLEN/EEW
+            case(emul_max)
+              EMUL1: begin
+                case(eew_max)
+                  EEW8: begin
+                    vs_evl = 1*`VLEN/8;
+                  end
+                  EEW16: begin
+                    vs_evl = 1*`VLEN/16;
+                  end
+                  EEW32: begin
+                    vs_evl = 1*`VLEN/32;
+                  end
+                endcase
+              end
+              EMUL2: begin
+                case(eew_max)
+                  EEW8: begin
+                    vs_evl = 2*`VLEN/8;
+                  end
+                  EEW16: begin
+                    vs_evl = 2*`VLEN/16;
+                  end
+                  EEW32: begin
+                    vs_evl = 2*`VLEN/32;
+                  end
+                endcase
+              end
+              EMUL4: begin
+                case(eew_max)
+                  EEW8: begin
+                    vs_evl = 4*`VLEN/8;
+                  end
+                  EEW16: begin
+                    vs_evl = 4*`VLEN/16;
+                  end
+                  EEW32: begin
+                    vs_evl = 4*`VLEN/32;
+                  end
+                endcase
+              end
+              EMUL8: begin
+                case(eew_max)
+                  EEW8: begin
+                    vs_evl = 8*`VLEN/8;
+                  end
+                  EEW16: begin
+                    vs_evl = 8*`VLEN/16;
+                  end
+                  EEW32: begin
+                    vs_evl = 8*`VLEN/32;
+                  end
+                endcase
+              end
+            endcase
+          end
+          US_MASK: begin       
+            // evl = ceil(vl/8)
+            vs_evl = csr_vl[`VL_WIDTH-1:3] + (csr_vl[2:0]!='b0);
+          end
+        endcase
+      end
+    endcase
+  end
+  
+  // check evl is not 0
+  assign check_evl_not_0 = vs_evl!='b0;
+
+  // check vstart < evl
+  assign check_vstart_sle_evl = {1'b0,csr_vstart} < vs_evl;
 
 // get the start number of uop_index
   always_comb begin
@@ -2167,6 +2251,13 @@ module rvv_backend_decode_unit_lsu
     end
   end
   
+  // update vs_ecl
+  always_comb begin
+    for(i=0;i<`NUM_DE_UOP;i=i+1) begin: GET_UOP_EVL
+      uop[i].vs_evl = vs_evl;
+    end
+  end
+
   // update force_vma_agnostic
   always_comb begin
     for(i=0;i<`NUM_DE_UOP;i=i+1) begin: GET_FORCE_VMA
