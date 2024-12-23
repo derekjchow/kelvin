@@ -133,10 +133,10 @@ module rvv_backend_alu_unit_mask
             end 
 
             `ifdef ASSERT_ON
-              `rvv_expect(vs1_data_valid==1'b1) 
+              assert(vs1_data_valid==1'b1) 
                 else $error("vs1_data_valid(%d) should be 1'b1.\n",vs1_data_valid);
 
-              `rvv_expect(vs2_data_valid==1'b1) 
+              assert(vs2_data_valid==1'b1) 
                 else $error("vs2_data_valid(%d) should be 1'b1.\n",vs2_data_valid);
             `endif
           end
@@ -169,10 +169,10 @@ module rvv_backend_alu_unit_mask
             end 
 
             `ifdef ASSERT_ON
-              `rvv_expect(vs1_data_valid==1'b1) 
+              assert(vs1_data_valid==1'b1) 
                 else $error("vs1_data_valid(%d) should be 1'b1.\n",vs1_data_valid);
 
-              `rvv_expect(vs2_data_valid==1'b1) 
+              assert(vs2_data_valid==1'b1) 
                 else $error("vs2_data_valid(%d) should be 1'b1.\n",vs2_data_valid);
             `endif
           end
@@ -196,16 +196,16 @@ module rvv_backend_alu_unit_mask
             end 
 
             `ifdef ASSERT_ON
-              `rvv_expect(vs1_data_valid==1'b1) 
+              assert(vs1_data_valid==1'b1) 
                 else $error("vs1_data_valid(%d) should be 1.\n",vs1_data_valid);
   
-              `rvv_expect(vs2_data_valid==1'b1) 
+              assert(vs2_data_valid==1'b1) 
                 else $error("vs2_data_valid(%d) should be 1.\n",vs2_data_valid);
   
-              `rvv_expect(vd_data_valid==1'b1) 
+              assert(vd_data_valid==1'b1) 
                 else $error("vd_data_valid(%d) should be 1.\n",vd_data_valid);
   
-              `rvv_expect(vm==1'b1) 
+              assert(vm==1'b1) 
                 else $error("vm(%d) should be 1.\n",vm);
             `endif
           end
@@ -223,10 +223,10 @@ module rvv_backend_alu_unit_mask
                 end 
 
                 `ifdef ASSERT_ON
-                  `rvv_expect(vs1_data_valid==1'b0) 
+                  assert(vs1_data_valid==1'b0) 
                     else $error("vs1_data_valid(%d) should be 0.\n",vs1_data_valid);
   
-                  `rvv_expect(vs2_data_valid==1'b1) 
+                  assert(vs2_data_valid==1'b1) 
                     else $error("vs2_data_valid(%d) should be 1.\n",vs2_data_valid);
                 `endif
               end
@@ -247,13 +247,13 @@ module rvv_backend_alu_unit_mask
                 end 
 
                 `ifdef ASSERT_ON
-                  `rvv_expect(vs1_data_valid==1'b0) 
+                  assert(vs1_data_valid==1'b0) 
                     else $error("vs1_data_valid(%d) should be 0.\n",vs1_data_valid);
   
-                  `rvv_expect(vs2_data_valid==1'b1) 
+                  assert(vs2_data_valid==1'b1) 
                     else $error("vs2_data_valid(%d) should be 1.\n",vs2_data_valid);
 
-                  `rvv_forbid((vm==1'b0)&(!vd_data_valid)) 
+                  assert(!((vm==1'b0)&(!vd_data_valid))) 
                     else $error("vd_data_valid(%d) should be 1 when vm=0.\n",vd_data_valid);
                 `endif
               end
@@ -268,10 +268,10 @@ module rvv_backend_alu_unit_mask
                 end 
 
                 `ifdef ASSERT_ON
-                  `rvv_expect(vs1_data_valid==1'b0) 
+                  assert(vs1_data_valid==1'b0) 
                     else $error("vs1_data_valid(%d) should be 0.\n",vs1_data_valid);
   
-                  `rvv_expect(vs2_data_valid==1'b1) 
+                  assert(vs2_data_valid==1'b1) 
                     else $error("vs2_data_valid(%d) should be 1.\n",vs2_data_valid);
                 `endif
               end
@@ -287,7 +287,7 @@ module rvv_backend_alu_unit_mask
                 end 
 
                 `ifdef ASSERT_ON
-                  `rvv_expect(vs1_data_valid==1'b0) 
+                  assert(vs1_data_valid==1'b0) 
                     else $error("vs1_data_valid(%d) should be 0.\n",vs1_data_valid);
                 `endif
               end
