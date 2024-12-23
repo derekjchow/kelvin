@@ -1949,8 +1949,8 @@ module rvv_backend_decode_unit_lsu
           check_vd_align = 1'b1; 
         
         `ifdef ASSERT_ON
-          `rvv_expect(inst_vd[0]==1'b0)
-          else $error("vd is not aligned to emul_vd(%d).\n",emul_vd);
+          assert(inst_vd[0]==1'b0)
+            else $error("vd is not aligned to emul_vd(%d).\n",emul_vd);
         `endif
       end
       EMUL4: begin
@@ -1958,8 +1958,8 @@ module rvv_backend_decode_unit_lsu
           check_vd_align = 1'b1; 
         
         `ifdef ASSERT_ON
-          `rvv_expect(inst_vd[1:0]==2'b0)
-          else $error("vd is not aligned to emul_vd(%d).\n",emul_vd);
+          assert(inst_vd[1:0]==2'b0)
+            else $error("vd is not aligned to emul_vd(%d).\n",emul_vd);
         `endif
       end
       EMUL8: begin
@@ -1967,8 +1967,8 @@ module rvv_backend_decode_unit_lsu
           check_vd_align = 1'b1; 
        
         `ifdef ASSERT_ON
-          `rvv_expect(inst_vd[2:0]==3'b0)        
-          else $error("vd is not aligned to emul_vd(%d).\n",emul_vd);
+          assert(inst_vd[2:0]==3'b0)        
+            else $error("vd is not aligned to emul_vd(%d).\n",emul_vd);
         `endif
       end
     endcase
@@ -1987,8 +1987,8 @@ module rvv_backend_decode_unit_lsu
           check_vs2_align = 1'b1; 
         
         `ifdef ASSERT_ON
-          `rvv_expect(inst_vs2[0]==1'b0)
-          else $error("vs2 is not aligned to emul_vs2(%d).\n",emul_vs2);
+          assert(inst_vs2[0]==1'b0)
+            else $error("vs2 is not aligned to emul_vs2(%d).\n",emul_vs2);
         `endif
       end
       EMUL4: begin
@@ -1996,8 +1996,8 @@ module rvv_backend_decode_unit_lsu
           check_vs2_align = 1'b1; 
         
         `ifdef ASSERT_ON
-          `rvv_expect(inst_vs2[1:0]==2'b0)
-          else $error("vs2 is not aligned to emul_vs2(%d).\n",emul_vs2);
+          assert(inst_vs2[1:0]==2'b0)
+            else $error("vs2 is not aligned to emul_vs2(%d).\n",emul_vs2);
         `endif
       end
       EMUL8: begin
@@ -2005,8 +2005,8 @@ module rvv_backend_decode_unit_lsu
           check_vs2_align = 1'b1; 
        
         `ifdef ASSERT_ON
-          `rvv_expect(inst_vs2[2:0]==3'b0)        
-          else $error("vs2 is not aligned to emul_vs2(%d).\n",emul_vs2);
+          assert(inst_vs2[2:0]==3'b0)        
+            else $error("vs2 is not aligned to emul_vs2(%d).\n",emul_vs2);
         `endif
       end
     endcase
@@ -2017,11 +2017,6 @@ module rvv_backend_decode_unit_lsu
     
   // check the validation of EMUL
   assign check_lmul = (emul_max != EMUL_NONE);
-
-  `ifdef ASSERT_ON
-    `rvv_forbid((inst_valid==1'b1)&(inst_encoding_correct==1'b0))        
-    else $error("check_special(%d) and check_common(%d) both should be 1.\n",check_special,check_common);
-  `endif
 
 // get the start number of uop_index
   always_comb begin

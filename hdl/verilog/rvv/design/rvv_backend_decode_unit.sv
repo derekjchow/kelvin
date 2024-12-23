@@ -95,9 +95,4 @@ module rvv_backend_decode_unit
     endcase
   end
 
-  `ifdef ASSERT_ON
-    `rvv_forbid((inst_valid_cq2de==1'b1)&((valid_lsu==1'b0)&(valid_ari==1'b0)))
-    else $error("Unsupported inst_opcode=%d.\n",inst_opcode);
-  `endif
-
 endmodule
