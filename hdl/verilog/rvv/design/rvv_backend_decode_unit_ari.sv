@@ -3240,7 +3240,7 @@ module rvv_backend_decode_unit_ari
   assign check_lmul = (emul_max != EMUL_NONE); 
 
   `ifdef ASSERT_ON
-    assert(!((inst_valid==1'b1)&(inst_encoding_correct==1'b0)))
+    `rvv_expect((inst_valid==1'b1)&(inst_encoding_correct==1'b0))
       else $error("check_special(%d) and check_common(%d) both should be 1.\n",check_special,check_common);
   `endif
 
