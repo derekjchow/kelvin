@@ -1459,13 +1459,13 @@ module rvv_backend_alu_unit_addsub
   
   generate
     for (j=0;j<`VLEN/`HWORD_WIDTH;j=j+1) begin: EXE_VADDSUB_PROD16
-      assign {cout16[j],product16[j]} = {f_half_addsub8(opcode, {cout8[`HWORD_WIDTH/`BYTE_WIDTH*j+1],product8[`HWORD_WIDTH/`BYTE_WIDTH*j+1]}, cout8[`HWORD_WIDTH/`BYTE_WIDTH*j]), product8[`HWORD_WIDTH/`BYTE_WIDTH*j]};
+      assign {cout16[j],product16[j]} = {f_half_addsub8(opcode, {cout8[2*j+1],product8[2*j+1]}, cout8[2*j]), product8[2*j]};
     end
   endgenerate 
 
   generate
     for (j=0;j<`VLEN/`WORD_WIDTH;j=j+1) begin: EXE_VADDSUB_PROD32
-      assign {cout32[j],product32[j]} = {f_half_addsub16(opcode, {cout16[`WORD_WIDTH/`HWORD_WIDTH*j+1],product16[`WORD_WIDTH/`HWORD_WIDTH*j+1]}, cout16[`WORD_WIDTH/`HWORD_WIDTH*j]), product16[`WORD_WIDTH/`HWORD_WIDTH*j]};
+      assign {cout32[j],product32[j]} = {f_half_addsub16(opcode, {cout16[2*j+1],product16[2*j+1]}, cout16[2*j]), product16[2*j]};
     end
   endgenerate 
   
@@ -2102,46 +2102,57 @@ module rvv_backend_alu_unit_addsub
     input ADDSUB_e              opcode;  
     input logic [`BYTE_WIDTH:0] src_x;
     input logic [`BYTE_WIDTH:0] src_y;
-    input logic                 cin;
+    input logic                 src_cin;
 
-    logic [`BYTE_WIDTH:0] src_y_plus_cin;
-
-    src_y_plus_cin = src_y + cin;
+    logic [`BYTE_WIDTH:0]       y;
+    logic                       cin;
 
     if (opcode==ADDSUB_VADD) begin
-      f_full_addsub8 = src_x + src_y_plus_cin;
+      y = src_y;
+      cin = src_cin;
     end
     else begin
-      f_full_addsub8 = src_x - src_y_plus_cin;
+      y = ~src_y;
+      cin = src_cin ? 1'b0 : 1'b1;
     end
+
+    f_full_addsub8 = src_x + y + cin;
   endfunction
 
   function [`BYTE_WIDTH:0] f_half_addsub8;
     // x +/- cin
     input ADDSUB_e              opcode;  
     input logic [`BYTE_WIDTH:0] src_x;
-    input logic                 cin;
+    input logic                 src_cin;
 
+    logic [`BYTE_WIDTH:0]       y;
+    
     if (opcode==ADDSUB_VADD) begin
-      f_half_addsub8 = src_x + cin;
+      y = src_cin ? 'b1 : 'b0; 
     end
     else begin
-      f_half_addsub8 = src_x - cin;
+      y = src_cin ? '1 : 'b0;
     end
+    
+    f_half_addsub8 = src_x + y;
   endfunction
 
   function [`HWORD_WIDTH:0] f_half_addsub16;
     // x +/- cin
     input ADDSUB_e               opcode;  
     input logic [`HWORD_WIDTH:0] src_x;
-    input logic                  cin;
+    input logic                  src_cin;
 
+    logic [`HWORD_WIDTH:0]       y;
+    
     if (opcode==ADDSUB_VADD) begin
-      f_half_addsub16 = src_x + cin;
+      y = src_cin ? 'b1 : 'b0; 
     end
     else begin
-      f_half_addsub16 = src_x - cin;
+      y = src_cin ? '1 : 'b0;
     end
+    
+    f_half_addsub16 = src_x + y;
   endfunction
 
   function [`WORD_WIDTH:0] f_half_add32;
