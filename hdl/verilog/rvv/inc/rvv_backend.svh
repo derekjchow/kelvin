@@ -444,14 +444,11 @@ typedef struct packed {
   EEW_e                               vd_eew; //vd to ROB eew
   logic   [`VLEN-1:0]                 vs1_data;           
   logic                               vs1_data_valid; 
-  BYTE_TYPE_t                         vs1_type; 
   logic   [`VLEN-1:0]                 vs2_data;	        
   logic                               vs2_data_valid; 
-  BYTE_TYPE_t                         vs2_type; 
   logic   [`VLEN-1:0]                 vs3_data;	//vd, source for MAC add 
   EEW_e                               vs3_eew; //vd as source, has independent eew
   logic                               vs3_data_valid; 
-  BYTE_TYPE_t                         vs3_type;
   // rs1_data could be from X[rs1] and imm(inst[19:15]). If it is imm, the 5-bit imm(inst[19:15]) will be sign-extend to XLEN-bit. 
   logic   [`XLEN-1:0] 	              rs1_data;          
   logic          	                    rs1_data_valid;   
