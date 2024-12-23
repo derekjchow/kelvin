@@ -462,7 +462,9 @@ module rvv_backend
         .d4                   (),
         .d5                   (),
         .d6                   (),
-        .d7                   ()
+        .d7                   (),
+        .dPtr                 (),
+        .dValid               ()
     );
 
     assign rs_ready_pmtrdt2dp[0] = ~pmtrdt_rs_full;

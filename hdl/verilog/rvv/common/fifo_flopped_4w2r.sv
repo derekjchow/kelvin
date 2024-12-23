@@ -85,7 +85,11 @@ edff #(2) pushStartFifoIDReg (
   .clk   (clk                         ), 
   .rst_n (rst_n                       ), 
   .d     (push_startFifo_id_nxt       ), 
-  .en    ((push0||push1||push2||push3)));
+  .en    ((push0||push1||push2||push3))
+`ifdef TB_SUPPORT
+  ,.init_data('0)
+`endif
+  );
 
 always@(*) begin
   case (push_startFifo_id) 
@@ -124,7 +128,11 @@ edff #(2) popStartFifoIDReg (
   .clk   (clk                         ), 
   .rst_n (rst_n                       ), 
   .d     (pop_startFifo_id_nxt        ), 
-  .en    (pop0||pop1                  ));
+  .en    (pop0||pop1                  )
+`ifdef TB_SUPPORT
+  ,.init_data('0)
+`endif
+);
 
 always@(*) begin
   case (pop_startFifo_id) 

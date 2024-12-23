@@ -73,7 +73,7 @@ wire pushSwapFlag;
 wire pushSwapFlag_nxt;
 wire single_push = push0 && !push1;
 assign pushSwapFlag_nxt = single_push ? !pushSwapFlag : pushSwapFlag;
-edff #(1) pushSwapFlagReg (.q(pushSwapFlag), .clk(clk), .rst_n(rst_n), .d(pushSwapFlag_nxt), .en(push0||push1));
+edff #(1) pushSwapFlagReg (.q(pushSwapFlag), .clk(clk), .rst_n(rst_n), .d(pushSwapFlag_nxt), .en(push0||push1) `ifdef TB_SUPPORT , .init_data('0)`endif);
 
 assign {push1_int,push0_int}     = pushSwapFlag ? {push0,push1}     : {push1,push0};
 assign {inData1_int,inData0_int} = pushSwapFlag ? {inData0,inData1} : {inData1,inData0};
@@ -83,7 +83,7 @@ wire popSwapFlag;
 wire popSwapFlag_nxt;
 wire single_pop = pop0 && !pop1;
 assign popSwapFlag_nxt = single_pop ? !popSwapFlag : popSwapFlag;
-edff #(1) popSwapReg (.q(popSwapFlag), .clk(clk), .rst_n(rst_n), .d(popSwapFlag_nxt), .en(pop0||pop1));
+edff #(1) popSwapReg (.q(popSwapFlag), .clk(clk), .rst_n(rst_n), .d(popSwapFlag_nxt), .en(pop0||pop1) `ifdef TB_SUPPORT , .init_data('0)`endif);
 
 assign {pop1_int,pop0_int} = popSwapFlag ? {pop0,pop1}               : {pop1,pop0};
 assign {outData1,outData0} = popSwapFlag ? {outData0_int,outData1_int} : {outData1_int,outData0_int};

@@ -42,7 +42,7 @@ module fifo_flopped(
                                    ) 
                                  : wrPtr;
 
-    edff #(AWIDTH) wrPtrReg (.q(wrPtr), .clk(clk), .rst_n(rst_n), .d(nxtWrPtr), .en(single_push));
+    edff #(AWIDTH) wrPtrReg (.q(wrPtr), .clk(clk), .rst_n(rst_n), .d(nxtWrPtr), .en(single_push) `ifdef TB_SUPPORT , .init_data('0)`endif);
 
     // Read pointer
     wire [AWIDTH-1:0] rdPtr;
@@ -55,7 +55,7 @@ module fifo_flopped(
     wire [AWIDTH-1:0] nxtRdPtr;
     assign nxtRdPtr = single_pop ? rdPtr_p1 : rdPtr;
 
-    edff #(AWIDTH) rdPtrReg (.q(rdPtr), .clk(clk), .rst_n(rst_n), .d(nxtRdPtr), .en(single_pop));
+    edff #(AWIDTH) rdPtrReg (.q(rdPtr), .clk(clk), .rst_n(rst_n), .d(nxtRdPtr), .en(single_pop) `ifdef TB_SUPPORT , .init_data('0)`endif);
 
     // Write enable decodes
     wire [DEPTH-1:0] en;
@@ -81,7 +81,7 @@ module fifo_flopped(
     wire [AWIDTH_PLUS1-1:0] entryCounter;
     wire [AWIDTH_PLUS1-1:0] entryCounterN;
     wire count;
-    edff  #(AWIDTH_PLUS1,0) entryCounterReg (.q(entryCounter), .clk(clk), .d(entryCounterN), .rst_n(rst_n), .en(count));
+    edff  #(AWIDTH_PLUS1,0) entryCounterReg (.q(entryCounter), .clk(clk), .d(entryCounterN), .rst_n(rst_n), .en(count) `ifdef TB_SUPPORT , .init_data('0)`endif);
     
     assign count = single_push | single_pop;
     assign entryCounterN = entryCounter + single_push - single_pop;

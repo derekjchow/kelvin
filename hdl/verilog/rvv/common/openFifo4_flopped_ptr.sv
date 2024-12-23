@@ -33,12 +33,12 @@ module openFifo4_flopped_ptr(/*AUTOARG*/
   wire [AWIDTH-1:0] wrPtr;
   wire [AWIDTH-1:0] nxtWrPtr = single_push ? wrPtr + 1'b1 : wrPtr;
 
-  edff #(AWIDTH) wrPtrReg (.q(wrPtr), .clk(clk), .rst_n(rst_n), .d(nxtWrPtr), .en(single_push));
+  edff #(AWIDTH) wrPtrReg (.q(wrPtr), .clk(clk), .rst_n(rst_n), .d(nxtWrPtr), .en(single_push) `ifdef TB_SUPPORT , .init_data('0)`endif);
   // Read pointer
   wire [AWIDTH-1:0] rdPtr;
   wire [AWIDTH-1:0] nxtRdPtr = single_pop ? rdPtr + 1'b1 : rdPtr;
 
-  edff #(AWIDTH) rdPtrReg (.q(rdPtr), .clk(clk), .rst_n(rst_n), .d(nxtRdPtr), .en(single_pop));
+  edff #(AWIDTH) rdPtrReg (.q(rdPtr), .clk(clk), .rst_n(rst_n), .d(nxtRdPtr), .en(single_pop) `ifdef TB_SUPPORT , .init_data('0)`endif);
 
   assign dPtr = nxtRdPtr;
   // Flag generation
@@ -78,10 +78,10 @@ module openFifo4_flopped_ptr(/*AUTOARG*/
   wire [DWIDTH-1:0] d2;
   wire [DWIDTH-1:0] d3;
 
-  edff #(DWIDTH) d0Reg (.q(d0), .clk(clk), .rst_n(rst_n), .en(en0), .d(fifo_inData));
-  edff #(DWIDTH) d1Reg (.q(d1), .clk(clk), .rst_n(rst_n), .en(en1), .d(fifo_inData));
-  edff #(DWIDTH) d2Reg (.q(d2), .clk(clk), .rst_n(rst_n), .en(en2), .d(fifo_inData));
-  edff #(DWIDTH) d3Reg (.q(d3), .clk(clk), .rst_n(rst_n), .en(en3), .d(fifo_inData));
+  edff #(DWIDTH) d0Reg (.q(d0), .clk(clk), .rst_n(rst_n), .en(en0), .d(fifo_inData) `ifdef TB_SUPPORT , .init_data('0)`endif);
+  edff #(DWIDTH) d1Reg (.q(d1), .clk(clk), .rst_n(rst_n), .en(en1), .d(fifo_inData) `ifdef TB_SUPPORT , .init_data('0)`endif);
+  edff #(DWIDTH) d2Reg (.q(d2), .clk(clk), .rst_n(rst_n), .en(en2), .d(fifo_inData) `ifdef TB_SUPPORT , .init_data('0)`endif);
+  edff #(DWIDTH) d3Reg (.q(d3), .clk(clk), .rst_n(rst_n), .en(en3), .d(fifo_inData) `ifdef TB_SUPPORT , .init_data('0)`endif);
 
   // Read output
   reg [DWIDTH-1:0] fifo_outData;
@@ -99,7 +99,7 @@ module openFifo4_flopped_ptr(/*AUTOARG*/
   // Valid signal per data
   reg  [4-1:0] dValidN;
   wire updateDValid;
-  edff  #(4) dValidReg (.q(dValid), .clk(clk), .d(dValidN), .rst_n(rst_n), .en(updateDValid));
+  edff  #(4) dValidReg (.q(dValid), .clk(clk), .d(dValidN), .rst_n(rst_n), .en(updateDValid) `ifdef TB_SUPPORT , .init_data('0)`endif);
   
   assign updateDValid = single_push | single_pop;
   
