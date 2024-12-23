@@ -123,7 +123,6 @@ module rvv_backend_rob
     logic     [`NUM_RT_UOP-1:0]  uop_retire_ready;
 
     genvar  i,j;
-    integer k;
 // ---code start------------------------------------------------------
   // Uop info FIFO
     multi_fifo #(
@@ -169,7 +168,8 @@ module rvv_backend_rob
         .M      (`NUM_DP_UOP),
         .N      (`NUM_RT_UOP),
         .DEPTH  (`ROB_DEPTH),
-        .POP_CLEAR (1'b1)
+        .POP_CLEAR (1'b1),
+        .ASYNC_RSTN (1'b1)
     ) u_uop_valid_fifo (
       // global
         .clk    (clk),
@@ -193,7 +193,7 @@ module rvv_backend_rob
 
   // update PU result to result memory
     always_ff @(posedge clk) begin
-        for (k=0; k<`NUM_ALU; k++) begin
+        for (int k=0; k<`NUM_ALU; k++) begin
             if (wr_valid_alu2rob[k] && wr_ready_rob2alu[k]) begin
                 res_mem[wr_alu2rob[k].rob_entry].w_valid <= wr_alu2rob[k].w_valid;
                 res_mem[wr_alu2rob[k].rob_entry].w_data  <= wr_alu2rob[k].w_data;
@@ -202,7 +202,7 @@ module rvv_backend_rob
                 res_mem[wr_alu2rob[k].rob_entry].ignore_vma <= wr_alu2rob[k].ignore_vma;
             end
         end
-        for (k=0; k<`NUM_PMTRDT; k++) begin
+        for (int k=0; k<`NUM_PMTRDT; k++) begin
             if (wr_valid_pmtrdt2rob[k] && wr_ready_rob2pmtrdt[k]) begin
                 res_mem[wr_pmtrdt2rob[k].rob_entry].w_valid <= wr_pmtrdt2rob[k].w_valid;
                 res_mem[wr_pmtrdt2rob[k].rob_entry].w_data  <= wr_pmtrdt2rob[k].w_data;
@@ -211,7 +211,7 @@ module rvv_backend_rob
                 res_mem[wr_pmtrdt2rob[k].rob_entry].ignore_vma <= wr_pmtrdt2rob[k].ignore_vma;
             end
         end
-        for (k=0; k<`NUM_MUL; k++) begin
+        for (int k=0; k<`NUM_MUL; k++) begin
             if (wr_valid_mul2rob[k] && wr_ready_rob2mul[k]) begin
                 res_mem[wr_mul2rob[k].rob_entry].w_valid <= wr_mul2rob[k].w_valid;
                 res_mem[wr_mul2rob[k].rob_entry].w_data  <= wr_mul2rob[k].w_data;
@@ -220,7 +220,7 @@ module rvv_backend_rob
                 res_mem[wr_mul2rob[k].rob_entry].ignore_vma <= wr_mul2rob[k].ignore_vma;
             end
         end
-        for (k=0; k<`NUM_DIV; k++) begin
+        for (int k=0; k<`NUM_DIV; k++) begin
             if (wr_valid_div2rob[k] && wr_ready_rob2div[k]) begin
                 res_mem[wr_div2rob[k].rob_entry].w_valid <= wr_div2rob[k].w_valid;
                 res_mem[wr_div2rob[k].rob_entry].w_data  <= wr_div2rob[k].w_data;
@@ -229,7 +229,7 @@ module rvv_backend_rob
                 res_mem[wr_div2rob[k].rob_entry].ignore_vma <= wr_div2rob[k].ignore_vma;
             end
         end
-        for (k=0; k<`NUM_LSU; k++) begin
+        for (int k=0; k<`NUM_LSU; k++) begin
             if (wr_valid_lsu2rob[k] && wr_ready_rob2lsu[k]) begin
                 res_mem[wr_lsu2rob[k].rob_entry].w_valid <= wr_lsu2rob[k].w_valid;
                 res_mem[wr_lsu2rob[k].rob_entry].w_data  <= wr_lsu2rob[k].w_data;
@@ -259,27 +259,27 @@ module rvv_backend_rob
         else if (flush_rob)
             uop_done <= '0;
         else begin
-            for (k=0; k<`NUM_RT_UOP; k++) begin
+            for (int k=0; k<`NUM_RT_UOP; k++) begin
                 if (rd_valid_rob2rt[k] && rd_ready_rt2rob[k])
                     uop_done[uop_rptr+k] <= 1'b0;
             end
-            for (k=0; k<`NUM_ALU; k++) begin
+            for (int k=0; k<`NUM_ALU; k++) begin
                 if (wr_valid_alu2rob[k] && wr_ready_rob2alu[k])
                     uop_done[wr_alu2rob[k].rob_entry] <= 1'b1;
             end
-            for (k=0; k<`NUM_PMTRDT; k++) begin
+            for (int k=0; k<`NUM_PMTRDT; k++) begin
                 if (wr_valid_pmtrdt2rob[k] && wr_ready_rob2pmtrdt[k])
                     uop_done[wr_pmtrdt2rob[k].rob_entry] <= 1'b1;
             end
-            for (k=0; k<`NUM_MUL; k++) begin
+            for (int k=0; k<`NUM_MUL; k++) begin
                 if (wr_valid_mul2rob[k] && wr_ready_rob2mul[k])
                     uop_done[wr_mul2rob[k].rob_entry] <= 1'b1;
             end
-            for (k=0; k<`NUM_DIV; k++) begin
+            for (int k=0; k<`NUM_DIV; k++) begin
                 if (wr_valid_div2rob[k] && wr_ready_rob2div[k])
                     uop_done[wr_div2rob[k].rob_entry] <= 1'b1;
             end
-            for (k=0; k<`NUM_LSU; k++) begin
+            for (int k=0; k<`NUM_LSU; k++) begin
                 if (wr_valid_lsu2rob[k] && wr_ready_rob2lsu[k])
                     uop_done[wr_lsu2rob[k].rob_entry] <= 1'b1;
             end

@@ -68,7 +68,7 @@ module rvv_backend_alu_unit_other
   logic                           ignore_vma;
   
   // for-loop
-  integer                         i;
+
   genvar                          j;
 
 //
@@ -252,7 +252,7 @@ module rvv_backend_alu_unit_other
               result_valid = 1'b1;
 
               src2_data = vs2_data;
-              for (i=0;i<`VLEN/`WORD_WIDTH;i=i+1) begin
+              for(int i=0;i<`VLEN/`WORD_WIDTH;i=i+1) begin
                 case(vs2_eew)
                   EEW8: begin
                     src1_data[(4*i  )*`BYTE_WIDTH +: `BYTE_WIDTH] = rs1_data[0 +: `BYTE_WIDTH];
@@ -289,7 +289,7 @@ module rvv_backend_alu_unit_other
             if(rs1_data_valid&(vm==1'b1)) begin
               result_valid = 1'b1;
               
-              for (i=0;i<`VLEN/`WORD_WIDTH;i=i+1) begin
+              for(int i=0;i<`VLEN/`WORD_WIDTH;i=i+1) begin
                 case(vd_eew)
                   EEW8: begin
                     src1_data[(4*i  )*`BYTE_WIDTH +: `BYTE_WIDTH] = rs1_data[0 +: `BYTE_WIDTH];
@@ -317,7 +317,7 @@ module rvv_backend_alu_unit_other
               result_valid = 1'b1;
               
               src2_data = vs2_data;
-              for (i=0;i<`VLEN/`WORD_WIDTH;i=i+1) begin
+              for(int i=0;i<`VLEN/`WORD_WIDTH;i=i+1) begin
                 case(vs2_eew)
                   EEW8: begin
                     src1_data[(4*i  )*`BYTE_WIDTH +: `BYTE_WIDTH] = rs1_data[0 +: `BYTE_WIDTH];
@@ -359,7 +359,7 @@ module rvv_backend_alu_unit_other
             if(rs1_data_valid&(vm==1'b1)) begin
               result_valid = 1'b1;
               
-              for (i=0;i<`VLEN/`WORD_WIDTH;i=i+1) begin
+              for(int i=0;i<`VLEN/`WORD_WIDTH;i=i+1) begin
                 case(vd_eew)
                   EEW8: begin
                     src1_data[(4*i  )*`BYTE_WIDTH +: `BYTE_WIDTH] = rs1_data[0 +: `BYTE_WIDTH];
@@ -387,7 +387,7 @@ module rvv_backend_alu_unit_other
               result_valid = 1'b1;
               
               src2_data = vs2_data;
-              for (i=0;i<`VLEN/`WORD_WIDTH;i=i+1) begin
+              for(int i=0;i<`VLEN/`WORD_WIDTH;i=i+1) begin
                 case(vs2_eew)
                   EEW8: begin
                     src1_data[(4*i  )*`BYTE_WIDTH +: `BYTE_WIDTH] = rs1_data[0 +: `BYTE_WIDTH];

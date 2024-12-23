@@ -72,7 +72,6 @@ module rvv_backend_decode_unit_lsu
   FUNCT6_u                                          funct6_lsu;
 
   // use for for-loop 
-  integer                                           i;
   genvar                                            j;
   
   // local parameter
@@ -2155,7 +2154,7 @@ module rvv_backend_decode_unit_lsu
 
   // generate uop valid
   always_comb begin        
-    for(i=0;i<`NUM_DE_UOP;i=i+1) begin: GET_UOP_VALID
+    for(int i=0;i<`NUM_DE_UOP;i=i+1) begin: GET_UOP_VALID
       if ((uop_index_current[i]<=uop_index_max)&inst_valid) 
         uop_valid[i]  = inst_encoding_correct;
       else
@@ -2165,35 +2164,35 @@ module rvv_backend_decode_unit_lsu
 
   // assign uop pc
   always_comb begin
-    for(i=0;i<`NUM_DE_UOP;i=i+1) begin: GET_UOP_PC
+    for(int i=0;i<`NUM_DE_UOP;i=i+1) begin: GET_UOP_PC
       uop[i].uop_pc = inst_pc;
     end
   end
 
   // update uop funct3
   always_comb begin
-    for(i=0;i<`NUM_DE_UOP;i=i+1) begin: GET_UOP_FUNCT3
+    for(int i=0;i<`NUM_DE_UOP;i=i+1) begin: GET_UOP_FUNCT3
       uop[i].uop_funct3 = inst_funct3;
     end
   end
 
   // update uop funct6
   always_comb begin
-    for(i=0;i<`NUM_DE_UOP;i=i+1) begin: GET_UOP_FUNCT6
+    for(int i=0;i<`NUM_DE_UOP;i=i+1) begin: GET_UOP_FUNCT6
       uop[i].uop_funct6 = funct6_lsu;
     end
   end
 
   // allocate uop to execution unit
   always_comb begin
-    for(i=0;i<`NUM_DE_UOP;i=i+1) begin: GET_UOP_EXE_UNIT
+    for(int i=0;i<`NUM_DE_UOP;i=i+1) begin: GET_UOP_EXE_UNIT
       uop[i].uop_exe_unit = LSU;
     end
   end
 
   // update uop class
   always_comb begin
-    for(i=0;i<`NUM_DE_UOP;i=i+1) begin: GET_UOP_CLASS
+    for(int i=0;i<`NUM_DE_UOP;i=i+1) begin: GET_UOP_CLASS
       // initial 
       uop[i].uop_class      = X;
       
@@ -2229,7 +2228,7 @@ module rvv_backend_decode_unit_lsu
 
   // update vector_csr and vstart
   always_comb begin
-    for(i=0;i<`NUM_DE_UOP;i=i+1) begin: GET_UOP_VCSR
+    for(int i=0;i<`NUM_DE_UOP;i=i+1) begin: GET_UOP_VCSR
       uop[i].vector_csr               = vector_csr_lsu;
 
       // update vstart of every uop
@@ -2253,14 +2252,14 @@ module rvv_backend_decode_unit_lsu
   
   // update vs_ecl
   always_comb begin
-    for(i=0;i<`NUM_DE_UOP;i=i+1) begin: GET_UOP_EVL
+    for(int i=0;i<`NUM_DE_UOP;i=i+1) begin: GET_UOP_EVL
       uop[i].vs_evl = vs_evl;
     end
   end
 
   // update force_vma_agnostic
   always_comb begin
-    for(i=0;i<`NUM_DE_UOP;i=i+1) begin: GET_FORCE_VMA
+    for(int i=0;i<`NUM_DE_UOP;i=i+1) begin: GET_FORCE_VMA
       //When source and destination registers overlap and have different EEW, the instruction is mask- and tail-agnostic.
       uop[i].force_vma_agnostic = ((check_vd_overlap_v0==1'b0)&(eew_vd!=EEW1)) | 
                                   ((check_vd_overlap_vs2==1'b0)&(eew_vd!=eew_vs2)&(eew_vd!=EEW_NONE)&(eew_vs2!=EEW_NONE));
@@ -2269,7 +2268,7 @@ module rvv_backend_decode_unit_lsu
 
   // update force_vta_agnostic
   always_comb begin
-    for(i=0;i<`NUM_DE_UOP;i=i+1) begin: GET_FORCE_VTA
+    for(int i=0;i<`NUM_DE_UOP;i=i+1) begin: GET_FORCE_VTA
       uop[i].force_vta_agnostic = (eew_vd==EEW1) |   // Mask destination tail elements are always treated as tail-agnostic
       //When source and destination registers overlap and have different EEW, the instruction is mask- and tail-agnostic.
                                   ((check_vd_overlap_v0==1'b0)&(eew_vd!=EEW1)) | 
@@ -2279,21 +2278,21 @@ module rvv_backend_decode_unit_lsu
 
   // update vm field
   always_comb begin
-    for(i=0;i<`NUM_DE_UOP;i=i+1) begin: GET_UOP_VM
+    for(int i=0;i<`NUM_DE_UOP;i=i+1) begin: GET_UOP_VM
       uop[i].vm = inst_vm;
     end
   end
   
   // some uop need v0 as the vector operand
   always_comb begin
-    for(i=0;i<`NUM_DE_UOP;i=i+1) begin: GET_UOP_V0
+    for(int i=0;i<`NUM_DE_UOP;i=i+1) begin: GET_UOP_V0
       uop[i].v0_valid = 'b0;
     end
   end
 
   // update vd_index and eew 
   always_comb begin
-    for(i=0;i<`NUM_DE_UOP;i=i+1) begin: GET_VD
+    for(int i=0;i<`NUM_DE_UOP;i=i+1) begin: GET_VD
       // initial
       uop[i].vd_index = 'b0;
       uop[i].vd_eew   = eew_vd;
@@ -2348,7 +2347,7 @@ module rvv_backend_decode_unit_lsu
   // update vd_valid and vs3_valid
   // some uop need vd as the vs3 vector operand
   always_comb begin
-    for(i=0;i<`NUM_DE_UOP;i=i+1) begin: GET_VD_VS3_VALID
+    for(int i=0;i<`NUM_DE_UOP;i=i+1) begin: GET_VD_VS3_VALID
       // initial
       uop[i].vs3_valid = 'b0;
       uop[i].vd_valid  = 'b0;
@@ -2362,7 +2361,7 @@ module rvv_backend_decode_unit_lsu
 
   // update vs1 
   always_comb begin
-    for(i=0;i<`NUM_DE_UOP;i=i+1) begin: GET_VS1
+    for(int i=0;i<`NUM_DE_UOP;i=i+1) begin: GET_VS1
       uop[i].vs1             = 'b0;
       uop[i].vs1_eew         = EEW_NONE;
       uop[i].vs1_index_valid = 'b0;
@@ -2371,7 +2370,7 @@ module rvv_backend_decode_unit_lsu
 
   // some uop will use vs1 field as an opcode to decode  
   always_comb begin
-    for(i=0;i<`NUM_DE_UOP;i=i+1) begin: GET_VS1_OPCODE
+    for(int i=0;i<`NUM_DE_UOP;i=i+1) begin: GET_VS1_OPCODE
       // initial
       uop[i].vs1_opcode_valid = 'b0;
     end
@@ -2379,7 +2378,7 @@ module rvv_backend_decode_unit_lsu
 
   // update vs2 index, eew and valid  
   always_comb begin
-    for(i=0;i<`NUM_DE_UOP;i=i+1) begin: GET_VS2
+    for(int i=0;i<`NUM_DE_UOP;i=i+1) begin: GET_VS2
       // initial
       uop[i].vs2_index        = 'b0; 
       uop[i].vs2_eew          = EEW_NONE; 
@@ -2465,7 +2464,7 @@ module rvv_backend_decode_unit_lsu
 
   // update rd_index and valid
   always_comb begin
-    for(i=0;i<`NUM_DE_UOP;i=i+1) begin: GET_RD
+    for(int i=0;i<`NUM_DE_UOP;i=i+1) begin: GET_RD
       uop[i].rd_index         = 'b0;
       uop[i].rd_index_valid   = 'b0;
     end
@@ -2473,7 +2472,7 @@ module rvv_backend_decode_unit_lsu
 
   // update rs1_data and rs1_data_valid 
   always_comb begin
-    for(i=0;i<`NUM_DE_UOP;i=i+1) begin: GET_RS1
+    for(int i=0;i<`NUM_DE_UOP;i=i+1) begin: GET_RS1
       uop[i].rs1_data         = 'b0;
       uop[i].rs1_data_valid   = 'b0;
     end
@@ -2481,14 +2480,14 @@ module rvv_backend_decode_unit_lsu
 
   // update uop index
   always_comb begin
-    for(i=0;i<`NUM_DE_UOP;i=i+1) begin: ASSIGN_UOP_INDEX
+    for(int i=0;i<`NUM_DE_UOP;i=i+1) begin: ASSIGN_UOP_INDEX
       uop[i].uop_index = uop_index_current[i];
     end
   end
 
   // update last_uop valid
   always_comb begin
-    for(i=0;i<`NUM_DE_UOP;i=i+1) begin: GET_UOP_LAST
+    for(int i=0;i<`NUM_DE_UOP;i=i+1) begin: GET_UOP_LAST
       uop[i].last_uop_valid = uop_index_current[i] == uop_index_max;
     end
   end

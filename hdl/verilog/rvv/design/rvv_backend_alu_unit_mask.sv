@@ -73,7 +73,7 @@ module rvv_backend_alu_unit_mask
   logic                           ignore_vma;
   
   // for-loop
-  integer                         i;
+
   genvar                          j;
 
 //
@@ -153,7 +153,7 @@ module rvv_backend_alu_unit_mask
               
               src2_data = vs2_data;
               
-              for (i=0;i<`VLEN/`WORD_WIDTH;i++) begin
+              for(int i=0;i<`VLEN/`WORD_WIDTH;i++) begin
                 case(vs2_eew) 
                   EEW8: begin
                     src1_data[i*`WORD_WIDTH +: `WORD_WIDTH] = {(`WORD_WIDTH/`BYTE_WIDTH){rs1_data[0 +: `BYTE_WIDTH]}};
@@ -321,7 +321,7 @@ module rvv_backend_alu_unit_mask
     if (src2_data=='b0) 
       result_data_vfirst = {`VLEN{1'b1}};
     else begin
-      for (i=0;i<`VLEN;i++) begin
+      for(int i=0;i<`VLEN;i++) begin
         if (result_data_vmsof[i]==1'b1)
           result_data_vfirst = i;         // one-hot to 8421BCD. get the index of first 1
       end
@@ -399,7 +399,7 @@ module rvv_backend_alu_unit_mask
             case(vs1_opcode)
               VCPOP: begin
                 result_data = 'b0;
-                for(i=0;i<`VLEN/16;i++) begin
+                for(int i=0;i<`VLEN/16;i++) begin
                   result_data = result_data + result_data_vcpop[i];
                 end
               end
@@ -425,42 +425,42 @@ module rvv_backend_alu_unit_mask
                   EEW8: begin
                     case(uop_index)
                       3'd0: begin
-                        for (i=0; i<`VLENB;i++) begin
+                        for(int i=0; i<`VLENB;i++) begin
                           result_data[i*`BYTE_WIDTH +: `BYTE_WIDTH] = result_data_viota[i];
                         end
                       end
                       3'd1: begin
-                        for (i=0; i<`VLENB;i++) begin
+                        for(int i=0; i<`VLENB;i++) begin
                           result_data[i*`BYTE_WIDTH +: `BYTE_WIDTH] = result_data_viota[1*`VLENB+i];
                         end
                       end
                       3'd2: begin
-                        for (i=0; i<`VLENB;i++) begin
+                        for(int i=0; i<`VLENB;i++) begin
                           result_data[i*`BYTE_WIDTH +: `BYTE_WIDTH] = result_data_viota[2*`VLENB+i];
                         end
                       end
                       3'd3: begin
-                        for (i=0; i<`VLENB;i++) begin
+                        for(int i=0; i<`VLENB;i++) begin
                           result_data[i*`BYTE_WIDTH +: `BYTE_WIDTH] = result_data_viota[3*`VLENB+i];
                         end
                       end
                       3'd4: begin
-                        for (i=0; i<`VLENB;i++) begin
+                        for(int i=0; i<`VLENB;i++) begin
                           result_data[i*`BYTE_WIDTH +: `BYTE_WIDTH] = result_data_viota[4*`VLENB+i];
                         end
                       end
                       3'd5: begin
-                        for (i=0; i<`VLENB;i++) begin
+                        for(int i=0; i<`VLENB;i++) begin
                           result_data[i*`BYTE_WIDTH +: `BYTE_WIDTH] = result_data_viota[5*`VLENB+i];
                         end
                       end
                       3'd6: begin
-                        for (i=0; i<`VLENB;i++) begin
+                        for(int i=0; i<`VLENB;i++) begin
                           result_data[i*`BYTE_WIDTH +: `BYTE_WIDTH] = result_data_viota[6*`VLENB+i];
                         end
                       end
                       3'd7: begin
-                        for (i=0; i<`VLENB;i++) begin
+                        for(int i=0; i<`VLENB;i++) begin
                           result_data[i*`BYTE_WIDTH +: `BYTE_WIDTH] = result_data_viota[7*`VLENB+i];
                         end
                       end
@@ -469,42 +469,42 @@ module rvv_backend_alu_unit_mask
                   EEW16: begin
                     case(uop_index)
                       3'd0: begin
-                        for (i=0; i<`VLEN/`HWORD_WIDTH;i++) begin
+                        for(int i=0; i<`VLEN/`HWORD_WIDTH;i++) begin
                           result_data[i*`HWORD_WIDTH +: `HWORD_WIDTH] = result_data_viota[i];
                         end
                       end
                       3'd1: begin
-                        for (i=0; i<`VLEN/`HWORD_WIDTH;i++) begin
+                        for(int i=0; i<`VLEN/`HWORD_WIDTH;i++) begin
                           result_data[i*`HWORD_WIDTH +: `HWORD_WIDTH] = result_data_viota[1*`VLEN/`HWORD_WIDTH+i];
                         end
                       end
                       3'd2: begin
-                        for (i=0; i<`VLEN/`HWORD_WIDTH;i++) begin
+                        for(int i=0; i<`VLEN/`HWORD_WIDTH;i++) begin
                           result_data[i*`HWORD_WIDTH +: `HWORD_WIDTH] = result_data_viota[2*`VLEN/`HWORD_WIDTH+i];
                         end
                       end
                       3'd3: begin
-                        for (i=0; i<`VLEN/`HWORD_WIDTH;i++) begin
+                        for(int i=0; i<`VLEN/`HWORD_WIDTH;i++) begin
                           result_data[i*`HWORD_WIDTH +: `HWORD_WIDTH] = result_data_viota[3*`VLEN/`HWORD_WIDTH+i];
                         end
                       end
                       3'd4: begin
-                        for (i=0; i<`VLEN/`HWORD_WIDTH;i++) begin
+                        for(int i=0; i<`VLEN/`HWORD_WIDTH;i++) begin
                           result_data[i*`HWORD_WIDTH +: `HWORD_WIDTH] = result_data_viota[4*`VLEN/`HWORD_WIDTH+i];
                         end
                       end
                       3'd5: begin
-                        for (i=0; i<`VLEN/`HWORD_WIDTH;i++) begin
+                        for(int i=0; i<`VLEN/`HWORD_WIDTH;i++) begin
                           result_data[i*`HWORD_WIDTH +: `HWORD_WIDTH] = result_data_viota[5*`VLEN/`HWORD_WIDTH+i];
                         end
                       end
                       3'd6: begin
-                        for (i=0; i<`VLEN/`HWORD_WIDTH;i++) begin
+                        for(int i=0; i<`VLEN/`HWORD_WIDTH;i++) begin
                           result_data[i*`HWORD_WIDTH +: `HWORD_WIDTH] = result_data_viota[6*`VLEN/`HWORD_WIDTH+i];
                         end
                       end
                       3'd7: begin
-                        for (i=0; i<`VLEN/`HWORD_WIDTH;i++) begin
+                        for(int i=0; i<`VLEN/`HWORD_WIDTH;i++) begin
                           result_data[i*`HWORD_WIDTH +: `HWORD_WIDTH] = result_data_viota[7*`VLEN/`HWORD_WIDTH+i];
                         end
                       end
@@ -513,42 +513,42 @@ module rvv_backend_alu_unit_mask
                   EEW32: begin
                     case(uop_index)
                       3'd0: begin
-                        for (i=0; i<`VLEN/`WORD_WIDTH;i++) begin
+                        for(int i=0; i<`VLEN/`WORD_WIDTH;i++) begin
                           result_data[i*`WORD_WIDTH +: `WORD_WIDTH] = result_data_viota[i];
                         end
                       end
                       3'd1: begin
-                        for (i=0; i<`VLEN/`WORD_WIDTH;i++) begin
+                        for(int i=0; i<`VLEN/`WORD_WIDTH;i++) begin
                           result_data[i*`WORD_WIDTH +: `WORD_WIDTH] = result_data_viota[1*`VLEN/`WORD_WIDTH+i];
                         end
                       end
                       3'd2: begin
-                        for (i=0; i<`VLEN/`WORD_WIDTH;i++) begin
+                        for(int i=0; i<`VLEN/`WORD_WIDTH;i++) begin
                           result_data[i*`WORD_WIDTH +: `WORD_WIDTH] = result_data_viota[2*`VLEN/`WORD_WIDTH+i];
                         end
                       end
                       3'd3: begin
-                        for (i=0; i<`VLEN/`WORD_WIDTH;i++) begin
+                        for(int i=0; i<`VLEN/`WORD_WIDTH;i++) begin
                           result_data[i*`WORD_WIDTH +: `WORD_WIDTH] = result_data_viota[3*`VLEN/`WORD_WIDTH+i];
                         end
                       end
                       3'd4: begin
-                        for (i=0; i<`VLEN/`WORD_WIDTH;i++) begin
+                        for(int i=0; i<`VLEN/`WORD_WIDTH;i++) begin
                           result_data[i*`WORD_WIDTH +: `WORD_WIDTH] = result_data_viota[4*`VLEN/`WORD_WIDTH+i];
                         end
                       end
                       3'd5: begin
-                        for (i=0; i<`VLEN/`WORD_WIDTH;i++) begin
+                        for(int i=0; i<`VLEN/`WORD_WIDTH;i++) begin
                           result_data[i*`WORD_WIDTH +: `WORD_WIDTH] = result_data_viota[5*`VLEN/`WORD_WIDTH+i];
                         end
                       end
                       3'd6: begin
-                        for (i=0; i<`VLEN/`WORD_WIDTH;i++) begin
+                        for(int i=0; i<`VLEN/`WORD_WIDTH;i++) begin
                           result_data[i*`WORD_WIDTH +: `WORD_WIDTH] = result_data_viota[6*`VLEN/`WORD_WIDTH+i];
                         end
                       end
                       3'd7: begin
-                        for (i=0; i<`VLEN/`WORD_WIDTH;i++) begin
+                        for(int i=0; i<`VLEN/`WORD_WIDTH;i++) begin
                           result_data[i*`WORD_WIDTH +: `WORD_WIDTH] = result_data_viota[7*`VLEN/`WORD_WIDTH+i];
                         end
                       end

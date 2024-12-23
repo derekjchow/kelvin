@@ -36,6 +36,7 @@ module multi_fifo
   parameter N     = 4;            // pop signal width
   parameter DEPTH = 16;           // fifo depth
   parameter POP_CLEAR = 1'b0;     // clear data once pop
+  parameter ASYNC_RSTN = 1'b0;    // reset data
   
   localparam DEPTH_BITS = $clog2(DEPTH);
 
@@ -70,11 +71,10 @@ module multi_fifo
   logic        [DEPTH_BITS-1:0] next_rptr;
 // ---code start------------------------------------------------------
   genvar  i;
-  integer j;
   // dataout
   always_comb begin
     pop_count = '0;
-    for (j=0; j<N; j++) pop_count = pop_count + pop[j];
+    for (int j=0; j<N; j++) pop_count = pop_count + pop[j];
   end
 
   assign next_rptr = ({1'b0,rptr} + pop_count < DEPTH) ? rptr + pop_count
@@ -90,32 +90,60 @@ module multi_fifo
   // datain
   always_comb begin
     push_count = '0;
-    for (j=0; j<M; j++) push_count = push_count + push[j];
+    for (int j=0; j<M; j++) push_count = push_count + push[j];
   end
 
   assign next_wptr = ({1'b0,wptr} + push_count < DEPTH) ? wptr + push_count
                                                  : wptr + push_count - DEPTH;
   cdffr #(.WIDTH(DEPTH_BITS)) u_wptr_reg (.q(wptr), .c(clear), .e(|push), .d(next_wptr), .clk(clk), .rst_n(rst_n));
 
-  always_ff @(posedge clk) begin
-    if (push[0] && !full) mem[wptr] <= datain[0];
-    for (j=1; j<M; j++) begin
-      if (push[j] && !almost_full[j]) mem[wptr+j] <= datain[j];
-    end
-
-    if (POP_CLEAR) begin
-      if (clear) begin
-        for (j=0; j<DEPTH; j++) begin 
+  generate
+  if (ASYNC_RSTN)
+    always_ff @(posedge clk or negedge rst_n) begin
+      if (!rst_n)
+        for (int j=0; j<DEPTH; j++) begin 
           mem[j] <= '0;
         end
-      end else begin
-        for (j=0; j<N; j++) begin
-          if (pop[j]) mem[rptr+j] <= '0;
+      else begin
+        if (push[0] && !full) mem[wptr] <= datain[0];
+        for (int j=1; j<M; j++) begin
+          if (push[j] && !almost_full[j]) mem[wptr+j] <= datain[j];
+        end
+
+        if (POP_CLEAR) begin
+          if (clear) begin
+            for (int j=0; j<DEPTH; j++) begin 
+              mem[j] <= '0;
+            end
+          end else begin
+            for (int j=0; j<N; j++) begin
+              if (pop[j]) mem[rptr+j] <= '0;
+            end
+          end
         end
       end
     end
+  else
+    always_ff @(posedge clk) begin
+      if (push[0] && !full) mem[wptr] <= datain[0];
+      for (int j=1; j<M; j++) begin
+        if (push[j] && !almost_full[j]) mem[wptr+j] <= datain[j];
+      end
 
-  end
+      if (POP_CLEAR) begin
+        if (clear) begin
+          for (int j=0; j<DEPTH; j++) begin 
+            mem[j] <= '0;
+          end
+        end else begin
+          for (int j=0; j<N; j++) begin
+            if (pop[j]) mem[rptr+j] <= '0;
+          end
+        end
+      end
+
+    end
+  endgenerate
 
   // fifo status
   assign next_entry_count = entry_count + push_count - pop_count;
@@ -137,7 +165,7 @@ module multi_fifo
   endgenerate
 
   generate
-    for (i=1; i<DEPTH; i++) begin : gen_fifo_data
+    for (i=0; i<DEPTH; i++) begin : gen_fifo_data
       assign fifo_data[i] = mem[rptr[0]+i];
     end
   endgenerate

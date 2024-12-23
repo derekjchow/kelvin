@@ -141,9 +141,9 @@ assign w_type1 = rob2rt_write_data[1].w_type;
 assign w_type2 = rob2rt_write_data[2].w_type;
 assign w_type3 = rob2rt_write_data[3].w_type;
 
-integer i;
+
 always@(*) begin
-  for (i=0; i<`VLENB; i=i+1) begin
+  for(int i=0; i<`VLENB; i=i+1) begin
     w_enB0_tmp[i] = (rob2rt_write_data[0].vd_type[i] == 2'b11);
     w_enB1_tmp[i] = (rob2rt_write_data[1].vd_type[i] == 2'b11);
     w_enB2_tmp[i] = (rob2rt_write_data[2].vd_type[i] == 2'b11);
@@ -227,7 +227,7 @@ assign w_enB3 = (ignore_vta3 || ignore_vma3) ? `VLENB'b1 : w_enB3_tmp;
 //3. Write-After-Write (WAW) check
 //  3.1. WAW among entry0 entry1, for group_req=1
 always@(*) begin
-  for (i=0; i<`VLENB; i=i+1) begin
+  for(int i=0; i<`VLENB; i=i+1) begin
     //when enB1[i]=enB0[i]=1, update enB0 to 0
     w_enB0_waw01_int[i] = w_enB0[i] && !w_enB1[i];
   end //end for
@@ -235,7 +235,7 @@ end
 
 //  3.2. WAW among entry0 entry1 entry2, for group_req=2
 always@(*) begin
-  for (i=0; i<`VLENB; i=i+1) begin
+  for(int i=0; i<`VLENB; i=i+1) begin
     if (w_addr1 == w_addr2) begin //check waw12 first
       w_enB1_waw012_int[i] = w_enB1[i] && !w_enB2[i];
       if (w_addr0 == w_addr1) begin //waw012 all happens
@@ -262,7 +262,7 @@ end//end always
 
 //  3.3. WAW among entry0 entry1 entry2 entry3, for group_req=3
 always@(*) begin
-  for (i=0; i<`VLENB; i=i+1) begin
+  for(int i=0; i<`VLENB; i=i+1) begin
     if (w_addr2 == w_addr3) begin//check waw23 first
       w_enB2_waw0123_int[i] = w_enB2[i] && !w_enB3[i];
       if (w_addr1 == w_addr2) begin //2=3, 1=2

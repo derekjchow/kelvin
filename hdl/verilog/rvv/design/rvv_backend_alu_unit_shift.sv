@@ -70,7 +70,7 @@ module rvv_backend_alu_unit_shift
   logic                           ignore_vma;
   
   // for-loop
-  integer                         i;
+
   genvar                          j;
 
 //
@@ -115,7 +115,7 @@ module rvv_backend_alu_unit_shift
               
               src2_data = vs2_data;
 
-              for (i=0;i<`VLEN/`WORD_WIDTH;i=i+1) begin
+              for(int i=0;i<`VLEN/`WORD_WIDTH;i=i+1) begin
                 case(vs2_eew)
                   EEW8: begin
                     shift_amount8[4*i]   = vs1_data[(4*i  )*`BYTE_WIDTH +: $clog2(`BYTE_WIDTH)];
@@ -152,7 +152,7 @@ module rvv_backend_alu_unit_shift
               
               src2_data = vs2_data;
 
-              for (i=0;i<`VLEN/`WORD_WIDTH;i=i+1) begin
+              for(int i=0;i<`VLEN/`WORD_WIDTH;i=i+1) begin
                 case(vs2_eew)
                   EEW16: begin
                     shift_amount16[2*i]   = vs1_data[(2*i  )*`HWORD_WIDTH +: $clog2(`HWORD_WIDTH)];
@@ -191,7 +191,7 @@ module rvv_backend_alu_unit_shift
               result_valid = 'b1;
               
               src2_data = vs2_data;
-              for (i=0;i<`VLEN/`WORD_WIDTH;i=i+1) begin
+              for(int i=0;i<`VLEN/`WORD_WIDTH;i=i+1) begin
                 case(vs2_eew)
                   EEW8: begin
                     shift_amount8[4*i]   = rs1_data[0 +: $clog2(`BYTE_WIDTH)];
@@ -227,7 +227,7 @@ module rvv_backend_alu_unit_shift
               result_valid = 'b1;
               
               src2_data = vs2_data;
-              for (i=0;i<`VLEN/`WORD_WIDTH;i=i+1) begin
+              for(int i=0;i<`VLEN/`WORD_WIDTH;i=i+1) begin
                 case(vs2_eew)
                   EEW16: begin
                     shift_amount16[2*i]   = rs1_data[0 +: $clog2(`HWORD_WIDTH)];
@@ -479,7 +479,7 @@ module rvv_backend_alu_unit_shift
     // initial the data
     result_data = 'b0;
  
-    for (i=0;i<`VLEN/`WORD_WIDTH;i++) begin
+    for(int i=0;i<`VLEN/`WORD_WIDTH;i++) begin
       // calculate result data
       case(uop_funct3) 
         OPIVV,

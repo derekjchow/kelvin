@@ -81,7 +81,7 @@ module rvv_backend_alu
     else $error("rob_entry=%d. Something wrong in alu_unit0 decoding and execution.\n",alu_uop_rs2ex[0].rob_entry);
 
   `rvv_forbid(alu_uop_valid_rs2ex[1]&(!result_valid_ex2rob[1])) 
-    else $error("rob_entry=%d. Something wrong in alu_unit1 decoding and execution.\n",alu_uop1_rs2ex[1].rob_entry);
+    else $error("rob_entry=%d. Something wrong in alu_unit1 decoding and execution.\n",alu_uop_rs2ex[1].rob_entry);
 `endif
 
 endmodule

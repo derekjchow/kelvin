@@ -154,9 +154,9 @@ always@(*) begin
 end
 
 // Mux 4 inputs to vrf_reg
-integer i;
+
 always@(*) begin
-  for (i=0; i<32; i=i+1) begin
+  for(int i=0; i<32; i=i+1) begin
     vrf_wr_wenb_full[i] = vrf_wr_wenb3[i] | vrf_wr_wenb2[i] | vrf_wr_wenb1[i] | vrf_wr_wenb0[i];
     vrf_wr_data_full[i] = vrf_wr_data3[i] | vrf_wr_data2[i] | vrf_wr_data1[i] | vrf_wr_data0[i];
   end

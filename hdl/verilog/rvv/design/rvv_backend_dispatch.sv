@@ -324,11 +324,10 @@ module rvv_backend_dispatch
             assign rs_dp2mul[i].vxrm          = uop_uop2dp[i].vector_csr.xrm;
             assign rs_dp2mul[i].vd_eew        = uop_uop2dp[i].vd_eew;
             assign rs_dp2mul[i].vs1_data      = uop_operand[i].vs1;
-            assign rs_dp2mul[i].vs1_eew       = uop_uop2dp[i].vs1_eew;
+            assign rs_dp2mul[i].vs_eew       = uop_uop2dp[i].vs1_eew;
             assign rs_dp2mul[i].vs1_data_valid= uop_uop2dp[i].vs1_index_valid;
             assign rs_dp2mul[i].vs1_type      = uop_operand_byte_type[i].vs1;
             assign rs_dp2mul[i].vs2_data      = uop_operand[i].vs2;
-            assign rs_dp2mul[i].vs2_eew       = uop_uop2dp[i].vs2_eew;
             assign rs_dp2mul[i].vs2_data_valid= uop_uop2dp[i].vs2_valid;
             assign rs_dp2mul[i].vs2_type      = uop_operand_byte_type[i].vs2;
             assign rs_dp2mul[i].vs3_data       = uop_operand[i].vd;
