@@ -164,9 +164,11 @@ module multi_fifo
     end
   endgenerate
 
+  logic [DEPTH_BITS-1:0] ring_rptr [DEPTH-1:0];
   generate
     for (i=0; i<DEPTH; i++) begin : gen_fifo_data
-      assign fifo_data[i] = mem[rptr[0]+i];
+      assign ring_rptr[i] = rptr+i;
+      assign fifo_data[i] = mem[ring_rptr[i]];
     end
   endgenerate
 

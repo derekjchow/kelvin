@@ -340,6 +340,7 @@ module rvv_backend_rob
           assign rd_rob2rt[i].vxsat   = res_mem[uop_rptr+i].vxsat;
           assign rd_rob2rt[i].ignore_vta = res_mem[uop_rptr+i].ignore_vta;
           assign rd_rob2rt[i].ignore_vma = res_mem[uop_rptr+i].ignore_vma;
+          assign rd_rob2rt[i].last_uop_valid = uop_rob2rt[i].last_uop_valid;
       end
   endgenerate
   
