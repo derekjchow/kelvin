@@ -4020,7 +4020,7 @@ module rvv_backend_decode_unit_ari
                 OPIVV,
                 OPIVX,
                 OPIVI: begin  
-                  uop[i].vd_index = inst_vd+uop_index_current[`UOP_INDEX_WIDTH-1:0];
+                  uop[i].vd_index = inst_vd+uop_index_current[i][`UOP_INDEX_WIDTH-1:0];
                   uop[i].vd_eew   = eew_vd;
                   uop[i].vd_valid = 1'b1;
                 end 
@@ -4038,7 +4038,7 @@ module rvv_backend_decode_unit_ari
               case(inst_funct3)
                 OPIVV,
                 OPIVX: begin  
-                  uop[i].vd_index = inst_vd+uop_index_current[`UOP_INDEX_WIDTH-1:0];
+                  uop[i].vd_index = inst_vd+uop_index_current[i][`UOP_INDEX_WIDTH-1:0];
                   uop[i].vd_eew   = eew_vd;
                   uop[i].vd_valid = 1'b1;
                 end 
@@ -4050,7 +4050,7 @@ module rvv_backend_decode_unit_ari
               case(inst_funct3)
                 OPIVX,
                 OPIVI: begin  
-                  uop[i].vd_index = inst_vd+uop_index_current[`UOP_INDEX_WIDTH-1:0];
+                  uop[i].vd_index = inst_vd+uop_index_current[i][`UOP_INDEX_WIDTH-1:0];
                   uop[i].vd_eew   = eew_vd;
                   uop[i].vd_valid = 1'b1;
                 end 
@@ -4106,7 +4106,7 @@ module rvv_backend_decode_unit_ari
                 OPIVV,
                 OPIVX,
                 OPIVI: begin
-                  uop[i].vd_index = inst_vd+uop_index_current[`UOP_INDEX_WIDTH-1:1];
+                  uop[i].vd_index = inst_vd+uop_index_current[i][`UOP_INDEX_WIDTH-1:1];
                   uop[i].vd_eew   = eew_vd;
                   uop[i].vd_valid = 1'b1;
                 end
@@ -4130,14 +4130,14 @@ module rvv_backend_decode_unit_ari
                     {EMUL2,EMUL2},
                     {EMUL4,EMUL4},
                     {EMUL8,EMUL8}: begin
-                      uop[i].vd_index = inst_vd+uop_index_current[`UOP_INDEX_WIDTH-1:0];
+                      uop[i].vd_index = inst_vd+uop_index_current[i][`UOP_INDEX_WIDTH-1:0];
                       uop[i].vd_eew   = eew_vd;
                       uop[i].vd_valid = 1'b1;
                     end
                     {EMUL2,EMUL1},
                     {EMUL4,EMUL2},
                     {EMUL8,EMUL4}: begin
-                      uop[i].vd_index = inst_vd+uop_index_current[`UOP_INDEX_WIDTH-1:1];
+                      uop[i].vd_index = inst_vd+uop_index_current[i][`UOP_INDEX_WIDTH-1:1];
                       uop[i].vd_eew   = eew_vd;
                       uop[i].vd_valid = 1'b1;
                     end
@@ -4145,7 +4145,7 @@ module rvv_backend_decode_unit_ari
                 end
                 OPIVX,
                 OPIVI: begin  
-                  uop[i].vd_index = inst_vd+uop_index_current[`UOP_INDEX_WIDTH-1:0];
+                  uop[i].vd_index = inst_vd+uop_index_current[i][`UOP_INDEX_WIDTH-1:0];
                   uop[i].vd_eew   = eew_vd;
                   uop[i].vd_valid = 1'b1;
                 end 
@@ -4190,7 +4190,7 @@ module rvv_backend_decode_unit_ari
               case(inst_funct3)
                 OPMVV,
                 OPMVX: begin
-                  uop[i].vd_index = inst_vd+uop_index_current[`UOP_INDEX_WIDTH-1:0];
+                  uop[i].vd_index = inst_vd+uop_index_current[i][`UOP_INDEX_WIDTH-1:0];
                   uop[i].vd_eew   = eew_vd;
                   uop[i].vd_valid = 1'b1;
                 end
@@ -4201,7 +4201,7 @@ module rvv_backend_decode_unit_ari
             VCOMPRESS: begin
               case(inst_funct3)
                 OPMVV: begin
-                  uop[i].vd_index = inst_vd+uop_index_current[`UOP_INDEX_WIDTH-1:0];
+                  uop[i].vd_index = inst_vd+uop_index_current[i][`UOP_INDEX_WIDTH-1:0];
                   uop[i].vd_eew   = eew_vd;
                   uop[i].vd_valid = 1'b1;
                 end
@@ -4213,7 +4213,7 @@ module rvv_backend_decode_unit_ari
             VSLIDE1DOWN: begin
               case(inst_funct3)
                 OPMVX: begin
-                  uop[i].vd_index = inst_vd+uop_index_current[`UOP_INDEX_WIDTH-1:0];
+                  uop[i].vd_index = inst_vd+uop_index_current[i][`UOP_INDEX_WIDTH-1:0];
                   uop[i].vd_eew   = eew_vd;
                   uop[i].vd_valid = 1'b1;
                 end
@@ -4268,7 +4268,7 @@ module rvv_backend_decode_unit_ari
                       uop[i].vd_valid = 1'b1;
                     end
                     VID: begin
-                      uop[i].vd_index = inst_vd+uop_index_current[`UOP_INDEX_WIDTH-1:0];
+                      uop[i].vd_index = inst_vd+uop_index_current[i][`UOP_INDEX_WIDTH-1:0];
                       uop[i].vd_eew   = eew_vd;
                       uop[i].vd_valid = 1'b1;
                     end
