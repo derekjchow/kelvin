@@ -379,7 +379,7 @@ typedef enum logic [1:0] {
 } TRAP_INFO_e;
 
 // the max number of byte in a vector register is VLENB
-typedef BYTE_TYPE_e [`VLENB-1:0]        BYTE_TYPE_t;
+typedef BYTE_TYPE_e [`VLENB-1:0]      BYTE_TYPE_t;
 
 typedef struct packed {
   logic   [`ROB_DEPTH_WIDTH-1:0]      rob_entry;
@@ -418,16 +418,12 @@ typedef struct packed {
   logic   [`ROB_DEPTH_WIDTH-1:0]      rob_entry;
   FUNCT6_u                            uop_funct6;
   logic   [`FUNCT3_WIDTH-1:0]         uop_funct3;
-  EEW_e                               vd_eew;
   // when vs1_data_valid=1, vs1_data is valid as a vector operand
   logic   [`VLEN-1:0]                 vs1_data;           
-  EEW_e                               vs1_eew;
   logic                               vs1_data_valid; 
-  BYTE_TYPE_t                         vs1_type; 
   logic   [`VLEN-1:0]                 vs2_data;	        
-  EEW_e                               vs2_eew;
   logic                               vs2_data_valid;  
-  BYTE_TYPE_t                         vs2_type; 
+  EEW_e                               vs2_eew;
   // rs1_data could be from X[rs1] and imm(inst[19:15]). If it is imm, the 5-bit imm(inst[19:15]) will be sign-extend to XLEN-bit. 
   logic   [`XLEN-1:0] 	              rs1_data;     
   logic        	                      rs1_data_valid;                                   
