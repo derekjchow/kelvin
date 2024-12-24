@@ -359,7 +359,7 @@ module rvv_backend_dispatch
             assign rs_dp2lsu[i].vs3_type      = uop_operand_byte_type[i].vd;
 
           // ROB
-            assign uop_dp2rob[i].w_index      = uop_operand[i].vd;
+            assign uop_dp2rob[i].w_index      = uop_uop2dp[i].vd_index;
             assign uop_dp2rob[i].w_type       = uop_uop2dp[i].rd_index_valid;
             assign uop_dp2rob[i].byte_type    = uop_operand_byte_type[i].vd;
             assign uop_dp2rob[i].vector_csr   = uop_uop2dp[i].vector_csr;

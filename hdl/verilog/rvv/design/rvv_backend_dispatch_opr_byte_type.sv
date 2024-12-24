@@ -14,8 +14,8 @@ module rvv_backend_dispatch_opr_byte_type
 // ---parameter definition--------------------------------------------
     localparam VLENB_WIDTH = $clog2(`VLENB);
     localparam logic [`VLENB-1:0][VLENB_WIDTH-1:0] BYTE_INDEX =
-        {4'd0, 4'd1, 4'd2, 4'd3, 4'd4, 4'd5, 4'd6, 4'd7, 
-         4'd8, 4'd9,4'd10,4'd11,4'd12,4'd13,4'd14,4'd15};
+        {4'd15, 4'd14, 4'd13, 4'd12, 4'd11, 4'd10, 4'd9, 4'd8, 
+         4'd7 , 4'd6 , 4'd5 , 4'd4 , 4'd3 , 4'd2 , 4'd1, 4'd0};
     //localparam logic [`VLENB-1:0][VLENB_WIDTH-1:0] BYTE_INDEX =
     //    {0, 1, 2, 3, 4, 5, 6, 7, 8, 9,10,11,12,13,14,15,
     //    16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31};
@@ -118,11 +118,11 @@ module rvv_backend_dispatch_opr_byte_type
             assign vd_ele_index[i] = uop_vd_start + (BYTE_INDEX[i] >> vd_eew_shift);
             assign vd_enable[i] = uop_info.vm ? vd_enable_tmp[BYTE_INDEX[i] >> vd_eew_shift] : 1'b1;
             always_comb begin
-                if (vd_ele_index[i] > uop_info.vl) operand_byte_type.vd[i] = TAIL;       // tail
+                if (vd_ele_index[i] >= uop_info.vl) operand_byte_type.vd[i] = TAIL;       // tail
                 else if (vd_ele_index[i] < {1'b0, uop_info.vstart}) 
-                                                   operand_byte_type.vd[i] = NOT_CHANGE; // prestart
-                else                               operand_byte_type.vd[i] = vd_enable[i] ? BODY_ACTIVE
-                                                                                          : BODY_INACTIVE;
+                                                    operand_byte_type.vd[i] = NOT_CHANGE; // prestart
+                else                                operand_byte_type.vd[i] = vd_enable[i] ? BODY_ACTIVE
+                                                                                           : BODY_INACTIVE;
             end
         end
     endgenerate

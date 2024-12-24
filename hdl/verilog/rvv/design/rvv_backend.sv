@@ -301,9 +301,9 @@ module rvv_backend
     );
 
     assign insts_ready_cq2rvs[0] = ~cq_full;
-    assign insts_ready_cq2rvs[1] = ~cq_1left_to_full;
-    assign insts_ready_cq2rvs[2] = ~cq_2left_to_full;
-    assign insts_ready_cq2rvs[3] = ~cq_3left_to_full;
+    assign insts_ready_cq2rvs[1] = ~cq_full | ~cq_1left_to_full;
+    assign insts_ready_cq2rvs[2] = ~cq_full | ~cq_1left_to_full | ~cq_2left_to_full;
+    assign insts_ready_cq2rvs[3] = ~cq_full | ~cq_1left_to_full | ~cq_2left_to_full | ~cq_3left_to_full;
 
   // Decode unit
     rvv_backend_decode #(
