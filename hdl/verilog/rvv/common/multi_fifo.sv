@@ -31,7 +31,7 @@ module multi_fifo
   rptr
 );
 // ---parameter definition--------------------------------------------
-  parameter type T = type(logic [7:0]);  // data structure
+  parameter type T = logic [7:0];  // data structure
   parameter M     = 4;            // push signal width
   parameter N     = 4;            // pop signal width
   parameter DEPTH = 16;           // fifo depth
