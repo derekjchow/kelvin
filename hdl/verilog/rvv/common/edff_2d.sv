@@ -22,9 +22,10 @@ module edff_2d (/*AUTOARG*/
 
     always @(posedge clk or negedge rst_n) begin  
         if ( !rst_n ) begin
+          for (i = 0; i <= NUM_OF_REGISTERS-1; i = i + 1)
             q[REGISTER_WIDTH*(i+1)-1 -: REGISTER_WIDTH] <= RESET_STATE;
         end else begin
-          for (int i = 0; i <= NUM_OF_REGISTERS-1; i = i + 1)
+          for (i = 0; i <= NUM_OF_REGISTERS-1; i = i + 1)
             if (en[i]) begin
                 q[REGISTER_WIDTH*(i+1)-1 -: REGISTER_WIDTH] <= d[REGISTER_WIDTH*(i+1)-1 -: REGISTER_WIDTH];
             end //else hold old value
