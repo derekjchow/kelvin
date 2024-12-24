@@ -46,6 +46,7 @@ module rvv_backend_alu_unit_mask
 
   // execute 
   logic   [`VLEN-1:0]                     src2_data;
+  logic   [`VLEN-1:0]                     src2_data_viota;
   logic   [`VLEN-1:0]                     src1_data;
   logic   [`VLEN-1:0]                     tail_data;
   logic   [`VLEN-1:0]                     result_data;
@@ -64,6 +65,9 @@ module rvv_backend_alu_unit_mask
   logic   [`VLEN-1:0]                     result_data_vfirst;
   logic   [`VLEN/16-1:0][4:0]             result_data_vcpop;
   logic   [`VLEN-1:0][$clog2(`VLEN)-1:0]  result_data_viota;
+  logic   [`VLEN-1:0]                     result_data_vid8;
+  logic   [`VLEN-1:0]                     result_data_vid16;
+  logic   [`VLEN-1:0]                     result_data_vid32;
 
   // PU2ROB_t  struct signals
   logic   [`VLEN-1:0]             w_data;             // when w_type=XRF, w_data[`XLEN-1:0] will store the scalar result
@@ -73,7 +77,6 @@ module rvv_backend_alu_unit_mask
   logic                           ignore_vma;
   
   // for-loop
-
   genvar                          j;
 
 //
@@ -114,9 +117,10 @@ module rvv_backend_alu_unit_mask
   // for mask logic instructions
   always_comb begin
     // initial the data
-    result_valid = 'b0;
-    src2_data    = 'b0;
-    src1_data    = 'b0;
+    result_valid    = 'b0;
+    src2_data       = 'b0;
+    src2_data_viota = 'b0;
+    src1_data       = 'b0;
 
     // prepare source data
     case({alu_uop_valid,uop_funct3})
@@ -262,9 +266,9 @@ module rvv_backend_alu_unit_mask
                   result_valid = 1'b1;
                   
                   if (vm==1'b1)
-                    src2_data = vs2_data;
+                    src2_data_viota = vs2_data;
                   else
-                    src2_data = vs2_data&v0_data; 
+                    src2_data_viota = vs2_data&v0_data; 
                 end 
 
                 `ifdef ASSERT_ON
@@ -276,20 +280,7 @@ module rvv_backend_alu_unit_mask
                 `endif
               end
               VID: begin
-                // vid is the same as viota when vs2 is {`VLEN{1'b1}}.
-                if((vs1_data_valid==1'b0)&((vm==1'b1)||((vm==1'b0)&v0_data_valid))) begin
-                  result_valid = 1'b1;
-                  
-                  if (vm==1'b1)
-                    src2_data = {`VLEN{1'b1}};
-                  else
-                    src2_data = v0_data; 
-                end 
-
-                `ifdef ASSERT_ON
-                  assert(vs1_data_valid==1'b0) 
-                    else $error("vs1_data_valid(%d) should be 0.\n",vs1_data_valid);
-                `endif
+                result_valid = 1'b1;
               end
             endcase
           end
@@ -340,10 +331,28 @@ module rvv_backend_alu_unit_mask
 
   // viota and vid
   assign result_data_viota[0] = 'b0;
-
   generate 
     for(j=1;j<`VLEN;j++) begin: GET_VIOTA
-      assign result_data_viota[j] = src2_data[j-1] + result_data_viota[j-1]; 
+      assign result_data_viota[j] = src2_data_viota[j-1] + result_data_viota[j-1]; 
+    end
+  endgenerate
+  
+  // vid
+  generate
+    for(j=0;j<`VLENB;j++) begin: GET_VID8
+      assign result_data_vid8[j*`BYTE_WIDTH +: `BYTE_WIDTH] = {uop_index, j[$clog2(`VLENB)-1:0]};
+    end
+  endgenerate
+
+  generate
+    for(j=0;j<`VLEN/`HWORD_WIDTH;j++) begin: GET_VID16
+      assign result_data_vid16[j*`HWORD_WIDTH +: `HWORD_WIDTH] = {uop_index, j[$clog2(`VLEN/`HWORD_WIDTH)-1:0]};
+    end
+  endgenerate
+
+  generate
+    for(j=0;j<`VLEN/`WORD_WIDTH;j++) begin: GET_VID32
+      assign result_data_vid32[j*`WORD_WIDTH +: `WORD_WIDTH] = {uop_index, j[$clog2(`VLEN/`WORD_WIDTH)-1:0]};
     end
   endgenerate
 
@@ -419,8 +428,7 @@ module rvv_backend_alu_unit_mask
               VMSIF: begin
                 result_data = result_data_vmsif;
               end
-              VIOTA,
-              VID: begin
+              VIOTA: begin
                 case(vd_eew)
                   EEW8: begin
                     case(uop_index)
@@ -553,6 +561,19 @@ module rvv_backend_alu_unit_mask
                         end
                       end
                     endcase
+                  end
+                endcase
+              end
+              VID: begin
+                case(vd_eew)
+                  EEW8: begin
+                    result_data = result_data_vid8;
+                  end
+                  EEW16: begin
+                    result_data = result_data_vid16;
+                  end
+                  EEW32: begin
+                    result_data = result_data_vid32;
                   end
                 endcase
               end
