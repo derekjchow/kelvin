@@ -436,11 +436,11 @@ typedef struct packed {
   logic   [`FUNCT3_WIDTH-1:0]         uop_funct3;
   RVVXRM                              vxrm;       
   
-  EEW_e                               vs_eew; //eew for vs1, vs2, rs1
   logic   [`VLEN-1:0]                 vs1_data;           
   logic                               vs1_data_valid; 
   logic   [`VLEN-1:0]                 vs2_data;	        
   logic                               vs2_data_valid; 
+  EEW_e                               vs2_eew; //eew for vs1, vs2, rs1
   logic   [`VLEN-1:0]                 vs3_data;	//vd, source for MAC add 
   EEW_e                               vs3_eew; //vd as source, has independent eew
   logic                               vs3_data_valid; 

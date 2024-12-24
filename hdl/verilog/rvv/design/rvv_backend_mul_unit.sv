@@ -103,7 +103,7 @@ assign mul_uop_rob_entry = rs2mul_uop_data.rob_entry;
 assign mul_uop_funct6 = rs2mul_uop_data.uop_funct6.ari_funct6;
 assign mul_uop_funct3 = rs2mul_uop_data.uop_funct3;
 assign mul_uop_xrm = rs2mul_uop_data.vxrm;
-assign mul_top_vs_eew = rs2mul_uop_data.vs_eew;
+assign mul_top_vs_eew = rs2mul_uop_data.vs2_eew;
 
 assign mul_uop_vs1_data = rs2mul_uop_data.vs1_data;
 assign mul_uop_vs1_valid = rs2mul_uop_data.vs1_data_valid;
