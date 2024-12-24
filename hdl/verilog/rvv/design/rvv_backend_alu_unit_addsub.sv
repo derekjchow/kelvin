@@ -2113,7 +2113,7 @@ module rvv_backend_alu_unit_addsub
     end
     else begin
       y = ~src_y;
-      cin = src_cin ? 1'b0 : 1'b1;
+      cin = ~src_cin;
     end
 
     f_full_addsub8 = src_x + y + cin;
