@@ -441,7 +441,6 @@ typedef struct packed {
   RVVXRM                              vxrm;       
   
   EEW_e                               vs_eew; //eew for vs1, vs2, rs1
-  EEW_e                               vd_eew; //vd to ROB eew
   logic   [`VLEN-1:0]                 vs1_data;           
   logic                               vs1_data_valid; 
   logic   [`VLEN-1:0]                 vs2_data;	        
