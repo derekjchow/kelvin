@@ -168,8 +168,8 @@ endclass : rvv_behavior_model
           vxrm   = inst_tr.vxrm;
           vxsat  = inst_tr.vxsat;
 
-          `uvm_info(get_type_name(),"Start calculation.",UVM_HIGH)
-          `uvm_info(get_type_name(),inst_tr.sprint(),UVM_HIGH)
+          `uvm_info("DEBUG","Start calculation.",UVM_HIGH)
+          `uvm_info("DEBUG",inst_tr.sprint(),UVM_HIGH)
         end else begin
           `uvm_error(get_type_name(), "Pop inst_queue while empty.")
           break;
@@ -299,7 +299,8 @@ endclass : rvv_behavior_model
               src2_eew = EEW1;
               src3_eew = EEW1;
             end
-            if(inst_tr.inst_type == ALU && inst_tr.alu_inst inside {VMADC, VMSBC}) begin
+            if(inst_tr.inst_type == ALU && inst_tr.alu_inst inside {VMADC, VMSBC, 
+                VMSEQ, VMSNE, VMSLTU, VMSLT, VMSLEU, VMSLE, VMSGTU, VMSGT}) begin
               dest_eew = EEW1;
             end
           end
@@ -440,8 +441,8 @@ endclass : rvv_behavior_model
         // 4. WB transaction gen
         inst_tr.wb_xrf.rt_index = inst_tr.dest_idx;
         inst_tr.wb_xrf.rt_data  = this.xrf[inst_tr.dest_idx];
-        `uvm_info(get_type_name(),"Complete calculation.",UVM_HIGH)
-        `uvm_info(get_type_name(),inst_tr.sprint(),UVM_HIGH)
+        `uvm_info("DEBUG","Complete calculation.",UVM_HIGH)
+        `uvm_info("DEBUG",inst_tr.sprint(),UVM_HIGH)
         wb_ap.write(inst_tr);
         wb_event = wb_event >> 1;
       end // if(wb_event[0])
@@ -532,68 +533,77 @@ virtual class alu_processor#(
     // `uvm_info("DEBUG", $sformatf("sizeof(T1)=%0d, sizeof(T2)=%0d, sizeof(TD)=%0d", $size(T1), $size(T2), $size(TD)), UVM_HIGH)
     case(inst_tr.alu_inst) 
     // OPI
-      VADD: dest = _vadd(src1, src2); 
-      VSUB: dest = _vsub(src1, src2); 
-      VRSUB: dest = _vsub(src2, src1); 
+      VADD: dest = _vadd(src2, src1); 
+      VSUB: dest = _vsub(src2, src1); 
+      VRSUB: dest = _vsub(src1, src2); 
   
       VADC : dest = _vadc(src2,src1,src0);
       VMADC: dest = _vmadc(src2,src1,src0);
       VSBC : dest = _vsbc(src2,src1,src0);
       VMSBC: dest = _vmsbc(src2,src1,src0);
 
-      VAND : dest = _vmand(src1, src2); 
-      VOR  : dest = _vmor(src1, src2); 
-      VXOR : dest = _vmxor(src1, src2); 
+      VAND : dest = _vmand(src2, src1); 
+      VOR  : dest = _vmor(src2, src1); 
+      VXOR : dest = _vmxor(src2, src1); 
 
-      VMINU: dest = _vminu(src1, src2); 
-      VMIN : dest = _vmin(src1, src2); 
-      VMAXU: dest = _vmaxu(src1, src2); 
-      VMAX : dest = _vmax(src1, src2); 
+      VMSEQ : dest = _vmseq(src2, src1); 
+      VMSNE : dest = _vmsne(src2, src1); 
+      VMSLTU: dest = _vmsltu(src2, src1); 
+      VMSLT : dest = _vmslt(src2, src1); 
+      VMSLEU: dest = _vmsleu(src2, src1); 
+      VMSLE : dest = _vmsle(src2, src1); 
+      VMSGTU: dest = _vmsgtu(src2, src1); 
+      VMSGT : dest = _vmsgt(src2, src1); 
+
+      VMINU: dest = _vminu(src2, src1); 
+      VMIN : dest = _vmin(src2, src1); 
+      VMAXU: dest = _vmaxu(src2, src1); 
+      VMAX : dest = _vmax(src2, src1); 
 
     // OPM
       VWADD,
-      VWADD_W:  dest = _vadd(src1, src2);
+      VWADD_W:  dest = _vadd(src2, src1);
       VWADDU,
-      VWADDU_W: dest = _vaddu(src1, src2); 
+      VWADDU_W: dest = _vaddu(src2, src1); 
       VWSUB, 
-      VWSUB_W:  dest = _vsub(src1, src2);
+      VWSUB_W:  dest = _vsub(src2, src1);
       VWSUBU, 
-      VWSUBU_W: dest = _vsubu(src1, src2); 
+      VWSUBU_W: dest = _vsubu(src2, src1); 
 
       VEXT: begin 
         if(inst_tr.src1_idx == VZEXT_VF4 || inst_tr.src1_idx == VZEXT_VF2) dest = _vzext(src2); 
         if(inst_tr.src1_idx == VSEXT_VF4 || inst_tr.src1_idx == VSEXT_VF2) dest = _vsext(src2); 
       end
 
-      VSLL : dest = _vsll(src1, src2);
-      VSRL : dest = _vsrl(src1, src2);
-      VSRA : dest = _vsra(src1, src2);
-      VNSRL: dest = _vsrl(src1, src2);
-      VNSRA: dest = _vsra(src1, src2);
+      VSLL : dest = _vsll(src2, src1);
+      VSRL : dest = _vsrl(src2, src1);
+      VSRA : dest = _vsra(src2, src1);
+      VNSRL: dest = _vsrl(src2, src1);
+      VNSRA: dest = _vsra(src2, src1);
 
-      VMAND : dest = _vmand(src1, src2); 
-      VMOR  : dest = _vmor(src1, src2); 
-      VMXOR : dest = _vmxor(src1, src2); 
-      VMORN : dest = _vmorn(src1, src2); 
-      VMNAND: dest = _vmnand(src1, src2); 
-      VMNOR : dest = _vmnor(src1, src2); 
-      VMANDN: dest = _vmandn(src1, src2); 
-      VMXNOR: dest = _vmxnor(src1, src2); 
+      VMAND : dest = _vmand(src2, src1); 
+      VMOR  : dest = _vmor(src2, src1); 
+      VMXOR : dest = _vmxor(src2, src1); 
+      VMORN : dest = _vmorn(src2, src1); 
+      VMNAND: dest = _vmnand(src2, src1); 
+      VMNOR : dest = _vmnor(src2, src1); 
+      VMANDN: dest = _vmandn(src2, src1); 
+      VMXNOR: dest = _vmxnor(src2, src1); 
     endcase
     exe = dest;
     // `uvm_info("DEBUG", $sformatf("dest=%0d, src1=%0d, src2=%0d", exe, src1, src2), UVM_HIGH)
   endfunction : exe
 
-  static function TD _vadd(T1 src1, T2 src2);
+  static function TD _vadd(T2 src2, T1 src1);
     _vadd = $signed(src1) + $signed(src2);
   endfunction : _vadd
-  static function TD _vaddu(T1 src1, T2 src2);
+  static function TD _vaddu(T2 src2, T1 src1);
     _vaddu = $unsigned(src1) + $unsigned(src2);
   endfunction : _vaddu
-  static function TD _vsub(T1 src1, T2 src2);
+  static function TD _vsub(T2 src2, T1 src1);
     _vsub = $signed(src2) - $signed(src1);
   endfunction : _vsub
-  static function TD _vsubu(T1 src1, T2 src2);
+  static function TD _vsubu(T2 src2, T1 src1);
     _vsubu = $unsigned(src2) - $unsigned(src1);
   endfunction : _vsubu
 
@@ -615,6 +625,31 @@ virtual class alu_processor#(
     _vmsbc = dest[$bits(T2)];
   endfunction : _vmsbc
 
+  static function TD _vmseq(T2 src2, T1 src1);
+    _vmseq = $signed(src2) === $signed(src1);
+  endfunction : _vmseq
+  static function TD _vmsne(T2 src2, T1 src1);
+    _vmsne = $signed(src2) !== $signed(src1);
+  endfunction : _vmsne
+  static function TD _vmsltu(T2 src2, T1 src1);
+    _vmsltu = $unsigned(src2) < $unsigned(src1);
+  endfunction : _vmsltu
+  static function TD _vmslt(T2 src2, T1 src1);
+    _vmslt = $signed(src2) < $signed(src1);
+  endfunction : _vmslt
+  static function TD _vmsleu(T2 src2, T1 src1);
+    _vmsleu = $unsigned(src2) <= $unsigned(src1);
+  endfunction : _vmsleu
+  static function TD _vmsle(T2 src2, T1 src1);
+    _vmsle = $signed(src2) <= $signed(src1);
+  endfunction : _vmsle
+  static function TD _vmsgtu(T2 src2, T1 src1);
+    _vmsgtu = $unsigned(src2) > $unsigned(src1);
+  endfunction : _vmsgtu
+  static function TD _vmsgt(T2 src2, T1 src1);
+    _vmsgt = $signed(src2) > $signed(src1);
+  endfunction : _vmsgt
+
   static function TD _vminu(T2 src2, T1 src1);
     _vminu = $unsigned(src2) > $unsigned(src1) ? $unsigned(src1) : $unsigned(src2);
   endfunction : _vminu
@@ -635,38 +670,38 @@ virtual class alu_processor#(
     _vsext = $signed(src2);
   endfunction : _vsext
   
-  static function TD _vsll(T1 src1, T2 src2);
+  static function TD _vsll(T2 src2, T1 src1);
     _vsll = $unsigned(src2) << src1;
   endfunction : _vsll
-  static function TD _vsrl(T1 src1, T2 src2);
+  static function TD _vsrl(T2 src2, T1 src1);
     _vsrl = $unsigned(src2) >> src1;
   endfunction : _vsrl
-  static function TD _vsra(T1 src1, T2 src2);
+  static function TD _vsra(T2 src2, T1 src1);
     _vsra = $signed(src2) >>> src1;
   endfunction : _vsra
 
-  static function TD _vmand(T1 src1, T2 src2);
+  static function TD _vmand(T2 src2, T1 src1);
     _vmand = src1 & src2;
   endfunction : _vmand
-  static function TD _vmor(T1 src1, T2 src2);
+  static function TD _vmor(T2 src2, T1 src1);
     _vmor = src1 | src2;
   endfunction : _vmor
-  static function TD _vmxor(T1 src1, T2 src2);
+  static function TD _vmxor(T2 src2, T1 src1);
     _vmxor = src1 ^ src2;
   endfunction : _vmxor
-  static function TD _vmorn(T1 src1, T2 src2);
+  static function TD _vmorn(T2 src2, T1 src1);
     _vmorn = src1 | ~src2;
   endfunction : _vmorn
-  static function TD _vmnand(T1 src1, T2 src2);
+  static function TD _vmnand(T2 src2, T1 src1);
     _vmnand = ~(src1 & src2);
   endfunction : _vmnand
-  static function TD _vmnor(T1 src1, T2 src2);
+  static function TD _vmnor(T2 src2, T1 src1);
     _vmnor = ~(src1 | src2);
   endfunction : _vmnor
-  static function TD _vmandn(T1 src1, T2 src2);
+  static function TD _vmandn(T2 src2, T1 src1);
     _vmandn = src1 & ~src2;
   endfunction : _vmandn
-  static function TD _vmxnor(T1 src1, T2 src2);
+  static function TD _vmxnor(T2 src2, T1 src1);
     _vmxnor = ~(src1 ^ src2);
   endfunction : _vmxnor
 endclass: alu_processor

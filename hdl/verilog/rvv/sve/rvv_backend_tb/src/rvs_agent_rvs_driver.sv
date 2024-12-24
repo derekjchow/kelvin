@@ -128,7 +128,7 @@ task rvs_driver::inst_manage();
   end
 
   for(int i=0; i<`ISSUE_LANE; i++) begin
-    if(rvs_if.insts_ready_cq2rvs[i] && inst_vld[i]) begin
+    if((rvs_if.insts_ready_cq2rvs[i]===1'b1) && inst_vld[i]) begin
       tr = inst_queue.pop_front();
       `uvm_info(get_type_name(), $sformatf("Send transaction to inst_ap"),UVM_HIGH)
       `uvm_info(get_type_name(), tr.sprint(),UVM_HIGH)

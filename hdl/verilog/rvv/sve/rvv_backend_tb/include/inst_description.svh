@@ -79,6 +79,15 @@ typedef enum logic [7:0] {
   VOR             =   8'b00_001_010,
   VXOR            =   8'b00_001_011,
 
+  VMSEQ           =   8'b00_011_000,
+  VMSNE           =   8'b00_011_001,
+  VMSLTU          =   8'b00_011_010,
+  VMSLT           =   8'b00_011_011,
+  VMSLEU          =   8'b00_011_100,
+  VMSLE           =   8'b00_011_101,
+  VMSGTU          =   8'b00_011_110,
+  VMSGT           =   8'b00_011_111,
+
   VMINU           =   8'b00_000_100,
   VMIN            =   8'b00_000_101,
   VMAXU           =   8'b00_000_110,

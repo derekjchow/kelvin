@@ -25,6 +25,11 @@ class rvv_backend_test extends uvm_test;
       vrf_if.vreg_init_data = '0;
     end else if($test$plusargs("all_one_vrf")) begin
       vrf_if.vreg_init_data = '1;
+    end else if($test$plusargs("given_vrf")) begin
+      vrf_if.vreg_init_data[0] = '1;
+      for(int i=1; i<32; i++) begin
+        vrf_if.vreg_init_data[i] = 128'hffff_0001_ffff_0002_ffff_0003_ffff_0000 + i;
+      end
     end else begin
       for(int i=0; i<32; i++) begin
         for(int j=0; j<`VLENB; j++) begin
@@ -346,5 +351,87 @@ class alu_shift_test extends rvv_backend_test;
     super.final_phase(phase);
   endfunction
 endclass: alu_shift_test
+//-------------------------------------------------
+// 
+//-------------------------------------------------
+class alu_vcomp_test extends rvv_backend_test;
+
+  alu_iterate_vcomp_seq rvs_seq;
+
+  `uvm_component_utils(alu_vcomp_test)
+
+  function new(string name, uvm_component parent);
+    super.new(name, parent);
+  endfunction
+
+  function void build_phase(uvm_phase phase);
+    super.build_phase(phase);
+  endfunction
+
+  function void connect_phase(uvm_phase phase);
+    super.connect_phase(phase);
+    this.set_report_id_action_hier("DEBUG", UVM_LOG);
+  endfunction
+
+  task main_phase(uvm_phase phase);
+    phase.raise_objection( .obj( this ) );
+
+    rvs_seq = alu_iterate_vcomp_seq::type_id::create("rvs_seq", this);
+    rvs_seq.run_inst(VMSEQ , env.rvs_agt.rvs_sqr);
+    rvs_seq.run_inst(VMSNE , env.rvs_agt.rvs_sqr);
+    rvs_seq.run_inst(VMSLTU, env.rvs_agt.rvs_sqr);
+    rvs_seq.run_inst(VMSLT , env.rvs_agt.rvs_sqr);
+    rvs_seq.run_inst(VMSLEU, env.rvs_agt.rvs_sqr);
+    rvs_seq.run_inst(VMSLE , env.rvs_agt.rvs_sqr);
+    rvs_seq.run_inst(VMSGTU, env.rvs_agt.rvs_sqr);
+    rvs_seq.run_inst(VMSGT , env.rvs_agt.rvs_sqr);
+
+    phase.phase_done.set_drain_time(this, 1000ns);
+    phase.drop_objection( .obj( this ) );
+  endtask
+
+  function void final_phase(uvm_phase phase);
+    super.final_phase(phase);
+  endfunction
+endclass: alu_vcomp_test
+//-------------------------------------------------
+// 
+//-------------------------------------------------
+class alu_vminmax_test extends rvv_backend_test;
+
+  alu_iterate_seq rvs_seq;
+
+  `uvm_component_utils(alu_vminmax_test)
+
+  function new(string name, uvm_component parent);
+    super.new(name, parent);
+  endfunction
+
+  function void build_phase(uvm_phase phase);
+    super.build_phase(phase);
+  endfunction
+
+  function void connect_phase(uvm_phase phase);
+    super.connect_phase(phase);
+    this.set_report_id_action_hier("DEBUG", UVM_LOG);
+  endfunction
+
+  task main_phase(uvm_phase phase);
+    phase.raise_objection( .obj( this ) );
+
+    rvs_seq = alu_iterate_seq::type_id::create("rvs_seq", this);
+    rvs_seq.run_inst(VMINU, env.rvs_agt.rvs_sqr);
+    rvs_seq.run_inst(VMIN , env.rvs_agt.rvs_sqr);
+    rvs_seq.run_inst(VMAXU, env.rvs_agt.rvs_sqr);
+    rvs_seq.run_inst(VMIN, env.rvs_agt.rvs_sqr);
+
+    phase.phase_done.set_drain_time(this, 1000ns);
+    phase.drop_objection( .obj( this ) );
+  endtask
+
+  function void final_phase(uvm_phase phase);
+    super.final_phase(phase);
+  endfunction
+endclass: alu_vminmax_test
 `endif // RVV_BACKEND_TEST__SV
 

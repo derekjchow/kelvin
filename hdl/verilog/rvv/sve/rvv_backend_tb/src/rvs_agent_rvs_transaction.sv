@@ -86,12 +86,13 @@ class rvs_transaction extends uvm_sequence_item;
     (inst_type == ALU && alu_inst inside {VADC, VSBC})
       -> vm == 0;
     (inst_type == ALU && alu_inst inside {
-      VMAND, VMOR, VMXOR, VMORN, VMNAND, VMNOR, VMANDN, VMXNOR})
+      VMAND, VMOR, VMXOR, VMORN, VMNAND, VMNOR, VMANDN, VMXNOR, 
+      VMSEQ, VMSNE, VMSLTU, VMSLT, VMSLEU, VMSLE, VMSGTU, VMSGT})
       -> vm == 1;
   }
 
   constraint c_oprand {
-    (inst_type == ALU && alu_inst[7:6] == 2'b00 && !(alu_inst inside {VSBC, VMSBC})) 
+    (inst_type == ALU && alu_inst[7:6] == 2'b00 && !(alu_inst inside {VSBC, VMSBC, VMSLTU, VMSLT, VMSGTU, VMSGT})) 
       -> (dest_type == VRF && src2_type == VRF && 
            ((alu_type == OPIVV && src1_type == VRF) || 
             (alu_type == OPIVX && src1_type == XRF) || 
@@ -99,9 +100,16 @@ class rvs_transaction extends uvm_sequence_item;
            )
          );
 
-    (inst_type == ALU && alu_inst inside {VSBC, VMSBC}) 
+    (inst_type == ALU && alu_inst inside {VSBC, VMSBC, VMSLTU, VMSLT}) 
       -> (dest_type == VRF && src2_type == VRF && 
            ((alu_type == OPIVV && src1_type == VRF) || 
+            (alu_type == OPIVX && src1_type == XRF) 
+           )
+         );
+
+    (inst_type == ALU && alu_inst inside {VMSGTU, VMSGT}) 
+      -> (dest_type == VRF && src2_type == VRF && 
+           ((alu_type == OPIVI && src1_type == IMM) || 
             (alu_type == OPIVX && src1_type == XRF) 
            )
          );
@@ -141,6 +149,8 @@ class rvs_transaction extends uvm_sequence_item;
     `uvm_field_int(vstart,UVM_ALL_ON)
     `uvm_field_int(vxrm,UVM_ALL_ON)
     `uvm_field_int(vxsat,UVM_ALL_ON)
+    `uvm_field_int(vm,UVM_ALL_ON)
+    `uvm_field_int(use_vm_to_cal,UVM_ALL_ON)
 
     `uvm_field_enum(inst_type_e,inst_type,UVM_ALL_ON)
     if(inst_type == ALU) begin
@@ -208,7 +218,7 @@ function void rvs_transaction::post_randomize();
   case(inst_type)
     LD: bin_inst[31:26] = '0; //FIXME
     ST: bin_inst[31:26] = '0; //FIXME
-    ALU:bin_inst[31:26] = alu_inst[6:0];
+    ALU:bin_inst[31:26] = alu_inst[5:0];
   endcase
   /* vm */
   bin_inst[25]    = vm;
