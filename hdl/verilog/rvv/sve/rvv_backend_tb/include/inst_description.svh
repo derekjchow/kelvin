@@ -93,6 +93,8 @@ typedef enum logic [7:0] {
   VMAXU           =   8'b00_000_110,
   VMAX            =   8'b00_000_111,
 
+  VMERGE_VMVV     =   8'b00_010_111, // vm=0: vmerge; vm=1: vmv.v
+
   // OPM
   VWADDU          =   8'b01_110_000,
   VWADD           =   8'b01_110_001,

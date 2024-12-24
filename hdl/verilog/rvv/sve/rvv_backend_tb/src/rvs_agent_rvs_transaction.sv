@@ -92,7 +92,7 @@ class rvs_transaction extends uvm_sequence_item;
   }
 
   constraint c_oprand {
-    (inst_type == ALU && alu_inst[7:6] == 2'b00 && !(alu_inst inside {VSBC, VMSBC, VMSLTU, VMSLT, VMSGTU, VMSGT})) 
+    (inst_type == ALU && alu_inst[7:6] == 2'b00 && !(alu_inst inside {VSBC, VMSBC, VMSLTU, VMSLT, VMSGTU, VMSGT, VMERGE_VMVV})) 
       -> (dest_type == VRF && src2_type == VRF && 
            ((alu_type == OPIVV && src1_type == VRF) || 
             (alu_type == OPIVX && src1_type == XRF) || 
@@ -111,6 +111,18 @@ class rvs_transaction extends uvm_sequence_item;
       -> (dest_type == VRF && src2_type == VRF && 
            ((alu_type == OPIVI && src1_type == IMM) || 
             (alu_type == OPIVX && src1_type == XRF) 
+           )
+         );
+
+    // check for constraint conflict 
+    (inst_type == ALU && alu_inst inside {VMERGE_VMVV}) 
+      -> (dest_type == VRF && 
+           ((src2_type == VRF && vm == 0) ||
+            (src2_type == UNUSE && vm == 1 && src2_idx == 0)
+           ) &&
+           ((alu_type == OPIVV && src1_type == VRF) || 
+            (alu_type == OPIVX && src1_type == XRF) || 
+            (alu_type == OPIVI && src1_type == IMM)
            )
          );
 
@@ -191,7 +203,7 @@ function rvs_transaction::new(string name = "Trans");
 endfunction: new
 
 function void rvs_transaction::post_randomize();
-  if(inst_type == ALU && alu_inst inside {VADC, VSBC, VMADC, VMSBC} && vm == 0)
+  if(inst_type == ALU && (alu_inst inside {VADC, VSBC, VMADC, VMSBC, VMERGE_VMVV}))
     use_vm_to_cal = 1;
   else
     use_vm_to_cal = 0;
@@ -253,6 +265,11 @@ function void rvs_transaction::asm_string_gen();
       if(alu_inst inside {VWADDU_W, VWADD_W, VWSUBU_W, VWSUB_W}) begin
         inst = this.alu_inst.name();
         inst = inst.substr(0,inst.len()-3);
+      end else if(alu_inst inside {VMERGE_VMVV}) begin
+        if(vm == 1)
+          inst = "vmv.v";
+        else
+          inst = "vmerge";
       end else begin
         inst = this.alu_inst.name();
       end
@@ -284,11 +301,16 @@ function void rvs_transaction::asm_string_gen();
     XRF: begin suf2 = "x"; src2 = $sformatf("x%0d",this.src2_idx); end
     IMM: begin suf2 = "i"; src2 = $sformatf("%0d",$signed(this.src2_idx)); end
   endcase
-  if(inst_type == ALU && use_vm_to_cal == 1) begin
-    suf0 = "m"; src0 = "v0";
+  if(vm == 0) begin
+    if(inst_type == ALU && use_vm_to_cal == 1) begin
+      suf0 = "m"; src0 = "v0";
+    end else begin
+      suf0 = "";  src0 = "v0.t";
+    end
   end else begin
-    suf0 = "";  src0 = this.vm ? "" : "v0.t";
+    suf0 = "";  src0 = "";
   end
+
   suff = $sformatf("%s%s%s",suf2,suf1,suf0);
 
   case(this.dest_type)

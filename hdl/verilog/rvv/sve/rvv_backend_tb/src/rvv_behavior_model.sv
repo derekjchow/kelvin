@@ -376,10 +376,17 @@ endclass : rvv_behavior_model
 
           // 3.1 Fetch elements data 
           dest = elm_fetch(inst_tr.dest_type, dest_reg_idx, elm_idx, dest_eew); 
-          src0 = vm == 0 ? elm_fetch(VRF, 0, elm_idx, src0_eew) : '0; 
-          src1 = elm_fetch(inst_tr.src1_type, src1_reg_idx, elm_idx, src1_eew); 
-          src2 = elm_fetch(inst_tr.src2_type, src2_reg_idx, elm_idx, src2_eew); 
           src3 = elm_fetch(inst_tr.src3_type, src3_reg_idx, elm_idx, src3_eew); 
+          src2 = elm_fetch(inst_tr.src2_type, src2_reg_idx, elm_idx, src2_eew); 
+          src1 = elm_fetch(inst_tr.src1_type, src1_reg_idx, elm_idx, src1_eew); 
+          if(vm == 0) begin
+            src0 = elm_fetch(VRF, 0, elm_idx, src0_eew);
+          end else begin
+            if(inst_tr.alu_inst inside {VMERGE_VMVV})
+              src0 = '1;
+            if(inst_tr.alu_inst inside {VMADC, VMSBC})
+              src0 = '0;
+          end
           
           `uvm_info("DEBUG", $sformatf("Before - elment[%2d]: dest=0x%8h, src1=0x%8h, src2=0x%8h", elm_idx, dest, src1, src2), UVM_HIGH)
 
@@ -560,6 +567,7 @@ virtual class alu_processor#(
       VMAXU: dest = _vmaxu(src2, src1); 
       VMAX : dest = _vmax(src2, src1); 
 
+      VMERGE_VMVV: dest = _vmerge(src2, src1, src0); 
     // OPM
       VWADD,
       VWADD_W:  dest = _vadd(src2, src1);
@@ -662,6 +670,10 @@ virtual class alu_processor#(
   static function TD _vmax(T2 src2, T1 src1);
     _vmax = $signed(src2) > $signed(src1) ? $signed(src2) : $signed(src1);
   endfunction : _vmax
+
+  static function TD _vmerge(T2 src2, T1 src1, T0 src0);
+    _vmerge = src0 ? src1 : src2;
+  endfunction : _vmerge
 
   static function TD _vzext(T2 src2);
     _vzext = $unsigned(src2);
