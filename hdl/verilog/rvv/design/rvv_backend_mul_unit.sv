@@ -201,7 +201,7 @@ always@(*) begin
       case (mul_uop_funct6) 
         VMUL : begin
           mul_src2 = mul_uop_vs2_valid ? mul_uop_vs2_data : `VLEN'b0;
-          mul_src1 = mul_uop_rs1_valid ? {{(`VLEN-`XLEN){mul_uop_rs1_data[`XLEN-1]}},mul_uop_rs1_data} : `VLEN'b0; //use rs1
+          mul_src1 = mul_uop_rs1_valid ? {{(`VLEN-`XLEN){mul_uop_rs1_data[`XLEN-1]&&mul_src1_is_signed}},mul_uop_rs1_data} : `VLEN'b0; //use rs1
           mul_src2_is_signed = 1'b1;
           mul_src1_is_signed = 1'b1;
           mul_is_widen = 1'b0;
