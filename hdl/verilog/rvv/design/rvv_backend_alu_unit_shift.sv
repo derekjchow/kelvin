@@ -665,10 +665,10 @@ module rvv_backend_alu_unit_shift
       {1'b1,OPIVI}: begin
         case(uop_funct6.ari_funct6)
           VNCLIPU: begin
-            vxsat = upoverflow;
+            vxsat = (|upoverflow);
           end
           VNCLIP: begin
-            vxsat = underoverflow | upoverflow;
+            vxsat = underoverflow || upoverflow;
           end
         endcase
       end
