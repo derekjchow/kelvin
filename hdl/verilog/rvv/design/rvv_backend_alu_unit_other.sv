@@ -878,7 +878,9 @@ module rvv_backend_alu_unit_other
     input logic signed [`BYTE_WIDTH:0] src2;
     input logic signed [`BYTE_WIDTH:0] src1;
     
-    logic comp_slt = src2<src1;
+    logic comp_slt;
+    
+    comp_slt = src2<src1;
 
     if (opcode==GET_MIN) begin
       if (comp_slt)
@@ -901,7 +903,8 @@ module rvv_backend_alu_unit_other
     input logic signed [`HWORD_WIDTH:0] src2;
     input logic signed [`HWORD_WIDTH:0] src1;
     
-    logic comp_slt = src2<src1;
+    logic comp_slt;
+    comp_slt = src2<src1;
 
     if (opcode==GET_MIN) begin
       if (comp_slt)
@@ -924,7 +927,8 @@ module rvv_backend_alu_unit_other
     input logic signed [`WORD_WIDTH:0] src2;
     input logic signed [`WORD_WIDTH:0] src1;
     
-    logic comp_slt = src2<src1;
+    logic comp_slt;
+    comp_slt = src2<src1;
 
     if (opcode==GET_MIN) begin
       if (comp_slt)
