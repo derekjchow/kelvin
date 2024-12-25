@@ -17,7 +17,7 @@ module fifo_flopped(
         end
     endfunction
 
-    parameter AWIDTH = clogb2(DEPTH);
+    parameter AWIDTH = (DEPTH==1'b1) ? 1'b1 : clogb2(DEPTH);
 
     input clk;
     input rst_n;
