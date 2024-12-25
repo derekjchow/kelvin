@@ -293,19 +293,19 @@ module rvv_backend_alu_unit_shift
   // shifte instructions
   generate
     for (j=0;j<`VLENB;j=j+1) begin: EXE_PROD8
-      assign {product8[j], round_bits8[j]} = f_shift8(opcode, {src2_data[j*`BYTE_WIDTH +: `BYTE_WIDTH],{`BYTE_WIDTH{1'b0}}}, shift_amount8[j]);
+      assign {product8[j], round_bits8[j]} = f_shift8(opcode, src2_data[j*`BYTE_WIDTH +: `BYTE_WIDTH], shift_amount8[j]);
     end
   endgenerate
   
   generate
     for (j=0;j<`VLEN/`HWORD_WIDTH;j=j+1) begin: EXE_PROD16
-      assign {product16[j], round_bits16[j]} = f_shift16(opcode, {src2_data[j*`HWORD_WIDTH +: `HWORD_WIDTH],{`HWORD_WIDTH{1'b0}}}, shift_amount16[j]);
+      assign {product16[j], round_bits16[j]} = f_shift16(opcode, src2_data[j*`HWORD_WIDTH +: `HWORD_WIDTH], shift_amount16[j]);
     end
   endgenerate 
 
   generate
     for (j=0;j<`VLEN/`WORD_WIDTH;j=j+1) begin: EXE_PROD32
-      assign {product32[j], round_bits32[j]} = f_shift32(opcode, {src2_data[j*`WORD_WIDTH +: `WORD_WIDTH],{`WORD_WIDTH{1'b0}}}, shift_amount32[j]);
+      assign {product32[j], round_bits32[j]} = f_shift32(opcode, src2_data[j*`WORD_WIDTH +: `WORD_WIDTH], shift_amount32[j]);
     end
   endgenerate 
  
@@ -684,48 +684,84 @@ module rvv_backend_alu_unit_shift
 //
   // shifter function
   function [2*`BYTE_WIDTH-1:0] f_shift8;
-    input SHIFT_e                           opcode;
-    input logic signed [2*`BYTE_WIDTH-1:0]  operand;
-    input logic [$clog2(`BYTE_WIDTH)-1:0]   amount;
+    input SHIFT_e                         opcode;
+    input logic [`BYTE_WIDTH-1:0]         operand;
+    input logic [$clog2(`BYTE_WIDTH)-1:0] amount;
+
+    logic signed [2*`BYTE_WIDTH:0] src;
+    logic signed [2*`BYTE_WIDTH:0] result;
 
     if (opcode==SHIFT_SLL)
-      f_shift8 = operand << amount;
+      src = {1'b0,operand,{`BYTE_WIDTH{1'b0}}};
     else if (opcode==SHIFT_SRL)
-      f_shift8 = operand >> amount;
+      src = {1'b0,operand,{`BYTE_WIDTH{1'b0}}};
     else if (opcode==SHIFT_SRA)
-      f_shift8 = operand >>> amount;
+      src = {operand[`BYTE_WIDTH-1],operand,{`BYTE_WIDTH{1'b0}}};
     else
-      f_shift8 = 'b0;
+      src = 'b0;
+
+    if (opcode==SHIFT_SLL)
+      result = src<<amount;
+    else if ((opcode==SHIFT_SRL)&(opcode==SHIFT_SRA))
+      result = src>>>amount;
+    else
+      result = 'b0;
+
+    return result[2*`BYTE_WIDTH-1:0];
   endfunction
 
   function [2*`HWORD_WIDTH-1:0] f_shift16;
-    input SHIFT_e                            opcode;
-    input logic signed [2*`HWORD_WIDTH-1:0]  operand;
-    input logic [$clog2(`HWORD_WIDTH)-1:0]   amount;
+    input SHIFT_e                          opcode;
+    input logic [`HWORD_WIDTH-1:0]         operand;
+    input logic [$clog2(`HWORD_WIDTH)-1:0] amount;
+
+    logic signed [2*`HWORD_WIDTH:0] src;
+    logic signed [2*`HWORD_WIDTH:0] result;
 
     if (opcode==SHIFT_SLL)
-      f_shift16 = operand << amount;
+      src = {1'b0,operand,{`HWORD_WIDTH{1'b0}}};
     else if (opcode==SHIFT_SRL)
-      f_shift16 = operand >> amount;
+      src = {1'b0,operand,{`HWORD_WIDTH{1'b0}}};
     else if (opcode==SHIFT_SRA)
-      f_shift16 = operand >>> amount;
+      src = {operand[`HWORD_WIDTH-1],operand,{`HWORD_WIDTH{1'b0}}};
     else
-      f_shift16 = 'b0;
+      src = 'b0;
+
+    if (opcode==SHIFT_SLL)
+      result = src<<amount;
+    else if ((opcode==SHIFT_SRL)&(opcode==SHIFT_SRA))
+      result = src>>>amount;
+    else
+      result = 'b0;
+
+    return result[2*`HWORD_WIDTH-1:0];
   endfunction
 
   function [2*`WORD_WIDTH-1:0] f_shift32;
-    input SHIFT_e                           opcode;
-    input logic signed [2*`WORD_WIDTH-1:0]  operand;
-    input logic [$clog2(`WORD_WIDTH)-1:0]   amount;
+    input SHIFT_e                         opcode;
+    input logic [`WORD_WIDTH-1:0]         operand;
+    input logic [$clog2(`WORD_WIDTH)-1:0] amount;
+
+    logic signed [2*`WORD_WIDTH:0] src;
+    logic signed [2*`WORD_WIDTH:0] result;
 
     if (opcode==SHIFT_SLL)
-      f_shift32 = operand << amount;
+      src = {1'b0,operand,{`WORD_WIDTH{1'b0}}};
     else if (opcode==SHIFT_SRL)
-      f_shift32 = operand >> amount;
+      src = {1'b0,operand,{`WORD_WIDTH{1'b0}}};
     else if (opcode==SHIFT_SRA)
-      f_shift32 = operand >>> amount;
+      src = {operand[`WORD_WIDTH-1],operand,{`WORD_WIDTH{1'b0}}};
     else
-      f_shift32 = 'b0;
+      src = 'b0;
+
+    if (opcode==SHIFT_SLL)
+      result = src<<amount;
+    else if ((opcode==SHIFT_SRL)&(opcode==SHIFT_SRA))
+      result = src>>>amount;
+    else
+      result = 'b0;
+
+    return result[2*`WORD_WIDTH-1:0];
   endfunction
 
   function [`BYTE_WIDTH-1:0] f_half_add8;
