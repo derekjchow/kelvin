@@ -301,9 +301,17 @@ module rvv_backend
     );
 
     assign insts_ready_cq2rvs[0] = ~cq_full;
-    assign insts_ready_cq2rvs[1] = ~cq_full | ~cq_1left_to_full;
-    assign insts_ready_cq2rvs[2] = ~cq_full | ~cq_1left_to_full | ~cq_2left_to_full;
-    assign insts_ready_cq2rvs[3] = ~cq_full | ~cq_1left_to_full | ~cq_2left_to_full | ~cq_3left_to_full;
+    assign insts_ready_cq2rvs[1] = ~cq_full & ~cq_1left_to_full;
+    assign insts_ready_cq2rvs[2] = ~cq_full & ~cq_1left_to_full & ~cq_2left_to_full;
+    assign insts_ready_cq2rvs[3] = ~cq_full & ~cq_1left_to_full & ~cq_2left_to_full & ~cq_3left_to_full;
+
+  `ifdef ASSERT_ON
+    PushToCMDQueue: `rvv_expect((insts_valid_rvs2cq & insts_ready_cq2rvs) inside {4'b1111, 4'b0111, 4'b0011, 4'b0001, 4'b0000})
+      else $error("Push to command queue out-of-order: %4b.", $sampled(insts_valid_rvs2cq & insts_ready_cq2rvs));
+
+    PopFromCMDQueue: `rvv_expect(pop_de2cq inside {2'b11, 2'b01, 2'b00})
+      else $error("Pop from command queue out-of-order: %2b.", $sampled(pop_de2cq));
+  `endif // ASSERT_ON
 
   // Decode unit
     rvv_backend_decode #(
@@ -356,7 +364,15 @@ module rvv_backend
     );
 
     assign uop_valid_uop2dp[0] = ~uq_empty;
-    assign uop_valid_uop2dp[1] = ~uq_1left_to_empty;
+    assign uop_valid_uop2dp[1] = ~uq_empty & ~uq_1left_to_empty;
+
+  `ifdef ASSERT_ON
+    PushToUopQueue: `rvv_expect(push_de2uq inside {4'b1111, 4'b0111, 4'b0011, 4'b0001, 4'b0000})
+      else $error("Push to uops queue out-of-order: %4b", $sampled(push_de2uq));
+
+    PopFromUopQueue: `rvv_expect((uop_valid_uop2dp & uop_ready_dp2uop) inside {2'b11, 2'b01, 2'b00})
+      else $error("Pop from uops queue out-of-order: %2b", $sampled(uop_valid_uop2dp & uop_ready_dp2uop));
+  `endif // ASSERT_ON
 
   // Dispatch unit
     rvv_backend_dispatch #(
@@ -430,7 +446,15 @@ module rvv_backend
     );
 
     assign rs_ready_alu2dp[0] = ~alu_rs_full;
-    assign rs_ready_alu2dp[1] = ~alu_rs_1left_to_full;
+    assign rs_ready_alu2dp[1] = ~alu_rs_full & ~alu_rs_1left_to_full;
+
+  `ifdef ASSERT_ON
+    PushToAluRSQueue: `rvv_expect((rs_valid_dp2alu & rs_ready_alu2dp) inside {2'b11, 2'b01, 2'b00})
+      else $error("Push to ALU Reservation Station out-of-order: %4b", $sampled(rs_valid_dp2alu & rs_ready_alu2dp));
+
+    PopFromAluRSQueue: `rvv_expect((pop_alu2rs) inside {2'b11, 2'b01, 2'b00})
+      else $error("Pop from ALU Reservation Station out-of-order: %2b", $sampled(pop_alu2rs));
+  `endif // ASSERT_ON
 
     // PMTRDT RS, Permutation + Reduction
     // TODO: update once PMTRDT unit implements
@@ -468,7 +492,15 @@ module rvv_backend
     );
 
     assign rs_ready_pmtrdt2dp[0] = ~pmtrdt_rs_full;
-    assign rs_ready_pmtrdt2dp[1] = ~pmtrdt_rs_1left_to_full;
+    assign rs_ready_pmtrdt2dp[1] = ~pmtrdt_rs_full & ~pmtrdt_rs_1left_to_full;
+
+  `ifdef ASSERT_ON
+    PushToPmtrdtRSQueue: `rvv_expect((rs_valid_dp2pmtrdt & rs_ready_pmtrdt2dp) inside {2'b11, 2'b01, 2'b00})
+      else $error("Push to PMTRDT Reservation Station out-of-order: %4b", $sampled(rs_valid_dp2pmtrdt & rs_ready_pmtrdt2dp));
+
+    // PopFromPmtrdtRSQueue: `rvv_expect((pop_pmtrdt2rs) inside {2'b11, 2'b01, 2'b00})
+    //   else $error("Pop from PMTRDT Reservation Station out-of-order: %2b", $sampled(pop_pmtrdt2rs));
+  `endif // ASSERT_ON
 
     // MUL RS, Multiply + Multiply-accumulate
     // TODO: update once MUL unit implements
@@ -498,7 +530,15 @@ module rvv_backend
     );
 
     assign rs_ready_mul2dp[0] = ~mul_rs_full;
-    assign rs_ready_mul2dp[1] = ~mul_rs_1left_to_full;
+    assign rs_ready_mul2dp[1] = ~mul_rs_full & ~mul_rs_1left_to_full;
+
+  `ifdef ASSERT_ON
+    PushToMulRSQueue: `rvv_expect((rs_valid_dp2mul & rs_ready_mul2dp) inside {2'b11, 2'b01, 2'b00})
+      else $error("Push to MUL Reservation Station out-of-order: %4b", $sampled(rs_valid_dp2mul & rs_ready_mul2dp));
+
+    // PopFromMulRSQueue: `rvv_expect((pop_mul2rs) inside {2'b11, 2'b01, 2'b00})
+    //   else $error("Pop from MUL Reservation Station out-of-order: %2b", $sampled(pop_mul2rs));
+  `endif // ASSERT_ON
 
     // DIV RS
     // TODO: update once DIV unit implements
@@ -528,7 +568,15 @@ module rvv_backend
     );
 
     assign rs_ready_div2dp[0] = ~div_rs_full;
-    assign rs_ready_div2dp[1] = ~div_rs_1left_to_full;
+    assign rs_ready_div2dp[1] = ~div_rs_full & ~div_rs_1left_to_full;
+
+  `ifdef ASSERT_ON
+    PushToDivRSQueue: `rvv_expect((rs_valid_dp2div & rs_ready_div2dp) inside {2'b11, 2'b01, 2'b00})
+      else $error("Push to DIV Reservation Station out-of-order: %4b", $sampled(rs_valid_dp2div & rs_ready_div2dp));
+
+    // PopFromDivRSQueue: `rvv_expect((pop_div2rs) inside {2'b11, 2'b01, 2'b00})
+    //   else $error("Pop from DIV Reservation Station out-of-order: %2b", $sampled(pop_div2rs));
+  `endif // ASSERT_ON
 
     // LSU RS
     fifo_flopped_2w2r #(
@@ -557,11 +605,19 @@ module rvv_backend
     );
   
     assign rs_ready_lsu2dp[0] = ~lsu_rs_full;
-    assign rs_ready_lsu2dp[1] = ~lsu_rs_1left_to_full;
+    assign rs_ready_lsu2dp[1] = ~lsu_rs_full & ~lsu_rs_1left_to_full;
 
     assign uop_valid_lsu_rvv2rvs[0] = ~fifo_empty_rs2lsu;
     assign uop_valid_lsu_rvv2rvs[1] = ~fifo_almost_empty_rs2lsu;
     assign uop_lsu_rvv2rvs = uop_rs2lsu;
+
+  `ifdef ASSERT_ON
+    PushToLsuRSQueue: `rvv_expect((rs_valid_dp2lsu & rs_ready_lsu2dp) inside {2'b11, 2'b01, 2'b00})
+      else $error("Push to LSU Reservation Station out-of-order: %4b", $sampled(rs_valid_dp2lsu & rs_ready_lsu2dp));
+
+    // PopFromLsuRSQueue: `rvv_expect((pop_lsu2rs) inside {2'b11, 2'b01, 2'b00})
+    //   else $error("Pop from LSU Reservation Station out-of-order: %2b", $sampled(pop_lsu2rs));
+  `endif // ASSERT_ON
 
   // PU, Process unit
     // ALU
