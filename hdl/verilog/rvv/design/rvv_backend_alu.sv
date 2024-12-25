@@ -2,7 +2,11 @@
 // 1. Instantiate rvv_backend_alu_unit and connect to ALU Reservation Station and ROB.
 //
 // feature list:
-// 1. It will instantiate 2 rvv_backend_alu_unit.
+// 1. The number of ALU units (`NUM_ALU) is configurable.
+// 2. The size of vector length (`VLEN) is configurable.
+// 3. Addsub unit for add and sub instructions reuses and combines the results of 8-bit adders to get 8,16,32-bit result. And sub instructions will reuse adder logic.
+// 4. Shift unit for shift instructions reuse arithmetic right shift to complete arithmetic and logic right shift.
+// 5. Mask unit can reuse logical operation for mask logical and regular logical instructions. And Mask unit can reuse find_first_1 logic for other mask instructions.
 
 `include "rvv_backend.svh"
 `include "rvv_backend_sva.svh"
