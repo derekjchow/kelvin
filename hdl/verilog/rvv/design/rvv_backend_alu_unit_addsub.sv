@@ -108,88 +108,13 @@ module rvv_backend_alu_unit_addsub
 
     case(vs2_eew)
       EEW8: begin
-        case(uop_index)
-          3'd0: begin
-            v0_data_in_use = v0_data[0 +: `VLENB];
-          end
-          3'd1: begin
-            v0_data_in_use = v0_data[1*`VLENB +: `VLENB];
-          end
-          3'd2: begin
-            v0_data_in_use = v0_data[2*`VLENB +: `VLENB];
-          end
-          3'd3: begin
-            v0_data_in_use = v0_data[3*`VLENB +: `VLENB];
-          end
-          3'd4: begin
-            v0_data_in_use = v0_data[4*`VLENB +: `VLENB];
-          end
-          3'd5: begin
-            v0_data_in_use = v0_data[5*`VLENB +: `VLENB];
-          end
-          3'd6: begin
-            v0_data_in_use = v0_data[6*`VLENB +: `VLENB];
-          end
-          3'd7: begin
-            v0_data_in_use = v0_data[7*`VLENB +: `VLENB];
-          end
-        endcase
+        v0_data_in_use = v0_data[{uop_index,{($clog2(`BYTE_WIDTH)){1'b0}}} +: `VLENB];
       end
       EEW16: begin
-        case(uop_index)
-          3'd0: begin
-            v0_data_in_use = v0_data[0 +: `VLENB];
-          end
-          3'd1: begin
-            v0_data_in_use = v0_data[1*`VLEN/`HWORD_WIDTH +: `VLENB];
-          end
-          3'd2: begin
-            v0_data_in_use = v0_data[2*`VLEN/`HWORD_WIDTH +: `VLENB];
-          end
-          3'd3: begin
-            v0_data_in_use = v0_data[3*`VLEN/`HWORD_WIDTH +: `VLENB];
-          end
-          3'd4: begin
-            v0_data_in_use = v0_data[4*`VLEN/`HWORD_WIDTH +: `VLENB];
-          end
-          3'd5: begin
-            v0_data_in_use = v0_data[5*`VLEN/`HWORD_WIDTH +: `VLENB];
-          end
-          3'd6: begin
-            v0_data_in_use = v0_data[6*`VLEN/`HWORD_WIDTH +: `VLENB];
-          end
-          3'd7: begin
-            v0_data_in_use = v0_data[7*`VLEN/`HWORD_WIDTH +: `VLENB];
-          end
-        endcase
+        v0_data_in_use = v0_data[{uop_index,{($clog2(`HWORD_WIDTH)){1'b0}}} +: `VLENB];
       end
       EEW32: begin
-        case(uop_index)
-          3'd0: begin
-            v0_data_in_use = v0_data[0 +: `VLENB];
-          end
-          3'd1: begin
-            v0_data_in_use = v0_data[1*`VLEN/`WORD_WIDTH +: `VLENB];
-          end
-          3'd2: begin
-            v0_data_in_use = v0_data[2*`VLEN/`WORD_WIDTH +: `VLENB];
-          end
-          3'd3: begin
-            v0_data_in_use = v0_data[3*`VLEN/`WORD_WIDTH +: `VLENB];
-          end
-          3'd4: begin
-            v0_data_in_use = v0_data[4*`VLEN/`WORD_WIDTH +: `VLENB];
-          end
-          3'd5: begin
-            v0_data_in_use = v0_data[5*`VLEN/`WORD_WIDTH +: `VLENB];
-          end
-          3'd6: begin
-            v0_data_in_use = v0_data[6*`VLEN/`WORD_WIDTH +: `VLENB];
-          end
-          3'd7: begin
-            v0_data_in_use = v0_data[7*`VLEN/`WORD_WIDTH +: `VLENB];
-          end
-        endcase
+        v0_data_in_use = v0_data[{uop_index,{($clog2(`WORD_WIDTH)){1'b0}}} +: `VLENB];
       end
     endcase
   end
@@ -197,12 +122,10 @@ module rvv_backend_alu_unit_addsub
 //  
 // prepare source data 
 //
-  // prepare valid signal and source data
+  // prepare valid signal 
   always_comb begin
     // initial the data
     result_valid = 'b0;
-    src2_data    = 'b0;
-    src1_data    = 'b0;
 
     case({alu_uop_valid,uop_funct3}) 
       {1'b1,OPIVV}: begin
@@ -213,11 +136,6 @@ module rvv_backend_alu_unit_addsub
           VSSUB: begin
             if (vs2_data_valid&vs1_data_valid) begin
               result_valid = 'b1;
-
-              for(int i=0;i<`VLENB;i=i+1) begin
-                src2_data[i] = {vs2_data[(i+1)*`BYTE_WIDTH-1], vs2_data[i*`BYTE_WIDTH +: `BYTE_WIDTH]};
-                src1_data[i] = {vs1_data[(i+1)*`BYTE_WIDTH-1], vs1_data[i*`BYTE_WIDTH +: `BYTE_WIDTH]};
-              end
             end
 
             `ifdef ASSERT_ON
@@ -233,11 +151,6 @@ module rvv_backend_alu_unit_addsub
           VSBC: begin
             if (vs2_data_valid&vs1_data_valid&(vm==1'b0)&v0_data_valid) begin
               result_valid = 'b1;
-
-              for(int i=0;i<`VLENB;i=i+1) begin
-                src2_data[i] = {vs2_data[(i+1)*`BYTE_WIDTH-1], vs2_data[i*`BYTE_WIDTH +: `BYTE_WIDTH]};
-                src1_data[i] = {vs1_data[(i+1)*`BYTE_WIDTH-1], vs1_data[i*`BYTE_WIDTH +: `BYTE_WIDTH]};
-              end
             end
 
             `ifdef ASSERT_ON
@@ -259,11 +172,6 @@ module rvv_backend_alu_unit_addsub
           VMSBC: begin
             if (vs2_data_valid&vs1_data_valid&vd_data_valid&(vm^v0_data_valid)) begin
               result_valid = 'b1;
-
-              for(int i=0;i<`VLENB;i=i+1) begin
-                src2_data[i] = {vs2_data[(i+1)*`BYTE_WIDTH-1], vs2_data[i*`BYTE_WIDTH +: `BYTE_WIDTH]};
-                src1_data[i] = {vs1_data[(i+1)*`BYTE_WIDTH-1], vs1_data[i*`BYTE_WIDTH +: `BYTE_WIDTH]};
-              end
             end
 
             `ifdef ASSERT_ON
@@ -285,11 +193,6 @@ module rvv_backend_alu_unit_addsub
           VSSUBU: begin
             if (vs2_data_valid&vs1_data_valid) begin
               result_valid = 'b1;
-
-              for(int i=0;i<`VLENB;i=i+1) begin
-                src2_data[i] = {1'b0, vs2_data[i*`BYTE_WIDTH +: `BYTE_WIDTH]};
-                src1_data[i] = {1'b0, vs1_data[i*`BYTE_WIDTH +: `BYTE_WIDTH]};
-              end
             end
       
             `ifdef ASSERT_ON
@@ -311,33 +214,6 @@ module rvv_backend_alu_unit_addsub
           VSSUB: begin
             if (vs2_data_valid&rs1_data_valid) begin
               result_valid = 'b1;
-              
-              for(int i=0;i<`VLENB;i=i+1) begin
-                src2_data[i] = {vs2_data[(i+1)*`BYTE_WIDTH-1], vs2_data[i*`BYTE_WIDTH +: `BYTE_WIDTH]};
-              end
-
-              for(int i=0;i<`VLEN/`WORD_WIDTH;i=i+1) begin
-                case(vs2_eew)
-                  EEW8: begin
-                    src1_data[4*i]   = {rs1_data[`BYTE_WIDTH-1], rs1_data[0 +: `BYTE_WIDTH]};
-                    src1_data[4*i+1] = {rs1_data[`BYTE_WIDTH-1], rs1_data[0 +: `BYTE_WIDTH]};
-                    src1_data[4*i+2] = {rs1_data[`BYTE_WIDTH-1], rs1_data[0 +: `BYTE_WIDTH]};
-                    src1_data[4*i+3] = {rs1_data[`BYTE_WIDTH-1], rs1_data[0 +: `BYTE_WIDTH]};
-                  end
-                  EEW16: begin  
-                    src1_data[4*i]   = {rs1_data[1*`BYTE_WIDTH-1], rs1_data[0             +: `BYTE_WIDTH]};
-                    src1_data[4*i+1] = {rs1_data[2*`BYTE_WIDTH-1], rs1_data[1*`BYTE_WIDTH +: `BYTE_WIDTH]};
-                    src1_data[4*i+2] = {rs1_data[1*`BYTE_WIDTH-1], rs1_data[0             +: `BYTE_WIDTH]};
-                    src1_data[4*i+3] = {rs1_data[2*`BYTE_WIDTH-1], rs1_data[1*`BYTE_WIDTH +: `BYTE_WIDTH]};
-                  end
-                  EEW32: begin 
-                    src1_data[4*i]   = {rs1_data[1*`BYTE_WIDTH-1], rs1_data[0             +: `BYTE_WIDTH]};
-                    src1_data[4*i+1] = {rs1_data[2*`BYTE_WIDTH-1], rs1_data[1*`BYTE_WIDTH +: `BYTE_WIDTH]};
-                    src1_data[4*i+2] = {rs1_data[3*`BYTE_WIDTH-1], rs1_data[2*`BYTE_WIDTH +: `BYTE_WIDTH]};
-                    src1_data[4*i+3] = {rs1_data[4*`BYTE_WIDTH-1], rs1_data[3*`BYTE_WIDTH +: `BYTE_WIDTH]};
-                  end
-                endcase
-              end
             end
 
             `ifdef ASSERT_ON
@@ -352,33 +228,6 @@ module rvv_backend_alu_unit_addsub
           VRSUB: begin
             if (vs2_data_valid&rs1_data_valid) begin
               result_valid = 'b1;
-
-              for(int i=0;i<`VLEN/`WORD_WIDTH;i=i+1) begin
-                case(vs2_eew)
-                  EEW8: begin
-                    src2_data[4*i]   = {rs1_data[`BYTE_WIDTH-1], rs1_data[0 +: `BYTE_WIDTH]};
-                    src2_data[4*i+1] = {rs1_data[`BYTE_WIDTH-1], rs1_data[0 +: `BYTE_WIDTH]};
-                    src2_data[4*i+2] = {rs1_data[`BYTE_WIDTH-1], rs1_data[0 +: `BYTE_WIDTH]};
-                    src2_data[4*i+3] = {rs1_data[`BYTE_WIDTH-1], rs1_data[0 +: `BYTE_WIDTH]};
-                  end
-                  EEW16: begin  
-                    src2_data[4*i]   = {rs1_data[1*`BYTE_WIDTH-1], rs1_data[0             +: `BYTE_WIDTH]};
-                    src2_data[4*i+1] = {rs1_data[2*`BYTE_WIDTH-1], rs1_data[1*`BYTE_WIDTH +: `BYTE_WIDTH]};
-                    src2_data[4*i+2] = {rs1_data[1*`BYTE_WIDTH-1], rs1_data[0             +: `BYTE_WIDTH]};
-                    src2_data[4*i+3] = {rs1_data[2*`BYTE_WIDTH-1], rs1_data[1*`BYTE_WIDTH +: `BYTE_WIDTH]};
-                  end
-                  EEW32: begin 
-                    src2_data[4*i]   = {rs1_data[1*`BYTE_WIDTH-1], rs1_data[0             +: `BYTE_WIDTH]};
-                    src2_data[4*i+1] = {rs1_data[2*`BYTE_WIDTH-1], rs1_data[1*`BYTE_WIDTH +: `BYTE_WIDTH]};
-                    src2_data[4*i+2] = {rs1_data[3*`BYTE_WIDTH-1], rs1_data[2*`BYTE_WIDTH +: `BYTE_WIDTH]};
-                    src2_data[4*i+3] = {rs1_data[4*`BYTE_WIDTH-1], rs1_data[3*`BYTE_WIDTH +: `BYTE_WIDTH]};
-                  end
-                endcase
-              end
-            
-              for(int i=0;i<`VLENB;i=i+1) begin
-                src1_data[i] = {vs2_data[(i+1)*`BYTE_WIDTH-1], vs2_data[i*`BYTE_WIDTH +: `BYTE_WIDTH]};
-              end
             end
 
             `ifdef ASSERT_ON
@@ -394,33 +243,6 @@ module rvv_backend_alu_unit_addsub
           VSBC: begin
             if (vs2_data_valid&rs1_data_valid&(vm==1'b0)&v0_data_valid) begin
               result_valid = 'b1;
-              
-              for(int i=0;i<`VLENB;i=i+1) begin
-                src2_data[i] = {vs2_data[(i+1)*`BYTE_WIDTH-1], vs2_data[i*`BYTE_WIDTH +: `BYTE_WIDTH]};
-              end
-
-              for(int i=0;i<`VLEN/`WORD_WIDTH;i=i+1) begin
-                case(vs2_eew)
-                  EEW8: begin
-                    src1_data[4*i]   = {rs1_data[`BYTE_WIDTH-1], rs1_data[0 +: `BYTE_WIDTH]};
-                    src1_data[4*i+1] = {rs1_data[`BYTE_WIDTH-1], rs1_data[0 +: `BYTE_WIDTH]};
-                    src1_data[4*i+2] = {rs1_data[`BYTE_WIDTH-1], rs1_data[0 +: `BYTE_WIDTH]};
-                    src1_data[4*i+3] = {rs1_data[`BYTE_WIDTH-1], rs1_data[0 +: `BYTE_WIDTH]};
-                  end
-                  EEW16: begin  
-                    src1_data[4*i]   = {rs1_data[1*`BYTE_WIDTH-1], rs1_data[0             +: `BYTE_WIDTH]};
-                    src1_data[4*i+1] = {rs1_data[2*`BYTE_WIDTH-1], rs1_data[1*`BYTE_WIDTH +: `BYTE_WIDTH]};
-                    src1_data[4*i+2] = {rs1_data[1*`BYTE_WIDTH-1], rs1_data[0             +: `BYTE_WIDTH]};
-                    src1_data[4*i+3] = {rs1_data[2*`BYTE_WIDTH-1], rs1_data[1*`BYTE_WIDTH +: `BYTE_WIDTH]};
-                  end
-                  EEW32: begin 
-                    src1_data[4*i]   = {rs1_data[1*`BYTE_WIDTH-1], rs1_data[0             +: `BYTE_WIDTH]};
-                    src1_data[4*i+1] = {rs1_data[2*`BYTE_WIDTH-1], rs1_data[1*`BYTE_WIDTH +: `BYTE_WIDTH]};
-                    src1_data[4*i+2] = {rs1_data[3*`BYTE_WIDTH-1], rs1_data[2*`BYTE_WIDTH +: `BYTE_WIDTH]};
-                    src1_data[4*i+3] = {rs1_data[4*`BYTE_WIDTH-1], rs1_data[3*`BYTE_WIDTH +: `BYTE_WIDTH]};
-                  end
-                endcase
-              end
             end
 
             `ifdef ASSERT_ON
@@ -442,33 +264,6 @@ module rvv_backend_alu_unit_addsub
           VMSBC: begin
             if (vs2_data_valid&vs1_data_valid&vd_data_valid&(vm^v0_data_valid)) begin
               result_valid = 'b1;
-              
-              for(int i=0;i<`VLENB;i=i+1) begin
-                src2_data[i] = {vs2_data[(i+1)*`BYTE_WIDTH-1], vs2_data[i*`BYTE_WIDTH +: `BYTE_WIDTH]};
-              end
-
-              for(int i=0;i<`VLEN/`WORD_WIDTH;i=i+1) begin
-                case(vs2_eew)
-                  EEW8: begin
-                    src1_data[4*i]   = {rs1_data[`BYTE_WIDTH-1], rs1_data[0 +: `BYTE_WIDTH]};
-                    src1_data[4*i+1] = {rs1_data[`BYTE_WIDTH-1], rs1_data[0 +: `BYTE_WIDTH]};
-                    src1_data[4*i+2] = {rs1_data[`BYTE_WIDTH-1], rs1_data[0 +: `BYTE_WIDTH]};
-                    src1_data[4*i+3] = {rs1_data[`BYTE_WIDTH-1], rs1_data[0 +: `BYTE_WIDTH]};
-                  end
-                  EEW16: begin  
-                    src1_data[4*i]   = {rs1_data[1*`BYTE_WIDTH-1], rs1_data[0             +: `BYTE_WIDTH]};
-                    src1_data[4*i+1] = {rs1_data[2*`BYTE_WIDTH-1], rs1_data[1*`BYTE_WIDTH +: `BYTE_WIDTH]};
-                    src1_data[4*i+2] = {rs1_data[1*`BYTE_WIDTH-1], rs1_data[0             +: `BYTE_WIDTH]};
-                    src1_data[4*i+3] = {rs1_data[2*`BYTE_WIDTH-1], rs1_data[1*`BYTE_WIDTH +: `BYTE_WIDTH]};
-                  end
-                  EEW32: begin 
-                    src1_data[4*i]   = {rs1_data[1*`BYTE_WIDTH-1], rs1_data[0             +: `BYTE_WIDTH]};
-                    src1_data[4*i+1] = {rs1_data[2*`BYTE_WIDTH-1], rs1_data[1*`BYTE_WIDTH +: `BYTE_WIDTH]};
-                    src1_data[4*i+2] = {rs1_data[3*`BYTE_WIDTH-1], rs1_data[2*`BYTE_WIDTH +: `BYTE_WIDTH]};
-                    src1_data[4*i+3] = {rs1_data[4*`BYTE_WIDTH-1], rs1_data[3*`BYTE_WIDTH +: `BYTE_WIDTH]};
-                  end
-                endcase
-              end
             end
 
             `ifdef ASSERT_ON
@@ -490,33 +285,6 @@ module rvv_backend_alu_unit_addsub
           VSSUBU: begin
             if (vs2_data_valid&rs1_data_valid) begin
               result_valid = 'b1;
-              
-              for(int i=0;i<`VLENB;i=i+1) begin
-                src2_data[i] = {1'b0, vs2_data[i*`BYTE_WIDTH +: `BYTE_WIDTH]};
-              end
-
-              for(int i=0;i<`VLEN/`WORD_WIDTH;i=i+1) begin
-                case(vs2_eew)
-                  EEW8: begin
-                    src1_data[4*i]   = {1'b0, rs1_data[0 +: `BYTE_WIDTH]};
-                    src1_data[4*i+1] = {1'b0, rs1_data[0 +: `BYTE_WIDTH]};
-                    src1_data[4*i+2] = {1'b0, rs1_data[0 +: `BYTE_WIDTH]};
-                    src1_data[4*i+3] = {1'b0, rs1_data[0 +: `BYTE_WIDTH]};
-                  end
-                  EEW16: begin  
-                    src1_data[4*i]   = {1'b0, rs1_data[0             +: `BYTE_WIDTH]};
-                    src1_data[4*i+1] = {1'b0, rs1_data[1*`BYTE_WIDTH +: `BYTE_WIDTH]};
-                    src1_data[4*i+2] = {1'b0, rs1_data[0             +: `BYTE_WIDTH]};
-                    src1_data[4*i+3] = {1'b0, rs1_data[1*`BYTE_WIDTH +: `BYTE_WIDTH]};
-                  end
-                  EEW32: begin 
-                    src1_data[4*i]   = {1'b0, rs1_data[0             +: `BYTE_WIDTH]};
-                    src1_data[4*i+1] = {1'b0, rs1_data[1*`BYTE_WIDTH +: `BYTE_WIDTH]};
-                    src1_data[4*i+2] = {1'b0, rs1_data[2*`BYTE_WIDTH +: `BYTE_WIDTH]};
-                    src1_data[4*i+3] = {1'b0, rs1_data[3*`BYTE_WIDTH +: `BYTE_WIDTH]};
-                  end
-                endcase
-              end
             end
 
             `ifdef ASSERT_ON
@@ -535,33 +303,6 @@ module rvv_backend_alu_unit_addsub
           VSADD: begin
             if (vs2_data_valid&rs1_data_valid) begin
               result_valid = 'b1;
-
-              for(int i=0;i<`VLENB;i=i+1) begin
-                src2_data[i] = {vs2_data[(i+1)*`BYTE_WIDTH-1], vs2_data[i*`BYTE_WIDTH +: `BYTE_WIDTH]};
-              end
-
-              for(int i=0;i<`VLEN/`WORD_WIDTH;i=i+1) begin
-                case(vs2_eew)
-                  EEW8: begin
-                    src1_data[4*i]   = {rs1_data[`BYTE_WIDTH-1], rs1_data[0 +: `BYTE_WIDTH]};
-                    src1_data[4*i+1] = {rs1_data[`BYTE_WIDTH-1], rs1_data[0 +: `BYTE_WIDTH]};
-                    src1_data[4*i+2] = {rs1_data[`BYTE_WIDTH-1], rs1_data[0 +: `BYTE_WIDTH]};
-                    src1_data[4*i+3] = {rs1_data[`BYTE_WIDTH-1], rs1_data[0 +: `BYTE_WIDTH]};
-                  end
-                  EEW16: begin  
-                    src1_data[4*i]   = {rs1_data[1*`BYTE_WIDTH-1], rs1_data[0             +: `BYTE_WIDTH]};
-                    src1_data[4*i+1] = {rs1_data[2*`BYTE_WIDTH-1], rs1_data[1*`BYTE_WIDTH +: `BYTE_WIDTH]};
-                    src1_data[4*i+2] = {rs1_data[1*`BYTE_WIDTH-1], rs1_data[0             +: `BYTE_WIDTH]};
-                    src1_data[4*i+3] = {rs1_data[2*`BYTE_WIDTH-1], rs1_data[1*`BYTE_WIDTH +: `BYTE_WIDTH]};
-                  end
-                  EEW32: begin 
-                    src1_data[4*i]   = {rs1_data[1*`BYTE_WIDTH-1], rs1_data[0             +: `BYTE_WIDTH]};
-                    src1_data[4*i+1] = {rs1_data[2*`BYTE_WIDTH-1], rs1_data[1*`BYTE_WIDTH +: `BYTE_WIDTH]};
-                    src1_data[4*i+2] = {rs1_data[3*`BYTE_WIDTH-1], rs1_data[2*`BYTE_WIDTH +: `BYTE_WIDTH]};
-                    src1_data[4*i+3] = {rs1_data[4*`BYTE_WIDTH-1], rs1_data[3*`BYTE_WIDTH +: `BYTE_WIDTH]};
-                  end
-                endcase
-              end
             end
 
             `ifdef ASSERT_ON
@@ -576,33 +317,6 @@ module rvv_backend_alu_unit_addsub
           VRSUB: begin
             if (vs2_data_valid&rs1_data_valid) begin
               result_valid = 'b1;
-
-              for(int i=0;i<`VLEN/`WORD_WIDTH;i=i+1) begin
-                case(vs2_eew)
-                  EEW8: begin
-                    src2_data[4*i]   = {rs1_data[`BYTE_WIDTH-1], rs1_data[0 +: `BYTE_WIDTH]};
-                    src2_data[4*i+1] = {rs1_data[`BYTE_WIDTH-1], rs1_data[0 +: `BYTE_WIDTH]};
-                    src2_data[4*i+2] = {rs1_data[`BYTE_WIDTH-1], rs1_data[0 +: `BYTE_WIDTH]};
-                    src2_data[4*i+3] = {rs1_data[`BYTE_WIDTH-1], rs1_data[0 +: `BYTE_WIDTH]};
-                  end
-                  EEW16: begin  
-                    src2_data[4*i]   = {rs1_data[1*`BYTE_WIDTH-1], rs1_data[0             +: `BYTE_WIDTH]};
-                    src2_data[4*i+1] = {rs1_data[2*`BYTE_WIDTH-1], rs1_data[1*`BYTE_WIDTH +: `BYTE_WIDTH]};
-                    src2_data[4*i+2] = {rs1_data[1*`BYTE_WIDTH-1], rs1_data[0             +: `BYTE_WIDTH]};
-                    src2_data[4*i+3] = {rs1_data[2*`BYTE_WIDTH-1], rs1_data[1*`BYTE_WIDTH +: `BYTE_WIDTH]};
-                  end
-                  EEW32: begin 
-                    src2_data[4*i]   = {rs1_data[1*`BYTE_WIDTH-1], rs1_data[0             +: `BYTE_WIDTH]};
-                    src2_data[4*i+1] = {rs1_data[2*`BYTE_WIDTH-1], rs1_data[1*`BYTE_WIDTH +: `BYTE_WIDTH]};
-                    src2_data[4*i+2] = {rs1_data[3*`BYTE_WIDTH-1], rs1_data[2*`BYTE_WIDTH +: `BYTE_WIDTH]};
-                    src2_data[4*i+3] = {rs1_data[4*`BYTE_WIDTH-1], rs1_data[3*`BYTE_WIDTH +: `BYTE_WIDTH]};
-                  end
-                endcase
-              end
-
-              for(int i=0;i<`VLENB;i=i+1) begin
-                src1_data[i] = {vs2_data[(i+1)*`BYTE_WIDTH-1], vs2_data[i*`BYTE_WIDTH +: `BYTE_WIDTH]};
-              end
             end
 
             `ifdef ASSERT_ON
@@ -617,33 +331,6 @@ module rvv_backend_alu_unit_addsub
           VADC: begin
             if (vs2_data_valid&rs1_data_valid&(vm==1'b0)&v0_data_valid) begin
               result_valid = 'b1;
-
-              for(int i=0;i<`VLENB;i=i+1) begin
-                src2_data[i] = {vs2_data[(i+1)*`BYTE_WIDTH-1], vs2_data[i*`BYTE_WIDTH +: `BYTE_WIDTH]};
-              end
-
-              for(int i=0;i<`VLEN/`WORD_WIDTH;i=i+1) begin
-                case(vs2_eew)
-                  EEW8: begin
-                    src2_data[4*i]   = {rs1_data[`BYTE_WIDTH-1], rs1_data[0 +: `BYTE_WIDTH]};
-                    src2_data[4*i+1] = {rs1_data[`BYTE_WIDTH-1], rs1_data[0 +: `BYTE_WIDTH]};
-                    src2_data[4*i+2] = {rs1_data[`BYTE_WIDTH-1], rs1_data[0 +: `BYTE_WIDTH]};
-                    src2_data[4*i+3] = {rs1_data[`BYTE_WIDTH-1], rs1_data[0 +: `BYTE_WIDTH]};
-                  end
-                  EEW16: begin  
-                    src2_data[4*i]   = {rs1_data[1*`BYTE_WIDTH-1], rs1_data[0           +: `BYTE_WIDTH]};
-                    src2_data[4*i+1] = {rs1_data[2*`BYTE_WIDTH-1], rs1_data[`BYTE_WIDTH +: `BYTE_WIDTH]};
-                    src2_data[4*i+2] = {rs1_data[1*`BYTE_WIDTH-1], rs1_data[0           +: `BYTE_WIDTH]};
-                    src2_data[4*i+3] = {rs1_data[2*`BYTE_WIDTH-1], rs1_data[`BYTE_WIDTH +: `BYTE_WIDTH]};
-                  end
-                  EEW32: begin 
-                    src2_data[4*i]   = {rs1_data[1*`BYTE_WIDTH-1], rs1_data[0             +: `BYTE_WIDTH]};
-                    src2_data[4*i+1] = {rs1_data[2*`BYTE_WIDTH-1], rs1_data[1*`BYTE_WIDTH +: `BYTE_WIDTH]};
-                    src2_data[4*i+2] = {rs1_data[3*`BYTE_WIDTH-1], rs1_data[2*`BYTE_WIDTH +: `BYTE_WIDTH]};
-                    src2_data[4*i+3] = {rs1_data[4*`BYTE_WIDTH-1], rs1_data[3*`BYTE_WIDTH +: `BYTE_WIDTH]};
-                  end
-                endcase
-              end
             end
 
             `ifdef ASSERT_ON
@@ -664,33 +351,6 @@ module rvv_backend_alu_unit_addsub
           VMADC: begin
             if (vs2_data_valid&vs1_data_valid&vd_data_valid&(vm^v0_data_valid)) begin
               result_valid = 'b1;
-              
-              for(int i=0;i<`VLENB;i=i+1) begin
-                src2_data[i] = {vs2_data[(i+1)*`BYTE_WIDTH-1], vs2_data[i*`BYTE_WIDTH +: `BYTE_WIDTH]};
-              end
-
-              for(int i=0;i<`VLEN/`WORD_WIDTH;i=i+1) begin
-                case(vs2_eew)
-                  EEW8: begin
-                    src1_data[4*i]   = {rs1_data[`BYTE_WIDTH-1], rs1_data[0 +: `BYTE_WIDTH]};
-                    src1_data[4*i+1] = {rs1_data[`BYTE_WIDTH-1], rs1_data[0 +: `BYTE_WIDTH]};
-                    src1_data[4*i+2] = {rs1_data[`BYTE_WIDTH-1], rs1_data[0 +: `BYTE_WIDTH]};
-                    src1_data[4*i+3] = {rs1_data[`BYTE_WIDTH-1], rs1_data[0 +: `BYTE_WIDTH]};
-                  end
-                  EEW16: begin  
-                    src1_data[4*i]   = {rs1_data[1*`BYTE_WIDTH-1], rs1_data[0             +: `BYTE_WIDTH]};
-                    src1_data[4*i+1] = {rs1_data[2*`BYTE_WIDTH-1], rs1_data[1*`BYTE_WIDTH +: `BYTE_WIDTH]};
-                    src1_data[4*i+2] = {rs1_data[1*`BYTE_WIDTH-1], rs1_data[0             +: `BYTE_WIDTH]};
-                    src1_data[4*i+3] = {rs1_data[2*`BYTE_WIDTH-1], rs1_data[1*`BYTE_WIDTH +: `BYTE_WIDTH]};
-                  end
-                  EEW32: begin 
-                    src1_data[4*i]   = {rs1_data[1*`BYTE_WIDTH-1], rs1_data[0             +: `BYTE_WIDTH]};
-                    src1_data[4*i+1] = {rs1_data[2*`BYTE_WIDTH-1], rs1_data[1*`BYTE_WIDTH +: `BYTE_WIDTH]};
-                    src1_data[4*i+2] = {rs1_data[3*`BYTE_WIDTH-1], rs1_data[2*`BYTE_WIDTH +: `BYTE_WIDTH]};
-                    src1_data[4*i+3] = {rs1_data[4*`BYTE_WIDTH-1], rs1_data[3*`BYTE_WIDTH +: `BYTE_WIDTH]};
-                  end
-                endcase
-              end
             end
 
             `ifdef ASSERT_ON
@@ -711,33 +371,6 @@ module rvv_backend_alu_unit_addsub
           VSADDU: begin
             if (vs2_data_valid&rs1_data_valid) begin
               result_valid = 'b1;
-
-              for(int i=0;i<`VLENB;i=i+1) begin
-                src2_data[i] = {1'b0, vs2_data[i*`BYTE_WIDTH +: `BYTE_WIDTH]};
-              end
-
-              for(int i=0;i<`VLEN/`WORD_WIDTH;i=i+1) begin
-                case(vs2_eew)
-                  EEW8: begin
-                    src1_data[4*i]   = {1'b0, rs1_data[0 +: `BYTE_WIDTH]};
-                    src1_data[4*i+1] = {1'b0, rs1_data[0 +: `BYTE_WIDTH]};
-                    src1_data[4*i+2] = {1'b0, rs1_data[0 +: `BYTE_WIDTH]};
-                    src1_data[4*i+3] = {1'b0, rs1_data[0 +: `BYTE_WIDTH]};
-                  end
-                  EEW16: begin  
-                    src1_data[4*i]   = {1'b0, rs1_data[0             +: `BYTE_WIDTH]};
-                    src1_data[4*i+1] = {1'b0, rs1_data[1*`BYTE_WIDTH +: `BYTE_WIDTH]};
-                    src1_data[4*i+2] = {1'b0, rs1_data[0             +: `BYTE_WIDTH]};
-                    src1_data[4*i+3] = {1'b0, rs1_data[1*`BYTE_WIDTH +: `BYTE_WIDTH]};
-                  end
-                  EEW32: begin 
-                    src1_data[4*i]   = {1'b0, rs1_data[0             +: `BYTE_WIDTH]};
-                    src1_data[4*i+1] = {1'b0, rs1_data[1*`BYTE_WIDTH +: `BYTE_WIDTH]};
-                    src1_data[4*i+2] = {1'b0, rs1_data[2*`BYTE_WIDTH +: `BYTE_WIDTH]};
-                    src1_data[4*i+3] = {1'b0, rs1_data[3*`BYTE_WIDTH +: `BYTE_WIDTH]};
-                  end
-                endcase
-              end
             end
 
             `ifdef ASSERT_ON
@@ -757,59 +390,6 @@ module rvv_backend_alu_unit_addsub
           VWSUBU: begin
             if (vs2_data_valid&vs1_data_valid&((vs2_eew==EEW8)|(vs2_eew==EEW16))) begin
               result_valid = 'b1;
-              
-              for(int i=0;i<`VLEN/`WORD_WIDTH;i=i+1) begin
-                case(vs2_eew)
-                  EEW8: begin
-                    if(uop_index[0]==1'b0) begin
-                      src2_data[4*i]   = {1'b0, vs2_data[(2*i)*`BYTE_WIDTH +: `BYTE_WIDTH]};
-                      src2_data[4*i+1] = 'b0;
-                      src2_data[4*i+2] = {1'b0, vs2_data[(2*i+1)*`BYTE_WIDTH +: `BYTE_WIDTH]};
-                      src2_data[4*i+3] = 'b0;
-
-                      src1_data[4*i]   = {1'b0, vs1_data[(2*i)*`BYTE_WIDTH +: `BYTE_WIDTH]};
-                      src1_data[4*i+1] = 'b0;
-                      src1_data[4*i+2] = {1'b0, vs1_data[(2*i+1)*`BYTE_WIDTH +: `BYTE_WIDTH]};
-                      src1_data[4*i+3] = 'b0;
-                    end
-                    else begin
-                      src2_data[4*i]   = {1'b0, vs2_data[`VLEN/2+(2*i  )*`BYTE_WIDTH +: `BYTE_WIDTH]};
-                      src2_data[4*i+1] = 'b0;
-                      src2_data[4*i+2] = {1'b0, vs2_data[`VLEN/2+(2*i+1)*`BYTE_WIDTH +: `BYTE_WIDTH]};
-                      src2_data[4*i+3] = 'b0;
-
-                      src1_data[4*i]   = {1'b0, vs1_data[`VLEN/2+(2*i  )*`BYTE_WIDTH +: `BYTE_WIDTH]};
-                      src1_data[4*i+1] = 'b0;
-                      src1_data[4*i+2] = {1'b0, vs1_data[`VLEN/2+(2*i+1)*`BYTE_WIDTH +: `BYTE_WIDTH]};
-                      src1_data[4*i+3] = 'b0;
-                    end
-                  end
-                  EEW16: begin
-                    if(uop_index[0]==1'b0) begin
-                      src2_data[4*i]   = {1'b0, vs2_data[(2*i  )*`BYTE_WIDTH +: `BYTE_WIDTH]};
-                      src2_data[4*i+1] = {1'b0, vs2_data[(2*i+1)*`BYTE_WIDTH +: `BYTE_WIDTH]};
-                      src2_data[4*i+2] = 'b0;
-                      src2_data[4*i+3] = 'b0;
-
-                      src1_data[4*i]   = {1'b0, vs1_data[(2*i  )*`BYTE_WIDTH +: `BYTE_WIDTH]};
-                      src1_data[4*i+1] = {1'b0, vs1_data[(2*i+1)*`BYTE_WIDTH +: `BYTE_WIDTH]};
-                      src1_data[4*i+2] = 'b0;
-                      src1_data[4*i+3] = 'b0;
-                    end
-                    else begin
-                      src2_data[4*i]   = {1'b0, vs2_data[`VLEN/2+(2*i  )*`BYTE_WIDTH +: `BYTE_WIDTH]};
-                      src2_data[4*i+1] = {1'b0, vs2_data[`VLEN/2+(2*i+1)*`BYTE_WIDTH +: `BYTE_WIDTH]};
-                      src2_data[4*i+2] = 'b0;
-                      src2_data[4*i+3] = 'b0;
-
-                      src1_data[4*i]   = {1'b0, vs1_data[`VLEN/2+(2*i  )*`BYTE_WIDTH +: `BYTE_WIDTH]};
-                      src1_data[4*i+1] = {1'b0, vs1_data[`VLEN/2+(2*i+1)*`BYTE_WIDTH +: `BYTE_WIDTH]};
-                      src1_data[4*i+2] = 'b0;
-                      src1_data[4*i+3] = 'b0;
-                    end
-                  end
-                endcase
-              end
             end
 
             `ifdef ASSERT_ON
@@ -828,60 +408,6 @@ module rvv_backend_alu_unit_addsub
           VWSUB: begin
             if (vs2_data_valid&vs1_data_valid&((vs2_eew==EEW8)|(vs2_eew==EEW16))) begin
               result_valid = 'b1;
-
-              for(int i=0;i<`VLEN/`WORD_WIDTH;i=i+1) begin
-                case(vs2_eew)
-                  EEW8: begin
-                    if(uop_index[0]==1'b0) begin
-                      src2_data[4*i]   = {vs2_data[(2*i+1)*`BYTE_WIDTH-1], vs2_data[(2*i  )*`BYTE_WIDTH +: `BYTE_WIDTH]};
-                      src2_data[4*i+1] = {(`BYTE_WIDTH+1){vs2_data[(2*i+1)*`BYTE_WIDTH-1]}};
-                      src2_data[4*i+2] = {vs2_data[(2*i+2)*`BYTE_WIDTH-1], vs2_data[(2*i+1)*`BYTE_WIDTH +: `BYTE_WIDTH]};
-                      src2_data[4*i+3] = {(`BYTE_WIDTH+1){vs2_data[(2*i+2)*`BYTE_WIDTH-1]}};
-
-                      src1_data[4*i]   = {vs1_data[(2*i+1)*`BYTE_WIDTH-1], vs1_data[(2*i  )*`BYTE_WIDTH +: `BYTE_WIDTH]};
-                      src1_data[4*i+1] = {(`BYTE_WIDTH+1){vs1_data[(2*i+1)*`BYTE_WIDTH-1]}};
-                      src1_data[4*i+2] = {vs1_data[(2*i+2)*`BYTE_WIDTH-1], vs1_data[(2*i+1)*`BYTE_WIDTH +: `BYTE_WIDTH]};
-                      src1_data[4*i+3] = {(`BYTE_WIDTH+1){vs1_data[(2*i+2)*`BYTE_WIDTH-1]}};
-                    end
-                    else begin
-                      src2_data[4*i]   = {vs2_data[`VLEN/2+(2*i+1)*`BYTE_WIDTH-1], vs2_data[`VLEN/2+(2*i  )*`BYTE_WIDTH +: `BYTE_WIDTH]};
-                      src2_data[4*i+1] = {(`BYTE_WIDTH+1){vs2_data[`VLEN/2+(2*i+1)*`BYTE_WIDTH-1]}};
-                      src2_data[4*i+2] = {vs2_data[`VLEN/2+(2*i+2)*`BYTE_WIDTH-1], vs2_data[`VLEN/2+(2*i+1)*`BYTE_WIDTH +: `BYTE_WIDTH]};
-                      src2_data[4*i+3] = {(`BYTE_WIDTH+1){vs2_data[`VLEN/2+(2*i+2)*`BYTE_WIDTH-1]}};
-
-
-                      src1_data[4*i]   = {vs1_data[`VLEN/2+(2*i+1)*`BYTE_WIDTH-1], vs1_data[`VLEN/2+(2*i  )*`BYTE_WIDTH +: `BYTE_WIDTH]};
-                      src1_data[4*i+1] = {(`BYTE_WIDTH+1){vs1_data[`VLEN/2+(2*i+1)*`BYTE_WIDTH-1]}};
-                      src1_data[4*i+2] = {vs1_data[`VLEN/2+(2*i+2)*`BYTE_WIDTH-1], vs1_data[`VLEN/2+(2*i+1)*`BYTE_WIDTH +: `BYTE_WIDTH]};
-                      src1_data[4*i+3] = {(`BYTE_WIDTH+1){vs1_data[`VLEN/2+(2*i+2)*`BYTE_WIDTH-1]}};
-                    end
-                  end
-                  EEW16: begin
-                    if(uop_index[0]==1'b0) begin
-                      src2_data[4*i]   = {vs2_data[(2*i+1)*`BYTE_WIDTH-1], vs2_data[(2*i  )*`BYTE_WIDTH +: `BYTE_WIDTH]};
-                      src2_data[4*i+1] = {vs2_data[(2*i+2)*`BYTE_WIDTH-1], vs2_data[(2*i+1)*`BYTE_WIDTH +: `BYTE_WIDTH]};
-                      src2_data[4*i+2] = {(`BYTE_WIDTH+1){vs2_data[(2*i+2)*`BYTE_WIDTH-1]}};
-                      src2_data[4*i+3] = {(`BYTE_WIDTH+1){vs2_data[(2*i+2)*`BYTE_WIDTH-1]}};
-
-                      src1_data[4*i]   = {vs1_data[(2*i+1)*`BYTE_WIDTH-1], vs1_data[(2*i  )*`BYTE_WIDTH +: `BYTE_WIDTH]};
-                      src1_data[4*i+1] = {vs1_data[(2*i+2)*`BYTE_WIDTH-1], vs1_data[(2*i+1)*`BYTE_WIDTH +: `BYTE_WIDTH]};
-                      src1_data[4*i+2] = {(`BYTE_WIDTH+1){vs1_data[(2*i+2)*`BYTE_WIDTH-1]}};
-                      src1_data[4*i+3] = {(`BYTE_WIDTH+1){vs1_data[(2*i+2)*`BYTE_WIDTH-1]}};
-                    end
-                    else begin
-                      src2_data[4*i]   = {vs2_data[`VLEN/2+(2*i+1)*`BYTE_WIDTH-1], vs2_data[`VLEN/2+(2*i  )*`BYTE_WIDTH +: `BYTE_WIDTH]};
-                      src2_data[4*i+1] = {vs2_data[`VLEN/2+(2*i+2)*`BYTE_WIDTH-1], vs2_data[`VLEN/2+(2*i+1)*`BYTE_WIDTH +: `BYTE_WIDTH]};
-                      src2_data[4*i+2] = {(`BYTE_WIDTH+1){vs2_data[`VLEN/2+(2*i+2)*`BYTE_WIDTH-1]}};
-                      src2_data[4*i+3] = {(`BYTE_WIDTH+1){vs2_data[`VLEN/2+(2*i+2)*`BYTE_WIDTH-1]}};
-
-                      src1_data[4*i]   = {vs1_data[`VLEN/2+(2*i+1)*`BYTE_WIDTH-1], vs1_data[`VLEN/2+(2*i  )*`BYTE_WIDTH +: `BYTE_WIDTH]};
-                      src1_data[4*i+1] = {vs1_data[`VLEN/2+(2*i+2)*`BYTE_WIDTH-1], vs1_data[`VLEN/2+(2*i+1)*`BYTE_WIDTH +: `BYTE_WIDTH]};
-                      src1_data[4*i+2] = {(`BYTE_WIDTH+1){vs1_data[`VLEN/2+(2*i+2)*`BYTE_WIDTH-1]}};
-                      src1_data[4*i+3] = {(`BYTE_WIDTH+1){vs1_data[`VLEN/2+(2*i+2)*`BYTE_WIDTH-1]}};
-                    end
-                  end
-                endcase
-              end
             end
 
             `ifdef ASSERT_ON
@@ -900,43 +426,6 @@ module rvv_backend_alu_unit_addsub
           VWSUBU_W: begin
             if (vs2_data_valid&vs1_data_valid&((vs2_eew==EEW16)|(vs2_eew==EEW32))) begin
               result_valid = 'b1;
-              
-              for(int i=0;i<`VLENB;i=i+1) begin
-                src2_data[i] = {1'b0, vs2_data[i*`BYTE_WIDTH +: `BYTE_WIDTH]};
-              end
-
-              for(int i=0;i<`VLEN/`WORD_WIDTH;i=i+1) begin
-                case(vs2_eew)
-                  EEW16: begin
-                    if(uop_index[0]==1'b0) begin
-                      src1_data[4*i]   = {1'b0, vs1_data[(2*i  )*`BYTE_WIDTH +: `BYTE_WIDTH]};
-                      src1_data[4*i+1] = 'b0;
-                      src1_data[4*i+2] = {1'b0, vs1_data[(2*i+1)*`BYTE_WIDTH +: `BYTE_WIDTH]};
-                      src1_data[4*i+3] = 'b0;
-                    end
-                    else begin
-                      src1_data[4*i]   = {1'b0, vs1_data[`VLEN/2+(2*i  )*`BYTE_WIDTH +: `BYTE_WIDTH]};
-                      src1_data[4*i+1] = 'b0; 
-                      src1_data[4*i+2] = {1'b0, vs1_data[`VLEN/2+(2*i+1)*`BYTE_WIDTH +: `BYTE_WIDTH]};
-                      src1_data[4*i+3] = 'b0;
-                    end
-                  end
-                  EEW32: begin
-                    if(uop_index[0]==1'b0) begin
-                      src1_data[4*i]   = {1'b0, vs1_data[(2*i  )*`BYTE_WIDTH +: `BYTE_WIDTH]};
-                      src1_data[4*i+1] = {1'b0, vs1_data[(2*i+1)*`BYTE_WIDTH +: `BYTE_WIDTH]};
-                      src1_data[4*i+2] = 'b0;
-                      src1_data[4*i+3] = 'b0;
-                    end
-                    else begin
-                      src1_data[4*i]   = {1'b0, vs1_data[`VLEN/2+(2*i  )*`BYTE_WIDTH +: `BYTE_WIDTH]};
-                      src1_data[4*i+1] = {1'b0, vs1_data[`VLEN/2+(2*i+1)*`BYTE_WIDTH +: `BYTE_WIDTH]};
-                      src1_data[4*i+2] = 'b0;
-                      src1_data[4*i+3] = 'b0;
-                    end
-                  end
-                endcase
-              end
             end
 
             `ifdef ASSERT_ON
@@ -955,43 +444,6 @@ module rvv_backend_alu_unit_addsub
           VWSUB_W: begin
             if (vs2_data_valid&vs1_data_valid&((vs2_eew==EEW16)|(vs2_eew==EEW32))) begin
               result_valid = 'b1;
-              
-              for(int i=0;i<`VLENB;i=i+1) begin
-                src2_data[i] = {vs2_data[(i+1)*`BYTE_WIDTH-1], vs2_data[i*`BYTE_WIDTH +: `BYTE_WIDTH]};
-              end
-
-              for(int i=0;i<`VLEN/`WORD_WIDTH;i=i+1) begin
-                case(vs2_eew)
-                  EEW16: begin
-                    if(uop_index[0]==1'b0) begin
-                      src1_data[4*i]   = {vs1_data[(2*i+1)*`BYTE_WIDTH-1], vs1_data[(2*i  )*`BYTE_WIDTH +: `BYTE_WIDTH]};
-                      src1_data[4*i+1] = {(`BYTE_WIDTH+1){vs1_data[(2*i+1)*`BYTE_WIDTH-1]}};
-                      src1_data[4*i+2] = {vs1_data[(2*i+2)*`BYTE_WIDTH-1], vs1_data[(2*i+1)*`BYTE_WIDTH +: `BYTE_WIDTH]};
-                      src1_data[4*i+3] = {(`BYTE_WIDTH+1){vs1_data[(2*i+2)*`BYTE_WIDTH-1]}};
-                    end
-                    else begin
-                      src1_data[4*i]   = {vs1_data[`VLEN/2+(2*i+1)*`BYTE_WIDTH-1], vs1_data[`VLEN/2+(2*i  )*`BYTE_WIDTH +: `BYTE_WIDTH]};
-                      src1_data[4*i+1] = {(`BYTE_WIDTH+1){vs1_data[`VLEN/2+(2*i+1)*`BYTE_WIDTH-1]}};
-                      src1_data[4*i+2] = {vs1_data[`VLEN/2+(2*i+2)*`BYTE_WIDTH-1], vs1_data[`VLEN/2+(2*i+1)*`BYTE_WIDTH +: `BYTE_WIDTH]};
-                      src1_data[4*i+3] = {(`BYTE_WIDTH+1){vs1_data[`VLEN/2+(2*i+2)*`BYTE_WIDTH-1]}};
-                    end
-                  end
-                  EEW32: begin
-                    if(uop_index[0]==1'b0) begin
-                      src1_data[4*i]   = {vs1_data[(2*i+1)*`BYTE_WIDTH-1], vs1_data[(2*i  )*`BYTE_WIDTH +: `BYTE_WIDTH]};
-                      src1_data[4*i+1] = {vs1_data[(2*i+2)*`BYTE_WIDTH-1], vs1_data[(2*i+1)*`BYTE_WIDTH +: `BYTE_WIDTH]};
-                      src1_data[4*i+2] = {(`BYTE_WIDTH+1){vs1_data[(2*i+2)*`BYTE_WIDTH-1]}};
-                      src1_data[4*i+3] = {(`BYTE_WIDTH+1){vs1_data[(2*i+2)*`BYTE_WIDTH-1]}};
-                    end
-                    else begin
-                      src1_data[4*i]   = {vs1_data[`VLEN/2+(2*i+1)*`BYTE_WIDTH-1], vs1_data[`VLEN/2+(2*i)*`BYTE_WIDTH +: `BYTE_WIDTH]};
-                      src1_data[4*i+1] = {vs1_data[`VLEN/2+(2*i+2)*`BYTE_WIDTH-1], vs1_data[`VLEN/2+(2*i+1)*`BYTE_WIDTH +: `BYTE_WIDTH]};
-                      src1_data[4*i+2] = {(`BYTE_WIDTH+1){vs1_data[`VLEN/2+(2*i+2)*`BYTE_WIDTH-1]}};
-                      src1_data[4*i+3] = {(`BYTE_WIDTH+1){vs1_data[`VLEN/2+(2*i+2)*`BYTE_WIDTH-1]}};
-                    end
-                  end
-                endcase
-              end
             end
 
             `ifdef ASSERT_ON
@@ -1010,11 +462,6 @@ module rvv_backend_alu_unit_addsub
           VASUBU: begin
             if (vs2_data_valid&vs1_data_valid) begin
               result_valid   = 'b1;
-
-              for(int i=0;i<`VLENB;i=i+1) begin
-                src2_data[i] = {1'b0, vs2_data[i*`BYTE_WIDTH +: `BYTE_WIDTH]};
-                src1_data[i] = {1'b0, vs1_data[i*`BYTE_WIDTH +: `BYTE_WIDTH]};
-              end
             end
 
             `ifdef ASSERT_ON
@@ -1030,11 +477,6 @@ module rvv_backend_alu_unit_addsub
           VASUB: begin
             if (vs2_data_valid&vs1_data_valid) begin
               result_valid = 'b1;
-
-              for(int i=0;i<`VLENB;i=i+1) begin
-                src2_data[i] = {vs2_data[(i+1)*`BYTE_WIDTH-1], vs2_data[i*`BYTE_WIDTH +: `BYTE_WIDTH]};
-                src1_data[i] = {vs1_data[(i+1)*`BYTE_WIDTH-1], vs1_data[i*`BYTE_WIDTH +: `BYTE_WIDTH]};
-              end
             end
 
             `ifdef ASSERT_ON
@@ -1054,49 +496,6 @@ module rvv_backend_alu_unit_addsub
           VWSUBU: begin
             if (vs2_data_valid&rs1_data_valid&((vs2_eew==EEW8)|(vs2_eew==EEW16))) begin
               result_valid = 'b1;
-              
-              for(int i=0;i<`VLEN/`WORD_WIDTH;i=i+1) begin
-                case(vs2_eew)
-                  EEW8: begin
-                    src1_data[4*i]   = {1'b0, rs1_data[0 +: `BYTE_WIDTH]};
-                    src1_data[4*i+1] = 'b0;
-                    src1_data[4*i+2] = {1'b0, rs1_data[0 +: `BYTE_WIDTH]};
-                    src1_data[4*i+3] = 'b0;
-
-                    if(uop_index[0]==1'b0) begin
-                      src2_data[4*i]   = {1'b0, vs2_data[(2*i  )*`BYTE_WIDTH +: `BYTE_WIDTH]};
-                      src2_data[4*i+1] = 'b0;
-                      src2_data[4*i+2] = {1'b0, vs2_data[(2*i+1)*`BYTE_WIDTH +: `BYTE_WIDTH]};
-                      src2_data[4*i+3] = 'b0;
-                    end
-                    else begin
-                      src2_data[4*i]   = {1'b0, vs2_data[`VLEN/2+(2*i  )*`BYTE_WIDTH +: `BYTE_WIDTH]};
-                      src2_data[4*i+1] = 'b0;
-                      src2_data[4*i+2] = {1'b0, vs2_data[`VLEN/2+(2*i+1)*`BYTE_WIDTH +: `BYTE_WIDTH]};
-                      src2_data[4*i+3] = 'b0;
-                    end
-                  end
-                  EEW16: begin
-                    src1_data[4*i]   = {1'b0, rs1_data[0 +: `BYTE_WIDTH]};
-                    src1_data[4*i+1] = {1'b0, rs1_data[`BYTE_WIDTH +: `BYTE_WIDTH]};
-                    src1_data[4*i+2] = 'b0;
-                    src1_data[4*i+3] = 'b0;
-
-                    if(uop_index[0]==1'b0) begin
-                      src2_data[4*i]   = {1'b0, vs2_data[(2*i  )*`BYTE_WIDTH +: `BYTE_WIDTH]};
-                      src2_data[4*i+1] = {1'b0, vs2_data[(2*i+1)*`BYTE_WIDTH +: `BYTE_WIDTH]};
-                      src2_data[4*i+2] = 'b0;
-                      src2_data[4*i+3] = 'b0;
-                    end
-                    else begin
-                      src2_data[4*i]   = {1'b0, vs2_data[`VLEN/2+(2*i  )*`BYTE_WIDTH +: `BYTE_WIDTH]};
-                      src2_data[4*i+1] = {1'b0, vs2_data[`VLEN/2+(2*i+1)*`BYTE_WIDTH +: `BYTE_WIDTH]};
-                      src2_data[4*i+2] = 'b0;
-                      src2_data[4*i+3] = 'b0;
-                    end
-                  end
-                endcase
-              end
             end
 
             `ifdef ASSERT_ON
@@ -1115,49 +514,6 @@ module rvv_backend_alu_unit_addsub
           VWSUB: begin
             if (vs2_data_valid&rs1_data_valid&((vs2_eew==EEW8)|(vs2_eew==EEW16))) begin
               result_valid = 'b1;
-              
-              for(int i=0;i<`VLEN/`WORD_WIDTH;i=i+1) begin
-                case(vs2_eew)
-                  EEW8: begin
-                    src1_data[4*i]   = {rs1_data[`BYTE_WIDTH-1], rs1_data[0 +: `BYTE_WIDTH]};
-                    src1_data[4*i+1] = {(`BYTE_WIDTH+1){rs1_data[`BYTE_WIDTH-1]}};
-                    src1_data[4*i+2] = {rs1_data[`BYTE_WIDTH-1], rs1_data[0 +: `BYTE_WIDTH]};
-                    src1_data[4*i+3] = {(`BYTE_WIDTH+1){rs1_data[`BYTE_WIDTH-1]}};
-
-                    if(uop_index[0]==1'b0) begin
-                      src2_data[4*i]   = {vs2_data[(2*i+1)*`BYTE_WIDTH-1], vs2_data[(2*i  )*`BYTE_WIDTH +: `BYTE_WIDTH]};
-                      src2_data[4*i+1] = {(`BYTE_WIDTH+1){vs2_data[(2*i+1)*`BYTE_WIDTH-1]}};
-                      src2_data[4*i+2] = {vs2_data[(2*i+2)*`BYTE_WIDTH-1], vs2_data[(2*i+1)*`BYTE_WIDTH +: `BYTE_WIDTH]};
-                      src2_data[4*i+3] = {(`BYTE_WIDTH+1){vs2_data[(2*i+2)*`BYTE_WIDTH-1]}};
-                    end
-                    else begin
-                      src2_data[4*i]   = {vs2_data[`VLEN/2+(2*i+1)*`BYTE_WIDTH-1], vs2_data[`VLEN/2+(2*i)*`BYTE_WIDTH +: `BYTE_WIDTH]};
-                      src2_data[4*i+1] = {(`BYTE_WIDTH+1){vs2_data[`VLEN/2+(2*i+1)*`BYTE_WIDTH-1]}};
-                      src2_data[4*i+2] = {vs2_data[`VLEN/2+(2*i+2)*`BYTE_WIDTH-1], vs2_data[`VLEN/2+(2*i+1)*`BYTE_WIDTH +: `BYTE_WIDTH]};
-                      src2_data[4*i+3] = {(`BYTE_WIDTH+1){vs2_data[`VLEN/2+(2*i+2)*`BYTE_WIDTH-1]}};
-                    end
-                  end
-                  EEW16: begin
-                    src1_data[4*i]   = {rs1_data[  `BYTE_WIDTH-1], rs1_data[0 +: `BYTE_WIDTH]};
-                    src1_data[4*i+1] = {rs1_data[2*`BYTE_WIDTH-1], rs1_data[`BYTE_WIDTH +: `BYTE_WIDTH]};
-                    src1_data[4*i+2] = {(`BYTE_WIDTH+1){rs1_data[2*`BYTE_WIDTH-1]}};
-                    src1_data[4*i+3] = {(`BYTE_WIDTH+1){rs1_data[2*`BYTE_WIDTH-1]}};
-
-                    if(uop_index[0]==1'b0) begin
-                      src2_data[4*i]   = {vs2_data[(2*i+1)*`BYTE_WIDTH-1], vs2_data[(2*i  )*`BYTE_WIDTH +: `BYTE_WIDTH]};
-                      src2_data[4*i+1] = {vs2_data[(2*i+2)*`BYTE_WIDTH-1], vs2_data[(2*i+1)*`BYTE_WIDTH +: `BYTE_WIDTH]};
-                      src2_data[4*i+2] = {(`BYTE_WIDTH+1){vs2_data[(2*i+2)*`BYTE_WIDTH-1]}};
-                      src2_data[4*i+3] = {(`BYTE_WIDTH+1){vs2_data[(2*i+2)*`BYTE_WIDTH-1]}};
-                    end
-                    else begin
-                      src2_data[4*i]   = {vs2_data[`VLEN/2+(2*i+1)*`BYTE_WIDTH-1], vs2_data[`VLEN/2+(2*i  )*`BYTE_WIDTH +: `BYTE_WIDTH]};
-                      src2_data[4*i+1] = {vs2_data[`VLEN/2+(2*i+2)*`BYTE_WIDTH-1], vs2_data[`VLEN/2+(2*i+1)*`BYTE_WIDTH +: `BYTE_WIDTH]};
-                      src2_data[4*i+2] = {(`BYTE_WIDTH+1){vs2_data[`VLEN/2+(2*i+2)*`BYTE_WIDTH-1]}};
-                      src2_data[4*i+3] = {(`BYTE_WIDTH+1){vs2_data[`VLEN/2+(2*i+2)*`BYTE_WIDTH-1]}};
-                    end
-                  end
-                endcase
-              end
             end
 
             `ifdef ASSERT_ON
@@ -1176,27 +532,6 @@ module rvv_backend_alu_unit_addsub
           VWSUBU_W: begin
             if (vs2_data_valid&rs1_data_valid&((vs2_eew==EEW16)|(vs2_eew==EEW32))) begin
               result_valid = 'b1;
-              
-              for(int i=0;i<`VLENB;i=i+1) begin
-                src2_data[i] = {1'b0, vs2_data[i*`BYTE_WIDTH +: `BYTE_WIDTH]};
-              end
-
-              for(int i=0;i<`VLEN/`WORD_WIDTH;i=i+1) begin
-                case(vs2_eew)
-                  EEW16: begin
-                    src1_data[4*i]   = {1'b0, rs1_data[0 +: `BYTE_WIDTH]};
-                    src1_data[4*i+1] = 'b0;
-                    src1_data[4*i+2] = {1'b0, rs1_data[0 +: `BYTE_WIDTH]};
-                    src1_data[4*i+3] = 'b0;
-                  end
-                  EEW32: begin
-                    src1_data[4*i]   = {1'b0, rs1_data[0 +: `BYTE_WIDTH]};
-                    src1_data[4*i+1] = {1'b0, rs1_data[`BYTE_WIDTH +: `BYTE_WIDTH]};
-                    src1_data[4*i+2] = 'b0;
-                    src1_data[4*i+3] = 'b0;
-                  end
-                endcase
-              end
             end
 
             `ifdef ASSERT_ON
@@ -1215,27 +550,6 @@ module rvv_backend_alu_unit_addsub
           VWSUB_W: begin
             if (vs2_data_valid&rs1_data_valid&((vs2_eew==EEW16)|(vs2_eew==EEW32))) begin
               result_valid = 'b1;
-              
-              for(int i=0;i<`VLENB;i=i+1) begin
-                src2_data[i] = {vs2_data[(i+1)*`BYTE_WIDTH-1], vs2_data[i*`BYTE_WIDTH +: `BYTE_WIDTH]};
-              end
-
-              for(int i=0;i<`VLEN/`WORD_WIDTH;i=i+1) begin
-                case(vs2_eew)
-                  EEW16: begin
-                    src1_data[4*i]   = {rs1_data[`BYTE_WIDTH-1], rs1_data[0 +: `BYTE_WIDTH]};
-                    src1_data[4*i+1] = {(`BYTE_WIDTH+1){rs1_data[`BYTE_WIDTH-1]}};
-                    src1_data[4*i+2] = {rs1_data[`BYTE_WIDTH-1], rs1_data[0 +: `BYTE_WIDTH]};
-                    src1_data[4*i+3] = {(`BYTE_WIDTH+1){rs1_data[`BYTE_WIDTH-1]}};
-                  end
-                  EEW32: begin
-                    src1_data[4*i]   = {rs1_data[  `BYTE_WIDTH-1], rs1_data[0           +: `BYTE_WIDTH]};
-                    src1_data[4*i+1] = {rs1_data[2*`BYTE_WIDTH-1], rs1_data[`BYTE_WIDTH +: `BYTE_WIDTH]};
-                    src1_data[4*i+2] = {(`BYTE_WIDTH+1){rs1_data[2*`BYTE_WIDTH-1]}};
-                    src1_data[4*i+3] = {(`BYTE_WIDTH+1){rs1_data[2*`BYTE_WIDTH-1]}};
-                  end
-                endcase
-              end
             end
 
             `ifdef ASSERT_ON
@@ -1254,33 +568,6 @@ module rvv_backend_alu_unit_addsub
           VASUBU: begin
             if (vs2_data_valid&rs1_data_valid) begin
               result_valid   = 'b1;
-              
-              for(int i=0;i<`VLENB;i=i+1) begin
-                src2_data[i]  = {1'b0, vs2_data[i*`BYTE_WIDTH +: `BYTE_WIDTH]};
-              end
-
-              for(int i=0;i<`VLEN/`WORD_WIDTH;i=i+1) begin
-                case(vs2_eew)
-                  EEW8: begin
-                    src1_data[4*i]   = {1'b0, rs1_data[0 +: `BYTE_WIDTH]};
-                    src1_data[4*i+1] = {1'b0, rs1_data[0 +: `BYTE_WIDTH]};
-                    src1_data[4*i+2] = {1'b0, rs1_data[0 +: `BYTE_WIDTH]};
-                    src1_data[4*i+3] = {1'b0, rs1_data[0 +: `BYTE_WIDTH]};
-                  end
-                  EEW16: begin  
-                    src1_data[4*i]   = {1'b0, rs1_data[0             +: `BYTE_WIDTH]};
-                    src1_data[4*i+1] = {1'b0, rs1_data[1*`BYTE_WIDTH +: `BYTE_WIDTH]};
-                    src1_data[4*i+2] = {1'b0, rs1_data[0             +: `BYTE_WIDTH]};
-                    src1_data[4*i+3] = {1'b0, rs1_data[1*`BYTE_WIDTH +: `BYTE_WIDTH]};
-                  end
-                  EEW32: begin 
-                    src1_data[4*i]   = {1'b0, rs1_data[0             +: `BYTE_WIDTH]};
-                    src1_data[4*i+1] = {1'b0, rs1_data[1*`BYTE_WIDTH +: `BYTE_WIDTH]};
-                    src1_data[4*i+2] = {1'b0, rs1_data[2*`BYTE_WIDTH +: `BYTE_WIDTH]};
-                    src1_data[4*i+3] = {1'b0, rs1_data[3*`BYTE_WIDTH +: `BYTE_WIDTH]};
-                  end
-                endcase
-              end
             end
 
             `ifdef ASSERT_ON
@@ -1296,33 +583,6 @@ module rvv_backend_alu_unit_addsub
           VASUB: begin
             if (vs2_data_valid&rs1_data_valid) begin
               result_valid   = 'b1;
-              
-              for(int i=0;i<`VLENB;i=i+1) begin
-                src2_data[i]  = {vs2_data[(i+1)*`BYTE_WIDTH-1], vs2_data[i*`BYTE_WIDTH +: `BYTE_WIDTH]};
-              end
-
-              for(int i=0;i<`VLEN/`WORD_WIDTH;i=i+1) begin
-                case(vs2_eew)
-                  EEW8: begin
-                    src1_data[4*i]   = {rs1_data[`BYTE_WIDTH-1], rs1_data[0 +: `BYTE_WIDTH]};
-                    src1_data[4*i+1] = {rs1_data[`BYTE_WIDTH-1], rs1_data[0 +: `BYTE_WIDTH]};
-                    src1_data[4*i+2] = {rs1_data[`BYTE_WIDTH-1], rs1_data[0 +: `BYTE_WIDTH]};
-                    src1_data[4*i+3] = {rs1_data[`BYTE_WIDTH-1], rs1_data[0 +: `BYTE_WIDTH]};
-                  end
-                  EEW16: begin  
-                    src1_data[4*i]   = {rs1_data[1*`BYTE_WIDTH-1], rs1_data[0             +: `BYTE_WIDTH]};
-                    src1_data[4*i+1] = {rs1_data[2*`BYTE_WIDTH-1], rs1_data[1*`BYTE_WIDTH +: `BYTE_WIDTH]};
-                    src1_data[4*i+2] = {rs1_data[1*`BYTE_WIDTH-1], rs1_data[0             +: `BYTE_WIDTH]};
-                    src1_data[4*i+3] = {rs1_data[2*`BYTE_WIDTH-1], rs1_data[1*`BYTE_WIDTH +: `BYTE_WIDTH]};
-                  end
-                  EEW32: begin 
-                    src1_data[4*i]   = {rs1_data[1*`BYTE_WIDTH-1], rs1_data[0             +: `BYTE_WIDTH]};
-                    src1_data[4*i+1] = {rs1_data[2*`BYTE_WIDTH-1], rs1_data[1*`BYTE_WIDTH +: `BYTE_WIDTH]};
-                    src1_data[4*i+2] = {rs1_data[3*`BYTE_WIDTH-1], rs1_data[2*`BYTE_WIDTH +: `BYTE_WIDTH]};
-                    src1_data[4*i+3] = {rs1_data[4*`BYTE_WIDTH-1], rs1_data[3*`BYTE_WIDTH +: `BYTE_WIDTH]};
-                  end
-                endcase
-              end
             end
 
             `ifdef ASSERT_ON
@@ -1332,6 +592,775 @@ module rvv_backend_alu_unit_addsub
               assert(rs1_data_valid==1'b1)
                 else $error("rs1_data_valid(%d) should be 1.\n",rs1_data_valid);
             `endif
+          end
+        endcase
+      end
+    endcase
+  end
+ 
+  // prepare source data
+  always_comb begin
+    // initial the data
+    src2_data    = 'b0;
+    src1_data    = 'b0;
+
+    case(uop_funct3) 
+      OPIVV: begin
+        case(uop_funct6.ari_funct6)
+          VADD,
+          VSUB,
+          VSADD,
+          VSSUB: begin
+            for(int i=0;i<`VLENB;i=i+1) begin
+              src2_data[i] = {vs2_data[(i+1)*`BYTE_WIDTH-1], vs2_data[i*`BYTE_WIDTH +: `BYTE_WIDTH]};
+              src1_data[i] = {vs1_data[(i+1)*`BYTE_WIDTH-1], vs1_data[i*`BYTE_WIDTH +: `BYTE_WIDTH]};
+            end
+          end
+
+          VADC,
+          VSBC: begin
+            for(int i=0;i<`VLENB;i=i+1) begin
+              src2_data[i] = {vs2_data[(i+1)*`BYTE_WIDTH-1], vs2_data[i*`BYTE_WIDTH +: `BYTE_WIDTH]};
+              src1_data[i] = {vs1_data[(i+1)*`BYTE_WIDTH-1], vs1_data[i*`BYTE_WIDTH +: `BYTE_WIDTH]};
+            end
+          end
+
+          VMADC,
+          VMSBC: begin
+            for(int i=0;i<`VLENB;i=i+1) begin
+              src2_data[i] = {vs2_data[(i+1)*`BYTE_WIDTH-1], vs2_data[i*`BYTE_WIDTH +: `BYTE_WIDTH]};
+              src1_data[i] = {vs1_data[(i+1)*`BYTE_WIDTH-1], vs1_data[i*`BYTE_WIDTH +: `BYTE_WIDTH]};
+            end
+          end
+
+          VSADDU,
+          VSSUBU: begin
+            for(int i=0;i<`VLENB;i=i+1) begin
+              src2_data[i] = {1'b0, vs2_data[i*`BYTE_WIDTH +: `BYTE_WIDTH]};
+              src1_data[i] = {1'b0, vs1_data[i*`BYTE_WIDTH +: `BYTE_WIDTH]};
+            end
+          end
+        endcase
+      end
+
+      OPIVX: begin
+        case(uop_funct6.ari_funct6)
+          VADD,
+          VSUB,
+          VSADD,
+          VSSUB: begin
+            for(int i=0;i<`VLENB;i=i+1) begin
+              src2_data[i] = {vs2_data[(i+1)*`BYTE_WIDTH-1], vs2_data[i*`BYTE_WIDTH +: `BYTE_WIDTH]};
+            end
+
+            for(int i=0;i<`VLEN/`WORD_WIDTH;i=i+1) begin
+              case(vs2_eew)
+                EEW8: begin
+                  src1_data[4*i]   = {rs1_data[`BYTE_WIDTH-1], rs1_data[0 +: `BYTE_WIDTH]};
+                  src1_data[4*i+1] = {rs1_data[`BYTE_WIDTH-1], rs1_data[0 +: `BYTE_WIDTH]};
+                  src1_data[4*i+2] = {rs1_data[`BYTE_WIDTH-1], rs1_data[0 +: `BYTE_WIDTH]};
+                  src1_data[4*i+3] = {rs1_data[`BYTE_WIDTH-1], rs1_data[0 +: `BYTE_WIDTH]};
+                end
+                EEW16: begin  
+                  src1_data[4*i]   = {rs1_data[1*`BYTE_WIDTH-1], rs1_data[0             +: `BYTE_WIDTH]};
+                  src1_data[4*i+1] = {rs1_data[2*`BYTE_WIDTH-1], rs1_data[1*`BYTE_WIDTH +: `BYTE_WIDTH]};
+                  src1_data[4*i+2] = {rs1_data[1*`BYTE_WIDTH-1], rs1_data[0             +: `BYTE_WIDTH]};
+                  src1_data[4*i+3] = {rs1_data[2*`BYTE_WIDTH-1], rs1_data[1*`BYTE_WIDTH +: `BYTE_WIDTH]};
+                end
+                EEW32: begin 
+                  src1_data[4*i]   = {rs1_data[1*`BYTE_WIDTH-1], rs1_data[0             +: `BYTE_WIDTH]};
+                  src1_data[4*i+1] = {rs1_data[2*`BYTE_WIDTH-1], rs1_data[1*`BYTE_WIDTH +: `BYTE_WIDTH]};
+                  src1_data[4*i+2] = {rs1_data[3*`BYTE_WIDTH-1], rs1_data[2*`BYTE_WIDTH +: `BYTE_WIDTH]};
+                  src1_data[4*i+3] = {rs1_data[4*`BYTE_WIDTH-1], rs1_data[3*`BYTE_WIDTH +: `BYTE_WIDTH]};
+                end
+              endcase
+            end
+          end
+          
+          VRSUB: begin
+            for(int i=0;i<`VLEN/`WORD_WIDTH;i=i+1) begin
+              case(vs2_eew)
+                EEW8: begin
+                  src2_data[4*i]   = {rs1_data[`BYTE_WIDTH-1], rs1_data[0 +: `BYTE_WIDTH]};
+                  src2_data[4*i+1] = {rs1_data[`BYTE_WIDTH-1], rs1_data[0 +: `BYTE_WIDTH]};
+                  src2_data[4*i+2] = {rs1_data[`BYTE_WIDTH-1], rs1_data[0 +: `BYTE_WIDTH]};
+                  src2_data[4*i+3] = {rs1_data[`BYTE_WIDTH-1], rs1_data[0 +: `BYTE_WIDTH]};
+                end
+                EEW16: begin  
+                  src2_data[4*i]   = {rs1_data[1*`BYTE_WIDTH-1], rs1_data[0             +: `BYTE_WIDTH]};
+                  src2_data[4*i+1] = {rs1_data[2*`BYTE_WIDTH-1], rs1_data[1*`BYTE_WIDTH +: `BYTE_WIDTH]};
+                  src2_data[4*i+2] = {rs1_data[1*`BYTE_WIDTH-1], rs1_data[0             +: `BYTE_WIDTH]};
+                  src2_data[4*i+3] = {rs1_data[2*`BYTE_WIDTH-1], rs1_data[1*`BYTE_WIDTH +: `BYTE_WIDTH]};
+                end
+                EEW32: begin 
+                  src2_data[4*i]   = {rs1_data[1*`BYTE_WIDTH-1], rs1_data[0             +: `BYTE_WIDTH]};
+                  src2_data[4*i+1] = {rs1_data[2*`BYTE_WIDTH-1], rs1_data[1*`BYTE_WIDTH +: `BYTE_WIDTH]};
+                  src2_data[4*i+2] = {rs1_data[3*`BYTE_WIDTH-1], rs1_data[2*`BYTE_WIDTH +: `BYTE_WIDTH]};
+                  src2_data[4*i+3] = {rs1_data[4*`BYTE_WIDTH-1], rs1_data[3*`BYTE_WIDTH +: `BYTE_WIDTH]};
+                end
+              endcase
+            end
+            
+            for(int i=0;i<`VLENB;i=i+1) begin
+              src1_data[i] = {vs2_data[(i+1)*`BYTE_WIDTH-1], vs2_data[i*`BYTE_WIDTH +: `BYTE_WIDTH]};
+            end
+          end
+
+          VADC,
+          VSBC: begin
+            for(int i=0;i<`VLENB;i=i+1) begin
+              src2_data[i] = {vs2_data[(i+1)*`BYTE_WIDTH-1], vs2_data[i*`BYTE_WIDTH +: `BYTE_WIDTH]};
+            end
+
+            for(int i=0;i<`VLEN/`WORD_WIDTH;i=i+1) begin
+              case(vs2_eew)
+                EEW8: begin
+                  src1_data[4*i]   = {rs1_data[`BYTE_WIDTH-1], rs1_data[0 +: `BYTE_WIDTH]};
+                  src1_data[4*i+1] = {rs1_data[`BYTE_WIDTH-1], rs1_data[0 +: `BYTE_WIDTH]};
+                  src1_data[4*i+2] = {rs1_data[`BYTE_WIDTH-1], rs1_data[0 +: `BYTE_WIDTH]};
+                  src1_data[4*i+3] = {rs1_data[`BYTE_WIDTH-1], rs1_data[0 +: `BYTE_WIDTH]};
+                end
+                EEW16: begin  
+                  src1_data[4*i]   = {rs1_data[1*`BYTE_WIDTH-1], rs1_data[0             +: `BYTE_WIDTH]};
+                  src1_data[4*i+1] = {rs1_data[2*`BYTE_WIDTH-1], rs1_data[1*`BYTE_WIDTH +: `BYTE_WIDTH]};
+                  src1_data[4*i+2] = {rs1_data[1*`BYTE_WIDTH-1], rs1_data[0             +: `BYTE_WIDTH]};
+                  src1_data[4*i+3] = {rs1_data[2*`BYTE_WIDTH-1], rs1_data[1*`BYTE_WIDTH +: `BYTE_WIDTH]};
+                end
+                EEW32: begin 
+                  src1_data[4*i]   = {rs1_data[1*`BYTE_WIDTH-1], rs1_data[0             +: `BYTE_WIDTH]};
+                  src1_data[4*i+1] = {rs1_data[2*`BYTE_WIDTH-1], rs1_data[1*`BYTE_WIDTH +: `BYTE_WIDTH]};
+                  src1_data[4*i+2] = {rs1_data[3*`BYTE_WIDTH-1], rs1_data[2*`BYTE_WIDTH +: `BYTE_WIDTH]};
+                  src1_data[4*i+3] = {rs1_data[4*`BYTE_WIDTH-1], rs1_data[3*`BYTE_WIDTH +: `BYTE_WIDTH]};
+                end
+              endcase
+            end
+          end
+
+          VMADC,
+          VMSBC: begin
+            for(int i=0;i<`VLENB;i=i+1) begin
+              src2_data[i] = {vs2_data[(i+1)*`BYTE_WIDTH-1], vs2_data[i*`BYTE_WIDTH +: `BYTE_WIDTH]};
+            end
+
+            for(int i=0;i<`VLEN/`WORD_WIDTH;i=i+1) begin
+              case(vs2_eew)
+                EEW8: begin
+                  src1_data[4*i]   = {rs1_data[`BYTE_WIDTH-1], rs1_data[0 +: `BYTE_WIDTH]};
+                  src1_data[4*i+1] = {rs1_data[`BYTE_WIDTH-1], rs1_data[0 +: `BYTE_WIDTH]};
+                  src1_data[4*i+2] = {rs1_data[`BYTE_WIDTH-1], rs1_data[0 +: `BYTE_WIDTH]};
+                  src1_data[4*i+3] = {rs1_data[`BYTE_WIDTH-1], rs1_data[0 +: `BYTE_WIDTH]};
+                end
+                EEW16: begin  
+                  src1_data[4*i]   = {rs1_data[1*`BYTE_WIDTH-1], rs1_data[0             +: `BYTE_WIDTH]};
+                  src1_data[4*i+1] = {rs1_data[2*`BYTE_WIDTH-1], rs1_data[1*`BYTE_WIDTH +: `BYTE_WIDTH]};
+                  src1_data[4*i+2] = {rs1_data[1*`BYTE_WIDTH-1], rs1_data[0             +: `BYTE_WIDTH]};
+                  src1_data[4*i+3] = {rs1_data[2*`BYTE_WIDTH-1], rs1_data[1*`BYTE_WIDTH +: `BYTE_WIDTH]};
+                end
+                EEW32: begin 
+                  src1_data[4*i]   = {rs1_data[1*`BYTE_WIDTH-1], rs1_data[0             +: `BYTE_WIDTH]};
+                  src1_data[4*i+1] = {rs1_data[2*`BYTE_WIDTH-1], rs1_data[1*`BYTE_WIDTH +: `BYTE_WIDTH]};
+                  src1_data[4*i+2] = {rs1_data[3*`BYTE_WIDTH-1], rs1_data[2*`BYTE_WIDTH +: `BYTE_WIDTH]};
+                  src1_data[4*i+3] = {rs1_data[4*`BYTE_WIDTH-1], rs1_data[3*`BYTE_WIDTH +: `BYTE_WIDTH]};
+                end
+              endcase
+            end
+          end
+
+          VSADDU,
+          VSSUBU: begin
+            for(int i=0;i<`VLENB;i=i+1) begin
+              src2_data[i] = {1'b0, vs2_data[i*`BYTE_WIDTH +: `BYTE_WIDTH]};
+            end
+
+            for(int i=0;i<`VLEN/`WORD_WIDTH;i=i+1) begin
+              case(vs2_eew)
+                EEW8: begin
+                  src1_data[4*i]   = {1'b0, rs1_data[0 +: `BYTE_WIDTH]};
+                  src1_data[4*i+1] = {1'b0, rs1_data[0 +: `BYTE_WIDTH]};
+                  src1_data[4*i+2] = {1'b0, rs1_data[0 +: `BYTE_WIDTH]};
+                  src1_data[4*i+3] = {1'b0, rs1_data[0 +: `BYTE_WIDTH]};
+                end
+                EEW16: begin  
+                  src1_data[4*i]   = {1'b0, rs1_data[0             +: `BYTE_WIDTH]};
+                  src1_data[4*i+1] = {1'b0, rs1_data[1*`BYTE_WIDTH +: `BYTE_WIDTH]};
+                  src1_data[4*i+2] = {1'b0, rs1_data[0             +: `BYTE_WIDTH]};
+                  src1_data[4*i+3] = {1'b0, rs1_data[1*`BYTE_WIDTH +: `BYTE_WIDTH]};
+                end
+                EEW32: begin 
+                  src1_data[4*i]   = {1'b0, rs1_data[0             +: `BYTE_WIDTH]};
+                  src1_data[4*i+1] = {1'b0, rs1_data[1*`BYTE_WIDTH +: `BYTE_WIDTH]};
+                  src1_data[4*i+2] = {1'b0, rs1_data[2*`BYTE_WIDTH +: `BYTE_WIDTH]};
+                  src1_data[4*i+3] = {1'b0, rs1_data[3*`BYTE_WIDTH +: `BYTE_WIDTH]};
+                end
+              endcase
+            end
+          end
+        endcase
+      end
+
+      OPIVI: begin
+        case(uop_funct6.ari_funct6)
+          VADD,
+          VSADD: begin
+            for(int i=0;i<`VLENB;i=i+1) begin
+              src2_data[i] = {vs2_data[(i+1)*`BYTE_WIDTH-1], vs2_data[i*`BYTE_WIDTH +: `BYTE_WIDTH]};
+            end
+
+            for(int i=0;i<`VLEN/`WORD_WIDTH;i=i+1) begin
+              case(vs2_eew)
+                EEW8: begin
+                  src1_data[4*i]   = {rs1_data[`BYTE_WIDTH-1], rs1_data[0 +: `BYTE_WIDTH]};
+                  src1_data[4*i+1] = {rs1_data[`BYTE_WIDTH-1], rs1_data[0 +: `BYTE_WIDTH]};
+                  src1_data[4*i+2] = {rs1_data[`BYTE_WIDTH-1], rs1_data[0 +: `BYTE_WIDTH]};
+                  src1_data[4*i+3] = {rs1_data[`BYTE_WIDTH-1], rs1_data[0 +: `BYTE_WIDTH]};
+                end
+                EEW16: begin  
+                  src1_data[4*i]   = {rs1_data[1*`BYTE_WIDTH-1], rs1_data[0             +: `BYTE_WIDTH]};
+                  src1_data[4*i+1] = {rs1_data[2*`BYTE_WIDTH-1], rs1_data[1*`BYTE_WIDTH +: `BYTE_WIDTH]};
+                  src1_data[4*i+2] = {rs1_data[1*`BYTE_WIDTH-1], rs1_data[0             +: `BYTE_WIDTH]};
+                  src1_data[4*i+3] = {rs1_data[2*`BYTE_WIDTH-1], rs1_data[1*`BYTE_WIDTH +: `BYTE_WIDTH]};
+                end
+                EEW32: begin 
+                  src1_data[4*i]   = {rs1_data[1*`BYTE_WIDTH-1], rs1_data[0             +: `BYTE_WIDTH]};
+                  src1_data[4*i+1] = {rs1_data[2*`BYTE_WIDTH-1], rs1_data[1*`BYTE_WIDTH +: `BYTE_WIDTH]};
+                  src1_data[4*i+2] = {rs1_data[3*`BYTE_WIDTH-1], rs1_data[2*`BYTE_WIDTH +: `BYTE_WIDTH]};
+                  src1_data[4*i+3] = {rs1_data[4*`BYTE_WIDTH-1], rs1_data[3*`BYTE_WIDTH +: `BYTE_WIDTH]};
+                end
+              endcase
+            end
+          end
+          
+          VRSUB: begin
+            for(int i=0;i<`VLEN/`WORD_WIDTH;i=i+1) begin
+              case(vs2_eew)
+                EEW8: begin
+                  src2_data[4*i]   = {rs1_data[`BYTE_WIDTH-1], rs1_data[0 +: `BYTE_WIDTH]};
+                  src2_data[4*i+1] = {rs1_data[`BYTE_WIDTH-1], rs1_data[0 +: `BYTE_WIDTH]};
+                  src2_data[4*i+2] = {rs1_data[`BYTE_WIDTH-1], rs1_data[0 +: `BYTE_WIDTH]};
+                  src2_data[4*i+3] = {rs1_data[`BYTE_WIDTH-1], rs1_data[0 +: `BYTE_WIDTH]};
+                end
+                EEW16: begin  
+                  src2_data[4*i]   = {rs1_data[1*`BYTE_WIDTH-1], rs1_data[0             +: `BYTE_WIDTH]};
+                  src2_data[4*i+1] = {rs1_data[2*`BYTE_WIDTH-1], rs1_data[1*`BYTE_WIDTH +: `BYTE_WIDTH]};
+                  src2_data[4*i+2] = {rs1_data[1*`BYTE_WIDTH-1], rs1_data[0             +: `BYTE_WIDTH]};
+                  src2_data[4*i+3] = {rs1_data[2*`BYTE_WIDTH-1], rs1_data[1*`BYTE_WIDTH +: `BYTE_WIDTH]};
+                end
+                EEW32: begin 
+                  src2_data[4*i]   = {rs1_data[1*`BYTE_WIDTH-1], rs1_data[0             +: `BYTE_WIDTH]};
+                  src2_data[4*i+1] = {rs1_data[2*`BYTE_WIDTH-1], rs1_data[1*`BYTE_WIDTH +: `BYTE_WIDTH]};
+                  src2_data[4*i+2] = {rs1_data[3*`BYTE_WIDTH-1], rs1_data[2*`BYTE_WIDTH +: `BYTE_WIDTH]};
+                  src2_data[4*i+3] = {rs1_data[4*`BYTE_WIDTH-1], rs1_data[3*`BYTE_WIDTH +: `BYTE_WIDTH]};
+                end
+              endcase
+            end
+
+            for(int i=0;i<`VLENB;i=i+1) begin
+              src1_data[i] = {vs2_data[(i+1)*`BYTE_WIDTH-1], vs2_data[i*`BYTE_WIDTH +: `BYTE_WIDTH]};
+            end
+          end
+
+          VADC: begin
+            for(int i=0;i<`VLENB;i=i+1) begin
+              src2_data[i] = {vs2_data[(i+1)*`BYTE_WIDTH-1], vs2_data[i*`BYTE_WIDTH +: `BYTE_WIDTH]};
+            end
+
+            for(int i=0;i<`VLEN/`WORD_WIDTH;i=i+1) begin
+              case(vs2_eew)
+                EEW8: begin
+                  src2_data[4*i]   = {rs1_data[`BYTE_WIDTH-1], rs1_data[0 +: `BYTE_WIDTH]};
+                  src2_data[4*i+1] = {rs1_data[`BYTE_WIDTH-1], rs1_data[0 +: `BYTE_WIDTH]};
+                  src2_data[4*i+2] = {rs1_data[`BYTE_WIDTH-1], rs1_data[0 +: `BYTE_WIDTH]};
+                  src2_data[4*i+3] = {rs1_data[`BYTE_WIDTH-1], rs1_data[0 +: `BYTE_WIDTH]};
+                end
+                EEW16: begin  
+                  src2_data[4*i]   = {rs1_data[1*`BYTE_WIDTH-1], rs1_data[0           +: `BYTE_WIDTH]};
+                  src2_data[4*i+1] = {rs1_data[2*`BYTE_WIDTH-1], rs1_data[`BYTE_WIDTH +: `BYTE_WIDTH]};
+                  src2_data[4*i+2] = {rs1_data[1*`BYTE_WIDTH-1], rs1_data[0           +: `BYTE_WIDTH]};
+                  src2_data[4*i+3] = {rs1_data[2*`BYTE_WIDTH-1], rs1_data[`BYTE_WIDTH +: `BYTE_WIDTH]};
+                end
+                EEW32: begin 
+                  src2_data[4*i]   = {rs1_data[1*`BYTE_WIDTH-1], rs1_data[0             +: `BYTE_WIDTH]};
+                  src2_data[4*i+1] = {rs1_data[2*`BYTE_WIDTH-1], rs1_data[1*`BYTE_WIDTH +: `BYTE_WIDTH]};
+                  src2_data[4*i+2] = {rs1_data[3*`BYTE_WIDTH-1], rs1_data[2*`BYTE_WIDTH +: `BYTE_WIDTH]};
+                  src2_data[4*i+3] = {rs1_data[4*`BYTE_WIDTH-1], rs1_data[3*`BYTE_WIDTH +: `BYTE_WIDTH]};
+                end
+              endcase
+            end
+          end
+          
+          VMADC: begin
+            for(int i=0;i<`VLENB;i=i+1) begin
+              src2_data[i] = {vs2_data[(i+1)*`BYTE_WIDTH-1], vs2_data[i*`BYTE_WIDTH +: `BYTE_WIDTH]};
+            end
+
+            for(int i=0;i<`VLEN/`WORD_WIDTH;i=i+1) begin
+              case(vs2_eew)
+                EEW8: begin
+                  src1_data[4*i]   = {rs1_data[`BYTE_WIDTH-1], rs1_data[0 +: `BYTE_WIDTH]};
+                  src1_data[4*i+1] = {rs1_data[`BYTE_WIDTH-1], rs1_data[0 +: `BYTE_WIDTH]};
+                  src1_data[4*i+2] = {rs1_data[`BYTE_WIDTH-1], rs1_data[0 +: `BYTE_WIDTH]};
+                  src1_data[4*i+3] = {rs1_data[`BYTE_WIDTH-1], rs1_data[0 +: `BYTE_WIDTH]};
+                end
+                EEW16: begin  
+                  src1_data[4*i]   = {rs1_data[1*`BYTE_WIDTH-1], rs1_data[0             +: `BYTE_WIDTH]};
+                  src1_data[4*i+1] = {rs1_data[2*`BYTE_WIDTH-1], rs1_data[1*`BYTE_WIDTH +: `BYTE_WIDTH]};
+                  src1_data[4*i+2] = {rs1_data[1*`BYTE_WIDTH-1], rs1_data[0             +: `BYTE_WIDTH]};
+                  src1_data[4*i+3] = {rs1_data[2*`BYTE_WIDTH-1], rs1_data[1*`BYTE_WIDTH +: `BYTE_WIDTH]};
+                end
+                EEW32: begin 
+                  src1_data[4*i]   = {rs1_data[1*`BYTE_WIDTH-1], rs1_data[0             +: `BYTE_WIDTH]};
+                  src1_data[4*i+1] = {rs1_data[2*`BYTE_WIDTH-1], rs1_data[1*`BYTE_WIDTH +: `BYTE_WIDTH]};
+                  src1_data[4*i+2] = {rs1_data[3*`BYTE_WIDTH-1], rs1_data[2*`BYTE_WIDTH +: `BYTE_WIDTH]};
+                  src1_data[4*i+3] = {rs1_data[4*`BYTE_WIDTH-1], rs1_data[3*`BYTE_WIDTH +: `BYTE_WIDTH]};
+                end
+              endcase
+            end
+          end
+
+          VSADDU: begin
+            for(int i=0;i<`VLENB;i=i+1) begin
+              src2_data[i] = {1'b0, vs2_data[i*`BYTE_WIDTH +: `BYTE_WIDTH]};
+            end
+
+            for(int i=0;i<`VLEN/`WORD_WIDTH;i=i+1) begin
+              case(vs2_eew)
+                EEW8: begin
+                  src1_data[4*i]   = {1'b0, rs1_data[0 +: `BYTE_WIDTH]};
+                  src1_data[4*i+1] = {1'b0, rs1_data[0 +: `BYTE_WIDTH]};
+                  src1_data[4*i+2] = {1'b0, rs1_data[0 +: `BYTE_WIDTH]};
+                  src1_data[4*i+3] = {1'b0, rs1_data[0 +: `BYTE_WIDTH]};
+                end
+                EEW16: begin  
+                  src1_data[4*i]   = {1'b0, rs1_data[0             +: `BYTE_WIDTH]};
+                  src1_data[4*i+1] = {1'b0, rs1_data[1*`BYTE_WIDTH +: `BYTE_WIDTH]};
+                  src1_data[4*i+2] = {1'b0, rs1_data[0             +: `BYTE_WIDTH]};
+                  src1_data[4*i+3] = {1'b0, rs1_data[1*`BYTE_WIDTH +: `BYTE_WIDTH]};
+                end
+                EEW32: begin 
+                  src1_data[4*i]   = {1'b0, rs1_data[0             +: `BYTE_WIDTH]};
+                  src1_data[4*i+1] = {1'b0, rs1_data[1*`BYTE_WIDTH +: `BYTE_WIDTH]};
+                  src1_data[4*i+2] = {1'b0, rs1_data[2*`BYTE_WIDTH +: `BYTE_WIDTH]};
+                  src1_data[4*i+3] = {1'b0, rs1_data[3*`BYTE_WIDTH +: `BYTE_WIDTH]};
+                end
+              endcase
+            end
+          end
+        endcase
+      end
+
+      OPMVV: begin
+        case(uop_funct6.ari_funct6)
+          VWADDU,
+          VWSUBU: begin
+            for(int i=0;i<`VLEN/`WORD_WIDTH;i=i+1) begin
+              case(vs2_eew)
+                EEW8: begin
+                  if(uop_index[0]==1'b0) begin
+                    src2_data[4*i]   = {1'b0, vs2_data[(2*i)*`BYTE_WIDTH +: `BYTE_WIDTH]};
+                    src2_data[4*i+1] = 'b0;
+                    src2_data[4*i+2] = {1'b0, vs2_data[(2*i+1)*`BYTE_WIDTH +: `BYTE_WIDTH]};
+                    src2_data[4*i+3] = 'b0;
+
+                    src1_data[4*i]   = {1'b0, vs1_data[(2*i)*`BYTE_WIDTH +: `BYTE_WIDTH]};
+                    src1_data[4*i+1] = 'b0;
+                    src1_data[4*i+2] = {1'b0, vs1_data[(2*i+1)*`BYTE_WIDTH +: `BYTE_WIDTH]};
+                    src1_data[4*i+3] = 'b0;
+                  end
+                  else begin
+                    src2_data[4*i]   = {1'b0, vs2_data[`VLEN/2+(2*i  )*`BYTE_WIDTH +: `BYTE_WIDTH]};
+                    src2_data[4*i+1] = 'b0;
+                    src2_data[4*i+2] = {1'b0, vs2_data[`VLEN/2+(2*i+1)*`BYTE_WIDTH +: `BYTE_WIDTH]};
+                    src2_data[4*i+3] = 'b0;
+
+                    src1_data[4*i]   = {1'b0, vs1_data[`VLEN/2+(2*i  )*`BYTE_WIDTH +: `BYTE_WIDTH]};
+                    src1_data[4*i+1] = 'b0;
+                    src1_data[4*i+2] = {1'b0, vs1_data[`VLEN/2+(2*i+1)*`BYTE_WIDTH +: `BYTE_WIDTH]};
+                    src1_data[4*i+3] = 'b0;
+                  end
+                end
+                EEW16: begin
+                  if(uop_index[0]==1'b0) begin
+                    src2_data[4*i]   = {1'b0, vs2_data[(2*i  )*`BYTE_WIDTH +: `BYTE_WIDTH]};
+                    src2_data[4*i+1] = {1'b0, vs2_data[(2*i+1)*`BYTE_WIDTH +: `BYTE_WIDTH]};
+                    src2_data[4*i+2] = 'b0;
+                    src2_data[4*i+3] = 'b0;
+
+                    src1_data[4*i]   = {1'b0, vs1_data[(2*i  )*`BYTE_WIDTH +: `BYTE_WIDTH]};
+                    src1_data[4*i+1] = {1'b0, vs1_data[(2*i+1)*`BYTE_WIDTH +: `BYTE_WIDTH]};
+                    src1_data[4*i+2] = 'b0;
+                    src1_data[4*i+3] = 'b0;
+                  end
+                  else begin
+                    src2_data[4*i]   = {1'b0, vs2_data[`VLEN/2+(2*i  )*`BYTE_WIDTH +: `BYTE_WIDTH]};
+                    src2_data[4*i+1] = {1'b0, vs2_data[`VLEN/2+(2*i+1)*`BYTE_WIDTH +: `BYTE_WIDTH]};
+                    src2_data[4*i+2] = 'b0;
+                    src2_data[4*i+3] = 'b0;
+
+                    src1_data[4*i]   = {1'b0, vs1_data[`VLEN/2+(2*i  )*`BYTE_WIDTH +: `BYTE_WIDTH]};
+                    src1_data[4*i+1] = {1'b0, vs1_data[`VLEN/2+(2*i+1)*`BYTE_WIDTH +: `BYTE_WIDTH]};
+                    src1_data[4*i+2] = 'b0;
+                    src1_data[4*i+3] = 'b0;
+                  end
+                end
+              endcase
+            end
+          end
+
+          VWADD,
+          VWSUB: begin
+            for(int i=0;i<`VLEN/`WORD_WIDTH;i=i+1) begin
+              case(vs2_eew)
+                EEW8: begin
+                  if(uop_index[0]==1'b0) begin
+                    src2_data[4*i]   = {vs2_data[(2*i+1)*`BYTE_WIDTH-1], vs2_data[(2*i  )*`BYTE_WIDTH +: `BYTE_WIDTH]};
+                    src2_data[4*i+1] = {(`BYTE_WIDTH+1){vs2_data[(2*i+1)*`BYTE_WIDTH-1]}};
+                    src2_data[4*i+2] = {vs2_data[(2*i+2)*`BYTE_WIDTH-1], vs2_data[(2*i+1)*`BYTE_WIDTH +: `BYTE_WIDTH]};
+                    src2_data[4*i+3] = {(`BYTE_WIDTH+1){vs2_data[(2*i+2)*`BYTE_WIDTH-1]}};
+
+                    src1_data[4*i]   = {vs1_data[(2*i+1)*`BYTE_WIDTH-1], vs1_data[(2*i  )*`BYTE_WIDTH +: `BYTE_WIDTH]};
+                    src1_data[4*i+1] = {(`BYTE_WIDTH+1){vs1_data[(2*i+1)*`BYTE_WIDTH-1]}};
+                    src1_data[4*i+2] = {vs1_data[(2*i+2)*`BYTE_WIDTH-1], vs1_data[(2*i+1)*`BYTE_WIDTH +: `BYTE_WIDTH]};
+                    src1_data[4*i+3] = {(`BYTE_WIDTH+1){vs1_data[(2*i+2)*`BYTE_WIDTH-1]}};
+                  end
+                  else begin
+                    src2_data[4*i]   = {vs2_data[`VLEN/2+(2*i+1)*`BYTE_WIDTH-1], vs2_data[`VLEN/2+(2*i  )*`BYTE_WIDTH +: `BYTE_WIDTH]};
+                    src2_data[4*i+1] = {(`BYTE_WIDTH+1){vs2_data[`VLEN/2+(2*i+1)*`BYTE_WIDTH-1]}};
+                    src2_data[4*i+2] = {vs2_data[`VLEN/2+(2*i+2)*`BYTE_WIDTH-1], vs2_data[`VLEN/2+(2*i+1)*`BYTE_WIDTH +: `BYTE_WIDTH]};
+                    src2_data[4*i+3] = {(`BYTE_WIDTH+1){vs2_data[`VLEN/2+(2*i+2)*`BYTE_WIDTH-1]}};
+
+
+                    src1_data[4*i]   = {vs1_data[`VLEN/2+(2*i+1)*`BYTE_WIDTH-1], vs1_data[`VLEN/2+(2*i  )*`BYTE_WIDTH +: `BYTE_WIDTH]};
+                    src1_data[4*i+1] = {(`BYTE_WIDTH+1){vs1_data[`VLEN/2+(2*i+1)*`BYTE_WIDTH-1]}};
+                    src1_data[4*i+2] = {vs1_data[`VLEN/2+(2*i+2)*`BYTE_WIDTH-1], vs1_data[`VLEN/2+(2*i+1)*`BYTE_WIDTH +: `BYTE_WIDTH]};
+                    src1_data[4*i+3] = {(`BYTE_WIDTH+1){vs1_data[`VLEN/2+(2*i+2)*`BYTE_WIDTH-1]}};
+                  end
+                end
+                EEW16: begin
+                  if(uop_index[0]==1'b0) begin
+                    src2_data[4*i]   = {vs2_data[(2*i+1)*`BYTE_WIDTH-1], vs2_data[(2*i  )*`BYTE_WIDTH +: `BYTE_WIDTH]};
+                    src2_data[4*i+1] = {vs2_data[(2*i+2)*`BYTE_WIDTH-1], vs2_data[(2*i+1)*`BYTE_WIDTH +: `BYTE_WIDTH]};
+                    src2_data[4*i+2] = {(`BYTE_WIDTH+1){vs2_data[(2*i+2)*`BYTE_WIDTH-1]}};
+                    src2_data[4*i+3] = {(`BYTE_WIDTH+1){vs2_data[(2*i+2)*`BYTE_WIDTH-1]}};
+
+                    src1_data[4*i]   = {vs1_data[(2*i+1)*`BYTE_WIDTH-1], vs1_data[(2*i  )*`BYTE_WIDTH +: `BYTE_WIDTH]};
+                    src1_data[4*i+1] = {vs1_data[(2*i+2)*`BYTE_WIDTH-1], vs1_data[(2*i+1)*`BYTE_WIDTH +: `BYTE_WIDTH]};
+                    src1_data[4*i+2] = {(`BYTE_WIDTH+1){vs1_data[(2*i+2)*`BYTE_WIDTH-1]}};
+                    src1_data[4*i+3] = {(`BYTE_WIDTH+1){vs1_data[(2*i+2)*`BYTE_WIDTH-1]}};
+                  end
+                  else begin
+                    src2_data[4*i]   = {vs2_data[`VLEN/2+(2*i+1)*`BYTE_WIDTH-1], vs2_data[`VLEN/2+(2*i  )*`BYTE_WIDTH +: `BYTE_WIDTH]};
+                    src2_data[4*i+1] = {vs2_data[`VLEN/2+(2*i+2)*`BYTE_WIDTH-1], vs2_data[`VLEN/2+(2*i+1)*`BYTE_WIDTH +: `BYTE_WIDTH]};
+                    src2_data[4*i+2] = {(`BYTE_WIDTH+1){vs2_data[`VLEN/2+(2*i+2)*`BYTE_WIDTH-1]}};
+                    src2_data[4*i+3] = {(`BYTE_WIDTH+1){vs2_data[`VLEN/2+(2*i+2)*`BYTE_WIDTH-1]}};
+
+                    src1_data[4*i]   = {vs1_data[`VLEN/2+(2*i+1)*`BYTE_WIDTH-1], vs1_data[`VLEN/2+(2*i  )*`BYTE_WIDTH +: `BYTE_WIDTH]};
+                    src1_data[4*i+1] = {vs1_data[`VLEN/2+(2*i+2)*`BYTE_WIDTH-1], vs1_data[`VLEN/2+(2*i+1)*`BYTE_WIDTH +: `BYTE_WIDTH]};
+                    src1_data[4*i+2] = {(`BYTE_WIDTH+1){vs1_data[`VLEN/2+(2*i+2)*`BYTE_WIDTH-1]}};
+                    src1_data[4*i+3] = {(`BYTE_WIDTH+1){vs1_data[`VLEN/2+(2*i+2)*`BYTE_WIDTH-1]}};
+                  end
+                end
+              endcase
+            end
+          end
+
+          VWADDU_W,
+          VWSUBU_W: begin
+            for(int i=0;i<`VLENB;i=i+1) begin
+              src2_data[i] = {1'b0, vs2_data[i*`BYTE_WIDTH +: `BYTE_WIDTH]};
+            end
+
+            for(int i=0;i<`VLEN/`WORD_WIDTH;i=i+1) begin
+              case(vs2_eew)
+                EEW16: begin
+                  if(uop_index[0]==1'b0) begin
+                    src1_data[4*i]   = {1'b0, vs1_data[(2*i  )*`BYTE_WIDTH +: `BYTE_WIDTH]};
+                    src1_data[4*i+1] = 'b0;
+                    src1_data[4*i+2] = {1'b0, vs1_data[(2*i+1)*`BYTE_WIDTH +: `BYTE_WIDTH]};
+                    src1_data[4*i+3] = 'b0;
+                  end
+                  else begin
+                    src1_data[4*i]   = {1'b0, vs1_data[`VLEN/2+(2*i  )*`BYTE_WIDTH +: `BYTE_WIDTH]};
+                    src1_data[4*i+1] = 'b0; 
+                    src1_data[4*i+2] = {1'b0, vs1_data[`VLEN/2+(2*i+1)*`BYTE_WIDTH +: `BYTE_WIDTH]};
+                    src1_data[4*i+3] = 'b0;
+                  end
+                end
+                EEW32: begin
+                  if(uop_index[0]==1'b0) begin
+                    src1_data[4*i]   = {1'b0, vs1_data[(2*i  )*`BYTE_WIDTH +: `BYTE_WIDTH]};
+                    src1_data[4*i+1] = {1'b0, vs1_data[(2*i+1)*`BYTE_WIDTH +: `BYTE_WIDTH]};
+                    src1_data[4*i+2] = 'b0;
+                    src1_data[4*i+3] = 'b0;
+                  end
+                  else begin
+                    src1_data[4*i]   = {1'b0, vs1_data[`VLEN/2+(2*i  )*`BYTE_WIDTH +: `BYTE_WIDTH]};
+                    src1_data[4*i+1] = {1'b0, vs1_data[`VLEN/2+(2*i+1)*`BYTE_WIDTH +: `BYTE_WIDTH]};
+                    src1_data[4*i+2] = 'b0;
+                    src1_data[4*i+3] = 'b0;
+                  end
+                end
+              endcase
+            end
+          end
+
+          VWADD_W,
+          VWSUB_W: begin
+            for(int i=0;i<`VLENB;i=i+1) begin
+              src2_data[i] = {vs2_data[(i+1)*`BYTE_WIDTH-1], vs2_data[i*`BYTE_WIDTH +: `BYTE_WIDTH]};
+            end
+
+            for(int i=0;i<`VLEN/`WORD_WIDTH;i=i+1) begin
+              case(vs2_eew)
+                EEW16: begin
+                  if(uop_index[0]==1'b0) begin
+                    src1_data[4*i]   = {vs1_data[(2*i+1)*`BYTE_WIDTH-1], vs1_data[(2*i  )*`BYTE_WIDTH +: `BYTE_WIDTH]};
+                    src1_data[4*i+1] = {(`BYTE_WIDTH+1){vs1_data[(2*i+1)*`BYTE_WIDTH-1]}};
+                    src1_data[4*i+2] = {vs1_data[(2*i+2)*`BYTE_WIDTH-1], vs1_data[(2*i+1)*`BYTE_WIDTH +: `BYTE_WIDTH]};
+                    src1_data[4*i+3] = {(`BYTE_WIDTH+1){vs1_data[(2*i+2)*`BYTE_WIDTH-1]}};
+                  end
+                  else begin
+                    src1_data[4*i]   = {vs1_data[`VLEN/2+(2*i+1)*`BYTE_WIDTH-1], vs1_data[`VLEN/2+(2*i  )*`BYTE_WIDTH +: `BYTE_WIDTH]};
+                    src1_data[4*i+1] = {(`BYTE_WIDTH+1){vs1_data[`VLEN/2+(2*i+1)*`BYTE_WIDTH-1]}};
+                    src1_data[4*i+2] = {vs1_data[`VLEN/2+(2*i+2)*`BYTE_WIDTH-1], vs1_data[`VLEN/2+(2*i+1)*`BYTE_WIDTH +: `BYTE_WIDTH]};
+                    src1_data[4*i+3] = {(`BYTE_WIDTH+1){vs1_data[`VLEN/2+(2*i+2)*`BYTE_WIDTH-1]}};
+                  end
+                end
+                EEW32: begin
+                  if(uop_index[0]==1'b0) begin
+                    src1_data[4*i]   = {vs1_data[(2*i+1)*`BYTE_WIDTH-1], vs1_data[(2*i  )*`BYTE_WIDTH +: `BYTE_WIDTH]};
+                    src1_data[4*i+1] = {vs1_data[(2*i+2)*`BYTE_WIDTH-1], vs1_data[(2*i+1)*`BYTE_WIDTH +: `BYTE_WIDTH]};
+                    src1_data[4*i+2] = {(`BYTE_WIDTH+1){vs1_data[(2*i+2)*`BYTE_WIDTH-1]}};
+                    src1_data[4*i+3] = {(`BYTE_WIDTH+1){vs1_data[(2*i+2)*`BYTE_WIDTH-1]}};
+                  end
+                  else begin
+                    src1_data[4*i]   = {vs1_data[`VLEN/2+(2*i+1)*`BYTE_WIDTH-1], vs1_data[`VLEN/2+(2*i)*`BYTE_WIDTH +: `BYTE_WIDTH]};
+                    src1_data[4*i+1] = {vs1_data[`VLEN/2+(2*i+2)*`BYTE_WIDTH-1], vs1_data[`VLEN/2+(2*i+1)*`BYTE_WIDTH +: `BYTE_WIDTH]};
+                    src1_data[4*i+2] = {(`BYTE_WIDTH+1){vs1_data[`VLEN/2+(2*i+2)*`BYTE_WIDTH-1]}};
+                    src1_data[4*i+3] = {(`BYTE_WIDTH+1){vs1_data[`VLEN/2+(2*i+2)*`BYTE_WIDTH-1]}};
+                  end
+                end
+              endcase
+            end
+          end
+
+          VAADDU,
+          VASUBU: begin
+            for(int i=0;i<`VLENB;i=i+1) begin
+              src2_data[i] = {1'b0, vs2_data[i*`BYTE_WIDTH +: `BYTE_WIDTH]};
+              src1_data[i] = {1'b0, vs1_data[i*`BYTE_WIDTH +: `BYTE_WIDTH]};
+            end
+          end
+
+          VAADD,
+          VASUB: begin
+            for(int i=0;i<`VLENB;i=i+1) begin
+              src2_data[i] = {vs2_data[(i+1)*`BYTE_WIDTH-1], vs2_data[i*`BYTE_WIDTH +: `BYTE_WIDTH]};
+              src1_data[i] = {vs1_data[(i+1)*`BYTE_WIDTH-1], vs1_data[i*`BYTE_WIDTH +: `BYTE_WIDTH]};
+            end
+          end
+        endcase
+      end
+      
+      OPMVX: begin
+        case(uop_funct6.ari_funct6)
+          VWADDU,
+          VWSUBU: begin
+            for(int i=0;i<`VLEN/`WORD_WIDTH;i=i+1) begin
+              case(vs2_eew)
+                EEW8: begin
+                  src1_data[4*i]   = {1'b0, rs1_data[0 +: `BYTE_WIDTH]};
+                  src1_data[4*i+1] = 'b0;
+                  src1_data[4*i+2] = {1'b0, rs1_data[0 +: `BYTE_WIDTH]};
+                  src1_data[4*i+3] = 'b0;
+
+                  if(uop_index[0]==1'b0) begin
+                    src2_data[4*i]   = {1'b0, vs2_data[(2*i  )*`BYTE_WIDTH +: `BYTE_WIDTH]};
+                    src2_data[4*i+1] = 'b0;
+                    src2_data[4*i+2] = {1'b0, vs2_data[(2*i+1)*`BYTE_WIDTH +: `BYTE_WIDTH]};
+                    src2_data[4*i+3] = 'b0;
+                  end
+                  else begin
+                    src2_data[4*i]   = {1'b0, vs2_data[`VLEN/2+(2*i  )*`BYTE_WIDTH +: `BYTE_WIDTH]};
+                    src2_data[4*i+1] = 'b0;
+                    src2_data[4*i+2] = {1'b0, vs2_data[`VLEN/2+(2*i+1)*`BYTE_WIDTH +: `BYTE_WIDTH]};
+                    src2_data[4*i+3] = 'b0;
+                  end
+                end
+                EEW16: begin
+                  src1_data[4*i]   = {1'b0, rs1_data[0 +: `BYTE_WIDTH]};
+                  src1_data[4*i+1] = {1'b0, rs1_data[`BYTE_WIDTH +: `BYTE_WIDTH]};
+                  src1_data[4*i+2] = 'b0;
+                  src1_data[4*i+3] = 'b0;
+
+                  if(uop_index[0]==1'b0) begin
+                    src2_data[4*i]   = {1'b0, vs2_data[(2*i  )*`BYTE_WIDTH +: `BYTE_WIDTH]};
+                    src2_data[4*i+1] = {1'b0, vs2_data[(2*i+1)*`BYTE_WIDTH +: `BYTE_WIDTH]};
+                    src2_data[4*i+2] = 'b0;
+                    src2_data[4*i+3] = 'b0;
+                  end
+                  else begin
+                    src2_data[4*i]   = {1'b0, vs2_data[`VLEN/2+(2*i  )*`BYTE_WIDTH +: `BYTE_WIDTH]};
+                    src2_data[4*i+1] = {1'b0, vs2_data[`VLEN/2+(2*i+1)*`BYTE_WIDTH +: `BYTE_WIDTH]};
+                    src2_data[4*i+2] = 'b0;
+                    src2_data[4*i+3] = 'b0;
+                  end
+                end
+              endcase
+            end
+          end
+
+          VWADD,
+          VWSUB: begin
+            for(int i=0;i<`VLEN/`WORD_WIDTH;i=i+1) begin
+              case(vs2_eew)
+                EEW8: begin
+                  src1_data[4*i]   = {rs1_data[`BYTE_WIDTH-1], rs1_data[0 +: `BYTE_WIDTH]};
+                  src1_data[4*i+1] = {(`BYTE_WIDTH+1){rs1_data[`BYTE_WIDTH-1]}};
+                  src1_data[4*i+2] = {rs1_data[`BYTE_WIDTH-1], rs1_data[0 +: `BYTE_WIDTH]};
+                  src1_data[4*i+3] = {(`BYTE_WIDTH+1){rs1_data[`BYTE_WIDTH-1]}};
+
+                  if(uop_index[0]==1'b0) begin
+                    src2_data[4*i]   = {vs2_data[(2*i+1)*`BYTE_WIDTH-1], vs2_data[(2*i  )*`BYTE_WIDTH +: `BYTE_WIDTH]};
+                    src2_data[4*i+1] = {(`BYTE_WIDTH+1){vs2_data[(2*i+1)*`BYTE_WIDTH-1]}};
+                    src2_data[4*i+2] = {vs2_data[(2*i+2)*`BYTE_WIDTH-1], vs2_data[(2*i+1)*`BYTE_WIDTH +: `BYTE_WIDTH]};
+                    src2_data[4*i+3] = {(`BYTE_WIDTH+1){vs2_data[(2*i+2)*`BYTE_WIDTH-1]}};
+                  end
+                  else begin
+                    src2_data[4*i]   = {vs2_data[`VLEN/2+(2*i+1)*`BYTE_WIDTH-1], vs2_data[`VLEN/2+(2*i)*`BYTE_WIDTH +: `BYTE_WIDTH]};
+                    src2_data[4*i+1] = {(`BYTE_WIDTH+1){vs2_data[`VLEN/2+(2*i+1)*`BYTE_WIDTH-1]}};
+                    src2_data[4*i+2] = {vs2_data[`VLEN/2+(2*i+2)*`BYTE_WIDTH-1], vs2_data[`VLEN/2+(2*i+1)*`BYTE_WIDTH +: `BYTE_WIDTH]};
+                    src2_data[4*i+3] = {(`BYTE_WIDTH+1){vs2_data[`VLEN/2+(2*i+2)*`BYTE_WIDTH-1]}};
+                  end
+                end
+                EEW16: begin
+                  src1_data[4*i]   = {rs1_data[  `BYTE_WIDTH-1], rs1_data[0 +: `BYTE_WIDTH]};
+                  src1_data[4*i+1] = {rs1_data[2*`BYTE_WIDTH-1], rs1_data[`BYTE_WIDTH +: `BYTE_WIDTH]};
+                  src1_data[4*i+2] = {(`BYTE_WIDTH+1){rs1_data[2*`BYTE_WIDTH-1]}};
+                  src1_data[4*i+3] = {(`BYTE_WIDTH+1){rs1_data[2*`BYTE_WIDTH-1]}};
+
+                  if(uop_index[0]==1'b0) begin
+                    src2_data[4*i]   = {vs2_data[(2*i+1)*`BYTE_WIDTH-1], vs2_data[(2*i  )*`BYTE_WIDTH +: `BYTE_WIDTH]};
+                    src2_data[4*i+1] = {vs2_data[(2*i+2)*`BYTE_WIDTH-1], vs2_data[(2*i+1)*`BYTE_WIDTH +: `BYTE_WIDTH]};
+                    src2_data[4*i+2] = {(`BYTE_WIDTH+1){vs2_data[(2*i+2)*`BYTE_WIDTH-1]}};
+                    src2_data[4*i+3] = {(`BYTE_WIDTH+1){vs2_data[(2*i+2)*`BYTE_WIDTH-1]}};
+                  end
+                  else begin
+                    src2_data[4*i]   = {vs2_data[`VLEN/2+(2*i+1)*`BYTE_WIDTH-1], vs2_data[`VLEN/2+(2*i  )*`BYTE_WIDTH +: `BYTE_WIDTH]};
+                    src2_data[4*i+1] = {vs2_data[`VLEN/2+(2*i+2)*`BYTE_WIDTH-1], vs2_data[`VLEN/2+(2*i+1)*`BYTE_WIDTH +: `BYTE_WIDTH]};
+                    src2_data[4*i+2] = {(`BYTE_WIDTH+1){vs2_data[`VLEN/2+(2*i+2)*`BYTE_WIDTH-1]}};
+                    src2_data[4*i+3] = {(`BYTE_WIDTH+1){vs2_data[`VLEN/2+(2*i+2)*`BYTE_WIDTH-1]}};
+                  end
+                end
+              endcase
+            end
+          end
+
+          VWADDU_W,
+          VWSUBU_W: begin
+            for(int i=0;i<`VLENB;i=i+1) begin
+              src2_data[i] = {1'b0, vs2_data[i*`BYTE_WIDTH +: `BYTE_WIDTH]};
+            end
+
+            for(int i=0;i<`VLEN/`WORD_WIDTH;i=i+1) begin
+              case(vs2_eew)
+                EEW16: begin
+                  src1_data[4*i]   = {1'b0, rs1_data[0 +: `BYTE_WIDTH]};
+                  src1_data[4*i+1] = 'b0;
+                  src1_data[4*i+2] = {1'b0, rs1_data[0 +: `BYTE_WIDTH]};
+                  src1_data[4*i+3] = 'b0;
+                end
+                EEW32: begin
+                  src1_data[4*i]   = {1'b0, rs1_data[0 +: `BYTE_WIDTH]};
+                  src1_data[4*i+1] = {1'b0, rs1_data[`BYTE_WIDTH +: `BYTE_WIDTH]};
+                  src1_data[4*i+2] = 'b0;
+                  src1_data[4*i+3] = 'b0;
+                end
+              endcase
+            end
+          end
+
+          VWADD_W,
+          VWSUB_W: begin
+            for(int i=0;i<`VLENB;i=i+1) begin
+              src2_data[i] = {vs2_data[(i+1)*`BYTE_WIDTH-1], vs2_data[i*`BYTE_WIDTH +: `BYTE_WIDTH]};
+            end
+
+            for(int i=0;i<`VLEN/`WORD_WIDTH;i=i+1) begin
+              case(vs2_eew)
+                EEW16: begin
+                  src1_data[4*i]   = {rs1_data[`BYTE_WIDTH-1], rs1_data[0 +: `BYTE_WIDTH]};
+                  src1_data[4*i+1] = {(`BYTE_WIDTH+1){rs1_data[`BYTE_WIDTH-1]}};
+                  src1_data[4*i+2] = {rs1_data[`BYTE_WIDTH-1], rs1_data[0 +: `BYTE_WIDTH]};
+                  src1_data[4*i+3] = {(`BYTE_WIDTH+1){rs1_data[`BYTE_WIDTH-1]}};
+                end
+                EEW32: begin
+                  src1_data[4*i]   = {rs1_data[  `BYTE_WIDTH-1], rs1_data[0           +: `BYTE_WIDTH]};
+                  src1_data[4*i+1] = {rs1_data[2*`BYTE_WIDTH-1], rs1_data[`BYTE_WIDTH +: `BYTE_WIDTH]};
+                  src1_data[4*i+2] = {(`BYTE_WIDTH+1){rs1_data[2*`BYTE_WIDTH-1]}};
+                  src1_data[4*i+3] = {(`BYTE_WIDTH+1){rs1_data[2*`BYTE_WIDTH-1]}};
+                end
+              endcase
+            end
+          end
+
+          VAADDU,
+          VASUBU: begin
+            for(int i=0;i<`VLENB;i=i+1) begin
+              src2_data[i]  = {1'b0, vs2_data[i*`BYTE_WIDTH +: `BYTE_WIDTH]};
+            end
+
+            for(int i=0;i<`VLEN/`WORD_WIDTH;i=i+1) begin
+              case(vs2_eew)
+                EEW8: begin
+                  src1_data[4*i]   = {1'b0, rs1_data[0 +: `BYTE_WIDTH]};
+                  src1_data[4*i+1] = {1'b0, rs1_data[0 +: `BYTE_WIDTH]};
+                  src1_data[4*i+2] = {1'b0, rs1_data[0 +: `BYTE_WIDTH]};
+                  src1_data[4*i+3] = {1'b0, rs1_data[0 +: `BYTE_WIDTH]};
+                end
+                EEW16: begin  
+                  src1_data[4*i]   = {1'b0, rs1_data[0             +: `BYTE_WIDTH]};
+                  src1_data[4*i+1] = {1'b0, rs1_data[1*`BYTE_WIDTH +: `BYTE_WIDTH]};
+                  src1_data[4*i+2] = {1'b0, rs1_data[0             +: `BYTE_WIDTH]};
+                  src1_data[4*i+3] = {1'b0, rs1_data[1*`BYTE_WIDTH +: `BYTE_WIDTH]};
+                end
+                EEW32: begin 
+                  src1_data[4*i]   = {1'b0, rs1_data[0             +: `BYTE_WIDTH]};
+                  src1_data[4*i+1] = {1'b0, rs1_data[1*`BYTE_WIDTH +: `BYTE_WIDTH]};
+                  src1_data[4*i+2] = {1'b0, rs1_data[2*`BYTE_WIDTH +: `BYTE_WIDTH]};
+                  src1_data[4*i+3] = {1'b0, rs1_data[3*`BYTE_WIDTH +: `BYTE_WIDTH]};
+                end
+              endcase
+            end
+          end
+
+          VAADD,
+          VASUB: begin
+            for(int i=0;i<`VLENB;i=i+1) begin
+              src2_data[i]  = {vs2_data[(i+1)*`BYTE_WIDTH-1], vs2_data[i*`BYTE_WIDTH +: `BYTE_WIDTH]};
+            end
+
+            for(int i=0;i<`VLEN/`WORD_WIDTH;i=i+1) begin
+              case(vs2_eew)
+                EEW8: begin
+                  src1_data[4*i]   = {rs1_data[`BYTE_WIDTH-1], rs1_data[0 +: `BYTE_WIDTH]};
+                  src1_data[4*i+1] = {rs1_data[`BYTE_WIDTH-1], rs1_data[0 +: `BYTE_WIDTH]};
+                  src1_data[4*i+2] = {rs1_data[`BYTE_WIDTH-1], rs1_data[0 +: `BYTE_WIDTH]};
+                  src1_data[4*i+3] = {rs1_data[`BYTE_WIDTH-1], rs1_data[0 +: `BYTE_WIDTH]};
+                end
+                EEW16: begin  
+                  src1_data[4*i]   = {rs1_data[1*`BYTE_WIDTH-1], rs1_data[0             +: `BYTE_WIDTH]};
+                  src1_data[4*i+1] = {rs1_data[2*`BYTE_WIDTH-1], rs1_data[1*`BYTE_WIDTH +: `BYTE_WIDTH]};
+                  src1_data[4*i+2] = {rs1_data[1*`BYTE_WIDTH-1], rs1_data[0             +: `BYTE_WIDTH]};
+                  src1_data[4*i+3] = {rs1_data[2*`BYTE_WIDTH-1], rs1_data[1*`BYTE_WIDTH +: `BYTE_WIDTH]};
+                end
+                EEW32: begin 
+                  src1_data[4*i]   = {rs1_data[1*`BYTE_WIDTH-1], rs1_data[0             +: `BYTE_WIDTH]};
+                  src1_data[4*i+1] = {rs1_data[2*`BYTE_WIDTH-1], rs1_data[1*`BYTE_WIDTH +: `BYTE_WIDTH]};
+                  src1_data[4*i+2] = {rs1_data[3*`BYTE_WIDTH-1], rs1_data[2*`BYTE_WIDTH +: `BYTE_WIDTH]};
+                  src1_data[4*i+3] = {rs1_data[4*`BYTE_WIDTH-1], rs1_data[3*`BYTE_WIDTH +: `BYTE_WIDTH]};
+                end
+              endcase
+            end
           end
         endcase
       end
@@ -1379,14 +1408,6 @@ module rvv_backend_alu_unit_addsub
                     end
                   endcase
                 end
-
-                `ifdef ASSERT_ON
-                  assert(vm==1'b0)
-                    else $error("vm(%d) should be 0.\n",vm);
-
-                  assert(v0_data_valid==1'b1)
-                    else $error("v0_data_valid(%d) should be 1.\n",v0_data_valid);
-                `endif
               end
             endcase
           end
@@ -2052,16 +2073,16 @@ module rvv_backend_alu_unit_addsub
       OPIVI: begin
         case(uop_funct6.ari_funct6)
           VSADDU: begin
-            vxsat = (|addu_upoverflow);
+            vxsat = (addu_upoverflow!='b0);
           end
           VSADD: begin
-            vxsat = (|add_upoverflow) || (|add_underoverflow);
+            vxsat = ({add_upoverflow,add_underoverflow}!='b0);
           end
           VSSUBU: begin
-            vxsat = (|subu_underoverflow);
+            vxsat = (subu_underoverflow!='b0);
           end
           VSUB: begin
-            vxsat = (|sub_upoverflow) || (|sub_underoverflow);
+            vxsat = ({sub_upoverflow,sub_underoverflow}!='b0);
           end
         endcase
       end
@@ -2128,7 +2149,7 @@ module rvv_backend_alu_unit_addsub
     logic [`BYTE_WIDTH:0]       y;
     
     if (opcode==ADDSUB_VADD) begin
-      y = src_cin ? 'b1 : 'b0; 
+      y = src_cin; 
     end
     else begin
       y = src_cin ? '1 : 'b0;
@@ -2146,7 +2167,7 @@ module rvv_backend_alu_unit_addsub
     logic [`HWORD_WIDTH:0]       y;
     
     if (opcode==ADDSUB_VADD) begin
-      y = src_cin ? 'b1 : 'b0; 
+      y = src_cin; 
     end
     else begin
       y = src_cin ? '1 : 'b0;
