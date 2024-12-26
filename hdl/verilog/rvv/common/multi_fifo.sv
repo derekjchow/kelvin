@@ -118,7 +118,7 @@ module multi_fifo
       else begin
         if (push[0] && !full) mem[wptr] <= datain[0];
         for (int j=1; j<M; j++) begin
-          if (push[j] && !almost_full[j]) mem[wind_wptr] <= datain[j];
+          if (push[j] && !almost_full[j]) mem[wind_wptr[j]] <= datain[j];
         end
 
         if (POP_CLEAR) begin
@@ -128,7 +128,7 @@ module multi_fifo
             end
           end else begin
             for (int j=0; j<N; j++) begin
-              if (pop[j]) mem[wind_rptr] <= '0;
+              if (pop[j]) mem[wind_rptr[j]] <= '0;
             end
           end
         end
@@ -138,7 +138,7 @@ module multi_fifo
     always_ff @(posedge clk) begin
       if (push[0] && !full) mem[wptr] <= datain[0];
       for (int j=1; j<M; j++) begin
-        if (push[j] && !almost_full[j]) mem[wind_wptr] <= datain[j];
+        if (push[j] && !almost_full[j]) mem[wind_wptr[j]] <= datain[j];
       end
 
       if (POP_CLEAR) begin
@@ -148,7 +148,7 @@ module multi_fifo
           end
         end else begin
           for (int j=0; j<N; j++) begin
-            if (pop[j]) mem[wind_rptr] <= '0;
+            if (pop[j]) mem[wind_rptr[j]] <= '0;
           end
         end
       end
