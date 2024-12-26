@@ -70,7 +70,6 @@ module rvv_backend_alu_unit_shift
   logic                           ignore_vma;
   
   // for-loop
-
   genvar                          j;
 
 //
@@ -93,14 +92,10 @@ module rvv_backend_alu_unit_shift
 //  
 // prepare source data 
 //
-  // prepare valid signal and source data
+  // prepare valid signal 
   always_comb begin
     // initial the data
     result_valid   = 'b0;
-    src2_data      = 'b0;
-    shift_amount8  = 'b0;
-    shift_amount16 = 'b0;
-    shift_amount32 = 'b0;
 
     case({alu_uop_valid,uop_funct3}) 
       {1'b1,OPIVV}: begin
@@ -112,26 +107,6 @@ module rvv_backend_alu_unit_shift
           VSSRA: begin
             if (vs2_data_valid&vs1_data_valid) begin
               result_valid = 'b1;
-              
-              src2_data = vs2_data;
-
-              for(int i=0;i<`VLEN/`WORD_WIDTH;i=i+1) begin
-                case(vs2_eew)
-                  EEW8: begin
-                    shift_amount8[4*i]   = vs1_data[(4*i  )*`BYTE_WIDTH +: $clog2(`BYTE_WIDTH)];
-                    shift_amount8[4*i+1] = vs1_data[(4*i+1)*`BYTE_WIDTH +: $clog2(`BYTE_WIDTH)];
-                    shift_amount8[4*i+2] = vs1_data[(4*i+2)*`BYTE_WIDTH +: $clog2(`BYTE_WIDTH)];
-                    shift_amount8[4*i+3] = vs1_data[(4*i+3)*`BYTE_WIDTH +: $clog2(`BYTE_WIDTH)];
-                  end
-                  EEW16: begin
-                    shift_amount16[2*i]   = vs1_data[(2*i  )*`HWORD_WIDTH +: $clog2(`HWORD_WIDTH)];
-                    shift_amount16[2*i+1] = vs1_data[(2*i+1)*`HWORD_WIDTH +: $clog2(`HWORD_WIDTH)];
-                  end
-                  EEW32: begin
-                    shift_amount32[i] = vs1_data[i*`WORD_WIDTH +: $clog2(`WORD_WIDTH)];
-                  end
-                endcase
-              end
             end
 
             `ifdef ASSERT_ON
@@ -149,20 +124,6 @@ module rvv_backend_alu_unit_shift
           VNCLIP: begin
             if (vs2_data_valid&vs1_data_valid&((vs2_eew==EEW16)|(vs2_eew==EEW32))) begin
               result_valid = 'b1;
-              
-              src2_data = vs2_data;
-
-              for(int i=0;i<`VLEN/`WORD_WIDTH;i=i+1) begin
-                case(vs2_eew)
-                  EEW16: begin
-                    shift_amount16[2*i]   = vs1_data[(2*i  )*`HWORD_WIDTH +: $clog2(`HWORD_WIDTH)];
-                    shift_amount16[2*i+1] = vs1_data[(2*i+1)*`HWORD_WIDTH +: $clog2(`HWORD_WIDTH)];
-                  end
-                  EEW32: begin
-                    shift_amount32[i] = vs1_data[i*`WORD_WIDTH +: $clog2(`WORD_WIDTH)];
-                  end
-                endcase
-              end      
             end
 
             `ifdef ASSERT_ON
@@ -189,25 +150,6 @@ module rvv_backend_alu_unit_shift
           VSSRA: begin
             if (vs2_data_valid&rs1_data_valid) begin
               result_valid = 'b1;
-              
-              src2_data = vs2_data;
-              for(int i=0;i<`VLEN/`WORD_WIDTH;i=i+1) begin
-                case(vs2_eew)
-                  EEW8: begin
-                    shift_amount8[4*i]   = rs1_data[0 +: $clog2(`BYTE_WIDTH)];
-                    shift_amount8[4*i+1] = rs1_data[0 +: $clog2(`BYTE_WIDTH)];
-                    shift_amount8[4*i+2] = rs1_data[0 +: $clog2(`BYTE_WIDTH)];
-                    shift_amount8[4*i+3] = rs1_data[0 +: $clog2(`BYTE_WIDTH)];
-                  end
-                  EEW16: begin
-                    shift_amount16[2*i]   = rs1_data[0 +: $clog2(`HWORD_WIDTH)];
-                    shift_amount16[2*i+1] = rs1_data[0 +: $clog2(`HWORD_WIDTH)];
-                  end
-                  EEW32: begin
-                    shift_amount32[i] = rs1_data[0 +: $clog2(`WORD_WIDTH)];
-                  end
-                endcase
-              end          
             end
 
             `ifdef ASSERT_ON
@@ -225,19 +167,6 @@ module rvv_backend_alu_unit_shift
           VNCLIP: begin
             if (vs2_data_valid&rs1_data_valid&((vs2_eew==EEW16)|(vs2_eew==EEW32))) begin
               result_valid = 'b1;
-              
-              src2_data = vs2_data;
-              for(int i=0;i<`VLEN/`WORD_WIDTH;i=i+1) begin
-                case(vs2_eew)
-                  EEW16: begin
-                    shift_amount16[2*i]   = rs1_data[0 +: $clog2(`HWORD_WIDTH)];
-                    shift_amount16[2*i+1] = rs1_data[0 +: $clog2(`HWORD_WIDTH)];
-                  end
-                  EEW32: begin
-                    shift_amount32[i] = rs1_data[0 +: $clog2(`WORD_WIDTH)];
-                  end
-                endcase
-              end          
             end
 
             `ifdef ASSERT_ON
@@ -256,16 +185,124 @@ module rvv_backend_alu_unit_shift
     endcase
   end
 
+  // prepare source data
+  always_comb begin
+    // initial the data
+    src2_data      = 'b0;
+    shift_amount8  = 'b0;
+    shift_amount16 = 'b0;
+    shift_amount32 = 'b0;
+
+    case(uop_funct3) 
+      OPIVV: begin
+        case(uop_funct6.ari_funct6)
+          VSLL,
+          VSRL,
+          VSRA,
+          VSSRL,
+          VSSRA: begin
+            src2_data = vs2_data;
+
+            for(int i=0;i<`VLEN/`WORD_WIDTH;i=i+1) begin
+              case(vs2_eew)
+                EEW8: begin
+                  shift_amount8[4*i]   = vs1_data[(4*i  )*`BYTE_WIDTH +: $clog2(`BYTE_WIDTH)];
+                  shift_amount8[4*i+1] = vs1_data[(4*i+1)*`BYTE_WIDTH +: $clog2(`BYTE_WIDTH)];
+                  shift_amount8[4*i+2] = vs1_data[(4*i+2)*`BYTE_WIDTH +: $clog2(`BYTE_WIDTH)];
+                  shift_amount8[4*i+3] = vs1_data[(4*i+3)*`BYTE_WIDTH +: $clog2(`BYTE_WIDTH)];
+                end
+                EEW16: begin
+                  shift_amount16[2*i]   = vs1_data[(2*i  )*`HWORD_WIDTH +: $clog2(`HWORD_WIDTH)];
+                  shift_amount16[2*i+1] = vs1_data[(2*i+1)*`HWORD_WIDTH +: $clog2(`HWORD_WIDTH)];
+                end
+                EEW32: begin
+                  shift_amount32[i] = vs1_data[i*`WORD_WIDTH +: $clog2(`WORD_WIDTH)];
+                end
+              endcase
+            end
+          end
+
+          VNSRL,
+          VNSRA,
+          VNCLIPU,
+          VNCLIP: begin
+            src2_data = vs2_data;
+
+            for(int i=0;i<`VLEN/`WORD_WIDTH;i=i+1) begin
+              case(vs2_eew)
+                EEW16: begin
+                  shift_amount16[2*i]   = vs1_data[(2*i  )*`HWORD_WIDTH +: $clog2(`HWORD_WIDTH)];
+                  shift_amount16[2*i+1] = vs1_data[(2*i+1)*`HWORD_WIDTH +: $clog2(`HWORD_WIDTH)];
+                end
+                EEW32: begin
+                  shift_amount32[i] = vs1_data[i*`WORD_WIDTH +: $clog2(`WORD_WIDTH)];
+                end
+              endcase
+            end      
+          end
+        endcase
+      end
+
+      OPIVX,
+      OPIVI: begin
+        case(uop_funct6.ari_funct6)
+          VSLL,
+          VSRL,
+          VSRA,
+          VSSRL,
+          VSSRA: begin
+            src2_data = vs2_data;
+            for(int i=0;i<`VLEN/`WORD_WIDTH;i=i+1) begin
+              case(vs2_eew)
+                EEW8: begin
+                  shift_amount8[4*i]   = rs1_data[0 +: $clog2(`BYTE_WIDTH)];
+                  shift_amount8[4*i+1] = rs1_data[0 +: $clog2(`BYTE_WIDTH)];
+                  shift_amount8[4*i+2] = rs1_data[0 +: $clog2(`BYTE_WIDTH)];
+                  shift_amount8[4*i+3] = rs1_data[0 +: $clog2(`BYTE_WIDTH)];
+                end
+                EEW16: begin
+                  shift_amount16[2*i]   = rs1_data[0 +: $clog2(`HWORD_WIDTH)];
+                  shift_amount16[2*i+1] = rs1_data[0 +: $clog2(`HWORD_WIDTH)];
+                end
+                EEW32: begin
+                  shift_amount32[i] = rs1_data[0 +: $clog2(`WORD_WIDTH)];
+                end
+              endcase
+            end          
+          end
+
+          VNSRL,
+          VNSRA,
+          VNCLIPU,
+          VNCLIP: begin
+            src2_data = vs2_data;
+            for(int i=0;i<`VLEN/`WORD_WIDTH;i=i+1) begin
+              case(vs2_eew)
+                EEW16: begin
+                  shift_amount16[2*i]   = rs1_data[0 +: $clog2(`HWORD_WIDTH)];
+                  shift_amount16[2*i+1] = rs1_data[0 +: $clog2(`HWORD_WIDTH)];
+                end
+                EEW32: begin
+                  shift_amount32[i] = rs1_data[0 +: $clog2(`WORD_WIDTH)];
+                end
+              endcase
+            end          
+          end
+        endcase
+      end
+    endcase
+  end
+
   // get opcode for f_addsub
   always_comb begin
     // initial the data
     opcode = SHIFT_SLL;
 
     // prepare source data
-    case({alu_uop_valid,uop_funct3}) 
-      {1'b1,OPIVV},
-      {1'b1,OPIVX},
-      {1'b1,OPIVI}: begin
+    case(uop_funct3) 
+      OPIVV,
+      OPIVX,
+      OPIVI: begin
         case(uop_funct6.ari_funct6)    
           VSLL: begin
             opcode = SHIFT_SLL;
@@ -665,10 +702,10 @@ module rvv_backend_alu_unit_shift
       {1'b1,OPIVI}: begin
         case(uop_funct6.ari_funct6)
           VNCLIPU: begin
-            vxsat = (|upoverflow);
+            vxsat = (upoverflow!='b0);
           end
           VNCLIP: begin
-            vxsat = underoverflow || upoverflow;
+            vxsat = ({underoverflow,upoverflow}!='b0);
           end
         endcase
       end
@@ -702,7 +739,7 @@ module rvv_backend_alu_unit_shift
 
     if (opcode==SHIFT_SLL)
       result = src<<amount;
-    else if ((opcode==SHIFT_SRL)&(opcode==SHIFT_SRA))
+    else if ((opcode==SHIFT_SRL)||(opcode==SHIFT_SRA))
       result = src>>>amount;
     else
       result = 'b0;
@@ -729,7 +766,7 @@ module rvv_backend_alu_unit_shift
 
     if (opcode==SHIFT_SLL)
       result = src<<amount;
-    else if ((opcode==SHIFT_SRL)&(opcode==SHIFT_SRA))
+    else if ((opcode==SHIFT_SRL)||(opcode==SHIFT_SRA))
       result = src>>>amount;
     else
       result = 'b0;
@@ -756,7 +793,7 @@ module rvv_backend_alu_unit_shift
 
     if (opcode==SHIFT_SLL)
       result = src<<amount;
-    else if ((opcode==SHIFT_SRL)&(opcode==SHIFT_SRA))
+    else if ((opcode==SHIFT_SRL)||(opcode==SHIFT_SRA))
       result = src>>>amount;
     else
       result = 'b0;
