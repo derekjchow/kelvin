@@ -301,7 +301,7 @@ module rvv_backend_rob
             for (j=0; j<`NUM_LSU; j++)    
                 assign res_sel[i][j+`NUM_DIV+`NUM_MUL+`NUM_PMTRDT+`NUM_ALU] = wr_valid_lsu2rob[j]    && wr_ready_rob2lsu[j]    && (wr_lsu2rob[j].rob_entry == i);
 
-            `rvv_expect($onehot(res_sel[i])) else $error("ROB: Multiple PU results write same entry: index %d, PU %d\n", i, $sampled(res_sel[i]));
+            `rvv_expect($onehot0(res_sel[i])) else $error("ROB: Multiple PU results write same entry: index %d, PU %d\n", i, $sampled(res_sel[i]));
         end
     endgenerate
   `endif

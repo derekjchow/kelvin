@@ -69,8 +69,19 @@ module multi_fifo
   logic        [DEPTH_BITS-1:0] pop_count;
   logic        [DEPTH_BITS-1:0] next_wptr;
   logic        [DEPTH_BITS-1:0] next_rptr;
+
+  logic        [DEPTH_BITS-1:0] wind_rptr [DEPTH-1:0];
+  logic        [DEPTH_BITS-1:0] wind_wptr [DEPTH-1:0];
 // ---code start------------------------------------------------------
-  genvar  i;
+  genvar  i;  
+  
+  // wind back rptr/wptr
+  generate
+    for (i=0; i<DEPTH; i++) begin : gen_wind_ptr
+      assign wind_rptr[i] = rptr+i;
+      assign wind_wptr[i] = wptr+i;
+    end
+  endgenerate
   // dataout
   always_comb begin
     pop_count = '0;
@@ -83,7 +94,7 @@ module multi_fifo
 
   generate
     for (i=0; i<N; i++) begin : gen_dataout
-      assign dataout[i] = mem[rptr+i];
+      assign dataout[i] = mem[wind_rptr[i]];
     end
   endgenerate
 
@@ -107,7 +118,7 @@ module multi_fifo
       else begin
         if (push[0] && !full) mem[wptr] <= datain[0];
         for (int j=1; j<M; j++) begin
-          if (push[j] && !almost_full[j]) mem[wptr+j] <= datain[j];
+          if (push[j] && !almost_full[j]) mem[wind_wptr] <= datain[j];
         end
 
         if (POP_CLEAR) begin
@@ -117,7 +128,7 @@ module multi_fifo
             end
           end else begin
             for (int j=0; j<N; j++) begin
-              if (pop[j]) mem[rptr+j] <= '0;
+              if (pop[j]) mem[wind_rptr] <= '0;
             end
           end
         end
@@ -127,7 +138,7 @@ module multi_fifo
     always_ff @(posedge clk) begin
       if (push[0] && !full) mem[wptr] <= datain[0];
       for (int j=1; j<M; j++) begin
-        if (push[j] && !almost_full[j]) mem[wptr+j] <= datain[j];
+        if (push[j] && !almost_full[j]) mem[wind_wptr] <= datain[j];
       end
 
       if (POP_CLEAR) begin
@@ -137,7 +148,7 @@ module multi_fifo
           end
         end else begin
           for (int j=0; j<N; j++) begin
-            if (pop[j]) mem[rptr+j] <= '0;
+            if (pop[j]) mem[wind_rptr] <= '0;
           end
         end
       end
@@ -164,11 +175,9 @@ module multi_fifo
     end
   endgenerate
 
-  logic [DEPTH_BITS-1:0] ring_rptr [DEPTH-1:0];
   generate
     for (i=0; i<DEPTH; i++) begin : gen_fifo_data
-      assign ring_rptr[i] = rptr+i;
-      assign fifo_data[i] = mem[ring_rptr[i]];
+      assign fifo_data[i] = mem[wind_rptr[i]];
     end
   endgenerate
 
