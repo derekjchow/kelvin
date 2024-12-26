@@ -39,28 +39,36 @@ module rvv_backend_alu_unit_shift
 
   // execute 
   // add and sub instructions
-  logic   [`VLEN-1:0]                                        src2_data;
-  logic   [`VLENB-1:0][$clog2(`BYTE_WIDTH)-1:0]              shift_amount8;
-  logic   [`VLEN/`HWORD_WIDTH-1:0][$clog2(`HWORD_WIDTH)-1:0] shift_amount16;
-  logic   [`VLEN/`WORD_WIDTH-1:0][$clog2(`WORD_WIDTH)-1:0]   shift_amount32;
-  logic   [`VLENB-1:0][`BYTE_WIDTH-1:0]                      product8;
-  logic   [`VLEN/`HWORD_WIDTH-1:0][`HWORD_WIDTH-1:0]         product16;
-  logic   [`VLEN/`WORD_WIDTH-1:0][`WORD_WIDTH-1:0]           product32;
-  logic   [`VLENB-1:0][`BYTE_WIDTH-1:0]                      round_bits8;
-  logic   [`VLEN/`HWORD_WIDTH-1:0][`HWORD_WIDTH-1:0]         round_bits16;
-  logic   [`VLEN/`WORD_WIDTH-1:0][`WORD_WIDTH-1:0]           round_bits32;
-  logic   [`VLENB-1:0]                                       round_increment8;
-  logic   [`VLEN/`HWORD_WIDTH-1:0]                           round_increment16;
-  logic   [`VLEN/`WORD_WIDTH-1:0]                            round_increment32;
-  logic   [`VLENB-1:0][`BYTE_WIDTH-1:0]                      round8;
-  logic   [`VLEN/`HWORD_WIDTH-1:0][`HWORD_WIDTH-1:0]         round16;
-  logic   [`VLEN/`WORD_WIDTH-1:0][`WORD_WIDTH-1:0]           round32;
-  logic   [`VLEN/`HWORD_WIDTH-1:0]                           cout16;
-  logic   [`VLEN/`WORD_WIDTH-1:0]                            cout32;
-  logic   [`VLENB-1:0]                                       upoverflow;
-  logic   [`VLENB-1:0]                                       underoverflow;
-  logic   [`VLEN-1:0]                                        result_data; 
-  SHIFT_e                                                    opcode;
+  logic   [`VLENB/2-1:0][`BYTE_WIDTH-1:0]                      src2_data8;
+  logic   [`VLEN/`HWORD_WIDTH/2-1:0][`HWORD_WIDTH-1:0]         src2_data16;
+  logic   [`VLEN/`WORD_WIDTH-1:0][`WORD_WIDTH-1:0]             src2_data32;
+  logic   [`VLENB/2-1:0][$clog2(`BYTE_WIDTH)-1:0]              shift_amount8;
+  logic   [`VLEN/`HWORD_WIDTH/2-1:0][$clog2(`HWORD_WIDTH)-1:0] shift_amount16;
+  logic   [`VLEN/`WORD_WIDTH-1:0][$clog2(`WORD_WIDTH)-1:0]     shift_amount32;
+  logic   [`VLENB/2-1:0][`BYTE_WIDTH-1:0]                      product8_tmp;
+  logic   [`VLEN/`HWORD_WIDTH/2-1:0][`HWORD_WIDTH-1:0]         product16_tmp;
+  logic   [`VLEN/`WORD_WIDTH-1:0][`WORD_WIDTH-1:0]             product32_tmp;
+  logic   [`VLENB-1:0][`BYTE_WIDTH-1:0]                        product8;
+  logic   [`VLEN/`HWORD_WIDTH-1:0][`HWORD_WIDTH-1:0]           product16;
+  logic   [`VLEN/`WORD_WIDTH-1:0][`WORD_WIDTH-1:0]             product32;
+  logic   [`VLENB/2-1:0][`BYTE_WIDTH-1:0]                      round_bits8_tmp;
+  logic   [`VLEN/`HWORD_WIDTH/2-1:0][`HWORD_WIDTH-1:0]         round_bits16_tmp;
+  logic   [`VLEN/`WORD_WIDTH-1:0][`WORD_WIDTH-1:0]             round_bits32_tmp;
+  logic   [`VLENB-1:0][`BYTE_WIDTH-1:0]                        round_bits8;
+  logic   [`VLEN/`HWORD_WIDTH-1:0][`HWORD_WIDTH-1:0]           round_bits16;
+  logic   [`VLEN/`WORD_WIDTH-1:0][`WORD_WIDTH-1:0]             round_bits32;
+  logic   [`VLENB-1:0]                                         round_increment8;
+  logic   [`VLEN/`HWORD_WIDTH-1:0]                             round_increment16;
+  logic   [`VLEN/`WORD_WIDTH-1:0]                              round_increment32;
+  logic   [`VLENB-1:0][`BYTE_WIDTH-1:0]                        round8;
+  logic   [`VLEN/`HWORD_WIDTH-1:0][`HWORD_WIDTH-1:0]           round16;
+  logic   [`VLEN/`WORD_WIDTH-1:0][`WORD_WIDTH-1:0]             round32;
+  logic   [`VLEN/`HWORD_WIDTH-1:0]                             cout16;
+  logic   [`VLEN/`WORD_WIDTH-1:0]                              cout32;
+  logic   [`VLENB-1:0]                                         upoverflow;
+  logic   [`VLENB-1:0]                                         underoverflow;
+  logic   [`VLEN-1:0]                                          result_data; 
+  SHIFT_e                                                      opcode;
 
   // PU2ROB_t  struct signals
   logic   [`VLEN-1:0]             w_data;             // when w_type=XRF, w_data[`XLEN-1:0] will store the scalar result
@@ -188,7 +196,9 @@ module rvv_backend_alu_unit_shift
   // prepare source data
   always_comb begin
     // initial the data
-    src2_data      = 'b0;
+    src2_data8     = 'b0;
+    src2_data16    = 'b0;
+    src2_data32    = 'b0;
     shift_amount8  = 'b0;
     shift_amount16 = 'b0;
     shift_amount32 = 'b0;
@@ -198,47 +208,119 @@ module rvv_backend_alu_unit_shift
         case(uop_funct6.ari_funct6)
           VSLL,
           VSRL,
-          VSRA,
-          VSSRL,
-          VSSRA: begin
-            src2_data = vs2_data;
-
-            for(int i=0;i<`VLEN/`WORD_WIDTH;i=i+1) begin
-              case(vs2_eew)
-                EEW8: begin
-                  shift_amount8[4*i]   = vs1_data[(4*i  )*`BYTE_WIDTH +: $clog2(`BYTE_WIDTH)];
-                  shift_amount8[4*i+1] = vs1_data[(4*i+1)*`BYTE_WIDTH +: $clog2(`BYTE_WIDTH)];
-                  shift_amount8[4*i+2] = vs1_data[(4*i+2)*`BYTE_WIDTH +: $clog2(`BYTE_WIDTH)];
-                  shift_amount8[4*i+3] = vs1_data[(4*i+3)*`BYTE_WIDTH +: $clog2(`BYTE_WIDTH)];
+          VSSRL: begin
+            case(vs2_eew)
+              EEW8: begin
+                for(int i=0;i<`VLENB/2;i=i+1) begin
+                  src2_data8[i]    = vs2_data[i*`BYTE_WIDTH +: `BYTE_WIDTH];
+                  shift_amount8[i] = vs1_data[i*`BYTE_WIDTH +: $clog2(`BYTE_WIDTH)];
                 end
-                EEW16: begin
-                  shift_amount16[2*i]   = vs1_data[(2*i  )*`HWORD_WIDTH +: $clog2(`HWORD_WIDTH)];
-                  shift_amount16[2*i+1] = vs1_data[(2*i+1)*`HWORD_WIDTH +: $clog2(`HWORD_WIDTH)];
+                for(int i=`VLENB/2;i<`VLENB*3/4;i=i+1) begin
+                  src2_data16[   i-`VLENB/2] = {8'b0,vs2_data[i*`BYTE_WIDTH +: `BYTE_WIDTH]};
+                  shift_amount16[i-`VLENB/2] =       vs1_data[i*`BYTE_WIDTH +: $clog2(`BYTE_WIDTH)];
+                end         
+                for(int i=`VLENB*3/4;i<`VLENB;i=i+1) begin
+                  src2_data32[   i-`VLENB*3/4] = {24'b0,vs2_data[i*`BYTE_WIDTH +: `BYTE_WIDTH]};
+                  shift_amount16[i-`VLENB*3/4] =        vs1_data[i*`BYTE_WIDTH +: $clog2(`BYTE_WIDTH)];
                 end
-                EEW32: begin
+              end
+              EEW16: begin
+                for(int i=0;i<`VLEN/`HWORD_WIDTH/2;i=i+1) begin
+                  src2_data16[i]    = vs2_data[i*`HWORD_WIDTH +: `HWORD_WIDTH];
+                  shift_amount16[i] = vs1_data[i*`HWORD_WIDTH +: $clog2(`HWORD_WIDTH)];
+                end
+                for(int i=`VLEN/`HWORD_WIDTH/2;i<`VLEN/`HWORD_WIDTH;i=i+1) begin
+                  src2_data32[   i-`VLEN/`HWORD_WIDTH/2] = {16'b0,vs2_data[i*`HWORD_WIDTH +: `HWORD_WIDTH]};
+                  shift_amount32[i-`VLEN/`HWORD_WIDTH/2] =        vs1_data[i*`HWORD_WIDTH +: $clog2(`HWORD_WIDTH)];
+                end   
+              end
+              EEW32: begin
+                for(int i=0;i<`VLEN/`WORD_WIDTH;i=i+1) begin
+                  src2_data32[i]    = vs2_data[i*`WORD_WIDTH +: `WORD_WIDTH];
                   shift_amount32[i] = vs1_data[i*`WORD_WIDTH +: $clog2(`WORD_WIDTH)];
                 end
-              endcase
-            end
+              end
+            endcase
+          end
+
+          VSRA,
+          VSSRA: begin
+             case(vs2_eew)
+              EEW8: begin
+                for(int i=0;i<`VLENB/2;i=i+1) begin
+                  src2_data8[i]    = vs2_data[i*`BYTE_WIDTH +: `BYTE_WIDTH];
+                  shift_amount8[i] = vs1_data[i*`BYTE_WIDTH +: $clog2(`BYTE_WIDTH)];
+                end
+                for(int i=`VLENB/2;i<`VLENB*3/4;i=i+1) begin
+                  src2_data16[   i-`VLENB/2] = {{8{vs2_data[(i+1)*`BYTE_WIDTH-1]}},vs2_data[i*`BYTE_WIDTH +: `BYTE_WIDTH]};
+                  shift_amount16[i-`VLENB/2] = vs1_data[i*`BYTE_WIDTH +: $clog2(`BYTE_WIDTH)];
+                end         
+                for(int i=`VLENB*3/4;i<`VLENB;i=i+1) begin
+                  src2_data32[   i-`VLENB*3/4] = {{24{vs2_data[(i+1)*`BYTE_WIDTH-1]}},vs2_data[i*`BYTE_WIDTH +: `BYTE_WIDTH]};
+                  shift_amount16[i-`VLENB*3/4] = vs1_data[i*`BYTE_WIDTH +: $clog2(`BYTE_WIDTH)];
+                end
+              end
+              EEW16: begin
+                for(int i=0;i<`VLEN/`HWORD_WIDTH/2;i=i+1) begin
+                  src2_data16[i]    = vs2_data[i*`HWORD_WIDTH +: `HWORD_WIDTH];
+                  shift_amount16[i] = vs1_data[i*`HWORD_WIDTH +: $clog2(`HWORD_WIDTH)];
+                end
+                for(int i=`VLEN/`HWORD_WIDTH/2;i<`VLEN/`HWORD_WIDTH;i=i+1) begin
+                  src2_data32[   i-`VLEN/`HWORD_WIDTH/2] = {{16{vs2_data[(i+1)*`HWORD_WIDTH-1]}},vs2_data[i*`HWORD_WIDTH +: `HWORD_WIDTH]};
+                  shift_amount32[i-`VLEN/`HWORD_WIDTH/2] = vs1_data[i*`HWORD_WIDTH +: $clog2(`HWORD_WIDTH)];
+                end   
+              end
+              EEW32: begin
+                for(int i=0;i<`VLEN/`WORD_WIDTH;i=i+1) begin
+                  src2_data32[i]    = vs2_data[i*`WORD_WIDTH +: `WORD_WIDTH];
+                  shift_amount32[i] = vs1_data[i*`WORD_WIDTH +: $clog2(`WORD_WIDTH)];
+                end
+              end
+            endcase         
           end
 
           VNSRL,
-          VNSRA,
-          VNCLIPU,
-          VNCLIP: begin
-            src2_data = vs2_data;
-
-            for(int i=0;i<`VLEN/`WORD_WIDTH;i=i+1) begin
-              case(vs2_eew)
-                EEW16: begin
-                  shift_amount16[2*i]   = vs1_data[(2*i  )*`HWORD_WIDTH +: $clog2(`HWORD_WIDTH)];
-                  shift_amount16[2*i+1] = vs1_data[(2*i+1)*`HWORD_WIDTH +: $clog2(`HWORD_WIDTH)];
+          VNCLIPU: begin
+            case(vs2_eew)
+              EEW16: begin
+                for(int i=0;i<`VLEN/`HWORD_WIDTH/2;i=i+1) begin
+                  src2_data16[i]    = vs2_data[i*`HWORD_WIDTH +: `HWORD_WIDTH];
+                  shift_amount16[i] = vs1_data[i*`HWORD_WIDTH +: $clog2(`HWORD_WIDTH)];
                 end
-                EEW32: begin
+                for(int i=`VLEN/`HWORD_WIDTH/2;i<`VLEN/`HWORD_WIDTH;i=i+1) begin
+                  src2_data32[   i-`VLEN/`HWORD_WIDTH/2] = {16'b0,vs2_data[i*`HWORD_WIDTH +: `HWORD_WIDTH]};
+                  shift_amount32[i-`VLEN/`HWORD_WIDTH/2] =        vs1_data[i*`HWORD_WIDTH +: $clog2(`HWORD_WIDTH)];
+                end   
+              end
+              EEW32: begin
+                for(int i=0;i<`VLEN/`WORD_WIDTH;i=i+1) begin
+                  src2_data32[i]    = vs2_data[i*`WORD_WIDTH +: `WORD_WIDTH];
                   shift_amount32[i] = vs1_data[i*`WORD_WIDTH +: $clog2(`WORD_WIDTH)];
                 end
-              endcase
-            end      
+              end
+            endcase
+          end
+
+          VNSRA,
+          VNCLIP: begin
+             case(vs2_eew)
+              EEW16: begin
+                for(int i=0;i<`VLEN/`HWORD_WIDTH/2;i=i+1) begin
+                  src2_data16[i]    = vs2_data[i*`HWORD_WIDTH +: `HWORD_WIDTH];
+                  shift_amount16[i] = vs1_data[i*`HWORD_WIDTH +: $clog2(`HWORD_WIDTH)];
+                end
+                for(int i=`VLEN/`HWORD_WIDTH/2;i<`VLEN/`HWORD_WIDTH;i=i+1) begin
+                  src2_data32[   i-`VLEN/`HWORD_WIDTH/2] = {{16{vs2_data[(i+1)*`HWORD_WIDTH-1]}},vs2_data[i*`HWORD_WIDTH +: `HWORD_WIDTH]};
+                  shift_amount32[i-`VLEN/`HWORD_WIDTH/2] = vs1_data[i*`HWORD_WIDTH +: $clog2(`HWORD_WIDTH)];
+                end   
+              end
+              EEW32: begin
+                for(int i=0;i<`VLEN/`WORD_WIDTH;i=i+1) begin
+                  src2_data32[i]    = vs2_data[i*`WORD_WIDTH +: `WORD_WIDTH];
+                  shift_amount32[i] = vs1_data[i*`WORD_WIDTH +: $clog2(`WORD_WIDTH)];
+                end
+              end
+            endcase  
           end
         endcase
       end
@@ -248,45 +330,119 @@ module rvv_backend_alu_unit_shift
         case(uop_funct6.ari_funct6)
           VSLL,
           VSRL,
+          VSSRL: begin
+             case(vs2_eew)
+              EEW8: begin
+                for(int i=0;i<`VLENB/2;i=i+1) begin
+                  src2_data8[i]    = vs2_data[i*`BYTE_WIDTH +: `BYTE_WIDTH];
+                  shift_amount8[i] = rs1_data[0             +: $clog2(`BYTE_WIDTH)];
+                end
+                for(int i=`VLENB/2;i<`VLENB*3/4;i=i+1) begin
+                  src2_data16[   i-`VLENB/2] = {8'b0,vs2_data[i*`BYTE_WIDTH +: `BYTE_WIDTH]};
+                  shift_amount16[i-`VLENB/2] =       rs1_data[0             +: $clog2(`BYTE_WIDTH)];
+                end         
+                for(int i=`VLENB*3/4;i<`VLENB;i=i+1) begin
+                  src2_data32[   i-`VLENB*3/4] = {24'b0,vs2_data[i*`BYTE_WIDTH +: `BYTE_WIDTH]};
+                  shift_amount16[i-`VLENB*3/4] =        rs1_data[0             +: $clog2(`BYTE_WIDTH)];
+                end
+              end
+              EEW16: begin
+                for(int i=0;i<`VLEN/`HWORD_WIDTH/2;i=i+1) begin
+                  src2_data16[i]    = vs2_data[i*`HWORD_WIDTH +: `HWORD_WIDTH];
+                  shift_amount16[i] = rs1_data[0              +: $clog2(`HWORD_WIDTH)];
+                end
+                for(int i=`VLEN/`HWORD_WIDTH/2;i<`VLEN/`HWORD_WIDTH;i=i+1) begin
+                  src2_data32[   i-`VLEN/`HWORD_WIDTH/2] = {16'b0,vs2_data[i*`HWORD_WIDTH +: `HWORD_WIDTH]};
+                  shift_amount32[i-`VLEN/`HWORD_WIDTH/2] =        rs1_data[0              +: $clog2(`HWORD_WIDTH)];
+                end   
+              end
+              EEW32: begin
+                for(int i=0;i<`VLEN/`WORD_WIDTH;i=i+1) begin
+                  src2_data32[i]    = vs2_data[i*`WORD_WIDTH +: `WORD_WIDTH];
+                  shift_amount32[i] = rs1_data[0             +: $clog2(`WORD_WIDTH)];
+                end
+              end
+            endcase       
+          end
+
           VSRA,
-          VSSRL,
           VSSRA: begin
-            src2_data = vs2_data;
-            for(int i=0;i<`VLEN/`WORD_WIDTH;i=i+1) begin
-              case(vs2_eew)
-                EEW8: begin
-                  shift_amount8[4*i]   = rs1_data[0 +: $clog2(`BYTE_WIDTH)];
-                  shift_amount8[4*i+1] = rs1_data[0 +: $clog2(`BYTE_WIDTH)];
-                  shift_amount8[4*i+2] = rs1_data[0 +: $clog2(`BYTE_WIDTH)];
-                  shift_amount8[4*i+3] = rs1_data[0 +: $clog2(`BYTE_WIDTH)];
+            case(vs2_eew)
+              EEW8: begin
+                for(int i=0;i<`VLENB/2;i=i+1) begin
+                  src2_data8[i]    = vs2_data[i*`BYTE_WIDTH +: `BYTE_WIDTH];
+                  shift_amount8[i] = rs1_data[0             +: $clog2(`BYTE_WIDTH)];
                 end
-                EEW16: begin
-                  shift_amount16[2*i]   = rs1_data[0 +: $clog2(`HWORD_WIDTH)];
-                  shift_amount16[2*i+1] = rs1_data[0 +: $clog2(`HWORD_WIDTH)];
+                for(int i=`VLENB/2;i<`VLENB*3/4;i=i+1) begin
+                  src2_data16[   i-`VLENB/2] = {{8{vs2_data[(i+1)*`BYTE_WIDTH-1]}},vs2_data[i*`BYTE_WIDTH +: `BYTE_WIDTH]};
+                  shift_amount16[i-`VLENB/2] = rs1_data[0 +: $clog2(`BYTE_WIDTH)];
+                end         
+                for(int i=`VLENB*3/4;i<`VLENB;i=i+1) begin
+                  src2_data32[   i-`VLENB*3/4] = {{24{vs2_data[(i+1)*`BYTE_WIDTH-1]}},vs2_data[i*`BYTE_WIDTH +: `BYTE_WIDTH]};
+                  shift_amount16[i-`VLENB*3/4] = rs1_data[0 +: $clog2(`BYTE_WIDTH)];
                 end
-                EEW32: begin
+              end
+              EEW16: begin
+                for(int i=0;i<`VLEN/`HWORD_WIDTH/2;i=i+1) begin
+                  src2_data16[i]    = vs2_data[i*`HWORD_WIDTH +: `HWORD_WIDTH];
+                  shift_amount16[i] = rs1_data[0              +: $clog2(`HWORD_WIDTH)];
+                end
+                for(int i=`VLEN/`HWORD_WIDTH/2;i<`VLEN/`HWORD_WIDTH;i=i+1) begin
+                  src2_data32[   i-`VLEN/`HWORD_WIDTH/2] = {{16{vs2_data[(i+1)*`HWORD_WIDTH-1]}},vs2_data[i*`HWORD_WIDTH +: `HWORD_WIDTH]};
+                  shift_amount32[i-`VLEN/`HWORD_WIDTH/2] = rs1_data[0 +: $clog2(`HWORD_WIDTH)];
+                end   
+              end
+              EEW32: begin
+                for(int i=0;i<`VLEN/`WORD_WIDTH;i=i+1) begin
+                  src2_data32[i]    = vs2_data[i*`WORD_WIDTH +: `WORD_WIDTH];
                   shift_amount32[i] = rs1_data[0 +: $clog2(`WORD_WIDTH)];
                 end
-              endcase
-            end          
+              end
+            endcase          
           end
 
           VNSRL,
-          VNSRA,
-          VNCLIPU,
-          VNCLIP: begin
-            src2_data = vs2_data;
-            for(int i=0;i<`VLEN/`WORD_WIDTH;i=i+1) begin
-              case(vs2_eew)
-                EEW16: begin
-                  shift_amount16[2*i]   = rs1_data[0 +: $clog2(`HWORD_WIDTH)];
-                  shift_amount16[2*i+1] = rs1_data[0 +: $clog2(`HWORD_WIDTH)];
+          VNCLIPU: begin
+            case(vs2_eew)
+              EEW16: begin
+                for(int i=0;i<`VLEN/`HWORD_WIDTH/2;i=i+1) begin
+                  src2_data16[i]    = vs2_data[i*`HWORD_WIDTH +: `HWORD_WIDTH];
+                  shift_amount16[i] = rs1_data[0              +: $clog2(`HWORD_WIDTH)];
                 end
-                EEW32: begin
+                for(int i=`VLEN/`HWORD_WIDTH/2;i<`VLEN/`HWORD_WIDTH;i=i+1) begin
+                  src2_data32[   i-`VLEN/`HWORD_WIDTH/2] = {16'b0,vs2_data[i*`HWORD_WIDTH +: `HWORD_WIDTH]};
+                  shift_amount32[i-`VLEN/`HWORD_WIDTH/2] =        rs1_data[0              +: $clog2(`HWORD_WIDTH)];
+                end   
+              end
+              EEW32: begin
+                for(int i=0;i<`VLEN/`WORD_WIDTH;i=i+1) begin
+                  src2_data32[i]    = vs2_data[i*`WORD_WIDTH +: `WORD_WIDTH];
+                  shift_amount32[i] = rs1_data[0             +: $clog2(`WORD_WIDTH)];
+                end
+              end
+            endcase  
+          end
+
+          VNSRA,
+          VNCLIP: begin
+            case(vs2_eew)
+              EEW16: begin
+                for(int i=0;i<`VLEN/`HWORD_WIDTH/2;i=i+1) begin
+                  src2_data16[i]    = vs2_data[i*`HWORD_WIDTH +: `HWORD_WIDTH];
+                  shift_amount16[i] = rs1_data[0              +: $clog2(`HWORD_WIDTH)];
+                end
+                for(int i=`VLEN/`HWORD_WIDTH/2;i<`VLEN/`HWORD_WIDTH;i=i+1) begin
+                  src2_data32[   i-`VLEN/`HWORD_WIDTH/2] = {{16{vs2_data[(i+1)*`HWORD_WIDTH-1]}},vs2_data[i*`HWORD_WIDTH +: `HWORD_WIDTH]};
+                  shift_amount32[i-`VLEN/`HWORD_WIDTH/2] = rs1_data[0 +: $clog2(`HWORD_WIDTH)];
+                end   
+              end
+              EEW32: begin
+                for(int i=0;i<`VLEN/`WORD_WIDTH;i=i+1) begin
+                  src2_data32[i]    = vs2_data[i*`WORD_WIDTH +: `WORD_WIDTH];
                   shift_amount32[i] = rs1_data[0 +: $clog2(`WORD_WIDTH)];
                 end
-              endcase
-            end          
+              end
+            endcase 
           end
         endcase
       end
@@ -327,25 +483,67 @@ module rvv_backend_alu_unit_shift
 //    
 // calculate the result
 //
-  // shifte instructions
+  // shift instructions
   generate
-    for (j=0;j<`VLENB;j=j+1) begin: EXE_PROD8
-      assign {product8[j], round_bits8[j]} = f_shift8(opcode, src2_data[j*`BYTE_WIDTH +: `BYTE_WIDTH], shift_amount8[j]);
+    for (j=0;j<`VLENB/2;j=j+1) begin: EXE_PROD8
+      assign {product8_tmp[j], round_bits8_tmp[j]} = f_shift8(opcode, src2_data8[j], shift_amount8[j]);
     end
   endgenerate
   
   generate
-    for (j=0;j<`VLEN/`HWORD_WIDTH;j=j+1) begin: EXE_PROD16
-      assign {product16[j], round_bits16[j]} = f_shift16(opcode, src2_data[j*`HWORD_WIDTH +: `HWORD_WIDTH], shift_amount16[j]);
+    for (j=0;j<`VLEN/`HWORD_WIDTH/2;j=j+1) begin: EXE_PROD16
+      assign {product16_tmp[j], round_bits16_tmp[j]} = f_shift16(opcode, src2_data16[j], shift_amount16[j]);
     end
   endgenerate 
 
   generate
     for (j=0;j<`VLEN/`WORD_WIDTH;j=j+1) begin: EXE_PROD32
-      assign {product32[j], round_bits32[j]} = f_shift32(opcode, src2_data[j*`WORD_WIDTH +: `WORD_WIDTH], shift_amount32[j]);
+      assign {product32_tmp[j], round_bits32_tmp[j]} = f_shift32(opcode, src2_data32[j], shift_amount32[j]);
     end
   endgenerate 
+  
+  always_comb begin
+    product8    = 'b0;
+    round_bits8 = 'b0;
+
+    for(int i=0;i<`VLENB/2;i=i+1) begin
+      product8[i]    = product8_tmp[i];
+      round_bits8[i] = round_bits8_tmp[i];
+    end
+    for(int i=`VLENB/2;i<`VLENB*3/4;i=i+1) begin
+      product8[i]    = product16_tmp[   i-`VLENB/2][0           +: `BYTE_WIDTH-1];
+      round_bits8[i] = round_bits16_tmp[i-`VLENB/2][`BYTE_WIDTH +: `BYTE_WIDTH];
+    end         
+    for(int i=`VLENB*3/4;i<`VLENB;i=i+1) begin
+      product8[i]    = product32_tmp[   i-`VLENB*3/4][0             +: `BYTE_WIDTH-1];
+      round_bits8[i] = round_bits32_tmp[i-`VLENB*3/4][3*`BYTE_WIDTH +: `BYTE_WIDTH];
+    end
+  end
  
+  always_comb begin
+    product16    = 'b0;
+    round_bits16 = 'b0;
+
+    for(int i=0;i<`VLEN/`HWORD_WIDTH/2;i=i+1) begin
+      product16[i]    = product16_tmp[i];
+      round_bits16[i] = round_bits16_tmp[i];
+    end
+    for(int i=`VLEN/`HWORD_WIDTH/2;i<`VLEN/`HWORD_WIDTH;i=i+1) begin
+      product16[i]    = product32_tmp[   i-`VLEN/`HWORD_WIDTH/2][0            +: `HWORD_WIDTH];
+      round_bits16[i] = round_bits32_tmp[i-`VLEN/`HWORD_WIDTH/2][`HWORD_WIDTH +: `HWORD_WIDTH];
+    end   
+  end
+
+  always_comb begin
+    product32    = 'b0;
+    round_bits32 = 'b0;
+
+    for(int i=0;i<`VLEN/`WORD_WIDTH;i=i+1) begin
+      product32[i]    = product32_tmp[i];
+      round_bits32[i] = round_bits32_tmp[i];
+    end
+  end
+
   // round increment
   generate
     for (j=0;j<`VLENB;j++) begin: INCREMENT8
@@ -359,13 +557,13 @@ module rvv_backend_alu_unit_shift
           RNE: begin
             round_increment8[j] = round_bits8[j][`BYTE_WIDTH-1] & (
                                   (round_bits8[j][`BYTE_WIDTH-2:0]!='b0) |
-                                  src2_data[j*`BYTE_WIDTH]);
+                                  product8[j][0]);
           end
           RDN: begin
             round_increment8[j] = 'b0;
           end
           ROD: begin
-            round_increment8[j] = (!src2_data[j*`BYTE_WIDTH]) & (round_bits8[j]!='b0);
+            round_increment8[j] = (!product8[j][0]) & (round_bits8[j]!='b0);
           end
         endcase
       end
@@ -384,13 +582,13 @@ module rvv_backend_alu_unit_shift
           RNE: begin
             round_increment16[j] = round_bits16[j][`HWORD_WIDTH-1] & (
                                   (round_bits16[j][`HWORD_WIDTH-2:0]!='b0) |
-                                  src2_data[j*`HWORD_WIDTH]);
+                                  product16[j][0]);
           end
           RDN: begin
             round_increment16[j] = 'b0;
           end
           ROD: begin
-            round_increment16[j] = (!src2_data[j*`HWORD_WIDTH]) & (round_bits16[j]!='b0);
+            round_increment16[j] = (!product16[j][0]) & (round_bits16[j]!='b0);
           end
         endcase
       end
@@ -409,13 +607,13 @@ module rvv_backend_alu_unit_shift
           RNE: begin
             round_increment32[j] = round_bits32[j][`WORD_WIDTH-1] & (
                                   (round_bits32[j][`WORD_WIDTH-2:0]!='b0) |
-                                  src2_data[j*`WORD_WIDTH]);
+                                  product32[j][0]);
           end
           RDN: begin
             round_increment32[j] = 'b0;
           end
           ROD: begin
-            round_increment32[j] = (!src2_data[j*`WORD_WIDTH]) & (round_bits32[j]!='b0);
+            round_increment32[j] = (!product32[j][0]) & (round_bits32[j]!='b0);
           end
         endcase
       end
