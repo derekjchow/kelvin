@@ -3,12 +3,13 @@
 // 1. It will read instructions from Command Queue and decode the instructions to uops and write to Uop Queue.
 //
 // feature list:
-// 1. One instruction can be decoded to 8 uops at most.
-// 2. Decoder will push 4 uops at most into Uops Queue, so decoder only decode to 4 uops at most per cycle.
-// 3. uops_de2dp.rs1_data could be from X[rs1] and imm(inst[19:15]).
-// 4. If the instruction is in wrong encoding, it will be discarded directly without applying a trap, but take assertion in simulation.
+// 1. One instruction can be decoded to 8 uops at most according to RISC-V spec.
+// 2. Decoder will push 4 uops at most into Uops Queue, so decoder only decode to 4 uops at most per cycle.  
+// 3. If the instruction is in wrong encoding, it will be discarded directly without applying a trap.
+// 4. When decoding, if the elements of one uop all belongs to ¡®prestart¡¯, this uop will be discarded.
 // 5. The vstart of the instruction will be calculated to a new value for every decoded uops.
-// 6. vmv<nr>r.v instruction will be split to <nr> vmv.v.v uops, which means funct6, funct3, vs1, vs2 fields will be modified in new uop. However, new uops' vtype.vlmul is not changed to recovery execution right when trap handling is done.
+// 6. Fault-only-first load instruction will be regarded as regular unit-stride load instruction.
+// 7. Vector segment vload/vstore instructions will be decoded to regular stride or indexed vload/vstore uops. 
 
 `include "rvv_backend.svh"
 `include "rvv_backend_sva.svh"
