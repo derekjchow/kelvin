@@ -442,7 +442,6 @@ typedef struct packed {
   logic                               vs2_data_valid; 
   EEW_e                               vs2_eew; //eew for vs1, vs2, rs1
   logic   [`VLEN-1:0]                 vs3_data;	//vd, source for MAC add 
-  EEW_e                               vs3_eew; //vd as source, has independent eew
   logic                               vs3_data_valid; 
   // rs1_data could be from X[rs1] and imm(inst[19:15]). If it is imm, the 5-bit imm(inst[19:15]) will be sign-extend to XLEN-bit. 
   logic   [`XLEN-1:0] 	              rs1_data;          

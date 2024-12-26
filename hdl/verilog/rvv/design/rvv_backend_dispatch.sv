@@ -328,7 +328,6 @@ module rvv_backend_dispatch
             assign rs_dp2mul[i].vs2_data_valid = uop_uop2dp[i].vs2_valid;
             assign rs_dp2mul[i].vs2_eew        = uop_uop2dp[i].vs2_eew;
             assign rs_dp2mul[i].vs3_data       = uop_operand[i].vd;
-            assign rs_dp2mul[i].vs3_eew        = uop_uop2dp[i].vd_eew;
             assign rs_dp2mul[i].vs3_data_valid = uop_uop2dp[i].vs3_valid;
             assign rs_dp2mul[i].rs1_data       = uop_uop2dp[i].rs1_data;
             assign rs_dp2mul[i].rs1_data_valid = uop_uop2dp[i].rs1_data_valid;
