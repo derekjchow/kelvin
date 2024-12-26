@@ -1945,6 +1945,7 @@ module rvv_backend_decode_unit_lsu
     check_vd_align = 'b0; 
 
     case(emul_vd)
+      EMUL_NONE,
       EMUL1: begin
         check_vd_align = 1'b1; 
       end
@@ -1983,6 +1984,7 @@ module rvv_backend_decode_unit_lsu
     check_vs2_align = 'b0; 
 
     case(emul_vs2)
+      EMUL_NONE,
       EMUL1: begin
         check_vs2_align = 1'b1; 
       end
