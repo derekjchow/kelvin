@@ -2127,6 +2127,8 @@ module rvv_backend_alu_unit_addsub
 
     logic [`BYTE_WIDTH:0]       y;
     logic                       cin;
+    logic [`BYTE_WIDTH-1:0]     result;
+    logic                       cout;
 
     if (opcode==ADDSUB_VADD) begin
       y = src_y;
@@ -2137,7 +2139,15 @@ module rvv_backend_alu_unit_addsub
       cin = ~src_cin;
     end
 
-    f_full_addsub8 = src_x + y + cin;
+    {cout,result} = src_x + y + cin;
+    
+    if ((opcode==ADDSUB_VADD)&(src_x[`BYTE_WIDTH]==src_y[`BYTE_WIDTH])&(src_x[`BYTE_WIDTH]^cout))
+      return {1'b1,result};
+    else if ((opcode==ADDSUB_VSUB)&(src_x[`BYTE_WIDTH]^src_y[`BYTE_WIDTH])&(src_y[`BYTE_WIDTH]==cout))
+      return {1'b1,result};
+    else
+      return {1'b0,result};
+
   endfunction
 
   function [`BYTE_WIDTH:0] f_half_addsub8;
@@ -2147,6 +2157,8 @@ module rvv_backend_alu_unit_addsub
     input logic                 src_cin;
 
     logic [`BYTE_WIDTH:0]       y;
+    logic [`BYTE_WIDTH-1:0]     result;
+    logic                       cout;
     
     if (opcode==ADDSUB_VADD) begin
       y = src_cin; 
@@ -2155,7 +2167,15 @@ module rvv_backend_alu_unit_addsub
       y = src_cin ? '1 : 'b0;
     end
     
-    f_half_addsub8 = src_x + y;
+    {cout,result} = src_x + y;
+
+    if ((opcode==ADDSUB_VADD)&(src_x[`BYTE_WIDTH]==1'b0)&(cout==1'b1))
+      return {1'b1,result};
+    else if ((opcode==ADDSUB_VSUB)&(src_x[`BYTE_WIDTH]==1'b1)&(cout==1'b0))
+      return {1'b1,result};
+    else
+      return {1'b0,result};  
+
   endfunction
 
   function [`HWORD_WIDTH:0] f_half_addsub16;
@@ -2165,6 +2185,8 @@ module rvv_backend_alu_unit_addsub
     input logic                  src_cin;
 
     logic [`HWORD_WIDTH:0]       y;
+    logic [`HWORD_WIDTH-1:0]     result;
+    logic                        cout;
     
     if (opcode==ADDSUB_VADD) begin
       y = src_cin; 
@@ -2173,7 +2195,15 @@ module rvv_backend_alu_unit_addsub
       y = src_cin ? '1 : 'b0;
     end
     
-    f_half_addsub16 = src_x + y;
+    {cout,result} = src_x + y;
+
+    if ((opcode==ADDSUB_VADD)&(src_x[`HWORD_WIDTH]==1'b0)&(cout==1'b1))
+      return {1'b1,result};
+    else if ((opcode==ADDSUB_VSUB)&(src_x[`HWORD_WIDTH]==1'b1)&(cout==1'b0))
+      return {1'b1,result};
+    else
+      return {1'b0,result}; 
+
   endfunction
 
   function [`WORD_WIDTH:0] f_half_add32;
@@ -2181,7 +2211,16 @@ module rvv_backend_alu_unit_addsub
     input logic [`WORD_WIDTH:0] src_x;
     input logic                 cin;
 
-    f_half_add32 = src_x + cin;
+    logic [`WORD_WIDTH-1:0]     result;
+    logic                       cout;
+
+    {cout,result} = src_x + cin;
+
+    if ((src_x[`WORD_WIDTH]==1'b0)&(cout==1'b1))
+      return {1'b1,result};
+    else
+      return {1'b0,result}; 
+
   endfunction
 
 endmodule
