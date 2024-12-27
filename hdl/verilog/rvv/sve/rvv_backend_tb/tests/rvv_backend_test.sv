@@ -36,7 +36,8 @@ class rvv_backend_test extends uvm_test;
     end else if($test$plusargs("all_one_vrf")) begin
       vrf_if.vreg_init_data = '1;
     end else if($test$plusargs("given_vrf")) begin
-      vrf_if.vreg_init_data[0] = '1;
+      vrf_if.vreg_init_data[0] = 128'h5555_5555_5555_5555_5555_5555_5555_5555;
+      // vrf_if.vreg_init_data[0] = '1;
       for(int i=1; i<32; i++) begin
         vrf_if.vreg_init_data[i] = 128'hffff_0001_ffff_0002_ffff_0003_ffff_0000 + i;
       end
@@ -155,15 +156,13 @@ class alu_vaddsub_test extends rvv_backend_test;
     phase.raise_objection( .obj( this ) );
 
     rvs_seq = alu_iterate_seq::type_id::create("rvs_seq", this);
-    // for(lmul_e lmul = lmul.first(); lmul != lmul.last(); lmul =lmul.next()) begin
-    for(lmul_e lmul = LMUL1; lmul != lmul.last(); lmul =lmul.next()) begin
+    for(lmul_e lmul = lmul.first(); lmul != lmul.last(); lmul =lmul.next()) begin
       rvs_seq.run_inst(VADD, lmul, env.rvs_agt.rvs_sqr);
-      break;
-      //repeat(10) @(posedge rvs_if.clk);
-      //rvs_seq.run_inst(VSUB, lmul, env.rvs_agt.rvs_sqr);
-      //repeat(10) @(posedge rvs_if.clk);
-      //rvs_seq.run_inst(VRSUB,lmul, env.rvs_agt.rvs_sqr);
-      //repeat(10) @(posedge rvs_if.clk);
+      repeat(10) @(posedge rvs_if.clk);
+      rvs_seq.run_inst(VSUB, lmul, env.rvs_agt.rvs_sqr);
+      repeat(10) @(posedge rvs_if.clk);
+      rvs_seq.run_inst(VRSUB,lmul, env.rvs_agt.rvs_sqr);
+      repeat(10) @(posedge rvs_if.clk);
     end
 
     phase.phase_done.set_drain_time(this, 1000ns);
