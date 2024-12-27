@@ -105,7 +105,7 @@ task rvv_scoreboard::wb_checker();
     @(posedge rvs_if.clk);
     while(wb_queue_rvs.size()>0) begin 
       if(wb_queue_mdl.size()==0) begin
-        `uvm_error("WB_CHECKER","DUT has been finished but MDL hasn't yet.");
+        `uvm_fatal("WB_CHECKER","DUT has been finished but MDL hasn't yet.");
       end else begin
         wb_xrf_valid = '0;
         rvs_tr = wb_queue_rvs.pop_front();

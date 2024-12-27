@@ -132,6 +132,7 @@ task rvs_driver::inst_manage();
       tr = inst_queue.pop_front();
       `uvm_info(get_type_name(), $sformatf("Send transaction to inst_ap"),UVM_HIGH)
       `uvm_info(get_type_name(), tr.sprint(),UVM_HIGH)
+      `uvm_info("INST_TR", tr.sprint(),UVM_LOW)
       inst_ap.write(tr);
       `uvm_info("ASM_DUMP",$sformatf("0x%8x\t%s", tr.pc, tr.asm_string),UVM_LOW)
     end

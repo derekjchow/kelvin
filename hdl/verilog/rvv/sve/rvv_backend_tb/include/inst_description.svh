@@ -47,6 +47,13 @@ typedef struct packed {
   lmul_e vlmul;
 } vtype_t;
 
+typedef enum logic [2:0] {
+  RNU = 0,
+  RNE = 1,
+  RDN = 2,
+  ROD = 3
+} vxrm_e;
+
 typedef enum logic [6:0] {
   LD  = 7'b000_0111, 
   ST  = 7'b010_0111, 
@@ -79,6 +86,12 @@ typedef enum logic [7:0] {
   VOR             =   8'b00_001_010,
   VXOR            =   8'b00_001_011,
 
+  VSLL            =   8'b00_100_101,
+  VSRL            =   8'b00_101_000,
+  VSRA            =   8'b00_101_001,
+  VNSRL           =   8'b00_101_100,
+  VNSRA           =   8'b00_101_101,
+
   VMSEQ           =   8'b00_011_000,
   VMSNE           =   8'b00_011_001,
   VMSLTU          =   8'b00_011_010,
@@ -107,11 +120,29 @@ typedef enum logic [7:0] {
 
   VEXT            =   8'b01_010_010,  // VZEXT/VSEXT 
 
-  VSLL            =   8'b01_100_101,
-  VSRL            =   8'b01_101_000,
-  VSRA            =   8'b01_101_001,
-  VNSRL           =   8'b01_101_100,
-  VNSRA           =   8'b01_101_101,
+  VMUL            =   8'b01_100_101,
+  VMULH           =   8'b01_100_111,
+  VMULHU          =   8'b01_100_100,
+  VMULHSU         =   8'b01_100_110,
+
+  VDIVU           =   8'b01_100_000,
+  VDIV            =   8'b01_100_001,
+  VREMU           =   8'b01_100_010,
+  VREM            =   8'b01_100_011,
+
+  VWMUL           =   8'b01_111_011,
+  VWMULU          =   8'b01_111_000,
+  VWMULSU         =   8'b01_111_010,
+
+  VMACC           =   8'b01_101_101,
+  VNMSAC          =   8'b01_101_111,
+  VMADD           =   8'b01_101_001,
+  VNMSUB          =   8'b01_101_011,
+
+  VWMACCU         =   8'b01_111_100,
+  VWMACC          =   8'b01_111_101,
+  VWMACCUS        =   8'b01_111_110,
+  VWMACCSU        =   8'b01_111_111,  
 
 
   VMAND           =   8'b01_011_001,

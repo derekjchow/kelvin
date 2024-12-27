@@ -8,11 +8,11 @@ class rvs_transaction extends uvm_sequence_item;
   rand bit use_vlmax = 0;
 
   /* VCSR field */
-  rand vtype_t vtype;
+  rand vtype_t           vtype;
   rand logic [`XLEN-1:0] vl;
        logic [`XLEN-1:0] vlmax;
   rand logic [`XLEN-1:0] vstart;
-  rand logic [`XLEN-1:0] vxrm;
+  rand vxrm_e            vxrm;
   rand logic [`XLEN-1:0] vxsat;  
 
   /* Instruction description field */
@@ -69,7 +69,6 @@ class rvs_transaction extends uvm_sequence_item;
     vtype.vill == 1'b0;
     vtype.rsv  ==  'b0;  
     vxsat inside {0,1,2,3};
-    vxrm inside {0,1,2,3};
   }
 
   constraint c_vl {
@@ -159,7 +158,7 @@ class rvs_transaction extends uvm_sequence_item;
     `uvm_field_int(use_vlmax,UVM_ALL_ON)
     `uvm_field_int(vl,UVM_ALL_ON)
     `uvm_field_int(vstart,UVM_ALL_ON)
-    `uvm_field_int(vxrm,UVM_ALL_ON)
+    `uvm_field_enum(vxrm_e,vxrm,UVM_ALL_ON)
     `uvm_field_int(vxsat,UVM_ALL_ON)
     `uvm_field_int(vm,UVM_ALL_ON)
     `uvm_field_int(use_vm_to_cal,UVM_ALL_ON)

@@ -186,7 +186,8 @@ endclass : rvv_behavior_model
         // --------------------------------------------------
         // 1. Decode - Get eew & emul
         is_mask_inst = inst_tr.inst_type == ALU && (inst_tr.alu_inst inside {VMAND});
-        is_widen_inst = inst_tr.inst_type == ALU && (inst_tr.alu_inst inside {VWADDU, VWADD, VWADD_W, VWSUBU, VWSUB, VWADDU_W});
+        is_widen_inst = inst_tr.inst_type == ALU && (inst_tr.alu_inst inside {VWADDU, VWADD, VWADD_W, VWSUBU, VWSUB, VWADDU_W, 
+                                                                              VWMUL, VWMULU, VWMULSU});
         is_widen_vs2_inst = inst_tr.inst_type == ALU && (inst_tr.alu_inst inside {VWADD_W, VWADDU_W});
         is_narrow_inst = inst_tr.inst_type == ALU && (inst_tr.alu_inst inside {VNSRL, VNSRA});
         use_vm_to_cal = inst_tr.use_vm_to_cal;
@@ -419,20 +420,20 @@ endclass : rvv_behavior_model
               ST: `uvm_fatal(get_type_name(),"Store fucntion hasn't been defined.")
               ALU: begin 
                 case({dest_eew, src1_eew, src2_eew})
-                  { EEW8,  EEW8,  EEW8}: dest = alu_processor #( sew8_t,  sew8_t,  sew8_t)::exe(inst_tr, src2, src1, src0);
-                  {EEW16, EEW16, EEW16}: dest = alu_processor #(sew16_t, sew16_t, sew16_t)::exe(inst_tr, src2, src1, src0);
-                  {EEW32, EEW32, EEW32}: dest = alu_processor #(sew32_t, sew32_t, sew32_t)::exe(inst_tr, src2, src1, src0);
+                  { EEW8,  EEW8,  EEW8}: dest = alu_processor #( sew8_t,  sew8_t,  sew8_t)::exe(inst_tr, dest, src2, src1, src0);
+                  {EEW16, EEW16, EEW16}: dest = alu_processor #(sew16_t, sew16_t, sew16_t)::exe(inst_tr, dest, src2, src1, src0);
+                  {EEW32, EEW32, EEW32}: dest = alu_processor #(sew32_t, sew32_t, sew32_t)::exe(inst_tr, dest, src2, src1, src0);
                   // widen
-                  {EEW16,  EEW8,  EEW8}: dest = alu_processor #(sew16_t,  sew8_t,  sew8_t)::exe(inst_tr, src2, src1, src0);
-                  {EEW16, EEW16,  EEW8}: dest = alu_processor #(sew16_t, sew16_t,  sew8_t)::exe(inst_tr, src2, src1, src0);
-                  {EEW32, EEW16, EEW16}: dest = alu_processor #(sew32_t, sew16_t, sew16_t)::exe(inst_tr, src2, src1, src0);
-                  {EEW32, EEW32, EEW16}: dest = alu_processor #(sew32_t, sew32_t, sew16_t)::exe(inst_tr, src2, src1, src0);
+                  {EEW16,  EEW8,  EEW8}: dest = alu_processor #(sew16_t,  sew8_t,  sew8_t)::exe(inst_tr, dest, src2, src1, src0);
+                  {EEW16, EEW16,  EEW8}: dest = alu_processor #(sew16_t, sew16_t,  sew8_t)::exe(inst_tr, dest, src2, src1, src0);
+                  {EEW32, EEW16, EEW16}: dest = alu_processor #(sew32_t, sew16_t, sew16_t)::exe(inst_tr, dest, src2, src1, src0);
+                  {EEW32, EEW32, EEW16}: dest = alu_processor #(sew32_t, sew32_t, sew16_t)::exe(inst_tr, dest, src2, src1, src0);
                   // narrow
-                  { EEW8, EEW16, EEW16}: dest = alu_processor #( sew8_t, sew16_t, sew16_t)::exe(inst_tr, src2, src1, src0);
-                  {EEW16, EEW32, EEW32}: dest = alu_processor #(sew16_t, sew32_t, sew32_t)::exe(inst_tr, src2, src1, src0);
+                  { EEW8, EEW16, EEW16}: dest = alu_processor #( sew8_t, sew16_t, sew16_t)::exe(inst_tr, dest, src2, src1, src0);
+                  {EEW16, EEW32, EEW32}: dest = alu_processor #(sew16_t, sew32_t, sew32_t)::exe(inst_tr, dest, src2, src1, src0);
                   // mask logic
-                  { EEW1,  EEW1,  EEW1}: dest = alu_processor #( sew1_t,  sew1_t,  sew1_t)::exe(inst_tr, src1, src2, src3);
-                  { EEW1,  EEW1,  EEW1}: dest = alu_processor #( sew1_t,  sew1_t,  sew1_t)::exe(inst_tr, src1, src2, src3);
+                  { EEW1,  EEW1,  EEW1}: dest = alu_processor #( sew1_t,  sew1_t,  sew1_t)::exe(inst_tr, dest, src1, src2, src3);
+                  { EEW1,  EEW1,  EEW1}: dest = alu_processor #( sew1_t,  sew1_t,  sew1_t)::exe(inst_tr, dest, src1, src2, src3);
                   default: `uvm_error(get_type_name(), $sformatf("Unsupported EEW: dest_eew=%d, src1_eew=%d, src2_eew=%d", dest_eew, src1_eew, src2_eew))
                 endcase
                 elm_writeback(dest, inst_tr.dest_type, dest_reg_idx, elm_idx, dest_eew);
@@ -535,8 +536,7 @@ virtual class alu_processor#(
   static bit overflow;
   static bit underflow;
 
-  static function TD exe (rvs_transaction inst_tr, T2 src2, T1 src1, T0 src0); //TODO ref ...
-    TD dest;
+  static function TD exe (rvs_transaction inst_tr, TD dest, T2 src2, T1 src1, T0 src0); //TODO ref ...
     // `uvm_info("DEBUG", $sformatf("sizeof(T1)=%0d, sizeof(T2)=%0d, sizeof(TD)=%0d", $size(T1), $size(T2), $size(TD)), UVM_HIGH)
     case(inst_tr.alu_inst) 
     // OPI
@@ -588,6 +588,30 @@ virtual class alu_processor#(
       VSRA : dest = _vsra(src2, src1);
       VNSRL: dest = _vsrl(src2, src1);
       VNSRA: dest = _vsra(src2, src1);
+        
+      VMUL    : dest = _vmul(src2, src1);
+      VMULH   : dest = _vmulh(src2, src1);
+      VMULHU  : dest = _vmulhu(src2, src1);
+      VMULHSU : dest = _vmulhsu(src2, src1);
+                
+      VDIVU: dest = _vdivu(src2, src1);
+      VDIV : dest = _vdiv(src2, src1);
+      VREMU: dest = _vremu(src2, src1);
+      VREM : dest = _vrem(src2, src1);        
+
+      VWMUL  : dest = _vwmul(src2, src1);
+      VWMULU : dest = _vwmulu(src2, src1);
+      VWMULSU: dest = _vwmulsu(src2, src1);
+
+      VMACC : dest = _vmacc(dest, src2, src1);
+      VNMSAC: dest = _vnmsac(dest, src2, src1);
+      VMADD : dest = _vmadd(dest, src2, src1);
+      VNMSUB: dest = _vnmsub(dest, src2, src1);
+
+      VWMACCU  : dest = _vwmaccu(dest, src2, src1);
+      VWMACC   : dest = _vwmacc(dest, src2, src1);
+      VWMACCUS : dest = _vwmaccus(dest, src2, src1);
+      VWMACCSU : dest = _vwmaccsu(dest, src2, src1);
 
       VMAND : dest = _vmand(src2, src1); 
       VMOR  : dest = _vmor(src2, src1); 
@@ -691,6 +715,94 @@ virtual class alu_processor#(
   static function TD _vsra(T2 src2, T1 src1);
     _vsra = $signed(src2) >>> src1;
   endfunction : _vsra
+
+  //---------------------------------------------------------------------- 
+  // Ch32.11.10 Vector Single-Width Integer Multiply Instructions
+  static function TD _vmul(T2 src2, T1 src1);
+    logic [$bits(TD)*2-1:0] dest_widen;
+    dest_widen = $signed(src2) * $signed(src1);
+    _vmul = dest_widen[$bits(TD)-1:0];
+  endfunction : _vmul
+  static function TD _vmulh(T2 src2, T1 src1);
+    logic [$bits(TD)*2-1:0] dest_widen;
+    dest_widen = $signed(src2) * $signed(src1);
+    _vmulh = dest_widen[$bits(TD)*2-1:$bits(TD)];
+  endfunction : _vmulh
+  static function TD _vmulhu(T2 src2, T1 src1);
+    logic [$bits(TD)*2-1:0] dest_widen;
+    dest_widen = $unsigned(src2) * $unsigned(src1);
+    _vmulhu = dest_widen[$bits(TD)*2-1:$bits(TD)];
+  endfunction : _vmulhu
+  static function TD _vmulhsu(T2 src2, T1 src1);
+    logic [$bits(TD)*2-1:0] dest_widen;
+    dest_widen = $signed(src2) * $unsigned(src1);
+    _vmulhsu = dest_widen[$bits(TD)*2-1:$bits(TD)];
+  endfunction : _vmulhsu
+
+  //---------------------------------------------------------------------- 
+  // Ch32.11.11 Vector Integer Divide Instructions
+  static function TD _vdivu(T2 src2, T1 src1);
+    _vdivu = (src1 == 0) ? '1 : $unsigned(src2) / $unsigned(src1);
+  endfunction : _vdivu
+  static function TD _vdiv(T2 src2, T1 src1);
+    _vdiv = (src1 == 0) ? '1 : $signed(src2) / $signed(src1);
+  endfunction : _vdiv
+  static function TD _vremu(T2 src2, T1 src1);
+    _vremu = (src1 == 0) ? src2 : $unsigned(src2) % $unsigned(src1);
+  endfunction : _vremu
+  static function TD _vrem(T2 src2, T1 src1);
+    _vrem = (src1 == 0) ? src2 : $signed(src2) % $signed(src1);
+  endfunction : _vrem
+
+  //---------------------------------------------------------------------- 
+  // Ch32.11.12 Vector Widening Integer Multiply Instructions
+  static function TD _vwmul(T2 src2, T1 src1);
+    _vwmul = $signed(src2) * $signed(src1);
+  endfunction : _vwmul
+  static function TD _vwmulu(T2 src2, T1 src1);
+    _vwmulu = $unsigned(src2) * $unsigned(src1);
+  endfunction : _vwmulu
+  static function TD _vwmulsu(T2 src2, T1 src1);
+    _vwmulsu = $signed(src2) * $unsigned(src1);
+  endfunction : _vwmulsu
+
+  //---------------------------------------------------------------------- 
+  // Ch32.11.13 Vector Single-Width Integer Multiply-Add Instructions
+  static function TD _vmacc(TD dest, T2 src2, T1 src1);
+    logic [$bits(TD)*2-1:0] dest_widen;
+    dest_widen = $signed(dest) + $signed(src2) * $signed(src1);
+    _vmacc = dest[$bits(TD)-1:0];
+  endfunction : _vmacc
+  static function TD _vnmsac(TD dest, T2 src2, T1 src1);
+    logic [$bits(TD)*2-1:0] dest_widen;
+    dest_widen = $signed(dest) - $signed(src2) * $signed(src1);
+    _vnmsac = dest[$bits(TD)-1:0];
+  endfunction : _vnmsac
+  static function TD _vmadd(TD dest, T2 src2, T1 src1);
+    logic [$bits(TD)*2-1:0] dest_widen;
+    dest_widen = $signed(src2) + $signed(dest) * $signed(src1);
+    _vmadd = dest[$bits(TD)-1:0];
+  endfunction : _vmadd
+  static function TD _vnmsub(TD dest, T2 src2, T1 src1);
+    logic [$bits(TD)*2-1:0] dest_widen;
+    dest_widen = $signed(src2) - $signed(dest) * $signed(src1);
+    _vnmsub = dest[$bits(TD)-1:0];
+  endfunction : _vnmsub
+
+  //---------------------------------------------------------------------- 
+  // Ch32.11.14 Vector Widening Integer Multiply-Add Instructions
+  static function TD _vwmaccu(TD dest, T2 src2, T1 src1);
+    _vwmaccu = $unsigned(dest) + $unsigned(src2) * $unsigned(src1);
+  endfunction : _vwmaccu
+  static function TD _vwmacc(TD dest, T2 src2, T1 src1);
+    _vwmacc = $signed(dest) + $signed(src2) * $signed(src1);
+  endfunction : _vwmacc
+  static function TD _vwmaccus(TD dest, T2 src2, T1 src1);
+    _vwmaccus = $unsigned(dest) + $signed(src2) * $unsigned(src1);
+  endfunction : _vwmaccus
+  static function TD _vwmaccsu(TD dest, T2 src2, T1 src1);
+    _vwmaccsu = $unsigned(dest) + $unsigned(src2) * $signed(src1);
+  endfunction : _vwmaccsu
 
   static function TD _vmand(T2 src2, T1 src1);
     _vmand = src1 & src2;

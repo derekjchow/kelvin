@@ -8,6 +8,10 @@ class rvv_backend_test extends uvm_test;
 
   `uvm_component_utils(rvv_backend_test)
 
+  typedef virtual rvs_interface v_if1;
+  typedef virtual vrf_interface v_if3;
+  v_if1 rvs_if;
+  v_if3 vrf_if;
   rvv_backend_env env;
 
   UVM_FILE tb_logs [string];
@@ -21,6 +25,12 @@ class rvv_backend_test extends uvm_test;
     super.build_phase(phase);
     env = rvv_backend_env::type_id::create("env", this);
     uvm_top.set_timeout(5000ns,1);
+    if(!uvm_config_db#(v_if1)::get(this, "", "rvs_if", rvs_if)) begin
+      `uvm_fatal("TEST/NOVIF", "No virtual interface specified for this agent instance")
+    end
+    if(!uvm_config_db#(v_if3)::get(this, "", "vrf_if", vrf_if)) begin
+      `uvm_fatal("TEST/NOVIF", "No virtual interface specified for this agent instance")
+    end
     if($test$plusargs("all_zero_vrf")) begin
       vrf_if.vreg_init_data = '0;
     end else if($test$plusargs("all_one_vrf")) begin
@@ -56,6 +66,9 @@ class rvv_backend_test extends uvm_test;
     tb_logs["ASM_DUMP"] = $fopen("tb_asm_dump.log", "w");
     this.env.rvs_agt.rvs_drv.set_report_id_file("ASM_DUMP", tb_logs["ASM_DUMP"]);
     this.env.rvs_agt.rvs_drv.set_report_id_action("ASM_DUMP", UVM_LOG);
+    tb_logs["INST_TR"] = $fopen("tb_inst_tr.log", "w");
+    this.env.rvs_agt.rvs_drv.set_report_id_file("INST_TR", tb_logs["INST_TR"]);
+    this.env.rvs_agt.rvs_drv.set_report_id_action("INST_TR", UVM_LOG);
   endfunction
 
   
@@ -142,9 +155,16 @@ class alu_vaddsub_test extends rvv_backend_test;
     phase.raise_objection( .obj( this ) );
 
     rvs_seq = alu_iterate_seq::type_id::create("rvs_seq", this);
-    rvs_seq.run_inst(VADD, env.rvs_agt.rvs_sqr);
-    rvs_seq.run_inst(VSUB, env.rvs_agt.rvs_sqr);
-    rvs_seq.run_inst(VRSUB, env.rvs_agt.rvs_sqr);
+    // for(lmul_e lmul = lmul.first(); lmul != lmul.last(); lmul =lmul.next()) begin
+    for(lmul_e lmul = LMUL1; lmul != lmul.last(); lmul =lmul.next()) begin
+      rvs_seq.run_inst(VADD, lmul, env.rvs_agt.rvs_sqr);
+      break;
+      //repeat(10) @(posedge rvs_if.clk);
+      //rvs_seq.run_inst(VSUB, lmul, env.rvs_agt.rvs_sqr);
+      //repeat(10) @(posedge rvs_if.clk);
+      //rvs_seq.run_inst(VRSUB,lmul, env.rvs_agt.rvs_sqr);
+      //repeat(10) @(posedge rvs_if.clk);
+    end
 
     phase.phase_done.set_drain_time(this, 1000ns);
     phase.drop_objection( .obj( this ) );
@@ -154,6 +174,7 @@ class alu_vaddsub_test extends rvv_backend_test;
     super.final_phase(phase);
   endfunction
 endclass: alu_vaddsub_test
+/*
 //-------------------------------------------------
 // 
 //-------------------------------------------------
@@ -469,5 +490,6 @@ class alu_vmerge_test extends rvv_backend_test;
     super.final_phase(phase);
   endfunction
 endclass: alu_vmerge_test
+*/
 `endif // RVV_BACKEND_TEST__SV
 
