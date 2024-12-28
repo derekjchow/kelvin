@@ -780,7 +780,7 @@ module rvv_backend
       else
         rt_uop <= rd_valid_rob2rt & rd_ready_rt2rob;
     end
-    LastUop:`rvv_forbid(!(rt_event ^ rt_uop) inside {4'b0000,4'b1000,4'b1100,4'b1110,4'b1111})
+    LastUop:`rvv_forbid(|rt_event && (!(rt_event ^ rt_uop) inside {4'b0000,4'b1000,4'b1100,4'b1110,4'b1111}))
       else $error("TB_ISSUE: get not-last uops retired after last uops.");
   `endif
 `endif // TB_BRINGUP
