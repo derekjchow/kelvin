@@ -122,6 +122,11 @@ module rvv_backend_rob
   // retire uops
     logic     [`NUM_RT_UOP-1:0]  uop_retire_ready;
 
+  // temp signal
+    logic [`ROB_DEPTH_WIDTH-1:0] wind_uop_wptr [`ROB_DEPTH-1:0];
+    logic [`ROB_DEPTH_WIDTH-1:0] wind_uop_rptr [`ROB_DEPTH-1:0];
+    
+
     genvar  i,j;
 // ---code start------------------------------------------------------
   // Uop info FIFO
@@ -253,6 +258,13 @@ module rvv_backend_rob
   // set if PU update uop result
   // clear if RT pop uop reuslt from ROB
   // reset once flush ROB.
+
+  // wind back pointer
+     generate
+         for (i=0; i<`ROB_DEPTH; i++) assign wind_uop_rptr[i] = uop_rptr+i;
+         for (i=0; i<`ROB_DEPTH; i++) assign wind_uop_wptr[i] = uop_wptr+i;
+     endgenerate
+    
      always_ff @(posedge clk or negedge rst_n) begin
         if (!rst_n)
             uop_done <= '0;
@@ -261,7 +273,7 @@ module rvv_backend_rob
         else begin
             for (int k=0; k<`NUM_RT_UOP; k++) begin
                 if (rd_valid_rob2rt[k] && rd_ready_rt2rob[k])
-                    uop_done[uop_rptr+k] <= 1'b0;
+                    uop_done[wind_uop_rptr[k]] <= 1'b0;
             end
             for (int k=0; k<`NUM_ALU; k++) begin
                 if (wr_valid_alu2rob[k] && wr_ready_rob2alu[k])
@@ -325,21 +337,21 @@ module rvv_backend_rob
   generate
       for (i=0; i<`NUM_RT_UOP; i++) begin : gen_rob2rt
         // retire_uop valid
-          assign uop_retire_ready[i] = uop_valid_rob2rt[i] & uop_done[uop_rptr+i];
+          assign uop_retire_ready[i] = uop_valid_rob2rt[i] & uop_done[wind_uop_rptr[i]];
           if (i==0) assign rd_valid_rob2rt[0] = uop_retire_ready[0];
-          else      assign rd_valid_rob2rt[i] = uop_retire_ready[i] & rd_valid_rob2rt[i-1] & ~trap_flag[uop_rptr+i-1];
+          else      assign rd_valid_rob2rt[i] = uop_retire_ready[i] & rd_valid_rob2rt[i-1] & ~trap_flag[wind_uop_rptr[i]-1];
 
         // retire_uop data
-          assign rd_rob2rt[i].w_valid = res_mem[uop_rptr+i].w_valid & rd_valid_rob2rt[i];
+          assign rd_rob2rt[i].w_valid = res_mem[wind_uop_rptr[i]].w_valid & rd_valid_rob2rt[i];
           assign rd_rob2rt[i].w_index = uop_rob2rt[i].w_index;
-          assign rd_rob2rt[i].w_data  = res_mem[uop_rptr+i].w_data;
+          assign rd_rob2rt[i].w_data  = res_mem[wind_uop_rptr[i]].w_data;
           assign rd_rob2rt[i].w_type  = uop_rob2rt[i].w_type;
           assign rd_rob2rt[i].vd_type = uop_rob2rt[i].byte_type;
-          assign rd_rob2rt[i].trap_flag = trap_flag[uop_rptr+i];
+          assign rd_rob2rt[i].trap_flag = trap_flag[wind_uop_rptr[i]];
           assign rd_rob2rt[i].vector_csr = uop_rob2rt[i].vector_csr;
-          assign rd_rob2rt[i].vxsat   = res_mem[uop_rptr+i].vxsat;
-          assign rd_rob2rt[i].ignore_vta = res_mem[uop_rptr+i].ignore_vta;
-          assign rd_rob2rt[i].ignore_vma = res_mem[uop_rptr+i].ignore_vma;
+          assign rd_rob2rt[i].vxsat   = res_mem[wind_uop_rptr[i]].vxsat;
+          assign rd_rob2rt[i].ignore_vta = res_mem[wind_uop_rptr[i]].ignore_vta;
+          assign rd_rob2rt[i].ignore_vma = res_mem[wind_uop_rptr[i]].ignore_vma;
           assign rd_rob2rt[i].last_uop_valid = uop_rob2rt[i].last_uop_valid;
       end
   endgenerate
@@ -357,9 +369,9 @@ module rvv_backend_rob
   generate
       for (i=0; i<`ROB_DEPTH; i++) begin : gen_rob2dp
           assign uop_rob2dp[i].valid   = entry_valid[i];
-          assign uop_rob2dp[i].w_valid = res_mem[uop_rptr+i].w_valid & uop_done[uop_rptr+i];
+          assign uop_rob2dp[i].w_valid = res_mem[wind_uop_rptr[i]].w_valid & uop_done[wind_uop_rptr[i]];
           assign uop_rob2dp[i].w_index = uop_info[i].w_index;
-          assign uop_rob2dp[i].w_data  = res_mem[uop_rptr+i].w_data;
+          assign uop_rob2dp[i].w_data  = res_mem[wind_uop_rptr[i]].w_data;
           assign uop_rob2dp[i].byte_type = uop_info[i].byte_type;
           assign uop_rob2dp[i].vector_csr = uop_info[i].vector_csr;
       end
