@@ -1,4 +1,5 @@
 `include "rvv_backend.svh"
+`include "rvv_backend_sva.svh"
 
 module rvv_backend
 (
@@ -761,6 +762,7 @@ module rvv_backend
   // testbench verification
   `ifdef TB_SUPPORT
     logic [`NUM_RT_UOP-1:0] rt_event;
+    logic [`NUM_RT_UOP-1:0] rt_uop;
     generate
       for (i=0; i<`NUM_RT_UOP; i++)
         always_ff @(posedge clk or negedge rst_n) begin
@@ -772,6 +774,14 @@ module rvv_backend
             rt_event[i] <= 1'b0;
         end
     endgenerate
+    always_ff @(posedge clk or negedge rst_n) begin
+      if(!rst_n)
+        rt_uop <= '0;
+      else
+        rt_uop <= rd_valid_rob2rt & rd_ready_rt2rob;
+    end
+    LastUop:`rvv_forbid(!(rt_event ^ rt_uop) inside {4'b0000,4'b1000,4'b1100,4'b1110,4'b1111})
+      else $error("TB_ISSUE: get not-last uops retired after last uops.");
   `endif
 `endif // TB_BRINGUP
 
