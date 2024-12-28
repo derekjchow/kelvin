@@ -1,5 +1,6 @@
 // rvv_vrf_reg - 32 vector regsiter for V standard extention
 `include "rvv_backend.svh"
+`include "rvv_backend_sva.svh"
 module rvv_backend_vrf_reg (/*AUTOARG*/
    // Outputs
    vreg,
@@ -32,8 +33,13 @@ generate
         .clk    (clk),
         .rst_n  (rst_n)
         );
+    `ifdef ASSERT_ON
+      `rvv_forbid($isunknown(vreg[i][j]))
+        else $error("VREG: data is unknow at vreg[%0d][%0d]",i,j);
+    `endif //ASSERT_ON
     end //end for loop j
   end //end for loop i
 endgenerate
+
 
 endmodule
