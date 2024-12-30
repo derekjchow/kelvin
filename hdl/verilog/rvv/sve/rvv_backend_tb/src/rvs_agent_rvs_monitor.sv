@@ -12,7 +12,7 @@ typedef class rvs_monitor;
 class rvs_monitor extends uvm_monitor;
 
   // uvm_analysis_port #(rvs_transaction) inst_ap; 
-  uvm_analysis_port #(rvs_transaction) wb_ap;   
+  uvm_analysis_port #(rvs_transaction) rt_ap;   
 
   typedef virtual rvs_interface v_if;
   v_if rvs_if;
@@ -39,7 +39,7 @@ endfunction: new
 
 function void rvs_monitor::build_phase(uvm_phase phase);
   super.build_phase(phase);
-  wb_ap = new("wb_ap", this);
+  rt_ap = new("rt_ap", this);
 endfunction: build_phase
 
 function void rvs_monitor::connect_phase(uvm_phase phase);
@@ -69,20 +69,20 @@ task rvs_monitor::tx_monitor();
 endtask: tx_monitor
 
 task rvs_monitor::rx_monitor();
-  logic [`NUM_RT_UOP-1:0] wb_event;
+  logic [`NUM_RT_UOP-1:0] rt_event;
   rvs_transaction tr;
   tr = new();
   forever begin
     @(posedge rvs_if.clk);
     if(rvs_if.rst_n) begin
-      wb_event = rvs_if.wb_event;
-      foreach(wb_event[wb_idx]) begin
-        if(wb_event[wb_idx]) begin
-          if(rvs_if.wb_xrf_valid_wb2rvs[0] && rvs_if.wb_xrf_ready_wb2rvs[0]) begin
-            tr.wb_xrf        = rvs_if.wb_xrf_wb2rvs[0];
-            tr.wb_xrf_valid  = '1;
+      rt_event = rvs_if.rt_event;
+      foreach(rt_event[rt_idx]) begin
+        if(rt_event[rt_idx]) begin
+          if(rvs_if.rt_xrf_valid_rvv2rvs[0] && rvs_if.rt_xrf_ready_rvs2rvv[0]) begin
+            tr.rt_xrf        = rvs_if.rt_xrf_rvv2rvs[0];
+            tr.rt_xrf_valid  = '1;
           end
-          wb_ap.write(tr); // write to scb
+          rt_ap.write(tr); // write to scb
         end
       end
     end

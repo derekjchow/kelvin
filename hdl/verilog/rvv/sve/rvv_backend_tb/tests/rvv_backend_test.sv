@@ -15,7 +15,7 @@ class rvv_backend_test extends uvm_test;
   rvv_backend_env env;
 
   UVM_FILE tb_logs [string];
-  int inst_queue_depth = 'd8;
+  int inst_queue_depth = 'd1;
 
   function new(string name, uvm_component parent);
     super.new(name, parent);
@@ -82,9 +82,9 @@ class rvv_backend_test extends uvm_test;
 endclass: rvv_backend_test
 
 
-//=================================================
+//===========================================================
 // To debug testbench.
-//=================================================
+//===========================================================
 class tb_debug_test extends rvv_backend_test;
 
   zero_seq rvs_seq;
@@ -127,15 +127,15 @@ class tb_debug_test extends rvv_backend_test;
 endclass: tb_debug_test
 
 
-//=================================================
+//===========================================================
 // ALU direct instruction tests 
-//=================================================
-//-------------------------------------------------
-// 
-//-------------------------------------------------
+//===========================================================
+//-----------------------------------------------------------
+// 32.11.1. Vector Single-Width Integer Add and Subtract
+//-----------------------------------------------------------
 class alu_vaddsub_test extends rvv_backend_test;
 
-  alu_iterate_seq rvs_seq;
+  alu_iterate_vxi_seq rvs_seq;
 
   `uvm_component_utils(alu_vaddsub_test)
 
@@ -155,15 +155,10 @@ class alu_vaddsub_test extends rvv_backend_test;
   task main_phase(uvm_phase phase);
     phase.raise_objection( .obj( this ) );
 
-    rvs_seq = alu_iterate_seq::type_id::create("rvs_seq", this);
-    for(lmul_e lmul = lmul.first(); lmul != lmul.last(); lmul =lmul.next()) begin
-      rvs_seq.run_inst(VADD, lmul, env.rvs_agt.rvs_sqr);
-      repeat(10) @(posedge rvs_if.clk);
-      rvs_seq.run_inst(VSUB, lmul, env.rvs_agt.rvs_sqr);
-      repeat(10) @(posedge rvs_if.clk);
-      rvs_seq.run_inst(VRSUB,lmul, env.rvs_agt.rvs_sqr);
-      repeat(10) @(posedge rvs_if.clk);
-    end
+    rvs_seq = alu_iterate_vxi_seq::type_id::create("rvs_seq", this);
+    rvs_seq.run_inst(VADD, env.rvs_agt.rvs_sqr);
+    rvs_seq.run_inst(VSUB, env.rvs_agt.rvs_sqr);
+    rvs_seq.run_inst(VRSUB,env.rvs_agt.rvs_sqr);
 
     phase.phase_done.set_drain_time(this, 1000ns);
     phase.drop_objection( .obj( this ) );
@@ -173,10 +168,10 @@ class alu_vaddsub_test extends rvv_backend_test;
     super.final_phase(phase);
   endfunction
 endclass: alu_vaddsub_test
-/*
-//-------------------------------------------------
-// 
-//-------------------------------------------------
+
+//-----------------------------------------------------------
+// 32.11.2. Vector Single-Width Integer Add and Subtract
+//-----------------------------------------------------------
 class alu_vwaddsub_test extends rvv_backend_test;
 
   alu_iterate_w_seq rvs_seq;
@@ -218,12 +213,13 @@ class alu_vwaddsub_test extends rvv_backend_test;
     super.final_phase(phase);
   endfunction
 endclass: alu_vwaddsub_test
+/*
 //-------------------------------------------------
 // 
 //-------------------------------------------------
 class alu_vadcsbc_test extends rvv_backend_test;
 
-  alu_iterate_seq rvs_seq;
+  alu_iterate_vxi_seq rvs_seq;
 
   `uvm_component_utils(alu_vadcsbc_test)
 
@@ -243,7 +239,7 @@ class alu_vadcsbc_test extends rvv_backend_test;
   task main_phase(uvm_phase phase);
     phase.raise_objection( .obj( this ) );
 
-    rvs_seq = alu_iterate_seq::type_id::create("rvs_seq", this);
+    rvs_seq = alu_iterate_vxi_seq::type_id::create("rvs_seq", this);
     rvs_seq.run_inst(VADC , env.rvs_agt.rvs_sqr);
     rvs_seq.run_inst(VMADC, env.rvs_agt.rvs_sqr);
     rvs_seq.run_inst(VSBC , env.rvs_agt.rvs_sqr);
@@ -298,7 +294,7 @@ endclass: alu_vext_test
 //-------------------------------------------------
 class alu_bitlogic_test extends rvv_backend_test;
 
-  alu_iterate_seq rvs_seq;
+  alu_iterate_vxi_seq rvs_seq;
 
   `uvm_component_utils(alu_bitlogic_test)
 
@@ -318,7 +314,7 @@ class alu_bitlogic_test extends rvv_backend_test;
   task main_phase(uvm_phase phase);
     phase.raise_objection( .obj( this ) );
 
-    rvs_seq = alu_iterate_seq::type_id::create("rvs_seq", this);
+    rvs_seq = alu_iterate_vxi_seq::type_id::create("rvs_seq", this);
     rvs_seq.run_inst(VAND, env.rvs_agt.rvs_sqr);
     rvs_seq.run_inst(VOR, env.rvs_agt.rvs_sqr);
     rvs_seq.run_inst(VXOR, env.rvs_agt.rvs_sqr);
@@ -336,7 +332,7 @@ endclass: alu_bitlogic_test
 //-------------------------------------------------
 class alu_shift_test extends rvv_backend_test;
 
-  alu_iterate_seq rvs_seq;
+  alu_iterate_vxi_seq rvs_seq;
 
   `uvm_component_utils(alu_shift_test)
 
@@ -356,7 +352,7 @@ class alu_shift_test extends rvv_backend_test;
   task main_phase(uvm_phase phase);
     phase.raise_objection( .obj( this ) );
 
-    rvs_seq = alu_iterate_seq::type_id::create("rvs_seq", this);
+    rvs_seq = alu_iterate_vxi_seq::type_id::create("rvs_seq", this);
     rvs_seq.run_inst(VSLL , env.rvs_agt.rvs_sqr);
     rvs_seq.run_inst(VSRL , env.rvs_agt.rvs_sqr);
     rvs_seq.run_inst(VSRA , env.rvs_agt.rvs_sqr);
@@ -419,7 +415,7 @@ endclass: alu_vcomp_test
 //-------------------------------------------------
 class alu_vminmax_test extends rvv_backend_test;
 
-  alu_iterate_seq rvs_seq;
+  alu_iterate_vxi_seq rvs_seq;
 
   `uvm_component_utils(alu_vminmax_test)
 
@@ -439,7 +435,7 @@ class alu_vminmax_test extends rvv_backend_test;
   task main_phase(uvm_phase phase);
     phase.raise_objection( .obj( this ) );
 
-    rvs_seq = alu_iterate_seq::type_id::create("rvs_seq", this);
+    rvs_seq = alu_iterate_vxi_seq::type_id::create("rvs_seq", this);
     rvs_seq.run_inst(VMINU, env.rvs_agt.rvs_sqr);
     rvs_seq.run_inst(VMIN , env.rvs_agt.rvs_sqr);
     rvs_seq.run_inst(VMAXU, env.rvs_agt.rvs_sqr);

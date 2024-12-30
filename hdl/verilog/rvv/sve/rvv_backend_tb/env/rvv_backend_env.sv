@@ -53,14 +53,14 @@ function void rvv_backend_env::connect_phase(uvm_phase phase);
   // rvs_agt.rvs_mon.inst_ap.connect(mdl.inst_imp);
   rvs_agt.rvs_drv.inst_ap.connect(mdl.inst_imp);
   // scb ap
-  rvs_agt.rvs_mon.wb_ap.connect(scb.rvs_imp);
+  rvs_agt.rvs_mon.rt_ap.connect(scb.rvs_imp);
   rvs_agt.vrf_mon.vrf_ap.connect(scb.rvs_vrf_imp);
-  mdl.wb_ap.connect(scb.mdl_imp);
+  mdl.rt_ap.connect(scb.mdl_imp);
   mdl.vrf_ap.connect(scb.mdl_vrf_imp);
   // lsu_agt.lsu_mon.mon_analysis_port.connect(scb.lsu_imp);
 
   // cov ap
-  rvs_agt.rvs_mon.wb_ap.connect(cov.cov_export);
+  rvs_agt.rvs_mon.rt_ap.connect(cov.cov_export);
 endfunction: connect_phase
 
 function void rvv_backend_env::start_of_simulation_phase(uvm_phase phase);

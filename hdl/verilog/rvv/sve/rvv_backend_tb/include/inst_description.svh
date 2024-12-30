@@ -108,6 +108,15 @@ typedef enum logic [7:0] {
 
   VMERGE_VMVV     =   8'b00_010_111, // vm=0: vmerge; vm=1: vmv.v
 
+  VSADDU          =   8'b00_100_000,
+  VSADD           =   8'b00_100_001,
+  VSSUBU          =   8'b00_100_010,
+  VSSUB           =   8'b00_100_011,
+
+  VSMUL_VMVNRR    =   8'b00_100_111, // .vv,.vx: vsmul; .vi: vmvnrr 
+
+  VSSRL           =   8'b00_101_010,
+  VSSRA           =   8'b00_101_011,
   // OPM
   VWADDU          =   8'b01_110_000,
   VWADD           =   8'b01_110_001,
@@ -143,6 +152,11 @@ typedef enum logic [7:0] {
   VWMACC          =   8'b01_111_101,
   VWMACCUS        =   8'b01_111_110,
   VWMACCSU        =   8'b01_111_111,  
+
+  VAADDU          =   8'b01_001_000,
+  VAADD           =   8'b01_001_001,
+  VASUBU          =   8'b01_001_010,
+  VASUB           =   8'b01_001_011,
 
 
   VMAND           =   8'b01_011_001,

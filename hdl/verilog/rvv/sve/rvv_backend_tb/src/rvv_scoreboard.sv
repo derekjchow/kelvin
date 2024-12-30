@@ -20,8 +20,8 @@ class rvv_scoreboard extends uvm_scoreboard;
   uvm_analysis_imp_mdl_vrf #(vrf_transaction,rvv_scoreboard) mdl_vrf_imp;
   // uvm_analysis_imp_mdl #(lsu_transaction,rvv_scoreboard) lsu_imp;
   
-  rvs_transaction wb_queue_rvs[$];
-  rvs_transaction wb_queue_mdl[$];
+  rvs_transaction rt_queue_rvs[$];
+  rvs_transaction rt_queue_mdl[$];
   vrf_transaction vrf_queue_rvs[$];
   vrf_transaction vrf_queue_mdl[$];
 
@@ -36,7 +36,7 @@ class rvv_scoreboard extends uvm_scoreboard;
 	extern function void write_mdl(rvs_transaction tr);
   extern function void write_rvs_vrf(vrf_transaction tr);
   extern function void write_mdl_vrf(vrf_transaction tr);
-	extern virtual task wb_checker();
+	extern virtual task rt_checker();
 	extern virtual task vrf_checker();
 
 endclass: rvv_scoreboard
@@ -64,7 +64,7 @@ endfunction:connect_phase
 task rvv_scoreboard::main_phase(uvm_phase phase);
   super.main_phase(phase);
   fork
-    wb_checker();
+    rt_checker();
     vrf_checker();
   join
 endtask: main_phase 
@@ -76,13 +76,13 @@ endfunction:report_phase
 function void rvv_scoreboard::write_rvs(rvs_transaction tr);
   `uvm_info("DEBUG", "get a wb inst from dut", UVM_HIGH)
   `uvm_info("DEBUG", tr.sprint(), UVM_HIGH)
-  wb_queue_rvs.push_back(tr);
+  rt_queue_rvs.push_back(tr);
 endfunction
 
 function void rvv_scoreboard::write_mdl(rvs_transaction tr);
   `uvm_info("DEBUG", "get a wb inst from mdl", UVM_HIGH)
   `uvm_info("DEBUG", tr.sprint(), UVM_HIGH)
-  wb_queue_mdl.push_back(tr);
+  rt_queue_mdl.push_back(tr);
 endfunction
 
 function void rvv_scoreboard::write_rvs_vrf(vrf_transaction tr);
@@ -97,37 +97,37 @@ function void rvv_scoreboard::write_mdl_vrf(vrf_transaction tr);
   vrf_queue_mdl.push_back(tr);
 endfunction
 
-task rvv_scoreboard::wb_checker();
+task rvv_scoreboard::rt_checker();
   rvs_transaction mdl_tr;
   rvs_transaction rvs_tr;
-  logic wb_xrf_valid;
+  logic rt_xrf_valid;
   forever begin
     @(posedge rvs_if.clk);
-    while(wb_queue_rvs.size()>0) begin 
-      if(wb_queue_mdl.size()==0) begin
+    while(rt_queue_rvs.size()>0) begin 
+      if(rt_queue_mdl.size()==0) begin
         `uvm_fatal("WB_CHECKER","DUT has been finished but MDL hasn't yet.");
       end else begin
-        wb_xrf_valid = '0;
-        rvs_tr = wb_queue_rvs.pop_front();
-        mdl_tr = wb_queue_mdl.pop_front();
+        rt_xrf_valid = '0;
+        rvs_tr = rt_queue_rvs.pop_front();
+        mdl_tr = rt_queue_mdl.pop_front();
         `uvm_info("WB_CHECKER", rvs_tr.sprint(),UVM_HIGH)
         `uvm_info("WB_CHECKER", mdl_tr.sprint(),UVM_HIGH)
-        if(rvs_tr.wb_xrf_valid != mdl_tr.wb_xrf_valid) begin
-          `uvm_error("WB_CHECKER","RVV wb_xrf_valid mismatch with reference model.");
+        if(rvs_tr.rt_xrf_valid != mdl_tr.rt_xrf_valid) begin
+          `uvm_error("WB_CHECKER","RVV rt_xrf_valid mismatch with reference model.");
         end else begin
-          wb_xrf_valid = rvs_tr.wb_xrf_valid;
+          rt_xrf_valid = rvs_tr.rt_xrf_valid;
         end
-        if(wb_xrf_valid && 
-          (rvs_tr.wb_xrf.rt_index != mdl_tr.wb_xrf.rt_index) || 
-          (rvs_tr.wb_xrf.rt_data != mdl_tr.wb_xrf.rt_data)) begin
+        if(rt_xrf_valid && 
+          (rvs_tr.rt_xrf.rt_index != mdl_tr.rt_xrf.rt_index) || 
+          (rvs_tr.rt_xrf.rt_data != mdl_tr.rt_xrf.rt_data)) begin
           `uvm_error("WB_CHECKER", $sformatf("Writeback xrf mismatch:\nDUT:xrf[%0d]=0x%8x\nMDL:xrf[%0d]=0x%8x",
-                                                  rvs_tr.wb_xrf.rt_index, rvs_tr.wb_xrf.rt_data,
-                                                  mdl_tr.wb_xrf.rt_index, mdl_tr.wb_xrf.rt_data));
+                                                  rvs_tr.rt_xrf.rt_index, rvs_tr.rt_xrf.rt_data,
+                                                  mdl_tr.rt_xrf.rt_index, mdl_tr.rt_xrf.rt_data));
         end
       end
     end
   end 
-endtask: wb_checker 
+endtask: rt_checker 
 
 task rvv_scoreboard::vrf_checker();
   vrf_transaction mdl_tr;
@@ -160,16 +160,16 @@ endtask: vrf_checker
 
 function void rvv_scoreboard::final_phase(uvm_phase phase);
   super.final_phase(phase);
-  if(wb_queue_rvs.size()>0) begin
-    `uvm_error("FINAL_CHECK", "wb_queue_rvs wasn't empty!")
-    foreach(wb_queue_rvs[idx]) begin
-      `uvm_error("FINAL_CHECK",wb_queue_rvs[idx].sprint())
+  if(rt_queue_rvs.size()>0) begin
+    `uvm_error("FINAL_CHECK", "rt_queue_rvs wasn't empty!")
+    foreach(rt_queue_rvs[idx]) begin
+      `uvm_error("FINAL_CHECK",rt_queue_rvs[idx].sprint())
     end
   end
-  if(wb_queue_mdl.size()>0) begin
-    `uvm_error("FINAL_CHECK", "wb_queue_mdl wasn't empty!")
-    foreach(wb_queue_mdl[idx]) begin
-      `uvm_error("FINAL_CHECK",wb_queue_mdl[idx].sprint())
+  if(rt_queue_mdl.size()>0) begin
+    `uvm_error("FINAL_CHECK", "rt_queue_mdl wasn't empty!")
+    foreach(rt_queue_mdl[idx]) begin
+      `uvm_error("FINAL_CHECK",rt_queue_mdl[idx].sprint())
     end
   end
   if(vrf_queue_rvs.size()>0) begin

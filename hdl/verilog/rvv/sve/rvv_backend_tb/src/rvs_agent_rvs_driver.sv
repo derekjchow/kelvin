@@ -33,7 +33,7 @@ class rvs_driver extends uvm_driver # (rvs_transaction);
   extern protected virtual task tx_driver();
   extern protected virtual task inst_manage();
 
-  extern protected virtual task wb_xrf_driver();
+  extern protected virtual task rt_xrf_driver();
 
 endclass: rvs_driver
 
@@ -44,6 +44,9 @@ endfunction: new
 function void rvs_driver::build_phase(uvm_phase phase);
   super.build_phase(phase);
   inst_ap = new("inst_ap", this);
+  if(uvm_config_db#(int)::get(this, "", "inst_queue_depth", inst_queue_depth)) begin
+    `uvm_info(get_type_name(), $sformatf("Depth of instruction queue in rvs_driver is set to %0d.", inst_queue_depth), UVM_LOW)
+  end
 endfunction: build_phase
 
 function void rvs_driver::connect_phase(uvm_phase phase);
@@ -52,9 +55,6 @@ function void rvs_driver::connect_phase(uvm_phase phase);
     `uvm_fatal(get_type_name(), "Fail to get rvs_if!")
   if(!uvm_config_db#(v_if3)::get(this, "", "vrf_if", vrf_if))
     `uvm_fatal(get_type_name(), "Fail to get vrf_if!")
-  if(uvm_config_db#(int)::get(this, "", "inst_queue_depth", inst_queue_depth)) begin
-    `uvm_info(get_type_name(), $sformatf("Depth of instruction queue in rvs_driver is set to %0d.", inst_queue_depth), UVM_LOW)
-  end
 endfunction: connect_phase
 
 task rvs_driver::reset_phase(uvm_phase phase);
@@ -70,7 +70,7 @@ task rvs_driver::reset_phase(uvm_phase phase);
       rvs_if.insts_valid_rvs2cq[i]   <= '0;
     end
     for(int i=0; i<`NUM_RT_UOP; i++) begin
-      rvs_if.wb_xrf_ready_wb2rvs[i] <= '0;
+      rvs_if.rt_xrf_ready_rvs2rvv[i] <= '0;
     end
     @(posedge rvs_if.clk);
   end
@@ -86,7 +86,7 @@ task rvs_driver::run_phase(uvm_phase phase);
   super.run_phase(phase);
   fork 
     tx_driver();
-    wb_xrf_driver();
+    rt_xrf_driver();
   join
 endtask: run_phase
 
@@ -153,14 +153,14 @@ task rvs_driver::tx_driver();
   end
 endtask: tx_driver
 
-task rvs_driver::wb_xrf_driver();
+task rvs_driver::rt_xrf_driver();
   forever begin
     for(int i=0; i<`NUM_RT_UOP; i++) begin
-      rvs_if.wb_xrf_ready_wb2rvs[i] <= '1;
+      rvs_if.rt_xrf_ready_rvs2rvv[i] <= '1;
     end
     @(posedge rvs_if.clk);
   end
-endtask: wb_xrf_driver
+endtask: rt_xrf_driver
 `endif // RVS_DRIVER__SV
 
 

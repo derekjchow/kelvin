@@ -12,9 +12,9 @@ interface rvs_interface (input bit clk, input bit rst_n);
   logic         [`ISSUE_LANE-1:0] insts_ready_cq2rvs;  
 
 // write back to XRF. RVS arbitrates write ports of XRF by itself.
-  RT2XRF_t      [`NUM_RT_UOP-1:0] wb_xrf_wb2rvs      ;
-  logic         [`NUM_RT_UOP-1:0] wb_xrf_valid_wb2rvs;
-  logic         [`NUM_RT_UOP-1:0] wb_xrf_ready_wb2rvs;
+  RT2XRF_t      [`NUM_RT_UOP-1:0] rt_xrf_rvv2rvs      ;
+  logic         [`NUM_RT_UOP-1:0] rt_xrf_valid_rvv2rvs;
+  logic         [`NUM_RT_UOP-1:0] rt_xrf_ready_rvs2rvv;
 
 // exception handler
   // trap signal handshake
@@ -26,7 +26,7 @@ interface rvs_interface (input bit clk, input bit rst_n);
   RVVConfigState                  vector_csr;
 
 // write back event (for each instruction)
-  logic         [`NUM_RT_UOP-1:0] wb_event;
+  logic         [`NUM_RT_UOP-1:0] rt_event;
 
 endinterface: rvs_interface
 

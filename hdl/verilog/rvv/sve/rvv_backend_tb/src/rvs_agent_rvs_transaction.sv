@@ -58,8 +58,8 @@ class rvs_transaction extends uvm_sequence_item;
        string asm_string;
 
   /* Write back info */
-  rt_xrf_t wb_xrf;
-  logic wb_xrf_valid;
+  rt_xrf_t rt_xrf;
+  logic rt_xrf_valid;
 
   /* Trap field */
   // TODO
@@ -72,12 +72,11 @@ class rvs_transaction extends uvm_sequence_item;
   }
 
   constraint c_vl {
-    if(vtype.vlmul[2])
+    if(vtype.vlmul[2]) // fraction_lmul
       vl <= (`VLENB >> (~vtype.vlmul +3'b1)) >> vtype.vsew;
     else  
       vl <= (`VLENB << vtype.vlmul) >> vtype.vsew;
-    // vstart <= vl;
-    vstart == 0;
+    vstart <= vl;
   }
 
   constraint c_vm {
@@ -98,21 +97,21 @@ class rvs_transaction extends uvm_sequence_item;
             (alu_type == OPIVX && src1_type == XRF) || 
             (alu_type == OPIVI && src1_type == IMM)
            )
-         );
+      );
 
     (inst_type == ALU && alu_inst inside {VSBC, VMSBC, VMSLTU, VMSLT}) 
       -> (dest_type == VRF && src2_type == VRF && 
            ((alu_type == OPIVV && src1_type == VRF) || 
             (alu_type == OPIVX && src1_type == XRF) 
            )
-         );
+      );
 
     (inst_type == ALU && alu_inst inside {VMSGTU, VMSGT}) 
       -> (dest_type == VRF && src2_type == VRF && 
            ((alu_type == OPIVI && src1_type == IMM) || 
             (alu_type == OPIVX && src1_type == XRF) 
            )
-         );
+      );
 
     // check for constraint conflict 
     (inst_type == ALU && alu_inst inside {VMERGE_VMVV}) 
@@ -124,7 +123,7 @@ class rvs_transaction extends uvm_sequence_item;
             (alu_type == OPIVX && src1_type == XRF) || 
             (alu_type == OPIVI && src1_type == IMM)
            )
-         );
+      );
 
     // OPM
     (inst_type == ALU && alu_inst[7:6] == 2'b01 && !(alu_inst inside {VEXT, VWMACCUS})) 
@@ -132,22 +131,46 @@ class rvs_transaction extends uvm_sequence_item;
            ((alu_type == OPMVV && src1_type == VRF) || 
             (alu_type == OPMVX && src1_type == XRF) 
            )
-         );
+      );
 
     (inst_type == ALU && alu_inst[7:6] == 2'b01 && alu_inst == VEXT) 
       -> (dest_type == VRF && src2_type == VRF && 
            ((alu_type == OPMVV && src1_type == FUNC && src1_idx inside {VZEXT_VF4, VSEXT_VF4, VZEXT_VF2, VSEXT_VF2}))
-         );
+      );
 
     (inst_type == ALU && alu_inst[7:6] == 2'b01 && (alu_inst inside {VWMACCUS})) 
       -> (dest_type == VRF && src2_type == VRF && 
            ((alu_type == OPMVX && src1_type == XRF) 
            )
-         );
+      );
 
     (inst_type == ALU) -> (src3_type == UNUSE);
 
     solve inst_type before src3_type;
+  }
+
+  constraint c_sewlmul {
+    // widen
+    // (inst_type == ALU && (alu_inst inside {VWADDU, VWADD, VWADD_W, VWSUBU, VWSUB, VWADDU_W, 
+    //                                       VWMUL, VWMULU, VWMULSU}))
+    //   -> (sew != SEW32);
+
+    // narrow
+    //(inst_type == ALU && (alu_inst inside {VNSRL, VNSRA})
+    //  -> (sew != SEW8);
+    
+    // TODO
+    // (dest_type == VRF && (vm == 0 || alu_inst inside {VMADC,VMSBC,
+    //     VMSEQ,VMSNE,VMSLTU,VMSLT,VMSLEU,VMSLE,VMSGTU,VMSGT}))
+    //   ->(dest_idx != 0);
+    // constraint vrf idex for overlaping
+    // widen: dest_idx != src_idx
+    // narrow: dest_idx + dest_emul != src_idx
+    // constraint vrf idex for alignment 
+    // (dest_type == VRF) -> (dest_idx % dest_emul == 0);
+    // (src3_type == VRF) -> (src3_idx % src3_emul == 0);
+    // (src2_type == VRF) -> (src2_idx % src2_emul == 0);
+    // (src1_type == VRF) -> (src1_idx % src1_emul == 0);
   }
 
 
@@ -193,9 +216,9 @@ class rvs_transaction extends uvm_sequence_item;
     `uvm_field_int(src3_idx,UVM_ALL_ON)
     `uvm_field_int(rs_data,UVM_ALL_ON)
 
-    `uvm_field_int(wb_xrf.rt_index ,UVM_ALL_ON)
-    `uvm_field_int(wb_xrf.rt_data  ,UVM_ALL_ON)
-    `uvm_field_int(wb_xrf_valid,UVM_ALL_ON)
+    `uvm_field_int(rt_xrf.rt_index ,UVM_ALL_ON)
+    `uvm_field_int(rt_xrf.rt_data  ,UVM_ALL_ON)
+    `uvm_field_int(rt_xrf_valid,UVM_ALL_ON)
   `uvm_object_utils_end
 
   extern function new(string name = "Trans");
@@ -216,7 +239,7 @@ function void rvs_transaction::post_randomize();
     use_vm_to_cal = 0;
 
   // rs random data
-  if(src1_type != XRF && src2_type != XRF) rs_data = '1;
+  if(src1_type != XRF && src2_type != XRF) rs_data = 'x;
 
   // constraint vl
   if(vtype.vlmul[2]) begin
@@ -228,6 +251,7 @@ function void rvs_transaction::post_randomize();
   end
   if(use_vlmax) begin 
     vl = vlmax;
+    vstart = 0;
   end else begin
     vl = vl > vlmax ? vlmax : vl;
   end
