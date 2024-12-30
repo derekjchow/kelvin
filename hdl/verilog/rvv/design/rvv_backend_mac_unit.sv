@@ -8,7 +8,7 @@
 
 module rvv_backend_mac_unit (
   // Outputs
-  mac2rob_uop_data,
+  mac2rob_uop_valid, mac2rob_uop_data,
   // Inputs
   clk, rst_n, rs2mac_uop_valid, rs2mac_uop_data
   );
@@ -19,6 +19,7 @@ input             rst_n;
 input             rs2mac_uop_valid;
 input MUL_RS_t    rs2mac_uop_data;
 
+output            mac2rob_uop_valid;
 output PU2ROB_t   mac2rob_uop_data;
 
 // Wires & Regs
@@ -818,6 +819,8 @@ assign mac_rslt_eew32_d1 = is_vmac_d1 ? mac_is_widen_d1 ? vmac_rslt_eew32_widen_
 assign update_vxsat_eew32_d1 = |(vsmul_sat_eew32_d1);
 
 //Output pack
+assign mac2rob_uop_valid = rs2mac_uop_valid_d1;
+
 assign mac2rob_uop_data.rob_entry = mac_uop_rob_entry_d1;
 assign mac2rob_uop_data.w_data = mac_top_vs_eew_d1==EEW32 ? mac_rslt_eew32_d1 : 
                                  mac_top_vs_eew_d1==EEW16 ? mac_rslt_eew16_d1 :

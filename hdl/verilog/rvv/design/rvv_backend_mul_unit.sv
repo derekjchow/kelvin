@@ -8,7 +8,7 @@
 
 module rvv_backend_mul_unit (
   // Outputs
-  mul2rob_uop_data,
+  mul2rob_uop_valid, mul2rob_uop_data,
   // Inputs
   clk, rst_n, rs2mul_uop_valid, rs2mul_uop_data
   );
@@ -19,6 +19,7 @@ input             rst_n;
 input             rs2mul_uop_valid;
 input MUL_RS_t    rs2mul_uop_data;
 
+output            mul2rob_uop_valid;
 output PU2ROB_t   mul2rob_uop_data;
 
 // Wires & Regs
@@ -508,6 +509,8 @@ assign mul_rslt_eew32_d1 = is_vsmul_d1     ? vsmul_rslt_eew32_d1 : //vsmul
 assign update_vxsat_eew32_d1 = |(vsmul_sat_eew32_d1);
 
 //Output pack
+assign mul2rob_uop_valid = rs2mul_uop_valid_d1;
+
 assign mul2rob_uop_data.rob_entry = mul_uop_rob_entry_d1;
 assign mul2rob_uop_data.w_data = mul_top_vs_eew_d1==EEW32 ? mul_rslt_eew32_d1 : 
                                  mul_top_vs_eew_d1==EEW16 ? mul_rslt_eew16_d1 :
