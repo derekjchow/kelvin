@@ -24,7 +24,6 @@ class rvv_backend_test extends uvm_test;
   virtual function void build_phase(uvm_phase phase);
     super.build_phase(phase);
     env = rvv_backend_env::type_id::create("env", this);
-    uvm_top.set_timeout(100000ns,1);
     if(!uvm_config_db#(v_if1)::get(this, "", "rvs_if", rvs_if)) begin
       `uvm_fatal("TEST/NOVIF", "No virtual interface specified for this agent instance")
     end
@@ -73,6 +72,14 @@ class rvv_backend_test extends uvm_test;
     tb_logs["INST_TR"] = $fopen("tb_inst_tr.log", "w");
     this.env.rvs_agt.rvs_drv.set_report_id_file("INST_TR", tb_logs["INST_TR"]);
     this.env.rvs_agt.rvs_drv.set_report_id_action("INST_TR", UVM_LOG);
+    tb_logs["ERROR_LOG"] = $fopen("tb_error.log", "w");
+    this.env.set_report_severity_file_hier(UVM_ERROR, tb_logs["ERROR_LOG"]);
+    this.env.set_report_severity_action_hier(UVM_ERROR, UVM_LOG|UVM_DISPLAY);
+    tb_logs["CHECKER_LOG"] = $fopen("tb_checker.log", "w");
+    this.env.scb.set_report_id_file("VRF_CHECKER", tb_logs["CHECKER_LOG"]);
+    this.env.scb.set_report_id_action("VRF_CHECKER", UVM_LOG|UVM_DISPLAY);
+    this.env.scb.set_report_id_file("RT_CHECKER", tb_logs["CHECKER_LOG"]);
+    this.env.scb.set_report_id_action("RT_CHECKER", UVM_LOG|UVM_DISPLAY);
   endfunction
 
   
