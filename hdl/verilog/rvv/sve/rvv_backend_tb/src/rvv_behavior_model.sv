@@ -167,8 +167,8 @@ endclass : rvv_behavior_model
           vxrm   = inst_tr.vxrm;
           vxsat  = '0;
 
-          `uvm_info("DEBUG","Start calculation.",UVM_HIGH)
-          `uvm_info("DEBUG",inst_tr.sprint(),UVM_HIGH)
+          `uvm_info("DEBUG","Start calculation.",UVM_LOW)
+          `uvm_info("DEBUG",inst_tr.sprint(),UVM_LOW)
         end else begin
           `uvm_error(get_type_name(), "Pop inst_queue while empty.")
           break;
@@ -397,15 +397,15 @@ endclass : rvv_behavior_model
               src0 = '0;
           end
           
-          `uvm_info("DEBUG", $sformatf("Before - elment[%2d]: dest=0x%8h, src1=0x%8h, src2=0x%8h", elm_idx, dest, src1, src2), UVM_HIGH)
+          `uvm_info("DEBUG", $sformatf("Before - elment[%2d]: dest=0x%8h, src1=0x%8h, src2=0x%8h", elm_idx, dest, src1, src2), UVM_LOW)
 
           // 3.2 Execute & Writeback 
           if(elm_idx < vstart) begin
-            `uvm_info("DEBUG", $sformatf("elment[%2d]: pre-start", elm_idx), UVM_HIGH)
+            `uvm_info("DEBUG", $sformatf("elment[%2d]: pre-start", elm_idx), UVM_LOW)
             // pre-start: do nothing
           end else if(elm_idx >= vl) begin
             // tail
-            `uvm_info("DEBUG", $sformatf("elment[%2d]: tail", elm_idx), UVM_HIGH)
+            `uvm_info("DEBUG", $sformatf("elment[%2d]: tail", elm_idx), UVM_LOW)
             if(vtype.vta == AGNOSTIC) begin
               if(all_one_for_agn) dest = '1;
               elm_writeback(dest, inst_tr.dest_type, dest_reg_idx, elm_idx, dest_eew);
@@ -413,7 +413,7 @@ endclass : rvv_behavior_model
             end
           end else if(!(vm || this.vrf[0][elm_idx] || use_vm_to_cal)) begin
             // body-inactive
-            `uvm_info("DEBUG", $sformatf("elment[%2d]: body-inactive", elm_idx), UVM_HIGH)
+            `uvm_info("DEBUG", $sformatf("elment[%2d]: body-inactive", elm_idx), UVM_LOW)
             if(vtype.vma == AGNOSTIC) begin
               if(all_one_for_agn) dest = '1;
               elm_writeback(dest, inst_tr.dest_type, dest_reg_idx, elm_idx, dest_eew);
@@ -421,7 +421,7 @@ endclass : rvv_behavior_model
             end
           end else begin
             // body-active
-            `uvm_info("DEBUG", $sformatf("elment[%2d]: body-active", elm_idx), UVM_HIGH)
+            `uvm_info("DEBUG", $sformatf("elment[%2d]: body-active", elm_idx), UVM_LOW)
             // EX
             case(inst_tr.inst_type)
               LD: 
@@ -452,15 +452,15 @@ endclass : rvv_behavior_model
             // Write back
           end
 
-          `uvm_info("DEBUG", $sformatf("After  - elment[%2d]: dest=0x%8h, src1=0x%8h, src2=0x%8h\n", elm_idx, dest, src1, src2), UVM_HIGH)
+          `uvm_info("DEBUG", $sformatf("After  - elment[%2d]: dest=0x%8h, src1=0x%8h, src2=0x%8h\n", elm_idx, dest, src1, src2), UVM_LOW)
         end : op_element
 
         // --------------------------------------------------
         // 4. WB transaction gen
         inst_tr.rt_xrf.rt_index = inst_tr.dest_idx;
         inst_tr.rt_xrf.rt_data  = this.xrf[inst_tr.dest_idx];
-        `uvm_info("DEBUG","Complete calculation.",UVM_HIGH)
-        `uvm_info("DEBUG",inst_tr.sprint(),UVM_HIGH)
+        `uvm_info("DEBUG","Complete calculation.",UVM_LOW)
+        `uvm_info("DEBUG",inst_tr.sprint(),UVM_LOW)
         rt_ap.write(inst_tr);
         rt_event = rt_event >> 1;
       end // while(rt_event[0])
