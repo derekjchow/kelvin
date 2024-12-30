@@ -97,13 +97,13 @@ module rvv_backend_alu_unit_other
 
     case(vs2_eew)
       EEW8: begin
-        v0_data_in_use = v0_data[{uop_index,{($clog2(`BYTE_WIDTH)){1'b0}}} +: `VLENB];
+        v0_data_in_use = v0_data[{uop_index,{($clog2(`VLENB)){1'b0}}} +: `VLENB];
       end
       EEW16: begin
-        v0_data_in_use = v0_data[{uop_index,{($clog2(`HWORD_WIDTH)){1'b0}}} +: `VLENB];
+        v0_data_in_use = v0_data[{uop_index,{($clog2(`VLENB/2)){1'b0}}} +: `VLENB];
       end
       EEW32: begin
-        v0_data_in_use = v0_data[{uop_index,{($clog2(`WORD_WIDTH)){1'b0}}} +: `VLENB];
+        v0_data_in_use = v0_data[{uop_index,{($clog2(`VLENB/4)){1'b0}}} +: `VLENB];
       end
     endcase
   end
