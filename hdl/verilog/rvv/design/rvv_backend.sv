@@ -668,6 +668,9 @@ module rvv_backend
     // LSU
     generate
         for (i=0; i<`NUM_LSU; i++) begin : gen_lsu2rob
+`ifdef TB_SUPPORT
+            assign wr_lsu2rob[i].uop_pc = uop_lsu_rvs2rvv[i].uop_pc;
+`endif
             assign wr_valid_lsu2rob[i] = uop_valid_lsu_rvs2rvv[i]; 
             assign wr_lsu2rob[i].rob_entry = uop_lsu_rvs2rvv[i].uop_id;
             assign wr_lsu2rob[i].w_data    = uop_lsu_rvs2rvv[i].vregfile_write_data;

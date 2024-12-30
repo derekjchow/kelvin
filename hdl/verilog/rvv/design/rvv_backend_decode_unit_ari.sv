@@ -24,7 +24,6 @@ module rvv_backend_decode_unit_ari
 // internal signals
 //
   // split INST_t struct signals
-  logic   [`PC_WIDTH-1:0]                         inst_pc;
   logic   [`FUNCT6_WIDTH-1:0]                     inst_funct6;      // inst original encoding[31:26]           
   logic   [`VM_WIDTH-1:0]                         inst_vm;          // inst original encoding[25]      
   logic   [`REGFILE_INDEX_WIDTH-1:0]              inst_vs2;         // inst original encoding[24:20]
@@ -89,7 +88,6 @@ module rvv_backend_decode_unit_ari
 //
 // decode
 //
-  assign inst_pc              = inst.inst_pc;
   assign inst_funct6          = inst.bits[24:19];
   assign inst_vm              = inst.bits[18];
   assign inst_vs2             = inst.bits[17:13];
@@ -3438,12 +3436,14 @@ module rvv_backend_decode_unit_ari
     end
   end
 
+`ifdef TB_SUPPORT
   // assign uop pc
   always_comb begin
     for(int i=0;i<`NUM_DE_UOP;i=i+1) begin: GET_UOP_PC
-      uop[i].uop_pc = inst_pc;
+      uop[i].uop_pc = inst.inst_pc;
     end
   end
+`endif
 
   // update uop funct3
   always_comb begin

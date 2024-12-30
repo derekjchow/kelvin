@@ -389,6 +389,13 @@ assign rt2vrf_write_data[0].rt_strobe = w_enB0_mux;
 assign rt2vrf_write_data[1].rt_strobe = w_enB1_mux;
 assign rt2vrf_write_data[2].rt_strobe = w_enB2_mux;
 assign rt2vrf_write_data[3].rt_strobe = w_enB3_mux;
+`ifdef TB_SUPPORT
+//pc
+assign rt2vrf_write_data[0].uop_pc = rob2rt_write_data[0].uop_pc;
+assign rt2vrf_write_data[1].uop_pc = rob2rt_write_data[1].uop_pc;
+assign rt2vrf_write_data[2].uop_pc = rob2rt_write_data[2].uop_pc;
+assign rt2vrf_write_data[3].uop_pc = rob2rt_write_data[3].uop_pc;
+`endif
 
 //  5.3. To XRF
 assign rt2xrf_write_valid[0] = w_valid0_chkTrap && w_type0;
@@ -405,6 +412,13 @@ assign rt2xrf_write_data[0].rt_index = w_addr0;
 assign rt2xrf_write_data[1].rt_index = w_addr1;
 assign rt2xrf_write_data[2].rt_index = w_addr2;
 assign rt2xrf_write_data[3].rt_index = w_addr3;
+`ifdef TB_SUPPORT
+//pc
+assign rt2xrf_write_data[0].uop_pc = rob2rt_write_data[0].uop_pc;
+assign rt2xrf_write_data[1].uop_pc = rob2rt_write_data[1].uop_pc;
+assign rt2xrf_write_data[2].uop_pc = rob2rt_write_data[2].uop_pc;
+assign rt2xrf_write_data[3].uop_pc = rob2rt_write_data[3].uop_pc;
+`endif
 
 //  5.4. To VCSR
 //Valid

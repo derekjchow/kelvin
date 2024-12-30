@@ -200,6 +200,9 @@ module rvv_backend_rob
     always_ff @(posedge clk) begin
         for (int k=0; k<`NUM_ALU; k++) begin
             if (wr_valid_alu2rob[k] && wr_ready_rob2alu[k]) begin
+`ifdef TB_SUPPORT
+                res_mem[wr_alu2rob[k].rob_entry].uop_pc <= wr_alu2rob[k].uop_pc;
+`endif                
                 res_mem[wr_alu2rob[k].rob_entry].w_valid <= wr_alu2rob[k].w_valid;
                 res_mem[wr_alu2rob[k].rob_entry].w_data  <= wr_alu2rob[k].w_data;
                 res_mem[wr_alu2rob[k].rob_entry].vxsat   <= wr_alu2rob[k].vxsat;
@@ -209,6 +212,9 @@ module rvv_backend_rob
         end
         for (int k=0; k<`NUM_PMTRDT; k++) begin
             if (wr_valid_pmtrdt2rob[k] && wr_ready_rob2pmtrdt[k]) begin
+`ifdef TB_SUPPORT
+                res_mem[wr_pmtrdt2rob[k].rob_entry].uop_pc <= wr_pmtrdt2rob[k].uop_pc;
+`endif                
                 res_mem[wr_pmtrdt2rob[k].rob_entry].w_valid <= wr_pmtrdt2rob[k].w_valid;
                 res_mem[wr_pmtrdt2rob[k].rob_entry].w_data  <= wr_pmtrdt2rob[k].w_data;
                 res_mem[wr_pmtrdt2rob[k].rob_entry].vxsat   <= wr_pmtrdt2rob[k].vxsat;
@@ -218,6 +224,9 @@ module rvv_backend_rob
         end
         for (int k=0; k<`NUM_MUL; k++) begin
             if (wr_valid_mul2rob[k] && wr_ready_rob2mul[k]) begin
+`ifdef TB_SUPPORT
+                res_mem[wr_mul2rob[k].rob_entry].uop_pc  <= wr_mul2rob[k].uop_pc;
+`endif                
                 res_mem[wr_mul2rob[k].rob_entry].w_valid <= wr_mul2rob[k].w_valid;
                 res_mem[wr_mul2rob[k].rob_entry].w_data  <= wr_mul2rob[k].w_data;
                 res_mem[wr_mul2rob[k].rob_entry].vxsat   <= wr_mul2rob[k].vxsat;
@@ -227,6 +236,9 @@ module rvv_backend_rob
         end
         for (int k=0; k<`NUM_DIV; k++) begin
             if (wr_valid_div2rob[k] && wr_ready_rob2div[k]) begin
+`ifdef TB_SUPPORT
+                res_mem[wr_div2rob[k].rob_entry].uop_pc  <= wr_div2rob[k].uop_pc;
+`endif                
                 res_mem[wr_div2rob[k].rob_entry].w_valid <= wr_div2rob[k].w_valid;
                 res_mem[wr_div2rob[k].rob_entry].w_data  <= wr_div2rob[k].w_data;
                 res_mem[wr_div2rob[k].rob_entry].vxsat   <= wr_div2rob[k].vxsat;
@@ -236,6 +248,9 @@ module rvv_backend_rob
         end
         for (int k=0; k<`NUM_LSU; k++) begin
             if (wr_valid_lsu2rob[k] && wr_ready_rob2lsu[k]) begin
+`ifdef TB_SUPPORT
+                res_mem[wr_lsu2rob[k].rob_entry].uop_pc  <= wr_lsu2rob[k].uop_pc;
+`endif                
                 res_mem[wr_lsu2rob[k].rob_entry].w_valid <= wr_lsu2rob[k].w_valid;
                 res_mem[wr_lsu2rob[k].rob_entry].w_data  <= wr_lsu2rob[k].w_data;
                 res_mem[wr_lsu2rob[k].rob_entry].vxsat   <= wr_lsu2rob[k].vxsat;
@@ -342,6 +357,9 @@ module rvv_backend_rob
           else      assign rd_valid_rob2rt[i] = uop_retire_ready[i] & rd_valid_rob2rt[i-1] & ~trap_flag[wind_uop_rptr[i]-1];
 
         // retire_uop data
+`ifdef TB_SUPPORT          
+          assign rd_rob2rt[i].uop_pc  = uop_rob2rt[i].uop_pc;
+`endif          
           assign rd_rob2rt[i].w_valid = res_mem[wind_uop_rptr[i]].w_valid & rd_valid_rob2rt[i];
           assign rd_rob2rt[i].w_index = uop_rob2rt[i].w_index;
           assign rd_rob2rt[i].w_data  = res_mem[wind_uop_rptr[i]].w_data;
@@ -368,6 +386,9 @@ module rvv_backend_rob
   // bypass ROB info to Dispatch
   generate
       for (i=0; i<`ROB_DEPTH; i++) begin : gen_rob2dp
+`ifdef TB_SUPPORT
+          assign uop_rob2dp[i].uop_pc  = uop_info[i].uop_pc;
+`endif
           assign uop_rob2dp[i].valid   = entry_valid[i];
           assign uop_rob2dp[i].w_valid = res_mem[wind_uop_rptr[i]].w_valid & uop_done[wind_uop_rptr[i]];
           assign uop_rob2dp[i].w_index = uop_info[i].w_index;

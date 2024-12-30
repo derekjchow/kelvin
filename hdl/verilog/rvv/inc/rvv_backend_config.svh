@@ -3,6 +3,8 @@
 
 `define ASSERT_ON
 
+//`define TB_SUPPORT
+
 //`define MULTI_LSU
 `define MULTI_ALU
 `define MULTI_MUL

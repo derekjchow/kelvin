@@ -73,7 +73,9 @@ typedef struct packed {
 // been read from the scalar register file if necessary. It also contains
 // additional data to track configuration register state (ie: SEW, LMUL, etc).
 typedef struct packed {
+`ifdef TB_SUPPORT
   logic [`PC_WIDTH-1:0] inst_pc;
+`endif
   RVVOpCode             opcode;
   logic [24:0]          bits;
   logic [31:0]          rs1;
@@ -317,7 +319,9 @@ typedef enum logic [2:0] {
 
 // the uop struct stored in Uops Queue
 typedef struct packed {
+`ifdef TB_SUPPORT
   logic   [`PC_WIDTH-1:0]             uop_pc;
+`endif
   logic   [`FUNCT3_WIDTH-1:0]         uop_funct3;
   FUNCT6_u                            uop_funct6;
   EXE_UNIT_e                          uop_exe_unit; 
@@ -382,6 +386,9 @@ typedef enum logic [1:0] {
 typedef BYTE_TYPE_e [`VLENB-1:0]      BYTE_TYPE_t;
 
 typedef struct packed {
+`ifdef TB_SUPPORT
+  logic   [`PC_WIDTH-1:0]             uop_pc;
+`endif
   logic   [`ROB_DEPTH_WIDTH-1:0]      rob_entry;
   FUNCT6_u                            uop_funct6;  
   logic   [`FUNCT3_WIDTH-1:0]         uop_funct3;
@@ -415,6 +422,9 @@ typedef struct packed {
 
 // DIV reservation station struct
 typedef struct packed {
+`ifdef TB_SUPPORT
+  logic   [`PC_WIDTH-1:0]             uop_pc;
+`endif
   logic   [`ROB_DEPTH_WIDTH-1:0]      rob_entry;
   FUNCT6_u                            uop_funct6;
   logic   [`FUNCT3_WIDTH-1:0]         uop_funct3;
@@ -431,6 +441,9 @@ typedef struct packed {
 
 // MUL and MAC reservation station struct
 typedef struct packed {   
+`ifdef TB_SUPPORT
+  logic   [`PC_WIDTH-1:0]             uop_pc;
+`endif
   logic   [`ROB_DEPTH_WIDTH-1:0]      rob_entry;
   FUNCT6_u                            uop_funct6;
   logic   [`FUNCT3_WIDTH-1:0]         uop_funct3;
@@ -451,6 +464,9 @@ typedef struct packed {
 
 // PMT and RDT reservation station struct
 typedef struct packed {   
+`ifdef TB_SUPPORT
+  logic   [`PC_WIDTH-1:0]             uop_pc;
+`endif
   logic   [`ROB_DEPTH_WIDTH-1:0]      rob_entry;
   FUNCT6_u                            uop_funct6;
   logic   [`FUNCT3_WIDTH-1:0]         uop_funct3;
@@ -476,7 +492,9 @@ typedef struct packed {
 
 // LSU reservation station struct
 typedef struct packed {   
+`ifdef TB_SUPPORT
   logic   [`PC_WIDTH-1:0]             uop_pc;
+`endif
   logic   [`ROB_DEPTH_WIDTH-1:0]      uop_id;
   LSU_TYPE_t                          uop_funct6;  
 
@@ -495,6 +513,9 @@ typedef struct packed {
 //
 // send PU's result to ROB
 typedef struct packed {
+`ifdef TB_SUPPORT
+  logic   [`PC_WIDTH-1:0]             uop_pc;
+`endif
   logic   [`ROB_DEPTH_WIDTH-1:0]      rob_entry;
   logic   [`VLEN-1:0]                 w_data;             // when w_type=XRF, w_data[`XLEN-1:0] will store the scalar result
   logic                               w_valid;
@@ -504,8 +525,9 @@ typedef struct packed {
 } PU2ROB_t;  
 // send uop to LSU
 typedef struct packed {   
-  // RVV send to uop_pc to help LSU match the vld/vst uop
-  logic   [`PC_WIDTH-1:0]             uop_pc;     
+`ifdef TB_SUPPORT
+  logic   [`PC_WIDTH-1:0]             uop_pc;
+`endif
   // When LSU submit the result to RVV; LSU need to attend uop_id to help RVV retire the uop in ROB  
   logic   [`ROB_DEPTH_WIDTH-1:0]      uop_id;     
   // Vector regfile index interface for indexed vld/vst
@@ -522,6 +544,9 @@ typedef struct packed {
 
 // LSU feedback to RVV
 typedef struct packed {   
+`ifdef TB_SUPPORT
+  logic   [`PC_WIDTH-1:0]             uop_pc;
+`endif
   // When LSU submit the result to RVV; LSU need to attend uop_id to help RVV retire the uop in ROB
   logic   [`ROB_DEPTH_WIDTH-1:0]      uop_id;   
   // LSU uop type
@@ -536,6 +561,9 @@ typedef struct packed {
 } UOP_LSU_RVS2RVV_t;  
 
 typedef struct packed {
+`ifdef TB_SUPPORT
+  logic   [`PC_WIDTH-1:0]             uop_pc;
+`endif
   logic                               w_valid;            // write valid
   logic [`VLEN-1:0]                   w_data;             // write data; w_data[`XLEN-1:0] is scalar result if write type is XRF
   logic [`VCSR_VXSAT_WIDTH-1:0]       vxsat;
@@ -545,6 +573,9 @@ typedef struct packed {
 
 // send uop to ROB
 typedef struct packed {
+`ifdef TB_SUPPORT
+  logic   [`PC_WIDTH-1:0]             uop_pc;
+`endif
   logic   [`REGFILE_INDEX_WIDTH-1:0]  w_index;            //wr addr
   W_DATA_TYPE_e                       w_type;             //write type: 0 for VRF, 1 for XRF
   BYTE_TYPE_t                         byte_type;          //wr Byte mask
@@ -554,6 +585,9 @@ typedef struct packed {
 
 // send ROB info to DP
 typedef struct packed {
+`ifdef TB_SUPPORT
+  logic   [`PC_WIDTH-1:0]             uop_pc;
+`endif
   logic                               valid;              //entry valid
   logic                               w_valid;            //vd valid
   logic   [`REGFILE_INDEX_WIDTH-1:0]  w_index;            //vd addr
@@ -563,6 +597,9 @@ typedef struct packed {
 } ROB2DP_t;
 
 typedef struct packed {
+`ifdef TB_SUPPORT
+  logic   [`PC_WIDTH-1:0]             uop_pc;
+`endif
   logic                               w_valid;            //entry valid
   logic   [`REGFILE_INDEX_WIDTH-1:0]  w_index;            //wr addr
   logic   [`VLEN-1:0]                 w_data;             //when w_type=XRF, w_data[`XLEN-1:0] will store the scalar result
@@ -578,6 +615,9 @@ typedef struct packed {
 
 // the rob struct stored in ROB
 typedef struct packed {
+`ifdef TB_SUPPORT
+  logic   [`PC_WIDTH-1:0]             uop_pc;
+`endif
   logic                               valid;              // entry valid
   DP2ROB_t                            uop_info;           // Uop information
   RES_ROB_t                           uop_res;            // Uop result
@@ -590,12 +630,18 @@ typedef struct packed {
 //
 // write back to XRF
 typedef struct packed {
+`ifdef TB_SUPPORT
+  logic   [`PC_WIDTH-1:0]             uop_pc;
+`endif
   logic   [`REGFILE_INDEX_WIDTH-1:0]  rt_index; 
   logic   [`XLEN-1:0]                 rt_data; 
 }RT2XRF_t;
 
 // write back to VRF
 typedef struct packed {
+`ifdef TB_SUPPORT
+  logic   [`PC_WIDTH-1:0]             uop_pc;
+`endif
   logic   [`REGFILE_INDEX_WIDTH-1:0]  rt_index; 
   logic   [`VLEN-1:0]                 rt_data;
   logic   [`VLENB-1:0]                rt_strobe; 

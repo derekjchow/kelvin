@@ -277,6 +277,9 @@ module rvv_backend_dispatch
     generate
         for (i=0; i<`NUM_DP_UOP; i++) begin : gen_output_sig
           // ALU RS
+`ifdef TB_SUPPORT
+            assign rs_dp2alu[i].uop_pc        = uop_uop2dp[i].uop_pc; 
+`endif
             assign rs_dp2alu[i].rob_entry     = uop_index_rob2dp + i; 
             assign rs_dp2alu[i].uop_funct6    = uop_uop2dp[i].uop_funct6;
             assign rs_dp2alu[i].uop_funct3    = uop_uop2dp[i].uop_funct3;
@@ -299,6 +302,9 @@ module rvv_backend_dispatch
             assign rs_dp2alu[i].uop_index     = uop_uop2dp[i].uop_index;
 
           // PMTRDT RS
+`ifdef TB_SUPPORT
+            assign rs_dp2pmtrdt[i].uop_pc        = uop_uop2dp[i].uop_pc; 
+`endif
             assign rs_dp2pmtrdt[i].rob_entry     = uop_index_rob2dp + i; 
             assign rs_dp2pmtrdt[i].uop_funct6    = uop_uop2dp[i].uop_funct6;
             assign rs_dp2pmtrdt[i].uop_funct3    = uop_uop2dp[i].uop_funct3;
@@ -318,6 +324,9 @@ module rvv_backend_dispatch
             assign rs_dp2pmtrdt[i].last_uop_valid= uop_uop2dp[i].last_uop_valid;
             
           // MUL/MAC RS
+`ifdef TB_SUPPORT
+            assign rs_dp2mul[i].uop_pc         = uop_uop2dp[i].uop_pc; 
+`endif
             assign rs_dp2mul[i].rob_entry      = uop_index_rob2dp + i; 
             assign rs_dp2mul[i].uop_funct6     = uop_uop2dp[i].uop_funct6;
             assign rs_dp2mul[i].uop_funct3     = uop_uop2dp[i].uop_funct3;
@@ -334,6 +343,9 @@ module rvv_backend_dispatch
             assign rs_dp2mul[i].uop_index      = uop_uop2dp[i].uop_index;
 
           // DIV RS
+`ifdef TB_SUPPORT
+            assign rs_dp2div[i].uop_pc        = uop_uop2dp[i].uop_pc; 
+`endif
             assign rs_dp2div[i].rob_entry     = uop_index_rob2dp + i; 
             assign rs_dp2div[i].uop_funct6    = uop_uop2dp[i].uop_funct6;
             assign rs_dp2div[i].uop_funct3    = uop_uop2dp[i].uop_funct3;
@@ -346,7 +358,9 @@ module rvv_backend_dispatch
             assign rs_dp2div[i].rs1_data_valid= uop_uop2dp[i].rs1_data_valid;
 
           // LSU RS
-            assign rs_dp2lsu[i].uop_pc        = uop_uop2dp[i].uop_pc;
+`ifdef TB_SUPPORT
+            assign rs_dp2lsu[i].uop_pc        = uop_uop2dp[i].uop_pc; 
+`endif
             assign rs_dp2lsu[i].uop_id        = uop_index_rob2dp + i; 
             assign rs_dp2lsu[i].uop_funct6    = uop_uop2dp[i].uop_funct6;
             assign rs_dp2lsu[i].vidx_valid    = uop_uop2dp[i].vs2_valid;
@@ -358,8 +372,11 @@ module rvv_backend_dispatch
             assign rs_dp2lsu[i].vs3_type      = uop_operand_byte_type[i].vd;
 
           // ROB
+`ifdef TB_SUPPORT
+            assign uop_dp2rob[i].uop_pc       = uop_uop2dp[i].uop_pc; 
+`endif
             assign uop_dp2rob[i].w_index      = uop_uop2dp[i].vd_index;
-            assign uop_dp2rob[i].w_type       = uop_uop2dp[i].rd_index_valid;
+            assign uop_dp2rob[i].w_type       = uop_uop2dp[i].rd_index_valid ? XRF : VRF;
             assign uop_dp2rob[i].byte_type    = uop_operand_byte_type[i].vd;
             assign uop_dp2rob[i].vector_csr   = uop_uop2dp[i].vector_csr;
             assign uop_dp2rob[i].last_uop_valid = uop_uop2dp[i].last_uop_valid;
