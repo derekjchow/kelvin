@@ -232,6 +232,11 @@ module rvv_backend
     LSU_RS_t     [`NUM_LSU-1:0]           uop_rs2lsu;
     logic                                 fifo_empty_rs2lsu;
     logic        [`NUM_LSU-1:1]           fifo_almost_empty_rs2lsu;
+  // MUL_RS to MUL
+    logic        [`NUM_MUL-1:0]           pop_mul2rs;
+    MUL_RS_t     [`NUM_MUL-1:0]           uop_rs2mul;
+    logic                                 fifo_empty_rs2mul;
+    logic                                 fifo_1left_to_empty_rs2mul;
   // ALU to ROB
     logic        [`NUM_ALU-1:0]           wr_valid_alu2rob;
     PU2ROB_t     [`NUM_ALU-1:0]           wr_alu2rob;
@@ -518,15 +523,15 @@ module rvv_backend
         .push1      (rs_valid_dp2mul[1] & rs_ready_mul2dp[1]),
         .inData1    (rs_dp2mul[1]),
       // read
-        .pop0       (1'b0),
-        .outData0   (),
-        .pop1       (1'b0),
-        .outData1   (),
+        .pop0       (pop_mul2rs[0]),
+        .outData0   (uop_rs2mul[0]),
+        .pop1       (pop_mul2rs[1]),
+        .outData1   (uop_rs2mul[1]),
       // fifo status
         .fifo_full            (mul_rs_full),
         .fifo_1left_to_full   (mul_rs_1left_to_full),
-        .fifo_empty           (),
-        .fifo_1left_to_empty  (),
+        .fifo_empty           (fifo_empty_rs2mul),
+        .fifo_1left_to_empty  (fifo_1left_to_empty_rs2mul),
         .fifo_idle            ()
     );
 
@@ -645,16 +650,23 @@ module rvv_backend
     assign wr_valid_pmtrdt2rob = '0;
     assign wr_pmtrdt2rob       = '0;
 
-    /*
-    // MUL
-    // TODO
-    rvv_mul #(
-    ) u_mul (
+    
+    // MULMAC
+    rvv_backend_mulmac u_mulmac (
+      .clk(clk), 
+      .rst_n(rst_n), 
+    // MUL_RS to MULMAC
+      .ex2rs_fifo_pop(pop_mul2rs),
+      .rs2ex_uop_data(uop_rs2mul), 
+      .rs2ex_fifo_empty(fifo_empty_rs2mul), 
+      .rs2ex_fifo_1left_to_empty(fifo_1left_to_empty_rs2mul), 
+    //MULMAC to ROB
+      .ex2rob_valid(wr_valid_mul2rob), 
+      .ex2rob_data(wr_mul2rob),
+      .rob2ex_ready(wr_ready_rob2mul)
     );
-    */
-    assign wr_valid_mul2rob = '0;
-    assign wr_mul2rob       = '0;
-
+    
+    
     /*
     // DIV
     // TODO
