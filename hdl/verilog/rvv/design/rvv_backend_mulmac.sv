@@ -14,11 +14,11 @@
 
 module rvv_backend_mulmac (
   //Outputs
-  ex2rob_valid, ex2rob_data, rs2ex_fifo_pop,
+  ex2rob_valid, ex2rob_data, ex2rs_fifo_pop,
   //Inputs
   clk, rst_n, rs2ex_uop_data, 
   rs2ex_fifo_empty, rs2ex_fifo_1left_to_empty, 
-  ex2rob_ready
+  rob2ex_ready
 );
 
 //global signals
@@ -29,12 +29,12 @@ input             rst_n;
 input MUL_RS_t [`NUM_MUL-1:0] rs2ex_uop_data;
 input logic                   rs2ex_fifo_empty;
 input logic                   rs2ex_fifo_1left_to_empty;
-output logic [`NUM_MUL-1:0]   rs2ex_fifo_pop;
+output logic [`NUM_MUL-1:0]   ex2rs_fifo_pop;
 
 //MUL_EX to ROB
 output  logic       [`NUM_ALU-1:0] ex2rob_valid;
 output  PU2ROB_t    [`NUM_ALU-1:0] ex2rob_data;
-input   logic       [`NUM_ALU-1:0] ex2rob_ready;
+input   logic       [`NUM_ALU-1:0] rob2ex_ready;
 
 // Wires & Regs
 logic [`FUNCT6_WIDTH-1:0] rs2ex_uop_funct6[`NUM_MUL-1:0];
@@ -170,17 +170,17 @@ rvv_backend_mac_unit u_mac (
   .rs2mac_uop_data(rs2mac_uop_data));
 
 // Pop RS fifo generation
-assign rs2ex_fifo_pop[0] = rs2ex_uop_valid[0] && rs2ex_uop_ready[0];
-assign rs2ex_fifo_pop[1] = rs2ex_uop_valid[1] && rs2ex_uop_ready[1] && rs2ex_fifo_pop[0];//forbid pop1=1 while pop0=0
+assign ex2rs_fifo_pop[0] = rs2ex_uop_valid[0] && rs2ex_uop_ready[0];
+assign ex2rs_fifo_pop[1] = rs2ex_uop_valid[1] && rs2ex_uop_ready[1] && ex2rs_fifo_pop[0];//forbid pop1=1 while pop0=0
 
 //Pack output to ROB
 //high pack MAC; low pack MUL
 assign ex2rob_valid[0] = mul2rob_uop_valid; 
 assign ex2rob_data[0] = mul2rob_uop_data;
-assign rs2mul_uop_ready = !mul2rob_uop_valid | ex2rob_ready[0];
+assign rs2mul_uop_ready = !mul2rob_uop_valid | rob2ex_ready[0];
 
 assign ex2rob_valid[1] = mac2rob_uop_valid;
 assign ex2rob_data[1] = mac2rob_uop_data;
-assign rs2mac_uop_ready = !mac2rob_uop_valid | ex2rob_ready[1];
+assign rs2mac_uop_ready = !mac2rob_uop_valid | rob2ex_ready[1];
 
 endmodule
