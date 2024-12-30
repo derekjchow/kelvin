@@ -105,22 +105,22 @@ task rvv_scoreboard::rt_checker();
     @(posedge rvs_if.clk);
     while(rt_queue_rvs.size()>0) begin 
       if(rt_queue_mdl.size()==0) begin
-        `uvm_fatal("WB_CHECKER","DUT has been finished but MDL hasn't yet.");
+        `uvm_fatal("RT_CHECKER","DUT has been finished but MDL hasn't yet.");
       end else begin
         rt_xrf_valid = '0;
         rvs_tr = rt_queue_rvs.pop_front();
         mdl_tr = rt_queue_mdl.pop_front();
-        `uvm_info("WB_CHECKER", rvs_tr.sprint(),UVM_HIGH)
-        `uvm_info("WB_CHECKER", mdl_tr.sprint(),UVM_HIGH)
+        `uvm_info("RT_RECORDER", rvs_tr.sprint(),UVM_HIGH)
+        `uvm_info("RT_RECORDER", mdl_tr.sprint(),UVM_LOW)
         if(rvs_tr.rt_xrf_valid != mdl_tr.rt_xrf_valid) begin
-          `uvm_error("WB_CHECKER","RVV rt_xrf_valid mismatch with reference model.");
+          `uvm_error("RT_CHECKER","RVV rt_xrf_valid mismatch with reference model.");
         end else begin
           rt_xrf_valid = rvs_tr.rt_xrf_valid;
         end
         if(rt_xrf_valid && 
           (rvs_tr.rt_xrf.rt_index != mdl_tr.rt_xrf.rt_index) || 
           (rvs_tr.rt_xrf.rt_data != mdl_tr.rt_xrf.rt_data)) begin
-          `uvm_error("WB_CHECKER", $sformatf("Writeback xrf mismatch:\nDUT:xrf[%0d]=0x%8x\nMDL:xrf[%0d]=0x%8x",
+          `uvm_error("RT_CHECKER", $sformatf("Writeback xrf mismatch:\nDUT:xrf[%0d]=0x%8x\nMDL:xrf[%0d]=0x%8x",
                                                   rvs_tr.rt_xrf.rt_index, rvs_tr.rt_xrf.rt_data,
                                                   mdl_tr.rt_xrf.rt_index, mdl_tr.rt_xrf.rt_data));
         end
@@ -145,6 +145,7 @@ task rvv_scoreboard::vrf_checker();
       `uvm_info("VRF_RECORDER", "\n==============================HEAD================================", UVM_HIGH)
       for(int idx=0; idx<32; idx++) begin
         if(rvs_tr.vreg[idx] !== mdl_tr.vreg[idx]) begin
+          `uvm_warning("VRF_RECORDER", $sformatf("VRF[%0d] value mismatch: \ndut = 0x%0h \nmdl = 0x%0h", idx, rvs_tr.vreg[idx], mdl_tr.vreg[idx]))
           `uvm_error("VRF_CHECKER", $sformatf("VRF[%0d] value mismatch: \ndut = 0x%0h \nmdl = 0x%0h", idx, rvs_tr.vreg[idx], mdl_tr.vreg[idx]))
           err++;
         end

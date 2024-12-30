@@ -63,23 +63,17 @@ class rvv_backend_test extends uvm_test;
     tb_logs["DEBUG"] = $fopen("tb_debug.log", "w");
     this.set_report_id_file_hier("DEBUG", tb_logs["DEBUG"]);
     this.set_report_id_action_hier("DEBUG", UVM_LOG);
-    tb_logs["VRF_RECORDER"] = $fopen("tb_vrf_recorder.log", "w");
-    this.env.scb.set_report_id_file("VRF_RECORDER", tb_logs["VRF_RECORDER"]);
-    this.env.scb.set_report_id_action("VRF_RECORDER", UVM_LOG);
     tb_logs["ASM_DUMP"] = $fopen("tb_asm_dump.log", "w");
     this.env.rvs_agt.rvs_drv.set_report_id_file("ASM_DUMP", tb_logs["ASM_DUMP"]);
     this.env.rvs_agt.rvs_drv.set_report_id_action("ASM_DUMP", UVM_LOG);
     tb_logs["INST_TR"] = $fopen("tb_inst_tr.log", "w");
     this.env.rvs_agt.rvs_drv.set_report_id_file("INST_TR", tb_logs["INST_TR"]);
     this.env.rvs_agt.rvs_drv.set_report_id_action("INST_TR", UVM_LOG);
-    tb_logs["ERROR_LOG"] = $fopen("tb_error.log", "w");
-    this.env.set_report_severity_file_hier(UVM_ERROR, tb_logs["ERROR_LOG"]);
-    this.env.set_report_severity_action_hier(UVM_ERROR, UVM_LOG|UVM_DISPLAY);
-    tb_logs["CHECKER_LOG"] = $fopen("tb_checker.log", "w");
-    this.env.scb.set_report_id_file("VRF_CHECKER", tb_logs["CHECKER_LOG"]);
-    this.env.scb.set_report_id_action("VRF_CHECKER", UVM_LOG|UVM_DISPLAY);
-    this.env.scb.set_report_id_file("RT_CHECKER", tb_logs["CHECKER_LOG"]);
-    this.env.scb.set_report_id_action("RT_CHECKER", UVM_LOG|UVM_DISPLAY);
+    tb_logs["RECORDER_LOG"] = $fopen("tb_recorder.log", "w");
+    this.env.scb.set_report_id_file("VRF_RECORDER", tb_logs["RECORDER_LOG"]);
+    this.env.scb.set_report_id_action("VRF_RECORDER", UVM_LOG);
+    this.env.scb.set_report_id_file("RT_RECORDER", tb_logs["RECORDER_LOG"]);
+    this.env.scb.set_report_id_action("RT_RECORDER", UVM_LOG|UVM_DISPLAY);
   endfunction
 
   
