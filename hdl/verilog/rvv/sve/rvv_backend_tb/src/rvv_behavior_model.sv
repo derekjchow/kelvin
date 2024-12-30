@@ -156,8 +156,7 @@ endclass : rvv_behavior_model
       @(posedge rvs_if.clk);
       if(rvs_if.rst_n) begin
       rt_event = rvs_if.rt_event;
-      repeat(`NUM_RT_UOP) begin
-      if(rt_event[0]) begin
+      while(rt_event[0]) begin
         // --------------------------------------------------
         // 0. Get inst and update VCSR
         if(inst_queue.size()>0) begin
@@ -374,7 +373,7 @@ endclass : rvv_behavior_model
               dest_reg_idx, dest_reg_idx+dest_emul, src1_reg_idx, src1_reg_idx+src1_emul));
           continue;
         end
-        if(inst_tr.dest_type == VRF && vm == 0 && dest_eew == 1 /*&& TODO scalar result of a reduction*/ && dest_reg_idx == 0) begin
+        if(inst_tr.dest_type == VRF && vm == 0 && dest_reg_idx == 0 && (dest_eew != EEW1 /*|| TODO scalar result of a reduction*/)) begin
           `uvm_warning("MDL/INST_CHECKER", $sformatf("Ch32.5.3. Dest vrf index(%0d) overlap source mask register v0. Ignored.", dest_reg_idx));
           continue;
         end
@@ -464,8 +463,7 @@ endclass : rvv_behavior_model
         `uvm_info("DEBUG",inst_tr.sprint(),UVM_HIGH)
         rt_ap.write(inst_tr);
         rt_event = rt_event >> 1;
-      end // if(rt_event[0])
-      end // repeat 
+      end // while(rt_event[0])
       end // rst_n
     end // forever
   endtask

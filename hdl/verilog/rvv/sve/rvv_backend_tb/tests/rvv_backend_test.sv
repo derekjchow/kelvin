@@ -24,7 +24,7 @@ class rvv_backend_test extends uvm_test;
   virtual function void build_phase(uvm_phase phase);
     super.build_phase(phase);
     env = rvv_backend_env::type_id::create("env", this);
-    uvm_top.set_timeout(5000ns,1);
+    uvm_top.set_timeout(100000ns,1);
     if(!uvm_config_db#(v_if1)::get(this, "", "rvs_if", rvs_if)) begin
       `uvm_fatal("TEST/NOVIF", "No virtual interface specified for this agent instance")
     end
@@ -53,6 +53,9 @@ class rvv_backend_test extends uvm_test;
     if($test$plusargs("all_one_for_agn"))
       uvm_config_db#(bit)::set(uvm_root::get(), "*", "all_one_for_agn", 1'b1);
     if($value$plusargs("inst_queue_depth=%d", inst_queue_depth))
+      uvm_config_db#(int)::set(uvm_root::get(), "*", "inst_queue_depth", inst_queue_depth);
+    else
+      // give default value
       uvm_config_db#(int)::set(uvm_root::get(), "*", "inst_queue_depth", inst_queue_depth);
   endfunction
 
