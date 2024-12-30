@@ -354,7 +354,7 @@ module rvv_backend_rob
         // retire_uop valid
           assign uop_retire_ready[i] = uop_valid_rob2rt[i] & uop_done[wind_uop_rptr[i]];
           if (i==0) assign rd_valid_rob2rt[0] = uop_retire_ready[0];
-          else      assign rd_valid_rob2rt[i] = uop_retire_ready[i] & rd_valid_rob2rt[i-1] & ~trap_flag[wind_uop_rptr[i]-1];
+          else      assign rd_valid_rob2rt[i] = uop_retire_ready[i] & rd_valid_rob2rt[i-1] & ~trap_flag[wind_uop_rptr[i]-1'b1];
 
         // retire_uop data
 `ifdef TB_SUPPORT          
