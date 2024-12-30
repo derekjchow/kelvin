@@ -111,10 +111,10 @@ module rvv_backend_decode_ctrl
   );
   
   // get unit1 last uop signal
-  assign get_unit1_last_signal[3] = uop_de2uq[1][0].last_uop_valid || (uop_valid_de2uq[1][`NUM_DE_UOP-1:0]=='b0);
-  assign get_unit1_last_signal[2] = get_unit1_last_signal[3] || uop_de2uq[1][1].last_uop_valid;
-  assign get_unit1_last_signal[1] = get_unit1_last_signal[2] || uop_de2uq[1][2].last_uop_valid;
-  assign get_unit1_last_signal[0] = get_unit1_last_signal[1] || uop_de2uq[1][3].last_uop_valid;
+  assign get_unit1_last_signal[3] = uop_de2uq[1][0].last_uop_valid; 
+  assign get_unit1_last_signal[2] = uop_de2uq[1][1].last_uop_valid || get_unit1_last_signal[3]; 
+  assign get_unit1_last_signal[1] = uop_de2uq[1][2].last_uop_valid || get_unit1_last_signal[2]; 
+  assign get_unit1_last_signal[0] = uop_de2uq[1][3].last_uop_valid || get_unit1_last_signal[1]; 
 
   mux8_1 
   #(
@@ -138,8 +138,8 @@ module rvv_backend_decode_ctrl
   assign fifo_ready = !(fifo_full_uq2de | (|fifo_almost_full_uq2de));
   
   // get pop signal to Command Queue
-  assign pop[0] = pkg_valid[0] & last_uop_unit[0] & fifo_ready;
-  assign pop[1] = pkg_valid[1] & last_uop_unit[1] & pop[0];
+  assign pop[0] =        pkg_valid[0]&((last_uop_unit[0]&fifo_ready) || (uop_valid_de2uq[0][`NUM_DE_UOP-1:0]=='b0));
+  assign pop[1] = pop[0]&pkg_valid[1]&((last_uop_unit[1]&fifo_ready) || (uop_valid_de2uq[1][`NUM_DE_UOP-1:0]=='b0));
   
   // instantiate cdffr for uop_index
   // clear signal
