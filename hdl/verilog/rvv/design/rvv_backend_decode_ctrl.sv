@@ -146,8 +146,8 @@ module rvv_backend_decode_ctrl
   assign uop_index_clear        = (pop[0]&(!pkg_valid[1])) | pop[1];
 
   // enable signal
-  assign uop_index_enable_unit0 = (!pop[0])&pkg_valid[0];       
-  assign uop_index_enable_unit1 = pop[0]&(!last_uop_unit[1])&pkg_valid[1];  
+  assign uop_index_enable_unit0 = pkg_valid[0]&(uop_valid_de2uq[0][`NUM_DE_UOP-1:0]!='b0)&(last_uop_unit[0]=='b0)&fifo_ready;       
+  assign uop_index_enable_unit1 = pkg_valid[1]&(uop_valid_de2uq[1][`NUM_DE_UOP-1:0]!='b0)&(last_uop_unit[1]=='b0)&fifo_ready&pop[0];  
   assign uop_index_enable       = uop_index_enable_unit0 | uop_index_enable_unit1;  
   
   // datain signal
