@@ -228,8 +228,12 @@ assign w_enB3 = (ignore_vta3 || ignore_vma3) ? `VLENB'b1 : w_enB3_tmp;
 //  3.1. WAW among entry0 entry1, for group_req=1
 always@(*) begin
   for(int i=0; i<`VLENB; i=i+1) begin
-    //when enB1[i]=enB0[i]=1, update enB0 to 0
-    w_enB0_waw01_int[i] = w_enB0[i] && !w_enB1[i];
+    if (w_addr0 == w_addr1) begin//check waw01
+      w_enB0_waw01_int[i] = w_enB0[i] && !w_enB1[i];
+    end
+    else begin
+      w_enB0_waw01_int[i] = w_enB0[i];
+    end
   end //end for
 end
 
