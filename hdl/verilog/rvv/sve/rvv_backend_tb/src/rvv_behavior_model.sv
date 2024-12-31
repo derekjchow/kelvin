@@ -156,7 +156,8 @@ endclass : rvv_behavior_model
       @(posedge rvs_if.clk);
       if(rvs_if.rst_n) begin
       rt_event = rvs_if.rt_event;
-      while(rt_event[0]) begin
+      while(|rt_event) begin
+      if(rt_event[0]) begin
         // --------------------------------------------------
         // 0. Get inst and update VCSR
         if(inst_queue.size()>0) begin
@@ -462,8 +463,9 @@ endclass : rvv_behavior_model
         `uvm_info("DEBUG","Complete calculation.",UVM_LOW)
         `uvm_info("DEBUG",inst_tr.sprint(),UVM_LOW)
         rt_ap.write(inst_tr);
+      end // if(rt_event[0])
         rt_event = rt_event >> 1;
-      end // while(rt_event[0])
+      end // while(|rt_event)
       end // rst_n
     end // forever
   endtask
