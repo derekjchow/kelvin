@@ -23,102 +23,107 @@ output            mac2rob_uop_valid;
 output PU2ROB_t   mac2rob_uop_data;
 
 // Wires & Regs
-logic [`ROB_DEPTH_WIDTH-1:0] mac_uop_rob_entry;
-logic [`FUNCT6_WIDTH-1:0] mac_uop_funct6;
-logic [`FUNCT3_WIDTH-1:0] mac_uop_funct3;
-logic [2:0] mac_uop_xrm;
-logic [2:0] mac_top_vs_eew;
-logic [`VLEN-1:0] mac_uop_vs1_data;
-logic mac_uop_vs1_valid;
-logic [`VLEN-1:0] mac_uop_vs2_data;
-logic mac_uop_vs2_valid;
-logic [`XLEN-1:0] mac_uop_rs1_data;
-logic mac_uop_rs1_valid;
-logic mac_uop_index;
+logic [`ROB_DEPTH_WIDTH-1:0]  mac_uop_rob_entry;
+logic [`FUNCT6_WIDTH-1:0]     mac_uop_funct6;
+logic [`FUNCT3_WIDTH-1:0]     mac_uop_funct3;
+logic [2:0]                   mac_uop_xrm;
+logic [2:0]                   mac_top_vs_eew;
+logic [`VLEN-1:0]             mac_uop_vs1_data;
+logic                         mac_uop_vs1_valid;
+logic [`VLEN-1:0]             mac_uop_vs2_data;
+logic                         mac_uop_vs2_valid;
+logic [`XLEN-1:0]             mac_uop_rs1_data;
+logic                         mac_uop_rs1_valid;
+logic                         mac_uop_index;
 
-logic is_vv; //1:op*vv; 0:op*vx
-logic [`VLEN-1:0] mac_src2;
-logic [`VLEN-1:0] mac_src1;
-logic [`VLEN-1:0] mac_addsrc;
-logic mac_src2_is_signed;
-logic mac_src1_is_signed;
-logic mac_is_widen;
-logic mac_keep_low_bits;
-logic mac_dst_is_signed;
-logic mac_mul_reverse;
-logic is_vsmul;
-logic is_vmac;
+logic                         is_vv; //1:op*vv; 0:op*vx
+logic [`VLEN-1:0]             mac_src2;
+logic [`VLEN-1:0]             mac_src1;
+logic [`VLEN-1:0]             mac_addsrc;
+logic                         mac_src2_is_signed;
+logic                         mac_src1_is_signed;
+logic                         mac_is_widen;
+logic                         mac_keep_low_bits;
+logic                         mac_dst_is_signed;
+logic                         mac_mul_reverse;
+logic                         is_vsmul;
+logic                         is_vmac;
 
-logic [`VLEN-1:0] mac_src2_mux;
-logic [`VLEN-1:0] mac_src1_mux;
-logic [15:0] mac_src2_is_signed_extend;
-logic [15:0] mac_src1_is_signed_extend;
+logic [`VLEN-1:0]             mac_src2_mux;
+logic [`VLEN-1:0]             mac_src1_mux;
+logic [15:0]                  mac_src2_is_signed_extend;
+logic [15:0]                  mac_src1_is_signed_extend;
 
-logic [7:0] mac8_in0[15:0];
-logic [15:0]             mac8_in0_is_signed;
-logic [7:0] mac8_in1[15:0];
-logic [15:0]             mac8_in1_is_signed;
-logic [15:0] mac8_out[63:0];
+logic [7:0]                   mac8_in0[15:0];
+logic [15:0]                  mac8_in0_is_signed;
+logic [7:0]                   mac8_in1[15:0];
+logic [15:0]                  mac8_in1_is_signed;
+logic [15:0]                  mac8_out[63:0];
 
-logic [15:0] mac8_out_d1[63:0];
-logic [`VLEN-1:0] mac_addsrc_d1;
-logic [2*`VLEN-1:0] mac_addsrc_widen_d1;
+logic [15:0]                  mac8_out_d1[63:0];
+logic [`VLEN-1:0]             mac_addsrc_d1;
+logic [2*`VLEN-1:0]           mac_addsrc_widen_d1;
 
-logic rs2mac_uop_valid_d1;
-logic mac_dst_is_signed_d1;
-logic mac_is_widen_d1;
-logic mac_keep_low_bits_d1;
-logic mac_mul_reverse_d1;
-logic is_vsmul_d1;
-logic is_vmac_d1;
-logic [2:0] mac_uop_xrm_d1;
-logic [2:0] mac_top_vs_eew_d1;
-logic [`ROB_DEPTH_WIDTH-1:0] mac_uop_rob_entry_d1;
+logic                         rs2mac_uop_valid_d1;
+logic                         mac_dst_is_signed_d1;
+logic                         mac_is_widen_d1;
+logic                         mac_keep_low_bits_d1;
+logic                         mac_mul_reverse_d1;
+logic                         is_vsmul_d1;
+logic                         is_vmac_d1;
+logic [2:0]                   mac_uop_xrm_d1;
+logic [2:0]                   mac_top_vs_eew_d1;
+logic [`ROB_DEPTH_WIDTH-1:0]  mac_uop_rob_entry_d1;
 
-logic [15:0] mac_rslt_full_eew8_d1[15:0];
-logic [2*`VLEN-1:0] mac_rslt_eew8_widen_d1;
-logic [`VLEN-1:0] mac_rslt_eew8_no_widen_d1;
-logic [15:0] vsmul_round_incr_eew8_d1;
-logic [`VLEN-1:0] vsmul_rslt_eew8_d1;
-logic [15:0] vsmul_sat_eew8_d1;
-logic [`VLEN-1:0] mac_rslt_eew8_d1;
-logic update_vxsat_eew8_d1;
-logic [8:0] vmac_mul_add_eew8_no_widen_d1[0:15];
-logic [8:0] vmac_mul_sub_eew8_no_widen_d1[0:15];
-logic [`VLEN-1:0] vmac_rslt_eew8_no_widen_d1;
-logic [16:0] vmac_mul_add_eew8_widen_d1[0:15];
-logic [16:0] vmac_mul_sub_eew8_widen_d1[0:15];
-logic [2*`VLEN-1:0] vmac_rslt_eew8_widen_d1;
+logic [15:0]                  mac_rslt_full_eew8_d1[15:0];
+logic [2*`VLEN-1:0]           mac_rslt_eew8_widen_d1;
+logic [`VLEN-1:0]             mac_rslt_eew8_no_widen_d1;
+logic [15:0]                  vsmul_round_incr_eew8_d1;
+logic [`VLEN-1:0]             vsmul_rslt_eew8_d1;
+logic [15:0]                  vsmul_sat_eew8_d1;
+logic [`VLEN-1:0]             mac_rslt_eew8_d1;
+logic                         update_vxsat_eew8_d1;
+logic [8:0]                   vmac_mul_add_eew8_no_widen_d1[0:15];
+logic [8:0]                   vmac_mul_sub_eew8_no_widen_d1[0:15];
+logic [`VLEN-1:0]             vmac_rslt_eew8_no_widen_d1;
+logic [16:0]                  vmac_mul_add_eew8_widen_d1[0:15];
+logic [16:0]                  vmac_mul_sub_eew8_widen_d1[0:15];
+logic [2*`VLEN-1:0]           vmac_rslt_eew8_widen_d1;
 
-logic [31:0] mac_rslt_full_eew16_d1[7:0];
-logic [2*`VLEN-1:0] mac_rslt_eew16_widen_d1;
-logic [`VLEN-1:0] mac_rslt_eew16_no_widen_d1;
-logic [7:0] vsmul_round_incr_eew16_d1;
-logic [`VLEN-1:0] vsmul_rslt_eew16_d1;
-logic [7:0] vsmul_sat_eew16_d1;
-logic [`VLEN-1:0] mac_rslt_eew16_d1;
-logic update_vxsat_eew16_d1;
-logic [16:0] vmac_mul_add_eew16_no_widen_d1[0:7];
-logic [16:0] vmac_mul_sub_eew16_no_widen_d1[0:7];
-logic [`VLEN-1:0] vmac_rslt_eew16_no_widen_d1;
-logic [32:0] vmac_mul_add_eew16_widen_d1[0:7];
-logic [32:0] vmac_mul_sub_eew16_widen_d1[0:7];
-logic [2*`VLEN-1:0] vmac_rslt_eew16_widen_d1;
+logic [31:0]                  mac_rslt_full_eew16_d1[7:0];
+logic [2*`VLEN-1:0]           mac_rslt_eew16_widen_d1;
+logic [`VLEN-1:0]             mac_rslt_eew16_no_widen_d1;
+logic [7:0]                   vsmul_round_incr_eew16_d1;
+logic [`VLEN-1:0]             vsmul_rslt_eew16_d1;
+logic [7:0]                   vsmul_sat_eew16_d1;
+logic [`VLEN-1:0]             mac_rslt_eew16_d1;
+logic                         update_vxsat_eew16_d1;
+logic [16:0]                  vmac_mul_add_eew16_no_widen_d1[0:7];
+logic [16:0]                  vmac_mul_sub_eew16_no_widen_d1[0:7];
+logic [`VLEN-1:0]             vmac_rslt_eew16_no_widen_d1;
+logic [32:0]                  vmac_mul_add_eew16_widen_d1[0:7];
+logic [32:0]                  vmac_mul_sub_eew16_widen_d1[0:7];
+logic [2*`VLEN-1:0]           vmac_rslt_eew16_widen_d1;
 
-logic [63:0] mac_rslt_full_eew32_d1[3:0];
-logic [2*`VLEN-1:0] mac_rslt_eew32_widen_d1;
-logic [`VLEN-1:0] mac_rslt_eew32_no_widen_d1;
-logic [3:0] vsmul_round_incr_eew32_d1;
-logic [`VLEN-1:0] vsmul_rslt_eew32_d1;
-logic [3:0] vsmul_sat_eew32_d1;
-logic [`VLEN-1:0] mac_rslt_eew32_d1;
-logic update_vxsat_eew32_d1;
-logic [32:0] vmac_mul_add_eew32_no_widen_d1[0:3];
-logic [32:0] vmac_mul_sub_eew32_no_widen_d1[0:3];
-logic [`VLEN-1:0] vmac_rslt_eew32_no_widen_d1;
-logic [64:0] vmac_mul_add_eew32_widen_d1[0:4];
-logic [64:0] vmac_mul_sub_eew32_widen_d1[0:4];
-logic [2*`VLEN-1:0] vmac_rslt_eew32_widen_d1;
+logic [63:0]                  mac_rslt_full_eew32_d1[3:0];
+logic [2*`VLEN-1:0]           mac_rslt_eew32_widen_d1;
+logic [`VLEN-1:0]             mac_rslt_eew32_no_widen_d1;
+logic [3:0]                   vsmul_round_incr_eew32_d1;
+logic [`VLEN-1:0]             vsmul_rslt_eew32_d1;
+logic [3:0]                   vsmul_sat_eew32_d1;
+logic [`VLEN-1:0]             mac_rslt_eew32_d1;
+logic                         update_vxsat_eew32_d1;
+logic [32:0]                  vmac_mul_add_eew32_no_widen_d1[0:3];
+logic [32:0]                  vmac_mul_sub_eew32_no_widen_d1[0:3];
+logic [`VLEN-1:0]             vmac_rslt_eew32_no_widen_d1;
+logic [64:0]                  vmac_mul_add_eew32_widen_d1[0:4];
+logic [64:0]                  vmac_mul_sub_eew32_widen_d1[0:4];
+logic [2*`VLEN-1:0]           vmac_rslt_eew32_widen_d1;
+
+`ifdef TB_SUPPORT
+logic [`PC_WIDTH-1:0]         mac_uop_pc;
+logic [`PC_WIDTH-1:0]         mac_uop_pc_d1;
+`endif
 
 //Int & Genvar
 integer i,j;
@@ -144,6 +149,10 @@ assign mac_uop_rs1_data = rs2mac_uop_data.rs1_data;
 assign mac_uop_rs1_valid = rs2mac_uop_data.rs1_data_valid;
 
 assign mac_uop_index = rs2mac_uop_data.uop_index[0];
+
+`ifdef TB_SUPPORT
+assign mac_uop_pc = rs2mac_uop_data.uop_pc;
+`endif
 
 // Global EU control
 always@(*) begin
@@ -687,6 +696,11 @@ dff #(3) u_eew_delay (.q(mac_top_vs_eew_d1), .clk(clk), .rst_n(rst_n), .d(mac_to
 
 dff #(`ROB_DEPTH_WIDTH) u_rob_entry_delay (.q(mac_uop_rob_entry_d1), .clk(clk), .rst_n(rst_n), .d(mac_uop_rob_entry));
 
+`ifdef TB_SUPPORT
+dff #(`PC_WIDTH) u_PC_delay (.q(mac_uop_pc_d1), .clk(clk), .rst_n(rst_n), .d(mac_uop_pc));
+`endif
+
+
 /////////////////////////////////////////////////
 ///////Enter d1_stage ///////////////////////////
 /////////////////////////////////////////////////
@@ -829,4 +843,8 @@ assign mac2rob_uop_data.w_valid = rs2mac_uop_valid_d1;
 assign mac2rob_uop_data.vxsat = update_vxsat_eew8_d1 || update_vxsat_eew16_d1 || update_vxsat_eew32_d1;
 assign mac2rob_uop_data.ignore_vta = 1'b0;//(TODO) check this
 assign mac2rob_uop_data.ignore_vma = 1'b0;//(TODO) check this
+
+`ifdef TB_SUPPORT
+assign mac2rob_uop_data.uop_pc = mac_uop_pc_d1;
+`endif
 endmodule

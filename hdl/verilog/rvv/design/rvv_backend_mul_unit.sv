@@ -23,77 +23,82 @@ output            mul2rob_uop_valid;
 output PU2ROB_t   mul2rob_uop_data;
 
 // Wires & Regs
-logic [`ROB_DEPTH_WIDTH-1:0] mul_uop_rob_entry;
-logic [`FUNCT6_WIDTH-1:0] mul_uop_funct6;
-logic [`FUNCT3_WIDTH-1:0] mul_uop_funct3;
-logic [2:0] mul_uop_xrm;
-logic [2:0] mul_top_vs_eew;
-logic [`VLEN-1:0] mul_uop_vs1_data;
-logic mul_uop_vs1_valid;
-logic [`VLEN-1:0] mul_uop_vs2_data;
-logic mul_uop_vs2_valid;
-logic [`XLEN-1:0] mul_uop_rs1_data;
-logic mul_uop_rs1_valid;
-logic mul_uop_index;
+logic [`ROB_DEPTH_WIDTH-1:0]   mul_uop_rob_entry;
+logic [`FUNCT6_WIDTH-1:0]      mul_uop_funct6;
+logic [`FUNCT3_WIDTH-1:0]      mul_uop_funct3;
+logic [2:0]                    mul_uop_xrm;
+logic [2:0]                    mul_top_vs_eew;
+logic [`VLEN-1:0]              mul_uop_vs1_data;
+logic                          mul_uop_vs1_valid;
+logic [`VLEN-1:0]              mul_uop_vs2_data;
+logic                          mul_uop_vs2_valid;
+logic [`XLEN-1:0]              mul_uop_rs1_data;
+logic                          mul_uop_rs1_valid;
+logic                          mul_uop_index;
 
-logic is_vv; //1:op*vv; 0:op*vx
-logic [`VLEN-1:0] mul_src2;
-logic [`VLEN-1:0] mul_src1;
-logic mul_src2_is_signed;
-logic mul_src1_is_signed;
-logic mul_is_widen;
-logic mul_keep_low_bits;
-logic is_vsmul;
-logic mul_dst_is_signed;
+logic                          is_vv; //1:op*vv; 0:op*vx
+logic [`VLEN-1:0]              mul_src2;
+logic [`VLEN-1:0]              mul_src1;
+logic                          mul_src2_is_signed;
+logic                          mul_src1_is_signed;
+logic                          mul_is_widen;
+logic                          mul_keep_low_bits;
+logic                          is_vsmul;
+logic                          mul_dst_is_signed;
 
-logic [`VLEN-1:0] mul_src2_mux;
-logic [`VLEN-1:0] mul_src1_mux;
-logic [15:0] mul_src2_is_signed_extend;
-logic [15:0] mul_src1_is_signed_extend;
+logic [`VLEN-1:0]              mul_src2_mux;
+logic [`VLEN-1:0]              mul_src1_mux;
+logic [15:0]                   mul_src2_is_signed_extend;
+logic [15:0]                   mul_src1_is_signed_extend;
 
-logic [7:0] mul8_in0[15:0];
-logic [15:0]             mul8_in0_is_signed;
-logic [7:0] mul8_in1[15:0];
-logic [15:0]             mul8_in1_is_signed;
-logic [15:0] mul8_out[63:0];
+logic [7:0]                    mul8_in0[15:0];
+logic [15:0]                   mul8_in0_is_signed;
+logic [7:0]                    mul8_in1[15:0];
+logic [15:0]                   mul8_in1_is_signed;
+logic [15:0]                   mul8_out[63:0];
 
-logic [15:0] mul8_out_d1[63:0];
+logic [15:0]                   mul8_out_d1[63:0];
 
-logic rs2mul_uop_valid_d1;
-logic mul_dst_is_signed_d1;
-logic mul_is_widen_d1;
-logic mul_keep_low_bits_d1;
-logic is_vsmul_d1;
-logic [2:0] mul_uop_xrm_d1;
-logic [2:0] mul_top_vs_eew_d1;
-logic [`ROB_DEPTH_WIDTH-1:0] mul_uop_rob_entry_d1;
+logic                          rs2mul_uop_valid_d1;
+logic                          mul_dst_is_signed_d1;
+logic                          mul_is_widen_d1;
+logic                          mul_keep_low_bits_d1;
+logic                          is_vsmul_d1;
+logic [2:0]                    mul_uop_xrm_d1;
+logic [2:0]                    mul_top_vs_eew_d1;
+logic [`ROB_DEPTH_WIDTH-1:0]   mul_uop_rob_entry_d1;
 
-logic [15:0] mul_rslt_full_eew8_d1[15:0];
-logic [2*`VLEN-1:0] mul_rslt_eew8_widen_d1;
-logic [`VLEN-1:0] mul_rslt_eew8_no_widen_d1;
-logic [15:0] vsmul_round_incr_eew8_d1;
-logic [`VLEN-1:0] vsmul_rslt_eew8_d1;
-logic [15:0] vsmul_sat_eew8_d1;
-logic [`VLEN-1:0] mul_rslt_eew8_d1;
-logic update_vxsat_eew8_d1;
+logic [15:0]                   mul_rslt_full_eew8_d1[15:0];
+logic [2*`VLEN-1:0]            mul_rslt_eew8_widen_d1;
+logic [`VLEN-1:0]              mul_rslt_eew8_no_widen_d1;
+logic [15:0]                   vsmul_round_incr_eew8_d1;
+logic [`VLEN-1:0]              vsmul_rslt_eew8_d1;
+logic [15:0]                   vsmul_sat_eew8_d1;
+logic [`VLEN-1:0]              mul_rslt_eew8_d1;
+logic                          update_vxsat_eew8_d1;
 
-logic [31:0] mul_rslt_full_eew16_d1[7:0];
-logic [2*`VLEN-1:0] mul_rslt_eew16_widen_d1;
-logic [`VLEN-1:0] mul_rslt_eew16_no_widen_d1;
-logic [7:0] vsmul_round_incr_eew16_d1;
-logic [`VLEN-1:0] vsmul_rslt_eew16_d1;
-logic [7:0] vsmul_sat_eew16_d1;
-logic [`VLEN-1:0] mul_rslt_eew16_d1;
-logic update_vxsat_eew16_d1;
+logic [31:0]                   mul_rslt_full_eew16_d1[7:0];
+logic [2*`VLEN-1:0]            mul_rslt_eew16_widen_d1;
+logic [`VLEN-1:0]              mul_rslt_eew16_no_widen_d1;
+logic [7:0]                    vsmul_round_incr_eew16_d1;
+logic [`VLEN-1:0]              vsmul_rslt_eew16_d1;
+logic [7:0]                    vsmul_sat_eew16_d1;
+logic [`VLEN-1:0]              mul_rslt_eew16_d1;
+logic                          update_vxsat_eew16_d1;
 
-logic [63:0] mul_rslt_full_eew32_d1[3:0];
-logic [2*`VLEN-1:0] mul_rslt_eew32_widen_d1;
-logic [`VLEN-1:0] mul_rslt_eew32_no_widen_d1;
-logic [3:0] vsmul_round_incr_eew32_d1;
-logic [`VLEN-1:0] vsmul_rslt_eew32_d1;
-logic [3:0] vsmul_sat_eew32_d1;
-logic [`VLEN-1:0] mul_rslt_eew32_d1;
-logic update_vxsat_eew32_d1;
+logic [63:0]                   mul_rslt_full_eew32_d1[3:0];
+logic [2*`VLEN-1:0]            mul_rslt_eew32_widen_d1;
+logic [`VLEN-1:0]              mul_rslt_eew32_no_widen_d1;
+logic [3:0]                    vsmul_round_incr_eew32_d1;
+logic [`VLEN-1:0]              vsmul_rslt_eew32_d1;
+logic [3:0]                    vsmul_sat_eew32_d1;
+logic [`VLEN-1:0]              mul_rslt_eew32_d1;
+logic                          update_vxsat_eew32_d1;
+
+`ifdef TB_SUPPORT
+logic [`PC_WIDTH-1:0]          mul_uop_pc;
+logic [`PC_WIDTH-1:0]          mul_uop_pc_d1;
+`endif
 
 //Int & Genvar
 integer i,j;
@@ -116,6 +121,10 @@ assign mul_uop_rs1_data = rs2mul_uop_data.rs1_data;
 assign mul_uop_rs1_valid = rs2mul_uop_data.rs1_data_valid;
 
 assign mul_uop_index = rs2mul_uop_data.uop_index[0];
+
+`ifdef TB_SUPPORT
+assign mul_uop_pc = rs2mul_uop_data.uop_pc;
+`endif
 
 // Global EU control
 always@(*) begin
@@ -410,6 +419,10 @@ dff #(3) u_eew_delay (.q(mul_top_vs_eew_d1), .clk(clk), .rst_n(rst_n), .d(mul_to
 
 dff #(`ROB_DEPTH_WIDTH) u_rob_entry_delay (.q(mul_uop_rob_entry_d1), .clk(clk), .rst_n(rst_n), .d(mul_uop_rob_entry));
 
+`ifdef TB_SUPPORT
+dff #(`PC_WIDTH) u_PC_delay (.q(mul_uop_pc_d1), .clk(clk), .rst_n(rst_n), .d(mul_uop_pc));
+`endif
+
 /////////////////////////////////////////////////
 ///////Enter d1_stage ///////////////////////////
 /////////////////////////////////////////////////
@@ -519,4 +532,8 @@ assign mul2rob_uop_data.w_valid = rs2mul_uop_valid_d1;
 assign mul2rob_uop_data.vxsat = update_vxsat_eew8_d1 || update_vxsat_eew16_d1 || update_vxsat_eew32_d1;
 assign mul2rob_uop_data.ignore_vta = 1'b0;//(TODO) check this
 assign mul2rob_uop_data.ignore_vma = 1'b0;//(TODO) check this
+
+`ifdef TB_SUPPORT
+assign mul2rob_uop_data.uop_pc = mul_uop_pc_d1;
+`endif
 endmodule
