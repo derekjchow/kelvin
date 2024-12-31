@@ -93,6 +93,18 @@ endtask: run_phase
 task rvs_driver::inst_manage();
   rvs_transaction tr;
   tr = new();
+  
+  for(int i=0; i<`ISSUE_LANE; i++) begin
+    if((rvs_if.insts_ready_cq2rvs[i]===1'b1) && inst_vld[i]) begin
+      tr = inst_queue.pop_front();
+      `uvm_info(get_type_name(), $sformatf("Send transaction to inst_ap"),UVM_HIGH)
+      `uvm_info(get_type_name(), tr.sprint(),UVM_HIGH)
+      `uvm_info("INST_TR", tr.sprint(),UVM_LOW)
+      inst_ap.write(tr);
+      `uvm_info("ASM_DUMP",$sformatf("0x%8x\t%s", tr.pc, tr.asm_string),UVM_LOW)
+    end
+  end
+
   while (inst_queue.size() < inst_queue_depth) begin
     //seq_item_port.get_next_item(tr);
     seq_item_port.try_next_item(tr);
@@ -127,16 +139,6 @@ task rvs_driver::inst_manage();
     end 
   end
 
-  for(int i=0; i<`ISSUE_LANE; i++) begin
-    if((rvs_if.insts_ready_cq2rvs[i]===1'b1) && inst_vld[i]) begin
-      tr = inst_queue.pop_front();
-      `uvm_info(get_type_name(), $sformatf("Send transaction to inst_ap"),UVM_HIGH)
-      `uvm_info(get_type_name(), tr.sprint(),UVM_HIGH)
-      `uvm_info("INST_TR", tr.sprint(),UVM_LOW)
-      inst_ap.write(tr);
-      `uvm_info("ASM_DUMP",$sformatf("0x%8x\t%s", tr.pc, tr.asm_string),UVM_LOW)
-    end
-  end
 endtask: inst_manage
 
 task rvs_driver::tx_driver();
