@@ -237,6 +237,13 @@ module rvv_backend
     MUL_RS_t     [`NUM_MUL-1:0]           uop_rs2mul;
     logic                                 fifo_empty_rs2mul;
     logic                                 fifo_1left_to_empty_rs2mul;
+  // DIV_RS to DIV
+    logic        [`NUM_DIV-1:0]           pop_div2rs;
+    DIV_RS_t     [`NUM_DIV-1:0]           uop_rs2div;
+    logic                                 fifo_empty_rs2div;
+`ifdef MULTI_DIV
+    logic                                 fifo_1left_to_empty_rs2div;
+`endif
   // ALU to ROB
     logic        [`NUM_ALU-1:0]           wr_valid_alu2rob;
     PU2ROB_t     [`NUM_ALU-1:0]           wr_alu2rob;
@@ -509,7 +516,6 @@ module rvv_backend
   `endif // ASSERT_ON
 
     // MUL RS, Multiply + Multiply-accumulate
-    // TODO: update once MUL unit implements
     fifo_flopped_2w2r #(
         .DWIDTH     ($bits(MUL_RS_t)),
         .DEPTH      (`MUL_RS_DEPTH)
@@ -547,7 +553,6 @@ module rvv_backend
   `endif // ASSERT_ON
 
     // DIV RS
-    // TODO: update once DIV unit implements
     fifo_flopped_2w2r #(
         .DWIDTH     ($bits(DIV_RS_t)),
         .DEPTH      (`DIV_RS_DEPTH)
@@ -561,15 +566,17 @@ module rvv_backend
         .push1      (rs_valid_dp2div[1] & rs_ready_div2dp[1]),
         .inData1    (rs_dp2div[1]),
       // read
-        .pop0       (1'b0),
-        .outData0   (),
+        .pop0       (pop_div2rs[0]),
+        .outData0   (uop_rs2div[0]),
         .pop1       (1'b0),
         .outData1   (),
       // fifo status
         .fifo_full            (div_rs_full),
         .fifo_1left_to_full   (div_rs_1left_to_full),
-        .fifo_empty           (),
-        .fifo_1left_to_empty  (),
+        .fifo_empty           (fifo_empty_rs2div),
+`ifdef MULTI_DIV
+        .fifo_1left_to_empty  (fifo_1left_to_empty_rs2div),
+`endif
         .fifo_idle            ()
     );
 
@@ -667,15 +674,23 @@ module rvv_backend
     );
     
     
-    /*
     // DIV
-    // TODO
-    rvv_div #(
-    ) u_div (
+    rvv_backend_div u_div
+    (  
+      .clk                      (clk),
+      .rst_n                    (rst_n),
+      // DIV_RS to DIV
+      .pop_ex2rs                (pop_div2rs),
+      .div_uop_rs2ex            (uop_rs2div),
+      .fifo_empty_rs2ex         (fifo_empty_rs2div),
+`ifdef MULTI_DIV
+      .fifo_almost_empty_rs2ex  (fifo_1left_to_empty_rs2div),
+`endif
+      // DIV to ROB
+      .result_valid_ex2rob      (wr_valid_div2rob),
+      .result_ex2rob            (wr_div2rob),
+      .result_ready_rob2div     (wr_ready_rob2div) 
     );
-    */
-    assign wr_valid_div2rob = '0;
-    assign wr_div2rob       = '0;
 
     // LSU
     generate
