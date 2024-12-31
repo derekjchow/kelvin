@@ -1765,7 +1765,8 @@ module rvv_backend_alu_unit_addsub
       y = src_cin; 
     end
     else begin
-      y = src_cin ? '1 : 'b0;
+      //                        -'d2                -'d1
+      y = src_cin ? {{(`BYTE_WIDTH-1){1'b1}},1'b0} : '1;
     end
     
     {cout,result} = src_x + y;
