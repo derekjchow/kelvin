@@ -60,7 +60,7 @@ module rvv_backend_dispatch_opr_byte_type
         for (i=0; i<`VLENB; i++) begin : gen_vs1_byte_type
             // ele_index = uop_index * (VLEN/vs1_eew) + BYTE_INDEX[MSB:vs1_eew]
             assign vs1_ele_index[i] = uop_vs1_start + (BYTE_INDEX[i] >> vs1_eew_shift);
-            assign vs1_enable[i] = uop_info.vm ? vs1_enable_tmp[BYTE_INDEX[i] >> vs1_eew_shift] : 1'b1;
+            assign vs1_enable[i] = uop_info.vm ? 1'b1 : vs1_enable_tmp[BYTE_INDEX[i] >> vs1_eew_shift];
             always_comb begin
                 if (vs1_ele_index[i] > uop_info.vl) operand_byte_type.vs1[i] = TAIL;       // tail
                 else if (vs1_ele_index[i] < {1'b0, uop_info.vstart}) 
@@ -88,7 +88,7 @@ module rvv_backend_dispatch_opr_byte_type
         for (i=0; i<`VLENB; i++) begin : gen_vs2_byte_type
             // ele_index = uop_index * (VLEN/vs2_eew) + BYTE_INDEX[MSB:vs2_eew]
             assign vs2_ele_index[i] = uop_vs2_start + (BYTE_INDEX[i] >> vs2_eew_shift);
-            assign vs2_enable[i] = uop_info.vm ? vs2_enable_tmp[BYTE_INDEX[i] >> vs2_eew_shift] : 1'b1;
+            assign vs2_enable[i] = uop_info.vm ? 1'b1 : vs2_enable_tmp[BYTE_INDEX[i] >> vs2_eew_shift];
             always_comb begin
                 if (vs2_ele_index[i] > uop_info.vl) operand_byte_type.vs2[i] = TAIL;       // tail
                 else if (vs2_ele_index[i] < {1'b0, uop_info.vstart}) 
@@ -116,7 +116,7 @@ module rvv_backend_dispatch_opr_byte_type
         for (i=0; i<`VLENB; i++) begin : gen_vd_byte_type
             // ele_index = uop_index * (VLEN/vd_eew) + BYTE_INDEX[MSB:vd_eew]
             assign vd_ele_index[i] = uop_vd_start + (BYTE_INDEX[i] >> vd_eew_shift);
-            assign vd_enable[i] = uop_info.vm ? vd_enable_tmp[BYTE_INDEX[i] >> vd_eew_shift] : 1'b1;
+            assign vd_enable[i] = uop_info.vm ? 1'b1 : vd_enable_tmp[BYTE_INDEX[i] >> vd_eew_shift];
             always_comb begin
                 if (vd_ele_index[i] >= uop_info.vl) operand_byte_type.vd[i] = TAIL;       // tail
                 else if (vd_ele_index[i] < {1'b0, uop_info.vstart}) 
