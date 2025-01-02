@@ -3376,7 +3376,7 @@ module rvv_backend_decode_unit_ari
   end
 
   `ifdef ASSERT_ON
-    `rvv_forbid((inst_valid==1'b1)&(inst_encoding_correct==1'b0);
+    `rvv_forbid((inst_valid==1'b1)&(inst_encoding_correct==1'b0))
       else $warning("This instruction will be discarded directly.\n");
   `endif
 
