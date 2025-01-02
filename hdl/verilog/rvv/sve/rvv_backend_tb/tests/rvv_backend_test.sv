@@ -38,7 +38,7 @@ class rvv_backend_test extends uvm_test;
       vrf_if.vreg_init_data[0] = 128'h5555_5555_5555_5555_5555_5555_5555_5555;
       // vrf_if.vreg_init_data[0] = '1;
       for(int i=1; i<32; i++) begin
-        vrf_if.vreg_init_data[i] = 128'hffff_0001_ffff_0002_ffff_0003_ffff_0000 + i;
+        vrf_if.vreg_init_data[i] = 128'hffff_ffff_5a5a_a5a5_ffff_ffff_0000_0000 + i;
       end
     end else begin
       for(int i=0; i<32; i++) begin

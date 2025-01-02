@@ -176,10 +176,10 @@ endclass : rvv_behavior_model
         end
         // 0.2 Calculate & decode for this instr
         sew = 8 << vtype.vsew;
+        fraction_lmul = vtype.vlmul[2];
         lmul = fraction_lmul ? (~vtype.vlmul[1:0]) + 1 : vtype.vlmul[1:0];
         lmul = 1 << lmul;
         // vlmax = inst_tr.vlmax;
-        fraction_lmul = vtype.vlmul[2];
         elm_idx_max = fraction_lmul ?        `VLEN / sew: 
                                       lmul * `VLEN / sew;
 
@@ -191,6 +191,12 @@ endclass : rvv_behavior_model
         is_widen_vs2_inst = inst_tr.inst_type == ALU && (inst_tr.alu_inst inside {VWADD_W, VWADDU_W});
         is_narrow_inst = inst_tr.inst_type == ALU && (inst_tr.alu_inst inside {VNSRL, VNSRA});
         use_vm_to_cal = inst_tr.use_vm_to_cal;
+
+        // 1.0 illegal inst check
+        if(inst_tr.inst_type == ALU && inst_tr.alu_inst == VRSUB && inst_tr.src2_type == VRF && inst_tr.src1_type == VRF) begin
+          `uvm_warning("MDL/INST_CHECKER", "vrsub.vv is ignored")
+          continue;
+        end
 
         dest_eew = sew;
         src0_eew = EEW1;
@@ -305,7 +311,9 @@ endclass : rvv_behavior_model
               dest_eew = EEW1;
             end
           end
-          default: break;
+          default: begin
+            continue;
+          end
         endcase
 
         // --------------------------------------------------
@@ -380,6 +388,7 @@ endclass : rvv_behavior_model
         end
 
 
+        `uvm_info("DEBUG",$sformatf("Prepare done!\nelm_idx_max=%0d\ndest_eew=%0d\nsrc2_eew=%0d\nsrc1_eew=%0d\n",elm_idx_max,dest_eew,src2_eew,src1_eew),UVM_HIGH)
         // --------------------------------------------------
         // 3. Operate elements
         for(int elm_idx=0; elm_idx<elm_idx_max; elm_idx++) begin : op_element
@@ -429,7 +438,7 @@ endclass : rvv_behavior_model
               ST: `uvm_fatal(get_type_name(),"Store fucntion hasn't been defined.")
               ALU: begin 
                 alu_processor#()::vxrm = vxrm;
-                case({dest_eew, src1_eew, src2_eew})
+                case({dest_eew, src2_eew, src1_eew})
                   { EEW8,  EEW8,  EEW8}: dest = alu_processor #( sew8_t,  sew8_t,  sew8_t)::exe(inst_tr, dest, src2, src1, src0);
                   {EEW16, EEW16, EEW16}: dest = alu_processor #(sew16_t, sew16_t, sew16_t)::exe(inst_tr, dest, src2, src1, src0);
                   {EEW32, EEW32, EEW32}: dest = alu_processor #(sew32_t, sew32_t, sew32_t)::exe(inst_tr, dest, src2, src1, src0);
@@ -444,7 +453,10 @@ endclass : rvv_behavior_model
                   // mask logic
                   { EEW1,  EEW1,  EEW1}: dest = alu_processor #( sew1_t,  sew1_t,  sew1_t)::exe(inst_tr, dest, src1, src2, src3);
                   { EEW1,  EEW1,  EEW1}: dest = alu_processor #( sew1_t,  sew1_t,  sew1_t)::exe(inst_tr, dest, src1, src2, src3);
-                  default: `uvm_error(get_type_name(), $sformatf("Unsupported EEW: dest_eew=%d, src1_eew=%d, src2_eew=%d", dest_eew, src1_eew, src2_eew))
+                  default: begin
+                    `uvm_error("DEBUG", $sformatf("Unsupported EEW: dest_eew=%d, src1_eew=%d, src2_eew=%d", dest_eew, src1_eew, src2_eew))
+                    continue;
+                  end
                 endcase
                 vxsat = vxsat ? vxsat : (alu_processor#()::overflow || alu_processor#()::underflow);
                 elm_writeback(dest, inst_tr.dest_type, dest_reg_idx, elm_idx, dest_eew);
@@ -468,6 +480,7 @@ endclass : rvv_behavior_model
       end // while(|rt_event)
       end // rst_n
     end // forever
+    // `uvm_fatal("MDL/FATAL","Im here.")
   endtask
 
   function logic [31:0] rvv_behavior_model::elm_fetch(oprand_type_e reg_type, int reg_idx, int elm_idx, int eew);

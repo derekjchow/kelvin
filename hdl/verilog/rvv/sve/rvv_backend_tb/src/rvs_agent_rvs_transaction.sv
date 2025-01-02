@@ -178,6 +178,7 @@ class rvs_transaction extends uvm_sequence_item;
   `uvm_object_utils_begin(rvs_transaction) 
     `uvm_field_int(pc,UVM_ALL_ON)
     `uvm_field_int(bin_inst,UVM_ALL_ON)
+    `uvm_field_int(bin_inst[31:7],UVM_ALL_ON)
     `uvm_field_string(asm_string,UVM_ALL_ON)
 
     `uvm_field_enum(sew_e,vtype.vsew,UVM_ALL_ON)

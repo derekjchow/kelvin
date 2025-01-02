@@ -130,6 +130,7 @@ class alu_smoke_seq extends base_sequence;
   `uvm_add_to_seq_lib(alu_smoke_seq,rvs_sequencer_sequence_library)
 
   alu_inst_e alu_inst;
+  oprand_type_e src1_type;
   function new(string name = "alu_smoke_seq");
     super.new(name);
 	`ifdef UVM_POST_VERSION_1_1
@@ -140,6 +141,8 @@ class alu_smoke_seq extends base_sequence;
   virtual task body();
     req = new("req");
     start_item(req);
+    if(alu_inst inside {VRSUB}) src1_type = XRF;
+    else src1_type = VRF;
     assert(req.randomize() with {
       use_vlmax == 1;
       pc == inst_cnt;
@@ -150,8 +153,8 @@ class alu_smoke_seq extends base_sequence;
       inst_type == ALU;
       alu_inst == local::alu_inst;
       dest_type == VRF; dest_idx == 16;
-      src2_type == VRF; src2_idx == 2;
-      src1_type == VRF; src1_idx == 16;
+      src2_type == VRF; src2_idx == 8;
+      src1_type == local::src1_type; src1_idx == 2;
       vm == 0; 
     });
     finish_item(req);
