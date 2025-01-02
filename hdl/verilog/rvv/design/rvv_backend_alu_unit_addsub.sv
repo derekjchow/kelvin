@@ -1687,7 +1687,7 @@ module rvv_backend_alu_unit_addsub
           VSSUBU: begin
             vxsat = (subu_underoverflow!='b0);
           end
-          VSUB: begin
+          VSSUB: begin
             vxsat = ({sub_upoverflow,sub_underoverflow}!='b0);
           end
         endcase
@@ -1731,17 +1731,17 @@ module rvv_backend_alu_unit_addsub
     input logic [`BYTE_WIDTH-1:0] src_y;
     input logic                   src_cin;
 
-    logic [`BYTE_WIDTH-1:0]       y;
+    logic [`BYTE_WIDTH:0]         y;
     logic                         cin;
     logic [`BYTE_WIDTH-1:0]       result;
     logic                         cout;
 
     if (opcode==ADDSUB_VADD) begin
-      y = src_y;
+      y = {1'b0,src_y};
       cin = src_cin;
     end
     else begin
-      y = ~src_y;
+      y = {1'b1,~src_y};
       cin = ~src_cin;
     end
 
@@ -1757,7 +1757,7 @@ module rvv_backend_alu_unit_addsub
     input logic [`BYTE_WIDTH:0] src_x;
     input logic                 src_cin;
 
-    logic [`BYTE_WIDTH-1:0]     y;
+    logic [`BYTE_WIDTH:0]       y;
     logic [`BYTE_WIDTH-1:0]     result;
     logic                       cout;
     
@@ -1765,8 +1765,7 @@ module rvv_backend_alu_unit_addsub
       y = src_cin; 
     end
     else begin
-      //                        -'d2                -'d1
-      y = src_cin ? {{(`BYTE_WIDTH-1){1'b1}},1'b0} : '1;
+      y = src_cin ? '1 : 'b0;
     end
     
     {cout,result} = src_x + y;
@@ -1781,7 +1780,7 @@ module rvv_backend_alu_unit_addsub
     input logic [`HWORD_WIDTH:0] src_x;
     input logic                  src_cin;
 
-    logic [`HWORD_WIDTH-1:0]     y;
+    logic [`HWORD_WIDTH:0]       y;
     logic [`HWORD_WIDTH-1:0]     result;
     logic                        cout;
     
