@@ -2101,6 +2101,11 @@ module rvv_backend_decode_unit_lsu
   // check vstart < evl
   assign check_vstart_sle_evl = {1'b0,csr_vstart} < vs_evl;
 
+  `ifdef ASSERT_ON
+    `rvv_forbid((inst_valid==1'b1)&(inst_encoding_correct==1'b0);
+      else $warning("This instruction will be discarded directly.\n");
+  `endif
+
 // get the start number of uop_index
   always_comb begin
     // initial
