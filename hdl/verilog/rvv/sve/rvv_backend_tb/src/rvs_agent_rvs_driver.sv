@@ -20,6 +20,10 @@ class rvs_driver extends uvm_driver # (rvs_transaction);
   RVVCmd          inst     [`ISSUE_LANE-1:0];
   logic           inst_vld [`ISSUE_LANE-1:0];
 
+  // FIXME For one inst mode now. 
+  // Later we can use this veriable to cover inst_valid<4.
+  int             skip_fetch_cnt = 2;
+
   extern function new(string name = "rvs_driver", uvm_component parent = null); 
  
   `uvm_component_utils_begin(rvs_driver)
@@ -106,6 +110,10 @@ task rvs_driver::inst_manage();
   end
 
   while (inst_queue.size() < inst_queue_depth) begin
+    if(skip_fetch_cnt != 0) begin 
+      skip_fetch_cnt--;
+      break;
+    end
     //seq_item_port.get_next_item(tr);
     seq_item_port.try_next_item(tr);
     if(tr != null) begin
@@ -113,6 +121,8 @@ task rvs_driver::inst_manage();
       `uvm_info(get_type_name(), tr.sprint(),UVM_HIGH)
       inst_queue.push_back(tr);
       seq_item_port.item_done(); 
+      // skip_fetch_cnt = $urandom();
+      skip_fetch_cnt = 5; 
     end else begin
       break;
     end
