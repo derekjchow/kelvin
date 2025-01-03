@@ -89,5 +89,11 @@ module fifo_flopped(
     assign fifo_full = (entryCounter == DEPTH);
     assign fifo_idle = fifo_empty;
 
+`ifdef ASSERT_ON
+  `rvv_forbid(single_push&&fifo_full) 
+    else $error("ERROR: Fifo Overflow! \n");
+  `rvv_forbid(single_pop&&fifo_empty) 
+    else $error("ERROR: Fifo Underflow! \n");
+`endif
 endmodule
 
