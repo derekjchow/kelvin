@@ -110,9 +110,9 @@ module openFifo4_flopped_ptr(/*AUTOARG*/
   end
 
 `ifdef ASSERT_ON
-  `rvv_forbid(single_push&&fifo_full) 
+  `rvv_forbid(single_push&&!single_pop&&fifo_full) 
     else $error("ERROR: Fifo Overflow! \n");
-  `rvv_forbid(single_pop&&fifo_empty) 
+  `rvv_forbid(!single_push&&single_pop&&fifo_empty) 
     else $error("ERROR: Fifo Underflow! \n");
 `endif
 

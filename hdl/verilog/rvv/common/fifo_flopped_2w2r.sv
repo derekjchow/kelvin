@@ -107,9 +107,9 @@ fifo_flopped #(DWIDTH,DEPTH_SUB) fifo_odd (
   .single_pop(pop1_int));
 
 `ifdef ASSERT_ON
-  `rvv_expect(({push1,push0}) inside {2'b11, 2'b01, 2'b00})
+  `rvv_expect(({push1_int,push0_int}) inside {2'b11, 2'b01, 2'b00})
     else $error("ERROR: Push 2w2r fifo out-of-order: %2b \n", $sampled({push1,push0}));
-  `rvv_expect(({pop1,pop0}) inside {2'b11, 2'b01, 2'b00})
+  `rvv_expect(({pop1_int,pop0_int}) inside {2'b11, 2'b01, 2'b00})
     else $error("ERROR: Pop 2w2r fifo out-of-order: %2b \n", $sampled({pop1,pop0}));
 `endif
 endmodule
