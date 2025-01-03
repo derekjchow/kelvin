@@ -417,7 +417,7 @@ module rvv_backend_alu_unit_addsub
               assert(vs1_data_valid==1'b1)
                 else $error("vs1_data_valid(%d) should be 1.\n",vs1_data_valid);
 
-              assert((vs2_eew==EEW16)|(vs2_eew==EEW32))
+              assert((vs2_eew==EEW8)|(vs2_eew==EEW16))
                 else $error("vs2_eew(%s) is not supported.\n",vs2_eew.name());
             `endif
           end
