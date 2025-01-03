@@ -248,6 +248,7 @@ fifo_flopped #(DWIDTH,DEPTH_SUB) fifo_inst3 (
 `ifdef ASSERT_ON
   `rvv_expect(({push3_int,push2_int,push1_int,push0_int}) inside {4'b1111, 4'b0111, 4'b0011, 4'b0001, 4'b0000})
     else $error("ERROR: Push 4w2r fifo out-of-order: %2b", $sampled({push3,push2,push1,push0}));
+
   `rvv_expect(({pop1_int,pop0_int}) inside {2'b11, 2'b01, 2'b00})
     else $error("ERROR: Pop 4w2r fifo out-of-order: %2b", $sampled({pop1,pop0}));
 `endif
