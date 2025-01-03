@@ -52,7 +52,6 @@ module rvv_backend_div_unit_divider
   logic [$clog2(DIV_WIDTH):0]   cnt_clzb;
 
   // processing round for divider
-  logic [DIV_WIDTH-1:0]         dividend;
   logic [DIV_WIDTH-1:0]         quotient_r1;
   logic [DIV_WIDTH-1:0]         quotient_r2;
   logic [DIV_WIDTH-1:0]         quotient_r3;
@@ -67,6 +66,9 @@ module rvv_backend_div_unit_divider
   logic [$clog2(DIV_WIDTH):0]   count_r4;
 
   // register signals
+  logic                         dividend_en;
+  logic [DIV_WIDTH-1:0]         dividend_d;
+  logic [DIV_WIDTH-1:0]         dividend_q;
   logic                         divisor_en;
   logic [DIV_WIDTH-1:0]         divisor_d;
   logic [DIV_WIDTH-1:0]         divisor_q;
@@ -89,6 +91,19 @@ module rvv_backend_div_unit_divider
 //
 // register
 //
+  // dividend
+  edff
+  #(
+  .WIDTH    (DIV_WIDTH)
+  )
+  dividend
+  (
+    .clk    (clk),
+    .rst_n  (rst_n),
+    .en     (dividend_en),
+    .d      (dividend_d),
+    .q      (dividend_q)
+  );
   // divisor
   edff
   #(
@@ -211,7 +226,8 @@ module rvv_backend_div_unit_divider
   // computational logic in every state
   always_comb begin
     // initial
-    dividend         = 'b0;
+    dividend_en      = 'b0;
+    dividend_d       = 'b0;
     divisor_en       = 'b0;
     divisor_d        = 'b0;
     quotient_en      = 'b0;
@@ -266,57 +282,66 @@ module rvv_backend_div_unit_divider
             count_en = 'b1;
             count_d  = 'b1;
           end
-          // start to regular div/rem
+          // start to initialize
           else begin
             if(opcode==DIV_SIGN) begin
               // convert signed data to unsigned data
-              dividend = src2_dividend[DIV_WIDTH-1] ? (~(src2_dividend)+1) : src2_dividend;
-              
-              divisor_en = 'b1;
+              dividend_d  = src2_dividend[DIV_WIDTH-1] ? (~(src2_dividend)+1) : src2_dividend;
               divisor_d  = src1_divisor[DIV_WIDTH-1] ? (~(src1_divisor )+1) : src1_divisor;
               
-              q_sgn_en  = 'b1;
               q_sgn_d   = src2_dividend[DIV_WIDTH-1]^src1_divisor[DIV_WIDTH-1];
-
-              r_sgn_en  = 'b1;
               r_sgn_d   = src2_dividend[DIV_WIDTH-1];
             end
             else begin
-              dividend = src2_dividend;
-
-              divisor_en = 'b1;
+              dividend_d  = src2_dividend;
               divisor_d  = src1_divisor;
 
-              q_sgn_en = 'b1;
               q_sgn_d  = 'b0;
-
-              r_sgn_en = 'b1;
               r_sgn_d  = 'b0;
             end
 
-            // count leading zero bits in dividend
-            if (DIV_WIDTH==32) begin
-              cnt_clzb  = f_clzb32(dividend);
-              count_en  = 'b1;
-              count_d   = 'd33 - cnt_clzb;            
-            end
-            else if (DIV_WIDTH==16) begin
-              cnt_clzb  = f_clzb16(dividend);
-              count_en  = 'b1;
-              count_d   = 'd17 - cnt_clzb;            
-            end
-            else if (DIV_WIDTH==8) begin
-              cnt_clzb  = f_clzb8(dividend);
-              count_en  = 'b1;
-              count_d   = 'd9 - cnt_clzb;            
-            end
+            // check whether dividend and divisor equal to last source data
+            if ((dividend_d==dividend_q)&(divisor_d==divisor_q)&(q_sgn_d==q_sgn_q)&(r_sgn_d==r_sgn_q)) begin
+              dividend_en = 'b0; 
+              divisor_en = 'b0;
 
-            // initial quotient and remainder
-            quotient_en = 'b1;   
-            quotient_d  = dividend<<cnt_clzb;
+              q_sgn_en  = 'b0;
+              r_sgn_en  = 'b0;
+              
+              count_en = 'b1;
+              count_d  = 'b1;
+            end
+            else begin
+              dividend_en = 'b1; 
+              divisor_en = 'b1;
 
-            remainder_en = 'b1;
-            remainder_d  = 'b0;
+              q_sgn_en  = 'b1;
+              r_sgn_en  = 'b1;
+
+              // count leading zero bits in dividend
+              if (DIV_WIDTH==32) begin
+                cnt_clzb  = f_clzb32(dividend_d);
+                count_en  = 'b1;
+                count_d   = 'd33 - cnt_clzb;            
+              end
+              else if (DIV_WIDTH==16) begin
+                cnt_clzb  = f_clzb16(dividend_d);
+                count_en  = 'b1;
+                count_d   = 'd17 - cnt_clzb;            
+              end
+              else if (DIV_WIDTH==8) begin
+                cnt_clzb  = f_clzb8(dividend_d);
+                count_en  = 'b1;
+                count_d   = 'd9 - cnt_clzb;            
+              end
+
+              // initialize quotient and remainder
+              quotient_en = 'b1;   
+              quotient_d  = dividend_d<<cnt_clzb;
+
+              remainder_en = 'b1;
+              remainder_d  = 'b0;
+            end
           end
         end
       end
@@ -383,18 +408,8 @@ module rvv_backend_div_unit_divider
         result_remainder = r_sgn_q ? ((~remainder_q)+'d1) : remainder_q;
     
         if (result_ready) begin
-          divisor_en   = 'b1;
-          divisor_d    = 'b0;
-          quotient_en  = 'b1;
-          quotient_d   = 'b0;
-          remainder_en = 'b1;
-          remainder_d  = 'b0;
           count_en     = 'b1;
           count_d      = 'b0;
-          q_sgn_en     = 'b1;
-          q_sgn_d      = 'b0;
-          r_sgn_en     = 'b1;
-          r_sgn_d      = 'b0;
         end
       end
     endcase
