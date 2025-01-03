@@ -1953,7 +1953,7 @@ module rvv_backend_decode_unit_lsu
         
         `ifdef ASSERT_ON
           assert(inst_vd[0]==1'b0)
-            else $warning("vd is not aligned to emul_vd(%d).\n",emul_vd);
+            else $warning("vd is not aligned to emul_vd=%s.\n",emul_vd.name());
         `endif
       end
       EMUL4: begin
@@ -1962,7 +1962,7 @@ module rvv_backend_decode_unit_lsu
         
         `ifdef ASSERT_ON
           assert(inst_vd[1:0]==2'b0)
-            else $warning("vd is not aligned to emul_vd(%d).\n",emul_vd);
+            else $warning("vd is not aligned to emul_vd=%s.\n",emul_vd.name());
         `endif
       end
       EMUL8: begin
@@ -1971,7 +1971,7 @@ module rvv_backend_decode_unit_lsu
        
         `ifdef ASSERT_ON
           assert(inst_vd[2:0]==3'b0)        
-            else $warning("vd is not aligned to emul_vd(%d).\n",emul_vd);
+            else $warning("vd is not aligned to emul_vd=%s.\n",emul_vd.name());
         `endif
       end
     endcase
@@ -1992,7 +1992,7 @@ module rvv_backend_decode_unit_lsu
         
         `ifdef ASSERT_ON
           assert(inst_vs2[0]==1'b0)
-            else $warning("vs2 is not aligned to emul_vs2(%d).\n",emul_vs2);
+            else $warning("vs2 is not aligned to emul_vs2=%s.\n",emul_vs2.name());
         `endif
       end
       EMUL4: begin
@@ -2001,7 +2001,7 @@ module rvv_backend_decode_unit_lsu
         
         `ifdef ASSERT_ON
           assert(inst_vs2[1:0]==2'b0)
-            else $warning("vs2 is not aligned to emul_vs2(%d).\n",emul_vs2);
+            else $warning("vs2 is not aligned to emul_vs2=%s.\n",emul_vs2.name());
         `endif
       end
       EMUL8: begin
@@ -2010,7 +2010,7 @@ module rvv_backend_decode_unit_lsu
        
         `ifdef ASSERT_ON
           assert(inst_vs2[2:0]==3'b0)        
-            else $warning("vs2 is not aligned to emul_vs2(%d).\n",emul_vs2);
+            else $warning("vs2 is not aligned to emul_vs2=%s.\n",emul_vs2.name());
         `endif
       end
     endcase
