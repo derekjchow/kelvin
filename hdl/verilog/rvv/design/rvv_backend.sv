@@ -621,7 +621,7 @@ module rvv_backend
     assign rs_ready_lsu2dp[1] = ~lsu_rs_full & ~lsu_rs_1left_to_full;
 
     assign uop_valid_lsu_rvv2rvs[0] = ~fifo_empty_rs2lsu;
-    assign uop_valid_lsu_rvv2rvs[1] = ~fifo_almost_empty_rs2lsu;
+    assign uop_valid_lsu_rvv2rvs[1] = ~(fifo_empty_rs2lsu || fifo_almost_empty_rs2lsu);
     assign uop_lsu_rvv2rvs = uop_rs2lsu;
 
   `ifdef ASSERT_ON
