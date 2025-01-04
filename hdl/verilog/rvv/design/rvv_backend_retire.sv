@@ -307,7 +307,7 @@ always@(*) begin
       end
       else if (w_addr1 == w_addr3) begin //2!=3, 1!=2, 1=3
         w_enB1_waw0123_int[i] = w_enB1[i] && !w_enB3[i];
-        if (w_addr0 == w_addr2) begin //2!=3, 1!=2, 1=3, 0=1 #case9
+        if (w_addr0 == w_addr2) begin //2!=3, 1!=2, 1=3, 0=2 #case9
           w_enB0_waw0123_int[i] = w_enB0[i] && !w_enB2_waw0123_int[i];
         end
         else if (w_addr0 == w_addr1) begin //2!=3, 1!=2, 1=3, 0=1 #case10
