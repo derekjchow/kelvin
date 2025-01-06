@@ -133,6 +133,8 @@ task rvv_scoreboard::vrf_checker();
   vrf_transaction mdl_tr;
   vrf_transaction rvs_tr;
   int err;
+  string vreg_dut_val;
+  string vreg_mdl_val;
   forever begin
     @(posedge rvs_if.clk); 
     err = 0;
@@ -144,9 +146,19 @@ task rvv_scoreboard::vrf_checker();
       mdl_tr = vrf_queue_mdl.pop_front();
       `uvm_info("VRF_RECORDER", "\n==============================HEAD================================", UVM_HIGH)
       for(int idx=0; idx<32; idx++) begin
+        vreg_dut_val = "0x";
+        vreg_mdl_val = "0x";
         if(rvs_tr.vreg[idx] !== mdl_tr.vreg[idx]) begin
+          for(int i=`VLEN-1;i>=0;i-=16) begin
+            vreg_dut_val = $sformatf("%s%4h_",vreg_dut_val,rvs_tr.vreg[idx][i-:16]);
+            vreg_mdl_val = $sformatf("%s%4h_",vreg_mdl_val,mdl_tr.vreg[idx][i-:16]);
+          end
+          vreg_dut_val = vreg_dut_val.substr(0,vreg_dut_val.len()-2);
+          vreg_mdl_val = vreg_mdl_val.substr(0,vreg_mdl_val.len()-2);
           `uvm_warning("VRF_RECORDER", $sformatf("VRF[%0d] value mismatch: \ndut = 0x%0h \nmdl = 0x%0h", idx, rvs_tr.vreg[idx], mdl_tr.vreg[idx]))
-          `uvm_error("VRF_CHECKER", $sformatf("VRF[%0d] value mismatch: \ndut = 0x%0h \nmdl = 0x%0h", idx, rvs_tr.vreg[idx], mdl_tr.vreg[idx]))
+          //`uvm_error("VRF_CHECKER", $sformatf("VRF[%0d] value mismatch: \ndut = 0x%0h \nmdl = 0x%0h", idx, rvs_tr.vreg[idx], mdl_tr.vreg[idx]))
+          //`uvm_warning("VRF_RECORDER", $sformatf("VRF[%0d] value mismatch: \ndut = %s \nmdl = %s", idx, vreg_dut_val, vreg_mdl_val))
+          `uvm_error("VRF_CHECKER", $sformatf("VRF[%0d] value mismatch: \ndut = %s \nmdl = %s", idx, vreg_dut_val, vreg_mdl_val))
           err++;
         end
         `uvm_info("VRF_RECORDER", $sformatf("VRF[%0d] value: \ndut = 0x%0h \nmdl = 0x%0h", idx, rvs_tr.vreg[idx], mdl_tr.vreg[idx]), UVM_HIGH)
