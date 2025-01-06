@@ -33,6 +33,7 @@ class DBus2Axi(p: Parameters) extends Module {
     val axi = new AxiMasterIO(p.axi2AddrBits, p.axi2DataBits, p.axi2IdBits)
   })
   io.axi.defaults()
+  assert(!(io.dbus.valid && PopCount(io.dbus.size) =/= 1.U))
 
   val linebit = log2Ceil(p.lsuDataBits / 8)
 
@@ -64,6 +65,7 @@ class DBus2Axi(p: Parameters) extends Module {
   io.axi.write.addr.bits.addr := saddr
   io.axi.write.addr.bits.id := 0.U
   io.axi.write.addr.bits.prot := 2.U
+  io.axi.write.addr.bits.size := Ctz(io.dbus.size)
 
   io.axi.write.data.valid := io.dbus.valid && io.dbus.write
   io.axi.write.data.bits.strb := io.dbus.wmask
@@ -76,6 +78,7 @@ class DBus2Axi(p: Parameters) extends Module {
   io.axi.read.addr.bits.addr := saddr
   io.axi.read.addr.bits.id := 0.U
   io.axi.read.addr.bits.prot := 2.U
+  io.axi.read.addr.bits.size := Ctz(io.dbus.size)
 
   io.axi.read.data.ready := true.B
 }

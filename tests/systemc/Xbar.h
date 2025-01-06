@@ -92,28 +92,34 @@ class Xbar : sc_core::sc_module {
     }
 
     if (!be_len && streaming_width == len) {
-      trans.set_response_status(tlm::TLM_BYTE_ENABLE_ERROR_RESPONSE);
-      SC_REPORT_FATAL("Uart", "Non-BE unsupported\n");
-      return;
-    }
-
-    for (unsigned int pos = 0; pos < len / 8; ++pos) {
-      if (be_len && be[pos % (be_len / 8)] != TLM_BYTE_ENABLED) {
-        continue;
+      for (unsigned int pos = 0; pos < len; ++pos) {
+        if (ptr[pos] == '\n') {
+          uart_buffer_.push_back('\0');
+          printf("%s\n", uart_buffer_.data());
+          uart_buffer_.clear();
+        } else {
+          uart_buffer_.push_back(ptr[pos]);
+        }
       }
+    } else {
+      for (unsigned int pos = 0; pos < len / 8; ++pos) {
+        if (be_len && be[pos % (be_len / 8)] != TLM_BYTE_ENABLED) {
+          continue;
+        }
 
-      if (addr != 0 || trans.is_read()) {
-        trans.set_response_status(tlm::TLM_ADDRESS_ERROR_RESPONSE);
-        SC_REPORT_FATAL("Uart", "Unsupported access\n");
-        return;
-      }
+        if (addr != 0 || trans.is_read()) {
+          trans.set_response_status(tlm::TLM_ADDRESS_ERROR_RESPONSE);
+          SC_REPORT_FATAL("Uart", "Unsupported access\n");
+          return;
+        }
 
-      if (ptr[pos] == '\n') {
-        uart_buffer_.push_back('\0');
-        printf("%s\n", uart_buffer_.data());
-        uart_buffer_.clear();
-      } else {
-        uart_buffer_.push_back(ptr[pos]);
+        if (ptr[pos] == '\n') {
+          uart_buffer_.push_back('\0');
+          printf("%s\n", uart_buffer_.data());
+          uart_buffer_.clear();
+        } else {
+          uart_buffer_.push_back(ptr[pos]);
+        }
       }
 
     }

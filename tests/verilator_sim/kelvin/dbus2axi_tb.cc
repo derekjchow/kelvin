@@ -78,7 +78,7 @@ struct DBus2Axi_tb : Sysc_tb {
       io_dbus_write = rand_bool();
       io_dbus_addr = rand_uint32();
       io_dbus_adrx = rand_uint32();
-      io_dbus_size = rand_uint32();
+      io_dbus_size = 1 << rand_int(0, 5);
       io_dbus_wdata = dbus_wdata;
       io_dbus_wmask = dbus_wmask;
     }

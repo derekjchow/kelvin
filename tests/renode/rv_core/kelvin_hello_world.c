@@ -40,6 +40,24 @@ void print_uint32(uint32_t val) {
   putc('\n');
 }
 
+void print_uint16(uint16_t val) {
+  putc('0');
+  putc('x');
+  for (int i = 3; i >= 0; --i) {
+    putc(hex[(val >> (i * 4)) & 0xF]);
+  }
+  putc('\n');
+}
+
+void print_uint8(uint8_t val) {
+  putc('0');
+  putc('x');
+  for (int i = 1; i >= 0; --i) {
+    putc(hex[(val >> (i * 4)) & 0xF]);
+  }
+  putc('\n');
+}
+
 void print_string(const char* s) {
   while (*s) {
     putc(*s);
@@ -48,8 +66,16 @@ void print_string(const char* s) {
 }
 
 int main(int argc, char *argv[]) {
-  uint32_t* rv_core_memory = (uint32_t*)0x20000000L;
-  print_uint32(*rv_core_memory);
+  volatile uint32_t* rv_core_memory32 = (uint32_t*)0x20000000L;
+  volatile uint16_t* rv_core_memory16 = (uint16_t*)0x20000000L;
+  volatile uint8_t* rv_core_memory8 = (uint8_t*)0x20000000L;
+  *rv_core_memory32 = 0xdeadbeef;
+  print_uint32(*rv_core_memory32);
+  *rv_core_memory16 = 0xb0ba;
+  print_uint16(*rv_core_memory16);
+  *rv_core_memory8 = 0xdd;
+  print_uint8(*rv_core_memory8);
+
   uint32_t* our_pc_csr = (uint32_t*)0x30110L;
   print_uint32(*our_pc_csr);
   print_string("beefb0ba\n");

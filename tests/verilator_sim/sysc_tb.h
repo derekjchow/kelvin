@@ -226,6 +226,7 @@ struct Sysc_tb : public sc_module {
            (!random_ || (rand() & 1));  // NOLINT(runtime/threadsafe_fn)
   }
 
+  // Generates a number on the range [min, max].
   int rand_int(int min = 0, int max = (1 << 31)) {
     return (rand() % (max - min + 1)) + min;  // NOLINT(runtime/threadsafe_fn)
   }
