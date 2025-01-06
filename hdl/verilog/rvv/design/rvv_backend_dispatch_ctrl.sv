@@ -80,12 +80,13 @@ module rvv_backend_dispatch_ctrl
         for (i=0; i<`NUM_DP_UOP; i++) begin : gen_rs_ready
             always_comb begin
                 case (uop_ctrl[i].uop_exe_unit)
-                    ALU:    rs_ready[i] = rs_ready_alu2dp[i];
-                    PMTRDT: rs_ready[i] = rs_ready_pmtrdt2dp[i];
+                    ALU: rs_ready[i] = rs_ready_alu2dp[i];
                     MUL,
-                    MAC:    rs_ready[i] = rs_ready_mul2dp[i];
-                    DIV:    rs_ready[i] = rs_ready_div2dp[i];
-                    LSU:    rs_ready[i] = rs_ready_lsu2dp[i];
+                    MAC: rs_ready[i] = rs_ready_mul2dp[i];
+                    PMT,
+                    RDT: rs_ready[i] = rs_ready_pmtrdt2dp[i];
+                    DIV: rs_ready[i] = rs_ready_div2dp[i];
+                    LSU: rs_ready[i] = rs_ready_lsu2dp[i];
                     default: rs_ready[i] = 1'bx;
                 endcase
             end
@@ -104,7 +105,7 @@ module rvv_backend_dispatch_ctrl
             assign rs_valid_dp2alu[i]    = uop_ready_dp2uop[i] & 
                                            (uop_ctrl[i].uop_exe_unit == ALU);
             assign rs_valid_dp2pmtrdt[i] = uop_ready_dp2uop[i] & 
-                                           (uop_ctrl[i].uop_exe_unit == PMTRDT);
+                                           ((uop_ctrl[i].uop_exe_unit == PMT) || (uop_ctrl[i].uop_exe_unit == RDT));
             assign rs_valid_dp2mul[i]    = uop_ready_dp2uop[i] & 
                                            (uop_ctrl[i].uop_exe_unit == MUL || uop_ctrl[i].uop_exe_unit == MAC);
             assign rs_valid_dp2div[i]    = uop_ready_dp2uop[i] & 
