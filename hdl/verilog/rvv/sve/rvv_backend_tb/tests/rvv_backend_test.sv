@@ -175,7 +175,7 @@ class alu_smoke_test extends rvv_backend_test;
     rvs_seq.run_inst(VWSUB_W, env.rvs_agt.rvs_sqr);
 
     rvs_ext_seq = alu_smoke_ext_seq::type_id::create("alu_smoke_ext_seq", this);
-    rvs_ext_seq.run_inst(VEXT, env.rvs_agt.rvs_sqr);
+    rvs_ext_seq.run_inst(VXUNARY0, env.rvs_agt.rvs_sqr);
 
     phase.phase_done.set_drain_time(this, 1000ns);
     phase.drop_objection( .obj( this ) );
@@ -231,7 +231,7 @@ endclass: alu_vaddsub_test
 //-----------------------------------------------------------
 class alu_vwaddsub_test extends rvv_backend_test;
 
-  alu_iterate_vxi_seq rvs_seq;
+  alu_iterate_vx_seq rvs_seq;
 
   `uvm_component_utils(alu_vwaddsub_test)
 
@@ -251,7 +251,7 @@ class alu_vwaddsub_test extends rvv_backend_test;
   task main_phase(uvm_phase phase);
     phase.raise_objection( .obj( this ) );
 
-    rvs_seq = alu_iterate_vxi_seq::type_id::create("rvs_seq", this);
+    rvs_seq = alu_iterate_vx_seq::type_id::create("rvs_seq", this);
     rvs_seq.run_inst(VWADD, env.rvs_agt.rvs_sqr);
     rvs_seq.run_inst(VWADDU, env.rvs_agt.rvs_sqr);
     rvs_seq.run_inst(VWADDU_W, env.rvs_agt.rvs_sqr);
@@ -297,7 +297,7 @@ class alu_vext_test extends rvv_backend_test;
     phase.raise_objection( .obj( this ) );
 
     rvs_seq = alu_iterate_ext_seq::type_id::create("rvs_seq", this);
-    rvs_seq.run_inst(VEXT, env.rvs_agt.rvs_sqr);
+    rvs_seq.run_inst(VXUNARY0, env.rvs_agt.rvs_sqr);
 
     phase.phase_done.set_drain_time(this, 1000ns);
     phase.drop_objection( .obj( this ) );

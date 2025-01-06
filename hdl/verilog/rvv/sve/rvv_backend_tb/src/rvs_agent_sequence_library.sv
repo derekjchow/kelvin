@@ -187,14 +187,14 @@ class alu_smoke_ext_seq extends base_sequence;
         use_vlmax == 1;
         pc == inst_cnt;
 
-        vtype.vsew == SEW8;
+        vtype.vsew == SEW32;
         vtype.vlmul inside {LMUL1_2, LMUL2};
 
         inst_type == ALU;
         alu_inst == local::alu_inst;
-        dest_type == VRF; 
+        dest_type == VRF; dest_idx == 16;
+        src2_type == VRF; src2_idx == 8;
         src1_type == FUNC; src1_idx == local::vext_func;
-        src2_type == VRF;
         vm == 0;
       });
       finish_item(req);
@@ -208,7 +208,6 @@ class alu_smoke_ext_seq extends base_sequence;
 endclass: alu_smoke_ext_seq
 //-----------------------------------------------------------
 // Iterate each vm/lmul/sew/red_idx for .vv/.vx/.vi
-// Total: 1,179,648 + 36,864 + 1,179,648 = 2,396,160
 //-----------------------------------------------------------
 class alu_iterate_vxi_seq extends base_sequence;
   `uvm_object_utils(alu_iterate_vxi_seq)
@@ -398,6 +397,145 @@ class alu_iterate_vxi_seq extends base_sequence;
   endtask: run_inst
 endclass: alu_iterate_vxi_seq
 
+//-----------------------------------------------------------
+// Iterate each vm/lmul/sew/red_idx for .vv/.vx
+//-----------------------------------------------------------
+class alu_iterate_vx_seq extends base_sequence;
+  `uvm_object_utils(alu_iterate_vx_seq)
+  `uvm_add_to_seq_lib(alu_iterate_vx_seq,rvs_sequencer_sequence_library)
+    
+  bit iterate_all_reg;
+  sew_e sew;
+  lmul_e lmul;
+  alu_inst_e alu_inst;
+  oprand_type_e src1_type;
+
+  function new(string name = "alu_iterate_vx_seq");
+    super.new(name);
+	  `ifdef UVM_POST_VERSION_1_1
+      set_automatic_phase_objection(1);
+    `endif
+  endfunction:new
+
+  virtual task body();
+    if(iterate_all_reg) begin
+      for(int vm=0; vm<=1; vm++) begin
+        for(lmul = lmul.first(); lmul != lmul.last(); lmul =lmul.next()) begin
+          for(sew = sew.first(); sew != sew.last(); sew =sew.next()) begin
+            for(int dest_idx=0; dest_idx<32; dest_idx++) begin
+              for(int src2_idx=0; src2_idx<32; src2_idx++) begin
+                for(int src1_idx=0; src1_idx<32; src1_idx++) begin
+                  req = new("req");
+                  start_item(req);
+                  assert(req.randomize() with {
+                    use_vlmax == 1;
+                    pc == inst_cnt;
+
+                    vtype.vsew ==  local::sew;
+                    vtype.vlmul == local::lmul;
+
+                    inst_type == ALU;
+                    alu_inst == local::alu_inst;
+
+                    dest_type == VRF; dest_idx == local::dest_idx; 
+                    src2_type == VRF; src2_idx == local::src2_idx;
+                    src1_type == VRF; src1_idx == local::src1_idx;
+                    vm == local::vm;
+                  });
+                  finish_item(req);
+                  inst_cnt++;
+                end // src1_idx
+              end // src2_idx
+            end // dest_idx
+          end // sew
+        end // lmul
+        for(lmul = lmul.first(); lmul != lmul.last(); lmul =lmul.next()) begin
+          for(sew = sew.first(); sew != sew.last(); sew =sew.next()) begin
+            for(int dest_idx=0; dest_idx<32; dest_idx++) begin
+              for(int src2_idx=0; src2_idx<32; src2_idx++) begin
+                  req = new("req");
+                  start_item(req);
+                  assert(req.randomize() with {
+                    use_vlmax == 1;
+                    pc == local::inst_cnt;
+
+                    vtype.vsew ==  local::sew;
+                    vtype.vlmul == local::lmul;
+
+                    inst_type == ALU;
+                    alu_inst == local::alu_inst;
+
+                    dest_type == VRF; dest_idx == local::dest_idx;
+                    src2_type == VRF; src2_idx == local::src2_idx;
+                    src1_type == XRF;
+                    vm == local::vm;
+                  });
+                  finish_item(req);
+                  inst_cnt++;
+              end // src2_idx
+            end // dest_idx
+          end // sew
+        end // lmul
+      end // vm
+    end else begin
+      for(int vm=0; vm<=1; vm++) begin
+        for(lmul = lmul.first(); lmul != lmul.last(); lmul =lmul.next()) begin
+          for(sew = sew.first(); sew != sew.last(); sew =sew.next()) begin
+            req = new("req");
+            start_item(req);
+            assert(req.randomize() with {
+              use_vlmax == 1;
+              pc == inst_cnt;
+
+              vtype.vsew ==  local::sew;
+              vtype.vlmul == local::lmul;
+
+              inst_type == ALU;
+              alu_inst == local::alu_inst;
+
+              dest_type == VRF;
+              src2_type == VRF;
+              src1_type == VRF;
+              vm == local::vm;
+            });
+            finish_item(req);
+            inst_cnt++;
+          end // sew
+        end // lmul
+        for(lmul = lmul.first(); lmul != lmul.last(); lmul =lmul.next()) begin
+          for(sew = sew.first(); sew != sew.last(); sew =sew.next()) begin
+            req = new("req");
+            start_item(req);
+            assert(req.randomize() with {
+              use_vlmax == 1;
+              pc == local::inst_cnt;
+
+              vtype.vsew ==  local::sew;
+              vtype.vlmul == local::lmul;
+
+              inst_type == ALU;
+              alu_inst == local::alu_inst;
+
+              dest_type == VRF;
+              src2_type == VRF;
+              src1_type == XRF;
+              vm == local::vm;
+            });
+            finish_item(req);
+            inst_cnt++;
+          end // sew
+        end // lmul
+      end // vm
+    end // iterate_all_reg
+  endtask
+
+  task run_inst(alu_inst_e inst, uvm_sequencer_base sqr, bit ite_all = 0);
+    this.alu_inst = inst;
+    this.start(sqr);
+    this.iterate_all_reg = ite_all;
+  endtask: run_inst
+endclass: alu_iterate_vx_seq
+
 class alu_iterate_ext_seq extends base_sequence;
   `uvm_object_utils(alu_iterate_ext_seq)
   `uvm_add_to_seq_lib(alu_iterate_ext_seq,rvs_sequencer_sequence_library)
@@ -415,8 +553,8 @@ class alu_iterate_ext_seq extends base_sequence;
       for(lmul_e lmul = lmul.first(); lmul != lmul.last(); lmul =lmul.next()) begin
         for(sew_e sew = sew.first(); sew != sew.last(); sew =sew.next()) begin
           for(vext_e vext_func = vext_func.first();vext_func != vext_func.last(); vext_func = vext_func.next()) begin
-            if((vext_func == VZEXT_VF4 || vext_func == VSEXT_VF4) && sew != SEW32) continue;
-            if((vext_func == VZEXT_VF2 || vext_func == VZEXT_VF2) && (sew == SEW8)) continue;
+            if((vext_func == VZEXT_VF4 || vext_func == VSEXT_VF4) && sew == SEW32) continue;
+            if((vext_func == VZEXT_VF2 || vext_func == VZEXT_VF2) && (sew != SEW32)) continue;
             req = new("req");
             start_item(req);
             assert(req.randomize() with {

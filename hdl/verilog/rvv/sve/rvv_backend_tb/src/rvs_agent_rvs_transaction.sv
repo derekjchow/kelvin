@@ -49,6 +49,7 @@ class rvs_transaction extends uvm_sequence_item;
        lmul_e src1_emul;
        lmul_e src2_emul;
        lmul_e src3_emul;
+       vext_e src1_func_vext;
    
   rand logic [`XLEN-1:0] rs_data;
 
@@ -126,14 +127,14 @@ class rvs_transaction extends uvm_sequence_item;
       );
 
     // OPM
-    (inst_type == ALU && alu_inst[7:6] == 2'b01 && !(alu_inst inside {VEXT, VWMACCUS})) 
+    (inst_type == ALU && alu_inst[7:6] == 2'b01 && !(alu_inst inside {VXUNARY0, VWMACCUS})) 
       -> (dest_type == VRF && src2_type == VRF && 
            ((alu_type == OPMVV && src1_type == VRF) || 
             (alu_type == OPMVX && src1_type == XRF) 
            )
       );
 
-    (inst_type == ALU && alu_inst[7:6] == 2'b01 && alu_inst == VEXT) 
+    (inst_type == ALU && alu_inst[7:6] == 2'b01 && alu_inst == VXUNARY0) 
       -> (dest_type == VRF && src2_type == VRF && 
            ((alu_type == OPMVV && src1_type == FUNC && src1_idx inside {VZEXT_VF4, VSEXT_VF4, VZEXT_VF2, VSEXT_VF2}))
       );
@@ -210,7 +211,11 @@ class rvs_transaction extends uvm_sequence_item;
     `uvm_field_enum(oprand_type_e,dest_type,UVM_ALL_ON)
     `uvm_field_int(dest_idx,UVM_ALL_ON)
     `uvm_field_enum(oprand_type_e,src1_type,UVM_ALL_ON)
-    `uvm_field_int(src1_idx,UVM_ALL_ON)
+    if(src1_type == FUNC && inst_type == ALU && alu_inst == VXUNARY0) begin
+      `uvm_field_enum(vext_e,src1_func_vext,UVM_ALL_ON)
+    end else begin
+      `uvm_field_int(src1_idx,UVM_ALL_ON)
+    end
     `uvm_field_enum(oprand_type_e,src2_type,UVM_ALL_ON)
     `uvm_field_int(src2_idx,UVM_ALL_ON)
     `uvm_field_enum(oprand_type_e,src3_type,UVM_ALL_ON)
@@ -238,7 +243,9 @@ function void rvs_transaction::post_randomize();
     use_vm_to_cal = 1;
   else
     use_vm_to_cal = 0;
-
+  
+  if(src1_type == FUNC && inst_type == ALU && alu_inst == VXUNARY0) $cast(src1_func_vext,src1_idx);
+  
   // rs random data
   if(src1_type != XRF && src2_type != XRF) rs_data = 'x;
 
@@ -297,6 +304,9 @@ function void rvs_transaction::asm_string_gen();
       if(alu_inst inside {VWADDU_W, VWADD_W, VWSUBU_W, VWSUB_W}) begin
         inst = this.alu_inst.name();
         inst = inst.substr(0,inst.len()-3);
+      end else if(alu_inst inside {VXUNARY0}) begin
+        if(src1_idx inside {VZEXT_VF4, VZEXT_VF2}) inst = "vzext";
+        if(src1_idx inside {VSEXT_VF4, VSEXT_VF2}) inst = "vsext";
       end else if(alu_inst inside {VMERGE_VMVV}) begin
         if(vm == 1)
           inst = "vmv.v";
@@ -313,10 +323,10 @@ function void rvs_transaction::asm_string_gen();
     XRF: begin suf1 = "x"; src1 = $sformatf("x%0d",this.src1_idx); end
     IMM: begin suf1 = "i"; src1 = $sformatf("%0d",$signed(this.src1_idx)); end
     FUNC: begin
-      if(inst_type == ALU && alu_inst == VEXT && src1_idx inside{VSEXT_VF4, VSEXT_VF4}) begin
+      if(inst_type == ALU && alu_inst == VXUNARY0 && src1_idx inside{VSEXT_VF4, VSEXT_VF4}) begin
         suf1 = "f4"; src1 = "";
       end
-      if(inst_type == ALU && alu_inst == VEXT && src1_idx inside{VSEXT_VF2, VSEXT_VF2}) begin
+      if(inst_type == ALU && alu_inst == VXUNARY0 && src1_idx inside{VSEXT_VF2, VSEXT_VF2}) begin
         suf1 = "f2"; src1 = "";
       end
     end

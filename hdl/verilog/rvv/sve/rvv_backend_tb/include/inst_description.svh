@@ -127,7 +127,7 @@ typedef enum logic [7:0] {
   VWSUBU_W        =   8'b01_110_110,
   VWSUB_W         =   8'b01_110_111,
 
-  VEXT            =   8'b01_010_010,  // VZEXT/VSEXT 
+  VXUNARY0        =   8'b01_010_010,  // VZEXT/VSEXT 
 
   VMUL            =   8'b01_100_101,
   VMULH           =   8'b01_100_111,
@@ -178,7 +178,7 @@ typedef enum logic [4:0] {
   VSEXT_VF4       =   5'b00101,
   VZEXT_VF2       =   5'b00110,
   VSEXT_VF2       =   5'b00111,  
-  VEXT_LAST       =   5'b11111
+  VXUNARY0_LAST       =   5'b11111
 } vext_e;
 
 typedef enum logic [1:0] {

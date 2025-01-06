@@ -32,6 +32,7 @@ class rvv_behavior_model extends uvm_component;
   logic [`XLEN-1:0] vxsat;  
   xrf_t [31:0] xrf;
   vrf_t [31:0] vrf;
+  vrf_t [31:0] vrf_temp;
 
   logic [`XLEN-1:0] vlmax;
   logic [`XLEN-1:0] imm_data;
@@ -126,9 +127,12 @@ endclass : rvv_behavior_model
 
   task rvv_behavior_model::tx_mdl();
     bit fraction_lmul;
-    int lmul, sew;
+    int  eew;
+    real emul;
     int elm_idx_max;
   
+    int pc;
+
     bit is_mask_inst;
     bit is_widen_inst;
     bit is_widen_vs2_inst;
@@ -137,11 +141,11 @@ endclass : rvv_behavior_model
 
     bit vm;
 
-    int dest_reg_idx, dest_eew, dest_emul;
-    int src0_reg_idx, src0_eew, src0_emul;
-    int src1_reg_idx, src1_eew, src1_emul;
-    int src2_reg_idx, src2_eew, src2_emul;
-    int src3_reg_idx, src3_eew, src3_emul;
+    int dest_reg_idx, dest_eew; real dest_emul;
+    int src0_reg_idx, src0_eew; real src0_emul;
+    int src1_reg_idx, src1_eew; real src1_emul;
+    int src2_reg_idx, src2_eew; real src2_emul;
+    int src3_reg_idx, src3_eew; real src3_emul;
     logic [31:0] dest;
     logic [31:0] src0;
     logic [31:0] src1;
@@ -175,44 +179,44 @@ endclass : rvv_behavior_model
           break;
         end
         // 0.2 Calculate & decode for this instr
-        sew = 8 << vtype.vsew;
+        eew = 8 << vtype.vsew;
         fraction_lmul = vtype.vlmul[2];
-        lmul = fraction_lmul ? (~vtype.vlmul[1:0]) + 1 : vtype.vlmul[1:0];
-        lmul = 1 << lmul;
+        emul = 2.0 ** $signed(vtype.vlmul);
         // vlmax = inst_tr.vlmax;
-        elm_idx_max = fraction_lmul ?        `VLEN / sew: 
-                                      lmul * `VLEN / sew;
+        elm_idx_max = fraction_lmul ?        `VLEN / eew: 
+                                      emul * `VLEN / eew;
 
         // --------------------------------------------------
         // 1. Decode - Get eew & emul
+        pc = inst_tr.pc;
         is_mask_inst = inst_tr.inst_type == ALU && (inst_tr.alu_inst inside {VMAND});
-        is_widen_inst = inst_tr.inst_type == ALU && (inst_tr.alu_inst inside {VWADDU, VWADD, VWADD_W, VWSUBU, VWSUB, VWADDU_W, 
+        is_widen_inst = inst_tr.inst_type == ALU && (inst_tr.alu_inst inside {VWADDU, VWADD, VWADDU_W, VWADD_W, VWSUBU, VWSUB, VWSUBU_W, VWSUB_W, 
                                                                               VWMUL, VWMULU, VWMULSU});
-        is_widen_vs2_inst = inst_tr.inst_type == ALU && (inst_tr.alu_inst inside {VWADD_W, VWADDU_W});
+        is_widen_vs2_inst = inst_tr.inst_type == ALU && (inst_tr.alu_inst inside {VWADD_W, VWADDU_W, VWSUBU_W, VWSUB_W});
         is_narrow_inst = inst_tr.inst_type == ALU && (inst_tr.alu_inst inside {VNSRL, VNSRA});
         use_vm_to_cal = inst_tr.use_vm_to_cal;
 
         // 1.0 illegal inst check
         if(inst_tr.inst_type == ALU && inst_tr.alu_inst == VRSUB && inst_tr.src2_type == VRF && inst_tr.src1_type == VRF) begin
-          `uvm_warning("MDL/INST_CHECKER", "vrsub.vv is ignored")
+          `uvm_warning("MDL/INST_CHECKER", $sformatf("pc=0x%8x: vrsub.vv is ignored.",pc))
           continue;
         end
         if(inst_tr.inst_type == ALU && inst_tr.alu_inst == VSUB && inst_tr.src2_type == VRF && inst_tr.src1_type == IMM) begin
-          `uvm_warning("MDL/INST_CHECKER", "vsub.vi is ignored")
+          `uvm_warning("MDL/INST_CHECKER", $sformatf("pc=0x%8x: vsub.vi is ignored.",pc))
           continue;
         end
 
-        dest_eew = sew;
+        dest_eew = eew;
         src0_eew = EEW1;
-        src1_eew = sew;
-        src2_eew = sew;
-        src3_eew = sew;
+        src1_eew = eew;
+        src2_eew = eew;
+        src3_eew = eew;
 
-        dest_emul = lmul;
-        src0_emul = LMUL1;
-        src1_emul = lmul;
-        src2_emul = lmul;
-        src3_emul = lmul;
+        dest_emul = emul;
+        src0_emul = 1;
+        src1_emul = emul;
+        src2_emul = emul;
+        src3_emul = emul;
 
         vm = inst_tr.vm; // <v0.t>
 
@@ -221,43 +225,43 @@ endclass : rvv_behavior_model
             // 1.1 unit-stride and constant-stride
             if(inst_tr.lsu_mop == LSU_E || inst_tr.lsu_mop == LSU_SE) begin
               dest_eew  = inst_tr.lsu_eew;
-              dest_emul = inst_tr.lsu_eew * lmul / sew;
+              dest_emul = inst_tr.lsu_eew * emul / eew;
               src1_eew  = EEW32; // rs1 as base address
               src1_emul = LMUL1;
             end
             // 1.2 vector indexed
             if(inst_tr.lsu_mop == LSU_UXEI || inst_tr.lsu_mop == LSU_OXEI) begin
-              dest_eew  = sew;   
-              dest_emul = lmul;
+              dest_eew  = eew;   
+              dest_emul = emul;
               src1_eew  = EEW32;    // rs1 as base address
               src1_emul = LMUL1;
               src2_eew  = inst_tr.lsu_eew;  // vs2 as offset address
-              src2_emul = inst_tr.lsu_eew * lmul / sew;
+              src2_emul = inst_tr.lsu_eew * emul / eew;
             end
           end
           ST: begin
             // 1.1 unit-stride and constant-stride
             if(inst_tr.lsu_mop == LSU_E || inst_tr.lsu_mop == LSU_SE) begin
               src3_eew = inst_tr.lsu_eew;
-              src3_emul = src3_eew * lmul / sew;
+              src3_emul = src3_eew * emul / eew;
               src1_eew = EEW32; // rs1 as base address
               src1_emul= LMUL1;
             end
             // 1.2 vector indexed
             if(inst_tr.lsu_mop == LSU_UXEI || inst_tr.lsu_mop == LSU_OXEI) begin
-              src3_eew  = sew;   
-              src3_emul = lmul;
+              src3_eew  = eew;   
+              src3_emul = emul;
               src1_eew  = EEW32;    // rs1 as base address
               src1_emul = LMUL1;
               src2_eew  = inst_tr.lsu_eew;  // vs2 as offset address
-              src2_emul = inst_tr.lsu_eew * lmul / sew;
+              src2_emul = inst_tr.lsu_eew * emul / eew;
             end
           end
           ALU: begin
             // 1.1 Widen
             if(is_widen_inst) begin
-              if(dest_eew > EEW16) begin
-                `uvm_warning("MDL/INST_CHECKER", $sformatf("Illegal sew(%s) for widen instruction. Ignored.",inst_tr.vtype.vsew.name()));
+              if(!(vtype.vsew inside {SEW8,SEW16})) begin
+                `uvm_warning("MDL/INST_CHECKER", $sformatf("pc=0x%8x: Illegal sew(%s) for widen instruction. Ignored.",pc,inst_tr.vtype.vsew.name()));
                 continue;
               end else begin
                 dest_eew = dest_eew * 2;
@@ -265,8 +269,8 @@ endclass : rvv_behavior_model
               end
             end
             if(is_widen_vs2_inst) begin
-              if(src2_eew > EEW16) begin
-                `uvm_warning("MDL/INST_CHECKER", $sformatf("Illegal sew(%s) for widen instruction. Ignored.",inst_tr.vtype.vsew.name()));
+              if(!(vtype.vsew inside {SEW8,SEW16})) begin
+                `uvm_warning("MDL/INST_CHECKER", $sformatf("pc=0x%8x: Illegal sew(%s) for widen instruction. Ignored.",pc,inst_tr.vtype.vsew.name()));
                 continue;
               end else begin
                 src2_eew = src2_eew * 2;
@@ -275,27 +279,33 @@ endclass : rvv_behavior_model
             end
             // 1.2 Narrow
             if(is_narrow_inst) begin
-              if(src2_eew > EEW16) begin
-                `uvm_warning("MDL/INST_CHECKER", $sformatf("Illegal sew(%s) for narrow instruction. Ignored.",inst_tr.vtype.vsew.name()));
+              if(!(vtype.vsew inside {SEW8,SEW16})) begin
+                `uvm_warning("MDL/INST_CHECKER", $sformatf("pc=0x%8x: Illegal sew(%s) for narrow instruction. Ignored.",pc,inst_tr.vtype.vsew.name()));
                 continue;
               end else begin
                 src2_eew = src2_eew * 2;
                 src2_emul = src2_emul * 2;
               end
             end
-            if(inst_tr.inst_type == ALU && inst_tr.alu_inst == VEXT) begin
-              if(inst_tr.src1_idx == VSEXT_VF2 && inst_tr.src1_idx == VZEXT_VF2) begin
-                if(dest_eew == EEW8) begin
-                  `uvm_warning("MDL/INST_CHECKER", $sformatf("Illegal sew(%s) for vext instruction. Ignored.",inst_tr.vtype.vsew.name()));
+            if(inst_tr.inst_type == ALU && inst_tr.alu_inst == VXUNARY0) begin
+              if(inst_tr.src1_idx inside {VSEXT_VF2, VZEXT_VF2}) begin
+                if(!(vtype.vsew inside {SEW16,SEW32})) begin
+                  `uvm_warning("MDL/INST_CHECKER", $sformatf("pc=0x%8x: Illegal sew(%s) for vext instruction. Ignored.",pc,inst_tr.vtype.vsew.name()));
+                  continue;
+                end else if(!(vtype.vlmul inside {LMUL1_2,LMUL1,LMUL2,LMUL4,LMUL8})) begin
+                  `uvm_warning("MDL/INST_CHECKER", $sformatf("pc=0x%8x: Illegal lmul(%s) for vext instruction. Ignored.",pc,inst_tr.vtype.vlmul.name()));
                   continue;
                 end else begin
                   src2_eew = src2_eew / 2;
                   src2_emul = src2_emul / 2;
                 end
               end
-              if(inst_tr.src1_idx == VSEXT_VF4 && inst_tr.src1_idx == VZEXT_VF4) begin
-                if(dest_eew != EEW32) begin
-                  `uvm_warning("MDL/INST_CHECKER", $sformatf("Illegal sew(%s) for vext instruction.",inst_tr.vtype.vsew.name()));
+              if(inst_tr.src1_idx inside {VSEXT_VF4, VZEXT_VF4}) begin
+                if(!(vtype.vsew inside {SEW32})) begin
+                  `uvm_warning("MDL/INST_CHECKER", $sformatf("pc=0x%8x: Illegal sew(%s) for vext instruction. Ignored.",pc,inst_tr.vtype.vsew.name()));
+                  continue;
+                end else if(!(vtype.vlmul inside {LMUL1,LMUL2,LMUL4,LMUL8})) begin
+                  `uvm_warning("MDL/INST_CHECKER", $sformatf("pc=0x%8x: Illegal lmul(%s) for vext instruction. Ignored.",pc,inst_tr.vtype.vlmul.name()));
                   continue;
                 end else begin
                   src2_eew = src2_eew / 4;
@@ -347,52 +357,53 @@ endclass : rvv_behavior_model
 
         // 2.2.1 Alignment Check
         if(inst_tr.dest_type == VRF) begin
-          if(!fraction_lmul && (dest_reg_idx % dest_emul)) begin
-            `uvm_warning("MDL/INST_CHECKER", $sformatf("Ch32.3.4.2. Dest vrf index(%0d) is unaligned to emul(%0d). Ignored.", dest_reg_idx, dest_emul));
+          if(dest_reg_idx % int'(dest_emul)) begin
+            `uvm_warning("MDL/INST_CHECKER", $sformatf("pc=0x%8x: Ch32.3.4.2. Dest vrf index(%0d) is unaligned to emul(%0d). Ignored.",pc , dest_reg_idx, dest_emul));
             continue;
           end
         end
         if(inst_tr.src2_type == VRF) begin
-          if(!fraction_lmul && (src2_reg_idx % src2_emul)) begin
-            `uvm_warning("MDL/INST_CHECKER", $sformatf("Ch32.5.3. Src2 vrf index(%0d) is unaligned to emul(%0d). Ignored.", src2_reg_idx, src2_emul));
+          if(src2_reg_idx % int'(src2_emul)) begin
+            `uvm_warning("MDL/INST_CHECKER", $sformatf("pc=0x%8x: Ch32.5.3. Src2 vrf index(%0d) is unaligned to emul(%0d). Ignored.",pc, src2_reg_idx, src2_emul));
             continue;
           end
         end
         if(inst_tr.src1_type == VRF) begin
-          if(!fraction_lmul && (src1_reg_idx % src1_emul)) begin
-            `uvm_warning("MDL/INST_CHECKER", $sformatf("Ch32.3.4.2. Src1 vrf index(%0d) is unaligned to emul(%0d). Ignored.", src1_reg_idx, src1_emul));
+          if(src1_reg_idx % int'(src1_emul)) begin
+            `uvm_warning("MDL/INST_CHECKER", $sformatf("pc=0x%8x: Ch32.3.4.2. Src1 vrf index(%0d) is unaligned to emul(%0d). Ignored.",pc, src1_reg_idx, src1_emul));
             continue;
           end
         end
 
         // 2.2.2 Overlap Check
-        if(inst_tr.dest_type == VRF && inst_tr.src2_type == VRF && (dest_eew > src2_eew) && src2_reg_idx == dest_reg_idx) begin
-          `uvm_warning("MDL/INST_CHECKER", $sformatf("Ch32.5.2. The lowest part of dest vrf(v%0d~v%0d) overlaps the src2 vrf(v%0d~v%0d) in a widen instruction. Ignored.",
+        if(inst_tr.dest_type == VRF && inst_tr.src2_type == VRF && (dest_eew > src2_eew) && src2_reg_idx == dest_reg_idx && src2_emul>=1) begin
+          `uvm_warning("MDL/INST_CHECKER", $sformatf("pc=0x%8x: Ch32.5.2. The lowest part of dest vrf(v%0d~v%0d) overlaps the src2 vrf(v%0d~v%0d) in a widen instruction. Ignored.",pc,
               dest_reg_idx, dest_reg_idx+dest_emul, src2_reg_idx, src2_reg_idx+src2_emul));
           continue;
         end
         if(inst_tr.dest_type == VRF && inst_tr.src2_type == VRF && (dest_eew < src2_eew) && (src2_reg_idx+dest_emul) == dest_reg_idx) begin
-          `uvm_warning("MDL/INST_CHECKER", $sformatf("Ch32.5.2. The dest vrf(v%0d~v%0d) overlaps the highest part of src2 vrf(v%0d~v%0d) in a narrow instruction. Ignored.",
+          `uvm_warning("MDL/INST_CHECKER", $sformatf("pc=0x%8x: Ch32.5.2. The dest vrf(v%0d~v%0d) overlaps the highest part of src2 vrf(v%0d~v%0d) in a narrow instruction. Ignored.",pc,
               dest_reg_idx, dest_reg_idx+dest_emul, src2_reg_idx, src2_reg_idx+src2_emul));
           continue;
         end
-        if(inst_tr.dest_type == VRF && inst_tr.src1_type == VRF && (dest_eew > src1_eew) && src1_reg_idx == dest_reg_idx) begin
-          `uvm_warning("MDL/INST_CHECKER", $sformatf("Ch32.5.2. The lower part of dest vrf(v%0d~v%0d) overlaps the src1 vrf(v%0d~v%0d) in a widen instruction. Ignored.",
+        if(inst_tr.dest_type == VRF && inst_tr.src1_type == VRF && (dest_eew > src1_eew) && src1_reg_idx == dest_reg_idx && src1_emul>=1) begin
+          `uvm_warning("MDL/INST_CHECKER", $sformatf("pc=0x%8x: Ch32.5.2. The lower part of dest vrf(v%0d~v%0d) overlaps the src1 vrf(v%0d~v%0d) in a widen instruction. Ignored.",pc,
               dest_reg_idx, dest_reg_idx+dest_emul, src1_reg_idx, src1_reg_idx+src1_emul));
           continue;
         end
         if(inst_tr.dest_type == VRF && inst_tr.src1_type == VRF && (dest_eew < src1_eew) && (src1_reg_idx+dest_emul) == dest_reg_idx) begin
-          `uvm_warning("MDL/INST_CHECKER", $sformatf("Ch32.5.2. The dest vrf(v%0d~v%0d) overlaps the highest part of src1 vrf(v%0d~v%0d) in a narrow instruction. Ignored.",
+          `uvm_warning("MDL/INST_CHECKER", $sformatf("pc=0x%8x: Ch32.5.2. The dest vrf(v%0d~v%0d) overlaps the highest part of src1 vrf(v%0d~v%0d) in a narrow instruction. Ignored.",pc,
               dest_reg_idx, dest_reg_idx+dest_emul, src1_reg_idx, src1_reg_idx+src1_emul));
           continue;
         end
         if(inst_tr.dest_type == VRF && vm == 0 && dest_reg_idx == 0 && (dest_eew != EEW1 /*|| TODO scalar result of a reduction*/)) begin
-          `uvm_warning("MDL/INST_CHECKER", $sformatf("Ch32.5.3. Dest vrf index(%0d) overlap source mask register v0. Ignored.", dest_reg_idx));
+          `uvm_warning("MDL/INST_CHECKER", $sformatf("pc=0x%8x: Ch32.5.3. Dest vrf index(%0d) overlap source mask register v0. Ignored.",pc,dest_reg_idx));
           continue;
         end
 
 
-        `uvm_info("DEBUG",$sformatf("Prepare done!\nelm_idx_max=%0d\ndest_eew=%0d\nsrc2_eew=%0d\nsrc1_eew=%0d\n",elm_idx_max,dest_eew,src2_eew,src1_eew),UVM_HIGH)
+        vrf_temp = vrf;
+        `uvm_info("DEBUG",$sformatf("Prepare done!\nelm_idx_max=%0d\ndest_eew=%0d\nsrc2_eew=%0d\nsrc1_eew=%0d\ndest_emul=%2.4f\nsrc2_emul=%2.4f\nsrc1_emul=%2.4f\n",elm_idx_max,dest_eew,src2_eew,src1_eew,dest_emul,src2_emul,src1_emul),UVM_HIGH)
         // --------------------------------------------------
         // 3. Operate elements
         for(int elm_idx=0; elm_idx<elm_idx_max; elm_idx++) begin : op_element
@@ -451,6 +462,16 @@ endclass : rvv_behavior_model
                   {EEW16, EEW16,  EEW8}: dest = alu_processor #(sew16_t, sew16_t,  sew8_t)::exe(inst_tr, dest, src2, src1, src0);
                   {EEW32, EEW16, EEW16}: dest = alu_processor #(sew32_t, sew16_t, sew16_t)::exe(inst_tr, dest, src2, src1, src0);
                   {EEW32, EEW32, EEW16}: dest = alu_processor #(sew32_t, sew32_t, sew16_t)::exe(inst_tr, dest, src2, src1, src0);
+                  //ext
+                  {EEW16,  EEW8, EEW32}: dest = alu_processor #(sew16_t,  sew8_t, sew32_t)::exe(inst_tr, dest, src2, src1, src0);
+                  {EEW16,  EEW8, EEW16}: dest = alu_processor #(sew16_t,  sew8_t, sew16_t)::exe(inst_tr, dest, src2, src1, src0);
+                  //{EEW16,  EEW8,  EEW8}: dest = alu_processor #(sew32_t,  sew8_t,  sew8_t)::exe(inst_tr, dest, src2, src1, src0);
+                  {EEW32, EEW16, EEW32}: dest = alu_processor #(sew32_t, sew16_t, sew32_t)::exe(inst_tr, dest, src2, src1, src0);
+                  //{EEW32, EEW16, EEW16}: dest = alu_processor #(sew32_t, sew16_t, sew16_t)::exe(inst_tr, dest, src2, src1, src0);
+                  {EEW32, EEW16,  EEW8}: dest = alu_processor #(sew32_t, sew16_t,  sew8_t)::exe(inst_tr, dest, src2, src1, src0);
+                  {EEW32,  EEW8, EEW32}: dest = alu_processor #(sew32_t,  sew8_t, sew32_t)::exe(inst_tr, dest, src2, src1, src0);
+                  {EEW32,  EEW8, EEW16}: dest = alu_processor #(sew32_t,  sew8_t, sew16_t)::exe(inst_tr, dest, src2, src1, src0);
+                  {EEW32,  EEW8,  EEW8}: dest = alu_processor #(sew32_t,  sew8_t,  sew8_t)::exe(inst_tr, dest, src2, src1, src0);
                   // narrow
                   { EEW8, EEW16, EEW16}: dest = alu_processor #( sew8_t, sew16_t, sew16_t)::exe(inst_tr, dest, src2, src1, src0);
                   {EEW16, EEW32, EEW32}: dest = alu_processor #(sew16_t, sew32_t, sew32_t)::exe(inst_tr, dest, src2, src1, src0);
@@ -474,6 +495,7 @@ endclass : rvv_behavior_model
 
         // --------------------------------------------------
         // 4. WB transaction gen
+        vrf = vrf_temp;
         inst_tr.rt_xrf.rt_index = inst_tr.dest_idx;
         inst_tr.rt_xrf.rt_data  = this.xrf[inst_tr.dest_idx];
         `uvm_info("DEBUG","Complete calculation.",UVM_LOW)
@@ -527,7 +549,7 @@ endclass : rvv_behavior_model
         reg_idx = elm_idx / (`VLEN / eew) + reg_idx;
         elm_idx = elm_idx % (`VLEN / eew);
         for(int i=0; i<bit_count; i++) begin
-          this.vrf[reg_idx][elm_idx*bit_count + i] = result[i];
+          this.vrf_temp[reg_idx][elm_idx*bit_count + i] = result[i];
         end
       end
       XRF: begin
@@ -618,7 +640,7 @@ virtual class alu_processor#(
       VWSUBU, 
       VWSUBU_W: dest = _vsubu(src2, src1); 
 
-      VEXT: begin 
+      VXUNARY0: begin 
         if(inst_tr.src1_idx == VZEXT_VF4 || inst_tr.src1_idx == VZEXT_VF2) dest = _vzext(src2); 
         if(inst_tr.src1_idx == VSEXT_VF4 || inst_tr.src1_idx == VSEXT_VF2) dest = _vsext(src2); 
       end
