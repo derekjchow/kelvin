@@ -710,8 +710,8 @@ module rvv_backend_alu_unit_addsub
                     src2_data[4*i+2] = 'b0;
                     src2_data[4*i+3] = 'b0;
 
-                    src1_data[4*i]   = {1'b0, vs1_data[`VLEN/2+(2*i  )*`BYTE_WIDTH +: `BYTE_WIDTH]};
-                    src1_data[4*i+1] = {1'b0, vs1_data[`VLEN/2+(2*i+1)*`BYTE_WIDTH +: `BYTE_WIDTH]};
+                    src1_data[4*i]   = vs1_data[`VLEN/2+(2*i  )*`BYTE_WIDTH +: `BYTE_WIDTH];
+                    src1_data[4*i+1] = vs1_data[`VLEN/2+(2*i+1)*`BYTE_WIDTH +: `BYTE_WIDTH];
                     src1_data[4*i+2] = 'b0;
                     src1_data[4*i+3] = 'b0;
                   end
@@ -948,8 +948,8 @@ module rvv_backend_alu_unit_addsub
                   else begin
                     src2_data[4*i]   =              vs2_data[`VLEN/2+(2*i  )*`BYTE_WIDTH +: `BYTE_WIDTH];
                     src2_data[4*i+1] =              vs2_data[`VLEN/2+(2*i+1)*`BYTE_WIDTH +: `BYTE_WIDTH];
-                    src2_data[4*i+2] = {`BYTE_WIDTH{vs2_data[(2*i+2)*`BYTE_WIDTH-1]}};
-                    src2_data[4*i+3] = {`BYTE_WIDTH{vs2_data[(2*i+2)*`BYTE_WIDTH-1]}};
+                    src2_data[4*i+2] = {`BYTE_WIDTH{vs2_data[`VLEN/2+(2*i+2)*`BYTE_WIDTH-1]}};
+                    src2_data[4*i+3] = {`BYTE_WIDTH{vs2_data[`VLEN/2+(2*i+2)*`BYTE_WIDTH-1]}};
                   end
                 end
               endcase
