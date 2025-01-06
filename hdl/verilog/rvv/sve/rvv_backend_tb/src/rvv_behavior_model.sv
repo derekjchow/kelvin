@@ -205,6 +205,14 @@ endclass : rvv_behavior_model
           `uvm_warning("MDL/INST_CHECKER", $sformatf("pc=0x%8x: vsub.vi is ignored.",pc))
           continue;
         end
+        if(inst_tr.inst_type == ALU && inst_tr.alu_inst == VMSBC && inst_tr.alu_type == OPIVI) begin
+          `uvm_warning("MDL/INST_CHECKER", $sformatf("pc=0x%8x: vmsbc.vi/.vim is ignored.",pc))
+          continue;
+        end
+        if(inst_tr.inst_type == ALU && inst_tr.alu_inst == VSBC && inst_tr.alu_type == OPIVI) begin
+          `uvm_warning("MDL/INST_CHECKER", $sformatf("pc=0x%8x: vsbc.vi/.vim is ignored.",pc))
+          continue;
+        end
 
         dest_eew = eew;
         src0_eew = EEW1;
@@ -821,24 +829,24 @@ virtual class alu_processor#(
   //---------------------------------------------------------------------- 
   // Ch32.11.10. Vector Single-Width Integer Multiply Instructions
   static function TD _vmul(T2 src2, T1 src1);
-    logic [$bits(TD)*2-2:0] dest_widen;
+    logic [$bits(TD)*2-1:0] dest_widen;
     dest_widen = $signed(src2) * $signed(src1);
     _vmul = dest_widen[$bits(TD)-1:0];
   endfunction : _vmul
   static function TD _vmulh(T2 src2, T1 src1);
-    logic [$bits(TD)*2-2:0] dest_widen;
+    logic [$bits(TD)*2-1:0] dest_widen;
     dest_widen = $signed(src2) * $signed(src1);
-    _vmulh = dest_widen[$bits(TD)*2-2:$bits(TD)];
+    _vmulh = dest_widen[$bits(TD)*2-1:$bits(TD)];
   endfunction : _vmulh
   static function TD _vmulhu(T2 src2, T1 src1);
-    logic [$bits(TD)*2-2:0] dest_widen;
+    logic [$bits(TD)*2-1:0] dest_widen;
     dest_widen = $unsigned(src2) * $unsigned(src1);
-    _vmulhu = dest_widen[$bits(TD)*2-2:$bits(TD)];
+    _vmulhu = dest_widen[$bits(TD)*2-1:$bits(TD)];
   endfunction : _vmulhu
   static function TD _vmulhsu(T2 src2, T1 src1);
-    logic [$bits(TD)*2-2:0] dest_widen;
+    logic [$bits(TD)*2-1:0] dest_widen;
     dest_widen = $signed(src2) * $unsigned(src1);
-    _vmulhsu = dest_widen[$bits(TD)*2-2:$bits(TD)];
+    _vmulhsu = dest_widen[$bits(TD)*2-1:$bits(TD)];
   endfunction : _vmulhsu
 
   //---------------------------------------------------------------------- 
@@ -871,22 +879,22 @@ virtual class alu_processor#(
   //---------------------------------------------------------------------- 
   // Ch32.11.13. Vector Single-Width Integer Multiply-Add Instructions
   static function TD _vmacc(TD dest, T2 src2, T1 src1);
-    logic [$bits(TD)*2-2:0] dest_widen;
+    logic [$bits(TD)*2-1:0] dest_widen;
     dest_widen = $signed(dest) + $signed(src2) * $signed(src1);
     _vmacc = dest[$bits(TD)-1:0];
   endfunction : _vmacc
   static function TD _vnmsac(TD dest, T2 src2, T1 src1);
-    logic [$bits(TD)*2-2:0] dest_widen;
+    logic [$bits(TD)*2-1:0] dest_widen;
     dest_widen = $signed(dest) - $signed(src2) * $signed(src1);
     _vnmsac = dest[$bits(TD)-1:0];
   endfunction : _vnmsac
   static function TD _vmadd(TD dest, T2 src2, T1 src1);
-    logic [$bits(TD)*2-2:0] dest_widen;
+    logic [$bits(TD)*2-1:0] dest_widen;
     dest_widen = $signed(src2) + $signed(dest) * $signed(src1);
     _vmadd = dest[$bits(TD)-1:0];
   endfunction : _vmadd
   static function TD _vnmsub(TD dest, T2 src2, T1 src1);
-    logic [$bits(TD)*2-2:0] dest_widen;
+    logic [$bits(TD)*2-1:0] dest_widen;
     dest_widen = $signed(src2) - $signed(dest) * $signed(src1);
     _vnmsub = dest[$bits(TD)-1:0];
   endfunction : _vnmsub
@@ -952,7 +960,7 @@ virtual class alu_processor#(
   //---------------------------------------------------------------------- 
   // Ch32.12.3. Vector Single-Width Fractional Multiply with Rounding and Saturation
   static function TD _vsmul(T2 src2, T1 src1);
-    logic [$bits(TD)*2-2:0] dest;
+    logic [$bits(TD)*2-1:0] dest;
     dest = $signed(src2) * $signed(src1);
     dest = _roundoff_signed($signed(dest), $bits(TD)-1);
     overflow = ^dest[$bits(TD):$bits(TD)-1];
