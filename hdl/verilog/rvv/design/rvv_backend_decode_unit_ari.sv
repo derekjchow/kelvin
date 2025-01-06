@@ -2088,7 +2088,7 @@ module rvv_backend_decode_unit_ari
           // SEW = extend 1/2SEW or 1/4SEW
           VXUNARY0: begin
             case(inst_funct3)
-              OPMVX: begin
+              OPMVV: begin
                 case(vs1_opcode_vxunary) 
                   VZEXT_VF2,
                   VSEXT_VF2: begin

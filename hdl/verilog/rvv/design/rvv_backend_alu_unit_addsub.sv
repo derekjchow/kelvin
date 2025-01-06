@@ -401,8 +401,8 @@ module rvv_backend_alu_unit_addsub
               assert(vs1_data_valid==1'b1)
                 else $error("vs1_data_valid(%d) should be 1.\n",vs1_data_valid);
 
-              assert((vs2_eew==EEW16)|(vs2_eew==EEW32))
-                else $error("vs2_eew(%s) is not supported.\n",vs2_eew.name());
+              assert((vs2_eew==EEW8)|(vs2_eew==EEW16))
+                else $warning("vs2_eew(%s) is not supported.\n",vs2_eew.name());
             `endif
           end
 
@@ -422,7 +422,7 @@ module rvv_backend_alu_unit_addsub
                 else $error("vs1_data_valid(%d) should be 1.\n",vs1_data_valid);
 
               assert((vs2_eew==EEW16)|(vs2_eew==EEW32))
-                else $error("vs2_eew(%s) is not supported.\n",vs2_eew.name());
+                else $warning("vs2_eew(%s) is not supported.\n",vs2_eew.name());
             `endif
           end
 
@@ -462,8 +462,8 @@ module rvv_backend_alu_unit_addsub
               assert(rs1_data_valid==1'b1)
                 else $error("rs1_data_valid(%d) should be 1.\n",rs1_data_valid);
 
-              assert((vs2_eew==EEW16)|(vs2_eew==EEW32))
-                else $error("vs2_eew(%s) is not supported.\n",vs2_eew.name());
+              assert((vs2_eew==EEW8)|(vs2_eew==EEW16))
+                else $warning("vs2_eew(%s) is not supported.\n",vs2_eew.name());
             `endif
           end
 
@@ -483,7 +483,7 @@ module rvv_backend_alu_unit_addsub
                 else $error("rs1_data_valid(%d) should be 1.\n",rs1_data_valid);
 
               assert((vs2_eew==EEW16)|(vs2_eew==EEW32))
-                else $error("vs2_eew(%s) is not supported.\n",vs2_eew.name());
+                else $warning("vs2_eew(%s) is not supported.\n",vs2_eew.name());
             `endif
           end
 
