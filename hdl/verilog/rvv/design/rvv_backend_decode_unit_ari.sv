@@ -3504,7 +3504,11 @@ module rvv_backend_decode_unit_ari
             VNCLIP: begin
               uop[i].uop_exe_unit     = ALU;
             end 
-           
+            
+            // Although comparison instructions belong to ALU previously, 
+            // they will be sent to RDT unit to execute for better performance. 
+            // Because all uops of the comparison instructions have a single vector destination index, 
+            // which is similar to reduction instructions.
             VMSEQ,
             VMSNE,
             VMSLTU,
@@ -3514,11 +3518,14 @@ module rvv_backend_decode_unit_ari
             VMSGTU,
             VMSGT,
             VWREDSUMU,
-            VWREDSUM,
+            VWREDSUM: begin
+              uop[i].uop_exe_unit = RDT;
+            end
+
             VSLIDEUP_RGATHEREI16,
             VSLIDEDOWN,
             VRGATHER: begin
-              uop[i].uop_exe_unit = PMTRDT;
+              uop[i].uop_exe_unit = PMT;
             end
 
             VSMUL_VMVNRR: begin
@@ -3600,11 +3607,14 @@ module rvv_backend_decode_unit_ari
             VREDMIN,
             VREDAND,
             VREDOR,
-            VREDXOR,
+            VREDXOR: begin
+              uop[i].uop_exe_unit     = RDT;
+            end
+
             VSLIDE1UP,
             VSLIDE1DOWN,
             VCOMPRESS: begin
-              uop[i].uop_exe_unit     = PMTRDT;
+              uop[i].uop_exe_unit     = PMT;
             end
           endcase
         end

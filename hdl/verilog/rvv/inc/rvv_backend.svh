@@ -89,9 +89,10 @@ typedef struct packed {
 // execution unit
 typedef enum logic [2:0] {
   ALU,
-  PMTRDT,
   MUL,
   MAC,
+  PMT,
+  RDT,
   DIV,
   LSU
 } EXE_UNIT_e;
