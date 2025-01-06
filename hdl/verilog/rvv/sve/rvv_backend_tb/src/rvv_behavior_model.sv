@@ -197,6 +197,10 @@ endclass : rvv_behavior_model
           `uvm_warning("MDL/INST_CHECKER", "vrsub.vv is ignored")
           continue;
         end
+        if(inst_tr.inst_type == ALU && inst_tr.alu_inst == VSUB && inst_tr.src2_type == VRF && inst_tr.src1_type == IMM) begin
+          `uvm_warning("MDL/INST_CHECKER", "vsub.vi is ignored")
+          continue;
+        end
 
         dest_eew = sew;
         src0_eew = EEW1;
