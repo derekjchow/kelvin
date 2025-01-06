@@ -540,12 +540,6 @@ module rvv_backend_alu_unit_mask
       end
     end
   endgenerate
-  // assign result_data_viota[0] = 'b0;
-  // generate 
-  //   for(j=1;j<`VLEN;j++) begin: GET_VIOTA
-  //     assign result_data_viota[j] = src2_data_viota[j-1] + result_data_viota[j-1]; 
-  //   end
-  // endgenerate
   
   generate
     for(j=0; j<`VLENB;j++) begin
