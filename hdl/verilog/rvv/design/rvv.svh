@@ -348,16 +348,16 @@ typedef struct packed {
 }DP2VRF_t;
 
 typedef struct packed {
-    logic                               vrf2mux_rd0_valid;
-    logic [`VLEN-1:0]                   vrf2mux_rd0_data;
-    logic                               vrf2mux_rd1_valid;
-    logic [`VLEN-1:0]                   vrf2mux_rd1_data;
-    logic                               vrf2mux_rd2_valid;
-    logic [`VLEN-1:0]                   vrf2mux_rd2_data;
-    logic                               vrf2mux_rd3_valid;
-    logic [`VLEN-1:0]                   vrf2mux_rd3_data;
-    logic                               vrf2mux_v0_valid;
-    logic [`VLEN-1:0]                   vrf2mux_v0_data;
+    logic                               vrf2dp_rd0_valid;
+    logic [`VLEN-1:0]                   vrf2dp_rd0_data;
+    logic                               vrf2dp_rd1_valid;
+    logic [`VLEN-1:0]                   vrf2dp_rd1_data;
+    logic                               vrf2dp_rd2_valid;
+    logic [`VLEN-1:0]                   vrf2dp_rd2_data;
+    logic                               vrf2dp_rd3_valid;
+    logic [`VLEN-1:0]                   vrf2dp_rd3_data;
+    logic                               vrf2dp_v0_valid;
+    logic [`VLEN-1:0]                   vrf2dp_v0_data;
 }VRF2DP_t;
 
 // specify whether the current byte belongs to 'prestart' or 'body-inactive' or 'body-active' or 'tail'
@@ -555,19 +555,25 @@ typedef struct packed {
 
 //
 // WB stage, bypass and write back to VRF/XRF, trap handler
+// Retire stage, bypass and write back to VRF/XRF, trap handler
 //
 // write back to XRF
 typedef struct packed {
-    logic   [`REGFILE_INDEX_WIDTH-1:0]  w_index;
-    logic   [`XLEN-1:0]                 w_data;
-} WB_XRF_t;
+    logic   [`REGFILE_INDEX_WIDTH-1:0]  rt_index, 
+    logic   [`XLEN-1:0]                 rt_data 
+} RT2XRF_data_t;  
 
 // write back to VRF
 typedef struct packed {
-    logic   [`REGFILE_INDEX_WIDTH-1:0]  w_index;
-    logic   [`VLEN-1:0]                 w_data;
-    logic   [`VLENB-1:0]                w_strobe;
-} WB_VRF_t;
+    logic   [`REGFILE_INDEX_WIDTH-1:0]  rt_index, 
+    logic   [`VLEN-1:0]                 rt_data,
+    logic   [`VLENB-1:0]                rt_strobe 
+} RT2VRF_data_t;  
+
+typedef struct packed {
+    logic [`NUM_WB_UOP-1:0]             rt2vrf_wr_valid;
+    [`NUM_WB_UOP-1:0] RT2VRF_data_t     rt2vrf_wr_data;
+}RT2VRF_t;
 
 // trap handle
 typedef enum logic [1:0] {
