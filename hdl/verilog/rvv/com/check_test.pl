@@ -13,13 +13,18 @@ else  { Usage(); }
 
 sub Check {
   my $p_uvmFail = qr/^(UVM_ERROR|UVM_FATAL) (\S+) (@\s*\d+:) (\S+) (\[\S+\]) (.*)$/;
-  my $p_errFail = qr/Error|((?<!UVM_)ERROR)/;
+  my $p_astFail = qr/Error/;
+  my $p_astWarn = qr/Warning/;
+  my $p_othFail = qr/((?<!UVM_)ERROR)/;
   foreach (@ARGV) {
     open my $fh, '+<', $_ or die "Open $_ failed: $!";
 
-    my $uvmFail = grep m/$p_uvmFail/g, <$fh>;
-    my $astFail = grep m/$p_errFail/g, <$fh>;
-    my $match = $uvmFail + $astFail;
+    my @texts = <$fh>;
+    my $uvmFail = grep m/$p_uvmFail/g, @texts;
+    my $astFail = grep m/$p_astFail/g, @texts;
+    my $astWarn = grep m/$p_astWarn/g, @texts;
+    my $othFail = grep m/$p_othFail/g, @texts;
+    my $match = $uvmFail + $astFail + $othFail;
 
     if($match) {
       print color "bold red";
@@ -27,12 +32,16 @@ sub Check {
       print $fh "====FAIL==== $testname\n";
       print "Assert Fail: $astFail\n";
       print $fh "Assert Fail: $astFail\n";
+      print "Assert Warning: $astWarn\n";
+      print $fh "Assert Warning: $astWarn\n";
       print color "reset";
     }
     else {
       print color "bold green";
       print "====PASS==== $testname\n";
       print $fh "====PASS==== $testname\n";
+      print "Assert Warning: $astWarn\n";
+      print $fh "Assert Warning: $astWarn\n";
       print color "reset";
     }
     close $fh;
