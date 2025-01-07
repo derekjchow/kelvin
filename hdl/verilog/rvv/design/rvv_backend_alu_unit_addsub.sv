@@ -78,7 +78,6 @@ module rvv_backend_alu_unit_addsub
   logic                           ignore_vma;
   
   // for-loop
-
   genvar                          j;
 
 //
@@ -133,7 +132,9 @@ module rvv_backend_alu_unit_addsub
           VADD,
           VSUB,
           VSADD,
-          VSSUB: begin
+          VSSUB,
+          VSADDU,
+          VSSUBU: begin
             if (vs2_data_valid&vs1_data_valid) begin
               result_valid = 'b1;
             end
@@ -188,21 +189,6 @@ module rvv_backend_alu_unit_addsub
                 else $error("vm^v0_data_valid(%d) should be 1.\n",vm^v0_data_valid);
             `endif
           end
-
-          VSADDU,
-          VSSUBU: begin
-            if (vs2_data_valid&vs1_data_valid) begin
-              result_valid = 'b1;
-            end
-      
-            `ifdef ASSERT_ON
-              assert(vs2_data_valid==1'b1)
-                else $error("vs2_data_valid(%d) should be 1.\n",vs2_data_valid);
-
-              assert(vs1_data_valid==1'b1)
-                else $error("vs1_data_valid(%d) should be 1.\n",vs1_data_valid);
-            `endif
-          end
         endcase
       end
 
@@ -210,22 +196,11 @@ module rvv_backend_alu_unit_addsub
         case(uop_funct6.ari_funct6)
           VADD,
           VSUB,
+          VRSUB,
           VSADD,
-          VSSUB: begin
-            if (vs2_data_valid&rs1_data_valid) begin
-              result_valid = 'b1;
-            end
-
-            `ifdef ASSERT_ON
-              assert(vs2_data_valid==1'b1)
-                else $error("vs2_data_valid(%d) should be 1.\n",vs2_data_valid);
-
-              assert(rs1_data_valid==1'b1)
-                else $error("rs1_data_valid(%d) should be 1.\n",rs1_data_valid);
-            `endif
-          end
-          
-          VRSUB: begin
+          VSSUB,
+          VSADDU,
+          VSSUBU: begin
             if (vs2_data_valid&rs1_data_valid) begin
               result_valid = 'b1;
             end
@@ -280,41 +255,14 @@ module rvv_backend_alu_unit_addsub
                 else $error("vm^v0_data_valid(%d) should be 1.\n",vm^v0_data_valid);
             `endif
           end
-
-          VSADDU,
-          VSSUBU: begin
-            if (vs2_data_valid&rs1_data_valid) begin
-              result_valid = 'b1;
-            end
-
-            `ifdef ASSERT_ON
-              assert(vs2_data_valid==1'b1)
-                else $error("vs2_data_valid(%d) should be 1.\n",vs2_data_valid);
-
-              assert(rs1_data_valid==1'b1)
-                else $error("rs1_data_valid(%d) should be 1.\n",rs1_data_valid);
-            `endif
-          end
         endcase
       end
       {1'b1,OPIVI}: begin
         case(uop_funct6.ari_funct6)
           VADD,
-          VSADD: begin
-            if (vs2_data_valid&rs1_data_valid) begin
-              result_valid = 'b1;
-            end
-
-            `ifdef ASSERT_ON
-              assert(vs2_data_valid==1'b1)
-                else $error("vs2_data_valid(%d) should be 1.\n",vs2_data_valid);
-
-              assert(rs1_data_valid==1'b1)
-                else $error("rs1_data_valid(%d) should be 1.\n",rs1_data_valid);
-            `endif
-          end
-          
-          VRSUB: begin
+          VRSUB,
+          VSADD,
+          VSADDU: begin
             if (vs2_data_valid&rs1_data_valid) begin
               result_valid = 'b1;
             end
@@ -365,20 +313,6 @@ module rvv_backend_alu_unit_addsub
 
               assert(vm^v0_data_valid)
                 else $error("vm^v0_data_valid(%d) should be 1.\n",vm^v0_data_valid);
-            `endif
-          end
-
-          VSADDU: begin
-            if (vs2_data_valid&rs1_data_valid) begin
-              result_valid = 'b1;
-            end
-
-            `ifdef ASSERT_ON
-              assert(vs2_data_valid==1'b1)
-                else $error("vs2_data_valid(%d) should be 1.\n",vs2_data_valid);
-
-              assert(rs1_data_valid==1'b1)
-                else $error("rs1_data_valid(%d) should be 1.\n",rs1_data_valid);
             `endif
           end
         endcase
@@ -1825,14 +1759,12 @@ module rvv_backend_alu_unit_addsub
     logic [`BYTE_WIDTH-1:0]     result;
     logic                       cout;
     
-    if (opcode==ADDSUB_VADD) begin
-      y = src_cin; 
-    end
-    else begin
-      y = src_cin ? '1 : 'b0;
-    end
-    
-    {cout,result} = src_x + y;
+    if ((opcode==ADDSUB_VADD)&(src_cin==1'b1))
+      {cout,result} = src_x + 'd1;
+    else if ((opcode==ADDSUB_VSUB)&(src_cin==1'b1))
+      {cout,result} = src_x + '1;
+    else
+      {cout,result} = src_x;
 
     return {cout,result};  
 
@@ -1848,14 +1780,12 @@ module rvv_backend_alu_unit_addsub
     logic [`HWORD_WIDTH-1:0]     result;
     logic                        cout;
     
-    if (opcode==ADDSUB_VADD) begin
-      y = src_cin; 
-    end
-    else begin
-      y = src_cin ? '1 : 'b0;
-    end
-    
-    {cout,result} = src_x + y;
+    if ((opcode==ADDSUB_VADD)&(src_cin==1'b1))
+      {cout,result} = src_x + 'd1;
+    else if ((opcode==ADDSUB_VSUB)&(src_cin==1'b1))
+      {cout,result} = src_x + '1;
+    else
+      {cout,result} = src_x;
 
     return {cout,result}; 
 
