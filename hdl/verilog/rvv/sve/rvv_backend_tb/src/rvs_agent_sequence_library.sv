@@ -843,7 +843,6 @@ class alu_iterate_vadcsbc_seq extends base_sequence;
 
   virtual task body();
     for(int vm=0; vm<=1; vm++) begin
-      if(this.alu_inst inside {VMADC, VMSBC} && vm == 0) continue; 
       if(this.alu_inst inside {VADC, VSBC} && vm == 1) continue; 
       for(lmul = lmul.first(); lmul != lmul.last(); lmul =lmul.next()) begin
         for(sew = sew.first(); sew != sew.last(); sew =sew.next()) begin
