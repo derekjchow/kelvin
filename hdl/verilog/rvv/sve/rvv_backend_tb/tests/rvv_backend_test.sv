@@ -182,10 +182,25 @@ class alu_smoke_test extends rvv_backend_test;
     rvs_seq.run_inst(VSBC , env.rvs_agt.rvs_sqr);
     rvs_seq.run_inst(VMSBC, env.rvs_agt.rvs_sqr);
 
+    rvs_seq.run_inst(VAND, env.rvs_agt.rvs_sqr);
+    rvs_seq.run_inst(VOR, env.rvs_agt.rvs_sqr);
+    rvs_seq.run_inst(VXOR, env.rvs_agt.rvs_sqr);
+
+    rvs_seq.run_inst(VSLL , env.rvs_agt.rvs_sqr);
+    rvs_seq.run_inst(VSRL , env.rvs_agt.rvs_sqr);
+    rvs_seq.run_inst(VSRA , env.rvs_agt.rvs_sqr);
+    rvs_seq.run_inst(VNSRL, env.rvs_agt.rvs_sqr);
+    rvs_seq.run_inst(VNSRA, env.rvs_agt.rvs_sqr);
+
     rvs_seq.run_inst(VMUL, env.rvs_agt.rvs_sqr);
     rvs_seq.run_inst(VMULH, env.rvs_agt.rvs_sqr);
     rvs_seq.run_inst(VMULHU, env.rvs_agt.rvs_sqr);
     rvs_seq.run_inst(VMULHSU, env.rvs_agt.rvs_sqr);
+
+//     rvs_seq.run_inst(VDIVU, env.rvs_agt.rvs_sqr);
+//     rvs_seq.run_inst(VDIV , env.rvs_agt.rvs_sqr);
+//     rvs_seq.run_inst(VREMU, env.rvs_agt.rvs_sqr);
+//     rvs_seq.run_inst(VREM , env.rvs_agt.rvs_sqr);
     phase.phase_done.set_drain_time(this, 1000ns);
     phase.drop_objection( .obj( this ) );
 
@@ -357,10 +372,9 @@ class alu_vadcsbc_test extends rvv_backend_test;
   endfunction
 endclass: alu_vadcsbc_test
 
-/*
-//-------------------------------------------------
-// 
-//-------------------------------------------------
+//-----------------------------------------------------------
+// 32.11.5. Vector Bitwise Logical Instructions 
+//-----------------------------------------------------------
 class alu_bitlogic_test extends rvv_backend_test;
 
   alu_iterate_vxi_seq rvs_seq;
@@ -396,9 +410,11 @@ class alu_bitlogic_test extends rvv_backend_test;
     super.final_phase(phase);
   endfunction
 endclass: alu_bitlogic_test
-//-------------------------------------------------
-// 
-//-------------------------------------------------
+
+//-----------------------------------------------------------
+// 32.11.6. Vector Single-Width Shift Instructions
+// 32.11.7. Vector Narrowing Integer Right Shift Instructions
+//-----------------------------------------------------------
 class alu_shift_test extends rvv_backend_test;
 
   alu_iterate_vxi_seq rvs_seq;
@@ -436,6 +452,7 @@ class alu_shift_test extends rvv_backend_test;
     super.final_phase(phase);
   endfunction
 endclass: alu_shift_test
+/*
 //-------------------------------------------------
 // 
 //-------------------------------------------------
@@ -555,9 +572,9 @@ class alu_vmerge_test extends rvv_backend_test;
   endfunction
 endclass: alu_vmerge_test
 */
-//-------------------------------------------------
+//-----------------------------------------------------------
 // 32.11.10. Vector Single-Width Integer Multiply Instructions 
-//-------------------------------------------------
+//-----------------------------------------------------------
 class alu_vmul_test extends rvv_backend_test;
 
   alu_iterate_vx_seq rvs_seq;
@@ -594,5 +611,45 @@ class alu_vmul_test extends rvv_backend_test;
     super.final_phase(phase);
   endfunction
 endclass: alu_vmul_test
+
+//-----------------------------------------------------------
+// 32.11.11. Vector Integer Divide Instructions
+//-----------------------------------------------------------
+class alu_vdiv_test extends rvv_backend_test;
+
+  alu_iterate_vx_seq rvs_seq;
+
+  `uvm_component_utils(alu_vdiv_test)
+
+  function new(string name, uvm_component parent);
+    super.new(name, parent);
+  endfunction
+
+  function void build_phase(uvm_phase phase);
+    super.build_phase(phase);
+  endfunction
+
+  function void connect_phase(uvm_phase phase);
+    super.connect_phase(phase);
+    this.set_report_id_action_hier("DEBUG", UVM_LOG);
+  endfunction
+
+  task main_phase(uvm_phase phase);
+    phase.raise_objection( .obj( this ) );
+
+    rvs_seq = alu_iterate_vx_seq::type_id::create("rvs_seq", this);
+    rvs_seq.run_inst(VDIVU, env.rvs_agt.rvs_sqr);
+    rvs_seq.run_inst(VDIV , env.rvs_agt.rvs_sqr);
+    rvs_seq.run_inst(VREMU, env.rvs_agt.rvs_sqr);
+    rvs_seq.run_inst(VREM , env.rvs_agt.rvs_sqr);
+
+    phase.phase_done.set_drain_time(this, 1000ns);
+    phase.drop_objection( .obj( this ) );
+  endtask
+
+  function void final_phase(uvm_phase phase);
+    super.final_phase(phase);
+  endfunction
+endclass: alu_vdiv_test
 `endif // RVV_BACKEND_TEST__SV
 
