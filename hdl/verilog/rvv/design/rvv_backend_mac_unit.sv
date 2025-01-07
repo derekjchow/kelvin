@@ -665,10 +665,10 @@ generate
       for (y=0; y<4; y=y+1) begin
         rvv_backend_mul_unit_mul8 u_mul8 (
           .out(mac8_out[z*16+y*4+x]), //16bit out
-          .in0(mac8_in0[x]), 
-          .in0_is_signed(mac8_in0_is_signed[x]),
-          .in1(mac8_in1[y]), 
-          .in1_is_signed(mac8_in1_is_signed[y]));
+          .in0(mac8_in0[z*4+x]), 
+          .in0_is_signed(mac8_in0_is_signed[z*4+x]),
+          .in1(mac8_in1[z*4+y]), 
+          .in1_is_signed(mac8_in1_is_signed[z*4+y]));
 
         dff #(16) u_mul8_delay (
           .q(mac8_out_d1[z*16+y*4+x]), 
