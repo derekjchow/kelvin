@@ -284,6 +284,7 @@ module rvv_backend_dispatch
             assign rs_dp2alu[i].uop_funct6    = uop_uop2dp[i].uop_funct6;
             assign rs_dp2alu[i].uop_funct3    = uop_uop2dp[i].uop_funct3;
             assign rs_dp2alu[i].vstart        = uop_uop2dp[i].vector_csr.vstart;
+            assign rs_dp2alu[i].vl            = uop_uop2dp[i].vs_evl;
             assign rs_dp2alu[i].vm            = uop_uop2dp[i].vm;
             assign rs_dp2alu[i].vxrm          = uop_uop2dp[i].vector_csr.xrm;
             assign rs_dp2alu[i].v0_data       = uop_operand[i].v0;
