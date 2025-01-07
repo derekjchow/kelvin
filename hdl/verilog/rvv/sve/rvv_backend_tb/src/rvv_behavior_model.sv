@@ -430,7 +430,7 @@ endclass : rvv_behavior_model
               src0 = '0;
           end
           
-          `uvm_info("DEBUG", $sformatf("Before - element[%2d]: dest=0x%8h, src2=0x%8h, src1=0x%8h", elm_idx, dest, src2, src1), UVM_LOW)
+          `uvm_info("DEBUG", $sformatf("Before - element[%2d]: dest=0x%8h, src2=0x%8h, src1=0x%8h, src0=0x%8h", elm_idx, dest, src2, src1, src0), UVM_LOW)
 
           // 3.2 Execute & Writeback 
           if(elm_idx < vstart) begin
@@ -484,8 +484,10 @@ endclass : rvv_behavior_model
                   { EEW8, EEW16,  EEW8}: dest = alu_processor #( sew8_t, sew16_t,  sew8_t)::exe(inst_tr, dest, src2, src1, src0);
                   {EEW16, EEW32, EEW16}: dest = alu_processor #(sew16_t, sew32_t, sew16_t)::exe(inst_tr, dest, src2, src1, src0);
                   // mask logic
-                  { EEW1,  EEW1,  EEW1}: dest = alu_processor #( sew1_t,  sew1_t,  sew1_t)::exe(inst_tr, dest, src1, src2, src3);
-                  { EEW1,  EEW1,  EEW1}: dest = alu_processor #( sew1_t,  sew1_t,  sew1_t)::exe(inst_tr, dest, src1, src2, src3);
+                  { EEW1,  EEW1,  EEW1}: dest = alu_processor #( sew1_t,  sew1_t,  sew1_t)::exe(inst_tr, dest, src2, src1, src0);
+                  { EEW1,  EEW8,  EEW8}: dest = alu_processor #( sew1_t,  sew8_t,  sew8_t)::exe(inst_tr, dest, src2, src1, src0);
+                  { EEW1, EEW16, EEW16}: dest = alu_processor #( sew1_t, sew16_t, sew16_t)::exe(inst_tr, dest, src2, src1, src0);
+                  { EEW1, EEW32, EEW32}: dest = alu_processor #( sew1_t, sew32_t, sew32_t)::exe(inst_tr, dest, src2, src1, src0);
                   default: begin
                     `uvm_error("DEBUG", $sformatf("Unsupported EEW: dest_eew=%d, src2_eew=%d, src1_eew=%d", dest_eew, src2_eew, src1_eew))
                     continue;
@@ -498,7 +500,7 @@ endclass : rvv_behavior_model
             // Write back
           end
 
-          `uvm_info("DEBUG", $sformatf("After  - element[%2d]: dest=0x%8h, src2=0x%8h, src1=0x%8h\n", elm_idx, dest, src2, src1), UVM_LOW)
+          `uvm_info("DEBUG", $sformatf("After  - element[%2d]: dest=0x%8h, src2=0x%8h, src1=0x%8h, src0=0x%8h\n", elm_idx, dest, src2, src1, src0), UVM_LOW)
         end : op_element
 
         // --------------------------------------------------

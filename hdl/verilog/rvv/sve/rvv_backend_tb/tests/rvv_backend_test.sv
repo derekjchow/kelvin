@@ -141,6 +141,7 @@ class alu_smoke_test extends rvv_backend_test;
 
   alu_smoke_seq rvs_seq;
   alu_smoke_ext_seq rvs_ext_seq;
+  alu_smoke_vx_seq rvs_vx_seq;
 
   `uvm_component_utils(alu_smoke_test)
 
@@ -160,9 +161,12 @@ class alu_smoke_test extends rvv_backend_test;
     phase.raise_objection( .obj( this ) );
 
     rvs_seq = alu_smoke_seq::type_id::create("alu_smoke_seq", this);
+    rvs_ext_seq = alu_smoke_ext_seq::type_id::create("alu_smoke_ext_seq", this);
+    rvs_vx_seq = alu_smoke_vx_seq::type_id::create("alu_smoke_vx_seq", this);
+
     rvs_seq.run_inst(VADD,env.rvs_agt.rvs_sqr);
     rvs_seq.run_inst(VSUB, env.rvs_agt.rvs_sqr);
-    rvs_seq.run_inst(VRSUB,env.rvs_agt.rvs_sqr);
+    rvs_vx_seq.run_inst(VRSUB,env.rvs_agt.rvs_sqr);
 
     rvs_seq.run_inst(VWADD, env.rvs_agt.rvs_sqr);
     rvs_seq.run_inst(VWADDU, env.rvs_agt.rvs_sqr);
@@ -174,7 +178,6 @@ class alu_smoke_test extends rvv_backend_test;
     rvs_seq.run_inst(VWSUBU_W, env.rvs_agt.rvs_sqr);
     rvs_seq.run_inst(VWSUB_W, env.rvs_agt.rvs_sqr);
 
-    rvs_ext_seq = alu_smoke_ext_seq::type_id::create("alu_smoke_ext_seq", this);
     rvs_ext_seq.run_inst(VXUNARY0, env.rvs_agt.rvs_sqr);
 
     rvs_seq.run_inst(VADC , env.rvs_agt.rvs_sqr);
@@ -191,16 +194,30 @@ class alu_smoke_test extends rvv_backend_test;
     rvs_seq.run_inst(VSRA , env.rvs_agt.rvs_sqr);
     rvs_seq.run_inst(VNSRL, env.rvs_agt.rvs_sqr);
     rvs_seq.run_inst(VNSRA, env.rvs_agt.rvs_sqr);
+ 
+    rvs_seq.run_inst(VMSEQ , env.rvs_agt.rvs_sqr, 1);
+    rvs_seq.run_inst(VMSNE , env.rvs_agt.rvs_sqr, 1);
+    rvs_seq.run_inst(VMSLTU, env.rvs_agt.rvs_sqr, 1);
+    rvs_seq.run_inst(VMSLT , env.rvs_agt.rvs_sqr, 1);
+    rvs_seq.run_inst(VMSLEU, env.rvs_agt.rvs_sqr, 1);
+    rvs_seq.run_inst(VMSLE , env.rvs_agt.rvs_sqr, 1);
+    rvs_vx_seq.run_inst(VMSGTU, env.rvs_agt.rvs_sqr, 1);
+    rvs_vx_seq.run_inst(VMSGT , env.rvs_agt.rvs_sqr, 1);
+
+    rvs_seq.run_inst(VMINU, env.rvs_agt.rvs_sqr);
+    rvs_seq.run_inst(VMIN , env.rvs_agt.rvs_sqr);
+    rvs_seq.run_inst(VMAXU, env.rvs_agt.rvs_sqr);
+    rvs_seq.run_inst(VMIN, env.rvs_agt.rvs_sqr);
 
     rvs_seq.run_inst(VMUL, env.rvs_agt.rvs_sqr);
     rvs_seq.run_inst(VMULH, env.rvs_agt.rvs_sqr);
     rvs_seq.run_inst(VMULHU, env.rvs_agt.rvs_sqr);
     rvs_seq.run_inst(VMULHSU, env.rvs_agt.rvs_sqr);
 
-//     rvs_seq.run_inst(VDIVU, env.rvs_agt.rvs_sqr);
-//     rvs_seq.run_inst(VDIV , env.rvs_agt.rvs_sqr);
-//     rvs_seq.run_inst(VREMU, env.rvs_agt.rvs_sqr);
-//     rvs_seq.run_inst(VREM , env.rvs_agt.rvs_sqr);
+    rvs_seq.run_inst(VDIVU, env.rvs_agt.rvs_sqr);
+    rvs_seq.run_inst(VDIV , env.rvs_agt.rvs_sqr);
+    rvs_seq.run_inst(VREMU, env.rvs_agt.rvs_sqr);
+    rvs_seq.run_inst(VREM , env.rvs_agt.rvs_sqr);
     phase.phase_done.set_drain_time(this, 1000ns);
     phase.drop_objection( .obj( this ) );
 
@@ -337,7 +354,7 @@ endclass: alu_vext_test
 //-----------------------------------------------------------
 class alu_vadcsbc_test extends rvv_backend_test;
 
-  alu_iterate_vxi_seq rvs_seq;
+  alu_iterate_vadcsbc_seq rvs_seq;
 
   `uvm_component_utils(alu_vadcsbc_test)
 
@@ -357,7 +374,7 @@ class alu_vadcsbc_test extends rvv_backend_test;
   task main_phase(uvm_phase phase);
     phase.raise_objection( .obj( this ) );
 
-    rvs_seq = alu_iterate_vxi_seq::type_id::create("rvs_seq", this);
+    rvs_seq = alu_iterate_vadcsbc_seq::type_id::create("rvs_seq", this);
     rvs_seq.run_inst(VADC , env.rvs_agt.rvs_sqr);
     rvs_seq.run_inst(VMADC, env.rvs_agt.rvs_sqr);
     rvs_seq.run_inst(VSBC , env.rvs_agt.rvs_sqr);
@@ -452,10 +469,10 @@ class alu_shift_test extends rvv_backend_test;
     super.final_phase(phase);
   endfunction
 endclass: alu_shift_test
-/*
-//-------------------------------------------------
-// 
-//-------------------------------------------------
+
+//-----------------------------------------------------------
+// 32.11.8. Vector Integer Compare Instructions
+//-----------------------------------------------------------
 class alu_vcomp_test extends rvv_backend_test;
 
   alu_iterate_vcomp_seq rvs_seq;
@@ -496,9 +513,10 @@ class alu_vcomp_test extends rvv_backend_test;
     super.final_phase(phase);
   endfunction
 endclass: alu_vcomp_test
-//-------------------------------------------------
-// 
-//-------------------------------------------------
+
+//-----------------------------------------------------------
+// 32.11.9. Vector Integer Min/Max Instructions
+//-----------------------------------------------------------
 class alu_vminmax_test extends rvv_backend_test;
 
   alu_iterate_vxi_seq rvs_seq;
@@ -535,43 +553,7 @@ class alu_vminmax_test extends rvv_backend_test;
     super.final_phase(phase);
   endfunction
 endclass: alu_vminmax_test
-//-------------------------------------------------
-// 
-//-------------------------------------------------
-class alu_vmerge_test extends rvv_backend_test;
 
-  alu_iterate_vmerge_seq rvs_seq;
-
-  `uvm_component_utils(alu_vmerge_test)
-
-  function new(string name, uvm_component parent);
-    super.new(name, parent);
-  endfunction
-
-  function void build_phase(uvm_phase phase);
-    super.build_phase(phase);
-  endfunction
-
-  function void connect_phase(uvm_phase phase);
-    super.connect_phase(phase);
-    this.set_report_id_action_hier("DEBUG", UVM_LOG);
-  endfunction
-
-  task main_phase(uvm_phase phase);
-    phase.raise_objection( .obj( this ) );
-
-    rvs_seq = alu_iterate_vmerge_seq::type_id::create("rvs_seq", this);
-    rvs_seq.run_inst(VMERGE_VMVV, env.rvs_agt.rvs_sqr);
-
-    phase.phase_done.set_drain_time(this, 1000ns);
-    phase.drop_objection( .obj( this ) );
-  endtask
-
-  function void final_phase(uvm_phase phase);
-    super.final_phase(phase);
-  endfunction
-endclass: alu_vmerge_test
-*/
 //-----------------------------------------------------------
 // 32.11.10. Vector Single-Width Integer Multiply Instructions 
 //-----------------------------------------------------------
@@ -651,5 +633,44 @@ class alu_vdiv_test extends rvv_backend_test;
     super.final_phase(phase);
   endfunction
 endclass: alu_vdiv_test
+/*
+//-----------------------------------------------------------
+// 
+//-----------------------------------------------------------
+class alu_vmerge_test extends rvv_backend_test;
+
+  alu_iterate_vmerge_seq rvs_seq;
+
+  `uvm_component_utils(alu_vmerge_test)
+
+  function new(string name, uvm_component parent);
+    super.new(name, parent);
+  endfunction
+
+  function void build_phase(uvm_phase phase);
+    super.build_phase(phase);
+  endfunction
+
+  function void connect_phase(uvm_phase phase);
+    super.connect_phase(phase);
+    this.set_report_id_action_hier("DEBUG", UVM_LOG);
+  endfunction
+
+  task main_phase(uvm_phase phase);
+    phase.raise_objection( .obj( this ) );
+
+    rvs_seq = alu_iterate_vmerge_seq::type_id::create("rvs_seq", this);
+    rvs_seq.run_inst(VMERGE_VMVV, env.rvs_agt.rvs_sqr);
+
+    phase.phase_done.set_drain_time(this, 1000ns);
+    phase.drop_objection( .obj( this ) );
+  endtask
+
+  function void final_phase(uvm_phase phase);
+    super.final_phase(phase);
+  endfunction
+endclass: alu_vmerge_test
+*/
+
 `endif // RVV_BACKEND_TEST__SV
 
