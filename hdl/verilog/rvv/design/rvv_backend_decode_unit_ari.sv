@@ -1219,7 +1219,7 @@ module rvv_backend_decode_unit_ari
                   end
                 endcase
               end
-              OPIVX: begin
+              OPMVX: begin
                 case(csr_lmul)
                   LMUL1_4,
                   LMUL1_2,
