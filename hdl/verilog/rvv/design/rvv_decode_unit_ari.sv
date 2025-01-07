@@ -1,5 +1,5 @@
 
-`include 'rvv.svh'
+`include "rvv.svh"
 
 module rvv_decode_unit_ari
 (
@@ -119,6 +119,7 @@ module rvv_decode_unit_ari
       VSLL,
       VSRL,
       VSRA,
+      VMERGE_VMV,
       VSADDU,
       VSADD,
       VSSRL,
@@ -126,8 +127,7 @@ module rvv_decode_unit_ari
       VSLIDEUP,
       VSLIDEDOWN,
       VRGATHER,
-      VMADC,
-      VMERGE_VMV: begin
+      VMADC: begin
         case(funct3_ari)
           OPIVV: begin
   
@@ -330,9 +330,9 @@ module rvv_decode_unit_ari
       VOR,
       VXOR,
       VSLL,
-      VSMUL_VMVNRR,
       VSRL,
       VSRA,
+      VSMUL_VMVNRR,
       VMERGE_VMV,
       VSADDU,
       VSADD,
@@ -489,9 +489,7 @@ module rvv_decode_unit_ari
       VSSRA,
       VNCLIPU,
       VNCLIP,
-      VSLIDEUP,
-      VSLIDEDOWN,
-      VRGATHER: begin
+      VSLIDEDOWN: begin
         case(funct3_ari)
           OPIVV: begin
 
@@ -514,11 +512,15 @@ module rvv_decode_unit_ari
 
           end
           OPIVI: begin
-            if (inst_vm == 1'b0)
+            if ((inst_vm==1'b0)&(inst_vd!='b0))
               inst_encoding_correct          = 1'b1;          
+            
             `ifdef ASSERT_ON
               `rvv_expect(inst_vm==1'b0)
               else $error("Unsupported inst_vm=%d in %s instruction.\n",inst_vm,funct6_ari.opi_funct6.name());
+              
+              `rvv_forbit(inst_vd=='b0)
+              else $error("inst_vd(%d) cannot be v0 in %s instruction.\n",funct6_ari.opi_funct6.name());
             `endif
           end
         endcase
@@ -535,15 +537,45 @@ module rvv_decode_unit_ari
           OPIVI: begin
             // when vm=1, it is vmv instruction and vs2_index must be 5'b0.
             if ((inst_vm==1'b0)|((inst_vm==1'b1)&(inst_vs2==5'b0)))
-              inst_encoding_correct          = 1'b1;          
+              inst_encoding_correct         = 1'b1;          
             `ifdef ASSERT_ON
-              `rvv_expect((inst_vm==1'b0)|((inst_vm==1'b1)&(inst_vs2==5'b0)))
-              else $error("Unsupported inst_vm=%d and vs2=%d in %s instruction.\n",inst_vm,inst_vs2,funct6_ari.opi_funct6.name());
+              `rvv_forbid((inst_vm==1'b1)&(inst_vs2!=5'b0))
+              else $error("when inst_vm=%d, inst_vs2(%d) should be 0 in instruction.\n",inst_vm,inst_vs2,funct6_ari.opi_funct6.name());
             `endif
           end
         endcase
       end
       
+      VSLIDEUP,
+      VRGATHER: begin
+        case(funct3_ari)
+          OPIVX: begin
+
+          end
+          OPIVI: begin
+            case(emul_max,emul_vs2)
+              {4'd1,4'd1}: begin
+                if(inst_vd!=inst_vs2)
+                  inst_encoding_correct     = 1'b1;          
+              end
+              {4'd2,4'd2}: begin
+                if(inst_vd[`REGFILE_INDEX_WIDTH-1:1]!=inst_vs2[`REGFILE_INDEX_WIDTH-1:1])
+                  inst_encoding_correct     = 1'b1;          
+              end
+              {4'd4,4'd4}: begin
+                if(inst_vd[`REGFILE_INDEX_WIDTH-1:2]!=inst_vs2[`REGFILE_INDEX_WIDTH-1:2])
+                  inst_encoding_correct     = 1'b1;          
+              end
+              {4'd8,4'd8}: begin
+                if(inst_vd[`REGFILE_INDEX_WIDTH-1:3]!=inst_vs2[`REGFILE_INDEX_WIDTH-1:3])
+                  inst_encoding_correct     = 1'b1;          
+              end
+
+            endcase
+          end
+        endcase
+      end
+
       VSMUL_VMVNRR: begin
         case(funct3_ari)
           OPIVV: begin
@@ -669,9 +701,6 @@ module rvv_decode_unit_ari
     // check whether vs1 is aligned to emul_vs1
  
 
-    // check vector register overlap??
-    
-
   end
 
   // get the start number of uop_index
@@ -708,8 +737,8 @@ module rvv_decode_unit_ari
   // generate uop valid
   always_comb begin        
   for(i=0;i<`NUM_DE_UOP;i=i+1) begin: GET_UOP_VALID
-    if (uop_index_current[i]<emul_max) 
-      uop_valid[i]  = inst_encoding_correct & inst_valid;
+    if ((uop_index_current[i]<emul_max)&inst_valid) 
+      uop_valid[i]  = inst_encoding_correct;
     else
       uop_valid[i]  = 'b0;
   end
@@ -970,7 +999,8 @@ module rvv_decode_unit_ari
       
       case(funct6_ari.opi_funct6)
         VADC,
-        VMADC: begin
+        VMADC,
+        VMERGE_VMV: begin
           case(funct3_ari)
             OPIVI: begin
               uop[i].v0_valid   = !inst_vm;

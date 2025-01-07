@@ -1,5 +1,5 @@
 
-`include 'rvv.svh'
+`include "rvv.svh"
 
 module rvv_decode_unit_lsu
 (

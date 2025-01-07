@@ -10,7 +10,7 @@
 // 5. The vstart of the instruction will be calculated to a new value for every decoded uops.
 // 6. vmv<nr>r.v instruction will be split to <nr> vmv.v.v uops, which means funct6, funct3, vs1, vs2 fields will be modified in new uop. However, new uops' vtype.vlmul is not changed to recovery execution right when trap handling is done.
 
-`include 'rvv.svh'
+`include "rvv.svh"
 
 module rvv_decode_unit
 (
