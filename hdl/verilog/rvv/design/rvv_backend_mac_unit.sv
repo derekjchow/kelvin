@@ -44,7 +44,6 @@ logic                         mac_src2_is_signed;
 logic                         mac_src1_is_signed;
 logic                         mac_is_widen;
 logic                         mac_keep_low_bits;
-logic                         mac_dst_is_signed;
 logic                         mac_mul_reverse;
 logic                         is_vsmul;
 logic                         is_vmac;
@@ -65,7 +64,8 @@ logic [`VLEN-1:0]             mac_addsrc_d1;
 logic [2*`VLEN-1:0]           mac_addsrc_widen_d1;
 
 logic                         rs2mac_uop_valid_d1;
-logic                         mac_dst_is_signed_d1;
+logic                         mac_src2_is_signed_d1;
+logic                         mac_src1_is_signed_d1;
 logic                         mac_is_widen_d1;
 logic                         mac_keep_low_bits_d1;
 logic                         mac_mul_reverse_d1;
@@ -612,8 +612,6 @@ always@(*) begin
     end//end default
   endcase//end funct3
 end
-assign mac_dst_is_signed = mac_src2_is_signed || mac_src1_is_signed;
-
 
 // Before using mac alu, 
 //  1.group sub-elements' sign bit
@@ -683,7 +681,8 @@ endgenerate
 dff #(`VLEN) u_addsrc_delay (.q(mac_addsrc_d1), .clk(clk), .rst_n(rst_n), .d(mac_addsrc));
 assign mac_addsrc_widen_d1 = {2{mac_addsrc_d1}}; //when widen, copy low half to high, for widen add
 dff #(1) u_valid_delay (.q(rs2mac_uop_valid_d1), .clk(clk), .rst_n(rst_n), .d(rs2mac_uop_valid));
-dff #(1) u_is_signed_delay (.q(mac_dst_is_signed_d1), .clk(clk), .rst_n(rst_n), .d(mac_dst_is_signed));
+dff #(1) u_src2_is_signed_delay (.q(mac_src2_is_signed_d1), .clk(clk), .rst_n(rst_n), .d(mac_src2_is_signed));
+dff #(1) u_src1_is_signed_delay (.q(mac_src1_is_signed_d1), .clk(clk), .rst_n(rst_n), .d(mac_src1_is_signed));
 dff #(1) u_is_widen_delay (.q(mac_is_widen_d1), .clk(clk), .rst_n(rst_n), .d(mac_is_widen));
 dff #(1) u_keep_low_bits_delay (.q(mac_keep_low_bits_d1), .clk(clk), .rst_n(rst_n), .d(mac_keep_low_bits));
 dff #(1) u_is_vsmul_delay (.q(is_vsmul_d1), .clk(clk), .rst_n(rst_n), .d(is_vsmul));
@@ -749,8 +748,8 @@ always@(*) begin
   for (i=0; i<4; i=i+1) begin //z
     for (j=0; j<2; j=j+1) begin //x
       mac_rslt_full_eew16_d1[i*2+j] = {mac8_out_d1[i*16+j*10+5],16'b0} + 
-                                   {{8{mac8_out_d1[i*16+j*10+4][15]&&mac_dst_is_signed_d1}},mac8_out_d1[i*16+j*10+4],8'b0} + 
-                                   {{8{mac8_out_d1[i*16+j*10+1][15]&&mac_dst_is_signed_d1}},mac8_out_d1[i*16+j*10+1],8'b0} + 
+                                   {{8{mac8_out_d1[i*16+j*10+4][15]&&mac_src1_is_signed_d1}},mac8_out_d1[i*16+j*10+4],8'b0} + 
+                                   {{8{mac8_out_d1[i*16+j*10+1][15]&&mac_src2_is_signed_d1}},mac8_out_d1[i*16+j*10+1],8'b0} + 
                                    {16'b0,mac8_out_d1[i*16+j*10]};
       mac_rslt_eew16_widen_d1[32*(i*2+j) +: 32] = mac_rslt_full_eew16_d1[i*2+j];//widen, and convert to [255:0]
       mac_rslt_eew16_no_widen_d1[16*(i*2+j) +: 16] = mac_keep_low_bits_d1 ? mac_rslt_full_eew16_d1[i*2+j][15:0] : mac_rslt_full_eew16_d1[i*2+j][31:16];
@@ -787,15 +786,15 @@ assign update_vxsat_eew16_d1 = |(vsmul_sat_eew16_d1);
 always@(*) begin
   for (i=0; i<4; i=i+1) begin //z
     mac_rslt_full_eew32_d1[i] = {mac8_out_d1[i*16+15],48'b0} + 
-                             {{8{mac8_out_d1[i*16+14][15]&&mac_dst_is_signed_d1}},mac8_out_d1[i*16+14],40'b0} + 
-                             {{8{mac8_out_d1[i*16+11][15]&&mac_dst_is_signed_d1}},mac8_out_d1[i*16+11],40'b0} + 
-                             {{16{mac8_out_d1[i*16+13][15]&&mac_dst_is_signed_d1}},mac8_out_d1[i*16+13],32'b0} + 
+                             {{8{mac8_out_d1[i*16+14][15]&&mac_src1_is_signed_d1}},mac8_out_d1[i*16+14],40'b0} + 
+                             {{8{mac8_out_d1[i*16+11][15]&&mac_src2_is_signed_d1}},mac8_out_d1[i*16+11],40'b0} + 
+                             {{16{mac8_out_d1[i*16+13][15]&& mac_src1_is_signed_d1}},mac8_out_d1[i*16+13],32'b0} + 
                              {16'b0,mac8_out_d1[i*16+10],32'b0} + 
-                             {{16{mac8_out_d1[i*16+7][15]&&mac_dst_is_signed_d1}},mac8_out_d1[i*16+7],32'b0} + 
-                             {{24{mac8_out_d1[i*16+12][15]&&mac_dst_is_signed_d1}},mac8_out_d1[i*16+12],24'b0} + 
+                             {{16{mac8_out_d1[i*16+7][15]&&mac_src2_is_signed_d1}},mac8_out_d1[i*16+7],32'b0} + 
+                             {{24{mac8_out_d1[i*16+12][15]&& mac_src1_is_signed_d1}},mac8_out_d1[i*16+12],24'b0} + 
                              {24'b0,mac8_out_d1[i*16+9],24'b0} +
                              {24'b0,mac8_out_d1[i*16+6],24'b0} + 
-                             {{24{mac8_out_d1[i*16+3][15]&&mac_dst_is_signed_d1}},mac8_out_d1[i*16+3],24'b0} + 
+                             {{24{mac8_out_d1[i*16+3][15]&&mac_src2_is_signed_d1}},mac8_out_d1[i*16+3],24'b0} + 
                              {32'b0,mac8_out_d1[i*16+8],16'b0} + 
                              {32'b0,mac8_out_d1[i*16+5],16'b0} +
                              {32'b0,mac8_out_d1[i*16+2],16'b0} + 

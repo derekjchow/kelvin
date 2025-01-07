@@ -44,7 +44,6 @@ logic                          mul_src1_is_signed;
 logic                          mul_is_widen;
 logic                          mul_keep_low_bits;
 logic                          is_vsmul;
-logic                          mul_dst_is_signed;
 
 logic [`VLEN-1:0]              mul_src2_mux;
 logic [`VLEN-1:0]              mul_src1_mux;
@@ -60,7 +59,8 @@ logic [15:0]                   mul8_out[63:0];
 logic [15:0]                   mul8_out_d1[63:0];
 
 logic                          rs2mul_uop_valid_d1;
-logic                          mul_dst_is_signed_d1;
+logic                          mul_src2_is_signed_d1;
+logic                          mul_src1_is_signed_d1;
 logic                          mul_is_widen_d1;
 logic                          mul_keep_low_bits_d1;
 logic                          is_vsmul_d1;
@@ -341,8 +341,6 @@ always@(*) begin
     end//end default
   endcase//end funct3
 end
-assign mul_dst_is_signed = mul_src2_is_signed || mul_src1_is_signed;
-
 
 // Before using MUL alu, 
 //  1.group sub-elements' sign bit
@@ -410,7 +408,8 @@ generate
 endgenerate
 
 dff #(1) u_valid_delay (.q(rs2mul_uop_valid_d1), .clk(clk), .rst_n(rst_n), .d(rs2mul_uop_valid));
-dff #(1) u_is_signed_delay (.q(mul_dst_is_signed_d1), .clk(clk), .rst_n(rst_n), .d(mul_dst_is_signed));
+dff #(1) u_src2_is_signed_delay (.q(mul_src2_is_signed_d1), .clk(clk), .rst_n(rst_n), .d(mul_src2_is_signed));
+dff #(1) u_src1_is_signed_delay (.q(mul_src1_is_signed_d1), .clk(clk), .rst_n(rst_n), .d(mul_src1_is_signed));
 dff #(1) u_is_widen_delay (.q(mul_is_widen_d1), .clk(clk), .rst_n(rst_n), .d(mul_is_widen));
 dff #(1) u_keep_low_bits_delay (.q(mul_keep_low_bits_d1), .clk(clk), .rst_n(rst_n), .d(mul_keep_low_bits));
 dff #(1) u_is_vsmul_delay (.q(is_vsmul_d1), .clk(clk), .rst_n(rst_n), .d(is_vsmul));
@@ -460,8 +459,8 @@ always@(*) begin
   for (i=0; i<4; i=i+1) begin //z
     for (j=0; j<2; j=j+1) begin //x
       mul_rslt_full_eew16_d1[i*2+j] = {mul8_out_d1[i*16+j*10+5],16'b0} + 
-                                   {{8{mul8_out_d1[i*16+j*10+4][15]&&mul_dst_is_signed_d1}},mul8_out_d1[i*16+j*10+4],8'b0} + 
-                                   {{8{mul8_out_d1[i*16+j*10+1][15]&&mul_dst_is_signed_d1}},mul8_out_d1[i*16+j*10+1],8'b0} + 
+                                   {{8{mul8_out_d1[i*16+j*10+4][15]&&mul_src1_is_signed_d1}},mul8_out_d1[i*16+j*10+4],8'b0} + 
+                                   {{8{mul8_out_d1[i*16+j*10+1][15]&&mul_src2_is_signed_d1}},mul8_out_d1[i*16+j*10+1],8'b0} + 
                                    {16'b0,mul8_out_d1[i*16+j*10]};
       mul_rslt_eew16_widen_d1[32*(i*2+j) +: 32] = mul_rslt_full_eew16_d1[i*2+j];//widen, and convert to [255:0]
       mul_rslt_eew16_no_widen_d1[16*(i*2+j) +: 16] = mul_keep_low_bits_d1 ? mul_rslt_full_eew16_d1[i*2+j][15:0] : mul_rslt_full_eew16_d1[i*2+j][31:16];
@@ -487,15 +486,15 @@ assign update_vxsat_eew16_d1 = |(vsmul_sat_eew16_d1);
 always@(*) begin
   for (i=0; i<4; i=i+1) begin //z
     mul_rslt_full_eew32_d1[i] = {mul8_out_d1[i*16+15],48'b0} + 
-                             {{8{mul8_out_d1[i*16+14][15]&&mul_dst_is_signed_d1}},mul8_out_d1[i*16+14],40'b0} + 
-                             {{8{mul8_out_d1[i*16+11][15]&&mul_dst_is_signed_d1}},mul8_out_d1[i*16+11],40'b0} + 
-                             {{16{mul8_out_d1[i*16+13][15]&&mul_dst_is_signed_d1}},mul8_out_d1[i*16+13],32'b0} + 
+                             {{8{mul8_out_d1[i*16+14][15]&&mul_src1_is_signed_d1}},mul8_out_d1[i*16+14],40'b0} + 
+                             {{8{mul8_out_d1[i*16+11][15]&&mul_src2_is_signed_d1}},mul8_out_d1[i*16+11],40'b0} + 
+                             {{16{mul8_out_d1[i*16+13][15]&&mul_src1_is_signed_d1}},mul8_out_d1[i*16+13],32'b0} + 
                              {16'b0,mul8_out_d1[i*16+10],32'b0} + 
-                             {{16{mul8_out_d1[i*16+7][15]&&mul_dst_is_signed_d1}},mul8_out_d1[i*16+7],32'b0} + 
-                             {{24{mul8_out_d1[i*16+12][15]&&mul_dst_is_signed_d1}},mul8_out_d1[i*16+12],24'b0} + 
+                             {{16{mul8_out_d1[i*16+7][15]&&mul_src2_is_signed_d1}},mul8_out_d1[i*16+7],32'b0} + 
+                             {{24{mul8_out_d1[i*16+12][15]&&mul_src1_is_signed_d1}},mul8_out_d1[i*16+12],24'b0} + 
                              {24'b0,mul8_out_d1[i*16+9],24'b0} +
                              {24'b0,mul8_out_d1[i*16+6],24'b0} + 
-                             {{24{mul8_out_d1[i*16+3][15]&&mul_dst_is_signed_d1}},mul8_out_d1[i*16+3],24'b0} + 
+                             {{24{mul8_out_d1[i*16+3][15]&&mul_src2_is_signed_d1}},mul8_out_d1[i*16+3],24'b0} + 
                              {32'b0,mul8_out_d1[i*16+8],16'b0} + 
                              {32'b0,mul8_out_d1[i*16+5],16'b0} +
                              {32'b0,mul8_out_d1[i*16+2],16'b0} + 
