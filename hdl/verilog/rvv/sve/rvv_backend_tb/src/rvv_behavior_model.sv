@@ -816,6 +816,9 @@ virtual class alu_processor#(
     _vsext = $signed(src2);
   endfunction : _vsext
   
+  //---------------------------------------------------------------------- 
+  // Ch32.11.6. Vector Single-Width Shift Instructions
+  // Ch32.11.7. Vector Narrowing Integer Right Shift Instructions
   static function TD _vsll(T2 src2, T1 src1);
     logic [$clog2($bits(T2))-1:0] shift_amount;
     shift_amount = src1;
@@ -836,22 +839,38 @@ virtual class alu_processor#(
   // Ch32.11.10. Vector Single-Width Integer Multiply Instructions
   static function TD _vmul(T2 src2, T1 src1);
     logic [$bits(TD)*2-1:0] dest_widen;
-    dest_widen = $signed(src2) * $signed(src1);
+    logic [$bits(TD)*2-1:0] src2_widen;
+    logic [$bits(TD)*2-1:0] src1_widen;
+    src2_widen = $signed(src2);
+    src1_widen = $signed(src1);
+    dest_widen = src2_widen * src1_widen;
     _vmul = dest_widen[$bits(TD)-1:0];
   endfunction : _vmul
   static function TD _vmulh(T2 src2, T1 src1);
     logic [$bits(TD)*2-1:0] dest_widen;
-    dest_widen = $signed(src2) * $signed(src1);
+    logic [$bits(TD)*2-1:0] src2_widen;
+    logic [$bits(TD)*2-1:0] src1_widen;
+    src2_widen = $signed(src2);
+    src1_widen = $signed(src1);
+    dest_widen = src2_widen * src1_widen;
     _vmulh = dest_widen[$bits(TD)*2-1:$bits(TD)];
   endfunction : _vmulh
   static function TD _vmulhu(T2 src2, T1 src1);
     logic [$bits(TD)*2-1:0] dest_widen;
-    dest_widen = $unsigned(src2) * $unsigned(src1);
+    logic [$bits(TD)*2-1:0] src2_widen;
+    logic [$bits(TD)*2-1:0] src1_widen;
+    src2_widen = $unsigned(src2);
+    src1_widen = $unsigned(src1);
+    dest_widen = src2_widen * src1_widen;
     _vmulhu = dest_widen[$bits(TD)*2-1:$bits(TD)];
   endfunction : _vmulhu
   static function TD _vmulhsu(T2 src2, T1 src1);
     logic [$bits(TD)*2-1:0] dest_widen;
-    dest_widen = $signed(src2) * $unsigned(src1);
+    logic [$bits(TD)*2-1:0] src2_widen;
+    logic [$bits(TD)*2-1:0] src1_widen;
+    src2_widen = $signed(src2);
+    src1_widen = $unsigned(src1);
+    dest_widen = src2_widen * src1_widen;
     _vmulhsu = dest_widen[$bits(TD)*2-1:$bits(TD)];
   endfunction : _vmulhsu
 
