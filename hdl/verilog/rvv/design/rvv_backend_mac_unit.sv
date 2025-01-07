@@ -749,7 +749,7 @@ always@(*) begin
   for (i=0; i<4; i=i+1) begin //z
     for (j=0; j<2; j=j+1) begin //x
       mac_rslt_full_eew16_d1[i*2+j] = {mac8_out_d1[i*16+j*10+5],16'b0} + 
-                                   {{8{mac8_out_d1[i*16+j*10+1][15]&&mac_dst_is_signed_d1}},mac8_out_d1[i*16+j*10+4],8'b0} + 
+                                   {{8{mac8_out_d1[i*16+j*10+4][15]&&mac_dst_is_signed_d1}},mac8_out_d1[i*16+j*10+4],8'b0} + 
                                    {{8{mac8_out_d1[i*16+j*10+1][15]&&mac_dst_is_signed_d1}},mac8_out_d1[i*16+j*10+1],8'b0} + 
                                    {16'b0,mac8_out_d1[i*16+j*10]};
       mac_rslt_eew16_widen_d1[32*(i*2+j) +: 32] = mac_rslt_full_eew16_d1[i*2+j];//widen, and convert to [255:0]

@@ -460,7 +460,7 @@ always@(*) begin
   for (i=0; i<4; i=i+1) begin //z
     for (j=0; j<2; j=j+1) begin //x
       mul_rslt_full_eew16_d1[i*2+j] = {mul8_out_d1[i*16+j*10+5],16'b0} + 
-                                   {{8{mul8_out_d1[i*16+j*10+1][15]&&mul_dst_is_signed_d1}},mul8_out_d1[i*16+j*10+4],8'b0} + 
+                                   {{8{mul8_out_d1[i*16+j*10+4][15]&&mul_dst_is_signed_d1}},mul8_out_d1[i*16+j*10+4],8'b0} + 
                                    {{8{mul8_out_d1[i*16+j*10+1][15]&&mul_dst_is_signed_d1}},mul8_out_d1[i*16+j*10+1],8'b0} + 
                                    {16'b0,mul8_out_d1[i*16+j*10]};
       mul_rslt_eew16_widen_d1[32*(i*2+j) +: 32] = mul_rslt_full_eew16_d1[i*2+j];//widen, and convert to [255:0]
