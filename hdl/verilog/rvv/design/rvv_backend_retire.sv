@@ -58,80 +58,80 @@ module rvv_backend_retire(/*AUTOARG*/
     output  logic   [`VCSR_VXSAT_WIDTH-1:0]   rt2vsat_write_data;
 
 ////////////Wires & Regs  ///////////////
-wire                            w_type0;
-wire                            w_type1;
-wire                            w_type2;
-wire                            w_type3;
+logic                            w_type0;
+logic                            w_type1;
+logic                            w_type2;
+logic                            w_type3;
 
-reg [`VLENB-1:0]                w_enB0_tmp;
-reg [`VLENB-1:0]                w_enB1_tmp;
-reg [`VLENB-1:0]                w_enB2_tmp;
-reg [`VLENB-1:0]                w_enB3_tmp;
+BYTE_TYPE_t                      vd_type0;
+BYTE_TYPE_t                      vd_type1;
+BYTE_TYPE_t                      vd_type2;
+BYTE_TYPE_t                      vd_type3;
 
-wire [`VLENB-1:0]               w_enB0;
-wire [`VLENB-1:0]               w_enB1;
-wire [`VLENB-1:0]               w_enB2;
-wire [`VLENB-1:0]               w_enB3;
+logic [`VLENB-1:0]               w_enB0;
+logic [`VLENB-1:0]               w_enB1;
+logic [`VLENB-1:0]               w_enB2;
+logic [`VLENB-1:0]               w_enB3;
 
-wire [`REGFILE_INDEX_WIDTH-1:0] w_addr0;
-wire [`REGFILE_INDEX_WIDTH-1:0] w_addr1;
-wire [`REGFILE_INDEX_WIDTH-1:0] w_addr2;
-wire [`REGFILE_INDEX_WIDTH-1:0] w_addr3;
+logic [`REGFILE_INDEX_WIDTH-1:0] w_addr0;
+logic [`REGFILE_INDEX_WIDTH-1:0] w_addr1;
+logic [`REGFILE_INDEX_WIDTH-1:0] w_addr2;
+logic [`REGFILE_INDEX_WIDTH-1:0] w_addr3;
 
-wire                            w_valid0;
-wire                            w_valid1;
-wire                            w_valid2;
-wire                            w_valid3;
+logic                            w_valid0;
+logic                            w_valid1;
+logic                            w_valid2;
+logic                            w_valid3;
 
-wire [`VLEN-1:0]                w_data0;
-wire [`VLEN-1:0]                w_data1;
-wire [`VLEN-1:0]                w_data2;
-wire [`VLEN-1:0]                w_data3;
+logic [`VLEN-1:0]                w_data0;
+logic [`VLEN-1:0]                w_data1;
+logic [`VLEN-1:0]                w_data2;
+logic [`VLEN-1:0]                w_data3;
 
-wire                            trap_flag0;
-wire                            trap_flag1;
-wire                            trap_flag2;
-wire                            trap_flag3;
+logic                            trap_flag0;
+logic                            trap_flag1;
+logic                            trap_flag2;
+logic                            trap_flag3;
 
 RVVConfigState                  w_vcsr0;
 RVVConfigState                  w_vcsr1;
 RVVConfigState                  w_vcsr2;
 RVVConfigState                  w_vcsr3;
 
-wire [`VCSR_VXSAT_WIDTH-1:0]    w_vxsat0;
-wire [`VCSR_VXSAT_WIDTH-1:0]    w_vxsat1;
-wire [`VCSR_VXSAT_WIDTH-1:0]    w_vxsat2;
-wire [`VCSR_VXSAT_WIDTH-1:0]    w_vxsat3;
+logic [`VCSR_VXSAT_WIDTH-1:0]    w_vxsat0;
+logic [`VCSR_VXSAT_WIDTH-1:0]    w_vxsat1;
+logic [`VCSR_VXSAT_WIDTH-1:0]    w_vxsat2;
+logic [`VCSR_VXSAT_WIDTH-1:0]    w_vxsat3;
 
-wire                            ignore_vta0;
-wire                            ignore_vta1;
-wire                            ignore_vta2;
-wire                            ignore_vta3;
+logic                            ignore_vta0;
+logic                            ignore_vta1;
+logic                            ignore_vta2;
+logic                            ignore_vta3;
 
-wire                            ignore_vma0;
-wire                            ignore_vma1;
-wire                            ignore_vma2;
-wire                            ignore_vma3;
+logic                            ignore_vma0;
+logic                            ignore_vma1;
+logic                            ignore_vma2;
+logic                            ignore_vma3;
 
-wire dst1_eq_dst0, dst2_eq_dst1, dst3_eq_dst2;
-reg [1:0]                       group_req;
+logic dst1_eq_dst0, dst2_eq_dst1, dst3_eq_dst2;
+logic [1:0]                       group_req;
 
-reg [`VLENB-1:0]                w_enB0_waw01_int;
-reg [`VLENB-1:0]                w_enB0_waw012_int;
-reg [`VLENB-1:0]                w_enB1_waw012_int;
-reg [`VLENB-1:0]                w_enB0_waw0123_int;
-reg [`VLENB-1:0]                w_enB1_waw0123_int;
-reg [`VLENB-1:0]                w_enB2_waw0123_int;
+logic [`VLENB-1:0]                w_enB0_waw01_int;
+logic [`VLENB-1:0]                w_enB0_waw012_int;
+logic [`VLENB-1:0]                w_enB1_waw012_int;
+logic [`VLENB-1:0]                w_enB0_waw0123_int;
+logic [`VLENB-1:0]                w_enB1_waw0123_int;
+logic [`VLENB-1:0]                w_enB2_waw0123_int;
 
-reg [`VLENB-1:0]                w_enB0_mux;
-reg [`VLENB-1:0]                w_enB1_mux;
-reg [`VLENB-1:0]                w_enB2_mux;
-reg [`VLENB-1:0]                w_enB3_mux;
+logic [`VLENB-1:0]                w_enB0_mux;
+logic [`VLENB-1:0]                w_enB1_mux;
+logic [`VLENB-1:0]                w_enB2_mux;
+logic [`VLENB-1:0]                w_enB3_mux;
 
-wire                            w_valid0_chkTrap;
-wire                            w_valid1_chkTrap;
-wire                            w_valid2_chkTrap;
-wire                            w_valid3_chkTrap;
+logic                            w_valid0_chkTrap;
+logic                            w_valid1_chkTrap;
+logic                            w_valid2_chkTrap;
+logic                            w_valid3_chkTrap;
 
 /////////////////////////////////
 ////////////Decode///////////////
@@ -141,15 +141,10 @@ assign w_type1 = rob2rt_write_data[1].w_type;
 assign w_type2 = rob2rt_write_data[2].w_type;
 assign w_type3 = rob2rt_write_data[3].w_type;
 
-
-always@(*) begin
-  for(int i=0; i<`VLENB; i=i+1) begin
-    w_enB0_tmp[i] = (rob2rt_write_data[0].vd_type[i] == 2'b11);
-    w_enB1_tmp[i] = (rob2rt_write_data[1].vd_type[i] == 2'b11);
-    w_enB2_tmp[i] = (rob2rt_write_data[2].vd_type[i] == 2'b11);
-    w_enB3_tmp[i] = (rob2rt_write_data[3].vd_type[i] == 2'b11);
-  end
-end
+assign vd_type0 = rob2rt_write_data[0].vd_type;
+assign vd_type1 = rob2rt_write_data[1].vd_type;
+assign vd_type2 = rob2rt_write_data[2].vd_type;
+assign vd_type3 = rob2rt_write_data[3].vd_type;
 
 assign w_addr0 = rob2rt_write_data[0].w_index;
 assign w_addr1 = rob2rt_write_data[1].w_index;
@@ -219,10 +214,14 @@ always@(*) begin
 end
 
 //2. Mask update if ignore vta/vma
-assign w_enB0 = (ignore_vta0 || ignore_vma0) ? `VLENB'b1 : w_enB0_tmp;
-assign w_enB1 = (ignore_vta1 || ignore_vma1) ? `VLENB'b1 : w_enB1_tmp;
-assign w_enB2 = (ignore_vta2 || ignore_vma2) ? `VLENB'b1 : w_enB2_tmp;
-assign w_enB3 = (ignore_vta3 || ignore_vma3) ? `VLENB'b1 : w_enB3_tmp;
+always@(*) begin
+  for(int i=0; i<`VLENB; i=i+1) begin
+    w_enB0[i] = (!vd_type0[i][1] && ignore_vta0) || (vd_type0[i][1] && (ignore_vma0 || vd_type0[i][0])); //tail ... body
+    w_enB1[i] = (!vd_type1[i][1] && ignore_vta1) || (vd_type1[i][1] && (ignore_vma1 || vd_type1[i][0])); 
+    w_enB2[i] = (!vd_type2[i][1] && ignore_vta2) || (vd_type2[i][1] && (ignore_vma2 || vd_type2[i][0]));
+    w_enB3[i] = (!vd_type3[i][1] && ignore_vta3) || (vd_type3[i][1] && (ignore_vma3 || vd_type3[i][0]));
+  end
+end
 
 //3. Write-After-Write (WAW) check
 //  3.1. WAW among entry0 entry1, for group_req=1
