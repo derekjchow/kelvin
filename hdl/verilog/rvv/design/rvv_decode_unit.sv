@@ -7,7 +7,8 @@
 // 2. Decoder will push 4 uops at most into Uops Queue, so this module only decode to 4 uops at most every time.  
 // 3. If the instruction is in wrong encoding, it will be discarded directly without applying a trap, but take assertion in simulation.
 // 4. The vstart of the instruction will be calculated to a new value for every decoded uops.
-// 5. vmv<nr>r.v instruction will be split to <nr> vmv.v.v uops, which means funct6 and some fields will be modified in new uop. 
+// 5. vmv<nr>r.v instruction will be split to <nr> vmv.v.v uops, which means funct6, funct3, vs1, vs2 fields will be modified in new uop.
+//    However, new uops' vtype.vlmul is not changed to recovery execution right when trap handling is done.
 
 `include 'rvv.svh'
 

@@ -97,7 +97,6 @@ typedef struct packed {
 //
 // It is used to distinguish which execute units that VVV/VVX/VX uop is dispatch to, based on inst_encoding[6:0]
 typedef enum logic [2:0] {
-    NONE,
     ALU,
     PMTRDT,
     MUL,
