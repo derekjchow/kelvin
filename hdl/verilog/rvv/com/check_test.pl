@@ -17,12 +17,18 @@ sub Check {
   foreach (@ARGV) {
     open my $fh, '+<', $_ or die "Open $_ failed: $!";
 
-    my $match = grep m/$p_uvmFail|$p_errFail/g, <$fh>;
+    my $uvmFail = grep m/$p_uvmFail/g, <$fh>;
+    seek($fh, 0, 0);
+    truncate($fh, 0);
+    my $astFail = grep m/$p_errFail/g, <$fh>;
+    my $match = $uvmFail + $astFail;
 
     if($match) {
       print color "bold red";
       print "====FAIL==== $testname\n";
       print $fh "====FAIL==== $testname\n";
+      print "Assert Fail: $astFail\n";
+      print $fh "Assert Fail: $astFail\n";
       print color "reset";
     }
     else {
