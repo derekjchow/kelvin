@@ -470,54 +470,54 @@ module rvv_backend_alu_unit_mask
         
         casez(src2_data_viota[4*j +: 4])
           4'b???0: begin
-            result_data_viota[4*j] = result_data_viota[4*(j-1)]; 
+            result_data_viota[4*j] = result_data_viota[4*j-1]; 
           end
           4'b???1: begin
-            result_data_viota[4*j] = result_data_viota[4*(j-1)]+'d1; 
+            result_data_viota[4*j] = result_data_viota[4*j-1]+'d1; 
           end
         endcase
     
         casez(src2_data_viota[4*j +: 4])
           4'b??00: begin
-            result_data_viota[4*j+1] = result_data_viota[4*(j-1)]; 
+            result_data_viota[4*j+1] = result_data_viota[4*j-1]; 
           end
           4'b??01,
           4'b??10: begin
-            result_data_viota[4*j+1] = result_data_viota[4*(j-1)]+'d1; 
+            result_data_viota[4*j+1] = result_data_viota[4*j-1]+'d1; 
           end
           4'b??11: begin
-            result_data_viota[4*j+1] = result_data_viota[4*(j-1)]+'d2; 
+            result_data_viota[4*j+1] = result_data_viota[4*j-1]+'d2; 
           end
         endcase
     
         casez(src2_data_viota[4*j +: 4])
           4'b?000: begin
-            result_data_viota[4*j+2] = result_data_viota[4*(j-1)]; 
+            result_data_viota[4*j+2] = result_data_viota[4*j-1]; 
           end
           4'b?001,
           4'b?010,
           4'b?100: begin
-            result_data_viota[4*j+2] = result_data_viota[4*(j-1)]+'d1; 
+            result_data_viota[4*j+2] = result_data_viota[4*j-1]+'d1; 
           end
           4'b?011,
           4'b?101,
           4'b?110: begin
-            result_data_viota[4*j+2] = result_data_viota[4*(j-1)]+'d2; 
+            result_data_viota[4*j+2] = result_data_viota[4*j-1]+'d2; 
           end
           4'b?111: begin
-            result_data_viota[4*j+2] = result_data_viota[4*(j-1)]+'d3; 
+            result_data_viota[4*j+2] = result_data_viota[4*j-1]+'d3; 
           end
         endcase
     
         case(src2_data_viota[4*j +: 4])
           4'b0000: begin
-            result_data_viota[4*j+3] = result_data_viota[4*(j-1)]; 
+            result_data_viota[4*j+3] = result_data_viota[4*j-1]; 
           end
           4'b0001,
           4'b0010,
           4'b0100,
           4'b1000: begin
-            result_data_viota[4*j+3] = result_data_viota[4*(j-1)]+'d1; 
+            result_data_viota[4*j+3] = result_data_viota[4*j-1]+'d1; 
           end
           4'b0011,
           4'b0101,
@@ -525,16 +525,16 @@ module rvv_backend_alu_unit_mask
           4'b0110,
           4'b1010,
           4'b1100: begin
-            result_data_viota[4*j+3] = result_data_viota[4*(j-1)]+'d2; 
+            result_data_viota[4*j+3] = result_data_viota[4*j-1]+'d2; 
           end
           4'b0111,
           4'b1011,
           4'b1101,
           4'b1110: begin
-            result_data_viota[4*j+3] = result_data_viota[4*(j-1)]+'d3; 
+            result_data_viota[4*j+3] = result_data_viota[4*j-1]+'d3; 
           end
           4'b1111: begin
-            result_data_viota[4*j+3] = result_data_viota[4*(j-1)]+'d4; 
+            result_data_viota[4*j+3] = result_data_viota[4*j-1]+'d4; 
           end
         endcase
       end
