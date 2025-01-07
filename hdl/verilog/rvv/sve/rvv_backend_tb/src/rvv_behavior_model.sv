@@ -48,6 +48,7 @@ class rvv_behavior_model extends uvm_component;
   extern virtual function void connect_phase(uvm_phase phase);
   extern virtual task reset_phase(uvm_phase phase);
   extern virtual task main_phase(uvm_phase phase);
+  extern virtual function void final_phase(uvm_phase phase);
 
   extern virtual task rx_mdl();
   extern virtual task tx_mdl();
@@ -115,6 +116,16 @@ endclass : rvv_behavior_model
       vrf_mdl();
     join 
   endtask : main_phase 
+
+  function void rvv_behavior_model::final_phase(uvm_phase phase);
+    super.final_phase(phase);
+    if(inst_queue.size()>0) begin
+      `uvm_error("FINAL_CHECK", "inst_queue in MDL wasn't empty!")
+      foreach(inst_queue[idx]) begin
+        `uvm_error("FINAL_CHECK",inst_queue[idx].sprint())
+      end
+    end
+  endfunction: final_phase 
 
   function void rvv_behavior_model::write_inst(rvs_transaction inst_tr);
     `uvm_info("DEBUG", "get a inst", UVM_HIGH)
