@@ -63,7 +63,8 @@ module rvv_alu_unit
   W_DATA_TYPE_t                   w_type;
   logic                           w_valid; 
   logic   [`VCSR_VXSAT-1:0]       vxsat;     
-  logic                           ignore_vta_vma;
+  logic                           ignore_vta;
+  logic                           ignore_vma;
   
   //
   integer                         i;
@@ -71,27 +72,27 @@ module rvv_alu_unit
 // prepare source data to calculate    
 //
   // split ALU_RS_t struct
-  assign  rob_entry       = alu_uop.rob_entry;
-  assign  uop_funct6      = alu_uop.uop_funct6;
-  assign  uop_funct3      = alu_uop.uop_funct3;
-  assign  vstart          = alu_uop.vstart;
-  assign  vm              = alu_uop.vm;
-  assign  vxrm            = alu_uop.vxrm;
-  assign  v0_data         = alu_uop.v0_data;
-  assign  v0_data_valid   = alu_uop.v0_data_valid;
-  assign  vd_data         = alu_uop.vd_data;
-  assign  vd_data_valid   = alu_uop.vd_data_valid;
-  assign  vs1             = alu_uop.vs1;
-  assign  vs1_data        = alu_uop.vs1_data;
-  assign  vs1_eew         = alu_uop.vs1_eew;
-  assign  vs1_data_valid  = alu_uop.vs1_data_valid;
-  assign  vs1_type        = alu_uop.vs1_type;
-  assign  vs2_data        = alu_uop.vs2_data;
-  assign  vs2_eew         = alu_uop.vs2_eew;
-  assign  vs2_data_valid  = alu_uop.vs2_data_valid;
-  assign  vs2_type        = alu_uop.vs2_type;
-  assign  rs1_data        = alu_uop.rs1_data;
-  assign  rs1_data_valid  = alu_uop.rs1_data_valid;
+  assign  rob_entry           = alu_uop.rob_entry;
+  assign  uop_funct6          = alu_uop.uop_funct6;
+  assign  uop_funct3          = alu_uop.uop_funct3;
+  assign  vstart              = alu_uop.vstart;
+  assign  vm                  = alu_uop.vm;
+  assign  vxrm                = alu_uop.vxrm;
+  assign  v0_data             = alu_uop.v0_data;
+  assign  v0_data_valid       = alu_uop.v0_data_valid;
+  assign  vd_data             = alu_uop.vd_data;
+  assign  vd_data_valid       = alu_uop.vd_data_valid;
+  assign  vs1                 = alu_uop.vs1;
+  assign  vs1_data            = alu_uop.vs1_data;
+  assign  vs1_eew             = alu_uop.vs1_eew;
+  assign  vs1_data_valid      = alu_uop.vs1_data_valid;
+  assign  vs1_type            = alu_uop.vs1_type;
+  assign  vs2_data            = alu_uop.vs2_data;
+  assign  vs2_eew             = alu_uop.vs2_eew;
+  assign  vs2_data_valid      = alu_uop.vs2_data_valid;
+  assign  vs2_type            = alu_uop.vs2_type;
+  assign  rs1_data            = alu_uop.rs1_data;
+  assign  rs1_data_valid      = alu_uop.rs1_data_valid;
   
   // prepare source data  
   always_comb begin
@@ -132,12 +133,12 @@ module rvv_alu_unit
               src2_vdata_mask_logic     = vs2_data;
               src1_vdata_vmask_logic    = vs1_data;
               result_valid_vmask_logic  = 1'b1;
-            end else begin
-              `ifdef ASSERT_ON
-              `rvv_expect((vs1_data_valid&vs2_data_valid&vm&vd_data_valid)==1'b1) 
-                else $error("%s uop: rob_entry=%d. vs1_data_valid(%d)&vs2_data_valid(%d)&vm(%d)&vd_data_valid(%d) should be 1'b1.\n",uop_funct6.opm_funct.name(),rob_entry,vs1_data_valid,vs2_data_valid,vm,vd_data_valid);
-              `endif
-            end
+            end 
+
+            `ifdef ASSERT_ON
+            `rvv_expect((vs1_data_valid&vs2_data_valid&vm&vd_data_valid)==1'b1) 
+              else $error("%s uop: rob_entry=%d. vs1_data_valid(%d)&vs2_data_valid(%d)&vm(%d)&vd_data_valid(%d) should be 1'b1.\n",uop_funct6.opm_funct.name(),rob_entry,vs1_data_valid,vs2_data_valid,vm,vd_data_valid);
+            `endif
           end
 
           default: begin
@@ -229,7 +230,8 @@ module rvv_alu_unit
   assign  result_ex2rob.w_type         = w_type;
   assign  result_ex2rob.w_valid        = w_valid;
   assign  result_ex2rob.vxsat          = vxsat;
-  assign  result_ex2rob.ignore_vta_vma = ignore_vta_vma;
+  assign  result_ex2rob.ignore_vta     = ignore_vta;
+  assign  result_ex2rob.ignore_vma     = ignore_vma;
 
   // combine the signals to result_ex2rob struct and submit
   always_comb begin
@@ -239,7 +241,8 @@ module rvv_alu_unit
     w_tpye                = 'b0;
     w_valid               = 'b0;
     vxsat                 = 'b0;
-    ignore_vta_vma        = 'b0;
+    ignore_vta            = 'b0;
+    ignore_vta            = 'b0;
   // submit
     case({alu_uop_valid,uop_funct3}) 
      
@@ -273,7 +276,8 @@ module rvv_alu_unit
             w_type                = VRF;
             w_valid               = 1'b1;
             vxsat                 = 1'b0;
-            ignore_vta_vma        = 1'b1;
+            ignore_vta            = 1'b1;
+            ignore_vma            = 1'b1;
           end
 
         endcase

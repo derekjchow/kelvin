@@ -44,4 +44,28 @@ module rvv_decoder
     // After RVV retire all uops before that exception instruction, RVV response a ready signal for trap application.      
     input   logic                   flush_uopsq_wb2de;   
 
+
+
+
+
+
+
+
+
+
+  // the start uop index of decoding instruction
+  logic   [`UOP_INDEX_WIDTH-1:0]      uop_index_reg_in;      
+  logic   [`UOP_INDEX_WIDTH-1:0]      uop_index_reg_out;     
+  
+  // update uop index    
+  edff #(`UOP_INDEX_WIDTH) uop_index_reg ( 
+    .clk		(clk), 
+		.rst_n	(rst_n), 
+		.e		  (1'b1), 
+		.d		  (uop_index_reg_in),
+		.q		  (uop_index_reg_out)
+	);
+
+
+
 endmodule

@@ -7,6 +7,9 @@
 // the max number of instructions are decoded per cycle in DE stage
 `define NUM_DE_INST             2
 
+// the max number of uops are written to Uops Queue per cycle in DE stage
+`define NUM_DE_UOP              4
+
 // the max number of uops are dispated per cycle in DP stage
 `define NUM_DP_UOP              2
 
@@ -31,8 +34,8 @@
 `define VLEN                    128
 `define VLENB                   `VLEN/8
 
-// vstart <= VLMAX_max and vl <= VLMAX_max, VLMAX_max=VLEN*LMUL_max/SEW_min=128
-`define VSTART_WIDTH            $clog2(`VLEN)+1
+// vstart < VLMAX_max and vl <= VLMAX_max, VLMAX_max=VLEN*LMUL_max/SEW_min=12
+`define VSTART_WIDTH            $clog2(`VLEN)
 `define VL_WIDTH                $clog2(`VLEN)+1
 `define VTYPE_VILL_WIDTH        1
 `define VTYPE_VMA_WIDTH         1
@@ -70,7 +73,8 @@
 // instruction opcode
 `define OPCODE_LOAD             2'b00
 `define OPCODE_STORE            2'b01
-`define OPCODE_ARITH            2'b00
+// configuration(vset*) and arithmetic instructions
+`define OPCODE_ARI_CFG          2'b10
 
 // Reservation Station data width
 `define ALU_RS_WIDTH            $bits(ALU_RS_t)

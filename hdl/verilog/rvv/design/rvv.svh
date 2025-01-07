@@ -97,6 +97,7 @@ typedef struct packed {
 //
 // It is used to distinguish which execute units that VVV/VVX/VX uop is dispatch to, based on inst_encoding[6:0]
 typedef enum logic [2:0] {
+    NONE,
     ALU,
     PMTRDT,
     MUL,
@@ -267,7 +268,7 @@ typedef enum logic {
 
 // combine those signals to LSU_TYPE
 typedef struct packed {
-    logic               rsv;        // reserved
+    logic               reserved;
     LSU_MOP_e           lsu_mop;
     LSU_UMOP_e          lsu_umop;
     LSU_IS_STORE_e      lsu_is_store;
@@ -275,9 +276,9 @@ typedef struct packed {
 
 // function opcode
 typedef union packed {
-    OPI_TYPE_e          opi_funct;
-    OPM_TYPE_e          opm_funct;
-    LSU_TYPE_t          lsu_funct;
+    OPI_TYPE_e          opi_funct6;
+    OPM_TYPE_e          opm_funct6;
+    LSU_TYPE_t          lsu_funct6;
 } FUNCT6_u;
 
 // vs1 field
@@ -312,22 +313,25 @@ typedef struct packed {
     FUNCT6_u                            uop_funct6;
     UOP_CLASS_e                         uop_class;
     VECTOR_CSR_t                        vector_csr;
-
     logic                               vm;                 // Original 32bit instruction encoding: insts[25]
+    logic                               v0_valid;           // when v0_valid=1, v0 will be regarded as a vector operand in this uop, not mask register. Like: vadc.vvm
     logic   [`REGFILE_INDEX_WIDTH-1:0]  vd_index;           // Original 32bit instruction encoding: insts[11:7].this index is also used as vs3 in some uops
     EEW_e                               vd_eew;
     logic                               vd_valid;
-    VS1_u                               vs1;                // when vs1_valid=1, vs1 field is used as vs1_index to address VRF
-    EEW_e                               vs1_eew;            // when vs1_valid=0, vs1 field is used to decode some OPMVV uops
-    logic                               vs1_valid;
-    logic   [`REGFILE_INDEX_WIDTH-1:0]  vs2_index; 	        // Original 32bit instruction encoding: insts[24:20]
+    logic                               vs3_valid;          // when vs3_valid=1, vd will be regarded as a vector operand in this uop.
+    // when vs1_index_valid=1, vs1 field is used as vs1_index to address VRF
+    // when vs1_opcode_valid=0, vs1 field is used to decode some OPMVV uops
+    VS1_u                               vs1;
+    EEW_e                               vs1_eew;
+    logic                               vs1_index_valid;
+    logic                               vs1_opcode_valid;
+    logic   [`REGFILE_INDEX_WIDTH-1:0]  vs2_index;          // Original 32bit instruction encoding: insts[24:20]
     EEW_e                               vs2_eew;
     logic                               vs2_valid;
-    logic   [`REGFILE_INDEX_WIDTH-1:0]  rd_index; 	        // Original 32bit instruction encoding: insts[11:7].
+    logic   [`REGFILE_INDEX_WIDTH-1:0]  rd_index;           // Original 32bit instruction encoding: insts[11:7].
     logic                               rd_index_valid;
-    logic   [`XLEN-1:0] 	            rs1_data;           // rs1_data could be from X[rs1] and imm(insts[19:15]). If it is imm, the 5-bit imm(insts[19:15]) will be sign-extend or zero-extend(shift instructions...) to XLEN-bit.
-    logic        	                    rs1_data_valid;
-
+    logic   [`XLEN-1:0]                 rs1_data;           // rs1_data could be from X[rs1] and imm(insts[19:15]). If it is imm, the 5-bit imm(insts[19:15]) will be sign-extend or zero-extend(shift instructions...) to XLEN-bit.
+    logic                               rs1_data_valid;
     logic   [`UOP_INDEX_WIDTH-1:0]      uop_index;          // used for calculate v0_start in DP stage
     logic                               last_uop_valid;     // one instruction may be split to many uops, this signal is used to specify the last uop in those uops of one instruction.
 } UOP_QUEUE_t;
@@ -357,16 +361,10 @@ typedef enum logic [1:0] {
     BODY_INACTIVE,      // body-inactive byte
     BODY_ACTIVE,        // body-active byte
     TAIL                // tail byte
-} ELE_TYPE_e;
+} BYTE_TYPE_e;
 
 // the max number of byte in a vector register is VLENB
-typedef ELE_TYPE_e [`VLENB-1:0]         ELE_TYPE_t;
-
-// ALU reservation station struct
-typedef union packed {
-    logic [`VLEN-1:0]   v0_data;
-    logic [`VLEN-1:0]   vd_data;
-}VS3_u;
+typedef BYTE_TYPE_e [`VLENB-1:0]        BYTE_TYPE_t;
 
 typedef struct packed {
     logic   [`ROB_DEPTH_WIDTH-1:0]      rob_entry;
@@ -377,24 +375,27 @@ typedef struct packed {
     // vm field can be used to identify vmsbc.v?m/vmsbc.v? uop in the same uop_funct6(6'b010011).
     logic                               vm;
     // rounding mode
-    logic   [`VCSR_VXRM_WIDTH-1:0]            vxrm;
-    // when the uop is vmadc.v?m/vmsbc.v?m, the uop will use v0_data as the third vector operand.
-    // when the uop is mask uop(vmandn,vmand,...), the uop will use vd_data as the third vector operand.
-    VS3_u                               vs3_data;
+    logic   [`VCSR_VXRM-1:0]            vxrm;
+    // when the uop is vmadc.v?m/vmsbc.v?m, the uop will use v0_data as the third vector operand. EEW_v0=1.
+    logic   [`VLENB-1:0]                v0_data;
+    logic                               v0_data_valid;
+    // when the uop is mask uop(vmandn,vmand,...), the uop will use vd_data as the third vector operand. EEW_vd=1.
+    logic   [`VLEN-1:0]                 vd_data;
+    logic                               vd_data_valid;
     // when vs1_data_valid=0, vs1_data is used to decode some OPMVV uops
     // when vs1_data_valid=1, vs1_data is valid as a vector operand
     VS1_u                               vs1;
     logic   [`VLEN-1:0]                 vs1_data;
     EEW_e                               vs1_eew;
     logic                               vs1_data_valid;
-    ELE_TYPE_t                          vs1_type;
+    BYTE_TYPE_t                         vs1_type;
     logic   [`VLEN-1:0]                 vs2_data;
     EEW_e                               vs2_eew;
     logic                               vs2_data_valid;
-    ELE_TYPE_t                          vs2_type;
+    BYTE_TYPE_t                         vs2_type;
     // rs1_data could be from X[rs1] and imm(insts[19:15]). If it is imm, the 5-bit imm(insts[19:15]) will be sign-extend to XLEN-bit. 
-    logic   [`XLEN-1:0] 	              rs1_data;
-    logic        	                      rs1_data_valid;
+    logic   [`XLEN-1:0] 	            rs1_data;
+    logic        	                    rs1_data_valid;
 } ALU_RS_t;
 
 // DIV reservation station struct
@@ -410,10 +411,10 @@ typedef struct packed {
     logic   [`VLEN-1:0]                 vs2_data;
     EEW_e                               vs2_eew;
     logic                               vs2_data_valid;
-    ELE_TYPE_t                          vs2_type;
+    BYTE_TYPE_t                         vs2_type;
     // rs1_data could be from X[rs1] and imm(insts[19:15]). If it is imm, the 5-bit imm(insts[19:15]) will be sign-extend to XLEN-bit.
-    logic   [`XLEN-1:0] 	              rs1_data;
-    logic        	                      rs1_data_valid;
+    logic   [`XLEN-1:0] 	            rs1_data;
+    logic        	                    rs1_data_valid;
 } DIV_RS_t;
 
 // MUL and MAC reservation station struct
@@ -426,17 +427,17 @@ typedef struct packed {
     logic   [`VLEN-1:0]                 vs1_data;
     EEW_e                               vs1_eew;
     logic                               vs1_data_valid;
-    ELE_TYPE_t                          vs1_type;
+    BYTE_TYPE_t                         vs1_type;
     logic   [`VLEN-1:0]                 vs2_data;
     EEW_e                               vs2_eew;
     logic                               vs2_data_valid;
-    ELE_TYPE_t                          vs2_type;
+    BYTE_TYPE_t                         vs2_type;
     logic   [`VLEN-1:0]                 vs3_data;
     EEW_e                               vs3_eew;
     logic                               vs3_data_valid;
-    ELE_TYPE_t                          vs3_type;
+    BYTE_TYPE_t                         vs3_type;
     // rs1_data could be from X[rs1] and imm(insts[19:15]). If it is imm, the 5-bit imm(insts[19:15]) will be sign-extend to XLEN-bit.
-    logic   [`XLEN-1:0] 	              rs1_data;
+    logic   [`XLEN-1:0] 	            rs1_data;
     logic          	                    rs1_data_valid;
 } MUL_RS_t;
 
@@ -453,14 +454,14 @@ typedef struct packed {
     logic   [`VLEN-1:0]                 vs1_data;
     EEW_e                               vs1_eew;
     logic                               vs1_data_valid;
-    ELE_TYPE_t                          vs1_type;
+    BYTE_TYPE_t                         vs1_type;
     logic   [`VLEN-1:0]                 vs2_data;        
     EEW_e                               vs2_eew;
     logic                               vs2_data_valid;
-    ELE_TYPE_t                          vs2_type;
+    BYTE_TYPE_t                         vs2_type;
     // rs1_data could be from X[rs1] and imm(insts[19:15]). If it is imm, the 5-bit imm(insts[19:15]) will be sign-extend to XLEN-bit. 
-    logic   [`XLEN-1:0] 	              rs1_data;
-    logic        	                      rs1_data_valid;
+    logic   [`XLEN-1:0] 	            rs1_data;
+    logic        	                    rs1_data_valid;
     logic                               last_uop_valid;
 } PMT_RDT_RS_t;    
 
@@ -473,11 +474,11 @@ typedef struct packed {
     logic                               vidx_valid;
     logic   [`REGFILE_INDEX_WIDTH-1:0]  vidx_addr;
     logic   [`VLEN-1:0]                 vidx_data;                  // vs2
-    ELE_TYPE_t                          vs2_type;
+    BYTE_TYPE_t                         vs2_type;
     logic                               vregfile_read_valid;
     logic   [`REGFILE_INDEX_WIDTH-1:0]  vregfile_read_addr;
     logic   [`VLEN-1:0]                 vregfile_read_data;         // vs3
-    ELE_TYPE_t                          vs3_type;
+    BYTE_TYPE_t                         vs3_type;
 } LSU_RS_t;
 
 //
@@ -495,8 +496,9 @@ typedef struct packed {
     logic   [`VLEN-1:0]                 w_data;             // when w_type=XRF, w_data[`XLEN-1:0] will store the scalar result
     W_DATA_TYPE_t                       w_type;
     logic                               w_valid;
-    logic   [`VCSR_VXSAT_WIDTH-1:0]           vxsat;
-    logic                               ignore_vta_vma;
+    logic   [`VCSR_VXSAT_WIDTH-1:0]     vxsat;
+    logic                               ignore_vta;
+    logic                               ignore_vma;
 } ALU2ROB_t;
 
 // send uop to LSU
@@ -509,12 +511,12 @@ typedef struct packed {
 	logic                               vidx_valid;
     logic   [`REGFILE_INDEX_WIDTH-1:0]  vidx_addr;
     logic   [`VLEN-1:0]                 vidx_data;             // vs2
-    ELE_TYPE_t                          vs2_type;              // mask for vs2
+    BYTE_TYPE_t                         vs2_type;              // mask for vs2
     // Vector regfile read interface for vst
     logic                               vregfile_read_valid;
     logic   [`REGFILE_INDEX_WIDTH-1:0]  vregfile_read_addr;
     logic   [`VLEN-1:0]                 vregfile_read_data;    // vs3
-    ELE_TYPE_t                          vs3_type;              // mask for vs3
+    BYTE_TYPE_t                         vs3_type;              // mask for vs3
 } UOP_LSU_RVV2RVS_t;
 
 // LSU feedback to RVV
@@ -528,9 +530,9 @@ typedef struct packed {
     LSU_IS_STORE_e                      uop_type;
 
 	// Vector regfile write interface for vld
-  	logic	[`REGFILE_INDEX_WIDTH-1:0] 	  vregfile_write_addr;
-  	logic	[`VLEN-1:0] 			          	vregfile_write_data;  	// vd
-    ELE_TYPE_t                          vs1_type;                // mask for vd
+  	logic	[`REGFILE_INDEX_WIDTH-1:0] 	vregfile_write_addr;
+  	logic	[`VLEN-1:0] 			    vregfile_write_data;  	// vd
+    BYTE_TYPE_t                         vs1_type;               // mask for vd
 } UOP_LSU_RVS2RVV_t;
 
 typedef struct packed {
@@ -539,9 +541,10 @@ typedef struct packed {
     logic   [`VLEN-1:0]                 w_data;             // when w_type=XRF, w_data[`XLEN-1:0] will store the scalar result
     W_DATA_TYPE_t                       w_type;
     logic                               w_valid;
-    ELE_TYPE_t                          vd_type;
+    BYTE_TYPE_t                         vd_type;
     VECTOR_CSR_t                        vector_csr;
-    logic                               ignore_vta_vma;
+    logic                               ignore_vta;
+    logic                               ignore_vma;
 } ROB_t;
 
 //
@@ -550,15 +553,15 @@ typedef struct packed {
 //
 // write back to XRF
 typedef struct packed {
-    logic   [`REGFILE_INDEX_WIDTH-1:0]  rt_index, 
-    logic   [`XLEN-1:0]                 rt_data 
+    logic   [`REGFILE_INDEX_WIDTH-1:0]  rt_index;
+    logic   [`XLEN-1:0]                 rt_data;
 } RT2XRF_data_t;  
 
 // write back to VRF
 typedef struct packed {
-    logic   [`REGFILE_INDEX_WIDTH-1:0]  rt_index, 
-    logic   [`VLEN-1:0]                 rt_data,
-    logic   [`VLENB-1:0]                rt_strobe 
+    logic   [`REGFILE_INDEX_WIDTH-1:0]  rt_index;
+    logic   [`VLEN-1:0]                 rt_data;
+    logic   [`VLENB-1:0]                rt_strobe;
 } RT2VRF_data_t;  
 
 typedef struct packed {
