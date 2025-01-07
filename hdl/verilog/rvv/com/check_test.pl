@@ -18,8 +18,6 @@ sub Check {
     open my $fh, '+<', $_ or die "Open $_ failed: $!";
 
     my $uvmFail = grep m/$p_uvmFail/g, <$fh>;
-    seek($fh, 0, 0);
-    truncate($fh, 0);
     my $astFail = grep m/$p_errFail/g, <$fh>;
     my $match = $uvmFail + $astFail;
 
