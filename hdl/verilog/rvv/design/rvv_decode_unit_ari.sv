@@ -14,7 +14,7 @@ module rvv_decode_unit_ari
 //
   input   logic                                   insts_valid;
   input   INST_t                                  insts;
-  input   logic [`UOP_INDEX_WIDTH-1:0]            uop_index_remain;
+  input   logic       [`UOP_INDEX_WIDTH-1:0]      uop_index_remain;
   
   output  logic       [`NUM_DE_UOP-1:0]           uop_valid;
   output  UOP_QUEUE_t [`NUM_DE_UOP-1:0]           uop;
@@ -39,10 +39,13 @@ module rvv_decode_unit_ari
   logic   [`VSTART_WIDTH-1:0]                     vstart;
   logic   [`XLEN-1:0] 	                          rs1_data;
   
-  logic   [`VTYPE_VLMUL_WIDTH:0]                  emul_max;         // 0000:emul=0, 0001:emul=1, 0010:emul=2,...  
+  logic   [`VTYPE_VLMUL_WIDTH:0]                  emul_vd;          // 0000:emul=0, 0001:emul=1, 0010:emul=2,...  
+  logic   [`VTYPE_VLMUL_WIDTH:0]                  emul_vs2;
+  logic   [`VTYPE_VLMUL_WIDTH:0]                  emul_vs1;
+  logic   [`VTYPE_VLMUL_WIDTH:0]                  emul_max;
   EEW_e                                           eew_vd;          
-  EEW_e                                           eew_vs1;          
-  EEW_e                                           eew_vs2;
+  EEW_e                                           eew_vs2;          
+  EEW_e                                           eew_vs1;
   EEW_e                                           eew_max;          
   logic                                           insts_encoding_correct;
   logic   [`UOP_INDEX_WIDTH-1:0]                  uop_vstart;         
@@ -74,16 +77,10 @@ module rvv_decode_unit_ari
   assign vlmul                = vector_csr_ari.vtype.vlmul;
   assign vstart               = vector_csr_ari.vstart;
   assign rs1_data             = insts.rs1_data;
- 
+  
   // decode funct3
-  assign funct3_ari = ((insts_valid==1'b1)&(vill==1'b0)) ? 
-                      insts_funct3 :
-                      'b0;
-  `ifdef ASSERT_ON
-    `rvv_forbid((insts_valid==1'b1)&(vill==1'b1))
-    else $error("Unsupported vtype.vill=%d.\n",vill);
-  `endif
-
+  assign funct3_ari           = insts_funct3;
+  
   // decode arithmetic instruction funct6
   always_comb begin
     // initial the data
@@ -100,19 +97,15 @@ module rvv_decode_unit_ari
       OPMVX: begin
         funct6_ari.opm_funct6 = insts_funct6;
       end
-
-      default: begin
-        `ifdef ASSERT_ON
-          `rvv_forbid((funct3_ari==OPFVV)|(funct3_ari==OPFVF)|(funct3_ari==OPCFG))
-          else $error("Unsupported funct3_ari=%s.\n",funct3_ari.name());
-        `endif
-      end
     endcase
   end
 
   // get EMUL
   always_comb begin
     // initial
+    emul_vd          = 'b0;
+    emul_vs2         = 'b0;
+    emul_vs1         = 'b0;
     emul_max         = 'b0;
 
     case(funct3_ari)
@@ -146,18 +139,128 @@ module rvv_decode_unit_ari
               `LMUL1_4,
               `LMUL1_2,
               `LMUL1: begin
+                emul_vd     = 4'd1;
+                emul_vs2    = 4'd1;
+                emul_vs1    = 'b0;
                 emul_max    = 4'd1;
               end
               `LMUL2: begin
+                emul_vd     = 4'd2;
+                emul_vs2    = 4'd2;
+                emul_vs1    = 'b0;
                 emul_max    = 4'd2;
               end
               `LMUL4: begin
+                emul_vd     = 4'd4;
+                emul_vs2    = 4'd4;
+                emul_vs1    = 'b0;
                 emul_max    = 4'd4;
               end
               `LMUL8: begin
+                emul_vd     = 4'd8;
+                emul_vs2    = 4'd8;
+                emul_vs1    = 'b0;
                 emul_max    = 4'd8;
               end
             endcase
+          end
+          // some vector register is mask register
+          VMADC,
+          VMSEQ,
+          VMSNE,
+          VMSLEU,
+          VMSLE,
+          VMSGTU,
+          VMSGT: begin
+            case(vlmul)
+              `LMUL1_4,
+              `LMUL1_2,
+              `LMUL1: begin
+                emul_vd     = 4'd1;
+                emul_vs2    = 4'd1;
+                emul_vs1    = 'b0;
+                emul_max    = 4'd1;
+              end
+              `LMUL2: begin
+                emul_vd     = 4'd1;
+                emul_vs2    = 4'd2;
+                emul_vs1    = 'b0;
+                emul_max    = 4'd2;
+              end
+              `LMUL4: begin
+                emul_vd     = 4'd1;
+                emul_vs2    = 4'd4;
+                emul_vs1    = 'b0;
+                emul_max    = 4'd4;
+              end
+              `LMUL8: begin
+                emul_vd     = 4'd1;
+                emul_vs2    = 4'd8;
+                emul_vs1    = 'b0;
+                emul_max    = 4'd8;
+              end
+            endcase
+          end
+          // narrowing instructions
+          VNSRL,
+          VNSRA,
+          VNCLIPU,
+          VNCLIP:begin
+            case(vlmul)
+              `LMUL1_4,
+              `LMUL1_2: begin
+                emul_vd     = 4'd1;
+                emul_vs2    = 4'd1;
+                emul_vs1    = 'b0;
+                emul_max    = 4'd1;
+              end
+              `LMUL1: begin
+                emul_vd     = 4'd1;
+                emul_vs2    = 4'd2;
+                emul_vs1    = 'b0;
+                emul_max    = 4'd2;
+              end
+              `LMUL2: begin
+                emul_vd     = 4'd2;
+                emul_vs2    = 4'd4;
+                emul_vs1    = 'b0;
+                emul_max    = 4'd4;
+              end
+              `LMUL4: begin
+                emul_vd     = 4'd4;
+                emul_vs2    = 4'd8;
+                emul_vs1    = 'b0;
+                emul_max    = 4'd8;
+              end
+            endcase
+          end
+          // vmv<nr>r.v instruction
+          VSMUL_VMVNRR: begin
+            case(insts_vs1[2:0])
+            `NREG1: begin
+                emul_vd     = 4'd1;
+                emul_vs2    = 4'd1;
+                emul_vs1    = 'b0;
+                emul_max    = 4'd1;
+            end
+            `NREG2: begin
+                emul_vd     = 4'd2;
+                emul_vs2    = 4'd2;
+                emul_vs1    = 'b0;
+                emul_max    = 4'd2;
+            end
+            `NREG4: begin
+                emul_vd     = 4'd4;
+                emul_vs2    = 4'd4;
+                emul_vs1    = 'b0;
+                emul_max    = 4'd4;
+            end
+            `NREG8: begin
+                emul_vd     = 4'd8;
+                emul_vs2    = 4'd8;
+                emul_vs1    = 'b0;
+                emul_max    = 4'd8;
+            end
           end
         endcase
       end
@@ -168,18 +271,13 @@ module rvv_decode_unit_ari
         
       end
   end
-
-  `ifdef ASSERT_ON
-    `rvv_expect();
-    $error("Unsupported vtype.vlmul=%d.\n",vlmul);
-  `endif
-
+  
 // get EEW 
   always_comb begin
     // initial
     eew_vd          = 'b0;
-    eew_vs1         = 'b0;
     eew_vs2         = 'b0;
+    eew_vs1         = 'b0;
     eew_max         = 'b0;
 
     case(funct3_ari)
@@ -198,8 +296,10 @@ module rvv_decode_unit_ari
           VOR,
           VXOR,
           VSLL,
+          VSMUL_VMVNRR,
           VSRL,
           VSRA,
+          VMERGE_VMV,
           VSADDU,
           VSADD,
           VSSRL,
@@ -211,79 +311,71 @@ module rvv_decode_unit_ari
               `VSEW8: begin
                 eew_vd      = EEW8;
                 eew_vs2     = EEW8;
+                eew_vs1     = EEW8;
                 eew_max     = EEW8;
               end
               `VSEW16: begin
                 eew_vd      = EEW16;
                 eew_vs2     = EEW16;
+                eew_vs1     = EEW16;
                 eew_max     = EEW16;
               end
               `VSEW32: begin
                 eew_vd      = EEW32;
                 eew_vs2     = EEW32;
+                eew_vs1     = EEW32;
                 eew_max     = EEW32;
               end
             endcase
           end
 
-          VMADC: begin
+          VMADC,
+          VMSEQ,
+          VMSNE,
+          VMSLEU,
+          VMSLE,
+          VMSGTU,
+          VMSGT: begin
             case(vsew)
               `VSEW8: begin
                 eew_vd      = EEW1;
                 eew_vs2     = EEW8;
+                eew_vs1     = EEW8;
                 eew_max     = EEW8;
               end
               `VSEW16: begin
                 eew_vd      = EEW1;
                 eew_vs2     = EEW16;
+                eew_vs1     = EEW16;
                 eew_max     = EEW16;
               end
               `VSEW32: begin
                 eew_vd      = EEW1;
                 eew_vs2     = EEW32;
+                eew_vs1     = EEW32;
                 eew_max     = EEW32;
               end
             endcase
           end
 
-          VMERGE_VMV: begin
-            if (insts_vm==1'b1) begin
-              // when vm=1, it's vmv.v.i
-              case(vsew)
-                `VSEW8: begin
-                  eew_vd      = EEW1;
-                  eew_max     = EEW8;
-                end
-                `VSEW16: begin
-                  eew_vd      = EEW1;
-                  eew_max     = EEW16;
-                end
-                `VSEW32: begin
-                  eew_vd      = EEW1;
-                  eew_max     = EEW32;
-                end
-              endcase
-            end
-            else begin
-              // when vm=0, it's vmerge
-              case(vsew)
-                `VSEW8: begin
-                  eew_vd      = EEW1;
-                  eew_vs2     = EEW8;
-                  eew_max     = EEW8;
-                end
-                `VSEW16: begin
-                  eew_vd      = EEW1;
-                  eew_vs2     = EEW16;
-                  eew_max     = EEW16;
-                end
-                `VSEW32: begin
-                  eew_vd      = EEW1;
-                  eew_vs2     = EEW32;
-                  eew_max     = EEW32;
-                end
-              endcase
-            end
+          VNSRL,
+          VNSRA,
+          VNCLIPU,
+          VNCLIP: begin
+            case(vsew)
+              `VSEW8: begin
+                eew_vd      = EEW8;
+                eew_vs2     = EEW16;
+                eew_vs1     = EEW8;
+                eew_max     = EEW16;
+              end
+              `VSEW16: begin
+                eew_vd      = EEW16;
+                eew_vs2     = EEW32;
+                eew_vs1     = EEW16;
+                eew_max     = EEW32;
+              end
+            endcase
           end
         endcase
       end
@@ -294,11 +386,14 @@ module rvv_decode_unit_ari
         
       end
   end
-
+  
   // opcode error check
   always_comb 
     insts_encoding_correct                = 'b0;
     
+    //
+    // check special requirements for every instructions
+    //
     case(funct3_ari)
       OPMVV,
       OPMVX: begin
@@ -320,10 +415,20 @@ module rvv_decode_unit_ari
           VSLL,
           VSRL,
           VSRA,
+          VNSRL,
+          VNSRA,
+          VMSEQ,
+          VMSNE,
+          VMSLEU,
+          VMSLE,
+          VMSGTU,
+          VMSGT,
           VSADDU,
           VSADD,
           VSSRL,
           VSSRA,
+          VNCLIPU,
+          VNCLIP,
           VSLIDEUP,
           VSLIDEDOWN,
           VRGATHER: begin
@@ -344,23 +449,48 @@ module rvv_decode_unit_ari
             if ((insts_vm==1'b0)|((insts_vm==1'b1)&(insts_vs2==5'b0)))
               insts_encoding_correct          = 1'b1;          
             `ifdef ASSERT_ON
-              `rvv_forbid((insts_vm==1'b0)|((insts_vm==1'b1)&(insts_vs2==5'b0)))
+              `rvv_expect((insts_vm==1'b0)|((insts_vm==1'b1)&(insts_vs2==5'b0)))
               else $error("Unsupported insts_vm=%d and vs2=%d in %s instruction.\n",insts_vm,insts_vs2,funct6_ari.opi_funct6.name());
+            `endif
+          end
+          
+          VSMUL_VMVNRR: begin
+            if ((insts_vm == 1'b1)&(insts_vs1[4:3]==2'b0)&((insts_vs1[2:0]==`NREG1)|(insts_vs1[2:0]==`NREG2)|(insts_vs1[2:0]==`NREG4)|(insts_vs1[2:0]==`NREG8)))
+              insts_encoding_correct          = 1'b1;          
+            `ifdef ASSERT_ON
+              `rvv_expect(insts_vm==1'b0)
+              else $error("Unsupported insts_vm=%d in vmv<nr>r instruction.\n",insts_vm,funct6_ari.opi_funct6.name());
+
+              `rvv_expect(insts_vs1[4:3]==2'b0)
+              else $error("insts_vs1[4:3]=%d should be 0 in vmv<nr>r instruction.\n",insts_vs1[4:3]);
+            
+              `rvv_expect((insts_vs1[2:0]==`NREG1)|(insts_vs1[2:0]==`NREG2)|(insts_vs1[2:0]==`NREG4)|(insts_vs1[2:0]==`NREG8))
+              else $error("Unsupported insts_vs1[2:0]=%d in vmv<nr>r instruction.\n",insts_vs1[2:0]);
             `endif
           end
         endcase
       end
+
+      default: begin
+        `ifdef ASSERT_ON
+          `rvv_forbid((insts_encoding_correct=1'b1)&(funct3_ari==OPFVV)|(funct3_ari==OPFVF)|(funct3_ari==OPCFG))
+          else $error("Unsupported funct3_ari=%s.\n",funct3_ari.name());
+        `endif
+      end
     endcase
 
-    // check whether vd is aligned to emul_max
-    case(emul_max)
+    //
+    // check common requirements for all instructions
+    //
+    // check whether vd is aligned to emul_vd
+    case(emul_vd)
       4'd2: begin
         if (insts_vd[0]!=1'b0)
           insts_encoding_correct          = 'b0;
         
         `ifdef ASSERT_ON
           `rvv_forbid(insts_vd[0]!=1'b0)
-          else $error("vd is not aligned to emul_max(%d).\n",emul_max);
+          else $error("vd is not aligned to emul_vd(%d).\n",emul_vd);
         `endif
       end
       4'd4: begin
@@ -369,7 +499,7 @@ module rvv_decode_unit_ari
         
         `ifdef ASSERT_ON
           `rvv_forbid(insts_vd[1:0]!=2'b0)
-          else $error("vd is not aligned to emul_max(%d).\n",emul_max);
+          else $error("vd is not aligned to emul_vd(%d).\n",emul_vd);
         `endif
       end
       4'd8: begin
@@ -378,20 +508,20 @@ module rvv_decode_unit_ari
        
         `ifdef ASSERT_ON
           `rvv_forbid(insts_vd[2:0]!=3'b0)        
-          else $error("vd is not aligned to emul_max(%d).\n",emul_max);
+          else $error("vd is not aligned to emul_vd(%d).\n",emul_vd);
         `endif
       end
     endcase
     
-    // check whether vs2 is aligned to emul_max
-    case(emul_max)
+    // check whether vs2 is aligned to emul_vs2
+    case(emul_vs2)
       4'd2: begin
         if (insts_vs2[0]!=1'b0)
           insts_encoding_correct          = 'b0;
         
         `ifdef ASSERT_ON
           `rvv_forbid(insts_vs2[0]!=1'b0)
-          else $error("vs2 is not aligned to emul_max(%d).\n",emul_max);
+          else $error("vs2 is not aligned to emul_vs2(%d).\n",emul_vs2);
         `endif
       end
       4'd4: begin
@@ -400,7 +530,7 @@ module rvv_decode_unit_ari
         
         `ifdef ASSERT_ON
           `rvv_forbid(insts_vs2[1:0]!=2'b0)
-          else $error("vs2 is not aligned to emul_max(%d).\n",emul_max);
+          else $error("vs2 is not aligned to emul_vs2(%d).\n",emul_vs2);
         `endif
       end
       4'd8: begin
@@ -409,14 +539,25 @@ module rvv_decode_unit_ari
        
         `ifdef ASSERT_ON
           `rvv_forbid(insts_vs2[2:0]!=3'b0)        
-          else $error("vs2 is not aligned to emul_max(%d).\n",emul_max);
+          else $error("vs2 is not aligned to emul_vs2(%d).\n",emul_vs2);
         `endif
       end
     endcase
     
-    // check whether vs1 is aligned to emul_max
+    // check whether vs1 is aligned to emul_vs1
  
 
+    // check vector register overlap??
+    
+
+    // check vtype.vill
+    if (!(insts_valid==1'b1)&(vill==1'b0))
+        insts_encoding_correct            = 'b0;
+
+    `ifdef ASSERT_ON
+      `rvv_forbid((insts_valid==1'b1)&(vill==1'b1))
+      else $error("Unsupported vtype.vill=%d.\n",vill);
+    `endif
   end
 
   // get the start number of uop_index
@@ -424,7 +565,7 @@ module rvv_decode_unit_ari
     // initial
     uop_vstart      = 'b0;
 
-    case(eew_mul)
+    case(eew_max)
       EEW8: begin
         uop_vstart  = vstart[4 +: `UOP_INDEX_WIDTH];
       end
@@ -453,17 +594,50 @@ module rvv_decode_unit_ari
   // generate uop valid
   always_comb begin        
   for(i=0;i<`NUM_DE_UOP;i=i+1) begin: GET_UOP_VALID
-    // initial 
-    uop_valid[i]    = 'b0;
-
     if (uop_index_current[i]<emul_max) 
       uop_valid[i]  = insts_encoding_correct;
+    else
+      uop_valid[i]  = 'b0;
   end
 
   // assign uop pc
   always_comb
     for(i=0;i<`NUM_DE_UOP;i=i+1) begin: GET_UOP_PC
       uop[i].uop_pc = insts_pc;
+    end
+  end
+
+  // update uop funct3
+  always_comb
+    for(i=0;i<`NUM_DE_UOP;i=i+1) begin: GET_UOP_FUNCT3
+      uop[i].uop_funct3  = funct3_ari;
+    end
+  end
+
+  // update uop funct6
+  always_comb
+    for(i=0;i<`NUM_DE_UOP;i=i+1) begin: GET_UOP_FUNCT6
+      // initial
+      uop[i].uop_funct6.opi_funct6          = 'b0;
+
+      case(funct3_ari)
+        OPIVV,
+        OPIVX,
+        OPIVI: begin
+          case(funct6_ari.opi_funct6)
+            //
+            
+            default: begin
+              uop[i].uop_funct6.opi_funct6  = insts_funct6; 
+            end
+          endcase
+        end
+  
+        OPMVV,
+        OPMVX: begin
+          uop[i].uop_funct6.opm_funct6      = insts_funct6;
+        end
+      endcase
     end
   end
 
@@ -493,13 +667,24 @@ module rvv_decode_unit_ari
             VOR,
             VXOR,
             VSLL,
+            VSMUL_VMVNRR,
             VSRL,
             VSRA,
+            VNSRL,
+            VNSRA,
+            VMSEQ,
+            VMSNE,
+            VMSLEU,
+            VMSLE,
+            VMSGTU,
+            VMSGT,
             VMERGE_VMV,
             VSADDU,
             VSADD,
             VSSRL,
-            VSSRA: begin
+            VSSRA,
+            VNCLIPU,
+            VNCLIP: begin
               uop[i].uop_exe_unit = ALU;
             end 
             
@@ -509,50 +694,16 @@ module rvv_decode_unit_ari
               uop[i].uop_exe_unit = PMTRDT;
             end
           endcase
-          
-        default: begin
-          `ifdef ASSERT_ON
-            `rvv_forbid((funct3_ari==OPFVV)|(funct3_ari==OPFVF)|(funct3_ari==OPCFG))
-            else $error("Unsupported funct3_ari=%s.\n",funct3_ari.name());
-          `endif
         end
       endcase
 
       `ifdef ASSERT_ON
-        `rvv_forbid(uop[i].uop_exe_unit==NONE)
+        `rvv_forbid((insts_encoding_correct==1'b1)&(uop[i].uop_exe_unit==NONE))
         else $error("Wrong execution unit: %s.\n",uop[i].uop_exe_unit.name());
       `endif
     end
   end
  
-  // update uop funct3
-  always_comb
-    for(i=0;i<`NUM_DE_UOP;i=i+1) begin: GET_UOP_FUNCT3
-      uop[i].uop_funct3  = funct3_ari;
-    end
-  end
-
-  // update uop funct6
-  always_comb
-    for(i=0;i<`NUM_DE_UOP;i=i+1) begin: GET_UOP_FUNCT6
-      // initial
-      uop[i].uop_funct6.opi_funct6    = 'b0;
-
-      case(funct3_ari)
-        OPIVV,
-        OPIVX,
-        OPIVI: begin
-          uop[i].uop_funct6.opi_funct6  = insts_funct6;
-        end
-  
-        OPMVV,
-        OPMVX: begin
-          uop[i].uop_funct6.opm_funct6  = insts_funct6;
-        end
-      endcase
-    end
-  end
-
   // update uop class
   always_comb
     for(i=0;i<`NUM_DE_UOP;i=i+1) begin: GET_UOP_CLASS
@@ -575,13 +726,24 @@ module rvv_decode_unit_ari
             VOR,
             VXOR,
             VSLL,
+            VSMUL_VMVNRR,
             VSRL,
             VSRA,
+            VNSRL,
+            VNSRA,
+            VMSEQ,
+            VMSNE,
+            VMSLEU,
+            VMSLE,
+            VMSGTU,
+            VMSGT,
             VMERGE_VMV,
             VSADDU,
             VSADD,
             VSSRL,
             VSSRA,
+            VNCLIPU,
+            VNCLIP,
             VSLIDEUP,
             VSLIDEDOWN,
             VRGATHER: begin
@@ -611,11 +773,11 @@ module rvv_decode_unit_ari
       // update vstart of every uop
       if(uop_index_current[i]=={1'b0,uop_vstart})
         uop[i].vector_csr.vstart    = vstart;
-      else if (vsew==`VSEW8)
+      else if (eew_max==EEW8)
         uop[i].vector_csr.vstart    = {uop_index_current[i][`UOP_INDEX_WIDTH-1:0],4'b0};
-      else if (vsew==`VSEW16)
+      else if (eew_max==EEW16)
         uop[i].vector_csr.vstart    = {1'b0,uop_index_current[i][`UOP_INDEX_WIDTH-1:0],3'b0};
-      else if (vsew==`VSEW32)
+      else if (eew_max==EEW32)
         uop[i].vector_csr.vstart    = {2'b0,uop_index_current[i][`UOP_INDEX_WIDTH-1:0],2'b0};
     end
   end
@@ -681,6 +843,7 @@ module rvv_decode_unit_ari
             VOR,
             VXOR,
             VSLL,
+            VSMUL_VMVNRR,
             VSRL,
             VSRA,
             VMERGE_VMV,
@@ -688,6 +851,8 @@ module rvv_decode_unit_ari
             VSADD,
             VSSRL,
             VSSRA,
+            VNCLIPU,
+            VNCLIP,
             VSLIDEUP,
             VSLIDEDOWN,
             VRGATHER: begin
@@ -696,10 +861,16 @@ module rvv_decode_unit_ari
               uop[i].vd_valid = 1'b1;
             end 
             
-            VMADC: begin
+            VMADC,
+            VMSEQ,
+            VMSNE,
+            VMSLEU,
+            VMSLE,
+            VMSGTU,
+            VMSGT: begin
               uop[i].vd_index = insts_vd;
               uop[i].vd_eew   = eew_vd;
-          u   op[i].vd_valid = 1'b1;
+              op[i].vd_valid  = 1'b1;
             end
           endcase
         end
@@ -728,7 +899,13 @@ module rvv_decode_unit_ari
         end
         OPIVI: begin
           case(funct6_ari.opi_funct6)
-            VMADC: begin
+            VMADC,
+            VMSEQ,
+            VMSNE,
+            VMSLEU,
+            VMSLE,
+            VMSGTU,
+            VMSGT: begin
               uop[i].vs3_valid = 1'b1;
             end
         end
@@ -830,8 +1007,8 @@ module rvv_decode_unit_ari
   always_comb
     for(i=0;i<`NUM_DE_UOP;i=i+1) begin: GET_RD
       // initial
-      uop[i].rd_index               = 'b0;
-      uop[i].rd_index_valid         = 'b0;
+      uop[i].rd_index         = 'b0;
+      uop[i].rd_index_valid   = 'b0;
       
       case(funct3_ari)
         OPIVV: begin
@@ -876,6 +1053,12 @@ module rvv_decode_unit_ari
             VAND,
             VOR,
             VXOR,
+            VMSEQ,
+            VMSNE,
+            VMSLEU,
+            VMSLE,
+            VMSGTU,
+            VMSGT,
             VMERGE_VMV,
             VSADDU,
             VSADD: begin
@@ -889,12 +1072,23 @@ module rvv_decode_unit_ari
             VSSRL,
             VSSRA: begin
               // zero-extended 
-              if (vsew==`VSEW8)
+              if (eew_vs1==EEW8)
                 uop[i].rs1_data         = {29'b0,insts_imm[2:0]};
-              else if (vsew==`VSEW16)
+              else if (eew_vs1==EEW16)
                 uop[i].rs1_data         = {28'b0,insts_imm[3:0]};
-              else if (vsew==`VSEW32)
+              else if (eew_vs1==EEW32)
                 uop[i].rs1_data         = {27'b0,insts_imm[4:0]};
+            end
+            
+            VNCLIPU,
+            VNCLIP: begin
+              // they will zero-extend log2(2*EEW)-width insts_imm to XLEN-width
+              if (eew_vs1==EEW8)
+                uop[i].rs1_data         = {28'b0,insts_imm[3:0]};
+              else if (eew_vs1==EEW16)
+                uop[i].rs1_data         = {27'b0,insts_imm[4:0]};
+              else if (eew_vs1==EEW32)
+                uop[i].rs1_data         = {26'b0,insts_imm[5:0]};
             end
             
             VSLIDEUP,
@@ -943,14 +1137,14 @@ module rvv_decode_unit_ari
   // update uop index
   always_comb
     for(i=0;i<`NUM_DE_UOP;i=i+1) begin: GET_UOP_INDEX
-      uop[i].uop_index = uop_index_current;
+      uop[i].uop_index = uop_index_current[i];
     end
   end
 
   // update last_uop valid
   always_comb
     for(i=0;i<`NUM_DE_UOP;i=i+1) begin: GET_UOP_LAST
-      uop[i].last_uop_valid = (uop_index_current == (emul_max-`VTYPE_VLMUL_WIDTH'd1));
+      uop[i].last_uop_valid = (uop_index_current[i] == (emul_max-`VTYPE_VLMUL_WIDTH'd1));
     end
   end
 

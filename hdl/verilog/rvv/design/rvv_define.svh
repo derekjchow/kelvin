@@ -70,6 +70,12 @@
 `define SEW16                   3'b001
 `define SEW32                   3'b010
 
+// <nr> field used in vmv<nr>.v instruction
+`define NREG1                   3'b000
+`define NREG2                   3'b001
+`define NREG4                   3'b011
+`define NREG8                   3'b111
+
 // instruction opcode
 `define OPCODE_LOAD             2'b00
 `define OPCODE_STORE            2'b01
