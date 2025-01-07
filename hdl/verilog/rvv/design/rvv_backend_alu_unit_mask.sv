@@ -345,8 +345,8 @@ module rvv_backend_alu_unit_mask
 //    
 // calculate the result
 //
-  assign result_data_andn  = f_and (src2_data,src1_data);  
-  assign result_data_and   = f_andn(src2_data,src1_data);  
+  assign result_data_and   = f_and (src2_data,src1_data);  
+  assign result_data_andn  = f_andn(src2_data,src1_data);  
   assign result_data_or    = f_or  (src2_data,src1_data);  
   assign result_data_xor   = f_xor (src2_data,src1_data);  
   assign result_data_orn   = f_orn (src2_data,src1_data);  
