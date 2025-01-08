@@ -4310,7 +4310,23 @@ module rvv_backend_decode_unit_ari
         valid_opi: begin
           // OPI*
           case(funct6_ari.ari_funct6)
-            VMADC,
+            VMADC: begin
+              case(inst_funct3)
+                OPIVV,
+                OPIVX,
+                OPIVI: begin
+                  uop[i].vs3_valid = 1'b1;
+                end
+              endcase
+            end
+            VMSBC: begin
+              case(inst_funct3)
+                OPIVV,
+                OPIVX: begin
+                  uop[i].vs3_valid = 1'b1;
+                end
+              endcase
+            end
             VMSEQ,
             VMSNE,
             VMSLEU,
@@ -4323,7 +4339,6 @@ module rvv_backend_decode_unit_ari
                 end
               endcase
             end
-            VMSBC,
             VMSLTU,
             VMSLT: begin
               case(inst_funct3)
