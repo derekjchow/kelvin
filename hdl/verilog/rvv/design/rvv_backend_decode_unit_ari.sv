@@ -2674,7 +2674,7 @@ module rvv_backend_decode_unit_ari
                   assert(inst_vm==1'b0)
                     else $error("Unsupported inst_vm=%d in %d instruction.\n",inst_vm,funct6_ari.ari_funct6);
                   
-                  assert(inst_vd==1'b1)
+                  assert(inst_vd!='b0)
                     else $warning("inst_vd(%d) cannot overlap v0 in %d instruction.\n",inst_vd,funct6_ari.ari_funct6);
                 `endif
               end
@@ -2704,7 +2704,7 @@ module rvv_backend_decode_unit_ari
                   assert(inst_vm==1'b0)
                     else $error("Unsupported inst_vm=%d in %d instruction.\n",inst_vm,funct6_ari.ari_funct6);
                   
-                  assert(inst_vd==1'b1)
+                  assert(inst_vd!='b0)
                     else $warning("inst_vd(%d) cannot overlap v0 in %d instruction.\n",inst_vd,funct6_ari.ari_funct6);
                 `endif
               end
