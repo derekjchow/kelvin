@@ -100,10 +100,10 @@ module rvv_backend_alu_unit_other
         v0_data_in_use = v0_data[{uop_index,{($clog2(`VLENB)){1'b0}}} +: `VLENB];
       end
       EEW16: begin
-        v0_data_in_use = v0_data[{uop_index,{($clog2(`VLENB/2)){1'b0}}} +: `VLENB];
+        v0_data_in_use = {{(`VLENB/2){1'b0}}, v0_data[{uop_index,{($clog2(`VLENB/2)){1'b0}}} +: `VLENB/2]};
       end
       EEW32: begin
-        v0_data_in_use = v0_data[{uop_index,{($clog2(`VLENB/4)){1'b0}}} +: `VLENB];
+        v0_data_in_use = {{(`VLENB*3/4){1'b0}}, v0_data[{uop_index,{($clog2(`VLENB/4)){1'b0}}} +: `VLENB/4]};
       end
     endcase
   end

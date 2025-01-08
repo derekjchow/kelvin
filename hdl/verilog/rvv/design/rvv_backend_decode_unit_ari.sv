@@ -4881,7 +4881,13 @@ module rvv_backend_decode_unit_ari
                       uop[i].vs2_eew      = eew_vs2;
                       uop[i].vs2_valid    = 1'b1;
                     end
+                    {EMUL4,EMUL2},
                     {EMUL8,EMUL4}: begin
+                      uop[i].vs2_index    = inst_vs2+uop_index_current[i][`UOP_INDEX_WIDTH-1:1];
+                      uop[i].vs2_eew      = eew_vs2;
+                      uop[i].vs2_valid    = 1'b1;
+                    end
+                    {EMUL8,EMUL2}: begin
                       uop[i].vs2_index    = inst_vs2+uop_index_current[i][`UOP_INDEX_WIDTH-1:2];
                       uop[i].vs2_eew      = eew_vs2;
                       uop[i].vs2_valid    = 1'b1;

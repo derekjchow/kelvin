@@ -27,6 +27,8 @@ module rvv_backend_alu_unit_addsub
   logic   [`ROB_DEPTH_WIDTH-1:0]  rob_entry;
   FUNCT6_u                        uop_funct6;
   logic   [`FUNCT3_WIDTH-1:0]     uop_funct3;
+  logic   [`VSTART_WIDTH-1:0]     vstart;
+  logic   [`VL_WIDTH-1:0]         vl;       
   logic                           vm;       
   RVVXRM                          vxrm;       
   logic   [`VLEN-1:0]             v0_data;
@@ -87,6 +89,8 @@ module rvv_backend_alu_unit_addsub
   assign  rob_entry      = alu_uop.rob_entry;
   assign  uop_funct6     = alu_uop.uop_funct6;
   assign  uop_funct3     = alu_uop.uop_funct3;
+  assign  vstart         = alu_uop.vstart;
+  assign  vl             = alu_uop.vl;
   assign  vm             = alu_uop.vm;
   assign  vxrm           = alu_uop.vxrm;
   assign  v0_data        = alu_uop.v0_data;
@@ -110,10 +114,10 @@ module rvv_backend_alu_unit_addsub
         v0_data_in_use = v0_data[{uop_index,{($clog2(`VLENB)){1'b0}}} +: `VLENB];
       end
       EEW16: begin
-        v0_data_in_use = v0_data[{uop_index,{($clog2(`VLENB/2)){1'b0}}} +: `VLENB];
+        v0_data_in_use = {{(`VLENB/2){1'b0}}, v0_data[{uop_index,{($clog2(`VLENB/2)){1'b0}}} +: `VLENB/2]};
       end
       EEW32: begin
-        v0_data_in_use = v0_data[{uop_index,{($clog2(`VLENB/4)){1'b0}}} +: `VLENB];
+        v0_data_in_use = {{(`VLENB*3/4){1'b0}}, v0_data[{uop_index,{($clog2(`VLENB/4)){1'b0}}} +: `VLENB/4]};
       end
     endcase
   end
@@ -237,7 +241,7 @@ module rvv_backend_alu_unit_addsub
 
           VMADC,
           VMSBC: begin
-            if (vs2_data_valid&vs1_data_valid&vd_data_valid&(vm^v0_data_valid)) begin
+            if (vs2_data_valid&rs1_data_valid&vd_data_valid&(vm^v0_data_valid)) begin
               result_valid = 'b1;
             end
 
@@ -1646,21 +1650,26 @@ module rvv_backend_alu_unit_addsub
   assign  result.ignore_vma = ignore_vma;
 
   // result data 
-  always_comb begin
-    w_data = result_data_rg;
+  for (j=0;j<`VLEN;j++) begin: GET_W_DATA
+    always_comb begin
+      w_data[j] = result_data_rg[j];
 
-    case(uop_funct3) 
-      OPIVV,
-      OPIVX,
-      OPIVI: begin
-        case(uop_funct6.ari_funct6)
-          VMADC,
-          VMSBC: begin
-            w_data = (result_data_sp&mask_sp_bit2) | (vd_data&(~mask_sp_bit2)); 
-          end
-        endcase
-      end
-    endcase
+      case(uop_funct3) 
+        OPIVV,
+        OPIVX,
+        OPIVI: begin
+          case(uop_funct6.ari_funct6)
+            VMADC,
+            VMSBC: begin
+              if ((j>=vstart)&(j<vl))
+                w_data[j] = (result_data_sp[j]&mask_sp_bit2[j]); 
+              else
+                w_data[j] = vd_data[j];
+            end
+          endcase
+        end
+      endcase
+    end
   end
 
   // result type and valid signal
