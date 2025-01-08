@@ -349,7 +349,7 @@ module rvv_backend_div_unit
         .result_quotient    (quotient8[j]),
         .result_remainder   (remainder8[j]),
         .result_valid       (result_valid8[j]),
-        .result_ready       (result_ready)
+        .result_ready       (result_ready&result_valid)
       );     
     end
   endgenerate 
@@ -371,7 +371,7 @@ module rvv_backend_div_unit
         .result_quotient    (quotient16[j]),
         .result_remainder   (remainder16[j]),
         .result_valid       (result_valid16[j]),
-        .result_ready       (result_ready)
+        .result_ready       (result_ready&result_valid)
       );     
     end
   endgenerate 
@@ -393,7 +393,7 @@ module rvv_backend_div_unit
         .result_quotient    (quotient32[j]),
         .result_remainder   (remainder32[j]),
         .result_valid       (result_valid32[j]),
-        .result_ready       (result_ready)
+        .result_ready       (result_ready&result_valid)
       );     
     end
   endgenerate

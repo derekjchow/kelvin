@@ -268,6 +268,12 @@ module rvv_backend_div_unit_divider
             remainder_en = 'b1;
             remainder_d  = src2_dividend;
 
+            q_sgn_en = 'b1;
+            q_sgn_d  = 'b0;
+
+            r_sgn_en = 'b1;
+            r_sgn_d  = 'b0;
+
             count_en = 'b1;
             count_d  = 'b1;
           end
@@ -278,6 +284,12 @@ module rvv_backend_div_unit_divider
 
             remainder_en = 'b1;
             remainder_d  = 'b0;
+
+            q_sgn_en = 'b1;
+            q_sgn_d  = 'b0;
+
+            r_sgn_en = 'b1;
+            r_sgn_d  = 'b0;
 
             count_en = 'b1;
             count_d  = 'b1;
