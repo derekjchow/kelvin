@@ -64,7 +64,10 @@ module rvv_backend_alu_unit_mask
   logic   [`VLEN-1:0]                     result_data_vmsbf;
   logic   [`VLEN-1:0]                     result_data_vfirst;
   logic   [`VLEN/16-1:0][4:0]             result_data_vcpop;
-  logic   [`VLEN-1:0][$clog2(`VLEN)-1:0]  result_data_viota;
+  logic   [`VLEN-1:0][$clog2(`VLEN)-1:0]               result_data_viota;
+  logic   [`VLEN/4-1:0][$clog2(`VLEN/4)-1:0]           result_data_viota_pct25;
+  logic   [`VLEN/4-1:0][$clog2(`VLEN/4)-1:0]           result_data_viota_pct50;
+  logic   [`VLEN/2-1:0][$clog2(`VLEN/2)-1:0]           result_data_viota_pct100;
   logic   [`VLENB-1:0][$clog2(`VLEN)-1:0]              result_data_viota8;
   logic   [`VLEN/`HWORD_WIDTH-1:0][$clog2(`VLEN)-1:0]  result_data_viota16;
   logic   [`VLEN/`WORD_WIDTH-1:0][$clog2(`VLEN)-1:0]   result_data_viota32;
@@ -330,9 +333,9 @@ module rvv_backend_alu_unit_mask
               end
               VIOTA: begin
                 if (vm==1'b1)
-                  src2_data_viota = {vs2_data,1'b0};
+                  src2_data_viota = vs2_data;
                 else
-                  src2_data_viota = {vs2_data&v0_data,1'b0}; 
+                  src2_data_viota = vs2_data&v0_data; 
               end
               // no source operand for VID
             endcase
@@ -383,178 +386,45 @@ module rvv_backend_alu_unit_mask
   endgenerate
 
   // viota 
-  always_comb begin
-    result_data_viota[0] = 'b0;
-    result_data_viota[1] = 'b0;
-    result_data_viota[2] = 'b0;
-    result_data_viota[3] = 'b0;
-    
-    casez(src2_data_viota[3:0])
-      4'b???0: begin
-        result_data_viota[0] = 'b0; 
-      end
-      4'b???1: begin
-        result_data_viota[0] = 'd1; 
-      end
-    endcase
+  assign result_data_viota_pct25[0]  = 'b0;
+  assign result_data_viota_pct50[0]  = 'b0;
+  assign result_data_viota_pct100[0] = 'b0;
 
-    casez(src2_data_viota[3:0])
-      4'b??00: begin
-        result_data_viota[1] = 'b0; 
-      end
-      4'b??01,
-      4'b??10: begin
-        result_data_viota[1] = 'd1; 
-      end
-      4'b??11: begin
-        result_data_viota[1] = 'd2; 
-      end
-    endcase
+  generate
+    for(j=1; j<`VLEN/4;j++) begin: VIOTA_PCT25
+      assign result_data_viota_pct25[j] = src2_data_viota[j-1]+result_data_viota_pct25[j-1];
+    end
 
-    casez(src2_data_viota[3:0])
-      4'b?000: begin
-        result_data_viota[2] = 'b0; 
-      end
-      4'b?001,
-      4'b?010,
-      4'b?100: begin
-        result_data_viota[2] = 'd1; 
-      end
-      4'b?011,
-      4'b?101,
-      4'b?110: begin
-        result_data_viota[2] = 'd2; 
-      end
-      4'b?111: begin
-        result_data_viota[2] = 'd3; 
-      end
-    endcase
+    for(j=1; j<`VLEN/4;j++) begin: VIOTA_PCT50
+      assign result_data_viota_pct50[j] = src2_data_viota[`VLEN/4+j-1]+result_data_viota_pct50[j-1];
+    end
 
-    case(src2_data_viota[3:0])
-      4'b0000: begin
-        result_data_viota[3] = 'b0; 
-      end
-      4'b0001,
-      4'b0010,
-      4'b0100,
-      4'b1000: begin
-        result_data_viota[3] = 'd1; 
-      end
-      4'b0011,
-      4'b0101,
-      4'b1001,
-      4'b0110,
-      4'b1010,
-      4'b1100: begin
-        result_data_viota[3] = 'd2; 
-      end
-      4'b0111,
-      4'b1011,
-      4'b1101,
-      4'b1110: begin
-        result_data_viota[3] = 'd3; 
-      end
-      4'b1111: begin
-        result_data_viota[3] = 'd4; 
-      end
-    endcase
-  end 
+    for(j=1; j<`VLEN/2;j++) begin: VIOTA_PCT100
+      assign result_data_viota_pct100[j] = src2_data_viota[`VLEN/2+j-1]+result_data_viota_pct100[j-1];
+    end
+  endgenerate
 
-  generate 
-    for(j=1;j<`VLEN/4;j++) begin: GET_VIOTA
-      always_comb begin
-        result_data_viota[4*j  ] = 'b0;
-        result_data_viota[4*j+1] = 'b0;
-        result_data_viota[4*j+2] = 'b0;
-        result_data_viota[4*j+3] = 'b0;
-        
-        casez(src2_data_viota[4*j +: 4])
-          4'b???0: begin
-            result_data_viota[4*j] = result_data_viota[4*j-1]; 
-          end
-          4'b???1: begin
-            result_data_viota[4*j] = result_data_viota[4*j-1]+'d1; 
-          end
-        endcase
-    
-        casez(src2_data_viota[4*j +: 4])
-          4'b??00: begin
-            result_data_viota[4*j+1] = result_data_viota[4*j-1]; 
-          end
-          4'b??01,
-          4'b??10: begin
-            result_data_viota[4*j+1] = result_data_viota[4*j-1]+'d1; 
-          end
-          4'b??11: begin
-            result_data_viota[4*j+1] = result_data_viota[4*j-1]+'d2; 
-          end
-        endcase
-    
-        casez(src2_data_viota[4*j +: 4])
-          4'b?000: begin
-            result_data_viota[4*j+2] = result_data_viota[4*j-1]; 
-          end
-          4'b?001,
-          4'b?010,
-          4'b?100: begin
-            result_data_viota[4*j+2] = result_data_viota[4*j-1]+'d1; 
-          end
-          4'b?011,
-          4'b?101,
-          4'b?110: begin
-            result_data_viota[4*j+2] = result_data_viota[4*j-1]+'d2; 
-          end
-          4'b?111: begin
-            result_data_viota[4*j+2] = result_data_viota[4*j-1]+'d3; 
-          end
-        endcase
-    
-        case(src2_data_viota[4*j +: 4])
-          4'b0000: begin
-            result_data_viota[4*j+3] = result_data_viota[4*j-1]; 
-          end
-          4'b0001,
-          4'b0010,
-          4'b0100,
-          4'b1000: begin
-            result_data_viota[4*j+3] = result_data_viota[4*j-1]+'d1; 
-          end
-          4'b0011,
-          4'b0101,
-          4'b1001,
-          4'b0110,
-          4'b1010,
-          4'b1100: begin
-            result_data_viota[4*j+3] = result_data_viota[4*j-1]+'d2; 
-          end
-          4'b0111,
-          4'b1011,
-          4'b1101,
-          4'b1110: begin
-            result_data_viota[4*j+3] = result_data_viota[4*j-1]+'d3; 
-          end
-          4'b1111: begin
-            result_data_viota[4*j+3] = result_data_viota[4*j-1]+'d4; 
-          end
-        endcase
-      end
+  generate
+    for(j=0; j<`VLEN;j++) begin: GET_VIOTA
+      if (j<`VLEN/4)
+        assign result_data_viota[j] = result_data_viota_pct25[j];
+      else if (j<`VLEN/2)
+        assign result_data_viota[j] = result_data_viota_pct50[j-`VLEN/4]+result_data_viota_pct25[`VLEN/4-1];
+      else
+        assign result_data_viota[j] = result_data_viota_pct100[j-`VLEN/2]+result_data_viota_pct50[`VLEN/4-1];
     end
   endgenerate
   
   generate
-    for(j=0; j<`VLENB;j++) begin
+    for(j=0; j<`VLENB;j++) begin: GET_VIOTA8
       assign result_data_viota8[j] = result_data_viota[{uop_index,j[$clog2(`VLENB)-1:0]}];
     end
-  endgenerate
 
-  generate
-    for(j=0; j<`VLEN/`HWORD_WIDTH;j++) begin
+    for(j=0; j<`VLEN/`HWORD_WIDTH;j++) begin: GET_VIOTA16
       assign result_data_viota16[j] = result_data_viota[{uop_index,j[$clog2(`VLEN/`HWORD_WIDTH)-1:0]}];
     end
-  endgenerate
 
-  generate
-    for(j=0; j<`VLEN/`WORD_WIDTH;j++) begin
+    for(j=0; j<`VLEN/`WORD_WIDTH;j++) begin: GET_VIOTA32
       assign result_data_viota32[j] = result_data_viota[{uop_index,j[$clog2(`VLEN/`WORD_WIDTH)-1:0]}];
     end
   endgenerate
