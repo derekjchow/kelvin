@@ -45,7 +45,7 @@ module rvv_backend_div_unit
   logic        	                  rs1_data_valid;
 
   // execute 
-  // add and sub instructions
+  logic                                                 uop_valid;
   logic   [`VLENB/2-1:0][`BYTE_WIDTH-1:0]               src2_data8;
   logic   [`VLEN/`HWORD_WIDTH/2-1:0][`HWORD_WIDTH-1:0]  src2_data16;
   logic   [`VLEN/`WORD_WIDTH-1:0][`WORD_WIDTH-1:0]      src2_data32;
@@ -96,7 +96,7 @@ module rvv_backend_div_unit
   // prepare valid signal
   always_comb begin
     // initial the data
-    result_valid = 'b0;
+    uop_valid = 'b0;
 
     case({div_uop_valid,uop_funct3}) 
       {1'b1,OPMVV}: begin
@@ -106,7 +106,7 @@ module rvv_backend_div_unit
           VREMU,
           VREM: begin
             if (vs2_data_valid&vs1_data_valid) begin
-              result_valid = 'b1;
+              uop_valid = 'b1;
             end
 
             `ifdef ASSERT_ON
@@ -126,7 +126,7 @@ module rvv_backend_div_unit
           VREMU,
           VREM: begin
             if (vs2_data_valid&rs1_data_valid) begin
-              result_valid = 'b1;
+              uop_valid = 'b1;
             end
 
             `ifdef ASSERT_ON
@@ -342,7 +342,7 @@ module rvv_backend_div_unit
       (
         .clk                (clk),
         .rst_n              (rst_n),
-        .div_valid          (div_uop_valid),
+        .div_valid          (uop_valid),
         .opcode             (opcode), 
         .src2_dividend      (src2_data8[j]),
         .src1_divisor       (src1_data8[j]),
@@ -364,7 +364,7 @@ module rvv_backend_div_unit
       (
         .clk                (clk),
         .rst_n              (rst_n),
-        .div_valid          (div_uop_valid),
+        .div_valid          (uop_valid),
         .opcode             (opcode), 
         .src2_dividend      (src2_data16[j]),
         .src1_divisor       (src1_data16[j]),
@@ -386,7 +386,7 @@ module rvv_backend_div_unit
       (
         .clk                (clk),
         .rst_n              (rst_n),
-        .div_valid          (div_uop_valid),
+        .div_valid          (uop_valid),
         .opcode             (opcode), 
         .src2_dividend      (src2_data32[j]),
         .src1_divisor       (src1_data32[j]),
@@ -504,8 +504,11 @@ module rvv_backend_div_unit
   // result data
   assign w_data = result_data;
 
+  // result valid
+  assign result_valid = result_all_valid;
+
   // result type and valid signal
-  assign w_valid = result_valid&result_all_valid;
+  assign w_valid = result_all_valid;
 
   // saturate signal
   assign vxsat = 'b0;
