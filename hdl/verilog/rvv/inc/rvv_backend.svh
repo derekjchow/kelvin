@@ -547,6 +547,7 @@ typedef struct packed {
     BYTE_TYPE_t                         vd_type;            //wr Byte mask
     logic                               trap_flag;          //whether this entry in a trap
     VECTOR_CSR_t                        vector_csr;         //Receive Vstart, vlen,... And need to update vcsr when trap
+    logic   [`VCSR_VXSAT_WIDTH-1:0]     vxsat;              //Update saturation bit
     logic                               ignore_vta;
     logic                               ignore_vma;
 } ROB2RT_t;
