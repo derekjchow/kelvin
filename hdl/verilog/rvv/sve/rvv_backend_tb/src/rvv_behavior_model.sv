@@ -202,7 +202,7 @@ endclass : rvv_behavior_model
         pc = inst_tr.pc;
         is_mask_inst = inst_tr.inst_type == ALU && (inst_tr.alu_inst inside {VMAND});
         is_widen_inst = inst_tr.inst_type == ALU && (inst_tr.alu_inst inside {VWADDU, VWADD, VWADDU_W, VWADD_W, VWSUBU, VWSUB, VWSUBU_W, VWSUB_W, 
-                                                                              VWMUL, VWMULU, VWMULSU});
+                                                                              VWMUL, VWMULU, VWMULSU, VWMACCU, VWMACC, VWMACCUS, VWMACCSU});
         is_widen_vs2_inst = inst_tr.inst_type == ALU && (inst_tr.alu_inst inside {VWADD_W, VWADDU_W, VWSUBU_W, VWSUB_W});
         is_narrow_inst = inst_tr.inst_type == ALU && (inst_tr.alu_inst inside {VNSRL, VNSRA});
         use_vm_to_cal = inst_tr.use_vm_to_cal;
