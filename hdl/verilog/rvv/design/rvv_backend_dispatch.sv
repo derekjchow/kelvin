@@ -180,6 +180,7 @@ module rvv_backend_dispatch
             assign strct_uop[i].vs1_index = uop_uop2dp[i].vs1;
             assign strct_uop[i].vs2_index = uop_uop2dp[i].vs2_index;
             assign strct_uop[i].vd_index  = uop_uop2dp[i].vd_index;
+            assign strct_uop[i].vs3_valid = uop_uop2dp[i].vs3_valid;
             assign strct_uop[i].uop_exe_unit = uop_uop2dp[i].uop_exe_unit;
             assign strct_uop[i].uop_class = uop_uop2dp[i].uop_class;
         end
@@ -208,8 +209,10 @@ module rvv_backend_dispatch
         for (i=0; i<`NUM_DP_UOP; i++) begin : gen_bypass
             assign vrf_byp[i].vs1 = rd_data_vrf2dp[2*i+1];
             assign vrf_byp[i].vs2 = rd_data_vrf2dp[2*i];
-            if (i == 0) assign vrf_byp[i].vd  = rd_data_vrf2dp[3]; // i == 0
-            else        assign vrf_byp[i].vd  = rd_data_vrf2dp[1]; // i == 1
+            if (i == 0) assign vrf_byp[i].vd = uop_uop2dp[i].uop_class == VV ? rd_data_vrf2dp[1] // i == 0
+                                                                             : rd_data_vrf2dp[3];
+            else        assign vrf_byp[i].vd = uop_uop2dp[i].uop_class == VV ? rd_data_vrf2dp[3] // i == 1
+                                                                             : rd_data_vrf2dp[1];
             assign vrf_byp[i].v0  = v0_mask_vrf2dp;
 
             rvv_backend_dispatch_bypass #(
