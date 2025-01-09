@@ -33,7 +33,7 @@ module rvv_backend_retire(/*AUTOARG*/
 
 // ROB dataout
     input   logic    [`NUM_RT_UOP-1:0]  rob2rt_write_valid;
-    input   ROB_RT_t [`NUM_RT_UOP-1:0]  rob2rt_write_data;
+    input   ROB2RT_t [`NUM_RT_UOP-1:0]  rob2rt_write_data;
     output  logic    [`NUM_RT_UOP-1:0]  rob2rt_write_ready;
 
 // write back to XRF
@@ -49,7 +49,7 @@ module rvv_backend_retire(/*AUTOARG*/
 
 // vxsat
     output  logic                       rt2vsat_write_valid;
-    output  logic   [`VCSR_VXSAT-1:0]   rt2vsat_write_data;
+    output  logic   [`VCSR_VXSAT_WIDTH-1:0]   rt2vsat_write_data;
 
 ////////////Wires & Regs  ///////////////
 wire w_type0;
@@ -57,10 +57,15 @@ wire w_type1;
 wire w_type2;
 wire w_type3;
 
-wire [`VLENB-1:0] w_enB0_tmp, w_enB0;
-wire [`VLENB-1:0] w_enB1_tmp, w_enB1;
-wire [`VLENB-1:0] w_enB2_tmp, w_enB2;
-wire [`VLENB-1:0] w_enB3_tmp, w_enB3;
+reg [`VLENB-1:0] w_enB0_tmp;
+reg [`VLENB-1:0] w_enB1_tmp;
+reg [`VLENB-1:0] w_enB2_tmp;
+reg [`VLENB-1:0] w_enB3_tmp;
+
+wire [`VLENB-1:0] w_enB0;
+wire [`VLENB-1:0] w_enB1;
+wire [`VLENB-1:0] w_enB2;
+wire [`VLENB-1:0] w_enB3;
 
 wire [`REGFILE_INDEX_WIDTH-1:0] w_addr0;
 wire [`REGFILE_INDEX_WIDTH-1:0] w_addr1;
@@ -87,10 +92,10 @@ VECTOR_CSR_t w_vcsr1;
 VECTOR_CSR_t w_vcsr2;
 VECTOR_CSR_t w_vcsr3;
 
-wire [`VCSR_VXSAT-1:0] w_vxsat0;
-wire [`VCSR_VXSAT-1:0] w_vxsat1;
-wire [`VCSR_VXSAT-1:0] w_vxsat2;
-wire [`VCSR_VXSAT-1:0] w_vxsat3;
+wire [`VCSR_VXSAT_WIDTH-1:0] w_vxsat0;
+wire [`VCSR_VXSAT_WIDTH-1:0] w_vxsat1;
+wire [`VCSR_VXSAT_WIDTH-1:0] w_vxsat2;
+wire [`VCSR_VXSAT_WIDTH-1:0] w_vxsat3;
 
 wire ignore_vta0;
 wire ignore_vta1;
@@ -129,7 +134,7 @@ assign w_type3 = rob2rt_write_data[3].w_type;
 
 integer i;
 always@(*) begin
-  for (i==0; i<`VLENB; i=i+1) begin
+  for (i=0; i<`VLENB; i=i+1) begin
     w_enB0_tmp[i] = (rob2rt_write_data[0].vd_type[i] == 2'b11);
     w_enB1_tmp[i] = (rob2rt_write_data[1].vd_type[i] == 2'b11);
     w_enB2_tmp[i] = (rob2rt_write_data[2].vd_type[i] == 2'b11);
@@ -213,7 +218,7 @@ assign w_enB3 = (ignore_vta3 && ignore_vma3) ? `VLENB'b1 : w_enB3_tmp;
 //2. Write-After-Write (WAW) check
 //  2.1. WAW among entry0 entry1, for group_req=1
 always@(*) begin
-  for (i==0; i<`VLENB; i=i+1) begin
+  for (i=0; i<`VLENB; i=i+1) begin
     //when enB1[i]=enB0[i]=1, update enB0 to 0
     w_enB0_waw01_int[i] = w_enB0[i] && !w_enB1[i];
   end //end for
@@ -221,7 +226,7 @@ end
 
 //  2.2. WAW among entry0 entry1 entry2, for group_req=2
 always@(*) begin
-  for (i==0; i<`VLENB; i=i+1) begin
+  for (i=0; i<`VLENB; i=i+1) begin
     if (w_addr1 == w_addr2) begin //check waw12 first
       w_enB1_waw012_int[i] = w_enB1[i] && !w_enB2[i];
       if (w_addr0 == w_addr1) begin //waw012 all happens
@@ -248,7 +253,7 @@ end//end always
 
 //  2.3. WAW among entry0 entry1 entry2 entry3, for group_req=3
 always@(*) begin
-  for (i==0; i<`VLENB; i=i+1) begin
+  for (i=0; i<`VLENB; i=i+1) begin
     if (w_addr2 == w_addr3) begin//check waw23 first
       w_enB2_waw0123_int[i] = w_enB2[i] && !w_enB3[i];
       if (w_addr1 == w_addr2) begin //2=3, 1=2
@@ -402,7 +407,7 @@ assign rt2vcsr_write_valid = (w_valid0 && trap_flag0) ? w_valid0 :
 assign rt2vcsr_write_data =  (w_valid0 && trap_flag0) ? w_vcsr0 : 
                              (w_valid1 && trap_flag1) ? w_vcsr1 :
                              (w_valid2 && trap_flag2) ? w_vcsr2 :
-                             (w_valid3 && trap_flag3) ? w_vcsr3 : VECTOR_CSR_t'b0;
+                             (w_valid3 && trap_flag3) ? w_vcsr3 : 'b0;
 
 //  4.5. To vsat
 assign rt2vsat_write_valid = (w_valid3 && w_vxsat3) || (w_valid2 && w_vxsat2) || (w_valid1 && w_vxsat1) || (w_valid0 && w_vxsat0);

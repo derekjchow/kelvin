@@ -129,8 +129,7 @@ typedef enum logic [5:0] {
     VOR             =   6'b001_010,
     VXOR            =   6'b001_011,
     VRGATHER        =   6'b001_100,
-    VSLIDEUP        =   6'b001_110,
-    // VRGATHEREI16    =   6'b001_110,  // Overlaps with VSLIDEUP
+    VSLIDEUP_RGATHEREI16    =   6'b001_110,
     VSLIDEDOWN      =   6'b001_111,
     VADC            =   6'b010_000,
     VMADC           =   6'b010_001,
@@ -253,10 +252,10 @@ typedef enum logic [1:0] {
 
 // It identifys what unit-stride instruction when LSU_MOP_e=US, based on inst_encoding[24:20]
 typedef enum logic [1:0] {
-    LSU_UMOP_US,         // Unit-Stride load/store
-    LSU_UMOP_WR,         // Whole Register load/store
-    LSU_UMOP_MK,         // MasK load/store, EEW=8(inst_encoding[14:12]=3'b000)
-    LSU_UMOP_FF          // Fault-only-First load
+    US_US,         // Unit-Stride load/store
+    US_WR,         // Whole Register load/store
+    US_MK,         // MasK load/store, EEW=8(inst_encoding[14:12]=3'b000)
+    US_FF          // Faul-only-First load
 } LSU_UMOP_e;
 
 // It identifys what inst_encoding[11:7] is used for when LSU instruction, based on inst_encoding[5]
@@ -284,7 +283,7 @@ typedef union packed {
 typedef union packed {
     OPM_VWXUNARY0_e                     vwxunary0_funct;
     OPM_VXUNARY0_e                      vxunary0_funct;
-    OPM_VMXUNARY0_e                     vmxunary0_funct;
+    OPM_VMUNARY0_e                      vmxunary0_funct;
     logic   [`REGFILE_INDEX_WIDTH-1:0]  vs1_index;
 } VS1_u;
 
@@ -363,6 +362,25 @@ typedef enum logic [1:0] {
     BODY_ACTIVE   = 2'b11       // body-active byte
 } BYTE_TYPE_e;
 
+// ReOrder Buffer data struct
+typedef enum logic [0:0] {
+    VRF,
+    XRF
+} W_DATA_TYPE_e;
+
+// trap handle
+typedef enum logic [1:0] {
+    TRAP_DECODE,             // RVS find some illegal instructions when decoding, 
+                             // which means a trap occurs to the instruction that is NOT executing in RVV.
+                             // So RVV will stop receiving new instructions from RVS, and complete all instructions in RVV.
+    TRAP_LSU,                // RVS find some illegal instructions when complete LSU transaction, like bus error,
+                             // which means a trap occurs to the instruction that is executing in RVV.
+                             // So RVV will top CQ to receive new instructions and flush Command Queue and Uops Queue, 
+                             // and complete the instructions in EX, ME and WB stage. And RVS need to send rob_entry of that exception instruction.
+                             // After RVV retire all uops before that exception instruction, RVV response a ready signal for trap application.
+    TRAP_LSU_FF              // fault only first load, need to confirm whether has TLB or not.
+} TRAP_INFO_e;
+
 // the max number of byte in a vector register is VLENB
 typedef BYTE_TYPE_e [`VLENB-1:0]        BYTE_TYPE_t;
 
@@ -375,7 +393,7 @@ typedef struct packed {
     // vm field can be used to identify vmsbc.v?m/vmsbc.v? uop in the same uop_funct6(6'b010011).
     logic                               vm;
     // rounding mode
-    logic   [`VCSR_VXRM-1:0]            vxrm;
+    logic   [`VCSR_VXRM_WIDTH-1:0]      vxrm;
     // when the uop is vmadc.v?m/vmsbc.v?m, the uop will use v0_data as the third vector operand. EEW_v0=1.
     logic   [`VLENB-1:0]                v0_data;
     logic                               v0_data_valid;
@@ -424,7 +442,7 @@ typedef struct packed {
     logic   [`ROB_DEPTH_WIDTH-1:0]      rob_entry;
     FUNCT6_u                            uop_funct6;
     EXE_FUNCT3_e                        uop_funct3;
-    logic   [`VCSR_VXRM_WIDTH-1:0]            vxrm;             // rounding mode
+    logic   [`VCSR_VXRM_WIDTH-1:0]      vxrm;               // rounding mode 
 
     logic   [`VLEN-1:0]                 vs1_data;
     EEW_e                               vs1_eew;
@@ -498,7 +516,7 @@ typedef enum logic {
 typedef struct packed {
     logic   [`ROB_DEPTH_WIDTH-1:0]      rob_entry;
     logic   [`VLEN-1:0]                 w_data;             // when w_type=XRF, w_data[`XLEN-1:0] will store the scalar result
-    W_DATA_TYPE_t                       w_type;
+    W_DATA_TYPE_e                       w_type;
     logic                               w_valid;
     logic   [`VCSR_VXSAT_WIDTH-1:0]     vxsat;
     logic                               ignore_vta;
@@ -543,7 +561,7 @@ typedef struct packed {
     logic                               w_valid;            //entry valid
     logic   [`REGFILE_INDEX_WIDTH-1:0]  w_index;            //wr addr
     logic   [`VLEN-1:0]                 w_data;             //when w_type=XRF, w_data[`XLEN-1:0] will store the scalar result
-    W_DATA_TYPE_t                       w_type;             //to VRF or XRF
+    W_DATA_TYPE_e                       w_type;             //to VRF or XRF
     BYTE_TYPE_t                         vd_type;            //wr Byte mask
     logic                               trap_flag;          //whether this entry in a trap
     VECTOR_CSR_t                        vector_csr;         //Receive Vstart, vlen,... And need to update vcsr when trap
@@ -580,18 +598,6 @@ typedef struct packed {
 }RT2VRF_t;
 
 // trap handle
-typedef enum logic [1:0] {
-    TRAP_INFO_DECODE,   // RVS find some illegal instructions when decoding,
-                        // which means a trap occurs to the instruction that is NOT executing in RVV.
-                        // So RVV will stop receiving new instructions from RVS, and complete all instructions in RVV.
-    TRAP_INFO_LSU,      // RVS find some illegal instructions when complete LSU transaction, like bus error,
-                        // which means a trap occurs to the instruction that is executing in RVV.
-                        // So RVV will top CQ to receive new instructions and flush Command Queue and Uops Queue,
-                        // and complete the instructions in EX, ME and WB stage. And RVS need to send rob_entry of that exception instruction.
-                        // After RVV retire all uops before that exception instruction, RVV response a ready signal for trap application.
-    TRAP_INFO_LSU_FF    // fault only first load, need to confirm whether has TLB or not.
-} TRAP_INFO_e;
-
 typedef struct packed {
     logic                               trap_apply;
     TRAP_INFO_e                         trap_info;
