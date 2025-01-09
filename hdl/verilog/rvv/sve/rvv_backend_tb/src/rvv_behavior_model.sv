@@ -212,16 +212,8 @@ endclass : rvv_behavior_model
           `uvm_warning("MDL/INST_CHECKER", $sformatf("pc=0x%8x: vrsub.vv is ignored.",pc))
           continue;
         end
-        if(inst_tr.inst_type == ALU && inst_tr.alu_inst == VSUB && inst_tr.src2_type == VRF && inst_tr.src1_type == IMM) begin
-          `uvm_warning("MDL/INST_CHECKER", $sformatf("pc=0x%8x: vsub.vi is ignored.",pc))
-          continue;
-        end
-        if(inst_tr.inst_type == ALU && inst_tr.alu_inst == VMSBC && inst_tr.alu_type == OPIVI) begin
-          `uvm_warning("MDL/INST_CHECKER", $sformatf("pc=0x%8x: vmsbc.vi/.vim is ignored.",pc))
-          continue;
-        end
-        if(inst_tr.inst_type == ALU && inst_tr.alu_inst == VSBC && inst_tr.alu_type == OPIVI) begin
-          `uvm_warning("MDL/INST_CHECKER", $sformatf("pc=0x%8x: vsbc.vi/.vim is ignored.",pc))
+        if(inst_tr.inst_type == ALU && inst_tr.alu_type == OPIVI && (inst_tr.alu_inst inside {VSUB, VMSBC, VSBC, VMINU, VMIN, VMAXU, VMAX})) begin
+          `uvm_warning("MDL/INST_CHECKER", $sformatf("pc=0x%8x: OPIVI of %0s is ignored.",pc,inst_tr.alu_type.name()))
           continue;
         end
 
