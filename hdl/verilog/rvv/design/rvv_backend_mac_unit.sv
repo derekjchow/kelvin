@@ -34,6 +34,8 @@ logic [`VLEN-1:0]             mac_uop_vs2_data;
 logic                         mac_uop_vs2_valid;
 logic [`XLEN-1:0]             mac_uop_rs1_data;
 logic                         mac_uop_rs1_valid;
+logic [`VLEN-1:0]             mac_uop_vs3_data;
+logic                         mac_uop_vs3_valid;
 logic                         mac_uop_index;
 
 logic                         is_vv; //1:op*vv; 0:op*vx
