@@ -535,16 +535,16 @@ typedef struct packed {
 } UOP_LSU_RVS2RVV_t;
 
 typedef struct packed {
-    logic                               valid;              // Total valid
-    logic   [`REGFILE_INDEX_WIDTH-1:0]  w_index;
-    logic   [`VLEN-1:0]                 w_data;             // when w_type=XRF, w_data[`XLEN-1:0] will store the scalar result
-    W_DATA_TYPE_t                       w_type;
-    logic                               w_valid;
-    BYTE_TYPE_t                         vd_type;
-    VECTOR_CSR_t                        vector_csr;
+    logic                               w_valid;            //entry valid
+    logic   [`REGFILE_INDEX_WIDTH-1:0]  w_index;            //wr addr
+    logic   [`VLEN-1:0]                 w_data;             //when w_type=XRF, w_data[`XLEN-1:0] will store the scalar result
+    W_DATA_TYPE_t                       w_type;             //to VRF or XRF
+    BYTE_TYPE_t                         vd_type;            //wr Byte mask
+    logic                               trap_flag;          //whether this entry in a trap
+    VECTOR_CSR_t                        vector_csr;         //Receive Vstart, vlen,... And need to update vcsr when trap
     logic                               ignore_vta;
     logic                               ignore_vma;
-} ROB_t;
+} ROB2RT_t;
 
 //
 // WB stage, bypass and write back to VRF/XRF, trap handler
