@@ -330,6 +330,7 @@ typedef struct packed {
     logic   [`REGFILE_INDEX_WIDTH-1:0]  rd_index;           // Original 32bit instruction encoding: insts[11:7].
     logic                               rd_index_valid;
     logic   [`XLEN-1:0]                 rs1_data;           // rs1_data could be from X[rs1] and imm(insts[19:15]). If it is imm, the 5-bit imm(insts[19:15]) will be sign-extend or zero-extend(shift instructions...) to XLEN-bit.
+    EEW_e                               scalar_eew;
     logic                               rs1_data_valid;
     logic   [`UOP_INDEX_WIDTH-1:0]      uop_index;          // used for calculate v0_start in DP stage
     logic                               last_uop_valid;     // one instruction may be split to many uops, this signal is used to specify the last uop in those uops of one instruction.
@@ -394,6 +395,7 @@ typedef struct packed {
     BYTE_TYPE_t                         vs2_type;
     // rs1_data could be from X[rs1] and imm(insts[19:15]). If it is imm, the 5-bit imm(insts[19:15]) will be sign-extend to XLEN-bit. 
     logic   [`XLEN-1:0] 	            rs1_data;
+    EEW_e                               scalar_eew;
     logic        	                    rs1_data_valid;
 } ALU_RS_t;
 
@@ -413,6 +415,7 @@ typedef struct packed {
     BYTE_TYPE_t                         vs2_type;
     // rs1_data could be from X[rs1] and imm(insts[19:15]). If it is imm, the 5-bit imm(insts[19:15]) will be sign-extend to XLEN-bit.
     logic   [`XLEN-1:0] 	            rs1_data;
+    EEW_e                               scalar_eew;
     logic        	                    rs1_data_valid;
 } DIV_RS_t;
 
@@ -437,6 +440,7 @@ typedef struct packed {
     BYTE_TYPE_t                         vs3_type;
     // rs1_data could be from X[rs1] and imm(insts[19:15]). If it is imm, the 5-bit imm(insts[19:15]) will be sign-extend to XLEN-bit.
     logic   [`XLEN-1:0] 	            rs1_data;
+    EEW_e                               scalar_eew;
     logic          	                    rs1_data_valid;
 } MUL_RS_t;
 
@@ -460,6 +464,7 @@ typedef struct packed {
     BYTE_TYPE_t                         vs2_type;
     // rs1_data could be from X[rs1] and imm(insts[19:15]). If it is imm, the 5-bit imm(insts[19:15]) will be sign-extend to XLEN-bit. 
     logic   [`XLEN-1:0] 	            rs1_data;
+    EEW_e                               scalar_eew;
     logic        	                    rs1_data_valid;
     logic                               last_uop_valid;
 } PMT_RDT_RS_t;    
