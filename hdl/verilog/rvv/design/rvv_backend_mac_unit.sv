@@ -211,8 +211,8 @@ always@(*) begin
           is_vmac = 1'b1;
         end
         VWMACCU : begin
-          mac_src2 = mac_uop_vs2_valid ? mac_uop_vs2_data : `VLEN'b0;
-          mac_src1 = mac_uop_vs1_valid ? mac_uop_vs1_data : `VLEN'b0;
+          mac_src2 = mac_uop_vs2_valid ? {64'b0,mac_uop_vs2_data[mac_uop_index*64 +: 64]} : `VLEN'b0;
+          mac_src1 = mac_uop_vs1_valid ? {64'b0,mac_uop_vs1_data[mac_uop_index*64 +: 64]} : `VLEN'b0;
           mac_addsrc = mac_uop_vs3_valid ? mac_uop_vs3_data : `VLEN'b0;
           mac_src2_is_signed = 1'b0;
           mac_src1_is_signed = 1'b0;
@@ -223,8 +223,8 @@ always@(*) begin
           is_vmac = 1'b1;
         end
         VWMACC : begin
-          mac_src2 = mac_uop_vs2_valid ? mac_uop_vs2_data : `VLEN'b0;
-          mac_src1 = mac_uop_vs1_valid ? mac_uop_vs1_data : `VLEN'b0;
+          mac_src2 = mac_uop_vs2_valid ? {64'b0,mac_uop_vs2_data[mac_uop_index*64 +: 64]} : `VLEN'b0;
+          mac_src1 = mac_uop_vs1_valid ? {64'b0,mac_uop_vs1_data[mac_uop_index*64 +: 64]} : `VLEN'b0;
           mac_addsrc = mac_uop_vs3_valid ? mac_uop_vs3_data : `VLEN'b0;
           mac_src2_is_signed = 1'b1;
           mac_src1_is_signed = 1'b1;
@@ -235,8 +235,8 @@ always@(*) begin
           is_vmac = 1'b1;
         end
         VWMACCSU : begin
-          mac_src2 = mac_uop_vs2_valid ? mac_uop_vs2_data : `VLEN'b0;
-          mac_src1 = mac_uop_vs1_valid ? mac_uop_vs1_data : `VLEN'b0;
+          mac_src2 = mac_uop_vs2_valid ? {64'b0,mac_uop_vs2_data[mac_uop_index*64 +: 64]} : `VLEN'b0;
+          mac_src1 = mac_uop_vs1_valid ? {64'b0,mac_uop_vs1_data[mac_uop_index*64 +: 64]}  : `VLEN'b0;
           mac_addsrc = mac_uop_vs3_valid ? mac_uop_vs3_data : `VLEN'b0;
           mac_src2_is_signed = 1'b0;
           mac_src1_is_signed = 1'b1;
@@ -396,7 +396,7 @@ always@(*) begin
           is_vmac = 1'b1;
         end
         VWMACCU : begin
-          mac_src2 = mac_uop_vs2_valid ? mac_uop_vs2_data : `VLEN'b0;
+          mac_src2 = mac_uop_vs2_valid ? {64'b0,mac_uop_vs2_data[mac_uop_index*64 +: 64]} : `VLEN'b0;
           mac_src1 = mac_uop_rs1_valid ? {{(`VLEN-`XLEN){mac_uop_rs1_data[`XLEN-1]&&mac_src1_is_signed}},mac_uop_rs1_data} : `VLEN'b0; //use rs1
           mac_addsrc = mac_uop_vs3_valid ? mac_uop_vs3_data : `VLEN'b0;
           mac_src2_is_signed = 1'b0;
@@ -408,7 +408,7 @@ always@(*) begin
           is_vmac = 1'b1;
         end
         VWMACC : begin
-          mac_src2 = mac_uop_vs2_valid ? mac_uop_vs2_data : `VLEN'b0;
+          mac_src2 = mac_uop_vs2_valid ? {64'b0,mac_uop_vs2_data[mac_uop_index*64 +: 64]} : `VLEN'b0;
           mac_src1 = mac_uop_rs1_valid ? {{(`VLEN-`XLEN){mac_uop_rs1_data[`XLEN-1]&&mac_src1_is_signed}},mac_uop_rs1_data} : `VLEN'b0; //use rs1
           mac_addsrc = mac_uop_vs3_valid ? mac_uop_vs3_data : `VLEN'b0;
           mac_src2_is_signed = 1'b1;
@@ -420,7 +420,7 @@ always@(*) begin
           is_vmac = 1'b1;
         end
         VWMACCSU : begin
-          mac_src2 = mac_uop_vs2_valid ? mac_uop_vs2_data : `VLEN'b0;
+          mac_src2 = mac_uop_vs2_valid ? {64'b0,mac_uop_vs2_data[mac_uop_index*64 +: 64]} : `VLEN'b0;
           mac_src1 = mac_uop_rs1_valid ? {{(`VLEN-`XLEN){mac_uop_rs1_data[`XLEN-1]&&mac_src1_is_signed}},mac_uop_rs1_data} : `VLEN'b0; //use rs1
           mac_addsrc = mac_uop_vs3_valid ? mac_uop_vs3_data : `VLEN'b0;
           mac_src2_is_signed = 1'b0;
@@ -432,7 +432,7 @@ always@(*) begin
           is_vmac = 1'b1;
         end
         VWMACCUS : begin
-          mac_src2 = mac_uop_vs2_valid ? mac_uop_vs2_data : `VLEN'b0;
+          mac_src2 = mac_uop_vs2_valid ? {64'b0,mac_uop_vs2_data[mac_uop_index*64 +: 64]} : `VLEN'b0;
           mac_src1 = mac_uop_rs1_valid ? {{(`VLEN-`XLEN){mac_uop_rs1_data[`XLEN-1]&&mac_src1_is_signed}},mac_uop_rs1_data} : `VLEN'b0; //use rs1
           mac_addsrc = mac_uop_vs3_valid ? mac_uop_vs3_data : `VLEN'b0;
           mac_src2_is_signed = 1'b1;
