@@ -556,6 +556,11 @@ typedef struct packed {
     logic   [`XLEN-1:0]                 rt_data;
 } RT2XRF_data_t;  
 
+typedef struct packed {
+    logic [`NUM_RT_UOP-1:0]             rt2xrf_wr_valid;
+    RT2XRF_data_t [`NUM_RT_UOP-1:0]     rt2xrf_wr_data;
+}RT2XRF_t;
+
 // write back to VRF
 typedef struct packed {
     logic   [`REGFILE_INDEX_WIDTH-1:0]  rt_index;
