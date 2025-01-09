@@ -125,13 +125,13 @@ endclass: zero_seq
 //-----------------------------------------------------------
 // Single instruction sequence
 //-----------------------------------------------------------
-class alu_smoke_seq extends base_sequence;
-  `uvm_object_utils(alu_smoke_seq)
-  `uvm_add_to_seq_lib(alu_smoke_seq,rvs_sequencer_sequence_library)
+class alu_smoke_vv_seq extends base_sequence;
+  `uvm_object_utils(alu_smoke_vv_seq)
+  `uvm_add_to_seq_lib(alu_smoke_vv_seq,rvs_sequencer_sequence_library)
 
   alu_inst_e alu_inst;
   bit vm;
-  function new(string name = "alu_smoke_seq");
+  function new(string name = "alu_smoke_vv_seq");
     super.new(name);
 	`ifdef UVM_POST_VERSION_1_1
      set_automatic_phase_objection(1);
@@ -164,7 +164,7 @@ class alu_smoke_seq extends base_sequence;
     this.vm = vm;
     this.start(sqr);
   endtask: run_inst
-endclass: alu_smoke_seq
+endclass: alu_smoke_vv_seq
 
 class alu_smoke_ext_seq extends base_sequence;
   `uvm_object_utils(alu_smoke_ext_seq)
@@ -646,7 +646,6 @@ class alu_iterate_vmerge_seq extends base_sequence;
     for(int vm=0; vm<=1; vm++) begin
       for(lmul = lmul.first(); lmul != lmul.last(); lmul =lmul.next()) begin
         for(sew = sew.first(); sew != sew.last(); sew =sew.next()) begin
-          if(alu_inst inside {VMSGTU, VMSGT} ) continue;
           req = new("req");
           start_item(req);
           assert(req.randomize() with {
@@ -695,7 +694,6 @@ class alu_iterate_vmerge_seq extends base_sequence;
       end
       for(lmul = lmul.first(); lmul != lmul.last(); lmul =lmul.next()) begin
         for(sew = sew.first(); sew != sew.last(); sew =sew.next()) begin
-          if(alu_inst inside {VMSLTU, VMSLT} ) continue;
           req = new("req");
           start_item(req);
           assert(req.randomize() with {
@@ -760,9 +758,9 @@ class alu_iterate_vcomp_seq extends base_sequence;
             inst_type == ALU;
             alu_inst == local::alu_inst;
 
-            dest_type == VRF; dest_idx == 24;
-            src1_type == VRF; src1_idx == 8;
-            src2_type == VRF; src2_idx == 16;
+            dest_type == VRF; 
+            src1_type == VRF; 
+            src2_type == VRF; 
             vm == local::vm;
           });
           finish_item(req);
@@ -783,9 +781,9 @@ class alu_iterate_vcomp_seq extends base_sequence;
             inst_type == ALU;
             alu_inst == local::alu_inst;
 
-            dest_type == VRF; dest_idx == 24;
-            src1_type == XRF; src1_idx == 8;
-            src2_type == VRF; src2_idx == 16;
+            dest_type == VRF;
+            src1_type == XRF;
+            src2_type == VRF;
             vm == local::vm;
           });
           finish_item(req);
@@ -807,9 +805,9 @@ class alu_iterate_vcomp_seq extends base_sequence;
             inst_type == ALU;
             alu_inst == local::alu_inst;
 
-            dest_type == VRF; dest_idx == 24;
-            src1_type == IMM; 
-            src2_type == VRF; src2_idx == 16;
+            dest_type == VRF;
+            src1_type == IMM;
+            src2_type == VRF;
             vm == local::vm;
           });
           finish_item(req);
