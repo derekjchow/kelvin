@@ -286,7 +286,7 @@ module rvv_backend_div_unit
               EEW16: begin
                 for (int i=0;i<`VLEN/`HWORD_WIDTH/2;i++) begin
                   src2_data16[i] = vs2_data[i*`HWORD_WIDTH +: `HWORD_WIDTH];
-                  src1_data16[i] = vs1_data[i*`HWORD_WIDTH +: `HWORD_WIDTH];
+                  src1_data16[i] = rs1_data[0              +: `HWORD_WIDTH];
                 end
                 for (int i=`VLEN/`HWORD_WIDTH/2;i<`VLEN/`HWORD_WIDTH;i++) begin
                   src2_data32[i-`VLEN/`HWORD_WIDTH/2] = {{16{vs2_data[(i+1)*`HWORD_WIDTH-1]}},vs2_data[i*`HWORD_WIDTH +: `HWORD_WIDTH]};
@@ -342,7 +342,7 @@ module rvv_backend_div_unit
       (
         .clk                (clk),
         .rst_n              (rst_n),
-        .div_valid          (uop_valid),
+        .div_valid          (uop_valid&(vs2_eew==EEW8)),
         .opcode             (opcode), 
         .src2_dividend      (src2_data8[j]),
         .src1_divisor       (src1_data8[j]),
@@ -364,7 +364,7 @@ module rvv_backend_div_unit
       (
         .clk                (clk),
         .rst_n              (rst_n),
-        .div_valid          (uop_valid),
+        .div_valid          (uop_valid&(vs2_eew!=EEW32)),
         .opcode             (opcode), 
         .src2_dividend      (src2_data16[j]),
         .src1_divisor       (src1_data16[j]),
