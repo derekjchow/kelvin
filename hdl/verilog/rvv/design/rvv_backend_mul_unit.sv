@@ -511,7 +511,7 @@ always@(*) begin
                                    mul_uop_xrm_d1==3'd1 ? mul_rslt_full_eew32_d1[i][30] && (|(mul_rslt_full_eew32_d1[i][29:0]) || mul_rslt_full_eew32_d1[i][31]) : //RNE
                                                           mul_rslt_full_eew32_d1[i][30]; //RNU      
     vsmul_rslt_eew32_d1[32*i +:32]= mul_rslt_full_eew32_d1[i][63:62] == 2'b01 ? 32'hefff_ffff : //saturate
-                                                                             mul_rslt_full_eew32_d1[i][31+:32] + {31'b0,vsmul_round_incr_eew32_d1[i]};//right shift 15bit then +"1"
+                                                                             mul_rslt_full_eew32_d1[i][31+:32] + {31'b0,vsmul_round_incr_eew32_d1[i]};//right shift 31bit then +"1"
     vsmul_sat_eew32_d1[i] = mul_rslt_full_eew32_d1[i][63:62] == 2'b01;
   end
 end

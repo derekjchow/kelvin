@@ -813,7 +813,7 @@ always@(*) begin
                                    mac_uop_xrm_d1==3'd1 ? mac_rslt_full_eew32_d1[i][30] && (|(mac_rslt_full_eew32_d1[i][29:0]) || mac_rslt_full_eew32_d1[i][31]) : //RNE
                                                           mac_rslt_full_eew32_d1[i][30]; //RNU      
     vsmul_rslt_eew32_d1[32*i +:32]= mac_rslt_full_eew32_d1[i][63:62] == 2'b01 ? 32'hefff_ffff : //saturate
-                                                                             mac_rslt_full_eew32_d1[i][31+:32] + {31'b0,vsmul_round_incr_eew32_d1[i]};//right shift 15bit then +"1"
+                                                                             mac_rslt_full_eew32_d1[i][31+:32] + {31'b0,vsmul_round_incr_eew32_d1[i]};//right shift 31bit then +"1"
     vsmul_sat_eew32_d1[i] = mac_rslt_full_eew32_d1[i][63:62] == 2'b01;
     //Below are for vmac related instructions
     vmac_mul_add_eew32_no_widen_d1[i] = mac_addsrc_d1[32*i +: 32] + mac_rslt_eew32_no_widen_d1[32*i +: 32];//33bit
