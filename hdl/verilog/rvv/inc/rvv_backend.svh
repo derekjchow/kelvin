@@ -78,13 +78,6 @@ typedef struct packed {
 } VCSR_t;
 
 typedef struct packed {
-    logic   [`VSTART_WIDTH-1:0]     vstart;
-    logic   [`VL_WIDTH-1:0]         vl;
-    VTYPE_t                         vtype;
-    VCSR_t                          vcsr;
-} VECTOR_CSR_t;
-
-typedef struct packed {
     logic   [`PC_WIDTH-1:0]         insts_pc;
     RVVOpCode opcode;
     logic [24:0] bits;
@@ -95,6 +88,15 @@ typedef struct packed {
 //
 // DE stage, Uops Queue to Dispatch unit
 //
+
+// Vector csr
+typedef struct packed {
+    logic   [`VSTART_WIDTH-1:0]     vstart;
+    logic   [`VL_WIDTH-1:0]         vl;
+    VTYPE_t                         vtype;
+    VCSR_t                          vcsr;
+} VECTOR_CSR_t;
+
 // It is used to distinguish which execute units that VVV/VVX/VX uop is dispatch to, based on inst_encoding[6:0]
 typedef enum logic [2:0] {
     ALU,
