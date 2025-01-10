@@ -419,7 +419,7 @@ class alu_iterate_vxi_seq extends base_sequence;
 
               dest_type == VRF;
               src2_type == VRF;
-              src1_type == IMM;
+              src1_type == (local::alu_inst inside {VSLL, VSRL, VSRA, VNSRL, VNSRA} ? UIMM : IMM);
               vm == local::vm;
             });
             finish_item(req);

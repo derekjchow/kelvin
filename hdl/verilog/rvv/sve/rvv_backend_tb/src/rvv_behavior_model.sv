@@ -293,6 +293,9 @@ endclass : rvv_behavior_model
               if(!(vtype.vsew inside {SEW8,SEW16})) begin
                 `uvm_warning("MDL/INST_CHECKER", $sformatf("pc=0x%8x: Illegal sew(%s) for narrow instruction. Ignored.",pc,inst_tr.vtype.vsew.name()));
                 continue;
+              end else if(vtype.vlmul == LMUL8) begin
+                `uvm_warning("MDL/INST_CHECKER", $sformatf("pc=0x%8x: Illegal lmul(%s) for narrow instruction. Ignored.",pc,inst_tr.vtype.vlmul.name()));
+                continue;
               end else begin
                 src2_eew = src2_eew * 2;
                 src2_emul = src2_emul * 2;

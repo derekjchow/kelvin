@@ -92,11 +92,20 @@ class rvs_transaction extends uvm_sequence_item;
 
   constraint c_oprand {
     // OPI
-    (inst_type == ALU && alu_inst[7:6] == 2'b00 && !(alu_inst inside {VSBC, VMSBC, VMSLTU, VMSLT, VMSGTU, VMSGT, VMERGE_VMVV})) 
+    (inst_type == ALU && alu_inst[7:6] == 2'b00 && !(alu_inst inside {VSBC, VMSBC, VMSLTU, VMSLT, VMSGTU, VMSGT, VMERGE_VMVV, 
+        VSLL, VSRL, VSRA, VNSRL, VNSRA})) 
       -> (dest_type == VRF && src2_type == VRF && 
            ((alu_type == OPIVV && src1_type == VRF) || 
             (alu_type == OPIVX && src1_type == XRF) || 
             (alu_type == OPIVI && src1_type == IMM)
+           )
+      );
+
+    (inst_type == ALU && alu_inst[7:6] == 2'b00 && (alu_inst inside {VSLL, VSRL, VSRA, VNSRL, VNSRA})) 
+      -> (dest_type == VRF && src2_type == VRF && 
+           ((alu_type == OPIVV && src1_type == VRF) || 
+            (alu_type == OPIVX && src1_type == XRF) || 
+            (alu_type == OPIVI && src1_type == UIMM)
            )
       );
 
