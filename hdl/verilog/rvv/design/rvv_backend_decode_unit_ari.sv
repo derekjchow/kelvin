@@ -2982,7 +2982,14 @@ module rvv_backend_decode_unit_ari
             endcase
           end
 
-          VWMACCUS,
+          VWMACCUS: begin
+            case(inst_funct3)
+              OPMVX: begin
+                check_special = check_vd_overlap_v0&check_vs2_part_overlap_vd_2_1;                
+              end
+            endcase
+          end
+
           VSLIDE1DOWN: begin
             case(inst_funct3)
               OPMVX: begin
