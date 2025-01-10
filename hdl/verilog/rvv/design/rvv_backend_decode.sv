@@ -16,7 +16,7 @@
 module rvv_backend_decode
 (
   clk,
-  rstn,
+  rst_n,
   inst_pkg0_cq2de, 
   inst_pkg1_cq2de,
   fifo_empty_cq2de,
@@ -44,8 +44,8 @@ module rvv_backend_decode
   input   logic                   rst_n;
   
   // signals from command queue
-  input   INST_t                  inst_pkg0_cq2de; 
-  input   INST_t                  inst_pkg1_cq2de;
+  input   RVVCmd                  inst_pkg0_cq2de; 
+  input   RVVCmd                  inst_pkg1_cq2de;
   input   logic                   fifo_empty_cq2de;
   input   logic                   fifo_1left_to_empty_cq2de;
   output  logic                   pop0_de2cq;

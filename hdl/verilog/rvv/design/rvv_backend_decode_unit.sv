@@ -25,7 +25,7 @@ module rvv_backend_decode_unit
 //
   // CQ to Decoder unit signals
   input   logic                         inst_valid_cq2de;
-  input   INST_t                        inst_cq2de;
+  input   RVVcmd                        inst_cq2de;
   input   logic [`UOP_INDEX_WIDTH-1:0]  uop_index_remain;
   
   // Decoder unit to Uops Queue signals
@@ -35,8 +35,7 @@ module rvv_backend_decode_unit
 //
 // internal signals
 //
-  logic   [`OPCODE_WIDTH-1:0]           inst_opcode;     // inst original encoding[6:0]
-  logic   [`VTYPE_VILL_WIDTH-1:0]       vill;             // 0:not illegal, 1:illegal
+  RVVOpCode                             inst_opcode;     // inst original encoding[6:0]
   logic                                 valid_ari;
   logic                                 valid_lsu;
 
@@ -51,25 +50,12 @@ module rvv_backend_decode_unit
 //
 // decode
 //
-  assign inst_opcode  = inst_cq2de.inst[1:0];
-  assign vill         = inst_cq2de.vector_csr.vtype.vill;
+  assign inst_opcode  = inst_cq2de.opcode;
  
   // decode opcode
-  assign valid_lsu    = (inst_valid_cq2de==1'b1) &
-                        (vill==1'b0) &
-                        ((inst_opcode==OPCODE_LOAD) | (inst_opcode==OPCODE_STORE));
+  assign valid_lsu    = (inst_valid_cq2de==1'b1) & ((inst_opcode==LOAD) | (inst_opcode==STORE));
   
-  assign valid_ari    = (inst_valid_cq2de==1'b1) &
-                        (vill==1'b0) &
-                        (inst_opcode==OPCODE_ARI_CFG);
-  
-  `ifdef ASSERT_ON
-    `rvv_forbid((inst_valid_cq2de==1'b1)&(vill==1'b1))
-    else $error("Illegal vtype.vill=%d.\n",vill);
-    
-    `rvv_forbid((inst_valid_cq2de==1'b1)&(vill==1'b0)&(inst_opcode!=OPCODE_LOAD&(inst_opcode!=OPCODE_STORE)&(inst_opcode!=OPCODE_ARI_CFG)))
-    else $error("Unsupported inst_opcode=%d.\n",inst_opcode);
-  `endif
+  assign valid_ari    = (inst_valid_cq2de==1'b1) & (inst_opcode==RVV);
   
   // decode LSU instruction 
   rvv_backend_decode_unit_lsu u_lsu_decode
@@ -111,7 +97,7 @@ module rvv_backend_decode_unit
 
   `ifdef ASSERT_ON
     `rvv_forbid((inst_valid_cq2de==1'b1)&((valid_lsu==1'b0)&(valid_ari==1'b0)))
-    else $error("Unsupported instruction to decode.\n");
+    else $error("Unsupported inst_opcode=%d.\n",inst_opcode);
   `endif
 
 endmodule

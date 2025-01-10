@@ -48,40 +48,17 @@
 
 // Instruction encoding
 `define FUNCT6_WIDTH            6
+`define NFIELD_WIDTH            3
 `define VM_WIDTH                1
 `define VS2_WIDTH               5
 `define UMOP_WIDTH              5
 `define VS1_WIDTH               5
+`define NREG_WIDTH              3
 `define IMM_WIDTH               5
 `define FUNCT3_WIDTH            3
 `define VD_WIDTH                5
 `define RD_WIDTH                5
 `define OPCODE_WIDTH            7
-  
-// vtype.vlmul
-`define LMUL1_4                 3'b110
-`define LMUL1_2                 3'b111
-`define LMUL1                   3'b000
-`define LMUL2                   3'b001
-`define LMUL4                   3'b010
-`define LMUL8                   3'b011
-
-// vtype.vsew
-`define SEW8                    3'b000
-`define SEW16                   3'b001
-`define SEW32                   3'b010
-
-// <nr> field used in vmv<nr>.v instruction
-`define NREG1                   3'b000
-`define NREG2                   3'b001
-`define NREG4                   3'b011
-`define NREG8                   3'b111
-
-// instruction opcode
-`define OPCODE_LOAD             2'b00
-`define OPCODE_STORE            2'b01
-// configuration(vset*) and arithmetic instructions
-`define OPCODE_ARI_CFG          2'b10
 
 // Uops Queue data width
 `define UQ_WIDTH                $bits(UOP_QUEUE_t)
