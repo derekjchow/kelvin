@@ -2,8 +2,12 @@
 `define HDL_VERILOG_RVV_DESIGN_RVV_SVH
 
 `ifndef HDL_VERILOG_RVV_DESIGN_RVV_DEFINE_SVH
-`include "rvv_define.svh"
+`include "rvv_backend_define.svh"
 `endif  // not defined HDL_VERILOG_RVV_DESIGN_RVV_DEFINE_SVH
+
+//
+// IF stage, RVS send instruction package to Command Queue
+//
 
 // Enum type for SEW. See Table 2 in:
 // https://github.com/riscv/riscv-v-spec/blob/master/v-spec.adoc#341-vector-selected-element-width-vsew20
@@ -29,13 +33,14 @@ typedef enum logic [2:0] {
 
 // The architectural configuration state of the RVV core.
 typedef struct packed {
-  logic [7:0] vl;  // Max 128, need one extra bit
+  logic [`VL_WIDTH-1:0]         vl;   // Max 128, need one extra bit
+  logic [`VSTART_WIDTH-1:0]     vstart;
   logic [`VTYPE_VMA_WIDTH-1:0]  ma;        // 0:inactive element undisturbed, 1:inactive element agnostic
   logic [`VTYPE_VTA_WIDTH-1:0]  ta;        // 0:tail undisturbed, 1:tail agnostic
-  logic [`VCSR_VXRM_WIDTH-1:0]  xrm;
-  logic [`VCSR_VXSAT_WIDTH-1:0] xsat;
-  RVVSEW sew;
-  RVVLMUL lmul;
+  logic [`VCSR_VXRM_WIDTH-1:0]  xrm;       
+  logic [`VCSR_VXSAT_WIDTH-1:0] xsat;            
+  RVVSEW                        sew;
+  RVVLMUL                       lmul;
 } RVVConfigState;
 
 // Enum to encode the major opcode of the instruction. See "Section 5. Vector
@@ -48,187 +53,169 @@ typedef enum logic [1:0] {
 
 // A decoded instruction forwarded to the RVVCore from the scalar core.
 typedef struct packed {
-  logic [31:0] pc;
-  RVVOpCode opcode; // effectively bits [6:0] from instruction
-  logic [24:0] bits;   // bits [31:7] from instruction
+  RVVOpCode             opcode;   // effectively bits [6:0] from instruction
+  logic [24:0]          bits;     // bits [31:7] from instruction
 } RVVInstruction;
 
-// A command internal to the RVVCore. The immediate value of this command has
+// An command internal to the RVVCore. The immediate value of this command has
 // been read from the scalar register file if necessary. It also contains
 // additional data to track configuration register state (ie: SEW, LMUL, etc).
 typedef struct packed {
-  RVVOpCode opcode;
-  logic [24:0] bits;
-  logic [31:0] rs1;
-  RVVConfigState arch_state;
+  logic [`PC_WIDTH-1:0] inst_pc;
+  RVVOpCode             opcode;
+  logic [24:0]          bits;
+  logic [31:0]          rs1;
+  RVVConfigState        arch_state;
 } RVVCmd;
 
 //
-// DE stage, Uops Queue to Dispatch unit
+// DE stage, Command Queue to Uops Queue
 //
 
-// Vector csr
-typedef struct packed {
-    logic   [`VSTART_WIDTH-1:0]     vstart;
-    logic   [`VL_WIDTH-1:0]         vl;
-    VTYPE_t                         vtype;
-    VCSR_t                          vcsr;
-} VECTOR_CSR_t;
-
-// It is used to distinguish which execute units that VVV/VVX/VX uop is dispatch to, based on inst_encoding[6:0]
+// execution unit
 typedef enum logic [2:0] {
-    ALU,
-    PMTRDT,
-    MUL,
-    MAC,
-    DIV,
-    LSU
+  ALU,
+  PMTRDT,
+  MUL,
+  MAC,
+  DIV,
+  LSU
 } EXE_UNIT_e;
 
 // when EXE_UNIT_e is not LSU, it is used to distinguish arithmetic instructions, based on inst_encoding[14:12]
-typedef enum logic [2:0] {
-    OPIVV,      // vs2,      vs1, vd.
-    OPFVV,      // vs2,      vs1, vd/rd. float, not support
-    OPMVV,      // vs2,      vs1, vd/rd.
-    OPIVI,      // vs2, imm[4:0], vd.
-    OPIVX,      // vs2,      rs1, vd.
-    OPFVF,      // vs2,      rs1, vd. float, not support
-    OPMVX,      // vs2,      rs1, vd/rd.
-    OPCFG       // vset* instructions
-} EXE_FUNCT3_e;
+  parameter  OPIVV=3'b000;      // vs2,      vs1, vd.
+  parameter  OPFVV=3'b001;      // vs2,      vs1, vd/rd. float, not support
+  parameter  OPMVV=3'b010;      // vs2,      vs1, vd/rd.
+  parameter  OPIVI=3'b011;      // vs2, imm[4:0], vd.
+  parameter  OPIVX=3'b100;      // vs2,      rs1, vd.
+  parameter  OPFVF=3'b101;      // vs2,      rs1, vd. float, not support
+  parameter  OPMVX=3'b110;      // vs2,      rs1, vd/rd.
+  parameter  OPCFG=3'b111;      // vset* instructions        
 
 // when EXE_UNIT_e is not LSU, it identifys what instruction, vadd or vmacc or ..? based on inst_encoding[31:26]
-typedef enum logic [5:0] {
-  VADD            =   6'b000_000,
-  VSUB            =   6'b000_010,
-  VRSUB           =   6'b000_011,
-  VMINU           =   6'b000_100,
-  VMIN            =   6'b000_101,
-  VMAXU           =   6'b000_110,
-  VMAX            =   6'b000_111,
-  VAND            =   6'b001_001,
-  VOR             =   6'b001_010,
-  VXOR            =   6'b001_011,
-  VRGATHER        =   6'b001_100,
-  VSLIDEUP_RGATHEREI16    =   6'b001_110,
-  VSLIDEDOWN      =   6'b001_111,
-  VADC            =   6'b010_000,
-  VMADC           =   6'b010_001,
-  VSBC            =   6'b010_010,
-  VMSBC           =   6'b010_011,
-  VMERGE_VMV      =   6'b010_111,     // it could be vmerge or vmv, based on vm field
-  VMSEQ           =   6'b011_000,
-  VMSNE           =   6'b011_001,
-  VMSLTU          =   6'b011_010,
-  VMSLT           =   6'b011_011,
-  VMSLEU          =   6'b011_100,
-  VMSLE           =   6'b011_101,
-  VMSGTU          =   6'b011_110,
-  VMSGT           =   6'b011_111,
-  VSADDU          =   6'b100_000,
-  VSADD           =   6'b100_001,
-  VSSUBU          =   6'b100_010,
-  VSSUB           =   6'b100_011,
-  VSLL            =   6'b100_101,
-  VSMUL_VMVNRR    =   6'b100_111,     // it could be vsmul or vmv<nr>r, based on vm field
-  VSRL            =   6'b101_000,
-  VSRA            =   6'b101_001,
-  VSSRL           =   6'b101_010,
-  VSSRA           =   6'b101_011,
-  VNSRL           =   6'b101_100,
-  VNSRA           =   6'b101_101,
-  VNCLIPU         =   6'b101_110,
-  VNCLIP          =   6'b101_111,
-  VWREDSUMU       =   6'b110_000,
-  VWREDSUM        =   6'b110_001
-} OPI_TYPE_e;
+  // OPI* instructions
+  parameter VADD            =   6'b000_000;
+  parameter VSUB            =   6'b000_010;
+  parameter VRSUB           =   6'b000_011;
+  parameter VMINU           =   6'b000_100;
+  parameter VMIN            =   6'b000_101;
+  parameter VMAXU           =   6'b000_110;
+  parameter VMAX            =   6'b000_111;
+  parameter VAND            =   6'b001_001;
+  parameter VOR             =   6'b001_010;
+  parameter VXOR            =   6'b001_011;
+  parameter VRGATHER        =   6'b001_100;
+  parameter VSLIDEUP_RGATHEREI16    =   6'b001_110;
+  parameter VSLIDEDOWN      =   6'b001_111;
+  parameter VADC            =   6'b010_000;
+  parameter VMADC           =   6'b010_001;
+  parameter VSBC            =   6'b010_010;
+  parameter VMSBC           =   6'b010_011;
+  parameter VMERGE_VMV      =   6'b010_111;     // it could be vmerge or vmv, based on vm field
+  parameter VMSEQ           =   6'b011_000;
+  parameter VMSNE           =   6'b011_001;
+  parameter VMSLTU          =   6'b011_010;
+  parameter VMSLT           =   6'b011_011;
+  parameter VMSLEU          =   6'b011_100;
+  parameter VMSLE           =   6'b011_101;
+  parameter VMSGTU          =   6'b011_110;
+  parameter VMSGT           =   6'b011_111;
+  parameter VSADDU          =   6'b100_000;
+  parameter VSADD           =   6'b100_001;
+  parameter VSSUBU          =   6'b100_010;
+  parameter VSSUB           =   6'b100_011;
+  parameter VSLL            =   6'b100_101;
+  parameter VSMUL_VMVNRR    =   6'b100_111;     // it could be vsmul or vmv<nr>r, based on vm field
+  parameter VSRL            =   6'b101_000;
+  parameter VSRA            =   6'b101_001;
+  parameter VSSRL           =   6'b101_010;
+  parameter VSSRA           =   6'b101_011;
+  parameter VNSRL           =   6'b101_100;
+  parameter VNSRA           =   6'b101_101;
+  parameter VNCLIPU         =   6'b101_110;
+  parameter VNCLIP          =   6'b101_111;
+  parameter VWREDSUMU       =   6'b110_000;
+  parameter VWREDSUM        =   6'b110_001;   
 
-typedef enum logic [5:0] {
-  VREDSUM         =   6'b000_000,
-  VREDAND         =   6'b000_001,
-  VREDOR          =   6'b000_010,
-  VREDXOR         =   6'b000_011,
-  VREDMINU        =   6'b000_100,
-  VREDMIN         =   6'b000_101,
-  VREDMAXU        =   6'b000_110,
-  VREDMAX         =   6'b000_111,
-  VAADDU          =   6'b001_000,
-  VAADD           =   6'b001_001,
-  VASUBU          =   6'b001_010,
-  VASUB           =   6'b001_011,
-  VSLIDE1UP       =   6'b001_110,
-  VSLIDE1DOWN     =   6'b001_111,
-  VWXUNARY0       =   6'b010_000,     // it could be vcpop.m, vfirst.m and vmv. They can be distinguished by vs1 field(inst_encoding[19:15]).
-  VXUNARY0        =   6'b010_010,     // it could be vzext.vf2, vzext.vf4, vsext.vf2, vsext.vf4. They can be distinguished by vs1 field(inst_encoding[19:15]).
-  VMUNARY0        =   6'b010_100,     // it could be vmsbf, vmsof, vmsif, viota, vid. They can be distinguished by vs1 field(inst_encoding[19:15]).
-  VCOMPRESS       =   6'b010_111,
-  VMANDN          =   6'b011_000,
-  VMAND           =   6'b011_001,
-  VMOR            =   6'b011_010,
-  VMXOR           =   6'b011_011,
-  VMORN           =   6'b011_100,
-  VMNAND          =   6'b011_101,
-  VMNOR           =   6'b011_110,
-  VMXNOR          =   6'b011_111,
-  VDIVU           =   6'b100_000,
-  VDIV            =   6'b100_001,
-  VREMU           =   6'b100_010,
-  VREM            =   6'b100_011,
-  VMULHU          =   6'b100_100,
-  VMUL            =   6'b100_101,
-  VMULHSU         =   6'b100_110,
-  VMULH           =   6'b100_111,
-  VMADD           =   6'b101_001,
-  VNMSUB          =   6'b101_011,
-  VMACC           =   6'b101_101,
-  VNMSAC          =   6'b101_111,
-  VWADDU          =   6'b110_000,
-  VWADD           =   6'b110_001,
-  VWSUBU          =   6'b110_010,
-  VWSUB           =   6'b110_011,
-  VWADDU_W        =   6'b110_100,
-  VWADD_W         =   6'b110_101,
-  VWSUBU_W        =   6'b110_110,
-  VWSUB_W         =   6'b110_111,
-  VWMULU          =   6'b111_000,
-  VWMULSU         =   6'b111_010,
-  VWMUL           =   6'b111_011,
-  VWMACCU         =   6'b111_100,
-  VWMACC          =   6'b111_101,
-  VWMACCUS        =   6'b111_110,
-  VWMACCSU        =   6'b111_111
-} OPM_TYPE_e;
+  // OPM* instructions
+  parameter VREDSUM         =   6'b000_000;
+  parameter VREDAND         =   6'b000_001;
+  parameter VREDOR          =   6'b000_010;
+  parameter VREDXOR         =   6'b000_011;
+  parameter VREDMINU        =   6'b000_100;
+  parameter VREDMIN         =   6'b000_101;
+  parameter VREDMAXU        =   6'b000_110;
+  parameter VREDMAX         =   6'b000_111;
+  parameter VAADDU          =   6'b001_000;
+  parameter VAADD           =   6'b001_001;
+  parameter VASUBU          =   6'b001_010;
+  parameter VASUB           =   6'b001_011;
+  parameter VSLIDE1UP       =   6'b001_110;
+  parameter VSLIDE1DOWN     =   6'b001_111;
+  parameter VWXUNARY0       =   6'b010_000;     // it could be vcpop.m, vfirst.m and vmv. They can be distinguished by vs1 field(inst_encoding[19:15]).
+  parameter VXUNARY0        =   6'b010_010;     // it could be vzext.vf2, vzext.vf4, vsext.vf2, vsext.vf4. They can be distinguished by vs1 field(inst_encoding[19:15]).
+  parameter VMUNARY0        =   6'b010_100;     // it could be vmsbf, vmsof, vmsif, viota, vid. They can be distinguished by vs1 field(inst_encoding[19:15]).
+  parameter VCOMPRESS       =   6'b010_111;
+  parameter VMANDN          =   6'b011_000;
+  parameter VMAND           =   6'b011_001;
+  parameter VMOR            =   6'b011_010;
+  parameter VMXOR           =   6'b011_011;
+  parameter VMORN           =   6'b011_100;
+  parameter VMNAND          =   6'b011_101;
+  parameter VMNOR           =   6'b011_110;
+  parameter VMXNOR          =   6'b011_111;
+  parameter VDIVU           =   6'b100_000;
+  parameter VDIV            =   6'b100_001;
+  parameter VREMU           =   6'b100_010;
+  parameter VREM            =   6'b100_011;
+  parameter VMULHU          =   6'b100_100;
+  parameter VMUL            =   6'b100_101;
+  parameter VMULHSU         =   6'b100_110;
+  parameter VMULH           =   6'b100_111;
+  parameter VMADD           =   6'b101_001;
+  parameter VNMSUB          =   6'b101_011;
+  parameter VMACC           =   6'b101_101;
+  parameter VNMSAC          =   6'b101_111;
+  parameter VWADDU          =   6'b110_000;
+  parameter VWADD           =   6'b110_001;
+  parameter VWSUBU          =   6'b110_010;
+  parameter VWSUB           =   6'b110_011;
+  parameter VWADDU_W        =   6'b110_100;
+  parameter VWADD_W         =   6'b110_101;
+  parameter VWSUBU_W        =   6'b110_110;
+  parameter VWSUB_W         =   6'b110_111;
+  parameter VWMULU          =   6'b111_000;
+  parameter VWMULSU         =   6'b111_010;
+  parameter VWMUL           =   6'b111_011;
+  parameter VWMACCU         =   6'b111_100;
+  parameter VWMACC          =   6'b111_101;
+  parameter VWMACCUS        =   6'b111_110;
+  parameter VWMACCSU        =   6'b111_111;  
 
-// when OPM_TYPE_e=vwxunary0, the uop could be vcpop.m, vfirst.m and vmv. They can be distinguished by vs1 field(inst_encoding[19:15]).
-typedef enum logic [4:0] {
-  VMV_X_S         =   5'b00000,
-  VCPOP           =   5'b10000,
-  VFIRST          =   5'b10001
-} OPM_VWXUNARY0_e;
+// vwxunary0, the uop could be vcpop.m, vfirst.m and vmv. They can be distinguished by vs1 field(inst_encoding[19:15]).
+  parameter VMV_X_S         =   5'b00000;
+  parameter VCPOP           =   5'b10000;
+  parameter VFIRST          =   5'b10001;
 
-// when OPM_TYPE_e=vxunary0, the uop could be vzext.vf2, vzext.vf4, vsext.vf2, vsext.vf4. They can be distinguished by vs1 field(inst_encoding[19:15]).
-typedef enum logic [4:0] {
-  VZEXT_VF4       =   5'b00100,
-  VSEXT_VF4       =   5'b00101,
-  VZEXT_VF2       =   5'b00110,
-  VSEXT_VF2       =   5'b00111
-} OPM_VXUNARY0_e;
+// vxunary0, the uop could be vzext.vf2, vzext.vf4, vsext.vf2, vsext.vf4. They can be distinguished by vs1 field(inst_encoding[19:15]).
+  parameter VZEXT_VF4       =   5'b00100;
+  parameter VSEXT_VF4       =   5'b00101;
+  parameter VZEXT_VF2       =   5'b00110;
+  parameter VSEXT_VF2       =   5'b00111;
 
-// when OPM_TYPE_e=vmxunary0, the uop could be vmsbf, vmsof, vmsif, viota, vid. They can be distinguished by vs1 field(inst_encoding[19:15]).
-typedef enum logic [4:0] {
-  VMSBF           =   5'b00001,
-  VMSOF           =   5'b00010,
-  VMSIF           =   5'b00011,
-  VIOTA           =   5'b10000,
-  VID             =   5'b10001
-} OPM_VMUNARY0_e;
+// vmxunary0, the uop could be vmsbf, vmsof, vmsif, viota, vid. They can be distinguished by vs1 field(inst_encoding[19:15]).
+  parameter VMSBF           =   5'b00001;
+  parameter VMSOF           =   5'b00010;
+  parameter VMSIF           =   5'b00011;
+  parameter VIOTA           =   5'b10000;
+  parameter VID             =   5'b10001;
 
 // when EXE_UNIT_e is LSU, it identifys what LSU instruction, unit-stride load or indexed store or ..? based on inst_encoding[31:26]
 typedef enum logic [1:0] {
-  LSU_MOP_US,         // Unit-Stride
-  LSU_MOP_IU,         // Indexed Unordered
-  LSU_MOP_CS,         // Constant Stride
-  LSU_MOP_IO          // Indexed Ordered
+  US,         // Unit-Stride
+  IU,         // Indexed Unordered
+  CS,         // Constant Stride
+  IO          // Indexed Ordered
 } LSU_MOP_e;
 
 // It identifys what unit-stride instruction when LSU_MOP_e=US, based on inst_encoding[24:20]
@@ -239,34 +226,36 @@ typedef enum logic [1:0] {
   US_FF          // Faul-only-First load
 } LSU_UMOP_e;
 
+// parameter for lsu decoding
+  parameter  UNIT_STRIDE       = 3'b000;
+  parameter  UNORDERED_INDEX   = 3'b001;
+  parameter  CONSTANT_STRIDE   = 3'b010;
+  parameter  ORDERED_INDEX     = 3'b011;
+
+  parameter  US_REGULAR        = 5'b00000;
+  parameter  US_WHOLE_REGISTER = 5'b01000;
+  parameter  US_MASK           = 5'b01011;
+  parameter  US_FAULT_FIRST    = 5'b10000;
+
 // It identifys what inst_encoding[11:7] is used for when LSU instruction, based on inst_encoding[5]
-typedef enum logic {
-  LSU_IS_STORE_LOAD,       // when load, inst_encoding[11:7] is seen as vs3
-  LSU_IS_STORE_STORE       // when load, inst_encoding[11:7] is seen as vd
+typedef enum logic [0:0] {
+  IS_LOAD,       // when load, inst_encoding[11:7] is seen as vs3
+  IS_STORE       // when load, inst_encoding[11:7] is seen as vd
 } LSU_IS_STORE_e;
 
 // combine those signals to LSU_TYPE
 typedef struct packed {
-  logic               reserved;
-  LSU_MOP_e           lsu_mop;
-  LSU_UMOP_e          lsu_umop;
-  LSU_IS_STORE_e      lsu_is_store;
+  logic                               reserved;
+  LSU_MOP_e                           lsu_mop;
+  LSU_UMOP_e                          lsu_umop;
+  LSU_IS_STORE_e                      lsu_is_store;
 } LSU_TYPE_t;
 
 // function opcode
 typedef union packed {
-  OPI_TYPE_e          opi_funct6;
-  OPM_TYPE_e          opm_funct6;
-  LSU_TYPE_t          lsu_funct6;
+  logic   [`FUNCT6_WIDTH-1:0]         ari_funct6;
+  LSU_TYPE_t                          lsu_funct6;
 } FUNCT6_u;
-
-// vs1 field
-typedef union packed {
-  OPM_VWXUNARY0_e                     vwxunary0_funct;
-  OPM_VXUNARY0_e                      vxunary0_funct;
-  OPM_VMUNARY0_e                      vmunary0_funct;
-  logic   [`REGFILE_INDEX_WIDTH-1:0]  vs1_index;
-} VS1_u;
 
 // uop classification used for dispatch rule
 typedef enum logic [1:0] {
@@ -290,68 +279,64 @@ typedef enum logic [2:0] {
 
 // Effective Element Width
 typedef enum logic [1:0] {
-    EEW1,
-    EEW8, 
-    EEW16,
-    EEW32
+  EEW1,
+  EEW8, 
+  EEW16,
+  EEW32
 } EEW_e;
 
 // Number of REG
-typedef enum logic [2:0] {
-  NREG1 = 3'b000,
-  NREG2 = 3'b001,
-  NREG4 = 3'b011,
-  NREG8 = 3'b111
-} NREG_e;
+  parameter NREG1 = 3'b000;  
+  parameter NREG2 = 3'b001;
+  parameter NREG4 = 3'b011;
+  parameter NREG8 = 3'b111;
 
 // Number of FIELD
-typedef enum logic [2:0] {
-  NF1,
-  NF2,
-  NF3,
-  NF4,
-  NF5,
-  NF6,
-  NF7,
-  NF8
-} NFIELD_e;
+  parameter NF1 = 3'b000;  
+  parameter NF2 = 3'b001;
+  parameter NF3 = 3'b010;
+  parameter NF4 = 3'b011;
+  parameter NF5 = 3'b100;
+  parameter NF6 = 3'b101;
+  parameter NF7 = 3'b110;
+  parameter NF8 = 3'b111;
 
 // the uop struct stored in Uops Queue
 typedef struct packed {
   logic   [`PC_WIDTH-1:0]             uop_pc;
-  EXE_FUNCT3_e                        uop_funct3;
+  logic   [`FUNCT3_WIDTH-1:0]         uop_funct3;
   FUNCT6_u                            uop_funct6;
-  EXE_UNIT_e                          uop_exe_unit;
-  UOP_CLASS_e                         uop_class;
-  RVVConfigState                      vector_csr;
+  EXE_UNIT_e                          uop_exe_unit; 
+  UOP_CLASS_e                         uop_class;   
+  RVVConfigState                      vector_csr;     
 
   logic                               vm;                 // Original 32bit instruction encoding: inst[25]
   logic                               v0_valid;           // when v0_valid=1, v0 will be regarded as a vector operand in this uop, not mask register. Like: vadc.vvm
-  logic   [`REGFILE_INDEX_WIDTH-1:0]  vd_index;           // Original 32bit instruction encoding: inst[11:7].this index is also used as vs3 in some uops
-  EEW_e                               vd_eew;
+  logic   [`REGFILE_INDEX_WIDTH-1:0]  vd_index;           // Original 32bit instruction encoding: inst[11:7].this index is also used as vs3 in some uops 
+  EEW_e                               vd_eew;  
   logic                               vd_valid;
   logic                               vs3_valid;          // when vs3_valid=1, vd will be regarded as a vector operand in this uop.
   // when vs1_index_valid=1, vs1 field is used as vs1_index to address VRF
-  // when vs1_opcode_valid=0, vs1 field is used to decode some OPMVV uops
-  VS1_u                               vs1;
-  EEW_e                               vs1_eew;
+  // when vs1_opcode_valid=0, vs1 field is used to decode some OPMVV uops 
+  logic   [`REGFILE_INDEX_WIDTH-1:0]  vs1;              
+  EEW_e                               vs1_eew;            
   logic                               vs1_index_valid;
   logic                               vs1_opcode_valid;
-  logic   [`REGFILE_INDEX_WIDTH-1:0]  vs2_index;               // Original 32bit instruction encoding: inst[24:20]
+  logic   [`REGFILE_INDEX_WIDTH-1:0]  vs2_index; 	        // Original 32bit instruction encoding: inst[24:20]
   EEW_e                               vs2_eew;
   logic                               vs2_valid;
-  logic   [`REGFILE_INDEX_WIDTH-1:0]  rd_index;                // Original 32bit instruction encoding: inst[11:7].
-  logic                               rd_index_valid;
-  logic   [`XLEN-1:0]                rs1_data;           // rs1_data could be from X[rs1] and imm(inst[19:15]). If it is imm, the 5-bit imm(inst[19:15]) will be sign-extend or zero-extend(shift instructions...) to XLEN-bit.
+  logic   [`REGFILE_INDEX_WIDTH-1:0]  rd_index; 	        // Original 32bit instruction encoding: inst[11:7].
+  logic                               rd_index_valid; 
+  logic   [`XLEN-1:0] 	              rs1_data;           // rs1_data could be from X[rs1] and imm(inst[19:15]). If it is imm, the 5-bit imm(inst[19:15]) will be sign-extend or zero-extend(shift instructions...) to XLEN-bit. 
   EEW_e                               scalar_eew;
-  logic                                      rs1_data_valid;
-
+  logic        	                      rs1_data_valid;                                
+          
   logic   [`UOP_INDEX_WIDTH-1:0]      uop_index;          // used for calculate v0_start in DP stage
   logic                               last_uop_valid;     // one instruction may be split to many uops, this signal is used to specify the last uop in those uops of one instruction.
-} UOP_QUEUE_t;
+} UOP_QUEUE_t;    
 
 //
-// DP stage,
+// DP stage, 
 //
 // VRF struct
 typedef struct packed {
@@ -385,12 +370,12 @@ typedef enum logic [0:0] {
 
 // trap handle
 typedef enum logic [1:0] {
-  TRAP_DECODE,             // RVS find some illegal instructions when decoding,
+  TRAP_DECODE,             // RVS find some illegal instructions when decoding, 
                            // which means a trap occurs to the instruction that is NOT executing in RVV.
                            // So RVV will stop receiving new instructions from RVS, and complete all instructions in RVV.
   TRAP_LSU,                // RVS find some illegal instructions when complete LSU transaction, like bus error,
                            // which means a trap occurs to the instruction that is executing in RVV.
-                           // So RVV will top CQ to receive new instructions and flush Command Queue and Uops Queue,
+                           // So RVV will top CQ to receive new instructions and flush Command Queue and Uops Queue, 
                            // and complete the instructions in EX, ME and WB stage. And RVS need to send rob_entry of that exception instruction.
                            // After RVV retire all uops before that exception instruction, RVV response a ready signal for trap application.
   TRAP_LSU_FF              // fault only first load, need to confirm whether has TLB or not.
@@ -401,14 +386,14 @@ typedef BYTE_TYPE_e [`VLENB-1:0]        BYTE_TYPE_t;
 
 typedef struct packed {
   logic   [`ROB_DEPTH_WIDTH-1:0]      rob_entry;
-  FUNCT6_u                            uop_funct6;
-  EXE_FUNCT3_e                        uop_funct3;
+  FUNCT6_u                            uop_funct6;  
+  logic   [`FUNCT3_WIDTH-1:0]         uop_funct3;
   logic   [`VSTART_WIDTH-1:0]         vstart;
   // vm field can be used to identify vmadc.v?m/vmadc.v? uop in the same uop_funct6(6'b010000).
-  // vm field can be used to identify vmsbc.v?m/vmsbc.v? uop in the same uop_funct6(6'b010011).
-  logic                               vm;
-  // rounding mode
-  logic   [`VCSR_VXRM_WIDTH-1:0]      vxrm;
+  // vm field can be used to identify vmsbc.v?m/vmsbc.v? uop in the same uop_funct6(6'b010011).   
+  logic                               vm;               
+  // rounding mode 
+  logic   [`VCSR_VXRM_WIDTH-1:0]      vxrm;              
   // when the uop is vmadc.v?m/vmsbc.v?m, the uop will use v0_data as the third vector operand. EEW_v0=1.
   logic   [`VLENB-1:0]                v0_data;
   logic                               v0_data_valid;
@@ -417,116 +402,109 @@ typedef struct packed {
   logic                               vd_data_valid;
   // when vs1_data_valid=0, vs1_data is used to decode some OPMVV uops
   // when vs1_data_valid=1, vs1_data is valid as a vector operand
-  VS1_u                               vs1;
-  logic   [`VLEN-1:0]                 vs1_data;
+  logic   [`REGFILE_INDEX_WIDTH-1:0]  vs1;              
+  logic   [`VLEN-1:0]                 vs1_data;           
   EEW_e                               vs1_eew;
-  logic                               vs1_data_valid;
-  BYTE_TYPE_t                         vs1_type;
-  logic   [`VLEN-1:0]                 vs2_data;
+  logic                               vs1_data_valid; 
+  BYTE_TYPE_t                         vs1_type; 
+  logic   [`VLEN-1:0]                 vs2_data;	        
   EEW_e                               vs2_eew;
-  logic                               vs2_data_valid;
-  BYTE_TYPE_t                         vs2_type;
-  // rs1_data could be from X[rs1] and imm(inst[19:15]). If it is imm, the 5-bit imm(inst[19:15]) will be sign-extend to XLEN-bit.
-  logic   [`XLEN-1:0]                rs1_data;
+  logic                               vs2_data_valid;  
+  BYTE_TYPE_t                         vs2_type; 
+  // rs1_data could be from X[rs1] and imm(inst[19:15]). If it is imm, the 5-bit imm(inst[19:15]) will be sign-extend to XLEN-bit. 
+  logic   [`XLEN-1:0] 	              rs1_data;        
   EEW_e                               scalar_eew;
-  logic                                      rs1_data_valid;
-} ALU_RS_t;
+  logic        	                      rs1_data_valid;                                   
+} ALU_RS_t;    
 
 // DIV reservation station struct
 typedef struct packed {
   logic   [`ROB_DEPTH_WIDTH-1:0]      rob_entry;
-  FUNCT6_u                            uop_funct6;
-  EXE_FUNCT3_e                        uop_funct3;
+  logic   [`FUNCT3_WIDTH-1:0]         uop_funct3;
   // when vs1_data_valid=1, vs1_data is valid as a vector operand
-  logic   [`VLEN-1:0]                 vs1_data;
+  logic   [`VLEN-1:0]                 vs1_data;           
   EEW_e                               vs1_eew;
-  logic                               vs1_data_valid;
-  BYTE_TYPE_t                         vs1_type;
-  logic   [`VLEN-1:0]                 vs2_data;
+  logic                               vs1_data_valid; 
+  BYTE_TYPE_t                         vs1_type; 
+  logic   [`VLEN-1:0]                 vs2_data;	        
   EEW_e                               vs2_eew;
-  logic                               vs2_data_valid;
-  BYTE_TYPE_t                         vs2_type;
-  // rs1_data could be from X[rs1] and imm(inst[19:15]). If it is imm, the 5-bit imm(inst[19:15]) will be sign-extend to XLEN-bit.
-  logic   [`XLEN-1:0]                rs1_data;
+  logic                               vs2_data_valid;  
+  BYTE_TYPE_t                         vs2_type; 
+  // rs1_data could be from X[rs1] and imm(inst[19:15]). If it is imm, the 5-bit imm(inst[19:15]) will be sign-extend to XLEN-bit. 
+  logic   [`XLEN-1:0] 	              rs1_data;     
   EEW_e                               scalar_eew;
-  logic                                      rs1_data_valid;
-} DIV_RS_t;
+  logic        	                      rs1_data_valid;                                   
+} DIV_RS_t; 
 
 // MUL and MAC reservation station struct
-typedef struct packed {
+typedef struct packed {   
   logic   [`ROB_DEPTH_WIDTH-1:0]      rob_entry;
   FUNCT6_u                            uop_funct6;
-  EXE_FUNCT3_e                        uop_funct3;
-  logic   [`VCSR_VXRM_WIDTH-1:0]      vxrm;               // rounding mode
-
-  logic   [`VLEN-1:0]                 vs1_data;
+  logic   [`FUNCT3_WIDTH-1:0]         uop_funct3;
+  logic   [`VCSR_VXRM_WIDTH-1:0]      vxrm;               // rounding mode 
+ 
+  logic   [`VLEN-1:0]                 vs1_data;           
   EEW_e                               vs1_eew;
-  logic                               vs1_data_valid;
-  BYTE_TYPE_t                         vs1_type;
-  logic   [`VLEN-1:0]                 vs2_data;
+  logic                               vs1_data_valid; 
+  BYTE_TYPE_t                         vs1_type; 
+  logic   [`VLEN-1:0]                 vs2_data;	        
   EEW_e                               vs2_eew;
-  logic                               vs2_data_valid;
-  BYTE_TYPE_t                         vs2_type;
-  logic   [`VLEN-1:0]                 vs3_data;
+  logic                               vs2_data_valid; 
+  BYTE_TYPE_t                         vs2_type; 
+  logic   [`VLEN-1:0]                 vs3_data;	        
   EEW_e                               vs3_eew;
-  logic                               vs3_data_valid;
+  logic                               vs3_data_valid; 
   BYTE_TYPE_t                         vs3_type;
-  // rs1_data could be from X[rs1] and imm(inst[19:15]). If it is imm, the 5-bit imm(inst[19:15]) will be sign-extend to XLEN-bit.
-  logic   [`XLEN-1:0]                rs1_data;
+  // rs1_data could be from X[rs1] and imm(inst[19:15]). If it is imm, the 5-bit imm(inst[19:15]) will be sign-extend to XLEN-bit. 
+  logic   [`XLEN-1:0] 	              rs1_data;          
   EEW_e                               scalar_eew;
-  logic                                    rs1_data_valid;
-} MUL_RS_t;
+  logic          	                    rs1_data_valid;   
+} MUL_RS_t;    
 
 // PMT and RDT reservation station struct
-typedef struct packed {
+typedef struct packed {   
   logic   [`ROB_DEPTH_WIDTH-1:0]      rob_entry;
   FUNCT6_u                            uop_funct6;
-  EXE_FUNCT3_e                        uop_funct3;
+  logic   [`FUNCT3_WIDTH-1:0]         uop_funct3;
   // Identify vmerge and vmv in the same uop_funct6(6'b010111).
-  logic                               vm;
+  logic                               vm;               
   // when vs1_data_valid=0; vs1 field is valid and used to decode some OPMVV uops
   // when vs1_data_valid=1, vs1_data is valid as a vector operand
-  VS1_u                               vs1;
-  logic   [`VLEN-1:0]                 vs1_data;
+  logic   [`REGFILE_INDEX_WIDTH-1:0]  vs1;              
+  logic   [`VLEN-1:0]                 vs1_data;          
   EEW_e                               vs1_eew;
-  logic                               vs1_data_valid;
-  BYTE_TYPE_t                         vs1_type;
-  logic   [`VLEN-1:0]                 vs2_data;
+  logic                               vs1_data_valid; 
+  BYTE_TYPE_t                         vs1_type; 
+  logic   [`VLEN-1:0]                 vs2_data;	        
   EEW_e                               vs2_eew;
-  logic                               vs2_data_valid;
+  logic                               vs2_data_valid; 
   BYTE_TYPE_t                         vs2_type;
-  // rs1_data could be from X[rs1] and imm(inst[19:15]). If it is imm, the 5-bit imm(inst[19:15]) will be sign-extend to XLEN-bit.
-  logic   [`XLEN-1:0]                rs1_data;
+  // rs1_data could be from X[rs1] and imm(inst[19:15]). If it is imm, the 5-bit imm(inst[19:15]) will be sign-extend to XLEN-bit. 
+  logic   [`XLEN-1:0] 	              rs1_data;         
   EEW_e                               scalar_eew;
-  logic                                      rs1_data_valid;
-  logic                               last_uop_valid;
+  logic        	                      rs1_data_valid;
+  logic                               last_uop_valid;     
 } PMT_RDT_RS_t;    
 
 // LSU reservation station struct
-typedef struct packed {
+typedef struct packed {   
   logic   [`PC_WIDTH-1:0]             uop_pc;
   logic   [`ROB_DEPTH_WIDTH-1:0]      uop_id;
-  LSU_TYPE_t                          uop_funct6;
+  LSU_TYPE_t                          uop_funct6;  
 
-  logic                               vidx_valid;
+  logic                               vidx_valid; 
   logic   [`REGFILE_INDEX_WIDTH-1:0]  vidx_addr;
-  logic   [`VLEN-1:0]                 vidx_data;                  // vs2
-  BYTE_TYPE_t                         vs2_type;
-  logic                               vregfile_read_valid;
+  logic   [`VLEN-1:0]                 vidx_data;                  // vs2        
+  BYTE_TYPE_t                         vs2_type;        
+  logic                               vregfile_read_valid; 
   logic   [`REGFILE_INDEX_WIDTH-1:0]  vregfile_read_addr;
-  logic   [`VLEN-1:0]                 vregfile_read_data;         // vs3
-  BYTE_TYPE_t                         vs3_type;
-} LSU_RS_t;
+  logic   [`VLEN-1:0]                 vregfile_read_data;         // vs3       
+  BYTE_TYPE_t                         vs3_type; 
+} LSU_RS_t;    
 
 //
-// EX stage,
+// EX stage, 
 //
-// ReOrder Buffer data struct
-typedef enum logic {
-    VRF,
-    XRF
-} W_DATA_TYPE_t;
-
 // send ALU's result to ROB
 typedef struct packed {
   logic   [`ROB_DEPTH_WIDTH-1:0]      rob_entry;
@@ -536,41 +514,41 @@ typedef struct packed {
   logic   [`VCSR_VXSAT_WIDTH-1:0]     vxsat;
   logic                               ignore_vta;
   logic                               ignore_vma;
-} ALU2ROB_t;
+} ALU2ROB_t;  
 
 // send uop to LSU
-typedef struct packed {
+typedef struct packed {   
   // RVV send to uop_pc to help LSU match the vld/vst uop
-  logic   [`PC_WIDTH-1:0]             uop_pc;
-  // When LSU submit the result to RVV; LSU need to attend uop_id to help RVV retire the uop in ROB
-  logic   [`ROB_DEPTH_WIDTH-1:0]      uop_id;
+  logic   [`PC_WIDTH-1:0]             uop_pc;     
+  // When LSU submit the result to RVV; LSU need to attend uop_id to help RVV retire the uop in ROB  
+  logic   [`ROB_DEPTH_WIDTH-1:0]      uop_id;     
   // Vector regfile index interface for indexed vld/vst
-  logic                                                                   vidx_valid;
-  logic        [`REGFILE_INDEX_WIDTH-1:0]        vidx_addr;
-  logic        [`VLEN-1:0]                                             vidx_data;              // vs2
+	logic 							              	vidx_valid;
+  logic	[`REGFILE_INDEX_WIDTH-1:0]	  vidx_addr;
+  logic	[`VLEN-1:0]				          	vidx_data;              // vs2
   BYTE_TYPE_t                         vs2_type;               // mask for vs2
   // Vector regfile read interface for vst
-  logic                                                                              vregfile_read_valid;
-  logic        [`REGFILE_INDEX_WIDTH-1:0]      vregfile_read_addr;
-  logic        [`VLEN-1:0]                                       vregfile_read_data;           // vs3
+  logic 								              vregfile_read_valid;
+  logic	[`REGFILE_INDEX_WIDTH-1:0]  	vregfile_read_addr;
+  logic	[`VLEN-1:0] 				          vregfile_read_data;	  	// vs3     
   BYTE_TYPE_t                         vs3_type;               // mask for vs3
-} UOP_LSU_RVV2RVS_t;
+} UOP_LSU_RVV2RVS_t;  
 
 // LSU feedback to RVV
-typedef struct packed {
+typedef struct packed {   
   // When LSU submit the result to RVV; LSU need to attend uop_id to help RVV retire the uop in ROB
-  logic   [`ROB_DEPTH_WIDTH-1:0]      uop_id;
+  logic   [`ROB_DEPTH_WIDTH-1:0]      uop_id;   
   // LSU uop type
   // When LSU complete the vstore uop, it need to tell RVV done signal and attend uop_id to help RVV retire the uops
   // when load, it means the uop is vld. It enables vregfile_write_addr and vregfile_write_data, and submit the vector data to ROB
   // when store, it means this store uop is done in LSU, ROB can retire this uop.
-  LSU_IS_STORE_e                      uop_type;
-
-  // Vector regfile write interface for vld
-  logic        [`REGFILE_INDEX_WIDTH-1:0]        vregfile_write_addr;
-  logic        [`VLEN-1:0]                                     vregfile_write_data;    // vd
+  LSU_IS_STORE_e                      uop_type;               
+                                                                
+	// Vector regfile write interface for vld
+  logic	[`REGFILE_INDEX_WIDTH-1:0] 	  vregfile_write_addr;
+  logic	[`VLEN-1:0] 			          	vregfile_write_data;  	// vd   
   BYTE_TYPE_t                         vs1_type;               // mask for vd
-} UOP_LSU_RVS2RVV_t;
+} UOP_LSU_RVS2RVV_t;  
 
 // send uop to ROB
 typedef struct packed {
@@ -600,16 +578,15 @@ typedef struct packed {
   logic   [`VCSR_VXSAT_WIDTH-1:0]     vxsat;              //Update saturation bit
   logic                               ignore_vta;
   logic                               ignore_vma;
-} ROB2RT_t;
+} ROB2RT_t;  
 
 //
-// WB stage, bypass and write back to VRF/XRF, trap handler
 // Retire stage, bypass and write back to VRF/XRF, trap handler
 //
 // write back to XRF
 typedef struct packed {
-  logic   [`REGFILE_INDEX_WIDTH-1:0]  rt_index;
-  logic   [`XLEN-1:0]                 rt_data;
+  logic   [`REGFILE_INDEX_WIDTH-1:0]  rt_index; 
+  logic   [`XLEN-1:0]                 rt_data; 
 } RT2XRF_data_t;  
 
 typedef struct packed {
@@ -619,9 +596,9 @@ typedef struct packed {
 
 // write back to VRF
 typedef struct packed {
-  logic   [`REGFILE_INDEX_WIDTH-1:0]  rt_index;
+  logic   [`REGFILE_INDEX_WIDTH-1:0]  rt_index; 
   logic   [`VLEN-1:0]                 rt_data;
-  logic   [`VLENB-1:0]                rt_strobe;
+  logic   [`VLENB-1:0]                rt_strobe; 
 } RT2VRF_data_t;  
 
 typedef struct packed {
@@ -632,8 +609,9 @@ typedef struct packed {
 // trap handle
 typedef struct packed {
   logic                               trap_apply;
-  TRAP_INFO_e                         trap_info;
+  TRAP_INFO_e                         trap_info; 
   logic   [`ROB_DEPTH_WIDTH-1:0]      trap_uop_rob_entry;
-} TRAP_t;
+} TRAP_t;  
+
 
 `endif  // HDL_VERILOG_RVV_DESIGN_RVV_SVH
