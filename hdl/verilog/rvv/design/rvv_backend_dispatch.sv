@@ -309,7 +309,7 @@ module rvv_backend_dispatch
             assign uop_info[i].vs1_eew   = uop_uop2dp[i].vs1_eew;
             assign uop_info[i].vs2_eew   = uop_uop2dp[i].vs2_eew;
             assign uop_info[i].vstart    = uop_uop2dp[i].vector_csr.vstart;
-            assign uop_info[i].vl        = uop_uop2dp[i].vector_csr.vl;
+            assign uop_info[i].vl        = uop_uop2dp[i].vs_evl;
             assign uop_info[i].vm        = uop_uop2dp[i].vm;
 
             rvv_backend_dispatch_opr_byte_type #(

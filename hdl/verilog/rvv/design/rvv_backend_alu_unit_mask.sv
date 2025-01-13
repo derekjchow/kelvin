@@ -259,7 +259,6 @@ module rvv_backend_alu_unit_mask
   always_comb begin
     // initial the data
     src2_data       = 'b0;
-    src2_data_viota = 'b0;
     src1_data       = 'b0;
 
     // prepare source data
@@ -331,14 +330,30 @@ module rvv_backend_alu_unit_mask
                 else
                   src2_data = vs2_data&tail_data&v0_data; 
               end
-              VIOTA: begin
-                if (vm==1'b1)
-                  src2_data_viota = vs2_data;
-                else
-                  src2_data_viota = vs2_data&v0_data; 
-              end
               // no source operand for VID
             endcase
+          end
+        endcase
+      end
+    endcase
+  end
+
+  // prepare viota source data
+  always_comb begin
+    // initial the data
+    src2_data_viota = 'b0;
+
+    // prepare source data
+    case(uop_funct3)
+      OPMVV: begin
+        case(uop_funct6.ari_funct6)
+          VMUNARY0: begin
+            if (vs1_opcode==VIOTA) begin
+              if (vm==1'b1)
+                src2_data_viota = vs2_data;
+              else
+                src2_data_viota = vs2_data&v0_data; 
+            end
           end
         endcase
       end

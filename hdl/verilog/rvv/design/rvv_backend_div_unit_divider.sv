@@ -262,6 +262,12 @@ module rvv_backend_div_unit_divider
         if(div_valid) begin
           // check whether divisor is 0
           if(src1_divisor=='b0) begin
+            dividend_en = 'b1;
+            dividend_d  = 'b0;
+
+            divisor_en = 'b1;
+            divisor_d  = 'b0;
+
             quotient_en = 'b1;
             quotient_d  = '1;
 
