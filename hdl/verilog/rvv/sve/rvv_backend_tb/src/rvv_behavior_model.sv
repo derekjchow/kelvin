@@ -213,7 +213,15 @@ endclass : rvv_behavior_model
           continue;
         end
         if(inst_tr.inst_type == ALU && inst_tr.alu_type == OPIVI && (inst_tr.alu_inst inside {VSUB, VMSBC, VSBC, VMINU, VMIN, VMAXU, VMAX})) begin
-          `uvm_warning("MDL/INST_CHECKER", $sformatf("pc=0x%8x: OPIVI of %0s is ignored.",pc,inst_tr.alu_type.name()))
+          `uvm_warning("MDL/INST_CHECKER", $sformatf("pc=0x%8x: OPIVI of %0s is ignored.",pc,inst_tr.alu_inst.name()))
+          continue;
+        end
+        if(inst_tr.inst_type == ALU && inst_tr.alu_inst == VMERGE_VMVV && inst_tr.vm == 1 && inst_tr.src2_idx != 0) begin
+          `uvm_warning("MDL/INST_CHECKER", $sformatf("pc=0x%8x: src2_idx != 0 of vmv.v is ignored.",pc))
+          continue;
+        end
+        if(inst_tr.inst_type == ALU && inst_tr.alu_type == OPMVV && (inst_tr.alu_inst inside {VWMACCUS})) begin
+          `uvm_warning("MDL/INST_CHECKER", $sformatf("pc=0x%8x: OPMVV of %0s is ignored.",pc,inst_tr.alu_inst.name()))
           continue;
         end
 
