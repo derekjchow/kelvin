@@ -127,14 +127,14 @@ module rvv_backend
   // vrf
   logic [127:0] vreg [31:0];
   logic [127:0] vreg_init_data [31:0];
-  logic [3:0] rt_event;
+  logic [3:0] rt_last_uop;
   always_ff @(posedge clk) begin
     if(!rst_n) begin 
       for(int i=0; i<32; i++) begin
         vreg[i] <= vreg_init_data[i];
       end
       for(int i=0; i<4; i++) begin
-        rt_event[i] <= 1'b0;
+        rt_last_uop[i] <= 1'b0;
       end
     end else begin
       for(int i=0; i<4; i++) begin
@@ -143,9 +143,9 @@ module rvv_backend
               // sew 8b, lmul 1, vl=16
               vreg[dest_idx[i]][elm_idx*8+:8] <= vreg[src1_idx[i]][elm_idx*8+:8] + vreg[src2_idx[i]][elm_idx*8+:8];
             end
-          rt_event[i] <= 1'b1;
+          rt_last_uop[i] <= 1'b1;
         end else begin
-          rt_event[i] <= 1'b0;
+          rt_last_uop[i] <= 1'b0;
         end
       end
     end
@@ -791,26 +791,27 @@ module rvv_backend
 
   // testbench verification
   `ifdef TB_SUPPORT
-    logic [`NUM_RT_UOP-1:0] rt_event;
     logic [`NUM_RT_UOP-1:0] rt_uop;
+    logic [`NUM_RT_UOP-1:0] rt_last_uop;
     generate
       for (i=0; i<`NUM_RT_UOP; i++)
-        always_ff @(posedge clk or negedge rst_n) begin
-          if (!rst_n) 
-            rt_event[i] <= 1'b0;
-          else if (rd_valid_rob2rt[i] & rd_ready_rt2rob[i])
-            rt_event[i] <= rd_rob2rt[i].last_uop_valid;
-          else if (rt_event[i])
-            rt_event[i] <= 1'b0;
+        always_comb begin
+          rt_last_uop[i] = rd_valid_rob2rt[i] & rd_ready_rt2rob[i] & rd_rob2rt[i].last_uop_valid;
         end
     endgenerate
-    always_ff @(posedge clk or negedge rst_n) begin
-      if(!rst_n)
-        rt_uop <= '0;
-      else
-        rt_uop <= rd_valid_rob2rt & rd_ready_rt2rob;
+    always_comb begin
+        rt_uop = rd_valid_rob2rt & rd_ready_rt2rob;
     end
-    LastUop:`rvv_expect(((rt_event ^ rt_uop) inside {4'b0000,4'b0001,4'b0011,4'b0111,4'b1111}))
+
+    logic single_inst_mode;
+    initial begin
+      if($test$plusargs("single_inst_mode"))
+        single_inst_mode = 1;
+      else 
+        single_inst_mode = 0;
+    end
+
+    LastUop:`rvv_expect(~single_inst_mode || single_inst_mode & ((rt_last_uop ^ rt_uop) inside {4'b0000,4'b0001,4'b0011,4'b0111,4'b1111}))
       else $error("TB_ISSUE: get not-last uops retired after last uops.");
   `endif
 `endif // TB_BRINGUP
