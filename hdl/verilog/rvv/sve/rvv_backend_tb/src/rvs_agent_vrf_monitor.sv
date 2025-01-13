@@ -56,7 +56,7 @@ task vrf_monitor::vrf_monitor();
   forever begin
     @(posedge vrf_if.clk);
     if(vrf_if.rst_n) begin
-      if(|vrf_if.rt_event) begin
+      if(|vrf_if.rt_last_uop && ((vrf_if.rt_last_uop ^ vrf_if.rt_uop) inside {4'b0000,4'b0001,4'b0011,4'b0111,4'b1111})) begin
         for(int i=0; i<32; i++) begin
             tr.vreg[i] = vrf_if.vreg[i];
         end

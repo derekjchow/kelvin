@@ -15,14 +15,13 @@ class rvs_driver extends uvm_driver # (rvs_transaction);
   v_if1 rvs_if;
   v_if3 vrf_if;
   
-  int             inst_queue_depth = 8;
-  rvs_transaction inst_queue[$];
+  int             inst_tx_queue_depth = 4;
+  rvs_transaction inst_tx_queue[$];
   RVVCmd          inst     [`ISSUE_LANE-1:0];
   logic           inst_vld [`ISSUE_LANE-1:0];
 
-  // FIXME For one inst mode now. 
-  // Later we can use this veriable to cover inst_valid<4.
-  int             skip_fetch_cnt = 2;
+  bit             single_inst_mode = 0; 
+  int             skip_fetch_cnt = 0;
 
   extern function new(string name = "rvs_driver", uvm_component parent = null); 
  
@@ -37,7 +36,7 @@ class rvs_driver extends uvm_driver # (rvs_transaction);
   extern protected virtual task tx_driver();
   extern protected virtual task inst_manage();
 
-  extern protected virtual task rt_xrf_driver();
+  extern protected virtual task rx_driver();
 
 endclass: rvs_driver
 
@@ -48,8 +47,11 @@ endfunction: new
 function void rvs_driver::build_phase(uvm_phase phase);
   super.build_phase(phase);
   inst_ap = new("inst_ap", this);
-  if(uvm_config_db#(int)::get(this, "", "inst_queue_depth", inst_queue_depth)) begin
-    `uvm_info(get_type_name(), $sformatf("Depth of instruction queue in rvs_driver is set to %0d.", inst_queue_depth), UVM_LOW)
+  if(uvm_config_db#(int)::get(this, "", "inst_tx_queue_depth", inst_tx_queue_depth)) begin
+    `uvm_info(get_type_name(), $sformatf("Depth of instruction queue in rvs_driver is set to %0d.", inst_tx_queue_depth), UVM_LOW)
+  end
+  if(uvm_config_db#(int)::get(this, "", "single_inst_mode", single_inst_mode)) begin
+    `uvm_info(get_type_name(), $sformatf("single_inst_mode of rvs_driver is set to %0d.",single_inst_mode), UVM_LOW)
   end
 endfunction: build_phase
 
@@ -90,7 +92,7 @@ task rvs_driver::run_phase(uvm_phase phase);
   super.run_phase(phase);
   fork 
     tx_driver();
-    rt_xrf_driver();
+    rx_driver();
   join
 endtask: run_phase
 
@@ -100,16 +102,12 @@ task rvs_driver::inst_manage();
   
   for(int i=0; i<`ISSUE_LANE; i++) begin
     if((rvs_if.insts_ready_cq2rvs[i]===1'b1) && inst_vld[i]) begin
-      tr = inst_queue.pop_front();
-      `uvm_info(get_type_name(), $sformatf("Send transaction to inst_ap"),UVM_HIGH)
-      `uvm_info(get_type_name(), tr.sprint(),UVM_HIGH)
-      `uvm_info("INST_TR", tr.sprint(),UVM_LOW)
-      inst_ap.write(tr);
+      tr = inst_tx_queue.pop_front();
       `uvm_info("ASM_DUMP",$sformatf("0x%8x\t%s", tr.pc, tr.asm_string),UVM_LOW)
     end
   end
 
-  while (inst_queue.size() < inst_queue_depth) begin
+  while (inst_tx_queue.size() < inst_tx_queue_depth) begin
     if(skip_fetch_cnt != 0) begin 
       skip_fetch_cnt--;
       break;
@@ -119,29 +117,36 @@ task rvs_driver::inst_manage();
     if(tr != null) begin
       `uvm_info(get_type_name(), "Get item from rvs_sqr",UVM_HIGH)
       `uvm_info(get_type_name(), tr.sprint(),UVM_HIGH)
-      inst_queue.push_back(tr);
+      inst_tx_queue.push_back(tr);
+      `uvm_info(get_type_name(), $sformatf("Send transaction to rvs_mon"),UVM_HIGH)
+      `uvm_info(get_type_name(), tr.sprint(),UVM_HIGH)
+      inst_ap.write(tr);
       seq_item_port.item_done(); 
-      // skip_fetch_cnt = $urandom();
-      skip_fetch_cnt = 5; 
+      if(single_inst_mode) begin
+        skip_fetch_cnt = 5;
+      end else begin
+        // skip_fetch_cnt = $urandom();
+        skip_fetch_cnt = 0; 
+      end
     end else begin
       break;
     end
   end
 
   for(int i=0; i<`ISSUE_LANE; i++) begin
-    if(i < inst_queue.size()) begin
+    if(i < inst_tx_queue.size()) begin
       `uvm_info("DEBUG", $sformatf("Assign to port inst[%d]",i),UVM_HIGH)
-      inst[i].inst_pc               = inst_queue[i].pc;
-      assert($cast(inst[i].opcode, inst_queue[i].bin_inst[6:5]));
-      inst[i].bits                  = inst_queue[i].bin_inst[31:7];
-      inst[i].rs1                   = inst_queue[i].rs_data;
-      inst[i].arch_state.vl         = inst_queue[i].vl;
-      inst[i].arch_state.vstart     = inst_queue[i].vstart;
-      assert($cast(inst[i].arch_state.xrm, inst_queue[i].vxrm));
-      inst[i].arch_state.ma         = inst_queue[i].vtype.vma;
-      inst[i].arch_state.ta         = inst_queue[i].vtype.vta;
-      assert($cast(inst[i].arch_state.sew, inst_queue[i].vtype.vsew));
-      assert($cast(inst[i].arch_state.lmul, inst_queue[i].vtype.vlmul));
+      inst[i].inst_pc               = inst_tx_queue[i].pc;
+      assert($cast(inst[i].opcode, inst_tx_queue[i].bin_inst[6:5]));
+      inst[i].bits                  = inst_tx_queue[i].bin_inst[31:7];
+      inst[i].rs1                   = inst_tx_queue[i].rs_data;
+      inst[i].arch_state.vl         = inst_tx_queue[i].vl;
+      inst[i].arch_state.vstart     = inst_tx_queue[i].vstart;
+      assert($cast(inst[i].arch_state.xrm, inst_tx_queue[i].vxrm));
+      inst[i].arch_state.ma         = inst_tx_queue[i].vtype.vma;
+      inst[i].arch_state.ta         = inst_tx_queue[i].vtype.vta;
+      assert($cast(inst[i].arch_state.sew, inst_tx_queue[i].vtype.vsew));
+      assert($cast(inst[i].arch_state.lmul, inst_tx_queue[i].vtype.vlmul));
       inst_vld[i] = 1'b1;
     end else begin
       inst[i] = inst[i];
@@ -155,24 +160,24 @@ task rvs_driver::tx_driver();
   rvs_transaction tr;
   tr = new();
   forever begin
+    @(posedge rvs_if.clk);
     inst_manage();
     for(int i=0; i<`ISSUE_LANE; i++) begin
       // `uvm_info(get_type_name(), $sformatf("Assign to dut inst[%d]",i),UVM_HIGH)
       rvs_if.insts_rvs2cq[i]         <= inst[i];
       rvs_if.insts_valid_rvs2cq[i]   <= inst_vld[i];
     end
-    @(posedge rvs_if.clk);
   end
 endtask: tx_driver
 
-task rvs_driver::rt_xrf_driver();
+task rvs_driver::rx_driver();
   forever begin
     for(int i=0; i<`NUM_RT_UOP; i++) begin
       rvs_if.rt_xrf_ready_rvs2rvv[i] <= '1;
     end
     @(posedge rvs_if.clk);
   end
-endtask: rt_xrf_driver
+endtask: rx_driver
 `endif // RVS_DRIVER__SV
 
 

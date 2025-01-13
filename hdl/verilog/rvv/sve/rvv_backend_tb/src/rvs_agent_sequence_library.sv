@@ -246,6 +246,66 @@ class alu_smoke_vx_seq extends base_sequence;
     this.start(sqr);
   endtask: run_inst
 endclass: alu_smoke_vx_seq
+
+class alu_smoke_vmerge_seq extends base_sequence;
+  `uvm_object_utils(alu_smoke_vmerge_seq)
+  `uvm_add_to_seq_lib(alu_smoke_vmerge_seq,rvs_sequencer_sequence_library)
+
+  alu_inst_e alu_inst;
+  bit vm;
+  function new(string name = "alu_smoke_vmerge_seq");
+    super.new(name);
+	`ifdef UVM_POST_VERSION_1_1
+     set_automatic_phase_objection(1);
+    `endif
+  endfunction:new
+
+  virtual task body();
+    req = new("req");
+    // vmerge
+    start_item(req);
+    assert(req.randomize() with {
+      use_vlmax == 1;
+      pc == inst_cnt;
+
+      vtype.vsew ==  SEW16;
+      vtype.vlmul inside {LMUL1_2, LMUL2};
+
+      inst_type == ALU;
+      alu_inst == local::alu_inst;
+      dest_type == VRF; dest_idx == 16;
+      src2_type == VRF; src2_idx == 8;
+      src1_type == VRF; src1_idx == 2;
+      vm == 0; 
+    });
+    finish_item(req);
+    inst_cnt++;
+    
+    // vmv.v
+    start_item(req);
+    assert(req.randomize() with {
+      use_vlmax == 1;
+      pc == inst_cnt;
+
+      vtype.vsew ==  SEW16;
+      vtype.vlmul inside {LMUL1_2, LMUL2};
+
+      inst_type == ALU;
+      alu_inst == local::alu_inst;
+      dest_type == VRF; dest_idx == 16;
+      src2_type == VRF; src2_idx == 0;
+      src1_type == VRF; src1_idx == 2;
+      vm == 1; 
+    });
+    finish_item(req);
+    inst_cnt++;
+  endtask
+
+  task run_inst(alu_inst_e inst, uvm_sequencer_base sqr);
+    this.alu_inst = inst;
+    this.start(sqr);
+  endtask: run_inst
+endclass: alu_smoke_vmerge_seq
 //-----------------------------------------------------------
 // Iterate each vm/lmul/sew/red_idx for .vv/.vx/.vi
 //-----------------------------------------------------------

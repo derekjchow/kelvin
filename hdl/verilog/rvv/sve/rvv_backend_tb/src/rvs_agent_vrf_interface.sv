@@ -8,7 +8,8 @@ interface vrf_interface (input bit clk, input bit rst_n);
 
   logic [31:0] [`VLEN-1:0] vreg_init_data;
 
-  logic [`NUM_RT_UOP-1:0]  rt_event;
+  logic [`NUM_RT_UOP-1:0]  rt_uop;
+  logic [`NUM_RT_UOP-1:0]  rt_last_uop;
 
 endinterface: vrf_interface
 

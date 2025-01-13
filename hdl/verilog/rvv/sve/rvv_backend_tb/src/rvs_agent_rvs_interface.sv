@@ -11,10 +11,18 @@ interface rvs_interface (input bit clk, input bit rst_n);
   RVVCmd        [`ISSUE_LANE-1:0] insts_rvs2cq      ;
   logic         [`ISSUE_LANE-1:0] insts_ready_cq2rvs;  
 
+// write back to VRF. These are internal signals after WAW-merge of RVV.
+  RT2VRF_t      [`NUM_RT_UOP-1:0] rt_vrf_data_rob2rt ;
+  logic         [`NUM_RT_UOP-1:0] rt_vrf_valid_rob2rt;
+
 // write back to XRF. RVS arbitrates write ports of XRF by itself.
   RT2XRF_t      [`NUM_RT_UOP-1:0] rt_xrf_rvv2rvs      ;
   logic         [`NUM_RT_UOP-1:0] rt_xrf_valid_rvv2rvs;
   logic         [`NUM_RT_UOP-1:0] rt_xrf_ready_rvs2rvv;
+
+// RT to VCSR.vxsat
+  logic                            wr_vxsat_valid;
+  logic    [`VCSR_VXSAT_WIDTH-1:0] wr_vxsat;
 
 // exception handler
   // trap signal handshake
@@ -26,7 +34,8 @@ interface rvs_interface (input bit clk, input bit rst_n);
   RVVConfigState                  vector_csr;
 
 // write back event (for each instruction)
-  logic         [`NUM_RT_UOP-1:0] rt_event;
+  logic         [`NUM_RT_UOP-1:0] rt_uop;
+  logic         [`NUM_RT_UOP-1:0] rt_last_uop;
 
 endinterface: rvs_interface
 

@@ -15,7 +15,7 @@ class rvv_backend_test extends uvm_test;
   rvv_backend_env env;
 
   UVM_FILE tb_logs [string];
-  int inst_queue_depth = 'd1;
+  int inst_tx_queue_depth = 4;
 
   function new(string name, uvm_component parent);
     super.new(name, parent);
@@ -51,11 +51,12 @@ class rvv_backend_test extends uvm_test;
       uvm_config_db#(bit)::set(uvm_root::get(), "*", "ill_inst_en", 1'b1);
     if($test$plusargs("all_one_for_agn"))
       uvm_config_db#(bit)::set(uvm_root::get(), "*", "all_one_for_agn", 1'b1);
-    if($value$plusargs("inst_queue_depth=%d", inst_queue_depth))
-      uvm_config_db#(int)::set(uvm_root::get(), "*", "inst_queue_depth", inst_queue_depth);
+    if($value$plusargs("inst_tx_queue_depth=%d", inst_tx_queue_depth))
+      uvm_config_db#(int)::set(uvm_root::get(), "*", "inst_tx_queue_depth", inst_tx_queue_depth);
     else
-      // give default value
-      uvm_config_db#(int)::set(uvm_root::get(), "*", "inst_queue_depth", inst_queue_depth);
+      uvm_config_db#(int)::set(uvm_root::get(), "*", "inst_tx_queue_depth", inst_tx_queue_depth);
+    if($test$plusargs("single_inst_mode"))
+      uvm_config_db#(int)::set(uvm_root::get(), "*", "single_inst_mode", 1'b1);
   endfunction
 
   virtual function void connect_phase(uvm_phase phase);
@@ -67,8 +68,8 @@ class rvv_backend_test extends uvm_test;
     this.env.rvs_agt.rvs_drv.set_report_id_file("ASM_DUMP", tb_logs["ASM_DUMP"]);
     this.env.rvs_agt.rvs_drv.set_report_id_action("ASM_DUMP", UVM_LOG);
     tb_logs["INST_TR"] = $fopen("tb_inst_tr.log", "w");
-    this.env.rvs_agt.rvs_drv.set_report_id_file("INST_TR", tb_logs["INST_TR"]);
-    this.env.rvs_agt.rvs_drv.set_report_id_action("INST_TR", UVM_LOG);
+    this.env.rvs_agt.rvs_mon.set_report_id_file("INST_TR", tb_logs["INST_TR"]);
+    this.env.rvs_agt.rvs_mon.set_report_id_action("INST_TR", UVM_LOG);
     tb_logs["RECORDER_LOG"] = $fopen("tb_recorder.log", "w");
     this.env.scb.set_report_id_file("VRF_RECORDER", tb_logs["RECORDER_LOG"]);
     this.env.scb.set_report_id_action("VRF_RECORDER", UVM_LOG);
@@ -255,6 +256,17 @@ class alu_smoke_test extends rvv_backend_test;
     rvs_seq.run_inst(VWMACC  , env.rvs_agt.rvs_sqr);
     rvs_seq.run_inst(VWMACCUS, env.rvs_agt.rvs_sqr);
     rvs_seq.run_inst(VWMACCSU, env.rvs_agt.rvs_sqr);
+    end
+
+    if($test$plusargs("case12") || $test$plusargs("all_case")) begin
+    rvs_seq.run_inst(VMERGE_VMVV, env.rvs_agt.rvs_sqr);
+    end
+
+    if($test$plusargs("case13") || $test$plusargs("all_case")) begin
+    rvs_seq.run_inst(VSADDU, env.rvs_agt.rvs_sqr);
+    rvs_seq.run_inst(VSADD , env.rvs_agt.rvs_sqr);
+    rvs_vx_seq.run_inst(VSSUBU, env.rvs_agt.rvs_sqr);
+    rvs_vx_seq.run_inst(VSSUB , env.rvs_agt.rvs_sqr);
     end
 
     phase.phase_done.set_drain_time(this, 1000ns);
@@ -838,6 +850,7 @@ endclass: alu_vwmac_test
 class alu_vmerge_test extends rvv_backend_test;
 
   alu_iterate_vmerge_seq rvs_seq;
+  alu_smoke_vv_seq rvs_last_seq;
 
   `uvm_component_utils(alu_vmerge_test)
 
@@ -860,6 +873,8 @@ class alu_vmerge_test extends rvv_backend_test;
     rvs_seq = alu_iterate_vmerge_seq::type_id::create("rvs_seq", this);
     rvs_seq.run_inst(VMERGE_VMVV, env.rvs_agt.rvs_sqr);
 
+    rvs_last_seq = alu_smoke_vv_seq::type_id::create("rvs_last_seq", this);
+    rvs_last_seq.run_inst(VADD,env.rvs_agt.rvs_sqr);
     phase.phase_done.set_drain_time(this, 1000ns);
     phase.drop_objection( .obj( this ) );
   endtask
@@ -868,6 +883,52 @@ class alu_vmerge_test extends rvv_backend_test;
     super.final_phase(phase);
   endfunction
 endclass: alu_vmerge_test
+
+//-----------------------------------------------------------
+// 32.12.1. Vector Single-Width Saturating Add and Subtract
+//-----------------------------------------------------------
+class alu_vsaddsub_test extends rvv_backend_test;
+
+  alu_iterate_vxi_seq rvs_vxi_seq;
+  alu_iterate_vx_seq  rvs_vx_seq;
+  alu_smoke_vv_seq rvs_last_seq;
+
+  `uvm_component_utils(alu_vsaddsub_test)
+
+  function new(string name, uvm_component parent);
+    super.new(name, parent);
+  endfunction
+
+  function void build_phase(uvm_phase phase);
+    super.build_phase(phase);
+  endfunction
+
+  function void connect_phase(uvm_phase phase);
+    super.connect_phase(phase);
+    this.set_report_id_action_hier("DEBUG", UVM_LOG);
+  endfunction
+
+  task main_phase(uvm_phase phase);
+    phase.raise_objection( .obj( this ) );
+
+    rvs_vxi_seq = alu_iterate_vxi_seq::type_id::create("rvs_vxi_seq", this);
+    rvs_vx_seq  = alu_iterate_vx_seq::type_id::create("rvs_vx_seq", this);
+    rvs_vxi_seq.run_inst(VSADDU, env.rvs_agt.rvs_sqr);
+    rvs_vxi_seq.run_inst(VSADD , env.rvs_agt.rvs_sqr);
+    rvs_vx_seq.run_inst(VSSUBU, env.rvs_agt.rvs_sqr);
+    rvs_vx_seq.run_inst(VSSUB , env.rvs_agt.rvs_sqr);
+
+    rvs_last_seq = alu_smoke_vv_seq::type_id::create("rvs_last_seq", this);
+    rvs_last_seq.run_inst(VADD,env.rvs_agt.rvs_sqr);
+    phase.phase_done.set_drain_time(this, 1000ns);
+    phase.drop_objection( .obj( this ) );
+  endtask
+
+  function void final_phase(uvm_phase phase);
+    super.final_phase(phase);
+  endfunction
+endclass: alu_vsaddsub_test
+
 
 `endif // RVV_BACKEND_TEST__SV
 

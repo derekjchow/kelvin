@@ -3,8 +3,10 @@
 
 `include "rvv_backend_define.svh"
 `include "rvv_backend.svh"
+typedef logic [`REGFILE_INDEX_WIDTH-1:0] reg_idx_t;
 typedef logic [`XLEN-1:0] xrf_t;
 typedef logic [`VLEN-1:0] vrf_t;
+typedef logic [`VLENB-1:0] vrf_byte_t;
 
 
 // typedef RVVSEW sew_e;
@@ -227,10 +229,5 @@ typedef enum int {
 typedef enum {
   XRF, VRF, IMM, UIMM, FUNC, UNUSE
 } oprand_type_e;
-
-typedef struct packed {
-  logic   [`REGFILE_INDEX_WIDTH-1:0]  rt_index; 
-  logic   [`XLEN-1:0]                 rt_data; 
-} rt_xrf_t;
 
 `endif // INST_DESCRIPTION__SVH

@@ -44,6 +44,7 @@ class rvs_agent extends uvm_agent;
     if(is_active == UVM_ACTIVE) begin
   	  rvs_drv.seq_item_port.connect(rvs_sqr.seq_item_export);
     end
+    rvs_drv.inst_ap.connect(rvs_mon.inst_imp);
   endfunction
 
   virtual task run_phase(uvm_phase phase);

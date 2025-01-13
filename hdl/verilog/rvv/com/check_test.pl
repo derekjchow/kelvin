@@ -12,7 +12,7 @@ elsif($cmd =~ m/gen_asm/) { GenASMSource(); }
 else  { Usage(); }
 
 sub Check {
-  my $p_uvmFail = qr/^(UVM_ERROR|UVM_FATAL) (\S+) (@\s*\d+:) (\S+) (\[\S+\]) (.*)$/;
+  my $p_uvmFail = qr/^(UVM_ERROR|UVM_FATAL)( \S+ | )(@\s*\d+:) (\S+) (\[\S+\]) (.*)$/;
   my $p_astFail = qr/Error/;
   my $p_astWarn = qr/Warning/;
   my $p_othFail = qr/((?<!UVM_)ERROR)/;

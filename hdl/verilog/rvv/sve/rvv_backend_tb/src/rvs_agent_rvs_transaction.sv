@@ -6,6 +6,7 @@
 class rvs_transaction extends uvm_sequence_item;
   /* Tr config field */
   rand bit use_vlmax = 0;
+       bit is_rt = 0;
 
   /* VCSR field */
   rand vtype_t           vtype;
@@ -13,7 +14,6 @@ class rvs_transaction extends uvm_sequence_item;
        logic [`XLEN-1:0] vlmax;
   rand logic [`XLEN-1:0] vstart;
   rand vxrm_e            vxrm;
-  rand logic [`XLEN-1:0] vxsat;  
 
   /* Instruction description field */
   rand inst_type_e inst_type;// opcode
@@ -59,8 +59,16 @@ class rvs_transaction extends uvm_sequence_item;
        string asm_string;
 
   /* Write back info */
-  rt_xrf_t rt_xrf;
-  logic rt_xrf_valid;
+       reg_idx_t  rt_vrf_index  [$];
+       vrf_t      rt_vrf_strobe [$];
+       vrf_t      rt_vrf_data   [$];
+
+       reg_idx_t  rt_xrf_index [$];
+       xrf_t      rt_xrf_data  [$];
+
+       logic [`XLEN-1:0] vxsat;  
+       logic             vxsat_valid;  
+
 
   /* Trap field */
   // TODO
@@ -69,7 +77,6 @@ class rvs_transaction extends uvm_sequence_item;
   constraint c_normal_set {
     vtype.vill == 1'b0;
     vtype.rsv  ==  'b0;  
-    vxsat inside {0,1,2,3};
   }
 
   constraint c_vl {
@@ -202,7 +209,6 @@ class rvs_transaction extends uvm_sequence_item;
     `uvm_field_int(vl,UVM_ALL_ON)
     `uvm_field_int(vstart,UVM_ALL_ON)
     `uvm_field_enum(vxrm_e,vxrm,UVM_ALL_ON)
-    `uvm_field_int(vxsat,UVM_ALL_ON)
     `uvm_field_int(vm,UVM_ALL_ON)
     `uvm_field_int(use_vm_to_cal,UVM_ALL_ON)
 
@@ -232,9 +238,20 @@ class rvs_transaction extends uvm_sequence_item;
     `uvm_field_int(src3_idx,UVM_ALL_ON)
     `uvm_field_int(rs_data,UVM_ALL_ON)
 
-    `uvm_field_int(rt_xrf.rt_index ,UVM_ALL_ON)
-    `uvm_field_int(rt_xrf.rt_data  ,UVM_ALL_ON)
-    `uvm_field_int(rt_xrf_valid,UVM_ALL_ON)
+
+    if(is_rt) begin
+      foreach(rt_vrf_index[idx]) begin
+        `uvm_field_int(rt_vrf_index[idx] ,UVM_ALL_ON)
+        `uvm_field_int(rt_vrf_strobe[idx],UVM_ALL_ON)
+        `uvm_field_int(rt_vrf_data[idx]  ,UVM_ALL_ON)
+      end
+      foreach(rt_xrf_index[idx]) begin
+        `uvm_field_int(rt_xrf_index[idx],UVM_ALL_ON)
+        `uvm_field_int(rt_xrf_data[idx] ,UVM_ALL_ON)
+      end
+      `uvm_field_int(vxsat_valid,UVM_ALL_ON)
+      `uvm_field_int(vxsat,UVM_ALL_ON)
+    end
   `uvm_object_utils_end
 
   extern function new(string name = "Trans");

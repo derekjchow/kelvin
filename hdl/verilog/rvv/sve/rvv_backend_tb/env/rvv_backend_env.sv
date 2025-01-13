@@ -50,8 +50,8 @@ endfunction: build_phase
 function void rvv_backend_env::connect_phase(uvm_phase phase);
   super.connect_phase(phase);
   // ref_mdl ap
-  // rvs_agt.rvs_mon.inst_ap.connect(mdl.inst_imp);
-  rvs_agt.rvs_drv.inst_ap.connect(mdl.inst_imp);
+  rvs_agt.rvs_mon.inst_ap.connect(mdl.inst_imp);
+  // rvs_agt.rvs_drv.inst_ap.connect(mdl.inst_imp);
   // scb ap
   rvs_agt.rvs_mon.rt_ap.connect(scb.rvs_imp);
   rvs_agt.vrf_mon.vrf_ap.connect(scb.rvs_vrf_imp);

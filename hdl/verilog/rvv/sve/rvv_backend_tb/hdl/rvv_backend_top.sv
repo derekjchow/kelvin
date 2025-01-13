@@ -58,8 +58,33 @@ module rvv_backend_top();
     .vector_csr               (rvs_if.vector_csr            )
   );
 
-  assign rvs_if.rt_event = `RT_EVENT_PATH.rt_event;
-  assign vrf_if.rt_event = `RT_EVENT_PATH.rt_event;
+  assign rvs_if.rt_uop      = `RT_UOP_PATH.rt_uop;
+  assign rvs_if.rt_last_uop = `RT_UOP_PATH.rt_last_uop;
+  
+  // VRF retire
+  always_comb begin
+    for(int i=0; i<`NUM_RT_UOP; i++) begin
+      rvs_if.rt_vrf_valid_rob2rt[i] = `RT_VRF_PATH.rt2vrf_write_valid[i];
+      rvs_if.rt_vrf_data_rob2rt[i].uop_pc   = `RT_VRF_PATH.rob2rt_write_data[i].uop_pc;
+      rvs_if.rt_vrf_data_rob2rt[i].rt_data  = `RT_VRF_PATH.rt2vrf_write_data[i].rt_data;
+      rvs_if.rt_vrf_data_rob2rt[i].rt_index = `RT_VRF_PATH.rt2vrf_write_data[i].rt_index;
+    end
+  end
+  assign rvs_if.rt_vrf_data_rob2rt[0].rt_strobe  = `RT_VRF_PATH.w_enB0;
+  assign rvs_if.rt_vrf_data_rob2rt[1].rt_strobe  = `RT_VRF_PATH.w_enB1;
+  assign rvs_if.rt_vrf_data_rob2rt[2].rt_strobe  = `RT_VRF_PATH.w_enB2;
+  assign rvs_if.rt_vrf_data_rob2rt[3].rt_strobe  = `RT_VRF_PATH.w_enB3;
+
+  // For VRF value check, we need to delay a cycle to wait for writeback finished.
+  always_ff @(posedge clk or negedge rst_n) begin
+    if(~rst_n) begin
+      vrf_if.rt_uop      <= '0;
+      vrf_if.rt_last_uop <= '0;
+    end else begin
+      vrf_if.rt_uop      <= `RT_UOP_PATH.rt_uop;
+      vrf_if.rt_last_uop <= `RT_UOP_PATH.rt_last_uop;
+    end
+  end
 
   always_comb begin: vrf_connect
     for(int i=0; i<32; i++) begin

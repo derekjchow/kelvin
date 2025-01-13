@@ -30,9 +30,12 @@ class rvv_behavior_model extends uvm_component;
   logic [`XLEN-1:0] vstart;
   vxrm_e            vxrm;
   logic [`XLEN-1:0] vxsat;  
+  logic             vxsat_valid;
   xrf_t [31:0] xrf;
   vrf_t [31:0] vrf;
+  vrf_t [31:0] vrf_delay;
   vrf_t [31:0] vrf_temp;
+  vrf_t [31:0] vrf_strobe_temp;
 
   logic [`XLEN-1:0] vlmax;
   logic [`XLEN-1:0] imm_data;
@@ -92,11 +95,12 @@ endclass : rvv_behavior_model
   task rvv_behavior_model::reset_phase(uvm_phase phase);
     phase.raise_objection( .obj( this ) );
     while(!rvs_if.rst_n) begin
-      vtype   = '0;
-      vl      = '0;
-      vstart  = '0;
-      vxrm    = RNU;
-      vxsat   = '0;
+      vtype       = '0;
+      vl          = '0;
+      vstart      = '0;
+      vxrm        = RNU;
+      vxsat       = '0;
+      vxsat_valid = '0;
       for(int i=0; i<32; i++) begin
         vrf[i] = vrf_if.vreg_init_data[i];
         xrf[i] = '0;
@@ -107,8 +111,6 @@ endclass : rvv_behavior_model
   endtask: reset_phase
 
   task rvv_behavior_model::main_phase(uvm_phase phase);
-    rvs_transaction inst_tr;
-    rvs_transaction rt_tr;
     super.main_phase(phase);
     fork
       // rx_mdl();
@@ -163,25 +165,29 @@ endclass : rvv_behavior_model
     logic [31:0] src2;
     logic [31:0] src3;
 
-    logic [`NUM_RT_UOP-1:0] rt_event;
+    logic [`NUM_RT_UOP-1:0] rt_uop;
+    logic [`NUM_RT_UOP-1:0] rt_last_uop;
     rvs_transaction inst_tr;
+    rvs_transaction rt_tr;
 
-    inst_tr = new();
     forever begin
       @(posedge rvs_if.clk);
       if(rvs_if.rst_n) begin
-      rt_event = rvs_if.rt_event;
-      while(|rt_event) begin
-      if(rt_event[0]) begin
+      rt_uop = rvs_if.rt_uop;
+      rt_last_uop = rvs_if.rt_last_uop;
+      while(|rt_last_uop) begin
+      if(rt_last_uop[0]) begin
         // --------------------------------------------------
         // 0. Get inst and update VCSR
         if(inst_queue.size()>0) begin
-          inst_tr = inst_queue.pop_front();
-          vtype  = inst_tr.vtype;
-          vl     = inst_tr.vl;
-          vstart = inst_tr.vstart;
-          vxrm   = inst_tr.vxrm;
-          vxsat  = '0;
+          inst_tr = new("inst_tr");
+          inst_tr     = inst_queue.pop_front();
+          vtype       = inst_tr.vtype;
+          vl          = inst_tr.vl;
+          vstart      = inst_tr.vstart;
+          vxrm        = inst_tr.vxrm;
+          vxsat       = '0;
+          vxsat_valid = '0;
 
           `uvm_info("DEBUG","Start calculation.",UVM_LOW)
           `uvm_info("DEBUG",inst_tr.sprint(),UVM_LOW)
@@ -405,22 +411,22 @@ endclass : rvv_behavior_model
         // 2.2.2 Overlap Check
         if(inst_tr.dest_type == VRF && inst_tr.src2_type == VRF && (dest_eew > src2_eew) && src2_reg_idx == dest_reg_idx && src2_emul>=1) begin
           `uvm_warning("MDL/INST_CHECKER", $sformatf("pc=0x%8x: Ch32.5.2. The lowest part of dest vrf(v%0d~v%0d) overlaps the src2 vrf(v%0d~v%0d) in a widen instruction. Ignored.",pc,
-              dest_reg_idx, dest_reg_idx+dest_emul, src2_reg_idx, src2_reg_idx+src2_emul));
+              dest_reg_idx, dest_reg_idx+int'(dest_emul)-1, src2_reg_idx, src2_reg_idx+int'(src2_emul)-1));
           continue;
         end
-        if(inst_tr.dest_type == VRF && inst_tr.src2_type == VRF && (dest_eew < src2_eew) && (src2_reg_idx+dest_emul) == dest_reg_idx) begin
+        if(inst_tr.dest_type == VRF && inst_tr.src2_type == VRF && (dest_eew < src2_eew) && (src2_reg_idx+int'(dest_emul)) == dest_reg_idx) begin
           `uvm_warning("MDL/INST_CHECKER", $sformatf("pc=0x%8x: Ch32.5.2. The dest vrf(v%0d~v%0d) overlaps the highest part of src2 vrf(v%0d~v%0d) in a narrow instruction. Ignored.",pc,
-              dest_reg_idx, dest_reg_idx+dest_emul, src2_reg_idx, src2_reg_idx+src2_emul));
+              dest_reg_idx, dest_reg_idx+int'(dest_emul)-1, src2_reg_idx, src2_reg_idx+int'(src2_emul)-1));
           continue;
         end
         if(inst_tr.dest_type == VRF && inst_tr.src1_type == VRF && (dest_eew > src1_eew) && src1_reg_idx == dest_reg_idx && src1_emul>=1) begin
           `uvm_warning("MDL/INST_CHECKER", $sformatf("pc=0x%8x: Ch32.5.2. The lower part of dest vrf(v%0d~v%0d) overlaps the src1 vrf(v%0d~v%0d) in a widen instruction. Ignored.",pc,
-              dest_reg_idx, dest_reg_idx+dest_emul, src1_reg_idx, src1_reg_idx+src1_emul));
+              dest_reg_idx, dest_reg_idx+int'(dest_emul)-1, src1_reg_idx, src1_reg_idx+int'(src1_emul)-1));
           continue;
         end
-        if(inst_tr.dest_type == VRF && inst_tr.src1_type == VRF && (dest_eew < src1_eew) && (src1_reg_idx+dest_emul) == dest_reg_idx) begin
+        if(inst_tr.dest_type == VRF && inst_tr.src1_type == VRF && (dest_eew < src1_eew) && (src1_reg_idx+int'(dest_emul)) == dest_reg_idx) begin
           `uvm_warning("MDL/INST_CHECKER", $sformatf("pc=0x%8x: Ch32.5.2. The dest vrf(v%0d~v%0d) overlaps the highest part of src1 vrf(v%0d~v%0d) in a narrow instruction. Ignored.",pc,
-              dest_reg_idx, dest_reg_idx+dest_emul, src1_reg_idx, src1_reg_idx+src1_emul));
+              dest_reg_idx, dest_reg_idx+int'(dest_emul)-1, src1_reg_idx, src1_reg_idx+int'(src1_emul)-1));
           continue;
         end
         if(inst_tr.dest_type == VRF && vm == 0 && dest_reg_idx == 0 && (dest_eew != EEW1 /*|| TODO scalar result of a reduction*/)) begin
@@ -430,6 +436,7 @@ endclass : rvv_behavior_model
 
 
         vrf_temp = vrf;
+        vrf_strobe_temp = '0;
         `uvm_info("DEBUG",$sformatf("Prepare done!\nelm_idx_max=%0d\ndest_eew=%0d\nsrc2_eew=%0d\nsrc1_eew=%0d\ndest_emul=%2.4f\nsrc2_emul=%2.4f\nsrc1_emul=%2.4f\n",elm_idx_max,dest_eew,src2_eew,src1_eew,dest_emul,src2_emul,src1_emul),UVM_HIGH)
         // --------------------------------------------------
         // 3. Operate elements
@@ -459,16 +466,20 @@ endclass : rvv_behavior_model
             // tail
             `uvm_info("DEBUG", $sformatf("element[%2d]: tail", elm_idx), UVM_LOW)
             if(vtype.vta == AGNOSTIC) begin
-              if(all_one_for_agn) dest = '1;
-              elm_writeback(dest, inst_tr.dest_type, dest_reg_idx, elm_idx, dest_eew);
+              if(all_one_for_agn) begin 
+                dest = '1;
+                elm_writeback(dest, inst_tr.dest_type, dest_reg_idx, elm_idx, dest_eew);
+              end
             end else begin
             end
           end else if(!(vm || this.vrf[0][elm_idx] || use_vm_to_cal)) begin
             // body-inactive
             `uvm_info("DEBUG", $sformatf("element[%2d]: body-inactive", elm_idx), UVM_LOW)
             if(vtype.vma == AGNOSTIC) begin
-              if(all_one_for_agn) dest = '1;
-              elm_writeback(dest, inst_tr.dest_type, dest_reg_idx, elm_idx, dest_eew);
+              if(all_one_for_agn) begin 
+                dest = '1;
+                elm_writeback(dest, inst_tr.dest_type, dest_reg_idx, elm_idx, dest_eew);
+              end
             end else begin
             end
           end else begin
@@ -522,17 +533,36 @@ endclass : rvv_behavior_model
           `uvm_info("DEBUG", $sformatf("After  - element[%2d]: dest=0x%8h, src2=0x%8h, src1=0x%8h, src0=0x%8h\n", elm_idx, dest, src2, src1, src0), UVM_LOW)
         end : op_element
 
-        // --------------------------------------------------
-        // 4. WB transaction gen
+        // Writeback whole vrf
         vrf = vrf_temp;
-        inst_tr.rt_xrf.rt_index = inst_tr.dest_idx;
-        inst_tr.rt_xrf.rt_data  = this.xrf[inst_tr.dest_idx];
+        // --------------------------------------------------
+        // 4. Retire transaction gen
+        rt_tr   = new("rt_tr");
+        rt_tr.copy(inst_tr);
+        rt_tr.is_rt = 1;
+        // VRF
+        if(rt_tr.dest_type == VRF) begin
+          for(int i=dest_reg_idx; i<dest_reg_idx+$ceil(dest_emul); i++) begin
+            rt_tr.rt_vrf_index.push_back(i);
+            rt_tr.rt_vrf_strobe.push_back(vrf_strobe_temp[i]);
+            rt_tr.rt_vrf_data.push_back(vrf_temp[i]);
+          end
+        end
+        // XRF
+        if(rt_tr.dest_type == XRF) begin
+          rt_tr.rt_xrf_index.push_back(rt_tr.dest_idx);
+          rt_tr.rt_xrf_data.push_back(this.xrf[rt_tr.dest_idx]);
+        end
+        // VXSAT
+        rt_tr.vxsat = vxsat;
+        rt_tr.vxsat_valid = vxsat_valid;
+
         `uvm_info("DEBUG","Complete calculation.",UVM_LOW)
-        `uvm_info("DEBUG",inst_tr.sprint(),UVM_LOW)
-        rt_ap.write(inst_tr);
-      end // if(rt_event[0])
-        rt_event = rt_event >> 1;
-      end // while(|rt_event)
+        `uvm_info("DEBUG",rt_tr.sprint(),UVM_LOW)
+        rt_ap.write(rt_tr);
+      end // if(rt_last_uop[0])
+        rt_last_uop = rt_last_uop >> 1;
+      end // while(|rt_last_uop)
       end // rst_n
     end // forever
     // `uvm_fatal("MDL/FATAL","Im here.")
@@ -579,6 +609,7 @@ endclass : rvv_behavior_model
         elm_idx = elm_idx % (`VLEN / eew);
         for(int i=0; i<bit_count; i++) begin
           this.vrf_temp[reg_idx][elm_idx*bit_count + i] = result[i];
+          this.vrf_strobe_temp[reg_idx][elm_idx*bit_count + i] = 1'b1;
         end
       end
       XRF: begin
@@ -593,15 +624,16 @@ endclass : rvv_behavior_model
     vrf_transaction tr;
     tr = new();
     forever begin
-      @(posedge rvs_if.clk);
-      if(rvs_if.rst_n) begin
-        if(|vrf_if.rt_event) begin
+      @(posedge vrf_if.clk);
+      if(vrf_if.rst_n) begin
+        if(|vrf_if.rt_last_uop && ((vrf_if.rt_last_uop ^ vrf_if.rt_uop) inside {4'b0000,4'b0001,4'b0011,4'b0111,4'b1111})) begin
           for(int i=0; i<32; i++) begin
-              tr.vreg[i] = vrf[i];
+              tr.vreg[i] = vrf_delay[i];
           end
           vrf_ap.write(tr);
         end
       end
+      vrf_delay <= vrf;
     end
   endtask
 
