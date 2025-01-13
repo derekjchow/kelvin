@@ -30,22 +30,22 @@ module rvv_backend_dispatch_bypass
     generate
         for (i=0; i<`ROB_DEPTH; i++) begin : gen_data_sel
             for (j=0; j<`VLENB; j++) begin
-                assign vs1_sel[i][j]  = (raw_uop_rob.vs1_hit[`ROB_DEPTH-1:i] == 'b1) & 
+                assign vs1_sel[i][j]  = (raw_uop_rob.vs1_hit[i] == 1'b1) & 
                                         (rob_byp[i].byte_type[j] == BODY_ACTIVE |
                                          rob_byp[i].byte_type[j] == BODY_INACTIVE & rob_byp[i].inactive_one |
                                          rob_byp[i].byte_type[j] == TAIL & rob_byp[i].tail_one);
 
-                assign vs2_sel[i][j]  = (raw_uop_rob.vs2_hit[`ROB_DEPTH-1:i] == 'b1) & 
+                assign vs2_sel[i][j]  = (raw_uop_rob.vs2_hit[i] == 1'b1) & 
                                         (rob_byp[i].byte_type[j] == BODY_ACTIVE |
                                          rob_byp[i].byte_type[j] == BODY_INACTIVE & rob_byp[i].inactive_one |
                                          rob_byp[i].byte_type[j] == TAIL & rob_byp[i].tail_one);
 
-                assign vd_sel[i][j]   = (raw_uop_rob.vd_hit[`ROB_DEPTH-1:i] == 'b1) & 
+                assign vd_sel[i][j]   = (raw_uop_rob.vd_hit[i] == 1'b1) & 
                                         (rob_byp[i].byte_type[j] == BODY_ACTIVE |
                                          rob_byp[i].byte_type[j] == BODY_INACTIVE & rob_byp[i].inactive_one |
                                          rob_byp[i].byte_type[j] == TAIL & rob_byp[i].tail_one);
 
-                assign v0_sel[i][j]   = (raw_uop_rob.v0_hit[`ROB_DEPTH-1:i] == 'b1) & 
+                assign v0_sel[i][j]   = (raw_uop_rob.v0_hit[i] == 1'b1) & 
                                         (rob_byp[i].byte_type[j] == BODY_ACTIVE |
                                          rob_byp[i].byte_type[j] == BODY_INACTIVE & rob_byp[i].inactive_one |
                                          rob_byp[i].byte_type[j] == TAIL & rob_byp[i].tail_one);
@@ -58,54 +58,54 @@ module rvv_backend_dispatch_bypass
           // Suppose ROB Depth is 8.
           // Please update the logic if ROB Depth is NOT 8.
             always_comb begin
-                case (1'b1)
-                    vs1_sel[0][j]: uop_operand.vs1[8*j+:8] = agnostic[0][j] ? 8'hFF : rob_byp[0].w_data[8*j+:8];
-                    vs1_sel[1][j]: uop_operand.vs1[8*j+:8] = agnostic[1][j] ? 8'hFF : rob_byp[1].w_data[8*j+:8];
-                    vs1_sel[2][j]: uop_operand.vs1[8*j+:8] = agnostic[2][j] ? 8'hFF : rob_byp[2].w_data[8*j+:8];
-                    vs1_sel[3][j]: uop_operand.vs1[8*j+:8] = agnostic[3][j] ? 8'hFF : rob_byp[3].w_data[8*j+:8];
-                    vs1_sel[4][j]: uop_operand.vs1[8*j+:8] = agnostic[4][j] ? 8'hFF : rob_byp[4].w_data[8*j+:8];
-                    vs1_sel[5][j]: uop_operand.vs1[8*j+:8] = agnostic[5][j] ? 8'hFF : rob_byp[5].w_data[8*j+:8];
-                    vs1_sel[6][j]: uop_operand.vs1[8*j+:8] = agnostic[6][j] ? 8'hFF : rob_byp[6].w_data[8*j+:8];
+                priority case (1'b1)
                     vs1_sel[7][j]: uop_operand.vs1[8*j+:8] = agnostic[7][j] ? 8'hFF : rob_byp[7].w_data[8*j+:8];
+                    vs1_sel[6][j]: uop_operand.vs1[8*j+:8] = agnostic[6][j] ? 8'hFF : rob_byp[6].w_data[8*j+:8];
+                    vs1_sel[5][j]: uop_operand.vs1[8*j+:8] = agnostic[5][j] ? 8'hFF : rob_byp[5].w_data[8*j+:8];
+                    vs1_sel[4][j]: uop_operand.vs1[8*j+:8] = agnostic[4][j] ? 8'hFF : rob_byp[4].w_data[8*j+:8];
+                    vs1_sel[3][j]: uop_operand.vs1[8*j+:8] = agnostic[3][j] ? 8'hFF : rob_byp[3].w_data[8*j+:8];
+                    vs1_sel[2][j]: uop_operand.vs1[8*j+:8] = agnostic[2][j] ? 8'hFF : rob_byp[2].w_data[8*j+:8];
+                    vs1_sel[1][j]: uop_operand.vs1[8*j+:8] = agnostic[1][j] ? 8'hFF : rob_byp[1].w_data[8*j+:8];
+                    vs1_sel[0][j]: uop_operand.vs1[8*j+:8] = agnostic[0][j] ? 8'hFF : rob_byp[0].w_data[8*j+:8];
                     default:       uop_operand.vs1[8*j+:8] = vrf_byp.vs1[8*j+:8];
                 endcase
             end
             always_comb begin
-                case (1'b1)
-                    vs2_sel[0][j]: uop_operand.vs2[8*j+:8] = agnostic[0][j] ? 8'hFF : rob_byp[0].w_data[8*j+:8];
-                    vs2_sel[1][j]: uop_operand.vs2[8*j+:8] = agnostic[1][j] ? 8'hFF : rob_byp[1].w_data[8*j+:8];
-                    vs2_sel[2][j]: uop_operand.vs2[8*j+:8] = agnostic[2][j] ? 8'hFF : rob_byp[2].w_data[8*j+:8];
-                    vs2_sel[3][j]: uop_operand.vs2[8*j+:8] = agnostic[3][j] ? 8'hFF : rob_byp[3].w_data[8*j+:8];
-                    vs2_sel[4][j]: uop_operand.vs2[8*j+:8] = agnostic[4][j] ? 8'hFF : rob_byp[4].w_data[8*j+:8];
-                    vs2_sel[5][j]: uop_operand.vs2[8*j+:8] = agnostic[5][j] ? 8'hFF : rob_byp[5].w_data[8*j+:8];
-                    vs2_sel[6][j]: uop_operand.vs2[8*j+:8] = agnostic[6][j] ? 8'hFF : rob_byp[6].w_data[8*j+:8];
+                priority case (1'b1)
                     vs2_sel[7][j]: uop_operand.vs2[8*j+:8] = agnostic[7][j] ? 8'hFF : rob_byp[7].w_data[8*j+:8];
+                    vs2_sel[6][j]: uop_operand.vs2[8*j+:8] = agnostic[6][j] ? 8'hFF : rob_byp[6].w_data[8*j+:8];
+                    vs2_sel[5][j]: uop_operand.vs2[8*j+:8] = agnostic[5][j] ? 8'hFF : rob_byp[5].w_data[8*j+:8];
+                    vs2_sel[4][j]: uop_operand.vs2[8*j+:8] = agnostic[4][j] ? 8'hFF : rob_byp[4].w_data[8*j+:8];
+                    vs2_sel[3][j]: uop_operand.vs2[8*j+:8] = agnostic[3][j] ? 8'hFF : rob_byp[3].w_data[8*j+:8];
+                    vs2_sel[2][j]: uop_operand.vs2[8*j+:8] = agnostic[2][j] ? 8'hFF : rob_byp[2].w_data[8*j+:8];
+                    vs2_sel[1][j]: uop_operand.vs2[8*j+:8] = agnostic[1][j] ? 8'hFF : rob_byp[1].w_data[8*j+:8];
+                    vs2_sel[0][j]: uop_operand.vs2[8*j+:8] = agnostic[0][j] ? 8'hFF : rob_byp[0].w_data[8*j+:8];
                     default:       uop_operand.vs2[8*j+:8] = vrf_byp.vs2[8*j+:8];
                 endcase
             end
             always_comb begin
-                case (1'b1)
-                    vd_sel[0][j]:  uop_operand.vd[8*j+:8]  = agnostic[0][j] ? 8'hFF : rob_byp[0].w_data[8*j+:8];
-                    vd_sel[1][j]:  uop_operand.vd[8*j+:8]  = agnostic[1][j] ? 8'hFF : rob_byp[1].w_data[8*j+:8];
-                    vd_sel[2][j]:  uop_operand.vd[8*j+:8]  = agnostic[2][j] ? 8'hFF : rob_byp[2].w_data[8*j+:8];
-                    vd_sel[3][j]:  uop_operand.vd[8*j+:8]  = agnostic[3][j] ? 8'hFF : rob_byp[3].w_data[8*j+:8];
-                    vd_sel[4][j]:  uop_operand.vd[8*j+:8]  = agnostic[4][j] ? 8'hFF : rob_byp[4].w_data[8*j+:8];
-                    vd_sel[5][j]:  uop_operand.vd[8*j+:8]  = agnostic[5][j] ? 8'hFF : rob_byp[5].w_data[8*j+:8];
-                    vd_sel[6][j]:  uop_operand.vd[8*j+:8]  = agnostic[6][j] ? 8'hFF : rob_byp[6].w_data[8*j+:8];
+                priority case (1'b1)
                     vd_sel[7][j]:  uop_operand.vd[8*j+:8]  = agnostic[7][j] ? 8'hFF : rob_byp[7].w_data[8*j+:8];
+                    vd_sel[6][j]:  uop_operand.vd[8*j+:8]  = agnostic[6][j] ? 8'hFF : rob_byp[6].w_data[8*j+:8];
+                    vd_sel[5][j]:  uop_operand.vd[8*j+:8]  = agnostic[5][j] ? 8'hFF : rob_byp[5].w_data[8*j+:8];
+                    vd_sel[4][j]:  uop_operand.vd[8*j+:8]  = agnostic[4][j] ? 8'hFF : rob_byp[4].w_data[8*j+:8];
+                    vd_sel[3][j]:  uop_operand.vd[8*j+:8]  = agnostic[3][j] ? 8'hFF : rob_byp[3].w_data[8*j+:8];
+                    vd_sel[2][j]:  uop_operand.vd[8*j+:8]  = agnostic[2][j] ? 8'hFF : rob_byp[2].w_data[8*j+:8];
+                    vd_sel[1][j]:  uop_operand.vd[8*j+:8]  = agnostic[1][j] ? 8'hFF : rob_byp[1].w_data[8*j+:8];
+                    vd_sel[0][j]:  uop_operand.vd[8*j+:8]  = agnostic[0][j] ? 8'hFF : rob_byp[0].w_data[8*j+:8];
                     default:       uop_operand.vd[8*j+:8]  = vrf_byp.vd[8*j+:8];
                 endcase
             end
             always_comb begin
-                case (1'b1)
-                    v0_sel[0][j]:  uop_operand.v0[8*j+:8]  = agnostic[0][j] ? 8'hFF : rob_byp[0].w_data[8*j+:8];
-                    v0_sel[1][j]:  uop_operand.v0[8*j+:8]  = agnostic[1][j] ? 8'hFF : rob_byp[1].w_data[8*j+:8];
-                    v0_sel[2][j]:  uop_operand.v0[8*j+:8]  = agnostic[2][j] ? 8'hFF : rob_byp[2].w_data[8*j+:8];
-                    v0_sel[3][j]:  uop_operand.v0[8*j+:8]  = agnostic[3][j] ? 8'hFF : rob_byp[3].w_data[8*j+:8];
-                    v0_sel[4][j]:  uop_operand.v0[8*j+:8]  = agnostic[4][j] ? 8'hFF : rob_byp[4].w_data[8*j+:8];
-                    v0_sel[5][j]:  uop_operand.v0[8*j+:8]  = agnostic[5][j] ? 8'hFF : rob_byp[5].w_data[8*j+:8];
-                    v0_sel[6][j]:  uop_operand.v0[8*j+:8]  = agnostic[6][j] ? 8'hFF : rob_byp[6].w_data[8*j+:8];
+                priority case (1'b1)
                     v0_sel[7][j]:  uop_operand.v0[8*j+:8]  = agnostic[7][j] ? 8'hFF : rob_byp[7].w_data[8*j+:8];
+                    v0_sel[6][j]:  uop_operand.v0[8*j+:8]  = agnostic[6][j] ? 8'hFF : rob_byp[6].w_data[8*j+:8];
+                    v0_sel[5][j]:  uop_operand.v0[8*j+:8]  = agnostic[5][j] ? 8'hFF : rob_byp[5].w_data[8*j+:8];
+                    v0_sel[4][j]:  uop_operand.v0[8*j+:8]  = agnostic[4][j] ? 8'hFF : rob_byp[4].w_data[8*j+:8];
+                    v0_sel[3][j]:  uop_operand.v0[8*j+:8]  = agnostic[3][j] ? 8'hFF : rob_byp[3].w_data[8*j+:8];
+                    v0_sel[2][j]:  uop_operand.v0[8*j+:8]  = agnostic[2][j] ? 8'hFF : rob_byp[2].w_data[8*j+:8];
+                    v0_sel[1][j]:  uop_operand.v0[8*j+:8]  = agnostic[1][j] ? 8'hFF : rob_byp[1].w_data[8*j+:8];
+                    v0_sel[0][j]:  uop_operand.v0[8*j+:8]  = agnostic[0][j] ? 8'hFF : rob_byp[0].w_data[8*j+:8];
                     default:       uop_operand.v0[8*j+:8]  = vrf_byp.v0[8*j+:8];
                 endcase
             end
