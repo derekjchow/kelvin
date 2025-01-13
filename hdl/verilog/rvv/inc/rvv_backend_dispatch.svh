@@ -43,6 +43,7 @@ typedef struct packed {
 typedef struct packed {
   logic [`REGFILE_INDEX_WIDTH-1:0] vs1_index;
   logic [`REGFILE_INDEX_WIDTH-1:0] vs2_index;
+  logic                            vs2_valid;
   logic [`REGFILE_INDEX_WIDTH-1:0] vd_index;
   logic                            vs3_valid;
   EXE_UNIT_e                       uop_exe_unit;

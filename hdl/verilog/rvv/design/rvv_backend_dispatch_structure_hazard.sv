@@ -21,41 +21,61 @@ module rvv_backend_dispatch_structure_hazard
 //---code start-------------------------------------------------------
 //determine rd_index for VRF read ports
 //e.g. suppose issue 2 uop per cycle
-//  rd0: uop0.vs2
+//  rd0: uop0.vs2 or uop0.vs1
 //  rd1: uop0.vs1 or uop1.vd
-//  rd2: uop1.vs2
+//  rd2: uop1.vs2 or uop1.vs1
 //  rd3: uop1.vs1 or uop0.vd
     genvar i;
     generate
         for (i=0; i<`NUM_DP_UOP; i++) begin : gen_rd_index
-            assign rd_index[2*i] = strct_uop[i].vs2_index;
-
-            if (i%2 == 0) // i is even
+            if (i[0] == 0) begin // i is even
                 always_comb begin
                     case(strct_uop[i].uop_class)
-                        VV:  rd_index[2*i+1] = strct_uop[i].vs3_valid ? strct_uop[i].vd_index
-                                                                      : strct_uop[i].vs1_index;
-                        VVV: rd_index[2*i+1] = strct_uop[i].vs1_index;
-                        VX,
-                        X  : rd_index[2*i+1] = strct_uop[i+1].vd_index;
-                        default: rd_index[2*i+1] = 'x;
+                        VVV,                       
+                        VV: begin
+                          rd_index[2*i+1] = strct_uop[i].vs1_index;
+                          rd_index[2*i] = strct_uop[i].vs2_index;
+                        end
+                        VX: begin
+                          // vmv only use vs1 as the operand.
+                          rd_index[2*i+1] = strct_uop[i+1].vs3_valid ? strct_uop[i+1].vd_index : 'x;
+                          rd_index[2*i] = strct_uop[i].vs2_valid ? strct_uop[i].vs2_index : strct_uop[i].vs1_index;
+                        end
+                        X: begin
+                          rd_index[2*i+1] = strct_uop[i+1].vs3_valid ? strct_uop[i+1].vd_index : 'x;
+                          rd_index[2*i] = 'x;
+                        end
+                        default: begin
+                          rd_index[2*i+1] = 'x;
+                          rd_index[2*i] = 'x;
+                        end
                     endcase
                 end
-            else // i is odd
+            end
+            else begin // i is odd
                 always_comb begin
-                    case(strct_uop[i-1].uop_class)
-                        VVV: rd_index[2*i+1] = strct_uop[i-1].vd_index;
-                        VV:  rd_index[2*i+1] = strct_uop[i].vs3_valid ? strct_uop[i].vd_index
-                                                                      : strct_uop[i].vs1_index;
-                        VX,
-                        X  : rd_index[2*i+1] = strct_uop[i].vs1_index;
-                        default: rd_index[2*i+1] = 'x;
+                    case(strct_uop[i].uop_class)
+                        VVV,
+                        VV: begin
+                          rd_index[2*i+1] = strct_uop[i-1].vs3_valid ? strct_uop[i-1].vd_index : strct_uop[i].vs1_index;
+                          rd_index[2*i] = strct_uop[i].vs2_index;
+                        end
+                        VX: begin
+                          // vmv only use vs1 as the operand.
+                          rd_index[2*i+1] = strct_uop[i-1].vs3_valid ? strct_uop[i-1].vd_index : 'x;
+                          rd_index[2*i] = strct_uop[i].vs2_valid ? strct_uop[i].vs2_index : strct_uop[i].vs1_index;
+                        end
+                        X: begin
+                          rd_index[2*i+1] = strct_uop[i-1].vs3_valid ? strct_uop[i-1].vd_index : 'x;
+                          rd_index[2*i] = 'x;
+                        end
+                        default: begin
+                          rd_index[2*i+1] = 'x;
+                          rd_index[2*i] = 'x;
+                        end
                     endcase
                 end
-            `ifdef ASSERT_ON
-                `rvv_forbid($isunknown(rd_index[2*i+1]))
-                  else $error("READ VRF: read index [%d] is X-state", 2*i+1);
-            `endif
+            end
         end
     endgenerate
 
