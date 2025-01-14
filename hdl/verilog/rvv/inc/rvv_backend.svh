@@ -328,9 +328,11 @@ typedef struct packed {
   EXE_UNIT_e                          uop_exe_unit; 
   UOP_CLASS_e                         uop_class;   
   RVVConfigState                      vector_csr;  
-  logic   [`VL_WIDTH-1:0]             vs_evl;                // effective vl
+  logic   [`VL_WIDTH-1:0]             vs_evl;             // effective vl
+  logic                               ignore_vma;
+  logic                               ignore_vta;
   logic                               force_vma_agnostic; // some situation will force to mask-agnostic regardless of vtype.vma
-  logic                               force_vta_agnostic; // some situation will force to mask-agnostic regardless of vtype.vma
+  logic                               force_vta_agnostic; // some situation will force to tail-agnostic regardless of vtype.vta
 
   logic                               vm;                 // Original 32bit instruction encoding: inst[25]
   logic                               v0_valid;           // when v0_valid=1, v0 will be regarded as a vector operand in this uop, not mask register. Like: vadc.vvm

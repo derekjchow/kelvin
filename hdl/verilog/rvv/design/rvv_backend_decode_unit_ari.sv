@@ -2621,7 +2621,7 @@ module rvv_backend_decode_unit_ari
                 check_special = check_vd_overlap_v0;
                 
                 `ifdef ASSERT_ON
-                  assert(check_vd_overlap_v0==1'b1)
+                  assert #0 (check_vd_overlap_v0==1'b1)
                     else $warning("vd is overlap v0 in %d instruction.\n",funct6_ari.ari_funct6);
                 `endif
               end
@@ -2641,7 +2641,7 @@ module rvv_backend_decode_unit_ari
                 check_special = check_vd_overlap_v0;
                 
                 `ifdef ASSERT_ON
-                  assert(check_vd_overlap_v0==1'b1)
+                  assert #0 (check_vd_overlap_v0==1'b1)
                     else $warning("vd is overlap v0 in %d instruction.\n",funct6_ari.ari_funct6);
                 `endif
               end
@@ -2655,7 +2655,7 @@ module rvv_backend_decode_unit_ari
                 check_special = check_vd_overlap_v0;
                 
                 `ifdef ASSERT_ON
-                  assert(check_vd_overlap_v0==1'b1)
+                  assert #0 (check_vd_overlap_v0==1'b1)
                     else $warning("vd is overlap v0 in %d instruction.\n",funct6_ari.ari_funct6);
                 `endif
               end
@@ -2671,10 +2671,10 @@ module rvv_backend_decode_unit_ari
                   check_special          = 1'b1;          
                 
                 `ifdef ASSERT_ON
-                  assert(inst_vm==1'b0)
+                  assert #0 (inst_vm==1'b0)
                     else $error("Unsupported inst_vm=%d in %d instruction.\n",inst_vm,funct6_ari.ari_funct6);
                   
-                  assert(inst_vd!='b0)
+                  assert #0 (inst_vd!='b0)
                     else $warning("inst_vd(%d) cannot overlap v0 in %d instruction.\n",inst_vd,funct6_ari.ari_funct6);
                 `endif
               end
@@ -2701,10 +2701,10 @@ module rvv_backend_decode_unit_ari
                   check_special         = 1'b1;          
                 
                 `ifdef ASSERT_ON
-                  assert(inst_vm==1'b0)
+                  assert #0 (inst_vm==1'b0)
                     else $error("Unsupported inst_vm=%d in %d instruction.\n",inst_vm,funct6_ari.ari_funct6);
                   
-                  assert(inst_vd!='b0)
+                  assert #0 (inst_vd!='b0)
                     else $warning("inst_vd(%d) cannot overlap v0 in %d instruction.\n",inst_vd,funct6_ari.ari_funct6);
                 `endif
               end
@@ -2782,10 +2782,10 @@ module rvv_backend_decode_unit_ari
                   check_special = 1'b1;          
                 
                 `ifdef ASSERT_ON
-                  assert(check_vd_overlap_v0==1'b1)
+                  assert #0 (check_vd_overlap_v0==1'b1)
                     else $warning("vd is overlap v0 in %d instruction.\n",funct6_ari.ari_funct6);
                   
-                  assert(!((inst_vm==1'b1)&(inst_vs2!=5'b0)))
+                  assert #0 (!((inst_vm==1'b1)&(inst_vs2!=5'b0)))
                     else $error("inst_vs2(%d) should be 0 in %d instruction.\n",inst_vm,inst_vs2,funct6_ari.ari_funct6);
                 `endif
               end
@@ -2799,7 +2799,7 @@ module rvv_backend_decode_unit_ari
                 check_special = check_vd_overlap_v0;
                 
                 `ifdef ASSERT_ON
-                  assert(check_vd_overlap_v0==1'b1)
+                  assert #0 (check_vd_overlap_v0==1'b1)
                     else $warning("vd is overlap v0 in %d instruction.\n",funct6_ari.ari_funct6);
                 `endif
               end
@@ -2811,13 +2811,13 @@ module rvv_backend_decode_unit_ari
                   check_special          = 1'b1;
 
                 `ifdef ASSERT_ON
-                  assert(inst_vm==1'b1)
+                  assert #0 (inst_vm==1'b1)
                     else $error("inst_vm(%d) should be 1 in vmv<nr>r instruction.\n",inst_vm,funct6_ari.ari_funct6);
 
-                  assert(inst_vs1[4:3]==2'b0)
+                  assert #0 (inst_vs1[4:3]==2'b0)
                     else $error("inst_vs1[4:3](%d) should be 0 in vmv<nr>r instruction.\n",inst_vs1[4:3]);
                 
-                  assert((inst_nr==NREG1)|(inst_nr==NREG2)|(inst_nr==NREG4)|(inst_nr==NREG8))
+                  assert #0 ((inst_nr==NREG1)|(inst_nr==NREG2)|(inst_nr==NREG4)|(inst_nr==NREG8))
                     else $error("Unsupported inst_vs1[2:0]=%d in vmv<nr>r instruction.\n",inst_vs1[2:0]);
                 `endif
               end
@@ -2832,10 +2832,10 @@ module rvv_backend_decode_unit_ari
                   check_special = check_vs2_part_overlap_vd_2_1;        
 
                 `ifdef ASSERT_ON
-                  assert(csr_vstart=='b0)
+                  assert #0 (csr_vstart=='b0)
                     else $error("csr_vstart(%d) should be 0 in %d instruction.\n",csr_vstart,funct6_ari.ari_funct6);
                   
-                  assert(check_vd_overlap_v0==1'b1)
+                  assert #0 (check_vd_overlap_v0==1'b1)
                     else $warning("vd is overlap v0 in %d instruction.\n",funct6_ari.ari_funct6);
                 `endif
               end
@@ -3013,7 +3013,7 @@ module rvv_backend_decode_unit_ari
                   check_special = check_vd_part_overlap_vs2;
             
                 `ifdef ASSERT_ON
-                  assert(csr_vstart=='b0)
+                  assert #0 (csr_vstart=='b0)
                     else $error("csr_vstart(%d) should be 0 in %d instruction.\n",csr_vstart,funct6_ari.ari_funct6);
                 `endif
               end
@@ -3035,7 +3035,7 @@ module rvv_backend_decode_unit_ari
                   check_special   = 1'b1;
             
                 `ifdef ASSERT_ON
-                  assert(inst_vm==1'b1)
+                  assert #0 (inst_vm==1'b1)
                     else $error("inst_vm(%d) should be 1 in %d instruction.\n",inst_vm,funct6_ari.ari_funct6);
                 `endif
               end
@@ -3061,10 +3061,10 @@ module rvv_backend_decode_unit_ari
                   check_special = 1'b1;
                 
                 `ifdef ASSERT_ON
-                  assert(inst_vm==1'b1)
+                  assert #0 (inst_vm==1'b1)
                     else $error("inst_vm(%d) should be 1 in %d instruction.\n",inst_vm,funct6_ari.ari_funct6);
                 
-                  assert(inst_vs2=='b0)
+                  assert #0 (inst_vs2=='b0)
                     else $error("inst_vs2(%d) should be 0 in %d instruction.\n",inst_vs2,funct6_ari.ari_funct6);
                 `endif
               end
@@ -3107,13 +3107,13 @@ module rvv_backend_decode_unit_ari
                   check_special = check_vd_overlap_v0&check_vd_overlap_vs2;
                 
                   `ifdef ASSERT_ON
-                    assert(csr_vstart=='b0)
+                    assert #0 (csr_vstart=='b0)
                       else $error("csr_vstart(%d) should be 0 in %d instruction.\n",csr_vstart,funct6_ari.ari_funct6);
                   
-                    assert(check_vd_overlap_v0==1'b1)
+                    assert #0 (check_vd_overlap_v0==1'b1)
                       else $warning("vd is overlap v0 in %d instruction.\n",funct6_ari.ari_funct6);
                     
-                    assert(check_vd_overlap_vs2==1'b1)
+                    assert #0 (check_vd_overlap_vs2==1'b1)
                       else $warning("vd is overlap vs2 in %d instruction.\n",funct6_ari.ari_funct6);
                   `endif
                 end
@@ -3142,7 +3142,7 @@ module rvv_backend_decode_unit_ari
           check_vd_align = 1'b1; 
         
         `ifdef ASSERT_ON
-          assert(inst_vd[0]==1'b0)
+          assert #0 (inst_vd[0]==1'b0)
             else $warning("vd is not aligned to emul_vd=%s.\n",emul_vd.name());
         `endif
       end
@@ -3151,7 +3151,7 @@ module rvv_backend_decode_unit_ari
           check_vd_align = 1'b1; 
         
         `ifdef ASSERT_ON
-          assert(inst_vd[1:0]==2'b0)
+          assert #0 (inst_vd[1:0]==2'b0)
             else $warning("vd is not aligned to emul_vd=%s.\n",emul_vd.name());
         `endif
       end
@@ -3160,7 +3160,7 @@ module rvv_backend_decode_unit_ari
           check_vd_align = 1'b1; 
        
         `ifdef ASSERT_ON
-          assert(inst_vd[2:0]==3'b0)        
+          assert #0 (inst_vd[2:0]==3'b0)        
             else $warning("vd is not aligned to emul_vd=%s.\n",emul_vd.name());
         `endif
       end
@@ -3181,7 +3181,7 @@ module rvv_backend_decode_unit_ari
           check_vs2_align = 1'b1; 
         
         `ifdef ASSERT_ON
-          assert(inst_vs2[0]==1'b0)
+          assert #0 (inst_vs2[0]==1'b0)
             else $warning("vs2 is not aligned to emul_vs2=%s.\n",emul_vs2.name());
         `endif
       end
@@ -3190,7 +3190,7 @@ module rvv_backend_decode_unit_ari
           check_vs2_align = 1'b1; 
         
         `ifdef ASSERT_ON
-          assert(inst_vs2[1:0]==2'b0)
+          assert #0 (inst_vs2[1:0]==2'b0)
             else $warning("vs2 is not aligned to emul_vs2=%s.\n",emul_vs2.name());
         `endif
       end
@@ -3199,7 +3199,7 @@ module rvv_backend_decode_unit_ari
           check_vs2_align = 1'b1; 
        
         `ifdef ASSERT_ON
-          assert(inst_vs2[2:0]==3'b0)        
+          assert #0 (inst_vs2[2:0]==3'b0)        
             else $warning("vs2 is not aligned to emul_vs2=%s.\n",emul_vs2.name());
         `endif
       end
@@ -3220,7 +3220,7 @@ module rvv_backend_decode_unit_ari
           check_vs1_align = 1'b1; 
         
         `ifdef ASSERT_ON
-          assert(inst_vs1[0]==1'b0)
+          assert #0 (inst_vs1[0]==1'b0)
             else $warning("vs1 is not aligned to emul_vs1=%s.\n",emul_vs1.name());
         `endif
       end
@@ -3229,7 +3229,7 @@ module rvv_backend_decode_unit_ari
           check_vs1_align = 1'b1; 
         
         `ifdef ASSERT_ON
-          assert(inst_vs1[1:0]==2'b0)
+          assert #0 (inst_vs1[1:0]==2'b0)
             else $warning("vs1 is not aligned to emul_vs1=%s.\n",emul_vs1.name());
         `endif
       end
@@ -3238,7 +3238,7 @@ module rvv_backend_decode_unit_ari
           check_vs1_align = 1'b1; 
        
         `ifdef ASSERT_ON
-          assert(inst_vs1[2:0]==3'b0)        
+          assert #0 (inst_vs1[2:0]==3'b0)        
             else $warning("vs1 is not aligned to emul_vs1=%s.\n",emul_vs1.name());
         `endif
       end
@@ -3485,9 +3485,7 @@ module rvv_backend_decode_unit_ari
             VSUB,
             VRSUB,
             VADC,
-            VMADC,
             VSBC,
-            VMSBC,
             VAND,
             VOR,
             VXOR,
@@ -3516,6 +3514,8 @@ module rvv_backend_decode_unit_ari
             // they will be sent to RDT unit to execute for better performance. 
             // Because all uops of the comparison instructions have a single vector destination index, 
             // which is similar to reduction instructions.
+            VMADC,
+            VMSBC,
             VMSEQ,
             VMSNE,
             VMSLTU,
@@ -3944,10 +3944,68 @@ module rvv_backend_decode_unit_ari
     end
   end
 
-  // update vs_ecl
+  // update vs_evl
   always_comb begin
     for(int i=0;i<`NUM_DE_UOP;i=i+1) begin: GET_UOP_EVL
       uop[i].vs_evl = vs_evl;
+    end
+  end
+ 
+  // update ignore_vma and ignore_vta
+  always_comb begin
+    for(int i=0;i<`NUM_DE_UOP;i=i+1) begin: GET_IGNORE
+      uop[i].ignore_vma = 'b0;
+      uop[i].ignore_vta = 'b0;
+      
+      case(inst_funct3) 
+        OPIVV,
+        OPIVX,
+        OPIVI: begin
+          case(funct6_ari.ari_funct6)
+            VADC,
+            VSBC: begin
+              uop[i].ignore_vma = 'b1;
+              uop[i].ignore_vta = 'b0;
+            end
+            VMADC,
+            VMSBC: begin
+              uop[i].ignore_vma = 'b1;
+              uop[i].ignore_vta = 'b1;
+            end
+            VMERGE_VMV: begin
+              if (inst_vm=='b0) begin
+                uop[i].ignore_vma = 'b1;
+              end
+            end
+          endcase
+        end
+
+        OPMVV: begin
+          case(funct6_ari.ari_funct6)
+            VMANDN,
+            VMAND,
+            VMOR,
+            VMXOR,
+            VMORN,
+            VMNAND,
+            VMNOR,
+            VMXNOR: begin
+              uop[i].ignore_vma = 'b1;
+              uop[i].ignore_vta = 'b1;
+            end
+            VMUNARY0: begin
+              case(vs1_opcode_vmunary)
+                VMSBF,
+                VMSOF,
+                VMSIF: begin
+                  uop[i].ignore_vma = 'b1;
+                  uop[i].ignore_vta = 'b1;
+                end
+              endcase
+            end
+          endcase
+        end
+      endcase
     end
   end
   
@@ -4093,7 +4151,7 @@ module rvv_backend_decode_unit_ari
                 OPIVI: begin  
                   uop[i].vd_index = inst_vd;
                   uop[i].vd_eew   = eew_vd;
-                  uop[i].vd_valid = 1'b1;
+                  uop[i].vd_valid = uop_index_current[i] == uop_index_max;
                 end
               endcase
             end
@@ -4106,7 +4164,7 @@ module rvv_backend_decode_unit_ari
                 OPIVX: begin  
                   uop[i].vd_index = inst_vd;
                   uop[i].vd_eew   = eew_vd;
-                  uop[i].vd_valid = 1'b1;
+                  uop[i].vd_valid = uop_index_current[i] == uop_index_max;
                 end
               endcase
             end
@@ -4118,7 +4176,7 @@ module rvv_backend_decode_unit_ari
                 OPIVI: begin  
                   uop[i].vd_index = inst_vd;
                   uop[i].vd_eew   = eew_vd;
-                  uop[i].vd_valid = 1'b1;
+                  uop[i].vd_valid = uop_index_current[i] == uop_index_max;
                 end
               endcase
             end
@@ -4143,7 +4201,7 @@ module rvv_backend_decode_unit_ari
               if(inst_funct3==OPIVV) begin
                 uop[i].vd_index   = inst_vd;
                 uop[i].vd_eew     = eew_vd;
-                uop[i].vd_valid   = 1'b1;
+                uop[i].vd_valid   = uop_index_current[i] == uop_index_max;
               end
             end
 
@@ -4252,7 +4310,16 @@ module rvv_backend_decode_unit_ari
             VREDMIN,
             VREDAND,
             VREDOR,
-            VREDXOR,
+            VREDXOR: begin
+              case(inst_funct3)
+                OPMVV: begin
+                  uop[i].vd_index = inst_vd;
+                  uop[i].vd_eew   = eew_vd;
+                  uop[i].vd_valid = uop_index_current[i] == uop_index_max;
+                end
+              endcase
+            end
+             
             VMAND,
             VMNAND,
             VMANDN,
@@ -4269,7 +4336,7 @@ module rvv_backend_decode_unit_ari
                 end
               endcase
             end
-             
+
             VWXUNARY0: begin
               case(inst_funct3)
                 OPMVX: begin
@@ -4499,7 +4566,7 @@ module rvv_backend_decode_unit_ari
                 OPIVV: begin
                   uop[i].vs1              = inst_vs1;
                   uop[i].vs1_eew          = eew_vs1;
-                  uop[i].vs1_index_valid  = 1'b1;   
+                  uop[i].vs1_index_valid  = uop_index_current[i] == uop_index_max;   
                 end
               endcase
             end        
@@ -4600,7 +4667,16 @@ module rvv_backend_decode_unit_ari
             VREDMIN,
             VREDAND,
             VREDOR,
-            VREDXOR,
+            VREDXOR: begin
+              case(inst_funct3)
+                OPMVV: begin
+                  uop[i].vs1              = inst_vs1;
+                  uop[i].vs1_eew          = eew_vs1;
+                  uop[i].vs1_index_valid  = uop_index_current[i] == uop_index_max;
+                end
+              endcase
+            end
+
             VMAND,
             VMNAND,
             VMANDN,

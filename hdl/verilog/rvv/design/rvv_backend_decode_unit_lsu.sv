@@ -1952,7 +1952,7 @@ module rvv_backend_decode_unit_lsu
           check_vd_align = 1'b1; 
         
         `ifdef ASSERT_ON
-          assert(inst_vd[0]==1'b0)
+          assert #0 (inst_vd[0]==1'b0)
             else $warning("vd is not aligned to emul_vd=%s.\n",emul_vd.name());
         `endif
       end
@@ -1961,7 +1961,7 @@ module rvv_backend_decode_unit_lsu
           check_vd_align = 1'b1; 
         
         `ifdef ASSERT_ON
-          assert(inst_vd[1:0]==2'b0)
+          assert #0 (inst_vd[1:0]==2'b0)
             else $warning("vd is not aligned to emul_vd=%s.\n",emul_vd.name());
         `endif
       end
@@ -1970,7 +1970,7 @@ module rvv_backend_decode_unit_lsu
           check_vd_align = 1'b1; 
        
         `ifdef ASSERT_ON
-          assert(inst_vd[2:0]==3'b0)        
+          assert #0 (inst_vd[2:0]==3'b0)        
             else $warning("vd is not aligned to emul_vd=%s.\n",emul_vd.name());
         `endif
       end
@@ -1991,7 +1991,7 @@ module rvv_backend_decode_unit_lsu
           check_vs2_align = 1'b1; 
         
         `ifdef ASSERT_ON
-          assert(inst_vs2[0]==1'b0)
+          assert #0 (inst_vs2[0]==1'b0)
             else $warning("vs2 is not aligned to emul_vs2=%s.\n",emul_vs2.name());
         `endif
       end
@@ -2000,7 +2000,7 @@ module rvv_backend_decode_unit_lsu
           check_vs2_align = 1'b1; 
         
         `ifdef ASSERT_ON
-          assert(inst_vs2[1:0]==2'b0)
+          assert #0 (inst_vs2[1:0]==2'b0)
             else $warning("vs2 is not aligned to emul_vs2=%s.\n",emul_vs2.name());
         `endif
       end
@@ -2009,7 +2009,7 @@ module rvv_backend_decode_unit_lsu
           check_vs2_align = 1'b1; 
        
         `ifdef ASSERT_ON
-          assert(inst_vs2[2:0]==3'b0)        
+          assert #0 (inst_vs2[2:0]==3'b0)        
             else $warning("vs2 is not aligned to emul_vs2=%s.\n",emul_vs2.name());
         `endif
       end
@@ -2257,10 +2257,18 @@ module rvv_backend_decode_unit_lsu
     end
   end
   
-  // update vs_ecl
+  // update vs_evl
   always_comb begin
     for(int i=0;i<`NUM_DE_UOP;i=i+1) begin: GET_UOP_EVL
       uop[i].vs_evl = vs_evl;
+    end
+  end
+
+  // update ignore_vma and ignore_vta
+  always_comb begin
+    for(int i=0;i<`NUM_DE_UOP;i=i+1) begin: GET_IGNORE
+      uop[i].ignore_vma = 'b0;
+      uop[i].ignore_vta = 'b0;
     end
   end
 

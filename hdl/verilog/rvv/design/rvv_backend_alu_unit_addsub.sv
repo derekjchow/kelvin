@@ -144,10 +144,10 @@ module rvv_backend_alu_unit_addsub
             end
 
             `ifdef ASSERT_ON
-              assert(vs2_data_valid==1'b1)
+              assert #0 (vs2_data_valid==1'b1)
                 else $error("vs2_data_valid(%d) should be 1.\n",vs2_data_valid);
 
-              assert(vs1_data_valid==1'b1)
+              assert #0 (vs1_data_valid==1'b1)
                 else $error("vs1_data_valid(%d) should be 1.\n",vs1_data_valid);
             `endif
           end
@@ -159,16 +159,16 @@ module rvv_backend_alu_unit_addsub
             end
 
             `ifdef ASSERT_ON
-              assert(vs2_data_valid==1'b1)
+              assert #0 (vs2_data_valid==1'b1)
                 else $error("vs2_data_valid(%d) should be 1.\n",vs2_data_valid);
 
-              assert(vs1_data_valid==1'b1)
+              assert #0 (vs1_data_valid==1'b1)
                 else $error("vs1_data_valid(%d) should be 1.\n",vs1_data_valid);
 
-              assert(vm==1'b0)
+              assert #0 (vm==1'b0)
                 else $error("vm(%d) should be 0.\n",vm);
 
-              assert(v0_data_valid==1'b1)
+              assert #0 (v0_data_valid==1'b1)
                 else $error("v0_data_valid(%d) should be 1.\n",v0_data_valid);
             `endif
           end
@@ -180,16 +180,16 @@ module rvv_backend_alu_unit_addsub
             end
 
             `ifdef ASSERT_ON
-              assert(vs2_data_valid==1'b1)
+              assert #0 (vs2_data_valid==1'b1)
                 else $error("vs2_data_valid(%d) should be 1.\n",vs2_data_valid);
 
-              assert(vs1_data_valid==1'b1)
+              assert #0 (vs1_data_valid==1'b1)
                 else $error("vs1_data_valid(%d) should be 1.\n",vs1_data_valid);
 
-              assert(vd_data_valid==1'b1)
+              assert #0 (vd_data_valid==1'b1)
                 else $error("vd_data_valid(%d) should be 1.\n",vd_data_valid);
 
-              assert(vm^v0_data_valid)
+              assert #0 (vm^v0_data_valid)
                 else $error("vm^v0_data_valid(%d) should be 1.\n",vm^v0_data_valid);
             `endif
           end
@@ -210,10 +210,10 @@ module rvv_backend_alu_unit_addsub
             end
 
             `ifdef ASSERT_ON
-              assert(vs2_data_valid==1'b1)
+              assert #0 (vs2_data_valid==1'b1)
                 else $error("vs2_data_valid(%d) should be 1.\n",vs2_data_valid);
 
-              assert(rs1_data_valid==1'b1)
+              assert #0 (rs1_data_valid==1'b1)
                 else $error("rs1_data_valid(%d) should be 1.\n",rs1_data_valid);
             `endif
           end
@@ -225,16 +225,16 @@ module rvv_backend_alu_unit_addsub
             end
 
             `ifdef ASSERT_ON
-              assert(vs2_data_valid==1'b1)
+              assert #0 (vs2_data_valid==1'b1)
                 else $error("vs2_data_valid(%d) should be 1.\n",vs2_data_valid);
 
-              assert(rs1_data_valid==1'b1)
+              assert #0 (rs1_data_valid==1'b1)
                 else $error("rs1_data_valid(%d) should be 1.\n",rs1_data_valid);
 
-              assert(vm==1'b0)
+              assert #0 (vm==1'b0)
                 else $error("vm(%d) should be 0.\n",vm);
 
-              assert(v0_data_valid==1'b1)
+              assert #0 (v0_data_valid==1'b1)
                 else $error("v0_data_valid(%d) should be 1.\n",v0_data_valid);
             `endif
           end
@@ -246,16 +246,16 @@ module rvv_backend_alu_unit_addsub
             end
 
             `ifdef ASSERT_ON
-              assert(vs2_data_valid==1'b1)
+              assert #0 (vs2_data_valid==1'b1)
                 else $error("vs2_data_valid(%d) should be 1.\n",vs2_data_valid);
 
-              assert(rs1_data_valid==1'b1)
+              assert #0 (rs1_data_valid==1'b1)
                 else $error("rs1_data_valid(%d) should be 1.\n",rs1_data_valid);
 
-              assert(vd_data_valid==1'b1)
+              assert #0 (vd_data_valid==1'b1)
                 else $error("vd_data_valid(%d) should be 1.\n",vd_data_valid);
 
-              assert(vm^v0_data_valid)
+              assert #0 (vm^v0_data_valid)
                 else $error("vm^v0_data_valid(%d) should be 1.\n",vm^v0_data_valid);
             `endif
           end
@@ -272,10 +272,10 @@ module rvv_backend_alu_unit_addsub
             end
 
             `ifdef ASSERT_ON
-              assert(vs2_data_valid==1'b1)
+              assert #0 (vs2_data_valid==1'b1)
                 else $error("vs2_data_valid(%d) should be 1.\n",vs2_data_valid);
 
-              assert(rs1_data_valid==1'b1)
+              assert #0 (rs1_data_valid==1'b1)
                 else $error("rs1_data_valid(%d) should be 1.\n",rs1_data_valid);
             `endif
           end
@@ -286,16 +286,16 @@ module rvv_backend_alu_unit_addsub
             end
 
             `ifdef ASSERT_ON
-              assert(vs2_data_valid==1'b1)
+              assert #0 (vs2_data_valid==1'b1)
                 else $error("vs2_data_valid(%d) should be 1.\n",vs2_data_valid);
 
-              assert(rs1_data_valid==1'b1)
+              assert #0 (rs1_data_valid==1'b1)
                 else $error("rs1_data_valid(%d) should be 1.\n",rs1_data_valid);
 
-              assert(vm==1'b0)
+              assert #0 (vm==1'b0)
                 else $error("vm(%d) should be 0.\n",vm);
 
-              assert(v0_data_valid==1'b1)
+              assert #0 (v0_data_valid==1'b1)
                 else $error("v0_data_valid(%d) should be 1.\n",v0_data_valid);
             `endif
           end
@@ -306,16 +306,16 @@ module rvv_backend_alu_unit_addsub
             end
 
             `ifdef ASSERT_ON
-              assert(vs2_data_valid==1'b1)
+              assert #0 (vs2_data_valid==1'b1)
                 else $error("vs2_data_valid(%d) should be 1.\n",vs2_data_valid);
 
-              assert(rs1_data_valid==1'b1)
+              assert #0 (rs1_data_valid==1'b1)
                 else $error("rs1_data_valid(%d) should be 1.\n",rs1_data_valid);
 
-              assert(vd_data_valid==1'b1)
+              assert #0 (vd_data_valid==1'b1)
                 else $error("vd_data_valid(%d) should be 1.\n",vd_data_valid);
 
-              assert(vm^v0_data_valid)
+              assert #0 (vm^v0_data_valid)
                 else $error("vm^v0_data_valid(%d) should be 1.\n",vm^v0_data_valid);
             `endif
           end
@@ -333,13 +333,13 @@ module rvv_backend_alu_unit_addsub
             end
 
             `ifdef ASSERT_ON
-              assert(vs2_data_valid==1'b1)
+              assert #0 (vs2_data_valid==1'b1)
                 else $error("vs2_data_valid(%d) should be 1.\n",vs2_data_valid);
 
-              assert(vs1_data_valid==1'b1)
+              assert #0 (vs1_data_valid==1'b1)
                 else $error("vs1_data_valid(%d) should be 1.\n",vs1_data_valid);
 
-              assert((vs2_eew==EEW8)|(vs2_eew==EEW16))
+              assert #0 ((vs2_eew==EEW8)|(vs2_eew==EEW16))
                 else $warning("vs2_eew(%s) is not supported.\n",vs2_eew.name());
             `endif
           end
@@ -353,13 +353,13 @@ module rvv_backend_alu_unit_addsub
             end
 
             `ifdef ASSERT_ON
-              assert(vs2_data_valid==1'b1)
+              assert #0 (vs2_data_valid==1'b1)
                 else $error("vs2_data_valid(%d) should be 1.\n",vs2_data_valid);
 
-              assert(vs1_data_valid==1'b1)
+              assert #0 (vs1_data_valid==1'b1)
                 else $error("vs1_data_valid(%d) should be 1.\n",vs1_data_valid);
 
-              assert((vs2_eew==EEW16)|(vs2_eew==EEW32))
+              assert #0 ((vs2_eew==EEW16)|(vs2_eew==EEW32))
                 else $warning("vs2_eew(%s) is not supported.\n",vs2_eew.name());
             `endif
           end
@@ -373,10 +373,10 @@ module rvv_backend_alu_unit_addsub
             end
 
             `ifdef ASSERT_ON
-              assert(vs2_data_valid==1'b1)
+              assert #0 (vs2_data_valid==1'b1)
                 else $error("vs2_data_valid(%d) should be 1.\n",vs2_data_valid);
 
-              assert(vs1_data_valid==1'b1)
+              assert #0 (vs1_data_valid==1'b1)
                 else $error("vs1_data_valid(%d) should be 1.\n",vs1_data_valid);
             `endif
           end
@@ -394,13 +394,13 @@ module rvv_backend_alu_unit_addsub
             end
 
             `ifdef ASSERT_ON
-              assert(vs2_data_valid==1'b1)
+              assert #0 (vs2_data_valid==1'b1)
                 else $error("vs2_data_valid(%d) should be 1.\n",vs2_data_valid);
 
-              assert(rs1_data_valid==1'b1)
+              assert #0 (rs1_data_valid==1'b1)
                 else $error("rs1_data_valid(%d) should be 1.\n",rs1_data_valid);
 
-              assert((vs2_eew==EEW8)|(vs2_eew==EEW16))
+              assert #0 ((vs2_eew==EEW8)|(vs2_eew==EEW16))
                 else $warning("vs2_eew(%s) is not supported.\n",vs2_eew.name());
             `endif
           end
@@ -414,13 +414,13 @@ module rvv_backend_alu_unit_addsub
             end
 
             `ifdef ASSERT_ON
-              assert(vs2_data_valid==1'b1)
+              assert #0 (vs2_data_valid==1'b1)
                 else $error("vs2_data_valid(%d) should be 1.\n",vs2_data_valid);
 
-              assert(rs1_data_valid==1'b1)
+              assert #0 (rs1_data_valid==1'b1)
                 else $error("rs1_data_valid(%d) should be 1.\n",rs1_data_valid);
 
-              assert((vs2_eew==EEW16)|(vs2_eew==EEW32))
+              assert #0 ((vs2_eew==EEW16)|(vs2_eew==EEW32))
                 else $warning("vs2_eew(%s) is not supported.\n",vs2_eew.name());
             `endif
           end
@@ -434,10 +434,10 @@ module rvv_backend_alu_unit_addsub
             end
 
             `ifdef ASSERT_ON
-              assert(vs2_data_valid==1'b1)
+              assert #0 (vs2_data_valid==1'b1)
                 else $error("vs2_data_valid(%d) should be 1.\n",vs2_data_valid);
 
-              assert(rs1_data_valid==1'b1)
+              assert #0 (rs1_data_valid==1'b1)
                 else $error("rs1_data_valid(%d) should be 1.\n",rs1_data_valid);
             `endif
           end

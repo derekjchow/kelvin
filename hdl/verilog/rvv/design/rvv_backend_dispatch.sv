@@ -217,17 +217,14 @@ module rvv_backend_dispatch
                     case(uop_uop2dp[i].uop_class)
                         VVV,                       
                         VV: begin
+                          vrf_byp[i].vd  = uop_uop2dp[i].vs3_valid ? rd_data_vrf2dp[2*(i+1)+1] : 'x;
                           vrf_byp[i].vs1 = rd_data_vrf2dp[2*i+1];
                           vrf_byp[i].vs2 = rd_data_vrf2dp[2*i];
                         end
                         VX: begin
                           // vmv only use vs1 as the operand.
-                          vrf_byp[i].vd  = uop_uop2dp[i].vs3_valid ? rd_data_vrf2dp[2*i+1] : 'x;
                           vrf_byp[i].vs1 = uop_uop2dp[i].vs1_index_valid ? rd_data_vrf2dp[2*i] : 'x;
                           vrf_byp[i].vs2 = uop_uop2dp[i].vs2_valid ? rd_data_vrf2dp[2*i] : 'x;
-                        end
-                        X: begin
-                          vrf_byp[i].vd  = uop_uop2dp[i].vs3_valid ? rd_data_vrf2dp[2*i+1] : 'x;
                         end
                     endcase
                 end
@@ -241,18 +238,14 @@ module rvv_backend_dispatch
                     case(uop_uop2dp[i].uop_class)
                         VVV,
                         VV: begin
-                          vrf_byp[i].vd  = uop_uop2dp[i-1].vs3_valid ? rd_data_vrf2dp[2*i+1] : 'x;
+                          vrf_byp[i].vd  = uop_uop2dp[i-1].vs3_valid ? rd_data_vrf2dp[2*(i-1)+1] : 'x;
                           vrf_byp[i].vs1 = uop_uop2dp[i-1].vs3_valid ? 'x : rd_data_vrf2dp[2*i+1];
-                          vrf_byp[i].vs2 = rd_data_vrf2dp[2*i];
+                          vrf_byp[i].vs2 = uop_uop2dp[i-1].vs3_valid ? 'x : rd_data_vrf2dp[2*i];
                         end
                         VX: begin
                           // vmv only use vs1 as the operand.
-                          vrf_byp[i].vd  = uop_uop2dp[i-1].vs3_valid ? rd_data_vrf2dp[2*i+1] : 'x;
                           vrf_byp[i].vs1 = uop_uop2dp[i].vs1_index_valid ? rd_data_vrf2dp[2*i] : 'x;
                           vrf_byp[i].vs2 = uop_uop2dp[i].vs2_valid ? rd_data_vrf2dp[2*i] : 'x;
-                        end
-                        X: begin
-                          vrf_byp[i].vd  = uop_uop2dp[i-1].vs3_valid ? rd_data_vrf2dp[2*i+1] : 'x;
                         end
                     endcase
                 end
