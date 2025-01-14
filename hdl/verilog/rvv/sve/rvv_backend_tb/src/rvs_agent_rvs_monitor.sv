@@ -119,7 +119,7 @@ task rvs_monitor::rx_monitor();
                 inst_rx_queue[0].rt_vrf_strobe[i] |= rt_vrf_strobe;
                 inst_rx_queue[0].rt_vrf_data[i]   |= rvs_if.rt_vrf_data_rob2rt[rt_idx].rt_data;
                 vrf_overlap = 1;
-                `uvm_info(get_type_name(), $sormatf("Uops %0d also write vrf[%0d].", rt_idx, rvs_if.rt_vrf_data_rob2rt[rt_idx].rt_index), UVM_HIGH)
+                `uvm_info(get_type_name(), $sformatf("Uops %0d also write vrf[%0d].", rt_idx, rvs_if.rt_vrf_data_rob2rt[rt_idx].rt_index), UVM_HIGH)
               end
             end
             if(!vrf_overlap) begin
