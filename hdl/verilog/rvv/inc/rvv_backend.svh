@@ -513,7 +513,7 @@ typedef struct packed {
 //
 // EX stage, 
 //
-// send ALU's result to ROB
+// send PU's result to ROB
 typedef struct packed {
   logic   [`ROB_DEPTH_WIDTH-1:0]      rob_entry;
   logic   [`VLEN-1:0]                 w_data;             // when w_type=XRF, w_data[`XLEN-1:0] will store the scalar result
@@ -521,7 +521,7 @@ typedef struct packed {
   logic   [`VCSR_VXSAT_WIDTH-1:0]     vxsat;
   logic                               ignore_vta;         // all tail elements has been gotten, can use it directly regardless of vta
   logic                               ignore_vma;         // all inactive elements has been gotten, can use it directly regardless of vma
-} ALU2ROB_t;  
+} PU2ROB_t;  
 
 // send uop to LSU
 typedef struct packed {   
@@ -557,10 +557,19 @@ typedef struct packed {
   BYTE_TYPE_t                         vs1_type;               // mask for vd
 } UOP_LSU_RVS2RVV_t;  
 
+typedef struct packed {
+  logic                               w_valid;            // write valid
+  logic [`VLEN-1:0]                   w_data;             // write data; w_data[`XLEN-1:0] is scalar result if write type is XRF
+  logic [`VCSR_VXSAT_WIDTH-1:0]       vxsat;
+  logic                               ignore_vta;
+  logic                               ignore_vma;
+} RES_ROB_t;
+
 // send uop to ROB
 typedef struct packed {
   logic   [`REGFILE_INDEX_WIDTH-1:0]  w_index;            //wr addr
-  BYTE_TYPE_t                         vd_type;            //wr Byte mask
+  W_DATA_TYPE_e                       w_type;             //write type: 0 for VRF, 1 for XRF
+  BYTE_TYPE_t                         byte_type;          //wr Byte mask
   RVVConfigState                      vector_csr;         //Receive Vstart, vlen,... And need to update vcsr when trap
 } DP2ROB_t;
 
@@ -586,6 +595,15 @@ typedef struct packed {
   logic                               ignore_vta;
   logic                               ignore_vma;
 } ROB2RT_t;  
+
+// the rob struct stored in ROB
+typedef struct packed {
+  logic                               valid;              // entry valid
+  DP2ROB_t                            uop_info;           // Uop information
+  RES_ROB_t                           uop_res;            // Uop result
+  logic                               uop_done;           // Uop is finished.
+  logic                               trap;
+} ROB_t;
 
 //
 // Retire stage, bypass and write back to VRF/XRF, trap handler
@@ -615,8 +633,8 @@ typedef struct packed {
 
 // trap handle
 typedef struct packed {
-  logic                               trap_apply;
-  TRAP_INFO_e                         trap_info; 
+  // logic                               trap_apply;
+  // TRAP_INFO_e                         trap_info;
   logic   [`ROB_DEPTH_WIDTH-1:0]      trap_uop_rob_entry;
 } TRAP_t;  
 

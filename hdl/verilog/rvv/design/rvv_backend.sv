@@ -34,15 +34,15 @@ module rvv_backend
     input   INST_t  [`NUM_DP_UOP-1:0] insts_rvs2cq;
     output  logic   [`NUM_DP_UOP-1:0] insts_ready_cq2rvs;
 
-// load/store unit interface
-  // RVV send LSU uop to RVS
-    output  logic   [`NUM_DP_UOP-1:0] uop_valid;
+ // load/store unit interface
+   // RVV send LSU uop to RVS
+    output  logic   [`NUM_DP_UOP-1:0] uop_valid_lsu_rvv2rvs;
     output  UOP_LSU_RVV2RVS_t [`NUM_DP_UOP-1:0] uop_lsu_rvv2rvs;
-    input   logic   [`NUM_DP_UOP-1:0] uop_ready;
-  // LSU feedback to RVV
-    input   logic   [`NUM_DP_UOP-1:0] uop_done_valid;
-    input   UOP_LSU_RVV2RVS_t [`NUM_DP_UOP-1:0] uop_done_rvs2rvv;
-    output  logic   [`NUM_DP_UOP-1:0] uop_done_ready;
+    input   logic   [`NUM_DP_UOP-1:0] uop_ready_lsu_rvs2rvv;
+   // LSU feedback to RVV
+    input   logic   [`NUM_DP_UOP-1:0] uop_valid_lsu_rvs2rvv;
+    input   UOP_LSU_RVS2RVV_t [`NUM_DP_UOP-1:0] uop_lsu_rvs2rvv;
+    output  logic   [`NUM_DP_UOP-1:0] uop_ready_rvv2rvs;
 
 // write back to XRF. RVS arbitrates write ports of XRF by itself.
     output  WB_XRF_t [`NUM_WB_UOP-1:0] wb_xrf_wb2rvs;
@@ -51,8 +51,9 @@ module rvv_backend
 
 // exception handler
   // trap signal handshake
-    input   logic                         trap_rvs2rvv;
-    output  logic                         ready_rvv2rvs;
+    input   logic                         trap_valid_rvs2rvv;
+    input   TRAP_t                        trap_rvs2rvv;
+    output  logic                         trap_ready_rvv2rvs;
   // the vcsr of last retired uop in last cycle
     output  logic                         vcsr_valid;
     output  VECTOR_CSR_t                  vector_csr;

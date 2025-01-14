@@ -1,0 +1,367 @@
+/*
+description: 
+1. the ROB module receives uop information from Dispatch unit and uop result from Processor Unit (PU).
+2. the ROB module provides all status for dispatch unit to foreward operand from ROB.
+3. the ROB module send retire request to retire unit.
+4. the ROB module receives trap information from LSU and flush buffer(s)
+
+feature list:
+1. the ROB can receive 2 uop information form Dispatch unit at most per cycle.
+2. the ROB can receive 9 uop result from PU at most per cycle.
+    a. However, U-arch of RVV limit the result number from 9 to 8.
+3. the ROB can send 4 retire uops to writeback unit at most per cycle.
+4. the ROB infomation for dispatch need to be sorted, which depends on program order.
+*/
+
+`include "rvv_backend.svh"
+
+module rvv_backend_rob
+(
+    clk,
+    rst_n,
+    uop_valid_dp2rob,
+    uop_dp2rob,
+    uop_ready_rob2dp,
+    uop_index_rob2dp,
+    wr_valid_alu2rob,
+    wr_alu2rob,
+    wr_ready_rob2alu,
+    wr_valid_pmtrdt2rob,
+    wr_pmtrdt2rob,
+    wr_ready_rob2pmtrdt,
+    wr_valid_mul2rob,
+    wr_mul2rob,
+    wr_ready_rob2mul,
+    wr_valid_div2rob,
+    wr_div2rob,
+    wr_ready_rob2div,
+    wr_valid_lsu2rob,
+    wr_lsu2rob,
+    wr_ready_rob2lsu,
+    rd_valid_rob2rt,
+    rd_rob2rt,
+    rd_ready_rt2rob,
+    uop_rob2dp,
+    trap_valid_rvs2rvv,
+    trap_rvs2rvv,
+    trap_ready_rvv2rvs
+);  
+// global signal
+    input   logic                   clk;
+    input   logic                   rst_n;
+
+// push uop infomation to ROB
+// Dispatch to ROB
+    input   logic     [`NUM_DP_UOP-1:0] uop_valid_dp2rob;
+    input   DP2ROB_t  [`NUM_DP_UOP-1:0] uop_dp2rob;
+    output  logic     [`NUM_DP_UOP-1:0] uop_ready_rob2dp;
+    output  logic     [`ROB_DEPTH_WIDTH-1:0] uop_index_rob2dp;
+
+// push uop result to ROB
+// ALU to ROB
+    input   logic     [`NUM_ALU-1:0]    wr_valid_alu2rob;
+    input   PU2ROB_t  [`NUM_ALU-1:0]    wr_alu2rob;
+    output  logic     [`NUM_ALU-1:0]    wr_ready_rob2alu;
+
+// PMT+RED to ROB
+    input   logic     [`NUM_PMTRDT-1:0] wr_valid_pmtrdt2rob;
+    input   PU2ROB_t  [`NUM_PMTRDT-1:0] wr_pmtrdt2rob;
+    output  logic     [`NUM_PMTRDT-1:0] wr_ready_rob2pmtrdt;
+
+// MUL to ROB
+    input   logic     [`NUM_MUL-1:0]    wr_valid_mul2rob;
+    input   PU2ROB_t  [`NUM_MUL-1:0]    wr_mul2rob;
+    output  logic     [`NUM_MUL-1:0]    wr_ready_rob2mul;
+
+// DIV to ROB
+    input   logic     [`NUM_DIV-1:0]    wr_valid_div2rob;
+    input   PU2ROB_t  [`NUM_DIV-1:0]    wr_div2rob;
+    output  logic     [`NUM_DIV-1:0]    wr_ready_rob2div;
+
+// LSU to ROB
+    input   logic     [`NUM_LSU-1:0]    wr_valid_lsu2rob;
+    input   PU2ROB_t  [`NUM_LSU-1:0]    wr_lsu2rob;
+    output  logic     [`NUM_LSU-1:0]    wr_ready_rob2lsu;
+
+// retire uops
+// pop vd_data from ROB and write to VRF
+    output  logic     [`NUM_RT_UOP-1:0] rd_valid_rob2rt;
+    output  ROB2RT_t  [`NUM_RT_UOP-1:0] rd_rob2rt;
+    input   logic     [`NUM_RT_UOP-1:0] rd_ready_rt2rob;
+
+// bypass all rob entries to Dispatch unit
+// rob_entries must be in program order instead of entry_index
+    output  ROB2DP_t  [`ROB_DEPTH-1:0]  uop_rob2dp;
+
+// trap signal handshake
+    input   logic                       trap_valid_rvs2rvv;
+    input   TRAP_t                      trap_rvs2rvv;
+    output  logic                       trap_ready_rvv2rvs;
+
+// ---internal signal definition--------------------------------------
+  // Uop info
+    DP2ROB_t [`NUM_RT_UOP-1:0]  uop_rob2rt;
+    logic    [`NUM_RT_UOP-1:0]  uop_valid_rob2rt;
+    DP2ROB_t [`ROB_DEPTH-1:0]   uop_info;
+    logic    [`ROB_DEPTH-1:0]   entry_valid;
+
+    logic [`ROB_DEPTH_WIDTH-1:0] uop_wptr;
+    logic [`ROB_DEPTH_WIDTH-1:0] uop_rptr;
+    logic                   uop_info_fifo_full;
+    logic [`NUM_DP_UOP-1:1] uop_info_fifo_almost_full;
+
+  // Uop result
+    RES_ROB_t [`ROB_DEPTH-1:0]  res_mem;
+    logic     [`ROB_DEPTH-1:0]  uop_done;
+
+  // trap
+    logic     [`ROB_DEPTH-1:0]   trap_flag;
+    logic                        flush_rob;
+    logic     [`NUM_RT_UOP-1:0]  flush;
+
+  // retire uops
+    logic     [`NUM_RT_UOP-1:0]  uop_retire_ready;
+
+    genvar  i,j;
+    integer k;
+// ---code start------------------------------------------------------
+  // Uop info FIFO
+    multi_fifo #(
+        .T      (DP2ROB_t),
+        .M      (`NUM_DP_UOP),
+        .N      (`NUM_RT_UOP),
+        .DEPTH  (`ROB_DEPTH)
+    ) u_uop_info_fifo (
+      // global
+        .clk    (clk),
+        .rst_n  (rst_n),
+      // push side
+        .push   (uop_valid_dp2rob & uop_ready_rob2dp),
+        .datain (uop_dp2rob),
+        .full   (uop_info_fifo_full),
+        .almost_full  (uop_info_fifo_almost_full),
+      // pop side
+        .pop    (rd_valid_rob2rt & rd_ready_rt2rob),
+        .dataout(uop_rob2rt),
+        .empty  (),
+        .almost_empty (),
+      // fifo info
+        .clear  (1'b0),
+        .fifo_data    (uop_info),
+        .wptr   (uop_wptr),
+        .rptr   (uop_rptr)
+    );
+
+    assign uop_index_rob2dp = uop_wptr;
+    assign uop_ready_rob2dp[0] = ~uop_info_fifo_full;
+    generate
+        for (i=1; i<`NUM_DP_UOP; i++) begin : gen_ready_rob2dp
+            assign uop_ready_rob2dp[i] = ~uop_info_fifo_almost_full[i];
+        end
+    endgenerate
+
+  // entry valid
+  // set if DP push uop into ROB
+  // clear if RT pop uop from ROB
+  // reset once flush ROB
+    multi_fifo #(
+        .T      (logic),
+        .M      (`NUM_DP_UOP),
+        .N      (`NUM_RT_UOP),
+        .DEPTH  (`ROB_DEPTH),
+        .POP_CLEAR (1'b1)
+    ) u_uop_valid_fifo (
+      // global
+        .clk    (clk),
+        .rst_n  (rst_n),
+      // push side
+        .push   (uop_valid_dp2rob & uop_ready_rob2dp),
+        .datain (uop_valid_dp2rob),
+        .full   (),
+        .almost_full  (),
+      // pop side
+        .pop    (rd_valid_rob2rt & rd_ready_rt2rob),
+        .dataout(uop_valid_rob2rt),
+        .empty  (),
+        .almost_empty (),
+      // fifo info
+        .clear  (flush_rob),
+        .fifo_data    (entry_valid),
+        .wptr   (),
+        .rptr   ()
+    );
+
+  // update PU result to result memory
+    always_ff @(posedge clk) begin
+        for (k=0; k<`NUM_ALU; k++) begin
+            if (wr_valid_alu2rob[k] && wr_ready_rob2alu[k]) begin
+                res_mem[wr_alu2rob[k].rob_entry].w_valid <= wr_alu2rob[k].w_valid;
+                res_mem[wr_alu2rob[k].rob_entry].w_data  <= wr_alu2rob[k].w_data;
+                res_mem[wr_alu2rob[k].rob_entry].vxsat   <= wr_alu2rob[k].vxsat;
+                res_mem[wr_alu2rob[k].rob_entry].ignore_vta <= wr_alu2rob[k].ignore_vta;
+                res_mem[wr_alu2rob[k].rob_entry].ignore_vma <= wr_alu2rob[k].ignore_vma;
+            end
+        end
+        for (k=0; k<`NUM_PMTRDT; k++) begin
+            if (wr_valid_pmtrdt2rob[k] && wr_ready_rob2pmtrdt[k]) begin
+                res_mem[wr_pmtrdt2rob[k].rob_entry].w_valid <= wr_pmtrdt2rob[k].w_valid;
+                res_mem[wr_pmtrdt2rob[k].rob_entry].w_data  <= wr_pmtrdt2rob[k].w_data;
+                res_mem[wr_pmtrdt2rob[k].rob_entry].vxsat   <= wr_pmtrdt2rob[k].vxsat;
+                res_mem[wr_pmtrdt2rob[k].rob_entry].ignore_vta <= wr_pmtrdt2rob[k].ignore_vta;
+                res_mem[wr_pmtrdt2rob[k].rob_entry].ignore_vma <= wr_pmtrdt2rob[k].ignore_vma;
+            end
+        end
+        for (k=0; k<`NUM_MUL; k++) begin
+            if (wr_valid_mul2rob[k] && wr_ready_rob2mul[k]) begin
+                res_mem[wr_mul2rob[k].rob_entry].w_valid <= wr_mul2rob[k].w_valid;
+                res_mem[wr_mul2rob[k].rob_entry].w_data  <= wr_mul2rob[k].w_data;
+                res_mem[wr_mul2rob[k].rob_entry].vxsat   <= wr_mul2rob[k].vxsat;
+                res_mem[wr_mul2rob[k].rob_entry].ignore_vta <= wr_mul2rob[k].ignore_vta;
+                res_mem[wr_mul2rob[k].rob_entry].ignore_vma <= wr_mul2rob[k].ignore_vma;
+            end
+        end
+        for (k=0; k<`NUM_DIV; k++) begin
+            if (wr_valid_div2rob[k] && wr_ready_rob2div[k]) begin
+                res_mem[wr_div2rob[k].rob_entry].w_valid <= wr_div2rob[k].w_valid;
+                res_mem[wr_div2rob[k].rob_entry].w_data  <= wr_div2rob[k].w_data;
+                res_mem[wr_div2rob[k].rob_entry].vxsat   <= wr_div2rob[k].vxsat;
+                res_mem[wr_div2rob[k].rob_entry].ignore_vta <= wr_div2rob[k].ignore_vta;
+                res_mem[wr_div2rob[k].rob_entry].ignore_vma <= wr_div2rob[k].ignore_vma;
+            end
+        end
+        for (k=0; k<`NUM_LSU; k++) begin
+            if (wr_valid_lsu2rob[k] && wr_ready_rob2lsu[k]) begin
+                res_mem[wr_lsu2rob[k].rob_entry].w_valid <= wr_lsu2rob[k].w_valid;
+                res_mem[wr_lsu2rob[k].rob_entry].w_data  <= wr_lsu2rob[k].w_data;
+                res_mem[wr_lsu2rob[k].rob_entry].vxsat   <= wr_lsu2rob[k].vxsat;
+                res_mem[wr_lsu2rob[k].rob_entry].ignore_vta <= wr_lsu2rob[k].ignore_vta;
+                res_mem[wr_lsu2rob[k].rob_entry].ignore_vma <= wr_lsu2rob[k].ignore_vma;
+            end
+        end
+    end
+    
+    // readys for PUs are always 1
+    generate
+        for (i=0; i<`NUM_ALU; i++) assign wr_ready_rob2alu[i] = 1'b1;
+        for (i=0; i<`NUM_PMTRDT; i++) assign wr_ready_rob2pmtrdt[i] = 1'b1;
+        for (i=0; i<`NUM_MUL; i++) assign wr_ready_rob2mul[i] = 1'b1;
+        for (i=0; i<`NUM_DIV; i++) assign wr_ready_rob2div[i] = 1'b1;
+        for (i=0; i<`NUM_LSU; i++) assign wr_ready_rob2lsu[i] = 1'b1;
+    endgenerate
+
+  // uop done
+  // set if PU update uop result
+  // clear if RT pop uop reuslt from ROB
+  // reset once flush ROB.
+     always_ff @(posedge clk or negedge rst_n) begin
+        if (!rst_n)
+            uop_done <= '0;
+        else if (flush_rob)
+            uop_done <= '0;
+        else begin
+            for (k=0; k<`NUM_RT_UOP; k++) begin
+                if (rd_valid_rob2rt[k] && rd_ready_rt2rob[k])
+                    uop_done[uop_rptr+k] <= 1'b0;
+            end
+            for (k=0; k<`NUM_ALU; k++) begin
+                if (wr_valid_alu2rob[k] && wr_ready_rob2alu[k])
+                    uop_done[wr_alu2rob[k].rob_entry] <= 1'b1;
+            end
+            for (k=0; k<`NUM_PMTRDT; k++) begin
+                if (wr_valid_pmtrdt2rob[k] && wr_ready_rob2pmtrdt[k])
+                    uop_done[wr_pmtrdt2rob[k].rob_entry] <= 1'b1;
+            end
+            for (k=0; k<`NUM_MUL; k++) begin
+                if (wr_valid_mul2rob[k] && wr_ready_rob2mul[k])
+                    uop_done[wr_mul2rob[k].rob_entry] <= 1'b1;
+            end
+            for (k=0; k<`NUM_DIV; k++) begin
+                if (wr_valid_div2rob[k] && wr_ready_rob2div[k])
+                    uop_done[wr_div2rob[k].rob_entry] <= 1'b1;
+            end
+            for (k=0; k<`NUM_LSU; k++) begin
+                if (wr_valid_lsu2rob[k] && wr_ready_rob2lsu[k])
+                    uop_done[wr_lsu2rob[k].rob_entry] <= 1'b1;
+            end
+        end
+    end
+
+  `ifdef ASSERT_ON 
+    logic [`ROB_DEPTH-1:0][`NUM_PU-1:0] res_sel; // one hot code for each entry
+    generate
+        for (i=0; i<`ROB_DEPTH; i++) begin
+            for (j=0; j<`NUM_ALU; j++)    
+                assign res_sel[i][j]                                        = wr_valid_alu2rob[j]    && wr_ready_rob2alu[j]    && (wr_alu2rob[j].rob_entry == i);
+            for (j=0; j<`NUM_PMTRDT; j++) 
+                assign res_sel[i][j+`NUM_ALU]                               = wr_valid_pmtrdt2rob[j] && wr_ready_rob2pmtrdt[j] && (wr_pmtrdt2rob[j].rob_entry == i);
+            for (j=0; j<`NUM_MUL; j++)    
+                assign res_sel[i][j+`NUM_PMTRDT+`NUM_ALU]                   = wr_valid_mul2rob[j]    && wr_ready_rob2mul[j]    && (wr_mul2rob[j].rob_entry == i);
+            for (j=0; j<`NUM_DIV; j++)    
+                assign res_sel[i][j+`NUM_MUL+`NUM_PMTRDT+`NUM_ALU]          = wr_valid_div2rob[j]    && wr_ready_rob2div[j]    && (wr_div2rob[j].rob_entry == i);
+            for (j=0; j<`NUM_LSU; j++)    
+                assign res_sel[i][j+`NUM_DIV+`NUM_MUL+`NUM_PMTRDT+`NUM_ALU] = wr_valid_lsu2rob[j]    && wr_ready_rob2lsu[j]    && (wr_lsu2rob[j].rob_entry == i);
+
+            `rvv_expect($onehot(res_sel[i])) else $error("ROB: Multiple PU results write same entry: index %d, PU %d\n", i, $sampled(res_sel[i]));
+        end
+    endgenerate
+  `endif
+
+  // trap flag
+  // write trap to ROB when trap occurs
+  // flush all fifo when the uop triggering trap is the oldest uop in ROB
+  always_ff @(posedge clk or negedge rst_n) begin
+      if (!rst_n)
+          trap_flag <= '0;
+      else if (flush_rob)
+          trap_flag <= '0;
+      else if (trap_valid_rvs2rvv & trap_ready_rvv2rvs)
+          trap_flag[trap_rvs2rvv.trap_uop_rob_entry] <= 1'b1;
+  end
+
+  // trap ready is always 1
+  assign trap_ready_rvv2rvs = 1'b1;
+
+  // retire uop(s)
+  generate
+      for (i=0; i<`NUM_RT_UOP; i++) begin : gen_rob2rt
+        // retire_uop valid
+          assign uop_retire_ready[i] = uop_valid_rob2rt[i] & uop_done[uop_rptr+i];
+          if (i==0) assign rd_valid_rob2rt[0] = uop_retire_ready[0];
+          else      assign rd_valid_rob2rt[i] = uop_retire_ready[i] & rd_valid_rob2rt[i-1] & trap_flag[uop_rptr+i-1];
+
+        // retire_uop data
+          assign rd_rob2rt[i].w_valid = res_mem[uop_rptr+i].w_valid;
+          assign rd_rob2rt[i].w_index = uop_rob2rt[i].w_index;
+          assign rd_rob2rt[i].w_data  = res_mem[uop_rptr+i].w_data;
+          assign rd_rob2rt[i].w_type  = uop_rob2rt[i].w_type;
+          assign rd_rob2rt[i].vd_type = uop_rob2rt[i].byte_type;
+          assign rd_rob2rt[i].trap_flag = trap_flag[uop_rptr+i];
+          assign rd_rob2rt[i].vector_csr = uop_rob2rt[i].vector_csr;
+          assign rd_rob2rt[i].vxsat   = res_mem[uop_rptr+i].vxsat;
+          assign rd_rob2rt[i].ignore_vta = res_mem[uop_rptr+i].ignore_vta;
+          assign rd_rob2rt[i].ignore_vma = res_mem[uop_rptr+i].ignore_vma;
+      end
+  endgenerate
+  
+  // flush signal
+  // set when one uop in retired uops triggers a trap.
+  generate
+      for (i=0; i<`NUM_RT_UOP; i++) begin : gen_flush
+          assign flush[i] = rd_rob2rt[i].trap_flag & rd_valid_rob2rt[i] & rd_ready_rt2rob[i];
+      end
+  endgenerate
+  assign flush_rob = |flush;
+
+  // bypass ROB info to Dispatch
+  generate
+      for (i=0; i<`ROB_DEPTH; i++) begin : gen_rob2dp
+          assign uop_rob2dp[i].valid   = entry_valid[i];
+          assign uop_rob2dp[i].w_valid = res_mem[uop_rptr+i].w_valid & uop_done[uop_rptr+i];
+          assign uop_rob2dp[i].w_index = uop_info[i].w_index;
+          assign uop_rob2dp[i].w_data  = res_mem[uop_rptr+i].w_data;
+          assign uop_rob2dp[i].byte_type = uop_info[i].byte_type;
+          assign uop_rob2dp[i].vector_csr = uop_info[i].vector_csr;
+      end
+  endgenerate
+  
+endmodule

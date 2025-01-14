@@ -15,12 +15,18 @@
 `define NUM_DP_UOP              2
 `define NUM_DP_VRF              `NUM_DP_UOP*2
 
-// the max number of uops can be executed in ALU per cycle
-`define NUM_ALU_UOP             2
+// the max number of processor unit in EX stage
+`define NUM_ALU                 2
+`define NUM_PMTRDT              2
+`define NUM_MUL                 2
+`define NUM_DIV                 1
+`define NUM_LSU                 2
+`define NUM_PU                  `NUM_ALU+`NUM_PMTRDT+`NUM_MUL+`NUM_DIV+`NUM_LSU
 
-// the max number of uops are retired per cycle in WB stage
+// the max number of uops are retired per cycle in RT stage
 `define NUM_RT_UOP              4
 
+// the depth of queue/station/buffer
 `define CQ_DEPTH                8
 `define UQ_DEPTH                16
 `define ALU_RS_DEPTH            2
