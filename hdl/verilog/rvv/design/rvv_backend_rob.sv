@@ -206,8 +206,6 @@ module rvv_backend_rob
                 res_mem[wr_alu2rob[k].rob_entry].w_valid <= wr_alu2rob[k].w_valid;
                 res_mem[wr_alu2rob[k].rob_entry].w_data  <= wr_alu2rob[k].w_data;
                 res_mem[wr_alu2rob[k].rob_entry].vxsat   <= wr_alu2rob[k].vxsat;
-                res_mem[wr_alu2rob[k].rob_entry].ignore_vta <= wr_alu2rob[k].ignore_vta;
-                res_mem[wr_alu2rob[k].rob_entry].ignore_vma <= wr_alu2rob[k].ignore_vma;
             end
         end
         for (int k=0; k<`NUM_PMTRDT; k++) begin
@@ -218,8 +216,6 @@ module rvv_backend_rob
                 res_mem[wr_pmtrdt2rob[k].rob_entry].w_valid <= wr_pmtrdt2rob[k].w_valid;
                 res_mem[wr_pmtrdt2rob[k].rob_entry].w_data  <= wr_pmtrdt2rob[k].w_data;
                 res_mem[wr_pmtrdt2rob[k].rob_entry].vxsat   <= wr_pmtrdt2rob[k].vxsat;
-                res_mem[wr_pmtrdt2rob[k].rob_entry].ignore_vta <= wr_pmtrdt2rob[k].ignore_vta;
-                res_mem[wr_pmtrdt2rob[k].rob_entry].ignore_vma <= wr_pmtrdt2rob[k].ignore_vma;
             end
         end
         for (int k=0; k<`NUM_MUL; k++) begin
@@ -230,8 +226,6 @@ module rvv_backend_rob
                 res_mem[wr_mul2rob[k].rob_entry].w_valid <= wr_mul2rob[k].w_valid;
                 res_mem[wr_mul2rob[k].rob_entry].w_data  <= wr_mul2rob[k].w_data;
                 res_mem[wr_mul2rob[k].rob_entry].vxsat   <= wr_mul2rob[k].vxsat;
-                res_mem[wr_mul2rob[k].rob_entry].ignore_vta <= wr_mul2rob[k].ignore_vta;
-                res_mem[wr_mul2rob[k].rob_entry].ignore_vma <= wr_mul2rob[k].ignore_vma;
             end
         end
         for (int k=0; k<`NUM_DIV; k++) begin
@@ -242,8 +236,6 @@ module rvv_backend_rob
                 res_mem[wr_div2rob[k].rob_entry].w_valid <= wr_div2rob[k].w_valid;
                 res_mem[wr_div2rob[k].rob_entry].w_data  <= wr_div2rob[k].w_data;
                 res_mem[wr_div2rob[k].rob_entry].vxsat   <= wr_div2rob[k].vxsat;
-                res_mem[wr_div2rob[k].rob_entry].ignore_vta <= wr_div2rob[k].ignore_vta;
-                res_mem[wr_div2rob[k].rob_entry].ignore_vma <= wr_div2rob[k].ignore_vma;
             end
         end
         for (int k=0; k<`NUM_LSU; k++) begin
@@ -254,8 +246,6 @@ module rvv_backend_rob
                 res_mem[wr_lsu2rob[k].rob_entry].w_valid <= wr_lsu2rob[k].w_valid;
                 res_mem[wr_lsu2rob[k].rob_entry].w_data  <= wr_lsu2rob[k].w_data;
                 res_mem[wr_lsu2rob[k].rob_entry].vxsat   <= wr_lsu2rob[k].vxsat;
-                res_mem[wr_lsu2rob[k].rob_entry].ignore_vta <= wr_lsu2rob[k].ignore_vta;
-                res_mem[wr_lsu2rob[k].rob_entry].ignore_vma <= wr_lsu2rob[k].ignore_vma;
             end
         end
     end
@@ -368,8 +358,6 @@ module rvv_backend_rob
           assign rd_rob2rt[i].trap_flag = trap_flag[wind_uop_rptr[i]];
           assign rd_rob2rt[i].vector_csr = uop_rob2rt[i].vector_csr;
           assign rd_rob2rt[i].vxsat   = res_mem[wind_uop_rptr[i]].vxsat;
-          assign rd_rob2rt[i].ignore_vta = res_mem[wind_uop_rptr[i]].ignore_vta;
-          assign rd_rob2rt[i].ignore_vma = res_mem[wind_uop_rptr[i]].ignore_vma;
           assign rd_rob2rt[i].last_uop_valid = uop_rob2rt[i].last_uop_valid;
       end
   endgenerate

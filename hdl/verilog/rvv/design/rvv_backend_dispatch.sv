@@ -297,13 +297,15 @@ module rvv_backend_dispatch
 // determine the type for each byte in uop's vector operands 
     generate
         for (i=0; i<`NUM_DP_UOP; i++) begin : gen_opr_bype_type
-            assign uop_info[i].uop_index = uop_uop2dp[i].uop_index;
-            assign uop_info[i].vd_eew    = uop_uop2dp[i].vd_eew;
-            assign uop_info[i].vs1_eew   = uop_uop2dp[i].vs1_eew;
-            assign uop_info[i].vs2_eew   = uop_uop2dp[i].vs2_eew;
-            assign uop_info[i].vstart    = uop_uop2dp[i].vector_csr.vstart;
-            assign uop_info[i].vl        = uop_uop2dp[i].vs_evl;
-            assign uop_info[i].vm        = uop_uop2dp[i].vm;
+            assign uop_info[i].uop_index  = uop_uop2dp[i].uop_index;
+            assign uop_info[i].vd_eew     = uop_uop2dp[i].vd_eew;
+            assign uop_info[i].vs1_eew    = uop_uop2dp[i].vs1_eew;
+            assign uop_info[i].vs2_eew    = uop_uop2dp[i].vs2_eew;
+            assign uop_info[i].vstart     = uop_uop2dp[i].vector_csr.vstart;
+            assign uop_info[i].vl         = uop_uop2dp[i].vs_evl;
+            assign uop_info[i].vm         = uop_uop2dp[i].vm;
+            assign uop_info[i].ignore_vma = uop_uop2dp[i].ignore_vma;
+            assign uop_info[i].ignore_vta = uop_uop2dp[i].ignore_vta;
 
             rvv_backend_dispatch_opr_byte_type #(
             ) u_opr_byte_type (

@@ -69,8 +69,6 @@ module rvv_backend_div_unit
   logic   [`VLEN-1:0]             w_data;             // when w_type=XRF, w_data[`XLEN-1:0] will store the scalar result
   logic                           w_valid; 
   logic   [`VCSR_VXSAT_WIDTH-1:0] vxsat;     
-  logic                           ignore_vta;
-  logic                           ignore_vma;
   
   // for-loop
   genvar                          j;
@@ -498,8 +496,6 @@ module rvv_backend_div_unit
   assign  result.w_data     = w_data;
   assign  result.w_valid    = w_valid;
   assign  result.vxsat      = vxsat;
-  assign  result.ignore_vta = ignore_vta;
-  assign  result.ignore_vma = ignore_vma;
 
   // result data
   assign w_data = result_data;
@@ -512,9 +508,5 @@ module rvv_backend_div_unit
 
   // saturate signal
   assign vxsat = 'b0;
-
-  // ignore vta an vma signal
-  assign ignore_vta = 'b0;
-  assign ignore_vma = 'b0;
 
 endmodule

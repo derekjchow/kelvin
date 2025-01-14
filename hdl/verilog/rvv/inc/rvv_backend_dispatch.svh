@@ -86,6 +86,8 @@ typedef struct packed {
   logic [`VSTART_WIDTH-1:0]    vstart;
   logic [`VL_WIDTH-1:0]        vl;
   logic                        vm;
+  logic                        ignore_vma;
+  logic                        ignore_vta;
 } UOP_INFO_t;
 
 // the vector operand byte type in uop

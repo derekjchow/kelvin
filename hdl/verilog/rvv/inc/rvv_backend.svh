@@ -523,8 +523,6 @@ typedef struct packed {
   logic   [`VLEN-1:0]                 w_data;             // when w_type=XRF, w_data[`XLEN-1:0] will store the scalar result
   logic                               w_valid;
   logic   [`VCSR_VXSAT_WIDTH-1:0]     vxsat;
-  logic                               ignore_vta;         // all tail elements has been gotten, can use it directly regardless of vta
-  logic                               ignore_vma;         // all inactive elements has been gotten, can use it directly regardless of vma
 } PU2ROB_t;  
 // send uop to LSU
 typedef struct packed {   
@@ -570,8 +568,6 @@ typedef struct packed {
   logic                               w_valid;            // write valid
   logic [`VLEN-1:0]                   w_data;             // write data; w_data[`XLEN-1:0] is scalar result if write type is XRF
   logic [`VCSR_VXSAT_WIDTH-1:0]       vxsat;
-  logic                               ignore_vta;
-  logic                               ignore_vma;
 } RES_ROB_t;
 
 // send uop to ROB
@@ -602,6 +598,7 @@ typedef struct packed {
 typedef struct packed {
 `ifdef TB_SUPPORT
   logic   [`PC_WIDTH-1:0]             uop_pc;
+  logic                               last_uop_valid;
 `endif
   logic                               w_valid;            //entry valid
   logic   [`REGFILE_INDEX_WIDTH-1:0]  w_index;            //wr addr
@@ -611,9 +608,6 @@ typedef struct packed {
   logic                               trap_flag;          //whether this entry in a trap
   RVVConfigState                      vector_csr;         //Receive Vstart, vlen,... And need to update vcsr when trap
   logic   [`VCSR_VXSAT_WIDTH-1:0]     vxsat;              //Update saturation bit
-  logic                               ignore_vta;
-  logic                               ignore_vma;
-  logic                               last_uop_valid;
 } ROB2RT_t;  
 
 // the rob struct stored in ROB
