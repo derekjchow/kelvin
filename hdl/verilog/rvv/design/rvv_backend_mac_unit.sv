@@ -842,8 +842,6 @@ assign mac2rob_uop_data.w_data = mac_top_vs_eew_d1==EEW32 ? mac_rslt_eew32_d1 :
                                                             mac_rslt_eew8_d1; //all possible cases are 8/16/32
 assign mac2rob_uop_data.w_valid = rs2mac_uop_valid_d1;
 assign mac2rob_uop_data.vxsat = update_vxsat_eew8_d1 || update_vxsat_eew16_d1 || update_vxsat_eew32_d1;
-assign mac2rob_uop_data.ignore_vta = 1'b0;//(TODO) check this
-assign mac2rob_uop_data.ignore_vma = 1'b0;//(TODO) check this
 
 `ifdef TB_SUPPORT
 assign mac2rob_uop_data.uop_pc = mac_uop_pc_d1;

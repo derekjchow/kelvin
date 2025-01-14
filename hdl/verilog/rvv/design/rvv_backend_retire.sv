@@ -7,9 +7,7 @@ feature list:
 2. Input has 4 entries. The 4 entries have their dependency. 0(oldest) > 1 > 2 > 3(latest)
 3. This module decodes the uop info from ROB
 4. Write back to VRF
-  4.1. Generate mask(strobe) based on vma/vta policy
-    4.1.1 When ignore_vta && ignore_vma, need to retire entire 128 bit of this entry
-		      Otherwise need to generate Byte-enable locally
+  4.1. Generate mask(strobe) based on Byte-enable locally
   4.2. Check vector write-after-write (WAW), and update mask to one-hot type
   4.3. Pack data to VRF struct
 5. Write back to XRF
@@ -103,16 +101,6 @@ logic [`VCSR_VXSAT_WIDTH-1:0]    w_vxsat1;
 logic [`VCSR_VXSAT_WIDTH-1:0]    w_vxsat2;
 logic [`VCSR_VXSAT_WIDTH-1:0]    w_vxsat3;
 
-logic                            ignore_vta0;
-logic                            ignore_vta1;
-logic                            ignore_vta2;
-logic                            ignore_vta3;
-
-logic                            ignore_vma0;
-logic                            ignore_vma1;
-logic                            ignore_vma2;
-logic                            ignore_vma3;
-
 logic dst1_eq_dst0, dst2_eq_dst1, dst3_eq_dst2;
 logic [1:0]                       group_req;
 
@@ -176,15 +164,6 @@ assign w_vxsat1 = rob2rt_write_data[1].vxsat;
 assign w_vxsat2 = rob2rt_write_data[2].vxsat;
 assign w_vxsat3 = rob2rt_write_data[3].vxsat;
 
-assign ignore_vta0 = rob2rt_write_data[0].ignore_vta;
-assign ignore_vta1 = rob2rt_write_data[1].ignore_vta;
-assign ignore_vta2 = rob2rt_write_data[2].ignore_vta;
-assign ignore_vta3 = rob2rt_write_data[3].ignore_vta;
-
-assign ignore_vma0 = rob2rt_write_data[0].ignore_vma;
-assign ignore_vma1 = rob2rt_write_data[1].ignore_vma;
-assign ignore_vma2 = rob2rt_write_data[2].ignore_vma;
-assign ignore_vma3 = rob2rt_write_data[3].ignore_vma;
 
 /////////////////////////////////
 ////////////Main  ///////////////
@@ -213,13 +192,13 @@ always@(*) begin
   end
 end
 
-//2. Mask update if ignore vta/vma
+//2. Mask update if the bit is body-active
 always@(*) begin
   for(int i=0; i<`VLENB; i=i+1) begin
-    w_enB0[i] = (!vd_type0[i][1] && ignore_vta0) || (vd_type0[i][1] && (ignore_vma0 || vd_type0[i][0])); //tail ... body
-    w_enB1[i] = (!vd_type1[i][1] && ignore_vta1) || (vd_type1[i][1] && (ignore_vma1 || vd_type1[i][0])); 
-    w_enB2[i] = (!vd_type2[i][1] && ignore_vta2) || (vd_type2[i][1] && (ignore_vma2 || vd_type2[i][0]));
-    w_enB3[i] = (!vd_type3[i][1] && ignore_vta3) || (vd_type3[i][1] && (ignore_vma3 || vd_type3[i][0]));
+    w_enB0[i] = (rob2rt_write_data[0].vd_type[i] == 2'b11);
+    w_enB1[i] = (rob2rt_write_data[1].vd_type[i] == 2'b11);
+    w_enB2[i] = (rob2rt_write_data[2].vd_type[i] == 2'b11);
+    w_enB3[i] = (rob2rt_write_data[3].vd_type[i] == 2'b11);
   end
 end
 
