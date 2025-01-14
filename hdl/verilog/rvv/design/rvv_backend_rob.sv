@@ -349,6 +349,7 @@ module rvv_backend_rob
         // retire_uop data
 `ifdef TB_SUPPORT          
           assign rd_rob2rt[i].uop_pc  = uop_rob2rt[i].uop_pc;
+          assign rd_rob2rt[i].last_uop_valid = uop_rob2rt[i].last_uop_valid;
 `endif          
           assign rd_rob2rt[i].w_valid = res_mem[wind_uop_rptr[i]].w_valid & rd_valid_rob2rt[i];
           assign rd_rob2rt[i].w_index = uop_rob2rt[i].w_index;
@@ -358,7 +359,6 @@ module rvv_backend_rob
           assign rd_rob2rt[i].trap_flag = trap_flag[wind_uop_rptr[i]];
           assign rd_rob2rt[i].vector_csr = uop_rob2rt[i].vector_csr;
           assign rd_rob2rt[i].vxsat   = res_mem[wind_uop_rptr[i]].vxsat;
-          assign rd_rob2rt[i].last_uop_valid = uop_rob2rt[i].last_uop_valid;
       end
   endgenerate
   
