@@ -9,19 +9,22 @@ module rvv_backend
     insts_rvs2cq,
     insts_ready_cq2rvs,
 
-    uop_valid,
+    uop_valid_lsu_rvv2rvs,
     uop_lsu_rvv2rvs,
-    uop_ready,
-    uop_done_valid,
-    uop_done_rvs2rvv,
-    uop_done_ready,
+    uop_ready_lsu_rvs2rvv,
 
-    wb_xrf_wb2rvs,
-    wb_xrf_valid_wb2rvs,
-    wb_xrf_ready_wb2rvs,
+    uop_valid_lsu_rvs2rvv,
+    uop_lsu_rvs2rvv,
+    uop_ready_rvv2rvs,
 
+    rt_xrf_wb2rvs,
+    rt_xrf_valid_wb2rvs,
+    rt_xrf_ready_wb2rvs,
+
+    trap_valid_rvs2rvv,
     trap_rvs2rvv,
-    ready_rvv2rvs,
+    trap_ready_rvv2rvs,    
+
     vcsr_valid,
     vector_csr
 );
@@ -30,34 +33,129 @@ module rvv_backend
     input   logic                  rst_n;
 
 // vector instruction and scalar operand input. 
-    input   logic   [`NUM_DP_UOP-1:0] insts_valid_rvs2cq;
-    input   INST_t  [`NUM_DP_UOP-1:0] insts_rvs2cq;
-    output  logic   [`NUM_DP_UOP-1:0] insts_ready_cq2rvs;
+    input   logic   [`ISSUE_LANE-1:0] insts_valid_rvs2cq;
+    input   RVVCmd  [`ISSUE_LANE-1:0] insts_rvs2cq;
+    output  logic   [`ISSUE_LANE-1:0] insts_ready_cq2rvs;  
 
- // load/store unit interface
-   // RVV send LSU uop to RVS
+// load/store unit interface
+  // RVV send LSU uop to RVS
     output  logic   [`NUM_DP_UOP-1:0] uop_valid_lsu_rvv2rvs;
     output  UOP_LSU_RVV2RVS_t [`NUM_DP_UOP-1:0] uop_lsu_rvv2rvs;
     input   logic   [`NUM_DP_UOP-1:0] uop_ready_lsu_rvs2rvv;
-   // LSU feedback to RVV
+  // LSU feedback to RVV
     input   logic   [`NUM_DP_UOP-1:0] uop_valid_lsu_rvs2rvv;
     input   UOP_LSU_RVS2RVV_t [`NUM_DP_UOP-1:0] uop_lsu_rvs2rvv;
     output  logic   [`NUM_DP_UOP-1:0] uop_ready_rvv2rvs;
 
 // write back to XRF. RVS arbitrates write ports of XRF by itself.
-    output  WB_XRF_t [`NUM_WB_UOP-1:0] wb_xrf_wb2rvs;
-    output  logic    [`NUM_WB_UOP-1:0] wb_xrf_valid_wb2rvs;
-    input   logic    [`NUM_WB_UOP-1:0] wb_xrf_ready_wb2rvs;
+    output  RT2XRF_t [`NUM_RT_UOP-1:0] rt_xrf_wb2rvs;
+    output  logic    [`NUM_RT_UOP-1:0] rt_xrf_valid_wb2rvs;
+    input   logic    [`NUM_RT_UOP-1:0] rt_xrf_ready_wb2rvs;
 
 // exception handler
   // trap signal handshake
     input   logic                         trap_valid_rvs2rvv;
     input   TRAP_t                        trap_rvs2rvv;
-    output  logic                         trap_ready_rvv2rvs;
+    output  logic                         trap_ready_rvv2rvs;    
   // the vcsr of last retired uop in last cycle
     output  logic                         vcsr_valid;
-    output  VECTOR_CSR_t                  vector_csr;
+    output  RVVConfigState                  vector_csr;
 
+`ifdef TB_BRINGUP
+  // inst queue
+  logic [5:0] src1_idx [3:0]; 
+  logic [5:0] src2_idx [3:0]; 
+  logic [5:0] dest_idx [3:0];
+  logic inst_valid [3:0];
+  logic [31:0] inst_queue [3:0];
+  always_ff @(posedge clk) begin
+    if(!rst_n) begin 
+      insts_ready_cq2rvs[0] <= 1'b0;
+      insts_ready_cq2rvs[1] <= 1'b0;
+      insts_ready_cq2rvs[2] <= 1'b0;
+      insts_ready_cq2rvs[3] <= 1'b0;
+      rt_xrf_valid_wb2rvs[0] <= 1'b0;
+      rt_xrf_valid_wb2rvs[1] <= 1'b0;
+      rt_xrf_valid_wb2rvs[2] <= 1'b0;
+      rt_xrf_valid_wb2rvs[3] <= 1'b0;
+    end else begin
+      insts_ready_cq2rvs[0] <= 1'b1;
+      insts_ready_cq2rvs[1] <= 1'b1;
+      insts_ready_cq2rvs[2] <= 1'b0;
+      insts_ready_cq2rvs[3] <= 1'b0;
+      rt_xrf_valid_wb2rvs[0] <= 1'b0;
+      rt_xrf_valid_wb2rvs[1] <= 1'b0;
+      rt_xrf_valid_wb2rvs[2] <= 1'b0;
+      rt_xrf_valid_wb2rvs[3] <= 1'b0;
+    end
+  end
+
+  always_ff @(posedge clk) begin
+    if(!rst_n) begin 
+      inst_valid[0] <= 1'b0;
+      inst_valid[1] <= 1'b0;
+      inst_valid[2] <= 1'b0;
+      inst_valid[3] <= 1'b0;
+    end else begin
+      inst_valid[0] <= insts_ready_cq2rvs[0] & insts_valid_rvs2cq[0];
+      inst_valid[1] <= insts_ready_cq2rvs[1] & insts_valid_rvs2cq[1];
+      inst_valid[2] <= insts_ready_cq2rvs[2] & insts_valid_rvs2cq[2];
+      inst_valid[3] <= insts_ready_cq2rvs[3] & insts_valid_rvs2cq[3];
+      inst_queue[0] <= (insts_ready_cq2rvs[0] & insts_valid_rvs2cq[0]) ? {insts_rvs2cq[0].bits,insts_rvs2cq[0].opcode,5'b0} : inst_queue[0];
+      inst_queue[1] <= (insts_ready_cq2rvs[1] & insts_valid_rvs2cq[1]) ? {insts_rvs2cq[1].bits,insts_rvs2cq[1].opcode,5'b0} : inst_queue[1];
+      inst_queue[2] <= (insts_ready_cq2rvs[2] & insts_valid_rvs2cq[2]) ? {insts_rvs2cq[2].bits,insts_rvs2cq[2].opcode,5'b0} : inst_queue[2];
+      inst_queue[3] <= (insts_ready_cq2rvs[3] & insts_valid_rvs2cq[3]) ? {insts_rvs2cq[3].bits,insts_rvs2cq[3].opcode,5'b0} : inst_queue[3];
+    end
+  end
+
+  always_comb begin
+    for(int i=0;i<4;i++) begin
+      src1_idx[i] = inst_queue[i][19:15];
+      src2_idx[i] = inst_queue[i][24:20];
+      dest_idx[i] = inst_queue[i][11:7];
+    end
+  end
+
+  // vrf
+  logic [127:0] vreg [31:0];
+  logic [3:0] rt_event;
+  always_ff @(posedge clk) begin
+    if(!rst_n) begin 
+      vreg[0] <= '0;
+      for(int i=1; i<32; i++) begin
+        vreg[i] <= 128'hffff_0001_ffff_0002_ffff_0003_ffff_0000 + i;
+      end
+      for(int i=0; i<4; i++) begin
+        rt_event[i] <= 1'b0;
+      end
+    end else begin
+      for(int i=0; i<4; i++) begin
+        if(inst_valid[i]) begin
+            for(int elm_idx=0; elm_idx<16; elm_idx++) begin
+              // sew 8b, lmul 1, vl=16
+              vreg[dest_idx[i]][elm_idx*8+:8] <= vreg[src1_idx[i]][elm_idx*8+:8] + vreg[src2_idx[i]][elm_idx*8+:8];
+            end
+          rt_event[i] <= 1'b1;
+        end else begin
+          rt_event[i] <= 1'b0;
+        end
+      end
+    end
+  end
+
+  initial begin
+    forever begin
+      @(posedge clk);
+      for(int i=0; i<3; i++) begin
+        if(insts_valid_rvs2cq[i] && insts_ready_cq2rvs[i]) begin
+          $display("[RTL INFO] @ %0t Got a instruction packet in insts_rvs2cq[%0d]", $time, i);
+          $display("insts_rvs2cq[i].pc    = 0x%8x", insts_rvs2cq[i].inst_pc);
+          $display("insts_rvs2cq[i].insts = 0x%8x", {insts_rvs2cq[i].bits,insts_rvs2cq[i].opcode,5'b0});
+        end
+      end
+    end
+  end
+`else
 // ---internal signals definition-------------------------------------
   // RVV frontend to command queue
     logic                                 cq_full;
@@ -80,9 +178,9 @@ module rvv_backend
     UOP_QUEUE_t                           data2_de2uq;
     logic                                 push3_de2uq;
     UOP_QUEUE_t                           data3_de2uq;
-    logic                                 fifo_full_uq2de;
+    logic                                 fifo_full_uq2de; 
     logic                                 fifo_1left_to_full_uq2de;
-    logic                                 fifo_2left_to_full_uq2de;
+    logic                                 fifo_2left_to_full_uq2de; 
     logic                                 fifo_3left_to_full_uq2de;
   // Uop queue to dispatch
     logic                                 uq_empty;
@@ -97,7 +195,7 @@ module rvv_backend
     logic        [`NUM_DP_UOP-1:0]        rs_valid_dp2alu;
     ALU_RS_t     [`NUM_DP_UOP-1:0]        rs_dp2alu;
     logic        [`NUM_DP_UOP-1:0]        rs_ready_alu2dp;
-    // PMTRDT_RS
+    // PMTRDT_RS 
     logic                                 pmtrdt_rs_full;
     logic                                 pmtrdt_rs_1left_to_full;
     logic        [`NUM_DP_UOP-1:0]        rs_valid_dp2pmtrdt;
@@ -141,7 +239,7 @@ module rvv_backend
     ALU2ROB_t                             result1_alu2rob;
     logic                                 result1_ready_rob2alu;
   // VRF to dispatch
-    logic [`NUM_DP_VRF-1:0][`REGFILE_INDEX_WIDTH-1:0] rd_index_dp2vrf;
+    logic [`NUM_DP_VRF-1:0][`REGFILE_INDEX_WIDTH-1:0] rd_index_dp2vrf;          
     logic [`NUM_DP_VRF-1:0][`VLEN-1:0]                rd_data_vrf2dp;
     logic [`VLEN-1:0]                                 v0_mask_vrf2dp;
   // ROB to dispatch
@@ -150,7 +248,7 @@ module rvv_backend
 // ---code start------------------------------------------------------
   // Command queue
     fifo_flopped_4w2r #(
-        .DWIDTH     ($bits(INST_t)),
+        .DWIDTH     ($bits(RVVCmd)),
         .DEPTH      (`CQ_DEPTH),
     ) u_command_queue (
       // global
@@ -265,7 +363,7 @@ module rvv_backend
         .rs_valid_dp2alu    (rs_valid_dp2alu),
         .rs_dp2alu          (rs_dp2alu),
         .rs_ready_alu2dp    (rs_ready_alu2dp),
-        // PMTRDT_RS
+        // PMTRDT_RS 
         .rs_valid_dp2pmtrdt (rs_valid_dp2pmtrdt),
         .rs_dp2pmtrdt       (rs_dp2pmtrdt),
         .rs_ready_pmtrdt2dp (rs_ready_pmtrdt2dp),
@@ -444,3 +542,63 @@ module rvv_backend
         .fifo_1left_to_empty  (),
         .fifo_idle            ()
     );
+  
+    assign rs_ready_lsu2dp[0] = ~lsu_rs_full;
+    assign rs_ready_lsu2dp[1] = ~lsu_rs_1left_to_full;
+
+  // PU, Process unit
+    // ALU
+    rvv_alu #(
+    ) u_alu (
+      // ALU_RS to ALU
+        .pop0_ex2rs                 (pop0_alu2rs),
+        .pop1_ex2rs                 (pop1_alu2rs),
+        .alu_uop0_rs2ex             (uop0_rs2alu),
+        .alu_uop1_rs2ex             (uop1_rs2alu),
+        .fifo_empty_rs2ex           (fifo_empty_rs2alu),
+        .fifo_1left_to_empty_rs2ex  (fifo_1left_to_empty_rs2alu),
+      // ALU to ROB  
+        .result0_valid_ex2rob       (result0_valid_alu2rob),
+        .result0_ex2rob             (result0_alu2rob),
+        .result0_ready_rob2alu      (result0_ready_rob2alu),
+        .result1_valid_ex2rob       (result1_valid_alu2rob),
+        .result1_ex2rob             (result1_alu2rob),
+        .result1_ready_rob2alu      (result1_ready_rob2alu)
+    );
+
+    // PMTRDT
+    // TODO
+    rvv_pmtrdt #(
+    ) u_pmtrdt (
+    );
+
+    // MUL
+    // TODO
+    rvv_mul #(
+    ) u_mul (
+    );
+
+    // DIV
+    // TODO
+    rvv_div #(
+    ) u_div (
+    );
+
+  // ROB, Re-Order Buffer
+    // TODO
+    rvv_backend_rob #(
+    ) u_rob (
+    );
+
+  // RT, Retire
+    rvv_backend_retire #(
+    ) u_retire (
+    );
+
+  // VRF, Vector Register File
+    rvv_backend_vrf #(
+    ) u_vrf (
+    );
+`endif // TB_BRINGUP
+
+endmodule
