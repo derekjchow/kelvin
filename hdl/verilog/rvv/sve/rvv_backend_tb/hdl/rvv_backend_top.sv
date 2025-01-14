@@ -50,9 +50,8 @@ module rvv_backend_top();
     .trap_rvs2rvv             (rvs_if.trap_rvs2rvv          ),
     .trap_ready_rvv2rvs       (rvs_if.trap_ready_rvv2rvs    ), 
 
-    // TODO
-    .wr_vxsat_valid           (),
-    .wr_vxsat                 (),
+    .wr_vxsat_valid           (rvs_if.wr_vxsat_valid        ),
+    .wr_vxsat                 (rvs_if.wr_vxsat              ),
 
     .vcsr_valid               (rvs_if.vcsr_valid            ),
     .vector_csr               (rvs_if.vector_csr            )

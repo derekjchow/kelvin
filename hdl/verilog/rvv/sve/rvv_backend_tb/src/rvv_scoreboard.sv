@@ -74,26 +74,26 @@ function void rvv_scoreboard::report_phase(uvm_phase phase);
 endfunction:report_phase
 
 function void rvv_scoreboard::write_rvs(rvs_transaction tr);
-  `uvm_info("DEBUG", "get a wb inst from dut", UVM_HIGH)
-  `uvm_info("DEBUG", tr.sprint(), UVM_HIGH)
+  `uvm_info(get_type_name(), "get a wb inst from dut", UVM_HIGH)
+  `uvm_info(get_type_name(), tr.sprint(), UVM_HIGH)
   rt_queue_rvs.push_back(tr);
 endfunction
 
 function void rvv_scoreboard::write_mdl(rvs_transaction tr);
-  `uvm_info("DEBUG", "get a wb inst from mdl", UVM_HIGH)
-  `uvm_info("DEBUG", tr.sprint(), UVM_HIGH)
+  `uvm_info(get_type_name(), "get a wb inst from mdl", UVM_HIGH)
+  `uvm_info(get_type_name(), tr.sprint(), UVM_HIGH)
   rt_queue_mdl.push_back(tr);
 endfunction
 
 function void rvv_scoreboard::write_rvs_vrf(vrf_transaction tr);
-  `uvm_info("DEBUG", "get a vrf check request from dut", UVM_HIGH)
-  `uvm_info("DEBUG", tr.sprint(), UVM_HIGH)
+  `uvm_info(get_type_name(), "get a vrf check request from dut", UVM_HIGH)
+  `uvm_info(get_type_name(), tr.sprint(), UVM_HIGH)
   vrf_queue_rvs.push_back(tr);
 endfunction
 
 function void rvv_scoreboard::write_mdl_vrf(vrf_transaction tr);
-  `uvm_info("DEBUG", "get a vrf check request from mdl", UVM_HIGH)
-  `uvm_info("DEBUG", tr.sprint(), UVM_HIGH)
+  `uvm_info(get_type_name(), "get a vrf check request from mdl", UVM_HIGH)
+  `uvm_info(get_type_name(), tr.sprint(), UVM_HIGH)
   vrf_queue_mdl.push_back(tr);
 endfunction
 
@@ -120,10 +120,17 @@ task rvv_scoreboard::rt_checker();
     while(rt_queue_rvs.size()>0) begin 
       rvs_tr = rt_queue_rvs.pop_front();
       mdl_tr = rt_queue_mdl.pop_front();
-      `uvm_info("RT_RECORDER", "Got retire transaction from RVV:",UVM_LOW)
-      `uvm_info("RT_RECORDER", rvs_tr.sprint(),UVM_LOW)
-      `uvm_info("RT_RECORDER", "Got retire transaction from MDL:",UVM_LOW)
-      `uvm_info("RT_RECORDER", mdl_tr.sprint(),UVM_LOW)
+
+      `uvm_info("RT_RECORDER", $sformatf("\nRetire check start. ====================================================================================================\n"),UVM_LOW)
+      `uvm_info("RT_RECORDER", $sformatf("Got retire transaction from DUT:\n%s",rvs_tr.sprint()),UVM_LOW)
+      `uvm_info("RT_RECORDER", $sformatf("Got retire transaction from MDL:\n%s",mdl_tr.sprint()),UVM_LOW)
+
+      // PC check
+      if(rvs_tr.pc !== mdl_tr.pc) begin
+        `uvm_error("RT_CHECKER", $sformatf("Retire PC mismatch:\nDUT retired pc 0x%8x, \nMDL retired pc 0x%8x.", 
+                                            rvs_tr.pc,
+                                            mdl_tr.pc))
+      end
 
       // VRF check
       if(rvs_tr.rt_vrf_index.size() != mdl_tr.rt_vrf_index.size()) begin
@@ -139,11 +146,11 @@ task rvv_scoreboard::rt_checker();
           mdl_rt_vrf_index  = mdl_tr.rt_vrf_index.pop_front();
           mdl_rt_vrf_strobe = mdl_tr.rt_vrf_strobe.pop_front();
           mdl_rt_vrf_data   = mdl_tr.rt_vrf_data.pop_front();
-          if(rvs_rt_vrf_index != mdl_rt_vrf_index) begin
+          if(rvs_rt_vrf_index !== mdl_rt_vrf_index) begin
             `uvm_error("RT_CHECKER", $sformatf("Retire VRF index mismatch:\nDUT retired vrf[%0d],\nMDL retired vrf[%0d].", 
                                                 rvs_rt_vrf_index, 
                                                 mdl_rt_vrf_index));
-          end else if(rvs_rt_vrf_strobe != mdl_rt_vrf_strobe) begin
+          end else if(rvs_rt_vrf_strobe !== mdl_rt_vrf_strobe) begin
             vreg_dut_val = "0x";
             vreg_mdl_val = "0x";
             for(int i=`VLEN-1;i>=0;i-=16) begin
@@ -155,7 +162,7 @@ task rvv_scoreboard::rt_checker();
             `uvm_error("RT_CHECKER", $sformatf("Retire VRF strobe(bit) mismatch:\nDUT retired vrf_strobe[%0d] = %s,\nMDL retired vrf_strobe[%0d] = %s.", 
                                                rvs_rt_vrf_index, vreg_dut_val,
                                                mdl_rt_vrf_index, vreg_mdl_val));
-          end else if((rvs_rt_vrf_strobe & rvs_rt_vrf_data) != (mdl_rt_vrf_strobe & mdl_rt_vrf_data)) begin
+          end else if((rvs_rt_vrf_strobe & rvs_rt_vrf_data) !== (mdl_rt_vrf_strobe & mdl_rt_vrf_data)) begin
             vreg_dut_val = "0x";
             vreg_mdl_val = "0x";
             for(int i=`VLEN-1;i>=0;i-=16) begin
@@ -188,11 +195,11 @@ task rvv_scoreboard::rt_checker();
           rvs_rt_xrf_data   = rvs_tr.rt_xrf_data.pop_front();
           mdl_rt_xrf_index  = mdl_tr.rt_xrf_index.pop_front();
           mdl_rt_xrf_data   = mdl_tr.rt_xrf_data.pop_front();
-          if(rvs_rt_xrf_index != mdl_rt_xrf_index) begin
+          if(rvs_rt_xrf_index !== mdl_rt_xrf_index) begin
             `uvm_error("RT_CHECKER", $sformatf("Retire XRF index mismatch:\nDUT retired xrf[%0d],\nMDL retired xrf[%0d].", 
                                                 rvs_rt_xrf_index, 
                                                 mdl_rt_xrf_index));
-          end else if(rvs_rt_xrf_data != mdl_rt_xrf_data) begin
+          end else if(rvs_rt_xrf_data !== mdl_rt_xrf_data) begin
             `uvm_error("RT_CHECKER", $sformatf("Retire XRF mismatch:\nDUT retired xrf[%0d] = 0x%8x,\nMDL retired xrf[%0d] = 0x%8x.", 
                                                 rvs_rt_xrf_index, rvs_rt_xrf_data,
                                                 mdl_rt_xrf_index, mdl_rt_xrf_data));
@@ -203,10 +210,10 @@ task rvv_scoreboard::rt_checker();
       end
 
       // VXSAT check
-      if(rvs_tr.vxsat_valid != mdl_tr.vxsat_valid) begin
+      if(rvs_tr.vxsat_valid !== mdl_tr.vxsat_valid) begin
         `uvm_error("RT_CHECKER","RVV vxsat_valid mismatch with reference model.");
       end else if(rvs_tr.vxsat_valid === 1 && mdl_tr.vxsat_valid === 1) begin
-        if(rvs_tr.vxsat != mdl_tr.vxsat) begin
+        if(rvs_tr.vxsat !== mdl_tr.vxsat) begin
           `uvm_error("RT_CHECKER", $sformatf("Retire vxsat mismatch:\nDUT vxsat = %0d\nMDL vxsat = %0d",
                                               rvs_tr.vxsat,
                                               mdl_tr.vxsat));
@@ -214,6 +221,7 @@ task rvv_scoreboard::rt_checker();
           `uvm_info("RT_CHECKER", "Writeback vxsat check pass.", UVM_LOW)
         end
       end
+      `uvm_info("RT_RECORDER", $sformatf("\nRetire check done.  ====================================================================================================\n\n"),UVM_LOW)
     end
   end 
 endtask: rt_checker 
@@ -233,7 +241,7 @@ task rvv_scoreboard::vrf_checker();
     if(vrf_queue_rvs.size()>0 && vrf_queue_mdl.size()>0) begin
       rvs_tr = vrf_queue_rvs.pop_front();
       mdl_tr = vrf_queue_mdl.pop_front();
-      `uvm_info("VRF_RECORDER", "\n==============================HEAD================================", UVM_HIGH)
+      `uvm_info("VRF_RECORDER", $sformatf("\nVRF check start. ====================================================================================================\n"),UVM_HIGH)
       for(int idx=0; idx<32; idx++) begin
         vreg_dut_val = "0x";
         vreg_mdl_val = "0x";
@@ -255,7 +263,7 @@ task rvv_scoreboard::vrf_checker();
       if(!err) begin
         `uvm_info("VRF_CHECKER", "VRF check pass", UVM_LOW)
       end
-      `uvm_info("VRF_RECORDER", "\n==============================TAIL================================", UVM_HIGH)
+      `uvm_info("VRF_RECORDER", $sformatf("\nVRF check done.  ====================================================================================================\n"),UVM_HIGH)
     end
   end
 endtask: vrf_checker 

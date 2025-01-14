@@ -130,8 +130,8 @@ endclass : rvv_behavior_model
   endfunction: final_phase 
 
   function void rvv_behavior_model::write_inst(rvs_transaction inst_tr);
-    `uvm_info("DEBUG", "get a inst", UVM_HIGH)
-    `uvm_info("DEBUG", inst_tr.sprint(), UVM_HIGH)
+    `uvm_info("MDL", "get a inst", UVM_HIGH)
+    `uvm_info("MDL", inst_tr.sprint(), UVM_HIGH)
     inst_queue.push_back(inst_tr);
   endfunction
 
@@ -189,8 +189,7 @@ endclass : rvv_behavior_model
           vxsat       = '0;
           vxsat_valid = '0;
 
-          `uvm_info("DEBUG","Start calculation.",UVM_LOW)
-          `uvm_info("DEBUG",inst_tr.sprint(),UVM_LOW)
+          `uvm_info("MDL",$sformatf("Start calculation:\n%s",inst_tr.sprint()),UVM_LOW)
         end else begin
           `uvm_error(get_type_name(), "Pop inst_queue while empty.")
           break;
@@ -370,17 +369,17 @@ endclass : rvv_behavior_model
         if(inst_tr.src2_type == XRF) xrf[inst_tr.src2_idx] = inst_tr.rs_data;
         if(inst_tr.src1_type == IMM) begin 
           imm_data = $signed(inst_tr.src1_idx);
-          `uvm_info("DEBUG", $sformatf("Got imm_data = 0x%8x(%0d) from rs1",imm_data, $signed(imm_data)), UVM_HIGH)
+          `uvm_info("MDL", $sformatf("Got imm_data = 0x%8x(%0d) from rs1",imm_data, $signed(imm_data)), UVM_HIGH)
         end else if (inst_tr.src1_type == UIMM) begin
           imm_data = $unsigned(inst_tr.src1_idx);
-          `uvm_info("DEBUG", $sformatf("Got uimm_data = 0x%8x(%0d) from rs1",imm_data, $unsigned(imm_data)), UVM_HIGH)
+          `uvm_info("MDL", $sformatf("Got uimm_data = 0x%8x(%0d) from rs1",imm_data, $unsigned(imm_data)), UVM_HIGH)
         end
         if(inst_tr.src2_type == IMM) begin 
           imm_data = $signed(inst_tr.src2_idx);
-          `uvm_info("DEBUG", $sformatf("Got imm_data = 0x%8x(%0d) from rs2",imm_data, $signed(imm_data)), UVM_HIGH)
+          `uvm_info("MDL", $sformatf("Got imm_data = 0x%8x(%0d) from rs2",imm_data, $signed(imm_data)), UVM_HIGH)
         end else if (inst_tr.src2_type == UIMM) begin
           imm_data = $unsigned(inst_tr.src2_idx);
-          `uvm_info("DEBUG", $sformatf("Got uimm_data = 0x%8x(%0d) from rs2",imm_data, $unsigned(imm_data)), UVM_HIGH)
+          `uvm_info("MDL", $sformatf("Got uimm_data = 0x%8x(%0d) from rs2",imm_data, $unsigned(imm_data)), UVM_HIGH)
         end
           
         // 2.2 Check VRF index
@@ -411,22 +410,22 @@ endclass : rvv_behavior_model
         // 2.2.2 Overlap Check
         if(inst_tr.dest_type == VRF && inst_tr.src2_type == VRF && (dest_eew > src2_eew) && src2_reg_idx == dest_reg_idx && src2_emul>=1) begin
           `uvm_warning("MDL/INST_CHECKER", $sformatf("pc=0x%8x: Ch32.5.2. The lowest part of dest vrf(v%0d~v%0d) overlaps the src2 vrf(v%0d~v%0d) in a widen instruction. Ignored.",pc,
-              dest_reg_idx, dest_reg_idx+int'(dest_emul)-1, src2_reg_idx, src2_reg_idx+int'(src2_emul)-1));
+              dest_reg_idx, dest_reg_idx+int'($floor(dest_emul))-1, src2_reg_idx, src2_reg_idx+int'($floor(src2_emul))-1));
           continue;
         end
-        if(inst_tr.dest_type == VRF && inst_tr.src2_type == VRF && (dest_eew < src2_eew) && (src2_reg_idx+int'(dest_emul)) == dest_reg_idx) begin
+        if(inst_tr.dest_type == VRF && inst_tr.src2_type == VRF && (dest_eew < src2_eew) && (src2_reg_idx+int'($floor(dest_emul)) == dest_reg_idx) && dest_emul>=1) begin
           `uvm_warning("MDL/INST_CHECKER", $sformatf("pc=0x%8x: Ch32.5.2. The dest vrf(v%0d~v%0d) overlaps the highest part of src2 vrf(v%0d~v%0d) in a narrow instruction. Ignored.",pc,
-              dest_reg_idx, dest_reg_idx+int'(dest_emul)-1, src2_reg_idx, src2_reg_idx+int'(src2_emul)-1));
+              dest_reg_idx, dest_reg_idx+int'($floor(dest_emul))-1, src2_reg_idx, src2_reg_idx+int'($floor(src2_emul))-1));
           continue;
         end
         if(inst_tr.dest_type == VRF && inst_tr.src1_type == VRF && (dest_eew > src1_eew) && src1_reg_idx == dest_reg_idx && src1_emul>=1) begin
           `uvm_warning("MDL/INST_CHECKER", $sformatf("pc=0x%8x: Ch32.5.2. The lower part of dest vrf(v%0d~v%0d) overlaps the src1 vrf(v%0d~v%0d) in a widen instruction. Ignored.",pc,
-              dest_reg_idx, dest_reg_idx+int'(dest_emul)-1, src1_reg_idx, src1_reg_idx+int'(src1_emul)-1));
+              dest_reg_idx, dest_reg_idx+int'($floor(dest_emul))-1, src1_reg_idx, src1_reg_idx+int'($floor(src1_emul))-1));
           continue;
         end
-        if(inst_tr.dest_type == VRF && inst_tr.src1_type == VRF && (dest_eew < src1_eew) && (src1_reg_idx+int'(dest_emul)) == dest_reg_idx) begin
+        if(inst_tr.dest_type == VRF && inst_tr.src1_type == VRF && (dest_eew < src1_eew) && (src1_reg_idx+int'($floor(dest_emul)) == dest_reg_idx) && dest_emul>=1) begin
           `uvm_warning("MDL/INST_CHECKER", $sformatf("pc=0x%8x: Ch32.5.2. The dest vrf(v%0d~v%0d) overlaps the highest part of src1 vrf(v%0d~v%0d) in a narrow instruction. Ignored.",pc,
-              dest_reg_idx, dest_reg_idx+int'(dest_emul)-1, src1_reg_idx, src1_reg_idx+int'(src1_emul)-1));
+              dest_reg_idx, dest_reg_idx+int'($floor(dest_emul))-1, src1_reg_idx, src1_reg_idx+int'($floor(src1_emul))-1));
           continue;
         end
         if(inst_tr.dest_type == VRF && vm == 0 && dest_reg_idx == 0 && (dest_eew != EEW1 /*|| TODO scalar result of a reduction*/)) begin
@@ -437,7 +436,7 @@ endclass : rvv_behavior_model
 
         vrf_temp = vrf;
         vrf_strobe_temp = '0;
-        `uvm_info("DEBUG",$sformatf("Prepare done!\nelm_idx_max=%0d\ndest_eew=%0d\nsrc2_eew=%0d\nsrc1_eew=%0d\ndest_emul=%2.4f\nsrc2_emul=%2.4f\nsrc1_emul=%2.4f\n",elm_idx_max,dest_eew,src2_eew,src1_eew,dest_emul,src2_emul,src1_emul),UVM_HIGH)
+        `uvm_info("MDL",$sformatf("Prepare done!\nelm_idx_max=%0d\ndest_eew=%0d\nsrc2_eew=%0d\nsrc1_eew=%0d\ndest_emul=%2.4f\nsrc2_emul=%2.4f\nsrc1_emul=%2.4f\n",elm_idx_max,dest_eew,src2_eew,src1_eew,dest_emul,src2_emul,src1_emul),UVM_LOW)
         // --------------------------------------------------
         // 3. Operate elements
         for(int elm_idx=0; elm_idx<elm_idx_max; elm_idx++) begin : op_element
@@ -456,15 +455,15 @@ endclass : rvv_behavior_model
               src0 = '0;
           end
           
-          `uvm_info("DEBUG", $sformatf("Before - element[%2d]: dest=0x%8h, src2=0x%8h, src1=0x%8h, src0=0x%8h", elm_idx, dest, src2, src1, src0), UVM_LOW)
+          `uvm_info("MDL", $sformatf("Before - element[%2d]: dest=0x%8h, src2=0x%8h, src1=0x%8h, src0=0x%8h", elm_idx, dest, src2, src1, src0), UVM_LOW)
 
           // 3.2 Execute & Writeback 
           if(elm_idx < vstart) begin
-            `uvm_info("DEBUG", $sformatf("element[%2d]: pre-start", elm_idx), UVM_LOW)
+            `uvm_info("MDL", $sformatf("element[%2d]: pre-start", elm_idx), UVM_LOW)
             // pre-start: do nothing
           end else if(elm_idx >= vl) begin
             // tail
-            `uvm_info("DEBUG", $sformatf("element[%2d]: tail", elm_idx), UVM_LOW)
+            `uvm_info("MDL", $sformatf("element[%2d]: tail", elm_idx), UVM_LOW)
             if(vtype.vta == AGNOSTIC) begin
               if(all_one_for_agn) begin 
                 dest = '1;
@@ -474,7 +473,7 @@ endclass : rvv_behavior_model
             end
           end else if(!(vm || this.vrf[0][elm_idx] || use_vm_to_cal)) begin
             // body-inactive
-            `uvm_info("DEBUG", $sformatf("element[%2d]: body-inactive", elm_idx), UVM_LOW)
+            `uvm_info("MDL", $sformatf("element[%2d]: body-inactive", elm_idx), UVM_LOW)
             if(vtype.vma == AGNOSTIC) begin
               if(all_one_for_agn) begin 
                 dest = '1;
@@ -484,53 +483,157 @@ endclass : rvv_behavior_model
             end
           end else begin
             // body-active
-            `uvm_info("DEBUG", $sformatf("element[%2d]: body-active", elm_idx), UVM_LOW)
+            `uvm_info("MDL", $sformatf("element[%2d]: body-active", elm_idx), UVM_LOW)
             // EX
             case(inst_tr.inst_type)
               LD: 
               ST: `uvm_fatal(get_type_name(),"Store fucntion hasn't been defined.")
               ALU: begin 
-                alu_processor#()::vxrm = vxrm;
                 case({dest_eew, src2_eew, src1_eew})
-                  { EEW8,  EEW8,  EEW8}: dest = alu_processor #( sew8_t,  sew8_t,  sew8_t)::exe(inst_tr, dest, src2, src1, src0);
-                  {EEW16, EEW16, EEW16}: dest = alu_processor #(sew16_t, sew16_t, sew16_t)::exe(inst_tr, dest, src2, src1, src0);
-                  {EEW32, EEW32, EEW32}: dest = alu_processor #(sew32_t, sew32_t, sew32_t)::exe(inst_tr, dest, src2, src1, src0);
+                  { EEW8,  EEW8,  EEW8}: begin
+                    alu_processor#( sew8_t,  sew8_t,  sew8_t)::vxrm = vxrm;
+                    dest = alu_processor #( sew8_t,  sew8_t,  sew8_t)::exe(inst_tr, dest, src2, src1, src0);
+                    vxsat = vxsat ? vxsat : (alu_processor#( sew8_t,  sew8_t,  sew8_t)::overflow 
+                                          || alu_processor#( sew8_t,  sew8_t,  sew8_t)::underflow);
+                  end
+                  {EEW16, EEW16, EEW16}: begin
+                    alu_processor#(sew16_t, sew16_t, sew16_t)::vxrm = vxrm;
+                    dest = alu_processor #(sew16_t, sew16_t, sew16_t)::exe(inst_tr, dest, src2, src1, src0);
+                    vxsat = vxsat ? vxsat : (alu_processor#(sew16_t, sew16_t, sew16_t)::overflow 
+                                          || alu_processor#(sew16_t, sew16_t, sew16_t)::underflow);
+                  end
+                  {EEW32, EEW32, EEW32}: begin
+                    alu_processor#(sew32_t, sew32_t, sew32_t)::vxrm = vxrm;
+                    dest = alu_processor #(sew32_t, sew32_t, sew32_t)::exe(inst_tr, dest, src2, src1, src0);
+                    vxsat = vxsat ? vxsat : (alu_processor#(sew32_t, sew32_t, sew32_t)::overflow 
+                                          || alu_processor#(sew32_t, sew32_t, sew32_t)::underflow);
+                  end
                   // widen
-                  {EEW16,  EEW8,  EEW8}: dest = alu_processor #(sew16_t,  sew8_t,  sew8_t)::exe(inst_tr, dest, src2, src1, src0);
-                  {EEW16, EEW16,  EEW8}: dest = alu_processor #(sew16_t, sew16_t,  sew8_t)::exe(inst_tr, dest, src2, src1, src0);
-                  {EEW32, EEW16, EEW16}: dest = alu_processor #(sew32_t, sew16_t, sew16_t)::exe(inst_tr, dest, src2, src1, src0);
-                  {EEW32, EEW32, EEW16}: dest = alu_processor #(sew32_t, sew32_t, sew16_t)::exe(inst_tr, dest, src2, src1, src0);
-                  //ext
-                  {EEW16,  EEW8, EEW32}: dest = alu_processor #(sew16_t,  sew8_t, sew32_t)::exe(inst_tr, dest, src2, src1, src0);
-                  {EEW16,  EEW8, EEW16}: dest = alu_processor #(sew16_t,  sew8_t, sew16_t)::exe(inst_tr, dest, src2, src1, src0);
-                  //{EEW16,  EEW8,  EEW8}: dest = alu_processor #(sew32_t,  sew8_t,  sew8_t)::exe(inst_tr, dest, src2, src1, src0);
-                  {EEW32, EEW16, EEW32}: dest = alu_processor #(sew32_t, sew16_t, sew32_t)::exe(inst_tr, dest, src2, src1, src0);
-                  //{EEW32, EEW16, EEW16}: dest = alu_processor #(sew32_t, sew16_t, sew16_t)::exe(inst_tr, dest, src2, src1, src0);
-                  {EEW32, EEW16,  EEW8}: dest = alu_processor #(sew32_t, sew16_t,  sew8_t)::exe(inst_tr, dest, src2, src1, src0);
-                  {EEW32,  EEW8, EEW32}: dest = alu_processor #(sew32_t,  sew8_t, sew32_t)::exe(inst_tr, dest, src2, src1, src0);
-                  {EEW32,  EEW8, EEW16}: dest = alu_processor #(sew32_t,  sew8_t, sew16_t)::exe(inst_tr, dest, src2, src1, src0);
-                  {EEW32,  EEW8,  EEW8}: dest = alu_processor #(sew32_t,  sew8_t,  sew8_t)::exe(inst_tr, dest, src2, src1, src0);
+                  {EEW16,  EEW8,  EEW8}: begin 
+                    alu_processor#(sew16_t,  sew8_t,  sew8_t)::vxrm = vxrm;
+                    dest = alu_processor #(sew16_t,  sew8_t,  sew8_t)::exe(inst_tr, dest, src2, src1, src0);
+                    vxsat = vxsat ? vxsat : (alu_processor#(sew16_t, sew8_t, sew8_t)::overflow 
+                                          || alu_processor#(sew16_t, sew8_t, sew8_t)::underflow);
+                  end
+                  {EEW16, EEW16,  EEW8}: begin
+                    alu_processor#(sew16_t, sew16_t,  sew8_t)::vxrm = vxrm;
+                    dest = alu_processor #(sew16_t, sew16_t,  sew8_t)::exe(inst_tr, dest, src2, src1, src0);
+                    vxsat = vxsat ? vxsat : (alu_processor#(sew16_t, sew16_t, sew8_t)::overflow 
+                                          || alu_processor#(sew16_t, sew16_t, sew8_t)::underflow);
+                  end
+                  {EEW32, EEW16, EEW16}: begin
+                    alu_processor#(sew32_t, sew16_t, sew16_t)::vxrm = vxrm;
+                    dest = alu_processor #(sew32_t, sew16_t, sew16_t)::exe(inst_tr, dest, src2, src1, src0);
+                    vxsat = vxsat ? vxsat : (alu_processor#(sew32_t, sew16_t, sew16_t)::overflow 
+                                          || alu_processor#(sew32_t, sew16_t, sew16_t)::underflow);
+                  end
+                  {EEW32, EEW32, EEW16}: begin
+                    alu_processor#(sew32_t, sew32_t, sew16_t)::vxrm = vxrm;
+                    dest = alu_processor #(sew32_t, sew32_t, sew16_t)::exe(inst_tr, dest, src2, src1, src0);
+                    vxsat = vxsat ? vxsat : (alu_processor#(sew32_t, sew32_t, sew16_t)::overflow 
+                                          || alu_processor#(sew32_t, sew32_t, sew16_t)::underflow);
+                  end
+                  // ext
+                  // {EEW16,  EEW8, EEW32}: begin
+                  //   alu_processor#(sew16_t,  sew8_t, sew32_t)::vxrm = vxrm;
+                  //   dest = alu_processor #(sew16_t,  sew8_t, sew32_t)::exe(inst_tr, dest, src2, src1, src0);
+                  //   vxsat = vxsat ? vxsat : (alu_processor#(sew16_t, sew8_t, sew32_t)::overflow 
+                  //                         || alu_processor#(sew16_t, sew8_t, sew32_t)::underflow);
+                  // end
+                  {EEW16,  EEW8, EEW16}: begin
+                    alu_processor#(sew16_t,  sew8_t, sew16_t)::vxrm = vxrm;
+                    dest = alu_processor #(sew16_t,  sew8_t, sew16_t)::exe(inst_tr, dest, src2, src1, src0);
+                    vxsat = vxsat ? vxsat : (alu_processor#(sew16_t, sew8_t, sew16_t)::overflow 
+                                          || alu_processor#(sew16_t, sew8_t, sew16_t)::underflow);
+                  end
+                  // {EEW16,  EEW8,  EEW8}: begin
+                  //   dest = alu_processor #(sew32_t,  sew8_t,  sew8_t)::exe(inst_tr, dest, src2, src1, src0);
+                  //   vxsat = vxsat ? vxsat : (alu_processor#(sew32_t, sew8_t, sew8_t)::overflow 
+                  //                         || alu_processor#(sew32_t, sew8_t, sew8_t)::underflow);
+                  // end
+                  {EEW32, EEW16, EEW32}: begin
+                    alu_processor#(sew32_t, sew16_t, sew32_t)::vxrm = vxrm;
+                    dest = alu_processor #(sew32_t, sew16_t, sew32_t)::exe(inst_tr, dest, src2, src1, src0);
+                    vxsat = vxsat ? vxsat : (alu_processor#(sew32_t, sew16_t, sew32_t)::overflow 
+                                          || alu_processor#(sew32_t, sew16_t, sew32_t)::underflow);
+                  end
+                  // {EEW32, EEW16, EEW16}: begin
+                  //   dest = alu_processor #(sew32_t, sew16_t, sew16_t)::exe(inst_tr, dest, src2, src1, src0);
+                  // end
+                  // {EEW32, EEW16,  EEW8}: begin
+                  //   alu_processor#()::vxrm = vxrm;
+                  //   dest = alu_processor #(sew32_t, sew16_t,  sew8_t)::exe(inst_tr, dest, src2, src1, src0);
+                  //   vxsat = vxsat ? vxsat : (alu_processor#(sew32_t, sew16_t, sew8_t)::overflow 
+                  //                         || alu_processor#(sew32_t, sew16_t, sew8_t)::underflow);
+                  // end
+                  {EEW32,  EEW8, EEW32}: begin
+                    alu_processor#(sew32_t,  sew8_t, sew32_t)::vxrm = vxrm;
+                    dest = alu_processor #(sew32_t,  sew8_t, sew32_t)::exe(inst_tr, dest, src2, src1, src0);
+                    vxsat = vxsat ? vxsat : (alu_processor#(sew32_t, sew8_t, sew32_t)::overflow 
+                                          || alu_processor#(sew32_t, sew8_t, sew32_t)::underflow);
+                  end
+                  // {EEW32,  EEW8, EEW16}: begin
+                  //   alu_processor#()::vxrm = vxrm;
+                  //   dest = alu_processor #(sew32_t,  sew8_t, sew16_t)::exe(inst_tr, dest, src2, src1, src0);
+                  //   vxsat = vxsat ? vxsat : (alu_processor#(sew32_t, sew8_t, sew16_t)::overflow 
+                  //                         || alu_processor#(sew32_t, sew8_t, sew16_t)::underflow);
+                  // end
+                  // {EEW32,  EEW8,  EEW8}: begin
+                  //   alu_processor#()::vxrm = vxrm;
+                  //   dest = alu_processor #(sew32_t,  sew8_t,  sew8_t)::exe(inst_tr, dest, src2, src1, src0);
+                  //   vxsat = vxsat ? vxsat : (alu_processor#(sew32_t, sew8_t, sew8_t)::overflow 
+                  //                         || alu_processor#(sew32_t, sew8_t, sew8_t)::underflow);
+                  // end
                   // narrow
-                  { EEW8, EEW16,  EEW8}: dest = alu_processor #( sew8_t, sew16_t,  sew8_t)::exe(inst_tr, dest, src2, src1, src0);
-                  {EEW16, EEW32, EEW16}: dest = alu_processor #(sew16_t, sew32_t, sew16_t)::exe(inst_tr, dest, src2, src1, src0);
+                  { EEW8, EEW16,  EEW8}: begin
+                    alu_processor#( sew8_t, sew16_t,  sew8_t)::vxrm = vxrm;
+                    dest = alu_processor #( sew8_t, sew16_t,  sew8_t)::exe(inst_tr, dest, src2, src1, src0);
+                    vxsat = vxsat ? vxsat : (alu_processor#(sew8_t, sew16_t, sew8_t)::overflow 
+                                          || alu_processor#(sew8_t, sew16_t, sew8_t)::underflow);
+                  end
+                  {EEW16, EEW32, EEW16}: begin
+                    alu_processor#()::vxrm = vxrm;
+                    dest = alu_processor #(sew16_t, sew32_t, sew16_t)::exe(inst_tr, dest, src2, src1, src0);
+                    vxsat = vxsat ? vxsat : (alu_processor#(sew16_t, sew32_t, sew8_t)::overflow 
+                                          || alu_processor#(sew16_t, sew32_t, sew8_t)::underflow);
+                  end
                   // mask logic
-                  { EEW1,  EEW1,  EEW1}: dest = alu_processor #( sew1_t,  sew1_t,  sew1_t)::exe(inst_tr, dest, src2, src1, src0);
-                  { EEW1,  EEW8,  EEW8}: dest = alu_processor #( sew1_t,  sew8_t,  sew8_t)::exe(inst_tr, dest, src2, src1, src0);
-                  { EEW1, EEW16, EEW16}: dest = alu_processor #( sew1_t, sew16_t, sew16_t)::exe(inst_tr, dest, src2, src1, src0);
-                  { EEW1, EEW32, EEW32}: dest = alu_processor #( sew1_t, sew32_t, sew32_t)::exe(inst_tr, dest, src2, src1, src0);
+                  { EEW1,  EEW1,  EEW1}: begin
+                    alu_processor#( sew1_t,  sew1_t,  sew1_t)::vxrm = vxrm;
+                    dest = alu_processor #( sew1_t,  sew1_t,  sew1_t)::exe(inst_tr, dest, src2, src1, src0);
+                    vxsat = vxsat ? vxsat : (alu_processor#(sew1_t, sew1_t, sew1_t)::overflow 
+                                          || alu_processor#(sew1_t, sew1_t, sew1_t)::underflow);
+                  end
+                  { EEW1,  EEW8,  EEW8}: begin
+                    alu_processor#( sew1_t,  sew8_t,  sew8_t)::vxrm = vxrm;
+                    dest = alu_processor #( sew1_t,  sew8_t,  sew8_t)::exe(inst_tr, dest, src2, src1, src0);
+                    vxsat = vxsat ? vxsat : (alu_processor#(sew1_t, sew8_t, sew8_t)::overflow 
+                                          || alu_processor#(sew1_t, sew8_t, sew8_t)::underflow);
+                  end
+                  { EEW1, EEW16, EEW16}: begin
+                    alu_processor#( sew1_t, sew16_t, sew16_t)::vxrm = vxrm;
+                    dest = alu_processor #( sew1_t, sew16_t, sew16_t)::exe(inst_tr, dest, src2, src1, src0);
+                    vxsat = vxsat ? vxsat : (alu_processor#(sew1_t, sew16_t, sew16_t)::overflow 
+                                          || alu_processor#(sew1_t, sew16_t, sew16_t)::underflow);
+                  end
+                  { EEW1, EEW32, EEW32}: begin
+                    alu_processor#( sew1_t, sew32_t, sew32_t)::vxrm = vxrm;
+                    dest = alu_processor #( sew1_t, sew32_t, sew32_t)::exe(inst_tr, dest, src2, src1, src0);
+                    vxsat = vxsat ? vxsat : (alu_processor#(sew1_t, sew32_t, sew32_t)::overflow 
+                                          || alu_processor#(sew1_t, sew32_t, sew32_t)::underflow);
+                  end
                   default: begin
-                    `uvm_error("DEBUG", $sformatf("Unsupported EEW: dest_eew=%d, src2_eew=%d, src1_eew=%d", dest_eew, src2_eew, src1_eew))
+                    `uvm_error(get_type_name(), $sformatf("Unsupported EEW: dest_eew=%d, src2_eew=%d, src1_eew=%d", dest_eew, src2_eew, src1_eew))
                     continue;
                   end
                 endcase
-                vxsat = vxsat ? vxsat : (alu_processor#()::overflow || alu_processor#()::underflow);
                 elm_writeback(dest, inst_tr.dest_type, dest_reg_idx, elm_idx, dest_eew);
               end
             endcase
             // Write back
           end
 
-          `uvm_info("DEBUG", $sformatf("After  - element[%2d]: dest=0x%8h, src2=0x%8h, src1=0x%8h, src0=0x%8h\n", elm_idx, dest, src2, src1, src0), UVM_LOW)
+          `uvm_info("MDL", $sformatf("After  - element[%2d]: dest=0x%8h, src2=0x%8h, src1=0x%8h, src0=0x%8h\n", elm_idx, dest, src2, src1, src0), UVM_LOW)
         end : op_element
 
         // Writeback whole vrf
@@ -554,18 +657,18 @@ endclass : rvv_behavior_model
           rt_tr.rt_xrf_data.push_back(this.xrf[rt_tr.dest_idx]);
         end
         // VXSAT
+        vxsat_valid = vxsat;
         rt_tr.vxsat = vxsat;
         rt_tr.vxsat_valid = vxsat_valid;
 
-        `uvm_info("DEBUG","Complete calculation.",UVM_LOW)
-        `uvm_info("DEBUG",rt_tr.sprint(),UVM_LOW)
+        `uvm_info("MDL",$sformatf("Complete calculation:\n%s",rt_tr.sprint()),UVM_LOW)
         rt_ap.write(rt_tr);
       end // if(rt_last_uop[0])
         rt_last_uop = rt_last_uop >> 1;
       end // while(|rt_last_uop)
       end // rst_n
     end // forever
-    // `uvm_fatal("MDL/FATAL","Im here.")
+    // `uvm_fatal(get_type_name()),"Im here.")
   endtask
 
   function logic [31:0] rvv_behavior_model::elm_fetch(oprand_type_e reg_type, int reg_idx, int elm_idx, int eew);
@@ -577,11 +680,11 @@ endclass : rvv_behavior_model
       VRF: begin
         reg_idx = elm_idx / (`VLEN / eew) + reg_idx;
         elm_idx = elm_idx % (`VLEN / eew);
-        // `uvm_info("DEBUG", $sformatf("reg_type=%0d, reg_idx=%0d, elm_idx=%0d, eew=%0d", reg_type, reg_idx, elm_idx, eew), UVM_HIGH)
+        // `uvm_info("MDL", $sformatf("reg_type=%0d, reg_idx=%0d, elm_idx=%0d, eew=%0d", reg_type, reg_idx, elm_idx, eew), UVM_HIGH)
         for(int i=0; i<bit_count; i++) begin
           result[i] = this.vrf[reg_idx][elm_idx*bit_count + i];
-          // `uvm_info("DEBUG", $sformatf("elm_idx*bit_count + i=%0d", elm_idx*bit_count + i), UVM_HIGH)
-          // `uvm_info("DEBUG", $sformatf("result[%0d]=%0d", i, result[i]), UVM_HIGH)
+          // `uvm_info("MDL", $sformatf("elm_idx*bit_count + i=%0d", elm_idx*bit_count + i), UVM_HIGH)
+          // `uvm_info("MDL", $sformatf("result[%0d]=%0d", i, result[i]), UVM_HIGH)
         end
       end
       XRF: begin
@@ -597,7 +700,7 @@ endclass : rvv_behavior_model
       default: result = 'x;
     endcase
     elm_fetch = result;
-    // `uvm_info("DEBUG", $sformatf("result=%0h", result), UVM_HIGH)
+    // `uvm_info("MDL", $sformatf("result=%0h", result), UVM_HIGH)
   endfunction: elm_fetch
 
   task rvv_behavior_model::elm_writeback(logic [31:0] result, oprand_type_e reg_type, int reg_idx, int elm_idx, int eew);
@@ -651,7 +754,7 @@ virtual class alu_processor#(
   static vxrm_e vxrm;
 
   static function TD exe (rvs_transaction inst_tr, TD dest, T2 src2, T1 src1, T0 src0); //TODO ref ...
-    // `uvm_info("DEBUG", $sformatf("sizeof(T1)=%0d, sizeof(T2)=%0d, sizeof(TD)=%0d", $size(T1), $size(T2), $size(TD)), UVM_HIGH)
+    // `uvm_info("MDL", $sformatf("sizeof(T1)=%0d, sizeof(T2)=%0d, sizeof(TD)=%0d", $size(T1), $size(T2), $size(TD)), UVM_HIGH)
     overflow  = 0;
     underflow = 0;
     case(inst_tr.alu_inst) 
@@ -751,7 +854,7 @@ virtual class alu_processor#(
       VMXNOR: dest = _vmxnor(src2, src1); 
     endcase
     exe = dest;
-    // `uvm_info("DEBUG", $sformatf("dest=%0d, src1=%0d, src2=%0d", exe, src1, src2), UVM_HIGH)
+    // `uvm_info("MDL", $sformatf("dest=%0d, src1=%0d, src2=%0d", exe, src1, src2), UVM_HIGH)
   endfunction : exe
 
   static function logic [ALU_MAX_WIDTH-1:0] _roundoff_unsigned(logic [ALU_MAX_WIDTH-1:0] v, int d);
@@ -1072,6 +1175,7 @@ virtual class alu_processor#(
     underflow = cout[1] == 1'b1; 
     if(overflow)  begin _vsadd = '1; _vsadd[$bits(TD)-1] = 1'b0; end
     if(underflow) begin _vsadd = '0; _vsadd[$bits(TD)-1] = 1'b1; end
+    $display("in function: overflow=%0d, underflow=%0d",overflow,underflow);
   endfunction : _vsadd
   static function TD _vssubu(T2 src2, T1 src1);
     {underflow,_vssubu} = $unsigned(src2) - $unsigned(src1);
@@ -1149,11 +1253,11 @@ virtual class lsu_processor#(
 
   static function TD exe (rvs_transaction inst_tr, T1 src1, T2 src2); //TODO ref ...
     TD dest;
-    // `uvm_info("DEBUG", $sformatf("sizeof(T1)=%0d, sizeof(T2)=%0d, sizeof(TD)=%0d", $size(T1), $size(T2), $size(TD)), UVM_HIGH)
+    // `uvm_info("MDL", $sformatf("sizeof(T1)=%0d, sizeof(T2)=%0d, sizeof(TD)=%0d", $size(T1), $size(T2), $size(TD)), UVM_HIGH)
     case(inst_tr.lsu_mop) 
     endcase
     exe = dest;
-    // `uvm_info("DEBUG", $sformatf("dest=%0d, src1=%0d, src2=%0d", exe, src1, src2), UVM_HIGH)
+    // `uvm_info("MDL", $sformatf("dest=%0d, src1=%0d, src2=%0d", exe, src1, src2), UVM_HIGH)
   endfunction : exe
 
 endclass: lsu_processor

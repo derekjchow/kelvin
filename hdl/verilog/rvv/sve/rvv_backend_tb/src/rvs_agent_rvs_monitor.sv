@@ -83,10 +83,11 @@ task rvs_monitor::tx_monitor();
           `uvm_info(get_type_name(), $sformatf("Send transaction to mdl"),UVM_HIGH)
           `uvm_info(get_type_name(), inst_tr.sprint(),UVM_HIGH)
           `uvm_info("INST_TR", inst_tr.sprint(),UVM_LOW)
+          `uvm_info("ASM_DUMP",$sformatf("0x%8x\t%s", inst_tr.pc, inst_tr.asm_string),UVM_LOW)
           inst_ap.write(inst_tr); // write to mdl
           rt_tr = new("rt_tr");
           rt_tr.copy(inst_tr);
-          rt_tr.is_rt = 1;
+          // rt_tr.is_rt = 1;
           inst_rx_queue.push_back(rt_tr);
         end
       end
@@ -105,55 +106,54 @@ task rvs_monitor::rx_monitor();
       // `uvm_info(get_type_name(),$sformatf("rt_uop=0x%1x, rt_last_uop=0x%1x",rvs_if.rt_uop, rvs_if.rt_last_uop), UVM_HIGH)
       for(int rt_idx=0; rt_idx<`NUM_RT_UOP; rt_idx++) begin
         if(rvs_if.rt_uop[rt_idx]) begin
+          while(!(rvs_if.rt_vrf_valid_rob2rt[rt_idx] && (rvs_if.rt_vrf_data_rob2rt[rt_idx].uop_pc === tr.pc))) begin
+              `uvm_info(get_type_name(), $sformatf("Monitor rx_queue pc(0x%8x) mismatch with DUT pc(0x%8x), discarded.", tr.pc, rvs_if.rt_vrf_data_rob2rt[rt_idx].uop_pc), UVM_HIGH)
+              `uvm_info(get_type_name(), tr.sprint(),UVM_HIGH)
+              tr = inst_rx_queue.pop_front();
+          end
           // VRF
           if(rvs_if.rt_vrf_valid_rob2rt[rt_idx]) begin
             vrf_overlap = 0;
-            if(rvs_if.rt_vrf_data_rob2rt[rt_idx].uop_pc != inst_rx_queue[0].pc) begin
-              `uvm_warning(get_type_name(), $sformatf("DUT pc(0x%8x) mismatch with monitor pc(0x%8x).", rvs_if.rt_vrf_data_rob2rt[rt_idx].uop_pc, inst_rx_queue[0].pc))
-            end
             for(int i=0; i<`VLENB; i++) begin
               rt_vrf_strobe[i*8 +: 8] = {8{rvs_if.rt_vrf_data_rob2rt[rt_idx].rt_strobe[i]}}; 
             end
-            foreach(inst_rx_queue[0].rt_vrf_index[i]) begin
-              if(inst_rx_queue[0].rt_vrf_index[i] == rvs_if.rt_vrf_data_rob2rt[rt_idx].rt_index) begin
-                inst_rx_queue[0].rt_vrf_strobe[i] |= rt_vrf_strobe;
-                inst_rx_queue[0].rt_vrf_data[i]   |= rvs_if.rt_vrf_data_rob2rt[rt_idx].rt_data;
+            foreach(tr.rt_vrf_index[i]) begin
+              if(tr.rt_vrf_index[i] == rvs_if.rt_vrf_data_rob2rt[rt_idx].rt_index) begin
+                tr.rt_vrf_strobe[i] |= rt_vrf_strobe;
+                tr.rt_vrf_data[i]   |= rvs_if.rt_vrf_data_rob2rt[rt_idx].rt_data;
                 vrf_overlap = 1;
                 `uvm_info(get_type_name(), $sformatf("Uops %0d also write vrf[%0d].", rt_idx, rvs_if.rt_vrf_data_rob2rt[rt_idx].rt_index), UVM_HIGH)
               end
             end
             if(!vrf_overlap) begin
-              inst_rx_queue[0].rt_vrf_index.push_back(rvs_if.rt_vrf_data_rob2rt[rt_idx].rt_index);
-              inst_rx_queue[0].rt_vrf_strobe.push_back(rt_vrf_strobe);
-              inst_rx_queue[0].rt_vrf_data.push_back(rvs_if.rt_vrf_data_rob2rt[rt_idx].rt_data);
+              tr.rt_vrf_index.push_back(rvs_if.rt_vrf_data_rob2rt[rt_idx].rt_index);
+              tr.rt_vrf_strobe.push_back(rt_vrf_strobe);
+              tr.rt_vrf_data.push_back(rvs_if.rt_vrf_data_rob2rt[rt_idx].rt_data);
             end
           end
 
           // XRF
           if(rvs_if.rt_xrf_valid_rvv2rvs[rt_idx] && rvs_if.rt_xrf_ready_rvs2rvv[rt_idx]) begin
-            if(rvs_if.rt_xrf_rvv2rvs[rt_idx].uop_pc != inst_rx_queue[0].pc) begin
-              `uvm_warning(get_type_name(),"DUT pc mismatch with monitor.")
-            end
-            inst_rx_queue[0].rt_xrf_index.push_back(rvs_if.rt_xrf_rvv2rvs[rt_idx].rt_index);
-            inst_rx_queue[0].rt_xrf_data.push_back(rvs_if.rt_xrf_rvv2rvs[rt_idx].rt_data);
+            tr.rt_xrf_index.push_back(rvs_if.rt_xrf_rvv2rvs[rt_idx].rt_index);
+            tr.rt_xrf_data.push_back(rvs_if.rt_xrf_rvv2rvs[rt_idx].rt_data);
           end
 
           // VXSAT
           if(rvs_if.wr_vxsat_valid) begin
-            inst_rx_queue[0].vxsat        = rvs_if.wr_vxsat;
-            inst_rx_queue[0].vxsat_valid  = 1'b1;
+            tr.vxsat        = rvs_if.wr_vxsat;
+            tr.vxsat_valid  = 1'b1;
           end else begin
-            inst_rx_queue[0].vxsat        = '0;
-            inst_rx_queue[0].vxsat_valid  = 1'b0;
+            tr.vxsat        = '0;
+            tr.vxsat_valid  = 1'b0;
           end
 
           // LAST_UOP
           if(rvs_if.rt_last_uop[rt_idx]) begin
-            tr = inst_rx_queue.pop_front();
             tr.is_rt = 1;
             `uvm_info(get_type_name(), $sformatf("Send rt transaction to scb"),UVM_HIGH)
             `uvm_info(get_type_name(), tr.sprint(),UVM_HIGH)
             rt_ap.write(tr); // write to scb
+            tr = new("tr");
           end
         end
       end

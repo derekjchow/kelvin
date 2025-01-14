@@ -103,7 +103,6 @@ task rvs_driver::inst_manage();
   for(int i=0; i<`ISSUE_LANE; i++) begin
     if((rvs_if.insts_ready_cq2rvs[i]===1'b1) && inst_vld[i]) begin
       tr = inst_tx_queue.pop_front();
-      `uvm_info("ASM_DUMP",$sformatf("0x%8x\t%s", tr.pc, tr.asm_string),UVM_LOW)
     end
   end
 
@@ -115,11 +114,9 @@ task rvs_driver::inst_manage();
     //seq_item_port.get_next_item(tr);
     seq_item_port.try_next_item(tr);
     if(tr != null) begin
-      `uvm_info(get_type_name(), "Get item from rvs_sqr",UVM_HIGH)
-      `uvm_info(get_type_name(), tr.sprint(),UVM_HIGH)
+      `uvm_info(get_type_name(), $sformatf("Get item from rvs_sqr:\n%s",tr.sprint()),UVM_HIGH)
       inst_tx_queue.push_back(tr);
-      `uvm_info(get_type_name(), $sformatf("Send transaction to rvs_mon"),UVM_HIGH)
-      `uvm_info(get_type_name(), tr.sprint(),UVM_HIGH)
+      `uvm_info(get_type_name(), $sformatf("Send transaction to rvs_mon:\n%s",tr.sprint()),UVM_HIGH)
       inst_ap.write(tr);
       seq_item_port.item_done(); 
       if(single_inst_mode) begin
@@ -135,7 +132,7 @@ task rvs_driver::inst_manage();
 
   for(int i=0; i<`ISSUE_LANE; i++) begin
     if(i < inst_tx_queue.size()) begin
-      `uvm_info("DEBUG", $sformatf("Assign to port inst[%d]",i),UVM_HIGH)
+      `uvm_info(get_type_name(), $sformatf("Assign to port inst[%d]",i),UVM_HIGH)
       inst[i].inst_pc               = inst_tx_queue[i].pc;
       assert($cast(inst[i].opcode, inst_tx_queue[i].bin_inst[6:5]));
       inst[i].bits                  = inst_tx_queue[i].bin_inst[31:7];
@@ -163,7 +160,6 @@ task rvs_driver::tx_driver();
     @(posedge rvs_if.clk);
     inst_manage();
     for(int i=0; i<`ISSUE_LANE; i++) begin
-      // `uvm_info(get_type_name(), $sformatf("Assign to dut inst[%d]",i),UVM_HIGH)
       rvs_if.insts_rvs2cq[i]         <= inst[i];
       rvs_if.insts_valid_rvs2cq[i]   <= inst_vld[i];
     end
