@@ -97,27 +97,36 @@ endtask: tx_monitor
 task rvs_monitor::rx_monitor();
   rvs_transaction tr;
   logic [`VLEN-1:0] rt_vrf_strobe;
+  bit vrf_overlap;
   tr = new("tr");
   forever begin
     @(posedge rvs_if.clk);
     if(rvs_if.rst_n) begin
-      `uvm_info(get_type_name(),$sformatf("rt_uop=0x%1x, rt_last_uop=0x%1x",rvs_if.rt_uop, rvs_if.rt_last_uop), UVM_HIGH)
+      // `uvm_info(get_type_name(),$sformatf("rt_uop=0x%1x, rt_last_uop=0x%1x",rvs_if.rt_uop, rvs_if.rt_last_uop), UVM_HIGH)
       for(int rt_idx=0; rt_idx<`NUM_RT_UOP; rt_idx++) begin
         if(rvs_if.rt_uop[rt_idx]) begin
           // VRF
           if(rvs_if.rt_vrf_valid_rob2rt[rt_idx]) begin
+            vrf_overlap = 0;
             if(rvs_if.rt_vrf_data_rob2rt[rt_idx].uop_pc != inst_rx_queue[0].pc) begin
               `uvm_warning(get_type_name(), $sformatf("DUT pc(0x%8x) mismatch with monitor pc(0x%8x).", rvs_if.rt_vrf_data_rob2rt[rt_idx].uop_pc, inst_rx_queue[0].pc))
             end
             for(int i=0; i<`VLENB; i++) begin
               rt_vrf_strobe[i*8 +: 8] = {8{rvs_if.rt_vrf_data_rob2rt[rt_idx].rt_strobe[i]}}; 
             end
-            inst_rx_queue[0].rt_vrf_index.push_back(rvs_if.rt_vrf_data_rob2rt[rt_idx].rt_index);
-            inst_rx_queue[0].rt_vrf_strobe.push_back(rt_vrf_strobe);
-            inst_rx_queue[0].rt_vrf_data.push_back(rvs_if.rt_vrf_data_rob2rt[rt_idx].rt_data);
-            `uvm_info(get_type_name(), $sformatf("rvs_if.rt_vrf_data_rob2rt[%0d].rt_index = 0x%0x",rt_idx,rvs_if.rt_vrf_data_rob2rt[rt_idx].rt_index),UVM_HIGH)
-            `uvm_info(get_type_name(), $sformatf("rvs_if.rt_vrf_data_rob2rt[%0d].rt_strobe= 0x%0x",rt_idx,rvs_if.rt_vrf_data_rob2rt[rt_idx].rt_strobe),UVM_HIGH)
-            `uvm_info(get_type_name(), $sformatf("rvs_if.rt_vrf_data_rob2rt[%0d].rt_data  = 0x%0x",rt_idx,rvs_if.rt_vrf_data_rob2rt[rt_idx].rt_data),UVM_HIGH)
+            foreach(inst_rx_queue[0].rt_vrf_index[i]) begin
+              if(inst_rx_queue[0].rt_vrf_index[i] == rvs_if.rt_vrf_data_rob2rt[rt_idx].rt_index) begin
+                inst_rx_queue[0].rt_vrf_strobe[i] |= rt_vrf_strobe;
+                inst_rx_queue[0].rt_vrf_data[i]   |= rvs_if.rt_vrf_data_rob2rt[rt_idx].rt_data;
+                vrf_overlap = 1;
+                `uvm_info(get_type_name(), $sormatf("Uops %0d also write vrf[%0d].", rt_idx, rvs_if.rt_vrf_data_rob2rt[rt_idx].rt_index), UVM_HIGH)
+              end
+            end
+            if(!vrf_overlap) begin
+              inst_rx_queue[0].rt_vrf_index.push_back(rvs_if.rt_vrf_data_rob2rt[rt_idx].rt_index);
+              inst_rx_queue[0].rt_vrf_strobe.push_back(rt_vrf_strobe);
+              inst_rx_queue[0].rt_vrf_data.push_back(rvs_if.rt_vrf_data_rob2rt[rt_idx].rt_data);
+            end
           end
 
           // XRF

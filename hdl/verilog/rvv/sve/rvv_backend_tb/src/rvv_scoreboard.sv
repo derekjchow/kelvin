@@ -106,6 +106,9 @@ task rvv_scoreboard::rt_checker();
   vrf_t      rvs_rt_vrf_strobe, mdl_rt_vrf_strobe;
   vrf_t      rvs_rt_vrf_data  , mdl_rt_vrf_data  ;
 
+  string vreg_dut_val;
+  string vreg_mdl_val;
+
   int        rt_xrf_num;
   reg_idx_t  rvs_rt_xrf_index, mdl_rt_xrf_index;
   xrf_t      rvs_rt_xrf_data , mdl_rt_xrf_data ;
@@ -120,11 +123,13 @@ task rvv_scoreboard::rt_checker();
       `uvm_info("RT_RECORDER", "Got retire transaction from RVV:",UVM_LOW)
       `uvm_info("RT_RECORDER", rvs_tr.sprint(),UVM_LOW)
       `uvm_info("RT_RECORDER", "Got retire transaction from MDL:",UVM_LOW)
-      `uvm_info("RT_RECORDER", mdl_tr.sprint(),UVM_HIGH)
+      `uvm_info("RT_RECORDER", mdl_tr.sprint(),UVM_LOW)
 
       // VRF check
       if(rvs_tr.rt_vrf_index.size() != mdl_tr.rt_vrf_index.size()) begin
-        `uvm_error("RT_CHECKER", $sformatf("DUT retired %0d vregs, but MDL %0d vregs.", rvs_tr.rt_vrf_index.size(),mdl_tr.rt_vrf_index.size()))
+        `uvm_error("RT_CHECKER", $sformatf("Retire VRF quantity mismatch:\nDUT retired %0d vregs, \nMDL retired %0d vregs.", 
+                                            rvs_tr.rt_vrf_index.size(),
+                                            mdl_tr.rt_vrf_index.size()))
       end else begin
         rt_vrf_num = rvs_tr.rt_vrf_index.size();
         for(int i=0; i<rt_vrf_num; i++) begin
@@ -135,20 +140,47 @@ task rvv_scoreboard::rt_checker();
           mdl_rt_vrf_strobe = mdl_tr.rt_vrf_strobe.pop_front();
           mdl_rt_vrf_data   = mdl_tr.rt_vrf_data.pop_front();
           if(rvs_rt_vrf_index != mdl_rt_vrf_index) begin
-            `uvm_error("RT_CHECKER", $sformatf("DUT retired vrf[%0d], but MDL retired vrf[%0d].", rvs_rt_vrf_index, mdl_rt_vrf_index));
+            `uvm_error("RT_CHECKER", $sformatf("Retire VRF index mismatch:\nDUT retired vrf[%0d],\nMDL retired vrf[%0d].", 
+                                                rvs_rt_vrf_index, 
+                                                mdl_rt_vrf_index));
+          end else if(rvs_rt_vrf_strobe != mdl_rt_vrf_strobe) begin
+            vreg_dut_val = "0x";
+            vreg_mdl_val = "0x";
+            for(int i=`VLEN-1;i>=0;i-=16) begin
+              vreg_dut_val = $sformatf("%s%4h_",vreg_dut_val,rvs_rt_vrf_strobe[i-:16]);
+              vreg_mdl_val = $sformatf("%s%4h_",vreg_mdl_val,mdl_rt_vrf_strobe[i-:16]);
+            end
+            vreg_dut_val = vreg_dut_val.substr(0,vreg_dut_val.len()-2);
+            vreg_mdl_val = vreg_mdl_val.substr(0,vreg_mdl_val.len()-2);
+            `uvm_error("RT_CHECKER", $sformatf("Retire VRF strobe(bit) mismatch:\nDUT retired vrf_strobe[%0d] = %s,\nMDL retired vrf_strobe[%0d] = %s.", 
+                                               rvs_rt_vrf_index, vreg_dut_val,
+                                               mdl_rt_vrf_index, vreg_mdl_val));
           end else if((rvs_rt_vrf_strobe & rvs_rt_vrf_data) != (mdl_rt_vrf_strobe & mdl_rt_vrf_data)) begin
-            `uvm_error("RT_CHECKER", $sformatf("DUT retired vrf[%0d] = 0x%0x, but MDL retired vrf[%0d] = 0x%0x.", 
-                                                rvs_rt_vrf_index, (rvs_rt_vrf_strobe & rvs_rt_vrf_data),
-                                                mdl_rt_vrf_index, (mdl_rt_vrf_strobe & mdl_rt_vrf_data)));
+            vreg_dut_val = "0x";
+            vreg_mdl_val = "0x";
+            for(int i=`VLEN-1;i>=0;i-=16) begin
+              vreg_dut_val = $sformatf("%s%4h_",vreg_dut_val,{rvs_rt_vrf_strobe & rvs_rt_vrf_data}[i-:16]);
+              vreg_mdl_val = $sformatf("%s%4h_",vreg_mdl_val,{mdl_rt_vrf_strobe & mdl_rt_vrf_data}[i-:16]);
+            end
+            vreg_dut_val = vreg_dut_val.substr(0,vreg_dut_val.len()-2);
+            vreg_mdl_val = vreg_mdl_val.substr(0,vreg_mdl_val.len()-2);
+            // `uvm_error("RT_CHECKER", $sformatf("Retire VRF mismatch:\nDUT retired vrf[%0d] = 0x%0x,\nMDL retired vrf[%0d] = 0x%0x.", 
+            //                                     rvs_rt_vrf_index, (rvs_rt_vrf_strobe & rvs_rt_vrf_data),
+            //                                     mdl_rt_vrf_index, (mdl_rt_vrf_strobe & mdl_rt_vrf_data)));
+            `uvm_error("RT_CHECKER", $sformatf("Retire VRF mismatch:\nDUT retired vrf[%0d] = %s,\nMDL retired vrf[%0d] = %s.", 
+                                                rvs_rt_vrf_index, vreg_dut_val,
+                                                mdl_rt_vrf_index, vreg_mdl_val));
           end else begin
-            `uvm_info("RT_CHECKER", $sformatf("vrf[%0d] retire check pass.",rvs_rt_vrf_index), UVM_LOW)
+            `uvm_info("RT_CHECKER", $sformatf("Retire vrf[%0d] check pass.",rvs_rt_vrf_index), UVM_LOW)
           end
         end
       end
 
       // XRF check
       if(rvs_tr.rt_xrf_index.size() != mdl_tr.rt_xrf_index.size()) begin
-        `uvm_error("RT_CHECKER", $sformatf("DUT retired %0d xregs, but MDL %0d xregs.", rvs_tr.rt_xrf_index.size(),mdl_tr.rt_xrf_index.size()))
+        `uvm_error("RT_CHECKER", $sformatf("Retire XRF quantity mismatch:\nDUT retired %0d xregs,\nMDL retired %0d xregs.", 
+                                            rvs_tr.rt_xrf_index.size(),
+                                            mdl_tr.rt_xrf_index.size()))
       end else begin
         rt_xrf_num = rvs_tr.rt_xrf_index.size();
         for(int i=0; i<rt_xrf_num; i++) begin
@@ -157,13 +189,15 @@ task rvv_scoreboard::rt_checker();
           mdl_rt_xrf_index  = mdl_tr.rt_xrf_index.pop_front();
           mdl_rt_xrf_data   = mdl_tr.rt_xrf_data.pop_front();
           if(rvs_rt_xrf_index != mdl_rt_xrf_index) begin
-            `uvm_error("RT_CHECKER", $sformatf("DUT retired xrf[%0d], but MDL retired xrf[%0d].", rvs_rt_xrf_index, mdl_rt_xrf_index));
+            `uvm_error("RT_CHECKER", $sformatf("Retire XRF index mismatch:\nDUT retired xrf[%0d],\nMDL retired xrf[%0d].", 
+                                                rvs_rt_xrf_index, 
+                                                mdl_rt_xrf_index));
           end else if(rvs_rt_xrf_data != mdl_rt_xrf_data) begin
-            `uvm_error("RT_CHECKER", $sformatf("DUT retired xrf[%0d] = 0x%0x, but MDL retired xrf[%0d] = 0x%0x.", 
+            `uvm_error("RT_CHECKER", $sformatf("Retire XRF mismatch:\nDUT retired xrf[%0d] = 0x%8x,\nMDL retired xrf[%0d] = 0x%8x.", 
                                                 rvs_rt_xrf_index, rvs_rt_xrf_data,
                                                 mdl_rt_xrf_index, mdl_rt_xrf_data));
           end else begin
-            `uvm_info("RT_CHECKER", $sformatf("xrf[%0d] retire check pass.",rvs_rt_xrf_index), UVM_LOW)
+            `uvm_info("RT_CHECKER", $sformatf("Retire xrf[%0d] check pass.",rvs_rt_xrf_index), UVM_LOW)
           end
         end
       end
@@ -173,9 +207,9 @@ task rvv_scoreboard::rt_checker();
         `uvm_error("RT_CHECKER","RVV vxsat_valid mismatch with reference model.");
       end else if(rvs_tr.vxsat_valid === 1 && mdl_tr.vxsat_valid === 1) begin
         if(rvs_tr.vxsat != mdl_tr.vxsat) begin
-          `uvm_error("RT_CHECKER", $sformatf("Writeback vxsat mismatch:\nDUT:vxsat=%0d\nMDL:vxsat=%0d",
-                                                rvs_tr.vxsat,
-                                                mdl_tr.vxsat));
+          `uvm_error("RT_CHECKER", $sformatf("Retire vxsat mismatch:\nDUT vxsat = %0d\nMDL vxsat = %0d",
+                                              rvs_tr.vxsat,
+                                              mdl_tr.vxsat));
         end else begin
           `uvm_info("RT_CHECKER", "Writeback vxsat check pass.", UVM_LOW)
         end
