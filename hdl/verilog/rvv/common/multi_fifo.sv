@@ -37,6 +37,7 @@ module multi_fifo
   parameter DEPTH = 16;           // fifo depth
   parameter POP_CLEAR = 1'b0;     // clear data once pop
   parameter ASYNC_RSTN = 1'b0;    // reset data
+  parameter CHAOS_PUSH = 1'b0;    // support push data disorderly
   
   localparam DEPTH_BITS = $clog2(DEPTH);
 
@@ -65,15 +66,19 @@ module multi_fifo
 
   logic        [DEPTH_BITS  :0] entry_count; // the number of occupied entry.
   logic        [DEPTH_BITS  :0] next_entry_count;
-  logic        [DEPTH_BITS-1:0] push_count;
-  logic        [DEPTH_BITS-1:0] pop_count;
+  logic        [DEPTH_BITS  :0] push_count;
+  logic        [DEPTH_BITS  :0] pop_count;
   logic        [DEPTH_BITS-1:0] next_wptr;
   logic        [DEPTH_BITS-1:0] next_rptr;
 
   logic        [DEPTH_BITS-1:0] wind_rptr [DEPTH-1:0];
   logic        [DEPTH_BITS-1:0] wind_wptr [DEPTH-1:0];
+
+  logic        [M-1:0]          push_seq;
+  T            [M-1:0]          datain_seq;
 // ---code start------------------------------------------------------
   genvar  i;  
+  integer j,k;
   
   // wind back rptr/wptr
   generate
@@ -109,6 +114,26 @@ module multi_fifo
   cdffr #(.WIDTH(DEPTH_BITS)) u_wptr_reg (.q(wptr), .c(clear), .e(|push), .d(next_wptr), .clk(clk), .rst_n(rst_n));
 
   generate
+    if (CHAOS_PUSH) begin
+      always_comb begin
+        push_seq = '0;
+        datain_seq = '0;
+        j = 0;
+        for (k=0; k<M; k++) begin
+          if (push[k]) begin
+            push_seq[j] = 1'b1;
+            datain_seq[j] = datain[k];
+            j++;
+          end
+        end
+      end
+    end else begin
+      assign push_seq = push;
+      assign datain_seq = datain;
+    end
+  endgenerate
+
+  generate
   if (ASYNC_RSTN)
     always_ff @(posedge clk or negedge rst_n) begin
       if (!rst_n)
@@ -116,9 +141,9 @@ module multi_fifo
           mem[j] <= '0;
         end
       else begin
-        if (push[0] && !full) mem[wptr] <= datain[0];
+        if (push_seq[0] && !full) mem[wptr] <= datain_seq[0];
         for (int j=1; j<M; j++) begin
-          if (push[j] && !almost_full[j]) mem[wind_wptr[j]] <= datain[j];
+          if (push_seq[j] && !almost_full[j]) mem[wind_wptr[j]] <= datain_seq[j];
         end
 
         if (POP_CLEAR) begin
@@ -136,9 +161,9 @@ module multi_fifo
     end
   else
     always_ff @(posedge clk) begin
-      if (push[0] && !full) mem[wptr] <= datain[0];
+      if (push_seq[0] && !full) mem[wptr] <= datain_seq[0];
       for (int j=1; j<M; j++) begin
-        if (push[j] && !almost_full[j]) mem[wind_wptr[j]] <= datain[j];
+        if (push_seq[j] && !almost_full[j]) mem[wind_wptr[j]] <= datain_seq[j];
       end
 
       if (POP_CLEAR) begin
@@ -183,12 +208,12 @@ module multi_fifo
 
   `ifdef ASSERT_ON
     // test for overflow
-      assert property (@(posedge clk) disable iff (!rst_n) not ( push[0] && full))
-        else $error("MULTI_FIFO: overflow of fifo when push[0] and full");
+      assert property (@(posedge clk) disable iff (!rst_n) not ( push_seq[0] && full))
+        else $error("MULTI_FIFO: overflow of fifo when push_seq[0] and full");
       generate
         for (i=1; i<M; i++) begin
-          assert property (@(posedge clk) disable iff (!rst_n) not ( push[i] && almost_full[i]))
-            else $error("MULTI_FIFO: overflow of fifo when push[%d] and almost_full[%d]", i, i);
+          assert property (@(posedge clk) disable iff (!rst_n) not ( push_seq[i] && almost_full[i]))
+            else $error("MULTI_FIFO: overflow of fifo when push_seq[%d] and almost_full[%d]", i, i);
         end
       endgenerate
     // test for underflow

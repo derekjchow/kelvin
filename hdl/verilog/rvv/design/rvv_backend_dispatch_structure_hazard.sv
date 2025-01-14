@@ -31,9 +31,12 @@ module rvv_backend_dispatch_structure_hazard
             if (i[0] == 0) begin // i is even
                 always_comb begin
                     case(strct_uop[i].uop_class)
-                        VVV,                       
-                        VV: begin
+                        VVV:begin                       
                           rd_index[2*i+1] = strct_uop[i].vs1_index;
+                          rd_index[2*i] = strct_uop[i].vs2_index;
+                        end
+                        VV: begin
+                          rd_index[2*i+1] = strct_uop[i].vs3_valid ? strct_uop[i].vd_index : strct_uop[i].vs1_index;
                           rd_index[2*i] = strct_uop[i].vs2_index;
                         end
                         VX: begin
@@ -55,9 +58,14 @@ module rvv_backend_dispatch_structure_hazard
             else begin // i is odd
                 always_comb begin
                     case(strct_uop[i].uop_class)
-                        VVV,
-                        VV: begin
+                        VVV:begin
                           rd_index[2*i+1] = strct_uop[i-1].vs3_valid ? strct_uop[i-1].vd_index : strct_uop[i].vs1_index;
+                          rd_index[2*i] = strct_uop[i].vs2_index;
+                        end
+                        VV: begin
+                          rd_index[2*i+1] = strct_uop[i-1].uop_class == VVV ? strct_uop[i-1].vd_index :
+                                                                             strct_uop[i].vs3_valid ? strct_uop[i].vd_index 
+                                                                                                    : strct_uop[i].vs1_index;
                           rd_index[2*i] = strct_uop[i].vs2_index;
                         end
                         VX: begin

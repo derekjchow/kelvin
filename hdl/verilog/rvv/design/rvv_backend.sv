@@ -189,7 +189,7 @@ module rvv_backend
   // Dispatch to RS
     // ALU_RS
     logic                                 alu_rs_full;
-    logic                                 alu_rs_1left_to_full;
+    logic        [`NUM_DP_UOP-1:1]        alu_rs_almost_full;
     logic        [`NUM_DP_UOP-1:0]        rs_valid_dp2alu;
     ALU_RS_t     [`NUM_DP_UOP-1:0]        rs_dp2alu;
     logic        [`NUM_DP_UOP-1:0]        rs_ready_alu2dp;
@@ -241,9 +241,7 @@ module rvv_backend
     logic        [`NUM_DIV-1:0]           pop_div2rs;
     DIV_RS_t     [`NUM_DIV-1:0]           uop_rs2div;
     logic                                 fifo_empty_rs2div;
-`ifdef MULTI_DIV
     logic                                 fifo_1left_to_empty_rs2div;
-`endif
   // ALU to ROB
     logic        [`NUM_ALU-1:0]           wr_valid_alu2rob;
     PU2ROB_t     [`NUM_ALU-1:0]           wr_alu2rob;
@@ -345,35 +343,30 @@ module rvv_backend
     );
 
   // Uop queue
-    fifo_flopped_4w2r #(
-        .DWIDTH     ($bits(UOP_QUEUE_t)),
+    multi_fifo #(
+        .T          (UOP_QUEUE_t),
+        .M          (`NUM_DE_UOP),
+        .N          (`NUM_DP_UOP),
         .DEPTH      (`UQ_DEPTH)
     ) u_uop_queue (
       // global
         .clk        (clk),
         .rst_n      (rst_n),
       // write
-        .push0      (push_de2uq[0]),
-        .inData0    (data_de2uq[0]),
-        .push1      (push_de2uq[1]),
-        .inData1    (data_de2uq[1]),
-        .push2      (push_de2uq[2]),
-        .inData2    (data_de2uq[2]),
-        .push3      (push_de2uq[3]),
-        .inData3    (data_de2uq[3]),
+        .push       (push_de2uq),
+        .datain     (data_de2uq),
       // read
-        .pop0       (uop_valid_uop2dp[0] & uop_ready_dp2uop[0]),
-        .outData0   (uop_uop2dp[0]),
-        .pop1       (uop_valid_uop2dp[1] & uop_ready_dp2uop[1]),
-        .outData1   (uop_uop2dp[1]),
+        .pop        (uop_valid_uop2dp & uop_ready_dp2uop),
+        .dataout    (uop_uop2dp),
       // fifo status
-        .fifo_full            (fifo_full_uq2de),
-        .fifo_1left_to_full   (fifo_almost_full_uq2de[1]),
-        .fifo_2left_to_full   (fifo_almost_full_uq2de[2]),
-        .fifo_3left_to_full   (fifo_almost_full_uq2de[3]),
-        .fifo_empty           (uq_empty),
-        .fifo_1left_to_empty  (uq_1left_to_empty),
-        .fifo_idle            ()
+        .full            (fifo_full_uq2de),
+        .almost_full     (fifo_almost_full_uq2de),
+        .empty           (uq_empty),
+        .almost_empty    (uq_1left_to_empty),
+        .clear           (1'b0),
+        .fifo_data       (),
+        .wptr            (),
+        .rptr            ()
     );
 
     assign uop_valid_uop2dp[0] = ~uq_empty;
@@ -433,38 +426,37 @@ module rvv_backend
 
   // RS, Reserve station
     // ALU RS
-    fifo_flopped_2w2r #(
-        .DWIDTH     ($bits(ALU_RS_t)),
-        .DEPTH      (`ALU_RS_DEPTH)
+    multi_fifo #(
+        .T          (ALU_RS_t),
+        .M          (`NUM_ALU),
+        .N          (`NUM_ALU),
+        .DEPTH      (`ALU_RS_DEPTH),
+        .CHAOS_PUSH (1'b1)
     ) u_alu_rs (
       // global
         .clk        (clk),
         .rst_n      (rst_n),
       // write
-        .push0      (rs_valid_dp2alu[0] & rs_ready_alu2dp[0]),
-        .inData0    (rs_dp2alu[0]),
-        .push1      (rs_valid_dp2alu[1] & rs_ready_alu2dp[1]),
-        .inData1    (rs_dp2alu[1]),
+        .push       (rs_valid_dp2alu & rs_ready_alu2dp),
+        .datain     (rs_dp2alu),
       // read
-        .pop0       (pop_alu2rs[0]),
-        .outData0   (uop_rs2alu[0]),
-        .pop1       (pop_alu2rs[1]),
-        .outData1   (uop_rs2alu[1]),
+        .pop        (pop_alu2rs),
+        .dataout    (uop_rs2alu),
       // fifo status
-        .fifo_full            (alu_rs_full),
-        .fifo_1left_to_full   (alu_rs_1left_to_full),
-        .fifo_empty           (fifo_empty_rs2alu),
-        .fifo_1left_to_empty  (fifo_almost_empty_rs2alu),
-        .fifo_idle            ()
+        .full            (alu_rs_full),
+        .almost_full     (alu_rs_almost_full),
+        .empty           (fifo_empty_rs2alu),
+        .almost_empty    (fifo_almost_empty_rs2alu),
+        .clear           (1'b0),
+        .fifo_data       (),
+        .wptr            (),
+        .rptr            ()
     );
 
     assign rs_ready_alu2dp[0] = ~alu_rs_full;
-    assign rs_ready_alu2dp[1] = ~alu_rs_full & ~alu_rs_1left_to_full;
+    assign rs_ready_alu2dp[1] = ~alu_rs_full & ~alu_rs_almost_full[1];
 
   `ifdef ASSERT_ON
-    PushToAluRSQueue: `rvv_expect((rs_valid_dp2alu & rs_ready_alu2dp) inside {2'b11, 2'b01, 2'b00})
-      else $error("Push to ALU Reservation Station out-of-order: %4b", $sampled(rs_valid_dp2alu & rs_ready_alu2dp));
-
     PopFromAluRSQueue: `rvv_expect((pop_alu2rs) inside {2'b11, 2'b01, 2'b00})
       else $error("Pop from ALU Reservation Station out-of-order: %2b", $sampled(pop_alu2rs));
   `endif // ASSERT_ON
@@ -508,85 +500,79 @@ module rvv_backend
     assign rs_ready_pmtrdt2dp[1] = ~pmtrdt_rs_full & ~pmtrdt_rs_1left_to_full;
 
   `ifdef ASSERT_ON
-    PushToPmtrdtRSQueue: `rvv_expect((rs_valid_dp2pmtrdt & rs_ready_pmtrdt2dp) inside {2'b11, 2'b01, 2'b00})
-      else $error("Push to PMTRDT Reservation Station out-of-order: %4b", $sampled(rs_valid_dp2pmtrdt & rs_ready_pmtrdt2dp));
-
     // PopFromPmtrdtRSQueue: `rvv_expect((pop_pmtrdt2rs) inside {2'b11, 2'b01, 2'b00})
     //   else $error("Pop from PMTRDT Reservation Station out-of-order: %2b", $sampled(pop_pmtrdt2rs));
   `endif // ASSERT_ON
 
     // MUL RS, Multiply + Multiply-accumulate
-    fifo_flopped_2w2r #(
-        .DWIDTH     ($bits(MUL_RS_t)),
-        .DEPTH      (`MUL_RS_DEPTH)
+    multi_fifo #(
+        .T          (MUL_RS_t),
+        .M          (`NUM_MUL),
+        .N          (`NUM_MUL),
+        .DEPTH      (`MUL_RS_DEPTH),
+        .CHAOS_PUSH (1'b1)
     ) u_mul_rs (
       // global
         .clk        (clk),
         .rst_n      (rst_n),
       // write
-        .push0      (rs_valid_dp2mul[0] & rs_ready_mul2dp[0]),
-        .inData0    (rs_dp2mul[0]),
-        .push1      (rs_valid_dp2mul[1] & rs_ready_mul2dp[1]),
-        .inData1    (rs_dp2mul[1]),
+        .push       (rs_valid_dp2mul & rs_ready_mul2dp),
+        .datain     (rs_dp2mul),
       // read
-        .pop0       (pop_mul2rs[0]),
-        .outData0   (uop_rs2mul[0]),
-        .pop1       (pop_mul2rs[1]),
-        .outData1   (uop_rs2mul[1]),
+        .pop        (pop_mul2rs),
+        .dataout    (uop_rs2mul),
       // fifo status
-        .fifo_full            (mul_rs_full),
-        .fifo_1left_to_full   (mul_rs_1left_to_full),
-        .fifo_empty           (fifo_empty_rs2mul),
-        .fifo_1left_to_empty  (fifo_1left_to_empty_rs2mul),
-        .fifo_idle            ()
+        .full          (mul_rs_full),
+        .almost_full   (mul_rs_1left_to_full),
+        .empty         (fifo_empty_rs2mul),
+        .almost_empty  (fifo_1left_to_empty_rs2mul),
+        .clear         (1'b0),
+        .fifo_data     (),
+        .wptr          (),
+        .rptr          ()
     );
 
     assign rs_ready_mul2dp[0] = ~mul_rs_full;
     assign rs_ready_mul2dp[1] = ~mul_rs_full & ~mul_rs_1left_to_full;
 
   `ifdef ASSERT_ON
-    PushToMulRSQueue: `rvv_expect((rs_valid_dp2mul & rs_ready_mul2dp) inside {2'b11, 2'b01, 2'b00})
-      else $error("Push to MUL Reservation Station out-of-order: %4b", $sampled(rs_valid_dp2mul & rs_ready_mul2dp));
-
     // PopFromMulRSQueue: `rvv_expect((pop_mul2rs) inside {2'b11, 2'b01, 2'b00})
     //   else $error("Pop from MUL Reservation Station out-of-order: %2b", $sampled(pop_mul2rs));
   `endif // ASSERT_ON
 
+    DIV_RS_t unused_uop_rs2div;
     // DIV RS
-    fifo_flopped_2w2r #(
-        .DWIDTH     ($bits(DIV_RS_t)),
-        .DEPTH      (`DIV_RS_DEPTH)
+    multi_fifo #(
+        .T          (DIV_RS_t),
+        .M          (`NUM_DIV*2),
+        .N          (`NUM_DIV*2),
+        .DEPTH      (`DIV_RS_DEPTH),
+        .CHAOS_PUSH (1'b1)
     ) u_div_rs (
       // global
         .clk        (clk),
         .rst_n      (rst_n),
       // write
-        .push0      (rs_valid_dp2div[0] & rs_ready_div2dp[0]),
-        .inData0    (rs_dp2div[0]),
-        .push1      (rs_valid_dp2div[1] & rs_ready_div2dp[1]),
-        .inData1    (rs_dp2div[1]),
+        .push       (rs_valid_dp2div & rs_ready_div2dp),
+        .datain     (rs_dp2div),
       // read
-        .pop0       (pop_div2rs[0]),
-        .outData0   (uop_rs2div[0]),
-        .pop1       (1'b0),
-        .outData1   (),
+        .pop        ({1'b0, pop_div2rs}),
+        .dataout    ({unused_uop_rs2div, uop_rs2div}),
       // fifo status
-        .fifo_full            (div_rs_full),
-        .fifo_1left_to_full   (div_rs_1left_to_full),
-        .fifo_empty           (fifo_empty_rs2div),
-`ifdef MULTI_DIV
-        .fifo_1left_to_empty  (fifo_1left_to_empty_rs2div),
-`endif
-        .fifo_idle            ()
+        .full          (div_rs_full),
+        .almost_full   (div_rs_1left_to_full),
+        .empty         (fifo_empty_rs2div),
+        .almost_empty  (fifo_1left_to_empty_rs2div),
+        .clear         (1'b0),
+        .fifo_data     (),
+        .wptr          (),
+        .rptr          ()
     );
 
     assign rs_ready_div2dp[0] = ~div_rs_full;
     assign rs_ready_div2dp[1] = ~div_rs_full & ~div_rs_1left_to_full;
 
   `ifdef ASSERT_ON
-    PushToDivRSQueue: `rvv_expect((rs_valid_dp2div & rs_ready_div2dp) inside {2'b11, 2'b01, 2'b00})
-      else $error("Push to DIV Reservation Station out-of-order: %4b", $sampled(rs_valid_dp2div & rs_ready_div2dp));
-
     // PopFromDivRSQueue: `rvv_expect((pop_div2rs) inside {2'b11, 2'b01, 2'b00})
     //   else $error("Pop from DIV Reservation Station out-of-order: %2b", $sampled(pop_div2rs));
   `endif // ASSERT_ON
@@ -625,9 +611,6 @@ module rvv_backend
     assign uop_lsu_rvv2rvs = uop_rs2lsu;
 
   `ifdef ASSERT_ON
-    PushToLsuRSQueue: `rvv_expect((rs_valid_dp2lsu & rs_ready_lsu2dp) inside {2'b11, 2'b01, 2'b00})
-      else $error("Push to LSU Reservation Station out-of-order: %4b", $sampled(rs_valid_dp2lsu & rs_ready_lsu2dp));
-
     // PopFromLsuRSQueue: `rvv_expect((pop_lsu2rs) inside {2'b11, 2'b01, 2'b00})
     //   else $error("Pop from LSU Reservation Station out-of-order: %2b", $sampled(pop_lsu2rs));
   `endif // ASSERT_ON

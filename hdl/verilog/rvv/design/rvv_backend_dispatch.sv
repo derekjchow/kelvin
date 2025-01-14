@@ -215,16 +215,20 @@ module rvv_backend_dispatch
                     vrf_byp[i].vd  = 'x;
 
                     case(uop_uop2dp[i].uop_class)
-                        VVV,                       
+                        VVV:begin
+                          vrf_byp[i].vd  = rd_data_vrf2dp[2*(i+1)+1];
+                          vrf_byp[i].vs1 = rd_data_vrf2dp[2*i+1];
+                          vrf_byp[i].vs2 = rd_data_vrf2dp[2*i];
+                            end                       
                         VV: begin
-                          vrf_byp[i].vd  = uop_uop2dp[i].vs3_valid ? rd_data_vrf2dp[2*(i+1)+1] : 'x;
+                          vrf_byp[i].vd  = rd_data_vrf2dp[2*i+1];
                           vrf_byp[i].vs1 = rd_data_vrf2dp[2*i+1];
                           vrf_byp[i].vs2 = rd_data_vrf2dp[2*i];
                         end
                         VX: begin
                           // vmv only use vs1 as the operand.
-                          vrf_byp[i].vs1 = uop_uop2dp[i].vs1_index_valid ? rd_data_vrf2dp[2*i] : 'x;
-                          vrf_byp[i].vs2 = uop_uop2dp[i].vs2_valid ? rd_data_vrf2dp[2*i] : 'x;
+                          vrf_byp[i].vs1 = rd_data_vrf2dp[2*i];
+                          vrf_byp[i].vs2 = rd_data_vrf2dp[2*i];
                         end
                     endcase
                 end
@@ -236,16 +240,20 @@ module rvv_backend_dispatch
                     vrf_byp[i].vd  = 'x;
 
                     case(uop_uop2dp[i].uop_class)
-                        VVV,
+                        VVV:begin
+                          vrf_byp[i].vd  = rd_data_vrf2dp[2*(i-1)+1];
+                          vrf_byp[i].vs1 = rd_data_vrf2dp[2*i+1];
+                          vrf_byp[i].vs2 = rd_data_vrf2dp[2*i];
+                            end
                         VV: begin
-                          vrf_byp[i].vd  = uop_uop2dp[i-1].vs3_valid ? rd_data_vrf2dp[2*(i-1)+1] : 'x;
-                          vrf_byp[i].vs1 = uop_uop2dp[i-1].vs3_valid ? 'x : rd_data_vrf2dp[2*i+1];
-                          vrf_byp[i].vs2 = uop_uop2dp[i-1].vs3_valid ? 'x : rd_data_vrf2dp[2*i];
+                          vrf_byp[i].vd  = rd_data_vrf2dp[2*i+1];
+                          vrf_byp[i].vs1 = rd_data_vrf2dp[2*i+1];
+                          vrf_byp[i].vs2 = rd_data_vrf2dp[2*i];
                         end
                         VX: begin
                           // vmv only use vs1 as the operand.
-                          vrf_byp[i].vs1 = uop_uop2dp[i].vs1_index_valid ? rd_data_vrf2dp[2*i] : 'x;
-                          vrf_byp[i].vs2 = uop_uop2dp[i].vs2_valid ? rd_data_vrf2dp[2*i] : 'x;
+                          vrf_byp[i].vs1 = rd_data_vrf2dp[2*i];
+                          vrf_byp[i].vs2 = rd_data_vrf2dp[2*i];
                         end
                     endcase
                 end
