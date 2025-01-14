@@ -76,7 +76,7 @@ module rvv_backend_decode_unit_ari
   logic                                           check_vstart_sle_evl;
   logic   [`UOP_INDEX_WIDTH-1:0]                  uop_vstart;         
   logic   [`UOP_INDEX_WIDTH-1:0]                  uop_index_base;         
-  logic   [`NUM_DE_UOP-1:0][`UOP_INDEX_WIDTH-1:0] uop_index_current;   
+  logic   [`NUM_DE_UOP-1:0][`UOP_INDEX_WIDTH:0]   uop_index_current;   
   logic   [`UOP_INDEX_WIDTH-1:0]                  uop_index_max;         
   
   // enum/union
@@ -3385,7 +3385,7 @@ module rvv_backend_decode_unit_ari
 
   // calculate the uop_index used in decoding uops 
   for(j=0;j<`NUM_DE_UOP;j=j+1) begin: GET_UOP_INDEX
-    assign uop_index_current[j] = j[`UOP_INDEX_WIDTH-1:0]+uop_index_base;
+    assign uop_index_current[j] = j[`UOP_INDEX_WIDTH:0]+uop_index_base;
   end
 
 //
@@ -3414,7 +3414,7 @@ module rvv_backend_decode_unit_ari
   // generate uop valid
   always_comb begin        
     for(int i=0;i<`NUM_DE_UOP;i=i+1) begin: GET_UOP_VALID
-      if ((uop_index_current[i]<=uop_index_max)&inst_valid) 
+      if ((uop_index_current[i]<={1'b0,uop_index_max})&inst_valid) 
         uop_valid[i]  = inst_encoding_correct;
       else
         uop_valid[i]  = 'b0;
@@ -3899,18 +3899,18 @@ module rvv_backend_decode_unit_ari
       uop[i].vector_csr               = vector_csr_ari;
 
       // update vstart of every uop
-      if(uop_index_current[i]==uop_vstart)
+      if(uop_index_current[i]=={1'b0,uop_vstart})
         uop[i].vector_csr.vstart      = csr_vstart;
       else begin
         case(eew_max)
           EEW8: begin
-            uop[i].vector_csr.vstart  = {uop_index_current[i],4'b0};
+            uop[i].vector_csr.vstart  = {uop_index_current[i][`UOP_INDEX_WIDTH-1:0],4'b0};
           end
           EEW16: begin
-            uop[i].vector_csr.vstart  = {1'b0,uop_index_current[i],3'b0};
+            uop[i].vector_csr.vstart  = {1'b0,uop_index_current[i][`UOP_INDEX_WIDTH-1:0],3'b0};
           end
           EEW32: begin
-            uop[i].vector_csr.vstart  = {2'b0,uop_index_current[i],2'b0};
+            uop[i].vector_csr.vstart  = {2'b0,uop_index_current[i][`UOP_INDEX_WIDTH-1:0],2'b0};
           end
         endcase
       end
@@ -4124,7 +4124,7 @@ module rvv_backend_decode_unit_ari
                 OPIVI: begin  
                   uop[i].vd_index = inst_vd;
                   uop[i].vd_eew   = eew_vd;
-                  uop[i].vd_valid = uop_index_current[i] == uop_index_max;
+                  uop[i].vd_valid = uop_index_current[i][`UOP_INDEX_WIDTH-1:0] == uop_index_max;
                 end
               endcase
             end
@@ -4137,7 +4137,7 @@ module rvv_backend_decode_unit_ari
                 OPIVX: begin  
                   uop[i].vd_index = inst_vd;
                   uop[i].vd_eew   = eew_vd;
-                  uop[i].vd_valid = uop_index_current[i] == uop_index_max;
+                  uop[i].vd_valid = uop_index_current[i][`UOP_INDEX_WIDTH-1:0] == uop_index_max;
                 end
               endcase
             end
@@ -4149,7 +4149,7 @@ module rvv_backend_decode_unit_ari
                 OPIVI: begin  
                   uop[i].vd_index = inst_vd;
                   uop[i].vd_eew   = eew_vd;
-                  uop[i].vd_valid = uop_index_current[i] == uop_index_max;
+                  uop[i].vd_valid = uop_index_current[i][`UOP_INDEX_WIDTH-1:0] == uop_index_max;
                 end
               endcase
             end
@@ -4174,7 +4174,7 @@ module rvv_backend_decode_unit_ari
               if(inst_funct3==OPIVV) begin
                 uop[i].vd_index   = inst_vd;
                 uop[i].vd_eew     = eew_vd;
-                uop[i].vd_valid   = uop_index_current[i] == uop_index_max;
+                uop[i].vd_valid   = uop_index_current[i][`UOP_INDEX_WIDTH-1:0] == uop_index_max;
               end
             end
 
@@ -4288,7 +4288,7 @@ module rvv_backend_decode_unit_ari
                 OPMVV: begin
                   uop[i].vd_index = inst_vd;
                   uop[i].vd_eew   = eew_vd;
-                  uop[i].vd_valid = uop_index_current[i] == uop_index_max;
+                  uop[i].vd_valid = uop_index_current[i][`UOP_INDEX_WIDTH-1:0] == uop_index_max;
                 end
               endcase
             end
@@ -4382,7 +4382,7 @@ module rvv_backend_decode_unit_ari
                 OPIVV,
                 OPIVX,
                 OPIVI: begin
-                  uop[i].vs3_valid = uop_index_current[i] == uop_index_max;
+                  uop[i].vs3_valid = uop_index_current[i][`UOP_INDEX_WIDTH-1:0] == uop_index_max;
                 end
               endcase
             end
@@ -4391,7 +4391,7 @@ module rvv_backend_decode_unit_ari
               case(inst_funct3)
                 OPIVV,
                 OPIVX: begin
-                  uop[i].vs3_valid = uop_index_current[i] == uop_index_max;
+                  uop[i].vs3_valid = uop_index_current[i][`UOP_INDEX_WIDTH-1:0] == uop_index_max;
                 end
               endcase
             end
@@ -4400,7 +4400,7 @@ module rvv_backend_decode_unit_ari
               case(inst_funct3)
                 OPIVX,
                 OPIVI: begin
-                  uop[i].vs3_valid = uop_index_current[i] == uop_index_max;
+                  uop[i].vs3_valid = uop_index_current[i][`UOP_INDEX_WIDTH-1:0] == uop_index_max;
                 end
               endcase
             end
@@ -4539,7 +4539,7 @@ module rvv_backend_decode_unit_ari
                 OPIVV: begin
                   uop[i].vs1              = inst_vs1;
                   uop[i].vs1_eew          = eew_vs1;
-                  uop[i].vs1_index_valid  = uop_index_current[i] == uop_index_max;   
+                  uop[i].vs1_index_valid  = uop_index_current[i][`UOP_INDEX_WIDTH-1:0] == uop_index_max;   
                 end
               endcase
             end        
@@ -4645,7 +4645,7 @@ module rvv_backend_decode_unit_ari
                 OPMVV: begin
                   uop[i].vs1              = inst_vs1;
                   uop[i].vs1_eew          = eew_vs1;
-                  uop[i].vs1_index_valid  = uop_index_current[i] == uop_index_max;
+                  uop[i].vs1_index_valid  = uop_index_current[i][`UOP_INDEX_WIDTH-1:0] == uop_index_max;
                 end
               endcase
             end
@@ -5187,14 +5187,14 @@ module rvv_backend_decode_unit_ari
   // update uop index
   always_comb begin
     for(int i=0;i<`NUM_DE_UOP;i=i+1) begin: ASSIGN_UOP_INDEX
-      uop[i].uop_index = uop_index_current[i];
+      uop[i].uop_index = uop_index_current[i][`UOP_INDEX_WIDTH-1:0];
     end
   end
 
   // update last_uop valid
   always_comb begin
     for(int i=0;i<`NUM_DE_UOP;i=i+1) begin: GET_UOP_LAST
-      uop[i].last_uop_valid = uop_index_current[i] == uop_index_max;
+      uop[i].last_uop_valid = uop_index_current[i][`UOP_INDEX_WIDTH-1:0] == uop_index_max;
     end
   end
 

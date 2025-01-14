@@ -78,6 +78,7 @@ module rvv_backend_dispatch_ctrl
                                     ~arch_hazard.pu_limit    ;  // for 2-issue
         end
         for (i=0; i<`NUM_DP_UOP; i++) begin : gen_rs_ready
+          if (i==0)
             always_comb begin
                 case (uop_ctrl[i].uop_exe_unit)
                     ALU: rs_ready[i] = rs_ready_alu2dp[i];
@@ -87,13 +88,22 @@ module rvv_backend_dispatch_ctrl
                     RDT: rs_ready[i] = rs_ready_pmtrdt2dp[i];
                     DIV: rs_ready[i] = rs_ready_div2dp[i];
                     LSU: rs_ready[i] = rs_ready_lsu2dp[i];
-                    default: rs_ready[i] = 1'bx;
+                    default: rs_ready[i] = 1'b0;
                 endcase
             end
-          `ifdef ASSERT_ON
-            `rvv_forbid($isunknown(rs_ready[i]))
-              else $error("DISPATCH CTRL: rs_ready[%d] is X-state", i);
-          `endif
+          else
+            always_comb begin
+                case (uop_ctrl[i].uop_exe_unit)
+                    ALU: rs_ready[i] = rs_ready[i-1] & rs_ready_alu2dp[i];
+                    MUL,
+                    MAC: rs_ready[i] = rs_ready[i-1] & rs_ready_mul2dp[i];
+                    PMT,
+                    RDT: rs_ready[i] = rs_ready[i-1] & rs_ready_pmtrdt2dp[i];
+                    DIV: rs_ready[i] = rs_ready[i-1] & rs_ready_div2dp[i];
+                    LSU: rs_ready[i] = rs_ready[i-1] & rs_ready_lsu2dp[i];
+                    default: rs_ready[i] = 1'b0;
+                endcase
+            end
         end
         for (i=0; i<`NUM_DP_UOP; i++) begin: gen_ctrl_output
             assign uop_ready_dp2uop[i] = uop_valid[i]        &
