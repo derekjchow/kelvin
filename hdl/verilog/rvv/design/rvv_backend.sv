@@ -685,7 +685,7 @@ module rvv_backend
             assign wr_lsu2rob[i].rob_entry = uop_lsu_rvs2rvv[i].uop_id;
             assign wr_lsu2rob[i].w_data    = uop_lsu_rvs2rvv[i].vregfile_write_data;
             assign wr_lsu2rob[i].w_valid   = ~uop_lsu_rvs2rvv[i].uop_type; // 0 for load, 1 for store
-            assign wr_lsu2rob[i].vxsat     = 1'b0;
+            assign wr_lsu2rob[i].vsaturate = 1'b0;
         end
     endgenerate
 
