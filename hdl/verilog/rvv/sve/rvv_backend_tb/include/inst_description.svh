@@ -119,6 +119,10 @@ typedef enum logic [7:0] {
 
   VSSRL           =   8'b00_101_010,
   VSSRA           =   8'b00_101_011,
+
+  VNCLIPU         =   8'b00_101_110,
+  VNCLIP          =   8'b00_101_111,
+
   // OPM
   VWADDU          =   8'b01_110_000,
   VWADD           =   8'b01_110_001,
@@ -229,5 +233,8 @@ typedef enum int {
 typedef enum {
   XRF, VRF, IMM, UIMM, FUNC, UNUSE
 } oprand_type_e;
+
+// Test description -----------------------------------------
+typedef enum { ITER = 0, RAND = 1} test_rand_type_e;
 
 `endif // INST_DESCRIPTION__SVH

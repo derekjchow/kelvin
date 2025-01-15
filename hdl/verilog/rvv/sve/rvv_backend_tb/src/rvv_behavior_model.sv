@@ -209,11 +209,15 @@ endclass : rvv_behavior_model
         is_widen_inst = inst_tr.inst_type == ALU && (inst_tr.alu_inst inside {VWADDU, VWADD, VWADDU_W, VWADD_W, VWSUBU, VWSUB, VWSUBU_W, VWSUB_W, 
                                                                               VWMUL, VWMULU, VWMULSU, VWMACCU, VWMACC, VWMACCUS, VWMACCSU});
         is_widen_vs2_inst = inst_tr.inst_type == ALU && (inst_tr.alu_inst inside {VWADD_W, VWADDU_W, VWSUBU_W, VWSUB_W});
-        is_narrow_inst = inst_tr.inst_type == ALU && (inst_tr.alu_inst inside {VNSRL, VNSRA});
+        is_narrow_inst = inst_tr.inst_type == ALU && (inst_tr.alu_inst inside {VNSRL, VNSRA, VNCLIPU, VNCLIP});
         use_vm_to_cal = inst_tr.use_vm_to_cal;
 
         // 1.0 illegal inst check
-        if(inst_tr.inst_type == ALU && inst_tr.alu_inst == VRSUB && inst_tr.src2_type == VRF && inst_tr.src1_type == VRF) begin
+        if(inst_tr.vstart >= inst_tr.vl) begin
+          `uvm_warning("MDL/INST_CHECKER", $sformatf("pc=0x%8x: ignored since vstart(%0d) >= vl(%0d).", pc, inst_tr.vstart, inst_tr.vl))
+          continue;
+        end
+        if(inst_tr.inst_type == ALU && inst_tr.alu_type == OPIVV && inst_tr.alu_inst == VRSUB) begin
           `uvm_warning("MDL/INST_CHECKER", $sformatf("pc=0x%8x: vrsub.vv is ignored.",pc))
           continue;
         end
@@ -227,6 +231,10 @@ endclass : rvv_behavior_model
         end
         if(inst_tr.inst_type == ALU && inst_tr.alu_type == OPMVV && (inst_tr.alu_inst inside {VWMACCUS})) begin
           `uvm_warning("MDL/INST_CHECKER", $sformatf("pc=0x%8x: OPMVV of %0s is ignored.",pc,inst_tr.alu_inst.name()))
+          continue;
+        end
+        if(inst_tr.inst_type == ALU && (inst_tr.alu_inst inside {VADC, VSBC}) && inst_tr.vm == 1) begin
+          `uvm_warning("MDL/INST_CHECKER", $sformatf("pc=0x%8x: vm == 1 of %0s is ignored.",pc,inst_tr.alu_inst.name()))
           continue;
         end
 
@@ -533,58 +541,24 @@ endclass : rvv_behavior_model
                     vxsat = vxsat ? vxsat : (alu_processor#(sew32_t, sew32_t, sew16_t)::overflow 
                                           || alu_processor#(sew32_t, sew32_t, sew16_t)::underflow);
                   end
-                  // ext
-                  // {EEW16,  EEW8, EEW32}: begin
-                  //   alu_processor#(sew16_t,  sew8_t, sew32_t)::vxrm = vxrm;
-                  //   dest = alu_processor #(sew16_t,  sew8_t, sew32_t)::exe(inst_tr, dest, src2, src1, src0);
-                  //   vxsat = vxsat ? vxsat : (alu_processor#(sew16_t, sew8_t, sew32_t)::overflow 
-                  //                         || alu_processor#(sew16_t, sew8_t, sew32_t)::underflow);
-                  // end
                   {EEW16,  EEW8, EEW16}: begin
                     alu_processor#(sew16_t,  sew8_t, sew16_t)::vxrm = vxrm;
                     dest = alu_processor #(sew16_t,  sew8_t, sew16_t)::exe(inst_tr, dest, src2, src1, src0);
                     vxsat = vxsat ? vxsat : (alu_processor#(sew16_t, sew8_t, sew16_t)::overflow 
                                           || alu_processor#(sew16_t, sew8_t, sew16_t)::underflow);
                   end
-                  // {EEW16,  EEW8,  EEW8}: begin
-                  //   dest = alu_processor #(sew32_t,  sew8_t,  sew8_t)::exe(inst_tr, dest, src2, src1, src0);
-                  //   vxsat = vxsat ? vxsat : (alu_processor#(sew32_t, sew8_t, sew8_t)::overflow 
-                  //                         || alu_processor#(sew32_t, sew8_t, sew8_t)::underflow);
-                  // end
                   {EEW32, EEW16, EEW32}: begin
                     alu_processor#(sew32_t, sew16_t, sew32_t)::vxrm = vxrm;
                     dest = alu_processor #(sew32_t, sew16_t, sew32_t)::exe(inst_tr, dest, src2, src1, src0);
                     vxsat = vxsat ? vxsat : (alu_processor#(sew32_t, sew16_t, sew32_t)::overflow 
                                           || alu_processor#(sew32_t, sew16_t, sew32_t)::underflow);
                   end
-                  // {EEW32, EEW16, EEW16}: begin
-                  //   dest = alu_processor #(sew32_t, sew16_t, sew16_t)::exe(inst_tr, dest, src2, src1, src0);
-                  // end
-                  // {EEW32, EEW16,  EEW8}: begin
-                  //   alu_processor#()::vxrm = vxrm;
-                  //   dest = alu_processor #(sew32_t, sew16_t,  sew8_t)::exe(inst_tr, dest, src2, src1, src0);
-                  //   vxsat = vxsat ? vxsat : (alu_processor#(sew32_t, sew16_t, sew8_t)::overflow 
-                  //                         || alu_processor#(sew32_t, sew16_t, sew8_t)::underflow);
-                  // end
                   {EEW32,  EEW8, EEW32}: begin
                     alu_processor#(sew32_t,  sew8_t, sew32_t)::vxrm = vxrm;
                     dest = alu_processor #(sew32_t,  sew8_t, sew32_t)::exe(inst_tr, dest, src2, src1, src0);
                     vxsat = vxsat ? vxsat : (alu_processor#(sew32_t, sew8_t, sew32_t)::overflow 
                                           || alu_processor#(sew32_t, sew8_t, sew32_t)::underflow);
                   end
-                  // {EEW32,  EEW8, EEW16}: begin
-                  //   alu_processor#()::vxrm = vxrm;
-                  //   dest = alu_processor #(sew32_t,  sew8_t, sew16_t)::exe(inst_tr, dest, src2, src1, src0);
-                  //   vxsat = vxsat ? vxsat : (alu_processor#(sew32_t, sew8_t, sew16_t)::overflow 
-                  //                         || alu_processor#(sew32_t, sew8_t, sew16_t)::underflow);
-                  // end
-                  // {EEW32,  EEW8,  EEW8}: begin
-                  //   alu_processor#()::vxrm = vxrm;
-                  //   dest = alu_processor #(sew32_t,  sew8_t,  sew8_t)::exe(inst_tr, dest, src2, src1, src0);
-                  //   vxsat = vxsat ? vxsat : (alu_processor#(sew32_t, sew8_t, sew8_t)::overflow 
-                  //                         || alu_processor#(sew32_t, sew8_t, sew8_t)::underflow);
-                  // end
-                  // narrow
                   { EEW8, EEW16,  EEW8}: begin
                     alu_processor#( sew8_t, sew16_t,  sew8_t)::vxrm = vxrm;
                     dest = alu_processor #( sew8_t, sew16_t,  sew8_t)::exe(inst_tr, dest, src2, src1, src0);
@@ -592,10 +566,10 @@ endclass : rvv_behavior_model
                                           || alu_processor#(sew8_t, sew16_t, sew8_t)::underflow);
                   end
                   {EEW16, EEW32, EEW16}: begin
-                    alu_processor#()::vxrm = vxrm;
+                    alu_processor#(sew16_t, sew32_t, sew16_t)::vxrm = vxrm;
                     dest = alu_processor #(sew16_t, sew32_t, sew16_t)::exe(inst_tr, dest, src2, src1, src0);
-                    vxsat = vxsat ? vxsat : (alu_processor#(sew16_t, sew32_t, sew8_t)::overflow 
-                                          || alu_processor#(sew16_t, sew32_t, sew8_t)::underflow);
+                    vxsat = vxsat ? vxsat : (alu_processor#(sew16_t, sew32_t, sew16_t)::overflow 
+                                          || alu_processor#(sew16_t, sew32_t, sew16_t)::underflow);
                   end
                   // mask logic
                   { EEW1,  EEW1,  EEW1}: begin
@@ -645,10 +619,13 @@ endclass : rvv_behavior_model
         rt_tr.is_rt = 1;
         // VRF
         if(rt_tr.dest_type == VRF) begin
-          for(int i=dest_reg_idx; i<dest_reg_idx+$ceil(dest_emul); i++) begin
-            rt_tr.rt_vrf_index.push_back(i);
-            rt_tr.rt_vrf_strobe.push_back(vrf_strobe_temp[i]);
-            rt_tr.rt_vrf_data.push_back(vrf_temp[i]);
+          for(int reg_idx=dest_reg_idx; reg_idx<dest_reg_idx+int'($ceil(dest_emul)); reg_idx++) begin
+            // All pre-start vreg will not be retired
+            if((reg_idx - dest_reg_idx) >= (vstart / (`VLEN / dest_eew))) begin
+              rt_tr.rt_vrf_index.push_back(reg_idx);
+              rt_tr.rt_vrf_strobe.push_back(vrf_strobe_temp[reg_idx]);
+              rt_tr.rt_vrf_data.push_back(vrf_temp[reg_idx]);
+            end
           end
         end
         // XRF
@@ -793,7 +770,16 @@ virtual class alu_processor#(
       VSSUBU: dest = _vssubu(src2, src1);
       VSSUB : dest = _vssub(src2, src1);
 
-      VSMUL_VMVNRR: dest = _vsmul(src2,src1);
+      VSMUL_VMVNRR: begin
+        // if(inst_tr.alu_type == OPIVI) dest = _vvmnrr(src2,src1);
+        if(inst_tr.alu_type != OPIVI) dest = _vsmul(src2,src1);
+      end
+      
+      VSSRL: dest = _vssrl(src2, src1);
+      VSSRA: dest = _vssra(src2, src1);
+
+      VNCLIPU: dest = _vnclipu(src2, src1);
+      VNCLIP : dest = _vnclip(src2, src1);
     // OPM
       VWADD,
       VWADD_W:  dest = _vadd(src2, src1);
@@ -857,7 +843,7 @@ virtual class alu_processor#(
     // `uvm_info("MDL", $sformatf("dest=%0d, src1=%0d, src2=%0d", exe, src1, src2), UVM_HIGH)
   endfunction : exe
 
-  static function logic [ALU_MAX_WIDTH-1:0] _roundoff_unsigned(logic [ALU_MAX_WIDTH-1:0] v, int d);
+  static function logic unsigned [ALU_MAX_WIDTH-1:0] _roundoff_unsigned(logic unsigned [ALU_MAX_WIDTH-1:0] v, int unsigned d);
     logic r;
     logic [ALU_MAX_WIDTH-1:0] v_ds1to0;
     logic [ALU_MAX_WIDTH-1:0] v_ds2to0;
@@ -873,8 +859,9 @@ virtual class alu_processor#(
       ROD: r = (d == 0) ? 0 : !v[d] && (v_ds1to0 != 0);
     endcase
     _roundoff_unsigned = ($unsigned(v) >> d) + r;
+    `uvm_info("MDL",$sformatf("_roundoff_unsigned: dest=0x%0x,v=0x%0x,d=0x%0x,r=0x%0x",_roundoff_unsigned,v,d,r),UVM_HIGH)
   endfunction: _roundoff_unsigned
-  static function logic [ALU_MAX_WIDTH-1:0] _roundoff_signed(logic [ALU_MAX_WIDTH-1:0] v, int d);
+  static function logic signed [ALU_MAX_WIDTH-1:0] _roundoff_signed(logic signed [ALU_MAX_WIDTH-1:0] v, int unsigned d);
     logic r;
     logic [ALU_MAX_WIDTH-1:0] v_ds1to0;
     logic [ALU_MAX_WIDTH-1:0] v_ds2to0;
@@ -890,6 +877,7 @@ virtual class alu_processor#(
       ROD: r = (d == 0) ? 0 : !v[d] && (v_ds1to0 != 0);
     endcase
     _roundoff_signed = ($signed(v) >>> d) + r;
+    `uvm_info("MDL",$sformatf("_roundoff_signed: dest=0x%0x,v=0x%0x,d=0x%0x,r=0x%0x",_roundoff_signed,v,d,r),UVM_HIGH)
   endfunction: _roundoff_signed
 
   static function TD _vadd(T2 src2, T1 src1);
@@ -972,17 +960,17 @@ virtual class alu_processor#(
   // Ch32.11.6. Vector Single-Width Shift Instructions
   // Ch32.11.7. Vector Narrowing Integer Right Shift Instructions
   static function TD _vsll(T2 src2, T1 src1);
-    logic [$clog2($bits(T2))-1:0] shift_amount;
+    logic unsigned [$clog2($bits(T2))-1:0] shift_amount;
     shift_amount = src1;
     _vsll = $unsigned(src2) << shift_amount;
   endfunction : _vsll
   static function TD _vsrl(T2 src2, T1 src1);
-    logic [$clog2($bits(T2))-1:0] shift_amount;
+    logic unsigned [$clog2($bits(T2))-1:0] shift_amount;
     shift_amount = src1;
     _vsrl = $unsigned(src2) >> shift_amount;
   endfunction : _vsrl
   static function TD _vsra(T2 src2, T1 src1);
-    logic [$clog2($bits(T2))-1:0] shift_amount;
+    logic unsigned [$clog2($bits(T2))-1:0] shift_amount;
     shift_amount = src1;
     _vsra = $signed(src2) >>> shift_amount;
   endfunction : _vsra
@@ -1175,7 +1163,6 @@ virtual class alu_processor#(
     underflow = cout[1] == 1'b1; 
     if(overflow)  begin _vsadd = '1; _vsadd[$bits(TD)-1] = 1'b0; end
     if(underflow) begin _vsadd = '0; _vsadd[$bits(TD)-1] = 1'b1; end
-    $display("in function: overflow=%0d, underflow=%0d",overflow,underflow);
   endfunction : _vsadd
   static function TD _vssubu(T2 src2, T1 src1);
     {underflow,_vssubu} = $unsigned(src2) - $unsigned(src1);
@@ -1193,29 +1180,73 @@ virtual class alu_processor#(
   //---------------------------------------------------------------------- 
   // Ch32.12.2. Vector Single-Width Averaging Add and Subtract
   static function TD _vaaddu(T2 src2, T1 src1);
-    _vaaddu = _roundoff_unsigned($unsigned(src2 + src1), 1);
+    logic unsigned [$bits(TD):0] dest;
+    dest = $unsigned(src2) + $unsigned(src1);
+    _vaaddu = _roundoff_unsigned(dest, 1);
   endfunction : _vaaddu
   static function TD _vaadd(T2 src2, T1 src1);
-    _vaadd = _roundoff_signed($signed(src2 + src1), 1);
+    logic signed [$bits(TD):0] dest;
+    dest = $signed(src2) + $signed(src1);
+    _vaadd = _roundoff_signed(dest, 1);
   endfunction : _vaadd
   // TODO check wraps around
   static function TD _vasubu(T2 src2, T1 src1);
-    _vasubu = _roundoff_unsigned($unsigned(src2 - src1), 1);
+    logic unsigned [$bits(TD):0] dest;
+    dest = $unsigned(src2) - $unsigned(src1);
+    _vasubu = _roundoff_unsigned(dest, 1);
   endfunction : _vasubu
   static function TD _vasub(T2 src2, T1 src1);
-    _vasub = _roundoff_signed($signed(src2 - src1), 1);
+    logic signed [$bits(TD):0] dest;
+    dest = $signed(src2) - $signed(src1);
+    _vasub = _roundoff_signed(dest, 1);
   endfunction : _vasub
 
   //---------------------------------------------------------------------- 
   // Ch32.12.3. Vector Single-Width Fractional Multiply with Rounding and Saturation
   static function TD _vsmul(T2 src2, T1 src1);
-    logic [$bits(TD)*2-1:0] dest;
+    logic signed [$bits(TD)*2-1:0] dest;
     dest = $signed(src2) * $signed(src1);
-    dest = _roundoff_signed($signed(dest), $bits(TD)-1);
+    dest = _roundoff_signed(dest, $bits(TD)-1);
     overflow = ^dest[$bits(TD):$bits(TD)-1];
     if(overflow) begin _vsmul = '1; _vsmul[$bits(TD)-1] = 1'b0; end
     else begin _vsmul = dest; end
   endfunction : _vsmul
+
+  //---------------------------------------------------------------------- 
+  // Ch32.12.4. Vector Single-Width Scaling Shift Instructions
+  static function TD _vssrl(T2 src2, T1 src1);
+    logic unsigned [$clog2($bits(T2))-1:0] shift_amount;
+    shift_amount = $unsigned(src1);
+    _vssrl = _roundoff_unsigned($unsigned(src2), shift_amount);
+  endfunction : _vssrl
+  static function TD _vssra(T2 src2, T1 src1);
+    logic unsigned [$clog2($bits(T2))-1:0] shift_amount;
+    shift_amount = src1;
+    _vssra = _roundoff_signed($signed(src2), shift_amount);
+  endfunction : _vssra
+
+  //---------------------------------------------------------------------- 
+  // Ch32.12.5 Vector Narrowing Fixed-Point Clip Instructions
+  static function TD _vnclipu(T2 src2, T1 src1);
+    logic unsigned [$bits(TD)*2-1:0] dest_widen;
+    logic unsigned [$clog2($bits(T2))-1:0] shift_amount;
+    shift_amount = $unsigned(src1);
+    dest_widen = _roundoff_unsigned($unsigned(src2), shift_amount);
+    `uvm_info("MDL",$sformatf("dest_widen(%0dbits) = 0x%x",$bits(dest_widen),dest_widen),UVM_HIGH)
+    overflow = |dest_widen[$bits(TD)*2-1:$bits(TD)];
+    _vnclipu = dest_widen;
+  endfunction
+  static function TD _vnclip(T2 src2, T1 src1);
+    logic signed [$bits(TD)*2-1:0] dest_widen;
+    logic unsigned [$clog2($bits(T2))-1:0] shift_amount;
+    shift_amount = $unsigned(src1);
+    dest_widen = _roundoff_signed($signed(src2), shift_amount);
+    `uvm_info("MDL",$sformatf("dest_widen(%0dbits) = 0x%x",$bits(dest_widen),dest_widen),UVM_HIGH)
+    underflow = |dest_widen[$bits(TD)*2-1:$bits(TD)];
+    overflow  = |dest_widen[$bits(TD)*2-1:$bits(TD)] && ~dest_widen[$bits(TD)*2-1];
+    _vnclip = dest_widen;
+  endfunction
+  
 
   //---------------------------------------------------------------------- 
   // Ch32.15.1. Vector Mask-Register Logical Instructions

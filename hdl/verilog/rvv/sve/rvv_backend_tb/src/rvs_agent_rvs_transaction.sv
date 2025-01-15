@@ -89,12 +89,12 @@ class rvs_transaction extends uvm_sequence_item;
 
   constraint c_vm {
     vm inside {0, 1};
-    (inst_type == ALU && alu_inst inside {VADC, VSBC})
-      -> vm == 0;
-    (inst_type == ALU && alu_inst inside {
-      VMAND, VMOR, VMXOR, VMORN, VMNAND, VMNOR, VMANDN, VMXNOR, 
-      VMSEQ, VMSNE, VMSLTU, VMSLT, VMSLEU, VMSLE, VMSGTU, VMSGT})
-      -> vm == 1;
+    // (inst_type == ALU && alu_inst inside {VADC, VSBC})
+    //   -> vm == 0;
+    // (inst_type == ALU && alu_inst inside {
+    //   VMAND, VMOR, VMXOR, VMORN, VMNAND, VMNOR, VMANDN, VMXNOR, 
+    //   VMSEQ, VMSNE, VMSLTU, VMSLT, VMSLEU, VMSLE, VMSGTU, VMSGT})
+    //   -> vm == 1;
   }
 
   constraint c_oprand {
@@ -266,6 +266,8 @@ function rvs_transaction::new(string name = "Trans");
 endfunction: new
 
 function void rvs_transaction::post_randomize();
+  if(vsew == SEW_LAST) vsew == SEW16;
+  if(vlmul== LMUL_LAST) vlmul == LMUL1;
   if(inst_type == ALU && (alu_inst inside {VADC, VSBC, VMADC, VMSBC, VMERGE_VMVV}))
     use_vm_to_cal = 1;
   else
