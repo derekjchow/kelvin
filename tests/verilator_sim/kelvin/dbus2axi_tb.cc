@@ -99,7 +99,7 @@ struct DBus2Axi_tb : Sysc_tb {
     if (io_dbus_valid && !io_dbus_write && !dbus_read_ready_) {
       dbus_read_ready_ = true;
       axi_read_addr_t r;
-      r.addr = io_dbus_addr.read().get_word(0) & ~31;
+      r.addr = io_dbus_addr.read().get_word(0);
       r.id = 0x00;  // from RTL
       axi_read_addr_.write(r);
     }
@@ -109,7 +109,7 @@ struct DBus2Axi_tb : Sysc_tb {
       axi_write_addr_t w;
       sc_bv<256> data;
       sc_bv<32> strb;
-      w.addr = io_dbus_addr.read().get_word(0) & ~31;
+      w.addr = io_dbus_addr.read().get_word(0);
       w.id = 0x00;  // from RTL
       w.strb = io_dbus_wmask;
       w.data = io_dbus_wdata;

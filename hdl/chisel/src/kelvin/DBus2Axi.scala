@@ -60,8 +60,6 @@ class DBus2Axi(p: Parameters) extends Module {
                        io.axi.read.data.valid && io.axi.read.data.ready)
   io.dbus.rdata := sdata
 
-  val saddr = Cat(io.dbus.addr(31, linebit), 0.U(linebit.W))
-
   val writePc = RegInit(MakeValid(false.B, 0.U(32.W)))
   writePc := MuxCase(writePc, Array(
     io.axi.write.resp.valid -> MakeValid(false.B, 0.U(32.W)),
@@ -70,7 +68,7 @@ class DBus2Axi(p: Parameters) extends Module {
   val writeAddr = RegInit(MakeValid(false.B, 0.U(32.W)))
   writeAddr := MuxCase(writeAddr, Array(
     io.axi.write.resp.valid -> MakeValid(false.B, 0.U(32.W)),
-    (io.dbus.valid && io.dbus.write) -> MakeValid(true.B, saddr),
+    (io.dbus.valid && io.dbus.write) -> MakeValid(true.B, io.dbus.addr),
   ))
   val writeAddrFired = RegInit(false.B)
   writeAddrFired := MuxCase(writeAddrFired, Array(
@@ -113,10 +111,10 @@ class DBus2Axi(p: Parameters) extends Module {
   val readAddr = RegInit(MakeValid(false.B, 0.U(32.W)))
   readAddr := MuxCase(readAddr, Array(
     io.axi.read.data.valid -> MakeValid(false.B, 0.U(32.W)),
-    (io.dbus.valid && !io.dbus.write && !sraddrActive) -> MakeValid(true.B, saddr),
+    (io.dbus.valid && !io.dbus.write && !sraddrActive) -> MakeValid(true.B, io.dbus.addr),
   ))
   io.axi.read.addr.valid := io.dbus.valid && !io.dbus.write && !sraddrActive
-  io.axi.read.addr.bits.addr := saddr
+  io.axi.read.addr.bits.addr := io.dbus.addr
   io.axi.read.addr.bits.id := 0.U
   io.axi.read.addr.bits.prot := 2.U
   io.axi.read.addr.bits.size := Ctz(io.dbus.size)
