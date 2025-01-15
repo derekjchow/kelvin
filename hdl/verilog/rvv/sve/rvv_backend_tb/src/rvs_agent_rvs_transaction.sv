@@ -168,6 +168,8 @@ class rvs_transaction extends uvm_sequence_item;
   }
 
   constraint c_sewlmul {
+    vtype.vsew != SEW_LAST;
+    vtype.vlmul != LMUL_LAST;
     // widen
     // (inst_type == ALU && (alu_inst inside {VWADDU, VWADD, VWADD_W, VWSUBU, VWSUB, VWADDU_W, 
     //                                       VWMUL, VWMULU, VWMULSU}))
@@ -266,8 +268,6 @@ function rvs_transaction::new(string name = "Trans");
 endfunction: new
 
 function void rvs_transaction::post_randomize();
-  if(vsew == SEW_LAST) vsew == SEW16;
-  if(vlmul== LMUL_LAST) vlmul == LMUL1;
   if(inst_type == ALU && (alu_inst inside {VADC, VSBC, VMADC, VMSBC, VMERGE_VMVV}))
     use_vm_to_cal = 1;
   else

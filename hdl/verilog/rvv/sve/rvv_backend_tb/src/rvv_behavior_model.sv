@@ -295,6 +295,9 @@ endclass : rvv_behavior_model
               if(!(vtype.vsew inside {SEW8,SEW16})) begin
                 `uvm_warning("MDL/INST_CHECKER", $sformatf("pc=0x%8x: Illegal sew(%s) for widen instruction. Ignored.",pc,inst_tr.vtype.vsew.name()));
                 continue;
+              end else if(vtype.vlmul == LMUL8) begin
+                `uvm_warning("MDL/INST_CHECKER", $sformatf("pc=0x%8x: Illegal lmul(%s) for widen instruction. Ignored.",pc,inst_tr.vtype.vlmul.name()));
+                continue;
               end else begin
                 dest_eew = dest_eew * 2;
                 dest_emul = dest_emul * 2;
@@ -416,22 +419,27 @@ endclass : rvv_behavior_model
         end
 
         // 2.2.2 Overlap Check
-        if(inst_tr.dest_type == VRF && inst_tr.src2_type == VRF && (dest_eew > src2_eew) && src2_reg_idx == dest_reg_idx && src2_emul>=1) begin
+        if(inst_tr.dest_type == VRF && inst_tr.src2_type == VRF && (dest_eew > src2_eew) && (src2_reg_idx >= dest_reg_idx) && (src2_reg_idx+int'(src2_emul) < dest_reg_idx+int'(dest_emul)) && src2_emul>=1) begin
           `uvm_warning("MDL/INST_CHECKER", $sformatf("pc=0x%8x: Ch32.5.2. The lowest part of dest vrf(v%0d~v%0d) overlaps the src2 vrf(v%0d~v%0d) in a widen instruction. Ignored.",pc,
               dest_reg_idx, dest_reg_idx+int'($floor(dest_emul))-1, src2_reg_idx, src2_reg_idx+int'($floor(src2_emul))-1));
           continue;
         end
-        if(inst_tr.dest_type == VRF && inst_tr.src2_type == VRF && (dest_eew < src2_eew) && (src2_reg_idx+int'($floor(dest_emul)) == dest_reg_idx) && dest_emul>=1) begin
+        if(inst_tr.dest_type == VRF && inst_tr.src2_type == VRF && inst_tr.alu_inst == VXUNARY0 && (src2_reg_idx == dest_reg_idx) && src2_emul == 0.5 && dest_emul == 2 ) begin
+          `uvm_warning("MDL/INST_CHECKER", $sformatf("pc=0x%8x: Ch32.5.2. vext.vf4 with LMUL2 will spit to 2 uops. The lowest part of dest vrf(v%0d~v%0d) overlaps the src2 vrf(v%0d~v%0d) in a widen instruction. Ignored.",pc,
+              dest_reg_idx, dest_reg_idx+int'($floor(dest_emul))-1, src2_reg_idx, src2_reg_idx+int'($floor(src2_emul))-1));
+          continue;
+        end
+        if(inst_tr.dest_type == VRF && inst_tr.src2_type == VRF && (dest_eew < src2_eew) && (dest_reg_idx > src2_reg_idx) && (dest_reg_idx+int'(dest_emul) <= src2_reg_idx+int'(src2_emul)) && dest_emul>=1) begin
           `uvm_warning("MDL/INST_CHECKER", $sformatf("pc=0x%8x: Ch32.5.2. The dest vrf(v%0d~v%0d) overlaps the highest part of src2 vrf(v%0d~v%0d) in a narrow instruction. Ignored.",pc,
               dest_reg_idx, dest_reg_idx+int'($floor(dest_emul))-1, src2_reg_idx, src2_reg_idx+int'($floor(src2_emul))-1));
           continue;
         end
-        if(inst_tr.dest_type == VRF && inst_tr.src1_type == VRF && (dest_eew > src1_eew) && src1_reg_idx == dest_reg_idx && src1_emul>=1) begin
+        if(inst_tr.dest_type == VRF && inst_tr.src1_type == VRF && (dest_eew > src1_eew) && (src1_reg_idx >= dest_reg_idx) && (src1_reg_idx+int'(src1_emul) < dest_reg_idx+int'(dest_emul)) && src1_emul>=1) begin
           `uvm_warning("MDL/INST_CHECKER", $sformatf("pc=0x%8x: Ch32.5.2. The lower part of dest vrf(v%0d~v%0d) overlaps the src1 vrf(v%0d~v%0d) in a widen instruction. Ignored.",pc,
               dest_reg_idx, dest_reg_idx+int'($floor(dest_emul))-1, src1_reg_idx, src1_reg_idx+int'($floor(src1_emul))-1));
           continue;
         end
-        if(inst_tr.dest_type == VRF && inst_tr.src1_type == VRF && (dest_eew < src1_eew) && (src1_reg_idx+int'($floor(dest_emul)) == dest_reg_idx) && dest_emul>=1) begin
+        if(inst_tr.dest_type == VRF && inst_tr.src1_type == VRF && (dest_eew < src1_eew) && (dest_reg_idx > src1_reg_idx) && (dest_reg_idx+int'(dest_emul) <= src1_reg_idx+int'(src1_emul)) && dest_emul>=1) begin
           `uvm_warning("MDL/INST_CHECKER", $sformatf("pc=0x%8x: Ch32.5.2. The dest vrf(v%0d~v%0d) overlaps the highest part of src1 vrf(v%0d~v%0d) in a narrow instruction. Ignored.",pc,
               dest_reg_idx, dest_reg_idx+int'($floor(dest_emul))-1, src1_reg_idx, src1_reg_idx+int'($floor(src1_emul))-1));
           continue;
@@ -978,36 +986,36 @@ virtual class alu_processor#(
   //---------------------------------------------------------------------- 
   // Ch32.11.10. Vector Single-Width Integer Multiply Instructions
   static function TD _vmul(T2 src2, T1 src1);
-    logic [$bits(TD)*2-1:0] dest_widen;
-    logic [$bits(TD)*2-1:0] src2_widen;
-    logic [$bits(TD)*2-1:0] src1_widen;
+    logic signed [$bits(TD)*2-1:0] dest_widen;
+    logic signed [$bits(TD)*2-1:0] src2_widen;
+    logic signed [$bits(TD)*2-1:0] src1_widen;
     src2_widen = $signed(src2);
     src1_widen = $signed(src1);
     dest_widen = src2_widen * src1_widen;
     _vmul = dest_widen[$bits(TD)-1:0];
   endfunction : _vmul
   static function TD _vmulh(T2 src2, T1 src1);
-    logic [$bits(TD)*2-1:0] dest_widen;
-    logic [$bits(TD)*2-1:0] src2_widen;
-    logic [$bits(TD)*2-1:0] src1_widen;
+    logic signed [$bits(TD)*2-1:0] dest_widen;
+    logic signed [$bits(TD)*2-1:0] src2_widen;
+    logic signed [$bits(TD)*2-1:0] src1_widen;
     src2_widen = $signed(src2);
     src1_widen = $signed(src1);
     dest_widen = src2_widen * src1_widen;
     _vmulh = dest_widen[$bits(TD)*2-1:$bits(TD)];
   endfunction : _vmulh
   static function TD _vmulhu(T2 src2, T1 src1);
-    logic [$bits(TD)*2-1:0] dest_widen;
-    logic [$bits(TD)*2-1:0] src2_widen;
-    logic [$bits(TD)*2-1:0] src1_widen;
+    logic unsigned [$bits(TD)*2-1:0] dest_widen;
+    logic unsigned [$bits(TD)*2-1:0] src2_widen;
+    logic unsigned [$bits(TD)*2-1:0] src1_widen;
     src2_widen = $unsigned(src2);
     src1_widen = $unsigned(src1);
     dest_widen = src2_widen * src1_widen;
     _vmulhu = dest_widen[$bits(TD)*2-1:$bits(TD)];
   endfunction : _vmulhu
   static function TD _vmulhsu(T2 src2, T1 src1);
-    logic [$bits(TD)*2-1:0] dest_widen;
-    logic [$bits(TD)*2-1:0] src2_widen;
-    logic [$bits(TD)*2-1:0] src1_widen;
+    logic signed   [$bits(TD)*2-1:0] dest_widen;
+    logic signed   [$bits(TD)*2-1:0] src2_widen;
+    logic unsigned [$bits(TD)*2-1:0] src1_widen;
     src2_widen = $signed(src2);
     src1_widen = $unsigned(src1);
     dest_widen = src2_widen * src1_widen;
@@ -1040,33 +1048,39 @@ virtual class alu_processor#(
   //---------------------------------------------------------------------- 
   // Ch32.11.12. Vector Widening Integer Multiply Instructions
   static function TD _vwmul(T2 src2, T1 src1);
-    logic [$bits(TD)-1:0] src2_widen;
-    logic [$bits(TD)-1:0] src1_widen;
+    logic signed [$bits(TD)-1:0] dest_widen;
+    logic signed [$bits(TD)-1:0] src2_widen;
+    logic signed [$bits(TD)-1:0] src1_widen;
     src2_widen = $signed(src2);
     src1_widen = $signed(src1);
-    _vwmul = src2_widen * src1_widen;
+    dest_widen = src2_widen * src1_widen;
+    _vwmul = dest_widen;
   endfunction : _vwmul
   static function TD _vwmulu(T2 src2, T1 src1);
-    logic [$bits(TD)-1:0] src2_widen;
-    logic [$bits(TD)-1:0] src1_widen;
+    logic unsigned [$bits(TD)-1:0] dest_widen;
+    logic unsigned [$bits(TD)-1:0] src2_widen;
+    logic unsigned [$bits(TD)-1:0] src1_widen;
     src2_widen = $unsigned(src2);
     src1_widen = $unsigned(src1);
-    _vwmulu = src2_widen * src1_widen;
+    dest_widen = src2_widen * src1_widen;
+    _vwmulu = dest_widen;
   endfunction : _vwmulu
   static function TD _vwmulsu(T2 src2, T1 src1);
-    logic [$bits(TD)-1:0] src2_widen;
-    logic [$bits(TD)-1:0] src1_widen;
+    logic signed   [$bits(TD)-1:0] dest_widen;
+    logic signed   [$bits(TD)-1:0] src2_widen;
+    logic unsigned [$bits(TD)-1:0] src1_widen;
     src2_widen = $signed(src2);
     src1_widen = $unsigned(src1);
-    _vwmulsu = src2_widen * src1_widen;
+    dest_widen = src2_widen * src1_widen;
+    _vwmulsu = dest_widen;
   endfunction : _vwmulsu
 
   //---------------------------------------------------------------------- 
   // Ch32.11.13. Vector Single-Width Integer Multiply-Add Instructions
   static function TD _vmacc(TD dest, T2 src2, T1 src1);
-    logic [$bits(TD)*2-1:0] dest_widen;
-    logic [$bits(TD)*2-1:0] src2_widen;
-    logic [$bits(TD)*2-1:0] src1_widen;
+    logic signed [$bits(TD)*2-1:0] dest_widen;
+    logic signed [$bits(TD)*2-1:0] src2_widen;
+    logic signed [$bits(TD)*2-1:0] src1_widen;
     dest_widen = $signed(dest);
     src2_widen = $signed(src2);
     src1_widen = $signed(src1);
@@ -1074,9 +1088,9 @@ virtual class alu_processor#(
     _vmacc = dest_widen;
   endfunction : _vmacc
   static function TD _vnmsac(TD dest, T2 src2, T1 src1);
-    logic [$bits(TD)*2-1:0] dest_widen;
-    logic [$bits(TD)*2-1:0] src2_widen;
-    logic [$bits(TD)*2-1:0] src1_widen;
+    logic signed [$bits(TD)*2-1:0] dest_widen;
+    logic signed [$bits(TD)*2-1:0] src2_widen;
+    logic signed [$bits(TD)*2-1:0] src1_widen;
     dest_widen = $signed(dest);
     src2_widen = $signed(src2);
     src1_widen = $signed(src1);
@@ -1084,9 +1098,9 @@ virtual class alu_processor#(
     _vnmsac = dest_widen;
   endfunction : _vnmsac
   static function TD _vmadd(TD dest, T2 src2, T1 src1);
-    logic [$bits(TD)*2-1:0] dest_widen;
-    logic [$bits(TD)*2-1:0] src2_widen;
-    logic [$bits(TD)*2-1:0] src1_widen;
+    logic signed [$bits(TD)*2-1:0] dest_widen;
+    logic signed [$bits(TD)*2-1:0] src2_widen;
+    logic signed [$bits(TD)*2-1:0] src1_widen;
     dest_widen = $signed(dest);
     src2_widen = $signed(src2);
     src1_widen = $signed(src1);
@@ -1094,9 +1108,9 @@ virtual class alu_processor#(
     _vmadd = dest_widen;
   endfunction : _vmadd
   static function TD _vnmsub(TD dest, T2 src2, T1 src1);
-    logic [$bits(TD)*2-1:0] dest_widen;
-    logic [$bits(TD)*2-1:0] src2_widen;
-    logic [$bits(TD)*2-1:0] src1_widen;
+    logic signed [$bits(TD)*2-1:0] dest_widen;
+    logic signed [$bits(TD)*2-1:0] src2_widen;
+    logic signed [$bits(TD)*2-1:0] src1_widen;
     dest_widen = $signed(dest);
     src2_widen = $signed(src2);
     src1_widen = $signed(src1);
@@ -1107,40 +1121,44 @@ virtual class alu_processor#(
   //---------------------------------------------------------------------- 
   // Ch32.11.14. Vector Widening Integer Multiply-Add Instructions
   static function TD _vwmaccu(TD dest, T2 src2, T1 src1);
-    logic [$bits(TD)-1:0] dest_widen;
-    logic [$bits(TD)-1:0] src2_widen;
-    logic [$bits(TD)-1:0] src1_widen;
+    logic unsigned [$bits(TD)-1:0] dest_widen;
+    logic unsigned [$bits(TD)-1:0] src2_widen;
+    logic unsigned [$bits(TD)-1:0] src1_widen;
     dest_widen = $unsigned(dest);
     src2_widen = $unsigned(src2);
     src1_widen = $unsigned(src1);
-    _vwmaccu = dest_widen + src2_widen * src1_widen;
+    dest_widen = dest_widen + src2_widen * src1_widen;
+    _vwmaccu = dest_widen;
   endfunction : _vwmaccu
   static function TD _vwmacc(TD dest, T2 src2, T1 src1);
-    logic [$bits(TD)-1:0] dest_widen;
-    logic [$bits(TD)-1:0] src2_widen;
-    logic [$bits(TD)-1:0] src1_widen;
+    logic signed [$bits(TD)-1:0] dest_widen;
+    logic signed [$bits(TD)-1:0] src2_widen;
+    logic signed [$bits(TD)-1:0] src1_widen;
     dest_widen = $signed(dest);
     src2_widen = $signed(src2);
     src1_widen = $signed(src1);
-    _vwmacc = dest_widen + src2_widen * src1_widen;
+    dest_widen = dest_widen + src2_widen * src1_widen;
+    _vwmacc = dest_widen;
   endfunction : _vwmacc
   static function TD _vwmaccus(TD dest, T2 src2, T1 src1);
-    logic [$bits(TD)-1:0] dest_widen;
-    logic [$bits(TD)-1:0] src2_widen;
-    logic [$bits(TD)-1:0] src1_widen;
-    dest_widen = $unsigned(dest);
+    logic signed   [$bits(TD)-1:0] dest_widen;
+    logic signed   [$bits(TD)-1:0] src2_widen;
+    logic unsigned [$bits(TD)-1:0] src1_widen;
+    dest_widen = $signed(dest);
     src2_widen = $signed(src2);
-    src1_widen = $signed(src1);
-    _vwmaccus = dest_widen + src2_widen * src1_widen;
+    src1_widen = $unsigned(src1);
+    dest_widen = dest_widen + src2_widen * src1_widen;
+    _vwmaccus = dest_widen;
   endfunction : _vwmaccus
   static function TD _vwmaccsu(TD dest, T2 src2, T1 src1);
-    logic [$bits(TD)-1:0] dest_widen;
-    logic [$bits(TD)-1:0] src2_widen;
-    logic [$bits(TD)-1:0] src1_widen;
-    dest_widen = $unsigned(dest);
+    logic signed   [$bits(TD)-1:0] dest_widen;
+    logic unsigned [$bits(TD)-1:0] src2_widen;
+    logic signed   [$bits(TD)-1:0] src1_widen;
+    dest_widen = $signed(dest);
     src2_widen = $unsigned(src2);
     src1_widen = $signed(src1);
-    _vwmaccsu = dest_widen + src2_widen * src1_widen;
+    dest_widen = dest_widen + src2_widen * src1_widen;
+    _vwmaccsu = dest_widen;
   endfunction : _vwmaccsu
 
   //---------------------------------------------------------------------- 

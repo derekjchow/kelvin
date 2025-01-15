@@ -1324,5 +1324,6 @@ class alu_vnclip_test extends rvv_backend_test;
     super.final_phase(phase);
   endfunction
 endclass: alu_vnclip_test
+
 `endif // RVV_BACKEND_TEST__SV
 
