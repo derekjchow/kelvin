@@ -75,7 +75,7 @@ logic [15:0]                   vsmul_round_incr_eew8_d1;
 logic [`VLEN-1:0]              vsmul_rslt_eew8_d1;
 logic [15:0]                   vsmul_sat_eew8_d1;
 logic [`VLEN-1:0]              mul_rslt_eew8_d1;
-logic                          update_vxsat_eew8_d1;
+logic [`VLENB-1:0]             update_vxsat_eew8_d1;
 
 logic [31:0]                   mul_rslt_full_eew16_d1[7:0];
 logic [2*`VLEN-1:0]            mul_rslt_eew16_widen_d1;
@@ -84,7 +84,7 @@ logic [7:0]                    vsmul_round_incr_eew16_d1;
 logic [`VLEN-1:0]              vsmul_rslt_eew16_d1;
 logic [7:0]                    vsmul_sat_eew16_d1;
 logic [`VLEN-1:0]              mul_rslt_eew16_d1;
-logic                          update_vxsat_eew16_d1;
+logic [`VLENB-1:0]             update_vxsat_eew16_d1;
 
 logic [63:0]                   mul_rslt_full_eew32_d1[3:0];
 logic [2*`VLEN-1:0]            mul_rslt_eew32_widen_d1;
@@ -93,7 +93,7 @@ logic [3:0]                    vsmul_round_incr_eew32_d1;
 logic [`VLEN-1:0]              vsmul_rslt_eew32_d1;
 logic [3:0]                    vsmul_sat_eew32_d1;
 logic [`VLEN-1:0]              mul_rslt_eew32_d1;
-logic                          update_vxsat_eew32_d1;
+logic [`VLENB-1:0]             update_vxsat_eew32_d1;
 
 `ifdef TB_SUPPORT
 logic [`PC_WIDTH-1:0]          mul_uop_pc;
@@ -452,7 +452,7 @@ end
 assign mul_rslt_eew8_d1 = is_vsmul_d1     ? vsmul_rslt_eew8_d1 : //vsmul
                           mul_is_widen_d1 ? mul_rslt_eew8_widen_d1[`VLEN-1:0] : //widen
                                             mul_rslt_eew8_no_widen_d1; //normal
-assign update_vxsat_eew8_d1 = |(vsmul_sat_eew8_d1);
+assign update_vxsat_eew8_d1 = vsmul_sat_eew8_d1;
 //eew16
 //full rslt is 32bit
 always@(*) begin
@@ -480,7 +480,14 @@ end
 assign mul_rslt_eew16_d1 = is_vsmul_d1     ? vsmul_rslt_eew16_d1 : //vsmul
                            mul_is_widen_d1 ? mul_rslt_eew16_widen_d1[`VLEN-1:0] : //widen
                                              mul_rslt_eew16_no_widen_d1; //normal
-assign update_vxsat_eew16_d1 = |(vsmul_sat_eew16_d1);
+assign update_vxsat_eew16_d1 = {vsmul_sat_eew16_d1[7],1'b0,
+                                vsmul_sat_eew16_d1[6],1'b0,
+                                vsmul_sat_eew16_d1[5],1'b0,
+                                vsmul_sat_eew16_d1[4],1'b0,
+                                vsmul_sat_eew16_d1[3],1'b0,
+                                vsmul_sat_eew16_d1[2],1'b0,
+                                vsmul_sat_eew16_d1[1],1'b0,
+                                vsmul_sat_eew16_d1[0],1'b0};
 //eew32
 //full rslt is 64bit
 always@(*) begin
@@ -518,7 +525,10 @@ end
 assign mul_rslt_eew32_d1 = is_vsmul_d1     ? vsmul_rslt_eew32_d1 : //vsmul
                            mul_is_widen_d1 ? mul_rslt_eew32_widen_d1[`VLEN-1:0] : //widen
                                              mul_rslt_eew32_no_widen_d1; //normal
-assign update_vxsat_eew32_d1 = |(vsmul_sat_eew32_d1);
+assign update_vxsat_eew32_d1 = {vsmul_sat_eew32_d1[3],3'b0,
+                                vsmul_sat_eew32_d1[2],3'b0,
+                                vsmul_sat_eew32_d1[1],3'b0,
+                                vsmul_sat_eew32_d1[0],3'b0};
 
 //Output pack
 assign mul2rob_uop_valid = rs2mul_uop_valid_d1;
@@ -528,7 +538,10 @@ assign mul2rob_uop_data.w_data = mul_top_vs_eew_d1==EEW32 ? mul_rslt_eew32_d1 :
                                  mul_top_vs_eew_d1==EEW16 ? mul_rslt_eew16_d1 :
                                                             mul_rslt_eew8_d1; //all possible cases are 8/16/32
 assign mul2rob_uop_data.w_valid = rs2mul_uop_valid_d1;
-assign mul2rob_uop_data.vxsat = is_vsmul_d1 && (update_vxsat_eew8_d1 || update_vxsat_eew16_d1 || update_vxsat_eew32_d1);
+assign mul2rob_uop_data.vsaturate = is_vsmul_d1 ? mul_top_vs_eew_d1==EEW32 ? update_vxsat_eew32_d1 :
+                                                  mul_top_vs_eew_d1==EEW16 ? update_vxsat_eew16_d1 :
+                                                                             update_vxsat_eew8_d1  :
+                                                                             {`VLENB{1'b0}};
 
 `ifdef TB_SUPPORT
 assign mul2rob_uop_data.uop_pc = mul_uop_pc_d1;
