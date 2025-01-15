@@ -297,13 +297,11 @@ module rvv_backend_alu_unit_mask
                 else
                   src2_data = vs2_data&tail_data&v0_data; 
               end
-              VMUNARY0: begin
-                if (vs1_opcode==VIOTA) begin
-                  if (vm==1'b1)
-                    src2_data_viota = vs2_data;
-                  else
-                    src2_data_viota = vs2_data&v0_data; 
-                end
+              VIOTA: begin
+                if (vm==1'b1)
+                  src2_data_viota = vs2_data;
+                else
+                  src2_data_viota = vs2_data&v0_data; 
               end
               // no source operand for VID
             endcase
