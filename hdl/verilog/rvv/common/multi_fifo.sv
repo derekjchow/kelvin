@@ -78,7 +78,7 @@ module multi_fifo
   T            [M-1:0]          datain_seq;
 // ---code start------------------------------------------------------
   genvar  i;  
-  integer j,k;
+  integer l,k;
   
   // wind back rptr/wptr
   generate
@@ -118,12 +118,12 @@ module multi_fifo
       always_comb begin
         push_seq = '0;
         datain_seq = '0;
-        j = 0;
+        l = 0;
         for (k=0; k<M; k++) begin
           if (push[k]) begin
-            push_seq[j] = 1'b1;
-            datain_seq[j] = datain[k];
-            j++;
+            push_seq[l] = 1'b1;
+            datain_seq[l] = datain[k];
+            l++;
           end
         end
       end

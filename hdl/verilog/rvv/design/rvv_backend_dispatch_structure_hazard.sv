@@ -49,7 +49,7 @@ module rvv_backend_dispatch_structure_hazard
                           rd_index[2*i] = 'x;
                         end
                         default: begin
-                          rd_index[2*i+1] = 'x;
+                          rd_index[2*i+1] = strct_uop[i+1].vs3_valid ? strct_uop[i+1].vd_index : 'x;
                           rd_index[2*i] = 'x;
                         end
                     endcase
@@ -78,7 +78,7 @@ module rvv_backend_dispatch_structure_hazard
                           rd_index[2*i] = 'x;
                         end
                         default: begin
-                          rd_index[2*i+1] = 'x;
+                          rd_index[2*i+1] = strct_uop[i-1].vs3_valid ? strct_uop[i-1].vd_index : 'x;
                           rd_index[2*i] = 'x;
                         end
                     endcase
