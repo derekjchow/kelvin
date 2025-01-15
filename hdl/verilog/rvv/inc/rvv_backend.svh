@@ -5,6 +5,10 @@
 `include "rvv_backend_define.svh"
 `endif  // not defined HDL_VERILOG_RVV_DESIGN_RVV_DEFINE_SVH
 
+`ifndef RVV_CONFIG_SVH
+`include "rvv_backend_config.svh"
+`endif
+
 //
 // IF stage, RVS send instruction package to Command Queue
 //
