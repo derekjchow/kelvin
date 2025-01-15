@@ -205,7 +205,7 @@ module rvv_backend_rob
 `endif                
                 res_mem[wr_alu2rob[k].rob_entry].w_valid <= wr_alu2rob[k].w_valid;
                 res_mem[wr_alu2rob[k].rob_entry].w_data  <= wr_alu2rob[k].w_data;
-                res_mem[wr_alu2rob[k].rob_entry].vxsat   <= wr_alu2rob[k].vxsat;
+                res_mem[wr_alu2rob[k].rob_entry].vsaturate <= wr_alu2rob[k].vsaturate;
             end
         end
         for (int k=0; k<`NUM_PMTRDT; k++) begin
@@ -215,7 +215,7 @@ module rvv_backend_rob
 `endif                
                 res_mem[wr_pmtrdt2rob[k].rob_entry].w_valid <= wr_pmtrdt2rob[k].w_valid;
                 res_mem[wr_pmtrdt2rob[k].rob_entry].w_data  <= wr_pmtrdt2rob[k].w_data;
-                res_mem[wr_pmtrdt2rob[k].rob_entry].vxsat   <= wr_pmtrdt2rob[k].vxsat;
+                res_mem[wr_pmtrdt2rob[k].rob_entry].vsaturate <= wr_pmtrdt2rob[k].vsaturate;
             end
         end
         for (int k=0; k<`NUM_MUL; k++) begin
@@ -225,7 +225,7 @@ module rvv_backend_rob
 `endif                
                 res_mem[wr_mul2rob[k].rob_entry].w_valid <= wr_mul2rob[k].w_valid;
                 res_mem[wr_mul2rob[k].rob_entry].w_data  <= wr_mul2rob[k].w_data;
-                res_mem[wr_mul2rob[k].rob_entry].vxsat   <= wr_mul2rob[k].vxsat;
+                res_mem[wr_mul2rob[k].rob_entry].vsaturate <= wr_mul2rob[k].vsaturate;
             end
         end
         for (int k=0; k<`NUM_DIV; k++) begin
@@ -235,7 +235,7 @@ module rvv_backend_rob
 `endif                
                 res_mem[wr_div2rob[k].rob_entry].w_valid <= wr_div2rob[k].w_valid;
                 res_mem[wr_div2rob[k].rob_entry].w_data  <= wr_div2rob[k].w_data;
-                res_mem[wr_div2rob[k].rob_entry].vxsat   <= wr_div2rob[k].vxsat;
+                res_mem[wr_div2rob[k].rob_entry].vsaturate <= wr_div2rob[k].vsaturate;
             end
         end
         for (int k=0; k<`NUM_LSU; k++) begin
@@ -245,7 +245,7 @@ module rvv_backend_rob
 `endif                
                 res_mem[wr_lsu2rob[k].rob_entry].w_valid <= wr_lsu2rob[k].w_valid;
                 res_mem[wr_lsu2rob[k].rob_entry].w_data  <= wr_lsu2rob[k].w_data;
-                res_mem[wr_lsu2rob[k].rob_entry].vxsat   <= wr_lsu2rob[k].vxsat;
+                res_mem[wr_lsu2rob[k].rob_entry].vsaturate <= wr_lsu2rob[k].vsaturate;
             end
         end
     end
@@ -358,7 +358,7 @@ module rvv_backend_rob
           assign rd_rob2rt[i].vd_type = uop_rob2rt[i].byte_type;
           assign rd_rob2rt[i].trap_flag = trap_flag[wind_uop_rptr[i]];
           assign rd_rob2rt[i].vector_csr = uop_rob2rt[i].vector_csr;
-          assign rd_rob2rt[i].vxsat   = res_mem[wind_uop_rptr[i]].vxsat;
+          assign rd_rob2rt[i].vsaturate = res_mem[wind_uop_rptr[i]].vsaturate;
       end
   endgenerate
   

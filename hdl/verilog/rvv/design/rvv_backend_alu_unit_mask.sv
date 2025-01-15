@@ -74,14 +74,9 @@ module rvv_backend_alu_unit_mask
   logic   [`VLEN-1:0]                     result_data_vid8;
   logic   [`VLEN-1:0]                     result_data_vid16;
   logic   [`VLEN-1:0]                     result_data_vid32;
-
-  // PU2ROB_t  struct signals
-  logic   [`VLEN-1:0]             w_data;             // when w_type=XRF, w_data[`XLEN-1:0] will store the scalar result
-  logic                           w_valid; 
-  logic   [`VCSR_VXSAT_WIDTH-1:0] vxsat;     
   
   // for-loop
-  genvar                          j;
+  genvar                                  j;
 
 //
 // prepare source data to calculate    
@@ -231,6 +226,7 @@ module rvv_backend_alu_unit_mask
     // initial the data
     src2_data       = 'b0;
     src1_data       = 'b0;
+    src2_data_viota = 'b0;
 
     // prepare source data
     case(uop_funct3)
@@ -301,30 +297,16 @@ module rvv_backend_alu_unit_mask
                 else
                   src2_data = vs2_data&tail_data&v0_data; 
               end
+              VMUNARY0: begin
+                if (vs1_opcode==VIOTA) begin
+                  if (vm==1'b1)
+                    src2_data_viota = vs2_data;
+                  else
+                    src2_data_viota = vs2_data&v0_data; 
+                end
+              end
               // no source operand for VID
             endcase
-          end
-        endcase
-      end
-    endcase
-  end
-
-  // prepare viota source data
-  always_comb begin
-    // initial the data
-    src2_data_viota = 'b0;
-
-    // prepare source data
-    case(uop_funct3)
-      OPMVV: begin
-        case(uop_funct6.ari_funct6)
-          VMUNARY0: begin
-            if (vs1_opcode==VIOTA) begin
-              if (vm==1'b1)
-                src2_data_viota = vs2_data;
-              else
-                src2_data_viota = vs2_data&v0_data; 
-            end
           end
         endcase
       end
@@ -549,19 +531,16 @@ module rvv_backend_alu_unit_mask
 // submit result to ROB
 //
 `ifdef TB_SUPPORT
-  assign  result.uop_pc     = alu_uop.uop_pc;
+  assign result.uop_pc = alu_uop.uop_pc;
 `endif
-  assign  result.rob_entry  = rob_entry;
-  assign  result.w_data     = w_data;
-  assign  result.w_valid    = w_valid;
-  assign  result.vxsat      = vxsat;
+  assign result.rob_entry = rob_entry;
 
   // result data
   generate 
     for (j=0;j<`VLEN;j++) begin: GET_W_DATA
       always_comb begin
         // initial
-        w_data[j] = 'b0;
+        result.w_data[j] = 'b0;
 
         case(uop_funct3)
           OPIVV,
@@ -571,7 +550,7 @@ module rvv_backend_alu_unit_mask
               VAND,
               VOR,
               VXOR: begin
-                w_data[j] = result_data[j];
+                result.w_data[j] = result_data[j];
               end
             endcase
           end
@@ -586,17 +565,17 @@ module rvv_backend_alu_unit_mask
               VMNOR,
               VMXNOR: begin
                 if (j<vstart)
-                  w_data[j] = vd_data[j];
+                  result.w_data[j] = vd_data[j];
                 else
-                  w_data[j] = result_data[j];
+                  result.w_data[j] = result_data[j];
               end
               VWXUNARY0: begin
                 case(vs1_opcode)
                   VCPOP: begin
-                    w_data[j] = result_data[j];
+                    result.w_data[j] = result_data[j];
                   end
                   VFIRST: begin
-                    w_data[j] = result_data[j];
+                    result.w_data[j] = result_data[j];
                   end
                 endcase
               end
@@ -606,13 +585,13 @@ module rvv_backend_alu_unit_mask
                   VMSOF,
                   VMSIF: begin
                     if (vm==1'b1)
-                      w_data[j] = result_data[j];
+                      result.w_data[j] = result_data[j];
                     else 
-                      w_data[j] = (tail_data[j]==1'b1)&(v0_data[j]==1'b0) ? vd_data[j] : result_data[j]; 
+                      result.w_data[j] = (tail_data[j]==1'b1)&(v0_data[j]==1'b0) ? vd_data[j] : result_data[j]; 
                   end
                   VIOTA,
                   VID: begin
-                    w_data[j] = result_data[j];
+                    result.w_data[j] = result_data[j];
                   end
                 endcase
               end
@@ -624,10 +603,10 @@ module rvv_backend_alu_unit_mask
   endgenerate
 
   // result valid signal
-  assign w_valid = result_valid;
+  assign result.w_valid = result_valid;
 
   // saturate signal
-  assign vxsat = 'b0;
+  assign result.vsaturate = 'b0;
 
 //
 // function unit

@@ -3356,8 +3356,13 @@ module rvv_backend_decode_unit_ari
   end
 
   `ifdef ASSERT_ON
-    `rvv_forbid((inst_valid==1'b1)&(inst_encoding_correct==1'b0))
-    else $warning("This instruction will be discarded directly.\n");
+    `ifdef TB_SUPPORT
+      `rvv_forbid((inst_valid==1'b1)&(inst_encoding_correct==1'b0))
+      else $warning("pc(%d) instruction will be discarded directly.\n",inst.inst_pc);
+    `else
+      `rvv_forbid((inst_valid==1'b1)&(inst_encoding_correct==1'b0))
+      else $warning("This instruction will be discarded directly.\n");
+    `endif
   `endif
 
 // get the start number of uop_index

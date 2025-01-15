@@ -96,6 +96,11 @@ RVVConfigState                  w_vcsr1;
 RVVConfigState                  w_vcsr2;
 RVVConfigState                  w_vcsr3;
 
+logic [`VLENB-1:0]              w_vsaturate0;
+logic [`VLENB-1:0]              w_vsaturate1;
+logic [`VLENB-1:0]              w_vsaturate2;
+logic [`VLENB-1:0]              w_vsaturate3;
+
 logic [`VCSR_VXSAT_WIDTH-1:0]    w_vxsat0;
 logic [`VCSR_VXSAT_WIDTH-1:0]    w_vxsat1;
 logic [`VCSR_VXSAT_WIDTH-1:0]    w_vxsat2;
@@ -120,6 +125,8 @@ logic                            w_valid0_chkTrap;
 logic                            w_valid1_chkTrap;
 logic                            w_valid2_chkTrap;
 logic                            w_valid3_chkTrap;
+
+genvar                            j;
 
 /////////////////////////////////
 ////////////Decode///////////////
@@ -159,11 +166,19 @@ assign w_vcsr1 = rob2rt_write_data[1].vector_csr;
 assign w_vcsr2 = rob2rt_write_data[2].vector_csr;
 assign w_vcsr3 = rob2rt_write_data[3].vector_csr;
 
-assign w_vxsat0 = rob2rt_write_data[0].vxsat;
-assign w_vxsat1 = rob2rt_write_data[1].vxsat;
-assign w_vxsat2 = rob2rt_write_data[2].vxsat;
-assign w_vxsat3 = rob2rt_write_data[3].vxsat;
+generate
+  for (j=0;j<`VLENB;j++) begin: GET_SAT
+    assign w_vsaturate0[j] = (vd_type0[j]==BODY_ACTIVE) ? rob2rt_write_data[0].vsaturate[j] : 1'b0;
+    assign w_vsaturate1[j] = (vd_type1[j]==BODY_ACTIVE) ? rob2rt_write_data[1].vsaturate[j] : 1'b0;
+    assign w_vsaturate2[j] = (vd_type2[j]==BODY_ACTIVE) ? rob2rt_write_data[2].vsaturate[j] : 1'b0;
+    assign w_vsaturate3[j] = (vd_type3[j]==BODY_ACTIVE) ? rob2rt_write_data[3].vsaturate[j] : 1'b0;
+  end
+endgenerate
 
+assign w_vxsat0 = w_vsaturate0!='b0;
+assign w_vxsat1 = w_vsaturate1!='b0;
+assign w_vxsat2 = w_vsaturate2!='b0;
+assign w_vxsat3 = w_vsaturate3!='b0;
 
 /////////////////////////////////
 ////////////Main  ///////////////

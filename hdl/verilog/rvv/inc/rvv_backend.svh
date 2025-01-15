@@ -85,7 +85,6 @@ typedef struct packed {
 //
 // DE stage, Command Queue to Uops Queue
 //
-
 // execution unit
 typedef enum logic [2:0] {
   ALU,
@@ -522,8 +521,9 @@ typedef struct packed {
   logic   [`ROB_DEPTH_WIDTH-1:0]      rob_entry;
   logic   [`VLEN-1:0]                 w_data;             // when w_type=XRF, w_data[`XLEN-1:0] will store the scalar result
   logic                               w_valid;
-  logic   [`VCSR_VXSAT_WIDTH-1:0]     vxsat;
+  logic   [`VLENB-1:0]                vsaturate;
 } PU2ROB_t;  
+
 // send uop to LSU
 typedef struct packed {   
 `ifdef TB_SUPPORT
@@ -567,7 +567,7 @@ typedef struct packed {
 `endif
   logic                               w_valid;            // write valid
   logic [`VLEN-1:0]                   w_data;             // write data; w_data[`XLEN-1:0] is scalar result if write type is XRF
-  logic [`VCSR_VXSAT_WIDTH-1:0]       vxsat;
+  logic [`VLENB-1:0]                  vsaturate;
 } RES_ROB_t;
 
 // send uop to ROB
@@ -607,7 +607,7 @@ typedef struct packed {
   BYTE_TYPE_t                         vd_type;            //wr Byte mask
   logic                               trap_flag;          //whether this entry in a trap
   RVVConfigState                      vector_csr;         //Receive Vstart, vlen,... And need to update vcsr when trap
-  logic   [`VCSR_VXSAT_WIDTH-1:0]     vxsat;              //Update saturation bit
+  logic   [`VLENB-1:0]                vsaturate;          //Update saturation bit
 } ROB2RT_t;  
 
 // the rob struct stored in ROB

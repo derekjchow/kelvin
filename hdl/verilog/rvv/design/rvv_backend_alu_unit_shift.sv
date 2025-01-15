@@ -71,8 +71,6 @@ module rvv_backend_alu_unit_shift
   SHIFT_e                                                      opcode;
 
   // PU2ROB_t  struct signals
-  logic   [`VLEN-1:0]             w_data;             // when w_type=XRF, w_data[`XLEN-1:0] will store the scalar result
-  logic                           w_valid; 
   logic   [`VCSR_VXSAT_WIDTH-1:0] vxsat;     
   
   // for-loop
@@ -673,33 +671,30 @@ module rvv_backend_alu_unit_shift
             // unsigned overflow check for vnclipu
             if (opcode == SHIFT_SRL) begin
               upoverflow[4*j +: 4] = {
-                1'b0, ({cout16[2*j+1], round16[2*j+1][`BYTE_WIDTH +: `BYTE_WIDTH]}!='b0),
-                1'b0, ({cout16[2*j],   round16[2*j][  `BYTE_WIDTH +: `BYTE_WIDTH]}!='b0)};
+                ({cout16[2*j+1], round16[2*j+1][`BYTE_WIDTH +: `BYTE_WIDTH]}!='b0),1'b0,
+                ({cout16[2*j],   round16[2*j][  `BYTE_WIDTH +: `BYTE_WIDTH]}!='b0),1'b0};
             end
             else if (opcode == SHIFT_SRA) begin
             // signed overflow check for vnclip
               upoverflow[4*j +: 4] = {
-                1'b0, ({cout16[2*j+1], round16[2*j+1][`BYTE_WIDTH +: `BYTE_WIDTH]}!='b0)&(round16[2*j+1][`BYTE_WIDTH-1]==1'b0),
-                1'b0, ({cout16[2*j],   round16[2*j][  `BYTE_WIDTH +: `BYTE_WIDTH]}!='b0)&(round16[2*j][  `BYTE_WIDTH-1]==1'b0)};
+                ({cout16[2*j+1], round16[2*j+1][`BYTE_WIDTH +: `BYTE_WIDTH]}!='b0)&(round16[2*j+1][`BYTE_WIDTH-1]==1'b0),1'b0,
+                ({cout16[2*j],   round16[2*j][  `BYTE_WIDTH +: `BYTE_WIDTH]}!='b0)&(round16[2*j][  `BYTE_WIDTH-1]==1'b0),1'b0};
 
               underoverflow[4*j +: 4] = {
-                1'b0, ((&{cout16[2*j+1], round16[2*j+1][`BYTE_WIDTH +: `BYTE_WIDTH]})!=1'b1)&(round16[2*j+1][`BYTE_WIDTH-1]==1'b1),
-                1'b0, ((&{cout16[2*j],   round16[2*j][  `BYTE_WIDTH +: `BYTE_WIDTH]})!=1'b1)&(round16[2*j][  `BYTE_WIDTH-1]==1'b1)};
+                ((&{cout16[2*j+1], round16[2*j+1][`BYTE_WIDTH +: `BYTE_WIDTH]})!=1'b1)&(round16[2*j+1][`BYTE_WIDTH-1]==1'b1),1'b0,
+                ((&{cout16[2*j],   round16[2*j][  `BYTE_WIDTH +: `BYTE_WIDTH]})!=1'b1)&(round16[2*j][  `BYTE_WIDTH-1]==1'b1),1'b0};
             end
           end
           EEW32: begin
             // unsigned overflow check for vnclipu
             if (opcode == SHIFT_SRL) begin
-              upoverflow[4*j +: 4] = {
-                3'b0, ({cout32[j], round32[j][`HWORD_WIDTH +: `HWORD_WIDTH]}!='b0)};
+              upoverflow[4*j +: 4] = {({cout32[j], round32[j][`HWORD_WIDTH +: `HWORD_WIDTH]}!='b0), 3'b0};
             end
             else if (opcode == SHIFT_SRA) begin
             // signed overflow check for vnclip
-              upoverflow[4*j +: 4] = {
-                3'b0, ({cout32[j], round32[j][`HWORD_WIDTH +: `HWORD_WIDTH]}!='b0)&(round32[j][`HWORD_WIDTH-1]==1'b0)};
+              upoverflow[4*j +: 4] = {({cout32[j], round32[j][`HWORD_WIDTH +: `HWORD_WIDTH]}!='b0)&(round32[j][`HWORD_WIDTH-1]==1'b0), 3'b0};
 
-              underoverflow[4*j +: 4] = {
-                3'b0, ((&{cout32[j], round32[j][`HWORD_WIDTH +: `HWORD_WIDTH]})!=1'b1)&(round32[j][`HWORD_WIDTH-1]==1'b1)};
+              underoverflow[4*j +: 4] = {((&{cout32[j], round32[j][`HWORD_WIDTH +: `HWORD_WIDTH]})!=1'b1)&(round32[j][`HWORD_WIDTH-1]==1'b1), 3'b0};
             end
           end
         endcase
@@ -875,23 +870,18 @@ module rvv_backend_alu_unit_shift
 // submit result to ROB
 //
 `ifdef TB_SUPPORT
-  assign  result.uop_pc     = alu_uop.uop_pc;
+  assign result.uop_pc = alu_uop.uop_pc;
 `endif
-  assign  result.rob_entry  = rob_entry;
-  assign  result.w_data     = w_data;
-  assign  result.w_valid    = w_valid;
-  assign  result.vxsat      = vxsat;
+  assign result.rob_entry = rob_entry;
 
-  // result data
-  assign w_data = result_data;
+  assign result.w_data = result_data;
 
-  // result type and valid signal
-  assign w_valid = result_valid;
+  assign result.w_valid = result_valid;
 
   // saturate signal
   always_comb begin
     // initial
-    vxsat = 'b0;
+    result.vsaturate = 'b0;
 
     case({alu_uop_valid,uop_funct3}) 
       {1'b1,OPIVV},
@@ -899,10 +889,10 @@ module rvv_backend_alu_unit_shift
       {1'b1,OPIVI}: begin
         case(uop_funct6.ari_funct6)
           VNCLIPU: begin
-            vxsat = (upoverflow!='b0);
+            result.vsaturate = upoverflow;
           end
           VNCLIP: begin
-            vxsat = ({underoverflow,upoverflow}!='b0);
+            result.vsaturate = underoverflow|upoverflow;
           end
         endcase
       end

@@ -59,15 +59,9 @@ module rvv_backend_alu_unit_other
   logic   [`VLEN-1:0]                                 result_data_extend;  
   logic   [`VLEN-1:0]                                 result_data_vmerge; 
   GET_MIN_MAX_e                                       opcode;
-
-  // PU2ROB_t  struct signals
-  logic   [`VLEN-1:0]             w_data;             // when w_type=XRF, w_data[`XLEN-1:0] will store the scalar result
-  logic                           w_valid; 
-  logic   [`VCSR_VXSAT_WIDTH-1:0] vxsat;     
   
   // for-loop
-
-  genvar                          j;
+  genvar                                              j;
 
 //
 // prepare source data to calculate    
@@ -792,21 +786,16 @@ module rvv_backend_alu_unit_other
 // submit result to ROB
 //
 `ifdef TB_SUPPORT
-  assign  result.uop_pc     = alu_uop.uop_pc;
+  assign  result.uop_pc = alu_uop.uop_pc;
 `endif
-  assign  result.rob_entry  = rob_entry;
-  assign  result.w_data     = w_data;
-  assign  result.w_valid    = w_valid;
-  assign  result.vxsat      = vxsat;
 
-  // result data
-  assign w_data = result_data;
+  assign  result.rob_entry = rob_entry;
 
-  // result valid signal
-  assign w_valid = result_valid;
+  assign result.w_data = result_data;
 
-  // saturate signal
-  assign vxsat = 'b0;
+  assign result.w_valid = result_valid;
+
+  assign result.vsaturate = 'b0;
 
 //
 // function unit

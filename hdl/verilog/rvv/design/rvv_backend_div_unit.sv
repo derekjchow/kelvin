@@ -65,13 +65,8 @@ module rvv_backend_div_unit
   logic                                                 result_all_valid; 
   DIV_SIGN_SRC_e                                        opcode;
 
-  // PU2ROB_t  struct signals
-  logic   [`VLEN-1:0]             w_data;             // when w_type=XRF, w_data[`XLEN-1:0] will store the scalar result
-  logic                           w_valid; 
-  logic   [`VCSR_VXSAT_WIDTH-1:0] vxsat;     
-  
   // for-loop
-  genvar                          j;
+  genvar                                                j;
 
 //
 // prepare source data to calculate    
@@ -490,23 +485,17 @@ module rvv_backend_div_unit
 // submit result to ROB
 //
 `ifdef TB_SUPPORT
-  assign  result.uop_pc     = div_uop.uop_pc;
+  assign result.uop_pc = div_uop.uop_pc;
 `endif
-  assign  result.rob_entry  = rob_entry;
-  assign  result.w_data     = w_data;
-  assign  result.w_valid    = w_valid;
-  assign  result.vxsat      = vxsat;
+  
+  assign result.rob_entry = rob_entry;
 
-  // result data
-  assign w_data = result_data;
+  assign result.w_data = result_data;
 
-  // result valid
   assign result_valid = result_all_valid;
 
-  // result type and valid signal
-  assign w_valid = result_all_valid;
+  assign result.w_valid = result_all_valid;
 
-  // saturate signal
-  assign vxsat = 'b0;
+  assign result.vsaturate = 'b0;
 
 endmodule

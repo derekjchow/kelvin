@@ -64,14 +64,14 @@ module rvv_backend_decode_unit_lsu
   logic                                           check_vstart_sle_evl;
   logic   [`UOP_INDEX_WIDTH-1:0]                  uop_vstart;         
   logic   [`UOP_INDEX_WIDTH-1:0]                  uop_index_base;         
-  logic   [`NUM_DE_UOP-1:0][`UOP_INDEX_WIDTH-1:0] uop_index_current;   
+  logic   [`NUM_DE_UOP-1:0][`UOP_INDEX_WIDTH:0]   uop_index_current;   
   logic   [`UOP_INDEX_WIDTH-1:0]                  uop_index_max;         
    
   // convert logic to enum/union
-  FUNCT6_u                                          funct6_lsu;
+  FUNCT6_u                                        funct6_lsu;
 
   // use for for-loop 
-  genvar                                            j;
+  genvar                                          j;
   
   // local parameter
   localparam  SEW_8     = 3'b000;
@@ -2102,8 +2102,13 @@ module rvv_backend_decode_unit_lsu
   assign check_vstart_sle_evl = {1'b0,csr_vstart} < vs_evl;
 
   `ifdef ASSERT_ON
-    `rvv_forbid((inst_valid==1'b1)&(inst_encoding_correct==1'b0))
-    else $warning("This instruction will be discarded directly.\n");
+    `ifdef TB_SUPPORT
+      `rvv_forbid((inst_valid==1'b1)&(inst_encoding_correct==1'b0))
+      else $warning("pc(%d) instruction will be discarded directly.\n",inst.inst_pc);
+    `else
+      `rvv_forbid((inst_valid==1'b1)&(inst_encoding_correct==1'b0))
+      else $warning("This instruction will be discarded directly.\n");
+    `endif
   `endif
 
 // get the start number of uop_index
@@ -2160,7 +2165,7 @@ module rvv_backend_decode_unit_lsu
   // generate uop valid
   always_comb begin        
     for(int i=0;i<`NUM_DE_UOP;i=i+1) begin: GET_UOP_VALID
-      if ((uop_index_current[i]<=uop_index_max)&inst_valid) 
+      if ((uop_index_current[i]<={1'b0,uop_index_max})&inst_valid) 
         uop_valid[i]  = inst_encoding_correct;
       else
         uop_valid[i]  = 'b0;
@@ -2239,18 +2244,18 @@ module rvv_backend_decode_unit_lsu
       uop[i].vector_csr               = vector_csr_lsu;
 
       // update vstart of every uop
-      if(uop_index_current[i]==uop_vstart)
+      if(uop_index_current[i]=={1'b0,uop_vstart})
         uop[i].vector_csr.vstart      = csr_vstart;
       else begin
         case(eew_max)
           EEW8: begin
-            uop[i].vector_csr.vstart  = {uop_index_current[i],4'b0};
+            uop[i].vector_csr.vstart  = {uop_index_current[i][`UOP_INDEX_WIDTH-1:0],4'b0};
           end
           EEW16: begin
-            uop[i].vector_csr.vstart  = {1'b0,uop_index_current[i],3'b0};
+            uop[i].vector_csr.vstart  = {1'b0,uop_index_current[i][`UOP_INDEX_WIDTH-1:0],3'b0};
           end
           EEW32: begin
-            uop[i].vector_csr.vstart  = {2'b0,uop_index_current[i],2'b0};
+            uop[i].vector_csr.vstart  = {2'b0,uop_index_current[i][`UOP_INDEX_WIDTH-1:0],2'b0};
           end
         endcase
       end
@@ -2496,14 +2501,14 @@ module rvv_backend_decode_unit_lsu
   // update uop index
   always_comb begin
     for(int i=0;i<`NUM_DE_UOP;i=i+1) begin: ASSIGN_UOP_INDEX
-      uop[i].uop_index = uop_index_current[i];
+      uop[i].uop_index = uop_index_current[i][`UOP_INDEX_WIDTH-1:0];
     end
   end
 
   // update last_uop valid
   always_comb begin
     for(int i=0;i<`NUM_DE_UOP;i=i+1) begin: GET_UOP_LAST
-      uop[i].last_uop_valid = uop_index_current[i] == uop_index_max;
+      uop[i].last_uop_valid = uop_index_current[i][`UOP_INDEX_WIDTH-1:0] == uop_index_max;
     end
   end
 
