@@ -247,13 +247,13 @@ class alu_smoke_vx_seq extends base_sequence;
   endtask: run_inst
 endclass: alu_smoke_vx_seq
 
-class alu_smoke_vmerge_seq extends base_sequence;
-  `uvm_object_utils(alu_smoke_vmerge_seq)
-  `uvm_add_to_seq_lib(alu_smoke_vmerge_seq,rvs_sequencer_sequence_library)
+class alu_smoke_vmerge_vmvv_seq extends base_sequence;
+  `uvm_object_utils(alu_smoke_vmerge_vmvv_seq)
+  `uvm_add_to_seq_lib(alu_smoke_vmerge_vmvv_seq,rvs_sequencer_sequence_library)
 
   alu_inst_e alu_inst;
   bit vm;
-  function new(string name = "alu_smoke_vmerge_seq");
+  function new(string name = "alu_smoke_vmerge_vmvv_seq");
     super.new(name);
 	`ifdef UVM_POST_VERSION_1_1
      set_automatic_phase_objection(1);
@@ -305,7 +305,7 @@ class alu_smoke_vmerge_seq extends base_sequence;
     this.alu_inst = inst;
     this.start(sqr);
   endtask: run_inst
-endclass: alu_smoke_vmerge_seq
+endclass: alu_smoke_vmerge_vmvv_seq
 
 class alu_smoke_vmunary0_seq extends base_sequence;
   `uvm_object_utils(alu_smoke_vmunary0_seq)
@@ -887,11 +887,11 @@ endclass: alu_iterate_ext_seq
 //-----------------------------------------------------------
 // Iterate vmerge/vmv.v
 //-----------------------------------------------------------
-class alu_iterate_vmerge_seq extends alu_iterate_base_sequence;
-  `uvm_object_utils(alu_iterate_vmerge_seq)
-  `uvm_add_to_seq_lib(alu_iterate_vmerge_seq,rvs_sequencer_sequence_library)
+class alu_iterate_vmerge_vmvv_seq extends alu_iterate_base_sequence;
+  `uvm_object_utils(alu_iterate_vmerge_vmvv_seq)
+  `uvm_add_to_seq_lib(alu_iterate_vmerge_vmvv_seq,rvs_sequencer_sequence_library)
     
-  function new(string name = "alu_iterate_vmerge_seq");
+  function new(string name = "alu_iterate_vmerge_vmvv_seq");
     super.new(name);
 	  `ifdef UVM_POST_VERSION_1_1
       set_automatic_phase_objection(1);
@@ -1007,7 +1007,7 @@ class alu_iterate_vmerge_seq extends alu_iterate_base_sequence;
     end
   endtask
 
-endclass: alu_iterate_vmerge_seq
+endclass: alu_iterate_vmerge_vmvv_seq
 
 //=================================================
 // LDST direct test sequence

@@ -1051,12 +1051,12 @@ endclass: alu_vwmac_test
 // 32.11.15. Vector Integer Merge Instructions
 // 32.11.16. Vector Integer Move Instructions
 //-----------------------------------------------------------
-class alu_vmerge_test extends rvv_backend_test;
+class alu_vmerge_vmvv_test extends rvv_backend_test;
 
-  alu_iterate_vmerge_seq rvs_seq;
+  alu_iterate_vmerge_vmvv_seq rvs_seq;
   alu_smoke_vv_seq rvs_last_seq;
 
-  `uvm_component_utils(alu_vmerge_test)
+  `uvm_component_utils(alu_vmerge_vmvv_test)
 
   function new(string name, uvm_component parent);
     super.new(name, parent);
@@ -1074,7 +1074,7 @@ class alu_vmerge_test extends rvv_backend_test;
   task main_phase(uvm_phase phase);
     phase.raise_objection( .obj( this ) );
 
-    rvs_seq = alu_iterate_vmerge_seq::type_id::create("rvs_seq", this);
+    rvs_seq = alu_iterate_vmerge_vmvv_seq::type_id::create("rvs_seq", this);
     rvs_seq.run_inst_iter(VMERGE_VMVV, env.rvs_agt.rvs_sqr, 0); // vmerge
     rvs_seq.run_inst_iter(VMERGE_VMVV, env.rvs_agt.rvs_sqr, 1); // vmv.v
 
@@ -1089,7 +1089,7 @@ class alu_vmerge_test extends rvv_backend_test;
   function void final_phase(uvm_phase phase);
     super.final_phase(phase);
   endfunction
-endclass: alu_vmerge_test
+endclass: alu_vmerge_vmvv_test
 
 //-----------------------------------------------------------
 // 32.12.1. Vector Single-Width Saturating Add and Subtract
