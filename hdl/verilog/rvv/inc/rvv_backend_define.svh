@@ -29,11 +29,11 @@
 // the depth of queue/station/buffer
 `define CQ_DEPTH                8
 `define UQ_DEPTH                16
-`define ALU_RS_DEPTH            2
+`define ALU_RS_DEPTH            4
 `define PMTRDT_RS_DEPTH         8
-`define MUL_RS_DEPTH            2
-`define DIV_RS_DEPTH            2
-`define LSU_RS_DEPTH            2
+`define MUL_RS_DEPTH            4
+`define DIV_RS_DEPTH            4
+`define LSU_RS_DEPTH            4
 `define ROB_DEPTH               8
 `define ROB_DEPTH_WIDTH         $clog2(`ROB_DEPTH)
 

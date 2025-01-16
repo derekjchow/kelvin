@@ -5069,17 +5069,18 @@ module rvv_backend_decode_unit_ari
             VRSUB,
             VADC,
             VMADC,
-            VSBC,
             VAND,
             VOR,
             VXOR,
             VMSEQ,
             VMSNE,
+            VMSLEU,
             VMSLE,
+            VMSGTU,
             VMSGT,
             VMERGE_VMV,
-            VSADD,
-            VNCLIP: begin
+            VSADDU,
+            VSADD: begin
               case(inst_funct3)
                 OPIVX: begin
                   uop[i].rs1_data       = rs1_data;
@@ -5093,13 +5094,14 @@ module rvv_backend_decode_unit_ari
             end
           
             VSUB,
+            VSBC,
             VMSBC,
             VMSLTU,
             VMSLT,
-            VMIN,
-            VMAX,
             VMINU,
+            VMIN,
             VMAXU,
+            VMAX,
             VSSUBU,
             VSSUB,
             VSMUL_VMVNRR: begin
@@ -5116,12 +5118,10 @@ module rvv_backend_decode_unit_ari
             VSRA,
             VNSRL,
             VNSRA,
-            VMSLEU,
-            VMSGTU,
-            VSADDU,
             VSSRL,
             VSSRA,
             VNCLIPU,
+            VNCLIP,
             VSLIDEUP_RGATHEREI16,
             VSLIDEDOWN,
             VRGATHER: begin

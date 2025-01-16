@@ -157,9 +157,21 @@ module rvv_backend_decode_ctrl
     
     case(1'b1)
       uop_index_enable_unit0: 
-        uop_index_din = uop_index_remain + 'd4;    
-      uop_index_enable_unit1:
-        uop_index_din = 'd4 - quantity; 
+        uop_index_din = uop_de2uq[0][`NUM_DE_UOP-1].uop_index + 1'b1;    
+      uop_index_enable_unit1: begin
+        case(quantity)
+          'd0:
+            uop_index_din = uop_de2uq[1][3].uop_index + 1'b1; 
+          'd1:
+            uop_index_din = uop_de2uq[1][2].uop_index + 1'b1; 
+          'd2:
+            uop_index_din = uop_de2uq[1][1].uop_index + 1'b1; 
+          'd3:
+            uop_index_din = uop_de2uq[1][0].uop_index + 1'b1; 
+          'd4:
+            uop_index_din = uop_de2uq[1][0].uop_index; 
+        endcase
+      end
     endcase
   end
 

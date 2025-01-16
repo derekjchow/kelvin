@@ -1000,58 +1000,133 @@ module rvv_backend_alu_unit_addsub
     round8  = 'b0;
     round16 = 'b0;
     round32 = 'b0;
+    
+    case(uop_funct6.ari_funct6)
+      VAADDU,
+      VASUBU: begin
+        case(vxrm)
+          RNU: begin
+            for(int i=0;i<`VLENB;i=i+1) begin
+              round8[i] = f_half_add8({cout8[i],product8[i][`BYTE_WIDTH-1:1]}, product8[i][0]); 
+            end
 
-    case(vxrm)
-      RNU: begin
-        for(int i=0;i<`VLENB;i=i+1) begin
-          round8[i] = f_half_add8({cout8[i],product8[i][`BYTE_WIDTH-1:1]}, product8[i][0]); 
-        end
-        
-        for(int i=0;i<`VLEN/`HWORD_WIDTH;i=i+1) begin
-          round16[i] = f_half_add16({cout16[i],product16[i][`HWORD_WIDTH-1:1]}, product16[i][0]); 
-        end
-        for(int i=0;i<`VLEN/`WORD_WIDTH;i=i+1) begin
-          round32[i] = f_half_add32({cout32[i],product32[i][`WORD_WIDTH-1:1]}, product32[i][0]); 
-        end
+            for(int i=0;i<`VLEN/`HWORD_WIDTH;i=i+1) begin
+              round16[i] = f_half_add16({cout16[i],product16[i][`HWORD_WIDTH-1:1]}, product16[i][0]); 
+            end
+
+            for(int i=0;i<`VLEN/`WORD_WIDTH;i=i+1) begin
+              round32[i] = f_half_add32({cout32[i],product32[i][`WORD_WIDTH-1:1]}, product32[i][0]); 
+            end
+          end
+          RNE: begin
+            for(int i=0;i<`VLENB;i=i+1) begin
+              round8[i] = f_half_add8({cout8[i],product8[i][`BYTE_WIDTH-1:1]}, (product8[i][0]&product8[i][1])); 
+            end
+    
+            for(int i=0;i<`VLEN/`HWORD_WIDTH;i=i+1) begin
+              round16[i] = f_half_add16({cout16[i],product16[i][`HWORD_WIDTH-1:1]}, (product16[i][0]&product16[i][1])); 
+            end
+    
+            for(int i=0;i<`VLEN/`WORD_WIDTH;i=i+1) begin
+              round32[i] = f_half_add32({cout32[i],product32[i][`WORD_WIDTH-1:1]}, (product32[i][0]&product32[i][1])); 
+            end
+          end
+          RDN: begin
+            for(int i=0;i<`VLENB;i=i+1) begin
+              round8[i] = {cout8[i],product8[i][`BYTE_WIDTH-1:1]}; 
+            end
+    
+            for(int i=0;i<`VLEN/`HWORD_WIDTH;i=i+1) begin
+              round16[i] = {cout16[i],product16[i][`HWORD_WIDTH-1:1]}; 
+            end
+    
+            for(int i=0;i<`VLEN/`WORD_WIDTH;i=i+1) begin
+              round32[i] = {cout32[i],product32[i][`WORD_WIDTH-1:1]}; 
+            end
+          end
+          ROD: begin
+            for(int i=0;i<`VLENB;i=i+1) begin
+              round8[i] = f_half_add8({cout8[i],product8[i][`BYTE_WIDTH-1:1]}, ((!product8[i][1])&product8[i][0])); 
+            end
+    
+            for(int i=0;i<`VLEN/`HWORD_WIDTH;i=i+1) begin
+              round16[i] = f_half_add16({cout16[i],product16[i][`HWORD_WIDTH-1:1]}, ((!product16[i][1])&product16[i][0])); 
+            end
+    
+            for(int i=0;i<`VLEN/`WORD_WIDTH;i=i+1) begin
+              round32[i] = f_half_add32({cout32[i],product32[i][`WORD_WIDTH-1:1]}, ((!product32[i][1])&product32[i][0])); 
+            end
+          end
+        endcase
       end
-      RNE: begin
-        for(int i=0;i<`VLENB;i=i+1) begin
-          round8[i] = f_half_add8({cout8[i],product8[i][`BYTE_WIDTH-1:1]}, (product8[i][0]&product8[i][1])); 
-        end
+      VAADD,
+      VASUB: begin
+        case(vxrm)
+          RNU: begin
+            for(int i=0;i<`VLENB;i=i+1) begin
+              round8[i] = f_half_add8({src2_data[i][`BYTE_WIDTH-1]^src1_data[i][`BYTE_WIDTH-1]?(!cout8[i]):cout8[i],
+                                      product8[i][`BYTE_WIDTH-1:1]}, product8[i][0]); 
+            end
+            
+            for(int i=0;i<`VLEN/`HWORD_WIDTH;i=i+1) begin
+              round16[i] = f_half_add16({src2_data[2*i+1][`BYTE_WIDTH-1]^src1_data[2*i+1][`BYTE_WIDTH-1]?(!cout16[i]):cout16[i],
+                                        product16[i][`HWORD_WIDTH-1:1]}, product16[i][0]); 
+            end
 
-        for(int i=0;i<`VLEN/`HWORD_WIDTH;i=i+1) begin
-          round16[i] = f_half_add16({cout16[i],product16[i][`HWORD_WIDTH-1:1]}, (product16[i][0]&product16[i][1])); 
-        end
-
-        for(int i=0;i<`VLEN/`WORD_WIDTH;i=i+1) begin
-          round32[i] = f_half_add32({cout32[i],product32[i][`WORD_WIDTH-1:1]}, (product32[i][0]&product32[i][1])); 
-        end
-      end
-      RDN: begin
-        for(int i=0;i<`VLENB;i=i+1) begin
-          round8[i] = {cout8[i],product8[i][`BYTE_WIDTH-1:1]}; 
-        end
-
-        for(int i=0;i<`VLEN/`HWORD_WIDTH;i=i+1) begin
-          round16[i] = {cout16[i],product16[i][`HWORD_WIDTH-1:1]}; 
-        end
-
-        for(int i=0;i<`VLEN/`WORD_WIDTH;i=i+1) begin
-          round32[i] = {cout32[i],product32[i][`WORD_WIDTH-1:1]}; 
-        end
-      end
-      ROD: begin
-        for(int i=0;i<`VLENB;i=i+1) begin
-          round8[i] = f_half_add8({cout8[i],product8[i][`BYTE_WIDTH-1:1]}, ((!product8[i][1])&product8[i][0])); 
-        end
-
-        for(int i=0;i<`VLEN/`HWORD_WIDTH;i=i+1) begin
-          round16[i] = f_half_add16({cout16[i],product16[i][`HWORD_WIDTH-1:1]}, ((!product16[i][1])&product16[i][0])); 
-        end
-
-        for(int i=0;i<`VLEN/`WORD_WIDTH;i=i+1) begin
-          round32[i] = f_half_add32({cout32[i],product32[i][`WORD_WIDTH-1:1]}, ((!product32[i][1])&product32[i][0])); 
-        end
+            for(int i=0;i<`VLEN/`WORD_WIDTH;i=i+1) begin
+              round32[i] = f_half_add32({src2_data[4*i+3][`BYTE_WIDTH-1]^src1_data[4*i+3][`BYTE_WIDTH-1]?(!cout32[i]):cout32[i],
+                                        product32[i][`WORD_WIDTH-1:1]}, product32[i][0]); 
+            end
+          end
+          RNE: begin
+            for(int i=0;i<`VLENB;i=i+1) begin
+              round8[i] = f_half_add8({src2_data[i][`BYTE_WIDTH-1]^src1_data[i][`BYTE_WIDTH-1]?(!cout8[i]):cout8[i],
+                                      product8[i][`BYTE_WIDTH-1:1]}, (product8[i][0]&product8[i][1])); 
+            end
+    
+            for(int i=0;i<`VLEN/`HWORD_WIDTH;i=i+1) begin
+              round16[i] = f_half_add16({src2_data[2*i+1][`BYTE_WIDTH-1]^src1_data[2*i+1][`BYTE_WIDTH-1]?(!cout16[i]):cout16[i],
+                                        product16[i][`HWORD_WIDTH-1:1]}, (product16[i][0]&product16[i][1])); 
+            end
+    
+            for(int i=0;i<`VLEN/`WORD_WIDTH;i=i+1) begin
+              round32[i] = f_half_add32({src2_data[4*i+3][`BYTE_WIDTH-1]^src1_data[4*i+3][`BYTE_WIDTH-1]?(!cout32[i]):cout32[i],
+                                        product32[i][`WORD_WIDTH-1:1]}, (product32[i][0]&product32[i][1])); 
+            end
+          end
+          RDN: begin
+            for(int i=0;i<`VLENB;i=i+1) begin
+              round8[i] = {src2_data[i][`BYTE_WIDTH-1]^src1_data[i][`BYTE_WIDTH-1]?(!cout8[i]):cout8[i],
+                           product8[i][`BYTE_WIDTH-1:1]}; 
+            end
+    
+            for(int i=0;i<`VLEN/`HWORD_WIDTH;i=i+1) begin
+              round16[i] = {src2_data[2*i+1][`BYTE_WIDTH-1]^src1_data[2*i+1][`BYTE_WIDTH-1]?(!cout16[i]):cout16[i],
+                            product16[i][`HWORD_WIDTH-1:1]}; 
+            end
+    
+            for(int i=0;i<`VLEN/`WORD_WIDTH;i=i+1) begin
+              round32[i] = {src2_data[4*i+3][`BYTE_WIDTH-1]^src1_data[4*i+3][`BYTE_WIDTH-1]?(!cout32[i]):cout32[i],
+                            product32[i][`WORD_WIDTH-1:1]}; 
+            end
+          end
+          ROD: begin
+            for(int i=0;i<`VLENB;i=i+1) begin
+              round8[i] = f_half_add8({src2_data[i][`BYTE_WIDTH-1]^src1_data[i][`BYTE_WIDTH-1]?(!cout8[i]):cout8[i],
+                                        product8[i][`BYTE_WIDTH-1:1]}, ((!product8[i][1])&product8[i][0])); 
+            end
+    
+            for(int i=0;i<`VLEN/`HWORD_WIDTH;i=i+1) begin
+              round16[i] = f_half_add16({src2_data[2*i+1][`BYTE_WIDTH-1]^src1_data[2*i+1][`BYTE_WIDTH-1]?(!cout16[i]):cout16[i],
+                                        product16[i][`HWORD_WIDTH-1:1]}, ((!product16[i][1])&product16[i][0])); 
+            end
+    
+            for(int i=0;i<`VLEN/`WORD_WIDTH;i=i+1) begin
+              round32[i] = f_half_add32({src2_data[4*i+3][`BYTE_WIDTH-1]^src1_data[4*i+3][`BYTE_WIDTH-1]?(!cout32[i]):cout32[i],
+                                        product32[i][`WORD_WIDTH-1:1]}, ((!product32[i][1])&product32[i][0])); 
+            end
+          end
+        endcase
       end
     endcase
   end
@@ -1073,79 +1148,79 @@ module rvv_backend_alu_unit_addsub
             addu_upoverflow[4*j +: 4] = {cout8[4*j+3],cout8[4*j+2],cout8[4*j+1],cout8[4*j]};
 
             add_upoverflow[4*j +: 4] = {
-              ((cout8[4*j+3]==1'b1)&(src2_data[4*j+3][`BYTE_WIDTH-1]==1'b0)&(src1_data[4*j+3][`BYTE_WIDTH-1]==1'b0)),
-              ((cout8[4*j+2]==1'b1)&(src2_data[4*j+2][`BYTE_WIDTH-1]==1'b0)&(src1_data[4*j+2][`BYTE_WIDTH-1]==1'b0)),
-              ((cout8[4*j+1]==1'b1)&(src2_data[4*j+1][`BYTE_WIDTH-1]==1'b0)&(src1_data[4*j+1][`BYTE_WIDTH-1]==1'b0)),
-              ((cout8[4*j]  ==1'b1)&(src2_data[4*j  ][`BYTE_WIDTH-1]==1'b0)&(src1_data[4*j  ][`BYTE_WIDTH-1]==1'b0))};
+              ((product8[4*j+3][`BYTE_WIDTH-1]==1'b1)&(src2_data[4*j+3][`BYTE_WIDTH-1]==1'b0)&(src1_data[4*j+3][`BYTE_WIDTH-1]==1'b0)),
+              ((product8[4*j+2][`BYTE_WIDTH-1]==1'b1)&(src2_data[4*j+2][`BYTE_WIDTH-1]==1'b0)&(src1_data[4*j+2][`BYTE_WIDTH-1]==1'b0)),
+              ((product8[4*j+1][`BYTE_WIDTH-1]==1'b1)&(src2_data[4*j+1][`BYTE_WIDTH-1]==1'b0)&(src1_data[4*j+1][`BYTE_WIDTH-1]==1'b0)),
+              ((product8[4*j  ][`BYTE_WIDTH-1]==1'b1)&(src2_data[4*j  ][`BYTE_WIDTH-1]==1'b0)&(src1_data[4*j  ][`BYTE_WIDTH-1]==1'b0))};
 
             add_underoverflow[4*j +: 4] = {
-              ((cout8[4*j+3]==1'b0)&(src2_data[4*j+3][`BYTE_WIDTH-1]==1'b1)&(src1_data[4*j+3][`BYTE_WIDTH-1]==1'b1)),
-              ((cout8[4*j+2]==1'b0)&(src2_data[4*j+2][`BYTE_WIDTH-1]==1'b1)&(src1_data[4*j+2][`BYTE_WIDTH-1]==1'b1)),
-              ((cout8[4*j+1]==1'b0)&(src2_data[4*j+1][`BYTE_WIDTH-1]==1'b1)&(src1_data[4*j+1][`BYTE_WIDTH-1]==1'b1)),
-              ((cout8[4*j]  ==1'b0)&(src2_data[4*j  ][`BYTE_WIDTH-1]==1'b1)&(src1_data[4*j  ][`BYTE_WIDTH-1]==1'b1))};
+              ((product8[4*j+3][`BYTE_WIDTH-1]==1'b0)&(src2_data[4*j+3][`BYTE_WIDTH-1]==1'b1)&(src1_data[4*j+3][`BYTE_WIDTH-1]==1'b1)),
+              ((product8[4*j+2][`BYTE_WIDTH-1]==1'b0)&(src2_data[4*j+2][`BYTE_WIDTH-1]==1'b1)&(src1_data[4*j+2][`BYTE_WIDTH-1]==1'b1)),
+              ((product8[4*j+1][`BYTE_WIDTH-1]==1'b0)&(src2_data[4*j+1][`BYTE_WIDTH-1]==1'b1)&(src1_data[4*j+1][`BYTE_WIDTH-1]==1'b1)),
+              ((product8[4*j  ][`BYTE_WIDTH-1]==1'b0)&(src2_data[4*j  ][`BYTE_WIDTH-1]==1'b1)&(src1_data[4*j  ][`BYTE_WIDTH-1]==1'b1))};
             
             subu_underoverflow[4*j +: 4] = {cout8[4*j+3],cout8[4*j+2],cout8[4*j+1],cout8[4*j]};
 
             sub_upoverflow[4*j +: 4] = {
-              ((cout8[4*j+3]==1'b1)&(src2_data[4*j+3][`BYTE_WIDTH-1]==1'b0)&(src1_data[4*j+3][`BYTE_WIDTH-1]==1'b1)),
-              ((cout8[4*j+2]==1'b1)&(src2_data[4*j+2][`BYTE_WIDTH-1]==1'b0)&(src1_data[4*j+2][`BYTE_WIDTH-1]==1'b1)),
-              ((cout8[4*j+1]==1'b1)&(src2_data[4*j+1][`BYTE_WIDTH-1]==1'b0)&(src1_data[4*j+1][`BYTE_WIDTH-1]==1'b1)),
-              ((cout8[4*j]  ==1'b1)&(src2_data[4*j  ][`BYTE_WIDTH-1]==1'b0)&(src1_data[4*j  ][`BYTE_WIDTH-1]==1'b1))};
+              ((product8[4*j+3][`BYTE_WIDTH-1]==1'b1)&(src2_data[4*j+3][`BYTE_WIDTH-1]==1'b0)&(src1_data[4*j+3][`BYTE_WIDTH-1]==1'b1)),
+              ((product8[4*j+2][`BYTE_WIDTH-1]==1'b1)&(src2_data[4*j+2][`BYTE_WIDTH-1]==1'b0)&(src1_data[4*j+2][`BYTE_WIDTH-1]==1'b1)),
+              ((product8[4*j+1][`BYTE_WIDTH-1]==1'b1)&(src2_data[4*j+1][`BYTE_WIDTH-1]==1'b0)&(src1_data[4*j+1][`BYTE_WIDTH-1]==1'b1)),
+              ((product8[4*j  ][`BYTE_WIDTH-1]==1'b1)&(src2_data[4*j  ][`BYTE_WIDTH-1]==1'b0)&(src1_data[4*j  ][`BYTE_WIDTH-1]==1'b1))};
 
             sub_underoverflow[4*j +: 4] = {
-              ((cout8[4*j+3]==1'b0)&(src2_data[4*j+3][`BYTE_WIDTH-1]==1'b1)&(src1_data[4*j+3][`BYTE_WIDTH-1]==1'b0)),
-              ((cout8[4*j+2]==1'b0)&(src2_data[4*j+2][`BYTE_WIDTH-1]==1'b1)&(src1_data[4*j+2][`BYTE_WIDTH-1]==1'b0)),
-              ((cout8[4*j+1]==1'b0)&(src2_data[4*j+1][`BYTE_WIDTH-1]==1'b1)&(src1_data[4*j+1][`BYTE_WIDTH-1]==1'b0)),
-              ((cout8[4*j]  ==1'b0)&(src2_data[4*j  ][`BYTE_WIDTH-1]==1'b1)&(src1_data[4*j  ][`BYTE_WIDTH-1]==1'b0))};
+              ((product8[4*j+3][`BYTE_WIDTH-1]==1'b0)&(src2_data[4*j+3][`BYTE_WIDTH-1]==1'b1)&(src1_data[4*j+3][`BYTE_WIDTH-1]==1'b0)),
+              ((product8[4*j+2][`BYTE_WIDTH-1]==1'b0)&(src2_data[4*j+2][`BYTE_WIDTH-1]==1'b1)&(src1_data[4*j+2][`BYTE_WIDTH-1]==1'b0)),
+              ((product8[4*j+1][`BYTE_WIDTH-1]==1'b0)&(src2_data[4*j+1][`BYTE_WIDTH-1]==1'b1)&(src1_data[4*j+1][`BYTE_WIDTH-1]==1'b0)),
+              ((product8[4*j  ][`BYTE_WIDTH-1]==1'b0)&(src2_data[4*j  ][`BYTE_WIDTH-1]==1'b1)&(src1_data[4*j  ][`BYTE_WIDTH-1]==1'b0))};
           end
           EEW16: begin
             addu_upoverflow[4*j +: 4] = {cout16[2*j+1],1'b0,cout16[2*j],1'b0};
 
             add_upoverflow[4*j +: 4] = {
-              ((cout16[2*j+1]==1'b1)&(src2_data[4*j+3][`BYTE_WIDTH-1]==1'b0)&(src1_data[4*j+3][`BYTE_WIDTH-1]==1'b0)),
+              ((product16[2*j+1][`HWORD_WIDTH-1]==1'b1)&(src2_data[4*j+3][`BYTE_WIDTH-1]==1'b0)&(src1_data[4*j+3][`BYTE_WIDTH-1]==1'b0)),
               1'b0,
-              ((cout16[2*j]  ==1'b1)&(src2_data[4*j+1][`BYTE_WIDTH-1]==1'b0)&(src1_data[4*j+1][`BYTE_WIDTH-1]==1'b0)),
+              ((product16[2*j  ][`HWORD_WIDTH-1]==1'b1)&(src2_data[4*j+1][`BYTE_WIDTH-1]==1'b0)&(src1_data[4*j+1][`BYTE_WIDTH-1]==1'b0)),
               1'b0};
 
             add_underoverflow[4*j +: 4] = {
-              ((cout16[2*j+1]==1'b0)&(src2_data[4*j+3][`BYTE_WIDTH-1]==1'b1)&(src1_data[4*j+3][`BYTE_WIDTH-1]==1'b1)),
+              ((product16[2*j+1][`HWORD_WIDTH-1]==1'b0)&(src2_data[4*j+3][`BYTE_WIDTH-1]==1'b1)&(src1_data[4*j+3][`BYTE_WIDTH-1]==1'b1)),
               1'b0,
-              ((cout16[2*j]  ==1'b0)&(src2_data[4*j+1][`BYTE_WIDTH-1]==1'b1)&(src1_data[4*j+1][`BYTE_WIDTH-1]==1'b1)),
+              ((product16[2*j  ][`HWORD_WIDTH-1]==1'b0)&(src2_data[4*j+1][`BYTE_WIDTH-1]==1'b1)&(src1_data[4*j+1][`BYTE_WIDTH-1]==1'b1)),
               1'b0};
 
             subu_underoverflow[4*j +: 4] = {cout16[2*j+1],1'b0,cout16[2*j],1'b0};
 
             sub_upoverflow[4*j +: 4] = {
-              ((cout16[2*j+1]==1'b1)&(src2_data[4*j+3][`BYTE_WIDTH-1]==1'b0)&(src1_data[4*j+3][`BYTE_WIDTH-1]==1'b1)),
+              ((product16[2*j+1][`HWORD_WIDTH-1]==1'b1)&(src2_data[4*j+3][`BYTE_WIDTH-1]==1'b0)&(src1_data[4*j+3][`BYTE_WIDTH-1]==1'b1)),
               1'b0,
-              ((cout16[2*j]  ==1'b1)&(src2_data[4*j+1][`BYTE_WIDTH-1]==1'b0)&(src1_data[4*j+1][`BYTE_WIDTH-1]==1'b1)),
+              ((product16[2*j  ][`HWORD_WIDTH-1]==1'b1)&(src2_data[4*j+1][`BYTE_WIDTH-1]==1'b0)&(src1_data[4*j+1][`BYTE_WIDTH-1]==1'b1)),
               1'b0};
 
             sub_underoverflow[4*j +: 4] = {
-              ((cout16[2*j+1]==1'b0)&(src2_data[4*j+3][`BYTE_WIDTH-1]==1'b1)&(src1_data[4*j+3][`BYTE_WIDTH-1]==1'b0)),
+              ((product16[2*j+1][`HWORD_WIDTH-1]==1'b0)&(src2_data[4*j+3][`BYTE_WIDTH-1]==1'b1)&(src1_data[4*j+3][`BYTE_WIDTH-1]==1'b0)),
               1'b0,
-              ((cout16[2*j]  ==1'b0)&(src2_data[4*j+1][`BYTE_WIDTH-1]==1'b1)&(src1_data[4*j+1][`BYTE_WIDTH-1]==1'b0)),
+              ((product16[2*j  ][`HWORD_WIDTH-1]==1'b0)&(src2_data[4*j+1][`BYTE_WIDTH-1]==1'b1)&(src1_data[4*j+1][`BYTE_WIDTH-1]==1'b0)),
               1'b0};
           end
           EEW32: begin
             addu_upoverflow[4*j +: 4] = {cout32[j],3'b0};
 
             add_upoverflow[4*j +: 4] = {
-              ((cout32[j]==1'b1)&(src2_data[4*j+3][`BYTE_WIDTH-1]==1'b0)&(src1_data[4*j+3][`BYTE_WIDTH-1]==1'b0)),
+              ((product32[j][`WORD_WIDTH-1]==1'b1)&(src2_data[4*j+3][`BYTE_WIDTH-1]==1'b0)&(src1_data[4*j+3][`BYTE_WIDTH-1]==1'b0)),
               3'b0};
 
             add_underoverflow[4*j +: 4] = {
-              ((cout32[j]==1'b0)&(src2_data[4*j+3][`BYTE_WIDTH-1]==1'b1)&(src1_data[4*j+3][`BYTE_WIDTH-1]==1'b1)),
+              ((product32[j][`WORD_WIDTH-1]==1'b0)&(src2_data[4*j+3][`BYTE_WIDTH-1]==1'b1)&(src1_data[4*j+3][`BYTE_WIDTH-1]==1'b1)),
               3'b0};
 
             subu_underoverflow[4*j +: 4] = {cout32[j],3'b0};
 
             sub_upoverflow[4*j +: 4] = {
-              ((cout32[j]==1'b1)&(src2_data[4*j+3][`BYTE_WIDTH-1]==1'b0)&(src1_data[4*j+3][`BYTE_WIDTH-1]==1'b1)),
+              ((product32[j][`WORD_WIDTH-1]==1'b1)&(src2_data[4*j+3][`BYTE_WIDTH-1]==1'b0)&(src1_data[4*j+3][`BYTE_WIDTH-1]==1'b1)),
               3'b0};
 
             sub_underoverflow[4*j +: 4] = {
-              ((cout32[j]==1'b0)&(src2_data[4*j+3][`BYTE_WIDTH-1]==1'b1)&(src1_data[4*j+3][`BYTE_WIDTH-1]==1'b0)),
+              ((product32[j][`WORD_WIDTH-1]==1'b0)&(src2_data[4*j+3][`BYTE_WIDTH-1]==1'b1)&(src1_data[4*j+3][`BYTE_WIDTH-1]==1'b0)),
               3'b0};
           end
         endcase

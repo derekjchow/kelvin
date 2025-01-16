@@ -65,18 +65,16 @@ module rvv_backend_alu_unit_mask
   logic   [`VLEN-1:0]                     result_data_vfirst;
   logic   [`VLEN/16-1:0][4:0]             result_data_vcpop;
   logic   [`VLEN-1:0][$clog2(`VLEN)-1:0]               result_data_viota;
-  logic   [`VLEN/4-1:0][$clog2(`VLEN/4)-1:0]           result_data_viota_pct25;
-  logic   [`VLEN/4-1:0][$clog2(`VLEN/4)-1:0]           result_data_viota_pct50;
-  logic   [`VLEN/2-1:0][$clog2(`VLEN/2)-1:0]           result_data_viota_pct100;
+  logic   [`VLEN-1:0][$clog2(`BYTE_WIDTH):0]           result_data_viota_per8;
   logic   [`VLENB-1:0][$clog2(`VLEN)-1:0]              result_data_viota8;
   logic   [`VLEN/`HWORD_WIDTH-1:0][$clog2(`VLEN)-1:0]  result_data_viota16;
   logic   [`VLEN/`WORD_WIDTH-1:0][$clog2(`VLEN)-1:0]   result_data_viota32;
   logic   [`VLEN-1:0]                     result_data_vid8;
   logic   [`VLEN-1:0]                     result_data_vid16;
   logic   [`VLEN-1:0]                     result_data_vid32;
-  
+
   // for-loop
-  genvar                                  j;
+  genvar                          j;
 
 //
 // prepare source data to calculate    
@@ -226,7 +224,7 @@ module rvv_backend_alu_unit_mask
     // initial the data
     src2_data       = 'b0;
     src1_data       = 'b0;
-    src2_data_viota = 'b0;
+    src2_data_viota = 'b0; 
 
     // prepare source data
     case(uop_funct3)
@@ -299,9 +297,9 @@ module rvv_backend_alu_unit_mask
               end
               VIOTA: begin
                 if (vm==1'b1)
-                  src2_data_viota = vs2_data;
+                  src2_data_viota = {vs2_data,1'b0};
                 else
-                  src2_data_viota = vs2_data&v0_data; 
+                  src2_data_viota = {vs2_data&v0_data,1'b0}; 
               end
               // no source operand for VID
             endcase
@@ -352,32 +350,39 @@ module rvv_backend_alu_unit_mask
   endgenerate
 
   // viota 
-  assign result_data_viota_pct25[0]  = 'b0;
-  assign result_data_viota_pct50[0]  = 'b0;
-  assign result_data_viota_pct100[0] = 'b0;
-
   generate
-    for(j=1; j<`VLEN/4;j++) begin: VIOTA_PCT25
-      assign result_data_viota_pct25[j] = src2_data_viota[j-1]+result_data_viota_pct25[j-1];
+    for(j=0; j<`VLENB;j++) begin: GET_VIOTA_PER8
+      assign {result_data_viota_per8[8*j+7],
+              result_data_viota_per8[8*j+6], 
+              result_data_viota_per8[8*j+5], 
+              result_data_viota_per8[8*j+4], 
+              result_data_viota_per8[8*j+3], 
+              result_data_viota_per8[8*j+2], 
+              result_data_viota_per8[8*j+1], 
+              result_data_viota_per8[8*j]} = f_viota8(src2_data_viota[8*j +: 8]);
     end
 
-    for(j=1; j<`VLEN/4;j++) begin: VIOTA_PCT50
-      assign result_data_viota_pct50[j] = src2_data_viota[`VLEN/4+j-1]+result_data_viota_pct50[j-1];
-    end
-
-    for(j=1; j<`VLEN/2;j++) begin: VIOTA_PCT100
-      assign result_data_viota_pct100[j] = src2_data_viota[`VLEN/2+j-1]+result_data_viota_pct100[j-1];
-    end
-  endgenerate
-
-  generate
-    for(j=0; j<`VLEN;j++) begin: GET_VIOTA
-      if (j<`VLEN/4)
-        assign result_data_viota[j] = result_data_viota_pct25[j];
-      else if (j<`VLEN/2)
-        assign result_data_viota[j] = result_data_viota_pct50[j-`VLEN/4]+result_data_viota_pct25[`VLEN/4-1];
-      else
-        assign result_data_viota[j] = result_data_viota_pct100[j-`VLEN/2]+result_data_viota_pct50[`VLEN/4-1];
+    for(j=0; j<`VLENB;j++) begin: GET_VIOTA
+      if (j==0) begin
+        assign result_data_viota[0] = result_data_viota_per8[0];
+        assign result_data_viota[1] = result_data_viota_per8[1];
+        assign result_data_viota[2] = result_data_viota_per8[2];
+        assign result_data_viota[3] = result_data_viota_per8[3];
+        assign result_data_viota[4] = result_data_viota_per8[4];
+        assign result_data_viota[5] = result_data_viota_per8[5];
+        assign result_data_viota[6] = result_data_viota_per8[6];
+        assign result_data_viota[7] = result_data_viota_per8[7];
+      end
+      else begin
+        assign result_data_viota[8*j  ] = result_data_viota_per8[8*j  ] + result_data_viota_per8[8*j-1];
+        assign result_data_viota[8*j+1] = result_data_viota_per8[8*j+1] + result_data_viota_per8[8*j-1];
+        assign result_data_viota[8*j+2] = result_data_viota_per8[8*j+2] + result_data_viota_per8[8*j-1];
+        assign result_data_viota[8*j+3] = result_data_viota_per8[8*j+3] + result_data_viota_per8[8*j-1];
+        assign result_data_viota[8*j+4] = result_data_viota_per8[8*j+4] + result_data_viota_per8[8*j-1];
+        assign result_data_viota[8*j+5] = result_data_viota_per8[8*j+5] + result_data_viota_per8[8*j-1];
+        assign result_data_viota[8*j+6] = result_data_viota_per8[8*j+6] + result_data_viota_per8[8*j-1];
+        assign result_data_viota[8*j+7] = result_data_viota_per8[8*j+7] + result_data_viota_per8[8*j-1];
+      end
     end
   endgenerate
   
@@ -529,9 +534,9 @@ module rvv_backend_alu_unit_mask
 // submit result to ROB
 //
 `ifdef TB_SUPPORT
-  assign result.uop_pc = alu_uop.uop_pc;
+  assign  result.uop_pc = alu_uop.uop_pc;
 `endif
-  assign result.rob_entry = rob_entry;
+  assign  result.rob_entry = rob_entry;
 
   // result data
   generate 
@@ -602,7 +607,7 @@ module rvv_backend_alu_unit_mask
 
   // result valid signal
   assign result.w_valid = result_valid;
-
+  
   // saturate signal
   assign result.vsaturate = 'b0;
 
@@ -692,6 +697,64 @@ module rvv_backend_alu_unit_mask
     input logic [`VLEN-1:0] src2;
 
     f_vmsbf = {1'b0, (src2[`VLEN-1:1]-1) & src2[`VLEN-1:1]};
+  endfunction
+
+  // viota
+  function [3:0][2:0] f_viota4;
+    input logic [3:0] src;
+    
+    if (src[0]==1'b1)
+      f_viota4[0] = 'd1;
+    else
+      f_viota4[0] = 'b0;
+      
+    if (src[1:0]==2'b11)
+      f_viota4[1] = 'd2;
+    else if ((src[1:0]==2'b10)|(src[1:0]==2'b01))
+      f_viota4[1] = 'd1;
+    else
+      f_viota4[1] = 'b0;
+
+    if (src[2:0]==3'b111)
+      f_viota4[2] = 'd3;
+    else if ((src[2:0]==3'b011)|(src[2:0]==3'b101)|(src[2:0]==3'b110))
+      f_viota4[2] = 'd2;
+    else if ((src[2:0]==3'b001)|(src[2:0]==3'b010)|(src[2:0]==3'b100))
+      f_viota4[2] = 'd1;
+    else
+      f_viota4[2] = 'b0;
+
+    if (src[3:0]==4'b1111)
+      f_viota4[3] = 'd4;
+    else if ((src[3:0]==4'b0111)|(src[3:0]==4'b1011)|(src[3:0]==4'b1101)|(src[3:0]==4'b1110))
+      f_viota4[3] = 'd3;
+    else if ((src[3:0]==4'b0011)|(src[3:0]==4'b0101)|(src[3:0]==4'b1001)|(src[3:0]==4'b0110)|(src[3:0]==4'b1010)|(src[3:0]==4'b1100))
+      f_viota4[3] = 'd2;
+    else if ((src[3:0]==4'b0001)|(src[3:0]==4'b0010)|(src[3:0]==4'b0100)|(src[3:0]==4'b1000))
+      f_viota4[3] = 'd1;
+    else
+      f_viota4[3] = 'b0;
+  
+  endfunction
+
+  function [7:0][3:0] f_viota8;
+    input logic [7:0] src;
+
+    logic [3:0][2:0] viota4_lo;
+    logic [3:0][2:0] viota4_hi;
+    
+    viota4_lo = f_viota4(src[3:0]);
+    viota4_hi = f_viota4(src[7:4]);
+
+    f_viota8[0] = viota4_lo[0];
+    f_viota8[1] = viota4_lo[1];
+    f_viota8[2] = viota4_lo[2];
+    f_viota8[3] = viota4_lo[3];
+    f_viota8[4] = viota4_hi[0]+viota4_lo[3];
+    f_viota8[5] = viota4_hi[1]+viota4_lo[3];
+    f_viota8[6] = viota4_hi[2]+viota4_lo[3];
+    f_viota8[7] = viota4_hi[3]+viota4_lo[3];
+
   endfunction
 
 endmodule
