@@ -358,22 +358,26 @@ module rvv_backend_dispatch
             assign rs_dp2pmtrdt[i].uop_pc        = uop_uop2dp[i].uop_pc; 
 `endif
             assign rs_dp2pmtrdt[i].rob_entry     = uop_index_rob2dp + i; 
+            assign rs_dp2pmtrdt[i].uop_exe_unit  = uop_uop2dp[i].uop_exe_unit; 
             assign rs_dp2pmtrdt[i].uop_funct6    = uop_uop2dp[i].uop_funct6;
             assign rs_dp2pmtrdt[i].uop_funct3    = uop_uop2dp[i].uop_funct3;
+            assign rs_dp2pmtrdt[i].vstart        = uop_uop2dp[i].vector_csr.vstart;
+            assign rs_dp2pmtrdt[i].vl            = uop_uop2dp[i].vs_evl;
             assign rs_dp2pmtrdt[i].vm            = uop_uop2dp[i].vm;
-            assign rs_dp2pmtrdt[i].vd_eew        = uop_uop2dp[i].vd_eew;
-            assign rs_dp2pmtrdt[i].vs1           = uop_uop2dp[i].vs1;
+            assign rs_dp2pmtrdt[i].v0_data       = uop_operand[i].v0;
+            assign rs_dp2pmtrdt[i].v0_data_valid = uop_uop2dp[i].v0_valid;
             assign rs_dp2pmtrdt[i].vs1_data      = uop_operand[i].vs1;
             assign rs_dp2pmtrdt[i].vs1_eew       = uop_uop2dp[i].vs1_eew;
             assign rs_dp2pmtrdt[i].vs1_data_valid= uop_uop2dp[i].vs1_index_valid;
-            assign rs_dp2pmtrdt[i].vs1_type      = uop_operand_byte_type[i].vs1;
             assign rs_dp2pmtrdt[i].vs2_data      = uop_operand[i].vs2;
             assign rs_dp2pmtrdt[i].vs2_eew       = uop_uop2dp[i].vs2_eew;
             assign rs_dp2pmtrdt[i].vs2_data_valid= uop_uop2dp[i].vs2_valid;
-            assign rs_dp2pmtrdt[i].vs2_type      = uop_operand_byte_type[i].vs2;
+            assign rs_dp2pmtrdt[i].vs3_data      = uop_operand[i].vd;
+            assign rs_dp2pmtrdt[i].vs3_data_valid= uop_uop2dp[i].vs3_valid;
             assign rs_dp2pmtrdt[i].rs1_data      = uop_uop2dp[i].rs1_data;
             assign rs_dp2pmtrdt[i].rs1_data_valid= uop_uop2dp[i].rs1_data_valid;
             assign rs_dp2pmtrdt[i].last_uop_valid= uop_uop2dp[i].last_uop_valid;
+            assign rs_dp2pmtrdt[i].uop_index     = uop_uop2dp[i].uop_index;
             
           // MUL/MAC RS
 `ifdef TB_SUPPORT

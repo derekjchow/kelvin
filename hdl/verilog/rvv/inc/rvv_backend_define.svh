@@ -51,6 +51,7 @@
 `define VLEN                    128
 `define VLENB                   `VLEN/8
 // vstart < VLMAX_max and vl <= VLMAX_max, VLMAX_max=VLEN*LMUL_max/SEW_min=128
+`define VLMAX                   `VLEN
 `define VSTART_WIDTH            $clog2(`VLEN)
 `define VL_WIDTH                $clog2(`VLEN)+1
 `define VTYPE_VILL_WIDTH        1

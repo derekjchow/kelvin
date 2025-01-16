@@ -195,7 +195,7 @@ module rvv_backend
     logic        [`NUM_DP_UOP-1:0]        rs_ready_alu2dp;
     // PMTRDT_RS 
     logic                                 pmtrdt_rs_full;
-    logic                                 pmtrdt_rs_1left_to_full;
+    logic        [`NUM_DP_UOP-1:1]        pmtrdt_rs_almost_full;
     logic        [`NUM_DP_UOP-1:0]        rs_valid_dp2pmtrdt;
     PMT_RDT_RS_t [`NUM_DP_UOP-1:0]        rs_dp2pmtrdt;
     logic        [`NUM_DP_UOP-1:0]        rs_ready_pmtrdt2dp;
@@ -227,6 +227,12 @@ module rvv_backend
     ALU_RS_t     [`NUM_ALU-1:0]           uop_rs2alu;
     logic                                 fifo_empty_rs2alu;
     logic        [`NUM_ALU-1:1]           fifo_almost_empty_rs2alu;
+  // PMTRDT_RS to PMTRDT
+    logic        [`NUM_PMTRDT-1:0]        pop_pmtrdt2rs;
+    PMT_RDT_RS_t [`NUM_PMTRDT-1:0]        uop_rs2pmtrdt;
+    logic                                 fifo_empty_rs2pmtrdt;
+    logic        [`NUM_PMTRDT-1:1]        fifo_almost_empty_rs2pmtrdt;
+    PMT_RDT_RS_t [`PMTRDT_RS_DEPTH-1:0]   all_uop_rs2pmtrdt;
   // LSU_RS to LSU
     logic        [`NUM_LSU-1:0]           pop_lsu2rs;
     LSU_RS_t     [`NUM_LSU-1:0]           uop_rs2lsu;
@@ -462,46 +468,39 @@ module rvv_backend
   `endif // ASSERT_ON
 
     // PMTRDT RS, Permutation + Reduction
-    // TODO: update once PMTRDT unit implements
-    openFifo8_flopped_2w2r #(
-        .DWIDTH     ($bits(PMT_RDT_RS_t))
+    multi_fifo #(
+        .T          (PMT_RDT_RS_t),
+        .M          (`NUM_PMTRDT),
+        .N          (`NUM_PMTRDT),
+        .DEPTH      (`PMTRDT_RS_DEPTH),
+        .CHAOS_PUSH (1'b1)
     ) u_pmtrdt_rs (
       // global
         .clk        (clk),
         .rst_n      (rst_n),
       // write
-        .push0      (rs_valid_dp2pmtrdt[0] & rs_ready_pmtrdt2dp[0]),
-        .inData0    (rs_dp2pmtrdt[0]),
-        .push1      (rs_valid_dp2pmtrdt[1] & rs_ready_pmtrdt2dp[1]),
-        .inData1    (rs_dp2pmtrdt[1]),
+        .push       (rs_valid_dp2pmtrdt & rs_ready_pmtrdt2dp),
+        .datain     (rs_dp2pmtrdt),
       // read
-        .pop0       (1'b0),
-        .outData0   (),
-        .pop1       (1'b0),
-        .outData1   (),
+        .pop        (pop_pmtrdt2rs),
+        .dataout    (uop_rs2pmtrdt),
       // fifo status
-        .fifo_full            (pmtrdt_rs_full),
-        .fifo_1left_to_full   (pmtrdt_rs_1left_to_full),
-        .fifo_empty           (),
-        .fifo_1left_to_empty  (),
-        .d0                   (),
-        .d1                   (),
-        .d2                   (),
-        .d3                   (),
-        .d4                   (),
-        .d5                   (),
-        .d6                   (),
-        .d7                   (),
-        .dPtr                 (),
-        .dValid               ()
+        .full            (pmtrdt_rs_full),
+        .almost_full     (pmtrdt_rs_almost_full),
+        .empty           (fifo_empty_rs2pmtrdt),
+        .almost_empty    (fifo_almost_empty_rs2pmtrdt),
+        .clear           (1'b0),
+        .fifo_data       (all_uop_rs2pmtrdt),
+        .wptr            (),
+        .rptr            ()
     );
 
     assign rs_ready_pmtrdt2dp[0] = ~pmtrdt_rs_full;
-    assign rs_ready_pmtrdt2dp[1] = ~pmtrdt_rs_full & ~pmtrdt_rs_1left_to_full;
+    assign rs_ready_pmtrdt2dp[1] = ~pmtrdt_rs_full & ~pmtrdt_rs_almost_full[1];
 
   `ifdef ASSERT_ON
-    // PopFromPmtrdtRSQueue: `rvv_expect((pop_pmtrdt2rs) inside {2'b11, 2'b01, 2'b00})
-    //   else $error("Pop from PMTRDT Reservation Station out-of-order: %2b", $sampled(pop_pmtrdt2rs));
+     PopFromPmtrdtRSQueue: `rvv_expect((pop_pmtrdt2rs) inside {2'b11, 2'b01, 2'b00})
+       else $error("Pop from PMTRDT Reservation Station out-of-order: %2b", $sampled(pop_pmtrdt2rs));
   `endif // ASSERT_ON
 
     // MUL RS, Multiply + Multiply-accumulate
@@ -630,16 +629,22 @@ module rvv_backend
         .result_ready_rob2alu       (wr_ready_rob2alu)
     );
 
-    /*
     // PMTRDT
-    // TODO
-    rvv_pmtrdt #(
+    rvv_backend_pmtrdt #(
     ) u_pmtrdt (
+        .clk(clk),
+        .rst_n(rst_n),
+      // PMTRDT_RS to PMTRDT
+        .pop_ex2rs                  (pop_pmtrdt2rs),
+        .pmtrdt_uop_rs2ex           (uop_rs2pmtrdt),
+        .fifo_empty_rs2ex           (fifo_empty_rs2pmtrdt),
+        .fifo_almost_empty_rs2ex    (fifo_almost_empty_rs2pmtrdt),
+        .all_uop_data               (all_uop_rs2pmtrdt),
+      // PMTRDT to ROB
+        .result_valid_ex2rob        (wr_valid_pmtrdt2rob),
+        .result_ex2rob              (wr_pmtrdt2rob),
+        .result_ready_rob2ex        (wr_ready_rob2pmtrdt)
     );
-    */
-    assign wr_valid_pmtrdt2rob = '0;
-    assign wr_pmtrdt2rob       = '0;
-
     
     // MULMAC
     rvv_backend_mulmac u_mulmac (

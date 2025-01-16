@@ -281,7 +281,7 @@ typedef enum logic [1:0] {
 
 // Effective MUL enum
 typedef enum logic [3:0] {
-  EMUL_NONE,    // it means this is nut supported 
+  EMUL_NONE,    // it means this is not supported 
   EMUL1,
   EMUL2,
   EMUL3,
@@ -294,7 +294,7 @@ typedef enum logic [3:0] {
 
 // Effective Element Width
 typedef enum logic [2:0] {
-  EEW_NONE,    // it means this is nut supported 
+  EEW_NONE,    // it means this is not supported 
   EEW1,
   EEW8, 
   EEW16,
@@ -416,7 +416,7 @@ typedef struct packed {
   logic   [`VLEN-1:0]                 vs2_data;	        
   logic                               vs2_data_valid;  
   EEW_e                               vs2_eew;
-  // rs1_data could be from X[rs1] and imm(inst[19:15]). If it is imm, the 5-bit imm(inst[19:15]) will be sign-extend to XLEN-bit. 
+  // rs1_data could be from X[rs1] and imm(inst[19:15]). If it is imm, the 5-bit imm(inst[19:15]) will be sign-extend or zero-extend(shift instructions...) to XLEN-bit.
   logic   [`XLEN-1:0] 	              rs1_data;        
   logic        	                      rs1_data_valid;                                   
   logic   [`UOP_INDEX_WIDTH-1:0]      uop_index;      
@@ -436,7 +436,7 @@ typedef struct packed {
   logic   [`VLEN-1:0]                 vs2_data;	        
   logic                               vs2_data_valid;  
   EEW_e                               vs2_eew;
-  // rs1_data could be from X[rs1] and imm(inst[19:15]). If it is imm, the 5-bit imm(inst[19:15]) will be sign-extend to XLEN-bit. 
+  // rs1_data could be from X[rs1] and imm(inst[19:15]). If it is imm, the 5-bit imm(inst[19:15]) will be sign-extend or zero-extend(shift instructions...) to XLEN-bit.
   logic   [`XLEN-1:0] 	              rs1_data;     
   logic        	                      rs1_data_valid;                                   
 } DIV_RS_t; 
@@ -458,7 +458,7 @@ typedef struct packed {
   EEW_e                               vs2_eew; //eew for vs1, vs2, rs1
   logic   [`VLEN-1:0]                 vs3_data;	//vd, source for MAC add 
   logic                               vs3_data_valid; 
-  // rs1_data could be from X[rs1] and imm(inst[19:15]). If it is imm, the 5-bit imm(inst[19:15]) will be sign-extend to XLEN-bit. 
+  // rs1_data could be from X[rs1] and imm(inst[19:15]). If it is imm, the 5-bit imm(inst[19:15]) will be sign-extend or zero-extend(shift instructions...) to XLEN-bit.
   logic   [`XLEN-1:0] 	              rs1_data;          
   logic          	                    rs1_data_valid;   
   logic   [`UOP_INDEX_WIDTH-1:0]      uop_index;//indicate using low/high when widen mul. 0:low, 1:high
@@ -470,26 +470,30 @@ typedef struct packed {
   logic   [`PC_WIDTH-1:0]             uop_pc;
 `endif
   logic   [`ROB_DEPTH_WIDTH-1:0]      rob_entry;
+  EXE_UNIT_e                          uop_exe_unit; 
   FUNCT6_u                            uop_funct6;
   logic   [`FUNCT3_WIDTH-1:0]         uop_funct3;
-  // Identify vmerge and vmv in the same uop_funct6(6'b010111).
+  logic   [`VSTART_WIDTH-1:0]         vstart;
+  logic   [`VL_WIDTH-1:0]             vl;       
   logic                               vm;               
   EEW_e                               vd_eew;
-  // when vs1_data_valid=0; vs1 field is valid and used to decode some OPMVV uops
-  // when vs1_data_valid=1, vs1_data is valid as a vector operand
-  logic   [`REGFILE_INDEX_WIDTH-1:0]  vs1;              
+  // when the uop is producing-mask operation, the uop will use v0_data as the third vector operand when the uop is the last uop. EEW_v0=1.
+  logic   [`VLEN-1:0]                 v0_data;
+  logic                               v0_data_valid;
   logic   [`VLEN-1:0]                 vs1_data;          
   EEW_e                               vs1_eew;
   logic                               vs1_data_valid; 
-  BYTE_TYPE_t                         vs1_type; 
   logic   [`VLEN-1:0]                 vs2_data;	        
   EEW_e                               vs2_eew;
   logic                               vs2_data_valid; 
-  BYTE_TYPE_t                         vs2_type;
-  // rs1_data could be from X[rs1] and imm(inst[19:15]). If it is imm, the 5-bit imm(inst[19:15]) will be sign-extend to XLEN-bit. 
+  logic   [`VLEN-1:0]                 vs3_data;	//vd, source for producing-mask instruction
+  logic                               vs3_data_valid; 
+  // rs1_data could be from X[rs1] and imm(inst[19:15]). If it is imm, the 5-bit imm(inst[19:15]) will be sign-extend or zero-extend(shift instructions...) to XLEN-bit.
+  // rs1_data could be from X[rs1] and imm(inst[19:15]). If it is imm, the 5-bit imm(inst[19:15]) will be sign-extend or zero-extend(shift instructions...) to XLEN-bit.
   logic   [`XLEN-1:0] 	              rs1_data;         
   logic        	                      rs1_data_valid;
   logic                               last_uop_valid;     
+  logic   [`UOP_INDEX_WIDTH-1:0]      uop_index;      
 } PMT_RDT_RS_t;    
 
 // LSU reservation station struct
