@@ -145,6 +145,7 @@ class alu_smoke_test extends rvv_backend_test;
   alu_smoke_vv_seq rvs_vv_seq;
   alu_smoke_ext_seq rvs_ext_seq;
   alu_smoke_vx_seq rvs_vx_seq;
+  alu_smoke_vmunary0_seq rvs_vmunary0_seq;
 
   `uvm_component_utils(alu_smoke_test)
 
@@ -166,6 +167,7 @@ class alu_smoke_test extends rvv_backend_test;
     rvs_vv_seq = alu_smoke_vv_seq::type_id::create("alu_smoke_vv_seq", this);
     rvs_ext_seq = alu_smoke_ext_seq::type_id::create("alu_smoke_ext_seq", this);
     rvs_vx_seq = alu_smoke_vx_seq::type_id::create("alu_smoke_vx_seq", this);
+    rvs_vmunary0_seq = alu_smoke_vmunary0_seq::type_id::create("rvs_vmunary0_seq", this);
 
     if($test$plusargs("case01") || $test$plusargs("all_case")) begin
       rvs_vv_seq.run_inst(VADD,env.rvs_agt.rvs_sqr);
@@ -298,6 +300,11 @@ class alu_smoke_test extends rvv_backend_test;
       rvs_vv_seq.run_inst(VNCLIPU, env.rvs_agt.rvs_sqr);
       rvs_vv_seq.run_inst(VNCLIP , env.rvs_agt.rvs_sqr);
     end
+    
+    if($test$plusargs("case19") || $test$plusargs("all_case")) begin
+      rvs_vmunary0_seq.run_inst(VMUNARY0, env.rvs_agt.rvs_sqr);
+    end
+    
     // Last inst  
     rvs_vv_seq.run_inst(VAND, env.rvs_agt.rvs_sqr);
 

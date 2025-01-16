@@ -50,8 +50,8 @@ module rvv_backend_top();
     .trap_rvs2rvv             (rvs_if.trap_rvs2rvv          ),
     .trap_ready_rvv2rvs       (rvs_if.trap_ready_rvv2rvs    ), 
 
-    .wr_vxsat_valid           (rvs_if.wr_vxsat_valid        ),
-    .wr_vxsat                 (rvs_if.wr_vxsat              ),
+    .wr_vxsat_valid           (),
+    .wr_vxsat                 (),
 
     .vcsr_valid               (rvs_if.vcsr_valid            ),
     .vector_csr               (rvs_if.vector_csr            )
@@ -73,6 +73,16 @@ module rvv_backend_top();
   assign rvs_if.rt_vrf_data_rob2rt[1].rt_strobe  = `RT_VRF_PATH.w_enB1;
   assign rvs_if.rt_vrf_data_rob2rt[2].rt_strobe  = `RT_VRF_PATH.w_enB2;
   assign rvs_if.rt_vrf_data_rob2rt[3].rt_strobe  = `RT_VRF_PATH.w_enB3;
+
+  assign rvs_if.wr_vxsat_valid[0] = `RT_VXSAT_PATH.w_valid0_chkTrap & `RT_VXSAT_PATH.w_vxsat0;
+  assign rvs_if.wr_vxsat_valid[1] = `RT_VXSAT_PATH.w_valid1_chkTrap & `RT_VXSAT_PATH.w_vxsat1;
+  assign rvs_if.wr_vxsat_valid[2] = `RT_VXSAT_PATH.w_valid2_chkTrap & `RT_VXSAT_PATH.w_vxsat2;
+  assign rvs_if.wr_vxsat_valid[3] = `RT_VXSAT_PATH.w_valid3_chkTrap & `RT_VXSAT_PATH.w_vxsat3;
+
+  assign rvs_if.wr_vxsat[0] = `RT_VXSAT_PATH.w_vxsat0;
+  assign rvs_if.wr_vxsat[1] = `RT_VXSAT_PATH.w_vxsat1;
+  assign rvs_if.wr_vxsat[2] = `RT_VXSAT_PATH.w_vxsat2;
+  assign rvs_if.wr_vxsat[3] = `RT_VXSAT_PATH.w_vxsat3;
 
   // For VRF value check, we need to delay a cycle to wait for writeback finished.
   always_ff @(posedge clk or negedge rst_n) begin

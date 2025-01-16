@@ -139,17 +139,20 @@ task rvs_monitor::rx_monitor();
           end
 
           // VXSAT
-          if(rvs_if.wr_vxsat_valid) begin
-            tr.vxsat        = rvs_if.wr_vxsat;
-            tr.vxsat_valid  = 1'b1;
+          if((tr.vxsat !== 1) && rvs_if.wr_vxsat_valid[rt_idx]) begin
+            tr.vxsat        = rvs_if.wr_vxsat[rt_idx];
+            tr.vxsat_valid  = rvs_if.wr_vxsat_valid[rt_idx];
           end else begin
-            tr.vxsat        = '0;
-            tr.vxsat_valid  = 1'b0;
+            tr.vxsat        = tr.vxsat;
+            tr.vxsat_valid  = tr.vxsat_valid;
           end
 
           // LAST_UOP
           if(rvs_if.rt_last_uop[rt_idx]) begin
             tr.is_rt = 1;
+            // Avoid x-state
+            if(tr.vxsat !== 1) tr.vxsat = '0;
+            if(tr.vxsat_valid !== 1) tr.vxsat_valid = '0;
             `uvm_info(get_type_name(), $sformatf("Send rt transaction to scb"),UVM_HIGH)
             `uvm_info(get_type_name(), tr.sprint(),UVM_HIGH)
             rt_ap.write(tr); // write to scb

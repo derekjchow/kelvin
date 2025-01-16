@@ -307,6 +307,46 @@ class alu_smoke_vmerge_seq extends base_sequence;
   endtask: run_inst
 endclass: alu_smoke_vmerge_seq
 
+class alu_smoke_vmunary0_seq extends base_sequence;
+  `uvm_object_utils(alu_smoke_vmunary0_seq)
+  `uvm_add_to_seq_lib(alu_smoke_vmunary0_seq,rvs_sequencer_sequence_library)
+    
+  alu_inst_e alu_inst;
+  function new(string name = "alu_smoke_vmunary0_seq");
+    super.new(name);
+	  `ifdef UVM_POST_VERSION_1_1
+      set_automatic_phase_objection(1);
+    `endif
+  endfunction:new
+
+  virtual task body();
+    for(vmunary0_e vmunary0_func = vmunary0_func.first();vmunary0_func != vmunary0_func.last(); vmunary0_func = vmunary0_func.next()) begin
+      req = new("req");
+      start_item(req);
+      assert(req.randomize() with {
+        use_vlmax == 1;
+        pc == inst_cnt;
+
+        vtype.vsew == SEW16;
+        vtype.vlmul inside {LMUL1_2, LMUL2};
+
+        inst_type == ALU;
+        alu_inst == local::alu_inst;
+        dest_type == VRF; dest_idx == 16;
+        src2_type == VRF; src2_idx == 8;
+        src1_type == FUNC; src1_idx == local::vmunary0_func;
+        vm == 0;
+      });
+      finish_item(req);
+      inst_cnt++;
+    end
+  endtask
+  task run_inst(alu_inst_e inst, uvm_sequencer_base sqr);
+    this.alu_inst = inst;
+    this.start(sqr);
+  endtask: run_inst
+endclass: alu_smoke_vmunary0_seq
+
 //-----------------------------------------------------------
 // Iterate base
 //-----------------------------------------------------------

@@ -21,8 +21,8 @@ interface rvs_interface (input bit clk, input bit rst_n);
   logic         [`NUM_RT_UOP-1:0] rt_xrf_ready_rvs2rvv;
 
 // RT to VCSR.vxsat
-  logic                            wr_vxsat_valid;
-  logic    [`VCSR_VXSAT_WIDTH-1:0] wr_vxsat;
+  logic   [`NUM_RT_UOP-1:0]                         wr_vxsat_valid;
+  logic   [`NUM_RT_UOP-1:0] [`VCSR_VXSAT_WIDTH-1:0] wr_vxsat;
 
 // exception handler
   // trap signal handshake

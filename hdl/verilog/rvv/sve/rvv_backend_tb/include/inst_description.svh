@@ -174,6 +174,7 @@ typedef enum logic [7:0] {
   VMANDN          =   8'b01_011_000,
   VMXNOR          =   8'b01_011_111,
 
+  VMUNARY0        =   8'b01_010_100,     // it could be vmsbf, vmsof, vmsif, viota, vid. They can be distinguished by vs1 field(inst_encoding[19:15]).
 
   UNUSE_INST      =   8'b11_111_111
 } alu_inst_e;
@@ -184,8 +185,19 @@ typedef enum logic [4:0] {
   VSEXT_VF4       =   5'b00101,
   VZEXT_VF2       =   5'b00110,
   VSEXT_VF2       =   5'b00111,  
-  VXUNARY0_LAST       =   5'b11111
+  VXUNARY0_LAST   =   5'b11111
 } vext_e;
+
+// vmunary0, the uop could be vmsbf, vmsof, vmsif, viota, vid. They can be distinguished by vs1 field(inst_encoding[19:15]).
+
+typedef enum logic [4:0] {
+  // VMSBF           =   5'b00001,
+  // VMSOF           =   5'b00010,
+  // VMSIF           =   5'b00011,
+  VIOTA           =   5'b10000,
+  // VID             =   5'b10001,
+  VMUNARY0_LAST   =   5'b11111
+} vmunary0_e;
 
 typedef enum logic [1:0] {
   LSU_E     = 2'b00, // unit-stride
