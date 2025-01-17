@@ -81,7 +81,8 @@ ${WORKDIR}/bazel fetch \
     @io_bazel_rules_scala_scalatest_shouldmatchers//:all \
     @ninja_1.11.0_linux//:all \
     @remote_java_tools_linux//:all \
-    @remotejdk11_linux//:jdk
+    @remotejdk11_linux//:jdk \
+    @com_github_grpc_grpc//:all
 
 cat <<EOF >${WORKDIR}/bazel.sh
 SCRIPT_DIR="\$(cd "\$(dirname "\${BASH_SOURCE[0]}")" && pwd)"
