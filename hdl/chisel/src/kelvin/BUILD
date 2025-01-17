@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+load("@kelvin_hw//rules:autogen.bzl", "autogen_scm_info")
 load(
     "@kelvin_hw//rules:chisel.bzl",
     "chisel_binary",
@@ -20,7 +21,6 @@ load(
     "chisel_test",
 )
 load("@kelvin_hw//rules:verilog.bzl", "verilog_zip_bundle")
-load("@kelvin_hw//rules:autogen.bzl", "autogen_scm_info")
 
 package(default_visibility = ["//visibility:public"])
 
@@ -68,28 +68,28 @@ chisel_test(
     srcs = [
         "rvv/RvvDecodeTest.scala",
     ],
+    args = [
+        "-P",  # Allows parallel tests.
+    ],
     deps = [
         ":kelvin_rvv",
         "//hdl/chisel/src/common:testing",
-    ],
-    args = [
-        "-P",  # Allows parallel tests.
     ],
 )
 
 chisel_test(
     name = "kelvin_scalar_tests",
     srcs = [
+        "scalar/AluTest.scala",
         "scalar/MluTest.scala",
-        "scalar/AluTest.scala"
+    ],
+    args = [
+        "-P",  # Allows parallel tests.
     ],
     deps = [
         ":kelvin_base",
         ":kelvin_scalar",
         "//hdl/chisel/src/common:testing",
-    ],
-    args = [
-        "-P",  # Allows parallel tests.
     ],
 )
 
@@ -125,10 +125,10 @@ chisel_library(
     srcs = [
         "ClockGate.scala",
     ],
+    resource_strip_prefix = "hdl/verilog",
     resources = [
         "//hdl/verilog:ClockGate.sv",
     ],
-    resource_strip_prefix = "hdl/verilog",
 )
 
 chisel_test(
@@ -136,11 +136,11 @@ chisel_test(
     srcs = [
         "ClockGateTest.scala",
     ],
-    deps = [
-        ":kelvin_base",
-        ":clock_gate",
-    ],
     tags = ["verilator"],
+    deps = [
+        ":clock_gate",
+        ":kelvin_base",
+    ],
 )
 
 chisel_library(
@@ -148,10 +148,10 @@ chisel_library(
     srcs = [
         "RstSync.scala",
     ],
+    resource_strip_prefix = "hdl/verilog",
     resources = [
         "//hdl/verilog:RstSync.sv",
     ],
-    resource_strip_prefix = "hdl/verilog",
 )
 
 autogen_scm_info(name = "KelvinScmInfo")
@@ -221,8 +221,8 @@ chisel_library(
         "scalar/UncachedFetch.scala",
     ],
     deps = [
-        ":kelvin_base",
         ":KelvinScmInfo",
+        ":kelvin_base",
         "//hdl/chisel/src/common",
         "//hdl/chisel/src/common:instruction_buffer",
     ],
@@ -231,18 +231,18 @@ chisel_library(
 chisel_library(
     name = "srams",
     srcs = [
-        "Sram_12ffcp_128x128.scala",
-        "Sram_12ffcp_512x128.scala",
-        "Sram_12ffcp_2048x128.scala",
         "SramNx128.scala",
-    ],
-    deps = [
-        ":kelvin_base",
+        "Sram_12ffcp_128x128.scala",
+        "Sram_12ffcp_2048x128.scala",
+        "Sram_12ffcp_512x128.scala",
     ],
     resources = [
         "//hdl/verilog:Sram_12ffcp_128x128.v",
-        "//hdl/verilog:Sram_12ffcp_512x128.v",
         "//hdl/verilog:Sram_12ffcp_2048x128.v",
+        "//hdl/verilog:Sram_12ffcp_512x128.v",
+    ],
+    deps = [
+        ":kelvin_base",
     ],
 )
 
@@ -258,11 +258,11 @@ chisel_library(
         "TCM.scala",
     ],
     deps = [
+        ":RstSync",
         ":clock_gate",
         ":kelvin_base",
         ":kelvin_scalar",
         ":kelvin_vector",
-        ":RstSync",
         ":srams",
         "//hdl/chisel/src/bus",
         "//hdl/chisel/src/common",
@@ -277,6 +277,13 @@ chisel_library(
     ],
     deps = [
     ],
+)
+
+chisel_cc_library(
+    name = "alu_cc_library",
+    chisel_lib = ":kelvin_scalar",
+    emit_class = "kelvin.EmitAlu",
+    module_name = "Alu",
 )
 
 chisel_cc_library(
@@ -338,11 +345,11 @@ chisel_cc_library(
         "--moduleName=CoreMini",
         "--useAxi",
     ],
+    module_name = "CoreMiniAxi",
+    verilog_file_path = "CoreMiniAxi.sv",
     vopts = [
         "-DUSE_GENERIC",
     ],
-    module_name = "CoreMiniAxi",
-    verilog_file_path = "CoreMiniAxi.sv",
 )
 
 verilog_zip_bundle(
@@ -355,6 +362,20 @@ chisel_cc_library(
     chisel_lib = ":kelvin",
     emit_class = "kelvin.EmitDBus2Axi",
     module_name = "DBus2Axi",
+)
+
+chisel_cc_library(
+    name = "dvu_cc_library",
+    chisel_lib = ":kelvin_scalar",
+    emit_class = "kelvin.EmitDvu",
+    module_name = "Dvu",
+)
+
+chisel_cc_library(
+    name = "mlu_cc_library",
+    chisel_lib = ":kelvin_scalar",
+    emit_class = "kelvin.EmitMlu",
+    module_name = "Mlu",
 )
 
 chisel_cc_library(

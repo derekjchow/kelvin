@@ -17,6 +17,7 @@ package kelvin
 import chisel3._
 import chisel3.util._
 import common._
+import _root_.circt.stage.ChiselStage
 
 object Alu {
   def apply(p: Parameters): Alu = {
@@ -132,4 +133,9 @@ class Alu(p: Parameters) extends Module {
   val rs1Only = op.isOneOf(AluOp.CLZ, AluOp.CTZ, AluOp.PCNT, AluOp.ZEXTH, AluOp.SEXTH, AluOp.SEXTB)
   assert(!(valid && !io.rs1.valid && !op.isOneOf(AluOp.LUI)))
   assert(!(valid && !io.rs2.valid && !rs1Only))
+}
+
+object EmitAlu extends App {
+  val p = new Parameters
+  ChiselStage.emitSystemVerilogFile(new Alu(p), args)
 }
