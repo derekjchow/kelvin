@@ -332,7 +332,10 @@ class alu_smoke_vmunary0_seq extends base_sequence;
 
         inst_type == ALU;
         alu_inst == local::alu_inst;
-        dest_type == VRF; dest_idx == 16;
+        (src1_idx inside {VIOTA, VID}) -> 
+          (dest_type == XRF);
+        (src1_idx inside {VMSBF, VMSOF, VMSIF}) -> 
+          (dest_type == VRF && dest_idx == 16);
         src2_type == VRF; src2_idx == 8;
         src1_type == FUNC; src1_idx == local::vmunary0_func;
         vm == 0;
@@ -346,6 +349,47 @@ class alu_smoke_vmunary0_seq extends base_sequence;
     this.start(sqr);
   endtask: run_inst
 endclass: alu_smoke_vmunary0_seq
+
+class alu_smoke_vwxunary0_seq extends base_sequence;
+  `uvm_object_utils(alu_smoke_vwxunary0_seq)
+  `uvm_add_to_seq_lib(alu_smoke_vwxunary0_seq,rvs_sequencer_sequence_library)
+    
+  alu_inst_e alu_inst;
+  function new(string name = "alu_smoke_vwxunary0_seq");
+    super.new(name);
+	  `ifdef UVM_POST_VERSION_1_1
+      set_automatic_phase_objection(1);
+    `endif
+  endfunction:new
+
+  virtual task body();
+    for(vwxunary0_e vwxunary0_func = vwxunary0_func.first();vwxunary0_func != vwxunary0_func.last(); vwxunary0_func = vwxunary0_func.next()) begin
+      if(!(vwxunary0_func inside {VCPOP, VFIRST})) continue;
+      req = new("req");
+      start_item(req);
+      assert(req.randomize() with {
+        use_vlmax == 1;
+        pc == inst_cnt;
+
+        vtype.vsew == SEW16;
+        vtype.vlmul inside {LMUL1_2, LMUL2};
+
+        inst_type == ALU;
+        alu_inst == local::alu_inst;
+        dest_type == XRF; dest_idx == 16;
+        src2_type == VRF; src2_idx == 8;
+        src1_type == FUNC; src1_idx == local::vwxunary0_func;
+        vm == 0;
+      });
+      finish_item(req);
+      inst_cnt++;
+    end
+  endtask
+  task run_inst(alu_inst_e inst, uvm_sequencer_base sqr);
+    this.alu_inst = inst;
+    this.start(sqr);
+  endtask: run_inst
+endclass: alu_smoke_vwxunary0_seq
 
 //-----------------------------------------------------------
 // Iterate base
@@ -714,7 +758,7 @@ class alu_iterate_vv_vx_seq extends alu_iterate_base_sequence;
 endclass: alu_iterate_vv_vx_seq
 
 //-----------------------------------------------------------
-// Iterate each lmul/sew for .vv/.vx
+// Iterate each lmul/sew for .vx/.vi
 //-----------------------------------------------------------
 class alu_iterate_vx_vi_seq extends alu_iterate_base_sequence;
   `uvm_object_utils(alu_iterate_vx_vi_seq)
@@ -806,6 +850,77 @@ class alu_iterate_vx_vi_seq extends alu_iterate_base_sequence;
   endtask
 
 endclass: alu_iterate_vx_vi_seq
+
+//-----------------------------------------------------------
+// Iterate each lmul/sew for .vv/.vx
+//-----------------------------------------------------------
+class alu_iterate_vv_seq extends alu_iterate_base_sequence;
+  `uvm_object_utils(alu_iterate_vv_seq)
+  `uvm_add_to_seq_lib(alu_iterate_vv_seq,rvs_sequencer_sequence_library)
+    
+  function new(string name = "alu_iterate_vv_seq");
+    super.new(name);
+	  `ifdef UVM_POST_VERSION_1_1
+      set_automatic_phase_objection(1);
+    `endif
+  endfunction:new
+
+  virtual task body();
+    if(rand_type == RAND) begin
+      repeat(inst_num) begin
+        req = new("req");
+        start_item(req);
+        assert(req.randomize() with {
+          // use_vlmax == 1;
+          pc == local::inst_cnt;
+
+          vtype.vlmul dist {
+            LMUL1_4 := 10,
+            LMUL1_2 := 20,
+            LMUL1   := 20,
+            LMUL2   := 30,
+            LMUL4   :=  5,
+            LMUL8   := 15 
+          };
+
+          inst_type == ALU;
+          alu_inst == local::alu_inst;
+
+          dest_type == VRF;
+          src2_type == VRF;
+          src1_type inside {VRF};
+        });
+        finish_item(req);
+        inst_cnt++;
+      end // repeat(inst_num)
+    end else begin
+      for(lmul = lmul.first(); lmul != lmul.last(); lmul =lmul.next()) begin
+        for(sew = sew.first(); sew != sew.last(); sew =sew.next()) begin
+          req = new("req");
+          start_item(req);
+          assert(req.randomize() with {
+            use_vlmax == 1;
+            pc == local::inst_cnt;
+
+            vtype.vsew ==  local::sew;
+            vtype.vlmul == local::lmul;
+
+            inst_type == ALU;
+            alu_inst == local::alu_inst;
+
+            dest_type == VRF;
+            src2_type == VRF;
+            src1_type == VRF;
+            vm == local::vm;
+          });
+          finish_item(req);
+          inst_cnt++;
+        end // sew
+      end // lmul
+    end
+  endtask
+
+endclass: alu_iterate_vv_seq
 
 //-----------------------------------------------------------
 // Iterate vzext/vsext
@@ -1008,6 +1123,153 @@ class alu_iterate_vmerge_vmvv_seq extends alu_iterate_base_sequence;
   endtask
 
 endclass: alu_iterate_vmerge_vmvv_seq
+
+//-----------------------------------------------------------
+// Iterate vcpop/vfirst
+//-----------------------------------------------------------
+class alu_iterate_vwxunary0_seq extends alu_iterate_base_sequence;
+  `uvm_object_utils(alu_iterate_vwxunary0_seq)
+  `uvm_add_to_seq_lib(alu_iterate_vwxunary0_seq,rvs_sequencer_sequence_library)
+
+  function new(string name = "alu_iterate_vwxunary0_seq");
+    super.new(name);
+	  `ifdef UVM_POST_VERSION_1_1
+      set_automatic_phase_objection(1);
+    `endif
+  endfunction:new
+
+  virtual task body();
+    if(rand_type == RAND) begin
+      repeat(inst_num) begin
+        req = new("req");
+        start_item(req);
+        assert(req.randomize() with {
+          // use_vlmax == 1;
+          pc == local::inst_cnt;
+
+          vtype.vlmul dist {
+            LMUL1_4 :=  5,
+            LMUL1_2 := 10,
+            LMUL1   := 30,
+            LMUL2   := 40,
+            LMUL4   :=  5,
+            LMUL8   := 10 
+          };
+
+          inst_type == ALU;
+          alu_inst == local::alu_inst;
+
+          dest_type == XRF;
+          src2_type == VRF;
+          src1_type == FUNC; src1_idx inside {VCPOP, VFIRST};
+        });
+        finish_item(req);
+        inst_cnt++;
+      end // repeat(inst_num)
+    end else begin
+      for(lmul_e lmul = lmul.first(); lmul != lmul.last(); lmul =lmul.next()) begin
+        for(sew_e sew = sew.first(); sew != sew.last(); sew =sew.next()) begin
+          for(vwxunary0_e vwxunary0_func = vwxunary0_func.first();vwxunary0_func != vwxunary0_func.last(); vwxunary0_func = vwxunary0_func.next()) begin
+            if(!(vwxunary0_func inside {VCPOP, VFIRST})) continue;
+            req = new("req");
+            start_item(req);
+            assert(req.randomize() with {
+              use_vlmax == 1;
+              pc == inst_cnt;
+
+              vtype.vsew ==  local::sew;
+              vtype.vlmul == local::lmul;
+
+              inst_type == ALU;
+              alu_inst == local::alu_inst;
+
+              dest_type == XRF; 
+              src2_type == VRF;
+              src1_type == FUNC; src1_idx == local::vwxunary0_func;
+              vm == local::vm;
+            });
+            finish_item(req);
+            inst_cnt++;
+          end
+        end
+      end
+    end
+  endtask
+
+endclass: alu_iterate_vwxunary0_seq
+
+//-----------------------------------------------------------
+// Iterate vmunary0
+//-----------------------------------------------------------
+class alu_iterate_vmunary0_seq extends alu_iterate_base_sequence;
+  `uvm_object_utils(alu_iterate_vmunary0_seq)
+  `uvm_add_to_seq_lib(alu_iterate_vmunary0_seq,rvs_sequencer_sequence_library)
+
+  function new(string name = "alu_iterate_vmunary0_seq");
+    super.new(name);
+	  `ifdef UVM_POST_VERSION_1_1
+      set_automatic_phase_objection(1);
+    `endif
+  endfunction:new
+
+  virtual task body();;
+    if(rand_type == RAND) begin
+      repeat(inst_num) begin
+        req = new("req");
+        start_item(req);
+        assert(req.randomize() with {
+          // use_vlmax == 1;
+          pc == local::inst_cnt;
+
+          vtype.vlmul dist {
+            LMUL1_4 :=  5,
+            LMUL1_2 := 10,
+            LMUL1   := 30,
+            LMUL2   := 40,
+            LMUL4   :=  5,
+            LMUL8   := 10 
+          };
+
+          inst_type == ALU;
+          alu_inst == local::alu_inst;
+
+          dest_type == VRF;
+          src2_type == VRF;
+          src1_type == FUNC; src1_idx != VMUNARY0_LAST;
+        });
+        finish_item(req);
+        inst_cnt++;
+      end // repeat(inst_num)
+    end else begin
+      for(lmul_e lmul = lmul.first(); lmul != lmul.last(); lmul =lmul.next()) begin
+        for(sew_e sew = sew.first(); sew != sew.last(); sew =sew.next()) begin
+          for(vmunary0_e vmunary0_func = vmunary0_func.first();vmunary0_func != vmunary0_func.last(); vmunary0_func = vmunary0_func.next()) begin
+            req = new("req");
+            start_item(req);
+            assert(req.randomize() with {
+              use_vlmax == 1;
+              pc == inst_cnt;
+
+              vtype.vsew ==  local::sew;
+              vtype.vlmul == local::lmul;
+
+              inst_type == ALU;
+              alu_inst == local::alu_inst;
+
+              dest_type == VRF; 
+              src2_type == VRF;
+              src1_type == FUNC; src1_idx == local::vmunary0_func;
+              vm == local::vm;
+            });
+            finish_item(req);
+            inst_cnt++;
+          end
+        end
+      end
+    end
+  endtask
+
+endclass: alu_iterate_vmunary0_seq
 
 //=================================================
 // LDST direct test sequence

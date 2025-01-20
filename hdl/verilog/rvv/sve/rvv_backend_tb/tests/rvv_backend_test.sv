@@ -146,6 +146,7 @@ class alu_smoke_test extends rvv_backend_test;
   alu_smoke_ext_seq rvs_ext_seq;
   alu_smoke_vx_seq rvs_vx_seq;
   alu_smoke_vmunary0_seq rvs_vmunary0_seq;
+  alu_smoke_vwxunary0_seq rvs_vwxunary0_seq;
 
   `uvm_component_utils(alu_smoke_test)
 
@@ -168,6 +169,7 @@ class alu_smoke_test extends rvv_backend_test;
     rvs_ext_seq = alu_smoke_ext_seq::type_id::create("alu_smoke_ext_seq", this);
     rvs_vx_seq = alu_smoke_vx_seq::type_id::create("alu_smoke_vx_seq", this);
     rvs_vmunary0_seq = alu_smoke_vmunary0_seq::type_id::create("rvs_vmunary0_seq", this);
+    rvs_vwxunary0_seq = alu_smoke_vwxunary0_seq::type_id::create("rvs_vwxunary0_seq", this);
 
     if($test$plusargs("case01") || $test$plusargs("all_case")) begin
       rvs_vv_seq.run_inst(VADD,env.rvs_agt.rvs_sqr);
@@ -193,11 +195,11 @@ class alu_smoke_test extends rvv_backend_test;
     end
 
     if($test$plusargs("case02_b") || $test$plusargs("all_case")) begin
-      // FIXME: RDT
-      // rvs_vv_seq.run_inst(VMADC, env.rvs_agt.rvs_sqr, 0);
-      // rvs_vv_seq.run_inst(VMADC, env.rvs_agt.rvs_sqr, 1);
-      // rvs_vv_seq.run_inst(VMSBC, env.rvs_agt.rvs_sqr, 0);
-      // rvs_vv_seq.run_inst(VMSBC, env.rvs_agt.rvs_sqr, 1);
+      // RDT in RTL
+      rvs_vv_seq.run_inst(VMADC, env.rvs_agt.rvs_sqr, 0);
+      rvs_vv_seq.run_inst(VMADC, env.rvs_agt.rvs_sqr, 1);
+      rvs_vv_seq.run_inst(VMSBC, env.rvs_agt.rvs_sqr, 0);
+      rvs_vv_seq.run_inst(VMSBC, env.rvs_agt.rvs_sqr, 1);
     end
 
     if($test$plusargs("case03") || $test$plusargs("all_case")) begin
@@ -215,15 +217,15 @@ class alu_smoke_test extends rvv_backend_test;
     end
  
     if($test$plusargs("case05") || $test$plusargs("all_case")) begin
-      // FIXME: RDT
-      // rvs_vv_seq.run_inst(VMSEQ , env.rvs_agt.rvs_sqr, 1);
-      // rvs_vv_seq.run_inst(VMSNE , env.rvs_agt.rvs_sqr, 1);
-      // rvs_vv_seq.run_inst(VMSLTU, env.rvs_agt.rvs_sqr, 1);
-      // rvs_vv_seq.run_inst(VMSLT , env.rvs_agt.rvs_sqr, 1);
-      // rvs_vv_seq.run_inst(VMSLEU, env.rvs_agt.rvs_sqr, 1);
-      // rvs_vv_seq.run_inst(VMSLE , env.rvs_agt.rvs_sqr, 1);
-      // rvs_vx_seq.run_inst(VMSGTU, env.rvs_agt.rvs_sqr, 1);
-      // rvs_vx_seq.run_inst(VMSGT , env.rvs_agt.rvs_sqr, 1);
+      // RDT in RTL
+      rvs_vv_seq.run_inst(VMSEQ , env.rvs_agt.rvs_sqr, 1);
+      rvs_vv_seq.run_inst(VMSNE , env.rvs_agt.rvs_sqr, 1);
+      rvs_vv_seq.run_inst(VMSLTU, env.rvs_agt.rvs_sqr, 1);
+      rvs_vv_seq.run_inst(VMSLT , env.rvs_agt.rvs_sqr, 1);
+      rvs_vv_seq.run_inst(VMSLEU, env.rvs_agt.rvs_sqr, 1);
+      rvs_vv_seq.run_inst(VMSLE , env.rvs_agt.rvs_sqr, 1);
+      rvs_vx_seq.run_inst(VMSGTU, env.rvs_agt.rvs_sqr, 1);
+      rvs_vx_seq.run_inst(VMSGT , env.rvs_agt.rvs_sqr, 1);
     end
 
     if($test$plusargs("case06") || $test$plusargs("all_case")) begin
@@ -301,7 +303,22 @@ class alu_smoke_test extends rvv_backend_test;
       rvs_vv_seq.run_inst(VNCLIP , env.rvs_agt.rvs_sqr);
     end
     
+    if($test$plusargs("case18") || $test$plusargs("all_case")) begin
+      rvs_vv_seq.run_inst(VMAND , env.rvs_agt.rvs_sqr, 1);
+      rvs_vv_seq.run_inst(VMOR  , env.rvs_agt.rvs_sqr, 1);
+      rvs_vv_seq.run_inst(VMXOR , env.rvs_agt.rvs_sqr, 1);
+      rvs_vv_seq.run_inst(VMORN , env.rvs_agt.rvs_sqr, 1);
+      rvs_vv_seq.run_inst(VMNAND, env.rvs_agt.rvs_sqr, 1);
+      rvs_vv_seq.run_inst(VMNOR , env.rvs_agt.rvs_sqr, 1);
+      rvs_vv_seq.run_inst(VMANDN, env.rvs_agt.rvs_sqr, 1);
+      rvs_vv_seq.run_inst(VMXNOR, env.rvs_agt.rvs_sqr, 1);
+    end
+
     if($test$plusargs("case19") || $test$plusargs("all_case")) begin
+      rvs_vwxunary0_seq.run_inst(VWXUNARY0, env.rvs_agt.rvs_sqr);
+    end
+
+    if($test$plusargs("case20") || $test$plusargs("all_case")) begin
       rvs_vmunary0_seq.run_inst(VMUNARY0, env.rvs_agt.rvs_sqr);
     end
     
@@ -1241,7 +1258,7 @@ class alu_vsmul_test extends rvv_backend_test;
 endclass: alu_vsmul_test
 
 //-----------------------------------------------------------
-// 32.12.3. Vector Single-Width Fractional Multiply with Rounding and Saturation
+// 32.12.4. Vector Single-Width Fractional Multiply with Rounding and Saturation
 //-----------------------------------------------------------
 class alu_vssrlsra_test extends rvv_backend_test;
 
@@ -1332,5 +1349,151 @@ class alu_vnclip_test extends rvv_backend_test;
   endfunction
 endclass: alu_vnclip_test
 
+//-----------------------------------------------------------
+// 32.12.5 Vector Narrowing Fixed-Point Clip Instructions
+//-----------------------------------------------------------
+class alu_mask_logic_test extends rvv_backend_test;
+
+  alu_iterate_vv_seq  rvs_seq;
+  alu_smoke_vv_seq rvs_last_seq;
+
+  `uvm_component_utils(alu_mask_logic_test)
+
+  function new(string name, uvm_component parent);
+    super.new(name, parent);
+  endfunction
+
+  function void build_phase(uvm_phase phase);
+    super.build_phase(phase);
+  endfunction
+
+  function void connect_phase(uvm_phase phase);
+    super.connect_phase(phase);
+    this.set_report_id_action_hier("DEBUG", UVM_LOG);
+  endfunction
+
+  task main_phase(uvm_phase phase);
+    phase.raise_objection( .obj( this ) );
+
+    rvs_seq  = alu_iterate_vv_seq::type_id::create("rvs_seq", this);
+    rvs_seq.run_inst_iter(VMAND , env.rvs_agt.rvs_sqr, 1);
+    rvs_seq.run_inst_iter(VMOR  , env.rvs_agt.rvs_sqr, 1);
+    rvs_seq.run_inst_iter(VMXOR , env.rvs_agt.rvs_sqr, 1);
+    rvs_seq.run_inst_iter(VMORN , env.rvs_agt.rvs_sqr, 1);
+    rvs_seq.run_inst_iter(VMNAND, env.rvs_agt.rvs_sqr, 1);
+    rvs_seq.run_inst_iter(VMNOR , env.rvs_agt.rvs_sqr, 1);
+    rvs_seq.run_inst_iter(VMANDN, env.rvs_agt.rvs_sqr, 1);
+    rvs_seq.run_inst_iter(VMXNOR, env.rvs_agt.rvs_sqr, 1);
+
+    rvs_seq.run_inst_rand(VMAND , env.rvs_agt.rvs_sqr, 100);
+    rvs_seq.run_inst_rand(VMOR  , env.rvs_agt.rvs_sqr, 100);
+    rvs_seq.run_inst_rand(VMXOR , env.rvs_agt.rvs_sqr, 100);
+    rvs_seq.run_inst_rand(VMORN , env.rvs_agt.rvs_sqr, 100);
+    rvs_seq.run_inst_rand(VMNAND, env.rvs_agt.rvs_sqr, 100);
+    rvs_seq.run_inst_rand(VMNOR , env.rvs_agt.rvs_sqr, 100);
+    rvs_seq.run_inst_rand(VMANDN, env.rvs_agt.rvs_sqr, 100);
+    rvs_seq.run_inst_rand(VMXNOR, env.rvs_agt.rvs_sqr, 100);
+
+    rvs_last_seq = alu_smoke_vv_seq::type_id::create("rvs_last_seq", this);
+    rvs_last_seq.run_inst(VADD,env.rvs_agt.rvs_sqr);
+    phase.phase_done.set_drain_time(this, 1000ns);
+    phase.drop_objection( .obj( this ) );
+  endtask
+
+  function void final_phase(uvm_phase phase);
+    super.final_phase(phase);
+  endfunction
+endclass: alu_mask_logic_test
+
+//-----------------------------------------------------------
+// 32.15.2. Vector count population in mask vcpop.m
+// 32.15.3. vfirst find-first-set mask bit
+//-----------------------------------------------------------
+class alu_vcpop_vfirst_test extends rvv_backend_test;
+
+  alu_iterate_vwxunary0_seq  rvs_seq;
+  alu_smoke_vv_seq rvs_last_seq;
+
+  `uvm_component_utils(alu_vcpop_vfirst_test)
+
+  function new(string name, uvm_component parent);
+    super.new(name, parent);
+  endfunction
+
+  function void build_phase(uvm_phase phase);
+    super.build_phase(phase);
+  endfunction
+
+  function void connect_phase(uvm_phase phase);
+    super.connect_phase(phase);
+    this.set_report_id_action_hier("DEBUG", UVM_LOG);
+  endfunction
+
+  task main_phase(uvm_phase phase);
+    phase.raise_objection( .obj( this ) );
+
+    rvs_seq  = alu_iterate_vwxunary0_seq::type_id::create("rvs_seq", this);
+    rvs_seq.run_inst_iter(VWXUNARY0, env.rvs_agt.rvs_sqr, 0);
+    rvs_seq.run_inst_iter(VWXUNARY0, env.rvs_agt.rvs_sqr, 1);
+
+    rvs_seq.run_inst_rand(VWXUNARY0, env.rvs_agt.rvs_sqr, 100);
+
+    rvs_last_seq = alu_smoke_vv_seq::type_id::create("rvs_last_seq", this);
+    rvs_last_seq.run_inst(VADD,env.rvs_agt.rvs_sqr);
+    phase.phase_done.set_drain_time(this, 1000ns);
+    phase.drop_objection( .obj( this ) );
+  endtask
+
+  function void final_phase(uvm_phase phase);
+    super.final_phase(phase);
+  endfunction
+endclass: alu_vcpop_vfirst_test
+
+//-----------------------------------------------------------
+// 32.15.4. vmsbf.m set-before-first mask bit
+// 32.15.5. vmsif.m set-including-first mask bit
+// 32.15.6. vmsof.m set-only-first mask bit
+// 32.15.8. Vector Iota Instruction
+// 32.15.9. Vector Element Index Instruction
+//-----------------------------------------------------------
+class alu_vmunary0_test extends rvv_backend_test;
+
+  alu_iterate_vmunary0_seq  rvs_seq;
+  alu_smoke_vv_seq rvs_last_seq;
+
+  `uvm_component_utils(alu_vmunary0_test)
+
+  function new(string name, uvm_component parent);
+    super.new(name, parent);
+  endfunction
+
+  function void build_phase(uvm_phase phase);
+    super.build_phase(phase);
+  endfunction
+
+  function void connect_phase(uvm_phase phase);
+    super.connect_phase(phase);
+    this.set_report_id_action_hier("DEBUG", UVM_LOG);
+  endfunction
+
+  task main_phase(uvm_phase phase);
+    phase.raise_objection( .obj( this ) );
+
+    rvs_seq  = alu_iterate_vmunary0_seq::type_id::create("rvs_seq", this);
+    rvs_seq.run_inst_iter(VMUNARY0, env.rvs_agt.rvs_sqr, 0);
+    rvs_seq.run_inst_iter(VMUNARY0, env.rvs_agt.rvs_sqr, 1);
+
+    rvs_seq.run_inst_rand(VMUNARY0, env.rvs_agt.rvs_sqr, 100);
+
+    rvs_last_seq = alu_smoke_vv_seq::type_id::create("rvs_last_seq", this);
+    rvs_last_seq.run_inst(VADD,env.rvs_agt.rvs_sqr);
+    phase.phase_done.set_drain_time(this, 1000ns);
+    phase.drop_objection( .obj( this ) );
+  endtask
+
+  function void final_phase(uvm_phase phase);
+    super.final_phase(phase);
+  endfunction
+endclass: alu_vmunary0_test
 `endif // RVV_BACKEND_TEST__SV
 

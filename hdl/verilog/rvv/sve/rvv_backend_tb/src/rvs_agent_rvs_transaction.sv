@@ -145,11 +145,15 @@ class rvs_transaction extends uvm_sequence_item;
       );
 
     // OPM
-    (inst_type == ALU && alu_inst[7:6] == 2'b01 && !(alu_inst inside {VXUNARY0, VMUNARY0/*, VWMACCUS*/})) 
+    (inst_type == ALU && alu_inst[7:6] == 2'b01 && !(alu_inst inside {VXUNARY0, VMUNARY0, VWXUNARY0/*, VWMACCUS*/})) 
       -> (dest_type == VRF && src2_type == VRF && 
            ((alu_type == OPMVV && src1_type == VRF) || 
             (alu_type == OPMVX && src1_type == XRF) 
            )
+      );
+    (inst_type == ALU && alu_inst[7:6] == 2'b01  && alu_inst == VWXUNARY0)
+      -> (dest_type == XRF && src2_type == VRF && 
+           ((alu_type == OPMVV && src1_type == FUNC && src1_idx inside {/*TODO*/VCPOP, VFIRST}))
       );
 
     (inst_type == ALU && alu_inst[7:6] == 2'b01 && alu_inst == VXUNARY0) 
@@ -158,8 +162,10 @@ class rvs_transaction extends uvm_sequence_item;
       );
 
     (inst_type == ALU && alu_inst[7:6] == 2'b01 && alu_inst == VMUNARY0) 
-      -> (dest_type == VRF && src2_type == VRF && 
-           ((alu_type == OPMVV && src1_type == FUNC && src1_idx inside {VIOTA/*TODO*/}))
+      -> ((dest_type == XRF && src2_type == VRF && 
+           alu_type == OPMVV && src1_type == FUNC && src1_idx inside {VIOTA, VID}) || 
+          (dest_type == VRF && src2_type == VRF &&
+           alu_type == OPMVV && src1_type == FUNC && src1_idx inside {VMSBF, VMSOF, VMSIF})
       );
     // FIXME
     //(inst_type == ALU && alu_inst[7:6] == 2'b01 && (alu_inst inside {VWMACCUS})) 
