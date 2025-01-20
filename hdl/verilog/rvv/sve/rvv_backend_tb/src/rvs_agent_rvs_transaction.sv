@@ -12,6 +12,7 @@ class rvs_transaction extends uvm_sequence_item;
   rand vtype_t           vtype;
   rand logic [`XLEN-1:0] vl;
        logic [`XLEN-1:0] vlmax;
+       logic [`XLEN-1:0] vlmax_max;
   rand logic [`XLEN-1:0] vstart;
   rand vxrm_e            vxrm;
 
@@ -60,7 +61,7 @@ class rvs_transaction extends uvm_sequence_item;
 
   /* Write back info */
        reg_idx_t  rt_vrf_index  [$];
-       vrf_t      rt_vrf_strobe [$];
+       vrf_byte_t rt_vrf_strobe [$];
        vrf_t      rt_vrf_data   [$];
 
        reg_idx_t  rt_xrf_index [$];
@@ -85,6 +86,8 @@ class rvs_transaction extends uvm_sequence_item;
     else  
       vl <= (`VLENB << vtype.vlmul) >> vtype.vsew;
     vstart <= vl;
+    vstart <= vlmax_max-1;
+    vl <= vlmax_max;
   }
 
   constraint c_vm {
@@ -269,6 +272,7 @@ class rvs_transaction extends uvm_sequence_item;
   `uvm_object_utils_end
 
   extern function new(string name = "Trans");
+  extern function void pre_randomize();
   extern function void post_randomize();
   extern function void asm_string_gen();
 
@@ -279,7 +283,13 @@ function rvs_transaction::new(string name = "Trans");
   super.new(name);
 endfunction: new
 
+function void rvs_transaction::pre_randomize();
+  super.pre_randomize();
+  vlmax_max = 8 * `VLEN / 8;
+endfunction: pre_randomize
+
 function void rvs_transaction::post_randomize();
+  super.post_randomize();
   if(inst_type == ALU && (alu_inst inside {VADC, VSBC, VMADC, VMSBC, VMERGE_VMVV}))
     use_vm_to_cal = 1;
   else

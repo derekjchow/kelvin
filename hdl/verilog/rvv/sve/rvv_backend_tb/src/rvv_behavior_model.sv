@@ -36,7 +36,8 @@ class rvv_behavior_model extends uvm_component;
   vrf_t [31:0] vrf;
   vrf_t [31:0] vrf_delay;
   vrf_t [31:0] vrf_temp;
-  vrf_t [31:0] vrf_strobe_temp;
+  vrf_t [31:0] vrf_bit_strobe_temp;
+  vrf_byte_t [31:0] vrf_byte_strobe_temp;
 
   logic [`XLEN-1:0] vlmax;
   logic [`XLEN-1:0] imm_data;
@@ -513,7 +514,7 @@ endclass : rvv_behavior_model
 
 
         vrf_temp = vrf;
-        vrf_strobe_temp = '0;
+        vrf_bit_strobe_temp = '0;
         `uvm_info("MDL",$sformatf("Prepare done!\nelm_idx_max=%0d\ndest_eew=%0d\nsrc2_eew=%0d\nsrc1_eew=%0d\ndest_emul=%2.4f\nsrc2_emul=%2.4f\nsrc1_emul=%2.4f\n",elm_idx_max,dest_eew,src2_eew,src1_eew,dest_emul,src2_emul,src1_emul),UVM_LOW)
         // --------------------------------------------------
         // 3. Operate elements
@@ -665,18 +666,29 @@ endclass : rvv_behavior_model
 
         // Writeback whole vrf
         vrf = vrf_temp;
+        for(int i=0; i<32; i++) begin
+          for(int j=0; j<`VLENB; j++) begin
+            vrf_byte_strobe_temp[i][j] = |vrf_bit_strobe_temp[i][j*8 +: 8];
+          end
+        end
         // --------------------------------------------------
         // 4. Retire transaction gen
         rt_tr   = new("rt_tr");
         rt_tr.copy(inst_tr);
         rt_tr.is_rt = 1;
         // VRF
+        // if(rt_tr.dest_type == VRF && !(|vrf_bit_strobe_temp)) begin
+        //   `uvm_warning("MDL/INST_CHECKER", $sformatf("pc=0x%8x: Instruction with no valid vrf wirte strobe will be ignored.",pc));
+        //   continue;
+        // end
         if(rt_tr.dest_type == VRF) begin
           for(int reg_idx=dest_reg_idx_base; reg_idx<dest_reg_idx_base+int'($ceil(dest_emul)); reg_idx++) begin
+            // FIXME: All 0s in vrf wirte strobe will not be executed in DUT.
+            // if(|vrf_byte_strobe_temp[reg_idx]) begin
             // All pre-start vreg will not be retired
             if((reg_idx - dest_reg_idx_base) >= (vstart / (`VLEN / dest_eew))) begin
               rt_tr.rt_vrf_index.push_back(reg_idx);
-              rt_tr.rt_vrf_strobe.push_back(vrf_strobe_temp[reg_idx]);
+              rt_tr.rt_vrf_strobe.push_back(vrf_byte_strobe_temp[reg_idx]);
               rt_tr.rt_vrf_data.push_back(vrf_temp[reg_idx]);
             end
           end
@@ -742,7 +754,7 @@ endclass : rvv_behavior_model
         elm_idx = elm_idx % (`VLEN / eew);
         for(int i=0; i<bit_count; i++) begin
           this.vrf_temp[reg_idx][elm_idx*bit_count + i] = result[i];
-          this.vrf_strobe_temp[reg_idx][elm_idx*bit_count + i] = 1'b1;
+          this.vrf_bit_strobe_temp[reg_idx][elm_idx*bit_count + i] = 1'b1;
         end
       end
       XRF: begin
@@ -1323,10 +1335,12 @@ class alu_processor#(
     if(overflow) _vsaddu = '1;
   endfunction : _vsaddu
   function TD _vsadd(T2 src2, T1 src1);
-    logic signed [$bits(TD)-1:0] dest;
+    logic signed [$bits(TD):0] dest;
     dest = $signed(src2) + $signed(src1);
-    overflow  = dest[$bits(TD)-1] & ~src2[$bits(T2)-1] & ~src1[$bits(T1)-1]; 
-    underflow = ~dest[$bits(TD)-1] & src2[$bits(T2)-1] & src1[$bits(T1)-1]; 
+    // overflow  = dest[$bits(TD)-1] & ~src2[$bits(T2)-1] & ~src1[$bits(T1)-1]; 
+    // underflow = ~dest[$bits(TD)-1] & src2[$bits(T2)-1] & src1[$bits(T1)-1]; 
+    overflow  = dest[$bits(TD):$bits(TD)-1] == 2'b01;
+    underflow = dest[$bits(TD):$bits(TD)-1] == 2'b10;
     if(overflow)  begin _vsadd = '1; _vsadd[$bits(TD)-1] = 1'b0; end
     else if(underflow) begin _vsadd = '0; _vsadd[$bits(TD)-1] = 1'b1; end
     else begin _vsadd = dest; end
@@ -1336,10 +1350,12 @@ class alu_processor#(
     if(underflow) _vssubu = '0;
   endfunction : _vssubu
   function TD _vssub(T2 src2, T1 src1);
-    logic unsigned [$bits(TD)-1:0] dest;
-    dest = $unsigned(src2) - $signed(src1);
-    overflow = dest[$bits(TD)-1] & ~src2[$bits(T2)-1] & src1[$bits(T1)-1]; 
-    underflow  = ~dest[$bits(TD)-1] & src2[$bits(T2)-1] & ~src1[$bits(T1)-1]; 
+    logic signed [$bits(TD):0] dest;
+    dest = $signed(src2) - $signed(src1);
+    // overflow = dest[$bits(TD)-1] & ~src2[$bits(T2)-1] & src1[$bits(T1)-1]; 
+    // underflow  = ~dest[$bits(TD)-1] & src2[$bits(T2)-1] & ~src1[$bits(T1)-1]; 
+    overflow  = dest[$bits(TD):$bits(TD)-1] == 2'b01;
+    underflow = dest[$bits(TD):$bits(TD)-1] == 2'b10;
     if(overflow)  begin _vssub = '1; _vssub[$bits(TD)-1] = 1'b0; end
     else if(underflow) begin _vssub = '0; _vssub[$bits(TD)-1] = 1'b1; end
     else begin _vssub = dest; end
@@ -1374,9 +1390,10 @@ class alu_processor#(
     logic signed [$bits(TD)*2-1:0] dest;
     dest = $signed(src2) * $signed(src1);
     dest = _roundoff_signed(dest, $bits(TD)-1);
-    // FIXME: check
-    overflow = ^dest[$bits(TD):$bits(TD)-1];
+    overflow  = dest[$bits(TD):$bits(TD)-1] == 2'b01;
+    underflow = dest[$bits(TD):$bits(TD)-1] == 2'b10;
     if(overflow) begin _vsmul = '1; _vsmul[$bits(TD)-1] = 1'b0; end
+    else if(underflow) begin _vsmul = '0; _vsmul[$bits(TD)-1] = 1'b1; end
     else begin _vsmul = dest; end
   endfunction : _vsmul
 

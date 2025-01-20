@@ -103,7 +103,8 @@ task rvv_scoreboard::rt_checker();
 
   int        rt_vrf_num;
   reg_idx_t  rvs_rt_vrf_index , mdl_rt_vrf_index ;
-  vrf_t      rvs_rt_vrf_strobe, mdl_rt_vrf_strobe;
+  vrf_byte_t rvs_rt_vrf_byte_strobe, mdl_rt_vrf_byte_strobe;
+  vrf_t      rvs_rt_vrf_bit_strobe,  mdl_rt_vrf_bit_strobe;
   vrf_t      rvs_rt_vrf_data  , mdl_rt_vrf_data  ;
 
   string vreg_dut_val;
@@ -141,39 +142,46 @@ task rvv_scoreboard::rt_checker();
         rt_vrf_num = rvs_tr.rt_vrf_index.size();
         for(int i=0; i<rt_vrf_num; i++) begin
           rvs_rt_vrf_index  = rvs_tr.rt_vrf_index.pop_front();
-          rvs_rt_vrf_strobe = rvs_tr.rt_vrf_strobe.pop_front();
+          rvs_rt_vrf_byte_strobe = rvs_tr.rt_vrf_strobe.pop_front();
           rvs_rt_vrf_data   = rvs_tr.rt_vrf_data.pop_front();
           mdl_rt_vrf_index  = mdl_tr.rt_vrf_index.pop_front();
-          mdl_rt_vrf_strobe = mdl_tr.rt_vrf_strobe.pop_front();
+          mdl_rt_vrf_byte_strobe = mdl_tr.rt_vrf_strobe.pop_front();
           mdl_rt_vrf_data   = mdl_tr.rt_vrf_data.pop_front();
+          // Since RTL use byte_strobe for retire, 
+          //   MDL should generate byte_strobe, 
+          //   and SCB also need to expand byte_strobe to bit_strobe to compare data.
+          for(int bit_idx=0; bit_idx<`VLENB; bit_idx++) begin
+            rvs_rt_vrf_bit_strobe[bit_idx*8 +: 8] = {8{rvs_rt_vrf_byte_strobe[bit_idx]}}; 
+            mdl_rt_vrf_bit_strobe[bit_idx*8 +: 8] = {8{mdl_rt_vrf_byte_strobe[bit_idx]}}; 
+          end 
           if(rvs_rt_vrf_index !== mdl_rt_vrf_index) begin
             `uvm_error("RT_CHECKER", $sformatf("Retire VRF index mismatch:\nDUT retired vrf[%0d],\nMDL retired vrf[%0d].", 
                                                 rvs_rt_vrf_index, 
                                                 mdl_rt_vrf_index));
-          end else if(rvs_rt_vrf_strobe !== mdl_rt_vrf_strobe) begin
+          end else if(rvs_rt_vrf_byte_strobe !== mdl_rt_vrf_byte_strobe) begin
             vreg_dut_val = "0x";
             vreg_mdl_val = "0x";
             for(int i=`VLEN-1;i>=0;i-=16) begin
-              vreg_dut_val = $sformatf("%s%4h_",vreg_dut_val,rvs_rt_vrf_strobe[i-:16]);
-              vreg_mdl_val = $sformatf("%s%4h_",vreg_mdl_val,mdl_rt_vrf_strobe[i-:16]);
+              vreg_dut_val = $sformatf("%s%4h_",vreg_dut_val,rvs_rt_vrf_byte_strobe[i-:16]);
+              vreg_mdl_val = $sformatf("%s%4h_",vreg_mdl_val,mdl_rt_vrf_byte_strobe[i-:16]);
             end
             vreg_dut_val = vreg_dut_val.substr(0,vreg_dut_val.len()-2);
             vreg_mdl_val = vreg_mdl_val.substr(0,vreg_mdl_val.len()-2);
             `uvm_error("RT_CHECKER", $sformatf("Retire VRF strobe(bit) mismatch:\nDUT retired vrf_strobe[%0d] = %s,\nMDL retired vrf_strobe[%0d] = %s.", 
                                                rvs_rt_vrf_index, vreg_dut_val,
                                                mdl_rt_vrf_index, vreg_mdl_val));
-          end else if((rvs_rt_vrf_strobe & rvs_rt_vrf_data) !== (mdl_rt_vrf_strobe & mdl_rt_vrf_data)) begin
+          end else if((rvs_rt_vrf_bit_strobe & rvs_rt_vrf_data) !== (mdl_rt_vrf_bit_strobe & mdl_rt_vrf_data)) begin
             vreg_dut_val = "0x";
             vreg_mdl_val = "0x";
             for(int i=`VLEN-1;i>=0;i-=16) begin
-              vreg_dut_val = $sformatf("%s%4h_",vreg_dut_val,{rvs_rt_vrf_strobe & rvs_rt_vrf_data}[i-:16]);
-              vreg_mdl_val = $sformatf("%s%4h_",vreg_mdl_val,{mdl_rt_vrf_strobe & mdl_rt_vrf_data}[i-:16]);
+              vreg_dut_val = $sformatf("%s%4h_",vreg_dut_val,{rvs_rt_vrf_bit_strobe & rvs_rt_vrf_data}[i-:16]);
+              vreg_mdl_val = $sformatf("%s%4h_",vreg_mdl_val,{mdl_rt_vrf_bit_strobe & mdl_rt_vrf_data}[i-:16]);
             end
             vreg_dut_val = vreg_dut_val.substr(0,vreg_dut_val.len()-2);
             vreg_mdl_val = vreg_mdl_val.substr(0,vreg_mdl_val.len()-2);
             // `uvm_error("RT_CHECKER", $sformatf("Retire VRF mismatch:\nDUT retired vrf[%0d] = 0x%0x,\nMDL retired vrf[%0d] = 0x%0x.", 
-            //                                     rvs_rt_vrf_index, (rvs_rt_vrf_strobe & rvs_rt_vrf_data),
-            //                                     mdl_rt_vrf_index, (mdl_rt_vrf_strobe & mdl_rt_vrf_data)));
+            //                                     rvs_rt_vrf_index, (rvs_rt_vrf_bit_strobe & rvs_rt_vrf_data),
+            //                                     mdl_rt_vrf_index, (mdl_rt_vrf_bit_strobe & mdl_rt_vrf_data)));
             `uvm_error("RT_CHECKER", $sformatf("Retire VRF mismatch:\nDUT retired vrf[%0d] = %s,\nMDL retired vrf[%0d] = %s.", 
                                                 rvs_rt_vrf_index, vreg_dut_val,
                                                 mdl_rt_vrf_index, vreg_mdl_val));
