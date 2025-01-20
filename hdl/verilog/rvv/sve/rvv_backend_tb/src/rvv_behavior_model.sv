@@ -147,7 +147,6 @@ endclass : rvv_behavior_model
   
     int pc;
 
-    bit is_mask_inst;
     bit is_widen_inst;
     bit is_widen_vs2_inst;
     bit is_narrow_inst;
@@ -242,7 +241,6 @@ endclass : rvv_behavior_model
         // --------------------------------------------------
         // 1. Decode - Get eew & emul
         pc = inst_tr.pc;
-        is_mask_inst = inst_tr.inst_type == ALU && (inst_tr.alu_inst inside {VMAND});
         is_widen_inst = inst_tr.inst_type == ALU && (inst_tr.alu_inst inside {VWADDU, VWADD, VWADDU_W, VWADD_W, VWSUBU, VWSUB, VWSUBU_W, VWSUB_W, 
                                                                               VWMUL, VWMULU, VWMULSU, VWMACCU, VWMACC, VWMACCUS, VWMACCSU});
         is_widen_vs2_inst = inst_tr.inst_type == ALU && (inst_tr.alu_inst inside {VWADD_W, VWADDU_W, VWSUBU_W, VWSUB_W});
@@ -272,6 +270,10 @@ endclass : rvv_behavior_model
         end
         if(inst_tr.inst_type == ALU && (inst_tr.alu_inst inside {VADC, VSBC}) && inst_tr.vm == 1) begin
           `uvm_warning("MDL/INST_CHECKER", $sformatf("pc=0x%8x: vm == 1 of %0s is ignored.",pc,inst_tr.alu_inst.name()))
+          continue;
+        end
+        if(inst_tr.inst_type == ALU && (inst_tr.alu_inst inside {VMAND, VMOR, VMXOR, VMORN, VMNAND, VMNOR, VMANDN, VMXNOR}) && inst_tr.vm == 0) begin
+          `uvm_warning("MDL/INST_CHECKER", $sformatf("pc=0x%8x: vm == 0 of %0s is ignored.",pc,inst_tr.alu_inst.name()))
           continue;
         end
 
@@ -389,22 +391,34 @@ endclass : rvv_behavior_model
               end
             end
             // 1.3 Mask inst
-            if(is_mask_inst) begin
+            if(inst_tr.inst_type == ALU && inst_tr.alu_inst inside {VMAND, VMOR, VMXOR, VMORN, VMNAND, VMNOR, VMANDN, VMXNOR}) begin
               dest_eew = EEW1;
-              src1_eew = EEW1;
-              src2_eew = EEW1;
-              src3_eew = EEW1;
               dest_emul = dest_emul * dest_eew / eew;
-              src1_emul = src1_emul * src1_eew / eew;
+              src2_eew = EEW1;
               src2_emul = src2_emul * src2_eew / eew;
-              src3_emul = src3_emul * src3_eew / eew;
+              src1_eew = EEW1;
+              src1_emul = src1_emul * src1_eew / eew;
             end
             if(inst_tr.inst_type == ALU && inst_tr.alu_inst inside {VMADC, VMSBC, 
                 VMSEQ, VMSNE, VMSLTU, VMSLT, VMSLEU, VMSLE, VMSGTU, VMSGT}) begin
               dest_eew = EEW1;
               dest_emul = dest_emul * dest_eew / eew;
             end
-            if(inst_tr.inst_type == ALU && inst_tr.alu_inst inside {VMUNARY0} && inst_tr.src1_idx == VIOTA) begin
+            if(inst_tr.inst_type == ALU && inst_tr.alu_inst inside {VMUNARY0} && inst_tr.src1_idx inside {VMSBF, VMSOF, VMSIF}) begin
+              dest_eew = EEW1;
+              dest_emul = dest_emul * dest_eew / eew;
+              src2_eew = EEW1;
+              src2_emul = src2_emul * src2_eew / eew;
+              src1_eew = EEW1;
+              src1_emul = src1_emul * src1_eew / eew;
+            end
+            if(inst_tr.inst_type == ALU && inst_tr.alu_inst inside {VMUNARY0} && inst_tr.src1_idx inside {VIOTA, VID}) begin
+              src2_eew = EEW1;
+              src2_emul = src2_emul * src2_eew / eew;
+              src1_eew = EEW1;
+              src1_emul = src1_emul * src1_eew / eew;
+            end
+            if(inst_tr.inst_type == ALU && inst_tr.alu_inst inside {VWXUNARY0} && inst_tr.src1_idx inside {VCPOP, VFIRST}) begin
               src2_eew = EEW1;
               src2_emul = src2_emul * src2_eew / eew;
               src1_eew = EEW1;
@@ -415,6 +429,11 @@ endclass : rvv_behavior_model
             continue;
           end
         endcase
+        // 1.4 dest is xrf
+        if(inst_tr.dest_type == XRF) begin
+          dest_eew = EEW32;
+          dest_emul = dest_emul * dest_eew / eew; // FIXME
+        end
 
         // --------------------------------------------------
         // 2. Prepare oprand
@@ -543,6 +562,58 @@ endclass : rvv_behavior_model
                                       src0_reg_idx, src0_reg_elm_idx, src0), UVM_LOW)
 
           // 3.2 Execute & Writeback 
+          // Prepare processor handler
+          case(inst_tr.inst_type)
+            LD: begin 
+              `uvm_fatal(get_type_name(),"Load fucntion hasn't been defined.")
+            end
+
+            ST: begin 
+              `uvm_fatal(get_type_name(),"Store fucntion hasn't been defined.")
+            end
+            ALU: begin 
+              case({dest_eew, src2_eew, src1_eew})
+                { EEW8,  EEW8,  EEW8}: alu_handler = alu_08_08_08;
+                {EEW16, EEW16, EEW16}: alu_handler = alu_16_16_16;
+                {EEW32, EEW32, EEW32}: alu_handler = alu_32_32_32;
+                // widen
+                {EEW16,  EEW8,  EEW8}: alu_handler = alu_16_08_08;
+                {EEW16, EEW16,  EEW8}: alu_handler = alu_16_16_08;
+                {EEW32, EEW16, EEW16}: alu_handler = alu_32_16_16;
+                {EEW32, EEW32, EEW16}: alu_handler = alu_32_32_16;
+                //ext
+                {EEW16,  EEW8, EEW32}: alu_handler = alu_16_08_32;
+                {EEW16,  EEW8, EEW16}: alu_handler = alu_16_08_16;
+                {EEW32, EEW16, EEW32}: alu_handler = alu_32_16_32;
+                {EEW32, EEW16,  EEW8}: alu_handler = alu_32_16_08;
+                {EEW32,  EEW8, EEW32}: alu_handler = alu_32_08_32;
+                {EEW32,  EEW8, EEW16}: alu_handler = alu_32_08_16;
+                {EEW32,  EEW8,  EEW8}: alu_handler = alu_32_08_08;
+                // narrow
+                { EEW8, EEW16,  EEW8}: alu_handler = alu_08_16_08;
+                {EEW16, EEW32, EEW16}: alu_handler = alu_16_32_16;
+                // mask logic
+                { EEW1,  EEW1,  EEW1}: alu_handler = alu_01_01_01;
+                { EEW1,  EEW8,  EEW8}: alu_handler = alu_01_08_08;
+                { EEW1, EEW16, EEW16}: alu_handler = alu_01_16_16;
+                { EEW1, EEW32, EEW32}: alu_handler = alu_01_32_32;
+                // viot
+                { EEW8,  EEW1,  EEW1}: alu_handler = alu_08_01_01;
+                {EEW16,  EEW1,  EEW1}: alu_handler = alu_16_01_01;
+                {EEW32,  EEW1,  EEW1}: alu_handler = alu_32_01_01;
+                default: begin
+                  `uvm_error(get_type_name(), $sformatf("Unsupported EEW: dest_eew=%d, src2_eew=%d, src1_eew=%d", dest_eew, src2_eew, src1_eew))
+                  continue;
+                end
+              endcase
+              if(elm_idx == 0) begin
+                alu_handler.reset();
+              end
+              alu_handler.set_vxrm(vxrm);
+              alu_handler.set_elm_idx(elm_idx);
+            end
+          endcase
+
           if(elm_idx < vstart) begin
             `uvm_info("MDL", $sformatf("element[%2d]: pre-start", elm_idx), UVM_LOW)
             // pre-start: do nothing
@@ -571,47 +642,11 @@ endclass : rvv_behavior_model
             `uvm_info("MDL", $sformatf("element[%2d]: body-active", elm_idx), UVM_LOW)
             // EX
             case(inst_tr.inst_type)
-              LD: 
-              ST: `uvm_fatal(get_type_name(),"Store fucntion hasn't been defined.")
+              LD: begin `uvm_fatal(get_type_name(),"Load fucntion hasn't been defined.") end
+              ST: begin `uvm_fatal(get_type_name(),"Store fucntion hasn't been defined.") end
               ALU: begin 
-                case({dest_eew, src2_eew, src1_eew})
-                  { EEW8,  EEW8,  EEW8}: alu_handler = alu_08_08_08;
-                  {EEW16, EEW16, EEW16}: alu_handler = alu_16_16_16;
-                  {EEW32, EEW32, EEW32}: alu_handler = alu_32_32_32;
-                  // widen
-                  {EEW16,  EEW8,  EEW8}: alu_handler = alu_16_08_08;
-                  {EEW16, EEW16,  EEW8}: alu_handler = alu_16_16_08;
-                  {EEW32, EEW16, EEW16}: alu_handler = alu_32_16_16;
-                  {EEW32, EEW32, EEW16}: alu_handler = alu_32_32_16;
-                  //ext
-                  {EEW16,  EEW8, EEW32}: alu_handler = alu_16_08_32;
-                  {EEW16,  EEW8, EEW16}: alu_handler = alu_16_08_16;
-                  {EEW32, EEW16, EEW32}: alu_handler = alu_32_16_32;
-                  {EEW32, EEW16,  EEW8}: alu_handler = alu_32_16_08;
-                  {EEW32,  EEW8, EEW32}: alu_handler = alu_32_08_32;
-                  {EEW32,  EEW8, EEW16}: alu_handler = alu_32_08_16;
-                  {EEW32,  EEW8,  EEW8}: alu_handler = alu_32_08_08;
-                  // narrow
-                  { EEW8, EEW16,  EEW8}: alu_handler = alu_08_16_08;
-                  {EEW16, EEW32, EEW16}: alu_handler = alu_16_32_16;
-                  // mask logic
-                  { EEW1,  EEW1,  EEW1}: alu_handler = alu_01_01_01;
-                  { EEW1,  EEW8,  EEW8}: alu_handler = alu_01_08_08;
-                  { EEW1, EEW16, EEW16}: alu_handler = alu_01_16_16;
-                  { EEW1, EEW32, EEW32}: alu_handler = alu_01_32_32;
-                  // viot
-                  { EEW8,  EEW1,  EEW1}: alu_handler = alu_08_01_01;
-                  {EEW16,  EEW1,  EEW1}: alu_handler = alu_16_01_01;
-                  {EEW32,  EEW1,  EEW1}: alu_handler = alu_32_01_01;
-                  default: begin
-                    `uvm_error(get_type_name(), $sformatf("Unsupported EEW: dest_eew=%d, src2_eew=%d, src1_eew=%d", dest_eew, src2_eew, src1_eew))
-                    continue;
-                  end
-                endcase
-                alu_handler.vxrm = vxrm;
-                alu_handler.elm_idx = elm_idx;
                 dest = alu_handler.exe(inst_tr, dest, src2, src1, src0);
-                vxsat = vxsat ? vxsat : (alu_handler.overflow || alu_handler.underflow);
+                vxsat = vxsat ? vxsat : alu_handler.get_saturate();
 
                 elm_writeback(dest, inst_tr.dest_type, dest_reg_idx_base, elm_idx, dest_eew);
               end
@@ -750,11 +785,29 @@ virtual class alu_base;
   bit overflow;
   bit underflow;
   int mask_count;
+  bit first_mask_bit;
+  int first_mask_idx;
   pure virtual function alu_unsigned_t exe (rvs_transaction inst_tr, alu_unsigned_t dest, alu_unsigned_t src2, alu_unsigned_t src1, alu_unsigned_t src0);
   pure virtual function alu_unsigned_t _roundoff_unsigned(alu_unsigned_t v, int unsigned d);
   pure virtual function alu_signed_t   _roundoff_signed(  alu_signed_t   v, int unsigned d);
+  virtual function void reset();
+    this.overflow = 1'b0;
+    this.underflow = 1'b0;
+    this.mask_count = 'b0;
+    this.first_mask_bit = 1'b0;
+    this.first_mask_idx =  'b0;
+  endfunction: reset
+  virtual function void set_vxrm(vxrm_e val);
+    this.vxrm = val;
+  endfunction: set_vxrm
+  virtual function void set_elm_idx(int val);
+    this.elm_idx = val;
+  endfunction: set_elm_idx
+  virtual function bit get_saturate();
+    get_saturate = this.overflow || this.underflow;
+  endfunction: get_saturate
 
-endclass
+endclass: alu_base
 
 class alu_processor#(
   type TD = sew8_t,
@@ -763,6 +816,18 @@ class alu_processor#(
   type T0 = sew1_t
   ) extends alu_base;  
   
+//   virtual void function reset();
+//     super.reset();
+//   endfunction: reset
+//   virtual function void set_vxrm(vxrm_e val);
+//     super.set_vxrm(vxrm_e val);
+//   endfunction: set_vxrm
+//   virtual function void set_elm_idx(int val);
+//     super.set_elm_idx(int val);
+//   endfunction: set_elm_idx
+//   virtual function bit get_saturate();
+//     super.get_saturate();
+//   endfunction: get_saturate
 
   virtual function alu_unsigned_t exe (rvs_transaction inst_tr, alu_unsigned_t dest, alu_unsigned_t src2, alu_unsigned_t src1, alu_unsigned_t src0);
     `uvm_info("MDL", $sformatf("sizeof(T1)=%0d, sizeof(T2)=%0d, sizeof(TD)=%0d", $size(T1), $size(T2), $size(TD)), UVM_HIGH)
@@ -875,7 +940,21 @@ class alu_processor#(
 
       VMUNARY0: begin
         case(inst_tr.src1_idx)
+          VMSBF: dest = _vmsbf(src2);
+          VMSOF: dest = _vmsof(src2);
+          VMSIF: dest = _vmsif(src2);
           VIOTA: dest = _viota(src2);
+          VID:   dest = _vid();
+        endcase
+      end
+
+      VWXUNARY0: begin
+        case(inst_tr.src1_idx)
+          VMV_X_S: begin
+            `uvm_fatal("TB_ISSUE", "VMV_X_S should be executed in permutation processor.")
+          end
+          VCPOP: dest = _vcpop(src2);
+          VFIRST: dest = _vfirst(src2);
         endcase
       end
     endcase
@@ -1368,6 +1447,69 @@ class alu_processor#(
   endfunction : _vmxnor
 
   //---------------------------------------------------------------------- 
+  // 31.15.2. Vector count population in mask vcpop.m
+  function TD _vcpop(T2 src2);
+    if(this.elm_idx == 0) begin
+      _vcpop = 0;
+      this.mask_count = 0;
+    end else begin
+      _vcpop = this.mask_count;
+      this.mask_count += src2;
+    end
+  endfunction: _vcpop
+
+  //---------------------------------------------------------------------- 
+  // 32.15.3. vfirst find-first-set mask bit
+  function TD _vfirst(T2 src2);
+    if(!this.first_mask_bit) begin
+      this.first_mask_idx = '0;
+    end else if(src2 && !this.first_mask_bit) begin
+      this.first_mask_bit = 1'b1;
+      this.first_mask_idx = this.elm_idx;
+    end else begin
+      this.first_mask_idx = this.first_mask_idx;
+    end
+    _vfirst = this.first_mask_idx;
+  endfunction: _vfirst
+
+  //---------------------------------------------------------------------- 
+  // 32.15.4. vmsbf.m set-before-first mask bit
+  function TD _vmsbf(T2 src2);
+    if(!first_mask_bit) begin
+      _vmsbf = 1'b1;
+    end else begin
+      _vmsbf = 1'b0;
+    end
+    if(src2 & ~first_mask_bit) begin
+      first_mask_bit = 1'b1; 
+    end
+  endfunction: _vmsbf
+
+  //---------------------------------------------------------------------- 
+  // 32.15.5. vmsif.m set-including-first mask bit
+  function TD _vmsof(T2 src2);
+    if(src2 & ~first_mask_bit) begin 
+      first_mask_bit = 1'b1; 
+      _vmsof = 1'b1;
+    end else begin
+      _vmsof = 1'b0;
+    end
+  endfunction: _vmsof
+
+  //---------------------------------------------------------------------- 
+  // 32.15.6. vmsof.m set-only-first mask bit
+  function TD _vmsif(T2 src2);
+    if(src2 & ~first_mask_bit) begin 
+      first_mask_bit = 1'b1; 
+    end
+    if(!first_mask_bit) begin
+      _vmsif = 1'b1;
+    end else begin
+      _vmsif = 1'b0;
+    end
+  endfunction: _vmsif
+
+  //---------------------------------------------------------------------- 
   // 31.15.8. Vector Iota Instruction
   function TD _viota(T2 src2);
     if(this.elm_idx == 0) begin
@@ -1378,6 +1520,12 @@ class alu_processor#(
       this.mask_count += src2;
     end
   endfunction: _viota
+
+  //---------------------------------------------------------------------- 
+  // 31.15.9. Vector Element Index Instruction
+  function TD _vid();
+    _vid = elm_idx;
+  endfunction: _vid
 
 endclass: alu_processor
 

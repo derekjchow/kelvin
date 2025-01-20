@@ -176,6 +176,8 @@ typedef enum logic [7:0] {
 
   VMUNARY0        =   8'b01_010_100,     // it could be vmsbf, vmsof, vmsif, viota, vid. They can be distinguished by vs1 field(inst_encoding[19:15]).
 
+  VWXUNARY0       =   8'b01_010_000,     // it could be vcpop.m, vfirst.m and vmv. They can be distinguished by vs1 field(inst_encoding[19:15]).
+
   UNUSE_INST      =   8'b11_111_111
 } alu_inst_e;
 
@@ -188,14 +190,21 @@ typedef enum logic [4:0] {
   VXUNARY0_LAST   =   5'b11111
 } vext_e;
 
-// vmunary0, the uop could be vmsbf, vmsof, vmsif, viota, vid. They can be distinguished by vs1 field(inst_encoding[19:15]).
-
+// vwxunary0, the uop could be vcpop.m, vfirst.m and vmv. They can be distinguished by vs1 field(inst_encoding[19:15]).
 typedef enum logic [4:0] {
-  // VMSBF           =   5'b00001,
-  // VMSOF           =   5'b00010,
-  // VMSIF           =   5'b00011,
+  VMV_X_S         =   5'b00000,
+  VCPOP           =   5'b10000,
+  VFIRST          =   5'b10001,
+  VWXUNARY0_LAST  =   5'b11111
+} vwxunary0_e;
+
+// vmunary0, the uop could be vmsbf, vmsof, vmsif, viota, vid. They can be distinguished by vs1 field(inst_encoding[19:15]).
+typedef enum logic [4:0] {
+  VMSBF           =   5'b00001,
+  VMSOF           =   5'b00010,
+  VMSIF           =   5'b00011,
   VIOTA           =   5'b10000,
-  // VID             =   5'b10001,
+  VID             =   5'b10001,
   VMUNARY0_LAST   =   5'b11111
 } vmunary0_e;
 
