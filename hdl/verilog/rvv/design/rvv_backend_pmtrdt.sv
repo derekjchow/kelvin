@@ -21,7 +21,9 @@ module rvv_backend_pmtrdt
   pop_ex2rs,
   pmtrdt_uop_rs2ex,
   fifo_empty_rs2ex,
+`ifdef MULTI_PMTRDT
   fifo_almost_empty_rs2ex,
+`endif
   all_uop_data,
 
   result_valid_ex2rob,
@@ -37,7 +39,9 @@ module rvv_backend_pmtrdt
   output  logic        [`NUM_PMTRDT-1:0]  pop_ex2rs;
   input   PMT_RDT_RS_t [`NUM_PMTRDT-1:0]  pmtrdt_uop_rs2ex;
   input   logic                           fifo_empty_rs2ex;
+`ifdef MULTI_PMTRDT
   input   logic        [`NUM_PMTRDT-1:1]  fifo_almost_empty_rs2ex;
+`endif
   input   PMT_RDT_RS_t [`PMTRDT_RS_DEPTH-1:0] all_uop_data;
 
 // PMTRDT unit to ROB
@@ -58,7 +62,6 @@ module rvv_backend_pmtrdt
 // ---code start------------------------------------------------------
 // compress instruction is a specified instruction in PMT.
 // the vl of vd in compress can not be acknowledged untill decode vs1 value.
-// in order to simplify design, the compress instruciton can only executed in pmtrdt_unit0.
 //TODO
 
   generate
@@ -67,7 +70,11 @@ module rvv_backend_pmtrdt
       if (i==0)
         assign pmtrdt_uop_valid[0] = ~fifo_empty_rs2ex;
       else
+      `ifdef MULTI_PMTRDT
         assign pmtrdt_uop_valid[i] = ~fifo_almost_empty_rs2ex[i];
+      `else
+        assign pmtrdt_uop_valid[i] = ~fifo_empty_rs2ex;
+      `endif
       assign pop_ex2rs[i] = pmtrdt_uop_valid[i] & pmtrdt_uop_ready[i];
 
       assign result_valid_ex2rob[i] = pmtrdt_res_valid[i];
@@ -79,24 +86,10 @@ module rvv_backend_pmtrdt
 // instance the pmtrdt unit
   generate
     for (i=0; i<`NUM_PMTRDT; i++) begin : gen_pmtrdt_unit
-      if (i==0)
         rvv_backend_pmtrdt_unit #(
           .RDT_CMP      (1'b1),
           .COMPRESS     (1'b1)
         ) u_pmtrdt_unit0 (
-          .clk                (clk),
-          .rst_n              (rst_n),
-          .pmtrdt_uop_valid   (pmtrdt_uop_valid[0]),
-          .pmtrdt_uop         (pmtrdt_uop[0]),
-          .pmtrdt_uop_ready   (pmtrdt_uop_ready[0]),
-          .pmtrdt_res_valid   (pmtrdt_res_valid[0]),
-          .pmtrdt_res         (pmtrdt_res[0]),
-          .pmtrdt_res_ready   (pmtrdt_res_ready[0]),
-          .uop_data           (all_uop_data)
-        );
-      else
-        rvv_backend_pmtrdt_unit #(
-        ) u_pmtrdt_unit (
           .clk                (clk),
           .rst_n              (rst_n),
           .pmtrdt_uop_valid   (pmtrdt_uop_valid[i]),

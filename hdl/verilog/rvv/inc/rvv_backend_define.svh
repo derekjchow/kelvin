@@ -17,7 +17,7 @@
 
 // the max number of processor unit in EX stage
 `define NUM_ALU                 2
-`define NUM_PMTRDT              2
+`define NUM_PMTRDT              1
 `define NUM_MUL                 2
 `define NUM_DIV                 1
 `define NUM_LSU                 2
