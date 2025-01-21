@@ -58,8 +58,16 @@ module rvv_backend_dispatch_opr_byte_type
         eew_max       = EEW16;
         eew_max_shift = 2'h1;
       end
-      else begin
+      else if ((uop_info.vs1_eew==EEW8)||(uop_info.vs2_eew==EEW8)||(uop_info.vd_eew==EEW8)) begin
         eew_max       = EEW8;
+        eew_max_shift = 2'h0;
+      end
+      else if ((uop_info.vs1_eew==EEW1)||(uop_info.vs2_eew==EEW1)||(uop_info.vd_eew==EEW1)) begin
+        eew_max       = EEW1;
+        eew_max_shift = 2'h0;
+      end
+      else begin
+        eew_max       = EEW_NONE;
         eew_max_shift = 2'h0;
       end
     end
@@ -114,19 +122,20 @@ module rvv_backend_dispatch_opr_byte_type
 
         for (i=0; i<`VLENB; i++) begin : gen_vs1_byte_type
             // ele_index = uop_index * (VLEN/vs1_eew) + BYTE_INDEX[MSB:vs1_eew]
-            assign vs1_enable[i] = (uop_info.vm || uop_info.ignore_vma) ? 1'b1 : vs1_enable_tmp[BYTE_INDEX[i] >> vs1_eew_shift];
+            assign vs1_enable[i] = uop_info.vm ? 1'b1 : vs1_enable_tmp[BYTE_INDEX[i] >> vs1_eew_shift];
             assign vs1_ele_index[i] = uop_vs1_start + (BYTE_INDEX[i] >> vs1_eew_shift);
             always_comb begin
-                if (vs1_ele_index[i] >= uop_info.vl) 
-                    operand_byte_type.vs1[i] = uop_info.ignore_vta ? BODY_ACTIVE 
-                                                                   : TAIL;
+                if (uop_info.ignore_vta&uop_info.ignore_vma)
+                    operand_byte_type.vs1[i] = BODY_ACTIVE;       
+                else if (vs1_ele_index[i] >= uop_info.vl) 
+                    operand_byte_type.vs1[i] = TAIL;
                 else if (vs1_ele_index[i] < {1'b0, uop_info.vstart}) 
                     operand_byte_type.vs1[i] = NOT_CHANGE; // prestart
                 else if (vs1_ele_index[i] > uop_vd_end) 
                     operand_byte_type.vs1[i] = BODY_INACTIVE;
                 else begin 
-                    operand_byte_type.vs1[i] = vd_enable[i] ? BODY_ACTIVE
-                                                            : BODY_INACTIVE;
+                    operand_byte_type.vs1[i] = (vd_enable[i] || uop_info.ignore_vma) ? BODY_ACTIVE
+                                                                                     : BODY_INACTIVE;
                 end
             end
         end
@@ -181,19 +190,20 @@ module rvv_backend_dispatch_opr_byte_type
 
         for (i=0; i<`VLENB; i++) begin : gen_vs2_byte_type
             // ele_index = uop_index * (VLEN/vs2_eew) + BYTE_INDEX[MSB:vs2_eew]
-            assign vs2_enable[i] = (uop_info.vm || uop_info.ignore_vma) ? 1'b1 : vs2_enable_tmp[BYTE_INDEX[i] >> vs2_eew_shift];
+            assign vs2_enable[i] = uop_info.vm ? 1'b1 : vs2_enable_tmp[BYTE_INDEX[i] >> vs2_eew_shift];
             assign vs2_ele_index[i] = uop_vs2_start + (BYTE_INDEX[i] >> vs2_eew_shift);
             always_comb begin
-                if (vs2_ele_index[i] >= uop_info.vl) 
-                    operand_byte_type.vs2[i] = uop_info.ignore_vta ? BODY_ACTIVE 
-                                                                   : TAIL; 
+                if (uop_info.ignore_vta&uop_info.ignore_vma)
+                    operand_byte_type.vs2[i] = BODY_ACTIVE;       
+                else if (vs2_ele_index[i] >= uop_info.vl) 
+                    operand_byte_type.vs2[i] = TAIL; 
                 else if (vs2_ele_index[i] < {1'b0, uop_info.vstart}) 
                     operand_byte_type.vs2[i] = NOT_CHANGE; // prestart
                 else if (vs2_ele_index[i] > uop_vd_end) 
                     operand_byte_type.vs2[i] = BODY_INACTIVE;
                 else begin 
-                    operand_byte_type.vs2[i] = vd_enable[i] ? BODY_ACTIVE
-                                                            : BODY_INACTIVE;
+                    operand_byte_type.vs2[i] = (vd_enable[i] || uop_info.ignore_vma) ? BODY_ACTIVE
+                                                                                     : BODY_INACTIVE;
                 end
             end
         end
@@ -236,19 +246,20 @@ module rvv_backend_dispatch_opr_byte_type
 
         for (i=0; i<`VLENB; i++) begin : gen_vd_byte_type
             // ele_index = uop_index * (VLEN/vd_eew) + BYTE_INDEX[MSB:vd_eew]
-            assign vd_enable[i] = (uop_info.vm || uop_info.ignore_vma) ? 1'b1 : vd_enable_tmp[BYTE_INDEX[i] >> vd_eew_shift];
+            assign vd_enable[i] = uop_info.vm ? 1'b1 : vd_enable_tmp[BYTE_INDEX[i] >> vd_eew_shift];
             assign vd_ele_index[i] = uop_vd_start + (BYTE_INDEX[i] >> vd_eew_shift);
             always_comb begin
-                if (vd_ele_index[i] >= uop_info.vl) 
-                    operand_byte_type.vd[i] = uop_info.ignore_vta ? BODY_ACTIVE 
-                                                                  : TAIL;       
+                if (uop_info.ignore_vta&uop_info.ignore_vma)
+                    operand_byte_type.vd[i] = BODY_ACTIVE;       
+                else if (vd_ele_index[i] >= uop_info.vl) 
+                    operand_byte_type.vd[i] = TAIL;       
                 else if (vd_ele_index[i] < {1'b0, uop_info.vstart}) 
                     operand_byte_type.vd[i] = NOT_CHANGE;     // prestart
                 else if (vd_ele_index[i] > uop_vd_end) 
                     operand_byte_type.vd[i] = BODY_INACTIVE;
                 else begin 
-                    operand_byte_type.vd[i] = vd_enable[i] ? BODY_ACTIVE
-                                                           : BODY_INACTIVE;
+                    operand_byte_type.vd[i] = (vd_enable[i] || uop_info.ignore_vma) ? BODY_ACTIVE
+                                                                                    : BODY_INACTIVE;
                 end
             end
         end

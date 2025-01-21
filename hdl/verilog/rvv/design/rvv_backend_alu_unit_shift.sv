@@ -660,11 +660,13 @@ module rvv_backend_alu_unit_shift
 
   // overflow check for vnclipu and vnclip 
   generate 
-    for (j=0;j<`VLEN/`WORD_WIDTH;j++) begin: GET_OVERFLOW
+    for (j=0;j<`VLEN/`WORD_WIDTH/2;j++) begin: GET_OVERFLOW
       always_comb begin
         // initial
         upoverflow[   4*j +: 4] = 'b0;
         underoverflow[4*j +: 4] = 'b0;
+        upoverflow[   4*(j+`VLEN/`WORD_WIDTH/2) +: 4] = 'b0;
+        underoverflow[4*(j+`VLEN/`WORD_WIDTH/2) +: 4] = 'b0;
           
         case(vs2_eew)
           EEW16: begin
@@ -672,69 +674,57 @@ module rvv_backend_alu_unit_shift
               SHIFT_SRL: begin
               // unsigned overflow check for vnclipu
                 if(uop_index[0]==1'b0) begin
-                  if(j<`VLEN/`WORD_WIDTH/2) begin
-                    upoverflow[4*j +: 4] = {
-                      ({cout16[4*j+3], round16[4*j+3][`BYTE_WIDTH +: `BYTE_WIDTH]}!='b0),
-                      ({cout16[4*j+2], round16[4*j+2][`BYTE_WIDTH +: `BYTE_WIDTH]}!='b0),
-                      ({cout16[4*j+1], round16[4*j+1][`BYTE_WIDTH +: `BYTE_WIDTH]}!='b0),
-                      ({cout16[4*j  ], round16[4*j  ][`BYTE_WIDTH +: `BYTE_WIDTH]}!='b0)};
-                  end
-                  else begin
-                    upoverflow[4*j +: 4] = 'b0;
-                  end
+                  upoverflow[4*j +: 4] = {
+                    ({cout16[4*j+3], round16[4*j+3][`BYTE_WIDTH +: `BYTE_WIDTH]}!='b0),
+                    ({cout16[4*j+2], round16[4*j+2][`BYTE_WIDTH +: `BYTE_WIDTH]}!='b0),
+                    ({cout16[4*j+1], round16[4*j+1][`BYTE_WIDTH +: `BYTE_WIDTH]}!='b0),
+                    ({cout16[4*j  ], round16[4*j  ][`BYTE_WIDTH +: `BYTE_WIDTH]}!='b0)};
+
+                  upoverflow[4*(j+`VLEN/`WORD_WIDTH/2) +: 4] = 'b0;
                 end
                 else begin
-                  if(j<`VLEN/`WORD_WIDTH/2) begin
-                    upoverflow[4*j +: 4] = 'b0;
-                  end
-                  else begin
-                    upoverflow[4*j +: 4] = {
-                      ({cout16[4*(j-`VLEN/`WORD_WIDTH/2)+3], round16[4*(j-`VLEN/`WORD_WIDTH/2)+3][`BYTE_WIDTH +: `BYTE_WIDTH]}!='b0),
-                      ({cout16[4*(j-`VLEN/`WORD_WIDTH/2)+2], round16[4*(j-`VLEN/`WORD_WIDTH/2)+2][`BYTE_WIDTH +: `BYTE_WIDTH]}!='b0),
-                      ({cout16[4*(j-`VLEN/`WORD_WIDTH/2)+1], round16[4*(j-`VLEN/`WORD_WIDTH/2)+1][`BYTE_WIDTH +: `BYTE_WIDTH]}!='b0),
-                      ({cout16[4*(j-`VLEN/`WORD_WIDTH/2)  ], round16[4*(j-`VLEN/`WORD_WIDTH/2)  ][`BYTE_WIDTH +: `BYTE_WIDTH]}!='b0)};
-                  end
+                  upoverflow[4*j +: 4] = 'b0;
+
+                  upoverflow[4*(j+`VLEN/`WORD_WIDTH/2) +: 4] = {
+                    ({cout16[4*j+3], round16[4*j+3][`BYTE_WIDTH +: `BYTE_WIDTH]}!='b0),
+                    ({cout16[4*j+2], round16[4*j+2][`BYTE_WIDTH +: `BYTE_WIDTH]}!='b0),
+                    ({cout16[4*j+1], round16[4*j+1][`BYTE_WIDTH +: `BYTE_WIDTH]}!='b0),
+                    ({cout16[4*j  ], round16[4*j  ][`BYTE_WIDTH +: `BYTE_WIDTH]}!='b0)};
                 end
               end
               SHIFT_SRA: begin
               // signed overflow check for vnclip
                 if(uop_index[0]==1'b0) begin
-                  if(j<`VLEN/`WORD_WIDTH/2) begin
-                    upoverflow[4*j +: 4] = {
-                      ({cout16[4*j+3], round16[4*j+3][`BYTE_WIDTH +: `BYTE_WIDTH]}!='b0)&(round16[4*j+3][`HWORD_WIDTH-1]==1'b0),
-                      ({cout16[4*j+2], round16[4*j+2][`BYTE_WIDTH +: `BYTE_WIDTH]}!='b0)&(round16[4*j+2][`HWORD_WIDTH-1]==1'b0),
-                      ({cout16[4*j+1], round16[4*j+1][`BYTE_WIDTH +: `BYTE_WIDTH]}!='b0)&(round16[4*j+1][`HWORD_WIDTH-1]==1'b0),
-                      ({cout16[4*j  ], round16[4*j  ][`BYTE_WIDTH +: `BYTE_WIDTH]}!='b0)&(round16[4*j  ][`HWORD_WIDTH-1]==1'b0)};
+                  upoverflow[4*j +: 4] = {
+                    ({cout16[4*j+3], round16[4*j+3][`BYTE_WIDTH +: `BYTE_WIDTH]}!='b0)&(round16[4*j+3][`HWORD_WIDTH-1]==1'b0),
+                    ({cout16[4*j+2], round16[4*j+2][`BYTE_WIDTH +: `BYTE_WIDTH]}!='b0)&(round16[4*j+2][`HWORD_WIDTH-1]==1'b0),
+                    ({cout16[4*j+1], round16[4*j+1][`BYTE_WIDTH +: `BYTE_WIDTH]}!='b0)&(round16[4*j+1][`HWORD_WIDTH-1]==1'b0),
+                    ({cout16[4*j  ], round16[4*j  ][`BYTE_WIDTH +: `BYTE_WIDTH]}!='b0)&(round16[4*j  ][`HWORD_WIDTH-1]==1'b0)};
   
-                    underoverflow[4*j +: 4] = {
-                      ({cout16[4*j+3], round16[4*j+3][`BYTE_WIDTH +: `BYTE_WIDTH]}!='1)&(round16[4*j+3][`HWORD_WIDTH-1]==1'b1),
-                      ({cout16[4*j+2], round16[4*j+2][`BYTE_WIDTH +: `BYTE_WIDTH]}!='1)&(round16[4*j+2][`HWORD_WIDTH-1]==1'b1),
-                      ({cout16[4*j+1], round16[4*j+1][`BYTE_WIDTH +: `BYTE_WIDTH]}!='1)&(round16[4*j+1][`HWORD_WIDTH-1]==1'b1),
-                      ({cout16[4*j  ], round16[4*j  ][`BYTE_WIDTH +: `BYTE_WIDTH]}!='1)&(round16[4*j  ][`HWORD_WIDTH-1]==1'b1)};
-                  end
-                  else begin
-                    upoverflow[4*j +: 4] = 'b0;
-                    underoverflow[4*j +: 4] = 'b0;
-                  end
+                  underoverflow[4*j +: 4] = {
+                    ({cout16[4*j+3], round16[4*j+3][`BYTE_WIDTH +: `BYTE_WIDTH]}!='1)&(round16[4*j+3][`HWORD_WIDTH-1]==1'b1),
+                    ({cout16[4*j+2], round16[4*j+2][`BYTE_WIDTH +: `BYTE_WIDTH]}!='1)&(round16[4*j+2][`HWORD_WIDTH-1]==1'b1),
+                    ({cout16[4*j+1], round16[4*j+1][`BYTE_WIDTH +: `BYTE_WIDTH]}!='1)&(round16[4*j+1][`HWORD_WIDTH-1]==1'b1),
+                    ({cout16[4*j  ], round16[4*j  ][`BYTE_WIDTH +: `BYTE_WIDTH]}!='1)&(round16[4*j  ][`HWORD_WIDTH-1]==1'b1)};
+
+                  upoverflow[4*(j+`VLEN/`WORD_WIDTH/2) +: 4] = 'b0;
+                  underoverflow[4*(j+`VLEN/`WORD_WIDTH/2) +: 4] = 'b0;
                 end
                 else begin
-                  if(j<`VLEN/`WORD_WIDTH/2) begin
-                    upoverflow[4*j +: 4] = 'b0;
-                    underoverflow[4*j +: 4] = 'b0;
-                  end
-                  else begin
-                    upoverflow[4*j +: 4] = {
-                      ({cout16[4*(j-`VLEN/`WORD_WIDTH/2)+3], round16[4*(j-`VLEN/`WORD_WIDTH/2)+3][`BYTE_WIDTH +: `BYTE_WIDTH]}!='b0)&(round16[4*(j-`VLEN/`WORD_WIDTH/2)+3][`HWORD_WIDTH-1]==1'b0),
-                      ({cout16[4*(j-`VLEN/`WORD_WIDTH/2)+2], round16[4*(j-`VLEN/`WORD_WIDTH/2)+2][`BYTE_WIDTH +: `BYTE_WIDTH]}!='b0)&(round16[4*(j-`VLEN/`WORD_WIDTH/2)+2][`HWORD_WIDTH-1]==1'b0),
-                      ({cout16[4*(j-`VLEN/`WORD_WIDTH/2)+1], round16[4*(j-`VLEN/`WORD_WIDTH/2)+1][`BYTE_WIDTH +: `BYTE_WIDTH]}!='b0)&(round16[4*(j-`VLEN/`WORD_WIDTH/2)+1][`HWORD_WIDTH-1]==1'b0),
-                      ({cout16[4*(j-`VLEN/`WORD_WIDTH/2)  ], round16[4*(j-`VLEN/`WORD_WIDTH/2)  ][`BYTE_WIDTH +: `BYTE_WIDTH]}!='b0)&(round16[4*(j-`VLEN/`WORD_WIDTH/2)  ][`HWORD_WIDTH-1]==1'b0)};
+                  upoverflow[4*j +: 4] = 'b0;
+                  underoverflow[4*j +: 4] = 'b0;
+
+                  upoverflow[4*(j+`VLEN/`WORD_WIDTH/2) +: 4] = {
+                    ({cout16[4*j+3], round16[4*j+3][`BYTE_WIDTH +: `BYTE_WIDTH]}!='b0)&(round16[4*j+3][`HWORD_WIDTH-1]==1'b0),
+                    ({cout16[4*j+2], round16[4*j+2][`BYTE_WIDTH +: `BYTE_WIDTH]}!='b0)&(round16[4*j+2][`HWORD_WIDTH-1]==1'b0),
+                    ({cout16[4*j+1], round16[4*j+1][`BYTE_WIDTH +: `BYTE_WIDTH]}!='b0)&(round16[4*j+1][`HWORD_WIDTH-1]==1'b0),
+                    ({cout16[4*j  ], round16[4*j  ][`BYTE_WIDTH +: `BYTE_WIDTH]}!='b0)&(round16[4*j  ][`HWORD_WIDTH-1]==1'b0)};
   
-                    underoverflow[4*j +: 4] = {
-                      ({cout16[4*(j-`VLEN/`WORD_WIDTH/2)+3], round16[4*(j-`VLEN/`WORD_WIDTH/2)+3][`BYTE_WIDTH +: `BYTE_WIDTH]}!='1)&(round16[4*(j-`VLEN/`WORD_WIDTH/2)+3][`HWORD_WIDTH-1]==1'b1),
-                      ({cout16[4*(j-`VLEN/`WORD_WIDTH/2)+2], round16[4*(j-`VLEN/`WORD_WIDTH/2)+2][`BYTE_WIDTH +: `BYTE_WIDTH]}!='1)&(round16[4*(j-`VLEN/`WORD_WIDTH/2)+2][`HWORD_WIDTH-1]==1'b1),
-                      ({cout16[4*(j-`VLEN/`WORD_WIDTH/2)+1], round16[4*(j-`VLEN/`WORD_WIDTH/2)+1][`BYTE_WIDTH +: `BYTE_WIDTH]}!='1)&(round16[4*(j-`VLEN/`WORD_WIDTH/2)+1][`HWORD_WIDTH-1]==1'b1),
-                      ({cout16[4*(j-`VLEN/`WORD_WIDTH/2)  ], round16[4*(j-`VLEN/`WORD_WIDTH/2)  ][`BYTE_WIDTH +: `BYTE_WIDTH]}!='1)&(round16[4*(j-`VLEN/`WORD_WIDTH/2)  ][`HWORD_WIDTH-1]==1'b1)};
-                  end
+                  underoverflow[4*(j+`VLEN/`WORD_WIDTH/2) +: 4] = {
+                    ({cout16[4*j+3], round16[4*j+3][`BYTE_WIDTH +: `BYTE_WIDTH]}!='1)&(round16[4*j+3][`HWORD_WIDTH-1]==1'b1),
+                    ({cout16[4*j+2], round16[4*j+2][`BYTE_WIDTH +: `BYTE_WIDTH]}!='1)&(round16[4*j+2][`HWORD_WIDTH-1]==1'b1),
+                    ({cout16[4*j+1], round16[4*j+1][`BYTE_WIDTH +: `BYTE_WIDTH]}!='1)&(round16[4*j+1][`HWORD_WIDTH-1]==1'b1),
+                    ({cout16[4*j  ], round16[4*j  ][`BYTE_WIDTH +: `BYTE_WIDTH]}!='1)&(round16[4*j  ][`HWORD_WIDTH-1]==1'b1)};
                 end
               end
             endcase
@@ -744,57 +734,45 @@ module rvv_backend_alu_unit_shift
               SHIFT_SRL: begin
               // unsigned overflow check for vnclipu
                 if(uop_index[0]==1'b0) begin
-                  if(j<`VLEN/`WORD_WIDTH/2) begin
-                    upoverflow[4*j +: 4] = {
-                      ({cout32[2*j+1], round32[2*j+1][`HWORD_WIDTH +: `HWORD_WIDTH]}!='b0),1'b0,
-                      ({cout32[2*j  ], round32[2*j  ][`HWORD_WIDTH +: `HWORD_WIDTH]}!='b0),1'b0};
-                  end
-                  else begin
-                    upoverflow[4*j +: 4] = 'b0;
-                  end
+                  upoverflow[4*j +: 4] = {
+                    ({cout32[2*j+1], round32[2*j+1][`HWORD_WIDTH +: `HWORD_WIDTH]}!='b0),1'b0,
+                    ({cout32[2*j  ], round32[2*j  ][`HWORD_WIDTH +: `HWORD_WIDTH]}!='b0),1'b0};
+
+                  upoverflow[4*(j+`VLEN/`WORD_WIDTH/2) +: 4] = 'b0;
                 end
                 else begin
-                  if(j<`VLEN/`WORD_WIDTH/2) begin
-                    upoverflow[4*j +: 4] = 'b0;
-                  end
-                  else begin
-                    upoverflow[4*j +: 4] = {
-                      ({cout32[2*(j-`VLEN/`WORD_WIDTH/2)+1], round32[2*(j-`VLEN/`WORD_WIDTH/2)+1][`HWORD_WIDTH +: `HWORD_WIDTH]}!='b0),1'b0,
-                      ({cout32[2*(j-`VLEN/`WORD_WIDTH/2)  ], round32[2*(j-`VLEN/`WORD_WIDTH/2)  ][`HWORD_WIDTH +: `HWORD_WIDTH]}!='b0),1'b0};
-                  end
+                  upoverflow[4*j +: 4] = 'b0;
+
+                  upoverflow[4*(j+`VLEN/`WORD_WIDTH/2) +: 4] = {
+                    ({cout32[2*j+1], round32[2*j+1][`HWORD_WIDTH +: `HWORD_WIDTH]}!='b0),1'b0,
+                    ({cout32[2*j  ], round32[2*j  ][`HWORD_WIDTH +: `HWORD_WIDTH]}!='b0),1'b0};
                 end
               end
               SHIFT_SRA: begin
               // unsigned overflow check for vnclip
                 if(uop_index[0]==1'b0) begin
-                  if(j<`VLEN/`WORD_WIDTH/2) begin
-                    upoverflow[4*j +: 4] = {
-                      ({cout32[2*j+1], round32[2*j+1][`HWORD_WIDTH +: `HWORD_WIDTH]}!='b0)&(round32[2*j+1][`WORD_WIDTH-1]==1'b0),1'b0,
-                      ({cout32[2*j  ], round32[2*j  ][`HWORD_WIDTH +: `HWORD_WIDTH]}!='b0)&(round32[2*j  ][`WORD_WIDTH-1]==1'b0),1'b0};
+                  upoverflow[4*j +: 4] = {
+                    ({cout32[2*j+1], round32[2*j+1][`HWORD_WIDTH +: `HWORD_WIDTH]}!='b0)&(round32[2*j+1][`WORD_WIDTH-1]==1'b0),1'b0,
+                    ({cout32[2*j  ], round32[2*j  ][`HWORD_WIDTH +: `HWORD_WIDTH]}!='b0)&(round32[2*j  ][`WORD_WIDTH-1]==1'b0),1'b0};
   
-                    underoverflow[4*j +: 4] = {
-                      ({cout32[2*j+1], round32[2*j+1][`HWORD_WIDTH +: `HWORD_WIDTH]}!='1)&(round32[2*j+1][`WORD_WIDTH-1]==1'b1),1'b0,
-                      ({cout32[2*j  ], round32[2*j  ][`HWORD_WIDTH +: `HWORD_WIDTH]}!='1)&(round32[2*j  ][`WORD_WIDTH-1]==1'b1),1'b0};
-                  end
-                  else begin
-                    upoverflow[4*j +: 4] = 'b0;
-                    underoverflow[4*j +: 4] = 'b0;
-                  end
+                  underoverflow[4*j +: 4] = {
+                    ({cout32[2*j+1], round32[2*j+1][`HWORD_WIDTH +: `HWORD_WIDTH]}!='1)&(round32[2*j+1][`WORD_WIDTH-1]==1'b1),1'b0,
+                    ({cout32[2*j  ], round32[2*j  ][`HWORD_WIDTH +: `HWORD_WIDTH]}!='1)&(round32[2*j  ][`WORD_WIDTH-1]==1'b1),1'b0};
+
+                  upoverflow[4*(j+`VLEN/`WORD_WIDTH/2) +: 4] = 'b0;
+                  underoverflow[4*(j+`VLEN/`WORD_WIDTH/2) +: 4] = 'b0;
                 end
                 else begin
-                  if(j<`VLEN/`WORD_WIDTH/2) begin
-                    upoverflow[4*j +: 4] = 'b0;
-                    underoverflow[4*j +: 4] = 'b0;
-                  end
-                  else begin
-                    upoverflow[4*j +: 4] = {
-                      ({cout32[2*(j-`VLEN/`WORD_WIDTH/2)+1], round32[2*(j-`VLEN/`WORD_WIDTH/2)+1][`HWORD_WIDTH +: `HWORD_WIDTH]}!='b0)&(round32[2*(j-`VLEN/`WORD_WIDTH/2)+1][`WORD_WIDTH-1]==1'b0),1'b0,
-                      ({cout32[2*(j-`VLEN/`WORD_WIDTH/2)  ], round32[2*(j-`VLEN/`WORD_WIDTH/2)  ][`HWORD_WIDTH +: `HWORD_WIDTH]}!='b0)&(round32[2*(j-`VLEN/`WORD_WIDTH/2)  ][`WORD_WIDTH-1]==1'b0),1'b0};
+                  upoverflow[4*j +: 4] = 'b0;
+                  underoverflow[4*j +: 4] = 'b0;
+
+                  upoverflow[4*(j+`VLEN/`WORD_WIDTH/2) +: 4] = {
+                    ({cout32[2*j+1], round32[2*j+1][`HWORD_WIDTH +: `HWORD_WIDTH]}!='b0)&(round32[2*j+1][`WORD_WIDTH-1]==1'b0),1'b0,
+                    ({cout32[2*j  ], round32[2*j  ][`HWORD_WIDTH +: `HWORD_WIDTH]}!='b0)&(round32[2*j  ][`WORD_WIDTH-1]==1'b0),1'b0};
   
-                    underoverflow[4*j +: 4] = {
-                      ({cout32[2*(j-`VLEN/`WORD_WIDTH/2)+1], round32[2*(j-`VLEN/`WORD_WIDTH/2)+1][`HWORD_WIDTH +: `HWORD_WIDTH]}!='1)&(round32[2*(j-`VLEN/`WORD_WIDTH/2)+1][`WORD_WIDTH-1]==1'b1),1'b0,
-                      ({cout32[2*(j-`VLEN/`WORD_WIDTH/2)  ], round32[2*(j-`VLEN/`WORD_WIDTH/2)  ][`HWORD_WIDTH +: `HWORD_WIDTH]}!='1)&(round32[2*(j-`VLEN/`WORD_WIDTH/2)  ][`WORD_WIDTH-1]==1'b1),1'b0};
-                  end
+                  underoverflow[4*(j+`VLEN/`WORD_WIDTH/2) +: 4] = {
+                    ({cout32[2*j+1], round32[2*j+1][`HWORD_WIDTH +: `HWORD_WIDTH]}!='1)&(round32[2*j+1][`WORD_WIDTH-1]==1'b1),1'b0,
+                    ({cout32[2*j  ], round32[2*j  ][`HWORD_WIDTH +: `HWORD_WIDTH]}!='1)&(round32[2*j  ][`WORD_WIDTH-1]==1'b1),1'b0};
                 end
               end
             endcase

@@ -46,9 +46,10 @@ module rvv_backend_alu_unit_mask
 
   // execute 
   logic   [`VLEN-1:0]                     src2_data;
+  logic   [`VLEN-1:0]                     src2_data_vcpop;
   logic   [`VLEN-1:0]                     src2_data_viota;
   logic   [`VLEN-1:0]                     src1_data;
-  logic   [`VLEN-1:0]                     tail_data;
+  logic   [`VLEN-1:0]                     tail_mask;
   logic   [`VLEN-1:0]                     result_data;
   logic   [`VLEN-1:0]                     result_data_andn;
   logic   [`VLEN-1:0]                     result_data_and; 
@@ -63,7 +64,8 @@ module rvv_backend_alu_unit_mask
   logic   [`VLEN-1:0]                     result_data_vmsif;
   logic   [`VLEN-1:0]                     result_data_vmsbf;
   logic   [`VLEN-1:0]                     result_data_vfirst;
-  logic   [`VLEN/16-1:0][4:0]             result_data_vcpop;
+  logic   [`VLENB-1:0][$clog2(`BYTE_WIDTH):0]          result_data_vcpop8;
+  logic   [`XLEN-1:0]                     result_data_vcpop;
   logic   [`VLEN-1:0][$clog2(`VLEN)-1:0]               result_data_viota;
   logic   [`VLEN-1:0][$clog2(`BYTE_WIDTH):0]           result_data_viota_per8;
   logic   [`VLENB-1:0][$clog2(`VLEN)-1:0]              result_data_viota8;
@@ -107,7 +109,7 @@ module rvv_backend_alu_unit_mask
   // get tail mask
   generate
     for(j=0;j<`VLEN;j++) begin: GET_TAIL
-      assign tail_data[j] = j<vl;
+      assign tail_mask[j] = j<vl;
     end
   endgenerate
 
@@ -224,6 +226,7 @@ module rvv_backend_alu_unit_mask
     // initial the data
     src2_data       = 'b0;
     src1_data       = 'b0;
+    src2_data_vcpop = 'b0; 
     src2_data_viota = 'b0; 
 
     // prepare source data
@@ -276,12 +279,17 @@ module rvv_backend_alu_unit_mask
           end
           VWXUNARY0: begin
             case(vs1_opcode)
-              VCPOP,
+              VCPOP: begin
+                if (vm==1'b1)
+                  src2_data_vcpop = vs2_data&tail_mask;
+                else
+                  src2_data_vcpop = vs2_data&tail_mask&v0_data; 
+              end
               VFIRST: begin
                 if (vm==1'b1)
-                  src2_data = vs2_data&tail_data;
+                  src2_data = vs2_data&tail_mask;
                 else
-                  src2_data = vs2_data&tail_data&v0_data; 
+                  src2_data = vs2_data&tail_mask&v0_data; 
               end
             endcase
           end
@@ -291,9 +299,9 @@ module rvv_backend_alu_unit_mask
               VMSOF,
               VMSIF: begin
                 if (vm==1'b1)
-                  src2_data = vs2_data&tail_data;
+                  src2_data = vs2_data;
                 else
-                  src2_data = vs2_data&tail_data&v0_data; 
+                  src2_data = vs2_data&v0_data; 
               end
               VIOTA: begin
                 if (vm==1'b1)
@@ -338,17 +346,22 @@ module rvv_backend_alu_unit_mask
       end
     end
   end
-
+  
   // vcpop
   generate
-    for(j=0;j<`VLEN/16;j++) begin: GET_PARTIAL_SUM_VCPOP
-      assign result_data_vcpop[j] = (((src2_data[16*j+0] +src2_data[16*j+1] ) + (src2_data[16*j+2] +src2_data[16*j+3] )) +
-                                     ((src2_data[16*j+4] +src2_data[16*j+5] ) + (src2_data[16*j+6] +src2_data[16*j+7] ))) + 
-                                    (((src2_data[16*j+8] +src2_data[16*j+9] ) + (src2_data[16*j+10]+src2_data[16*j+11])) +
-                                     ((src2_data[16*j+12]+src2_data[16*j+13]) + (src2_data[16*j+14]+src2_data[16*j+15])));
+    for(j=0; j<`VLENB;j++) begin: GET_VCPOP_PER8
+      assign result_data_vcpop8[j] = f_vcpop8(src2_data_vcpop[8*j +: 8]);
     end
   endgenerate
 
+  always_comb begin
+    result_data_vcpop = 'b0;
+
+    for(int i=0;i<`VLENB;i++) begin
+      result_data_vcpop = result_data_vcpop+result_data_vcpop8[i];
+    end
+  end
+   
   // viota 
   generate
     for(j=0; j<`VLENB;j++) begin: GET_VIOTA_PER8
@@ -399,7 +412,7 @@ module rvv_backend_alu_unit_mask
       assign result_data_viota32[j] = result_data_viota[{uop_index,j[$clog2(`VLEN/`WORD_WIDTH)-1:0]}];
     end
   endgenerate
-
+  
   // vid
   generate
     for(j=0;j<`VLENB;j++) begin: GET_VID8
@@ -470,10 +483,7 @@ module rvv_backend_alu_unit_mask
           VWXUNARY0: begin
             case(vs1_opcode)
               VCPOP: begin
-                result_data = 'b0;
-                for(int i=0;i<`VLEN/16;i++) begin
-                  result_data = result_data + result_data_vcpop[i];
-                end
+                result_data = result_data_vcpop;
               end
               VFIRST: begin
                 result_data = result_data_vfirst;
@@ -590,7 +600,7 @@ module rvv_backend_alu_unit_mask
                     if (vm==1'b1)
                       result.w_data[j] = result_data[j];
                     else 
-                      result.w_data[j] = (tail_data[j]==1'b1)&(v0_data[j]==1'b0) ? vd_data[j] : result_data[j]; 
+                      result.w_data[j] = v0_data[j] ? result_data[j] : vd_data[j]; 
                   end
                   VIOTA,
                   VID: begin
@@ -678,25 +688,75 @@ module rvv_backend_alu_unit_mask
     f_xnor = ~(vs2_data ^ vs1_data);
   endfunction
 
+  // vcpop
+  function [2:0] f_vcpop4;
+    input logic [3:0] src;
+    
+    case(src)
+      4'b0000: begin
+        f_vcpop4 = 3'd0;
+      end
+      4'b0001,
+      4'b0010,
+      4'b0100,
+      4'b1000: begin
+        f_vcpop4 = 3'd1;
+      end
+      4'b0011,
+      4'b0101,
+      4'b1001,
+      4'b0110,
+      4'b1010,
+      4'b1100: begin
+        f_vcpop4 = 3'd2;
+      end
+      4'b0111,
+      4'b1011,
+      4'b1101,
+      4'b1110: begin
+        f_vcpop4 = 3'd3;
+      end
+      4'b1111: begin
+        f_vcpop4 = 3'd4;
+      end
+      default: begin
+        f_vcpop4 = 3'd0;
+      end
+    endcase
+  
+  endfunction
+
+  function [3:0] f_vcpop8;
+    input logic [7:0] src;
+     
+    logic [3:0] vcpop4_hi;
+    logic [3:0] vcpop4_lo;
+
+    vcpop4_hi = f_vcpop4(src[7:4]);
+    vcpop4_lo = f_vcpop4(src[3:0]);
+
+    f_vcpop8 = vcpop4_hi+vcpop4_lo;
+  endfunction
+
   // find first 1 from LSB
   function [`VLEN-1:0] f_first1;
     input logic [`VLEN-1:0] src2;
 
-    f_first1 = (~(src2-1)) & src2;
+    f_first1 = (~(src2-1'b1)) & src2;
   endfunction
 
   // set from [0] to [first_1_index]
   function [`VLEN-1:0] f_vmsif;
     input logic [`VLEN-1:0] src2;
 
-    f_vmsif = (src2-1) & src2;
+    f_vmsif = (src2-1'b1) | src2;
   endfunction
 
   // set from [0] to [first_1_index-1]
   function [`VLEN-1:0] f_vmsbf;
     input logic [`VLEN-1:0] src2;
 
-    f_vmsbf = {1'b0, (src2[`VLEN-1:1]-1) & src2[`VLEN-1:1]};
+    f_vmsbf = {1'b0, (src2[`VLEN-1:1]-1'b1) | src2[`VLEN-1:1]};
   endfunction
 
   // viota

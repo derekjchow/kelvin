@@ -2104,7 +2104,7 @@ module rvv_backend_decode_unit_lsu
   `ifdef ASSERT_ON
     `ifdef TB_SUPPORT
       `rvv_forbid((inst_valid==1'b1)&(inst_encoding_correct==1'b0))
-      else $warning("pc(%d) instruction will be discarded directly.\n",inst.inst_pc);
+      else $warning("pc(0x%h) instruction will be discarded directly.\n",inst.inst_pc);
     `else
       `rvv_forbid((inst_valid==1'b1)&(inst_encoding_correct==1'b0))
       else $warning("This instruction will be discarded directly.\n");
@@ -2117,6 +2117,9 @@ module rvv_backend_decode_unit_lsu
     uop_vstart      = 'b0;
 
     case(eew_max)
+      EEW1: begin
+        uop_vstart = 'b0;
+      end
       EEW8: begin
         uop_vstart  = csr_vstart[4 +: `UOP_INDEX_WIDTH];
       end

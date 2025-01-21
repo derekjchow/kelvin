@@ -2799,7 +2799,7 @@ module rvv_backend_decode_unit_ari
                     (inst_vs1[4:3]==2'b0)&
                     ((inst_nr==NREG1)|(inst_nr==NREG2)|(inst_nr==NREG4)|(inst_nr==NREG8))
                    )
-                  check_special          = 1'b1;
+                  check_special = 1'b1;
 
                 `ifdef ASSERT_ON
                   assert #0 (check_special==1'b1)
@@ -3030,7 +3030,8 @@ module rvv_backend_decode_unit_ari
                 case(vs1_opcode_vwxunary)
                   VCPOP,
                   VFIRST: begin
-                    check_special   = 1'b1;
+                    if(csr_vstart=='b0)
+                      check_special  = 1'b1;
                   end
                   VMV_X_S: begin
                     if(inst_vm==1'b1)
@@ -3058,7 +3059,8 @@ module rvv_backend_decode_unit_ari
                   VMSIF,
                   VMSOF,
                   VIOTA: begin
-                    check_special = check_vd_overlap_v0&check_vd_overlap_vs2;
+                    if(csr_vstart=='b0)
+                      check_special = check_vd_overlap_v0&check_vd_overlap_vs2;
                   end
                   VID: begin
                     if(inst_vs2=='b0)
@@ -3358,7 +3360,7 @@ module rvv_backend_decode_unit_ari
   `ifdef ASSERT_ON
     `ifdef TB_SUPPORT
       `rvv_forbid((inst_valid==1'b1)&(inst_encoding_correct==1'b0))
-      else $warning("pc(%d) instruction will be discarded directly.\n",inst.inst_pc);
+      else $warning("pc(0x%h) instruction will be discarded directly.\n",inst.inst_pc);
     `else
       `rvv_forbid((inst_valid==1'b1)&(inst_encoding_correct==1'b0))
       else $warning("This instruction will be discarded directly.\n");
@@ -3368,17 +3370,20 @@ module rvv_backend_decode_unit_ari
 // get the start number of uop_index
   always_comb begin
     // initial
-    uop_vstart      = 'b0;
+    uop_vstart = 'b0;
 
     case(eew_max)
+      EEW1: begin
+        uop_vstart = 'b0;
+      end
       EEW8: begin
-        uop_vstart  = csr_vstart[4 +: `UOP_INDEX_WIDTH];
+        uop_vstart = csr_vstart[4 +: `UOP_INDEX_WIDTH];
       end
       EEW16: begin
-        uop_vstart  = csr_vstart[3 +: `UOP_INDEX_WIDTH];
+        uop_vstart = csr_vstart[3 +: `UOP_INDEX_WIDTH];
       end
       EEW32: begin
-        uop_vstart  = csr_vstart[2 +: `UOP_INDEX_WIDTH];
+        uop_vstart = csr_vstart[2 +: `UOP_INDEX_WIDTH];
       end
     endcase
   end
@@ -3402,7 +3407,7 @@ module rvv_backend_decode_unit_ari
     
     case(emul_max)
       EMUL1: begin
-        uop_index_max = 'd0;
+        uop_index_max = 'b0;
       end
       EMUL2: begin
         uop_index_max = 'd1;
@@ -3930,6 +3935,8 @@ module rvv_backend_decode_unit_ari
   end
  
   // update ignore_vma and ignore_vta
+  // some instructions use vm as an extra opcode, so it needs ignore vma policy.
+  // the instructions whose EEW_vd=1b can write the result to TAIL elements, so it needs ignore vta policy.
   always_comb begin
     for(int i=0;i<`NUM_DE_UOP;i=i+1) begin: GET_IGNORE
       uop[i].ignore_vma = 'b0;
@@ -4032,7 +4039,7 @@ module rvv_backend_decode_unit_ari
                 OPIVV,
                 OPIVX,
                 OPIVI: begin
-                  uop[i].v0_valid   = !inst_vm;
+                  uop[i].v0_valid = !inst_vm;
                 end
               endcase
             end 
@@ -4041,7 +4048,30 @@ module rvv_backend_decode_unit_ari
               case(inst_funct3)
                 OPIVV,
                 OPIVX: begin
-                  uop[i].v0_valid   = !inst_vm;
+                  uop[i].v0_valid = !inst_vm;
+                end
+              endcase
+            end
+          endcase
+        end
+        valid_opm: begin
+          // OPI*
+          case(funct6_ari.ari_funct6)
+            VWXUNARY0: begin
+              case(vs1_opcode_vwxunary)
+                VCPOP,
+                VFIRST: begin
+                  uop[i].v0_valid = !inst_vm;
+                end
+              endcase
+            end
+            VMUNARY0: begin
+              case(vs1_opcode_vmunary)
+                VMSBF,
+                VMSOF,
+                VMSIF,
+                VIOTA: begin
+                  uop[i].v0_valid = !inst_vm;
                 end
               endcase
             end

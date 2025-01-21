@@ -431,7 +431,7 @@ module rvv_backend_dispatch
 `ifdef TB_SUPPORT
             assign uop_dp2rob[i].uop_pc       = uop_uop2dp[i].uop_pc; 
 `endif
-            assign uop_dp2rob[i].w_index      = uop_uop2dp[i].vd_index;
+            assign uop_dp2rob[i].w_index      = uop_uop2dp[i].rd_index_valid ? uop_uop2dp[i].rd_index : uop_uop2dp[i].vd_index;
             assign uop_dp2rob[i].w_type       = uop_uop2dp[i].rd_index_valid ? XRF : VRF;
             assign uop_dp2rob[i].byte_type    = uop_operand_byte_type[i].vd;
             assign uop_dp2rob[i].vector_csr   = uop_uop2dp[i].vector_csr;
