@@ -51,6 +51,8 @@ class rvs_transaction extends uvm_sequence_item;
        lmul_e src2_emul;
        lmul_e src3_emul;
        vext_e src1_func_vext;
+       vwxunary0_e src1_func_vwxunary0;
+       vmunary0_e  src1_func_vmunary0;
    
   rand logic [`XLEN-1:0] rs_data;
 
@@ -243,17 +245,33 @@ class rvs_transaction extends uvm_sequence_item;
 
     `uvm_field_enum(oprand_type_e,dest_type,UVM_ALL_ON)
     `uvm_field_int(dest_idx,UVM_ALL_ON)
-    `uvm_field_enum(oprand_type_e,src1_type,UVM_ALL_ON)
     if(src1_type == FUNC && inst_type == ALU && alu_inst == VXUNARY0) begin
+      `uvm_field_enum(oprand_type_e,src1_type,UVM_ALL_ON)
       `uvm_field_enum(vext_e,src1_func_vext,UVM_ALL_ON)
-    end else begin
+      `uvm_field_int(src1_idx,UVM_ALL_ON)
+    end else if(src1_type == FUNC && inst_type == ALU && alu_inst == VWXUNARY0) begin
+      `uvm_field_enum(oprand_type_e,src1_type,UVM_ALL_ON)
+      `uvm_field_enum(vwxunary0_e,src1_func_vwxunary0,UVM_ALL_ON)
+      `uvm_field_int(src1_idx,UVM_ALL_ON)
+    end else if(src1_type == FUNC && inst_type == ALU && alu_inst == VMUNARY0) begin
+      `uvm_field_enum(oprand_type_e,src1_type,UVM_ALL_ON)
+      `uvm_field_enum(vmunary0_e,src1_func_vmunary0,UVM_ALL_ON)
+      `uvm_field_int(src1_idx,UVM_ALL_ON)
+    end else if(src1_type != UNUSE) begin
+      `uvm_field_enum(oprand_type_e,src1_type,UVM_ALL_ON)
       `uvm_field_int(src1_idx,UVM_ALL_ON)
     end
-    `uvm_field_enum(oprand_type_e,src2_type,UVM_ALL_ON)
-    `uvm_field_int(src2_idx,UVM_ALL_ON)
-    `uvm_field_enum(oprand_type_e,src3_type,UVM_ALL_ON)
-    `uvm_field_int(src3_idx,UVM_ALL_ON)
-    `uvm_field_int(rs_data,UVM_ALL_ON)
+    if(src2_type != UNUSE) begin
+      `uvm_field_enum(oprand_type_e,src2_type,UVM_ALL_ON)
+      `uvm_field_int(src2_idx,UVM_ALL_ON)
+    end
+    if(src3_type != UNUSE) begin
+      `uvm_field_enum(oprand_type_e,src3_type,UVM_ALL_ON)
+      `uvm_field_int(src3_idx,UVM_ALL_ON)
+    end
+    if(src1_type == XRF || src2_type == XRF) begin
+      `uvm_field_int(rs_data,UVM_ALL_ON)
+    end
 
 
     if(is_rt) begin
@@ -296,6 +314,8 @@ function void rvs_transaction::post_randomize();
     use_vm_to_cal = 0;
   
   if(src1_type == FUNC && inst_type == ALU && alu_inst == VXUNARY0) $cast(src1_func_vext,src1_idx);
+  if(src1_type == FUNC && inst_type == ALU && alu_inst == VWXUNARY0) $cast(src1_func_vwxunary0,src1_idx);
+  if(src1_type == FUNC && inst_type == ALU && alu_inst == VMUNARY0) $cast(src1_func_vmunary0,src1_idx);
   
   // rs random data
   if(src1_type != XRF && src2_type != XRF) rs_data = 'x;
@@ -363,6 +383,10 @@ function void rvs_transaction::asm_string_gen();
           inst = "vmv.v";
         else
           inst = "vmerge";
+      end else if(alu_inst inside {VWXUNARY0}) begin
+        inst = src1_func_vwxunary0.name();
+      end else if(alu_inst inside {VMUNARY0}) begin
+        inst = src1_func_vmunary0.name();
       end else begin
         inst = this.alu_inst.name();
       end
@@ -377,9 +401,10 @@ function void rvs_transaction::asm_string_gen();
     FUNC: begin
       if(inst_type == ALU && alu_inst == VXUNARY0 && src1_idx inside{VSEXT_VF4, VSEXT_VF4}) begin
         suf1 = "f4"; src1 = "";
-      end
-      if(inst_type == ALU && alu_inst == VXUNARY0 && src1_idx inside{VSEXT_VF2, VSEXT_VF2}) begin
+      end else if(inst_type == ALU && alu_inst == VXUNARY0 && src1_idx inside{VSEXT_VF2, VSEXT_VF2}) begin
         suf1 = "f2"; src1 = "";
+      end else if(inst_type == ALU && alu_inst inside {VMAND, VMOR, VMXOR, VMORN, VMNAND, VMNOR, VMANDN, VMXNOR}) begin
+        suf1 = "m"; src1 = $sformatf("v%0d",this.src1_idx); 
       end
     end
     default: begin suf1 = "?"; src1 = "?"; end
@@ -388,12 +413,16 @@ function void rvs_transaction::asm_string_gen();
     VRF: begin 
       if(inst_type == ALU && alu_inst inside {VWADDU_W, VWADD_W, VWSUBU_W, VWSUB_W}) begin
         suf2 = "w"; src2 = $sformatf("v%0d",this.src2_idx); 
+      end else if(inst_type == ALU && alu_inst inside {VMAND, VMOR, VMXOR, VMORN, VMNAND, VMNOR, VMANDN, VMXNOR,
+                                                       VWXUNARY0, VMUNARY0}) begin
+        suf2 = "m"; src2 = $sformatf("v%0d",this.src2_idx); 
       end else begin
         suf2 = "v"; src2 = $sformatf("v%0d",this.src2_idx); 
       end
     end
     XRF: begin suf2 = "x"; src2 = $sformatf("x%0d",this.src2_idx); end
     IMM: begin suf2 = "i"; src2 = $sformatf("%0d",$signed(this.src2_idx)); end
+    default: begin suf1 = "?"; src1 = "?"; end
   endcase
   if(vm == 0) begin
     if(inst_type == ALU && use_vm_to_cal == 1) begin

@@ -107,7 +107,8 @@ task rvs_monitor::rx_monitor();
       // `uvm_info(get_type_name(),$sformatf("rt_uop=0x%1x, rt_last_uop=0x%1x",rvs_if.rt_uop, rvs_if.rt_last_uop), UVM_HIGH)
       for(int rt_idx=0; rt_idx<`NUM_RT_UOP; rt_idx++) begin
         if(rvs_if.rt_uop[rt_idx]) begin
-          while(!(rvs_if.rt_vrf_valid_rob2rt[rt_idx] && (rvs_if.rt_vrf_data_rob2rt[rt_idx].uop_pc === tr.pc))) begin
+          while(!(rvs_if.rt_vrf_valid_rob2rt[rt_idx] && (rvs_if.rt_vrf_data_rob2rt[rt_idx].uop_pc === tr.pc)) && 
+                !(rvs_if.rt_xrf_valid_rvv2rvs[rt_idx] && rvs_if.rt_xrf_ready_rvs2rvv[rt_idx] && (rvs_if.rt_xrf_rvv2rvs[rt_idx].uop_pc === tr.pc))) begin
               `uvm_info(get_type_name(), $sformatf("Monitor rx_queue pc(0x%8x) mismatch with DUT pc(0x%8x), discarded.", tr.pc, rvs_if.rt_vrf_data_rob2rt[rt_idx].uop_pc), UVM_HIGH)
               `uvm_info(get_type_name(), tr.sprint(),UVM_HIGH)
               tr = inst_rx_queue.pop_front();

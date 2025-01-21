@@ -151,6 +151,7 @@ endclass : rvv_behavior_model
     bit is_widen_inst;
     bit is_widen_vs2_inst;
     bit is_narrow_inst;
+    bit is_mask_producing_inst;
     bit use_vm_to_cal;
 
     bit vm;
@@ -246,6 +247,10 @@ endclass : rvv_behavior_model
                                                                               VWMUL, VWMULU, VWMULSU, VWMACCU, VWMACC, VWMACCUS, VWMACCSU});
         is_widen_vs2_inst = inst_tr.inst_type == ALU && (inst_tr.alu_inst inside {VWADD_W, VWADDU_W, VWSUBU_W, VWSUB_W});
         is_narrow_inst = inst_tr.inst_type == ALU && (inst_tr.alu_inst inside {VNSRL, VNSRA, VNCLIPU, VNCLIP});
+        is_mask_producing_inst = inst_tr.inst_type == ALU && (inst_tr.alu_inst inside {VMAND, VMOR, VMXOR, VMORN, VMNAND, VMNOR, VMANDN, VMXNOR,
+                                                                                       VMADC, VMSBC, 
+                                                                                       VMSEQ, VMSNE, VMSLTU, VMSLT, VMSLEU, VMSLE, VMSGTU, VMSGT,
+                                                                                       VMUNARY0});
         use_vm_to_cal = inst_tr.use_vm_to_cal;
 
         // 1.0 illegal inst check
@@ -399,6 +404,8 @@ endclass : rvv_behavior_model
               src2_emul = src2_emul * src2_eew / eew;
               src1_eew = EEW1;
               src1_emul = src1_emul * src1_eew / eew;
+              // Special case: In this case, DUT will writeback all bits in dest.
+              elm_idx_max = `VLEN;
             end
             if(inst_tr.inst_type == ALU && inst_tr.alu_inst inside {VMADC, VMSBC, 
                 VMSEQ, VMSNE, VMSLTU, VMSLT, VMSLEU, VMSLE, VMSGTU, VMSGT}) begin
@@ -412,6 +419,8 @@ endclass : rvv_behavior_model
               src2_emul = src2_emul * src2_eew / eew;
               src1_eew = EEW1;
               src1_emul = src1_emul * src1_eew / eew;
+              // Special case: In this case, DUT will writeback all bits in dest.
+              elm_idx_max = `VLEN;
             end
             if(inst_tr.inst_type == ALU && inst_tr.alu_inst inside {VMUNARY0} && inst_tr.src1_idx inside {VIOTA, VID}) begin
               src2_eew = EEW1;
@@ -616,27 +625,45 @@ endclass : rvv_behavior_model
           endcase
 
           if(elm_idx < vstart) begin
-            `uvm_info("MDL", $sformatf("element[%2d]: pre-start", elm_idx), UVM_LOW)
             // pre-start: do nothing
+            if(is_mask_producing_inst) begin
+              //  If is mask producing operation, it will write with calculation results.
+              `uvm_info("MDL", $sformatf("element[%2d]: pre-start, mask producing operation", elm_idx), UVM_LOW)
+              elm_writeback(dest, inst_tr.dest_type, dest_reg_idx_base, elm_idx, dest_eew);
+            end else begin 
+              `uvm_info("MDL", $sformatf("element[%2d]: pre-start", elm_idx), UVM_LOW)
+            end
           end else if(elm_idx >= vl) begin
-            // tail
-            `uvm_info("MDL", $sformatf("element[%2d]: tail", elm_idx), UVM_LOW)
-            if(vtype.vta == AGNOSTIC) begin
-              if(all_one_for_agn) begin 
-                dest = '1;
-                elm_writeback(dest, inst_tr.dest_type, dest_reg_idx_base, elm_idx, dest_eew);
+            // tail 
+            if(is_mask_producing_inst) begin
+              //  If is mask producing operation, it will write with calculation results.
+              `uvm_info("MDL", $sformatf("element[%2d]: tail, mask producing operation", elm_idx), UVM_LOW)
+              dest = alu_handler.exe(inst_tr, dest, src2, src1, src0);
+              elm_writeback(dest, inst_tr.dest_type, dest_reg_idx_base, elm_idx, dest_eew);
+            end else begin 
+              `uvm_info("MDL", $sformatf("element[%2d]: tail", elm_idx), UVM_LOW)
+              if(vtype.vta == AGNOSTIC) begin
+                if(all_one_for_agn) begin 
+                  dest = '1;
+                  elm_writeback(dest, inst_tr.dest_type, dest_reg_idx_base, elm_idx, dest_eew);
+                end
+              end else begin
               end
-            end else begin
             end
           end else if(!(vm || this.vrf[0][elm_idx] || use_vm_to_cal)) begin
             // body-inactive
-            `uvm_info("MDL", $sformatf("element[%2d]: body-inactive", elm_idx), UVM_LOW)
-            if(vtype.vma == AGNOSTIC) begin
-              if(all_one_for_agn) begin 
-                dest = '1;
-                elm_writeback(dest, inst_tr.dest_type, dest_reg_idx_base, elm_idx, dest_eew);
-              end
+            if(is_mask_producing_inst) begin
+              `uvm_info("MDL", $sformatf("element[%2d]: body-inactive, mask producing operation", elm_idx), UVM_LOW)
+              elm_writeback(dest, inst_tr.dest_type, dest_reg_idx_base, elm_idx, dest_eew);
             end else begin
+              `uvm_info("MDL", $sformatf("element[%2d]: body-inactive", elm_idx), UVM_LOW)
+              if(vtype.vma == AGNOSTIC) begin
+                if(all_one_for_agn) begin 
+                  dest = '1;
+                  elm_writeback(dest, inst_tr.dest_type, dest_reg_idx_base, elm_idx, dest_eew);
+                end
+              end else begin
+              end
             end
           end else begin
             // body-active
@@ -797,7 +824,7 @@ virtual class alu_base;
   bit overflow;
   bit underflow;
   int mask_count;
-  bit first_mask_bit;
+  bit found_first_mask;
   int first_mask_idx;
   pure virtual function alu_unsigned_t exe (rvs_transaction inst_tr, alu_unsigned_t dest, alu_unsigned_t src2, alu_unsigned_t src1, alu_unsigned_t src0);
   pure virtual function alu_unsigned_t _roundoff_unsigned(alu_unsigned_t v, int unsigned d);
@@ -806,7 +833,7 @@ virtual class alu_base;
     this.overflow = 1'b0;
     this.underflow = 1'b0;
     this.mask_count = 'b0;
-    this.first_mask_bit = 1'b0;
+    this.found_first_mask = 1'b0;
     this.first_mask_idx =  'b0;
   endfunction: reset
   virtual function void set_vxrm(vxrm_e val);
@@ -1439,74 +1466,69 @@ class alu_processor#(
   //---------------------------------------------------------------------- 
   // Ch31.15.1. Vector Mask-Register Logical Instructions
   function TD _vmand(T2 src2, T1 src1);
-    _vmand = src1 & src2;
+    _vmand = src2 & src1;
   endfunction : _vmand
   function TD _vmor(T2 src2, T1 src1);
-    _vmor = src1 | src2;
+    _vmor = src2 | src1;
   endfunction : _vmor
   function TD _vmxor(T2 src2, T1 src1);
-    _vmxor = src1 ^ src2;
+    _vmxor = src2 ^ src1;
   endfunction : _vmxor
   function TD _vmorn(T2 src2, T1 src1);
-    _vmorn = src1 | ~src2;
+    _vmorn = src2 | ~src1;
   endfunction : _vmorn
   function TD _vmnand(T2 src2, T1 src1);
-    _vmnand = ~(src1 & src2);
+    _vmnand = ~(src2 & src1);
   endfunction : _vmnand
   function TD _vmnor(T2 src2, T1 src1);
-    _vmnor = ~(src1 | src2);
+    _vmnor = ~(src2 | src1);
   endfunction : _vmnor
   function TD _vmandn(T2 src2, T1 src1);
-    _vmandn = src1 & ~src2;
+    _vmandn = src2 & ~src1;
   endfunction : _vmandn
   function TD _vmxnor(T2 src2, T1 src1);
-    _vmxnor = ~(src1 ^ src2);
+    _vmxnor = ~(src2 ^ src1);
   endfunction : _vmxnor
 
   //---------------------------------------------------------------------- 
   // 31.15.2. Vector count population in mask vcpop.m
   function TD _vcpop(T2 src2);
-    if(this.elm_idx == 0) begin
-      _vcpop = 0;
-      this.mask_count = 0;
-    end else begin
-      _vcpop = this.mask_count;
-      this.mask_count += src2;
-    end
+    this.mask_count += src2;
+    _vcpop = this.mask_count;
   endfunction: _vcpop
 
   //---------------------------------------------------------------------- 
   // 32.15.3. vfirst find-first-set mask bit
   function TD _vfirst(T2 src2);
-    if(!this.first_mask_bit) begin
-      this.first_mask_idx = '0;
-    end else if(src2 && !this.first_mask_bit) begin
-      this.first_mask_bit = 1'b1;
+    if(src2 && !this.found_first_mask) begin
+      this.found_first_mask = 1'b1;
       this.first_mask_idx = this.elm_idx;
     end else begin
       this.first_mask_idx = this.first_mask_idx;
     end
     _vfirst = this.first_mask_idx;
+    `uvm_info("MDL", $sformatf("found_first_mask=%0d, first_mask_idx=%0d, elm_idx=%0d", 
+                                found_first_mask, first_mask_idx, elm_idx),UVM_HIGH)
   endfunction: _vfirst
 
   //---------------------------------------------------------------------- 
   // 32.15.4. vmsbf.m set-before-first mask bit
   function TD _vmsbf(T2 src2);
-    if(!first_mask_bit) begin
+    if(!found_first_mask) begin
       _vmsbf = 1'b1;
     end else begin
       _vmsbf = 1'b0;
     end
-    if(src2 & ~first_mask_bit) begin
-      first_mask_bit = 1'b1; 
+    if(src2 & ~found_first_mask) begin
+      found_first_mask = 1'b1; 
     end
   endfunction: _vmsbf
 
   //---------------------------------------------------------------------- 
   // 32.15.5. vmsif.m set-including-first mask bit
   function TD _vmsof(T2 src2);
-    if(src2 & ~first_mask_bit) begin 
-      first_mask_bit = 1'b1; 
+    if(src2 & ~found_first_mask) begin 
+      found_first_mask = 1'b1; 
       _vmsof = 1'b1;
     end else begin
       _vmsof = 1'b0;
@@ -1516,10 +1538,10 @@ class alu_processor#(
   //---------------------------------------------------------------------- 
   // 32.15.6. vmsof.m set-only-first mask bit
   function TD _vmsif(T2 src2);
-    if(src2 & ~first_mask_bit) begin 
-      first_mask_bit = 1'b1; 
+    if(src2 & ~found_first_mask) begin 
+      found_first_mask = 1'b1; 
     end
-    if(!first_mask_bit) begin
+    if(!found_first_mask) begin
       _vmsif = 1'b1;
     end else begin
       _vmsif = 1'b0;
