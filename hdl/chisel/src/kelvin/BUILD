@@ -112,12 +112,14 @@ chisel_test(
         "AxiSlave2SRAMTest.scala",
         "CoreAxiCSRTest.scala",
         "CoreAxiSlaveMuxTest.scala",
+        "DBus2AxiTest.scala",
     ],
     deps = [
         ":kelvin",
         ":kelvin_base",
         "//hdl/chisel/src/bus",
     ],
+    size = "medium",
 )
 
 chisel_library(

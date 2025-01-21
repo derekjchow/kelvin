@@ -125,6 +125,7 @@ class Parameters(var m: Seq[MemoryRegion] = Seq(), val hartId: Int = 0) {
   val axi2IdBits = 6
   val axi2AddrBits = 32
   def axi2DataBits: Int = { lsuDataBits } // vectorBits
+  def axi2DataBytes: Int = { axi2DataBits / 8 }
 
   // If set, itcmMemoryFile should contain a path to a Verilog mem file.
   // NB: Only used by CoreAxi
