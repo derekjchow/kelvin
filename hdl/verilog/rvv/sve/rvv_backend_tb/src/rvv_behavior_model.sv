@@ -282,6 +282,10 @@ endclass : rvv_behavior_model
           `uvm_warning("MDL/INST_CHECKER", $sformatf("pc=0x%8x: vm == 0 of %0s is ignored.",pc,inst_tr.alu_inst.name()))
           continue;
         end
+        if(inst_tr.inst_type == ALU && inst_tr.alu_inst == VWXUNARY0 && inst_tr.src1_idx inside {VCPOP, VFIRST} && inst_tr.vstart !== 0) begin
+          `uvm_warning("MDL/INST_CHECKER", $sformatf("pc=0x%8x: vstart = %0d of vcpop is ignored.", pc, inst_tr.vstart))
+          continue;
+        end
 
         dest_eew = eew;
         src0_eew = EEW1;
@@ -834,7 +838,7 @@ virtual class alu_base;
     this.underflow = 1'b0;
     this.mask_count = 'b0;
     this.found_first_mask = 1'b0;
-    this.first_mask_idx =  'b0;
+    this.first_mask_idx =  -'d1;
   endfunction: reset
   virtual function void set_vxrm(vxrm_e val);
     this.vxrm = val;
