@@ -1235,6 +1235,7 @@ class alu_iterate_vmunary0_seq extends alu_iterate_base_sequence;
 
           dest_type == VRF;
           src2_type == VRF;
+          (src1_idx == VID) -> (src2_idx dist{0 := 9, 1 := 1});
           src1_type == FUNC; src1_idx != VMUNARY0_LAST;
         });
         finish_item(req);
@@ -1258,6 +1259,7 @@ class alu_iterate_vmunary0_seq extends alu_iterate_base_sequence;
 
               dest_type == VRF; 
               src2_type == VRF;
+              (src1_idx == VID) -> (src2_idx dist{0 := 9, 1 := 1});
               src1_type == FUNC; src1_idx == local::vmunary0_func;
               vm == local::vm;
             });

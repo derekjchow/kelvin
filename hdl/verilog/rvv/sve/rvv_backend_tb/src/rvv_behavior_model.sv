@@ -247,16 +247,20 @@ endclass : rvv_behavior_model
                                                                               VWMUL, VWMULU, VWMULSU, VWMACCU, VWMACC, VWMACCUS, VWMACCSU});
         is_widen_vs2_inst = inst_tr.inst_type == ALU && (inst_tr.alu_inst inside {VWADD_W, VWADDU_W, VWSUBU_W, VWSUB_W});
         is_narrow_inst = inst_tr.inst_type == ALU && (inst_tr.alu_inst inside {VNSRL, VNSRA, VNCLIPU, VNCLIP});
-        is_mask_producing_inst = inst_tr.inst_type == ALU && (inst_tr.alu_inst inside {VMAND, VMOR, VMXOR, VMORN, VMNAND, VMNOR, VMANDN, VMXNOR,
+        is_mask_producing_inst = inst_tr.inst_type == ALU && ((inst_tr.alu_inst inside {VMAND, VMOR, VMXOR, VMORN, VMNAND, VMNOR, VMANDN, VMXNOR,
                                                                                        VMADC, VMSBC, 
-                                                                                       VMSEQ, VMSNE, VMSLTU, VMSLT, VMSLEU, VMSLE, VMSGTU, VMSGT,
-                                                                                       VMUNARY0});
+                                                                                       VMSEQ, VMSNE, VMSLTU, VMSLT, VMSLEU, VMSLE, VMSGTU, VMSGT
+                                                                                       }) ||
+                                                              (inst_tr.alu_inst inside {VMUNARY0} && inst_tr.src1_idx inside {VMSBF, VMSOF, VMSIF}));
         use_vm_to_cal = inst_tr.use_vm_to_cal;
 
         // 1.0 illegal inst check
         if(inst_tr.vstart >= inst_tr.vl) begin
-          `uvm_warning("MDL/INST_CHECKER", $sformatf("pc=0x%8x: ignored since vstart(%0d) >= vl(%0d).", pc, inst_tr.vstart, inst_tr.vl))
-          continue;
+          if(inst_tr.dest_type == XRF && inst_tr.vl == 0) begin
+          end else begin
+            `uvm_warning("MDL/INST_CHECKER", $sformatf("pc=0x%8x: ignored since vstart(%0d) >= vl(%0d).", pc, inst_tr.vstart, inst_tr.vl))
+            continue;
+          end
         end
         if(inst_tr.inst_type == ALU && inst_tr.alu_type == OPIVV && inst_tr.alu_inst == VRSUB) begin
           `uvm_warning("MDL/INST_CHECKER", $sformatf("pc=0x%8x: vrsub.vv is ignored.",pc))
@@ -283,7 +287,15 @@ endclass : rvv_behavior_model
           continue;
         end
         if(inst_tr.inst_type == ALU && inst_tr.alu_inst == VWXUNARY0 && inst_tr.src1_idx inside {VCPOP, VFIRST} && inst_tr.vstart !== 0) begin
-          `uvm_warning("MDL/INST_CHECKER", $sformatf("pc=0x%8x: vstart = %0d of vcpop is ignored.", pc, inst_tr.vstart))
+          `uvm_warning("MDL/INST_CHECKER", $sformatf("pc=0x%8x: vstart = %0d of vcpop/vfirst is ignored.", pc, inst_tr.vstart))
+          continue;
+        end
+        if(inst_tr.inst_type == ALU && inst_tr.alu_inst == VMUNARY0 && inst_tr.src1_idx inside {VMSBF, VMSOF, VMSIF, VIOTA} && inst_tr.vstart !== 0) begin
+          `uvm_warning("MDL/INST_CHECKER", $sformatf("pc=0x%8x: vstart = %0d of vmsf/vmsof/vmsif/viota is ignored.", pc, inst_tr.vstart))
+          continue;
+        end
+        if(inst_tr.inst_type == ALU && inst_tr.alu_inst == VMUNARY0 && inst_tr.src1_idx inside {VID} && inst_tr.src2_idx !== 0) begin
+          `uvm_warning("MDL/INST_CHECKER", $sformatf("pc=0x%8x: vs2 = v%0d of vid is ignored.", pc, inst_tr.src2_idx))
           continue;
         end
 
@@ -524,7 +536,14 @@ endclass : rvv_behavior_model
           `uvm_warning("MDL/INST_CHECKER", $sformatf("pc=0x%8x: Ch32.5.3. Dest vrf index(%0d) overlap source mask register v0. Ignored.",pc,dest_reg_idx_base));
           continue;
         end
-
+        if(inst_tr.inst_type == ALU && inst_tr.alu_inst == VMUNARY0 && inst_tr.src1_idx inside {VMSBF, VMSOF, VMSIF, VIOTA} && dest_reg_idx_base == src2_reg_idx_base) begin
+          `uvm_warning("MDL/INST_CHECKER", $sformatf("pc=0x%8x: In vmsf/vmsof/vmsif/viota, dest vrf(v%0d) can't overlap src2 vrf(v%0d). Ignored.", pc, dest_reg_idx_base, src2_reg_idx_base, inst_tr.vstart))
+          continue;
+        end
+        if(inst_tr.inst_type == ALU && inst_tr.alu_inst == VMUNARY0 && inst_tr.src1_idx inside {VMSBF, VMSOF, VMSIF, VIOTA} && dest_reg_idx_base == 0 && vm == 0) begin
+          `uvm_warning("MDL/INST_CHECKER", $sformatf("pc=0x%8x: In vmsf/vmsof/vmsif/viota, dest vrf(v%0d) can't overlap v0 while vm == 0. Ignored.", pc, dest_reg_idx_base, inst_tr.vstart))
+          continue;
+        end
 
         vrf_temp = vrf;
         vrf_bit_strobe_temp = '0;
@@ -554,7 +573,7 @@ endclass : rvv_behavior_model
             src0_reg_elm_idx = elm_idx % (`VLEN / src0_eew);
 
           // 3.1 Fetch elements data 
-          dest = elm_fetch(inst_tr.dest_type, dest_reg_idx_base, elm_idx, dest_eew); 
+          dest = elm_fetch(inst_tr.dest_type, dest_reg_idx_base, elm_idx, dest_eew);
           src3 = elm_fetch(inst_tr.src3_type, src3_reg_idx_base, elm_idx, src3_eew); 
           src2 = elm_fetch(inst_tr.src2_type, src2_reg_idx_base, elm_idx, src2_eew); 
           src1 = elm_fetch(inst_tr.src1_type, src1_reg_idx_base, elm_idx, src1_eew); 
@@ -611,7 +630,7 @@ endclass : rvv_behavior_model
                 { EEW1,  EEW8,  EEW8}: alu_handler = alu_01_08_08;
                 { EEW1, EEW16, EEW16}: alu_handler = alu_01_16_16;
                 { EEW1, EEW32, EEW32}: alu_handler = alu_01_32_32;
-                // viot
+                // viot/vfirst/...
                 { EEW8,  EEW1,  EEW1}: alu_handler = alu_08_01_01;
                 {EEW16,  EEW1,  EEW1}: alu_handler = alu_16_01_01;
                 {EEW32,  EEW1,  EEW1}: alu_handler = alu_32_01_01;
@@ -631,7 +650,7 @@ endclass : rvv_behavior_model
           if(elm_idx < vstart) begin
             // pre-start: do nothing
             if(is_mask_producing_inst) begin
-              //  If is mask producing operation, it will write with calculation results.
+              //  If is mask producing operation, it will keep original values.
               `uvm_info("MDL", $sformatf("element[%2d]: pre-start, mask producing operation", elm_idx), UVM_LOW)
               elm_writeback(dest, inst_tr.dest_type, dest_reg_idx_base, elm_idx, dest_eew);
             end else begin 
@@ -642,7 +661,9 @@ endclass : rvv_behavior_model
             if(is_mask_producing_inst) begin
               //  If is mask producing operation, it will write with calculation results.
               `uvm_info("MDL", $sformatf("element[%2d]: tail, mask producing operation", elm_idx), UVM_LOW)
-              dest = alu_handler.exe(inst_tr, dest, src2, src1, src0);
+              if((!vm && this.vrf[0][elm_idx]) || vm) begin
+                dest = alu_handler.exe(inst_tr, dest, src2, src1, src0);
+              end
               elm_writeback(dest, inst_tr.dest_type, dest_reg_idx_base, elm_idx, dest_eew);
             end else begin 
               `uvm_info("MDL", $sformatf("element[%2d]: tail", elm_idx), UVM_LOW)
@@ -684,6 +705,15 @@ endclass : rvv_behavior_model
               end
             endcase
             // Write back
+          end
+
+          // Special case : Get the final value to wireback to XRF, avoiding all inactive situation. 
+          if(elm_idx == vl) begin
+            if(inst_tr.dest_type == XRF) begin
+              $display("Im here...");
+              dest = alu_handler.get_xrf_wb_value(inst_tr);
+              elm_writeback(dest, inst_tr.dest_type, dest_reg_idx_base, elm_idx, dest_eew);
+            end
           end
 
           `uvm_info("MDL", $sformatf("After - element[%2d]:\n  dest(v[%2d][%2d])=0x%8h\n  src2(v[%2d][%2d])=0x%8h\n  src1(v[%2d][%2d])=0x%8h\n  src0(v[%2d][%2d])=0x%8h",
@@ -849,6 +879,8 @@ virtual class alu_base;
   virtual function bit get_saturate();
     get_saturate = this.overflow || this.underflow;
   endfunction: get_saturate
+  virtual function int get_xrf_wb_value(rvs_transaction inst_tr);
+  endfunction: get_xrf_wb_value
 
 endclass: alu_base
 
@@ -871,6 +903,21 @@ class alu_processor#(
 //   virtual function bit get_saturate();
 //     super.get_saturate();
 //   endfunction: get_saturate
+
+  virtual function int get_xrf_wb_value(rvs_transaction inst_tr);
+    super.get_xrf_wb_value(inst_tr);
+    case(inst_tr.alu_inst)
+      VWXUNARY0: begin
+        case(inst_tr.src1_idx)
+          VMV_X_S: begin
+            `uvm_fatal("TB_ISSUE", "VMV_X_S should be executed in permutation processor.")
+          end
+          VCPOP : get_xrf_wb_value = mask_count;
+          VFIRST: get_xrf_wb_value = first_mask_idx;
+        endcase
+      end
+    endcase
+  endfunction: get_xrf_wb_value
 
   virtual function alu_unsigned_t exe (rvs_transaction inst_tr, alu_unsigned_t dest, alu_unsigned_t src2, alu_unsigned_t src1, alu_unsigned_t src0);
     `uvm_info("MDL", $sformatf("sizeof(T1)=%0d, sizeof(T2)=%0d, sizeof(TD)=%0d", $size(T1), $size(T2), $size(TD)), UVM_HIGH)
@@ -1518,18 +1565,31 @@ class alu_processor#(
   //---------------------------------------------------------------------- 
   // 32.15.4. vmsbf.m set-before-first mask bit
   function TD _vmsbf(T2 src2);
-    if(!found_first_mask) begin
+    if(src2 & ~found_first_mask) begin
+      found_first_mask = 1'b1; 
+    end
+    if(~found_first_mask) begin
       _vmsbf = 1'b1;
     end else begin
       _vmsbf = 1'b0;
-    end
-    if(src2 & ~found_first_mask) begin
-      found_first_mask = 1'b1; 
     end
   endfunction: _vmsbf
 
   //---------------------------------------------------------------------- 
   // 32.15.5. vmsif.m set-including-first mask bit
+  function TD _vmsif(T2 src2);
+    if(!found_first_mask) begin
+      _vmsif = 1'b1;
+    end else begin
+      _vmsif = 1'b0;
+    end
+    if(src2 & ~found_first_mask) begin 
+      found_first_mask = 1'b1; 
+    end
+  endfunction: _vmsif
+
+  //---------------------------------------------------------------------- 
+  // 32.15.6. vmsof.m set-only-first mask bit
   function TD _vmsof(T2 src2);
     if(src2 & ~found_first_mask) begin 
       found_first_mask = 1'b1; 
@@ -1538,19 +1598,6 @@ class alu_processor#(
       _vmsof = 1'b0;
     end
   endfunction: _vmsof
-
-  //---------------------------------------------------------------------- 
-  // 32.15.6. vmsof.m set-only-first mask bit
-  function TD _vmsif(T2 src2);
-    if(src2 & ~found_first_mask) begin 
-      found_first_mask = 1'b1; 
-    end
-    if(!found_first_mask) begin
-      _vmsif = 1'b1;
-    end else begin
-      _vmsif = 1'b0;
-    end
-  endfunction: _vmsif
 
   //---------------------------------------------------------------------- 
   // 31.15.8. Vector Iota Instruction

@@ -167,7 +167,7 @@ class rvs_transaction extends uvm_sequence_item;
       );
 
     (inst_type == ALU && alu_inst[7:6] == 2'b01 && alu_inst == VMUNARY0) 
-      -> ((dest_type == XRF && src2_type == VRF && 
+      -> ((dest_type == VRF && src2_type == VRF && 
            alu_type == OPMVV && src1_type == FUNC && src1_idx inside {VIOTA, VID}) || 
           (dest_type == VRF && src2_type == VRF &&
            alu_type == OPMVV && src1_type == FUNC && src1_idx inside {VMSBF, VMSOF, VMSIF})
