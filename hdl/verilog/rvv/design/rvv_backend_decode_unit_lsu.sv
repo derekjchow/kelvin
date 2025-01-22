@@ -2104,7 +2104,7 @@ module rvv_backend_decode_unit_lsu
   `ifdef ASSERT_ON
     `ifdef TB_SUPPORT
       `rvv_forbid((inst_valid==1'b1)&(inst_encoding_correct==1'b0))
-      else $warning("pc(0x%h) instruction will be discarded directly.\n",inst.inst_pc);
+      else $warning("pc(0x%h) instruction will be discarded directly.\n",$sampled(inst.inst_pc));
     `else
       `rvv_forbid((inst_valid==1'b1)&(inst_encoding_correct==1'b0))
       else $warning("This instruction will be discarded directly.\n");
@@ -2209,18 +2209,18 @@ module rvv_backend_decode_unit_lsu
   always_comb begin
     for(int i=0;i<`NUM_DE_UOP;i=i+1) begin: GET_UOP_CLASS
       // initial 
-      uop[i].uop_class      = X;
+      uop[i].uop_class      = XXX;
       
       case(inst_opcode) 
         LOAD:begin
           case(inst_funct6[2:0])
             UNIT_STRIDE,
             CONSTANT_STRIDE: begin
-              uop[i].uop_class = X;
+              uop[i].uop_class = XXX;
             end
             UNORDERED_INDEX,
             ORDERED_INDEX: begin
-              uop[i].uop_class = VX;
+              uop[i].uop_class = XVX;
             end
           endcase
         end
@@ -2229,11 +2229,11 @@ module rvv_backend_decode_unit_lsu
           case(inst_funct6[2:0])
             UNIT_STRIDE,
             CONSTANT_STRIDE: begin
-              uop[i].uop_class = VX;
+              uop[i].uop_class = VXX;
             end
             UNORDERED_INDEX,
             ORDERED_INDEX: begin
-              uop[i].uop_class = VV;
+              uop[i].uop_class = VVX;
             end
           endcase
         end

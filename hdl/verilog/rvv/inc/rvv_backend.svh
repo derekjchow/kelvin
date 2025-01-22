@@ -210,6 +210,7 @@ typedef enum logic [2:0] {
   parameter VMV_X_S         =   5'b00000;
   parameter VCPOP           =   5'b10000;
   parameter VFIRST          =   5'b10001;
+  parameter VMV_S_X         =   5'b00000;  // vs2 field
 
 // vxunary0, the uop could be vzext.vf2, vzext.vf4, vsext.vf2, vsext.vf4. They can be distinguished by vs1 field(inst_encoding[19:15]).
   parameter VZEXT_VF4       =   5'b00100;
@@ -272,11 +273,14 @@ typedef union packed {
 } FUNCT6_u;
 
 // uop classification used for dispatch rule
-typedef enum logic [1:0] {
-  VV,        // this uop will use 2 read ports of VRF
-  VX,        // this uop will use 1 read ports of VRF
-  X,         // this uop will use 0 read ports of VRF
-  VVV        // this uop will use 3 read ports of VRF
+typedef enum logic [2:0] {
+  VVV,
+  XVV,
+  VVX,
+  VXX,
+  XVX,
+  XXV,
+  XXX
 } UOP_CLASS_e;
 
 // Effective MUL enum

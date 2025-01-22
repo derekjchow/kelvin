@@ -179,9 +179,7 @@ module rvv_backend_dispatch
         for (i=0; i<`NUM_DP_UOP; i++) begin : gen_strct_uop
             assign strct_uop[i].vs1_index = uop_uop2dp[i].vs1;
             assign strct_uop[i].vs2_index = uop_uop2dp[i].vs2_index;
-            assign strct_uop[i].vs2_valid = uop_uop2dp[i].vs2_valid;
             assign strct_uop[i].vd_index  = uop_uop2dp[i].vd_index;
-            assign strct_uop[i].vs3_valid = uop_uop2dp[i].vs3_valid;
             assign strct_uop[i].uop_exe_unit = uop_uop2dp[i].uop_exe_unit;
             assign strct_uop[i].uop_class = uop_uop2dp[i].uop_class;
         end
@@ -219,16 +217,23 @@ module rvv_backend_dispatch
                           vrf_byp[i].vd  = rd_data_vrf2dp[2*(i+1)+1];
                           vrf_byp[i].vs1 = rd_data_vrf2dp[2*i+1];
                           vrf_byp[i].vs2 = rd_data_vrf2dp[2*i];
-                            end                       
-                        VV: begin
-                          vrf_byp[i].vd  = rd_data_vrf2dp[2*i+1];
+                        end                       
+                        XVV: begin
                           vrf_byp[i].vs1 = rd_data_vrf2dp[2*i+1];
                           vrf_byp[i].vs2 = rd_data_vrf2dp[2*i];
                         end
-                        VX: begin
-                          // vmv only use vs1 as the operand.
-                          vrf_byp[i].vs1 = rd_data_vrf2dp[2*i];
+                        VVX: begin
+                          vrf_byp[i].vd  = rd_data_vrf2dp[2*i+1];
                           vrf_byp[i].vs2 = rd_data_vrf2dp[2*i];
+                        end
+                        VXX: begin
+                          vrf_byp[i].vd  = rd_data_vrf2dp[2*i];
+                        end
+                        XVX: begin
+                          vrf_byp[i].vs2 = rd_data_vrf2dp[2*i];
+                        end
+                        XXV: begin
+                          vrf_byp[i].vs1 = rd_data_vrf2dp[2*i];
                         end
                     endcase
                 end
@@ -244,16 +249,23 @@ module rvv_backend_dispatch
                           vrf_byp[i].vd  = rd_data_vrf2dp[2*(i-1)+1];
                           vrf_byp[i].vs1 = rd_data_vrf2dp[2*i+1];
                           vrf_byp[i].vs2 = rd_data_vrf2dp[2*i];
-                            end
-                        VV: begin
-                          vrf_byp[i].vd  = rd_data_vrf2dp[2*i+1];
+                        end
+                        XVV: begin
                           vrf_byp[i].vs1 = rd_data_vrf2dp[2*i+1];
                           vrf_byp[i].vs2 = rd_data_vrf2dp[2*i];
                         end
-                        VX: begin
-                          // vmv only use vs1 as the operand.
-                          vrf_byp[i].vs1 = rd_data_vrf2dp[2*i];
+                        VVX: begin
+                          vrf_byp[i].vd  = rd_data_vrf2dp[2*i+1];
                           vrf_byp[i].vs2 = rd_data_vrf2dp[2*i];
+                        end
+                        VXX: begin
+                          vrf_byp[i].vd = rd_data_vrf2dp[2*i];
+                        end
+                        XVX: begin
+                          vrf_byp[i].vs2 = rd_data_vrf2dp[2*i];
+                        end
+                        XXV: begin
+                          vrf_byp[i].vs1 = rd_data_vrf2dp[2*i];
                         end
                     endcase
                 end

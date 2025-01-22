@@ -38,6 +38,7 @@ module rvv_backend_decode_unit_ari
   logic   [`REGFILE_INDEX_WIDTH-1:0]              vs1_opcode_vwxunary;
   logic   [`REGFILE_INDEX_WIDTH-1:0]              vs1_opcode_vxunary;
   logic   [`REGFILE_INDEX_WIDTH-1:0]              vs1_opcode_vmunary;
+  logic   [`REGFILE_INDEX_WIDTH-1:0]              vs2_opcode_vrxunary;
    
   RVVConfigState                                  vector_csr_ari;
   logic   [`VSTART_WIDTH-1:0]                     csr_vstart;
@@ -91,6 +92,7 @@ module rvv_backend_decode_unit_ari
   assign inst_funct6          = inst.bits[24:19];
   assign inst_vm              = inst.bits[18];
   assign inst_vs2             = inst.bits[17:13];
+  assign vs2_opcode_vrxunary  = inst.bits[17:13];
   assign inst_vs1             = inst.bits[12:8];
   assign vs1_opcode_vwxunary  = inst.bits[12:8];
   assign vs1_opcode_vxunary   = inst.bits[12:8];
@@ -1353,8 +1355,10 @@ module rvv_backend_decode_unit_ari
                 endcase
               end
               OPMVX: begin
-                emul_vd     = EMUL1;
-                emul_max    = EMUL1;
+                if(vs2_opcode_vrxunary==VMV_S_X) begin
+                  emul_vd     = EMUL1;
+                  emul_max    = EMUL1;
+                end
               end
             endcase
           end
@@ -2286,21 +2290,22 @@ module rvv_backend_decode_unit_ari
                 endcase
               end
               OPMVX: begin
-                // vmv.s.x
-                case(csr_sew)
-                  SEW8: begin
-                    eew_vd      = EEW8;
-                    eew_max     = EEW8;
-                  end
-                  SEW16: begin
-                    eew_vd      = EEW16;
-                    eew_max     = EEW16;
-                  end
-                  SEW32: begin
-                    eew_vd      = EEW32;
-                    eew_max     = EEW32;
-                  end
-                endcase
+                if(vs2_opcode_vrxunary==VMV_S_X) begin
+                  case(csr_sew)
+                    SEW8: begin
+                      eew_vd      = EEW8;
+                      eew_max     = EEW8;
+                    end
+                    SEW16: begin
+                      eew_vd      = EEW16;
+                      eew_max     = EEW16;
+                    end
+                    SEW32: begin
+                      eew_vd      = EEW32;
+                      eew_max     = EEW32;
+                    end
+                  endcase
+                end
               end
             endcase
           end
@@ -3040,7 +3045,7 @@ module rvv_backend_decode_unit_ari
                 endcase
               end
               OPMVX: begin
-                if((inst_vm==1'b1)&(inst_vs2=='b0))
+                if((vs2_opcode_vrxunary==VMV_S_X)&(inst_vm==1'b1)&(inst_vs2=='b0))
                   check_special = 1'b1;
                 
                 `ifdef ASSERT_ON
@@ -3303,8 +3308,9 @@ module rvv_backend_decode_unit_ari
           VWXUNARY0: begin
             case(inst_funct3)
               OPMVX: begin
-              // vmv.s.x
-              vs_evl = 'b1;
+                if(vs2_opcode_vrxunary==VMV_S_X) begin
+                  vs_evl = 'b1;
+                end
               end
             endcase
           end
@@ -3360,7 +3366,7 @@ module rvv_backend_decode_unit_ari
   `ifdef ASSERT_ON
     `ifdef TB_SUPPORT
       `rvv_forbid((inst_valid==1'b1)&(inst_encoding_correct==1'b0))
-      else $warning("pc(0x%h) instruction will be discarded directly.\n",inst.inst_pc);
+      else $warning("pc(0x%h) instruction will be discarded directly.\n",$sampled(inst.inst_pc));
     `else
       `rvv_forbid((inst_valid==1'b1)&(inst_encoding_correct==1'b0))
       else $warning("This instruction will be discarded directly.\n");
@@ -3616,7 +3622,7 @@ module rvv_backend_decode_unit_ari
   always_comb begin
     for(int i=0;i<`NUM_DE_UOP;i=i+1) begin: GET_UOP_CLASS
       // initial 
-      uop[i].uop_class = X;
+      uop[i].uop_class = XXX;
       
       case(1'b1)
         valid_opi: begin
@@ -3642,11 +3648,11 @@ module rvv_backend_decode_unit_ari
             VRGATHER: begin
               case(inst_funct3)
                 OPIVV: begin
-                  uop[i].uop_class  = VV;
+                  uop[i].uop_class  = XVV;
                 end
                 OPIVX,
                 OPIVI: begin
-                  uop[i].uop_class  = VX;
+                  uop[i].uop_class  = XVX;
                 end 
               endcase
             end
@@ -3661,10 +3667,10 @@ module rvv_backend_decode_unit_ari
             VSSUB: begin
               case(inst_funct3)
                 OPIVV: begin
-                  uop[i].uop_class  = VV;
+                  uop[i].uop_class  = XVV;
                 end
                 OPIVX: begin
-                  uop[i].uop_class  = VX;
+                  uop[i].uop_class  = XVX;
                 end 
               endcase
             end
@@ -3674,7 +3680,7 @@ module rvv_backend_decode_unit_ari
               case(inst_funct3)
                 OPIVX,
                 OPIVI: begin
-                  uop[i].uop_class  = VX;
+                  uop[i].uop_class  = XVX;
                 end 
               endcase
             end
@@ -3690,7 +3696,7 @@ module rvv_backend_decode_unit_ari
                 end
                 OPIVX,
                 OPIVI: begin
-                  uop[i].uop_class  = VV;
+                  uop[i].uop_class  = VVX;
                 end
               endcase
             end
@@ -3703,7 +3709,7 @@ module rvv_backend_decode_unit_ari
                   uop[i].uop_class  = VVV;
                 end
                 OPIVX: begin
-                  uop[i].uop_class  = VV;
+                  uop[i].uop_class  = VVX;
                 end
               endcase
             end
@@ -3713,7 +3719,7 @@ module rvv_backend_decode_unit_ari
               case(inst_funct3)
                 OPIVX,
                 OPIVI: begin
-                  uop[i].uop_class  = VV;
+                  uop[i].uop_class  = VVX;
                 end 
               endcase
             end
@@ -3722,16 +3728,16 @@ module rvv_backend_decode_unit_ari
               case(inst_funct3)
                 OPIVV: begin
                   if (inst_vm==1'b0)
-                    uop[i].uop_class  = VV;
+                    uop[i].uop_class  = XVV;
                   else
-                    uop[i].uop_class  = VX;
+                    uop[i].uop_class  = XXV;
                 end
                 OPIVX,
                 OPIVI: begin
                   if (inst_vm==1'b0)
-                    uop[i].uop_class  = VX;
+                    uop[i].uop_class  = XVX;
                   else
-                    uop[i].uop_class  = X;
+                    uop[i].uop_class  = XXX;
                 end
               endcase
             end
@@ -3740,7 +3746,7 @@ module rvv_backend_decode_unit_ari
             VWREDSUM: begin
               case(inst_funct3)
                 OPIVV: begin
-                  uop[i].uop_class  = VV;
+                  uop[i].uop_class  = XVV;
                 end
               endcase
             end
@@ -3748,11 +3754,11 @@ module rvv_backend_decode_unit_ari
             VSLIDEUP_RGATHEREI16: begin
               case(inst_funct3)
                 OPIVV: begin
-                  uop[i].uop_class  = VV;
+                  uop[i].uop_class  = XVV;
                 end
                 OPIVX,
                 OPIVI: begin
-                  uop[i].uop_class  = VX;
+                  uop[i].uop_class  = XVX;
                 end
               endcase
             end
@@ -3787,10 +3793,10 @@ module rvv_backend_decode_unit_ari
             VASUB: begin
               case(inst_funct3)
                 OPMVV: begin
-                  uop[i].uop_class  = VV;
+                  uop[i].uop_class  = XVV;
                 end
                 OPMVX: begin
-                  uop[i].uop_class  = VX;
+                  uop[i].uop_class  = XVX;
                 end
               endcase
             end 
@@ -3798,7 +3804,7 @@ module rvv_backend_decode_unit_ari
             VXUNARY0: begin
               case(inst_funct3)
                 OPMVV: begin
-                  uop[i].uop_class  = VX;
+                  uop[i].uop_class  = XVX;
                 end
               endcase
             end
@@ -3815,17 +3821,15 @@ module rvv_backend_decode_unit_ari
                   uop[i].uop_class  = VVV;
                 end
                 OPMVX: begin
-                  uop[i].uop_class  = VV;
+                  uop[i].uop_class  = VVX;
                 end
               endcase
             end
 
-            VWMACCUS,
-            VSLIDE1UP,
-            VSLIDE1DOWN: begin
+            VWMACCUS: begin
               case(inst_funct3)
                 OPMVX: begin
-                  uop[i].uop_class  = VV;
+                  uop[i].uop_class  = VVX;
                 end
               endcase
             end 
@@ -3842,11 +3846,11 @@ module rvv_backend_decode_unit_ari
             VCOMPRESS: begin
               case(inst_funct3)
                 OPMVV: begin
-                  uop[i].uop_class  = VV;
+                  uop[i].uop_class  = XVV;
                 end
               endcase
             end
-            
+
             // mask
             VMAND,
             VMNAND,
@@ -3862,14 +3866,14 @@ module rvv_backend_decode_unit_ari
                 end
               endcase
             end
-          
+
             VWXUNARY0: begin
               case(inst_funct3)
                 OPMVV: begin
-                  uop[i].uop_class  = VX;
+                  uop[i].uop_class  = XVX;
                 end
                 OPMVX: begin
-                  uop[i].uop_class  = X;
+                  uop[i].uop_class  = XXX;
                 end
               endcase
             end
@@ -3883,20 +3887,29 @@ module rvv_backend_decode_unit_ari
                     VMSOF: begin
                       if (inst_vm==1'b0)
                         // need vd as vs3
-                        uop[i].uop_class  = VV;
+                        uop[i].uop_class  = VVX;
                       else
-                        uop[i].uop_class  = VX;
+                        uop[i].uop_class  = XVX;
                     end
                     VIOTA: begin
-                      uop[i].uop_class  = VX;
+                      uop[i].uop_class  = XVX;
                     end
                     VID: begin
-                      uop[i].uop_class  = X;
+                      uop[i].uop_class  = XXX;
                     end
                   endcase
                 end
               endcase
             end
+
+            VSLIDE1UP,
+            VSLIDE1DOWN: begin
+              case(inst_funct3)
+                OPMVX: begin
+                  uop[i].uop_class  = XVX;
+                end
+              endcase
+            end 
           endcase
         end
       endcase
@@ -4361,12 +4374,12 @@ module rvv_backend_decode_unit_ari
                   case(vs1_opcode_vmunary)
                     VMSBF,
                     VMSIF,
-                    VMSOF,
-                    VIOTA: begin
+                    VMSOF: begin
                       uop[i].vd_index = inst_vd;
                       uop[i].vd_eew   = eew_vd;
                       uop[i].vd_valid = 1'b1;
                     end
+                    VIOTA,
                     VID: begin
                       uop[i].vd_index = inst_vd+uop_index_current[i][`UOP_INDEX_WIDTH-1:0];
                       uop[i].vd_eew   = eew_vd;
