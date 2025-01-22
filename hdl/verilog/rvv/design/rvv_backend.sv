@@ -621,6 +621,8 @@ module rvv_backend
     rvv_backend_alu #(
     ) u_alu (
       // ALU_RS to ALU
+        .clk                        (clk),
+        .rst_n                      (rst_n),
         .pop_ex2rs                  (pop_alu2rs),
         .alu_uop_rs2ex              (uop_rs2alu),
         .fifo_empty_rs2ex           (fifo_empty_rs2alu),

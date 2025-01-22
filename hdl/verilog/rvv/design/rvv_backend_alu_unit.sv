@@ -11,14 +11,20 @@
 
 module rvv_backend_alu_unit
 (
+  clk,
+  rst_n,
   alu_uop_valid,
   alu_uop,
   result_valid,
-  result
+  result,
+  result_ready
 );
 //
 // interface signals
 //
+  // global signal
+  input   logic           clk;
+  input   logic           rst_n;
 
   // ALU RS handshake signals
   input   logic           alu_uop_valid;
@@ -27,6 +33,7 @@ module rvv_backend_alu_unit
   // ALU send result signals to ROB
   output  logic           result_valid;
   output  PU2ROB_t        result;
+  input   logic           result_ready;
 
 //
 // internal signals
@@ -60,11 +67,14 @@ module rvv_backend_alu_unit
   );
   
   rvv_backend_alu_unit_mask u_alu_mask
-  (
+  ( 
+    .clk                  (clk),
+    .rst_n                (rst_n),
     .alu_uop_valid        (alu_uop_valid),
     .alu_uop              (alu_uop),
     .result_valid         (result_valid_mask),
-    .result               (result_mask)
+    .result               (result_mask),
+    .result_ready         (result_ready)
   );
 
   rvv_backend_alu_unit_other u_alu_other

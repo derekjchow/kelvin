@@ -15,6 +15,11 @@ typedef enum logic [1:0]{
 typedef enum logic [0:0]{
   GET_MIN, 
   GET_MAX
-} GET_MIN_MAX_e;   
+} GET_MIN_MAX_e;  
+
+typedef struct packed {
+  logic                                       result_valid_viota;
+  logic   [`VLEN-1:0][$clog2(`HWORD_WIDTH):0] result_data_viota_per16;
+}PKG_VIOTA_t;
 
 `endif // ALU_DEFINE_SVH

@@ -13,12 +13,12 @@
 
 module rvv_backend_alu
 (
+  clk,
+  rst_n,
   pop_ex2rs,
   alu_uop_rs2ex,
   fifo_empty_rs2ex,
-`ifdef MULTI_ALU
   fifo_almost_empty_rs2ex,
-`endif
   result_valid_ex2rob,
   result_ex2rob,
   result_ready_rob2alu
@@ -27,13 +27,15 @@ module rvv_backend_alu
 //
 // interface signals
 //
+  // global signal
+  input   logic                         clk;
+  input   logic                         rst_n;
+
   // ALU RS to ALU unit
   output  logic       [`NUM_ALU-1:0]    pop_ex2rs;
   input   ALU_RS_t    [`NUM_ALU-1:0]    alu_uop_rs2ex;
   input   logic                         fifo_empty_rs2ex;
-`ifdef MULTI_ALU
   input   logic       [`NUM_ALU-1:1]    fifo_almost_empty_rs2ex;
-`endif
 
   // submit ALU result to ROB
   output  logic       [`NUM_ALU-1:0]    result_valid_ex2rob;
@@ -80,11 +82,14 @@ module rvv_backend_alu
       rvv_backend_alu_unit u_alu_unit
         (
           // inputs
-          .alu_uop_valid          (alu_uop_valid_rs2ex[i]),
-          .alu_uop                (alu_uop_rs2ex[i]),
+          .clk            (clk),
+          .rst_n          (rst_n),
+          .alu_uop_valid  (alu_uop_valid_rs2ex[i]),
+          .alu_uop        (alu_uop_rs2ex[i]),
           // outputs
-          .result_valid           (result_valid_ex2rob[i]),
-          .result                 (result_ex2rob[i])
+          .result_valid   (result_valid_ex2rob[i]),
+          .result         (result_ex2rob[i]),
+          .result_ready   (result_ready_rob2alu[i])
         );
     end
   endgenerate
