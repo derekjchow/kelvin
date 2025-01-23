@@ -185,8 +185,10 @@ class rvs_transaction extends uvm_sequence_item;
   }
 
   constraint c_sewlmul {
-    vtype.vsew != SEW_LAST;
-    vtype.vlmul != LMUL_LAST;
+    // vtype.vsew != SEW_LAST;
+    // vtype.vlmul != LMUL_LAST;
+    vtype.vsew inside {SEW8, SEW16, SEW32};
+    vtype.vlmul inside {LMUL1_4, LMUL1_2, LMUL1, LMUL2, LMUL4, LMUL8};
     // widen
     // (inst_type == ALU && (alu_inst inside {VWADDU, VWADD, VWADD_W, VWSUBU, VWSUB, VWADDU_W, 
     //                                       VWMUL, VWMULU, VWMULSU}))
