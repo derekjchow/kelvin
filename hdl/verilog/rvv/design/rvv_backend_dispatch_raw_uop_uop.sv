@@ -53,10 +53,10 @@ module rvv_backend_dispatch_raw_uop_uop
 // c. predecessor uop is a valid uop
     generate
         for (i=0; i<PREUOP_NUM; i++) begin : gen_hit_result
-            assign vs1_hit[i] = vs1_cmp[i] & suc_uop.vs1_valid & pre_uop[i].valid;
-            assign vs2_hit[i] = vs2_cmp[i] & suc_uop.vs2_valid & pre_uop[i].valid;
-            assign vd_hit[i]  = vd_cmp[i]  & suc_uop.vs3_valid & pre_uop[i].valid;
-            assign v0_hit[i]  = v0_cmp[i]  & (~suc_uop.vm)     & pre_uop[i].valid;
+            assign vs1_hit[i] = vs1_cmp[i] & suc_uop.vs1_valid & pre_uop[i].valid & (pre_uop[i].w_type==VRF);
+            assign vs2_hit[i] = vs2_cmp[i] & suc_uop.vs2_valid & pre_uop[i].valid & (pre_uop[i].w_type==VRF);
+            assign vd_hit[i]  = vd_cmp[i]  & suc_uop.vs3_valid & pre_uop[i].valid & (pre_uop[i].w_type==VRF);
+            assign v0_hit[i]  = v0_cmp[i]  & (~suc_uop.vm)     & pre_uop[i].valid & (pre_uop[i].w_type==VRF);
         end
     endgenerate
 

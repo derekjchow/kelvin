@@ -380,6 +380,7 @@ module rvv_backend_rob
           assign uop_rob2dp[i].valid   = entry_valid[i];
           assign uop_rob2dp[i].w_valid = res_mem[wind_uop_rptr[i]].w_valid & uop_done[wind_uop_rptr[i]];
           assign uop_rob2dp[i].w_index = uop_info[i].w_index;
+          assign uop_rob2dp[i].w_type  = uop_info[i].w_type;
           assign uop_rob2dp[i].w_data  = res_mem[wind_uop_rptr[i]].w_data;
           assign uop_rob2dp[i].byte_type = uop_info[i].byte_type;
           assign uop_rob2dp[i].vector_csr = uop_info[i].vector_csr;

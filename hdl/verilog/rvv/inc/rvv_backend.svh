@@ -598,8 +598,9 @@ typedef struct packed {
   logic                               valid;              //entry valid
   logic                               w_valid;            //vd valid
   logic   [`REGFILE_INDEX_WIDTH-1:0]  w_index;            //vd addr
+  W_DATA_TYPE_e                       w_type;             //write type: 0 for VRF, 1 for XRF
   logic   [`VLEN-1:0]                 w_data;             //when w_type=XRF, w_data[`XLEN-1:0] will store the scalar result
-  BYTE_TYPE_t                         byte_type;            //wr Byte mask
+  BYTE_TYPE_t                         byte_type;          //wr Byte mask
   RVVConfigState                      vector_csr;         //Receive Vstart, vlen,... And need to update vcsr when trap
 } ROB2DP_t;
 

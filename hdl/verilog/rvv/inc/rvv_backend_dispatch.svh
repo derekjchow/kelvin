@@ -16,6 +16,7 @@ typedef struct packed {
 
 typedef struct packed {
   logic [`REGFILE_INDEX_WIDTH-1:0] w_index; 
+  W_DATA_TYPE_e                    w_type; 
   logic                            w_valid;
   logic                            valid;
 } PRE_UOP_RAW_t;

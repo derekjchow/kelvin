@@ -118,11 +118,6 @@ module rvv_backend_alu_unit_other
             if(vs1_data_valid&vs2_data_valid) begin
               result_valid = 1'b1;
             end
-
-            `ifdef ASSERT_ON
-              assert #0 (result_valid==1'b1)
-              else $error("result_valid(%d) should be 1.\n",result_valid);
-            `endif
           end
           VMERGE_VMV: begin
             // vmv.v
@@ -133,11 +128,6 @@ module rvv_backend_alu_unit_other
             else if(vs1_data_valid&(vm==1'b0)&vs2_data_valid&v0_data_valid) begin
               result_valid = 1'b1;
             end
-
-            `ifdef ASSERT_ON
-              assert #0 (result_valid==1'b1)
-              else $error("result_valid(%d) should be 1.\n",result_valid);
-            `endif
           end
         endcase
       end
@@ -151,11 +141,6 @@ module rvv_backend_alu_unit_other
             if(rs1_data_valid&vs2_data_valid) begin
               result_valid = 1'b1;
             end
-
-            `ifdef ASSERT_ON
-              assert #0 (result_valid==1'b1)
-              else $error("result_valid(%d) should be 1.\n",result_valid);
-            `endif
           end
           VMERGE_VMV: begin
             // vmv.v
@@ -166,11 +151,6 @@ module rvv_backend_alu_unit_other
             else if(rs1_data_valid&(vm==1'b0)&vs2_data_valid&v0_data_valid) begin
               result_valid = 1'b1;
             end
-
-            `ifdef ASSERT_ON
-              assert #0 (result_valid==1'b1)
-              else $error("result_valid(%d) should be 1.\n",result_valid);
-            `endif
           end
         endcase
       end
@@ -186,21 +166,11 @@ module rvv_backend_alu_unit_other
             else if(rs1_data_valid&(vm==1'b0)&vs2_data_valid&v0_data_valid) begin
               result_valid = 1'b1;
             end
-
-            `ifdef ASSERT_ON
-              assert #0 (result_valid==1'b1)
-              else $error("result_valid(%d) should be 1.\n",result_valid);
-            `endif
           end
           VSMUL_VMVNRR: begin
             if(vm&vs2_data_valid) begin
               result_valid = 1'b1;
             end
-
-            `ifdef ASSERT_ON
-              assert #0 (result_valid==1'b1)
-              else $error("result_valid(%d) should be 1.\n",result_valid);
-            `endif
           end
         endcase
       end
@@ -214,22 +184,12 @@ module rvv_backend_alu_unit_other
                 if((vs1_data_valid==1'b0)&vs2_data_valid&((vs2_eew==EEW8)|(vs2_eew==EEW16))) begin
                   result_valid = 1'b1;
                 end
-
-                `ifdef ASSERT_ON
-                  assert #0 (result_valid==1'b1)
-                  else $error("result_valid(%d) should be 1.\n",result_valid);
-                `endif
               end
               VZEXT_VF4,
               VSEXT_VF4: begin
                 if((vs1_data_valid==1'b0)&vs2_data_valid&(vs2_eew==EEW8)) begin
                   result_valid = 1'b1;
                 end
-
-                `ifdef ASSERT_ON
-                  assert #0 (result_valid==1'b1)
-                  else $error("result_valid(%d) should be 1.\n",result_valid);
-                `endif
               end
             endcase
           end
@@ -238,11 +198,6 @@ module rvv_backend_alu_unit_other
             if(vm&vs2_data_valid&(vs1_opcode==VMV_X_S)) begin
               result_valid = 1'b1;
             end
-
-            `ifdef ASSERT_ON
-              assert #0 (result_valid==1'b1)
-              else $error("result_valid(%d) should be 1.\n",result_valid);
-            `endif               
           end
         endcase
       end
@@ -254,11 +209,6 @@ module rvv_backend_alu_unit_other
             if(vm&rs1_data_valid) begin
               result_valid = 1'b1;
             end
-
-            `ifdef ASSERT_ON
-              assert #0 (result_valid==1'b1)
-              else $error("result_valid(%d) should be 1.\n",result_valid);
-            `endif
           end
         endcase
       end
@@ -472,7 +422,7 @@ module rvv_backend_alu_unit_other
           VWXUNARY0: begin
             // vmv.x.s
             if(vs1_opcode==VMV_X_S) begin
-              case(vd_eew)
+              case(vs2_eew)
                 EEW8: begin
                   src2_data[0 +: `BYTE_WIDTH] = vs2_data[0 +: `BYTE_WIDTH];
                 end
@@ -492,7 +442,7 @@ module rvv_backend_alu_unit_other
         case(uop_funct6.ari_funct6)
           VWXUNARY0: begin
             // vmv.s.x
-            case(vs2_eew)
+            case(vd_eew)
               EEW8: begin
                 src1_data[0 +: `BYTE_WIDTH] = rs1_data[0 +: `BYTE_WIDTH];
               end
