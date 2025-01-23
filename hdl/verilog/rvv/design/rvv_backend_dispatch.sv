@@ -162,7 +162,7 @@ module rvv_backend_dispatch
         for (i=0; i<`NUM_DP_UOP-1; i++) begin : gen_pre_uop_uop
             assign pre_uop_uop[i].w_index = uop_uop2dp[i].vd_index;
             assign pre_uop_uop[i].w_valid = 1'b0;
-            assign pre_uop_uop[i].w_type  = rob_entry[i].w_type;
+            assign pre_uop_uop[i].w_type  = uop_uop2dp[i].rd_index_valid ? XRF : VRF;
             assign pre_uop_uop[i].valid   = uop_uop2dp[i].vd_valid & uop_valid_uop2dp[i];
         end
         for (i=1; i<`NUM_DP_UOP; i++) begin : gen_raw_uop_uop

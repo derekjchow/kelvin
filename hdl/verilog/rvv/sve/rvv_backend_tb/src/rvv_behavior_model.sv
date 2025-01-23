@@ -239,6 +239,7 @@ endclass : rvv_behavior_model
         // vlmax = inst_tr.vlmax;
         elm_idx_max = fraction_lmul ?        `VLEN / eew: 
                                       emul * `VLEN / eew;
+        `uvm_info("MDL/INST_CHECKER", $sformatf("Get eew=%0d, emul=%.0f",eew,emul), UVM_HIGH)
 
         // --------------------------------------------------
         // 1. Decode - Get eew & emul
@@ -639,7 +640,7 @@ endclass : rvv_behavior_model
                 {EEW16,  EEW1,  EEW1}: alu_handler = alu_16_01_01;
                 {EEW32,  EEW1,  EEW1}: alu_handler = alu_32_01_01;
                 default: begin
-                  `uvm_error(get_type_name(), $sformatf("Unsupported EEW: dest_eew=%d, src2_eew=%d, src1_eew=%d", dest_eew, src2_eew, src1_eew))
+                  `uvm_error("TB_ISSUE", $sformatf("pc=0x%8x: Unsupported EEW: dest_eew=%d, src2_eew=%d, src1_eew=%d",pc, dest_eew, src2_eew, src1_eew))
                   continue;
                 end
               endcase
@@ -712,7 +713,7 @@ endclass : rvv_behavior_model
           end
 
           // Special case : Get the final value to wireback to XRF, avoiding all inactive situation. 
-          if(elm_idx == vl) begin
+          if(elm_idx == elm_idx_max-1) begin
             if(inst_tr.dest_type == XRF) begin
               $display("Im here...");
               dest = alu_handler.get_xrf_wb_value(inst_tr);
