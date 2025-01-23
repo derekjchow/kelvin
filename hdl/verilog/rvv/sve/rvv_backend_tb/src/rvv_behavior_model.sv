@@ -540,8 +540,8 @@ endclass : rvv_behavior_model
           `uvm_warning("MDL/INST_CHECKER", $sformatf("pc=0x%8x: In vmsf/vmsof/vmsif, dest vrf(v%0d) can't overlap src2 vrf(v%0d). Ignored.", pc, dest_reg_idx_base, src2_reg_idx_base, inst_tr.vstart))
           continue;
         end
-        if(inst_tr.inst_type == ALU && inst_tr.alu_inst == VMUNARY0 && inst_tr.src1_idx inside {VIOTA} && src2_reg_idx_base inside {[dest_reg_idx_base:dest_reg_idx_base+int'($floor(dest_emul))-1]}) begin
-          `uvm_warning("MDL/INST_CHECKER", $sformatf("pc=0x%8x: In viota, dest vrf(%0d~%0d) can't overlap src2 vrf(%0d). Ignored.", pc, dest_reg_idx_base, dest_reg_idx_base+int'($floor(dest_emul))-1, src2_reg_idx_base))
+        if(inst_tr.inst_type == ALU && inst_tr.alu_inst == VMUNARY0 && inst_tr.src1_idx inside {VIOTA} && src2_reg_idx_base inside {[dest_reg_idx_base:dest_reg_idx_base+int'($ceil(dest_emul))-1]}) begin
+          `uvm_warning("MDL/INST_CHECKER", $sformatf("pc=0x%8x: In viota, dest vrf(%0d~%0d) can't overlap src2 vrf(%0d). Ignored.", pc, dest_reg_idx_base, dest_reg_idx_base+int'($ceil(dest_emul))-1, src2_reg_idx_base))
           continue;
         end
         if(inst_tr.inst_type == ALU && inst_tr.alu_inst == VMUNARY0 && inst_tr.src1_idx inside {VMSBF, VMSOF, VMSIF, VIOTA} && dest_reg_idx_base == 0 && vm == 0) begin
