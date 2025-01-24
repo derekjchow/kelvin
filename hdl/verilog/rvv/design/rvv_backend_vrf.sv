@@ -29,12 +29,10 @@ output  logic                      [`VLEN-1:0]  vrf2dp_v0_data;
 input   logic     [`NUM_RT_UOP-1:0] rt2vrf_wr_valid;
 input   RT2VRF_t  [`NUM_RT_UOP-1:0] rt2vrf_wr_data;
 
-
 // Wires & Regs
-wire [`REGFILE_INDEX_WIDTH-1:0] rd_addr0;
-wire [`REGFILE_INDEX_WIDTH-1:0] rd_addr1;
-wire [`REGFILE_INDEX_WIDTH-1:0] rd_addr2;
-wire [`REGFILE_INDEX_WIDTH-1:0] rd_addr3;
+logic [`NUM_DP_VRF-1:0][`REGFILE_INDEX_WIDTH-1:0] rd_addr;
+
+genvar  j;
 
 wire wr_valid0;
 wire wr_valid1;
@@ -80,10 +78,11 @@ wire [31:0] [`VLEN-1:0] vrf_rd_data_full;
 
 
 // DP2VRF data unpack
-assign rd_addr0 = dp2vrf_rd_index[0];
-assign rd_addr1 = dp2vrf_rd_index[1];
-assign rd_addr2 = dp2vrf_rd_index[2];
-assign rd_addr3 = dp2vrf_rd_index[3];
+generate
+  for (j=0;j<`NUM_DP_VRF;j++) begin: GET_RD_ADDR
+    assign rd_addr[j] = dp2vrf_rd_index[j];
+  end
+endgenerate
 
 // RT2VRF data unpack
 assign wr_valid0 = rt2vrf_wr_valid[0];
@@ -173,11 +172,13 @@ rvv_backend_vrf_reg vrf_reg (
   .wdata(vrf_wr_data_full));
 
 // VRF2DP data pack
-assign vrf2dp_rd_data[0] = vrf_rd_data_full[rd_addr0];
-assign vrf2dp_rd_data[1] = vrf_rd_data_full[rd_addr1];
-assign vrf2dp_rd_data[2] = vrf_rd_data_full[rd_addr2];
-assign vrf2dp_rd_data[3] = vrf_rd_data_full[rd_addr3];
 assign vrf2dp_v0_data = vrf_rd_data_full[0];
+
+generate
+  for (j=0;j<`NUM_DP_VRF;j++) begin: GET_RD_DATA
+    assign vrf2dp_rd_data[j] = vrf_rd_data_full[rd_addr[j]];
+  end
+endgenerate
 
 
 endmodule

@@ -180,8 +180,11 @@ module rvv_backend_dispatch
     generate
         for (i=0; i<`NUM_DP_UOP; i++) begin : gen_strct_uop
             assign strct_uop[i].vs1_index = uop_uop2dp[i].vs1;
+            assign strct_uop[i].vs1_valid = uop_uop2dp[i].vs1_index_valid;
             assign strct_uop[i].vs2_index = uop_uop2dp[i].vs2_index;
+            assign strct_uop[i].vs2_valid = uop_uop2dp[i].vs2_valid;
             assign strct_uop[i].vd_index  = uop_uop2dp[i].vd_index;
+            assign strct_uop[i].vs3_valid = uop_uop2dp[i].vs3_valid;
             assign strct_uop[i].uop_exe_unit = uop_uop2dp[i].uop_exe_unit;
             assign strct_uop[i].uop_class = uop_uop2dp[i].uop_class;
         end
@@ -196,93 +199,106 @@ module rvv_backend_dispatch
 
 // Bypass data for source operand of uop(s)
     generate
-        for (i=0; i<`ROB_DEPTH; i++) begin : gen_rob_byp
-            assign rob_byp[i].w_data    = rob_entry[i].w_data;
-            assign rob_byp[i].byte_type = rob_entry[i].byte_type;
-          `ifdef AGNOSTIC_ONE
-            assign rob_byp[i].tail_one  = rob_entry[i].vector_csr.vtype.vta;
-            assign rob_byp[i].inactive_one = rob_entry[i].vector_csr.vtype.vma;
-          `else
-            assign rob_byp[i].tail_one  = 1'b0;
-            assign rob_byp[i].inactive_one = 1'b0;
-          `endif
+      for (i=0; i<`ROB_DEPTH; i++) begin : gen_rob_byp
+        assign rob_byp[i].w_data    = rob_entry[i].w_data;
+        assign rob_byp[i].byte_type = rob_entry[i].byte_type;
+
+        `ifdef AGNOSTIC_ONE
+          assign rob_byp[i].tail_one  = rob_entry[i].vector_csr.vtype.vta;
+          assign rob_byp[i].inactive_one = rob_entry[i].vector_csr.vtype.vma;
+        `else
+          assign rob_byp[i].tail_one  = 1'b0;
+          assign rob_byp[i].inactive_one = 1'b0;
+        `endif
+      end
+`ifdef DISPATCH_ISSUE2
+      if (`NUM_DP_VRF==6) begin
+        always_comb begin
+          vrf_byp[0].v0  = v0_mask_vrf2dp;
+          vrf_byp[0].vs1 = rd_data_vrf2dp[0];
+          vrf_byp[0].vs2 = rd_data_vrf2dp[1];
+          vrf_byp[0].vd  = rd_data_vrf2dp[2];
+          vrf_byp[1].v0  = v0_mask_vrf2dp;
+          vrf_byp[1].vs1 = rd_data_vrf2dp[3];
+          vrf_byp[1].vs2 = rd_data_vrf2dp[4];
+          vrf_byp[1].vd  = rd_data_vrf2dp[5];
         end
-        for (i=0; i<`NUM_DP_UOP; i++) begin : gen_bypass
-            if (i[0] == 0) begin // i is even
-                always_comb begin
-                    vrf_byp[i].vs1 = 'x;
-                    vrf_byp[i].vs2 = 'x;
-                    vrf_byp[i].vd  = 'x;
+      end
+      else if(`NUM_DP_VRF==4) begin
+        always_comb begin
+          vrf_byp[0].v0  = v0_mask_vrf2dp;
+          vrf_byp[0].vs1 = 'x;
+          vrf_byp[0].vs2 = 'x;
+          vrf_byp[0].vd  = 'x;
+          vrf_byp[1].v0  = v0_mask_vrf2dp;
+          vrf_byp[1].vs1 = 'x;
+          vrf_byp[1].vs2 = 'x;
+          vrf_byp[1].vd  = 'x;
 
-                    case(uop_uop2dp[i].uop_class)
-                        VVV:begin
-                          vrf_byp[i].vd  = rd_data_vrf2dp[2*(i+1)+1];
-                          vrf_byp[i].vs1 = rd_data_vrf2dp[2*i+1];
-                          vrf_byp[i].vs2 = rd_data_vrf2dp[2*i];
-                        end                       
-                        XVV: begin
-                          vrf_byp[i].vs1 = rd_data_vrf2dp[2*i+1];
-                          vrf_byp[i].vs2 = rd_data_vrf2dp[2*i];
-                        end
-                        VVX: begin
-                          vrf_byp[i].vd  = rd_data_vrf2dp[2*i+1];
-                          vrf_byp[i].vs2 = rd_data_vrf2dp[2*i];
-                        end
-                        VXX: begin
-                          vrf_byp[i].vd  = rd_data_vrf2dp[2*i];
-                        end
-                        XVX: begin
-                          vrf_byp[i].vs2 = rd_data_vrf2dp[2*i];
-                        end
-                        XXV: begin
-                          vrf_byp[i].vs1 = rd_data_vrf2dp[2*i];
-                        end
-                    endcase
-                end
+          case(uop_uop2dp[0].uop_class)
+            VVV:begin
+              vrf_byp[0].vd  = rd_data_vrf2dp[3];
+              vrf_byp[0].vs1 = rd_data_vrf2dp[1];
+              vrf_byp[0].vs2 = rd_data_vrf2dp[0];
+            end                       
+            XVV: begin
+              vrf_byp[0].vs1 = rd_data_vrf2dp[1];
+              vrf_byp[0].vs2 = rd_data_vrf2dp[0];
             end
-            else begin // i is odd
-                always_comb begin
-                    vrf_byp[i].vs1 = 'x;
-                    vrf_byp[i].vs2 = 'x;
-                    vrf_byp[i].vd  = 'x;
-
-                    case(uop_uop2dp[i].uop_class)
-                        VVV:begin
-                          vrf_byp[i].vd  = rd_data_vrf2dp[2*(i-1)+1];
-                          vrf_byp[i].vs1 = rd_data_vrf2dp[2*i+1];
-                          vrf_byp[i].vs2 = rd_data_vrf2dp[2*i];
-                        end
-                        XVV: begin
-                          vrf_byp[i].vs1 = rd_data_vrf2dp[2*i+1];
-                          vrf_byp[i].vs2 = rd_data_vrf2dp[2*i];
-                        end
-                        VVX: begin
-                          vrf_byp[i].vd  = rd_data_vrf2dp[2*i+1];
-                          vrf_byp[i].vs2 = rd_data_vrf2dp[2*i];
-                        end
-                        VXX: begin
-                          vrf_byp[i].vd = rd_data_vrf2dp[2*i];
-                        end
-                        XVX: begin
-                          vrf_byp[i].vs2 = rd_data_vrf2dp[2*i];
-                        end
-                        XXV: begin
-                          vrf_byp[i].vs1 = rd_data_vrf2dp[2*i];
-                        end
-                    endcase
-                end
+            VVX: begin
+              vrf_byp[0].vd  = rd_data_vrf2dp[1];
+              vrf_byp[0].vs2 = rd_data_vrf2dp[0];
             end
+            VXX: begin
+              vrf_byp[0].vd  = rd_data_vrf2dp[0];
+            end
+            XVX: begin
+              vrf_byp[0].vs2 = rd_data_vrf2dp[0];
+            end
+            XXV: begin
+              vrf_byp[0].vs1 = rd_data_vrf2dp[0];
+            end
+          endcase
 
-            assign vrf_byp[i].v0  = v0_mask_vrf2dp;
-
-            rvv_backend_dispatch_bypass #(
-            ) u_bypass (
-                .uop_operand  (uop_operand[i]),
-                .rob_byp      (rob_byp),
-                .vrf_byp      (vrf_byp[i]),
-                .raw_uop_rob  (raw_uop_rob[i])
-            );
+          case(uop_uop2dp[1].uop_class)
+            VVV:begin
+              vrf_byp[1].vd  = rd_data_vrf2dp[1];
+              vrf_byp[1].vs1 = rd_data_vrf2dp[3];
+              vrf_byp[1].vs2 = rd_data_vrf2dp[2];
+            end
+            XVV: begin
+              vrf_byp[1].vs1 = rd_data_vrf2dp[3];
+              vrf_byp[1].vs2 = rd_data_vrf2dp[2];
+            end
+            VVX: begin
+              vrf_byp[1].vd  = rd_data_vrf2dp[3];
+              vrf_byp[1].vs2 = rd_data_vrf2dp[2];
+            end
+            VXX: begin
+              vrf_byp[1].vd = rd_data_vrf2dp[2];
+            end
+            XVX: begin
+              vrf_byp[1].vs2 = rd_data_vrf2dp[2];
+            end
+            XXV: begin
+              vrf_byp[1].vs1 = rd_data_vrf2dp[2];
+            end
+          endcase
         end
+      end
+`endif
+      
+      for (i=0;i<`NUM_DP_UOP;i++) begin: gen_bypass_data
+        rvv_backend_dispatch_bypass 
+        #(
+        ) 
+        u_bypass (
+          .uop_operand  (uop_operand[i]),
+          .rob_byp      (rob_byp),
+          .vrf_byp      (vrf_byp[i]),
+          .raw_uop_rob  (raw_uop_rob[i])
+        );
+      end
     endgenerate
 
 // Control handshae mechanism for uop_queue <-> dispath, dispatch <-> rs and dispatch <-> rob

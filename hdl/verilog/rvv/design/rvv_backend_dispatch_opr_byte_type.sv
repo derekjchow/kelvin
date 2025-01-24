@@ -131,7 +131,7 @@ module rvv_backend_dispatch_opr_byte_type
                     operand_byte_type.vs1[i] = TAIL;
                 else if (vs1_ele_index[i] < {1'b0, uop_info.vstart}) 
                     operand_byte_type.vs1[i] = NOT_CHANGE; // prestart
-                else if (vs1_ele_index[i] > uop_vd_end) 
+                else if (vs1_ele_index[i] > {1'b0, uop_vd_end}) 
                     operand_byte_type.vs1[i] = BODY_INACTIVE;
                 else begin 
                     operand_byte_type.vs1[i] = (vd_enable[i] || uop_info.ignore_vma) ? BODY_ACTIVE
@@ -199,7 +199,7 @@ module rvv_backend_dispatch_opr_byte_type
                     operand_byte_type.vs2[i] = TAIL; 
                 else if (vs2_ele_index[i] < {1'b0, uop_info.vstart}) 
                     operand_byte_type.vs2[i] = NOT_CHANGE; // prestart
-                else if (vs2_ele_index[i] > uop_vd_end) 
+                else if (vs2_ele_index[i] > {1'b0, uop_vd_end}) 
                     operand_byte_type.vs2[i] = BODY_INACTIVE;
                 else begin 
                     operand_byte_type.vs2[i] = (vd_enable[i] || uop_info.ignore_vma) ? BODY_ACTIVE
@@ -255,7 +255,7 @@ module rvv_backend_dispatch_opr_byte_type
                     operand_byte_type.vd[i] = TAIL;       
                 else if (vd_ele_index[i] < {1'b0, uop_info.vstart}) 
                     operand_byte_type.vd[i] = NOT_CHANGE;     // prestart
-                else if (vd_ele_index[i] > uop_vd_end) 
+                else if (vd_ele_index[i] > {1'b0, uop_vd_end}) 
                     operand_byte_type.vd[i] = BODY_INACTIVE;
                 else begin 
                     operand_byte_type.vd[i] = (vd_enable[i] || uop_info.ignore_vma) ? BODY_ACTIVE
