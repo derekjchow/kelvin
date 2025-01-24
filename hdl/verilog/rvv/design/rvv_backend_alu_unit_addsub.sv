@@ -98,22 +98,6 @@ module rvv_backend_alu_unit_addsub
   assign  rs1_data       = alu_uop.rs1_data;
   assign  rs1_data_valid = alu_uop.rs1_data_valid;
   assign  uop_index      = alu_uop.uop_index;
- 
-  always_comb begin
-    v0_data_in_use = 'b0;
-
-    case(vs2_eew)
-      EEW8: begin
-        v0_data_in_use = v0_data[{uop_index,{($clog2(`VLENB)){1'b0}}} +: `VLENB];
-      end
-      EEW16: begin
-        v0_data_in_use = {{(`VLENB/2){1'b0}}, v0_data[{uop_index,{($clog2(`VLENB/2)){1'b0}}} +: `VLENB/2]};
-      end
-      EEW32: begin
-        v0_data_in_use = {{(`VLENB*3/4){1'b0}}, v0_data[{uop_index,{($clog2(`VLENB/4)){1'b0}}} +: `VLENB/4]};
-      end
-    endcase
-  end
 
 //  
 // prepare source data 
@@ -873,6 +857,22 @@ module rvv_backend_alu_unit_addsub
   end
  
   // prepare cin
+  always_comb begin
+    v0_data_in_use = 'b0;
+
+    case(vs2_eew)
+      EEW8: begin
+        v0_data_in_use = v0_data[{uop_index,{($clog2(`VLENB)){1'b0}}} +: `VLENB];
+      end
+      EEW16: begin
+        v0_data_in_use = {{(`VLENB/2){1'b0}}, v0_data[{uop_index,{($clog2(`VLENB/2)){1'b0}}} +: `VLENB/2]};
+      end
+      EEW32: begin
+        v0_data_in_use = {{(`VLENB*3/4){1'b0}}, v0_data[{uop_index,{($clog2(`VLENB/4)){1'b0}}} +: `VLENB/4]};
+      end
+    endcase
+  end
+
   generate
     for (j=0;j<`VLEN/`WORD_WIDTH;j=j+1) begin: GET_CIN
       always_comb begin
@@ -1686,21 +1686,26 @@ module rvv_backend_alu_unit_addsub
     input logic [`BYTE_WIDTH-1:0] src_y;
     input logic                   src_cin;
 
-    logic [`BYTE_WIDTH:0]         y;
-    logic                         cin;
     logic [`BYTE_WIDTH-1:0]       result;
     logic                         cout;
-
-    if (opcode==ADDSUB_VADD) begin
-      y = {1'b0,src_y};
-      cin = src_cin;
-    end
-    else begin
-      y = {1'b1,~src_y};
-      cin = ~src_cin;
-    end
-
-    {cout,result} = src_x + y + cin;
+    
+    case({opcode,src_cin})
+      {ADDSUB_VADD,1'b1}: begin
+        {cout,result} = src_x + src_y + 1'b1;
+      end
+      {ADDSUB_VADD,1'b0}: begin
+        {cout,result} = src_x + src_y;
+      end
+      {ADDSUB_VSUB,1'b1}: begin
+        {cout,result} = src_x + {1'b1,~src_y};
+      end
+      {ADDSUB_VSUB,1'b0}: begin
+        {cout,result} = src_x + {1'b1,~src_y} + 1'b1;
+      end
+      default: begin
+        {cout,result} = 'b0;
+      end
+    endcase
     
     return {cout,result};
 
@@ -1712,14 +1717,13 @@ module rvv_backend_alu_unit_addsub
     input logic [`BYTE_WIDTH:0] src_x;
     input logic                 src_cin;
 
-    logic [`BYTE_WIDTH:0]       y;
     logic [`BYTE_WIDTH-1:0]     result;
     logic                       cout;
     
     if ((opcode==ADDSUB_VADD)&(src_cin==1'b1))
-      {cout,result} = src_x + 'd1;
+      {cout,result} = src_x + 1'b1;
     else if ((opcode==ADDSUB_VSUB)&(src_cin==1'b1))
-      {cout,result} = src_x + '1;
+      {cout,result} = src_x - 1'b1;
     else
       {cout,result} = src_x;
 
@@ -1733,14 +1737,13 @@ module rvv_backend_alu_unit_addsub
     input logic [`HWORD_WIDTH:0] src_x;
     input logic                  src_cin;
 
-    logic [`HWORD_WIDTH:0]       y;
     logic [`HWORD_WIDTH-1:0]     result;
     logic                        cout;
     
     if ((opcode==ADDSUB_VADD)&(src_cin==1'b1))
-      {cout,result} = src_x + 'd1;
+      {cout,result} = src_x + 1'b1;
     else if ((opcode==ADDSUB_VSUB)&(src_cin==1'b1))
-      {cout,result} = src_x + '1;
+      {cout,result} = src_x - 1'b1;
     else
       {cout,result} = src_x;
 
