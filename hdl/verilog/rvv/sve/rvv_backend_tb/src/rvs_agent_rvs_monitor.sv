@@ -19,6 +19,9 @@ class rvs_monitor extends uvm_monitor;
   rvs_transaction inst_tx_queue[$];
   rvs_transaction inst_rx_queue[$];
 
+  int total_inst = 0;
+  int executed_inst = 0;
+
   `uvm_component_utils_begin(rvs_monitor)
   `uvm_component_utils_end
 
@@ -28,6 +31,7 @@ class rvs_monitor extends uvm_monitor;
   extern virtual task reset_phase(uvm_phase phase);
   extern virtual task configure_phase(uvm_phase phase);
   extern virtual task run_phase(uvm_phase phase);
+  extern virtual function void final_phase(uvm_phase phase);
   extern protected virtual task tx_monitor();
   extern protected virtual task rx_monitor();
 
@@ -62,6 +66,20 @@ task rvs_monitor::configure_phase(uvm_phase phase);
   super.configure_phase(phase);
 endtask:configure_phase
 
+function void rvs_monitor::final_phase(uvm_phase phase);
+  super.final_phase(phase);
+  if(inst_rx_queue.size()>0) begin
+    `uvm_error("FINAL_CHECK", "inst_rx_queue in RVS_MON wasn't empty!")
+    foreach(inst_rx_queue[idx]) begin
+      `uvm_error("FINAL_CHECK",inst_rx_queue[idx].sprint())
+    end
+  end
+  uvm_config_db#(int)::set(uvm_root::get(), "", "rvv_total_inst", this.total_inst);
+  uvm_config_db#(int)::set(uvm_root::get(), "", "rvv_excuted_inst", this.executed_inst);
+  `uvm_info("FINAL_CHECK", $sformatf("RVV total accepted inst: %0d, executed inst: %0d, discarded %.2f%%", 
+                                      this.total_inst, this.executed_inst, real'(this.total_inst - this.executed_inst)*100.0/real'(this.total_inst)), UVM_LOW)
+endfunction: final_phase 
+
 task rvs_monitor::run_phase(uvm_phase phase);
   super.run_phase(phase);
   fork
@@ -89,6 +107,7 @@ task rvs_monitor::tx_monitor();
           rt_tr.copy(inst_tr);
           // rt_tr.is_rt = 1;
           inst_rx_queue.push_back(rt_tr);
+          this.total_inst++;
         end
       end
     end
@@ -159,6 +178,7 @@ task rvs_monitor::rx_monitor();
             `uvm_info(get_type_name(), $sformatf("Send rt transaction to scb"),UVM_HIGH)
             `uvm_info(get_type_name(), tr.sprint(),UVM_HIGH)
             rt_ap.write(tr); // write to scb
+            this.executed_inst++;
             tr = new("tr");
           end
         end

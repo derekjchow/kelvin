@@ -332,11 +332,13 @@ class alu_smoke_vmunary0_seq extends base_sequence;
 
         inst_type == ALU;
         alu_inst == local::alu_inst;
-        (src1_idx inside {VIOTA, VID}) -> 
+        (src1_idx inside {VIOTA}) -> 
           (dest_type == XRF);
-        (src1_idx inside {VMSBF, VMSOF, VMSIF}) -> 
+        (src1_idx inside {VMSBF, VMSOF, VMSIF, VID}) -> 
           (dest_type == VRF && dest_idx == 16);
-        src2_type == VRF; src2_idx == 8;
+        (src1_idx == VID) -> (src2_type == UNUSE);
+        (src1_idx == VID) -> (src2_idx dist{0 := 9, 1 := 1});
+        (src1_idx != VID) -> (src2_type == VRF && src2_idx == 8);
         src1_type == FUNC; src1_idx == local::vmunary0_func;
         vm == 0;
       });
@@ -1234,7 +1236,8 @@ class alu_iterate_vmunary0_seq extends alu_iterate_base_sequence;
           alu_inst == local::alu_inst;
 
           dest_type == VRF;
-          src2_type == VRF;
+          (src1_idx != VID) -> (src2_type == VRF);
+          (src1_idx == VID) -> (src2_type == UNUSE);
           (src1_idx == VID) -> (src2_idx dist{0 := 9, 1 := 1});
           src1_type == FUNC; src1_idx != VMUNARY0_LAST;
         });
@@ -1258,7 +1261,8 @@ class alu_iterate_vmunary0_seq extends alu_iterate_base_sequence;
               alu_inst == local::alu_inst;
 
               dest_type == VRF; 
-              src2_type == VRF;
+              (src1_idx != VID) -> (src2_type == VRF);
+              (src1_idx == VID) -> (src2_type == UNUSE);
               (src1_idx == VID) -> (src2_idx dist{0 := 9, 1 := 1});
               src1_type == FUNC; src1_idx == local::vmunary0_func;
               vm == local::vm;

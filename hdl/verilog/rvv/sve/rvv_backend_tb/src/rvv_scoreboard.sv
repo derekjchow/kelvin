@@ -25,6 +25,11 @@ class rvv_scoreboard extends uvm_scoreboard;
   vrf_transaction vrf_queue_rvs[$];
   vrf_transaction vrf_queue_mdl[$];
 
+  int rvv_total_inst;
+  int rvv_executed_inst;
+  int mdl_total_inst;
+  int mdl_executed_inst;
+
   `uvm_component_utils(rvv_scoreboard)
 	extern function new(string name = "rvv_scoreboard", uvm_component parent = null); 
 	extern virtual function void build_phase (uvm_phase phase);
@@ -278,6 +283,18 @@ endtask: vrf_checker
 
 function void rvv_scoreboard::final_phase(uvm_phase phase);
   super.final_phase(phase);
+  if(!uvm_config_db#(int)::get(uvm_root::get(), "", "rvv_total_inst", this.rvv_total_inst)) begin
+    `uvm_fatal(get_type_name(), "Fail to get rvv_total_inst!")
+  end
+  if(!uvm_config_db#(int)::get(uvm_root::get(), "", "rvv_excuted_inst", this.rvv_executed_inst)) begin
+    `uvm_fatal(get_type_name(), "Fail to get rvv_executed_inst!")
+  end
+  if(!uvm_config_db#(int)::get(uvm_root::get(), "", "mdl_total_inst", this.mdl_total_inst)) begin
+    `uvm_fatal(get_type_name(), "Fail to get mdl_total_inst!")
+  end
+  if(!uvm_config_db#(int)::get(uvm_root::get(), "", "mdl_excuted_inst", this.mdl_executed_inst)) begin
+    `uvm_fatal(get_type_name(), "Fail to get mdl_executed_inst!")
+  end
   if(rt_queue_rvs.size()>0) begin
     `uvm_error("FINAL_CHECK", "rt_queue_rvs wasn't empty!")
     foreach(rt_queue_rvs[idx]) begin
@@ -301,6 +318,12 @@ function void rvv_scoreboard::final_phase(uvm_phase phase);
     foreach(vrf_queue_mdl[idx]) begin
       `uvm_error("FINAL_CHECK",vrf_queue_mdl[idx].sprint())
     end
+  end
+  if(rvv_total_inst !== mdl_total_inst) begin
+    `uvm_error("FINAL_CHECK", "Total instruction number mismatch.")
+  end
+  if(rvv_executed_inst !== mdl_executed_inst) begin
+    `uvm_error("FINAL_CHECK", "Executed instruction number mismatch.")
   end
   `uvm_info(get_type_name(),"Exit final_phase...", UVM_HIGH)
 endfunction: final_phase

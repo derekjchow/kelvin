@@ -45,6 +45,8 @@ class rvv_behavior_model extends uvm_component;
   byte mem[int];
   rvs_transaction inst_queue [$];
 
+  int total_inst = 0;
+  int executed_inst = 0;
       
   `uvm_component_utils(rvv_behavior_model)
 
@@ -129,12 +131,17 @@ endclass : rvv_behavior_model
         `uvm_error("FINAL_CHECK",inst_queue[idx].sprint())
       end
     end
+    uvm_config_db#(int)::set(uvm_root::get(), "", "mdl_total_inst", this.total_inst);
+    uvm_config_db#(int)::set(uvm_root::get(), "", "mdl_excuted_inst", this.executed_inst);
+    `uvm_info("FINAL_CHECK", $sformatf("MDL total accepted inst: %0d, executed inst: %0d, discarded %.2f%%", 
+                                        this.total_inst, this.executed_inst, real'(this.total_inst - this.executed_inst)*100.0/real'(this.total_inst)), UVM_LOW)
   endfunction: final_phase 
 
   function void rvv_behavior_model::write_inst(rvs_transaction inst_tr);
     `uvm_info("MDL", "get a inst", UVM_HIGH)
     `uvm_info("MDL", inst_tr.sprint(), UVM_HIGH)
     inst_queue.push_back(inst_tr);
+    this.total_inst++;
   endfunction
 
   task rvv_behavior_model::rx_mdl();
@@ -533,7 +540,7 @@ endclass : rvv_behavior_model
               dest_reg_idx_base, dest_reg_idx_base+int'($floor(dest_emul))-1, src1_reg_idx_base, src1_reg_idx_base+int'($floor(src1_emul))-1));
           continue;
         end
-        if(inst_tr.dest_type == VRF && vm == 0 && dest_reg_idx_base == 0 && (dest_eew != EEW1 /*|| TODO scalar result of a reduction*/)) begin
+        if(inst_tr.dest_type == VRF && vm == 0 && dest_reg_idx_base == 0 && dest_eew != EEW1) begin
           `uvm_warning("MDL/INST_CHECKER", $sformatf("pc=0x%8x: Ch32.5.3. Dest vrf index(%0d) overlap source mask register v0. Ignored.",pc,dest_reg_idx_base));
           continue;
         end
@@ -771,6 +778,7 @@ endclass : rvv_behavior_model
 
         `uvm_info("MDL",$sformatf("Complete calculation:\n%s",rt_tr.sprint()),UVM_LOW)
         rt_ap.write(rt_tr);
+        this.executed_inst++;
       end // if(rt_last_uop[0])
         rt_last_uop = rt_last_uop >> 1;
       end // while(|rt_last_uop)

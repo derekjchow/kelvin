@@ -429,15 +429,15 @@ class alu_vwaddsub_test extends rvv_backend_test;
     rvs_seq.run_inst_iter(VWSUBU_W, env.rvs_agt.rvs_sqr, 1);
     rvs_seq.run_inst_iter(VWSUB_W , env.rvs_agt.rvs_sqr, 1);
     
-    rvs_seq.run_inst_rand(VWADD   , env.rvs_agt.rvs_sqr, 100);
-    rvs_seq.run_inst_rand(VWADDU  , env.rvs_agt.rvs_sqr, 100);
-    rvs_seq.run_inst_rand(VWADDU_W, env.rvs_agt.rvs_sqr, 100);
-    rvs_seq.run_inst_rand(VWADD_W , env.rvs_agt.rvs_sqr, 100);
+    rvs_seq.run_inst_rand(VWADD   , env.rvs_agt.rvs_sqr, 500);
+    rvs_seq.run_inst_rand(VWADDU  , env.rvs_agt.rvs_sqr, 500);
+    rvs_seq.run_inst_rand(VWADDU_W, env.rvs_agt.rvs_sqr, 500);
+    rvs_seq.run_inst_rand(VWADD_W , env.rvs_agt.rvs_sqr, 500);
 
-    rvs_seq.run_inst_rand(VWSUB   , env.rvs_agt.rvs_sqr, 100);
-    rvs_seq.run_inst_rand(VWSUBU  , env.rvs_agt.rvs_sqr, 100);
-    rvs_seq.run_inst_rand(VWSUBU_W, env.rvs_agt.rvs_sqr, 100);
-    rvs_seq.run_inst_rand(VWSUB_W , env.rvs_agt.rvs_sqr, 100);
+    rvs_seq.run_inst_rand(VWSUB   , env.rvs_agt.rvs_sqr, 500);
+    rvs_seq.run_inst_rand(VWSUBU  , env.rvs_agt.rvs_sqr, 500);
+    rvs_seq.run_inst_rand(VWSUBU_W, env.rvs_agt.rvs_sqr, 500);
+    rvs_seq.run_inst_rand(VWSUB_W , env.rvs_agt.rvs_sqr, 500);
 
     rvs_last_seq = alu_smoke_vv_seq::type_id::create("rvs_last_seq", this);
     rvs_last_seq.run_inst(VADD,env.rvs_agt.rvs_sqr);
@@ -1146,10 +1146,10 @@ class alu_vsaddsub_test extends rvv_backend_test;
     rvs_vv_vx_seq.run_inst_iter(   VSSUBU, env.rvs_agt.rvs_sqr, 1);
     rvs_vv_vx_seq.run_inst_iter(   VSSUB , env.rvs_agt.rvs_sqr, 1);
 
-    rvs_vv_vx_vi_seq.run_inst_rand(VSADDU, env.rvs_agt.rvs_sqr, 100);
-    rvs_vv_vx_vi_seq.run_inst_rand(VSADD , env.rvs_agt.rvs_sqr, 100);
-    rvs_vv_vx_seq.run_inst_rand(   VSSUBU, env.rvs_agt.rvs_sqr, 100);
-    rvs_vv_vx_seq.run_inst_rand(   VSSUB , env.rvs_agt.rvs_sqr, 100);
+    rvs_vv_vx_vi_seq.run_inst_rand(VSADDU, env.rvs_agt.rvs_sqr, 400);
+    rvs_vv_vx_vi_seq.run_inst_rand(VSADD , env.rvs_agt.rvs_sqr, 400);
+    rvs_vv_vx_seq.run_inst_rand(   VSSUBU, env.rvs_agt.rvs_sqr, 400);
+    rvs_vv_vx_seq.run_inst_rand(   VSSUB , env.rvs_agt.rvs_sqr, 400);
 
     rvs_last_seq = alu_smoke_vv_seq::type_id::create("rvs_last_seq", this);
     rvs_last_seq.run_inst(VADD,env.rvs_agt.rvs_sqr);

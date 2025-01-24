@@ -168,7 +168,9 @@ class rvs_transaction extends uvm_sequence_item;
 
     (inst_type == ALU && alu_inst[7:6] == 2'b01 && alu_inst == VMUNARY0) 
       -> ((dest_type == VRF && src2_type == VRF && 
-           alu_type == OPMVV && src1_type == FUNC && src1_idx inside {VIOTA, VID}) || 
+           alu_type == OPMVV && src1_type == FUNC && src1_idx inside {VIOTA}) || 
+          (dest_type == VRF && src2_type == UNUSE && 
+           alu_type == OPMVV && src1_type == FUNC && src1_idx inside {VID}) ||
           (dest_type == VRF && src2_type == VRF &&
            alu_type == OPMVV && src1_type == FUNC && src1_idx inside {VMSBF, VMSOF, VMSIF})
       );
@@ -259,18 +261,14 @@ class rvs_transaction extends uvm_sequence_item;
       `uvm_field_enum(oprand_type_e,src1_type,UVM_ALL_ON)
       `uvm_field_enum(vmunary0_e,src1_func_vmunary0,UVM_ALL_ON)
       `uvm_field_int(src1_idx,UVM_ALL_ON)
-    end else if(src1_type != UNUSE) begin
+    end begin
       `uvm_field_enum(oprand_type_e,src1_type,UVM_ALL_ON)
       `uvm_field_int(src1_idx,UVM_ALL_ON)
     end
-    if(src2_type != UNUSE) begin
-      `uvm_field_enum(oprand_type_e,src2_type,UVM_ALL_ON)
-      `uvm_field_int(src2_idx,UVM_ALL_ON)
-    end
-    if(src3_type != UNUSE) begin
-      `uvm_field_enum(oprand_type_e,src3_type,UVM_ALL_ON)
-      `uvm_field_int(src3_idx,UVM_ALL_ON)
-    end
+    `uvm_field_enum(oprand_type_e,src2_type,UVM_ALL_ON)
+    `uvm_field_int(src2_idx,UVM_ALL_ON)
+    `uvm_field_enum(oprand_type_e,src3_type,UVM_ALL_ON)
+    `uvm_field_int(src3_idx,UVM_ALL_ON)
     if(src1_type == XRF || src2_type == XRF) begin
       `uvm_field_int(rs_data,UVM_ALL_ON)
     end
@@ -424,7 +422,10 @@ function void rvs_transaction::asm_string_gen();
     end
     XRF: begin suf2 = "x"; src2 = $sformatf("x%0d",this.src2_idx); end
     IMM: begin suf2 = "i"; src2 = $sformatf("%0d",$signed(this.src2_idx)); end
-    default: begin suf1 = "?"; src1 = "?"; end
+    UNUSE: begin 
+      if(this.src1_idx ==  VID) begin suf2 = ""; src2 = ""; end
+    end
+    default: begin suf2 = "?"; src2 = "?"; end
   endcase
   if(vm == 0) begin
     if(inst_type == ALU && use_vm_to_cal == 1) begin

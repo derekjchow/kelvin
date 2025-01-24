@@ -16,6 +16,8 @@ sub Check {
   my $p_astFail = qr/Error/;
   my $p_astWarn = qr/Warning/;
   my $p_othFail = qr/((?<!UVM_)ERROR)/;
+
+  my $p_discardRate = qr/UVM_INFO.+\[FINAL_CHECK\] RVV.+discarded ([0-9.]+)%/;
   foreach (@ARGV) {
     open my $fh, '+<', $_ or die "Open $_ failed: $!";
 
@@ -25,6 +27,9 @@ sub Check {
     my $astWarn = grep m/$p_astWarn/g, @texts;
     my $othFail = grep m/$p_othFail/g, @texts;
     my $match = $uvmFail + $astFail + $othFail;
+    my $discardRate = 0;
+    map { $discardRate = $1 if m/$p_discardRate/g; } @texts;
+
 
     if($match) {
       print color "bold red";
@@ -35,8 +40,7 @@ sub Check {
       print "Assert Warning: $astWarn\n";
       print $fh "Assert Warning: $astWarn\n";
       print color "reset";
-    }
-    else {
+    } else {
       print color "bold green";
       print "====PASS==== $testname\n";
       print $fh "====PASS==== $testname\n";
@@ -44,6 +48,18 @@ sub Check {
       print $fh "Assert Warning: $astWarn\n";
       print color "reset";
     }
+    if($discardRate > 50.0) {
+      print color "bold red";
+      print "WARNING: Discarded rate $discardRate% > 50%\n";
+      print $fh "WARNING: Discarded rate: $discardRate% > 50%\n";
+      print color "reset";
+    } else {
+      print color "bold green";
+      print "Discarded rate: $discardRate%\n";
+      print $fh "Discarded rate: $discardRate%\n";
+      print color "reset";
+    }
+
     close $fh;
   }
 }
