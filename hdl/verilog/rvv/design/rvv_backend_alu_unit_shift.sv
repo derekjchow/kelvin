@@ -262,7 +262,7 @@ module rvv_backend_alu_unit_shift
             case(vs2_eew)
               EEW16: begin
                 for(int i=0;i<`VLEN/`HWORD_WIDTH/2;i=i+1) begin
-                  src2_data16[i]    = vs2_data[i*`HWORD_WIDTH +: `HWORD_WIDTH];
+                  src2_data16[i] = vs2_data[i*`HWORD_WIDTH +: `HWORD_WIDTH];
                   if (uop_index[0]==1'b0)
                     shift_amount16[i] = vs1_data[i*`BYTE_WIDTH  +: $clog2(`HWORD_WIDTH)];
                   else
@@ -278,7 +278,7 @@ module rvv_backend_alu_unit_shift
               end
               EEW32: begin
                 for(int i=0;i<`VLEN/`WORD_WIDTH;i=i+1) begin
-                  src2_data32[i]    = vs2_data[i*`WORD_WIDTH  +: `WORD_WIDTH];
+                  src2_data32[i] = vs2_data[i*`WORD_WIDTH  +: `WORD_WIDTH];
                   if (uop_index[0]==1'b0)
                     shift_amount32[i] = vs1_data[i*`HWORD_WIDTH +: $clog2(`WORD_WIDTH)];
                   else
@@ -293,14 +293,14 @@ module rvv_backend_alu_unit_shift
              case(vs2_eew)
               EEW16: begin
                 for(int i=0;i<`VLEN/`HWORD_WIDTH/2;i=i+1) begin
-                  src2_data16[i]    = vs2_data[i*`HWORD_WIDTH +: `HWORD_WIDTH];
+                  src2_data16[i] = vs2_data[i*`HWORD_WIDTH +: `HWORD_WIDTH];
                   if (uop_index[0]==1'b0)
                     shift_amount16[i] = vs1_data[i*`BYTE_WIDTH  +: $clog2(`HWORD_WIDTH)];
                   else
                     shift_amount16[i] = vs1_data[`VLEN/2+i*`BYTE_WIDTH  +: $clog2(`HWORD_WIDTH)];
                 end
                 for(int i=`VLEN/`HWORD_WIDTH/2;i<`VLEN/`HWORD_WIDTH;i=i+1) begin
-                  src2_data32[   i-`VLEN/`HWORD_WIDTH/2] = {{16{vs2_data[(i+1)*`HWORD_WIDTH-1]}},vs2_data[i*`HWORD_WIDTH +: `HWORD_WIDTH]};
+                  src2_data32[i-`VLEN/`HWORD_WIDTH/2] = {{16{vs2_data[(i+1)*`HWORD_WIDTH-1]}},vs2_data[i*`HWORD_WIDTH +: `HWORD_WIDTH]};
                   if (uop_index[0]==1'b0)
                     shift_amount32[i-`VLEN/`HWORD_WIDTH/2] = vs1_data[i*`BYTE_WIDTH +: $clog2(`HWORD_WIDTH)];
                   else
@@ -309,7 +309,7 @@ module rvv_backend_alu_unit_shift
               end
               EEW32: begin
                 for(int i=0;i<`VLEN/`WORD_WIDTH;i=i+1) begin
-                  src2_data32[i]    = vs2_data[i*`WORD_WIDTH  +: `WORD_WIDTH];
+                  src2_data32[i] = vs2_data[i*`WORD_WIDTH  +: `WORD_WIDTH];
                   if (uop_index[0]==1'b0)
                     shift_amount32[i] = vs1_data[i*`HWORD_WIDTH +: $clog2(`WORD_WIDTH)];
                   else
@@ -1060,26 +1060,26 @@ module rvv_backend_alu_unit_shift
     input logic [`BYTE_WIDTH-1:0]         operand;
     input logic [$clog2(`BYTE_WIDTH)-1:0] amount;
 
-    logic signed [2*`BYTE_WIDTH:0] src;
-    logic signed [2*`BYTE_WIDTH:0] result;
+    logic signed [`BYTE_WIDTH:0]   src;
+    logic signed [`BYTE_WIDTH-1:0] result;
+    logic signed [`BYTE_WIDTH-1:0] round;
 
-    if (opcode==SHIFT_SLL)
-      src = {1'b0,operand,{`BYTE_WIDTH{1'b0}}};
-    else if (opcode==SHIFT_SRL)
-      src = {1'b0,operand,{`BYTE_WIDTH{1'b0}}};
-    else if (opcode==SHIFT_SRA)
-      src = {operand[`BYTE_WIDTH-1],operand,{`BYTE_WIDTH{1'b0}}};
-    else
-      src = 'b0;
+    if ((opcode==SHIFT_SLL)||(opcode==SHIFT_SRL))
+      src = {1'b0,operand};
+    else 
+      src = {operand[`BYTE_WIDTH-1],operand};   // (opcode==SHIFT_SRA)
 
-    if (opcode==SHIFT_SLL)
+    if (opcode==SHIFT_SLL) begin
       result = src<<amount;
-    else if ((opcode==SHIFT_SRL)||(opcode==SHIFT_SRA))
-      result = src>>>amount;
-    else
-      result = 'b0;
+      round  = 'b0;
+    end
+    else begin
+      // ((opcode==SHIFT_SRL)||(opcode==SHIFT_SRA))
+      result = src>>>amount;    
+      round  = operand<<(`BYTE_WIDTH-amount); 
+    end
 
-    return result[2*`BYTE_WIDTH-1:0];
+    return {result,round};
   endfunction
 
   function [2*`HWORD_WIDTH-1:0] f_shift16;
@@ -1087,26 +1087,27 @@ module rvv_backend_alu_unit_shift
     input logic [`HWORD_WIDTH-1:0]         operand;
     input logic [$clog2(`HWORD_WIDTH)-1:0] amount;
 
-    logic signed [2*`HWORD_WIDTH:0] src;
-    logic signed [2*`HWORD_WIDTH:0] result;
+    logic signed [`HWORD_WIDTH:0]   src;
+    logic signed [`HWORD_WIDTH-1:0] result;
+    logic signed [`HWORD_WIDTH-1:0] round;
 
-    if (opcode==SHIFT_SLL)
-      src = {1'b0,operand,{`HWORD_WIDTH{1'b0}}};
-    else if (opcode==SHIFT_SRL)
-      src = {1'b0,operand,{`HWORD_WIDTH{1'b0}}};
-    else if (opcode==SHIFT_SRA)
-      src = {operand[`HWORD_WIDTH-1],operand,{`HWORD_WIDTH{1'b0}}};
-    else
-      src = 'b0;
+    if ((opcode==SHIFT_SLL)||(opcode==SHIFT_SRL))
+      src = {1'b0,operand};
+    else 
+      src = {operand[`HWORD_WIDTH-1],operand};   // (opcode==SHIFT_SRA)
 
-    if (opcode==SHIFT_SLL)
+    if (opcode==SHIFT_SLL) begin
       result = src<<amount;
-    else if ((opcode==SHIFT_SRL)||(opcode==SHIFT_SRA))
-      result = src>>>amount;
-    else
-      result = 'b0;
+      round  = 'b0;
+    end
+    else begin
+      // ((opcode==SHIFT_SRL)||(opcode==SHIFT_SRA))
+      result = src>>>amount;    
+      round  = operand<<(`HWORD_WIDTH-amount); 
+    end
 
-    return result[2*`HWORD_WIDTH-1:0];
+    return {result,round};
+
   endfunction
 
   function [2*`WORD_WIDTH-1:0] f_shift32;
@@ -1114,26 +1115,27 @@ module rvv_backend_alu_unit_shift
     input logic [`WORD_WIDTH-1:0]         operand;
     input logic [$clog2(`WORD_WIDTH)-1:0] amount;
 
-    logic signed [2*`WORD_WIDTH:0] src;
-    logic signed [2*`WORD_WIDTH:0] result;
+    logic signed [`WORD_WIDTH:0]   src;
+    logic signed [`WORD_WIDTH-1:0] result;
+    logic signed [`WORD_WIDTH-1:0] round;
 
-    if (opcode==SHIFT_SLL)
-      src = {1'b0,operand,{`WORD_WIDTH{1'b0}}};
-    else if (opcode==SHIFT_SRL)
-      src = {1'b0,operand,{`WORD_WIDTH{1'b0}}};
-    else if (opcode==SHIFT_SRA)
-      src = {operand[`WORD_WIDTH-1],operand,{`WORD_WIDTH{1'b0}}};
-    else
-      src = 'b0;
+    if ((opcode==SHIFT_SLL)||(opcode==SHIFT_SRL))
+      src = {1'b0,operand};
+    else 
+      src = {operand[`WORD_WIDTH-1],operand};   // (opcode==SHIFT_SRA)
 
-    if (opcode==SHIFT_SLL)
+    if (opcode==SHIFT_SLL) begin
       result = src<<amount;
-    else if ((opcode==SHIFT_SRL)||(opcode==SHIFT_SRA))
-      result = src>>>amount;
-    else
-      result = 'b0;
+      round  = 'b0;
+    end
+    else begin
+      // ((opcode==SHIFT_SRL)||(opcode==SHIFT_SRA))
+      result = src>>>amount;    
+      round  = operand<<(`WORD_WIDTH-amount); 
+    end
 
-    return result[2*`WORD_WIDTH-1:0];
+    return {result,round};
+
   endfunction
 
   function [`BYTE_WIDTH-1:0] f_half_add8;

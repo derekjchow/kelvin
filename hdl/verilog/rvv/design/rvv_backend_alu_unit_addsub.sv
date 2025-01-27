@@ -1686,26 +1686,21 @@ module rvv_backend_alu_unit_addsub
     input logic [`BYTE_WIDTH-1:0] src_y;
     input logic                   src_cin;
 
+    logic [`BYTE_WIDTH:0]         y;
+    logic                         cin;
     logic [`BYTE_WIDTH-1:0]       result;
     logic                         cout;
-    
-    case({opcode,src_cin})
-      {ADDSUB_VADD,1'b1}: begin
-        {cout,result} = src_x + src_y + 1'b1;
-      end
-      {ADDSUB_VADD,1'b0}: begin
-        {cout,result} = src_x + src_y;
-      end
-      {ADDSUB_VSUB,1'b1}: begin
-        {cout,result} = src_x + {1'b1,~src_y};
-      end
-      {ADDSUB_VSUB,1'b0}: begin
-        {cout,result} = src_x + {1'b1,~src_y} + 1'b1;
-      end
-      default: begin
-        {cout,result} = 'b0;
-      end
-    endcase
+
+    if (opcode==ADDSUB_VADD) begin
+      y = {1'b0,src_y};
+      cin = src_cin;
+    end
+    else begin
+      y = {1'b1,~src_y};
+      cin = ~src_cin;
+    end
+
+    {cout,result} = src_x + y + cin;
     
     return {cout,result};
 

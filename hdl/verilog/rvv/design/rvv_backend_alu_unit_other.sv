@@ -83,22 +83,6 @@ module rvv_backend_alu_unit_other
   assign  rs1_data       = alu_uop.rs1_data;
   assign  rs1_data_valid = alu_uop.rs1_data_valid;
   assign  uop_index      = alu_uop.uop_index;
- 
-  always_comb begin
-    v0_data_in_use = 'b0;
-
-    case(vs2_eew)
-      EEW8: begin
-        v0_data_in_use = v0_data[{uop_index,{($clog2(`VLENB)){1'b0}}} +: `VLENB];
-      end
-      EEW16: begin
-        v0_data_in_use = {{(`VLENB/2){1'b0}}, v0_data[{uop_index,{($clog2(`VLENB/2)){1'b0}}} +: `VLENB/2]};
-      end
-      EEW32: begin
-        v0_data_in_use = {{(`VLENB*3/4){1'b0}}, v0_data[{uop_index,{($clog2(`VLENB/4)){1'b0}}} +: `VLENB/4]};
-      end
-    endcase
-  end
 
 //  
 // prepare source data 
@@ -647,6 +631,22 @@ module rvv_backend_alu_unit_other
   endgenerate
  
   // vmerge
+  always_comb begin
+    v0_data_in_use = 'b0;
+
+    case(vs2_eew)
+      EEW8: begin
+        v0_data_in_use = v0_data[{uop_index,{($clog2(`VLENB)){1'b0}}} +: `VLENB];
+      end
+      EEW16: begin
+        v0_data_in_use = {{(`VLENB/2){1'b0}}, v0_data[{uop_index,{($clog2(`VLENB/2)){1'b0}}} +: `VLENB/2]};
+      end
+      EEW32: begin
+        v0_data_in_use = {{(`VLENB*3/4){1'b0}}, v0_data[{uop_index,{($clog2(`VLENB/4)){1'b0}}} +: `VLENB/4]};
+      end
+    endcase
+  end 
+
   generate
     for (j=0;j<`VLEN/`WORD_WIDTH;j=j+1) begin: EXE_VMERGE
       always_comb begin
