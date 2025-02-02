@@ -7,17 +7,8 @@ class CoreMiniAxiInterface:
   def __init__(self, dut):
     self.dut = dut
     self.clock = Clock(dut.io_aclk, 10, units="us")
-    #cocotb.start_soon(clock.start())
-
-  async def toggle_clock(self, n=1):
-    for _ in range(n):
-      self.dut.io_aclk.value = 0
-      await Timer(100, units="ns")
-      self.dut.io_aclk.value = 1
-      await Timer(100, units="ns")
 
   async def reset(self):
-    # #await self.toggle_clock(5)
     self.dut.io_aresetn.setimmediatevalue(1)
     await Timer(500, units="ns")
     self.dut.io_aresetn.setimmediatevalue(0)
@@ -25,8 +16,7 @@ class CoreMiniAxiInterface:
     self.dut.io_aresetn.setimmediatevalue(1)
     await Timer(500, units="ns")
 
-
-  async def writeAddr(self, addr, size):
+  async def _writeAddr(self, addr, size):
     self.dut.io_axi_slave_write_addr_valid.value = 1
     self.dut.io_axi_slave_write_addr_bits_addr.value   = addr
     self.dut.io_axi_slave_write_addr_bits_prot.value   = 2
@@ -45,11 +35,11 @@ class CoreMiniAxiInterface:
     await ClockCycles(self.dut.io_aclk, 1)
     self.dut.io_axi_slave_write_addr_valid.value = 0
 
-  async def writeDataWord(self, data):
+  async def writeDataWord(self, data, shift):
     self.dut.io_axi_slave_write_data_valid.value = 1
     self.dut.io_axi_slave_write_data_bits_data.value = data
+    self.dut.io_axi_slave_write_data_bits_strb.value = 0xF << shift # Just the LSB?
     self.dut.io_axi_slave_write_data_bits_last.value = 1 #
-    self.dut.io_axi_slave_write_data_bits_strb.value = 1 # Just the LSB?
     while self.dut.io_axi_slave_write_data_ready.value != 1:
         await ClockCycles(self.dut.io_aclk, 1)
 
@@ -65,8 +55,15 @@ class CoreMiniAxiInterface:
 
   async def writeWord(self, addr, data):
     self.dut.io_axi_slave_write_resp_ready.value = 0
-    write_addr_task = self.writeAddr(addr, 2) # Write one word
-    write_data_task = self.writeDataWord(data)
+    write_addr_task = self._writeAddr(addr, 2) # Write one word (2^2 = 4 bytes)
+
+    shift = addr % 16
+    line = np.zeros([4], dtype=np.uint32)
+    line[0] = data
+    line = np.roll(line.view(np.uint8), shift)
+    bdata = cocotb.binary.BinaryValue()
+    bdata.buff = reversed(line.tobytes())
+    write_data_task = self.writeDataWord(bdata, shift)
 
     await write_addr_task
     await write_data_task
@@ -92,7 +89,7 @@ class CoreMiniAxiInterface:
     bdata.buff = reversed(data.tobytes()) # TODO(derekjchow): Check endianness
 
     self.dut.io_axi_slave_write_resp_ready.value = 0
-    write_addr_task = self.writeAddr(addr, 4) # Write 16 bytes
+    write_addr_task = self._writeAddr(addr, 4) # Write 2^4=16 bytes
     write_data_task = self.writeDataLine(bdata, last=True)
 
     await write_addr_task
@@ -102,6 +99,19 @@ class CoreMiniAxiInterface:
     self.dut.io_axi_slave_write_resp_ready.value = 0
 
   # TODO(derekjchow): Write bulk thing of memory
+  async def write(self, addr, data):
+    # TODO(derekjchow): "reinterpret_cast" into uint8_t
+    # Pad data to multiples of 16 or set write masks
+    padding = 16 - (len(data) % 16)
+    data = np.pad(data, (0, padding))
+    # TODO(derekjchow): Unaligned writes / partial writes
+    n_bytes = len(data)
+    idx = 0
+    while idx < n_bytes:
+       line = data[idx:idx+16]
+       #print(line)
+       await self.writeLine(addr + idx, line)
+       idx += 16
 
   # TODO(derekjchow): Read functions
   async def readAddr(self, addr, size):
@@ -143,9 +153,28 @@ class CoreMiniAxiInterface:
     self.dut.io_axi_slave_read_data_ready.value = 0
     return np.array(list(reversed(data[0]))) # TODO(derekjchow): Check endianness
 
-  async def read(self, addr):
-     await self.readAddr(addr, 4) # Read 16 bytes
-     return await self.readData()
+  async def read_line(self, addr):
+    await self.readAddr(addr, 4) # Read 16 bytes
+    return await self.readData()
+
+  async def read(self, addr, size):
+    assert(size % 16 == 0), "Reads muliple of 16 only supported for now"
+    assert(addr % 16 == 0), "Reads aligned to 16 only supported for now"
+    # TODO(derekjchow): Handle unaligned and burst
+    idx = 0
+    data = None
+    while idx < size:
+      line = await self.read_line(addr + idx)
+      if data is None:
+        data = line
+      else:
+        data = np.concatenate([data, line])
+      idx += 16
+    return data
+
+  async def wait_for_wfi(self):
+    while self.dut.io_wfi.value != 1:
+      await ClockCycles(self.dut.io_aclk, 1)
 
 @cocotb.test()
 async def core_mini_axi_write_read_memory(dut):
@@ -155,14 +184,52 @@ async def core_mini_axi_write_read_memory(dut):
     cocotb.start_soon(core_mini_axi.clock.start())
     await ClockCycles(dut.io_aclk, 10)
 
-    await core_mini_axi.writeWord(0x0100, 0x42)
+    await core_mini_axi.writeWord(0x100, 0x42)
+    await core_mini_axi.writeWord(0x104, 0x43)
+    rdata = await core_mini_axi.read_line(0x100)
+    print(rdata.view(np.uint32))
 
     wdata = np.arange(16, dtype=np.int8)
     await core_mini_axi.writeLine(0x0, wdata)
-    rdata = await core_mini_axi.read(0x0)
-    
+    rdata = await core_mini_axi.read_line(0x0)
+
     assert (wdata == rdata).all()
 
-    # print("20 cycles")
-    # await ClockCycles(dut.io_aclk, 40)
-    # print("20 cycles done")
+@cocotb.test()
+async def core_mini_axi_run_binary_example_add(dut):
+    """Basic test to start up a binary."""
+    core_mini_axi = CoreMiniAxiInterface(dut)
+    await core_mini_axi.reset()
+    cocotb.start_soon(core_mini_axi.clock.start())
+    await ClockCycles(dut.io_aclk, 10)
+
+    program_binary = np.fromfile(
+        "/home/derekjchow/code/kelvin/tests/cocotb/example_add.bin",
+        dtype=np.uint8)
+    await core_mini_axi.write(0x0, program_binary)
+
+    # Program inputs
+    inputs1 = np.arange(8, dtype=np.int32)
+    inputs2 = np.ones([8], dtype=np.int32)
+    await core_mini_axi.write(0x00010000, inputs1.view(np.uint8))
+    await core_mini_axi.write(0x00010100, inputs2.view(np.uint8))
+
+    # Program starting address
+    kelvin_pc_csr_addr = 0x30004
+    start_pc = 0xdc # _start
+    await core_mini_axi.writeWord(kelvin_pc_csr_addr, start_pc)
+    await ClockCycles(dut.io_aclk, 8)
+
+    # Release clock gate
+    kelvin_reset_csr_addr = 0x30000
+    await core_mini_axi.writeWord(kelvin_reset_csr_addr, 1)
+    await ClockCycles(dut.io_aclk, 8)
+
+    # Release reset
+    await core_mini_axi.writeWord(kelvin_reset_csr_addr, 0)
+    await ClockCycles(dut.io_aclk, 8)
+
+    await core_mini_axi.wait_for_wfi()
+
+    result = (await core_mini_axi.read(0x00010200, 32)).view(np.int32)
+    assert (result == (inputs1 + inputs2)).all()
