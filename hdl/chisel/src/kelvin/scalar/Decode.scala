@@ -36,6 +36,7 @@ class DecodeSerializeIO extends Bundle {
   val jump = Output(Bool())
   val brcond = Output(Bool())
   val vinst = Output(Bool())     // all vector instructions
+  val wfi = Output(Bool())
 
   def defaults() = {
     lsu := false.B
@@ -43,6 +44,7 @@ class DecodeSerializeIO extends Bundle {
     jump := false.B
     brcond := false.B
     vinst := false.B
+    wfi := false.B
   }
 }
 
@@ -480,7 +482,8 @@ class Decode(p: Parameters, pipeline: Int) extends Module {
   // This must not factor branchTaken, which will be done directly in the
   // fetch unit. Note above decodeEn resolves for branch for execute usage.
   io.inst.ready := aluEn && bruEn && lsuEn && mulEn && dvuEn && vinstEn && fenceEn &&
-                   !io.serializeIn.jump && !io.halted && !io.interlock &&
+                   !io.serializeIn.jump && !io.serializeIn.wfi &&
+                   !io.halted && !io.interlock &&
                    (pipeline.U === 0.U || !d.undef)
 
   // Serialize Interface.
@@ -494,6 +497,7 @@ class Decode(p: Parameters, pipeline: Int) extends Module {
   io.serializeOut.brcond := io.serializeIn.brcond |
       d.beq || d.bne || d.blt || d.bge || d.bltu || d.bgeu
   io.serializeOut.vinst := io.serializeIn.vinst
+  io.serializeOut.wfi := io.serializeIn.wfi || d.wfi
 }
 
 object DecodeInstruction {
