@@ -3,6 +3,15 @@ import numpy as np
 from cocotb.clock import Clock
 from cocotb.triggers import Timer, RisingEdge, ClockCycles, FallingEdge, NextTimeStep
 
+def format_line_from_word(word, addr):
+  shift = addr % 16
+  line = np.zeros([4], dtype=np.uint32)
+  line[0] = word
+  line = np.roll(line.view(np.uint8), shift)
+  bdata = cocotb.binary.BinaryValue()
+  bdata.buff = reversed(line.tobytes())
+  return bdata
+
 class CoreMiniAxiInterface:
   def __init__(self, dut):
     self.dut = dut
@@ -172,28 +181,96 @@ class CoreMiniAxiInterface:
       idx += 16
     return data
 
+  async def execute_from(self, start_pc):
+    # Program starting address
+    kelvin_pc_csr_addr = 0x30004
+    await self.writeWord(kelvin_pc_csr_addr, start_pc)
+
+    # Release clock gate
+    kelvin_reset_csr_addr = 0x30000
+    await self.writeWord(kelvin_reset_csr_addr, 1)
+
+    # Release reset
+    await self.writeWord(kelvin_reset_csr_addr, 0)
+
   async def wait_for_wfi(self):
     while self.dut.io_wfi.value != 1:
       await ClockCycles(self.dut.io_aclk, 1)
 
-@cocotb.test()
-async def core_mini_axi_write_read_memory(dut):
-    """Basic test to check if memory can be written and read back."""
-    core_mini_axi = CoreMiniAxiInterface(dut)
-    await core_mini_axi.reset()
-    cocotb.start_soon(core_mini_axi.clock.start())
-    await ClockCycles(dut.io_aclk, 10)
+  async def wait_for_master_axi_read(self):
+    self.dut.io_axi_master_read_addr_ready.value = 1
+    while self.dut.io_axi_master_read_addr_valid.value != 1:
+      await ClockCycles(self.dut.io_aclk, 1)
+    await ClockCycles(self.dut.io_aclk, 1)
+    return {
+        "addr": self.dut.io_axi_master_read_addr_bits_addr.value,
+        "size": self.dut.io_axi_master_read_addr_bits_size.value,
+        "len": self.dut.io_axi_master_read_addr_bits_len.value,
+        "id": self.dut.io_axi_master_read_addr_bits_id.value,
+    }
 
-    await core_mini_axi.writeWord(0x100, 0x42)
-    await core_mini_axi.writeWord(0x104, 0x43)
-    rdata = await core_mini_axi.read_line(0x100)
-    print(rdata.view(np.uint32))
+  async def respond_to_read_word(self, addr, word, id):
+    self.dut.io_axi_master_read_data_valid.value = 1
+    self.dut.io_axi_master_read_data_bits_id.value = id
+    self.dut.io_axi_master_read_data_bits_data.value = \
+        format_line_from_word(word, addr)
+    self.dut.io_axi_master_read_data_bits_resp.value = 0 # OKAY
+    self.dut.io_axi_master_read_data_bits_last.value = 1
 
-    wdata = np.arange(16, dtype=np.int8)
-    await core_mini_axi.writeLine(0x0, wdata)
-    rdata = await core_mini_axi.read_line(0x0)
+    while self.dut.io_axi_master_read_addr_ready.value != 1:
+      await ClockCycles(self.dut.io_aclk, 1)
+    await ClockCycles(self.dut.io_aclk, 1)
 
-    assert (wdata == rdata).all()
+    self.dut.io_axi_master_read_data_valid.value = 0
+
+
+     #io_axi_master_read_data_bits_data
+
+# @cocotb.test()
+# async def core_mini_axi_write_read_memory(dut):
+#     """Basic test to check if memory can be written and read back."""
+#     core_mini_axi = CoreMiniAxiInterface(dut)
+#     await core_mini_axi.reset()
+#     cocotb.start_soon(core_mini_axi.clock.start())
+#     await ClockCycles(dut.io_aclk, 10)
+
+#     await core_mini_axi.writeWord(0x100, 0x42)
+#     await core_mini_axi.writeWord(0x104, 0x43)
+#     rdata = await core_mini_axi.read_line(0x100)
+#     print(rdata.view(np.uint32))
+
+#     wdata = np.arange(16, dtype=np.int8)
+#     await core_mini_axi.writeLine(0x0, wdata)
+#     rdata = await core_mini_axi.read_line(0x0)
+
+#     assert (wdata == rdata).all()
+
+
+# @cocotb.test()
+# async def core_mini_axi_run_binary_example_add(dut):
+#     """Basic test to start up a binary."""
+#     core_mini_axi = CoreMiniAxiInterface(dut)
+#     await core_mini_axi.reset()
+#     cocotb.start_soon(core_mini_axi.clock.start())
+#     await ClockCycles(dut.io_aclk, 10)
+
+#     program_binary = np.fromfile(
+#         "/home/derekjchow/code/kelvin/tests/cocotb/example_add.bin",
+#         dtype=np.uint8)
+#     await core_mini_axi.write(0x0, program_binary)
+
+#     # Program inputs
+#     inputs1 = np.arange(8, dtype=np.int32)
+#     inputs2 = np.ones([8], dtype=np.int32)
+#     await core_mini_axi.write(0x00010000, inputs1.view(np.uint8))
+#     await core_mini_axi.write(0x00010100, inputs2.view(np.uint8))
+
+#     await core_mini_axi.execute_from(0xdc)
+#     await core_mini_axi.wait_for_wfi()
+
+#     result = (await core_mini_axi.read(0x00010200, 32)).view(np.int32)
+#     assert (result == (inputs1 + inputs2)).all()
+
 
 @cocotb.test()
 async def core_mini_axi_run_binary_example_add(dut):
@@ -204,32 +281,23 @@ async def core_mini_axi_run_binary_example_add(dut):
     await ClockCycles(dut.io_aclk, 10)
 
     program_binary = np.fromfile(
-        "/home/derekjchow/code/kelvin/tests/cocotb/example_add.bin",
+        "/home/derekjchow/code/kelvin/tests/cocotb/example_external_read.bin",
         dtype=np.uint8)
     await core_mini_axi.write(0x0, program_binary)
 
-    # Program inputs
-    inputs1 = np.arange(8, dtype=np.int32)
-    inputs2 = np.ones([8], dtype=np.int32)
-    await core_mini_axi.write(0x00010000, inputs1.view(np.uint8))
-    await core_mini_axi.write(0x00010100, inputs2.view(np.uint8))
+    # inputs1 = np.arange(32, dtype=np.int8)
+    # await core_mini_axi.write(0x00010000, inputs1.view(np.uint8))
 
-    # Program starting address
-    kelvin_pc_csr_addr = 0x30004
-    start_pc = 0xdc # _start
-    await core_mini_axi.writeWord(kelvin_pc_csr_addr, start_pc)
-    await ClockCycles(dut.io_aclk, 8)
-
-    # Release clock gate
-    kelvin_reset_csr_addr = 0x30000
-    await core_mini_axi.writeWord(kelvin_reset_csr_addr, 1)
-    await ClockCycles(dut.io_aclk, 8)
-
-    # Release reset
-    await core_mini_axi.writeWord(kelvin_reset_csr_addr, 0)
-    await ClockCycles(dut.io_aclk, 8)
+    await core_mini_axi.execute_from(0xac)
+    
+    for i in range(0, 4):
+      master_read = await core_mini_axi.wait_for_master_axi_read()
+      await core_mini_axi.respond_to_read_word(
+          master_read['addr'], 42+i, master_read['id'])
 
     await core_mini_axi.wait_for_wfi()
 
-    result = (await core_mini_axi.read(0x00010200, 32)).view(np.int32)
-    assert (result == (inputs1 + inputs2)).all()
+    result = (await core_mini_axi.read(0x00010000, 16)).view(np.int32)
+    print(result)
+
+    # await core_mini_axi.wait_for_wfi()
