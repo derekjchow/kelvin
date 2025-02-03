@@ -14,26 +14,21 @@
  * limitations under the License.
  */
 
-// A Simple kelvin program.
+// A Simple kelvin program to check writes from Kelvin over AXI.
 
 #include <stdint.h>
 
 int main(int argc, char *argv[]) {
-  // Wait for signal
-  volatile uint32_t* input1_data = (uint32_t*)0x00010000;
-  volatile uint32_t* input2_data = (uint32_t*)0x00010100;
-  volatile uint32_t* output_data = (uint32_t*)0x00010200;
+  // CSR lives in [0x30000-0x31FFF]
+  volatile uint32_t* output_data = (uint32_t*)0x00040000;
 
-  for (int i = 0; i < 8; i++) {
-    output_data[i] = input1_data[i] + input2_data[i];
+  {
+    for (int i = 0; i < 4; i++) {
+      output_data[i] = i+7000;
+    }
   }
 
-  asm volatile("nop");
-  asm volatile("nop");
-  asm volatile("nop");
   asm volatile("wfi");
-  asm volatile("nop");
-  asm volatile("nop");
-  asm volatile("nop");
+
   return 0;
 }
