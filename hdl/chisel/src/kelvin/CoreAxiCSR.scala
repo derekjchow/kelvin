@@ -63,7 +63,7 @@ class CoreCSR(p: Parameters) extends Module {
 
   // TODO(atv): What bits are allowed to change in these? Add a mask or something.
   resetReg := Mux(io.fabric.writeDataAddr.valid && io.fabric.writeDataAddr.bits === 0x0.U && !io.internal, io.fabric.writeDataBits(31,0), resetReg)
-  pcStartReg := Mux(io.fabric.writeDataAddr.valid && io.fabric.writeDataAddr.bits === 0x4.U && !io.internal, io.fabric.writeDataBits(31,0), pcStartReg)
+  pcStartReg := Mux(io.fabric.writeDataAddr.valid && io.fabric.writeDataAddr.bits === 0x4.U && !io.internal, io.fabric.writeDataBits(63,32), pcStartReg)
   io.fabric.writeResp := io.fabric.writeDataAddr.valid && MuxLookup(io.fabric.writeDataAddr.bits, false.B)(Seq(
     0x0.U -> true.B,
     0x4.U -> true.B,
