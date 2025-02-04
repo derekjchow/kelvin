@@ -39,7 +39,7 @@ class Xbar : sc_core::sc_module {
     if (((addr & kMemoryAddr) == kMemoryAddr) &&
         (addr + len < kMemoryAddr + kMemorySizeBytes)) {
       memory_b_transport_(trans, delay);
-    } else if ((addr & kUartAddr) == kUartAddr) {
+    } else if (addr == kUartAddr) {
       uart_b_transport_(trans, delay);
     } else {
       trans.set_response_status(tlm::TLM_ADDRESS_ERROR_RESPONSE);

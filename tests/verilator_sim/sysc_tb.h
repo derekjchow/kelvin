@@ -28,8 +28,6 @@ using namespace sc_core;      // NOLINT(build/namespaces)
 
 using sc_dt::sc_bv;
 
-const char *vcd_path_ = "/tmp";
-
 #define BIND(a, b) a.b(b)
 #define BIND2(a, b, c) \
   BIND(a, c);          \
@@ -171,7 +169,7 @@ struct Sysc_tb : public sc_module {
     if (!strlen(name)) {
       name = design->name();
     }
-    std::string path = std::string(vcd_path_) + "/" + name;
+    std::string path = std::string("/tmp/") + name;
 
     reset = 1;
     resetn = 0;
