@@ -444,6 +444,23 @@ async def core_mini_axi_basic_write_read_memory(dut):
 
 
 @cocotb.test()
+async def core_mini_axi_run_wfi_in_all_slots(dut):
+    """Tests the WFI instruction in each of the 4 issue slots."""
+    core_mini_axi = CoreMiniAxiInterface(dut)
+    cocotb.start_soon(core_mini_axi.clock.start())
+
+    for slot in range(0,4):
+      with open(f"../tests/cocotb/wfi_slot_{slot}.elf", "rb") as f:
+        await core_mini_axi.reset()
+        await ClockCycles(dut.io_aclk, 10)
+        entry_point = await core_mini_axi.load_elf(f)
+        await core_mini_axi.execute_from(entry_point)
+
+        await core_mini_axi.wait_for_wfi()
+        await core_mini_axi.raise_irq()
+        await core_mini_axi.wait_for_halted()
+
+@cocotb.test()
 async def core_mini_axi_slow_bready(dut):
   """Test that BVALID stays high until BREADY is presented"""
   core_mini_axi = CoreMiniAxiInterface(dut)
@@ -516,6 +533,16 @@ async def core_mini_axi_master_write_alignment(dut):
 
     cocotb.start_soon(master_read_worker(core_mini_axi))
     cocotb.start_soon(master_write_worker(core_mini_axi))
+    workers = []
+    workers.append(cocotb.start_soon(master_read_worker(core_mini_axi)))
+    workers.append(cocotb.start_soon(master_write_worker(core_mini_axi)))
 
     await core_mini_axi.wait_for_halted(timeout_cycles=10000)
     assert core_mini_axi.dut.io_fault.value == 0
+
+    for w in workers:
+      w.cancel()
+      await w.join()
+    dut.io_axi_master_read_addr_ready.value = 0
+    dut.io_axi_master_write_addr_ready.value = 0
+    await ClockCycles(dut.io_aclk, 1)

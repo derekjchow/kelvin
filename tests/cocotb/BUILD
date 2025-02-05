@@ -17,7 +17,5 @@ verilator_cocotb_test(
         requirement("pyelftools"),
         requirement("tqdm"),
     ],
-    data = [
-        "align_test.elf",
-    ],
+    data = glob(["*.elf"]),
 )
