@@ -34,7 +34,7 @@
 #include "hdl/chisel/src/kelvin/VCoreMiniAxi_parameters.h"
 
 /* clang-format off */
-#include <systemc>
+#include <systemc.h>
 #include <tlm>
 #include <tlm_utils/simple_initiator_socket.h>
 #include <tlm_utils/simple_target_socket.h>

@@ -44,5 +44,7 @@ chisel_cc_library(
     ],
     vopts = [
         "-DUSE_GENERIC",
+        "-Iexternal/lowrisc_opentitan/hw/ip/prim/rtl",
+        "-Wno-UNOPTFLAT",
     ],
 )

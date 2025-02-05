@@ -34,11 +34,28 @@ verilog_library(
 )
 
 verilog_library(
+    name = "prim_basics",
+    hdrs = [
+        # Verilator
+        "@lowrisc_opentitan//hw/ip/prim:rtl/prim_assert_dummy_macros.svh",
+        "@lowrisc_opentitan//hw/ip/prim:rtl/prim_assert_sec_cm.svh",
+    ],
+    srcs = [
+        "@lowrisc_opentitan//hw/ip/prim:rtl/prim_flop_macros.sv",
+        "@lowrisc_opentitan//hw/ip/prim:rtl/prim_assert.sv",
+    ],
+    visibility = ["//visibility:public"],
+)
+
+verilog_library(
     name = "prim_generic",
     srcs = [
         "@lowrisc_opentitan//hw/ip/prim_generic:rtl/prim_generic_buf.sv",
         "@lowrisc_opentitan//hw/ip/prim_generic:rtl/prim_generic_clock_gating.sv",
         "@lowrisc_opentitan//hw/ip/prim_generic:rtl/prim_generic_flop.sv",
+    ],
+    deps = [
+        ":prim_basics",
     ],
     visibility = ["//visibility:public"],
 )
@@ -62,12 +79,6 @@ verilog_library(
         "@lowrisc_opentitan//hw/ip/prim:rtl/prim_subreg_pkg.sv",
         "@lowrisc_opentitan//hw/ip/prim:rtl/prim_util_pkg.sv",
         "@lowrisc_opentitan//hw/ip/prim:rtl/prim_alert_sender.sv",
-        "@lowrisc_opentitan//hw/ip/prim:rtl/prim_assert.sv",
-        # Verilator
-        "@lowrisc_opentitan//hw/ip/prim:rtl/prim_assert_dummy_macros.svh",
-        # Synth
-        # "@lowrisc_opentitan//hw/ip/prim:rtl/prim_assert_standard_macros.svh",
-        "@lowrisc_opentitan//hw/ip/prim:rtl/prim_assert_sec_cm.svh",
         "@lowrisc_opentitan//hw:vendor/lowrisc_ibex/dv/uvm/core_ibex/common/prim/prim_buf.sv",
         "@lowrisc_opentitan//hw:vendor/lowrisc_ibex/dv/uvm/core_ibex/common/prim/prim_clock_gating.sv",
         "@lowrisc_opentitan//hw/ip/prim:rtl/prim_count.sv",
@@ -76,7 +87,6 @@ verilog_library(
         "@lowrisc_opentitan//hw/ip/prim:rtl/prim_fifo_sync_cnt.sv",
         "@lowrisc_opentitan//hw:vendor/lowrisc_ibex/dv/uvm/core_ibex/common/prim/prim_flop.sv",
         "@lowrisc_opentitan//hw/ip/prim:rtl/prim_flop_2sync.sv",
-        "@lowrisc_opentitan//hw/ip/prim:rtl/prim_flop_macros.sv",
         "@lowrisc_opentitan//hw/ip/prim:rtl/prim_intr_hw.sv",
         "@lowrisc_opentitan//hw/ip/prim:rtl/prim_onehot_check.sv",
         "@lowrisc_opentitan//hw/ip/prim:rtl/prim_reg_we_check.sv",

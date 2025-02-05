@@ -29,17 +29,13 @@ def kelvin_repos():
 
     http_archive(
         name = "rules_hdl",
-        sha256 = "223bce01f8375b29073a1475591c0c7e0d86c0d0b2ed73cbdb85f9e9dfa0dda3",
-        strip_prefix = "bazel_rules_hdl-b58d34add60108ae20d273ee480193b25e96d000",
+        sha256 = "1b560fe7d4100486784d6f2329e82a63dd37301e185ba77d0fd69b3ecc299649",
+        strip_prefix = "bazel_rules_hdl-7a1ba0e8d229200b4628e8a676917fc6b8e165d1",
         urls = [
-            "https://github.com/hdl/bazel_rules_hdl/archive/b58d34add60108ae20d273ee480193b25e96d000.tar.gz",
+            "https://github.com/hdl/bazel_rules_hdl/archive/7a1ba0e8d229200b4628e8a676917fc6b8e165d1.tar.gz",
         ],
         patches = [
-            "@kelvin_hw//external:0001-Update-version-of-Googletest-for-bazel-compatitibili.patch",
-            "@kelvin_hw//external:0002-SystemC-support-for-verilator.patch",
-            "@kelvin_hw//external:0003-Add-systemc-lib-support.patch",
-            "@kelvin_hw//external:0004-Build-verilator-v4.226.patch",
-            "@kelvin_hw//external:0006-Update-flex-release-URL.patch",
+            "@kelvin_hw//external:0001-Use-systemc-in-verilator-and-support-verilator-in-co.patch",
         ],
         patch_args = ["-p1"],
     )
