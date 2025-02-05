@@ -214,6 +214,17 @@ class CoreMiniAxiInterface:
     while self.dut.io_wfi.value != 1:
       await ClockCycles(self.dut.io_aclk, 1)
 
+  async def raise_irq(self, cycles=1):
+    self.dut.io_irq.value = 1
+    await ClockCycles(self.dut.io_aclk, cycles)
+    self.dut.io_irq.value = 0
+
+  async def wait_for_halted(self, timeout_cycles=1000):
+    while self.dut.io_halted.value != 1 and timeout_cycles > 0:
+      await ClockCycles(self.dut.io_aclk, 1)
+      timeout_cycles = timeout_cycles - 1
+    assert timeout_cycles > 0
+
   async def wait_for_master_axi_read(self):
     self.dut.io_axi_master_read_addr_ready.value = 1
     while self.dut.io_axi_master_read_addr_valid.value != 1:
