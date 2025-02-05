@@ -83,7 +83,6 @@ module rvv_backend_pmtrdt_unit
   logic [`VLENB-1:0][8:0]   cmp_src1, cmp_src2; // source value for reduction/compare
   logic [`VLENB-1:0]        cmp_carry_in;
   logic [`VLENB-1:0][8:0]   cmp_sum;
-  logic [`VLENB-1:0]        less_than_1stage, great_than_1stage;
   logic [`VLENB-1:0]        less_than, great_than, equal, not_equal;
   logic [`VLENB-1:0]        cmp_res;
   logic [`VSTART_WIDTH-1:0] cmp_res_offset;
