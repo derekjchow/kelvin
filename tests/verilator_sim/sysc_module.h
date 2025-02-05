@@ -15,7 +15,7 @@
 #ifndef TESTS_VERILATOR_SIM_SYSC_MODULE_H_
 #define TESTS_VERILATOR_SIM_SYSC_MODULE_H_
 
-#include <systemc>
+#include <systemc.h>
 using sc_dt::sc_bv;
 
 struct Sysc_module : sc_module {

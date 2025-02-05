@@ -15,7 +15,7 @@
 """chisel build rules"""
 
 load("@io_bazel_rules_scala//scala:scala.bzl", "scala_binary", "scala_library", "scala_test")
-load("@kelvin_hw//rules:verilator.bzl", "verilator_cc_library")
+load("@rules_hdl//verilator:defs.bzl", "verilator_cc_library")
 load("@rules_hdl//verilog:providers.bzl", "verilog_library")
 
 SCALA_COPTS = [
@@ -145,7 +145,7 @@ def chisel_cc_library(
         module_top = module_name,
         visibility = ["//visibility:public"],
         # TODO(derekjchow): Re-enable the default -Wall?
-        vopts = vopts,
+        vopts = vopts + ["--pins-bv", "2"],
         systemc = True,
     )
 
@@ -158,6 +158,6 @@ def chisel_cc_library(
         module_top = module_name,
         visibility = ["//visibility:public"],
         # TODO(derekjchow): Re-enable the default -Wall?
-        vopts = vopts,
+        vopts = vopts + ["--pins-bv", "2"],
         systemc = False,
     )
