@@ -85,6 +85,7 @@ module rvv_backend_alu_unit_mask
 
   // for-loop
   genvar                          j;
+  genvar                          k;
 
 //
 // prepare source data to calculate    
@@ -369,76 +370,42 @@ module rvv_backend_alu_unit_mask
 
   // viota 
   generate
-    for(j=0; j<`VLEN/`HWORD_WIDTH;j++) begin: GET_VIOTA_PER16
-      assign {pkg_viota.result_data_viota_per16[16*j+15],
-              pkg_viota.result_data_viota_per16[16*j+14], 
-              pkg_viota.result_data_viota_per16[16*j+13], 
-              pkg_viota.result_data_viota_per16[16*j+12], 
-              pkg_viota.result_data_viota_per16[16*j+11], 
-              pkg_viota.result_data_viota_per16[16*j+10], 
-              pkg_viota.result_data_viota_per16[16*j+9], 
-              pkg_viota.result_data_viota_per16[16*j+8], 
-              pkg_viota.result_data_viota_per16[16*j+7], 
-              pkg_viota.result_data_viota_per16[16*j+6], 
-              pkg_viota.result_data_viota_per16[16*j+5], 
-              pkg_viota.result_data_viota_per16[16*j+4], 
-              pkg_viota.result_data_viota_per16[16*j+3], 
-              pkg_viota.result_data_viota_per16[16*j+2], 
-              pkg_viota.result_data_viota_per16[16*j+1], 
-              pkg_viota.result_data_viota_per16[16*j]} = f_viota16(src2_data_viota[`HWORD_WIDTH*j +: `HWORD_WIDTH]);
+    for(j=0; j<`VLEN/64;j++) begin: GET_VIOTA_PER64
+      rvv_backend_alu_unit_mask_viota64
+      u_viota64
+      (
+        .source         (src2_data_viota[64*j +: 64]),
+        .result_viota64 (pkg_viota.result_data_viota_per64[j])
+      );
     end
+  endgenerate
     
-    // pipeline for viota 
-    cdffr 
-    #(
-      .WIDTH     ($bits(PKG_VIOTA_t))
-    )
-    uop_index_cdffr
-    ( 
-      .clk       (clk), 
-      .rst_n     (rst_n), 
-      .c         (pkg_viota_d1.result_valid_viota&result_ready), 
-      .e         (pkg_viota.result_valid_viota), 
-      .d         (pkg_viota),
-      .q         (pkg_viota_d1)
-    ); 
+  // pipeline for viota 
+  cdffr 
+  #(
+    .WIDTH     ($bits(PKG_VIOTA_t))
+  )
+  pkg_viota_cdffr
+  ( 
+    .clk       (clk), 
+    .rst_n     (rst_n), 
+    .c         (pkg_viota_d1.result_valid_viota&result_ready), 
+    .e         (pkg_viota.result_valid_viota), 
+    .d         (pkg_viota),
+    .q         (pkg_viota_d1)
+  ); 
 
-    for(j=0; j<`VLEN/`HWORD_WIDTH;j++) begin: GET_VIOTA
+  generate
+    for(j=0; j<`VLEN/64;j++) begin: GET_VIOTA
       if (j==0) begin
-        assign result_data_viota[0] = pkg_viota_d1.result_data_viota_per16[0];
-        assign result_data_viota[1] = pkg_viota_d1.result_data_viota_per16[1];
-        assign result_data_viota[2] = pkg_viota_d1.result_data_viota_per16[2];
-        assign result_data_viota[3] = pkg_viota_d1.result_data_viota_per16[3];
-        assign result_data_viota[4] = pkg_viota_d1.result_data_viota_per16[4];
-        assign result_data_viota[5] = pkg_viota_d1.result_data_viota_per16[5];
-        assign result_data_viota[6] = pkg_viota_d1.result_data_viota_per16[6];
-        assign result_data_viota[7] = pkg_viota_d1.result_data_viota_per16[7];
-        assign result_data_viota[8] = pkg_viota_d1.result_data_viota_per16[8];
-        assign result_data_viota[9] = pkg_viota_d1.result_data_viota_per16[9];
-        assign result_data_viota[10] = pkg_viota_d1.result_data_viota_per16[10];
-        assign result_data_viota[11] = pkg_viota_d1.result_data_viota_per16[11];
-        assign result_data_viota[12] = pkg_viota_d1.result_data_viota_per16[12];
-        assign result_data_viota[13] = pkg_viota_d1.result_data_viota_per16[13];
-        assign result_data_viota[14] = pkg_viota_d1.result_data_viota_per16[14];
-        assign result_data_viota[15] = pkg_viota_d1.result_data_viota_per16[15];
+        for(k=0;k<64;k++) begin: GET_VIOTA64_LOW
+          assign result_data_viota[k] = pkg_viota_d1.result_data_viota_per64[0][k];
+        end
       end
       else begin
-        assign result_data_viota[16*j  ] = pkg_viota_d1.result_data_viota_per16[16*j  ] + result_data_viota[16*j-1];
-        assign result_data_viota[16*j+1] = pkg_viota_d1.result_data_viota_per16[16*j+1] + result_data_viota[16*j-1];
-        assign result_data_viota[16*j+2] = pkg_viota_d1.result_data_viota_per16[16*j+2] + result_data_viota[16*j-1];
-        assign result_data_viota[16*j+3] = pkg_viota_d1.result_data_viota_per16[16*j+3] + result_data_viota[16*j-1];
-        assign result_data_viota[16*j+4] = pkg_viota_d1.result_data_viota_per16[16*j+4] + result_data_viota[16*j-1];
-        assign result_data_viota[16*j+5] = pkg_viota_d1.result_data_viota_per16[16*j+5] + result_data_viota[16*j-1];
-        assign result_data_viota[16*j+6] = pkg_viota_d1.result_data_viota_per16[16*j+6] + result_data_viota[16*j-1];
-        assign result_data_viota[16*j+7] = pkg_viota_d1.result_data_viota_per16[16*j+7] + result_data_viota[16*j-1];
-        assign result_data_viota[16*j+8] = pkg_viota_d1.result_data_viota_per16[16*j+8] + result_data_viota[16*j-1];
-        assign result_data_viota[16*j+9] = pkg_viota_d1.result_data_viota_per16[16*j+9] + result_data_viota[16*j-1];
-        assign result_data_viota[16*j+10] = pkg_viota_d1.result_data_viota_per16[16*j+10] + result_data_viota[16*j-1];
-        assign result_data_viota[16*j+11] = pkg_viota_d1.result_data_viota_per16[16*j+11] + result_data_viota[16*j-1];
-        assign result_data_viota[16*j+12] = pkg_viota_d1.result_data_viota_per16[16*j+12] + result_data_viota[16*j-1];
-        assign result_data_viota[16*j+13] = pkg_viota_d1.result_data_viota_per16[16*j+13] + result_data_viota[16*j-1];
-        assign result_data_viota[16*j+14] = pkg_viota_d1.result_data_viota_per16[16*j+14] + result_data_viota[16*j-1];
-        assign result_data_viota[16*j+15] = pkg_viota_d1.result_data_viota_per16[16*j+15] + result_data_viota[16*j-1];
+        for(k=0;k<64;k++) begin: GET_VIOTA64_HIGH
+          assign result_data_viota[64*j+k] = pkg_viota_d1.result_data_viota_per64[j][k] + result_data_viota[64*j-1];
+        end
       end
     end
   endgenerate
@@ -749,184 +716,5 @@ module rvv_backend_alu_unit_mask
     f_vmsif = (src2-1'b1) | src2;
   endfunction
 
-  // viota
-  function [3:0][2:0] f_viota4;
-    input logic [3:0] src;
-    
-    case(src[0])
-      1'b0: begin
-        f_viota4[0] = 3'd0;
-      end
-      1'b1: begin
-        f_viota4[0] = 3'd1;
-      end
-      default: begin
-        f_viota4[0] = 3'd0;
-      end
-    endcase
-
-    case(src[1:0])
-      2'b00: begin
-        f_viota4[1] = 3'd0;
-      end
-      2'b01,
-      2'b10: begin
-        f_viota4[1] = 3'd1;
-      end
-      2'b11: begin
-        f_viota4[1] = 3'd2;
-      end
-      default: begin
-        f_viota4[1] = 3'd0;
-      end
-    endcase
-
-    case(src[2:0])
-      3'b000: begin
-        f_viota4[2] = 3'd0;
-      end
-      3'b001,
-      3'b010,
-      3'b100: begin
-        f_viota4[2] = 3'd1;
-      end
-      3'b011,
-      3'b101,
-      3'b110: begin
-        f_viota4[2] = 3'd2;
-      end
-      3'b111: begin
-        f_viota4[2] = 3'd3;
-      end
-      default: begin
-        f_viota4[2] = 3'd0;
-      end
-    endcase
-
-    case(src)
-      4'b0000: begin
-        f_viota4[3] = 3'd0;
-      end
-      4'b0001,
-      4'b0010,
-      4'b0100,
-      4'b1000: begin
-        f_viota4[3] = 3'd1;
-      end
-      4'b0011,
-      4'b0101,
-      4'b1001,
-      4'b0110,
-      4'b1010,
-      4'b1100: begin
-        f_viota4[3] = 3'd2;
-      end
-      4'b0111,
-      4'b1011,
-      4'b1101,
-      4'b1110: begin
-        f_viota4[3] = 3'd3;
-      end
-      4'b1111: begin
-        f_viota4[3] = 3'd4;
-      end
-      default: begin
-        f_viota4[3] = 3'd0;
-      end
-    endcase
-
-  endfunction
-
-  function [7:0][3:0] f_viota8;
-    input logic [7:0] src;
-
-    logic [3:0][2:0] viota4_lo;
-    logic [3:0][2:0] viota4_hi;
-    
-    viota4_lo = f_viota4(src[3:0]);
-    viota4_hi = f_viota4(src[7:4]);
-
-    f_viota8[0] = viota4_lo[0];
-    f_viota8[1] = viota4_lo[1];
-    f_viota8[2] = viota4_lo[2];
-    f_viota8[3] = viota4_lo[3];
-    f_viota8[4] = viota4_hi[0]+viota4_lo[3];
-    f_viota8[5] = viota4_hi[1]+viota4_lo[3];
-    f_viota8[6] = viota4_hi[2]+viota4_lo[3];
-    f_viota8[7] = viota4_hi[3]+viota4_lo[3];
-
-  endfunction
-
-  function [15:0][4:0] f_viota16;
-    input logic [15:0] src;
-
-    logic [7:0][3:0] viota8_lo;
-    logic [7:0][3:0] viota8_hi;
-    
-    viota8_lo = f_viota8(src[7:0]);
-    viota8_hi = f_viota8(src[15:8]);
-
-    f_viota16[0] = viota8_lo[0];
-    f_viota16[1] = viota8_lo[1];
-    f_viota16[2] = viota8_lo[2];
-    f_viota16[3] = viota8_lo[3];
-    f_viota16[4] = viota8_lo[4];
-    f_viota16[5] = viota8_lo[5];
-    f_viota16[6] = viota8_lo[6];
-    f_viota16[7] = viota8_lo[7];
-    f_viota16[8] = viota8_hi[0]+viota8_lo[7];
-    f_viota16[9] = viota8_hi[1]+viota8_lo[7];
-    f_viota16[10] = viota8_hi[2]+viota8_lo[7];
-    f_viota16[11] = viota8_hi[3]+viota8_lo[7];
-    f_viota16[12] = viota8_hi[4]+viota8_lo[7];
-    f_viota16[13] = viota8_hi[5]+viota8_lo[7];
-    f_viota16[14] = viota8_hi[6]+viota8_lo[7];
-    f_viota16[15] = viota8_hi[7]+viota8_lo[7];
-
-  endfunction
-
-  //function [31:0][5:0] f_viota32;
-  //  input logic [31:0] src;
-
-  //  logic [15:0][4:0] viota16_lo;
-  //  logic [15:0][4:0] viota16_hi;
-  //  
-  //  viota16_lo = f_viota16(src[15:0]);
-  //  viota16_hi = f_viota16(src[31:16]);
-
-  //  f_viota32[0] = viota16_lo[0];
-  //  f_viota32[1] = viota16_lo[1];
-  //  f_viota32[2] = viota16_lo[2];
-  //  f_viota32[3] = viota16_lo[3];
-  //  f_viota32[4] = viota16_lo[4];
-  //  f_viota32[5] = viota16_lo[5];
-  //  f_viota32[6] = viota16_lo[6];
-  //  f_viota32[7] = viota16_lo[7];
-  //  f_viota32[8] = viota16_lo[8];
-  //  f_viota32[9] = viota16_lo[9];
-  //  f_viota32[10] = viota16_lo[10];
-  //  f_viota32[11] = viota16_lo[11];
-  //  f_viota32[12] = viota16_lo[12];
-  //  f_viota32[13] = viota16_lo[13];
-  //  f_viota32[14] = viota16_lo[14];
-  //  f_viota32[15] = viota16_lo[15];
-  //  f_viota32[16] = viota16_hi[0]+viota16_lo[15];
-  //  f_viota32[17] = viota16_hi[1]+viota16_lo[15];
-  //  f_viota32[18] = viota16_hi[2]+viota16_lo[15];
-  //  f_viota32[19] = viota16_hi[3]+viota16_lo[15];
-  //  f_viota32[20] = viota16_hi[4]+viota16_lo[15];
-  //  f_viota32[21] = viota16_hi[5]+viota16_lo[15];
-  //  f_viota32[22] = viota16_hi[6]+viota16_lo[15];
-  //  f_viota32[23] = viota16_hi[7]+viota16_lo[15];
-  //  f_viota32[24] = viota16_hi[8]+viota16_lo[15];
-  //  f_viota32[25] = viota16_hi[9]+viota16_lo[15];
-  //  f_viota32[26] = viota16_hi[10]+viota16_lo[15];
-  //  f_viota32[27] = viota16_hi[11]+viota16_lo[15];
-  //  f_viota32[28] = viota16_hi[12]+viota16_lo[15];
-  //  f_viota32[29] = viota16_hi[13]+viota16_lo[15];
-  //  f_viota32[30] = viota16_hi[14]+viota16_lo[15];
-  //  f_viota32[31] = viota16_hi[15]+viota16_lo[15];
-
-  //endfunction
 
 endmodule

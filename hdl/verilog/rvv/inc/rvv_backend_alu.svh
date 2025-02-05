@@ -18,8 +18,8 @@ typedef enum logic [0:0]{
 } GET_MIN_MAX_e;  
 
 typedef struct packed {
-  logic                                       result_valid_viota;
-  logic   [`VLEN-1:0][$clog2(`HWORD_WIDTH):0] result_data_viota_per16;
+  logic                                      result_valid_viota;
+  logic   [`VLEN/64-1:0][63:0][$clog2(64):0] result_data_viota_per64;
 }PKG_VIOTA_t;
 
 `endif // ALU_DEFINE_SVH
