@@ -489,6 +489,7 @@ typedef struct packed {
   logic                               vs1_data_valid; 
   logic   [`VLEN-1:0]                 vs2_data;	        
   EEW_e                               vs2_eew;
+  BYTE_TYPE_t                         vs2_type;
   logic                               vs2_data_valid; 
   logic   [`VLEN-1:0]                 vs3_data;	//vd, source for producing-mask instruction
   logic                               vs3_data_valid; 

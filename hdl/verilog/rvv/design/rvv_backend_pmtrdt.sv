@@ -60,10 +60,6 @@ module rvv_backend_pmtrdt
 
   genvar i;
 // ---code start------------------------------------------------------
-// compress instruction is a specified instruction in PMT.
-// the vl of vd in compress can not be acknowledged untill decode vs1 value.
-//TODO
-
   generate
     for (i=0; i<`NUM_PMTRDT; i++) begin
       assign pmtrdt_uop[i] = pmtrdt_uop_rs2ex[i];
@@ -87,8 +83,9 @@ module rvv_backend_pmtrdt
   generate
     for (i=0; i<`NUM_PMTRDT; i++) begin : gen_pmtrdt_unit
         rvv_backend_pmtrdt_unit #(
-          .RDT_CMP      (1'b1),
-          .COMPRESS     (1'b1)
+          .GEN_RDT      (1'b1),
+          .GEN_CMP      (1'b1),
+          .GEN_PMT      (1'b1)
         ) u_pmtrdt_unit0 (
           .clk                (clk),
           .rst_n              (rst_n),
