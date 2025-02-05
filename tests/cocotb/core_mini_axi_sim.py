@@ -2,6 +2,7 @@ import cocotb
 import numpy as np
 from cocotb.clock import Clock
 from cocotb.triggers import Timer, ClockCycles
+from elftools.elf.elffile import ELFFile
 
 def format_line_from_word(word, addr):
   shift = addr % 16
@@ -178,6 +179,24 @@ class CoreMiniAxiInterface:
         data = np.concatenate([data, line])
       idx += 16
     return data
+
+  async def load_elf(self, f):
+    """Loads an ELF file into DUT memory, and returns the entry point address."""
+    elf_file = ELFFile(f)
+    entry_point = elf_file.header["e_entry"]
+    for segment in elf_file.iter_segments(type="PT_LOAD"):
+      header = segment.header
+      data = np.frombuffer(segment.data(), dtype=np.uint8)
+      await self.write(header["p_paddr"], data)
+    return entry_point
+
+  def lookup_symbol(self, f, symbol_name):
+    elf_file = ELFFile(f)
+    symtab_section = next(elf_file.iter_sections(type='SHT_SYMTAB'))
+    i1 = symtab_section.get_symbol_by_name(symbol_name)
+    if i1:
+      return i1[0].entry['st_value']
+    return None
 
   async def execute_from(self, start_pc):
     # Program starting address
