@@ -80,6 +80,7 @@ ${WORKDIR}/bazel fetch \
     @io_bazel_rules_scala_scalatest_mustmatchers//:all \
     @io_bazel_rules_scala_scalatest_shouldmatchers//:all \
     @ninja_1.11.0_linux//:all \
+    @python39//:all \
     @remote_java_tools_linux//:all \
     @remotejdk11_linux//:jdk \
     @rules_hdl//:all \
