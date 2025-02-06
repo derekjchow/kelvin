@@ -8,9 +8,9 @@ module rvv_backend_alu_unit_mask
   rst_n,
   alu_uop_valid,
   alu_uop,
+  result_ready,
   result_valid,
-  result,
-  result_ready
+  result
 );
 //
 // interface signals
@@ -22,11 +22,11 @@ module rvv_backend_alu_unit_mask
   // ALU RS handshake signals
   input   logic           alu_uop_valid;
   input   ALU_RS_t        alu_uop;
+  input   logic           result_ready;
 
   // ALU send result signals to ROB
   output  logic           result_valid;
   output  PU2ROB_t        result;
-  input   logic           result_ready;
 
 //
 // internal signals
@@ -75,17 +75,16 @@ module rvv_backend_alu_unit_mask
   logic   [`XLEN-1:0]                 result_data_vcpop;
   PKG_VIOTA_t                         pkg_viota;
   PKG_VIOTA_t                         pkg_viota_d1;
-  logic   [`VLEN-1:0][$clog2(`VLEN)-1:0]               result_data_viota;
-  logic   [`VLENB-1:0][$clog2(`VLEN)-1:0]              result_data_viota8;
-  logic   [`VLEN/`HWORD_WIDTH-1:0][$clog2(`VLEN)-1:0]  result_data_viota16;
-  logic   [`VLEN/`WORD_WIDTH-1:0][$clog2(`VLEN)-1:0]   result_data_viota32;
+  logic   [`VLEN-1:0][$clog2(`VLEN):0]               result_data_viota;
+  logic   [`VLENB-1:0][$clog2(`VLEN):0]              result_data_viota8;
+  logic   [`VLEN/`HWORD_WIDTH-1:0][$clog2(`VLEN):0]  result_data_viota16;
+  logic   [`VLEN/`WORD_WIDTH-1:0][$clog2(`VLEN):0]   result_data_viota32;
   logic   [`VLEN-1:0]                 result_data_vid8;
   logic   [`VLEN-1:0]                 result_data_vid16;
   logic   [`VLEN-1:0]                 result_data_vid32;
 
   // for-loop
-  genvar                          j;
-  genvar                          k;
+  genvar                              j;
 
 //
 // prepare source data to calculate    
@@ -396,16 +395,10 @@ module rvv_backend_alu_unit_mask
   ); 
 
   generate
-    for(j=0; j<`VLEN/64;j++) begin: GET_VIOTA
-      if (j==0) begin
-        for(k=0;k<64;k++) begin: GET_VIOTA64_LOW
-          assign result_data_viota[k] = pkg_viota_d1.result_data_viota_per64[0][k];
-        end
-      end
-      else begin
-        for(k=0;k<64;k++) begin: GET_VIOTA64_HIGH
-          assign result_data_viota[64*j+k] = pkg_viota_d1.result_data_viota_per64[j][k] + result_data_viota[64*j-1];
-        end
+    if(`VLEN==128) begin
+      for(j=0;j<64;j++) begin: GET_VIOTA128
+        assign result_data_viota[j] = pkg_viota_d1.result_data_viota_per64[0][j];
+        assign result_data_viota[j+64] = {1'b0,pkg_viota_d1.result_data_viota_per64[1][j]} + {1'b0,pkg_viota_d1.result_data_viota_per64[0][63]};
       end
     end
   endgenerate
