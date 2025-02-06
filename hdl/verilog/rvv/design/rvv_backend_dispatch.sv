@@ -401,6 +401,7 @@ module rvv_backend_dispatch
             assign rs_dp2pmtrdt[i].vs1_data_valid= uop_uop2dp[i].vs1_index_valid;
             assign rs_dp2pmtrdt[i].vs2_data      = uop_operand[i].vs2;
             assign rs_dp2pmtrdt[i].vs2_eew       = uop_uop2dp[i].vs2_eew;
+            assign rs_dp2pmtrdt[i].vs2_type      = uop_operand_byte_type[i].vs2;
             assign rs_dp2pmtrdt[i].vs2_data_valid= uop_uop2dp[i].vs2_valid;
             assign rs_dp2pmtrdt[i].vs3_data      = uop_operand[i].vd;
             assign rs_dp2pmtrdt[i].vs3_data_valid= uop_uop2dp[i].vs3_valid;
