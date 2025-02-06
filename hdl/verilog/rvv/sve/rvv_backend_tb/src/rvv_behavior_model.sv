@@ -159,6 +159,7 @@ endclass : rvv_behavior_model
     bit is_widen_vs2_inst;
     bit is_narrow_inst;
     bit is_mask_producing_inst;
+    bit is_reduction_inst;
     bit use_vm_to_cal;
 
     bit vm;
@@ -252,14 +253,19 @@ endclass : rvv_behavior_model
         // 1. Decode - Get eew & emul
         pc = inst_tr.pc;
         is_widen_inst = inst_tr.inst_type == ALU && (inst_tr.alu_inst inside {VWADDU, VWADD, VWADDU_W, VWADD_W, VWSUBU, VWSUB, VWSUBU_W, VWSUB_W, 
-                                                                              VWMUL, VWMULU, VWMULSU, VWMACCU, VWMACC, VWMACCUS, VWMACCSU});
-        is_widen_vs2_inst = inst_tr.inst_type == ALU && (inst_tr.alu_inst inside {VWADD_W, VWADDU_W, VWSUBU_W, VWSUB_W});
+                                                                              VWMUL, VWMULU, VWMULSU, VWMACCU, VWMACC, VWMACCUS, VWMACCSU,
+                                                                              VWREDSUMU, VWREDSUM});
+        is_widen_vs2_inst = inst_tr.inst_type == ALU && (inst_tr.alu_inst inside {VWADD_W, VWADDU_W, VWSUBU_W, VWSUB_W,
+                                                                                  VWREDSUMU, VWREDSUM});
         is_narrow_inst = inst_tr.inst_type == ALU && (inst_tr.alu_inst inside {VNSRL, VNSRA, VNCLIPU, VNCLIP});
         is_mask_producing_inst = inst_tr.inst_type == ALU && ((inst_tr.alu_inst inside {VMAND, VMOR, VMXOR, VMORN, VMNAND, VMNOR, VMANDN, VMXNOR,
                                                                                        VMADC, VMSBC, 
                                                                                        VMSEQ, VMSNE, VMSLTU, VMSLT, VMSLEU, VMSLE, VMSGTU, VMSGT
                                                                                        }) ||
                                                               (inst_tr.alu_inst inside {VMUNARY0} && inst_tr.src1_idx inside {VMSBF, VMSOF, VMSIF}));
+        is_reduction_inst = inst_tr.inst_type == ALU && inst_tr.alu_inst inside {VREDSUM, VREDAND, VREDOR, VREDXOR, 
+                                                                                 VREDMINU,VREDMIN,VREDMAXU,VREDMAX,
+                                                                                 VWREDSUMU, VWREDSUM};
         use_vm_to_cal = inst_tr.use_vm_to_cal;
 
         // 1.0 illegal inst check
@@ -304,6 +310,10 @@ endclass : rvv_behavior_model
         end
         if(inst_tr.inst_type == ALU && inst_tr.alu_inst == VMUNARY0 && inst_tr.src1_idx inside {VID} && inst_tr.src2_idx !== 0) begin
           `uvm_warning("MDL/INST_CHECKER", $sformatf("pc=0x%8x: vs2 = v%0d of vid is ignored.", pc, inst_tr.src2_idx))
+          continue;
+        end
+        if(inst_tr.inst_type == ALU && inst_tr.alu_inst inside {VREDSUM, VREDAND, VREDOR, VREDXOR, VREDMINU, VREDMIN, VREDMAXU, VREDMAX} && inst_tr.vstart !== 0) begin
+          `uvm_warning("MDL/INST_CHECKER", $sformatf("pc=0x%8x: vstart = %0d of reduction insts is ignored.", pc, inst_tr.vstart))
           continue;
         end
 
@@ -458,6 +468,11 @@ endclass : rvv_behavior_model
               src1_eew = EEW1;
               src1_emul = src1_emul * src1_eew / eew;
             end
+            // 1.4 Reduction inst
+            if(is_reduction_inst) begin
+              dest_emul = 1;
+              src1_emul = 1;
+            end
           end
           default: begin
             continue;
@@ -545,7 +560,7 @@ endclass : rvv_behavior_model
           continue;
         end
         if(inst_tr.inst_type == ALU && inst_tr.alu_inst == VMUNARY0 && inst_tr.src1_idx inside {VMSBF, VMSOF, VMSIF} && dest_reg_idx_base == src2_reg_idx_base) begin
-          `uvm_warning("MDL/INST_CHECKER", $sformatf("pc=0x%8x: In vmsf/vmsof/vmsif, dest vrf(v%0d) can't overlap src2 vrf(v%0d). Ignored.", pc, dest_reg_idx_base, src2_reg_idx_base, inst_tr.vstart))
+          `uvm_warning("MDL/INST_CHECKER", $sformatf("pc=0x%8x: In vmsf/vmsof/vmsif, dest vrf(v%0d) can't overlap src2 vrf(v%0d). Ignored.", pc, dest_reg_idx_base, src2_reg_idx_base))
           continue;
         end
         if(inst_tr.inst_type == ALU && inst_tr.alu_inst == VMUNARY0 && inst_tr.src1_idx inside {VIOTA} && src2_reg_idx_base inside {[dest_reg_idx_base:dest_reg_idx_base+int'($ceil(dest_emul))-1]}) begin
@@ -565,22 +580,46 @@ endclass : rvv_behavior_model
         for(int elm_idx=0; elm_idx<elm_idx_max; elm_idx++) begin : op_element
 
           // 3.0 Update elements index
-          if(inst_tr.dest_type == VRF) begin 
-            dest_reg_idx = elm_idx / (`VLEN / dest_eew) + dest_reg_idx_base;
-            dest_reg_elm_idx = elm_idx % (`VLEN / dest_eew);
-          end
-          if(inst_tr.src3_type == VRF) begin 
-            src3_reg_idx = elm_idx / (`VLEN / src3_eew) + src3_reg_idx_base;
-            src3_reg_elm_idx = elm_idx % (`VLEN / src3_eew);
-          end
-          if(inst_tr.src2_type == VRF) begin 
-            src2_reg_idx = elm_idx / (`VLEN / src2_eew) + src2_reg_idx_base;
-            src2_reg_elm_idx = elm_idx % (`VLEN / src2_eew);
-          end
-          if(inst_tr.src1_type == VRF) begin 
-            src1_reg_idx = elm_idx / (`VLEN / src1_eew) + src1_reg_idx_base;
-            src1_reg_elm_idx = elm_idx % (`VLEN / src1_eew);
-          end
+          case(inst_tr.dest_type) 
+            VRF: begin
+              dest_reg_idx = elm_idx / (`VLEN / dest_eew) + dest_reg_idx_base;
+              dest_reg_elm_idx = elm_idx % (`VLEN / dest_eew);
+            end
+            default: begin
+              dest_reg_idx = dest_reg_idx_base;
+              dest_reg_elm_idx = 0;
+            end
+          endcase
+          case(inst_tr.src3_type)
+            VRF: begin 
+              src3_reg_idx = elm_idx / (`VLEN / src3_eew) + src3_reg_idx_base;
+              src3_reg_elm_idx = elm_idx % (`VLEN / src3_eew);
+            end
+            default: begin
+              src3_reg_idx = src3_reg_idx_base;
+              src3_reg_elm_idx =0;
+            end
+          endcase
+          case(inst_tr.src2_type)
+            VRF: begin 
+              src2_reg_idx = elm_idx / (`VLEN / src2_eew) + src2_reg_idx_base;
+              src2_reg_elm_idx = elm_idx % (`VLEN / src2_eew);
+            end
+            default: begin
+              src2_reg_idx = src2_reg_idx_base;
+              src2_reg_elm_idx =0;
+            end
+          endcase
+          case(inst_tr.src1_type)
+            VRF: begin 
+              src1_reg_idx = elm_idx / (`VLEN / src1_eew) + src1_reg_idx_base;
+              src1_reg_elm_idx = elm_idx % (`VLEN / src1_eew);
+            end
+            default: begin
+              src1_reg_idx = src1_reg_idx_base;
+              src1_reg_elm_idx =0;
+            end
+          endcase
             src0_reg_idx = 0;
             src0_reg_elm_idx = elm_idx % (`VLEN / src0_eew);
 
@@ -592,6 +631,7 @@ endclass : rvv_behavior_model
           if(vm == 0) begin
             src0 = elm_fetch(VRF, 0, elm_idx, src0_eew);
           end else begin
+            src0 = '1;
             if(inst_tr.alu_inst inside {VMERGE_VMVV})
               src0 = '1;
             if(inst_tr.alu_inst inside {VMADC, VMSBC})
@@ -659,6 +699,18 @@ endclass : rvv_behavior_model
             end
           endcase
 
+          // For vs1[0] of reduction inst.
+          if(is_reduction_inst && elm_idx == 0) begin
+            dest = alu_handler.exe_first_scalar(inst_tr, dest, src2, src1, src0);
+            elm_writeback(dest, inst_tr.dest_type, dest_reg_idx_base, elm_idx, dest_eew);
+            `uvm_info("MDL", $sformatf("Scalar - element[%2d]:\n  dest(v[%2d][%2d])=0x%8h\n  src2(v[%2d][%2d])=0x%8h\n  src1(v[%2d][%2d])=0x%8h\n  src0(v[%2d][%2d])=0x%8h",
+                                        elm_idx, 
+                                        dest_reg_idx, dest_reg_elm_idx, dest, 
+                                        src2_reg_idx, src2_reg_elm_idx, src2, 
+                                        src1_reg_idx, src1_reg_elm_idx, src1, 
+                                        src0_reg_idx, src0_reg_elm_idx, src0), UVM_LOW)
+          end
+
           if(elm_idx < vstart) begin
             // pre-start: do nothing
             if(is_mask_producing_inst) begin
@@ -722,7 +774,6 @@ endclass : rvv_behavior_model
           // Special case : Get the final value to wireback to XRF, avoiding all inactive situation. 
           if(elm_idx == elm_idx_max-1) begin
             if(inst_tr.dest_type == XRF) begin
-              $display("Im here...");
               dest = alu_handler.get_xrf_wb_value(inst_tr);
               elm_writeback(dest, inst_tr.dest_type, dest_reg_idx_base, elm_idx, dest_eew);
             end
@@ -758,6 +809,16 @@ endclass : rvv_behavior_model
           for(int reg_idx=dest_reg_idx_base; reg_idx<dest_reg_idx_base+int'($ceil(dest_emul)); reg_idx++) begin
             // FIXME: All 0s in vrf wirte strobe will not be executed in DUT.
             // if(|vrf_byte_strobe_temp[reg_idx]) begin
+            // All pre-start vreg will not be retired
+            if((reg_idx - dest_reg_idx_base) >= (vstart / (`VLEN / dest_eew))) begin
+              rt_tr.rt_vrf_index.push_back(reg_idx);
+              rt_tr.rt_vrf_strobe.push_back(vrf_byte_strobe_temp[reg_idx]);
+              rt_tr.rt_vrf_data.push_back(vrf_temp[reg_idx]);
+            end
+          end
+        end
+        if(rt_tr.dest_type == SCALAR) begin
+          for(int reg_idx=dest_reg_idx_base; reg_idx<dest_reg_idx_base+int'($ceil(dest_emul)); reg_idx++) begin
             // All pre-start vreg will not be retired
             if((reg_idx - dest_reg_idx_base) >= (vstart / (`VLEN / dest_eew))) begin
               rt_tr.rt_vrf_index.push_back(reg_idx);
@@ -803,6 +864,12 @@ endclass : rvv_behavior_model
           // `uvm_info("MDL", $sformatf("result[%0d]=%0d", i, result[i]), UVM_HIGH)
         end
       end
+      SCALAR: begin
+        for(int i=0; i<bit_count; i++) begin
+          result[i] = elm_idx == 0 ? this.vrf[reg_idx][i]
+                                   : this.vrf_temp[reg_idx][i]; // Always use element 0.
+        end
+      end
       XRF: begin
         for(int i=0; i<bit_count; i++) begin
           result[i] = this.xrf[reg_idx][i]; 
@@ -829,6 +896,12 @@ endclass : rvv_behavior_model
         for(int i=0; i<bit_count; i++) begin
           this.vrf_temp[reg_idx][elm_idx*bit_count + i] = result[i];
           this.vrf_bit_strobe_temp[reg_idx][elm_idx*bit_count + i] = 1'b1;
+        end
+      end
+      SCALAR: begin
+        for(int i=0; i<bit_count; i++) begin
+          this.vrf_temp[reg_idx][i] = result[i]; // Always use element 0.
+          this.vrf_bit_strobe_temp[reg_idx][i] = 1'b1;
         end
       end
       XRF: begin
@@ -873,6 +946,7 @@ virtual class alu_base;
   int mask_count;
   bit found_first_mask;
   int first_mask_idx;
+  pure virtual function alu_unsigned_t exe_first_scalar (rvs_transaction inst_tr, alu_unsigned_t dest, alu_unsigned_t src2, alu_unsigned_t src1, alu_unsigned_t src0);
   pure virtual function alu_unsigned_t exe (rvs_transaction inst_tr, alu_unsigned_t dest, alu_unsigned_t src2, alu_unsigned_t src1, alu_unsigned_t src0);
   pure virtual function alu_unsigned_t _roundoff_unsigned(alu_unsigned_t v, int unsigned d);
   pure virtual function alu_signed_t   _roundoff_signed(  alu_signed_t   v, int unsigned d);
@@ -932,6 +1006,24 @@ class alu_processor#(
     endcase
   endfunction: get_xrf_wb_value
 
+  virtual function alu_unsigned_t exe_first_scalar (rvs_transaction inst_tr, alu_unsigned_t dest, alu_unsigned_t src2, alu_unsigned_t src1, alu_unsigned_t src0);
+    `uvm_info("MDL", $sformatf("sizeof(T1)=%0d, sizeof(T2)=%0d, sizeof(TD)=%0d", $size(T1), $size(T2), $size(TD)), UVM_HIGH)
+    case(inst_tr.alu_inst) 
+    // OPI
+      VWREDSUM : exe_first_scalar = src1;
+      VWREDSUMU: exe_first_scalar = src1;
+    // OPM
+      VREDSUM : exe_first_scalar = src1;
+      VREDAND : exe_first_scalar = src1;
+      VREDOR  : exe_first_scalar = src1;
+      VREDXOR : exe_first_scalar = src1;
+      VREDMINU: exe_first_scalar = src1;
+      VREDMIN : exe_first_scalar = src1;
+      VREDMAXU: exe_first_scalar = src1;
+      VREDMAX : exe_first_scalar = src1;
+    endcase
+  endfunction: exe_first_scalar
+
   virtual function alu_unsigned_t exe (rvs_transaction inst_tr, alu_unsigned_t dest, alu_unsigned_t src2, alu_unsigned_t src1, alu_unsigned_t src0);
     `uvm_info("MDL", $sformatf("sizeof(T1)=%0d, sizeof(T2)=%0d, sizeof(TD)=%0d", $size(T1), $size(T2), $size(TD)), UVM_HIGH)
     overflow  = 0;
@@ -982,6 +1074,10 @@ class alu_processor#(
 
       VNCLIPU: dest = _vnclipu(src2, src1);
       VNCLIP : dest = _vnclip(src2, src1);
+      
+      VWREDSUM : dest = _vwredsum(dest,src2);
+      VWREDSUMU: dest = _vwredsumu(dest,src2);
+
     // OPM
       VWADD,
       VWADD_W:  dest = _vwadd(src2, src1);
@@ -1031,6 +1127,15 @@ class alu_processor#(
       VAADD : dest = _vaadd(src2, src1);
       VASUBU: dest = _vasubu(src2, src1);
       VASUB : dest = _vasub(src2, src1);
+
+      VREDSUM : dest = _vredsum(dest,src2);
+      VREDAND : dest = _vredand(dest,src2);
+      VREDOR  : dest = _vredor(dest,src2);
+      VREDXOR : dest = _vredxor(dest,src2);
+      VREDMINU: dest = _vredminu(dest,src2);
+      VREDMIN : dest = _vredmin(dest,src2);
+      VREDMAXU: dest = _vredmaxu(dest,src2);
+      VREDMAX : dest = _vredmax(dest,src2);
 
       VMAND : dest = _vmand(src2, src1); 
       VMOR  : dest = _vmor(src2, src1); 
@@ -1173,8 +1278,6 @@ class alu_processor#(
   //---------------------------------------------------------------------- 
   // 31.11.5. Vector Bitwise Logical Instructions
   // Reuse mask bit logic part.
-
-
   function TD _vminu(T2 src2, T1 src1);
     _vminu = $unsigned(src2) > $unsigned(src1) ? $unsigned(src1) : $unsigned(src2);
   endfunction : _vminu
@@ -1526,6 +1629,62 @@ class alu_processor#(
     else if(underflow) begin _vnclip = '0; _vnclip[$bits(TD)-1] = 1'b1; end
     else begin _vnclip = dest_widen; end
   endfunction
+
+  //---------------------------------------------------------------------- 
+  // 31.14.1. Vector Single-Width Integer Reduction Instructions
+  function TD _vredsum(TD dest, T2 src2);
+    logic signed [$bits(TD)-1:0] dest_temp;
+    dest_temp = dest + src2;
+    _vredsum = dest_temp;
+  endfunction:_vredsum
+  function TD _vredand(TD dest, T2 src2);
+    logic signed [$bits(TD)-1:0] dest_temp;
+    dest_temp = dest & src2;
+    _vredand = dest_temp;
+  endfunction:_vredand
+  function TD _vredor(TD dest, T2 src2);
+    logic signed [$bits(TD)-1:0] dest_temp;
+    dest_temp = dest | src2;
+    _vredor = dest_temp;
+  endfunction:_vredor
+  function TD _vredxor(TD dest, T2 src2);
+    logic signed [$bits(TD)-1:0] dest_temp;
+    dest_temp = dest ^ src2;
+    _vredxor = dest_temp;
+  endfunction:_vredxor
+  function TD _vredminu(TD dest, T2 src2);
+    logic unsigned [$bits(TD)-1:0] dest_temp;
+    dest_temp = dest < src2 ? dest : src2;
+    _vredminu = dest_temp;
+  endfunction:_vredminu
+  function TD _vredmin(TD dest, T2 src2);
+    logic signed [$bits(TD)-1:0] dest_temp;
+    dest_temp = dest < src2 ? dest : src2;
+    _vredmin = dest_temp;
+  endfunction:_vredmin
+  function TD _vredmaxu(TD dest, T2 src2);
+    logic unsigned [$bits(TD)-1:0] dest_temp;
+    dest_temp = dest > src2 ? dest : src2;
+    _vredmaxu = dest_temp;
+  endfunction:_vredmaxu
+  function TD _vredmax(TD dest, T2 src2);
+    logic signed [$bits(TD)-1:0] dest_temp;
+    dest_temp = dest > src2 ? dest : src2;
+    _vredmax = dest_temp;
+  endfunction:_vredmax
+
+  //---------------------------------------------------------------------- 
+  // 31.14.2. Vector Widening Integer Reduction Instructions
+  function TD _vwredsum(TD dest, T2 src2);
+    logic signed [$bits(TD)-1:0] dest_temp;
+    dest_temp = dest + $signed(src2);
+    _vwredsum = dest_temp;
+  endfunction:_vwredsum
+  function TD _vwredsumu(TD dest, T2 src2);
+    logic unsigned [$bits(TD)-1:0] dest_temp;
+    dest_temp = dest + $unsigned(src2);
+    _vwredsumu = dest_temp;
+  endfunction:_vwredsumu
 
   //---------------------------------------------------------------------- 
   // Ch31.15.1. Vector Mask-Register Logical Instructions

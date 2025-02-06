@@ -123,6 +123,9 @@ typedef enum logic [7:0] {
   VNCLIPU         =   8'b00_101_110,
   VNCLIP          =   8'b00_101_111,
 
+  VWREDSUMU       =   8'b00_110_000,
+  VWREDSUM        =   8'b00_110_001,  
+
   // OPM
   VWADDU          =   8'b01_110_000,
   VWADD           =   8'b01_110_001,
@@ -164,6 +167,14 @@ typedef enum logic [7:0] {
   VASUBU          =   8'b01_001_010,
   VASUB           =   8'b01_001_011,
 
+  VREDSUM         =   8'b01_000_000,
+  VREDAND         =   8'b01_000_001,
+  VREDOR          =   8'b01_000_010,
+  VREDXOR         =   8'b01_000_011,
+  VREDMINU        =   8'b01_000_100,
+  VREDMIN         =   8'b01_000_101,
+  VREDMAXU        =   8'b01_000_110,
+  VREDMAX         =   8'b01_000_111,
 
   VMAND           =   8'b01_011_001,
   VMOR            =   8'b01_011_010,
@@ -252,7 +263,7 @@ typedef enum int {
 } lsu_inst_e;
 
 typedef enum {
-  XRF, VRF, IMM, UIMM, FUNC, UNUSE
+  XRF, VRF, IMM, UIMM, FUNC, SCALAR, UNUSE
 } oprand_type_e;
 
 // Test description -----------------------------------------

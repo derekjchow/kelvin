@@ -147,6 +147,7 @@ class alu_smoke_test extends rvv_backend_test;
   alu_smoke_vx_seq rvs_vx_seq;
   alu_smoke_vmunary0_seq rvs_vmunary0_seq;
   alu_smoke_vwxunary0_seq rvs_vwxunary0_seq;
+  alu_smoke_vred_seq rvs_vred_seq;
 
   `uvm_component_utils(alu_smoke_test)
 
@@ -170,6 +171,7 @@ class alu_smoke_test extends rvv_backend_test;
     rvs_vx_seq = alu_smoke_vx_seq::type_id::create("alu_smoke_vx_seq", this);
     rvs_vmunary0_seq = alu_smoke_vmunary0_seq::type_id::create("rvs_vmunary0_seq", this);
     rvs_vwxunary0_seq = alu_smoke_vwxunary0_seq::type_id::create("rvs_vwxunary0_seq", this);
+    rvs_vred_seq = alu_smoke_vred_seq::type_id::create("alu_smoke_vred_seq", this);
 
     if($test$plusargs("case01") || $test$plusargs("all_case")) begin
       rvs_vv_seq.run_inst(VADD,env.rvs_agt.rvs_sqr);
@@ -322,6 +324,22 @@ class alu_smoke_test extends rvv_backend_test;
       rvs_vmunary0_seq.run_inst(VMUNARY0, env.rvs_agt.rvs_sqr);
     end
     
+    if($test$plusargs("case21") || $test$plusargs("all_case")) begin
+      rvs_vred_seq.run_inst(VREDSUM , env.rvs_agt.rvs_sqr);
+      rvs_vred_seq.run_inst(VREDAND , env.rvs_agt.rvs_sqr);
+      rvs_vred_seq.run_inst(VREDOR  , env.rvs_agt.rvs_sqr);
+      rvs_vred_seq.run_inst(VREDXOR , env.rvs_agt.rvs_sqr);
+      rvs_vred_seq.run_inst(VREDMINU, env.rvs_agt.rvs_sqr);
+      rvs_vred_seq.run_inst(VREDMIN , env.rvs_agt.rvs_sqr);
+      rvs_vred_seq.run_inst(VREDMAXU, env.rvs_agt.rvs_sqr);
+      rvs_vred_seq.run_inst(VREDMAX , env.rvs_agt.rvs_sqr);
+    end
+ 
+    if($test$plusargs("case22") || $test$plusargs("all_case")) begin
+      rvs_vred_seq.run_inst(VWREDSUM , env.rvs_agt.rvs_sqr);
+      rvs_vred_seq.run_inst(VWREDSUMU, env.rvs_agt.rvs_sqr);
+    end
+
     // Last inst  
     rvs_vv_seq.run_inst(VAND, env.rvs_agt.rvs_sqr);
 
@@ -1404,6 +1422,106 @@ class alu_mask_logic_test extends rvv_backend_test;
     super.final_phase(phase);
   endfunction
 endclass: alu_mask_logic_test
+
+//-----------------------------------------------------------
+// 31.14.1. Vector Single-Width Integer Reduction Instructions
+//-----------------------------------------------------------
+class alu_vred_test extends rvv_backend_test;
+
+  alu_iterate_vs_seq  rvs_seq;
+  alu_smoke_vv_seq rvs_last_seq;
+
+  `uvm_component_utils(alu_vred_test)
+
+  function new(string name, uvm_component parent);
+    super.new(name, parent);
+  endfunction
+
+  function void build_phase(uvm_phase phase);
+    super.build_phase(phase);
+  endfunction
+
+  function void connect_phase(uvm_phase phase);
+    super.connect_phase(phase);
+    this.set_report_id_action_hier("DEBUG", UVM_LOG);
+  endfunction
+
+  task main_phase(uvm_phase phase);
+    phase.raise_objection( .obj( this ) );
+
+    rvs_seq  = alu_iterate_vs_seq::type_id::create("rvs_seq", this);
+    rvs_seq.run_inst_iter(VREDSUM , env.rvs_agt.rvs_sqr, 1);
+    rvs_seq.run_inst_iter(VREDAND , env.rvs_agt.rvs_sqr, 1);
+    rvs_seq.run_inst_iter(VREDOR  , env.rvs_agt.rvs_sqr, 1);
+    rvs_seq.run_inst_iter(VREDXOR , env.rvs_agt.rvs_sqr, 1);
+    rvs_seq.run_inst_iter(VREDMINU, env.rvs_agt.rvs_sqr, 1);
+    rvs_seq.run_inst_iter(VREDMIN , env.rvs_agt.rvs_sqr, 1);
+    rvs_seq.run_inst_iter(VREDMAXU, env.rvs_agt.rvs_sqr, 1);
+    rvs_seq.run_inst_iter(VREDMAX , env.rvs_agt.rvs_sqr, 1);
+
+    rvs_seq.run_inst_rand(VREDSUM , env.rvs_agt.rvs_sqr, 100);
+    rvs_seq.run_inst_rand(VREDAND , env.rvs_agt.rvs_sqr, 100);
+    rvs_seq.run_inst_rand(VREDOR  , env.rvs_agt.rvs_sqr, 100);
+    rvs_seq.run_inst_rand(VREDXOR , env.rvs_agt.rvs_sqr, 100);
+    rvs_seq.run_inst_rand(VREDMINU, env.rvs_agt.rvs_sqr, 100);
+    rvs_seq.run_inst_rand(VREDMIN , env.rvs_agt.rvs_sqr, 100);
+    rvs_seq.run_inst_rand(VREDMAXU, env.rvs_agt.rvs_sqr, 100);
+    rvs_seq.run_inst_rand(VREDMAX , env.rvs_agt.rvs_sqr, 100);
+
+    rvs_last_seq = alu_smoke_vv_seq::type_id::create("rvs_last_seq", this);
+    rvs_last_seq.run_inst(VADD,env.rvs_agt.rvs_sqr);
+    phase.phase_done.set_drain_time(this, 1000ns);
+    phase.drop_objection( .obj( this ) );
+  endtask
+
+  function void final_phase(uvm_phase phase);
+    super.final_phase(phase);
+  endfunction
+endclass: alu_vred_test
+
+//-----------------------------------------------------------
+// 31.14.2. Vector Widening Integer Reduction Instructions
+//-----------------------------------------------------------
+class alu_vwred_test extends rvv_backend_test;
+
+  alu_iterate_vs_seq  rvs_seq;
+  alu_smoke_vv_seq rvs_last_seq;
+
+  `uvm_component_utils(alu_vwred_test)
+
+  function new(string name, uvm_component parent);
+    super.new(name, parent);
+  endfunction
+
+  function void build_phase(uvm_phase phase);
+    super.build_phase(phase);
+  endfunction
+
+  function void connect_phase(uvm_phase phase);
+    super.connect_phase(phase);
+    this.set_report_id_action_hier("DEBUG", UVM_LOG);
+  endfunction
+
+  task main_phase(uvm_phase phase);
+    phase.raise_objection( .obj( this ) );
+
+    rvs_seq  = alu_iterate_vs_seq::type_id::create("rvs_seq", this);
+    rvs_seq.run_inst_iter(VWREDSUM , env.rvs_agt.rvs_sqr, 1);
+    rvs_seq.run_inst_iter(VWREDSUMU, env.rvs_agt.rvs_sqr, 1);
+
+    rvs_seq.run_inst_rand(VWREDSUM , env.rvs_agt.rvs_sqr, 100);
+    rvs_seq.run_inst_rand(VWREDSUMU, env.rvs_agt.rvs_sqr, 100);
+
+    rvs_last_seq = alu_smoke_vv_seq::type_id::create("rvs_last_seq", this);
+    rvs_last_seq.run_inst(VADD,env.rvs_agt.rvs_sqr);
+    phase.phase_done.set_drain_time(this, 1000ns);
+    phase.drop_objection( .obj( this ) );
+  endtask
+
+  function void final_phase(uvm_phase phase);
+    super.final_phase(phase);
+  endfunction
+endclass: alu_vwred_test
 
 //-----------------------------------------------------------
 // 32.15.2. Vector count population in mask vcpop.m

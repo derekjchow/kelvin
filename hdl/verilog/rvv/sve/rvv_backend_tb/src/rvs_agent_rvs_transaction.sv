@@ -106,7 +106,8 @@ class rvs_transaction extends uvm_sequence_item;
     // OPI
     (inst_type == ALU && alu_inst[7:6] == 2'b00 && !(alu_inst inside {VSBC, VMSBC, VMSLTU, VMSLT, VMSGTU, VMSGT, VMERGE_VMVV, 
         VSLL, VSRL, VSRA, VNSRL, VNSRA,
-        VSSRL, VSSRA, VNCLIPU, VNCLIP})) 
+        VSSRL, VSSRA, VNCLIPU, VNCLIP,
+        VWREDSUMU, VWREDSUM})) 
       -> (dest_type == VRF && src2_type == VRF && 
            ((alu_type == OPIVV && src1_type == VRF) || 
             (alu_type == OPIVX && src1_type == XRF) || 
@@ -123,17 +124,23 @@ class rvs_transaction extends uvm_sequence_item;
            )
       );
 
-    (inst_type == ALU && alu_inst inside {VSBC, VMSBC, VMSLTU, VMSLT}) 
+    (inst_type == ALU && alu_inst[7:6] == 2'b00 && alu_inst inside {VSBC, VMSBC, VMSLTU, VMSLT}) 
       -> (dest_type == VRF && src2_type == VRF && 
            ((alu_type == OPIVV && src1_type == VRF) || 
             (alu_type == OPIVX && src1_type == XRF) 
            )
       );
 
-    (inst_type == ALU && alu_inst inside {VMSGTU, VMSGT}) 
+    (inst_type == ALU && alu_inst[7:6] == 2'b00 && alu_inst inside {VMSGTU, VMSGT}) 
       -> (dest_type == VRF && src2_type == VRF && 
            ((alu_type == OPIVI && src1_type == IMM) || 
             (alu_type == OPIVX && src1_type == XRF) 
+           )
+      );
+
+    (inst_type == ALU && alu_inst[7:6] == 2'b00 && alu_inst inside {VWREDSUMU, VWREDSUM}) 
+      -> (dest_type == SCALAR && src2_type == VRF && 
+           ((alu_type == OPIVV && src1_type == SCALAR)
            )
       );
 
@@ -150,7 +157,10 @@ class rvs_transaction extends uvm_sequence_item;
       );
 
     // OPM
-    (inst_type == ALU && alu_inst[7:6] == 2'b01 && !(alu_inst inside {VXUNARY0, VMUNARY0, VWXUNARY0/*, VWMACCUS*/})) 
+    (inst_type == ALU && alu_inst[7:6] == 2'b01 && !(alu_inst inside {VXUNARY0, VMUNARY0, VWXUNARY0, 
+                                                                      VREDSUM, VREDAND, VREDOR, VREDXOR, 
+                                                                      VREDMINU,VREDMIN,VREDMAXU,VREDMAX
+                                                                      /*, VWMACCUS*/})) 
       -> (dest_type == VRF && src2_type == VRF && 
            ((alu_type == OPMVV && src1_type == VRF) || 
             (alu_type == OPMVX && src1_type == XRF) 
@@ -174,6 +184,13 @@ class rvs_transaction extends uvm_sequence_item;
           (dest_type == VRF && src2_type == VRF &&
            alu_type == OPMVV && src1_type == FUNC && src1_idx inside {VMSBF, VMSOF, VMSIF})
       );
+
+    (inst_type == ALU && alu_inst[7:6] == 2'b01 && (alu_inst inside {VREDSUM, VREDAND, VREDOR, VREDXOR, 
+                                                                     VREDMINU,VREDMIN,VREDMAXU,VREDMAX})) 
+      -> (dest_type == SCALAR && src2_type == VRF && 
+           (alu_type == OPMVV && src1_type == SCALAR)
+      );
+
     // FIXME
     //(inst_type == ALU && alu_inst[7:6] == 2'b01 && (alu_inst inside {VWMACCUS})) 
     //  -> (dest_type == VRF && src2_type == VRF && 
@@ -395,6 +412,7 @@ function void rvs_transaction::asm_string_gen();
   inst = inst.tolower();
   case(this.src1_type)
     VRF: begin suf1 = "v"; src1 = $sformatf("v%0d",this.src1_idx); end
+    SCALAR: begin suf1 = "s"; src1 = $sformatf("v%0d",this.src1_idx); end
     XRF: begin suf1 = "x"; src1 = $sformatf("x%0d",this.src1_idx); end
     IMM: begin suf1 = "i"; src1 = $sformatf("%0d",$signed(this.src1_idx)); end
     UIMM: begin suf1 = "i"; src1 = $sformatf("%0d",$unsigned(this.src1_idx)); end
@@ -420,6 +438,7 @@ function void rvs_transaction::asm_string_gen();
         suf2 = "v"; src2 = $sformatf("v%0d",this.src2_idx); 
       end
     end
+    SCALAR: begin suf2 = "s"; src2 = $sformatf("v%0d",this.src2_idx); end
     XRF: begin suf2 = "x"; src2 = $sformatf("x%0d",this.src2_idx); end
     IMM: begin suf2 = "i"; src2 = $sformatf("%0d",$signed(this.src2_idx)); end
     UNUSE: begin 
