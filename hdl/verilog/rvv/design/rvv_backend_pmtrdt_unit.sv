@@ -28,6 +28,8 @@ module rvv_backend_pmtrdt_unit
   parameter GEN_RDT = 1'b0; // by default, NO Reduction unit
   parameter GEN_CMP = 1'b0; // by default, NO COMPARE unit
   parameter GEN_PMT = 1'b0; // by default, NO PERMUTATION unit
+
+  localparam VLENB_WIDTH = $clog2(`VLENB);
 // ---port definition-------------------------------------------------
 // global signal
   input logic       clk;
@@ -89,6 +91,7 @@ module rvv_backend_pmtrdt_unit
   logic [`VLEN-1:0]         cmp_res_d, cmp_res_q;
   logic [`VLEN-1:0]         pmtrdt_res_cmp; // pmtrdt result of compare
   // Permutation operation
+  // slide+gather instruction
   logic [`VLENB-1:0][`XLEN-1:0] offset;
   logic [`VLENB-1:0]            sel_scalar;
   BYTE_TYPE_t                   vd_type;
@@ -96,6 +99,17 @@ module rvv_backend_pmtrdt_unit
   logic [`XLEN-1:0]         pmt_rs1_data;
   logic [`VLENB-1:0][7:0]   pmt_res_d, pmt_res_q;
   logic [`VLEN-1:0]         pmtrdt_res_pmt; // pmtrdt result of permutation
+  // compress instruction
+  logic [`VLENB-1:0]        compress_enable;
+  logic [`VLENB-1:0][VLENB_WIDTH:0] compress_offset;
+  logic [`VLEN-1:0]         compress_mask_d, compress_mask_q; // register vs1_data for compress mask
+  logic                     compress_mask_en;
+  logic [VLENB_WIDTH:0]     compress_cnt_d, compress_cnt_q;   // compress counter
+  logic                     compress_cnt_en;
+  logic [`VLENB-1:0][7:0]   compress_value;
+  logic [2*`VLENB-1:0][7:0] compress_res_d, compress_res_q;
+  logic [2*`VLENB-1:0]      compress_res_en;
+  logic [`VLEN-1:0]         pmtrdt_res_compress; // pmtrdt result of vcompress instruction
 
   genvar i;
 // ---code start------------------------------------------------------
@@ -1620,11 +1634,80 @@ module rvv_backend_pmtrdt_unit
         assign pmtrdt_res_pmt[i*8+:8] = pmt_res_q[i];
       end
 
-      // Compress instruction
-      // compress instruction is a specified instruction in PMT.
-      // the vl of vd in compress can not be acknowledged untill decode vs1 value.
-      //TODO
-    end
+    // Compress instruction
+    // compress instruction is a specified instruction in PMT.
+    // the vl of vd in compress can not be acknowledged untill decode vs1 value.
+      // compress_mask_d is driven from shifted vs1_data based on vs2_eew
+      always_comb begin
+        case (pmtrdt_uop.vs2_eew) // vcompress instruction: vd_eew == vs2_eew
+          EEW32:compress_mask_d = pmtrdt_uop.uop_index == '0 ? pmtrdt_uop.vs1_data >> (`VLENB/4) : compress_mask_q >> (`VLENB/4);
+          EEW16:compress_mask_d = pmtrdt_uop.uop_index == '0 ? pmtrdt_uop.vs1_data >> (`VLENB/2) : compress_mask_q >> (`VLENB/2);
+          default:compress_mask_d = pmtrdt_uop.uop_index == '0 ? pmtrdt_uop.vs1_data >> `VLENB : compress_mask_q >> `VLENB;
+        endcase
+      end
+      assign compress_mask_en = pmtrdt_uop_valid & pmtrdt_uop_ready;
+      cdffr #(.WIDTH(`VLEN)) compress_mask_reg (.q(compress_mask_q), .d(compress_mask_d), .c(1'b0), .e(compress_mask_en), .clk(clk), .rst_n(rst_n));
+
+      // compress_enable is from vs1_data[0+:N] based on vs2_eew
+      // and then be extended to `VLENB bits.
+      always_comb begin
+        case (pmtrdt_uop.vs2_eew)
+          EEW32:begin
+            for (int j=0; j<`VLENB/4; j++) begin
+              compress_enable[4*j+:4] = pmtrdt_uop.uop_index == '0 ? {4{pmtrdt_uop.vs1_data[j]}} : {4{compress_mask_q[j]}};
+            end
+          end
+          EEW16:begin
+            for (int j=0; j<`VLENB/2; j++) begin
+              compress_enable[2*j+:2] = pmtrdt_uop.uop_index == '0 ? {2{pmtrdt_uop.vs1_data[j]}} : {2{compress_mask_q[j]}};
+            end
+          end
+          default:compress_enable = pmtrdt_uop.uop_index == '0 ? pmtrdt_uop.vs1_data[`VLENB-1:0] : compress_mask_q[`VLENB-1:0];
+        endcase
+      end
+
+      // compress_cnt indicates how much bytes have been compressed
+      always_comb begin
+        if (pmtrdt_uop.uop_index == '0) compress_cnt_d = f_sum(compress_enable);
+        else                            compress_cnt_d = compress_cnt_q + f_sum(compress_enable);
+      end
+      assign compress_cnt_en = pmtrdt_uop_valid & pmtrdt_uop_ready;
+      cdffr #(.WIDTH(VLENB_WIDTH+1)) compress_cnt_reg (.q(compress_cnt_q), .d(compress_cnt_d), .c(1'b0), .e(compress_cnt_en), .clk(clk), .rst_n(rst_n));
+
+      // compress_offset select elements of vs2_data and compress to compress_value
+      assign compress_offset = f_compress_offset(compress_enable);
+      for (i=0; i<`VLENB; i++) begin
+        assign compress_value[i] = compress_offset[i] == '1 ? '0 : pmtrdt_uop.vs2_data[compress_offset[i]];
+      end
+
+      // compress_res is driven by compress_value and compress_cnt.
+      always_comb begin
+        if (pmtrdt_uop.uop_index == '0) compress_res_d = {'0, compress_value};
+        else                            compress_res_d = f_circular_shift(compress_value, compress_cnt_q);
+      end
+
+      // compress_res_en
+      always_comb begin
+        if (pmtrdt_uop.uop_index == '0) compress_res_en = {'0, f_pack_1s(compress_enable)};
+        else                            compress_res_en = f_circular_en(compress_enable,compress_cnt_q);
+      end
+      for (i=0; i<2*`VLENB; i++) cdffr #(.WIDTH(8)) compress_res_reg (.q(compress_res_q[i]), .d(compress_res_d[i]), .c(1'b0), .e(compress_res_en[i]), .clk(clk), .rst_n(rst_n));
+
+      // pmtrdt_res_compress
+      always_comb begin
+        if (ctrl_q.last_uop_valid)
+          if (compress_cnt_q[VLENB_WIDTH]) 
+            pmtrdt_res_compress = f_res_compress_merge(ctrl_q.vs3_data, compress_res_q[`VLENB+:`VLENB], compress_cnt_q[VLENB_WIDTH-1:0]);
+          else
+            pmtrdt_res_compress = f_res_compress_merge(ctrl_q.vs3_data, compress_res_q[0+:`VLENB], compress_cnt_q[VLENB_WIDTH-1:0]);
+        else
+          if (compress_cnt_q[VLENB_WIDTH])
+            pmtrdt_res_compress = compress_res_q[2*`VLENB-1:`VLENB];
+          else
+            pmtrdt_res_compress = compress_res_q[`VLENB-1:0];
+      end
+
+    end // if (GEN_PMT == 1'b1) 
   endgenerate
 
 // output result
@@ -1637,7 +1720,7 @@ module rvv_backend_pmtrdt_unit
   assign pmtrdt_res.vsaturate = '0;
   always_comb begin
     case (ctrl_q.uop_type)
-      PERMUTATION: pmtrdt_res.w_data = pmtrdt_res_pmt;
+      PERMUTATION: pmtrdt_res.w_data = ctrl_q.compress ? pmtrdt_res_compress : pmtrdt_res_pmt;
       REDUCTION:   pmtrdt_res.w_data = pmtrdt_res_red;
       COMPARE:     pmtrdt_res.w_data = pmtrdt_res_cmp;
       default:     pmtrdt_res.w_data = pmtrdt_res_cmp;
@@ -1645,5 +1728,109 @@ module rvv_backend_pmtrdt_unit
   end
 
   assign pmtrdt_uop_ready = ctrl.last_uop_valid;
+
+// ---function--------------------------------------------------------
+// f_sum: sum how many bits are asserted.
+  function [VLENB_WIDTH:0] f_sum;
+    input [`VLENB-1:0] vector_bits;
+
+    int                i;
+    logic [VLENB_WIDTH:0] sum_val;
+    begin
+      sum_val = '0;
+      for (i=0; i<`VLENB; i++) begin
+        sum_val = sum_val + vector_bits[i];
+      end
+      f_sum = sum_val;
+    end
+  endfunction
+
+// f_compress_offset: extract valid bit and put its index to offset 
+  function [`VLENB-1:0][VLENB_WIDTH:0] f_compress_offset;
+    input [`VLENB-1:0] enables;
+
+    int                i,j;
+    logic [`VLENB-1:0][VLENB_WIDTH:0] results;
+    begin
+      j = 0;
+      for (i=0; i<`VLENB; i++) results[i] = '1;
+      for (i=0; i<`VLENB; i++) begin
+        if (enables[i]) begin
+          results[j] = i;
+          j++;
+        end
+      end
+      f_compress_offset = results;
+    end
+  endfunction
+
+// f_circular_shift: circular shift result to proper site 
+  function [2*`VLENB-1:0][7:0] f_circular_shift;
+    input [`VLENB-1:0][7:0] value; 
+    input [VLENB_WIDTH:0]   shift;
+
+    logic [`VLEN-1:0]       value_tmp;
+    logic [`VLEN-1:0]       buf2,buf1,buf0;
+    logic [1:0][`VLEN-1:0]  result;
+    begin
+      value_tmp = value;
+      {buf2,buf1,buf0} = value_tmp << (shift*8);
+      result = shift[VLENB_WIDTH] ? {buf1, buf2} : {buf1,buf0};
+      f_circular_shift = result;
+    end
+  endfunction
+
+// f_pack_1s: collect all 1s and pack them
+  function [`VLENB-1:0] f_pack_1s;
+    input [`VLENB-1:0] value;
+    
+    int                i,j;
+    logic [`VLENB-1:0] result;
+    begin
+      j = 0;
+      result = '0;
+      for (i=0; i<`VLENB; i++) begin
+        if (value[i]) begin
+          result[j] = 1'b1;
+          j++;
+        end
+      end
+    end
+  endfunction
+
+// f_circular_en: circular shift enable signals
+  function [2*`VLENB-1:0] f_circular_en;
+    input [`VLENB-1:0]    value;
+    input [VLENB_WIDTH:0] shift;
+
+    logic [`VLENB-1:0]    value_pack_1s;
+    logic [`VLENB-1:0]    en2,en1,en0;
+    logic [1:0][`VLENB-1:0] result;
+    begin
+      value_pack_1s = f_pack_1s(value);
+      {en2,en1,en0} = value_pack_1s << shift;
+      result = shift[VLENB_WIDTH] ? {en1, en2} : {en1, en0};
+      f_circular_en = result;
+    end
+  endfunction
+
+// f_res_compress_merge: merge raw data with copmress result
+  function [`VLEN-1:0] f_res_compress_merge;
+    input [`VLENB-1:0][7:0] raw_data;
+    input [`VLENB-1:0][7:0] res_data;
+    input [VLENB_WIDTH-1:0] valid_num;
+
+    int                     i;
+    logic [`VLENB-1:0]      valid;
+    logic [`VLENB-1:0][7:0] result;
+    begin
+      for (i=0; i<`VLENB; i++) begin
+        if (i < valid_num) valid[i] = 1'b1;
+        else               valid[i] = 1'b0;
+        result[i] = valid[i] ? res_data[i] : raw_data[i];
+      end
+      f_res_compress_merge = result;
+    end
+  endfunction
 
 endmodule
