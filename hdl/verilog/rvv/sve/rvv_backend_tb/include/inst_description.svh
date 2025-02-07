@@ -123,8 +123,14 @@ typedef enum logic [7:0] {
   VNCLIPU         =   8'b00_101_110,
   VNCLIP          =   8'b00_101_111,
 
+// Vector Reduction Operations in OPI
   VWREDSUMU       =   8'b00_110_000,
-  VWREDSUM        =   8'b00_110_001,  
+  VWREDSUM        =   8'b00_110_001,
+// Vector Permutation Operations in OPI
+  VSLIDEUP_RGATHEREI16 =   8'b00_001_110,
+  VSLIDEDOWN      =   8'b00_001_111,
+  VRGATHER        =   8'b00_001_100,
+
 
   // OPM
   VWADDU          =   8'b01_110_000,
@@ -185,7 +191,22 @@ typedef enum logic [7:0] {
   VMANDN          =   8'b01_011_000,
   VMXNOR          =   8'b01_011_111,
 
+
   VMUNARY0        =   8'b01_010_100,     // it could be vmsbf, vmsof, vmsif, viota, vid. They can be distinguished by vs1 field(inst_encoding[19:15]).
+// Vector Reduction Operations
+  VREDSUM         =   8'b01_000_000,
+  VREDMAXU        =   8'b01_000_110,
+  VREDMAX         =   8'b01_000_111,
+  VREDMINU        =   8'b01_000_100,
+  VREDMIN         =   8'b01_000_101,
+  VREDAND         =   8'b01_000_001,
+  VREDOR          =   8'b01_000_010,
+  VREDXOR         =   8'b01_000_011,
+// Vector Permutation Operations in OPM 
+  //VMV             =   8'b01_010_000,
+  VSLIDE1UP       =   8'b01_001_110,
+  VSLIDE1DOWN     =   8'b01_001_111,
+  VCOMPRESS       =   8'b01_010_111,
 
   VWXUNARY0       =   8'b01_010_000,     // it could be vcpop.m, vfirst.m and vmv. They can be distinguished by vs1 field(inst_encoding[19:15]).
 
