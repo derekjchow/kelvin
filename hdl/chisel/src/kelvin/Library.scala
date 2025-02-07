@@ -254,6 +254,13 @@ object PageMaskShift {
   }
 }
 
+// Modulo, where divisor must be a power of two.
+object Mod2 {
+  def apply(dividend: UInt, divisor: UInt) = {
+    dividend & (divisor - 1.U)
+  }
+}
+
 object Cto {
   def apply(bits: UInt): UInt = {
     PriorityEncoder(Cat(1.U(1.W), ~bits))

@@ -30,6 +30,22 @@ class DBus2AxiSpec extends AnyFreeSpec with ChiselScalatestTester {
     leftPart | rightPart
   }
 
+  def generateMasks(addr: Int, size: Int, txnSizes: Seq[Int]): List[BigInt] = {
+    val bottom: Int = addr & 0x1F
+    val mask0 = rotateLeft((31 to 0 by -1).map(i => i < txnSizes(0)).foldLeft(0L) { (acc, b) => (acc << 1 | (if (b) 1L else 0L))}, bottom, 32)
+    val mask1 = rotateLeft((31 to 0 by -1).map(i => i < txnSizes(1)).foldLeft(0L) { (acc, b) => (acc << 1 | (if (b) 1L else 0L))}, bottom + txnSizes(0), 32)
+    List(mask0, mask1)
+  }
+
+  def generateBitmask(bytemask: BigInt): BigInt = {
+    var bitmask: BigInt = 0
+    for (i <- 31 to 0 by -1) {
+      bitmask = (bitmask | (if (bytemask.testBit(i)) 255 else 0)) << 8
+    }
+    bitmask >>= 8
+    bitmask
+  }
+
   class Case(val addr: Int, val size: Int, val data: BigInt, val mask: Long) {}
   "Unaligned Write then Read" in {
     test(new DBus2Axi(p)) { dut =>
@@ -61,16 +77,29 @@ class DBus2AxiSpec extends AnyFreeSpec with ChiselScalatestTester {
         new Case(0x0000001f, 2, 0x1122, 0x80000001L),
       )
       cases.foreach(c => {
+        val alignedAddr = c.addr - (c.addr % c.size)
+        val misalignment = c.addr % c.size
+        val crossLineBoundary = ((c.addr % 32) + c.size - 1) >= 32
+        val belowLineBoundary = (32 - (c.addr % 32)) & 0x7
+        val txnCount = if (misalignment != 0) { 2 } else { 1 }
+        val txnSizes =
+          if (crossLineBoundary) {
+            Array(belowLineBoundary, c.size - belowLineBoundary)
+          } else if (misalignment != 0) {
+            Array(c.size - misalignment, misalignment)
+          } else {
+            Array(c.size, 0)
+          }
         val rotatedData = rotateLeft(c.data, 8 * c.addr, p.axi2DataBits)
-        var ogMask: BigInt = 0
-        for (i <- 31 to 0 by -1) {
-          ogMask = (ogMask | (if (i < c.size) 1 else 0)) << 1
-        }
-        ogMask >>= 1
-        val bottom: Int = c.addr & 0x1F
-        val shiftedMask: BigInt = ogMask << bottom
-        val mask1 = shiftedMask & 0xFFFFFFFFL
-        val mask2 = (shiftedMask >> 32) & 0xFFFFFFFFL
+
+        val masks = generateMasks(c.addr, c.size, txnSizes)
+
+        dut.io.axi.read.addr.ready.poke(false.B)
+        dut.io.axi.read.data.valid.poke(false.B)
+        dut.io.axi.write.data.ready.poke(false.B)
+        dut.io.axi.write.addr.ready.poke(false.B)
+        dut.io.axi.write.resp.valid.poke(false.B)
+        dut.clock.step()
 
         dut.io.dbus.valid.poke(true.B)
         dut.io.dbus.addr.poke(c.addr.U)
@@ -79,69 +108,121 @@ class DBus2AxiSpec extends AnyFreeSpec with ChiselScalatestTester {
         dut.io.dbus.wmask.poke(c.mask.U)
         dut.io.dbus.size.poke(c.size.U)
 
-        dut.io.axi.write.addr.ready.poke(true.B)
-        dut.clock.step()
+        for (i <- 0 until txnCount) {
+          // Receive master write addr
+          val (waddr, wsize, wlen) = {
+            dut.io.axi.write.addr.ready.poke(true.B)
+            while (dut.io.axi.write.addr.valid.peekInt() != 1 || dut.io.axi.write.addr.ready.peekInt() != 1) {
+              dut.clock.step()
+            }
+            val rv = (
+              dut.io.axi.write.addr.bits.addr.peekInt(),
+              dut.io.axi.write.addr.bits.size.peekInt(),
+              dut.io.axi.write.addr.bits.len.peekInt(),
+            )
+            dut.clock.step()
+            dut.io.axi.write.addr.ready.poke(false.B)
+            rv
+          }
 
-        assertResult(1) { dut.io.axi.write.addr.valid.peekInt() }
-        assertResult(c.addr) { dut.io.axi.write.addr.bits.addr.peekInt() }
-        assertResult(log2Ceil(c.size)) { dut.io.axi.write.addr.bits.size.peekInt() }
-        assertResult(1) { dut.io.axi.write.addr.bits.len.peekInt() }
+          assertResult(waddr) { alignedAddr + (i * c.size) }
+          assertResult(wsize) { log2Ceil(c.size) }
+          assertResult(wlen) { 0 }
 
-        dut.io.axi.write.data.ready.poke(true.B)
-        dut.clock.step()
+          // Receive master write data
+          val (wdata, wstrb) = {
+            dut.io.axi.write.data.ready.poke(true.B)
+            while (dut.io.axi.write.data.valid.peekInt() != 1 || dut.io.axi.write.data.ready.peekInt() != 1) {
+              dut.clock.step()
+            }
+            assertResult(1) { dut.io.axi.write.data.bits.last.peekInt() }
+            val rv = (
+              dut.io.axi.write.data.bits.data.peekInt(),
+              dut.io.axi.write.data.bits.strb.peekInt(),
+            )
+            dut.clock.step()
+            dut.io.axi.write.data.ready.poke(false.B)
+            rv
+          }
 
-        assertResult(1) { dut.io.axi.write.data.valid.peekInt() }
-        assertResult(0) { dut.io.axi.write.data.bits.last.peekInt() }
-        assertResult(mask1) { dut.io.axi.write.data.bits.strb.peekInt() }
-        assertResult(rotatedData) { dut.io.axi.write.data.bits.data.peekInt() }
-        dut.clock.step()
+          assertResult(wdata) { rotatedData & generateBitmask(masks(i)) }
+          assertResult(wstrb) { masks(i) }
 
-        assertResult(1) { dut.io.axi.write.data.valid.peekInt() }
-        assertResult(1) { dut.io.axi.write.data.bits.last.peekInt() }
-        assertResult(mask2) { dut.io.axi.write.data.bits.strb.peekInt() }
-        assertResult(rotatedData) { dut.io.axi.write.data.bits.data.peekInt() }
-
-        dut.io.dbus.valid.poke(false.B)
-        dut.io.axi.write.resp.valid.poke(true.B)
-        dut.io.axi.write.resp.bits.resp.poke(0.U)
-        dut.clock.step()
-        assertResult(1) { dut.io.axi.write.resp.ready.peekInt() }
-        assertResult(1) { dut.io.dbus.ready.peekInt() }
-        dut.io.axi.write.resp.valid.poke(false.B)
-        dut.clock.step()
+          // Emit master write response
+          {
+            dut.io.axi.write.resp.valid.poke(true.B)
+            dut.io.axi.write.resp.bits.id.poke(0.U)
+            dut.io.axi.write.resp.bits.resp.poke(0.U)
+            while (dut.io.axi.write.resp.ready.peekInt() != 1 || dut.io.axi.write.resp.valid.peekInt() != 1) {
+              dut.clock.step()
+            }
+            if (i == 1) {
+              assertResult(1) { dut.io.dbus.ready.peekInt() }
+            }
+            dut.clock.step()
+            if (i == 1) {
+              dut.io.dbus.valid.poke(false.B)
+            }
+            dut.io.axi.write.resp.valid.poke(false.B)
+          }
+        }
 
         assertResult(0) { dut.io.dbus.ready.peekInt() }
         dut.io.dbus.valid.poke(true.B)
         dut.io.dbus.addr.poke(c.addr.U)
         dut.io.dbus.write.poke(false.B)
         dut.io.dbus.size.poke(c.size.U)
-        dut.io.axi.read.addr.ready.poke(true.B)
-
-        assertResult(0) { dut.io.axi.write.addr.valid.peekInt() }
-        assertResult(1) { dut.io.axi.read.addr.valid.peekInt() }
-        assertResult(c.addr) { dut.io.axi.read.addr.bits.addr.peekInt() }
-        assertResult(log2Ceil(c.size)) { dut.io.axi.read.addr.bits.size.peekInt() }
-        assertResult(1) { dut.io.axi.read.addr.bits.len.peekInt() }
         dut.clock.step()
 
-        assertResult(1) { dut.io.axi.read.data.ready.peekInt() }
-        dut.io.axi.read.addr.ready.poke(false.B)
-        dut.io.axi.read.data.valid.poke(true.B)
-        dut.io.axi.read.data.bits.data.poke(rotatedData.U)
-        dut.io.axi.read.data.bits.last.poke(false.B)
-        dut.clock.step()
+        val readTxnCount = if (crossLineBoundary) { 2 } else { 1 }
+        for (txn <- 0 until readTxnCount) {
+          // Receive read addr
+          val (len, addr, size) = {
+            assertResult(0) { dut.io.axi.read.addr.ready.peekInt() }
+            dut.io.axi.read.addr.ready.poke(true.B)
+            while (dut.io.axi.read.addr.valid.peekInt() != 1 || dut.io.axi.read.addr.ready.peekInt() != 1) {
+              dut.clock.step()
+            }
+            val rv = (
+              dut.io.axi.read.addr.bits.len.peekInt(),
+              dut.io.axi.read.addr.bits.addr.peekInt(),
+              dut.io.axi.read.addr.bits.size.peekInt(),
+            )
+            dut.clock.step()
+            dut.io.axi.read.addr.ready.poke(false.B)
+            rv
+          }
 
-        assertResult(1) { dut.io.axi.read.data.ready.peekInt() }
-        dut.io.axi.read.data.valid.poke(true.B)
-        dut.io.axi.read.data.bits.data.poke(rotatedData.U)
-        dut.io.axi.read.data.bits.last.poke(true.B)
-        dut.clock.step()
+          assertResult(len) { if (misalignment != 0 && !crossLineBoundary) 1 else 0 }
+          assertResult(size) { log2Ceil(c.size) }
+          assertResult(addr) { if (txn == 0) { c.addr } else { (c.addr + 32) & ~31 } }
 
-        assertResult(1) { dut.io.dbus.ready.peekInt() }
-        assertResult(rotatedData) { dut.io.dbus.rdata.peekInt() }
-        dut.io.dbus.valid.poke(false.B)
-        dut.io.axi.read.data.valid.poke(false.B)
-        dut.clock.step()
+          // Transmit read data
+          {
+            assertResult(0) { dut.io.axi.read.data.valid.peekInt() }
+            for (i <- 0 to (len).toInt) {
+              dut.io.axi.read.data.valid.poke(true.B)
+              dut.io.axi.read.data.bits.id.poke(0.U)
+              dut.io.axi.read.data.bits.data.poke(0.U)
+              dut.io.axi.read.data.bits.resp.poke(0.U) // OKAY
+              dut.io.axi.read.data.bits.last.poke(if (i == len) { 1 } else { 0 })
+              if (i == len && txn == (readTxnCount - 1)) {
+                assertResult(1) { dut.io.dbus.ready.peekInt() }
+              }
+              dut.clock.step()
+              while (dut.io.axi.read.data.valid.peekInt() != 1 || dut.io.axi.read.data.ready.peekInt() != 1) {
+                dut.clock.step()
+              }
+              if (i == len && txn == (readTxnCount - 1)) {
+                dut.io.dbus.valid.poke(false.B)
+              }
+              dut.io.axi.read.data.valid.poke(false.B)
+              dut.clock.step()
+            }
+            dut.io.axi.read.data.valid.poke(false.B)
+            dut.clock.step()
+          }
+        }
       })
     }
   }
@@ -208,6 +289,15 @@ class DBus2AxiSpec extends AnyFreeSpec with ChiselScalatestTester {
       )
       cases.foreach(c => {
         val shiftedData: BigInt = c.data << (c.addr * 8)
+        val alignedAddr = c.addr - (c.addr % c.size)
+
+        dut.io.axi.read.addr.ready.poke(false.B)
+        dut.io.axi.read.data.valid.poke(false.B)
+        dut.io.axi.write.data.ready.poke(false.B)
+        dut.io.axi.write.addr.ready.poke(false.B)
+        dut.io.axi.write.resp.valid.poke(false.B)
+        dut.clock.step()
+
         // Build a DBus transaction
         dut.io.dbus.valid.poke(true.B)
         dut.io.dbus.addr.poke(c.addr.U)
@@ -216,63 +306,103 @@ class DBus2AxiSpec extends AnyFreeSpec with ChiselScalatestTester {
         dut.io.dbus.wmask.poke(c.mask.U)
         dut.io.dbus.size.poke(c.size.U)
 
-        // Signal that we are ready for a write address
-        dut.io.axi.write.addr.ready.poke(true.B)
-        dut.clock.step()
+        val (waddr, wsize, wlen) = {
+          dut.io.axi.write.addr.ready.poke(true.B)
+          while (dut.io.axi.write.addr.valid.peekInt() != 1 || dut.io.axi.write.addr.ready.peekInt() != 1) {
+            dut.clock.step()
+          }
+          val rv = (
+            dut.io.axi.write.addr.bits.addr.peekInt(),
+            dut.io.axi.write.addr.bits.size.peekInt(),
+            dut.io.axi.write.addr.bits.len.peekInt(),
+          )
+          dut.clock.step()
+          dut.io.axi.write.addr.ready.poke(false.B)
+          rv
+        }
 
-        // Validate the AXI write control data
-        assertResult(1) { dut.io.axi.write.addr.valid.peekInt() }
-        assertResult(c.addr) { dut.io.axi.write.addr.bits.addr.peekInt() }
-        assertResult(log2Ceil(c.size)) { dut.io.axi.write.addr.bits.size.peekInt() }
-        assertResult(0) { dut.io.axi.write.addr.bits.len.peekInt() }
+        assertResult(waddr) { alignedAddr }
+        assertResult(wsize) { log2Ceil(c.size) }
+        assertResult(wlen) { 0 }
 
-        // Signal readiness for the data
-        dut.io.axi.write.data.ready.poke(true.B)
-        dut.clock.step()
+        val (wdata, wstrb) = {
+          dut.io.axi.write.data.ready.poke(true.B)
+          while (dut.io.axi.write.data.valid.peekInt() != 1 || dut.io.axi.write.data.ready.peekInt() != 1) {
+            dut.clock.step()
+          }
+          assertResult(1) { dut.io.axi.write.data.bits.last.peekInt() }
+          val rv = (
+            dut.io.axi.write.data.bits.data.peekInt(),
+            dut.io.axi.write.data.bits.strb.peekInt(),
+          )
+          dut.clock.step()
+          dut.io.axi.write.data.ready.poke(false.B)
+          rv
+        }
 
-        // Validate write data
-        assertResult(1) { dut.io.axi.write.data.valid.peekInt() }
-        assertResult(shiftedData) { dut.io.axi.write.data.bits.data.peekInt() }
-        assertResult(1) { dut.io.axi.write.data.bits.last.peekInt() }
-        assertResult(c.mask) { dut.io.axi.write.data.bits.strb.peekInt() }
+        assertResult(wdata) { shiftedData & generateBitmask(c.mask) }
+        assertResult(wstrb) { c.mask }
 
-        // Handle response phase
-        dut.io.dbus.valid.poke(false.B)
-        dut.io.axi.write.resp.valid.poke(true.B)
-        dut.io.axi.write.resp.bits.resp.poke(0.U)
-        dut.clock.step()
-        assertResult(1) { dut.io.axi.write.resp.ready.peekInt() }
-        assertResult(1) { dut.io.dbus.ready.peekInt() }
-        dut.io.axi.write.resp.valid.poke(false.B)
-        dut.clock.step()
+        {
+          dut.io.axi.write.resp.valid.poke(true.B)
+          dut.io.axi.write.resp.bits.id.poke(0.U)
+          dut.io.axi.write.resp.bits.resp.poke(0.U)
+          while (dut.io.axi.write.resp.ready.peekInt() != 1 || dut.io.axi.write.resp.valid.peekInt() != 1) {
+            dut.clock.step()
+          }
+          assertResult(1) { dut.io.dbus.ready.peekInt() }
+          dut.clock.step()
+          dut.io.dbus.valid.poke(false.B)
+          dut.io.axi.write.resp.valid.poke(false.B)
+        }
 
-        // Build read transaction
         assertResult(0) { dut.io.dbus.ready.peekInt() }
         dut.io.dbus.valid.poke(true.B)
         dut.io.dbus.addr.poke(c.addr.U)
         dut.io.dbus.write.poke(false.B)
         dut.io.dbus.size.poke(c.size.U)
-        dut.io.axi.read.addr.ready.poke(true.B)
-
-        assertResult(0) { dut.io.axi.write.addr.valid.peekInt() }
-        assertResult(1) { dut.io.axi.read.addr.valid.peekInt() }
-        assertResult(c.addr) { dut.io.axi.read.addr.bits.addr.peekInt() }
-        assertResult(log2Ceil(c.size)) { dut.io.axi.read.addr.bits.size.peekInt() }
-        assertResult(0) { dut.io.axi.read.addr.bits.len.peekInt() }
         dut.clock.step()
 
-        assertResult(1) { dut.io.axi.read.data.ready.peekInt() }
-        dut.io.axi.read.addr.ready.poke(false.B)
-        dut.io.axi.read.data.valid.poke(true.B)
-        dut.io.axi.read.data.bits.data.poke(shiftedData.U(p.axi2DataBits.W))
-        dut.io.axi.read.data.bits.last.poke(true.B)
-        dut.clock.step()
+        val (len, addr, size) = {
+          assertResult(0) { dut.io.axi.read.addr.ready.peekInt() }
+          dut.io.axi.read.addr.ready.poke(true.B)
+          while (dut.io.axi.read.addr.valid.peekInt() != 1 || dut.io.axi.read.addr.ready.peekInt() != 1) {
+            dut.clock.step()
+          }
+          val rv = (
+            dut.io.axi.read.addr.bits.len.peekInt(),
+            dut.io.axi.read.addr.bits.addr.peekInt(),
+            dut.io.axi.read.addr.bits.size.peekInt(),
+          )
+          dut.clock.step()
+          dut.io.axi.read.addr.ready.poke(false.B)
+          rv
+        }
 
-        assertResult(1) { dut.io.dbus.ready.peekInt() }
-        assertResult(shiftedData) { dut.io.dbus.rdata.peekInt() }
-        dut.io.dbus.valid.poke(false.B)
-        dut.io.axi.read.data.valid.poke(false.B)
-        dut.clock.step()
+        assertResult(len) { 0 }
+        assertResult(size) { log2Ceil(c.size) }
+        assertResult(addr) { c.addr }
+
+        {
+          assertResult(0) { dut.io.axi.read.data.valid.peekInt() }
+          for (i <- 0 to (len).toInt) {
+            dut.io.axi.read.data.valid.poke(true.B)
+            dut.io.axi.read.data.bits.id.poke(0.U)
+            dut.io.axi.read.data.bits.data.poke(0.U)
+            dut.io.axi.read.data.bits.resp.poke(0.U) // OKAY
+            dut.io.axi.read.data.bits.last.poke(1.U)
+            assertResult(1) { dut.io.dbus.ready.peekInt() }
+            dut.clock.step()
+            while (dut.io.axi.read.data.valid.peekInt() != 1 || dut.io.axi.read.data.ready.peekInt() != 1) {
+              dut.clock.step()
+            }
+            dut.io.dbus.valid.poke(false.B)
+            dut.io.axi.read.data.valid.poke(false.B)
+            dut.clock.step()
+          }
+          dut.io.axi.read.data.valid.poke(false.B)
+          dut.clock.step()
+        }
       })
     }
   }

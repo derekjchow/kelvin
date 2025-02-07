@@ -120,6 +120,7 @@ struct DBus2Axi_tb : Sysc_tb {
     // DBus Read Data.
     if (dbus_read_active_) {
       dbus_read_active_ = false;
+      axi_read_fired_ = false;
       dbus_read_data_t ref, dut;
       check(dbus_read_data_.read(ref), "dbus read data");
       dut.data = io_dbus_rdata;
@@ -142,7 +143,8 @@ struct DBus2Axi_tb : Sysc_tb {
 
     // *************************************************************************
     // AXI Read Addr.
-    if (io_axi_read_addr_valid && io_axi_read_addr_ready) {
+    if (io_axi_read_addr_valid && io_axi_read_addr_ready && !axi_read_fired_) {
+      axi_read_fired_ = true;
       axi_read_addr_t dut, ref;
       check(axi_read_addr_.read(ref), "axi read addr");
       dut.addr = io_axi_read_addr_bits_addr.read().get_word(0);
@@ -302,6 +304,7 @@ struct DBus2Axi_tb : Sysc_tb {
   bool dbus_read_active_ = false;
   bool dbus_write_active_ = false;
   bool dbus_write_resp_phase_ = false;
+  bool axi_read_fired_ = false;
   fifo_t<axi_read_addr_t> axi_read_addr_;
   fifo_t<axi_read_data_t> axi_read_data_;
   fifo_t<axi_write_addr_t> axi_write_addr_;

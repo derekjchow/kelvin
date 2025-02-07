@@ -1,4 +1,5 @@
 import cocotb
+import itertools
 import math
 import numpy as np
 import tqdm
@@ -41,6 +42,8 @@ class CoreMiniAxiInterface:
   def __init__(self, dut):
     self.dut = dut
     self.clock = Clock(dut.io_aclk, 10, units="us")
+    self.memory_base_addr = 0x20000000
+    self.memory = np.zeros([4 * 1024 * 1024], dtype=np.uint8)
 
   async def reset(self):
     self.dut.io_aresetn.setimmediatevalue(1)
@@ -276,6 +279,32 @@ class CoreMiniAxiInterface:
       return i1[0].entry['st_value']
     return None
 
+  def write_memory(self, wdata):
+    """Write `wdata` to memory."""
+    addr = int(wdata["addr"])
+    data = wdata["data"]
+    masks = wdata["masks"]
+    assert addr >= self.memory_base_addr
+    assert addr < self.memory_base_addr + len(self.memory)
+    line_start = (addr - self.memory_base_addr) & 0xFFFFFFF0
+    flat_data = list(itertools.chain(*data))
+    flat_masks = list(itertools.chain(*masks))
+    for i in range(0,len(flat_data)):
+      if flat_masks[i] == 1:
+        self.memory[line_start + i] = flat_data[i]
+
+  def read_memory(self, raddr):
+    addr = int(raddr["addr"])
+    size = (2 ** raddr["size"])
+    assert addr >= self.memory_base_addr
+    assert addr < self.memory_base_addr + len(self.memory)
+    offset = (addr - self.memory_base_addr)
+    data = self.memory[offset:offset+size].astype(np.uint32)
+    data_flat = 0
+    for i in range(0,size):
+      data_flat = data_flat + (data[i] << (i * 8))
+    return data_flat
+
   async def execute_from(self, start_pc):
     # Program starting address
     kelvin_pc_csr_addr = 0x30004
@@ -303,60 +332,64 @@ class CoreMiniAxiInterface:
       timeout_cycles = timeout_cycles - 1
     assert timeout_cycles > 0
 
-  async def wait_for_master_axi_read(self):
+  async def wait_for_master_axi_read(self, timeout_cycles=1000):
+    assert(self.dut.io_axi_master_read_addr_ready.value == 0)
     self.dut.io_axi_master_read_addr_ready.value = 1
-    while self.dut.io_axi_master_read_addr_valid.value != 1:
+    while self.dut.io_axi_master_read_addr_valid.value != 1 or self.dut.io_axi_master_read_addr_ready.value != 1:
       await ClockCycles(self.dut.io_aclk, 1)
-    await ClockCycles(self.dut.io_aclk, 1)
-    return {
+    self.dut.io_axi_master_read_addr_ready.value = 0
+    rv = {
         "addr": self.dut.io_axi_master_read_addr_bits_addr.value,
         "size": self.dut.io_axi_master_read_addr_bits_size.value,
         "len": self.dut.io_axi_master_read_addr_bits_len.value,
         "id": self.dut.io_axi_master_read_addr_bits_id.value,
     }
+    await ClockCycles(self.dut.io_aclk, 1)
+    return rv
 
-  async def respond_to_read_word(self, addr, word, id):
-    self.dut.io_axi_master_read_data_valid.value = 1
-    self.dut.io_axi_master_read_data_bits_id.value = id
-    self.dut.io_axi_master_read_data_bits_data.value = \
+  async def respond_to_read(self, addr, word, id, size, len):
+    assert(self.dut.io_axi_master_read_data_valid.value == 0)
+    for i in range(0, len+1):
+      self.dut.io_axi_master_read_data_valid.value = 1
+      self.dut.io_axi_master_read_data_bits_id.value = id
+      self.dut.io_axi_master_read_data_bits_data.value = \
         format_line_from_word(word, addr)
-    self.dut.io_axi_master_read_data_bits_resp.value = 0 # OKAY
-    self.dut.io_axi_master_read_data_bits_last.value = 1
-
-    while self.dut.io_axi_master_read_addr_ready.value != 1:
+      self.dut.io_axi_master_read_data_bits_resp.value = 0 # OKAY
+      self.dut.io_axi_master_read_data_bits_last.value = 1 if i == len else 0
+      while (self.dut.io_axi_master_read_data_ready.value != 1 or self.dut.io_axi_master_read_data_valid.value != 1):
+        await ClockCycles(self.dut.io_aclk, 1)
+      self.dut.io_axi_master_read_data_valid.value = 0
       await ClockCycles(self.dut.io_aclk, 1)
+    self.dut.io_axi_master_read_data_valid.value = 0
     await ClockCycles(self.dut.io_aclk, 1)
 
-    self.dut.io_axi_master_read_data_valid.value = 0
-
-  async def receive_master_write(self):
+  async def receive_master_write(self, timeout_cycles=1000):
+    assert(self.dut.io_axi_master_write_addr_ready.value == 0)
     self.dut.io_axi_master_write_addr_ready.value = 1
-    while self.dut.io_axi_master_write_addr_valid.value != 1:
+    while self.dut.io_axi_master_write_addr_valid.value != 1 or self.dut.io_axi_master_write_addr_ready.value != 1:
       await ClockCycles(self.dut.io_aclk, 1)
+    self.dut.io_axi_master_write_addr_ready.value = 0
+
     id = self.dut.io_axi_master_write_addr_bits_id.value
     addr = self.dut.io_axi_master_write_addr_bits_addr.value
     size = self.dut.io_axi_master_write_addr_bits_size.value
     length = self.dut.io_axi_master_write_addr_bits_len.value
-    await ClockCycles(self.dut.io_aclk, 1)
-    self.dut.io_axi_master_write_addr_ready.value = 0
 
     last = False
     data = []
     masks = []
+    assert (self.dut.io_axi_master_write_data_ready.value == 0)
     self.dut.io_axi_master_write_data_ready.value = 1
     while not last:
-      while self.dut.io_axi_master_write_data_valid.value != 1:
+      while self.dut.io_axi_master_write_data_valid.value != 1 or self.dut.io_axi_master_write_data_ready.value != 1:
         await ClockCycles(self.dut.io_aclk, 1)
 
       line = np.frombuffer(
           self.dut.io_axi_master_write_data_bits_data.value.buff,
           dtype=np.uint8)
       data.append(list(reversed(line)))
-      masks.append(self.dut.io_axi_master_write_data_bits_strb.value)
-      last = self.dut.io_axi_slave_read_data_bits_last.value
-      # TODO(derekjchow): Exception on error?
-      # TODO(derekjchow): Mask?
-      await ClockCycles(self.dut.io_aclk, 1)
+      masks.append(list(reversed(self.dut.io_axi_master_write_data_bits_strb.value)))
+      last = self.dut.io_axi_master_write_data_bits_last.value
     self.dut.io_axi_master_write_data_ready.value = 0
 
     assert len(data) == length + 1
@@ -368,8 +401,8 @@ class CoreMiniAxiInterface:
     self.dut.io_axi_master_write_resp_bits_resp.value = 0 # Okay
     while self.dut.io_axi_master_write_resp_ready.value != 1:
       await ClockCycles(self.dut.io_aclk, 1)
-    await ClockCycles(self.dut.io_aclk, 1)
     self.dut.io_axi_master_write_resp_valid.value = 0
+    await ClockCycles(self.dut.io_aclk, 1)
 
     return {
       'addr': addr,
@@ -378,7 +411,6 @@ class CoreMiniAxiInterface:
       'data': data,
       'masks': masks,
     }
-
 
 @cocotb.test()
 async def core_mini_axi_basic_write_read_memory(dut):
@@ -457,3 +489,33 @@ async def core_mini_axi_write_read_memory_stress_test(dut):
         expected = dtcm_model_buffer[start_addr-DTCM_START: end_addr-DTCM_START]
         rdata = await core_mini_axi.read(start_addr, transaction_length)
         assert (expected == rdata).all()
+
+@cocotb.test()
+async def core_mini_axi_master_write_alignment(dut):
+  """Test data alignment during AXI master writes"""
+  core_mini_axi = CoreMiniAxiInterface(dut)
+  await core_mini_axi.reset()
+  cocotb.start_soon(core_mini_axi.clock.start())
+  await ClockCycles(dut.io_aclk, 10)
+
+  with open("../tests/cocotb/align_test.elf", "rb") as f:
+    entry_point = await core_mini_axi.load_elf(f)
+    await core_mini_axi.execute_from(entry_point)
+
+    async def master_read_worker(core_mini_axi):
+      while core_mini_axi.dut.io_halted.value != 1:
+        raddr = await core_mini_axi.wait_for_master_axi_read()
+        size = (2 ** raddr["size"]) # AXI size is an exponent
+        data_flat = core_mini_axi.read_memory(raddr)
+        await core_mini_axi.respond_to_read(raddr["addr"], data_flat, raddr["id"], size, raddr["len"])
+
+    async def master_write_worker(core_mini_axi):
+      while core_mini_axi.dut.io_halted.value != 1:
+        wdata = await core_mini_axi.receive_master_write()
+        core_mini_axi.write_memory(wdata)
+
+    cocotb.start_soon(master_read_worker(core_mini_axi))
+    cocotb.start_soon(master_write_worker(core_mini_axi))
+
+    await core_mini_axi.wait_for_halted(timeout_cycles=10000)
+    assert core_mini_axi.dut.io_fault.value == 0
