@@ -131,10 +131,10 @@ module rvv_backend_dispatch_opr_byte_type
                     operand_byte_type.vs1[i] = TAIL;
                 else if (vs1_ele_index[i] < {1'b0, uop_info.vstart}) 
                     operand_byte_type.vs1[i] = NOT_CHANGE; // prestart
-                else if (vs1_ele_index[i] > {1'b0, uop_vd_end}) 
-                    operand_byte_type.vs1[i] = BODY_INACTIVE;
+                //else if (vs1_ele_index[i] > {1'b0, uop_vs1_end}) 
+                //    operand_byte_type.vs1[i] = BODY_INACTIVE;
                 else begin 
-                    operand_byte_type.vs1[i] = (vd_enable[i] || uop_info.ignore_vma) ? BODY_ACTIVE
+                    operand_byte_type.vs1[i] = (vs1_enable[i] || uop_info.ignore_vma) ? BODY_ACTIVE
                                                                                      : BODY_INACTIVE;
                 end
             end
@@ -199,10 +199,10 @@ module rvv_backend_dispatch_opr_byte_type
                     operand_byte_type.vs2[i] = TAIL; 
                 else if (vs2_ele_index[i] < {1'b0, uop_info.vstart}) 
                     operand_byte_type.vs2[i] = NOT_CHANGE; // prestart
-                else if (vs2_ele_index[i] > {1'b0, uop_vd_end}) 
-                    operand_byte_type.vs2[i] = BODY_INACTIVE;
+                //else if (vs2_ele_index[i] > {1'b0, uop_vs2_end}) 
+                //    operand_byte_type.vs2[i] = BODY_INACTIVE;
                 else begin 
-                    operand_byte_type.vs2[i] = (vd_enable[i] || uop_info.ignore_vma) ? BODY_ACTIVE
+                    operand_byte_type.vs2[i] = (vs2_enable[i] || uop_info.ignore_vma) ? BODY_ACTIVE
                                                                                      : BODY_INACTIVE;
                 end
             end
@@ -249,18 +249,29 @@ module rvv_backend_dispatch_opr_byte_type
             assign vd_enable[i] = uop_info.vm ? 1'b1 : vd_enable_tmp[BYTE_INDEX[i] >> vd_eew_shift];
             assign vd_ele_index[i] = uop_vd_start + (BYTE_INDEX[i] >> vd_eew_shift);
             always_comb begin
-                if (uop_info.ignore_vta&uop_info.ignore_vma)
-                    operand_byte_type.vd[i] = BODY_ACTIVE;       
-                else if (vd_ele_index[i] >= uop_info.vl) 
-                    operand_byte_type.vd[i] = TAIL;       
-                else if (vd_ele_index[i] < {1'b0, uop_info.vstart}) 
-                    operand_byte_type.vd[i] = NOT_CHANGE;     // prestart
-                else if (vd_ele_index[i] > {1'b0, uop_vd_end}) 
-                    operand_byte_type.vd[i] = BODY_INACTIVE;
-                else begin 
-                    operand_byte_type.vd[i] = (vd_enable[i] || uop_info.ignore_vma) ? BODY_ACTIVE
-                                                                                    : BODY_INACTIVE;
+              case (uop_info.uop_exe_unit)
+                RDT:begin
+                  case(uop_info.vd_eew)
+                    EEW32:operand_byte_type.vd[i] = i<4 ? BODY_ACTIVE : TAIL;
+                    EEW16:operand_byte_type.vd[i] = i<2 ? BODY_ACTIVE : TAIL;
+                    default:operand_byte_type.vd[i] = i<1 ? BODY_ACTIVE : TAIL;
+                  endcase
                 end
+                default:begin
+                  if (uop_info.ignore_vta&uop_info.ignore_vma)
+                      operand_byte_type.vd[i] = BODY_ACTIVE;       
+                  else if (vd_ele_index[i] >= uop_info.vl) 
+                      operand_byte_type.vd[i] = TAIL;       
+                  else if (vd_ele_index[i] < {1'b0, uop_info.vstart}) 
+                      operand_byte_type.vd[i] = NOT_CHANGE;     // prestart
+                  else if (vd_ele_index[i] > {1'b0, uop_vd_end}) 
+                      operand_byte_type.vd[i] = BODY_INACTIVE;
+                  else begin 
+                      operand_byte_type.vd[i] = (vd_enable[i] || uop_info.ignore_vma) ? BODY_ACTIVE
+                                                                                      : BODY_INACTIVE;
+                  end
+                end
+              endcase
             end
         end
     endgenerate

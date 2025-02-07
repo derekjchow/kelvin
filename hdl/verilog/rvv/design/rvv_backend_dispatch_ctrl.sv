@@ -84,6 +84,7 @@ module rvv_backend_dispatch_ctrl
                     ALU: rs_ready[i] = rs_ready_alu2dp[i];
                     MUL,
                     MAC: rs_ready[i] = rs_ready_mul2dp[i];
+                    CMP,
                     PMT,
                     RDT: rs_ready[i] = rs_ready_pmtrdt2dp[i];
                     DIV: rs_ready[i] = rs_ready_div2dp[i];
@@ -97,6 +98,7 @@ module rvv_backend_dispatch_ctrl
                     ALU: rs_ready[i] = rs_ready[i-1] & rs_ready_alu2dp[i];
                     MUL,
                     MAC: rs_ready[i] = rs_ready[i-1] & rs_ready_mul2dp[i];
+                    CMP,
                     PMT,
                     RDT: rs_ready[i] = rs_ready[i-1] & rs_ready_pmtrdt2dp[i];
                     DIV: rs_ready[i] = rs_ready[i-1] & rs_ready_div2dp[i];
@@ -115,7 +117,7 @@ module rvv_backend_dispatch_ctrl
             assign rs_valid_dp2alu[i]    = uop_ready_dp2uop[i] & 
                                            (uop_ctrl[i].uop_exe_unit == ALU);
             assign rs_valid_dp2pmtrdt[i] = uop_ready_dp2uop[i] & 
-                                           ((uop_ctrl[i].uop_exe_unit == PMT) || (uop_ctrl[i].uop_exe_unit == RDT));
+                                           ((uop_ctrl[i].uop_exe_unit == PMT) || (uop_ctrl[i].uop_exe_unit == RDT) || (uop_ctrl[i].uop_exe_unit == CMP));
             assign rs_valid_dp2mul[i]    = uop_ready_dp2uop[i] & 
                                            (uop_ctrl[i].uop_exe_unit == MUL || uop_ctrl[i].uop_exe_unit == MAC);
             assign rs_valid_dp2div[i]    = uop_ready_dp2uop[i] & 

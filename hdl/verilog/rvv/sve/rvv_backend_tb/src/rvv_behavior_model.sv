@@ -253,10 +253,8 @@ endclass : rvv_behavior_model
         // 1. Decode - Get eew & emul
         pc = inst_tr.pc;
         is_widen_inst = inst_tr.inst_type == ALU && (inst_tr.alu_inst inside {VWADDU, VWADD, VWADDU_W, VWADD_W, VWSUBU, VWSUB, VWSUBU_W, VWSUB_W, 
-                                                                              VWMUL, VWMULU, VWMULSU, VWMACCU, VWMACC, VWMACCUS, VWMACCSU,
-                                                                              VWREDSUMU, VWREDSUM});
-        is_widen_vs2_inst = inst_tr.inst_type == ALU && (inst_tr.alu_inst inside {VWADD_W, VWADDU_W, VWSUBU_W, VWSUB_W,
-                                                                                  VWREDSUMU, VWREDSUM});
+                                                                              VWMUL, VWMULU, VWMULSU, VWMACCU, VWMACC, VWMACCUS, VWMACCSU});
+        is_widen_vs2_inst = inst_tr.inst_type == ALU && (inst_tr.alu_inst inside {VWADD_W, VWADDU_W, VWSUBU_W, VWSUB_W});
         is_narrow_inst = inst_tr.inst_type == ALU && (inst_tr.alu_inst inside {VNSRL, VNSRA, VNCLIPU, VNCLIP});
         is_mask_producing_inst = inst_tr.inst_type == ALU && ((inst_tr.alu_inst inside {VMAND, VMOR, VMXOR, VMORN, VMNAND, VMNOR, VMANDN, VMXNOR,
                                                                                        VMADC, VMSBC, 
@@ -472,6 +470,10 @@ endclass : rvv_behavior_model
             if(is_reduction_inst) begin
               dest_emul = 1;
               src1_emul = 1;
+              if(inst_tr.alu_inst inside {VWREDSUM, VWREDSUMU}) begin
+                dest_eew = dest_eew * 2;
+                src1_eew = src1_eew * 2;
+              end
             end
           end
           default: begin
@@ -1659,7 +1661,7 @@ class alu_processor#(
   endfunction:_vredminu
   function TD _vredmin(TD dest, T2 src2);
     logic signed [$bits(TD)-1:0] dest_temp;
-    dest_temp = dest < src2 ? dest : src2;
+    dest_temp = $signed(dest) < $signed(src2) ? dest : src2;
     _vredmin = dest_temp;
   endfunction:_vredmin
   function TD _vredmaxu(TD dest, T2 src2);
@@ -1669,7 +1671,7 @@ class alu_processor#(
   endfunction:_vredmaxu
   function TD _vredmax(TD dest, T2 src2);
     logic signed [$bits(TD)-1:0] dest_temp;
-    dest_temp = dest > src2 ? dest : src2;
+    dest_temp = $signed(dest) > $signed(src2) ? dest : src2;
     _vredmax = dest_temp;
   endfunction:_vredmax
 
@@ -1677,12 +1679,12 @@ class alu_processor#(
   // 31.14.2. Vector Widening Integer Reduction Instructions
   function TD _vwredsum(TD dest, T2 src2);
     logic signed [$bits(TD)-1:0] dest_temp;
-    dest_temp = dest + $signed(src2);
+    dest_temp = $signed(dest) + $signed(src2);
     _vwredsum = dest_temp;
   endfunction:_vwredsum
   function TD _vwredsumu(TD dest, T2 src2);
     logic unsigned [$bits(TD)-1:0] dest_temp;
-    dest_temp = dest + $unsigned(src2);
+    dest_temp = $unsigned(dest) + $unsigned(src2);
     _vwredsumu = dest_temp;
   endfunction:_vwredsumu
 

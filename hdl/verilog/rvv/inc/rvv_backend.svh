@@ -92,6 +92,7 @@ typedef enum logic [2:0] {
   MAC,
   PMT,
   RDT,
+  CMP,
   DIV,
   LSU
 } EXE_UNIT_e;

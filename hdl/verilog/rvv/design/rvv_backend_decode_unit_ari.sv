@@ -1937,13 +1937,13 @@ module rvv_backend_decode_unit_ari
                   SEW8: begin
                     eew_vd      = EEW16;
                     eew_vs2     = EEW8;
-                    eew_vs1     = EEW8;
+                    eew_vs1     = EEW16;
                     eew_max     = EEW16;
                   end
                   SEW16: begin
                     eew_vd      = EEW32;
                     eew_vs2     = EEW16;
-                    eew_vs1     = EEW16;
+                    eew_vs1     = EEW32;
                     eew_max     = EEW32;
                   end
                 endcase
@@ -3512,7 +3512,9 @@ module rvv_backend_decode_unit_ari
             VMSLEU,
             VMSLE,
             VMSGTU,
-            VMSGT,
+            VMSGT:begin
+              uop[i].uop_exe_unit = CMP;
+            end
             VWREDSUMU,
             VWREDSUM: begin
               uop[i].uop_exe_unit = RDT;

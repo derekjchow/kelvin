@@ -82,6 +82,7 @@ typedef struct packed {
 // input signals for opr_byte_type unit
 typedef struct packed {
   logic [`UOP_INDEX_WIDTH-1:0] uop_index;
+  EXE_UNIT_e                   uop_exe_unit;
   EEW_e                        vd_eew;
   EEW_e                        vs1_eew;
   EEW_e                        vs2_eew;
