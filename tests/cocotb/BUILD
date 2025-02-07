@@ -15,5 +15,6 @@ verilator_cocotb_test(
     ],
     deps = [
         requirement("pyelftools"),
+        requirement("tqdm"),
     ],
 )

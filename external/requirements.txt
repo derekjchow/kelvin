@@ -2,3 +2,4 @@ cocotb==1.9.2
 find_libpython==0.4.0
 numpy==2.0.0
 pyelftools==0.29
+tqdm==4.67.1

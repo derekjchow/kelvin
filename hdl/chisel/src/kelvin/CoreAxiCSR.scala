@@ -53,8 +53,11 @@ class CoreCSR(p: Parameters) extends Module {
       0x4.U -> true.B,
       0x8.U -> true.B,
     ) ++ ((0 until p.csrOutCount).map(x => ((0x100 + 4*x).U -> true.B))))
-  io.fabric.readData.valid := readDataValid
-  io.fabric.readData.bits := readData
+
+  // Delay reads by one cycle
+  val readDataNext = RegInit(MakeValid(false.B, 0.U(p.axi2DataBits.W)))
+  readDataNext := MakeValid(readDataValid, readData)
+  io.fabric.readData := readDataNext
 
   io.reset := resetReg(0)
   io.cg := resetReg(1)

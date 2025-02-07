@@ -17,9 +17,13 @@ package kelvin
 import chisel3._
 import chisel3.util._
 
-import bus.{AxiBurstType, AxiMasterIO, AxiResponseType}
-
+import bus._
 import common._
+
+class RWAxiAddress(p: Parameters) extends Bundle {
+  val addr = new AxiAddress(p.axi2AddrBits, p.axi2DataBits, p.axi2IdBits)
+  val write = Bool()
+}
 
 class AxiSlave(p: Parameters) extends Module {
   val io = IO(new Bundle{
@@ -31,97 +35,117 @@ class AxiSlave(p: Parameters) extends Module {
     val periBusy = Input(Bool())
   })
 
-  val readAddr = RegInit(MakeValid(false.B, 0.U.asTypeOf(io.axi.read.addr.bits)))
-  val readBaseAddr = RegInit(0.U.asTypeOf(io.axi.read.addr.bits.addr))
-  io.axi.read.addr.ready := !readAddr.valid && !io.periBusy
-  val canRead = !readAddr.valid && io.axi.read.addr.valid && !io.periBusy
-  when (canRead) {
-    readAddr := MakeValid(true.B, io.axi.read.addr.bits)
-    val readMask = VecInit((0 until io.axi.read.addr.bits.addr.getWidth).map(x => !(x.U < io.axi.read.addr.bits.size)))
-    readBaseAddr := io.axi.read.addr.bits.addr & readMask.asUInt;
-  }
+  // Arbitrate Read/Write channels
+  val addrArbiter = Module(new RRArbiter(
+      new AxiAddress(p.axi2AddrBits, p.axi2DataBits, p.axi2IdBits), 2))
+  addrArbiter.io.in(0) <> Queue(io.axi.read.addr, 2)
+  addrArbiter.io.in(1) <> Queue(io.axi.write.addr, 2)
+  val axiAddr = Wire(Decoupled(new RWAxiAddress(p)))
+  axiAddr.valid := addrArbiter.io.out.valid
+  axiAddr.bits.addr := addrArbiter.io.out.bits
+  axiAddr.bits.write := (addrArbiter.io.chosen === 1.U)
 
-  val readValid = RegInit(false.B)
-  val doRead = readAddr.valid && !readValid
-  readValid := doRead
-  io.axi.read.data.valid := readValid
-  when (io.axi.read.data.fire) {
-    when (io.axi.read.data.bits.last) {
-      readAddr := MakeValid(false.B, 0.U.asTypeOf(io.axi.read.addr.bits))
-    } .otherwise {
-      val (burst, burstValid) = AxiBurstType.safe(readAddr.bits.burst)
-      readAddr.bits.addr := MuxOR(burstValid, MuxLookup(burst, 0.U)(Seq(
-        AxiBurstType.FIXED -> readAddr.bits.addr,
-        AxiBurstType.INCR -> (readAddr.bits.addr +  (1.U << readAddr.bits.size)),
-        AxiBurstType.WRAP -> {
-          val newAddr = readAddr.bits.addr + (1.U << readAddr.bits.size)
-          val newAddrWrapped = Mux(newAddr >= readBaseAddr + (p.axi2DataBits / 8).U, readBaseAddr, newAddr)
-          newAddrWrapped(31,0)
-        }
-      )))
-      readAddr.bits.len := MuxOR(burstValid, readAddr.bits.len - 1.U)
-    }
-  }
-  io.fabric.readDataAddr := MakeValid(readAddr.valid, readAddr.bits.addr)
+  addrArbiter.io.out.ready := axiAddr.ready
+  val axiAddrCmd = Queue(axiAddr, 1)
+  val writeActive = axiAddrCmd.valid && axiAddrCmd.bits.write
+  val readActive = axiAddrCmd.valid && !axiAddrCmd.bits.write
+  // This register tracks the address over multiple beats in a burst
+  val cmdAddr = RegInit(0.U(p.axi2AddrBits.W))
 
-  val alignedAddrMask = VecInit((0 until io.axi.read.addr.bits.addr.getWidth).map(
-    x => !(x.U < io.axi.read.addr.bits.size)
-  ))
-  val alignedAddr = io.axi.read.addr.bits.addr & alignedAddrMask.asUInt
-  val msb = log2Ceil(p.axi2DataBits) - 1
-  io.axi.read.data.bits.data := io.fabric.readData.bits
-  io.axi.read.data.bits.id := Mux(readAddr.valid, readAddr.bits.id, 0.U)
-  // If readData is valid, return AXI OK. Otherwise, return AXI SLVERR.
-  io.axi.read.data.bits.resp := Mux(io.fabric.readData.valid, AxiResponseType.OKAY.asUInt, AxiResponseType.SLVERR.asUInt);
-  io.axi.read.data.bits.last := Mux(readAddr.valid, readAddr.bits.len === 0.U, false.B)
+  // Write
+  val writeData = Queue(io.axi.write.data, 2)
+  val writeResponse = Wire(Decoupled(new AxiWriteResponse(p.axi2IdBits)))
+  io.axi.write.resp <> Queue(writeResponse, 2)
 
-  val writeAddr = RegInit(MakeValid(false.B, 0.U.asTypeOf(io.axi.write.addr.bits)))
-  val writeBaseAddr = RegInit(0.U.asTypeOf(io.axi.write.addr.bits.addr))
-  io.axi.write.addr.ready := !writeAddr.valid && !io.periBusy
-  val canWrite = !writeAddr.valid && io.axi.write.addr.valid
-  when (canWrite) {
-    writeAddr := MakeValid(true.B, io.axi.write.addr.bits)
-    val writeMask = VecInit((0 until io.axi.write.addr.bits.addr.getWidth).map(x => !(x.U < io.axi.write.addr.bits.size)))
-    writeBaseAddr := io.axi.write.addr.bits.addr & writeMask.asUInt
-  }
-
-  val writeData = RegInit(MakeValid(false.B, 0.U.asTypeOf(io.axi.write.data.bits)))
-  io.axi.write.data.ready := !writeData.valid && !io.periBusy
-  val canWriteData = !writeData.valid && io.axi.write.data.valid
-  when (canWriteData) {
-    writeData := MakeValid(true.B, io.axi.write.data.bits)
-  }
-  when (writeData.valid) {
-    writeData := MakeValid(false.B, 0.U.asTypeOf(io.axi.write.data.bits))
-    val (burst, burstValid) = AxiBurstType.safe(writeAddr.bits.burst)
-    writeAddr.bits.addr := MuxOR(burstValid, MuxLookup(burst, 0.U)(Seq(
-      AxiBurstType.FIXED -> writeAddr.bits.addr,
-      AxiBurstType.INCR -> (writeAddr.bits.addr + (1.U << writeAddr.bits.size)),
-      AxiBurstType.WRAP -> {
-        val newAddr = writeAddr.bits.addr + (1.U << writeAddr.bits.size)
-        val newAddrWrapped = Mux(newAddr >= writeBaseAddr + (p.axi2DataBits / 8).U, writeBaseAddr, newAddr)
-        newAddrWrapped(31,0)
-      },
-    )))
-    writeAddr.bits.len := MuxOR(burstValid, writeAddr.bits.len - 1.U)
-  }
-  io.fabric.writeDataAddr := MakeValid(writeData.valid, writeAddr.bits.addr)
+  /// Set fabric write command. Note that even if valid is asserted,
+  /// the write won't occur if io.periBusy is high
+  val maybeWriteData = writeActive &&       // Write must be active
+                       writeData.valid &&   // Write data packet must be valid
+                       writeResponse.ready  // Make sure resp can be sent
+  io.fabric.writeDataAddr.valid := maybeWriteData
+  io.fabric.writeDataAddr.bits  := cmdAddr
   io.fabric.writeDataBits := writeData.bits.data
   io.fabric.writeDataStrb := writeData.bits.strb
 
-  val doWrite = writeData.valid && writeAddr.valid
-  val writeRespValid = RegInit(false.B)
-  writeRespValid := writeAddr.valid && writeData.valid && writeAddr.bits.len === 0.U && writeData.bits.last
-  val writeResp = RegInit(false.B)
-  writeResp := io.fabric.writeResp
-  io.axi.write.resp.valid := writeRespValid
-  // If writeResp is true, return AXI OK. Otherwise, return AXI SLVERR.
-  io.axi.write.resp.bits.resp := Mux(writeResp, AxiResponseType.OKAY.asUInt, AxiResponseType.SLVERR.asUInt)
-  when (io.axi.write.resp.fire) {
-    writeAddr := MakeValid(false.B, 0.U.asTypeOf(io.axi.write.addr.bits))
-    writeBaseAddr := 0.U.asTypeOf(io.axi.write.addr.bits.addr)
-  }
+  /// Check if ok to write
+  writeData.ready := maybeWriteData && !io.periBusy
 
-  io.axi.write.resp.bits.id := Mux(doWrite, writeAddr.bits.id, 0.U.asTypeOf(io.axi.write.resp.bits.id))
-  io.txnInProgress := readAddr.valid || writeAddr.valid
+  /// Enqueue write response
+  writeResponse.valid    := writeData.fire && writeData.bits.last
+  writeResponse.bits.id   := axiAddrCmd.bits.addr.id
+  writeResponse.bits.resp := Mux(io.fabric.writeResp,
+      AxiResponseType.OKAY.asUInt, AxiResponseType.SLVERR.asUInt)
+
+  // Read
+  val readDataQueueSize = 2
+  val readDataQueue = Module(new Queue(
+      new AxiReadData(p.axi2DataBits, p.axi2IdBits), readDataQueueSize))
+  val readData = readDataQueue.io.enq
+  io.axi.read.data <> readDataQueue.io.deq
+
+  val readIssued = RegInit(false.B)   // Tracks if a read was issued last cycle
+  val readsIssued = RegInit(0.U(9.W)) // Tracks number of readData issued
+
+  /// Check if we can issue a read
+  val nextQueueCount = readDataQueue.io.count +& readIssued -&
+      readDataQueue.io.deq.fire
+  val maybeIssueRead = readActive &&
+      ((readDataQueueSize.U - nextQueueCount) >= 1.U) &&
+      (readsIssued <= axiAddrCmd.bits.addr.len) // Don't issue if last transaction
+  val issueRead = maybeIssueRead && !io.periBusy
+  readIssued := issueRead
+  readsIssued := Mux(axiAddr.fire, 0.U, readsIssued + issueRead)
+
+  /// Forward read command to SRAM
+  /// Note: maybeIssueRead is used here instead of issue read so the downstream
+  /// arbiter can route the correct periBusy signal back. If periBusy is raised
+  /// the read operation is not conducted.
+  io.fabric.readDataAddr.valid := maybeIssueRead
+  io.fabric.readDataAddr.bits  := cmdAddr
+
+  /// Response from SRAM, cycle later
+  readData.valid := readIssued
+  readData.bits.data := io.fabric.readData.bits
+  readData.bits.id := axiAddrCmd.bits.addr.id
+  readData.bits.resp := Mux(io.fabric.readData.valid,
+      AxiResponseType.OKAY.asUInt, AxiResponseType.SLVERR.asUInt)
+  readData.bits.last := (readsIssued === (axiAddrCmd.bits.addr.len + 1.U))
+
+  /// Ensure read is enqueued
+  assert(!readIssued || readDataQueue.io.enq.ready)
+
+  // Update address between beats
+  val baseAddrMask = VecInit((0 until axiAddrCmd.bits.addr.addr.getWidth).map(
+      x => !(x.U < axiAddrCmd.bits.addr.size)))
+  val cmdAddrBase = axiAddrCmd.bits.addr.addr & baseAddrMask.asUInt
+  val (burst, burstValid) = AxiBurstType.safe(axiAddrCmd.bits.addr.burst)
+  val validBurst = axiAddrCmd.valid && burstValid
+  val addrNext = MuxCase(cmdAddr, Seq(
+      (validBurst && (burst === AxiBurstType.FIXED)) -> cmdAddr,
+      (validBurst && (burst === AxiBurstType.INCR)) ->
+          (cmdAddr + (1.U << axiAddrCmd.bits.addr.size)),
+      (validBurst && (burst === AxiBurstType.WRAP)) -> {
+          val newAddr = cmdAddr + (1.U << axiAddrCmd.bits.addr.size)
+          val newAddrWrapped = Mux(
+              newAddr >= cmdAddrBase + (p.axi2DataBits / 8).U,
+              cmdAddrBase, newAddr)
+          newAddrWrapped(31,0)
+      }
+  ))
+
+  cmdAddr := MuxCase(cmdAddr, Seq(
+      // New command
+      axiAddr.fire -> axiAddr.bits.addr.addr,
+      // Updates
+      (writeActive && io.fabric.writeDataAddr.valid && !io.periBusy) -> addrNext,
+      (readActive && io.fabric.readDataAddr.valid && !io.periBusy) -> addrNext,
+  ))
+
+  // Move to the next command when done
+  axiAddrCmd.ready := MuxCase(false.B, Seq(
+      writeActive -> writeResponse.fire,
+      readActive -> (readData.fire && readData.bits.last),
+  ))
+
+  io.txnInProgress := axiAddrCmd.valid
 }

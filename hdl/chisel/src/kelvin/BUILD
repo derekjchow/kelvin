@@ -113,6 +113,7 @@ chisel_test(
         "CoreAxiCSRTest.scala",
         "CoreAxiSlaveMuxTest.scala",
         "DBus2AxiTest.scala",
+        "FabricTest.scala",
     ],
     deps = [
         ":kelvin",
@@ -253,6 +254,7 @@ chisel_library(
     srcs = [
         "AxiSlave.scala",
         "AxiSlave2SRAM.scala",
+        "Fabric.scala",
         "Core.scala",
         "CoreAxi.scala",
         "CoreAxiCSR.scala",

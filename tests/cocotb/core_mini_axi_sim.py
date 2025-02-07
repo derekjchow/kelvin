@@ -1,5 +1,9 @@
 import cocotb
+import math
 import numpy as np
+import tqdm
+import random
+
 from cocotb.clock import Clock
 from cocotb.triggers import Timer, ClockCycles
 from elftools.elf.elffile import ELFFile
@@ -12,6 +16,26 @@ def format_line_from_word(word, addr):
   bdata = cocotb.binary.BinaryValue()
   bdata.buff = reversed(line.tobytes())
   return bdata
+
+def pad_to_multiple(x, multiple):
+  padding = multiple - (len(x) % multiple)
+  if padding == multiple:
+    return x
+  return np.pad(x, (0, padding))
+
+def get_strb(mask):
+  val = 0
+  for m in reversed(mask):
+    val = val << 1
+    if m:
+      val += 1
+  return val
+
+def convert_to_binary_value(data):
+  bdata = cocotb.binary.BinaryValue()
+  bdata.buff = reversed(data.tobytes())
+  return bdata
+
 
 class CoreMiniAxiInterface:
   def __init__(self, dut):
@@ -26,12 +50,12 @@ class CoreMiniAxiInterface:
     self.dut.io_aresetn.setimmediatevalue(1)
     await Timer(500, units="ns")
 
-  async def _writeAddr(self, addr, size):
+  async def _write_addr(self, addr, size, burst_len=1):
     self.dut.io_axi_slave_write_addr_valid.value = 1
     self.dut.io_axi_slave_write_addr_bits_addr.value   = addr
     self.dut.io_axi_slave_write_addr_bits_prot.value   = 2
     self.dut.io_axi_slave_write_addr_bits_id.value     = 0
-    self.dut.io_axi_slave_write_addr_bits_len.value    = 0 # 0+1 beats
+    self.dut.io_axi_slave_write_addr_bits_len.value    = burst_len - 1
     self.dut.io_axi_slave_write_addr_bits_size.value   = size
     self.dut.io_axi_slave_write_addr_bits_burst.value  = 1
     self.dut.io_axi_slave_write_addr_bits_lock.value   = 0
@@ -41,93 +65,128 @@ class CoreMiniAxiInterface:
 
     while self.dut.io_axi_slave_write_addr_ready.value != 1:
         await ClockCycles(self.dut.io_aclk, 1)
-
     await ClockCycles(self.dut.io_aclk, 1)
+
     self.dut.io_axi_slave_write_addr_valid.value = 0
 
-  async def writeDataWord(self, data, shift):
-    self.dut.io_axi_slave_write_data_valid.value = 1
-    self.dut.io_axi_slave_write_data_bits_data.value = data
-    self.dut.io_axi_slave_write_data_bits_strb.value = 0xF << shift # Just the LSB?
-    self.dut.io_axi_slave_write_data_bits_last.value = 1 #
-    while self.dut.io_axi_slave_write_data_ready.value != 1:
-        await ClockCycles(self.dut.io_aclk, 1)
-
-    await ClockCycles(self.dut.io_aclk, 1)
-    self.dut.io_axi_slave_write_data_valid.value = 0
-
-  async def waitWriteResponse(self):
+  async def _wait_write_response(self, delay_bready: int = 0):
+    self.dut.io_axi_slave_write_resp_ready.value = 0
+    if delay_bready:
+      await ClockCycles(self.dut.io_aclk, delay_bready)
     self.dut.io_axi_slave_write_resp_ready.value = 1
-    while self.dut.io_axi_slave_write_resp_valid.value != 1:
+    timeout_cycles = 100
+    while self.dut.io_axi_slave_write_resp_valid.value != 1 and \
+          timeout_cycles > 0:
        await ClockCycles(self.dut.io_aclk, 1)
+       timeout_cycles = timeout_cycles - 1
+    assert timeout_cycles > 0
     await ClockCycles(self.dut.io_aclk, 1)
     self.dut.io_axi_slave_write_resp_ready.value = 0
 
-  async def writeWord(self, addr, data):
-    self.dut.io_axi_slave_write_resp_ready.value = 0
-    write_addr_task = self._writeAddr(addr, 2) # Write one word (2^2 = 4 bytes)
+  async def _write_data_beat(self, data, mask, last):
+    """Writes one beat to the write data line."""
+    assert len(data) % 16 == 0
+    assert len(mask) % 16 == 0
 
-    shift = addr % 16
-    line = np.zeros([4], dtype=np.uint32)
-    line[0] = data
-    line = np.roll(line.view(np.uint8), shift)
-    bdata = cocotb.binary.BinaryValue()
-    bdata.buff = reversed(line.tobytes())
-    write_data_task = self.writeDataWord(bdata, shift)
-
-    await write_addr_task
-    await write_data_task
-
-    await self.waitWriteResponse()
-
-  async def writeDataLine(self, data, last):
-     # TODO(derekjchow): For the time being, we assume a full 128 bit line is
-     # being written to an aligned address. Relax this.
     self.dut.io_axi_slave_write_data_valid.value = 1
-    self.dut.io_axi_slave_write_data_bits_data.value = data
+    self.dut.io_axi_slave_write_data_bits_data.value = convert_to_binary_value(
+        data)
+    self.dut.io_axi_slave_write_data_bits_strb.value = get_strb(mask)
+
     self.dut.io_axi_slave_write_data_bits_last.value = last
-    self.dut.io_axi_slave_write_data_bits_strb.value = 0xFFFF # 16 bytes all 1's
     while self.dut.io_axi_slave_write_data_ready.value != 1:
         await ClockCycles(self.dut.io_aclk, 1)
-
     await ClockCycles(self.dut.io_aclk, 1)
+
     self.dut.io_axi_slave_write_data_valid.value = 0
 
-  async def _writeLine(self, addr, data):
-    # Convert numpy to buff
-    bdata = cocotb.binary.BinaryValue()
-    bdata.buff = reversed(data.tobytes()) # TODO(derekjchow): Check endianness
+  def _determine_transaction_size(self, addr: int, data_len: int) -> int:
+    # Transactions cannot cross 4k boundary
+    offset4096 = addr % 4096
+    remainder4096 = 4096 - offset4096
 
-    self.dut.io_axi_slave_write_resp_ready.value = 0
-    write_addr_task = self._writeAddr(addr, 4) # Write 2^4=16 bytes
-    write_data_task = self.writeDataLine(bdata, last=True)
+    # Max transaction size is 16 beats * 16 bytes, but cannot cross 4kB boundary
+    max_transaction_size_bytes = min(256, remainder4096)
+
+    return min(data_len, max_transaction_size_bytes)
+
+  async def _write_data(self, addr, data, masks, beats):
+    beats_sent = 0
+    while len(data) > 0:
+      base_addr = (addr // 16) * 16
+      sub_addr = addr - base_addr
+      bytes_to_write = 16 - sub_addr
+      bytes_to_write = min(len(data), bytes_to_write)
+
+      local_data = data[0:bytes_to_write]
+      local_data = np.pad(local_data, (sub_addr, 0))
+      local_data = pad_to_multiple(local_data, 16)
+      local_masks = masks[0:bytes_to_write]
+      local_masks = np.pad(local_masks, (sub_addr, 0))
+      local_masks = pad_to_multiple(local_masks, 16)
+
+      data = data[bytes_to_write:]
+      masks = masks[bytes_to_write:]
+      last = (len(data) == 0)
+
+      # TODO(derekjchow): Insert RNG delays
+      await self._write_data_beat(local_data, local_masks, last)
+
+      addr = addr + bytes_to_write
+      beats_sent = beats_sent + 1
+    assert beats_sent == beats
+
+  async def _write_transaction(self,
+                               addr: int,
+                               data: np.array,
+                               masks: np.array,
+                               delay_bready: int = 0) -> None:
+    # Compute number of beats
+    start_addr = addr
+    end_addr = addr + len(data) - 1 # Last address written
+    start_line = start_addr // 16
+    end_line = end_addr // 16
+    beats = (end_line - start_line) + 1
+
+    # Compute size of transaction
+    # TODO(derekjchow): Fuzz element size?
+    write_addr_size = math.ceil(math.log2(len(data)))
+    write_addr_size = min(write_addr_size, 4) # Size of 16 for increment
+    write_addr_task = self._write_addr(addr, write_addr_size, beats)
+    write_data_task = self._write_data(addr, data, masks, beats)
 
     await write_addr_task
     await write_data_task
 
-    await self.waitWriteResponse()
-    self.dut.io_axi_slave_write_resp_ready.value = 0
+    await self._wait_write_response(delay_bready=delay_bready)
 
-  async def write(self, addr, data):
-    # TODO(derekjchow): "reinterpret_cast" into uint8_t
-    # Pad data to multiples of 16 or set write masks
-    padding = 16 - (len(data) % 16)
-    data = np.pad(data, (0, padding))
-    # TODO(derekjchow): Unaligned writes / partial writes
-    n_bytes = len(data)
-    idx = 0
-    while idx < n_bytes:
-       line = data[idx:idx+16]
-       await self._writeLine(addr + idx, line)
-       idx += 16
+  async def write(self,
+                  addr: int,
+                  data: np.array,
+                  delay_bready: int = 0,
+                  masks: np.array = None) -> None:
+    """Writes data into Kelvin memory."""
+    data = data.view(np.uint8)
+    if masks is None:
+      masks = np.copy(np.ones_like(data, dtype=bool))
+    while len(data) > 0:
+      transaction_size = self._determine_transaction_size(addr, len(data))
+      local_data = data[0:transaction_size]
+      local_masks = masks[0:transaction_size]
+      await self._write_transaction(addr, local_data, local_masks, delay_bready)
+      addr += len(local_data)
+      data = data[transaction_size:]
+      masks = masks[transaction_size:]
 
-  # TODO(derekjchow): Read functions
-  async def readAddr(self, addr, size):
+  async def write_word(self, addr: int, data: int) -> None:
+    await self.write(addr, np.array([data], dtype=np.uint32))
+
+  async def _read_addr(self, addr, size, beats=1):
     self.dut.io_axi_slave_read_addr_valid.value = 1
     self.dut.io_axi_slave_read_addr_bits_addr.value   = addr
     self.dut.io_axi_slave_read_addr_bits_prot.value   = 2
     self.dut.io_axi_slave_read_addr_bits_id.value     = 0
-    self.dut.io_axi_slave_read_addr_bits_len.value    = 0 # 0+1 beats
+    self.dut.io_axi_slave_read_addr_bits_len.value    = beats-1
     self.dut.io_axi_slave_read_addr_bits_size.value   = size
     self.dut.io_axi_slave_read_addr_bits_burst.value  = 1
     self.dut.io_axi_slave_read_addr_bits_lock.value   = 0
@@ -141,44 +200,63 @@ class CoreMiniAxiInterface:
     await ClockCycles(self.dut.io_aclk, 1)
     self.dut.io_axi_slave_read_addr_valid.value = 0
 
-  async def readData(self):
+  async def _read_data(self):
     self.dut.io_axi_slave_read_data_ready.value = 1
-    last = False
+    while self.dut.io_axi_slave_read_data_valid.value != 1:
+      await ClockCycles(self.dut.io_aclk, 1)
+
+    data = np.frombuffer(
+        self.dut.io_axi_slave_read_data_bits_data.value.buff,
+        dtype=np.uint8)
+    last = self.dut.io_axi_slave_read_data_bits_last.value
+    assert self.dut.io_axi_slave_read_data_bits_resp == 0 # OKAY
+
+    await ClockCycles(self.dut.io_aclk, 1)
+    self.dut.io_axi_slave_read_data_ready.value = 0
+
+    return last, np.flip(data)
+
+  async def _read_transaction(self, addr, bytes_to_read):
+    # Compute number of beats
+    start_addr = addr
+    end_addr = addr + bytes_to_read - 1 # Last address written
+    start_line = start_addr // 16
+    end_line = end_addr // 16
+    beats = (end_line - start_line) + 1
+
+    await self._read_addr(start_line * 16, 4, beats)
 
     data = []
-    while not last:
-        while self.dut.io_axi_slave_read_data_valid.value != 1:
-            await ClockCycles(self.dut.io_aclk, 1)
+    bytes_remaining = bytes_to_read
+    for beat in range(beats):
+      base_addr = (addr // 16) * 16
+      sub_addr = addr - base_addr
+      (last, beat_data) = await self._read_data()
 
-        data.append(np.frombuffer(
-            self.dut.io_axi_slave_read_data_bits_data.value.buff,
-            dtype=np.int8))
-        last = self.dut.io_axi_slave_read_data_bits_last
-        # TODO(derekjchow): Exception on error?
-        # TODO(derekjchow): Mask?
-        await ClockCycles(self.dut.io_aclk, 1)
+      beat_data = beat_data[sub_addr:]
+      if len(beat_data) > bytes_remaining:
+        beat_data = beat_data[0:bytes_remaining]
 
-    self.dut.io_axi_slave_read_data_ready.value = 0
-    return np.array(list(reversed(data[0]))) # TODO(derekjchow): Check endianness
+      data.append(beat_data)
+      bytes_remaining = bytes_remaining - len(beat_data)
+      addr = addr + len(beat_data)
+      if beat == (beats - 1):
+        assert last
 
-  async def read_line(self, addr):
-    await self.readAddr(addr, 4) # Read 16 bytes
-    return await self.readData()
+    return np.concatenate(data)
 
-  async def read(self, addr, size):
-    assert(size % 16 == 0), "Reads muliple of 16 only supported for now"
-    assert(addr % 16 == 0), "Reads aligned to 16 only supported for now"
-    # TODO(derekjchow): Handle unaligned and burst
-    idx = 0
-    data = None
-    while idx < size:
-      line = await self.read_line(addr + idx)
-      if data is None:
-        data = line
-      else:
-        data = np.concatenate([data, line])
-      idx += 16
-    return data
+  async def read(self, addr, bytes_to_read):
+    """Reads data from Kelvin Memory."""
+    data = []
+    while bytes_to_read > 0:
+      transaction_size = self._determine_transaction_size(addr, bytes_to_read)
+      data.append(await self._read_transaction(addr, transaction_size))
+      bytes_to_read -= transaction_size
+      addr += transaction_size
+
+    if len(data) == 0:
+      return data
+    return np.concatenate(data)
 
   async def load_elf(self, f):
     """Loads an ELF file into DUT memory, and returns the entry point address."""
@@ -201,14 +279,14 @@ class CoreMiniAxiInterface:
   async def execute_from(self, start_pc):
     # Program starting address
     kelvin_pc_csr_addr = 0x30004
-    await self.writeWord(kelvin_pc_csr_addr, start_pc)
+    await self.write_word(kelvin_pc_csr_addr, start_pc)
 
     # Release clock gate
     kelvin_reset_csr_addr = 0x30000
-    await self.writeWord(kelvin_reset_csr_addr, 1)
+    await self.write_word(kelvin_reset_csr_addr, 1)
 
     # Release reset
-    await self.writeWord(kelvin_reset_csr_addr, 0)
+    await self.write_word(kelvin_reset_csr_addr, 0)
 
   async def wait_for_wfi(self):
     while self.dut.io_wfi.value != 1:
@@ -272,10 +350,10 @@ class CoreMiniAxiInterface:
 
       line = np.frombuffer(
           self.dut.io_axi_master_write_data_bits_data.value.buff,
-          dtype=np.int8)
+          dtype=np.uint8)
       data.append(list(reversed(line)))
       masks.append(self.dut.io_axi_master_write_data_bits_strb.value)
-      last = self.dut.io_axi_slave_read_data_bits_last
+      last = self.dut.io_axi_slave_read_data_bits_last.value
       # TODO(derekjchow): Exception on error?
       # TODO(derekjchow): Mask?
       await ClockCycles(self.dut.io_aclk, 1)
@@ -303,19 +381,79 @@ class CoreMiniAxiInterface:
 
 
 @cocotb.test()
-async def core_mini_axi_write_read_memory(dut):
+async def core_mini_axi_basic_write_read_memory(dut):
     """Basic test to check if TCM memory can be written and read back."""
     core_mini_axi = CoreMiniAxiInterface(dut)
     await core_mini_axi.reset()
     cocotb.start_soon(core_mini_axi.clock.start())
     await ClockCycles(dut.io_aclk, 10)
 
-    await core_mini_axi.writeWord(0x100, 0x42)
-    await core_mini_axi.writeWord(0x104, 0x43)
-    rdata = await core_mini_axi.read_line(0x100)
+    # Test reading/writing words
+    await core_mini_axi.write_word(0x100, 0x42)
+    await core_mini_axi.write_word(0x104, 0x43)
+    rdata = (await core_mini_axi.read(0x100, 16)).view(np.uint32)
+    assert (rdata[0:2] == np.array([0x42, 0x43])).all()
 
-    wdata = np.arange(16, dtype=np.int8)
+    # Three write/read data burst
+    wdata = np.arange(48, dtype=np.uint8)
     await core_mini_axi.write(0x0, wdata)
-    rdata = await core_mini_axi.read_line(0x0)
-
+    rdata = await core_mini_axi.read(0x0, 48)
     assert (wdata == rdata).all()
+
+    # Unaligned read, taking two bursts
+    rdata = await core_mini_axi.read(0x8, 16)
+    assert (np.arange(8, 24, dtype=np.uint8) == rdata).all()
+
+    # Unaligned write, taking two bursts
+    wdata = np.arange(20, dtype=np.uint8)
+    await core_mini_axi.write(0x204, wdata)
+    rdata = await core_mini_axi.read(0x200, 32)
+    assert (wdata == rdata[4:24]).all()
+
+
+@cocotb.test()
+async def core_mini_axi_slow_bready(dut):
+  """Test that BVALID stays high until BREADY is presented"""
+  core_mini_axi = CoreMiniAxiInterface(dut)
+  await core_mini_axi.reset()
+  cocotb.start_soon(core_mini_axi.clock.start())
+  await ClockCycles(dut.io_aclk, 10)
+
+  wdata = np.arange(16, dtype=np.uint8)
+  for i in tqdm.trange(100):
+    bready_delay = random.randint(0, 50)
+    await core_mini_axi.write(i*32, wdata, delay_bready=bready_delay)
+
+  for _ in tqdm.trange(100):
+    rdata = await core_mini_axi.read(i*32, 16)
+    assert (wdata == rdata).all()
+
+
+@cocotb.test()
+async def core_mini_axi_write_read_memory_stress_test(dut):
+    """Stress test reading/writing from DTCM."""
+    core_mini_axi = CoreMiniAxiInterface(dut)
+    await core_mini_axi.reset()
+    cocotb.start_soon(core_mini_axi.clock.start())
+    await ClockCycles(dut.io_aclk, 10)
+
+    # TODO(derekjchow): Write stress program to run on Kelvin
+
+    # Range for a DTCM buffer we can read/write too.
+    DTCM_START = 0x12000
+    DTCM_END = 0x14000
+    dtcm_model_buffer = np.zeros((DTCM_END - DTCM_START))
+
+    for i in tqdm.trange(1000):
+      start_addr = random.randint(DTCM_START, DTCM_END-2)
+      end_addr = random.randint(start_addr, DTCM_END-1)
+      transaction_length = end_addr - start_addr
+
+      if random.randint(0, 1) == 1:
+        wdata = np.random.randint(0, 256, transaction_length, dtype=np.uint8)
+        await core_mini_axi.write(start_addr, wdata)
+        dtcm_model_buffer[start_addr-DTCM_START: end_addr-DTCM_START] = wdata
+      else:
+        expected = dtcm_model_buffer[start_addr-DTCM_START: end_addr-DTCM_START]
+        rdata = await core_mini_axi.read(start_addr, transaction_length)
+        assert (expected == rdata).all()

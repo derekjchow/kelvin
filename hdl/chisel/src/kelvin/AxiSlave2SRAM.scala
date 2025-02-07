@@ -42,9 +42,11 @@ class SRAM(p: Parameters, sramAddressWidth: Int) extends Module {
   ))
 
   val readData = Cat(io.sram.readData)
-  io.fabric.readData.bits := Mux(
-      io.fabric.readDataAddr.valid, readData, 0.U.asTypeOf(io.fabric.readData.bits))
-  io.fabric.readData.valid := io.fabric.readDataAddr.valid
+  val readIssued = RegInit(false.B)
+  val issueRead = io.fabric.readDataAddr.valid && !io.fabric.writeDataAddr.valid
+  readIssued := issueRead
+  io.fabric.readData.bits := Mux(readIssued, readData, 0.U)
+  io.fabric.readData.valid := readIssued
 
   io.sram.enable := (io.fabric.readDataAddr.valid || io.fabric.writeDataAddr.valid)
   io.sram.isWrite := io.fabric.writeDataAddr.valid
