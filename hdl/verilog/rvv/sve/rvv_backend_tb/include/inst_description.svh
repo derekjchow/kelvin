@@ -193,15 +193,6 @@ typedef enum logic [7:0] {
 
 
   VMUNARY0        =   8'b01_010_100,     // it could be vmsbf, vmsof, vmsif, viota, vid. They can be distinguished by vs1 field(inst_encoding[19:15]).
-// Vector Reduction Operations
-  VREDSUM         =   8'b01_000_000,
-  VREDMAXU        =   8'b01_000_110,
-  VREDMAX         =   8'b01_000_111,
-  VREDMINU        =   8'b01_000_100,
-  VREDMIN         =   8'b01_000_101,
-  VREDAND         =   8'b01_000_001,
-  VREDOR          =   8'b01_000_010,
-  VREDXOR         =   8'b01_000_011,
 // Vector Permutation Operations in OPM 
   //VMV             =   8'b01_010_000,
   VSLIDE1UP       =   8'b01_001_110,
