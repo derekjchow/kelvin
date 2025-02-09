@@ -34,7 +34,14 @@ UNUSED = $(DESIGN_PATH)/Aligner.sv	\
 				$(DESIGN_PATH)/Aligner_tb.sv	\
 				$(DESIGN_PATH)/MultiFifo.sv	\
 				$(DESIGN_PATH)/MultiFifo_tb.sv	\
+				$(DESIGN_PATH)/rvv_backend_mul_unit.sv	\
 				$(DESIGN_PATH)/RvvBackend.sv
+
+UNUSED += $(STD_PATH)/fifo_flopped_2w2r.sv	\
+					$(STD_PATH)/fifo_flopped_4w2r.sv	\
+					$(STD_PATH)/openFifo8_flopped_2w2r.sv	\
+					$(STD_PATH)/fifo_flopped.sv	\
+					$(STD_PATH)/openFifo4_flopped_ptr.sv
 					
 
 # ------------------------------------------------------------------

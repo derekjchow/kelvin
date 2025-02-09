@@ -207,7 +207,7 @@ class rvs_transaction extends uvm_sequence_item;
       -> (dest_type == SCALAR && src2_type == VRF && 
            (alu_type == OPMVV && src1_type == SCALAR)
       );
-      (inst_type == ALU && alu_inst[7:6] == 2'b01 && !(alu_inst inside {VCOMPRESS, VWXUNARY0})) 
+      (inst_type == ALU && alu_inst[7:6] == 2'b01 && (alu_inst inside {VCOMPRESS/*, VWXUNARY0*/})) 
       -> (dest_type == VRF && src2_type == VRF && 
            ((alu_type == OPMVV && src1_type == VRF) 
            ));
@@ -503,6 +503,8 @@ function void rvs_transaction::asm_string_gen();
   case(this.dest_type)
     VRF: dest = $sformatf("v%0d",this.dest_idx);
     XRF: dest = $sformatf("x%0d",this.dest_idx);
+    SCALAR: dest = $sformatf("v%0d",this.dest_idx);
+    default: dest = "?";
   endcase
   comm = $sformatf("# vlmul=%0s, vsew=%0s, vstart=%0d, vl=%0d", vtype.vlmul.name(), vtype.vsew.name(), vstart, vl);
 

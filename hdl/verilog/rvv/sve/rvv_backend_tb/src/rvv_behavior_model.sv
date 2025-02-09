@@ -167,6 +167,7 @@ endclass : rvv_behavior_model
     bit is_widen_vs2_inst;
     bit is_narrow_inst;
     bit is_mask_producing_inst;
+    bit is_mask_compare_inst;
     bit is_reduction_inst;
     bit use_vm_to_cal;
     bit is_rdt_pmt_inst;
@@ -253,7 +254,8 @@ endclass : rvv_behavior_model
         eew = 8 << vtype.vsew;
         fraction_lmul = vtype.vlmul[2];
         emul = 2.0 ** $signed(vtype.vlmul);
-        // vlmax = inst_tr.vlmax;
+        vlmax       = fraction_lmul ?        `VLEN / eew: 
+                                      emul * `VLEN / eew;
         elm_idx_max = fraction_lmul ?        `VLEN / eew: 
                                       emul * `VLEN / eew;
         `uvm_info("MDL/INST_CHECKER", $sformatf("Get eew=%0d, emul=%.0f",eew,emul), UVM_HIGH)
@@ -270,6 +272,7 @@ endclass : rvv_behavior_model
                                                                                        VMSEQ, VMSNE, VMSLTU, VMSLT, VMSLEU, VMSLE, VMSGTU, VMSGT
                                                                                        }) ||
                                                               (inst_tr.alu_inst inside {VMUNARY0} && inst_tr.src1_idx inside {VMSBF, VMSOF, VMSIF}));
+        is_mask_compare_inst   = inst_tr.inst_type == ALU &&  (inst_tr.alu_inst inside {VMSEQ, VMSNE, VMSLTU, VMSLT, VMSLEU, VMSLE, VMSGTU, VMSGT});
         is_reduction_inst = inst_tr.inst_type == ALU && inst_tr.alu_inst inside {VREDSUM, VREDAND, VREDOR, VREDXOR, 
                                                                                  VREDMINU,VREDMIN,VREDMAXU,VREDMAX,
                                                                                  VWREDSUMU, VWREDSUM};
@@ -319,7 +322,7 @@ endclass : rvv_behavior_model
           `uvm_warning("MDL/INST_CHECKER", $sformatf("pc=0x%8x: vs2 = v%0d of vid is ignored.", pc, inst_tr.src2_idx))
           continue;
         end
-        if(inst_tr.inst_type == ALU && inst_tr.alu_inst inside {VREDSUM, VREDAND, VREDOR, VREDXOR, VREDMINU, VREDMIN, VREDMAXU, VREDMAX} && inst_tr.vstart !== 0) begin
+        if(is_reduction_inst && inst_tr.vstart !== 0) begin
           `uvm_warning("MDL/INST_CHECKER", $sformatf("pc=0x%8x: vstart = %0d of reduction insts is ignored.", pc, inst_tr.vstart))
           continue;
         end
@@ -445,8 +448,6 @@ endclass : rvv_behavior_model
               src2_emul = src2_emul * src2_eew / eew;
               src1_eew = EEW1;
               src1_emul = src1_emul * src1_eew / eew;
-              // Special case: In this case, DUT will writeback all bits in dest.
-              elm_idx_max = `VLEN;
             end
             if(inst_tr.inst_type == ALU && inst_tr.alu_inst inside {VMADC, VMSBC, 
                 VMSEQ, VMSNE, VMSLTU, VMSLT, VMSLEU, VMSLE, VMSGTU, VMSGT}) begin
@@ -460,8 +461,6 @@ endclass : rvv_behavior_model
               src2_emul = src2_emul * src2_eew / eew;
               src1_eew = EEW1;
               src1_emul = src1_emul * src1_eew / eew;
-              // Special case: In this case, DUT will writeback all bits in dest.
-              elm_idx_max = `VLEN;
             end
             if(inst_tr.inst_type == ALU && inst_tr.alu_inst inside {VWXUNARY0} && (inst_tr.src1_idx inside {VMV_X_S} || (inst_tr.src2_idx inside {0} && inst_tr.src2_type == FUNC))) begin
               dest_eew = EEW1;
@@ -481,7 +480,13 @@ endclass : rvv_behavior_model
               src1_eew = EEW1;
               src1_emul = src1_emul * src1_eew / eew;
             end
-           // end
+            if(is_mask_producing_inst) begin
+              // Special case: In this case, DUT will writeback all bits in dest.
+              elm_idx_max = `VLEN;
+              if(!is_mask_compare_inst) 
+                // Special case: In this case, DUT will tread any elements > vl as tail.
+                vlmax = `VLEN;
+            end
             // 1.4 Reduction inst
             if(is_reduction_inst) begin
               dest_emul = 1;
@@ -800,21 +805,29 @@ endclass : rvv_behavior_model
           if(elm_idx < vstart) begin
             // pre-start: do nothing
             if(is_mask_producing_inst) begin
-              //  If is mask producing operation, it will keep original values.
+              // Special case: If is mask producing operation, it will keep original values.
               `uvm_info("MDL", $sformatf("element[%2d]: pre-start, mask producing operation", elm_idx), UVM_LOW)
               elm_writeback(dest, inst_tr.dest_type, dest_reg_idx_base, elm_idx, dest_eew);
             end else begin 
               `uvm_info("MDL", $sformatf("element[%2d]: pre-start", elm_idx), UVM_LOW)
             end
           end else if(elm_idx >= vl) begin
-            // tail 
+            // tail
             if(is_mask_producing_inst) begin
-              //  If is mask producing operation, it will write with calculation results.
-              `uvm_info("MDL", $sformatf("element[%2d]: tail, mask producing operation", elm_idx), UVM_LOW)
-              if((!vm && this.vrf[0][elm_idx]) || vm) begin
-                dest = alu_handler.exe(inst_tr, dest, src2, src1, src0);
+              if(elm_idx < vlmax) begin
+                // tail-1
+                // Special case: If is mask producing operation, it will write with calculation results.
+                `uvm_info("MDL", $sformatf("element[%2d]: tail, mask producing operation", elm_idx), UVM_LOW)
+                if((!vm && this.vrf[0][elm_idx]) || vm) begin
+                  dest = alu_handler.exe(inst_tr, dest, src2, src1, src0);
+                end
+                elm_writeback(dest, inst_tr.dest_type, dest_reg_idx_base, elm_idx, dest_eew);
+              end else begin
+                // tail-2
+                // Special case: If is mask producing operation, 
+                //               it will keep original values, but write strobe should be 1.
+                elm_writeback(dest, inst_tr.dest_type, dest_reg_idx_base, elm_idx, dest_eew);
               end
-              elm_writeback(dest, inst_tr.dest_type, dest_reg_idx_base, elm_idx, dest_eew);
             end else begin 
               `uvm_info("MDL", $sformatf("element[%2d]: tail", elm_idx), UVM_LOW)
               if(vtype.vta == AGNOSTIC) begin
@@ -1793,7 +1806,7 @@ class alu_processor#(
   endfunction:_vredxor
   function TD _vredminu(TD dest, T2 src2);
     logic unsigned [$bits(TD)-1:0] dest_temp;
-    dest_temp = dest < src2 ? dest : src2;
+    dest_temp = $unsigned(dest) < $unsigned(src2) ? dest : src2;
     _vredminu = dest_temp;
   endfunction:_vredminu
   function TD _vredmin(TD dest, T2 src2);
@@ -1803,7 +1816,7 @@ class alu_processor#(
   endfunction:_vredmin
   function TD _vredmaxu(TD dest, T2 src2);
     logic unsigned [$bits(TD)-1:0] dest_temp;
-    dest_temp = dest > src2 ? dest : src2;
+    dest_temp = $unsigned(dest) > $unsigned(src2) ? dest : src2;
     _vredmaxu = dest_temp;
   endfunction:_vredmaxu
   function TD _vredmax(TD dest, T2 src2);
@@ -1852,11 +1865,6 @@ class alu_processor#(
     _vmxnor = ~(src2 ^ src1);
   endfunction : _vmxnor 
 
-  //----------------------------------------------------------------------
-  // Ch31.14.1 Vector Single-Width Integer Reduction Instructions
-  ////static function TD _vredsum(T2 src2, T1 src1, T0 src0);
-  ////  _vredsum = src1 + src0;
-  ////endfunction : _vredsum
   //---------------------------------------------------------------------- 
   // 31.15.2. Vector count population in mask vcpop.m
   function TD _vcpop(T2 src2);

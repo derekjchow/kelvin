@@ -1517,7 +1517,7 @@ class alu_iterate_vv_seq extends alu_iterate_base_sequence;
 
           dest_type == VRF;
           src2_type == VRF;
-          src1_type == FUNC;
+          src1_type == VRF;
         });
         finish_item(req);
         inst_cnt++;
@@ -1539,7 +1539,7 @@ class alu_iterate_vv_seq extends alu_iterate_base_sequence;
 
             dest_type == VRF;
             src2_type == VRF;
-            src1_type == FUNC;
+            src1_type == VRF;
             vm == local::vm;
           });
           finish_item(req);
