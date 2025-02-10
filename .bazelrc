@@ -26,12 +26,12 @@ test --repo_env BAZEL_JVM_FETCH_SOURCES=false
 
 # Skip VCS by default as most workstations will not have licenses.
 # Skip renode by default until dependencies can be sandboxed appropriately.
-build --build_tag_filters="-vcs,-renode,-verilator"
+build --build_tag_filters="-vcs,-renode,-verilator,-synthesis"
 build --action_env=VCS_HOME
 build --action_env=VERDI_HOME
 build --action_env=LM_LICENSE_FILE
-test --build_tag_filters="-vcs,-renode,-verilator"
-test --test_tag_filters="-vcs,-renode,-verilator"
+test --build_tag_filters="-vcs,-renode,-verilator,-synthesis"
+test --test_tag_filters="-vcs,-renode,-verilator,-synthesis"
 test --action_env=VCS_HOME
 test --action_env=VERDI_HOME
 test --action_env=LM_LICENSE_FILE
@@ -45,3 +45,10 @@ test:vcs --build_tag_filters="vcs"
 test:vcs --test_tag_filters="vcs"
 run:vcs --build_tag_filters="vcs"
 run:vcs --test_tag_filters="vcs"
+
+# Add config to enable synthesis targets.
+build:synthesis --build_tag_filters="synthesis"
+test:synthesis --build_tag_filters="synthesis"
+test:synthesis --test_tag_filters="synthesis"
+run:synthesis --build_tag_filters="synthesis"
+run:synthesis --test_tag_filters="synthesis"
