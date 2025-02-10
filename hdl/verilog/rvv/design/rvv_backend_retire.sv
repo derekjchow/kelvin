@@ -396,9 +396,9 @@ assign rt2vrf_write_data[3].uop_pc = rob2rt_write_data[3].uop_pc;
 
 //  5.3. To XRF
 assign rt2xrf_write_valid[0] = w_valid0_chkTrap && w_type0;
-assign rt2xrf_write_valid[1] = w_valid1_chkTrap && rt2xrf_write_valid[0] && w_type1;
-assign rt2xrf_write_valid[2] = w_valid2_chkTrap && rt2xrf_write_valid[0] && rt2xrf_write_valid[1] && w_type2;
-assign rt2xrf_write_valid[3] = w_valid3_chkTrap && rt2xrf_write_valid[0] && rt2xrf_write_valid[1] && rt2xrf_write_valid[2] && w_type3;
+assign rt2xrf_write_valid[1] = w_valid1_chkTrap && w_type1;
+assign rt2xrf_write_valid[2] = w_valid2_chkTrap && w_type2;
+assign rt2xrf_write_valid[3] = w_valid3_chkTrap && w_type3;
 //Data
 assign rt2xrf_write_data[0].rt_data = w_data0[`XLEN-1:0];
 assign rt2xrf_write_data[1].rt_data = w_data1[`XLEN-1:0];
