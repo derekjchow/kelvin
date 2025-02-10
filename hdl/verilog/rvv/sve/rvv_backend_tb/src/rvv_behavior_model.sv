@@ -170,7 +170,7 @@ endclass : rvv_behavior_model
     bit is_mask_compare_inst;
     bit is_reduction_inst;
     bit use_vm_to_cal;
-    bit is_rdt_pmt_inst;
+    bit is_permutation_inst;
 
     bit vm;
 
@@ -258,39 +258,44 @@ endclass : rvv_behavior_model
                                       emul * `VLEN / eew;
         elm_idx_max = fraction_lmul ?        `VLEN / eew: 
                                       emul * `VLEN / eew;
-        `uvm_info("MDL/INST_CHECKER", $sformatf("Get eew=%0d, emul=%.0f",eew,emul), UVM_HIGH)
+        `uvm_info("MDL", $sformatf("Get eew=%0d, emul=%.2f",eew,emul), UVM_HIGH)
 
         // --------------------------------------------------
         // 1. Decode - Get eew & emul
         pc = inst_tr.pc;
-        is_widen_inst = inst_tr.inst_type == ALU && (inst_tr.alu_inst inside {VWADDU, VWADD, VWADDU_W, VWADD_W, VWSUBU, VWSUB, VWSUBU_W, VWSUB_W, 
-                                                                              VWMUL, VWMULU, VWMULSU, VWMACCU, VWMACC, VWMACCUS, VWMACCSU});
-        is_widen_vs2_inst = inst_tr.inst_type == ALU && (inst_tr.alu_inst inside {VWADD_W, VWADDU_W, VWSUBU_W, VWSUB_W});
-        is_narrow_inst = inst_tr.inst_type == ALU && (inst_tr.alu_inst inside {VNSRL, VNSRA, VNCLIPU, VNCLIP});
-        is_mask_producing_inst = inst_tr.inst_type == ALU && ((inst_tr.alu_inst inside {VMAND, VMOR, VMXOR, VMORN, VMNAND, VMNOR, VMANDN, VMXNOR,
-                                                                                       VMADC, VMSBC, 
-                                                                                       VMSEQ, VMSNE, VMSLTU, VMSLT, VMSLEU, VMSLE, VMSGTU, VMSGT
-                                                                                       }) ||
-                                                              (inst_tr.alu_inst inside {VMUNARY0} && inst_tr.src1_idx inside {VMSBF, VMSOF, VMSIF}));
-        is_mask_compare_inst   = inst_tr.inst_type == ALU &&  (inst_tr.alu_inst inside {VMSEQ, VMSNE, VMSLTU, VMSLT, VMSLEU, VMSLE, VMSGTU, VMSGT});
-        is_reduction_inst = inst_tr.inst_type == ALU && inst_tr.alu_inst inside {VREDSUM, VREDAND, VREDOR, VREDXOR, 
-                                                                                 VREDMINU,VREDMIN,VREDMAXU,VREDMAX,
-                                                                                 VWREDSUMU, VWREDSUM};
+        is_widen_inst           = inst_tr.inst_type == ALU &&  (inst_tr.alu_inst inside {VWADDU, VWADD, VWADDU_W, VWADD_W, VWSUBU, VWSUB, VWSUBU_W, VWSUB_W, 
+                                                                                         VWMUL, VWMULU, VWMULSU, VWMACCU, VWMACC, VWMACCUS, VWMACCSU,
+                                                                                         VWREDSUMU, VWREDSUM});
+        is_widen_vs2_inst       = inst_tr.inst_type == ALU &&  (inst_tr.alu_inst inside {VWADD_W, VWADDU_W, VWSUBU_W, VWSUB_W,
+                                                                                         VWREDSUMU, VWREDSUM});
+        is_narrow_inst          = inst_tr.inst_type == ALU &&  (inst_tr.alu_inst inside {VNSRL, VNSRA, VNCLIPU, VNCLIP});
+        is_mask_producing_inst  = inst_tr.inst_type == ALU && ((inst_tr.alu_inst inside {VMAND, VMOR, VMXOR, VMORN, VMNAND, VMNOR, VMANDN, VMXNOR,
+                                                                                         VMADC, VMSBC, 
+                                                                                         VMSEQ, VMSNE, VMSLTU, VMSLT, VMSLEU, VMSLE, VMSGTU, VMSGT}) ||
+                                                               (inst_tr.alu_inst inside {VMUNARY0} && inst_tr.src1_idx inside {VMSBF, VMSOF, VMSIF}));
+        is_reduction_inst       = inst_tr.inst_type == ALU &&  (inst_tr.alu_inst inside {VREDSUM, VREDAND, VREDOR, VREDXOR, 
+                                                                                         VREDMINU,VREDMIN,VREDMAXU,VREDMAX,
+                                                                                         VWREDSUMU, VWREDSUM});
+        is_permutation_inst     = inst_tr.inst_type == ALU && ((inst_tr.alu_inst inside {VSMUL_VMVNRR} && inst_tr.alu_type == OPIVI) ||
+                                                               (inst_tr.alu_inst inside {VWXUNARY0} && inst_tr.src1_type == FUNC && inst_tr.src1_idx inside {VMV_X_S}) ||
+                                                               (inst_tr.alu_inst inside {VWXUNARY0} && inst_tr.src2_type == FUNC && inst_tr.src2_idx inside {VMV_X_S}));
         use_vm_to_cal = inst_tr.use_vm_to_cal;
-        is_rdt_pmt_inst = (inst_tr.inst_type == ALU && (inst_tr.alu_inst inside {VREDSUM, VREDMAXU, VREDMAX, VREDMINU, VREDMIN, VREDAND, VREDOR, VREDXOR, VSMUL_VMVNRR})) || (inst_tr.inst_type == ALU && (inst_tr.alu_inst inside {VWXUNARY0}) && ((inst_tr.src1_type == FUNC && inst_tr.src1_idx inside {VMV_X_S}) || inst_tr.src2_type == FUNC) );
         // 1.0 illegal inst check
-        if(inst_tr.vstart >= inst_tr.vl && !(inst_tr.alu_inst inside {VSMUL_VMVNRR})) begin
+        // vstart
+        if(inst_tr.vstart >= inst_tr.vl && !(inst_tr.alu_inst inside {VSMUL_VMVNRR} && inst_tr.alu_type == OPIVI)) begin
           if(inst_tr.dest_type == XRF && inst_tr.vl == 0) begin
           end else begin
             `uvm_warning("MDL/INST_CHECKER", $sformatf("pc=0x%8x: ignored since vstart(%0d) >= vl(%0d).", pc, inst_tr.vstart, inst_tr.vl))
             continue;
           end
         end
-        if(inst_tr.inst_type == ALU && inst_tr.alu_type == OPIVV && inst_tr.alu_inst == VRSUB) begin
-          `uvm_warning("MDL/INST_CHECKER", $sformatf("pc=0x%8x: vrsub.vv is ignored.",pc))
+
+        // OPxxx reserve check
+        if(inst_tr.inst_type == ALU && inst_tr.alu_type == OPIVV && inst_tr.alu_inst inside {VRSUB, VMSGTU, VMSGT}) begin
+          `uvm_warning("MDL/INST_CHECKER", $sformatf("pc=0x%8x: OPIVV of %0s is ignored.",pc,inst_tr.alu_inst.name()))
           continue;
         end
-        if(inst_tr.inst_type == ALU && inst_tr.alu_type == OPIVI && (inst_tr.alu_inst inside {VSUB, VMSBC, VSBC, VMINU, VMIN, VMAXU, VMAX})) begin
+        if(inst_tr.inst_type == ALU && inst_tr.alu_type == OPIVI && (inst_tr.alu_inst inside {VSUB, VSBC, VMSBC, VMINU, VMIN, VMAXU, VMAX, VMSLTU, VMSLT})) begin
           `uvm_warning("MDL/INST_CHECKER", $sformatf("pc=0x%8x: OPIVI of %0s is ignored.",pc,inst_tr.alu_inst.name()))
           continue;
         end
@@ -298,10 +303,29 @@ endclass : rvv_behavior_model
           `uvm_warning("MDL/INST_CHECKER", $sformatf("pc=0x%8x: src2_idx != 0 of vmv.v is ignored.",pc))
           continue;
         end
+        if(inst_tr.inst_type == ALU && inst_tr.alu_type == OPMVX && (inst_tr.alu_inst inside {VMAND, VMOR, VMXOR, VMORN, VMNAND, VMNOR, VMANDN, VMXNOR})) begin
+          `uvm_warning("MDL/INST_CHECKER", $sformatf("pc=0x%8x: OPMVX of %0s is ignored.",pc,inst_tr.alu_inst.name()))
+          continue;
+        end
         if(inst_tr.inst_type == ALU && inst_tr.alu_type == OPMVV && (inst_tr.alu_inst inside {VWMACCUS})) begin
           `uvm_warning("MDL/INST_CHECKER", $sformatf("pc=0x%8x: OPMVV of %0s is ignored.",pc,inst_tr.alu_inst.name()))
           continue;
         end
+        if(inst_tr.inst_type == ALU && inst_tr.alu_type == OPMVX && (inst_tr.alu_inst inside {VWXUNARY0}) && inst_tr.src1_type == FUNC && inst_tr.src1_idx inside {VCPOP, VFIRST}) begin
+          `uvm_warning("MDL/INST_CHECKER", $sformatf("pc=0x%8x: OPMVX of %0s vcpop/vfirst is ignored.",pc,inst_tr.alu_inst.name()))
+          continue;
+        end
+        if(inst_tr.inst_type == ALU && inst_tr.alu_type == OPMVX && (inst_tr.alu_inst inside {VMUNARY0})) begin
+          `uvm_warning("MDL/INST_CHECKER", $sformatf("pc=0x%8x: OPMVX of %0s is ignored.",pc,inst_tr.alu_inst.name()))
+          continue;
+        end
+        if(inst_tr.inst_type == ALU && inst_tr.alu_type == OPMVX && (inst_tr.alu_inst inside {VREDSUM, VREDAND, VREDOR, VREDXOR,
+                                                                                              VREDMINU,VREDMIN,VREDMAXU,VREDMAX})) begin
+          `uvm_warning("MDL/INST_CHECKER", $sformatf("pc=0x%8x: OPMVX of %0s is ignored.",pc,inst_tr.alu_inst.name()))
+          continue;
+        end
+
+        // vm for special inst check
         if(inst_tr.inst_type == ALU && (inst_tr.alu_inst inside {VADC, VSBC}) && inst_tr.vm == 1) begin
           `uvm_warning("MDL/INST_CHECKER", $sformatf("pc=0x%8x: vm == 1 of %0s is ignored.",pc,inst_tr.alu_inst.name()))
           continue;
@@ -310,7 +334,7 @@ endclass : rvv_behavior_model
           `uvm_warning("MDL/INST_CHECKER", $sformatf("pc=0x%8x: vm == 0 of %0s is ignored.",pc,inst_tr.alu_inst.name()))
           continue;
         end
-        if(inst_tr.inst_type == ALU && inst_tr.alu_inst == VWXUNARY0 && inst_tr.src1_idx inside {VCPOP, VFIRST} && inst_tr.vstart !== 0) begin
+        if(inst_tr.inst_type == ALU && inst_tr.alu_inst == VWXUNARY0 && inst_tr.src1_type == FUNC && inst_tr.src1_idx inside {VCPOP, VFIRST} && inst_tr.vstart !== 0) begin
           `uvm_warning("MDL/INST_CHECKER", $sformatf("pc=0x%8x: vstart = %0d of vcpop/vfirst is ignored.", pc, inst_tr.vstart))
           continue;
         end
@@ -334,7 +358,7 @@ endclass : rvv_behavior_model
         src3_eew = eew;
 
         dest_emul = emul;
-        src0_emul = 1;
+        src0_emul = EMUL1;
         src1_emul = emul;
         src2_emul = emul;
         src3_emul = emul;
@@ -414,7 +438,7 @@ endclass : rvv_behavior_model
                 src2_emul = src2_emul * 2;
               end
             end
-            if(inst_tr.inst_type == ALU && inst_tr.alu_inst == VXUNARY0) begin
+            if(inst_tr.alu_inst == VXUNARY0) begin
               if(inst_tr.src1_idx inside {VSEXT_VF2, VZEXT_VF2}) begin
                 if(!(vtype.vsew inside {SEW16,SEW32})) begin
                   `uvm_warning("MDL/INST_CHECKER", $sformatf("pc=0x%8x: Illegal sew(%s) for vext instruction. Ignored.",pc,inst_tr.vtype.vsew.name()));
@@ -441,7 +465,8 @@ endclass : rvv_behavior_model
               end
             end
             // 1.3 Mask inst
-            if(inst_tr.inst_type == ALU && inst_tr.alu_inst inside {VMAND, VMOR, VMXOR, VMORN, VMNAND, VMNOR, VMANDN, VMXNOR}) begin
+            if(inst_tr.alu_inst inside {VMAND, VMOR, VMXOR, VMORN, VMNAND, VMNOR, VMANDN, VMXNOR} || 
+               inst_tr.alu_inst inside {VMUNARY0} && inst_tr.src1_idx inside {VMSBF, VMSOF, VMSIF}) begin
               dest_eew = EEW1;
               dest_emul = dest_emul * dest_eew / eew;
               src2_eew = EEW1;
@@ -449,8 +474,8 @@ endclass : rvv_behavior_model
               src1_eew = EEW1;
               src1_emul = src1_emul * src1_eew / eew;
             end
-            if(inst_tr.inst_type == ALU && inst_tr.alu_inst inside {VMADC, VMSBC, 
-                VMSEQ, VMSNE, VMSLTU, VMSLT, VMSLEU, VMSLE, VMSGTU, VMSGT}) begin
+            if(inst_tr.alu_inst inside {VMADC, VMSBC, VMSEQ, VMSNE, VMSLTU, 
+                                        VMSLT, VMSLEU, VMSLE, VMSGTU, VMSGT}) begin
               dest_eew = EEW1;
               dest_emul = dest_emul * dest_eew / eew;
             end
@@ -462,19 +487,20 @@ endclass : rvv_behavior_model
               src1_eew = EEW1;
               src1_emul = src1_emul * src1_eew / eew;
             end
-            if(inst_tr.inst_type == ALU && inst_tr.alu_inst inside {VWXUNARY0} && (inst_tr.src1_idx inside {VMV_X_S} || (inst_tr.src2_idx inside {0} && inst_tr.src2_type == FUNC))) begin
+            if(inst_tr.inst_type == ALU && inst_tr.alu_inst inside {VWXUNARY0} && (inst_tr.src1_type == FUNC && inst_tr.src1_idx inside {VMV_X_S} || 
+                                                                                   inst_tr.src2_type == FUNC && inst_tr.src2_idx inside {VMV_X_S})) begin
               dest_eew = EEW1;
-              dest_emul = 1;
-              src2_emul = 1;
-              src1_emul = 1;
+              dest_emul = EMUL1;
+              src2_emul = EMUL1;
+              src1_emul = EMUL1;
             end
-            if(inst_tr.inst_type == ALU && inst_tr.alu_inst inside {VMUNARY0} && inst_tr.src1_idx inside {VIOTA, VID}) begin
+            if(inst_tr.inst_type == ALU && inst_tr.alu_inst inside {VWXUNARY0} && inst_tr.src1_type == FUNC && inst_tr.src1_idx inside {VCPOP, VFIRST}) begin
               src2_eew = EEW1;
               src2_emul = src2_emul * src2_eew / eew;
               src1_eew = EEW1;
               src1_emul = src1_emul * src1_eew / eew;
             end
-            if(inst_tr.inst_type == ALU && inst_tr.alu_inst inside {VWXUNARY0} && inst_tr.src1_idx inside {VCPOP, VFIRST}) begin
+            if(inst_tr.inst_type == ALU && inst_tr.alu_inst inside {VMUNARY0} && inst_tr.src1_idx inside {VIOTA, VID}) begin
               src2_eew = EEW1;
               src2_emul = src2_emul * src2_eew / eew;
               src1_eew = EEW1;
@@ -489,50 +515,33 @@ endclass : rvv_behavior_model
             end
             // 1.4 Reduction inst
             if(is_reduction_inst) begin
-              dest_emul = 1;
-              src1_emul = 1;
+              dest_emul = EMUL1;
+              src1_emul = EMUL1;
               if(inst_tr.alu_inst inside {VWREDSUM, VWREDSUMU}) begin
                 dest_eew = dest_eew * 2;
                 src1_eew = src1_eew * 2;
               end
             end
             //end 
-            if(is_rdt_pmt_inst) begin
-                if(inst_tr.inst_type == ALU && inst_tr.alu_inst == VSMUL_VMVNRR) begin
-                    dest_eew  = dest_eew;
-                    case({inst_tr.alu_inst,inst_tr.alu_type})
-                        {VSMUL_VMVNRR,OPIVI}: begin 
-                        if(inst_tr.src1_idx[2:0]==3'b000) begin
-                                    dest_emul =1;
-                                    src2_emul =1;
-                                    `uvm_info("pmt_processor",$sformatf("This is in VMV1R function\n"),UVM_LOW)
-                                end
-                                else if(inst_tr.src1_idx[2:0]==3'b001) begin
-                                    dest_emul =2;
-                                    src2_emul =2;
-                                    `uvm_info("pmt_processor",$sformatf("This is in VMV2R function\n"),UVM_LOW)
-                                end
-                                else if(inst_tr.src1_idx[2:0]==3'b011) begin
-                                    dest_emul =4;
-                                    src2_emul =4;
-                                    `uvm_info("pmt_processor",$sformatf("This is in VMV4R function\n"),UVM_LOW)
-                                end
-                                else if(inst_tr.src1_idx[2:0]==3'b111) begin
-                                    dest_emul =8;
-                                    src2_emul =8;
-                                    `uvm_info("pmt_processor",$sformatf("This is in VMV8R function\n"),UVM_LOW)
-                                end
-                            else
-                                `uvm_error("pmt_processor","illegal NR number in transaction!")
+            if(is_permutation_inst) begin
+              if(inst_tr.inst_type == ALU && inst_tr.alu_inst == VSMUL_VMVNRR) begin
+                dest_eew  = dest_eew;
+                case({inst_tr.alu_inst,inst_tr.alu_type})
+                  {VSMUL_VMVNRR,OPIVI}: begin 
+                    if(inst_tr.src1_idx inside {0,1,3,7}) begin
+                      dest_emul = inst_tr.src1_idx + 1;
+                      src2_emul = inst_tr.src1_idx + 1;
+                    end else begin
+                      `uvm_error("pmt_processor","illegal NR number in transaction!")
+                      continue;
                     end
-                    default: `uvm_info("pmt_processor",$sformatf("Not invaild instruction."),UVM_LOW)
-                    endcase
-                    //src1_eew  = EEW32; // rs1 as base address
-                    //src1_emul = LMUL1;
-                end 
-
-            end // is_rdt_pmt_inst
-
+                  end
+                  default: `uvm_info("pmt_processor",$sformatf("Not invaild instruction."),UVM_LOW)
+                endcase
+                //src1_eew  = EEW32; // rs1 as base address
+                //src1_emul = LMUL1;
+              end 
+            end // is_permutation_inst
           end
           default: begin
             continue;
@@ -541,7 +550,7 @@ endclass : rvv_behavior_model
         // 1.4 dest is xrf
         if(inst_tr.dest_type == XRF) begin
           dest_eew = EEW32;
-          dest_emul = dest_emul * dest_eew / eew; // FIXME
+          dest_emul = EMUL1; 
         end
 
         // --------------------------------------------------
@@ -571,19 +580,19 @@ endclass : rvv_behavior_model
 
         // 2.2.1 Alignment Check
         if(inst_tr.dest_type == VRF) begin
-          if(dest_reg_idx_base % int'(dest_emul)) begin
+          if(dest_reg_idx_base % int'($ceil(dest_emul)) !== 0) begin
             `uvm_warning("MDL/INST_CHECKER", $sformatf("pc=0x%8x: Ch32.3.4.2. Dest vrf index(%0d) is unaligned to emul(%0d). Ignored.",pc , dest_reg_idx_base, dest_emul));
             continue;
           end
         end
         if(inst_tr.src2_type == VRF) begin
-          if(src2_reg_idx_base % int'(src2_emul)) begin
+          if(src2_reg_idx_base % int'($ceil(src2_emul)) !== 0) begin
             `uvm_warning("MDL/INST_CHECKER", $sformatf("pc=0x%8x: Ch32.5.3. Src2 vrf index(%0d) is unaligned to emul(%0d). Ignored.",pc, src2_reg_idx_base, src2_emul));
             continue;
           end
         end
         if(inst_tr.src1_type == VRF) begin
-          if(src1_reg_idx_base % int'(src1_emul)) begin
+          if(src1_reg_idx_base % int'($ceil(src1_emul)) !== 0) begin
             `uvm_warning("MDL/INST_CHECKER", $sformatf("pc=0x%8x: Ch32.3.4.2. Src1 vrf index(%0d) is unaligned to emul(%0d). Ignored.",pc, src1_reg_idx_base, src1_emul));
             continue;
           end
@@ -609,45 +618,68 @@ endclass : rvv_behavior_model
       end
 
         // 2.2.2 Overlap Check
-        if(inst_tr.dest_type == VRF && inst_tr.src2_type == VRF && (dest_eew > src2_eew) && (src2_reg_idx_base >= dest_reg_idx_base) && (src2_reg_idx_base+int'(src2_emul) < dest_reg_idx_base+int'(dest_emul)) && src2_emul>=1) begin
-          `uvm_warning("MDL/INST_CHECKER", $sformatf("pc=0x%8x: Ch32.5.2. The lowest part of dest vrf(v%0d~v%0d) overlaps the src2 vrf(v%0d~v%0d) in a widen instruction. Ignored.",pc,
-              dest_reg_idx_base, dest_reg_idx_base+int'($floor(dest_emul))-1, src2_reg_idx_base, src2_reg_idx_base+int'($floor(src2_emul))-1));
-          continue;
-        end
-        if(inst_tr.dest_type == VRF && inst_tr.src2_type == VRF && inst_tr.alu_inst == VXUNARY0 && (src2_reg_idx_base == dest_reg_idx_base) && src2_emul == 0.5 && dest_emul == 2 ) begin
-          `uvm_warning("MDL/INST_CHECKER", $sformatf("pc=0x%8x: Ch32.5.2. vext.vf4 with LMUL2 will spit to 2 uops. The lowest part of dest vrf(v%0d~v%0d) overlaps the src2 vrf(v%0d~v%0d) in a widen instruction. Ignored.",pc,
-              dest_reg_idx_base, dest_reg_idx_base+int'($floor(dest_emul))-1, src2_reg_idx_base, src2_reg_idx_base+int'($floor(src2_emul))-1));
-          continue;
-        end
-        if(inst_tr.dest_type == VRF && inst_tr.src2_type == VRF && (dest_eew < src2_eew) && (dest_reg_idx_base > src2_reg_idx_base) && (dest_reg_idx_base+int'(dest_emul) <= src2_reg_idx_base+int'(src2_emul)) && dest_emul>=1) begin
-          `uvm_warning("MDL/INST_CHECKER", $sformatf("pc=0x%8x: Ch32.5.2. The dest vrf(v%0d~v%0d) overlaps the highest part of src2 vrf(v%0d~v%0d) in a narrow instruction. Ignored.",pc,
-              dest_reg_idx_base, dest_reg_idx_base+int'($floor(dest_emul))-1, src2_reg_idx_base, src2_reg_idx_base+int'($floor(src2_emul))-1));
-          continue;
-        end
-        if(inst_tr.dest_type == VRF && inst_tr.src1_type == VRF && (dest_eew > src1_eew) && (src1_reg_idx_base >= dest_reg_idx_base) && (src1_reg_idx_base+int'(src1_emul) < dest_reg_idx_base+int'(dest_emul)) && src1_emul>=1) begin
-          `uvm_warning("MDL/INST_CHECKER", $sformatf("pc=0x%8x: Ch32.5.2. The lower part of dest vrf(v%0d~v%0d) overlaps the src1 vrf(v%0d~v%0d) in a widen instruction. Ignored.",pc,
-              dest_reg_idx_base, dest_reg_idx_base+int'($floor(dest_emul))-1, src1_reg_idx_base, src1_reg_idx_base+int'($floor(src1_emul))-1));
-          continue;
-        end
-        if(inst_tr.dest_type == VRF && inst_tr.src1_type == VRF && (dest_eew < src1_eew) && (dest_reg_idx_base > src1_reg_idx_base) && (dest_reg_idx_base+int'(dest_emul) <= src1_reg_idx_base+int'(src1_emul)) && dest_emul>=1) begin
-          `uvm_warning("MDL/INST_CHECKER", $sformatf("pc=0x%8x: Ch32.5.2. The dest vrf(v%0d~v%0d) overlaps the highest part of src1 vrf(v%0d~v%0d) in a narrow instruction. Ignored.",pc,
-              dest_reg_idx_base, dest_reg_idx_base+int'($floor(dest_emul))-1, src1_reg_idx_base, src1_reg_idx_base+int'($floor(src1_emul))-1));
-          continue;
-        end
+        // vd overlap v0.t
         if(inst_tr.dest_type == VRF && vm == 0 && dest_reg_idx_base == 0 && dest_eew != EEW1) begin
           `uvm_warning("MDL/INST_CHECKER", $sformatf("pc=0x%8x: Ch32.5.3. Dest vrf index(%0d) overlap source mask register v0. Ignored.",pc,dest_reg_idx_base));
           continue;
         end
-        if(inst_tr.inst_type == ALU && inst_tr.alu_inst == VMUNARY0 && inst_tr.src1_idx inside {VMSBF, VMSOF, VMSIF} && dest_reg_idx_base == src2_reg_idx_base) begin
-          `uvm_warning("MDL/INST_CHECKER", $sformatf("pc=0x%8x: In vmsf/vmsof/vmsif, dest vrf(v%0d) can't overlap src2 vrf(v%0d). Ignored.", pc, dest_reg_idx_base, src2_reg_idx_base))
+        // vd overlap vs2
+        if(inst_tr.dest_type == VRF && inst_tr.src2_type == VRF && (dest_eew > src2_eew) &&
+           (src2_reg_idx_base >= dest_reg_idx_base) && (src2_reg_idx_base+int'(src2_emul) < dest_reg_idx_base+int'(dest_emul)) && 
+           src2_emul>=1) begin
+          `uvm_warning("MDL/INST_CHECKER", 
+                       $sformatf("pc=0x%8x: Ch32.5.2. The lowest part of dest vrf(v%0d~v%0d) overlaps the src2 vrf(v%0d~v%0d) in a widen instruction. Ignored.",
+                       pc, dest_reg_idx_base, dest_reg_idx_base+int'($floor(dest_emul))-1, src2_reg_idx_base, src2_reg_idx_base+int'($floor(src2_emul))-1));
           continue;
         end
-        if(inst_tr.inst_type == ALU && inst_tr.alu_inst == VMUNARY0 && inst_tr.src1_idx inside {VIOTA} && src2_reg_idx_base inside {[dest_reg_idx_base:dest_reg_idx_base+int'($ceil(dest_emul))-1]}) begin
-          `uvm_warning("MDL/INST_CHECKER", $sformatf("pc=0x%8x: In viota, dest vrf(%0d~%0d) can't overlap src2 vrf(%0d). Ignored.", pc, dest_reg_idx_base, dest_reg_idx_base+int'($ceil(dest_emul))-1, src2_reg_idx_base))
+        if(inst_tr.dest_type == VRF && inst_tr.src2_type == VRF && (dest_eew < src2_eew) &&
+           (dest_reg_idx_base > src2_reg_idx_base) && (dest_reg_idx_base+int'(dest_emul) <= src2_reg_idx_base+int'(src2_emul)) && 
+           dest_emul>=1) begin
+          `uvm_warning("MDL/INST_CHECKER", 
+                       $sformatf("pc=0x%8x: Ch32.5.2. The dest vrf(v%0d~v%0d) overlaps the highest part of src2 vrf(v%0d~v%0d) in a narrow instruction. Ignored.",
+                       pc, dest_reg_idx_base, dest_reg_idx_base+int'($floor(dest_emul))-1, src2_reg_idx_base, src2_reg_idx_base+int'($floor(src2_emul))-1));
+          continue;
+        end
+        // vd overlap vs1
+        if(inst_tr.dest_type == VRF && inst_tr.src1_type == VRF && (dest_eew > src1_eew) &&
+           (src1_reg_idx_base >= dest_reg_idx_base) && (src1_reg_idx_base+int'(src1_emul) < dest_reg_idx_base+int'(dest_emul)) && 
+           src1_emul>=1) begin
+          `uvm_warning("MDL/INST_CHECKER",
+                       $sformatf("pc=0x%8x: Ch32.5.2. The lower part of dest vrf(v%0d~v%0d) overlaps the src1 vrf(v%0d~v%0d) in a widen instruction. Ignored.",
+                       pc, dest_reg_idx_base, dest_reg_idx_base+int'($floor(dest_emul))-1, src1_reg_idx_base, src1_reg_idx_base+int'($floor(src1_emul))-1));
+          continue;
+        end
+        if(inst_tr.dest_type == VRF && inst_tr.src1_type == VRF && (dest_eew < src1_eew) &&
+           (dest_reg_idx_base > src1_reg_idx_base) && (dest_reg_idx_base+int'(dest_emul) <= src1_reg_idx_base+int'(src1_emul)) && 
+           dest_emul>=1) begin
+          `uvm_warning("MDL/INST_CHECKER", 
+                       $sformatf("pc=0x%8x: Ch32.5.2. The dest vrf(v%0d~v%0d) overlaps the highest part of src1 vrf(v%0d~v%0d) in a narrow instruction. Ignored.",
+                       pc, dest_reg_idx_base, dest_reg_idx_base+int'($floor(dest_emul))-1, src1_reg_idx_base, src1_reg_idx_base+int'($floor(src1_emul))-1));
+          continue;
+        end
+        // Special case: vext.vf4 with LMUL2 will spit to 2 uops
+        if(inst_tr.dest_type == VRF && inst_tr.src2_type == VRF && 
+           inst_tr.alu_inst == VXUNARY0 && (src2_reg_idx_base == dest_reg_idx_base) && src2_emul == 0.5 && dest_emul == 2 ) begin
+          `uvm_warning("MDL/INST_CHECKER", 
+                       $sformatf("pc=0x%8x: Ch32.5.2. vext.vf4 with LMUL2 will be splitted to 2 uops. The lowest part of dest vrf(v%0d~v%0d) overlaps the src2 vrf(v%0d~v%0d) in a widen instruction. Ignored.",
+                       pc, dest_reg_idx_base, dest_reg_idx_base+int'($floor(dest_emul))-1, src2_reg_idx_base, src2_reg_idx_base+int'($floor(src2_emul))-1));
+          continue;
+        end
+        if(inst_tr.inst_type == ALU && inst_tr.alu_inst == VMUNARY0 && inst_tr.src1_idx inside {VMSBF, VMSOF, VMSIF} && dest_reg_idx_base == src2_reg_idx_base) begin
+          `uvm_warning("MDL/INST_CHECKER", 
+                       $sformatf("pc=0x%8x: In vmsf/vmsof/vmsif, dest vrf(v%0d) can't overlap src2 vrf(v%0d). Ignored.", 
+                       pc, dest_reg_idx_base, src2_reg_idx_base));
+          continue;
+        end
+        if(inst_tr.inst_type == ALU && inst_tr.alu_inst == VMUNARY0 && inst_tr.src1_idx inside {VIOTA} && 
+           src2_reg_idx_base inside {[dest_reg_idx_base:dest_reg_idx_base+int'($ceil(dest_emul))-1]}) begin
+          `uvm_warning("MDL/INST_CHECKER", 
+                       $sformatf("pc=0x%8x: In viota, dest vrf(%0d~%0d) can't overlap src2 vrf(%0d). Ignored.", 
+                      pc, dest_reg_idx_base, dest_reg_idx_base+int'($ceil(dest_emul))-1, src2_reg_idx_base));
           continue;
         end
         if(inst_tr.inst_type == ALU && inst_tr.alu_inst == VMUNARY0 && inst_tr.src1_idx inside {VMSBF, VMSOF, VMSIF, VIOTA} && dest_reg_idx_base == 0 && vm == 0) begin
-          `uvm_warning("MDL/INST_CHECKER", $sformatf("pc=0x%8x: In vmsf/vmsof/vmsif/viota, dest vrf(v%0d) can't overlap v0 while vm == 0. Ignored.", pc, dest_reg_idx_base, inst_tr.vstart))
+          `uvm_warning("MDL/INST_CHECKER", $sformatf("pc=0x%8x: In vmsf/vmsof/vmsif/viota, dest vrf(v%0d) can't overlap v0 while vm == 0. Ignored.", pc, dest_reg_idx_base))
           continue;
         end
 
@@ -656,7 +688,7 @@ endclass : rvv_behavior_model
         `uvm_info("MDL",$sformatf("Prepare done!\nelm_idx_max=%0d\ndest_eew=%0d\nsrc2_eew=%0d\nsrc1_eew=%0d\ndest_emul=%2.4f\nsrc2_emul=%2.4f\nsrc1_emul=%2.4f\n",elm_idx_max,dest_eew,src2_eew,src1_eew,dest_emul,src2_emul,src1_emul),UVM_LOW)
         // --------------------------------------------------
         // 3. Operate elements
-        if( is_rdt_pmt_inst == 1) begin //is_rdt_pmt_inst
+        if( is_permutation_inst == 1) begin //is_permutation_inst
         // vstart = 0 ch31.14
         //if (vstart != 0) begin
             `uvm_info("RDT_CHECKER", $sformatf("The Instructions are RDT PMT Instructions\n"),UVM_LOW)
@@ -894,12 +926,12 @@ endclass : rvv_behavior_model
             vrf_byte_strobe_temp[i][j] = |vrf_bit_strobe_temp[i][j*8 +: 8];
           end
         end
-      end // is_rdt_pmt_inst 
+      end // is_permutation_inst 
 
 
         // --------------------------------------------------
         // 4. Retire transaction gen
-     if( is_rdt_pmt_inst == 1) begin //is_rdt_pmt_inst
+     if( is_permutation_inst == 1) begin //is_permutation_inst
         rt_tr   = new("rt_tr");
         rt_tr.copy(inst_tr);
         rt_tr.is_rt = 1;
@@ -942,7 +974,7 @@ endclass : rvv_behavior_model
         `uvm_info("MDL",$sformatf("Complete calculation:\n%s",rt_tr.sprint()),UVM_LOW)
         rt_ap.write(rt_tr);
         this.executed_inst++;
-    end //is_rdt_pmt_inst
+    end //is_permutation_inst
     else begin
         rt_tr   = new("rt_tr");
         rt_tr.copy(inst_tr);
@@ -989,7 +1021,7 @@ endclass : rvv_behavior_model
         rt_ap.write(rt_tr);
         this.executed_inst++;
 
-    end // else end is_rdt_pmt_inst
+    end // else end is_permutation_inst
         
       //`uvm_info("MDL",$sformatf("Complete calculation:\n%s",rt_tr.sprint()),UVM_LOW)
       end // if(rt_last_uop[0])

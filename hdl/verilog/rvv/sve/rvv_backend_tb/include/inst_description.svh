@@ -11,17 +11,17 @@ typedef logic [`VLENB-1:0] vrf_byte_t;
 
 // typedef RVVSEW sew_e;
 typedef enum logic [2:0] {
-    SEW8  = 3'b000, 
-    SEW16 = 3'b001,
-    SEW32 = 3'b010,
-    SEW_LAST = 3'b111
+  SEW8  = 3'b000, 
+  SEW16 = 3'b001,
+  SEW32 = 3'b010,
+  SEW_LAST = 3'b111
 } sew_e;
 
 typedef enum int {
-    EEW1  = 1, 
-    EEW8  = 8, 
-    EEW16 = 16,
-    EEW32 = 32
+  EEW1  = 1, 
+  EEW8  = 8, 
+  EEW16 = 16,
+  EEW32 = 32
 } eew_e;
 
 typedef enum logic {
@@ -39,6 +39,12 @@ typedef enum logic [2:0] {
   LMUL8     = 3'b011,
   LMUL_LAST = 3'b100
 } lmul_e;
+parameter real EMUL1_4   = 0.25;
+parameter real EMUL1_2   = 0.50;
+parameter real EMUL1     = 1.00;
+parameter real EMUL2     = 2.00;
+parameter real EMUL4     = 4.00;
+parameter real EMUL8     = 8.00;
 
 typedef struct packed {
   logic [31] vill;
