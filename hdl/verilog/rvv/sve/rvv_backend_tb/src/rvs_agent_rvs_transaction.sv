@@ -85,8 +85,8 @@ class rvs_transaction extends uvm_sequence_item;
 
   constraint c_ill_rate {
     illegal_inst_en dist {
-      illegal_rate := 1,
-      legal_rate   := 0 
+      1 := illegal_rate,
+      0 := legal_rate    
     }; 
   }
 
@@ -117,6 +117,8 @@ class rvs_transaction extends uvm_sequence_item;
 
       (inst_type == ALU && alu_inst inside {VWREDSUM, VWREDSUMU}) 
       ->  (vstart == 0);
+    } else {
+    //TODO  
     }
 
     solve vl before vstart;
@@ -284,7 +286,28 @@ class rvs_transaction extends uvm_sequence_item;
               && vm == 1
             );
       }
-    } // if(!illegal_inst_en)
+    } else {
+      // TODO
+      // OPI
+      if(inst_type == ALU && alu_inst[7:6] == 2'b00) {
+        (dest_type == VRF && src2_type == VRF && 
+              ((alu_type == OPIVV && src1_type == VRF) || 
+               (alu_type == OPIVX && src1_type == XRF) || 
+               (alu_type == OPIVI && src1_type == IMM)
+              )
+            );
+      }
+
+      // OPM
+      if(inst_type == ALU && alu_inst[7:6] == 2'b01) {
+        (dest_type == VRF && src2_type == VRF && 
+              ((alu_type == OPMVV && src1_type == VRF) || 
+               (alu_type == OPMVX && src1_type == XRF) 
+              )
+            );
+      }
+      
+    }// if(!illegal_inst_en)
 
     (inst_type == ALU) -> (src3_type == UNUSE);
     solve inst_type before src3_type;
@@ -294,7 +317,7 @@ class rvs_transaction extends uvm_sequence_item;
     vtype.vsew inside {SEW8, SEW16, SEW32};
     vtype.vlmul inside {LMUL1_4, LMUL1_2, LMUL1, LMUL2, LMUL4, LMUL8};
 
-    // if(!illegal_inst_en) {
+    if(!illegal_inst_en) {
     //   if(inst_type == ALU) {
     //     // widen
     //     (alu_inst inside {VWADDU, VWADD, VWADDU_W, VWADD_W, VWSUBU, VWSUB, VWSUBU_W, VWSUB_W, 
@@ -313,7 +336,9 @@ class rvs_transaction extends uvm_sequence_item;
     //     (alu_inst == VXUNARY0 && src1_idx inside {VSEXT_VF4, VZEXT_VF4})
     //     ->  (vtype.vsew inside {SEW32} && vtype.vlmul inside {LMUL1,LMUL2,LMUL4,LMUL8});
     //   }
-    // } // if(!illegal_inst_en)
+    } else {
+      // TODO
+    }// if(!illegal_inst_en)
   }
 
 // Auto Field ---------------------------------------------------------

@@ -21,7 +21,10 @@ class rvs_driver extends uvm_driver # (rvs_transaction);
   logic           inst_vld [`ISSUE_LANE-1:0];
 
   bit             single_inst_mode = 0; 
-  int             skip_fetch_cnt = 0;
+  int             inst_tx_delay_max = 8;
+  int             inst_tx_delay = 0;
+  int             inst_tx_timeout_max = 500;
+  int             inst_tx_timeout_cnt = 0;
 
   extern function new(string name = "rvs_driver", uvm_component parent = null); 
  
@@ -107,8 +110,8 @@ task rvs_driver::inst_manage();
   end
 
   while (inst_tx_queue.size() < inst_tx_queue_depth) begin
-    if(skip_fetch_cnt != 0) begin 
-      skip_fetch_cnt--;
+    if(inst_tx_delay != 0) begin 
+      inst_tx_delay--;
       break;
     end
     //seq_item_port.get_next_item(tr);
@@ -120,10 +123,9 @@ task rvs_driver::inst_manage();
       inst_ap.write(tr);
       seq_item_port.item_done(); 
       if(single_inst_mode) begin
-        skip_fetch_cnt = 5;
+        inst_tx_delay = 5;
       end else begin
-        // skip_fetch_cnt = $urandom();
-        skip_fetch_cnt = 0; 
+        assert(std::randomize(inst_tx_delay) with {inst_tx_delay dist {0 := 94, [1:2] := 5, 8 := 1};});
       end
     end else begin
       break;
@@ -132,7 +134,7 @@ task rvs_driver::inst_manage();
 
   for(int i=0; i<`ISSUE_LANE; i++) begin
     if(i < inst_tx_queue.size()) begin
-      `uvm_info(get_type_name(), $sformatf("Assign to port inst[%d]",i),UVM_HIGH)
+      // `uvm_info(get_type_name(), $sformatf("Assign to port inst[%d]",i),UVM_HIGH)
       inst[i].inst_pc               = inst_tx_queue[i].pc;
       assert($cast(inst[i].opcode, inst_tx_queue[i].bin_inst[6:5]));
       inst[i].bits                  = inst_tx_queue[i].bin_inst[31:7];
@@ -151,6 +153,17 @@ task rvs_driver::inst_manage();
     end 
   end
 
+  // Timeout of inst port handshake check.
+  if(|rvs_if.insts_valid_rvs2cq) begin
+    inst_tx_timeout_cnt++;
+  end
+  if(|(rvs_if.insts_valid_rvs2cq & rvs_if.insts_ready_cq2rvs)) begin
+    inst_tx_timeout_cnt = 0;
+  end
+  if(inst_tx_timeout_cnt >= inst_tx_timeout_max) begin
+    `uvm_fatal(get_type_name(), $sformatf("Insts haven't been accepted by rvv for %0d cycles. Shut down!",inst_tx_timeout_cnt))
+  end
+
 endtask: inst_manage
 
 task rvs_driver::tx_driver();
@@ -167,11 +180,13 @@ task rvs_driver::tx_driver();
 endtask: tx_driver
 
 task rvs_driver::rx_driver();
+  logic rt_xrf_ready [`NUM_RT_UOP-1:0] ;
   forever begin
-    for(int i=0; i<`NUM_RT_UOP; i++) begin
-      rvs_if.rt_xrf_ready_rvs2rvv[i] <= '1;
-    end
     @(posedge rvs_if.clk);
+    for(int i=0; i<`NUM_RT_UOP; i++) begin
+      assert(std::randomize(rt_xrf_ready[i]) with {rt_xrf_ready[i] dist {0 := 20, 1 := 80};});
+      rvs_if.rt_xrf_ready_rvs2rvv[i] <= rt_xrf_ready[i];
+    end
   end
 endtask: rx_driver
 `endif // RVS_DRIVER__SV

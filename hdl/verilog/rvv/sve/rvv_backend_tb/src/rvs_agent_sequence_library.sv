@@ -1740,6 +1740,64 @@ class alu_iterate_vmvnr_seq extends alu_iterate_base_sequence;
 
 endclass: alu_iterate_vmvnr_seq
 
+//-----------------------------------------------------------
+// ALU random sequence
+//-----------------------------------------------------------
+
+class alu_random_base_sequence extends base_sequence;
+  `uvm_object_utils(alu_random_base_sequence)
+  `uvm_add_to_seq_lib(alu_random_base_sequence,rvs_sequencer_sequence_library)
+   
+  int inst_num = 1;
+
+  function new(string name = "alu_random_base_sequence");
+    super.new(name);
+	  `ifdef UVM_POST_VERSION_1_1
+      set_automatic_phase_objection(1);
+    `endif
+  endfunction:new
+  
+  task run_inst(uvm_sequencer_base sqr, int inst_num = 50);
+    this.inst_num = inst_num;
+    this.start(sqr);
+  endtask: run_inst
+
+endclass: alu_random_base_sequence
+
+class alu_random_seq extends alu_random_base_sequence;
+  `uvm_object_utils(alu_random_seq)
+  `uvm_add_to_seq_lib(alu_random_seq,rvs_sequencer_sequence_library)
+
+  virtual task body();
+    repeat(inst_num) begin
+      req = new("req");
+      start_item(req);
+      assert(req.randomize() with {
+        pc == local::inst_cnt;
+
+        vtype.vlmul dist {
+          LMUL1_4 := 10,
+          LMUL1_2 := 20,
+          LMUL1   := 20,
+          LMUL2   := 30,
+          LMUL4   :=  5,
+          LMUL8   := 15 
+        };
+
+        inst_type == ALU;
+        //(!alu_inst inside {VSLIDE1UP, VSLIDE1DOWN, VCOMPRESS, VSLIDEUP_RGATHEREI16, VSLIDEDOWN, VRGATHER, UNUSE_INST});
+        alu_inst inside {VADD, VSUB, VRSUB, VADC, VAND, VSADD, VSSRA, VNCLIPU, VWADDU, VWSUBU_W, VMUL, VMULHSU,
+        VDIVU, VREM, VWMULSU, VWMUL, VMACC, VWMACCUS, VMAND};
+
+      });
+      finish_item(req);
+      inst_cnt++;
+    end // repeat(inst_num)
+  endtask
+
+endclass: alu_random_seq
+
+
 //=================================================
 // LDST direct test sequence
 //=================================================
