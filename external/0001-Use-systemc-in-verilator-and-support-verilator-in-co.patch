@@ -1,15 +1,46 @@
-From 4d02e5b9713b77c7ee0cb4562d809b6db8ebae75 Mon Sep 17 00:00:00 2001
+From 0f95eb535f98bb362dd422a7b120c4161c3b936b Mon Sep 17 00:00:00 2001
 From: Alex Van Damme <atv@google.com>
 Date: Wed, 5 Feb 2025 13:40:42 -0800
 Subject: [PATCH] Use systemc in verilator and support verilator in cocotb
 
 ---
+ BUILD                                         |  11 +-
  cocotb/cocotb.bzl                             |  20 +++-
  cocotb/cocotb_wrapper.py                      |   1 +
  .../verilator/verilator.BUILD.bazel           | 110 +++++++++++++++++-
- verilator/defs.bzl                            |  21 +++-
- 4 files changed, 142 insertions(+), 10 deletions(-)
+ verilator/defs.bzl                            |  22 ++--
+ 5 files changed, 152 insertions(+), 12 deletions(-)
 
+diff --git a/BUILD b/BUILD
+index bf28dd5..a6fe964 100644
+--- a/BUILD
++++ b/BUILD
+@@ -13,15 +13,24 @@
+ # limitations under the License.
+ 
+ load("@rules_license//rules:license.bzl", "license")
++load("@rules_license//rules:license_kind.bzl", "license_kind")
+ 
+ package(
+     default_applicable_licenses = ["//:package_license"],
+-    default_visibility = ["//visibility:private"],
++    default_visibility = ["//visibility:public"],
++)
++
++license_kind(
++    name = "unencumbered",
++    conditions = [],
+ )
+ 
+ license(
+     name = "package_license",
+     package_name = "bazel_rules_hdl",
++    license_kinds = [
++        ":unencumbered",
++    ],
+ )
+ 
+ licenses(["notice"])
 diff --git a/cocotb/cocotb.bzl b/cocotb/cocotb.bzl
 index 8ab664d..cde681b 100644
 --- a/cocotb/cocotb.bzl
@@ -255,10 +286,18 @@ index f958490..3fadcca 100644
 +    visibility = ["//visibility:public"],
 +)
 diff --git a/verilator/defs.bzl b/verilator/defs.bzl
-index c3e26d5..5f092a2 100644
+index c3e26d5..fc8af53 100644
 --- a/verilator/defs.bzl
 +++ b/verilator/defs.bzl
-@@ -104,9 +104,10 @@ def _verilator_cc_library(ctx):
+@@ -16,7 +16,6 @@
+ """Functions for verilator."""
+ 
+ load("@bazel_tools//tools/cpp:toolchain_utils.bzl", "find_cpp_toolchain")
+-load("@rules_cc//cc:defs.bzl", "CcInfo")
+ load("//verilog:defs.bzl", "VerilogInfo")
+ 
+ def cc_compile_and_link_static_library(ctx, srcs, hdrs, deps, runfiles, includes = [], defines = []):
+@@ -104,9 +103,10 @@ def _verilator_cc_library(ctx):
      verilator_toolchain = ctx.toolchains["@rules_hdl//verilator:toolchain_type"]
  
      transitive_srcs = depset([], transitive = [ctx.attr.module[VerilogInfo].dag])
@@ -270,7 +309,7 @@ index c3e26d5..5f092a2 100644
  
      # Filter out .dat files.
      runfiles = []
-@@ -123,16 +124,20 @@ def _verilator_cc_library(ctx):
+@@ -123,16 +123,20 @@ def _verilator_cc_library(ctx):
  
      args = ctx.actions.args()
      args.add("--no-std")
@@ -295,7 +334,7 @@ index c3e26d5..5f092a2 100644
  
      ctx.actions.run(
          arguments = [args],
-@@ -192,12 +197,16 @@ verilator_cc_library = rule(
+@@ -192,12 +196,16 @@ verilator_cc_library = rule(
          ),
          "trace": attr.bool(
              doc = "Enable tracing for Verilator",
@@ -314,5 +353,5 @@ index c3e26d5..5f092a2 100644
              doc = "CC compiler.",
              default = Label("@bazel_tools//tools/cpp:current_cc_toolchain"),
 -- 
-2.48.1.362.g079036d154-goog
+2.48.1.502.g6dc24dfdaf-goog
 
