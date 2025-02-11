@@ -168,6 +168,7 @@ endclass : rvv_behavior_model
     bit is_narrow_inst;
     bit is_mask_producing_inst;
     bit is_mask_compare_inst;
+    bit is_carry_produce_inst;
     bit is_reduction_inst;
     bit use_vm_to_cal;
     bit is_permutation_inst;
@@ -251,6 +252,7 @@ endclass : rvv_behavior_model
           is_narrow_inst          = 0;
           is_mask_producing_inst  = 0;
           is_mask_compare_inst    = 0;
+          is_carry_produce_inst   = 0;
           is_reduction_inst       = 0;
           use_vm_to_cal           = 0;
           is_permutation_inst     = 0;
@@ -284,6 +286,7 @@ endclass : rvv_behavior_model
                                                                                          VMSEQ, VMSNE, VMSLTU, VMSLT, VMSLEU, VMSLE, VMSGTU, VMSGT}) ||
                                                                (inst_tr.alu_inst inside {VMUNARY0} && inst_tr.src1_idx inside {VMSBF, VMSOF, VMSIF}));
         is_mask_compare_inst    = inst_tr.inst_type == ALU &&  (inst_tr.alu_inst inside {VMSEQ, VMSNE, VMSLTU, VMSLT, VMSLEU, VMSLE, VMSGTU, VMSGT});
+        is_carry_produce_inst   = inst_tr.inst_type == ALU &&  (inst_tr.alu_inst inside {VMADC, VMSBC});
         is_reduction_inst       = inst_tr.inst_type == ALU &&  (inst_tr.alu_inst inside {VREDSUM, VREDAND, VREDOR, VREDXOR, 
                                                                                          VREDMINU,VREDMIN,VREDMAXU,VREDMAX,
                                                                                          VWREDSUMU, VWREDSUM});
@@ -520,7 +523,7 @@ endclass : rvv_behavior_model
             if(is_mask_producing_inst) begin
               // Special case: In this case, DUT will writeback all bits in dest.
               elm_idx_max = `VLEN;
-              if(!is_mask_compare_inst) 
+              if(!(is_mask_compare_inst || is_carry_produce_inst)) 
                 // Special case: In this case, DUT will tread any elements > vl as tail.
                 vlmax = `VLEN;
             end
