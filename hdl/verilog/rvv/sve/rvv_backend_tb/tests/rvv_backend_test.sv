@@ -741,6 +741,8 @@ class alu_vcomp_test extends rvv_backend_test;
     phase.raise_objection( .obj( this ) );
 
     rvs_vv_vx_vi_seq = alu_iterate_vv_vx_vi_seq::type_id::create("rvs_vv_vx_vi_seq", this);
+    rvs_vv_vx_seq    = alu_iterate_vv_vx_seq::type_id::create("rvs_vv_vx_seq", this);
+    rvs_vx_vi_seq    = alu_iterate_vx_vi_seq::type_id::create("rvs_vx_vi_seq", this);
     rvs_vv_vx_vi_seq.run_inst_iter(VMSEQ , env.rvs_agt.rvs_sqr, 0);
     rvs_vv_vx_vi_seq.run_inst_iter(VMSNE , env.rvs_agt.rvs_sqr, 0);
     rvs_vv_vx_seq.run_inst_iter(   VMSLTU, env.rvs_agt.rvs_sqr, 0);

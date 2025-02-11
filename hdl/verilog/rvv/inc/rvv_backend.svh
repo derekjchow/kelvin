@@ -359,6 +359,7 @@ typedef struct packed {
   logic        	                      rs1_data_valid;                                
           
   logic   [`UOP_INDEX_WIDTH-1:0]      uop_index;          // used for calculate v0_start in DP stage
+  logic                               first_uop_valid;     // one instruction may be split to many uops, this signal is used to specify the first uop in those uops of one instruction.
   logic                               last_uop_valid;     // one instruction may be split to many uops, this signal is used to specify the last uop in those uops of one instruction.
 } UOP_QUEUE_t;    
 
@@ -498,6 +499,7 @@ typedef struct packed {
   // rs1_data could be from X[rs1] and imm(inst[19:15]). If it is imm, the 5-bit imm(inst[19:15]) will be sign-extend or zero-extend(shift instructions...) to XLEN-bit.
   logic   [`XLEN-1:0] 	              rs1_data;         
   logic        	                      rs1_data_valid;
+  logic                               first_uop_valid;     
   logic                               last_uop_valid;     
   logic   [`UOP_INDEX_WIDTH-1:0]      uop_index;      
 } PMT_RDT_RS_t;    

@@ -50,7 +50,7 @@ module rvv_backend_pmtrdt_unit
 
 // ---internal signal definition--------------------------------------
   PMTRDT_CTRL_t             ctrl, ctrl_q; // control signals
-  logic                     ctrl_reg_en;
+  logic                     ctrl_reg_en, ctrl_reg_clr;
 
   // Reduction operation
   logic                     red_widen_sum_flag;
@@ -84,13 +84,15 @@ module rvv_backend_pmtrdt_unit
   logic [31:0]              sum_32b, max_32b, min_32b, and_32b, or_32b, xor_32b;
   logic [`VLEN-1:0]         pmtrdt_res_red; // pmtrdt result of reduction
   // Comparation operation
+  logic [`VSTART_WIDTH-1:0] cmp_vstart_d, cmp_vstart_q;
+  logic                     cmp_vstart_en;
   logic [`VLENB-1:0][8:0]   cmp_src1, cmp_src2; // source value for reduction/compare
   logic [`VLENB-1:0]        cmp_carry_in;
   logic [`VLENB-1:0][8:0]   cmp_sum;
-  logic [`VLENB-1:0]        less_than, great_than, equal, not_equal;
+  logic [`VLENB-1:0]        less_than, great_than_equal, equal, not_equal;
   logic [`VLENB-1:0]        cmp_res;
   logic [`VSTART_WIDTH-1:0] cmp_res_offset;
-  logic [`VLEN-1:0]         cmp_res_d, cmp_res_q;
+  logic [`VLEN-1:0]         cmp_res_d, cmp_res_q, cmp_res_en;
   logic [`VLEN-1:0]         pmtrdt_res_cmp; // pmtrdt result of compare
   // Permutation operation
   // slide+gather instruction
@@ -118,22 +120,11 @@ module rvv_backend_pmtrdt_unit
 // control signals based on uop
   // uop_type: permutation, reduction or compare
   always_comb begin
-    if (pmtrdt_uop.uop_exe_unit == RDT)
-      case (pmtrdt_uop.uop_funct6)
-        VREDSUM,
-        VREDMAXU,
-        VREDMAX,
-        VREDMINU,
-        VREDMIN,
-        VREDAND,
-        VREDOR,
-        VREDXOR,
-        VWREDSUMU,
-        VWREDSUM: ctrl.uop_type = REDUCTION;
-        default : ctrl.uop_type = COMPARE;
-      endcase
-    else
-      ctrl.uop_type = PERMUTATION;
+    case (pmtrdt_uop.uop_exe_unit)
+      PMT: ctrl.uop_type = PERMUTATION;
+      RDT: ctrl.uop_type = REDUCTION;
+      default : ctrl.uop_type = COMPARE;
+    endcase
   end
 
   // sign_opr: 0-unsigned, 1-signed
@@ -204,7 +195,6 @@ module rvv_backend_pmtrdt_unit
   assign ctrl.uop_pc = pmtrdt_uop.uop_pc;
 `endif
   assign ctrl.rob_entry = pmtrdt_uop.rob_entry;
-  assign ctrl.vstart = pmtrdt_uop.vstart;
   assign ctrl.vl     = pmtrdt_uop.vl;
   assign ctrl.vm     = pmtrdt_uop.vm;
   assign ctrl.vs1_eew        = pmtrdt_uop.vs1_eew;
@@ -212,8 +202,27 @@ module rvv_backend_pmtrdt_unit
   assign ctrl.vs3_data       = pmtrdt_uop.vs3_data;
   assign ctrl.last_uop_valid = pmtrdt_uop.last_uop_valid;
 
+  // cmp_evl
+  // prestart element: undisturbed
+  // body element:
+  //   active element: updated
+  //   inactive element: undisturbed
+  // tail element:
+  //   tail element in CMP-unit: updated
+  //   tail element not in CMP-unit: disturbed
+  always_comb begin
+    case (pmtrdt_uop.vs2_eew)
+      EEW32: ctrl.cmp_evl = pmtrdt_uop.uop_index * (`VLENB/4) + (`VLENB/4);
+      EEW16: ctrl.cmp_evl = pmtrdt_uop.uop_index * (`VLENB/2) + (`VLENB/2);
+      default:ctrl.cmp_evl = pmtrdt_uop.uop_index * `VLENB + `VLENB;
+    endcase
+  end
+
+  // when to clear ctrl reg?
+  // if ex0 stage has no uop to execute!
   assign ctrl_reg_en = pmtrdt_uop_valid & pmtrdt_uop_ready;
-  cdffr #(.WIDTH($bits(PMTRDT_CTRL_t))) ctrl_reg (.q(ctrl_q), .d(ctrl), .c(1'b0), .e(ctrl_reg_en), .clk(clk), .rst_n(rst_n));
+  assign ctrl_reg_clr = !ctrl_reg_en & ctrl_q.last_uop_valid;
+  cdffr #(.WIDTH($bits(PMTRDT_CTRL_t))) ctrl_reg (.q(ctrl_q), .d(ctrl), .c(ctrl_reg_clr), .e(ctrl_reg_en), .clk(clk), .rst_n(rst_n));
   
 // Reduction unit
   generate
@@ -1576,9 +1585,9 @@ module rvv_backend_pmtrdt_unit
                   cmp_src1[4*i+1][7:0] = ~pmtrdt_uop.rs1_data[8*1+:8];
                   cmp_src1[4*i+2][7:0] = ~pmtrdt_uop.rs1_data[8*2+:8];
                   cmp_src1[4*i+3][7:0] = ~pmtrdt_uop.rs1_data[8*3+:8];
-                  cmp_src1[4*i][8]     = ~1'b0;
-                  cmp_src1[4*i+1][8]   = ~1'b0;
-                  cmp_src1[4*i+2][8]   = ~1'b0;
+                  cmp_src1[4*i][8]     = 1'b0;
+                  cmp_src1[4*i+1][8]   = 1'b0;
+                  cmp_src1[4*i+2][8]   = 1'b0;
                   cmp_src1[4*i+3][8]   = ctrl.sign_opr ? ~pmtrdt_uop.rs1_data[8*3+7] : ~1'b0;
                 end
                 EEW16:begin
@@ -1586,9 +1595,9 @@ module rvv_backend_pmtrdt_unit
                   cmp_src1[4*i+1][7:0] = ~pmtrdt_uop.rs1_data[8*1+:8];
                   cmp_src1[4*i+2][7:0] = ~pmtrdt_uop.rs1_data[8*0+:8];
                   cmp_src1[4*i+3][7:0] = ~pmtrdt_uop.rs1_data[8*1+:8];
-                  cmp_src1[4*i][8]     = ~1'b0;
+                  cmp_src1[4*i][8]     = 1'b0;
                   cmp_src1[4*i+1][8]   = ctrl.sign_opr ? ~pmtrdt_uop.rs1_data[8*1+7] : ~1'b0;
-                  cmp_src1[4*i+2][8]   = ~1'b0;
+                  cmp_src1[4*i+2][8]   = 1'b0;
                   cmp_src1[4*i+3][8]   = ctrl.sign_opr ? ~pmtrdt_uop.rs1_data[8*1+7] : ~1'b0;
                 end
                 default:begin
@@ -1610,15 +1619,15 @@ module rvv_backend_pmtrdt_unit
               cmp_src1[4*i+3][7:0] = ~pmtrdt_uop.vs1_data[8*(4*i+3)+:8];
               case (pmtrdt_uop.vs2_eew) // compare instruction: vs1_eew == vs2_eew
                 EEW32:begin
-                  cmp_src1[4*i][8]   = ~1'b0;
-                  cmp_src1[4*i+1][8] = ~1'b0;
-                  cmp_src1[4*i+2][8] = ~1'b0;
+                  cmp_src1[4*i][8]   = 1'b0;
+                  cmp_src1[4*i+1][8] = 1'b0;
+                  cmp_src1[4*i+2][8] = 1'b0;
                   cmp_src1[4*i+3][8] = ctrl.sign_opr ? ~pmtrdt_uop.vs1_data[8*(4*i+3)+7] : ~1'b0;
                 end
                 EEW16:begin
-                  cmp_src1[4*i][8]   = ~1'b0;
+                  cmp_src1[4*i][8]   = 1'b0;
                   cmp_src1[4*i+1][8] = ctrl.sign_opr ? ~pmtrdt_uop.vs1_data[8*(4*i+1)+7] : ~1'b0;
-                  cmp_src1[4*i+2][8] = ~1'b0;
+                  cmp_src1[4*i+2][8] = 1'b0;
                   cmp_src1[4*i+3][8] = ctrl.sign_opr ? ~pmtrdt_uop.vs1_data[8*(4*i+3)+7] : ~1'b0;
                 end
                 default:begin
@@ -1658,57 +1667,134 @@ module rvv_backend_pmtrdt_unit
       end // end for (i=0; i<`VLENB/4; i++) begin : gen_cmp_src_data
 
       // generate compare result for compare operation
-      for (i=0; i<`VLENB; i++) begin : gen_compare_result
-        assign cmp_sum[i]   = cmp_src2[i] + cmp_src1[i] + cmp_carry_in[i];
+      for (i=0; i<`VLENB; i++) begin : gen_compare_value
+        assign cmp_sum[i]    = cmp_src2[i] + cmp_src1[i] + cmp_carry_in[i];
         assign less_than[i]  = cmp_sum[i][8];
-        assign great_than[i] = ~cmp_sum[i][8]; 
-        assign equal[i]      = cmp_sum[i] == '0;
-        assign not_equal[i]  = cmp_sum[i] != '0;
+        assign great_than_equal[i] = ~cmp_sum[i][8]; 
+        assign equal[i]      = cmp_sum[i][7:0] == '0;
+        assign not_equal[i]  = cmp_sum[i][7:0] != '0;
+      end
 
-        // cmp_res data
-        always_comb begin
-          case (ctrl.gt_lt_eq)
-            NOT_EQUAL:begin
-              case (pmtrdt_uop.vs2_eew)
-                EEW32: cmp_res[i] = |not_equal[4*(i%4)+:4]; 
-                EEW16: cmp_res[i] = |not_equal[2*(i%2)+:2];
-                default: cmp_res[i] = not_equal[i];
-              endcase
-            end
-            EQUAL:begin
-              case (pmtrdt_uop.vs2_eew)
-                EEW32: cmp_res[i] = &equal[4*(i%4)+:4];
-                EEW16: cmp_res[i] = &equal[2*(i%2)+:2];
-                default: cmp_res[i] = equal[i];
-              endcase
-            end
-            LESS_THAN:begin
-              case (pmtrdt_uop.vs2_eew)
-                EEW32: cmp_res[i] = less_than[4*(i%4+1)-1];
-                EEW16: cmp_res[i] = less_than[2*(i%2+1)-1];
-                default: cmp_res[i] = less_than[i];
-              endcase
-            end
-            LESS_THAN_OR_EQUAL:begin
-              case (pmtrdt_uop.vs2_eew)
-                EEW32: cmp_res[i] = less_than[4*(i%4+1)-1] | (&equal[4*(i%4)+:4]);
-                EEW16: cmp_res[i] = less_than[2*(i%2+1)-1] | (&equal[2*(i%2)+:2]);
-                default: cmp_res[i] = less_than[i] | equal[i];
-              endcase
-            end
-            GREAT_THAN:begin
-              case (pmtrdt_uop.vs2_eew)
-                EEW32: cmp_res[i] = great_than[4*(i%4+1)-1];
-                EEW16: cmp_res[i] = great_than[2*(i%2+1)-1];
-                default: cmp_res[i] = great_than[i];
-              endcase
-            end
-            default:begin
-                cmp_res[i] = 1'b0;
-            end
-          endcase
-        end
-      end //end for () begin : gen_compare_result
+      // cmp_res data
+      always_comb begin
+        case (ctrl.gt_lt_eq)
+          NOT_EQUAL:begin
+            case (pmtrdt_uop.vs2_eew)
+              EEW32: begin
+                for (int j=0; j<`VLENB/4; j++) begin 
+                  cmp_res[j]            = |not_equal[4*j+:4]; 
+                  cmp_res[j+`VLENB/4]   = |not_equal[4*j+:4]; 
+                  cmp_res[j+2*`VLENB/4] = |not_equal[4*j+:4]; 
+                  cmp_res[j+3*`VLENB/4] = |not_equal[4*j+:4]; 
+                end
+              end
+              EEW16: begin
+                for (int j=0; j<`VLENB/2; j++) begin 
+                  cmp_res[j]          = |not_equal[2*j+:2];
+                  cmp_res[j+`VLENB/2] = |not_equal[2*j+:2];
+                end
+              end
+              default: begin
+                for (int j=0; j<`VLENB; j++) begin 
+                  cmp_res[j] = not_equal[j];
+                end
+              end
+            endcase
+          end
+          EQUAL:begin
+            case (pmtrdt_uop.vs2_eew)
+              EEW32: begin
+                for (int j=0; j<`VLENB/4; j++) begin 
+                  cmp_res[j]            = &equal[4*j+:4];
+                  cmp_res[j+`VLENB/4]   = &equal[4*j+:4];
+                  cmp_res[j+2*`VLENB/4] = &equal[4*j+:4];
+                  cmp_res[j+3*`VLENB/4] = &equal[4*j+:4];
+                end
+              end
+              EEW16: begin
+                for (int j=0; j<`VLENB/2; j++) begin 
+                  cmp_res[j]          = &equal[2*j+:2];
+                  cmp_res[j+`VLENB/2] = &equal[2*j+:2];
+                end
+              end
+              default: begin
+                for (int j=0; j<`VLENB; j++) begin 
+                  cmp_res[j] = equal[j];
+                end
+              end
+            endcase
+          end
+          LESS_THAN:begin
+            case (pmtrdt_uop.vs2_eew)
+              EEW32: begin
+                for (int j=0; j<`VLENB/4; j++) begin 
+                  cmp_res[j]            = less_than[4*j+3];
+                  cmp_res[j+`VLENB/4]   = less_than[4*j+3];
+                  cmp_res[j+2*`VLENB/4] = less_than[4*j+3];
+                  cmp_res[j+3*`VLENB/4] = less_than[4*j+3];
+                end
+              end
+              EEW16: begin
+                for (int j=0; j<`VLENB/2; j++) begin 
+                  cmp_res[j]          = less_than[2*j+1];
+                  cmp_res[j+`VLENB/2] = less_than[2*j+1];
+                end
+              end
+              default: begin
+                for (int j=0; j<`VLENB; j++) begin 
+                  cmp_res[j] = less_than[j];
+                end
+              end
+            endcase
+          end
+          LESS_THAN_OR_EQUAL:begin
+            case (pmtrdt_uop.vs2_eew)
+              EEW32: begin
+                for (int j=0; j<`VLENB/4; j++) begin 
+                  cmp_res[j]            = less_than[4*j+3] | (&equal[4*j+:4]);
+                  cmp_res[j+`VLENB/4]   = less_than[4*j+3] | (&equal[4*j+:4]);
+                  cmp_res[j+2*`VLENB/4] = less_than[4*j+3] | (&equal[4*j+:4]);
+                  cmp_res[j+3*`VLENB/4] = less_than[4*j+3] | (&equal[4*j+:4]);
+                end
+              end
+              EEW16: begin
+                for (int j=0; j<`VLENB/2; j++) begin 
+                  cmp_res[j]          = less_than[2*j+1] | (&equal[2*j+:2]);
+                  cmp_res[j+`VLENB/2] = less_than[2*j+1] | (&equal[2*j+:2]);
+                end
+              end
+              default: begin
+                for (int j=0; j<`VLENB; j++) begin 
+                  cmp_res[j] = less_than[j] | equal[j];
+                end
+              end
+            endcase
+          end
+          default:begin //GREAT_THAN
+            case (pmtrdt_uop.vs2_eew)
+              EEW32: begin
+                for (int j=0; j<`VLENB/4; j++) begin 
+                  cmp_res[j]            = great_than_equal[4*j+3] & (|not_equal[4*j+:4]);
+                  cmp_res[j+`VLENB/4]   = great_than_equal[4*j+3] & (|not_equal[4*j+:4]);
+                  cmp_res[j+2*`VLENB/4] = great_than_equal[4*j+3] & (|not_equal[4*j+:4]);
+                  cmp_res[j+3*`VLENB/4] = great_than_equal[4*j+3] & (|not_equal[4*j+:4]);
+                end
+              end
+              EEW16: begin
+                for (int j=0; j<`VLENB/2; j++) begin 
+                  cmp_res[j]          = great_than_equal[2*j+1] & (|not_equal[2*j+:2]);
+                  cmp_res[j+`VLENB/2] = great_than_equal[2*j+1] & (|not_equal[2*j+:2]);
+                end
+              end
+              default: begin
+                for (int j=0; j<`VLENB; j++) begin 
+                  cmp_res[j] = great_than_equal[j] & not_equal[j];
+                end
+              end
+            endcase
+          end
+        endcase
+      end
 
       // cmp_res_offset
       always_comb begin
@@ -1720,16 +1806,28 @@ module rvv_backend_pmtrdt_unit
       end
 
       // cmp_res_d/cmp_res_q
+      always_comb begin
+        case (pmtrdt_uop.vs2_eew)
+          EEW32: cmp_res_en = {'0, {(`VLENB/4){1'b1}}} << cmp_res_offset;
+          EEW16: cmp_res_en = {'0, {(`VLENB/2){1'b1}}} << cmp_res_offset;
+          default: cmp_res_en = {'0, {(`VLENB){1'b1}}} << cmp_res_offset;
+        endcase
+      end
       assign cmp_res_d = {'0, cmp_res} << cmp_res_offset;
       for (i=0; i<`VLEN; i++) begin
-        cdffr cmp_res_reg (.q(cmp_res_q[i]), .d(cmp_res_d[i]), .c(1'b0), .e(cmp_res_d[i]), .clk(clk), .rst_n(rst_n));
+        cdffr #(.WIDTH(1)) cmp_res_reg (.q(cmp_res_q[i]), .d(cmp_res_d[i]), .c(1'b0), .e(cmp_res_en[i] & pmtrdt_uop_valid & pmtrdt_uop_ready), .clk(clk), .rst_n(rst_n));
       end
 
+      // cmp_vstart value is from the first uop of compare instruction
+      assign cmp_vstart_d = pmtrdt_uop.vstart;
+      assign cmp_vstart_en = pmtrdt_uop.first_uop_valid & pmtrdt_uop_valid & pmtrdt_uop_ready;
+      cdffr #(.WIDTH(`VSTART_WIDTH)) cmp_vstart_reg (.q(cmp_vstart_q), .d(cmp_vstart_d), .c(1'b0), .e(cmp_vstart_en), .clk(clk), .rst_n(rst_n));
       // pmtrdt_res_cmp
       for (i=0; i<`VLEN; i++) begin
         always_comb begin
-          if (i < ctrl_q.vstart) pmtrdt_res_cmp[i] = ctrl_q.vs3_data[i];
-          else if (ctrl_q.vm)    pmtrdt_res_cmp[i] = cmp_res_q[i];
+          if (i < cmp_vstart_q)      pmtrdt_res_cmp[i] = ctrl_q.vs3_data[i];
+          else if (i >= ctrl_q.cmp_evl) pmtrdt_res_cmp[i] = ctrl_q.vs3_data[i];
+          else if (ctrl_q.vm)         pmtrdt_res_cmp[i] = cmp_res_q[i];
           else if (ctrl_q.v0_data[i]) pmtrdt_res_cmp[i] = cmp_res_q[i];
           else                        pmtrdt_res_cmp[i] = ctrl_q.vs3_data[i];
         end
@@ -2017,7 +2115,7 @@ module rvv_backend_pmtrdt_unit
     end
   endfunction
 
-// f_pack_1s: collect all 1s and pack them
+// f_pack_1s: collect all 1s and pack themsigned(dest) < $signed(src2)
   function [`VLENB-1:0] f_pack_1s;
     input [`VLENB-1:0] value;
     

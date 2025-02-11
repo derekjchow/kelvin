@@ -45,8 +45,8 @@ typedef struct packed {
   logic [`PC_WIDTH-1:0]     uop_pc;
 `endif
   logic [`ROB_DEPTH-1:0]    rob_entry;
-  logic [`VSTART_WIDTH-1:0] vstart;
   logic [`VL_WIDTH-1:0]     vl;
+  logic [`VL_WIDTH-1:0]     cmp_evl; // evl for compare instruction
   logic                     vm;
   EEW_e                     vs1_eew;
   logic [`VLEN-1:0]         v0_data;

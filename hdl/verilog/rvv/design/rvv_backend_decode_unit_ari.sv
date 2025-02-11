@@ -3087,7 +3087,7 @@ module rvv_backend_decode_unit_ari
 
           VCOMPRESS: begin
             case(inst_funct3)
-              OPMVX: begin
+              OPMVV: begin
                 if (csr_vstart=='b0) begin
                   // destination register group cannot overlap the source register group
                   check_special = check_vd_overlap_v0&check_vd_overlap_vs2;
@@ -3968,7 +3968,15 @@ module rvv_backend_decode_unit_ari
               uop[i].ignore_vta = 'b0;
             end
             VMADC,
-            VMSBC: begin
+            VMSBC,
+            VMSEQ,
+            VMSNE,
+            VMSLTU,
+            VMSLT,
+            VMSLEU,
+            VMSLE,
+            VMSGTU,
+            VMSGT: begin
               uop[i].ignore_vma = 'b1;
               uop[i].ignore_vta = 'b1;
             end
@@ -5244,6 +5252,7 @@ module rvv_backend_decode_unit_ari
   // update last_uop valid
   always_comb begin
     for(int i=0;i<`NUM_DE_UOP;i=i+1) begin: GET_UOP_LAST
+      uop[i].first_uop_valid = uop_index_current[i][`UOP_INDEX_WIDTH-1:0] == uop_vstart;
       uop[i].last_uop_valid = uop_index_current[i][`UOP_INDEX_WIDTH-1:0] == uop_index_max;
     end
   end

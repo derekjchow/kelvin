@@ -134,7 +134,8 @@ module rvv_backend_rob
         .T      (DP2ROB_t),
         .M      (`NUM_DP_UOP),
         .N      (`NUM_RT_UOP),
-        .DEPTH  (`ROB_DEPTH)
+        .DEPTH  (`ROB_DEPTH),
+        .CHAOS_PUSH (1'b1)
     ) u_uop_info_fifo (
       // global
         .clk    (clk),
@@ -174,7 +175,8 @@ module rvv_backend_rob
         .N      (`NUM_RT_UOP),
         .DEPTH  (`ROB_DEPTH),
         .POP_CLEAR (1'b1),
-        .ASYNC_RSTN (1'b1)
+        .ASYNC_RSTN (1'b1),
+        .CHAOS_PUSH (1'b1)
     ) u_uop_valid_fifo (
       // global
         .clk    (clk),

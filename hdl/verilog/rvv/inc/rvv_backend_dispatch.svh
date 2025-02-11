@@ -77,6 +77,7 @@ typedef struct packed {
 // input signals for ctrl unit
 typedef struct packed {
   EXE_UNIT_e             uop_exe_unit;
+  logic                  last_uop_valid;
 } UOP_CTRL_t;
 
 // input signals for opr_byte_type unit

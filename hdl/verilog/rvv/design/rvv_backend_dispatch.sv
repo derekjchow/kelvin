@@ -304,7 +304,8 @@ module rvv_backend_dispatch
 // Control handshae mechanism for uop_queue <-> dispath, dispatch <-> rs and dispatch <-> rob
     generate
         for (i=0; i<`NUM_DP_UOP; i++) begin : gen_uop_ctrl
-            assign uop_ctrl[i] = uop_uop2dp[i].uop_exe_unit;
+            assign uop_ctrl[i].uop_exe_unit   = uop_uop2dp[i].uop_exe_unit;
+            assign uop_ctrl[i].last_uop_valid = uop_uop2dp[i].last_uop_valid;
         end
     endgenerate
 
@@ -388,7 +389,13 @@ module rvv_backend_dispatch
 `ifdef TB_SUPPORT
             assign rs_dp2pmtrdt[i].uop_pc        = uop_uop2dp[i].uop_pc; 
 `endif
-            assign rs_dp2pmtrdt[i].rob_entry     = uop_index_rob2dp + i; 
+            always_comb begin
+              case (uop_uop2dp[i].uop_exe_unit)
+              CMP,
+              RDT:rs_dp2pmtrdt[i].rob_entry      = uop_uop2dp[i].first_uop_valid ? (uop_index_rob2dp + i) : uop_index_rob2dp;
+              default:rs_dp2pmtrdt[i].rob_entry  = uop_index_rob2dp + i; 
+              endcase
+            end
             assign rs_dp2pmtrdt[i].uop_exe_unit  = uop_uop2dp[i].uop_exe_unit; 
             assign rs_dp2pmtrdt[i].uop_funct6    = uop_uop2dp[i].uop_funct6;
             assign rs_dp2pmtrdt[i].uop_funct3    = uop_uop2dp[i].uop_funct3;
@@ -408,7 +415,8 @@ module rvv_backend_dispatch
             assign rs_dp2pmtrdt[i].vs3_data_valid= uop_uop2dp[i].vs3_valid;
             assign rs_dp2pmtrdt[i].rs1_data      = uop_uop2dp[i].rs1_data;
             assign rs_dp2pmtrdt[i].rs1_data_valid= uop_uop2dp[i].rs1_data_valid;
-            assign rs_dp2pmtrdt[i].last_uop_valid= uop_uop2dp[i].last_uop_valid;
+            assign rs_dp2pmtrdt[i].first_uop_valid = uop_uop2dp[i].first_uop_valid;
+            assign rs_dp2pmtrdt[i].last_uop_valid  = uop_uop2dp[i].last_uop_valid;
             assign rs_dp2pmtrdt[i].uop_index     = uop_uop2dp[i].uop_index;
             
           // MUL/MAC RS

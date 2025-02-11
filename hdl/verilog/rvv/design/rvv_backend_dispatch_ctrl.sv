@@ -112,7 +112,14 @@ module rvv_backend_dispatch_ctrl
                                          uop_ready_rob2dp[i] &
                                          rs_ready[i]         ;
 
-            assign uop_valid_dp2rob[i] = uop_ready_dp2uop[i];
+            // CMP&RDT instruction update vd in the last uop.
+            always_comb begin
+              case (uop_ctrl[i].uop_exe_unit)
+                CMP,
+                RDT: uop_valid_dp2rob[i] = uop_ctrl[i].last_uop_valid ? uop_ready_dp2uop[i] : 1'b0;
+                default: uop_valid_dp2rob[i] = uop_ready_dp2uop[i];
+              endcase
+            end
 
             assign rs_valid_dp2alu[i]    = uop_ready_dp2uop[i] & 
                                            (uop_ctrl[i].uop_exe_unit == ALU);
