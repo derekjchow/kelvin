@@ -120,7 +120,7 @@ module rvv_backend_rob
     logic     [`NUM_RT_UOP-1:0]  flush;
 
   // retire uops
-    logic     [`NUM_RT_UOP-1:0]  uop_retire_ready;
+    logic     [`NUM_RT_UOP-1:0]  uop_retire_valid;
 
   // temp signal
     logic [`ROB_DEPTH_WIDTH-1:0] wind_uop_wptr [`ROB_DEPTH-1:0];
@@ -342,16 +342,16 @@ module rvv_backend_rob
   generate
       for (i=0; i<`NUM_RT_UOP; i++) begin : gen_rob2rt
         // retire_uop valid
-          assign uop_retire_ready[i] = uop_valid_rob2rt[i] & uop_done[wind_uop_rptr[i]];
-          if (i==0) assign rd_valid_rob2rt[0] = uop_retire_ready[0];
-          else      assign rd_valid_rob2rt[i] = uop_retire_ready[i] & rd_valid_rob2rt[i-1] & ~trap_flag[wind_uop_rptr[i]-1'b1];
+          assign uop_retire_valid[i] = uop_valid_rob2rt[i] & uop_done[wind_uop_rptr[i]];
+          if (i==0) assign rd_valid_rob2rt[0] = rd_ready_rt2rob[0] && uop_retire_valid[0];
+          else      assign rd_valid_rob2rt[i] = rd_ready_rt2rob[i] && uop_retire_valid[i] && rd_valid_rob2rt[i-1] && ~trap_flag[wind_uop_rptr[i]-1'b1];
 
         // retire_uop data
 `ifdef TB_SUPPORT          
           assign rd_rob2rt[i].uop_pc  = uop_rob2rt[i].uop_pc;
           assign rd_rob2rt[i].last_uop_valid = uop_rob2rt[i].last_uop_valid;
 `endif          
-          assign rd_rob2rt[i].w_valid = res_mem[wind_uop_rptr[i]].w_valid & rd_valid_rob2rt[i];
+          assign rd_rob2rt[i].w_valid = res_mem[wind_uop_rptr[i]].w_valid;
           assign rd_rob2rt[i].w_index = uop_rob2rt[i].w_index;
           assign rd_rob2rt[i].w_data  = res_mem[wind_uop_rptr[i]].w_data;
           assign rd_rob2rt[i].w_type  = uop_rob2rt[i].w_type;
