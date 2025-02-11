@@ -13,7 +13,9 @@ typedef enum logic [2:0] {
   LESS_THAN,
   LESS_THAN_OR_EQUAL,
   GREAT_THAN,
-  GREAT_THAN_OR_EQUAL
+  GREAT_THAN_OR_EQUAL,
+  COUT, // carry-out
+  BOUT  // borrow-out
 } CMP_TYPE_e;
 
 typedef enum logic [2:0] {
@@ -34,7 +36,7 @@ typedef enum logic [1:0] {
 typedef struct packed {
   PMTRDT_UOP_TYPE_e         uop_type;
   logic                     sign_opr;   // set if signed value, clear if unsigned value
-  CMP_TYPE_e                gt_lt_eq;
+  CMP_TYPE_e                cmp_opr;
   logic                     widen;      // set if vd EEW is 2*SEW
   RDT_OPERATION_e           rdt_opr;
   PMT_OPERATION_e           pmt_opr;

@@ -864,7 +864,7 @@ endclass : rvv_behavior_model
                 // tail-1
                 // Special case: If is mask producing operation, it will write with calculation results.
                 `uvm_info("MDL", $sformatf("element[%2d]: tail, mask producing operation", elm_idx), UVM_LOW)
-                if(((!vm && this.vrf[0][elm_idx]) || vm )) begin
+                if((!vm && this.vrf[0][elm_idx]) || vm || use_vm_to_cal ) begin
                   dest = alu_handler.exe(inst_tr, dest, src2, src1, src0);
                 end
                 elm_writeback(dest, inst_tr.dest_type, dest_reg_idx_base, elm_idx, dest_eew);
@@ -1460,17 +1460,17 @@ class alu_processor#(
     _vadc = src2 + src1 + src0;
   endfunction : _vadc
   function TD _vmadc(T2 src2, T1 src1, T0 src0);
-    logic [$bits(TD):0] dest;
+    logic [$bits(T2):0] dest;
     dest = src2 + src1 + src0;
-    _vmadc = dest[$bits(TD)];
+    _vmadc = dest[$bits(T2)];
   endfunction : _vmadc
   function TD _vsbc(T2 src2, T1 src1, T0 src0);
     _vsbc = src2 - src1 - src0;
   endfunction : _vsbc
   function TD _vmsbc(T2 src2, T1 src1, T0 src0);
-    logic [$bits(TD):0] dest;
+    logic [$bits(T2):0] dest;
     dest = src2 - src1 - src0;
-    _vmsbc = dest[$bits(TD)];
+    _vmsbc = dest[$bits(T2)];
   endfunction : _vmsbc
 
   //---------------------------------------------------------------------- 

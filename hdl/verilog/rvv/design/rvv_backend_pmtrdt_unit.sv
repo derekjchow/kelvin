@@ -87,9 +87,10 @@ module rvv_backend_pmtrdt_unit
   logic [`VSTART_WIDTH-1:0] cmp_vstart_d, cmp_vstart_q;
   logic                     cmp_vstart_en;
   logic [`VLENB-1:0][8:0]   cmp_src1, cmp_src2; // source value for reduction/compare
+  logic [`VLENB-1:0]        in_data, cin_data, bin_data; // vmadc/vmsbc mask data
   logic [`VLENB-1:0]        cmp_carry_in;
   logic [`VLENB-1:0][8:0]   cmp_sum;
-  logic [`VLENB-1:0]        less_than, great_than_equal, equal, not_equal;
+  logic [`VLENB-1:0]        less_than, great_than_equal, equal, not_equal, out_data;
   logic [`VLENB-1:0]        cmp_res;
   logic [`VSTART_WIDTH-1:0] cmp_res_offset;
   logic [`VLEN-1:0]         cmp_res_d, cmp_res_q, cmp_res_en;
@@ -130,6 +131,8 @@ module rvv_backend_pmtrdt_unit
   // sign_opr: 0-unsigned, 1-signed
   always_comb begin
     case (pmtrdt_uop.uop_funct6)
+      VMADC,
+      VMSBC,
       VMSLTU,
       VMSLEU,
       VMSGTU,
@@ -140,18 +143,20 @@ module rvv_backend_pmtrdt_unit
     endcase
   end
 
-  // gt_lt_eq: great than / less than / equal
+  // cmp_opr: great than / less than / equal / carry_out / borrow_out
   always_comb begin
     case (pmtrdt_uop.uop_funct6)
-      VMSEQ: ctrl.gt_lt_eq = EQUAL;
-      VMSNE: ctrl.gt_lt_eq = NOT_EQUAL;
+      VMSEQ: ctrl.cmp_opr = EQUAL;
+      VMSNE: ctrl.cmp_opr = NOT_EQUAL;
       VMSLTU,
-      VMSLT: ctrl.gt_lt_eq = LESS_THAN;
+      VMSLT: ctrl.cmp_opr = LESS_THAN;
       VMSLEU,
-      VMSLE: ctrl.gt_lt_eq = LESS_THAN_OR_EQUAL;
+      VMSLE: ctrl.cmp_opr = LESS_THAN_OR_EQUAL;
       VMSGTU,
-      VMSGT: ctrl.gt_lt_eq = GREAT_THAN;
-      default: ctrl.gt_lt_eq = NOT_EQUAL;
+      VMSGT: ctrl.cmp_opr = GREAT_THAN;
+      VMADC: ctrl.cmp_opr = COUT;
+      VMSBC: ctrl.cmp_opr = BOUT;
+      default: ctrl.cmp_opr = NOT_EQUAL;
     endcase
   end
 
@@ -1544,7 +1549,42 @@ module rvv_backend_pmtrdt_unit
   // Compare unit
   generate
     if (GEN_CMP == 1'b1) begin
-       // cmp_src1/cmp_src2/cmp_carry_in data
+      // cin_data/bin_data
+      always_comb begin
+        case (pmtrdt_uop.vs2_eew) // vmadc/vmsbc inst: vd_eew == vs2_eew
+          EEW32: in_data = {pmtrdt_uop.v0_data >> (pmtrdt_uop.uop_index*`VLENB/4)}[`VLENB-1:0]; 
+          EEW16: in_data = {pmtrdt_uop.v0_data >> (pmtrdt_uop.uop_index*`VLENB/2)}[`VLENB-1:0];
+          default: in_data = {pmtrdt_uop.v0_data >> (pmtrdt_uop.uop_index*`VLENB)}[`VLENB-1:0];
+        endcase
+      end
+
+      for (i=0; i<`VLENB/4; i++) begin
+        always_comb begin
+          case (pmtrdt_uop.vs2_eew) // vmadc/vmsbc inst: vd_eew == vs2_eew
+            EEW32:begin
+              cin_data[4*i]   = in_data[i]; 
+              cin_data[4*i+1] = in_data[i]; 
+              cin_data[4*i+2] = in_data[i]; 
+              cin_data[4*i+3] = in_data[i]; 
+            end
+            EEW16:begin
+              cin_data[4*i]   = in_data[2*i]; 
+              cin_data[4*i+1] = in_data[2*i]; 
+              cin_data[4*i+2] = in_data[2*i+1]; 
+              cin_data[4*i+3] = in_data[2*i+1]; 
+            end
+            default:begin
+              cin_data[4*i]   = in_data[4*i]; 
+              cin_data[4*i+1] = in_data[4*i+1]; 
+              cin_data[4*i+2] = in_data[4*i+2]; 
+              cin_data[4*i+3] = in_data[4*i+3]; 
+            end
+          endcase
+        end
+      end
+      assign bin_data = ~cin_data;
+
+      // cmp_src1/cmp_src2/cmp_carry_in data
       for (i=0; i<`VLENB/4; i++) begin : gen_cmp_src_data
         // cmp_src2 data
         always_comb begin
@@ -1581,60 +1621,142 @@ module rvv_backend_pmtrdt_unit
             OPIVI:begin
               case (pmtrdt_uop.vs2_eew)
                 EEW32:begin
-                  cmp_src1[4*i][7:0]   = ~pmtrdt_uop.rs1_data[8*0+:8];
-                  cmp_src1[4*i+1][7:0] = ~pmtrdt_uop.rs1_data[8*1+:8];
-                  cmp_src1[4*i+2][7:0] = ~pmtrdt_uop.rs1_data[8*2+:8];
-                  cmp_src1[4*i+3][7:0] = ~pmtrdt_uop.rs1_data[8*3+:8];
-                  cmp_src1[4*i][8]     = 1'b0;
-                  cmp_src1[4*i+1][8]   = 1'b0;
-                  cmp_src1[4*i+2][8]   = 1'b0;
-                  cmp_src1[4*i+3][8]   = ctrl.sign_opr ? ~pmtrdt_uop.rs1_data[8*3+7] : ~1'b0;
+                  case (ctrl.cmp_opr)
+                    COUT:begin
+                      cmp_src1[4*i][7:0]   = pmtrdt_uop.rs1_data[8*0+:8];
+                      cmp_src1[4*i+1][7:0] = pmtrdt_uop.rs1_data[8*1+:8];
+                      cmp_src1[4*i+2][7:0] = pmtrdt_uop.rs1_data[8*2+:8];
+                      cmp_src1[4*i+3][7:0] = pmtrdt_uop.rs1_data[8*3+:8];
+                      cmp_src1[4*i][8]     = 1'b0;
+                      cmp_src1[4*i+1][8]   = 1'b0;
+                      cmp_src1[4*i+2][8]   = 1'b0;
+                      cmp_src1[4*i+3][8]   = ctrl.sign_opr ? pmtrdt_uop.rs1_data[8*3+7] : 1'b0;
+                    end
+                    default:begin
+                      cmp_src1[4*i][7:0]   = ~pmtrdt_uop.rs1_data[8*0+:8];
+                      cmp_src1[4*i+1][7:0] = ~pmtrdt_uop.rs1_data[8*1+:8];
+                      cmp_src1[4*i+2][7:0] = ~pmtrdt_uop.rs1_data[8*2+:8];
+                      cmp_src1[4*i+3][7:0] = ~pmtrdt_uop.rs1_data[8*3+:8];
+                      cmp_src1[4*i][8]     = 1'b0;
+                      cmp_src1[4*i+1][8]   = 1'b0;
+                      cmp_src1[4*i+2][8]   = 1'b0;
+                      cmp_src1[4*i+3][8]   = ctrl.sign_opr ? ~pmtrdt_uop.rs1_data[8*3+7] : ~1'b0;
+                    end
+                  endcase
                 end
                 EEW16:begin
-                  cmp_src1[4*i][7:0]   = ~pmtrdt_uop.rs1_data[8*0+:8];
-                  cmp_src1[4*i+1][7:0] = ~pmtrdt_uop.rs1_data[8*1+:8];
-                  cmp_src1[4*i+2][7:0] = ~pmtrdt_uop.rs1_data[8*0+:8];
-                  cmp_src1[4*i+3][7:0] = ~pmtrdt_uop.rs1_data[8*1+:8];
-                  cmp_src1[4*i][8]     = 1'b0;
-                  cmp_src1[4*i+1][8]   = ctrl.sign_opr ? ~pmtrdt_uop.rs1_data[8*1+7] : ~1'b0;
-                  cmp_src1[4*i+2][8]   = 1'b0;
-                  cmp_src1[4*i+3][8]   = ctrl.sign_opr ? ~pmtrdt_uop.rs1_data[8*1+7] : ~1'b0;
+                  case (ctrl.cmp_opr)
+                    COUT:begin
+                      cmp_src1[4*i][7:0]   = pmtrdt_uop.rs1_data[8*0+:8];
+                      cmp_src1[4*i+1][7:0] = pmtrdt_uop.rs1_data[8*1+:8];
+                      cmp_src1[4*i+2][7:0] = pmtrdt_uop.rs1_data[8*0+:8];
+                      cmp_src1[4*i+3][7:0] = pmtrdt_uop.rs1_data[8*1+:8];
+                      cmp_src1[4*i][8]     = 1'b0;
+                      cmp_src1[4*i+1][8]   = ctrl.sign_opr ? pmtrdt_uop.rs1_data[8*1+7] : 1'b0;
+                      cmp_src1[4*i+2][8]   = 1'b0;
+                      cmp_src1[4*i+3][8]   = ctrl.sign_opr ? pmtrdt_uop.rs1_data[8*1+7] : 1'b0;
+                    end
+                    default:begin
+                      cmp_src1[4*i][7:0]   = ~pmtrdt_uop.rs1_data[8*0+:8];
+                      cmp_src1[4*i+1][7:0] = ~pmtrdt_uop.rs1_data[8*1+:8];
+                      cmp_src1[4*i+2][7:0] = ~pmtrdt_uop.rs1_data[8*0+:8];
+                      cmp_src1[4*i+3][7:0] = ~pmtrdt_uop.rs1_data[8*1+:8];
+                      cmp_src1[4*i][8]     = 1'b0;
+                      cmp_src1[4*i+1][8]   = ctrl.sign_opr ? ~pmtrdt_uop.rs1_data[8*1+7] : ~1'b0;
+                      cmp_src1[4*i+2][8]   = 1'b0;
+                      cmp_src1[4*i+3][8]   = ctrl.sign_opr ? ~pmtrdt_uop.rs1_data[8*1+7] : ~1'b0;
+                    end
+                  endcase
                 end
                 default:begin
-                  cmp_src1[4*i][7:0]   = ~pmtrdt_uop.rs1_data[0+:8];
-                  cmp_src1[4*i+1][7:0] = ~pmtrdt_uop.rs1_data[0+:8];
-                  cmp_src1[4*i+2][7:0] = ~pmtrdt_uop.rs1_data[0+:8];
-                  cmp_src1[4*i+3][7:0] = ~pmtrdt_uop.rs1_data[0+:8];
-                  cmp_src1[4*i][8]     = ctrl.sign_opr ? ~pmtrdt_uop.rs1_data[7] : ~1'b0;
-                  cmp_src1[4*i+1][8]   = ctrl.sign_opr ? ~pmtrdt_uop.rs1_data[7] : ~1'b0;
-                  cmp_src1[4*i+2][8]   = ctrl.sign_opr ? ~pmtrdt_uop.rs1_data[7] : ~1'b0;
-                  cmp_src1[4*i+3][8]   = ctrl.sign_opr ? ~pmtrdt_uop.rs1_data[7] : ~1'b0;
+                  case (ctrl.cmp_opr)
+                    COUT:begin
+                      cmp_src1[4*i][7:0]   = pmtrdt_uop.rs1_data[0+:8];
+                      cmp_src1[4*i+1][7:0] = pmtrdt_uop.rs1_data[0+:8];
+                      cmp_src1[4*i+2][7:0] = pmtrdt_uop.rs1_data[0+:8];
+                      cmp_src1[4*i+3][7:0] = pmtrdt_uop.rs1_data[0+:8];
+                      cmp_src1[4*i][8]     = ctrl.sign_opr ? pmtrdt_uop.rs1_data[7] : 1'b0;
+                      cmp_src1[4*i+1][8]   = ctrl.sign_opr ? pmtrdt_uop.rs1_data[7] : 1'b0;
+                      cmp_src1[4*i+2][8]   = ctrl.sign_opr ? pmtrdt_uop.rs1_data[7] : 1'b0;
+                      cmp_src1[4*i+3][8]   = ctrl.sign_opr ? pmtrdt_uop.rs1_data[7] : 1'b0;
+                    end
+                    default:begin
+                      cmp_src1[4*i][7:0]   = ~pmtrdt_uop.rs1_data[0+:8];
+                      cmp_src1[4*i+1][7:0] = ~pmtrdt_uop.rs1_data[0+:8];
+                      cmp_src1[4*i+2][7:0] = ~pmtrdt_uop.rs1_data[0+:8];
+                      cmp_src1[4*i+3][7:0] = ~pmtrdt_uop.rs1_data[0+:8];
+                      cmp_src1[4*i][8]     = ctrl.sign_opr ? ~pmtrdt_uop.rs1_data[7] : ~1'b0;
+                      cmp_src1[4*i+1][8]   = ctrl.sign_opr ? ~pmtrdt_uop.rs1_data[7] : ~1'b0;
+                      cmp_src1[4*i+2][8]   = ctrl.sign_opr ? ~pmtrdt_uop.rs1_data[7] : ~1'b0;
+                      cmp_src1[4*i+3][8]   = ctrl.sign_opr ? ~pmtrdt_uop.rs1_data[7] : ~1'b0;
+                    end
+                  endcase
                 end
               endcase
             end
             default:begin
-              cmp_src1[4*i][7:0]   = ~pmtrdt_uop.vs1_data[8*(4*i)+:8];
-              cmp_src1[4*i+1][7:0] = ~pmtrdt_uop.vs1_data[8*(4*i+1)+:8];
-              cmp_src1[4*i+2][7:0] = ~pmtrdt_uop.vs1_data[8*(4*i+2)+:8];
-              cmp_src1[4*i+3][7:0] = ~pmtrdt_uop.vs1_data[8*(4*i+3)+:8];
+              case (ctrl.cmp_opr)
+                COUT:begin
+                  cmp_src1[4*i][7:0]   = pmtrdt_uop.vs1_data[8*(4*i)+:8];
+                  cmp_src1[4*i+1][7:0] = pmtrdt_uop.vs1_data[8*(4*i+1)+:8];
+                  cmp_src1[4*i+2][7:0] = pmtrdt_uop.vs1_data[8*(4*i+2)+:8];
+                  cmp_src1[4*i+3][7:0] = pmtrdt_uop.vs1_data[8*(4*i+3)+:8];
+                end
+                default: begin
+                  cmp_src1[4*i][7:0]   = ~pmtrdt_uop.vs1_data[8*(4*i)+:8];
+                  cmp_src1[4*i+1][7:0] = ~pmtrdt_uop.vs1_data[8*(4*i+1)+:8];
+                  cmp_src1[4*i+2][7:0] = ~pmtrdt_uop.vs1_data[8*(4*i+2)+:8];
+                  cmp_src1[4*i+3][7:0] = ~pmtrdt_uop.vs1_data[8*(4*i+3)+:8];
+                end
+              endcase
               case (pmtrdt_uop.vs2_eew) // compare instruction: vs1_eew == vs2_eew
                 EEW32:begin
-                  cmp_src1[4*i][8]   = 1'b0;
-                  cmp_src1[4*i+1][8] = 1'b0;
-                  cmp_src1[4*i+2][8] = 1'b0;
-                  cmp_src1[4*i+3][8] = ctrl.sign_opr ? ~pmtrdt_uop.vs1_data[8*(4*i+3)+7] : ~1'b0;
+                  case (ctrl.cmp_opr)
+                    COUT:begin
+                      cmp_src1[4*i][8]   = 1'b0;
+                      cmp_src1[4*i+1][8] = 1'b0;
+                      cmp_src1[4*i+2][8] = 1'b0;
+                      cmp_src1[4*i+3][8] = ctrl.sign_opr ? pmtrdt_uop.vs1_data[8*(4*i+3)+7] : 1'b0;
+                    end
+                    default:begin
+                      cmp_src1[4*i][8]   = 1'b0;
+                      cmp_src1[4*i+1][8] = 1'b0;
+                      cmp_src1[4*i+2][8] = 1'b0;
+                      cmp_src1[4*i+3][8] = ctrl.sign_opr ? ~pmtrdt_uop.vs1_data[8*(4*i+3)+7] : ~1'b0;
+                    end
+                  endcase
                 end
                 EEW16:begin
-                  cmp_src1[4*i][8]   = 1'b0;
-                  cmp_src1[4*i+1][8] = ctrl.sign_opr ? ~pmtrdt_uop.vs1_data[8*(4*i+1)+7] : ~1'b0;
-                  cmp_src1[4*i+2][8] = 1'b0;
-                  cmp_src1[4*i+3][8] = ctrl.sign_opr ? ~pmtrdt_uop.vs1_data[8*(4*i+3)+7] : ~1'b0;
+                  case (ctrl.cmp_opr)
+                    COUT:begin
+                      cmp_src1[4*i][8]   = 1'b0;
+                      cmp_src1[4*i+1][8] = ctrl.sign_opr ? pmtrdt_uop.vs1_data[8*(4*i+1)+7] : 1'b0;
+                      cmp_src1[4*i+2][8] = 1'b0;
+                      cmp_src1[4*i+3][8] = ctrl.sign_opr ? pmtrdt_uop.vs1_data[8*(4*i+3)+7] : 1'b0;
+                    end
+                    default:begin
+                      cmp_src1[4*i][8]   = 1'b0;
+                      cmp_src1[4*i+1][8] = ctrl.sign_opr ? ~pmtrdt_uop.vs1_data[8*(4*i+1)+7] : ~1'b0;
+                      cmp_src1[4*i+2][8] = 1'b0;
+                      cmp_src1[4*i+3][8] = ctrl.sign_opr ? ~pmtrdt_uop.vs1_data[8*(4*i+3)+7] : ~1'b0;
+                    end
+                  endcase
                 end
                 default:begin
-                  cmp_src1[4*i][8]   = ctrl.sign_opr ? ~pmtrdt_uop.vs1_data[8*(4*i)+7] : ~1'b0;
-                  cmp_src1[4*i+1][8] = ctrl.sign_opr ? ~pmtrdt_uop.vs1_data[8*(4*i+1)+7] : ~1'b0;
-                  cmp_src1[4*i+2][8] = ctrl.sign_opr ? ~pmtrdt_uop.vs1_data[8*(4*i+2)+7] : ~1'b0;
-                  cmp_src1[4*i+3][8] = ctrl.sign_opr ? ~pmtrdt_uop.vs1_data[8*(4*i+3)+7] : ~1'b0;
+                  case (ctrl.cmp_opr)
+                    COUT:begin
+                      cmp_src1[4*i][8]   = ctrl.sign_opr ? pmtrdt_uop.vs1_data[8*(4*i)+7]   : 1'b0;
+                      cmp_src1[4*i+1][8] = ctrl.sign_opr ? pmtrdt_uop.vs1_data[8*(4*i+1)+7] : 1'b0;
+                      cmp_src1[4*i+2][8] = ctrl.sign_opr ? pmtrdt_uop.vs1_data[8*(4*i+2)+7] : 1'b0;
+                      cmp_src1[4*i+3][8] = ctrl.sign_opr ? pmtrdt_uop.vs1_data[8*(4*i+3)+7] : 1'b0;
+                    end
+                    default:begin
+                      cmp_src1[4*i][8]   = ctrl.sign_opr ? ~pmtrdt_uop.vs1_data[8*(4*i)+7] : ~1'b0;
+                      cmp_src1[4*i+1][8] = ctrl.sign_opr ? ~pmtrdt_uop.vs1_data[8*(4*i+1)+7] : ~1'b0;
+                      cmp_src1[4*i+2][8] = ctrl.sign_opr ? ~pmtrdt_uop.vs1_data[8*(4*i+2)+7] : ~1'b0;
+                      cmp_src1[4*i+3][8] = ctrl.sign_opr ? ~pmtrdt_uop.vs1_data[8*(4*i+3)+7] : ~1'b0;
+                    end
+                  endcase
                 end
               endcase
             end
@@ -1645,22 +1767,54 @@ module rvv_backend_pmtrdt_unit
         always_comb begin
           case (pmtrdt_uop.vs2_eew)
             EEW32:begin
-              cmp_carry_in[4*i]   = 1'b1;
+              case (ctrl.cmp_opr)
+                COUT: cmp_carry_in[4*i] = ctrl.vm ? 1'b0 : cin_data[4*i];
+                BOUT: cmp_carry_in[4*i] = ctrl.vm ? 1'b1 : bin_data[4*i];
+                default: cmp_carry_in[4*i]   = 1'b1;
+              endcase
               cmp_carry_in[4*i+1] = cmp_sum[4*i][8];
               cmp_carry_in[4*i+2] = cmp_sum[4*i+1][8];
               cmp_carry_in[4*i+3] = cmp_sum[4*i+2][8];
             end
             EEW16:begin
-              cmp_carry_in[4*i]   = 1'b1; 
+              case (ctrl.cmp_opr)
+                COUT:begin
+                  cmp_carry_in[4*i]   = ctrl.vm ? 1'b0 : cin_data[4*i]; 
+                  cmp_carry_in[4*i+2] = ctrl.vm ? 1'b0 : cin_data[4*i+2]; 
+                end
+                BOUT:begin
+                  cmp_carry_in[4*i]   = ctrl.vm ? 1'b1 : bin_data[4*i]; 
+                  cmp_carry_in[4*i+2] = ctrl.vm ? 1'b1 : bin_data[4*i+2]; 
+                end
+                default:begin
+                  cmp_carry_in[4*i]   = 1'b1; 
+                  cmp_carry_in[4*i+2] = 1'b1; 
+                end
+              endcase
               cmp_carry_in[4*i+1] = cmp_sum[4*i][8]; 
-              cmp_carry_in[4*i+2] = 1'b1; 
               cmp_carry_in[4*i+3] = cmp_sum[4*i+2][8]; 
             end
             default:begin
-              cmp_carry_in[4*i]   = 1'b1;
-              cmp_carry_in[4*i+1] = 1'b1;
-              cmp_carry_in[4*i+2] = 1'b1;
-              cmp_carry_in[4*i+3] = 1'b1;
+              case (ctrl.cmp_opr)
+                COUT:begin
+                  cmp_carry_in[4*i]   = ctrl.vm ? 1'b0 : cin_data[4*i];
+                  cmp_carry_in[4*i+1] = ctrl.vm ? 1'b0 : cin_data[4*i+1];
+                  cmp_carry_in[4*i+2] = ctrl.vm ? 1'b0 : cin_data[4*i+2];
+                  cmp_carry_in[4*i+3] = ctrl.vm ? 1'b0 : cin_data[4*i+3];
+                end
+                BOUT:begin
+                  cmp_carry_in[4*i]   = ctrl.vm ? 1'b1 : bin_data[4*i];
+                  cmp_carry_in[4*i+1] = ctrl.vm ? 1'b1 : bin_data[4*i+1];
+                  cmp_carry_in[4*i+2] = ctrl.vm ? 1'b1 : bin_data[4*i+2];
+                  cmp_carry_in[4*i+3] = ctrl.vm ? 1'b1 : bin_data[4*i+3];
+                end
+                default:begin
+                  cmp_carry_in[4*i]   = 1'b1;
+                  cmp_carry_in[4*i+1] = 1'b1;
+                  cmp_carry_in[4*i+2] = 1'b1;
+                  cmp_carry_in[4*i+3] = 1'b1;
+                end
+              endcase
             end
           endcase
         end
@@ -1670,6 +1824,7 @@ module rvv_backend_pmtrdt_unit
       for (i=0; i<`VLENB; i++) begin : gen_compare_value
         assign cmp_sum[i]    = cmp_src2[i] + cmp_src1[i] + cmp_carry_in[i];
         assign less_than[i]  = cmp_sum[i][8];
+        assign out_data[i]   = cmp_sum[i][8];
         assign great_than_equal[i] = ~cmp_sum[i][8]; 
         assign equal[i]      = cmp_sum[i][7:0] == '0;
         assign not_equal[i]  = cmp_sum[i][7:0] != '0;
@@ -1677,7 +1832,31 @@ module rvv_backend_pmtrdt_unit
 
       // cmp_res data
       always_comb begin
-        case (ctrl.gt_lt_eq)
+        case (ctrl.cmp_opr)
+          COUT,
+          BOUT:begin
+            case (pmtrdt_uop.vs2_eew)
+              EEW32:begin
+                for (int j=0; j<`VLENB/4; j++) begin 
+                  cmp_res[j]            = out_data[4*j+3]; 
+                  cmp_res[j+`VLENB/4]   = out_data[4*j+3]; 
+                  cmp_res[j+2*`VLENB/4] = out_data[4*j+3]; 
+                  cmp_res[j+3*`VLENB/4] = out_data[4*j+3]; 
+                end
+              end
+              EEW16:begin
+                for (int j=0; j<`VLENB/2; j++) begin 
+                  cmp_res[j]          = out_data[2*j+1];
+                  cmp_res[j+`VLENB/2] = out_data[2*j+1];
+                end
+              end
+              default:begin
+                for (int j=0; j<`VLENB; j++) begin 
+                  cmp_res[j] = out_data[j];
+                end
+              end
+            endcase
+          end
           NOT_EQUAL:begin
             case (pmtrdt_uop.vs2_eew)
               EEW32: begin
@@ -1827,9 +2006,16 @@ module rvv_backend_pmtrdt_unit
         always_comb begin
           if (i < cmp_vstart_q)      pmtrdt_res_cmp[i] = ctrl_q.vs3_data[i];
           else if (i >= ctrl_q.cmp_evl) pmtrdt_res_cmp[i] = ctrl_q.vs3_data[i];
-          else if (ctrl_q.vm)         pmtrdt_res_cmp[i] = cmp_res_q[i];
-          else if (ctrl_q.v0_data[i]) pmtrdt_res_cmp[i] = cmp_res_q[i];
-          else                        pmtrdt_res_cmp[i] = ctrl_q.vs3_data[i];
+          else begin
+            case (ctrl_q.cmp_opr)
+              COUT,
+              BOUT: pmtrdt_res_cmp[i] = cmp_res_q[i];
+              default:
+                if (ctrl_q.vm)         pmtrdt_res_cmp[i] = cmp_res_q[i];
+                else if (ctrl_q.v0_data[i]) pmtrdt_res_cmp[i] = cmp_res_q[i];
+                else                        pmtrdt_res_cmp[i] = ctrl_q.vs3_data[i];
+            endcase
+          end
         end
       end
     end // end if (GEN_CMP == 1'b1)
