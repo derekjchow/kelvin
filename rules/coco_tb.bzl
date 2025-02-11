@@ -17,8 +17,14 @@
 load("@bazel_skylib//rules:copy_file.bzl", "copy_file")
 load("@kelvin_pip_deps//:requirements.bzl", "requirement")
 load("@rules_hdl//cocotb:cocotb.bzl", "cocotb_test")
+load("@rules_python//python:defs.bzl", "py_library")
 
-def verilator_cocotb_test(name, hdl_toplevel, test_module, deps=[], **kwargs):
+def verilator_cocotb_test(name,
+                          hdl_toplevel,
+                          test_module,
+                          deps=[],
+                          data=[],
+                          **kwargs):
     kwargs.update(
         hdl_toplevel_lang="verilog",
         sim_name = "verilator",
@@ -27,13 +33,23 @@ def verilator_cocotb_test(name, hdl_toplevel, test_module, deps=[], **kwargs):
             "@verilator//:verilator_bin",
         ])
 
+    # Wrap in py_library so we can forward data
+    py_library(
+        name = name + "_test_data",
+        srcs = [],
+        deps = deps + [
+            requirement("cocotb"),
+            requirement("numpy"),
+        ],
+        data = data,
+    )
+
     cocotb_test(
         name = name,
         hdl_toplevel = hdl_toplevel,
         test_module = test_module,
-        deps = deps + [
-            requirement("cocotb"),
-            requirement("numpy"),
+        deps = [
+            ":{}_test_data".format(name),
         ],
         **kwargs,
     )
