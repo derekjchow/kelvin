@@ -15,18 +15,12 @@ module rvv_backend_vrf_reg (/*AUTOARG*/
   input  logic                    clk;
   input  logic                    rst_n;
 
-`ifdef TB_SUPPORT
-  logic [31:0][`VLEN-1:0]  vreg_init_data;
-`endif
 // -- 32 vector registers --------------------------------------------
 genvar i,j;
 generate
   for (i=0; i<32; i=i+1) begin
     for (j=0; j<`VLEN; j=j+1) begin
       edff #(1) vrf_unit1_reg (
-`ifdef TB_SUPPORT
-        .init_data(vreg_init_data[i][j]),
-`endif
         .q      (vreg[i][j]),
         .en     (wenb[i][j]),
         .d      (wdata[i][j]),

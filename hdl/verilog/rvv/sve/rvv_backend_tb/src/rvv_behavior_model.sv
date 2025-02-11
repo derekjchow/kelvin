@@ -113,7 +113,7 @@ endclass : rvv_behavior_model
       vxsat       = '0;
       vxsat_valid = '0;
       for(int i=0; i<32; i++) begin
-        vrf[i] = vrf_if.vreg_init_data[i];
+        vrf[i] = '0;
         xrf[i] = '0;
       end 
       @(posedge rvs_if.clk);

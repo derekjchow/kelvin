@@ -27,6 +27,8 @@ class alu_random_test extends rvv_backend_test;
   task main_phase(uvm_phase phase);
     phase.raise_objection( .obj( this ) );
 
+    rand_vrf();
+
     rvs_seq = alu_random_seq::type_id::create("rvs_seq", this);
     rvs_transaction::set_ill_rate(0);
     rvs_seq.run_inst(env.rvs_agt.rvs_sqr, 100);

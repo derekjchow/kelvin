@@ -6,7 +6,7 @@
   `define VRF_PATH      DUT
   `define RT_UOP_PATH   DUT
 `else
-  `define VRF_PATH      DUT.u_vrf.vrf_reg
+  `define VRF_PATH      DUT.u_vrf
   `define RT_UOP_PATH   DUT
   `define RT_VRF_PATH   DUT.u_retire
   `define RT_VXSAT_PATH DUT.u_retire

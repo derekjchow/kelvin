@@ -97,9 +97,10 @@ module rvv_backend_top();
 
   always_comb begin: vrf_connect
     for(int i=0; i<32; i++) begin
-      vrf_if.vreg[i] = `VRF_PATH.vreg[i];
-      `VRF_PATH.vreg_init_data[i] = vrf_if.vreg_init_data[i];
+      vrf_if.vreg[i] = `VRF_PATH.vrf_rd_data_full[i];
     end
+    vrf_if.vrf_wr_wenb_full = `VRF_PATH.vrf_wr_wenb_full;
+    vrf_if.vrf_wr_data_full = `VRF_PATH.vrf_wr_data_full;
   end: vrf_connect
 
   //Driver reset depending on rst_delay
