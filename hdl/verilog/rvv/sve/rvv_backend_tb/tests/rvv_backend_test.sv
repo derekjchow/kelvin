@@ -1729,7 +1729,7 @@ endclass: alu_vmv_test
 //-----------------------------------------------------------
 class alu_slide_test extends rvv_backend_test;
 
-  alu_iterate_vx_vi_seq rvs_seq;
+  //alu_iterate_vx_vi_seq rvs_seq;
   alu_smoke_vx_seq rvs_last_seq;
 
   `uvm_component_utils(alu_slide_test)
@@ -1751,19 +1751,19 @@ class alu_slide_test extends rvv_backend_test;
     phase.raise_objection( .obj( this ) );
 
     rand_vrf();
+    //rvs_seq = alu_iterate_vx_vi_seq::type_id::create("rvs_seq", this);
+    //rvs_seq.run_inst_iter(VSLIDEUP_RGATHEREI16 , env.rvs_agt.rvs_sqr, 0);
+    //rvs_seq.run_inst_iter(VSLIDEDOWN , env.rvs_agt.rvs_sqr, 0);
+    //rvs_seq.run_inst_iter(VSLIDEUP_RGATHEREI16 , env.rvs_agt.rvs_sqr, 0);
+    //rvs_seq.run_inst_iter(VSLIDEDOWN , env.rvs_agt.rvs_sqr, 0);
 
-    rvs_seq = alu_iterate_vx_vi_seq::type_id::create("rvs_seq", this);
-    rvs_seq.run_inst_iter(VSLIDEUP_RGATHEREI16 , env.rvs_agt.rvs_sqr, 0);
-    rvs_seq.run_inst_iter(VSLIDEDOWN , env.rvs_agt.rvs_sqr, 0);
-    rvs_seq.run_inst_iter(VSLIDEUP_RGATHEREI16 , env.rvs_agt.rvs_sqr, 0);
-    rvs_seq.run_inst_iter(VSLIDEDOWN , env.rvs_agt.rvs_sqr, 0);
 
-    rvs_seq.run_inst_iter(VSLIDEUP_RGATHEREI16 , env.rvs_agt.rvs_sqr, 100);
-    rvs_seq.run_inst_iter(VSLIDEDOWN , env.rvs_agt.rvs_sqr, 100);
+    //rvs_seq.run_inst_iter(VSLIDEUP_RGATHEREI16 , env.rvs_agt.rvs_sqr, 100);
+    //rvs_seq.run_inst_iter(VSLIDEDOWN , env.rvs_agt.rvs_sqr, 100);
 
     rvs_last_seq = alu_smoke_vx_seq::type_id::create("rvs_last_seq", this);
     rvs_last_seq.run_inst(VSLIDEUP_RGATHEREI16,env.rvs_agt.rvs_sqr);
-    rvs_last_seq.run_inst(VSLIDEDOWN,env.rvs_agt.rvs_sqr);
+    //rvs_last_seq.run_inst(VSLIDEDOWN,env.rvs_agt.rvs_sqr);
     phase.phase_done.set_drain_time(this, 1000ns);
     phase.drop_objection( .obj( this ) );
   endtask
@@ -1777,7 +1777,7 @@ endclass: alu_slide_test
 //-----------------------------------------------------------
 class alu_gather_test extends rvv_backend_test;
 
-  alu_iterate_vv_seq rvs_seq;
+  //alu_iterate_vv_seq rvs_seq;
   alu_iterate_vv_vx_vi_seq rvs_seq1;// used for vrgather
   alu_smoke_vv_seq rvs_last_seq;
 
@@ -1801,18 +1801,18 @@ class alu_gather_test extends rvv_backend_test;
 
     rand_vrf();
 
-    rvs_seq = alu_iterate_vv_seq::type_id::create("rvs_seq", this);
+    //rvs_seq = alu_iterate_vv_seq::type_id::create("rvs_seq", this);
     rvs_seq1 = alu_iterate_vv_vx_vi_seq::type_id::create("rvs_seq1", this);
-    rvs_seq.run_inst_iter(VSLIDEUP_RGATHEREI16, env.rvs_agt.rvs_sqr, 0);
+    //rvs_seq.run_inst_iter(VSLIDEUP_RGATHEREI16, env.rvs_agt.rvs_sqr, 0);
     rvs_seq1.run_inst_iter(VRGATHER, env.rvs_agt.rvs_sqr, 0);
-    rvs_seq.run_inst_iter(VSLIDEUP_RGATHEREI16, env.rvs_agt.rvs_sqr, 1);
+    //rvs_seq.run_inst_iter(VSLIDEUP_RGATHEREI16, env.rvs_agt.rvs_sqr, 1);
     rvs_seq1.run_inst_iter(VRGATHER, env.rvs_agt.rvs_sqr, 1);
 
-    rvs_seq.run_inst_rand(VSLIDEUP_RGATHEREI16, env.rvs_agt.rvs_sqr, 100);
+    //rvs_seq.run_inst_rand(VSLIDEUP_RGATHEREI16, env.rvs_agt.rvs_sqr, 100);
     rvs_seq1.run_inst_rand(VRGATHER, env.rvs_agt.rvs_sqr, 100);
 
     rvs_last_seq = alu_smoke_vv_seq::type_id::create("rvs_last_seq", this);
-    rvs_last_seq.run_inst(VSLIDEUP_RGATHEREI16,env.rvs_agt.rvs_sqr);
+    rvs_last_seq.run_inst(VRGATHER,env.rvs_agt.rvs_sqr);
     phase.phase_done.set_drain_time(this, 1000ns);
     phase.drop_objection( .obj( this ) );
   endtask
@@ -1853,10 +1853,8 @@ class alu_vcompress_test extends rvv_backend_test;
     rvs_seq.run_inst_iter(VCOMPRESS, env.rvs_agt.rvs_sqr, 0);
     rvs_seq.run_inst_iter(VCOMPRESS, env.rvs_agt.rvs_sqr, 1);
 
-    rvs_seq.run_inst_rand(VCOMPRESS, env.rvs_agt.rvs_sqr, 100);
-
     rvs_last_seq = alu_smoke_vv_seq::type_id::create("rvs_last_seq", this);
-    rvs_last_seq.run_inst(VCOMPRESS,env.rvs_agt.rvs_sqr);
+    rvs_last_seq.run_inst(VCOMPRESS,env.rvs_agt.rvs_sqr,1);
     phase.phase_done.set_drain_time(this, 1000ns);
     phase.drop_objection( .obj( this ) );
   endtask

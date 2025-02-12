@@ -6,7 +6,7 @@
 PROJECT_NAME = rvv_fifo
 ################################################################################
 
-DESIGN_ROOT = <RTL root>
+DESIGN_ROOT = /workspace/IDC_IPDCD_ZSPHW01/perforce/cn9399/RVV_perforce_dk/RISCV/kelvin_RVV/hdl/verilog/rvv
 RTL_PATH = $(DESIGN_ROOT)/common
 #RTLFILES = $(shell ls ../../common/*.sv)
 RTLFILES := $(RTL_PATH)/fifo_flopped.sv \
@@ -119,7 +119,7 @@ sim_test:
 
 chk_test:
 	@echo "checking test result......"
-	@$(DESIGN_ROOT)/com/check_test.pl $(SIM_PATH)/test.log $(UVM_TEST)
+	@$(DESIGN_ROOT)/com/check_test.pl check $(UVM_TEST) $(SIM_PATH)/test.log
 
 sim: mktest sim_test chk_test
 	@echo "finised simulation......"

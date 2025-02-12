@@ -154,7 +154,7 @@ class rvs_transaction extends uvm_sequence_item;
                             VMERGE_VMVV, 
                             VSLL, VSRL, VSRA, VNSRL, VNSRA,
                             VSSRL, VSSRA, VNCLIPU, VNCLIP,
-                            VWREDSUMU, VWREDSUM})) 
+                            VWREDSUMU, VWREDSUM, VSMUL_VMVNRR})) 
         ->  (dest_type == VRF && src2_type == VRF && 
               ((alu_type == OPIVV && src1_type == VRF) || 
                (alu_type == OPIVX && src1_type == XRF) || 

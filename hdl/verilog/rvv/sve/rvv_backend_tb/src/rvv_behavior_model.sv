@@ -291,9 +291,18 @@ endclass : rvv_behavior_model
                                                                                          VREDMINU,VREDMIN,VREDMAXU,VREDMAX,
                                                                                          VWREDSUMU, VWREDSUM});
         is_permutation_inst     = inst_tr.inst_type == ALU && ((inst_tr.alu_inst inside {VSMUL_VMVNRR} && inst_tr.alu_type == OPIVI) ||
+                                                               (inst_tr.alu_inst inside {VCOMPRESS}) ||
+                                                               (inst_tr.alu_inst inside {VSLIDEUP_RGATHEREI16, VSLIDEDOWN, VRGATHER}) ||
                                                                (inst_tr.alu_inst inside {VWXUNARY0} && inst_tr.src1_type == FUNC && inst_tr.src1_idx inside {VMV_X_S}) ||
                                                                (inst_tr.alu_inst inside {VWXUNARY0} && inst_tr.src2_type == FUNC && inst_tr.src2_idx inside {VMV_X_S}));
         use_vm_to_cal = inst_tr.use_vm_to_cal;
+            
+        `uvm_info(get_type_name(), $sformatf("permutation instruction dectect inst_tr.alu_inst = %0x , inst_tr.type = %0x\n", inst_tr.alu_inst,inst_tr.inst_type), UVM_LOW)
+
+        if(is_permutation_inst) begin
+            `uvm_info(get_type_name(), $sformatf("permutation instruction dectect\n"), UVM_LOW)
+        end
+
         // 1.0 illegal inst check
         // vstart
         if(inst_tr.vstart >= inst_tr.vl && !(inst_tr.alu_inst inside {VSMUL_VMVNRR} && inst_tr.alu_type == OPIVI)) begin
@@ -2491,12 +2500,12 @@ class pmt_processor#(
                             VMV_X_S(rvv_behavior_model_inst);
                     end
                     {VWXUNARY0,OPMVX}: VMV_S_X(rvv_behavior_model_inst);
-                    {VSLIDEUP_RGATHEREI16,OPIVX}: VSLIDE(rvv_behavior_model_inst,rvv_behavior_model_inst.xrf[src1_reg_idx],0);
-                    {VSLIDEUP_RGATHEREI16,OPIVI}: VSLIDE(rvv_behavior_model_inst,inst_tr.src1_idx,0);
-                    {VSLIDEDOWN,OPIVX}: VSLIDE(rvv_behavior_model_inst,rvv_behavior_model_inst.xrf[src1_reg_idx],1);
-                    {VSLIDEDOWN,OPIVI}: VSLIDE(rvv_behavior_model_inst,inst_tr.src1_idx,1);
-                    {VSLIDE1UP,OPMVX}: VSLIDE1(rvv_behavior_model_inst,rvv_behavior_model_inst.xrf[src1_reg_idx],0);
-                    {VSLIDE1DOWN,OPMVX}: VSLIDE1(rvv_behavior_model_inst,rvv_behavior_model_inst.xrf[src1_reg_idx],1);
+                    {VSLIDEUP_RGATHEREI16,OPIVX}: VSLIDEUP(rvv_behavior_model_inst,rvv_behavior_model_inst.xrf[src1_reg_idx]);
+                    {VSLIDEUP_RGATHEREI16,OPIVI}: VSLIDEUP(rvv_behavior_model_inst,inst_tr.src1_idx);
+                    {VSLIDEDOWN,OPIVX}: VSLIDEDOWN_F(rvv_behavior_model_inst,rvv_behavior_model_inst.xrf[src1_reg_idx]);
+                    {VSLIDEDOWN,OPIVI}: VSLIDEDOWN_F(rvv_behavior_model_inst,inst_tr.src1_idx);
+                    {VSLIDE1UP,OPMVX}: VSLIDE1UP_F(rvv_behavior_model_inst,rvv_behavior_model_inst.xrf[src1_reg_idx]);
+                    {VSLIDE1DOWN,OPMVX}: VSLIDE1DOWN_F(rvv_behavior_model_inst,rvv_behavior_model_inst.xrf[src1_reg_idx]);
                     {VRGATHER,OPIVV}: VRGATHER_VV(rvv_behavior_model_inst);
                     {VSLIDEUP_RGATHEREI16,OPIVV}: VRGATHEREI16_VV(rvv_behavior_model_inst);
                     {VRGATHER,OPIVX}: VRGATHER_VXI(rvv_behavior_model_inst,rvv_behavior_model_inst.xrf[src1_reg_idx]);
@@ -2535,8 +2544,10 @@ class pmt_processor#(
     extern function void PMT_INIT(input rvv_behavior_model rvm, input rvs_transaction inst_tr);
     extern function void VMV_X_S(input rvv_behavior_model rvv_behavior_model_inst);
     extern function void VMV_S_X(input rvv_behavior_model rvm);
-    extern function void VSLIDE(input rvv_behavior_model rvm, input int src1_elm_idx, input bit dir );
-    extern function void VSLIDE1(input rvv_behavior_model rvm, input int src1_elm_data, input bit dir);
+    extern function void VSLIDEUP(input rvv_behavior_model rvm, input int src1_elm_idx );
+    extern function void VSLIDEDOWN_F(input rvv_behavior_model rvm, input int src1_elm_idx );
+    extern function void VSLIDE1UP_F(input rvv_behavior_model rvm, input int src1_elm_data);
+    extern function void VSLIDE1DOWN_F(input rvv_behavior_model rvm, input int src1_elm_idx);
     extern function void VRGATHER_VV(input rvv_behavior_model rvm);
     extern function void VRGATHEREI16_VV(input rvv_behavior_model rvm);
     extern function void VRGATHER_VXI(input rvv_behavior_model rvm, input int src1_elm_data);
@@ -2620,247 +2631,482 @@ endclass: pmt_processor
     //        end
     //endfunction
     // dir : 0 -> up    1 -> down ;
-    function void pmt_processor::VSLIDE(input rvv_behavior_model rvm, input int src1_elm_idx, input bit dir );
-           if(dest_eew == EEW8) begin
-            foreach(vrf_sew8[i])begin
-                    if (i < rvm.vstart)begin
+    function void pmt_processor::VSLIDEUP(input rvv_behavior_model rvm, input int src1_elm_idx );
+        int slide_start;
+        slide_start = (rvm.vstart >= src1_elm_idx) ? rvm.vstart : src1_elm_idx;
+        if(rvm.vtype.vsew == SEW8) begin 
+                for(int i=slide_start; i<rvm.vl;i++)begin
+                    if(i < rvm.vl) begin
+                        if(rvm.vrf[0][i]) begin
+                            vrf_sew8[dest_reg_idx*16+i] =  vrf_sew8[src2_reg_idx*16 + (i-src1_elm_idx)] ;
+                `uvm_info("pmt_processor",$sformatf("VSLIDE Des vrf_sew8[%0d] == %0x Src2 vrf_sew8[%0d]==%0x ", dest_reg_idx, vrf_sew8[dest_reg_idx*16+i], src2_reg_idx, vrf_sew8[src2_reg_idx*16 + vrf_sew16[src1_reg_idx*8+i]]),UVM_LOW)
+                        end 
+                        //else begin
+                        //    vrf_sew8[dest_reg_idx*16+i] = 8'h00;
+                        //end
+                        vrf_bit_strobe_temp_sew8[dest_reg_idx*16+i] = 8'hff;
+                    end 
+                end
+        end
+        else if(rvm.vtype.vsew == SEW16) begin 
+                for(int i=slide_start; i<rvm.vl;i++)begin
+                    if(i < rvm.vl) begin
+                        if(rvm.vrf[0][i]) begin
+                            vrf_sew16[dest_reg_idx*8+i] =  vrf_sew16[src2_reg_idx*8 + (i-src1_elm_idx)] ;
+                `uvm_info("pmt_processor",$sformatf("VSLIDE Des vrf_sew16[%0d] == %0x Src2 vrf_sew16[%0d]==%0x ", dest_reg_idx, vrf_sew16[dest_reg_idx*8+i], src2_reg_idx, vrf_sew16[src2_reg_idx*8 + vrf_sew16[src1_reg_idx*8+i]]),UVM_LOW)
+                        end 
+                        vrf_bit_strobe_temp_sew16[dest_reg_idx*16+i] = 8'hff;
+                    end 
+                end
+        end
+        else if(rvm.vtype.vsew == SEW32) begin 
+                for(int i=slide_start; i<rvm.vl;i++)begin
+                    if(i < rvm.vl) begin
+                        if(rvm.vrf[0][i]) begin
+                            vrf_sew32[dest_reg_idx*4+i] =  vrf_sew32[src2_reg_idx*4 + (i-src1_elm_idx)] ;
+                `uvm_info("pmt_processor",$sformatf("VSLIDE Des vrf_sew32[%0d] == %0x Src2 vrf_sew32[%0d]==%0x ", dest_reg_idx, vrf_sew32[dest_reg_idx*4+i], src2_reg_idx, vrf_sew32[src2_reg_idx*4 + vrf_sew32[src1_reg_idx*4+i]]),UVM_LOW)
+                        end 
+                        //else begin
+                        //    vrf_sew32[dest_reg_idx*4+i] = 32'h00000000;
+                        //end
+                        vrf_bit_strobe_temp_sew32[dest_reg_idx*4+i] = 32'hffffffff;
+                    end 
+                end
+            end 
+        else begin
+        end
+
+         case(rvm.vtype.vsew)
+                    SEW8:begin
+                        rvm.vrf=vrf_sew8;
+                        rvm.vrf_bit_strobe_temp = vrf_bit_strobe_temp_sew8;
                     end
-                    else if(i < rvm.vl) begin 
-                            if(!dir) begin //slideup
-                                vrf_sew8[i+dest_reg_idx*16] = rvm.vrf[0][i]&&vm ? vrf_sew8[i+src2_reg_idx*16 - src1_elm_idx] : vrf_sew8[i+dest_reg_idx*16];
-                            end
-                            else begin //slidedown
-                                vrf_sew8[i+dest_reg_idx*16] = rvm.vrf[0][i]&&vm ? vrf_sew8[i+src2_reg_idx*16 - src1_elm_idx] : vrf_sew8[i+dest_reg_idx*16];
-                            end
+                    SEW16: begin
+                `uvm_info("pmt_processor",$sformatf("Origin VCOMPRESS_VM FUNC Des  vrf[%0d] == %0x", dest_reg_idx, rvm.vrf[dest_reg_idx]),UVM_LOW)
+                        rvm.vrf=vrf_sew16;
+                `uvm_info("pmt_processor",$sformatf("Origin VCOMPRESS_VM FUNC Des  vrf[%0d] == %0x", dest_reg_idx, rvm.vrf[dest_reg_idx]),UVM_LOW)
+                        rvm.vrf_bit_strobe_temp = vrf_bit_strobe_temp_sew16;
                     end
-                    else if(i < rvm.vlmax) begin
-                            vrf_sew8[i] = vrf_sew8[i];
+                    SEW32: begin
+                        rvm.vrf=vrf_sew32;
+                        rvm.vrf_bit_strobe_temp = vrf_bit_strobe_temp_sew32;
                     end
-            end
-          end
-          else if(dest_eew == EEW16) begin
-            foreach(vrf_sew16[i])begin
-                    if (i < rvm.vstart)begin
+                    default: begin
+                        `uvm_error("VCOMPRESS_VM CHECK", "NO VAILD SEW!")
                     end
-                    else if(i < rvm.vl) begin
-                            if(!dir) begin //slideup
-                                vrf_sew16[i+dest_reg_idx*8] = rvm.vrf[0][i]&&vm ? vrf_sew16[i+src2_reg_idx*8 - src1_elm_idx] : vrf_sew16[i+dest_reg_idx*8];
-                            end
-                            else begin //slidedown
-                                vrf_sew16[i+dest_reg_idx*8] = rvm.vrf[0][i]&&vm ? vrf_sew16[i+src2_reg_idx*8 - src1_elm_idx] : vrf_sew16[i+dest_reg_idx*8];
-                            end
+        endcase
+    endfunction 
+
+    function void pmt_processor::VSLIDEDOWN_F(input rvv_behavior_model rvm, input int src1_elm_idx );
+        if(rvm.vtype.vsew == SEW8) begin 
+                for(int i=rvm.vstart; i<rvm.vl;i++)begin
+                    if(i < rvm.vl) begin
+                        if(rvm.vrf[0][i]) begin
+                            vrf_sew8[dest_reg_idx*16 + i] = ((i+src1_elm_idx) < rvm.vlmax) ? vrf_sew8[src2_reg_idx*16 + (i+src1_elm_idx)] : 0;
+                        end 
+                        vrf_bit_strobe_temp_sew8[dest_reg_idx*16+i] = 8'hff;
+                    end 
+                end
+        end
+        else if(rvm.vtype.vsew == SEW16) begin 
+                for(int i=rvm.vstart; i<rvm.vl;i++)begin
+                    if(i < rvm.vl) begin
+                        if(rvm.vrf[0][i]) begin
+                            vrf_sew16[dest_reg_idx*8 + i] = ((i+src1_elm_idx) < rvm.vlmax) ? vrf_sew16[src2_reg_idx*8 + (i+src1_elm_idx)] : 0;
+                        end 
+                        vrf_bit_strobe_temp_sew16[dest_reg_idx*16+i] = 8'hff;
+                    end 
+                end
+        end
+        else if(rvm.vtype.vsew == SEW32) begin 
+                for(int i=rvm.vstart; i<rvm.vl;i++)begin
+                    if(i < rvm.vl) begin
+                        if(rvm.vrf[0][i]) begin
+                            vrf_sew16[dest_reg_idx*4 + i] = ((i+src1_elm_idx) < rvm.vlmax) ? vrf_sew32[src2_reg_idx*4 + (i+src1_elm_idx)] : 0;
+                        end 
+                        vrf_bit_strobe_temp_sew32[dest_reg_idx*4+i] = 32'hffffffff;
+                    end 
+                end
+            end 
+        else begin
+        end
+
+         case(rvm.vtype.vsew)
+                    SEW8:begin
+                        rvm.vrf=vrf_sew8;
+                        rvm.vrf_bit_strobe_temp = vrf_bit_strobe_temp_sew8;
                     end
-                    else if(i < rvm.vlmax) begin
-                            vrf_sew16[i] = vrf_sew16[i];
+                    SEW16: begin
+                        rvm.vrf=vrf_sew16;
+                        rvm.vrf_bit_strobe_temp = vrf_bit_strobe_temp_sew16;
                     end
-            end
-          end
-          else begin
-            foreach(vrf_sew32[i])begin
-                    if (i < rvm.vstart)begin
+                    SEW32: begin
+                        rvm.vrf=vrf_sew32;
+                        rvm.vrf_bit_strobe_temp = vrf_bit_strobe_temp_sew32;
                     end
-                    else if(i < rvm.vl) begin
-                            if(!dir) begin //slideup
-                                vrf_sew32[i+dest_reg_idx*4] = rvm.vrf[0][i]&&vm ? vrf_sew32[i+src2_reg_idx*4 - src1_elm_idx] : vrf_sew32[i+dest_reg_idx*4];
-                            end
-                            else begin //slidedown
-                                vrf_sew32[i+dest_reg_idx*4] = rvm.vrf[0][i]&&vm ? vrf_sew32[i+src2_reg_idx*4 - src1_elm_idx] : vrf_sew32[i+dest_reg_idx*4];
-                            end
+                    default: begin
+                        `uvm_error("VCOMPRESS_VM CHECK", "NO VAILD SEW!")
                     end
-                    else if(i < rvm.vlmax) begin
-                            vrf_sew32[i] = vrf_sew32[i];
-                    end
-            end
-          end
+        endcase
     endfunction
+
+
     //function void pmt_processor::VSLIDEDOWN_VX(input rvv_behavior_model rvm);
     //endfunction 
     //function void pmt_processor::VSLIDEDOWN_VI(input rvv_behavior_model rvm);
     //endfunction
-    function void pmt_processor::VSLIDE1(input rvv_behavior_model rvm, input int src1_elm_data, input bit dir);
-           if(dest_eew == EEW8) begin
-            foreach(vrf_sew8[i])begin
-                    if (i < rvm.vstart)begin
-                            vrf_sew8[dest_reg_idx*16] = src1_elm_data ;
-                    end
-                    else if(i < rvm.vl) begin 
-                            if(!dir) begin //slideup
-                                vrf_sew8[i+dest_reg_idx*16+1] = rvm.vrf[0][i]&&vm ? vrf_sew8[i+src2_reg_idx*16] : vrf_sew8[i+dest_reg_idx*16];
-                            end
-                            else begin //slidedown
-                                vrf_sew8[i+dest_reg_idx*16-1] = rvm.vrf[0][i]&&vm ? vrf_sew8[i+src2_reg_idx*16] : vrf_sew8[i+dest_reg_idx*16];
-                            end
-                    end
-                    else if(i < rvm.vlmax) begin
-                            vrf_sew8[i] = vrf_sew8[i];
-                    end
-            end
-          end
-          else if(dest_eew == EEW16) begin
-            foreach(vrf_sew16[i])begin
-                    if (i < rvm.vstart)begin
-                            vrf_sew16[dest_reg_idx*8] = src1_elm_data ;
-                    end
-                    else if(i < rvm.vl) begin
-                            if(!dir) begin //slideup
-                                vrf_sew16[i+dest_reg_idx*8+1] = rvm.vrf[0][i]&&vm ? vrf_sew16[i+src2_reg_idx*8] : vrf_sew16[i+dest_reg_idx*8];
-                            end
-                            else begin //slidedown
-                                vrf_sew16[i+dest_reg_idx*8+1] = rvm.vrf[0][i]&&vm ? vrf_sew16[i+src2_reg_idx*8] : vrf_sew16[i+dest_reg_idx*8];
-                            end
-                    end
-                    else if(i < rvm.vlmax) begin
-                            vrf_sew16[i] = vrf_sew16[i];
-                    end
-            end
-          end
-          else begin
-            foreach(vrf_sew32[i])begin
-                    if (i < rvm.vstart)begin
-                            vrf_sew32[dest_reg_idx*4] = src1_elm_data ;
-                    end
-                    else if(i < rvm.vl) begin
-                            if(!dir) begin //slideup
-                                vrf_sew32[i+dest_reg_idx*4] = rvm.vrf[0][i]&&vm ? vrf_sew32[i+src2_reg_idx*4] : vrf_sew32[i+dest_reg_idx*4];
-                            end
-                            else begin //slidedown
-                                vrf_sew32[i+dest_reg_idx*4] = rvm.vrf[0][i]&&vm ? vrf_sew32[i+src2_reg_idx*4] : vrf_sew32[i+dest_reg_idx*4];
-                            end
-                    end
-                    else if(i < rvm.vlmax) begin
-                            vrf_sew32[i] = vrf_sew32[i];
-                    end
+    function void pmt_processor::VSLIDE1UP_F(input rvv_behavior_model rvm, input int src1_elm_data);
+        int slide_first_data;
+        slide_first_data = (rvm.vstart >= 1) ? rvm.vstart : src1_elm_data;
+        if(rvm.vtype.vsew == SEW8) begin 
+                for(int i=slide_first_data; i<rvm.vl;i++)begin
+                    if(i < rvm.vl) begin
+                        if(rvm.vrf[0][i]) begin
+                            vrf_sew8[dest_reg_idx*16+i] =  vrf_sew8[src2_reg_idx*16 + (i-src1_elm_data)] ;
+                        end 
+                        vrf_bit_strobe_temp_sew8[dest_reg_idx*16+i] = 8'hff;
+                    end 
+                end
+        end
+        else if(rvm.vtype.vsew == SEW16) begin 
+                for(int i=slide_first_data; i<rvm.vl;i++)begin
+                    if(i < rvm.vl) begin
+                        if(rvm.vrf[0][i]) begin
+                            vrf_sew16[dest_reg_idx*8+i] =  vrf_sew16[src2_reg_idx*8 + (i-src1_elm_data)] ;
+                `uvm_info("pmt_processor",$sformatf("VSLIDE Des vrf_sew16[%0d] == %0x Src2 vrf_sew16[%0d]==%0x ", dest_reg_idx, vrf_sew16[dest_reg_idx*8+i], src2_reg_idx, vrf_sew16[src2_reg_idx*8 + vrf_sew16[src1_reg_idx*8+i]]),UVM_LOW)
+                        end 
+                        vrf_bit_strobe_temp_sew16[dest_reg_idx*16+i] = 8'hff;
+                    end 
+                end
+        end
+        else if(rvm.vtype.vsew == SEW32) begin 
+                for(int i=slide_first_data; i<rvm.vl;i++)begin
+                    if(i < rvm.vl) begin
+                        if(rvm.vrf[0][i]) begin
+                            vrf_sew32[dest_reg_idx*4+i] =  vrf_sew32[src2_reg_idx*4 + (i-src1_elm_data)] ;
+                `uvm_info("pmt_processor",$sformatf("VSLIDE Des vrf_sew32[%0d] == %0x Src2 vrf_sew32[%0d]==%0x ", dest_reg_idx, vrf_sew32[dest_reg_idx*4+i], src2_reg_idx, vrf_sew32[src2_reg_idx*4 + vrf_sew32[src1_reg_idx*4+i]]),UVM_LOW)
+                        end 
+                        //else begin
+                        //    vrf_sew32[dest_reg_idx*4+i] = 32'h00000000;
+                        //end
+                        vrf_bit_strobe_temp_sew32[dest_reg_idx*4+i] = 32'hffffffff;
+                    end 
+                end
             end 
-         end
+        else begin
+        end
+
+         case(rvm.vtype.vsew)
+                    SEW8:begin
+                        rvm.vrf=vrf_sew8;
+                        rvm.vrf_bit_strobe_temp = vrf_bit_strobe_temp_sew8;
+                    end
+                    SEW16: begin
+                `uvm_info("pmt_processor",$sformatf("Origin VCOMPRESS_VM FUNC Des  vrf[%0d] == %0x", dest_reg_idx, rvm.vrf[dest_reg_idx]),UVM_LOW)
+                        rvm.vrf=vrf_sew16;
+                `uvm_info("pmt_processor",$sformatf("Origin VCOMPRESS_VM FUNC Des  vrf[%0d] == %0x", dest_reg_idx, rvm.vrf[dest_reg_idx]),UVM_LOW)
+                        rvm.vrf_bit_strobe_temp = vrf_bit_strobe_temp_sew16;
+                    end
+                    SEW32: begin
+                        rvm.vrf=vrf_sew32;
+                        rvm.vrf_bit_strobe_temp = vrf_bit_strobe_temp_sew32;
+                    end
+                    default: begin
+                        `uvm_error("VCOMPRESS_VM CHECK", "NO VAILD SEW!")
+                    end
+        endcase
+
+    endfunction 
+
+    function void pmt_processor::VSLIDE1DOWN_F(input rvv_behavior_model rvm, input int src1_elm_idx);
+           if(rvm.vtype.vsew == SEW8) begin 
+                for(int i=rvm.vstart; i<rvm.vl;i++)begin
+                    if(i < rvm.vl) begin
+                        if(rvm.vrf[0][i]) begin
+                            vrf_sew8[dest_reg_idx*16 + i] = ((i+src1_elm_idx) < rvm.vlmax) ? vrf_sew8[src2_reg_idx*16 + (i+src1_elm_idx)] : 0;
+                        end 
+                        vrf_bit_strobe_temp_sew8[dest_reg_idx*16+i] = 8'hff;
+                    end 
+                end
+        end
+        else if(rvm.vtype.vsew == SEW16) begin 
+                for(int i=rvm.vstart; i<rvm.vl;i++)begin
+                    if(i < rvm.vl) begin
+                        if(rvm.vrf[0][i]) begin
+                            vrf_sew16[dest_reg_idx*8 + i] = ((i+src1_elm_idx) < rvm.vlmax) ? vrf_sew16[src2_reg_idx*8 + (i+src1_elm_idx)] : 0;
+                        end 
+                        vrf_bit_strobe_temp_sew16[dest_reg_idx*16+i] = 8'hff;
+                    end 
+                end
+        end
+        else if(rvm.vtype.vsew == SEW32) begin 
+                for(int i=rvm.vstart; i<rvm.vl;i++)begin
+                    if(i < rvm.vl) begin
+                        if(rvm.vrf[0][i]) begin
+                            vrf_sew16[dest_reg_idx*4 + i] = ((i+src1_elm_idx) < rvm.vlmax) ? vrf_sew32[src2_reg_idx*4 + (i+src1_elm_idx)] : 0;
+                        end 
+                        vrf_bit_strobe_temp_sew32[dest_reg_idx*4+i] = 32'hffffffff;
+                    end 
+                end
+            end 
+        else begin
+        end
+
+         case(rvm.vtype.vsew)
+                    SEW8:begin
+                        rvm.vrf=vrf_sew8;
+                        rvm.vrf_bit_strobe_temp = vrf_bit_strobe_temp_sew8;
+                    end
+                    SEW16: begin
+                        rvm.vrf=vrf_sew16;
+                        rvm.vrf_bit_strobe_temp = vrf_bit_strobe_temp_sew16;
+                    end
+                    SEW32: begin
+                        rvm.vrf=vrf_sew32;
+                        rvm.vrf_bit_strobe_temp = vrf_bit_strobe_temp_sew32;
+                    end
+                    default: begin
+                        `uvm_error("VCOMPRESS_VM CHECK", "NO VAILD SEW!")
+                    end
+        endcase
     endfunction
     //function void pmt_processor::VSLIDE1DOWN_VX(input rvv_behavior_model rvm);
     //endfunction
     function void pmt_processor::VRGATHER_VV(input rvv_behavior_model rvm);
-        if(dest_eew == EEW8) begin
-            foreach(vrf_sew8[i]) begin 
-               if (i < rvm.vstart) begin
-               end
-               else if(i < rvm.vl) begin
-                    vrf_sew8[dest_reg_idx*16+i] = (vrf_sew8[src1_reg_idx*16 + i] >= rvm.vlmax) ? 0 : vrf_sew8[src2_reg_idx*16 + vrf_sew8[src1_reg_idx*16 + i]] ;
-               end
-            end 
+        if(rvm.vtype.vsew == SEW8) begin 
+                for(int i=rvm.vstart; i<rvm.vl;i++)begin
+                    if(i < rvm.vl) begin
+                        if(rvm.vrf[0][i]) begin
+                            vrf_sew8[dest_reg_idx*16+i] = (vrf_sew8[src1_reg_idx*16 + i] >= rvm.vlmax) ? 0 : vrf_sew8[src2_reg_idx*16 + vrf_sew8[src1_reg_idx*16 + i]] ;
+                        end
+                    end 
+                vrf_bit_strobe_temp_sew8[dest_reg_idx*16+i] = 8'hff;
+                end
         end
-        else if(dest_eew == EEW16) begin
-            foreach(vrf_sew16[i]) begin 
-               if (i < rvm.vstart) begin
-               end
-               else if(i < rvm.vl) begin
-                    vrf_sew16[dest_reg_idx*8+i] = (vrf_sew16[src1_reg_idx*8 + i] >= rvm.vlmax) ? 0 : vrf_sew16[src2_reg_idx*8 + vrf_sew16[src1_reg_idx*8 + i]] ;
-               end
-            end 
-
-        end
-        else begin
-            foreach(vrf_sew32[i]) begin 
-               if (i < rvm.vstart) begin
-               end
-               else if(i < rvm.vl) begin
-                    vrf_sew32[dest_reg_idx*4+i] = (vrf_sew32[src1_reg_idx*4 + i] >= rvm.vlmax) ? 0 : vrf_sew32[src2_reg_idx*4 + vrf_sew32[src1_reg_idx*4 + i]] ;
-               end
-            end 
-
-        end
-    endfunction
-    function void pmt_processor::VRGATHEREI16_VV(input rvv_behavior_model rvm);
-        if(dest_eew == EEW8) begin
-            foreach(vrf_sew8[i]) begin 
-               if (i < rvm.vstart) begin
-               end
-               else if(i < rvm.vl) begin
-                    vrf_sew8[dest_reg_idx*16+i] = (vrf_sew16[src1_reg_idx*8 + i] >= rvm.vlmax) ? 0 : vrf_sew8[src2_reg_idx*16 + vrf_sew16[src1_reg_idx*8 + i]] ;
-               end
-            end 
-        end
-        else if(dest_eew == EEW16) begin
-            foreach(vrf_sew16[i]) begin 
-               if (i < rvm.vstart) begin
-               end
-               else if(i < rvm.vl) begin
-                    vrf_sew16[dest_reg_idx*8+i] = (vrf_sew16[src1_reg_idx*8 + i] >= rvm.vlmax) ? 0 : vrf_sew16[src2_reg_idx*8 + vrf_sew16[src1_reg_idx*8 + i]] ;
-               end
-            end 
-
+        else if(rvm.vtype.vsew == SEW16) begin
+                for(int i=rvm.vstart; i<rvm.vl;i++)begin
+                    if(i < rvm.vl) begin
+                        if(rvm.vrf[0][i]) begin
+                            vrf_sew16[dest_reg_idx*8+i] = (vrf_sew16[src1_reg_idx*8 + i] >= rvm.vlmax) ? 0 : vrf_sew16[src2_reg_idx*8 + vrf_sew16[src1_reg_idx*8 + i]] ;
+                        end
+                    end 
+                vrf_bit_strobe_temp_sew16[dest_reg_idx*8+i] = 16'hffff;
+                end
         end
         else begin
-            foreach(vrf_sew32[i]) begin 
-               if (i < rvm.vstart) begin
-               end
-               else if(i < rvm.vl) begin
-                    vrf_sew32[dest_reg_idx*4+i] = (vrf_sew16[src1_reg_idx*8 + i] >= rvm.vlmax) ? 0 : vrf_sew32[src2_reg_idx*4 + vrf_sew16[src1_reg_idx*8 + i]] ;
-               end
-            end 
-
+                for(int i=rvm.vstart; i<rvm.vl;i++)begin
+                    if(i < rvm.vl) begin
+                        if(rvm.vrf[0][i]) begin
+                            vrf_sew32[dest_reg_idx*4+i] = (vrf_sew32[src1_reg_idx*4 + i] >= rvm.vlmax) ? 0 : vrf_sew32[src2_reg_idx*4 + vrf_sew32[src1_reg_idx*4 + i]] ;
+                        end
+                    end 
+                vrf_bit_strobe_temp_sew32[dest_reg_idx*4+i] = 32'hffffffff;
+                end
         end
 
-    endfunction
+
+        case(rvm.vtype.vsew)
+                    SEW8:begin
+                        rvm.vrf=vrf_sew8;
+                        rvm.vrf_bit_strobe_temp = vrf_bit_strobe_temp_sew8;
+                    end
+                    SEW16: begin
+                `uvm_info("pmt_processor",$sformatf("Origin VCOMPRESS_VM FUNC Des  vrf[%0d] == %0x", dest_reg_idx, rvm.vrf[dest_reg_idx]),UVM_LOW)
+                        rvm.vrf=vrf_sew16;
+                `uvm_info("pmt_processor",$sformatf("Origin VCOMPRESS_VM FUNC Des  vrf[%0d] == %0x", dest_reg_idx, rvm.vrf[dest_reg_idx]),UVM_LOW)
+                        rvm.vrf_bit_strobe_temp = vrf_bit_strobe_temp_sew16;
+                    end
+                    SEW32: begin
+                        rvm.vrf=vrf_sew32;
+                        rvm.vrf_bit_strobe_temp = vrf_bit_strobe_temp_sew32;
+                    end
+                    default: begin
+                        `uvm_error("VCOMPRESS_VM CHECK", "NO VAILD SEW!")
+                    end
+       endcase
+   endfunction 
+
+
     function void pmt_processor::VRGATHER_VXI(input rvv_behavior_model rvm, input int src1_elm_data);
-        if(dest_eew == EEW8) begin
-            foreach(vrf_sew8[i]) begin 
-               if (i < rvm.vstart) begin
-               end
-               else if(i < rvm.vl) begin
-                    vrf_sew8[dest_reg_idx*16+i] = (src1_elm_data >= rvm.vlmax) ? 0 : vrf_sew8[src2_reg_idx*16 + rvm.xrf[src1_reg_idx]] ;
-               end
-            end 
+        if(rvm.vtype.vsew == SEW8) begin 
+                for(int i=rvm.vstart; i<rvm.vl;i++)begin
+                    if(i < rvm.vl) begin
+                        if(rvm.vrf[0][i]) begin
+                            vrf_sew8[dest_reg_idx*16+i] = (src1_elm_data >= rvm.vlmax) ? 0 : vrf_sew8[src2_reg_idx*16 + src1_elm_data] ;
+                `uvm_info("pmt_processor",$sformatf("VRGATHER_VXI Des vrf_sew8[%0d] == %0x Src2 vrf_sew8[%0d]==%0x ", dest_reg_idx, vrf_sew8[dest_reg_idx*16+i], src2_reg_idx, vrf_sew8[src2_reg_idx*16 + src1_elm_data]),UVM_LOW)
+                        end
+                    end 
+                vrf_bit_strobe_temp_sew8[dest_reg_idx*16+i] = 8'hff;
+                end
         end
-        else if(dest_eew == EEW16) begin
-            foreach(vrf_sew16[i]) begin 
-               if (i < rvm.vstart) begin
-               end
-               else if(i < rvm.vl) begin
-                    vrf_sew16[dest_reg_idx*8+i] = (src1_elm_data >= rvm.vlmax) ? 0 : vrf_sew16[src2_reg_idx*8 + rvm.xrf[src1_reg_idx]] ;
-               end
-            end
+        else if(rvm.vtype.vsew == SEW16) begin
+                for(int i=rvm.vstart; i<rvm.vl;i++)begin
+                    if(i < rvm.vl) begin
+                        if(rvm.vrf[0][i]) begin
+                            vrf_sew16[dest_reg_idx*8+i] = (src1_elm_data >= rvm.vlmax) ? 0 : vrf_sew16[src2_reg_idx*8 + src1_elm_data] ;
+                `uvm_info("pmt_processor",$sformatf("VRGATHER_VXI Des vrf_sew16[%0d] == %0x Src2 vrf_sew16[%0d]==%0x ", dest_reg_idx, vrf_sew16[dest_reg_idx*8+i], src2_reg_idx, vrf_sew16[src2_reg_idx*8 + src1_elm_data]),UVM_LOW)
+                        end
+                    end 
+                vrf_bit_strobe_temp_sew16[dest_reg_idx*8+i] = 16'hffff;
+                end
         end
         else begin
-            foreach(vrf_sew32[i]) begin 
-               if (i < rvm.vstart) begin
-               end
-               else if(i < rvm.vl) begin
-                    vrf_sew32[dest_reg_idx*4+i] = (src1_elm_data >= rvm.vlmax) ? 0 : vrf_sew32[src2_reg_idx*4 + rvm.xrf[src1_reg_idx]] ;
-               end
-            end
+                for(int i=rvm.vstart; i<rvm.vl;i++)begin
+                    if(i < rvm.vl) begin
+                        if(rvm.vrf[0][i]) begin
+                            vrf_sew32[dest_reg_idx*4+i] = (src1_elm_data >= rvm.vlmax) ? 0 : vrf_sew32[src2_reg_idx*4 + src1_elm_data];
+                `uvm_info("pmt_processor",$sformatf("VRGATHER_VXI Des vrf_sew32[%0d] == %0x Src2 vrf_sew32[%0d]==%0x ", dest_reg_idx, vrf_sew32[dest_reg_idx*4+i], src2_reg_idx, vrf_sew32[src2_reg_idx*4 + src1_elm_data]),UVM_LOW)
+                        end
+                    end 
+                vrf_bit_strobe_temp_sew32[dest_reg_idx*4+i] = 32'hffffffff;
+                end
+       end
+
+        case(rvm.vtype.vsew)
+                    SEW8:begin
+                        rvm.vrf=vrf_sew8;
+                        rvm.vrf_bit_strobe_temp = vrf_bit_strobe_temp_sew8;
+                    end
+                    SEW16: begin
+                `uvm_info("pmt_processor",$sformatf("Origin VCOMPRESS_VM FUNC Des  vrf[%0d] == %0x", dest_reg_idx, rvm.vrf[dest_reg_idx]),UVM_LOW)
+                        rvm.vrf=vrf_sew16;
+                `uvm_info("pmt_processor",$sformatf("Origin VCOMPRESS_VM FUNC Des  vrf[%0d] == %0x", dest_reg_idx, rvm.vrf[dest_reg_idx]),UVM_LOW)
+                        rvm.vrf_bit_strobe_temp = vrf_bit_strobe_temp_sew16;
+                    end
+                    SEW32: begin
+                        rvm.vrf=vrf_sew32;
+                        rvm.vrf_bit_strobe_temp = vrf_bit_strobe_temp_sew32;
+                    end
+                    default: begin
+                        `uvm_error("VCOMPRESS_VM CHECK", "NO VAILD SEW!")
+                    end
+       endcase
+
+    endfunction 
+
+        function void pmt_processor::VRGATHEREI16_VV(input rvv_behavior_model rvm);
+            if(rvm.vtype.vsew == SEW8) begin 
+                for(int i=rvm.vstart; i<rvm.vl;i++)begin
+                    if(i < rvm.vl) begin
+                        if(rvm.vrf[0][i]) begin
+                            vrf_sew8[dest_reg_idx*16+i] = (vrf_sew16[src1_reg_idx*8 + i] >= rvm.vlmax) ? 0 : vrf_sew8[src2_reg_idx*16 + vrf_sew16[src1_reg_idx*8 + i]] ;
+                `uvm_info("pmt_processor",$sformatf("VRGATHEREI16_VV Des vrf_sew8[%0d] == %0x Src2 vrf_sew8[%0d]==%0x ", dest_reg_idx, vrf_sew8[dest_reg_idx*16+i], src2_reg_idx, vrf_sew8[src2_reg_idx*16 + vrf_sew16[src1_reg_idx*8+i]]),UVM_LOW)
+                        end
+                    end 
+                vrf_bit_strobe_temp_sew8[dest_reg_idx*16+i] = 8'hff;
+                end
         end
+        else if(rvm.vtype.vsew == SEW16) begin
+                for(int i=rvm.vstart; i<rvm.vl;i++)begin
+                    if(i < rvm.vl) begin
+                        if(rvm.vrf[0][i]) begin
+                            vrf_sew16[dest_reg_idx*8+i] = (vrf_sew16[src1_reg_idx*8 + i] >= rvm.vlmax) ? 0 : vrf_sew16[src2_reg_idx*4 + vrf_sew16[src1_reg_idx*8 + i]] ;
+                `uvm_info("pmt_processor",$sformatf("VRGATHEREI16_VV Des vrf_sew16[%0d] == %0x Src2 vrf_sew16[%0d]==%0x ", dest_reg_idx, vrf_sew16[dest_reg_idx*8+i], src2_reg_idx, vrf_sew16[src2_reg_idx*8 + vrf_sew16[src1_reg_idx*8+i]]),UVM_LOW)
+                        end
+                    end 
+                vrf_bit_strobe_temp_sew16[dest_reg_idx*8+i] = 16'hff;
+                end
+        end
+        else begin
+                for(int i=rvm.vstart; i<rvm.vl;i++)begin
+                    if(i < rvm.vl) begin
+                        if(rvm.vrf[0][i]) begin
+                            vrf_sew32[dest_reg_idx*4+i] = (vrf_sew16[src1_reg_idx*8 + i] >= rvm.vlmax) ? 0 : vrf_sew32[src2_reg_idx*4 + vrf_sew16[src1_reg_idx*8 + i]] ;
+                `uvm_info("pmt_processor",$sformatf("VRGATHEREI16_VV Des vrf_sew32[%0d] == %0x Src2 vrf_sew32[%0d]==%0x ", dest_reg_idx, vrf_sew32[dest_reg_idx*4+i], src2_reg_idx, vrf_sew32[src2_reg_idx*4 + vrf_sew16[src1_reg_idx*8+i]]),UVM_LOW)
+                        end
+                    end 
+                vrf_bit_strobe_temp_sew32[dest_reg_idx*4+i] = 32'hffffffff;
+                end
+        end
+    
+        case(rvm.vtype.vsew)
+                    SEW8:begin
+                        rvm.vrf=vrf_sew8;
+                        rvm.vrf_bit_strobe_temp = vrf_bit_strobe_temp_sew8;
+                    end
+                    SEW16: begin
+                `uvm_info("pmt_processor",$sformatf("Origin VCOMPRESS_VM FUNC Des  vrf[%0d] == %0x", dest_reg_idx, rvm.vrf[dest_reg_idx]),UVM_LOW)
+                        rvm.vrf=vrf_sew16;
+                `uvm_info("pmt_processor",$sformatf("Origin VCOMPRESS_VM FUNC Des  vrf[%0d] == %0x", dest_reg_idx, rvm.vrf[dest_reg_idx]),UVM_LOW)
+                        rvm.vrf_bit_strobe_temp = vrf_bit_strobe_temp_sew16;
+                    end
+                    SEW32: begin
+                        rvm.vrf=vrf_sew32;
+                        rvm.vrf_bit_strobe_temp = vrf_bit_strobe_temp_sew32;
+                    end
+                    default: begin
+                        `uvm_error("VCOMPRESS_VM CHECK", "NO VAILD SEW!")
+                    end
+       endcase
     endfunction
+
     //function void pmt_processor::VRGATHER_VI(input rvv_behavior_model rvm);
     //endfunction
     function void pmt_processor::VCOMPRESS_VM(input rvv_behavior_model rvm);
-        int j;
-        if(dest_eew == EEW8) begin
-            foreach(vrf_sew8[i]) begin 
-               if (i < rvm.vstart) begin
-               end
-               else if(i < rvm.vl) begin
-                    vrf_sew8[dest_reg_idx*16+j] = (rvm.vrf[src1_reg_idx][i]&&vm) ? vrf_sew8[src2_reg_idx*16 + i] : 0;
-                    j = j + 1;
-               end
+        int j=0;
+        if(rvm.vtype.vsew == SEW8) begin
+            for(int i=0; i<rvm.vl; i++) begin 
+                if(i < rvm.vl) begin 
+                    if(rvm.vrf[src1_reg_idx][i]) begin
+                        j = j+1;
+                        vrf_sew8[dest_reg_idx*16+j] = vrf_sew8[src2_reg_idx*16 + i];
+                    end
+                end 
+                vrf_bit_strobe_temp_sew8[dest_reg_idx*16+i] = 8'hff;
             end 
         end
-        else if(dest_eew == EEW16) begin
-            foreach(vrf_sew16[i]) begin 
-               if (i < rvm.vstart) begin
+        else if(rvm.vtype.vsew == SEW16) begin
+            for(int i=0; i<rvm.vl; i++) begin 
+                if(i < rvm.vl) begin 
+                    if(rvm.vrf[src1_reg_idx][i]) begin
+                `uvm_info("pmt_processor",$sformatf("VCOMPRESS Src vrf[%0d] == %0x", src1_reg_idx, rvm.vrf[src1_reg_idx]),UVM_LOW)
+                `uvm_info("pmt_processor",$sformatf("VCOMPRESS Src2 vrf[%0d] == %0x", src2_reg_idx, vrf_sew16[src2_reg_idx*8+i]),UVM_LOW)
+                `uvm_info("pmt_processor",$sformatf("VCOMPRESS Src2 vrf[%0d] == %0x", dest_reg_idx, vrf_sew16[dest_reg_idx*8+j]),UVM_LOW)
+                `uvm_info("pmt_processor",$sformatf("VCOMPRESS i== %0x, j == %0x", i, j),UVM_LOW)
+                        vrf_sew16[dest_reg_idx*8+j] = vrf_sew16[src2_reg_idx*8 + i];
+                `uvm_info("pmt_processor",$sformatf("VCOMPRESS Src2 vrf[%0d] == %0x", src2_reg_idx, vrf_sew16[src2_reg_idx*8+i]),UVM_LOW)
+                `uvm_info("pmt_processor",$sformatf("VCOMPRESS Src2 vrf[%0d] == %0x", dest_reg_idx, vrf_sew16[dest_reg_idx*8+j]),UVM_LOW)
+                        j = j+1;
+                    end
                end
-               else if(i < rvm.vl) begin
-                    vrf_sew16[dest_reg_idx*8+j] = (rvm.vrf[src1_reg_idx][i]&&vm) ? vrf_sew16[src2_reg_idx*8 + i] : 0;
-                    j = j + 1;
-               end
-            end 
+                vrf_bit_strobe_temp_sew16[dest_reg_idx*8+i] = 16'hffff;
+            end  
         end
         else begin
-            foreach(vrf_sew32[i]) begin 
-               if (i < rvm.vstart) begin
+             for(int i=0; i<rvm.vl; i++) begin 
+                if(i < rvm.vl) begin 
+                    if(rvm.vrf[src1_reg_idx][i]) begin
+                        j = j+1;
+                        vrf_sew32[dest_reg_idx*4+j] = vrf_sew32[src2_reg_idx*4 + i];
+                `uvm_info("pmt_processor",$sformatf("VCOMPRESS Src vrf[%0d] == %0x", src1_reg_idx, rvm.vrf[src1_reg_idx]),UVM_LOW)
+                    end
                end
-               else if(i < rvm.vl) begin
-                    vrf_sew32[dest_reg_idx*4+j] = (rvm.vrf[src1_reg_idx][i]&&vm) ? vrf_sew8[src2_reg_idx*4 + i] : 0;
-                    j = j + 1;
-               end
+               vrf_bit_strobe_temp_sew32[dest_reg_idx*4+i] = 32'hffffffff;
             end 
-        end
+        end 
+
+        case(rvm.vtype.vsew)
+                    SEW8:begin
+                        rvm.vrf=vrf_sew8;
+                        rvm.vrf_bit_strobe_temp = vrf_bit_strobe_temp_sew8;
+                    end
+                    SEW16: begin
+                `uvm_info("pmt_processor",$sformatf("Origin VCOMPRESS_VM FUNC Des  vrf[%0d] == %0x", dest_reg_idx, rvm.vrf[dest_reg_idx]),UVM_LOW)
+                        rvm.vrf=vrf_sew16;
+                `uvm_info("pmt_processor",$sformatf("Origin VCOMPRESS_VM FUNC Des  vrf[%0d] == %0x", dest_reg_idx, rvm.vrf[dest_reg_idx]),UVM_LOW)
+                        rvm.vrf_bit_strobe_temp = vrf_bit_strobe_temp_sew16;
+                    end
+                    SEW32: begin
+                        rvm.vrf=vrf_sew32;
+                        rvm.vrf_bit_strobe_temp = vrf_bit_strobe_temp_sew32;
+                    end
+                    default: begin
+                        `uvm_error("VCOMPRESS_VM CHECK", "NO VAILD SEW!")
+                    end
+       endcase
+                `uvm_info("pmt_processor",$sformatf("Origin VCOMPRESS_VM FUNC Des  vrf[%0d] == %0x", dest_reg_idx, rvm.vrf[dest_reg_idx]),UVM_LOW)
+                `uvm_info("pmt_processor",$sformatf("Origin VCOMPRESS_VM FUNC Src2  vrf[%0d] == %0x", src2_reg_idx, rvm.vrf[src2_reg_idx]),UVM_LOW)
+                `uvm_info("pmt_processor",$sformatf("Origin VCOMPRESS_VM FUNC Src1  vrf[%0d] == %0x", src1_reg_idx, rvm.vrf[src1_reg_idx]),UVM_LOW)
     endfunction
     function void pmt_processor::VMV1R(input rvv_behavior_model rvm);
                 logic [7:0] start_reg_idx;
