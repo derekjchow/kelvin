@@ -979,6 +979,7 @@ endclass : rvv_behavior_model
               rt_tr.rt_vrf_index.push_back(reg_idx);
               rt_tr.rt_vrf_strobe.push_back(vrf_byte_strobe_temp[reg_idx]);
               rt_tr.rt_vrf_data.push_back(vrf[reg_idx]);
+                `uvm_info("pmt_processor",$sformatf("VGATHER V0  vrf[%0x] == %0x", reg_idx, vrf[reg_idx]),UVM_LOW)
             end
           end
         end
@@ -2482,9 +2483,9 @@ class pmt_processor#(
             vrf_sew8 = rvv_behavior_model_inst.vrf;
             vrf_sew16 = rvv_behavior_model_inst.vrf;
             vrf_sew32 = rvv_behavior_model_inst.vrf;
-            vrf_bit_strobe_temp_sew8 = rvv_behavior_model_inst.vrf;
-            vrf_bit_strobe_temp_sew16 = rvv_behavior_model_inst.vrf;
-            vrf_bit_strobe_temp_sew32 = rvv_behavior_model_inst.vrf;
+            vrf_bit_strobe_temp_sew8 = rvv_behavior_model_inst.vrf_bit_strobe_temp;
+            vrf_bit_strobe_temp_sew16 = rvv_behavior_model_inst.vrf_bit_strobe_temp;
+            vrf_bit_strobe_temp_sew32 = rvv_behavior_model_inst.vrf_bit_strobe_temp;
             `uvm_info("pmt_processor",$sformatf("This is in pmt_func function\n"),UVM_LOW)
             //foreach (vrf_sew8[idx8]) begin
             //    `uvm_info("pmt_processor",$sformatf("vrf_sew8[%0h] = %0h", idx8, vrf_sew8[idx8]),UVM_LOW)
@@ -2495,6 +2496,7 @@ class pmt_processor#(
             //foreach (vrf_sew32[idx32]) begin
             //    `uvm_info("pmt_processor",$sformatf("vrf_sew32[%0h] = %0h", idx32, vrf_sew32[idx32]),UVM_LOW)
             //end
+            `uvm_info("pmt_processor",$sformatf("Instruction is %0x, type is %0x",inst_tr.alu_inst,inst_tr.alu_type),UVM_LOW)
             case({inst_tr.alu_inst,inst_tr.alu_type})
                     {VWXUNARY0,OPMVV}: begin
                             VMV_X_S(rvv_behavior_model_inst);
@@ -2876,11 +2878,12 @@ endclass: pmt_processor
         if(rvm.vtype.vsew == SEW8) begin 
                 for(int i=rvm.vstart; i<rvm.vl;i++)begin
                     if(i < rvm.vl) begin
+                        `uvm_info("pmt_processor",$sformatf("Index is %0x", i),UVM_LOW)
                         if(rvm.vrf[0][i]) begin
                             vrf_sew8[dest_reg_idx*16+i] = (vrf_sew8[src1_reg_idx*16 + i] >= rvm.vlmax) ? 0 : vrf_sew8[src2_reg_idx*16 + vrf_sew8[src1_reg_idx*16 + i]] ;
+                            vrf_bit_strobe_temp_sew8[dest_reg_idx*16+i] = 8'hff;
                         end
                     end 
-                vrf_bit_strobe_temp_sew8[dest_reg_idx*16+i] = 8'hff;
                 end
         end
         else if(rvm.vtype.vsew == SEW16) begin
@@ -2888,9 +2891,9 @@ endclass: pmt_processor
                     if(i < rvm.vl) begin
                         if(rvm.vrf[0][i]) begin
                             vrf_sew16[dest_reg_idx*8+i] = (vrf_sew16[src1_reg_idx*8 + i] >= rvm.vlmax) ? 0 : vrf_sew16[src2_reg_idx*8 + vrf_sew16[src1_reg_idx*8 + i]] ;
+                            vrf_bit_strobe_temp_sew16[dest_reg_idx*8+i] = 16'hffff;
                         end
                     end 
-                vrf_bit_strobe_temp_sew16[dest_reg_idx*8+i] = 16'hffff;
                 end
         end
         else begin
@@ -2898,9 +2901,9 @@ endclass: pmt_processor
                     if(i < rvm.vl) begin
                         if(rvm.vrf[0][i]) begin
                             vrf_sew32[dest_reg_idx*4+i] = (vrf_sew32[src1_reg_idx*4 + i] >= rvm.vlmax) ? 0 : vrf_sew32[src2_reg_idx*4 + vrf_sew32[src1_reg_idx*4 + i]] ;
+                            vrf_bit_strobe_temp_sew32[dest_reg_idx*4+i] = 32'hffffffff;
                         end
                     end 
-                vrf_bit_strobe_temp_sew32[dest_reg_idx*4+i] = 32'hffffffff;
                 end
         end
 
@@ -2909,11 +2912,19 @@ endclass: pmt_processor
                     SEW8:begin
                         rvm.vrf=vrf_sew8;
                         rvm.vrf_bit_strobe_temp = vrf_bit_strobe_temp_sew8;
+                `uvm_info("pmt_processor",$sformatf("VGATHER Des  vrf[%0d] == %0x", dest_reg_idx, rvm.vrf[dest_reg_idx]),UVM_LOW)
+                `uvm_info("pmt_processor",$sformatf("VGATHER SRC2  vrf[%0d] == %0x", src2_reg_idx, rvm.vrf[src2_reg_idx]),UVM_LOW)
+                `uvm_info("pmt_processor",$sformatf("VGATHER SRC1  vrf[%0d] == %0x", src1_reg_idx, rvm.vrf[src1_reg_idx]),UVM_LOW)
+                `uvm_info("pmt_processor",$sformatf("VGATHER V0  vrf[0] == %0x", rvm.vrf[0]),UVM_LOW)
+                `uvm_info("pmt_processor",$sformatf("VGATHER VLMAX  %0x", rvm.vlmax),UVM_LOW)
                     end
                     SEW16: begin
-                `uvm_info("pmt_processor",$sformatf("Origin VCOMPRESS_VM FUNC Des  vrf[%0d] == %0x", dest_reg_idx, rvm.vrf[dest_reg_idx]),UVM_LOW)
+                `uvm_info("pmt_processor",$sformatf("VGATHER Des  vrf[%0d] == %0x", dest_reg_idx, rvm.vrf[dest_reg_idx]),UVM_LOW)
                         rvm.vrf=vrf_sew16;
-                `uvm_info("pmt_processor",$sformatf("Origin VCOMPRESS_VM FUNC Des  vrf[%0d] == %0x", dest_reg_idx, rvm.vrf[dest_reg_idx]),UVM_LOW)
+                `uvm_info("pmt_processor",$sformatf("VGATHER Des  vrf[%0d] == %0x", dest_reg_idx, rvm.vrf[dest_reg_idx]),UVM_LOW)
+                `uvm_info("pmt_processor",$sformatf("VGATHER SRC2  vrf[%0d] == %0x", src2_reg_idx, rvm.vrf[src2_reg_idx]),UVM_LOW)
+                `uvm_info("pmt_processor",$sformatf("VGATHER SRC1  vrf[%0d] == %0x", src1_reg_idx, rvm.vrf[src1_reg_idx]),UVM_LOW)
+                `uvm_info("pmt_processor",$sformatf("VGATHER V0  vrf[0] == %0x", rvm.vrf[0]),UVM_LOW)
                         rvm.vrf_bit_strobe_temp = vrf_bit_strobe_temp_sew16;
                     end
                     SEW32: begin
@@ -2921,7 +2932,7 @@ endclass: pmt_processor
                         rvm.vrf_bit_strobe_temp = vrf_bit_strobe_temp_sew32;
                     end
                     default: begin
-                        `uvm_error("VCOMPRESS_VM CHECK", "NO VAILD SEW!")
+                        `uvm_error("VGATHER CHECK", "NO VAILD SEW!")
                     end
        endcase
    endfunction 
