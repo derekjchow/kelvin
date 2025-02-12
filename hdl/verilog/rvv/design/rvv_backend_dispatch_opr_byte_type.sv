@@ -152,36 +152,45 @@ module rvv_backend_dispatch_opr_byte_type
             endcase
         end
 
+        // for RDT instruction, eew_max == vs2_eew
         always_comb begin
-          case({eew_max,uop_info.vs2_eew})
-            {EEW32,EEW32},
-            {EEW16,EEW16},
-            {EEW8,EEW8}: begin
-              // regular and narrowing instruction
+          case (uop_info.uop_exe_unit)
+            RDT:begin
               uop_vs2_start = uop_info.uop_index << (VLENB_WIDTH - vs2_eew_shift);
               uop_vs2_end = uop_vs2_start + (`VLENB >> eew_max_shift) - 1'b1;
             end
-            {EEW32,EEW16},
-            {EEW16,EEW8}: begin
-              // widening instruction: EEW_vd:EEW_vs = 2:1
-              uop_vs2_start = uop_info.uop_index[`UOP_INDEX_WIDTH-1:1] << (VLENB_WIDTH - vs2_eew_shift);
-              uop_vs2_end = uop_info.uop_index[0] ? uop_vs2_start + (`VLENB >> (eew_max_shift-1)) - 1'b1 :
-                                                    uop_vs2_start + (`VLENB >> eew_max_shift) - 1'b1 ; 
-            end
-            {EEW32,EEW8}: begin
-              // widening instruction: EEW_vd:EEW_vs = 4:1
-              uop_vs2_start = uop_info.uop_index[`UOP_INDEX_WIDTH-1:2] << (VLENB_WIDTH - vs2_eew_shift);
-              case(uop_info.uop_index[1:0])
-                2'd0: uop_vs2_end = uop_vs2_start + `VLENB/4 - 1;  
-                2'd1: uop_vs2_end = uop_vs2_start + `VLENB/2 - 1;  
-                2'd2: uop_vs2_end = uop_vs2_start + `VLENB*3/4 - 1;  
-                2'd3: uop_vs2_end = uop_vs2_start + `VLENB - 1;  
-                default: uop_vs2_end = 'b0;  
+            default:begin
+              case({eew_max,uop_info.vs2_eew})
+                {EEW32,EEW32},
+                {EEW16,EEW16},
+                {EEW8,EEW8}: begin
+                  // regular and narrowing instruction
+                  uop_vs2_start = uop_info.uop_index << (VLENB_WIDTH - vs2_eew_shift);
+                  uop_vs2_end = uop_vs2_start + (`VLENB >> eew_max_shift) - 1'b1;
+                end
+                {EEW32,EEW16},
+                {EEW16,EEW8}: begin
+                  // widening instruction: EEW_vd:EEW_vs = 2:1
+                  uop_vs2_start = uop_info.uop_index[`UOP_INDEX_WIDTH-1:1] << (VLENB_WIDTH - vs2_eew_shift);
+                  uop_vs2_end = uop_info.uop_index[0] ? uop_vs2_start + (`VLENB >> (eew_max_shift-1)) - 1'b1 :
+                                                        uop_vs2_start + (`VLENB >> eew_max_shift) - 1'b1 ; 
+                end
+                {EEW32,EEW8}: begin
+                  // widening instruction: EEW_vd:EEW_vs = 4:1
+                  uop_vs2_start = uop_info.uop_index[`UOP_INDEX_WIDTH-1:2] << (VLENB_WIDTH - vs2_eew_shift);
+                  case(uop_info.uop_index[1:0])
+                    2'd0: uop_vs2_end = uop_vs2_start + `VLENB/4 - 1;  
+                    2'd1: uop_vs2_end = uop_vs2_start + `VLENB/2 - 1;  
+                    2'd2: uop_vs2_end = uop_vs2_start + `VLENB*3/4 - 1;  
+                    2'd3: uop_vs2_end = uop_vs2_start + `VLENB - 1;  
+                    default: uop_vs2_end = 'b0;  
+                  endcase
+                end
+                default: begin
+                  uop_vs2_start = 'b0;
+                  uop_vs2_end = 'b0;
+                end
               endcase
-            end
-            default: begin
-              uop_vs2_start = 'b0;
-              uop_vs2_end = 'b0;
             end
           endcase
         end

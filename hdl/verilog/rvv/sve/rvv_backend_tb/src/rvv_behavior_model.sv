@@ -276,10 +276,8 @@ endclass : rvv_behavior_model
         // 1. Decode - Get eew & emul
         pc = inst_tr.pc;
         is_widen_inst           = inst_tr.inst_type == ALU &&  (inst_tr.alu_inst inside {VWADDU, VWADD, VWADDU_W, VWADD_W, VWSUBU, VWSUB, VWSUBU_W, VWSUB_W, 
-                                                                                         VWMUL, VWMULU, VWMULSU, VWMACCU, VWMACC, VWMACCUS, VWMACCSU,
-                                                                                         VWREDSUMU, VWREDSUM});
-        is_widen_vs2_inst       = inst_tr.inst_type == ALU &&  (inst_tr.alu_inst inside {VWADD_W, VWADDU_W, VWSUBU_W, VWSUB_W,
-                                                                                         VWREDSUMU, VWREDSUM});
+                                                                                         VWMUL, VWMULU, VWMULSU, VWMACCU, VWMACC, VWMACCUS, VWMACCSU});
+        is_widen_vs2_inst       = inst_tr.inst_type == ALU &&  (inst_tr.alu_inst inside {VWADD_W, VWADDU_W, VWSUBU_W, VWSUB_W});
         is_narrow_inst          = inst_tr.inst_type == ALU &&  (inst_tr.alu_inst inside {VNSRL, VNSRA, VNCLIPU, VNCLIP});
         is_mask_producing_inst  = inst_tr.inst_type == ALU && ((inst_tr.alu_inst inside {VMAND, VMOR, VMXOR, VMORN, VMNAND, VMNOR, VMANDN, VMXNOR,
                                                                                          VMADC, VMSBC, 
