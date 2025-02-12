@@ -977,7 +977,6 @@ endclass : rvv_behavior_model
               rt_tr.rt_vrf_index.push_back(reg_idx);
               rt_tr.rt_vrf_strobe.push_back(vrf_byte_strobe_temp[reg_idx]);
               rt_tr.rt_vrf_data.push_back(vrf[reg_idx]);
-                `uvm_info("pmt_processor",$sformatf("VGATHER V0  vrf[%0x] == %0x", reg_idx, vrf[reg_idx]),UVM_LOW)
             end
           end
         end
@@ -2639,12 +2638,9 @@ endclass: pmt_processor
                     if(i < rvm.vl) begin
                         if(rvm.vrf[0][i]) begin
                             vrf_sew8[dest_reg_idx*16+i] =  vrf_sew8[src2_reg_idx*16 + (i-src1_elm_idx)] ;
-                `uvm_info("pmt_processor",$sformatf("VSLIDE Des vrf_sew8[%0d] == %0x Src2 vrf_sew8[%0d]==%0x ", dest_reg_idx, vrf_sew8[dest_reg_idx*16+i], src2_reg_idx, vrf_sew8[src2_reg_idx*16 + vrf_sew16[src1_reg_idx*8+i]]),UVM_LOW)
+                            `uvm_info("pmt_processor",$sformatf("VSLIDE Des vrf_sew8[%0d] == %0x Src2 vrf_sew8[%0d]==%0x ", dest_reg_idx, vrf_sew8[dest_reg_idx*16+i], src2_reg_idx, vrf_sew8[src2_reg_idx*16 + (i-src1_elm_idx)]),UVM_LOW)
+                            vrf_bit_strobe_temp_sew8[dest_reg_idx*16+i] = 8'hff;
                         end 
-                        //else begin
-                        //    vrf_sew8[dest_reg_idx*16+i] = 8'h00;
-                        //end
-                        vrf_bit_strobe_temp_sew8[dest_reg_idx*16+i] = 8'hff;
                     end 
                 end
         end
@@ -2653,9 +2649,9 @@ endclass: pmt_processor
                     if(i < rvm.vl) begin
                         if(rvm.vrf[0][i]) begin
                             vrf_sew16[dest_reg_idx*8+i] =  vrf_sew16[src2_reg_idx*8 + (i-src1_elm_idx)] ;
-                `uvm_info("pmt_processor",$sformatf("VSLIDE Des vrf_sew16[%0d] == %0x Src2 vrf_sew16[%0d]==%0x ", dest_reg_idx, vrf_sew16[dest_reg_idx*8+i], src2_reg_idx, vrf_sew16[src2_reg_idx*8 + vrf_sew16[src1_reg_idx*8+i]]),UVM_LOW)
+                            `uvm_info("pmt_processor",$sformatf("VSLIDE Des vrf_sew16[%0d] == %0x Src2 vrf_sew16[%0d]==%0x ", dest_reg_idx, vrf_sew16[dest_reg_idx*8+i], src2_reg_idx, vrf_sew16[src2_reg_idx*8 + (i-src1_elm_idx)]),UVM_LOW)
+                            vrf_bit_strobe_temp_sew16[dest_reg_idx*16+i] = 8'hff;
                         end 
-                        vrf_bit_strobe_temp_sew16[dest_reg_idx*16+i] = 8'hff;
                     end 
                 end
         end
@@ -2664,12 +2660,9 @@ endclass: pmt_processor
                     if(i < rvm.vl) begin
                         if(rvm.vrf[0][i]) begin
                             vrf_sew32[dest_reg_idx*4+i] =  vrf_sew32[src2_reg_idx*4 + (i-src1_elm_idx)] ;
-                `uvm_info("pmt_processor",$sformatf("VSLIDE Des vrf_sew32[%0d] == %0x Src2 vrf_sew32[%0d]==%0x ", dest_reg_idx, vrf_sew32[dest_reg_idx*4+i], src2_reg_idx, vrf_sew32[src2_reg_idx*4 + vrf_sew32[src1_reg_idx*4+i]]),UVM_LOW)
+                            `uvm_info("pmt_processor",$sformatf("VSLIDE Des vrf_sew32[%0d] == %0x Src2 vrf_sew32[%0d]==%0x ", dest_reg_idx, vrf_sew32[dest_reg_idx*4+i], src2_reg_idx, vrf_sew32[src2_reg_idx*4 + (i-src1_elm_idx)]),UVM_LOW)
+                            vrf_bit_strobe_temp_sew32[dest_reg_idx*4+i] = 32'hffffffff;
                         end 
-                        //else begin
-                        //    vrf_sew32[dest_reg_idx*4+i] = 32'h00000000;
-                        //end
-                        vrf_bit_strobe_temp_sew32[dest_reg_idx*4+i] = 32'hffffffff;
                     end 
                 end
             end 
@@ -2678,33 +2671,38 @@ endclass: pmt_processor
 
          case(rvm.vtype.vsew)
                     SEW8:begin
+                `uvm_info("pmt_processor",$sformatf("Origin VSLIDEUP FUNC Des  vrf[%0d] == %0x", dest_reg_idx, rvm.vrf[dest_reg_idx]),UVM_LOW)
                         rvm.vrf=vrf_sew8;
                         rvm.vrf_bit_strobe_temp = vrf_bit_strobe_temp_sew8;
+                `uvm_info("pmt_processor",$sformatf("VSLIDEUP FUNC Des  vrf[%0d] == %0x, v[0] == %0x, xrf[%0d]== %0x", dest_reg_idx, rvm.vrf[dest_reg_idx], rvm.vrf[0], src1_reg_idx, src1_elm_idx),UVM_LOW)
                     end
                     SEW16: begin
-                `uvm_info("pmt_processor",$sformatf("Origin VCOMPRESS_VM FUNC Des  vrf[%0d] == %0x", dest_reg_idx, rvm.vrf[dest_reg_idx]),UVM_LOW)
+                `uvm_info("pmt_processor",$sformatf("Origin VSLIDEUP FUNC Des  vrf[%0d] == %0x", dest_reg_idx, rvm.vrf[dest_reg_idx]),UVM_LOW)
                         rvm.vrf=vrf_sew16;
-                `uvm_info("pmt_processor",$sformatf("Origin VCOMPRESS_VM FUNC Des  vrf[%0d] == %0x", dest_reg_idx, rvm.vrf[dest_reg_idx]),UVM_LOW)
+                `uvm_info("pmt_processor",$sformatf("VSLIDEUP FUNC Des  vrf[%0d] == %0x, v[0] == %0x", dest_reg_idx, rvm.vrf[dest_reg_idx], rvm.vrf[0]),UVM_LOW)
                         rvm.vrf_bit_strobe_temp = vrf_bit_strobe_temp_sew16;
                     end
                     SEW32: begin
                         rvm.vrf=vrf_sew32;
                         rvm.vrf_bit_strobe_temp = vrf_bit_strobe_temp_sew32;
+                `uvm_info("pmt_processor",$sformatf("VSLIDEUP FUNC Des  vrf[%0d] == %0x, v[0] == %0x, xrf[%0d]== %0x", dest_reg_idx, rvm.vrf[dest_reg_idx], rvm.vrf[0], src1_reg_idx, src1_elm_idx),UVM_LOW)
                     end
                     default: begin
-                        `uvm_error("VCOMPRESS_VM CHECK", "NO VAILD SEW!")
+                        `uvm_error("pmt_processor CHECK", "NO VAILD SEW!")
                     end
         endcase
     endfunction 
 
     function void pmt_processor::VSLIDEDOWN_F(input rvv_behavior_model rvm, input int src1_elm_idx );
+
         if(rvm.vtype.vsew == SEW8) begin 
                 for(int i=rvm.vstart; i<rvm.vl;i++)begin
                     if(i < rvm.vl) begin
                         if(rvm.vrf[0][i]) begin
-                            vrf_sew8[dest_reg_idx*16 + i] = ((i+src1_elm_idx) < rvm.vlmax) ? vrf_sew8[src2_reg_idx*16 + (i+src1_elm_idx)] : 0;
+                            vrf_sew8[dest_reg_idx*16+i] = (src1_elm_idx < rvm.vlmax) ? vrf_sew8[src2_reg_idx*16 + (i+src1_elm_idx)] : 0;
+                            `uvm_info("pmt_processor",$sformatf("VSLIDEDOWN Des vrf_sew8[%0d] == %0x Src2 vrf_sew8[%0d]==%0x ", dest_reg_idx, vrf_sew8[dest_reg_idx*16+i], src2_reg_idx, vrf_sew8[src2_reg_idx*16 + (i+src1_elm_idx)]),UVM_LOW)
+                            vrf_bit_strobe_temp_sew8[dest_reg_idx*16+i] = 8'hff;
                         end 
-                        vrf_bit_strobe_temp_sew8[dest_reg_idx*16+i] = 8'hff;
                     end 
                 end
         end
@@ -2712,9 +2710,10 @@ endclass: pmt_processor
                 for(int i=rvm.vstart; i<rvm.vl;i++)begin
                     if(i < rvm.vl) begin
                         if(rvm.vrf[0][i]) begin
-                            vrf_sew16[dest_reg_idx*8 + i] = ((i+src1_elm_idx) < rvm.vlmax) ? vrf_sew16[src2_reg_idx*8 + (i+src1_elm_idx)] : 0;
+                            vrf_sew16[dest_reg_idx*8+i] = (src1_elm_idx < rvm.vlmax) ? vrf_sew16[src2_reg_idx*8 + (i+src1_elm_idx)] : 0;
+                            `uvm_info("pmt_processor",$sformatf("VSLIDE Des vrf_sew16[%0d] == %0x Src2 vrf_sew16[%0d]==%0x ", dest_reg_idx, vrf_sew16[dest_reg_idx*8+i], src2_reg_idx, vrf_sew16[src2_reg_idx*8 + (i+src1_elm_idx)]),UVM_LOW)
+                            vrf_bit_strobe_temp_sew16[dest_reg_idx*8+i] = 16'hffff;
                         end 
-                        vrf_bit_strobe_temp_sew16[dest_reg_idx*16+i] = 8'hff;
                     end 
                 end
         end
@@ -2722,9 +2721,10 @@ endclass: pmt_processor
                 for(int i=rvm.vstart; i<rvm.vl;i++)begin
                     if(i < rvm.vl) begin
                         if(rvm.vrf[0][i]) begin
-                            vrf_sew16[dest_reg_idx*4 + i] = ((i+src1_elm_idx) < rvm.vlmax) ? vrf_sew32[src2_reg_idx*4 + (i+src1_elm_idx)] : 0;
+                            vrf_sew32[dest_reg_idx*4+i] = (src1_elm_idx < rvm.vlmax) ? vrf_sew32[src2_reg_idx*4 + (i+src1_elm_idx)] : 0;
+                            `uvm_info("pmt_processor",$sformatf("VSLIDE Des vrf_sew32[%0d] == %0x Src2 vrf_sew32[%0d]==%0x ", dest_reg_idx, vrf_sew32[dest_reg_idx*4+i], src2_reg_idx, vrf_sew32[src2_reg_idx*4 + (i+src1_elm_idx)]),UVM_LOW)
+                            vrf_bit_strobe_temp_sew32[dest_reg_idx*4+i] = 32'hffffffff;
                         end 
-                        vrf_bit_strobe_temp_sew32[dest_reg_idx*4+i] = 32'hffffffff;
                     end 
                 end
             end 
@@ -2757,39 +2757,46 @@ endclass: pmt_processor
     //endfunction
     function void pmt_processor::VSLIDE1UP_F(input rvv_behavior_model rvm, input int src1_elm_data);
         int slide_first_data;
-        slide_first_data = (rvm.vstart >= 1) ? rvm.vstart : src1_elm_data;
+        slide_first_data = (rvm.vstart >= 1) ? rvm.vstart : 1;
         if(rvm.vtype.vsew == SEW8) begin 
+                if(rvm.vrf[0][0]) begin
+                    vrf_sew8[dest_reg_idx*16] =  src1_elm_data ;
+                    vrf_bit_strobe_temp_sew8[dest_reg_idx*16] = 8'hff;
+                end
                 for(int i=slide_first_data; i<rvm.vl;i++)begin
                     if(i < rvm.vl) begin
                         if(rvm.vrf[0][i]) begin
-                            vrf_sew8[dest_reg_idx*16+i] =  vrf_sew8[src2_reg_idx*16 + (i-src1_elm_data)] ;
+                            vrf_sew8[dest_reg_idx*16+i] =  vrf_sew8[src2_reg_idx*16 + (i-1)] ;
+                            vrf_bit_strobe_temp_sew8[dest_reg_idx*16+i] = 8'hff;
                         end 
-                        vrf_bit_strobe_temp_sew8[dest_reg_idx*16+i] = 8'hff;
                     end 
                 end
         end
         else if(rvm.vtype.vsew == SEW16) begin 
+                if(rvm.vrf[0][0]) begin
+                    vrf_sew16[dest_reg_idx*8] = src1_elm_data ;
+                    vrf_bit_strobe_temp_sew16[dest_reg_idx*8] = 16'hff;
+                end
                 for(int i=slide_first_data; i<rvm.vl;i++)begin
                     if(i < rvm.vl) begin
                         if(rvm.vrf[0][i]) begin
-                            vrf_sew16[dest_reg_idx*8+i] =  vrf_sew16[src2_reg_idx*8 + (i-src1_elm_data)] ;
-                `uvm_info("pmt_processor",$sformatf("VSLIDE Des vrf_sew16[%0d] == %0x Src2 vrf_sew16[%0d]==%0x ", dest_reg_idx, vrf_sew16[dest_reg_idx*8+i], src2_reg_idx, vrf_sew16[src2_reg_idx*8 + vrf_sew16[src1_reg_idx*8+i]]),UVM_LOW)
+                            vrf_sew16[dest_reg_idx*8+i] =  vrf_sew16[src2_reg_idx*8 + (i-1)] ;
+                            vrf_bit_strobe_temp_sew16[dest_reg_idx*8+i] = 16'hffff;
                         end 
-                        vrf_bit_strobe_temp_sew16[dest_reg_idx*16+i] = 8'hff;
                     end 
                 end
         end
         else if(rvm.vtype.vsew == SEW32) begin 
+                if(rvm.vrf[0][0]) begin
+                    vrf_sew32[dest_reg_idx*4] =  src1_elm_data ;
+                    vrf_bit_strobe_temp_sew32[dest_reg_idx*4] = 32'hffffffff;
+                end
                 for(int i=slide_first_data; i<rvm.vl;i++)begin
                     if(i < rvm.vl) begin
                         if(rvm.vrf[0][i]) begin
-                            vrf_sew32[dest_reg_idx*4+i] =  vrf_sew32[src2_reg_idx*4 + (i-src1_elm_data)] ;
-                `uvm_info("pmt_processor",$sformatf("VSLIDE Des vrf_sew32[%0d] == %0x Src2 vrf_sew32[%0d]==%0x ", dest_reg_idx, vrf_sew32[dest_reg_idx*4+i], src2_reg_idx, vrf_sew32[src2_reg_idx*4 + vrf_sew32[src1_reg_idx*4+i]]),UVM_LOW)
+                            vrf_sew32[dest_reg_idx*4+i] =  vrf_sew32[src2_reg_idx*4 + (i-1)] ;
+                            vrf_bit_strobe_temp_sew32[dest_reg_idx*4+i] = 32'hffffffff;
                         end 
-                        //else begin
-                        //    vrf_sew32[dest_reg_idx*4+i] = 32'h00000000;
-                        //end
-                        vrf_bit_strobe_temp_sew32[dest_reg_idx*4+i] = 32'hffffffff;
                     end 
                 end
             end 
@@ -2819,38 +2826,52 @@ endclass: pmt_processor
     endfunction 
 
     function void pmt_processor::VSLIDE1DOWN_F(input rvv_behavior_model rvm, input int src1_elm_idx);
-           if(rvm.vtype.vsew == SEW8) begin 
-                for(int i=rvm.vstart; i<rvm.vl;i++)begin
+         int slide_last_data;
+        slide_last_data = rvm.vl - 1;
+        if(rvm.vtype.vsew == SEW8) begin 
+                if(rvm.vrf[0][slide_last_data]) begin
+                    vrf_sew8[dest_reg_idx*16 + slide_last_data] =  src1_elm_idx ;
+                    vrf_bit_strobe_temp_sew8[dest_reg_idx*16 + slide_last_data] = 8'hff;
+                end
+                for(int i=rvm.vstart; i<slide_last_data;i++)begin
                     if(i < rvm.vl) begin
                         if(rvm.vrf[0][i]) begin
-                            vrf_sew8[dest_reg_idx*16 + i] = ((i+src1_elm_idx) < rvm.vlmax) ? vrf_sew8[src2_reg_idx*16 + (i+src1_elm_idx)] : 0;
+                            vrf_sew8[dest_reg_idx*16+i] =  vrf_sew8[src2_reg_idx*16 + (i+1)] ;
+                            vrf_bit_strobe_temp_sew8[dest_reg_idx*16+i] = 8'hff;
                         end 
-                        vrf_bit_strobe_temp_sew8[dest_reg_idx*16+i] = 8'hff;
                     end 
                 end
         end
         else if(rvm.vtype.vsew == SEW16) begin 
-                for(int i=rvm.vstart; i<rvm.vl;i++)begin
+                if(rvm.vrf[0][slide_last_data]) begin
+                    vrf_sew16[dest_reg_idx*8 + slide_last_data] =  src1_elm_idx ;
+                    vrf_bit_strobe_temp_sew16[dest_reg_idx*8 + slide_last_data] = 16'hffff;
+                end
+                for(int i=rvm.vstart; i<slide_last_data;i++)begin
                     if(i < rvm.vl) begin
                         if(rvm.vrf[0][i]) begin
-                            vrf_sew16[dest_reg_idx*8 + i] = ((i+src1_elm_idx) < rvm.vlmax) ? vrf_sew16[src2_reg_idx*8 + (i+src1_elm_idx)] : 0;
+                            vrf_sew16[dest_reg_idx*8+i] =  vrf_sew16[src2_reg_idx*8 + (i+1)] ;
+                            vrf_bit_strobe_temp_sew16[dest_reg_idx*8+i] = 16'hffff;
                         end 
-                        vrf_bit_strobe_temp_sew16[dest_reg_idx*16+i] = 8'hff;
                     end 
                 end
         end
         else if(rvm.vtype.vsew == SEW32) begin 
-                for(int i=rvm.vstart; i<rvm.vl;i++)begin
+                if(rvm.vrf[0][slide_last_data]) begin
+                    vrf_sew32[dest_reg_idx*4 + slide_last_data] =  src1_elm_idx ;
+                    vrf_bit_strobe_temp_sew32[dest_reg_idx*4 + slide_last_data] = 32'hffffffff;
+                end
+                for(int i=rvm.vstart; i<slide_last_data;i++)begin
                     if(i < rvm.vl) begin
                         if(rvm.vrf[0][i]) begin
-                            vrf_sew16[dest_reg_idx*4 + i] = ((i+src1_elm_idx) < rvm.vlmax) ? vrf_sew32[src2_reg_idx*4 + (i+src1_elm_idx)] : 0;
+                            vrf_sew32[dest_reg_idx*4+i] =  vrf_sew32[src2_reg_idx*4 + (i+1)] ;
+                            vrf_bit_strobe_temp_sew32[dest_reg_idx*4+i] = 32'hffffffff;
                         end 
-                        vrf_bit_strobe_temp_sew32[dest_reg_idx*4+i] = 32'hffffffff;
                     end 
                 end
             end 
         else begin
-        end
+        end  
 
          case(rvm.vtype.vsew)
                     SEW8:begin
