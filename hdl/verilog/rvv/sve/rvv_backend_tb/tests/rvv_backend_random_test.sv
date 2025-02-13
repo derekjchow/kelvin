@@ -31,11 +31,11 @@ class alu_random_test extends rvv_backend_test;
 
     rvs_seq = alu_random_seq::type_id::create("rvs_seq", this);
     rvs_transaction::set_ill_rate(0);
-    rvs_seq.run_inst(env.rvs_agt.rvs_sqr, 100);
+    rvs_seq.run_inst(env.rvs_agt.rvs_sqr, 1000);
 
     rvs_last_seq = alu_smoke_vv_seq::type_id::create("rvs_last_seq", this);
     rvs_last_seq.run_inst(VADD,env.rvs_agt.rvs_sqr);
-    phase.phase_done.set_drain_time(this, 1000ns);
+    phase.phase_done.set_drain_time(this, 2000ns);
     phase.drop_objection( .obj( this ) );
   endtask
 

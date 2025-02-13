@@ -746,6 +746,10 @@ class alu_iterate_vv_vx_vui_seq extends alu_iterate_base_sequence;
     end else begin
       for(lmul = lmul.first(); lmul != lmul.last(); lmul =lmul.next()) begin
         for(sew = sew.first(); sew != sew.last(); sew =sew.next()) begin
+          if(alu_inst inside {VNSRL, VNSRA, VNCLIPU, VNCLIP}) begin
+            if(sew == SEW32) continue;
+            if(lmul == LMUL8) continue;
+          end
           req = new("req");
           start_item(req);
           assert(req.randomize() with {
@@ -769,6 +773,10 @@ class alu_iterate_vv_vx_vui_seq extends alu_iterate_base_sequence;
       end // lmul
       for(lmul = lmul.first(); lmul != lmul.last(); lmul =lmul.next()) begin
         for(sew = sew.first(); sew != sew.last(); sew =sew.next()) begin
+          if(alu_inst inside {VNSRL, VNSRA, VNCLIPU, VNCLIP}) begin
+            if(sew == SEW32) continue;
+            if(lmul == LMUL8) continue;
+          end
           req = new("req");
           start_item(req);
           assert(req.randomize() with {
@@ -792,6 +800,10 @@ class alu_iterate_vv_vx_vui_seq extends alu_iterate_base_sequence;
       end // lmul
       for(lmul = lmul.first(); lmul != lmul.last(); lmul =lmul.next()) begin
         for(sew = sew.first(); sew != sew.last(); sew =sew.next()) begin
+          if(alu_inst inside {VNSRL, VNSRA, VNCLIPU, VNCLIP}) begin
+            if(sew == SEW32) continue;
+            if(lmul == LMUL8) continue;
+          end
           req = new("req");
           start_item(req);
           assert(req.randomize() with {
@@ -863,6 +875,11 @@ class alu_iterate_vv_vx_seq extends alu_iterate_base_sequence;
     end else begin
       for(lmul = lmul.first(); lmul != lmul.last(); lmul =lmul.next()) begin
         for(sew = sew.first(); sew != sew.last(); sew =sew.next()) begin
+          if(alu_inst inside {VWADDU, VWADD, VWADDU_W, VWADD_W, VWSUBU, VWSUB, VWSUBU_W, VWSUB_W,
+              VWMUL, VWMULU, VWMULSU, VWMACCU, VWMACC, VWMACCSU}) begin
+            if(sew == SEW32) continue;
+            if(lmul == LMUL8) continue;
+          end
           req = new("req");
           start_item(req);
           assert(req.randomize() with {
@@ -886,6 +903,11 @@ class alu_iterate_vv_vx_seq extends alu_iterate_base_sequence;
       end // lmul
       for(lmul = lmul.first(); lmul != lmul.last(); lmul =lmul.next()) begin
         for(sew = sew.first(); sew != sew.last(); sew =sew.next()) begin
+          if(alu_inst inside {VWADDU, VWADD, VWADDU_W, VWADD_W, VWSUBU, VWSUB, VWSUBU_W, VWSUB_W,
+              VWMUL, VWMULU, VWMULSU, VWMACCU, VWMACC, VWMACCSU}) begin
+            if(sew == SEW32) continue;
+            if(lmul == LMUL8) continue;
+          end
           req = new("req");
           start_item(req);
           assert(req.randomize() with {
@@ -1122,6 +1144,10 @@ class alu_iterate_vx_seq extends alu_iterate_base_sequence;
     end else begin
       for(lmul = lmul.first(); lmul != lmul.last(); lmul =lmul.next()) begin
         for(sew = sew.first(); sew != sew.last(); sew =sew.next()) begin
+          if(alu_inst inside {VWMACCUS}) begin
+            if(sew == SEW32) continue;
+            if(lmul == LMUL8) continue;
+          end
           req = new("req");
           start_item(req);
           assert(req.randomize() with {
@@ -1187,7 +1213,7 @@ class alu_iterate_ext_seq extends alu_iterate_base_sequence;
 
           dest_type == VRF;
           src2_type == VRF;
-          src1_type == FUNC; src1_idx inside {VZEXT_VF4, VSEXT_VF4, VZEXT_VF2, VZEXT_VF2};
+          src1_type == FUNC; src1_idx inside {VZEXT_VF4, VSEXT_VF4, VZEXT_VF2, VSEXT_VF2};
         });
         finish_item(req);
         inst_cnt++;
@@ -1196,8 +1222,14 @@ class alu_iterate_ext_seq extends alu_iterate_base_sequence;
       for(lmul_e lmul = lmul.first(); lmul != lmul.last(); lmul =lmul.next()) begin
         for(sew_e sew = sew.first(); sew != sew.last(); sew =sew.next()) begin
           for(vext_e vext_func = vext_func.first();vext_func != vext_func.last(); vext_func = vext_func.next()) begin
-            if((vext_func inside {VZEXT_VF4, VSEXT_VF4}) && !(sew inside {SEW32})) continue;
-            if((vext_func inside {VZEXT_VF2, VZEXT_VF2}) && !(sew inside {SEW16, SEW32})) continue;
+            if(vext_func inside {VZEXT_VF4, VSEXT_VF4}) begin 
+              if(!(sew inside {SEW32})) continue;
+              if(lmul inside {LMUL1_4, LMUL1_2}) continue;
+            end
+            if(vext_func inside {VZEXT_VF2, VSEXT_VF2}) begin
+              if(!(sew inside {SEW16, SEW32})) continue;
+              if(lmul inside {LMUL1_4}) continue;
+            end
             req = new("req");
             start_item(req);
             assert(req.randomize() with {
@@ -1546,6 +1578,10 @@ class alu_iterate_vs_seq extends alu_iterate_base_sequence;
     end else begin
       for(lmul = lmul.first(); lmul != lmul.last(); lmul =lmul.next()) begin
         for(sew = sew.first(); sew != sew.last(); sew =sew.next()) begin
+          if(alu_inst inside {VWREDSUM, VWREDSUMU}) begin
+            if(sew == SEW32) continue;
+            if(lmul == LMUL8) continue;
+          end
           req = new("req");
           start_item(req);
           assert(req.randomize() with {
@@ -1580,7 +1616,7 @@ class alu_iterate_vmv_xs_sx_seq extends alu_iterate_base_sequence;
   `uvm_object_utils(alu_iterate_vmv_xs_sx_seq)
   `uvm_add_to_seq_lib(alu_iterate_vmv_xs_sx_seq,rvs_sequencer_sequence_library)
     
-  function new(string name = "alu_iterate_vv_vx_seq");
+  function new(string name = "alu_iterate_vmv_xs_sx_seq");
     super.new(name);
 	  `ifdef UVM_POST_VERSION_1_1
       set_automatic_phase_objection(1);
@@ -1596,15 +1632,14 @@ class alu_iterate_vmv_xs_sx_seq extends alu_iterate_base_sequence;
            use_vlmax == 1;
           pc == local::inst_cnt;
 
-          // FIXME
-          //vtype.vlmul dist {
-          //  LMUL1_4 := 10,
-          //  LMUL1_2 := 20,
-          //  LMUL1   := 20,
-          //  LMUL2   := 30,
-          //  LMUL4   :=  5,
-          //  LMUL8   := 15 
-          //};
+          vtype.vlmul dist {
+            LMUL1_4 := 10,
+            LMUL1_2 := 20,
+            LMUL1   := 20,
+            LMUL2   := 30,
+            LMUL4   :=  5,
+            LMUL8   := 15 
+          };
 
           inst_type == ALU;
           alu_inst == local::alu_inst;
@@ -1690,15 +1725,6 @@ class alu_iterate_vmvnr_seq extends alu_iterate_base_sequence;
         assert(req.randomize() with {
           //use_vlmax == 1;
           pc == local::inst_cnt;
-
-          //vtype.vlmul dist {
-          // // LMUL1_4 := 10,
-          // // LMUL1_2 := 20,
-          //  LMUL1   := 20,
-          //  LMUL2   := 30,
-          //  LMUL4   :=  5,
-          //  LMUL8   := 15 
-          //};
 
           inst_type == ALU;
           alu_inst == local::alu_inst;
@@ -1787,7 +1813,7 @@ class alu_random_seq extends alu_random_base_sequence;
         inst_type == ALU;
         //(!alu_inst inside {VSLIDE1UP, VSLIDE1DOWN, VCOMPRESS, VSLIDEUP_RGATHEREI16, VSLIDEDOWN, VRGATHER, UNUSE_INST});
         alu_inst inside {VADD, VSUB, VRSUB, VADC, VAND, VSADD, VSSRA, VNCLIPU, VWADDU, VWSUBU_W, VMUL, VMULHSU,
-        VDIVU, VREM, VWMULSU, VWMUL, VMACC, VWMACCUS, VMAND};
+        VDIVU, VREM, VWMULSU, VWMUL, VMACC, VWMACCUS, VMAND, VMUNARY0, VXUNARY0};
 
       });
       finish_item(req);

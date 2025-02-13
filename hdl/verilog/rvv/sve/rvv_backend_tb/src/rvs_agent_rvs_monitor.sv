@@ -22,6 +22,9 @@ class rvs_monitor extends uvm_monitor;
   int total_inst = 0;
   int executed_inst = 0;
 
+  int inst_tx_timeout_max = 500;
+  int inst_tx_timeout_cnt = 0;
+
   `uvm_component_utils_begin(rvs_monitor)
   `uvm_component_utils_end
 
@@ -34,6 +37,7 @@ class rvs_monitor extends uvm_monitor;
   extern virtual function void final_phase(uvm_phase phase);
   extern protected virtual task tx_monitor();
   extern protected virtual task rx_monitor();
+  extern protected virtual task rx_timeout_monitor();
 
   // imp task
   extern virtual function void write_rvs_mon_inst(rvs_transaction inst_tr);
@@ -85,6 +89,7 @@ task rvs_monitor::run_phase(uvm_phase phase);
   fork
      tx_monitor();
      rx_monitor();
+     rx_timeout_monitor();
   join
 endtask: run_phase
 
@@ -186,6 +191,19 @@ task rvs_monitor::rx_monitor();
     end
   end
 endtask: rx_monitor
+
+task rvs_monitor::rx_timeout_monitor();
+  // Timeout of inst port handshake check.
+  if(|rvs_if.insts_valid_rvs2cq) begin
+    inst_tx_timeout_cnt++;
+  end
+  if(|(rvs_if.insts_valid_rvs2cq & rvs_if.insts_ready_cq2rvs)) begin
+    inst_tx_timeout_cnt = 0;
+  end
+  if(inst_tx_timeout_cnt >= inst_tx_timeout_max) begin
+    `uvm_fatal(get_type_name(), $sformatf("Insts haven't been accepted by rvv for %0d cycles. Shut down!",inst_tx_timeout_cnt))
+  end
+endtask: rx_timeout_monitor
 
 function void rvs_monitor::write_rvs_mon_inst(rvs_transaction inst_tr);
   `uvm_info(get_type_name(), "get a inst", UVM_HIGH)

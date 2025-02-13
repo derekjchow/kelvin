@@ -126,7 +126,7 @@ class tb_debug_test extends rvv_backend_test;
     rvs_seq = zero_seq::type_id::create("rvs_seq", this);
     rvs_seq.start(env.rvs_agt.rvs_sqr);
 
-    phase.phase_done.set_drain_time(this, 1000ns);
+    phase.phase_done.set_drain_time(this, 2000ns);
     phase.drop_objection( .obj( this ) );
 
     `uvm_info(get_type_name(), "Complete test ...", UVM_LOW)
@@ -349,7 +349,7 @@ class alu_smoke_test extends rvv_backend_test;
     // Last inst  
     rvs_vv_seq.run_inst(VAND, env.rvs_agt.rvs_sqr);
 
-    phase.phase_done.set_drain_time(this, 1000ns);
+    phase.phase_done.set_drain_time(this, 2000ns);
     phase.drop_objection( .obj( this ) );
 
   endtask
@@ -405,7 +405,7 @@ class alu_vaddsub_test extends rvv_backend_test;
 
     rvs_last_seq = alu_smoke_vv_seq::type_id::create("rvs_last_seq", this);
     rvs_last_seq.run_inst(VADD,env.rvs_agt.rvs_sqr);
-    phase.phase_done.set_drain_time(this, 1000ns);
+    phase.phase_done.set_drain_time(this, 2000ns);
     phase.drop_objection( .obj( this ) );
   endtask
 
@@ -473,7 +473,7 @@ class alu_vwaddsub_test extends rvv_backend_test;
 
     rvs_last_seq = alu_smoke_vv_seq::type_id::create("rvs_last_seq", this);
     rvs_last_seq.run_inst(VADD,env.rvs_agt.rvs_sqr);
-    phase.phase_done.set_drain_time(this, 1000ns);
+    phase.phase_done.set_drain_time(this, 2000ns);
     phase.drop_objection( .obj( this ) );
   endtask
 
@@ -518,7 +518,7 @@ class alu_vext_test extends rvv_backend_test;
 
     rvs_last_seq = alu_smoke_vv_seq::type_id::create("rvs_last_seq", this);
     rvs_last_seq.run_inst(VADD,env.rvs_agt.rvs_sqr);
-    phase.phase_done.set_drain_time(this, 1000ns);
+    phase.phase_done.set_drain_time(this, 2000ns);
     phase.drop_objection( .obj( this ) );
   endtask
 
@@ -566,7 +566,7 @@ class alu_vadcsbc_test extends rvv_backend_test;
 
     rvs_last_seq = alu_smoke_vv_seq::type_id::create("rvs_last_seq", this);
     rvs_last_seq.run_inst(VADD,env.rvs_agt.rvs_sqr);
-    phase.phase_done.set_drain_time(this, 1000ns);
+    phase.phase_done.set_drain_time(this, 2000ns);
     phase.drop_objection( .obj( this ) );
   endtask
 
@@ -614,7 +614,7 @@ class alu_vmadcsbc_test extends rvv_backend_test;
 
     rvs_last_seq = alu_smoke_vv_seq::type_id::create("rvs_last_seq", this);
     rvs_last_seq.run_inst(VADD,env.rvs_agt.rvs_sqr);
-    phase.phase_done.set_drain_time(this, 1000ns);
+    phase.phase_done.set_drain_time(this, 2000ns);
     phase.drop_objection( .obj( this ) );
   endtask
 
@@ -665,7 +665,7 @@ class alu_bitlogic_test extends rvv_backend_test;
 
     rvs_last_seq = alu_smoke_vv_seq::type_id::create("rvs_last_seq", this);
     rvs_last_seq.run_inst(VADD,env.rvs_agt.rvs_sqr);
-    phase.phase_done.set_drain_time(this, 1000ns);
+    phase.phase_done.set_drain_time(this, 2000ns);
     phase.drop_objection( .obj( this ) );
   endtask
 
@@ -723,7 +723,7 @@ class alu_shift_test extends rvv_backend_test;
 
     rvs_last_seq = alu_smoke_vv_seq::type_id::create("rvs_last_seq", this);
     rvs_last_seq.run_inst(VADD,env.rvs_agt.rvs_sqr);
-    phase.phase_done.set_drain_time(this, 1000ns);
+    phase.phase_done.set_drain_time(this, 2000ns);
     phase.drop_objection( .obj( this ) );
   endtask
 
@@ -793,7 +793,7 @@ class alu_vcomp_test extends rvv_backend_test;
 
     rvs_last_seq = alu_smoke_vv_seq::type_id::create("rvs_last_seq", this);
     rvs_last_seq.run_inst(VADD,env.rvs_agt.rvs_sqr);
-    phase.phase_done.set_drain_time(this, 1000ns);
+    phase.phase_done.set_drain_time(this, 2000ns);
     phase.drop_objection( .obj( this ) );
   endtask
 
@@ -847,7 +847,7 @@ class alu_vminmax_test extends rvv_backend_test;
 
     rvs_last_seq = alu_smoke_vv_seq::type_id::create("rvs_last_seq", this);
     rvs_last_seq.run_inst(VADD,env.rvs_agt.rvs_sqr);
-    phase.phase_done.set_drain_time(this, 1000ns);
+    phase.phase_done.set_drain_time(this, 2000ns);
     phase.drop_objection( .obj( this ) );
   endtask
 
@@ -901,7 +901,7 @@ class alu_vmul_test extends rvv_backend_test;
 
     rvs_last_seq = alu_smoke_vv_seq::type_id::create("rvs_last_seq", this);
     rvs_last_seq.run_inst(VADD,env.rvs_agt.rvs_sqr);
-    phase.phase_done.set_drain_time(this, 1000ns);
+    phase.phase_done.set_drain_time(this, 2000ns);
     phase.drop_objection( .obj( this ) );
   endtask
 
@@ -1006,7 +1006,7 @@ class alu_vwmul_test extends rvv_backend_test;
 
     rvs_last_seq = alu_smoke_vv_seq::type_id::create("rvs_last_seq", this);
     rvs_last_seq.run_inst(VADD,env.rvs_agt.rvs_sqr);
-    phase.phase_done.set_drain_time(this, 1000ns);
+    phase.phase_done.set_drain_time(this, 2000ns);
     phase.drop_objection( .obj( this ) );
   endtask
 
@@ -1060,7 +1060,7 @@ class alu_vmac_test extends rvv_backend_test;
 
     rvs_last_seq = alu_smoke_vv_seq::type_id::create("rvs_last_seq", this);
     rvs_last_seq.run_inst(VADD,env.rvs_agt.rvs_sqr);
-    phase.phase_done.set_drain_time(this, 1000ns);
+    phase.phase_done.set_drain_time(this, 2000ns);
     phase.drop_objection( .obj( this ) );
   endtask
 
@@ -1115,7 +1115,7 @@ class alu_vwmac_test extends rvv_backend_test;
     rvs_seq.run_inst_rand(VWMACCSU, env.rvs_agt.rvs_sqr, 100);
     rvs_last_seq = alu_smoke_vv_seq::type_id::create("rvs_last_seq", this);
     rvs_last_seq.run_inst(VADD,env.rvs_agt.rvs_sqr);
-    phase.phase_done.set_drain_time(this, 1000ns);
+    phase.phase_done.set_drain_time(this, 2000ns);
     phase.drop_objection( .obj( this ) );
   endtask
 
@@ -1161,7 +1161,7 @@ class alu_vmerge_vmvv_test extends rvv_backend_test;
 
     rvs_last_seq = alu_smoke_vv_seq::type_id::create("rvs_last_seq", this);
     rvs_last_seq.run_inst(VADD,env.rvs_agt.rvs_sqr);
-    phase.phase_done.set_drain_time(this, 1000ns);
+    phase.phase_done.set_drain_time(this, 2000ns);
     phase.drop_objection( .obj( this ) );
   endtask
 
@@ -1217,7 +1217,7 @@ class alu_vsaddsub_test extends rvv_backend_test;
 
     rvs_last_seq = alu_smoke_vv_seq::type_id::create("rvs_last_seq", this);
     rvs_last_seq.run_inst(VADD,env.rvs_agt.rvs_sqr);
-    phase.phase_done.set_drain_time(this, 1000ns);
+    phase.phase_done.set_drain_time(this, 2000ns);
     phase.drop_objection( .obj( this ) );
   endtask
 
@@ -1271,7 +1271,7 @@ class alu_vaaddsub_test extends rvv_backend_test;
 
     rvs_last_seq = alu_smoke_vv_seq::type_id::create("rvs_last_seq", this);
     rvs_last_seq.run_inst(VADD,env.rvs_agt.rvs_sqr);
-    phase.phase_done.set_drain_time(this, 1000ns);
+    phase.phase_done.set_drain_time(this, 2000ns);
     phase.drop_objection( .obj( this ) );
   endtask
 
@@ -1316,7 +1316,7 @@ class alu_vsmul_test extends rvv_backend_test;
 
     rvs_last_seq = alu_smoke_vv_seq::type_id::create("rvs_last_seq", this);
     rvs_last_seq.run_inst(VADD,env.rvs_agt.rvs_sqr);
-    phase.phase_done.set_drain_time(this, 1000ns);
+    phase.phase_done.set_drain_time(this, 2000ns);
     phase.drop_objection( .obj( this ) );
   endtask
 
@@ -1364,7 +1364,7 @@ class alu_vssrlsra_test extends rvv_backend_test;
 
     rvs_last_seq = alu_smoke_vv_seq::type_id::create("rvs_last_seq", this);
     rvs_last_seq.run_inst(VADD,env.rvs_agt.rvs_sqr);
-    phase.phase_done.set_drain_time(this, 1000ns);
+    phase.phase_done.set_drain_time(this, 2000ns);
     phase.drop_objection( .obj( this ) );
   endtask
 
@@ -1412,7 +1412,7 @@ class alu_vnclip_test extends rvv_backend_test;
 
     rvs_last_seq = alu_smoke_vv_seq::type_id::create("rvs_last_seq", this);
     rvs_last_seq.run_inst(VADD,env.rvs_agt.rvs_sqr);
-    phase.phase_done.set_drain_time(this, 1000ns);
+    phase.phase_done.set_drain_time(this, 2000ns);
     phase.drop_objection( .obj( this ) );
   endtask
 
@@ -1470,7 +1470,7 @@ class alu_mask_logic_test extends rvv_backend_test;
 
     rvs_last_seq = alu_smoke_vv_seq::type_id::create("rvs_last_seq", this);
     rvs_last_seq.run_inst(VADD,env.rvs_agt.rvs_sqr);
-    phase.phase_done.set_drain_time(this, 1000ns);
+    phase.phase_done.set_drain_time(this, 2000ns);
     phase.drop_objection( .obj( this ) );
   endtask
 
@@ -1528,7 +1528,7 @@ class alu_vred_test extends rvv_backend_test;
 
     rvs_last_seq = alu_smoke_vv_seq::type_id::create("rvs_last_seq", this);
     rvs_last_seq.run_inst(VADD,env.rvs_agt.rvs_sqr);
-    phase.phase_done.set_drain_time(this, 1000ns);
+    phase.phase_done.set_drain_time(this, 2000ns);
     phase.drop_objection( .obj( this ) );
   endtask
 
@@ -1574,7 +1574,7 @@ class alu_vwred_test extends rvv_backend_test;
 
     rvs_last_seq = alu_smoke_vv_seq::type_id::create("rvs_last_seq", this);
     rvs_last_seq.run_inst(VADD,env.rvs_agt.rvs_sqr);
-    phase.phase_done.set_drain_time(this, 5000ns);
+    phase.phase_done.set_drain_time(this, 2000ns);
     phase.drop_objection( .obj( this ) );
   endtask
 
@@ -1620,7 +1620,7 @@ class alu_vcpop_vfirst_test extends rvv_backend_test;
 
     rvs_last_seq = alu_smoke_vv_seq::type_id::create("rvs_last_seq", this);
     rvs_last_seq.run_inst(VADD,env.rvs_agt.rvs_sqr);
-    phase.phase_done.set_drain_time(this, 1000ns);
+    phase.phase_done.set_drain_time(this, 2000ns);
     phase.drop_objection( .obj( this ) );
   endtask
 
@@ -1669,7 +1669,7 @@ class alu_vmunary0_test extends rvv_backend_test;
 
     rvs_last_seq = alu_smoke_vv_seq::type_id::create("rvs_last_seq", this);
     rvs_last_seq.run_inst(VADD,env.rvs_agt.rvs_sqr);
-    phase.phase_done.set_drain_time(this, 1000ns);
+    phase.phase_done.set_drain_time(this, 2000ns);
     phase.drop_objection( .obj( this ) );
   endtask
 
@@ -1712,7 +1712,7 @@ class alu_vmv_test extends rvv_backend_test;
 
     rvs_last_seq = alu_smoke_vmv_xs_sx_seq::type_id::create("rvs_last_seq", this);
     rvs_last_seq.run_inst(VWXUNARY0,env.rvs_agt.rvs_sqr,1);
-    phase.phase_done.set_drain_time(this, 1000ns);
+    phase.phase_done.set_drain_time(this, 2000ns);
     phase.drop_objection( .obj( this ) );
   endtask
 
@@ -1825,7 +1825,7 @@ class alu_gather_test extends rvv_backend_test;
 
     rvs_last_seq = alu_smoke_vv_seq::type_id::create("rvs_last_seq", this);
     rvs_last_seq.run_inst(VRGATHER,env.rvs_agt.rvs_sqr);
-    phase.phase_done.set_drain_time(this, 1000ns);
+    phase.phase_done.set_drain_time(this, 2000ns);
     phase.drop_objection( .obj( this ) );
   endtask
 
@@ -1867,7 +1867,7 @@ class alu_vcompress_test extends rvv_backend_test;
 
     rvs_last_seq = alu_smoke_vv_seq::type_id::create("rvs_last_seq", this);
     rvs_last_seq.run_inst(VCOMPRESS,env.rvs_agt.rvs_sqr,1);
-    phase.phase_done.set_drain_time(this, 1000ns);
+    phase.phase_done.set_drain_time(this, 2000ns);
     phase.drop_objection( .obj( this ) );
   endtask
 
@@ -1904,13 +1904,12 @@ class alu_vmvnr_test extends rvv_backend_test;
     rand_vrf();
 
     rvs_seq = alu_iterate_vmvnr_seq::type_id::create("rvs_seq", this);
-    //rvs_seq.run_inst_iter(VSMUL_VMVNRR, env.rvs_agt.rvs_sqr, 0);
     rvs_seq.run_inst_iter(VSMUL_VMVNRR, env.rvs_agt.rvs_sqr, 1);
     rvs_seq.run_inst_rand(VSMUL_VMVNRR, env.rvs_agt.rvs_sqr, 100);
 
     rvs_last_seq = alu_smoke_vmvnr_seq::type_id::create("rvs_last_seq", this);
     rvs_last_seq.run_inst(VSMUL_VMVNRR,env.rvs_agt.rvs_sqr, 1);
-    phase.phase_done.set_drain_time(this, 1000ns);
+    phase.phase_done.set_drain_time(this, 2000ns);
     phase.drop_objection( .obj( this ) );
   endtask
 

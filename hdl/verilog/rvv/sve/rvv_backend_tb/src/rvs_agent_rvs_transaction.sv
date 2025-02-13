@@ -17,8 +17,9 @@ class rvs_transaction extends uvm_sequence_item;
   /* VCSR field */
   rand vtype_t           vtype;
   rand logic [`XLEN-1:0] vl;
-       logic [`XLEN-1:0] vlmax;
+  rand logic [`XLEN-1:0] vlmax;
        logic [`XLEN-1:0] vlmax_max;
+  rand int               evl;
   rand logic [`XLEN-1:0] vstart;
   rand vxrm_e            vxrm;
 
@@ -97,14 +98,26 @@ class rvs_transaction extends uvm_sequence_item;
 
   constraint c_vl {
     if(vtype.vlmul[2]) // fraction_lmul
-      vl <= ((`VLENB >> (~vtype.vlmul +3'b1)) >> vtype.vsew);
+      vlmax == ((`VLENB >> (~vtype.vlmul +3'b1)) >> vtype.vsew);
     else  
-      vl <= ((`VLENB << vtype.vlmul) >> vtype.vsew);
+      vlmax == ((`VLENB << vtype.vlmul) >> vtype.vsew);
+
+    vl <= vlmax_max;
+    vstart <= vlmax_max-1;
 
     if(!illegal_inst_en) {
-      vstart < vl;
-      vstart <= vlmax_max-1;
-      vl <= vlmax_max;
+      // vl
+      vl <= vlmax;
+      // evl
+      if(alu_inst == VSMUL_VMVNRR && alu_type == OPIVI)
+        evl == ((src1_idx + 1) * `VLENB) >> vtype.vsew;
+      else 
+        evl == vl;
+      // vstart
+      if(alu_inst == VSMUL_VMVNRR && alu_type == OPIVI)
+        vstart < evl;
+      else
+        vstart < vl;
 
       (inst_type == ALU && alu_inst inside {VWXUNARY0} && src1_idx inside {VCPOP, VFIRST}) 
       ->  (vstart == 0);
@@ -154,7 +167,8 @@ class rvs_transaction extends uvm_sequence_item;
                             VMERGE_VMVV, 
                             VSLL, VSRL, VSRA, VNSRL, VNSRA,
                             VSSRL, VSSRA, VNCLIPU, VNCLIP,
-                            VWREDSUMU, VWREDSUM, VSMUL_VMVNRR})) 
+                            VWREDSUMU, VWREDSUM,
+                            VSMUL_VMVNRR})) 
         ->  (dest_type == VRF && src2_type == VRF && 
               ((alu_type == OPIVV && src1_type == VRF) || 
                (alu_type == OPIVX && src1_type == XRF) || 
@@ -318,24 +332,24 @@ class rvs_transaction extends uvm_sequence_item;
     vtype.vlmul inside {LMUL1_4, LMUL1_2, LMUL1, LMUL2, LMUL4, LMUL8};
 
     if(!illegal_inst_en) {
-    //   if(inst_type == ALU) {
-    //     // widen
-    //     (alu_inst inside {VWADDU, VWADD, VWADDU_W, VWADD_W, VWSUBU, VWSUB, VWSUBU_W, VWSUB_W, 
-    //                       VWMUL, VWMULU, VWMULSU, VWMACCU, VWMACC, VWMACCUS, VWMACCSU,
-    //                       VWREDSUMU, VWREDSUM})
-    //     ->  (vtype.vsew inside {SEW8,SEW16} && vtype.vlmul inside {LMUL1_4,LMUL1_2,LMUL1,LMUL2,LMUL4});
+      if(inst_type == ALU) {
+        // widen
+        (alu_inst inside {VWADDU, VWADD, VWADDU_W, VWADD_W, VWSUBU, VWSUB, VWSUBU_W, VWSUB_W, 
+                          VWMUL, VWMULU, VWMULSU, VWMACCU, VWMACC, VWMACCUS, VWMACCSU,
+                          VWREDSUMU, VWREDSUM})
+        ->  (vtype.vsew inside {SEW8,SEW16} && vtype.vlmul inside {LMUL1_4,LMUL1_2,LMUL1,LMUL2,LMUL4});
 
-    //     // narrow
-    //     (alu_inst inside {VNSRL, VNSRA, VNCLIPU, VNCLIP})
-    //     ->  (vtype.vsew inside {SEW8,SEW16} && vtype.vlmul inside {LMUL1_4,LMUL1_2,LMUL1,LMUL2,LMUL4});
+        // narrow
+        (alu_inst inside {VNSRL, VNSRA, VNCLIPU, VNCLIP})
+        ->  (vtype.vsew inside {SEW8,SEW16} && vtype.vlmul inside {LMUL1_4,LMUL1_2,LMUL1,LMUL2,LMUL4});
 
-    //     // vxunary0
-    //     (alu_inst == VXUNARY0 && src1_idx inside {VSEXT_VF2, VZEXT_VF2})
-    //     ->  (vtype.vsew inside {SEW16,SEW32} && vtype.vlmul inside {LMUL1_2,LMUL1,LMUL2,LMUL4,LMUL8});
+        // vxunary0
+        (alu_inst == VXUNARY0 && src1_idx inside {VSEXT_VF2, VZEXT_VF2})
+        ->  (vtype.vsew inside {SEW16,SEW32} && vtype.vlmul inside {LMUL1_2,LMUL1,LMUL2,LMUL4,LMUL8});
 
-    //     (alu_inst == VXUNARY0 && src1_idx inside {VSEXT_VF4, VZEXT_VF4})
-    //     ->  (vtype.vsew inside {SEW32} && vtype.vlmul inside {LMUL1,LMUL2,LMUL4,LMUL8});
-    //   }
+        (alu_inst == VXUNARY0 && src1_idx inside {VSEXT_VF4, VZEXT_VF4})
+        ->  (vtype.vsew inside {SEW32} && vtype.vlmul inside {LMUL1,LMUL2,LMUL4,LMUL8});
+      }
     } else {
       // TODO
     }// if(!illegal_inst_en)
@@ -458,7 +472,7 @@ function void rvs_transaction::post_randomize();
   super.post_randomize();
 
 
-  if(!illegal_inst_en) legal_inst_gen();
+  if(!illegal_inst_en) begin legal_inst_gen(); end
 
   if(inst_type == ALU && (alu_inst inside {VADC, VSBC, VMADC, VMSBC, VMERGE_VMVV}))
     use_vm_to_cal = 1;
@@ -474,20 +488,10 @@ function void rvs_transaction::post_randomize();
   if(src1_type != XRF && src2_type != XRF) rs_data = 'x;
 
   // constraint vl
-  if(vtype.vlmul[2]) begin
-    logic [2:0] vlmul = ~vtype.vlmul +3'b1;
-    vlmax = (`VLENB >> vlmul) >> vtype.vsew; 
-  end else begin
-    logic [2:0] vlmul = vtype.vlmul;
-    vlmax = (`VLENB << vlmul) >> vtype.vsew;
-  end
   if(use_vlmax) begin 
     vl = vlmax;
     vstart = 0;
-  end else if(!illegal_inst_en) begin
-    vl = vl > vlmax ? vlmax : vl;
-    vstart = vstart > vl-1 ? vl-1 : vstart;
-  end
+  end 
 
   // gen bin_inst
   /* func6 */
@@ -605,42 +609,51 @@ function void rvs_transaction::legal_inst_gen();
           src2_eew  = src2_eew  / 4;
           src2_emul = src2_emul / 4;
         end
-        // 1.3 mask producing inst
-        if(alu_inst inside {VMAND, VMOR, VMXOR, VMORN, VMNAND, VMNOR, VMANDN, VMXNOR}) begin
-          dest_eew = EEW1;
-          dest_emul = dest_emul * dest_eew / eew;
-          src2_eew = EEW1;
-          src2_emul = src2_emul * src2_eew / eew;
-          src1_eew = EEW1;
-          src1_emul = src1_emul * src1_eew / eew;
-        end
-        if(alu_inst inside {VMADC, VMSBC, VMSEQ, VMSNE, VMSLTU, 
-                            VMSLT, VMSLEU, VMSLE, VMSGTU, VMSGT}) begin
-          dest_eew = EEW1;
-          dest_emul = dest_emul * dest_eew / eew;
-        end
-        if(alu_inst inside {VMUNARY0} && src1_idx inside {VMSBF, VMSOF, VMSIF}) begin
-          dest_eew = EEW1;
-          dest_emul = dest_emul * dest_eew / eew;
-          src2_eew = EEW1;
-          src2_emul = src2_emul * src2_eew / eew;
-          src1_eew = EEW1;
-          src1_emul = src1_emul * src1_eew / eew;
-        end
-        if(alu_inst inside {VMUNARY0} && src1_idx inside {VIOTA, VID} ||
-           alu_inst inside {VWXUNARY0} && alu_type == OPMVV && src1_idx inside {VCPOP, VFIRST}) begin
-          src2_eew = EEW1;
-          src2_emul = src2_emul * src2_eew / eew;
-          src1_eew = EEW1;
-          src1_emul = src1_emul * src1_eew / eew;
-        end
-        // 1.4 Reduction inst
-        if(is_reduction_inst) begin
+      end
+      // 1.3 mask producing inst
+      if(alu_inst inside {VMAND, VMOR, VMXOR, VMORN, VMNAND, VMNOR, VMANDN, VMXNOR}) begin
+        dest_eew = EEW1;
+        dest_emul = dest_emul * dest_eew / eew;
+        src2_eew = EEW1;
+        src2_emul = src2_emul * src2_eew / eew;
+        src1_eew = EEW1;
+        src1_emul = src1_emul * src1_eew / eew;
+      end
+      if(alu_inst inside {VMADC, VMSBC, VMSEQ, VMSNE, VMSLTU, 
+                          VMSLT, VMSLEU, VMSLE, VMSGTU, VMSGT}) begin
+        dest_eew = EEW1;
+        dest_emul = dest_emul * dest_eew / eew;
+      end
+      if(alu_inst inside {VMUNARY0} && src1_idx inside {VMSBF, VMSOF, VMSIF}) begin
+        dest_eew = EEW1;
+        dest_emul = dest_emul * dest_eew / eew;
+        src2_eew = EEW1;
+        src2_emul = src2_emul * src2_eew / eew;
+        src1_eew = EEW1;
+        src1_emul = src1_emul * src1_eew / eew;
+      end
+      if(alu_inst inside {VMUNARY0} && src1_idx inside {VIOTA, VID} ||
+         alu_inst inside {VWXUNARY0} && alu_type == OPMVV && src1_idx inside {VCPOP, VFIRST}) begin
+        src2_eew = EEW1;
+        src2_emul = src2_emul * src2_eew / eew;
+        src1_eew = EEW1;
+        src1_emul = src1_emul * src1_eew / eew;
+      end
+      // 1.4 Reduction inst
+      if(is_reduction_inst) begin
+        dest_emul = EMUL1;
+        src1_emul = EMUL1;
+      end
+      if(alu_inst == VSMUL_VMVNRR && alu_type == OPIVI && src1_type == FUNC) begin
+        if(src1_idx inside {0,1,3,7}) begin
+          dest_emul = src1_idx + 1;
+          src2_emul = src1_idx + 1;
+        end else begin
           dest_emul = EMUL1;
-          src1_emul = EMUL1;
+          src2_emul = EMUL1;
         end
       end
-    end
+    end // ALU
   endcase
   // 1.4 dest is xrf
   if(dest_type == XRF) begin
@@ -657,12 +670,7 @@ function void rvs_transaction::legal_inst_gen();
   if(src1_type == VRF) src1_idx = src1_idx - src1_idx % int'($ceil(src1_emul));
 
   // Overlap
-  // Special case: vext.vf4 with LMUL2 will spit to 2 uops
-  if(dest_type == VRF && src2_type == VRF && alu_inst == VXUNARY0 &&
-     (src2_idx == dest_idx) && 
-     src2_emul == 0.5 && dest_emul == 2) begin
-    src2_idx = dest_idx + int'(dest_emul);
-  end
+  // Special case
   if(inst_type == ALU && alu_inst == VMUNARY0 && src1_idx inside {VMSBF, VMSOF, VMSIF, VIOTA} && dest_idx == 0 && vm == 0) begin
     dest_idx = int'($ceil(dest_emul));
   end
@@ -679,32 +687,33 @@ function void rvs_transaction::legal_inst_gen();
   end
   // vd overlap vs2
   if(dest_type == VRF && src2_type == VRF && (dest_eew > src2_eew) && 
-     (src2_idx >= dest_idx) && (src2_idx+int'(src2_emul) < dest_idx+int'(dest_emul)) &&
-     src2_emul>=1) begin
+     (src2_idx >= dest_idx) && (src2_idx+int'($ceil(src2_emul)) < dest_idx+int'($ceil(dest_emul))) && 
+     (dest_emul > 1 || src2_emul > 1))  begin
     if(vm == 0 && dest_idx == 0 && dest_eew != EEW1) begin
       dest_idx = dest_idx + int'(dest_emul);
     end
     src2_idx = dest_idx + int'(dest_emul);
   end
   if(dest_type == VRF && src2_type == VRF && (dest_eew < src2_eew) && 
-     (dest_idx > src2_idx) && (dest_idx+int'(dest_emul) <= src2_idx+int'(src2_emul)) && dest_emul>=1) begin
+     (dest_idx > src2_idx) && (dest_idx+int'($ceil(dest_emul)) <= src2_idx+int'($ceil(src2_emul))) && 
+     (dest_emul > 1 || src2_emul > 1)) begin
     if(vm == 0 && src2_idx == 0 && dest_eew != EEW1)
       dest_idx = src2_idx+int'(src2_emul);
     else
       dest_idx = src2_idx;
   end
   // vd overlap vs1
-  if(dest_type == VRF && src1_type == VRF && (dest_eew > src1_eew) && 
-     (src1_idx >= dest_idx) && (src1_idx+int'(src1_emul) < dest_idx+int'(dest_emul)) &&
-     src1_emul>=1) begin
+  if(dest_type == VRF && src1_type == VRF && (dest_eew > src1_eew) &&
+     (src1_idx >= dest_idx) && (src1_idx+int'($ceil(src1_emul)) < dest_idx+int'($ceil(dest_emul))) && 
+     (dest_emul > 1 || src1_emul > 1)) begin
     if(vm == 0 && dest_idx == 0 && dest_eew != EEW1) begin
       dest_idx = dest_idx + int'(dest_emul);
     end
     src1_idx = dest_idx + int'(dest_emul);
   end
-  if(dest_type == VRF && src1_type == VRF && (dest_eew < src1_eew) && 
-     (dest_idx > src1_idx) && (dest_idx+int'(dest_emul) <= src1_idx+int'(src1_emul)) && 
-     dest_emul>=1) begin
+  if(dest_type == VRF && src1_type == VRF && (dest_eew < src1_eew) &&
+     (dest_idx > src1_idx) && (dest_idx+int'($ceil(dest_emul)) <= src1_idx+int'($ceil(src1_emul))) && 
+     (dest_emul > 1 || src1_emul > 1)) begin
     if(vm == 0 && src1_idx == 0 && dest_eew != EEW1)
       dest_idx = src1_idx+int'(src1_emul);
     else
@@ -789,9 +798,9 @@ function void rvs_transaction::asm_string_gen();
     IMM: begin suf1 = "i"; src1 = $sformatf("%0d",$signed(this.src1_idx)); end
     UIMM: begin suf1 = "i"; src1 = $sformatf("%0d",$unsigned(this.src1_idx)); end
     FUNC: begin
-      if(inst_type == ALU && alu_inst == VXUNARY0 && src1_idx inside{VSEXT_VF4, VSEXT_VF4}) begin
+      if(inst_type == ALU && alu_inst == VXUNARY0 && src1_idx inside{VSEXT_VF4, VZEXT_VF4}) begin
         suf1 = "f4"; src1 = "";
-      end else if(inst_type == ALU && alu_inst == VXUNARY0 && src1_idx inside{VSEXT_VF2, VSEXT_VF2}) begin
+      end else if(inst_type == ALU && alu_inst == VXUNARY0 && src1_idx inside{VSEXT_VF2, VZEXT_VF2}) begin
         suf1 = "f2"; src1 = "";
       end
       if(inst_type == ALU && alu_inst == VWXUNARY0 && src1_idx inside{VMV_X_S}) begin

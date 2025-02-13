@@ -23,8 +23,6 @@ class rvs_driver extends uvm_driver # (rvs_transaction);
   bit             single_inst_mode = 0; 
   int             inst_tx_delay_max = 8;
   int             inst_tx_delay = 0;
-  int             inst_tx_timeout_max = 500;
-  int             inst_tx_timeout_cnt = 0;
 
   extern function new(string name = "rvs_driver", uvm_component parent = null); 
  
@@ -123,9 +121,9 @@ task rvs_driver::inst_manage();
       inst_ap.write(tr);
       seq_item_port.item_done(); 
       if(single_inst_mode) begin
-        inst_tx_delay = 5;
+        inst_tx_delay = inst_tx_delay_max;
       end else begin
-        assert(std::randomize(inst_tx_delay) with {inst_tx_delay dist {0 := 94, [1:2] := 5, 8 := 1};});
+        assert(std::randomize(inst_tx_delay) with {inst_tx_delay dist {0 := 94, [1:2] := 5, inst_tx_delay_max := 1};});
       end
     end else begin
       break;
@@ -151,17 +149,6 @@ task rvs_driver::inst_manage();
       inst[i] = inst[i];
       inst_vld[i] = 1'b0;
     end 
-  end
-
-  // Timeout of inst port handshake check.
-  if(|rvs_if.insts_valid_rvs2cq) begin
-    inst_tx_timeout_cnt++;
-  end
-  if(|(rvs_if.insts_valid_rvs2cq & rvs_if.insts_ready_cq2rvs)) begin
-    inst_tx_timeout_cnt = 0;
-  end
-  if(inst_tx_timeout_cnt >= inst_tx_timeout_max) begin
-    `uvm_fatal(get_type_name(), $sformatf("Insts haven't been accepted by rvv for %0d cycles. Shut down!",inst_tx_timeout_cnt))
   end
 
 endtask: inst_manage

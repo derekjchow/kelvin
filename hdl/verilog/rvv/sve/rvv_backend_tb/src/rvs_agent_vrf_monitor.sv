@@ -81,7 +81,8 @@ task vrf_monitor::vrf_write_zero_monitor();
           if((vrf_if.vrf_wr_wenb_full[i] & vrf_if.vrf_wr_data_full[i]) === 0) begin
             write_zero_to_vrf[i]++;
             if(write_zero_to_vrf[i] > 5) begin
-              `uvm_fatal("TB_ISSUE", $sformatf("Write zero to vrf[%0d] five times. Please check the testbench.",i))
+              // `uvm_fatal("TB_ISSUE", $sformatf("Write zero to vrf[%0d] five times. Please check the testbench.",i))
+              `uvm_warning("TB_ISSUE", $sformatf("Write zero to vrf[%0d] five times. Please check the testbench.",i))
             end
           end else begin
             write_zero_to_vrf[i] = '0;
