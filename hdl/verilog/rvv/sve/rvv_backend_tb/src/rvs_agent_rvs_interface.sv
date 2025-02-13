@@ -21,8 +21,9 @@ interface rvs_interface (input bit clk, input bit rst_n);
   logic         [`NUM_RT_UOP-1:0] rt_xrf_ready_rvs2rvv;
 
 // RT to VCSR.vxsat
-  logic   [`NUM_RT_UOP-1:0]                         wr_vxsat_valid;
-  logic   [`NUM_RT_UOP-1:0] [`VCSR_VXSAT_WIDTH-1:0] wr_vxsat;
+  logic   [`NUM_RT_UOP-1:0]                         wr_vxsat_valid; // for each uops
+  logic   [`NUM_RT_UOP-1:0] [`VCSR_VXSAT_WIDTH-1:0] wr_vxsat;       // for each uops
+  logic                                             wr_vxsat_ready; // for all uops
 
 // exception handler
   // trap signal handshake
@@ -32,6 +33,7 @@ interface rvs_interface (input bit clk, input bit rst_n);
   // the vcsr of last retired uop in last cycle
   logic                           vcsr_valid;
   RVVConfigState                  vector_csr;
+  logic                           vcsr_ready;
 
 // write back event (for each instruction)
   logic         [`NUM_RT_UOP-1:0] rt_uop;

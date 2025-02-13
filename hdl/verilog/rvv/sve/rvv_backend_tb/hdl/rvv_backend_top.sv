@@ -33,9 +33,9 @@ module rvv_backend_top();
     .insts_rvs2cq             (rvs_if.insts_rvs2cq          ),
     .insts_ready_cq2rvs       (rvs_if.insts_ready_cq2rvs    ),
     
-    .rt_xrf_rvv2rvs           (rvs_if.rt_xrf_rvv2rvs         ),
-    .rt_xrf_valid_rvv2rvs     (rvs_if.rt_xrf_valid_rvv2rvs   ),
-    .rt_xrf_ready_rvs2rvv     (rvs_if.rt_xrf_ready_rvs2rvv   ),
+    .rt_xrf_rvv2rvs           (rvs_if.rt_xrf_rvv2rvs        ),
+    .rt_xrf_valid_rvv2rvs     (rvs_if.rt_xrf_valid_rvv2rvs  ),
+    .rt_xrf_ready_rvs2rvv     (rvs_if.rt_xrf_ready_rvs2rvv  ),
 
     .uop_lsu_valid_rvv2rvs    (lsu_if.uop_lsu_valid_rvv2rvs ),
     .uop_lsu_rvv2rvs          (lsu_if.uop_lsu_rvv2rvs       ),
@@ -43,18 +43,20 @@ module rvv_backend_top();
 
     .uop_lsu_valid_rvs2rvv    (lsu_if.uop_lsu_valid_rvs2rvv ),
     .uop_lsu_rvs2rvv          (lsu_if.uop_lsu_rvs2rvv       ),
-    .uop_lsu_ready_rvv2rvs    (lsu_if.uop_lsu_ready_rvv2rvs     ),
+    .uop_lsu_ready_rvv2rvs    (lsu_if.uop_lsu_ready_rvv2rvs ),
 
     
-    .trap_valid_rvs2rvv       (rvs_if.trap_valid_rvs2rvv    ),
-    .trap_rvs2rvv             (rvs_if.trap_rvs2rvv          ),
+    .trap_valid_rvs2rvv       ('0                           ), // FIXME
+    .trap_rvs2rvv             ('0                           ), // FIXME
     .trap_ready_rvv2rvs       (rvs_if.trap_ready_rvv2rvs    ), 
 
     .wr_vxsat_valid           (),
     .wr_vxsat                 (),
+    .wr_vxsat_ready           (rvs_if.wr_vxsat_ready),
 
     .vcsr_valid               (rvs_if.vcsr_valid            ),
-    .vector_csr               (rvs_if.vector_csr            )
+    .vector_csr               (rvs_if.vector_csr            ),
+    .vcsr_ready               (1'b1            ) // FIXME
   );
 
   assign rvs_if.rt_uop      = `RT_UOP_PATH.rt_uop;

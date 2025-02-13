@@ -34,9 +34,9 @@ class rvs_driver extends uvm_driver # (rvs_transaction);
   extern virtual task reset_phase(uvm_phase phase);
   extern virtual task configure_phase(uvm_phase phase);
   extern virtual task run_phase(uvm_phase phase);
+
   extern protected virtual task tx_driver();
   extern protected virtual task inst_manage();
-
   extern protected virtual task rx_driver();
 
 endclass: rvs_driver
@@ -79,6 +79,7 @@ task rvs_driver::reset_phase(uvm_phase phase);
     for(int i=0; i<`NUM_RT_UOP; i++) begin
       rvs_if.rt_xrf_ready_rvs2rvv[i] <= '0;
     end
+    rvs_if.wr_vxsat_ready <= '0;
     @(posedge rvs_if.clk);
   end
   phase.drop_objection( .obj( this ) );
@@ -168,14 +169,18 @@ endtask: tx_driver
 
 task rvs_driver::rx_driver();
   logic rt_xrf_ready [`NUM_RT_UOP-1:0] ;
+  logic wr_vxsat_ready;
   forever begin
     @(posedge rvs_if.clk);
     for(int i=0; i<`NUM_RT_UOP; i++) begin
       assert(std::randomize(rt_xrf_ready[i]) with {rt_xrf_ready[i] dist {0 := 20, 1 := 80};});
       rvs_if.rt_xrf_ready_rvs2rvv[i] <= rt_xrf_ready[i];
     end
+    assert(std::randomize(wr_vxsat_ready) with {wr_vxsat_ready dist {0 := 20, 1 := 80};});
+    rvs_if.wr_vxsat_ready <= wr_vxsat_ready;
   end
 endtask: rx_driver
+
 `endif // RVS_DRIVER__SV
 
 
