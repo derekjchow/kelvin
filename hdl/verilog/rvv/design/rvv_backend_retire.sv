@@ -138,6 +138,9 @@ logic [`VLENB-1:0]               w_enB0_waw4_int;
 logic [`VLENB-1:0]               w_enB1_waw4_int;
 logic [`VLENB-1:0]               w_enB2_waw4_int;
 
+logic [`VLENB-1:0]               w_enB1_waw4_int_tmp;
+logic [`VLENB-1:0]               w_enB2_waw4_int_tmp;
+
 logic [`VLENB-1:0]               w_enB0_mux;
 logic [`VLENB-1:0]               w_enB1_mux;
 logic [`VLENB-1:0]               w_enB2_mux;
@@ -270,17 +273,19 @@ always@(*) begin
   for(int i=0; i<`VLENB; i=i+1) begin
     if (waw4_in_addr2 == waw4_in_addr3) begin//check waw23 first
       w_enB2_waw4_int[i] = waw4_in_enB2[i] && !waw4_in_enB3[i];
+      w_enB2_waw4_int_tmp[i] = waw4_in_enB2[i] || waw4_in_enB3[i]; //tmp perform OR to cover 23
       if (waw4_in_addr1 == waw4_in_addr2) begin //2=3, 1=2
-        w_enB1_waw4_int[i] = waw4_in_enB1[i] && !w_enB2_waw4_int[i];
+        w_enB1_waw4_int[i] = waw4_in_enB1[i] && !w_enB2_waw4_int_tmp[i];
+        w_enB1_waw4_int_tmp[i] = waw4_in_enB1[i] || w_enB2_waw4_int_tmp[i];//tmp perform OR to cover 123
         if (waw4_in_addr0 == waw4_in_addr1) begin //2=3, 1=2, 0=1 #case1
-          w_enB0_waw4_int[i] = waw4_in_enB0[i] && !w_enB1_waw4_int[i];
+          w_enB0_waw4_int[i] = waw4_in_enB0[i] && !w_enB1_waw4_int_tmp[i];
         end
         else begin//2=3, 1=2, 0!=1 #case2
           w_enB0_waw4_int[i] = waw4_in_enB0[i];
         end
       end
       else if (waw4_in_addr0 == waw4_in_addr2) begin //2=3, 1!=2, 0=2 #case3
-        w_enB0_waw4_int[i] = waw4_in_enB0[i] && !w_enB2_waw4_int[i];
+        w_enB0_waw4_int[i] = waw4_in_enB0[i] && !w_enB2_waw4_int_tmp[i];
         w_enB1_waw4_int[i] = waw4_in_enB1[i];
       end
       else if (waw4_in_addr0 == waw4_in_addr1) begin //2=3, 1!=2, 0=1 #case4
@@ -296,8 +301,9 @@ always@(*) begin
       w_enB2_waw4_int[i] = waw4_in_enB2[i];
       if (waw4_in_addr1 == waw4_in_addr2) begin //2!=3, 1=2
         w_enB1_waw4_int[i] = waw4_in_enB1[i] && !waw4_in_enB2[i];
+        w_enB1_waw4_int_tmp[i] = waw4_in_enB1[i] || waw4_in_enB2[i]; //tmp perform OR to cover 12
         if (waw4_in_addr0 == waw4_in_addr1) begin //2!=3, 1=2, 0=1 #case6
-          w_enB0_waw4_int[i] = waw4_in_enB0[i] && !w_enB1_waw4_int[i];
+          w_enB0_waw4_int[i] = waw4_in_enB0[i] && !w_enB1_waw4_int_tmp[i]; 
         end
         else if (waw4_in_addr0 == waw4_in_addr3) begin //2!=3, 1=2, 0=3 #case7
           w_enB0_waw4_int[i] = waw4_in_enB0[i] && !waw4_in_enB3[i];
@@ -308,11 +314,12 @@ always@(*) begin
       end
       else if (waw4_in_addr1 == waw4_in_addr3) begin //2!=3, 1!=2, 1=3
         w_enB1_waw4_int[i] = waw4_in_enB1[i] && !waw4_in_enB3[i];
+        w_enB1_waw4_int_tmp[i] = waw4_in_enB1[i] || waw4_in_enB3[i]; //tmp perform OR to cover 13
         if (waw4_in_addr0 == waw4_in_addr2) begin //2!=3, 1!=2, 1=3, 0=2 #case9
-          w_enB0_waw4_int[i] = waw4_in_enB0[i] && !w_enB2_waw4_int[i];
+          w_enB0_waw4_int[i] = waw4_in_enB0[i] && !waw4_in_enB2[i];
         end
         else if (waw4_in_addr0 == waw4_in_addr1) begin //2!=3, 1!=2, 1=3, 0=1 #case10
-          w_enB0_waw4_int[i] = waw4_in_enB0[i] && !w_enB1_waw4_int[i];
+          w_enB0_waw4_int[i] = waw4_in_enB0[i] && !w_enB1_waw4_int_tmp[i];
         end
         else begin //2!=3, 1!=2, 1=3, 0!=1 #case11
           w_enB0_waw4_int[i] = waw4_in_enB0[i];
@@ -324,10 +331,10 @@ always@(*) begin
           w_enB0_waw4_int[i] = waw4_in_enB0[i] && !waw4_in_enB3[i];
         end
         else if (waw4_in_addr0 == waw4_in_addr2) begin //2!=3, 1!=2, 1!=3, 0=2 #case13
-          w_enB0_waw4_int[i] = waw4_in_enB0[i] && !w_enB2_waw4_int[i];
+          w_enB0_waw4_int[i] = waw4_in_enB0[i] && !waw4_in_enB2[i];
         end
         else if (waw4_in_addr0 == waw4_in_addr1) begin //2!=3, 1!=2, 1!=3, 0=1 #case14
-          w_enB0_waw4_int[i] = waw4_in_enB0[i] && !w_enB1_waw4_int[i];
+          w_enB0_waw4_int[i] = waw4_in_enB0[i] && !waw4_in_enB1[i];
         end
         else begin //4 all different #case15
           w_enB0_waw4_int[i] = waw4_in_enB0[i];
