@@ -24,8 +24,8 @@ The interfaces to Kelvin are defined as follows:
 | ---------------- | --------------------------------------------------------- |
 |       clk        | The clock of the AXI Bus/Kelvin core.                     |
 |      reset       | The active-low reset signal for the AXI Bus/Kelvin core.  |
-|      s_axi       | An AXI slave interface that can be used to write TCMs or touch Kelvin CSRs. |
-|      m_axi       | An AXI master interface used by Kelvin to read/write to memories/CSRs. |
+|      s_axi       | An AXI4 slave interface that can be used to write TCMs or touch Kelvin CSRs. |
+|      m_axi       | An AXI4 master interface used by Kelvin to read/write to memories/CSRs. |
 |       irqn       | Active-low interrupt to the Kelvin core. Can be triggered by peripherals or other host processor. |
 |       wfi        | Active-high signal from the Kelvin core, indicating that the core is waiting for an interrupt. While this is active, Kelvin is clock-gated. |
 |      debug       | Debug interface to monitor Kelvin instructions execution. This interface is typically only used for simulation. |
@@ -33,6 +33,81 @@ The interfaces to Kelvin are defined as follows:
 |      halted      | Output interface informing if the Core is running or not. Can be ignored. |
 |      fault       | Output interface to determine if the Core hit a fault. These signals should be connected to a system control CPU interrupt-line or status register for notification when Kelvin faults or is halted. |
 
+#### AXI master signals
+AR / AW channel
+| Signal | Behaviour |
+| ------ | --------- |
+| addr   | Address Kelvin wishes to read/write |
+| prot   | Always 2 (unprivileged, insecure, data) |
+| id     | Always 0 |
+| len    | (Count of beats in the burst) - 1 |
+| size   | Bytes-per-beat (1, 2, or 4) |
+| burst  | Always 1 (INCR) |
+| lock   | Always 0 (normal access) |
+| cache  | Always 0 (Device non-bufferable) |
+| qos    | Always 0 |
+| region | Always 0 |
+
+R channel
+| Signal | Behaviour |
+| ------ | --------- |
+| data   | Response data from the slave |
+| id     | Ignored, but should be 0 as Kelvin only emits txns with an id of 0 |
+| resp   | Response code |
+| last   | Whether the beat is the last in the burst |
+
+W channel
+| Signal | Behaviour |
+| ------ | --------- |
+| data   | Data Kelvin wishes to write |
+| last   | Whether the beat is the last in the burst |
+| strb   | Which bytes in the data are valid |
+
+B channel
+| Signal | Behaviour |
+| ------ | --------- |
+| id     | Ignored, but should be 0 as Kelvin only emits txns with an id of 0 (an RTL assertion exists for this) |
+| resp   | Response code |
+
+Note: the USER signal is not supported on any of the channels.
+
+#### AXI slave signals
+AR / AW channel
+| Signal | Behaviour |
+| ------ | --------- |
+| addr   | Address the master wishes to read / write to |
+| prot   | Ignored |
+| id     | Transaction ID, should be reflected in the response beats |
+| len    | (Count of beats in the burst) - 1 |
+| size   | Bytes-per-beat (1,2,4,8,16) |
+| burst  | 0, 1, or 2 (FIXED, INCR, WRAP) |
+| lock   | Ignored |
+| cache  | Ignored |
+| qos    | Ignored |
+| region | Ignored |
+
+R channel
+| Signal | Behaviour |
+| ------ | --------- |
+| data   | Response data from Kelvin |
+| id     | Transaction ID, should match with the id field from AR |
+| resp   | Response code (0/OKAY or 2/SLVERR) |
+| last   | Whether the beat is the last in the burst |
+
+W channel
+| Signal | Behaviour |
+| ------ | --------- |
+| data   | Data the master wishes to write to Kelvin |
+| last   | Whether the beat is the last in the burst |
+| strb   | Which bytes in data are valid |
+
+B channel
+| Signal | Behaviour |
+| ------ | --------- |
+| id     | Transaction ID, should match with the id field from AW |
+| resp   | Response code (0/OKAY or 2/SLVERR)
+
+Note: the USER signal is not supported on any of the channels.
 
 ### Kelvin Memory Map
 
