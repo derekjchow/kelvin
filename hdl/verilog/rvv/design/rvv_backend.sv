@@ -754,20 +754,22 @@ module rvv_backend
       // ROB to RT
         .rob2rt_write_valid  (rd_valid_rob2rt),
         .rob2rt_write_data   (rd_rob2rt),
-        .rob2rt_write_ready  (rd_ready_rt2rob),
+        .rt2rob_write_ready  (rd_ready_rt2rob),
       // RT to RVS.XRF
         .rt2xrf_write_valid  (rt_xrf_valid_rvv2rvs),
         .rt2xrf_write_data   (rt_xrf_rvv2rvs),
-        .rt2xrf_write_ready  (rt_xrf_ready_rvs2rvv),
+        .xrf2rt_write_ready  (rt_xrf_ready_rvs2rvv),
       // RT to VRF
         .rt2vrf_write_valid  (wr_valid_rt2vrf),
         .rt2vrf_write_data   (wr_data_rt2vrf),
       // write to update vcsr
         .rt2vcsr_write_valid (vcsr_valid),
         .rt2vcsr_write_data  (vector_csr),
+        .vcsr2rt_write_ready (vcsr_ready),
       // update to vxsat
-        .rt2vsat_write_valid (wr_vxsat_valid),
-        .rt2vsat_write_data  (wr_vxsat)
+        .rt2vxsat_write_valid (wr_vxsat_valid),
+        .rt2vxsat_write_data  (wr_vxsat),
+        .vxsat2rt_write_ready(wr_vxsat_ready)
     );
 
   // VRF, Vector Register File

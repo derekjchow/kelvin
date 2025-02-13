@@ -622,7 +622,7 @@ typedef struct packed {
   BYTE_TYPE_t                         vd_type;            //wr Byte mask
   logic                               trap_flag;          //whether this entry in a trap
   RVVConfigState                      vector_csr;         //Receive Vstart, vlen,... And need to update vcsr when trap
-  logic   [`VLENB-1:0]                vsaturate;          //Update saturation bit
+  logic   [`VLENB-1:0]                vxsaturate;         //Update saturation bit
 } ROB2RT_t;  
 
 // the rob struct stored in ROB

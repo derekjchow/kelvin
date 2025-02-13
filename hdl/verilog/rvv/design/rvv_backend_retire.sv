@@ -21,14 +21,15 @@ feature list:
 
 module rvv_backend_retire(/*AUTOARG*/
    // Outputs
-   rob2rt_write_ready, 
+   rt2rob_write_ready, 
    rt2xrf_write_valid, rt2xrf_write_data, 
    rt2vrf_write_valid, rt2vrf_write_data, 
    rt2vcsr_write_valid, rt2vcsr_write_data, 
-   rt2vsat_write_valid, rt2vsat_write_data,
+   rt2vxsat_write_valid, rt2vxsat_write_data,
    // Inputs
    rob2rt_write_valid, rob2rt_write_data,
-   rt2xrf_write_ready
+   xrf2rt_write_ready, vcsr2rt_write_ready,
+   vxsat2rt_write_ready
    );
 // global signal
 // Pure combinational logic, thus no clk no rst_n
@@ -36,12 +37,12 @@ module rvv_backend_retire(/*AUTOARG*/
 // ROB dataout
     input   logic    [`NUM_RT_UOP-1:0]  rob2rt_write_valid;
     input   ROB2RT_t [`NUM_RT_UOP-1:0]  rob2rt_write_data;
-    output  logic    [`NUM_RT_UOP-1:0]  rob2rt_write_ready;
+    output  logic    [`NUM_RT_UOP-1:0]  rt2rob_write_ready;
 
 // write back to XRF
     output  logic    [`NUM_RT_UOP-1:0]  rt2xrf_write_valid;
     output  RT2XRF_t [`NUM_RT_UOP-1:0]  rt2xrf_write_data;
-    input   logic    [`NUM_RT_UOP-1:0]  rt2xrf_write_ready;
+    input   logic    [`NUM_RT_UOP-1:0]  xrf2rt_write_ready;
 
 // write back to VRF
     output  logic    [`NUM_RT_UOP-1:0]  rt2vrf_write_valid;
@@ -50,10 +51,12 @@ module rvv_backend_retire(/*AUTOARG*/
 // write to update vcsr
     output  logic                       rt2vcsr_write_valid;
     output  RVVConfigState              rt2vcsr_write_data;
+    input   logic                       vcsr2rt_write_ready;
 
 // vxsat
-    output  logic                       rt2vsat_write_valid;
-    output  logic   [`VCSR_VXSAT_WIDTH-1:0]   rt2vsat_write_data;
+    output  logic                             rt2vxsat_write_valid;
+    output  logic   [`VCSR_VXSAT_WIDTH-1:0]   rt2vxsat_write_data;
+    input   logic                             vxsat2rt_write_ready;
 
 ////////////Wires & Regs  ///////////////
 logic                            w_type0;
@@ -96,10 +99,10 @@ RVVConfigState                  w_vcsr1;
 RVVConfigState                  w_vcsr2;
 RVVConfigState                  w_vcsr3;
 
-logic [`VLENB-1:0]              w_vsaturate0;
-logic [`VLENB-1:0]              w_vsaturate1;
-logic [`VLENB-1:0]              w_vsaturate2;
-logic [`VLENB-1:0]              w_vsaturate3;
+logic [`VLENB-1:0]              w_vxsaturate0;
+logic [`VLENB-1:0]              w_vxsaturate1;
+logic [`VLENB-1:0]              w_vxsaturate2;
+logic [`VLENB-1:0]              w_vxsaturate3;
 
 logic [`VCSR_VXSAT_WIDTH-1:0]    w_vxsat0;
 logic [`VCSR_VXSAT_WIDTH-1:0]    w_vxsat1;
@@ -135,17 +138,21 @@ logic [`VLENB-1:0]               w_enB0_waw4_int;
 logic [`VLENB-1:0]               w_enB1_waw4_int;
 logic [`VLENB-1:0]               w_enB2_waw4_int;
 
-logic [`VLENB-1:0]                w_enB0_mux;
-logic [`VLENB-1:0]                w_enB1_mux;
-logic [`VLENB-1:0]                w_enB2_mux;
-logic [`VLENB-1:0]                w_enB3_mux;
+logic [`VLENB-1:0]               w_enB0_mux;
+logic [`VLENB-1:0]               w_enB1_mux;
+logic [`VLENB-1:0]               w_enB2_mux;
+logic [`VLENB-1:0]               w_enB3_mux;
 
 logic                            w_valid0_chkTrap;
 logic                            w_valid1_chkTrap;
 logic                            w_valid2_chkTrap;
 logic                            w_valid3_chkTrap;
 
-genvar                            j;
+logic                            retire_has_trap;
+logic                            retire_has_vxsat;
+logic                            vxsat2rt_ready_int;
+
+genvar                           j;
 
 /////////////////////////////////
 ////////////Decode///////////////
@@ -187,17 +194,17 @@ assign w_vcsr3 = rob2rt_write_data[3].vector_csr;
 
 generate
   for (j=0;j<`VLENB;j++) begin: GET_SAT
-    assign w_vsaturate0[j] = (vd_type0[j]==BODY_ACTIVE) ? rob2rt_write_data[0].vsaturate[j] : 1'b0;
-    assign w_vsaturate1[j] = (vd_type1[j]==BODY_ACTIVE) ? rob2rt_write_data[1].vsaturate[j] : 1'b0;
-    assign w_vsaturate2[j] = (vd_type2[j]==BODY_ACTIVE) ? rob2rt_write_data[2].vsaturate[j] : 1'b0;
-    assign w_vsaturate3[j] = (vd_type3[j]==BODY_ACTIVE) ? rob2rt_write_data[3].vsaturate[j] : 1'b0;
+    assign w_vxsaturate0[j] = (vd_type0[j]==BODY_ACTIVE) ? rob2rt_write_data[0].vxsaturate[j] : 1'b0;
+    assign w_vxsaturate1[j] = (vd_type1[j]==BODY_ACTIVE) ? rob2rt_write_data[1].vxsaturate[j] : 1'b0;
+    assign w_vxsaturate2[j] = (vd_type2[j]==BODY_ACTIVE) ? rob2rt_write_data[2].vxsaturate[j] : 1'b0;
+    assign w_vxsaturate3[j] = (vd_type3[j]==BODY_ACTIVE) ? rob2rt_write_data[3].vxsaturate[j] : 1'b0;
   end
 endgenerate
 
-assign w_vxsat0 = w_vsaturate0!='b0;
-assign w_vxsat1 = w_vsaturate1!='b0;
-assign w_vxsat2 = w_vsaturate2!='b0;
-assign w_vxsat3 = w_vsaturate3!='b0;
+assign w_vxsat0 = w_vxsaturate0!='b0;
+assign w_vxsat1 = w_vxsaturate1!='b0;
+assign w_vxsat2 = w_vxsaturate2!='b0;
+assign w_vxsat3 = w_vxsaturate3!='b0;
 
 /////////////////////////////////
 ////////////Main  ///////////////
@@ -770,31 +777,41 @@ assign rt2xrf_write_data[1].uop_pc = rob2rt_write_data[1].uop_pc;
 assign rt2xrf_write_data[2].uop_pc = rob2rt_write_data[2].uop_pc;
 assign rt2xrf_write_data[3].uop_pc = rob2rt_write_data[3].uop_pc;
 `endif
-
 //  5.4. To VCSR
+//In our current arch, only uop0 can contain a trap in each cycle
 //Valid
-assign rt2vcsr_write_valid = (rob2rt_write_valid[0] && w_valid0 && trap_flag0) ? w_valid0 : 
-                             (rob2rt_write_valid[1] && w_valid1 && trap_flag1) ? w_valid1 :
-                             (rob2rt_write_valid[2] && w_valid2 && trap_flag2) ? w_valid2 :
-                             (rob2rt_write_valid[3] && w_valid3 && trap_flag3) ? w_valid3 : 1'b0;
+assign retire_has_trap = w_valid0 && trap_flag0;
+assign rt2vcsr_write_valid = rob2rt_write_valid[0] && retire_has_trap;
 //Data
-assign rt2vcsr_write_data =  (w_valid0 && trap_flag0) ? w_vcsr0 : 
-                             (w_valid1 && trap_flag1) ? w_vcsr1 :
-                             (w_valid2 && trap_flag2) ? w_vcsr2 :
-                             (w_valid3 && trap_flag3) ? w_vcsr3 : 'b0;
+assign rt2vcsr_write_data =  w_vcsr0;
 
-//  5.5. To vsat
-assign rt2vsat_write_valid = (rob2rt_write_valid[0] && w_valid3_chkTrap && w_vxsat3) || 
-                             (rob2rt_write_valid[1] && w_valid2_chkTrap && w_vxsat2) || 
-                             (rob2rt_write_valid[2] && w_valid1_chkTrap && w_vxsat1) || 
-                             (rob2rt_write_valid[3] && w_valid0_chkTrap && w_vxsat0);
-assign rt2vsat_write_data = w_vxsat3 || w_vxsat2 || w_vxsat1 || w_vxsat0;
+//  5.5. To vxsat
+assign retire_has_vxsat = (w_valid3_chkTrap && w_vxsat3) || (w_valid2_chkTrap && w_vxsat2) || (w_valid1_chkTrap && w_vxsat1) || (w_valid0_chkTrap && w_vxsat0);
+assign rt2vxsat_write_valid = (rob2rt_write_valid[3] && w_valid3_chkTrap && w_vxsat3) || 
+                              (rob2rt_write_valid[2] && w_valid2_chkTrap && w_vxsat2) || 
+                              (rob2rt_write_valid[1] && w_valid1_chkTrap && w_vxsat1) || 
+                              (rob2rt_write_valid[0] && w_valid0_chkTrap && w_vxsat0);
+assign rt2vxsat_write_data = w_vxsat3 || w_vxsat2 || w_vxsat1 || w_vxsat0;
 
 //6. Ready generation
-assign rob2rt_write_ready[0] = w_type0 ? rt2xrf_write_ready[0] : 1'b1; //to XRF use ready, otherwise ready is tied to 1
-assign rob2rt_write_ready[1] = w_type1 ? rt2xrf_write_ready[1] : 1'b1; 
-assign rob2rt_write_ready[2] = w_type2 ? rt2xrf_write_ready[2] : 1'b1;
-assign rob2rt_write_ready[3] = w_type3 ? rt2xrf_write_ready[3] : 1'b1;
+//Rob can only issue two cases:
+//  a. all uops are valid without trap
+//  b. uop0 contains trap
+
+//this int is 1 when: 
+//  a. 4 uops have no vxsat update; 
+//  b. has vxsat update while vxsat rdy == 1
+assign vxsat2rt_ready_int = !retire_has_vxsat || vxsat2rt_write_ready; 
+
+assign rt2rob_write_ready[0] = retire_has_trap ? vcsr2rt_write_ready :                         //use vcrs rdy
+                                       w_type0 ? xrf2rt_write_ready[0] && vxsat2rt_ready_int : //xrf rdy but check vxsat
+                                                 vxsat2rt_ready_int;                           //vrf rdy but check vxsat, equals to (1'b1 && vxsat2rt_ready_int)
+assign rt2rob_write_ready[1] = w_type1 ? xrf2rt_write_ready[1] && vxsat2rt_ready_int :         //xrf rdy but check vxsat
+                                         vxsat2rt_ready_int;                                   //vrf rdy but check vxsat, equals to (1'b1 && vxsat2rt_ready_int)
+assign rt2rob_write_ready[2] = w_type2 ? xrf2rt_write_ready[2] && vxsat2rt_ready_int :
+                                         vxsat2rt_ready_int;
+assign rt2rob_write_ready[3] = w_type3 ? xrf2rt_write_ready[3] && vxsat2rt_ready_int : 
+                                         vxsat2rt_ready_int ;
 /////////////////////////////////
 
 endmodule

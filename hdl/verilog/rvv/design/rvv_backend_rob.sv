@@ -360,7 +360,7 @@ module rvv_backend_rob
           assign rd_rob2rt[i].vd_type = uop_rob2rt[i].byte_type;
           assign rd_rob2rt[i].trap_flag = trap_flag[wind_uop_rptr[i]];
           assign rd_rob2rt[i].vector_csr = uop_rob2rt[i].vector_csr;
-          assign rd_rob2rt[i].vsaturate = res_mem[wind_uop_rptr[i]].vsaturate;
+          assign rd_rob2rt[i].vxsaturate = res_mem[wind_uop_rptr[i]].vsaturate;
       end
   endgenerate
   
