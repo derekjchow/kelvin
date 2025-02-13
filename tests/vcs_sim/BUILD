@@ -12,16 +12,18 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-package(default_visibility = ["//visibility:public"])
 load("@kelvin_hw//rules:vcs.bzl", "vcs_systemc_binary")
+
+package(default_visibility = ["//visibility:public"])
 
 vcs_systemc_binary(
     name = "core_mini_axi_sim",
     module = "CoreMiniAxi",
-    verilog_srcs = [
-        "//internal:syn/libs/tsmc12ffc/ts1n12ffcllsblvtd512x128m4swbsho_130b/VERILOG/ts1n12ffcllsblvtd512x128m4swbsho_130b.v",
-        "//internal:syn/libs/tsmc12ffc/ts1n12ffcllmblvtd2048x128m4swbsho_130d/VERILOG/ts1n12ffcllmblvtd2048x128m4swbsho_130d.v",
-        "//internal:syn/libs/tsmc12ffc/tcbn12ffcllbwp6t20p96cpdlvt.v",
+    portmap = "core_mini_axi.map",
+    systemc_deps = [
+        "@libsystemctlm_soc//:libsystemctlm_soc",
+        "//tests/verilator_sim:elf",
+        "//tests/systemc:Xbar",
     ],
     systemc_srcs = [
         "top.cc",
@@ -30,10 +32,9 @@ vcs_systemc_binary(
     verilog_deps = [
         "//hdl/chisel/src/kelvin:core_mini_axi_cc_library_verilog",
     ],
-    systemc_deps = [
-        "@libsystemctlm_soc//:libsystemctlm_soc",
-        "//tests/verilator_sim:elf",
-        "//tests/systemc:Xbar",
+    verilog_srcs = [
+        "//internal:syn/libs/tsmc12ffc/ts1n12ffcllsblvtd512x128m4swbsho_130b/VERILOG/ts1n12ffcllsblvtd512x128m4swbsho_130b.v",
+        "//internal:syn/libs/tsmc12ffc/ts1n12ffcllmblvtd2048x128m4swbsho_130d/VERILOG/ts1n12ffcllmblvtd2048x128m4swbsho_130d.v",
+        "//internal:syn/libs/tsmc12ffc/tcbn12ffcllbwp6t20p96cpdlvt.v",
     ],
-    portmap = "core_mini_axi.map",
 )
