@@ -106,15 +106,34 @@ logic [`VCSR_VXSAT_WIDTH-1:0]    w_vxsat1;
 logic [`VCSR_VXSAT_WIDTH-1:0]    w_vxsat2;
 logic [`VCSR_VXSAT_WIDTH-1:0]    w_vxsat3;
 
-logic dst1_eq_dst0, dst2_eq_dst1, dst3_eq_dst2;
-logic [1:0]                       group_req;
+logic [`NUM_RT_UOP-1:0]          rob2rt_is_to_vrf;
 
-logic [`VLENB-1:0]                w_enB0_waw01_int;
-logic [`VLENB-1:0]                w_enB0_waw012_int;
-logic [`VLENB-1:0]                w_enB1_waw012_int;
-logic [`VLENB-1:0]                w_enB0_waw0123_int;
-logic [`VLENB-1:0]                w_enB1_waw0123_int;
-logic [`VLENB-1:0]                w_enB2_waw0123_int;
+logic [`VLENB-1:0]               waw2_in_enB0;
+logic [`REGFILE_INDEX_WIDTH-1:0] waw2_in_addr0;
+logic [`VLENB-1:0]               waw2_in_enB1;
+logic [`REGFILE_INDEX_WIDTH-1:0] waw2_in_addr1;
+logic [`VLENB-1:0]               w_enB0_waw2_int;
+
+logic [`VLENB-1:0]               waw3_in_enB0;
+logic [`REGFILE_INDEX_WIDTH-1:0] waw3_in_addr0;
+logic [`VLENB-1:0]               waw3_in_enB1;
+logic [`REGFILE_INDEX_WIDTH-1:0] waw3_in_addr1;
+logic [`VLENB-1:0]               waw3_in_enB2;
+logic [`REGFILE_INDEX_WIDTH-1:0] waw3_in_addr2;
+logic [`VLENB-1:0]               w_enB0_waw3_int;
+logic [`VLENB-1:0]               w_enB1_waw3_int;
+
+logic [`VLENB-1:0]               waw4_in_enB0;
+logic [`REGFILE_INDEX_WIDTH-1:0] waw4_in_addr0;
+logic [`VLENB-1:0]               waw4_in_enB1;
+logic [`REGFILE_INDEX_WIDTH-1:0] waw4_in_addr1;
+logic [`VLENB-1:0]               waw4_in_enB2;
+logic [`REGFILE_INDEX_WIDTH-1:0] waw4_in_addr2;
+logic [`VLENB-1:0]               waw4_in_enB3;
+logic [`REGFILE_INDEX_WIDTH-1:0] waw4_in_addr3;
+logic [`VLENB-1:0]               w_enB0_waw4_int;
+logic [`VLENB-1:0]               w_enB1_waw4_int;
+logic [`VLENB-1:0]               w_enB2_waw4_int;
 
 logic [`VLENB-1:0]                w_enB0_mux;
 logic [`VLENB-1:0]                w_enB1_mux;
@@ -183,29 +202,11 @@ assign w_vxsat3 = w_vsaturate3!='b0;
 /////////////////////////////////
 ////////////Main  ///////////////
 /////////////////////////////////
-//1. Group VRF/XRF req
-assign dst1_eq_dst0 = ({rob2rt_write_valid[1],w_type1} == {rob2rt_write_valid[0],w_type0});
-assign dst2_eq_dst1 = ({rob2rt_write_valid[2],w_type2} == {rob2rt_write_valid[1],w_type1});
-assign dst3_eq_dst2 = ({rob2rt_write_valid[3],w_type3} == {rob2rt_write_valid[2],w_type2});
-
-always@(*) begin
-  if (dst1_eq_dst0) begin
-    if (dst2_eq_dst1) begin
-      if (dst3_eq_dst2) begin
-        group_req = 2'd3;
-      end
-      else begin
-        group_req = 2'd2;
-      end
-    end
-    else begin
-      group_req = 2'd1;
-    end
-  end
-  else begin
-    group_req = 2'd0;
-  end
-end
+//1. Check whether uop is a VRF req
+assign rob2rt_is_to_vrf[0] = rob2rt_write_valid[0] && !w_type0;
+assign rob2rt_is_to_vrf[1] = rob2rt_write_valid[1] && !w_type1;
+assign rob2rt_is_to_vrf[2] = rob2rt_write_valid[2] && !w_type2;
+assign rob2rt_is_to_vrf[3] = rob2rt_write_valid[3] && !w_type3;
 
 //2. Mask update if the bit is body-active
 always@(*) begin
@@ -217,140 +218,493 @@ always@(*) begin
   end
 end
 
-//3. Write-After-Write (WAW) check
-//  3.1. WAW among entry0 entry1, for group_req=1
+//3. Shared resources for Write-After-Write (WAW) check 
+//  3.1. Submodule: WAW among 2 uops
 always@(*) begin
   for(int i=0; i<`VLENB; i=i+1) begin
-    if (w_addr0 == w_addr1) begin//check waw01
-      w_enB0_waw01_int[i] = w_enB0[i] && !w_enB1[i];
+    if (waw2_in_addr0 == waw2_in_addr1) begin//check waw01
+      w_enB0_waw2_int[i] = waw2_in_enB0[i] && !waw2_in_enB1[i];
     end
     else begin
-      w_enB0_waw01_int[i] = w_enB0[i];
+      w_enB0_waw2_int[i] = waw2_in_enB0[i];
     end
   end //end for
 end
 
-//  3.2. WAW among entry0 entry1 entry2, for group_req=2
+//  3.2. Submodule: WAW among 3 uops
 always@(*) begin
   for(int i=0; i<`VLENB; i=i+1) begin
-    if (w_addr1 == w_addr2) begin //check waw12 first
-      w_enB1_waw012_int[i] = w_enB1[i] && !w_enB2[i];
-      if (w_addr0 == w_addr1) begin //waw012 all happens
-        w_enB0_waw012_int[i] = w_enB0[i] && !w_enB1_waw012_int[i];
+    if (waw3_in_addr1 == waw3_in_addr2) begin //check waw12 first
+      w_enB1_waw3_int[i] = waw3_in_enB1[i] && !waw3_in_enB2[i];
+      if (waw3_in_addr0 == waw3_in_addr1) begin //waw012 all happens
+        w_enB0_waw3_int[i] = waw3_in_enB0[i] && !w_enB1_waw3_int[i];
       end
       else begin //only waw12
-        w_enB0_waw012_int[i] = w_enB0[i];
+        w_enB0_waw3_int[i] = waw3_in_enB0[i];
       end
     end //end addr1==addr2
-    else if (w_addr0 == w_addr2) begin //check waw02
-      w_enB0_waw012_int[i] = w_enB0[i] && !w_enB2[i];
-      w_enB1_waw012_int[i] = w_enB1[i];
+    else if (waw3_in_addr0 == waw3_in_addr2) begin //check waw02
+      w_enB0_waw3_int[i] = waw3_in_enB0[i] && !waw3_in_enB2[i];
+      w_enB1_waw3_int[i] = waw3_in_enB1[i];
     end
-    else if (w_addr0 == w_addr1) begin //check waw01
-      w_enB0_waw012_int[i] = w_enB0[i] && !w_enB1[i];
-      w_enB1_waw012_int[i] = w_enB1[i];
+    else if (waw3_in_addr0 == waw3_in_addr1) begin //check waw01
+      w_enB0_waw3_int[i] = waw3_in_enB0[i] && !waw3_in_enB1[i];
+      w_enB1_waw3_int[i] = waw3_in_enB1[i];
     end
     else begin
-      w_enB0_waw012_int[i] = w_enB0[i];
-      w_enB1_waw012_int[i] = w_enB1[i];
+      w_enB0_waw3_int[i] = waw3_in_enB0[i];
+      w_enB1_waw3_int[i] = waw3_in_enB1[i];
     end
   end//end for
 end//end always
 
-//  3.3. WAW among entry0 entry1 entry2 entry3, for group_req=3
+//  3.3. Submodule: WAW among 4 uops
 always@(*) begin
   for(int i=0; i<`VLENB; i=i+1) begin
-    if (w_addr2 == w_addr3) begin//check waw23 first
-      w_enB2_waw0123_int[i] = w_enB2[i] && !w_enB3[i];
-      if (w_addr1 == w_addr2) begin //2=3, 1=2
-        w_enB1_waw0123_int[i] = w_enB1[i] && !w_enB2_waw0123_int[i];
-        if (w_addr0 == w_addr1) begin //2=3, 1=2, 0=1 #case1
-          w_enB0_waw0123_int[i] = w_enB0[i] && !w_enB1_waw0123_int[i];
+    if (waw4_in_addr2 == waw4_in_addr3) begin//check waw23 first
+      w_enB2_waw4_int[i] = waw4_in_enB2[i] && !waw4_in_enB3[i];
+      if (waw4_in_addr1 == waw4_in_addr2) begin //2=3, 1=2
+        w_enB1_waw4_int[i] = waw4_in_enB1[i] && !w_enB2_waw4_int[i];
+        if (waw4_in_addr0 == waw4_in_addr1) begin //2=3, 1=2, 0=1 #case1
+          w_enB0_waw4_int[i] = waw4_in_enB0[i] && !w_enB1_waw4_int[i];
         end
         else begin//2=3, 1=2, 0!=1 #case2
-          w_enB0_waw0123_int[i] = w_enB0[i];
+          w_enB0_waw4_int[i] = waw4_in_enB0[i];
         end
       end
-      else if (w_addr0 == w_addr2) begin //2=3, 1!=2, 0=2 #case3
-        w_enB0_waw0123_int[i] = w_enB0[i] && !w_enB2_waw0123_int[i];
-        w_enB1_waw0123_int[i] = w_enB1[i];
+      else if (waw4_in_addr0 == waw4_in_addr2) begin //2=3, 1!=2, 0=2 #case3
+        w_enB0_waw4_int[i] = waw4_in_enB0[i] && !w_enB2_waw4_int[i];
+        w_enB1_waw4_int[i] = waw4_in_enB1[i];
       end
-      else if (w_addr0 == w_addr1) begin //2=3, 1!=2, 0=1 #case4
-        w_enB0_waw0123_int[i] = w_enB0[i] && !w_enB1[i];
-        w_enB1_waw0123_int[i] = w_enB1[i];
+      else if (waw4_in_addr0 == waw4_in_addr1) begin //2=3, 1!=2, 0=1 #case4
+        w_enB0_waw4_int[i] = waw4_in_enB0[i] && !waw4_in_enB1[i];
+        w_enB1_waw4_int[i] = waw4_in_enB1[i];
       end
       else begin //2=3, 0!=1!=2 #case5
-        w_enB0_waw0123_int[i] = w_enB0[i];
-        w_enB1_waw0123_int[i] = w_enB1[i];
+        w_enB0_waw4_int[i] = waw4_in_enB0[i];
+        w_enB1_waw4_int[i] = waw4_in_enB1[i];
       end
     end//end 2=3 if
     else begin //2!=3
-      w_enB2_waw0123_int[i] = w_enB2[i];
-      if (w_addr1 == w_addr2) begin //2!=3, 1=2
-        w_enB1_waw0123_int[i] = w_enB1[i] && !w_enB2[i];
-        if (w_addr0 == w_addr1) begin //2!=3, 1=2, 0=1 #case6
-          w_enB0_waw0123_int[i] = w_enB0[i] && !w_enB1_waw0123_int[i];
+      w_enB2_waw4_int[i] = waw4_in_enB2[i];
+      if (waw4_in_addr1 == waw4_in_addr2) begin //2!=3, 1=2
+        w_enB1_waw4_int[i] = waw4_in_enB1[i] && !waw4_in_enB2[i];
+        if (waw4_in_addr0 == waw4_in_addr1) begin //2!=3, 1=2, 0=1 #case6
+          w_enB0_waw4_int[i] = waw4_in_enB0[i] && !w_enB1_waw4_int[i];
         end
-        else if (w_addr0 == w_addr3) begin //2!=3, 1=2, 0=3 #case7
-          w_enB0_waw0123_int[i] = w_enB0[i] && !w_enB3[i];
+        else if (waw4_in_addr0 == waw4_in_addr3) begin //2!=3, 1=2, 0=3 #case7
+          w_enB0_waw4_int[i] = waw4_in_enB0[i] && !waw4_in_enB3[i];
         end
         else begin //2!=3, 1=2, 0!=1 && 0!=3 # case8
-          w_enB0_waw0123_int[i] = w_enB0[i];
+          w_enB0_waw4_int[i] = waw4_in_enB0[i];
         end
       end
-      else if (w_addr1 == w_addr3) begin //2!=3, 1!=2, 1=3
-        w_enB1_waw0123_int[i] = w_enB1[i] && !w_enB3[i];
-        if (w_addr0 == w_addr2) begin //2!=3, 1!=2, 1=3, 0=2 #case9
-          w_enB0_waw0123_int[i] = w_enB0[i] && !w_enB2_waw0123_int[i];
+      else if (waw4_in_addr1 == waw4_in_addr3) begin //2!=3, 1!=2, 1=3
+        w_enB1_waw4_int[i] = waw4_in_enB1[i] && !waw4_in_enB3[i];
+        if (waw4_in_addr0 == waw4_in_addr2) begin //2!=3, 1!=2, 1=3, 0=2 #case9
+          w_enB0_waw4_int[i] = waw4_in_enB0[i] && !w_enB2_waw4_int[i];
         end
-        else if (w_addr0 == w_addr1) begin //2!=3, 1!=2, 1=3, 0=1 #case10
-          w_enB0_waw0123_int[i] = w_enB0[i] && !w_enB1_waw0123_int[i];
+        else if (waw4_in_addr0 == waw4_in_addr1) begin //2!=3, 1!=2, 1=3, 0=1 #case10
+          w_enB0_waw4_int[i] = waw4_in_enB0[i] && !w_enB1_waw4_int[i];
         end
         else begin //2!=3, 1!=2, 1=3, 0!=1 #case11
-          w_enB0_waw0123_int[i] = w_enB0[i];
+          w_enB0_waw4_int[i] = waw4_in_enB0[i];
         end
       end
       else begin //2!=3, 1!=2, 1!=3
-        w_enB1_waw0123_int[i] = w_enB1[i];
-        if (w_addr0 == w_addr3) begin //2!=3, 1!=2, 1!=3, 0=3 #case12
-          w_enB0_waw0123_int[i] = w_enB0[i] && !w_enB3[i];
+        w_enB1_waw4_int[i] = waw4_in_enB1[i];
+        if (waw4_in_addr0 == waw4_in_addr3) begin //2!=3, 1!=2, 1!=3, 0=3 #case12
+          w_enB0_waw4_int[i] = waw4_in_enB0[i] && !waw4_in_enB3[i];
         end
-        else if (w_addr0 == w_addr2) begin //2!=3, 1!=2, 1!=3, 0=2 #case13
-          w_enB0_waw0123_int[i] = w_enB0[i] && !w_enB2_waw0123_int[i];
+        else if (waw4_in_addr0 == waw4_in_addr2) begin //2!=3, 1!=2, 1!=3, 0=2 #case13
+          w_enB0_waw4_int[i] = waw4_in_enB0[i] && !w_enB2_waw4_int[i];
         end
-        else if (w_addr0 == w_addr1) begin //2!=3, 1!=2, 1!=3, 0=1 #case14
-          w_enB0_waw0123_int[i] = w_enB0[i] && !w_enB1_waw0123_int[i];
+        else if (waw4_in_addr0 == waw4_in_addr1) begin //2!=3, 1!=2, 1!=3, 0=1 #case14
+          w_enB0_waw4_int[i] = waw4_in_enB0[i] && !w_enB1_waw4_int[i];
         end
         else begin //4 all different #case15
-          w_enB0_waw0123_int[i] = w_enB0[i];
+          w_enB0_waw4_int[i] = waw4_in_enB0[i];
         end
       end
     end//end 2!=3 if
   end//end for
 end//end always
 
-//4. Combine group_req and WAW check
+//4. Combine vrf group and WAW check
 always@(*) begin
-  case (group_req)
-    2'd3 : begin //0123 all to same dst
-      w_enB0_mux = w_enB0_waw0123_int;
-      w_enB1_mux = w_enB1_waw0123_int;
-      w_enB2_mux = w_enB2_waw0123_int;
-      w_enB3_mux = w_enB3;
-    end
-    2'd2 : begin //012 to same dst
-      w_enB0_mux = w_enB0_waw012_int;
-      w_enB1_mux = w_enB1_waw012_int;
-      w_enB2_mux = w_enB2;
-      w_enB3_mux = w_enB3;
-    end
-    2'd1 : begin //01 to same dst
-      w_enB0_mux = w_enB0_waw01_int;
+  case (rob2rt_is_to_vrf)
+    4'b0000, 4'b0001, 4'b0010, 4'b0100, 4'b1000 : begin
+      //Input mux
+      //WAW2 part
+      waw2_in_enB0 = {`VLENB{1'b0}};
+      waw2_in_addr0 = {`REGFILE_INDEX_WIDTH{1'b0}};
+      waw2_in_enB1 = {`VLENB{1'b0}};
+      waw2_in_addr1 = {`REGFILE_INDEX_WIDTH{1'b0}};
+      //WAW3 part
+      waw3_in_enB0 = {`VLENB{1'b0}};
+      waw3_in_addr0 = {`REGFILE_INDEX_WIDTH{1'b0}};
+      waw3_in_enB1 = {`VLENB{1'b0}};
+      waw3_in_addr1 = {`REGFILE_INDEX_WIDTH{1'b0}};
+      waw3_in_enB2 = {`VLENB{1'b0}};
+      waw3_in_addr2 = {`REGFILE_INDEX_WIDTH{1'b0}};
+      //WAW4 part
+      waw4_in_enB0 = {`VLENB{1'b0}};
+      waw4_in_addr0 = {`REGFILE_INDEX_WIDTH{1'b0}};
+      waw4_in_enB1 = {`VLENB{1'b0}};
+      waw4_in_addr1 = {`REGFILE_INDEX_WIDTH{1'b0}};
+      waw4_in_enB2 = {`VLENB{1'b0}};
+      waw4_in_addr2 = {`REGFILE_INDEX_WIDTH{1'b0}};
+      waw4_in_enB3 = {`VLENB{1'b0}};
+      waw4_in_addr3 = {`REGFILE_INDEX_WIDTH{1'b0}};
+      //Output mux
+      w_enB0_mux = w_enB0;
       w_enB1_mux = w_enB1;
       w_enB2_mux = w_enB2;
       w_enB3_mux = w_enB3;
     end
-    default : begin //cant group
+    4'b0011 : begin
+      //Input mux
+      //WAW2 part
+      waw2_in_enB0 = w_enB0;
+      waw2_in_addr0 = w_addr0;
+      waw2_in_enB1 = w_enB1;
+      waw2_in_addr1 = w_addr1;
+      //WAW3 part
+      waw3_in_enB0 = {`VLENB{1'b0}};
+      waw3_in_addr0 = {`REGFILE_INDEX_WIDTH{1'b0}};
+      waw3_in_enB1 = {`VLENB{1'b0}};
+      waw3_in_addr1 = {`REGFILE_INDEX_WIDTH{1'b0}};
+      waw3_in_enB2 = {`VLENB{1'b0}};
+      waw3_in_addr2 = {`REGFILE_INDEX_WIDTH{1'b0}};
+      //WAW4 part
+      waw4_in_enB0 = {`VLENB{1'b0}};
+      waw4_in_addr0 = {`REGFILE_INDEX_WIDTH{1'b0}};
+      waw4_in_enB1 = {`VLENB{1'b0}};
+      waw4_in_addr1 = {`REGFILE_INDEX_WIDTH{1'b0}};
+      waw4_in_enB2 = {`VLENB{1'b0}};
+      waw4_in_addr2 = {`REGFILE_INDEX_WIDTH{1'b0}};
+      waw4_in_enB3 = {`VLENB{1'b0}};
+      waw4_in_addr3 = {`REGFILE_INDEX_WIDTH{1'b0}};
+      //Output mux
+      w_enB0_mux = w_enB0_waw2_int; //0 marks for the lower out of WAW2
+      w_enB1_mux = w_enB1;
+      w_enB2_mux = w_enB2; 
+      w_enB3_mux = w_enB3;
+    end
+    4'b0101 : begin
+      //Input mux
+      //WAW2 part
+      waw2_in_enB0 = w_enB0;
+      waw2_in_addr0 = w_addr0;
+      waw2_in_enB1 = w_enB2;
+      waw2_in_addr1 = w_addr2;
+      //WAW3 part
+      waw3_in_enB0 = {`VLENB{1'b0}};
+      waw3_in_addr0 = {`REGFILE_INDEX_WIDTH{1'b0}};
+      waw3_in_enB1 = {`VLENB{1'b0}};
+      waw3_in_addr1 = {`REGFILE_INDEX_WIDTH{1'b0}};
+      waw3_in_enB2 = {`VLENB{1'b0}};
+      waw3_in_addr2 = {`REGFILE_INDEX_WIDTH{1'b0}};
+      //WAW4 part
+      waw4_in_enB0 = {`VLENB{1'b0}};
+      waw4_in_addr0 = {`REGFILE_INDEX_WIDTH{1'b0}};
+      waw4_in_enB1 = {`VLENB{1'b0}};
+      waw4_in_addr1 = {`REGFILE_INDEX_WIDTH{1'b0}};
+      waw4_in_enB2 = {`VLENB{1'b0}};
+      waw4_in_addr2 = {`REGFILE_INDEX_WIDTH{1'b0}};
+      waw4_in_enB3 = {`VLENB{1'b0}};
+      waw4_in_addr3 = {`REGFILE_INDEX_WIDTH{1'b0}};
+      //Output mux
+      w_enB0_mux = w_enB0_waw2_int; //0 marks for the lower out of WAW2
+      w_enB1_mux = w_enB1; 
+      w_enB2_mux = w_enB2; 
+      w_enB3_mux = w_enB3;
+    end
+    4'b0110 : begin
+      //Input mux
+      //WAW2 part
+      waw2_in_enB0 = w_enB1;
+      waw2_in_addr0 = w_addr1;
+      waw2_in_enB1 = w_enB2;
+      waw2_in_addr1 = w_addr2;
+      //WAW3 part
+      waw3_in_enB0 = {`VLENB{1'b0}};
+      waw3_in_addr0 = {`REGFILE_INDEX_WIDTH{1'b0}};
+      waw3_in_enB1 = {`VLENB{1'b0}};
+      waw3_in_addr1 = {`REGFILE_INDEX_WIDTH{1'b0}};
+      waw3_in_enB2 = {`VLENB{1'b0}};
+      waw3_in_addr2 = {`REGFILE_INDEX_WIDTH{1'b0}};
+      //WAW4 part
+      waw4_in_enB0 = {`VLENB{1'b0}};
+      waw4_in_addr0 = {`REGFILE_INDEX_WIDTH{1'b0}};
+      waw4_in_enB1 = {`VLENB{1'b0}};
+      waw4_in_addr1 = {`REGFILE_INDEX_WIDTH{1'b0}};
+      waw4_in_enB2 = {`VLENB{1'b0}};
+      waw4_in_addr2 = {`REGFILE_INDEX_WIDTH{1'b0}};
+      waw4_in_enB3 = {`VLENB{1'b0}};
+      waw4_in_addr3 = {`REGFILE_INDEX_WIDTH{1'b0}};
+      //Output mux
+      w_enB0_mux = w_enB0;
+      w_enB1_mux = w_enB0_waw2_int; //0 marks for the lower out of WAW2
+      w_enB2_mux = w_enB2; 
+      w_enB3_mux = w_enB3;
+    end
+    4'b0111 : begin
+      //Input mux
+      //WAW2 part
+      waw2_in_enB0 = {`VLENB{1'b0}};
+      waw2_in_addr0 = {`REGFILE_INDEX_WIDTH{1'b0}};
+      waw2_in_enB1 = {`VLENB{1'b0}};
+      waw2_in_addr1 = {`REGFILE_INDEX_WIDTH{1'b0}};
+      //WAW3 part
+      waw3_in_enB0 = w_enB0;
+      waw3_in_addr0 = w_addr0;
+      waw3_in_enB1 = w_enB1;
+      waw3_in_addr1 = w_addr1;
+      waw3_in_enB2 = w_enB2;
+      waw3_in_addr2 = w_addr2;
+      //WAW4 part
+      waw4_in_enB0 = {`VLENB{1'b0}};
+      waw4_in_addr0 = {`REGFILE_INDEX_WIDTH{1'b0}};
+      waw4_in_enB1 = {`VLENB{1'b0}};
+      waw4_in_addr1 = {`REGFILE_INDEX_WIDTH{1'b0}};
+      waw4_in_enB2 = {`VLENB{1'b0}};
+      waw4_in_addr2 = {`REGFILE_INDEX_WIDTH{1'b0}};
+      waw4_in_enB3 = {`VLENB{1'b0}};
+      waw4_in_addr3 = {`REGFILE_INDEX_WIDTH{1'b0}};
+      //Output mux
+      w_enB0_mux = w_enB0_waw3_int; //0 marks for the lowest out of WAW3
+      w_enB1_mux = w_enB1_waw3_int; //1 marks for the 2nd lowest out of WAW3 
+      w_enB2_mux = w_enB2;
+      w_enB3_mux = w_enB3;
+    end
+    4'b1001 : begin
+      //Input mux
+      //WAW2 part
+      waw2_in_enB0 = w_enB0;
+      waw2_in_addr0 = w_addr0;
+      waw2_in_enB1 = w_enB3;
+      waw2_in_addr1 = w_addr3;
+      //WAW3 part
+      waw3_in_enB0 = {`VLENB{1'b0}};
+      waw3_in_addr0 = {`REGFILE_INDEX_WIDTH{1'b0}};
+      waw3_in_enB1 = {`VLENB{1'b0}};
+      waw3_in_addr1 = {`REGFILE_INDEX_WIDTH{1'b0}};
+      waw3_in_enB2 = {`VLENB{1'b0}};
+      waw3_in_addr2 = {`REGFILE_INDEX_WIDTH{1'b0}};
+      //WAW4 part
+      waw4_in_enB0 = {`VLENB{1'b0}};
+      waw4_in_addr0 = {`REGFILE_INDEX_WIDTH{1'b0}};
+      waw4_in_enB1 = {`VLENB{1'b0}};
+      waw4_in_addr1 = {`REGFILE_INDEX_WIDTH{1'b0}};
+      waw4_in_enB2 = {`VLENB{1'b0}};
+      waw4_in_addr2 = {`REGFILE_INDEX_WIDTH{1'b0}};
+      waw4_in_enB3 = {`VLENB{1'b0}};
+      waw4_in_addr3 = {`REGFILE_INDEX_WIDTH{1'b0}};
+      //Output mux
+      w_enB0_mux = w_enB0_waw2_int; //0 marks for the lower out of WAW2
+      w_enB1_mux = w_enB1; 
+      w_enB2_mux = w_enB2; 
+      w_enB3_mux = w_enB3;
+    end
+    4'b1010 : begin
+      //Input mux
+      //WAW2 part
+      waw2_in_enB0 = w_enB1;
+      waw2_in_addr0 = w_addr1;
+      waw2_in_enB1 = w_enB3;
+      waw2_in_addr1 = w_addr3;
+      //WAW3 part
+      waw3_in_enB0 = {`VLENB{1'b0}};
+      waw3_in_addr0 = {`REGFILE_INDEX_WIDTH{1'b0}};
+      waw3_in_enB1 = {`VLENB{1'b0}};
+      waw3_in_addr1 = {`REGFILE_INDEX_WIDTH{1'b0}};
+      waw3_in_enB2 = {`VLENB{1'b0}};
+      waw3_in_addr2 = {`REGFILE_INDEX_WIDTH{1'b0}};
+      //WAW4 part
+      waw4_in_enB0 = {`VLENB{1'b0}};
+      waw4_in_addr0 = {`REGFILE_INDEX_WIDTH{1'b0}};
+      waw4_in_enB1 = {`VLENB{1'b0}};
+      waw4_in_addr1 = {`REGFILE_INDEX_WIDTH{1'b0}};
+      waw4_in_enB2 = {`VLENB{1'b0}};
+      waw4_in_addr2 = {`REGFILE_INDEX_WIDTH{1'b0}};
+      waw4_in_enB3 = {`VLENB{1'b0}};
+      waw4_in_addr3 = {`REGFILE_INDEX_WIDTH{1'b0}};
+      //Output mux
+      w_enB0_mux = w_enB0; 
+      w_enB1_mux = w_enB0_waw2_int; //0 marks for the lower out of WAW2
+      w_enB2_mux = w_enB2; 
+      w_enB3_mux = w_enB3;
+    end
+    4'b1011 : begin
+      //Input mux
+      //WAW2 part
+      waw2_in_enB0 = {`VLENB{1'b0}};
+      waw2_in_addr0 = {`REGFILE_INDEX_WIDTH{1'b0}};
+      waw2_in_enB1 = {`VLENB{1'b0}};
+      waw2_in_addr1 = {`REGFILE_INDEX_WIDTH{1'b0}};
+      //WAW3 part
+      waw3_in_enB0 = w_enB0;
+      waw3_in_addr0 = w_addr0;
+      waw3_in_enB1 = w_enB1;
+      waw3_in_addr1 = w_addr1;
+      waw3_in_enB2 = w_enB3;
+      waw3_in_addr2 = w_addr3;
+      //WAW4 part
+      waw4_in_enB0 = {`VLENB{1'b0}};
+      waw4_in_addr0 = {`REGFILE_INDEX_WIDTH{1'b0}};
+      waw4_in_enB1 = {`VLENB{1'b0}};
+      waw4_in_addr1 = {`REGFILE_INDEX_WIDTH{1'b0}};
+      waw4_in_enB2 = {`VLENB{1'b0}};
+      waw4_in_addr2 = {`REGFILE_INDEX_WIDTH{1'b0}};
+      waw4_in_enB3 = {`VLENB{1'b0}};
+      waw4_in_addr3 = {`REGFILE_INDEX_WIDTH{1'b0}};
+      //Output mux
+      w_enB0_mux = w_enB0_waw3_int; //0 marks for the lowest out of WAW3
+      w_enB1_mux = w_enB1_waw3_int; //1 marks for the 2nd lowest out of WAW3
+      w_enB2_mux = w_enB2; 
+      w_enB3_mux = w_enB3;
+    end
+    4'b1100 : begin
+      //Input mux
+      //WAW2 part
+      waw2_in_enB0 = w_enB2;
+      waw2_in_addr0 = w_addr2;
+      waw2_in_enB1 = w_enB3;
+      waw2_in_addr1 = w_addr3;
+      //WAW3 part
+      waw3_in_enB0 = {`VLENB{1'b0}};
+      waw3_in_addr0 = {`REGFILE_INDEX_WIDTH{1'b0}};
+      waw3_in_enB1 = {`VLENB{1'b0}};
+      waw3_in_addr1 = {`REGFILE_INDEX_WIDTH{1'b0}};
+      waw3_in_enB2 = {`VLENB{1'b0}};
+      waw3_in_addr2 = {`REGFILE_INDEX_WIDTH{1'b0}};
+      //WAW4 part
+      waw4_in_enB0 = {`VLENB{1'b0}};
+      waw4_in_addr0 = {`REGFILE_INDEX_WIDTH{1'b0}};
+      waw4_in_enB1 = {`VLENB{1'b0}};
+      waw4_in_addr1 = {`REGFILE_INDEX_WIDTH{1'b0}};
+      waw4_in_enB2 = {`VLENB{1'b0}};
+      waw4_in_addr2 = {`REGFILE_INDEX_WIDTH{1'b0}};
+      waw4_in_enB3 = {`VLENB{1'b0}};
+      waw4_in_addr3 = {`REGFILE_INDEX_WIDTH{1'b0}};
+      //Output mux
+      w_enB0_mux = w_enB0; 
+      w_enB1_mux = w_enB1; 
+      w_enB2_mux = w_enB0_waw2_int; //0 marks for the lower out of WAW2
+      w_enB3_mux = w_enB3;
+    end
+    4'b1101 : begin
+      //Input mux
+      //WAW2 part
+      waw2_in_enB0 = {`VLENB{1'b0}};
+      waw2_in_addr0 = {`REGFILE_INDEX_WIDTH{1'b0}};
+      waw2_in_enB1 = {`VLENB{1'b0}};
+      waw2_in_addr1 = {`REGFILE_INDEX_WIDTH{1'b0}};
+      //WAW3 part
+      waw3_in_enB0 = w_enB0;
+      waw3_in_addr0 = w_addr0;
+      waw3_in_enB1 = w_enB2;
+      waw3_in_addr1 = w_addr2;
+      waw3_in_enB2 = w_enB3;
+      waw3_in_addr2 = w_addr3;
+      //WAW4 part
+      waw4_in_enB0 = {`VLENB{1'b0}};
+      waw4_in_addr0 = {`REGFILE_INDEX_WIDTH{1'b0}};
+      waw4_in_enB1 = {`VLENB{1'b0}};
+      waw4_in_addr1 = {`REGFILE_INDEX_WIDTH{1'b0}};
+      waw4_in_enB2 = {`VLENB{1'b0}};
+      waw4_in_addr2 = {`REGFILE_INDEX_WIDTH{1'b0}};
+      waw4_in_enB3 = {`VLENB{1'b0}};
+      waw4_in_addr3 = {`REGFILE_INDEX_WIDTH{1'b0}};
+      //Output mux
+      w_enB0_mux = w_enB0_waw3_int; //0 marks for the lowest out of WAW3
+      w_enB1_mux = w_enB1; 
+      w_enB2_mux = w_enB1_waw3_int; //1 marks for the 2nd lowest out of WAW3
+      w_enB3_mux = w_enB3;
+    end
+    4'b1110 : begin
+      //Input mux
+      //WAW2 part
+      waw2_in_enB0 = {`VLENB{1'b0}};
+      waw2_in_addr0 = {`REGFILE_INDEX_WIDTH{1'b0}};
+      waw2_in_enB1 = {`VLENB{1'b0}};
+      waw2_in_addr1 = {`REGFILE_INDEX_WIDTH{1'b0}};
+      //WAW3 part
+      waw3_in_enB0 = w_enB1;
+      waw3_in_addr0 = w_addr1;
+      waw3_in_enB1 = w_enB2;
+      waw3_in_addr1 = w_addr2;
+      waw3_in_enB2 = w_enB3;
+      waw3_in_addr2 = w_addr3;
+      //WAW4 part
+      waw4_in_enB0 = {`VLENB{1'b0}};
+      waw4_in_addr0 = {`REGFILE_INDEX_WIDTH{1'b0}};
+      waw4_in_enB1 = {`VLENB{1'b0}};
+      waw4_in_addr1 = {`REGFILE_INDEX_WIDTH{1'b0}};
+      waw4_in_enB2 = {`VLENB{1'b0}};
+      waw4_in_addr2 = {`REGFILE_INDEX_WIDTH{1'b0}};
+      waw4_in_enB3 = {`VLENB{1'b0}};
+      waw4_in_addr3 = {`REGFILE_INDEX_WIDTH{1'b0}};
+      //Output mux
+      w_enB0_mux = w_enB0; 
+      w_enB1_mux = w_enB0_waw3_int; //0 marks for the lowest out of WAW3
+      w_enB2_mux = w_enB1_waw3_int; //1 marks for the 2nd lowest out of WAW3
+      w_enB3_mux = w_enB3;
+    end
+    4'b1111 : begin
+      //Input mux
+      //WAW2 part
+      waw2_in_enB0 = {`VLENB{1'b0}};
+      waw2_in_addr0 = {`REGFILE_INDEX_WIDTH{1'b0}};
+      waw2_in_enB1 = {`VLENB{1'b0}};
+      waw2_in_addr1 = {`REGFILE_INDEX_WIDTH{1'b0}};
+      //WAW3 part
+      waw3_in_enB0 = {`VLENB{1'b0}};
+      waw3_in_addr0 = {`REGFILE_INDEX_WIDTH{1'b0}};
+      waw3_in_enB1 = {`VLENB{1'b0}};
+      waw3_in_addr1 = {`REGFILE_INDEX_WIDTH{1'b0}};
+      waw3_in_enB2 = {`VLENB{1'b0}};
+      waw3_in_addr2 = {`REGFILE_INDEX_WIDTH{1'b0}};
+      //WAW4 part
+      waw4_in_enB0 = w_enB0;
+      waw4_in_addr0 = w_addr0;
+      waw4_in_enB1 = w_enB1;
+      waw4_in_addr1 = w_addr1;
+      waw4_in_enB2 = w_enB2;
+      waw4_in_addr2 = w_addr2;
+      waw4_in_enB3 = w_enB3;
+      waw4_in_addr3 = w_addr3;
+      //Output mux
+      w_enB0_mux = w_enB0_waw4_int;
+      w_enB1_mux = w_enB1_waw4_int;
+      w_enB2_mux = w_enB2_waw4_int;
+      w_enB3_mux = w_enB3;
+    end
+    default : begin
+      //Input mux
+      //WAW2 part
+      waw2_in_enB0 = {`VLENB{1'b0}};
+      waw2_in_addr0 = {`REGFILE_INDEX_WIDTH{1'b0}};
+      waw2_in_enB1 = {`VLENB{1'b0}};
+      waw2_in_addr1 = {`REGFILE_INDEX_WIDTH{1'b0}};
+      //WAW3 part
+      waw3_in_enB0 = {`VLENB{1'b0}};
+      waw3_in_addr0 = {`REGFILE_INDEX_WIDTH{1'b0}};
+      waw3_in_enB1 = {`VLENB{1'b0}};
+      waw3_in_addr1 = {`REGFILE_INDEX_WIDTH{1'b0}};
+      waw3_in_enB2 = {`VLENB{1'b0}};
+      waw3_in_addr2 = {`REGFILE_INDEX_WIDTH{1'b0}};
+      //WAW4 part
+      waw4_in_enB0 = {`VLENB{1'b0}};
+      waw4_in_addr0 = {`REGFILE_INDEX_WIDTH{1'b0}};
+      waw4_in_enB1 = {`VLENB{1'b0}};
+      waw4_in_addr1 = {`REGFILE_INDEX_WIDTH{1'b0}};
+      waw4_in_enB2 = {`VLENB{1'b0}};
+      waw4_in_addr2 = {`REGFILE_INDEX_WIDTH{1'b0}};
+      waw4_in_enB3 = {`VLENB{1'b0}};
+      waw4_in_addr3 = {`REGFILE_INDEX_WIDTH{1'b0}};
+      //Output mux
       w_enB0_mux = w_enB0;
       w_enB1_mux = w_enB1;
       w_enB2_mux = w_enB2;
