@@ -333,7 +333,7 @@ end//end always
 //4. Combine vrf group and WAW check
 always@(*) begin
   case (rob2rt_is_to_vrf)
-    4'b0000, 4'b0001, 4'b0010, 4'b0100, 4'b1000 : begin
+    4'b0000, 4'b0001, 4'b0010, 4'b0100, 4'b1000 : begin //only 1 uop is to vrf, not need WAW
       //Input mux
       //WAW2 part
       waw2_in_enB0 = {`VLENB{1'b0}};
@@ -362,7 +362,7 @@ always@(*) begin
       w_enB2_mux = w_enB2;
       w_enB3_mux = w_enB3;
     end
-    4'b0011 : begin
+    4'b0011 : begin //uop 0/1 are to vrf
       //Input mux
       //WAW2 part
       waw2_in_enB0 = w_enB0;
@@ -391,7 +391,7 @@ always@(*) begin
       w_enB2_mux = w_enB2; 
       w_enB3_mux = w_enB3;
     end
-    4'b0101 : begin
+    4'b0101 : begin //uop 0/2 are to vrf
       //Input mux
       //WAW2 part
       waw2_in_enB0 = w_enB0;
@@ -420,7 +420,7 @@ always@(*) begin
       w_enB2_mux = w_enB2; 
       w_enB3_mux = w_enB3;
     end
-    4'b0110 : begin
+    4'b0110 : begin //uop 1/2 are to vrf
       //Input mux
       //WAW2 part
       waw2_in_enB0 = w_enB1;
@@ -449,7 +449,7 @@ always@(*) begin
       w_enB2_mux = w_enB2; 
       w_enB3_mux = w_enB3;
     end
-    4'b0111 : begin
+    4'b0111 : begin //uop 0/1/2 are to vrf
       //Input mux
       //WAW2 part
       waw2_in_enB0 = {`VLENB{1'b0}};
@@ -478,7 +478,7 @@ always@(*) begin
       w_enB2_mux = w_enB2;
       w_enB3_mux = w_enB3;
     end
-    4'b1001 : begin
+    4'b1001 : begin //uop 0/3 are to vrf
       //Input mux
       //WAW2 part
       waw2_in_enB0 = w_enB0;
@@ -507,7 +507,7 @@ always@(*) begin
       w_enB2_mux = w_enB2; 
       w_enB3_mux = w_enB3;
     end
-    4'b1010 : begin
+    4'b1010 : begin //uop 1/3 are to vrf
       //Input mux
       //WAW2 part
       waw2_in_enB0 = w_enB1;
@@ -536,7 +536,7 @@ always@(*) begin
       w_enB2_mux = w_enB2; 
       w_enB3_mux = w_enB3;
     end
-    4'b1011 : begin
+    4'b1011 : begin //uop 0/1/3 are to vrf
       //Input mux
       //WAW2 part
       waw2_in_enB0 = {`VLENB{1'b0}};
@@ -565,7 +565,7 @@ always@(*) begin
       w_enB2_mux = w_enB2; 
       w_enB3_mux = w_enB3;
     end
-    4'b1100 : begin
+    4'b1100 : begin //uop 2/3 are to vrf
       //Input mux
       //WAW2 part
       waw2_in_enB0 = w_enB2;
@@ -594,7 +594,7 @@ always@(*) begin
       w_enB2_mux = w_enB0_waw2_int; //0 marks for the lower out of WAW2
       w_enB3_mux = w_enB3;
     end
-    4'b1101 : begin
+    4'b1101 : begin //uop 0/2/3 are to vrf
       //Input mux
       //WAW2 part
       waw2_in_enB0 = {`VLENB{1'b0}};
@@ -623,7 +623,7 @@ always@(*) begin
       w_enB2_mux = w_enB1_waw3_int; //1 marks for the 2nd lowest out of WAW3
       w_enB3_mux = w_enB3;
     end
-    4'b1110 : begin
+    4'b1110 : begin //uop 1/2/3 are to vrf
       //Input mux
       //WAW2 part
       waw2_in_enB0 = {`VLENB{1'b0}};
@@ -652,7 +652,7 @@ always@(*) begin
       w_enB2_mux = w_enB1_waw3_int; //1 marks for the 2nd lowest out of WAW3
       w_enB3_mux = w_enB3;
     end
-    4'b1111 : begin
+    4'b1111 : begin //uop 0/1/2/3 are to vrf
       //Input mux
       //WAW2 part
       waw2_in_enB0 = {`VLENB{1'b0}};
