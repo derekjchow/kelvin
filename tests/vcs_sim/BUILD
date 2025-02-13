@@ -33,8 +33,8 @@ vcs_systemc_binary(
         "//hdl/chisel/src/kelvin:core_mini_axi_cc_library_verilog",
     ],
     verilog_srcs = [
-        "//internal:syn/libs/tsmc12ffc/ts1n12ffcllsblvtd512x128m4swbsho_130b/VERILOG/ts1n12ffcllsblvtd512x128m4swbsho_130b.v",
-        "//internal:syn/libs/tsmc12ffc/ts1n12ffcllmblvtd2048x128m4swbsho_130d/VERILOG/ts1n12ffcllmblvtd2048x128m4swbsho_130d.v",
-        "//internal:syn/libs/tsmc12ffc/tcbn12ffcllbwp6t20p96cpdlvt.v",
+        "//internal/syn:libs/tsmc12ffc/ts1n12ffcllsblvtd512x128m4swbsho_130b/VERILOG/ts1n12ffcllsblvtd512x128m4swbsho_130b.v",
+        "//internal/syn:libs/tsmc12ffc/ts1n12ffcllmblvtd2048x128m4swbsho_130d/VERILOG/ts1n12ffcllmblvtd2048x128m4swbsho_130d.v",
+        "//internal/syn:libs/tsmc12ffc/tcbn12ffcllbwp6t20p96cpdlvt.v",
     ],
 )
