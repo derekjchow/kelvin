@@ -167,6 +167,7 @@ class DecodedInstruction extends Bundle {
   def isMul(): Bool = { mul || mulh || mulhsu || mulhu }
   def isDvu(): Bool = { div || divu || rem || remu }
   def isVector(): Bool = { vld || vst || viop || getvl || getmaxvl }
+  def isFency(): Bool = { fencei || ebreak || wfi || mpause || flushat || flushall }
 }
 
 class Decode(p: Parameters, pipeline: Int) extends Module {
@@ -182,6 +183,7 @@ class Decode(p: Parameters, pipeline: Int) extends Module {
       val spec = Output(UInt(32.W))
     }
     val mactive = Input(Bool())  // memory active
+    val lsuActive = Input(Bool()) // lsu active
 
     // Register file decode cycle interface.
     val rs1Read = Flipped(new RegfileReadAddrIO)
@@ -288,7 +290,7 @@ class Decode(p: Parameters, pipeline: Int) extends Module {
 
   // Fence interlock.
   // Input mactive used passthrough, prefer to avoid registers in Decode.
-  val fenceEn = !(d.fence && io.mactive)
+  val fenceEn = !(d.isFency() && (io.mactive || io.lsuActive))
 
   // ALU opcode.
   val alu = MuxCase(MakeValid(false.B, AluOp.ADD), Seq(

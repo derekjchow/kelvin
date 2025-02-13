@@ -78,12 +78,15 @@ class CoreMiniAxiInterface:
       await ClockCycles(self.dut.io_aclk, delay_bready)
     self.dut.io_axi_slave_write_resp_ready.value = 1
     timeout_cycles = 100
+    cyclesawaited = 0
     while self.dut.io_axi_slave_write_resp_valid.value != 1 and \
           timeout_cycles > 0:
        await ClockCycles(self.dut.io_aclk, 1)
+       cyclesawaited += 1
        timeout_cycles = timeout_cycles - 1
     assert timeout_cycles > 0
-    await ClockCycles(self.dut.io_aclk, 1)
+    if cyclesawaited == 0:
+      await ClockCycles(self.dut.io_aclk, 1)
     self.dut.io_axi_slave_write_resp_ready.value = 0
 
   async def _write_data_beat(self, data, mask, last):
@@ -531,14 +534,48 @@ async def core_mini_axi_master_write_alignment(dut):
         wdata = await core_mini_axi.receive_master_write()
         core_mini_axi.write_memory(wdata)
 
-    cocotb.start_soon(master_read_worker(core_mini_axi))
-    cocotb.start_soon(master_write_worker(core_mini_axi))
     workers = []
     workers.append(cocotb.start_soon(master_read_worker(core_mini_axi)))
     workers.append(cocotb.start_soon(master_write_worker(core_mini_axi)))
 
     await core_mini_axi.wait_for_halted(timeout_cycles=10000)
     assert core_mini_axi.dut.io_fault.value == 0
+
+    for w in workers:
+      w.cancel()
+      await w.join()
+    dut.io_axi_master_read_addr_ready.value = 0
+    dut.io_axi_master_write_addr_ready.value = 0
+    await ClockCycles(dut.io_aclk, 1)
+
+@cocotb.test()
+async def core_mini_axi_finish_txn_before_halt_test(dut):
+  core_mini_axi = CoreMiniAxiInterface(dut)
+  await core_mini_axi.reset()
+  cocotb.start_soon(core_mini_axi.clock.start())
+  await ClockCycles(dut.io_aclk, 10)
+
+  async def master_read_worker(core_mini_axi):
+    while core_mini_axi.dut.io_halted.value != 1:
+      raddr = await core_mini_axi.wait_for_master_axi_read()
+      size = (2 ** raddr["size"]) # AXI size is an exponent
+      data_flat = core_mini_axi.read_memory(raddr)
+      await core_mini_axi.respond_to_read(raddr["addr"], data_flat, raddr["id"], size, raddr["len"])
+
+  async def master_write_worker(core_mini_axi):
+    while core_mini_axi.dut.io_halted.value != 1:
+      wdata = await core_mini_axi.receive_master_write()
+      core_mini_axi.write_memory(wdata)
+
+  with open("../tests/cocotb/finish_txn_before_halt.elf", "rb") as f:
+    entry_point = await core_mini_axi.load_elf(f)
+    await core_mini_axi.execute_from(entry_point)
+
+    workers = []
+    workers.append(cocotb.start_soon(master_read_worker(core_mini_axi)))
+    workers.append(cocotb.start_soon(master_write_worker(core_mini_axi)))
+
+    await core_mini_axi.wait_for_halted()
 
     for w in workers:
       w.cancel()

@@ -98,6 +98,7 @@ class Lsu(p: Parameters) extends Module {
     val vldst = Output(Bool())
 
     val storeCount = Output(UInt(2.W))
+    val active = Output(Bool())
   })
 
   // AXI Queues.
@@ -106,6 +107,8 @@ class Lsu(p: Parameters) extends Module {
   val data = Slice(new LsuReadData(p), true, true)
 
   // Match and mask.
+  io.active :=
+    (ctrl.io.count =/= 0.U || data.io.count =/= 0.U)
   val ctrlready = (1 to p.instructionLanes).reverse.map(x => ctrl.io.count <= (n - x).U)
 
   for (i <- 0 until p.instructionLanes) {

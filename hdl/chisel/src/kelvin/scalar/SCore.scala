@@ -144,8 +144,10 @@ class SCore(p: Parameters) extends Module {
   }
 
   decode(0).io.mactive := (if (p.enableVector) { io.vcore.get.mactive } else { false.B })
+  decode(0).io.lsuActive := lsu.io.active
   for (i <- 1 until p.instructionLanes) {
     decode(i).io.mactive := false.B
+    decode(i).io.lsuActive := false.B
   }
 
   // ---------------------------------------------------------------------------
