@@ -47,7 +47,7 @@ module rvv_backend_alu
 //
   // ALU RS to ALU unit
   logic               [`NUM_ALU-1:0]    alu_uop_valid_rs2ex;    
-  logic                                 pop_valid;
+  logic               [`NUM_ALU-1:0]    pop_valid;
   logic               [`NUM_ALU-1:0]    result_valid_ex;
   
   // for-loop
@@ -77,8 +77,9 @@ module rvv_backend_alu
           .rst_n          (rst_n),
           .alu_uop_valid  (alu_uop_valid_rs2ex[i]),
           .alu_uop        (alu_uop_rs2ex[i]),
-          .result_ready   (pop_ex2rs[i]),
+          .result_ready   (result_ready_rob2alu[i]),
           // outputs
+          .pop_rs         (pop_valid[i]),
           .result_valid   (result_valid_ex[i]),
           .result         (result_ex2rob[i])
         );
@@ -86,14 +87,14 @@ module rvv_backend_alu
   endgenerate
 
   // generate pop signals
-  assign pop_valid = (alu_uop_valid_rs2ex==result_valid_ex)&(alu_uop_valid_rs2ex<=result_ready_rob2alu);
-
+  assign pop_ex2rs[0] = pop_valid[0]&result_ready_rob2alu[0];
+  
   generate
-    for (i=0;i<`NUM_ALU;i=i+1) begin: POP_ALU_RS
-      assign pop_ex2rs[i] = pop_valid&alu_uop_valid_rs2ex[i];
+    for (i=1;i<`NUM_ALU;i=i+1) begin: POP_ALU_RS
+      assign pop_ex2rs[i] = pop_valid[i]&result_ready_rob2alu[i]&(&pop_valid[i-1:0]);
     end
   endgenerate
 
-  assign result_valid_ex2rob = pop_ex2rs;
+  assign result_valid_ex2rob = result_valid_ex;
 
 endmodule

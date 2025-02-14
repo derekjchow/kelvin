@@ -1,0 +1,98 @@
+
+`include "rvv_backend.svh"
+`include "rvv_backend_sva.svh"
+
+module rvv_backend_alu_unit_execution_p1
+(
+  uop_valid,
+  uop,
+  result
+);
+//
+// interface signals
+//
+  input   logic           uop_valid;
+  input   PIPE_DATA_t     uop;
+  output  PU2ROB_t        result;
+
+  // internal signals
+  logic   [`XLEN-1:0]                               result_data_vcpop;
+  logic   [`VLEN-1:0][$clog2(`VLEN):0]              result_data_viota;
+  logic   [`VLENB-1:0][$clog2(`VLEN):0]             result_data_viota8;
+  logic   [`VLEN/`HWORD_WIDTH-1:0][$clog2(`VLEN):0] result_data_viota16;
+  logic   [`VLEN/`WORD_WIDTH-1:0][$clog2(`VLEN):0]  result_data_viota32;
+
+  genvar                  j;
+
+  // calculate viota and vcpop 
+  generate
+    if(`VLEN==128) begin
+      for(j=0;j<64;j++) begin: GET_VIOTA128
+        assign result_data_viota[j] = uop.data_viota_per64[0][j];
+        assign result_data_viota[j+64] = {1'b0,uop.data_viota_per64[1][j]} + {1'b0,uop.data_viota_per64[0][63]};
+      end
+    end
+  endgenerate
+  
+  generate
+    for(j=0; j<`VLENB;j++) begin: GET_VIOTA8
+      assign result_data_viota8[j] = result_data_viota[{uop.uop_index,j[$clog2(`VLENB)-1:0]}];
+    end
+
+    for(j=0; j<`VLEN/`HWORD_WIDTH;j++) begin: GET_VIOTA16
+      assign result_data_viota16[j] = result_data_viota[{uop.uop_index,j[$clog2(`VLEN/`HWORD_WIDTH)-1:0]}];
+    end
+
+    for(j=0; j<`VLEN/`WORD_WIDTH;j++) begin: GET_VIOTA32
+      assign result_data_viota32[j] = result_data_viota[{uop.uop_index,j[$clog2(`VLEN/`WORD_WIDTH)-1:0]}];
+    end
+  endgenerate
+  
+  // vcpop
+  assign result_data_vcpop = result_data_viota[`VLEN-1];
+
+//
+// submit result to ROB
+//
+`ifdef TB_SUPPORT
+  assign  result.uop_pc = uop.uop_pc;
+`endif
+  assign  result.rob_entry = uop.rob_entry;
+
+  // get result_uop
+  always_comb begin
+    // initial the data
+    result.w_data = uop.result_data; 
+ 
+    // calculate result data
+    case(uop.alu_sub_opcode)
+      OP_VCPOP: begin
+        result.w_data = result_data_vcpop;
+      end
+      OP_VIOTA: begin
+        case(uop.vd_eew)
+          EEW8: begin
+            for(int i=0; i<`VLENB;i++) begin
+              result.w_data[i*`BYTE_WIDTH +: `BYTE_WIDTH] = result_data_viota8[i];
+            end
+          end
+          EEW16: begin
+            for(int i=0; i<`VLEN/`HWORD_WIDTH;i++) begin
+              result.w_data[i*`HWORD_WIDTH +: `HWORD_WIDTH] = result_data_viota16[i];
+            end
+          end
+          EEW32: begin
+            for(int i=0; i<`VLEN/`WORD_WIDTH;i++) begin
+              result.w_data[i*`WORD_WIDTH +: `WORD_WIDTH] = result_data_viota32[i];
+            end
+          end
+        endcase
+      end
+    endcase
+  end
+
+  assign  result.w_valid = uop_valid;
+
+  assign  result.vsaturate = 'b0;
+
+endmodule

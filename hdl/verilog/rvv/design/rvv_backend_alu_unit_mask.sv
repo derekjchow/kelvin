@@ -4,29 +4,21 @@
 
 module rvv_backend_alu_unit_mask
 (
-  clk,
-  rst_n,
   alu_uop_valid,
   alu_uop,
-  result_ready,
   result_valid,
   result
 );
 //
 // interface signals
 //
-  // global signal
-  input   logic           clk;
-  input   logic           rst_n;
-
   // ALU RS handshake signals
   input   logic           alu_uop_valid;
   input   ALU_RS_t        alu_uop;
-  input   logic           result_ready;
 
   // ALU send result signals to ROB
   output  logic           result_valid;
-  output  PU2ROB_t        result;
+  output  PIPE_DATA_t     result;
 
 //
 // internal signals
@@ -57,6 +49,8 @@ module rvv_backend_alu_unit_mask
   logic   [`VLEN-1:0]                 src2_data_viota;
   logic   [`VLEN-1:0]                 src1_data;
   logic   [`VLEN-1:0]                 tail_mask;
+  logic                               result_valid;
+  ALU_SUB_OPCODE_e                    alu_sub_opcode; 
   logic   [`VLEN-1:0]                 result_data;
   logic   [`VLEN-1:0]                 result_data_andn;
   logic   [`VLEN-1:0]                 result_data_and; 
@@ -66,19 +60,13 @@ module rvv_backend_alu_unit_mask
   logic   [`VLEN-1:0]                 result_data_nand;
   logic   [`VLEN-1:0]                 result_data_nor; 
   logic   [`VLEN-1:0]                 result_data_xnor;
-  logic   [`VLEN-1:0]                 result_first1;      // find first 1 from LSB
+  logic   [`VLEN-1:0]                 result_first1;      // find the index of first 1 from LSB to MSB
   logic   [`VLEN-1:0]                 result_data_vmsof;
   logic   [`VLEN-1:0]                 result_vmsif;
   logic   [`VLEN-1:0]                 result_data_vmsif;
   logic   [`VLEN-1:0]                 result_data_vmsbf;
   logic   [`VLEN-1:0]                 result_data_vfirst;
-  logic   [`XLEN-1:0]                 result_data_vcpop;
-  PKG_VIOTA_t                         pkg_viota;
-  PKG_VIOTA_t                         pkg_viota_d1;
-  logic   [`VLEN-1:0][$clog2(`VLEN):0]               result_data_viota;
-  logic   [`VLENB-1:0][$clog2(`VLEN):0]              result_data_viota8;
-  logic   [`VLEN/`HWORD_WIDTH-1:0][$clog2(`VLEN):0]  result_data_viota16;
-  logic   [`VLEN/`WORD_WIDTH-1:0][$clog2(`VLEN):0]   result_data_viota32;
+  logic   [`VLEN/64-1:0][63:0][$clog2(64):0]  data_viota_per64;
   logic   [`VLEN-1:0]                 result_data_vid8;
   logic   [`VLEN-1:0]                 result_data_vid16;
   logic   [`VLEN-1:0]                 result_data_vid32;
@@ -124,8 +112,8 @@ module rvv_backend_alu_unit_mask
   // prepare valid signal
   always_comb begin
     // initial the data
-    result_valid                 = 'b0;
-    pkg_viota.result_valid_viota = 'b0;
+    result_valid = 'b0;
+    alu_sub_opcode = OP_NONE;
 
     // prepare source data
     case({alu_uop_valid,uop_funct3})
@@ -136,6 +124,7 @@ module rvv_backend_alu_unit_mask
           VXOR: begin
             if(vs1_data_valid&vs2_data_valid) begin
               result_valid = 1'b1;
+              alu_sub_opcode = OP_OTHER;
             end 
 
             `ifdef ASSERT_ON
@@ -153,6 +142,7 @@ module rvv_backend_alu_unit_mask
           VXOR: begin
             if(rs1_data_valid&vs2_data_valid) begin
               result_valid = 1'b1;
+              alu_sub_opcode = OP_OTHER;
             end 
 
             `ifdef ASSERT_ON
@@ -174,6 +164,7 @@ module rvv_backend_alu_unit_mask
           VMXNOR: begin
             if(vs1_data_valid&vs2_data_valid&vm&vd_data_valid) begin
               result_valid = 1'b1;
+              alu_sub_opcode = OP_OTHER;
             end 
 
             `ifdef ASSERT_ON
@@ -185,18 +176,19 @@ module rvv_backend_alu_unit_mask
             case(vs1_opcode)
               VCPOP: begin
                 if((vs1_data_valid==1'b0)&vs2_data_valid&((vm==1'b1)||((vm==1'b0)&v0_data_valid))) begin
-                  pkg_viota.result_valid_viota = 1'b1;
+                  result_valid = 1'b1;
+                  alu_sub_opcode = OP_VCPOP;
                 end
-                result_valid = pkg_viota_d1.result_valid_viota;
 
                 `ifdef ASSERT_ON
-                  assert #0 (pkg_viota.result_valid_viota ==1'b1)
-                  else $error("result_valid_viota(%d) should be 1.\n",pkg_viota.result_valid_viota);
+                  assert #0 (result_valid ==1'b1)
+                  else $error("result_valid(%d) should be 1.\n",result_valid);
                 `endif
               end
               VFIRST: begin
                 if((vs1_data_valid==1'b0)&vs2_data_valid&((vm==1'b1)||((vm==1'b0)&v0_data_valid))) begin
                   result_valid = 1'b1;
+                  alu_sub_opcode = OP_OTHER;
                 end 
 
                 `ifdef ASSERT_ON
@@ -213,6 +205,7 @@ module rvv_backend_alu_unit_mask
               VMSIF: begin
                 if((vs1_data_valid==1'b0)&vs2_data_valid&((vm==1'b1)||((vm==1'b0)&vd_data_valid&v0_data_valid))) begin
                   result_valid = 1'b1;
+                  alu_sub_opcode = OP_OTHER;
                 end 
 
                 `ifdef ASSERT_ON
@@ -222,17 +215,18 @@ module rvv_backend_alu_unit_mask
               end
               VIOTA: begin
                 if((vs1_data_valid==1'b0)&vs2_data_valid&((vm==1'b1)||((vm==1'b0)&v0_data_valid))) begin
-                  pkg_viota.result_valid_viota = 1'b1;
+                  result_valid = 1'b1;
+                  alu_sub_opcode = OP_VIOTA;
                 end 
-                result_valid = pkg_viota_d1.result_valid_viota;
 
                 `ifdef ASSERT_ON
-                  assert #0 (pkg_viota.result_valid_viota ==1'b1)
-                  else $error("result_valid_viota(%d) should be 1.\n",pkg_viota.result_valid_viota);
+                  assert #0 (result_valid ==1'b1)
+                  else $error("result_valid(%d) should be 1.\n",result_valid);
                 `endif
               end
               VID: begin
                 result_valid = 1'b1;
+                alu_sub_opcode = OP_OTHER;
               end
             endcase
           end
@@ -324,9 +318,9 @@ module rvv_backend_alu_unit_mask
               end
               VIOTA: begin
                 if (vm==1'b1)
-                  src2_data_viota = {vs2_data,1'b0};
+                  src2_data_viota = {vs2_data[`VLEN-2:0],1'b0};
                 else
-                  src2_data_viota = {vs2_data&v0_data,1'b0}; 
+                  src2_data_viota = {vs2_data[`VLEN-2:0]&v0_data[`VLEN-2:0],1'b0}; 
               end
               // no source operand for VID
             endcase
@@ -367,58 +361,17 @@ module rvv_backend_alu_unit_mask
     end
   end
 
-  // viota 
+  // viota and vcpop, still need process in next pipeline
   generate
     for(j=0; j<`VLEN/64;j++) begin: GET_VIOTA_PER64
       rvv_backend_alu_unit_mask_viota64
       u_viota64
       (
         .source         (src2_data_viota[64*j +: 64]),
-        .result_viota64 (pkg_viota.result_data_viota_per64[j])
+        .result_viota64 (data_viota_per64[j])
       );
     end
   endgenerate
-    
-  // pipeline for viota 
-  cdffr 
-  #(
-    .WIDTH     ($bits(PKG_VIOTA_t))
-  )
-  pkg_viota_cdffr
-  ( 
-    .clk       (clk), 
-    .rst_n     (rst_n), 
-    .c         (pkg_viota_d1.result_valid_viota&result_ready), 
-    .e         (pkg_viota.result_valid_viota), 
-    .d         (pkg_viota),
-    .q         (pkg_viota_d1)
-  ); 
-
-  generate
-    if(`VLEN==128) begin
-      for(j=0;j<64;j++) begin: GET_VIOTA128
-        assign result_data_viota[j] = pkg_viota_d1.result_data_viota_per64[0][j];
-        assign result_data_viota[j+64] = {1'b0,pkg_viota_d1.result_data_viota_per64[1][j]} + {1'b0,pkg_viota_d1.result_data_viota_per64[0][63]};
-      end
-    end
-  endgenerate
-  
-  generate
-    for(j=0; j<`VLENB;j++) begin: GET_VIOTA8
-      assign result_data_viota8[j] = result_data_viota[{uop_index,j[$clog2(`VLENB)-1:0]}];
-    end
-
-    for(j=0; j<`VLEN/`HWORD_WIDTH;j++) begin: GET_VIOTA16
-      assign result_data_viota16[j] = result_data_viota[{uop_index,j[$clog2(`VLEN/`HWORD_WIDTH)-1:0]}];
-    end
-
-    for(j=0; j<`VLEN/`WORD_WIDTH;j++) begin: GET_VIOTA32
-      assign result_data_viota32[j] = result_data_viota[{uop_index,j[$clog2(`VLEN/`WORD_WIDTH)-1:0]}];
-    end
-  endgenerate
-  
-  // vcpop
-  assign result_data_vcpop = result_data_viota[`VLEN-1];
 
   // vid
   generate
@@ -439,10 +392,10 @@ module rvv_backend_alu_unit_mask
     end
   endgenerate
 
-  // get results
+  // get result_data
   always_comb begin
     // initial the data
-    result_data   = 'b0; 
+    result_data = 'b0; 
  
     // calculate result data
     case(uop_funct3)
@@ -489,9 +442,6 @@ module rvv_backend_alu_unit_mask
           end
           VWXUNARY0: begin
             case(vs1_opcode)
-              VCPOP: begin
-                result_data = result_data_vcpop;
-              end
               VFIRST: begin
                 result_data = result_data_vfirst;
               end
@@ -507,25 +457,6 @@ module rvv_backend_alu_unit_mask
               end
               VMSIF: begin
                 result_data = result_data_vmsif;
-              end
-              VIOTA: begin
-                case(vd_eew)
-                  EEW8: begin
-                    for(int i=0; i<`VLENB;i++) begin
-                      result_data[i*`BYTE_WIDTH +: `BYTE_WIDTH] = result_data_viota8[i];
-                    end
-                  end
-                  EEW16: begin
-                    for(int i=0; i<`VLEN/`HWORD_WIDTH;i++) begin
-                      result_data[i*`HWORD_WIDTH +: `HWORD_WIDTH] = result_data_viota16[i];
-                    end
-                  end
-                  EEW32: begin
-                    for(int i=0; i<`VLEN/`WORD_WIDTH;i++) begin
-                      result_data[i*`WORD_WIDTH +: `WORD_WIDTH] = result_data_viota32[i];
-                    end
-                  end
-                endcase
               end
               VID: begin
                 case(vd_eew)
@@ -555,12 +486,18 @@ module rvv_backend_alu_unit_mask
 `endif
   assign  result.rob_entry = rob_entry;
 
+  assign  result.vd_eew = vd_eew;
+
+  assign  result.uop_index = uop_index;
+
+  assign  result.alu_sub_opcode = alu_sub_opcode;
+
   // result data
   generate 
     for (j=0;j<`VLEN;j++) begin: GET_W_DATA
       always_comb begin
         // initial
-        result.w_data[j] = 'b0;
+        result.result_data[j] = 'b0;
 
         case(uop_funct3)
           OPIVV,
@@ -570,7 +507,7 @@ module rvv_backend_alu_unit_mask
               VAND,
               VOR,
               VXOR: begin
-                result.w_data[j] = result_data[j];
+                result.result_data[j] = result_data[j];
               end
             endcase
           end
@@ -585,17 +522,14 @@ module rvv_backend_alu_unit_mask
               VMNOR,
               VMXNOR: begin
                 if (j<vstart)
-                  result.w_data[j] = vd_data[j];
+                  result.result_data[j] = vd_data[j];
                 else
-                  result.w_data[j] = result_data[j];
+                  result.result_data[j] = result_data[j];
               end
               VWXUNARY0: begin
                 case(vs1_opcode)
-                  VCPOP: begin
-                    result.w_data[j] = result_data[j];
-                  end
                   VFIRST: begin
-                    result.w_data[j] = result_data[j];
+                    result.result_data[j] = result_data[j];
                   end
                 endcase
               end
@@ -605,13 +539,12 @@ module rvv_backend_alu_unit_mask
                   VMSOF,
                   VMSIF: begin
                     if (vm==1'b1)
-                      result.w_data[j] = result_data[j];
+                      result.result_data[j] = result_data[j];
                     else 
-                      result.w_data[j] = v0_data[j] ? result_data[j] : vd_data[j]; 
+                      result.result_data[j] = v0_data[j] ? result_data[j] : vd_data[j]; 
                   end
-                  VIOTA,
                   VID: begin
-                    result.w_data[j] = result_data[j];
+                    result.result_data[j] = result_data[j];
                   end
                 endcase
               end
@@ -622,11 +555,16 @@ module rvv_backend_alu_unit_mask
     end
   endgenerate
 
-  // result valid signal
-  assign result.w_valid = result_valid;
+  always_comb begin
+    for(int i=0;i<`VLEN/64;i++) begin
+      for(int k=0;k<64;k++) begin
+        result.data_viota_per64[i][k][$clog2(64):0] = data_viota_per64[i][k][$clog2(64):0];
+      end
+    end
+  end
   
   // saturate signal
-  assign result.vsaturate = 'b0;
+  assign  result.vsaturate = 'b0;
 
 //
 // function unit

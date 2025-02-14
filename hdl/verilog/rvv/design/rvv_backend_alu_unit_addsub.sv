@@ -1623,28 +1623,6 @@ module rvv_backend_alu_unit_addsub
   // result data 
   assign result.w_data = result_data;
 
-  //for (j=0;j<`VLEN;j++) begin: GET_W_DATA
-  //  always_comb begin
-  //    w_data[j] = result_data[j];
-
-  //    case(uop_funct3) 
-  //      OPIVV,
-  //      OPIVX,
-  //      OPIVI: begin
-  //        case(uop_funct6.ari_funct6)
-  //          VMADC,
-  //          VMSBC: begin
-  //            if ((j>=vstart)&(j<vl))
-  //              w_data[j] = (result_data_sp[j]&mask_sp_bit2[j]); 
-  //            else
-  //              w_data[j] = vd_data[j];
-  //          end
-  //        endcase
-  //      end
-  //    endcase
-  //  end
-  //end
-
   // result type and valid signal
   assign result.w_valid = result_valid;
 
