@@ -138,6 +138,7 @@ logic [`VLENB-1:0]               w_enB0_waw4_int;
 logic [`VLENB-1:0]               w_enB1_waw4_int;
 logic [`VLENB-1:0]               w_enB2_waw4_int;
 
+logic [`VLENB-1:0]               w_enB1_waw3_int_tmp;
 logic [`VLENB-1:0]               w_enB1_waw4_int_tmp;
 logic [`VLENB-1:0]               w_enB2_waw4_int_tmp;
 
@@ -246,8 +247,9 @@ always@(*) begin
   for(int i=0; i<`VLENB; i=i+1) begin
     if (waw3_in_addr1 == waw3_in_addr2) begin //check waw12 first
       w_enB1_waw3_int[i] = waw3_in_enB1[i] && !waw3_in_enB2[i];
+      w_enB1_waw3_int_tmp[i] = waw3_in_enB1[i] || waw3_in_enB2[i]; //tmp perform OR to cover 12
       if (waw3_in_addr0 == waw3_in_addr1) begin //waw012 all happens
-        w_enB0_waw3_int[i] = waw3_in_enB0[i] && !w_enB1_waw3_int[i];
+        w_enB0_waw3_int[i] = waw3_in_enB0[i] && !w_enB1_waw3_int_tmp[i];
       end
       else begin //only waw12
         w_enB0_waw3_int[i] = waw3_in_enB0[i];
