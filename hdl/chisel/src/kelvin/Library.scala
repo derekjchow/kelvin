@@ -368,3 +368,17 @@ object LiftAddr {
     (x: WithAddr[X]) => WithAddr.create(x.addr, f(x.bits))
   }
 }
+
+/** Inhibit the propagation of valid/ready signals while enable is low.
+  * @param iface The DecoupledIO interface to gate.
+  * @param enable The signal to use to control the gate.
+  */
+object GateDecoupled {
+  def apply[T <: Bundle](iface: DecoupledIO[T], enable: Bool): DecoupledIO[T] = {
+    val out = Wire(chiselTypeOf(iface))
+    iface.bits <> out.bits
+    iface.ready := out.ready && (enable)
+    out.valid := iface.valid && (enable)
+    out
+  }
+}

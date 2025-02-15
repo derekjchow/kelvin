@@ -158,9 +158,15 @@ class CoreAxi(p: Parameters, coreModuleName: String) extends RawModule {
 
     // Create AXI Slave interface and connect internal fabric to AXI
     val axiSlave = Module(new AxiSlave(p))
+    val axiSlaveEnable = RegInit(false.B)
+    axiSlaveEnable := true.B
     axiSlave.io.fabric <> fabricMux.io.source
     axiSlave.io.periBusy := fabricMux.io.fabricBusy
-    axiSlave.io.axi <> io.axi_slave
+    axiSlave.io.axi.write.addr <> GateDecoupled(io.axi_slave.write.addr, axiSlaveEnable)
+    axiSlave.io.axi.write.data <> GateDecoupled(io.axi_slave.write.data, axiSlaveEnable)
+    io.axi_slave.write.resp <> GateDecoupled(axiSlave.io.axi.write.resp, axiSlaveEnable)
+    axiSlave.io.axi.read.addr <> GateDecoupled(io.axi_slave.read.addr, axiSlaveEnable)
+    io.axi_slave.read.data <> GateDecoupled(axiSlave.io.axi.read.data, axiSlaveEnable)
 
     // Connect ebus to AXI Master
     val ebus2axi = DBus2Axi(p)
