@@ -46,6 +46,7 @@ module rvv_backend_alu_unit
   PU2ROB_t                result_shift_p0;
   logic                   result_valid_mask_p0;
   PIPE_DATA_t             result_mask_p0;
+  logic                   result_mask_2cycle;
   logic                   result_valid_other_p0;
   PU2ROB_t                result_other_p0;
   PU2ROB_t                result_p1;
@@ -53,8 +54,8 @@ module rvv_backend_alu_unit
   logic                   result_valid_p1_en;
   logic                   result_valid_p1_in;
   logic                   result_valid_p1;
-  logic                   uop_p1_en;
-  PIPE_DATA_t             uop_p1;
+  logic                   alu_uop_p1_en;
+  PIPE_DATA_t             alu_uop_p1;
 
 //
 // instance
@@ -80,7 +81,8 @@ module rvv_backend_alu_unit
     .alu_uop_valid        (alu_uop_valid),
     .alu_uop              (alu_uop),
     .result_valid         (result_valid_mask_p0),
-    .result               (result_mask_p0)
+    .result               (result_mask_p0),
+    .result_2cycle        (result_mask_2cycle)
   );
 
   rvv_backend_alu_unit_other u_alu_other
@@ -96,7 +98,7 @@ module rvv_backend_alu_unit
   always_comb begin
     case({result_valid_p1,(result_valid_addsub_p0|result_valid_shift_p0|result_valid_mask_p0|result_valid_other_p0)})
       2'b01: begin
-        result_valid_p1_en = (result_mask_p0.alu_sub_opcode==OP_VIOTA)|(result_mask_p0.alu_sub_opcode==OP_VCPOP);
+        result_valid_p1_en = result_mask_2cycle;
         result_valid_p1_in = 1'b1;
       end
       2'b10: begin
@@ -127,17 +129,17 @@ module rvv_backend_alu_unit
     .q         (result_valid_p1)
   ); 
   
-  // uop_p1
+  // alu_uop_p1
   always_comb begin
     case({result_valid_p1,(result_valid_addsub_p0|result_valid_shift_p0|result_valid_mask_p0|result_valid_other_p0)})
       2'b01: begin
-        uop_p1_en = (result_mask_p0.alu_sub_opcode==OP_VIOTA)|(result_mask_p0.alu_sub_opcode==OP_VCPOP);
+        alu_uop_p1_en = result_mask_2cycle;
       end
       2'b11: begin
-        uop_p1_en = result_ready;        
+        alu_uop_p1_en = result_ready;        
       end
       default: begin
-        uop_p1_en = 1'b0;
+        alu_uop_p1_en = 1'b0;
       end
     endcase
   end
@@ -145,63 +147,63 @@ module rvv_backend_alu_unit
   always_ff @(posedge clk, negedge rst_n) begin
     if(!rst_n) begin
 `ifdef TB_SUPPORT 
-      uop_p1.uop_pc         <= 'b0;
+      alu_uop_p1.uop_pc         <= 'b0;
 `endif
-      uop_p1.rob_entry      <= 'b0;
-      uop_p1.vd_eew         <= EEW_NONE;
-      uop_p1.uop_index      <= 'b0;
-      uop_p1.alu_sub_opcode <= OP_NONE;
-      uop_p1.result_data    <= 'b0;
+      alu_uop_p1.rob_entry      <= 'b0;
+      alu_uop_p1.vd_eew         <= EEW_NONE;
+      alu_uop_p1.uop_index      <= 'b0;
+      alu_uop_p1.alu_sub_opcode <= OP_NONE;
+      alu_uop_p1.result_data    <= 'b0;
       for(int i=0;i<`VLEN/64;i++) begin
         for(int k=0;k<64;k++) begin
-          uop_p1.data_viota_per64[i][k][$clog2(64):0] <= 'b0;
+          alu_uop_p1.data_viota_per64[i][k][$clog2(64):0] <= 'b0;
         end
       end
-      uop_p1.vsaturate      <= 'b0;
+      alu_uop_p1.vsaturate      <= 'b0;
     end
-    else if(uop_p1_en) begin
+    else if(alu_uop_p1_en) begin
 `ifdef TB_SUPPORT 
-      uop_p1.uop_pc         <= 'b0;
+      alu_uop_p1.uop_pc         <= 'b0;
 `endif
-      uop_p1.rob_entry      <= 'b0;
-      uop_p1.vd_eew         <= EEW_NONE;
-      uop_p1.uop_index      <= 'b0;
-      uop_p1.alu_sub_opcode <= OP_OTHER;
-      uop_p1.result_data    <= 'b0;
+      alu_uop_p1.rob_entry      <= 'b0;
+      alu_uop_p1.vd_eew         <= EEW_NONE;
+      alu_uop_p1.uop_index      <= 'b0;
+      alu_uop_p1.alu_sub_opcode <= OP_OTHER;
+      alu_uop_p1.result_data    <= 'b0;
       for(int i=0;i<`VLEN/64;i++) begin
         for(int k=0;k<64;k++) begin
-          uop_p1.data_viota_per64[i][k][$clog2(64):0] <= 'b0;
+          alu_uop_p1.data_viota_per64[i][k][$clog2(64):0] <= 'b0;
         end
       end
-      uop_p1.vsaturate      <= 'b0;
+      alu_uop_p1.vsaturate      <= 'b0;
 
       case(1'b1)
         result_valid_addsub_p0: begin
 `ifdef TB_SUPPORT 
-          uop_p1.uop_pc       <= result_addsub_p0.uop_pc;
+          alu_uop_p1.uop_pc       <= result_addsub_p0.uop_pc;
 `endif
-          uop_p1.rob_entry    <= result_addsub_p0.rob_entry;
-          uop_p1.result_data  <= result_addsub_p0.w_data;
-          uop_p1.vsaturate    <= result_addsub_p0.vsaturate;
+          alu_uop_p1.rob_entry    <= result_addsub_p0.rob_entry;
+          alu_uop_p1.result_data  <= result_addsub_p0.w_data;
+          alu_uop_p1.vsaturate    <= result_addsub_p0.vsaturate;
         end
         result_valid_shift_p0: begin
 `ifdef TB_SUPPORT 
-          uop_p1.uop_pc       <= result_shift_p0.uop_pc;
+          alu_uop_p1.uop_pc       <= result_shift_p0.uop_pc;
 `endif
-          uop_p1.rob_entry    <= result_shift_p0.rob_entry;
-          uop_p1.result_data  <= result_shift_p0.w_data;
-          uop_p1.vsaturate    <= result_shift_p0.vsaturate;
+          alu_uop_p1.rob_entry    <= result_shift_p0.rob_entry;
+          alu_uop_p1.result_data  <= result_shift_p0.w_data;
+          alu_uop_p1.vsaturate    <= result_shift_p0.vsaturate;
         end
         result_valid_other_p0: begin
 `ifdef TB_SUPPORT 
-          uop_p1.uop_pc       <= result_other_p0.uop_pc;
+          alu_uop_p1.uop_pc       <= result_other_p0.uop_pc;
 `endif
-          uop_p1.rob_entry    <= result_other_p0.rob_entry;
-          uop_p1.result_data  <= result_other_p0.w_data;
-          uop_p1.vsaturate    <= result_other_p0.vsaturate;
+          alu_uop_p1.rob_entry    <= result_other_p0.rob_entry;
+          alu_uop_p1.result_data  <= result_other_p0.w_data;
+          alu_uop_p1.vsaturate    <= result_other_p0.vsaturate;
         end
         result_valid_mask_p0: begin
-          uop_p1              <= result_mask_p0;
+          alu_uop_p1              <= result_mask_p0;
         end
       endcase
     end
@@ -209,8 +211,8 @@ module rvv_backend_alu_unit
 
   rvv_backend_alu_unit_execution_p1 u_alu_p1
   ( 
-    .uop_valid            (result_valid_p1),
-    .uop                  (uop_p1),
+    .alu_uop_valid        (result_valid_p1),
+    .alu_uop              (alu_uop_p1),
     .result               (result_p1)
   );
 
@@ -241,7 +243,7 @@ module rvv_backend_alu_unit
             pop_rs       = 1'b1;
           end
           result_valid_mask_p0: begin
-            result_valid      = result_mask_p0.alu_sub_opcode==OP_OTHER;
+            result_valid      = !result_mask_2cycle;
 `ifdef TB_SUPPORT
             result.uop_pc     = result_mask_p0.uop_pc;
 `endif

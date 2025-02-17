@@ -4,15 +4,15 @@
 
 module rvv_backend_alu_unit_execution_p1
 (
-  uop_valid,
-  uop,
+  alu_uop_valid,
+  alu_uop,
   result
 );
 //
 // interface signals
 //
-  input   logic           uop_valid;
-  input   PIPE_DATA_t     uop;
+  input   logic           alu_uop_valid;
+  input   PIPE_DATA_t     alu_uop;
   output  PU2ROB_t        result;
 
   // internal signals
@@ -28,23 +28,23 @@ module rvv_backend_alu_unit_execution_p1
   generate
     if(`VLEN==128) begin
       for(j=0;j<64;j++) begin: GET_VIOTA128
-        assign result_data_viota[j] = uop.data_viota_per64[0][j];
-        assign result_data_viota[j+64] = {1'b0,uop.data_viota_per64[1][j]} + {1'b0,uop.data_viota_per64[0][63]};
+        assign result_data_viota[j] = alu_uop.data_viota_per64[0][j];
+        assign result_data_viota[j+64] = {1'b0,alu_uop.data_viota_per64[1][j]} + {1'b0,alu_uop.data_viota_per64[0][63]};
       end
     end
   endgenerate
   
   generate
     for(j=0; j<`VLENB;j++) begin: GET_VIOTA8
-      assign result_data_viota8[j] = result_data_viota[{uop.uop_index,j[$clog2(`VLENB)-1:0]}];
+      assign result_data_viota8[j] = result_data_viota[{alu_uop.uop_index,j[$clog2(`VLENB)-1:0]}];
     end
 
     for(j=0; j<`VLEN/`HWORD_WIDTH;j++) begin: GET_VIOTA16
-      assign result_data_viota16[j] = result_data_viota[{uop.uop_index,j[$clog2(`VLEN/`HWORD_WIDTH)-1:0]}];
+      assign result_data_viota16[j] = result_data_viota[{alu_uop.uop_index,j[$clog2(`VLEN/`HWORD_WIDTH)-1:0]}];
     end
 
     for(j=0; j<`VLEN/`WORD_WIDTH;j++) begin: GET_VIOTA32
-      assign result_data_viota32[j] = result_data_viota[{uop.uop_index,j[$clog2(`VLEN/`WORD_WIDTH)-1:0]}];
+      assign result_data_viota32[j] = result_data_viota[{alu_uop.uop_index,j[$clog2(`VLEN/`WORD_WIDTH)-1:0]}];
     end
   endgenerate
   
@@ -55,22 +55,22 @@ module rvv_backend_alu_unit_execution_p1
 // submit result to ROB
 //
 `ifdef TB_SUPPORT
-  assign  result.uop_pc = uop.uop_pc;
+  assign  result.uop_pc = alu_uop.uop_pc;
 `endif
-  assign  result.rob_entry = uop.rob_entry;
+  assign  result.rob_entry = alu_uop.rob_entry;
 
   // get result_uop
   always_comb begin
     // initial the data
-    result.w_data = uop.result_data; 
+    result.w_data = alu_uop.result_data; 
  
     // calculate result data
-    case(uop.alu_sub_opcode)
+    case(alu_uop.alu_sub_opcode)
       OP_VCPOP: begin
         result.w_data = result_data_vcpop;
       end
       OP_VIOTA: begin
-        case(uop.vd_eew)
+        case(alu_uop.vd_eew)
           EEW8: begin
             for(int i=0; i<`VLENB;i++) begin
               result.w_data[i*`BYTE_WIDTH +: `BYTE_WIDTH] = result_data_viota8[i];
@@ -91,7 +91,7 @@ module rvv_backend_alu_unit_execution_p1
     endcase
   end
 
-  assign  result.w_valid = uop_valid;
+  assign  result.w_valid = alu_uop_valid;
 
   assign  result.vsaturate = 'b0;
 

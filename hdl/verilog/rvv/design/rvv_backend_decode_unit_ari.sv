@@ -2483,51 +2483,49 @@ module rvv_backend_decode_unit_ari
   // vd cannot overlap vs2
   // check_vd_overlap_vs2=1 means that check pass (vd group does NOT overlap vs2 group fully)
   always_comb begin
-    check_vd_overlap_vs2 = 'b0;
-    
-    case(emul_max)
-      EMUL1: begin
-        if(inst_vd!=inst_vs2)
-          check_vd_overlap_vs2 = 1'b1;
-      end
-      EMUL2: begin
-        if(!((inst_vd[`REGFILE_INDEX_WIDTH-1:1]==inst_vs2[`REGFILE_INDEX_WIDTH-1:1])))
-          check_vd_overlap_vs2 = 1'b1;
-      end
-      EMUL4: begin
-        if(!((inst_vd[`REGFILE_INDEX_WIDTH-1:2]==inst_vs2[`REGFILE_INDEX_WIDTH-1:2])))
-          check_vd_overlap_vs2 = 1'b1;
-      end
-      EMUL8: begin
-        if(!((inst_vd[`REGFILE_INDEX_WIDTH-1:3]==inst_vs2[`REGFILE_INDEX_WIDTH-1:3])))
-          check_vd_overlap_vs2 = 1'b1;
-      end
-    endcase
+    if((emul_vd==EMUL8)|(emul_vs2==EMUL8)) begin
+      if(!(inst_vd[`REGFILE_INDEX_WIDTH-1:3]==inst_vs2[`REGFILE_INDEX_WIDTH-1:3]))
+        check_vd_overlap_vs2 = 1'b1;
+    end
+    else if((emul_vd==EMUL4)|(emul_vs2==EMUL4)) begin
+      if(!(inst_vd[`REGFILE_INDEX_WIDTH-1:2]==inst_vs2[`REGFILE_INDEX_WIDTH-1:2]))
+        check_vd_overlap_vs2 = 1'b1;
+    end
+    else if((emul_vd==EMUL2)|(emul_vs2==EMUL2)) begin
+      if(!(inst_vd[`REGFILE_INDEX_WIDTH-1:1]==inst_vs2[`REGFILE_INDEX_WIDTH-1:1]))
+        check_vd_overlap_vs2 = 1'b1;
+    end
+    else if((emul_vd==EMUL1)|(emul_vs2==EMUL1)) begin
+      if(inst_vd!=inst_vs2)
+        check_vd_overlap_vs2 = 1'b1;
+    end
+    else begin
+      check_vd_overlap_vs2 = 'b0;
+    end
   end
   
   // vd cannot overlap vs1
   // check_vd_overlap_vs1=1 means that check pass (vd group does NOT overlap vs1 group fully)
   always_comb begin
-    check_vd_overlap_vs1 = 'b0;
-    
-    case(emul_max)
-      EMUL1: begin
-        if(inst_vd!=inst_vs1)
-          check_vd_overlap_vs1 = 1'b1;
-      end
-      EMUL2: begin
-        if(!((inst_vd[`REGFILE_INDEX_WIDTH-1:1]==inst_vs1[`REGFILE_INDEX_WIDTH-1:1])))
-          check_vd_overlap_vs1 = 1'b1;
-      end
-      EMUL4: begin
-        if(!((inst_vd[`REGFILE_INDEX_WIDTH-1:2]==inst_vs1[`REGFILE_INDEX_WIDTH-1:2])))
-          check_vd_overlap_vs1 = 1'b1;
-      end
-      EMUL8: begin
-        if(!((inst_vd[`REGFILE_INDEX_WIDTH-1:3]==inst_vs1[`REGFILE_INDEX_WIDTH-1:3])))
-          check_vd_overlap_vs1 = 1'b1;
-      end
-    endcase
+    if((emul_vd==EMUL8)|(emul_vs1==EMUL8)) begin
+      if(!(inst_vd[`REGFILE_INDEX_WIDTH-1:3]==inst_vs1[`REGFILE_INDEX_WIDTH-1:3]))
+        check_vd_overlap_vs1 = 1'b1;
+    end
+    else if((emul_vd==EMUL4)|(emul_vs1==EMUL4)) begin
+      if(!(inst_vd[`REGFILE_INDEX_WIDTH-1:2]==inst_vs1[`REGFILE_INDEX_WIDTH-1:2]))
+        check_vd_overlap_vs1 = 1'b1;
+    end
+    else if((emul_vd==EMUL2)|(emul_vs1==EMUL2)) begin
+      if(!(inst_vd[`REGFILE_INDEX_WIDTH-1:1]==inst_vs1[`REGFILE_INDEX_WIDTH-1:1]))
+        check_vd_overlap_vs1 = 1'b1;
+    end
+    else if((emul_vd==EMUL1)|(emul_vs1==EMUL1)) begin
+      if(inst_vd!=inst_vs1)
+        check_vd_overlap_vs1 = 1'b1;
+    end
+    else begin
+      check_vd_overlap_vs1 = 'b0;
+    end
   end
 
   // check whether vs2 group partially overlaps vd group for EEW_vd:EEW_vs2=2:1
@@ -2624,11 +2622,6 @@ module rvv_backend_decode_unit_ari
               OPIVX,
               OPIVI: begin
                 check_special = check_vd_overlap_v0;
-                
-                `ifdef ASSERT_ON
-                  assert #0 (check_special==1'b1)
-                  else $warning("check_special(%d) should be 1.\n",check_special);
-                `endif
               end
             endcase
           end
@@ -2644,11 +2637,6 @@ module rvv_backend_decode_unit_ari
               OPIVV,
               OPIVX: begin
                 check_special = check_vd_overlap_v0;
-                
-                `ifdef ASSERT_ON
-                  assert #0 (check_special==1'b1)
-                  else $warning("check_special(%d) should be 1.\n",check_special);
-                `endif
               end
             endcase
           end
@@ -2658,11 +2646,6 @@ module rvv_backend_decode_unit_ari
               OPIVX,
               OPIVI: begin
                 check_special = check_vd_overlap_v0;
-                
-                `ifdef ASSERT_ON
-                  assert #0 (check_special==1'b1)
-                  else $warning("check_special(%d) should be 1.\n",check_special);
-                `endif
               end
             endcase
           end
@@ -2674,11 +2657,6 @@ module rvv_backend_decode_unit_ari
               OPIVI: begin
                 if ((inst_vm==1'b0)&(inst_vd!='b0))
                   check_special          = 1'b1;          
-                
-                `ifdef ASSERT_ON
-                  assert #0 (check_special==1'b1)
-                  else $warning("check_special(%d) should be 1.\n",check_special);
-                `endif
               end
             endcase
           end
@@ -2699,13 +2677,7 @@ module rvv_backend_decode_unit_ari
             case(inst_funct3)
               OPIVV,
               OPIVX: begin
-                if ((inst_vm==1'b0)&(inst_vd!='b0))
-                  check_special         = 1'b1;          
-                
-                `ifdef ASSERT_ON
-                  assert #0 (check_special==1'b1)
-                  else $warning("check_special(%d) should be 1.\n",check_special);
-                `endif
+                check_special = (inst_vm==1'b0)&(inst_vd!='b0);
               end
             endcase
           end
@@ -2777,13 +2749,7 @@ module rvv_backend_decode_unit_ari
               OPIVX,
               OPIVI: begin
                 // when vm=1, it is vmv instruction and vs2_index must be 5'b0.
-                if (((inst_vm=='b0)&(inst_vd!='b0)) | ((inst_vm==1'b1)&(inst_vs2=='b0)))   
-                  check_special = 1'b1;          
-                
-                `ifdef ASSERT_ON
-                  assert #0 (check_special==1'b1)
-                  else $warning("check_special(%d) should be 1.\n",check_special);
-                `endif
+                check_special = ((inst_vm=='b0)&(inst_vd!='b0)) | ((inst_vm==1'b1)&(inst_vs2=='b0));
               end
             endcase
           end
@@ -2793,23 +2759,10 @@ module rvv_backend_decode_unit_ari
               OPIVV,
               OPIVX: begin
                 check_special = check_vd_overlap_v0;
-                
-                `ifdef ASSERT_ON
-                  assert #0 (check_special==1'b1)
-                  else $warning("check_special(%d) should be 1.\n",check_special);
-                `endif
               end
               OPIVI: begin
-                if ((inst_vm == 1'b1)&
-                    (inst_vs1[4:3]==2'b0)&
-                    ((inst_nr==NREG1)|(inst_nr==NREG2)|(inst_nr==NREG4)|(inst_nr==NREG8))
-                   )
-                  check_special = 1'b1;
-
-                `ifdef ASSERT_ON
-                  assert #0 (check_special==1'b1)
-                  else $warning("check_special(%d) should be 1.\n",check_special);
-                `endif
+                check_special = (inst_vm == 1'b1)&(inst_vs1[4:3]==2'b0)&
+                                ((inst_nr==NREG1)|(inst_nr==NREG2)|(inst_nr==NREG4)|(inst_nr==NREG8));
               end
             endcase
           end
@@ -2818,13 +2771,7 @@ module rvv_backend_decode_unit_ari
           VWREDSUM: begin
             case(inst_funct3)
               OPIVV: begin
-                if (csr_vstart=='b0) 
-                  check_special = 1'b1;        
-
-                `ifdef ASSERT_ON
-                  assert #0 (check_special==1'b1)
-                  else $warning("check_special(%d) should be 1.\n",check_special);
-                `endif
+                check_special = (csr_vstart=='b0);
               end
             endcase
           end
@@ -2834,32 +2781,7 @@ module rvv_backend_decode_unit_ari
               // VRGATHEREI16
               OPIVV: begin
                 // destination register group cannot overlap the source register group
-                case({emul_max,emul_vs2,emul_vs1})
-                  {EMUL1,EMUL1,EMUL1},
-                  {EMUL2,EMUL2,EMUL2},
-                  {EMUL4,EMUL4,EMUL4},
-                  {EMUL8,EMUL8,EMUL8}: begin
-                    check_special   = check_vd_overlap_v0&check_vd_overlap_vs2&check_vd_overlap_vs1;                
-                  end
-
-                  {EMUL2,EMUL1,EMUL2},
-                  {EMUL2,EMUL2,EMUL1}: begin
-                    if(inst_vd[`REGFILE_INDEX_WIDTH-1:1]!=inst_vs1[`REGFILE_INDEX_WIDTH-1:1])
-                      check_special = check_vd_overlap_v0&check_vd_overlap_vs2;          
-                  end
-
-                  {EMUL4,EMUL2,EMUL4},
-                  {EMUL4,EMUL4,EMUL2}: begin
-                    if(inst_vd[`REGFILE_INDEX_WIDTH-1:2]!=inst_vs1[`REGFILE_INDEX_WIDTH-1:2])
-                      check_special = check_vd_overlap_v0&check_vd_overlap_vs2;          
-                  end
-
-                  {EMUL8,EMUL4,EMUL8},
-                  {EMUL8,EMUL8,EMUL4}: begin
-                    if(inst_vd[`REGFILE_INDEX_WIDTH-1:3]!=inst_vs1[`REGFILE_INDEX_WIDTH-1:3])
-                      check_special = check_vd_overlap_v0&check_vd_overlap_vs2;          
-                  end
-                endcase
+                check_special = check_vd_overlap_v0&check_vd_overlap_vs2&check_vd_overlap_vs1;                
               end
               // VSLIDEUP 
               OPIVX,
@@ -2996,13 +2918,7 @@ module rvv_backend_decode_unit_ari
           VREDXOR: begin
             case(inst_funct3)
               OPMVV: begin
-                if(csr_vstart=='b0)
-                  check_special = 1'b1;
-            
-                `ifdef ASSERT_ON
-                  assert #0 (check_special==1'b1)
-                  else $warning("check_special(%d) should be 1.\n",check_special);
-                `endif
+                check_special = (csr_vstart=='b0);
               end
             endcase
           end
@@ -3018,13 +2934,7 @@ module rvv_backend_decode_unit_ari
           VMXNOR: begin
             case(inst_funct3)  
               OPMVV: begin
-                if(inst_vm==1'b1)
-                  check_special   = 1'b1;
-            
-                `ifdef ASSERT_ON
-                  assert #0 (check_special==1'b1)
-                  else $warning("check_special(%d) should be 1.\n",check_special);
-                `endif
+                check_special = (inst_vm==1'b1);
               end
             endcase
           end
@@ -3035,23 +2945,15 @@ module rvv_backend_decode_unit_ari
                 case(vs1_opcode_vwxunary)
                   VCPOP,
                   VFIRST: begin
-                    if(csr_vstart=='b0)
-                      check_special  = 1'b1;
+                    check_special = (csr_vstart=='b0);
                   end
                   VMV_X_S: begin
-                    if(inst_vm==1'b1)
-                      check_special = 1'b1;
+                    check_special = (inst_vm==1'b1);
                   end
                 endcase
               end
               OPMVX: begin
-                if((vs2_opcode_vrxunary==VMV_S_X)&(inst_vm==1'b1)&(inst_vs2=='b0))
-                  check_special = 1'b1;
-                
-                `ifdef ASSERT_ON
-                  assert #0 (check_special==1'b1)
-                  else $warning("check_special(%d) should be 1.\n",check_special);
-                `endif
+                check_special = (vs2_opcode_vrxunary==VMV_S_X)&(inst_vm==1'b1)&(inst_vs2=='b0);
               end
             endcase
           end
@@ -3064,12 +2966,10 @@ module rvv_backend_decode_unit_ari
                   VMSIF,
                   VMSOF,
                   VIOTA: begin
-                    if(csr_vstart=='b0)
-                      check_special = check_vd_overlap_v0&check_vd_overlap_vs2;
+                    check_special = (csr_vstart=='b0)&check_vd_overlap_v0&check_vd_overlap_vs2;
                   end
                   VID: begin
-                    if(inst_vs2=='b0)
-                      check_special = check_vd_overlap_v0;
+                    check_special = (inst_vs2=='b0)&check_vd_overlap_v0;
                   end
                 endcase
               end
@@ -3088,15 +2988,8 @@ module rvv_backend_decode_unit_ari
           VCOMPRESS: begin
             case(inst_funct3)
               OPMVV: begin
-                if (csr_vstart=='b0) begin
-                  // destination register group cannot overlap the source register group
-                  check_special = check_vd_overlap_v0&check_vd_overlap_vs2;
-                
-                  `ifdef ASSERT_ON
-                    assert #0 (check_special==1'b1)
-                    else $warning("check_special(%d) should be 1.\n",check_special);
-                  `endif
-                end
+                // destination register group cannot overlap the source register group
+                check_special = (csr_vstart=='b0)&check_vd_overlap_v0&check_vd_overlap_vs2;
               end
             endcase
           end
@@ -3120,29 +3013,14 @@ module rvv_backend_decode_unit_ari
       EMUL2: begin
         if (inst_vd[0]==1'b0)
           check_vd_align = 1'b1; 
-        
-        `ifdef ASSERT_ON
-          assert #0 (check_vd_align==1'b1)
-          else $warning("check_vd_align(%d) should be 1.\n",check_vd_align);
-        `endif
       end
       EMUL4: begin
         if (inst_vd[1:0]==2'b0)
           check_vd_align = 1'b1; 
-        
-        `ifdef ASSERT_ON
-          assert #0 (check_vd_align==1'b1)
-          else $warning("check_vd_align(%d) should be 1.\n",check_vd_align);
-        `endif
       end
       EMUL8: begin
         if (inst_vd[2:0]==3'b0)
           check_vd_align = 1'b1; 
-       
-        `ifdef ASSERT_ON
-          assert #0 (check_vd_align==1'b1)
-          else $warning("check_vd_align(%d) should be 1.\n",check_vd_align);
-        `endif
       end
     endcase
   end
@@ -3159,29 +3037,14 @@ module rvv_backend_decode_unit_ari
       EMUL2: begin
         if (inst_vs2[0]==1'b0)
           check_vs2_align = 1'b1; 
-        
-        `ifdef ASSERT_ON
-          assert #0 (check_vs2_align==1'b1)
-          else $warning("check_vs2_align(%d) should be 1.\n",check_vs2_align);
-        `endif
       end
       EMUL4: begin
         if (inst_vs2[1:0]==2'b0)
           check_vs2_align = 1'b1; 
-        
-        `ifdef ASSERT_ON
-          assert #0 (check_vs2_align==1'b1)
-          else $warning("check_vs2_align(%d) should be 1.\n",check_vs2_align);
-        `endif
       end
       EMUL8: begin
         if (inst_vs2[2:0]==3'b0)
           check_vs2_align = 1'b1; 
-       
-        `ifdef ASSERT_ON
-          assert #0 (check_vs2_align==1'b1)
-          else $warning("check_vs2_align(%d) should be 1.\n",check_vs2_align);
-        `endif
       end
     endcase
   end
@@ -3198,29 +3061,14 @@ module rvv_backend_decode_unit_ari
       EMUL2: begin
         if (inst_vs1[0]==1'b0)
           check_vs1_align = 1'b1; 
-        
-        `ifdef ASSERT_ON
-          assert #0 (check_vs1_align==1'b1)
-          else $warning("check_vs1_align(%d) should be 1.\n",check_vs1_align);
-        `endif
       end
       EMUL4: begin
         if (inst_vs1[1:0]==2'b0)
           check_vs1_align = 1'b1; 
-        
-        `ifdef ASSERT_ON
-          assert #0 (check_vs1_align==1'b1)
-          else $warning("check_vs1_align(%d) should be 1.\n",check_vs1_align);
-        `endif
       end
       EMUL8: begin
         if (inst_vs1[2:0]==3'b0)
           check_vs1_align = 1'b1; 
-       
-        `ifdef ASSERT_ON
-          assert #0 (check_vs1_align==1'b1)
-          else $warning("check_vs1_align(%d) should be 1.\n",check_vs1_align);
-        `endif
       end
     endcase
   end
