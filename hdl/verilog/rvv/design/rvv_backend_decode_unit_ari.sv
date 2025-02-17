@@ -3375,23 +3375,25 @@ module rvv_backend_decode_unit_ari
 
 // get the start number of uop_index
   always_comb begin
-    // initial
-    uop_vstart = 'b0;
-
-    case(eew_max)
-      EEW1: begin
-        uop_vstart = 'b0;
-      end
-      EEW8: begin
-        uop_vstart = csr_vstart[4 +: `UOP_INDEX_WIDTH];
-      end
-      EEW16: begin
-        uop_vstart = csr_vstart[3 +: `UOP_INDEX_WIDTH];
-      end
-      EEW32: begin
-        uop_vstart = csr_vstart[2 +: `UOP_INDEX_WIDTH];
-      end
-    endcase
+    if((funct6_ari.ari_funct6==VWXUNARY0)&(inst_funct3==OPMVV)&(vs1_opcode_vwxunary==VMV_X_S)) begin
+      uop_vstart = 'b0;
+    end
+    else begin
+      case(eew_max)
+        EEW8: begin
+          uop_vstart = csr_vstart[4 +: `UOP_INDEX_WIDTH];
+        end
+        EEW16: begin
+          uop_vstart = csr_vstart[3 +: `UOP_INDEX_WIDTH];
+        end
+        EEW32: begin
+          uop_vstart = csr_vstart[2 +: `UOP_INDEX_WIDTH];
+        end
+        default: begin
+          uop_vstart = 'b0;
+        end
+      endcase
+    end
   end
   
   // select uop_vstart and uop_index_remain as the base uop_index
