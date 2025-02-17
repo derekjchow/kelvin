@@ -5,6 +5,7 @@
 `include "rvv_backend_tb_mod.sv"
 module rvv_backend_top();
 
+// clock & reset -----------------------------------------------------
   logic clk;
   logic rst_n;
 
@@ -19,9 +20,21 @@ module rvv_backend_top();
       #(sim_cycle/2) clk = ~clk;
     end
 
+  //Driver reset depending on rst_delay
+  initial begin
+      clk = 0;
+      rst_n = 0;
+      repeat (rst_delay) @(posedge clk);
+      rst_n = 1'b1;
+      @(clk);
+  end
+
+// Instatiation ------------------------------------------------------
   rvs_interface rvs_if(clk,rst_n);
   lsu_interface lsu_if(clk,rst_n);
   vrf_interface vrf_if(clk,rst_n);
+
+  rvv_intern_interface rvv_intern_if(clk,rst_n);
   
   rvv_backend_tb_mod test(); 
   
@@ -59,6 +72,7 @@ module rvv_backend_top();
     .vcsr_ready               (1'b1            ) // FIXME
   );
 
+// rvs interface -----------------------------------------------------
   assign rvs_if.rt_uop      = `RT_UOP_PATH.rt_uop;
   assign rvs_if.rt_last_uop = `RT_UOP_PATH.rt_last_uop;
   
@@ -86,6 +100,7 @@ module rvv_backend_top();
   assign rvs_if.wr_vxsat[2] = `RT_VXSAT_PATH.w_vxsat2;
   assign rvs_if.wr_vxsat[3] = `RT_VXSAT_PATH.w_vxsat3;
 
+// vrf interface -----------------------------------------------------
   // For VRF value check, we need to delay a cycle to wait for writeback finished.
   always_ff @(posedge clk or negedge rst_n) begin
     if(~rst_n) begin
@@ -105,14 +120,11 @@ module rvv_backend_top();
     vrf_if.vrf_wr_data_full = `VRF_PATH.vrf_wr_data_full;
   end: vrf_connect
 
-  //Driver reset depending on rst_delay
-  initial begin
-      clk = 0;
-      rst_n = 0;
-      repeat (rst_delay) @(posedge clk);
-      rst_n = 1'b1;
-      @(clk);
-  end
+// Internal Signals connection ------------- -------------------------
+  assign rvv_intern_if.rob2rt_write_valid = DUT.u_retire.rob2rt_write_valid;
+  assign rvv_intern_if.rob2rt_write_data  = DUT.u_retire.rob2rt_write_data;
+  assign rvv_intern_if.rt2rob_write_ready = DUT.u_retire.rt2rob_write_ready;
+
 
 endmodule: rvv_backend_top
 

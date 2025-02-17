@@ -1118,11 +1118,18 @@ endclass : rvv_behavior_model
 
   task rvv_behavior_model::vrf_mdl();
     vrf_transaction tr;
+    int last_uop_idx_max, uop_idx_max;
     tr = new();
     forever begin
       @(posedge vrf_if.clk);
       if(vrf_if.rst_n) begin
-        if(|vrf_if.rt_last_uop && ((vrf_if.rt_last_uop ^ vrf_if.rt_uop) inside {4'b0000,4'b0001,4'b0011,4'b0111,4'b1111})) begin
+        last_uop_idx_max = -1;
+        uop_idx_max = -1;
+        for(int i=0; i<`NUM_RT_UOP; i++) begin
+          if(vrf_if.rt_last_uop[i] === 1'b1) last_uop_idx_max = i;
+          if(vrf_if.rt_uop[i] === 1'b1) uop_idx_max = i;
+        end
+        if(last_uop_idx_max>=0 && last_uop_idx_max>=uop_idx_max) begin
           for(int i=0; i<32; i++) begin
               tr.vreg[i] = vrf_delay[i];
           end

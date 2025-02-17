@@ -729,6 +729,34 @@ always@(*) begin
   endcase
 end
 
+`ifdef TB_SUPPORT
+`ifdef ASSERT_ON
+  logic [`NUM_RT_UOP-1:0] [`NUM_RT_UOP-1:0] vidx_eq;
+  logic [`NUM_RT_UOP-1:0] [`NUM_RT_UOP-1:0] vstrobe_conflict;
+
+  genvar gv_i, gv_j;
+  generate
+    for(gv_i=0; gv_i<`NUM_RT_UOP; gv_i++) begin: gen_upper_uops
+      for(gv_j=0; gv_j<`NUM_RT_UOP; gv_j++) begin: gen_lower_uops
+        if(gv_i > gv_j) begin: gen_check
+          assign vidx_eq[gv_i][gv_j] = (rt2vrf_write_valid[gv_i] && rt2vrf_write_valid[gv_j] &&
+                                        rt2vrf_write_data[gv_i].rt_index === rt2vrf_write_data[gv_j].rt_index);
+          assign vstrobe_conflict[gv_i][gv_j] = vidx_eq[gv_i][gv_j] && |(rt2vrf_write_data[gv_i].rt_strobe & rt2vrf_write_data[gv_j].rt_strobe);
+          VRFWriteStrobeConflict: `rvv_forbid(vstrobe_conflict[gv_i][gv_j])
+            else $error("Uop %0d write to vrf[%0d] with strobe = 0x%4h\nUop %0d write to vrf[%0d] with strobe = 0x%4h\n",
+                        gv_i, $sampled(rt2vrf_write_data[gv_i].rt_index), $sampled(rt2vrf_write_data[gv_i].rt_strobe),
+                        gv_j, $sampled(rt2vrf_write_data[gv_j].rt_index), $sampled(rt2vrf_write_data[gv_j].rt_strobe));
+        end else begin: gen_ignore_check
+          assign vidx_eq[gv_i][gv_j] = '0;
+          assign vstrobe_conflict[gv_i][gv_j] = '0;
+        end
+      end
+    end
+  endgenerate 
+
+`endif // ASSERT_ON
+`endif // TB_SUPPORT
+
 //5. OutValid generation & OutData pack
 //  5.1. When trap, clean the latter valid
 assign w_valid0_chkTrap = w_valid0;

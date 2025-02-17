@@ -137,6 +137,7 @@ VCOMP = vcs -full64 -sverilog +define+SV	\
 				+vcs+lic+wait	\
 				-deraceclockdata +notimingcheck	\
 				-debug_access+all	\
+				-assert enable_hier	\
 				$(TIMESCALE)	\
 				$(PLI_OPTS)	\
 				$(UVM)	\
@@ -152,6 +153,7 @@ VCOMP = vcs -full64 -sverilog +define+SV	\
 #Simulation command
 VSIM  = $(BUILD_PATH)/simv	\
 				+vcs+lic+wait  \
+				-assert finish_maxfail=10	\
 				$(SEED)	\
 				$(DEFINES) $(PLUS_ARGS)	\
 				+UVM_TESTNAME=$(UVM_TEST) +UVM_VERBOSITY=$(UVM_VERBOSITY) \

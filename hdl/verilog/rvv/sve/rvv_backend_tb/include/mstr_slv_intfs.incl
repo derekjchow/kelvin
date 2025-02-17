@@ -2,3 +2,4 @@
 `include "rvs_agent_rvs_interface.sv" 
 `include "lsu_agent_lsu_interface.sv"
 `include "rvs_agent_vrf_interface.sv"
+`include "rvv_intern_interface.sv"
