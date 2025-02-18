@@ -63,13 +63,17 @@ module rvv_backend_alu_unit_execution_p1
   always_comb begin
     // initial the data
     result.w_data = alu_uop.result_data; 
- 
+    result.vsaturate = alu_uop.vsaturate;
+
     // calculate result data
     case(alu_uop.alu_sub_opcode)
       OP_VCPOP: begin
         result.w_data = result_data_vcpop;
+        result.vsaturate = 'b0;
       end
       OP_VIOTA: begin
+        result.vsaturate = 'b0;
+        
         case(alu_uop.vd_eew)
           EEW8: begin
             for(int i=0; i<`VLENB;i++) begin
@@ -93,6 +97,5 @@ module rvv_backend_alu_unit_execution_p1
 
   assign  result.w_valid = alu_uop_valid;
 
-  assign  result.vsaturate = 'b0;
 
 endmodule

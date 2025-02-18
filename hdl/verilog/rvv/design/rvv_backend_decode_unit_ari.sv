@@ -2486,18 +2486,26 @@ module rvv_backend_decode_unit_ari
     if((emul_vd==EMUL8)|(emul_vs2==EMUL8)) begin
       if(!(inst_vd[`REGFILE_INDEX_WIDTH-1:3]==inst_vs2[`REGFILE_INDEX_WIDTH-1:3]))
         check_vd_overlap_vs2 = 1'b1;
+      else
+        check_vd_overlap_vs2 = 1'b0;
     end
     else if((emul_vd==EMUL4)|(emul_vs2==EMUL4)) begin
       if(!(inst_vd[`REGFILE_INDEX_WIDTH-1:2]==inst_vs2[`REGFILE_INDEX_WIDTH-1:2]))
         check_vd_overlap_vs2 = 1'b1;
+      else
+        check_vd_overlap_vs2 = 1'b0;
     end
     else if((emul_vd==EMUL2)|(emul_vs2==EMUL2)) begin
       if(!(inst_vd[`REGFILE_INDEX_WIDTH-1:1]==inst_vs2[`REGFILE_INDEX_WIDTH-1:1]))
         check_vd_overlap_vs2 = 1'b1;
+      else
+        check_vd_overlap_vs2 = 1'b0;
     end
     else if((emul_vd==EMUL1)|(emul_vs2==EMUL1)) begin
       if(inst_vd!=inst_vs2)
         check_vd_overlap_vs2 = 1'b1;
+      else
+        check_vd_overlap_vs2 = 1'b0;
     end
     else begin
       check_vd_overlap_vs2 = 'b0;
@@ -2510,18 +2518,26 @@ module rvv_backend_decode_unit_ari
     if((emul_vd==EMUL8)|(emul_vs1==EMUL8)) begin
       if(!(inst_vd[`REGFILE_INDEX_WIDTH-1:3]==inst_vs1[`REGFILE_INDEX_WIDTH-1:3]))
         check_vd_overlap_vs1 = 1'b1;
+      else
+        check_vd_overlap_vs1 = 1'b0;
     end
     else if((emul_vd==EMUL4)|(emul_vs1==EMUL4)) begin
       if(!(inst_vd[`REGFILE_INDEX_WIDTH-1:2]==inst_vs1[`REGFILE_INDEX_WIDTH-1:2]))
         check_vd_overlap_vs1 = 1'b1;
+      else
+        check_vd_overlap_vs1 = 1'b0;
     end
     else if((emul_vd==EMUL2)|(emul_vs1==EMUL2)) begin
       if(!(inst_vd[`REGFILE_INDEX_WIDTH-1:1]==inst_vs1[`REGFILE_INDEX_WIDTH-1:1]))
         check_vd_overlap_vs1 = 1'b1;
+      else
+        check_vd_overlap_vs1 = 1'b0;
     end
     else if((emul_vd==EMUL1)|(emul_vs1==EMUL1)) begin
       if(inst_vd!=inst_vs1)
         check_vd_overlap_vs1 = 1'b1;
+      else
+        check_vd_overlap_vs1 = 1'b0;
     end
     else begin
       check_vd_overlap_vs1 = 'b0;
