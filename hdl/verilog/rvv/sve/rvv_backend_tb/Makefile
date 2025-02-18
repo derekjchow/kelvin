@@ -125,11 +125,14 @@ endif
 PLI_OPTS = -P ${NOVAS_HOME}/share/PLI/VCS/LINUX64/novas.tab ${NOVAS_HOME}/share/PLI/VCS/LINUX64/pli.a
 
 BUILD_PATH = $(RVV_ROOT)/build/$(scfg)
+
 ifdef seed
-SIM_PATH	 = $(RVV_ROOT)/$(logdir)/$(scfg)/$(UVM_TEST)$(atn)"."$(seed)
+TESTNAME   = $(UVM_TEST)$(atn)"."$(seed)
 else
-SIM_PATH	 = $(RVV_ROOT)/$(logdir)/$(scfg)/$(UVM_TEST)$(atn)
+TESTNAME   = $(UVM_TEST)$(atn)
 endif
+SIM_PATH	 = $(RVV_ROOT)/$(logdir)/$(scfg)/$(TESTNAME)
+COV_PATH   = $(RVV_ROOT)/$(logdir)/$(scfg)/
 
 #Compile command
 VCOMP = vcs -full64 -sverilog +define+SV	\
@@ -160,8 +163,7 @@ VSIM  = $(BUILD_PATH)/simv	\
 				$(DUMP) $(UVM_DEBUG_SIM)	\
 				+UVM_MAX_QUIT_COUNT=$(max_error),NO	\
 				+UVM_TIMEOUT=$(timeout)	\
-				$(COV)
-	  	
+				$(COV) 	  	
 
 RTLFILES := $(filter-out $(UNUSED),$(RTLFILES))
 
@@ -171,11 +173,11 @@ RTLFILES := $(filter-out $(UNUSED),$(RTLFILES))
 all default: vcs sim 
 
 vcs: vlst mkbuilddir
-	@cd $(BUILD_PATH); $(VCOMP) -l $(BUILD_PATH)/vcs.log
+	@cd $(BUILD_PATH); $(VCOMP) -l $(BUILD_PATH)/vcs.log -cm_dir $(COV_PATH) 
 	@echo "Build log: $(BUILD_PATH)/vcs.log"
 
 sim_test:
-	@cd $(SIM_PATH); $(VSIM) -l $(SIM_PATH)/test.log
+	@cd $(SIM_PATH); $(VSIM) -l $(SIM_PATH)/test.log -cm_dir $(COV_PATH) -cm_name $(TESTNAME)
 	@echo "Test log: $(SIM_PATH)/test.log"
 
 chk_test:

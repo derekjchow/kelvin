@@ -133,8 +133,10 @@ task rvs_monitor::rx_monitor();
         if(rvs_if.rt_uop[rt_idx]) begin
           while(!(rvs_if.rt_vrf_valid_rob2rt[rt_idx] && (rvs_if.rt_vrf_data_rob2rt[rt_idx].uop_pc === tr.pc)) && 
                 !(rvs_if.rt_xrf_valid_rvv2rvs[rt_idx] && rvs_if.rt_xrf_ready_rvs2rvv[rt_idx] && (rvs_if.rt_xrf_rvv2rvs[rt_idx].uop_pc === tr.pc))) begin
-              `uvm_info(get_type_name(), $sformatf("Monitor rx_queue pc(0x%8x) mismatch with DUT pc(0x%8x), discarded.", tr.pc, rvs_if.rt_vrf_data_rob2rt[rt_idx].uop_pc), UVM_HIGH)
-              `uvm_info(get_type_name(), tr.sprint(),UVM_HIGH)
+              if(tr.pc !== 'x) begin
+                `uvm_info(get_type_name(), $sformatf("Monitor rx_queue pc(0x%8x) mismatch with DUT pc(0x%8x), discarded.", tr.pc, rvs_if.rt_vrf_data_rob2rt[rt_idx].uop_pc), UVM_HIGH)
+                `uvm_info(get_type_name(), tr.sprint(),UVM_HIGH)
+              end
               tr = inst_rx_queue.pop_front();
           end
           // VRF
@@ -193,15 +195,20 @@ task rvs_monitor::rx_monitor();
 endtask: rx_monitor
 
 task rvs_monitor::rx_timeout_monitor();
-  // Timeout of inst port handshake check.
-  if(|rvs_if.insts_valid_rvs2cq) begin
-    inst_tx_timeout_cnt++;
-  end
-  if(|(rvs_if.insts_valid_rvs2cq & rvs_if.insts_ready_cq2rvs)) begin
-    inst_tx_timeout_cnt = 0;
-  end
-  if(inst_tx_timeout_cnt >= inst_tx_timeout_max) begin
-    `uvm_fatal(get_type_name(), $sformatf("Insts haven't been accepted by rvv for %0d cycles. Shut down!",inst_tx_timeout_cnt))
+  forever begin
+    @(posedge rvs_if.clk);
+    if(rvs_if.rst_n) begin
+      // Timeout of inst port handshake check.
+      if(|rvs_if.insts_valid_rvs2cq) begin
+        inst_tx_timeout_cnt++;
+      end
+      if(|(rvs_if.insts_valid_rvs2cq & rvs_if.insts_ready_cq2rvs)) begin
+        inst_tx_timeout_cnt = 0;
+      end
+      if(inst_tx_timeout_cnt >= inst_tx_timeout_max) begin
+        `uvm_fatal(get_type_name(), $sformatf("Insts haven't been accepted by rvv for %0d cycles. Shut down!",inst_tx_timeout_cnt))
+      end
+    end
   end
 endtask: rx_timeout_monitor
 
