@@ -27,7 +27,7 @@ sub Check {
     my $astWarn = grep m/$p_astWarn/g, @texts;
     my $othFail = grep m/$p_othFail/g, @texts;
     my $match = $uvmFail + $astFail + $othFail;
-    my $discardRate = 0;
+    my $discardRate = undef;
     map { $discardRate = $1 if m/$p_discardRate/g; } @texts;
 
 
@@ -48,16 +48,18 @@ sub Check {
       print $fh "Assert Warning: $astWarn\n";
       print color "reset";
     }
-    if($discardRate > 50.0) {
-      print color "bold red";
-      print "WARNING: Discarded rate $discardRate% > 50%\n";
-      print $fh "WARNING: Discarded rate: $discardRate% > 50%\n";
-      print color "reset";
-    } else {
-      print color "bold green";
-      print "Discarded rate: $discardRate%\n";
-      print $fh "Discarded rate: $discardRate%\n";
-      print color "reset";
+    if(defined $discardRate) {
+      if($discardRate > 50.0) {
+        print color "bold red";
+        print "WARNING: Discarded rate $discardRate% > 50%\n";
+        print $fh "WARNING: Discarded rate: $discardRate% > 50%\n";
+        print color "reset";
+      } else {
+        print color "bold green";
+        print "Discarded rate: $discardRate%\n";
+        print $fh "Discarded rate: $discardRate%\n";
+        print color "reset";
+      }
     }
 
     close $fh;

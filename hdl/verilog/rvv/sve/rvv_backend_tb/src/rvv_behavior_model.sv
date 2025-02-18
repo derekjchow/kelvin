@@ -380,6 +380,10 @@ endclass : rvv_behavior_model
           `uvm_warning("MDL/INST_CHECKER", $sformatf("pc=0x%8x: vstart = %0d of reduction insts is ignored.", pc, inst_tr.vstart))
           continue;
         end
+        if(inst_tr.inst_type == ALU && inst_tr.alu_inst == VWXUNARY0 && inst_tr.dest_type == VRF && inst_tr.src2_type == FUNC && inst_tr.src2_idx inside {VMV_X_S} && inst_tr.src1_type == XRF && inst_tr.vstart !== 0) begin
+          `uvm_warning("MDL/INST_CHECKER", $sformatf("pc=0x%8x: vstart = %0d of vmv.s.x is ignored.", pc, inst_tr.vstart))
+          continue;
+        end
 
         dest_eew = eew;
         src0_eew = EEW1;
@@ -705,7 +709,7 @@ endclass : rvv_behavior_model
 
         vrf_temp = vrf;
         vrf_bit_strobe_temp = '0;
-        `uvm_info("MDL",$sformatf("Check done!\nelm_idx_max=%0d\ndest_eew=%0d\nsrc2_eew=%0d\nsrc1_eew=%0d\ndest_emul=%2.4f\nsrc2_emul=%2.4f\nsrc1_emul=%2.4f\n",elm_idx_max,dest_eew,src2_eew,src1_eew,dest_emul,src2_emul,src1_emul),UVM_LOW)
+        `uvm_info("MDL",$sformatf("Check done!\nelm_idx_max=%0d\ndest_eew=%0d\nsrc2_eew=%0d\nsrc1_eew=%0d\nsrc0_eew=%0d\ndest_emul=%2.4f\nsrc2_emul=%2.4f\nsrc1_emul=%2.4f\nsrc0_emul=%2.4f\n",elm_idx_max,dest_eew,src2_eew,src1_eew,src0_eew,dest_emul,src2_emul,src1_emul,src0_emul),UVM_LOW)
         // --------------------------------------------------
         // 3. Operate elements
         if( is_permutation_inst == 1) begin //is_permutation_inst
@@ -723,6 +727,10 @@ endclass : rvv_behavior_model
         for(int elm_idx=0; elm_idx<elm_idx_max; elm_idx++) begin : op_element
 
           // 3.0 Update elements index
+          src3 = '0;
+          src2 = '0;
+          src1 = '0;
+          src0 = '0;
           case(inst_tr.dest_type) 
             VRF: begin
               dest_reg_idx = elm_idx / (`VLEN / dest_eew) + dest_reg_idx_base;
@@ -914,6 +922,9 @@ endclass : rvv_behavior_model
               ST: begin `uvm_fatal(get_type_name(),"Store fucntion hasn't been defined.") end
               ALU: begin 
                 dest = alu_handler.exe(inst_tr, dest, src2, src1, src0);
+                if(vxsat === 0 && alu_handler.get_saturate() === 1) begin
+                  `uvm_info("MDL", $sformatf("element[%2d]: body-active, vxsat has been set to 1.", elm_idx), UVM_LOW)
+                end
                 vxsat = vxsat ? vxsat : alu_handler.get_saturate();
 
                 elm_writeback(dest, inst_tr.dest_type, dest_reg_idx_base, elm_idx, dest_eew);

@@ -1629,7 +1629,6 @@ class alu_iterate_vmv_xs_sx_seq extends alu_iterate_base_sequence;
         req = new("req");
         start_item(req);
         assert(req.randomize() with {
-           use_vlmax == 1;
           pc == local::inst_cnt;
 
           vtype.vlmul dist {
@@ -1811,9 +1810,7 @@ class alu_random_seq extends alu_random_base_sequence;
         };
 
         inst_type == ALU;
-        //(!alu_inst inside {VSLIDE1UP, VSLIDE1DOWN, VCOMPRESS, VSLIDEUP_RGATHEREI16, VSLIDEDOWN, VRGATHER, UNUSE_INST});
-        alu_inst inside {VADD, VSUB, VRSUB, VADC, VAND, VSADD, VSSRA, VNCLIPU, VWADDU, VWSUBU_W, VMUL, VMULHSU,
-        VDIVU, VREM, VWMULSU, VWMUL, VMACC, VWMACCUS, VMAND, VMUNARY0, VXUNARY0};
+        !(alu_inst inside {VSLIDE1UP, VSLIDE1DOWN, VCOMPRESS, VSLIDEUP_RGATHEREI16, VSLIDEDOWN, VRGATHER, UNUSE_INST});
 
       });
       finish_item(req);

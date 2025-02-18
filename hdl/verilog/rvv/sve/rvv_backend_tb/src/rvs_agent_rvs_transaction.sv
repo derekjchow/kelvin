@@ -122,6 +122,9 @@ class rvs_transaction extends uvm_sequence_item;
       (inst_type == ALU && alu_inst inside {VWXUNARY0} && src1_idx inside {VCPOP, VFIRST}) 
       ->  (vstart == 0);
 
+      (inst_type == ALU && alu_inst inside {VWXUNARY0} && (alu_type == OPMVX && src2_type == FUNC && src2_idx inside{VMV_X_S})) 
+      ->  (vstart == 0);  // vmv.s.x
+
       (inst_type == ALU && alu_inst inside {VMUNARY0} && src1_idx inside {VMSBF, VMSOF, VMSIF, VIOTA}) 
       ->  (vstart == 0);
 
@@ -276,9 +279,9 @@ class rvs_transaction extends uvm_sequence_item;
         ->  ((dest_type == XRF && src2_type == VRF && 
               alu_type == OPMVV && src1_type == FUNC && src1_idx inside { VCPOP, VFIRST}) ||
              (dest_type == XRF && src2_type == VRF && 
-              alu_type == OPMVV && src1_type == FUNC && src1_idx inside {VMV_X_S} && vm == 1) ||
+              alu_type == OPMVV && src1_type == FUNC && src1_idx inside {VMV_X_S} && vm == 1) ||  // vmv.x.s
              (dest_type == VRF && src2_type == FUNC  && src2_idx inside{VMV_X_S} &&
-              alu_type == OPMVX && src1_type == XRF && vm == 1)
+              alu_type == OPMVX && src1_type == XRF && vm == 1) // vmv.s.x
             );
 
         (alu_inst inside {VWMACCUS}) 
