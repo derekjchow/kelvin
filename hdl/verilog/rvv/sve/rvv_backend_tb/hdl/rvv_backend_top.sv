@@ -120,10 +120,14 @@ module rvv_backend_top();
     vrf_if.vrf_wr_data_full = `VRF_PATH.vrf_wr_data_full;
   end: vrf_connect
 
-// Internal Signals connection ------------- -------------------------
+// Internal Signals connection ---------------------------------------
+  // ROB to Retire
   assign rvv_intern_if.rob2rt_write_valid = DUT.u_retire.rob2rt_write_valid;
   assign rvv_intern_if.rob2rt_write_data  = DUT.u_retire.rob2rt_write_data;
   assign rvv_intern_if.rt2rob_write_ready = DUT.u_retire.rt2rob_write_ready;
+
+  // Decode to UOPs queue
+  assign rvv_intern_if.uop_valid_de2uq  = DUT.u_decode.uop_valid_de2uq;
 
 
 endmodule: rvv_backend_top

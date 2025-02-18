@@ -13,8 +13,9 @@ class rvv_cov extends uvm_component;
   function new(string name, uvm_component parent);
     super.new(name,parent);
     cg_trans = new;
-    cg_waw = new();
     cov_export = new("Coverage Analysis",this);
+    cg_waw = new();
+    cg_uops_valid_de2uq = new();
   endfunction: new
 
   virtual function void build_phase(uvm_phase phase);
@@ -28,6 +29,7 @@ class rvv_cov extends uvm_component;
   virtual task main_phase(uvm_phase phase);
     fork
       vidx_eq_check();
+      clk_event_gen();
     join
   endtask: main_phase
 
@@ -41,6 +43,19 @@ class rvv_cov extends uvm_component;
      // coverpoint tr.kind;
      // ToDo: Add required coverpoints, coverbins
   endgroup: cg_trans
+
+// clk event gen -----------------------------------------------------
+  event posedge_clk_event;
+
+  task clk_event_gen();
+    forever begin
+      @(posedge rvv_intern_if.clk);
+      if(~rvv_intern_if.rst_n) begin
+      end else begin
+        -> posedge_clk_event;
+      end
+    end
+  endtask: clk_event_gen
 
 // WAW cov -----------------------------------------------------------
   event rob2rt_cov_event;
@@ -98,6 +113,29 @@ class rvv_cov extends uvm_component;
         illegal_bins misc = default;
 
       }
+  endgroup
+
+// Decode cov --------------------------------------------------------
+  covergroup cg_uops_valid_de2uq @(posedge_clk_event);
+    inst0:
+      coverpoint {rvv_intern_if.uop_valid_de2uq[0]} {
+        bins uop0 = {4'b0000};  
+        bins uop1 = {4'b0001};  
+        bins uop2 = {4'b0011};  
+        bins uop3 = {4'b0111};  
+        bins uop4 = {4'b1111};  
+        illegal_bins misc = default;
+      }
+    inst1:
+      coverpoint {rvv_intern_if.uop_valid_de2uq[1]} {
+        bins uop0 = {4'b0000};  
+        bins uop1 = {4'b0001};  
+        bins uop2 = {4'b0011};  
+        bins uop3 = {4'b0111};  
+        bins uop4 = {4'b1111};  
+        illegal_bins misc = default;
+      }
+    cross inst0, inst1;
   endgroup
 
 endclass: rvv_cov
