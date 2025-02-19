@@ -108,7 +108,7 @@ else
 	UVM_DEBUG_SIM = 
 endif
 atn ?=
-max_error ?= 10
+max_error ?= 1
 
 ifdef VCS_HOME
  ifneq ($(VCS_VERSION),$(filter $(VCS_VERSION),$(UVM10_SUPP_VCS_VERSNS)))
@@ -123,6 +123,12 @@ else
  ERR_STATUS = 1
 endif
 PLI_OPTS = -P ${NOVAS_HOME}/share/PLI/VCS/LINUX64/novas.tab ${NOVAS_HOME}/share/PLI/VCS/LINUX64/pli.a
+
+ASSERT_OPTS = -assert global_finish_maxfail=1		\
+							-assert set_error_action=display -assert set_error_action=count	\
+							-assert set_warning_action=display	\
+							-assert set_info_action=display	\
+							-assert quiet+quiet1+nopostproc
 
 BUILD_PATH = $(RVV_ROOT)/build/$(scfg)
 
@@ -156,14 +162,14 @@ VCOMP = vcs -full64 -sverilog +define+SV	\
 #Simulation command
 VSIM  = $(BUILD_PATH)/simv	\
 				+vcs+lic+wait  \
-				-assert finish_maxfail=10	\
+				$(ASSERT_OPTS)	\
 				$(SEED)	\
 				$(DEFINES) $(PLUS_ARGS)	\
 				+UVM_TESTNAME=$(UVM_TEST) +UVM_VERBOSITY=$(UVM_VERBOSITY) \
 				$(DUMP) $(UVM_DEBUG_SIM)	\
 				+UVM_MAX_QUIT_COUNT=$(max_error),NO	\
 				+UVM_TIMEOUT=$(timeout)	\
-				$(COV) 	  	
+				$(COV)
 
 RTLFILES := $(filter-out $(UNUSED),$(RTLFILES))
 
