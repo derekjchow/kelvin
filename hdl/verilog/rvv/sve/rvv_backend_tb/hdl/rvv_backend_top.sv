@@ -128,6 +128,35 @@ module rvv_backend_top();
 
   // Decode to UOPs queue
   assign rvv_intern_if.uop_valid_de2uq  = DUT.u_decode.uop_valid_de2uq;
+  
+  // FIFO empty/full signals
+  /* CMD queue */
+  assign rvv_intern_if.cmd_q_full  = DUT.u_command_queue.full;
+  assign rvv_intern_if.cmd_q_empty = DUT.u_command_queue.empty;
+
+  /* UOPs queue */
+  assign rvv_intern_if.uop_q_full  = DUT.u_uop_queue.full;
+  assign rvv_intern_if.uop_q_empty = DUT.u_uop_queue.empty;
+
+  /* RS */
+  assign rvv_intern_if.alu_rs_full  = DUT.u_alu_rs.full;
+  assign rvv_intern_if.alu_rs_empty = DUT.u_alu_rs.empty;
+  assign rvv_intern_if.mul_rs_full  = DUT.u_mul_rs.full;
+  assign rvv_intern_if.mul_rs_empty = DUT.u_mul_rs.empty;
+  assign rvv_intern_if.div_rs_full  = DUT.u_div_rs.full;
+  assign rvv_intern_if.div_rs_empty = DUT.u_div_rs.empty;
+  assign rvv_intern_if.pmtrdt_rs_full  = DUT.u_pmtrdt_rs.full;
+  assign rvv_intern_if.pmtrdt_rs_empty = DUT.u_pmtrdt_rs.empty;
+  assign rvv_intern_if.lsu_rs_full  = DUT.u_lsu_rs.full;
+  assign rvv_intern_if.lsu_rs_empty = DUT.u_lsu_rs.empty;
+
+// Interface Coverage Collection ----------------------------------------
+  rvv_interface_cov rvv_interface_cov(
+    .clk(clk), 
+    .rst_n(rst_n), 
+    .rvv_intern_if(rvv_intern_if)
+  );
+
 
 
 endmodule: rvv_backend_top

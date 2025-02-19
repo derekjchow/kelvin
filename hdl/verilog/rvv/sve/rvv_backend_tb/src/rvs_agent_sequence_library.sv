@@ -1768,7 +1768,6 @@ endclass: alu_iterate_vmvnr_seq
 //-----------------------------------------------------------
 // ALU random sequence
 //-----------------------------------------------------------
-
 class alu_random_base_sequence extends base_sequence;
   `uvm_object_utils(alu_random_base_sequence)
   `uvm_add_to_seq_lib(alu_random_base_sequence,rvs_sequencer_sequence_library)
@@ -1800,14 +1799,14 @@ class alu_random_seq extends alu_random_base_sequence;
       assert(req.randomize() with {
         pc == local::inst_cnt;
 
-        vtype.vlmul dist {
-          LMUL1_4 := 10,
-          LMUL1_2 := 20,
-          LMUL1   := 20,
-          LMUL2   := 30,
-          LMUL4   :=  5,
-          LMUL8   := 15 
-        };
+        // vtype.vlmul dist {
+        //   LMUL1_4 := 10,
+        //   LMUL1_2 := 20,
+        //   LMUL1   := 20,
+        //   LMUL2   := 30,
+        //   LMUL4   :=  5,
+        //   LMUL8   := 15 
+        // };
 
         inst_type == ALU;
         !(alu_inst inside {VSLIDE1UP, VSLIDE1DOWN, VCOMPRESS, VSLIDEUP_RGATHEREI16, VSLIDEDOWN, VRGATHER, UNUSE_INST});
@@ -1820,7 +1819,127 @@ class alu_random_seq extends alu_random_base_sequence;
 
 endclass: alu_random_seq
 
+class alu_random_small_lmul_seq extends alu_random_base_sequence;
+  `uvm_object_utils(alu_random_small_lmul_seq)
+  `uvm_add_to_seq_lib(alu_random_small_lmul_seq,rvs_sequencer_sequence_library)
 
+  virtual task body();
+    repeat(inst_num) begin
+      req = new("req");
+      start_item(req);
+      assert(req.randomize() with {
+        pc == local::inst_cnt;
+
+        vtype.vlmul dist {
+          LMUL1_4 := 30,
+          LMUL1_2 := 30,
+          LMUL1   := 35,
+          LMUL2   :=  5
+        };
+
+        inst_type == ALU;
+        !(alu_inst inside {VSLIDE1UP, VSLIDE1DOWN, VCOMPRESS, VSLIDEUP_RGATHEREI16, VSLIDEDOWN, VRGATHER, UNUSE_INST});
+        (alu_inst == VSMUL_VMVNRR && alu_type == OPIVI && src1_type == FUNC) -> (src1_idx inside {0,1}); // constraint vmv<nr>r
+
+      });
+      finish_item(req);
+      inst_cnt++;
+    end // repeat(inst_num)
+  endtask
+
+endclass: alu_random_small_lmul_seq
+
+class alu_random_large_lmul_seq extends alu_random_base_sequence;
+  `uvm_object_utils(alu_random_large_lmul_seq)
+  `uvm_add_to_seq_lib(alu_random_large_lmul_seq,rvs_sequencer_sequence_library)
+
+  virtual task body();
+    repeat(inst_num) begin
+      req = new("req");
+      start_item(req);
+      assert(req.randomize() with {
+        pc == local::inst_cnt;
+
+        vtype.vlmul dist {
+          LMUL2   :=  5,
+          LMUL4   := 35,
+          LMUL8   := 60 
+        };
+
+        inst_type == ALU;
+        !(alu_inst inside {VSLIDE1UP, VSLIDE1DOWN, VCOMPRESS, VSLIDEUP_RGATHEREI16, VSLIDEDOWN, VRGATHER, UNUSE_INST});
+        (alu_inst == VSMUL_VMVNRR && alu_type == OPIVI && src1_type == FUNC) -> (src1_idx inside {3,7}); // constraint vmv<nr>r
+
+      });
+      finish_item(req);
+      inst_cnt++;
+    end // repeat(inst_num)
+  endtask
+
+endclass: alu_random_large_lmul_seq
+
+class alu_random_bypass_seq extends alu_random_base_sequence;
+  `uvm_object_utils(alu_random_bypass_seq)
+  `uvm_add_to_seq_lib(alu_random_bypass_seq,rvs_sequencer_sequence_library)
+
+  virtual task body();
+    repeat(inst_num) begin
+      req = new("req");
+      start_item(req);
+      assert(req.randomize() with {
+        pc == local::inst_cnt;
+
+        vtype.vlmul dist {
+          LMUL1_4 := 20,
+          LMUL1_2 := 40,
+          LMUL1   := 40
+        };
+
+        inst_type == ALU;
+        !(alu_inst inside {VSLIDE1UP, VSLIDE1DOWN, VCOMPRESS, VSLIDEUP_RGATHEREI16, VSLIDEDOWN, VRGATHER, UNUSE_INST});
+        (alu_inst == VSMUL_VMVNRR && alu_type == OPIVI && src1_type == FUNC) -> (src1_idx inside {0}); // only use vmv1r
+
+        (dest_type == VRF) -> (dest_idx inside {[0:3]});
+        (src2_type == VRF) -> (src2_idx inside {[0:3]});
+        (src1_type == VRF) -> (src1_idx inside {[0:3]});
+      });
+      finish_item(req);
+      inst_cnt++;
+    end // repeat(inst_num)
+  endtask
+
+endclass: alu_random_bypass_seq
+
+class alu_random_waw_seq extends alu_random_base_sequence;
+  `uvm_object_utils(alu_random_waw_seq)
+  `uvm_add_to_seq_lib(alu_random_waw_seq,rvs_sequencer_sequence_library)
+
+  virtual task body();
+    repeat(inst_num) begin
+      req = new("req");
+      start_item(req);
+      assert(req.randomize() with {
+        pc == local::inst_cnt;
+
+        vtype.vlmul dist {
+          LMUL1_4 := 20,
+          LMUL1_2 := 40,
+          LMUL1   := 40
+        };
+
+        inst_type == ALU;
+        !(alu_inst inside {VSLIDE1UP, VSLIDE1DOWN, VCOMPRESS, VSLIDEUP_RGATHEREI16, VSLIDEDOWN, VRGATHER, UNUSE_INST});
+        (alu_inst == VSMUL_VMVNRR && alu_type == OPIVI && src1_type == FUNC) -> (src1_idx inside {0}); // only use vmv1r
+
+        dest_type == VRF;
+        (dest_type == VRF) -> (dest_idx inside {[0:3]});
+      });
+      finish_item(req);
+      inst_cnt++;
+    end // repeat(inst_num)
+  endtask
+
+endclass: alu_random_waw_seq
 //=================================================
 // LDST direct test sequence
 //=================================================
