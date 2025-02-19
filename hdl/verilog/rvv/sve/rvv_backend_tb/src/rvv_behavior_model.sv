@@ -267,12 +267,11 @@ endclass : rvv_behavior_model
         eew = 8 << vtype.vsew;
         fraction_lmul = vtype.vlmul[2];
         emul = 2.0 ** $signed(vtype.vlmul);
-        vlmax       = fraction_lmul ?        `VLEN / eew: 
-                                      emul * `VLEN / eew;
+        vlmax       = emul * `VLEN / eew;
         elm_idx_max = fraction_lmul ?        `VLEN / eew: 
                                       emul * `VLEN / eew;
         evl = inst_tr.vl;
-        `uvm_info("MDL", $sformatf("Get eew=%0d, emul=%.2f",eew,emul), UVM_HIGH)
+        `uvm_info("MDL", $sformatf("Get eew=%0d, emul=%.2f, vlmax=%0d, elm_idx_max=%0d",eew,emul,vlmax,elm_idx_max), UVM_HIGH)
 
         // --------------------------------------------------
         // 1. Decode - Get eew & emul
@@ -543,9 +542,14 @@ endclass : rvv_behavior_model
             if(is_mask_producing_inst) begin
               // Special case: In this case, DUT will writeback all bits in dest.
               elm_idx_max = `VLEN;
-              if(!(is_mask_compare_inst || is_carry_produce_inst)) 
-                // Special case: In this case, DUT will tread any elements > vl as tail.
+              if(!(is_mask_compare_inst || is_carry_produce_inst)) begin
+                // Special case: In this case, DUT will tread any elements > vl as tail and calculate result.
                 vlmax = `VLEN;
+              end else begin 
+                // Special case: In this case, DUT will use vlmax==`VLEN/sew will vlmax, and calculate the result.
+                vlmax = fraction_lmul ?        `VLEN / eew: 
+                                        emul * `VLEN / eew;
+              end
             end
             // 1.4 Reduction inst
             if(is_reduction_inst) begin
