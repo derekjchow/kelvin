@@ -66,10 +66,6 @@ module rvv_backend_alu_unit_addsub
   logic   [`VLENB-1:0]                                sub_upoverflow;
   logic   [`VLENB-1:0]                                sub_underoverflow;
   logic   [`VLEN-1:0]                                 result_data;   // regular data for EEW_vd = 8b,16b,32b
-  //logic   [`VLEN-1:0]                                 result_data_sp;   // special data for EEW_vd = 1b 
-  //logic   [`VLEN-1:0]                                 mask_sp_bit0;     // control logic for result_data_sp 
-  //logic   [`VLEN-1:0]                                 mask_sp_bit1;     // control logic for result_data_sp 
-  //logic   [`VLEN-1:0]                                 mask_sp_bit2;     // control logic for result_data_sp 
   ADDSUB_e                                            opcode;
   
   // for-loop
@@ -119,11 +115,6 @@ module rvv_backend_alu_unit_addsub
             if (vs2_data_valid&vs1_data_valid) begin
               result_valid = 'b1;
             end
-
-            `ifdef ASSERT_ON
-              assert #0 (result_valid==1'b1)
-              else $error("result_valid(%d) should be 1.\n",result_valid);
-            `endif
           end
 
           VADC,
@@ -131,24 +122,7 @@ module rvv_backend_alu_unit_addsub
             if (vs2_data_valid&vs1_data_valid&(vm==1'b0)&v0_data_valid) begin
               result_valid = 'b1;
             end
-
-            `ifdef ASSERT_ON
-              assert #0 (result_valid==1'b1)
-              else $error("result_valid(%d) should be 1.\n",result_valid);
-            `endif
           end
-
-          //VMADC,
-          //VMSBC: begin
-          //  if (vs2_data_valid&vs1_data_valid&vd_data_valid&(vm^v0_data_valid)) begin
-          //    result_valid = 'b1;
-          //  end
-
-          //  `ifdef ASSERT_ON
-          //    assert #0 (result_valid==1'b1)
-          //    else $error("result_valid(%d) should be 1.\n",result_valid);
-          //  `endif
-          //end
         endcase
       end
 
@@ -164,11 +138,6 @@ module rvv_backend_alu_unit_addsub
             if (vs2_data_valid&rs1_data_valid) begin
               result_valid = 'b1;
             end
-
-            `ifdef ASSERT_ON
-              assert #0 (result_valid==1'b1)
-              else $error("result_valid(%d) should be 1.\n",result_valid);
-            `endif
           end
 
           VADC,
@@ -176,24 +145,7 @@ module rvv_backend_alu_unit_addsub
             if (vs2_data_valid&rs1_data_valid&(vm==1'b0)&v0_data_valid) begin
               result_valid = 'b1;
             end
-
-            `ifdef ASSERT_ON
-              assert #0 (result_valid==1'b1)
-              else $error("result_valid(%d) should be 1.\n",result_valid);
-            `endif
           end
-
-          //VMADC,
-          //VMSBC: begin
-          //  if (vs2_data_valid&rs1_data_valid&vd_data_valid&(vm^v0_data_valid)) begin
-          //    result_valid = 'b1;
-          //  end
-
-          //  `ifdef ASSERT_ON
-          //    assert #0 (result_valid==1'b1)
-          //    else $error("result_valid(%d) should be 1.\n",result_valid);
-          //  `endif
-          //end
         endcase
       end
       {1'b1,OPIVI}: begin
@@ -205,34 +157,13 @@ module rvv_backend_alu_unit_addsub
             if (vs2_data_valid&rs1_data_valid) begin
               result_valid = 'b1;
             end
-
-            `ifdef ASSERT_ON
-              assert #0 (result_valid==1'b1)
-              else $error("result_valid(%d) should be 1.\n",result_valid);
-            `endif
           end
 
           VADC: begin
             if (vs2_data_valid&rs1_data_valid&(vm==1'b0)&v0_data_valid) begin
               result_valid = 'b1;
             end
-
-            `ifdef ASSERT_ON
-              assert #0 (result_valid==1'b1)
-              else $error("result_valid(%d) should be 1.\n",result_valid);
-            `endif
           end
-          
-          //VMADC: begin
-          //  if (vs2_data_valid&vs1_data_valid&vd_data_valid&(vm^v0_data_valid)) begin
-          //    result_valid = 'b1;
-          //  end
-
-          //  `ifdef ASSERT_ON
-          //    assert #0 (result_valid==1'b1)
-          //    else $error("result_valid(%d) should be 1.\n",result_valid);
-          //  `endif
-          //end
         endcase
       end
 
@@ -245,11 +176,6 @@ module rvv_backend_alu_unit_addsub
             if (vs2_data_valid&vs1_data_valid&((vs2_eew==EEW8)|(vs2_eew==EEW16))) begin
               result_valid = 'b1;
             end
-
-            `ifdef ASSERT_ON
-              assert #0 (result_valid==1'b1)
-              else $error("result_valid(%d) should be 1.\n",result_valid);
-            `endif
           end
 
           VWADDU_W,
@@ -259,11 +185,6 @@ module rvv_backend_alu_unit_addsub
             if (vs2_data_valid&vs1_data_valid&((vs2_eew==EEW16)|(vs2_eew==EEW32))) begin
               result_valid = 'b1;
             end
-
-            `ifdef ASSERT_ON
-              assert #0 (result_valid==1'b1)
-              else $error("result_valid(%d) should be 1.\n",result_valid);
-            `endif
           end
 
           VAADDU,
@@ -273,11 +194,6 @@ module rvv_backend_alu_unit_addsub
             if (vs2_data_valid&vs1_data_valid) begin
               result_valid   = 'b1;
             end
-
-            `ifdef ASSERT_ON
-              assert #0 (result_valid==1'b1)
-              else $error("result_valid(%d) should be 1.\n",result_valid);
-            `endif
           end
         endcase
       end
@@ -291,11 +207,6 @@ module rvv_backend_alu_unit_addsub
             if (vs2_data_valid&rs1_data_valid&((vs2_eew==EEW8)|(vs2_eew==EEW16))) begin
               result_valid = 'b1;
             end
-
-            `ifdef ASSERT_ON
-              assert #0 (result_valid==1'b1)
-              else $error("result_valid(%d) should be 1.\n",result_valid);
-            `endif
           end
 
           VWADDU_W,
@@ -305,11 +216,6 @@ module rvv_backend_alu_unit_addsub
             if (vs2_data_valid&rs1_data_valid&((vs2_eew==EEW16)|(vs2_eew==EEW32))) begin
               result_valid = 'b1;
             end
-
-            `ifdef ASSERT_ON
-              assert #0 (result_valid==1'b1)
-              else $error("result_valid(%d) should be 1.\n",result_valid);
-            `endif
           end
 
           VAADDU,
@@ -319,11 +225,6 @@ module rvv_backend_alu_unit_addsub
             if (vs2_data_valid&rs1_data_valid) begin
               result_valid   = 'b1;
             end
-
-            `ifdef ASSERT_ON
-              assert #0 (result_valid==1'b1)
-              else $error("result_valid(%d) should be 1.\n",result_valid);
-            `endif
           end
         endcase
       end
@@ -342,9 +243,7 @@ module rvv_backend_alu_unit_addsub
           VADD,
           VSUB,
           VADC,
-          //VMADC,
           VSBC,
-          //VMSBC,
           VSADDU,
           VSADD,
           VSSUBU,
@@ -360,9 +259,7 @@ module rvv_backend_alu_unit_addsub
           VADD,
           VSUB,
           VADC,
-          //VMADC,
           VSBC,
-          //VMSBC,
           VSADDU,
           VSADD,
           VSSUBU,
@@ -426,7 +323,6 @@ module rvv_backend_alu_unit_addsub
         case(uop_funct6.ari_funct6)
           VADD,
           VADC,
-          //VMADC,
           VSADDU,
           VSADD: begin
             src2_data = vs2_data;
@@ -888,9 +784,7 @@ module rvv_backend_alu_unit_addsub
           OPIVI: begin
             case(uop_funct6.ari_funct6)
               VADC,
-              //VMADC,
               VSBC: begin
-              //VMSBC: begin
                 if ((vm==1'b0)&v0_data_valid) begin
                   case(vs2_eew)
                     EEW8: begin                    
@@ -934,7 +828,6 @@ module rvv_backend_alu_unit_addsub
         case(uop_funct6.ari_funct6)    
           VADD,
           VADC,
-          //VMADC,
           VSADDU,
           VSADD: begin
             opcode = ADDSUB_VADD;
@@ -942,7 +835,6 @@ module rvv_backend_alu_unit_addsub
           VSUB,
           VRSUB,
           VSBC,
-          //VMSBC,
           VSSUBU,
           VSSUB: begin
             opcode = ADDSUB_VSUB;
@@ -1514,102 +1406,6 @@ module rvv_backend_alu_unit_addsub
       end
     end
   endgenerate
-
-  // mask logic for result_data_sp
-  //always_comb begin
-  //  mask_sp_bit0 = 'b0;
-  //  
-  //  case(vs2_eew)
-  //    EEW8: begin
-  //      if (uop_index[0])
-  //        mask_sp_bit0 = {{(`VLEN-2*`VLENB){1'b0}}, {`VLENB{1'b1}}, {`VLENB{1'b0}}};
-  //      else
-  //        mask_sp_bit0 = {{(`VLEN-`VLENB){1'b0}}, {`VLENB{1'b1}}};
-  //    end
-  //    EEW16: begin
-  //      if (uop_index[0])
-  //        mask_sp_bit0 = {{(`VLEN-2*`VLEN/`HWORD_WIDTH){1'b0}}, {`VLEN/`HWORD_WIDTH{1'b1}}, {(`VLEN/`HWORD_WIDTH){1'b0}}};
-  //      else
-  //        mask_sp_bit0 = {{(`VLEN-`VLEN/`HWORD_WIDTH){1'b0}}, {`VLEN/`HWORD_WIDTH{1'b1}}};
-  //    end
-  //    EEW32: begin
-  //      if (uop_index[0])
-  //        mask_sp_bit0 = {{(`VLEN-2*`VLEN/`WORD_WIDTH){1'b0}}, {`VLEN/`WORD_WIDTH{1'b1}}, {(`VLEN/`WORD_WIDTH){1'b0}}};
-  //      else
-  //        mask_sp_bit0 = {{(`VLEN-`VLEN/`WORD_WIDTH){1'b0}}, {`VLEN/`WORD_WIDTH{1'b1}}};
-  //    end
-  //  endcase
-  //end
-
-  //always_comb begin
-  //  mask_sp_bit1 = mask_sp_bit0;
-  //  
-  //  case(vs2_eew)
-  //    EEW8: begin
-  //      if (uop_index[1]) begin
-  //        mask_sp_bit1 = {mask_sp_bit0[`VLEN-1 : 4*`VLENB], 
-  //                        mask_sp_bit0[0        +: 2*`VLENB], 
-  //                        mask_sp_bit0[2*`VLENB +: 2*`VLENB]};
-  //      end
-  //    end
-  //    EEW16: begin
-  //      if (uop_index[1]) begin
-  //        mask_sp_bit1 = {mask_sp_bit0[`VLEN-1 : 4*`VLEN/`HWORD_WIDTH], 
-  //                        mask_sp_bit0[0                    +: 2*`VLEN/`HWORD_WIDTH], 
-  //                        mask_sp_bit0[2*`VLEN/`HWORD_WIDTH +: 2*`VLEN/`HWORD_WIDTH]};
-  //      end
-  //    end
-  //    EEW32: begin
-  //      if (uop_index[1]) begin
-  //        mask_sp_bit1 = {mask_sp_bit0[`VLEN-1 : 4*`VLEN/`WORD_WIDTH], 
-  //                        mask_sp_bit0[0                   +: 2*`VLEN/`WORD_WIDTH], 
-  //                        mask_sp_bit0[2*`VLEN/`WORD_WIDTH +: 2*`VLEN/`WORD_WIDTH]};
-  //      end
-  //    end
-  //  endcase
-  //end
-
-  //always_comb begin
-  //  mask_sp_bit2 = mask_sp_bit1;
-  //  
-  //  case(vs2_eew)
-  //    EEW8: begin
-  //      if (uop_index[2]) begin
-  //        mask_sp_bit2 = {mask_sp_bit1[0      +: 4*`VLENB], 
-  //                        mask_sp_bit1[`VLEN-1 : 4*`VLENB]}; 
-  //      end
-  //    end
-  //    EEW16: begin
-  //      if (uop_index[2]) begin
-  //        mask_sp_bit2 = {mask_sp_bit1[0      +: 4*`VLEN/`HWORD_WIDTH],
-  //                        mask_sp_bit1[`VLEN-1 : 4*`VLEN/`HWORD_WIDTH]}; 
-  //      end
-  //    end
-  //    EEW32: begin
-  //      if (uop_index[2]) begin
-  //        mask_sp_bit2 = {mask_sp_bit1[0      +: 4*`VLEN/`WORD_WIDTH], 
-  //                        mask_sp_bit1[`VLEN-1 : 4*`VLEN/`WORD_WIDTH]};
-  //      end
-  //    end
-  //  endcase
-  //end
-
-  // assign to result_data_sp
-  //always_comb begin
-  //  result_data_sp = 'b0; 
-
-  //  case(vs2_eew)
-  //    EEW8: begin
-  //      result_data_sp = {`BYTE_WIDTH{cout8}}; 
-  //    end
-  //    EEW16: begin
-  //      result_data_sp = {`HWORD_WIDTH{cout16}}; 
-  //    end
-  //    EEW32: begin
-  //      result_data_sp = {`WORD_WIDTH{cout32}}; 
-  //    end
-  //  endcase
-  //end
 
 //
 // submit result to ROB
