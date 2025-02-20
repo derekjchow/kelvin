@@ -2155,22 +2155,22 @@ module rvv_backend_pmtrdt_unit
                 OPIVX,
                 OPIVI:begin
                   case (pmtrdt_uop.vs2_eew) // Permutation instruction: vd_eew == vs2_eew
-                    EEW32:offset[i] = i%4 + 4*pmtrdt_uop.rs1_data;
-                    EEW16:offset[i] = i%2 + 2*pmtrdt_uop.rs1_data;
+                    EEW32:offset[i] = i%4 + {pmtrdt_uop.rs1_data,2'b0};
+                    EEW16:offset[i] = i%2 + {pmtrdt_uop.rs1_data,1'b0};
                     default:offset[i] = pmtrdt_uop.rs1_data;
                   endcase
                 end
                 default:begin
                   case (pmtrdt_uop.vs1_eew)
-                    EEW32: offset[i] = i%4 + 4*{{(`XLEN-32){1'b0}}, uop_data[i/(`VLENB/4)].vs1_data[i%(`VLENB/4)+:32]};
+                    EEW32: offset[i] = i%4 + ({{(`XLEN-32){1'b0}}, uop_data[(uop_done_cnt_q*`VLENB/4+i/4)/(`VLENB/4)].vs1_data[32*((i/4)%(`VLENB/4))+:32]}<<2);
                     EEW16: begin
                       case (pmtrdt_uop.vs2_eew) // vrgatherei16
-                        EEW32:offset[i] = i%4 + 4*{{(`XLEN-16){1'b0}}, uop_data[i/(`VLENB/2)].vs1_data[i%(`VLENB/2)+:16]};
-                        EEW16:offset[i] = i%2 + 2*{{(`XLEN-16){1'b0}}, uop_data[i/(`VLENB/2)].vs1_data[i%(`VLENB/2)+:16]};
-                        default:offset[i] = {{(`XLEN-16){1'b0}}, uop_data[i/(`VLENB/2)].vs1_data[i%(`VLENB/2)+:16]};
+                        EEW32:offset[i] = i%4 + ({{(`XLEN-16){1'b0}}, uop_data[(uop_done_cnt_q*`VLENB/4+i/4)/(`VLENB/4)].vs1_data[16*((uop_done_cnt_q*`VLENB/4+i/4)%(`VLENB/2))+:16]}<<2);
+                        EEW16:offset[i] = i%2 + ({{(`XLEN-16){1'b0}}, uop_data[(uop_done_cnt_q*`VLENB/2+i/2)/(`VLENB/2)].vs1_data[16*((i/2)%(`VLENB/2))+:16]}<<1);
+                        default:offset[i] = {{(`XLEN-16){1'b0}}, uop_data[(uop_done_cnt_q*`VLENB+i)/(`VLENB)].vs1_data[16*(i%(`VLENB/2))+:16]};
                       endcase
                     end
-                    default: offset[i] = {{(`XLEN-8){1'b0}}, uop_data[i/(`VLENB)].vs1_data[i%(`VLENB)+:8]};
+                    default: offset[i] = {{(`XLEN-8){1'b0}}, uop_data[(uop_done_cnt_q*`VLENB+i)/(`VLENB)].vs1_data[8*(i%(`VLENB))+:8]};
                   endcase
                 end
               endcase

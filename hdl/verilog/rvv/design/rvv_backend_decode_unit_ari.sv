@@ -1,4 +1,3 @@
-
 `include "rvv_backend.svh"
 `include "rvv_backend_sva.svh"
 
@@ -4927,9 +4926,7 @@ module rvv_backend_decode_unit_ari
               endcase
             end
 
-            VWMACCUS,
-            VSLIDE1UP,
-            VSLIDE1DOWN: begin
+            VWMACCUS: begin
               case(inst_funct3)
                 OPMVX: begin
                   uop[i].vs2_index    = inst_vs2+uop_index_current[i][`UOP_INDEX_WIDTH-1:1];
@@ -4988,6 +4985,17 @@ module rvv_backend_decode_unit_ari
                       uop[i].vs2_valid    = 1'b1;   
                     end
                   endcase
+                end
+              endcase
+            end
+
+            VSLIDE1UP,
+            VSLIDE1DOWN: begin
+              case(inst_funct3)
+                OPMVX: begin
+                  uop[i].vs2_index    = inst_vs2+uop_index_current[i][`UOP_INDEX_WIDTH-1:0];
+                  uop[i].vs2_eew      = eew_vs2;
+                  uop[i].vs2_valid    = 1'b1;        
                 end
               endcase
             end
