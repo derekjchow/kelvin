@@ -1114,13 +1114,20 @@ endclass : rvv_behavior_model
 
         if(rt_tr.dest_type == VRF) begin
           for(int reg_idx=dest_reg_idx_base; reg_idx<dest_reg_idx_base+int'($ceil(dest_emul)); reg_idx++) begin
-            // FIXME: All 0s in vrf wirte strobe will not be executed in DUT.
-            // if(|vrf_byte_strobe_temp[reg_idx]) begin
-            // All pre-start vreg will not be retired
-            if(((reg_idx - dest_reg_idx_base) >= (vstart / (`VLEN / dest_eew)))   ) begin
+            if(inst_tr.inst_type == ALU && (inst_tr.alu_inst inside {VSLIDEUP_RGATHEREI16, VSLIDE1UP, VRGATHER})) begin
+              // Special case: for slideup/gather inst, we will retire all uop for now, including all-prestart uops.
               rt_tr.rt_vrf_index.push_back(reg_idx);
               rt_tr.rt_vrf_strobe.push_back(vrf_byte_strobe_temp[reg_idx]);
               rt_tr.rt_vrf_data.push_back(vrf[reg_idx]);
+            end else begin
+              // FIXME: All 0s in vrf wirte strobe will not be executed in DUT.
+              // if(|vrf_byte_strobe_temp[reg_idx]) begin
+              // All pre-start vreg will not be retired
+              if(((reg_idx - dest_reg_idx_base) >= (vstart / (`VLEN / dest_eew)))   ) begin
+                rt_tr.rt_vrf_index.push_back(reg_idx);
+                rt_tr.rt_vrf_strobe.push_back(vrf_byte_strobe_temp[reg_idx]);
+                rt_tr.rt_vrf_data.push_back(vrf[reg_idx]);
+              end
             end
           end
         end

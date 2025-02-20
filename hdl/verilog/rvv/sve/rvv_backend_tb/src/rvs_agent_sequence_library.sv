@@ -146,7 +146,7 @@ class alu_smoke_vv_seq extends base_sequence;
       pc == inst_cnt;
 
       vtype.vsew ==  SEW16;
-      vtype.vlmul inside {LMUL1};//{LMUL1_2, LMUL2};
+      vtype.vlmul inside {LMUL1_2, LMUL2};
 
       inst_type == ALU;
       alu_inst == local::alu_inst;

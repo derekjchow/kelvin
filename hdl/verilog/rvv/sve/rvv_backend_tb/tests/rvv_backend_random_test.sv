@@ -121,7 +121,7 @@ class alu_random_small_lmul_test extends rvv_backend_test;
 
     rvs_seq = alu_random_small_lmul_seq::type_id::create("rvs_seq", this);
     rvs_transaction::set_ill_rate(0);
-    rvs_seq.run_inst(env.rvs_agt.rvs_sqr, 1000);
+    rvs_seq.run_inst(env.rvs_agt.rvs_sqr, 10000);
 
     rvs_last_seq = alu_smoke_vv_seq::type_id::create("rvs_last_seq", this);
     rvs_last_seq.run_inst(VADD,env.rvs_agt.rvs_sqr);

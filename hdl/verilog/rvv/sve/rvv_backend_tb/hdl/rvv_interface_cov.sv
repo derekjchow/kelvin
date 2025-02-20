@@ -101,6 +101,43 @@ module rvv_interface_cov (
   endgroup
   Cov_uops_valid_de2uq cg_uops_valid_de2uq;
 
+// Dispatch cov ------------------------------------------------------
+  logic [`NUM_DP_UOP-1:0] [4:0] dipsatch_unit;
+  always_comb begin
+    dipsatch_unit = '0;
+    for(int i=0; i<`NUM_DP_UOP; i++) begin
+      dipsatch_unit[i][0] = rvv_intern_if.rs_valid_dp2alu[i] & rvv_intern_if.rs_valid_dp2alu[i];
+      dipsatch_unit[i][1] = rvv_intern_if.rs_valid_dp2pmtrdt[i] & rvv_intern_if.rs_valid_dp2pmtrdt[i];
+      dipsatch_unit[i][2] = rvv_intern_if.rs_valid_dp2mul[i] & rvv_intern_if.rs_valid_dp2mul[i];
+      dipsatch_unit[i][3] = rvv_intern_if.rs_valid_dp2div[i] & rvv_intern_if.rs_valid_dp2div[i];
+      dipsatch_unit[i][4] = rvv_intern_if.rs_valid_dp2lsu[i] & rvv_intern_if.rs_valid_dp2lsu[i];
+    end
+  end
+  covergroup Cov_dispatch_unit @(posedge clk);
+    uop0_dispatch_unit:
+      coverpoint dipsatch_unit[0] {
+        bins to_none = {5'b00000};
+        bins to_alu = {5'b00001};  
+        bins to_pmtrdt = {5'b00010};  
+        bins to_mul = {5'b00100};  
+        bins to_div = {5'b01000};  
+        bins to_lsu = {5'b10000};  
+        illegal_bins misc = default;
+      }
+    uop1_dispatch_unit:
+      coverpoint dipsatch_unit[1] {
+        bins to_none = {5'b00000};
+        bins to_alu = {5'b00001};  
+        bins to_pmtrdt = {5'b00010};  
+        bins to_mul = {5'b00100};  
+        bins to_div = {5'b01000};  
+        bins to_lsu = {5'b10000};  
+        illegal_bins misc = default;
+      }
+    cross uop0_dispatch_unit, uop1_dispatch_unit;
+  endgroup
+  Cov_dispatch_unit cg_dispatch_unit;
+
 // FIFO cov ----------------------------------------------------------
   covergroup Cov_exe_unit_state @(posedge clk);
     alu:
@@ -143,7 +180,11 @@ module rvv_interface_cov (
     cg_pmtrdt_rs_empty_toggle = new(rvv_intern_if.pmtrdt_rs_empty);
 
     cg_waw = new();
+    
     cg_uops_valid_de2uq = new();
+    
+    cg_dispatch_unit = new();
+
     cg_exe_unit_state = new();
   end
 endmodule 

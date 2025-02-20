@@ -129,6 +129,27 @@ module rvv_backend_top();
   // Decode to UOPs queue
   assign rvv_intern_if.uop_valid_de2uq  = DUT.u_decode.uop_valid_de2uq;
   
+  // Disptach to each rs
+  /* Dispatch unit to ALU reservation station */
+  assign rvv_intern_if.rs_valid_dp2alu = DUT.u_dispatch.rs_valid_dp2alu;
+  assign rvv_intern_if.rs_ready_alu2dp = DUT.u_dispatch.rs_ready_alu2dp;
+
+  /* Dispatch unit to PMT+RDT reservation station */
+  assign rvv_intern_if.rs_valid_dp2pmtrdt = DUT.u_dispatch.rs_valid_dp2pmtrdt;
+  assign rvv_intern_if.rs_ready_pmtrdt2dp = DUT.u_dispatch.rs_ready_pmtrdt2dp;
+
+  /* Dispatch unit to MUL reservation station */
+  assign rvv_intern_if.rs_valid_dp2mul = DUT.u_dispatch.rs_valid_dp2mul;
+  assign rvv_intern_if.rs_ready_mul2dp = DUT.u_dispatch.rs_ready_mul2dp;
+
+  /* Dispatch unit to DIV reservation station */
+  assign rvv_intern_if.rs_valid_dp2div = DUT.u_dispatch.rs_valid_dp2div;
+  assign rvv_intern_if.rs_ready_div2dp = DUT.u_dispatch.rs_ready_div2dp;
+
+  /* Dispatch unit to LSU reservation station */
+  assign rvv_intern_if.rs_valid_dp2lsu = DUT.u_dispatch.rs_valid_dp2lsu;
+  assign rvv_intern_if.rs_ready_lsu2dp = DUT.u_dispatch.rs_ready_lsu2dp;
+
   // FIFO empty/full signals
   /* CMD queue */
   assign rvv_intern_if.cmd_q_full  = DUT.u_command_queue.full;

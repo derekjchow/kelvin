@@ -9,6 +9,7 @@ import uvm_pkg::*;
 `include "rvv_backend_env.sv"
 `include "rvv_backend_test.sv"  
 `include "rvv_backend_random_test.sv"  
+`include "rvv_backend_corner_test.sv"  
 
   typedef virtual rvs_interface v_if1;
   typedef virtual lsu_interface v_if2;
