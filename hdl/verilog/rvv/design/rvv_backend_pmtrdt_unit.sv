@@ -2213,8 +2213,18 @@ module rvv_backend_pmtrdt_unit
         end
       end
 
+      always_comb begin
+        if (pmtrdt_uop.vs2_eew == EEW8 && pmtrdt_uop.vs1_eew == EEW16)
+          for (int j=0; j<`VLMAX_MAX/2; j++) begin
+            pmt_vs2_data[j] = uop_data[j/(`VLENB/2)].vs2_data[8*(j%(`VLENB))+:8];
+            pmt_vs2_data[j+`VLMAX_MAX/2] = '0;
+          end
+        else
+          for (int j=0; j<`VLMAX_MAX; j++)
+            pmt_vs2_data[j] = uop_data[j/(`VLENB)].vs2_data[8*(j%(`VLENB))+:8];
+      end
+
       for (i=0; i<`VLMAX_MAX; i++) begin
-        assign pmt_vs2_data[i] = uop_data[i/(`VLENB)].vs2_data[8*(i%(`VLENB))+:8];
         assign pmt_vs3_data[i] = uop_data[i/(`VLENB)].vs3_data[8*(i%(`VLENB))+:8];
       end
 

@@ -3004,7 +3004,7 @@ module rvv_backend_decode_unit_ari
             case(inst_funct3)
               OPMVV: begin
                 // destination register group cannot overlap the source register group
-                check_special = (csr_vstart=='b0)&check_vd_overlap_v0&check_vd_overlap_vs2;
+                check_special = (csr_vstart=='b0)&check_vd_overlap_v0&check_vd_overlap_vs2&check_vd_overlap_vs1;
               end
             endcase
           end
@@ -3236,72 +3236,9 @@ module rvv_backend_decode_unit_ari
     `endif
   `endif
 
-// get the start number of uop_index
-  always_comb begin
-    if((funct6_ari.ari_funct6==VWXUNARY0)&(inst_funct3==OPMVV)&(vs1_opcode_vwxunary==VMV_X_S)) begin
-      uop_vstart = 'b0;
-    end
-    else begin
-      case(eew_max)
-        EEW8: begin
-          uop_vstart = csr_vstart[4 +: `UOP_INDEX_WIDTH];
-        end
-        EEW16: begin
-          uop_vstart = csr_vstart[3 +: `UOP_INDEX_WIDTH];
-        end
-        EEW32: begin
-          uop_vstart = csr_vstart[2 +: `UOP_INDEX_WIDTH];
-        end
-        default: begin
-          uop_vstart = 'b0;
-        end
-      endcase
-    end
-  end
-  
-  // select uop_vstart and uop_index_remain as the base uop_index
-  assign uop_index_base  = (uop_index_remain=='b0) ? 
-                            uop_vstart : 
-                            uop_index_remain;
-
-  // calculate the uop_index used in decoding uops 
-  for(j=0;j<`NUM_DE_UOP;j=j+1) begin: GET_UOP_INDEX
-    assign uop_index_current[j] = j[`UOP_INDEX_WIDTH:0]+uop_index_base;
-  end
-
 //
 // split instruction to uops
 //
-  // get the max uop index 
-  always_comb begin
-    uop_index_max = 'b0;
-    
-    case(emul_max)
-      EMUL1: begin
-        uop_index_max = 'b0;
-      end
-      EMUL2: begin
-        uop_index_max = 'd1;
-      end
-      EMUL4: begin
-        uop_index_max = 'd3;
-      end
-      EMUL8: begin
-        uop_index_max = 'd7;
-      end
-    endcase
-  end
-
-  // generate uop valid
-  always_comb begin        
-    for(int i=0;i<`NUM_DE_UOP;i=i+1) begin: GET_UOP_VALID
-      if ((uop_index_current[i]<={1'b0,uop_index_max})&inst_valid) 
-        uop_valid[i]  = inst_encoding_correct;
-      else
-        uop_valid[i]  = 'b0;
-    end
-  end
-
 `ifdef TB_SUPPORT
   // assign uop pc
   always_comb begin
@@ -3431,7 +3368,7 @@ module rvv_backend_decode_unit_ari
             VMXNOR,
             VWXUNARY0,
             VMUNARY0: begin
-              uop[i].uop_exe_unit     = ALU;
+              uop[i].uop_exe_unit = ALU;
             end
 
             VMUL,
@@ -3441,14 +3378,14 @@ module rvv_backend_decode_unit_ari
             VWMUL,
             VWMULU,
             VWMULSU: begin
-              uop[i].uop_exe_unit     = MUL;
+              uop[i].uop_exe_unit = MUL;
             end
 
             VDIVU,
             VDIV,
             VREMU,
             VREM: begin
-              uop[i].uop_exe_unit     = DIV;
+              uop[i].uop_exe_unit = DIV;
             end
             
             VMACC,
@@ -3459,7 +3396,7 @@ module rvv_backend_decode_unit_ari
             VWMACC,
             VWMACCSU,
             VWMACCUS: begin
-              uop[i].uop_exe_unit     = MAC;
+              uop[i].uop_exe_unit = MAC;
             end
 
             // reduction
@@ -3471,20 +3408,103 @@ module rvv_backend_decode_unit_ari
             VREDAND,
             VREDOR,
             VREDXOR: begin
-              uop[i].uop_exe_unit     = RDT;
+              uop[i].uop_exe_unit = RDT;
             end
 
             VSLIDE1UP,
             VSLIDE1DOWN,
             VCOMPRESS: begin
-              uop[i].uop_exe_unit     = PMT;
+              uop[i].uop_exe_unit = PMT;
             end
           endcase
         end
       endcase
     end
   end
- 
+
+// get the start number of uop_index
+  always_comb begin
+    if((funct6_ari.ari_funct6==VWXUNARY0)&(inst_funct3==OPMVV)&(vs1_opcode_vwxunary==VMV_X_S)) begin
+      uop_vstart = 'b0;
+    end
+    else begin
+      case(eew_max)
+        EEW8: begin
+          uop_vstart = csr_vstart[4 +: `UOP_INDEX_WIDTH];
+        end
+        EEW16: begin
+          uop_vstart = csr_vstart[3 +: `UOP_INDEX_WIDTH];
+        end
+        EEW32: begin
+          uop_vstart = csr_vstart[2 +: `UOP_INDEX_WIDTH];
+        end
+        default: begin
+          uop_vstart = 'b0;
+        end
+      endcase
+    end
+  end
+  
+  // select uop_vstart and uop_index_remain as the base uop_index
+  always_comb begin
+    // initial
+    uop_index_base = (uop_index_remain=='b0) ? uop_vstart : uop_index_remain;
+
+    case(1'b1)
+      valid_opi: begin
+        case(funct6_ari.ari_funct6)
+          VSLIDEUP_RGATHEREI16,
+          VRGATHER: begin
+            uop_index_base = uop_index_remain;
+          end
+        endcase
+      end
+
+      valid_opm: begin
+        case(funct6_ari.ari_funct6)
+          VSLIDE1UP: begin
+            uop_index_base = uop_index_remain;
+          end
+        endcase
+      end
+    endcase
+  end
+
+  // calculate the uop_index used in decoding uops 
+  for(j=0;j<`NUM_DE_UOP;j=j+1) begin: GET_UOP_INDEX
+    assign uop_index_current[j] = j[`UOP_INDEX_WIDTH:0]+uop_index_base;
+  end
+
+  // get the max uop index 
+  always_comb begin
+    uop_index_max = 'b0;
+    
+    case(emul_max)
+      EMUL1: begin
+        uop_index_max = 'b0;
+      end
+      EMUL2: begin
+        uop_index_max = 'd1;
+      end
+      EMUL4: begin
+        uop_index_max = 'd3;
+      end
+      EMUL8: begin
+        uop_index_max = 'd7;
+      end
+    endcase
+  end
+
+  // generate uop valid
+  always_comb begin        
+    for(int i=0;i<`NUM_DE_UOP;i=i+1) begin: GET_UOP_VALID
+      if ((uop_index_current[i]<={1'b0,uop_index_max})&inst_valid) 
+        uop_valid[i]  = inst_encoding_correct;
+      else
+        uop_valid[i]  = 'b0;
+    end
+  end
+
   // update uop class
   always_comb begin
     for(int i=0;i<`NUM_DE_UOP;i=i+1) begin: GET_UOP_CLASS
@@ -3789,7 +3809,7 @@ module rvv_backend_decode_unit_ari
       uop[i].vector_csr = vector_csr_ari;
 
       // update vstart of every uop
-      if(uop_index_current[i]!={1'b0,uop_vstart}) begin
+      if(uop_index_current[i]>{1'b0,uop_vstart}) begin
         case(1'b1)
           valid_opi: begin
             // OPI*
@@ -5166,18 +5186,42 @@ module rvv_backend_decode_unit_ari
     end
   end
 
-  // update uop index
+  // update first_uop valid
   always_comb begin
-    for(int i=0;i<`NUM_DE_UOP;i=i+1) begin: ASSIGN_UOP_INDEX
-      uop[i].uop_index = uop_index_current[i][`UOP_INDEX_WIDTH-1:0];
+    for(int i=0;i<`NUM_DE_UOP;i=i+1) begin: GET_UOP_FIRST
+      uop[i].first_uop_valid = uop_index_current[i][`UOP_INDEX_WIDTH-1:0] == uop_vstart;
+
+      case(1'b1)
+        valid_opi: begin
+          case(funct6_ari.ari_funct6)
+            VSLIDEUP_RGATHEREI16,
+            VRGATHER: begin
+              uop[i].first_uop_valid = uop_index_current[i][`UOP_INDEX_WIDTH-1:0] == 'b0;
+            end
+          endcase
+        end
+        valid_opm: begin
+          case(funct6_ari.ari_funct6)
+            VSLIDE1UP: begin
+              uop[i].first_uop_valid = uop_index_current[i][`UOP_INDEX_WIDTH-1:0] == 'b0;
+            end
+          endcase
+        end
+      endcase
     end
   end
 
   // update last_uop valid
   always_comb begin
     for(int i=0;i<`NUM_DE_UOP;i=i+1) begin: GET_UOP_LAST
-      uop[i].first_uop_valid = uop_index_current[i][`UOP_INDEX_WIDTH-1:0] == uop_vstart;
       uop[i].last_uop_valid = uop_index_current[i][`UOP_INDEX_WIDTH-1:0] == uop_index_max;
+    end
+  end
+
+  // update uop index
+  always_comb begin
+    for(int i=0;i<`NUM_DE_UOP;i=i+1) begin: ASSIGN_UOP_INDEX
+      uop[i].uop_index = uop_index_current[i][`UOP_INDEX_WIDTH-1:0];
     end
   end
 
