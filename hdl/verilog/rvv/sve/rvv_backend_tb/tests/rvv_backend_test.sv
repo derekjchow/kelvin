@@ -1756,27 +1756,25 @@ class alu_slide_test extends rvv_backend_test;
     rvs_vx_seq = alu_iterate_vx_seq::type_id::create("rvs_vx_seq", this);
     rvs_seq.run_inst_iter(VSLIDEUP_RGATHEREI16 , env.rvs_agt.rvs_sqr, 0);
     rvs_seq.run_inst_iter(VSLIDEDOWN , env.rvs_agt.rvs_sqr, 0);
-    rvs_seq.run_inst_iter(VSLIDEUP_RGATHEREI16 , env.rvs_agt.rvs_sqr, 0);
-    rvs_seq.run_inst_iter(VSLIDEDOWN , env.rvs_agt.rvs_sqr, 0);
     rvs_vx_seq.run_inst_iter(VSLIDE1UP , env.rvs_agt.rvs_sqr, 0);
     rvs_vx_seq.run_inst_iter(VSLIDE1DOWN , env.rvs_agt.rvs_sqr, 0);
-    rvs_seq.run_inst_iter(VSLIDEUP_RGATHEREI16 , env.rvs_agt.rvs_sqr, 1);
-    rvs_seq.run_inst_iter(VSLIDEDOWN , env.rvs_agt.rvs_sqr, 1);
     rvs_seq.run_inst_iter(VSLIDEUP_RGATHEREI16 , env.rvs_agt.rvs_sqr, 1);
     rvs_seq.run_inst_iter(VSLIDEDOWN , env.rvs_agt.rvs_sqr, 1);
     rvs_vx_seq.run_inst_iter(VSLIDE1UP , env.rvs_agt.rvs_sqr, 1);
     rvs_vx_seq.run_inst_iter(VSLIDE1DOWN , env.rvs_agt.rvs_sqr, 1);
 
 
-    rvs_seq.run_inst_iter(VSLIDEUP_RGATHEREI16 , env.rvs_agt.rvs_sqr, 100);
-    rvs_seq.run_inst_iter(VSLIDEDOWN , env.rvs_agt.rvs_sqr, 100);
+    rvs_seq.run_inst_rand(VSLIDEUP_RGATHEREI16 , env.rvs_agt.rvs_sqr, 100);
+    rvs_seq.run_inst_rand(VSLIDEDOWN , env.rvs_agt.rvs_sqr, 100);
+    rvs_vx_seq.run_inst_rand(VSLIDE1UP , env.rvs_agt.rvs_sqr, 100);
+    rvs_vx_seq.run_inst_rand(VSLIDE1DOWN , env.rvs_agt.rvs_sqr, 100);
 
     rvs_last_seq = alu_smoke_vx_seq::type_id::create("rvs_last_seq", this);
     rvs_last_seq.run_inst(VSLIDEUP_RGATHEREI16,env.rvs_agt.rvs_sqr);
     rvs_last_seq.run_inst(VSLIDEDOWN,env.rvs_agt.rvs_sqr);
     rvs_last_seq.run_inst(VSLIDE1UP,env.rvs_agt.rvs_sqr);
     rvs_last_seq.run_inst(VSLIDE1DOWN,env.rvs_agt.rvs_sqr);
-    phase.phase_done.set_drain_time(this, 1000ns);
+    phase.phase_done.set_drain_time(this, 2000ns);
     phase.drop_objection( .obj( this ) );
   endtask
 
@@ -1815,13 +1813,13 @@ class alu_gather_test extends rvv_backend_test;
 
     rvs_seq = alu_iterate_gather_vv_seq::type_id::create("rvs_seq", this);
     rvs_seq1 = alu_iterate_vv_vx_vui_seq::type_id::create("rvs_seq1", this);
+    rvs_seq.run_inst_rand(VSLIDEUP_RGATHEREI16, env.rvs_agt.rvs_sqr, 100);
+    rvs_seq1.run_inst_rand(VRGATHER, env.rvs_agt.rvs_sqr, 100);
+
     rvs_seq.run_inst_iter(VSLIDEUP_RGATHEREI16, env.rvs_agt.rvs_sqr, 0);
     rvs_seq1.run_inst_iter(VRGATHER, env.rvs_agt.rvs_sqr, 0);
     rvs_seq.run_inst_iter(VSLIDEUP_RGATHEREI16, env.rvs_agt.rvs_sqr, 1);
     rvs_seq1.run_inst_iter(VRGATHER, env.rvs_agt.rvs_sqr, 1);
-
-    rvs_seq.run_inst_rand(VSLIDEUP_RGATHEREI16, env.rvs_agt.rvs_sqr, 100);
-    rvs_seq1.run_inst_rand(VRGATHER, env.rvs_agt.rvs_sqr, 100);
 
     rvs_last_seq = alu_smoke_vv_seq::type_id::create("rvs_last_seq", this);
     rvs_last_seq.run_inst(VRGATHER,env.rvs_agt.rvs_sqr);

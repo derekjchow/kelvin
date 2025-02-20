@@ -2187,7 +2187,7 @@ module rvv_backend_pmtrdt_unit
         if (pmtrdt_uop.uop_funct3 == OPMVX) begin
           case (pmt_ctrl.pmt_opr)
             SLIDE_UP:begin
-              if (pmtrdt_uop.uop_index == 0)
+              if (uop_done_cnt_q == 0)
                 case (pmtrdt_uop.vs2_eew) // Permutation instruction: vd_eew == vs2_eew
                   EEW32:sel_scalar = 'hF;
                   EEW16:sel_scalar = 'h3;
@@ -2197,7 +2197,7 @@ module rvv_backend_pmtrdt_unit
                 sel_scalar = '0;
             end
             SLIDE_DOWN:begin
-              if (pmtrdt_uop.last_uop_valid)
+              if (uop_data[uop_done_cnt_q].last_uop_valid)
                 case (pmtrdt_uop.vs2_eew) // Permutation instruction: vd_eew == vs2_eew
                   EEW32:sel_scalar = 'hF << ((rdt_ctrl.vl-1)%(`VLENB/4))*4;
                   EEW16:sel_scalar = 'h3 << ((rdt_ctrl.vl-1)%(`VLENB/2))*2;
@@ -2231,7 +2231,7 @@ module rvv_backend_pmtrdt_unit
       assign pmt_res_en = pmt_go;
       for (i=0; i<`VLENB; i++) begin
         always_comb begin
-          if (sel_scalar[i]) pmt_res_d[i] = pmt_rs1_data[i%4];
+          if (sel_scalar[i]) pmt_res_d[i] = pmt_rs1_data[8*(i%4)+:8];
           else
             case (pmt_ctrl.pmt_opr)
               SLIDE_UP:begin
