@@ -1383,6 +1383,83 @@ class alu_iterate_vmerge_vmvv_seq extends alu_iterate_base_sequence;
 endclass: alu_iterate_vmerge_vmvv_seq
 
 //-----------------------------------------------------------
+// Iterate gathervv
+//-----------------------------------------------------------
+class alu_iterate_gather_vv_seq extends alu_iterate_base_sequence;
+  `uvm_object_utils(alu_iterate_gather_vv_seq)
+  `uvm_add_to_seq_lib(alu_iterate_gather_vv_seq,rvs_sequencer_sequence_library)
+    
+  function new(string name = "alu_iterate_gather_vv_seq");
+    super.new(name);
+	  `ifdef UVM_POST_VERSION_1_1
+      set_automatic_phase_objection(1);
+    `endif
+  endfunction:new
+
+  virtual task body();
+    if(rand_type == RAND) begin
+      repeat(inst_num) begin
+        req = new("req");
+        start_item(req);
+        assert(req.randomize() with {
+          // use_vlmax == 1;
+          pc == local::inst_cnt;
+
+          vtype.vlmul dist {
+            LMUL1_2 := 20,
+            LMUL1   := 20,
+            LMUL2   := 30,
+            LMUL4   := 15,
+            LMUL8   := 15 
+          };
+
+          inst_type == ALU;
+          alu_inst == local::alu_inst;
+
+          dest_type == VRF;
+          src2_type == VRF;
+          src1_type inside {VRF};
+        });
+        finish_item(req);
+        inst_cnt++;
+      end // repeat(inst_num)
+    end else begin
+      for(lmul = lmul.first(); lmul != lmul.last(); lmul =lmul.next()) begin
+        for(sew = sew.first(); sew != sew.last(); sew =sew.next()) begin
+          req = new("req");
+          start_item(req);
+          assert(req.randomize() with {
+            use_vlmax == 1;
+            pc == local::inst_cnt;
+
+            vtype.vsew ==  local::sew;
+ //           vtype.vlmul == local::lmul;
+            vtype.vlmul dist {
+            LMUL1_2 := 20,
+            LMUL1   := 20,
+            LMUL2   := 30,
+            LMUL4   := 15,
+            LMUL8   := 15 
+          };
+
+            inst_type == ALU;
+            alu_inst == local::alu_inst;
+
+            dest_type == VRF;
+            src2_type == VRF;
+            src1_type == VRF;
+            vm == local::vm;
+          });
+          finish_item(req);
+          inst_cnt++;
+        end // sew
+      end // lmul
+    end
+  endtask
+
+endclass: alu_iterate_gather_vv_seq
+
+//-----------------------------------------------------------
 // Iterate vcpop/vfirst
 //-----------------------------------------------------------
 class alu_iterate_vwxunary0_seq extends alu_iterate_base_sequence;

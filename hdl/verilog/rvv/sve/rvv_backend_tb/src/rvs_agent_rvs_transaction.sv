@@ -170,7 +170,7 @@ class rvs_transaction extends uvm_sequence_item;
                             VMERGE_VMVV, 
                             VSLL, VSRL, VSRA, VNSRL, VNSRA,
                             VSSRL, VSSRA, VNCLIPU, VNCLIP,
-                            VWREDSUMU, VWREDSUM,
+                            VWREDSUMU, VWREDSUM, VRGATHER,
                             VSMUL_VMVNRR})) 
         ->  (dest_type == VRF && src2_type == VRF && 
               ((alu_type == OPIVV && src1_type == VRF) || 
@@ -225,10 +225,19 @@ class rvs_transaction extends uvm_sequence_item;
               )
             );
 
-        (inst_type == ALU && alu_inst inside {VSLIDEUP_RGATHEREI16}) 
+            (inst_type == ALU && alu_inst inside {VSLIDEUP_RGATHEREI16}) 
         ->  (dest_type == VRF && src2_type == VRF && 
               ((alu_type == OPIVI && src1_type == IMM) || 
-               (alu_type == OPIVX && src1_type == XRF) 
+               (alu_type == OPIVX && src1_type == XRF) ||
+               (alu_type == OPIVV && src1_type == VRF)
+              )
+            );
+
+        (inst_type == ALU && alu_inst inside {VRGATHER}) 
+        ->  (dest_type == VRF && src2_type == VRF && 
+              ((alu_type == OPIVI && src1_type == UIMM) || 
+               (alu_type == OPIVX && src1_type == XRF) ||
+               (alu_type == OPIVV && src1_type == VRF)
               )
             );
 
@@ -352,12 +361,22 @@ class rvs_transaction extends uvm_sequence_item;
 
         (alu_inst == VXUNARY0 && src1_idx inside {VSEXT_VF4, VZEXT_VF4})
         ->  (vtype.vsew inside {SEW32} && vtype.vlmul inside {LMUL1,LMUL2,LMUL4,LMUL8});
+
+        // vrgather
+        (alu_inst == VSLIDEUP_RGATHEREI16 && alu_type inside {OPIVV})
+        ->  (vtype.vlmul inside {LMUL1_2,LMUL1,LMUL2,LMUL4,LMUL8});
+        
       }
     } else {
       // TODO
     }// if(!illegal_inst_en)
   }
 
+  constraint c_rs_data {
+  //slide
+      (alu_inst inside {VSLIDEUP_RGATHEREI16, VSLIDEDOWN, VSLIDE1UP, VSLIDE1DOWN} && alu_type inside {OPIVX, OPMVX})
+      -> (rs_data >=0 && rs_data <= 130);
+  }
 // Auto Field ---------------------------------------------------------
   `uvm_object_utils_begin(rvs_transaction) 
     `uvm_field_int(pc,UVM_ALL_ON)
