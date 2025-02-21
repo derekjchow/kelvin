@@ -35,6 +35,7 @@ chisel_library(
         "FifoX.scala",
         "FifoXe.scala",
         "IDiv.scala",
+        "KelvinArbiter.scala",
         "MathUtil.scala",
         "Slice.scala",
     ],
@@ -78,6 +79,16 @@ chisel_library(
     visibility = ["//visibility:public"],
     deps = [
         ":library",
+    ],
+)
+
+chisel_test(
+    name = "common_test",
+    srcs = [
+        "KelvinArbiterTest.scala",
+    ],
+    deps = [
+        ":common",
     ],
 )
 

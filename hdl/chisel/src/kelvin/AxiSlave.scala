@@ -36,7 +36,7 @@ class AxiSlave(p: Parameters) extends Module {
   })
 
   // Arbitrate Read/Write channels
-  val addrArbiter = Module(new RRArbiter(
+  val addrArbiter = Module(new KelvinRRArbiter(
       new AxiAddress(p.axi2AddrBits, p.axi2DataBits, p.axi2IdBits), 2))
   addrArbiter.io.in(0) <> Queue(io.axi.read.addr, 2)
   addrArbiter.io.in(1) <> Queue(io.axi.write.addr, 2)
