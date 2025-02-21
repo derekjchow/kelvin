@@ -3645,7 +3645,7 @@ module rvv_backend_decode_unit_ari
                 end
                 OPIVX,
                 OPIVI: begin
-                  uop[i].uop_class  = XVX;
+                  uop[i].uop_class  = VVX;
                 end
               endcase
             end
@@ -4397,6 +4397,14 @@ module rvv_backend_decode_unit_ari
                 end
               endcase
             end
+            VSLIDEUP_RGATHEREI16: begin
+              case(inst_funct3)
+                OPIVX,
+                OPIVI: begin
+                  uop[i].vs3_valid = 1'b1;
+                end
+              endcase
+            end
           endcase
         end
 
@@ -4417,7 +4425,6 @@ module rvv_backend_decode_unit_ari
                 end
               endcase
             end
-
             VWMACCUS: begin
               case(inst_funct3)
                 OPMVX: begin
@@ -4425,7 +4432,6 @@ module rvv_backend_decode_unit_ari
                 end
               endcase
             end
-
             VMAND,
             VMNAND,
             VMANDN,
@@ -4440,7 +4446,6 @@ module rvv_backend_decode_unit_ari
                 end
               endcase
             end
-
             VMUNARY0: begin
               case(inst_funct3)
                 OPMVV: begin
