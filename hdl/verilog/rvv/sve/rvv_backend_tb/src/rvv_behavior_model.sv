@@ -837,6 +837,17 @@ endclass : rvv_behavior_model
           continue;
       end
 
+        // vcompress vd overlaps 
+        if(inst_tr.inst_type == ALU && inst_tr.alu_inst == VCOMPRESS && inst_tr.dest_type == VRF && inst_tr.src2_type == VRF && inst_tr.src1_type == VRF &&
+            ((src2_reg_idx_base >= dest_reg_idx_base) && (src2_reg_idx_base+int'($ceil(src2_emul)) <= dest_reg_idx_base+int'($ceil(dest_emul))) || 
+           (src2_reg_idx_base < dest_reg_idx_base) && (src2_reg_idx_base+int'($ceil(src2_emul)) <= dest_reg_idx_base+int'($ceil(dest_emul))) ||
+            (src1_reg_idx_base >= dest_reg_idx_base) && (src1_reg_idx_base <= dest_reg_idx_base+int'($ceil(dest_emul))))
+           ) begin
+          `uvm_warning("MDL/INST_CHECKER",
+                       $sformatf("pc=0x%8x: Ch31.16.4. The lower part of dest vrf(v%0d~v%0d) overlaps the src2 vrf(v%0d~v%0d) in a vslide instruction. Ignored.",
+                       pc, dest_reg_idx_base, dest_reg_idx_base+int'($ceil(dest_emul))-1, src2_reg_idx_base, src2_reg_idx_base+int'($ceil(src2_emul))-1));
+          continue;
+        end
 
 
 
@@ -2996,11 +3007,11 @@ endclass: pmt_processor
         slide_first_data = (rvm.vstart >= 1) ? rvm.vstart : 1;
         if(rvm.vtype.vsew == SEW8) begin 
                 `uvm_info("VSLIDE1UP_F",$sformatf("des vrf[%0d] == %0x, xrf[%0x] == %0x", dest_reg_idx, rvm.vrf[dest_reg_idx], src1_reg_idx, src1_elm_data),UVM_LOW)
-                if(rvm.vrf[0][0] & (~vm)) begin
+                if((rvm.vstart==0) & rvm.vrf[0][0] & (~vm)) begin
                     vrf_sew8[dest_reg_idx*16] =  src1_elm_data ;
                     vrf_bit_strobe_temp_sew8[dest_reg_idx*16] = 8'hff;
                 end
-                else if(vm) begin
+                else if((rvm.vstart==0)&vm) begin
                     vrf_sew8[dest_reg_idx*16] =  src1_elm_data ;
                     vrf_bit_strobe_temp_sew8[dest_reg_idx*16] = 8'hff;
                 end
@@ -3018,11 +3029,11 @@ endclass: pmt_processor
                 end
         end
         else if(rvm.vtype.vsew == SEW16) begin 
-                if(rvm.vrf[0][0] & (~vm)) begin
+                if((rvm.vstart==0)&rvm.vrf[0][0] & (~vm)) begin
                     vrf_sew16[dest_reg_idx*8] = src1_elm_data ;
                     vrf_bit_strobe_temp_sew16[dest_reg_idx*8] = 16'hffff;
                 end
-                else if(vm) begin
+                else if((rvm.vstart==0)&vm) begin
                     vrf_sew16[dest_reg_idx*8] = src1_elm_data ;
                     vrf_bit_strobe_temp_sew16[dest_reg_idx*8] = 16'hffff;
                 end
@@ -3040,11 +3051,11 @@ endclass: pmt_processor
                 end
         end
         else if(rvm.vtype.vsew == SEW32) begin 
-                if(rvm.vrf[0][0] & (~vm)) begin
+                if((rvm.vstart==0)&rvm.vrf[0][0] & (~vm)) begin
                     vrf_sew32[dest_reg_idx*4] =  src1_elm_data ;
                     vrf_bit_strobe_temp_sew32[dest_reg_idx*4] = 32'hffffffff;
                 end
-                else if(vm) begin
+                else if((rvm.vstart==0)&vm) begin
                     vrf_sew32[dest_reg_idx*4] =  src1_elm_data ;
                     vrf_bit_strobe_temp_sew32[dest_reg_idx*4] = 32'hffffffff;
                 end
