@@ -364,7 +364,9 @@ class rvs_transaction extends uvm_sequence_item;
 
         // vrgather
         (alu_inst == VSLIDEUP_RGATHEREI16 && alu_type inside {OPIVV})
-        ->  (vtype.vlmul inside {LMUL1_2,LMUL1,LMUL2,LMUL4,LMUL8});
+        ->  ((vtype.vlmul inside {LMUL1_2,LMUL1,LMUL2,LMUL4,LMUL8} && vtype.vsew inside {SEW16,SEW32}) ||
+            (vtype.vlmul inside {LMUL1_4,LMUL1_2,LMUL1,LMUL2,LMUL4} && vtype.vsew inside {SEW8,SEW16})
+        );
         
       }
     } else {
@@ -674,7 +676,20 @@ function void rvs_transaction::legal_inst_gen();
           dest_emul = EMUL1;
           src2_emul = EMUL1;
         end
-      end
+     end 
+    // 1.5 Permutation Instructions.
+     if(alu_inst == VSLIDEUP_RGATHEREI16 && alu_type == OPIVV) begin
+        src1_eew = EEW16;
+        src1_emul = src1_emul * src1_eew / eew;
+        if(src1_emul > EMUL8) begin
+        
+        end
+     end
+     if(alu_inst == VCOMPRESS && alu_type == OPMVV) begin
+        src1_eew = EEW1;
+        src1_emul = EMUL1;
+     end
+
     end // ALU
   endcase
   // 1.4 dest is xrf
@@ -745,8 +760,32 @@ function void rvs_transaction::legal_inst_gen();
   if(dest_type == VRF && vm == 0 && dest_idx == 0 && dest_eew != EEW1) begin
     dest_idx = int'($ceil(dest_emul));
   end
+ // vd Overlap vs1 vs2 for 
+  if(dest_type == VRF && src1_type == VRF && src2_type == VRF && inst_type == ALU && 
+  alu_inst inside {VCOMPRESS,VSLIDEUP_RGATHEREI16,VRGATHER} && alu_type inside {OPIVV,OPMVV}) begin
+      if(((dest_idx >= src1_idx) && (dest_idx < src1_idx+int'($ceil(src1_emul)))) ||
+          ((dest_idx >= src2_idx) && (dest_idx < src2_idx+int'($ceil(src2_emul)))) ||
+          ((dest_idx < src1_idx) && (dest_idx+int'($ceil(dest_emul)) > src1_idx)) ||
+          ((dest_idx < src2_idx) && (dest_idx+int'($ceil(dest_emul)) > src2_idx))
+      ) begin
+        dest_idx = 24;
+        src1_idx = 8;
+        src2_idx = 16;
+      end
+  end
+ // vd Overlap vs2 
+  if(dest_type == VRF && src2_type == VRF && inst_type == ALU && 
+  alu_inst inside {VSLIDEUP_RGATHEREI16,VSLIDE1UP,VRGATHER} && alu_type inside {OPMVX,OPIVX,OPIVI}) begin
+    if(((dest_idx >= src2_idx) && (dest_idx < src2_idx+int'($ceil(src2_emul)))) ||
+          ((dest_idx < src2_idx) && (dest_idx+int'($ceil(dest_emul)) > src2_idx))
+      ) begin
+        dest_idx = 24;
+        src2_idx = 8;
+    end
+  end
 
-  
+
+
   `uvm_info("TR_GEN",$sformatf("pc=0x%8x, dest_idx=%0d, src2_idx=%0d", pc, dest_idx, src2_idx), UVM_HIGH)
   `uvm_info("TR_GEN",$sformatf("pc=0x%8x, dest_eew=%0d, src2_eew=%0d", pc, dest_eew, src2_eew), UVM_HIGH)
   `uvm_info("TR_GEN",$sformatf("pc=0x%8x, dest_emul=%0d, src2_emul=%0d", pc, dest_emul, src2_emul), UVM_HIGH)
