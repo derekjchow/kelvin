@@ -65,4 +65,13 @@ typedef struct packed {
   logic [`VLEN-1:0]         vs3_data;
 } PMT_CTRL_t;
 
+typedef struct packed {
+  // signals from uop
+`ifdef TB_SUPPORT
+  logic [`PC_WIDTH-1:0]     uop_pc;
+`endif
+  logic [`ROB_DEPTH-1:0]    rob_entry;
+  logic [`VLEN-1:0]         vs3_data;
+  logic                     last_uop_valid;
+} COMPRESS_CTRL_t;
 `endif

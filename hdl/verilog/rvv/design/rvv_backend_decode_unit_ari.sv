@@ -3004,7 +3004,7 @@ module rvv_backend_decode_unit_ari
             case(inst_funct3)
               OPMVV: begin
                 // destination register group cannot overlap the source register group
-                check_special = (csr_vstart=='b0)&check_vd_overlap_v0&check_vd_overlap_vs2&check_vd_overlap_vs1;
+                check_special = (csr_vstart=='b0)&inst_vm&check_vd_overlap_vs2&check_vd_overlap_vs1;
               end
             endcase
           end
@@ -3729,11 +3729,22 @@ module rvv_backend_decode_unit_ari
             VREDMIN,
             VREDAND,
             VREDOR,
-            VREDXOR,
-            VCOMPRESS: begin
+            VREDXOR: begin
               case(inst_funct3)
                 OPMVV: begin
                   uop[i].uop_class  = XVV;
+                end
+              endcase
+            end
+
+            // permutation
+            VCOMPRESS: begin
+              case(inst_funct3)
+                OPMVV: begin
+                  if (uop_index_current[i][`UOP_INDEX_WIDTH-1:0] == uop_vstart) 
+                    uop[i].uop_class  = VVV;
+                  else
+                    uop[i].uop_class  = VVX;
                 end
               endcase
             end
@@ -4439,7 +4450,8 @@ module rvv_backend_decode_unit_ari
             VMOR,
             VMNOR,
             VMORN,
-            VMXNOR: begin
+            VMXNOR,
+            VCOMPRESS: begin
               case(inst_funct3)
                 OPMVV: begin
                   uop[i].vs3_valid = 1'b1;
@@ -4619,8 +4631,7 @@ module rvv_backend_decode_unit_ari
             VAADDU,
             VAADD,
             VASUBU,
-            VASUB,
-            VCOMPRESS: begin
+            VASUB: begin
               case(inst_funct3)
                 OPMVV: begin
                   uop[i].vs1              = inst_vs1+uop_index_current[i][`UOP_INDEX_WIDTH-1:0];
@@ -4661,6 +4672,18 @@ module rvv_backend_decode_unit_ari
                   uop[i].vs1              = inst_vs1;
                   uop[i].vs1_eew          = eew_vs1;
                   uop[i].vs1_index_valid  = 1'b1;
+                end
+              endcase
+            end
+
+            VCOMPRESS: begin
+              case(inst_funct3)
+                OPMVV: begin
+                  if (uop_index_current[i][`UOP_INDEX_WIDTH-1:0] == uop_vstart) begin
+                    uop[i].vs1              = inst_vs1;
+                    uop[i].vs1_eew          = eew_vs1;
+                    uop[i].vs1_index_valid  = 1'b1;        
+                  end
                 end
               endcase
             end

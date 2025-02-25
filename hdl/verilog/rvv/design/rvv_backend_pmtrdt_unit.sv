@@ -60,6 +60,9 @@ module rvv_backend_pmtrdt_unit
   PMT_CTRL_t                pmt_ctrl, pmt_ctrl_q; // PMT control signals
   logic                     pmt_ctrl_reg_en, pmt_ctrl_reg_clr;
 
+  COMPRESS_CTRL_t           compress_ctrl_ex0, compress_ctrl_ex1;
+  logic                     compress_ctrl_push, compress_ctrl_pop;
+
   // Reduction operation
   logic                     red_widen_sum_flag;
   logic [`VLEN-1:0]         widen_vs2;       // vs2 data after being widen if need
@@ -122,8 +125,9 @@ module rvv_backend_pmtrdt_unit
   logic [`VLENB-1:0][VLENB_WIDTH:0] compress_offset;
   logic [`VLEN-1:0]         compress_mask_d, compress_mask_q; // register vs1_data for compress mask
   logic                     compress_mask_en;
-  logic [VLENB_WIDTH:0]     compress_cnt_d, compress_cnt_q;   // compress counter
-  logic                     compress_cnt_en;
+  logic [VLENB_WIDTH:0]     compress_cnt_d, compress_cnt_q, compress_cnt_qq;   // compress counter
+  logic                     compress_cnt_ge_vlenb, compress_cnt_gt_vlenb;
+  logic                     compress_cnt_en, compress_cnt_clr;
   logic [`VLENB-1:0][7:0]   compress_value;
   logic [2*`VLENB-1:0][7:0] compress_res_d, compress_res_q;
   logic [2*`VLENB-1:0]      compress_res_en;
@@ -229,7 +233,8 @@ module rvv_backend_pmtrdt_unit
   // when to clear rdt_ctrl reg?
   // if ex0 stage has no uop to execute!
   assign rdt_ctrl_reg_en = pmtrdt_uop_valid & pmtrdt_uop_ready;
-  assign rdt_ctrl_reg_clr = !rdt_ctrl_reg_en & rdt_ctrl_q.last_uop_valid;
+  assign rdt_ctrl_reg_clr = rdt_ctrl_q.compress ? !rdt_ctrl_reg_en & rdt_ctrl_q.last_uop_valid & compress_ctrl_ex1.last_uop_valid
+                                                : !rdt_ctrl_reg_en & rdt_ctrl_q.last_uop_valid;
   cdffr #(.WIDTH($bits(RDT_CTRL_t))) rdt_ctrl_reg (.q(rdt_ctrl_q), .d(rdt_ctrl), .c(rdt_ctrl_reg_clr), .e(rdt_ctrl_reg_en), .clk(clk), .rst_n(rst_n));
 
   // pmt_opr: permutation operation
@@ -2272,7 +2277,7 @@ module rvv_backend_pmtrdt_unit
       assign pmt_uop_done_cnt_d = pmt_uop_done_cnt_q + 1'b1;
       cdffr #(.WIDTH(`UOP_INDEX_WIDTH)) pmt_uop_done_cnt_reg (.q(pmt_uop_done_cnt_q), .d(pmt_uop_done_cnt_d), .c(uop_data[pmt_uop_done_cnt_q].last_uop_valid), .e(pmt_go), .clk(clk), .rst_n(rst_n));
 
-    // Compress instruction
+  // Compress instruction
     // compress instruction is a specified instruction in PMT.
     // the vl of vd in compress can not be acknowledged untill decode vs1 value.
       // compress_mask_d is driven from shifted vs1_data based on vs2_eew
@@ -2308,9 +2313,9 @@ module rvv_backend_pmtrdt_unit
       // 0: tail element; 1: body element
       always_comb begin
         case (pmtrdt_uop.vs2_eew)
-          EEW32:compress_body = ~({`VLENB{1'b1}} << (4*(pmtrdt_uop.vl - pmtrdt_uop.uop_index*`VLENB/4)));
-          EEW16:compress_body = ~({`VLENB{1'b1}} << (2*(pmtrdt_uop.vl - pmtrdt_uop.uop_index*`VLENB/2)));
-          default:compress_body = ~({`VLENB{1'b1}} << (pmtrdt_uop.vl - pmtrdt_uop.uop_index*`VLENB));
+          EEW32:compress_body = (pmtrdt_uop.vl > pmtrdt_uop.uop_index*`VLENB/4) ? ~({`VLENB{1'b1}} << (4*(pmtrdt_uop.vl - pmtrdt_uop.uop_index*`VLENB/4))) : '0;
+          EEW16:compress_body = (pmtrdt_uop.vl > pmtrdt_uop.uop_index*`VLENB/2) ? ~({`VLENB{1'b1}} << (2*(pmtrdt_uop.vl - pmtrdt_uop.uop_index*`VLENB/2))) : '0;
+          default:compress_body = (pmtrdt_uop.vl > pmtrdt_uop.uop_index*`VLENB) ? ~({`VLENB{1'b1}} << (pmtrdt_uop.vl - pmtrdt_uop.uop_index*`VLENB)) : '0;
         endcase
       end
 
@@ -2320,7 +2325,13 @@ module rvv_backend_pmtrdt_unit
         else                            compress_cnt_d = compress_cnt_q + f_sum(compress_enable & compress_body);
       end
       assign compress_cnt_en = pmtrdt_uop_valid & pmtrdt_uop_ready;
-      cdffr #(.WIDTH(VLENB_WIDTH+1)) compress_cnt_reg (.q(compress_cnt_q), .d(compress_cnt_d), .c(1'b0), .e(compress_cnt_en), .clk(clk), .rst_n(rst_n));
+      assign compress_cnt_clr =  ~compress_cnt_gt_vlenb & rdt_ctrl_q.last_uop_valid; 
+      cdffr #(.WIDTH(VLENB_WIDTH+1)) compress_cnt_reg (.q(compress_cnt_q), .d(compress_cnt_d), .c(~compress_cnt_en & compress_cnt_clr), .e(compress_cnt_en), .clk(clk), .rst_n(rst_n));
+      cdffr #(.WIDTH(VLENB_WIDTH+1)) compress_cnt_reg_reg (.q(compress_cnt_qq), .d(compress_cnt_q), .c(compress_cnt_clr), .e(1'b1), .clk(clk), .rst_n(rst_n));
+      
+      // set if compress more than or equal 16 byte and then write the result to ROB
+      assign compress_cnt_ge_vlenb = compress_cnt_qq[VLENB_WIDTH] ^ compress_cnt_q[VLENB_WIDTH];
+      assign compress_cnt_gt_vlenb = compress_cnt_ge_vlenb & (|compress_cnt_q[VLENB_WIDTH-1:0]);
 
       // compress_offset select elements of vs2_data and compress to compress_value
       assign compress_offset = f_compress_offset(compress_enable);
@@ -2330,30 +2341,63 @@ module rvv_backend_pmtrdt_unit
 
       // compress_res is driven by compress_value and compress_cnt.
       always_comb begin
-        if (pmtrdt_uop.uop_index == '0) compress_res_d = {'0, compress_value};
+        if (pmtrdt_uop.first_uop_valid) compress_res_d = {'0, compress_value};
         else                            compress_res_d = f_circular_shift(compress_value, compress_cnt_q);
       end
 
       // compress_res_en
       always_comb begin
-        if (pmtrdt_uop.uop_index == '0) compress_res_en = {'0, f_pack_1s(compress_enable)};
-        else                            compress_res_en = f_circular_en(compress_enable,compress_cnt_q);
+        if (compress_ctrl_push)
+          if (pmtrdt_uop.first_uop_valid) compress_res_en = {'0, f_pack_1s(compress_enable)};
+          else                            compress_res_en = f_circular_en(compress_enable,compress_cnt_q);
+        else 
+          compress_res_en = '0;
       end
       for (i=0; i<2*`VLENB; i++) cdffr #(.WIDTH(8)) compress_res_reg (.q(compress_res_q[i]), .d(compress_res_d[i]), .c(1'b0), .e(compress_res_en[i]), .clk(clk), .rst_n(rst_n));
 
       // pmtrdt_res_compress
       always_comb begin
-        if (rdt_ctrl_q.last_uop_valid)
-          if (compress_cnt_q[VLENB_WIDTH]) 
-            pmtrdt_res_compress = f_res_compress_merge(rdt_ctrl_q.vs3_data, compress_res_q[`VLENB+:`VLENB], compress_cnt_q[VLENB_WIDTH-1:0]);
+        if (rdt_ctrl_q.last_uop_valid) begin
+          if (compress_cnt_qq[VLENB_WIDTH]) 
+            pmtrdt_res_compress = f_res_compress_merge(compress_ctrl_ex1.vs3_data, compress_res_q[`VLENB+:`VLENB], (compress_cnt_q[VLENB_WIDTH:0] - `VLENB));
           else
-            pmtrdt_res_compress = f_res_compress_merge(rdt_ctrl_q.vs3_data, compress_res_q[0+:`VLENB], compress_cnt_q[VLENB_WIDTH-1:0]);
-        else
-          if (compress_cnt_q[VLENB_WIDTH])
+            pmtrdt_res_compress = f_res_compress_merge(compress_ctrl_ex1.vs3_data, compress_res_q[0+:`VLENB], compress_cnt_q[VLENB_WIDTH:0]);
+        end else begin
+          if (compress_cnt_qq[VLENB_WIDTH])
             pmtrdt_res_compress = compress_res_q[2*`VLENB-1:`VLENB];
           else
             pmtrdt_res_compress = compress_res_q[`VLENB-1:0];
+        end
       end
+
+      // compress control fifo
+      // based on the value of vs1, one or multiple uop(s) writes one vd.
+      // the remaining elements of vd are treated as tail elements.
+    `ifdef TB_SUPPORT
+      assign compress_ctrl_ex0.uop_pc = pmtrdt_uop.uop_pc;
+    `endif
+      assign compress_ctrl_ex0.rob_entry      = pmtrdt_uop.rob_entry;
+      assign compress_ctrl_ex0.vs3_data       = pmtrdt_uop.vs3_data;
+      assign compress_ctrl_ex0.last_uop_valid = pmtrdt_uop.last_uop_valid;
+
+      assign compress_ctrl_push = pmtrdt_uop_valid & pmtrdt_uop_ready & rdt_ctrl.compress;
+      assign compress_ctrl_pop  = (compress_cnt_ge_vlenb | rdt_ctrl_q.last_uop_valid);
+      fifo_flopped #(
+        .DWIDTH ($bits(COMPRESS_CTRL_t)),
+        .DEPTH  (`EMUL_MAX)
+      ) compress_ctrl_fifo (
+        // output
+        .fifo_outData   (compress_ctrl_ex1),
+        .fifo_full      (),
+        .fifo_empty     (),
+        .fifo_idle      (),
+        // input
+        .fifo_inData    (compress_ctrl_ex0),
+        .single_push    (compress_ctrl_push),
+        .single_pop     (compress_ctrl_pop),
+        .clk            (clk),
+        .rst_n          (rst_n)
+      );
 
     end // if (GEN_PMT == 1'b1) 
   endgenerate
@@ -2361,22 +2405,22 @@ module rvv_backend_pmtrdt_unit
 // output result
   always_comb begin
     case (uop_type_q)
-      PERMUTATION: pmtrdt_res_valid = rdt_ctrl_q.compress ? (&compress_cnt_q[VLENB_WIDTH-1:0] | rdt_ctrl_q.last_uop_valid)
-                                                      : pmt_go_q;
+      PERMUTATION: pmtrdt_res_valid = rdt_ctrl_q.compress ? compress_ctrl_pop
+                                                          : pmt_go_q;
       default: pmtrdt_res_valid = rdt_ctrl_q.last_uop_valid;
     endcase
   end
 `ifdef TB_SUPPORT
   always_comb begin
     case (uop_type_q)
-      PERMUTATION: pmtrdt_res.uop_pc = rdt_ctrl_q.compress ? rdt_ctrl_q.uop_pc : pmt_ctrl_q.uop_pc;
+      PERMUTATION: pmtrdt_res.uop_pc = rdt_ctrl_q.compress ? compress_ctrl_ex1.uop_pc : pmt_ctrl_q.uop_pc;
       default: pmtrdt_res.uop_pc = rdt_ctrl_q.uop_pc; 
     endcase
   end
 `endif
   always_comb begin
     case (uop_type_q)
-      PERMUTATION:pmtrdt_res.rob_entry = rdt_ctrl_q.compress ? rdt_ctrl_q.rob_entry : pmt_ctrl_q.rob_entry;
+      PERMUTATION:pmtrdt_res.rob_entry = rdt_ctrl_q.compress ? compress_ctrl_ex1.rob_entry : pmt_ctrl_q.rob_entry;
       default:pmtrdt_res.rob_entry = rdt_ctrl_q.rob_entry;
     endcase
   end
@@ -2400,8 +2444,8 @@ module rvv_backend_pmtrdt_unit
   cdffr #(.WIDTH(1)) wredsum_flag_reg (.q(red_widen_sum_flag), .d(~red_widen_sum_flag), .c(1'b0), .e(rdt_ctrl.widen & pmtrdt_uop_valid), .clk(clk), .rst_n(rst_n));
   always_comb begin
     case (uop_type)
-      PERMUTATION: pmtrdt_uop_ready = rdt_ctrl.compress ? 1'b1
-                                                    : uop_data[pmt_uop_done_cnt_q].last_uop_valid || ~uop_data[0].first_uop_valid;
+      PERMUTATION: pmtrdt_uop_ready = rdt_ctrl.compress ? (compress_ctrl_ex1.last_uop_valid | ~rdt_ctrl_q.last_uop_valid)
+                                                        : uop_data[pmt_uop_done_cnt_q].last_uop_valid || ~uop_data[0].first_uop_valid;
       REDUCTION:
         if (rdt_ctrl.widen) pmtrdt_uop_ready = red_widen_sum_flag;
         else            pmtrdt_uop_ready = 1'b1;
@@ -2498,7 +2542,7 @@ module rvv_backend_pmtrdt_unit
   function [`VLEN-1:0] f_res_compress_merge;
     input [`VLENB-1:0][7:0] raw_data;
     input [`VLENB-1:0][7:0] res_data;
-    input [VLENB_WIDTH-1:0] valid_num;
+    input [VLENB_WIDTH:0] valid_num;
 
     int                     i;
     logic [`VLENB-1:0]      valid;

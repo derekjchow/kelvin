@@ -40,7 +40,6 @@ UNUSED = $(DESIGN_PATH)/Aligner.sv	\
 UNUSED += $(STD_PATH)/fifo_flopped_2w2r.sv	\
 					$(STD_PATH)/fifo_flopped_4w2r.sv	\
 					$(STD_PATH)/openFifo8_flopped_2w2r.sv	\
-					$(STD_PATH)/fifo_flopped.sv	\
 					$(STD_PATH)/openFifo4_flopped_ptr.sv
 					
 
