@@ -133,6 +133,9 @@ class rvs_transaction extends uvm_sequence_item;
 
       (inst_type == ALU && alu_inst inside {VWREDSUM, VWREDSUMU}) 
       ->  (vstart == 0);
+
+      (inst_type == ALU && alu_inst inside {VCOMPRESS}) 
+      ->  (vstart == 0);
     } else {
     //TODO  
     }
