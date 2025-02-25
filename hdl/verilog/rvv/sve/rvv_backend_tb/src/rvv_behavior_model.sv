@@ -590,6 +590,10 @@ endclass : rvv_behavior_model
                 //src1_eew  = EEW32; // rs1 as base address
                 //src1_emul = LMUL1;
               end 
+            // vcompress vs1 emul == 1;
+             if(inst_tr.inst_type == ALU && inst_tr.alu_inst == VCOMPRESS) begin
+                 src1_emul = EMUL1;
+             end
             end // is_permutation_inst
           end // ALU
           default: begin
@@ -839,16 +843,21 @@ endclass : rvv_behavior_model
 
         // vcompress vd overlaps 
         if(inst_tr.inst_type == ALU && inst_tr.alu_inst == VCOMPRESS && inst_tr.dest_type == VRF && inst_tr.src2_type == VRF && inst_tr.src1_type == VRF &&
-            ((src2_reg_idx_base >= dest_reg_idx_base) && (src2_reg_idx_base+int'($ceil(src2_emul)) <= dest_reg_idx_base+int'($ceil(dest_emul))) || 
-           (src2_reg_idx_base < dest_reg_idx_base) && (src2_reg_idx_base+int'($ceil(src2_emul)) <= dest_reg_idx_base+int'($ceil(dest_emul))) ||
-            (src1_reg_idx_base >= dest_reg_idx_base) && (src1_reg_idx_base <= dest_reg_idx_base+int'($ceil(dest_emul))))
+            ((src2_reg_idx_base >= dest_reg_idx_base) && (src2_reg_idx_base < dest_reg_idx_base+int'($ceil(dest_emul))) || 
+            ((src2_reg_idx_base < dest_reg_idx_base) && (src2_reg_idx_base+int'($ceil(src2_emul)) > dest_reg_idx_base)) ||
+            ((src1_reg_idx_base < dest_reg_idx_base) && (src1_reg_idx_base+int'($ceil(src1_emul)) > dest_reg_idx_base)) ||
+            ((src1_reg_idx_base >= dest_reg_idx_base) && (src1_reg_idx_base < dest_reg_idx_base+int'($ceil(dest_emul)))))
            ) begin
           `uvm_warning("MDL/INST_CHECKER",
                        $sformatf("pc=0x%8x: Ch31.16.4. The lower part of dest vrf(v%0d~v%0d) overlaps the src2 vrf(v%0d~v%0d) in a vslide instruction. Ignored.",
                        pc, dest_reg_idx_base, dest_reg_idx_base+int'($ceil(dest_emul))-1, src2_reg_idx_base, src2_reg_idx_base+int'($ceil(src2_emul))-1));
           continue;
         end
-
+        // vcompress vstart!=0 will discard
+        if(inst_tr.inst_type == ALU && inst_tr.alu_inst == VCOMPRESS && (inst_tr.vstart != 0)
+           ) begin
+          continue;
+      end
 
 
 
