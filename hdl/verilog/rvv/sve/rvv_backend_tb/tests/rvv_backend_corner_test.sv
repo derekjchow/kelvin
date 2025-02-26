@@ -29,7 +29,6 @@ class alu_div_zero_seq extends base_sequence;
 
         dest_type == VRF; dest_idx inside {[3:31]};
         src2_type == VRF; src2_idx inside {[3:31]};
-        src1_type dist {VRF:=50, XRF:=50};
         (src1_type == VRF) -> (src1_idx dist{ 2:=95, [3:31]:/5});
         (src1_type == XRF) -> (rs_data dist {0:=95, [1:$]:/5});
         vm dist {1:=80, 0:=20}; // to do more calcualtion

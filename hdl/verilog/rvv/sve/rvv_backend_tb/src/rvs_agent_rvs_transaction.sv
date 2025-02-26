@@ -84,6 +84,24 @@ class rvs_transaction extends uvm_sequence_item;
   // TODO
 // Constrain ----------------------------------------------------------
 
+  constraint c_solve_order {
+    solve vl before vstart;
+
+    solve inst_type before src3_type;
+    solve inst_type before alu_inst;
+    solve inst_type before lsu_inst;
+    
+    solve alu_inst before dest_type;
+    solve alu_inst before src2_type;
+    solve alu_inst before src1_type;
+    solve dest_type before alu_type;
+    solve src2_type before alu_type;
+    solve src1_type before alu_type;
+    solve dest_type before dest_idx;
+    solve src2_type before src2_idx;
+    solve src1_type before src1_idx;
+  }
+
   constraint c_ill_rate {
     illegal_inst_en dist {
       1 := illegal_rate,
@@ -140,7 +158,6 @@ class rvs_transaction extends uvm_sequence_item;
     //TODO  
     }
 
-    solve vl before vstart;
 
   }
 
@@ -339,7 +356,6 @@ class rvs_transaction extends uvm_sequence_item;
     }// if(!illegal_inst_en)
 
     (inst_type == ALU) -> (src3_type == UNUSE);
-    solve inst_type before src3_type;
   }
 
   constraint c_sewlmul {
