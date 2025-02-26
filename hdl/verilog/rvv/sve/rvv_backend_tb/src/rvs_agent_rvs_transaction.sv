@@ -191,7 +191,8 @@ class rvs_transaction extends uvm_sequence_item;
                             VSLL, VSRL, VSRA, VNSRL, VNSRA,
                             VSSRL, VSSRA, VNCLIPU, VNCLIP,
                             VWREDSUMU, VWREDSUM, VRGATHER,
-                            VSMUL_VMVNRR})) 
+                            VSMUL_VMVNRR,
+                            VSLIDEDOWN})) 
         ->  (dest_type == VRF && src2_type == VRF && 
               ((alu_type == OPIVV && src1_type == VRF) || 
                (alu_type == OPIVX && src1_type == XRF) || 
@@ -245,15 +246,14 @@ class rvs_transaction extends uvm_sequence_item;
               )
             );
 
-            (inst_type == ALU && alu_inst inside {VSLIDEUP_RGATHEREI16}) 
+        (alu_inst inside {VSLIDEDOWN}) 
         ->  (dest_type == VRF && src2_type == VRF && 
               ((alu_type == OPIVI && src1_type == IMM) || 
-               (alu_type == OPIVX && src1_type == XRF) ||
-               (alu_type == OPIVV && src1_type == VRF)
+               (alu_type == OPIVX && src1_type == XRF)
               )
             );
 
-        (inst_type == ALU && alu_inst inside {VRGATHER}) 
+        (alu_inst inside {VRGATHER}) 
         ->  (dest_type == VRF && src2_type == VRF && 
               ((alu_type == OPIVI && src1_type == UIMM) || 
                (alu_type == OPIVX && src1_type == XRF) ||
@@ -277,6 +277,7 @@ class rvs_transaction extends uvm_sequence_item;
                             VWMACCUS,
                             VREDSUM, VREDAND, VREDOR, VREDXOR, 
                             VREDMINU,VREDMIN,VREDMAXU,VREDMAX,
+                            VSLIDE1UP, VSLIDE1DOWN,
                             VCOMPRESS})) 
         ->  (dest_type == VRF && src2_type == VRF && 
               ((alu_type == OPMVV && src1_type == VRF) || 
@@ -325,6 +326,11 @@ class rvs_transaction extends uvm_sequence_item;
               (alu_type == OPMVV && src1_type == SCALAR)
             );
 
+        (alu_inst inside {VSLIDE1UP, VSLIDE1DOWN}) 
+        ->  (dest_type == VRF && src2_type == VRF && 
+              ((alu_type == OPMVX && src1_type == XRF) 
+              )
+            );
         
         (alu_inst inside {VCOMPRESS}) 
         ->  (dest_type == VRF && src2_type == VRF && 
@@ -853,10 +859,21 @@ function void rvs_transaction::asm_string_gen();
       end else if(alu_inst inside {VMUNARY0}) begin
         inst = src1_func_vmunary0.name();
       end else if(alu_inst inside {VSMUL_VMVNRR} && alu_type == OPIVI ) begin
-        if(src1_idx inside{0,1,3,7})
-          inst = $sformatf("vmv%0dr.v",src1_idx+1);
+        if(alu_type inside {OPIVI}) begin
+          if(src1_idx inside{0,1,3,7})
+            inst = $sformatf("vmv%0dr.v",src1_idx+1);
+          else
+            inst = "vmv?r.v";
+        end else if(alu_type inside {OPIVV, OPIVX}) begin
+          inst = "vsmul";
+        end
+      end else if(alu_inst inside {VSLIDEUP_RGATHEREI16}) begin
+        if(alu_type inside {OPIVX,OPIVI})
+          inst = "vslideup";
+        else if(alu_type inside {OPIVV})
+          inst = "vrgatheri16";
         else
-          inst = "vmv?r.v";
+          inst = "?";
       end else begin
         inst = this.alu_inst.name();
       end

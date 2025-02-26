@@ -319,15 +319,15 @@ sub ForkCMD {
     } elsif ($pid == 0) {
       my $status =0; 
       print "(PID $$) Command start: $cmd\n";
-      print $fh_regLog "(PID $$) Command start: $cmd\n";
+      # print $fh_regLog "(PID $$) Command start: $cmd\n";
       $status = system($cmd);
       if ($status == 0) {
         print "(PID $$) Command completed successfully: $cmd\n";
-        print $fh_regLog "(PID $$) Command completed successfully: $cmd\n";
+        # print $fh_regLog "(PID $$) Command completed successfully: $cmd\n";
         exit 0;
       } else {
         print "(PID $$) Command failed: $cmd\n";
-        print $fh_regLog "(PID $$) Command failed: $cmd\n";
+        # print $fh_regLog "(PID $$) Command failed: $cmd\n";
         exit 1;
       }
     } else {
