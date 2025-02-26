@@ -144,7 +144,11 @@ module rvv_backend_pmtrdt_unit
       default: uop_type = COMPARE;
     endcase
   end
-  cdffr #(.T(PMTRDT_UOP_TYPE_t)) uop_type_reg (.q(uop_type_q), .d(uop_type), .c(1'b0), .e(1'b1), .clk(clk), .rst_n(rst_n));
+  logic uop_type_reg_en, uop_type_reg_clr;
+  assign uop_type_reg_en = pmtrdt_uop_valid & pmtrdt_uop_ready;
+  assign uop_type_reg_clr = rdt_ctrl_q.compress ? !rdt_ctrl_reg_en & rdt_ctrl_q.last_uop_valid & compress_ctrl_ex1.last_uop_valid
+                                                : !rdt_ctrl_reg_en & rdt_ctrl_q.last_uop_valid;
+  cdffr #(.T(PMTRDT_UOP_TYPE_t)) uop_type_reg (.q(uop_type_q), .d(uop_type), .c(uop_type_reg_clr), .e(uop_type_reg_en), .clk(clk), .rst_n(rst_n));
 
   // rdt control signals
   // sign_opr: 0-unsigned, 1-signed
@@ -2120,7 +2124,7 @@ module rvv_backend_pmtrdt_unit
         for (int j=0; j<`PMTRDT_RS_DEPTH; j++) begin
           pmt_go = pmt_go | (uop_data[j].last_uop_valid & rs_entry_valid[j]);
         end
-        pmt_go = uop_data[0].first_uop_valid & pmt_go;
+        pmt_go = (uop_type==PERMUTATION) & uop_data[0].first_uop_valid & pmt_go;
       end
       cdffr #(.T(logic)) pmt_go_reg (.q(pmt_go_q), .d(pmt_go), .c(1'b0), .e(1'b1), .clk(clk), .rst_n(rst_n));
 
