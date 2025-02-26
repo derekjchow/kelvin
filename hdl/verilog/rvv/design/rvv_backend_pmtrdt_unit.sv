@@ -2324,7 +2324,7 @@ module rvv_backend_pmtrdt_unit
         if (pmtrdt_uop.uop_index == '0) compress_cnt_d = f_sum(compress_enable & compress_body);
         else                            compress_cnt_d = compress_cnt_q + f_sum(compress_enable & compress_body);
       end
-      assign compress_cnt_en = pmtrdt_uop_valid & pmtrdt_uop_ready;
+      assign compress_cnt_en = pmtrdt_uop_valid & pmtrdt_uop_ready & rdt_ctrl.compress;
       assign compress_cnt_clr =  ~compress_cnt_gt_vlenb & rdt_ctrl_q.last_uop_valid; 
       cdffr #(.WIDTH(VLENB_WIDTH+1)) compress_cnt_reg (.q(compress_cnt_q), .d(compress_cnt_d), .c(~compress_cnt_en & compress_cnt_clr), .e(compress_cnt_en), .clk(clk), .rst_n(rst_n));
       cdffr #(.WIDTH(VLENB_WIDTH+1)) compress_cnt_reg_reg (.q(compress_cnt_qq), .d(compress_cnt_q), .c(compress_cnt_clr), .e(1'b1), .clk(clk), .rst_n(rst_n));
@@ -2381,7 +2381,7 @@ module rvv_backend_pmtrdt_unit
       assign compress_ctrl_ex0.last_uop_valid = pmtrdt_uop.last_uop_valid;
 
       assign compress_ctrl_push = pmtrdt_uop_valid & pmtrdt_uop_ready & rdt_ctrl.compress;
-      assign compress_ctrl_pop  = (compress_cnt_ge_vlenb | rdt_ctrl_q.last_uop_valid);
+      assign compress_ctrl_pop  = (compress_cnt_ge_vlenb | rdt_ctrl_q.last_uop_valid & rdt_ctrl_q.compress);
       fifo_flopped #(
         .DWIDTH ($bits(COMPRESS_CTRL_t)),
         .DEPTH  (`EMUL_MAX)
