@@ -1,0 +1,577 @@
+#! /usr/bin/env perl
+
+use strict;
+use warnings;
+use Getopt::Long;
+use File::Path qw(make_path remove_tree);
+use File::Basename;
+use List::Util qw(shuffle);
+
+my ($sec, $min, $hour, $mday, $mon, $year, $wday, $yday, $isdst) = localtime();
+
+GetOptions (
+  "help|h" => \(my $opt_help),
+
+  "lsf" =>  \(my $opt_lsf),
+  "local|loc" => \(my $opt_local_run),
+  "max_job=i" => \(my $opt_max_job=0),
+  "queue|que=s" => \(my $opt_queue=undef),
+  
+  "repeat|rep=i" => \(my $opt_repeat=0),
+  "testlist|list=s" => \(my $opt_testlist=undef),
+  "logdir|dir=s" => \(my $opt_logdir=undef),
+
+  "show" => \(my $opt_show),
+  "no_compile|noc" => \(my $opt_no_compile),
+  "only_compile|oc" => \(my $opt_only_compile),
+  "scfg=s" => \(my $scfg = "rvv_backend"),
+  "report" => \(my $opt_report),
+  "coverage|cov" => \(my $opt_coverage),
+
+  "shuffle" => \(my $opt_shuffle),
+  "qualify|q" => \(my $opt_qualify),
+);
+
+if($opt_help) { Usage(); }
+
+# Path config
+my $workRoot = $ENV{PWD};
+$workRoot =~ s%(\S+)/hdl/verilog/rvv/%$1%;
+
+my $testList = "$workRoot/sve/${scfg}_tb/regress.list";
+if(defined $opt_testlist) { $testList = "$workRoot/$opt_testlist"; }
+
+$mon = $mon + 1;
+my $logDir = "outfiles_regress/${mon}_${mday}_${hour}${min}";
+if(defined $opt_logdir) { $logDir = "$opt_logdir"; }
+my $absLogDir = "$workRoot/$logDir";
+
+my $regressLog = "$workRoot/regress.log";
+open my $fh_regLog, "+>", $regressLog or die "Open $regressLog failed. $! ";
+
+my $compilePath = "$workRoot/build/$scfg";
+my $simulatePath = "$logDir/$scfg";
+my $coveragePath = "$logDir/$scfg.vdb";
+
+# Server  Config
+my $useLSF = $opt_lsf ? 1 : 0;
+my $localRun = $opt_local_run ? 1 : 0;
+my $maxJobs = $localRun ? 1 : ($opt_max_job ? $opt_max_job : 1);
+my $cpuNum = 1;
+my $mem   = 1000;
+my $host = qq("span[hosts=1] rusage[mem=$mem] select[type==rhel7]");
+my $queue = "";
+my $maxRunTime = 60;
+if(defined $opt_queue) { $queue = $opt_queue; }
+my $bsub  = $localRun ? "bsub -Is -q $queue -n $cpuNum -R $host -W $maxRunTime"
+                      : "bsub -q $queue -n $cpuNum -R $host -W $maxRunTime";
+## for local server
+my $null = ' > /dev/null 2>&1';
+my $maxProcess = ($opt_max_job && $opt_max_job < 30) ? $opt_max_job : 30;
+
+# Execution Steps Config
+my $exeCompile = 1;
+$exeCompile = 0 if($opt_no_compile || $opt_report || $opt_show);
+my $exeSimulate = 1;
+$exeSimulate = 0 if($opt_only_compile || $opt_report || $opt_show);
+my $exeReport = 1;
+$exeReport = 0 if($opt_show);
+my $exeShow = $opt_show;
+my $exeCoverage = 1 if($opt_coverage);
+
+my $repeat = $opt_qualify ? 1 : $opt_repeat ? $opt_repeat : 0; 
+
+# Others
+my $startTime, my $startTimeStr;
+my $finishTime, my $finishTimeStr;
+
+my $regStatus = 0;
+
+#------------------------------------------------------------ 
+# Main
+#------------------------------------------------------------ 
+if(!$exeShow) {
+  if(-d $logDir) {
+    #remove_tree($logDir) or die "Remove $logDir failed $!";
+  } else {
+    make_path($logDir) or die "Make $logDir failed $!";
+  }
+}
+
+open my $fh_testLile, '<', $testList, or die "Open $testList failed. $! ";
+my @tests = map { $_ =~ m/^\s*[^#\s].*$/g; } <$fh_testLile>;
+close $fh_testLile;
+
+if($exeShow) {
+  foreach (@tests) {
+    printf "$_\n";
+  }
+}
+
+# generate command
+my @cmd_comp =(); 
+push @cmd_comp, qq(sve/rvv_backend_tb/Makefile vcs scfg=$scfg);
+my @cmd_sim;
+foreach my $test_name (@tests) {
+  if($repeat) {
+    foreach my $re (0..$repeat-1) {
+      push @cmd_sim, qq(sve/rvv_backend_tb/Makefile sim scfg=$scfg test=$test_name atn=._duplicate_${re}_ logdir=$logDir);
+    }
+  } else {
+    push @cmd_sim, qq(sve/rvv_backend_tb/Makefile sim  scfg=$scfg test=$test_name logdir=$logDir);
+  }
+}
+if($opt_shuffle) { @cmd_sim = shuffle(@cmd_sim);}
+
+my $qualifyOpt;
+if($opt_qualify) {
+  $qualifyOpt = "PLUS_ARGS+=+qualify";
+  @cmd_sim = map { "$_ $qualifyOpt"; } @cmd_sim;
+}
+
+my $covOpt;
+if($exeCoverage) {
+  $covOpt = "coverage=on";
+  @cmd_comp = map { "$_ $covOpt logdir=$logDir"; } @cmd_comp;
+  @cmd_sim = map { "$_ $covOpt"; } @cmd_sim;
+} else {
+  $covOpt = "";
+}
+
+$startTime = time();
+$startTimeStr = localtime();
+if($useLSF) { 
+  my $regressCmdList = "./regress_cmdlist";
+  my $useBash = 0;
+  open my $fh_regCmdList, "+>", $regressCmdList, or die "Open $testList failed. $! ";
+  
+  # packet tests
+  my @cmd_compPkt;
+  while (@cmd_comp) {
+    my $combine = '"'.join("; ", splice(@cmd_comp, 0, $maxJobs)).'"';
+    push @cmd_compPkt, $combine;
+  }
+  my @cmd_simPkt;
+  while (@cmd_sim) {
+    my $combine = '"'.join("; ", splice(@cmd_sim, 0, $maxJobs)).'"';
+    push @cmd_simPkt, $combine;
+  }
+
+  if($exeShow) {
+    foreach (@cmd_compPkt) { print "$_\n"; }
+    foreach (@cmd_simPkt) { print "$_\n"; }
+  }
+
+  # Run tests
+  my $jobTag = "";
+  my $cmd = "";
+  my @jobIDs;
+  my $jobID;
+  if($exeCompile) {
+    $jobTag = "comp_$ENV{LOGNAME}_$ENV{P4CLIENT}";
+    if($useBash) {
+      seek $fh_regCmdList, 0, 0;
+      @cmd_compPkt = map { "$bsub -J $jobTag $_ \n"; } @cmd_compPkt;
+      print $fh_regCmdList @cmd_compPkt;
+      system("com/regress_bs $regressCmdList");
+      $cmd = qq(bsub -n 1 -q $queue -w 'ended("$jobTag")' -I 'echo "Compile finished."');
+      system($cmd);
+    } else {
+      @cmd_compPkt = map { "$bsub -J $jobTag $_"; } @cmd_compPkt;
+      foreach $cmd (@cmd_compPkt) {
+          $jobID = qx($cmd) if !$exeShow;
+          $jobID =~ s/.*?(\d+).*/$1/g;
+          push @jobIDs, $jobID;
+          sleep 1; # bsub gap
+      }
+      print "Waiting for compiles ... \n";
+      $cmd = qq(bsub -n 1 -q $queue -w 'ended("$jobTag")' -I 'echo "Compile finished."');
+      system($cmd) if !$exeShow;
+      print "$cmd\n" if $exeShow;
+      # Compile result check
+      foreach (@jobIDs) {
+        my $exitCode;
+        $exitCode = qx(bjobs -o "exit_code" $_);
+        chomp $exitCode;
+        $exitCode =~ s/.*\n?(\d+).*/$1/g;
+        if($exitCode) {
+          print $fh_regLog "Compile fail!\n";
+          print STDERR"Compile fail!\n";
+          exit 255;
+        }
+      }
+    }
+  }
+  if($exeSimulate) {
+    $jobTag = "sim_$ENV{LOGNAME}_$ENV{P4CLIENT}";
+    if($useBash) {
+      seek $fh_regCmdList, 0, 0;
+      @cmd_simPkt = map { "$bsub -J $jobTag $_ \n"; } @cmd_simPkt;
+      print $fh_regCmdList @cmd_simPkt;
+      system("com/regress_bs $regressCmdList");
+      $cmd = qq(bsub -n 1 -q $queue -w 'ended("$jobTag")' -I 'echo "Simulate done!"');
+      system($cmd);
+    } else {
+      @cmd_simPkt = map { "$bsub -J $jobTag $_"; } @cmd_simPkt;
+      foreach $cmd (@cmd_simPkt) {
+        print "Submit tests: $cmd\n";
+        system($cmd) if !$exeShow;
+        print "$cmd\n" if $exeShow;
+        sleep 1; # bsub gap
+      }
+      print "Waiting for simulation ... \n";
+      $cmd = qq(bsub -n 1 -q $queue -w 'ended("$jobTag")' -I 'echo "Simulate done!"');
+      system($cmd) if !$exeShow;
+      print "$cmd\n" if $exeShow;
+    }
+  }
+  if($exeCoverage) {
+    if($useBash) {
+      $cmd = qq(urg -dir $logDir/$scfg.vdb -report $logDir/urgReport);
+      system($cmd);
+    } else {
+      $cmd = qq(urg -dir $logDir/$scfg.vdb -report $logDir/urgReport);
+      system($cmd) if !$exeShow;
+      print "$cmd\n" if $exeShow;
+    }
+  }
+  close $fh_regCmdList;
+} else {
+  my $cmd = "";
+  my $status = 0;
+  if($exeCompile) {
+    print("Compile Start!\n");
+    if($localRun) {
+      foreach $cmd (@cmd_comp) {
+        system($cmd) if !$exeShow;
+        print "$cmd\n" if $exeShow;
+      }
+    } else {
+      $status = ForkCMD(@cmd_comp);
+    }
+    if($status) {
+      print "Compile failed!"; 
+      print $fh_regLog "Compile failed!"; 
+      exit 255;
+    } else {
+      print("Compile done!\n"); 
+    }
+  }
+  if($exeSimulate) {
+    print("Simulation Start!\n");
+    if($localRun) {
+      foreach $cmd (@cmd_sim) {
+        system($cmd) if !$exeShow;
+        print "$cmd\n" if $exeShow;
+      }
+    } else {
+      $status = ForkCMD(@cmd_sim);
+    }
+    print("Simulate done!\n");
+  }
+  if($exeCoverage) {
+    $cmd = qq(urg -dir $logDir/$scfg.vdb -report $logDir/urgReport);
+    system($cmd) if !$exeShow;
+    print "$cmd\n" if $exeShow;
+  }
+}
+$regStatus = CheckResult($logDir) if $exeReport;
+
+
+$finishTime = time();
+$finishTimeStr = localtime();
+my $costTime = ($finishTime - $startTime) / 60.0;
+
+print "\n";
+print $fh_regLog "\n";
+print "Run direction: $absLogDir\n";
+print $fh_regLog "Run direction: $absLogDir\n";
+print "Summary path: $regressLog\n" if $exeReport;
+print $fh_regLog "Summary path: $regressLog\n" if $exeReport;
+print "Coverage path: $logDir/urgReport\n" if $exeCoverage;
+print $fh_regLog "Coverage path: $logDir/urgReport\n" if $exeCoverage;
+print "Regression started at $startTimeStr, finished at $finishTimeStr. Cost: ".sprintf("%.2f",$costTime)."mins\n";
+print $fh_regLog "Regression started at $startTimeStr, finished at $finishTimeStr. Cost: ".sprintf("%.2f",$costTime)."mins\n";
+
+close $fh_regLog;
+
+exit 254 if($regStatus != 0);
+
+#------------------------------------------------------------ 
+# Sub
+#------------------------------------------------------------ 
+sub ForkCMD {
+  my (@cmds) = @_;
+  my @childPids;
+  my $fail = 0;
+  foreach (@cmds) {
+    if(scalar @childPids >= $maxProcess) {
+      my $finishedPid = waitpid(-1, 0); 
+      @childPids = grep { $_ != $finishedPid } @childPids; 
+      my $exitCode = $? >> 8;
+      $fail++ if($exitCode);
+    }
+
+    my $cmd = $_.$null;
+    my $pid = fork();
+    if($pid) {
+      push @childPids, $pid;
+    } elsif ($pid == 0) {
+      my $status =0; 
+      print "(PID $$) Command start: $cmd\n";
+      print $fh_regLog "(PID $$) Command start: $cmd\n";
+      $status = system($cmd);
+      if ($status == 0) {
+        print "(PID $$) Command completed successfully: $cmd\n";
+        print $fh_regLog "(PID $$) Command completed successfully: $cmd\n";
+        exit 0;
+      } else {
+        print "(PID $$) Command failed: $cmd\n";
+        print $fh_regLog "(PID $$) Command failed: $cmd\n";
+        exit 1;
+      }
+    } else {
+      die "Failed to fork: $!";
+    }
+  }
+
+  foreach my $pid (@childPids) {
+    waitpid($pid, 0);
+    my $exitCode = $? >> 8;
+    $fail++ if($exitCode);
+  }
+
+  return $fail;
+}
+
+sub CreatCovReport{
+
+}
+
+sub CheckResult{
+  my ($logDir) = @_;
+  my $testNum = 0;
+  my $seed;
+  my $testName;
+  my $testPath;
+  my $rerunCmd;
+  my $passNum = 0; 
+  my $failNum = 0;
+  my $unimNum = 0;
+  my $isPass = 0;
+  my $isFail = 0;
+  my $isUnim = 0;
+  my @failReport;
+  my @unimReport;
+  my @passReport;
+  my @summReport;
+  my @rerunCMDs;
+  my %testBucket;
+  my $uvmFirstFail = undef;
+  my $astFirstFail = undef;
+
+  # To count high discard rate tests
+  my $isHighDisc = 0;
+  my $highDiscNum = 0;
+  my $discardRate = 0;
+  my @highDiscReport;
+
+  my $p_uvmFail = qr/^(UVM_ERROR|UVM_FATAL)( \S+ | )(@\s*\d+:) (\S+) (\[\S+\]) (.*)$/;
+  my $p_astFail = qr/\(^Error.*\n.*\)/;
+  my $p_discardRate = qr/UVM_INFO.+\[FINAL_CHECK\] RVV.+discarded ([0-9.]+)%/;
+
+  foreach my $file (glob("$logDir/$scfg/*/test.log")) {
+      $testNum++;
+      $isFail = 0;
+      $isPass = 0;
+      $isUnim = 0;
+      open my $fh, '<', $file, or die "Open $file failed. $!";
+      my @texts = <$fh>;
+      foreach my $line (@texts) {
+        if($line =~ m/\+UVM_TESTNAME=(\S+)/g) { $testName = $1; }
+        if($line =~ m/====PASS====/g) { $passNum++; $isPass = 1; }
+        if($line =~ m/====FAIL====/g) { $failNum++; $isFail = 1; }
+        if($line =~ m/\+ntb_random_seed=(\d+)/g) { $seed = $1; }
+        if($line =~ m/automatic random seed used: (\d+)/g) { $seed = $1; }
+        if($line =~ m/$p_uvmFail/g) { $uvmFirstFail = "$1 $3 $5 $6"; }
+        if($line =~ m/$p_astFail/g) { $astFirstFail = $1; }
+        if($line =~ m/$p_discardRate/g) { 
+          $discardRate = $1; 
+          if($discardRate > 0.01) {
+            $isHighDisc = 1;
+            $highDiscNum++;
+          } else {
+            $isHighDisc = 0;
+          } 
+        }
+      }
+      if(!$isPass && !$isFail) { $unimNum++; $isUnim = 1;}
+      if(grep {m/$testName/g} keys %testBucket) {
+        $testBucket{$testName}->{total} ++;
+      } else {
+        $testBucket{$testName} = {total => 1, pass => 0, fail => 0, unim => 0, highDisc => 0};
+      }
+      if($isPass) {
+        $testPath = "$file";
+        $rerunCmd = "sve/rvv_backend_tb/Makefile sim test=$testName seed=$seed";
+        push @passReport, "=========================================================\n";
+        push @passReport, "TEST:      $testName\n";
+        push @passReport, "SEED:      $seed\n";
+        push @passReport, "RERUN:     $rerunCmd\n";
+        push @passReport, "LOG:       $testPath\n";
+        push @passReport, "DISC-RATE: $discardRate%\n";
+        push @passReport, "RESULT:    PASS\n";
+        push @passReport, "\n\n";
+        $testBucket{$testName}->{pass} ++;
+      }
+      if($isFail) {
+        $testPath = "$file";
+        $rerunCmd = "sve/rvv_backend_tb/Makefile sim test=$testName seed=$seed";
+        push @failReport, "=========================================================\n";
+        push @failReport, "TEST:      $testName\n";
+        push @failReport, "SEED:      $seed\n";
+        push @failReport, "RERUN:     $rerunCmd\n";
+        push @failReport, "LOG:       $testPath\n";
+        push @failReport, "DISC-RATE: $discardRate%\n";
+        push @failReport, "RESULT:    FAIL\n";
+        push @failReport, "ERROR:     $astFirstFail\n" if(defined $astFirstFail);
+        push @failReport, "ERROR:     $uvmFirstFail\n" if(defined $uvmFirstFail);
+        push @failReport, "\n\n";
+        push @rerunCMDs,  "$testName  seed=$seed\n";
+        $testBucket{$testName}->{fail} ++;
+      }
+      if($isUnim) {
+        $testPath = "$file";
+        $rerunCmd = "sve/rvv_backend_tb/Makefile sim test=$testName seed=$seed";
+        push @unimReport, "=========================================================\n";
+        push @unimReport, "TEST:      $testName\n";
+        push @unimReport, "SEED:      $seed\n";
+        push @unimReport, "RERUN:     $rerunCmd\n";
+        push @unimReport, "LOG:       $testPath\n";
+        push @unimReport, "DISC-RATE: $discardRate%\n";
+        push @unimReport, "RESULT:    UNIMPLEMENT\n";
+        push @unimReport, "ERROR:     $astFirstFail\n" if(defined $astFirstFail);
+        push @unimReport, "ERROR:     $uvmFirstFail\n" if(defined $uvmFirstFail);
+        push @unimReport, "\n\n";
+        push @rerunCMDs,  "$testName  seed=$seed\n";
+        $testBucket{$testName}->{unim} ++;
+      }
+      if($isHighDisc) {
+        $testPath = "$file";
+        $rerunCmd = "sve/rvv_backend_tb/Makefile sim test=$testName seed=$seed";
+        push @highDiscReport, "=========================================================\n";
+        push @highDiscReport, "TEST:      $testName\n";
+        push @highDiscReport, "SEED:      $seed\n";
+        push @highDiscReport, "RERUN:     $rerunCmd\n";
+        push @highDiscReport, "LOG:       $testPath\n";
+        push @highDiscReport, "DISC-RATE: $discardRate%\n";
+        push @highDiscReport, "RESULT:    HIGH-DISCARD\n";
+        push @highDiscReport, "\n\n";
+        $testBucket{$testName}->{highDisc} ++;
+      }
+      close $fh;
+  }
+  push @summReport, "\n";
+  foreach my $test (keys %testBucket) {
+    push @summReport, "-------\n";
+    push @summReport, "$test\n";
+    push @summReport, "Total Tests: $testBucket{$test}->{total}\n";
+    push @summReport, "Pass Tests:  $testBucket{$test}->{pass}(".sprintf("%.2f%%",100*$testBucket{$test}->{pass}/$testBucket{$test}->{total}).")\n";
+    push @summReport, "Fail Tests:  $testBucket{$test}->{fail}(".sprintf("%.2f%%",100*$testBucket{$test}->{fail}/$testBucket{$test}->{total}).")\n";
+    push @summReport, "Unim Tests:  $testBucket{$test}->{unim}(".sprintf("%.2f%%",100*$testBucket{$test}->{unim}/$testBucket{$test}->{total}).")\n";
+    push @summReport, "High-discard Tests:  $testBucket{$test}->{highDisc}(".sprintf("%.2f%%",100*$testBucket{$test}->{highDisc}/$testBucket{$test}->{total}).")\n";
+  }
+  push @summReport, "\n";
+  push @summReport, "Summary\n";
+  push @summReport, "-------\n";
+  push @summReport, "Total Tests: $testNum\n";
+  push @summReport, "Pass Tests:  $passNum(".sprintf("%.2f%%",100*$passNum/$testNum).")\n";
+  push @summReport, "Fail Tests:  $failNum(".sprintf("%.2f%%",100*$failNum/$testNum).")\n";
+  push @summReport, "Unimplemented Tests:  $unimNum(".sprintf("%.2f%%",100*$unimNum/$testNum).")\n";
+  push @summReport, "High discard Tests:  $highDiscNum(".sprintf("%.2f%%",100*$highDiscNum/$testNum).")\n";
+
+  push @summReport, "\n\n";
+
+  my $reportLog = "$logDir/$scfg/report.log";
+  my $rerunList = "./regress_rerun.list";
+  # full report
+  open my $fh_rptLog , '+>', $reportLog , or die "Open $reportLog failed. $! ";
+  print $fh_rptLog "\n** PASS TESTS : $passNum *****************************************************\n";
+  print $fh_rptLog @passReport;
+  print $fh_rptLog "\n** FAIL TESTS : $failNum *****************************************************\n";
+  print $fh_rptLog @failReport;
+  print $fh_rptLog "\n** UNIM TESTS : $unimNum *****************************************************\n";
+  print $fh_rptLog @unimReport;
+  print $fh_rptLog "\n** HIGH DISCARD TESTS : $highDiscNum *****************************************\n";
+  print $fh_rptLog @highDiscReport;
+  print $fh_rptLog @summReport;
+  close $fh_rptLog;
+  # summary regress report
+  print $fh_regLog "\n** FAIL TESTS : $failNum *****************************************************\n";
+  print $fh_regLog @failReport;
+  print $fh_regLog "\n** UNIM TESTS : $unimNum *****************************************************\n";
+  print $fh_regLog @unimReport;
+  print $fh_regLog @summReport;
+  print STDOUT     @summReport;
+  # gen rerun list
+  open my $fh_rerun , '+>', $rerunList, or die "Open $rerunList failed. $! ";
+  print $fh_rerun  @rerunCMDs;
+  close $fh_rerun;
+
+  return $failNum;
+}
+
+sub Usage {
+  die <<EOU;
+Help infomation:
+
+  ------------- In LSF server ------------
+    Run in openlava (Recommand):
+      bsb regress -lsf -que <que-name> [options...]
+
+  ------------ Normal server -------------
+    Local space
+      regress -loc [options...]
+    Multi-process mode (Recommand):
+      regress [options...]
+
+  ----------- Useful commands ------------
+      bsb regress -lsf -que <que-name> -rep 100 
+      regress -rep 100 
+    Collect coverage:
+      bsb regress -lsf -que <que-name> -rep 100 -cov
+      regress -rep 100 -cov
+    Only generate report:
+      regress -report -logdir <dir>
+    Rerun:
+      bsb regress -lsf -que <que-name> -list regress_rerun.list -logdir <dir>
+
+  Options:
+    -help,-h                        Help Info.
+
+    -lsf                            Use openlava to run test.
+    -local,-loc                     Run command in local workspace one-by-one.
+    -que,-q <str>                   Specify openlava execution queue.
+                                    Default local queue is ZSP_debug. Default regress queue is ZSP_regression.
+    -max_job <num>                  Max openlava jobs per bsub command.
+                                    Default is 30.     
+
+    -repeat,-rep <num>              Test repeat number.
+    -testlist,-testlist <file>      Specify testlist file. 
+                                    Default is ./regress.list
+    -logdir,-dir <dir>              Specify outfile direction. (Relative address)
+                                    Default is ./outfiles_regress/mon_mday_hourmin.
+
+    -show                           Show all commands.
+    -report                         Only generate report.
+
+    -no_compile,-noc                Run simulation with out compile.
+    -only_compile,-oc               Only compile.
+  
+    -cov,-coverage                  Open coverage collection.
+    -shuffle                        Shuffle tests.
+    -qualify, -q                    Run qualify tests.
+
+
+EOU
+}

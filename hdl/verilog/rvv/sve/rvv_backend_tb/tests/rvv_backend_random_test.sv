@@ -5,8 +5,6 @@ typedef class rvv_backend_env;
 `include "rvv_backend_define.svh"
 `include "inst_description.svh"
 
-const int inst_nums = 50000;
-
 //-----------------------------------------------------------
 // Normal random test
 //-----------------------------------------------------------
@@ -37,7 +35,7 @@ class alu_random_test extends rvv_backend_test;
 
     rvs_seq = alu_random_seq::type_id::create("rvs_seq", this);
     rvs_transaction::set_ill_rate(0);
-    rvs_seq.run_inst(env.rvs_agt.rvs_sqr, inst_nums);
+    rvs_seq.run_inst(env.rvs_agt.rvs_sqr, random_inst_num);
 
     rvs_last_seq = alu_smoke_vv_seq::type_id::create("rvs_last_seq", this);
     rvs_last_seq.run_inst(VADD,env.rvs_agt.rvs_sqr);
@@ -80,7 +78,7 @@ class alu_random_large_lmul_test extends rvv_backend_test;
 
     rvs_seq = alu_random_large_lmul_seq::type_id::create("rvs_seq", this);
     rvs_transaction::set_ill_rate(0);
-    rvs_seq.run_inst(env.rvs_agt.rvs_sqr, inst_nums);
+    rvs_seq.run_inst(env.rvs_agt.rvs_sqr, random_inst_num);
 
     rvs_last_seq = alu_smoke_vv_seq::type_id::create("rvs_last_seq", this);
     rvs_last_seq.run_inst(VADD,env.rvs_agt.rvs_sqr);
@@ -123,7 +121,7 @@ class alu_random_small_lmul_test extends rvv_backend_test;
 
     rvs_seq = alu_random_small_lmul_seq::type_id::create("rvs_seq", this);
     rvs_transaction::set_ill_rate(0);
-    rvs_seq.run_inst(env.rvs_agt.rvs_sqr, inst_nums);
+    rvs_seq.run_inst(env.rvs_agt.rvs_sqr, random_inst_num);
 
     rvs_last_seq = alu_smoke_vv_seq::type_id::create("rvs_last_seq", this);
     rvs_last_seq.run_inst(VADD,env.rvs_agt.rvs_sqr);
@@ -166,7 +164,7 @@ class alu_random_bypass_test extends rvv_backend_test;
 
     rvs_seq = alu_random_bypass_seq::type_id::create("rvs_seq", this);
     rvs_transaction::set_ill_rate(0);
-    rvs_seq.run_inst(env.rvs_agt.rvs_sqr, inst_nums);
+    rvs_seq.run_inst(env.rvs_agt.rvs_sqr, random_inst_num);
 
     rvs_last_seq = alu_smoke_vv_seq::type_id::create("rvs_last_seq", this);
     rvs_last_seq.run_inst(VADD,env.rvs_agt.rvs_sqr);
@@ -209,7 +207,7 @@ class alu_random_waw_test extends rvv_backend_test;
 
     rvs_seq = alu_random_waw_seq::type_id::create("rvs_seq", this);
     rvs_transaction::set_ill_rate(0);
-    rvs_seq.run_inst(env.rvs_agt.rvs_sqr, inst_nums);
+    rvs_seq.run_inst(env.rvs_agt.rvs_sqr, random_inst_num);
 
     rvs_last_seq = alu_smoke_vv_seq::type_id::create("rvs_last_seq", this);
     rvs_last_seq.run_inst(VADD,env.rvs_agt.rvs_sqr);

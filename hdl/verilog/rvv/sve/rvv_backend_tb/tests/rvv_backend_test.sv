@@ -16,6 +16,7 @@ class rvv_backend_test extends uvm_test;
 
   UVM_FILE tb_logs [string];
   int inst_tx_queue_depth = 4;
+  int random_inst_num = 50000;
 
   function new(string name, uvm_component parent);
     super.new(name, parent);
@@ -41,6 +42,12 @@ class rvv_backend_test extends uvm_test;
       uvm_config_db#(int)::set(uvm_root::get(), "*", "inst_tx_queue_depth", inst_tx_queue_depth);
     if($test$plusargs("single_inst_mode"))
       uvm_config_db#(int)::set(uvm_root::get(), "*", "single_inst_mode", 1'b1);
+    if($test$plusargs("qualify")) begin
+      random_inst_num = 5000;
+    end else begin
+      random_inst_num = 50000;
+    end
+
   endfunction
 
   virtual function void connect_phase(uvm_phase phase);
