@@ -1886,7 +1886,7 @@ class alu_random_seq extends alu_random_base_sequence;
         // };
 
         inst_type == ALU;
-        !(alu_inst inside {VSLIDE1UP, VSLIDE1DOWN, VCOMPRESS, VSLIDEUP_RGATHEREI16, VSLIDEDOWN, VRGATHER, UNUSE_INST});
+        !(alu_inst inside {UNUSE_INST});
 
       });
       finish_item(req);
@@ -1915,7 +1915,7 @@ class alu_random_small_lmul_seq extends alu_random_base_sequence;
         };
 
         inst_type == ALU;
-        !(alu_inst inside {VSLIDE1UP, VSLIDE1DOWN, VCOMPRESS, VSLIDEUP_RGATHEREI16, VSLIDEDOWN, VRGATHER, UNUSE_INST});
+        !(alu_inst inside {UNUSE_INST});
         (alu_inst == VSMUL_VMVNRR && alu_type == OPIVI && src1_type == FUNC) -> (src1_idx inside {0,1}); // constraint vmv<nr>r
 
       });
@@ -1944,7 +1944,7 @@ class alu_random_large_lmul_seq extends alu_random_base_sequence;
         };
 
         inst_type == ALU;
-        !(alu_inst inside {VSLIDE1UP, VSLIDE1DOWN, VCOMPRESS, VSLIDEUP_RGATHEREI16, VSLIDEDOWN, VRGATHER, UNUSE_INST});
+        !(alu_inst inside {UNUSE_INST});
         (alu_inst == VSMUL_VMVNRR && alu_type == OPIVI && src1_type == FUNC) -> (src1_idx inside {3,7}); // constraint vmv<nr>r
 
       });
@@ -1973,7 +1973,7 @@ class alu_random_bypass_seq extends alu_random_base_sequence;
         };
 
         inst_type == ALU;
-        !(alu_inst inside {VSLIDE1UP, VSLIDE1DOWN, VCOMPRESS, VSLIDEUP_RGATHEREI16, VSLIDEDOWN, VRGATHER, UNUSE_INST});
+        !(alu_inst inside {UNUSE_INST});
         (alu_inst == VSMUL_VMVNRR && alu_type == OPIVI && src1_type == FUNC) -> (src1_idx inside {0}); // only use vmv1r
 
         (dest_type == VRF) -> (dest_idx inside {[0:3]});
@@ -2005,7 +2005,7 @@ class alu_random_waw_seq extends alu_random_base_sequence;
         };
 
         inst_type == ALU;
-        !(alu_inst inside {VSLIDE1UP, VSLIDE1DOWN, VCOMPRESS, VSLIDEUP_RGATHEREI16, VSLIDEDOWN, VRGATHER, UNUSE_INST});
+        !(alu_inst inside {UNUSE_INST});
         (alu_inst == VSMUL_VMVNRR && alu_type == OPIVI && src1_type == FUNC) -> (src1_idx inside {0}); // only use vmv1r
 
         dest_type == VRF;

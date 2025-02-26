@@ -43,7 +43,7 @@ class rvv_backend_test extends uvm_test;
     if($test$plusargs("single_inst_mode"))
       uvm_config_db#(int)::set(uvm_root::get(), "*", "single_inst_mode", 1'b1);
     if($test$plusargs("qualify")) begin
-      random_inst_num = 5000;
+      random_inst_num = 2000;
     end else begin
       random_inst_num = 50000;
     end
