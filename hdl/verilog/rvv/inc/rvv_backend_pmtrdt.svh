@@ -7,6 +7,10 @@ typedef enum logic [1:0] {
   COMPARE
 } PMTRDT_UOP_TYPE_e;
 
+typedef struct packed {
+  PMTRDT_UOP_TYPE_e   uop_type; 
+} PMTRDT_UOP_TYPE_t;
+
 typedef enum logic [2:0] {
   NOT_EQUAL,
   EQUAL,

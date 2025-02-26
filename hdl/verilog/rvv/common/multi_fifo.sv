@@ -96,7 +96,7 @@ module multi_fifo
 
   assign next_rptr = ({1'b0,rptr} + pop_count < DEPTH) ? rptr + pop_count
                                                 : rptr + pop_count - DEPTH;
-  cdffr #(.WIDTH(DEPTH_BITS)) u_rptr_reg (.q(rptr), .c(clear), .e(|pop), .d(next_rptr), .clk(clk), .rst_n(rst_n));
+  cdffr #(.T(logic[DEPTH_BITS-1:0])) u_rptr_reg (.q(rptr), .c(clear), .e(|pop), .d(next_rptr), .clk(clk), .rst_n(rst_n));
 
   generate
     for (i=0; i<N; i++) begin : gen_dataout
@@ -112,7 +112,7 @@ module multi_fifo
 
   assign next_wptr = ({1'b0,wptr} + push_count < DEPTH) ? wptr + push_count
                                                  : wptr + push_count - DEPTH;
-  cdffr #(.WIDTH(DEPTH_BITS)) u_wptr_reg (.q(wptr), .c(clear), .e(|push), .d(next_wptr), .clk(clk), .rst_n(rst_n));
+  cdffr #(.T(logic[DEPTH_BITS-1:0])) u_wptr_reg (.q(wptr), .c(clear), .e(|push), .d(next_wptr), .clk(clk), .rst_n(rst_n));
 
   generate
     if (CHAOS_PUSH) begin
@@ -185,7 +185,7 @@ module multi_fifo
   // fifo status
   assign next_entry_count = entry_count + push_count - pop_count;
   wire entry_count_en = (|push) | (|pop);
-  cdffr #(.WIDTH(DEPTH_BITS+1)) u_entry_count_reg (.q(entry_count), .c(clear), .e(entry_count_en), .d(next_entry_count), .clk(clk), .rst_n(rst_n));
+  cdffr #(.T(logic[DEPTH_BITS:0])) u_entry_count_reg (.q(entry_count), .c(clear), .e(entry_count_en), .d(next_entry_count), .clk(clk), .rst_n(rst_n));
 
   assign full = (entry_count == DEPTH);
   generate

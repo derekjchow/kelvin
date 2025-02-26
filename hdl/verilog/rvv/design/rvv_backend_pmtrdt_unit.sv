@@ -52,7 +52,7 @@ module rvv_backend_pmtrdt_unit
 
 // ---internal signal definition--------------------------------------
   // control signal
-  PMTRDT_UOP_TYPE_e         uop_type, uop_type_q;
+  PMTRDT_UOP_TYPE_t         uop_type, uop_type_q;
 
   RDT_CTRL_t                rdt_ctrl, rdt_ctrl_q; // RDT+CMP control signals
   logic                     rdt_ctrl_reg_en, rdt_ctrl_reg_clr;
@@ -112,7 +112,7 @@ module rvv_backend_pmtrdt_unit
   logic [`PMTRDT_RS_DEPTH-1:0]  rs_entry_valid;
   logic                         pmt_go, pmt_go_q; // start to execute pmt inst when all uop(s) are in RS
   logic [`UOP_INDEX_WIDTH-1:0]  pmt_uop_done_cnt_d, pmt_uop_done_cnt_q;
-  logic [`VLENB-1:0][`XLEN-1:0] offset;
+  logic [`VLENB-1:0][`XLEN+1:0] offset;
   logic [`VLENB-1:0]            sel_scalar;
   BYTE_TYPE_t                   vd_type;
   logic [`VLMAX_MAX-1:0][7:0]   pmt_vs2_data, pmt_vs3_data;
@@ -144,7 +144,7 @@ module rvv_backend_pmtrdt_unit
       default: uop_type = COMPARE;
     endcase
   end
-  cdffr #(.WIDTH($bits(PMTRDT_UOP_TYPE_e))) uop_type_reg (.q(uop_type_q), .d(uop_type), .c(1'b0), .e(1'b1), .clk(clk), .rst_n(rst_n));
+  cdffr #(.T(PMTRDT_UOP_TYPE_t)) uop_type_reg (.q(uop_type_q), .d(uop_type), .c(1'b0), .e(1'b1), .clk(clk), .rst_n(rst_n));
 
   // rdt control signals
   // sign_opr: 0-unsigned, 1-signed
@@ -235,7 +235,7 @@ module rvv_backend_pmtrdt_unit
   assign rdt_ctrl_reg_en = pmtrdt_uop_valid & pmtrdt_uop_ready;
   assign rdt_ctrl_reg_clr = rdt_ctrl_q.compress ? !rdt_ctrl_reg_en & rdt_ctrl_q.last_uop_valid & compress_ctrl_ex1.last_uop_valid
                                                 : !rdt_ctrl_reg_en & rdt_ctrl_q.last_uop_valid;
-  cdffr #(.WIDTH($bits(RDT_CTRL_t))) rdt_ctrl_reg (.q(rdt_ctrl_q), .d(rdt_ctrl), .c(rdt_ctrl_reg_clr), .e(rdt_ctrl_reg_en), .clk(clk), .rst_n(rst_n));
+  cdffr #(.T(RDT_CTRL_t)) rdt_ctrl_reg (.q(rdt_ctrl_q), .d(rdt_ctrl), .c(rdt_ctrl_reg_clr), .e(rdt_ctrl_reg_en), .clk(clk), .rst_n(rst_n));
 
   // pmt_opr: permutation operation
   always_comb begin
@@ -258,7 +258,7 @@ module rvv_backend_pmtrdt_unit
 
   assign pmt_ctrl_reg_en    = pmt_go;
   assign pmt_ctrl_reg_clr   = !pmt_ctrl_reg_en;
-  cdffr #(.WIDTH($bits(PMT_CTRL_t))) pmt_ctrl_reg (.q(pmt_ctrl_q), .d(pmt_ctrl), .c(pmt_ctrl_reg_clr), .e(pmt_ctrl_reg_en), .clk(clk), .rst_n(rst_n));
+  cdffr #(.T(PMT_CTRL_t)) pmt_ctrl_reg (.q(pmt_ctrl_q), .d(pmt_ctrl), .c(pmt_ctrl_reg_clr), .e(pmt_ctrl_reg_en), .clk(clk), .rst_n(rst_n));
   
 // Reduction unit
   generate
@@ -1491,7 +1491,7 @@ module rvv_backend_pmtrdt_unit
           endcase
         end
 
-        cdffr #(.WIDTH(8)) red_res_reg (.q(red_res_q[i]), .d(red_res_d[i]), .c(1'b0), .e(red_res_en), .clk(clk), .rst_n(rst_n));
+        cdffr #(.T(logic[7:0])) red_res_reg (.q(red_res_q[i]), .d(red_res_d[i]), .c(1'b0), .e(red_res_en), .clk(clk), .rst_n(rst_n));
       end
 
       // reduction result when vd_eew is 32b
@@ -2079,13 +2079,13 @@ module rvv_backend_pmtrdt_unit
       end
       assign cmp_res_d = {'0, cmp_res} << cmp_res_offset;
       for (i=0; i<`VLEN; i++) begin
-        cdffr #(.WIDTH(1)) cmp_res_reg (.q(cmp_res_q[i]), .d(cmp_res_d[i]), .c(1'b0), .e(cmp_res_en[i] & pmtrdt_uop_valid & pmtrdt_uop_ready), .clk(clk), .rst_n(rst_n));
+        cdffr #(.T(logic)) cmp_res_reg (.q(cmp_res_q[i]), .d(cmp_res_d[i]), .c(1'b0), .e(cmp_res_en[i] & pmtrdt_uop_valid & pmtrdt_uop_ready), .clk(clk), .rst_n(rst_n));
       end
 
       // cmp_vstart value is from the first uop of compare instruction
       assign cmp_vstart_d = pmtrdt_uop.vstart;
       assign cmp_vstart_en = pmtrdt_uop.first_uop_valid & pmtrdt_uop_valid & pmtrdt_uop_ready;
-      cdffr #(.WIDTH(`VSTART_WIDTH)) cmp_vstart_reg (.q(cmp_vstart_q), .d(cmp_vstart_d), .c(1'b0), .e(cmp_vstart_en), .clk(clk), .rst_n(rst_n));
+      cdffr #(.T(logic[`VSTART_WIDTH-1:0])) cmp_vstart_reg (.q(cmp_vstart_q), .d(cmp_vstart_d), .c(1'b0), .e(cmp_vstart_en), .clk(clk), .rst_n(rst_n));
       // pmtrdt_res_cmp
       for (i=0; i<`VLEN; i++) begin
         always_comb begin
@@ -2122,7 +2122,7 @@ module rvv_backend_pmtrdt_unit
         end
         pmt_go = uop_data[0].first_uop_valid & pmt_go;
       end
-      cdffr #(.WIDTH(1)) pmt_go_reg (.q(pmt_go_q), .d(pmt_go), .c(1'b0), .e(1'b1), .clk(clk), .rst_n(rst_n));
+      cdffr #(.T(logic)) pmt_go_reg (.q(pmt_go_q), .d(pmt_go), .c(1'b0), .e(1'b1), .clk(clk), .rst_n(rst_n));
 
       for (i=0; i<`VLENB; i++) begin
         always_comb begin
@@ -2136,8 +2136,8 @@ module rvv_backend_pmtrdt_unit
                 endcase
               else
                 case (pmtrdt_uop.vs2_eew) // Permutation instruction: vd_eew == vs2_eew
-                  EEW32:offset[i] = uop_data[pmt_uop_done_cnt_q].uop_index*`VLENB + i - (pmtrdt_uop.rs1_data << 2);
-                  EEW16:offset[i] = uop_data[pmt_uop_done_cnt_q].uop_index*`VLENB + i - (pmtrdt_uop.rs1_data << 1);
+                  EEW32:offset[i] = uop_data[pmt_uop_done_cnt_q].uop_index*`VLENB + i - (4*pmtrdt_uop.rs1_data);
+                  EEW16:offset[i] = uop_data[pmt_uop_done_cnt_q].uop_index*`VLENB + i - (2*pmtrdt_uop.rs1_data);
                   default:offset[i] = uop_data[pmt_uop_done_cnt_q].uop_index*`VLENB+ i - pmtrdt_uop.rs1_data; 
                 endcase
             end
@@ -2150,8 +2150,8 @@ module rvv_backend_pmtrdt_unit
                 endcase
               else
                 case (pmtrdt_uop.vs2_eew) // Permutation instruction: vd_eew == vs2_eew
-                  EEW32:offset[i] = uop_data[pmt_uop_done_cnt_q].uop_index*`VLENB + i + (pmtrdt_uop.rs1_data << 2);
-                  EEW16:offset[i] = uop_data[pmt_uop_done_cnt_q].uop_index*`VLENB + i + (pmtrdt_uop.rs1_data << 1);
+                  EEW32:offset[i] = uop_data[pmt_uop_done_cnt_q].uop_index*`VLENB + i + (4*pmtrdt_uop.rs1_data);
+                  EEW16:offset[i] = uop_data[pmt_uop_done_cnt_q].uop_index*`VLENB + i + (2*pmtrdt_uop.rs1_data);
                   default:offset[i] = uop_data[pmt_uop_done_cnt_q].uop_index*`VLENB + i + pmtrdt_uop.rs1_data;
                 endcase
             end
@@ -2167,11 +2167,11 @@ module rvv_backend_pmtrdt_unit
                 end
                 default:begin
                   case (pmtrdt_uop.vs1_eew)
-                    EEW32: offset[i] = i%4 + ({{(`XLEN-32){1'b0}}, uop_data[(pmt_uop_done_cnt_q*`VLENB/4+i/4)/(`VLENB/4)].vs1_data[32*((i/4)%(`VLENB/4))+:32]}<<2);
+                    EEW32: offset[i] = i%4 + (4*{{(`XLEN-32){1'b0}}, uop_data[(pmt_uop_done_cnt_q*`VLENB/4+i/4)/(`VLENB/4)].vs1_data[32*((i/4)%(`VLENB/4))+:32]});
                     EEW16: begin
                       case (pmtrdt_uop.vs2_eew) // vrgatherei16
-                        EEW32:offset[i] = i%4 + ({{(`XLEN-16){1'b0}}, uop_data[(pmt_uop_done_cnt_q*`VLENB/4+i/4)/(`VLENB/4)].vs1_data[16*((pmt_uop_done_cnt_q*`VLENB/4+i/4)%(`VLENB/2))+:16]}<<2);
-                        EEW16:offset[i] = i%2 + ({{(`XLEN-16){1'b0}}, uop_data[(pmt_uop_done_cnt_q*`VLENB/2+i/2)/(`VLENB/2)].vs1_data[16*((i/2)%(`VLENB/2))+:16]}<<1);
+                        EEW32:offset[i] = i%4 + (4*{{(`XLEN-16){1'b0}}, uop_data[(pmt_uop_done_cnt_q*`VLENB/4+i/4)/(`VLENB/4)].vs1_data[16*((pmt_uop_done_cnt_q*`VLENB/4+i/4)%(`VLENB/2))+:16]});
+                        EEW16:offset[i] = i%2 + (2*{{(`XLEN-16){1'b0}}, uop_data[(pmt_uop_done_cnt_q*`VLENB/2+i/2)/(`VLENB/2)].vs1_data[16*((i/2)%(`VLENB/2))+:16]});
                         default:offset[i] = {{(`XLEN-16){1'b0}}, uop_data[(pmt_uop_done_cnt_q*`VLENB+i)/(`VLENB)].vs1_data[16*(i%(`VLENB/2))+:16]};
                       endcase
                     end
@@ -2269,13 +2269,13 @@ module rvv_backend_pmtrdt_unit
               end
             endcase
         end
-        cdffr #(.WIDTH(8)) pmt_res_reg (.q(pmt_res_q[i]), .d(pmt_res_d[i]), .c(1'b0), .e(pmt_res_en), .clk(clk), .rst_n(rst_n));
+        cdffr #(.T(logic[7:0])) pmt_res_reg (.q(pmt_res_q[i]), .d(pmt_res_d[i]), .c(1'b0), .e(pmt_res_en), .clk(clk), .rst_n(rst_n));
         assign pmtrdt_res_pmt[i*8+:8] = pmt_res_q[i];
       end
 
       // pmt_uop_done_cnt_d/pmt_uop_done_cnt_q
       assign pmt_uop_done_cnt_d = pmt_uop_done_cnt_q + 1'b1;
-      cdffr #(.WIDTH(`UOP_INDEX_WIDTH)) pmt_uop_done_cnt_reg (.q(pmt_uop_done_cnt_q), .d(pmt_uop_done_cnt_d), .c(uop_data[pmt_uop_done_cnt_q].last_uop_valid), .e(pmt_go), .clk(clk), .rst_n(rst_n));
+      cdffr #(.T(logic[`UOP_INDEX_WIDTH-1:0])) pmt_uop_done_cnt_reg (.q(pmt_uop_done_cnt_q), .d(pmt_uop_done_cnt_d), .c(uop_data[pmt_uop_done_cnt_q].last_uop_valid), .e(pmt_go), .clk(clk), .rst_n(rst_n));
 
   // Compress instruction
     // compress instruction is a specified instruction in PMT.
@@ -2289,7 +2289,7 @@ module rvv_backend_pmtrdt_unit
         endcase
       end
       assign compress_mask_en = pmtrdt_uop_valid & pmtrdt_uop_ready;
-      cdffr #(.WIDTH(`VLEN)) compress_mask_reg (.q(compress_mask_q), .d(compress_mask_d), .c(1'b0), .e(compress_mask_en), .clk(clk), .rst_n(rst_n));
+      cdffr #(.T(logic[`VLEN-1:0])) compress_mask_reg (.q(compress_mask_q), .d(compress_mask_d), .c(1'b0), .e(compress_mask_en), .clk(clk), .rst_n(rst_n));
 
       // compress_enable is from vs1_data[0+:N] based on vs2_eew
       // and then be extended to `VLENB bits.
@@ -2326,8 +2326,8 @@ module rvv_backend_pmtrdt_unit
       end
       assign compress_cnt_en = pmtrdt_uop_valid & pmtrdt_uop_ready & rdt_ctrl.compress;
       assign compress_cnt_clr =  ~compress_cnt_gt_vlenb & rdt_ctrl_q.last_uop_valid; 
-      cdffr #(.WIDTH(VLENB_WIDTH+1)) compress_cnt_reg (.q(compress_cnt_q), .d(compress_cnt_d), .c(~compress_cnt_en & compress_cnt_clr), .e(compress_cnt_en), .clk(clk), .rst_n(rst_n));
-      cdffr #(.WIDTH(VLENB_WIDTH+1)) compress_cnt_reg_reg (.q(compress_cnt_qq), .d(compress_cnt_q), .c(compress_cnt_clr), .e(1'b1), .clk(clk), .rst_n(rst_n));
+      cdffr #(.T(logic[VLENB_WIDTH:0])) compress_cnt_reg (.q(compress_cnt_q), .d(compress_cnt_d), .c(~compress_cnt_en & compress_cnt_clr), .e(compress_cnt_en), .clk(clk), .rst_n(rst_n));
+      cdffr #(.T(logic[VLENB_WIDTH:0])) compress_cnt_reg_reg (.q(compress_cnt_qq), .d(compress_cnt_q), .c(compress_cnt_clr), .e(1'b1), .clk(clk), .rst_n(rst_n));
       
       // set if compress more than or equal 16 byte and then write the result to ROB
       assign compress_cnt_ge_vlenb = compress_cnt_qq[VLENB_WIDTH] ^ compress_cnt_q[VLENB_WIDTH];
@@ -2353,7 +2353,7 @@ module rvv_backend_pmtrdt_unit
         else 
           compress_res_en = '0;
       end
-      for (i=0; i<2*`VLENB; i++) cdffr #(.WIDTH(8)) compress_res_reg (.q(compress_res_q[i]), .d(compress_res_d[i]), .c(1'b0), .e(compress_res_en[i]), .clk(clk), .rst_n(rst_n));
+      for (i=0; i<2*`VLENB; i++) cdffr #(.T(logic[7:0])) compress_res_reg (.q(compress_res_q[i]), .d(compress_res_d[i]), .c(1'b0), .e(compress_res_en[i]), .clk(clk), .rst_n(rst_n));
 
       // pmtrdt_res_compress
       always_comb begin
@@ -2441,7 +2441,7 @@ module rvv_backend_pmtrdt_unit
   //    VWREDSUMU&VWREDSUM - set 1 only if red_widen_sum_flag toggle to 1.
   //    the others         - clear 0
   // 3. PMT instruction - set 1 only if last_uop_valid is asserted.
-  cdffr #(.WIDTH(1)) wredsum_flag_reg (.q(red_widen_sum_flag), .d(~red_widen_sum_flag), .c(1'b0), .e(rdt_ctrl.widen & pmtrdt_uop_valid), .clk(clk), .rst_n(rst_n));
+  cdffr #(.T(logic)) wredsum_flag_reg (.q(red_widen_sum_flag), .d(~red_widen_sum_flag), .c(1'b0), .e(rdt_ctrl.widen & pmtrdt_uop_valid), .clk(clk), .rst_n(rst_n));
   always_comb begin
     case (uop_type)
       PERMUTATION: pmtrdt_uop_ready = rdt_ctrl.compress ? (compress_ctrl_ex1.last_uop_valid | ~rdt_ctrl_q.last_uop_valid)

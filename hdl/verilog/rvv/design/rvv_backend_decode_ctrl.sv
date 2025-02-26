@@ -177,7 +177,7 @@ module rvv_backend_decode_ctrl
 
   cdffr 
   #(
-    .WIDTH     (`UOP_INDEX_WIDTH)
+    .T         (logic[`UOP_INDEX_WIDTH-1:0])
   )
   uop_index_cdffr
   ( 
