@@ -14,6 +14,9 @@ module rvv_backend_div_unit_divider
   result_quotient,
   result_remainder,
   result_valid,
+`ifdef TB_SUPPORT
+  res_reuse_valid_p1,
+`endif
   result_ready
 );
 //
@@ -40,6 +43,9 @@ module rvv_backend_div_unit_divider
   output  logic [DIV_WIDTH-1:0] result_quotient;
   output  logic [DIV_WIDTH-1:0] result_remainder;
   output  logic                 result_valid;
+`ifdef TB_SUPPORT
+  output  logic                 res_reuse_valid_p1;
+`endif
   input   logic                 result_ready;
 
 //
@@ -87,6 +93,9 @@ module rvv_backend_div_unit_divider
   logic                         r_sgn_en;
   logic                         r_sgn_d;
   logic                         r_sgn_q;
+`ifdef TB_SUPPORT
+  logic                         res_reuse_valid_p0;
+`endif
   
 //
 // register
@@ -183,6 +192,19 @@ module rvv_backend_div_unit_divider
     .q      (r_sgn_q)
   );
 
+`ifdef TB_SUPPORT
+  always_ff @(posedge clk, negedge rst_n) begin
+    if(rst_n=='b0)
+      res_reuse_valid_p1 = 'b0;
+    else if(next_state==DIV_IDLE)
+      res_reuse_valid_p1 = 'b0;
+    else if((state==DIV_IDLE)&div_valid)
+      res_reuse_valid_p1 = res_reuse_valid_p0;
+    else
+      res_reuse_valid_p1 = res_reuse_valid_p1;
+  end
+`endif
+
 //
 // FSM
 //
@@ -256,6 +278,9 @@ module rvv_backend_div_unit_divider
     result_quotient  = 'b0;
     result_remainder = 'b0;
     result_valid     = 'b0;
+`ifdef TB_SUPPORT
+    res_reuse_valid_p0 = 'b0;
+`endif
 
     case(state)
       DIV_IDLE: begin
@@ -285,6 +310,12 @@ module rvv_backend_div_unit_divider
           end
           // check whether is -2^(WIDTH-1)/-1. The result will overflow.
           else if ((opcode==DIV_SIGN)&(src2_dividend=={1'b1,{(DIV_WIDTH-1){1'b0}}})&(src1_divisor=='1)) begin
+            dividend_en = 'b1;
+            dividend_d  = 'b0;
+
+            divisor_en = 'b1;
+            divisor_d  = 'b0;
+
             quotient_en = 'b1;
             quotient_d  = {1'b1,{(DIV_WIDTH-1){1'b0}}};
 
@@ -328,6 +359,10 @@ module rvv_backend_div_unit_divider
               
               count_en = 'b1;
               count_d  = 'b1;
+
+`ifdef TB_SUPPORT
+              res_reuse_valid_p0 = 1'b1;
+`endif
             end
             else begin
               dividend_en = 'b1; 
@@ -337,17 +372,17 @@ module rvv_backend_div_unit_divider
               r_sgn_en  = 'b1;
 
               // count leading zero bits in dividend
-              if (DIV_WIDTH==32) begin
+              if (DIV_WIDTH==`WORD_WIDTH) begin
                 cnt_clzb  = f_clzb32(dividend_d);
                 count_en  = 'b1;
                 count_d   = 'd33 - cnt_clzb;            
               end
-              else if (DIV_WIDTH==16) begin
+              else if (DIV_WIDTH==`HWORD_WIDTH) begin
                 cnt_clzb  = f_clzb16(dividend_d);
                 count_en  = 'b1;
                 count_d   = 'd17 - cnt_clzb;            
               end
-              else if (DIV_WIDTH==8) begin
+              else if (DIV_WIDTH==`BYTE_WIDTH) begin
                 cnt_clzb  = f_clzb8(dividend_d);
                 count_en  = 'b1;
                 count_d   = 'd9 - cnt_clzb;            
@@ -425,13 +460,22 @@ module rvv_backend_div_unit_divider
         result_quotient  = q_sgn_q ? ((~quotient_q )+'d1) : quotient_q;
         result_remainder = r_sgn_q ? ((~remainder_q)+'d1) : remainder_q;
     
-        if (result_ready) begin
-          count_en     = 'b1;
-          count_d      = 'b0;
-        end
+        count_en = result_ready;
+        count_d  = 'b0;
       end
     endcase
   end
+
+
+`ifdef TB_SUPPORT
+  `ifdef ASSERT_ON
+    `rvv_forbid(result_valid&res_reuse_valid_p1&result_ready&(result_quotient!=(src2_dividend/src1_divisor)))
+      else $warning("result_quotient(0x%h) should be 0x%h.\n",result_quotient,src2_dividend/src1_divisor);
+
+    `rvv_forbid(result_valid&res_reuse_valid_p1&result_ready&(result_remainder!=(src2_dividend%src1_divisor)))
+      else $warning("result_remainder(0x%h) should be 0x%h.\n",result_remainder,src2_dividend%src1_divisor);
+  `endif
+`endif
 
 //
 // function unit
