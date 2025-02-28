@@ -36,6 +36,7 @@ def kelvin_repos():
         ],
         patches = [
             "@kelvin_hw//external:0001-Use-systemc-in-verilator-and-support-verilator-in-co.patch",
+            "@kelvin_hw//external:0002-Update-cocotb-script-to-support-newer-version.patch",
         ],
         patch_args = ["-p1"],
     )

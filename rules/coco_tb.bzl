@@ -53,3 +53,38 @@ def verilator_cocotb_test(name,
         ],
         **kwargs,
     )
+
+def vcs_cocotb_test(name,
+                    hdl_toplevel,
+                    test_module,
+                    deps=[],
+                    data=[],
+                    **kwargs):
+    tags = kwargs.pop("tags", [])
+    tags.append("vcs")
+    kwargs.update(
+        hdl_toplevel_lang="verilog",
+        sim_name = "vcs",
+        sim = [],
+        tags = tags)
+
+    # Wrap in py_library so we can forward data
+    py_library(
+        name = name + "_test_data",
+        srcs = [],
+        deps = deps + [
+            requirement("cocotb"),
+            requirement("numpy"),
+        ],
+        data = data,
+    )
+
+    cocotb_test(
+        name = name,
+        hdl_toplevel = hdl_toplevel,
+        test_module = test_module,
+        deps = [
+            ":{}_test_data".format(name),
+        ],
+        **kwargs,
+    )

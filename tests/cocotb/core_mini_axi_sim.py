@@ -10,14 +10,6 @@ from cocotb.queue import Queue
 from cocotb.triggers import Timer, ClockCycles, RisingEdge, FallingEdge
 from elftools.elf.elffile import ELFFile
 
-def format_line_from_word(word, addr):
-  shift = addr % 16
-  line = np.zeros([4], dtype=np.uint32)
-  line[0] = word
-  line = np.roll(line.view(np.uint8), shift)
-  bdata = cocotb.binary.BinaryValue()
-  bdata.buff = reversed(line.tobytes())
-  return bdata
 
 def pad_to_multiple(x, multiple):
   padding = multiple - (len(x) % multiple)
@@ -34,15 +26,33 @@ def get_strb(mask):
   return val
 
 def convert_to_binary_value(data):
-  bdata = cocotb.binary.BinaryValue()
-  bdata.buff = reversed(data.tobytes())
-  return bdata
+  return cocotb.types.LogicArray.from_bytes(data, byteorder="little")
+
+def format_line_from_word(word, addr):
+  shift = addr % 16
+  line = np.zeros([4], dtype=np.uint32)
+  line[0] = word
+  line = np.roll(line.view(np.uint8), shift)
+  return convert_to_binary_value(line)
 
 
 class CoreMiniAxiInterface:
   def __init__(self, dut):
     self.dut = dut
-    self.clock = Clock(dut.io_aclk, 10, units="us")
+    self.dut.io_aclk.value = 0
+    self.dut.io_irq.value = 0
+    self.dut.io_te.value = 0
+    self.dut.io_axi_slave_read_addr_valid.value = 0
+    self.dut.io_axi_slave_read_addr_bits_addr.value = 0
+    self.dut.io_axi_slave_read_data_ready.value = 0
+    self.dut.io_axi_slave_write_addr_valid.value = 0
+    self.dut.io_axi_slave_write_addr_bits_addr.value = 0
+    self.dut.io_axi_slave_write_data_valid.value = 0
+    self.dut.io_axi_slave_write_resp_ready.value = 0
+    self.dut.io_axi_master_read_data_valid.value = 0
+    self.dut.io_axi_master_write_resp_valid.value = 0
+
+    self.clock = Clock(dut.io_aclk, 10, unit="us")
     self.memory_base_addr = 0x20000000
     self.memory = np.zeros([4 * 1024 * 1024], dtype=np.uint8)
 
@@ -134,11 +144,14 @@ class CoreMiniAxiInterface:
     while True:
       await RisingEdge(self.dut.io_aclk)
 
-      if self.dut.io_axi_slave_write_resp_valid.value:
-        bdata = dict()
-        bdata["id"] = self.dut.io_axi_slave_write_resp_bits_id
-        bdata["resp"] = self.dut.io_axi_slave_write_resp_bits_resp
-        await self.slave_bfifo.put(bdata)
+      try:
+        if self.dut.io_axi_slave_write_resp_valid.value:
+          bdata = dict()
+          bdata["id"] = self.dut.io_axi_slave_write_resp_bits_id
+          bdata["resp"] = self.dut.io_axi_slave_write_resp_bits_resp
+          await self.slave_bfifo.put(bdata)
+      except Exception as e:
+        print('X seen in slave_bagent: ' + str(e))
 
   async def slave_aragent(self, timeout=4096):
     self.dut.io_axi_slave_read_addr_valid.value = 0
@@ -175,14 +188,24 @@ class CoreMiniAxiInterface:
     while True:
       await RisingEdge(self.dut.io_aclk)
 
-      if self.dut.io_axi_slave_read_data_valid.value:
-        rdata = dict()
-        rdata["data"] = self.dut.io_axi_slave_read_data_bits_data.value.buff
-        rdata["id"] = self.dut.io_axi_slave_read_data_bits_id.value
-        rdata["last"] = self.dut.io_axi_slave_read_data_bits_last.value
-        rdata["resp"] = self.dut.io_axi_slave_read_data_bits_resp.value
+      try:
+        if self.dut.io_axi_slave_read_data_valid.value:
+          rdata = dict()
 
-        await self.slave_rfifo.put(rdata)
+          # Parse binary string value, replacing "X" with zero
+          # TODO(derekjchow): Consider passing in a x mask for checking downstream
+          nonx_data = str(self.dut.io_axi_slave_read_data_bits_data.value).replace("X", "0")
+          nonx_data = [ int(nonx_data[i:i+8], 2) for i in range(0, len(nonx_data), 8)]
+          nonx_data = np.array(nonx_data, dtype=np.uint8)
+          rdata["data"] = nonx_data
+
+          rdata["id"] = self.dut.io_axi_slave_read_data_bits_id.value
+          rdata["last"] = self.dut.io_axi_slave_read_data_bits_last.value
+          rdata["resp"] = self.dut.io_axi_slave_read_data_bits_resp.value
+
+          await self.slave_rfifo.put(rdata)
+      except Exception as e:
+        print('X seen in slave_ragent: ' + str(e))
 
   async def memory_read_agent(self):
     while True:
@@ -207,14 +230,17 @@ class CoreMiniAxiInterface:
     while True:
       await RisingEdge(self.dut.io_aclk)
 
-      if self.dut.io_axi_master_read_addr_valid.value:
-        ardata = dict()
-        ardata["id"] = self.dut.io_axi_master_read_addr_bits_id.value
-        ardata["addr"] = self.dut.io_axi_master_read_addr_bits_addr.value
-        ardata["size"] = self.dut.io_axi_master_read_addr_bits_size.value
-        ardata["len"] = self.dut.io_axi_master_read_addr_bits_len.value
+      try:
+        if self.dut.io_axi_master_read_addr_valid.value:
+          ardata = dict()
+          ardata["id"] = self.dut.io_axi_master_read_addr_bits_id.value.to_unsigned()
+          ardata["addr"] = self.dut.io_axi_master_read_addr_bits_addr.value.to_unsigned()
+          ardata["size"] = self.dut.io_axi_master_read_addr_bits_size.value.to_unsigned()
+          ardata["len"] = self.dut.io_axi_master_read_addr_bits_len.value.to_unsigned()
 
-        await self.master_arfifo.put(ardata)
+          await self.master_arfifo.put(ardata)
+      except Exception as e:
+        print('X seen in master_aragent: ' + str(e))
 
   async def master_ragent(self, timeout=4096):
     while True:
@@ -280,14 +306,17 @@ class CoreMiniAxiInterface:
     while True:
       await RisingEdge(self.dut.io_aclk)
 
-      if self.dut.io_axi_master_write_addr_valid.value:
-        awdata = dict()
-        awdata["id"] = self.dut.io_axi_master_write_addr_bits_id.value
-        awdata["addr"] = self.dut.io_axi_master_write_addr_bits_addr.value
-        awdata["size"] = self.dut.io_axi_master_write_addr_bits_size.value
-        awdata["len"] = self.dut.io_axi_master_write_addr_bits_len.value
+      try:
+        if self.dut.io_axi_master_write_addr_valid.value:
+          awdata = dict()
+          awdata["id"] = self.dut.io_axi_master_write_addr_bits_id.value.to_unsigned()
+          awdata["addr"] = self.dut.io_axi_master_write_addr_bits_addr.value.to_unsigned()
+          awdata["size"] = self.dut.io_axi_master_write_addr_bits_size.value.to_unsigned()
+          awdata["len"] = self.dut.io_axi_master_write_addr_bits_len.value.to_unsigned()
 
-        await self.master_awfifo.put(awdata)
+          await self.master_awfifo.put(awdata)
+      except Exception as e:
+        print('X seen in master_awagent: ' + str(e))
 
   async def master_wagent(self):
     self.dut.io_axi_master_write_data_ready.value = 1
@@ -295,13 +324,16 @@ class CoreMiniAxiInterface:
     while True:
       await RisingEdge(self.dut.io_aclk)
 
-      if self.dut.io_axi_master_write_data_valid.value:
-        wdata = dict()
-        wdata["data"] = self.dut.io_axi_master_write_data_bits_data.value.buff
-        wdata["strb"] = self.dut.io_axi_master_write_data_bits_strb.value
-        wdata["last"] = self.dut.io_axi_master_write_data_bits_last.value
+      try:
+        if self.dut.io_axi_master_write_data_valid.value:
+          wdata = dict()
+          wdata["data"] = self.dut.io_axi_master_write_data_bits_data.value.buff
+          wdata["strb"] = self.dut.io_axi_master_write_data_bits_strb.value
+          wdata["last"] = self.dut.io_axi_master_write_data_bits_last.value
 
-        await self.master_wfifo.put(wdata)
+          await self.master_wfifo.put(wdata)
+      except Exception as e:
+        print('X seen in master_wagent: ' + str(e))
 
   async def master_bagent(self, timeout=4096):
     while True:
@@ -328,11 +360,11 @@ class CoreMiniAxiInterface:
 
   async def reset(self):
     self.dut.io_aresetn.setimmediatevalue(1)
-    await Timer(500, units="ns")
+    await Timer(1, unit="us")
     self.dut.io_aresetn.setimmediatevalue(0)
-    await Timer(500, units="ns")
+    await Timer(1, unit="us")
     self.dut.io_aresetn.setimmediatevalue(1)
-    await Timer(500, units="ns")
+    await Timer(1, unit="us")
 
   async def _write_addr(self, addr, size, burst_len=1):
     awdata = dict()
@@ -606,7 +638,7 @@ async def core_mini_axi_basic_write_read_memory(dut):
     rdata = await core_mini_axi.read(0x8, 16)
     assert (np.arange(8, 24, dtype=np.uint8) == rdata).all()
 
-    # # Unaligned write, taking two bursts
+    # Unaligned write, taking two bursts
     wdata = np.arange(20, dtype=np.uint8)
     await core_mini_axi.write(0x204, wdata)
     rdata = await core_mini_axi.read(0x200, 32)
@@ -646,7 +678,6 @@ async def core_mini_axi_slow_bready(dut):
   for _ in tqdm.trange(100):
     rdata = await core_mini_axi.read(i*32, 16)
     assert (wdata == rdata).all()
-
 
 @cocotb.test()
 async def core_mini_axi_write_read_memory_stress_test(dut):
