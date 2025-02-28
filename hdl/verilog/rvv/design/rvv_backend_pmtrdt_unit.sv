@@ -62,6 +62,7 @@ module rvv_backend_pmtrdt_unit
 
   COMPRESS_CTRL_t           compress_ctrl_ex0, compress_ctrl_ex1;
   logic                     compress_ctrl_push, compress_ctrl_pop;
+  logic                     compress_ctrl_empty;
 
   // Reduction operation
   logic                     red_widen_sum_flag;
@@ -2124,7 +2125,7 @@ module rvv_backend_pmtrdt_unit
         for (int j=0; j<`PMTRDT_RS_DEPTH; j++) begin
           pmt_go = pmt_go | (uop_data[j].last_uop_valid & rs_entry_valid[j]);
         end
-        pmt_go = (uop_type==PERMUTATION) & uop_data[0].first_uop_valid & pmt_go;
+        pmt_go = ~rdt_ctrl.compress & compress_ctrl_empty & (uop_type==PERMUTATION) & uop_data[0].first_uop_valid & pmt_go;
       end
       cdffr #(.T(logic)) pmt_go_reg (.q(pmt_go_q), .d(pmt_go), .c(1'b0), .e(1'b1), .clk(clk), .rst_n(rst_n));
 
@@ -2393,7 +2394,7 @@ module rvv_backend_pmtrdt_unit
         // output
         .fifo_outData   (compress_ctrl_ex1),
         .fifo_full      (),
-        .fifo_empty     (),
+        .fifo_empty     (compress_ctrl_empty),
         .fifo_idle      (),
         // input
         .fifo_inData    (compress_ctrl_ex0),
@@ -2447,14 +2448,17 @@ module rvv_backend_pmtrdt_unit
   // 3. PMT instruction - set 1 only if last_uop_valid is asserted.
   cdffr #(.T(logic)) wredsum_flag_reg (.q(red_widen_sum_flag), .d(~red_widen_sum_flag), .c(1'b0), .e(rdt_ctrl.widen & pmtrdt_uop_valid), .clk(clk), .rst_n(rst_n));
   always_comb begin
-    case (uop_type)
-      PERMUTATION: pmtrdt_uop_ready = rdt_ctrl.compress ? (compress_ctrl_ex1.last_uop_valid | ~rdt_ctrl_q.last_uop_valid)
-                                                        : uop_data[pmt_uop_done_cnt_q].last_uop_valid || ~uop_data[0].first_uop_valid;
-      REDUCTION:
-        if (rdt_ctrl.widen) pmtrdt_uop_ready = red_widen_sum_flag;
-        else            pmtrdt_uop_ready = 1'b1;
-      default: pmtrdt_uop_ready = 1'b1;
-    endcase
+    if (compress_ctrl_empty)
+      case (uop_type)
+        PERMUTATION: pmtrdt_uop_ready = rdt_ctrl.compress ? (compress_ctrl_ex1.last_uop_valid | ~rdt_ctrl_q.last_uop_valid)
+                                                          : uop_data[pmt_uop_done_cnt_q].last_uop_valid || ~uop_data[0].first_uop_valid;
+        REDUCTION:
+          if (rdt_ctrl.widen) pmtrdt_uop_ready = red_widen_sum_flag;
+          else                pmtrdt_uop_ready = 1'b1;
+        default: pmtrdt_uop_ready = 1'b1;
+      endcase
+    else pmtrdt_uop_ready = rdt_ctrl.compress ? (compress_ctrl_ex1.last_uop_valid | ~rdt_ctrl_q.last_uop_valid)
+                                              : uop_data[pmt_uop_done_cnt_q].last_uop_valid || ~uop_data[0].first_uop_valid;
   end
 
 // ---function--------------------------------------------------------
