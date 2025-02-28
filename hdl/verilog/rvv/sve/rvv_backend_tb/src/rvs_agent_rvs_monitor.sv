@@ -81,7 +81,7 @@ function void rvs_monitor::final_phase(uvm_phase phase);
   uvm_config_db#(int)::set(uvm_root::get(), "", "rvv_total_inst", this.total_inst);
   uvm_config_db#(int)::set(uvm_root::get(), "", "rvv_excuted_inst", this.executed_inst);
   `uvm_info("FINAL_CHECK", $sformatf("RVV total accepted inst: %0d, executed inst: %0d, discarded %.2f%%", 
-                                      this.total_inst, this.executed_inst, real'(this.total_inst - this.executed_inst)*100.0/real'(this.total_inst)), UVM_LOW)
+                                      this.total_inst, this.executed_inst, real'(this.total_inst - this.executed_inst)*100.0/real'(this.total_inst)), UVM_NONE)
 endfunction: final_phase 
 
 task rvs_monitor::run_phase(uvm_phase phase);

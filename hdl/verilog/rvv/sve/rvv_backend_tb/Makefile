@@ -89,13 +89,18 @@ ifdef seed
 else
 	SEED = +ntb_random_seed_automatic
 endif
+ifdef seed
+TESTNAME   = $(UVM_TEST)$(atn)"."$(seed)
+else
+TESTNAME   = $(UVM_TEST)$(atn)
+endif
 ifeq ($(dump),on)
  	DUMP = -ucli -i $(SIM_TCL)
 else
 	DUMP = 
 endif
 ifeq ($(coverage),on)
-	COV = -cm cond+line+branch+tgl 
+	COV = -cm cond+line+branch+tgl -cm_dir $(COV_PATH) -cm_name $(TESTNAME)
 else
 	COV = 
 endif
@@ -131,11 +136,6 @@ ASSERT_OPTS = -assert global_finish_maxfail=1		\
 
 BUILD_PATH = $(RVV_ROOT)/build/$(scfg)
 
-ifdef seed
-TESTNAME   = $(UVM_TEST)$(atn)"."$(seed)
-else
-TESTNAME   = $(UVM_TEST)$(atn)
-endif
 SIM_PATH	 = $(RVV_ROOT)/$(logdir)/$(scfg)/$(TESTNAME)
 COV_PATH   = $(RVV_ROOT)/$(logdir)/$(scfg)/
 
@@ -178,11 +178,11 @@ RTLFILES := $(filter-out $(UNUSED),$(RTLFILES))
 all default: vcs sim 
 
 vcs: vlst mkbuilddir
-	@cd $(BUILD_PATH); $(VCOMP) -l $(BUILD_PATH)/vcs.log -cm_dir $(COV_PATH) 
+	@cd $(BUILD_PATH); $(VCOMP) -l $(BUILD_PATH)/vcs.log 
 	@echo "Build log: $(BUILD_PATH)/vcs.log"
 
 sim_test:
-	@cd $(SIM_PATH); $(VSIM) -l $(SIM_PATH)/test.log -cm_dir $(COV_PATH) -cm_name $(TESTNAME)
+	@cd $(SIM_PATH); $(VSIM) -l $(SIM_PATH)/test.log
 	@echo "Test log: $(SIM_PATH)/test.log"
 
 chk_test:

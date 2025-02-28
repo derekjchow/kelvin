@@ -1,0 +1,5 @@
+alu_random_test
+alu_random_large_lmul_test
+alu_random_small_lmul_test
+alu_random_bypass_test
+alu_random_waw_test

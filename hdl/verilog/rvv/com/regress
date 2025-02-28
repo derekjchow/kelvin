@@ -27,6 +27,7 @@ GetOptions (
   "scfg=s" => \(my $scfg = "rvv_backend"),
   "report" => \(my $opt_report),
   "coverage|cov" => \(my $opt_coverage),
+  "show_discard|disc" => \(my $opt_show_disc),
 
   "shuffle" => \(my $opt_shuffle),
   "qualify|q" => \(my $opt_qualify),
@@ -77,7 +78,10 @@ $exeSimulate = 0 if($opt_only_compile || $opt_report || $opt_show);
 my $exeReport = 1;
 $exeReport = 0 if($opt_show);
 my $exeShow = $opt_show;
-my $exeCoverage = 1 if($opt_coverage);
+my $exeCoverage = 0
+$exeCoverage = 1 if($opt_coverage);
+my $exeCountDiscRate = 0;
+$exeCountDiscRate = 1 if($opt_show_disc);
 
 my $repeat = $opt_qualify ? 1 : $opt_repeat ? $opt_repeat : 0; 
 
@@ -115,10 +119,10 @@ my @cmd_sim;
 foreach my $test_name (@tests) {
   if($repeat) {
     foreach my $re (0..$repeat-1) {
-      push @cmd_sim, qq(sve/rvv_backend_tb/Makefile sim scfg=$scfg test=$test_name atn=._duplicate_${re}_ logdir=$logDir);
+      push @cmd_sim, qq(sve/rvv_backend_tb/Makefile sim scfg=$scfg test=$test_name atn=._duplicate_${re}_ logdir=$logDir UVM_VERBOSITY=UVM_NONE);
     }
   } else {
-    push @cmd_sim, qq(sve/rvv_backend_tb/Makefile sim  scfg=$scfg test=$test_name logdir=$logDir);
+    push @cmd_sim, qq(sve/rvv_backend_tb/Makefile sim  scfg=$scfg test=$test_name logdir=$logDir UVM_VERBOSITY=UVM_NONE);
   }
 }
 if($opt_shuffle) { @cmd_sim = shuffle(@cmd_sim);}
@@ -456,7 +460,7 @@ sub CheckResult{
         push @rerunCMDs,  "$testName  seed=$seed\n";
         $testBucket{$testName}->{unim} ++;
       }
-      if($isHighDisc) {
+      if($exeCountDiscRate && $isHighDisc) {
         $testPath = "$file";
         $rerunCmd = "sve/rvv_backend_tb/Makefile sim test=$testName seed=$seed";
         push @highDiscReport, "=========================================================\n";
@@ -479,7 +483,7 @@ sub CheckResult{
     push @summReport, "Pass Tests:  $testBucket{$test}->{pass}(".sprintf("%.2f%%",100*$testBucket{$test}->{pass}/$testBucket{$test}->{total}).")\n";
     push @summReport, "Fail Tests:  $testBucket{$test}->{fail}(".sprintf("%.2f%%",100*$testBucket{$test}->{fail}/$testBucket{$test}->{total}).")\n";
     push @summReport, "Unim Tests:  $testBucket{$test}->{unim}(".sprintf("%.2f%%",100*$testBucket{$test}->{unim}/$testBucket{$test}->{total}).")\n";
-    push @summReport, "High-discard Tests:  $testBucket{$test}->{highDisc}(".sprintf("%.2f%%",100*$testBucket{$test}->{highDisc}/$testBucket{$test}->{total}).")\n";
+    push @summReport, "High-discard Tests:  $testBucket{$test}->{highDisc}(".sprintf("%.2f%%",100*$testBucket{$test}->{highDisc}/$testBucket{$test}->{total}).")\n" if $exeCountDiscRate;
   }
   push @summReport, "\n";
   push @summReport, "Summary\n";
@@ -488,7 +492,7 @@ sub CheckResult{
   push @summReport, "Pass Tests:  $passNum(".sprintf("%.2f%%",100*$passNum/$testNum).")\n";
   push @summReport, "Fail Tests:  $failNum(".sprintf("%.2f%%",100*$failNum/$testNum).")\n";
   push @summReport, "Unimplemented Tests:  $unimNum(".sprintf("%.2f%%",100*$unimNum/$testNum).")\n";
-  push @summReport, "High discard Tests:  $highDiscNum(".sprintf("%.2f%%",100*$highDiscNum/$testNum).")\n";
+  push @summReport, "High discard Tests:  $highDiscNum(".sprintf("%.2f%%",100*$highDiscNum/$testNum).")\n" if $exeCountDiscRate;
 
   push @summReport, "\n\n";
 
@@ -502,8 +506,8 @@ sub CheckResult{
   print $fh_rptLog @failReport;
   print $fh_rptLog "\n** UNIM TESTS : $unimNum *****************************************************\n";
   print $fh_rptLog @unimReport;
-  print $fh_rptLog "\n** HIGH DISCARD TESTS : $highDiscNum *****************************************\n";
-  print $fh_rptLog @highDiscReport;
+  print $fh_rptLog "\n** HIGH DISCARD TESTS : $highDiscNum *****************************************\n" if $exeCountDiscRate;
+  print $fh_rptLog @highDiscReport if $exeCountDiscRate;
   print $fh_rptLog @summReport;
   close $fh_rptLog;
   # summary regress report

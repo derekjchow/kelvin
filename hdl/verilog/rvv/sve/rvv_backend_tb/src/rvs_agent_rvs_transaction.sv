@@ -15,7 +15,7 @@ class rvs_transaction extends uvm_sequence_item;
        bit is_rt = 0;
 
   /* VCSR field */
-  rand vtype_t           vtype;
+  rand vtype_t           vtype;   // TODO: replace vtype by separate variables
   rand logic [`XLEN-1:0] vl;
   rand logic [`XLEN-1:0] vlmax;
        logic [`XLEN-1:0] vlmax_max;
@@ -85,21 +85,37 @@ class rvs_transaction extends uvm_sequence_item;
 // Constrain ----------------------------------------------------------
 
   constraint c_solve_order {
-    solve vl before vstart;
-
     solve inst_type before src3_type;
     solve inst_type before alu_inst;
     solve inst_type before lsu_inst;
+
+    // ALU insts solve order will be:
+    //   inst_type -> alu_inst -> op_type/alu_type -> op_idx/vm 
+    //   -> vtypes -> vl -> vstart
+    // vl should be: 
+    //   vlmax -> vl -> evl  
     
+    solve alu_inst before alu_type;
     solve alu_inst before dest_type;
     solve alu_inst before src2_type;
-    solve alu_inst before src1_type;
-    solve dest_type before alu_type;
-    solve src2_type before alu_type;
-    solve src1_type before alu_type;
+    solve alu_inst before src1_type;    
+
     solve dest_type before dest_idx;
     solve src2_type before src2_idx;
     solve src1_type before src1_idx;
+
+    solve dest_type before vm;
+    solve src2_type before vm;
+    solve src1_type before vm;
+
+    solve dest_idx before vtype;
+    solve src2_idx before vtype;
+    solve src1_idx before vtype;
+
+    solve vtype before vlmax;
+    solve vlmax before vl;
+    solve vl before evl;
+    solve evl before vstart;
   }
 
   constraint c_ill_rate {
@@ -157,25 +173,14 @@ class rvs_transaction extends uvm_sequence_item;
     } else {
     //TODO  
     }
-
-
-  }
-
-  constraint c_vm {
-    vm inside {0, 1};
-    (inst_type == ALU && alu_inst inside {VCOMPRESS})
-    ->  vm == 1;
-    (inst_type == ALU && alu_inst inside {VSMUL_VMVNRR} && alu_type == OPIVI)
-    ->  vm == 1;
-    (inst_type == ALU && alu_inst inside {VADC, VSBC})
-    ->  vm == 0;
-    (inst_type == ALU && alu_inst inside {VMAND, VMOR, VMXOR, VMORN, VMNAND, VMNOR, VMANDN, VMXNOR})
-    ->  vm == 1;
   }
 
   constraint c_oprand {
 
     (inst_type == ALU) -> (alu_type inside {OPIVV, OPIVX, OPIVI, OPMVV, OPMVX});
+    vm inside {0, 1};
+    (inst_type == ALU) -> (src3_type == UNUSE);
+
     dest_idx inside {[0:31]};
     src3_idx inside {[0:31]};
     src2_idx inside {[0:31]};
@@ -185,7 +190,7 @@ class rvs_transaction extends uvm_sequence_item;
       // OPI
       if(inst_type == ALU && alu_inst[7:6] == 2'b00) {
         (!(alu_inst inside {VSUB, VRSUB,
-                            VSBC, VMSBC, 
+                            VADC, VSBC, VMSBC, 
                             VMSLTU, VMSLT, VMSGTU, VMSGT, 
                             VMERGE_VMVV, 
                             VSLL, VSRL, VSRA, VNSRL, VNSRA,
@@ -193,80 +198,75 @@ class rvs_transaction extends uvm_sequence_item;
                             VWREDSUMU, VWREDSUM, VRGATHER,
                             VSMUL_VMVNRR,
                             VSLIDEDOWN})) 
-        ->  (dest_type == VRF && src2_type == VRF && 
-              ((alu_type == OPIVV && src1_type == VRF) || 
-               (alu_type == OPIVX && src1_type == XRF) || 
-               (alu_type == OPIVI && src1_type == IMM)
-              )
+        ->  ((alu_type == OPIVV && dest_type == VRF && src2_type == VRF && src1_type == VRF) || 
+             (alu_type == OPIVX && dest_type == VRF && src2_type == VRF && src1_type == XRF) || 
+             (alu_type == OPIVI && dest_type == VRF && src2_type == VRF && src1_type == IMM)
             );
 
         (alu_inst inside {VSUB, 
-                          VSBC, VMSBC, 
+                          VMSBC, 
                           VMINU, VMIN, VMAXU, VMAX,
                           VMSLTU, VMSLT,
                           VSSUBU, VSSUB
                           })
-        ->  (dest_type == VRF && src2_type == VRF &&
-              ((alu_type == OPIVV && src1_type == VRF) || 
-               (alu_type == OPIVX && src1_type == XRF) 
-              )
+        ->  ((alu_type == OPIVV && dest_type == VRF && src2_type == VRF && src1_type == VRF) || 
+             (alu_type == OPIVX && dest_type == VRF && src2_type == VRF && src1_type == XRF) 
+            );
+
+        (alu_inst inside {VADC})
+        ->  ((alu_type == OPIVV && dest_type == VRF && src2_type == VRF && src1_type == VRF && vm == 0) || 
+             (alu_type == OPIVX && dest_type == VRF && src2_type == VRF && src1_type == XRF && vm == 0) ||
+             (alu_type == OPIVI && dest_type == VRF && src2_type == VRF && src1_type == IMM && vm == 0) 
+            );
+
+        (alu_inst inside {VSBC})
+        ->  ((alu_type == OPIVV && dest_type == VRF && src2_type == VRF && src1_type == VRF && vm == 0) || 
+             (alu_type == OPIVX && dest_type == VRF && src2_type == VRF && src1_type == XRF && vm == 0)
             );
 
         (alu_inst inside {VRSUB,
                           VMSGTU, VMSGT}) 
-        ->  (dest_type == VRF && src2_type == VRF && 
-              ((alu_type == OPIVX && src1_type == XRF) || 
-               (alu_type == OPIVI && src1_type == IMM) 
-              )
+        ->  ((alu_type == OPIVX && dest_type == VRF && src2_type == VRF && src1_type == XRF) || 
+             (alu_type == OPIVI && dest_type == VRF && src2_type == VRF && src1_type == IMM) 
             );
 
         (alu_inst inside {VMERGE_VMVV}) 
-        ->  (dest_type == VRF && 
-              ((src2_type == VRF && vm == 0) ||
-               (src2_type == UNUSE && vm == 1 && src2_idx == 0)
-              ) &&
-              ((alu_type == OPIVV && src1_type == VRF) || 
-               (alu_type == OPIVX && src1_type == XRF) || 
-               (alu_type == OPIVI && src1_type == IMM)
-              )
+        ->  (// vmerge
+             (alu_type == OPIVV && dest_type == VRF && src2_type == VRF && src1_type == VRF && vm == 0) || 
+             (alu_type == OPIVX && dest_type == VRF && src2_type == VRF && src1_type == XRF && vm == 0) || 
+             (alu_type == OPIVI && dest_type == VRF && src2_type == VRF && src1_type == IMM && vm == 0) ||
+             //vmv
+             (alu_type == OPIVV && dest_type == VRF && src2_type == UNUSE && src1_type == VRF && vm == 1 && src2_idx == 0) || 
+             (alu_type == OPIVX && dest_type == VRF && src2_type == UNUSE && src1_type == XRF && vm == 1 && src2_idx == 0) || 
+             (alu_type == OPIVI && dest_type == VRF && src2_type == UNUSE && src1_type == IMM && vm == 1 && src2_idx == 0) 
             );
 
         (alu_inst inside {VSLL, VSRL, VSRA, VNSRL, VNSRA,
                           VSSRL, VSSRA, VNCLIPU, VNCLIP}) 
-        ->  (dest_type == VRF && src2_type == VRF && 
-              ((alu_type == OPIVV && src1_type == VRF) || 
-               (alu_type == OPIVX && src1_type == XRF) || 
-               (alu_type == OPIVI && src1_type == UIMM)
-              )
+        ->  ((alu_type == OPIVV && dest_type == VRF && src2_type == VRF && src1_type == VRF) || 
+             (alu_type == OPIVX && dest_type == VRF && src2_type == VRF && src1_type == XRF) || 
+             (alu_type == OPIVI && dest_type == VRF && src2_type == VRF && src1_type == UIMM)
             );
 
         (alu_inst inside {VWREDSUMU, VWREDSUM}) 
-        ->  (dest_type == SCALAR && src2_type == VRF && 
-              ((alu_type == OPIVV && src1_type == SCALAR)
-              )
+        ->  ((alu_type == OPIVV && dest_type == SCALAR && src2_type == VRF && src1_type == SCALAR)
             );
 
         (alu_inst inside {VSLIDEDOWN}) 
-        ->  (dest_type == VRF && src2_type == VRF && 
-              ((alu_type == OPIVI && src1_type == IMM) || 
-               (alu_type == OPIVX && src1_type == XRF)
-              )
+        ->  ((alu_type == OPIVI && dest_type == VRF && src2_type == VRF && src1_type == IMM) || 
+             (alu_type == OPIVX && dest_type == VRF && src2_type == VRF && src1_type == XRF)
             );
 
         (alu_inst inside {VRGATHER}) 
-        ->  (dest_type == VRF && src2_type == VRF && 
-              ((alu_type == OPIVI && src1_type == UIMM) || 
-               (alu_type == OPIVX && src1_type == XRF) ||
-               (alu_type == OPIVV && src1_type == VRF)
-              )
+        ->  ((alu_type == OPIVI && dest_type == VRF && src2_type == VRF && src1_type == UIMM) || 
+             (alu_type == OPIVX && dest_type == VRF && src2_type == VRF && src1_type == XRF) ||
+             (alu_type == OPIVV && dest_type == VRF && src2_type == VRF && src1_type == VRF)
             );
 
         (alu_inst inside {VSMUL_VMVNRR})
-        ->  (dest_type == VRF && src2_type == VRF &&
-              ((alu_type == OPIVV && src1_type == VRF) ||         // vsmul
-               (alu_type == OPIVX && src1_type == XRF) ||         // vsmul
-               (alu_type == OPIVI && src1_type == FUNC && src1_idx inside {0,1,3,7} && vm == 1) // vmv<nr>r
-              )
+        ->  ((alu_type == OPIVV && dest_type == VRF && src2_type == VRF && src1_type == VRF) ||         // vsmul
+             (alu_type == OPIVX && dest_type == VRF && src2_type == VRF && src1_type == XRF) ||         // vsmul
+             (alu_type == OPIVI && dest_type == VRF && src2_type == VRF && src1_type == FUNC && vm == 1 && src1_idx inside {0,1,3,7}) // vmv<nr>r
             );
       }
 
@@ -279,63 +279,45 @@ class rvs_transaction extends uvm_sequence_item;
                             VREDMINU,VREDMIN,VREDMAXU,VREDMAX,
                             VSLIDE1UP, VSLIDE1DOWN,
                             VCOMPRESS})) 
-        ->  (dest_type == VRF && src2_type == VRF && 
-              ((alu_type == OPMVV && src1_type == VRF) || 
-               (alu_type == OPMVX && src1_type == XRF) 
-              )
+        ->  ((alu_type == OPMVV && dest_type == VRF && src2_type == VRF && src1_type == VRF) || 
+             (alu_type == OPMVX && dest_type == VRF && src2_type == VRF && src1_type == XRF) 
             );
 
         (alu_inst inside {VMAND, VMOR, VMXOR, VMORN, VMNAND, VMNOR, VMANDN, VMXNOR}) 
-        ->  (dest_type == VRF && src2_type == VRF && 
-              ((alu_type == OPMVV && src1_type == VRF) 
-              )
+        ->  ((alu_type == OPMVV && dest_type == VRF && src2_type == VRF && src1_type == VRF && vm == 1) 
             );
 
         (alu_inst == VXUNARY0) 
-        ->  (dest_type == VRF && src2_type == VRF && 
-              ((alu_type == OPMVV && src1_type == FUNC && src1_idx inside {VZEXT_VF4, VSEXT_VF4, VZEXT_VF2, VSEXT_VF2}))
+        ->  ((alu_type == OPMVV && dest_type == VRF && src2_type == VRF && src1_type == FUNC && src1_idx inside {VZEXT_VF4, VSEXT_VF4, VZEXT_VF2, VSEXT_VF2})
             );
 
         (alu_inst == VMUNARY0) 
-        ->  ((dest_type == VRF && src2_type == VRF && 
-              alu_type == OPMVV && src1_type == FUNC && src1_idx inside {VIOTA}) || 
-             (dest_type == VRF && src2_type == UNUSE && 
-              alu_type == OPMVV && src1_type == FUNC && src1_idx inside {VID} && src2_idx == 0) ||
-             (dest_type == VRF && src2_type == VRF &&
-              alu_type == OPMVV && src1_type == FUNC && src1_idx inside {VMSBF, VMSOF, VMSIF})
+        ->  ((alu_type == OPMVV && dest_type == VRF && src2_type == VRF && src1_type == FUNC && src1_idx inside {VIOTA}) || 
+             (alu_type == OPMVV && dest_type == VRF && src2_type == UNUSE && src1_type == FUNC && src2_idx == 0 && src1_idx inside {VID}) ||
+             (alu_type == OPMVV && dest_type == VRF && src2_type == VRF && src1_type == FUNC && src1_idx inside {VMSBF, VMSOF, VMSIF})
             );
 
         (alu_inst == VWXUNARY0)
-        ->  ((dest_type == XRF && src2_type == VRF && 
-              alu_type == OPMVV && src1_type == FUNC && src1_idx inside { VCPOP, VFIRST}) ||
-             (dest_type == XRF && src2_type == VRF && 
-              alu_type == OPMVV && src1_type == FUNC && src1_idx inside {VMV_X_S} && vm == 1) ||  // vmv.x.s
-             (dest_type == VRF && src2_type == FUNC  && src2_idx inside{VMV_X_S} &&
-              alu_type == OPMVX && src1_type == XRF && vm == 1) // vmv.s.x
+        ->  ((alu_type == OPMVV && dest_type == XRF && src2_type == VRF && src1_type == FUNC && src1_idx inside { VCPOP, VFIRST}) ||
+             (alu_type == OPMVV && dest_type == XRF && src2_type == VRF && src1_type == FUNC && vm ==1 && src1_idx inside {VMV_X_S}) ||  // vmv.x.s
+             (alu_type == OPMVX && dest_type == VRF && src2_type == FUNC && src1_type == XRF && vm ==1 && src2_idx inside{VMV_X_S}) // vmv.s.x
             );
 
         (alu_inst inside {VWMACCUS}) 
-        ->  (dest_type == VRF && src2_type == VRF && 
-              ((alu_type == OPMVX && src1_type == XRF) 
-              )
+        ->  ((alu_type == OPMVX && dest_type == VRF && src2_type == VRF && src1_type == XRF) 
             );
         
         (alu_inst inside {VREDSUM, VREDAND, VREDOR, VREDXOR,
                           VREDMINU,VREDMIN,VREDMAXU,VREDMAX}) 
-        ->  (dest_type == SCALAR && src2_type == VRF && 
-              (alu_type == OPMVV && src1_type == SCALAR)
+        ->  ((alu_type == OPMVV && dest_type == SCALAR && src2_type == VRF && src1_type == SCALAR)
             );
 
         (alu_inst inside {VSLIDE1UP, VSLIDE1DOWN}) 
-        ->  (dest_type == VRF && src2_type == VRF && 
-              ((alu_type == OPMVX && src1_type == XRF) 
-              )
+        ->  ((alu_type == OPMVX && dest_type == VRF && src2_type == VRF && src1_type == XRF) 
             );
         
         (alu_inst inside {VCOMPRESS}) 
-        ->  (dest_type == VRF && src2_type == VRF && 
-              (alu_type == OPMVV && src1_type == VRF) 
-              && vm == 1
+        ->  ((alu_type == OPMVV && dest_type == VRF && src2_type == VRF && src1_type == VRF && vm == 1) 
             );
       }
     } else {
@@ -361,7 +343,6 @@ class rvs_transaction extends uvm_sequence_item;
       
     }// if(!illegal_inst_en)
 
-    (inst_type == ALU) -> (src3_type == UNUSE);
   }
 
   constraint c_sewlmul {
@@ -519,7 +500,6 @@ endfunction: pre_randomize
 
 function void rvs_transaction::post_randomize();
   super.post_randomize();
-
 
   if(!illegal_inst_en) begin legal_inst_gen(); end
 
@@ -858,7 +838,7 @@ function void rvs_transaction::asm_string_gen();
         end
       end else if(alu_inst inside {VMUNARY0}) begin
         inst = src1_func_vmunary0.name();
-      end else if(alu_inst inside {VSMUL_VMVNRR} && alu_type == OPIVI ) begin
+      end else if(alu_inst inside {VSMUL_VMVNRR}) begin
         if(alu_type inside {OPIVI}) begin
           if(src1_idx inside{0,1,3,7})
             inst = $sformatf("vmv%0dr.v",src1_idx+1);

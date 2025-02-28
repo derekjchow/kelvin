@@ -1845,6 +1845,7 @@ endclass: alu_iterate_vmvnr_seq
 //-----------------------------------------------------------
 // ALU random sequence
 //-----------------------------------------------------------
+alu_inst_e unwanted_alu_inst [] = '{UNUSE_INST};
 class alu_random_base_sequence extends base_sequence;
   `uvm_object_utils(alu_random_base_sequence)
   `uvm_add_to_seq_lib(alu_random_base_sequence,rvs_sequencer_sequence_library)
@@ -1876,17 +1877,8 @@ class alu_random_seq extends alu_random_base_sequence;
       assert(req.randomize() with {
         pc == local::inst_cnt;
 
-        // vtype.vlmul dist {
-        //   LMUL1_4 := 10,
-        //   LMUL1_2 := 20,
-        //   LMUL1   := 20,
-        //   LMUL2   := 30,
-        //   LMUL4   :=  5,
-        //   LMUL8   := 15 
-        // };
-
         inst_type == ALU;
-        !(alu_inst inside {UNUSE_INST});
+        !(alu_inst inside {unwanted_alu_inst});
 
       });
       finish_item(req);
@@ -1915,7 +1907,7 @@ class alu_random_small_lmul_seq extends alu_random_base_sequence;
         };
 
         inst_type == ALU;
-        !(alu_inst inside {UNUSE_INST});
+        !(alu_inst inside {unwanted_alu_inst});
         (alu_inst == VSMUL_VMVNRR && alu_type == OPIVI && src1_type == FUNC) -> (src1_idx inside {0,1}); // constraint vmv<nr>r
 
       });
@@ -1944,7 +1936,7 @@ class alu_random_large_lmul_seq extends alu_random_base_sequence;
         };
 
         inst_type == ALU;
-        !(alu_inst inside {UNUSE_INST});
+        !(alu_inst inside {unwanted_alu_inst});
         (alu_inst == VSMUL_VMVNRR && alu_type == OPIVI && src1_type == FUNC) -> (src1_idx inside {3,7}); // constraint vmv<nr>r
 
       });
@@ -1973,7 +1965,7 @@ class alu_random_bypass_seq extends alu_random_base_sequence;
         };
 
         inst_type == ALU;
-        !(alu_inst inside {UNUSE_INST});
+        !(alu_inst inside {unwanted_alu_inst});
         (alu_inst == VSMUL_VMVNRR && alu_type == OPIVI && src1_type == FUNC) -> (src1_idx inside {0}); // only use vmv1r
 
         (dest_type == VRF) -> (dest_idx inside {[0:3]});
@@ -2005,7 +1997,7 @@ class alu_random_waw_seq extends alu_random_base_sequence;
         };
 
         inst_type == ALU;
-        !(alu_inst inside {UNUSE_INST});
+        !(alu_inst inside {unwanted_alu_inst});
         (alu_inst == VSMUL_VMVNRR && alu_type == OPIVI && src1_type == FUNC) -> (src1_idx inside {0}); // only use vmv1r
 
         dest_type == VRF;

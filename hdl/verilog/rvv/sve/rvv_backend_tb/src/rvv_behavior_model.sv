@@ -142,7 +142,7 @@ endclass : rvv_behavior_model
     uvm_config_db#(int)::set(uvm_root::get(), "", "mdl_total_inst", this.total_inst);
     uvm_config_db#(int)::set(uvm_root::get(), "", "mdl_excuted_inst", this.executed_inst);
     `uvm_info("FINAL_CHECK", $sformatf("MDL total accepted inst: %0d, executed inst: %0d, discarded %.2f%%", 
-                                        this.total_inst, this.executed_inst, real'(this.total_inst - this.executed_inst)*100.0/real'(this.total_inst)), UVM_LOW)
+                                        this.total_inst, this.executed_inst, real'(this.total_inst - this.executed_inst)*100.0/real'(this.total_inst)), UVM_NONE)
   endfunction: final_phase 
 
   function void rvv_behavior_model::write_inst(rvs_transaction inst_tr);
