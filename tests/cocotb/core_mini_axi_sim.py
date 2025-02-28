@@ -1,4 +1,5 @@
 import cocotb
+import glob
 import itertools
 import math
 import numpy as np
@@ -740,3 +741,17 @@ async def core_mini_axi_finish_txn_before_halt_test(dut):
             core_mini_axi.master_awfifo.qsize() + \
             core_mini_axi.master_wfifo.qsize() + \
             core_mini_axi.master_bfifo.qsize()) == 0
+
+@cocotb.test()
+async def core_mini_axi_riscv_tests(dut):
+  core_mini_axi = CoreMiniAxiInterface(dut)
+  await core_mini_axi.init()
+  cocotb.start_soon(core_mini_axi.clock.start())
+
+  riscv_test_elfs = glob.glob("../tests/cocotb/riscv-tests/*.elf")
+  for elf in tqdm.tqdm(riscv_test_elfs):
+    with open(elf, "rb") as f:
+      await core_mini_axi.reset()
+      entry_point = await core_mini_axi.load_elf(f)
+      await core_mini_axi.execute_from(entry_point)
+      await core_mini_axi.wait_for_halted()
