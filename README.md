@@ -7,6 +7,13 @@ Kelvin is a RISC-V32IM core with a custom instruction set.
 More information on the design can be found in the
 [overview](doc/overview.md).
 
+## Getting Started
+
+* If you are hardware engineer looking to integrate Kelvin into your design,
+  check out our [integration guide](doc/integration_guide.md).
+* If you are a software engineer looking to write code for Kelvin, start with
+  [this tutorial](doc/tutorials/writing_kelvin_programs.md).
+
 ## Building
 
 Kelvin uses [bazel](https://bazel.build/) as it's build system. The Verilated

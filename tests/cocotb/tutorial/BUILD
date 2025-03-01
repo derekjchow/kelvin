@@ -1,0 +1,33 @@
+# Copyright 2025 Google LLC
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+load("//rules:coco_tb.bzl", "verilator_cocotb_test")
+
+verilator_cocotb_test(
+    name = "tutorial",
+    defines = {
+        "USE_GENERIC" : "",
+    },
+    waves = True,
+    hdl_toplevel = "CoreMiniAxi",
+    seed = "42",
+    test_module = ["tutorial.py"],
+    verilog_sources = [
+        "//hdl/chisel/src/kelvin:core_mini_axi_cc_library_verilog"
+    ],
+    deps = [
+        "//tests/cocotb:core_mini_axi_sim_interface",
+    ],
+    data = glob(["**/*.elf"]),
+)
