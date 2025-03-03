@@ -2458,7 +2458,7 @@ module rvv_backend_pmtrdt_unit
         default: pmtrdt_uop_ready = 1'b1;
       endcase
     else pmtrdt_uop_ready = rdt_ctrl.compress ? (compress_ctrl_ex1.last_uop_valid | ~rdt_ctrl_q.last_uop_valid)
-                                              : uop_data[pmt_uop_done_cnt_q].last_uop_valid || ~uop_data[0].first_uop_valid;
+                                              : pmt_go & uop_data[pmt_uop_done_cnt_q].last_uop_valid | ~uop_data[0].first_uop_valid;
   end
 
 // ---function--------------------------------------------------------
