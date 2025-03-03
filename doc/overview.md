@@ -1,13 +1,13 @@
 # Kelvin
 
-Kelvin is a RISCV CPU with custom SIMD instructions and microarchitectural
-decisions aligned with the dataplane properties of an ML accelerator. Kelvin
-starts with domain and matrix capabilities and then adds vector and scalar
-capabilities for a fused design.
+Kelvin is a RISCV CPU built with custom SIMD instructions and microarchitectural
+decisions that align with the dataplane properties of an ML accelerator. The design
+of Kelvin starts with domain and matrix capabilities; vector and scalar
+capabilities are then added for a fused design.
 
 ## Block Diagram
 
-![Kelvin block diagram](images/arch.png)
+![Kelvin block diagram](images/kelvin_block.png)
 
 ## Scalar Core
 
@@ -26,15 +26,24 @@ The branch policy in the fetch stage is backwards branches are taken and forward
 branches are not-taken, incurring a penalty cycle if the execute result does not
 match the decision in the fetch unit.
 
-## Vector Core
+Registers        | Names         | Width
+---------------- | ------------- | -----------------------
+Scalar (31)      | zero, x1..x31 | 32 bits
+Control & Status | CSRx          | Various
 
-![Kelvin SIMD](images/simd.png)
+## Vector Core
 
 We use SIMD and vector interchangeably, referring to a simple and practical SIMD
 instruction definition devoid of variable length behaviors. The scalar frontend
-is decoupled from the backend by a Fifo structure that buffers vector
+is decoupled from the backend by a FIFO structure that buffers vector
 instructions, posting only to the relevant command queues when dependencies are
-resolved in the vector regfile.
+resolved in the vector regfile. The vector core supports data widths of 8, 16, and 32 bits.
+
+Registers        | Names         | Width
+---------------- | ------------- | -----------------------
+Vector (64)      | v0..v63       | 256 bits (eg. int32 x8)
+Accumulator      | acc<8><8>     | 8x8x 32 bits
+
 
 ### MAC
 
@@ -45,10 +54,11 @@ to memory accesses. On one axis is a parallel broadcast (“wide”, convolution
 weights), and the other axis the transpose shifted inputs of a number of batches
 (“narrow”, eg. MobileNet XY batching).
 
-![Kelvin MAC](images/mac.png)
+![Kelvin MAC](images/kelvin_aconv.png)
 
 The outer-product construction is a vertical arrangement of multiple VDOT
-opcodes which utilize 4x 8bit multiplies reduced into 32 bit accumulators.
+opcodes which utilize 4x 8bit multiplies reduced into 32 bit accumulators and
+performing 256 MACs per cycle.
 
 ### Stripmining
 
@@ -60,17 +70,6 @@ stripmine mechanism that converts a single frontend dispatch event to the
 command queue into four serialized issue events into the SIMD units. For
 instance a “vadd v0” in Dispatch will produce “vadd v0 : vadd v1 : vadd v2 :
 vadd v3” at Issue. These will be processed as four discrete events.
-
-## Registers
-
-There are 4 distinct register types.
-
-Registers        | Names         | Width
----------------- | ------------- | -----------------------
-Scalar (31)      | zero, x1..x31 | 32 bits
-Vector (64)      | v0..v63       | 256 bits (eg. int32 x8)
-Accumulator      | acc<8><8>     | 8x8x 32 bits
-Control & Status | CSRx          | Various
 
 ## Cache
 

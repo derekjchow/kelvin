@@ -2,7 +2,7 @@
 
 Kelvin is a RISC-V32IM core with a custom instruction set.
 
-![Kelvin block diagram](doc/images/arch.png)
+![Kelvin block diagram](doc/images/kelvin_block.png)
 
 More information on the design can be found in the
 [overview](doc/overview.md).
