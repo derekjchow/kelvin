@@ -172,7 +172,7 @@ if($useLSF) {
   my @jobIDs;
   my $jobID;
   if($exeCompile) {
-    $jobTag = "comp_$ENV{LOGNAME}_$ENV{P4CLIENT}";
+    $jobTag = "comp_$ENV{USER}";
     if($useBash) {
       seek $fh_regCmdList, 0, 0;
       @cmd_compPkt = map { "$bsub -J $jobTag $_ \n"; } @cmd_compPkt;
@@ -207,7 +207,7 @@ if($useLSF) {
     }
   }
   if($exeSimulate) {
-    $jobTag = "sim_$ENV{LOGNAME}_$ENV{P4CLIENT}";
+    $jobTag = "sim_$ENV{USER}";
     if($useBash) {
       seek $fh_regCmdList, 0, 0;
       @cmd_simPkt = map { "$bsub -J $jobTag $_ \n"; } @cmd_simPkt;
