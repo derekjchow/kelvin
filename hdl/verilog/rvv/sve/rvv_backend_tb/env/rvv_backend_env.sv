@@ -11,9 +11,6 @@ class rvv_backend_env extends uvm_env;
   
   rvv_behavior_model mdl;
 
-  rvs_monitor_2cov_connect mon2cov;
-
-
   `uvm_component_utils(rvv_backend_env)
 
   extern function new(string name="rvv_backend_env", uvm_component parent=null);
@@ -39,9 +36,6 @@ function void rvv_backend_env::build_phase(uvm_phase phase);
  
   cov = rvv_cov::type_id::create("cov",this); //Instantiating the coverage class
 
-  mon2cov  = rvs_monitor_2cov_connect::type_id::create("mon2cov", this);
-  mon2cov.cov = cov;
-
   scb = rvv_scoreboard::type_id::create("scb",this);
 
   mdl = rvv_behavior_model::type_id::create("mdl",this);
@@ -52,6 +46,8 @@ function void rvv_backend_env::connect_phase(uvm_phase phase);
   // ref_mdl ap
   rvs_agt.rvs_mon.inst_ap.connect(mdl.inst_imp);
   // rvs_agt.rvs_drv.inst_ap.connect(mdl.inst_imp);
+  rvs_agt.rvs_drv.vrf_state_port.connect(rvs_agt.vrf_mon.vrf_state_imp);
+  rvs_agt.rvs_drv.rvv_state_port.connect(rvs_agt.rvs_mon.rvv_state_imp);
   // scb ap
   rvs_agt.rvs_mon.rt_ap.connect(scb.rvs_imp);
   rvs_agt.vrf_mon.vrf_ap.connect(scb.rvs_vrf_imp);
@@ -60,7 +56,7 @@ function void rvv_backend_env::connect_phase(uvm_phase phase);
   // lsu_agt.lsu_mon.mon_analysis_port.connect(scb.lsu_imp);
 
   // cov ap
-  rvs_agt.rvs_mon.rt_ap.connect(cov.cov_export);
+  rvs_agt.rvs_mon.rt_ap.connect(cov.cov_imp);
 endfunction: connect_phase
 
 function void rvv_backend_env::start_of_simulation_phase(uvm_phase phase);

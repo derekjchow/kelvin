@@ -1,7 +1,6 @@
 `ifndef VRF_TRANSACTION__SV
 `define VRF_TRANSACTION__SV
 
-`include "inst_description.svh"
 class vrf_transaction extends uvm_sequence_item;
 
   logic [`VLEN-1:0] vreg [31:0];

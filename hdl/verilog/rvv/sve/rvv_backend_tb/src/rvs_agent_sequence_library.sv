@@ -1,7 +1,6 @@
 `ifndef RVS_SEQUENCER_SEQUENCE_LIBRARY__SV
 `define RVS_SEQUENCER_SEQUENCE_LIBRARY__SV
 
-`include "inst_description.svh"
 typedef class rvs_transaction;
 
 class rvs_sequencer_sequence_library extends uvm_sequence_library # (rvs_transaction);
@@ -1845,12 +1844,12 @@ endclass: alu_iterate_vmvnr_seq
 //-----------------------------------------------------------
 // ALU random sequence
 //-----------------------------------------------------------
-alu_inst_e unwanted_alu_inst [] = '{UNUSE_INST};
 class alu_random_base_sequence extends base_sequence;
   `uvm_object_utils(alu_random_base_sequence)
   `uvm_add_to_seq_lib(alu_random_base_sequence,rvs_sequencer_sequence_library)
    
   int inst_num = 1;
+  alu_inst_e alu_inst_set [$];
 
   function new(string name = "alu_random_base_sequence");
     super.new(name);
@@ -1859,10 +1858,21 @@ class alu_random_base_sequence extends base_sequence;
     `endif
   endfunction:new
   
-  task run_inst(uvm_sequencer_base sqr, int inst_num = 50);
+  virtual task run_inst(uvm_sequencer_base sqr, int inst_num = 50);
     this.inst_num = inst_num;
+    for(alu_inst_e inst = inst.first(); inst != inst.last(); inst = inst.next()) begin
+      // inst.last() == UNUSE_INST
+      // if(inst inside {}) continue; // unwanted inst
+      alu_inst_set.push_back(inst);
+    end
     this.start(sqr);
   endtask: run_inst
+  
+  virtual task run_rand_with_set(alu_inst_e inst_set[$], uvm_sequencer_base sqr, int inst_num = 50);
+    this.alu_inst_set = inst_set;
+    this.inst_num = inst_num;
+    this.start(sqr);
+  endtask: run_rand_with_set
 
 endclass: alu_random_base_sequence
 
@@ -1878,7 +1888,7 @@ class alu_random_seq extends alu_random_base_sequence;
         pc == local::inst_cnt;
 
         inst_type == ALU;
-        !(alu_inst inside {unwanted_alu_inst});
+        alu_inst inside {alu_inst_set};
 
       });
       finish_item(req);
@@ -1907,7 +1917,7 @@ class alu_random_small_lmul_seq extends alu_random_base_sequence;
         };
 
         inst_type == ALU;
-        !(alu_inst inside {unwanted_alu_inst});
+        alu_inst inside {alu_inst_set};
         (alu_inst == VSMUL_VMVNRR && alu_type == OPIVI && src1_type == FUNC) -> (src1_idx inside {0,1}); // constraint vmv<nr>r
 
       });
@@ -1936,7 +1946,7 @@ class alu_random_large_lmul_seq extends alu_random_base_sequence;
         };
 
         inst_type == ALU;
-        !(alu_inst inside {unwanted_alu_inst});
+        alu_inst inside {alu_inst_set};
         (alu_inst == VSMUL_VMVNRR && alu_type == OPIVI && src1_type == FUNC) -> (src1_idx inside {3,7}); // constraint vmv<nr>r
 
       });
@@ -1965,7 +1975,7 @@ class alu_random_bypass_seq extends alu_random_base_sequence;
         };
 
         inst_type == ALU;
-        !(alu_inst inside {unwanted_alu_inst});
+        alu_inst inside {alu_inst_set};
         (alu_inst == VSMUL_VMVNRR && alu_type == OPIVI && src1_type == FUNC) -> (src1_idx inside {0}); // only use vmv1r
 
         (dest_type == VRF) -> (dest_idx inside {[0:3]});
@@ -1997,7 +2007,7 @@ class alu_random_waw_seq extends alu_random_base_sequence;
         };
 
         inst_type == ALU;
-        !(alu_inst inside {unwanted_alu_inst});
+        alu_inst inside {alu_inst_set};
         (alu_inst == VSMUL_VMVNRR && alu_type == OPIVI && src1_type == FUNC) -> (src1_idx inside {0}); // only use vmv1r
 
         dest_type == VRF;

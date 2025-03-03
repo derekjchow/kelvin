@@ -3,6 +3,19 @@
 
 `include "rvv_backend_define.svh"
 `include "rvv_backend.svh"
+
+// TB status description ------------------------------------
+package vrf_mon_pkg;
+  typedef enum {IDLE, BUSY, ALL_ZERO, UNKNOW} vrf_state_e;
+endpackage: vrf_mon_pkg
+package rvv_state_pkg;
+  typedef enum {IDLE, BUSY, UNKNOW} rvv_state_e;
+endpackage: rvv_state_pkg
+
+
+package rvv_tb_pkg;
+import vrf_mon_pkg::*;
+import rvv_state_pkg::*;
 typedef logic [`REGFILE_INDEX_WIDTH-1:0] reg_idx_t;
 typedef logic [`XLEN-1:0] xrf_t;
 typedef logic [`VLEN-1:0] vrf_t;
@@ -285,6 +298,6 @@ typedef enum {
 } oprand_type_e;
 
 // Test description -----------------------------------------
-typedef enum { ITER = 0, RAND = 1} test_rand_type_e;
-
+typedef enum { ITER, RAND } test_rand_type_e;
+endpackage: rvv_tb_pkg
 `endif // INST_DESCRIPTION__SVH

@@ -171,6 +171,12 @@ module rvv_backend_top();
   assign rvv_intern_if.lsu_rs_full  = DUT.u_lsu_rs.full;
   assign rvv_intern_if.lsu_rs_empty = DUT.u_lsu_rs.empty;
 
+  /* ROB */
+  assign rvv_intern_if.rob_empty = DUT.u_rob.u_uop_valid_fifo.empty;
+
+  /* vrf */
+  assign rvv_intern_if.vrf_wr_wenb_full = `VRF_PATH.vrf_wr_wenb_full;
+
 // Interface Coverage Collection ----------------------------------------
   rvv_interface_cov rvv_interface_cov(
     .clk(clk), 

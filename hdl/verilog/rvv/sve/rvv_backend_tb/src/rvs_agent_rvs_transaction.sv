@@ -1,7 +1,6 @@
 `ifndef RVS_TRANSACTION__SV
 `define RVS_TRANSACTION__SV
 
-`include "inst_description.svh"
 
 class rvs_transaction extends uvm_sequence_item;
 
@@ -150,14 +149,17 @@ class rvs_transaction extends uvm_sequence_item;
       // vstart
       if(alu_inst == VSMUL_VMVNRR && alu_type == OPIVI)
         vstart < evl;
+      else if(inst_type == ALU && alu_inst inside {VWXUNARY0})
+        // for vcpop, vfirst, vmv.x.s, vmv.s.x, vstart >= vl is allowed
+        vstart dist { 
+          [0:vl-1] :/ 99,
+          [vl:vlmax_max-1] :/ 1
+        };
       else
         vstart < vl;
 
       (inst_type == ALU && alu_inst inside {VWXUNARY0} && src1_idx inside {VCPOP, VFIRST}) 
       ->  (vstart == 0);
-
-      (inst_type == ALU && alu_inst inside {VWXUNARY0} && (alu_type == OPMVX && src2_type == FUNC && src2_idx inside{VMV_X_S})) 
-      ->  (vstart == 0);  // vmv.s.x
 
       (inst_type == ALU && alu_inst inside {VMUNARY0} && src1_idx inside {VMSBF, VMSOF, VMSIF, VIOTA}) 
       ->  (vstart == 0);
@@ -826,13 +828,13 @@ function void rvs_transaction::asm_string_gen();
       end else if(alu_inst inside {VWXUNARY0}) begin
         if(src1_type == FUNC) begin
           if(src1_idx == VMV_X_S)
-            inst = "vmv";
+            inst = "vmv.x";
           else
             inst = src1_func_vwxunary0.name();
         end
         if(src2_type == FUNC) begin
           if(src2_idx == VMV_X_S)
-            inst = "vmv";
+            inst = "vmv.s";
           else
             inst = src2_func_vwxunary0.name();
         end
@@ -880,9 +882,6 @@ function void rvs_transaction::asm_string_gen();
       end else if(inst_type == ALU && alu_inst == VXUNARY0 && src1_idx inside{VSEXT_VF2, VZEXT_VF2}) begin
         suf1 = "f2"; src1 = "";
       end
-      if(inst_type == ALU && alu_inst == VWXUNARY0 && src1_idx inside{VMV_X_S}) begin
-        suf1 = "s"; src1 = "";
-      end
     end
     UNUSE: begin
     end
@@ -900,6 +899,8 @@ function void rvs_transaction::asm_string_gen();
       end else if(inst_type == ALU && alu_inst inside {VWXUNARY0}) begin
         if(src1_type == FUNC && src1_idx inside {VCPOP, VFIRST}) begin
           suf2 = "m"; src2 = $sformatf("v%0d",this.src2_idx); 
+        end else if(src1_type == FUNC && src1_idx inside {VMV_X_S}) begin // vmv.x.s
+          suf2 = "s"; src2 = $sformatf("v%0d",this.src2_idx); 
         end else begin
           suf2 = "v"; src2 = $sformatf("v%0d",this.src2_idx); 
         end
@@ -914,9 +915,7 @@ function void rvs_transaction::asm_string_gen();
         if(this.src1_idx ==  VID) begin suf2 = ""; src2 = ""; end 
     end
     FUNC: begin
-      if(inst_type == ALU && alu_inst == VWXUNARY0) begin
-        suf2 = "s"; src2 = "";
-      end
+      suf2 = ""; src2 = "";
     end
     default: begin suf2 = "?"; src2 = "?"; end
   endcase

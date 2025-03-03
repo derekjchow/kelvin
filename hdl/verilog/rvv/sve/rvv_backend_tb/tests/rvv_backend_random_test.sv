@@ -3,8 +3,6 @@
 
 typedef class rvv_backend_env;
 `include "rvv_backend_define.svh"
-`include "inst_description.svh"
-
 //-----------------------------------------------------------
 // Normal random test
 //-----------------------------------------------------------

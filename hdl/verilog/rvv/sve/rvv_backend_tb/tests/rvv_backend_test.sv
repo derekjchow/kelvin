@@ -3,7 +3,6 @@
 
 typedef class rvv_backend_env;
 `include "rvv_backend_define.svh"
-`include "inst_description.svh"
 class rvv_backend_test extends uvm_test;
 
   `uvm_component_utils(rvv_backend_test)
@@ -16,6 +15,7 @@ class rvv_backend_test extends uvm_test;
 
   UVM_FILE tb_logs [string];
   int inst_tx_queue_depth = 4;
+  int direct_inst_num = 1000;
   int random_inst_num = 50000;
 
   function new(string name, uvm_component parent);
@@ -43,8 +43,10 @@ class rvv_backend_test extends uvm_test;
     if($test$plusargs("single_inst_mode"))
       uvm_config_db#(int)::set(uvm_root::get(), "*", "single_inst_mode", 1'b1);
     if($test$plusargs("qualify")) begin
+      direct_inst_num = 200;
       random_inst_num = 2000;
     end else begin
+      direct_inst_num = 1000;
       random_inst_num = 50000;
     end
 
@@ -92,8 +94,8 @@ class rvv_backend_test extends uvm_test;
       for(int j=0; j<`VLENB; j++) begin
         value[j*8+:8] = $urandom_range(0, 8'hFF);
       end
-      vrf_if.set_dut_vrf(reg_idx, value);
       set_mdl_vrf(reg_idx, value);
+      vrf_if.set_dut_vrf(reg_idx, value);
     end
   endtask: rand_vrf
 
@@ -376,6 +378,9 @@ class alu_vaddsub_test extends rvv_backend_test;
   alu_iterate_vx_vi_seq     rvs_vx_vi_seq;
   alu_smoke_vv_seq rvs_last_seq;
 
+  alu_random_seq rvs_rand_seq;
+  alu_inst_e inst_set[$] = '{VADD, VSUB, VRSUB};
+
   `uvm_component_utils(alu_vaddsub_test)
 
   function new(string name, uvm_component parent);
@@ -396,6 +401,7 @@ class alu_vaddsub_test extends rvv_backend_test;
 
     rand_vrf();
 
+    `uvm_info(get_type_name(), "Iterate part.", UVM_HIGH)
     rvs_vv_vx_vi_seq = alu_iterate_vv_vx_vi_seq::type_id::create("rvs_vv_vx_vi_seq", this);
     rvs_vv_vx_seq = alu_iterate_vv_vx_seq::type_id::create("rvs_vv_vx_seq", this);
     rvs_vx_vi_seq = alu_iterate_vx_vi_seq::type_id::create("rvs_vx_vi_seq", this);
@@ -406,9 +412,14 @@ class alu_vaddsub_test extends rvv_backend_test;
     rvs_vv_vx_seq.run_inst_iter(VSUB , env.rvs_agt.rvs_sqr, 1);
     rvs_vx_vi_seq.run_inst_iter(VRSUB, env.rvs_agt.rvs_sqr, 1);
 
-    rvs_vv_vx_vi_seq.run_inst_rand(VADD , env.rvs_agt.rvs_sqr, 100);
-    rvs_vv_vx_seq.run_inst_rand(VSUB , env.rvs_agt.rvs_sqr, 100);
-    rvs_vx_vi_seq.run_inst_rand(VRSUB, env.rvs_agt.rvs_sqr, 100);
+    `uvm_info(get_type_name(), "Single inst random part.", UVM_HIGH)
+    rvs_vv_vx_vi_seq.run_inst_rand(VADD , env.rvs_agt.rvs_sqr, direct_inst_num);
+    rvs_vv_vx_seq.run_inst_rand(VSUB , env.rvs_agt.rvs_sqr, direct_inst_num);
+    rvs_vx_vi_seq.run_inst_rand(VRSUB, env.rvs_agt.rvs_sqr, direct_inst_num);
+
+    `uvm_info(get_type_name(), "Inst set random part.", UVM_HIGH)
+    rvs_rand_seq = alu_random_seq::type_id::create("rvs_rand_seq", this);
+    rvs_rand_seq.run_rand_with_set(inst_set, env.rvs_agt.rvs_sqr, direct_inst_num * inst_set.size());
 
     rvs_last_seq = alu_smoke_vv_seq::type_id::create("rvs_last_seq", this);
     rvs_last_seq.run_inst(VADD,env.rvs_agt.rvs_sqr);
@@ -428,6 +439,10 @@ class alu_vwaddsub_test extends rvv_backend_test;
 
   alu_iterate_vv_vx_seq rvs_seq;
   alu_smoke_vv_seq rvs_last_seq;
+
+  alu_random_seq rvs_rand_seq;
+  alu_inst_e inst_set[$] = '{VWADD, VWADDU, VWADDU_W, VWADD_W,
+                             VWSUB, VWSUBU, VWSUBU_W, VWSUB_W};
 
   `uvm_component_utils(alu_vwaddsub_test)
 
@@ -449,6 +464,7 @@ class alu_vwaddsub_test extends rvv_backend_test;
 
     rand_vrf();
 
+    `uvm_info(get_type_name(), "Iterate part.", UVM_HIGH)
     rvs_seq = alu_iterate_vv_vx_seq::type_id::create("rvs_seq", this);
     rvs_seq.run_inst_iter(VWADD   , env.rvs_agt.rvs_sqr, 0);
     rvs_seq.run_inst_iter(VWADDU  , env.rvs_agt.rvs_sqr, 0);
@@ -468,15 +484,20 @@ class alu_vwaddsub_test extends rvv_backend_test;
     rvs_seq.run_inst_iter(VWSUBU_W, env.rvs_agt.rvs_sqr, 1);
     rvs_seq.run_inst_iter(VWSUB_W , env.rvs_agt.rvs_sqr, 1);
     
-    rvs_seq.run_inst_rand(VWADD   , env.rvs_agt.rvs_sqr, 500);
-    rvs_seq.run_inst_rand(VWADDU  , env.rvs_agt.rvs_sqr, 500);
-    rvs_seq.run_inst_rand(VWADDU_W, env.rvs_agt.rvs_sqr, 500);
-    rvs_seq.run_inst_rand(VWADD_W , env.rvs_agt.rvs_sqr, 500);
+    `uvm_info(get_type_name(), "Single inst random part.", UVM_HIGH)
+    rvs_seq.run_inst_rand(VWADD   , env.rvs_agt.rvs_sqr, direct_inst_num);
+    rvs_seq.run_inst_rand(VWADDU  , env.rvs_agt.rvs_sqr, direct_inst_num);
+    rvs_seq.run_inst_rand(VWADDU_W, env.rvs_agt.rvs_sqr, direct_inst_num);
+    rvs_seq.run_inst_rand(VWADD_W , env.rvs_agt.rvs_sqr, direct_inst_num);
 
-    rvs_seq.run_inst_rand(VWSUB   , env.rvs_agt.rvs_sqr, 500);
-    rvs_seq.run_inst_rand(VWSUBU  , env.rvs_agt.rvs_sqr, 500);
-    rvs_seq.run_inst_rand(VWSUBU_W, env.rvs_agt.rvs_sqr, 500);
-    rvs_seq.run_inst_rand(VWSUB_W , env.rvs_agt.rvs_sqr, 500);
+    rvs_seq.run_inst_rand(VWSUB   , env.rvs_agt.rvs_sqr, direct_inst_num);
+    rvs_seq.run_inst_rand(VWSUBU  , env.rvs_agt.rvs_sqr, direct_inst_num);
+    rvs_seq.run_inst_rand(VWSUBU_W, env.rvs_agt.rvs_sqr, direct_inst_num);
+    rvs_seq.run_inst_rand(VWSUB_W , env.rvs_agt.rvs_sqr, direct_inst_num);
+
+    `uvm_info(get_type_name(), "Inst set random part.", UVM_HIGH)
+    rvs_rand_seq = alu_random_seq::type_id::create("rvs_rand_seq", this);
+    rvs_rand_seq.run_rand_with_set(inst_set, env.rvs_agt.rvs_sqr, direct_inst_num * inst_set.size());
 
     rvs_last_seq = alu_smoke_vv_seq::type_id::create("rvs_last_seq", this);
     rvs_last_seq.run_inst(VADD,env.rvs_agt.rvs_sqr);
@@ -496,6 +517,9 @@ class alu_vext_test extends rvv_backend_test;
 
   alu_iterate_ext_seq rvs_seq;
   alu_smoke_vv_seq rvs_last_seq;
+
+  alu_random_seq rvs_rand_seq;
+  alu_inst_e inst_set[$] = '{VXUNARY0};
 
   `uvm_component_utils(alu_vext_test)
 
@@ -517,11 +541,17 @@ class alu_vext_test extends rvv_backend_test;
 
     rand_vrf();
 
+    `uvm_info(get_type_name(), "Iterate part.", UVM_HIGH)
     rvs_seq = alu_iterate_ext_seq::type_id::create("rvs_seq", this);
     rvs_seq.run_inst_iter(VXUNARY0, env.rvs_agt.rvs_sqr, 0);
     rvs_seq.run_inst_iter(VXUNARY0, env.rvs_agt.rvs_sqr, 1);
     
-    rvs_seq.run_inst_rand(VXUNARY0, env.rvs_agt.rvs_sqr, 200);
+    `uvm_info(get_type_name(), "Single inst random part.", UVM_HIGH)
+    rvs_seq.run_inst_rand(VXUNARY0, env.rvs_agt.rvs_sqr, direct_inst_num);
+
+    `uvm_info(get_type_name(), "Inst set random part.", UVM_HIGH)
+    rvs_rand_seq = alu_random_seq::type_id::create("rvs_rand_seq", this);
+    rvs_rand_seq.run_rand_with_set(inst_set, env.rvs_agt.rvs_sqr, direct_inst_num * inst_set.size());
 
     rvs_last_seq = alu_smoke_vv_seq::type_id::create("rvs_last_seq", this);
     rvs_last_seq.run_inst(VADD,env.rvs_agt.rvs_sqr);
@@ -543,6 +573,9 @@ class alu_vadcsbc_test extends rvv_backend_test;
   alu_iterate_vv_vx_seq rvs_vv_vx_seq;
   alu_smoke_vv_seq rvs_last_seq;
 
+  alu_random_seq rvs_rand_seq;
+  alu_inst_e inst_set[$] = '{VADC, VSBC};
+
   `uvm_component_utils(alu_vadcsbc_test)
 
   function new(string name, uvm_component parent);
@@ -563,13 +596,19 @@ class alu_vadcsbc_test extends rvv_backend_test;
 
     rand_vrf();
 
+    `uvm_info(get_type_name(), "Iterate part.", UVM_HIGH)
     rvs_vv_vx_vi_seq = alu_iterate_vv_vx_vi_seq::type_id::create("rvs_vv_vx_vi_seq", this);
     rvs_vv_vx_seq = alu_iterate_vv_vx_seq::type_id::create("rvs_vv_vx_seq", this);
     rvs_vv_vx_vi_seq.run_inst_iter(VADC , env.rvs_agt.rvs_sqr, 0);
     rvs_vv_vx_seq.run_inst_iter(   VSBC , env.rvs_agt.rvs_sqr, 0);
 
-    rvs_vv_vx_vi_seq.run_inst_rand(VADC , env.rvs_agt.rvs_sqr, 100);
-    rvs_vv_vx_seq.run_inst_rand(   VSBC , env.rvs_agt.rvs_sqr, 100);
+    `uvm_info(get_type_name(), "Single inst random part.", UVM_HIGH)
+    rvs_vv_vx_vi_seq.run_inst_rand(VADC , env.rvs_agt.rvs_sqr, direct_inst_num);
+    rvs_vv_vx_seq.run_inst_rand(   VSBC , env.rvs_agt.rvs_sqr, direct_inst_num);
+
+    `uvm_info(get_type_name(), "Inst set random part.", UVM_HIGH)
+    rvs_rand_seq = alu_random_seq::type_id::create("rvs_rand_seq", this);
+    rvs_rand_seq.run_rand_with_set(inst_set, env.rvs_agt.rvs_sqr, direct_inst_num * inst_set.size());
 
     rvs_last_seq = alu_smoke_vv_seq::type_id::create("rvs_last_seq", this);
     rvs_last_seq.run_inst(VADD,env.rvs_agt.rvs_sqr);
@@ -588,6 +627,9 @@ class alu_vmadcsbc_test extends rvv_backend_test;
   alu_iterate_vv_vx_vi_seq rvs_vv_vx_vi_seq;
   alu_iterate_vv_vx_seq rvs_vv_vx_seq;
   alu_smoke_vv_seq rvs_last_seq;
+
+  alu_random_seq rvs_rand_seq;
+  alu_inst_e inst_set[$] = '{VMADC, VMSBC};
 
   `uvm_component_utils(alu_vmadcsbc_test)
 
@@ -609,6 +651,7 @@ class alu_vmadcsbc_test extends rvv_backend_test;
 
     rand_vrf();
 
+    `uvm_info(get_type_name(), "Iterate part.", UVM_HIGH)
     rvs_vv_vx_vi_seq = alu_iterate_vv_vx_vi_seq::type_id::create("rvs_vv_vx_vi_seq", this);
     rvs_vv_vx_seq = alu_iterate_vv_vx_seq::type_id::create("rvs_vv_vx_seq", this);
     rvs_vv_vx_vi_seq.run_inst_iter(VMADC, env.rvs_agt.rvs_sqr, 0);
@@ -616,8 +659,13 @@ class alu_vmadcsbc_test extends rvv_backend_test;
     rvs_vv_vx_vi_seq.run_inst_iter(VMADC, env.rvs_agt.rvs_sqr, 1);
     rvs_vv_vx_seq.run_inst_iter(   VMSBC, env.rvs_agt.rvs_sqr, 1);
 
-    rvs_vv_vx_vi_seq.run_inst_rand(VMADC, env.rvs_agt.rvs_sqr, 200);
-    rvs_vv_vx_seq.run_inst_rand(   VMSBC, env.rvs_agt.rvs_sqr, 200);
+    `uvm_info(get_type_name(), "Single inst random part.", UVM_HIGH)
+    rvs_vv_vx_vi_seq.run_inst_rand(VMADC, env.rvs_agt.rvs_sqr, direct_inst_num);
+    rvs_vv_vx_seq.run_inst_rand(   VMSBC, env.rvs_agt.rvs_sqr, direct_inst_num);
+
+    `uvm_info(get_type_name(), "Inst set random part.", UVM_HIGH)
+    rvs_rand_seq = alu_random_seq::type_id::create("rvs_rand_seq", this);
+    rvs_rand_seq.run_rand_with_set(inst_set, env.rvs_agt.rvs_sqr, direct_inst_num * inst_set.size());
 
     rvs_last_seq = alu_smoke_vv_seq::type_id::create("rvs_last_seq", this);
     rvs_last_seq.run_inst(VADD,env.rvs_agt.rvs_sqr);
@@ -637,6 +685,9 @@ class alu_bitlogic_test extends rvv_backend_test;
 
   alu_iterate_vv_vx_vi_seq rvs_seq;
   alu_smoke_vv_seq rvs_last_seq;
+
+  alu_random_seq rvs_rand_seq;
+  alu_inst_e inst_set[$] = '{VAND, VOR, VXOR};
 
   `uvm_component_utils(alu_bitlogic_test)
 
@@ -658,6 +709,7 @@ class alu_bitlogic_test extends rvv_backend_test;
 
     rand_vrf();
 
+    `uvm_info(get_type_name(), "Iterate part.", UVM_HIGH)
     rvs_seq = alu_iterate_vv_vx_vi_seq::type_id::create("rvs_seq", this);
     rvs_seq.run_inst_iter(VAND, env.rvs_agt.rvs_sqr, 0);
     rvs_seq.run_inst_iter(VOR , env.rvs_agt.rvs_sqr, 0);
@@ -666,9 +718,14 @@ class alu_bitlogic_test extends rvv_backend_test;
     rvs_seq.run_inst_iter(VOR , env.rvs_agt.rvs_sqr, 1);
     rvs_seq.run_inst_iter(VXOR, env.rvs_agt.rvs_sqr, 1);
 
-    rvs_seq.run_inst_rand(VAND, env.rvs_agt.rvs_sqr, 100);
-    rvs_seq.run_inst_rand(VOR , env.rvs_agt.rvs_sqr, 100);
-    rvs_seq.run_inst_rand(VXOR, env.rvs_agt.rvs_sqr, 100);
+    `uvm_info(get_type_name(), "Single inst random part.", UVM_HIGH)
+    rvs_seq.run_inst_rand(VAND, env.rvs_agt.rvs_sqr, direct_inst_num);
+    rvs_seq.run_inst_rand(VOR , env.rvs_agt.rvs_sqr, direct_inst_num);
+    rvs_seq.run_inst_rand(VXOR, env.rvs_agt.rvs_sqr, direct_inst_num);
+
+    `uvm_info(get_type_name(), "Inst set random part.", UVM_HIGH)
+    rvs_rand_seq = alu_random_seq::type_id::create("rvs_rand_seq", this);
+    rvs_rand_seq.run_rand_with_set(inst_set, env.rvs_agt.rvs_sqr, direct_inst_num * inst_set.size());
 
     rvs_last_seq = alu_smoke_vv_seq::type_id::create("rvs_last_seq", this);
     rvs_last_seq.run_inst(VADD,env.rvs_agt.rvs_sqr);
@@ -690,6 +747,9 @@ class alu_shift_test extends rvv_backend_test;
   alu_iterate_vv_vx_vui_seq rvs_seq;
   alu_smoke_vv_seq rvs_last_seq;
 
+  alu_random_seq rvs_rand_seq;
+  alu_inst_e inst_set[$] = '{VSLL, VSRL, VSRA, VNSRL, VNSRA};
+
   `uvm_component_utils(alu_shift_test)
 
   function new(string name, uvm_component parent);
@@ -710,6 +770,7 @@ class alu_shift_test extends rvv_backend_test;
 
     rand_vrf();
 
+    `uvm_info(get_type_name(), "Iterate part.", UVM_HIGH)
     rvs_seq = alu_iterate_vv_vx_vui_seq::type_id::create("rvs_seq", this);
     rvs_seq.run_inst_iter(VSLL , env.rvs_agt.rvs_sqr, 0);
     rvs_seq.run_inst_iter(VSRL , env.rvs_agt.rvs_sqr, 0);
@@ -722,11 +783,16 @@ class alu_shift_test extends rvv_backend_test;
     rvs_seq.run_inst_iter(VNSRL, env.rvs_agt.rvs_sqr, 1);
     rvs_seq.run_inst_iter(VNSRA, env.rvs_agt.rvs_sqr, 1);
 
-    rvs_seq.run_inst_rand(VSLL , env.rvs_agt.rvs_sqr, 100);
-    rvs_seq.run_inst_rand(VSRL , env.rvs_agt.rvs_sqr, 100);
-    rvs_seq.run_inst_rand(VSRA , env.rvs_agt.rvs_sqr, 100);
-    rvs_seq.run_inst_rand(VNSRL, env.rvs_agt.rvs_sqr, 100);
-    rvs_seq.run_inst_rand(VNSRA, env.rvs_agt.rvs_sqr, 100);
+    `uvm_info(get_type_name(), "Single inst random part.", UVM_HIGH)
+    rvs_seq.run_inst_rand(VSLL , env.rvs_agt.rvs_sqr, direct_inst_num);
+    rvs_seq.run_inst_rand(VSRL , env.rvs_agt.rvs_sqr, direct_inst_num);
+    rvs_seq.run_inst_rand(VSRA , env.rvs_agt.rvs_sqr, direct_inst_num);
+    rvs_seq.run_inst_rand(VNSRL, env.rvs_agt.rvs_sqr, direct_inst_num);
+    rvs_seq.run_inst_rand(VNSRA, env.rvs_agt.rvs_sqr, direct_inst_num);
+
+    `uvm_info(get_type_name(), "Inst set random part.", UVM_HIGH)
+    rvs_rand_seq = alu_random_seq::type_id::create("rvs_rand_seq", this);
+    rvs_rand_seq.run_rand_with_set(inst_set, env.rvs_agt.rvs_sqr, direct_inst_num * inst_set.size());
 
     rvs_last_seq = alu_smoke_vv_seq::type_id::create("rvs_last_seq", this);
     rvs_last_seq.run_inst(VADD,env.rvs_agt.rvs_sqr);
@@ -749,6 +815,11 @@ class alu_vcomp_test extends rvv_backend_test;
   alu_iterate_vx_vi_seq rvs_vx_vi_seq;
   alu_smoke_vv_seq rvs_last_seq;
 
+  alu_random_seq rvs_rand_seq;
+  alu_inst_e inst_set[$] = '{
+    VMSEQ, VMSNE, VMSLTU, VMSLT, VMSLEU, VMSLE, VMSGTU, VMSGT
+  };
+
   `uvm_component_utils(alu_vcomp_test)
 
   function new(string name, uvm_component parent);
@@ -769,6 +840,7 @@ class alu_vcomp_test extends rvv_backend_test;
 
     rand_vrf();
 
+    `uvm_info(get_type_name(), "Iterate part.", UVM_HIGH)
     rvs_vv_vx_vi_seq = alu_iterate_vv_vx_vi_seq::type_id::create("rvs_vv_vx_vi_seq", this);
     rvs_vv_vx_seq    = alu_iterate_vv_vx_seq::type_id::create("rvs_vv_vx_seq", this);
     rvs_vx_vi_seq    = alu_iterate_vx_vi_seq::type_id::create("rvs_vx_vi_seq", this);
@@ -789,14 +861,19 @@ class alu_vcomp_test extends rvv_backend_test;
     rvs_vx_vi_seq.run_inst_iter(   VMSGTU, env.rvs_agt.rvs_sqr, 1);
     rvs_vx_vi_seq.run_inst_iter(   VMSGT , env.rvs_agt.rvs_sqr, 1);
 
-    rvs_vv_vx_vi_seq.run_inst_rand(VMSEQ , env.rvs_agt.rvs_sqr, 100);
-    rvs_vv_vx_vi_seq.run_inst_rand(VMSNE , env.rvs_agt.rvs_sqr, 100);
-    rvs_vv_vx_seq.run_inst_rand(   VMSLTU, env.rvs_agt.rvs_sqr, 100);
-    rvs_vv_vx_seq.run_inst_rand(   VMSLT , env.rvs_agt.rvs_sqr, 100);
-    rvs_vv_vx_vi_seq.run_inst_rand(VMSLEU, env.rvs_agt.rvs_sqr, 100);
-    rvs_vv_vx_vi_seq.run_inst_rand(VMSLE , env.rvs_agt.rvs_sqr, 100);
-    rvs_vx_vi_seq.run_inst_rand(   VMSGTU, env.rvs_agt.rvs_sqr, 100);
-    rvs_vx_vi_seq.run_inst_rand(   VMSGT , env.rvs_agt.rvs_sqr, 100);
+    `uvm_info(get_type_name(), "Single inst random part.", UVM_HIGH)
+    rvs_vv_vx_vi_seq.run_inst_rand(VMSEQ , env.rvs_agt.rvs_sqr, direct_inst_num);
+    rvs_vv_vx_vi_seq.run_inst_rand(VMSNE , env.rvs_agt.rvs_sqr, direct_inst_num);
+    rvs_vv_vx_seq.run_inst_rand(   VMSLTU, env.rvs_agt.rvs_sqr, direct_inst_num);
+    rvs_vv_vx_seq.run_inst_rand(   VMSLT , env.rvs_agt.rvs_sqr, direct_inst_num);
+    rvs_vv_vx_vi_seq.run_inst_rand(VMSLEU, env.rvs_agt.rvs_sqr, direct_inst_num);
+    rvs_vv_vx_vi_seq.run_inst_rand(VMSLE , env.rvs_agt.rvs_sqr, direct_inst_num);
+    rvs_vx_vi_seq.run_inst_rand(   VMSGTU, env.rvs_agt.rvs_sqr, direct_inst_num);
+    rvs_vx_vi_seq.run_inst_rand(   VMSGT , env.rvs_agt.rvs_sqr, direct_inst_num);
+
+    `uvm_info(get_type_name(), "Inst set random part.", UVM_HIGH)
+    rvs_rand_seq = alu_random_seq::type_id::create("rvs_rand_seq", this);
+    rvs_rand_seq.run_rand_with_set(inst_set, env.rvs_agt.rvs_sqr, direct_inst_num * inst_set.size());
 
     rvs_last_seq = alu_smoke_vv_seq::type_id::create("rvs_last_seq", this);
     rvs_last_seq.run_inst(VADD,env.rvs_agt.rvs_sqr);
@@ -816,6 +893,9 @@ class alu_vminmax_test extends rvv_backend_test;
 
   alu_iterate_vv_vx_seq rvs_seq;
   alu_smoke_vv_seq rvs_last_seq;
+
+  alu_random_seq rvs_rand_seq;
+  alu_inst_e inst_set[$] = '{VMINU, VMIN, VMAXU, VMAX};
 
   `uvm_component_utils(alu_vminmax_test)
 
@@ -847,10 +927,14 @@ class alu_vminmax_test extends rvv_backend_test;
     rvs_seq.run_inst_iter(VMAXU, env.rvs_agt.rvs_sqr, 1);
     rvs_seq.run_inst_iter(VMIN , env.rvs_agt.rvs_sqr, 1);
 
-    rvs_seq.run_inst_rand(VMINU, env.rvs_agt.rvs_sqr, 100);
-    rvs_seq.run_inst_rand(VMIN , env.rvs_agt.rvs_sqr, 100);
-    rvs_seq.run_inst_rand(VMAXU, env.rvs_agt.rvs_sqr, 100);
-    rvs_seq.run_inst_rand(VMIN , env.rvs_agt.rvs_sqr, 100);
+    rvs_seq.run_inst_rand(VMINU, env.rvs_agt.rvs_sqr, direct_inst_num);
+    rvs_seq.run_inst_rand(VMIN , env.rvs_agt.rvs_sqr, direct_inst_num);
+    rvs_seq.run_inst_rand(VMAXU, env.rvs_agt.rvs_sqr, direct_inst_num);
+    rvs_seq.run_inst_rand(VMIN , env.rvs_agt.rvs_sqr, direct_inst_num);
+
+    `uvm_info(get_type_name(), "Inst set random part.", UVM_HIGH)
+    rvs_rand_seq = alu_random_seq::type_id::create("rvs_rand_seq", this);
+    rvs_rand_seq.run_rand_with_set(inst_set, env.rvs_agt.rvs_sqr, direct_inst_num * inst_set.size());
 
     rvs_last_seq = alu_smoke_vv_seq::type_id::create("rvs_last_seq", this);
     rvs_last_seq.run_inst(VADD,env.rvs_agt.rvs_sqr);
@@ -870,6 +954,9 @@ class alu_vmul_test extends rvv_backend_test;
 
   alu_iterate_vv_vx_seq rvs_seq;
   alu_smoke_vv_seq rvs_last_seq;
+
+  alu_random_seq rvs_rand_seq;
+  alu_inst_e inst_set[$] = '{VMUL, VMULH, VMULHU, VMULHSU};
 
   `uvm_component_utils(alu_vmul_test)
 
@@ -901,10 +988,14 @@ class alu_vmul_test extends rvv_backend_test;
     rvs_seq.run_inst_iter(VMULHU , env.rvs_agt.rvs_sqr, 1);
     rvs_seq.run_inst_iter(VMULHSU, env.rvs_agt.rvs_sqr, 1);
 
-    rvs_seq.run_inst_rand(VMUL   , env.rvs_agt.rvs_sqr, 100);
-    rvs_seq.run_inst_rand(VMULH  , env.rvs_agt.rvs_sqr, 100);
-    rvs_seq.run_inst_rand(VMULHU , env.rvs_agt.rvs_sqr, 100);
-    rvs_seq.run_inst_rand(VMULHSU, env.rvs_agt.rvs_sqr, 100);
+    rvs_seq.run_inst_rand(VMUL   , env.rvs_agt.rvs_sqr, direct_inst_num);
+    rvs_seq.run_inst_rand(VMULH  , env.rvs_agt.rvs_sqr, direct_inst_num);
+    rvs_seq.run_inst_rand(VMULHU , env.rvs_agt.rvs_sqr, direct_inst_num);
+    rvs_seq.run_inst_rand(VMULHSU, env.rvs_agt.rvs_sqr, direct_inst_num);
+
+    `uvm_info(get_type_name(), "Inst set random part.", UVM_HIGH)
+    rvs_rand_seq = alu_random_seq::type_id::create("rvs_rand_seq", this);
+    rvs_rand_seq.run_rand_with_set(inst_set, env.rvs_agt.rvs_sqr, direct_inst_num * inst_set.size());
 
     rvs_last_seq = alu_smoke_vv_seq::type_id::create("rvs_last_seq", this);
     rvs_last_seq.run_inst(VADD,env.rvs_agt.rvs_sqr);
@@ -924,6 +1015,9 @@ class alu_vdiv_test extends rvv_backend_test;
 
   alu_iterate_vv_vx_seq rvs_seq;
   alu_smoke_vv_seq rvs_last_seq;
+
+  alu_random_seq rvs_rand_seq;
+  alu_inst_e inst_set[$] = '{VDIVU, VDIV, VREMU, VREM};
 
   `uvm_component_utils(alu_vdiv_test)
 
@@ -955,10 +1049,14 @@ class alu_vdiv_test extends rvv_backend_test;
     rvs_seq.run_inst_iter(VREMU, env.rvs_agt.rvs_sqr, 1);
     rvs_seq.run_inst_iter(VREM , env.rvs_agt.rvs_sqr, 1);
 
-    rvs_seq.run_inst_rand(VDIVU, env.rvs_agt.rvs_sqr, 100);
-    rvs_seq.run_inst_rand(VDIV , env.rvs_agt.rvs_sqr, 100);
-    rvs_seq.run_inst_rand(VREMU, env.rvs_agt.rvs_sqr, 100);
-    rvs_seq.run_inst_rand(VREM , env.rvs_agt.rvs_sqr, 100);
+    rvs_seq.run_inst_rand(VDIVU, env.rvs_agt.rvs_sqr, direct_inst_num);
+    rvs_seq.run_inst_rand(VDIV , env.rvs_agt.rvs_sqr, direct_inst_num);
+    rvs_seq.run_inst_rand(VREMU, env.rvs_agt.rvs_sqr, direct_inst_num);
+    rvs_seq.run_inst_rand(VREM , env.rvs_agt.rvs_sqr, direct_inst_num);
+
+    `uvm_info(get_type_name(), "Inst set random part.", UVM_HIGH)
+    rvs_rand_seq = alu_random_seq::type_id::create("rvs_rand_seq", this);
+    rvs_rand_seq.run_rand_with_set(inst_set, env.rvs_agt.rvs_sqr, direct_inst_num * inst_set.size());
 
     rvs_last_seq = alu_smoke_vv_seq::type_id::create("rvs_last_seq", this);
     rvs_last_seq.run_inst(VADD,env.rvs_agt.rvs_sqr);
@@ -978,6 +1076,9 @@ class alu_vwmul_test extends rvv_backend_test;
 
   alu_iterate_vv_vx_seq rvs_seq;
   alu_smoke_vv_seq rvs_last_seq;
+
+  alu_random_seq rvs_rand_seq;
+  alu_inst_e inst_set[$] = '{VWMUL, VWMULU, VWMULSU};
 
   `uvm_component_utils(alu_vwmul_test)
 
@@ -1007,9 +1108,13 @@ class alu_vwmul_test extends rvv_backend_test;
     rvs_seq.run_inst_iter(VWMULU , env.rvs_agt.rvs_sqr, 1);
     rvs_seq.run_inst_iter(VWMULSU, env.rvs_agt.rvs_sqr, 1);
 
-    rvs_seq.run_inst_rand(VWMUL  , env.rvs_agt.rvs_sqr, 100);
-    rvs_seq.run_inst_rand(VWMULU , env.rvs_agt.rvs_sqr, 100);
-    rvs_seq.run_inst_rand(VWMULSU, env.rvs_agt.rvs_sqr, 100);
+    rvs_seq.run_inst_rand(VWMUL  , env.rvs_agt.rvs_sqr, direct_inst_num);
+    rvs_seq.run_inst_rand(VWMULU , env.rvs_agt.rvs_sqr, direct_inst_num);
+    rvs_seq.run_inst_rand(VWMULSU, env.rvs_agt.rvs_sqr, direct_inst_num);
+
+    `uvm_info(get_type_name(), "Inst set random part.", UVM_HIGH)
+    rvs_rand_seq = alu_random_seq::type_id::create("rvs_rand_seq", this);
+    rvs_rand_seq.run_rand_with_set(inst_set, env.rvs_agt.rvs_sqr, direct_inst_num * inst_set.size());
 
     rvs_last_seq = alu_smoke_vv_seq::type_id::create("rvs_last_seq", this);
     rvs_last_seq.run_inst(VADD,env.rvs_agt.rvs_sqr);
@@ -1029,6 +1134,9 @@ class alu_vmac_test extends rvv_backend_test;
 
   alu_iterate_vv_vx_seq rvs_seq;
   alu_smoke_vv_seq rvs_last_seq;
+
+  alu_random_seq rvs_rand_seq;
+  alu_inst_e inst_set[$] = '{VMACC, VNMSAC, VMADD, VNMSUB};
 
   `uvm_component_utils(alu_vmac_test)
 
@@ -1060,10 +1168,14 @@ class alu_vmac_test extends rvv_backend_test;
     rvs_seq.run_inst_iter(VMADD , env.rvs_agt.rvs_sqr, 1);
     rvs_seq.run_inst_iter(VNMSUB, env.rvs_agt.rvs_sqr, 1);
 
-    rvs_seq.run_inst_rand(VMACC , env.rvs_agt.rvs_sqr, 100);
-    rvs_seq.run_inst_rand(VNMSAC, env.rvs_agt.rvs_sqr, 100);
-    rvs_seq.run_inst_rand(VMADD , env.rvs_agt.rvs_sqr, 100);
-    rvs_seq.run_inst_rand(VNMSUB, env.rvs_agt.rvs_sqr, 100);
+    rvs_seq.run_inst_rand(VMACC , env.rvs_agt.rvs_sqr, direct_inst_num);
+    rvs_seq.run_inst_rand(VNMSAC, env.rvs_agt.rvs_sqr, direct_inst_num);
+    rvs_seq.run_inst_rand(VMADD , env.rvs_agt.rvs_sqr, direct_inst_num);
+    rvs_seq.run_inst_rand(VNMSUB, env.rvs_agt.rvs_sqr, direct_inst_num);
+
+    `uvm_info(get_type_name(), "Inst set random part.", UVM_HIGH)
+    rvs_rand_seq = alu_random_seq::type_id::create("rvs_rand_seq", this);
+    rvs_rand_seq.run_rand_with_set(inst_set, env.rvs_agt.rvs_sqr, direct_inst_num * inst_set.size());
 
     rvs_last_seq = alu_smoke_vv_seq::type_id::create("rvs_last_seq", this);
     rvs_last_seq.run_inst(VADD,env.rvs_agt.rvs_sqr);
@@ -1084,6 +1196,9 @@ class alu_vwmac_test extends rvv_backend_test;
   alu_iterate_vv_vx_seq rvs_seq;
   alu_iterate_vx_seq rvs_vx_seq;
   alu_smoke_vv_seq rvs_last_seq;
+
+  alu_random_seq rvs_rand_seq;
+  alu_inst_e inst_set[$] = '{VWMACCU, VWMACC, VWMACCUS, VWMACCSU};
 
   `uvm_component_utils(alu_vwmac_test)
 
@@ -1116,10 +1231,15 @@ class alu_vwmac_test extends rvv_backend_test;
     rvs_vx_seq.run_inst_iter(VWMACCUS, env.rvs_agt.rvs_sqr, 1);
     rvs_seq.run_inst_iter(VWMACCSU, env.rvs_agt.rvs_sqr, 1);
 
-    rvs_seq.run_inst_rand(VWMACCU , env.rvs_agt.rvs_sqr, 100);
-    rvs_seq.run_inst_rand(VWMACC  , env.rvs_agt.rvs_sqr, 100);
-    rvs_vx_seq.run_inst_rand(VWMACCUS, env.rvs_agt.rvs_sqr, 100);
-    rvs_seq.run_inst_rand(VWMACCSU, env.rvs_agt.rvs_sqr, 100);
+    rvs_seq.run_inst_rand(VWMACCU , env.rvs_agt.rvs_sqr, direct_inst_num);
+    rvs_seq.run_inst_rand(VWMACC  , env.rvs_agt.rvs_sqr, direct_inst_num);
+    rvs_vx_seq.run_inst_rand(VWMACCUS, env.rvs_agt.rvs_sqr, direct_inst_num);
+    rvs_seq.run_inst_rand(VWMACCSU, env.rvs_agt.rvs_sqr, direct_inst_num);
+
+    `uvm_info(get_type_name(), "Inst set random part.", UVM_HIGH)
+    rvs_rand_seq = alu_random_seq::type_id::create("rvs_rand_seq", this);
+    rvs_rand_seq.run_rand_with_set(inst_set, env.rvs_agt.rvs_sqr, direct_inst_num * inst_set.size());
+
     rvs_last_seq = alu_smoke_vv_seq::type_id::create("rvs_last_seq", this);
     rvs_last_seq.run_inst(VADD,env.rvs_agt.rvs_sqr);
     phase.phase_done.set_drain_time(this, 2000ns);
@@ -1139,6 +1259,9 @@ class alu_vmerge_vmvv_test extends rvv_backend_test;
 
   alu_iterate_vmerge_vmvv_seq rvs_seq;
   alu_smoke_vv_seq rvs_last_seq;
+
+  alu_random_seq rvs_rand_seq;
+  alu_inst_e inst_set[$] = '{VMERGE_VMVV};
 
   `uvm_component_utils(alu_vmerge_vmvv_test)
 
@@ -1164,7 +1287,11 @@ class alu_vmerge_vmvv_test extends rvv_backend_test;
     rvs_seq.run_inst_iter(VMERGE_VMVV, env.rvs_agt.rvs_sqr, 0); // vmerge
     rvs_seq.run_inst_iter(VMERGE_VMVV, env.rvs_agt.rvs_sqr, 1); // vmv.v
 
-    rvs_seq.run_inst_rand(VMERGE_VMVV, env.rvs_agt.rvs_sqr, 200); 
+    rvs_seq.run_inst_rand(VMERGE_VMVV, env.rvs_agt.rvs_sqr, direct_inst_num); 
+
+    `uvm_info(get_type_name(), "Inst set random part.", UVM_HIGH)
+    rvs_rand_seq = alu_random_seq::type_id::create("rvs_rand_seq", this);
+    rvs_rand_seq.run_rand_with_set(inst_set, env.rvs_agt.rvs_sqr, direct_inst_num * inst_set.size());
 
     rvs_last_seq = alu_smoke_vv_seq::type_id::create("rvs_last_seq", this);
     rvs_last_seq.run_inst(VADD,env.rvs_agt.rvs_sqr);
@@ -1185,6 +1312,9 @@ class alu_vsaddsub_test extends rvv_backend_test;
   alu_iterate_vv_vx_vi_seq rvs_vv_vx_vi_seq;
   alu_iterate_vv_vx_seq  rvs_vv_vx_seq;
   alu_smoke_vv_seq rvs_last_seq;
+
+  alu_random_seq rvs_rand_seq;
+  alu_inst_e inst_set[$] = '{VSADDU, VSADD, VSSUBU, VSSUB};
 
   `uvm_component_utils(alu_vsaddsub_test)
 
@@ -1217,10 +1347,15 @@ class alu_vsaddsub_test extends rvv_backend_test;
     rvs_vv_vx_seq.run_inst_iter(   VSSUBU, env.rvs_agt.rvs_sqr, 1);
     rvs_vv_vx_seq.run_inst_iter(   VSSUB , env.rvs_agt.rvs_sqr, 1);
 
-    rvs_vv_vx_vi_seq.run_inst_rand(VSADDU, env.rvs_agt.rvs_sqr, 400);
-    rvs_vv_vx_vi_seq.run_inst_rand(VSADD , env.rvs_agt.rvs_sqr, 400);
-    rvs_vv_vx_seq.run_inst_rand(   VSSUBU, env.rvs_agt.rvs_sqr, 400);
-    rvs_vv_vx_seq.run_inst_rand(   VSSUB , env.rvs_agt.rvs_sqr, 400);
+    rvs_vv_vx_vi_seq.run_inst_rand(VSADDU, env.rvs_agt.rvs_sqr, direct_inst_num);
+    rvs_vv_vx_vi_seq.run_inst_rand(VSADD , env.rvs_agt.rvs_sqr, direct_inst_num);
+    rvs_vv_vx_seq.run_inst_rand(   VSSUBU, env.rvs_agt.rvs_sqr, direct_inst_num);
+    rvs_vv_vx_seq.run_inst_rand(   VSSUB , env.rvs_agt.rvs_sqr, direct_inst_num);
+
+
+    `uvm_info(get_type_name(), "Inst set random part.", UVM_HIGH)
+    rvs_rand_seq = alu_random_seq::type_id::create("rvs_rand_seq", this);
+    rvs_rand_seq.run_rand_with_set(inst_set, env.rvs_agt.rvs_sqr, direct_inst_num * inst_set.size());
 
     rvs_last_seq = alu_smoke_vv_seq::type_id::create("rvs_last_seq", this);
     rvs_last_seq.run_inst(VADD,env.rvs_agt.rvs_sqr);
@@ -1240,6 +1375,9 @@ class alu_vaaddsub_test extends rvv_backend_test;
 
   alu_iterate_vv_vx_seq  rvs_seq;
   alu_smoke_vv_seq rvs_last_seq;
+
+  alu_random_seq rvs_rand_seq;
+  alu_inst_e inst_set[$] = '{VAADDU, VAADD, VASUBU, VASUB};
 
   `uvm_component_utils(alu_vaaddsub_test)
 
@@ -1271,10 +1409,14 @@ class alu_vaaddsub_test extends rvv_backend_test;
     rvs_seq.run_inst_iter(VASUBU, env.rvs_agt.rvs_sqr, 1);
     rvs_seq.run_inst_iter(VASUB , env.rvs_agt.rvs_sqr, 1);
 
-    rvs_seq.run_inst_rand(VAADDU, env.rvs_agt.rvs_sqr, 100);
-    rvs_seq.run_inst_rand(VAADD , env.rvs_agt.rvs_sqr, 100);
-    rvs_seq.run_inst_rand(VASUBU, env.rvs_agt.rvs_sqr, 100);
-    rvs_seq.run_inst_rand(VASUB , env.rvs_agt.rvs_sqr, 100);
+    rvs_seq.run_inst_rand(VAADDU, env.rvs_agt.rvs_sqr, direct_inst_num);
+    rvs_seq.run_inst_rand(VAADD , env.rvs_agt.rvs_sqr, direct_inst_num);
+    rvs_seq.run_inst_rand(VASUBU, env.rvs_agt.rvs_sqr, direct_inst_num);
+    rvs_seq.run_inst_rand(VASUB , env.rvs_agt.rvs_sqr, direct_inst_num);
+
+    `uvm_info(get_type_name(), "Inst set random part.", UVM_HIGH)
+    rvs_rand_seq = alu_random_seq::type_id::create("rvs_rand_seq", this);
+    rvs_rand_seq.run_rand_with_set(inst_set, env.rvs_agt.rvs_sqr, direct_inst_num * inst_set.size());
 
     rvs_last_seq = alu_smoke_vv_seq::type_id::create("rvs_last_seq", this);
     rvs_last_seq.run_inst(VADD,env.rvs_agt.rvs_sqr);
@@ -1294,6 +1436,9 @@ class alu_vsmul_test extends rvv_backend_test;
 
   alu_iterate_vv_vx_seq  rvs_seq;
   alu_smoke_vv_seq rvs_last_seq;
+
+  alu_random_seq rvs_rand_seq;
+  alu_inst_e inst_set[$] = '{VSMUL_VMVNRR};
 
   `uvm_component_utils(alu_vsmul_test)
 
@@ -1319,7 +1464,11 @@ class alu_vsmul_test extends rvv_backend_test;
     rvs_seq.run_inst_iter(VSMUL_VMVNRR, env.rvs_agt.rvs_sqr, 0);
     rvs_seq.run_inst_iter(VSMUL_VMVNRR, env.rvs_agt.rvs_sqr, 1);
 
-    rvs_seq.run_inst_rand(VSMUL_VMVNRR, env.rvs_agt.rvs_sqr, 100);
+    rvs_seq.run_inst_rand(VSMUL_VMVNRR, env.rvs_agt.rvs_sqr, direct_inst_num);
+
+    `uvm_info(get_type_name(), "Inst set random part.", UVM_HIGH)
+    rvs_rand_seq = alu_random_seq::type_id::create("rvs_rand_seq", this);
+    rvs_rand_seq.run_rand_with_set(inst_set, env.rvs_agt.rvs_sqr, direct_inst_num * inst_set.size());
 
     rvs_last_seq = alu_smoke_vv_seq::type_id::create("rvs_last_seq", this);
     rvs_last_seq.run_inst(VADD,env.rvs_agt.rvs_sqr);
@@ -1339,6 +1488,9 @@ class alu_vssrlsra_test extends rvv_backend_test;
 
   alu_iterate_vv_vx_vui_seq  rvs_seq;
   alu_smoke_vv_seq rvs_last_seq;
+
+  alu_random_seq rvs_rand_seq;
+  alu_inst_e inst_set[$] = '{VSSRL, VSSRA};
 
   `uvm_component_utils(alu_vssrlsra_test)
 
@@ -1366,8 +1518,12 @@ class alu_vssrlsra_test extends rvv_backend_test;
     rvs_seq.run_inst_iter(VSSRL, env.rvs_agt.rvs_sqr, 1);
     rvs_seq.run_inst_iter(VSSRA, env.rvs_agt.rvs_sqr, 1);
 
-    rvs_seq.run_inst_rand(VSSRL, env.rvs_agt.rvs_sqr, 100);
-    rvs_seq.run_inst_rand(VSSRA, env.rvs_agt.rvs_sqr, 100);
+    rvs_seq.run_inst_rand(VSSRL, env.rvs_agt.rvs_sqr, direct_inst_num);
+    rvs_seq.run_inst_rand(VSSRA, env.rvs_agt.rvs_sqr, direct_inst_num);
+
+    `uvm_info(get_type_name(), "Inst set random part.", UVM_HIGH)
+    rvs_rand_seq = alu_random_seq::type_id::create("rvs_rand_seq", this);
+    rvs_rand_seq.run_rand_with_set(inst_set, env.rvs_agt.rvs_sqr, direct_inst_num * inst_set.size());
 
     rvs_last_seq = alu_smoke_vv_seq::type_id::create("rvs_last_seq", this);
     rvs_last_seq.run_inst(VADD,env.rvs_agt.rvs_sqr);
@@ -1387,6 +1543,9 @@ class alu_vnclip_test extends rvv_backend_test;
 
   alu_iterate_vv_vx_vui_seq  rvs_seq;
   alu_smoke_vv_seq rvs_last_seq;
+
+  alu_random_seq rvs_rand_seq;
+  alu_inst_e inst_set[$] = '{VNCLIPU, VNCLIP};
 
   `uvm_component_utils(alu_vnclip_test)
 
@@ -1414,8 +1573,12 @@ class alu_vnclip_test extends rvv_backend_test;
     rvs_seq.run_inst_iter(VNCLIPU, env.rvs_agt.rvs_sqr, 1);
     rvs_seq.run_inst_iter(VNCLIP , env.rvs_agt.rvs_sqr, 1);
 
-    rvs_seq.run_inst_rand(VNCLIPU, env.rvs_agt.rvs_sqr, 100);
-    rvs_seq.run_inst_rand(VNCLIP , env.rvs_agt.rvs_sqr, 100);
+    rvs_seq.run_inst_rand(VNCLIPU, env.rvs_agt.rvs_sqr, direct_inst_num);
+    rvs_seq.run_inst_rand(VNCLIP , env.rvs_agt.rvs_sqr, direct_inst_num);
+
+    `uvm_info(get_type_name(), "Inst set random part.", UVM_HIGH)
+    rvs_rand_seq = alu_random_seq::type_id::create("rvs_rand_seq", this);
+    rvs_rand_seq.run_rand_with_set(inst_set, env.rvs_agt.rvs_sqr, direct_inst_num * inst_set.size());
 
     rvs_last_seq = alu_smoke_vv_seq::type_id::create("rvs_last_seq", this);
     rvs_last_seq.run_inst(VADD,env.rvs_agt.rvs_sqr);
@@ -1436,10 +1599,15 @@ class alu_mask_logic_test extends rvv_backend_test;
   alu_iterate_vv_seq  rvs_seq;
   alu_smoke_vv_seq rvs_last_seq;
 
+  alu_random_seq rvs_rand_seq;
+  alu_inst_e inst_set[$] = '{
+    VMAND, VMOR, VMXOR, VMORN, VMNAND, VMNOR, VMANDN, VMXNOR
+  };
+
   `uvm_component_utils(alu_mask_logic_test)
 
-  function new(string name, uvm_component parent);
-    super.new(name, parent);
+  function new(string name,  uvm_component parent);
+    super.new(name,  parent);
   endfunction
 
   function void build_phase(uvm_phase phase);
@@ -1466,14 +1634,18 @@ class alu_mask_logic_test extends rvv_backend_test;
     rvs_seq.run_inst_iter(VMANDN, env.rvs_agt.rvs_sqr, 1);
     rvs_seq.run_inst_iter(VMXNOR, env.rvs_agt.rvs_sqr, 1);
 
-    rvs_seq.run_inst_rand(VMAND , env.rvs_agt.rvs_sqr, 100);
-    rvs_seq.run_inst_rand(VMOR  , env.rvs_agt.rvs_sqr, 100);
-    rvs_seq.run_inst_rand(VMXOR , env.rvs_agt.rvs_sqr, 100);
-    rvs_seq.run_inst_rand(VMORN , env.rvs_agt.rvs_sqr, 100);
-    rvs_seq.run_inst_rand(VMNAND, env.rvs_agt.rvs_sqr, 100);
-    rvs_seq.run_inst_rand(VMNOR , env.rvs_agt.rvs_sqr, 100);
-    rvs_seq.run_inst_rand(VMANDN, env.rvs_agt.rvs_sqr, 100);
-    rvs_seq.run_inst_rand(VMXNOR, env.rvs_agt.rvs_sqr, 100);
+    rvs_seq.run_inst_rand(VMAND , env.rvs_agt.rvs_sqr, direct_inst_num);
+    rvs_seq.run_inst_rand(VMOR  , env.rvs_agt.rvs_sqr, direct_inst_num);
+    rvs_seq.run_inst_rand(VMXOR , env.rvs_agt.rvs_sqr, direct_inst_num);
+    rvs_seq.run_inst_rand(VMORN , env.rvs_agt.rvs_sqr, direct_inst_num);
+    rvs_seq.run_inst_rand(VMNAND, env.rvs_agt.rvs_sqr, direct_inst_num);
+    rvs_seq.run_inst_rand(VMNOR , env.rvs_agt.rvs_sqr, direct_inst_num);
+    rvs_seq.run_inst_rand(VMANDN, env.rvs_agt.rvs_sqr, direct_inst_num);
+    rvs_seq.run_inst_rand(VMXNOR, env.rvs_agt.rvs_sqr, direct_inst_num);
+
+    `uvm_info(get_type_name(), "Inst set random part.", UVM_HIGH)
+    rvs_rand_seq = alu_random_seq::type_id::create("rvs_rand_seq", this);
+    rvs_rand_seq.run_rand_with_set(inst_set, env.rvs_agt.rvs_sqr, direct_inst_num * inst_set.size());
 
     rvs_last_seq = alu_smoke_vv_seq::type_id::create("rvs_last_seq", this);
     rvs_last_seq.run_inst(VADD,env.rvs_agt.rvs_sqr);
@@ -1493,6 +1665,11 @@ class alu_vred_test extends rvv_backend_test;
 
   alu_iterate_vs_seq  rvs_seq;
   alu_smoke_vv_seq rvs_last_seq;
+
+  alu_random_seq rvs_rand_seq;
+  alu_inst_e inst_set[$] = '{
+    VREDSUM, VREDAND, VREDOR, VREDXOR, VREDMINU, VREDMIN, VREDMAXU, VREDMAX
+  };
 
   `uvm_component_utils(alu_vred_test)
 
@@ -1524,14 +1701,18 @@ class alu_vred_test extends rvv_backend_test;
     rvs_seq.run_inst_iter(VREDMAXU, env.rvs_agt.rvs_sqr, 1);
     rvs_seq.run_inst_iter(VREDMAX , env.rvs_agt.rvs_sqr, 1);
 
-    rvs_seq.run_inst_rand(VREDSUM , env.rvs_agt.rvs_sqr, 100);
-    rvs_seq.run_inst_rand(VREDAND , env.rvs_agt.rvs_sqr, 100);
-    rvs_seq.run_inst_rand(VREDOR  , env.rvs_agt.rvs_sqr, 100);
-    rvs_seq.run_inst_rand(VREDXOR , env.rvs_agt.rvs_sqr, 100);
-    rvs_seq.run_inst_rand(VREDMINU, env.rvs_agt.rvs_sqr, 100);
-    rvs_seq.run_inst_rand(VREDMIN , env.rvs_agt.rvs_sqr, 100);
-    rvs_seq.run_inst_rand(VREDMAXU, env.rvs_agt.rvs_sqr, 100);
-    rvs_seq.run_inst_rand(VREDMAX , env.rvs_agt.rvs_sqr, 100);
+    rvs_seq.run_inst_rand(VREDSUM , env.rvs_agt.rvs_sqr, direct_inst_num);
+    rvs_seq.run_inst_rand(VREDAND , env.rvs_agt.rvs_sqr, direct_inst_num);
+    rvs_seq.run_inst_rand(VREDOR  , env.rvs_agt.rvs_sqr, direct_inst_num);
+    rvs_seq.run_inst_rand(VREDXOR , env.rvs_agt.rvs_sqr, direct_inst_num);
+    rvs_seq.run_inst_rand(VREDMINU, env.rvs_agt.rvs_sqr, direct_inst_num);
+    rvs_seq.run_inst_rand(VREDMIN , env.rvs_agt.rvs_sqr, direct_inst_num);
+    rvs_seq.run_inst_rand(VREDMAXU, env.rvs_agt.rvs_sqr, direct_inst_num);
+    rvs_seq.run_inst_rand(VREDMAX , env.rvs_agt.rvs_sqr, direct_inst_num);
+
+    `uvm_info(get_type_name(), "Inst set random part.", UVM_HIGH)
+    rvs_rand_seq = alu_random_seq::type_id::create("rvs_rand_seq", this);
+    rvs_rand_seq.run_rand_with_set(inst_set, env.rvs_agt.rvs_sqr, direct_inst_num * inst_set.size());
 
     rvs_last_seq = alu_smoke_vv_seq::type_id::create("rvs_last_seq", this);
     rvs_last_seq.run_inst(VADD,env.rvs_agt.rvs_sqr);
@@ -1551,6 +1732,9 @@ class alu_vwred_test extends rvv_backend_test;
 
   alu_iterate_vs_seq  rvs_seq;
   alu_smoke_vv_seq rvs_last_seq;
+
+  alu_random_seq rvs_rand_seq;
+  alu_inst_e inst_set[$] = '{VWREDSUM, VWREDSUMU};
 
   `uvm_component_utils(alu_vwred_test)
 
@@ -1576,8 +1760,12 @@ class alu_vwred_test extends rvv_backend_test;
     rvs_seq.run_inst_iter(VWREDSUM , env.rvs_agt.rvs_sqr, 1);
     rvs_seq.run_inst_iter(VWREDSUMU, env.rvs_agt.rvs_sqr, 1);
 
-    rvs_seq.run_inst_rand(VWREDSUM , env.rvs_agt.rvs_sqr, 100);
-    rvs_seq.run_inst_rand(VWREDSUMU, env.rvs_agt.rvs_sqr, 100);
+    rvs_seq.run_inst_rand(VWREDSUM , env.rvs_agt.rvs_sqr, direct_inst_num);
+    rvs_seq.run_inst_rand(VWREDSUMU, env.rvs_agt.rvs_sqr, direct_inst_num);
+
+    `uvm_info(get_type_name(), "Inst set random part.", UVM_HIGH)
+    rvs_rand_seq = alu_random_seq::type_id::create("rvs_rand_seq", this);
+    rvs_rand_seq.run_rand_with_set(inst_set, env.rvs_agt.rvs_sqr, direct_inst_num * inst_set.size());
 
     rvs_last_seq = alu_smoke_vv_seq::type_id::create("rvs_last_seq", this);
     rvs_last_seq.run_inst(VADD,env.rvs_agt.rvs_sqr);
@@ -1598,6 +1786,9 @@ class alu_vcpop_vfirst_test extends rvv_backend_test;
 
   alu_iterate_vwxunary0_seq  rvs_seq;
   alu_smoke_vv_seq rvs_last_seq;
+
+  alu_random_seq rvs_rand_seq;
+  alu_inst_e inst_set[$] = '{VWXUNARY0};
 
   `uvm_component_utils(alu_vcpop_vfirst_test)
 
@@ -1623,7 +1814,11 @@ class alu_vcpop_vfirst_test extends rvv_backend_test;
     rvs_seq.run_inst_iter(VWXUNARY0, env.rvs_agt.rvs_sqr, 0);
     rvs_seq.run_inst_iter(VWXUNARY0, env.rvs_agt.rvs_sqr, 1);
 
-    rvs_seq.run_inst_rand(VWXUNARY0, env.rvs_agt.rvs_sqr, 100);
+    rvs_seq.run_inst_rand(VWXUNARY0, env.rvs_agt.rvs_sqr, direct_inst_num);
+
+    `uvm_info(get_type_name(), "Inst set random part.", UVM_HIGH)
+    rvs_rand_seq = alu_random_seq::type_id::create("rvs_rand_seq", this);
+    rvs_rand_seq.run_rand_with_set(inst_set, env.rvs_agt.rvs_sqr, direct_inst_num * inst_set.size());
 
     rvs_last_seq = alu_smoke_vv_seq::type_id::create("rvs_last_seq", this);
     rvs_last_seq.run_inst(VADD,env.rvs_agt.rvs_sqr);
@@ -1647,6 +1842,9 @@ class alu_vmunary0_test extends rvv_backend_test;
 
   alu_iterate_vmunary0_seq  rvs_seq;
   alu_smoke_vv_seq rvs_last_seq;
+
+  alu_random_seq rvs_rand_seq;
+  alu_inst_e inst_set[$] = '{VMUNARY0};
 
   `uvm_component_utils(alu_vmunary0_test)
 
@@ -1672,7 +1870,11 @@ class alu_vmunary0_test extends rvv_backend_test;
     rvs_seq.run_inst_iter(VMUNARY0, env.rvs_agt.rvs_sqr, 0);
     rvs_seq.run_inst_iter(VMUNARY0, env.rvs_agt.rvs_sqr, 1);
 
-    rvs_seq.run_inst_rand(VMUNARY0, env.rvs_agt.rvs_sqr, 100);
+    rvs_seq.run_inst_rand(VMUNARY0, env.rvs_agt.rvs_sqr, direct_inst_num);
+
+    `uvm_info(get_type_name(), "Inst set random part.", UVM_HIGH)
+    rvs_rand_seq = alu_random_seq::type_id::create("rvs_rand_seq", this);
+    rvs_rand_seq.run_rand_with_set(inst_set, env.rvs_agt.rvs_sqr, direct_inst_num * inst_set.size());
 
     rvs_last_seq = alu_smoke_vv_seq::type_id::create("rvs_last_seq", this);
     rvs_last_seq.run_inst(VADD,env.rvs_agt.rvs_sqr);
@@ -1692,6 +1894,9 @@ class alu_vmv_test extends rvv_backend_test;
 
   alu_iterate_vmv_xs_sx_seq rvs_xs_sx_seq;
   alu_smoke_vmv_xs_sx_seq rvs_last_seq;
+
+  alu_random_seq rvs_rand_seq;
+  alu_inst_e inst_set[$] = '{VWXUNARY0};
 
   `uvm_component_utils(alu_vmv_test)
 
@@ -1715,7 +1920,12 @@ class alu_vmv_test extends rvv_backend_test;
 
     rvs_xs_sx_seq = alu_iterate_vmv_xs_sx_seq::type_id::create("rvs_xs_sx_seq", this);
     rvs_xs_sx_seq.run_inst_iter(VWXUNARY0, env.rvs_agt.rvs_sqr, 1);
-    rvs_xs_sx_seq.run_inst_rand(VWXUNARY0, env.rvs_agt.rvs_sqr, 100);
+
+    rvs_xs_sx_seq.run_inst_rand(VWXUNARY0, env.rvs_agt.rvs_sqr, direct_inst_num);
+
+    `uvm_info(get_type_name(), "Inst set random part.", UVM_HIGH)
+    rvs_rand_seq = alu_random_seq::type_id::create("rvs_rand_seq", this);
+    rvs_rand_seq.run_rand_with_set(inst_set, env.rvs_agt.rvs_sqr, direct_inst_num * inst_set.size());
 
     rvs_last_seq = alu_smoke_vmv_xs_sx_seq::type_id::create("rvs_last_seq", this);
     rvs_last_seq.run_inst(VWXUNARY0,env.rvs_agt.rvs_sqr,1);
@@ -1728,9 +1938,6 @@ class alu_vmv_test extends rvv_backend_test;
   endfunction
 endclass: alu_vmv_test
 
-
-
-
 //-----------------------------------------------------------
 // 32.16.3. Vector Slide Instructions
 //-----------------------------------------------------------
@@ -1739,6 +1946,9 @@ class alu_slide_test extends rvv_backend_test;
   alu_iterate_vx_vi_seq rvs_seq;
   alu_iterate_vx_seq rvs_vx_seq;
   alu_smoke_vx_seq rvs_last_seq;
+
+  alu_random_seq rvs_rand_seq;
+  alu_inst_e inst_set[$] = '{VSLIDEUP_RGATHEREI16, VSLIDEDOWN, VSLIDE1UP, VSLIDE1DOWN};
 
   `uvm_component_utils(alu_slide_test)
 
@@ -1771,10 +1981,14 @@ class alu_slide_test extends rvv_backend_test;
     rvs_vx_seq.run_inst_iter(VSLIDE1DOWN , env.rvs_agt.rvs_sqr, 1);
 
 
-    rvs_seq.run_inst_rand(VSLIDEUP_RGATHEREI16 , env.rvs_agt.rvs_sqr, 100);
-    rvs_seq.run_inst_rand(VSLIDEDOWN , env.rvs_agt.rvs_sqr, 100);
-    rvs_vx_seq.run_inst_rand(VSLIDE1UP , env.rvs_agt.rvs_sqr, 100);
-    rvs_vx_seq.run_inst_rand(VSLIDE1DOWN , env.rvs_agt.rvs_sqr, 100);
+    rvs_seq.run_inst_rand(VSLIDEUP_RGATHEREI16 , env.rvs_agt.rvs_sqr, direct_inst_num);
+    rvs_seq.run_inst_rand(VSLIDEDOWN , env.rvs_agt.rvs_sqr, direct_inst_num);
+    rvs_vx_seq.run_inst_rand(VSLIDE1UP , env.rvs_agt.rvs_sqr, direct_inst_num);
+    rvs_vx_seq.run_inst_rand(VSLIDE1DOWN , env.rvs_agt.rvs_sqr, direct_inst_num);
+
+    `uvm_info(get_type_name(), "Inst set random part.", UVM_HIGH)
+    rvs_rand_seq = alu_random_seq::type_id::create("rvs_rand_seq", this);
+    rvs_rand_seq.run_rand_with_set(inst_set, env.rvs_agt.rvs_sqr, direct_inst_num * inst_set.size());
 
     rvs_last_seq = alu_smoke_vx_seq::type_id::create("rvs_last_seq", this);
     rvs_last_seq.run_inst(VSLIDEUP_RGATHEREI16,env.rvs_agt.rvs_sqr);
@@ -1798,6 +2012,9 @@ class alu_gather_test extends rvv_backend_test;
   alu_iterate_vv_vx_vui_seq rvs_seq1;// used for vrgather
   alu_smoke_vv_seq rvs_last_seq;
 
+  alu_random_seq rvs_rand_seq;
+  alu_inst_e inst_set[$] = '{VSLIDEUP_RGATHEREI16, VRGATHER};
+
   `uvm_component_utils(alu_gather_test)
 
   function new(string name, uvm_component parent);
@@ -1820,13 +2037,18 @@ class alu_gather_test extends rvv_backend_test;
 
     rvs_seq = alu_iterate_gather_vv_seq::type_id::create("rvs_seq", this);
     rvs_seq1 = alu_iterate_vv_vx_vui_seq::type_id::create("rvs_seq1", this);
-    rvs_seq.run_inst_rand(VSLIDEUP_RGATHEREI16, env.rvs_agt.rvs_sqr, 100);
-    rvs_seq1.run_inst_rand(VRGATHER, env.rvs_agt.rvs_sqr, 100);
+    rvs_seq.run_inst_rand(VSLIDEUP_RGATHEREI16, env.rvs_agt.rvs_sqr, direct_inst_num);
+    rvs_seq1.run_inst_rand(VRGATHER, env.rvs_agt.rvs_sqr, direct_inst_num);
 
     rvs_seq.run_inst_iter(VSLIDEUP_RGATHEREI16, env.rvs_agt.rvs_sqr, 0);
     rvs_seq1.run_inst_iter(VRGATHER, env.rvs_agt.rvs_sqr, 0);
     rvs_seq.run_inst_iter(VSLIDEUP_RGATHEREI16, env.rvs_agt.rvs_sqr, 1);
     rvs_seq1.run_inst_iter(VRGATHER, env.rvs_agt.rvs_sqr, 1);
+
+
+    `uvm_info(get_type_name(), "Inst set random part.", UVM_HIGH)
+    rvs_rand_seq = alu_random_seq::type_id::create("rvs_rand_seq", this);
+    rvs_rand_seq.run_rand_with_set(inst_set, env.rvs_agt.rvs_sqr, direct_inst_num * inst_set.size());
 
     rvs_last_seq = alu_smoke_vv_seq::type_id::create("rvs_last_seq", this);
     rvs_last_seq.run_inst(VRGATHER,env.rvs_agt.rvs_sqr);
@@ -1845,6 +2067,9 @@ class alu_vcompress_test extends rvv_backend_test;
 
   alu_iterate_vv_seq rvs_seq;
   alu_smoke_vv_seq rvs_last_seq;
+
+  alu_random_seq rvs_rand_seq;
+  alu_inst_e inst_set[$] = '{VCOMPRESS};
 
   `uvm_component_utils(alu_vcompress_test)
 
@@ -1869,7 +2094,11 @@ class alu_vcompress_test extends rvv_backend_test;
     rvs_seq = alu_iterate_vv_seq::type_id::create("rvs_seq", this);
     rvs_seq.run_inst_iter(VCOMPRESS, env.rvs_agt.rvs_sqr, 1);
 
-    rvs_seq.run_inst_rand(VCOMPRESS, env.rvs_agt.rvs_sqr, 100);
+    rvs_seq.run_inst_rand(VCOMPRESS, env.rvs_agt.rvs_sqr, direct_inst_num);
+
+    `uvm_info(get_type_name(), "Inst set random part.", UVM_HIGH)
+    rvs_rand_seq = alu_random_seq::type_id::create("rvs_rand_seq", this);
+    rvs_rand_seq.run_rand_with_set(inst_set, env.rvs_agt.rvs_sqr, direct_inst_num * inst_set.size());
 
     rvs_last_seq = alu_smoke_vv_seq::type_id::create("rvs_last_seq", this);
     rvs_last_seq.run_inst(VCOMPRESS,env.rvs_agt.rvs_sqr,1);
@@ -1888,6 +2117,9 @@ class alu_vmvnr_test extends rvv_backend_test;
 
   alu_iterate_vmvnr_seq rvs_seq;
   alu_smoke_vmvnr_seq rvs_last_seq;
+
+  alu_random_seq rvs_rand_seq;
+  alu_inst_e inst_set[$] = '{VSMUL_VMVNRR};
 
   `uvm_component_utils(alu_vmvnr_test)
 
@@ -1911,7 +2143,11 @@ class alu_vmvnr_test extends rvv_backend_test;
 
     rvs_seq = alu_iterate_vmvnr_seq::type_id::create("rvs_seq", this);
     rvs_seq.run_inst_iter(VSMUL_VMVNRR, env.rvs_agt.rvs_sqr, 1);
-    rvs_seq.run_inst_rand(VSMUL_VMVNRR, env.rvs_agt.rvs_sqr, 100);
+    rvs_seq.run_inst_rand(VSMUL_VMVNRR, env.rvs_agt.rvs_sqr, direct_inst_num);
+
+    `uvm_info(get_type_name(), "Inst set random part.", UVM_HIGH)
+    rvs_rand_seq = alu_random_seq::type_id::create("rvs_rand_seq", this);
+    rvs_rand_seq.run_rand_with_set(inst_set, env.rvs_agt.rvs_sqr, direct_inst_num * inst_set.size());
 
     rvs_last_seq = alu_smoke_vmvnr_seq::type_id::create("rvs_last_seq", this);
     rvs_last_seq.run_inst(VSMUL_VMVNRR,env.rvs_agt.rvs_sqr, 1);

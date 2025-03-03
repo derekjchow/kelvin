@@ -6,15 +6,19 @@ typedef class rvs_transaction;
 typedef class rvs_monitor;
 
   `uvm_analysis_imp_decl(_rvs_mon_inst)
+  `uvm_blocking_get_imp_decl(_rvv_state)
 class rvs_monitor extends uvm_monitor;
 
   uvm_analysis_imp_rvs_mon_inst #(rvs_transaction,rvs_monitor) inst_imp; 
+  uvm_blocking_get_imp_rvv_state #(rvv_state_pkg::rvv_state_e, rvs_monitor) rvv_state_imp;
 
   uvm_analysis_port #(rvs_transaction) inst_ap; 
   uvm_analysis_port #(rvs_transaction) rt_ap;   
 
   typedef virtual rvs_interface v_if;
+  typedef virtual rvv_intern_interface v_if4;
   v_if rvs_if;
+  v_if4 rvv_intern_if;
 
   rvs_transaction inst_tx_queue[$];
   rvs_transaction inst_rx_queue[$];
@@ -41,6 +45,7 @@ class rvs_monitor extends uvm_monitor;
 
   // imp task
   extern virtual function void write_rvs_mon_inst(rvs_transaction inst_tr);
+  extern task get_rvv_state(output rvv_state_pkg::rvv_state_e rvv_state);
 
 endclass: rvs_monitor
 
@@ -52,6 +57,7 @@ endfunction: new
 function void rvs_monitor::build_phase(uvm_phase phase);
   super.build_phase(phase);
   inst_imp = new("inst_imp", this);
+  rvv_state_imp = new("rvv_state_imp", this);
   inst_ap = new ("inst_ap",this);
   rt_ap = new ("rt_ap",this);
 endfunction: build_phase
@@ -60,6 +66,8 @@ function void rvs_monitor::connect_phase(uvm_phase phase);
   super.connect_phase(phase);
   if(!uvm_config_db#(v_if)::get(this, "", "rvs_if", rvs_if))
     `uvm_fatal(get_type_name(), "Fail to get rvs_if!")
+  if(!uvm_config_db#(v_if4)::get(this, "", "rvv_intern_if", rvv_intern_if))
+    `uvm_fatal(get_type_name(), "Fail to get rvv_intern_if!")
 endfunction: connect_phase
 
 task rvs_monitor::reset_phase(uvm_phase phase);
@@ -217,4 +225,13 @@ function void rvs_monitor::write_rvs_mon_inst(rvs_transaction inst_tr);
   `uvm_info(get_type_name(), inst_tr.sprint(), UVM_HIGH)
   inst_tx_queue.push_back(inst_tr);
 endfunction
+
+task rvs_monitor::get_rvv_state(output rvv_state_pkg::rvv_state_e rvv_state);
+  if(rvv_intern_if.rvv_is_idle() === 1'b1)
+    rvv_state = rvv_state_pkg::IDLE; 
+  else if(rvv_intern_if.rvv_is_idle() === 1'b0)
+    rvv_state = rvv_state_pkg::BUSY; 
+  else
+    rvv_state = rvv_state_pkg::UNKNOW;
+endtask: get_rvv_state
 `endif // RVS_MONITOR__SV

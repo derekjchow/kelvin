@@ -5,10 +5,15 @@
 `include "rvv_backend.svh"
 typedef class rvs_transaction;
 typedef class rvs_driver;
+typedef class rvv_backend_test;
 
 class rvs_driver extends uvm_driver # (rvs_transaction);
 
   uvm_analysis_port #(rvs_transaction) inst_ap; 
+  uvm_blocking_get_port #(vrf_mon_pkg::vrf_state_e) vrf_state_port;
+  uvm_blocking_get_port #(rvv_state_pkg::rvv_state_e) rvv_state_port;
+
+  rvv_backend_test test_top;
   
   typedef virtual rvs_interface v_if1; 
   typedef virtual vrf_interface v_if3; 
@@ -19,6 +24,7 @@ class rvs_driver extends uvm_driver # (rvs_transaction);
   rvs_transaction inst_tx_queue[$];
   RVVCmd          inst     [`ISSUE_LANE-1:0];
   logic           inst_vld [`ISSUE_LANE-1:0];
+  bit             stall_tx;
 
   bit             single_inst_mode = 0; 
   int             inst_tx_delay_max = 8;
@@ -38,22 +44,27 @@ class rvs_driver extends uvm_driver # (rvs_transaction);
   extern protected virtual task tx_driver();
   extern protected virtual task inst_manage();
   extern protected virtual task rx_driver();
+  extern protected virtual task vrf_driver();
 
 endclass: rvs_driver
 
 function rvs_driver::new(string name = "rvs_driver", uvm_component parent = null);
   super.new(name, parent);
+  inst_ap = new("inst_ap", this);
+  vrf_state_port = new("vrf_state_port", this);
+  rvv_state_port = new("rvv_state_port", this);
 endfunction: new
 
 function void rvs_driver::build_phase(uvm_phase phase);
   super.build_phase(phase);
-  inst_ap = new("inst_ap", this);
   if(uvm_config_db#(int)::get(this, "", "inst_tx_queue_depth", inst_tx_queue_depth)) begin
     `uvm_info(get_type_name(), $sformatf("Depth of instruction queue in rvs_driver is set to %0d.", inst_tx_queue_depth), UVM_LOW)
   end
   if(uvm_config_db#(int)::get(this, "", "single_inst_mode", single_inst_mode)) begin
     `uvm_info(get_type_name(), $sformatf("single_inst_mode of rvs_driver is set to %0d.",single_inst_mode), UVM_LOW)
   end
+  if(!$cast(test_top, uvm_root::get().find("uvm_test_top")))
+    `uvm_fatal(get_type_name(),"Get uvm_test_top fail")
 endfunction: build_phase
 
 function void rvs_driver::connect_phase(uvm_phase phase);
@@ -71,6 +82,7 @@ task rvs_driver::reset_phase(uvm_phase phase);
       inst[i] = '0;
       inst_vld[i] = '0;
     end
+    stall_tx = 0;
     //Reset DUT
     for(int i=0; i<`ISSUE_LANE; i++) begin
       rvs_if.insts_rvs2cq[i]         <= '0;
@@ -95,6 +107,7 @@ task rvs_driver::run_phase(uvm_phase phase);
   fork 
     tx_driver();
     rx_driver();
+    vrf_driver();
   join
 endtask: run_phase
 
@@ -103,7 +116,7 @@ task rvs_driver::inst_manage();
   tr = new();
   
   for(int i=0; i<`ISSUE_LANE; i++) begin
-    if((rvs_if.insts_ready_cq2rvs[i]===1'b1) && inst_vld[i]) begin
+    if((rvs_if.insts_ready_cq2rvs[i]===1'b1) && (rvs_if.insts_valid_rvs2cq[i]===1'b1)) begin
       tr = inst_tx_queue.pop_front();
     end
   end
@@ -160,9 +173,16 @@ task rvs_driver::tx_driver();
   forever begin
     @(posedge rvs_if.clk);
     inst_manage();
-    for(int i=0; i<`ISSUE_LANE; i++) begin
-      rvs_if.insts_rvs2cq[i]         <= inst[i];
-      rvs_if.insts_valid_rvs2cq[i]   <= inst_vld[i];
+    if(stall_tx) begin
+      for(int i=0; i<`ISSUE_LANE; i++) begin
+        rvs_if.insts_rvs2cq[i]         <= inst[i];
+        rvs_if.insts_valid_rvs2cq[i]   <= 1'b0;
+      end
+    end else begin
+      for(int i=0; i<`ISSUE_LANE; i++) begin
+        rvs_if.insts_rvs2cq[i]         <= inst[i];
+        rvs_if.insts_valid_rvs2cq[i]   <= inst_vld[i];
+      end
     end
   end
 endtask: tx_driver
@@ -180,6 +200,39 @@ task rvs_driver::rx_driver();
     rvs_if.wr_vxsat_ready <= wr_vxsat_ready;
   end
 endtask: rx_driver
+
+task rvs_driver::vrf_driver();
+  logic [`VLEN-1:0] value;
+  vrf_mon_pkg::vrf_state_e vrf_state;
+  rvv_state_pkg::rvv_state_e rvv_state;
+  forever begin
+    @(posedge rvs_if.clk);
+    if(~rvs_if.rst_n) begin
+    end else begin
+      rvv_state_port.get(rvv_state);
+      vrf_state_port.get(vrf_state);
+      if(vrf_state == vrf_mon_pkg::ALL_ZERO) begin
+        `uvm_info(get_type_name(),$sformatf("Got vrf status %s",vrf_state.name()),UVM_HIGH)
+        stall_tx = 1;
+        if(rvv_state == rvv_state_pkg::IDLE) begin
+          `uvm_info(get_type_name(),$sformatf("Got rvv status %s",rvv_state.name()),UVM_HIGH)
+          `uvm_info(get_type_name(), "Start to randomize vrf", UVM_HIGH)
+          for(int reg_idx=0; reg_idx<32; reg_idx++) begin
+            for(int j=0; j<`VLENB; j++) begin
+              value[j*8+:8] = $urandom_range(0, 8'hFF);
+            end
+            test_top.set_mdl_vrf(reg_idx, value);
+            vrf_if.set_dut_vrf(reg_idx, value);
+          end
+          `uvm_info(get_type_name(), "Randomize vrf done", UVM_HIGH)
+        end
+      end else begin
+        stall_tx = 0;
+      end
+    end
+  end
+
+endtask: vrf_driver
 
 `endif // RVS_DRIVER__SV
 

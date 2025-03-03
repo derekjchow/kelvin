@@ -2,7 +2,6 @@
 `define RVV_BEHAVIOR_MODEL
 
 `include "rvv_backend.svh"
-`include "inst_description.svh"
 
   `uvm_analysis_imp_decl(_inst)
 
@@ -305,14 +304,14 @@ endclass : rvv_behavior_model
         // 1.0 illegal inst check
         // vstart
         if(inst_tr.vstart >= inst_tr.vl && !(inst_tr.alu_inst inside {VSMUL_VMVNRR} && inst_tr.alu_type == OPIVI)) begin
-          if(inst_tr.dest_type == XRF && inst_tr.vl == 0) begin
+          if(inst_tr.dest_type == XRF || inst_tr.vl == 0) begin
           end else begin
             `uvm_warning("MDL/INST_CHECKER", $sformatf("pc=0x%8x: ignored since vstart(%0d) >= vl(%0d).", pc, inst_tr.vstart, inst_tr.vl))
             continue;
           end
         end
         if(inst_tr.vstart >= vlmax && !(inst_tr.alu_inst inside {VSMUL_VMVNRR} && inst_tr.alu_type == OPIVI)) begin
-          if(inst_tr.dest_type == XRF && inst_tr.vl == 0) begin
+          if(inst_tr.dest_type == XRF || inst_tr.vl == 0) begin
           end else begin
             `uvm_warning("MDL/INST_CHECKER", $sformatf("pc=0x%8x: ignored since vstart(%0d) >= vlmax(%0d).", pc, inst_tr.vstart, vlmax))
             continue;
@@ -379,6 +378,8 @@ endclass : rvv_behavior_model
           `uvm_warning("MDL/INST_CHECKER", $sformatf("pc=0x%8x: vstart = %0d of reduction insts is ignored.", pc, inst_tr.vstart))
           continue;
         end
+        // FIXME: vstart != 0 of vmv.s.x isn't a illegal case, it will just dispatch/retire nothing.
+        //        Move this part to retire section.
         if(inst_tr.inst_type == ALU && inst_tr.alu_inst == VWXUNARY0 && inst_tr.dest_type == VRF && inst_tr.src2_type == FUNC && inst_tr.src2_idx inside {VMV_X_S} && inst_tr.src1_type == XRF && inst_tr.vstart !== 0) begin
           `uvm_warning("MDL/INST_CHECKER", $sformatf("pc=0x%8x: vstart = %0d of vmv.s.x is ignored.", pc, inst_tr.vstart))
           continue;

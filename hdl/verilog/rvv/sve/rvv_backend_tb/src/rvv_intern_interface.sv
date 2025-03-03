@@ -46,5 +46,22 @@ interface rvv_intern_interface (input bit clk, input bit rst_n);
   logic pmtrdt_rs_full, pmtrdt_rs_empty;
   logic lsu_rs_full,    lsu_rs_empty;
 
+  /* ROB */
+  logic rob_empty;
+
+  /* vrf */
+  logic [31:0] [`VLEN-1:0] vrf_wr_wenb_full;
+
+  function bit rvv_is_idle();
+    rvv_is_idle = cmd_q_empty &
+                  uop_q_empty &
+                  alu_rs_empty &
+                  mul_rs_empty &
+                  div_rs_empty &
+                  pmtrdt_rs_empty &
+                  lsu_rs_empty &
+                  rob_empty &
+                  (|vrf_wr_wenb_full === 1'b0);
+  endfunction: rvv_is_idle
 endinterface: rvv_intern_interface
 `endif // RVV_INTERN_INTERFACE__SV

@@ -11,6 +11,4 @@
 
 `include "rvv_cov.sv"
 
-`include "mon_2cov.sv"
-
 `endif // RVV_BACKEND_TB__SV
