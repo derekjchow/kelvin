@@ -39,11 +39,14 @@ if($opt_help) { Usage(); }
 my $workRoot = $ENV{PWD};
 $workRoot =~ s%(\S+)/hdl/verilog/rvv/%$1%;
 
-my $testList = "$workRoot/sve/${scfg}_tb/regress.list";
+my $base = "";
+if($scfg =~ m/(rvv_backend)/g) { $base = $1; }
+
+my $testList = "$workRoot/sve/${base}_tb/regress.list";
 if(defined $opt_testlist) { $testList = "$workRoot/$opt_testlist"; }
 
 $mon = $mon + 1;
-my $logDir = "outfiles_regress/${mon}_${mday}_${hour}${min}";
+my $logDir = "outfiles_regress/${mon}_${mday}_${hour}_${min}";
 if(defined $opt_logdir) { $logDir = "$opt_logdir"; }
 my $absLogDir = "$workRoot/$logDir";
 
@@ -68,7 +71,7 @@ my $bsub  = $localRun ? "bsub -Is -q $queue -n $cpuNum -R $host -W $maxRunTime"
                       : "bsub -q $queue -n $cpuNum -R $host -W $maxRunTime";
 ## for local server
 my $null = ' > /dev/null 2>&1';
-my $maxProcess = ($opt_max_job && $opt_max_job < 30) ? $opt_max_job : 30;
+my $maxProcess = ($opt_max_job && $opt_max_job < 30) ? $opt_max_job : 20;
 
 # Execution Steps Config
 my $exeCompile = 1;
@@ -83,7 +86,7 @@ $exeCoverage = 1 if($opt_coverage);
 my $exeCountDiscRate = 0;
 $exeCountDiscRate = 1 if($opt_show_disc);
 
-my $repeat = $opt_qualify ? 1 : $opt_repeat ? $opt_repeat : 0; 
+my $repeat = $opt_repeat ? $opt_repeat : 0; 
 
 # Others
 my $startTime, my $startTimeStr;
@@ -555,7 +558,7 @@ Help infomation:
 
     -lsf                            Use openlava to run test.
     -local,-loc                     Run command in local workspace one-by-one.
-    -que,-q <str>                   Specify openlava execution queue.
+    -queue,-que <str>               Specify openlava execution queue.
                                     Default local queue is ZSP_debug. Default regress queue is ZSP_regression.
     -max_job <num>                  Max openlava jobs per bsub command.
                                     Default is 30.     
