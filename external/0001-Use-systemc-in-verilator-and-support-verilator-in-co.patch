@@ -1,15 +1,15 @@
-From 0f95eb535f98bb362dd422a7b120c4161c3b936b Mon Sep 17 00:00:00 2001
+From e792bdbdab5cedb6e4c47826a5324e6eeceac5b9 Mon Sep 17 00:00:00 2001
 From: Alex Van Damme <atv@google.com>
 Date: Wed, 5 Feb 2025 13:40:42 -0800
 Subject: [PATCH] Use systemc in verilator and support verilator in cocotb
 
 ---
  BUILD                                         |  11 +-
- cocotb/cocotb.bzl                             |  20 +++-
+ cocotb/cocotb.bzl                             |  27 ++++-
  cocotb/cocotb_wrapper.py                      |   1 +
  .../verilator/verilator.BUILD.bazel           | 110 +++++++++++++++++-
  verilator/defs.bzl                            |  22 ++--
- 5 files changed, 152 insertions(+), 12 deletions(-)
+ 5 files changed, 157 insertions(+), 14 deletions(-)
 
 diff --git a/BUILD b/BUILD
 index bf28dd5..a6fe964 100644
@@ -42,10 +42,10 @@ index bf28dd5..a6fe964 100644
  
  licenses(["notice"])
 diff --git a/cocotb/cocotb.bzl b/cocotb/cocotb.bzl
-index 8ab664d..cde681b 100644
+index 8ab664d..103eca7 100644
 --- a/cocotb/cocotb.bzl
 +++ b/cocotb/cocotb.bzl
-@@ -15,6 +15,7 @@
+@@ -15,16 +15,20 @@
  """Rules for running tests using Cocotb framework"""
  
  load("@rules_python//python:defs.bzl", "PyInfo")
@@ -53,7 +53,22 @@ index 8ab664d..cde681b 100644
  load("//verilog:defs.bzl", "VerilogInfo")
  
  ## Helpers for parsing arguments
-@@ -159,6 +160,9 @@ def _get_test_command(ctx, verilog_files, vhdl_files):
+ 
+ def _list_to_argstring(data, argname, attr = None, operation = None):
+-    result = " --{}".format(argname) if data else ""
++    result = " --{}=".format(argname) if data else ""
++    elems = []
+     for value in data:
+         elem = value if attr == None else getattr(value, attr)
+         elem = elem if operation == None else operation(elem)
+-        result += " {}".format(elem)
++        elems.append(elem)
++    elems = " ".join(elems)
++    result += "\"{}\"".format(elems)
+     return result
+ 
+ def _dict_to_argstring(data, argname):
+@@ -159,6 +163,9 @@ def _get_test_command(ctx, verilog_files, vhdl_files):
          test_module_args
      )
  
@@ -63,7 +78,7 @@ index 8ab664d..cde681b 100644
      return command
  
  def _cocotb_test_impl(ctx):
-@@ -183,8 +187,18 @@ def _cocotb_test_impl(ctx):
+@@ -183,8 +190,18 @@ def _cocotb_test_impl(ctx):
          _collect_transitive_runfiles(ctx),
      )
  
@@ -83,7 +98,7 @@ index 8ab664d..cde681b 100644
  
      # return the information about testing script and its dependencies
      return [
-@@ -292,6 +306,10 @@ _cocotb_test_attrs = {
+@@ -292,6 +309,10 @@ _cocotb_test_attrs = {
          doc = "Record signal traces",
          default = True,
      ),
@@ -353,5 +368,5 @@ index c3e26d5..fc8af53 100644
              doc = "CC compiler.",
              default = Label("@bazel_tools//tools/cpp:current_cc_toolchain"),
 -- 
-2.48.1.502.g6dc24dfdaf-goog
+2.48.1.711.g2feabab25a-goog
 
