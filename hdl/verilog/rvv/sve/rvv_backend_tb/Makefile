@@ -56,6 +56,22 @@ endif
 ifeq ($(scfg), rvv_backend)
 	RTL_DEFINE = +define+TB_SUPPORT
 	RTL_DEFINE += +define+ASSERT_ON
+	RTL_DEFINE += +define+RVV_CONFIG_SVH +define+ISSUE_3_READ_PORT_6
+endif
+ifeq ($(scfg), rvv_backend_i2rp4)
+	RTL_DEFINE = +define+TB_SUPPORT
+	RTL_DEFINE += +define+ASSERT_ON
+	RTL_DEFINE += +define+RVV_CONFIG_SVH +define+ISSUE_2_READ_PORT_4
+endif
+ifeq ($(scfg), rvv_backend_i2rp6)
+	RTL_DEFINE = +define+TB_SUPPORT
+	RTL_DEFINE += +define+ASSERT_ON
+	RTL_DEFINE += +define+RVV_CONFIG_SVH +define+ISSUE_2_READ_PORT_6
+endif
+ifeq ($(scfg), rvv_backend_i3rp6)
+	RTL_DEFINE = +define+TB_SUPPORT
+	RTL_DEFINE += +define+ASSERT_ON
+	RTL_DEFINE += +define+RVV_CONFIG_SVH +define+ISSUE_3_READ_PORT_6
 endif
 ifeq ($(scfg), rvv_backend_bringup)
 	RTL_DEFINE = +define+TB_BRINGUP+TB_SUPPORT
