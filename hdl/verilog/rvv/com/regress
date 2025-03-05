@@ -420,7 +420,7 @@ sub CheckResult{
       }
       if($isPass) {
         $testPath = "$file";
-        $rerunCmd = "sve/rvv_backend_tb/Makefile sim test=$testName seed=$seed";
+        $rerunCmd = "sve/rvv_backend_tb/Makefile sim test=$testName seed=$seed scfg=$scfg";
         push @passReport, "=========================================================\n";
         push @passReport, "TEST:      $testName\n";
         push @passReport, "SEED:      $seed\n";
@@ -433,7 +433,7 @@ sub CheckResult{
       }
       if($isFail) {
         $testPath = "$file";
-        $rerunCmd = "sve/rvv_backend_tb/Makefile sim test=$testName seed=$seed";
+        $rerunCmd = "sve/rvv_backend_tb/Makefile sim test=$testName seed=$seed scfg=$scfg";
         push @failReport, "=========================================================\n";
         push @failReport, "TEST:      $testName\n";
         push @failReport, "SEED:      $seed\n";
@@ -449,7 +449,7 @@ sub CheckResult{
       }
       if($isUnim) {
         $testPath = "$file";
-        $rerunCmd = "sve/rvv_backend_tb/Makefile sim test=$testName seed=$seed";
+        $rerunCmd = "sve/rvv_backend_tb/Makefile sim test=$testName seed=$seed scfg=$scfg";
         push @unimReport, "=========================================================\n";
         push @unimReport, "TEST:      $testName\n";
         push @unimReport, "SEED:      $seed\n";
@@ -465,7 +465,7 @@ sub CheckResult{
       }
       if($exeCountDiscRate && $isHighDisc) {
         $testPath = "$file";
-        $rerunCmd = "sve/rvv_backend_tb/Makefile sim test=$testName seed=$seed";
+        $rerunCmd = "sve/rvv_backend_tb/Makefile sim test=$testName seed=$seed scfg=$scfg";
         push @highDiscReport, "=========================================================\n";
         push @highDiscReport, "TEST:      $testName\n";
         push @highDiscReport, "SEED:      $seed\n";
