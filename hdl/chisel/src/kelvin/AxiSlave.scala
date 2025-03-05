@@ -84,7 +84,7 @@ class AxiSlave(p: Parameters) extends Module {
   io.axi.read.data <> readDataQueue.io.deq
 
   val readIssued = RegInit(false.B)   // Tracks if a read was issued last cycle
-  val readsIssued = RegInit(0.U(9.W)) // Tracks number of readData issued
+  val readsIssued = RegInit(0.U((axiAddrCmd.bits.addr.len.getWidth + 1).W)) // Tracks number of readData issued
 
   /// Check if we can issue a read
   val nextQueueCount = readDataQueue.io.count +& readIssued -&
@@ -109,7 +109,7 @@ class AxiSlave(p: Parameters) extends Module {
   readData.bits.id := axiAddrCmd.bits.addr.id
   readData.bits.resp := Mux(io.fabric.readData.valid,
       AxiResponseType.OKAY.asUInt, AxiResponseType.SLVERR.asUInt)
-  readData.bits.last := (readsIssued === (axiAddrCmd.bits.addr.len + 1.U))
+  readData.bits.last := (readsIssued === (axiAddrCmd.bits.addr.len +& 1.U))
 
   /// Ensure read is enqueued
   assert(!readIssued || readDataQueue.io.enq.ready)

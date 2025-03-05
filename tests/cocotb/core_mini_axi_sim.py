@@ -409,8 +409,8 @@ class CoreMiniAxiInterface:
     offset4096 = addr % 4096
     remainder4096 = 4096 - offset4096
 
-    # Max transaction size is 16 beats * 16 bytes, but cannot cross 4kB boundary
-    max_transaction_size_bytes = min(256, remainder4096)
+    # Max transaction size is 256 beats * 16 bytes, but cannot cross 4kB boundary
+    max_transaction_size_bytes = min(4096, remainder4096)
 
     return min(data_len, max_transaction_size_bytes)
 
@@ -645,6 +645,21 @@ async def core_mini_axi_basic_write_read_memory(dut):
     rdata = await core_mini_axi.read(0x200, 32)
     assert (wdata == rdata[4:24]).all()
 
+    # Iterate over both TCMs with all valid AXI sizes
+    for size in range(13):
+      txn_bytes = 2 ** size
+      wdata = np.random.randint(0, 255, txn_bytes, dtype=np.uint8)
+      for i in tqdm.tqdm(range((8 * 1024) // txn_bytes)):
+        await core_mini_axi.write(i * txn_bytes, wdata)
+      for i in tqdm.tqdm(range((32 * 1024) // txn_bytes)):
+        await core_mini_axi.write(0x10000 + (i * txn_bytes), wdata)
+
+      for i in tqdm.tqdm(range((8 * 1024) // txn_bytes)):
+        rdata = await core_mini_axi.read(i * txn_bytes, txn_bytes)
+        assert(rdata == wdata).all()
+      for i in tqdm.tqdm(range((32 * 1024) // txn_bytes)):
+        rdata = await core_mini_axi.read(0x10000 + (i * txn_bytes), txn_bytes)
+        assert(rdata == wdata).all()
 
 @cocotb.test()
 async def core_mini_axi_run_wfi_in_all_slots(dut):
@@ -692,8 +707,9 @@ async def core_mini_axi_write_read_memory_stress_test(dut):
 
     # Range for a DTCM buffer we can read/write too.
     DTCM_START = 0x12000
-    DTCM_END = 0x14000
-    dtcm_model_buffer = np.zeros((DTCM_END - DTCM_START))
+    DTCM_SIZE = 0x2000
+    DTCM_END = DTCM_START + DTCM_SIZE
+    dtcm_model_buffer = await core_mini_axi.read(DTCM_START, DTCM_SIZE)
 
     for i in tqdm.trange(1000):
       start_addr = random.randint(DTCM_START, DTCM_END-2)

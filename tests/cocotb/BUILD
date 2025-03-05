@@ -3,6 +3,7 @@ load("@kelvin_pip_deps//:requirements.bzl", "requirement")
 
 verilator_cocotb_test(
     name = "core_mini_axi_sim_cocotb",
+    size = "large",
     defines = {
         "USE_GENERIC" : "",
     },
@@ -22,6 +23,7 @@ verilator_cocotb_test(
 
 vcs_cocotb_test(
     name = "vcs_core_mini_axi_sim_cocotb",
+    size = "large",
     defines = {
         "USE_GENERIC" : "",
     },
