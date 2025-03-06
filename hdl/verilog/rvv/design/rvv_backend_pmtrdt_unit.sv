@@ -84,19 +84,18 @@ module rvv_backend_pmtrdt_unit
   logic [`VLENB/4-1:0][7:0] and_2stage, or_2stage, xor_2stage;
   logic [`VLENB/4-1:0]      less_than_2stage, great_than_2stage;
   logic                     sel_vs1; // operate vs1[0] if the last operation for reduction instruction
-  logic [3:0][8:0]          src1_vd, src2_vs1;        // source value for reduction vs1[0] & vd[0]
-  logic [3:0]               carry_in_vd;
-  logic [3:0][8:0]          sum_vd;
-  logic [3:0][7:0]          and_vd, or_vd, xor_vd;
-  logic [3:0]               less_than_vd, great_than_vd;
-  logic [`VLENB/4-1:0][8:0] sum_src1_3stage, sum_src2_3stage; // source value for reduction res_2stage[*] & res_vd[*]
-  logic [`VLENB/4-1:0]      sum_cin_3stage;
-  logic [`VLENB/4-1:0][8:0] maxmin_src1_3stage, maxmin_src2_3stage; // source value for reduction res_2stage[*] & res_vd[*]
-  logic [`VLENB/4-1:0]      maxmin_cin_3stage;
-  logic [`VLENB/4-1:0][8:0] sum_res_3stage, maxmin_res_3stage;
-  logic [`VLENB/4-1:0][7:0] and_3stage, or_3stage, xor_3stage;
-  logic [`VLENB/4-1:0]      less_than_3stage, great_than_3stage;
+  logic [3:0][8:0]          src1_vd_1stage, src2_vs1_1stage;        // source value for reduction vs1[0] & vd[0]
+  logic [3:0]               carry_in_vd_1stage;
+  logic [3:0][8:0]          sum_vd_1stage;
+  logic [3:0][7:0]          and_vd_1stage, or_vd_1stage, xor_vd_1stage;
+  logic [3:0]               less_than_vd_1stage, great_than_vd_1stage;
+  logic [3:0][8:0]          src1_vd_2stage, src2_vs1_2stage;        // source value for reduction vs1[0] & vd[0]
+  logic [3:0]               carry_in_vd_2stage;
+  logic [3:0][8:0]          sum_vd_2stage;
+  logic [3:0][7:0]          and_vd_2stage, or_vd_2stage, xor_vd_2stage;
+  logic [3:0]               less_than_vd_2stage, great_than_vd_2stage;
   logic [`VLENB/4-1:0][7:0] red_res_d, red_res_q;
+  logic [`VLENB/4-1:0][7:0] red_vs1_d, red_vs1_q;
   logic                     red_res_en;
   logic [7:0]               sum_8b,  max_8b,  min_8b,  and_8b,  or_8b,  xor_8b;
   logic [15:0]              sum_16b, max_16b, min_16b, and_16b, or_16b, xor_16b;
@@ -901,78 +900,235 @@ module rvv_backend_pmtrdt_unit
         assign xor_2stage[4*i+3] = xor_1stage[8*i+3] ^ xor_1stage[8*i+7];
       end
 
-      // VS1[0] & vd[0] operation for reduction
-      // src1_vd/src2_vs1/carry_in_vs1vd data
-      // src2_vs1
+      // red_res_q & red_vs1_q operation for reduction
+      // src1_vd_1stage/src2_vs1_1stage/carry_in_vd_1stage data
+      // src2_vs1_1stage
+      always_comb begin
+        src2_vs1_1stage[0][7:0] = red_vs1_q[0][7:0];
+        src2_vs1_1stage[1][7:0] = red_vs1_q[1][7:0];
+        src2_vs1_1stage[2][7:0] = red_vs1_q[2][7:0];
+        src2_vs1_1stage[3][7:0] = red_vs1_q[3][7:0];
+        case (pmtrdt_uop.vs1_eew)
+          EEW32:begin
+            src2_vs1_1stage[0][8] = 1'b0;
+            src2_vs1_1stage[1][8] = 1'b0;
+            src2_vs1_1stage[2][8] = 1'b0;
+            src2_vs1_1stage[3][8] = rdt_ctrl.sign_opr ? src2_vs1_1stage[3][7] : 1'b0;
+          end
+          EEW16:begin
+            src2_vs1_1stage[0][8] = 1'b0;
+            src2_vs1_1stage[1][8] = rdt_ctrl.sign_opr ? src2_vs1_1stage[1][7] : 1'b0;
+            src2_vs1_1stage[2][8] = 1'b0;
+            src2_vs1_1stage[3][8] = rdt_ctrl.sign_opr ? src2_vs1_1stage[3][7] : 1'b0;
+          end
+          default:begin
+            src2_vs1_1stage[0][8] = rdt_ctrl.sign_opr ? src2_vs1_1stage[0][7] : 1'b0;
+            src2_vs1_1stage[1][8] = rdt_ctrl.sign_opr ? src2_vs1_1stage[1][7] : 1'b0;
+            src2_vs1_1stage[2][8] = rdt_ctrl.sign_opr ? src2_vs1_1stage[2][7] : 1'b0;
+            src2_vs1_1stage[3][8] = rdt_ctrl.sign_opr ? src2_vs1_1stage[3][7] : 1'b0;
+          end
+        endcase
+      end
+
+      // src1_vd_1stage data
+      always_comb begin
+        case (rdt_ctrl.rdt_opr)
+          MAX,
+          MIN:begin
+            src1_vd_1stage[0][7:0] = ~red_res_q[0][7:0];
+            src1_vd_1stage[1][7:0] = ~red_res_q[1][7:0];
+            src1_vd_1stage[2][7:0] = ~red_res_q[2][7:0];
+            src1_vd_1stage[3][7:0] = ~red_res_q[3][7:0];
+          end
+          default:begin
+            src1_vd_1stage[0][7:0] = red_res_q[0][7:0];
+            src1_vd_1stage[1][7:0] = red_res_q[1][7:0];
+            src1_vd_1stage[2][7:0] = red_res_q[2][7:0];
+            src1_vd_1stage[3][7:0] = red_res_q[3][7:0];
+          end
+        endcase
+        case (rdt_ctrl.rdt_opr)
+          MAX,
+          MIN:begin
+            case (pmtrdt_uop.vs1_eew)
+              EEW32:begin
+                src1_vd_1stage[0][8] = 1'b0;
+                src1_vd_1stage[1][8] = 1'b0;
+                src1_vd_1stage[2][8] = 1'b0;
+                src1_vd_1stage[3][8] = rdt_ctrl.sign_opr ? src1_vd_1stage[3][7] : ~1'b0;
+              end
+              EEW16:begin
+                src1_vd_1stage[0][8] = 1'b0;
+                src1_vd_1stage[1][8] = rdt_ctrl.sign_opr ? src1_vd_1stage[1][7] : ~1'b0;
+                src1_vd_1stage[2][8] = 1'b0;
+                src1_vd_1stage[3][8] = rdt_ctrl.sign_opr ? src1_vd_1stage[3][7] : ~1'b0;
+              end
+              default:begin
+                src1_vd_1stage[0][8] = rdt_ctrl.sign_opr ? src1_vd_1stage[0][7] : ~1'b0;
+                src1_vd_1stage[1][8] = rdt_ctrl.sign_opr ? src1_vd_1stage[1][7] : ~1'b0;
+                src1_vd_1stage[2][8] = rdt_ctrl.sign_opr ? src1_vd_1stage[2][7] : ~1'b0;
+                src1_vd_1stage[3][8] = rdt_ctrl.sign_opr ? src1_vd_1stage[3][7] : ~1'b0;
+              end
+            endcase
+          end
+          default:begin
+            case (pmtrdt_uop.vs1_eew)
+              EEW32:begin
+                src1_vd_1stage[0][8] = 1'b0;
+                src1_vd_1stage[1][8] = 1'b0;
+                src1_vd_1stage[2][8] = 1'b0;
+                src1_vd_1stage[3][8] = rdt_ctrl.sign_opr ? src1_vd_1stage[3][7] : 1'b0;
+              end
+              EEW16:begin
+                src1_vd_1stage[0][8] = 1'b0;
+                src1_vd_1stage[1][8] = rdt_ctrl.sign_opr ? src1_vd_1stage[1][7] : 1'b0;
+                src1_vd_1stage[2][8] = 1'b0;
+                src1_vd_1stage[3][8] = rdt_ctrl.sign_opr ? src1_vd_1stage[3][7] : 1'b0;
+              end
+              default:begin
+                src1_vd_1stage[0][8] = rdt_ctrl.sign_opr ? src1_vd_1stage[0][7] : 1'b0;
+                src1_vd_1stage[1][8] = rdt_ctrl.sign_opr ? src1_vd_1stage[1][7] : 1'b0;
+                src1_vd_1stage[2][8] = rdt_ctrl.sign_opr ? src1_vd_1stage[2][7] : 1'b0;
+                src1_vd_1stage[3][8] = rdt_ctrl.sign_opr ? src1_vd_1stage[3][7] : 1'b0;
+              end
+            endcase
+          end
+        endcase
+      end
+
+      // carry_in_vd_1stage data
+      always_comb begin
+        case (rdt_ctrl.rdt_opr)
+          MAX,
+          MIN:begin
+            case (pmtrdt_uop.vs1_eew)
+              EEW32:begin
+                carry_in_vd_1stage[0] = 1'b1;
+                carry_in_vd_1stage[1] = sum_vd_1stage[0][8];
+                carry_in_vd_1stage[2] = sum_vd_1stage[1][8];
+                carry_in_vd_1stage[3] = sum_vd_1stage[2][8];
+              end
+              EEW16:begin
+                carry_in_vd_1stage[0] = 1'b1;
+                carry_in_vd_1stage[1] = sum_vd_1stage[0][8];
+                carry_in_vd_1stage[2] = 1'b1;
+                carry_in_vd_1stage[3] = sum_vd_1stage[2][8];
+              end
+              default:begin
+                carry_in_vd_1stage[0] = 1'b1;
+                carry_in_vd_1stage[1] = 1'b1;
+                carry_in_vd_1stage[2] = 1'b1;
+                carry_in_vd_1stage[3] = 1'b1;
+              end
+            endcase
+          end
+          default:begin
+            case (pmtrdt_uop.vs1_eew)
+              EEW32:begin
+                carry_in_vd_1stage[0] = 1'b0;
+                carry_in_vd_1stage[1] = sum_vd_1stage[0][8];
+                carry_in_vd_1stage[2] = sum_vd_1stage[1][8];
+                carry_in_vd_1stage[3] = sum_vd_1stage[2][8];
+              end
+              EEW16:begin
+                carry_in_vd_1stage[0] = 1'b0;
+                carry_in_vd_1stage[1] = sum_vd_1stage[0][8];
+                carry_in_vd_1stage[2] = 1'b0;
+                carry_in_vd_1stage[3] = sum_vd_1stage[2][8];
+              end
+              default:begin
+                carry_in_vd_1stage[0] = 1'b0;
+                carry_in_vd_1stage[1] = 1'b0;
+                carry_in_vd_1stage[2] = 1'b0;
+                carry_in_vd_1stage[3] = 1'b0;
+              end
+            endcase
+          end
+        endcase
+      end
+
+      // four 9-bit adder/and/or/xor for red_res_q & red_vs1_q
+      for (i=0; i<4; i++) begin : gen_rdt_arithmetic_unit_vs1vd_1stage
+        assign sum_vd_1stage[i] = src2_vs1_1stage[i] + src1_vd_1stage[i] + carry_in_vd_1stage[i];
+        assign and_vd_1stage[i] = src2_vs1_1stage[i][7:0] & src1_vd_1stage[i][7:0];
+        assign or_vd_1stage[i]  = src2_vs1_1stage[i][7:0] | src1_vd_1stage[i][7:0];
+        assign xor_vd_1stage[i] = src2_vs1_1stage[i][7:0] ^ src1_vd_1stage[i][7:0];
+        assign less_than_vd_1stage[i]  = sum_vd_1stage[i][8];
+        assign great_than_vd_1stage[i] = ~sum_vd_1stage[i][8];
+      end
+
+      // VS1[0] & res_vd_1stage[0] operation for reduction
+      // src1_vd_2stage/src2_vs1_2stage/carry_in_vd_2stage data
+      // src2_vs1_2stage
       assign sel_vs1 = rdt_ctrl.last_uop_valid && !rdt_ctrl.widen ||
                        rdt_ctrl.last_uop_valid && rdt_ctrl.widen && red_widen_sum_flag;
       always_comb begin
         if (sel_vs1) begin
           case (pmtrdt_uop.vs1_eew)
             EEW32: begin
-              src2_vs1[0][7:0] = pmtrdt_uop.vs1_data[8*0+:8];
-              src2_vs1[1][7:0] = pmtrdt_uop.vs1_data[8*1+:8];
-              src2_vs1[2][7:0] = pmtrdt_uop.vs1_data[8*2+:8];
-              src2_vs1[3][7:0] = pmtrdt_uop.vs1_data[8*3+:8];
-              src2_vs1[0][8]   = 1'b0;
-              src2_vs1[1][8]   = 1'b0;
-              src2_vs1[2][8]   = 1'b0;
-              src2_vs1[3][8]   = rdt_ctrl.sign_opr ? src2_vs1[3][7] : 1'b0;
+              src2_vs1_2stage[0][7:0] = pmtrdt_uop.vs1_data[8*0+:8];
+              src2_vs1_2stage[1][7:0] = pmtrdt_uop.vs1_data[8*1+:8];
+              src2_vs1_2stage[2][7:0] = pmtrdt_uop.vs1_data[8*2+:8];
+              src2_vs1_2stage[3][7:0] = pmtrdt_uop.vs1_data[8*3+:8];
+              src2_vs1_2stage[0][8]   = 1'b0;
+              src2_vs1_2stage[1][8]   = 1'b0;
+              src2_vs1_2stage[2][8]   = 1'b0;
+              src2_vs1_2stage[3][8]   = rdt_ctrl.sign_opr ? src2_vs1_2stage[3][7] : 1'b0;
             end
             EEW16: begin
-              src2_vs1[0][7:0] = pmtrdt_uop.vs1_data[8*0+:8];
-              src2_vs1[1][7:0] = pmtrdt_uop.vs1_data[8*1+:8];
+              src2_vs1_2stage[0][7:0] = pmtrdt_uop.vs1_data[8*0+:8];
+              src2_vs1_2stage[1][7:0] = pmtrdt_uop.vs1_data[8*1+:8];
               case (rdt_ctrl.rdt_opr)
                 MAX:begin
-                  src2_vs1[2][7:0] = 8'h00;
-                  src2_vs1[3][7:0] = rdt_ctrl.sign_opr ? 8'h80 : 8'h00;
+                  src2_vs1_2stage[2][7:0] = 8'h00;
+                  src2_vs1_2stage[3][7:0] = rdt_ctrl.sign_opr ? 8'h80 : 8'h00;
                 end
                 MIN:begin
-                  src2_vs1[2][7:0] = 8'hFF;
-                  src2_vs1[3][7:0] = rdt_ctrl.sign_opr ? 8'h7F : 8'hFF;
+                  src2_vs1_2stage[2][7:0] = 8'hFF;
+                  src2_vs1_2stage[3][7:0] = rdt_ctrl.sign_opr ? 8'h7F : 8'hFF;
                 end
                 AND:begin
-                  src2_vs1[2][7:0] = 8'hFF;
-                  src2_vs1[3][7:0] = 8'hFF;
+                  src2_vs1_2stage[2][7:0] = 8'hFF;
+                  src2_vs1_2stage[3][7:0] = 8'hFF;
                 end
                 default:begin
-                  src2_vs1[2][7:0] = 8'h00;
-                  src2_vs1[3][7:0] = 8'h00;
+                  src2_vs1_2stage[2][7:0] = 8'h00;
+                  src2_vs1_2stage[3][7:0] = 8'h00;
                 end
               endcase
-              src2_vs1[0][8]   = 1'b0;
-              src2_vs1[1][8]   = rdt_ctrl.sign_opr ? src2_vs1[1][7] : 1'b0;
-              src2_vs1[2][8]   = 1'b0;
-              src2_vs1[3][8]   = rdt_ctrl.sign_opr ? src2_vs1[3][7] : 1'b0;
+              src2_vs1_2stage[0][8]   = 1'b0;
+              src2_vs1_2stage[1][8]   = rdt_ctrl.sign_opr ? src2_vs1_2stage[1][7] : 1'b0;
+              src2_vs1_2stage[2][8]   = 1'b0;
+              src2_vs1_2stage[3][8]   = rdt_ctrl.sign_opr ? src2_vs1_2stage[3][7] : 1'b0;
             end
             default: begin
-              src2_vs1[0][7:0] = pmtrdt_uop.vs1_data[0+:8];
+              src2_vs1_2stage[0][7:0] = pmtrdt_uop.vs1_data[0+:8];
               case (rdt_ctrl.rdt_opr)
                 MAX:begin
-                  src2_vs1[1][7:0] = rdt_ctrl.sign_opr ? 8'h80 : 8'h00;
-                  src2_vs1[2][7:0] = rdt_ctrl.sign_opr ? 8'h80 : 8'h00;
-                  src2_vs1[3][7:0] = rdt_ctrl.sign_opr ? 8'h80 : 8'h00;
+                  src2_vs1_2stage[1][7:0] = rdt_ctrl.sign_opr ? 8'h80 : 8'h00;
+                  src2_vs1_2stage[2][7:0] = rdt_ctrl.sign_opr ? 8'h80 : 8'h00;
+                  src2_vs1_2stage[3][7:0] = rdt_ctrl.sign_opr ? 8'h80 : 8'h00;
                 end
                 MIN:begin
-                  src2_vs1[1][7:0] = rdt_ctrl.sign_opr ? 8'h7F : 8'hFF;
-                  src2_vs1[2][7:0] = rdt_ctrl.sign_opr ? 8'h7F : 8'hFF;
-                  src2_vs1[3][7:0] = rdt_ctrl.sign_opr ? 8'h7F : 8'hFF;
+                  src2_vs1_2stage[1][7:0] = rdt_ctrl.sign_opr ? 8'h7F : 8'hFF;
+                  src2_vs1_2stage[2][7:0] = rdt_ctrl.sign_opr ? 8'h7F : 8'hFF;
+                  src2_vs1_2stage[3][7:0] = rdt_ctrl.sign_opr ? 8'h7F : 8'hFF;
                 end
                 AND:begin
-                  src2_vs1[1][7:0] = 8'hFF;
-                  src2_vs1[2][7:0] = 8'hFF;
-                  src2_vs1[3][7:0] = 8'hFF;
+                  src2_vs1_2stage[1][7:0] = 8'hFF;
+                  src2_vs1_2stage[2][7:0] = 8'hFF;
+                  src2_vs1_2stage[3][7:0] = 8'hFF;
                 end
                 default:begin
-                  src2_vs1[1][7:0] = 8'h00;
-                  src2_vs1[2][7:0] = 8'h00;
-                  src2_vs1[3][7:0] = 8'h00;
+                  src2_vs1_2stage[1][7:0] = 8'h00;
+                  src2_vs1_2stage[2][7:0] = 8'h00;
+                  src2_vs1_2stage[3][7:0] = 8'h00;
                 end
               endcase
-              src2_vs1[0][8]   = rdt_ctrl.sign_opr ? src2_vs1[0][7] : 1'b0;
-              src2_vs1[1][8]   = rdt_ctrl.sign_opr ? src2_vs1[1][7] : 1'b0;
-              src2_vs1[2][8]   = rdt_ctrl.sign_opr ? src2_vs1[2][7] : 1'b0;
-              src2_vs1[3][8]   = rdt_ctrl.sign_opr ? src2_vs1[3][7] : 1'b0;
+              src2_vs1_2stage[0][8]   = rdt_ctrl.sign_opr ? src2_vs1_2stage[0][7] : 1'b0;
+              src2_vs1_2stage[1][8]   = rdt_ctrl.sign_opr ? src2_vs1_2stage[1][7] : 1'b0;
+              src2_vs1_2stage[2][8]   = rdt_ctrl.sign_opr ? src2_vs1_2stage[2][7] : 1'b0;
+              src2_vs1_2stage[3][8]   = rdt_ctrl.sign_opr ? src2_vs1_2stage[3][7] : 1'b0;
             end
           endcase
         end else begin
@@ -980,178 +1136,233 @@ module rvv_backend_pmtrdt_unit
             EEW32:begin
               case (rdt_ctrl.rdt_opr)
                 MAX:begin
-                  src2_vs1[0][7:0] = 8'h00;
-                  src2_vs1[1][7:0] = 8'h00;
-                  src2_vs1[2][7:0] = 8'h00;
-                  src2_vs1[3][7:0] = rdt_ctrl.sign_opr ? 8'h80 : 8'h00;
+                  src2_vs1_2stage[0][7:0] = 8'h00;
+                  src2_vs1_2stage[1][7:0] = 8'h00;
+                  src2_vs1_2stage[2][7:0] = 8'h00;
+                  src2_vs1_2stage[3][7:0] = rdt_ctrl.sign_opr ? 8'h80 : 8'h00;
                 end
                 MIN:begin
-                  src2_vs1[0][7:0] = 8'hFF;
-                  src2_vs1[1][7:0] = 8'hFF;
-                  src2_vs1[2][7:0] = 8'hFF;
-                  src2_vs1[3][7:0] = rdt_ctrl.sign_opr ? 8'h7F : 8'hFF;
+                  src2_vs1_2stage[0][7:0] = 8'hFF;
+                  src2_vs1_2stage[1][7:0] = 8'hFF;
+                  src2_vs1_2stage[2][7:0] = 8'hFF;
+                  src2_vs1_2stage[3][7:0] = rdt_ctrl.sign_opr ? 8'h7F : 8'hFF;
                 end
                 AND:begin
-                  src2_vs1[0][7:0] = 8'hFF;
-                  src2_vs1[1][7:0] = 8'hFF;
-                  src2_vs1[2][7:0] = 8'hFF;
-                  src2_vs1[3][7:0] = 8'hFF;
+                  src2_vs1_2stage[0][7:0] = 8'hFF;
+                  src2_vs1_2stage[1][7:0] = 8'hFF;
+                  src2_vs1_2stage[2][7:0] = 8'hFF;
+                  src2_vs1_2stage[3][7:0] = 8'hFF;
                 end
                 default:begin
-                  src2_vs1[0][7:0] = 8'h00;
-                  src2_vs1[1][7:0] = 8'h00;
-                  src2_vs1[2][7:0] = 8'h00;
-                  src2_vs1[3][7:0] = 8'h00;
+                  src2_vs1_2stage[0][7:0] = 8'h00;
+                  src2_vs1_2stage[1][7:0] = 8'h00;
+                  src2_vs1_2stage[2][7:0] = 8'h00;
+                  src2_vs1_2stage[3][7:0] = 8'h00;
                 end
               endcase
-              src2_vs1[0][8]   = 1'b0;
-              src2_vs1[1][8]   = 1'b0;
-              src2_vs1[2][8]   = 1'b0;
-              src2_vs1[3][8]   = rdt_ctrl.sign_opr ? src2_vs1[3][7] : 1'b0;
+              src2_vs1_2stage[0][8]   = 1'b0;
+              src2_vs1_2stage[1][8]   = 1'b0;
+              src2_vs1_2stage[2][8]   = 1'b0;
+              src2_vs1_2stage[3][8]   = rdt_ctrl.sign_opr ? src2_vs1_2stage[3][7] : 1'b0;
             end
             EEW16:begin
               case (rdt_ctrl.rdt_opr)
                 MAX:begin
-                  src2_vs1[0][7:0] = 8'h00;
-                  src2_vs1[1][7:0] = rdt_ctrl.sign_opr ? 8'h80 : 8'h00;
-                  src2_vs1[2][7:0] = 8'h00;
-                  src2_vs1[3][7:0] = rdt_ctrl.sign_opr ? 8'h80 : 8'h00;
+                  src2_vs1_2stage[0][7:0] = 8'h00;
+                  src2_vs1_2stage[1][7:0] = rdt_ctrl.sign_opr ? 8'h80 : 8'h00;
+                  src2_vs1_2stage[2][7:0] = 8'h00;
+                  src2_vs1_2stage[3][7:0] = rdt_ctrl.sign_opr ? 8'h80 : 8'h00;
                 end
                 MIN:begin
-                  src2_vs1[0][7:0] = 8'hFF;
-                  src2_vs1[1][7:0] = rdt_ctrl.sign_opr ? 8'h7F : 8'hFF;
-                  src2_vs1[2][7:0] = 8'hFF;
-                  src2_vs1[3][7:0] = rdt_ctrl.sign_opr ? 8'h7F : 8'hFF;
+                  src2_vs1_2stage[0][7:0] = 8'hFF;
+                  src2_vs1_2stage[1][7:0] = rdt_ctrl.sign_opr ? 8'h7F : 8'hFF;
+                  src2_vs1_2stage[2][7:0] = 8'hFF;
+                  src2_vs1_2stage[3][7:0] = rdt_ctrl.sign_opr ? 8'h7F : 8'hFF;
                 end
                 AND:begin
-                  src2_vs1[0][7:0] = 8'hFF;
-                  src2_vs1[1][7:0] = 8'hFF;
-                  src2_vs1[2][7:0] = 8'hFF;
-                  src2_vs1[3][7:0] = 8'hFF;
+                  src2_vs1_2stage[0][7:0] = 8'hFF;
+                  src2_vs1_2stage[1][7:0] = 8'hFF;
+                  src2_vs1_2stage[2][7:0] = 8'hFF;
+                  src2_vs1_2stage[3][7:0] = 8'hFF;
                 end
                 default:begin
-                  src2_vs1[0][7:0] = 8'h00;
-                  src2_vs1[1][7:0] = 8'h00;
-                  src2_vs1[2][7:0] = 8'h00;
-                  src2_vs1[3][7:0] = 8'h00;
+                  src2_vs1_2stage[0][7:0] = 8'h00;
+                  src2_vs1_2stage[1][7:0] = 8'h00;
+                  src2_vs1_2stage[2][7:0] = 8'h00;
+                  src2_vs1_2stage[3][7:0] = 8'h00;
                 end
               endcase
-              src2_vs1[0][8]   = 1'b0;
-              src2_vs1[1][8]   = rdt_ctrl.sign_opr ? src2_vs1[1][7] : 1'b0;
-              src2_vs1[2][8]   = 1'b0;
-              src2_vs1[3][8]   = rdt_ctrl.sign_opr ? src2_vs1[3][7] : 1'b0;
+              src2_vs1_2stage[0][8]   = 1'b0;
+              src2_vs1_2stage[1][8]   = rdt_ctrl.sign_opr ? src2_vs1_2stage[1][7] : 1'b0;
+              src2_vs1_2stage[2][8]   = 1'b0;
+              src2_vs1_2stage[3][8]   = rdt_ctrl.sign_opr ? src2_vs1_2stage[3][7] : 1'b0;
             end
             default:begin
               case (rdt_ctrl.rdt_opr)
                 MAX:begin
-                  src2_vs1[0][7:0] = rdt_ctrl.sign_opr ? 8'h80 : 8'h00;
-                  src2_vs1[1][7:0] = rdt_ctrl.sign_opr ? 8'h80 : 8'h00;
-                  src2_vs1[2][7:0] = rdt_ctrl.sign_opr ? 8'h80 : 8'h00;
-                  src2_vs1[3][7:0] = rdt_ctrl.sign_opr ? 8'h80 : 8'h00;
+                  src2_vs1_2stage[0][7:0] = rdt_ctrl.sign_opr ? 8'h80 : 8'h00;
+                  src2_vs1_2stage[1][7:0] = rdt_ctrl.sign_opr ? 8'h80 : 8'h00;
+                  src2_vs1_2stage[2][7:0] = rdt_ctrl.sign_opr ? 8'h80 : 8'h00;
+                  src2_vs1_2stage[3][7:0] = rdt_ctrl.sign_opr ? 8'h80 : 8'h00;
                 end
                 MIN:begin
-                  src2_vs1[0][7:0] = rdt_ctrl.sign_opr ? 8'h7F : 8'hFF;
-                  src2_vs1[1][7:0] = rdt_ctrl.sign_opr ? 8'h7F : 8'hFF;
-                  src2_vs1[2][7:0] = rdt_ctrl.sign_opr ? 8'h7F : 8'hFF;
-                  src2_vs1[3][7:0] = rdt_ctrl.sign_opr ? 8'h7F : 8'hFF;
+                  src2_vs1_2stage[0][7:0] = rdt_ctrl.sign_opr ? 8'h7F : 8'hFF;
+                  src2_vs1_2stage[1][7:0] = rdt_ctrl.sign_opr ? 8'h7F : 8'hFF;
+                  src2_vs1_2stage[2][7:0] = rdt_ctrl.sign_opr ? 8'h7F : 8'hFF;
+                  src2_vs1_2stage[3][7:0] = rdt_ctrl.sign_opr ? 8'h7F : 8'hFF;
                 end
                 AND:begin
-                  src2_vs1[0][7:0] = 8'hFF;
-                  src2_vs1[1][7:0] = 8'hFF;
-                  src2_vs1[2][7:0] = 8'hFF;
-                  src2_vs1[3][7:0] = 8'hFF;
+                  src2_vs1_2stage[0][7:0] = 8'hFF;
+                  src2_vs1_2stage[1][7:0] = 8'hFF;
+                  src2_vs1_2stage[2][7:0] = 8'hFF;
+                  src2_vs1_2stage[3][7:0] = 8'hFF;
                 end
                 default:begin
-                  src2_vs1[0][7:0] = 8'h00;
-                  src2_vs1[1][7:0] = 8'h00;
-                  src2_vs1[2][7:0] = 8'h00;
-                  src2_vs1[3][7:0] = 8'h00;
+                  src2_vs1_2stage[0][7:0] = 8'h00;
+                  src2_vs1_2stage[1][7:0] = 8'h00;
+                  src2_vs1_2stage[2][7:0] = 8'h00;
+                  src2_vs1_2stage[3][7:0] = 8'h00;
                 end
               endcase
-              src2_vs1[0][8]   = rdt_ctrl.sign_opr ? src2_vs1[0][7] : 1'b0;
-              src2_vs1[1][8]   = rdt_ctrl.sign_opr ? src2_vs1[1][7] : 1'b0;
-              src2_vs1[2][8]   = rdt_ctrl.sign_opr ? src2_vs1[2][7] : 1'b0;
-              src2_vs1[3][8]   = rdt_ctrl.sign_opr ? src2_vs1[3][7] : 1'b0;
+              src2_vs1_2stage[0][8]   = rdt_ctrl.sign_opr ? src2_vs1_2stage[0][7] : 1'b0;
+              src2_vs1_2stage[1][8]   = rdt_ctrl.sign_opr ? src2_vs1_2stage[1][7] : 1'b0;
+              src2_vs1_2stage[2][8]   = rdt_ctrl.sign_opr ? src2_vs1_2stage[2][7] : 1'b0;
+              src2_vs1_2stage[3][8]   = rdt_ctrl.sign_opr ? src2_vs1_2stage[3][7] : 1'b0;
             end
           endcase
         end
       end
 
-      // src1_vd data
+      // src1_vd_2stage data
       always_comb begin
-        if (pmtrdt_uop.uop_index == '0 && !red_widen_sum_flag) begin
+        if (pmtrdt_uop.first_uop_valid && !red_widen_sum_flag) begin
           case (rdt_ctrl.rdt_opr)
             MAX:begin
               case (pmtrdt_uop.vs1_eew)
                 EEW32:begin
-                  src1_vd[0][7:0] = ~8'h00;
-                  src1_vd[1][7:0] = ~8'h00;
-                  src1_vd[2][7:0] = ~8'h00;
-                  src1_vd[3][7:0] = rdt_ctrl.sign_opr ? ~8'h80 : ~8'h00;
+                  src1_vd_2stage[0][7:0] = ~8'h00;
+                  src1_vd_2stage[1][7:0] = ~8'h00;
+                  src1_vd_2stage[2][7:0] = ~8'h00;
+                  src1_vd_2stage[3][7:0] = rdt_ctrl.sign_opr ? ~8'h80 : ~8'h00;
                 end
                 EEW16:begin
-                  src1_vd[0][7:0] = ~8'h00;
-                  src1_vd[1][7:0] = rdt_ctrl.sign_opr ? ~8'h80 : ~8'h00;
-                  src1_vd[2][7:0] = ~8'h00;
-                  src1_vd[3][7:0] = rdt_ctrl.sign_opr ? ~8'h80 : ~8'h00;
+                  src1_vd_2stage[0][7:0] = ~8'h00;
+                  src1_vd_2stage[1][7:0] = rdt_ctrl.sign_opr ? ~8'h80 : ~8'h00;
+                  src1_vd_2stage[2][7:0] = ~8'h00;
+                  src1_vd_2stage[3][7:0] = rdt_ctrl.sign_opr ? ~8'h80 : ~8'h00;
                 end
                 default:begin
-                  src1_vd[0][7:0] = rdt_ctrl.sign_opr ? ~8'h80 : ~8'h00;
-                  src1_vd[1][7:0] = rdt_ctrl.sign_opr ? ~8'h80 : ~8'h00;
-                  src1_vd[2][7:0] = rdt_ctrl.sign_opr ? ~8'h80 : ~8'h00;
-                  src1_vd[3][7:0] = rdt_ctrl.sign_opr ? ~8'h80 : ~8'h00;
+                  src1_vd_2stage[0][7:0] = rdt_ctrl.sign_opr ? ~8'h80 : ~8'h00;
+                  src1_vd_2stage[1][7:0] = rdt_ctrl.sign_opr ? ~8'h80 : ~8'h00;
+                  src1_vd_2stage[2][7:0] = rdt_ctrl.sign_opr ? ~8'h80 : ~8'h00;
+                  src1_vd_2stage[3][7:0] = rdt_ctrl.sign_opr ? ~8'h80 : ~8'h00;
                 end
               endcase
             end
             MIN:begin
               case (pmtrdt_uop.vs1_eew)
                 EEW32:begin
-                  src1_vd[0][7:0] = ~8'hFF;
-                  src1_vd[1][7:0] = ~8'hFF;
-                  src1_vd[2][7:0] = ~8'hFF;
-                  src1_vd[3][7:0] = rdt_ctrl.sign_opr ? ~8'h7F : ~8'hFF;
+                  src1_vd_2stage[0][7:0] = ~8'hFF;
+                  src1_vd_2stage[1][7:0] = ~8'hFF;
+                  src1_vd_2stage[2][7:0] = ~8'hFF;
+                  src1_vd_2stage[3][7:0] = rdt_ctrl.sign_opr ? ~8'h7F : ~8'hFF;
                 end
                 EEW16:begin
-                  src1_vd[0][7:0] = ~8'hFF;
-                  src1_vd[1][7:0] = rdt_ctrl.sign_opr ? ~8'h7F : ~8'hFF;
-                  src1_vd[2][7:0] = ~8'hFF;
-                  src1_vd[3][7:0] = rdt_ctrl.sign_opr ? ~8'h7F : ~8'hFF;
+                  src1_vd_2stage[0][7:0] = ~8'hFF;
+                  src1_vd_2stage[1][7:0] = rdt_ctrl.sign_opr ? ~8'h7F : ~8'hFF;
+                  src1_vd_2stage[2][7:0] = ~8'hFF;
+                  src1_vd_2stage[3][7:0] = rdt_ctrl.sign_opr ? ~8'h7F : ~8'hFF;
                 end
                 default:begin
-                  src1_vd[0][7:0] = rdt_ctrl.sign_opr ? ~8'h7F : ~8'hFF;
-                  src1_vd[1][7:0] = rdt_ctrl.sign_opr ? ~8'h7F : ~8'hFF;
-                  src1_vd[2][7:0] = rdt_ctrl.sign_opr ? ~8'h7F : ~8'hFF;
-                  src1_vd[3][7:0] = rdt_ctrl.sign_opr ? ~8'h7F : ~8'hFF;
+                  src1_vd_2stage[0][7:0] = rdt_ctrl.sign_opr ? ~8'h7F : ~8'hFF;
+                  src1_vd_2stage[1][7:0] = rdt_ctrl.sign_opr ? ~8'h7F : ~8'hFF;
+                  src1_vd_2stage[2][7:0] = rdt_ctrl.sign_opr ? ~8'h7F : ~8'hFF;
+                  src1_vd_2stage[3][7:0] = rdt_ctrl.sign_opr ? ~8'h7F : ~8'hFF;
                 end
               endcase
             end
             AND:begin
-              src1_vd[0][7:0] = 8'hFF;
-              src1_vd[1][7:0] = 8'hFF;
-              src1_vd[2][7:0] = 8'hFF;
-              src1_vd[3][7:0] = 8'hFF;
+              src1_vd_2stage[0][7:0] = 8'hFF;
+              src1_vd_2stage[1][7:0] = 8'hFF;
+              src1_vd_2stage[2][7:0] = 8'hFF;
+              src1_vd_2stage[3][7:0] = 8'hFF;
             end
             default:begin
-              src1_vd[0][7:0] = 8'h00;
-              src1_vd[1][7:0] = 8'h00;
-              src1_vd[2][7:0] = 8'h00;
-              src1_vd[3][7:0] = 8'h00;
+              src1_vd_2stage[0][7:0] = 8'h00;
+              src1_vd_2stage[1][7:0] = 8'h00;
+              src1_vd_2stage[2][7:0] = 8'h00;
+              src1_vd_2stage[3][7:0] = 8'h00;
             end
           endcase
         end else begin
           case (rdt_ctrl.rdt_opr)
-            MAX,
+            MAX:begin
+              case (pmtrdt_uop.vs1_eew)
+                EEW32:begin
+                  src1_vd_2stage[0][7:0] = great_than_vd_1stage[3] ? ~src2_vs1_1stage[0][7:0] : src1_vd_1stage[0][7:0];
+                  src1_vd_2stage[1][7:0] = great_than_vd_1stage[3] ? ~src2_vs1_1stage[1][7:0] : src1_vd_1stage[1][7:0];
+                  src1_vd_2stage[2][7:0] = great_than_vd_1stage[3] ? ~src2_vs1_1stage[2][7:0] : src1_vd_1stage[2][7:0];
+                  src1_vd_2stage[3][7:0] = great_than_vd_1stage[3] ? ~src2_vs1_1stage[3][7:0] : src1_vd_1stage[3][7:0];
+                end
+                EEW16:begin
+                  src1_vd_2stage[0][7:0] = great_than_vd_1stage[1] ? ~src2_vs1_1stage[0][7:0] : src1_vd_1stage[0][7:0];
+                  src1_vd_2stage[1][7:0] = great_than_vd_1stage[1] ? ~src2_vs1_1stage[1][7:0] : src1_vd_1stage[1][7:0];
+                  src1_vd_2stage[2][7:0] = great_than_vd_1stage[3] ? ~src2_vs1_1stage[2][7:0] : src1_vd_1stage[2][7:0];
+                  src1_vd_2stage[3][7:0] = great_than_vd_1stage[3] ? ~src2_vs1_1stage[3][7:0] : src1_vd_1stage[3][7:0];
+                end
+                default:begin
+                  src1_vd_2stage[0][7:0] = great_than_vd_1stage[0] ? ~src2_vs1_1stage[0][7:0] : src1_vd_1stage[0][7:0];
+                  src1_vd_2stage[1][7:0] = great_than_vd_1stage[1] ? ~src2_vs1_1stage[1][7:0] : src1_vd_1stage[1][7:0];
+                  src1_vd_2stage[2][7:0] = great_than_vd_1stage[2] ? ~src2_vs1_1stage[2][7:0] : src1_vd_1stage[2][7:0];
+                  src1_vd_2stage[3][7:0] = great_than_vd_1stage[3] ? ~src2_vs1_1stage[3][7:0] : src1_vd_1stage[3][7:0];
+                end
+              endcase
+            end
             MIN:begin
-              src1_vd[0][7:0] = ~red_res_q[0][7:0];
-              src1_vd[1][7:0] = ~red_res_q[1][7:0];
-              src1_vd[2][7:0] = ~red_res_q[2][7:0];
-              src1_vd[3][7:0] = ~red_res_q[3][7:0];
+              case (pmtrdt_uop.vs1_eew)
+                EEW32:begin
+                  src1_vd_2stage[0][7:0] = less_than_vd_1stage[3] ? ~src2_vs1_1stage[0][7:0] : src1_vd_1stage[0][7:0];
+                  src1_vd_2stage[1][7:0] = less_than_vd_1stage[3] ? ~src2_vs1_1stage[1][7:0] : src1_vd_1stage[1][7:0];
+                  src1_vd_2stage[2][7:0] = less_than_vd_1stage[3] ? ~src2_vs1_1stage[2][7:0] : src1_vd_1stage[2][7:0];
+                  src1_vd_2stage[3][7:0] = less_than_vd_1stage[3] ? ~src2_vs1_1stage[3][7:0] : src1_vd_1stage[3][7:0];
+                end
+                EEW16:begin
+                  src1_vd_2stage[0][7:0] = less_than_vd_1stage[1] ? ~src2_vs1_1stage[0][7:0] : src1_vd_1stage[0][7:0];
+                  src1_vd_2stage[1][7:0] = less_than_vd_1stage[1] ? ~src2_vs1_1stage[1][7:0] : src1_vd_1stage[1][7:0];
+                  src1_vd_2stage[2][7:0] = less_than_vd_1stage[3] ? ~src2_vs1_1stage[2][7:0] : src1_vd_1stage[2][7:0];
+                  src1_vd_2stage[3][7:0] = less_than_vd_1stage[3] ? ~src2_vs1_1stage[3][7:0] : src1_vd_1stage[3][7:0];
+                end
+                default:begin
+                  src1_vd_2stage[0][7:0] = less_than_vd_1stage[0] ? ~src2_vs1_1stage[0][7:0] : src1_vd_1stage[0][7:0];
+                  src1_vd_2stage[1][7:0] = less_than_vd_1stage[1] ? ~src2_vs1_1stage[1][7:0] : src1_vd_1stage[1][7:0];
+                  src1_vd_2stage[2][7:0] = less_than_vd_1stage[2] ? ~src2_vs1_1stage[2][7:0] : src1_vd_1stage[2][7:0];
+                  src1_vd_2stage[3][7:0] = less_than_vd_1stage[3] ? ~src2_vs1_1stage[3][7:0] : src1_vd_1stage[3][7:0];
+                end
+              endcase
+            end
+            AND:begin
+              src1_vd_2stage[0][7:0] = and_vd_1stage[0][7:0];
+              src1_vd_2stage[1][7:0] = and_vd_1stage[1][7:0];
+              src1_vd_2stage[2][7:0] = and_vd_1stage[2][7:0];
+              src1_vd_2stage[3][7:0] = and_vd_1stage[3][7:0];
+            end
+            OR:begin
+              src1_vd_2stage[0][7:0] = or_vd_1stage[0][7:0];
+              src1_vd_2stage[1][7:0] = or_vd_1stage[1][7:0];
+              src1_vd_2stage[2][7:0] = or_vd_1stage[2][7:0];
+              src1_vd_2stage[3][7:0] = or_vd_1stage[3][7:0];
+            end
+            XOR:begin
+              src1_vd_2stage[0][7:0] = xor_vd_1stage[0][7:0];
+              src1_vd_2stage[1][7:0] = xor_vd_1stage[1][7:0];
+              src1_vd_2stage[2][7:0] = xor_vd_1stage[2][7:0];
+              src1_vd_2stage[3][7:0] = xor_vd_1stage[3][7:0];
             end
             default:begin
-              src1_vd[0][7:0] = red_res_q[0][7:0];
-              src1_vd[1][7:0] = red_res_q[1][7:0];
-              src1_vd[2][7:0] = red_res_q[2][7:0];
-              src1_vd[3][7:0] = red_res_q[3][7:0];
+              src1_vd_2stage[0][7:0] = sum_vd_1stage[0][7:0];
+              src1_vd_2stage[1][7:0] = sum_vd_1stage[1][7:0];
+              src1_vd_2stage[2][7:0] = sum_vd_1stage[2][7:0];
+              src1_vd_2stage[3][7:0] = sum_vd_1stage[3][7:0];
             end
           endcase
         end
@@ -1160,95 +1371,95 @@ module rvv_backend_pmtrdt_unit
           MIN:begin
             case (pmtrdt_uop.vs1_eew)
               EEW32:begin
-                src1_vd[0][8] = 1'b0;
-                src1_vd[1][8] = 1'b0;
-                src1_vd[2][8] = 1'b0;
-                src1_vd[3][8] = rdt_ctrl.sign_opr ? src1_vd[3][7] : ~1'b0;
+                src1_vd_2stage[0][8] = 1'b0;
+                src1_vd_2stage[1][8] = 1'b0;
+                src1_vd_2stage[2][8] = 1'b0;
+                src1_vd_2stage[3][8] = rdt_ctrl.sign_opr ? src1_vd_2stage[3][7] : ~1'b0;
               end
               EEW16:begin
-                src1_vd[0][8] = 1'b0;
-                src1_vd[1][8] = rdt_ctrl.sign_opr ? src1_vd[1][7] : ~1'b0;
-                src1_vd[2][8] = 1'b0;
-                src1_vd[3][8] = rdt_ctrl.sign_opr ? src1_vd[3][7] : ~1'b0;
+                src1_vd_2stage[0][8] = 1'b0;
+                src1_vd_2stage[1][8] = rdt_ctrl.sign_opr ? src1_vd_2stage[1][7] : ~1'b0;
+                src1_vd_2stage[2][8] = 1'b0;
+                src1_vd_2stage[3][8] = rdt_ctrl.sign_opr ? src1_vd_2stage[3][7] : ~1'b0;
               end
               default:begin
-                src1_vd[0][8] = rdt_ctrl.sign_opr ? src1_vd[0][7] : ~1'b0;
-                src1_vd[1][8] = rdt_ctrl.sign_opr ? src1_vd[1][7] : ~1'b0;
-                src1_vd[2][8] = rdt_ctrl.sign_opr ? src1_vd[2][7] : ~1'b0;
-                src1_vd[3][8] = rdt_ctrl.sign_opr ? src1_vd[3][7] : ~1'b0;
+                src1_vd_2stage[0][8] = rdt_ctrl.sign_opr ? src1_vd_2stage[0][7] : ~1'b0;
+                src1_vd_2stage[1][8] = rdt_ctrl.sign_opr ? src1_vd_2stage[1][7] : ~1'b0;
+                src1_vd_2stage[2][8] = rdt_ctrl.sign_opr ? src1_vd_2stage[2][7] : ~1'b0;
+                src1_vd_2stage[3][8] = rdt_ctrl.sign_opr ? src1_vd_2stage[3][7] : ~1'b0;
               end
             endcase
           end
           default:begin
             case (pmtrdt_uop.vs1_eew)
               EEW32:begin
-                src1_vd[0][8] = 1'b0;
-                src1_vd[1][8] = 1'b0;
-                src1_vd[2][8] = 1'b0;
-                src1_vd[3][8] = rdt_ctrl.sign_opr ? src1_vd[3][7] : 1'b0;
+                src1_vd_2stage[0][8] = 1'b0;
+                src1_vd_2stage[1][8] = 1'b0;
+                src1_vd_2stage[2][8] = 1'b0;
+                src1_vd_2stage[3][8] = rdt_ctrl.sign_opr ? src1_vd_2stage[3][7] : 1'b0;
               end
               EEW16:begin
-                src1_vd[0][8] = 1'b0;
-                src1_vd[1][8] = rdt_ctrl.sign_opr ? src1_vd[1][7] : 1'b0;
-                src1_vd[2][8] = 1'b0;
-                src1_vd[3][8] = rdt_ctrl.sign_opr ? src1_vd[3][7] : 1'b0;
+                src1_vd_2stage[0][8] = 1'b0;
+                src1_vd_2stage[1][8] = rdt_ctrl.sign_opr ? src1_vd_2stage[1][7] : 1'b0;
+                src1_vd_2stage[2][8] = 1'b0;
+                src1_vd_2stage[3][8] = rdt_ctrl.sign_opr ? src1_vd_2stage[3][7] : 1'b0;
               end
               default:begin
-                src1_vd[0][8] = rdt_ctrl.sign_opr ? src1_vd[0][7] : 1'b0;
-                src1_vd[1][8] = rdt_ctrl.sign_opr ? src1_vd[1][7] : 1'b0;
-                src1_vd[2][8] = rdt_ctrl.sign_opr ? src1_vd[2][7] : 1'b0;
-                src1_vd[3][8] = rdt_ctrl.sign_opr ? src1_vd[3][7] : 1'b0;
+                src1_vd_2stage[0][8] = rdt_ctrl.sign_opr ? src1_vd_2stage[0][7] : 1'b0;
+                src1_vd_2stage[1][8] = rdt_ctrl.sign_opr ? src1_vd_2stage[1][7] : 1'b0;
+                src1_vd_2stage[2][8] = rdt_ctrl.sign_opr ? src1_vd_2stage[2][7] : 1'b0;
+                src1_vd_2stage[3][8] = rdt_ctrl.sign_opr ? src1_vd_2stage[3][7] : 1'b0;
               end
             endcase
           end
         endcase
       end
 
-      // carry_in_vd data
+      // carry_in_vd_2stage data
       always_comb begin
         case (rdt_ctrl.rdt_opr)
           MAX,
           MIN:begin
             case (pmtrdt_uop.vs1_eew)
               EEW32:begin
-                carry_in_vd[0] = 1'b1;
-                carry_in_vd[1] = sum_vd[0][8];
-                carry_in_vd[2] = sum_vd[1][8];
-                carry_in_vd[3] = sum_vd[2][8];
+                carry_in_vd_2stage[0] = 1'b1;
+                carry_in_vd_2stage[1] = sum_vd_2stage[0][8];
+                carry_in_vd_2stage[2] = sum_vd_2stage[1][8];
+                carry_in_vd_2stage[3] = sum_vd_2stage[2][8];
               end
               EEW16:begin
-                carry_in_vd[0] = 1'b1;
-                carry_in_vd[1] = sum_vd[0][8];
-                carry_in_vd[2] = 1'b1;
-                carry_in_vd[3] = sum_vd[2][8];
+                carry_in_vd_2stage[0] = 1'b1;
+                carry_in_vd_2stage[1] = sum_vd_2stage[0][8];
+                carry_in_vd_2stage[2] = 1'b1;
+                carry_in_vd_2stage[3] = sum_vd_2stage[2][8];
               end
               default:begin
-                carry_in_vd[0] = 1'b1;
-                carry_in_vd[1] = 1'b1;
-                carry_in_vd[2] = 1'b1;
-                carry_in_vd[3] = 1'b1;
+                carry_in_vd_2stage[0] = 1'b1;
+                carry_in_vd_2stage[1] = 1'b1;
+                carry_in_vd_2stage[2] = 1'b1;
+                carry_in_vd_2stage[3] = 1'b1;
               end
             endcase
           end
           default:begin
             case (pmtrdt_uop.vs1_eew)
               EEW32:begin
-                carry_in_vd[0] = 1'b0;
-                carry_in_vd[1] = sum_vd[0][8];
-                carry_in_vd[2] = sum_vd[1][8];
-                carry_in_vd[3] = sum_vd[2][8];
+                carry_in_vd_2stage[0] = 1'b0;
+                carry_in_vd_2stage[1] = sum_vd_2stage[0][8];
+                carry_in_vd_2stage[2] = sum_vd_2stage[1][8];
+                carry_in_vd_2stage[3] = sum_vd_2stage[2][8];
               end
               EEW16:begin
-                carry_in_vd[0] = 1'b0;
-                carry_in_vd[1] = sum_vd[0][8];
-                carry_in_vd[2] = 1'b0;
-                carry_in_vd[3] = sum_vd[2][8];
+                carry_in_vd_2stage[0] = 1'b0;
+                carry_in_vd_2stage[1] = sum_vd_2stage[0][8];
+                carry_in_vd_2stage[2] = 1'b0;
+                carry_in_vd_2stage[3] = sum_vd_2stage[2][8];
               end
               default:begin
-                carry_in_vd[0] = 1'b0;
-                carry_in_vd[1] = 1'b0;
-                carry_in_vd[2] = 1'b0;
-                carry_in_vd[3] = 1'b0;
+                carry_in_vd_2stage[0] = 1'b0;
+                carry_in_vd_2stage[1] = 1'b0;
+                carry_in_vd_2stage[2] = 1'b0;
+                carry_in_vd_2stage[3] = 1'b0;
               end
             endcase
           end
@@ -1256,278 +1467,14 @@ module rvv_backend_pmtrdt_unit
       end
 
       // four 9-bit-adder/and/or/xor for vs1[0] & vd[0]
-      for (i=0; i<4; i++) begin : gen_rdt_arithmetic_unit_vs1vd
-        assign sum_vd[i] = src2_vs1[i] + src1_vd[i] + carry_in_vd[i];
-        assign and_vd[i] = src2_vs1[i][7:0] & src1_vd[i][7:0];
-        assign or_vd[i]  = src2_vs1[i][7:0] | src1_vd[i][7:0];
-        assign xor_vd[i] = src2_vs1[i][7:0] ^ src1_vd[i][7:0];
-        assign less_than_vd[i]  = sum_vd[i][8];
-        assign great_than_vd[i] = ~sum_vd[i][8];
+      for (i=0; i<4; i++) begin : gen_rdt_arithmetic_unit_vs1vd_2stage
+        assign sum_vd_2stage[i] = src2_vs1_2stage[i] + src1_vd_2stage[i] + carry_in_vd_2stage[i];
+        assign and_vd_2stage[i] = src2_vs1_2stage[i][7:0] & src1_vd_2stage[i][7:0];
+        assign or_vd_2stage[i]  = src2_vs1_2stage[i][7:0] | src1_vd_2stage[i][7:0];
+        assign xor_vd_2stage[i] = src2_vs1_2stage[i][7:0] ^ src1_vd_2stage[i][7:0];
+        assign less_than_vd_2stage[i]  = sum_vd_2stage[i][8];
+        assign great_than_vd_2stage[i] = ~sum_vd_2stage[i][8];
       end
-
-      // sum_src1_3stage/sum_src2_3stage/sum_cin_3stage data
-      // sum_src2_3stage[3:0] data
-      always_comb begin
-        sum_src2_3stage[0][7:0] = sum_res_2stage[0][7:0];
-        sum_src2_3stage[1][7:0] = sum_res_2stage[1][7:0];
-        sum_src2_3stage[2][7:0] = sum_res_2stage[2][7:0];
-        sum_src2_3stage[3][7:0] = sum_res_2stage[3][7:0];
-        case (pmtrdt_uop.vs1_eew)
-          EEW32:begin
-            sum_src2_3stage[0][8] = 1'b0;
-            sum_src2_3stage[1][8] = 1'b0;
-            sum_src2_3stage[2][8] = 1'b0;
-            sum_src2_3stage[3][8] = rdt_ctrl.sign_opr ? sum_src2_3stage[3][7] : 1'b0;
-          end
-          EEW16:begin
-            sum_src2_3stage[0][8] = 1'b0;
-            sum_src2_3stage[1][8] = rdt_ctrl.sign_opr ? sum_src2_3stage[1][7] : 1'b0;
-            sum_src2_3stage[2][8] = 1'b0;
-            sum_src2_3stage[3][8] = rdt_ctrl.sign_opr ? sum_src2_3stage[3][7] : 1'b0;
-          end
-          default:begin
-            sum_src2_3stage[0][8] = rdt_ctrl.sign_opr ? sum_src2_3stage[0][7] : 1'b0;
-            sum_src2_3stage[1][8] = rdt_ctrl.sign_opr ? sum_src2_3stage[1][7] : 1'b0;
-            sum_src2_3stage[2][8] = rdt_ctrl.sign_opr ? sum_src2_3stage[2][7] : 1'b0;
-            sum_src2_3stage[3][8] = rdt_ctrl.sign_opr ? sum_src2_3stage[3][7] : 1'b0;
-          end
-        endcase
-      end
-
-      // sum_src1_3stage[3:0] data
-      always_comb begin
-        sum_src1_3stage[0][7:0] = sum_vd[0][7:0];
-        sum_src1_3stage[1][7:0] = sum_vd[1][7:0];
-        sum_src1_3stage[2][7:0] = sum_vd[2][7:0];
-        sum_src1_3stage[3][7:0] = sum_vd[3][7:0];
-        case (pmtrdt_uop.vs1_eew)
-          EEW32:begin
-            sum_src1_3stage[0][8] = 1'b0;
-            sum_src1_3stage[1][8] = 1'b0;
-            sum_src1_3stage[2][8] = 1'b0;
-            sum_src1_3stage[3][8] = rdt_ctrl.sign_opr ? sum_src1_3stage[3][7] : 1'b0;
-          end
-          EEW16:begin
-            sum_src1_3stage[0][8] = 1'b0;
-            sum_src1_3stage[1][8] = rdt_ctrl.sign_opr ? sum_src1_3stage[1][7] : 1'b0;
-            sum_src1_3stage[2][8] = 1'b0;
-            sum_src1_3stage[3][8] = rdt_ctrl.sign_opr ? sum_src1_3stage[3][7] : 1'b0;
-          end
-          default:begin
-            sum_src1_3stage[0][8] = rdt_ctrl.sign_opr ? sum_src1_3stage[0][7] : 1'b0;
-            sum_src1_3stage[1][8] = rdt_ctrl.sign_opr ? sum_src1_3stage[1][7] : 1'b0;
-            sum_src1_3stage[2][8] = rdt_ctrl.sign_opr ? sum_src1_3stage[2][7] : 1'b0;
-            sum_src1_3stage[3][8] = rdt_ctrl.sign_opr ? sum_src1_3stage[3][7] : 1'b0;
-          end
-        endcase
-      end
-
-      // sum_cin_3stage[3:0] data
-      always_comb begin
-        case (pmtrdt_uop.vs1_eew)
-          EEW32:begin
-            sum_cin_3stage[0] = 1'b0;
-            sum_cin_3stage[1] = sum_res_3stage[0][8];
-            sum_cin_3stage[2] = sum_res_3stage[1][8];
-            sum_cin_3stage[3] = sum_res_3stage[2][8];
-          end
-          EEW16:begin
-            sum_cin_3stage[0] = 1'b0;
-            sum_cin_3stage[1] = sum_res_3stage[0][8];
-            sum_cin_3stage[2] = 1'b0;
-            sum_cin_3stage[3] = sum_res_3stage[2][8];
-          end
-          default:begin
-            sum_cin_3stage[0] = 1'b0;
-            sum_cin_3stage[1] = 1'b0;
-            sum_cin_3stage[2] = 1'b0;
-            sum_cin_3stage[3] = 1'b0;
-          end
-        endcase
-      end
-
-      // sum_src1_3stage/sum_src2_3stage/sum_cin_3stage [`VLENB/4:4] data when `VLENB > 16
-      // TODO
-
-      // maxmin_src1_3stage/maxmin_src2_3stage/maxmin_cin_3stage data
-      // maxmin_src2_3stage[3:0] data
-      always_comb begin
-        case (rdt_ctrl.rdt_opr)
-          MAX:begin
-            case (pmtrdt_uop.vs1_eew)
-              EEW32:begin
-                maxmin_src2_3stage[0][7:0] = great_than_2stage[3] ? maxmin_src2_2stage[0][7:0] : ~maxmin_src1_2stage[0][7:0];
-                maxmin_src2_3stage[1][7:0] = great_than_2stage[3] ? maxmin_src2_2stage[1][7:0] : ~maxmin_src1_2stage[1][7:0];
-                maxmin_src2_3stage[2][7:0] = great_than_2stage[3] ? maxmin_src2_2stage[2][7:0] : ~maxmin_src1_2stage[2][7:0];
-                maxmin_src2_3stage[3][7:0] = great_than_2stage[3] ? maxmin_src2_2stage[3][7:0] : ~maxmin_src1_2stage[3][7:0];
-              end
-              EEW16:begin
-                maxmin_src2_3stage[0][7:0] = great_than_2stage[1] ? maxmin_src2_2stage[0][7:0] : ~maxmin_src1_2stage[0][7:0];
-                maxmin_src2_3stage[1][7:0] = great_than_2stage[1] ? maxmin_src2_2stage[1][7:0] : ~maxmin_src1_2stage[1][7:0];
-                maxmin_src2_3stage[2][7:0] = great_than_2stage[3] ? maxmin_src2_2stage[2][7:0] : ~maxmin_src1_2stage[2][7:0];
-                maxmin_src2_3stage[3][7:0] = great_than_2stage[3] ? maxmin_src2_2stage[3][7:0] : ~maxmin_src1_2stage[3][7:0];
-              end
-              default:begin
-                maxmin_src2_3stage[0][7:0] = great_than_2stage[0] ? maxmin_src2_2stage[0][7:0] : ~maxmin_src1_2stage[0][7:0];
-                maxmin_src2_3stage[1][7:0] = great_than_2stage[1] ? maxmin_src2_2stage[1][7:0] : ~maxmin_src1_2stage[1][7:0];
-                maxmin_src2_3stage[2][7:0] = great_than_2stage[2] ? maxmin_src2_2stage[2][7:0] : ~maxmin_src1_2stage[2][7:0];
-                maxmin_src2_3stage[3][7:0] = great_than_2stage[3] ? maxmin_src2_2stage[3][7:0] : ~maxmin_src1_2stage[3][7:0];
-              end
-            endcase
-          end
-          default:begin // MIN
-            case (pmtrdt_uop.vs1_eew)
-              EEW32:begin
-                maxmin_src2_3stage[0][7:0] = less_than_2stage[3] ? maxmin_src2_2stage[0][7:0] : ~maxmin_src1_2stage[0][7:0];
-                maxmin_src2_3stage[1][7:0] = less_than_2stage[3] ? maxmin_src2_2stage[1][7:0] : ~maxmin_src1_2stage[1][7:0];
-                maxmin_src2_3stage[2][7:0] = less_than_2stage[3] ? maxmin_src2_2stage[2][7:0] : ~maxmin_src1_2stage[2][7:0];
-                maxmin_src2_3stage[3][7:0] = less_than_2stage[3] ? maxmin_src2_2stage[3][7:0] : ~maxmin_src1_2stage[3][7:0];
-              end
-              EEW16:begin
-                maxmin_src2_3stage[0][7:0] = less_than_2stage[1] ? maxmin_src2_2stage[0][7:0] : ~maxmin_src1_2stage[0][7:0];
-                maxmin_src2_3stage[1][7:0] = less_than_2stage[1] ? maxmin_src2_2stage[1][7:0] : ~maxmin_src1_2stage[1][7:0];
-                maxmin_src2_3stage[2][7:0] = less_than_2stage[3] ? maxmin_src2_2stage[2][7:0] : ~maxmin_src1_2stage[2][7:0];
-                maxmin_src2_3stage[3][7:0] = less_than_2stage[3] ? maxmin_src2_2stage[3][7:0] : ~maxmin_src1_2stage[3][7:0];
-              end
-              default:begin
-                maxmin_src2_3stage[0][7:0] = less_than_2stage[0] ? maxmin_src2_2stage[0][7:0] : ~maxmin_src1_2stage[0][7:0];
-                maxmin_src2_3stage[1][7:0] = less_than_2stage[1] ? maxmin_src2_2stage[1][7:0] : ~maxmin_src1_2stage[1][7:0];
-                maxmin_src2_3stage[2][7:0] = less_than_2stage[2] ? maxmin_src2_2stage[2][7:0] : ~maxmin_src1_2stage[2][7:0];
-                maxmin_src2_3stage[3][7:0] = less_than_2stage[3] ? maxmin_src2_2stage[3][7:0] : ~maxmin_src1_2stage[3][7:0];
-              end
-            endcase
-          end
-        endcase
-        case (pmtrdt_uop.vs1_eew)
-          EEW32:begin
-            maxmin_src2_3stage[0][8] = 1'b0;
-            maxmin_src2_3stage[1][8] = 1'b0;
-            maxmin_src2_3stage[2][8] = 1'b0;
-            maxmin_src2_3stage[3][8] = rdt_ctrl.sign_opr ? maxmin_src2_3stage[3][7] : 1'b0;
-          end
-          EEW16:begin
-            maxmin_src2_3stage[0][8] = 1'b0;
-            maxmin_src2_3stage[1][8] = rdt_ctrl.sign_opr ? maxmin_src2_3stage[1][7] : 1'b0;
-            maxmin_src2_3stage[2][8] = 1'b0;
-            maxmin_src2_3stage[3][8] = rdt_ctrl.sign_opr ? maxmin_src2_3stage[3][7] : 1'b0;
-          end
-          default:begin
-            maxmin_src2_3stage[0][8] = rdt_ctrl.sign_opr ? maxmin_src2_3stage[0][7] : 1'b0;
-            maxmin_src2_3stage[1][8] = rdt_ctrl.sign_opr ? maxmin_src2_3stage[1][7] : 1'b0;
-            maxmin_src2_3stage[2][8] = rdt_ctrl.sign_opr ? maxmin_src2_3stage[2][7] : 1'b0;
-            maxmin_src2_3stage[3][8] = rdt_ctrl.sign_opr ? maxmin_src2_3stage[3][7] : 1'b0;
-          end
-        endcase
-      end
-
-      // maxmin_src1_3stage[3:0] data
-      always_comb begin
-        case (rdt_ctrl.rdt_opr)
-          MAX:begin
-            case (pmtrdt_uop.vs1_eew)
-              EEW32:begin
-                maxmin_src1_3stage[0][7:0] = great_than_vd[3] ? ~src2_vs1[0][7:0] : src1_vd[0][7:0];
-                maxmin_src1_3stage[1][7:0] = great_than_vd[3] ? ~src2_vs1[1][7:0] : src1_vd[1][7:0];
-                maxmin_src1_3stage[2][7:0] = great_than_vd[3] ? ~src2_vs1[2][7:0] : src1_vd[2][7:0];
-                maxmin_src1_3stage[3][7:0] = great_than_vd[3] ? ~src2_vs1[3][7:0] : src1_vd[3][7:0];
-              end
-              EEW16:begin
-                maxmin_src1_3stage[0][7:0] = great_than_vd[1] ? ~src2_vs1[0][7:0] : src1_vd[0][7:0];
-                maxmin_src1_3stage[1][7:0] = great_than_vd[1] ? ~src2_vs1[1][7:0] : src1_vd[1][7:0];
-                maxmin_src1_3stage[2][7:0] = great_than_vd[3] ? ~src2_vs1[2][7:0] : src1_vd[2][7:0];
-                maxmin_src1_3stage[3][7:0] = great_than_vd[3] ? ~src2_vs1[3][7:0] : src1_vd[3][7:0];
-              end
-              default:begin
-                maxmin_src1_3stage[0][7:0] = great_than_vd[0] ? ~src2_vs1[0][7:0] : src1_vd[0][7:0];
-                maxmin_src1_3stage[1][7:0] = great_than_vd[1] ? ~src2_vs1[1][7:0] : src1_vd[1][7:0];
-                maxmin_src1_3stage[2][7:0] = great_than_vd[2] ? ~src2_vs1[2][7:0] : src1_vd[2][7:0];
-                maxmin_src1_3stage[3][7:0] = great_than_vd[3] ? ~src2_vs1[3][7:0] : src1_vd[3][7:0];
-              end
-            endcase
-          end
-          default:begin // MIN
-            case (pmtrdt_uop.vs1_eew)
-              EEW32:begin
-                maxmin_src1_3stage[0][7:0] = less_than_vd[3] ? ~src2_vs1[0][7:0] : src1_vd[0][7:0];
-                maxmin_src1_3stage[1][7:0] = less_than_vd[3] ? ~src2_vs1[1][7:0] : src1_vd[1][7:0];
-                maxmin_src1_3stage[2][7:0] = less_than_vd[3] ? ~src2_vs1[2][7:0] : src1_vd[2][7:0];
-                maxmin_src1_3stage[3][7:0] = less_than_vd[3] ? ~src2_vs1[3][7:0] : src1_vd[3][7:0];
-              end
-              EEW16:begin
-                maxmin_src1_3stage[0][7:0] = less_than_vd[1] ? ~src2_vs1[0][7:0] : src1_vd[0][7:0];
-                maxmin_src1_3stage[1][7:0] = less_than_vd[1] ? ~src2_vs1[1][7:0] : src1_vd[1][7:0];
-                maxmin_src1_3stage[2][7:0] = less_than_vd[3] ? ~src2_vs1[2][7:0] : src1_vd[2][7:0];
-                maxmin_src1_3stage[3][7:0] = less_than_vd[3] ? ~src2_vs1[3][7:0] : src1_vd[3][7:0];
-              end
-              default:begin
-                maxmin_src1_3stage[0][7:0] = less_than_vd[0] ? ~src2_vs1[0][7:0] : src1_vd[0][7:0];
-                maxmin_src1_3stage[1][7:0] = less_than_vd[1] ? ~src2_vs1[1][7:0] : src1_vd[1][7:0];
-                maxmin_src1_3stage[2][7:0] = less_than_vd[2] ? ~src2_vs1[2][7:0] : src1_vd[2][7:0];
-                maxmin_src1_3stage[3][7:0] = less_than_vd[3] ? ~src2_vs1[3][7:0] : src1_vd[3][7:0];
-              end
-            endcase
-          end
-        endcase
-        case (pmtrdt_uop.vs1_eew)
-          EEW32:begin
-            maxmin_src1_3stage[0][8] = 1'b0;
-            maxmin_src1_3stage[1][8] = 1'b0;
-            maxmin_src1_3stage[2][8] = 1'b0;
-            maxmin_src1_3stage[3][8] = rdt_ctrl.sign_opr ? maxmin_src1_3stage[3][7] : ~1'b0;
-          end
-          EEW16:begin
-            maxmin_src1_3stage[0][8] = 1'b0;
-            maxmin_src1_3stage[1][8] = rdt_ctrl.sign_opr ? maxmin_src1_3stage[1][7] : ~1'b0;
-            maxmin_src1_3stage[2][8] = 1'b0;
-            maxmin_src1_3stage[3][8] = rdt_ctrl.sign_opr ? maxmin_src1_3stage[3][7] : ~1'b0;
-          end
-          default:begin
-            maxmin_src1_3stage[0][8] = rdt_ctrl.sign_opr ? maxmin_src1_3stage[0][7] : ~1'b0;
-            maxmin_src1_3stage[1][8] = rdt_ctrl.sign_opr ? maxmin_src1_3stage[1][7] : ~1'b0;
-            maxmin_src1_3stage[2][8] = rdt_ctrl.sign_opr ? maxmin_src1_3stage[2][7] : ~1'b0;
-            maxmin_src1_3stage[3][8] = rdt_ctrl.sign_opr ? maxmin_src1_3stage[3][7] : ~1'b0;
-          end
-        endcase
-      end
-
-      // maxmin_cin_3stage[3:0] data
-      always_comb begin
-        case (pmtrdt_uop.vs1_eew)
-          EEW32:begin
-            maxmin_cin_3stage[0] = 1'b1;
-            maxmin_cin_3stage[1] = maxmin_res_3stage[0][8];
-            maxmin_cin_3stage[2] = maxmin_res_3stage[1][8];
-            maxmin_cin_3stage[3] = maxmin_res_3stage[2][8];
-          end
-          EEW16:begin
-            maxmin_cin_3stage[0] = 1'b1;
-            maxmin_cin_3stage[1] = maxmin_res_3stage[0][8];
-            maxmin_cin_3stage[2] = 1'b1;
-            maxmin_cin_3stage[3] = maxmin_res_3stage[2][8];
-          end
-          default:begin
-            maxmin_cin_3stage[0] = 1'b1;
-            maxmin_cin_3stage[1] = 1'b1;
-            maxmin_cin_3stage[2] = 1'b1;
-            maxmin_cin_3stage[3] = 1'b1;
-          end
-        endcase
-      end
-
-      // maxmin_src1_3stage/maxmin_src2_3stage/maxmin_cin_3stage [`VLENB/4:4] data when `VLENB > 16
-      // TODO
-
-      // four 9-bit-adder/and/or/xor for 3stage
-      for (i=0; i<4; i++) begin : gen_rdt_arithmetic_unit_3stage
-        assign sum_res_3stage[i]   = sum_src2_3stage[i] + sum_src1_3stage[i] + sum_cin_3stage[i];
-        assign maxmin_res_3stage[i]   = maxmin_src2_3stage[i] + maxmin_src1_3stage[i] + maxmin_cin_3stage[i];
-        assign and_3stage[i]   = and_2stage[i] & and_vd[i];
-        assign or_3stage[i]    = or_2stage[i]  | or_vd[i];
-        assign xor_3stage[i]   = xor_2stage[i] ^ xor_vd[i];
-        assign less_than_3stage[i]  = maxmin_res_3stage[i][8];
-        assign great_than_3stage[i] = ~maxmin_res_3stage[i][8];
-      end
-
       assign red_res_en = pmtrdt_uop_valid & (pmtrdt_uop_ready | !red_widen_sum_flag);
 
       for (i=0; i<`VLENB/4; i++) begin : gen_reduction_result
@@ -1536,26 +1483,51 @@ module rvv_backend_pmtrdt_unit
           case(rdt_ctrl.rdt_opr)
             MAX:begin
               case (pmtrdt_uop.vs1_eew)
-                EEW32:   red_res_d[i] = great_than_3stage[4*(i/4)+3] ? maxmin_src2_3stage[i][7:0] : ~maxmin_src1_3stage[i][7:0];
-                EEW16:   red_res_d[i] = great_than_3stage[2*(i/2)+1] ? maxmin_src2_3stage[i][7:0] : ~maxmin_src1_3stage[i][7:0];
-                default: red_res_d[i] = great_than_3stage[i]         ? maxmin_src2_3stage[i][7:0] : ~maxmin_src1_3stage[i][7:0];
+                EEW32:   red_res_d[i] = great_than_2stage[4*(i/4)+3] ? maxmin_src2_2stage[i][7:0] : ~maxmin_src1_2stage[i][7:0];
+                EEW16:   red_res_d[i] = great_than_2stage[2*(i/2)+1] ? maxmin_src2_2stage[i][7:0] : ~maxmin_src1_2stage[i][7:0];
+                default: red_res_d[i] = great_than_2stage[i]         ? maxmin_src2_2stage[i][7:0] : ~maxmin_src1_2stage[i][7:0];
               endcase
             end
             MIN:begin
               case (pmtrdt_uop.vs1_eew)
-                EEW32:   red_res_d[i] = less_than_3stage[4*(i/4)+3] ? maxmin_src2_3stage[i][7:0] : ~maxmin_src1_3stage[i][7:0];
-                EEW16:   red_res_d[i] = less_than_3stage[2*(i/2)+1] ? maxmin_src2_3stage[i][7:0] : ~maxmin_src1_3stage[i][7:0];
-                default: red_res_d[i] = less_than_3stage[i]         ? maxmin_src2_3stage[i][7:0] : ~maxmin_src1_3stage[i][7:0];
+                EEW32:   red_res_d[i] = less_than_2stage[4*(i/4)+3] ? maxmin_src2_2stage[i][7:0] : ~maxmin_src1_2stage[i][7:0];
+                EEW16:   red_res_d[i] = less_than_2stage[2*(i/2)+1] ? maxmin_src2_2stage[i][7:0] : ~maxmin_src1_2stage[i][7:0];
+                default: red_res_d[i] = less_than_2stage[i]         ? maxmin_src2_2stage[i][7:0] : ~maxmin_src1_2stage[i][7:0];
               endcase
             end
-            AND: red_res_d[i] = and_3stage[i];
-            OR:  red_res_d[i] = or_3stage[i];
-            XOR: red_res_d[i] = xor_3stage[i];
-            default: red_res_d[i] = sum_res_3stage[i][7:0]; //SUM
+            AND: red_res_d[i] = and_2stage[i];
+            OR:  red_res_d[i] = or_2stage[i];
+            XOR: red_res_d[i] = xor_2stage[i];
+            default: red_res_d[i] = sum_res_2stage[i][7:0]; //SUM
           endcase
         end
 
         cdffr #(.T(logic[7:0])) red_res_reg (.q(red_res_q[i]), .d(red_res_d[i]), .c(1'b0), .e(red_res_en), .clk(clk), .rst_n(rst_n));
+
+        // select red_res_d based on reduction operation
+        always_comb begin
+          case(rdt_ctrl.rdt_opr)
+            MAX:begin
+              case (pmtrdt_uop.vs1_eew)
+                EEW32:   red_vs1_d[i] = great_than_vd_2stage[4*(i/4)+3] ? src2_vs1_2stage[i][7:0] : ~src1_vd_2stage[i][7:0];
+                EEW16:   red_vs1_d[i] = great_than_vd_2stage[2*(i/2)+1] ? src2_vs1_2stage[i][7:0] : ~src1_vd_2stage[i][7:0];
+                default: red_vs1_d[i] = great_than_vd_2stage[i]         ? src2_vs1_2stage[i][7:0] : ~src1_vd_2stage[i][7:0];
+              endcase
+            end
+            MIN:begin
+              case (pmtrdt_uop.vs1_eew)
+                EEW32:   red_vs1_d[i] = less_than_vd_2stage[4*(i/4)+3] ? src2_vs1_2stage[i][7:0] : ~src1_vd_2stage[i][7:0];
+                EEW16:   red_vs1_d[i] = less_than_vd_2stage[2*(i/2)+1] ? src2_vs1_2stage[i][7:0] : ~src1_vd_2stage[i][7:0];
+                default: red_vs1_d[i] = less_than_vd_2stage[i]         ? src2_vs1_2stage[i][7:0] : ~src1_vd_2stage[i][7:0];
+              endcase
+            end
+            AND: red_vs1_d[i] = and_vd_2stage[i];
+            OR:  red_vs1_d[i] = or_vd_2stage[i];
+            XOR: red_vs1_d[i] = xor_vd_2stage[i];
+            default: red_vs1_d[i] = sum_vd_2stage[i][7:0]; //SUM
+          endcase
+        end
+        cdffr #(.T(logic[7:0])) red_vs1_reg (.q(red_vs1_q[i]), .d(red_vs1_d[i]), .c(1'b0), .e(red_res_en), .clk(clk), .rst_n(rst_n));
       end
 
       // reduction result when vd_eew is 32b
@@ -1588,6 +1560,17 @@ module rvv_backend_pmtrdt_unit
           or_32b  = or_32b  | {red_res_q[4*j+3],red_res_q[4*j+2],red_res_q[4*j+1],red_res_q[4*j]};
           xor_32b = xor_32b ^ {red_res_q[4*j+3],red_res_q[4*j+2],red_res_q[4*j+1],red_res_q[4*j]};
         end
+        sum_32b = sum_32b + red_vs1_q;
+        if (rdt_ctrl_q.sign_opr) begin
+          max_32b = $signed(max_32b) > $signed(red_vs1_q) ? max_32b : red_vs1_q; 
+          min_32b = $signed(min_32b) < $signed(red_vs1_q) ? min_32b : red_vs1_q; 
+        end else begin
+          max_32b = max_32b > red_vs1_q ? max_32b : red_vs1_q; 
+          min_32b = min_32b < red_vs1_q ? min_32b : red_vs1_q; 
+        end
+        and_32b = and_32b & red_vs1_q;
+        or_32b  = or_32b  | red_vs1_q;
+        xor_32b = xor_32b ^ red_vs1_q;
       end
 
       // reduction result when vd_eew is 16b
@@ -1620,6 +1603,23 @@ module rvv_backend_pmtrdt_unit
           or_16b  = or_16b  | {red_res_q[2*j+1],red_res_q[2*j]};
           xor_16b = xor_16b ^ {red_res_q[2*j+1],red_res_q[2*j]};
         end
+        for (int j=0; j<`VLENB/8; j++) begin
+          sum_16b = sum_16b + {red_vs1_q[2*j+1],red_vs1_q[2*j]};
+          if (rdt_ctrl_q.sign_opr) begin
+            max_16b = $signed(max_16b) > $signed({red_vs1_q[2*j+1],red_vs1_q[2*j]}) 
+                      ? max_16b : {red_vs1_q[2*j+1],red_vs1_q[2*j]}; 
+            min_16b = $signed(min_16b) < $signed({red_vs1_q[2*j+1],red_vs1_q[2*j]}) 
+                      ? min_16b : {red_vs1_q[2*j+1],red_vs1_q[2*j]}; 
+          end else begin
+            max_16b = max_16b > {red_vs1_q[2*j+1],red_vs1_q[2*j]} 
+                      ? max_16b : {red_vs1_q[2*j+1],red_vs1_q[2*j]}; 
+            min_16b = min_16b < {red_vs1_q[2*j+1],red_vs1_q[2*j]}
+                      ? min_16b : {red_vs1_q[2*j+1],red_vs1_q[2*j]}; 
+          end
+          and_16b = and_16b & {red_vs1_q[2*j+1],red_vs1_q[2*j]};
+          or_16b  = or_16b  | {red_vs1_q[2*j+1],red_vs1_q[2*j]};
+          xor_16b = xor_16b ^ {red_vs1_q[2*j+1],red_vs1_q[2*j]};
+        end
       end
 
       // reduction result when vd_eew is 8b
@@ -1651,6 +1651,23 @@ module rvv_backend_pmtrdt_unit
           and_8b = and_8b & red_res_q[j];
           or_8b  = or_8b  | red_res_q[j];
           xor_8b = xor_8b ^ red_res_q[j];
+        end
+        for (int j=0; j<`VLENB/4; j++) begin
+          sum_8b = sum_8b + red_vs1_q[j];
+          if (rdt_ctrl_q.sign_opr) begin
+            max_8b = $signed(max_8b) > $signed(red_vs1_q[j]) 
+                      ? max_8b : red_vs1_q[j]; 
+            min_8b = $signed(min_8b) < $signed(red_vs1_q[j]) 
+                      ? min_8b : red_vs1_q[j]; 
+          end else begin
+            max_8b = max_8b > red_vs1_q[j]
+                      ? max_8b : red_vs1_q[j]; 
+            min_8b = min_8b < red_vs1_q[j]
+                      ? min_8b : red_vs1_q[j]; 
+          end
+          and_8b = and_8b & red_vs1_q[j];
+          or_8b  = or_8b  | red_vs1_q[j];
+          xor_8b = xor_8b ^ red_vs1_q[j];
         end
       end
 
