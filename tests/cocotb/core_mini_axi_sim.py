@@ -730,10 +730,14 @@ async def core_mini_axi_write_read_memory_stress_test(dut):
     await core_mini_axi.reset()
     cocotb.start_soon(core_mini_axi.clock.start())
 
-    # TODO(derekjchow): Write stress program to run on Kelvin
+    with open(f"../tests/cocotb/stress_test.elf", "rb") as f:
+      halt = core_mini_axi.lookup_symbol(f, "halt")
+      dtcm_vec = core_mini_axi.lookup_symbol(f, "dtcm_vec")
+      entry_point = await core_mini_axi.load_elf(f)
+    await core_mini_axi.execute_from(entry_point)
 
     # Range for a DTCM buffer we can read/write too.
-    DTCM_START = 0x12000
+    DTCM_START = dtcm_vec
     DTCM_SIZE = 0x2000
     DTCM_END = DTCM_START + DTCM_SIZE
     dtcm_model_buffer = await core_mini_axi.read(DTCM_START, DTCM_SIZE)
@@ -751,6 +755,9 @@ async def core_mini_axi_write_read_memory_stress_test(dut):
         expected = dtcm_model_buffer[start_addr-DTCM_START: end_addr-DTCM_START]
         rdata = await core_mini_axi.read(start_addr, transaction_length)
         assert (expected == rdata).all()
+
+    await core_mini_axi.write_word(halt, 1)
+    await core_mini_axi.wait_for_halted()
 
 @cocotb.test()
 async def core_mini_axi_master_write_alignment(dut):
