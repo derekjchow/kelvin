@@ -788,6 +788,22 @@ async def core_mini_axi_riscv_tests(dut):
       entry_point = await core_mini_axi.load_elf(f)
       await core_mini_axi.execute_from(entry_point)
       await core_mini_axi.wait_for_halted()
+      assert core_mini_axi.dut.io_fault.value == 0
+
+@cocotb.test()
+async def core_mini_axi_riscv_dv(dut):
+  core_mini_axi = CoreMiniAxiInterface(dut)
+  await core_mini_axi.init()
+  cocotb.start_soon(core_mini_axi.clock.start())
+
+  riscv_dv_elfs = glob.glob("../tests/cocotb/riscv-dv/*.o")
+  for elf in tqdm.tqdm(riscv_dv_elfs):
+    with open(elf, "rb") as f:
+      await core_mini_axi.reset()
+      entry_point = await core_mini_axi.load_elf(f)
+      await core_mini_axi.execute_from(entry_point)
+      await core_mini_axi.wait_for_halted(timeout_cycles=1000000)
+      assert core_mini_axi.dut.io_fault.value == 0
 
 @cocotb.test()
 async def core_mini_axi_csr_test(dut):

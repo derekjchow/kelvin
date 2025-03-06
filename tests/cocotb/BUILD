@@ -18,7 +18,7 @@ verilator_cocotb_test(
         requirement("pyelftools"),
         requirement("tqdm"),
     ],
-    data = glob(["**/*.elf"]),
+    data = glob(["**/*.elf"]) + glob(["**/*.o"]),
 )
 
 vcs_cocotb_test(
@@ -44,5 +44,5 @@ vcs_cocotb_test(
         requirement("pyelftools"),
         requirement("tqdm"),
     ],
-    data = glob(["**/*.elf"]),
+    data = glob(["**/*.elf"]) + glob(["**/*.o"]),
 )
