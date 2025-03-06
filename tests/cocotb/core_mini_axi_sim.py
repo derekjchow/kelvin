@@ -3,6 +3,7 @@ import glob
 import itertools
 import math
 import numpy as np
+import os
 import tqdm
 import random
 
@@ -224,13 +225,22 @@ class CoreMiniAxiInterface:
 
       ardata = await self.master_arfifo.get()
       word = self.read_memory(ardata)
-      for i in range(0, ardata["len"] + 1):
-        rdata = dict()
-        rdata["id"] = ardata["id"]
-        rdata["data"] = format_line_from_word(word, ardata["addr"])
-        rdata["resp"] = AxiResp.OKAY
-        rdata["last"] = 1 if (i == ardata["len"]) else 0
-        await self.master_rfifo.put(rdata)
+      if word is None:
+        for i in range(0, ardata["len"] + 1):
+          rdata = dict()
+          rdata["id"] = ardata["id"]
+          rdata["data"] = 0
+          rdata["resp"] = AxiResp.SLVERR
+          rdata["last"] = 1 if (i == ardata["len"]) else 0
+          await self.master_rfifo.put(rdata)
+      else:
+        for i in range(0, ardata["len"] + 1):
+          rdata = dict()
+          rdata["id"] = ardata["id"]
+          rdata["data"] = format_line_from_word(word, ardata["addr"])
+          rdata["resp"] = AxiResp.OKAY
+          rdata["last"] = 1 if (i == ardata["len"]) else 0
+          await self.master_rfifo.put(rdata)
 
   async def master_aragent(self):
     self.dut.io_axi_master_read_addr_ready.value = 1
@@ -295,7 +305,7 @@ class CoreMiniAxiInterface:
 
       assert len(data) == awdata['len'] + 1
       assert len(strb) == awdata['len'] + 1
-      self.write_memory({
+      ret = self.write_memory({
         'addr': awdata['addr'],
         'size': awdata['size'],
         'len': awdata['len'],
@@ -305,7 +315,7 @@ class CoreMiniAxiInterface:
 
       bdata = dict()
       bdata["id"] = awdata["id"]
-      bdata["resp"] = AxiResp.OKAY
+      bdata["resp"] = AxiResp.OKAY if ret else AxiResp.SLVERR
       await self.master_bfifo.put(bdata)
 
   async def master_awagent(self):
@@ -555,7 +565,6 @@ class CoreMiniAxiInterface:
 
   async def read_word(self, addr, expected_resp=AxiResp.OKAY):
     data = []
-    transaction_size = 4
     offset = addr % 16
     await self._read_addr(addr, 4)
     (last, beat_data) = await self._read_data(expected_resp)
@@ -586,20 +595,21 @@ class CoreMiniAxiInterface:
     addr = int(wdata["addr"])
     data = wdata["data"]
     strb = wdata["strb"]
-    assert addr >= self.memory_base_addr
-    assert addr < self.memory_base_addr + len(self.memory)
+    if addr < self.memory_base_addr or addr >= (self.memory_base_addr + len(self.memory)):
+      return False
     line_start = (addr - self.memory_base_addr) & 0xFFFFFFF0
     flat_data = list(itertools.chain(*data))
     flat_strb = list(itertools.chain(*strb))
     for i in range(0,len(flat_data)):
       if flat_strb[i] == 1:
         self.memory[line_start + i] = flat_data[i]
+    return True
 
   def read_memory(self, raddr):
     addr = int(raddr["addr"])
     size = (2 ** raddr["size"])
-    assert addr >= self.memory_base_addr
-    assert addr < self.memory_base_addr + len(self.memory)
+    if addr < self.memory_base_addr or addr >= (self.memory_base_addr + len(self.memory)):
+      return None
     offset = (addr - self.memory_base_addr)
     data = self.memory[offset:offset+size].astype(np.uint32)
     data_flat = 0
@@ -844,3 +854,44 @@ async def core_mini_axi_csr_test(dut):
     misc_csr_rdata = await core_mini_axi.read_word(0x30000 + (4 * i), expected_resp=AxiResp.SLVERR)
   for i in range(8, 0x2000 // 4):
     misc_csr_rdata = await core_mini_axi.read_word(0x30100 + (4 * i), expected_resp=AxiResp.SLVERR)
+
+@cocotb.test()
+async def core_mini_axi_exceptions_test(dut):
+  core_mini_axi = CoreMiniAxiInterface(dut)
+  await core_mini_axi.init()
+  await core_mini_axi.reset()
+  cocotb.start_soon(core_mini_axi.clock.start())
+
+  # ELF file -> [pc, mepc, mtval, mcause]
+  expected_csrs = dict({
+    'illegal_elf.elf': [0x160, 0x15c, 0x02007043, 2],
+    'instr_align_0_elf.elf': [0x160, 0x160, 0, 0],
+    'instr_align_1_elf.elf': [0x15c, 0x15c, 0, 0],
+    'instr_align_2_elf.elf': [0x15c, 0x15c, 0, 0],
+    'instr_fault_elf.elf': [0x40000000, 0x40000010, 0, 1],
+    'load_fault_0_elf.elf': [0x40000000, 0x40000010, 0, 1],
+    'load_fault_1_elf.elf': [0x16c, 0x160, 0xA0000000, 5],
+    'mret_fault_elf.elf': [0x310, 0x326, 0, 0],
+    'store_fault_1_elf.elf': [0x138, 0x168, 0xA0000000, 7],
+  })
+  exceptions_elfs = glob.glob("../tests/cocotb/exceptions/*.elf")
+  for elf in tqdm.tqdm(exceptions_elfs):
+    with open(elf, "rb") as f:
+      await core_mini_axi.reset()
+      entry_point = await core_mini_axi.load_elf(f)
+      await core_mini_axi.execute_from(entry_point)
+      await core_mini_axi.wait_for_halted()
+      assert core_mini_axi.dut.io_fault.value == 1
+      pc = await core_mini_axi.read_word(0x30100)
+      mepc = await core_mini_axi.read_word(0x30104)
+      mtval = await core_mini_axi.read_word(0x30108)
+      mcause = await core_mini_axi.read_word(0x3010c)
+      expected = expected_csrs.get(os.path.basename(elf))
+      if expected != None:
+        assert pc.view(np.uint32)[0] == expected[0]
+        assert mepc.view(np.uint32)[0] == expected[1]
+        assert mtval.view(np.uint32)[0] == expected[2]
+        assert mcause.view(np.uint32)[0] == expected[3]
+
+      assert (pc != 0).any()
+      assert (mepc != 0).any()
