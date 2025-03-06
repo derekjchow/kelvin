@@ -67,8 +67,8 @@ my $host = qq("span[hosts=1] rusage[mem=$mem] select[type==rhel7]");
 my $queue = "";
 my $maxRunTime = 60;
 if(defined $opt_queue) { $queue = $opt_queue; }
-my $bsub  = $localRun ? "bsub -Is -q $queue -n $cpuNum -R $host -W $maxRunTime"
-                      : "bsub -q $queue -n $cpuNum -R $host -W $maxRunTime";
+my $bsub  = $localRun ? "bsub -Is -q $queue -n $cpuNum -R $host"
+                      : "bsub -q $queue -n $cpuNum -R $host";
 ## for local server
 my $null = ' > /dev/null 2>&1';
 my $maxProcess = ($opt_max_job && $opt_max_job < 30) ? $opt_max_job : 20;
@@ -79,10 +79,10 @@ $exeCompile = 0 if($opt_no_compile || $opt_report || $opt_show);
 my $exeSimulate = 1;
 $exeSimulate = 0 if($opt_only_compile || $opt_report || $opt_show);
 my $exeReport = 1;
-$exeReport = 0 if($opt_show || $opt_only_compile);
+$exeReport = 0 if($opt_show || $opt_only_compile || $opt_show);
 my $exeShow = $opt_show;
 my $exeCoverage = 0;
-$exeCoverage = 1 if($opt_coverage);
+$exeCoverage = 1 if($opt_coverage && !$opt_show);
 my $exeCountDiscRate = 0;
 $exeCountDiscRate = 1 if($opt_show_disc);
 
@@ -178,23 +178,25 @@ if($useLSF) {
     $jobTag = "comp_$ENV{USER}";
     if($useBash) {
       seek $fh_regCmdList, 0, 0;
-      @cmd_compPkt = map { "$bsub -J $jobTag $_ \n"; } @cmd_compPkt;
+      @cmd_compPkt = map { "$bsub -W $maxRunTime -J $jobTag $_ \n"; } @cmd_compPkt;
       print $fh_regCmdList @cmd_compPkt;
       system("com/regress_bs $regressCmdList");
-      $cmd = qq(bsub -n 1 -q $queue -w 'ended("$jobTag")' -I 'echo "Compile finished."');
+      $cmd = qq(bsub -n 1 -q $queue -w 'ended("$jobTag")' -I 'echo Compile finished.');
       system($cmd);
     } else {
-      @cmd_compPkt = map { "$bsub -J $jobTag $_"; } @cmd_compPkt;
+      @cmd_compPkt = map { "$bsub -W $maxRunTime -J $jobTag $_"; } @cmd_compPkt;
       foreach $cmd (@cmd_compPkt) {
-          $jobID = qx($cmd) if !$exeShow;
+          print "Submit compile: $cmd\n";
+          $jobID = qx($cmd);
+          print "$jobID";
           $jobID =~ s/.*?(\d+).*/$1/g;
           push @jobIDs, $jobID;
           sleep 1; # bsub gap
       }
       print "Waiting for compiles ... \n";
-      $cmd = qq(bsub -n 1 -q $queue -w 'ended("$jobTag")' -I 'echo "Compile finished."');
-      system($cmd) if !$exeShow;
-      print "$cmd\n" if $exeShow;
+      $cmd = qq($bsub -w 'ended("$jobTag")' -I 'echo Compile finished.');
+      print "$cmd\n";
+      system($cmd);
       # Compile result check
       foreach (@jobIDs) {
         my $exitCode;
@@ -203,7 +205,7 @@ if($useLSF) {
         $exitCode =~ s/.*\n?(\d+).*/$1/g;
         if($exitCode) {
           print $fh_regLog "Compile fail!\n";
-          print STDERR"Compile fail!\n";
+          print STDERR "Compile fail with $exitCode!\n";
           exit 255;
         }
       }
@@ -213,23 +215,22 @@ if($useLSF) {
     $jobTag = "sim_$ENV{USER}";
     if($useBash) {
       seek $fh_regCmdList, 0, 0;
-      @cmd_simPkt = map { "$bsub -J $jobTag $_ \n"; } @cmd_simPkt;
+      @cmd_simPkt = map { "$bsub -W $maxRunTime -J $jobTag $_ \n"; } @cmd_simPkt;
       print $fh_regCmdList @cmd_simPkt;
       system("com/regress_bs $regressCmdList");
-      $cmd = qq(bsub -n 1 -q $queue -w 'ended("$jobTag")' -I 'echo "Simulate done!"');
+      $cmd = qq(bsub -n 1 -q $queue -w 'ended("$jobTag")' -I 'echo Simulate done!');
       system($cmd);
     } else {
-      @cmd_simPkt = map { "$bsub -J $jobTag $_"; } @cmd_simPkt;
+      @cmd_simPkt = map { "$bsub -W $maxRunTime -J $jobTag $_"; } @cmd_simPkt;
       foreach $cmd (@cmd_simPkt) {
         print "Submit tests: $cmd\n";
-        system($cmd) if !$exeShow;
-        print "$cmd\n" if $exeShow;
+        system($cmd);
         sleep 1; # bsub gap
       }
       print "Waiting for simulation ... \n";
-      $cmd = qq(bsub -n 1 -q $queue -w 'ended("$jobTag")' -I 'echo "Simulate done!"');
-      system($cmd) if !$exeShow;
-      print "$cmd\n" if $exeShow;
+      $cmd = qq(bsub -n 1 -q $queue -w 'ended("$jobTag")' -I 'echo Simulate done!');
+      print "$cmd\n";
+      system($cmd);
     }
   }
   if($exeCoverage) {
@@ -238,8 +239,8 @@ if($useLSF) {
       system($cmd);
     } else {
       $cmd = qq(urg -dir $logDir/$scfg.vdb -report $logDir/urgReport);
-      system($cmd) if !$exeShow;
-      print "$cmd\n" if $exeShow;
+      print "$cmd\n";
+      system($cmd);
     }
   }
   close $fh_regCmdList;
