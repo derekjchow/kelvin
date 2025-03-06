@@ -12,6 +12,13 @@ from cocotb.triggers import Timer, ClockCycles, RisingEdge, FallingEdge
 from elftools.elf.elffile import ELFFile
 
 
+class AxiResp:
+  OKAY = 0
+  EXOKAY = 1
+  SLVERR = 2
+  DECERR = 3
+
+
 def pad_to_multiple(x, multiple):
   padding = multiple - (len(x) % multiple)
   if padding == multiple:
@@ -221,7 +228,7 @@ class CoreMiniAxiInterface:
         rdata = dict()
         rdata["id"] = ardata["id"]
         rdata["data"] = format_line_from_word(word, ardata["addr"])
-        rdata["resp"] = 0 # OKAY
+        rdata["resp"] = AxiResp.OKAY
         rdata["last"] = 1 if (i == ardata["len"]) else 0
         await self.master_rfifo.put(rdata)
 
@@ -298,7 +305,7 @@ class CoreMiniAxiInterface:
 
       bdata = dict()
       bdata["id"] = awdata["id"]
-      bdata["resp"] = 0 # OKAY
+      bdata["resp"] = AxiResp.OKAY
       await self.master_bfifo.put(bdata)
 
   async def master_awagent(self):
@@ -493,18 +500,18 @@ class CoreMiniAxiInterface:
     ardata["size"] = size
     await self.slave_arfifo.put(ardata)
 
-  async def _read_data(self):
+  async def _read_data(self, expected_resp=AxiResp.OKAY):
     rdata = await self.slave_rfifo.get()
 
     data = np.frombuffer(
         rdata["data"],
         dtype=np.uint8)
     last = rdata["last"]
-    assert rdata["resp"] == 0 # OKAY
+    assert rdata["resp"] == expected_resp
 
     return last, np.flip(data)
 
-  async def _read_transaction(self, addr, bytes_to_read):
+  async def _read_transaction(self, addr, bytes_to_read, expected_resp=AxiResp.OKAY):
     # Compute number of beats
     start_addr = addr
     end_addr = addr + bytes_to_read - 1 # Last address written
@@ -519,7 +526,7 @@ class CoreMiniAxiInterface:
     for beat in range(beats):
       base_addr = (addr // 16) * 16
       sub_addr = addr - base_addr
-      (last, beat_data) = await self._read_data()
+      (last, beat_data) = await self._read_data(expected_resp)
 
       beat_data = beat_data[sub_addr:]
       if len(beat_data) > bytes_remaining:
@@ -544,6 +551,16 @@ class CoreMiniAxiInterface:
 
     if len(data) == 0:
       return data
+    return np.concatenate(data)
+
+  async def read_word(self, addr, expected_resp=AxiResp.OKAY):
+    data = []
+    transaction_size = 4
+    offset = addr % 16
+    await self._read_addr(addr, 4)
+    (last, beat_data) = await self._read_data(expected_resp)
+    assert (last == True)
+    data.append(beat_data[offset:offset+4])
     return np.concatenate(data)
 
   async def load_elf(self, f):
@@ -771,3 +788,43 @@ async def core_mini_axi_riscv_tests(dut):
       entry_point = await core_mini_axi.load_elf(f)
       await core_mini_axi.execute_from(entry_point)
       await core_mini_axi.wait_for_halted()
+
+@cocotb.test()
+async def core_mini_axi_csr_test(dut):
+  """Exercises the CoreAxiCSR module."""
+  core_mini_axi = CoreMiniAxiInterface(dut)
+  await core_mini_axi.init()
+  await core_mini_axi.reset()
+  cocotb.start_soon(core_mini_axi.clock.start())
+
+  for _ in tqdm.tqdm(range(10000)):
+    reset_csr_wdata = np.random.randint(0, 255, 4, dtype=np.uint8)
+    await core_mini_axi.write(0x30000, reset_csr_wdata)
+    reset_csr_rdata = await core_mini_axi.read_word(0x30000)
+    assert (reset_csr_wdata == reset_csr_rdata).all()
+
+  for _ in tqdm.tqdm(range(10000)):
+    pc_start_csr_wdata = np.random.randint(0, 255, 4, dtype=np.uint8)
+    await core_mini_axi.write(0x30004, pc_start_csr_wdata)
+    pc_start_csr_rdata = await core_mini_axi.read_word(0x30004)
+    assert (pc_start_csr_wdata == pc_start_csr_rdata).all()
+
+  # Neither of these are valid CSRs, but this will exercise the top half of the wdata field.
+  for _ in tqdm.tqdm(range(10000)):
+    csr_wdata = np.random.randint(0, 255, 4, dtype=np.uint8)
+    await core_mini_axi.write(0x30008, csr_wdata)
+    await core_mini_axi.write(0x3000c, csr_wdata)
+
+  status_reg_csr_rdata = await core_mini_axi.read_word(0x30008)
+  # Because we write a random value to the reset CSR, it's possible
+  # for this register to either be 0, 1, or 3.
+  assert (status_reg_csr_rdata.view(np.uint32) <= 3)
+
+  # Read valid CSRs
+  for i in range(8):
+    misc_csr_rdata = await core_mini_axi.read_word(0x30100 + (4 * i))
+  # Read invalid CSRs, expect error response
+  for i in range(3, 0x100 // 4):
+    misc_csr_rdata = await core_mini_axi.read_word(0x30000 + (4 * i), expected_resp=AxiResp.SLVERR)
+  for i in range(8, 0x2000 // 4):
+    misc_csr_rdata = await core_mini_axi.read_word(0x30100 + (4 * i), expected_resp=AxiResp.SLVERR)
