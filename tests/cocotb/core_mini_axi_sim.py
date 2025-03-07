@@ -909,3 +909,19 @@ async def core_mini_axi_exceptions_test(dut):
 
       assert (pc != 0).any()
       assert (mepc != 0).any()
+
+@cocotb.test()
+async def core_mini_axi_kelvin_isa_test(dut):
+  core_mini_axi = CoreMiniAxiInterface(dut)
+  await core_mini_axi.init()
+  await core_mini_axi.reset()
+  cocotb.start_soon(core_mini_axi.clock.start())
+
+  kelvin_isa_elfs = glob.glob("../tests/cocotb/kelvin_isa/*.elf")
+  for elf in tqdm.tqdm(kelvin_isa_elfs):
+    with open(elf, "rb") as f:
+      await core_mini_axi.reset()
+      entry_point = await core_mini_axi.load_elf(f)
+      await core_mini_axi.execute_from(entry_point)
+      await core_mini_axi.wait_for_halted()
+      assert core_mini_axi.dut.io_fault.value == 0
