@@ -57,7 +57,7 @@ class SCore(p: Parameters) extends Module {
 
   val decode = (0 until p.instructionLanes).map(x => Seq(Decode(p, x))).reduce(_ ++ _)
   val alu = Seq.fill(p.instructionLanes)(Alu(p))
-  val bru = Seq.fill(p.instructionLanes)(Bru(p))
+  val bru = (0 until p.instructionLanes).map(x => Seq(Bru(p, x == 0))).reduce(_ ++ _)
   val csr = Csr(p)
   val lsu = Lsu(p)
   val mlu = Mlu(p)
@@ -70,7 +70,7 @@ class SCore(p: Parameters) extends Module {
   // IFlush
   val iflush = RegInit(false.B)
 
-  when (bru(0).io.iflush) {
+  when (bru(0).io.iflush.get) {
     iflush := true.B
   } .elsewhen (fetch.io.iflush.ready && io.iflush.ready &&
                lsu.io.flush.ready && lsu.io.flush.fencei) {
@@ -81,10 +81,6 @@ class SCore(p: Parameters) extends Module {
   io.dflush.all   := lsu.io.flush.all
   io.dflush.clean := lsu.io.flush.clean
   lsu.io.flush.ready := io.dflush.ready
-
-  for (i <- 1 until p.instructionLanes) {
-    assert(!bru(i).io.iflush)
-  }
 
   // ---------------------------------------------------------------------------
   // Fetch
@@ -114,7 +110,7 @@ class SCore(p: Parameters) extends Module {
   }
 
   // Interlock based on regfile write port dependencies.
-  decode(0).io.interlock := bru(0).io.interlock
+  decode(0).io.interlock := bru(0).io.interlock.get
   for (i <- 1 until p.instructionLanes) {
     decode(i).io.interlock := decode(i - 1).io.interlock
   }
@@ -167,10 +163,7 @@ class SCore(p: Parameters) extends Module {
     bru(i).io.target := regfile.io.target(i)
   }
 
-  bru(0).io.csr <> csr.io.bru
-  for (i <- 1 until p.instructionLanes) {
-    bru(i).io.csr.defaults()
-  }
+  bru(0).io.csr.get <> csr.io.bru
 
   io.iflush.valid := iflush
 
