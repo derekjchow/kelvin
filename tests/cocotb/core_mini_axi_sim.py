@@ -384,10 +384,10 @@ class CoreMiniAxiInterface:
     self.dut.io_aresetn.setimmediatevalue(1)
     await Timer(1, unit="us")
 
-  async def _write_addr(self, addr, size, burst_len=1):
+  async def _write_addr(self, addr, size, burst_len=1, axi_id=0):
     awdata = dict()
     awdata["addr"] = addr
-    awdata["id"] = 0
+    awdata["id"] = axi_id
     awdata["len"] = burst_len - 1
     awdata["size"] = size
     await self.slave_awfifo.put(awdata)
@@ -461,7 +461,8 @@ class CoreMiniAxiInterface:
                                addr: int,
                                data: np.array,
                                masks: np.array,
-                               delay_bready: int = 0) -> None:
+                               delay_bready: int = 0,
+                               axi_id: int = 0) -> None:
     # Compute number of beats
     start_addr = addr
     end_addr = addr + len(data) - 1 # Last address written
@@ -473,13 +474,14 @@ class CoreMiniAxiInterface:
     # TODO(derekjchow): Fuzz element size?
     write_addr_size = math.ceil(math.log2(len(data)))
     write_addr_size = min(write_addr_size, 4) # Size of 16 for increment
-    write_addr_task = self._write_addr(addr, write_addr_size, beats)
+    write_addr_task = self._write_addr(addr, write_addr_size, beats, axi_id)
     write_data_task = self._write_data(addr, data, masks, beats)
 
     await write_addr_task
     await write_data_task
 
-    await self.slave_bfifo.get()
+    bdata = await self.slave_bfifo.get()
+    assert bdata["id"].value == axi_id
 
   async def write(self,
                   addr: int,
@@ -487,6 +489,7 @@ class CoreMiniAxiInterface:
                   delay_bready: int = 0,
                   masks: np.array = None) -> None:
     """Writes data into Kelvin memory."""
+    axi_id = random.randint(0,63)
     data = data.view(np.uint8)
     if masks is None:
       masks = np.copy(np.ones_like(data, dtype=bool))
@@ -494,23 +497,24 @@ class CoreMiniAxiInterface:
       transaction_size = self._determine_transaction_size(addr, len(data))
       local_data = data[0:transaction_size]
       local_masks = masks[0:transaction_size]
-      await self._write_transaction(addr, local_data, local_masks, delay_bready)
+      await self._write_transaction(addr, local_data, local_masks, delay_bready, axi_id)
       addr += len(local_data)
       data = data[transaction_size:]
       masks = masks[transaction_size:]
 
   async def write_word(self, addr: int, data: int) -> None:
-    await self.write(addr, np.array([data], dtype=np.uint32))
+    axi_id = random.randint(0,63)
+    await self.write(addr, np.array([data], dtype=np.uint32), axi_id)
 
-  async def _read_addr(self, addr, size, beats=1):
+  async def _read_addr(self, addr, size, beats=1, axi_id=0):
     ardata = dict()
     ardata["addr"] = addr
-    ardata["id"] = 0
+    ardata["id"] = axi_id
     ardata["len"] = beats - 1
     ardata["size"] = size
     await self.slave_arfifo.put(ardata)
 
-  async def _read_data(self, expected_resp=AxiResp.OKAY):
+  async def _read_data(self, expected_resp=AxiResp.OKAY, axi_id=0):
     rdata = await self.slave_rfifo.get()
 
     data = np.frombuffer(
@@ -518,10 +522,11 @@ class CoreMiniAxiInterface:
         dtype=np.uint8)
     last = rdata["last"]
     assert rdata["resp"] == expected_resp
+    assert rdata["id"] == axi_id
 
     return last, np.flip(data)
 
-  async def _read_transaction(self, addr, bytes_to_read, expected_resp=AxiResp.OKAY):
+  async def _read_transaction(self, addr, bytes_to_read, expected_resp=AxiResp.OKAY, axi_id=0):
     # Compute number of beats
     start_addr = addr
     end_addr = addr + bytes_to_read - 1 # Last address written
@@ -529,14 +534,14 @@ class CoreMiniAxiInterface:
     end_line = end_addr // 16
     beats = (end_line - start_line) + 1
 
-    await self._read_addr(start_line * 16, 4, beats)
+    await self._read_addr(start_line * 16, 4, beats, axi_id)
 
     data = []
     bytes_remaining = bytes_to_read
     for beat in range(beats):
       base_addr = (addr // 16) * 16
       sub_addr = addr - base_addr
-      (last, beat_data) = await self._read_data(expected_resp)
+      (last, beat_data) = await self._read_data(expected_resp, axi_id)
 
       beat_data = beat_data[sub_addr:]
       if len(beat_data) > bytes_remaining:
@@ -552,10 +557,11 @@ class CoreMiniAxiInterface:
 
   async def read(self, addr, bytes_to_read):
     """Reads data from Kelvin Memory."""
+    axi_id = random.randint(0,63)
     data = []
     while bytes_to_read > 0:
       transaction_size = self._determine_transaction_size(addr, bytes_to_read)
-      data.append(await self._read_transaction(addr, transaction_size))
+      data.append(await self._read_transaction(addr, transaction_size, 0, axi_id))
       bytes_to_read -= transaction_size
       addr += transaction_size
 
@@ -564,10 +570,11 @@ class CoreMiniAxiInterface:
     return np.concatenate(data)
 
   async def read_word(self, addr, expected_resp=AxiResp.OKAY):
+    axi_id = random.randint(0,63)
     data = []
     offset = addr % 16
-    await self._read_addr(addr, 4)
-    (last, beat_data) = await self._read_data(expected_resp)
+    await self._read_addr(addr, 4, 1, axi_id)
+    (last, beat_data) = await self._read_data(expected_resp, axi_id)
     assert (last == True)
     data.append(beat_data[offset:offset+4])
     return np.concatenate(data)
