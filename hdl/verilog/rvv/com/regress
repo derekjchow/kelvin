@@ -181,7 +181,7 @@ if($useLSF) {
       @cmd_compPkt = map { "$bsub -W $maxRunTime -J $jobTag $_ \n"; } @cmd_compPkt;
       print $fh_regCmdList @cmd_compPkt;
       system("com/regress_bs $regressCmdList");
-      $cmd = qq(bsub -n 1 -q $queue -w 'ended("$jobTag")' -I 'echo Compile finished.');
+      $cmd = qq($bsub -w 'ended("$jobTag")' -I 'echo Compile finished.');
       system($cmd);
     } else {
       @cmd_compPkt = map { "$bsub -W $maxRunTime -J $jobTag $_"; } @cmd_compPkt;
@@ -218,7 +218,7 @@ if($useLSF) {
       @cmd_simPkt = map { "$bsub -W $maxRunTime -J $jobTag $_ \n"; } @cmd_simPkt;
       print $fh_regCmdList @cmd_simPkt;
       system("com/regress_bs $regressCmdList");
-      $cmd = qq(bsub -n 1 -q $queue -w 'ended("$jobTag")' -I 'echo Simulate done!');
+      $cmd = qq($bsub -w 'ended("$jobTag")' -I 'echo Simulate done!');
       system($cmd);
     } else {
       @cmd_simPkt = map { "$bsub -W $maxRunTime -J $jobTag $_"; } @cmd_simPkt;
@@ -228,7 +228,7 @@ if($useLSF) {
         sleep 1; # bsub gap
       }
       print "Waiting for simulation ... \n";
-      $cmd = qq(bsub -n 1 -q $queue -w 'ended("$jobTag")' -I 'echo Simulate done!');
+      $cmd = qq($bsub -w 'ended("$jobTag")' -I 'echo Simulate done!');
       print "$cmd\n";
       system($cmd);
     }
