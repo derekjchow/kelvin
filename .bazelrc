@@ -55,3 +55,8 @@ test:synthesis --build_tag_filters="synthesis"
 test:synthesis --test_tag_filters="synthesis"
 run:synthesis --build_tag_filters="synthesis"
 run:synthesis --test_tag_filters="synthesis"
+
+# Use our custom-configured c++ toolchain, using --crosstol_top as a differentiator.
+build:kelvin_v2_cc_toolchain_config --crosstool_top=//toolchain:kelvin_v2
+build:kelvin_v2_cc_toolchain_config --cpu=kelvin_v2
+
