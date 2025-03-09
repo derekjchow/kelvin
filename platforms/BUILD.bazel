@@ -1,0 +1,17 @@
+package(default_visibility = ["//visibility:public"])
+
+platform(
+    name = "kelvin_v2",
+    constraint_values = [
+        "//platforms/cpu:kelvin_v2",
+        "@platforms//os:none",
+    ],
+)
+
+config_setting(
+    name = "kelvin_config",
+    constraint_values = [
+        "//platforms/cpu:kelvin_v2",
+        "@platforms//os:none",
+    ],
+)
