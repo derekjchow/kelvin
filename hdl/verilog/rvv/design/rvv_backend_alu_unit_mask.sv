@@ -48,6 +48,7 @@ module rvv_backend_alu_unit_mask
 
   // execute 
   logic   [`VLEN-1:0]                 src2_data;
+  logic   [`VLEN-1:0]                 src2_data_sub1;
   logic   [`VLEN-1:0]                 src2_data_viota;
   logic   [`VLEN-1:0]                 src1_data;
   logic   [`VLEN-1:0]                 tail_mask;
@@ -61,7 +62,6 @@ module rvv_backend_alu_unit_mask
   logic   [`VLEN-1:0]                 result_data_nand;
   logic   [`VLEN-1:0]                 result_data_nor; 
   logic   [`VLEN-1:0]                 result_data_xnor;
-  logic   [`VLEN-1:0]                 result_first1;      // find the index of first 1 from LSB to MSB
   logic   [`VLEN-1:0]                 result_data_vmsof;
   logic   [`VLEN-1:0]                 result_vmsif;
   logic   [`VLEN-1:0]                 result_data_vmsif;
@@ -124,43 +124,29 @@ module rvv_backend_alu_unit_mask
     result_2cycle = 'b0;
 
     // prepare source data
-    case({alu_uop_valid,uop_funct3})
-      {1'b1,OPIVV}: begin
+    case(uop_funct3)
+      OPIVV: begin
         case(uop_funct6.ari_funct6)
           VAND,
           VOR,
           VXOR: begin
-            if(vs1_data_valid&vs2_data_valid) begin
-              result_valid = 1'b1;
-              alu_sub_opcode = OP_OTHER;
-            end 
-
-            `ifdef ASSERT_ON
-              assert #0 (result_valid==1'b1)
-              else $error("result_valid(%d) should be 1.\n",result_valid);
-            `endif
+            result_valid = alu_uop_valid&vs1_data_valid&vs2_data_valid;
+            alu_sub_opcode = OP_OTHER;
           end
         endcase
       end
-      {1'b1,OPIVX},
-      {1'b1,OPIVI}: begin
+      OPIVX,
+      OPIVI: begin
         case(uop_funct6.ari_funct6)
           VAND,
           VOR,
           VXOR: begin
-            if(rs1_data_valid&vs2_data_valid) begin
-              result_valid = 1'b1;
-              alu_sub_opcode = OP_OTHER;
-            end 
-
-            `ifdef ASSERT_ON
-              assert #0 (result_valid==1'b1)
-              else $error("result_valid(%d) should be 1.\n",result_valid);
-            `endif
+            result_valid = alu_uop_valid&rs1_data_valid&vs2_data_valid;
+            alu_sub_opcode = OP_OTHER;
           end
         endcase
       end
-      {1'b1,OPMVV}: begin
+      OPMVV: begin
         case(uop_funct6.ari_funct6)
           VMANDN,
           VMAND,
@@ -170,40 +156,19 @@ module rvv_backend_alu_unit_mask
           VMNAND,
           VMNOR,
           VMXNOR: begin
-            if(vs1_data_valid&vs2_data_valid&vm&vd_data_valid) begin
-              result_valid = 1'b1;
-              alu_sub_opcode = OP_OTHER;
-            end 
-
-            `ifdef ASSERT_ON
-              assert #0 (result_valid==1'b1)
-              else $error("result_valid(%d) should be 1.\n",result_valid);
-            `endif
+            result_valid = alu_uop_valid&vs1_data_valid&vs2_data_valid&vm&vd_data_valid;
+            alu_sub_opcode = OP_OTHER;
           end
           VWXUNARY0: begin
             case(vs1_opcode)
               VCPOP: begin
-                if((vs1_data_valid==1'b0)&vs2_data_valid&((vm==1'b1)||((vm==1'b0)&v0_data_valid))) begin
-                  result_valid = 1'b1;
-                  alu_sub_opcode = OP_VCPOP;
-                  result_2cycle = 1'b1;
-                end
-
-                `ifdef ASSERT_ON
-                  assert #0 (result_valid ==1'b1)
-                  else $error("result_valid(%d) should be 1.\n",result_valid);
-                `endif
+                result_valid = alu_uop_valid&(vs1_data_valid==1'b0)&vs2_data_valid&((vm==1'b1)||((vm==1'b0)&v0_data_valid));
+                alu_sub_opcode = OP_VCPOP;
+                result_2cycle = 1'b1;
               end
               VFIRST: begin
-                if((vs1_data_valid==1'b0)&vs2_data_valid&((vm==1'b1)||((vm==1'b0)&v0_data_valid))) begin
-                  result_valid = 1'b1;
-                  alu_sub_opcode = OP_OTHER;
-                end 
-
-                `ifdef ASSERT_ON
-                  assert #0 (result_valid==1'b1)
-                  else $error("result_valid(%d) should be 1.\n",result_valid);
-                `endif
+                result_valid = alu_uop_valid&(vs1_data_valid==1'b0)&vs2_data_valid&((vm==1'b1)||((vm==1'b0)&v0_data_valid));
+                alu_sub_opcode = OP_OTHER;
               end
             endcase
           end
@@ -212,36 +177,22 @@ module rvv_backend_alu_unit_mask
               VMSBF,
               VMSOF,
               VMSIF: begin
-                if((vs1_data_valid==1'b0)&vs2_data_valid&((vm==1'b1)||((vm==1'b0)&vd_data_valid&v0_data_valid))) begin
-                  result_valid = 1'b1;
-                  alu_sub_opcode = OP_OTHER;
-                end 
-
-                `ifdef ASSERT_ON
-                  assert #0 (result_valid==1'b1)
-                  else $error("result_valid(%d) should be 1.\n",result_valid);
-                `endif
+                result_valid = alu_uop_valid&(vs1_data_valid==1'b0)&vs2_data_valid&((vm==1'b1)||((vm==1'b0)&vd_data_valid&v0_data_valid));
+                alu_sub_opcode = OP_OTHER;
               end
               VIOTA: begin
-                if((vs1_data_valid==1'b0)&vs2_data_valid&((vm==1'b1)||((vm==1'b0)&v0_data_valid))) begin
-                  result_valid = 1'b1;
-                  alu_sub_opcode = OP_VIOTA;
-                  // it can get the viota result in one cycle whose element index in vd belongs to 0-31.
-                  // Otherwise, it will get the result in next cycle.
-                  case(vd_eew)
-                    EEW8  : result_2cycle = uop_index >= 32/(`VLEN/8);
-                    EEW16 : result_2cycle = uop_index >= 32/(`VLEN/16);
-                    EEW32 : result_2cycle = uop_index >= 32/(`VLEN/32);
-                  endcase
-                end 
-
-                `ifdef ASSERT_ON
-                  assert #0 (result_valid ==1'b1)
-                  else $error("result_valid(%d) should be 1.\n",result_valid);
-                `endif
+                result_valid = alu_uop_valid&(vs1_data_valid==1'b0)&vs2_data_valid&((vm==1'b1)||((vm==1'b0)&v0_data_valid));
+                alu_sub_opcode = OP_VIOTA;
+                // it can get the viota result in one cycle whose element index in vd belongs to 0-31.
+                // Otherwise, it will get the result in next cycle.
+                case(vd_eew)
+                  EEW8   : result_2cycle = uop_index >= 32/(`VLEN/8);
+                  EEW16  : result_2cycle = uop_index >= 32/(`VLEN/16);
+                  default: result_2cycle = uop_index >= 32/(`VLEN/32);  //EEW32
+                endcase
               end
               VID: begin
-                result_valid = 1'b1;
+                result_valid = alu_uop_valid;
                 alu_sub_opcode = OP_OTHER;
               end
             endcase
@@ -357,9 +308,9 @@ module rvv_backend_alu_unit_mask
   assign result_data_nand  = f_nand(src2_data,src1_data);  
   assign result_data_nor   = f_nor (src2_data,src1_data);  
   assign result_data_xnor  = f_xnor(src2_data,src1_data); 
-  assign result_first1     = f_first1(src2_data);
-  assign result_data_vmsof = result_first1;
-  assign result_vmsif      = f_vmsif(result_first1);
+  assign src2_data_sub1    = src2_data - 1'b1;
+  assign result_data_vmsof = src2_data & (~src2_data_sub1);
+  assign result_vmsif      = src2_data ^ src2_data_sub1;
   assign result_data_vmsif = (src2_data==0) ? {`VLEN{1'b1}} : result_vmsif;  
   assign result_data_vmsbf = (src2_data==0) ? {`VLEN{1'b1}} : {1'b0,result_vmsif[`VLEN-1:1]}; 
  
@@ -697,20 +648,6 @@ module rvv_backend_alu_unit_mask
     input logic [`VLEN-1:0] vs1_data;
 
     f_xnor = ~(vs2_data ^ vs1_data);
-  endfunction
-
-  // find first 1 from LSB
-  function [`VLEN-1:0] f_first1;
-    input logic [`VLEN-1:0] src2;
-
-    f_first1 = (~(src2-1'b1)) & src2;
-  endfunction
-
-  // set from [0] to [first_1_index]
-  function [`VLEN-1:0] f_vmsif;
-    input logic [`VLEN-1:0] src2;
-
-    f_vmsif = (src2-1'b1) | src2;
   endfunction
 
 
