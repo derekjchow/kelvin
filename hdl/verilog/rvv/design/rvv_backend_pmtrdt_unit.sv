@@ -94,12 +94,16 @@ module rvv_backend_pmtrdt_unit
   logic [3:0][8:0]          sum_vd_2stage;
   logic [3:0][7:0]          and_vd_2stage, or_vd_2stage, xor_vd_2stage;
   logic [3:0]               less_than_vd_2stage, great_than_vd_2stage;
-  logic [`VLENB/4-1:0][7:0] red_res_d, red_res_q;
-  logic [`VLENB/4-1:0][7:0] red_vs1_d, red_vs1_q;
+  logic [`VLENB/4-1:0][7:0] max_res_ex0, min_res_ex0;
+  logic [`VLENB/4-1:0][7:0] sum_res_ex1, max_res_ex1, min_res_ex1, and_res_ex1, or_res_ex1, xor_res_ex1;
+  logic [3:0][7:0]          max_vs1_ex0, min_vs1_ex0;
+  logic [3:0][7:0]          sum_vs1_ex1, max_vs1_ex1, min_vs1_ex1, and_vs1_ex1, or_vs1_ex1, xor_vs1_ex1;
   logic                     red_res_en;
   logic [7:0]               sum_8b,  max_8b,  min_8b,  and_8b,  or_8b,  xor_8b;
   logic [15:0]              sum_16b, max_16b, min_16b, and_16b, or_16b, xor_16b;
   logic [31:0]              sum_32b, max_32b, min_32b, and_32b, or_32b, xor_32b;
+  logic [1:0][15:0]         max_16b_1stage, min_16b_1stage;
+  logic [3:0][7:0]          max_8b_1stage,  min_8b_1stage;
   logic [`VLEN-1:0]         pmtrdt_res_red; // pmtrdt result of reduction
   // Comparation operation
   logic [`VSTART_WIDTH-1:0] cmp_vstart_d, cmp_vstart_q;
@@ -900,96 +904,153 @@ module rvv_backend_pmtrdt_unit
         assign xor_2stage[4*i+3] = xor_1stage[8*i+3] ^ xor_1stage[8*i+7];
       end
 
-      // red_res_q & red_vs1_q operation for reduction
+      // red_res_ex1 & red_vs1_ex1 operation for reduction
       // src1_vd_1stage/src2_vs1_1stage/carry_in_vd_1stage data
       // src2_vs1_1stage
       always_comb begin
-        src2_vs1_1stage[0][7:0] = red_vs1_q[0][7:0];
-        src2_vs1_1stage[1][7:0] = red_vs1_q[1][7:0];
-        src2_vs1_1stage[2][7:0] = red_vs1_q[2][7:0];
-        src2_vs1_1stage[3][7:0] = red_vs1_q[3][7:0];
-        case (pmtrdt_uop.vs1_eew)
+        case (rdt_ctrl_q.rdt_opr)
+          MAX:begin
+            src2_vs1_1stage[0][7:0] = max_vs1_ex1[0][7:0];
+            src2_vs1_1stage[1][7:0] = max_vs1_ex1[1][7:0];
+            src2_vs1_1stage[2][7:0] = max_vs1_ex1[2][7:0];
+            src2_vs1_1stage[3][7:0] = max_vs1_ex1[3][7:0];
+          end
+          MIN:begin
+            src2_vs1_1stage[0][7:0] = min_vs1_ex1[0][7:0];
+            src2_vs1_1stage[1][7:0] = min_vs1_ex1[1][7:0];
+            src2_vs1_1stage[2][7:0] = min_vs1_ex1[2][7:0];
+            src2_vs1_1stage[3][7:0] = min_vs1_ex1[3][7:0];
+          end
+          AND:begin
+            src2_vs1_1stage[0][7:0] = and_vs1_ex1[0][7:0];
+            src2_vs1_1stage[1][7:0] = and_vs1_ex1[1][7:0];
+            src2_vs1_1stage[2][7:0] = and_vs1_ex1[2][7:0];
+            src2_vs1_1stage[3][7:0] = and_vs1_ex1[3][7:0];
+          end
+          OR:begin
+            src2_vs1_1stage[0][7:0] = or_vs1_ex1[0][7:0];
+            src2_vs1_1stage[1][7:0] = or_vs1_ex1[1][7:0];
+            src2_vs1_1stage[2][7:0] = or_vs1_ex1[2][7:0];
+            src2_vs1_1stage[3][7:0] = or_vs1_ex1[3][7:0];
+          end
+          XOR:begin
+            src2_vs1_1stage[0][7:0] = xor_vs1_ex1[0][7:0];
+            src2_vs1_1stage[1][7:0] = xor_vs1_ex1[1][7:0];
+            src2_vs1_1stage[2][7:0] = xor_vs1_ex1[2][7:0];
+            src2_vs1_1stage[3][7:0] = xor_vs1_ex1[3][7:0];
+          end
+          default:begin
+            src2_vs1_1stage[0][7:0] = sum_vs1_ex1[0][7:0];
+            src2_vs1_1stage[1][7:0] = sum_vs1_ex1[1][7:0];
+            src2_vs1_1stage[2][7:0] = sum_vs1_ex1[2][7:0];
+            src2_vs1_1stage[3][7:0] = sum_vs1_ex1[3][7:0];
+          end
+        endcase
+        case (rdt_ctrl_q.vs1_eew)
           EEW32:begin
             src2_vs1_1stage[0][8] = 1'b0;
             src2_vs1_1stage[1][8] = 1'b0;
             src2_vs1_1stage[2][8] = 1'b0;
-            src2_vs1_1stage[3][8] = rdt_ctrl.sign_opr ? src2_vs1_1stage[3][7] : 1'b0;
+            src2_vs1_1stage[3][8] = rdt_ctrl_q.sign_opr ? src2_vs1_1stage[3][7] : 1'b0;
           end
           EEW16:begin
             src2_vs1_1stage[0][8] = 1'b0;
-            src2_vs1_1stage[1][8] = rdt_ctrl.sign_opr ? src2_vs1_1stage[1][7] : 1'b0;
+            src2_vs1_1stage[1][8] = rdt_ctrl_q.sign_opr ? src2_vs1_1stage[1][7] : 1'b0;
             src2_vs1_1stage[2][8] = 1'b0;
-            src2_vs1_1stage[3][8] = rdt_ctrl.sign_opr ? src2_vs1_1stage[3][7] : 1'b0;
+            src2_vs1_1stage[3][8] = rdt_ctrl_q.sign_opr ? src2_vs1_1stage[3][7] : 1'b0;
           end
           default:begin
-            src2_vs1_1stage[0][8] = rdt_ctrl.sign_opr ? src2_vs1_1stage[0][7] : 1'b0;
-            src2_vs1_1stage[1][8] = rdt_ctrl.sign_opr ? src2_vs1_1stage[1][7] : 1'b0;
-            src2_vs1_1stage[2][8] = rdt_ctrl.sign_opr ? src2_vs1_1stage[2][7] : 1'b0;
-            src2_vs1_1stage[3][8] = rdt_ctrl.sign_opr ? src2_vs1_1stage[3][7] : 1'b0;
+            src2_vs1_1stage[0][8] = rdt_ctrl_q.sign_opr ? src2_vs1_1stage[0][7] : 1'b0;
+            src2_vs1_1stage[1][8] = rdt_ctrl_q.sign_opr ? src2_vs1_1stage[1][7] : 1'b0;
+            src2_vs1_1stage[2][8] = rdt_ctrl_q.sign_opr ? src2_vs1_1stage[2][7] : 1'b0;
+            src2_vs1_1stage[3][8] = rdt_ctrl_q.sign_opr ? src2_vs1_1stage[3][7] : 1'b0;
           end
         endcase
       end
 
       // src1_vd_1stage data
       always_comb begin
-        case (rdt_ctrl.rdt_opr)
-          MAX,
+        case (rdt_ctrl_q.rdt_opr)
+          MAX:begin
+            src1_vd_1stage[0][7:0] = ~max_res_ex1[0][7:0];
+            src1_vd_1stage[1][7:0] = ~max_res_ex1[1][7:0];
+            src1_vd_1stage[2][7:0] = ~max_res_ex1[2][7:0];
+            src1_vd_1stage[3][7:0] = ~max_res_ex1[3][7:0];
+          end
           MIN:begin
-            src1_vd_1stage[0][7:0] = ~red_res_q[0][7:0];
-            src1_vd_1stage[1][7:0] = ~red_res_q[1][7:0];
-            src1_vd_1stage[2][7:0] = ~red_res_q[2][7:0];
-            src1_vd_1stage[3][7:0] = ~red_res_q[3][7:0];
+            src1_vd_1stage[0][7:0] = ~min_res_ex1[0][7:0];
+            src1_vd_1stage[1][7:0] = ~min_res_ex1[1][7:0];
+            src1_vd_1stage[2][7:0] = ~min_res_ex1[2][7:0];
+            src1_vd_1stage[3][7:0] = ~min_res_ex1[3][7:0];
+          end
+          AND:begin
+            src1_vd_1stage[0][7:0] = and_res_ex1[0][7:0];
+            src1_vd_1stage[1][7:0] = and_res_ex1[1][7:0];
+            src1_vd_1stage[2][7:0] = and_res_ex1[2][7:0];
+            src1_vd_1stage[3][7:0] = and_res_ex1[3][7:0];
+          end
+          OR:begin
+            src1_vd_1stage[0][7:0] = or_res_ex1[0][7:0];
+            src1_vd_1stage[1][7:0] = or_res_ex1[1][7:0];
+            src1_vd_1stage[2][7:0] = or_res_ex1[2][7:0];
+            src1_vd_1stage[3][7:0] = or_res_ex1[3][7:0];
+          end
+          XOR:begin
+            src1_vd_1stage[0][7:0] = xor_res_ex1[0][7:0];
+            src1_vd_1stage[1][7:0] = xor_res_ex1[1][7:0];
+            src1_vd_1stage[2][7:0] = xor_res_ex1[2][7:0];
+            src1_vd_1stage[3][7:0] = xor_res_ex1[3][7:0];
           end
           default:begin
-            src1_vd_1stage[0][7:0] = red_res_q[0][7:0];
-            src1_vd_1stage[1][7:0] = red_res_q[1][7:0];
-            src1_vd_1stage[2][7:0] = red_res_q[2][7:0];
-            src1_vd_1stage[3][7:0] = red_res_q[3][7:0];
+            src1_vd_1stage[0][7:0] = sum_res_ex1[0][7:0];
+            src1_vd_1stage[1][7:0] = sum_res_ex1[1][7:0];
+            src1_vd_1stage[2][7:0] = sum_res_ex1[2][7:0];
+            src1_vd_1stage[3][7:0] = sum_res_ex1[3][7:0];
           end
         endcase
-        case (rdt_ctrl.rdt_opr)
+        case (rdt_ctrl_q.rdt_opr)
           MAX,
           MIN:begin
-            case (pmtrdt_uop.vs1_eew)
+            case (rdt_ctrl_q.vs1_eew)
               EEW32:begin
                 src1_vd_1stage[0][8] = 1'b0;
                 src1_vd_1stage[1][8] = 1'b0;
                 src1_vd_1stage[2][8] = 1'b0;
-                src1_vd_1stage[3][8] = rdt_ctrl.sign_opr ? src1_vd_1stage[3][7] : ~1'b0;
+                src1_vd_1stage[3][8] = rdt_ctrl_q.sign_opr ? src1_vd_1stage[3][7] : ~1'b0;
               end
               EEW16:begin
                 src1_vd_1stage[0][8] = 1'b0;
-                src1_vd_1stage[1][8] = rdt_ctrl.sign_opr ? src1_vd_1stage[1][7] : ~1'b0;
+                src1_vd_1stage[1][8] = rdt_ctrl_q.sign_opr ? src1_vd_1stage[1][7] : ~1'b0;
                 src1_vd_1stage[2][8] = 1'b0;
-                src1_vd_1stage[3][8] = rdt_ctrl.sign_opr ? src1_vd_1stage[3][7] : ~1'b0;
+                src1_vd_1stage[3][8] = rdt_ctrl_q.sign_opr ? src1_vd_1stage[3][7] : ~1'b0;
               end
               default:begin
-                src1_vd_1stage[0][8] = rdt_ctrl.sign_opr ? src1_vd_1stage[0][7] : ~1'b0;
-                src1_vd_1stage[1][8] = rdt_ctrl.sign_opr ? src1_vd_1stage[1][7] : ~1'b0;
-                src1_vd_1stage[2][8] = rdt_ctrl.sign_opr ? src1_vd_1stage[2][7] : ~1'b0;
-                src1_vd_1stage[3][8] = rdt_ctrl.sign_opr ? src1_vd_1stage[3][7] : ~1'b0;
+                src1_vd_1stage[0][8] = rdt_ctrl_q.sign_opr ? src1_vd_1stage[0][7] : ~1'b0;
+                src1_vd_1stage[1][8] = rdt_ctrl_q.sign_opr ? src1_vd_1stage[1][7] : ~1'b0;
+                src1_vd_1stage[2][8] = rdt_ctrl_q.sign_opr ? src1_vd_1stage[2][7] : ~1'b0;
+                src1_vd_1stage[3][8] = rdt_ctrl_q.sign_opr ? src1_vd_1stage[3][7] : ~1'b0;
               end
             endcase
           end
           default:begin
-            case (pmtrdt_uop.vs1_eew)
+            case (rdt_ctrl_q.vs1_eew)
               EEW32:begin
                 src1_vd_1stage[0][8] = 1'b0;
                 src1_vd_1stage[1][8] = 1'b0;
                 src1_vd_1stage[2][8] = 1'b0;
-                src1_vd_1stage[3][8] = rdt_ctrl.sign_opr ? src1_vd_1stage[3][7] : 1'b0;
+                src1_vd_1stage[3][8] = rdt_ctrl_q.sign_opr ? src1_vd_1stage[3][7] : 1'b0;
               end
               EEW16:begin
                 src1_vd_1stage[0][8] = 1'b0;
-                src1_vd_1stage[1][8] = rdt_ctrl.sign_opr ? src1_vd_1stage[1][7] : 1'b0;
+                src1_vd_1stage[1][8] = rdt_ctrl_q.sign_opr ? src1_vd_1stage[1][7] : 1'b0;
                 src1_vd_1stage[2][8] = 1'b0;
-                src1_vd_1stage[3][8] = rdt_ctrl.sign_opr ? src1_vd_1stage[3][7] : 1'b0;
+                src1_vd_1stage[3][8] = rdt_ctrl_q.sign_opr ? src1_vd_1stage[3][7] : 1'b0;
               end
               default:begin
-                src1_vd_1stage[0][8] = rdt_ctrl.sign_opr ? src1_vd_1stage[0][7] : 1'b0;
-                src1_vd_1stage[1][8] = rdt_ctrl.sign_opr ? src1_vd_1stage[1][7] : 1'b0;
-                src1_vd_1stage[2][8] = rdt_ctrl.sign_opr ? src1_vd_1stage[2][7] : 1'b0;
-                src1_vd_1stage[3][8] = rdt_ctrl.sign_opr ? src1_vd_1stage[3][7] : 1'b0;
+                src1_vd_1stage[0][8] = rdt_ctrl_q.sign_opr ? src1_vd_1stage[0][7] : 1'b0;
+                src1_vd_1stage[1][8] = rdt_ctrl_q.sign_opr ? src1_vd_1stage[1][7] : 1'b0;
+                src1_vd_1stage[2][8] = rdt_ctrl_q.sign_opr ? src1_vd_1stage[2][7] : 1'b0;
+                src1_vd_1stage[3][8] = rdt_ctrl_q.sign_opr ? src1_vd_1stage[3][7] : 1'b0;
               end
             endcase
           end
@@ -998,10 +1059,10 @@ module rvv_backend_pmtrdt_unit
 
       // carry_in_vd_1stage data
       always_comb begin
-        case (rdt_ctrl.rdt_opr)
+        case (rdt_ctrl_q.rdt_opr)
           MAX,
           MIN:begin
-            case (pmtrdt_uop.vs1_eew)
+            case (rdt_ctrl_q.vs1_eew)
               EEW32:begin
                 carry_in_vd_1stage[0] = 1'b1;
                 carry_in_vd_1stage[1] = sum_vd_1stage[0][8];
@@ -1023,7 +1084,7 @@ module rvv_backend_pmtrdt_unit
             endcase
           end
           default:begin
-            case (pmtrdt_uop.vs1_eew)
+            case (rdt_ctrl_q.vs1_eew)
               EEW32:begin
                 carry_in_vd_1stage[0] = 1'b0;
                 carry_in_vd_1stage[1] = sum_vd_1stage[0][8];
@@ -1478,153 +1539,98 @@ module rvv_backend_pmtrdt_unit
       assign red_res_en = pmtrdt_uop_valid & (pmtrdt_uop_ready | !red_widen_sum_flag);
 
       for (i=0; i<`VLENB/4; i++) begin : gen_reduction_result
-        // select red_res_d based on reduction operation
+        // max_res_ex0/min_res_ex0 based on vs1_eew
         always_comb begin
-          case(rdt_ctrl.rdt_opr)
-            MAX:begin
-              case (pmtrdt_uop.vs1_eew)
-                EEW32:   red_res_d[i] = great_than_2stage[4*(i/4)+3] ? maxmin_src2_2stage[i][7:0] : ~maxmin_src1_2stage[i][7:0];
-                EEW16:   red_res_d[i] = great_than_2stage[2*(i/2)+1] ? maxmin_src2_2stage[i][7:0] : ~maxmin_src1_2stage[i][7:0];
-                default: red_res_d[i] = great_than_2stage[i]         ? maxmin_src2_2stage[i][7:0] : ~maxmin_src1_2stage[i][7:0];
-              endcase
-            end
-            MIN:begin
-              case (pmtrdt_uop.vs1_eew)
-                EEW32:   red_res_d[i] = less_than_2stage[4*(i/4)+3] ? maxmin_src2_2stage[i][7:0] : ~maxmin_src1_2stage[i][7:0];
-                EEW16:   red_res_d[i] = less_than_2stage[2*(i/2)+1] ? maxmin_src2_2stage[i][7:0] : ~maxmin_src1_2stage[i][7:0];
-                default: red_res_d[i] = less_than_2stage[i]         ? maxmin_src2_2stage[i][7:0] : ~maxmin_src1_2stage[i][7:0];
-              endcase
-            end
-            AND: red_res_d[i] = and_2stage[i];
-            OR:  red_res_d[i] = or_2stage[i];
-            XOR: red_res_d[i] = xor_2stage[i];
-            default: red_res_d[i] = sum_res_2stage[i][7:0]; //SUM
+          case (pmtrdt_uop.vs1_eew)
+            EEW32:   max_res_ex0[i] = great_than_2stage[4*(i/4)+3] ? maxmin_src2_2stage[i][7:0] : ~maxmin_src1_2stage[i][7:0];
+            EEW16:   max_res_ex0[i] = great_than_2stage[2*(i/2)+1] ? maxmin_src2_2stage[i][7:0] : ~maxmin_src1_2stage[i][7:0];
+            default: max_res_ex0[i] = great_than_2stage[i]         ? maxmin_src2_2stage[i][7:0] : ~maxmin_src1_2stage[i][7:0];
+          endcase
+        end
+        always_comb begin
+          case (pmtrdt_uop.vs1_eew)
+            EEW32:   min_res_ex0[i] = less_than_2stage[4*(i/4)+3] ? maxmin_src2_2stage[i][7:0] : ~maxmin_src1_2stage[i][7:0];
+            EEW16:   min_res_ex0[i] = less_than_2stage[2*(i/2)+1] ? maxmin_src2_2stage[i][7:0] : ~maxmin_src1_2stage[i][7:0];
+            default: min_res_ex0[i] = less_than_2stage[i]         ? maxmin_src2_2stage[i][7:0] : ~maxmin_src1_2stage[i][7:0];
           endcase
         end
 
-        cdffr #(.T(logic[7:0])) red_res_reg (.q(red_res_q[i]), .d(red_res_d[i]), .c(1'b0), .e(red_res_en), .clk(clk), .rst_n(rst_n));
+        cdffr #(.T(logic[7:0])) sum_res_reg (.q(sum_res_ex1[i]), .d(sum_res_2stage[i][7:0]), .c(1'b0), .e(red_res_en), .clk(clk), .rst_n(rst_n));
+        cdffr #(.T(logic[7:0])) max_res_reg (.q(max_res_ex1[i]), .d(max_res_ex0[i]), .c(1'b0), .e(red_res_en), .clk(clk), .rst_n(rst_n));
+        cdffr #(.T(logic[7:0])) min_res_reg (.q(min_res_ex1[i]), .d(min_res_ex0[i]), .c(1'b0), .e(red_res_en), .clk(clk), .rst_n(rst_n));
+        cdffr #(.T(logic[7:0])) and_res_reg (.q(and_res_ex1[i]), .d(and_2stage[i]), .c(1'b0), .e(red_res_en), .clk(clk), .rst_n(rst_n));
+        cdffr #(.T(logic[7:0])) or_res_reg  (.q(or_res_ex1[i]),  .d(or_2stage[i]),  .c(1'b0), .e(red_res_en), .clk(clk), .rst_n(rst_n));
+        cdffr #(.T(logic[7:0])) xor_res_reg (.q(xor_res_ex1[i]), .d(xor_2stage[i]), .c(1'b0), .e(red_res_en), .clk(clk), .rst_n(rst_n));
 
-        // select red_res_d based on reduction operation
+        // max_vs1_ex0/min_vs1_ex0 based on vs1_eew
         always_comb begin
-          case(rdt_ctrl.rdt_opr)
-            MAX:begin
-              case (pmtrdt_uop.vs1_eew)
-                EEW32:   red_vs1_d[i] = great_than_vd_2stage[4*(i/4)+3] ? src2_vs1_2stage[i][7:0] : ~src1_vd_2stage[i][7:0];
-                EEW16:   red_vs1_d[i] = great_than_vd_2stage[2*(i/2)+1] ? src2_vs1_2stage[i][7:0] : ~src1_vd_2stage[i][7:0];
-                default: red_vs1_d[i] = great_than_vd_2stage[i]         ? src2_vs1_2stage[i][7:0] : ~src1_vd_2stage[i][7:0];
-              endcase
-            end
-            MIN:begin
-              case (pmtrdt_uop.vs1_eew)
-                EEW32:   red_vs1_d[i] = less_than_vd_2stage[4*(i/4)+3] ? src2_vs1_2stage[i][7:0] : ~src1_vd_2stage[i][7:0];
-                EEW16:   red_vs1_d[i] = less_than_vd_2stage[2*(i/2)+1] ? src2_vs1_2stage[i][7:0] : ~src1_vd_2stage[i][7:0];
-                default: red_vs1_d[i] = less_than_vd_2stage[i]         ? src2_vs1_2stage[i][7:0] : ~src1_vd_2stage[i][7:0];
-              endcase
-            end
-            AND: red_vs1_d[i] = and_vd_2stage[i];
-            OR:  red_vs1_d[i] = or_vd_2stage[i];
-            XOR: red_vs1_d[i] = xor_vd_2stage[i];
-            default: red_vs1_d[i] = sum_vd_2stage[i][7:0]; //SUM
+          case (pmtrdt_uop.vs1_eew)
+            EEW32:   max_vs1_ex0[i] = great_than_vd_2stage[4*(i/4)+3] ? src2_vs1_2stage[i][7:0] : ~src1_vd_2stage[i][7:0];
+            EEW16:   max_vs1_ex0[i] = great_than_vd_2stage[2*(i/2)+1] ? src2_vs1_2stage[i][7:0] : ~src1_vd_2stage[i][7:0];
+            default: max_vs1_ex0[i] = great_than_vd_2stage[i]         ? src2_vs1_2stage[i][7:0] : ~src1_vd_2stage[i][7:0];
           endcase
         end
-        cdffr #(.T(logic[7:0])) red_vs1_reg (.q(red_vs1_q[i]), .d(red_vs1_d[i]), .c(1'b0), .e(red_res_en), .clk(clk), .rst_n(rst_n));
+        always_comb begin
+          case (pmtrdt_uop.vs1_eew)
+            EEW32:   min_vs1_ex0[i] = less_than_vd_2stage[4*(i/4)+3] ? src2_vs1_2stage[i][7:0] : ~src1_vd_2stage[i][7:0];
+            EEW16:   min_vs1_ex0[i] = less_than_vd_2stage[2*(i/2)+1] ? src2_vs1_2stage[i][7:0] : ~src1_vd_2stage[i][7:0];
+            default: min_vs1_ex0[i] = less_than_vd_2stage[i]         ? src2_vs1_2stage[i][7:0] : ~src1_vd_2stage[i][7:0];
+          endcase
+        end
+
+        cdffr #(.T(logic[7:0])) sum_vs1_reg (.q(sum_vs1_ex1[i]), .d(sum_vd_2stage[i][7:0]), .c(1'b0), .e(red_res_en), .clk(clk), .rst_n(rst_n));
+        cdffr #(.T(logic[7:0])) max_vs1_reg (.q(max_vs1_ex1[i]), .d(max_vs1_ex0[i]), .c(1'b0), .e(red_res_en), .clk(clk), .rst_n(rst_n));
+        cdffr #(.T(logic[7:0])) min_vs1_reg (.q(min_vs1_ex1[i]), .d(min_vs1_ex0[i]), .c(1'b0), .e(red_res_en), .clk(clk), .rst_n(rst_n));
+        cdffr #(.T(logic[7:0])) and_vs1_reg (.q(and_vs1_ex1[i]), .d(and_vd_2stage[i]), .c(1'b0), .e(red_res_en), .clk(clk), .rst_n(rst_n));
+        cdffr #(.T(logic[7:0])) or_vs1_reg  (.q(or_vs1_ex1[i]),  .d(or_vd_2stage[i]),  .c(1'b0), .e(red_res_en), .clk(clk), .rst_n(rst_n));
+        cdffr #(.T(logic[7:0])) xor_vs1_reg (.q(xor_vs1_ex1[i]), .d(xor_vd_2stage[i]), .c(1'b0), .e(red_res_en), .clk(clk), .rst_n(rst_n));
       end
 
       // reduction result when vd_eew is 32b
-      always_comb begin
-        sum_32b = '0;
-        if (rdt_ctrl_q.sign_opr) begin
-          max_32b = 32'h8000_0000;
-          min_32b = 32'h7FFF_FFFF;
-        end else begin
-          max_32b = 32'h0000_0000;
-          min_32b = 32'hFFFF_FFFF;
-        end
-        and_32b = '1;
-        or_32b  = '0;
-        xor_32b = '0;
-        for (int j=0; j<`VLENB/16; j++) begin
-          sum_32b = sum_32b + {red_res_q[4*j+3],red_res_q[4*j+2],red_res_q[4*j+1],red_res_q[4*j]};
-          if (rdt_ctrl_q.sign_opr) begin
-            max_32b = $signed(max_32b) > $signed({red_res_q[4*j+3],red_res_q[4*j+2],red_res_q[4*j+1],red_res_q[4*j]}) 
-                      ? max_32b : {red_res_q[4*j+3],red_res_q[4*j+2],red_res_q[4*j+1],red_res_q[4*j]}; 
-            min_32b = $signed(min_32b) < $signed({red_res_q[4*j+3],red_res_q[4*j+2],red_res_q[4*j+1],red_res_q[4*j]}) 
-                      ? min_32b : {red_res_q[4*j+3],red_res_q[4*j+2],red_res_q[4*j+1],red_res_q[4*j]}; 
-          end else begin
-            max_32b = max_32b > {red_res_q[4*j+3],red_res_q[4*j+2],red_res_q[4*j+1],red_res_q[4*j]} 
-                      ? max_32b : {red_res_q[4*j+3],red_res_q[4*j+2],red_res_q[4*j+1],red_res_q[4*j]}; 
-            min_32b = min_32b < {red_res_q[4*j+3],red_res_q[4*j+2],red_res_q[4*j+1],red_res_q[4*j]}
-                      ? min_32b : {red_res_q[4*j+3],red_res_q[4*j+2],red_res_q[4*j+1],red_res_q[4*j]}; 
-          end
-          and_32b = and_32b & {red_res_q[4*j+3],red_res_q[4*j+2],red_res_q[4*j+1],red_res_q[4*j]};
-          or_32b  = or_32b  | {red_res_q[4*j+3],red_res_q[4*j+2],red_res_q[4*j+1],red_res_q[4*j]};
-          xor_32b = xor_32b ^ {red_res_q[4*j+3],red_res_q[4*j+2],red_res_q[4*j+1],red_res_q[4*j]};
-        end
-        sum_32b = sum_32b + red_vs1_q;
-        if (rdt_ctrl_q.sign_opr) begin
-          max_32b = $signed(max_32b) > $signed(red_vs1_q) ? max_32b : red_vs1_q; 
-          min_32b = $signed(min_32b) < $signed(red_vs1_q) ? min_32b : red_vs1_q; 
-        end else begin
-          max_32b = max_32b > red_vs1_q ? max_32b : red_vs1_q; 
-          min_32b = min_32b < red_vs1_q ? min_32b : red_vs1_q; 
-        end
-        and_32b = and_32b & red_vs1_q;
-        or_32b  = or_32b  | red_vs1_q;
-        xor_32b = xor_32b ^ red_vs1_q;
+      for (i=0; i<4; i++) begin
+        assign sum_32b[8*i+:8] = sum_vd_1stage[i][7:0];
+        assign max_32b[8*i+:8] = great_than_vd_1stage[3] ? src2_vs1_1stage[i][7:0] : ~src1_vd_1stage[i][7:0];
+        assign min_32b[8*i+:8] = less_than_vd_1stage[3] ? src2_vs1_1stage[i][7:0] : ~src1_vd_1stage[i][7:0];
+        assign and_32b[8*i+:8] = and_vd_1stage[i];
+        assign or_32b[8*i+:8]  = or_vd_1stage[i];
+        assign xor_32b[8*i+:8] = xor_vd_1stage[i];
       end
-
+     
       // reduction result when vd_eew is 16b
+      assign sum_16b = sum_32b[31:16] + sum_32b[15:0];
+      for (i=0; i<2; i++) begin
+        assign max_16b_1stage[i][7:0]  = great_than_vd_1stage[2*i+1] ? src2_vs1_1stage[2*i][7:0] : ~src1_vd_1stage[2*i][7:0];
+        assign max_16b_1stage[i][15:8] = great_than_vd_1stage[2*i+1] ? src2_vs1_1stage[2*i+1][7:0] : ~src1_vd_1stage[2*i+1][7:0];
+        assign min_16b_1stage[i][7:0]  = less_than_vd_1stage[2*i+1] ? src2_vs1_1stage[2*i][7:0] : ~src1_vd_1stage[2*i][7:0];
+        assign min_16b_1stage[i][15:8] = less_than_vd_1stage[2*i+1] ? src2_vs1_1stage[2*i+1][7:0] : ~src1_vd_1stage[2*i+1][7:0];
+      end
+      assign and_16b = and_32b[31:16] & and_32b[15:0];
+      assign or_16b  = or_32b[31:16]  | or_32b[15:0]; 
+      assign xor_16b = xor_32b[31:16] ^ xor_32b[15:0];
       always_comb begin
-        sum_16b = '0;
         if (rdt_ctrl_q.sign_opr) begin
-          max_16b = 16'h8000;
-          min_16b = 16'h7FFF;
+          max_16b = $signed(max_16b_1stage[0]) > $signed(max_16b_1stage[1]) 
+                    ? max_16b_1stage[0] : max_16b_1stage[1]; 
+          min_16b = $signed(min_16b_1stage[0]) < $signed(min_16b_1stage[1]) 
+                    ? min_16b_1stage[0] : min_16b_1stage[1]; 
         end else begin
-          max_16b = 16'h0000;
-          min_16b = 16'hFFFF;
-        end
-        and_16b = '1;
-        or_16b  = '0;
-        xor_16b = '0;
-        for (int j=0; j<`VLENB/8; j++) begin
-          sum_16b = sum_16b + {red_res_q[2*j+1],red_res_q[2*j]};
-          if (rdt_ctrl_q.sign_opr) begin
-            max_16b = $signed(max_16b) > $signed({red_res_q[2*j+1],red_res_q[2*j]}) 
-                      ? max_16b : {red_res_q[2*j+1],red_res_q[2*j]}; 
-            min_16b = $signed(min_16b) < $signed({red_res_q[2*j+1],red_res_q[2*j]}) 
-                      ? min_16b : {red_res_q[2*j+1],red_res_q[2*j]}; 
-          end else begin
-            max_16b = max_16b > {red_res_q[2*j+1],red_res_q[2*j]} 
-                      ? max_16b : {red_res_q[2*j+1],red_res_q[2*j]}; 
-            min_16b = min_16b < {red_res_q[2*j+1],red_res_q[2*j]}
-                      ? min_16b : {red_res_q[2*j+1],red_res_q[2*j]}; 
-          end
-          and_16b = and_16b & {red_res_q[2*j+1],red_res_q[2*j]};
-          or_16b  = or_16b  | {red_res_q[2*j+1],red_res_q[2*j]};
-          xor_16b = xor_16b ^ {red_res_q[2*j+1],red_res_q[2*j]};
-        end
-        for (int j=0; j<`VLENB/8; j++) begin
-          sum_16b = sum_16b + {red_vs1_q[2*j+1],red_vs1_q[2*j]};
-          if (rdt_ctrl_q.sign_opr) begin
-            max_16b = $signed(max_16b) > $signed({red_vs1_q[2*j+1],red_vs1_q[2*j]}) 
-                      ? max_16b : {red_vs1_q[2*j+1],red_vs1_q[2*j]}; 
-            min_16b = $signed(min_16b) < $signed({red_vs1_q[2*j+1],red_vs1_q[2*j]}) 
-                      ? min_16b : {red_vs1_q[2*j+1],red_vs1_q[2*j]}; 
-          end else begin
-            max_16b = max_16b > {red_vs1_q[2*j+1],red_vs1_q[2*j]} 
-                      ? max_16b : {red_vs1_q[2*j+1],red_vs1_q[2*j]}; 
-            min_16b = min_16b < {red_vs1_q[2*j+1],red_vs1_q[2*j]}
-                      ? min_16b : {red_vs1_q[2*j+1],red_vs1_q[2*j]}; 
-          end
-          and_16b = and_16b & {red_vs1_q[2*j+1],red_vs1_q[2*j]};
-          or_16b  = or_16b  | {red_vs1_q[2*j+1],red_vs1_q[2*j]};
-          xor_16b = xor_16b ^ {red_vs1_q[2*j+1],red_vs1_q[2*j]};
+          max_16b = max_16b_1stage[0] > max_16b_1stage[1]
+                    ? max_16b_1stage[0] : max_16b_1stage[1]; 
+          min_16b = min_16b_1stage[0] < min_16b_1stage[1]
+                    ? min_16b_1stage[0] : min_16b_1stage[1]; 
         end
       end
 
       // reduction result when vd_eew is 8b
+      assign sum_8b = sum_32b[31:24] + sum_32b[23:16] + sum_32b[15:8] + sum_32b[7:0];
+      for (i=0; i<4; i++) begin
+        assign max_8b_1stage[i] = great_than_vd_1stage[i] ? src2_vs1_1stage[i][7:0] : ~src1_vd_1stage[i][7:0];
+        assign min_8b_1stage[i] = less_than_vd_1stage[i] ? src2_vs1_1stage[i][7:0] : ~src1_vd_1stage[i][7:0];
+      end
+      assign and_8b = and_16b[15:8] & and_16b[7:0];
+      assign or_8b  = or_16b[15:8]  | or_16b[7:0]; 
+      assign xor_8b = xor_16b[15:8] ^ xor_16b[7:0];
       always_comb begin
-        sum_8b = '0;
         if (rdt_ctrl_q.sign_opr) begin
           max_8b = 8'h80;
           min_8b = 8'h7F;
@@ -1632,42 +1638,18 @@ module rvv_backend_pmtrdt_unit
           max_8b = 8'h00;
           min_8b = 8'hFF;
         end
-        and_8b = '1;
-        or_8b  = '0;
-        xor_8b = '0;
-        for (int j=0; j<`VLENB/4; j++) begin
-          sum_8b = sum_8b + red_res_q[j];
+        for (int j=0; j<4; j++) begin
           if (rdt_ctrl_q.sign_opr) begin
-            max_8b = $signed(max_8b) > $signed(red_res_q[j]) 
-                      ? max_8b : red_res_q[j]; 
-            min_8b = $signed(min_8b) < $signed(red_res_q[j]) 
-                      ? min_8b : red_res_q[j]; 
+            max_8b = $signed(max_8b) > $signed(max_8b_1stage[j]) 
+                      ? max_8b : max_8b_1stage[j]; 
+            min_8b = $signed(min_8b) < $signed(min_8b_1stage[j]) 
+                      ? min_8b : min_8b_1stage[j]; 
           end else begin
-            max_8b = max_8b > red_res_q[j]
-                      ? max_8b : red_res_q[j]; 
-            min_8b = min_8b < red_res_q[j]
-                      ? min_8b : red_res_q[j]; 
+            max_8b = max_8b > max_8b_1stage[j]
+                      ? max_8b : max_8b_1stage[j]; 
+            min_8b = min_8b < min_8b_1stage[j]
+                      ? min_8b : min_8b_1stage[j]; 
           end
-          and_8b = and_8b & red_res_q[j];
-          or_8b  = or_8b  | red_res_q[j];
-          xor_8b = xor_8b ^ red_res_q[j];
-        end
-        for (int j=0; j<`VLENB/4; j++) begin
-          sum_8b = sum_8b + red_vs1_q[j];
-          if (rdt_ctrl_q.sign_opr) begin
-            max_8b = $signed(max_8b) > $signed(red_vs1_q[j]) 
-                      ? max_8b : red_vs1_q[j]; 
-            min_8b = $signed(min_8b) < $signed(red_vs1_q[j]) 
-                      ? min_8b : red_vs1_q[j]; 
-          end else begin
-            max_8b = max_8b > red_vs1_q[j]
-                      ? max_8b : red_vs1_q[j]; 
-            min_8b = min_8b < red_vs1_q[j]
-                      ? min_8b : red_vs1_q[j]; 
-          end
-          and_8b = and_8b & red_vs1_q[j];
-          or_8b  = or_8b  | red_vs1_q[j];
-          xor_8b = xor_8b ^ red_vs1_q[j];
         end
       end
 
