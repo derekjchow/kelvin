@@ -2434,23 +2434,20 @@ module rvv_backend_decode_unit_ari
   // check whether vd partially overlaps vs2 with EEW_vd<EEW_vs2
   // check_vd_part_overlap_vs2=1 means that check pass (vd group does NOT overlap vs2 group partially)
   always_comb begin
-    check_vd_part_overlap_vs2       = 'b0;          
+    check_vd_part_overlap_vs2 = 'b0;          
     
     case(emul_vs2)
       EMUL1: begin
-        check_vd_part_overlap_vs2   = 1'b1;          
+        check_vd_part_overlap_vs2 = 1'b1;          
       end
       EMUL2: begin
-        if(!((inst_vd[0]!='b0) & ((inst_vd[`REGFILE_INDEX_WIDTH-1:1]==inst_vs2[`REGFILE_INDEX_WIDTH-1:1]))))
-          check_vd_part_overlap_vs2 = 1'b1;          
+        check_vd_part_overlap_vs2 = !((inst_vd[0]!='b0) & ((inst_vd[`REGFILE_INDEX_WIDTH-1:1]==inst_vs2[`REGFILE_INDEX_WIDTH-1:1])));
       end
       EMUL4: begin
-        if(!((inst_vd[1:0]!='b0) & ((inst_vd[`REGFILE_INDEX_WIDTH-1:2]==inst_vs2[`REGFILE_INDEX_WIDTH-1:2]))))
-          check_vd_part_overlap_vs2 = 1'b1;          
+        check_vd_part_overlap_vs2 = !((inst_vd[1:0]!='b0) & ((inst_vd[`REGFILE_INDEX_WIDTH-1:2]==inst_vs2[`REGFILE_INDEX_WIDTH-1:2])));
       end
       EMUL8 : begin
-        if(!((inst_vd[2:0]!='b0) & ((inst_vd[`REGFILE_INDEX_WIDTH-1:3]==inst_vs2[`REGFILE_INDEX_WIDTH-1:3]))))
-          check_vd_part_overlap_vs2 = 1'b1;          
+        check_vd_part_overlap_vs2 = !((inst_vd[2:0]!='b0) & ((inst_vd[`REGFILE_INDEX_WIDTH-1:3]==inst_vs2[`REGFILE_INDEX_WIDTH-1:3])));
       end
     endcase
   end
@@ -2465,16 +2462,13 @@ module rvv_backend_decode_unit_ari
         check_vd_part_overlap_vs1 = 1'b1;          
       end
       EMUL2: begin
-        if(!((inst_vd[0]!='b0) & ((inst_vd[`REGFILE_INDEX_WIDTH-1:1]==inst_vs1[`REGFILE_INDEX_WIDTH-1:1]))))
-          check_vd_part_overlap_vs1 = 1'b1;          
+        check_vd_part_overlap_vs1 = !((inst_vd[0]!='b0) & ((inst_vd[`REGFILE_INDEX_WIDTH-1:1]==inst_vs1[`REGFILE_INDEX_WIDTH-1:1])));
       end
       EMUL4: begin
-        if(!((inst_vd[1:0]!='b0) & ((inst_vd[`REGFILE_INDEX_WIDTH-1:2]==inst_vs1[`REGFILE_INDEX_WIDTH-1:2]))))
-          check_vd_part_overlap_vs1 = 1'b1;          
+        check_vd_part_overlap_vs1 = !((inst_vd[1:0]!='b0) & ((inst_vd[`REGFILE_INDEX_WIDTH-1:2]==inst_vs1[`REGFILE_INDEX_WIDTH-1:2])));
       end
       EMUL8 : begin
-        if(!((inst_vd[2:0]!='b0) & ((inst_vd[`REGFILE_INDEX_WIDTH-1:3]==inst_vs1[`REGFILE_INDEX_WIDTH-1:3]))))
-          check_vd_part_overlap_vs1 = 1'b1;          
+        check_vd_part_overlap_vs1 = !((inst_vd[2:0]!='b0) & ((inst_vd[`REGFILE_INDEX_WIDTH-1:3]==inst_vs1[`REGFILE_INDEX_WIDTH-1:3])));
       end
     endcase
   end
@@ -2482,132 +2476,89 @@ module rvv_backend_decode_unit_ari
   // vd cannot overlap vs2
   // check_vd_overlap_vs2=1 means that check pass (vd group does NOT overlap vs2 group fully)
   always_comb begin
-    if((emul_vd==EMUL8)|(emul_vs2==EMUL8)) begin
-      if(!(inst_vd[`REGFILE_INDEX_WIDTH-1:3]==inst_vs2[`REGFILE_INDEX_WIDTH-1:3]))
-        check_vd_overlap_vs2 = 1'b1;
-      else
-        check_vd_overlap_vs2 = 1'b0;
-    end
-    else if((emul_vd==EMUL4)|(emul_vs2==EMUL4)) begin
-      if(!(inst_vd[`REGFILE_INDEX_WIDTH-1:2]==inst_vs2[`REGFILE_INDEX_WIDTH-1:2]))
-        check_vd_overlap_vs2 = 1'b1;
-      else
-        check_vd_overlap_vs2 = 1'b0;
-    end
-    else if((emul_vd==EMUL2)|(emul_vs2==EMUL2)) begin
-      if(!(inst_vd[`REGFILE_INDEX_WIDTH-1:1]==inst_vs2[`REGFILE_INDEX_WIDTH-1:1]))
-        check_vd_overlap_vs2 = 1'b1;
-      else
-        check_vd_overlap_vs2 = 1'b0;
-    end
-    else if((emul_vd==EMUL1)|(emul_vs2==EMUL1)) begin
-      if(inst_vd!=inst_vs2)
-        check_vd_overlap_vs2 = 1'b1;
-      else
-        check_vd_overlap_vs2 = 1'b0;
-    end
-    else begin
+    if((emul_vd==EMUL8)|(emul_vs2==EMUL8)) 
+      check_vd_overlap_vs2 = !(inst_vd[`REGFILE_INDEX_WIDTH-1:3]==inst_vs2[`REGFILE_INDEX_WIDTH-1:3]);
+    else if((emul_vd==EMUL4)|(emul_vs2==EMUL4)) 
+      check_vd_overlap_vs2 = !(inst_vd[`REGFILE_INDEX_WIDTH-1:2]==inst_vs2[`REGFILE_INDEX_WIDTH-1:2]);
+    else if((emul_vd==EMUL2)|(emul_vs2==EMUL2)) 
+      check_vd_overlap_vs2 = !(inst_vd[`REGFILE_INDEX_WIDTH-1:1]==inst_vs2[`REGFILE_INDEX_WIDTH-1:1]);
+    else if((emul_vd==EMUL1)|(emul_vs2==EMUL1)) 
+      check_vd_overlap_vs2 = (inst_vd!=inst_vs2);
+    else 
       check_vd_overlap_vs2 = 'b0;
-    end
   end
   
   // vd cannot overlap vs1
   // check_vd_overlap_vs1=1 means that check pass (vd group does NOT overlap vs1 group fully)
   always_comb begin
-    if((emul_vd==EMUL8)|(emul_vs1==EMUL8)) begin
-      if(!(inst_vd[`REGFILE_INDEX_WIDTH-1:3]==inst_vs1[`REGFILE_INDEX_WIDTH-1:3]))
-        check_vd_overlap_vs1 = 1'b1;
-      else
-        check_vd_overlap_vs1 = 1'b0;
-    end
-    else if((emul_vd==EMUL4)|(emul_vs1==EMUL4)) begin
-      if(!(inst_vd[`REGFILE_INDEX_WIDTH-1:2]==inst_vs1[`REGFILE_INDEX_WIDTH-1:2]))
-        check_vd_overlap_vs1 = 1'b1;
-      else
-        check_vd_overlap_vs1 = 1'b0;
-    end
-    else if((emul_vd==EMUL2)|(emul_vs1==EMUL2)) begin
-      if(!(inst_vd[`REGFILE_INDEX_WIDTH-1:1]==inst_vs1[`REGFILE_INDEX_WIDTH-1:1]))
-        check_vd_overlap_vs1 = 1'b1;
-      else
-        check_vd_overlap_vs1 = 1'b0;
-    end
-    else if((emul_vd==EMUL1)|(emul_vs1==EMUL1)) begin
-      if(inst_vd!=inst_vs1)
-        check_vd_overlap_vs1 = 1'b1;
-      else
-        check_vd_overlap_vs1 = 1'b0;
-    end
-    else begin
+    if((emul_vd==EMUL8)|(emul_vs1==EMUL8)) 
+      check_vd_overlap_vs1 = !(inst_vd[`REGFILE_INDEX_WIDTH-1:3]==inst_vs1[`REGFILE_INDEX_WIDTH-1:3]);
+    else if((emul_vd==EMUL4)|(emul_vs1==EMUL4)) 
+      check_vd_overlap_vs1 = !(inst_vd[`REGFILE_INDEX_WIDTH-1:2]==inst_vs1[`REGFILE_INDEX_WIDTH-1:2]);
+    else if((emul_vd==EMUL2)|(emul_vs1==EMUL2)) 
+      check_vd_overlap_vs1 = !(inst_vd[`REGFILE_INDEX_WIDTH-1:1]==inst_vs1[`REGFILE_INDEX_WIDTH-1:1]);
+    else if((emul_vd==EMUL1)|(emul_vs1==EMUL1)) 
+      check_vd_overlap_vs1 = (inst_vd!=inst_vs1);
+    else 
       check_vd_overlap_vs1 = 'b0;
-    end
   end
 
   // check whether vs2 group partially overlaps vd group for EEW_vd:EEW_vs2=2:1
   always_comb begin
-    check_vs2_part_overlap_vd_2_1       = 'b0;
+    check_vs2_part_overlap_vd_2_1 = 'b0;
 
     case(emul_vd)
       EMUL1: begin
-        check_vs2_part_overlap_vd_2_1   = 1'b1;
+        check_vs2_part_overlap_vd_2_1 = 1'b1;
       end
       EMUL2: begin
-        if(!((inst_vd[`REGFILE_INDEX_WIDTH-1:1]==inst_vs2[`REGFILE_INDEX_WIDTH-1:1])&(inst_vs2[0]!=1'b1)))
-          check_vs2_part_overlap_vd_2_1 = 1'b1;
+        check_vs2_part_overlap_vd_2_1 = !((inst_vd[`REGFILE_INDEX_WIDTH-1:1]==inst_vs2[`REGFILE_INDEX_WIDTH-1:1])&(inst_vs2[0]!=1'b1));
       end
       EMUL4: begin
-        if(!((inst_vd[`REGFILE_INDEX_WIDTH-1:2]==inst_vs2[`REGFILE_INDEX_WIDTH-1:2])&(inst_vs2[1:0]!=2'b10)))
-          check_vs2_part_overlap_vd_2_1 = 1'b1;
+        check_vs2_part_overlap_vd_2_1 = !((inst_vd[`REGFILE_INDEX_WIDTH-1:2]==inst_vs2[`REGFILE_INDEX_WIDTH-1:2])&(inst_vs2[1:0]!=2'b10));
       end
       EMUL8: begin
-        if(!((inst_vd[`REGFILE_INDEX_WIDTH-1:3]==inst_vs2[`REGFILE_INDEX_WIDTH-1:3])&(inst_vs2[2:0]!=3'b100)))
-          check_vs2_part_overlap_vd_2_1 = 1'b1;
+        check_vs2_part_overlap_vd_2_1 = !((inst_vd[`REGFILE_INDEX_WIDTH-1:3]==inst_vs2[`REGFILE_INDEX_WIDTH-1:3])&(inst_vs2[2:0]!=3'b100));
       end
     endcase
   end
   
   // check whether vs1 group partially overlaps vd group for EEW_vd:EEW_vs1=2:1
   always_comb begin
-    check_vs1_part_overlap_vd_2_1       = 'b0;
+    check_vs1_part_overlap_vd_2_1 = 'b0;
 
     case(emul_vd)
       EMUL1: begin
-        check_vs1_part_overlap_vd_2_1   = 1'b1;
+        check_vs1_part_overlap_vd_2_1 = 1'b1;
       end
       EMUL2: begin
-        if(!((inst_vd[`REGFILE_INDEX_WIDTH-1:1]==inst_vs1[`REGFILE_INDEX_WIDTH-1:1])&(inst_vs1[0]!=1'b1)))
-          check_vs1_part_overlap_vd_2_1 = 1'b1;
+        check_vs1_part_overlap_vd_2_1 = !((inst_vd[`REGFILE_INDEX_WIDTH-1:1]==inst_vs1[`REGFILE_INDEX_WIDTH-1:1])&(inst_vs1[0]!=1'b1));
       end
       EMUL4: begin
-        if(!((inst_vd[`REGFILE_INDEX_WIDTH-1:2]==inst_vs1[`REGFILE_INDEX_WIDTH-1:2])&(inst_vs1[1:0]!=2'b10)))
-          check_vs1_part_overlap_vd_2_1 = 1'b1;
+        check_vs1_part_overlap_vd_2_1 = !((inst_vd[`REGFILE_INDEX_WIDTH-1:2]==inst_vs1[`REGFILE_INDEX_WIDTH-1:2])&(inst_vs1[1:0]!=2'b10));
       end
       EMUL8: begin
-        if(!((inst_vd[`REGFILE_INDEX_WIDTH-1:3]==inst_vs1[`REGFILE_INDEX_WIDTH-1:3])&(inst_vs1[2:0]!=3'b100)))
-          check_vs1_part_overlap_vd_2_1 = 1'b1;
+        check_vs1_part_overlap_vd_2_1 = !((inst_vd[`REGFILE_INDEX_WIDTH-1:3]==inst_vs1[`REGFILE_INDEX_WIDTH-1:3])&(inst_vs1[2:0]!=3'b100));
       end
     endcase
   end
 
   // check whether vs2 group partially overlaps vd group for EEW_vd:EEW_vs2=4:1
   always_comb begin
-    check_vs2_part_overlap_vd_4_1       = 'b0;
+    check_vs2_part_overlap_vd_4_1 = 'b0;
 
     case(emul_vd)
       EMUL1: begin
-        check_vs2_part_overlap_vd_4_1   = 1'b1;
+        check_vs2_part_overlap_vd_4_1 = 1'b1;
       end
       EMUL2: begin
-        if(!((inst_vd[`REGFILE_INDEX_WIDTH-1:1]==inst_vs2[`REGFILE_INDEX_WIDTH-1:1])&(inst_vs2[0]!=1'b1)))
-          check_vs2_part_overlap_vd_4_1 = 1'b1;
+        check_vs2_part_overlap_vd_4_1 = !((inst_vd[`REGFILE_INDEX_WIDTH-1:1]==inst_vs2[`REGFILE_INDEX_WIDTH-1:1])&(inst_vs2[0]!=1'b1));
       end
       EMUL4: begin
-        if(!((inst_vd[`REGFILE_INDEX_WIDTH-1:2]==inst_vs2[`REGFILE_INDEX_WIDTH-1:2])&(inst_vs2[1:0]!=2'b11)))
-          check_vs2_part_overlap_vd_4_1 = 1'b1;
+        check_vs2_part_overlap_vd_4_1 = !((inst_vd[`REGFILE_INDEX_WIDTH-1:2]==inst_vs2[`REGFILE_INDEX_WIDTH-1:2])&(inst_vs2[1:0]!=2'b11));
       end
       EMUL8: begin
-        if(!((inst_vd[`REGFILE_INDEX_WIDTH-1:3]==inst_vs2[`REGFILE_INDEX_WIDTH-1:3])&(inst_vs2[2:0]!=3'b110)))
-          check_vs2_part_overlap_vd_4_1 = 1'b1;
+        check_vs2_part_overlap_vd_4_1 = !((inst_vd[`REGFILE_INDEX_WIDTH-1:3]==inst_vs2[`REGFILE_INDEX_WIDTH-1:3])&(inst_vs2[2:0]!=3'b110));
       end
     endcase
   end

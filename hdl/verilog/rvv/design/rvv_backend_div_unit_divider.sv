@@ -56,6 +56,8 @@ module rvv_backend_div_unit_divider
   
   // number of leading zero bits
   logic [$clog2(DIV_WIDTH):0]   cnt_clzb;
+  logic [$clog2(DIV_WIDTH):0]   clzb;
+  logic [$clog2(DIV_WIDTH):0]   count_shift;
 
   // processing round for divider
   logic [DIV_WIDTH-1:0]         quotient_r1;
@@ -246,6 +248,22 @@ module rvv_backend_div_unit_divider
   end
 
   // computational logic in every state
+  generate 
+    if (DIV_WIDTH==`WORD_WIDTH) begin
+      assign clzb = f_clzb32(dividend_d);
+      assign count_shift = 'd33 - clzb;            
+    end
+    else if (DIV_WIDTH==`HWORD_WIDTH) begin
+      assign clzb = f_clzb16(dividend_d);
+      assign count_shift = 'd17 - clzb;            
+    end
+    else if (DIV_WIDTH==`BYTE_WIDTH) begin
+      assign clzb = f_clzb8(dividend_d);
+      assign count_shift = 'd9 - clzb;            
+    end
+
+  endgenerate
+
   always_comb begin
     // initial
     dividend_en      = 'b0;
@@ -372,21 +390,9 @@ module rvv_backend_div_unit_divider
               r_sgn_en  = 'b1;
 
               // count leading zero bits in dividend
-              if (DIV_WIDTH==`WORD_WIDTH) begin
-                cnt_clzb  = f_clzb32(dividend_d);
-                count_en  = 'b1;
-                count_d   = 'd33 - cnt_clzb;            
-              end
-              else if (DIV_WIDTH==`HWORD_WIDTH) begin
-                cnt_clzb  = f_clzb16(dividend_d);
-                count_en  = 'b1;
-                count_d   = 'd17 - cnt_clzb;            
-              end
-              else if (DIV_WIDTH==`BYTE_WIDTH) begin
-                cnt_clzb  = f_clzb8(dividend_d);
-                count_en  = 'b1;
-                count_d   = 'd9 - cnt_clzb;            
-              end
+              cnt_clzb  = clzb;
+              count_en  = 'b1;
+              count_d   = count_shift;            
 
               // initialize quotient and remainder
               quotient_en = 'b1;   

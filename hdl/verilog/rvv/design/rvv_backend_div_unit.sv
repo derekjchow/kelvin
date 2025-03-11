@@ -91,44 +91,24 @@ module rvv_backend_div_unit
     // initial the data
     uop_valid = 'b0;
 
-    case({div_uop_valid,uop_funct3}) 
-      {1'b1,OPMVV}: begin
+    case(uop_funct3) 
+      OPMVV: begin
         case(uop_funct6.ari_funct6)
           VDIVU,
           VDIV,
           VREMU,
           VREM: begin
-            if (vs2_data_valid&vs1_data_valid) begin
-              uop_valid = 'b1;
-            end
-
-            `ifdef ASSERT_ON
-              assert(vs2_data_valid==1'b1)
-                else $error("vs2_data_valid(%d) should be 1.\n",vs2_data_valid);
-
-              assert(vs1_data_valid==1'b1)
-                else $error("vs1_data_valid(%d) should be 1.\n",vs1_data_valid);
-            `endif
+            uop_valid = div_uop_valid&vs2_data_valid&vs1_data_valid;
           end
         endcase
       end
-      {1'b1,OPMVX}: begin
+      OPMVX: begin
         case(uop_funct6.ari_funct6)
           VDIVU,
           VDIV,
           VREMU,
           VREM: begin
-            if (vs2_data_valid&rs1_data_valid) begin
-              uop_valid = 'b1;
-            end
-
-            `ifdef ASSERT_ON
-              assert(vs2_data_valid==1'b1)
-                else $error("vs2_data_valid(%d) should be 1.\n",vs2_data_valid);
-
-              assert(rs1_data_valid==1'b1)
-                else $error("rs1_data_valid(%d) should be 1.\n",rs1_data_valid);
-            `endif
+            uop_valid = div_uop_valid&vs2_data_valid&rs1_data_valid;
           end
         endcase
       end

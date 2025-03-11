@@ -98,7 +98,7 @@ module rvv_backend_decode_ctrl
       end
 
       // get unit0 last uop signal
-      mux8_1 
+      mux7_1 
       #(
         .WIDTH    (1) 
       )
@@ -112,7 +112,6 @@ module rvv_backend_decode_ctrl
          .indata4  (1'b1),
          .indata5  (1'b1),
          .indata6  (uop_de2uq[0][`NUM_DE_UOP-1].last_uop_valid),
-         .indata7  (1'b0),
          .outdata  (last_uop_unit[0]) 
       );
       
@@ -124,7 +123,7 @@ module rvv_backend_decode_ctrl
       assign get_unit1_last_signal[1] = uop_de2uq[1][4].last_uop_valid || get_unit1_last_signal[2]; 
       assign get_unit1_last_signal[0] = uop_de2uq[1][5].last_uop_valid || get_unit1_last_signal[1]; 
     
-      mux8_1 
+      mux7_1 
       #(
         .WIDTH    (1) 
       )
@@ -138,7 +137,6 @@ module rvv_backend_decode_ctrl
          .indata4  (get_unit1_last_signal[4]),
          .indata5  (get_unit1_last_signal[5]),
          .indata6  (1'b0),
-         .indata7  (1'b0),
          .outdata  (last_uop_unit[1]) 
       );
 
@@ -161,7 +159,7 @@ module rvv_backend_decode_ctrl
       end
 
       // get unit0 last uop signal
-      mux8_1 
+      mux5_1 
       #(
         .WIDTH    (1) 
       )
@@ -173,9 +171,6 @@ module rvv_backend_decode_ctrl
          .indata2  (1'b1),
          .indata3  (1'b1),
          .indata4  (uop_de2uq[0][`NUM_DE_UOP-1].last_uop_valid),
-         .indata5  (1'b0),
-         .indata6  (1'b0),
-         .indata7  (1'b0),
          .outdata  (last_uop_unit[0]) 
       );
       
@@ -185,7 +180,7 @@ module rvv_backend_decode_ctrl
       assign get_unit1_last_signal[1] = uop_de2uq[1][2].last_uop_valid || get_unit1_last_signal[2]; 
       assign get_unit1_last_signal[0] = uop_de2uq[1][3].last_uop_valid || get_unit1_last_signal[1]; 
     
-      mux8_1 
+      mux5_1 
       #(
         .WIDTH    (1) 
       )
@@ -197,9 +192,6 @@ module rvv_backend_decode_ctrl
          .indata2  (get_unit1_last_signal[2]),
          .indata3  (get_unit1_last_signal[3]),
          .indata4  (1'b0),
-         .indata5  (1'b0),
-         .indata6  (1'b0),
-         .indata7  (1'b0),
          .outdata  (last_uop_unit[1]) 
       );
 
@@ -269,7 +261,7 @@ module rvv_backend_decode_ctrl
       end
     
       // push signal for Uops Queue
-      mux8_1 
+      mux7_1 
       #(
         .WIDTH    (1) 
       )
@@ -283,11 +275,10 @@ module rvv_backend_decode_ctrl
          .indata4  (uop_valid_de2uq[0][0]),
          .indata5  (uop_valid_de2uq[0][0]),
          .indata6  (uop_valid_de2uq[0][0]),
-         .indata7  (1'b0),
          .outdata  (push_valid[0]) 
       );
       
-      mux8_1 
+      mux7_1 
       #(
         .WIDTH    (1) 
       )
@@ -301,11 +292,10 @@ module rvv_backend_decode_ctrl
          .indata4  (uop_valid_de2uq[0][1]),
          .indata5  (uop_valid_de2uq[0][1]),
          .indata6  (uop_valid_de2uq[0][1]),
-         .indata7  (1'b0),
          .outdata  (push_valid[1]) 
       );
     
-      mux8_1 
+      mux7_1 
       #(
         .WIDTH    (1) 
       )
@@ -319,11 +309,10 @@ module rvv_backend_decode_ctrl
          .indata4  (uop_valid_de2uq[0][2]),
          .indata5  (uop_valid_de2uq[0][2]),
          .indata6  (uop_valid_de2uq[0][2]),
-         .indata7  (1'b0),
          .outdata  (push_valid[2]) 
       );
     
-      mux8_1 
+      mux7_1 
       #(
         .WIDTH    (1) 
       )
@@ -337,11 +326,10 @@ module rvv_backend_decode_ctrl
          .indata4  (uop_valid_de2uq[0][3]),
          .indata5  (uop_valid_de2uq[0][3]),
          .indata6  (uop_valid_de2uq[0][3]),
-         .indata7  (1'b0),
          .outdata  (push_valid[3]) 
       );
 
-      mux8_1 
+      mux7_1 
       #(
         .WIDTH    (1) 
       )
@@ -355,11 +343,10 @@ module rvv_backend_decode_ctrl
          .indata4  (uop_valid_de2uq[1][0]),
          .indata5  (uop_valid_de2uq[0][4]),
          .indata6  (uop_valid_de2uq[0][4]),
-         .indata7  (1'b0),
          .outdata  (push_valid[4]) 
       );
 
-      mux8_1 
+      mux7_1 
       #(
         .WIDTH    (1) 
       )
@@ -373,12 +360,11 @@ module rvv_backend_decode_ctrl
          .indata4  (uop_valid_de2uq[1][1]),
          .indata5  (uop_valid_de2uq[1][0]),
          .indata6  (uop_valid_de2uq[0][5]),
-         .indata7  (1'b0),
          .outdata  (push_valid[5]) 
       );
     
       // data signal for Uops Queue
-      mux8_1 
+      mux7_1 
       #(
         .WIDTH    (`UQ_WIDTH) 
       )
@@ -392,11 +378,10 @@ module rvv_backend_decode_ctrl
          .indata4  (uop_de2uq[0][0]),
          .indata5  (uop_de2uq[0][0]),
          .indata6  (uop_de2uq[0][0]),
-         .indata7  ('0),
          .outdata  (dataout[0]) 
       );
     
-      mux8_1 
+      mux7_1 
       #(
         .WIDTH    (`UQ_WIDTH) 
       )
@@ -410,11 +395,10 @@ module rvv_backend_decode_ctrl
          .indata4  (uop_de2uq[0][1]),
          .indata5  (uop_de2uq[0][1]),
          .indata6  (uop_de2uq[0][1]),
-         .indata7  ('0),
          .outdata  (dataout[1]) 
       );
     
-      mux8_1  
+      mux7_1  
       #(
         .WIDTH    (`UQ_WIDTH) 
       )
@@ -428,11 +412,10 @@ module rvv_backend_decode_ctrl
          .indata4  (uop_de2uq[0][2]),
          .indata5  (uop_de2uq[0][2]),
          .indata6  (uop_de2uq[0][2]),
-         .indata7  ('0),
          .outdata  (dataout[2]) 
       );
     
-      mux8_1  
+      mux7_1  
       #(
         .WIDTH    (`UQ_WIDTH) 
       )
@@ -446,11 +429,10 @@ module rvv_backend_decode_ctrl
          .indata4  (uop_de2uq[0][3]),
          .indata5  (uop_de2uq[0][3]),
          .indata6  (uop_de2uq[0][3]),
-         .indata7  ('0),
          .outdata  (dataout[3]) 
       );
 
-      mux8_1  
+      mux7_1  
       #(
         .WIDTH    (`UQ_WIDTH) 
       )
@@ -464,11 +446,10 @@ module rvv_backend_decode_ctrl
          .indata4  (uop_de2uq[1][0]),
          .indata5  (uop_de2uq[0][4]),
          .indata6  (uop_de2uq[0][4]),
-         .indata7  ('0),
          .outdata  (dataout[4]) 
       );
 
-      mux8_1  
+      mux7_1  
       #(
         .WIDTH    (`UQ_WIDTH) 
       )
@@ -482,7 +463,6 @@ module rvv_backend_decode_ctrl
          .indata4  (uop_de2uq[1][1]),
          .indata5  (uop_de2uq[1][0]),
          .indata6  (uop_de2uq[0][5]),
-         .indata7  ('0),
          .outdata  (dataout[5]) 
       );
 
@@ -514,7 +494,7 @@ module rvv_backend_decode_ctrl
       end
       
       // push signal for Uops Queue
-      mux8_1 
+      mux5_1 
       #(
         .WIDTH    (1) 
       )
@@ -526,13 +506,10 @@ module rvv_backend_decode_ctrl
          .indata2  (uop_valid_de2uq[0][0]),
          .indata3  (uop_valid_de2uq[0][0]),
          .indata4  (uop_valid_de2uq[0][0]),
-         .indata5  (1'b0),
-         .indata6  (1'b0),
-         .indata7  (1'b0),
          .outdata  (push_valid[0]) 
       );
       
-      mux8_1 
+      mux5_1 
       #(
         .WIDTH    (1) 
       )
@@ -544,13 +521,10 @@ module rvv_backend_decode_ctrl
          .indata2  (uop_valid_de2uq[0][1]),
          .indata3  (uop_valid_de2uq[0][1]),
          .indata4  (uop_valid_de2uq[0][1]),
-         .indata5  (1'b0),
-         .indata6  (1'b0),
-         .indata7  (1'b0),
          .outdata  (push_valid[1]) 
       );
     
-    mux8_1 
+    mux5_1 
       #(
         .WIDTH    (1) 
       )
@@ -562,13 +536,10 @@ module rvv_backend_decode_ctrl
          .indata2  (uop_valid_de2uq[1][0]),
          .indata3  (uop_valid_de2uq[0][2]),
          .indata4  (uop_valid_de2uq[0][2]),
-         .indata5  (1'b0),
-         .indata6  (1'b0),
-         .indata7  (1'b0),
          .outdata  (push_valid[2]) 
       );
     
-    mux8_1 
+    mux5_1 
       #(
         .WIDTH    (1) 
       )
@@ -580,14 +551,11 @@ module rvv_backend_decode_ctrl
          .indata2  (uop_valid_de2uq[1][1]),
          .indata3  (uop_valid_de2uq[1][0]),
          .indata4  (uop_valid_de2uq[0][3]),
-         .indata5  (1'b0),
-         .indata6  (1'b0),
-         .indata7  (1'b0),
          .outdata  (push_valid[3]) 
       );
     
       // data signal for Uops Queue
-      mux8_1 
+      mux5_1 
       #(
         .WIDTH    (`UQ_WIDTH) 
       )
@@ -599,13 +567,10 @@ module rvv_backend_decode_ctrl
          .indata2  (uop_de2uq[0][0]),
          .indata3  (uop_de2uq[0][0]),
          .indata4  (uop_de2uq[0][0]),
-         .indata5  ('0),
-         .indata6  ('0),
-         .indata7  ('0),
          .outdata  (dataout[0]) 
       );
     
-      mux8_1 
+      mux5_1 
       #(
         .WIDTH    (`UQ_WIDTH) 
       )
@@ -617,13 +582,10 @@ module rvv_backend_decode_ctrl
          .indata2  (uop_de2uq[0][1]),
          .indata3  (uop_de2uq[0][1]),
          .indata4  (uop_de2uq[0][1]),
-         .indata5  ('0),
-         .indata6  ('0),
-         .indata7  ('0),
          .outdata  (dataout[1]) 
       );
     
-      mux8_1  
+      mux5_1  
       #(
         .WIDTH    (`UQ_WIDTH) 
       )
@@ -635,13 +597,10 @@ module rvv_backend_decode_ctrl
          .indata2  (uop_de2uq[1][0]),
          .indata3  (uop_de2uq[0][2]),
          .indata4  (uop_de2uq[0][2]),
-         .indata5  ('0),
-         .indata6  ('0),
-         .indata7  ('0),
          .outdata  (dataout[2]) 
       );
     
-      mux8_1  
+      mux5_1  
       #(
         .WIDTH    (`UQ_WIDTH) 
       )
@@ -653,9 +612,6 @@ module rvv_backend_decode_ctrl
          .indata2  (uop_de2uq[1][1]),
          .indata3  (uop_de2uq[1][0]),
          .indata4  (uop_de2uq[0][3]),
-         .indata5  ('0),
-         .indata6  ('0),
-         .indata7  ('0),
          .outdata  (dataout[3]) 
       );
 

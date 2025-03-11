@@ -101,70 +101,42 @@ module rvv_backend_alu_unit_shift
     // initial the data
     result_valid   = 'b0;
 
-    case({alu_uop_valid,uop_funct3}) 
-      {1'b1,OPIVV}: begin
+    case(uop_funct3) 
+      OPIVV: begin
         case(uop_funct6.ari_funct6)
           VSLL,
           VSRL,
           VSRA,
           VSSRL,
           VSSRA: begin
-            if (vs2_data_valid&vs1_data_valid) begin
-              result_valid = 'b1;
-            end
-
-            `ifdef ASSERT_ON
-              assert #0 (result_valid==1'b1)
-              else $error("result_valid(%d) should be 1.\n",result_valid);
-            `endif
+            result_valid = alu_uop_valid&vs2_data_valid&vs1_data_valid;
           end
 
           VNSRL,
           VNSRA,
           VNCLIPU,
           VNCLIP: begin
-            if (vs2_data_valid&vs1_data_valid&((vs2_eew==EEW16)|(vs2_eew==EEW32))) begin
-              result_valid = 'b1;
-            end
-
-            `ifdef ASSERT_ON
-              assert #0 (result_valid==1'b1)
-              else $error("result_valid(%d) should be 1.\n",result_valid);
-            `endif
+            result_valid = alu_uop_valid&vs2_data_valid&vs1_data_valid&((vs2_eew==EEW16)|(vs2_eew==EEW32));
           end
         endcase
       end
 
-      {1'b1,OPIVX},
-      {1'b1,OPIVI}: begin
+      OPIVX,
+      OPIVI: begin
         case(uop_funct6.ari_funct6)
           VSLL,
           VSRL,
           VSRA,
           VSSRL,
           VSSRA: begin
-            if (vs2_data_valid&rs1_data_valid) begin
-              result_valid = 'b1;
-            end
-
-            `ifdef ASSERT_ON
-              assert #0 (result_valid==1'b1)
-              else $error("result_valid(%d) should be 1.\n",result_valid);
-            `endif
+            result_valid = alu_uop_valid&vs2_data_valid&rs1_data_valid;
           end
 
           VNSRL,
           VNSRA,
           VNCLIPU,
           VNCLIP: begin
-            if (vs2_data_valid&rs1_data_valid&((vs2_eew==EEW16)|(vs2_eew==EEW32))) begin
-              result_valid = 'b1;
-            end
-
-            `ifdef ASSERT_ON
-              assert #0 (result_valid==1'b1)
-              else $error("result_valid(%d) should be 1.\n",result_valid);
-            `endif
+            result_valid = alu_uop_valid&vs2_data_valid&rs1_data_valid&((vs2_eew==EEW16)|(vs2_eew==EEW32));
           end
         endcase
       end
@@ -1035,10 +1007,10 @@ module rvv_backend_alu_unit_shift
     // initial
     result.vsaturate = 'b0;
 
-    case({alu_uop_valid,uop_funct3}) 
-      {1'b1,OPIVV},
-      {1'b1,OPIVX},
-      {1'b1,OPIVI}: begin
+    case(uop_funct3) 
+      OPIVV,
+      OPIVX,
+      OPIVI: begin
         case(uop_funct6.ari_funct6)
           VNCLIPU: begin
             result.vsaturate = upoverflow;
@@ -1062,7 +1034,6 @@ module rvv_backend_alu_unit_shift
 
     logic signed [`BYTE_WIDTH:0]   src;
     logic signed [`BYTE_WIDTH:0]   res;
-    logic signed [`BYTE_WIDTH-1:0] result;
     logic signed [`BYTE_WIDTH-1:0] round;
 
     if ((opcode==SHIFT_SLL)||(opcode==SHIFT_SRL))
@@ -1072,17 +1043,15 @@ module rvv_backend_alu_unit_shift
 
     if (opcode==SHIFT_SLL) begin
       res = src<<amount;
-      result = res[`BYTE_WIDTH-1:0];
       round  = 'b0;
     end
     else begin
       // ((opcode==SHIFT_SRL)||(opcode==SHIFT_SRA))
       res = src>>>amount;    
-      result = res[`BYTE_WIDTH-1:0];
       round  = operand<<(`BYTE_WIDTH-amount); 
     end
 
-    return {result,round};
+    return {res[`BYTE_WIDTH-1:0],round};
   endfunction
 
   function [2*`HWORD_WIDTH-1:0] f_shift16;
@@ -1092,7 +1061,6 @@ module rvv_backend_alu_unit_shift
 
     logic signed [`HWORD_WIDTH:0]   src;
     logic signed [`HWORD_WIDTH:0]   res;
-    logic signed [`HWORD_WIDTH-1:0] result;
     logic signed [`HWORD_WIDTH-1:0] round;
 
     if ((opcode==SHIFT_SLL)||(opcode==SHIFT_SRL))
@@ -1102,17 +1070,15 @@ module rvv_backend_alu_unit_shift
 
     if (opcode==SHIFT_SLL) begin
       res = src<<amount;
-      result = res[`HWORD_WIDTH-1:0];
       round  = 'b0;
     end
     else begin
       // ((opcode==SHIFT_SRL)||(opcode==SHIFT_SRA))
       res = src>>>amount;    
-      result = res[`HWORD_WIDTH-1:0];
       round  = operand<<(`HWORD_WIDTH-amount); 
     end
 
-    return {result,round};
+    return {res[`HWORD_WIDTH-1:0],round};
 
   endfunction
 
@@ -1123,7 +1089,6 @@ module rvv_backend_alu_unit_shift
 
     logic signed [`WORD_WIDTH:0]   src;
     logic signed [`WORD_WIDTH:0]   res;
-    logic signed [`WORD_WIDTH-1:0] result;
     logic signed [`WORD_WIDTH-1:0] round;
 
     if ((opcode==SHIFT_SLL)||(opcode==SHIFT_SRL))
@@ -1133,17 +1098,15 @@ module rvv_backend_alu_unit_shift
 
     if (opcode==SHIFT_SLL) begin
       res = src<<amount;
-      result = res[`WORD_WIDTH-1:0];
       round  = 'b0;
     end
     else begin
       // ((opcode==SHIFT_SRL)||(opcode==SHIFT_SRA))
       res = src>>>amount;    
-      result = res[`WORD_WIDTH-1:0];
       round  = operand<<(`WORD_WIDTH-amount); 
     end
 
-    return {result,round};
+    return {res[`WORD_WIDTH-1:0],round};
 
   endfunction
 

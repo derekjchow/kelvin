@@ -92,107 +92,75 @@ module rvv_backend_alu_unit_other
     result_valid = 'b0;
 
     // prepare source data
-    case({alu_uop_valid,uop_funct3})
-      {1'b1,OPIVV}: begin
+    case(uop_funct3)
+      OPIVV: begin
         case(uop_funct6.ari_funct6)
           VMINU,
           VMIN,
           VMAXU,
           VMAX: begin
-            if(vs1_data_valid&vs2_data_valid) begin
-              result_valid = 1'b1;
-            end
+            result_valid = alu_uop_valid&vs1_data_valid&vs2_data_valid;
           end
           VMERGE_VMV: begin
-            // vmv.v
-            if(vs1_data_valid&(vm==1'b1)) begin
-              result_valid = 1'b1;
-            end
-            // vmerge.v
-            else if(vs1_data_valid&(vm==1'b0)&vs2_data_valid&v0_data_valid) begin
-              result_valid = 1'b1;
-            end
+            //                                          vmv.v           vmerge.v
+            result_valid = alu_uop_valid&vs1_data_valid&(vm||vs2_data_valid&v0_data_valid);
           end
         endcase
       end
 
-      {1'b1,OPIVX}: begin
+      OPIVX: begin
         case(uop_funct6.ari_funct6)
           VMINU,
           VMIN,
           VMAXU,
           VMAX: begin
-            if(rs1_data_valid&vs2_data_valid) begin
-              result_valid = 1'b1;
-            end
+            result_valid = alu_uop_valid&rs1_data_valid&vs2_data_valid;
           end
           VMERGE_VMV: begin
-            // vmv.v
-            if(rs1_data_valid&(vm==1'b1)) begin
-              result_valid = 1'b1;
-            end
-            // vmerge.v
-            else if(rs1_data_valid&(vm==1'b0)&vs2_data_valid&v0_data_valid) begin
-              result_valid = 1'b1;
-            end
+            //                                          vmv.v           vmerge.v
+            result_valid = alu_uop_valid&rs1_data_valid&(vm||vs2_data_valid&v0_data_valid);
           end
         endcase
       end
 
-      {1'b1,OPIVI}: begin
+      OPIVI: begin
         case(uop_funct6.ari_funct6)
           VMERGE_VMV: begin
-            // vmv.v
-            if(rs1_data_valid&(vm==1'b1)) begin
-              result_valid = 1'b1;
-            end
-            // vmerge.v
-            else if(rs1_data_valid&(vm==1'b0)&vs2_data_valid&v0_data_valid) begin
-              result_valid = 1'b1;
-            end
+            //                                          vmv.v           vmerge.v
+            result_valid = alu_uop_valid&rs1_data_valid&(vm||vs2_data_valid&v0_data_valid);
           end
           VSMUL_VMVNRR: begin
-            if(vm&vs2_data_valid) begin
-              result_valid = 1'b1;
-            end
+            result_valid = alu_uop_valid&vm&vs2_data_valid;
           end
         endcase
       end
 
-      {1'b1,OPMVV}: begin
+      OPMVV: begin
         case(uop_funct6.ari_funct6)
           VXUNARY0: begin
             case(vs1_opcode) 
               VZEXT_VF2,
               VSEXT_VF2: begin
-                if((vs1_data_valid==1'b0)&vs2_data_valid&((vs2_eew==EEW8)|(vs2_eew==EEW16))) begin
-                  result_valid = 1'b1;
-                end
+                result_valid = alu_uop_valid&(vs1_data_valid==1'b0)&vs2_data_valid&((vs2_eew==EEW8)|(vs2_eew==EEW16));
               end
               VZEXT_VF4,
               VSEXT_VF4: begin
-                if((vs1_data_valid==1'b0)&vs2_data_valid&(vs2_eew==EEW8)) begin
-                  result_valid = 1'b1;
-                end
+                result_valid = alu_uop_valid&(vs1_data_valid==1'b0)&vs2_data_valid&(vs2_eew==EEW8);
               end
             endcase
           end
           VWXUNARY0: begin
             // vmv.x.s
-            if(vm&vs2_data_valid&(vs1_opcode==VMV_X_S)) begin
-              result_valid = 1'b1;
-            end
+            result_valid = alu_uop_valid&vm&vs2_data_valid&(vs1_opcode==VMV_X_S);
           end
         endcase
       end
 
-      {1'b1,OPMVX}: begin
+      OPMVX: begin
         case(uop_funct6.ari_funct6)
           VWXUNARY0: begin
             // vmv.s.x
-            if(vm&rs1_data_valid) begin
-              result_valid = 1'b1;
-            end
+            result_valid = alu_uop_valid&vm&rs1_data_valid;
           end
         endcase
       end
@@ -218,11 +186,11 @@ module rvv_backend_alu_unit_other
           end
           VMERGE_VMV: begin
             // vmv.v
-            if(vm==1'b1) begin
+            if(vm) begin
               src1_data = vs1_data;
             end
             // vmerge.v
-            else if(vm==1'b0) begin
+            else begin
               src2_data = vs2_data;
               src1_data = vs1_data;
             end
@@ -766,14 +734,12 @@ module rvv_backend_alu_unit_other
       else
         f_get_min_max8 = src1[`BYTE_WIDTH-1:0];
     end
-    else if (opcode==GET_MAX) begin
+    else begin //(opcode==GET_MAX) 
       if (comp_slt)
         f_get_min_max8 = src1[`BYTE_WIDTH-1:0];
       else
         f_get_min_max8 = src2[`BYTE_WIDTH-1:0];
     end
-    else
-      f_get_min_max8 = 'b0;
   endfunction
 
   function [`HWORD_WIDTH-1:0] f_get_min_max16;
@@ -790,14 +756,12 @@ module rvv_backend_alu_unit_other
       else
         f_get_min_max16 = src1[`HWORD_WIDTH-1:0];
     end
-    else if (opcode==GET_MAX) begin
+    else begin //(opcode==GET_MAX)
       if (comp_slt)
         f_get_min_max16 = src1[`HWORD_WIDTH-1:0];
       else
         f_get_min_max16 = src2[`HWORD_WIDTH-1:0];
     end
-    else
-      f_get_min_max16 = 'b0;
   endfunction
 
   function [`WORD_WIDTH-1:0] f_get_min_max32;
@@ -814,14 +778,12 @@ module rvv_backend_alu_unit_other
       else
         f_get_min_max32 = src1[`WORD_WIDTH-1:0];
     end
-    else if (opcode==GET_MAX) begin
+    else begin //(opcode==GET_MAX) 
       if (comp_slt)
         f_get_min_max32 = src1[`WORD_WIDTH-1:0];
       else
         f_get_min_max32 = src2[`WORD_WIDTH-1:0];
     end
-    else
-      f_get_min_max32 = 'b0;
   endfunction
 
 

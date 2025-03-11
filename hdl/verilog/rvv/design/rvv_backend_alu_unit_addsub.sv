@@ -103,8 +103,8 @@ module rvv_backend_alu_unit_addsub
     // initial the data
     result_valid = 'b0;
 
-    case({alu_uop_valid,uop_funct3}) 
-      {1'b1,OPIVV}: begin
+    case(uop_funct3) 
+      OPIVV: begin
         case(uop_funct6.ari_funct6)
           VADD,
           VSUB,
@@ -112,21 +112,17 @@ module rvv_backend_alu_unit_addsub
           VSSUB,
           VSADDU,
           VSSUBU: begin
-            if (vs2_data_valid&vs1_data_valid) begin
-              result_valid = 'b1;
-            end
+            result_valid = alu_uop_valid&vs2_data_valid&vs1_data_valid;
           end
 
           VADC,
           VSBC: begin
-            if (vs2_data_valid&vs1_data_valid&(vm==1'b0)&v0_data_valid) begin
-              result_valid = 'b1;
-            end
+            result_valid = alu_uop_valid&vs2_data_valid&vs1_data_valid&(vm==1'b0)&v0_data_valid;
           end
         endcase
       end
 
-      {1'b1,OPIVX}: begin
+      OPIVX: begin
         case(uop_funct6.ari_funct6)
           VADD,
           VSUB,
@@ -135,96 +131,76 @@ module rvv_backend_alu_unit_addsub
           VSSUB,
           VSADDU,
           VSSUBU: begin
-            if (vs2_data_valid&rs1_data_valid) begin
-              result_valid = 'b1;
-            end
+            result_valid = alu_uop_valid&vs2_data_valid&rs1_data_valid;
           end
 
           VADC,
           VSBC: begin
-            if (vs2_data_valid&rs1_data_valid&(vm==1'b0)&v0_data_valid) begin
-              result_valid = 'b1;
-            end
+            result_valid = alu_uop_valid&vs2_data_valid&rs1_data_valid&(vm==1'b0)&v0_data_valid;
           end
         endcase
       end
-      {1'b1,OPIVI}: begin
+      OPIVI: begin
         case(uop_funct6.ari_funct6)
           VADD,
           VRSUB,
           VSADD,
           VSADDU: begin
-            if (vs2_data_valid&rs1_data_valid) begin
-              result_valid = 'b1;
-            end
+            result_valid = alu_uop_valid&vs2_data_valid&rs1_data_valid;
           end
 
           VADC: begin
-            if (vs2_data_valid&rs1_data_valid&(vm==1'b0)&v0_data_valid) begin
-              result_valid = 'b1;
-            end
+            result_valid = alu_uop_valid&vs2_data_valid&rs1_data_valid&(vm==1'b0)&v0_data_valid;
           end
         endcase
       end
 
-      {1'b1,OPMVV}: begin
+      OPMVV: begin
         case(uop_funct6.ari_funct6)
           VWADDU,
           VWADD,
           VWSUBU,
           VWSUB: begin
-            if (vs2_data_valid&vs1_data_valid&((vs2_eew==EEW8)|(vs2_eew==EEW16))) begin
-              result_valid = 'b1;
-            end
+            result_valid = alu_uop_valid&vs2_data_valid&vs1_data_valid&((vs2_eew==EEW8)|(vs2_eew==EEW16));
           end
 
           VWADDU_W,
           VWADD_W,
           VWSUBU_W,
           VWSUB_W: begin
-            if (vs2_data_valid&vs1_data_valid&((vs2_eew==EEW16)|(vs2_eew==EEW32))) begin
-              result_valid = 'b1;
-            end
+            result_valid = alu_uop_valid&vs2_data_valid&vs1_data_valid&((vs2_eew==EEW16)|(vs2_eew==EEW32));
           end
 
           VAADDU,
           VAADD,
           VASUBU,
           VASUB: begin
-            if (vs2_data_valid&vs1_data_valid) begin
-              result_valid   = 'b1;
-            end
+            result_valid = alu_uop_valid&vs2_data_valid&vs1_data_valid;
           end
         endcase
       end
       
-      {1'b1,OPMVX}: begin
+      OPMVX: begin
         case(uop_funct6.ari_funct6)
           VWADDU,
           VWADD,
           VWSUBU,
           VWSUB: begin
-            if (vs2_data_valid&rs1_data_valid&((vs2_eew==EEW8)|(vs2_eew==EEW16))) begin
-              result_valid = 'b1;
-            end
+            result_valid = alu_uop_valid&vs2_data_valid&rs1_data_valid&((vs2_eew==EEW8)|(vs2_eew==EEW16));
           end
 
           VWADDU_W,
           VWADD_W,
           VWSUBU_W,
           VWSUB_W: begin
-            if (vs2_data_valid&rs1_data_valid&((vs2_eew==EEW16)|(vs2_eew==EEW32))) begin
-              result_valid = 'b1;
-            end
+            result_valid = alu_uop_valid&vs2_data_valid&rs1_data_valid&((vs2_eew==EEW16)|(vs2_eew==EEW32));
           end
 
           VAADDU,
           VAADD,
           VASUBU,
           VASUB: begin
-            if (vs2_data_valid&rs1_data_valid) begin
-              result_valid   = 'b1;
-            end
+            result_valid = alu_uop_valid&vs2_data_valid&rs1_data_valid;
           end
         endcase
       end
@@ -785,28 +761,26 @@ module rvv_backend_alu_unit_addsub
             case(uop_funct6.ari_funct6)
               VADC,
               VSBC: begin
-                if ((vm==1'b0)&v0_data_valid) begin
-                  case(vs2_eew)
-                    EEW8: begin                    
-                      cin[4*j]   = v0_data_in_use[4*j];
-                      cin[4*j+1] = v0_data_in_use[4*j+1];
-                      cin[4*j+2] = v0_data_in_use[4*j+2];
-                      cin[4*j+3] = v0_data_in_use[4*j+3];
-                    end
-                    EEW16: begin
-                      cin[4*j]   = v0_data_in_use[2*j];
-                      cin[4*j+1] = 'b0;
-                      cin[4*j+2] = v0_data_in_use[2*j+1];
-                      cin[4*j+3] = 'b0;
-                    end
-                    EEW32: begin
-                      cin[4*j]   = v0_data_in_use[j];
-                      cin[4*j+1] = 'b0;
-                      cin[4*j+2] = 'b0;
-                      cin[4*j+3] = 'b0;
-                    end
-                  endcase
-                end
+                case(vs2_eew)
+                  EEW8: begin                    
+                    cin[4*j]   = v0_data_in_use[4*j];
+                    cin[4*j+1] = v0_data_in_use[4*j+1];
+                    cin[4*j+2] = v0_data_in_use[4*j+2];
+                    cin[4*j+3] = v0_data_in_use[4*j+3];
+                  end
+                  EEW16: begin
+                    cin[4*j]   = v0_data_in_use[2*j];
+                    cin[4*j+1] = 'b0;
+                    cin[4*j+2] = v0_data_in_use[2*j+1];
+                    cin[4*j+3] = 'b0;
+                  end
+                  EEW32: begin
+                    cin[4*j]   = v0_data_in_use[j];
+                    cin[4*j+1] = 'b0;
+                    cin[4*j+2] = 'b0;
+                    cin[4*j+3] = 'b0;
+                  end
+                endcase
               end
             endcase
           end
@@ -1489,12 +1463,10 @@ module rvv_backend_alu_unit_addsub
     logic [`BYTE_WIDTH-1:0]     result;
     logic                       cout;
     
-    if ((opcode==ADDSUB_VADD)&(src_cin==1'b1))
-      {cout,result} = src_x + 1'b1;
-    else if ((opcode==ADDSUB_VSUB)&(src_cin==1'b1))
-      {cout,result} = src_x - 1'b1;
-    else
-      {cout,result} = src_x;
+    if (opcode==ADDSUB_VADD)
+      {cout,result} = src_x + src_cin;
+    else //(opcode==ADDSUB_VSUB)
+      {cout,result} = src_x - src_cin;
 
     return {cout,result};  
 
@@ -1509,12 +1481,10 @@ module rvv_backend_alu_unit_addsub
     logic [`HWORD_WIDTH-1:0]     result;
     logic                        cout;
     
-    if ((opcode==ADDSUB_VADD)&(src_cin==1'b1))
-      {cout,result} = src_x + 1'b1;
-    else if ((opcode==ADDSUB_VSUB)&(src_cin==1'b1))
-      {cout,result} = src_x - 1'b1;
-    else
-      {cout,result} = src_x;
+    if (opcode==ADDSUB_VADD)
+      {cout,result} = src_x + src_cin;
+    else //(opcode==ADDSUB_VSUB)
+      {cout,result} = src_x - src_cin;
 
     return {cout,result}; 
 
