@@ -30,6 +30,8 @@ module rvv_backend_alu_unit_mask
   FUNCT6_u                            uop_funct6;
   logic   [`FUNCT3_WIDTH-1:0]         uop_funct3;
   logic   [`VSTART_WIDTH-1:0]         vstart;
+  logic   [`VLEN-1:0]                 vstart_onehot;
+  logic   [`VLEN-1:0]                 vstart_onehot_sub1;
   logic   [`VL_WIDTH-1:0]             vl;       
   logic   [`VLEN-1:0]                 v0_data;           
   logic                               v0_data_valid;
@@ -300,14 +302,14 @@ module rvv_backend_alu_unit_mask
 //    
 // calculate the result
 //
-  assign result_data_and   = f_and (src2_data,src1_data);  
-  assign result_data_andn  = f_andn(src2_data,src1_data);  
-  assign result_data_or    = f_or  (src2_data,src1_data);  
-  assign result_data_xor   = f_xor (src2_data,src1_data);  
-  assign result_data_orn   = f_orn (src2_data,src1_data);  
-  assign result_data_nand  = f_nand(src2_data,src1_data);  
-  assign result_data_nor   = f_nor (src2_data,src1_data);  
-  assign result_data_xnor  = f_xnor(src2_data,src1_data); 
+  assign result_data_and   = src2_data & src1_data;  
+  assign result_data_andn  = src2_data & (~src1_data);  
+  assign result_data_or    = src2_data | src1_data;  
+  assign result_data_xor   = src2_data ^ src1_data;  
+  assign result_data_orn   = src2_data | (~src1_data);  
+  assign result_data_nand  = ~(src2_data & src1_data);  
+  assign result_data_nor   = ~(src2_data | src1_data);  
+  assign result_data_xnor  = ~(src2_data ^ src1_data); 
   assign src2_data_sub1    = src2_data - 1'b1;
   assign result_data_vmsof = src2_data & (~src2_data_sub1);
   assign result_vmsif      = src2_data ^ src2_data_sub1;
@@ -507,70 +509,66 @@ module rvv_backend_alu_unit_mask
   assign  result.alu_sub_opcode = alu_sub_opcode;
 
   // result data
-  generate 
-    for (j=0;j<`VLEN;j++) begin: GET_W_DATA
-      always_comb begin
-        // initial
-        result.result_data[j] = 'b0;
+  assign vstart_onehot = 1'b1<<vstart;
+  assign vstart_onehot_sub1 = vstart_onehot - 1'b1;
 
-        case(uop_funct3)
-          OPIVV,
-          OPIVX,
-          OPIVI: begin
-            case(uop_funct6.ari_funct6)
-              VAND,
-              VOR,
-              VXOR: begin
-                result.result_data[j] = result_data[j];
+  always_comb begin
+    // initial
+    result.result_data = 'b0;
+
+    case(uop_funct3)
+      OPIVV,
+      OPIVX,
+      OPIVI: begin
+        case(uop_funct6.ari_funct6)
+          VAND,
+          VOR,
+          VXOR: begin
+            result.result_data = result_data;
+          end
+        endcase
+      end
+      OPMVV: begin
+        case(uop_funct6.ari_funct6)
+          VMANDN,
+          VMAND,
+          VMOR,
+          VMXOR,
+          VMORN,
+          VMNAND,
+          VMNOR,
+          VMXNOR: begin
+            result.result_data = result_data&(~vstart_onehot_sub1) | vd_data&vstart_onehot_sub1;
+          end
+          VWXUNARY0: begin
+            case(vs1_opcode)
+              VFIRST: begin
+                result.result_data = result_data;
               end
             endcase
           end
-          OPMVV: begin
-            case(uop_funct6.ari_funct6)
-              VMANDN,
-              VMAND,
-              VMOR,
-              VMXOR,
-              VMORN,
-              VMNAND,
-              VMNOR,
-              VMXNOR: begin
-                if (j<vstart)
-                  result.result_data[j] = vd_data[j];
-                else
-                  result.result_data[j] = result_data[j];
+          VMUNARY0: begin
+            case(vs1_opcode)
+              VMSBF,
+              VMSOF,
+              VMSIF: begin
+                if (vm==1'b1)
+                  result.result_data = result_data;
+                else 
+                  result.result_data = result_data&v0_data | vd_data&(~v0_data);
               end
-              VWXUNARY0: begin
-                case(vs1_opcode)
-                  VFIRST: begin
-                    result.result_data[j] = result_data[j];
-                  end
-                endcase
+              VIOTA: begin
+                result.result_data = result_data;
               end
-              VMUNARY0: begin
-                case(vs1_opcode)
-                  VMSBF,
-                  VMSOF,
-                  VMSIF: begin
-                    if (vm==1'b1)
-                      result.result_data[j] = result_data[j];
-                    else 
-                      result.result_data[j] = v0_data[j] ? result_data[j] : vd_data[j]; 
-                  end
-                  VIOTA: begin
-                    result.result_data[j] = result_data[j];
-                  end
-                  VID: begin
-                    result.result_data[j] = result_data[j];
-                  end
-                endcase
+              VID: begin
+                result.result_data = result_data;
               end
             endcase
           end
         endcase
-      end   
-    end
-  endgenerate
+      end
+    endcase
+  end   
 
   always_comb begin
     for(int i=0;i<`VLEN/64;i++) begin
@@ -582,73 +580,5 @@ module rvv_backend_alu_unit_mask
   
   // saturate signal
   assign  result.vsaturate = 'b0;
-
-//
-// function unit
-//
-  // OPMVV-vmandn function
-  function [`VLEN-1:0] f_andn;
-    input logic [`VLEN-1:0] vs2_data;
-    input logic [`VLEN-1:0] vs1_data;
-
-    f_andn = vs2_data & (~vs1_data);
-  endfunction
-
-  // OPMVV-vmand function 
-  function [`VLEN-1:0] f_and;
-    input logic [`VLEN-1:0] vs2_data;
-    input logic [`VLEN-1:0] vs1_data;
-
-    f_and = vs2_data & vs1_data;
-  endfunction
-
-  // OPMVV-vmor function 
-  function [`VLEN-1:0] f_or;
-    input logic [`VLEN-1:0] vs2_data;
-    input logic [`VLEN-1:0] vs1_data;
-
-    f_or = vs2_data | vs1_data;
-  endfunction
-
-  // OPMVV-vmxor function 
-  function [`VLEN-1:0] f_xor;
-    input logic [`VLEN-1:0] vs2_data;
-    input logic [`VLEN-1:0] vs1_data;
-
-    f_xor = vs2_data ^ vs1_data;
-  endfunction
-
-  // OPMVV-vmorn function 
-  function [`VLEN-1:0] f_orn;
-    input logic [`VLEN-1:0] vs2_data;
-    input logic [`VLEN-1:0] vs1_data;
-
-    f_orn = vs2_data | (~vs1_data);
-  endfunction
-
-  // OPMVV-vmnand function
-  function [`VLEN-1:0] f_nand;
-    input logic [`VLEN-1:0] vs2_data;
-    input logic [`VLEN-1:0] vs1_data;
-
-    f_nand = ~(vs2_data & vs1_data);
-  endfunction
-
-  // OPMVV-vmnor function 
-  function [`VLEN-1:0] f_nor;
-    input logic [`VLEN-1:0] vs2_data;
-    input logic [`VLEN-1:0] vs1_data;
-
-    f_nor = ~(vs2_data | vs1_data);
-  endfunction
-  
-  // OPMVV-vmxnor function 
-  function [`VLEN-1:0] f_xnor;
-    input logic [`VLEN-1:0] vs2_data;
-    input logic [`VLEN-1:0] vs1_data;
-
-    f_xnor = ~(vs2_data ^ vs1_data);
-  endfunction
-
 
 endmodule
