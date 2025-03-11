@@ -1,6 +1,4 @@
-// a mux with 8 inputs and 1 output
-
-module mux8_1
+module mux7_1
 (
   sel,
   indata0,
@@ -10,7 +8,6 @@ module mux8_1
   indata4,
   indata5,
   indata6,
-  indata7,
   outdata 
 );
   parameter WIDTH = 1;
@@ -23,7 +20,6 @@ module mux8_1
   input  logic [WIDTH-1:0]   indata4;
   input  logic [WIDTH-1:0]   indata5;
   input  logic [WIDTH-1:0]   indata6;
-  input  logic [WIDTH-1:0]   indata7;
   output logic [WIDTH-1:0]   outdata;
   
 
@@ -49,9 +45,6 @@ module mux8_1
       end
       3'd6: begin
         outdata = indata6;
-      end
-      3'd7: begin
-        outdata = indata7;
       end
       default: begin
         outdata = 'b0;
