@@ -44,6 +44,9 @@ def format_line_from_word(word, addr):
   line = np.roll(line.view(np.uint8), shift)
   return convert_to_binary_value(line)
 
+async def halt(self):
+  kelvin_reset_csr_addr = 0x30000
+  await self.write_word(kelvin_reset_csr_addr, 3)
 
 class CoreMiniAxiInterface:
   def __init__(self, dut):
@@ -925,3 +928,21 @@ async def core_mini_axi_kelvin_isa_test(dut):
       await core_mini_axi.execute_from(entry_point)
       await core_mini_axi.wait_for_halted()
       assert core_mini_axi.dut.io_fault.value == 0
+
+@cocotb.test()
+async def core_mini_axi_rand_instr_test(dut):
+  core_mini_axi = CoreMiniAxiInterface(dut)
+  await core_mini_axi.init()
+  cocotb.start_soon(core_mini_axi.clock.start())
+
+  for _ in tqdm.tqdm(range(1000)):
+    instr = np.random.randint(0, 2**32, 1, dtype=np.uint32)
+    mpause = np.array([0x8000073], dtype=np.uint32)
+    wdata = np.concatenate([instr, mpause, mpause, mpause])
+    await core_mini_axi.reset()
+    await core_mini_axi.write(0, wdata)
+    await core_mini_axi.execute_from(0)
+    try:
+      await core_mini_axi.wait_for_halted()
+    except:
+      await core_mini_axi.halt()
