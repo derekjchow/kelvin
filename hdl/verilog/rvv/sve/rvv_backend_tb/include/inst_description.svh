@@ -68,7 +68,7 @@ typedef struct packed {
   lmul_e vlmul;
 } vtype_t;
 
-typedef enum logic [2:0] {
+typedef enum logic [1:0] {
   RNU = 0,
   RNE = 1,
   RDN = 2,
