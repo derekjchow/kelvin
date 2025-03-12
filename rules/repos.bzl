@@ -84,7 +84,7 @@ def kelvin_repos():
             "https://github.com/grpc/grpc/archive/v1.58.0.tar.gz",
         ],
         strip_prefix = "grpc-1.58.0",
-        sha256 = "ec64fdab22726d50fc056474dd29401d914cc616f53ab8f2fe4866772881d581",
+        sha256 = "ec64fdab22726d50fc056474dd29401d914cc616f53ab8f2fe4866772881d581"
     )
 
     http_archive(
