@@ -115,8 +115,8 @@ sc_top::sc_top(sc_core::sc_module_name name)
   core.io_axi_slave_write_resp_bits_id(slave_bid_4);
   core.io_axi_slave_write_resp_bits_resp(slave_bresp_4);
 
-  SC_METHOD(posedge);
-  sensitive << clock.pos();
+  SC_METHOD(negedge);
+  sensitive << clock.neg();
 }
 
 void sc_top::start_of_simulation() {
@@ -125,7 +125,7 @@ void sc_top::start_of_simulation() {
   irq = sc_dt::Log_0;
 }
 
-void sc_top::posedge() {
+void sc_top::negedge() {
   if (hdl_elaboration_only()) {
     return;
   }

@@ -221,11 +221,13 @@ int sc_main(int argc, char** argv) {
     }
     close(fd);
 
+    uint32_t csr_addr_ = 0x30000;
     uint32_t elf_magic = 0x464c457f;
     uint8_t* data8 = reinterpret_cast<uint8_t*>(file_data_);
     if (memcmp(file_data_, &elf_magic, sizeof(elf_magic)) == 0) {
       std::vector<DataTransfer> elf_transfers;
       const Elf32_Ehdr* elf_header = reinterpret_cast<Elf32_Ehdr*>(file_data_);
+      auto entry_point = elf_header->e_entry;
       elf_transfers.reserve(3 * elf_header->e_phnum + 1);
       LoadElf(data8,
               [&elf_transfers](void* dest, const void* src, size_t count) {
@@ -238,6 +240,9 @@ int sc_main(int argc, char** argv) {
                     reinterpret_cast<uint8_t*>(const_cast<void*>(src)), count));
                 return dest;
               });
+      elf_transfers.push_back(utils::Write(
+        csr_addr_ + 0x4, reinterpret_cast<uint8_t*>(&entry_point), sizeof(entry_point)
+      ));
       bin_transfer = std::make_unique<TrafficDesc>(utils::merge(elf_transfers));
     } else {
       // Transaction to fill ITCM with the provided binary.
@@ -247,7 +252,6 @@ int sc_main(int argc, char** argv) {
                utils::Expect(data8, file_size_)})));
     }
 
-    auto csr_addr_ = 0x30000;
     disable_cg_transfer =
         std::make_unique<TrafficDesc>(utils::merge(std::vector<DataTransfer>(
             {utils::Write(csr_addr_, DATA(1, 0, 0, 0)),

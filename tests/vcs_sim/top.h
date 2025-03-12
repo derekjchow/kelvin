@@ -30,7 +30,7 @@ struct DebugIO {
 SC_MODULE(sc_top) {
   SC_CTOR(sc_top);
 
-  void posedge();
+  void negedge();
 
   void start_of_simulation() override;
 
