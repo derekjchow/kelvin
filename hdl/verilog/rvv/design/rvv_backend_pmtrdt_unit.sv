@@ -921,24 +921,6 @@ module rvv_backend_pmtrdt_unit
             src2_vs1_1stage[2][7:0] = min_vs1_ex1[2][7:0];
             src2_vs1_1stage[3][7:0] = min_vs1_ex1[3][7:0];
           end
-          AND:begin
-            src2_vs1_1stage[0][7:0] = and_vs1_ex1[0][7:0];
-            src2_vs1_1stage[1][7:0] = and_vs1_ex1[1][7:0];
-            src2_vs1_1stage[2][7:0] = and_vs1_ex1[2][7:0];
-            src2_vs1_1stage[3][7:0] = and_vs1_ex1[3][7:0];
-          end
-          OR:begin
-            src2_vs1_1stage[0][7:0] = or_vs1_ex1[0][7:0];
-            src2_vs1_1stage[1][7:0] = or_vs1_ex1[1][7:0];
-            src2_vs1_1stage[2][7:0] = or_vs1_ex1[2][7:0];
-            src2_vs1_1stage[3][7:0] = or_vs1_ex1[3][7:0];
-          end
-          XOR:begin
-            src2_vs1_1stage[0][7:0] = xor_vs1_ex1[0][7:0];
-            src2_vs1_1stage[1][7:0] = xor_vs1_ex1[1][7:0];
-            src2_vs1_1stage[2][7:0] = xor_vs1_ex1[2][7:0];
-            src2_vs1_1stage[3][7:0] = xor_vs1_ex1[3][7:0];
-          end
           default:begin
             src2_vs1_1stage[0][7:0] = sum_vs1_ex1[0][7:0];
             src2_vs1_1stage[1][7:0] = sum_vs1_ex1[1][7:0];
@@ -946,7 +928,7 @@ module rvv_backend_pmtrdt_unit
             src2_vs1_1stage[3][7:0] = sum_vs1_ex1[3][7:0];
           end
         endcase
-        case (rdt_ctrl_q.vs1_eew)
+        case (rdt_ctrl_q.vs1_eew) // Reduction instruction: widen_vs2_eew == vs1_eew
           EEW32:begin
             src2_vs1_1stage[0][8] = 1'b0;
             src2_vs1_1stage[1][8] = 1'b0;
@@ -983,24 +965,6 @@ module rvv_backend_pmtrdt_unit
             src1_vd_1stage[2][7:0] = ~min_res_ex1[2][7:0];
             src1_vd_1stage[3][7:0] = ~min_res_ex1[3][7:0];
           end
-          AND:begin
-            src1_vd_1stage[0][7:0] = and_res_ex1[0][7:0];
-            src1_vd_1stage[1][7:0] = and_res_ex1[1][7:0];
-            src1_vd_1stage[2][7:0] = and_res_ex1[2][7:0];
-            src1_vd_1stage[3][7:0] = and_res_ex1[3][7:0];
-          end
-          OR:begin
-            src1_vd_1stage[0][7:0] = or_res_ex1[0][7:0];
-            src1_vd_1stage[1][7:0] = or_res_ex1[1][7:0];
-            src1_vd_1stage[2][7:0] = or_res_ex1[2][7:0];
-            src1_vd_1stage[3][7:0] = or_res_ex1[3][7:0];
-          end
-          XOR:begin
-            src1_vd_1stage[0][7:0] = xor_res_ex1[0][7:0];
-            src1_vd_1stage[1][7:0] = xor_res_ex1[1][7:0];
-            src1_vd_1stage[2][7:0] = xor_res_ex1[2][7:0];
-            src1_vd_1stage[3][7:0] = xor_res_ex1[3][7:0];
-          end
           default:begin
             src1_vd_1stage[0][7:0] = sum_res_ex1[0][7:0];
             src1_vd_1stage[1][7:0] = sum_res_ex1[1][7:0];
@@ -1011,7 +975,7 @@ module rvv_backend_pmtrdt_unit
         case (rdt_ctrl_q.rdt_opr)
           MAX,
           MIN:begin
-            case (rdt_ctrl_q.vs1_eew)
+            case (rdt_ctrl_q.vs1_eew) // Reduction instruction: widen_vs2_eew == vs1_eew
               EEW32:begin
                 src1_vd_1stage[0][8] = 1'b0;
                 src1_vd_1stage[1][8] = 1'b0;
@@ -1033,7 +997,7 @@ module rvv_backend_pmtrdt_unit
             endcase
           end
           default:begin
-            case (rdt_ctrl_q.vs1_eew)
+            case (rdt_ctrl_q.vs1_eew) // Reduction instruction: widen_vs2_eew == vs1_eew
               EEW32:begin
                 src1_vd_1stage[0][8] = 1'b0;
                 src1_vd_1stage[1][8] = 1'b0;
@@ -1062,7 +1026,7 @@ module rvv_backend_pmtrdt_unit
         case (rdt_ctrl_q.rdt_opr)
           MAX,
           MIN:begin
-            case (rdt_ctrl_q.vs1_eew)
+            case (rdt_ctrl_q.vs1_eew) // Reduction instruction: widen_vs2_eew == vs1_eew
               EEW32:begin
                 carry_in_vd_1stage[0] = 1'b1;
                 carry_in_vd_1stage[1] = sum_vd_1stage[0][8];
@@ -1084,7 +1048,7 @@ module rvv_backend_pmtrdt_unit
             endcase
           end
           default:begin
-            case (rdt_ctrl_q.vs1_eew)
+            case (rdt_ctrl_q.vs1_eew) // Reduction instruction: widen_vs2_eew == vs1_eew
               EEW32:begin
                 carry_in_vd_1stage[0] = 1'b0;
                 carry_in_vd_1stage[1] = sum_vd_1stage[0][8];
@@ -1111,9 +1075,9 @@ module rvv_backend_pmtrdt_unit
       // four 9-bit adder/and/or/xor for red_res_q & red_vs1_q
       for (i=0; i<4; i++) begin : gen_rdt_arithmetic_unit_vs1vd_1stage
         assign sum_vd_1stage[i] = src2_vs1_1stage[i] + src1_vd_1stage[i] + carry_in_vd_1stage[i];
-        assign and_vd_1stage[i] = src2_vs1_1stage[i][7:0] & src1_vd_1stage[i][7:0];
-        assign or_vd_1stage[i]  = src2_vs1_1stage[i][7:0] | src1_vd_1stage[i][7:0];
-        assign xor_vd_1stage[i] = src2_vs1_1stage[i][7:0] ^ src1_vd_1stage[i][7:0];
+        assign and_vd_1stage[i] = and_vs1_ex1[i] & and_res_ex1[i];
+        assign or_vd_1stage[i]  = or_vs1_ex1[i]  | or_res_ex1[i];
+        assign xor_vd_1stage[i] = xor_vs1_ex1[i] ^ xor_res_ex1[i];
         assign less_than_vd_1stage[i]  = sum_vd_1stage[i][8];
         assign great_than_vd_1stage[i] = ~sum_vd_1stage[i][8];
       end
