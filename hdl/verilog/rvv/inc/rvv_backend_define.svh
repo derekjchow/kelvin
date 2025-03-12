@@ -23,7 +23,7 @@
 
   // the depth of queue/station/buffer
   `define CQ_DEPTH                16
-  `define UQ_DEPTH                32
+  `define UQ_DEPTH                16
   `define ALU_RS_DEPTH            8
   `define PMTRDT_RS_DEPTH         8
   `define MUL_RS_DEPTH            8
@@ -42,7 +42,7 @@
 
   // the depth of queue/station/buffer
   `define CQ_DEPTH                16
-  `define UQ_DEPTH                32
+  `define UQ_DEPTH                16
   `define ALU_RS_DEPTH            4
   `define PMTRDT_RS_DEPTH         8
   `define MUL_RS_DEPTH            4
@@ -61,7 +61,7 @@
 
   // the depth of queue/station/buffer
   `define CQ_DEPTH                16
-  `define UQ_DEPTH                32
+  `define UQ_DEPTH                16
   `define ALU_RS_DEPTH            4
   `define PMTRDT_RS_DEPTH         8
   `define MUL_RS_DEPTH            4

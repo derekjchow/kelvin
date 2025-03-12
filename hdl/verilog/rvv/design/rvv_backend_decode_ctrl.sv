@@ -140,6 +140,13 @@ module rvv_backend_decode_ctrl
          .outdata  (last_uop_unit[1]) 
       );
 
+      // get fifo_ready
+      assign fifo_ready = !(fifo_full_uq2de || ( 
+                            (|fifo_almost_full_uq2de[2:1])&(quantity<=2) |
+                            (|fifo_almost_full_uq2de[4:1])&(quantity<=4) | 
+                            (|fifo_almost_full_uq2de)
+                           ));
+
     end
     else begin //if(`NUM_DE_UOP==4)
       always_comb begin
@@ -195,12 +202,15 @@ module rvv_backend_decode_ctrl
          .outdata  (last_uop_unit[1]) 
       );
 
+      // get fifo_ready
+      assign fifo_ready = !(fifo_full_uq2de || ( 
+                            (|fifo_almost_full_uq2de[2:1])&(quantity<=2) |
+                            (|fifo_almost_full_uq2de)
+                           ));
+
     end
   endgenerate
       
-  // get fifo_ready
-  assign fifo_ready = !(fifo_full_uq2de | (|fifo_almost_full_uq2de));
-  
   // get pop signal to Command Queue
   assign pop[0] =        pkg_valid[0]&((last_uop_unit[0]&fifo_ready) || (uop_valid_de2uq[0][`NUM_DE_UOP-1:0]=='b0));
   assign pop[1] = pop[0]&pkg_valid[1]&((last_uop_unit[1]&fifo_ready) || (uop_valid_de2uq[1][`NUM_DE_UOP-1:0]=='b0));
