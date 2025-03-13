@@ -52,6 +52,9 @@ module rvv_backend_alu_unit_addsub
   logic   [`VLENB-1:0][`BYTE_WIDTH-1:0]               product8;
   logic   [`VLEN/`HWORD_WIDTH-1:0][`HWORD_WIDTH-1:0]  product16;
   logic   [`VLEN/`WORD_WIDTH-1:0][`WORD_WIDTH-1:0]    product32;
+  logic   [`VLENB-1:0][`BYTE_WIDTH-1:0]               round8_src;
+  logic   [`VLEN/`HWORD_WIDTH-1:0][`HWORD_WIDTH-1:0]  round16_src;
+  logic   [`VLEN/`WORD_WIDTH-1:0][`WORD_WIDTH-1:0]    round32_src;
   logic   [`VLENB-1:0][`BYTE_WIDTH-1:0]               round8;
   logic   [`VLEN/`HWORD_WIDTH-1:0][`HWORD_WIDTH-1:0]  round16;
   logic   [`VLEN/`WORD_WIDTH-1:0][`WORD_WIDTH-1:0]    round32;
@@ -863,6 +866,9 @@ module rvv_backend_alu_unit_addsub
   
   // rounding result
   always_comb begin
+    round8_src  = 'b0;
+    round16_src = 'b0;
+    round32_src = 'b0;
     round8  = 'b0;
     round16 = 'b0;
     round32 = 'b0;
@@ -873,54 +879,66 @@ module rvv_backend_alu_unit_addsub
         case(vxrm)
           RNU: begin
             for(int i=0;i<`VLENB;i=i+1) begin
-              round8[i] = f_half_add8({cout8[i],product8[i][`BYTE_WIDTH-1:1]}, product8[i][0]); 
+              round8_src[i] = {cout8[i],product8[i][`BYTE_WIDTH-1:1]};
+              round8[i] = product8[i][0] ? round8_src[i]+1'b1 : round8_src[i];
             end
 
             for(int i=0;i<`VLEN/`HWORD_WIDTH;i=i+1) begin
-              round16[i] = f_half_add16({cout16[i],product16[i][`HWORD_WIDTH-1:1]}, product16[i][0]); 
+              round16_src[i] = {cout16[i],product16[i][`HWORD_WIDTH-1:1]};
+              round16[i] = product16[i][0] ? round16_src[i]+1'b1 : round16_src[i];
             end
 
             for(int i=0;i<`VLEN/`WORD_WIDTH;i=i+1) begin
-              round32[i] = f_half_add32({cout32[i],product32[i][`WORD_WIDTH-1:1]}, product32[i][0]); 
+              round32_src[i] = {cout32[i],product32[i][`WORD_WIDTH-1:1]};
+              round32[i] = product32[i][0] ? f_src_plus1(round32_src[i]) : round32_src[i];
             end
           end
           RNE: begin
             for(int i=0;i<`VLENB;i=i+1) begin
-              round8[i] = f_half_add8({cout8[i],product8[i][`BYTE_WIDTH-1:1]}, (product8[i][0]&product8[i][1])); 
+              round8_src[i] = {cout8[i],product8[i][`BYTE_WIDTH-1:1]};
+              round8[i] = product8[i][0]&product8[i][1] ? round8_src[i]+1'b1 : round8_src[i];
             end
     
             for(int i=0;i<`VLEN/`HWORD_WIDTH;i=i+1) begin
-              round16[i] = f_half_add16({cout16[i],product16[i][`HWORD_WIDTH-1:1]}, (product16[i][0]&product16[i][1])); 
+              round16_src[i] = {cout16[i],product16[i][`HWORD_WIDTH-1:1]};
+              round16[i] = product16[i][0]&product16[i][1] ? round16_src[i]+1'b1 : round16_src[i];
             end
     
             for(int i=0;i<`VLEN/`WORD_WIDTH;i=i+1) begin
-              round32[i] = f_half_add32({cout32[i],product32[i][`WORD_WIDTH-1:1]}, (product32[i][0]&product32[i][1])); 
+              round32_src[i] = {cout32[i],product32[i][`WORD_WIDTH-1:1]};
+              round32[i] = product32[i][0]&product32[i][1] ? f_src_plus1(round32_src[i]) : round32_src[i];
             end
           end
           RDN: begin
             for(int i=0;i<`VLENB;i=i+1) begin
-              round8[i] = {cout8[i],product8[i][`BYTE_WIDTH-1:1]}; 
+              round8_src[i] = {cout8[i],product8[i][`BYTE_WIDTH-1:1]}; 
+              round8[i] = round8_src[i];
             end
     
             for(int i=0;i<`VLEN/`HWORD_WIDTH;i=i+1) begin
-              round16[i] = {cout16[i],product16[i][`HWORD_WIDTH-1:1]}; 
+              round16_src[i] = {cout16[i],product16[i][`HWORD_WIDTH-1:1]}; 
+              round16[i] = round16_src[i];
             end
     
             for(int i=0;i<`VLEN/`WORD_WIDTH;i=i+1) begin
-              round32[i] = {cout32[i],product32[i][`WORD_WIDTH-1:1]}; 
+              round32_src[i] = {cout32[i],product32[i][`WORD_WIDTH-1:1]}; 
+              round32[i] = round32_src[i];
             end
           end
           ROD: begin
             for(int i=0;i<`VLENB;i=i+1) begin
-              round8[i] = f_half_add8({cout8[i],product8[i][`BYTE_WIDTH-1:1]}, ((!product8[i][1])&product8[i][0])); 
+              round8_src[i] = {cout8[i],product8[i][`BYTE_WIDTH-1:1]};
+              round8[i] = (!product8[i][1])&product8[i][0] ? round8_src[i]+1'b1 : round8_src[i];
             end
     
             for(int i=0;i<`VLEN/`HWORD_WIDTH;i=i+1) begin
-              round16[i] = f_half_add16({cout16[i],product16[i][`HWORD_WIDTH-1:1]}, ((!product16[i][1])&product16[i][0])); 
+              round16_src[i] = {cout16[i],product16[i][`HWORD_WIDTH-1:1]};
+              round16[i] = (!product16[i][1])&product16[i][0] ? round16_src[i]+1'b1 : round16_src[i]; 
             end
     
             for(int i=0;i<`VLEN/`WORD_WIDTH;i=i+1) begin
-              round32[i] = f_half_add32({cout32[i],product32[i][`WORD_WIDTH-1:1]}, ((!product32[i][1])&product32[i][0])); 
+              round32_src[i] = {cout32[i],product32[i][`WORD_WIDTH-1:1]}; 
+              round32[i] = (!product32[i][1])&product32[i][0] ? f_src_plus1(round32_src[i]) : round32_src[i]; 
             end
           end
         endcase
@@ -930,66 +948,67 @@ module rvv_backend_alu_unit_addsub
         case(vxrm)
           RNU: begin
             for(int i=0;i<`VLENB;i=i+1) begin
-              round8[i] = f_half_add8({src2_data[i][`BYTE_WIDTH-1]^src1_data[i][`BYTE_WIDTH-1]?(!cout8[i]):cout8[i],
-                                      product8[i][`BYTE_WIDTH-1:1]}, product8[i][0]); 
+              round8_src[i] = {src2_data[i][`BYTE_WIDTH-1]^src1_data[i][`BYTE_WIDTH-1]?(!cout8[i]):cout8[i],product8[i][`BYTE_WIDTH-1:1]};
+              round8[i] = product8[i][0] ? round8_src[i]+1'b1 : round8_src[i]; 
+                                            
             end
             
             for(int i=0;i<`VLEN/`HWORD_WIDTH;i=i+1) begin
-              round16[i] = f_half_add16({src2_data[2*i+1][`BYTE_WIDTH-1]^src1_data[2*i+1][`BYTE_WIDTH-1]?(!cout16[i]):cout16[i],
-                                        product16[i][`HWORD_WIDTH-1:1]}, product16[i][0]); 
+              round16_src[i] = {src2_data[2*i+1][`BYTE_WIDTH-1]^src1_data[2*i+1][`BYTE_WIDTH-1]?(!cout16[i]):cout16[i],product16[i][`HWORD_WIDTH-1:1]};
+              round16[i] = product16[i][0] ? round16_src[i]+1'b1 : round16_src[i]; 
             end
 
             for(int i=0;i<`VLEN/`WORD_WIDTH;i=i+1) begin
-              round32[i] = f_half_add32({src2_data[4*i+3][`BYTE_WIDTH-1]^src1_data[4*i+3][`BYTE_WIDTH-1]?(!cout32[i]):cout32[i],
-                                        product32[i][`WORD_WIDTH-1:1]}, product32[i][0]); 
+              round32_src[i] = {src2_data[4*i+3][`BYTE_WIDTH-1]^src1_data[4*i+3][`BYTE_WIDTH-1]?(!cout32[i]):cout32[i],product32[i][`WORD_WIDTH-1:1]};
+              round32[i] = product32[i][0] ? f_src_plus1(round32_src[i]) : round32_src[i]; 
             end
           end
           RNE: begin
             for(int i=0;i<`VLENB;i=i+1) begin
-              round8[i] = f_half_add8({src2_data[i][`BYTE_WIDTH-1]^src1_data[i][`BYTE_WIDTH-1]?(!cout8[i]):cout8[i],
-                                      product8[i][`BYTE_WIDTH-1:1]}, (product8[i][0]&product8[i][1])); 
+              round8_src[i] = {src2_data[i][`BYTE_WIDTH-1]^src1_data[i][`BYTE_WIDTH-1]?(!cout8[i]):cout8[i],product8[i][`BYTE_WIDTH-1:1]};
+              round8[i] = product8[i][0]&product8[i][1] ? round8_src[i]+1'b1 : round8_src[i]; 
             end
     
             for(int i=0;i<`VLEN/`HWORD_WIDTH;i=i+1) begin
-              round16[i] = f_half_add16({src2_data[2*i+1][`BYTE_WIDTH-1]^src1_data[2*i+1][`BYTE_WIDTH-1]?(!cout16[i]):cout16[i],
-                                        product16[i][`HWORD_WIDTH-1:1]}, (product16[i][0]&product16[i][1])); 
+              round16_src[i] = {src2_data[2*i+1][`BYTE_WIDTH-1]^src1_data[2*i+1][`BYTE_WIDTH-1]?(!cout16[i]):cout16[i],product16[i][`HWORD_WIDTH-1:1]};
+              round16[i] = product16[i][0]&product16[i][1] ? round16_src[i]+1'b1 : round16_src[i]; 
             end
     
             for(int i=0;i<`VLEN/`WORD_WIDTH;i=i+1) begin
-              round32[i] = f_half_add32({src2_data[4*i+3][`BYTE_WIDTH-1]^src1_data[4*i+3][`BYTE_WIDTH-1]?(!cout32[i]):cout32[i],
-                                        product32[i][`WORD_WIDTH-1:1]}, (product32[i][0]&product32[i][1])); 
+              round32_src[i] = {src2_data[4*i+3][`BYTE_WIDTH-1]^src1_data[4*i+3][`BYTE_WIDTH-1]?(!cout32[i]):cout32[i],product32[i][`WORD_WIDTH-1:1]};
+              round32[i] = product32[i][0]&product32[i][1] ? f_src_plus1(round32_src[i]) : round32_src[i]; 
             end
           end
           RDN: begin
             for(int i=0;i<`VLENB;i=i+1) begin
-              round8[i] = {src2_data[i][`BYTE_WIDTH-1]^src1_data[i][`BYTE_WIDTH-1]?(!cout8[i]):cout8[i],
-                           product8[i][`BYTE_WIDTH-1:1]}; 
+              round8_src[i] = {src2_data[i][`BYTE_WIDTH-1]^src1_data[i][`BYTE_WIDTH-1]?(!cout8[i]):cout8[i],product8[i][`BYTE_WIDTH-1:1]}; 
+              round8[i] = round8_src[i];
             end
     
             for(int i=0;i<`VLEN/`HWORD_WIDTH;i=i+1) begin
-              round16[i] = {src2_data[2*i+1][`BYTE_WIDTH-1]^src1_data[2*i+1][`BYTE_WIDTH-1]?(!cout16[i]):cout16[i],
-                            product16[i][`HWORD_WIDTH-1:1]}; 
+              round16_src[i] = {src2_data[2*i+1][`BYTE_WIDTH-1]^src1_data[2*i+1][`BYTE_WIDTH-1]?(!cout16[i]):cout16[i],product16[i][`HWORD_WIDTH-1:1]}; 
+              round16[i] = round16_src[i];
             end
     
             for(int i=0;i<`VLEN/`WORD_WIDTH;i=i+1) begin
-              round32[i] = {src2_data[4*i+3][`BYTE_WIDTH-1]^src1_data[4*i+3][`BYTE_WIDTH-1]?(!cout32[i]):cout32[i],
-                            product32[i][`WORD_WIDTH-1:1]}; 
+              round32_src[i] = {src2_data[4*i+3][`BYTE_WIDTH-1]^src1_data[4*i+3][`BYTE_WIDTH-1]?(!cout32[i]):cout32[i],product32[i][`WORD_WIDTH-1:1]}; 
+              round32[i] = round32_src[i];
             end
           end
           ROD: begin
             for(int i=0;i<`VLENB;i=i+1) begin
-              round8[i] = f_half_add8({src2_data[i][`BYTE_WIDTH-1]^src1_data[i][`BYTE_WIDTH-1]?(!cout8[i]):cout8[i],
-                                        product8[i][`BYTE_WIDTH-1:1]}, ((!product8[i][1])&product8[i][0])); 
+              round8_src[i] = {src2_data[i][`BYTE_WIDTH-1]^src1_data[i][`BYTE_WIDTH-1]?(!cout8[i]):cout8[i],product8[i][`BYTE_WIDTH-1:1]};
+              round8[i] = (!product8[i][1])&product8[i][0] ? round8_src[i]+1'b1 : round8_src[i]; 
             end
     
             for(int i=0;i<`VLEN/`HWORD_WIDTH;i=i+1) begin
-              round16[i] = f_half_add16({src2_data[2*i+1][`BYTE_WIDTH-1]^src1_data[2*i+1][`BYTE_WIDTH-1]?(!cout16[i]):cout16[i],
-                                        product16[i][`HWORD_WIDTH-1:1]}, ((!product16[i][1])&product16[i][0])); 
+              round16_src[i] = {src2_data[2*i+1][`BYTE_WIDTH-1]^src1_data[2*i+1][`BYTE_WIDTH-1]?(!cout16[i]):cout16[i],product16[i][`HWORD_WIDTH-1:1]};
+              round16[i] = (!product16[i][1])&product16[i][0] ? round16_src[i]+1'b1 : round16_src[i]; 
             end
     
             for(int i=0;i<`VLEN/`WORD_WIDTH;i=i+1) begin
-              round32[i] = f_half_add32({src2_data[4*i+3][`BYTE_WIDTH-1]^src1_data[4*i+3][`BYTE_WIDTH-1]?(!cout32[i]):cout32[i],
-                                        product32[i][`WORD_WIDTH-1:1]}, ((!product32[i][1])&product32[i][0])); 
+              round32_src[i] = {src2_data[4*i+3][`BYTE_WIDTH-1]^src1_data[4*i+3][`BYTE_WIDTH-1]?(!cout32[i]):cout32[i],product32[i][`WORD_WIDTH-1:1]};
+              round32[i] = (!product32[i][1])&product32[i][0] ? f_src_plus1(round32_src[i]) : round32_src[i]; 
             end
           end
         endcase
@@ -1434,21 +1453,13 @@ module rvv_backend_alu_unit_addsub
     input logic [`BYTE_WIDTH-1:0] src_y;
     input logic                   src_cin;
 
-    logic [`BYTE_WIDTH:0]         y;
-    logic                         cin;
     logic [`BYTE_WIDTH-1:0]       result;
     logic                         cout;
 
-    if (opcode==ADDSUB_VADD) begin
-      y = {1'b0,src_y};
-      cin = src_cin;
-    end
-    else begin
-      y = {1'b1,~src_y};
-      cin = ~src_cin;
-    end
-
-    {cout,result} = src_x + y + cin;
+    if (opcode==ADDSUB_VADD) 
+      {cout,result} = src_x + src_y + src_cin;
+    else //(opcode==ADDSUB_VSUB)
+      {cout,result} = src_x - src_y - src_cin;
     
     return {cout,result};
 
@@ -1490,30 +1501,20 @@ module rvv_backend_alu_unit_addsub
 
   endfunction
 
-  function [`BYTE_WIDTH-1:0] f_half_add8;
-    // x + cin
-    input logic [`BYTE_WIDTH-1:0] src_x;
-    input logic                   cin;
-
-    return src_x + cin;
-
-  endfunction
-
-  function [`HWORD_WIDTH-1:0] f_half_add16;
-    // x + cin
-    input logic [`HWORD_WIDTH-1:0] src_x;
-    input logic                    cin;
-
-    return src_x + cin;
-
-  endfunction
-
-  function [`WORD_WIDTH-1:0] f_half_add32;
+  function [`WORD_WIDTH-1:0] f_src_plus1;
     // x + cin
     input logic [`WORD_WIDTH-1:0] src_x;
-    input logic                   cin;
 
-    return src_x + cin;
+    logic [`HWORD_WIDTH-1:0] res_hi;
+    logic [`HWORD_WIDTH:0]   res_lo;
+
+    res_hi = src_x[`WORD_WIDTH-1:`HWORD_WIDTH] + 1'b1;
+    res_lo = src_x[`HWORD_WIDTH-1:0] + 1'b1;
+    
+    if (res_lo[`HWORD_WIDTH])
+      return {res_hi,res_lo[`HWORD_WIDTH-1:0]};
+    else
+      return {src_x[`WORD_WIDTH-1:`HWORD_WIDTH],res_lo[`HWORD_WIDTH-1:0]};
 
   endfunction
 
