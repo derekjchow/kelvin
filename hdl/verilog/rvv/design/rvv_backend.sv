@@ -483,33 +483,34 @@ module rvv_backend
   // RS, Reserve station
     // ALU RS
     multi_fifo #(
-        .T          (ALU_RS_t),
-        .M          (`NUM_DP_UOP),
-        .N          (`NUM_ALU),
-        .DEPTH      (`ALU_RS_DEPTH),
-        .CHAOS_PUSH (1'b1)
+        .T            (ALU_RS_t),
+        .M            (`NUM_DP_UOP),
+        .N            (`NUM_ALU),
+        .DEPTH        (`ALU_RS_DEPTH),
+        .CHAOS_PUSH   (1'b1),
+        .DATAOUT_REG  (1'b1)
     ) u_alu_rs (
       // global
-        .clk        (clk),
-        .rst_n      (rst_n),
+        .clk          (clk),
+        .rst_n        (rst_n),
       // write
-        .push       (rs_valid_dp2alu & rs_ready_alu2dp),
-        .datain     (rs_dp2alu),
+        .push         (rs_valid_dp2alu & rs_ready_alu2dp),
+        .datain       (rs_dp2alu),
       // read
-        .pop        (pop_alu2rs),
-        .dataout    (uop_rs2alu),
+        .pop          (pop_alu2rs),
+        .dataout      (uop_rs2alu),
       // fifo status
-        .full            (alu_rs_full),
-        .almost_full     (alu_rs_almost_full),
-        .empty           (fifo_empty_rs2alu),
+        .full         (alu_rs_full),
+        .almost_full  (alu_rs_almost_full),
+        .empty        (fifo_empty_rs2alu),
     `ifdef MULTI_ALU
-        .almost_empty    (fifo_almost_empty_rs2alu),
+        .almost_empty (fifo_almost_empty_rs2alu),
       `endif
-        .clear           (1'b0),
-        .fifo_data       (),
-        .wptr            (),
-        .rptr            (),
-        .entry_count     ()
+        .clear        (1'b0),
+        .fifo_data    (),
+        .wptr         (),
+        .rptr         (),
+        .entry_count  ()
     );
 
     assign rs_ready_alu2dp[0] = ~alu_rs_full;
@@ -527,33 +528,34 @@ module rvv_backend
     PMT_RDT_RS_t unused_uop_rs2pmtrdt;
     // PMTRDT RS, Permutation + Reduction
     multi_fifo #(
-        .T          (PMT_RDT_RS_t),
-        .M          (`NUM_DP_UOP),
-        .N          (`NUM_PMTRDT*2),
-        .DEPTH      (`PMTRDT_RS_DEPTH),
-        .CHAOS_PUSH (1'b1)
+        .T                (PMT_RDT_RS_t),
+        .M                (`NUM_DP_UOP),
+        .N                (`NUM_PMTRDT*2),
+        .DEPTH            (`PMTRDT_RS_DEPTH),
+        .CHAOS_PUSH       (1'b1),
+        .DATAOUT_REG      (1'b1)
     ) u_pmtrdt_rs (
       // global
-        .clk        (clk),
-        .rst_n      (rst_n),
+        .clk              (clk),
+        .rst_n            (rst_n),
       // write
-        .push       (rs_valid_dp2pmtrdt & rs_ready_pmtrdt2dp),
-        .datain     (rs_dp2pmtrdt),
+        .push             (rs_valid_dp2pmtrdt & rs_ready_pmtrdt2dp),
+        .datain           (rs_dp2pmtrdt),
       // read
-        .pop        ({1'b0, pop_pmtrdt2rs}),
-        .dataout    ({unused_uop_rs2pmtrdt, uop_rs2pmtrdt}),
+        .pop              ({1'b0, pop_pmtrdt2rs}),
+        .dataout          ({unused_uop_rs2pmtrdt, uop_rs2pmtrdt}),
       // fifo status
-        .full            (pmtrdt_rs_full),
-        .almost_full     (pmtrdt_rs_almost_full),
-        .empty           (fifo_empty_rs2pmtrdt),
-      `ifdef MULTI_PMTRDT
-        .almost_empty    (fifo_almost_empty_rs2pmtrdt),
+        .full             (pmtrdt_rs_full),
+        .almost_full      (pmtrdt_rs_almost_full),
+        .empty            (fifo_empty_rs2pmtrdt),
+      `ifdef MULTI_PMTRDT 
+        .almost_empty     (fifo_almost_empty_rs2pmtrdt),
       `endif
-        .clear           (1'b0),
-        .fifo_data       (all_uop_rs2pmtrdt),
-        .wptr            (),
-        .rptr            (),
-        .entry_count     (valid_cnt_rs2pmtrdt)
+        .clear            (1'b0),
+        .fifo_data        (all_uop_rs2pmtrdt),
+        .wptr             (),
+        .rptr             (),
+        .entry_count      (valid_cnt_rs2pmtrdt)
     );
 
     assign rs_ready_pmtrdt2dp[0] = ~pmtrdt_rs_full;
