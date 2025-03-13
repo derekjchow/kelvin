@@ -12,11 +12,6 @@ typedef enum logic [1:0]{
   SHIFT_SRA
 } SHIFT_e;   
 
-typedef enum logic [0:0]{
-  GET_MIN, 
-  GET_MAX
-} GET_MIN_MAX_e;  
-
 typedef enum logic [1:0]{
   OP_NONE,
   OP_VCPOP, 

@@ -68,6 +68,9 @@ module rvv_backend_alu_unit_addsub
   logic   [`VLENB-1:0]                                subu_underoverflow;
   logic   [`VLENB-1:0]                                sub_upoverflow;
   logic   [`VLENB-1:0]                                sub_underoverflow;
+  logic   [`VLENB-1:0][`BYTE_WIDTH-1:0]               result_minmax8;
+  logic   [`VLEN/`HWORD_WIDTH-1:0][`HWORD_WIDTH-1:0]  result_minmax16;
+  logic   [`VLEN/`WORD_WIDTH-1:0][`WORD_WIDTH-1:0]    result_minmax32;
   logic   [`VLEN-1:0]                                 result_data;   // regular data for EEW_vd = 8b,16b,32b
   ADDSUB_e                                            opcode;
   
@@ -122,6 +125,13 @@ module rvv_backend_alu_unit_addsub
           VSBC: begin
             result_valid = alu_uop_valid&vs2_data_valid&vs1_data_valid&(vm==1'b0)&v0_data_valid;
           end
+
+          VMINU,
+          VMIN,
+          VMAXU,
+          VMAX: begin
+            result_valid = alu_uop_valid&vs1_data_valid&vs2_data_valid;
+          end
         endcase
       end
 
@@ -140,6 +150,13 @@ module rvv_backend_alu_unit_addsub
           VADC,
           VSBC: begin
             result_valid = alu_uop_valid&vs2_data_valid&rs1_data_valid&(vm==1'b0)&v0_data_valid;
+          end
+
+          VMINU,
+          VMIN,
+          VMAXU,
+          VMAX: begin
+            result_valid = alu_uop_valid&rs1_data_valid&vs2_data_valid;
           end
         endcase
       end
@@ -226,7 +243,11 @@ module rvv_backend_alu_unit_addsub
           VSADDU,
           VSADD,
           VSSUBU,
-          VSSUB: begin
+          VSSUB,
+          VMINU,
+          VMIN,
+          VMAXU,
+          VMAX: begin
             src2_data = vs2_data;
             src1_data = vs1_data;
           end
@@ -242,7 +263,11 @@ module rvv_backend_alu_unit_addsub
           VSADDU,
           VSADD,
           VSSUBU,
-          VSSUB: begin
+          VSSUB,
+          VMINU,
+          VMIN,
+          VMAXU,
+          VMAX: begin
             src2_data = vs2_data;
 
             for(int i=0;i<`VLEN/`WORD_WIDTH;i=i+1) begin
@@ -813,7 +838,11 @@ module rvv_backend_alu_unit_addsub
           VRSUB,
           VSBC,
           VSSUBU,
-          VSSUB: begin
+          VSSUB,
+          VMINU,
+          VMIN,
+          VMAXU,
+          VMAX: begin
             opcode = ADDSUB_VSUB;
           end
         endcase
@@ -1119,6 +1148,13 @@ module rvv_backend_alu_unit_addsub
       always_comb begin
         // initial the data
         result_data[j*`WORD_WIDTH +: `WORD_WIDTH] = 'b0;
+        result_minmax8[4*j+3]  = 'b0;
+        result_minmax8[4*j+2]  = 'b0;
+        result_minmax8[4*j+1]  = 'b0;
+        result_minmax8[4*j]    = 'b0;
+        result_minmax16[2*j+1] = 'b0;
+        result_minmax16[2*j]   = 'b0;
+        result_minmax32[j]     = 'b0;
  
         // calculate result data
         case(uop_funct3) 
@@ -1343,6 +1379,190 @@ module rvv_backend_alu_unit_addsub
                   end
                 endcase
               end
+
+              VMINU: begin
+                case(vs2_eew)
+                  EEW8: begin
+                    result_minmax8[4*j+3] = cout8[4*j+3] ? src2_data[4*j+3] : src1_data[4*j+3];
+                    result_minmax8[4*j+2] = cout8[4*j+2] ? src2_data[4*j+2] : src1_data[4*j+2];
+                    result_minmax8[4*j+1] = cout8[4*j+1] ? src2_data[4*j+1] : src1_data[4*j+1];
+                    result_minmax8[4*j  ] = cout8[4*j  ] ? src2_data[4*j  ] : src1_data[4*j  ];
+
+                    result_data[j*`WORD_WIDTH +: `WORD_WIDTH] = {result_minmax8[4*j+3],
+                                                                 result_minmax8[4*j+2],
+                                                                 result_minmax8[4*j+1],
+                                                                 result_minmax8[4*j]};
+                  end
+                  EEW16: begin
+                    result_minmax16[2*j+1] = cout16[2*j+1] ? {src2_data[4*j+3],src2_data[4*j+2]} : {src1_data[4*j+3],src1_data[4*j+2]}; 
+                    result_minmax16[2*j  ] = cout16[2*j  ] ? {src2_data[4*j+1],src2_data[4*j  ]} : {src1_data[4*j+1],src1_data[4*j  ]};
+
+                    result_data[j*`WORD_WIDTH +: `WORD_WIDTH] = {result_minmax16[2*j+1],
+                                                                 result_minmax16[2*j]};
+                  end
+                  EEW32: begin
+                    result_minmax32[j] = cout32[j] ? {src2_data[4*j+3],src2_data[4*j+2],src2_data[4*j+1],src2_data[4*j]}: 
+                                                     {src1_data[4*j+3],src1_data[4*j+2],src1_data[4*j+1],src1_data[4*j]}; 
+
+                    result_data[j*`WORD_WIDTH +: `WORD_WIDTH] = result_minmax32[j];
+                  end
+                endcase
+              end
+
+              VMIN: begin
+                case(vs2_eew)
+                  EEW8: begin
+                    case({src2_data[4*j][`BYTE_WIDTH-1],src1_data[4*j][`BYTE_WIDTH-1]})
+                      2'b10  : result_minmax8[4*j] = src2_data[4*j];
+                      2'b01  : result_minmax8[4*j] = src1_data[4*j];
+                      default: result_minmax8[4*j] = product8[4*j][`BYTE_WIDTH-1] ? src2_data[4*j] : src1_data[4*j];
+                    endcase
+
+                    case({src2_data[4*j+1][`BYTE_WIDTH-1],src1_data[4*j+1][`BYTE_WIDTH-1]})
+                      2'b10  : result_minmax8[4*j+1] = src2_data[4*j+1];
+                      2'b01  : result_minmax8[4*j+1] = src1_data[4*j+1];
+                      default: result_minmax8[4*j+1] = product8[4*j+1][`BYTE_WIDTH-1] ? src2_data[4*j+1] : src1_data[4*j+1];
+                    endcase
+
+                    case({src2_data[4*j+2][`BYTE_WIDTH-1],src1_data[4*j+2][`BYTE_WIDTH-1]})
+                      2'b10  : result_minmax8[4*j+2] = src2_data[4*j+2];
+                      2'b01  : result_minmax8[4*j+2] = src1_data[4*j+2];
+                      default: result_minmax8[4*j+2] = product8[4*j+2][`BYTE_WIDTH-1] ? src2_data[4*j+2] : src1_data[4*j+2];
+                    endcase
+
+                    case({src2_data[4*j+3][`BYTE_WIDTH-1],src1_data[4*j+3][`BYTE_WIDTH-1]})
+                      2'b10  : result_minmax8[4*j+3] = src2_data[4*j+3];
+                      2'b01  : result_minmax8[4*j+3] = src1_data[4*j+3];
+                      default: result_minmax8[4*j+3] = product8[4*j+3][`BYTE_WIDTH-1] ? src2_data[4*j+3] : src1_data[4*j+3];
+                    endcase
+
+                    result_data[j*`WORD_WIDTH +: `WORD_WIDTH] = {result_minmax8[4*j+3],
+                                                                 result_minmax8[4*j+2],
+                                                                 result_minmax8[4*j+1],
+                                                                 result_minmax8[4*j]};
+                  end
+                  EEW16: begin
+                    case({src2_data[4*j+1][`BYTE_WIDTH-1],src1_data[4*j+1][`BYTE_WIDTH-1]})
+                      2'b10  : result_minmax16[2*j] = {src2_data[4*j+1],src2_data[4*j]};
+                      2'b01  : result_minmax16[2*j] = {src1_data[4*j+1],src1_data[4*j]};
+                      default: result_minmax16[2*j] = product16[2*j][`HWORD_WIDTH-1] ? {src2_data[4*j+1],src2_data[4*j]} : {src1_data[4*j+1],src1_data[4*j]};
+                    endcase
+
+                    case({src2_data[4*j+3][`BYTE_WIDTH-1],src1_data[4*j+3][`BYTE_WIDTH-1]})
+                      2'b10  : result_minmax16[2*j+1] = {src2_data[4*j+3],src2_data[4*j+2]};
+                      2'b01  : result_minmax16[2*j+1] = {src1_data[4*j+3],src1_data[4*j+2]};
+                      default: result_minmax16[2*j+1] = product16[2*j+1][`HWORD_WIDTH-1] ? {src2_data[4*j+3],src2_data[4*j+2]} : {src1_data[4*j+3],src1_data[4*j+2]};
+                    endcase
+
+                    result_data[j*`WORD_WIDTH +: `WORD_WIDTH] = {result_minmax16[2*j+1],
+                                                                 result_minmax16[2*j]};
+                  end
+                  EEW32: begin
+                    case({src2_data[4*j+3][`BYTE_WIDTH-1],src1_data[4*j+3][`BYTE_WIDTH-1]})
+                      2'b10  : result_minmax32[j] = {src2_data[4*j+3],src2_data[4*j+2],src2_data[4*j+1],src2_data[4*j]};
+                      2'b01  : result_minmax32[j] = {src1_data[4*j+3],src1_data[4*j+2],src1_data[4*j+1],src1_data[4*j]};
+                      default: result_minmax32[j] = product32[j][`WORD_WIDTH-1] ? 
+                                                      {src2_data[4*j+3],src2_data[4*j+2],src2_data[4*j+1],src2_data[4*j]}:
+                                                      {src1_data[4*j+3],src1_data[4*j+2],src1_data[4*j+1],src1_data[4*j]}; 
+                    endcase
+
+                    result_data[j*`WORD_WIDTH +: `WORD_WIDTH] = result_minmax32[j];
+                  end
+                endcase
+              end
+
+              VMAXU: begin
+                case(vs2_eew)
+                  EEW8: begin
+                    result_minmax8[4*j+3] = cout8[4*j+3] ? src1_data[4*j+3] : src2_data[4*j+3];
+                    result_minmax8[4*j+2] = cout8[4*j+2] ? src1_data[4*j+2] : src2_data[4*j+2];
+                    result_minmax8[4*j+1] = cout8[4*j+1] ? src1_data[4*j+1] : src2_data[4*j+1];
+                    result_minmax8[4*j  ] = cout8[4*j  ] ? src1_data[4*j  ] : src2_data[4*j  ];
+
+                    result_data[j*`WORD_WIDTH +: `WORD_WIDTH] = {result_minmax8[4*j+3],
+                                                                 result_minmax8[4*j+2],
+                                                                 result_minmax8[4*j+1],
+                                                                 result_minmax8[4*j]};
+                  end
+                  EEW16: begin
+                    result_minmax16[2*j+1] = cout16[2*j+1] ? {src1_data[4*j+3],src1_data[4*j+2]} : {src2_data[4*j+3],src2_data[4*j+2]}; 
+                    result_minmax16[2*j  ] = cout16[2*j  ] ? {src1_data[4*j+1],src1_data[4*j  ]} : {src2_data[4*j+1],src2_data[4*j  ]};
+
+                    result_data[j*`WORD_WIDTH +: `WORD_WIDTH] = {result_minmax16[2*j+1],
+                                                                 result_minmax16[2*j]};
+                  end
+                  EEW32: begin
+                    result_minmax32[j] = cout32[j] ? {src1_data[4*j+3],src1_data[4*j+2],src1_data[4*j+1],src1_data[4*j]}: 
+                                                     {src2_data[4*j+3],src2_data[4*j+2],src2_data[4*j+1],src2_data[4*j]}; 
+
+                    result_data[j*`WORD_WIDTH +: `WORD_WIDTH] = result_minmax32[j];
+                  end
+                endcase
+              end
+
+              VMAX: begin
+                case(vs2_eew)
+                  EEW8: begin
+                    case({src2_data[4*j][`BYTE_WIDTH-1],src1_data[4*j][`BYTE_WIDTH-1]})
+                      2'b01  : result_minmax8[4*j] = src2_data[4*j];
+                      2'b10  : result_minmax8[4*j] = src1_data[4*j];
+                      default: result_minmax8[4*j] = product8[4*j][`BYTE_WIDTH-1] ? src1_data[4*j] : src2_data[4*j];
+                    endcase
+
+                    case({src2_data[4*j+1][`BYTE_WIDTH-1],src1_data[4*j+1][`BYTE_WIDTH-1]})
+                      2'b01  : result_minmax8[4*j+1] = src2_data[4*j+1];
+                      2'b10  : result_minmax8[4*j+1] = src1_data[4*j+1];
+                      default: result_minmax8[4*j+1] = product8[4*j+1][`BYTE_WIDTH-1] ? src1_data[4*j+1] : src2_data[4*j+1];
+                    endcase
+
+                    case({src2_data[4*j+2][`BYTE_WIDTH-1],src1_data[4*j+2][`BYTE_WIDTH-1]})
+                      2'b01  : result_minmax8[4*j+2] = src2_data[4*j+2];
+                      2'b10  : result_minmax8[4*j+2] = src1_data[4*j+2];
+                      default: result_minmax8[4*j+2] = product8[4*j+2][`BYTE_WIDTH-1] ? src1_data[4*j+2] : src2_data[4*j+2];
+                    endcase
+
+                    case({src2_data[4*j+3][`BYTE_WIDTH-1],src1_data[4*j+3][`BYTE_WIDTH-1]})
+                      2'b01  : result_minmax8[4*j+3] = src2_data[4*j+3];
+                      2'b10  : result_minmax8[4*j+3] = src1_data[4*j+3];
+                      default: result_minmax8[4*j+3] = product8[4*j+3][`BYTE_WIDTH-1] ? src1_data[4*j+3] : src2_data[4*j+3];
+                    endcase
+
+                    result_data[j*`WORD_WIDTH +: `WORD_WIDTH] = {result_minmax8[4*j+3],
+                                                                 result_minmax8[4*j+2],
+                                                                 result_minmax8[4*j+1],
+                                                                 result_minmax8[4*j]};
+                  end
+                  EEW16: begin
+                    case({src2_data[4*j+1][`BYTE_WIDTH-1],src1_data[4*j+1][`BYTE_WIDTH-1]})
+                      2'b01  : result_minmax16[2*j] = {src2_data[4*j+1],src2_data[4*j]};
+                      2'b10  : result_minmax16[2*j] = {src1_data[4*j+1],src1_data[4*j]};
+                      default: result_minmax16[2*j] = product16[2*j][`HWORD_WIDTH-1] ? {src1_data[4*j+1],src1_data[4*j]} : {src2_data[4*j+1],src2_data[4*j]};
+                    endcase
+
+                    case({src2_data[4*j+3][`BYTE_WIDTH-1],src1_data[4*j+3][`BYTE_WIDTH-1]})
+                      2'b01  : result_minmax16[2*j+1] = {src2_data[4*j+3],src2_data[4*j+2]};
+                      2'b10  : result_minmax16[2*j+1] = {src1_data[4*j+3],src1_data[4*j+2]};
+                      default: result_minmax16[2*j+1] = product16[2*j+1][`HWORD_WIDTH-1] ? {src1_data[4*j+3],src1_data[4*j+2]} : {src2_data[4*j+3],src2_data[4*j+2]};
+                    endcase
+
+                    result_data[j*`WORD_WIDTH +: `WORD_WIDTH] = {result_minmax16[2*j+1],
+                                                                 result_minmax16[2*j]};
+                  end
+                  EEW32: begin
+                    case({src2_data[4*j+3][`BYTE_WIDTH-1],src1_data[4*j+3][`BYTE_WIDTH-1]})
+                      2'b01  : result_minmax32[j] = {src2_data[4*j+3],src2_data[4*j+2],src2_data[4*j+1],src2_data[4*j]};
+                      2'b10  : result_minmax32[j] = {src1_data[4*j+3],src1_data[4*j+2],src1_data[4*j+1],src1_data[4*j]};
+                      default: result_minmax32[j] = product32[j][`WORD_WIDTH-1] ? 
+                                                      {src1_data[4*j+3],src1_data[4*j+2],src1_data[4*j+1],src1_data[4*j]}:
+                                                      {src2_data[4*j+3],src2_data[4*j+2],src2_data[4*j+1],src2_data[4*j]}; 
+                    endcase
+
+                    result_data[j*`WORD_WIDTH +: `WORD_WIDTH] = result_minmax32[j];
+                  end
+                endcase
+              end        
+
+
             endcase
           end
           

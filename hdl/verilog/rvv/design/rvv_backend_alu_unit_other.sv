@@ -44,21 +44,10 @@ module rvv_backend_alu_unit_other
   // mask logic instructions
   logic   [`VLENB-1:0]                                v0_data_in_use;
   logic   [`VLEN-1:0]                                 src2_data;
-  logic   [`VLENB-1:0][`BYTE_WIDTH:0]                 src2_minmax8;
-  logic   [`VLEN/`HWORD_WIDTH-1:0][`HWORD_WIDTH:0]    src2_minmax16;
-  logic   [`VLEN/`WORD_WIDTH-1:0][`WORD_WIDTH:0]      src2_minmax32;
   logic   [`VLEN-1:0]                                 src1_data;
-  logic   [`VLENB-1:0][`BYTE_WIDTH:0]                 src1_minmax8;
-  logic   [`VLEN/`HWORD_WIDTH-1:0][`HWORD_WIDTH:0]    src1_minmax16;
-  logic   [`VLEN/`WORD_WIDTH-1:0][`WORD_WIDTH:0]      src1_minmax32;
   logic   [`VLEN-1:0]                                 result_data;
-  logic   [`VLENB-1:0][`BYTE_WIDTH-1:0]               result_data_minmax8;
-  logic   [`VLEN/`HWORD_WIDTH-1:0][`HWORD_WIDTH-1:0]  result_data_minmax16;
-  logic   [`VLEN/`WORD_WIDTH-1:0][`WORD_WIDTH-1:0]    result_data_minmax32;
-  logic   [`VLEN-1:0]                                 result_data_minmax;  
   logic   [`VLEN-1:0]                                 result_data_extend;  
   logic   [`VLEN-1:0]                                 result_data_vmerge; 
-  GET_MIN_MAX_e                                       opcode;
   
   // for-loop
   genvar                                              j;
@@ -95,12 +84,6 @@ module rvv_backend_alu_unit_other
     case(uop_funct3)
       OPIVV: begin
         case(uop_funct6.ari_funct6)
-          VMINU,
-          VMIN,
-          VMAXU,
-          VMAX: begin
-            result_valid = alu_uop_valid&vs1_data_valid&vs2_data_valid;
-          end
           VMERGE_VMV: begin
             //                                          vmv.v           vmerge.v
             result_valid = alu_uop_valid&vs1_data_valid&(vm||vs2_data_valid&v0_data_valid);
@@ -110,12 +93,6 @@ module rvv_backend_alu_unit_other
 
       OPIVX: begin
         case(uop_funct6.ari_funct6)
-          VMINU,
-          VMIN,
-          VMAXU,
-          VMAX: begin
-            result_valid = alu_uop_valid&rs1_data_valid&vs2_data_valid;
-          end
           VMERGE_VMV: begin
             //                                          vmv.v           vmerge.v
             result_valid = alu_uop_valid&rs1_data_valid&(vm||vs2_data_valid&v0_data_valid);
@@ -177,13 +154,6 @@ module rvv_backend_alu_unit_other
     case(uop_funct3)
       OPIVV: begin
         case(uop_funct6.ari_funct6)
-          VMINU,
-          VMIN,
-          VMAXU,
-          VMAX: begin
-            src2_data = vs2_data;
-            src1_data = vs1_data;
-          end
           VMERGE_VMV: begin
             // vmv.v
             if(vm) begin
@@ -200,34 +170,6 @@ module rvv_backend_alu_unit_other
 
       OPIVX: begin
         case(uop_funct6.ari_funct6)
-          VMINU,
-          VMIN,
-          VMAXU,
-          VMAX: begin
-            src2_data = vs2_data;
-            for(int i=0;i<`VLEN/`WORD_WIDTH;i=i+1) begin
-              case(vs2_eew)
-                EEW8: begin
-                  src1_data[(4*i  )*`BYTE_WIDTH +: `BYTE_WIDTH] = rs1_data[0 +: `BYTE_WIDTH];
-                  src1_data[(4*i+1)*`BYTE_WIDTH +: `BYTE_WIDTH] = rs1_data[0 +: `BYTE_WIDTH];
-                  src1_data[(4*i+2)*`BYTE_WIDTH +: `BYTE_WIDTH] = rs1_data[0 +: `BYTE_WIDTH];
-                  src1_data[(4*i+3)*`BYTE_WIDTH +: `BYTE_WIDTH] = rs1_data[0 +: `BYTE_WIDTH];
-                end
-                EEW16: begin
-                  src1_data[(4*i  )*`BYTE_WIDTH +: `BYTE_WIDTH] = rs1_data[0             +: `BYTE_WIDTH];
-                  src1_data[(4*i+1)*`BYTE_WIDTH +: `BYTE_WIDTH] = rs1_data[1*`BYTE_WIDTH +: `BYTE_WIDTH];
-                  src1_data[(4*i+2)*`BYTE_WIDTH +: `BYTE_WIDTH] = rs1_data[0             +: `BYTE_WIDTH];
-                  src1_data[(4*i+3)*`BYTE_WIDTH +: `BYTE_WIDTH] = rs1_data[1*`BYTE_WIDTH +: `BYTE_WIDTH];
-                end
-                EEW32: begin
-                  src1_data[(4*i  )*`BYTE_WIDTH +: `BYTE_WIDTH] = rs1_data[0             +: `BYTE_WIDTH];
-                  src1_data[(4*i+1)*`BYTE_WIDTH +: `BYTE_WIDTH] = rs1_data[1*`BYTE_WIDTH +: `BYTE_WIDTH];
-                  src1_data[(4*i+2)*`BYTE_WIDTH +: `BYTE_WIDTH] = rs1_data[2*`BYTE_WIDTH +: `BYTE_WIDTH];
-                  src1_data[(4*i+3)*`BYTE_WIDTH +: `BYTE_WIDTH] = rs1_data[3*`BYTE_WIDTH +: `BYTE_WIDTH];
-                end
-              endcase
-            end
-          end
           VMERGE_VMV: begin
             // vmv.v
             if(vm==1'b1) begin
@@ -411,145 +353,9 @@ module rvv_backend_alu_unit_other
     endcase
   end
 
-  // get opcode for f_get_min_max
-  always_comb begin
-    // initial the data
-    opcode = GET_MIN;
-
-    // prepare source data
-    case(uop_funct3) 
-      OPIVV,
-      OPIVX,
-      OPIVI: begin
-        case(uop_funct6.ari_funct6)    
-          VMINU,
-          VMIN: begin
-            opcode = GET_MIN;
-          end
-          VMAXU,
-          VMAX: begin
-            opcode = GET_MAX;
-          end
-        endcase
-      end
-    endcase
-  end
-
-  // source operand of VMIN/VMAX instructions
-  generate
-    for (j=0;j<`VLENB;j=j+1) begin: MINMAX8
-      always_comb begin
-        // initial the data
-        src2_minmax8[j] = 'b0; 
-        src1_minmax8[j] = 'b0; 
-        
-        // prepare source data
-        case(uop_funct6.ari_funct6)    
-          VMINU,
-          VMAXU: begin
-            src2_minmax8[j] = {1'b0, src2_data[j*`BYTE_WIDTH +: `BYTE_WIDTH]}; 
-            src1_minmax8[j] = {1'b0, src1_data[j*`BYTE_WIDTH +: `BYTE_WIDTH]}; 
-          end
-          VMIN,
-          VMAX: begin
-            src2_minmax8[j] = {src2_data[(j+1)*`BYTE_WIDTH-1], src2_data[j*`BYTE_WIDTH +: `BYTE_WIDTH]}; 
-            src1_minmax8[j] = {src1_data[(j+1)*`BYTE_WIDTH-1], src1_data[j*`BYTE_WIDTH +: `BYTE_WIDTH]}; 
-          end
-        endcase
-      end
-    end
-  endgenerate
-  
-  generate
-    for (j=0;j<`VLEN/`HWORD_WIDTH;j=j+1) begin: MINMAX16
-      always_comb begin
-        // initial the data
-        src2_minmax16[j] = 'b0; 
-        src1_minmax16[j] = 'b0; 
-        
-        // prepare source data
-        case(uop_funct6.ari_funct6)    
-          VMINU,
-          VMAXU: begin
-            src2_minmax16[j] = {1'b0, src2_data[j*`HWORD_WIDTH +: `HWORD_WIDTH]}; 
-            src1_minmax16[j] = {1'b0, src1_data[j*`HWORD_WIDTH +: `HWORD_WIDTH]}; 
-          end
-          VMIN,
-          VMAX: begin
-            src2_minmax16[j] = {src2_data[(j+1)*`HWORD_WIDTH-1], src2_data[j*`HWORD_WIDTH +: `HWORD_WIDTH]}; 
-            src1_minmax16[j] = {src1_data[(j+1)*`HWORD_WIDTH-1], src1_data[j*`HWORD_WIDTH +: `HWORD_WIDTH]}; 
-          end
-        endcase
-      end
-    end
-  endgenerate 
-
-  generate
-    for (j=0;j<`VLEN/`WORD_WIDTH;j=j+1) begin: MINMAX32
-      always_comb begin
-        // initial the data
-        src2_minmax32[j] = 'b0; 
-        src1_minmax32[j] = 'b0; 
-        
-        // prepare source data
-        case(uop_funct6.ari_funct6)    
-          VMINU,
-          VMAXU: begin
-            src2_minmax32[j] = {1'b0, src2_data[j*`WORD_WIDTH +: `WORD_WIDTH]}; 
-            src1_minmax32[j] = {1'b0, src1_data[j*`WORD_WIDTH +: `WORD_WIDTH]}; 
-          end
-          VMIN,
-          VMAX: begin
-            src2_minmax32[j] = {src2_data[(j+1)*`WORD_WIDTH-1], src2_data[j*`WORD_WIDTH +: `WORD_WIDTH]}; 
-            src1_minmax32[j] = {src1_data[(j+1)*`WORD_WIDTH-1], src1_data[j*`WORD_WIDTH +: `WORD_WIDTH]}; 
-          end
-        endcase
-      end
-    end
-  endgenerate 
-
 //    
 // calculate the result
 //
-  // VMIN/VMAX instructions
-  generate
-    for (j=0;j<`VLENB;j=j+1) begin: EXE_MINMAX8
-      assign result_data_minmax8[j] = f_get_min_max8(opcode, src2_minmax8[j], src1_minmax8[j]);
-    end
-  endgenerate
-  
-  generate
-    for (j=0;j<`VLEN/`HWORD_WIDTH;j=j+1) begin: EXE_MINMAX16
-      assign result_data_minmax16[j] = f_get_min_max16(opcode, src2_minmax16[j], src1_minmax16[j]);
-    end
-  endgenerate 
-
-  generate
-    for (j=0;j<`VLEN/`WORD_WIDTH;j=j+1) begin: EXE_MINMAX32
-      assign result_data_minmax32[j] = f_get_min_max32(opcode, src2_minmax32[j], src1_minmax32[j]);
-    end
-  endgenerate 
- 
-  generate
-    for (j=0;j<`VLEN/`WORD_WIDTH;j=j+1) begin: EXE_MINMAX
-      always_comb begin
-        result_data_minmax[j*`WORD_WIDTH +: `WORD_WIDTH] = 'b0;
-        
-        case(vs2_eew)
-          EEW8: begin
-            result_data_minmax[j*`WORD_WIDTH +: `WORD_WIDTH] = {result_data_minmax8[4*j+3],result_data_minmax8[4*j+2],result_data_minmax8[4*j+1],result_data_minmax8[4*j]};
-          end
-          EEW16: begin
-            result_data_minmax[j*`WORD_WIDTH +: `WORD_WIDTH] = {result_data_minmax16[2*j+1],result_data_minmax16[2*j]};
-          end
-          EEW32: begin
-            result_data_minmax[j*`WORD_WIDTH +: `WORD_WIDTH] = result_data_minmax32[j];
-          end
-        endcase
-      end
-    end
-  endgenerate
-
   // VXUNARY0
   generate
     for (j=0;j<`VLEN/`WORD_WIDTH;j=j+1) begin: EXE_EXTEND
@@ -663,12 +469,6 @@ module rvv_backend_alu_unit_other
       OPIVX,
       OPIVI: begin
         case(uop_funct6.ari_funct6)
-          VMINU,
-          VMIN,
-          VMAXU,
-          VMAX: begin
-            result_data = result_data_minmax;
-          end
           VMERGE_VMV: begin
             if(vm==1'b0)
               result_data = result_data_vmerge;
@@ -714,77 +514,5 @@ module rvv_backend_alu_unit_other
   assign result.w_valid = result_valid;
 
   assign result.vsaturate = 'b0;
-
-//
-// function unit
-//
-  // use for vminu, vmin, vmaxu, vmax
-  function [`BYTE_WIDTH-1:0] f_get_min_max8;
-    input GET_MIN_MAX_e                opcode;
-    input logic signed [`BYTE_WIDTH:0] src2;
-    input logic signed [`BYTE_WIDTH:0] src1;
-    
-    logic comp_slt;
-    
-    comp_slt = src2<src1;
-
-    if (opcode==GET_MIN) begin
-      if (comp_slt)
-        f_get_min_max8 = src2[`BYTE_WIDTH-1:0];
-      else
-        f_get_min_max8 = src1[`BYTE_WIDTH-1:0];
-    end
-    else begin //(opcode==GET_MAX) 
-      if (comp_slt)
-        f_get_min_max8 = src1[`BYTE_WIDTH-1:0];
-      else
-        f_get_min_max8 = src2[`BYTE_WIDTH-1:0];
-    end
-  endfunction
-
-  function [`HWORD_WIDTH-1:0] f_get_min_max16;
-    input GET_MIN_MAX_e                 opcode;
-    input logic signed [`HWORD_WIDTH:0] src2;
-    input logic signed [`HWORD_WIDTH:0] src1;
-    
-    logic comp_slt;
-    comp_slt = src2<src1;
-
-    if (opcode==GET_MIN) begin
-      if (comp_slt)
-        f_get_min_max16 = src2[`HWORD_WIDTH-1:0];
-      else
-        f_get_min_max16 = src1[`HWORD_WIDTH-1:0];
-    end
-    else begin //(opcode==GET_MAX)
-      if (comp_slt)
-        f_get_min_max16 = src1[`HWORD_WIDTH-1:0];
-      else
-        f_get_min_max16 = src2[`HWORD_WIDTH-1:0];
-    end
-  endfunction
-
-  function [`WORD_WIDTH-1:0] f_get_min_max32;
-    input GET_MIN_MAX_e                opcode;
-    input logic signed [`WORD_WIDTH:0] src2;
-    input logic signed [`WORD_WIDTH:0] src1;
-    
-    logic comp_slt;
-    comp_slt = src2<src1;
-
-    if (opcode==GET_MIN) begin
-      if (comp_slt)
-        f_get_min_max32 = src2[`WORD_WIDTH-1:0];
-      else
-        f_get_min_max32 = src1[`WORD_WIDTH-1:0];
-    end
-    else begin //(opcode==GET_MAX) 
-      if (comp_slt)
-        f_get_min_max32 = src1[`WORD_WIDTH-1:0];
-      else
-        f_get_min_max32 = src2[`WORD_WIDTH-1:0];
-    end
-  endfunction
-
 
 endmodule
