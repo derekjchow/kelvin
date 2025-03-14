@@ -84,6 +84,7 @@ ${WORKDIR}/bazel fetch \
     @remote_java_tools_linux//:all \
     @remotejdk11_linux//:jdk \
     @rules_hdl//:all \
+    @verilator//:all \
     @com_github_grpc_grpc//:all
 
 cat <<EOF >${WORKDIR}/bazel.sh
