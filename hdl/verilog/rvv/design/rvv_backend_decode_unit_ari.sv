@@ -2819,7 +2819,7 @@ module rvv_backend_decode_unit_ari
             case(inst_funct3)
               OPIVV: begin
                 if (csr_vstart=='b0) 
-                  check_special = check_vs2_part_overlap_vd_2_1;        
+                  check_special = 1'b1;        
 
                 `ifdef ASSERT_ON
                   assert #0 (check_special==1'b1)
@@ -2997,7 +2997,7 @@ module rvv_backend_decode_unit_ari
             case(inst_funct3)
               OPMVV: begin
                 if(csr_vstart=='b0)
-                  check_special = check_vd_part_overlap_vs2;
+                  check_special = 1'b1;
             
                 `ifdef ASSERT_ON
                   assert #0 (check_special==1'b1)
@@ -3921,21 +3921,71 @@ module rvv_backend_decode_unit_ari
   // update vector_csr and vstart
   always_comb begin
     for(int i=0;i<`NUM_DE_UOP;i=i+1) begin: GET_UOP_VCSR
-      uop[i].vector_csr               = vector_csr_ari;
+      uop[i].vector_csr = vector_csr_ari;
 
       // update vstart of every uop
-      if(uop_index_current[i]=={1'b0,uop_vstart})
-        uop[i].vector_csr.vstart      = csr_vstart;
-      else begin
-        case(eew_max)
-          EEW8: begin
-            uop[i].vector_csr.vstart  = {uop_index_current[i][`UOP_INDEX_WIDTH-1:0],4'b0};
+      if(uop_index_current[i]!={1'b0,uop_vstart}) begin
+        case(1'b1)
+          valid_opi: begin
+            // OPI*
+            case(funct6_ari.ari_funct6)
+              VMADC,
+              VMSBC,
+              VMSEQ,
+              VMSNE,
+              VMSLTU,
+              VMSLT,
+              VMSLEU,
+              VMSLE,
+              VMSGTU,
+              VMSGT,
+              VWREDSUMU,
+              VWREDSUM: begin
+                uop[i].vector_csr.vstart = vector_csr_ari.vstart;
+              end
+              default: begin 
+                case(eew_max)
+                  EEW8: begin
+                    uop[i].vector_csr.vstart  = {uop_index_current[i][`UOP_INDEX_WIDTH-1:0],4'b0};
+                  end
+                  EEW16: begin
+                    uop[i].vector_csr.vstart  = {1'b0,uop_index_current[i][`UOP_INDEX_WIDTH-1:0],3'b0};
+                  end
+                  EEW32: begin
+                    uop[i].vector_csr.vstart  = {2'b0,uop_index_current[i][`UOP_INDEX_WIDTH-1:0],2'b0};
+                  end
+                endcase
+              end
+            endcase
           end
-          EEW16: begin
-            uop[i].vector_csr.vstart  = {1'b0,uop_index_current[i][`UOP_INDEX_WIDTH-1:0],3'b0};
-          end
-          EEW32: begin
-            uop[i].vector_csr.vstart  = {2'b0,uop_index_current[i][`UOP_INDEX_WIDTH-1:0],2'b0};
+          valid_opm: begin
+            // OPM*
+            case(funct6_ari.ari_funct6)
+              VREDSUM,
+              VREDMAXU,
+              VREDMAX,
+              VREDMINU,
+              VREDMIN,
+              VREDAND,
+              VREDOR,
+              VREDXOR,
+              VCOMPRESS: begin
+                uop[i].vector_csr.vstart = vector_csr_ari.vstart;
+              end
+              default: begin 
+                case(eew_max)
+                  EEW8: begin
+                    uop[i].vector_csr.vstart  = {uop_index_current[i][`UOP_INDEX_WIDTH-1:0],4'b0};
+                  end
+                  EEW16: begin
+                    uop[i].vector_csr.vstart  = {1'b0,uop_index_current[i][`UOP_INDEX_WIDTH-1:0],3'b0};
+                  end
+                  EEW32: begin
+                    uop[i].vector_csr.vstart  = {2'b0,uop_index_current[i][`UOP_INDEX_WIDTH-1:0],2'b0};
+                  end
+                endcase
+              end
+            endcase
           end
         endcase
       end

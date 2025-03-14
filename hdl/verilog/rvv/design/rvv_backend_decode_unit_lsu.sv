@@ -2511,6 +2511,7 @@ module rvv_backend_decode_unit_lsu
   // update last_uop valid
   always_comb begin
     for(int i=0;i<`NUM_DE_UOP;i=i+1) begin: GET_UOP_LAST
+      uop[i].first_uop_valid = uop_index_current[i][`UOP_INDEX_WIDTH-1:0] == uop_vstart;
       uop[i].last_uop_valid = uop_index_current[i][`UOP_INDEX_WIDTH-1:0] == uop_index_max;
     end
   end

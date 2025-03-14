@@ -457,15 +457,14 @@ module rvv_backend_dispatch
 `ifdef TB_SUPPORT
             assign rs_dp2lsu[i].uop_pc        = uop_uop2dp[i].uop_pc; 
 `endif
-            assign rs_dp2lsu[i].uop_id        = uop_index_rob2dp + i; 
+            assign rs_dp2lsu[i].rob_entry     = uop_index_rob2dp + i; 
             assign rs_dp2lsu[i].uop_funct6    = uop_uop2dp[i].uop_funct6;
             assign rs_dp2lsu[i].vidx_valid    = uop_uop2dp[i].vs2_valid;
             assign rs_dp2lsu[i].vidx_addr     = uop_uop2dp[i].vs2_index;
             assign rs_dp2lsu[i].vidx_data     = uop_operand[i].vs2;
-            assign rs_dp2lsu[i].vregfile_read_data  = uop_operand[i].vd;
-            assign rs_dp2lsu[i].vregfile_read_addr  = uop_uop2dp[i].vd_index;
             assign rs_dp2lsu[i].vregfile_read_valid = uop_uop2dp[i].vs3_valid;
-            assign rs_dp2lsu[i].vs3_type      = uop_operand_byte_type[i].vd;
+            assign rs_dp2lsu[i].vregfile_read_addr  = uop_uop2dp[i].vd_index;
+            assign rs_dp2lsu[i].vregfile_read_data  = uop_operand[i].vd;
 
           // ROB
 `ifdef TB_SUPPORT

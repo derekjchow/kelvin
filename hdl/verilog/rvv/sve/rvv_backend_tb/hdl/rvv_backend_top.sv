@@ -37,13 +37,13 @@ module rvv_backend_top();
     .rt_xrf_valid_rvv2rvs     (rvs_if.rt_xrf_valid_rvv2rvs   ),
     .rt_xrf_ready_rvs2rvv     (rvs_if.rt_xrf_ready_rvs2rvv   ),
 
-    .uop_valid_lsu_rvv2rvs    (lsu_if.uop_valid_lsu_rvv2rvs ),
+    .uop_lsu_valid_rvv2rvs    (lsu_if.uop_lsu_valid_rvv2rvs ),
     .uop_lsu_rvv2rvs          (lsu_if.uop_lsu_rvv2rvs       ),
-    .uop_ready_lsu_rvs2rvv    (lsu_if.uop_ready_lsu_rvs2rvv ),
+    .uop_lsu_ready_rvs2rvv    (lsu_if.uop_lsu_ready_rvs2rvv ),
 
-    .uop_valid_lsu_rvs2rvv    (lsu_if.uop_valid_lsu_rvs2rvv ),
+    .uop_lsu_valid_rvs2rvv    (lsu_if.uop_lsu_valid_rvs2rvv ),
     .uop_lsu_rvs2rvv          (lsu_if.uop_lsu_rvs2rvv       ),
-    .uop_ready_rvv2rvs        (lsu_if.uop_ready_rvv2rvs     ),
+    .uop_lsu_ready_rvv2rvs    (lsu_if.uop_lsu_ready_rvv2rvs     ),
 
     
     .trap_valid_rvs2rvv       (rvs_if.trap_valid_rvs2rvv    ),

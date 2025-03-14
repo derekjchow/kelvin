@@ -64,8 +64,8 @@ task lsu_driver::reset_phase(uvm_phase phase);
   phase.raise_objection( .obj( this ) );
   while(!lsu_if.rst_n) begin
     for(int i=0; i<`NUM_DP_UOP; i++) begin
-      lsu_if.uop_ready_lsu_rvs2rvv[i] <= '0;
-      lsu_if.uop_valid_lsu_rvs2rvv[i] <= '0;
+      lsu_if.uop_lsu_ready_rvs2rvv[i] <= '0;
+      lsu_if.uop_lsu_valid_rvs2rvv[i] <= '0;
       lsu_if.uop_lsu_rvs2rvv[i]       <= '0;
     end
     @(posedge lsu_if.clk);
@@ -99,9 +99,9 @@ task lsu_driver::tx_driver();
   forever begin
     @(posedge lsu_if.clk);
     for(int i=0; i<`NUM_DP_UOP; i++) begin
-      lsu_if.uop_ready_lsu_rvs2rvv[i] <= '1;
+      lsu_if.uop_lsu_ready_rvs2rvv[i] <= '1;
       // feedback
-      lsu_if.uop_valid_lsu_rvs2rvv[i] <= '0;
+      lsu_if.uop_lsu_valid_rvs2rvv[i] <= '0;
       lsu_if.uop_lsu_rvs2rvv[i]       <= '0;
     end
     /*

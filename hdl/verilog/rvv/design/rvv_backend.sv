@@ -10,13 +10,13 @@ module rvv_backend
     insts_rvs2cq,
     insts_ready_cq2rvs,
 
-    uop_valid_lsu_rvv2rvs,
+    uop_lsu_valid_rvv2rvs,
     uop_lsu_rvv2rvs,
-    uop_ready_lsu_rvs2rvv,
+    uop_lsu_ready_rvs2rvv,
 
-    uop_valid_lsu_rvs2rvv,
+    uop_lsu_valid_rvs2rvv,
     uop_lsu_rvs2rvv,
-    uop_ready_rvv2rvs,
+    uop_lsu_ready_rvv2rvs,
 
     rt_xrf_rvv2rvs,
     rt_xrf_valid_rvv2rvs,
@@ -24,50 +24,54 @@ module rvv_backend
 
     wr_vxsat_valid,
     wr_vxsat,
+    wr_vxsat_ready,
 
     trap_valid_rvs2rvv,
     trap_rvs2rvv,
     trap_ready_rvv2rvs,    
 
     vcsr_valid,
-    vector_csr
+    vector_csr,
+    vcsr_ready
 );
 // global signal
-    input   logic                  clk;
-    input   logic                  rst_n;
+    input   logic                                     clk;
+    input   logic                                     rst_n;
 
 // vector instruction and scalar operand input. 
-    input   logic   [`ISSUE_LANE-1:0] insts_valid_rvs2cq;
-    input   RVVCmd  [`ISSUE_LANE-1:0] insts_rvs2cq;
-    output  logic   [`ISSUE_LANE-1:0] insts_ready_cq2rvs;  
+    input   logic             [`ISSUE_LANE-1:0]       insts_valid_rvs2cq;
+    input   RVVCmd            [`ISSUE_LANE-1:0]       insts_rvs2cq;
+    output  logic             [`ISSUE_LANE-1:0]       insts_ready_cq2rvs;  
 
 // load/store unit interface
   // RVV send LSU uop to RVS
-    output  logic   [`NUM_DP_UOP-1:0] uop_valid_lsu_rvv2rvs;
-    output  UOP_LSU_RVV2RVS_t [`NUM_DP_UOP-1:0] uop_lsu_rvv2rvs;
-    input   logic   [`NUM_DP_UOP-1:0] uop_ready_lsu_rvs2rvv;
+    output  logic             [`NUM_LSU-1:0]          uop_lsu_valid_rvv2rvs;
+    output  LSU_RS_t          [`NUM_LSU-1:0]          uop_lsu_rvv2rvs;
+    input   logic             [`NUM_LSU-1:0]          uop_lsu_ready_rvs2rvv;
   // LSU feedback to RVV
-    input   logic   [`NUM_DP_UOP-1:0] uop_valid_lsu_rvs2rvv;
-    input   UOP_LSU_RVS2RVV_t [`NUM_DP_UOP-1:0] uop_lsu_rvs2rvv;
-    output  logic   [`NUM_DP_UOP-1:0] uop_ready_rvv2rvs;
+    input   logic             [`NUM_LSU-1:0]          uop_lsu_valid_rvs2rvv;
+    input   UOP_LSU_RVS2RVV_t [`NUM_LSU-1:0]          uop_lsu_rvs2rvv;
+    output  logic             [`NUM_LSU-1:0]          uop_lsu_ready_rvv2rvs;
 
 // RT to XRF. RVS arbitrates write ports of XRF by itself.
-    output  logic    [`NUM_RT_UOP-1:0] rt_xrf_valid_rvv2rvs;
-    output  RT2XRF_t [`NUM_RT_UOP-1:0] rt_xrf_rvv2rvs;
-    input   logic    [`NUM_RT_UOP-1:0] rt_xrf_ready_rvs2rvv;
+    output  logic             [`NUM_RT_UOP-1:0]       rt_xrf_valid_rvv2rvs;
+    output  RT2XRF_t          [`NUM_RT_UOP-1:0]       rt_xrf_rvv2rvs;
+    input   logic             [`NUM_RT_UOP-1:0]       rt_xrf_ready_rvs2rvv;
 
 // RT to VCSR.vxsat
-    output  logic                            wr_vxsat_valid;
-    output  logic    [`VCSR_VXSAT_WIDTH-1:0] wr_vxsat;
+    output  logic                                     wr_vxsat_valid;
+    output  logic             [`VCSR_VXSAT_WIDTH-1:0] wr_vxsat;
+    input   logic                                     wr_vxsat_ready;
 
 // exception handler
   // trap signal handshake
-    input   logic                         trap_valid_rvs2rvv;
-    input   TRAP_t                        trap_rvs2rvv;
-    output  logic                         trap_ready_rvv2rvs;    
+    input   logic                                     trap_valid_rvs2rvv;
+    input   TRAP_t                                    trap_rvs2rvv;
+    output  logic                                     trap_ready_rvv2rvs;    
   // the vcsr of last retired uop in last cycle
-    output  logic                         vcsr_valid;
-    output  RVVConfigState                vector_csr;
+    output  logic                                     vcsr_valid;
+    output  RVVConfigState                            vector_csr;
+    input   logic                                     vcsr_ready;
 
 `ifdef TB_BRINGUP
   // inst queue
@@ -591,7 +595,7 @@ module rvv_backend
         .push       (rs_valid_dp2lsu & rs_ready_lsu2dp),
         .datain     (rs_dp2lsu),
       // read
-        .pop        (uop_valid_lsu_rvv2rvs & uop_ready_lsu_rvs2rvv),
+        .pop        (uop_lsu_valid_rvv2rvs & uop_lsu_ready_rvs2rvv),
         .dataout    (uop_rs2lsu),
       // fifo status
         .full         (lsu_rs_full),
@@ -607,8 +611,8 @@ module rvv_backend
     assign rs_ready_lsu2dp[0] = ~lsu_rs_full;
     assign rs_ready_lsu2dp[1] = ~lsu_rs_full & ~lsu_rs_almost_full[1];
 
-    assign uop_valid_lsu_rvv2rvs[0] = ~fifo_empty_rs2lsu;
-    assign uop_valid_lsu_rvv2rvs[1] = ~(fifo_empty_rs2lsu || fifo_almost_empty_rs2lsu);
+    assign uop_lsu_valid_rvv2rvs[0] = ~fifo_empty_rs2lsu;
+    assign uop_lsu_valid_rvv2rvs[1] = ~(fifo_empty_rs2lsu || fifo_almost_empty_rs2lsu);
     assign uop_lsu_rvv2rvs = uop_rs2lsu;
 
   `ifdef ASSERT_ON
@@ -688,16 +692,17 @@ module rvv_backend
 
     // LSU
     generate
-        for (i=0; i<`NUM_LSU; i++) begin : gen_lsu2rob
+      for (i=0; i<`NUM_LSU; i++) begin : gen_lsu2rob
 `ifdef TB_SUPPORT
-            assign wr_lsu2rob[i].uop_pc = uop_lsu_rvs2rvv[i].uop_pc;
+        assign wr_lsu2rob[i].uop_pc = uop_lsu_rvs2rvv[i].uop_pc;
 `endif
-            assign wr_valid_lsu2rob[i] = uop_valid_lsu_rvs2rvv[i]; 
-            assign wr_lsu2rob[i].rob_entry = uop_lsu_rvs2rvv[i].uop_id;
-            assign wr_lsu2rob[i].w_data    = uop_lsu_rvs2rvv[i].vregfile_write_data;
-            assign wr_lsu2rob[i].w_valid   = ~uop_lsu_rvs2rvv[i].uop_type; // 0 for load, 1 for store
-            assign wr_lsu2rob[i].vsaturate = 1'b0;
-        end
+        assign wr_valid_lsu2rob[i] = uop_lsu_valid_rvs2rvv[i]&(uop_lsu_rvs2rvv[i].vregfile_write_valid|uop_lsu_rvs2rvv[i].lsu_vstore_done); 
+        assign wr_lsu2rob[i].rob_entry = uop_lsu_rvs2rvv[i].rob_entry;
+        assign wr_lsu2rob[i].w_data    = uop_lsu_rvs2rvv[i].vregfile_write_data;
+        assign wr_lsu2rob[i].w_valid   = uop_lsu_rvs2rvv[i].vregfile_write_valid; 
+        assign wr_lsu2rob[i].vsaturate = 'b0;
+        assign uop_lsu_ready_rvv2rvs[i] = wr_ready_rob2lsu[i];
+      end
     endgenerate
 
   // ROB, Re-Order Buffer
