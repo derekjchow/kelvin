@@ -109,129 +109,22 @@ module rvv_backend_decode_unit_ari
   assign rs1_data             = inst.rs1;
 
   // decode arithmetic instruction funct6
-  always_comb begin
-    if (inst_valid)
-      funct6_ari.ari_funct6 = inst_funct6;
-    else
-      funct6_ari.ari_funct6 = 'b0;
-  end
+  assign funct6_ari.ari_funct6 = inst_valid ? inst_funct6 : 'b0;
 
-  // make sure: funct6 and funct3 are not illegal opcode
   always_comb begin
     // initial the data
-    valid_opi                 = 'b0;
-    valid_opm                 = 'b0;
+    valid_opi = 'b0;
+    valid_opm = 'b0;
     
     case(inst_funct3)
       OPIVV,
       OPIVX,
       OPIVI: begin
-        case(funct6_ari.ari_funct6)
-          VADD,            
-          VSUB,            
-          VRSUB,           
-          VMINU,           
-          VMIN,            
-          VMAXU,           
-          VMAX,            
-          VAND,            
-          VOR,             
-          VXOR,            
-          VRGATHER,        
-          VSLIDEUP_RGATHEREI16,
-          VSLIDEDOWN,      
-          VADC,            
-          VMADC,           
-          VSBC,            
-          VMSBC,           
-          VMERGE_VMV,      
-          VMSEQ,           
-          VMSNE,           
-          VMSLTU,          
-          VMSLT,           
-          VMSLEU,          
-          VMSLE,           
-          VMSGTU,          
-          VMSGT,           
-          VSADDU,          
-          VSADD,           
-          VSSUBU,          
-          VSSUB,           
-          VSLL,            
-          VSMUL_VMVNRR,    
-          VSRL,            
-          VSRA,            
-          VSSRL,           
-          VSSRA,           
-          VNSRL,           
-          VNSRA,           
-          VNCLIPU,         
-          VNCLIP,          
-          VWREDSUMU,       
-          VWREDSUM: begin
-            valid_opi = inst_valid;
-          end
-        endcase
+        valid_opi = inst_valid;
       end
       OPMVV,
       OPMVX: begin
-        case(funct6_ari.ari_funct6)
-          VREDSUM    ,   
-          VREDAND    ,
-          VREDOR     ,
-          VREDXOR    ,
-          VREDMINU   ,
-          VREDMIN    ,
-          VREDMAXU   ,
-          VREDMAX    ,
-          VAADDU     ,
-          VAADD      ,
-          VASUBU     ,
-          VASUB      ,
-          VSLIDE1UP  ,
-          VSLIDE1DOWN,
-          VWXUNARY0  ,  
-          VXUNARY0   ,  
-          VMUNARY0   ,  
-          VCOMPRESS  ,
-          VMANDN     ,
-          VMAND      ,
-          VMOR       ,
-          VMXOR      ,
-          VMORN      ,
-          VMNAND     ,
-          VMNOR      ,
-          VMXNOR     ,
-          VDIVU      ,
-          VDIV       ,
-          VREMU      ,
-          VREM       ,
-          VMULHU     ,
-          VMUL       ,
-          VMULHSU    ,
-          VMULH      ,
-          VMADD      ,
-          VNMSUB     ,
-          VMACC      ,
-          VNMSAC     ,
-          VWADDU     ,
-          VWADD      ,
-          VWSUBU     ,
-          VWSUB      ,
-          VWADDU_W   ,
-          VWADD_W    ,
-          VWSUBU_W   ,
-          VWSUB_W    ,
-          VWMULU     ,
-          VWMULSU    ,
-          VWMUL      ,
-          VWMACCU    ,
-          VWMACC     ,
-          VWMACCUS   ,
-          VWMACCSU: begin
-            valid_opm = inst_valid;
-          end
-        endcase
+        valid_opm = inst_valid;
       end
     endcase
   end 
@@ -239,13 +132,13 @@ module rvv_backend_decode_unit_ari
   // get EMUL
   always_comb begin
     // initial
-    emul_vd          = EMUL_NONE;
-    emul_vs2         = EMUL_NONE;
-    emul_vs1         = EMUL_NONE;
-    emul_max         = EMUL_NONE;
+    emul_vd  = EMUL_NONE;
+    emul_vs2 = EMUL_NONE;
+    emul_vs1 = EMUL_NONE;
+    emul_max = EMUL_NONE;
     
-    case(1'b1)
-      valid_opi: begin
+    case(inst_funct3)
+      OPIVV: begin
         // OPI* instruction
         case(funct6_ari.ari_funct6)
           VADD,
@@ -261,63 +154,32 @@ module rvv_backend_decode_unit_ari
           VSSRL,
           VSSRA,
           VRGATHER: begin
-            case(inst_funct3)
-              OPIVV: begin
-                case(csr_lmul)
-                  LMUL1_4,
-                  LMUL1_2,
-                  LMUL1: begin
-                    emul_vd     = EMUL1;
-                    emul_vs2    = EMUL1;
-                    emul_vs1    = EMUL1;
-                    emul_max    = EMUL1;
-                  end
-                  LMUL2: begin
-                    emul_vd     = EMUL2;
-                    emul_vs2    = EMUL2;
-                    emul_vs1    = EMUL2;
-                    emul_max    = EMUL2;
-                  end
-                  LMUL4: begin
-                    emul_vd     = EMUL4;
-                    emul_vs2    = EMUL4;
-                    emul_vs1    = EMUL4;
-                    emul_max    = EMUL4;
-                  end
-                  LMUL8: begin
-                    emul_vd     = EMUL8;
-                    emul_vs2    = EMUL8;
-                    emul_vs1    = EMUL8;
-                    emul_max    = EMUL8;
-                  end
-                endcase
+            case(csr_lmul)
+              LMUL1_4,
+              LMUL1_2,
+              LMUL1: begin
+                emul_vd     = EMUL1;
+                emul_vs2    = EMUL1;
+                emul_vs1    = EMUL1;
+                emul_max    = EMUL1;
               end
-              OPIVX,
-              OPIVI: begin
-                case(csr_lmul)
-                  LMUL1_4,
-                  LMUL1_2,
-                  LMUL1: begin
-                    emul_vd     = EMUL1;
-                    emul_vs2    = EMUL1;
-                    emul_max    = EMUL1;
-                  end
-                  LMUL2: begin
-                    emul_vd     = EMUL2;
-                    emul_vs2    = EMUL2;
-                    emul_max    = EMUL2;
-                  end
-                  LMUL4: begin
-                    emul_vd     = EMUL4;
-                    emul_vs2    = EMUL4;
-                    emul_max    = EMUL4;
-                  end
-                  LMUL8: begin
-                    emul_vd     = EMUL8;
-                    emul_vs2    = EMUL8;
-                    emul_max    = EMUL8;
-                  end
-                endcase
+              LMUL2: begin
+                emul_vd     = EMUL2;
+                emul_vs2    = EMUL2;
+                emul_vs1    = EMUL2;
+                emul_max    = EMUL2;
+              end
+              LMUL4: begin
+                emul_vd     = EMUL4;
+                emul_vs2    = EMUL4;
+                emul_vs1    = EMUL4;
+                emul_max    = EMUL4;
+              end
+              LMUL8: begin
+                emul_vd     = EMUL8;
+                emul_vs2    = EMUL8;
+                emul_vs1    = EMUL8;
+                emul_max    = EMUL8;
               end
             endcase
           end
@@ -330,95 +192,32 @@ module rvv_backend_decode_unit_ari
           VMAX,
           VSSUBU,
           VSSUB: begin
-            case(inst_funct3)
-              OPIVV: begin
-                case(csr_lmul)
-                  LMUL1_4,
-                  LMUL1_2,
-                  LMUL1: begin
-                    emul_vd     = EMUL1;
-                    emul_vs2    = EMUL1;
-                    emul_vs1    = EMUL1;
-                    emul_max    = EMUL1;
-                  end
-                  LMUL2: begin
-                    emul_vd     = EMUL2;
-                    emul_vs2    = EMUL2;
-                    emul_vs1    = EMUL2;
-                    emul_max    = EMUL2;
-                  end
-                  LMUL4: begin
-                    emul_vd     = EMUL4;
-                    emul_vs2    = EMUL4;
-                    emul_vs1    = EMUL4;
-                    emul_max    = EMUL4;
-                  end
-                  LMUL8: begin
-                    emul_vd     = EMUL8;
-                    emul_vs2    = EMUL8;
-                    emul_vs1    = EMUL8;
-                    emul_max    = EMUL8;
-                  end
-                endcase
+            case(csr_lmul)
+              LMUL1_4,
+              LMUL1_2,
+              LMUL1: begin
+                emul_vd     = EMUL1;
+                emul_vs2    = EMUL1;
+                emul_vs1    = EMUL1;
+                emul_max    = EMUL1;
               end
-              OPIVX: begin
-                case(csr_lmul)
-                  LMUL1_4,
-                  LMUL1_2,
-                  LMUL1: begin
-                    emul_vd     = EMUL1;
-                    emul_vs2    = EMUL1;
-                    emul_max    = EMUL1;
-                  end
-                  LMUL2: begin
-                    emul_vd     = EMUL2;
-                    emul_vs2    = EMUL2;
-                    emul_max    = EMUL2;
-                  end
-                  LMUL4: begin
-                    emul_vd     = EMUL4;
-                    emul_vs2    = EMUL4;
-                    emul_max    = EMUL4;
-                  end
-                  LMUL8: begin
-                    emul_vd     = EMUL8;
-                    emul_vs2    = EMUL8;
-                    emul_max    = EMUL8;
-                  end
-                endcase
+              LMUL2: begin
+                emul_vd     = EMUL2;
+                emul_vs2    = EMUL2;
+                emul_vs1    = EMUL2;
+                emul_max    = EMUL2;
               end
-            endcase
-          end
-
-          VRSUB,
-          VSLIDEDOWN: begin        
-            case(inst_funct3)
-              OPIVX,
-              OPIVI: begin
-                case(csr_lmul)
-                  LMUL1_4,
-                  LMUL1_2,
-                  LMUL1: begin
-                    emul_vd     = EMUL1;
-                    emul_vs2    = EMUL1;
-                    emul_max    = EMUL1;
-                  end
-                  LMUL2: begin
-                    emul_vd     = EMUL2;
-                    emul_vs2    = EMUL2;
-                    emul_max    = EMUL2;
-                  end
-                  LMUL4: begin
-                    emul_vd     = EMUL4;
-                    emul_vs2    = EMUL4;
-                    emul_max    = EMUL4;
-                  end
-                  LMUL8: begin
-                    emul_vd     = EMUL8;
-                    emul_vs2    = EMUL8;
-                    emul_max    = EMUL8;
-                  end
-                endcase
+              LMUL4: begin
+                emul_vd     = EMUL4;
+                emul_vs2    = EMUL4;
+                emul_vs1    = EMUL4;
+                emul_max    = EMUL4;
+              end
+              LMUL8: begin
+                emul_vd     = EMUL8;
+                emul_vs2    = EMUL8;
+                emul_vs1    = EMUL8;
+                emul_max    = EMUL8;
               end
             endcase
           end
@@ -429,63 +228,32 @@ module rvv_backend_decode_unit_ari
           VMSNE,
           VMSLEU,
           VMSLE: begin
-            case(inst_funct3)
-              OPIVV: begin
-                  case(csr_lmul)
-                  LMUL1_4,
-                  LMUL1_2,
-                  LMUL1: begin
-                    emul_vd     = EMUL1;
-                    emul_vs2    = EMUL1;
-                    emul_vs1    = EMUL1;
-                    emul_max    = EMUL1;
-                  end
-                  LMUL2: begin
-                    emul_vd     = EMUL1;
-                    emul_vs2    = EMUL2;
-                    emul_vs1    = EMUL2;
-                    emul_max    = EMUL2;
-                  end
-                  LMUL4: begin
-                    emul_vd     = EMUL1;
-                    emul_vs2    = EMUL4;
-                    emul_vs1    = EMUL4;
-                    emul_max    = EMUL4;
-                  end
-                  LMUL8: begin
-                    emul_vd     = EMUL1;
-                    emul_vs2    = EMUL8;
-                    emul_vs1    = EMUL8;
-                    emul_max    = EMUL8;
-                  end
-                endcase
+            case(csr_lmul)
+              LMUL1_4,
+              LMUL1_2,
+              LMUL1: begin
+                emul_vd     = EMUL1;
+                emul_vs2    = EMUL1;
+                emul_vs1    = EMUL1;
+                emul_max    = EMUL1;
               end
-              OPIVX,
-              OPIVI: begin
-                case(csr_lmul)
-                  LMUL1_4,
-                  LMUL1_2,
-                  LMUL1: begin
-                    emul_vd     = EMUL1;
-                    emul_vs2    = EMUL1;
-                    emul_max    = EMUL1;
-                  end
-                  LMUL2: begin
-                    emul_vd     = EMUL1;
-                    emul_vs2    = EMUL2;
-                    emul_max    = EMUL2;
-                  end
-                  LMUL4: begin
-                    emul_vd     = EMUL1;
-                    emul_vs2    = EMUL4;
-                    emul_max    = EMUL4;
-                  end
-                  LMUL8: begin
-                    emul_vd     = EMUL1;
-                    emul_vs2    = EMUL8;
-                    emul_max    = EMUL8;
-                  end
-                endcase
+              LMUL2: begin
+                emul_vd     = EMUL1;
+                emul_vs2    = EMUL2;
+                emul_vs1    = EMUL2;
+                emul_max    = EMUL2;
+              end
+              LMUL4: begin
+                emul_vd     = EMUL1;
+                emul_vs2    = EMUL4;
+                emul_vs1    = EMUL4;
+                emul_max    = EMUL4;
+              end
+              LMUL8: begin
+                emul_vd     = EMUL1;
+                emul_vs2    = EMUL8;
+                emul_vs1    = EMUL8;
+                emul_max    = EMUL8;
               end
             endcase
           end
@@ -493,62 +261,32 @@ module rvv_backend_decode_unit_ari
           VMSBC,
           VMSLTU,
           VMSLT: begin
-            case(inst_funct3)
-              OPIVV: begin
-                  case(csr_lmul)
-                  LMUL1_4,
-                  LMUL1_2,
-                  LMUL1: begin
-                    emul_vd     = EMUL1;
-                    emul_vs2    = EMUL1;
-                    emul_vs1    = EMUL1;
-                    emul_max    = EMUL1;
-                  end
-                  LMUL2: begin
-                    emul_vd     = EMUL1;
-                    emul_vs2    = EMUL2;
-                    emul_vs1    = EMUL2;
-                    emul_max    = EMUL2;
-                  end
-                  LMUL4: begin
-                    emul_vd     = EMUL1;
-                    emul_vs2    = EMUL4;
-                    emul_vs1    = EMUL4;
-                    emul_max    = EMUL4;
-                  end
-                  LMUL8: begin
-                    emul_vd     = EMUL1;
-                    emul_vs2    = EMUL8;
-                    emul_vs1    = EMUL8;
-                    emul_max    = EMUL8;
-                  end
-                endcase
+            case(csr_lmul)
+              LMUL1_4,
+              LMUL1_2,
+              LMUL1: begin
+                emul_vd     = EMUL1;
+                emul_vs2    = EMUL1;
+                emul_vs1    = EMUL1;
+                emul_max    = EMUL1;
               end
-              OPIVX: begin
-                case(csr_lmul)
-                  LMUL1_4,
-                  LMUL1_2,
-                  LMUL1: begin
-                    emul_vd     = EMUL1;
-                    emul_vs2    = EMUL1;
-                    emul_max    = EMUL1;
-                  end
-                  LMUL2: begin
-                    emul_vd     = EMUL1;
-                    emul_vs2    = EMUL2;
-                    emul_max    = EMUL2;
-                  end
-                  LMUL4: begin
-                    emul_vd     = EMUL1;
-                    emul_vs2    = EMUL4;
-                    emul_max    = EMUL4;
-                  end
-                  LMUL8: begin
-                    emul_vd     = EMUL1;
-                    emul_vs2    = EMUL8;
-                    emul_max    = EMUL8;
-                  end
-                endcase
+              LMUL2: begin
+                emul_vd     = EMUL1;
+                emul_vs2    = EMUL2;
+                emul_vs1    = EMUL2;
+                emul_max    = EMUL2;
+              end
+              LMUL4: begin
+                emul_vd     = EMUL1;
+                emul_vs2    = EMUL4;
+                emul_vs1    = EMUL4;
+                emul_max    = EMUL4;
+              end
+              LMUL8: begin
+                emul_vd     = EMUL1;
+                emul_vs2    = EMUL8;
+                emul_vs1    = EMUL8;
+                emul_max    = EMUL8;
               end
             endcase
           end
@@ -558,250 +296,97 @@ module rvv_backend_decode_unit_ari
           VNSRA,
           VNCLIPU,
           VNCLIP:begin
-            case(inst_funct3)
-              OPIVV: begin
-                case(csr_lmul)
-                  LMUL1_4,
-                  LMUL1_2: begin
-                    emul_vd     = EMUL1;
-                    emul_vs2    = EMUL1;
-                    emul_vs1    = EMUL1;
-                    emul_max    = EMUL1;
-                  end
-                  LMUL1: begin
-                    emul_vd     = EMUL1;
-                    emul_vs2    = EMUL2;
-                    emul_vs1    = EMUL1;
-                    emul_max    = EMUL2;
-                  end
-                  LMUL2: begin
-                    emul_vd     = EMUL2;
-                    emul_vs2    = EMUL4;
-                    emul_vs1    = EMUL2;
-                    emul_max    = EMUL4;
-                  end
-                  LMUL4: begin
-                    emul_vd     = EMUL4;
-                    emul_vs2    = EMUL8;
-                    emul_vs1    = EMUL4;
-                    emul_max    = EMUL8;
-                  end
-                endcase 
+            case(csr_lmul)
+              LMUL1_4,
+              LMUL1_2: begin
+                emul_vd     = EMUL1;
+                emul_vs2    = EMUL1;
+                emul_vs1    = EMUL1;
+                emul_max    = EMUL1;
               end
-              OPIVX,
-              OPIVI: begin
-                case(csr_lmul)
-                  LMUL1_4,
-                  LMUL1_2: begin
-                    emul_vd     = EMUL1;
-                    emul_vs2    = EMUL1;
-                    emul_max    = EMUL1;
-                  end
-                  LMUL1: begin
-                    emul_vd     = EMUL1;
-                    emul_vs2    = EMUL2;
-                    emul_max    = EMUL2;
-                  end
-                  LMUL2: begin
-                    emul_vd     = EMUL2;
-                    emul_vs2    = EMUL4;
-                    emul_max    = EMUL4;
-                  end
-                  LMUL4: begin
-                    emul_vd     = EMUL4;
-                    emul_vs2    = EMUL8;
-                    emul_max    = EMUL8;
-                  end
-                endcase
+              LMUL1: begin
+                emul_vd     = EMUL1;
+                emul_vs2    = EMUL2;
+                emul_vs1    = EMUL1;
+                emul_max    = EMUL2;
               end
-            endcase
+              LMUL2: begin
+                emul_vd     = EMUL2;
+                emul_vs2    = EMUL4;
+                emul_vs1    = EMUL2;
+                emul_max    = EMUL4;
+              end
+              LMUL4: begin
+                emul_vd     = EMUL4;
+                emul_vs2    = EMUL8;
+                emul_vs1    = EMUL4;
+                emul_max    = EMUL8;
+              end
+            endcase 
           end
           
-          VMSGTU,
-          VMSGT: begin
-            case(inst_funct3)
-              OPIVX,
-              OPIVI: begin
-                case(csr_lmul)
-                  LMUL1_4,
-                  LMUL1_2,
-                  LMUL1: begin
-                    emul_vd     = EMUL1;
-                    emul_vs2    = EMUL1;
-                    emul_max    = EMUL1;
-                  end
-                  LMUL2: begin
-                    emul_vd     = EMUL1;
-                    emul_vs2    = EMUL2;
-                    emul_max    = EMUL2;
-                  end
-                  LMUL4: begin
-                    emul_vd     = EMUL1;
-                    emul_vs2    = EMUL4;
-                    emul_max    = EMUL4;
-                  end
-                  LMUL8: begin
-                    emul_vd     = EMUL1;
-                    emul_vs2    = EMUL8;
-                    emul_max    = EMUL8;
-                  end
-                endcase
-              end
-            endcase
-          end
-
           VMERGE_VMV: begin
-            case(inst_funct3)
-              OPIVV: begin
-                case(csr_lmul)
-                  LMUL1_4,
-                  LMUL1_2,
-                  LMUL1: begin
-                    emul_vd     = EMUL1;
-                    if (inst_vm=='b0)
-                      emul_vs2  = EMUL1;
-                    emul_vs1    = EMUL1;
-                    emul_max    = EMUL1;
-                  end
-                  LMUL2: begin
-                    emul_vd     = EMUL2;
-                    if (inst_vm=='b0)
-                      emul_vs2  = EMUL2;
-                    emul_vs1    = EMUL2;
-                    emul_max    = EMUL2;
-                  end
-                  LMUL4: begin
-                    emul_vd     = EMUL4;
-                    if (inst_vm=='b0)
-                      emul_vs2  = EMUL4;
-                    emul_vs1    = EMUL4;
-                    emul_max    = EMUL4;
-                  end
-                  LMUL8: begin
-                    emul_vd     = EMUL8;
-                    if (inst_vm=='b0)
-                      emul_vs2  = EMUL8;
-                    emul_vs1    = EMUL8;
-                    emul_max    = EMUL8;
-                  end
-                endcase
+            case(csr_lmul)
+              LMUL1_4,
+              LMUL1_2,
+              LMUL1: begin
+                emul_vd     = EMUL1;
+                if (inst_vm=='b0)
+                  emul_vs2  = EMUL1;
+                emul_vs1    = EMUL1;
+                emul_max    = EMUL1;
               end
-              OPIVX,
-              OPIVI: begin
-                case(csr_lmul)
-                  LMUL1_4,
-                  LMUL1_2,
-                  LMUL1: begin
-                    emul_vd     = EMUL1;
-                    if (inst_vm=='b0)
-                      emul_vs2  = EMUL1;
-                    emul_max    = EMUL1;
-                  end
-                  LMUL2: begin
-                    emul_vd     = EMUL2;
-                    if (inst_vm=='b0)
-                      emul_vs2  = EMUL2;
-                    emul_max    = EMUL2;
-                  end
-                  LMUL4: begin
-                    emul_vd     = EMUL4;
-                    if (inst_vm=='b0)
-                      emul_vs2  = EMUL4;
-                    emul_max    = EMUL4;
-                  end
-                  LMUL8: begin
-                    emul_vd     = EMUL8;
-                    if (inst_vm=='b0)
-                      emul_vs2  = EMUL8;
-                    emul_max    = EMUL8;
-                  end
-                endcase
+              LMUL2: begin
+                emul_vd     = EMUL2;
+                if (inst_vm=='b0)
+                  emul_vs2  = EMUL2;
+                emul_vs1    = EMUL2;
+                emul_max    = EMUL2;
+              end
+              LMUL4: begin
+                emul_vd     = EMUL4;
+                if (inst_vm=='b0)
+                  emul_vs2  = EMUL4;
+                emul_vs1    = EMUL4;
+                emul_max    = EMUL4;
+              end
+              LMUL8: begin
+                emul_vd     = EMUL8;
+                if (inst_vm=='b0)
+                  emul_vs2  = EMUL8;
+                emul_vs1    = EMUL8;
+                emul_max    = EMUL8;
               end
             endcase
           end
 
           VSMUL_VMVNRR: begin
-            case(inst_funct3)
-              OPIVV: begin
-                case(csr_lmul)
-                  LMUL1_4,
-                  LMUL1_2,
-                  LMUL1: begin
-                    emul_vd     = EMUL1;
-                    emul_vs2    = EMUL1;
-                    emul_vs1    = EMUL1;
-                    emul_max    = EMUL1;
-                  end
-                  LMUL2: begin
-                    emul_vd     = EMUL2;
-                    emul_vs2    = EMUL2;
-                    emul_vs1    = EMUL2;
-                    emul_max    = EMUL2;
-                  end
-                  LMUL4: begin
-                    emul_vd     = EMUL4;
-                    emul_vs2    = EMUL4;
-                    emul_vs1    = EMUL4;
-                    emul_max    = EMUL4;
-                  end
-                  LMUL8: begin
-                    emul_vd     = EMUL8;
-                    emul_vs2    = EMUL8;
-                    emul_vs1    = EMUL8;
-                    emul_max    = EMUL8;
-                  end
-                endcase
+            case(csr_lmul)
+              LMUL1_4,
+              LMUL1_2,
+              LMUL1: begin
+                emul_vd     = EMUL1;
+                emul_vs2    = EMUL1;
+                emul_vs1    = EMUL1;
+                emul_max    = EMUL1;
               end
-              OPIVX: begin
-                case(csr_lmul)
-                  LMUL1_4,
-                  LMUL1_2,
-                  LMUL1: begin
-                    emul_vd     = EMUL1;
-                    emul_vs2    = EMUL1;
-                    emul_max    = EMUL1;
-                  end
-                  LMUL2: begin
-                    emul_vd     = EMUL2;
-                    emul_vs2    = EMUL2;
-                    emul_max    = EMUL2;
-                  end
-                  LMUL4: begin
-                    emul_vd     = EMUL4;
-                    emul_vs2    = EMUL4;
-                    emul_max    = EMUL4;
-                  end
-                  LMUL8: begin
-                    emul_vd     = EMUL8;
-                    emul_vs2    = EMUL8;
-                    emul_max    = EMUL8;
-                  end
-                endcase
+              LMUL2: begin
+                emul_vd     = EMUL2;
+                emul_vs2    = EMUL2;
+                emul_vs1    = EMUL2;
+                emul_max    = EMUL2;
               end
-              // vmv<nr>r.v instruction
-              OPIVI: begin
-                case(inst_nr)
-                  NREG1: begin
-                    emul_vd     = EMUL1;
-                    emul_vs2    = EMUL1;
-                    emul_max    = EMUL1;
-                  end
-                  NREG2: begin
-                    emul_vd     = EMUL2;
-                    emul_vs2    = EMUL2;
-                    emul_max    = EMUL2;
-                  end
-                  NREG4: begin
-                    emul_vd     = EMUL4;
-                    emul_vs2    = EMUL4;
-                    emul_max    = EMUL4;
-                  end
-                  NREG8: begin
-                    emul_vd     = EMUL8;
-                    emul_vs2    = EMUL8;
-                    emul_max    = EMUL8;
-                  end
-                endcase
+              LMUL4: begin
+                emul_vd     = EMUL4;
+                emul_vs2    = EMUL4;
+                emul_vs1    = EMUL4;
+                emul_max    = EMUL4;
+              end
+              LMUL8: begin
+                emul_vd     = EMUL8;
+                emul_vs2    = EMUL8;
+                emul_vs1    = EMUL8;
+                emul_max    = EMUL8;
               end
             endcase
           end
@@ -809,165 +394,129 @@ module rvv_backend_decode_unit_ari
           // widening instructions
           VWREDSUMU,
           VWREDSUM: begin
-            case(inst_funct3)
-              OPIVV: begin
-                case(csr_lmul)
-                  LMUL1_4,
-                  LMUL1_2,
-                  LMUL1: begin
-                    emul_vd     = EMUL1;
-                    emul_vs2    = EMUL1;
-                    emul_vs1    = EMUL1;
-                    emul_max    = EMUL1;
-                  end
-                  LMUL2: begin
-                    emul_vd     = EMUL1;
-                    emul_vs2    = EMUL2;
-                    emul_vs1    = EMUL1;
-                    emul_max    = EMUL2;
-                  end
-                  LMUL4: begin
-                    emul_vd     = EMUL1;
-                    emul_vs2    = EMUL4;
-                    emul_vs1    = EMUL1;
-                    emul_max    = EMUL4;
-                  end
-                  LMUL8: begin
-                    emul_vd     = EMUL1;
-                    emul_vs2    = EMUL8;
-                    emul_vs1    = EMUL1;
-                    emul_max    = EMUL8;
-                  end
-                endcase
+            case(csr_lmul)
+              LMUL1_4,
+              LMUL1_2,
+              LMUL1: begin
+                emul_vd     = EMUL1;
+                emul_vs2    = EMUL1;
+                emul_vs1    = EMUL1;
+                emul_max    = EMUL1;
+              end
+              LMUL2: begin
+                emul_vd     = EMUL1;
+                emul_vs2    = EMUL2;
+                emul_vs1    = EMUL1;
+                emul_max    = EMUL2;
+              end
+              LMUL4: begin
+                emul_vd     = EMUL1;
+                emul_vs2    = EMUL4;
+                emul_vs1    = EMUL1;
+                emul_max    = EMUL4;
+              end
+              LMUL8: begin
+                emul_vd     = EMUL1;
+                emul_vs2    = EMUL8;
+                emul_vs1    = EMUL1;
+                emul_max    = EMUL8;
               end
             endcase
           end
 
           VSLIDEUP_RGATHEREI16: begin        
-            case(inst_funct3)
-              // VRGATHEREI16
-              OPIVV: begin
-                case(csr_lmul)
-                  LMUL1_4: begin
-                    case(csr_sew)
-                      SEW8,
-                      SEW16: begin
-                        emul_vd     = EMUL1;
-                        emul_vs2    = EMUL1;
-                        emul_vs1    = EMUL1;
-                        emul_max    = EMUL1;
-                      end
-                    endcase
-                  end
-                  LMUL1_2: begin
+            // VRGATHEREI16
+            case(csr_lmul)
+              LMUL1_4: begin
+                case(csr_sew)
+                  SEW8,
+                  SEW16: begin
                     emul_vd     = EMUL1;
                     emul_vs2    = EMUL1;
                     emul_vs1    = EMUL1;
                     emul_max    = EMUL1;
                   end
-                  LMUL1: begin
-                    case(csr_sew)
-                      SEW8: begin
-                        emul_vd     = EMUL1;
-                        emul_vs2    = EMUL1;
-                        emul_vs1    = EMUL2;
-                        emul_max    = EMUL2;                  
-                      end
-                      SEW16,
-                      SEW32: begin
-                        emul_vd     = EMUL1;
-                        emul_vs2    = EMUL1;
-                        emul_vs1    = EMUL1;
-                        emul_max    = EMUL1;
-                      end
-                    endcase
+                endcase
+              end
+              LMUL1_2: begin
+                emul_vd     = EMUL1;
+                emul_vs2    = EMUL1;
+                emul_vs1    = EMUL1;
+                emul_max    = EMUL1;
+              end
+              LMUL1: begin
+                case(csr_sew)
+                  SEW8: begin
+                    emul_vd     = EMUL1;
+                    emul_vs2    = EMUL1;
+                    emul_vs1    = EMUL2;
+                    emul_max    = EMUL2;                  
                   end
-                  LMUL2: begin                  
-                    case(csr_sew)
-                      SEW8: begin
-                        emul_vd     = EMUL2;
-                        emul_vs2    = EMUL2;
-                        emul_vs1    = EMUL4;
-                        emul_max    = EMUL4;
-                      end
-                      SEW16: begin
-                        emul_vd     = EMUL2;
-                        emul_vs2    = EMUL2;
-                        emul_vs1    = EMUL2;
-                        emul_max    = EMUL2;
-                      end
-                      SEW32: begin
-                        emul_vd     = EMUL2;
-                        emul_vs2    = EMUL2;
-                        emul_vs1    = EMUL1;
-                        emul_max    = EMUL2;
-                      end
-                    endcase
-                  end
-                  LMUL4: begin
-                    case(csr_sew)
-                      SEW8: begin
-                        emul_vd     = EMUL4;
-                        emul_vs2    = EMUL4;
-                        emul_vs1    = EMUL8;
-                        emul_max    = EMUL8;
-                      end
-                      SEW16: begin
-                        emul_vd     = EMUL4;
-                        emul_vs2    = EMUL4;
-                        emul_vs1    = EMUL4;
-                        emul_max    = EMUL4;
-                      end
-                      SEW32: begin
-                        emul_vd     = EMUL4;
-                        emul_vs2    = EMUL4;
-                        emul_vs1    = EMUL2;
-                        emul_max    = EMUL4;
-                      end
-                    endcase
-                  end
-                  LMUL8: begin
-                    case(csr_sew)
-                      SEW16: begin
-                        emul_vd     = EMUL8;
-                        emul_vs2    = EMUL8;
-                        emul_vs1    = EMUL8;
-                        emul_max    = EMUL8;
-                      end
-                      SEW32: begin
-                        emul_vd     = EMUL8;
-                        emul_vs2    = EMUL8;
-                        emul_vs1    = EMUL4;
-                        emul_max    = EMUL8;
-                      end
-                    endcase
+                  SEW16,
+                  SEW32: begin
+                    emul_vd     = EMUL1;
+                    emul_vs2    = EMUL1;
+                    emul_vs1    = EMUL1;
+                    emul_max    = EMUL1;
                   end
                 endcase
               end
-              // VSLIDEUP 
-              OPIVX,
-              OPIVI: begin
-                case(csr_lmul)
-                  LMUL1_4,
-                  LMUL1_2,
-                  LMUL1: begin
-                    emul_vd     = EMUL1;
-                    emul_vs2    = EMUL1;
-                    emul_max    = EMUL1;
-                  end
-                  LMUL2: begin
+              LMUL2: begin                  
+                case(csr_sew)
+                  SEW8: begin
                     emul_vd     = EMUL2;
                     emul_vs2    = EMUL2;
-                    emul_max    = EMUL2;
-                  end
-                  LMUL4: begin
-                    emul_vd     = EMUL4;
-                    emul_vs2    = EMUL4;
+                    emul_vs1    = EMUL4;
                     emul_max    = EMUL4;
                   end
-                  LMUL8: begin
+                  SEW16: begin
+                    emul_vd     = EMUL2;
+                    emul_vs2    = EMUL2;
+                    emul_vs1    = EMUL2;
+                    emul_max    = EMUL2;
+                  end
+                  SEW32: begin
+                    emul_vd     = EMUL2;
+                    emul_vs2    = EMUL2;
+                    emul_vs1    = EMUL1;
+                    emul_max    = EMUL2;
+                  end
+                endcase
+              end
+              LMUL4: begin
+                case(csr_sew)
+                  SEW8: begin
+                    emul_vd     = EMUL4;
+                    emul_vs2    = EMUL4;
+                    emul_vs1    = EMUL8;
+                    emul_max    = EMUL8;
+                  end
+                  SEW16: begin
+                    emul_vd     = EMUL4;
+                    emul_vs2    = EMUL4;
+                    emul_vs1    = EMUL4;
+                    emul_max    = EMUL4;
+                  end
+                  SEW32: begin
+                    emul_vd     = EMUL4;
+                    emul_vs2    = EMUL4;
+                    emul_vs1    = EMUL2;
+                    emul_max    = EMUL4;
+                  end
+                endcase
+              end
+              LMUL8: begin
+                case(csr_sew)
+                  SEW16: begin
                     emul_vd     = EMUL8;
                     emul_vs2    = EMUL8;
+                    emul_vs1    = EMUL8;
+                    emul_max    = EMUL8;
+                  end
+                  SEW32: begin
+                    emul_vd     = EMUL8;
+                    emul_vs2    = EMUL8;
+                    emul_vs1    = EMUL4;
                     emul_max    = EMUL8;
                   end
                 endcase
@@ -976,8 +525,565 @@ module rvv_backend_decode_unit_ari
           end
         endcase
       end
+      
+      OPIVX: begin
+        // OPI* instruction
+        case(funct6_ari.ari_funct6)
+          VADD,
+          VADC,
+          VAND,
+          VOR,
+          VXOR,
+          VSLL,
+          VSRL,
+          VSRA,
+          VSADDU,
+          VSADD,
+          VSSRL,
+          VSSRA,
+          VRGATHER: begin
+            case(csr_lmul)
+              LMUL1_4,
+              LMUL1_2,
+              LMUL1: begin
+                emul_vd     = EMUL1;
+                emul_vs2    = EMUL1;
+                emul_max    = EMUL1;
+              end
+              LMUL2: begin
+                emul_vd     = EMUL2;
+                emul_vs2    = EMUL2;
+                emul_max    = EMUL2;
+              end
+              LMUL4: begin
+                emul_vd     = EMUL4;
+                emul_vs2    = EMUL4;
+                emul_max    = EMUL4;
+              end
+              LMUL8: begin
+                emul_vd     = EMUL8;
+                emul_vs2    = EMUL8;
+                emul_max    = EMUL8;
+              end
+            endcase
+          end
 
-      valid_opm: begin
+          VSUB,
+          VSBC,
+          VMINU,
+          VMIN,
+          VMAXU,
+          VMAX,
+          VSSUBU,
+          VSSUB: begin
+            case(csr_lmul)
+              LMUL1_4,
+              LMUL1_2,
+              LMUL1: begin
+                emul_vd     = EMUL1;
+                emul_vs2    = EMUL1;
+                emul_max    = EMUL1;
+              end
+              LMUL2: begin
+                emul_vd     = EMUL2;
+                emul_vs2    = EMUL2;
+                emul_max    = EMUL2;
+              end
+              LMUL4: begin
+                emul_vd     = EMUL4;
+                emul_vs2    = EMUL4;
+                emul_max    = EMUL4;
+              end
+              LMUL8: begin
+                emul_vd     = EMUL8;
+                emul_vs2    = EMUL8;
+                emul_max    = EMUL8;
+              end
+            endcase
+          end
+
+          VRSUB,
+          VSLIDEDOWN: begin        
+            case(csr_lmul)
+              LMUL1_4,
+              LMUL1_2,
+              LMUL1: begin
+                emul_vd     = EMUL1;
+                emul_vs2    = EMUL1;
+                emul_max    = EMUL1;
+              end
+              LMUL2: begin
+                emul_vd     = EMUL2;
+                emul_vs2    = EMUL2;
+                emul_max    = EMUL2;
+              end
+              LMUL4: begin
+                emul_vd     = EMUL4;
+                emul_vs2    = EMUL4;
+                emul_max    = EMUL4;
+              end
+              LMUL8: begin
+                emul_vd     = EMUL8;
+                emul_vs2    = EMUL8;
+                emul_max    = EMUL8;
+              end
+            endcase
+          end
+
+          // destination vector register is mask register
+          VMADC,
+          VMSEQ,
+          VMSNE,
+          VMSLEU,
+          VMSLE: begin
+            case(csr_lmul)
+              LMUL1_4,
+              LMUL1_2,
+              LMUL1: begin
+                emul_vd     = EMUL1;
+                emul_vs2    = EMUL1;
+                emul_max    = EMUL1;
+              end
+              LMUL2: begin
+                emul_vd     = EMUL1;
+                emul_vs2    = EMUL2;
+                emul_max    = EMUL2;
+              end
+              LMUL4: begin
+                emul_vd     = EMUL1;
+                emul_vs2    = EMUL4;
+                emul_max    = EMUL4;
+              end
+              LMUL8: begin
+                emul_vd     = EMUL1;
+                emul_vs2    = EMUL8;
+                emul_max    = EMUL8;
+              end
+            endcase
+          end
+
+          VMSBC,
+          VMSLTU,
+          VMSLT: begin
+            case(csr_lmul)
+              LMUL1_4,
+              LMUL1_2,
+              LMUL1: begin
+                emul_vd     = EMUL1;
+                emul_vs2    = EMUL1;
+                emul_max    = EMUL1;
+              end
+              LMUL2: begin
+                emul_vd     = EMUL1;
+                emul_vs2    = EMUL2;
+                emul_max    = EMUL2;
+              end
+              LMUL4: begin
+                emul_vd     = EMUL1;
+                emul_vs2    = EMUL4;
+                emul_max    = EMUL4;
+              end
+              LMUL8: begin
+                emul_vd     = EMUL1;
+                emul_vs2    = EMUL8;
+                emul_max    = EMUL8;
+              end
+            endcase
+          end
+
+          // narrowing instructions
+          VNSRL,
+          VNSRA,
+          VNCLIPU,
+          VNCLIP:begin
+            case(csr_lmul)
+              LMUL1_4,
+              LMUL1_2: begin
+                emul_vd     = EMUL1;
+                emul_vs2    = EMUL1;
+                emul_max    = EMUL1;
+              end
+              LMUL1: begin
+                emul_vd     = EMUL1;
+                emul_vs2    = EMUL2;
+                emul_max    = EMUL2;
+              end
+              LMUL2: begin
+                emul_vd     = EMUL2;
+                emul_vs2    = EMUL4;
+                emul_max    = EMUL4;
+              end
+              LMUL4: begin
+                emul_vd     = EMUL4;
+                emul_vs2    = EMUL8;
+                emul_max    = EMUL8;
+              end
+            endcase
+          end
+          
+          VMSGTU,
+          VMSGT: begin
+            case(csr_lmul)
+              LMUL1_4,
+              LMUL1_2,
+              LMUL1: begin
+                emul_vd     = EMUL1;
+                emul_vs2    = EMUL1;
+                emul_max    = EMUL1;
+              end
+              LMUL2: begin
+                emul_vd     = EMUL1;
+                emul_vs2    = EMUL2;
+                emul_max    = EMUL2;
+              end
+              LMUL4: begin
+                emul_vd     = EMUL1;
+                emul_vs2    = EMUL4;
+                emul_max    = EMUL4;
+              end
+              LMUL8: begin
+                emul_vd     = EMUL1;
+                emul_vs2    = EMUL8;
+                emul_max    = EMUL8;
+              end
+            endcase
+          end
+
+          VMERGE_VMV: begin
+            case(csr_lmul)
+              LMUL1_4,
+              LMUL1_2,
+              LMUL1: begin
+                emul_vd     = EMUL1;
+                if (inst_vm=='b0)
+                  emul_vs2  = EMUL1;
+                emul_max    = EMUL1;
+              end
+              LMUL2: begin
+                emul_vd     = EMUL2;
+                if (inst_vm=='b0)
+                  emul_vs2  = EMUL2;
+                emul_max    = EMUL2;
+              end
+              LMUL4: begin
+                emul_vd     = EMUL4;
+                if (inst_vm=='b0)
+                  emul_vs2  = EMUL4;
+                emul_max    = EMUL4;
+              end
+              LMUL8: begin
+                emul_vd     = EMUL8;
+                if (inst_vm=='b0)
+                  emul_vs2  = EMUL8;
+                emul_max    = EMUL8;
+              end
+            endcase
+          end
+
+          VSMUL_VMVNRR: begin
+            case(csr_lmul)
+              LMUL1_4,
+              LMUL1_2,
+              LMUL1: begin
+                emul_vd     = EMUL1;
+                emul_vs2    = EMUL1;
+                emul_max    = EMUL1;
+              end
+              LMUL2: begin
+                emul_vd     = EMUL2;
+                emul_vs2    = EMUL2;
+                emul_max    = EMUL2;
+              end
+              LMUL4: begin
+                emul_vd     = EMUL4;
+                emul_vs2    = EMUL4;
+                emul_max    = EMUL4;
+              end
+              LMUL8: begin
+                emul_vd     = EMUL8;
+                emul_vs2    = EMUL8;
+                emul_max    = EMUL8;
+              end
+            endcase
+          end
+          
+          VSLIDEUP_RGATHEREI16: begin        
+            // VSLIDEUP 
+            case(csr_lmul)
+              LMUL1_4,
+              LMUL1_2,
+              LMUL1: begin
+                emul_vd     = EMUL1;
+                emul_vs2    = EMUL1;
+                emul_max    = EMUL1;
+              end
+              LMUL2: begin
+                emul_vd     = EMUL2;
+                emul_vs2    = EMUL2;
+                emul_max    = EMUL2;
+              end
+              LMUL4: begin
+                emul_vd     = EMUL4;
+                emul_vs2    = EMUL4;
+                emul_max    = EMUL4;
+              end
+              LMUL8: begin
+                emul_vd     = EMUL8;
+                emul_vs2    = EMUL8;
+                emul_max    = EMUL8;
+              end
+            endcase
+          end
+        endcase
+      end
+      OPIVI: begin
+        // OPI* instruction
+        case(funct6_ari.ari_funct6)
+          VADD,
+          VADC,
+          VAND,
+          VOR,
+          VXOR,
+          VSLL,
+          VSRL,
+          VSRA,
+          VSADDU,
+          VSADD,
+          VSSRL,
+          VSSRA,
+          VRGATHER: begin
+            case(csr_lmul)
+              LMUL1_4,
+              LMUL1_2,
+              LMUL1: begin
+                emul_vd     = EMUL1;
+                emul_vs2    = EMUL1;
+                emul_max    = EMUL1;
+              end
+              LMUL2: begin
+                emul_vd     = EMUL2;
+                emul_vs2    = EMUL2;
+                emul_max    = EMUL2;
+              end
+              LMUL4: begin
+                emul_vd     = EMUL4;
+                emul_vs2    = EMUL4;
+                emul_max    = EMUL4;
+              end
+              LMUL8: begin
+                emul_vd     = EMUL8;
+                emul_vs2    = EMUL8;
+                emul_max    = EMUL8;
+              end
+            endcase
+          end
+
+          VRSUB,
+          VSLIDEDOWN: begin        
+            case(csr_lmul)
+              LMUL1_4,
+              LMUL1_2,
+              LMUL1: begin
+                emul_vd     = EMUL1;
+                emul_vs2    = EMUL1;
+                emul_max    = EMUL1;
+              end
+              LMUL2: begin
+                emul_vd     = EMUL2;
+                emul_vs2    = EMUL2;
+                emul_max    = EMUL2;
+              end
+              LMUL4: begin
+                emul_vd     = EMUL4;
+                emul_vs2    = EMUL4;
+                emul_max    = EMUL4;
+              end
+              LMUL8: begin
+                emul_vd     = EMUL8;
+                emul_vs2    = EMUL8;
+                emul_max    = EMUL8;
+              end
+            endcase
+          end
+
+          // destination vector register is mask register
+          VMADC,
+          VMSEQ,
+          VMSNE,
+          VMSLEU,
+          VMSLE: begin
+            case(csr_lmul)
+              LMUL1_4,
+              LMUL1_2,
+              LMUL1: begin
+                emul_vd     = EMUL1;
+                emul_vs2    = EMUL1;
+                emul_max    = EMUL1;
+              end
+              LMUL2: begin
+                emul_vd     = EMUL1;
+                emul_vs2    = EMUL2;
+                emul_max    = EMUL2;
+              end
+              LMUL4: begin
+                emul_vd     = EMUL1;
+                emul_vs2    = EMUL4;
+                emul_max    = EMUL4;
+              end
+              LMUL8: begin
+                emul_vd     = EMUL1;
+                emul_vs2    = EMUL8;
+                emul_max    = EMUL8;
+              end
+            endcase
+          end
+
+          // narrowing instructions
+          VNSRL,
+          VNSRA,
+          VNCLIPU,
+          VNCLIP:begin
+            case(csr_lmul)
+              LMUL1_4,
+              LMUL1_2: begin
+                emul_vd     = EMUL1;
+                emul_vs2    = EMUL1;
+                emul_max    = EMUL1;
+              end
+              LMUL1: begin
+                emul_vd     = EMUL1;
+                emul_vs2    = EMUL2;
+                emul_max    = EMUL2;
+              end
+              LMUL2: begin
+                emul_vd     = EMUL2;
+                emul_vs2    = EMUL4;
+                emul_max    = EMUL4;
+              end
+              LMUL4: begin
+                emul_vd     = EMUL4;
+                emul_vs2    = EMUL8;
+                emul_max    = EMUL8;
+              end
+            endcase
+          end
+          
+          VMSGTU,
+          VMSGT: begin
+            case(csr_lmul)
+              LMUL1_4,
+              LMUL1_2,
+              LMUL1: begin
+                emul_vd     = EMUL1;
+                emul_vs2    = EMUL1;
+                emul_max    = EMUL1;
+              end
+              LMUL2: begin
+                emul_vd     = EMUL1;
+                emul_vs2    = EMUL2;
+                emul_max    = EMUL2;
+              end
+              LMUL4: begin
+                emul_vd     = EMUL1;
+                emul_vs2    = EMUL4;
+                emul_max    = EMUL4;
+              end
+              LMUL8: begin
+                emul_vd     = EMUL1;
+                emul_vs2    = EMUL8;
+                emul_max    = EMUL8;
+              end
+            endcase
+          end
+
+          VMERGE_VMV: begin
+            case(csr_lmul)
+              LMUL1_4,
+              LMUL1_2,
+              LMUL1: begin
+                emul_vd     = EMUL1;
+                if (inst_vm=='b0)
+                  emul_vs2  = EMUL1;
+                emul_max    = EMUL1;
+              end
+              LMUL2: begin
+                emul_vd     = EMUL2;
+                if (inst_vm=='b0)
+                  emul_vs2  = EMUL2;
+                emul_max    = EMUL2;
+              end
+              LMUL4: begin
+                emul_vd     = EMUL4;
+                if (inst_vm=='b0)
+                  emul_vs2  = EMUL4;
+                emul_max    = EMUL4;
+              end
+              LMUL8: begin
+                emul_vd     = EMUL8;
+                if (inst_vm=='b0)
+                  emul_vs2  = EMUL8;
+                emul_max    = EMUL8;
+              end
+            endcase
+          end
+
+          VSMUL_VMVNRR: begin
+            // vmv<nr>r.v instruction
+            case(inst_nr)
+              NREG1: begin
+                emul_vd     = EMUL1;
+                emul_vs2    = EMUL1;
+                emul_max    = EMUL1;
+              end
+              NREG2: begin
+                emul_vd     = EMUL2;
+                emul_vs2    = EMUL2;
+                emul_max    = EMUL2;
+              end
+              NREG4: begin
+                emul_vd     = EMUL4;
+                emul_vs2    = EMUL4;
+                emul_max    = EMUL4;
+              end
+              NREG8: begin
+                emul_vd     = EMUL8;
+                emul_vs2    = EMUL8;
+                emul_max    = EMUL8;
+              end
+            endcase
+          end
+          
+          VSLIDEUP_RGATHEREI16: begin        
+            // VSLIDEUP 
+            case(csr_lmul)
+              LMUL1_4,
+              LMUL1_2,
+              LMUL1: begin
+                emul_vd     = EMUL1;
+                emul_vs2    = EMUL1;
+                emul_max    = EMUL1;
+              end
+              LMUL2: begin
+                emul_vd     = EMUL2;
+                emul_vs2    = EMUL2;
+                emul_max    = EMUL2;
+              end
+              LMUL4: begin
+                emul_vd     = EMUL4;
+                emul_vs2    = EMUL4;
+                emul_max    = EMUL4;
+              end
+              LMUL8: begin
+                emul_vd     = EMUL8;
+                emul_vs2    = EMUL8;
+                emul_max    = EMUL8;
+              end
+            endcase
+          end
+        endcase
+      end
+
+      OPMVV: begin
         // OPM* instruction
         case(funct6_ari.ari_funct6)
           // widening instructions: 2SEW = SEW op SEW
@@ -991,60 +1097,31 @@ module rvv_backend_decode_unit_ari
           VWMACCU,
           VWMACC,
           VWMACCSU: begin
-            case(inst_funct3)
-              OPMVV: begin
-                case(csr_lmul)
-                  LMUL1_4,
-                  LMUL1_2: begin
-                    emul_vd     = EMUL1;
-                    emul_vs2    = EMUL1;
-                    emul_vs1    = EMUL1;
-                    emul_max    = EMUL1;
-                  end
-                  LMUL1: begin
-                    emul_vd     = EMUL2;
-                    emul_vs2    = EMUL1;
-                    emul_vs1    = EMUL1;
-                    emul_max    = EMUL2;
-                  end
-                  LMUL2: begin
-                    emul_vd     = EMUL4;
-                    emul_vs2    = EMUL2;
-                    emul_vs1    = EMUL2;
-                    emul_max    = EMUL4;
-                  end
-                  LMUL4: begin
-                    emul_vd     = EMUL8;
-                    emul_vs2    = EMUL4;
-                    emul_vs1    = EMUL4;
-                    emul_max    = EMUL8;
-                  end
-                endcase
+            case(csr_lmul)
+              LMUL1_4,
+              LMUL1_2: begin
+                emul_vd     = EMUL1;
+                emul_vs2    = EMUL1;
+                emul_vs1    = EMUL1;
+                emul_max    = EMUL1;
               end
-              OPMVX: begin
-                case(csr_lmul)
-                  LMUL1_4,
-                  LMUL1_2: begin
-                    emul_vd     = EMUL1;
-                    emul_vs2    = EMUL1;
-                    emul_max    = EMUL1;
-                  end
-                  LMUL1: begin
-                    emul_vd     = EMUL2;
-                    emul_vs2    = EMUL1;
-                    emul_max    = EMUL2;
-                  end
-                  LMUL2: begin
-                    emul_vd     = EMUL4;
-                    emul_vs2    = EMUL2;
-                    emul_max    = EMUL4;
-                  end
-                  LMUL4: begin
-                    emul_vd     = EMUL8;
-                    emul_vs2    = EMUL4;
-                    emul_max    = EMUL8;
-                  end
-                endcase
+              LMUL1: begin
+                emul_vd     = EMUL2;
+                emul_vs2    = EMUL1;
+                emul_vs1    = EMUL1;
+                emul_max    = EMUL2;
+              end
+              LMUL2: begin
+                emul_vd     = EMUL4;
+                emul_vs2    = EMUL2;
+                emul_vs1    = EMUL2;
+                emul_max    = EMUL4;
+              end
+              LMUL4: begin
+                emul_vd     = EMUL8;
+                emul_vs2    = EMUL4;
+                emul_vs1    = EMUL4;
+                emul_max    = EMUL8;
               end
             endcase
           end
@@ -1054,118 +1131,85 @@ module rvv_backend_decode_unit_ari
           VWSUBU_W,
           VWADD_W,
           VWSUB_W: begin
-            case(inst_funct3)
-              OPMVV: begin
-                case(csr_lmul)
-                  LMUL1_4,
-                  LMUL1_2: begin
-                    emul_vd     = EMUL1;
-                    emul_vs2    = EMUL1;
-                    emul_vs1    = EMUL1;
-                    emul_max    = EMUL1;
-                  end
-                  LMUL1: begin
-                    emul_vd     = EMUL2;
-                    emul_vs2    = EMUL2;
-                    emul_vs1    = EMUL1;
-                    emul_max    = EMUL2;
-                  end
-                  LMUL2: begin
-                    emul_vd     = EMUL4;
-                    emul_vs2    = EMUL4;
-                    emul_vs1    = EMUL2;
-                    emul_max    = EMUL4;
-                  end
-                  LMUL4: begin
-                    emul_vd     = EMUL8;
-                    emul_vs2    = EMUL8;
-                    emul_vs1    = EMUL4;
-                    emul_max    = EMUL8;
-                  end
-                endcase
+            case(csr_lmul)
+              LMUL1_4,
+              LMUL1_2: begin
+                emul_vd     = EMUL1;
+                emul_vs2    = EMUL1;
+                emul_vs1    = EMUL1;
+                emul_max    = EMUL1;
               end
-              OPMVX: begin
-                case(csr_lmul)
-                  LMUL1_4,
-                  LMUL1_2: begin
-                    emul_vd     = EMUL1;
-                    emul_vs2    = EMUL1;
-                    emul_max    = EMUL1;
-                  end
-                  LMUL1: begin
-                    emul_vd     = EMUL2;
-                    emul_vs2    = EMUL2;
-                    emul_max    = EMUL2;
-                  end
-                  LMUL2: begin
-                    emul_vd     = EMUL4;
-                    emul_vs2    = EMUL4;
-                    emul_max    = EMUL4;
-                  end
-                  LMUL4: begin
-                    emul_vd     = EMUL8;
-                    emul_vs2    = EMUL8;
-                    emul_max    = EMUL8;
-                  end
-                endcase
+              LMUL1: begin
+                emul_vd     = EMUL2;
+                emul_vs2    = EMUL2;
+                emul_vs1    = EMUL1;
+                emul_max    = EMUL2;
+              end
+              LMUL2: begin
+                emul_vd     = EMUL4;
+                emul_vs2    = EMUL4;
+                emul_vs1    = EMUL2;
+                emul_max    = EMUL4;
+              end
+              LMUL4: begin
+                emul_vd     = EMUL8;
+                emul_vs2    = EMUL8;
+                emul_vs1    = EMUL4;
+                emul_max    = EMUL8;
               end
             endcase
           end
 
           VXUNARY0: begin
-            case(inst_funct3)
-              OPMVV: begin
-                case(vs1_opcode_vxunary) 
-                  VZEXT_VF2,
-                  VSEXT_VF2: begin
-                    case(csr_lmul)
-                      LMUL1_2,
-                      LMUL1: begin
-                        emul_vd     = EMUL1;
-                        emul_vs2    = EMUL1;
-                        emul_max    = EMUL1;
-                      end
-                      LMUL2: begin
-                        emul_vd     = EMUL2;
-                        emul_vs2    = EMUL1;
-                        emul_max    = EMUL2;
-                      end
-                      LMUL4: begin
-                        emul_vd     = EMUL4;
-                        emul_vs2    = EMUL2;
-                        emul_max    = EMUL4;
-                      end
-                      LMUL8: begin
-                        emul_vd     = EMUL8;
-                        emul_vs2    = EMUL4;
-                        emul_max    = EMUL8;
-                      end
-                    endcase
+            case(vs1_opcode_vxunary) 
+              VZEXT_VF2,
+              VSEXT_VF2: begin
+                case(csr_lmul)
+                  LMUL1_2,
+                  LMUL1: begin
+                    emul_vd     = EMUL1;
+                    emul_vs2    = EMUL1;
+                    emul_max    = EMUL1;
                   end
-                  VZEXT_VF4,
-                  VSEXT_VF4: begin
-                    case(csr_lmul)
-                      LMUL1: begin
-                        emul_vd     = EMUL1;
-                        emul_vs2    = EMUL1;
-                        emul_max    = EMUL1;
-                      end
-                      LMUL2: begin
-                        emul_vd     = EMUL2;
-                        emul_vs2    = EMUL1;
-                        emul_max    = EMUL2;
-                      end
-                      LMUL4: begin
-                        emul_vd     = EMUL4;
-                        emul_vs2    = EMUL1;
-                        emul_max    = EMUL4;
-                      end
-                      LMUL8: begin
-                        emul_vd     = EMUL8;
-                        emul_vs2    = EMUL2;
-                        emul_max    = EMUL8;
-                      end
-                    endcase
+                  LMUL2: begin
+                    emul_vd     = EMUL2;
+                    emul_vs2    = EMUL1;
+                    emul_max    = EMUL2;
+                  end
+                  LMUL4: begin
+                    emul_vd     = EMUL4;
+                    emul_vs2    = EMUL2;
+                    emul_max    = EMUL4;
+                  end
+                  LMUL8: begin
+                    emul_vd     = EMUL8;
+                    emul_vs2    = EMUL4;
+                    emul_max    = EMUL8;
+                  end
+                endcase
+              end
+              VZEXT_VF4,
+              VSEXT_VF4: begin
+                case(csr_lmul)
+                  LMUL1: begin
+                    emul_vd     = EMUL1;
+                    emul_vs2    = EMUL1;
+                    emul_max    = EMUL1;
+                  end
+                  LMUL2: begin
+                    emul_vd     = EMUL2;
+                    emul_vs2    = EMUL1;
+                    emul_max    = EMUL2;
+                  end
+                  LMUL4: begin
+                    emul_vd     = EMUL4;
+                    emul_vs2    = EMUL1;
+                    emul_max    = EMUL4;
+                  end
+                  LMUL8: begin
+                    emul_vd     = EMUL8;
+                    emul_vs2    = EMUL2;
+                    emul_max    = EMUL8;
                   end
                 endcase
               end
@@ -1189,92 +1233,32 @@ module rvv_backend_decode_unit_ari
           VAADD,
           VASUBU,
           VASUB: begin
-            case(inst_funct3)
-              OPMVV: begin
-                case(csr_lmul)
-                  LMUL1_4,
-                  LMUL1_2,
-                  LMUL1: begin
-                    emul_vd     = EMUL1;
-                    emul_vs2    = EMUL1;
-                    emul_vs1    = EMUL1;
-                    emul_max    = EMUL1;
-                  end
-                  LMUL2: begin
-                    emul_vd     = EMUL2;
-                    emul_vs2    = EMUL2;
-                    emul_vs1    = EMUL2;
-                    emul_max    = EMUL2;
-                  end
-                  LMUL4: begin
-                    emul_vd     = EMUL4;
-                    emul_vs2    = EMUL4;
-                    emul_vs1    = EMUL4;
-                    emul_max    = EMUL4;
-                  end
-                  LMUL8: begin
-                    emul_vd     = EMUL8;
-                    emul_vs2    = EMUL8;
-                    emul_vs1    = EMUL8;
-                    emul_max    = EMUL8;
-                  end
-                endcase
+            case(csr_lmul)
+              LMUL1_4,
+              LMUL1_2,
+              LMUL1: begin
+                emul_vd     = EMUL1;
+                emul_vs2    = EMUL1;
+                emul_vs1    = EMUL1;
+                emul_max    = EMUL1;
               end
-              OPMVX: begin
-                case(csr_lmul)
-                  LMUL1_4,
-                  LMUL1_2,
-                  LMUL1: begin
-                    emul_vd     = EMUL1;
-                    emul_vs2    = EMUL1;
-                    emul_max    = EMUL1;
-                  end
-                  LMUL2: begin
-                    emul_vd     = EMUL2;
-                    emul_vs2    = EMUL2;
-                    emul_max    = EMUL2;
-                  end
-                  LMUL4: begin
-                    emul_vd     = EMUL4;
-                    emul_vs2    = EMUL4;
-                    emul_max    = EMUL4;
-                  end
-                  LMUL8: begin
-                    emul_vd     = EMUL8;
-                    emul_vs2    = EMUL8;
-                    emul_max    = EMUL8;
-                  end
-                endcase
+              LMUL2: begin
+                emul_vd     = EMUL2;
+                emul_vs2    = EMUL2;
+                emul_vs1    = EMUL2;
+                emul_max    = EMUL2;
               end
-            endcase
-          end
-
-          VWMACCUS: begin
-            case(inst_funct3)
-              OPMVX: begin
-                case(csr_lmul)
-                  LMUL1_4,
-                  LMUL1_2: begin
-                    emul_vd     = EMUL1;
-                    emul_vs2    = EMUL1;
-                    emul_max    = EMUL1;
-                  end
-                  LMUL1: begin
-                    emul_vd     = EMUL2;
-                    emul_vs2    = EMUL1;
-                    emul_max    = EMUL2;
-                  end
-                  LMUL2: begin
-                    emul_vd     = EMUL4;
-                    emul_vs2    = EMUL2;
-                    emul_max    = EMUL4;
-                  end
-                  LMUL4: begin
-                    emul_vd     = EMUL8;
-                    emul_vs2    = EMUL4;
-                    emul_max    = EMUL8;
-                  end
-                endcase
+              LMUL4: begin
+                emul_vd     = EMUL4;
+                emul_vs2    = EMUL4;
+                emul_vs1    = EMUL4;
+                emul_max    = EMUL4;
+              end
+              LMUL8: begin
+                emul_vd     = EMUL8;
+                emul_vs2    = EMUL8;
+                emul_vs1    = EMUL8;
+                emul_max    = EMUL8;
               end
             endcase
           end
@@ -1288,36 +1272,32 @@ module rvv_backend_decode_unit_ari
           VREDAND,
           VREDOR,
           VREDXOR: begin
-            case(inst_funct3)
-              OPMVV: begin
-                case(csr_lmul)
-                  LMUL1_4,
-                  LMUL1_2,
-                  LMUL1: begin
-                    emul_vd     = EMUL1;
-                    emul_vs2    = EMUL1;
-                    emul_vs1    = EMUL1;
-                    emul_max    = EMUL1;
-                  end
-                  LMUL2: begin
-                    emul_vd     = EMUL1;
-                    emul_vs2    = EMUL2;
-                    emul_vs1    = EMUL1;
-                    emul_max    = EMUL2;
-                  end
-                  LMUL4: begin
-                    emul_vd     = EMUL1;
-                    emul_vs2    = EMUL4;
-                    emul_vs1    = EMUL1;
-                    emul_max    = EMUL4;
-                  end
-                  LMUL8: begin
-                    emul_vd     = EMUL1;
-                    emul_vs2    = EMUL8;
-                    emul_vs1    = EMUL1;
-                    emul_max    = EMUL8;
-                  end
-                endcase
+            case(csr_lmul)
+              LMUL1_4,
+              LMUL1_2,
+              LMUL1: begin
+                emul_vd     = EMUL1;
+                emul_vs2    = EMUL1;
+                emul_vs1    = EMUL1;
+                emul_max    = EMUL1;
+              end
+              LMUL2: begin
+                emul_vd     = EMUL1;
+                emul_vs2    = EMUL2;
+                emul_vs1    = EMUL1;
+                emul_max    = EMUL2;
+              end
+              LMUL4: begin
+                emul_vd     = EMUL1;
+                emul_vs2    = EMUL4;
+                emul_vs1    = EMUL1;
+                emul_max    = EMUL4;
+              end
+              LMUL8: begin
+                emul_vd     = EMUL1;
+                emul_vs2    = EMUL8;
+                emul_vs1    = EMUL1;
+                emul_max    = EMUL8;
               end
             endcase
           end
@@ -1331,105 +1311,33 @@ module rvv_backend_decode_unit_ari
           VMNOR,
           VMORN,
           VMXNOR: begin
-            case(inst_funct3)
-              OPMVV: begin
-                emul_vd     = EMUL1;
-                emul_vs2    = EMUL1;
-                emul_vs1    = EMUL1;
-                emul_max    = EMUL1;
-              end
-            endcase
+            emul_vd     = EMUL1;
+            emul_vs2    = EMUL1;
+            emul_vs1    = EMUL1;
+            emul_max    = EMUL1;
           end
 
           VWXUNARY0: begin
-            case(inst_funct3)
-              OPMVV: begin
-                case(vs1_opcode_vwxunary)
-                  VCPOP,
-                  VFIRST,
-                  VMV_X_S: begin
-                    emul_vs2  = EMUL1;
-                    emul_max  = EMUL1;
-                  end
-                endcase
-              end
-              OPMVX: begin
-                if(vs2_opcode_vrxunary==VMV_S_X) begin
-                  emul_vd     = EMUL1;
-                  emul_max    = EMUL1;
-                end
+            case(vs1_opcode_vwxunary)
+              VCPOP,
+              VFIRST,
+              VMV_X_S: begin
+                emul_vs2  = EMUL1;
+                emul_max  = EMUL1;
               end
             endcase
           end
 
           VMUNARY0: begin
-            case(inst_funct3)
-              OPMVV: begin
-                case(vs1_opcode_vmunary)
-                  VMSBF,
-                  VMSIF,
-                  VMSOF: begin
-                    emul_vd         = EMUL1;
-                    emul_vs2        = EMUL1;
-                    emul_max        = EMUL1;
-                  end
-                  VIOTA: begin
-                    case(csr_lmul)
-                      LMUL1_4,
-                      LMUL1_2,
-                      LMUL1: begin
-                        emul_vd     = EMUL1;
-                        emul_vs2    = EMUL1;
-                        emul_max    = EMUL1;
-                      end
-                      LMUL2: begin
-                        emul_vd     = EMUL2;
-                        emul_vs2    = EMUL1;
-                        emul_max    = EMUL2;
-                      end
-                      LMUL4: begin
-                        emul_vd     = EMUL4;
-                        emul_vs2    = EMUL1;
-                        emul_max    = EMUL4;
-                      end
-                      LMUL8: begin
-                        emul_vd     = EMUL8;
-                        emul_vs2    = EMUL1;
-                        emul_max    = EMUL8;
-                      end
-                    endcase
-                  end
-                  VID: begin
-                    case(csr_lmul)
-                      LMUL1_4,
-                      LMUL1_2,
-                      LMUL1: begin
-                        emul_vd     = EMUL1;
-                        emul_max    = EMUL1;
-                      end
-                      LMUL2: begin
-                        emul_vd     = EMUL2;
-                        emul_max    = EMUL2;
-                      end
-                      LMUL4: begin
-                        emul_vd     = EMUL4;
-                        emul_max    = EMUL4;
-                      end
-                      LMUL8: begin
-                        emul_vd     = EMUL8;
-                        emul_max    = EMUL8;
-                      end
-                    endcase
-                  end
-                endcase
+            case(vs1_opcode_vmunary)
+              VMSBF,
+              VMSIF,
+              VMSOF: begin
+                emul_vd         = EMUL1;
+                emul_vs2        = EMUL1;
+                emul_max        = EMUL1;
               end
-            endcase
-          end
-          
-          VSLIDE1UP,
-          VSLIDE1DOWN: begin
-            case(inst_funct3)
-              OPMVX: begin
+              VIOTA: begin
                 case(csr_lmul)
                   LMUL1_4,
                   LMUL1_2,
@@ -1440,17 +1348,39 @@ module rvv_backend_decode_unit_ari
                   end
                   LMUL2: begin
                     emul_vd     = EMUL2;
-                    emul_vs2    = EMUL2;
+                    emul_vs2    = EMUL1;
                     emul_max    = EMUL2;
                   end
                   LMUL4: begin
                     emul_vd     = EMUL4;
-                    emul_vs2    = EMUL4;
+                    emul_vs2    = EMUL1;
                     emul_max    = EMUL4;
                   end
                   LMUL8: begin
                     emul_vd     = EMUL8;
-                    emul_vs2    = EMUL8;
+                    emul_vs2    = EMUL1;
+                    emul_max    = EMUL8;
+                  end
+                endcase
+              end
+              VID: begin
+                case(csr_lmul)
+                  LMUL1_4,
+                  LMUL1_2,
+                  LMUL1: begin
+                    emul_vd     = EMUL1;
+                    emul_max    = EMUL1;
+                  end
+                  LMUL2: begin
+                    emul_vd     = EMUL2;
+                    emul_max    = EMUL2;
+                  end
+                  LMUL4: begin
+                    emul_vd     = EMUL4;
+                    emul_max    = EMUL4;
+                  end
+                  LMUL8: begin
+                    emul_vd     = EMUL8;
                     emul_max    = EMUL8;
                   end
                 endcase
@@ -1459,35 +1389,244 @@ module rvv_backend_decode_unit_ari
           end
 
           VCOMPRESS: begin
-            case(inst_funct3)
-              OPMVV: begin
-                case(csr_lmul)
-                  LMUL1_4,
-                  LMUL1_2,
-                  LMUL1: begin
-                    emul_vd     = EMUL1;
-                    emul_vs2    = EMUL1;
-                    emul_max    = EMUL1;
-                  end
-                  LMUL2: begin
-                    emul_vd     = EMUL2;
-                    emul_vs2    = EMUL2;
-                    emul_vs1    = EMUL1;
-                    emul_max    = EMUL2;
-                  end
-                  LMUL4: begin
-                    emul_vd     = EMUL4;
-                    emul_vs2    = EMUL4;
-                    emul_vs1    = EMUL1;
-                    emul_max    = EMUL4;
-                  end
-                  LMUL8: begin
-                    emul_vd     = EMUL8;
-                    emul_vs2    = EMUL8;
-                    emul_vs1    = EMUL1;
-                    emul_max    = EMUL8;
-                  end
-                endcase
+            case(csr_lmul)
+              LMUL1_4,
+              LMUL1_2,
+              LMUL1: begin
+                emul_vd     = EMUL1;
+                emul_vs2    = EMUL1;
+                emul_max    = EMUL1;
+              end
+              LMUL2: begin
+                emul_vd     = EMUL2;
+                emul_vs2    = EMUL2;
+                emul_vs1    = EMUL1;
+                emul_max    = EMUL2;
+              end
+              LMUL4: begin
+                emul_vd     = EMUL4;
+                emul_vs2    = EMUL4;
+                emul_vs1    = EMUL1;
+                emul_max    = EMUL4;
+              end
+              LMUL8: begin
+                emul_vd     = EMUL8;
+                emul_vs2    = EMUL8;
+                emul_vs1    = EMUL1;
+                emul_max    = EMUL8;
+              end
+            endcase
+          end
+        endcase
+      end
+      OPMVX: begin
+        // OPM* instruction
+        case(funct6_ari.ari_funct6)
+          // widening instructions: 2SEW = SEW op SEW
+          VWADDU,
+          VWSUBU,
+          VWADD,
+          VWSUB,
+          VWMUL,
+          VWMULU,
+          VWMULSU,
+          VWMACCU,
+          VWMACC,
+          VWMACCSU: begin
+            case(csr_lmul)
+              LMUL1_4,
+              LMUL1_2: begin
+                emul_vd     = EMUL1;
+                emul_vs2    = EMUL1;
+                emul_max    = EMUL1;
+              end
+              LMUL1: begin
+                emul_vd     = EMUL2;
+                emul_vs2    = EMUL1;
+                emul_max    = EMUL2;
+              end
+              LMUL2: begin
+                emul_vd     = EMUL4;
+                emul_vs2    = EMUL2;
+                emul_max    = EMUL4;
+              end
+              LMUL4: begin
+                emul_vd     = EMUL8;
+                emul_vs2    = EMUL4;
+                emul_max    = EMUL8;
+              end
+            endcase
+          end
+          
+          // widening instructions: 2SEW = 2SEW op SEW
+          VWADDU_W,
+          VWSUBU_W,
+          VWADD_W,
+          VWSUB_W: begin
+            case(csr_lmul)
+              LMUL1_4,
+              LMUL1_2: begin
+                emul_vd     = EMUL1;
+                emul_vs2    = EMUL1;
+                emul_max    = EMUL1;
+              end
+              LMUL1: begin
+                emul_vd     = EMUL2;
+                emul_vs2    = EMUL2;
+                emul_max    = EMUL2;
+              end
+              LMUL2: begin
+                emul_vd     = EMUL4;
+                emul_vs2    = EMUL4;
+                emul_max    = EMUL4;
+              end
+              LMUL4: begin
+                emul_vd     = EMUL8;
+                emul_vs2    = EMUL8;
+                emul_max    = EMUL8;
+              end
+            endcase
+          end
+
+          // SEW = SEW op SEW
+          VMUL,
+          VMULH,
+          VMULHU,
+          VMULHSU,
+          VDIVU,
+          VDIV,
+          VREMU,
+          VREM,
+          VMACC,
+          VNMSAC,
+          VMADD,
+          VNMSUB,
+          VAADDU,
+          VAADD,
+          VASUBU,
+          VASUB: begin
+            case(csr_lmul)
+              LMUL1_4,
+              LMUL1_2,
+              LMUL1: begin
+                emul_vd     = EMUL1;
+                emul_vs2    = EMUL1;
+                emul_max    = EMUL1;
+              end
+              LMUL2: begin
+                emul_vd     = EMUL2;
+                emul_vs2    = EMUL2;
+                emul_max    = EMUL2;
+              end
+              LMUL4: begin
+                emul_vd     = EMUL4;
+                emul_vs2    = EMUL4;
+                emul_max    = EMUL4;
+              end
+              LMUL8: begin
+                emul_vd     = EMUL8;
+                emul_vs2    = EMUL8;
+                emul_max    = EMUL8;
+              end
+            endcase
+          end
+
+          VWMACCUS: begin
+            case(csr_lmul)
+              LMUL1_4,
+              LMUL1_2: begin
+                emul_vd     = EMUL1;
+                emul_vs2    = EMUL1;
+                emul_max    = EMUL1;
+              end
+              LMUL1: begin
+                emul_vd     = EMUL2;
+                emul_vs2    = EMUL1;
+                emul_max    = EMUL2;
+              end
+              LMUL2: begin
+                emul_vd     = EMUL4;
+                emul_vs2    = EMUL2;
+                emul_max    = EMUL4;
+              end
+              LMUL4: begin
+                emul_vd     = EMUL8;
+                emul_vs2    = EMUL4;
+                emul_max    = EMUL8;
+              end
+            endcase
+          end
+         
+          // reduction
+          VREDSUM,
+          VREDMAXU,
+          VREDMAX,
+          VREDMINU,
+          VREDMIN,
+          VREDAND,
+          VREDOR,
+          VREDXOR: begin
+            case(csr_lmul)
+              LMUL1_4,
+              LMUL1_2,
+              LMUL1: begin
+                emul_vd     = EMUL1;
+                emul_vs2    = EMUL1;
+                emul_vs1    = EMUL1;
+                emul_max    = EMUL1;
+              end
+              LMUL2: begin
+                emul_vd     = EMUL1;
+                emul_vs2    = EMUL2;
+                emul_vs1    = EMUL1;
+                emul_max    = EMUL2;
+              end
+              LMUL4: begin
+                emul_vd     = EMUL1;
+                emul_vs2    = EMUL4;
+                emul_vs1    = EMUL1;
+                emul_max    = EMUL4;
+              end
+              LMUL8: begin
+                emul_vd     = EMUL1;
+                emul_vs2    = EMUL8;
+                emul_vs1    = EMUL1;
+                emul_max    = EMUL8;
+              end
+            endcase
+          end
+
+          VWXUNARY0: begin
+            if(vs2_opcode_vrxunary==VMV_S_X) begin
+              emul_vd     = EMUL1;
+              emul_max    = EMUL1;
+            end
+          end
+
+          VSLIDE1UP,
+          VSLIDE1DOWN: begin
+            case(csr_lmul)
+              LMUL1_4,
+              LMUL1_2,
+              LMUL1: begin
+                emul_vd     = EMUL1;
+                emul_vs2    = EMUL1;
+                emul_max    = EMUL1;
+              end
+              LMUL2: begin
+                emul_vd     = EMUL2;
+                emul_vs2    = EMUL2;
+                emul_max    = EMUL2;
+              end
+              LMUL4: begin
+                emul_vd     = EMUL4;
+                emul_vs2    = EMUL4;
+                emul_max    = EMUL4;
+              end
+              LMUL8: begin
+                emul_vd     = EMUL8;
+                emul_vs2    = EMUL8;
+                emul_max    = EMUL8;
               end
             endcase
           end
@@ -1504,8 +1643,10 @@ module rvv_backend_decode_unit_ari
     eew_vs1         = EEW_NONE;
     eew_max         = EEW_NONE;
 
-    case(1'b1)
-      valid_opi: begin
+    case(inst_funct3)
+      OPIVV,
+      OPIVX,
+      OPIVI: begin
         // OPI* instruction
         case(funct6_ari.ari_funct6)
           VADD,
@@ -2001,7 +2142,8 @@ module rvv_backend_decode_unit_ari
         endcase
       end
 
-      valid_opm: begin
+      OPMVV,
+      OPMVX: begin
         // OPM* instruction
         case(funct6_ari.ari_funct6)
           // widening instructions: 2SEW = SEW op SEW
@@ -2567,8 +2709,10 @@ module rvv_backend_decode_unit_ari
   always_comb begin 
     check_special = 'b0;
     
-    case(1'b1)
-      valid_opi: begin
+    case(inst_funct3)
+      OPIVV,
+      OPIVX,
+      OPIVI: begin
         // OPI* instruction
         case(funct6_ari.ari_funct6)
           VADD,
@@ -2583,13 +2727,7 @@ module rvv_backend_decode_unit_ari
           VSSRL,
           VSSRA,
           VSLIDEDOWN: begin
-            case(inst_funct3)
-              OPIVV,
-              OPIVX,
-              OPIVI: begin
-                check_special = check_vd_overlap_v0;
-              end
-            endcase
+            check_special = check_vd_overlap_v0;
           end
         
           VSUB,
@@ -2617,14 +2755,7 @@ module rvv_backend_decode_unit_ari
           end
 
           VADC: begin
-            case(inst_funct3)
-              OPIVV,
-              OPIVX,
-              OPIVI: begin
-                if ((inst_vm==1'b0)&(inst_vd!='b0))
-                  check_special          = 1'b1;          
-              end
-            endcase
+            check_special = (inst_vm==1'b0)&(inst_vd!='b0);
           end
 
           VMADC: begin
@@ -2663,13 +2794,7 @@ module rvv_backend_decode_unit_ari
           VNSRA,
           VNCLIPU,
           VNCLIP: begin
-            case(inst_funct3)
-              OPIVV,
-              OPIVX,
-              OPIVI: begin
-                check_special = check_vd_overlap_v0&check_vd_part_overlap_vs2;
-              end
-            endcase
+            check_special = check_vd_overlap_v0&check_vd_part_overlap_vs2;
           end
           
           VMSEQ,
@@ -2710,14 +2835,8 @@ module rvv_backend_decode_unit_ari
           end
 
           VMERGE_VMV: begin
-            case(inst_funct3)
-              OPIVV,
-              OPIVX,
-              OPIVI: begin
-                // when vm=1, it is vmv instruction and vs2_index must be 5'b0.
-                check_special = ((inst_vm=='b0)&(inst_vd!='b0)) | ((inst_vm==1'b1)&(inst_vs2=='b0));
-              end
-            endcase
+            // when vm=1, it is vmv instruction and vs2_index must be 5'b0.
+            check_special = ((inst_vm=='b0)&(inst_vd!='b0)) | ((inst_vm==1'b1)&(inst_vs2=='b0));
           end
                
           VSMUL_VMVNRR: begin
@@ -2774,7 +2893,8 @@ module rvv_backend_decode_unit_ari
         endcase
       end
 
-      valid_opm: begin
+      OPMVV,
+      OPMVX: begin
         // OPM* instruction
         case(funct6_ari.ari_funct6)
           VWADDU,
@@ -2849,12 +2969,7 @@ module rvv_backend_decode_unit_ari
           VAADD,
           VASUBU,
           VASUB: begin
-            case(inst_funct3)
-              OPMVV,
-              OPMVX: begin
-                check_special = check_vd_overlap_v0;          
-              end
-            endcase
+            check_special = check_vd_overlap_v0;          
           end
 
           VWMACCUS: begin
@@ -3040,66 +3155,61 @@ module rvv_backend_decode_unit_ari
   always_comb begin
     vs_evl = csr_vl;
   
-    case(1'b1)
-      valid_opi: begin
-        // OPI* instruction
+    case(inst_funct3)
+      OPIVI: begin
         case(funct6_ari.ari_funct6)
           VSMUL_VMVNRR: begin
-            case(inst_funct3)
-              OPIVI: begin
-              // vmv<nr>r.v
-                case(emul_max)
-                  EMUL1: begin
-                    case(eew_max)
-                      EEW8: begin
-                        vs_evl = 1*`VLEN/8;
-                      end
-                      EEW16: begin
-                        vs_evl = 1*`VLEN/16;
-                      end
-                      EEW32: begin
-                        vs_evl = 1*`VLEN/32;
-                      end
-                    endcase
+            // vmv<nr>r.v
+            case(emul_max)
+              EMUL1: begin
+                case(eew_max)
+                  EEW8: begin
+                    vs_evl = 1*`VLEN/8;
                   end
-                  EMUL2: begin
-                    case(eew_max)
-                      EEW8: begin
-                        vs_evl = 2*`VLEN/8;
-                      end
-                      EEW16: begin
-                        vs_evl = 2*`VLEN/16;
-                      end
-                      EEW32: begin
-                        vs_evl = 2*`VLEN/32;
-                      end
-                    endcase
+                  EEW16: begin
+                    vs_evl = 1*`VLEN/16;
                   end
-                  EMUL4: begin
-                    case(eew_max)
-                      EEW8: begin
-                        vs_evl = 4*`VLEN/8;
-                      end
-                      EEW16: begin
-                        vs_evl = 4*`VLEN/16;
-                      end
-                      EEW32: begin
-                        vs_evl = 4*`VLEN/32;
-                      end
-                    endcase
+                  EEW32: begin
+                    vs_evl = 1*`VLEN/32;
                   end
-                  EMUL8: begin
-                    case(eew_max)
-                      EEW8: begin
-                        vs_evl = 8*`VLEN/8;
-                      end
-                      EEW16: begin
-                        vs_evl = 8*`VLEN/16;
-                      end
-                      EEW32: begin
-                        vs_evl = 8*`VLEN/32;
-                      end
-                    endcase
+                endcase
+              end
+              EMUL2: begin
+                case(eew_max)
+                  EEW8: begin
+                    vs_evl = 2*`VLEN/8;
+                  end
+                  EEW16: begin
+                    vs_evl = 2*`VLEN/16;
+                  end
+                  EEW32: begin
+                    vs_evl = 2*`VLEN/32;
+                  end
+                endcase
+              end
+              EMUL4: begin
+                case(eew_max)
+                  EEW8: begin
+                    vs_evl = 4*`VLEN/8;
+                  end
+                  EEW16: begin
+                    vs_evl = 4*`VLEN/16;
+                  end
+                  EEW32: begin
+                    vs_evl = 4*`VLEN/32;
+                  end
+                endcase
+              end
+              EMUL8: begin
+                case(eew_max)
+                  EEW8: begin
+                    vs_evl = 8*`VLEN/8;
+                  end
+                  EEW16: begin
+                    vs_evl = 8*`VLEN/16;
+                  end
+                  EEW32: begin
+                    vs_evl = 8*`VLEN/32;
                   end
                 endcase
               end
@@ -3107,17 +3217,13 @@ module rvv_backend_decode_unit_ari
           end
         endcase
       end
-      valid_opm: begin
-        // OPM* instruction
+
+      OPMVX: begin
         case(funct6_ari.ari_funct6)
           VWXUNARY0: begin
-            case(inst_funct3)
-              OPMVX: begin
-                if(vs2_opcode_vrxunary==VMV_S_X) begin
-                  vs_evl = 'b1;
-                end
-              end
-            endcase
+            if(vs2_opcode_vrxunary==VMV_S_X) begin
+              vs_evl = 'b1;
+            end
           end
         endcase
       end
@@ -3964,7 +4070,7 @@ module rvv_backend_decode_unit_ari
           endcase
         end
         valid_opm: begin
-          // OPI*
+          // OPM*
           case(funct6_ari.ari_funct6)
             VWXUNARY0: begin
               case(vs1_opcode_vwxunary)
@@ -4423,12 +4529,11 @@ module rvv_backend_decode_unit_ari
     for(int i=0;i<`NUM_DE_UOP;i=i+1) begin: GET_VS1
       // initial
       uop[i].vs1             = inst_vs1;
-      uop[i].vs1_eew         = EEW_NONE;
+      uop[i].vs1_eew         = eew_vs1;
       uop[i].vs1_index_valid = 'b0;
       
-      case(1'b1)
-        valid_opi: begin
-          // OPI*
+      case(inst_funct3)
+        OPIVV: begin
           case(funct6_ari.ari_funct6)
             VADD,
             VSUB,
@@ -4461,65 +4566,45 @@ module rvv_backend_decode_unit_ari
             VSSRL,
             VSSRA,
             VRGATHER: begin
-              case(inst_funct3)
-                OPIVV: begin
-                  uop[i].vs1              = inst_vs1+uop_index_current[i][`UOP_INDEX_WIDTH-1:0];
-                  uop[i].vs1_eew          = eew_vs1;
-                  uop[i].vs1_index_valid  = 1'b1;   
-                end
-              endcase
+              uop[i].vs1              = inst_vs1+uop_index_current[i][`UOP_INDEX_WIDTH-1:0];
+              uop[i].vs1_index_valid  = 1'b1;   
             end
             
             VNSRL,
             VNSRA,
             VNCLIPU,
             VNCLIP: begin
-              case(inst_funct3)
-                OPIVV: begin
-                  uop[i].vs1              = inst_vs1+uop_index_current[i][`UOP_INDEX_WIDTH-1:1];
-                  uop[i].vs1_eew          = eew_vs1;
-                  uop[i].vs1_index_valid  = 1'b1;
-                end
-              endcase
+              uop[i].vs1              = inst_vs1+uop_index_current[i][`UOP_INDEX_WIDTH-1:1];
+              uop[i].vs1_index_valid  = 1'b1;
             end
             
             VWREDSUMU,
             VWREDSUM: begin
-              case(inst_funct3)
-                OPIVV: begin
-                  uop[i].vs1              = inst_vs1;
-                  uop[i].vs1_eew          = eew_vs1;
-                  uop[i].vs1_index_valid  = uop_index_current[i][`UOP_INDEX_WIDTH-1:0] == uop_index_max;   
-                end
-              endcase
+              uop[i].vs1              = inst_vs1;
+              uop[i].vs1_index_valid  = uop_index_current[i][`UOP_INDEX_WIDTH-1:0] == uop_index_max;   
             end        
             
             VSLIDEUP_RGATHEREI16: begin
-              if(inst_funct3==OPIVV) begin
-                case({emul_max,emul_vs1})
-                  {EMUL1,EMUL1},
-                  {EMUL2,EMUL2},
-                  {EMUL4,EMUL4},
-                  {EMUL8,EMUL8}: begin
-                    uop[i].vs1             = inst_vs1+uop_index_current[i][`UOP_INDEX_WIDTH-1:0];
-                    uop[i].vs1_eew         = eew_vs1;
-                    uop[i].vs1_index_valid = 1'b1;
-                  end
-                  {EMUL2,EMUL1},
-                  {EMUL4,EMUL2},
-                  {EMUL8,EMUL4}: begin
-                    uop[i].vs1             = inst_vs1+uop_index_current[i][`UOP_INDEX_WIDTH-1:1];
-                    uop[i].vs1_eew         = eew_vs1;
-                    uop[i].vs1_index_valid = 1'b1;
-                  end
-                endcase
-              end
+              case({emul_max,emul_vs1})
+                {EMUL1,EMUL1},
+                {EMUL2,EMUL2},
+                {EMUL4,EMUL4},
+                {EMUL8,EMUL8}: begin
+                  uop[i].vs1             = inst_vs1+uop_index_current[i][`UOP_INDEX_WIDTH-1:0];
+                  uop[i].vs1_index_valid = 1'b1;
+                end
+                {EMUL2,EMUL1},
+                {EMUL4,EMUL2},
+                {EMUL8,EMUL4}: begin
+                  uop[i].vs1             = inst_vs1+uop_index_current[i][`UOP_INDEX_WIDTH-1:1];
+                  uop[i].vs1_index_valid = 1'b1;
+                end
+              endcase
             end
           endcase
         end
 
-        valid_opm: begin
-          // OPM*
+        OPMVV: begin
           case(funct6_ari.ari_funct6)
             VWADDU,
             VWSUBU,
@@ -4535,25 +4620,15 @@ module rvv_backend_decode_unit_ari
             VWMACCU,
             VWMACC,
             VWMACCSU: begin
-              case(inst_funct3)
-                OPMVV: begin
-                  uop[i].vs1              = inst_vs1+uop_index_current[i][`UOP_INDEX_WIDTH-1:1];
-                  uop[i].vs1_eew          = eew_vs1;
-                  uop[i].vs1_index_valid  = 1'b1;        
-                end
-              endcase
+              uop[i].vs1              = inst_vs1+uop_index_current[i][`UOP_INDEX_WIDTH-1:1];
+              uop[i].vs1_index_valid  = 1'b1;        
             end
 
             VXUNARY0,
             VWXUNARY0,
             VMUNARY0: begin
-              case(inst_funct3)
-                OPMVV: begin
-                  uop[i].vs1              = inst_vs1; // vs1 is regarded as opcode
-                  uop[i].vs1_eew          = EEW_NONE;
-                  uop[i].vs1_index_valid  = 'b0;        
-                end
-              endcase
+              uop[i].vs1              = inst_vs1; // vs1 is regarded as opcode
+              uop[i].vs1_index_valid  = 'b0;        
             end
 
             VMUL,
@@ -4572,13 +4647,8 @@ module rvv_backend_decode_unit_ari
             VAADD,
             VASUBU,
             VASUB: begin
-              case(inst_funct3)
-                OPMVV: begin
-                  uop[i].vs1              = inst_vs1+uop_index_current[i][`UOP_INDEX_WIDTH-1:0];
-                  uop[i].vs1_eew          = eew_vs1;
-                  uop[i].vs1_index_valid  = 1'b1;        
-                end
-              endcase
+              uop[i].vs1              = inst_vs1+uop_index_current[i][`UOP_INDEX_WIDTH-1:0];
+              uop[i].vs1_index_valid  = 1'b1;        
             end
 
             // reduction
@@ -4590,13 +4660,8 @@ module rvv_backend_decode_unit_ari
             VREDAND,
             VREDOR,
             VREDXOR: begin
-              case(inst_funct3)
-                OPMVV: begin
-                  uop[i].vs1              = inst_vs1;
-                  uop[i].vs1_eew          = eew_vs1;
-                  uop[i].vs1_index_valid  = uop_index_current[i][`UOP_INDEX_WIDTH-1:0] == uop_index_max;
-                end
-              endcase
+              uop[i].vs1              = inst_vs1;
+              uop[i].vs1_index_valid  = uop_index_current[i][`UOP_INDEX_WIDTH-1:0] == uop_index_max;
             end
 
             VMAND,
@@ -4607,25 +4672,15 @@ module rvv_backend_decode_unit_ari
             VMNOR,
             VMORN,
             VMXNOR: begin
-              case(inst_funct3)
-                OPMVV: begin
-                  uop[i].vs1              = inst_vs1;
-                  uop[i].vs1_eew          = eew_vs1;
-                  uop[i].vs1_index_valid  = 1'b1;
-                end
-              endcase
+              uop[i].vs1              = inst_vs1;
+              uop[i].vs1_index_valid  = 1'b1;
             end
 
             VCOMPRESS: begin
-              case(inst_funct3)
-                OPMVV: begin
-                  if (uop_index_current[i][`UOP_INDEX_WIDTH-1:0] == uop_vstart) begin
-                    uop[i].vs1              = inst_vs1;
-                    uop[i].vs1_eew          = eew_vs1;
-                    uop[i].vs1_index_valid  = 1'b1;        
-                  end
-                end
-              endcase
+              if (uop_index_current[i][`UOP_INDEX_WIDTH-1:0] == uop_vstart) begin
+                uop[i].vs1              = inst_vs1;
+                uop[i].vs1_index_valid  = 1'b1;        
+              end
             end
           endcase
         end
@@ -4639,54 +4694,36 @@ module rvv_backend_decode_unit_ari
       // initial
       uop[i].vs1_opcode_valid         = 'b0;
       
-      case(1'b1)
-        valid_opi: begin
-          // OPI*
+      case(inst_funct3)
+        OPIVI: begin
           case(funct6_ari.ari_funct6)
             VSMUL_VMVNRR: begin
-              case(inst_funct3)
-                OPIVI: begin
-                  uop[i].vs1_opcode_valid = 1'b1;   // vmvnrr.v's vs1 opcode is 5'b0, which means vmv1r.v
-                end
-              endcase
+              uop[i].vs1_opcode_valid = 1'b1;   // vmvnrr.v's vs1 opcode is 5'b0, which means vmv1r.v
             end
           endcase
         end
         
-        valid_opm: begin
-          // OPM*
+        OPMVV: begin
           case(funct6_ari.ari_funct6)
             VXUNARY0: begin
-              case(inst_funct3)
-                OPMVV: begin
+              uop[i].vs1_opcode_valid = 1'b1;
+            end
+            VWXUNARY0: begin
+              case(vs1_opcode_vwxunary)
+                VCPOP,
+                VFIRST,
+                VMV_X_S: begin
                   uop[i].vs1_opcode_valid = 1'b1;
                 end
               endcase
             end
-             VWXUNARY0: begin
-              case(inst_funct3)
-                OPMVV: begin
-                  case(vs1_opcode_vwxunary)
-                    VCPOP,
-                    VFIRST,
-                    VMV_X_S: begin
-                      uop[i].vs1_opcode_valid = 1'b1;
-                    end
-                  endcase
-                end
-              endcase
-            end
             VMUNARY0: begin
-              case(inst_funct3)
-                OPMVV: begin
-                  case(vs1_opcode_vmunary)
-                    VMSBF,
-                    VMSIF,
-                    VMSOF,
-                    VIOTA: begin
-                      uop[i].vs1_opcode_valid = 1'b1;
-                    end
-                  endcase
+              case(vs1_opcode_vmunary)
+                VMSBF,
+                VMSIF,
+                VMSOF,
+                VIOTA: begin
+                  uop[i].vs1_opcode_valid = 1'b1;
                 end
               endcase
             end
