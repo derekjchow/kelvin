@@ -19,6 +19,11 @@ class AxiResp:
   SLVERR = 2
   DECERR = 3
 
+class AxiBurst:
+  FIXED = 0
+  INCR = 1
+  WRAP = 2
+
 
 def pad_to_multiple(x, multiple):
   padding = multiple - (len(x) % multiple)
@@ -99,7 +104,6 @@ class CoreMiniAxiInterface:
   async def slave_awagent(self, timeout=4096):
     self.dut.io_axi_slave_write_addr_valid.value = 0
     self.dut.io_axi_slave_write_addr_bits_prot.value   = 2
-    self.dut.io_axi_slave_write_addr_bits_burst.value  = 1
     self.dut.io_axi_slave_write_addr_bits_lock.value   = 0
     self.dut.io_axi_slave_write_addr_bits_cache.value  = 0
     self.dut.io_axi_slave_write_addr_bits_qos.value    = 0
@@ -118,6 +122,7 @@ class CoreMiniAxiInterface:
       self.dut.io_axi_slave_write_addr_bits_id.value = awdata["id"]
       self.dut.io_axi_slave_write_addr_bits_len.value = awdata["len"]
       self.dut.io_axi_slave_write_addr_bits_size.value = awdata["size"]
+      self.dut.io_axi_slave_write_addr_bits_burst.value = awdata["burst"]
       await FallingEdge(self.dut.io_aclk)
 
       timeout_count = 0
@@ -168,7 +173,6 @@ class CoreMiniAxiInterface:
   async def slave_aragent(self, timeout=4096):
     self.dut.io_axi_slave_read_addr_valid.value = 0
     self.dut.io_axi_slave_read_addr_bits_prot.value   = 2
-    self.dut.io_axi_slave_read_addr_bits_burst.value  = 1
     self.dut.io_axi_slave_read_addr_bits_lock.value   = 0
     self.dut.io_axi_slave_read_addr_bits_cache.value  = 0
     self.dut.io_axi_slave_read_addr_bits_qos.value    = 0
@@ -186,6 +190,7 @@ class CoreMiniAxiInterface:
       self.dut.io_axi_slave_read_addr_bits_id.value = ardata["id"]
       self.dut.io_axi_slave_read_addr_bits_len.value = ardata["len"]
       self.dut.io_axi_slave_read_addr_bits_size.value = ardata["size"]
+      self.dut.io_axi_slave_read_addr_bits_burst.value = ardata["burst"]
       await FallingEdge(self.dut.io_aclk)
 
       timeout_count = 0
@@ -258,6 +263,7 @@ class CoreMiniAxiInterface:
           ardata["addr"] = self.dut.io_axi_master_read_addr_bits_addr.value.to_unsigned()
           ardata["size"] = self.dut.io_axi_master_read_addr_bits_size.value.to_unsigned()
           ardata["len"] = self.dut.io_axi_master_read_addr_bits_len.value.to_unsigned()
+          ardata["burst"] = self.dut.io_axi_master_read_addr_bits_burst.value.to_unsigned()
 
           await self.master_arfifo.put(ardata)
       except Exception as e:
@@ -387,12 +393,13 @@ class CoreMiniAxiInterface:
     self.dut.io_aresetn.setimmediatevalue(1)
     await Timer(1, unit="us")
 
-  async def _write_addr(self, addr, size, burst_len=1, axi_id=0):
+  async def _write_addr(self, addr, size, burst_len=1, axi_id=0, burst=AxiBurst.INCR):
     awdata = dict()
     awdata["addr"] = addr
     awdata["id"] = axi_id
     awdata["len"] = burst_len - 1
     awdata["size"] = size
+    awdata["burst"] = burst
     await self.slave_awfifo.put(awdata)
 
   async def _wait_write_response(self, delay_bready: int = 0):
@@ -465,7 +472,8 @@ class CoreMiniAxiInterface:
                                data: np.array,
                                masks: np.array,
                                delay_bready: int = 0,
-                               axi_id: int = 0) -> None:
+                               axi_id: int = 0,
+                               burst: AxiBurst = AxiBurst.INCR) -> None:
     # Compute number of beats
     start_addr = addr
     end_addr = addr + len(data) - 1 # Last address written
@@ -477,7 +485,7 @@ class CoreMiniAxiInterface:
     # TODO(derekjchow): Fuzz element size?
     write_addr_size = math.ceil(math.log2(len(data)))
     write_addr_size = min(write_addr_size, 4) # Size of 16 for increment
-    write_addr_task = self._write_addr(addr, write_addr_size, beats, axi_id)
+    write_addr_task = self._write_addr(addr, write_addr_size, beats, axi_id, burst)
     write_data_task = self._write_data(addr, data, masks, beats)
 
     await write_addr_task
@@ -490,7 +498,8 @@ class CoreMiniAxiInterface:
                   addr: int,
                   data: np.array,
                   delay_bready: int = 0,
-                  masks: np.array = None) -> None:
+                  masks: np.array = None,
+                  burst: AxiBurst = AxiBurst.INCR) -> None:
     """Writes data into Kelvin memory."""
     axi_id = random.randint(0,63)
     data = data.view(np.uint8)
@@ -500,7 +509,7 @@ class CoreMiniAxiInterface:
       transaction_size = self._determine_transaction_size(addr, len(data))
       local_data = data[0:transaction_size]
       local_masks = masks[0:transaction_size]
-      await self._write_transaction(addr, local_data, local_masks, delay_bready, axi_id)
+      await self._write_transaction(addr, local_data, local_masks, delay_bready, axi_id, burst)
       addr += len(local_data)
       data = data[transaction_size:]
       masks = masks[transaction_size:]
@@ -509,12 +518,18 @@ class CoreMiniAxiInterface:
     axi_id = random.randint(0,63)
     await self.write(addr, np.array([data], dtype=np.uint32), axi_id)
 
-  async def _read_addr(self, addr, size, beats=1, axi_id=0):
+  async def _read_addr(self,
+                       addr: int,
+                       size: int,
+                       beats: int = 1,
+                       axi_id: int = 0,
+                       burst: AxiBurst = AxiBurst.INCR):
     ardata = dict()
     ardata["addr"] = addr
     ardata["id"] = axi_id
     ardata["len"] = beats - 1
     ardata["size"] = size
+    ardata["burst"] = burst
     await self.slave_arfifo.put(ardata)
 
   async def _read_data(self, expected_resp=AxiResp.OKAY, axi_id=0):
@@ -529,7 +544,12 @@ class CoreMiniAxiInterface:
 
     return last, np.flip(data)
 
-  async def _read_transaction(self, addr, bytes_to_read, expected_resp=AxiResp.OKAY, axi_id=0):
+  async def _read_transaction(self,
+                              addr: int,
+                              bytes_to_read: int,
+                              expected_resp: AxiResp = AxiResp.OKAY,
+                              axi_id: int = 0,
+                              burst: AxiBurst = AxiBurst.INCR):
     # Compute number of beats
     start_addr = addr
     end_addr = addr + bytes_to_read - 1 # Last address written
@@ -537,7 +557,7 @@ class CoreMiniAxiInterface:
     end_line = end_addr // 16
     beats = (end_line - start_line) + 1
 
-    await self._read_addr(start_line * 16, 4, beats, axi_id)
+    await self._read_addr(start_line * 16, 4, beats, axi_id, burst)
 
     data = []
     bytes_remaining = bytes_to_read
@@ -558,13 +578,13 @@ class CoreMiniAxiInterface:
 
     return np.concatenate(data)
 
-  async def read(self, addr, bytes_to_read):
+  async def read(self, addr, bytes_to_read, burst: AxiBurst=AxiBurst.INCR):
     """Reads data from Kelvin Memory."""
     axi_id = random.randint(0,63)
     data = []
     while bytes_to_read > 0:
       transaction_size = self._determine_transaction_size(addr, bytes_to_read)
-      data.append(await self._read_transaction(addr, transaction_size, 0, axi_id))
+      data.append(await self._read_transaction(addr, transaction_size, 0, axi_id, burst))
       bytes_to_read -= transaction_size
       addr += transaction_size
 
@@ -946,3 +966,37 @@ async def core_mini_axi_rand_instr_test(dut):
       await core_mini_axi.wait_for_halted()
     except:
       await core_mini_axi.halt()
+
+@cocotb.test()
+async def core_mini_axi_burst_types_test(dut):
+  core_mini_axi = CoreMiniAxiInterface(dut)
+  await core_mini_axi.init()
+  await core_mini_axi.reset()
+  cocotb.start_soon(core_mini_axi.clock.start())
+
+  # AxiBurst.FIXED
+  for _ in tqdm.trange(1000):
+    beats = random.randint(2, 255)
+    wdata = np.random.randint(0, 255, 16 * beats, dtype=np.uint8)
+    await core_mini_axi.write(0, wdata, burst=AxiBurst.FIXED)
+    rdata = await core_mini_axi.read(0, 16, burst=AxiBurst.FIXED)
+    assert (wdata[((beats - 1) * 16):(beats * 16)] == rdata).all()
+
+  # AxiBurst.INCR
+  for _ in tqdm.trange(1000):
+    beats = random.randint(2, 255)
+    wdata = np.random.randint(0, 255, 16 * beats, dtype=np.uint8)
+    await core_mini_axi.write(0, wdata, burst=AxiBurst.INCR)
+    rdata = await core_mini_axi.read(0, beats * 16, burst=AxiBurst.INCR)
+    assert (wdata == rdata).all()
+
+  # AxiBurst.WRAP
+  for _ in tqdm.trange(1000):
+    beats = random.randint(2, 255)
+    wdata = np.random.randint(0, 255, 16 * beats, dtype=np.uint8)
+    write_offset = random.randint(1, 15)
+    read_offset = random.randint(1, 15)
+    await core_mini_axi.write(write_offset, wdata, burst=AxiBurst.WRAP)
+    rdata = await core_mini_axi.read(read_offset, 16, burst=AxiBurst.WRAP)
+    expected = np.concatenate([wdata[-write_offset:], wdata[-16:-write_offset]])
+    assert (expected == np.roll(rdata, read_offset)).all()
