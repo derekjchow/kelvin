@@ -696,7 +696,7 @@ module rvv_backend
 `ifdef TB_SUPPORT
         assign wr_lsu2rob[i].uop_pc = uop_lsu_rvs2rvv[i].uop_pc;
 `endif
-        assign wr_valid_lsu2rob[i] = uop_lsu_valid_rvs2rvv[i]&(uop_lsu_rvs2rvv[i].vregfile_write_valid|uop_lsu_rvs2rvv[i].lsu_vstore_done); 
+        assign wr_valid_lsu2rob[i] = uop_lsu_valid_rvs2rvv[i]&(uop_lsu_rvs2rvv[i].vregfile_write_valid|uop_lsu_rvs2rvv[i].lsu_vstore_last); 
         assign wr_lsu2rob[i].rob_entry = uop_lsu_rvs2rvv[i].rob_entry;
         assign wr_lsu2rob[i].w_data    = uop_lsu_rvs2rvv[i].vregfile_write_data;
         assign wr_lsu2rob[i].w_valid   = uop_lsu_rvs2rvv[i].vregfile_write_valid; 

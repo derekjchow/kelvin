@@ -571,6 +571,8 @@ typedef struct packed {
 	// Vector regfile write interface for vld
   // logic	[`REGFILE_INDEX_WIDTH-1:0] 	  vregfile_write_addr;
   logic	[`VLEN-1:0] 			          	vregfile_write_data;  	// vd   
+  // Store done signal to help ROB retire the store uop
+  logic                               lsu_vstore_last;
 } UOP_LSU_RVS2RVV_t;  
 
 typedef struct packed {
