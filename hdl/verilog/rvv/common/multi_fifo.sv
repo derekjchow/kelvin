@@ -136,18 +136,18 @@ module multi_fifo
       if (CHAOS_PUSH) begin
         for (i=0; i<N; i++) begin : gen_dataout
           always_ff @(posedge clk) begin
-            if ((i<remain_count)&(pop||push_seq))
+            if ((i<remain_count)&((|pop)|(|push_seq)))
               dataout[i] <= mem[next_rptr+i]; 
-            else if ((push_seq[i-remain_count]&((i-remain_count)<M))&(pop||push_seq))
+            else if ((push_seq[i-remain_count]&((i-remain_count)<M))&((|pop)|(|push_seq)))
               dataout[i] <= datain_seq[i-remain_count];
           end
         end
       end else begin
         for (i=0; i<N; i++) begin : gen_dataout
           always_ff @(posedge clk) begin
-            if ((i<remain_count)&(pop||push))
+            if ((i<remain_count)&((|pop)|(|push)))
               dataout[i] <= mem[next_rptr+i]; 
-            else if ((push[i-remain_count]&((i-remain_count)<M))&(pop||push))
+            else if ((push[i-remain_count]&((i-remain_count)<M))&((|pop)|(|push)))
               dataout[i] <= datain[i-remain_count];
           end
         end
