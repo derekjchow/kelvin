@@ -25,6 +25,7 @@ module rvv_backend_pmtrdt
   fifo_almost_empty_rs2ex,
 `endif
   all_uop_data,
+  all_uop_cnt,
 
   result_valid_ex2rob,
   result_ex2rob,
@@ -43,6 +44,7 @@ module rvv_backend_pmtrdt
   input   logic        [`NUM_PMTRDT-1:1]  fifo_almost_empty_rs2ex;
 `endif
   input   PMT_RDT_RS_t [`PMTRDT_RS_DEPTH-1:0] all_uop_data;
+  input   logic        [$clog2(`PMTRDT_RS_DEPTH):0] all_uop_cnt;
 
 // PMTRDT unit to ROB
   output  logic        [`NUM_PMTRDT-1:0]  result_valid_ex2rob;
@@ -95,7 +97,8 @@ module rvv_backend_pmtrdt
           .pmtrdt_res_valid   (pmtrdt_res_valid[i]),
           .pmtrdt_res         (pmtrdt_res[i]),
           .pmtrdt_res_ready   (pmtrdt_res_ready[i]),
-          .uop_data           (all_uop_data)
+          .uop_data           (all_uop_data),
+          .uop_cnt            (all_uop_cnt)
         );
     end
   endgenerate

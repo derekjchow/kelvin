@@ -481,8 +481,8 @@ typedef struct packed {
   logic   [`FUNCT3_WIDTH-1:0]         uop_funct3;
   logic   [`VSTART_WIDTH-1:0]         vstart;
   logic   [`VL_WIDTH-1:0]             vl;       
+  logic   [`VL_WIDTH-1:0]             vlmax;
   logic                               vm;               
-  EEW_e                               vd_eew;
   // when the uop is producing-mask operation, the uop will use v0_data as the third vector operand when the uop is the last uop. EEW_v0=1.
   logic   [`VLEN-1:0]                 v0_data;
   logic                               v0_data_valid;

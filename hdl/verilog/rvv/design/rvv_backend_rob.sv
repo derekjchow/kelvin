@@ -154,7 +154,8 @@ module rvv_backend_rob
         .clear  (1'b0),
         .fifo_data    (uop_info),
         .wptr   (uop_wptr),
-        .rptr   (uop_rptr)
+        .rptr   (uop_rptr),
+        .entry_count  (),
     );
 
     assign uop_index_rob2dp = uop_wptr;
@@ -195,7 +196,8 @@ module rvv_backend_rob
         .clear  (flush_rob),
         .fifo_data    (entry_valid),
         .wptr   (),
-        .rptr   ()
+        .rptr   (),
+        .entry_count ()
     );
 
   // update PU result to result memory

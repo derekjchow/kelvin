@@ -28,7 +28,8 @@ module multi_fifo
   clear,
   fifo_data,
   wptr,
-  rptr
+  rptr,
+  entry_count
 );
 // ---parameter definition--------------------------------------------
   parameter type T = logic [7:0];  // data structure
@@ -60,11 +61,11 @@ module multi_fifo
   output  T     [DEPTH-1:0] fifo_data;    // sort based on rptr
   output  logic [DEPTH_BITS-1:0] wptr;    // write pointer
   output  logic [DEPTH_BITS-1:0] rptr;    // read pointer
+  output        [DEPTH_BITS  :0] entry_count; // the number of occupied entry.
 
 // ---internal signal definition--------------------------------------
   T mem[DEPTH-1:0];
 
-  logic        [DEPTH_BITS  :0] entry_count; // the number of occupied entry.
   logic        [DEPTH_BITS  :0] next_entry_count;
   logic        [DEPTH_BITS  :0] push_count;
   logic        [DEPTH_BITS  :0] pop_count;

@@ -237,6 +237,7 @@ module rvv_backend
     logic        [`NUM_PMTRDT-1:1]        fifo_almost_empty_rs2pmtrdt;
   `endif
     PMT_RDT_RS_t [`PMTRDT_RS_DEPTH-1:0]   all_uop_rs2pmtrdt;
+    logic        [$clog2(`PMTRDT_RS_DEPTH):0] valid_cnt_rs2pmtrdt;
   // LSU_RS to LSU
     logic        [`NUM_LSU-1:0]           pop_lsu2rs;
     LSU_RS_t     [`NUM_LSU-1:0]           uop_rs2lsu;
@@ -313,7 +314,8 @@ module rvv_backend
         .clear        (1'b0),
         .fifo_data    (),
         .wptr         (),
-        .rptr         ()
+        .rptr         (),
+        .entry_count  ()
     );
 
     assign insts_ready_cq2rvs[0] = ~cq_full;
@@ -371,7 +373,8 @@ module rvv_backend
         .clear           (1'b0),
         .fifo_data       (),
         .wptr            (),
-        .rptr            ()
+        .rptr            (),
+        .entry_count     ()
     );
 
     assign uop_valid_uop2dp[0] = ~uq_empty;
@@ -455,7 +458,8 @@ module rvv_backend
         .clear           (1'b0),
         .fifo_data       (),
         .wptr            (),
-        .rptr            ()
+        .rptr            (),
+        .entry_count     ()
     );
 
     assign rs_ready_alu2dp[0] = ~alu_rs_full;
@@ -496,7 +500,8 @@ module rvv_backend
         .clear           (1'b0),
         .fifo_data       (all_uop_rs2pmtrdt),
         .wptr            (),
-        .rptr            ()
+        .rptr            (),
+        .entry_count     (valid_cnt_rs2pmtrdt)
     );
 
     assign rs_ready_pmtrdt2dp[0] = ~pmtrdt_rs_full;
@@ -532,7 +537,8 @@ module rvv_backend
         .clear         (1'b0),
         .fifo_data     (),
         .wptr          (),
-        .rptr          ()
+        .rptr          (),
+        .entry_count   ()
     );
 
     assign rs_ready_mul2dp[0] = ~mul_rs_full;
@@ -569,7 +575,8 @@ module rvv_backend
         .clear         (1'b0),
         .fifo_data     (),
         .wptr          (),
-        .rptr          ()
+        .rptr          (),
+        .entry_count   ()
     );
 
     assign rs_ready_div2dp[0] = ~div_rs_full;
@@ -605,7 +612,8 @@ module rvv_backend
         .clear        (1'b0),
         .fifo_data    (),
         .wptr         (),
-        .rptr         ()
+        .rptr         (),
+        .entry_count  ()
     );
   
     assign rs_ready_lsu2dp[0] = ~lsu_rs_full;
@@ -650,6 +658,7 @@ module rvv_backend
         .fifo_almost_empty_rs2ex    (fifo_almost_empty_rs2pmtrdt),
       `endif
         .all_uop_data               (all_uop_rs2pmtrdt),
+        .all_uop_cnt                (valid_cnt_rs2pmtrdt),
       // PMTRDT to ROB
         .result_valid_ex2rob        (wr_valid_pmtrdt2rob),
         .result_ex2rob              (wr_pmtrdt2rob),

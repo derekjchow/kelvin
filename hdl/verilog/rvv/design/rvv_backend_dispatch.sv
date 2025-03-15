@@ -126,8 +126,20 @@ module rvv_backend_dispatch
     UOP_INFO_t    [`NUM_DP_UOP-1:0]   uop_info;
     UOP_OPN_BYTE_TYPE_t [`NUM_DP_UOP-1:0] uop_operand_byte_type;
 
+    logic         [`NUM_DP_UOP-1:0][`VL_WIDTH-1:0] vlmax;
+    logic         [`NUM_DP_UOP-1:0][$clog2(`VSTART_WIDTH)-1:0] vlmax_shift;
+
 // ---code start------------------------------------------------------
     genvar i;
+
+    // vlmax = lmul * `VLENB / sew 
+    generate
+      for (i=0; i<`NUM_DP_UOP; i++) begin : gen_vlmax
+        assign vlmax_shift[i] ={1'b0, uop_uop2dp[i].vector_csr.lmul[1:0]} + $clog2(`VLENB) - uop_uop2dp[i].vector_csr.sew - {uop_uop2dp[i].vector_csr.lmul[2],2'b00};
+        assign vlmax[i] = 'h1 << vlmax_shift[i];
+      end
+    endgenerate
+
     generate
         for (i=0; i<`NUM_DP_UOP; i++) begin : gen_suc_uop
             assign suc_uop[i].vs1_index = uop_uop2dp[i].vs1;
@@ -401,6 +413,7 @@ module rvv_backend_dispatch
             assign rs_dp2pmtrdt[i].uop_funct3    = uop_uop2dp[i].uop_funct3;
             assign rs_dp2pmtrdt[i].vstart        = uop_uop2dp[i].vector_csr.vstart;
             assign rs_dp2pmtrdt[i].vl            = uop_uop2dp[i].vs_evl;
+            assign rs_dp2pmtrdt[i].vlmax         = vlmax[i];
             assign rs_dp2pmtrdt[i].vm            = uop_uop2dp[i].vm;
             assign rs_dp2pmtrdt[i].v0_data       = uop_operand[i].v0;
             assign rs_dp2pmtrdt[i].v0_data_valid = uop_uop2dp[i].v0_valid;
