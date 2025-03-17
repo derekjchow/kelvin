@@ -55,7 +55,6 @@ typedef struct packed {
 // Structure hazard information
 typedef struct packed {
   logic                  vr_limit; // VRF read port limitation
-  logic                  pu_limit; // Processor Unit limitation
 } ARCH_HAZARD_t;
 
 // input signals of ROB for bypass unit

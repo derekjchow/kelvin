@@ -1,40 +1,97 @@
 `ifndef HDL_VERILOG_RVV_DESIGN_RVV_DEFINE_SVH
 `define HDL_VERILOG_RVV_DESIGN_RVV_DEFINE_SVH
 
+`ifndef RVV_CONFIG_SVH^M
+`include "rvv_backend_config.svh"^M
+`endif
+
 // number of scalar core issue lane
 `define ISSUE_LANE              4
 
 // the max number of instructions are decoded per cycle in DE stage
 `define NUM_DE_INST             2
 
-// the max number of uops are written to Uops Queue per cycle in DE stage
-`define NUM_DE_UOP              4
+// multi-issue and multi-read-ports of VRF
+`ifdef ISSUE_3_READ_PORT_6
+  // the max number of uops are written to Uops Queue per cycle in DE stage
+  `define NUM_DE_UOP              4
+  // the max number of uops are dispated per cycle in DP stage.
+  `define NUM_DP_UOP              3
+  // the number of read ports for VRF
+  `define NUM_DP_VRF              6
+
+  // the depth of queue/station/buffer
+  `define CQ_DEPTH                16
+  `define UQ_DEPTH                32
+  `define ALU_RS_DEPTH            8
+  `define PMTRDT_RS_DEPTH         8
+  `define MUL_RS_DEPTH            8
+  `define DIV_RS_DEPTH            8
+  `define LSU_RS_DEPTH            8
+  `define ROB_DEPTH               8
+
+`elsif ISSUE_2_READ_PORT_6
+  // the max number of uops are written to Uops Queue per cycle in DE stage
+  `define NUM_DE_UOP              4
+  // the max number of uops are dispated per cycle in DP stage
+  `define NUM_DP_UOP              2
+  // the number of read ports for VRF
+  `define NUM_DP_VRF              6
+
+  // the depth of queue/station/buffer
+  `define CQ_DEPTH                16
+  `define UQ_DEPTH                32
+  `define ALU_RS_DEPTH            4
+  `define PMTRDT_RS_DEPTH         8
+  `define MUL_RS_DEPTH            4
+  `define DIV_RS_DEPTH            4
+  `define LSU_RS_DEPTH            4
+  `define ROB_DEPTH               8
+
+`else  //ISSUE_2_READ_PORT_4
+  // the max number of uops are written to Uops Queue per cycle in DE stage
+  `define NUM_DE_UOP              4
+  // the max number of uops are dispated per cycle in DP stage
+  `define NUM_DP_UOP              2
+  // the number of read ports for VRF
+  `define NUM_DP_VRF              4
+
+  // the depth of queue/station/buffer
+  `define CQ_DEPTH                16
+  `define UQ_DEPTH                32
+  `define ALU_RS_DEPTH            4
+  `define PMTRDT_RS_DEPTH         8
+  `define MUL_RS_DEPTH            4
+  `define DIV_RS_DEPTH            4
+  `define LSU_RS_DEPTH            4
+  `define ROB_DEPTH               8
+`endif
+
 `define NUM_DE_UOP_WIDTH        $clog2(`NUM_DE_UOP)+1
 
-// the max number of uops are dispated per cycle in DP stage
-`define NUM_DP_UOP              2
-`define NUM_DP_VRF              6
+// Uops Queue data width^M
+`define UQ_WIDTH                $bits(UOP_QUEUE_t)^M
 
 // the max number of processor unit in EX stage
-`define NUM_ALU                 2
-`define NUM_PMTRDT              1
-`define NUM_MUL                 2
-`define NUM_DIV                 1
 `define NUM_LSU                 2
+`define NUM_ALU                 2
+`define NUM_MUL                 2
+`define NUM_PMTRDT              1
+`define NUM_DIV                 1
 `define NUM_PU                  `NUM_ALU+`NUM_PMTRDT+`NUM_MUL+`NUM_DIV+`NUM_LSU
+ 
+`define MULTI_LSU
+`define MULTI_ALU
+`define MULTI_MUL
+//`define MULTI_PMTRDT
+//`define MULTI_DIV
+
+// Reservation Station data width
+`define ALU_RS_WIDTH            $bits(ALU_RS_t)
 
 // the max number of uops are retired per cycle in RT stage
 `define NUM_RT_UOP              4
 
-// the depth of queue/station/buffer
-`define CQ_DEPTH                16
-`define UQ_DEPTH                32
-`define ALU_RS_DEPTH            4
-`define PMTRDT_RS_DEPTH         8
-`define MUL_RS_DEPTH            4
-`define DIV_RS_DEPTH            4
-`define LSU_RS_DEPTH            4
-`define ROB_DEPTH               8
 `define ROB_DEPTH_WIDTH         $clog2(`ROB_DEPTH)
 
 `define PC_WIDTH                32
@@ -50,7 +107,8 @@
 // Vector CSR
 `define VLEN                    128
 `define VLENB                   `VLEN/8
-// vstart < VLMAX_max and vl <= VLMAX_max, VLMAX_max=VLEN*LMUL_max/SEW_min=128
+// VLMAX = VLEN*LMUL/SEW
+// vstart < VLMAX_max and vl <= VLMAX_max, VLMAX_max=VLEN*LMUL_max(8)/SEW_min(8)=VLEN
 `define VLMAX_MAX               `VLEN
 `define VSTART_WIDTH            $clog2(`VLEN)
 `define VL_WIDTH                $clog2(`VLEN)+1
@@ -72,12 +130,6 @@
 `define IMM_WIDTH               5
 `define FUNCT3_WIDTH            3
 `define OPCODE_WIDTH            7
-
-// Uops Queue data width
-`define UQ_WIDTH                $bits(UOP_QUEUE_t)
-
-// Reservation Station data width
-`define ALU_RS_WIDTH            $bits(ALU_RS_t)
 
 // V0 mask regsiter index^M
 `define V0_INDEX                5'b00000

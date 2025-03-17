@@ -1,13 +1,9 @@
 `ifndef RVV_CONFIG_SVH
 `define RVV_CONFIG_SVH
 
-`define DISPATCH_ISSUE2
-
-//`define MULTI_LSU
-`define MULTI_ALU
-`define MULTI_MUL
-//`define MULTI_PMTRDT
-//`define MULTI_DIV
-
+// config for multi-issue
+`define ISSUE_3_READ_PORT_6
+//`define ISSUE_2_READ_PORT_6
+//`define ISSUE_2_READ_PORT_4
 
 `endif // RVV_CONFIG_SVH

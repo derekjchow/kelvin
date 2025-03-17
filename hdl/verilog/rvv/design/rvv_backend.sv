@@ -203,7 +203,7 @@ module rvv_backend
     logic        [`NUM_DP_UOP-1:0]        rs_ready_pmtrdt2dp;
     // MUL_RS
     logic                                 mul_rs_full;
-    logic                                 mul_rs_1left_to_full;
+    logic        [`NUM_DP_UOP-1:1]        mul_rs_almost_full;
     logic        [`NUM_DP_UOP-1:0]        rs_valid_dp2mul;
     MUL_RS_t     [`NUM_DP_UOP-1:0]        rs_dp2mul;
     logic        [`NUM_DP_UOP-1:0]        rs_ready_mul2dp;
@@ -228,7 +228,9 @@ module rvv_backend
     logic        [`NUM_ALU-1:0]           pop_alu2rs;
     ALU_RS_t     [`NUM_ALU-1:0]           uop_rs2alu;
     logic                                 fifo_empty_rs2alu;
+  `ifdef MULTI_ALU
     logic        [`NUM_ALU-1:1]           fifo_almost_empty_rs2alu;
+  `endif
   // PMTRDT_RS to PMTRDT
     logic        [`NUM_PMTRDT-1:0]        pop_pmtrdt2rs;
     PMT_RDT_RS_t [`NUM_PMTRDT-1:0]        uop_rs2pmtrdt;
@@ -242,17 +244,23 @@ module rvv_backend
     logic        [`NUM_LSU-1:0]           pop_lsu2rs;
     LSU_RS_t     [`NUM_LSU-1:0]           uop_rs2lsu;
     logic                                 fifo_empty_rs2lsu;
+  `ifdef MULTI_LSU
     logic        [`NUM_LSU-1:1]           fifo_almost_empty_rs2lsu;
+  `endif
   // MUL_RS to MUL
     logic        [`NUM_MUL-1:0]           pop_mul2rs;
     MUL_RS_t     [`NUM_MUL-1:0]           uop_rs2mul;
     logic                                 fifo_empty_rs2mul;
-    logic                                 fifo_1left_to_empty_rs2mul;
+  `ifdef MULTI_MUL
+    logic        [`NUM_MUL-1:1]           fifo_almost_empty_rs2mul;
+  `endif
   // DIV_RS to DIV
     logic        [`NUM_DIV-1:0]           pop_div2rs;
     DIV_RS_t     [`NUM_DIV-1:0]           uop_rs2div;
     logic                                 fifo_empty_rs2div;
-    logic                                 fifo_almost_empty_rs2div;
+  `ifdef MULTI_DIV
+    logic        [`NUM_DIV-1:1]           fifo_almost_empty_rs2div;
+  `endif
   // ALU to ROB
     logic        [`NUM_ALU-1:0]           wr_valid_alu2rob;
     PU2ROB_t     [`NUM_ALU-1:0]           wr_alu2rob;
@@ -378,14 +386,22 @@ module rvv_backend
     );
 
     assign uop_valid_uop2dp[0] = ~uq_empty;
-    assign uop_valid_uop2dp[1] = ~uq_empty & ~uq_almost_empty[1];
+    generate
+      for (i=1;i<`NUM_DP_UOP;i++) begin: uop_queue_valid
+        assign uop_valid_uop2dp[i] = ~uq_empty & ~uq_almost_empty[i];
+      end
+    endgenerate
 
   `ifdef ASSERT_ON
     PushToUopQueue: `rvv_expect(push_de2uq inside {4'b1111, 4'b0111, 4'b0011, 4'b0001, 4'b0000})
       else $error("Push to uops queue out-of-order: %4b", $sampled(push_de2uq));
-
-    PopFromUopQueue: `rvv_expect((uop_valid_uop2dp & uop_ready_dp2uop) inside {2'b11, 2'b01, 2'b00})
-      else $error("Pop from uops queue out-of-order: %2b", $sampled(uop_valid_uop2dp & uop_ready_dp2uop));
+    `ifdef ISSUE_3_READ_PORT_6 
+      PopFromUopQueue: `rvv_expect((uop_valid_uop2dp & uop_ready_dp2uop) inside {3'b111, 3'b011, 3'b001,3'b000})
+        else $error("Pop from uops queue out-of-order: %3b", $sampled(uop_valid_uop2dp & uop_ready_dp2uop));
+    `else
+      PopFromUopQueue: `rvv_expect((uop_valid_uop2dp & uop_ready_dp2uop) inside {2'b11, 2'b01, 2'b00})
+        else $error("Pop from uops queue out-of-order: %2b", $sampled(uop_valid_uop2dp & uop_ready_dp2uop));
+    `endif
   `endif // ASSERT_ON
 
   // Dispatch unit
@@ -454,7 +470,9 @@ module rvv_backend
         .full            (alu_rs_full),
         .almost_full     (alu_rs_almost_full),
         .empty           (fifo_empty_rs2alu),
+    `ifdef MULTI_ALU
         .almost_empty    (fifo_almost_empty_rs2alu),
+    `endif
         .clear           (1'b0),
         .fifo_data       (),
         .wptr            (),
@@ -463,7 +481,11 @@ module rvv_backend
     );
 
     assign rs_ready_alu2dp[0] = ~alu_rs_full;
-    assign rs_ready_alu2dp[1] = ~alu_rs_full & ~alu_rs_almost_full[1];
+    generate
+      for (i=1;i<`NUM_DP_UOP;i++) begin: alu_rs_ready
+        assign rs_ready_alu2dp[i] = ~alu_rs_full & ~alu_rs_almost_full[i];
+      end
+    endgenerate
 
   `ifdef ASSERT_ON
     PopFromAluRSQueue: `rvv_expect((pop_alu2rs) inside {2'b11, 2'b01, 2'b00})
@@ -494,8 +516,6 @@ module rvv_backend
         .empty           (fifo_empty_rs2pmtrdt),
       `ifdef MULTI_PMTRDT
         .almost_empty    (fifo_almost_empty_rs2pmtrdt),
-      `else
-        .almost_empty    (),
       `endif
         .clear           (1'b0),
         .fifo_data       (all_uop_rs2pmtrdt),
@@ -505,7 +525,11 @@ module rvv_backend
     );
 
     assign rs_ready_pmtrdt2dp[0] = ~pmtrdt_rs_full;
-    assign rs_ready_pmtrdt2dp[1] = ~pmtrdt_rs_full & ~pmtrdt_rs_almost_full[1];
+    generate
+      for (i=1;i<`NUM_DP_UOP;i++) begin: pmtrdt_rs_ready
+        assign rs_ready_pmtrdt2dp[i] = ~pmtrdt_rs_full & ~pmtrdt_rs_almost_full[i];
+      end
+    endgenerate
 
   `ifdef ASSERT_ON
      PopFromPmtrdtRSQueue: `rvv_expect((pop_pmtrdt2rs) inside {2'b11, 2'b01, 2'b00})
@@ -531,9 +555,11 @@ module rvv_backend
         .dataout    (uop_rs2mul),
       // fifo status
         .full          (mul_rs_full),
-        .almost_full   (mul_rs_1left_to_full),
+        .almost_full   (mul_rs_almost_full),
         .empty         (fifo_empty_rs2mul),
-        .almost_empty  (fifo_1left_to_empty_rs2mul),
+      `ifdef MULTI_MUL
+        .almost_empty  (fifo_almost_empty_rs2mul),
+      `endif
         .clear         (1'b0),
         .fifo_data     (),
         .wptr          (),
@@ -542,7 +568,11 @@ module rvv_backend
     );
 
     assign rs_ready_mul2dp[0] = ~mul_rs_full;
-    assign rs_ready_mul2dp[1] = ~mul_rs_full & ~mul_rs_1left_to_full;
+    generate
+      for (i=1;i<`NUM_DP_UOP;i++) begin: mul_rs_ready
+        assign rs_ready_mul2dp[i] = ~mul_rs_full & ~mul_rs_almost_full[i];
+      end
+    endgenerate
 
   `ifdef ASSERT_ON
     // PopFromMulRSQueue: `rvv_expect((pop_mul2rs) inside {2'b11, 2'b01, 2'b00})
@@ -571,7 +601,9 @@ module rvv_backend
         .full          (div_rs_full),
         .almost_full   (div_rs_almost_full),
         .empty         (fifo_empty_rs2div),
+      `ifdef MULTI_DIV
         .almost_empty  (fifo_almost_empty_rs2div),
+      `endif
         .clear         (1'b0),
         .fifo_data     (),
         .wptr          (),
@@ -580,7 +612,11 @@ module rvv_backend
     );
 
     assign rs_ready_div2dp[0] = ~div_rs_full;
-    assign rs_ready_div2dp[1] = ~div_rs_full & ~div_rs_almost_full[1];
+    generate
+      for (i=1;i<`NUM_DP_UOP;i++) begin: div_rs_ready
+        assign rs_ready_div2dp[i] = ~div_rs_full & ~div_rs_almost_full[i];
+      end
+    endgenerate
 
   `ifdef ASSERT_ON
     // PopFromDivRSQueue: `rvv_expect((pop_div2rs) inside {2'b11, 2'b01, 2'b00})
@@ -608,7 +644,9 @@ module rvv_backend
         .full         (lsu_rs_full),
         .almost_full  (lsu_rs_almost_full),
         .empty        (fifo_empty_rs2lsu),
+      `ifdef MULTI_LSU
         .almost_empty (fifo_almost_empty_rs2lsu),
+      `endif
         .clear        (1'b0),
         .fifo_data    (),
         .wptr         (),
@@ -617,7 +655,11 @@ module rvv_backend
     );
   
     assign rs_ready_lsu2dp[0] = ~lsu_rs_full;
-    assign rs_ready_lsu2dp[1] = ~lsu_rs_full & ~lsu_rs_almost_full[1];
+    generate
+      for (i=1;i<`NUM_DP_UOP;i++) begin: lsu_rs_ready
+        assign rs_ready_lsu2dp[i] = ~lsu_rs_full & ~lsu_rs_almost_full[i];
+      end
+    endgenerate
 
     assign uop_lsu_valid_rvv2rvs[0] = ~fifo_empty_rs2lsu;
     assign uop_lsu_valid_rvv2rvs[1] = ~(fifo_empty_rs2lsu || fifo_almost_empty_rs2lsu);
@@ -638,7 +680,9 @@ module rvv_backend
         .pop_ex2rs                  (pop_alu2rs),
         .alu_uop_rs2ex              (uop_rs2alu),
         .fifo_empty_rs2ex           (fifo_empty_rs2alu),
+      `ifdef MULTI_ALU
         .fifo_almost_empty_rs2ex    (fifo_almost_empty_rs2alu),
+      `endif
       // ALU to ROB  
         .result_valid_ex2rob        (wr_valid_alu2rob),
         .result_ex2rob              (wr_alu2rob),
@@ -673,7 +717,7 @@ module rvv_backend
       .ex2rs_fifo_pop(pop_mul2rs),
       .rs2ex_uop_data(uop_rs2mul), 
       .rs2ex_fifo_empty(fifo_empty_rs2mul), 
-      .rs2ex_fifo_1left_to_empty(fifo_1left_to_empty_rs2mul), 
+      .rs2ex_fifo_1left_to_empty(fifo_almost_empty_rs2mul[1]),
     //MULMAC to ROB
       .ex2rob_valid(wr_valid_mul2rob), 
       .ex2rob_data(wr_mul2rob),

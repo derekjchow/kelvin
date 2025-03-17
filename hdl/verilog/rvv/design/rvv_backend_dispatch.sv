@@ -104,7 +104,7 @@ module rvv_backend_dispatch
 
 // Dispatch unit accept all ROB entry to determine if vs_data of RS is from ROB or not
 // ROB unit to Dispatch unit
-    input  ROB2DP_t [`ROB_DEPTH-1:0]    rob_entry;
+    input  ROB2DP_t [`ROB_DEPTH-1:0]      rob_entry;
 
 // ---internal signal definition--------------------------------------
     SUC_UOP_RAW_t [`NUM_DP_UOP-1:0]   suc_uop;
@@ -126,8 +126,10 @@ module rvv_backend_dispatch
     UOP_INFO_t    [`NUM_DP_UOP-1:0]   uop_info;
     UOP_OPN_BYTE_TYPE_t [`NUM_DP_UOP-1:0] uop_operand_byte_type;
 
-    logic         [`NUM_DP_UOP-1:0][`VL_WIDTH-1:0] vlmax;
+    logic         [`NUM_DP_UOP-1:0][`VL_WIDTH-1:0]             vlmax;
     logic         [`NUM_DP_UOP-1:0][$clog2(`VSTART_WIDTH)-1:0] vlmax_shift;
+
+    logic         [`NUM_DP_UOP-1:0][`ROB_DEPTH_WIDTH-1:0]      rob_address;
 
 // ---code start------------------------------------------------------
     genvar i;
@@ -223,80 +225,330 @@ module rvv_backend_dispatch
           assign rob_byp[i].inactive_one = 1'b0;
         `endif
       end
-`ifdef DISPATCH_ISSUE2
-      if (`NUM_DP_VRF==6) begin
-        always_comb begin
-          vrf_byp[0].v0  = v0_mask_vrf2dp;
-          vrf_byp[0].vs1 = rd_data_vrf2dp[0];
-          vrf_byp[0].vs2 = rd_data_vrf2dp[1];
-          vrf_byp[0].vd  = rd_data_vrf2dp[2];
-          vrf_byp[1].v0  = v0_mask_vrf2dp;
-          vrf_byp[1].vs1 = rd_data_vrf2dp[3];
-          vrf_byp[1].vs2 = rd_data_vrf2dp[4];
-          vrf_byp[1].vd  = rd_data_vrf2dp[5];
-        end
+
+`ifdef ISSUE_3_READ_PORT_6  
+      always_comb begin
+        vrf_byp[0].v0  = v0_mask_vrf2dp;
+        vrf_byp[0].vs1 = rd_data_vrf2dp[0];
+        vrf_byp[0].vs2 = rd_data_vrf2dp[1];
+        vrf_byp[0].vd  = rd_data_vrf2dp[2];
+        vrf_byp[1].v0  = v0_mask_vrf2dp;
+        vrf_byp[1].vs1 = rd_data_vrf2dp[3];
+        vrf_byp[1].vs2 = rd_data_vrf2dp[4];
+        vrf_byp[1].vd  = rd_data_vrf2dp[5];
+        vrf_byp[2].v0  = v0_mask_vrf2dp;
+        vrf_byp[2].vs1 = 'b0;
+        vrf_byp[2].vs2 = 'b0;
+        vrf_byp[2].vd  = 'b0;
+
+        case(uop_uop2dp[2].uop_class)
+          XXV,
+          XVX,
+          VXX: begin
+            case(uop_uop2dp[0].uop_class)
+              XXV,
+              XVV: begin
+                vrf_byp[2].vs1 = rd_data_vrf2dp[2];
+                vrf_byp[2].vs2 = rd_data_vrf2dp[2];
+                vrf_byp[2].vd  = rd_data_vrf2dp[2];
+              end
+
+              XXX,
+              XVX,
+              VXX,
+              VVX: begin
+                vrf_byp[2].vs1 = rd_data_vrf2dp[0];
+                vrf_byp[2].vs2 = rd_data_vrf2dp[0];
+                vrf_byp[2].vd  = rd_data_vrf2dp[0];
+              end
+
+              VVV: begin 
+                case(uop_uop2dp[1].uop_class)
+                  XXV,
+                  XVV: begin
+                    vrf_byp[2].vs1 = rd_data_vrf2dp[5];
+                    vrf_byp[2].vs2 = rd_data_vrf2dp[5];
+                    vrf_byp[2].vd  = rd_data_vrf2dp[5];
+                  end
+
+                  XXX,
+                  XVX,
+                  VXX,
+                  VVX: begin
+                    vrf_byp[2].vs1 = rd_data_vrf2dp[3];
+                    vrf_byp[2].vs2 = rd_data_vrf2dp[3];
+                    vrf_byp[2].vd  = rd_data_vrf2dp[3];
+                  end
+                endcase
+              end
+            endcase
+          end
+          
+          XVV,
+          VVX: begin
+            case(uop_uop2dp[0].uop_class)
+              XXX,
+              VXX: begin
+                vrf_byp[2].vs1 = rd_data_vrf2dp[0];
+                vrf_byp[2].vs2 = rd_data_vrf2dp[1];
+                vrf_byp[2].vd  = rd_data_vrf2dp[0];
+              end
+
+              XXV: begin
+                vrf_byp[2].vs1 = rd_data_vrf2dp[2];
+                vrf_byp[2].vs2 = rd_data_vrf2dp[1];
+                vrf_byp[2].vd  = rd_data_vrf2dp[2];
+              end
+
+              XVX: begin
+                vrf_byp[2].vs1 = rd_data_vrf2dp[0];
+                vrf_byp[2].vs2 = rd_data_vrf2dp[2];
+                vrf_byp[2].vd  = rd_data_vrf2dp[0];
+              end
+
+              XVV,
+              VVX: begin
+                case(uop_uop2dp[1].uop_class)
+                  XXX,
+                  VXX: begin
+                    vrf_byp[2].vs1 = rd_data_vrf2dp[3];
+                    vrf_byp[2].vs2 = rd_data_vrf2dp[4];
+                    vrf_byp[2].vd  = rd_data_vrf2dp[3];
+                  end
+
+                  XXV: begin
+                    vrf_byp[2].vs1 = rd_data_vrf2dp[5];
+                    vrf_byp[2].vs2 = rd_data_vrf2dp[4];
+                    vrf_byp[2].vd  = rd_data_vrf2dp[5];
+                  end
+
+                  XVX: begin
+                    vrf_byp[2].vs1 = rd_data_vrf2dp[3];
+                    vrf_byp[2].vs2 = rd_data_vrf2dp[5];
+                    vrf_byp[2].vd  = rd_data_vrf2dp[3];
+                  end   
+
+                  VVX: begin
+                    vrf_byp[2].vs1 = rd_data_vrf2dp[3];
+                    vrf_byp[2].vs2 = uop_uop2dp[0].vs1_index_valid ? rd_data_vrf2dp[2] : rd_data_vrf2dp[0];
+                    vrf_byp[2].vd  = rd_data_vrf2dp[3];
+                  end
+
+                  XVV: begin
+                    vrf_byp[2].vs1 = rd_data_vrf2dp[5];
+                    vrf_byp[2].vs2 = uop_uop2dp[0].vs1_index_valid ? rd_data_vrf2dp[2] : rd_data_vrf2dp[0];
+                    vrf_byp[2].vd  = rd_data_vrf2dp[5];
+                  end
+                endcase
+              end
+
+              VVV: begin 
+                case(uop_uop2dp[1].uop_class)
+                  XXX,
+                  VXX: begin
+                    vrf_byp[2].vs1 = rd_data_vrf2dp[3];
+                    vrf_byp[2].vs2 = rd_data_vrf2dp[4];
+                    vrf_byp[2].vd  = rd_data_vrf2dp[3];
+                  end
+
+                  XVX: begin
+                    vrf_byp[2].vs1 = rd_data_vrf2dp[3];
+                    vrf_byp[2].vs2 = rd_data_vrf2dp[5];
+                    vrf_byp[2].vd  = rd_data_vrf2dp[3];
+                  end
+
+                  XXV: begin
+                    vrf_byp[2].vs1 = rd_data_vrf2dp[4];
+                    vrf_byp[2].vs2 = rd_data_vrf2dp[5];
+                    vrf_byp[2].vd  = rd_data_vrf2dp[4];
+                  end
+                endcase
+              end
+            endcase
+          end
+
+          VVV: begin
+            case({uop_uop2dp[0].uop_class,uop_uop2dp[1].uop_class})
+              {XXX,XXX},
+              {XXX,XXV},
+              {XXX,XVX},
+              {XXX,VXX},
+              {XXX,XVV},
+              {XXX,VVX},
+              {XXX,VVV}: begin
+                vrf_byp[2].vs1 = rd_data_vrf2dp[0];
+                vrf_byp[2].vs2 = rd_data_vrf2dp[1];
+                vrf_byp[2].vd  = rd_data_vrf2dp[2];
+              end
+
+              {XXV,XXX},
+              {XVX,XXX},
+              {VXX,XXX},
+              {XVV,XXX},
+              {VVX,XXX},
+              {VVV,XXX}: begin
+                vrf_byp[2].vs1 = rd_data_vrf2dp[3];
+                vrf_byp[2].vs2 = rd_data_vrf2dp[4];
+                vrf_byp[2].vd  = rd_data_vrf2dp[5];
+              end
+
+              {XXV,VXX},
+              {XXV,VVX}: begin
+                vrf_byp[2].vs1 = rd_data_vrf2dp[3];
+                vrf_byp[2].vs2 = rd_data_vrf2dp[1];
+                vrf_byp[2].vd  = rd_data_vrf2dp[2];
+              end
+              
+              {XXV,XXV},
+              {XXV,XVX},
+              {XXV,XVV}: begin
+                vrf_byp[2].vs1 = rd_data_vrf2dp[5];
+                vrf_byp[2].vs2 = rd_data_vrf2dp[1];
+                vrf_byp[2].vd  = rd_data_vrf2dp[2];
+              end
+              
+              {XVX,VXX},
+              {XVX,VVX}: begin
+                vrf_byp[2].vs1 = rd_data_vrf2dp[0];
+                vrf_byp[2].vs2 = rd_data_vrf2dp[3];
+                vrf_byp[2].vd  = rd_data_vrf2dp[2];
+              end
+
+              {XVX,XXV},
+              {XVX,XVX},
+              {XVX,XVV}: begin
+                vrf_byp[2].vs1 = rd_data_vrf2dp[0];
+                vrf_byp[2].vs2 = rd_data_vrf2dp[5];
+                vrf_byp[2].vd  = rd_data_vrf2dp[2];
+              end
+
+              {VXX,VXX},
+              {VXX,VVX}: begin
+                vrf_byp[2].vs1 = rd_data_vrf2dp[0];
+                vrf_byp[2].vs2 = rd_data_vrf2dp[1];
+                vrf_byp[2].vd  = rd_data_vrf2dp[3];
+              end
+
+              {VXX,XXV},
+              {VXX,XVX},
+              {VXX,XVV}: begin
+                vrf_byp[2].vs1 = rd_data_vrf2dp[0];
+                vrf_byp[2].vs2 = rd_data_vrf2dp[1];
+                vrf_byp[2].vd  = rd_data_vrf2dp[5];
+              end
+
+              {XVV,VXX}: begin
+                vrf_byp[2].vs1 = rd_data_vrf2dp[3];
+                vrf_byp[2].vs2 = rd_data_vrf2dp[4];
+                vrf_byp[2].vd  = rd_data_vrf2dp[2];
+              end
+
+              {XVV,XVX}: begin
+                vrf_byp[2].vs1 = rd_data_vrf2dp[3];
+                vrf_byp[2].vs2 = rd_data_vrf2dp[2];
+                vrf_byp[2].vd  = rd_data_vrf2dp[5];
+              end
+
+              {XVV,XXV}: begin
+                vrf_byp[2].vs1 = rd_data_vrf2dp[2];
+                vrf_byp[2].vs2 = rd_data_vrf2dp[4];
+                vrf_byp[2].vd  = rd_data_vrf2dp[5];
+              end
+
+              {VVX,VXX}: begin
+                vrf_byp[2].vs1 = rd_data_vrf2dp[3];
+                vrf_byp[2].vs2 = rd_data_vrf2dp[4];
+                vrf_byp[2].vd  = rd_data_vrf2dp[0];
+              end
+
+              {VVX,XVX}: begin
+                vrf_byp[2].vs1 = rd_data_vrf2dp[3];
+                vrf_byp[2].vs2 = rd_data_vrf2dp[0];
+                vrf_byp[2].vd  = rd_data_vrf2dp[5];
+              end
+
+              {VVX,XXV}: begin
+                vrf_byp[2].vs1 = rd_data_vrf2dp[0];
+                vrf_byp[2].vs2 = rd_data_vrf2dp[4];
+                vrf_byp[2].vd  = rd_data_vrf2dp[5];
+              end
+            endcase
+          end
+        endcase
+      end   
+
+`elsif ISSUE_2_READ_PORT_6  
+      always_comb begin
+        vrf_byp[0].v0  = v0_mask_vrf2dp;
+        vrf_byp[0].vs1 = rd_data_vrf2dp[0];
+        vrf_byp[0].vs2 = rd_data_vrf2dp[1];
+        vrf_byp[0].vd  = rd_data_vrf2dp[2];
+        vrf_byp[1].v0  = v0_mask_vrf2dp;
+        vrf_byp[1].vs1 = rd_data_vrf2dp[3];
+        vrf_byp[1].vs2 = rd_data_vrf2dp[4];
+        vrf_byp[1].vd  = rd_data_vrf2dp[5];
       end
-      else if(`NUM_DP_VRF==4) begin
-        always_comb begin
-          vrf_byp[0].v0  = v0_mask_vrf2dp;
-          vrf_byp[0].vs1 = 'x;
-          vrf_byp[0].vs2 = 'x;
-          vrf_byp[0].vd  = 'x;
-          vrf_byp[1].v0  = v0_mask_vrf2dp;
-          vrf_byp[1].vs1 = 'x;
-          vrf_byp[1].vs2 = 'x;
-          vrf_byp[1].vd  = 'x;
 
-          case(uop_uop2dp[0].uop_class)
-            VVV:begin
-              vrf_byp[0].vd  = rd_data_vrf2dp[3];
-              vrf_byp[0].vs1 = rd_data_vrf2dp[1];
-              vrf_byp[0].vs2 = rd_data_vrf2dp[0];
-            end                       
-            XVV: begin
-              vrf_byp[0].vs1 = rd_data_vrf2dp[1];
-              vrf_byp[0].vs2 = rd_data_vrf2dp[0];
-            end
-            VVX: begin
-              vrf_byp[0].vd  = rd_data_vrf2dp[1];
-              vrf_byp[0].vs2 = rd_data_vrf2dp[0];
-            end
-            VXX: begin
-              vrf_byp[0].vd  = rd_data_vrf2dp[0];
-            end
-            XVX: begin
-              vrf_byp[0].vs2 = rd_data_vrf2dp[0];
-            end
-            XXV: begin
-              vrf_byp[0].vs1 = rd_data_vrf2dp[0];
-            end
-          endcase
+`else //ISSUE_2_READ_PORT_4
+      always_comb begin
+        vrf_byp[0].v0  = v0_mask_vrf2dp;
+        vrf_byp[0].vs1 = 'b0;
+        vrf_byp[0].vs2 = 'b0;
+        vrf_byp[0].vd  = 'b0;
+        vrf_byp[1].v0  = v0_mask_vrf2dp;
+        vrf_byp[1].vs1 = 'b0;
+        vrf_byp[1].vs2 = 'b0;
+        vrf_byp[1].vd  = 'b0;
 
-          case(uop_uop2dp[1].uop_class)
-            VVV:begin
-              vrf_byp[1].vd  = rd_data_vrf2dp[1];
-              vrf_byp[1].vs1 = rd_data_vrf2dp[3];
-              vrf_byp[1].vs2 = rd_data_vrf2dp[2];
-            end
-            XVV: begin
-              vrf_byp[1].vs1 = rd_data_vrf2dp[3];
-              vrf_byp[1].vs2 = rd_data_vrf2dp[2];
-            end
-            VVX: begin
-              vrf_byp[1].vd  = rd_data_vrf2dp[3];
-              vrf_byp[1].vs2 = rd_data_vrf2dp[2];
-            end
-            VXX: begin
-              vrf_byp[1].vd = rd_data_vrf2dp[2];
-            end
-            XVX: begin
-              vrf_byp[1].vs2 = rd_data_vrf2dp[2];
-            end
-            XXV: begin
-              vrf_byp[1].vs1 = rd_data_vrf2dp[2];
-            end
-          endcase
-        end
+        case(uop_uop2dp[0].uop_class)
+          VVV:begin
+            vrf_byp[0].vd  = rd_data_vrf2dp[3];
+            vrf_byp[0].vs1 = rd_data_vrf2dp[1];
+            vrf_byp[0].vs2 = rd_data_vrf2dp[0];
+          end                       
+          XVV: begin
+            vrf_byp[0].vs1 = rd_data_vrf2dp[1];
+            vrf_byp[0].vs2 = rd_data_vrf2dp[0];
+          end
+          VVX: begin
+            vrf_byp[0].vd  = rd_data_vrf2dp[1];
+            vrf_byp[0].vs2 = rd_data_vrf2dp[0];
+          end
+          VXX: begin
+            vrf_byp[0].vd  = rd_data_vrf2dp[0];
+          end
+          XVX: begin
+            vrf_byp[0].vs2 = rd_data_vrf2dp[0];
+          end
+          XXV: begin
+            vrf_byp[0].vs1 = rd_data_vrf2dp[0];
+          end
+        endcase
+
+        case(uop_uop2dp[1].uop_class)
+          VVV:begin
+            vrf_byp[1].vd  = rd_data_vrf2dp[1];
+            vrf_byp[1].vs1 = rd_data_vrf2dp[3];
+            vrf_byp[1].vs2 = rd_data_vrf2dp[2];
+          end
+          XVV: begin
+            vrf_byp[1].vs1 = rd_data_vrf2dp[3];
+            vrf_byp[1].vs2 = rd_data_vrf2dp[2];
+          end
+          VVX: begin
+            vrf_byp[1].vd  = rd_data_vrf2dp[3];
+            vrf_byp[1].vs2 = rd_data_vrf2dp[2];
+          end
+          VXX: begin
+            vrf_byp[1].vd = rd_data_vrf2dp[2];
+          end
+          XVX: begin
+            vrf_byp[1].vs2 = rd_data_vrf2dp[2];
+          end
+          XXV: begin
+            vrf_byp[1].vs1 = rd_data_vrf2dp[2];
+          end
+        endcase
       end
 `endif
       
@@ -371,11 +623,18 @@ module rvv_backend_dispatch
 // output signals for RS+ROB
     generate
         for (i=0; i<`NUM_DP_UOP; i++) begin : gen_output_sig
+          // rob_address
+            if (i==0)
+              assign rob_address[0] = uop_index_rob2dp;
+            else begin 
+              assign rob_address[i] = (uop_uop2dp[i].uop_exe_unit==RDT||uop_uop2dp[i].uop_exe_unit==CMP)&(!uop_uop2dp[i].first_uop_valid) ? rob_address[i-1] : rob_address[i-1]+1'b1;
+            end
+
           // ALU RS
 `ifdef TB_SUPPORT
             assign rs_dp2alu[i].uop_pc        = uop_uop2dp[i].uop_pc; 
 `endif
-            assign rs_dp2alu[i].rob_entry     = uop_index_rob2dp + i; 
+            assign rs_dp2alu[i].rob_entry     = rob_address[i]; 
             assign rs_dp2alu[i].uop_funct6    = uop_uop2dp[i].uop_funct6;
             assign rs_dp2alu[i].uop_funct3    = uop_uop2dp[i].uop_funct3;
             assign rs_dp2alu[i].vstart        = uop_uop2dp[i].vector_csr.vstart;
@@ -401,13 +660,7 @@ module rvv_backend_dispatch
 `ifdef TB_SUPPORT
             assign rs_dp2pmtrdt[i].uop_pc        = uop_uop2dp[i].uop_pc; 
 `endif
-            always_comb begin
-              case (uop_uop2dp[i].uop_exe_unit)
-              CMP,
-              RDT:rs_dp2pmtrdt[i].rob_entry      = uop_uop2dp[i].first_uop_valid ? (uop_index_rob2dp + i) : uop_index_rob2dp;
-              default:rs_dp2pmtrdt[i].rob_entry  = uop_index_rob2dp + i; 
-              endcase
-            end
+            assign rs_dp2pmtrdt[i].rob_entry     = rob_address[i];
             assign rs_dp2pmtrdt[i].uop_exe_unit  = uop_uop2dp[i].uop_exe_unit; 
             assign rs_dp2pmtrdt[i].uop_funct6    = uop_uop2dp[i].uop_funct6;
             assign rs_dp2pmtrdt[i].uop_funct3    = uop_uop2dp[i].uop_funct3;
@@ -436,7 +689,7 @@ module rvv_backend_dispatch
 `ifdef TB_SUPPORT
             assign rs_dp2mul[i].uop_pc         = uop_uop2dp[i].uop_pc; 
 `endif
-            assign rs_dp2mul[i].rob_entry      = uop_index_rob2dp + i; 
+            assign rs_dp2mul[i].rob_entry      = rob_address[i]; 
             assign rs_dp2mul[i].uop_funct6     = uop_uop2dp[i].uop_funct6;
             assign rs_dp2mul[i].uop_funct3     = uop_uop2dp[i].uop_funct3;
             assign rs_dp2mul[i].vxrm           = uop_uop2dp[i].vector_csr.xrm;
@@ -455,7 +708,7 @@ module rvv_backend_dispatch
 `ifdef TB_SUPPORT
             assign rs_dp2div[i].uop_pc        = uop_uop2dp[i].uop_pc; 
 `endif
-            assign rs_dp2div[i].rob_entry     = uop_index_rob2dp + i; 
+            assign rs_dp2div[i].rob_entry     = rob_address[i]; 
             assign rs_dp2div[i].uop_funct6    = uop_uop2dp[i].uop_funct6;
             assign rs_dp2div[i].uop_funct3    = uop_uop2dp[i].uop_funct3;
             assign rs_dp2div[i].vs1_data      = uop_operand[i].vs1;
@@ -470,7 +723,7 @@ module rvv_backend_dispatch
 `ifdef TB_SUPPORT
             assign rs_dp2lsu[i].uop_pc        = uop_uop2dp[i].uop_pc; 
 `endif
-            assign rs_dp2lsu[i].rob_entry     = uop_index_rob2dp + i; 
+            assign rs_dp2lsu[i].rob_entry     = rob_address[i];
             assign rs_dp2lsu[i].uop_funct6    = uop_uop2dp[i].uop_funct6;
             assign rs_dp2lsu[i].vidx_valid    = uop_uop2dp[i].vs2_valid;
             assign rs_dp2lsu[i].vidx_addr     = uop_uop2dp[i].vs2_index;

@@ -63,6 +63,17 @@ module rvv_backend_dispatch_ctrl
                                     ~raw_uop_rob[0].vs2_wait &
                                     ~raw_uop_rob[0].vd_wait  &
                                     ~raw_uop_rob[0].v0_wait  ;
+            else if (i<`NUM_DP_UOP-1)
+              assign uop_valid[i] = uop_valid[i-1]           &
+                                    uop_valid_uop2dp[i]      &
+                                    ~raw_uop_rob[i].vs1_wait &
+                                    ~raw_uop_rob[i].vs2_wait &
+                                    ~raw_uop_rob[i].vd_wait  &
+                                    ~raw_uop_rob[i].v0_wait  &
+                                    ~raw_uop_uop[i].vs1_wait &
+                                    ~raw_uop_uop[i].vs2_wait &
+                                    ~raw_uop_uop[i].vd_wait  &
+                                    ~raw_uop_uop[i].v0_wait  ;
             else
               assign uop_valid[i] = uop_valid[i-1]           &
                                     uop_valid_uop2dp[i]      &
@@ -74,22 +85,21 @@ module rvv_backend_dispatch_ctrl
                                     ~raw_uop_uop[i].vs2_wait &
                                     ~raw_uop_uop[i].vd_wait  &
                                     ~raw_uop_uop[i].v0_wait  &
-                                    ~arch_hazard.vr_limit    &  // for 2-issue
-                                    ~arch_hazard.pu_limit    ;  // for 2-issue
+                                    ~arch_hazard.vr_limit    ;  // for 2-issue
         end
         for (i=0; i<`NUM_DP_UOP; i++) begin : gen_rs_ready
           if (i==0)
             always_comb begin
                 case (uop_ctrl[i].uop_exe_unit)
-                    ALU: rs_ready[i] = rs_ready_alu2dp[i];
+                    ALU: rs_ready[0] = rs_ready_alu2dp[0];
                     MUL,
-                    MAC: rs_ready[i] = rs_ready_mul2dp[i];
+                    MAC: rs_ready[0] = rs_ready_mul2dp[0];
                     CMP,
                     PMT,
-                    RDT: rs_ready[i] = rs_ready_pmtrdt2dp[i];
-                    DIV: rs_ready[i] = rs_ready_div2dp[i];
-                    LSU: rs_ready[i] = rs_ready_lsu2dp[i];
-                    default: rs_ready[i] = 1'b0;
+                    RDT: rs_ready[0] = rs_ready_pmtrdt2dp[0];
+                    DIV: rs_ready[0] = rs_ready_div2dp[0];
+                    LSU: rs_ready[0] = rs_ready_lsu2dp[0];
+                    default: rs_ready[0] = 1'b0;
                 endcase
             end
           else
