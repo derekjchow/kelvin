@@ -309,33 +309,6 @@ object WCtz {
   }
 }
 
-object DecodeBits {
-  def apply(inst: UInt, bitPattern: String, v: Bool = true.B, index: Int = 31):
-      Bool = {
-    // System.out.println(">>> String \"" + bitPattern + "\" = " + bitPattern.length + " : " + index)
-    if (bitPattern.length > 0) {
-      if (bitPattern(0) == '0') {
-        val bit = ~inst(index)
-        DecodeBits(inst, bitPattern.drop(1), v && bit, index - 1)
-      } else if (bitPattern(0) == '1') {
-        val bit = inst(index)
-        DecodeBits(inst, bitPattern.drop(1), v && bit, index - 1)
-      } else if (bitPattern(0) == 'x') {
-        val bit = inst(index)
-        DecodeBits(inst, bitPattern.drop(1), v, index - 1)
-      } else if (bitPattern(0) == '_') {
-        DecodeBits(inst, bitPattern.drop(1), v, index)
-      } else {
-        assert(false)
-        v
-      }
-    } else {
-      assert(index == -1)
-      v
-    }
-  }
-}
-
 /** A bundle that extends Data with an addr field. The lifted Data type will be
   * contained in the "bits" field.
   * @param width The bit-width of the addr field.

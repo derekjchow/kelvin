@@ -240,11 +240,11 @@ class VDecodeInstruction(p: Parameters) extends Module {
   // Decode the instruction bits.
 
   // Duplicate
-  val vdup = DecodeBits(inst, "01000x_0xxxxx_000000_xx_xxxxxx_x_111_11") && sz < 3.U
+  val vdup = inst === BitPat("b01000?_0?????_000000_??_??????_?_111_11") && sz < 3.U
   val vdupf2 = inst(31,27) === 8.U  // used to prevent vdup and vldst op collision only
 
   // Load/Store
-  val vldstdec = DecodeBits(inst, "xxxxxx_0xxxxx_xxxxx0_xx_xxxxxx_x_111_11") && sz < 3.U && !vdupf2
+  val vldstdec = inst === BitPat("b??????_0?????_?????0_??_??????_?_111_11") && sz < 3.U && !vdupf2
   assert(!(vdup && vldstdec))
 
   val vld  = vldstdec && (func2 === 0.U || func2 === 1.U || func2 === 2.U ||
@@ -357,11 +357,11 @@ class VDecodeInstruction(p: Parameters) extends Module {
   val vfmt6 = vslidevn | vslidehn | vslidehn2 | vslidevp | vslidehp | vslidehp2 | vsel | vevn | vodd | vevnodd | vzip
 
   // FormatVVV
-  val aconv   = DecodeBits(inst, "xxxxxx_1xxxxx_xxxxxx_10_xxxxxx_0_00_101")
-  val vcget   = DecodeBits(inst, "010100_000000_000000_xx_xxxxxx_x_111_11")
+  val aconv   = inst === BitPat("b??????_1?????_??????_10_??????_0_00_101")
+  val vcget   = inst === BitPat("b010100_000000_000000_??_??????_?_111_11")
 
-  val vdwconv = DecodeBits(inst, "xxxxxx_0xxxxx_xxxxxx_10_xxxxxx_x_10_101")
-  val adwconv = DecodeBits(inst, "xxxxxx_1xxxxx_xxxxxx_10_xxxxxx_x_10_101")
+  val vdwconv = inst === BitPat("b??????_0?????_??????_10_??????_?_10_101")
+  val adwconv = inst === BitPat("b??????_1?????_??????_10_??????_?_10_101")
   val vadwconv = vdwconv || adwconv
 
   // Undef

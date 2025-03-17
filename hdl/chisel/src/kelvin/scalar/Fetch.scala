@@ -102,7 +102,7 @@ class Fetch(p: Parameters) extends FetchUnit(p) {
   // Do not request entries that are already inflight.
   // Perform a branch tag lookup to see if target is in cache.
   def Predecode(addr: UInt, op: UInt): (Bool, UInt) = {
-    val jal = DecodeBits(op, "xxxxxxxxxxxxxxxxxxxx_xxxxx_1101111")
+    val jal = op === BitPat("b????????????????????_?????_1101111")
     val immed = Cat(Fill(12, op(31)), op(19,12), op(20), op(30,21), 0.U(1.W))
     val target = addr + immed
     (jal, target)
@@ -318,10 +318,10 @@ class Fetch(p: Parameters) extends FetchUnit(p) {
   }
 
   def PredecodeDe(addr: UInt, op: UInt): (Bool, UInt) = {
-    val jal = DecodeBits(op, "xxxxxxxxxxxxxxxxxxxx_xxxxx_1101111")
-    val ret = DecodeBits(op, "000000000000_00001_000_00000_1100111") &&
+    val jal = op === BitPat("b????????????????????_?????_1101111")
+    val ret = op === BitPat("b000000000000_00001_000_00000_1100111") &&
                 io.linkPort.valid
-    val bxx = DecodeBits(op, "xxxxxxx_xxxxx_xxxxx_xxx_xxxxx_1100011") &&
+    val bxx = op === BitPat("b???????_?????_?????_???_?????_1100011") &&
                 op(31) && op(14,13) =/= 1.U
     val immjal = Cat(Fill(12, op(31)), op(19,12), op(20), op(30,21), 0.U(1.W))
     val immbxx = Cat(Fill(20, op(31)), op(7), op(30,25), op(11,8), 0.U(1.W))

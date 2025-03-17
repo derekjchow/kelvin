@@ -515,92 +515,92 @@ object DecodeInstruction {
     d.immst  := Cat(Fill(20, op(31)), op(31,25), op(11,7))
 
     // RV32I
-    d.lui   := DecodeBits(op, "xxxxxxxxxxxxxxxxxxxx_xxxxx_0110111")
-    d.auipc := DecodeBits(op, "xxxxxxxxxxxxxxxxxxxx_xxxxx_0010111")
-    d.jal   := DecodeBits(op, "xxxxxxxxxxxxxxxxxxxx_xxxxx_1101111")
-    d.jalr  := DecodeBits(op, "xxxxxxxxxxxx_xxxxx_000_xxxxx_1100111")
-    d.beq   := DecodeBits(op, "xxxxxxx_xxxxx_xxxxx_000_xxxxx_1100011")
-    d.bne   := DecodeBits(op, "xxxxxxx_xxxxx_xxxxx_001_xxxxx_1100011")
-    d.blt   := DecodeBits(op, "xxxxxxx_xxxxx_xxxxx_100_xxxxx_1100011")
-    d.bge   := DecodeBits(op, "xxxxxxx_xxxxx_xxxxx_101_xxxxx_1100011")
-    d.bltu  := DecodeBits(op, "xxxxxxx_xxxxx_xxxxx_110_xxxxx_1100011")
-    d.bgeu  := DecodeBits(op, "xxxxxxx_xxxxx_xxxxx_111_xxxxx_1100011")
-    d.csrrw := DecodeBits(op, "xxxxxxxxxxxx_xxxxx_x01_xxxxx_1110011")
-    d.csrrs := DecodeBits(op, "xxxxxxxxxxxx_xxxxx_x10_xxxxx_1110011")
-    d.csrrc := DecodeBits(op, "xxxxxxxxxxxx_xxxxx_x11_xxxxx_1110011")
-    d.lb    := DecodeBits(op, "xxxxxxxxxxxx_xxxxx_000_xxxxx_0000011")
-    d.lh    := DecodeBits(op, "xxxxxxxxxxxx_xxxxx_001_xxxxx_0000011")
-    d.lw    := DecodeBits(op, "xxxxxxxxxxxx_xxxxx_010_xxxxx_0000011")
-    d.lbu   := DecodeBits(op, "xxxxxxxxxxxx_xxxxx_100_xxxxx_0000011")
-    d.lhu   := DecodeBits(op, "xxxxxxxxxxxx_xxxxx_101_xxxxx_0000011")
-    d.sb    := DecodeBits(op, "xxxxxxxxxxxx_xxxxx_000_xxxxx_0100011")
-    d.sh    := DecodeBits(op, "xxxxxxxxxxxx_xxxxx_001_xxxxx_0100011")
-    d.sw    := DecodeBits(op, "xxxxxxxxxxxx_xxxxx_010_xxxxx_0100011")
-    d.fence := DecodeBits(op, "0000_xxxx_xxxx_00000_000_00000_0001111")
-    d.addi  := DecodeBits(op, "xxxxxxxxxxxx_xxxxx_000_xxxxx_0010011")
-    d.slti  := DecodeBits(op, "xxxxxxxxxxxx_xxxxx_010_xxxxx_0010011")
-    d.sltiu := DecodeBits(op, "xxxxxxxxxxxx_xxxxx_011_xxxxx_0010011")
-    d.xori  := DecodeBits(op, "xxxxxxxxxxxx_xxxxx_100_xxxxx_0010011")
-    d.ori   := DecodeBits(op, "xxxxxxxxxxxx_xxxxx_110_xxxxx_0010011")
-    d.andi  := DecodeBits(op, "xxxxxxxxxxxx_xxxxx_111_xxxxx_0010011")
-    d.slli  := DecodeBits(op, "0000000_xxxxx_xxxxx_001_xxxxx_0010011")
-    d.srli  := DecodeBits(op, "0000000_xxxxx_xxxxx_101_xxxxx_0010011")
-    d.srai  := DecodeBits(op, "0100000_xxxxx_xxxxx_101_xxxxx_0010011")
-    d.add   := DecodeBits(op, "0000000_xxxxx_xxxxx_000_xxxxx_0110011")
-    d.sub   := DecodeBits(op, "0100000_xxxxx_xxxxx_000_xxxxx_0110011")
-    d.slt   := DecodeBits(op, "0000000_xxxxx_xxxxx_010_xxxxx_0110011")
-    d.sltu  := DecodeBits(op, "0000000_xxxxx_xxxxx_011_xxxxx_0110011")
-    d.xor   := DecodeBits(op, "0000000_xxxxx_xxxxx_100_xxxxx_0110011")
-    d.or    := DecodeBits(op, "0000000_xxxxx_xxxxx_110_xxxxx_0110011")
-    d.and   := DecodeBits(op, "0000000_xxxxx_xxxxx_111_xxxxx_0110011")
-    d.sll   := DecodeBits(op, "0000000_xxxxx_xxxxx_001_xxxxx_0110011")
-    d.srl   := DecodeBits(op, "0000000_xxxxx_xxxxx_101_xxxxx_0110011")
-    d.sra   := DecodeBits(op, "0100000_xxxxx_xxxxx_101_xxxxx_0110011")
-    d.xnor  := DecodeBits(op, "0100000_xxxxx_xxxxx_100_xxxxx_0110011")
-    d.orn   := DecodeBits(op, "0100000_xxxxx_xxxxx_110_xxxxx_0110011")
-    d.andn  := DecodeBits(op, "0100000_xxxxx_xxxxx_111_xxxxx_0110011")
+    d.lui   := op === BitPat("b????????????????????_?????_0110111")
+    d.auipc := op === BitPat("b????????????????????_?????_0010111")
+    d.jal   := op === BitPat("b????????????????????_?????_1101111")
+    d.jalr  := op === BitPat("b????????????_?????_000_?????_1100111")
+    d.beq   := op === BitPat("b???????_?????_?????_000_?????_1100011")
+    d.bne   := op === BitPat("b???????_?????_?????_001_?????_1100011")
+    d.blt   := op === BitPat("b???????_?????_?????_100_?????_1100011")
+    d.bge   := op === BitPat("b???????_?????_?????_101_?????_1100011")
+    d.bltu  := op === BitPat("b???????_?????_?????_110_?????_1100011")
+    d.bgeu  := op === BitPat("b???????_?????_?????_111_?????_1100011")
+    d.csrrw := op === BitPat("b????????????_?????_?01_?????_1110011")
+    d.csrrs := op === BitPat("b????????????_?????_?10_?????_1110011")
+    d.csrrc := op === BitPat("b????????????_?????_?11_?????_1110011")
+    d.lb    := op === BitPat("b????????????_?????_000_?????_0000011")
+    d.lh    := op === BitPat("b????????????_?????_001_?????_0000011")
+    d.lw    := op === BitPat("b????????????_?????_010_?????_0000011")
+    d.lbu   := op === BitPat("b????????????_?????_100_?????_0000011")
+    d.lhu   := op === BitPat("b????????????_?????_101_?????_0000011")
+    d.sb    := op === BitPat("b????????????_?????_000_?????_0100011")
+    d.sh    := op === BitPat("b????????????_?????_001_?????_0100011")
+    d.sw    := op === BitPat("b????????????_?????_010_?????_0100011")
+    d.fence := op === BitPat("b0000_????_????_00000_000_00000_0001111")
+    d.addi  := op === BitPat("b????????????_?????_000_?????_0010011")
+    d.slti  := op === BitPat("b????????????_?????_010_?????_0010011")
+    d.sltiu := op === BitPat("b????????????_?????_011_?????_0010011")
+    d.xori  := op === BitPat("b????????????_?????_100_?????_0010011")
+    d.ori   := op === BitPat("b????????????_?????_110_?????_0010011")
+    d.andi  := op === BitPat("b????????????_?????_111_?????_0010011")
+    d.slli  := op === BitPat("b0000000_?????_?????_001_?????_0010011")
+    d.srli  := op === BitPat("b0000000_?????_?????_101_?????_0010011")
+    d.srai  := op === BitPat("b0100000_?????_?????_101_?????_0010011")
+    d.add   := op === BitPat("b0000000_?????_?????_000_?????_0110011")
+    d.sub   := op === BitPat("b0100000_?????_?????_000_?????_0110011")
+    d.slt   := op === BitPat("b0000000_?????_?????_010_?????_0110011")
+    d.sltu  := op === BitPat("b0000000_?????_?????_011_?????_0110011")
+    d.xor   := op === BitPat("b0000000_?????_?????_100_?????_0110011")
+    d.or    := op === BitPat("b0000000_?????_?????_110_?????_0110011")
+    d.and   := op === BitPat("b0000000_?????_?????_111_?????_0110011")
+    d.sll   := op === BitPat("b0000000_?????_?????_001_?????_0110011")
+    d.srl   := op === BitPat("b0000000_?????_?????_101_?????_0110011")
+    d.sra   := op === BitPat("b0100000_?????_?????_101_?????_0110011")
+    d.xnor  := op === BitPat("b0100000_?????_?????_100_?????_0110011")
+    d.orn   := op === BitPat("b0100000_?????_?????_110_?????_0110011")
+    d.andn  := op === BitPat("b0100000_?????_?????_111_?????_0110011")
 
     // RV32M
-    d.mul     := DecodeBits(op, "0000_001_xxxxx_xxxxx_000_xxxxx_0110011")
-    d.mulh    := DecodeBits(op, "0000_001_xxxxx_xxxxx_001_xxxxx_0110011")
-    d.mulhsu  := DecodeBits(op, "0000_001_xxxxx_xxxxx_010_xxxxx_0110011")
-    d.mulhu   := DecodeBits(op, "0000_001_xxxxx_xxxxx_011_xxxxx_0110011")
-    d.div     := DecodeBits(op, "0000_001_xxxxx_xxxxx_100_xxxxx_0110011")
-    d.divu    := DecodeBits(op, "0000_001_xxxxx_xxxxx_101_xxxxx_0110011")
-    d.rem     := DecodeBits(op, "0000_001_xxxxx_xxxxx_110_xxxxx_0110011")
-    d.remu    := DecodeBits(op, "0000_001_xxxxx_xxxxx_111_xxxxx_0110011")
+    d.mul     := op === BitPat("b0000_001_?????_?????_000_?????_0110011")
+    d.mulh    := op === BitPat("b0000_001_?????_?????_001_?????_0110011")
+    d.mulhsu  := op === BitPat("b0000_001_?????_?????_010_?????_0110011")
+    d.mulhu   := op === BitPat("b0000_001_?????_?????_011_?????_0110011")
+    d.div     := op === BitPat("b0000_001_?????_?????_100_?????_0110011")
+    d.divu    := op === BitPat("b0000_001_?????_?????_101_?????_0110011")
+    d.rem     := op === BitPat("b0000_001_?????_?????_110_?????_0110011")
+    d.remu    := op === BitPat("b0000_001_?????_?????_111_?????_0110011")
 
     // RV32B
-    d.clz   := DecodeBits(op, "0110000_00000_xxxxx_001_xxxxx_0010011")
-    d.ctz   := DecodeBits(op, "0110000_00001_xxxxx_001_xxxxx_0010011")
-    d.pcnt  := DecodeBits(op, "0110000_00010_xxxxx_001_xxxxx_0010011")
-    d.min   := DecodeBits(op, "0000101_xxxxx_xxxxx_100_xxxxx_0110011")
-    d.minu  := DecodeBits(op, "0000101_xxxxx_xxxxx_101_xxxxx_0110011")
-    d.max   := DecodeBits(op, "0000101_xxxxx_xxxxx_110_xxxxx_0110011")
-    d.maxu  := DecodeBits(op, "0000101_xxxxx_xxxxx_111_xxxxx_0110011")
-    d.sextb := DecodeBits(op, "0110000_00100_xxxxx_001_xxxxx_0010011")
-    d.sexth := DecodeBits(op, "0110000_00101_xxxxx_001_xxxxx_0010011")
-    d.zexth := DecodeBits(op, "0000100_00000_xxxxx_100_xxxxx_0110011")
+    d.clz   := op === BitPat("b0110000_00000_?????_001_?????_0010011")
+    d.ctz   := op === BitPat("b0110000_00001_?????_001_?????_0010011")
+    d.pcnt  := op === BitPat("b0110000_00010_?????_001_?????_0010011")
+    d.min   := op === BitPat("b0000101_?????_?????_100_?????_0110011")
+    d.minu  := op === BitPat("b0000101_?????_?????_101_?????_0110011")
+    d.max   := op === BitPat("b0000101_?????_?????_110_?????_0110011")
+    d.maxu  := op === BitPat("b0000101_?????_?????_111_?????_0110011")
+    d.sextb := op === BitPat("b0110000_00100_?????_001_?????_0010011")
+    d.sexth := op === BitPat("b0110000_00101_?????_001_?????_0010011")
+    d.zexth := op === BitPat("b0000100_00000_?????_100_?????_0110011")
 
     // Decode scalar log.
-    val slog = DecodeBits(op, "01111_00_00000_xxxxx_0xx_00000_11101_11")
+    val slog = op === BitPat("b01111_00_00000_?????_0??_00000_11101_11")
 
     if (p.enableVector) {
       // Vector length.
-      d.getvl    := DecodeBits(op, "0001x_xx_xxxxx_xxxxx_000_xxxxx_11101_11") && op(26,25) =/= 3.U && (op(24,20) =/= 0.U || op(19,15) =/= 0.U)
-      d.getmaxvl := DecodeBits(op, "0001x_xx_00000_00000_000_xxxxx_11101_11") && op(26,25) =/= 3.U
+      d.getvl    := op === BitPat("b0001?_??_?????_?????_000_?????_11101_11") && op(26,25) =/= 3.U && (op(24,20) =/= 0.U || op(19,15) =/= 0.U)
+      d.getmaxvl := op === BitPat("b0001?_??_00000_00000_000_?????_11101_11") && op(26,25) =/= 3.U
 
       // Vector load/store.
-      d.vld := DecodeBits(op, "000xxx_0xxxxx_xxxxx0_xx_xxxxxx_x_111_11")     // vld
+      d.vld := op === BitPat("b000???_0?????_?????0_??_??????_?_111_11")     // vld
 
-      d.vst := DecodeBits(op, "001xxx_0xxxxx_xxxxx0_xx_xxxxxx_x_111_11") ||  // vst
-               DecodeBits(op, "011xxx_0xxxxx_xxxxx0_xx_xxxxxx_x_111_11")     // vstq
+      d.vst := op === BitPat("b001???_0?????_?????0_??_??????_?_111_11") ||  // vst
+               op === BitPat("b011???_0?????_?????0_??_??????_?_111_11")     // vstq
 
       // Convolution transfer accumulators to vregs. Also decodes acset/actr ops.
-      val vconv = DecodeBits(op, "010100_000000_000000_xx_xxxxxx_x_111_11")
+      val vconv = op === BitPat("b010100_000000_000000_??_??????_?_111_11")
 
       // Duplicate
-      val vdup = DecodeBits(op, "01000x_0xxxxx_000000_xx_xxxxxx_x_111_11") && op(13,12) <= 2.U
+      val vdup = op === BitPat("b01000?_0?????_000000_??_??????_?_111_11") && op(13,12) <= 2.U
       val vdupi = vdup && op(26) === 0.U
 
       // Vector instructions.
@@ -616,19 +616,19 @@ object DecodeInstruction {
     }
 
     // [extensions] Core controls.
-    d.ebreak := DecodeBits(op, "000000000001_00000_000_00000_11100_11")
-    d.ecall  := DecodeBits(op, "000000000000_00000_000_00000_11100_11")
-    d.eexit  := DecodeBits(op, "000000100000_00000_000_00000_11100_11")
-    d.eyield := DecodeBits(op, "000001000000_00000_000_00000_11100_11")
-    d.ectxsw := DecodeBits(op, "000001100000_00000_000_00000_11100_11")
-    d.mpause := DecodeBits(op, "000010000000_00000_000_00000_11100_11")
-    d.mret   := DecodeBits(op, "001100000010_00000_000_00000_11100_11")
-    d.wfi    := DecodeBits(op, "000100000101_00000_000_00000_11100_11")
+    d.ebreak := op === BitPat("b000000000001_00000_000_00000_11100_11")
+    d.ecall  := op === BitPat("b000000000000_00000_000_00000_11100_11")
+    d.eexit  := op === BitPat("b000000100000_00000_000_00000_11100_11")
+    d.eyield := op === BitPat("b000001000000_00000_000_00000_11100_11")
+    d.ectxsw := op === BitPat("b000001100000_00000_000_00000_11100_11")
+    d.mpause := op === BitPat("b000010000000_00000_000_00000_11100_11")
+    d.mret   := op === BitPat("b001100000010_00000_000_00000_11100_11")
+    d.wfi    := op === BitPat("b000100000101_00000_000_00000_11100_11")
 
     // Fences.
-    d.fencei   := DecodeBits(op, "0000_0000_0000_00000_001_00000_0001111")
-    d.flushat  := DecodeBits(op, "0010x_xx_00000_xxxxx_000_00000_11101_11") && op(19,15) =/= 0.U
-    d.flushall := DecodeBits(op, "0010x_xx_00000_00000_000_00000_11101_11")
+    d.fencei   := op === BitPat("b0000_0000_0000_00000_001_00000_0001111")
+    d.flushat  := op === BitPat("b0010?_??_00000_?????_000_00000_11101_11") && op(19,15) =/= 0.U
+    d.flushall := op === BitPat("b0010?_??_00000_00000_000_00000_11101_11")
 
     // [extensions] Scalar logging.
     d.slog := slog
@@ -680,7 +680,7 @@ object DecodeInstruction {
                       d.ebreak, d.ecall, d.eexit, d.eyield, d.ectxsw, d.wfi,
                       d.mpause, d.mret, d.fencei, d.flushat, d.flushall, d.slog)
 
-    d.undef := !WiredOR(decoded)
+    d.undef := decoded === 0.U
 
     d
   }

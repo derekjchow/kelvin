@@ -93,9 +93,9 @@ class FetchControl(p: Parameters) extends Module {
 
     def PredictJump(addr: UInt, inst: UInt): ValidIO[UInt] = {
       assert(p.instructionBits == 32)
-      val jal = DecodeBits(inst, "xxxxxxxxxxxxxxxxxxxx_xxxxx_1101111")
+      val jal = inst === BitPat("b????????????????????_?????_1101111")
       val immjal = Cat(Fill(12, inst(31)), inst(19,12), inst(20), inst(30,21), 0.U(1.W))
-      val bxx = DecodeBits(inst, "xxxxxxx_xxxxx_xxxxx_xxx_xxxxx_1100011") &&
+      val bxx = inst === BitPat("b???????_?????_?????_???_?????_1100011") &&
                   inst(31) && inst(14,13) =/= 1.U
       val immbxx = Cat(Fill(20, inst(31)), inst(7), inst(30,25), inst(11,8), 0.U(1.W))
       val immed = Mux(inst(2), immjal, immbxx)
