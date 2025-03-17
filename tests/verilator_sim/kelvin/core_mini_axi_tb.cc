@@ -270,11 +270,12 @@ absl::Status CoreMiniAxi_tb::ClockGateSync(bool enable) {
 absl::Status CoreMiniAxi_tb::ClockGateAsync(bool enable) {
   absl::MutexLock lock(&transfer_queue_mtx_);
   uint8_t enable8 = enable ? 3 : 1;
+  uint8_t enable_[4] = DATA(enable8, 0, 0, 0);
   transfer_queue_.push(
       std::make_unique<TrafficDesc>(utils::merge(std::vector<DataTransfer>(
-          {utils::Write(csr_addr_, DATA(enable8, 0, 0, 0)),
+          {utils::Write(csr_addr_, enable_),
            utils::Read(csr_addr_, 4),
-           utils::Expect(DATA(enable8, 0, 0, 0), 4)}))));
+           utils::Expect(enable_, 4)}))));
   return absl::OkStatus();
 }
 
@@ -288,11 +289,12 @@ absl::Status CoreMiniAxi_tb::ResetSync(bool enable) {
 absl::Status CoreMiniAxi_tb::ResetAsync(bool enable) {
   absl::MutexLock lock(&transfer_queue_mtx_);
   uint8_t enable8 = enable ? 1 : 0;
+  uint8_t enable_[4] = DATA(enable8, 0, 0, 0);
   transfer_queue_.push(
       std::make_unique<TrafficDesc>(utils::merge(std::vector<DataTransfer>(
-          {utils::Write(csr_addr_, DATA(enable8, 0, 0, 0)),
+          {utils::Write(csr_addr_, enable_),
            utils::Read(csr_addr_, 4),
-           utils::Expect(DATA(enable8, 0, 0, 0), 4)}))));
+           utils::Expect(enable_, 4)}))));
   return absl::OkStatus();
 }
 
