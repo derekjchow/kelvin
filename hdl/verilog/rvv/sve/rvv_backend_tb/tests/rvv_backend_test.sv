@@ -70,9 +70,9 @@ class rvv_backend_test extends uvm_test;
     this.env.scb.set_report_id_action("VRF_RECORDER", UVM_LOG);
     this.env.scb.set_report_id_file("RT_RECORDER", tb_logs["RECORDER_LOG"]);
     this.env.scb.set_report_id_action("RT_RECORDER", UVM_LOG|UVM_DISPLAY);
-    tb_logs["LSU_DRV"] = $fopen("tb_lsu_driver.log", "w");
-    this.env.lsu_agt.lsu_drv.set_report_id_file("LSU_DRV", tb_logs["LSU_DRV"]);
-    this.env.lsu_agt.lsu_drv.set_report_id_action("LSU_DRV", UVM_LOG|UVM_DISPLAY);
+    // tb_logs["LSU_DRV"] = $fopen("tb_lsu_driver.log", "w");
+    // this.env.lsu_agt.lsu_drv.set_report_id_file("LSU_DRV", tb_logs["LSU_DRV"]);
+    // this.env.lsu_agt.lsu_drv.set_report_id_action("LSU_DRV", UVM_LOG|UVM_DISPLAY);
 
   endfunction
 

@@ -81,7 +81,7 @@ task lsu_driver::rx_driver();
   lsu_transaction uop_tr;
   bit pre_uop_have_delay;
   forever begin
-    @(negedge lsu_if.clk);
+    @(posedge lsu_if.clk);
     if(~lsu_if.rst_n) begin
       for(int i=0; i<`NUM_LSU; i++) begin
         lsu_if.uop_lsu_ready_lsu2rvv[i] <= '0;
