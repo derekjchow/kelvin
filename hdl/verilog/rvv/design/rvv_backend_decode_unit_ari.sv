@@ -2710,10 +2710,7 @@ module rvv_backend_decode_unit_ari
     check_special = 'b0;
     
     case(inst_funct3)
-      OPIVV,
-      OPIVX,
-      OPIVI: begin
-        // OPI* instruction
+      OPIVV: begin
         case(funct6_ari.ari_funct6)
           VADD,
           VAND,
@@ -2737,21 +2734,7 @@ module rvv_backend_decode_unit_ari
           VMAX,
           VSSUBU,
           VSSUB: begin
-            case(inst_funct3)
-              OPIVV,
-              OPIVX: begin
-                check_special = check_vd_overlap_v0;
-              end
-            endcase
-          end
-
-          VRSUB: begin
-            case(inst_funct3)
-              OPIVX,
-              OPIVI: begin
-                check_special = check_vd_overlap_v0;
-              end
-            endcase
+            check_special = check_vd_overlap_v0;
           end
 
           VADC: begin
@@ -2759,35 +2742,15 @@ module rvv_backend_decode_unit_ari
           end
 
           VMADC: begin
-            case(inst_funct3)
-              OPIVV: begin
-                check_special = check_vd_part_overlap_vs2&check_vd_part_overlap_vs1;
-              end
-              OPIVX,
-              OPIVI: begin
-                check_special = check_vd_part_overlap_vs2;
-              end
-            endcase
+            check_special = check_vd_part_overlap_vs2&check_vd_part_overlap_vs1;
           end
 
           VSBC: begin
-            case(inst_funct3)
-              OPIVV,
-              OPIVX: begin
-                check_special = (inst_vm==1'b0)&(inst_vd!='b0);
-              end
-            endcase
+            check_special = (inst_vm==1'b0)&(inst_vd!='b0);
           end
       
           VMSBC: begin
-            case(inst_funct3)
-              OPIVV: begin
-                check_special = check_vd_part_overlap_vs2&check_vd_part_overlap_vs1;
-              end
-              OPIVX: begin
-                check_special = check_vd_part_overlap_vs2;
-              end
-            endcase
+            check_special = check_vd_part_overlap_vs2&check_vd_part_overlap_vs1;
           end
 
           VNSRL,
@@ -2801,37 +2764,12 @@ module rvv_backend_decode_unit_ari
           VMSNE,
           VMSLEU,
           VMSLE: begin
-            case(inst_funct3)
-              OPIVV: begin
-                check_special = check_vd_part_overlap_vs2&check_vd_part_overlap_vs1;
-              end
-              OPIVX,
-              OPIVI: begin
-                check_special = check_vd_part_overlap_vs2;
-              end
-            endcase
+            check_special = check_vd_part_overlap_vs2&check_vd_part_overlap_vs1;
           end
 
           VMSLTU,
           VMSLT: begin
-            case(inst_funct3)
-              OPIVV: begin
-                check_special = check_vd_part_overlap_vs2&check_vd_part_overlap_vs1;
-              end
-              OPIVX: begin
-                check_special = check_vd_part_overlap_vs2;
-              end
-            endcase
-          end
-          
-          VMSGTU,
-          VMSGT: begin
-            case(inst_funct3)
-              OPIVX,
-              OPIVI: begin
-                check_special = check_vd_part_overlap_vs2;
-              end
-            endcase     
+            check_special = check_vd_part_overlap_vs2&check_vd_part_overlap_vs1;
           end
 
           VMERGE_VMV: begin
@@ -2840,62 +2778,190 @@ module rvv_backend_decode_unit_ari
           end
                
           VSMUL_VMVNRR: begin
-            case(inst_funct3)
-              OPIVV,
-              OPIVX: begin
-                check_special = check_vd_overlap_v0;
-              end
-              OPIVI: begin
-                check_special = (inst_vm == 1'b1)&(inst_vs1[4:3]==2'b0)&
-                                ((inst_nr==NREG1)|(inst_nr==NREG2)|(inst_nr==NREG4)|(inst_nr==NREG8));
-              end
-            endcase
+            check_special = check_vd_overlap_v0;
           end
 
           VWREDSUMU,
           VWREDSUM: begin
-            case(inst_funct3)
-              OPIVV: begin
-                check_special = (csr_vstart=='b0);
-              end
-            endcase
+            check_special = (csr_vstart=='b0);
           end
 
           VSLIDEUP_RGATHEREI16: begin
-            case(inst_funct3)
-              // VRGATHEREI16
-              OPIVV: begin
-                // destination register group cannot overlap the source register group
-                check_special = check_vd_overlap_v0&check_vd_overlap_vs2&check_vd_overlap_vs1;                
-              end
-              // VSLIDEUP 
-              OPIVX,
-              OPIVI: begin
-                // destination register group cannot overlap the source register group
-                check_special = check_vd_overlap_v0&check_vd_overlap_vs2;
-              end
-            endcase
+            // VRGATHEREI16
+            // destination register group cannot overlap the source register group
+            check_special = check_vd_overlap_v0&check_vd_overlap_vs2&check_vd_overlap_vs1;                
           end
           
           VRGATHER: begin
-            case(inst_funct3)
-              OPIVV: begin
-                // destination register group cannot overlap the source register group
-                check_special = check_vd_overlap_v0&check_vd_overlap_vs2&check_vd_overlap_vs1;
-              end
-              OPIVX,
-              OPIVI: begin
-                // destination register group cannot overlap the source register group
-                check_special = check_vd_overlap_v0&check_vd_overlap_vs2;
-              end
-            endcase
+            // destination register group cannot overlap the source register group
+            check_special = check_vd_overlap_v0&check_vd_overlap_vs2&check_vd_overlap_vs1;
+          end
+        endcase
+      end
+      OPIVX: begin
+        case(funct6_ari.ari_funct6)
+          VADD,
+          VAND,
+          VOR,
+          VXOR,
+          VSLL,
+          VSRL,
+          VSRA,
+          VSADDU,
+          VSADD,
+          VSSRL,
+          VSSRA,
+          VSLIDEDOWN: begin
+            check_special = check_vd_overlap_v0;
+          end
+        
+          VSUB,
+          VMINU,
+          VMIN,
+          VMAXU,
+          VMAX,
+          VSSUBU,
+          VSSUB: begin
+            check_special = check_vd_overlap_v0;
+          end
+
+          VRSUB: begin
+            check_special = check_vd_overlap_v0;
+          end
+
+          VADC: begin
+            check_special = (inst_vm==1'b0)&(inst_vd!='b0);
+          end
+
+          VMADC: begin
+            check_special = check_vd_part_overlap_vs2;
+          end
+
+          VSBC: begin
+            check_special = (inst_vm==1'b0)&(inst_vd!='b0);
+          end
+      
+          VMSBC: begin
+            check_special = check_vd_part_overlap_vs2;
+          end
+
+          VNSRL,
+          VNSRA,
+          VNCLIPU,
+          VNCLIP: begin
+            check_special = check_vd_overlap_v0&check_vd_part_overlap_vs2;
+          end
+          
+          VMSEQ,
+          VMSNE,
+          VMSLEU,
+          VMSLE: begin
+            check_special = check_vd_part_overlap_vs2;
+          end
+
+          VMSLTU,
+          VMSLT: begin
+            check_special = check_vd_part_overlap_vs2;
+          end
+          
+          VMSGTU,
+          VMSGT: begin
+            check_special = check_vd_part_overlap_vs2;
+          end
+
+          VMERGE_VMV: begin
+            // when vm=1, it is vmv instruction and vs2_index must be 5'b0.
+            check_special = ((inst_vm=='b0)&(inst_vd!='b0)) | ((inst_vm==1'b1)&(inst_vs2=='b0));
+          end
+               
+          VSMUL_VMVNRR: begin
+            check_special = check_vd_overlap_v0;
+          end
+
+          VSLIDEUP_RGATHEREI16: begin
+            // VSLIDEUP 
+            // destination register group cannot overlap the source register group
+            check_special = check_vd_overlap_v0&check_vd_overlap_vs2;
+          end
+          
+          VRGATHER: begin
+            // destination register group cannot overlap the source register group
+            check_special = check_vd_overlap_v0&check_vd_overlap_vs2;
+          end
+        endcase
+      end
+      OPIVI: begin
+        case(funct6_ari.ari_funct6)
+          VADD,
+          VAND,
+          VOR,
+          VXOR,
+          VSLL,
+          VSRL,
+          VSRA,
+          VSADDU,
+          VSADD,
+          VSSRL,
+          VSSRA,
+          VSLIDEDOWN: begin
+            check_special = check_vd_overlap_v0;
+          end
+
+          VRSUB: begin
+            check_special = check_vd_overlap_v0;
+          end
+
+          VADC: begin
+            check_special = (inst_vm==1'b0)&(inst_vd!='b0);
+          end
+
+          VMADC: begin
+            check_special = check_vd_part_overlap_vs2;
+          end
+
+          VNSRL,
+          VNSRA,
+          VNCLIPU,
+          VNCLIP: begin
+            check_special = check_vd_overlap_v0&check_vd_part_overlap_vs2;
+          end
+          
+          VMSEQ,
+          VMSNE,
+          VMSLEU,
+          VMSLE: begin
+            check_special = check_vd_part_overlap_vs2;
+          end
+          
+          VMSGTU,
+          VMSGT: begin
+            check_special = check_vd_part_overlap_vs2;
+          end
+
+          VMERGE_VMV: begin
+            // when vm=1, it is vmv instruction and vs2_index must be 5'b0.
+            check_special = ((inst_vm=='b0)&(inst_vd!='b0)) | ((inst_vm==1'b1)&(inst_vs2=='b0));
+          end
+               
+          VSMUL_VMVNRR: begin
+            check_special = (inst_vm == 1'b1)&(inst_vs1[4:3]==2'b0)&
+                            ((inst_nr==NREG1)|(inst_nr==NREG2)|(inst_nr==NREG4)|(inst_nr==NREG8));
+          end
+
+          VSLIDEUP_RGATHEREI16: begin
+            // VSLIDEUP 
+            // destination register group cannot overlap the source register group
+            check_special = check_vd_overlap_v0&check_vd_overlap_vs2;
+          end
+          
+          VRGATHER: begin
+            // destination register group cannot overlap the source register group
+            check_special = check_vd_overlap_v0&check_vd_overlap_vs2;
           end
         endcase
       end
 
-      OPMVV,
-      OPMVX: begin
-        // OPM* instruction
+      OPMVV: begin
         case(funct6_ari.ari_funct6)
           VWADDU,
           VWSUBU,
@@ -2907,48 +2973,29 @@ module rvv_backend_decode_unit_ari
           VWMACCU,
           VWMACC,
           VWMACCSU: begin
-            case(inst_funct3)
-              OPMVV: begin
-                // overlap constraint
-                check_special = check_vd_overlap_v0&check_vs2_part_overlap_vd_2_1&check_vs1_part_overlap_vd_2_1;                
-              end
-              OPMVX: begin
-                // overlap constraint
-                check_special = check_vd_overlap_v0&check_vs2_part_overlap_vd_2_1;                
-              end
-            endcase
+            // overlap constraint
+            check_special = check_vd_overlap_v0&check_vs2_part_overlap_vd_2_1&check_vs1_part_overlap_vd_2_1;                
           end
 
           VWADDU_W,
           VWSUBU_W,
           VWADD_W,
           VWSUB_W: begin
-            case(inst_funct3)
-              OPMVV: begin
-                // overlap constraint
-                check_special = check_vd_overlap_v0&check_vs1_part_overlap_vd_2_1;                
-              end
-              OPMVX: begin
-                check_special = check_vd_overlap_v0;                
-              end
-            endcase
+            // overlap constraint
+            check_special = check_vd_overlap_v0&check_vs1_part_overlap_vd_2_1;                
           end
           
           VXUNARY0: begin
-            case(inst_funct3)
-              OPMVV: begin
-                case(vs1_opcode_vxunary) 
-                  VZEXT_VF2,
-                  VSEXT_VF2: begin
-                    // overlap constraint
-                    check_special = check_vd_overlap_v0&check_vs2_part_overlap_vd_2_1;                
-                  end
-                  VZEXT_VF4,
-                  VSEXT_VF4: begin
-                    // overlap constraint
-                    check_special = check_vd_overlap_v0&check_vs2_part_overlap_vd_4_1;                
-                  end
-                endcase
+            case(vs1_opcode_vxunary) 
+              VZEXT_VF2,
+              VSEXT_VF2: begin
+                // overlap constraint
+                check_special = check_vd_overlap_v0&check_vs2_part_overlap_vd_2_1;                
+              end
+              VZEXT_VF4,
+              VSEXT_VF4: begin
+                // overlap constraint
+                check_special = check_vd_overlap_v0&check_vs2_part_overlap_vd_4_1;                
               end
             endcase
           end
@@ -2972,22 +3019,6 @@ module rvv_backend_decode_unit_ari
             check_special = check_vd_overlap_v0;          
           end
 
-          VWMACCUS: begin
-            case(inst_funct3)
-              OPMVX: begin
-                check_special = check_vd_overlap_v0&check_vs2_part_overlap_vd_2_1;                
-              end
-            endcase
-          end
-
-          VSLIDE1DOWN: begin
-            case(inst_funct3)
-              OPMVX: begin
-                check_special = check_vd_overlap_v0;          
-              end
-            endcase
-          end
-
           // reduction
           VREDSUM,
           VREDMAXU,
@@ -2997,11 +3028,7 @@ module rvv_backend_decode_unit_ari
           VREDAND,
           VREDOR,
           VREDXOR: begin
-            case(inst_funct3)
-              OPMVV: begin
-                check_special = (csr_vstart=='b0);
-              end
-            endcase
+            check_special = (csr_vstart=='b0);
           end
 
           // mask 
@@ -3013,66 +3040,98 @@ module rvv_backend_decode_unit_ari
           VMNOR,
           VMORN,
           VMXNOR: begin
-            case(inst_funct3)  
-              OPMVV: begin
-                check_special = (inst_vm==1'b1);
-              end
-            endcase
+            check_special = inst_vm;
           end
           
           VWXUNARY0: begin
-            case(inst_funct3)
-              OPMVV: begin
-                case(vs1_opcode_vwxunary)
-                  VCPOP,
-                  VFIRST: begin
-                    check_special = (csr_vstart=='b0);
-                  end
-                  VMV_X_S: begin
-                    check_special = (inst_vm==1'b1);
-                  end
-                endcase
+            case(vs1_opcode_vwxunary)
+              VCPOP,
+              VFIRST: begin
+                check_special = (csr_vstart=='b0);
               end
-              OPMVX: begin
-                check_special = (vs2_opcode_vrxunary==VMV_S_X)&(inst_vm==1'b1)&(inst_vs2=='b0);
+              VMV_X_S: begin
+                check_special = (inst_vm==1'b1);
               end
             endcase
           end
 
           VMUNARY0: begin
-            case(inst_funct3)
-              OPMVV: begin
-                case(vs1_opcode_vmunary)
-                  VMSBF,
-                  VMSIF,
-                  VMSOF,
-                  VIOTA: begin
-                    check_special = (csr_vstart=='b0)&check_vd_overlap_v0&check_vd_overlap_vs2;
-                  end
-                  VID: begin
-                    check_special = (inst_vs2=='b0)&check_vd_overlap_v0;
-                  end
-                endcase
+            case(vs1_opcode_vmunary)
+              VMSBF,
+              VMSIF,
+              VMSOF,
+              VIOTA: begin
+                check_special = (csr_vstart=='b0)&check_vd_overlap_v0&check_vd_overlap_vs2;
               end
-            endcase
-          end
-
-          VSLIDE1UP: begin
-            case(inst_funct3)
-              OPMVX: begin
-                // destination register group cannot overlap the source register group
-                check_special = check_vd_overlap_v0&check_vd_overlap_vs2;
+              VID: begin
+                check_special = (inst_vs2=='b0)&check_vd_overlap_v0;
               end
             endcase
           end
 
           VCOMPRESS: begin
-            case(inst_funct3)
-              OPMVV: begin
-                // destination register group cannot overlap the source register group
-                check_special = (csr_vstart=='b0)&inst_vm&check_vd_overlap_vs2&check_vd_overlap_vs1;
-              end
-            endcase
+            // destination register group cannot overlap the source register group
+            check_special = (csr_vstart=='b0)&inst_vm&check_vd_overlap_vs2&check_vd_overlap_vs1;
+          end
+        endcase
+      end
+      OPMVX: begin
+        case(funct6_ari.ari_funct6)
+          VWADDU,
+          VWSUBU,
+          VWADD,
+          VWSUB,
+          VWMUL,
+          VWMULU,
+          VWMULSU,
+          VWMACCU,
+          VWMACC,
+          VWMACCSU: begin
+            // overlap constraint
+            check_special = check_vd_overlap_v0&check_vs2_part_overlap_vd_2_1;                
+          end
+
+          VWADDU_W,
+          VWSUBU_W,
+          VWADD_W,
+          VWSUB_W: begin
+            check_special = check_vd_overlap_v0;                
+          end
+
+          VMUL,
+          VMULH,
+          VMULHU,
+          VMULHSU,
+          VDIVU,
+          VDIV,
+          VREMU,
+          VREM,
+          VMACC,
+          VNMSAC,
+          VMADD,
+          VNMSUB,
+          VAADDU,
+          VAADD,
+          VASUBU,
+          VASUB: begin
+            check_special = check_vd_overlap_v0;          
+          end
+
+          VWMACCUS: begin
+            check_special = check_vd_overlap_v0&check_vs2_part_overlap_vd_2_1;                
+          end
+
+          VSLIDE1DOWN: begin
+            check_special = check_vd_overlap_v0;          
+          end
+          
+          VWXUNARY0: begin
+            check_special = (vs2_opcode_vrxunary==VMV_S_X)&(inst_vm==1'b1)&(inst_vs2=='b0);
+          end
+
+          VSLIDE1UP: begin
+            // destination register group cannot overlap the source register group
+            check_special = check_vd_overlap_v0&check_vd_overlap_vs2;
           end
         endcase
       end

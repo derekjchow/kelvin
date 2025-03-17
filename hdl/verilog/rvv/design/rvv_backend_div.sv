@@ -50,7 +50,7 @@ module rvv_backend_div
 
   generate
     for (i=1;i<`NUM_DIV;i=i+1) begin: GET_UOP_VALID
-      assign  div_uop_valid_rs2ex[i] = !( |fifo_almost_empty_rs2ex[i:0]);
+      assign  div_uop_valid_rs2ex[i] = !fifo_almost_empty_rs2ex[i];
     end
   endgenerate
 

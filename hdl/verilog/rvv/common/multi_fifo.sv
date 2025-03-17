@@ -49,15 +49,15 @@ module multi_fifo
   input   logic [M-1:0]           push;         // M bits indicates M push operation(s). 
   input   T     [M-1:0]           datain;
   output  logic                   full;
-  output  logic [M-1:0]           almost_full;  // almost_full[0] - full
-                                                // almost_full[1] - 1 left to full
-                                                // almost_full[M-1] - (M-1) left to full
+  output  logic [M-1:0]           almost_full;  // almost_full[0]==1 - full
+                                                // almost_full[1]==1 - The remaining free spaces <=1
+                                                // almost_full[M-1]==1 - The remaining free spaces <=M-1
   input   logic [N-1:0]           pop;          // N bits indicates N pop operation(s).
   output  T     [N-1:0]           dataout;
   output  logic                   empty;
-  output  logic [N-1:0]           almost_empty; // almost_empty[0] - empty
-                                                // almost_empty[1] - 1 left to empty
-                                                // almost_empty[N-1] - (N-1) left to empty
+  output  logic [N-1:0]           almost_empty; // almost_empty[0]==1 - empty
+                                                // almost_empty[1]==1 - The remaining quantity of valid data <= 1
+                                                // almost_empty[N-1]==1 - The remaining quantity of valid data <= N-1
   input   logic                   clear;
   output  T     [DEPTH-1:0]       fifo_data;    // sort based on rptr
   output  logic [DEPTH_BITS-1:0]  wptr;         // write pointer

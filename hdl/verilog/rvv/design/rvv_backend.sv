@@ -310,20 +310,23 @@ module rvv_backend
 // ---code start------------------------------------------------------
   // Command queue
     multi_fifo #(
-        .T          (RVVCmd),
-        .M          (`ISSUE_LANE),
-        .N          (`NUM_DE_INST),
-        .DEPTH      (`CQ_DEPTH)
+        .T            (RVVCmd),
+        .M            (`ISSUE_LANE),
+        .N            (`NUM_DE_INST),
+//`ifdef ISSUE_3_READ_PORT_6
+//        .DATAOUT_REG  (1'b1),
+//`endif
+        .DEPTH        (`CQ_DEPTH)
     ) u_command_queue (
       // global
-        .clk        (clk),
-        .rst_n      (rst_n),
+        .clk          (clk),
+        .rst_n        (rst_n),
       // write
-        .push       (insts_valid_rvs2cq & insts_ready_cq2rvs),
-        .datain     (insts_rvs2cq),
+        .push         (insts_valid_rvs2cq & insts_ready_cq2rvs),
+        .datain       (insts_rvs2cq),
       // read
-        .pop        (pop_de2cq),
-        .dataout    (inst_pkg_cq2de),
+        .pop          (pop_de2cq),
+        .dataout      (inst_pkg_cq2de),
       // fifo status
         .full         (cq_full),
         .almost_full  (cq_almost_full),
@@ -339,7 +342,7 @@ module rvv_backend
     assign insts_ready_cq2rvs[0] = ~cq_full;
     generate
       for (i=1;i<`ISSUE_LANE;i++) begin: cmq_ready
-        assign insts_ready_cq2rvs[i] = !(|cq_almost_full[i:0]);
+        assign insts_ready_cq2rvs[i] = !cq_almost_full[i];
       end
     endgenerate
 
@@ -400,7 +403,7 @@ module rvv_backend
     assign uop_valid_uop2dp[0] = ~uq_empty;
     generate
       for (i=1;i<`NUM_DP_UOP;i++) begin: uop_queue_valid
-        assign uop_valid_uop2dp[i] = !(|uq_almost_empty[i:0]);
+        assign uop_valid_uop2dp[i] = !uq_almost_empty[i];
       end
     endgenerate
 
@@ -502,7 +505,7 @@ module rvv_backend
     assign rs_ready_alu2dp[0] = ~alu_rs_full;
     generate
       for (i=1;i<`NUM_DP_UOP;i++) begin: alu_rs_ready
-        assign rs_ready_alu2dp[i] = !(|alu_rs_almost_full[i:0]);
+        assign rs_ready_alu2dp[i] = !alu_rs_almost_full[i];
       end
     endgenerate
 
@@ -544,7 +547,7 @@ module rvv_backend
     assign rs_ready_pmtrdt2dp[0] = ~pmtrdt_rs_full;
     generate
       for (i=1;i<`NUM_DP_UOP;i++) begin: pmtrdt_rs_ready
-        assign rs_ready_pmtrdt2dp[i] = !(|pmtrdt_rs_almost_full[i:0]);
+        assign rs_ready_pmtrdt2dp[i] = !pmtrdt_rs_almost_full[i];
       end
     endgenerate
 
@@ -585,7 +588,7 @@ module rvv_backend
     assign rs_ready_mul2dp[0] = ~mul_rs_full;
     generate
       for (i=1;i<`NUM_DP_UOP;i++) begin: mul_rs_ready
-        assign rs_ready_mul2dp[i] = !(|mul_rs_almost_full[i:0]);
+        assign rs_ready_mul2dp[i] = !mul_rs_almost_full[i];
       end
     endgenerate
 
@@ -626,7 +629,7 @@ module rvv_backend
     assign rs_ready_div2dp[0] = ~div_rs_full;
     generate
       for (i=1;i<`NUM_DP_UOP;i++) begin: div_rs_ready
-        assign rs_ready_div2dp[i] = !(|div_rs_almost_full[i:0]);
+        assign rs_ready_div2dp[i] = !div_rs_almost_full[i];
       end
     endgenerate
 
@@ -667,7 +670,7 @@ module rvv_backend
     assign rs_ready_lsu2dp[0] = ~lsu_rs_full;
     generate
       for (i=1;i<`NUM_DP_UOP;i++) begin: lsu_rs_ready
-        assign rs_ready_lsu2dp[i] = !(|lsu_rs_almost_full[i:0]);
+        assign rs_ready_lsu2dp[i] = !lsu_rs_almost_full[i];
       end
     endgenerate
 
@@ -675,7 +678,7 @@ module rvv_backend
     assign uop_lsu_valid_rvv2lsu[0] = ~lsu_rs_empty;
     generate
       for (i=1;i<`NUM_LSU;i++) begin: uop_lsu_valid
-        assign uop_lsu_valid_rvv2lsu[i] = ~(lsu_rs_empty || lsu_rs_almost_empty[i]);
+        assign uop_lsu_valid_rvv2lsu[i] = ~lsu_rs_almost_empty[i];
       end
     endgenerate
     
@@ -711,7 +714,7 @@ module rvv_backend
     assign mapinfo_ready_lsu2dp[0] = ~mapinfo_full;
     generate
       for (i=1;i<`NUM_DP_UOP;i++) begin: mapinfo_ready
-        assign mapinfo_ready_lsu2dp[i] = !(|mapinfo_almost_full[i:0]);
+        assign mapinfo_ready_lsu2dp[i] = !mapinfo_almost_full[i];
       end
     endgenerate
 
@@ -747,7 +750,7 @@ module rvv_backend
     assign uop_lsu_ready_rvv2lsu[0] = ~lsu_res_full;
     generate
       for (i=1;i<`NUM_LSU;i++) begin: lsu_res_ready
-        assign uop_lsu_ready_rvv2lsu[i] = !(|lsu_res_almost_full[i:0]);
+        assign uop_lsu_ready_rvv2lsu[i] = !lsu_res_almost_full[i];
       end
     endgenerate
 

@@ -51,8 +51,8 @@ module rvv_backend_lsu_remap
 
   generate
     for(i=1;i<`NUM_LSU;i++) begin: GET_VALID
-      assign mapinfo_valid[i] = !(|mapinfo_almost_empty[i:0]);
-      assign lsu_res_valid[i] = !(|lsu_res_almost_empty[i:0]);
+      assign mapinfo_valid[i] = !mapinfo_almost_empty[i];
+      assign lsu_res_valid[i] = !lsu_res_almost_empty[i];
     end
   endgenerate
   

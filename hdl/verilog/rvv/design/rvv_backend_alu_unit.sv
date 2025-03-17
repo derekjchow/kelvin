@@ -1,11 +1,3 @@
-// description: 
-// 1. It will get uops from ALU Reservation station and execute this uop.
-//
-// feature list:
-// 1. All are combinatorial logic.
-// 2. All alu uop is executed and submit to ROB in 1 cycle.
-// 3. Reuse arithmetic logic as much as possible.
-// 4. Low-power design.
 
 `include "rvv_backend.svh"
 
@@ -55,6 +47,7 @@ module rvv_backend_alu_unit
   logic                   result_valid_p1_in;
   logic                   result_valid_p1;
   logic                   alu_uop_p1_en;
+  PIPE_DATA_t             alu_uop_p1_in;
   PIPE_DATA_t             alu_uop_p1;
 
 //
@@ -144,70 +137,63 @@ module rvv_backend_alu_unit
     endcase
   end
 
-  always_ff @(posedge clk, negedge rst_n) begin
-    if(!rst_n) begin
-`ifdef TB_SUPPORT 
-      alu_uop_p1.uop_pc         <= 'b0;
-`endif
-      alu_uop_p1.rob_entry      <= 'b0;
-      alu_uop_p1.vd_eew         <= EEW_NONE;
-      alu_uop_p1.uop_index      <= 'b0;
-      alu_uop_p1.alu_sub_opcode <= OP_NONE;
-      alu_uop_p1.result_data    <= 'b0;
-      for(int i=0;i<`VLEN/64;i++) begin
-        for(int k=0;k<64;k++) begin
-          alu_uop_p1.data_viota_per64[i][k][$clog2(64):0] <= 'b0;
-        end
-      end
-      alu_uop_p1.vsaturate      <= 'b0;
-    end
-    else if(alu_uop_p1_en) begin
-`ifdef TB_SUPPORT 
-      alu_uop_p1.uop_pc         <= 'b0;
-`endif
-      alu_uop_p1.rob_entry      <= 'b0;
-      alu_uop_p1.vd_eew         <= EEW_NONE;
-      alu_uop_p1.uop_index      <= 'b0;
-      alu_uop_p1.alu_sub_opcode <= OP_OTHER;
-      alu_uop_p1.result_data    <= 'b0;
-      for(int i=0;i<`VLEN/64;i++) begin
-        for(int k=0;k<64;k++) begin
-          alu_uop_p1.data_viota_per64[i][k][$clog2(64):0] <= 'b0;
-        end
-      end
-      alu_uop_p1.vsaturate      <= 'b0;
+  always_comb begin
+  `ifdef TB_SUPPORT 
+    alu_uop_p1_in.uop_pc         = 'b0;
+  `endif
+    alu_uop_p1_in.rob_entry      = 'b0;
+    alu_uop_p1_in.vd_eew         = EEW_NONE;
+    alu_uop_p1_in.uop_index      = 'b0;
+    alu_uop_p1_in.alu_sub_opcode = OP_OTHER;
+    alu_uop_p1_in.result_data    = 'b0;
+    alu_uop_p1_in.data_viota_per64 = 'b0;
+    alu_uop_p1_in.vsaturate      = 'b0;
 
-      case(1'b1)
-        result_valid_addsub_p0: begin
-`ifdef TB_SUPPORT 
-          alu_uop_p1.uop_pc       <= result_addsub_p0.uop_pc;
-`endif
-          alu_uop_p1.rob_entry    <= result_addsub_p0.rob_entry;
-          alu_uop_p1.result_data  <= result_addsub_p0.w_data;
-          alu_uop_p1.vsaturate    <= result_addsub_p0.vsaturate;
-        end
-        result_valid_shift_p0: begin
-`ifdef TB_SUPPORT 
-          alu_uop_p1.uop_pc       <= result_shift_p0.uop_pc;
-`endif
-          alu_uop_p1.rob_entry    <= result_shift_p0.rob_entry;
-          alu_uop_p1.result_data  <= result_shift_p0.w_data;
-          alu_uop_p1.vsaturate    <= result_shift_p0.vsaturate;
-        end
-        result_valid_other_p0: begin
-`ifdef TB_SUPPORT 
-          alu_uop_p1.uop_pc       <= result_other_p0.uop_pc;
-`endif
-          alu_uop_p1.rob_entry    <= result_other_p0.rob_entry;
-          alu_uop_p1.result_data  <= result_other_p0.w_data;
-          alu_uop_p1.vsaturate    <= result_other_p0.vsaturate;
-        end
-        result_valid_mask_p0: begin
-          alu_uop_p1              <= result_mask_p0;
-        end
-      endcase
-    end
+    case(1'b1)
+      result_valid_addsub_p0: begin 
+      `ifdef TB_SUPPORT 
+        alu_uop_p1_in.uop_pc      = result_addsub_p0.uop_pc;
+      `endif
+        alu_uop_p1_in.rob_entry   = result_addsub_p0.rob_entry;
+        alu_uop_p1_in.result_data = result_addsub_p0.w_data;
+        alu_uop_p1_in.vsaturate   = result_addsub_p0.vsaturate;
+      end
+      result_valid_shift_p0: begin
+      `ifdef TB_SUPPORT 
+        alu_uop_p1_in.uop_pc      = result_shift_p0.uop_pc;
+      `endif
+        alu_uop_p1_in.rob_entry   = result_shift_p0.rob_entry;
+        alu_uop_p1_in.result_data = result_shift_p0.w_data;
+        alu_uop_p1_in.vsaturate   = result_shift_p0.vsaturate;
+      end
+      result_valid_other_p0: begin
+      `ifdef TB_SUPPORT 
+        alu_uop_p1_in.uop_pc      = result_other_p0.uop_pc;
+      `endif
+        alu_uop_p1_in.rob_entry   = result_other_p0.rob_entry;
+        alu_uop_p1_in.result_data = result_other_p0.w_data;
+        alu_uop_p1_in.vsaturate   = result_other_p0.vsaturate;
+      end
+      result_valid_mask_p0: begin
+        alu_uop_p1_in             = result_mask_p0;
+      end
+    endcase
   end
+
+
+  cdffr
+  #(
+    .T      (PIPE_DATA_t)
+  )
+  alu_uop_d1
+  (
+    .clk    (clk),
+    .rst_n  (rst_n),
+    .c      (1'b0), 
+    .e      (alu_uop_p1_en), 
+    .d      (alu_uop_p1_in),
+    .q      (alu_uop_p1)
+  );
 
   rvv_backend_alu_unit_execution_p1 u_alu_p1
   ( 

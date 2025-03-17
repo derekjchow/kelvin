@@ -4,9 +4,6 @@
 // feature list:
 // 1. The number of ALU units (`NUM_ALU) is configurable.
 // 2. The size of vector length (`VLEN) is configurable.
-// 3. Addsub unit for add and sub instructions reuses and combines the results of 8-bit adders to get 8,16,32-bit result. And sub instructions will reuse adder logic.
-// 4. Shift unit for shift instructions reuse arithmetic right shift to complete arithmetic and logic right shift.
-// 5. Mask unit can reuse logical operation for mask logical and regular logical instructions. And Mask unit can reuse find_first_1 logic for other mask instructions.
 
 `include "rvv_backend.svh"
 `include "rvv_backend_sva.svh"
@@ -61,7 +58,7 @@ module rvv_backend_alu
 
   generate 
     for (i=1;i<`NUM_ALU;i=i+1) begin: GET_UOP_VALID
-      assign  alu_uop_valid_rs2ex[i] = !(|fifo_almost_empty_rs2ex[i:0]);
+      assign  alu_uop_valid_rs2ex[i] = !fifo_almost_empty_rs2ex[i];
     end
   endgenerate
 
