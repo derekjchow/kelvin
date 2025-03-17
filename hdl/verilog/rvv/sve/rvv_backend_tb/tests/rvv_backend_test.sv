@@ -70,6 +70,10 @@ class rvv_backend_test extends uvm_test;
     this.env.scb.set_report_id_action("VRF_RECORDER", UVM_LOG);
     this.env.scb.set_report_id_file("RT_RECORDER", tb_logs["RECORDER_LOG"]);
     this.env.scb.set_report_id_action("RT_RECORDER", UVM_LOG|UVM_DISPLAY);
+    tb_logs["LSU_DRV"] = $fopen("tb_lsu_driver.log", "w");
+    this.env.lsu_agt.lsu_drv.set_report_id_file("LSU_DRV", tb_logs["LSU_DRV"]);
+    this.env.lsu_agt.lsu_drv.set_report_id_action("LSU_DRV", UVM_LOG|UVM_DISPLAY);
+
   endfunction
 
   virtual function void final_phase(uvm_phase phase);
@@ -98,6 +102,23 @@ class rvv_backend_test extends uvm_test;
       vrf_if.set_dut_vrf(reg_idx, value);
     end
   endtask: rand_vrf
+
+  virtual task set_mdl_mem(int unsigned addr, byte value);
+    env.mdl.mem[addr] = value;
+  endtask: set_mdl_mem
+
+  virtual task set_lsu_mem(int unsigned addr, byte value);
+    env.lsu_agt.lsu_drv.mem[addr] = value;
+  endtask: set_lsu_mem
+
+  virtual task rand_mem(int unsigned mem_base, int unsigned mem_size);
+    byte value;
+    for(int byte_idx=mem_base; byte_idx<mem_size; byte_idx++) begin
+      value = $urandom_range(0, 8'hFF);
+      set_lsu_mem(byte_idx, value);
+      set_mdl_mem(byte_idx, value);
+    end
+  endtask: rand_mem
 
 endclass: rvv_backend_test
 
@@ -2159,6 +2180,54 @@ class alu_vmvnr_test extends rvv_backend_test;
     super.final_phase(phase);
   endfunction
 endclass: alu_vmvnr_test
+
+//===========================================================
+// LSU direct instruction tests 
+//===========================================================
+class lsu_unit_stride_test extends rvv_backend_test;
+
+  lsu_unit_stride_seq rvs_seq;
+  alu_smoke_vv_seq rvs_last_seq;
+
+  `uvm_component_utils(lsu_unit_stride_test)
+
+  function new(string name, uvm_component parent);
+    super.new(name, parent);
+  endfunction
+
+  function void build_phase(uvm_phase phase);
+    super.build_phase(phase);
+  endfunction
+
+  function void connect_phase(uvm_phase phase);
+    super.connect_phase(phase);
+    this.set_report_id_action_hier("MDL", UVM_LOG);
+  endfunction
+
+  task main_phase(uvm_phase phase);
+    phase.raise_objection( .obj( this ) );
+
+    `uvm_info(get_type_name(),"Start randomize mem & vrf.", UVM_LOW)
+    rand_mem(0, 32'h10_0000);
+    rand_vrf();
+    `uvm_info(get_type_name(), "Randomize done.", UVM_LOW)
+
+    rvs_seq = lsu_unit_stride_seq::type_id::create("rvs_seq", this);
+    rvs_seq.inst_num = 100;
+    rvs_seq.start(env.rvs_agt.rvs_sqr);
+
+    rvs_last_seq = alu_smoke_vv_seq::type_id::create("rvs_last_seq", this);
+    rvs_last_seq.run_inst(VADD,env.rvs_agt.rvs_sqr);
+    phase.phase_done.set_drain_time(this, 2000ns);
+    phase.drop_objection( .obj( this ) );
+  endtask
+
+  function void final_phase(uvm_phase phase);
+    super.final_phase(phase);
+  endfunction
+endclass: lsu_unit_stride_test
+
+
 
 `endif // RVV_BACKEND_TEST__SV
 

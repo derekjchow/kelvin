@@ -101,7 +101,7 @@
 
 // Vector CSR
 `define VLEN                    128
-`define VLENB                   `VLEN/8
+`define VLENB                   (`VLEN/8)
 // VLMAX = VLEN*LMUL/SEW
 // vstart < VLMAX_max and vl <= VLMAX_max, VLMAX_max=VLEN*LMUL_max(8)/SEW_min(8)=VLEN
 `define VLMAX_MAX               `VLEN

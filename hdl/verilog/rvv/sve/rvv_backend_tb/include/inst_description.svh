@@ -31,10 +31,12 @@ typedef enum logic [2:0] {
 } sew_e;
 
 typedef enum int {
+  EEW_NONE = 0,
   EEW1  = 1, 
   EEW8  = 8, 
   EEW16 = 16,
-  EEW32 = 32
+  EEW32 = 32,
+  EEW64 = 64
 } eew_e;
 
 typedef enum logic {
@@ -52,6 +54,7 @@ typedef enum logic [2:0] {
   LMUL8     = 3'b011,
   LMUL_LAST = 3'b100
 } lmul_e;
+parameter real EMUL_NONE = 0.00;
 parameter real EMUL1_4   = 0.25;
 parameter real EMUL1_2   = 0.50;
 parameter real EMUL1     = 1.00;
@@ -267,6 +270,20 @@ typedef enum logic [4:0] {
 typedef enum logic [2:0] {
   NF1,  NF2,  NF3,  NF4,  NF5,  NF6,  NF7,  NF8
 } lsu_nf_e;
+
+typedef enum logic [2:0] {
+  NR1 = 3'b000,  
+  NR2 = 3'b001,  
+  NR4 = 3'b011,
+  NR8 = 3'b111
+} lsu_nr_e;
+
+typedef enum logic [2:0]{
+  LSU_8BIT  = 3'b000,
+  LSU_16BIT = 3'b101,
+  LSU_32BIT = 3'b110,
+  LSU_64BIT = 3'b111
+} lsu_width_e;
 
 typedef enum int {
   VLE,

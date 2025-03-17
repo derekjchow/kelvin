@@ -22,7 +22,7 @@ class alu_div_zero_seq extends base_sequence;
       assert(req.randomize() with {
         pc == inst_cnt;
 
-        vtype.vlmul inside {LMUL1_2, LMUL1, LMUL2};
+        vlmul inside {LMUL1_2, LMUL1, LMUL2};
 
         inst_type == ALU;
         alu_inst inside {VDIVU, VDIV, VREMU, VREM};
@@ -30,7 +30,7 @@ class alu_div_zero_seq extends base_sequence;
         dest_type == VRF; dest_idx inside {[3:31]};
         src2_type == VRF; src2_idx inside {[3:31]};
         (src1_type == VRF) -> (src1_idx dist{ 2:=95, [3:31]:/5});
-        (src1_type == XRF) -> (rs_data dist {0:=95, [1:$]:/5});
+        (src1_type == XRF) -> (rs1_data dist {0:=95, [1:$]:/5});
         vm dist {1:=80, 0:=20}; // to do more calcualtion
       });
       finish_item(req);

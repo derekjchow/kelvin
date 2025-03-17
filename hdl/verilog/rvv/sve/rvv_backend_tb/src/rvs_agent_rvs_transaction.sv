@@ -14,7 +14,12 @@ class rvs_transaction extends uvm_sequence_item;
        bit is_rt = 0;
 
   /* VCSR field */
-  rand vtype_t           vtype;   // TODO: replace vtype by separate variables
+  // vtype
+  rand bit               vill;
+  rand agnostic_e        vma;
+  rand agnostic_e        vta;
+  rand sew_e             vsew; 
+  rand lmul_e            vlmul;
   rand logic [`XLEN-1:0] vl;
   rand logic [`XLEN-1:0] vlmax;
        logic [`XLEN-1:0] vlmax_max;
@@ -24,13 +29,17 @@ class rvs_transaction extends uvm_sequence_item;
 
   /* Instruction description field */
   rand inst_type_e inst_type;// opcode
+       int uop_idx;
+       bit first_uop;
+       bit last_uop;
 
   // Load/Store inst
-  rand lsu_inst_e lsu_inst;
-  rand lsu_mop_e lsu_mop;
-  rand lsu_umop_e lsu_umop;
-  rand lsu_nf_e lsu_nf;
-  rand eew_e lsu_eew;
+  rand lsu_inst_e   lsu_inst;
+  rand lsu_mop_e    lsu_mop;  // func6[28:26]
+  rand lsu_umop_e   lsu_umop; // src2_idx
+  rand lsu_nf_e     lsu_nf;   // func6[31:29]
+  rand lsu_width_e  lsu_width;// func3
+       eew_e        lsu_eew;  // func3
 
   // Algoritm inst
   rand alu_type_e alu_type;  // func3
@@ -61,7 +70,8 @@ class rvs_transaction extends uvm_sequence_item;
        vwxunary0_e src1_func_vwxunary0;
        vmunary0_e  src1_func_vmunary0;
    
-  rand logic [`XLEN-1:0] rs_data;
+  rand logic [`XLEN-1:0] rs2_data;
+  rand logic [`XLEN-1:0] rs1_data;
 
   /* Real instruction */
   rand logic [31:0] pc;
@@ -107,14 +117,26 @@ class rvs_transaction extends uvm_sequence_item;
     solve src2_type before vm;
     solve src1_type before vm;
 
-    solve dest_idx before vtype;
-    solve src2_idx before vtype;
-    solve src1_idx before vtype;
+    solve dest_idx before vma;
+    solve src2_idx before vma;
+    solve src1_idx before vma;
+    solve dest_idx before vta;
+    solve src2_idx before vta;
+    solve src1_idx before vta;
+    solve dest_idx before vsew;
+    solve src2_idx before vsew;
+    solve src1_idx before vsew;
+    solve dest_idx before vlmul;
+    solve src2_idx before vlmul;
+    solve src1_idx before vlmul;
 
-    solve vtype before vlmax;
+    solve vma   before vlmax;
+    solve vta   before vlmax;
+    solve vsew  before vlmax;
+    solve vlmul before vlmax;
     solve vlmax before vl;
-    solve vl before evl;
-    solve evl before vstart;
+    solve vl    before evl;
+    solve evl   before vstart;
   }
 
   constraint c_ill_rate {
@@ -125,15 +147,14 @@ class rvs_transaction extends uvm_sequence_item;
   }
 
   constraint c_normal_set {
-    vtype.vill == 1'b0;
-    vtype.rsv  ==  'b0;  
+    vill == 0;
   }
 
   constraint c_vl {
-    if(vtype.vlmul[2]) // fraction_lmul
-      vlmax == ((`VLENB >> (~vtype.vlmul +3'b1)) >> vtype.vsew);
+    if(vlmul[2]) // fraction_lmul
+      vlmax == ((`VLENB >> (~vlmul +3'b1)) >> vsew);
     else  
-      vlmax == ((`VLENB << vtype.vlmul) >> vtype.vsew);
+      vlmax == ((`VLENB << vlmul) >> vsew);
 
     vl <= vlmax_max;
     vstart <= vlmax_max-1;
@@ -143,7 +164,7 @@ class rvs_transaction extends uvm_sequence_item;
       vl <= vlmax;
       // evl
       if(alu_inst == VSMUL_VMVNRR && alu_type == OPIVI)
-        evl == ((src1_idx + 1) * `VLENB) >> vtype.vsew;
+        evl == ((src1_idx + 1) * `VLENB) >> vsew;
       else 
         evl == vl;
       // vstart
@@ -348,8 +369,8 @@ class rvs_transaction extends uvm_sequence_item;
   }
 
   constraint c_sewlmul {
-    vtype.vsew inside {SEW8, SEW16, SEW32};
-    vtype.vlmul inside {LMUL1_4, LMUL1_2, LMUL1, LMUL2, LMUL4, LMUL8};
+    vsew inside {SEW8, SEW16, SEW32};
+    vlmul inside {LMUL1_4, LMUL1_2, LMUL1, LMUL2, LMUL4, LMUL8};
 
     if(!illegal_inst_en) {
       if(inst_type == ALU) {
@@ -357,23 +378,23 @@ class rvs_transaction extends uvm_sequence_item;
         (alu_inst inside {VWADDU, VWADD, VWADDU_W, VWADD_W, VWSUBU, VWSUB, VWSUBU_W, VWSUB_W, 
                           VWMUL, VWMULU, VWMULSU, VWMACCU, VWMACC, VWMACCUS, VWMACCSU,
                           VWREDSUMU, VWREDSUM})
-        ->  (vtype.vsew inside {SEW8,SEW16} && vtype.vlmul inside {LMUL1_4,LMUL1_2,LMUL1,LMUL2,LMUL4});
+        ->  (vsew inside {SEW8,SEW16} && vlmul inside {LMUL1_4,LMUL1_2,LMUL1,LMUL2,LMUL4});
 
         // narrow
         (alu_inst inside {VNSRL, VNSRA, VNCLIPU, VNCLIP})
-        ->  (vtype.vsew inside {SEW8,SEW16} && vtype.vlmul inside {LMUL1_4,LMUL1_2,LMUL1,LMUL2,LMUL4});
+        ->  (vsew inside {SEW8,SEW16} && vlmul inside {LMUL1_4,LMUL1_2,LMUL1,LMUL2,LMUL4});
 
         // vxunary0
         (alu_inst == VXUNARY0 && src1_idx inside {VSEXT_VF2, VZEXT_VF2})
-        ->  (vtype.vsew inside {SEW16,SEW32} && vtype.vlmul inside {LMUL1_2,LMUL1,LMUL2,LMUL4,LMUL8});
+        ->  (vsew inside {SEW16,SEW32} && vlmul inside {LMUL1_2,LMUL1,LMUL2,LMUL4,LMUL8});
 
         (alu_inst == VXUNARY0 && src1_idx inside {VSEXT_VF4, VZEXT_VF4})
-        ->  (vtype.vsew inside {SEW32} && vtype.vlmul inside {LMUL1,LMUL2,LMUL4,LMUL8});
+        ->  (vsew inside {SEW32} && vlmul inside {LMUL1,LMUL2,LMUL4,LMUL8});
 
         // vrgather
         (alu_inst == VSLIDEUP_RGATHEREI16 && alu_type inside {OPIVV})
-        ->  ((vtype.vlmul inside {LMUL1_2,LMUL1,LMUL2,LMUL4,LMUL8} && vtype.vsew inside {SEW16,SEW32}) ||
-            (vtype.vlmul inside {LMUL1_4,LMUL1_2,LMUL1,LMUL2,LMUL4} && vtype.vsew inside {SEW8,SEW16})
+        ->  ((vlmul inside {LMUL1_2,LMUL1,LMUL2,LMUL4,LMUL8} && vsew inside {SEW16,SEW32}) ||
+            (vlmul inside {LMUL1_4,LMUL1_2,LMUL1,LMUL2,LMUL4} && vsew inside {SEW8,SEW16})
         );
         
       }
@@ -382,10 +403,10 @@ class rvs_transaction extends uvm_sequence_item;
     }// if(!illegal_inst_en)
   }
 
-  constraint c_rs_data {
+  constraint c_rs1_data {
   //slide
       (alu_inst inside {VSLIDEUP_RGATHEREI16, VSLIDEDOWN, VSLIDE1UP, VSLIDE1DOWN} && alu_type inside {OPIVX, OPMVX})
-      -> (rs_data >=0 && rs_data <= 130);
+      -> (rs1_data >=0 && rs1_data <= 130);
   }
 // Auto Field ---------------------------------------------------------
   `uvm_object_utils_begin(rvs_transaction) 
@@ -394,10 +415,10 @@ class rvs_transaction extends uvm_sequence_item;
     `uvm_field_int(bin_inst[31:7],UVM_ALL_ON)
     `uvm_field_string(asm_string,UVM_ALL_ON)
 
-    `uvm_field_enum(sew_e,vtype.vsew,UVM_ALL_ON)
-    `uvm_field_enum(lmul_e,vtype.vlmul,UVM_ALL_ON)
-    `uvm_field_enum(agnostic_e,vtype.vma,UVM_ALL_ON)
-    `uvm_field_enum(agnostic_e,vtype.vta,UVM_ALL_ON)
+    `uvm_field_enum(sew_e,vsew,UVM_ALL_ON)
+    `uvm_field_enum(lmul_e,vlmul,UVM_ALL_ON)
+    `uvm_field_enum(agnostic_e,vma,UVM_ALL_ON)
+    `uvm_field_enum(agnostic_e,vta,UVM_ALL_ON)
 
     `uvm_field_int(vlmax,UVM_ALL_ON)
     `uvm_field_int(use_vlmax,UVM_ALL_ON)
@@ -416,6 +437,7 @@ class rvs_transaction extends uvm_sequence_item;
       `uvm_field_enum(lsu_mop_e,lsu_mop,UVM_ALL_ON)
       `uvm_field_enum(lsu_umop_e,lsu_umop,UVM_ALL_ON)
       `uvm_field_enum(lsu_nf_e,lsu_nf,UVM_ALL_ON)
+      `uvm_field_enum(lsu_width_e,lsu_width,UVM_ALL_ON)
       `uvm_field_enum(eew_e,lsu_eew,UVM_ALL_ON)
     end
 
@@ -451,8 +473,11 @@ class rvs_transaction extends uvm_sequence_item;
     // src3
     `uvm_field_enum(oprand_type_e,src3_type,UVM_ALL_ON)
     `uvm_field_int(src3_idx,UVM_ALL_ON)
-    if(src1_type == XRF || src2_type == XRF) begin
-      `uvm_field_int(rs_data,UVM_ALL_ON)
+    if(src2_type == XRF) begin
+      `uvm_field_int(rs2_data,UVM_ALL_ON)
+    end
+    if(src1_type == XRF) begin
+      `uvm_field_int(rs1_data,UVM_ALL_ON)
     end
     
     // retire info
@@ -514,9 +539,19 @@ function void rvs_transaction::post_randomize();
   if(src1_type == FUNC && inst_type == ALU && alu_inst == VWXUNARY0) $cast(src1_func_vwxunary0,src1_idx);
   if(src2_type == FUNC && inst_type == ALU && alu_inst == VWXUNARY0) $cast(src2_func_vwxunary0,src2_idx);
   if(src1_type == FUNC && inst_type == ALU && alu_inst == VMUNARY0) $cast(src1_func_vmunary0,src1_idx);
+  if(src2_type == FUNC && inst_type inside {LD,ST} && lsu_mop == LSU_E) $cast(lsu_umop,src2_idx);
+  
+  case(lsu_width)
+    LSU_8BIT  : lsu_eew = EEW8;
+    LSU_16BIT : lsu_eew = EEW16;
+    LSU_32BIT : lsu_eew = EEW32;
+    LSU_64BIT : lsu_eew = EEW64;
+    default   : lsu_eew = EEW_NONE;
+  endcase
   
   // rs random data
-  if(src1_type != XRF && src2_type != XRF) rs_data = 'x;
+  if(src2_type != XRF) rs2_data = 'x;
+  if(src1_type != XRF) rs1_data = 'x;
 
   // constraint vl
   if(use_vlmax) begin 
@@ -527,8 +562,11 @@ function void rvs_transaction::post_randomize();
   // gen bin_inst
   /* func6 */
   case(inst_type)
-    LD: bin_inst[31:26] = '0; //FIXME
-    ST: bin_inst[31:26] = '0; //FIXME
+    LD, ST: begin
+      bin_inst[31:29] = lsu_nf;
+      bin_inst[28]    = 1'b0;
+      bin_inst[27:26] = lsu_mop;
+    end 
     ALU:bin_inst[31:26] = alu_inst[5:0];
   endcase
   /* vm */
@@ -536,8 +574,9 @@ function void rvs_transaction::post_randomize();
   bin_inst[24:20] = src2_idx;
   bin_inst[19:15] = src1_idx;
   case(inst_type)
-    LD: bin_inst[14:12] = '0; // FIXME
-    ST: bin_inst[14:12] = '0; // FIXME
+    LD, ST: begin
+      bin_inst[14:12] = lsu_width;
+    end 
     ALU: bin_inst[14:12] = alu_type;
   endcase
   bin_inst[11:7]  = dest_idx;
@@ -572,13 +611,13 @@ function void rvs_transaction::legal_inst_gen();
                                                                    VWREDSUMU, VWREDSUM});
 
   // Calculate eew/emul
-  eew      = 8 << vtype.vsew;
+  eew      = 8 << vsew;
   dest_eew = eew;
   src3_eew = eew;
   src2_eew = eew;
   src1_eew = eew;
 
-  emul      = 2.0 ** signed'(vtype.vlmul);
+  emul      = 2.0 ** signed'(vlmul);
   dest_emul = emul;
   src3_emul = emul;
   src2_emul = emul;
@@ -594,11 +633,11 @@ function void rvs_transaction::legal_inst_gen();
     ALU: begin
       // 1.1 Widen
       if(is_widen_inst) begin
-        if(!(vtype.vsew inside {SEW8,SEW16})) begin
-          vtype.vsew = SEW8;
+        if(!(vsew inside {SEW8,SEW16})) begin
+          vsew = SEW8;
         end
-        if(vtype.vlmul == LMUL8) begin
-          vtype.vlmul = LMUL1;
+        if(vlmul == LMUL8) begin
+          vlmul = LMUL1;
         end
         dest_eew  = dest_eew  * 2;
         dest_emul = dest_emul * 2;
@@ -609,11 +648,11 @@ function void rvs_transaction::legal_inst_gen();
       end
       // 1.2 Narrow
       if(is_narrow_inst) begin
-        if(!(vtype.vsew inside {SEW8,SEW16})) begin
-          vtype.vsew = SEW8;
+        if(!(vsew inside {SEW8,SEW16})) begin
+          vsew = SEW8;
         end
-        if(vtype.vlmul == LMUL8) begin
-          vtype.vlmul = LMUL1;
+        if(vlmul == LMUL8) begin
+          vlmul = LMUL1;
         end
         src2_eew  = src2_eew  * 2;
         src2_emul = src2_emul * 2;
@@ -621,21 +660,21 @@ function void rvs_transaction::legal_inst_gen();
       // vxunary0
       if(alu_inst == VXUNARY0) begin
         if(src1_idx inside {VSEXT_VF2, VZEXT_VF2}) begin
-          if(!(vtype.vsew inside {SEW16,SEW32})) begin
-            vtype.vsew = SEW16;
+          if(!(vsew inside {SEW16,SEW32})) begin
+            vsew = SEW16;
           end
-          if(!(vtype.vlmul inside {LMUL1_2,LMUL1,LMUL2,LMUL4,LMUL8})) begin
-            vtype.vlmul = LMUL1_2;
+          if(!(vlmul inside {LMUL1_2,LMUL1,LMUL2,LMUL4,LMUL8})) begin
+            vlmul = LMUL1_2;
           end
           src2_eew  = src2_eew  / 2;
           src2_emul = src2_emul / 2;
         end
         if(src1_idx inside {VSEXT_VF4, VZEXT_VF4}) begin
-          if(!(vtype.vsew inside {SEW32})) begin
-            vtype.vsew = SEW32;
+          if(!(vsew inside {SEW32})) begin
+            vsew = SEW32;
           end
-          if(!(vtype.vlmul inside {LMUL1,LMUL2,LMUL4,LMUL8})) begin
-            vtype.vlmul = LMUL1;
+          if(!(vlmul inside {LMUL1,LMUL2,LMUL4,LMUL8})) begin
+            vlmul = LMUL1;
           end
           src2_eew  = src2_eew  / 4;
           src2_emul = src2_emul / 4;
@@ -808,11 +847,16 @@ function void rvs_transaction::asm_string_gen();
   string suf2 = "";
   string src2 = "";
   string dest = "";
+  string sufd = "";
   string comm = "# an example";
   // Inst name
   case(inst_type)
-    LD: ; 
-    ST: ; 
+    LD: begin
+      inst = this.lsu_inst.name();
+    end 
+    ST: begin
+      inst = this.lsu_inst.name();
+    end 
     ALU: begin 
       if(alu_inst inside {VWADDU_W, VWADD_W, VWSUBU_W, VWSUB_W}) begin
         inst = this.alu_inst.name();
@@ -864,28 +908,35 @@ function void rvs_transaction::asm_string_gen();
   inst = inst.tolower();
 
   // src1
-  case(this.src1_type)
-    VRF: begin 
-      if(inst_type == ALU && alu_inst inside {VMAND, VMOR, VMXOR, VMORN, VMNAND, VMNOR, VMANDN, VMXNOR}) begin
-        suf1 = "m"; src1 = $sformatf("v%0d",this.src1_idx); 
-      end else begin
-        suf1 = "v"; src1 = $sformatf("v%0d",this.src1_idx); 
-      end
+  case(inst_type)
+    LD, ST: begin
+      suf1 = ""; src1 = $sformatf("(x%0d)",this.src1_idx); 
     end
-    SCALAR: begin suf1 = "s"; src1 = $sformatf("v%0d",this.src1_idx); end
-    XRF: begin suf1 = "x"; src1 = $sformatf("x%0d",this.src1_idx); end
-    IMM: begin suf1 = "i"; src1 = $sformatf("%0d",$signed(this.src1_idx)); end
-    UIMM: begin suf1 = "i"; src1 = $sformatf("%0d",$unsigned(this.src1_idx)); end
-    FUNC: begin
-      if(inst_type == ALU && alu_inst == VXUNARY0 && src1_idx inside{VSEXT_VF4, VZEXT_VF4}) begin
-        suf1 = "f4"; src1 = "";
-      end else if(inst_type == ALU && alu_inst == VXUNARY0 && src1_idx inside{VSEXT_VF2, VZEXT_VF2}) begin
-        suf1 = "f2"; src1 = "";
-      end
+    ALU: begin
+      case(this.src1_type)
+        VRF: begin 
+          if(inst_type == ALU && alu_inst inside {VMAND, VMOR, VMXOR, VMORN, VMNAND, VMNOR, VMANDN, VMXNOR}) begin
+            suf1 = "m"; src1 = $sformatf("v%0d",this.src1_idx); 
+          end else begin
+            suf1 = "v"; src1 = $sformatf("v%0d",this.src1_idx); 
+          end
+        end
+        SCALAR: begin suf1 = "s"; src1 = $sformatf("v%0d",this.src1_idx); end
+        XRF: begin suf1 = "x"; src1 = $sformatf("x%0d",this.src1_idx); end
+        IMM: begin suf1 = "i"; src1 = $sformatf("%0d",$signed(this.src1_idx)); end
+        UIMM: begin suf1 = "i"; src1 = $sformatf("%0d",$unsigned(this.src1_idx)); end
+        FUNC: begin
+          if(inst_type == ALU && alu_inst == VXUNARY0 && src1_idx inside{VSEXT_VF4, VZEXT_VF4}) begin
+            suf1 = "f4"; src1 = "";
+          end else if(inst_type == ALU && alu_inst == VXUNARY0 && src1_idx inside{VSEXT_VF2, VZEXT_VF2}) begin
+            suf1 = "f2"; src1 = "";
+          end
+        end
+        UNUSE: begin
+        end
+        default: begin suf1 = "?"; src1 = "?"; end
+      endcase
     end
-    UNUSE: begin
-    end
-    default: begin suf1 = "?"; src1 = "?"; end
   endcase
 
   // src2
@@ -931,8 +982,6 @@ function void rvs_transaction::asm_string_gen();
     suf0 = "";  src0 = "";
   end
 
-  suff = $sformatf("%s%s%s",suf2,suf1,suf0);
-
   // dest
   case(this.dest_type)
     VRF: dest = $sformatf("v%0d",this.dest_idx);
@@ -940,9 +989,21 @@ function void rvs_transaction::asm_string_gen();
     SCALAR: dest = $sformatf("v%0d",this.dest_idx);
     default: dest = "?";
   endcase
+  case(inst_type)
+    LD,
+    ST: begin
+      sufd = "v";
+    end
+    ALU: begin
+      // TODO
+      sufd = "";
+    end
+  endcase
+
+  suff = $sformatf("%s%s%s%s",sufd,suf2,suf1,suf0);
 
   // Comments
-  comm = $sformatf("# vlmul=%0s, vsew=%0s, vstart=%0d, vl=%0d", vtype.vlmul.name(), vtype.vsew.name(), vstart, vl);
+  comm = $sformatf("# vlmul=%0s, vsew=%0s, vstart=%0d, vl=%0d", vlmul.name(), vsew.name(), vstart, vl);
 
   // asm string
   if(this.vm) 

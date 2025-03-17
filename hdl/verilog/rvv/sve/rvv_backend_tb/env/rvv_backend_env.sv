@@ -45,6 +45,7 @@ function void rvv_backend_env::connect_phase(uvm_phase phase);
   super.connect_phase(phase);
   // ref_mdl ap
   rvs_agt.rvs_mon.inst_ap.connect(mdl.inst_imp);
+  rvs_agt.rvs_mon.inst_ap.connect(lsu_agt.lsu_drv.inst_imp);
   // rvs_agt.rvs_drv.inst_ap.connect(mdl.inst_imp);
   rvs_agt.rvs_drv.vrf_state_port.connect(rvs_agt.vrf_mon.vrf_state_imp);
   rvs_agt.rvs_drv.rvv_state_port.connect(rvs_agt.rvs_mon.rvv_state_imp);

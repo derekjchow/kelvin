@@ -138,6 +138,7 @@ task rvs_driver::inst_manage();
         inst_tx_delay = inst_tx_delay_max;
       end else begin
         assert(std::randomize(inst_tx_delay) with {inst_tx_delay dist {0 := 94, [1:2] := 5, inst_tx_delay_max := 1};});
+        // inst_tx_delay = 0;
       end
     end else begin
       break;
@@ -150,14 +151,14 @@ task rvs_driver::inst_manage();
       inst[i].inst_pc               = inst_tx_queue[i].pc;
       assert($cast(inst[i].opcode, inst_tx_queue[i].bin_inst[6:5]));
       inst[i].bits                  = inst_tx_queue[i].bin_inst[31:7];
-      inst[i].rs1                   = inst_tx_queue[i].rs_data;
+      inst[i].rs1                   = inst_tx_queue[i].rs1_data;
       inst[i].arch_state.vl         = inst_tx_queue[i].vl;
       inst[i].arch_state.vstart     = inst_tx_queue[i].vstart;
       assert($cast(inst[i].arch_state.xrm, inst_tx_queue[i].vxrm));
-      inst[i].arch_state.ma         = inst_tx_queue[i].vtype.vma;
-      inst[i].arch_state.ta         = inst_tx_queue[i].vtype.vta;
-      assert($cast(inst[i].arch_state.sew, inst_tx_queue[i].vtype.vsew));
-      assert($cast(inst[i].arch_state.lmul, inst_tx_queue[i].vtype.vlmul));
+      inst[i].arch_state.ma         = inst_tx_queue[i].vma;
+      inst[i].arch_state.ta         = inst_tx_queue[i].vta;
+      assert($cast(inst[i].arch_state.sew,  inst_tx_queue[i].vsew));
+      assert($cast(inst[i].arch_state.lmul, inst_tx_queue[i].vlmul));
       inst_vld[i] = 1'b1;
     end else begin
       inst[i] = inst[i];

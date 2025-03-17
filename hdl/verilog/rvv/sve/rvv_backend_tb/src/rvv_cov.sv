@@ -45,9 +45,9 @@ class rvv_cov extends uvm_component;
   //   vm:
   //     coverpoint {tx_tr.vm};
   //   vlmul:
-  //     coverpoint {tx_tr.vtype.vlmul};
+  //     coverpoint {tx_tr.vlmul};
   //   vsew:
-  //     coverpoint {tx_tr.vtype.vsew};
+  //     coverpoint {tx_tr.vsew};
   //   vl:
   //     coverpoint {tx_tr.vl};
   //   vstart:
@@ -61,24 +61,22 @@ class rvv_cov extends uvm_component;
     alu_inst:
       coverpoint rx_tr.alu_inst;
     alu_type:
-      coverpoint rx_tr.alu_type {
-        bins OPIVV = {rvv_tb_pkg::OPIVV};
-        bins OPIVI = {rvv_tb_pkg::OPIVI};
-        bins OPIVX = {rvv_tb_pkg::OPIVX};
+      coverpoint {rx_tr.inst_type, rx_tr.alu_type} {
+        bins OPIVV = {rvv_tb_pkg::ALU, rvv_tb_pkg::OPIVV};
+        bins OPIVI = {rvv_tb_pkg::ALU, rvv_tb_pkg::OPIVI};
+        bins OPIVX = {rvv_tb_pkg::ALU, rvv_tb_pkg::OPIVX};
 
-        bins OPMVV = {rvv_tb_pkg::OPMVV};
-        bins OPMVX = {rvv_tb_pkg::OPMVX};
+        bins OPMVV = {rvv_tb_pkg::ALU, rvv_tb_pkg::OPMVV};
+        bins OPMVX = {rvv_tb_pkg::ALU, rvv_tb_pkg::OPMVX};
         
-        illegal_bins OPFVV = {rvv_tb_pkg::OPFVV};
-        illegal_bins OPFVF = {rvv_tb_pkg::OPFVF};
-        illegal_bins OPCFG = {rvv_tb_pkg::OPCFG};
-
-        illegal_bins misc = default;
-      }
+        illegal_bins OPFVV = {rvv_tb_pkg::ALU, rvv_tb_pkg::OPFVV};
+        illegal_bins OPFVF = {rvv_tb_pkg::ALU, rvv_tb_pkg::OPFVF};
+        illegal_bins OPCFG = {rvv_tb_pkg::ALU, rvv_tb_pkg::OPCFG};
+      }                                        
     vm:
       coverpoint rx_tr.vm;
     vlmul:
-      coverpoint rx_tr.vtype.vlmul {
+      coverpoint rx_tr.vlmul {
         bins LMUL1_4 = {rvv_tb_pkg::LMUL1_4};
         bins LMUL1_2 = {rvv_tb_pkg::LMUL1_2};
         bins LMUL1   = {rvv_tb_pkg::LMUL1  };
@@ -89,7 +87,7 @@ class rvv_cov extends uvm_component;
         illegal_bins misc = default;
       }
     vsew:
-      coverpoint rx_tr.vtype.vsew {
+      coverpoint rx_tr.vsew {
         bins SEW8  = {rvv_tb_pkg::SEW8 }; 
         bins SEW16 = {rvv_tb_pkg::SEW16};
         bins SEW32 = {rvv_tb_pkg::SEW32};

@@ -2832,7 +2832,7 @@ module rvv_backend_decode_unit_lsu
   // some uop need v0 as the vector operand
   always_comb begin
     for(int i=0;i<`NUM_DE_UOP;i=i+1) begin: GET_UOP_V0
-      uop[i].v0_valid = 'b0;
+      uop[i].v0_valid = !inst_vm;
     end
   end
 

@@ -74,12 +74,11 @@ class zero_seq extends base_sequence;
         use_vlmax == 1;
         pc == inst_cnt;
 
-        vtype.vill ==  'b0;
-        vtype.rsv  ==  'b0;  
-        vtype.vma  ==  'b0;
-        vtype.vta  ==  'b0;
-        vtype.vsew ==  SEW8;
-        vtype.vlmul == LMUL1;
+        vill ==  'b0;
+        vma  ==  'b0;
+        vta  ==  'b0;
+        vsew ==  SEW8;
+        vlmul == LMUL1;
 
         inst_type == ALU;
         alu_inst == VADD;
@@ -96,19 +95,18 @@ class zero_seq extends base_sequence;
         use_vlmax == 1;
         pc == inst_cnt;
 
-        vtype.vill ==  'b0;
-        vtype.rsv  ==  'b0;  
-        vtype.vma  ==  'b0;
-        vtype.vta  ==  'b1;
-        vtype.vsew ==  SEW8;
-        vtype.vlmul == LMUL1;
+        vill ==  'b0;
+        vma  ==  'b0;
+        vta  ==  'b1;
+        vsew ==  SEW8;
+        vlmul == LMUL1;
 
         inst_type == ALU;
         alu_inst == VADD;
         dest_type == VRF; dest_idx == 16;
         src1_type == VRF; src1_idx == 1;
         src2_type == VRF; src2_idx == 16;
-        rs_data == 123;
+        rs1_data == 123;
         vm == 1; 
       });
       finish_item(req);
@@ -144,8 +142,8 @@ class alu_smoke_vv_seq extends base_sequence;
       use_vlmax == 1;
       pc == inst_cnt;
 
-      vtype.vsew ==  SEW16;
-      vtype.vlmul inside {LMUL1_2, LMUL2};
+      vsew ==  SEW16;
+      vlmul inside {LMUL1_2, LMUL2};
 
       inst_type == ALU;
       alu_inst == local::alu_inst;
@@ -187,8 +185,8 @@ class alu_smoke_ext_seq extends base_sequence;
         use_vlmax == 1;
         pc == inst_cnt;
 
-        vtype.vsew == SEW32;
-        vtype.vlmul inside {LMUL1_2, LMUL2};
+        vsew == SEW32;
+        vlmul inside {LMUL1_2, LMUL2};
 
         inst_type == ALU;
         alu_inst == local::alu_inst;
@@ -227,8 +225,8 @@ class alu_smoke_vx_seq extends base_sequence;
       use_vlmax == 1;
       pc == inst_cnt;
 
-      vtype.vsew ==  SEW16;
-      vtype.vlmul inside {LMUL1_2, LMUL2};
+      vsew ==  SEW16;
+      vlmul inside {LMUL1_2, LMUL2};
 
       inst_type == ALU;
       alu_inst == local::alu_inst;
@@ -269,8 +267,8 @@ class alu_smoke_vmerge_vmvv_seq extends base_sequence;
       use_vlmax == 1;
       pc == inst_cnt;
 
-      vtype.vsew ==  SEW16;
-      vtype.vlmul inside {LMUL1_2, LMUL2};
+      vsew ==  SEW16;
+      vlmul inside {LMUL1_2, LMUL2};
 
       inst_type == ALU;
       alu_inst == local::alu_inst;
@@ -288,8 +286,8 @@ class alu_smoke_vmerge_vmvv_seq extends base_sequence;
       use_vlmax == 1;
       pc == inst_cnt;
 
-      vtype.vsew ==  SEW16;
-      vtype.vlmul inside {LMUL1_2, LMUL2};
+      vsew ==  SEW16;
+      vlmul inside {LMUL1_2, LMUL2};
 
       inst_type == ALU;
       alu_inst == local::alu_inst;
@@ -328,8 +326,8 @@ class alu_smoke_vmunary0_seq extends base_sequence;
         use_vlmax == 1;
         pc == inst_cnt;
 
-        vtype.vsew == SEW16;
-        vtype.vlmul inside {LMUL1_2, LMUL2};
+        vsew == SEW16;
+        vlmul inside {LMUL1_2, LMUL2};
 
         inst_type == ALU;
         alu_inst == local::alu_inst;
@@ -374,8 +372,8 @@ class alu_smoke_vwxunary0_seq extends base_sequence;
         use_vlmax == 1;
         pc == inst_cnt;
 
-        vtype.vsew == SEW16;
-        vtype.vlmul inside {LMUL1_2, LMUL2};
+        vsew == SEW16;
+        vlmul inside {LMUL1_2, LMUL2};
 
         inst_type == ALU;
         alu_inst == local::alu_inst;
@@ -414,8 +412,8 @@ class alu_smoke_vred_seq extends base_sequence;
       use_vlmax == 1;
       pc == inst_cnt;
 
-      vtype.vsew ==  SEW16;
-      vtype.vlmul inside {LMUL1};
+      vsew ==  SEW16;
+      vlmul inside {LMUL1};
 
       inst_type == ALU;
       alu_inst == local::alu_inst;
@@ -455,8 +453,8 @@ class alu_smoke_vmv_xs_sx_seq extends base_sequence;
       use_vlmax == 1;
       pc == inst_cnt;
 
-      vtype.vsew ==  SEW16;
-      vtype.vlmul inside {LMUL1};//{LMUL1_2, LMUL2};
+      vsew ==  SEW16;
+      vlmul inside {LMUL1};//{LMUL1_2, LMUL2};
 
       inst_type == ALU;
       alu_inst == local::alu_inst;
@@ -476,8 +474,8 @@ class alu_smoke_vmv_xs_sx_seq extends base_sequence;
       use_vlmax == 1;
       pc == inst_cnt;
 
-      vtype.vsew ==  SEW16;
-      vtype.vlmul inside {LMUL1};//{LMUL1_2, LMUL2};
+      vsew ==  SEW16;
+      vlmul inside {LMUL1};//{LMUL1_2, LMUL2};
 
       inst_type == ALU;
       alu_inst == local::alu_inst;
@@ -521,8 +519,8 @@ class alu_smoke_vmvnr_seq extends base_sequence;
       use_vlmax == 0;
       pc == inst_cnt;
 
-      vtype.vsew ==  SEW16;
-      vtype.vlmul inside {LMUL1};//{LMUL1_2, LMUL2};
+      vsew ==  SEW16;
+      vlmul inside {LMUL1};//{LMUL1_2, LMUL2};
 
       inst_type == ALU;
       alu_inst == local::alu_inst;
@@ -607,7 +605,7 @@ class alu_iterate_vv_vx_vi_seq extends alu_iterate_base_sequence;
           // use_vlmax == 1;
           pc == inst_cnt;
 
-          vtype.vlmul dist {
+          vlmul dist {
             LMUL1_4 := 10,
             LMUL1_2 := 20,
             LMUL1   := 20,
@@ -635,8 +633,8 @@ class alu_iterate_vv_vx_vi_seq extends alu_iterate_base_sequence;
             use_vlmax == 1;
             pc == inst_cnt;
 
-            vtype.vsew ==  local::sew;
-            vtype.vlmul == local::lmul;
+            vsew ==  local::sew;
+            vlmul == local::lmul;
 
             inst_type == ALU;
             alu_inst == local::alu_inst;
@@ -658,8 +656,8 @@ class alu_iterate_vv_vx_vi_seq extends alu_iterate_base_sequence;
             use_vlmax == 1;
             pc == inst_cnt;
 
-            vtype.vsew ==  local::sew;
-            vtype.vlmul == local::lmul;
+            vsew ==  local::sew;
+            vlmul == local::lmul;
 
             inst_type == ALU;
             alu_inst == local::alu_inst;
@@ -681,8 +679,8 @@ class alu_iterate_vv_vx_vi_seq extends alu_iterate_base_sequence;
             use_vlmax == 1;
             pc == inst_cnt;
 
-            vtype.vsew ==  local::sew;
-            vtype.vlmul == local::lmul;
+            vsew ==  local::sew;
+            vlmul == local::lmul;
 
             inst_type == ALU;
             alu_inst == local::alu_inst;
@@ -723,7 +721,7 @@ class alu_iterate_vv_vx_vui_seq extends alu_iterate_base_sequence;
           // use_vlmax == 1;
           pc == inst_cnt;
 
-          vtype.vlmul dist {
+          vlmul dist {
             LMUL1_4 := 10,
             LMUL1_2 := 20,
             LMUL1   := 20,
@@ -755,8 +753,8 @@ class alu_iterate_vv_vx_vui_seq extends alu_iterate_base_sequence;
             use_vlmax == 1;
             pc == inst_cnt;
 
-            vtype.vsew ==  local::sew;
-            vtype.vlmul == local::lmul;
+            vsew ==  local::sew;
+            vlmul == local::lmul;
 
             inst_type == ALU;
             alu_inst == local::alu_inst;
@@ -782,8 +780,8 @@ class alu_iterate_vv_vx_vui_seq extends alu_iterate_base_sequence;
             use_vlmax == 1;
             pc == inst_cnt;
 
-            vtype.vsew ==  local::sew;
-            vtype.vlmul == local::lmul;
+            vsew ==  local::sew;
+            vlmul == local::lmul;
 
             inst_type == ALU;
             alu_inst == local::alu_inst;
@@ -809,8 +807,8 @@ class alu_iterate_vv_vx_vui_seq extends alu_iterate_base_sequence;
             use_vlmax == 1;
             pc == inst_cnt;
 
-            vtype.vsew ==  local::sew;
-            vtype.vlmul == local::lmul;
+            vsew ==  local::sew;
+            vlmul == local::lmul;
 
             inst_type == ALU;
             alu_inst == local::alu_inst;
@@ -852,7 +850,7 @@ class alu_iterate_vv_vx_seq extends alu_iterate_base_sequence;
           // use_vlmax == 1;
           pc == local::inst_cnt;
 
-          vtype.vlmul dist {
+          vlmul dist {
             LMUL1_4 := 10,
             LMUL1_2 := 20,
             LMUL1   := 20,
@@ -885,8 +883,8 @@ class alu_iterate_vv_vx_seq extends alu_iterate_base_sequence;
             use_vlmax == 1;
             pc == local::inst_cnt;
 
-            vtype.vsew ==  local::sew;
-            vtype.vlmul == local::lmul;
+            vsew ==  local::sew;
+            vlmul == local::lmul;
 
             inst_type == ALU;
             alu_inst == local::alu_inst;
@@ -913,8 +911,8 @@ class alu_iterate_vv_vx_seq extends alu_iterate_base_sequence;
             use_vlmax == 1;
             pc == local::inst_cnt;
 
-            vtype.vsew ==  local::sew;
-            vtype.vlmul == local::lmul;
+            vsew ==  local::sew;
+            vlmul == local::lmul;
 
             inst_type == ALU;
             alu_inst == local::alu_inst;
@@ -956,7 +954,7 @@ class alu_iterate_vx_vi_seq extends alu_iterate_base_sequence;
           // use_vlmax == 1;
           pc == local::inst_cnt;
 
-          vtype.vlmul dist {
+          vlmul dist {
             LMUL1_4 := 10,
             LMUL1_2 := 20,
             LMUL1   := 20,
@@ -984,8 +982,8 @@ class alu_iterate_vx_vi_seq extends alu_iterate_base_sequence;
             use_vlmax == 1;
             pc == local::inst_cnt;
 
-            vtype.vsew ==  local::sew;
-            vtype.vlmul == local::lmul;
+            vsew ==  local::sew;
+            vlmul == local::lmul;
 
             inst_type == ALU;
             alu_inst == local::alu_inst;
@@ -1007,8 +1005,8 @@ class alu_iterate_vx_vi_seq extends alu_iterate_base_sequence;
             use_vlmax == 1;
             pc == local::inst_cnt;
 
-            vtype.vsew ==  local::sew;
-            vtype.vlmul == local::lmul;
+            vsew ==  local::sew;
+            vlmul == local::lmul;
 
             inst_type == ALU;
             alu_inst == local::alu_inst;
@@ -1050,7 +1048,7 @@ class alu_iterate_vv_seq extends alu_iterate_base_sequence;
           // use_vlmax == 1;
           pc == local::inst_cnt;
 
-          vtype.vlmul dist {
+          vlmul dist {
             LMUL1_4 := 10,
             LMUL1_2 := 20,
             LMUL1   := 20,
@@ -1078,8 +1076,8 @@ class alu_iterate_vv_seq extends alu_iterate_base_sequence;
             use_vlmax == 1;
             pc == local::inst_cnt;
 
-            vtype.vsew ==  local::sew;
-            vtype.vlmul == local::lmul;
+            vsew ==  local::sew;
+            vlmul == local::lmul;
 
             inst_type == ALU;
             alu_inst == local::alu_inst;
@@ -1121,7 +1119,7 @@ class alu_iterate_vx_seq extends alu_iterate_base_sequence;
           // use_vlmax == 1;
           pc == local::inst_cnt;
 
-          vtype.vlmul dist {
+          vlmul dist {
             LMUL1_4 := 10,
             LMUL1_2 := 20,
             LMUL1   := 20,
@@ -1153,8 +1151,8 @@ class alu_iterate_vx_seq extends alu_iterate_base_sequence;
             use_vlmax == 1;
             pc == local::inst_cnt;
 
-            vtype.vsew ==  local::sew;
-            vtype.vlmul == local::lmul;
+            vsew ==  local::sew;
+            vlmul == local::lmul;
 
             inst_type == ALU;
             alu_inst == local::alu_inst;
@@ -1196,9 +1194,9 @@ class alu_iterate_ext_seq extends alu_iterate_base_sequence;
           // use_vlmax == 1;
           pc == local::inst_cnt;
 
-          src1_idx inside {VZEXT_VF4, VSEXT_VF4} -> vtype.vsew inside {SEW32};
-          src1_idx inside {VZEXT_VF2, VSEXT_VF2} -> vtype.vsew inside {SEW16, SEW32};
-          vtype.vlmul dist {
+          src1_idx inside {VZEXT_VF4, VSEXT_VF4} -> vsew inside {SEW32};
+          src1_idx inside {VZEXT_VF2, VSEXT_VF2} -> vsew inside {SEW16, SEW32};
+          vlmul dist {
             LMUL1_4 :=  5,
             LMUL1_2 := 10,
             LMUL1   := 30,
@@ -1235,8 +1233,8 @@ class alu_iterate_ext_seq extends alu_iterate_base_sequence;
               use_vlmax == 1;
               pc == inst_cnt;
 
-              vtype.vsew ==  local::sew;
-              vtype.vlmul == local::lmul;
+              vsew ==  local::sew;
+              vlmul == local::lmul;
 
               inst_type == ALU;
               alu_inst == local::alu_inst;
@@ -1279,7 +1277,7 @@ class alu_iterate_vmerge_vmvv_seq extends alu_iterate_base_sequence;
           // use_vlmax == 1;
           pc == local::inst_cnt;
 
-          vtype.vlmul dist {
+          vlmul dist {
             LMUL1_4 := 10,
             LMUL1_2 := 20,
             LMUL1   := 20,
@@ -1309,8 +1307,8 @@ class alu_iterate_vmerge_vmvv_seq extends alu_iterate_base_sequence;
             use_vlmax == 1;
             pc == inst_cnt;
 
-            vtype.vsew ==  local::sew;
-            vtype.vlmul == local::lmul;
+            vsew ==  local::sew;
+            vlmul == local::lmul;
 
             inst_type == ALU;
             alu_inst == local::alu_inst;
@@ -1334,8 +1332,8 @@ class alu_iterate_vmerge_vmvv_seq extends alu_iterate_base_sequence;
             use_vlmax == 1;
             pc == local::inst_cnt;
 
-            vtype.vsew ==  local::sew;
-            vtype.vlmul == local::lmul;
+            vsew ==  local::sew;
+            vlmul == local::lmul;
 
             inst_type == ALU;
             alu_inst == local::alu_inst;
@@ -1359,8 +1357,8 @@ class alu_iterate_vmerge_vmvv_seq extends alu_iterate_base_sequence;
             use_vlmax == 1;
             pc == local::inst_cnt;
 
-            vtype.vsew ==  local::sew;
-            vtype.vlmul == local::lmul;
+            vsew ==  local::sew;
+            vlmul == local::lmul;
 
             inst_type == ALU;
             alu_inst == local::alu_inst;
@@ -1404,7 +1402,7 @@ class alu_iterate_gather_vv_seq extends alu_iterate_base_sequence;
           // use_vlmax == 1;
           pc == local::inst_cnt;
 
-          vtype.vlmul dist {
+          vlmul dist {
             LMUL1_2 := 20,
             LMUL1   := 20,
             LMUL2   := 30,
@@ -1431,9 +1429,9 @@ class alu_iterate_gather_vv_seq extends alu_iterate_base_sequence;
             use_vlmax == 1;
             pc == local::inst_cnt;
 
-            vtype.vsew ==  local::sew;
- //           vtype.vlmul == local::lmul;
-            vtype.vlmul dist {
+            vsew ==  local::sew;
+ //           vlmul == local::lmul;
+            vlmul dist {
             LMUL1_2 := 20,
             LMUL1   := 20,
             LMUL2   := 30,
@@ -1481,7 +1479,7 @@ class alu_iterate_vwxunary0_seq extends alu_iterate_base_sequence;
           // use_vlmax == 1;
           pc == local::inst_cnt;
 
-          vtype.vlmul dist {
+          vlmul dist {
             LMUL1_4 :=  5,
             LMUL1_2 := 10,
             LMUL1   := 30,
@@ -1511,8 +1509,8 @@ class alu_iterate_vwxunary0_seq extends alu_iterate_base_sequence;
               use_vlmax == 1;
               pc == inst_cnt;
 
-              vtype.vsew ==  local::sew;
-              vtype.vlmul == local::lmul;
+              vsew ==  local::sew;
+              vlmul == local::lmul;
 
               inst_type == ALU;
               alu_inst == local::alu_inst;
@@ -1555,7 +1553,7 @@ class alu_iterate_vmunary0_seq extends alu_iterate_base_sequence;
           // use_vlmax == 1;
           pc == local::inst_cnt;
 
-          vtype.vlmul dist {
+          vlmul dist {
             LMUL1_4 :=  5,
             LMUL1_2 := 10,
             LMUL1   := 30,
@@ -1586,8 +1584,8 @@ class alu_iterate_vmunary0_seq extends alu_iterate_base_sequence;
               use_vlmax == 1;
               pc == inst_cnt;
 
-              vtype.vsew ==  local::sew;
-              vtype.vlmul == local::lmul;
+              vsew ==  local::sew;
+              vlmul == local::lmul;
 
               inst_type == ALU;
               alu_inst == local::alu_inst;
@@ -1632,7 +1630,7 @@ class alu_iterate_vs_seq extends alu_iterate_base_sequence;
           // use_vlmax == 1;
           pc == local::inst_cnt;
 
-          vtype.vlmul dist {
+          vlmul dist {
             LMUL1_4 := 10,
             LMUL1_2 := 20,
             LMUL1   := 20,
@@ -1664,8 +1662,8 @@ class alu_iterate_vs_seq extends alu_iterate_base_sequence;
             use_vlmax == 1;
             pc == local::inst_cnt;
 
-            vtype.vsew ==  local::sew;
-            vtype.vlmul == local::lmul;
+            vsew ==  local::sew;
+            vlmul == local::lmul;
 
             inst_type == ALU;
             alu_inst == local::alu_inst;
@@ -1707,7 +1705,7 @@ class alu_iterate_vmv_xs_sx_seq extends alu_iterate_base_sequence;
         assert(req.randomize() with {
           pc == local::inst_cnt;
 
-          vtype.vlmul dist {
+          vlmul dist {
             LMUL1_4 := 10,
             LMUL1_2 := 20,
             LMUL1   := 20,
@@ -1735,8 +1733,8 @@ class alu_iterate_vmv_xs_sx_seq extends alu_iterate_base_sequence;
             use_vlmax == 1;
             pc == local::inst_cnt;
 
-            vtype.vsew ==  local::sew;
-            vtype.vlmul == local::lmul;
+            vsew ==  local::sew;
+            vlmul == local::lmul;
 
             inst_type == ALU;
             alu_inst == local::alu_inst;
@@ -1758,8 +1756,8 @@ class alu_iterate_vmv_xs_sx_seq extends alu_iterate_base_sequence;
             use_vlmax == 1;
             pc == local::inst_cnt;
 
-            vtype.vsew ==  local::sew;
-            vtype.vlmul == local::lmul;
+            vsew ==  local::sew;
+            vlmul == local::lmul;
 
             inst_type == ALU;
             alu_inst == local::alu_inst;
@@ -1821,8 +1819,8 @@ class alu_iterate_vmvnr_seq extends alu_iterate_base_sequence;
             use_vlmax == 1;
             pc == local::inst_cnt;
 
-            vtype.vsew ==  local::sew;
-            vtype.vlmul == local::lmul;
+            vsew ==  local::sew;
+            vlmul == local::lmul;
 
             inst_type == ALU;
             alu_inst == local::alu_inst;
@@ -1909,7 +1907,7 @@ class alu_random_small_lmul_seq extends alu_random_base_sequence;
       assert(req.randomize() with {
         pc == local::inst_cnt;
 
-        vtype.vlmul dist {
+        vlmul dist {
           LMUL1_4 := 30,
           LMUL1_2 := 30,
           LMUL1   := 35,
@@ -1939,7 +1937,7 @@ class alu_random_large_lmul_seq extends alu_random_base_sequence;
       assert(req.randomize() with {
         pc == local::inst_cnt;
 
-        vtype.vlmul dist {
+        vlmul dist {
           LMUL2   :=  5,
           LMUL4   := 35,
           LMUL8   := 60 
@@ -1968,7 +1966,7 @@ class alu_random_bypass_seq extends alu_random_base_sequence;
       assert(req.randomize() with {
         pc == local::inst_cnt;
 
-        vtype.vlmul dist {
+        vlmul dist {
           LMUL1_4 := 20,
           LMUL1_2 := 40,
           LMUL1   := 40
@@ -2000,7 +1998,7 @@ class alu_random_waw_seq extends alu_random_base_sequence;
       assert(req.randomize() with {
         pc == local::inst_cnt;
 
-        vtype.vlmul dist {
+        vlmul dist {
           LMUL1_4 := 20,
           LMUL1_2 := 40,
           LMUL1   := 40
@@ -2019,14 +2017,19 @@ class alu_random_waw_seq extends alu_random_base_sequence;
   endtask
 
 endclass: alu_random_waw_seq
-//=================================================
+
+//===========================================================
 // LDST direct test sequence
-//=================================================
+//===========================================================
+//-----------------------------------------------------------
+// LSU direct sequences
+//-----------------------------------------------------------
 class lsu_unit_stride_seq extends base_sequence;
   `uvm_object_utils(lsu_unit_stride_seq)
   `uvm_add_to_seq_lib(lsu_unit_stride_seq,rvs_sequencer_sequence_library)
 
-  alu_inst_e alu_inst;
+  int inst_num;
+
   function new(string name = "lsu_unit_stride_seq");
     super.new(name);
 	`ifdef UVM_POST_VERSION_1_1
@@ -2035,35 +2038,31 @@ class lsu_unit_stride_seq extends base_sequence;
   endfunction:new
 
   virtual task body();
-    for(int i=0; i<10; i++) begin
+    repeat(inst_num) begin
       req = new("req");
       start_item(req);
       assert(req.randomize() with {
         pc == inst_cnt;
 
-        vtype.vma  ==  UNDISTURB;
-        vtype.vta  ==  UNDISTURB;
-        vtype.vsew ==  SEW8;
-        vtype.vlmul == LMUL1;
+        vsew ==  SEW8;
+        vlmul == LMUL1;
 
-        use_vlmax == 1;
-        // vl == 10;
-
+        lsu_inst  == VLE;
         inst_type == LD;
         lsu_mop   == LSU_E;
         lsu_umop  == NORMAL;
         lsu_nf    == NF1;
-        lsu_eew   == EEW8;
+        lsu_width == LSU_8BIT;
 
-        dest_type == VRF; dest_idx == 2;
-        src1_type == VRF; src1_idx == 12;
-        src2_type == VRF; src2_idx == 2;
+        dest_type == VRF; dest_idx == 8;
+        src2_type == FUNC; src2_idx == NORMAL;
+        src1_type == XRF; 
+                          rs1_data inside {[32'h0000_0000:32'h1_0000]};
 
-        vm == 0; 
       });
       finish_item(req);
       inst_cnt++;
-    end
+    end // repeat(inst_num)
   endtask
 endclass: lsu_unit_stride_seq
 

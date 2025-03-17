@@ -283,6 +283,7 @@ endtask: vrf_checker
 
 function void rvv_scoreboard::final_phase(uvm_phase phase);
   super.final_phase(phase);
+
   if(!uvm_config_db#(int)::get(uvm_root::get(), "", "rvv_total_inst", this.rvv_total_inst)) begin
     `uvm_fatal(get_type_name(), "Fail to get rvv_total_inst!")
   end
@@ -295,6 +296,14 @@ function void rvv_scoreboard::final_phase(uvm_phase phase);
   if(!uvm_config_db#(int)::get(uvm_root::get(), "", "mdl_excuted_inst", this.mdl_executed_inst)) begin
     `uvm_fatal(get_type_name(), "Fail to get mdl_executed_inst!")
   end
+
+  // Memory compare
+  // foreach(lsu_mem[idx]) begin
+  //   if(lsu_mem[idx] !== mdl_mem[idx])
+  //     `uvm_error("FINAL_CHECK", $sformatf("Memory mismatch: lsu_mem[0x%8x] = 0x%2x, mdl_mem[0x%8x] = 0x%2x.",lsu_mem[idx], mdl_mem[idx]))
+  // end
+
+  // Queue check
   if(rt_queue_rvs.size()>0) begin
     `uvm_error("FINAL_CHECK", "rt_queue_rvs wasn't empty!")
     foreach(rt_queue_rvs[idx]) begin
@@ -319,6 +328,8 @@ function void rvv_scoreboard::final_phase(uvm_phase phase);
       `uvm_error("FINAL_CHECK",vrf_queue_mdl[idx].sprint())
     end
   end
+
+  // Executed inst num check
   if(rvv_total_inst !== mdl_total_inst) begin
     `uvm_error("FINAL_CHECK", "Total instruction number mismatch.")
   end

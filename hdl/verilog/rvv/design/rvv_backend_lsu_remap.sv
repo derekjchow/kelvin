@@ -71,7 +71,7 @@ module rvv_backend_lsu_remap
       `ifdef TB_SUPPORT
         assign result_lsu2rob[i].uop_pc = mapinfo[i].uop_pc;
       `endif
-        assign result_lsu2rob[i].rob_entry = mapinfo[i].valid;
+        assign result_lsu2rob[i].rob_entry = mapinfo[i].rob_entry;
         assign result_lsu2rob[i].w_data = lsu_res[i].vregfile_write_data;
         assign result_lsu2rob[i].w_valid = (mapinfo[i].lsu_class==IS_LOAD)&lsu_res[i].vregfile_write_valid&(lsu_res[i].vregfile_write_addr==mapinfo[i].vregfile_write_addr);
         assign result_lsu2rob[i].vsaturate = 'b0;
