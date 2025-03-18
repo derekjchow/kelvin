@@ -31,6 +31,7 @@ GetOptions (
 
   "shuffle" => \(my $opt_shuffle),
   "qualify|q" => \(my $opt_qualify),
+  "mode=s" => \(my $opt_mode = "normal"),
 );
 
 if($opt_help) { Usage(); }
@@ -143,6 +144,16 @@ if($exeCoverage) {
   @cmd_sim = map { "$_ $covOpt"; } @cmd_sim;
 } else {
   $covOpt = "";
+}
+
+my $modeOpt;
+if($opt_mode =~ m/slow/) {
+  $modeOpt = "PLUS_ARGS+=+resp_mode_all_slow";
+  @cmd_sim = map { "$_  $modeOpt"; } @cmd_sim;
+}
+if($opt_mode =~ m/fast/) {
+  $modeOpt = "PLUS_ARGS+=+resp_mode_all_fast";
+  @cmd_sim = map { "$_  $modeOpt"; } @cmd_sim;
 }
 
 $startTime = time();

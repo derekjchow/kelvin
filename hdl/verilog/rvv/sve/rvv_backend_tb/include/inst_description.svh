@@ -11,11 +11,14 @@ endpackage: vrf_mon_pkg
 package rvv_state_pkg;
   typedef enum {IDLE, BUSY, UNKNOW} rvv_state_e;
 endpackage: rvv_state_pkg
-
+package resp_mode_pkg;
+typedef enum {FAST, NORMAL, SLOW} resp_mode_e;
+endpackage: resp_mode_pkg
 
 package rvv_tb_pkg;
 import vrf_mon_pkg::*;
 import rvv_state_pkg::*;
+import resp_mode_pkg::*;
 typedef logic [`REGFILE_INDEX_WIDTH-1:0] reg_idx_t;
 typedef logic [`XLEN-1:0] xrf_t;
 typedef logic [`VLEN-1:0] vrf_t;

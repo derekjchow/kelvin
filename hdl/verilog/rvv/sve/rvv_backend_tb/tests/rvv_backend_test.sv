@@ -44,12 +44,20 @@ class rvv_backend_test extends uvm_test;
       uvm_config_db#(int)::set(uvm_root::get(), "*", "single_inst_mode", 1'b1);
     if($test$plusargs("qualify")) begin
       direct_inst_num = 200;
-      random_inst_num = 2000;
+      random_inst_num = 5000;
     end else begin
       direct_inst_num = 1000;
-      random_inst_num = 50000;
+      random_inst_num = 100000;
     end
 
+    if($test$plusargs("resp_mode_all_slow")) begin
+      uvm_config_db#(resp_mode_pkg::resp_mode_e)::set(uvm_root::get(), "*", "resp_mode_rt_xrf", resp_mode_pkg::SLOW);
+      uvm_config_db#(resp_mode_pkg::resp_mode_e)::set(uvm_root::get(), "*", "resp_mode_wr_vxsat", resp_mode_pkg::SLOW);
+    end
+    if($test$plusargs("resp_mode_all_fast")) begin
+      uvm_config_db#(resp_mode_pkg::resp_mode_e)::set(uvm_root::get(), "*", "resp_mode_rt_xrf", resp_mode_pkg::FAST);
+      uvm_config_db#(resp_mode_pkg::resp_mode_e)::set(uvm_root::get(), "*", "resp_mode_wr_vxsat", resp_mode_pkg::FAST);
+    end
   endfunction
 
   virtual function void connect_phase(uvm_phase phase);
@@ -1081,7 +1089,7 @@ class alu_vdiv_test extends rvv_backend_test;
 
     rvs_last_seq = alu_smoke_vv_seq::type_id::create("rvs_last_seq", this);
     rvs_last_seq.run_inst(VADD,env.rvs_agt.rvs_sqr);
-    phase.phase_done.set_drain_time(this, 5000ns);
+    phase.phase_done.set_drain_time(this, 10000ns);
     phase.drop_objection( .obj( this ) );
   endtask
 
@@ -2016,7 +2024,7 @@ class alu_slide_test extends rvv_backend_test;
     rvs_last_seq.run_inst(VSLIDEDOWN,env.rvs_agt.rvs_sqr);
     rvs_last_seq.run_inst(VSLIDE1UP,env.rvs_agt.rvs_sqr);
     rvs_last_seq.run_inst(VSLIDE1DOWN,env.rvs_agt.rvs_sqr);
-    phase.phase_done.set_drain_time(this, 2000ns);
+    phase.phase_done.set_drain_time(this, 5000ns);
     phase.drop_objection( .obj( this ) );
   endtask
 
