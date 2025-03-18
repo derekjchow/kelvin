@@ -14,7 +14,8 @@
 // multi-issue and multi-read-ports of VRF
 `ifdef ISSUE_3_READ_PORT_6
   // the max number of uops are written to Uops Queue per cycle in DE stage
-  `define NUM_DE_UOP              4
+  `define NUM_DE_UOP              6
+  `define NUM_DE_UOP_WIDTH        3
   // the max number of uops are dispated per cycle in DP stage.
   `define NUM_DP_UOP              3
   // the number of read ports for VRF
@@ -33,6 +34,7 @@
 `elsif ISSUE_2_READ_PORT_6
   // the max number of uops are written to Uops Queue per cycle in DE stage
   `define NUM_DE_UOP              4
+  `define NUM_DE_UOP_WIDTH        3
   // the max number of uops are dispated per cycle in DP stage
   `define NUM_DP_UOP              2
   // the number of read ports for VRF
@@ -51,6 +53,7 @@
 `else  //ISSUE_2_READ_PORT_4
   // the max number of uops are written to Uops Queue per cycle in DE stage
   `define NUM_DE_UOP              4
+  `define NUM_DE_UOP_WIDTH        3
   // the max number of uops are dispated per cycle in DP stage
   `define NUM_DP_UOP              2
   // the number of read ports for VRF
@@ -66,8 +69,6 @@
   `define LSU_RS_DEPTH            4
   `define ROB_DEPTH               8
 `endif
-
-`define NUM_DE_UOP_WIDTH        $clog2(`NUM_DE_UOP)+1
 
 // Uops Queue data width^M
 `define UQ_WIDTH                $bits(UOP_QUEUE_t)^M

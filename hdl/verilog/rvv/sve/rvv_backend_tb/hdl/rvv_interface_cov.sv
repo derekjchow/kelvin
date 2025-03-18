@@ -78,6 +78,33 @@ module rvv_interface_cov (
   Cov_waw cg_waw;
 
 // Decode cov --------------------------------------------------------
+`ifdef ISSUE_3_READ_PORT_6
+  covergroup Cov_uops_valid_de2uq @(posedge clk);
+    inst0:
+      coverpoint {rvv_intern_if.uop_valid_de2uq[0]} {
+        bins uop0 = {6'b00_0000};
+        bins uop1 = {6'b00_0001};
+        bins uop2 = {6'b00_0011};
+        bins uop3 = {6'b00_0111};
+        bins uop4 = {6'b00_1111};
+        bins uop5 = {6'b01_1111};
+        bins uop6 = {6'b11_1111};
+        illegal_bins misc = default;
+      }
+    inst1:
+      coverpoint {rvv_intern_if.uop_valid_de2uq[1]} {
+        bins uop0 = {6'b00_0000};
+        bins uop1 = {6'b00_0001};
+        bins uop2 = {6'b00_0011};
+        bins uop3 = {6'b00_0111};
+        bins uop4 = {6'b00_1111};
+        bins uop5 = {6'b01_1111};
+        bins uop6 = {6'b11_1111};
+        illegal_bins misc = default;
+      }
+    cross inst0, inst1;
+  endgroup
+`else // ISSUE_3_READ_PORT_6
   covergroup Cov_uops_valid_de2uq @(posedge clk);
     inst0:
       coverpoint {rvv_intern_if.uop_valid_de2uq[0]} {
@@ -99,6 +126,8 @@ module rvv_interface_cov (
       }
     cross inst0, inst1;
   endgroup
+`endif // ISSUE_*
+
   Cov_uops_valid_de2uq cg_uops_valid_de2uq;
 
 // Dispatch cov ------------------------------------------------------

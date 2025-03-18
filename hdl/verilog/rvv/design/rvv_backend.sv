@@ -393,12 +393,16 @@ module rvv_backend
     endgenerate
 
   `ifdef ASSERT_ON
-    PushToUopQueue: `rvv_expect(push_de2uq inside {4'b1111, 4'b0111, 4'b0011, 4'b0001, 4'b0000})
-      else $error("Push to uops queue out-of-order: %4b", $sampled(push_de2uq));
     `ifdef ISSUE_3_READ_PORT_6 
+      PushToUopQueue: `rvv_expect(push_de2uq inside {6'b111111, 6'b011111, 6'b001111, 6'b000111, 6'b000011, 6'b000001, 6'b000000})
+        else $error("Push to uops queue out-of-order: %6b", $sampled(push_de2uq));
+
       PopFromUopQueue: `rvv_expect((uop_valid_uop2dp & uop_ready_dp2uop) inside {3'b111, 3'b011, 3'b001,3'b000})
         else $error("Pop from uops queue out-of-order: %3b", $sampled(uop_valid_uop2dp & uop_ready_dp2uop));
-    `else
+    `else  //ISSUE_2
+      PushToUopQueue: `rvv_expect(push_de2uq inside {4'b1111, 4'b0111, 4'b0011, 4'b0001, 4'b0000})
+        else $error("Push to uops queue out-of-order: %4b", $sampled(push_de2uq));
+
       PopFromUopQueue: `rvv_expect((uop_valid_uop2dp & uop_ready_dp2uop) inside {2'b11, 2'b01, 2'b00})
         else $error("Pop from uops queue out-of-order: %2b", $sampled(uop_valid_uop2dp & uop_ready_dp2uop));
     `endif
