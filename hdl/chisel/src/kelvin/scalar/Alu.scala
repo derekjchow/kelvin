@@ -26,6 +26,7 @@ object Alu {
 }
 
 object AluOp extends ChiselEnum {
+  // RV32IM
   val ADD  = Value
   val SUB  = Value
   val SLT  = Value
@@ -33,22 +34,27 @@ object AluOp extends ChiselEnum {
   val XOR  = Value
   val OR   = Value
   val AND  = Value
-  val XNOR = Value
-  val ORN  = Value
-  val ANDN = Value
   val SLL  = Value
   val SRL  = Value
   val SRA  = Value
   val LUI  = Value
+  // ZBB
+  val ANDN = Value
+  val ORN  = Value
+  val XNOR = Value
   val CLZ  = Value
   val CTZ  = Value
-  val PCNT = Value
-  val MIN  = Value
-  val MINU = Value
+  val CPOP = Value
   val MAX  = Value
   val MAXU = Value
+  val MIN  = Value
+  val MINU = Value
   val SEXTB = Value
   val SEXTH = Value
+  val ROL = Value
+  val ROR = Value
+  val ORCB = Value
+  val REV8 = Value
   val ZEXTH = Value
 }
 
@@ -101,6 +107,14 @@ class Alu(p: Parameters) extends Module {
     ext.asUInt
   }
 
+  def Orcb(x: UInt, length: Int): UInt = {
+    val orcb = Wire(UInt(length.W))
+    orcb := Cat((0 until length by 8).reverse.map(i =>
+      Mux(x(i+7, i) === 0.U, 0x0.U(8.W), 0xFF.U(8.W))
+    ))
+    orcb
+  }
+
   io.rd.bits.data  := MuxLookup(op, 0.U)(Seq(
     AluOp.ADD  -> (rs1 + rs2),
     AluOp.SUB  -> (rs1 - rs2),
@@ -109,28 +123,37 @@ class Alu(p: Parameters) extends Module {
     AluOp.XOR  -> (rs1 ^ rs2),
     AluOp.OR   -> (rs1 | rs2),
     AluOp.AND  -> (rs1 & rs2),
-    AluOp.XNOR -> ~(rs1 ^ rs2),
-    AluOp.ORN  -> (rs1 | ~rs2),
-    AluOp.ANDN -> (rs1 & ~rs2),
     AluOp.SLL  -> (rs1 << shamt),
     AluOp.SRL  -> (rs1 >> shamt),
     AluOp.SRA  -> (rs1.asSInt >> shamt).asUInt,
     AluOp.LUI  -> rs2,
+    // ZBB
+    AluOp.ANDN -> (rs1 & ~rs2),
+    AluOp.ORN  -> (rs1 | ~rs2),
+    AluOp.XNOR -> ~(rs1 ^ rs2),
     AluOp.CLZ  -> Clz(rs1),
     AluOp.CTZ  -> Ctz(rs1),
-    AluOp.PCNT -> PopCount(rs1),
-    AluOp.MIN  -> Mux(r2IsGreater,  rs1, rs2),
+    AluOp.CPOP -> PopCount(rs1),
     AluOp.MAX  -> Mux(r2IsGreater,  rs2, rs1),
-    AluOp.MINU -> Mux(r2IsGreaterU, rs1, rs2),
     AluOp.MAXU -> Mux(r2IsGreaterU, rs2, rs1),
+    AluOp.MIN  -> Mux(r2IsGreater,  rs1, rs2),
+    AluOp.MINU -> Mux(r2IsGreaterU, rs1, rs2),
     AluOp.SEXTB -> SignExtend(rs1(7, 0), rsWidth),
     AluOp.SEXTH -> SignExtend(rs1(rsWidthH-1,0), rsWidth),
-    AluOp.ZEXTH -> rs1(rsWidthH - 1, 0)
+    AluOp.ROL -> rs1.rotateLeft(shamt),
+    AluOp.ROR -> rs1.rotateRight(shamt),
+    AluOp.ORCB -> Orcb(rs1, rsWidth),
+    AluOp.REV8 -> Cat(UIntToVec(rs1, 8)),
+    AluOp.ZEXTH -> rs1(rsWidthH - 1, 0),
   ))
 
 
   // Assertions.
-  val rs1Only = op.isOneOf(AluOp.CLZ, AluOp.CTZ, AluOp.PCNT, AluOp.ZEXTH, AluOp.SEXTH, AluOp.SEXTB)
+  val rs1Only = op.isOneOf(
+    AluOp.CLZ, AluOp.CTZ, AluOp.CPOP,
+    AluOp.ZEXTH, AluOp.SEXTH, AluOp.SEXTB,
+    AluOp.ORCB, AluOp.REV8,
+  )
   assert(!(valid && !io.rs1.valid && !op.isOneOf(AluOp.LUI)))
   assert(!(valid && !io.rs2.valid && !rs1Only))
 }

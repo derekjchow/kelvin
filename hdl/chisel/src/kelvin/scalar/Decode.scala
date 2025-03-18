@@ -96,9 +96,6 @@ class DecodedInstruction extends Bundle {
   val xor   = Bool()
   val or    = Bool()
   val and   = Bool()
-  val xnor  = Bool()
-  val orn   = Bool()
-  val andn  = Bool()
   val sll   = Bool()
   val srl   = Bool()
   val sra   = Bool()
@@ -113,17 +110,25 @@ class DecodedInstruction extends Bundle {
   val rem     = Bool()
   val remu    = Bool()
 
-  // RV32B
+  // ZBB
+  val andn  = Bool()
+  val orn   = Bool()
+  val xnor  = Bool()
   val clz  = Bool()
   val ctz  = Bool()
-  val pcnt = Bool()
-  val min  = Bool()
-  val minu = Bool()
+  val cpop = Bool()
   val max  = Bool()
   val maxu = Bool()
+  val min  = Bool()
+  val minu = Bool()
   val sextb = Bool()
   val sexth = Bool()
+  val rol = Bool()
+  val ror = Bool()
+  val orcb = Bool()
+  val rev8 = Bool()
   val zexth = Bool()
+  val rori = Bool()
 
   // Vector instructions.
   val getvl = Bool()
@@ -152,13 +157,13 @@ class DecodedInstruction extends Bundle {
   val slog = Bool()
 
   def isAluImm(): Bool = {
-      addi || slti || sltiu || xori || ori || andi || slli || srli || srai
+      addi || slti || sltiu || xori || ori || andi || slli || srli || srai || rori
   }
   def isAluReg(): Bool = {
       add || sub || slt || sltu || xor || or || and || xnor || orn || andn || sll || srl || sra
   }
-  def isAlu1Bit(): Bool = { clz || ctz || pcnt || sextb || sexth || zexth }
-  def isAlu2Bit(): Bool = { min || minu || max || maxu }
+  def isAlu1Bit(): Bool = { clz || ctz || cpop || sextb || sexth || zexth || orcb || rev8 }
+  def isAlu2Bit(): Bool = { min || minu || max || maxu || rol || ror }
   def isCsr(): Bool = { csrrw || csrrs || csrrc }
   def isCondBr(): Bool = { beq || bne || blt || bge || bltu || bgeu }
   def isLoad(): Bool = { lb || lh || lw || lbu || lhu }
@@ -294,6 +299,7 @@ class Decode(p: Parameters, pipeline: Int) extends Module {
 
   // ALU opcode.
   val alu = MuxCase(MakeValid(false.B, AluOp.ADD), Seq(
+    // RV32IM
     (d.auipc || d.addi || d.add) -> MakeValid(true.B, AluOp.ADD),
     d.sub                        -> MakeValid(true.B, AluOp.SUB),
     (d.slti || d.slt)            -> MakeValid(true.B, AluOp.SLT),
@@ -301,23 +307,29 @@ class Decode(p: Parameters, pipeline: Int) extends Module {
     (d.xori || d.xor)            -> MakeValid(true.B, AluOp.XOR),
     (d.ori || d.or)              -> MakeValid(true.B, AluOp.OR),
     (d.andi || d.and)            -> MakeValid(true.B, AluOp.AND),
-    d.xnor                       -> MakeValid(true.B, AluOp.XNOR),
-    d.orn                        -> MakeValid(true.B, AluOp.ORN),
-    d.andn                       -> MakeValid(true.B, AluOp.ANDN),
     (d.slli || d.sll)            -> MakeValid(true.B, AluOp.SLL),
     (d.srli || d.srl)            -> MakeValid(true.B, AluOp.SRL),
     (d.srai || d.sra)            -> MakeValid(true.B, AluOp.SRA),
     d.lui                        -> MakeValid(true.B, AluOp.LUI),
+    // ZBB
+    d.andn                       -> MakeValid(true.B, AluOp.ANDN),
+    d.orn                        -> MakeValid(true.B, AluOp.ORN),
+    d.xnor                       -> MakeValid(true.B, AluOp.XNOR),
     d.clz                        -> MakeValid(true.B, AluOp.CLZ),
     d.ctz                        -> MakeValid(true.B, AluOp.CTZ),
-    d.pcnt                       -> MakeValid(true.B, AluOp.PCNT),
-    d.min                        -> MakeValid(true.B, AluOp.MIN),
-    d.minu                       -> MakeValid(true.B, AluOp.MINU),
+    d.cpop                       -> MakeValid(true.B, AluOp.CPOP),
     d.max                        -> MakeValid(true.B, AluOp.MAX),
     d.maxu                       -> MakeValid(true.B, AluOp.MAXU),
+    d.min                        -> MakeValid(true.B, AluOp.MIN),
+    d.minu                       -> MakeValid(true.B, AluOp.MINU),
     d.sextb                      -> MakeValid(true.B, AluOp.SEXTB),
     d.sexth                      -> MakeValid(true.B, AluOp.SEXTH),
-    d.zexth                      -> MakeValid(true.B, AluOp.ZEXTH)
+    d.rol                        -> MakeValid(true.B, AluOp.ROL),
+    d.ror                        -> MakeValid(true.B, AluOp.ROR),
+    d.orcb                       -> MakeValid(true.B, AluOp.ORCB),
+    d.rev8                       -> MakeValid(true.B, AluOp.REV8),
+    d.zexth                      -> MakeValid(true.B, AluOp.ZEXTH),
+    d.rori                       -> MakeValid(true.B, AluOp.ROR),
   ))
   io.alu.valid := decodeEn && alu.valid
   io.alu.bits.addr := rdAddr
@@ -556,9 +568,6 @@ object DecodeInstruction {
     d.sll   := op === BitPat("b0000000_?????_?????_001_?????_0110011")
     d.srl   := op === BitPat("b0000000_?????_?????_101_?????_0110011")
     d.sra   := op === BitPat("b0100000_?????_?????_101_?????_0110011")
-    d.xnor  := op === BitPat("b0100000_?????_?????_100_?????_0110011")
-    d.orn   := op === BitPat("b0100000_?????_?????_110_?????_0110011")
-    d.andn  := op === BitPat("b0100000_?????_?????_111_?????_0110011")
 
     // RV32M
     d.mul     := op === BitPat("b0000_001_?????_?????_000_?????_0110011")
@@ -570,17 +579,25 @@ object DecodeInstruction {
     d.rem     := op === BitPat("b0000_001_?????_?????_110_?????_0110011")
     d.remu    := op === BitPat("b0000_001_?????_?????_111_?????_0110011")
 
-    // RV32B
+    // ZBB
+    d.andn  := op === BitPat("b0100000_?????_?????_111_?????_0110011")
+    d.orn   := op === BitPat("b0100000_?????_?????_110_?????_0110011")
+    d.xnor  := op === BitPat("b0100000_?????_?????_100_?????_0110011")
     d.clz   := op === BitPat("b0110000_00000_?????_001_?????_0010011")
     d.ctz   := op === BitPat("b0110000_00001_?????_001_?????_0010011")
-    d.pcnt  := op === BitPat("b0110000_00010_?????_001_?????_0010011")
-    d.min   := op === BitPat("b0000101_?????_?????_100_?????_0110011")
-    d.minu  := op === BitPat("b0000101_?????_?????_101_?????_0110011")
+    d.cpop  := op === BitPat("b0110000_00010_?????_001_?????_0010011")
     d.max   := op === BitPat("b0000101_?????_?????_110_?????_0110011")
     d.maxu  := op === BitPat("b0000101_?????_?????_111_?????_0110011")
+    d.min   := op === BitPat("b0000101_?????_?????_100_?????_0110011")
+    d.minu  := op === BitPat("b0000101_?????_?????_101_?????_0110011")
     d.sextb := op === BitPat("b0110000_00100_?????_001_?????_0010011")
     d.sexth := op === BitPat("b0110000_00101_?????_001_?????_0010011")
+    d.rol   := op === BitPat("b0110000_?????_?????_001_?????_0110011")
+    d.ror   := op === BitPat("b0110000_?????_?????_101_?????_0110011")
+    d.orcb  := op === BitPat("b0010100_00111_?????_101_?????_0010011")
+    d.rev8  := op === BitPat("b0110100_11000_?????_101_?????_0010011")
     d.zexth := op === BitPat("b0000100_00000_?????_100_?????_0110011")
+    d.rori  := op === BitPat("b0110000_?????_?????_101_?????_0010011")
 
     // Decode scalar log.
     val slog = op === BitPat("b01111_00_00000_?????_0??_00000_11101_11")
@@ -673,8 +690,9 @@ object DecodeInstruction {
                       d.slli, d.srli, d.srai, d.sll, d.srl, d.sra,
                       d.mul, d.mulh, d.mulhsu, d.mulhu,
                       d.div, d.divu, d.rem, d.remu,
-                      d.clz, d.ctz, d.pcnt, d.min, d.minu, d.max, d.maxu,
+                      d.clz, d.ctz, d.cpop, d.min, d.minu, d.max, d.maxu,
                       d.sextb, d.sexth, d.zexth,
+                      d.rol, d.ror, d.orcb, d.rev8, d.rori,
                       d.viop, d.vld, d.vst,
                       d.getvl, d.getmaxvl,
                       d.ebreak, d.ecall, d.eexit, d.eyield, d.ectxsw, d.wfi,
