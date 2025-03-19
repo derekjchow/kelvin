@@ -29,11 +29,8 @@ logic [`FUNCT3_WIDTH-1:0]      mul_uop_funct3;
 logic [1:0]                    mul_uop_xrm;
 logic [2:0]                    mul_top_vs_eew;
 logic [`VLEN-1:0]              mul_uop_vs1_data;
-logic                          mul_uop_vs1_valid;
 logic [`VLEN-1:0]              mul_uop_vs2_data;
-logic                          mul_uop_vs2_valid;
 logic [`XLEN-1:0]              mul_uop_rs1_data;
-logic                          mul_uop_rs1_valid;
 logic                          mul_uop_index;
 
 logic                          is_vv; //1:op*vv; 0:op*vx
@@ -112,13 +109,10 @@ assign mul_uop_xrm = rs2mul_uop_data.vxrm;
 assign mul_top_vs_eew = rs2mul_uop_data.vs2_eew;
 
 assign mul_uop_vs1_data = rs2mul_uop_data.vs1_data;
-assign mul_uop_vs1_valid = rs2mul_uop_data.vs1_data_valid;
 
 assign mul_uop_vs2_data = rs2mul_uop_data.vs2_data;
-assign mul_uop_vs2_valid = rs2mul_uop_data.vs2_data_valid;
 
 assign mul_uop_rs1_data = rs2mul_uop_data.rs1_data;
-assign mul_uop_rs1_valid = rs2mul_uop_data.rs1_data_valid;
 
 assign mul_uop_index = rs2mul_uop_data.uop_index[0];
 
@@ -133,8 +127,8 @@ always@(*) begin
       is_vv = 1'b1;
       case (mul_uop_funct6) 
         VMUL: begin
-          mul_src2 = mul_uop_vs2_valid ? mul_uop_vs2_data : `VLEN'b0;
-          mul_src1 = mul_uop_vs1_valid ? mul_uop_vs1_data : `VLEN'b0;
+          mul_src2 = mul_uop_vs2_data;
+          mul_src1 = mul_uop_vs1_data;
           mul_src2_is_signed = 1'b1;
           mul_src1_is_signed = 1'b1;
           mul_is_widen = 1'b0;
@@ -142,8 +136,8 @@ always@(*) begin
           is_vsmul = 1'b0;
         end
         VMULH : begin
-          mul_src2 = mul_uop_vs2_valid ? mul_uop_vs2_data : `VLEN'b0;
-          mul_src1 = mul_uop_vs1_valid ? mul_uop_vs1_data : `VLEN'b0;
+          mul_src2 = mul_uop_vs2_data;
+          mul_src1 = mul_uop_vs1_data;
           mul_src2_is_signed = 1'b1;
           mul_src1_is_signed = 1'b1;
           mul_is_widen = 1'b0;
@@ -151,8 +145,8 @@ always@(*) begin
           is_vsmul = 1'b0;
         end
         VMULHU : begin
-          mul_src2 = mul_uop_vs2_valid ? mul_uop_vs2_data : `VLEN'b0;
-          mul_src1 = mul_uop_vs1_valid ? mul_uop_vs1_data : `VLEN'b0;
+          mul_src2 = mul_uop_vs2_data;
+          mul_src1 = mul_uop_vs1_data;
           mul_src2_is_signed = 1'b0;
           mul_src1_is_signed = 1'b0;
           mul_is_widen = 1'b0;
@@ -160,8 +154,8 @@ always@(*) begin
           is_vsmul = 1'b0;
         end
         VMULHSU : begin
-          mul_src2 = mul_uop_vs2_valid ? mul_uop_vs2_data : `VLEN'b0;
-          mul_src1 = mul_uop_vs1_valid ? mul_uop_vs1_data : `VLEN'b0;
+          mul_src2 = mul_uop_vs2_data;
+          mul_src1 = mul_uop_vs1_data;
           mul_src2_is_signed = 1'b1;
           mul_src1_is_signed = 1'b0;
           mul_is_widen = 1'b0;
@@ -169,8 +163,8 @@ always@(*) begin
           is_vsmul = 1'b0;
         end
         VWMUL : begin
-          mul_src2 = mul_uop_vs2_valid ? {64'b0,mul_uop_vs2_data[mul_uop_index*64 +: 64]} : `VLEN'b0;
-          mul_src1 = mul_uop_vs1_valid ? {64'b0,mul_uop_vs1_data[mul_uop_index*64 +: 64]} : `VLEN'b0;
+          mul_src2 = {64'b0,mul_uop_vs2_data[mul_uop_index*64 +: 64]};
+          mul_src1 = {64'b0,mul_uop_vs1_data[mul_uop_index*64 +: 64]};
           mul_src2_is_signed = 1'b1;
           mul_src1_is_signed = 1'b1;
           mul_is_widen = 1'b1;
@@ -178,8 +172,8 @@ always@(*) begin
           is_vsmul = 1'b0;
         end
         VWMULU : begin
-          mul_src2 = mul_uop_vs2_valid ? {64'b0,mul_uop_vs2_data[mul_uop_index*64 +: 64]} : `VLEN'b0;
-          mul_src1 = mul_uop_vs1_valid ? {64'b0,mul_uop_vs1_data[mul_uop_index*64 +: 64]} : `VLEN'b0;
+          mul_src2 = {64'b0,mul_uop_vs2_data[mul_uop_index*64 +: 64]};
+          mul_src1 = {64'b0,mul_uop_vs1_data[mul_uop_index*64 +: 64]};
           mul_src2_is_signed = 1'b0;
           mul_src1_is_signed = 1'b0;
           mul_is_widen = 1'b1;
@@ -187,8 +181,8 @@ always@(*) begin
           is_vsmul = 1'b0;
         end
         VWMULSU : begin
-          mul_src2 = mul_uop_vs2_valid ? {64'b0,mul_uop_vs2_data[mul_uop_index*64 +: 64]} : `VLEN'b0;
-          mul_src1 = mul_uop_vs1_valid ? {64'b0,mul_uop_vs1_data[mul_uop_index*64 +: 64]} : `VLEN'b0;
+          mul_src2 = {64'b0,mul_uop_vs2_data[mul_uop_index*64 +: 64]};
+          mul_src1 = {64'b0,mul_uop_vs1_data[mul_uop_index*64 +: 64]};
           mul_src2_is_signed = 1'b1;
           mul_src1_is_signed = 1'b0;
           mul_is_widen = 1'b1;
@@ -196,8 +190,8 @@ always@(*) begin
           is_vsmul = 1'b0;
         end
         default : begin //default use VMUL
-          mul_src2 = mul_uop_vs2_valid ? mul_uop_vs2_data : `VLEN'b0;
-          mul_src1 = mul_uop_vs1_valid ? mul_uop_vs1_data : `VLEN'b0;
+          mul_src2 = mul_uop_vs2_data;
+          mul_src1 = mul_uop_vs1_data;
           mul_src2_is_signed = 1'b1;
           mul_src1_is_signed = 1'b1;
           mul_is_widen = 1'b0;
@@ -210,8 +204,8 @@ always@(*) begin
       is_vv = 1'b0;
       case (mul_uop_funct6) 
         VMUL : begin
-          mul_src2 = mul_uop_vs2_valid ? mul_uop_vs2_data : `VLEN'b0;
-          mul_src1 = mul_uop_rs1_valid ? {{(`VLEN-`XLEN){mul_uop_rs1_data[`XLEN-1]&&mul_src1_is_signed}},mul_uop_rs1_data} : `VLEN'b0; //use rs1
+          mul_src2 = mul_uop_vs2_data;
+          mul_src1 = {{(`VLEN-`XLEN){mul_uop_rs1_data[`XLEN-1]&&mul_src1_is_signed}},mul_uop_rs1_data}; //use rs1
           mul_src2_is_signed = 1'b1;
           mul_src1_is_signed = 1'b1;
           mul_is_widen = 1'b0;
@@ -219,8 +213,8 @@ always@(*) begin
           is_vsmul = 1'b0;
         end
         VMULH : begin
-          mul_src2 = mul_uop_vs2_valid ? mul_uop_vs2_data : `VLEN'b0;
-          mul_src1 = mul_uop_rs1_valid ? {{(`VLEN-`XLEN){mul_uop_rs1_data[`XLEN-1]&&mul_src1_is_signed}},mul_uop_rs1_data} : `VLEN'b0; //use rs1
+          mul_src2 = mul_uop_vs2_data;
+          mul_src1 = {{(`VLEN-`XLEN){mul_uop_rs1_data[`XLEN-1]&&mul_src1_is_signed}},mul_uop_rs1_data}; //use rs1
           mul_src2_is_signed = 1'b1;
           mul_src1_is_signed = 1'b1;
           mul_is_widen = 1'b0;
@@ -228,8 +222,8 @@ always@(*) begin
           is_vsmul = 1'b0;
         end
         VMULHU : begin
-          mul_src2 = mul_uop_vs2_valid ? mul_uop_vs2_data : `VLEN'b0;
-          mul_src1 = mul_uop_rs1_valid ? {{(`VLEN-`XLEN){mul_uop_rs1_data[`XLEN-1]&&mul_src1_is_signed}},mul_uop_rs1_data} : `VLEN'b0; //use rs1
+          mul_src2 = mul_uop_vs2_data;
+          mul_src1 = {{(`VLEN-`XLEN){mul_uop_rs1_data[`XLEN-1]&&mul_src1_is_signed}},mul_uop_rs1_data}; //use rs1
           mul_src2_is_signed = 1'b0;
           mul_src1_is_signed = 1'b0;
           mul_is_widen = 1'b0;
@@ -237,8 +231,8 @@ always@(*) begin
           is_vsmul = 1'b0;
         end
         VMULHSU : begin
-          mul_src2 = mul_uop_vs2_valid ? mul_uop_vs2_data : `VLEN'b0;
-          mul_src1 = mul_uop_rs1_valid ? {{(`VLEN-`XLEN){mul_uop_rs1_data[`XLEN-1]&&mul_src1_is_signed}},mul_uop_rs1_data} : `VLEN'b0; //use rs1
+          mul_src2 = mul_uop_vs2_data;
+          mul_src1 = {{(`VLEN-`XLEN){mul_uop_rs1_data[`XLEN-1]&&mul_src1_is_signed}},mul_uop_rs1_data}; //use rs1
           mul_src2_is_signed = 1'b1;
           mul_src1_is_signed = 1'b0;
           mul_is_widen = 1'b0;
@@ -246,8 +240,8 @@ always@(*) begin
           is_vsmul = 1'b0;
         end
         VWMUL : begin
-          mul_src2 = mul_uop_vs2_valid ? {64'b0,mul_uop_vs2_data[mul_uop_index*64 +: 64]} : `VLEN'b0;
-          mul_src1 = mul_uop_rs1_valid ? {{(`VLEN-`XLEN){mul_uop_rs1_data[`XLEN-1]&&mul_src1_is_signed}},mul_uop_rs1_data} : `VLEN'b0; //use rs1
+          mul_src2 = {64'b0,mul_uop_vs2_data[mul_uop_index*64 +: 64]};
+          mul_src1 = {{(`VLEN-`XLEN){mul_uop_rs1_data[`XLEN-1]&&mul_src1_is_signed}},mul_uop_rs1_data}; //use rs1
           mul_src2_is_signed = 1'b1;
           mul_src1_is_signed = 1'b1;
           mul_is_widen = 1'b1;
@@ -255,8 +249,8 @@ always@(*) begin
           is_vsmul = 1'b0;
         end
         VWMULU : begin
-          mul_src2 = mul_uop_vs2_valid ? {64'b0,mul_uop_vs2_data[mul_uop_index*64 +: 64]} : `VLEN'b0;
-          mul_src1 = mul_uop_rs1_valid ? {{(`VLEN-`XLEN){mul_uop_rs1_data[`XLEN-1]&&mul_src1_is_signed}},mul_uop_rs1_data} : `VLEN'b0; //use rs1
+          mul_src2 = {64'b0,mul_uop_vs2_data[mul_uop_index*64 +: 64]};
+          mul_src1 = {{(`VLEN-`XLEN){mul_uop_rs1_data[`XLEN-1]&&mul_src1_is_signed}},mul_uop_rs1_data}; //use rs1
           mul_src2_is_signed = 1'b0;
           mul_src1_is_signed = 1'b0;
           mul_is_widen = 1'b1;
@@ -264,8 +258,8 @@ always@(*) begin
           is_vsmul = 1'b0;
         end
         VWMULSU : begin
-          mul_src2 = mul_uop_vs2_valid ? {64'b0,mul_uop_vs2_data[mul_uop_index*64 +: 64]} : `VLEN'b0;
-          mul_src1 = mul_uop_rs1_valid ? {{(`VLEN-`XLEN){mul_uop_rs1_data[`XLEN-1]&&mul_src1_is_signed}},mul_uop_rs1_data} : `VLEN'b0; //use rs1
+          mul_src2 = {64'b0,mul_uop_vs2_data[mul_uop_index*64 +: 64]};
+          mul_src1 = {{(`VLEN-`XLEN){mul_uop_rs1_data[`XLEN-1]&&mul_src1_is_signed}},mul_uop_rs1_data}; //use rs1
           mul_src2_is_signed = 1'b1;
           mul_src1_is_signed = 1'b0;
           mul_is_widen = 1'b1;
@@ -273,8 +267,8 @@ always@(*) begin
           is_vsmul = 1'b0;
         end
         default : begin //default use VMUL
-          mul_src2 = mul_uop_vs2_valid ? mul_uop_vs2_data : `VLEN'b0;
-          mul_src1 = mul_uop_rs1_valid ? {{(`VLEN-`XLEN){mul_uop_rs1_data[`XLEN-1]&&mul_src1_is_signed}},mul_uop_rs1_data} : `VLEN'b0; //use rs1
+          mul_src2 = mul_uop_vs2_data;
+          mul_src1 = {{(`VLEN-`XLEN){mul_uop_rs1_data[`XLEN-1]&&mul_src1_is_signed}},mul_uop_rs1_data}; //use rs1
           mul_src2_is_signed = 1'b1;
           mul_src1_is_signed = 1'b1;
           mul_is_widen = 1'b0;
@@ -287,8 +281,8 @@ always@(*) begin
       is_vv = 1'b1;
       case (mul_uop_funct6) 
         VSMUL_VMVNRR : begin
-          mul_src2 = mul_uop_vs2_valid ? mul_uop_vs2_data : `VLEN'b0;
-          mul_src1 = mul_uop_vs1_valid ? mul_uop_vs1_data : `VLEN'b0;
+          mul_src2 = mul_uop_vs2_data;
+          mul_src1 = mul_uop_vs1_data;
           mul_src2_is_signed = 1'b1;
           mul_src1_is_signed = 1'b1;
           mul_is_widen = 1'b0;
@@ -296,8 +290,8 @@ always@(*) begin
           is_vsmul = 1'b1;
         end
         default : begin //currently put default the same as vsmul
-          mul_src2 = mul_uop_vs2_valid ? mul_uop_vs2_data : `VLEN'b0;
-          mul_src1 = mul_uop_vs1_valid ? mul_uop_vs1_data : `VLEN'b0;
+          mul_src2 = mul_uop_vs2_data;
+          mul_src1 = mul_uop_vs1_data;
           mul_src2_is_signed = 1'b1;
           mul_src1_is_signed = 1'b1;
           mul_is_widen = 1'b0;
@@ -310,8 +304,8 @@ always@(*) begin
       is_vv = 1'b0;
       case (mul_uop_funct6) 
         VSMUL_VMVNRR : begin
-          mul_src2 = mul_uop_vs2_valid ? mul_uop_vs2_data : `VLEN'b0;
-          mul_src1 = mul_uop_rs1_valid ? {{(`VLEN-`XLEN){mul_uop_rs1_data[`XLEN-1]&&mul_src1_is_signed}},mul_uop_rs1_data} : `VLEN'b0; //use rs1
+          mul_src2 = mul_uop_vs2_data;
+          mul_src1 = {{(`VLEN-`XLEN){mul_uop_rs1_data[`XLEN-1]&&mul_src1_is_signed}},mul_uop_rs1_data}; //use rs1
           mul_src2_is_signed = 1'b1;
           mul_src1_is_signed = 1'b1;
           mul_is_widen = 1'b0;
@@ -319,8 +313,8 @@ always@(*) begin
           is_vsmul = 1'b1;
         end
         default : begin //currently put default the same as vsmul
-          mul_src2 = mul_uop_vs2_valid ? mul_uop_vs2_data : `VLEN'b0;
-          mul_src1 = mul_uop_rs1_valid ? {{(`VLEN-`XLEN){mul_uop_rs1_data[`XLEN-1]&&mul_src1_is_signed}},mul_uop_rs1_data} : `VLEN'b0; //use rs1
+          mul_src2 = mul_uop_vs2_data;
+          mul_src1 = {{(`VLEN-`XLEN){mul_uop_rs1_data[`XLEN-1]&&mul_src1_is_signed}},mul_uop_rs1_data}; //use rs1
           mul_src2_is_signed = 1'b1;
           mul_src1_is_signed = 1'b1;
           mul_is_widen = 1'b0;
