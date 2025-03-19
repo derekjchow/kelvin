@@ -3026,16 +3026,13 @@ module rvv_backend_decode_unit_ari
         check_vd_align = 1'b1; 
       end
       EMUL2: begin
-        if (inst_vd[0]==1'b0)
-          check_vd_align = 1'b1; 
+        check_vd_align = (inst_vd[0]==1'b0); 
       end
       EMUL4: begin
-        if (inst_vd[1:0]==2'b0)
-          check_vd_align = 1'b1; 
+        check_vd_align = (inst_vd[1:0]==2'b0); 
       end
       EMUL8: begin
-        if (inst_vd[2:0]==3'b0)
-          check_vd_align = 1'b1; 
+        check_vd_align = (inst_vd[2:0]==3'b0); 
       end
     endcase
   end
@@ -3050,16 +3047,13 @@ module rvv_backend_decode_unit_ari
         check_vs2_align = 1'b1; 
       end
       EMUL2: begin
-        if (inst_vs2[0]==1'b0)
-          check_vs2_align = 1'b1; 
+        check_vs2_align = (inst_vs2[0]==1'b0); 
       end
       EMUL4: begin
-        if (inst_vs2[1:0]==2'b0)
-          check_vs2_align = 1'b1; 
+        check_vs2_align = (inst_vs2[1:0]==2'b0); 
       end
       EMUL8: begin
-        if (inst_vs2[2:0]==3'b0)
-          check_vs2_align = 1'b1; 
+        check_vs2_align = (inst_vs2[2:0]==3'b0); 
       end
     endcase
   end
@@ -3074,16 +3068,13 @@ module rvv_backend_decode_unit_ari
         check_vs1_align = 1'b1; 
       end
       EMUL2: begin
-        if (inst_vs1[0]==1'b0)
-          check_vs1_align = 1'b1; 
+        check_vs1_align = (inst_vs1[0]==1'b0); 
       end
       EMUL4: begin
-        if (inst_vs1[1:0]==2'b0)
-          check_vs1_align = 1'b1; 
+        check_vs1_align = (inst_vs1[1:0]==2'b0); 
       end
       EMUL8: begin
-        if (inst_vs1[2:0]==3'b0)
-          check_vs1_align = 1'b1; 
+        check_vs1_align = (inst_vs1[2:0]==3'b0); 
       end
     endcase
   end
@@ -3842,13 +3833,13 @@ module rvv_backend_decode_unit_ari
               default: begin 
                 case(eew_max)
                   EEW8: begin
-                    uop[i].vector_csr.vstart  = {uop_index_current[i][`UOP_INDEX_WIDTH-1:0],4'b0};
+                    uop[i].vector_csr.vstart  = {uop_index_current[i][`UOP_INDEX_WIDTH-1:0],{($clog2(`VLENB)){1'b0}}};
                   end
                   EEW16: begin
-                    uop[i].vector_csr.vstart  = {1'b0,uop_index_current[i][`UOP_INDEX_WIDTH-1:0],3'b0};
+                    uop[i].vector_csr.vstart  = {1'b0,uop_index_current[i][`UOP_INDEX_WIDTH-1:0],{($clog2(`VLEN/`HWORD_WIDTH)){1'b0}}};
                   end
                   EEW32: begin
-                    uop[i].vector_csr.vstart  = {2'b0,uop_index_current[i][`UOP_INDEX_WIDTH-1:0],2'b0};
+                    uop[i].vector_csr.vstart  = {2'b0,uop_index_current[i][`UOP_INDEX_WIDTH-1:0],{($clog2(`VLEN/`WORD_WIDTH)){1'b0}}};
                   end
                 endcase
               end
@@ -3871,13 +3862,13 @@ module rvv_backend_decode_unit_ari
               default: begin 
                 case(eew_max)
                   EEW8: begin
-                    uop[i].vector_csr.vstart  = {uop_index_current[i][`UOP_INDEX_WIDTH-1:0],4'b0};
+                    uop[i].vector_csr.vstart  = {uop_index_current[i][`UOP_INDEX_WIDTH-1:0],{($clog2(`VLENB)){1'b0}}};
                   end
                   EEW16: begin
-                    uop[i].vector_csr.vstart  = {1'b0,uop_index_current[i][`UOP_INDEX_WIDTH-1:0],3'b0};
+                    uop[i].vector_csr.vstart  = {1'b0,uop_index_current[i][`UOP_INDEX_WIDTH-1:0],{($clog2(`VLEN/`HWORD_WIDTH)){1'b0}}};
                   end
                   EEW32: begin
-                    uop[i].vector_csr.vstart  = {2'b0,uop_index_current[i][`UOP_INDEX_WIDTH-1:0],2'b0};
+                    uop[i].vector_csr.vstart  = {2'b0,uop_index_current[i][`UOP_INDEX_WIDTH-1:0],{($clog2(`VLEN/`WORD_WIDTH)){1'b0}}};
                   end
                 endcase
               end
@@ -3967,8 +3958,7 @@ module rvv_backend_decode_unit_ari
   always_comb begin
     for(int i=0;i<`NUM_DE_UOP;i=i+1) begin: GET_FORCE_VMA
       //When source and destination registers overlap and have different EEW, the instruction is mask- and tail-agnostic.
-      uop[i].force_vma_agnostic = ((check_vd_overlap_v0==1'b0)&(eew_vd!=EEW1)) | 
-                                  ((check_vd_overlap_vs2==1'b0)&(eew_vd!=eew_vs2)&(eew_vd!=EEW_NONE)&(eew_vs2!=EEW_NONE)) |
+      uop[i].force_vma_agnostic = ((check_vd_overlap_vs2==1'b0)&(eew_vd!=eew_vs2)&(eew_vd!=EEW_NONE)&(eew_vs2!=EEW_NONE)) |
                                   ((check_vd_overlap_vs1==1'b0)&(eew_vd!=eew_vs1)&(eew_vd!=EEW_NONE)&(eew_vs1!=EEW_NONE));
     end
   end
@@ -3978,7 +3968,6 @@ module rvv_backend_decode_unit_ari
     for(int i=0;i<`NUM_DE_UOP;i=i+1) begin: GET_FORCE_VTA
       uop[i].force_vta_agnostic = (eew_vd==EEW1) |   // Mask destination tail elements are always treated as tail-agnostic
       //When source and destination registers overlap and have different EEW, the instruction is mask- and tail-agnostic.
-                                  ((check_vd_overlap_v0==1'b0)&(eew_vd!=EEW1)) | 
                                   ((check_vd_overlap_vs2==1'b0)&(eew_vd!=eew_vs2)&(eew_vd!=EEW_NONE)&(eew_vs2!=EEW_NONE)) |
                                   ((check_vd_overlap_vs1==1'b0)&(eew_vd!=eew_vs1)&(eew_vd!=EEW_NONE)&(eew_vs1!=EEW_NONE));
     end

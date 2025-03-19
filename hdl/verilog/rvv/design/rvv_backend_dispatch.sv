@@ -43,6 +43,9 @@ module rvv_backend_dispatch
     rs_valid_dp2lsu,
     rs_dp2lsu,
     rs_ready_lsu2dp,
+    mapinfo_valid_dp2lsu,
+    mapinfo_dp2lsu,
+    mapinfo_ready_lsu2dp,
     uop_valid_dp2rob,
     uop_dp2rob,
     uop_ready_rob2dp,
@@ -65,35 +68,40 @@ module rvv_backend_dispatch
 // Dispatch unit sends oprations to reservation stations
 // Dispatch unit to ALU reservation station
 // rs_*: reservation station
-    output logic        [`NUM_DP_UOP-1:0] rs_valid_dp2alu;
-    output ALU_RS_t     [`NUM_DP_UOP-1:0] rs_dp2alu;
-    input  logic        [`NUM_DP_UOP-1:0] rs_ready_alu2dp;
+    output logic          [`NUM_DP_UOP-1:0]   rs_valid_dp2alu;
+    output ALU_RS_t       [`NUM_DP_UOP-1:0]   rs_dp2alu;
+    input  logic          [`NUM_DP_UOP-1:0]   rs_ready_alu2dp;
 
 // Dispatch unit to PMT+RDT reservation station
-    output logic        [`NUM_DP_UOP-1:0] rs_valid_dp2pmtrdt;
-    output PMT_RDT_RS_t [`NUM_DP_UOP-1:0] rs_dp2pmtrdt;
-    input  logic        [`NUM_DP_UOP-1:0] rs_ready_pmtrdt2dp;
+    output logic          [`NUM_DP_UOP-1:0]   rs_valid_dp2pmtrdt;
+    output PMT_RDT_RS_t   [`NUM_DP_UOP-1:0]   rs_dp2pmtrdt;
+    input  logic          [`NUM_DP_UOP-1:0]   rs_ready_pmtrdt2dp;
 
 // Dispatch unit to MUL reservation station
-    output logic        [`NUM_DP_UOP-1:0] rs_valid_dp2mul;
-    output MUL_RS_t     [`NUM_DP_UOP-1:0] rs_dp2mul;
-    input  logic        [`NUM_DP_UOP-1:0] rs_ready_mul2dp;
+    output logic          [`NUM_DP_UOP-1:0]   rs_valid_dp2mul;
+    output MUL_RS_t       [`NUM_DP_UOP-1:0]   rs_dp2mul;
+    input  logic          [`NUM_DP_UOP-1:0]   rs_ready_mul2dp;
 
 // Dispatch unit to DIV reservation station
-    output logic        [`NUM_DP_UOP-1:0] rs_valid_dp2div;
-    output DIV_RS_t     [`NUM_DP_UOP-1:0] rs_dp2div;
-    input  logic        [`NUM_DP_UOP-1:0] rs_ready_div2dp;
+    output logic          [`NUM_DP_UOP-1:0]   rs_valid_dp2div;
+    output DIV_RS_t       [`NUM_DP_UOP-1:0]   rs_dp2div;
+    input  logic          [`NUM_DP_UOP-1:0]   rs_ready_div2dp;
 
-// Dispatch unit to LSU reservation station
-    output logic        [`NUM_DP_UOP-1:0] rs_valid_dp2lsu;
-    output LSU_RS_t     [`NUM_DP_UOP-1:0] rs_dp2lsu;
-    input  logic        [`NUM_DP_UOP-1:0] rs_ready_lsu2dp;
+// Dispatch unit to LSU 
+    // to LSU RS
+    output logic          [`NUM_DP_UOP-1:0]   rs_valid_dp2lsu;
+    output UOP_RVV2LSU_t  [`NUM_DP_UOP-1:0]   rs_dp2lsu;
+    input  logic          [`NUM_DP_UOP-1:0]   rs_ready_lsu2dp;
+    // to LSU MAP INFO
+    output logic          [`NUM_DP_UOP-1:0]   mapinfo_valid_dp2lsu;
+    output LSU_MAP_INFO_t [`NUM_DP_UOP-1:0]   mapinfo_dp2lsu;
+    input  logic          [`NUM_DP_UOP-1:0]   mapinfo_ready_lsu2dp;
 
 // Dispatch unit pushes operations to ROB unit
-    output logic        [`NUM_DP_UOP-1:0] uop_valid_dp2rob;
-    output DP2ROB_t     [`NUM_DP_UOP-1:0] uop_dp2rob;
-    input  logic        [`NUM_DP_UOP-1:0] uop_ready_rob2dp;
-    input  logic        [`ROB_DEPTH_WIDTH-1:0] uop_index_rob2dp;
+    output logic          [`NUM_DP_UOP-1:0]   uop_valid_dp2rob;
+    output DP2ROB_t       [`NUM_DP_UOP-1:0]   uop_dp2rob;
+    input  logic          [`NUM_DP_UOP-1:0]   uop_ready_rob2dp;
+    input  logic          [`ROB_DEPTH_WIDTH-1:0] uop_index_rob2dp;
 
 // Dispatch unit sends read request to VRF for vector data.
 // Dispatch unit to VRF unit
@@ -576,25 +584,27 @@ module rvv_backend_dispatch
     rvv_backend_dispatch_ctrl #(
     ) u_ctrl (
       // ctrl input signal
-        .raw_uop_rob  (raw_uop_rob),
-        .raw_uop_uop  (raw_uop_uop),
-        .arch_hazard  (arch_hazard),
-        .uop_ctrl     (uop_ctrl),
+        .raw_uop_rob            (raw_uop_rob),
+        .raw_uop_uop            (raw_uop_uop),
+        .arch_hazard            (arch_hazard),
+        .uop_ctrl               (uop_ctrl),
       // handshake signals
-        .uop_valid_uop2dp   (uop_valid_uop2dp),
-        .uop_ready_dp2uop   (uop_ready_dp2uop),
-        .rs_valid_dp2alu    (rs_valid_dp2alu),
-        .rs_ready_alu2dp    (rs_ready_alu2dp),
-        .rs_valid_dp2pmtrdt (rs_valid_dp2pmtrdt),
-        .rs_ready_pmtrdt2dp (rs_ready_pmtrdt2dp),
-        .rs_valid_dp2mul    (rs_valid_dp2mul),
-        .rs_ready_mul2dp    (rs_ready_mul2dp),
-        .rs_valid_dp2div    (rs_valid_dp2div),
-        .rs_ready_div2dp    (rs_ready_div2dp),
-        .rs_valid_dp2lsu    (rs_valid_dp2lsu),
-        .rs_ready_lsu2dp    (rs_ready_lsu2dp),
-        .uop_valid_dp2rob   (uop_valid_dp2rob),
-        .uop_ready_rob2dp   (uop_ready_rob2dp)
+        .uop_valid_uop2dp       (uop_valid_uop2dp),
+        .uop_ready_dp2uop       (uop_ready_dp2uop),
+        .rs_valid_dp2alu        (rs_valid_dp2alu),
+        .rs_ready_alu2dp        (rs_ready_alu2dp),
+        .rs_valid_dp2pmtrdt     (rs_valid_dp2pmtrdt),
+        .rs_ready_pmtrdt2dp     (rs_ready_pmtrdt2dp),
+        .rs_valid_dp2mul        (rs_valid_dp2mul),
+        .rs_ready_mul2dp        (rs_ready_mul2dp),
+        .rs_valid_dp2div        (rs_valid_dp2div),
+        .rs_ready_div2dp        (rs_ready_div2dp),
+        .rs_valid_dp2lsu        (rs_valid_dp2lsu),
+        .rs_ready_lsu2dp        (rs_ready_lsu2dp),
+        .mapinfo_valid_dp2lsu   (mapinfo_valid_dp2lsu),
+        .mapinfo_ready_lsu2dp   (mapinfo_ready_lsu2dp),
+        .uop_valid_dp2rob       (uop_valid_dp2rob),
+        .uop_ready_rob2dp       (uop_ready_rob2dp)
     );
 
 // determine the type for each byte in uop's vector operands 
@@ -660,7 +670,7 @@ module rvv_backend_dispatch
 `ifdef TB_SUPPORT
             assign rs_dp2pmtrdt[i].uop_pc        = uop_uop2dp[i].uop_pc; 
 `endif
-            assign rs_dp2pmtrdt[i].rob_entry     = rob_address[i];
+            assign rs_dp2pmtrdt[i].rob_entry     = rob_address[i]; 
             assign rs_dp2pmtrdt[i].uop_exe_unit  = uop_uop2dp[i].uop_exe_unit; 
             assign rs_dp2pmtrdt[i].uop_funct6    = uop_uop2dp[i].uop_funct6;
             assign rs_dp2pmtrdt[i].uop_funct3    = uop_uop2dp[i].uop_funct3;
@@ -723,14 +733,23 @@ module rvv_backend_dispatch
 `ifdef TB_SUPPORT
             assign rs_dp2lsu[i].uop_pc        = uop_uop2dp[i].uop_pc; 
 `endif
-            assign rs_dp2lsu[i].rob_entry     = rob_address[i];
-            assign rs_dp2lsu[i].uop_funct6    = uop_uop2dp[i].uop_funct6;
             assign rs_dp2lsu[i].vidx_valid    = uop_uop2dp[i].vs2_valid;
             assign rs_dp2lsu[i].vidx_addr     = uop_uop2dp[i].vs2_index;
             assign rs_dp2lsu[i].vidx_data     = uop_operand[i].vs2;
             assign rs_dp2lsu[i].vregfile_read_valid = uop_uop2dp[i].vs3_valid;
             assign rs_dp2lsu[i].vregfile_read_addr  = uop_uop2dp[i].vd_index;
             assign rs_dp2lsu[i].vregfile_read_data  = uop_operand[i].vd;
+            assign rs_dp2lsu[i].v0_valid      = uop_uop2dp[i].v0_valid;
+            assign rs_dp2lsu[i].v0_data       = uop_operand_byte_type[i].v0;
+
+          // LSU MAP INFO
+`ifdef TB_SUPPORT
+            assign mapinfo_dp2lsu[i].uop_pc     = uop_uop2dp[i].uop_pc; 
+`endif
+            assign mapinfo_dp2lsu[i].valid      = mapinfo_valid_dp2lsu;
+            assign mapinfo_dp2lsu[i].rob_entry  = rob_address[i];
+            assign mapinfo_dp2lsu[i].lsu_class  = uop_uop2dp[i].uop_funct6.lsu_funct6.lsu_is_store;
+            assign mapinfo_dp2lsu[i].vregfile_write_addr = uop_uop2dp[i].vd_index;
 
           // ROB
 `ifdef TB_SUPPORT

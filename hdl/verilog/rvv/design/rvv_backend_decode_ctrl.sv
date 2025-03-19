@@ -104,7 +104,7 @@ module rvv_backend_decode_ctrl
       )
       mux_unit0_last
       (
-         .sel      ({1'b0,quantity}),
+         .sel      (quantity),
          .indata0  (1'b0),
          .indata1  (1'b1),
          .indata2  (1'b1),
@@ -130,7 +130,7 @@ module rvv_backend_decode_ctrl
       )
       mux_unit1_last
       (
-         .sel      ({1'b0,quantity}),
+         .sel      (quantity),
          .indata0  (get_unit1_last_signal[0]),
          .indata1  (get_unit1_last_signal[1]),
          .indata2  (get_unit1_last_signal[2]),
@@ -275,7 +275,7 @@ module rvv_backend_decode_ctrl
       )
       mux_push_valid0 
       (
-         .sel      ({1'b0,quantity}),
+         .sel      (quantity),
          .indata0  (uop_valid_de2uq[1][0]),
          .indata1  (uop_valid_de2uq[0][0]),
          .indata2  (uop_valid_de2uq[0][0]),
@@ -293,7 +293,7 @@ module rvv_backend_decode_ctrl
       )
       mux_push_valid1 
       (
-         .sel      ({1'b0,quantity}),
+         .sel      (quantity),
          .indata0  (uop_valid_de2uq[1][1]),
          .indata1  (uop_valid_de2uq[1][0]),
          .indata2  (uop_valid_de2uq[0][1]),
@@ -311,7 +311,7 @@ module rvv_backend_decode_ctrl
       )
       mux_push_valid2
       (
-         .sel      ({1'b0,quantity}),
+         .sel      (quantity),
          .indata0  (uop_valid_de2uq[1][2]),
          .indata1  (uop_valid_de2uq[1][1]),
          .indata2  (uop_valid_de2uq[1][0]),
@@ -329,7 +329,7 @@ module rvv_backend_decode_ctrl
       )
       mux_push_valid3 
       (
-         .sel      ({1'b0,quantity}),
+         .sel      (quantity),
          .indata0  (uop_valid_de2uq[1][3]),
          .indata1  (uop_valid_de2uq[1][2]),
          .indata2  (uop_valid_de2uq[1][1]),
@@ -347,7 +347,7 @@ module rvv_backend_decode_ctrl
       )
       mux_push_valid4 
       (
-         .sel      ({1'b0,quantity}),
+         .sel      (quantity),
          .indata0  (uop_valid_de2uq[1][4]),
          .indata1  (uop_valid_de2uq[1][3]),
          .indata2  (uop_valid_de2uq[1][2]),
@@ -365,7 +365,7 @@ module rvv_backend_decode_ctrl
       )
       mux_push_valid5
       (
-         .sel      ({1'b0,quantity}),
+         .sel      (quantity),
          .indata0  (uop_valid_de2uq[1][5]),
          .indata1  (uop_valid_de2uq[1][4]),
          .indata2  (uop_valid_de2uq[1][3]),
@@ -384,7 +384,7 @@ module rvv_backend_decode_ctrl
       )
       mux_data0
       (
-         .sel      ({1'b0,quantity}),
+         .sel      (quantity),
          .indata0  (uop_de2uq[1][0]),
          .indata1  (uop_de2uq[0][0]),
          .indata2  (uop_de2uq[0][0]),
@@ -402,7 +402,7 @@ module rvv_backend_decode_ctrl
       )
       mux_data1
       (
-         .sel      ({1'b0,quantity}),
+         .sel      (quantity),
          .indata0  (uop_de2uq[1][1]),
          .indata1  (uop_de2uq[1][0]),
          .indata2  (uop_de2uq[0][1]),
@@ -420,7 +420,7 @@ module rvv_backend_decode_ctrl
       )
       mux_data2
       (
-         .sel      ({1'b0,quantity}),
+         .sel      (quantity),
          .indata0  (uop_de2uq[1][2]),
          .indata1  (uop_de2uq[1][1]),
          .indata2  (uop_de2uq[1][0]),
@@ -438,7 +438,7 @@ module rvv_backend_decode_ctrl
       )
       mux_data3
       (
-         .sel      ({1'b0,quantity}),
+         .sel      (quantity),
          .indata0  (uop_de2uq[1][3]),
          .indata1  (uop_de2uq[1][2]),
          .indata2  (uop_de2uq[1][1]),
@@ -456,7 +456,7 @@ module rvv_backend_decode_ctrl
       )
       mux_data4
       (
-         .sel      ({1'b0,quantity}),
+         .sel      (quantity),
          .indata0  (uop_de2uq[1][4]),
          .indata1  (uop_de2uq[1][3]),
          .indata2  (uop_de2uq[1][2]),
@@ -474,7 +474,7 @@ module rvv_backend_decode_ctrl
       )
       mux_data5
       (
-         .sel      ({1'b0,quantity}),
+         .sel      (quantity),
          .indata0  (uop_de2uq[1][5]),
          .indata1  (uop_de2uq[1][4]),
          .indata2  (uop_de2uq[1][3]),

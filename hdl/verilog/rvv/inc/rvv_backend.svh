@@ -255,12 +255,18 @@ typedef enum logic [0:0] {
   IS_STORE       // when store, inst_encoding[11:7] is seen as vs3
 } LSU_IS_STORE_e;
 
+// segment load/store 
+typedef enum logic [0:0] {
+  IS_SEGMENT,
+  NONE      
+} LSU_IS_SEG_e;
+
 // combine those signals to LSU_TYPE
 typedef struct packed {
-  logic                               reserved;
-  LSU_MOP_e                           lsu_mop;
-  LSU_UMOP_e                          lsu_umop;
-  LSU_IS_STORE_e                      lsu_is_store;
+  LSU_MOP_e         lsu_mop;
+  LSU_UMOP_e        lsu_umop;
+  LSU_IS_STORE_e    lsu_is_store;
+  LSU_IS_SEG_e      lsu_is_seg;
 } LSU_TYPE_t;
 
 // function opcode
@@ -282,7 +288,6 @@ typedef enum logic [2:0] {
 
 // Effective MUL enum
 typedef enum logic [3:0] {
-  EMUL_NONE,    // it means this is not supported 
   EMUL1,
   EMUL2,
   EMUL3,
@@ -290,7 +295,8 @@ typedef enum logic [3:0] {
   EMUL5,
   EMUL6,
   EMUL7,
-  EMUL8
+  EMUL8,
+  EMUL_NONE     // it means this is not supported 
 } EMUL_e;
 
 // Effective Element Width
@@ -477,7 +483,7 @@ typedef struct packed {
   logic   [`FUNCT3_WIDTH-1:0]         uop_funct3;
   logic   [`VSTART_WIDTH-1:0]         vstart;
   logic   [`VL_WIDTH-1:0]             vl;       
-  logic   [`VL_WIDTH-1:0]             vlmax;
+  logic   [`VL_WIDTH-1:0]             vlmax;       
   logic                               vm;               
   // when the uop is producing-mask operation, the uop will use v0_data as the third vector operand when the uop is the last uop. EEW_v0=1.
   logic   [`VLEN-1:0]                 v0_data;
@@ -505,18 +511,17 @@ typedef struct packed {
 `ifdef TB_SUPPORT
   logic   [`PC_WIDTH-1:0]             uop_pc;
 `endif
-  logic   [`ROB_DEPTH_WIDTH-1:0]      uop_id;
-  LSU_TYPE_t                          uop_funct6;  
 
   logic                               vidx_valid; 
   logic   [`REGFILE_INDEX_WIDTH-1:0]  vidx_addr;
-  logic   [`VLEN-1:0]                 vidx_data;                  // vs2        
-  BYTE_TYPE_t                         vs2_type;        
+  logic   [`VLEN-1:0]                 vidx_data;            // vs2        
   logic                               vregfile_read_valid; 
   logic   [`REGFILE_INDEX_WIDTH-1:0]  vregfile_read_addr;
-  logic   [`VLEN-1:0]                 vregfile_read_data;         // vs3       
-  BYTE_TYPE_t                         vs3_type; 
-} LSU_RS_t;    
+  logic   [`VLEN-1:0]                 vregfile_read_data;   // vs3       
+  logic                               v0_valid;
+  logic   [`VLENB-1:0]                v0_data;              // byte strobe signal for mask load/store. 
+                                                            // v0[i]=1 means vd/vs3[8*i +: 8] data is valid. 
+} UOP_RVV2LSU_t;    
 
 //
 // EX stage, 
@@ -532,44 +537,26 @@ typedef struct packed {
   logic   [`VLENB-1:0]                vsaturate;
 } PU2ROB_t;  
 
-// send uop to LSU
+// lsu uop info to remap rob_entry for UOP_LSU2RVV_t
 typedef struct packed {   
 `ifdef TB_SUPPORT
   logic   [`PC_WIDTH-1:0]             uop_pc;
 `endif
-  // When LSU submit the result to RVV; LSU need to attend uop_id to help RVV retire the uop in ROB  
-  logic   [`ROB_DEPTH_WIDTH-1:0]      uop_id;     
-  // Vector regfile index interface for indexed vld/vst
-	logic 							              	vidx_valid;
-  logic	[`REGFILE_INDEX_WIDTH-1:0]	  vidx_addr;
-  logic	[`VLEN-1:0]				          	vidx_data;              // vs2
-  BYTE_TYPE_t                         vs2_type;               // mask for vs2
-  // Vector regfile read interface for vst
-  logic 								              vregfile_read_valid;
-  logic	[`REGFILE_INDEX_WIDTH-1:0]  	vregfile_read_addr;
-  logic	[`VLEN-1:0] 				          vregfile_read_data;	  	// vs3     
-  BYTE_TYPE_t                         vs3_type;               // mask for vs3
-} UOP_LSU_RVV2RVS_t;  
+  logic                               valid;
+  logic   [`ROB_DEPTH_WIDTH-1:0]      rob_entry;
+  LSU_IS_STORE_e                      lsu_class; 
+  logic	[`REGFILE_INDEX_WIDTH-1:0] 	  vregfile_write_addr;  
+} LSU_MAP_INFO_t; 
 
 // LSU feedback to RVV
 typedef struct packed {   
-`ifdef TB_SUPPORT
-  logic   [`PC_WIDTH-1:0]             uop_pc;
-`endif
-  // When LSU submit the result to RVV; LSU need to attend uop_id to help RVV retire the uop in ROB
-  logic   [`ROB_DEPTH_WIDTH-1:0]      uop_id;   
-  // LSU uop type
-  // When LSU complete the vstore uop, it need to tell RVV done signal and attend uop_id to help RVV retire the uops
-  // when load, it means the uop is vld. It enables vregfile_write_addr and vregfile_write_data, and submit the vector data to ROB
-  // when store, it means this store uop is done in LSU, ROB can retire this uop.
-  LSU_IS_STORE_e                      uop_type;               
-                                                                
-	// Vector regfile write interface for vld
-  // logic	[`REGFILE_INDEX_WIDTH-1:0] 	  vregfile_write_addr;
+  // For load data
+  logic                               vregfile_write_valid;
+  logic	[`REGFILE_INDEX_WIDTH-1:0] 	  vregfile_write_addr;  
   logic	[`VLEN-1:0] 			          	vregfile_write_data;  	// vd   
   // Store done signal to help ROB retire the store uop
   logic                               lsu_vstore_last;
-} UOP_LSU_RVS2RVV_t;  
+} UOP_LSU2RVV_t;  
 
 typedef struct packed {
 `ifdef TB_SUPPORT
@@ -657,8 +644,6 @@ typedef struct packed {
 
 // trap handle
 typedef struct packed {
-  // logic                               trap_apply;
-  // TRAP_INFO_e                         trap_info;
   logic   [`ROB_DEPTH_WIDTH-1:0]      trap_uop_rob_entry;
 } TRAP_t;  
 

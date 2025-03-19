@@ -1061,6 +1061,7 @@ module rvv_backend_alu_unit_shift
     input logic [$clog2(`BYTE_WIDTH)-1:0] amount;
 
     logic signed [`BYTE_WIDTH:0]   src;
+    logic signed [`BYTE_WIDTH:0]   res;
     logic signed [`BYTE_WIDTH-1:0] result;
     logic signed [`BYTE_WIDTH-1:0] round;
 
@@ -1070,12 +1071,14 @@ module rvv_backend_alu_unit_shift
       src = {operand[`BYTE_WIDTH-1],operand};   // (opcode==SHIFT_SRA)
 
     if (opcode==SHIFT_SLL) begin
-      result = src<<amount;
+      res = src<<amount;
+      result = res[`BYTE_WIDTH-1:0];
       round  = 'b0;
     end
     else begin
       // ((opcode==SHIFT_SRL)||(opcode==SHIFT_SRA))
-      result = src>>>amount;    
+      res = src>>>amount;    
+      result = res[`BYTE_WIDTH-1:0];
       round  = operand<<(`BYTE_WIDTH-amount); 
     end
 
@@ -1088,6 +1091,7 @@ module rvv_backend_alu_unit_shift
     input logic [$clog2(`HWORD_WIDTH)-1:0] amount;
 
     logic signed [`HWORD_WIDTH:0]   src;
+    logic signed [`HWORD_WIDTH:0]   res;
     logic signed [`HWORD_WIDTH-1:0] result;
     logic signed [`HWORD_WIDTH-1:0] round;
 
@@ -1097,12 +1101,14 @@ module rvv_backend_alu_unit_shift
       src = {operand[`HWORD_WIDTH-1],operand};   // (opcode==SHIFT_SRA)
 
     if (opcode==SHIFT_SLL) begin
-      result = src<<amount;
+      res = src<<amount;
+      result = res[`HWORD_WIDTH-1:0];
       round  = 'b0;
     end
     else begin
       // ((opcode==SHIFT_SRL)||(opcode==SHIFT_SRA))
-      result = src>>>amount;    
+      res = src>>>amount;    
+      result = res[`HWORD_WIDTH-1:0];
       round  = operand<<(`HWORD_WIDTH-amount); 
     end
 
@@ -1116,6 +1122,7 @@ module rvv_backend_alu_unit_shift
     input logic [$clog2(`WORD_WIDTH)-1:0] amount;
 
     logic signed [`WORD_WIDTH:0]   src;
+    logic signed [`WORD_WIDTH:0]   res;
     logic signed [`WORD_WIDTH-1:0] result;
     logic signed [`WORD_WIDTH-1:0] round;
 
@@ -1125,12 +1132,14 @@ module rvv_backend_alu_unit_shift
       src = {operand[`WORD_WIDTH-1],operand};   // (opcode==SHIFT_SRA)
 
     if (opcode==SHIFT_SLL) begin
-      result = src<<amount;
+      res = src<<amount;
+      result = res[`WORD_WIDTH-1:0];
       round  = 'b0;
     end
     else begin
       // ((opcode==SHIFT_SRL)||(opcode==SHIFT_SRA))
-      result = src>>>amount;    
+      res = src>>>amount;    
+      result = res[`WORD_WIDTH-1:0];
       round  = operand<<(`WORD_WIDTH-amount); 
     end
 

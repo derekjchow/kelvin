@@ -22,6 +22,8 @@ module rvv_backend_dispatch_ctrl
     rs_ready_div2dp,
     rs_valid_dp2lsu,
     rs_ready_lsu2dp,
+    mapinfo_valid_dp2lsu,
+    mapinfo_ready_lsu2dp,
     uop_valid_dp2rob,
     uop_ready_rob2dp
 );
@@ -45,6 +47,8 @@ module rvv_backend_dispatch_ctrl
     input   logic         [`NUM_DP_UOP-1:0] rs_ready_div2dp;
     output  logic         [`NUM_DP_UOP-1:0] rs_valid_dp2lsu;
     input   logic         [`NUM_DP_UOP-1:0] rs_ready_lsu2dp;
+    output  logic         [`NUM_DP_UOP-1:0] mapinfo_valid_dp2lsu;
+    input   logic         [`NUM_DP_UOP-1:0] mapinfo_ready_lsu2dp;
 
     output  logic         [`NUM_DP_UOP-1:0] uop_valid_dp2rob;
     input   logic         [`NUM_DP_UOP-1:0] uop_ready_rob2dp;
@@ -85,7 +89,7 @@ module rvv_backend_dispatch_ctrl
                                     ~raw_uop_uop[i].vs2_wait &
                                     ~raw_uop_uop[i].vd_wait  &
                                     ~raw_uop_uop[i].v0_wait  &
-                                    ~arch_hazard.vr_limit    ;  // for 2-issue
+                                    ~arch_hazard.vr_limit    ;  
         end
         for (i=0; i<`NUM_DP_UOP; i++) begin : gen_rs_ready
           if (i==0)
@@ -98,7 +102,7 @@ module rvv_backend_dispatch_ctrl
                     PMT,
                     RDT: rs_ready[0] = rs_ready_pmtrdt2dp[0];
                     DIV: rs_ready[0] = rs_ready_div2dp[0];
-                    LSU: rs_ready[0] = rs_ready_lsu2dp[0];
+                    LSU: rs_ready[0] = rs_ready_lsu2dp[0]&mapinfo_ready_lsu2dp[0];
                     default: rs_ready[0] = 1'b0;
                 endcase
             end
@@ -112,7 +116,7 @@ module rvv_backend_dispatch_ctrl
                     PMT,
                     RDT: rs_ready[i] = rs_ready[i-1] & rs_ready_pmtrdt2dp[i];
                     DIV: rs_ready[i] = rs_ready[i-1] & rs_ready_div2dp[i];
-                    LSU: rs_ready[i] = rs_ready[i-1] & rs_ready_lsu2dp[i];
+                    LSU: rs_ready[i] = rs_ready[i-1] & rs_ready_lsu2dp[i] & mapinfo_ready_lsu2dp[i];
                     default: rs_ready[i] = 1'b0;
                 endcase
             end
@@ -141,6 +145,7 @@ module rvv_backend_dispatch_ctrl
                                            (uop_ctrl[i].uop_exe_unit == DIV);
             assign rs_valid_dp2lsu[i]    = uop_ready_dp2uop[i] & 
                                            (uop_ctrl[i].uop_exe_unit == LSU);
+            assign mapinfo_valid_dp2lsu[i] = rs_valid_dp2lsu[i]; 
         end
     endgenerate
     

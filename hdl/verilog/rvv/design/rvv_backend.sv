@@ -10,13 +10,13 @@ module rvv_backend
     insts_rvs2cq,
     insts_ready_cq2rvs,
 
-    uop_lsu_valid_rvv2rvs,
-    uop_lsu_rvv2rvs,
-    uop_lsu_ready_rvs2rvv,
+    uop_lsu_valid_rvv2lsu,
+    uop_lsu_rvv2lsu,
+    uop_lsu_ready_lsu2rvv,
 
-    uop_lsu_valid_rvs2rvv,
-    uop_lsu_rvs2rvv,
-    uop_lsu_ready_rvv2rvs,
+    uop_lsu_valid_lsu2rvv,
+    uop_lsu_lsu2rvv,
+    uop_lsu_ready_rvv2lsu,
 
     rt_xrf_rvv2rvs,
     rt_xrf_valid_rvv2rvs,
@@ -45,13 +45,13 @@ module rvv_backend
 
 // load/store unit interface
   // RVV send LSU uop to RVS
-    output  logic             [`NUM_LSU-1:0]          uop_lsu_valid_rvv2rvs;
-    output  LSU_RS_t          [`NUM_LSU-1:0]          uop_lsu_rvv2rvs;
-    input   logic             [`NUM_LSU-1:0]          uop_lsu_ready_rvs2rvv;
+    output  logic             [`NUM_LSU-1:0]          uop_lsu_valid_rvv2lsu;
+    output  UOP_RVV2LSU_t     [`NUM_LSU-1:0]          uop_lsu_rvv2lsu;
+    input   logic             [`NUM_LSU-1:0]          uop_lsu_ready_lsu2rvv;
   // LSU feedback to RVV
-    input   logic             [`NUM_LSU-1:0]          uop_lsu_valid_rvs2rvv;
-    input   UOP_LSU_RVS2RVV_t [`NUM_LSU-1:0]          uop_lsu_rvs2rvv;
-    output  logic             [`NUM_LSU-1:0]          uop_lsu_ready_rvv2rvs;
+    input   logic             [`NUM_LSU-1:0]          uop_lsu_valid_lsu2rvv;
+    input   UOP_LSU2RVV_t     [`NUM_LSU-1:0]          uop_lsu_lsu2rvv;
+    output  logic             [`NUM_LSU-1:0]          uop_lsu_ready_rvv2lsu;
 
 // RT to XRF. RVS arbitrates write ports of XRF by itself.
     output  logic             [`NUM_RT_UOP-1:0]       rt_xrf_valid_rvv2rvs;
@@ -188,6 +188,7 @@ module rvv_backend
     logic        [`NUM_DP_UOP-1:0]        uop_valid_uop2dp;
     UOP_QUEUE_t  [`NUM_DP_UOP-1:0]        uop_uop2dp;
     logic        [`NUM_DP_UOP-1:0]        uop_ready_dp2uop;
+
   // Dispatch to RS
     // ALU_RS
     logic                                 alu_rs_full;
@@ -216,14 +217,26 @@ module rvv_backend
     // LSU_RS
     logic                                 lsu_rs_full;
     logic        [`NUM_DP_UOP-1:1]        lsu_rs_almost_full;
+    logic                                 lsu_rs_empty;
+  `ifdef MULTI_LSU
+    logic        [`NUM_LSU-1:1]           lsu_rs_almost_empty;
+  `endif
     logic        [`NUM_DP_UOP-1:0]        rs_valid_dp2lsu;
-    LSU_RS_t     [`NUM_DP_UOP-1:0]        rs_dp2lsu;
+    UOP_RVV2LSU_t [`NUM_DP_UOP-1:0]       rs_dp2lsu;
     logic        [`NUM_DP_UOP-1:0]        rs_ready_lsu2dp;
+    // LSU MAP INFO
+    logic                                 mapinfo_full;
+    logic        [`NUM_DP_UOP-1:1]        mapinfo_almost_full;
+    logic        [`NUM_DP_UOP-1:0]        mapinfo_valid_dp2lsu;
+    LSU_MAP_INFO_t  [`NUM_DP_UOP-1:0]     mapinfo_dp2lsu;
+    logic        [`NUM_DP_UOP-1:0]        mapinfo_ready_lsu2dp;
   // Dispatch to ROB
     logic        [`NUM_DP_UOP-1:0]        uop_valid_dp2rob;
     DP2ROB_t     [`NUM_DP_UOP-1:0]        uop_dp2rob;
     logic        [`NUM_DP_UOP-1:0]        uop_ready_rob2dp;
     logic        [`ROB_DEPTH_WIDTH-1:0]   uop_index_rob2dp;
+  
+  // RS to excution unit
   // ALU_RS to ALU
     logic        [`NUM_ALU-1:0]           pop_alu2rs;
     ALU_RS_t     [`NUM_ALU-1:0]           uop_rs2alu;
@@ -240,13 +253,6 @@ module rvv_backend
   `endif
     PMT_RDT_RS_t [`PMTRDT_RS_DEPTH-1:0]   all_uop_rs2pmtrdt;
     logic        [$clog2(`PMTRDT_RS_DEPTH):0] valid_cnt_rs2pmtrdt;
-  // LSU_RS to LSU
-    logic        [`NUM_LSU-1:0]           pop_lsu2rs;
-    LSU_RS_t     [`NUM_LSU-1:0]           uop_rs2lsu;
-    logic                                 fifo_empty_rs2lsu;
-  `ifdef MULTI_LSU
-    logic        [`NUM_LSU-1:1]           fifo_almost_empty_rs2lsu;
-  `endif
   // MUL_RS to MUL
     logic        [`NUM_MUL-1:0]           pop_mul2rs;
     MUL_RS_t     [`NUM_MUL-1:0]           uop_rs2mul;
@@ -261,6 +267,24 @@ module rvv_backend
   `ifdef MULTI_DIV
     logic        [`NUM_DIV-1:1]           fifo_almost_empty_rs2div;
   `endif
+  // LSU mapinfo
+    logic        [`NUM_LSU-1:0]           pop_mapinfo;
+    LSU_MAP_INFO_t  [`NUM_LSU-1:0]        mapinfo;
+    logic                                 mapinfo_empty;
+  `ifdef MULTI_LSU
+    logic        [`NUM_LSU-1:1]           mapinfo_almost_empty;
+  `endif
+  // LSU result
+    logic        [`NUM_LSU-1:0]           pop_lsu_res;
+    UOP_LSU2RVV_t   [`NUM_LSU-1:0]        lsu_res;
+    logic                                 lsu_res_full;
+    logic        [`NUM_LSU-1:1]           lsu_res_almost_full;
+    logic                                 lsu_res_empty;
+  `ifdef MULTI_LSU
+    logic        [`NUM_LSU-1:1]           lsu_res_almost_empty;
+  `endif
+
+  // execution unit submit result to ROB
   // ALU to ROB
     logic        [`NUM_ALU-1:0]           wr_valid_alu2rob;
     PU2ROB_t     [`NUM_ALU-1:0]           wr_alu2rob;
@@ -384,7 +408,7 @@ module rvv_backend
         .rptr            (),
         .entry_count     ()
     );
-
+   
     assign uop_valid_uop2dp[0] = ~uq_empty;
     generate
       for (i=1;i<`NUM_DP_UOP;i++) begin: uop_queue_valid
@@ -399,7 +423,7 @@ module rvv_backend
 
       PopFromUopQueue: `rvv_expect((uop_valid_uop2dp & uop_ready_dp2uop) inside {3'b111, 3'b011, 3'b001,3'b000})
         else $error("Pop from uops queue out-of-order: %3b", $sampled(uop_valid_uop2dp & uop_ready_dp2uop));
-    `else  //ISSUE_2
+    `else //ISSUE_2
       PushToUopQueue: `rvv_expect(push_de2uq inside {4'b1111, 4'b0111, 4'b0011, 4'b0001, 4'b0000})
         else $error("Push to uops queue out-of-order: %4b", $sampled(push_de2uq));
 
@@ -436,9 +460,13 @@ module rvv_backend
         .rs_dp2div          (rs_dp2div),
         .rs_ready_div2dp    (rs_ready_div2dp),
         // LSU_RS
-        .rs_valid_dp2lsu    (rs_valid_dp2lsu),
-        .rs_dp2lsu          (rs_dp2lsu),
-        .rs_ready_lsu2dp    (rs_ready_lsu2dp),
+        .rs_valid_dp2lsu      (rs_valid_dp2lsu),
+        .rs_dp2lsu            (rs_dp2lsu),
+        .rs_ready_lsu2dp      (rs_ready_lsu2dp),
+        // LSU MAP INFO
+        .mapinfo_valid_dp2lsu (mapinfo_valid_dp2lsu),
+        .mapinfo_dp2lsu       (mapinfo_dp2lsu),
+        .mapinfo_ready_lsu2dp (mapinfo_ready_lsu2dp),
       // Dispatch to ROB
         .uop_valid_dp2rob   (uop_valid_dp2rob),
         .uop_dp2rob         (uop_dp2rob),
@@ -476,7 +504,7 @@ module rvv_backend
         .empty           (fifo_empty_rs2alu),
     `ifdef MULTI_ALU
         .almost_empty    (fifo_almost_empty_rs2alu),
-    `endif
+      `endif
         .clear           (1'b0),
         .fifo_data       (),
         .wptr            (),
@@ -586,33 +614,33 @@ module rvv_backend
     DIV_RS_t unused_uop_rs2div;
     // DIV RS
     multi_fifo #(
-        .T          (DIV_RS_t),
-        .M          (`NUM_DP_UOP),
-        .N          (`NUM_DIV*2),
-        .DEPTH      (`DIV_RS_DEPTH),
-        .CHAOS_PUSH (1'b1)
+        .T              (DIV_RS_t),
+        .M              (`NUM_DP_UOP),
+        .N              (`NUM_DIV*2),
+        .DEPTH          (`DIV_RS_DEPTH),
+        .CHAOS_PUSH     (1'b1)
     ) u_div_rs (
       // global
-        .clk        (clk),
-        .rst_n      (rst_n),
+        .clk            (clk),
+        .rst_n          (rst_n),
       // write
-        .push       (rs_valid_dp2div & rs_ready_div2dp),
-        .datain     (rs_dp2div),
+        .push           (rs_valid_dp2div & rs_ready_div2dp),
+        .datain         (rs_dp2div),
       // read
-        .pop        ({1'b0, pop_div2rs}),
-        .dataout    ({unused_uop_rs2div, uop_rs2div}),
+        .pop            ({1'b0, pop_div2rs}),
+        .dataout        ({unused_uop_rs2div, uop_rs2div}),
       // fifo status
-        .full          (div_rs_full),
-        .almost_full   (div_rs_almost_full),
-        .empty         (fifo_empty_rs2div),
+        .full           (div_rs_full),
+        .almost_full    (div_rs_almost_full),
+        .empty          (fifo_empty_rs2div),
       `ifdef MULTI_DIV
-        .almost_empty  (fifo_almost_empty_rs2div),
+        .almost_empty   (fifo_almost_empty_rs2div),
       `endif
-        .clear         (1'b0),
-        .fifo_data     (),
-        .wptr          (),
-        .rptr          (),
-        .entry_count   ()
+        .clear          (1'b0),
+        .fifo_data      (),
+        .wptr           (),
+        .rptr           (),
+        .entry_count    ()
     );
 
     assign rs_ready_div2dp[0] = ~div_rs_full;
@@ -629,27 +657,27 @@ module rvv_backend
 
     // LSU RS
     multi_fifo #(
-        .T          (LSU_RS_t),
-        .M          (`NUM_DP_UOP),
-        .N          (`NUM_LSU),
-        .DEPTH      (`LSU_RS_DEPTH),
-        .CHAOS_PUSH (1'b1)
+        .T            (UOP_RVV2LSU_t),
+        .M            (`NUM_DP_UOP),
+        .N            (`NUM_LSU),
+        .DEPTH        (`LSU_RS_DEPTH),
+        .CHAOS_PUSH   (1'b1)
     ) u_lsu_rs (
       // global
-        .clk        (clk),
-        .rst_n      (rst_n),
+        .clk          (clk),
+        .rst_n        (rst_n),
       // write
-        .push       (rs_valid_dp2lsu & rs_ready_lsu2dp),
-        .datain     (rs_dp2lsu),
+        .push         (rs_valid_dp2lsu & rs_ready_lsu2dp),
+        .datain       (rs_dp2lsu),
       // read
-        .pop        (uop_lsu_valid_rvv2rvs & uop_lsu_ready_rvs2rvv),
-        .dataout    (uop_rs2lsu),
+        .pop          (uop_lsu_valid_rvv2lsu & uop_lsu_ready_lsu2rvv),
+        .dataout      (uop_lsu_rvv2lsu),
       // fifo status
         .full         (lsu_rs_full),
         .almost_full  (lsu_rs_almost_full),
-        .empty        (fifo_empty_rs2lsu),
+        .empty        (lsu_rs_empty),
       `ifdef MULTI_LSU
-        .almost_empty (fifo_almost_empty_rs2lsu),
+        .almost_empty (lsu_rs_almost_empty),
       `endif
         .clear        (1'b0),
         .fifo_data    (),
@@ -657,7 +685,7 @@ module rvv_backend
         .rptr         (),
         .entry_count  ()
     );
-  
+    // LSU RS full signal for dispatch unit
     assign rs_ready_lsu2dp[0] = ~lsu_rs_full;
     generate
       for (i=1;i<`NUM_DP_UOP;i++) begin: lsu_rs_ready
@@ -665,14 +693,89 @@ module rvv_backend
       end
     endgenerate
 
-    assign uop_lsu_valid_rvv2rvs[0] = ~fifo_empty_rs2lsu;
-    assign uop_lsu_valid_rvv2rvs[1] = ~(fifo_empty_rs2lsu || fifo_almost_empty_rs2lsu);
-    assign uop_lsu_rvv2rvs = uop_rs2lsu;
+    // output valid and data to LSU
+    assign uop_lsu_valid_rvv2lsu[0] = ~ lsu_rs_empty;
+    generate
+      for (i=1;i<`NUM_LSU;i++) begin: uop_lsu_valid
+        assign uop_lsu_valid_rvv2lsu[i] = ~(lsu_rs_empty || lsu_rs_almost_empty[i]);
+      end
+    endgenerate
+    
+    // LSU MAP INFO
+    multi_fifo #(
+        .T            (LSU_MAP_INFO_t),
+        .M            (`NUM_DP_UOP),
+        .N            (`NUM_LSU),
+        .DEPTH        (`LSU_RS_DEPTH),
+        .CHAOS_PUSH   (1'b1)
+    ) u_lsu_map_info (
+      // global
+        .clk          (clk),
+        .rst_n        (rst_n),
+      // write
+        .push         (mapinfo_valid_dp2lsu & mapinfo_ready_lsu2dp),
+        .datain       (mapinfo_dp2lsu),
+      // read
+        .pop          (pop_mapinfo),
+        .dataout      (mapinfo),
+      // fifo status
+        .full         (mapinfo_full),
+        .almost_full  (mapinfo_almost_full),
+        .empty        (mapinfo_empty),
+      `ifdef MULTI_LSU
+        .almost_empty (mapinfo_almost_empty),
+      `endif
+        .clear        (1'b0),
+        .fifo_data    (),
+        .wptr         (),
+        .rptr         (),
+        .entry_count  ()
+    );
 
-  `ifdef ASSERT_ON
-    // PopFromLsuRSQueue: `rvv_expect((pop_lsu2rs) inside {2'b11, 2'b01, 2'b00})
-    //   else $error("Pop from LSU Reservation Station out-of-order: %2b", $sampled(pop_lsu2rs));
-  `endif // ASSERT_ON
+    assign mapinfo_ready_lsu2dp[0] = ~mapinfo_full;
+    generate
+      for (i=1;i<`NUM_DP_UOP;i++) begin: mapinfo_ready
+        assign mapinfo_ready_lsu2dp[i] = ~mapinfo_full & ~mapinfo_almost_full[i];
+      end
+    endgenerate
+
+  // LSU feedback result
+    multi_fifo #(
+        .T            (UOP_LSU2RVV_t),
+        .M            (`NUM_LSU),
+        .N            (`NUM_LSU),
+        .DEPTH        (`LSU_RS_DEPTH),
+        .CHAOS_PUSH   (1'b1)
+    ) u_lsu_res (
+      // global
+        .clk          (clk),
+        .rst_n        (rst_n),
+      // write
+        .push         (uop_lsu_valid_lsu2rvv & uop_lsu_ready_rvv2lsu),
+        .datain       (uop_lsu_lsu2rvv),
+      // read
+        .pop          (pop_lsu_res),
+        .dataout      (lsu_res),
+      // fifo status
+        .full         (lsu_res_full),
+        .almost_full  (lsu_res_almost_full),
+        .empty        (lsu_res_empty),
+      `ifdef MULTI_LSU
+        .almost_empty (lsu_res_almost_empty),
+      `endif
+        .clear        (1'b0),
+        .fifo_data    (),
+        .wptr         (),
+        .rptr         (),
+        .entry_count  ()
+    );
+    // ready signal for LSU
+    assign uop_lsu_ready_rvv2lsu[0] = ~lsu_res_full;
+    generate
+      for (i=1;i<`NUM_LSU;i++) begin: lsu_res_ready
+        assign uop_lsu_ready_rvv2lsu[i] = ~lsu_res_full & ~lsu_res_almost_full[i];
+      end
+    endgenerate
 
   // PU, Process unit
     // ALU
@@ -721,13 +824,12 @@ module rvv_backend
       .ex2rs_fifo_pop(pop_mul2rs),
       .rs2ex_uop_data(uop_rs2mul), 
       .rs2ex_fifo_empty(fifo_empty_rs2mul), 
-      .rs2ex_fifo_1left_to_empty(fifo_almost_empty_rs2mul[1]),
+      .rs2ex_fifo_1left_to_empty(fifo_almost_empty_rs2mul[1]), 
     //MULMAC to ROB
       .ex2rob_valid(wr_valid_mul2rob), 
       .ex2rob_data(wr_mul2rob),
       .rob2ex_ready(wr_ready_rob2mul)
     );
-    
     
     // DIV
     rvv_backend_div u_div
@@ -747,20 +849,22 @@ module rvv_backend
       .result_ready_rob2div     (wr_ready_rob2div) 
     );
 
-    // LSU
-    generate
-      for (i=0; i<`NUM_LSU; i++) begin : gen_lsu2rob
-`ifdef TB_SUPPORT
-        assign wr_lsu2rob[i].uop_pc = uop_lsu_rvs2rvv[i].uop_pc;
-`endif
-        assign wr_valid_lsu2rob[i] = uop_lsu_valid_rvs2rvv[i]&(uop_lsu_rvs2rvv[i].vregfile_write_valid|uop_lsu_rvs2rvv[i].lsu_vstore_last); 
-        assign wr_lsu2rob[i].rob_entry = uop_lsu_rvs2rvv[i].rob_entry;
-        assign wr_lsu2rob[i].w_data    = uop_lsu_rvs2rvv[i].vregfile_write_data;
-        assign wr_lsu2rob[i].w_valid   = uop_lsu_rvs2rvv[i].vregfile_write_valid; 
-        assign wr_lsu2rob[i].vsaturate = 'b0;
-        assign uop_lsu_ready_rvv2rvs[i] = wr_ready_rob2lsu[i];
-      end
-    endgenerate
+    // LSU remap
+    rvv_backend_lsu_remap
+    u_lsu_remap
+    (
+      .mapinfo                (mapinfo),
+      .lsu_res                (lsu_res),
+      .mapinfo_empty          (mapinfo_empty),
+      .mapinfo_almost_empty   (mapinfo_almost_empty),
+      .lsu_res_empty          (lsu_res_empty),
+      .lsu_res_almost_empty   (lsu_res_almost_empty),
+      .pop_mapinfo            (pop_mapinfo),
+      .pop_lsu_res            (pop_lsu_res),
+      .result_valid_lsu2rob   (wr_valid_lsu2rob),
+      .result_lsu2rob         (wr_lsu2rob),      
+      .result_ready_rob2lsu   (wr_ready_rob2lsu)
+    );
 
   // ROB, Re-Order Buffer
     rvv_backend_rob #(

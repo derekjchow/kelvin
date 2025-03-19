@@ -50,13 +50,13 @@ module rvv_backend_top();
     .rt_xrf_valid_rvv2rvs     (rvs_if.rt_xrf_valid_rvv2rvs  ),
     .rt_xrf_ready_rvs2rvv     (rvs_if.rt_xrf_ready_rvs2rvv  ),
 
-    .uop_lsu_valid_rvv2rvs    (lsu_if.uop_lsu_valid_rvv2rvs ),
-    .uop_lsu_rvv2rvs          (lsu_if.uop_lsu_rvv2rvs       ),
-    .uop_lsu_ready_rvs2rvv    (lsu_if.uop_lsu_ready_rvs2rvv ),
+    .uop_lsu_valid_rvv2lsu    (lsu_if.uop_lsu_valid_rvv2lsu ),
+    .uop_lsu_rvv2lsu          (lsu_if.uop_lsu_rvv2lsu       ),
+    .uop_lsu_ready_lsu2rvv    (lsu_if.uop_lsu_ready_lsu2rvv ),
 
-    .uop_lsu_valid_rvs2rvv    (lsu_if.uop_lsu_valid_rvs2rvv ),
-    .uop_lsu_rvs2rvv          (lsu_if.uop_lsu_rvs2rvv       ),
-    .uop_lsu_ready_rvv2rvs    (lsu_if.uop_lsu_ready_rvv2rvs ),
+    .uop_lsu_valid_lsu2rvv    (lsu_if.uop_lsu_valid_lsu2rvv ),
+    .uop_lsu_lsu2rvv          (lsu_if.uop_lsu_lsu2rvv       ),
+    .uop_lsu_ready_rvv2lsu    (lsu_if.uop_lsu_ready_rvv2lsu ),
 
     
     .trap_valid_rvs2rvv       ('0                           ), // FIXME

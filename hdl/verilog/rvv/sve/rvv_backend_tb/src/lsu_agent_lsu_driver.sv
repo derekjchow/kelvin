@@ -64,9 +64,9 @@ task lsu_driver::reset_phase(uvm_phase phase);
   phase.raise_objection( .obj( this ) );
   while(!lsu_if.rst_n) begin
     for(int i=0; i<`NUM_DP_UOP; i++) begin
-      lsu_if.uop_lsu_ready_rvs2rvv[i] <= '0;
-      lsu_if.uop_lsu_valid_rvs2rvv[i] <= '0;
-      lsu_if.uop_lsu_rvs2rvv[i]       <= '0;
+      lsu_if.uop_lsu_ready_lsu2rvv[i] <= '0;
+      lsu_if.uop_lsu_valid_lsu2rvv[i] <= '0;
+      lsu_if.uop_lsu_lsu2rvv[i]       <= '0;
     end
     @(posedge lsu_if.clk);
   end
@@ -99,20 +99,20 @@ task lsu_driver::tx_driver();
   forever begin
     @(posedge lsu_if.clk);
     for(int i=0; i<`NUM_DP_UOP; i++) begin
-      lsu_if.uop_lsu_ready_rvs2rvv[i] <= '1;
+      lsu_if.uop_lsu_ready_lsu2rvv[i] <= '1;
       // feedback
-      lsu_if.uop_lsu_valid_rvs2rvv[i] <= '0;
-      lsu_if.uop_lsu_rvs2rvv[i]       <= '0;
+      lsu_if.uop_lsu_valid_lsu2rvv[i] <= '0;
+      lsu_if.uop_lsu_lsu2rvv[i]       <= '0;
     end
     /*
     if(lsu_if.rst_n) begin
       for(int i=0; i<`NUM_DP_UOP; i++) begin
         if(lsu_if.uop_valid[i]) begin
-          if(pc == lsu_if.uop_lsu_rvv2rvs[i].uop_pc) begin
+          if(pc == lsu_if.uop_lsu_rvv2lsu[i].uop_pc) begin
             if(inst_tr.inst_type == LD) begin
               lsu_tr.kind = LOAD;
               lsu_tr.value = $random();
-              lsu_tr.byte_mask = lsu_if.uop_lsu_rvv2rvs[i]
+              lsu_tr.byte_mask = lsu_if.uop_lsu_rvv2lsu[i]
             end
             if(inst_tr.inst_type == ST) begin
               store queue push;
