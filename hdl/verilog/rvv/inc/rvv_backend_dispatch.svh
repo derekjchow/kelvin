@@ -95,10 +95,9 @@ typedef struct packed {
 
 // the vector operand byte type in uop
 typedef struct packed {
-  BYTE_TYPE_t           vs1;
   BYTE_TYPE_t           vs2;
   BYTE_TYPE_t           vd;
-  logic [`VLENB-1:0]    v0;
+  logic [`VLENB-1:0]    v0_strobe;
 } UOP_OPN_BYTE_TYPE_t;
 
 `endif // RVV_DISPATCH__SVH

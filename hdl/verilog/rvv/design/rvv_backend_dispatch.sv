@@ -740,7 +740,7 @@ module rvv_backend_dispatch
             assign rs_dp2lsu[i].vregfile_read_addr  = uop_uop2dp[i].vd_index;
             assign rs_dp2lsu[i].vregfile_read_data  = uop_operand[i].vd;
             assign rs_dp2lsu[i].v0_valid      = uop_uop2dp[i].v0_valid;
-            assign rs_dp2lsu[i].v0_data       = uop_operand_byte_type[i].v0;
+            assign rs_dp2lsu[i].v0_data       = uop_operand_byte_type[i].v0_strobe;
 
           // LSU MAP INFO
 `ifdef TB_SUPPORT

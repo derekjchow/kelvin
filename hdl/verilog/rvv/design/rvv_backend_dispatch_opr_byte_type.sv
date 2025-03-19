@@ -13,9 +13,6 @@ module rvv_backend_dispatch_opr_byte_type
 );
 // ---parameter definition--------------------------------------------
     localparam VLENB_WIDTH = $clog2(`VLENB);
-    localparam logic [`VLENB-1:0][VLENB_WIDTH-1:0] BYTE_INDEX =
-        {4'd15, 4'd14, 4'd13, 4'd12, 4'd11, 4'd10, 4'd9, 4'd8, 
-         4'd7 , 4'd6 , 4'd5 , 4'd4 , 4'd3 , 4'd2 , 4'd1, 4'd0};
 
 // ---port definition-------------------------------------------------
     output UOP_OPN_BYTE_TYPE_t operand_byte_type;
@@ -25,11 +22,6 @@ module rvv_backend_dispatch_opr_byte_type
 // ---internal signal definition--------------------------------------
     EEW_e                               eew_max;
     logic  [1:0]                        eew_max_shift;
-
-    logic  [1:0]                        vs1_eew_shift;
-    logic  [`VSTART_WIDTH-1:0]          uop_vs1_start;
-    logic  [`VLENB-1:0][`VL_WIDTH-1:0]  vs1_ele_index; // element index
-    logic  [`VLENB-1:0]                 vs1_enable, vs1_enable_tmp;
     
     logic  [1:0]                        vs2_eew_shift;
     logic  [`VSTART_WIDTH-1:0]          uop_vs2_start;
@@ -68,60 +60,6 @@ module rvv_backend_dispatch_opr_byte_type
     end
 
     genvar i;
-// for vs1 byte type
-    generate
-        always_comb begin
-            case (uop_info.vs1_eew)
-                EEW8:   vs1_eew_shift = 2'h0;
-                EEW16:  vs1_eew_shift = 2'h1;
-                EEW32:  vs1_eew_shift = 2'h2;
-                default:vs1_eew_shift = 2'h0;
-            endcase
-        end
-
-        always_comb begin
-          case({eew_max,uop_info.vs1_eew})
-            {EEW32,EEW32},
-            {EEW16,EEW16},
-            {EEW8,EEW8}: begin
-              // regular and narrowing instruction
-              uop_vs1_start = uop_info.uop_index << (VLENB_WIDTH - vs1_eew_shift);
-            end
-            {EEW32,EEW16},
-            {EEW16,EEW8}: begin
-              // widening instructio: EEW_vd:EEW_vs = 2:1
-              uop_vs1_start = uop_info.uop_index[`UOP_INDEX_WIDTH-1:1] << (VLENB_WIDTH - vs1_eew_shift);
-            end
-            {EEW32,EEW8}: begin
-              // widening instructio: EEW_vd:EEW_vs = 4:1
-              uop_vs1_start = uop_info.uop_index[`UOP_INDEX_WIDTH-1:2] << (VLENB_WIDTH - vs1_eew_shift);
-            end
-            default: begin
-              uop_vs1_start = 'b0;
-            end
-          endcase
-        end
-
-        assign vs1_enable_tmp  = v0_enable[uop_vs1_start+:`VLENB]; 
-
-        for (i=0; i<`VLENB; i++) begin : gen_vs1_byte_type
-            // ele_index = uop_index * (VLEN/vs1_eew) + BYTE_INDEX[MSB:vs1_eew]
-            assign vs1_enable[i] = uop_info.vm ? 1'b1 : vs1_enable_tmp[BYTE_INDEX[i] >> vs1_eew_shift];
-            assign vs1_ele_index[i] = uop_vs1_start + (BYTE_INDEX[i] >> vs1_eew_shift);
-            always_comb begin
-                if (uop_info.ignore_vta&uop_info.ignore_vma)
-                    operand_byte_type.vs1[i] = BODY_ACTIVE;       
-                else if (vs1_ele_index[i] >= uop_info.vl) 
-                    operand_byte_type.vs1[i] = TAIL;
-                else if (vs1_ele_index[i] < {1'b0, uop_info.vstart}) 
-                    operand_byte_type.vs1[i] = NOT_CHANGE; // prestart
-                else begin 
-                    operand_byte_type.vs1[i] = (vs1_enable[i] || uop_info.ignore_vma) ? BODY_ACTIVE
-                                                                                     : BODY_INACTIVE;
-                end
-            end
-        end
-    endgenerate
 
 // for vs2 byte type
     generate
@@ -169,8 +107,8 @@ module rvv_backend_dispatch_opr_byte_type
 
         for (i=0; i<`VLENB; i++) begin : gen_vs2_byte_type
             // ele_index = uop_index * (VLEN/vs2_eew) + BYTE_INDEX[MSB:vs2_eew]
-            assign vs2_enable[i] = uop_info.vm ? 1'b1 : vs2_enable_tmp[BYTE_INDEX[i] >> vs2_eew_shift];
-            assign vs2_ele_index[i] = uop_vs2_start + (BYTE_INDEX[i] >> vs2_eew_shift);
+            assign vs2_enable[i] = uop_info.vm ? 1'b1 : vs2_enable_tmp[i[VLENB_WIDTH-1:0] >> vs2_eew_shift];
+            assign vs2_ele_index[i] = uop_vs2_start + (i[VLENB_WIDTH-1:0] >> vs2_eew_shift);
             always_comb begin
                 if (uop_info.ignore_vta&uop_info.ignore_vma)
                     operand_byte_type.vs2[i] = BODY_ACTIVE;       
@@ -241,11 +179,11 @@ module rvv_backend_dispatch_opr_byte_type
 
         for (i=0; i<`VLENB; i++) begin : gen_vd_byte_type
             // ele_index = uop_index * (VLEN/vd_eew) + BYTE_INDEX[MSB:vd_eew]
-            assign vd_enable[i] = uop_info.vm ? 1'b1 : vd_enable_tmp[BYTE_INDEX[i] >> vd_eew_shift];
-            assign vd_ele_index[i] = uop_vd_start + (BYTE_INDEX[i] >> vd_eew_shift);
+            assign vd_enable[i] = uop_info.vm ? 1'b1 : vd_enable_tmp[i[VLENB_WIDTH-1:0] >> vd_eew_shift];
+            assign vd_ele_index[i] = uop_vd_start + (i[VLENB_WIDTH-1:0] >> vd_eew_shift);
 
             always_comb begin
-              operand_byte_type.v0[i] = 'b0;
+              operand_byte_type.v0_strobe[i] = 'b0;
 
               case (uop_info.uop_exe_unit)
                 RDT:begin
@@ -267,7 +205,7 @@ module rvv_backend_dispatch_opr_byte_type
                   else begin 
                       operand_byte_type.vd[i] = (vd_enable[i] || uop_info.ignore_vma) ? BODY_ACTIVE
                                                                                       : BODY_INACTIVE;
-                      operand_byte_type.v0[i] = vd_enable[i] || uop_info.ignore_vma;
+                      operand_byte_type.v0_strobe[i] = vd_enable[i] || uop_info.ignore_vma;
                   end
                 end
               endcase
