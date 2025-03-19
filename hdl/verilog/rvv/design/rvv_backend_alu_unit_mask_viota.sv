@@ -1,33 +1,33 @@
- module rvv_backend_alu_unit_mask_viota64
- (
-   source,
-   result_viota64
- );
-   input  logic  [63:0]                source;
-   output logic  [63:0][$clog2(64):0]  result_viota64;
- 
-   logic [1:0][31:0][$clog2(32):0]     result_viota32;
- 
-   genvar                              j;
-   
-   // calculate
-   generate
-     for(j=0;j<2;j++) begin: GET_VIOTA32
-       rvv_backend_alu_unit_mask_viota32
-       u_viota32
-       (
-         .source         (source[32*j +: 32]),
-         .result_viota32 (result_viota32[j])
-       );
-     end
-     
-     for(j=0;j<32;j++) begin: GET_VIOTA64
-       assign result_viota64[j] = result_viota32[0][j];
-       assign result_viota64[j+32] = result_viota32[1][j]+result_viota32[0][31];
-     end
-   endgenerate
- 
- endmodule
+//module rvv_backend_alu_unit_mask_viota64
+//(
+//  source,
+//  result_viota64
+//);
+//  input  logic  [63:0]                source;
+//  output logic  [63:0][$clog2(64):0]  result_viota64;
+//
+//  logic [1:0][31:0][$clog2(32):0]     result_viota32;
+//
+//  genvar                              j;
+//  
+//  // calculate
+//  generate
+//    for(j=0;j<2;j++) begin: GET_VIOTA32
+//      rvv_backend_alu_unit_mask_viota32
+//      u_viota32
+//      (
+//        .source         (source[32*j +: 32]),
+//        .result_viota32 (result_viota32[j])
+//      );
+//    end
+//    
+//    for(j=0;j<32;j++) begin: GET_VIOTA64
+//      assign result_viota64[j] = result_viota32[0][j];
+//      assign result_viota64[j+32] = result_viota32[1][j]+result_viota32[0][31];
+//    end
+//  endgenerate
+//
+//endmodule
  
 //
 //  another viota64 by using viota16

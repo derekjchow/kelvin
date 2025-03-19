@@ -25,8 +25,8 @@ module rvv_backend_decode_ctrl
 // interface signals
 //
   // global signals
-  input   logic       clk;
-  input   logic       rst_n;
+  input   logic                                           clk;
+  input   logic                                           rst_n;
 
   // decoded uops
   input   logic       [`NUM_DE_INST-1:0]                  pkg_valid;
@@ -34,44 +34,42 @@ module rvv_backend_decode_ctrl
   input   UOP_QUEUE_t [`NUM_DE_INST-1:0][`NUM_DE_UOP-1:0] uop_de2uq;
   
   // uop_index for decode_unit
-  output  logic       [`UOP_INDEX_WIDTH-1:0]  uop_index_remain;
+  output  logic       [`UOP_INDEX_WIDTH-1:0]              uop_index_remain;
   
   // pop signals for command queue
-  output  logic       [`NUM_DE_INST-1:0]      pop;
+  output  logic       [`NUM_DE_INST-1:0]                  pop;
 
   // signals from Uops Quue
-  output  logic       [`NUM_DE_UOP-1:0]       push;
-  output  UOP_QUEUE_t [`NUM_DE_UOP-1:0]       dataout;
-  input   logic                               fifo_full_uq2de;
-  input   logic       [`NUM_DE_UOP-1:0]       fifo_almost_full_uq2de;
+  output  logic       [`NUM_DE_UOP-1:0]                   push;
+  output  UOP_QUEUE_t [`NUM_DE_UOP-1:0]                   dataout;
+  input   logic                                           fifo_full_uq2de;
+  input   logic       [`NUM_DE_UOP-1:0]                   fifo_almost_full_uq2de;
 
 //
 // internal signals
 //
   // get last uop signal 
-  logic [`NUM_DE_INST-1:0]      last_uop_unit;
-  logic [`NUM_DE_UOP-1:0]       get_unit1_last_signal;
+  logic [`NUM_DE_INST-1:0]        last_uop_unit;
+  logic [`NUM_DE_UOP-1:0]         get_unit1_last_signal;
 
-  // quantity of uop_valid
-  logic [$clog2(`NUM_DE_UOP)-1:0] quantity_unit0;
-  logic [$clog2(`NUM_DE_UOP)-1:0] quantity_unit1;
-  logic [$clog2(`NUM_DE_UOP):0]   quantity_sum;
+  // compress uop_valid
+  logic [`NUM_DE_UOP-1:0]         compress_valid;
 
   // fifo is ready when it has `NUM_DE_UOP free spaces at least
-  logic                         fifo_ready;
+  logic                           fifo_ready;
   
   // signals in uop_index DFF 
-  logic                         uop_index_clear;   
-  logic                         uop_index_enable_unit0;
-  logic                         uop_index_enable_unit1;
-  logic                         uop_index_enable;
-  logic [`UOP_INDEX_WIDTH-1:0]  uop_index_din;
+  logic                           uop_index_clear;   
+  logic                           uop_index_enable_unit0;
+  logic                           uop_index_enable_unit1;
+  logic                           uop_index_enable;
+  logic [`UOP_INDEX_WIDTH-1:0]    uop_index_din;
   
   // used in getting push0-3
-  logic [`NUM_DE_UOP-1:0]       push_valid;
+  logic [`NUM_DE_UOP-1:0]         push_valid;
   
   // for-loop
-  genvar                        i;
+  genvar                          i;
 
 //
 // ctroller
@@ -111,43 +109,16 @@ module rvv_backend_decode_ctrl
         endcase
       end
 
-      // get quantity of uop_valid
+      // compress uop_valid
       always_comb begin
         case(uop_valid_de2uq[0][`NUM_DE_UOP-1:0])
-          6'b00_0001: quantity_unit0 = 'd1; 
-          6'b00_0011: quantity_unit0 = 'd2;
-          6'b00_0111: quantity_unit0 = 'd3;
-          6'b00_1111: quantity_unit0 = 'd4;
-          6'b01_1111: quantity_unit0 = 'd5;
-          6'b11_1111: quantity_unit0 = 'd6;
-          default   : quantity_unit0 = 'd0;
-        endcase
-      end
-
-      always_comb begin
-        case(uop_valid_de2uq[1][`NUM_DE_UOP-1:0])
-          6'b00_0001: quantity_unit1 = 'd1; 
-          6'b00_0011: quantity_unit1 = 'd2;
-          6'b00_0111: quantity_unit1 = 'd3;
-          6'b00_1111: quantity_unit1 = 'd4;
-          6'b01_1111: quantity_unit1 = 'd5;
-          6'b11_1111: quantity_unit1 = 'd6;
-          default   : quantity_unit1 = 'd0;
-        endcase
-      end
-
-      assign quantity_sum = quantity_unit0+quantity_unit1;
-
-      // get fifo_ready
-      always_comb begin
-        case(quantity_sum)
-          4'd0: fifo_ready = 'b1;
-          4'd1: fifo_ready = !fifo_full_uq2de;
-          4'd2: fifo_ready = !fifo_almost_full_uq2de[1];
-          4'd3: fifo_ready = !fifo_almost_full_uq2de[2];
-          4'd4: fifo_ready = !fifo_almost_full_uq2de[3];
-          4'd5: fifo_ready = !fifo_almost_full_uq2de[4];
-          default: fifo_ready = !fifo_almost_full_uq2de[5];
+          6'b00_0001: compress_valid = {uop_valid_de2uq[1][4:0],1'b1}; 
+          6'b00_0011: compress_valid = {uop_valid_de2uq[1][3:0],2'b11}; 
+          6'b00_0111: compress_valid = {uop_valid_de2uq[1][2:0],3'b111}; 
+          6'b00_1111: compress_valid = {uop_valid_de2uq[1][1:0],4'b1111}; 
+          6'b01_1111: compress_valid = {uop_valid_de2uq[1][0]  ,5'b1_1111}; 
+          6'b11_1111: compress_valid = 6'b11_1111; 
+          default   : compress_valid = 'b0; 
         endcase
       end
 
@@ -180,42 +151,22 @@ module rvv_backend_decode_ctrl
         endcase
       end
 
-      // get quantity of uop_valid
+      // compress uop_valid
       always_comb begin
         case(uop_valid_de2uq[0][`NUM_DE_UOP-1:0])
-          4'b0001: quantity_unit0 = 'd1; 
-          4'b0011: quantity_unit0 = 'd2;
-          4'b0111: quantity_unit0 = 'd3;
-          4'b1111: quantity_unit0 = 'd4;
-          default: quantity_unit0 = 'd0;
-        endcase
-      end
-
-      always_comb begin
-        case(uop_valid_de2uq[1][`NUM_DE_UOP-1:0])
-          4'b0001: quantity_unit1 = 'd1; 
-          4'b0011: quantity_unit1 = 'd2;
-          4'b0111: quantity_unit1 = 'd3;
-          4'b1111: quantity_unit1 = 'd4;
-          default: quantity_unit1 = 'd0;
-        endcase
-      end
-
-      assign quantity_sum = quantity_unit0+quantity_unit1;
-
-      // get fifo_ready
-      always_comb begin
-        case(quantity_sum)
-          4'd0: fifo_ready = 'b1;
-          4'd1: fifo_ready = !fifo_full_uq2de;
-          4'd2: fifo_ready = !fifo_almost_full_uq2de[1];
-          4'd3: fifo_ready = !fifo_almost_full_uq2de[2];
-          default: fifo_ready = !fifo_almost_full_uq2de[3];
+          4'b0001: compress_valid = {uop_valid_de2uq[1][2:0],1'b1}; 
+          4'b0011: compress_valid = {uop_valid_de2uq[1][1:0],2'b11}; 
+          4'b0111: compress_valid = {uop_valid_de2uq[1][0]  ,3'b111}; 
+          4'b1111: compress_valid = 4'b1111; 
+          default: compress_valid = 'b0; 
         endcase
       end
 
     end
   endgenerate
+
+  // get fifo_ready
+  assign fifo_ready = (compress_valid=='b0) ? 'b0 : ((compress_valid&fifo_almost_full_uq2de)=='b0);
       
   // get pop signal to Command Queue
   assign pop[0] =        pkg_valid[0]&((last_uop_unit[0]&fifo_ready) || (uop_valid_de2uq[0][`NUM_DE_UOP-1:0]=='b0));
