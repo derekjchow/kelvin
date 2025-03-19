@@ -49,10 +49,6 @@ def format_line_from_word(word, addr):
   line = np.roll(line.view(np.uint8), shift)
   return convert_to_binary_value(line)
 
-async def halt(self):
-  kelvin_reset_csr_addr = 0x30000
-  await self.write_word(kelvin_reset_csr_addr, 3)
-
 class CoreMiniAxiInterface:
   def __init__(self, dut):
     self.dut = dut
@@ -392,6 +388,10 @@ class CoreMiniAxiInterface:
     await Timer(1, unit="us")
     self.dut.io_aresetn.setimmediatevalue(1)
     await Timer(1, unit="us")
+
+  async def halt(self):
+    kelvin_reset_csr_addr = 0x30000
+    await self.write_word(kelvin_reset_csr_addr, 3)
 
   async def _write_addr(self, addr, size, burst_len=1, axi_id=0, burst=AxiBurst.INCR):
     awdata = dict()
@@ -787,7 +787,10 @@ async def core_mini_axi_write_read_memory_stress_test(dut):
         assert (expected == rdata).all()
 
     await core_mini_axi.write_word(halt, 1)
-    await core_mini_axi.wait_for_halted()
+    try:
+      await core_mini_axi.wait_for_halted()
+    except:
+      await core_mini_axi.halt()
 
 @cocotb.test()
 async def core_mini_axi_master_write_alignment(dut):

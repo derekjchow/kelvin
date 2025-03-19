@@ -57,6 +57,7 @@ def verilator_cocotb_test(name,
 def vcs_cocotb_test(name,
                     hdl_toplevel,
                     test_module,
+                    testcases=[],
                     deps=[],
                     data=[],
                     **kwargs):
@@ -79,12 +80,15 @@ def vcs_cocotb_test(name,
         data = data,
     )
 
-    cocotb_test(
-        name = name,
+    test_args = kwargs.pop("test_args", [""])
+    [cocotb_test(
+        name = "{}_{}".format(name, tc),
         hdl_toplevel = hdl_toplevel,
         test_module = test_module,
+        testcase = [tc],
+        test_args = ["{} -cm_name {}".format(test_args[0], tc)] + test_args[1:],
         deps = [
             ":{}_test_data".format(name),
         ],
         **kwargs,
-    )
+    ) for tc in testcases]
