@@ -76,6 +76,12 @@ module rvv_backend_top();
   assign rvs_if.rt_uop      = `RT_UOP_PATH.rt_uop;
   assign rvs_if.rt_last_uop = `RT_UOP_PATH.rt_last_uop;
   
+  // ROB dataout 
+  assign rvs_if.rd_valid_rob2rt = DUT.rd_valid_rob2rt;
+  assign rvs_if.rd_rob2rt       = DUT.rd_rob2rt      ;
+  assign rvs_if.rd_ready_rt2rob = DUT.rd_ready_rt2rob;
+
+
   // VRF retire
   always_comb begin
     for(int i=0; i<`NUM_RT_UOP; i++) begin

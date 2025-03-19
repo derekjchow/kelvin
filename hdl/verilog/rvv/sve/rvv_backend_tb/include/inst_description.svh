@@ -226,7 +226,7 @@ typedef enum logic [7:0] {
 
   VWXUNARY0       =   8'b01_010_000,     // it could be vcpop.m, vfirst.m and vmv. They can be distinguished by vs1 field(inst_encoding[19:15]).
 
-  UNUSE_INST      =   8'b11_111_111
+  ALU_UNUSE_INST  =   8'b11_111_111
 } alu_inst_e;
 
 /* VZEXT/VSEXT vs1 */
@@ -310,7 +310,8 @@ typedef enum int {
   VSUXSEG,
   VSOXSEG,
   VL,
-  VSR
+  VSR,
+  LSU_UNUSE_INST
 } lsu_inst_e;
 
 typedef enum {
@@ -318,6 +319,6 @@ typedef enum {
 } oprand_type_e;
 
 // Test description -----------------------------------------
-typedef enum { ITER, RAND } test_rand_type_e;
+typedef enum { ITER, RAND, RAND_SET } test_rand_type_e;
 endpackage: rvv_tb_pkg
 `endif // INST_DESCRIPTION__SVH

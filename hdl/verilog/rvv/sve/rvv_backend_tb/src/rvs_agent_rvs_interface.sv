@@ -11,6 +11,11 @@ interface rvs_interface (input bit clk, input bit rst_n);
   RVVCmd        [`ISSUE_LANE-1:0] insts_rvs2cq      ;
   logic         [`ISSUE_LANE-1:0] insts_ready_cq2rvs;  
 
+// ROB dataout
+  logic        [`NUM_RT_UOP-1:0]  rd_valid_rob2rt ;
+  ROB2RT_t     [`NUM_RT_UOP-1:0]  rd_rob2rt       ;
+  logic        [`NUM_RT_UOP-1:0]  rd_ready_rt2rob ;
+
 // write back to VRF. These are internal signals after WAW-merge of RVV.
   RT2VRF_t      [`NUM_RT_UOP-1:0] rt_vrf_data_rob2rt ;
   logic         [`NUM_RT_UOP-1:0] rt_vrf_valid_rob2rt;

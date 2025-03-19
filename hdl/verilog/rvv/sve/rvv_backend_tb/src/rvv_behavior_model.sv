@@ -49,6 +49,8 @@ class rvv_behavior_model extends uvm_component;
   logic [`XLEN-1:0] vlmax;
   logic [`XLEN-1:0] imm_data;
 
+  int unsigned mem_addr_lo;
+  int unsigned mem_addr_hi;
   byte mem[int unsigned];
   rvs_transaction inst_queue [$];
 
@@ -319,7 +321,7 @@ endclass : rvv_behavior_model
         // 1.0 illegal inst check
         // vstart
         if(inst_tr.vstart >= inst_tr.vl && !(inst_tr.inst_type == ALU && inst_tr.alu_inst inside {VSMUL_VMVNRR} && inst_tr.alu_type == OPIVI)) begin
-          if(inst_tr.dest_type == XRF || inst_tr.vl == 0) begin
+          if(inst_tr.dest_type == XRF) begin
           end else begin
             `uvm_warning("MDL/INST_CHECKER", $sformatf("pc=0x%8x: ignored since vstart(%0d) >= vl(%0d).", pc, inst_tr.vstart, inst_tr.vl))
             continue;
@@ -327,7 +329,7 @@ endclass : rvv_behavior_model
         end
         if(inst_tr.vstart >= vlmax && !(inst_tr.inst_type == ALU && inst_tr.alu_inst inside {VSMUL_VMVNRR} && inst_tr.alu_type == OPIVI || 
                                         inst_tr.inst_type == ALU && inst_tr.alu_inst inside {VMAND, VMOR, VMXOR, VMORN, VMNAND, VMNOR, VMANDN, VMXNOR})) begin
-          if(inst_tr.dest_type == XRF || inst_tr.vl == 0) begin
+          if(inst_tr.dest_type == XRF) begin
           end else begin
             `uvm_warning("MDL/INST_CHECKER", $sformatf("pc=0x%8x: ignored since vstart(%0d) >= vlmax(%0d).", pc, inst_tr.vstart, vlmax))
             continue;
@@ -1200,8 +1202,29 @@ endclass : rvv_behavior_model
         `uvm_info("MDL",$sformatf("Complete calculation:\n%s",rt_tr.sprint()),UVM_LOW)
         rt_ap.write(rt_tr);
         this.executed_inst++;
-    end //is_permutation_inst
-    else begin
+    end else if(inst_tr.inst_type inside {LD, ST}) begin
+        rt_tr   = new("rt_tr");
+        rt_tr.copy(inst_tr);
+        rt_tr.is_rt = 1;
+
+        // Vec load inst will retire all uops, including all pre-start inst, for now.
+        if(rt_tr.dest_type == VRF) begin
+          for(int reg_idx=dest_reg_idx_base; reg_idx<dest_reg_idx_base+int'($ceil(dest_emul)); reg_idx++) begin
+            rt_tr.rt_vrf_index.push_back(reg_idx);
+            rt_tr.rt_vrf_strobe.push_back(vrf_byte_strobe_temp[reg_idx]);
+            rt_tr.rt_vrf_data.push_back(vrf_temp[reg_idx]);
+          end
+        end
+        // VXSAT
+        vxsat_valid = vxsat;
+        rt_tr.vxsat = vxsat;
+        rt_tr.vxsat_valid = vxsat_valid;
+
+        `uvm_info("MDL",$sformatf("Complete calculation:\n%s",rt_tr.sprint()),UVM_LOW)
+        rt_ap.write(rt_tr);
+        this.executed_inst++;
+      
+    end else begin
         rt_tr   = new("rt_tr");
         rt_tr.copy(inst_tr);
         rt_tr.is_rt = 1;
@@ -2243,10 +2266,16 @@ class lsu_processor;
 
   bit vm;
 
+  int unsigned mem_addr_lo;
+  int unsigned mem_addr_hi;
+
   function new();
   endfunction: new 
   
   function void exe(rvv_behavior_model rvm, ref rvs_transaction inst_tr);
+
+    mem_addr_lo = rvm.mem_addr_lo;
+    mem_addr_hi = rvm.mem_addr_hi;
 
     decode(inst_tr);
     `uvm_info("MDL", "LSU decode done", UVM_HIGH)
@@ -2379,7 +2408,7 @@ class lsu_processor;
               end
               default: begin
                 src3_eew  = inst_tr.lsu_eew;
-                src3_emul = dest_eew * lmul / sew;
+                src3_emul = src3_eew * lmul / sew;
                 src2_eew  = EEW_NONE;
                 src2_emul = EMUL_NONE;
                 src1_eew  = EEW32;
@@ -2437,29 +2466,43 @@ class lsu_processor;
 
   task load_from_mem(
     output sew_max_t load_data, 
-    input int address, 
-    input int byte_size, 
+    input int unsigned address, 
+    input int unsigned byte_size, 
     const ref byte mem[int unsigned]
     ); 
     
+    int unsigned addr_temp;
     load_data = 'x;
     for(int byte_cnt=0; byte_cnt<byte_size; byte_cnt++) begin
-      load_data[byte_cnt*8 +: 8] = mem[address+byte_cnt];
+      if(!(address+byte_cnt inside {[mem_addr_lo:mem_addr_hi]})) begin
+        addr_temp = (address+byte_cnt) % (mem_addr_hi - mem_addr_lo + 1) + mem_addr_lo;
+        `uvm_info("MDL/LSU", $sformatf("Wrap address from @0x%8x to @0x%8x.", address+byte_cnt, addr_temp), UVM_HIGH)
+      end else begin
+        addr_temp = (address+byte_cnt);
+      end
+      load_data[byte_cnt*8 +: 8] = mem[addr_temp];
+      `uvm_info("MDL/LSU",$sformatf("Load 0x%x from @0x%8x", load_data, addr_temp), UVM_LOW)
     end
-    `uvm_info("MDL/LSU",$sformatf("Load %0d bytes @0x%8x: 0x%x", byte_size, address, load_data), UVM_LOW)
   endtask: load_from_mem
 
   task store_to_mem(
     input sew_max_t store_data,
-    input address, 
-    input byte_size,
+    input int unsigned address, 
+    input int unsigned byte_size,
     ref byte mem[int unsigned]
     ); 
     
+    int unsigned addr_temp;
     for(int byte_cnt=0; byte_cnt<byte_size; byte_cnt++) begin
-      mem[address+byte_cnt] = store_data[byte_cnt*8 +: 8];
+      if(!(address+byte_cnt inside {[mem_addr_lo:mem_addr_hi]})) begin
+        addr_temp = (address+byte_cnt) % (mem_addr_hi - mem_addr_lo + 1) + mem_addr_lo;
+        `uvm_info("MDL/LSU", $sformatf("Wrap address from @0x%8x to @0x%8x.", address+byte_cnt, addr_temp), UVM_HIGH)
+      end else begin
+        addr_temp = (address+byte_cnt);
+      end
+      mem[addr_temp] = store_data[byte_cnt*8 +: 8];
+      `uvm_info("MDL/LSU",$sformatf("Store 0x%x to @0x%8x", store_data, addr_temp), UVM_LOW)
     end
-    `uvm_info("MDL/LSU",$sformatf("Store %0d bytes @0x%8x: 0x%x", byte_size, address, store_data), UVM_LOW)
   endtask: store_to_mem
 
 endclass: lsu_processor 

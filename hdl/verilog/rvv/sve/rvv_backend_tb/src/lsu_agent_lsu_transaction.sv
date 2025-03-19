@@ -128,7 +128,7 @@ function lsu_transaction::new(string name = "Trans");
   end
   lsu_slot_data_valid = 1'b0;
   lsu_slot_data       = 'x;
-  lsu_slot_strobe     = 'x;
+  lsu_slot_strobe     = '0;
 
   uop_rx_sent = 1'b0;
   uop_done = 1'b0;

@@ -30,6 +30,8 @@ class rvv_scoreboard extends uvm_scoreboard;
   int mdl_total_inst;
   int mdl_executed_inst;
 
+  rvv_backend_test test_top;
+
   `uvm_component_utils(rvv_scoreboard)
 	extern function new(string name = "rvv_scoreboard", uvm_component parent = null); 
 	extern virtual function void build_phase (uvm_phase phase);
@@ -57,6 +59,8 @@ function void rvv_scoreboard::build_phase(uvm_phase phase);
   mdl_imp = new("mdl_imp", this);
   rvs_vrf_imp = new("rvs_vrf_imp", this);
   mdl_vrf_imp = new("mdl_vrf_imp", this);
+  if(!$cast(test_top, uvm_root::get().find("uvm_test_top")))
+    `uvm_fatal(get_type_name(),"Get uvm_test_top fail")
 endfunction:build_phase
 
 function void rvv_scoreboard::connect_phase(uvm_phase phase);
@@ -298,10 +302,12 @@ function void rvv_scoreboard::final_phase(uvm_phase phase);
   end
 
   // Memory compare
-  // foreach(lsu_mem[idx]) begin
-  //   if(lsu_mem[idx] !== mdl_mem[idx])
-  //     `uvm_error("FINAL_CHECK", $sformatf("Memory mismatch: lsu_mem[0x%8x] = 0x%2x, mdl_mem[0x%8x] = 0x%2x.",lsu_mem[idx], mdl_mem[idx]))
-  // end
+  `uvm_info("FINAL_CHECK", "Checking memory...", UVM_LOW)
+  foreach(test_top.env.lsu_agt.lsu_drv.mem[idx]) begin
+    if(test_top.env.lsu_agt.lsu_drv.mem[idx] !== test_top.env.mdl.mem[idx])
+      `uvm_error("FINAL_CHECK", $sformatf("Memory mismatch: lsu_mem[0x%8x] = 0x%2x, mdl_mem[0x%8x] = 0x%2x.", idx, test_top.env.lsu_agt.lsu_drv.mem[idx], idx, test_top.env.mdl.mem[idx]))
+  end
+  `uvm_info("FINAL_CHECK", "Memory check pass.", UVM_LOW)
 
   // Queue check
   if(rt_queue_rvs.size()>0) begin

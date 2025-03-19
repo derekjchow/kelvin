@@ -2019,18 +2019,29 @@ class alu_random_waw_seq extends alu_random_base_sequence;
 endclass: alu_random_waw_seq
 
 //===========================================================
-// LDST direct test sequence
+// LSU sequence
 //===========================================================
 //-----------------------------------------------------------
-// LSU direct sequences
+// Unit stride load/store
 //-----------------------------------------------------------
-class lsu_unit_stride_seq extends base_sequence;
-  `uvm_object_utils(lsu_unit_stride_seq)
-  `uvm_add_to_seq_lib(lsu_unit_stride_seq,rvs_sequencer_sequence_library)
+class lsu_sequence_library extends uvm_sequence_library # (rvs_transaction);
+  `uvm_object_utils(lsu_sequence_library)
+  `uvm_sequence_library_utils(lsu_sequence_library)
 
-  int inst_num;
+  function new(string name = "lsu_sequence_library");
+    super.new(name);
+    init_sequence_library();
+  endfunction
 
-  function new(string name = "lsu_unit_stride_seq");
+endclass: lsu_sequence_library
+
+class vle_seq extends base_sequence;
+  `uvm_object_utils(vle_seq)
+  `uvm_add_to_seq_lib(vle_seq,rvs_sequencer_sequence_library)
+
+  int inst_num = 1;
+
+  function new(string name = "vle_seq");
     super.new(name);
 	`ifdef UVM_POST_VERSION_1_1
      set_automatic_phase_objection(1);
@@ -2044,27 +2055,104 @@ class lsu_unit_stride_seq extends base_sequence;
       assert(req.randomize() with {
         pc == inst_cnt;
 
-        vsew ==  SEW8;
-        vlmul == LMUL1;
-
-        lsu_inst  == VLE;
         inst_type == LD;
+        lsu_inst  == VLE;
         lsu_mop   == LSU_E;
-        lsu_umop  == NORMAL;
         lsu_nf    == NF1;
-        lsu_width == LSU_8BIT;
 
-        dest_type == VRF; dest_idx == 8;
+        dest_type == VRF;
         src2_type == FUNC; src2_idx == NORMAL;
-        src1_type == XRF; 
-                          rs1_data inside {[32'h0000_0000:32'h1_0000]};
+        src1_type == XRF;
 
+        vm == 1;
+        use_vlmax == 1;
       });
       finish_item(req);
       inst_cnt++;
-    end // repeat(inst_num)
+    end
   endtask
-endclass: lsu_unit_stride_seq
+endclass: vle_seq 
+
+class vse_seq extends base_sequence;
+  `uvm_object_utils(vse_seq)
+  `uvm_add_to_seq_lib(vse_seq,rvs_sequencer_sequence_library)
+
+  int inst_num = 1;
+
+  function new(string name = "vle_seq");
+    super.new(name);
+	`ifdef UVM_POST_VERSION_1_1
+     set_automatic_phase_objection(1);
+    `endif
+  endfunction:new
+
+  virtual task body();
+    repeat(inst_num) begin
+      req = new("req");
+      start_item(req);
+      assert(req.randomize() with {
+        pc == inst_cnt;
+
+        inst_type == ST;
+        lsu_inst  == VSE;
+        lsu_mop   == LSU_E;
+        lsu_nf    == NF1;
+
+        src3_type == VRF;
+        src2_type == FUNC; src2_idx == NORMAL;
+        src1_type == XRF;
+      });
+      finish_item(req);
+      inst_cnt++;
+    end
+  endtask
+endclass: vse_seq 
 
 
+class lsu_base_seq extends base_sequence;
+  `uvm_object_utils(lsu_base_seq)
+  `uvm_add_to_seq_lib(lsu_base_seq,rvs_sequencer_sequence_library)
+
+  lsu_inst_e inst_set [$];
+  int inst_num = 1;
+
+  function new(string name = "vle_seq");
+    super.new(name);
+	`ifdef UVM_POST_VERSION_1_1
+     set_automatic_phase_objection(1);
+    `endif
+  endfunction:new
+  
+  virtual task run_inst(lsu_inst_e inst, uvm_sequencer_base sqr, int inst_num = 50);
+    this.inst_set.push_back(inst);
+    this.inst_num = inst_num;
+
+    this.start(sqr);
+  endtask: run_inst
+  
+  virtual task run_inst_set(lsu_inst_e inst_set[$], uvm_sequencer_base sqr, int inst_num = 50);
+    if(inst_set.size() ==0 ) begin
+      for(lsu_inst_e inst = inst.first(); inst != inst.last(); inst = inst.next()) begin
+        inst_set.push_back(inst);
+      end
+    end else begin
+      this.inst_set = inst_set;
+    end
+    this.inst_num = inst_num;
+    this.start(sqr);
+  endtask: run_inst_set
+
+  virtual task body();
+    repeat(inst_num) begin
+      req = new("req");
+      start_item(req);
+      assert(req.randomize() with {
+        pc == inst_cnt;
+        lsu_inst inside {inst_set};
+      });
+      finish_item(req);
+      inst_cnt++;
+    end
+  endtask
+endclass: lsu_base_seq 
 `endif // RVS_SEQUENCER_SEQUENCE_LIBRARY__SV

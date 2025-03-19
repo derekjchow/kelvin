@@ -18,6 +18,9 @@ class rvv_backend_test extends uvm_test;
   int direct_inst_num = 1000;
   int random_inst_num = 50000;
 
+  int unsigned mem_base = 32'h0000_0000;
+  int unsigned mem_size = 1024*1024;
+
   function new(string name, uvm_component parent);
     super.new(name, parent);
   endfunction
@@ -121,6 +124,10 @@ class rvv_backend_test extends uvm_test;
 
   virtual task rand_mem(int unsigned mem_base, int unsigned mem_size);
     byte value;
+    env.lsu_agt.lsu_drv.mem_addr_lo = mem_base;
+    env.lsu_agt.lsu_drv.mem_addr_hi = mem_base + mem_size - 1;
+    env.mdl.mem_addr_lo = mem_base;
+    env.mdl.mem_addr_hi = mem_base + mem_size - 1;
     for(int byte_idx=mem_base; byte_idx<mem_size; byte_idx++) begin
       value = $urandom_range(0, 8'hFF);
       set_lsu_mem(byte_idx, value);
@@ -2194,8 +2201,10 @@ endclass: alu_vmvnr_test
 //===========================================================
 class lsu_unit_stride_test extends rvv_backend_test;
 
-  lsu_unit_stride_seq rvs_seq;
+  lsu_base_seq rvs_seq;
   alu_smoke_vv_seq rvs_last_seq;
+
+  lsu_inst_e inst_set[$] = '{VLE, VSE};
 
   `uvm_component_utils(lsu_unit_stride_test)
 
@@ -2216,13 +2225,15 @@ class lsu_unit_stride_test extends rvv_backend_test;
     phase.raise_objection( .obj( this ) );
 
     `uvm_info(get_type_name(),"Start randomize mem & vrf.", UVM_LOW)
-    rand_mem(0, 32'h10_0000);
+    rand_mem(mem_base, mem_size);
     rand_vrf();
     `uvm_info(get_type_name(), "Randomize done.", UVM_LOW)
 
-    rvs_seq = lsu_unit_stride_seq::type_id::create("rvs_seq", this);
-    rvs_seq.inst_num = 100;
-    rvs_seq.start(env.rvs_agt.rvs_sqr);
+    rvs_seq = lsu_base_seq::type_id::create("lsu_base_seq", this);
+    rvs_seq.run_inst(VLE, env.rvs_agt.rvs_sqr, direct_inst_num);
+    rvs_seq.run_inst(VSE, env.rvs_agt.rvs_sqr, direct_inst_num);
+
+    rvs_seq.run_inst_set(inst_set, env.rvs_agt.rvs_sqr, direct_inst_num * inst_set.size());
 
     rvs_last_seq = alu_smoke_vv_seq::type_id::create("rvs_last_seq", this);
     rvs_last_seq.run_inst(VADD,env.rvs_agt.rvs_sqr);
