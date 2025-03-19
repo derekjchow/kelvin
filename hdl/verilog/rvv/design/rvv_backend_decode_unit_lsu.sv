@@ -2450,7 +2450,7 @@ module rvv_backend_decode_unit_lsu
       UNIT_STRIDE: begin
         case(inst_umop)
           US_REGULAR: begin
-            check_special = check_vd_overlap_v0;
+            check_special = (inst_opcode==LOAD) ? check_vd_overlap_v0 : 1'b1;
           end
           US_WHOLE_REGISTER: begin
             check_special = inst_vm&((inst_opcode==LOAD)||((inst_opcode==STORE)&(inst_funct3==SEW_8)));
@@ -2465,7 +2465,7 @@ module rvv_backend_decode_unit_lsu
       end
       
       CONSTANT_STRIDE: begin
-        check_special = check_vd_overlap_v0;
+        check_special = (inst_opcode==LOAD) ? check_vd_overlap_v0 : 1'b1;
       end
       
       UNORDERED_INDEX,
@@ -2476,29 +2476,29 @@ module rvv_backend_decode_unit_lsu
             {SEW_8,SEW8},
             {SEW_16,SEW16},
             {SEW_32,SEW32}: begin            
-              check_special = check_vd_overlap_v0;
+              check_special = (inst_opcode==LOAD) ? check_vd_overlap_v0 : 1'b1;
             end
             // 2:1
             {SEW_16,SEW8},
             {SEW_32,SEW16},            
             // 4:1
             {SEW_32,SEW8}: begin            
-              check_special = check_vd_overlap_v0&check_vd_part_overlap_vs2;
+              check_special = (inst_opcode==LOAD) ? check_vd_overlap_v0&check_vd_part_overlap_vs2 : 1'b1;
             end
             // 1:2
             {SEW_8,SEW16},
             {SEW_16,SEW32}: begin            
-              check_special = check_vd_overlap_v0&check_vs2_part_overlap_vd_2_1;
+              check_special = (inst_opcode==LOAD) ? check_vd_overlap_v0&check_vs2_part_overlap_vd_2_1 : 1'b1;
             end
             // 1:4
             {SEW_8,SEW32}: begin            
-              check_special = check_vd_overlap_v0&check_vs2_part_overlap_vd_4_1;
+              check_special = (inst_opcode==LOAD) ? check_vd_overlap_v0&check_vs2_part_overlap_vd_4_1 : 1'b1;
             end
           endcase
         end
         else begin
-          // segment indexed ld/st, vd group cannot overlap vs2 group fully
-          check_special = check_vd_overlap_v0&check_vd_overlap_vs2;
+          // segment indexed ld, vd group cannot overlap vs2 group fully
+          check_special = (inst_opcode==LOAD) ? check_vd_overlap_v0&check_vd_overlap_vs2 : 1'b1;
         end        
       end
     endcase
