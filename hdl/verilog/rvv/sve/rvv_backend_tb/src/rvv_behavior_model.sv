@@ -315,6 +315,7 @@ endclass : rvv_behavior_model
             `uvm_info(get_type_name(), $sformatf("permutation instruction dectect\n"), UVM_LOW)
         end
 
+
         // 1.0 illegal inst check
         // vstart
         if(inst_tr.vstart >= inst_tr.vl && !(inst_tr.inst_type == ALU && inst_tr.alu_inst inside {VSMUL_VMVNRR} && inst_tr.alu_type == OPIVI)) begin
@@ -324,10 +325,19 @@ endclass : rvv_behavior_model
             continue;
           end
         end
-        if(inst_tr.vstart >= vlmax && !(inst_tr.inst_type == ALU && inst_tr.alu_inst inside {VSMUL_VMVNRR} && inst_tr.alu_type == OPIVI)) begin
+        if(inst_tr.vstart >= vlmax && !(inst_tr.inst_type == ALU && inst_tr.alu_inst inside {VSMUL_VMVNRR} && inst_tr.alu_type == OPIVI || 
+                                        inst_tr.inst_type == ALU && inst_tr.alu_inst inside {VMAND, VMOR, VMXOR, VMORN, VMNAND, VMNOR, VMANDN, VMXNOR})) begin
           if(inst_tr.dest_type == XRF || inst_tr.vl == 0) begin
           end else begin
             `uvm_warning("MDL/INST_CHECKER", $sformatf("pc=0x%8x: ignored since vstart(%0d) >= vlmax(%0d).", pc, inst_tr.vstart, vlmax))
+            continue;
+          end
+        end
+        if(inst_tr.vl > vlmax && !(inst_tr.alu_inst inside {VSMUL_VMVNRR} && inst_tr.alu_type == OPIVI || 
+                                   inst_tr.alu_inst inside {VMAND, VMOR, VMXOR, VMORN, VMNAND, VMNOR, VMANDN, VMXNOR})) begin
+          if(inst_tr.dest_type == XRF || inst_tr.vl == 0) begin
+          end else begin
+            `uvm_warning("MDL/INST_CHECKER", $sformatf("pc=0x%8x: ignored since vl(%0d) >= vlmax(%0d).", pc, inst_tr.vl, vlmax))
             continue;
           end
         end

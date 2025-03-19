@@ -161,7 +161,8 @@ class rvs_transaction extends uvm_sequence_item;
 
     if(!illegal_inst_en) {
       // vl
-      vl <= vlmax;
+      if(!(alu_inst inside {VMAND, VMOR, VMXOR, VMORN, VMNAND, VMNOR, VMANDN, VMXNOR}))
+        vl <= vlmax;
       // evl
       if(alu_inst == VSMUL_VMVNRR && alu_type == OPIVI)
         evl == ((src1_idx + 1) * `VLENB) >> vsew;

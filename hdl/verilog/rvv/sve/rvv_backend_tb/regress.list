@@ -39,3 +39,4 @@ alu_random_bypass_test
 alu_random_waw_test
 
 alu_div_zero_test
+alu_large_vstart_test
