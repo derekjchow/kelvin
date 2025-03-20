@@ -46,7 +46,7 @@ class lsu_driver extends uvm_driver # (lsu_transaction);
 
   // receive & decode inst from rvs
   extern function void write_lsu_inst(rvs_transaction inst_tr);
-  extern function void lsu_uop_decode(ref rvs_transaction inst_tr);
+  extern function int lsu_uop_decode(ref rvs_transaction inst_tr);
 
 endclass: lsu_driver
 
@@ -105,7 +105,7 @@ task lsu_driver::rx_driver();
       end
 
       for(int i=0; i<`NUM_LSU; i++) begin: rx_driver_logic_part
-        if(i < uops_rx_queue.size()) begin
+        if(uops_rx_queue.size() > 0) begin
           if(lsu_if.uop_lsu_ready_lsu2rvv[i] && lsu_if.uop_lsu_valid_rvv2lsu[i]) begin
             uop_tr = new();
             uop_tr = uops_rx_queue.pop_front();
@@ -229,6 +229,8 @@ task lsu_driver::lsu_process();
               uops_tx_queue[uop_idx].lsu_slot_data_valid = 1;
               uops_tx_queue[uop_idx].uop_done = 1;
               `uvm_info("LSU_DRV",$sformatf("uops_tx_queue[%0d] load uop done:\n%s",uop_idx,uops_tx_queue[uop_idx].sprint()),UVM_HIGH)
+            end else begin
+              `uvm_info("LSU_DRV",$sformatf("uops_tx_queue[%0d] aleady done:\n%s",uop_idx,uops_tx_queue[uop_idx].sprint()),UVM_HIGH)
             end
           end
           lsu_transaction::STORE: begin
@@ -246,6 +248,8 @@ task lsu_driver::lsu_process();
               end
               uops_tx_queue[uop_idx].uop_done = 1;
               `uvm_info("LSU_DRV",$sformatf("uops_tx_queue[%0d] store uop done:\n%s",uop_idx,uops_tx_queue[uop_idx].sprint()),UVM_HIGH)
+            end else begin
+              `uvm_info("LSU_DRV",$sformatf("uops_tx_queue[%0d] aleady done:\n%s",uop_idx,uops_tx_queue[uop_idx].sprint()),UVM_HIGH)
             end
           end
         endcase
@@ -283,7 +287,7 @@ task lsu_driver::tx_driver();
         if(lsu_if.uop_lsu_valid_lsu2rvv[i] === 1'b1 && lsu_if.uop_lsu_ready_rvv2lsu[i] === 1'b1) begin
           uop_tr = new("uop_tr");
           uop_tr = uops_tx_queue.pop_front();
-          `uvm_info("LSU_DRV", $sformatf("Uop done, pop uop from uops_tx_queue:%s\n", uop_tr.sprint()),UVM_HIGH)
+          `uvm_info("LSU_DRV", $sformatf("lsu2rvv handshake done, pop uop from uops_tx_queue:%s\n", uop_tr.sprint()),UVM_HIGH)
           if(uop_tr.is_last_uop) begin 
             inst_queue.pop_front();
           end
@@ -294,6 +298,8 @@ task lsu_driver::tx_driver();
           if(uops_tx_queue[i].uop_done) begin
             `uvm_info("LSU_DRV",$sformatf("Assign uops_tx_queue[%0d] to lsu2rvv port:\n%s",i,uops_tx_queue[i].sprint()),UVM_HIGH)
             lsu_if.uop_lsu_valid_lsu2rvv[i] <= '1;
+            lsu_if.uop_lsu_lsu2rvv[i].uop_pc <= uops_tx_queue[i].uop_pc;
+            lsu_if.uop_lsu_lsu2rvv[i].uop_index <= uops_tx_queue[i].uop_index;
             if(uops_tx_queue[i].kind == lsu_transaction::LOAD) begin
               lsu_if.uop_lsu_lsu2rvv[i].vregfile_write_valid  <= 1'b1;
               lsu_if.uop_lsu_lsu2rvv[i].vregfile_write_addr   <= uops_tx_queue[i].data_vreg_idx;
@@ -308,19 +314,6 @@ task lsu_driver::tx_driver();
             end
           end else begin
             lsu_if.uop_lsu_valid_lsu2rvv[i] <= '0;
-            if(uops_tx_queue[i].kind == lsu_transaction::LOAD) begin
-              lsu_if.uop_lsu_lsu2rvv[i].vregfile_write_valid  <= 1'b1;
-              lsu_if.uop_lsu_lsu2rvv[i].vregfile_write_addr   <= uops_tx_queue[i].data_vreg_idx;
-              lsu_if.uop_lsu_lsu2rvv[i].vregfile_write_data   <= uops_tx_queue[i].lsu_slot_data;
-              lsu_if.uop_lsu_lsu2rvv[i].lsu_vstore_last       <= 1'bx;
-            end
-            if(uops_tx_queue[i].kind == lsu_transaction::STORE) begin
-              lsu_if.uop_lsu_lsu2rvv[i].vregfile_write_valid  <= 1'bx;
-              lsu_if.uop_lsu_lsu2rvv[i].vregfile_write_addr   <= 'x;
-              lsu_if.uop_lsu_lsu2rvv[i].vregfile_write_data   <= 'x;
-              lsu_if.uop_lsu_lsu2rvv[i].lsu_vstore_last       <= 1'b1;
-            end
-            break;
           end
         end else begin
           lsu_if.uop_lsu_valid_lsu2rvv[i] <= '0;
@@ -332,14 +325,15 @@ task lsu_driver::tx_driver();
 endtask : tx_driver
 
 function void lsu_driver::write_lsu_inst(rvs_transaction inst_tr);
-  if(inst_tr.inst_type inside {LD, ST}) begin
+  if(inst_tr.inst_type inside {LD, ST} && 
+     (inst_tr.vstart < inst_tr.vl)) begin
     `uvm_info("LSU_DRV",$sformatf("LSU driver got inst_tr:\n%s",inst_tr.sprint()),UVM_HIGH)
     inst_queue.push_back(inst_tr);
     lsu_uop_decode(inst_tr);
   end
 endfunction
 
-function void lsu_driver::lsu_uop_decode(ref rvs_transaction inst_tr);
+function int lsu_driver::lsu_uop_decode(ref rvs_transaction inst_tr);
   lsu_transaction uop_tr;
   // vtype decode
   int sew;
@@ -376,6 +370,7 @@ function void lsu_driver::lsu_uop_decode(ref rvs_transaction inst_tr);
 
   addr_base = inst_tr.rs1_data;
   lsu_nf = inst_tr.lsu_nf;
+
 
   case(inst_tr.lsu_mop) 
     LSU_E   : begin

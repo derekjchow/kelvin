@@ -550,6 +550,11 @@ typedef struct packed {
 
 // LSU feedback to RVV
 typedef struct packed {   
+`ifdef TB_SUPPORT
+  // To trace wave
+  logic   [`PC_WIDTH-1:0]             uop_pc;
+  logic   [`UOP_INDEX_WIDTH-1:0]      uop_index;
+`endif
   // For load data
   logic                               vregfile_write_valid;
   logic	[`REGFILE_INDEX_WIDTH-1:0] 	  vregfile_write_addr;  
