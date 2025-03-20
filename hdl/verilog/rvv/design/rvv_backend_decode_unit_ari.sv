@@ -3294,29 +3294,9 @@ module rvv_backend_decode_unit_ari
   end
 
   // check evl is not 0
-  always_comb begin
-    check_evl_not_0 = vs_evl!='b0;
-    
-    // Instructions that write an x register or f register do so even when vstart >= vl, including when vl=0.
-    case({valid_opm,funct6_ari.ari_funct6})
-      {1'b1,VWXUNARY0}: begin
-        case(inst_funct3)
-          OPMVV: begin
-            case(vs1_opcode_vwxunary)
-              VCPOP,
-              VFIRST,
-              VMV_X_S: begin
-                check_evl_not_0 = 'b1;
-              end
-            endcase
-          end
-        endcase
-      end
-    endcase
-  end
-
   // check vstart < evl
   always_comb begin
+    check_evl_not_0 = vs_evl!='b0;
     check_vstart_sle_evl = {1'b0,csr_vstart} < vs_evl;
     
     // Instructions that write an x register or f register do so even when vstart >= vl, including when vl=0.
@@ -3328,14 +3308,48 @@ module rvv_backend_decode_unit_ari
               VCPOP,
               VFIRST,
               VMV_X_S: begin
+                check_evl_not_0 = 'b1;
                 check_vstart_sle_evl = 'b1;
               end
             endcase
+          end
+          OPMVX: begin
+            if(vs2_opcode_vrxunary==VMV_S_X) begin
+              check_evl_not_0 = csr_vl!='b0;
+              check_evl_not_0 = {1'b0,csr_vstart} < csr_vl;
+            end
           end
         endcase
       end
     endcase
   end
+
+  // check vstart < evl
+  //always_comb begin
+  //  check_vstart_sle_evl = {1'b0,csr_vstart} < vs_evl;
+  //  
+  //  // Instructions that write an x register or f register do so even when vstart >= vl, including when vl=0.
+  //  case({valid_opm,funct6_ari.ari_funct6})
+  //    {1'b1,VWXUNARY0}: begin
+  //      case(inst_funct3)
+  //        OPMVV: begin
+  //          case(vs1_opcode_vwxunary)
+  //            VCPOP,
+  //            VFIRST,
+  //            VMV_X_S: begin
+  //              check_vstart_sle_evl = 'b1;
+  //            end
+  //          endcase
+  //        end
+  //        OPMVX: begin
+  //          if(vs2_opcode_vrxunary==VMV_S_X) begin
+  //            check_evl_not_0 = {1'b0,csr_vstart} < csr_vl;
+  //          end
+  //        end
+  //      endcase
+  //    end
+  //  endcase
+  //end
 
   `ifdef ASSERT_ON
     `ifdef TB_SUPPORT
