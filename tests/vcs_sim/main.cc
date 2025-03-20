@@ -189,6 +189,7 @@ int sc_main(int argc, char** argv) {
   constexpr int kRetFileNotExist = -2;
   constexpr int kRetFstatError = -3;
   constexpr int kRetMmapFailed = -4;
+  constexpr int kRetSemihostError = -5;
 
   if (!hdl_elaboration_only()) {
     const char* kKeyFilename = "--filename";
@@ -244,6 +245,20 @@ int sc_main(int argc, char** argv) {
         csr_addr_ + 0x4, reinterpret_cast<uint8_t*>(&entry_point), sizeof(entry_point)
       ));
       bin_transfer = std::make_unique<TrafficDesc>(utils::merge(elf_transfers));
+      uint32_t tohost;
+      if (::LookupSymbol(data8, "tohost", &tohost)) {
+        if ((tohost & 0xFFFFFFF0L) != tohost) {
+          return kRetSemihostError;
+        }
+        top.tohost_addr_ = tohost;
+      }
+      uint32_t fromhost;
+      if (::LookupSymbol(data8, "fromhost", &fromhost)) {
+        if ((fromhost & 0xFFFFFFF0L) != fromhost) {
+          return kRetSemihostError;
+        }
+        top.fromhost_addr_ = fromhost;
+      }
     } else {
       // Transaction to fill ITCM with the provided binary.
       bin_transfer =

@@ -153,6 +153,20 @@ void sc_top::negedge() {
     return;
   }
 
+  if (tohost_addr_.has_value()) {
+    sc_logic dbus_valid = tli_get_logic("top.core_mini_axi.core.io_dbus_valid");
+    if (dbus_valid.is_01() && dbus_valid.to_bool()) {
+      sc_lv<32> dbus_addr = tli_get_lv("top.core_mini_axi.core.io_dbus_addr");
+      if (dbus_addr.get_word(0) == tohost_addr_.value()) {
+        sc_lv<128> dbus_wdata = tli_get_lv("top.core_mini_axi.core.io_dbus_wdata");
+        if (dbus_wdata.get_word(0) & 1) {
+          printf("DUT requested halt.\n");
+          sc_stop();
+        }
+      }
+    }
+  }
+
   // The below sections move data between the SystemC world
   // and RTL world, and convert between 2-state and 4-state
   // logic.

@@ -63,13 +63,13 @@ static bool run(const char* name, const std::string binary, const int cycles,
     halted_cv.Wait(&halted_mtx);
   }
 
-  if (!tb.io_fault) {
+  if (!tb.io_fault && !tb.tohost_halt) {
     CHECK_OK(tb.CheckStatusSync());
   }
 
   sc_stop();
   sc_main_thread.join();
-  return !tb.io_fault;
+  return (!tb.io_fault && !(tb.tohost_halt && tb.tohost_val != 1));
 }
 
 extern "C" int sc_main(int argc, char** argv) {

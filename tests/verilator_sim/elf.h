@@ -17,10 +17,12 @@
 
 #include <cstdint>
 #include <functional>
+#include <string>
 
 typedef std::function<void*(void* /* dest */, const void* /* src */,
                             size_t /* count */)>
     CopyFn;
 void LoadElf(uint8_t* data, CopyFn copy_fn);
+bool LookupSymbol(const uint8_t* data, const std::string& symbol_name, uint32_t* symbol_addr);
 
 #endif  // TESTS_VERILATOR_SIM_UTIL_H_

@@ -39,6 +39,8 @@ namespace internal {
 using namespace internal;
 /* clang-format on */
 
+#include "VCoreMiniAxi__Syms.h"
+
 CoreMiniAxi_tb::CoreMiniAxi_tb(sc_module_name n, int loops, bool random,
                                std::string binary, bool debug_axi,
                                std::optional<std::function<void()>> wfi_cb,
@@ -249,6 +251,16 @@ absl::Status CoreMiniAxi_tb::LoadElfAsync(const std::string& file_name) {
     ));
     transfer_queue_.push(
         std::make_unique<TrafficDesc>(utils::merge(elf_transfers)));
+    uint32_t tohost;
+    if (::LookupSymbol(data8, "tohost", &tohost)) {
+      CHECK((tohost & 0xFFFFFFF0L) == tohost);
+      tohost_addr_ = tohost;
+    }
+    uint32_t fromhost;
+    if (::LookupSymbol(data8, "fromhost", &fromhost)) {
+      CHECK((fromhost & 0xFFFFFFF0L) == fromhost);
+      fromhost_addr_ = fromhost;
+    }
   } else {
     // Transaction to fill ITCM with the provided binary.
     transfer_queue_.push(
@@ -314,8 +326,19 @@ absl::Status CoreMiniAxi_tb::CheckStatusAsync() {
 }
 
 void CoreMiniAxi_tb::posedge() {
+  bool core_io_dbus_valid = static_cast<bool>(core_->rootp->CoreMiniAxi__DOT___core_io_dbus_valid);
+  uint32_t core_io_dbus_addr = reinterpret_cast<uint32_t>(core_->rootp->CoreMiniAxi__DOT___core_io_dbus_addr);
+  if (tohost_addr_.has_value() && core_io_dbus_valid && (core_io_dbus_addr == tohost_addr_.value())) {
+    uint32_t wdata0;
+    wdata0 = reinterpret_cast<uint32_t>(core_->rootp->CoreMiniAxi__DOT___core_io_dbus_wdata[0]);
+    if (wdata0 & 1) {
+      tohost_halt = true;
+      tohost_val = wdata0;
+    }
+  }
+
   static bool invoked_halted_cb = false;
-  if ((io_halted || io_fault) && !invoked_halted_cb) {
+  if ((io_halted || io_fault || tohost_halt) && !invoked_halted_cb) {
     invoked_halted_cb = true;
     if (halted_cb_) {
       halted_cb_.value()();
@@ -335,6 +358,7 @@ void CoreMiniAxi_tb::posedge() {
   } else {
     io_irq = false;
   }
+
 
   if (!transfer_in_progress_) {
     absl::MutexLock lock(&transfer_queue_mtx_);

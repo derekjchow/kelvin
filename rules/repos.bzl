@@ -38,6 +38,7 @@ def kelvin_repos():
             "@kelvin_hw//external:0001-Use-systemc-in-verilator-and-support-verilator-in-co.patch",
             "@kelvin_hw//external:0002-Update-cocotb-script-to-support-newer-version.patch",
             "@kelvin_hw//external:0003-Export-vdb-via-undeclared-test-outputs.patch",
+            "@kelvin_hw//external:0004-Verilator-Enable-public-flat-rw.patch",
         ],
         patch_args = ["-p1"],
     )

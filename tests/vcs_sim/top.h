@@ -5,6 +5,8 @@
 #include <systemc.h>
 #include <systemc_user.h>
 
+#include <optional>
+
 #include "CoreMiniAxi.h"
 #include "VCoreMiniAxi_parameters.h"
 
@@ -221,6 +223,9 @@ SC_MODULE(sc_top) {
   sc_signal<sc_lv<6>> master_rid_4;
   sc_signal<sc_lv<2>> master_rresp_4;
   sc_signal<sc_logic> master_rlast_4;
+
+  std::optional<uint32_t> tohost_addr_;
+  std::optional<uint32_t> fromhost_addr_;
 };
 
 #endif  // TESTS_VCS_SIM_TOP_H_

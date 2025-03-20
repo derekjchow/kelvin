@@ -9,7 +9,7 @@ import random
 
 from cocotb.clock import Clock
 from cocotb.queue import Queue
-from cocotb.triggers import Timer, ClockCycles, RisingEdge, FallingEdge
+from cocotb.triggers import Timer, ClockCycles, RisingEdge, FallingEdge, with_timeout, SimTimeoutError
 from elftools.elf.elffile import ELFFile
 
 
@@ -674,6 +674,15 @@ class CoreMiniAxiInterface:
       timeout_cycles = timeout_cycles - 1
     assert timeout_cycles > 0
 
+  async def watch(self, addr, timeout_cycles=1_000_000):
+    while timeout_cycles > 0:
+      if self.dut.core.io_dbus_valid.value == 1:
+        if self.dut.core.io_dbus_addr.value == addr:
+          return self.dut.core.io_dbus_wdata.value.buff
+      await ClockCycles(self.dut.io_aclk, 1)
+      timeout_cycles = timeout_cycles - 1
+    assert timeout_cycles > 0
+
 @cocotb.test()
 async def core_mini_axi_basic_write_read_memory(dut):
     """Basic test to check if TCM memory can be written and read back."""
@@ -851,9 +860,20 @@ async def core_mini_axi_riscv_dv(dut):
     with open(elf, "rb") as f:
       await core_mini_axi.reset()
       entry_point = await core_mini_axi.load_elf(f)
+      tohost = core_mini_axi.lookup_symbol(f, "tohost")
+      assert tohost != None
       await core_mini_axi.execute_from(entry_point)
-      await core_mini_axi.wait_for_halted(timeout_cycles=1000000)
-      assert core_mini_axi.dut.io_fault.value == 0
+      if cocotb.SIM_NAME == "Verilator":
+        rv = await core_mini_axi.watch(tohost)
+        assert np.sum(np.frombuffer(rv[0:4], dtype=np.uint8)) == 1
+      else:
+        initial_rv = await core_mini_axi.read_word(tohost)
+        while True:
+          await ClockCycles(dut.io_aclk, 1000)
+          rv = await core_mini_axi.read_word(tohost)
+          if not (rv == initial_rv).all():
+            assert np.sum(rv) == 1
+            break
 
 @cocotb.test()
 async def core_mini_axi_csr_test(dut):

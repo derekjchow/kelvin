@@ -14,6 +14,7 @@
 
 #include "tests/verilator_sim/elf.h"
 
+#include <cstring>
 #include <elf.h>
 
 void LoadElf(uint8_t* data, CopyFn copy_fn) {
@@ -31,4 +32,59 @@ void LoadElf(uint8_t* data, CopyFn copy_fn) {
             reinterpret_cast<void*>(data + program_header->p_offset),
             program_header->p_filesz);
   }
+}
+
+bool LookupSymbol(const uint8_t* data, const std::string& symbol_name, uint32_t* symbol_addr) {
+  if (symbol_addr == nullptr)
+    return false;
+  const Elf32_Ehdr* elf_header = reinterpret_cast<const Elf32_Ehdr*>(data);
+
+  // Locate .shstrtab
+  if (elf_header->e_shstrndx == SHN_UNDEF)
+    return false;
+  const Elf32_Half section_string_table_idx = elf_header->e_shstrndx;
+  const Elf32_Shdr* section_string_table_header = reinterpret_cast<const Elf32_Shdr*>(
+    data + elf_header->e_shoff + sizeof(Elf32_Shdr) * section_string_table_idx);
+  const char* section_string_table =
+    reinterpret_cast<const char*>(data + section_string_table_header->sh_offset);
+
+  // Locate .strtab and .symtab
+  const Elf32_Sym* symbol_table = nullptr;
+  uint32_t symbol_count;
+  const char* string_table = nullptr;
+  for (int i = 0; i < elf_header->e_shnum; ++i) {
+    const Elf32_Shdr* section_header = reinterpret_cast<const Elf32_Shdr*>(
+      data + elf_header->e_shoff + sizeof(Elf32_Shdr) * i);
+    if (section_header->sh_type == SHT_SYMTAB) {
+      const char* symtab_name = (section_string_table + section_header->sh_name);
+      const char* expected_symtab_name = ".symtab";
+      if (strncmp(symtab_name, expected_symtab_name, strlen(expected_symtab_name)) == 0) {
+        symbol_count = section_header->sh_size / sizeof(Elf32_Sym);
+        symbol_table = reinterpret_cast<const Elf32_Sym*>(
+          data + section_header->sh_offset);
+      }
+    }
+    if (section_header->sh_type == SHT_STRTAB) {
+      const char* strtab_name = (section_string_table + section_header->sh_name);
+      const char* expected_strtab_name = ".strtab";
+      if (strncmp(strtab_name, expected_strtab_name, strlen(expected_strtab_name)) == 0) {
+        string_table = reinterpret_cast<const char*>(data + section_header->sh_offset);
+      }
+    }
+  }
+  if (string_table == nullptr || symbol_table == nullptr)
+    return false;
+
+  // Find our symbol!
+  for (uint32_t i = 0; i < symbol_count; ++i) {
+    const Elf32_Sym* symbol = symbol_table + i;
+    if (symbol->st_name != 0) {
+      const char* found_symbol_name = string_table + symbol->st_name;
+      if (strncmp(found_symbol_name, symbol_name.c_str(), symbol_name.length()) == 0) {
+        *symbol_addr = symbol->st_value;
+        return true;
+      }
+    }
+  }
+  return false;
 }

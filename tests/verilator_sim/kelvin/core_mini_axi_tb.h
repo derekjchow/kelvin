@@ -15,6 +15,7 @@
 #ifndef TESTS_VERILATOR_SIM_KELVIN_CORE_MINI_AXI_TB_H_
 #define TESTS_VERILATOR_SIM_KELVIN_CORE_MINI_AXI_TB_H_
 
+#include <cstdint>
 #include <functional>
 #include <optional>
 #include <queue>
@@ -85,6 +86,8 @@ struct CoreMiniAxi_tb : Sysc_tb {
   sc_signal<bool> io_wfi;
   sc_signal<bool> io_irq;
   sc_signal<bool> io_te;
+  bool tohost_halt = false;
+  uint32_t tohost_val = 0;
 
   absl::Status LoadElfSync(const std::string& file_name);
   absl::Status LoadElfAsync(const std::string& file_name);
@@ -146,5 +149,8 @@ struct CoreMiniAxi_tb : Sysc_tb {
   static CoreMiniAxi_tb* getSingleton() { return singleton_; }
   static constexpr uint32_t csr_addr_ = 0x30000;
   std::unique_ptr<VCoreMiniAxi> core_;
+
+  std::optional<uint32_t> tohost_addr_;
+  std::optional<uint32_t> fromhost_addr_;
 };
 #endif  // TESTS_VERILATOR_SIM_KELVIN_CORE_MINI_AXI_TB_H_
