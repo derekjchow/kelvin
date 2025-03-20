@@ -43,7 +43,7 @@ module rvv_backend_decode_ctrl
   output  logic       [`NUM_DE_UOP-1:0]       push;
   output  UOP_QUEUE_t [`NUM_DE_UOP-1:0]       dataout;
   input   logic                               fifo_full_uq2de;
-  input   logic       [`NUM_DE_UOP-1:1]       fifo_almost_full_uq2de;
+  input   logic       [`NUM_DE_UOP-1:0]       fifo_almost_full_uq2de;
 
 //
 // internal signals

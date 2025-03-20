@@ -81,12 +81,6 @@
 `define NUM_DIV                 1
 `define NUM_PU                  `NUM_ALU+`NUM_PMTRDT+`NUM_MUL+`NUM_DIV+`NUM_LSU
  
-`define MULTI_LSU
-`define MULTI_ALU
-`define MULTI_MUL
-//`define MULTI_PMTRDT
-//`define MULTI_DIV
-
 // Reservation Station data width
 `define ALU_RS_WIDTH            $bits(ALU_RS_t)
 

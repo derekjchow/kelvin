@@ -9,9 +9,7 @@ module rvv_backend_div
   pop_ex2rs,
   div_uop_rs2ex,
   fifo_empty_rs2ex,
-`ifdef MULTI_DIV
   fifo_almost_empty_rs2ex,
-`endif
   result_valid_ex2rob,
   result_ex2rob,
   result_ready_rob2div
@@ -27,9 +25,7 @@ module rvv_backend_div
   // DIV RS to DIV unit
   input   DIV_RS_t  [`NUM_DIV-1:0]  div_uop_rs2ex;
   input   logic                     fifo_empty_rs2ex;
-`ifdef MULTI_DIV
-  input   logic     [`NUM_DIV-1:1]  fifo_almost_empty_rs2ex;
-`endif
+  input   logic     [`NUM_DIV-1:0]  fifo_almost_empty_rs2ex;
   output  logic     [`NUM_DIV-1:0]  pop_ex2rs;
 
   // submit DIV result to ROB
@@ -52,24 +48,20 @@ module rvv_backend_div
   // generate valid signals
   assign div_uop_valid_rs2ex[0] = !fifo_empty_rs2ex;
 
-`ifdef MULTI_DIV
   generate
     for (i=1;i<`NUM_DIV;i=i+1) begin: GET_UOP_VALID
-      assign  div_uop_valid_rs2ex[i] = !( fifo_empty_rs2ex || (|fifo_almost_empty_rs2ex[i:1]));
+      assign  div_uop_valid_rs2ex[i] = !( |fifo_almost_empty_rs2ex[i:0]);
     end
   endgenerate
-`endif
 
   // generate pop signals
   assign pop_ex2rs[0] = div_uop_valid_rs2ex[0]&result_valid_ex2rob[0]&result_ready_rob2div[0];
     
-`ifdef MULTI_DIV
   generate
     for (i=1;i<`NUM_DIV;i=i+1) begin: POP_DIV_RS
       assign pop_ex2rs[i] = div_uop_valid_rs2ex[i]&result_valid_ex2rob[i]&result_ready_rob2div[i]&(pop_ex2rs[i-1:0]=='1);
     end
   endgenerate
-`endif
 
   // instantiate
   generate

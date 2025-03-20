@@ -37,14 +37,14 @@ module rvv_backend_decode
   // signals from command queue
   input   RVVCmd  [`NUM_DE_INST-1:0]    inst_pkg_cq2de; 
   input   logic                         fifo_empty_cq2de;
-  input   logic   [`NUM_DE_INST-1:1]    fifo_almost_empty_cq2de;
+  input   logic   [`NUM_DE_INST-1:0]    fifo_almost_empty_cq2de;
   output  logic   [`NUM_DE_INST-1:0]    pop_de2cq;
 
   // signals from Uops Quue
   output  logic   [`NUM_DE_UOP-1:0]     push_de2uq;
   output  UOP_QUEUE_t [`NUM_DE_UOP-1:0] data_de2uq;
   input   logic                         fifo_full_uq2de;
-  input   logic   [`NUM_DE_UOP-1:1]     fifo_almost_full_uq2de;
+  input   logic   [`NUM_DE_UOP-1:0]     fifo_almost_full_uq2de;
 
 //
 // internal signals
@@ -70,7 +70,7 @@ module rvv_backend_decode
 
   generate 
     for (i=1;i<`NUM_DE_INST;i=i+1) begin: GET_PKG_VALID
-      assign pkg_valid[i] = !( fifo_empty_cq2de || (|fifo_almost_empty_cq2de[i:1]));
+      assign pkg_valid[i] = !(|fifo_almost_empty_cq2de[i:0]);
     end
   endgenerate
 

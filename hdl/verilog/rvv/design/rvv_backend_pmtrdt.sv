@@ -21,9 +21,7 @@ module rvv_backend_pmtrdt
   pop_ex2rs,
   pmtrdt_uop_rs2ex,
   fifo_empty_rs2ex,
-`ifdef MULTI_PMTRDT
   fifo_almost_empty_rs2ex,
-`endif
   all_uop_data,
   all_uop_cnt,
 
@@ -40,9 +38,7 @@ module rvv_backend_pmtrdt
   output  logic        [`NUM_PMTRDT-1:0]  pop_ex2rs;
   input   PMT_RDT_RS_t [`NUM_PMTRDT-1:0]  pmtrdt_uop_rs2ex;
   input   logic                           fifo_empty_rs2ex;
-`ifdef MULTI_PMTRDT
-  input   logic        [`NUM_PMTRDT-1:1]  fifo_almost_empty_rs2ex;
-`endif
+  input   logic        [`NUM_PMTRDT-1:0]  fifo_almost_empty_rs2ex;
   input   PMT_RDT_RS_t [`PMTRDT_RS_DEPTH-1:0] all_uop_data;
   input   logic        [$clog2(`PMTRDT_RS_DEPTH):0] all_uop_cnt;
 
@@ -68,11 +64,7 @@ module rvv_backend_pmtrdt
       if (i==0)
         assign pmtrdt_uop_valid[0] = ~fifo_empty_rs2ex;
       else
-      `ifdef MULTI_PMTRDT
         assign pmtrdt_uop_valid[i] = ~fifo_almost_empty_rs2ex[i];
-      `else
-        assign pmtrdt_uop_valid[i] = ~fifo_empty_rs2ex;
-      `endif
       assign pop_ex2rs[i] = pmtrdt_uop_valid[i] & pmtrdt_uop_ready[i];
 
       assign result_valid_ex2rob[i] = pmtrdt_res_valid[i];

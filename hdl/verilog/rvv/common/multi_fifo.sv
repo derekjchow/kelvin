@@ -39,30 +39,30 @@ module multi_fifo
   parameter POP_CLEAR   = 1'b0;         // clear data once pop
   parameter ASYNC_RSTN  = 1'b0;         // reset data
   parameter CHAOS_PUSH  = 1'b0;         // support push data disorderly
-  parameter DATAOUT_REG = 1'b0;         // dataout signal register output. It requires N<=M
+  parameter DATAOUT_REG = 1'b0;         // dataout signal register output. 
   
   localparam DEPTH_BITS = $clog2(DEPTH);
 
 // ---port definition-------------------------------------------------
   input   logic                   clk;
   input   logic                   rst_n;
-  input   logic [M-1:0]           push;   // M bits indicates M push operation(s). 
+  input   logic [M-1:0]           push;         // M bits indicates M push operation(s). 
   input   T     [M-1:0]           datain;
   output  logic                   full;
-  output  logic [M-1:1]           almost_full;  // almost_full[1] - 1 entry to full
-                                                // almost_full[2] - 2 entrys to full
-                                                // almost_full[M-1] - (M-1) entry(s) to full
-  input   logic [N-1:0]           pop;    // N bits indicates N pop operation(s).
+  output  logic [M-1:0]           almost_full;  // almost_full[0] - full
+                                                // almost_full[1] - 1 left to full
+                                                // almost_full[M-1] - (M-1) left to full
+  input   logic [N-1:0]           pop;          // N bits indicates N pop operation(s).
   output  T     [N-1:0]           dataout;
   output  logic                   empty;
-  output  logic [N-1:1]           almost_empty; // almost_empty[1] - 1 entry to empty
-                                                // almost_empty[2] - 2 entrys to empty
-                                                // almost_empty[N-1] - (N-1) entry(s) to empty
+  output  logic [N-1:0]           almost_empty; // almost_empty[0] - empty
+                                                // almost_empty[1] - 1 left to empty
+                                                // almost_empty[N-1] - (N-1) left to empty
   input   logic                   clear;
   output  T     [DEPTH-1:0]       fifo_data;    // sort based on rptr
-  output  logic [DEPTH_BITS-1:0]  wptr;    // write pointer
-  output  logic [DEPTH_BITS-1:0]  rptr;    // read pointer
-  output  logic [DEPTH_BITS  :0]  entry_count; // the number of occupied entry.
+  output  logic [DEPTH_BITS-1:0]  wptr;         // write pointer
+  output  logic [DEPTH_BITS-1:0]  rptr;         // read pointer
+  output  logic [DEPTH_BITS  :0]  entry_count;  // the number of occupied entry.
 
 // ---internal signal definition--------------------------------------
   T mem[DEPTH-1:0];
@@ -90,6 +90,7 @@ module multi_fifo
 
   // full
   assign full = (entry_count == DEPTH);
+  assign almost_full[0] = full;
   generate
     for (i=1; i<M; i++) begin : gen_almost_full
       assign almost_full[i] = (entry_count + i >= DEPTH);
@@ -98,6 +99,7 @@ module multi_fifo
 
   // empty
   assign empty = (entry_count == '0);
+  assign almost_empty[0] = empty;
   generate
     for (i=1; i<N; i++) begin : gen_almost_empty
       assign almost_empty[i] = (entry_count <= i);
@@ -136,7 +138,7 @@ module multi_fifo
           always_ff @(posedge clk) begin
             if (i<remain_count)
               dataout[i] <= mem[next_rptr+i]; 
-            else if (push_seq[i-remain_count])
+            else if (push_seq[i-remain_count]&((i-remain_count)<M))
               dataout[i] <= datain_seq[i-remain_count];
           end
         end
@@ -145,7 +147,7 @@ module multi_fifo
           always_ff @(posedge clk) begin
             if (i<remain_count)
               dataout[i] <= mem[next_rptr+i]; 
-            else if (push[i-remain_count])
+            else if (push[i-remain_count]&((i-remain_count)<M))
               dataout[i] <= datain[i-remain_count];
           end
         end

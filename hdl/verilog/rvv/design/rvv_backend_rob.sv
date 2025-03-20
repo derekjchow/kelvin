@@ -100,61 +100,60 @@ module rvv_backend_rob
 
 // ---internal signal definition--------------------------------------
   // Uop info
-    DP2ROB_t [`NUM_RT_UOP-1:0]  uop_rob2rt;
-    logic    [`NUM_RT_UOP-1:0]  uop_valid_rob2rt;
-    DP2ROB_t [`ROB_DEPTH-1:0]   uop_info;
-    logic    [`ROB_DEPTH-1:0]   entry_valid;
+    DP2ROB_t  [`NUM_RT_UOP-1:0]       uop_rob2rt;
+    logic     [`NUM_RT_UOP-1:0]       uop_valid_rob2rt;
+    DP2ROB_t  [`ROB_DEPTH-1:0]        uop_info;
+    logic     [`ROB_DEPTH-1:0]        entry_valid;
 
-    logic [`ROB_DEPTH_WIDTH-1:0] uop_wptr;
-    logic [`ROB_DEPTH_WIDTH-1:0] uop_rptr;
-    logic                   uop_info_fifo_full;
-    logic [`NUM_DP_UOP-1:1] uop_info_fifo_almost_full;
+    logic     [`ROB_DEPTH_WIDTH-1:0]  uop_wptr;
+    logic     [`ROB_DEPTH_WIDTH-1:0]  uop_rptr;
+    logic                             uop_info_fifo_full;
+    logic     [`NUM_DP_UOP-1:0]       uop_info_fifo_almost_full;
 
   // Uop result
-    RES_ROB_t [`ROB_DEPTH-1:0]  res_mem;
-    logic     [`ROB_DEPTH-1:0]  uop_done;
+    RES_ROB_t [`ROB_DEPTH-1:0]        res_mem;
+    logic     [`ROB_DEPTH-1:0]        uop_done;
 
   // trap
-    logic     [`ROB_DEPTH-1:0]   trap_flag;
-    logic                        flush_rob;
-    logic     [`NUM_RT_UOP-1:0]  flush;
+    logic     [`ROB_DEPTH-1:0]        trap_flag;
+    logic                             flush_rob;
+    logic     [`NUM_RT_UOP-1:0]       flush;
 
   // retire uops
-    logic     [`NUM_RT_UOP-1:0]  uop_retire_valid;
+    logic     [`NUM_RT_UOP-1:0]       uop_retire_valid;
 
   // temp signal
-    logic [`ROB_DEPTH_WIDTH-1:0] wind_uop_wptr [`ROB_DEPTH-1:0];
-    logic [`ROB_DEPTH_WIDTH-1:0] wind_uop_rptr [`ROB_DEPTH-1:0];
-    
+    logic     [`ROB_DEPTH_WIDTH-1:0]  wind_uop_wptr [`ROB_DEPTH-1:0];
+    logic     [`ROB_DEPTH_WIDTH-1:0]  wind_uop_rptr [`ROB_DEPTH-1:0];
 
-    genvar  i,j;
+    genvar                            i,j;
 // ---code start------------------------------------------------------
   // Uop info FIFO
     multi_fifo #(
-        .T      (DP2ROB_t),
-        .M      (`NUM_DP_UOP),
-        .N      (`NUM_RT_UOP),
-        .DEPTH  (`ROB_DEPTH),
-        .CHAOS_PUSH (1'b1)
+        .T            (DP2ROB_t),
+        .M            (`NUM_DP_UOP),
+        .N            (`NUM_RT_UOP),
+        .DEPTH        (`ROB_DEPTH),
+        .CHAOS_PUSH   (1'b1)
     ) u_uop_info_fifo (
       // global
-        .clk    (clk),
-        .rst_n  (rst_n),
+        .clk          (clk),
+        .rst_n        (rst_n),
       // push side
-        .push   (uop_valid_dp2rob & uop_ready_rob2dp),
-        .datain (uop_dp2rob),
-        .full   (uop_info_fifo_full),
+        .push         (uop_valid_dp2rob & uop_ready_rob2dp),
+        .datain       (uop_dp2rob),
+        .full         (uop_info_fifo_full),
         .almost_full  (uop_info_fifo_almost_full),
       // pop side
-        .pop    (rd_valid_rob2rt & rd_ready_rt2rob),
-        .dataout(uop_rob2rt),
-        .empty  (),
+        .pop          (rd_valid_rob2rt & rd_ready_rt2rob),
+        .dataout      (uop_rob2rt),
+        .empty        (),
         .almost_empty (),
       // fifo info
-        .clear  (1'b0),
+        .clear        (1'b0),
         .fifo_data    (uop_info),
-        .wptr   (uop_wptr),
-        .rptr   (uop_rptr),
+        .wptr         (uop_wptr),
+        .rptr         (uop_rptr),
         .entry_count  (),
     );
 
