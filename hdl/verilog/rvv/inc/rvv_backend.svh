@@ -32,7 +32,7 @@ typedef enum logic [2:0] {
 } RVVLMUL;
 
 // Enum type for vtype.vxrm: rounding mode
-typedef enum logic [2:0] {
+typedef enum logic [1:0] {
   RNU = 0,
   RNE = 1,
   RDN = 2,

@@ -26,7 +26,7 @@ output PU2ROB_t   mac2rob_uop_data;
 logic [`ROB_DEPTH_WIDTH-1:0]  mac_uop_rob_entry;
 logic [`FUNCT6_WIDTH-1:0]     mac_uop_funct6;
 logic [`FUNCT3_WIDTH-1:0]     mac_uop_funct3;
-logic [2:0]                   mac_uop_xrm;
+logic [1:0]                   mac_uop_xrm;
 logic [2:0]                   mac_top_vs_eew;
 logic [`VLEN-1:0]             mac_uop_vs1_data;
 logic                         mac_uop_vs1_valid;
@@ -73,7 +73,7 @@ logic                         mac_keep_low_bits_d1;
 logic                         mac_mul_reverse_d1;
 logic                         is_vsmul_d1;
 logic                         is_vmac_d1;
-logic [2:0]                   mac_uop_xrm_d1;
+logic [1:0]                   mac_uop_xrm_d1;
 logic [2:0]                   mac_top_vs_eew_d1;
 logic [`ROB_DEPTH_WIDTH-1:0]  mac_uop_rob_entry_d1;
 
@@ -691,7 +691,7 @@ dff #(1) u_is_vsmul_delay (.q(is_vsmul_d1), .clk(clk), .rst_n(rst_n), .d(is_vsmu
 dff #(1) u_mul_reverse_delay (.q(mac_mul_reverse_d1), .clk(clk), .rst_n(rst_n), .d(mac_mul_reverse));
 dff #(1) u_is_vmac_delay (.q(is_vmac_d1), .clk(clk), .rst_n(rst_n), .d(is_vmac));
 
-dff #(3) u_xrm_delay (.q(mac_uop_xrm_d1), .clk(clk), .rst_n(rst_n), .d(mac_uop_xrm));
+dff #(2) u_xrm_delay (.q(mac_uop_xrm_d1), .clk(clk), .rst_n(rst_n), .d(mac_uop_xrm));
 dff #(3) u_eew_delay (.q(mac_top_vs_eew_d1), .clk(clk), .rst_n(rst_n), .d(mac_top_vs_eew));
 
 
@@ -719,9 +719,9 @@ always@(*) begin
         //Below are for rounding mul (vsmul.vv, vsmul.vx)
         //right shift bit is 7 not 8 !
         //(TODO) Improve to make this readable
-        vsmul_round_incr_eew8_d1[i*4+j] = mac_uop_xrm_d1==3'd3 ? !mac_rslt_full_eew8_d1[i*4+j][7] && (|mac_rslt_full_eew8_d1[i*4+j][6:0]) : //ROD
-                                          mac_uop_xrm_d1==3'd2 ? 1'b0  : //RDN
-                                          mac_uop_xrm_d1==3'd1 ? mac_rslt_full_eew8_d1[i*4+j][6] && (|(mac_rslt_full_eew8_d1[i*4+j][5:0]) || mac_rslt_full_eew8_d1[i*4+j][7]) : //RNE
+        vsmul_round_incr_eew8_d1[i*4+j] = mac_uop_xrm_d1==2'd3 ? !mac_rslt_full_eew8_d1[i*4+j][7] && (|mac_rslt_full_eew8_d1[i*4+j][6:0]) : //ROD
+                                          mac_uop_xrm_d1==2'd2 ? 1'b0  : //RDN
+                                          mac_uop_xrm_d1==2'd1 ? mac_rslt_full_eew8_d1[i*4+j][6] && (|(mac_rslt_full_eew8_d1[i*4+j][5:0]) || mac_rslt_full_eew8_d1[i*4+j][7]) : //RNE
                                                                  mac_rslt_full_eew8_d1[i*4+j][6]; //RNU
         vsmul_rslt_eew8_d1[8*(i*4+j) +:8]= mac_rslt_full_eew8_d1[i*4+j][15:14] == 2'b01 ? 8'h7f : //saturate
                                                                                       mac_rslt_full_eew8_d1[i*4+j][7+:8] + {7'b0,vsmul_round_incr_eew8_d1[i*4+j]};//right shift 7bit then +"1"
@@ -758,9 +758,9 @@ always@(*) begin
       //Below are for rounding mac (vsmul.vv, vsmul.vx)
       //right shift bit is 16-1=15 not 16 !
       //(TODO) Improve to make this readable
-      vsmul_round_incr_eew16_d1[i*2+j] = mac_uop_xrm_d1==3'd3 ? !mac_rslt_full_eew16_d1[i*2+j][15] && (|mac_rslt_full_eew16_d1[i*2+j][14:0]) : //ROD
-                                         mac_uop_xrm_d1==3'd2 ? 1'b0  : //RDN
-                                         mac_uop_xrm_d1==3'd1 ? mac_rslt_full_eew16_d1[i*2+j][14] && (|(mac_rslt_full_eew16_d1[i*2+j][13:0]) || mac_rslt_full_eew16_d1[i*2+j][15]) : //RNE
+      vsmul_round_incr_eew16_d1[i*2+j] = mac_uop_xrm_d1==2'd3 ? !mac_rslt_full_eew16_d1[i*2+j][15] && (|mac_rslt_full_eew16_d1[i*2+j][14:0]) : //ROD
+                                         mac_uop_xrm_d1==2'd2 ? 1'b0  : //RDN
+                                         mac_uop_xrm_d1==2'd1 ? mac_rslt_full_eew16_d1[i*2+j][14] && (|(mac_rslt_full_eew16_d1[i*2+j][13:0]) || mac_rslt_full_eew16_d1[i*2+j][15]) : //RNE
                                                                 mac_rslt_full_eew16_d1[i*2+j][14]; //RNU
       vsmul_rslt_eew16_d1[16*(i*2+j) +:16]= mac_rslt_full_eew16_d1[i*2+j][31:30] == 2'b01 ? 16'h7fff : //saturate
                                                                                        mac_rslt_full_eew16_d1[i*2+j][15+:16] + {15'b0,vsmul_round_incr_eew16_d1[i*2+j]};//right shift 15bit then +"1"
@@ -815,9 +815,9 @@ always@(*) begin
     //Below are for rounding mac (vsmul.vv, vsmul.vx)
     //right shift bit is 32-1=31 not 32 !
     //(TODO) Improve to make this readable
-    vsmul_round_incr_eew32_d1[i] = mac_uop_xrm_d1==3'd3 ? !mac_rslt_full_eew32_d1[i][31] && (|mac_rslt_full_eew32_d1[i][30:0]) : //ROD
-                                   mac_uop_xrm_d1==3'd2 ? 1'b0  : //RDN
-                                   mac_uop_xrm_d1==3'd1 ? mac_rslt_full_eew32_d1[i][30] && (|(mac_rslt_full_eew32_d1[i][29:0]) || mac_rslt_full_eew32_d1[i][31]) : //RNE
+    vsmul_round_incr_eew32_d1[i] = mac_uop_xrm_d1==2'd3 ? !mac_rslt_full_eew32_d1[i][31] && (|mac_rslt_full_eew32_d1[i][30:0]) : //ROD
+                                   mac_uop_xrm_d1==2'd2 ? 1'b0  : //RDN
+                                   mac_uop_xrm_d1==2'd1 ? mac_rslt_full_eew32_d1[i][30] && (|(mac_rslt_full_eew32_d1[i][29:0]) || mac_rslt_full_eew32_d1[i][31]) : //RNE
                                                           mac_rslt_full_eew32_d1[i][30]; //RNU      
     vsmul_rslt_eew32_d1[32*i +:32]= mac_rslt_full_eew32_d1[i][63:62] == 2'b01 ? 32'h7fff_ffff : //saturate
                                                                              mac_rslt_full_eew32_d1[i][31+:32] + {31'b0,vsmul_round_incr_eew32_d1[i]};//right shift 31bit then +"1"

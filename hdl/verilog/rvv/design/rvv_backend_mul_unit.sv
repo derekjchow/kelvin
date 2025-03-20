@@ -26,7 +26,7 @@ output PU2ROB_t   mul2rob_uop_data;
 logic [`ROB_DEPTH_WIDTH-1:0]   mul_uop_rob_entry;
 logic [`FUNCT6_WIDTH-1:0]      mul_uop_funct6;
 logic [`FUNCT3_WIDTH-1:0]      mul_uop_funct3;
-logic [2:0]                    mul_uop_xrm;
+logic [1:0]                    mul_uop_xrm;
 logic [2:0]                    mul_top_vs_eew;
 logic [`VLEN-1:0]              mul_uop_vs1_data;
 logic                          mul_uop_vs1_valid;
@@ -64,7 +64,7 @@ logic                          mul_src1_is_signed_d1;
 logic                          mul_is_widen_d1;
 logic                          mul_keep_low_bits_d1;
 logic                          is_vsmul_d1;
-logic [2:0]                    mul_uop_xrm_d1;
+logic [1:0]                    mul_uop_xrm_d1;
 logic [2:0]                    mul_top_vs_eew_d1;
 logic [`ROB_DEPTH_WIDTH-1:0]   mul_uop_rob_entry_d1;
 
@@ -413,7 +413,7 @@ dff #(1) u_src1_is_signed_delay (.q(mul_src1_is_signed_d1), .clk(clk), .rst_n(rs
 dff #(1) u_is_widen_delay (.q(mul_is_widen_d1), .clk(clk), .rst_n(rst_n), .d(mul_is_widen));
 dff #(1) u_keep_low_bits_delay (.q(mul_keep_low_bits_d1), .clk(clk), .rst_n(rst_n), .d(mul_keep_low_bits));
 dff #(1) u_is_vsmul_delay (.q(is_vsmul_d1), .clk(clk), .rst_n(rst_n), .d(is_vsmul));
-dff #(3) u_xrm_delay (.q(mul_uop_xrm_d1), .clk(clk), .rst_n(rst_n), .d(mul_uop_xrm));
+dff #(2) u_xrm_delay (.q(mul_uop_xrm_d1), .clk(clk), .rst_n(rst_n), .d(mul_uop_xrm));
 dff #(3) u_eew_delay (.q(mul_top_vs_eew_d1), .clk(clk), .rst_n(rst_n), .d(mul_top_vs_eew));
 
 dff #(`ROB_DEPTH_WIDTH) u_rob_entry_delay (.q(mul_uop_rob_entry_d1), .clk(clk), .rst_n(rst_n), .d(mul_uop_rob_entry));
@@ -439,9 +439,9 @@ always@(*) begin
         //Below are for rounding mul (vsmul.vv, vsmul.vx)
         //right shift bit is 7 not 8 !
         //(TODO) Improve to make this readable
-        vsmul_round_incr_eew8_d1[i*4+j] = mul_uop_xrm_d1==3'd3 ? !mul_rslt_full_eew8_d1[i*4+j][7] && (|mul_rslt_full_eew8_d1[i*4+j][6:0]) : //ROD
-                                          mul_uop_xrm_d1==3'd2 ? 1'b0  : //RDN
-                                          mul_uop_xrm_d1==3'd1 ? mul_rslt_full_eew8_d1[i*4+j][6] && (|(mul_rslt_full_eew8_d1[i*4+j][5:0]) || mul_rslt_full_eew8_d1[i*4+j][7]) : //RNE
+        vsmul_round_incr_eew8_d1[i*4+j] = mul_uop_xrm_d1==2'd3 ? !mul_rslt_full_eew8_d1[i*4+j][7] && (|mul_rslt_full_eew8_d1[i*4+j][6:0]) : //ROD
+                                          mul_uop_xrm_d1==2'd2 ? 1'b0  : //RDN
+                                          mul_uop_xrm_d1==2'd1 ? mul_rslt_full_eew8_d1[i*4+j][6] && (|(mul_rslt_full_eew8_d1[i*4+j][5:0]) || mul_rslt_full_eew8_d1[i*4+j][7]) : //RNE
                                                                  mul_rslt_full_eew8_d1[i*4+j][6]; //RNU
         vsmul_rslt_eew8_d1[8*(i*4+j) +:8]= mul_rslt_full_eew8_d1[i*4+j][15:14] == 2'b01 ? 8'h7f : //saturate
                                                                                       mul_rslt_full_eew8_d1[i*4+j][7+:8] + {7'b0,vsmul_round_incr_eew8_d1[i*4+j]};//right shift 7bit then +"1"
@@ -467,9 +467,9 @@ always@(*) begin
       //Below are for rounding mul (vsmul.vv, vsmul.vx)
       //right shift bit is 16-1=15 not 16 !
       //(TODO) Improve to make this readable
-      vsmul_round_incr_eew16_d1[i*2+j] = mul_uop_xrm_d1==3'd3 ? !mul_rslt_full_eew16_d1[i*2+j][15] && (|mul_rslt_full_eew16_d1[i*2+j][14:0]) : //ROD
-                                         mul_uop_xrm_d1==3'd2 ? 1'b0  : //RDN
-                                         mul_uop_xrm_d1==3'd1 ? mul_rslt_full_eew16_d1[i*2+j][14] && (|(mul_rslt_full_eew16_d1[i*2+j][13:0]) || mul_rslt_full_eew16_d1[i*2+j][15]) : //RNE
+      vsmul_round_incr_eew16_d1[i*2+j] = mul_uop_xrm_d1==2'd3 ? !mul_rslt_full_eew16_d1[i*2+j][15] && (|mul_rslt_full_eew16_d1[i*2+j][14:0]) : //ROD
+                                         mul_uop_xrm_d1==2'd2 ? 1'b0  : //RDN
+                                         mul_uop_xrm_d1==2'd1 ? mul_rslt_full_eew16_d1[i*2+j][14] && (|(mul_rslt_full_eew16_d1[i*2+j][13:0]) || mul_rslt_full_eew16_d1[i*2+j][15]) : //RNE
                                                                 mul_rslt_full_eew16_d1[i*2+j][14]; //RNU
       vsmul_rslt_eew16_d1[16*(i*2+j) +:16]= mul_rslt_full_eew16_d1[i*2+j][31:30] == 2'b01 ? 16'h7fff : //saturate
                                                                                        mul_rslt_full_eew16_d1[i*2+j][15+:16] + {15'b0,vsmul_round_incr_eew16_d1[i*2+j]};//right shift 15bit then +"1"
@@ -513,9 +513,9 @@ always@(*) begin
     //Below are for rounding mul (vsmul.vv, vsmul.vx)
     //right shift bit is 32-1=31 not 32 !
     //(TODO) Improve to make this readable
-    vsmul_round_incr_eew32_d1[i] = mul_uop_xrm_d1==3'd3 ? !mul_rslt_full_eew32_d1[i][31] && (|mul_rslt_full_eew32_d1[i][30:0]) : //ROD
-                                   mul_uop_xrm_d1==3'd2 ? 1'b0  : //RDN
-                                   mul_uop_xrm_d1==3'd1 ? mul_rslt_full_eew32_d1[i][30] && (|(mul_rslt_full_eew32_d1[i][29:0]) || mul_rslt_full_eew32_d1[i][31]) : //RNE
+    vsmul_round_incr_eew32_d1[i] = mul_uop_xrm_d1==2'd3 ? !mul_rslt_full_eew32_d1[i][31] && (|mul_rslt_full_eew32_d1[i][30:0]) : //ROD
+                                   mul_uop_xrm_d1==2'd2 ? 1'b0  : //RDN
+                                   mul_uop_xrm_d1==2'd1 ? mul_rslt_full_eew32_d1[i][30] && (|(mul_rslt_full_eew32_d1[i][29:0]) || mul_rslt_full_eew32_d1[i][31]) : //RNE
                                                           mul_rslt_full_eew32_d1[i][30]; //RNU      
     vsmul_rslt_eew32_d1[32*i +:32]= mul_rslt_full_eew32_d1[i][63:62] == 2'b01 ? 32'h7fff_ffff : //saturate
                                                                              mul_rslt_full_eew32_d1[i][31+:32] + {31'b0,vsmul_round_incr_eew32_d1[i]};//right shift 31bit then +"1"
