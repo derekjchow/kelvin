@@ -107,8 +107,8 @@ module rvv_backend_dispatch_opr_byte_type
 
         for (i=0; i<`VLENB; i++) begin : gen_vs2_byte_type
             // ele_index = uop_index * (VLEN/vs2_eew) + BYTE_INDEX[MSB:vs2_eew]
-            assign vs2_enable[i] = uop_info.vm ? 1'b1 : vs2_enable_tmp[i[VLENB_WIDTH-1:0] >> vs2_eew_shift];
-            assign vs2_ele_index[i] = uop_vs2_start + (i[VLENB_WIDTH-1:0] >> vs2_eew_shift);
+            assign vs2_enable[i] = uop_info.vm ? 1'b1 : vs2_enable_tmp[i >> vs2_eew_shift];
+            assign vs2_ele_index[i] = uop_vs2_start + (i >> vs2_eew_shift);
             always_comb begin
                 if (uop_info.ignore_vta&uop_info.ignore_vma)
                     operand_byte_type.vs2[i] = BODY_ACTIVE;       
@@ -179,8 +179,8 @@ module rvv_backend_dispatch_opr_byte_type
 
         for (i=0; i<`VLENB; i++) begin : gen_vd_byte_type
             // ele_index = uop_index * (VLEN/vd_eew) + BYTE_INDEX[MSB:vd_eew]
-            assign vd_enable[i] = uop_info.vm ? 1'b1 : vd_enable_tmp[i[VLENB_WIDTH-1:0] >> vd_eew_shift];
-            assign vd_ele_index[i] = uop_vd_start + (i[VLENB_WIDTH-1:0] >> vd_eew_shift);
+            assign vd_enable[i] = uop_info.vm ? 1'b1 : vd_enable_tmp[i >> vd_eew_shift];
+            assign vd_ele_index[i] = uop_vd_start + (i >> vd_eew_shift);
 
             always_comb begin
               operand_byte_type.v0_strobe[i] = 'b0;

@@ -136,18 +136,18 @@ module multi_fifo
 
   generate
   if (ASYNC_RSTN)
-    always_ff @(posedge clk or negedge rst_n) begin
-      if (!rst_n)
-        for (int j=0; j<DEPTH; j++) begin 
-          mem[j] <= '0;
-        end
-      else begin
-        if (push_seq[0] && !full) mem[wptr] <= datain_seq[0];
-        for (int j=1; j<M; j++) begin
-          if (push_seq[j] && !almost_full[j]) mem[wind_wptr[j]] <= datain_seq[j];
-        end
-
-        if (POP_CLEAR) begin
+    if (POP_CLEAR) begin
+      always_ff @(posedge clk or negedge rst_n) begin
+        if (!rst_n)
+          for (int j=0; j<DEPTH; j++) begin 
+            mem[j] <= '0;
+          end
+        else begin
+          if (push_seq[0] && !full) mem[wptr] <= datain_seq[0];
+          for (int j=1; j<M; j++) begin
+            if (push_seq[j] && !almost_full[j]) mem[wind_wptr[j]] <= datain_seq[j];
+          end
+  
           if (clear) begin
             for (int j=0; j<DEPTH; j++) begin 
               mem[j] <= '0;
@@ -159,15 +159,28 @@ module multi_fifo
           end
         end
       end
+    end else begin
+      always_ff @(posedge clk or negedge rst_n) begin
+        if (!rst_n)
+          for (int j=0; j<DEPTH; j++) begin 
+            mem[j] <= '0;
+          end
+        else begin
+          if (push_seq[0] && !full) mem[wptr] <= datain_seq[0];
+          for (int j=1; j<M; j++) begin
+            if (push_seq[j] && !almost_full[j]) mem[wind_wptr[j]] <= datain_seq[j];
+          end
+        end
+      end
     end
   else
-    always_ff @(posedge clk) begin
-      if (push_seq[0] && !full) mem[wptr] <= datain_seq[0];
-      for (int j=1; j<M; j++) begin
-        if (push_seq[j] && !almost_full[j]) mem[wind_wptr[j]] <= datain_seq[j];
-      end
+    if (POP_CLEAR) begin
+      always_ff @(posedge clk) begin
+        if (push_seq[0] && !full) mem[wptr] <= datain_seq[0];
+        for (int j=1; j<M; j++) begin
+          if (push_seq[j] && !almost_full[j]) mem[wind_wptr[j]] <= datain_seq[j];
+        end
 
-      if (POP_CLEAR) begin
         if (clear) begin
           for (int j=0; j<DEPTH; j++) begin 
             mem[j] <= '0;
@@ -178,7 +191,13 @@ module multi_fifo
           end
         end
       end
-
+    end else begin
+      always_ff @(posedge clk) begin
+        if (push_seq[0] && !full) mem[wptr] <= datain_seq[0];
+        for (int j=1; j<M; j++) begin
+          if (push_seq[j] && !almost_full[j]) mem[wind_wptr[j]] <= datain_seq[j];
+        end
+      end
     end
   endgenerate
 
