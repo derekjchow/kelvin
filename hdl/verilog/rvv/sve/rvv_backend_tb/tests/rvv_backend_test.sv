@@ -2199,6 +2199,9 @@ endclass: alu_vmvnr_test
 //===========================================================
 // LSU direct instruction tests 
 //===========================================================
+//-----------------------------------------------------------
+// 31.7.4. Vector Unit-Stride Instructions
+//-----------------------------------------------------------
 class lsu_unit_stride_test extends rvv_backend_test;
 
   lsu_base_seq rvs_seq;
@@ -2246,6 +2249,106 @@ class lsu_unit_stride_test extends rvv_backend_test;
   endfunction
 endclass: lsu_unit_stride_test
 
+//-----------------------------------------------------------
+// 31.7.5. Vector Strided Instructions
+//-----------------------------------------------------------
+class lsu_const_stride_test extends rvv_backend_test;
+
+  lsu_base_seq rvs_seq;
+  alu_smoke_vv_seq rvs_last_seq;
+
+  lsu_inst_e inst_set[$] = '{VLSE, VSSE};
+
+  `uvm_component_utils(lsu_const_stride_test)
+
+  function new(string name, uvm_component parent);
+    super.new(name, parent);
+  endfunction
+
+  function void build_phase(uvm_phase phase);
+    super.build_phase(phase);
+  endfunction
+
+  function void connect_phase(uvm_phase phase);
+    super.connect_phase(phase);
+    this.set_report_id_action_hier("MDL", UVM_LOG);
+  endfunction
+
+  task main_phase(uvm_phase phase);
+    phase.raise_objection( .obj( this ) );
+
+    `uvm_info(get_type_name(),"Start randomize mem & vrf.", UVM_LOW)
+    rand_mem(mem_base, mem_size);
+    rand_vrf();
+    `uvm_info(get_type_name(), "Randomize done.", UVM_LOW)
+
+    rvs_seq = lsu_base_seq::type_id::create("lsu_base_seq", this);
+    rvs_seq.run_inst(VLSE, env.rvs_agt.rvs_sqr, direct_inst_num);
+    rvs_seq.run_inst(VSSE, env.rvs_agt.rvs_sqr, direct_inst_num);
+
+    rvs_seq.run_inst_set(inst_set, env.rvs_agt.rvs_sqr, direct_inst_num * inst_set.size());
+
+    rvs_last_seq = alu_smoke_vv_seq::type_id::create("rvs_last_seq", this);
+    rvs_last_seq.run_inst(VADD,env.rvs_agt.rvs_sqr);
+    phase.phase_done.set_drain_time(this, 2000ns);
+    phase.drop_objection( .obj( this ) );
+  endtask
+
+  function void final_phase(uvm_phase phase);
+    super.final_phase(phase);
+  endfunction
+endclass: lsu_const_stride_test
+
+//-----------------------------------------------------------
+// 31.7.6. Vector Indexed Instructions
+//-----------------------------------------------------------
+class lsu_indexed_test extends rvv_backend_test;
+
+  lsu_base_seq rvs_seq;
+  alu_smoke_vv_seq rvs_last_seq;
+
+  lsu_inst_e inst_set[$] = '{VLUXEI, VLOXEI, VSUXEI, VSOXEI};
+
+  `uvm_component_utils(lsu_indexed_test)
+
+  function new(string name, uvm_component parent);
+    super.new(name, parent);
+  endfunction
+
+  function void build_phase(uvm_phase phase);
+    super.build_phase(phase);
+  endfunction
+
+  function void connect_phase(uvm_phase phase);
+    super.connect_phase(phase);
+    this.set_report_id_action_hier("MDL", UVM_LOG);
+  endfunction
+
+  task main_phase(uvm_phase phase);
+    phase.raise_objection( .obj( this ) );
+
+    `uvm_info(get_type_name(),"Start randomize mem & vrf.", UVM_LOW)
+    rand_mem(mem_base, mem_size);
+    rand_vrf();
+    `uvm_info(get_type_name(), "Randomize done.", UVM_LOW)
+
+    rvs_seq = lsu_base_seq::type_id::create("lsu_base_seq", this);
+    foreach(inst_set[idx]) begin
+      rvs_seq.run_inst(inst_set[idx], env.rvs_agt.rvs_sqr, direct_inst_num);
+    end
+
+    rvs_seq.run_inst_set(inst_set, env.rvs_agt.rvs_sqr, direct_inst_num * inst_set.size());
+
+    rvs_last_seq = alu_smoke_vv_seq::type_id::create("rvs_last_seq", this);
+    rvs_last_seq.run_inst(VADD,env.rvs_agt.rvs_sqr);
+    phase.phase_done.set_drain_time(this, 2000ns);
+    phase.drop_objection( .obj( this ) );
+  endtask
+
+  function void final_phase(uvm_phase phase);
+    super.final_phase(phase);
+  endfunction
+endclass: lsu_indexed_test
 
 
 `endif // RVV_BACKEND_TEST__SV

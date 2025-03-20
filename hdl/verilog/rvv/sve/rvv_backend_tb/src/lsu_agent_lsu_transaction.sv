@@ -11,6 +11,9 @@ class lsu_transaction extends uvm_sequence_item;
   bit is_last_uop;
   bit is_indexed;
 
+  int total_uops_num;
+  int unsigned base_addr;
+
   /* info about vreg */
   // v0.t
   bit vm;
@@ -29,7 +32,6 @@ class lsu_transaction extends uvm_sequence_item;
   int   vidx_vreg_byte_start;
   int   vidx_vreg_byte_end;
   
-  int elm_num;
 
   /* info about load/store address/data */
   bit  lsu_slot_addr_valid;
@@ -66,6 +68,8 @@ class lsu_transaction extends uvm_sequence_item;
     `uvm_field_int(uop_index,UVM_ALL_ON)
     `uvm_field_int(is_last_uop,UVM_ALL_ON)
     `uvm_field_int(is_indexed,UVM_ALL_ON)
+    `uvm_field_int(total_uops_num,UVM_ALL_ON)
+    `uvm_field_int(base_addr,UVM_ALL_ON)
     
     `uvm_field_int(vm,UVM_ALL_ON)
 
@@ -105,6 +109,8 @@ function lsu_transaction::new(string name = "Trans");
   uop_index = 0;
   is_last_uop = 0;
   is_indexed = 0;
+  total_uops_num = 0;
+  base_addr = 0;
 
   vm = 0;
 
@@ -120,7 +126,6 @@ function lsu_transaction::new(string name = "Trans");
   vidx_vreg_byte_start = 0;
   vidx_vreg_byte_end   = 0;
 
-  elm_num = 0;
 
   lsu_slot_addr_valid = 1'b0;
   foreach(lsu_slot_addr[i]) begin

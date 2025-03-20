@@ -182,6 +182,9 @@ class rvs_transaction extends uvm_sequence_item;
     solve vlmax before vl;
     solve vl    before evl;
     solve evl   before vstart;
+
+    solve src2_idx before rs2_data;
+    solve src1_idx before rs1_data;
   }
 
   constraint c_ill_rate {
@@ -260,6 +263,8 @@ class rvs_transaction extends uvm_sequence_item;
     src3_idx inside {[0:31]};
     src2_idx inside {[0:31]};
     src1_idx inside {[0:31]};
+
+    (src2_type == XRF && src1_type == XRF) -> (src2_idx != src1_idx);
 
     if(!illegal_inst_en) {
       // OPI
@@ -400,10 +405,38 @@ class rvs_transaction extends uvm_sequence_item;
       // LD
       (lsu_inst == VLE)
       ->  (inst_type == LD && lsu_mop == LSU_E && lsu_nf == NF1 && dest_type == VRF && src2_type == FUNC && src2_idx == NORMAL && src1_type == XRF);
+      (lsu_inst == VLM)
+      ->  (inst_type == LD && lsu_mop == LSU_E && lsu_nf == NF1 && dest_type == VRF && src2_type == FUNC && src2_idx == MASK && src1_type == XRF);
+      (lsu_inst == VLR)
+      ->  (inst_type == LD && lsu_mop == LSU_E && lsu_nf == NF1 && dest_type == VRF && src2_type == FUNC && src2_idx == WHOLE_REG && src1_type == XRF);
+      (lsu_inst == VLEFF)
+      ->  (inst_type == LD && lsu_mop == LSU_E && lsu_nf == NF1 && dest_type == VRF && src2_type == FUNC && src2_idx == FOF && src1_type == XRF);
+
+      (lsu_inst == VLSE)
+      ->  (inst_type == LD && lsu_mop == LSU_SE && lsu_nf == NF1 && dest_type == VRF && src2_type == XRF && src1_type == XRF);
+
+      (lsu_inst == VLUXEI)
+      ->  (inst_type == LD && lsu_mop == LSU_UXEI && lsu_nf == NF1 && dest_type == VRF && src2_type == VRF && src1_type == XRF);
+
+      (lsu_inst == VLOXEI)
+      ->  (inst_type == LD && lsu_mop == LSU_OXEI && lsu_nf == NF1 && dest_type == VRF && src2_type == VRF && src1_type == XRF);
 
       // ST
       (lsu_inst == VSE)
       ->  (inst_type == ST && lsu_mop == LSU_E && lsu_nf == NF1 && src3_type == VRF && src2_type == FUNC && src2_idx == NORMAL && src1_type == XRF);
+      (lsu_inst == VSM)
+      ->  (inst_type == ST && lsu_mop == LSU_E && lsu_nf == NF1 && src3_type == VRF && src2_type == FUNC && src2_idx == MASK && src1_type == XRF);
+      (lsu_inst == VSR)
+      ->  (inst_type == ST && lsu_mop == LSU_E && lsu_nf == NF1 && src3_type == VRF && src2_type == FUNC && src2_idx == WHOLE_REG && src1_type == XRF);
+
+      (lsu_inst == VSSE)
+      ->  (inst_type == ST && lsu_mop == LSU_SE && lsu_nf == NF1 && src3_type == VRF && src2_type == XRF && src1_type == XRF);
+
+      (lsu_inst == VSUXEI)
+      ->  (inst_type == ST && lsu_mop == LSU_UXEI && lsu_nf == NF1 && src3_type == VRF && src2_type == VRF && src1_type == XRF);
+
+      (lsu_inst == VSOXEI)
+      ->  (inst_type == ST && lsu_mop == LSU_OXEI && lsu_nf == NF1 && src3_type == VRF && src2_type == VRF && src1_type == XRF);
 
     } else {
       // TODO
@@ -745,7 +778,7 @@ function void rvs_transaction::legal_inst_gen();
           dest_eew  = eew;
           dest_emul = emul;
           src2_eew  = lsu_eew;
-          src2_emul = dest_eew * emul / eew;
+          src2_emul = src2_eew * emul / eew;
           src1_eew  = EEW32;
           src1_emul = EMUL1;
         end      
@@ -786,7 +819,7 @@ function void rvs_transaction::legal_inst_gen();
           src3_eew  = eew;
           src3_emul = emul;
           src2_eew  = lsu_eew;
-          src2_emul = src3_eew * emul / eew;
+          src2_emul = src2_eew * emul / eew;
           src1_eew  = EEW32;
           src1_emul = EMUL1;
         end      
@@ -914,6 +947,7 @@ function void rvs_transaction::legal_inst_gen();
   if(src3_type == VRF) src3_idx = src3_idx - src3_idx % int'($ceil(src3_emul));
   if(src2_type == VRF) src2_idx = src2_idx - src2_idx % int'($ceil(src2_emul));
   if(src1_type == VRF) src1_idx = src1_idx - src1_idx % int'($ceil(src1_emul));
+  `uvm_info("TR_GEN",$sformatf("pc=0x%8x, dest_idx=%0d, src3_idx=%0d, src2_idx=%0d, src1_idx=%0d", pc, dest_idx, src3_idx, src2_idx, src1_idx), UVM_HIGH)
 
   // Overlap
   // Special case
@@ -930,6 +964,10 @@ function void rvs_transaction::legal_inst_gen();
   end
   if(inst_type == ALU && alu_inst == VMUNARY0 && src1_idx inside {VIOTA} && src2_idx inside {[dest_idx:dest_idx+int'($ceil(dest_emul))-1]}) begin
     src2_idx = dest_idx+int'($ceil(dest_emul));
+  end
+  // vd overlap v0.t
+  if(dest_type == VRF && vm == 0 && dest_idx == 0 && dest_eew != EEW1) begin
+    dest_idx = int'($ceil(dest_emul));
   end
   // vd overlap vs2
   if(dest_type == VRF && src2_type == VRF && (dest_eew > src2_eew) && 
@@ -965,11 +1003,8 @@ function void rvs_transaction::legal_inst_gen();
     else
       dest_idx = src1_idx;
   end
-  // vd overlap v0.t
-  if(dest_type == VRF && vm == 0 && dest_idx == 0 && dest_eew != EEW1) begin
-    dest_idx = int'($ceil(dest_emul));
-  end
- // vd Overlap vs1 vs2 for 
+  // FIXME: clean code
+  // vd Overlap vs1 vs2 for 
   if(dest_type == VRF && src1_type == VRF && src2_type == VRF && inst_type == ALU && 
   alu_inst inside {VCOMPRESS,VSLIDEUP_RGATHEREI16,VRGATHER} && alu_type inside {OPIVV,OPMVV}) begin
       if(((dest_idx >= src1_idx) && (dest_idx < src1_idx+int'($ceil(src1_emul)))) ||
@@ -982,7 +1017,7 @@ function void rvs_transaction::legal_inst_gen();
         src2_idx = 16;
       end
   end
- // vd Overlap vs2 
+  // vd Overlap vs2 
   if(dest_type == VRF && src2_type == VRF && inst_type == ALU && 
   alu_inst inside {VSLIDEUP_RGATHEREI16,VSLIDE1UP,VRGATHER} && alu_type inside {OPMVX,OPIVX,OPIVI}) begin
     if(((dest_idx >= src2_idx) && (dest_idx < src2_idx+int'($ceil(src2_emul)))) ||
@@ -993,9 +1028,10 @@ function void rvs_transaction::legal_inst_gen();
     end
   end
 
-  `uvm_info("TR_GEN",$sformatf("pc=0x%8x, dest_idx=%0d, src2_idx=%0d", pc, dest_idx, src2_idx), UVM_HIGH)
-  `uvm_info("TR_GEN",$sformatf("pc=0x%8x, dest_eew=%0d, src2_eew=%0d", pc, dest_eew, src2_eew), UVM_HIGH)
-  `uvm_info("TR_GEN",$sformatf("pc=0x%8x, dest_emul=%0d, src2_emul=%0d", pc, dest_emul, src2_emul), UVM_HIGH)
+  `uvm_info("TR_GEN",$sformatf("pc=0x%8x, dest_idx=%0d, src3_idx=%0d, src2_idx=%0d, src1_idx=%0d", pc, dest_idx, src3_idx, src2_idx, src1_idx), UVM_HIGH)
+  `uvm_info("TR_GEN",$sformatf("pc=0x%8x, dest_eew=%0d, src3_eew=%0d, src2_eew=%0d, src1_eew=%0d", pc, dest_eew, src3_eew, src2_eew, src1_eew), UVM_HIGH)
+  `uvm_info("TR_GEN",$sformatf("pc=0x%8x, dest_emul=%0d, src3_emul=%0d, src2_emul=%0d, src1_emul=%0d", pc, dest_emul, src3_emul, src2_emul, src1_emul), UVM_HIGH)
+
 endfunction: legal_inst_gen
 
 function void rvs_transaction::asm_string_gen();
@@ -1027,9 +1063,11 @@ function void rvs_transaction::asm_string_gen();
           endcase
         end
         LSU_SE  : begin
+          inst = $sformatf("%s%0d", inst, lsu_eew);
         end
         LSU_UXEI, 
         LSU_OXEI: begin
+          inst = $sformatf("%s%0d", inst, lsu_eew);
         end      
       endcase
     end 
@@ -1046,9 +1084,11 @@ function void rvs_transaction::asm_string_gen();
           endcase
         end
         LSU_SE  : begin
+          inst = $sformatf("%s%0d", inst, lsu_eew);
         end
         LSU_UXEI, 
         LSU_OXEI: begin
+          inst = $sformatf("%s%0d", inst, lsu_eew);
         end      
       endcase
     end 
@@ -1135,35 +1175,42 @@ function void rvs_transaction::asm_string_gen();
   endcase
 
   // src2
-  case(this.src2_type)
-    VRF: begin 
-      if(inst_type == ALU && alu_inst inside {VWADDU_W, VWADD_W, VWSUBU_W, VWSUB_W}) begin
-        suf2 = "w"; src2 = $sformatf("v%0d",this.src2_idx); 
-      end else if(inst_type == ALU && alu_inst inside {VMAND, VMOR, VMXOR, VMORN, VMNAND, VMNOR, VMANDN, VMXNOR,
-                                                       VMUNARY0}) begin
-        suf2 = "m"; src2 = $sformatf("v%0d",this.src2_idx); 
-      end else if(inst_type == ALU && alu_inst inside {VWXUNARY0}) begin
-        if(src1_type == FUNC && src1_idx inside {VCPOP, VFIRST}) begin
-          suf2 = "m"; src2 = $sformatf("v%0d",this.src2_idx); 
-        end else if(src1_type == FUNC && src1_idx inside {VMV_X_S}) begin // vmv.x.s
-          suf2 = "s"; src2 = $sformatf("v%0d",this.src2_idx); 
-        end else begin
-          suf2 = "v"; src2 = $sformatf("v%0d",this.src2_idx); 
+  case(inst_type)
+    LD, ST: begin
+      suf2 = ""; src2 = $sformatf("(x%0d)",this.src2_idx); 
+    end
+    ALU: begin
+      case(this.src2_type)
+        VRF: begin 
+          if(inst_type == ALU && alu_inst inside {VWADDU_W, VWADD_W, VWSUBU_W, VWSUB_W}) begin
+            suf2 = "w"; src2 = $sformatf("v%0d",this.src2_idx); 
+          end else if(inst_type == ALU && alu_inst inside {VMAND, VMOR, VMXOR, VMORN, VMNAND, VMNOR, VMANDN, VMXNOR,
+                                                           VMUNARY0}) begin
+            suf2 = "m"; src2 = $sformatf("v%0d",this.src2_idx); 
+          end else if(inst_type == ALU && alu_inst inside {VWXUNARY0}) begin
+            if(src1_type == FUNC && src1_idx inside {VCPOP, VFIRST}) begin
+              suf2 = "m"; src2 = $sformatf("v%0d",this.src2_idx); 
+            end else if(src1_type == FUNC && src1_idx inside {VMV_X_S}) begin // vmv.x.s
+              suf2 = "s"; src2 = $sformatf("v%0d",this.src2_idx); 
+            end else begin
+              suf2 = "v"; src2 = $sformatf("v%0d",this.src2_idx); 
+            end
+          end else begin
+            suf2 = "v"; src2 = $sformatf("v%0d",this.src2_idx); 
+          end
         end
-      end else begin
-        suf2 = "v"; src2 = $sformatf("v%0d",this.src2_idx); 
-      end
+        SCALAR: begin suf2 = "s"; src2 = $sformatf("v%0d",this.src2_idx); end
+        XRF: begin suf2 = "x"; src2 = $sformatf("x%0d",this.src2_idx); end
+        IMM: begin suf2 = "i"; src2 = $sformatf("%0d",$signed(this.src2_idx)); end
+        UNUSE: begin 
+            if(this.src1_idx ==  VID) begin suf2 = ""; src2 = ""; end 
+        end
+        FUNC: begin
+          suf2 = ""; src2 = "";
+        end
+        default: begin suf2 = "?"; src2 = "?"; end
+      endcase
     end
-    SCALAR: begin suf2 = "s"; src2 = $sformatf("v%0d",this.src2_idx); end
-    XRF: begin suf2 = "x"; src2 = $sformatf("x%0d",this.src2_idx); end
-    IMM: begin suf2 = "i"; src2 = $sformatf("%0d",$signed(this.src2_idx)); end
-    UNUSE: begin 
-        if(this.src1_idx ==  VID) begin suf2 = ""; src2 = ""; end 
-    end
-    FUNC: begin
-      suf2 = ""; src2 = "";
-    end
-    default: begin suf2 = "?"; src2 = "?"; end
   endcase
 
   // vm
@@ -1218,6 +1265,8 @@ function void rvs_transaction::asm_string_gen();
 
   // Comments
   comm = $sformatf("# vlmul=%0s, vsew=%0s, vstart=%0d, vl=%0d", vlmul.name(), vsew.name(), vstart, vl);
+  if(inst_type inside {LD, ST} && src1_type == XRF) comm = $sformatf("%s, base=0x%8x", comm, rs1_data);
+  if(inst_type inside {LD, ST} && lsu_mop == LSU_SE && src2_type == XRF) comm = $sformatf("%s, const_stride=%0d", comm, $signed(rs2_data));
 
   // asm string
   if(inst_type == ST) dest = src3;

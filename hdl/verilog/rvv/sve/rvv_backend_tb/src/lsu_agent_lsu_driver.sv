@@ -128,17 +128,25 @@ task lsu_driver::rx_driver();
                 `uvm_fatal("LSU_DRV", $sformatf("vidx_addr mismatch: lsu=%0d, dut=%0d", uop_tr.vidx_vreg_idx, lsu_if.uop_lsu_rvv2lsu[i].vidx_addr))
                 continue;
               end else begin
-                for(int byte_idx=uop_tr.vidx_vreg_byte_start; byte_idx<uop_tr.vidx_vreg_byte_end; byte_idx += uop_tr.vidx_vreg_eew/8) begin
+                `uvm_info("LSU_DRV", $sformatf("Got vreg[%0d]=0x%16x from dut.", lsu_if.uop_lsu_rvv2lsu[i].vidx_addr, lsu_if.uop_lsu_rvv2lsu[i].vidx_data), UVM_HIGH);
+                for(int byte_idx=uop_tr.vidx_vreg_byte_start; byte_idx<=uop_tr.vidx_vreg_byte_end; byte_idx += uop_tr.vidx_vreg_eew/8) begin
                   case(uop_tr.vidx_vreg_eew)
-                    EEW8 : stride_temp = $signed(lsu_if.uop_lsu_rvv2lsu[i].vidx_data[byte_idx*8  +: 8 ]);
-                    EEW16: stride_temp = $signed(lsu_if.uop_lsu_rvv2lsu[i].vidx_data[byte_idx*16 +: 16]);
-                    EEW32: stride_temp = $signed(lsu_if.uop_lsu_rvv2lsu[i].vidx_data[byte_idx*32 +: 32]);
+                    // For indexed-stride, the stride from vrf should be zero-extended to `XLEN.
+                    EEW8 : stride_temp = $unsigned(lsu_if.uop_lsu_rvv2lsu[i].vidx_data[byte_idx*8 +: 8 ]);
+                    EEW16: stride_temp = $unsigned(lsu_if.uop_lsu_rvv2lsu[i].vidx_data[byte_idx*8 +: 16]);
+                    EEW32: stride_temp = $unsigned(lsu_if.uop_lsu_rvv2lsu[i].vidx_data[byte_idx*8 +: 32]);
                   endcase
                   indexed_stride.push_back(stride_temp);
+                  `uvm_info("LSU_DRV", $sformatf("byte[%0d]: push stride=0x%8x to indexed_stride(size: %0d).", byte_idx, stride_temp, indexed_stride.size()), UVM_HIGH)
                 end
                 for(int byte_idx=uop_tr.data_vreg_byte_start; byte_idx<=uop_tr.data_vreg_byte_end; byte_idx++) begin
-                  if(byte_idx % (uop_tr.data_vreg_eew/8) == 0) stride_temp = indexed_stride.pop_front();
+                  if(byte_idx % (uop_tr.data_vreg_eew/8) == 0) begin 
+                    stride_temp = indexed_stride.pop_front();
+                    `uvm_info("LSU_DRV", $sformatf("byte[%0d]: pop stride=0x%8x from indexed_stride(size: %0d).", byte_idx, stride_temp, indexed_stride.size()), UVM_HIGH)
+                  end
+                  `uvm_info("LSU_DRV", $sformatf("byte[%0d]: base=0x%8x, stride=0x%8x.", byte_idx, uop_tr.lsu_slot_addr[byte_idx], stride_temp), UVM_HIGH)
                   uop_tr.lsu_slot_addr[byte_idx] += stride_temp;
+
                 end
                 uop_tr.lsu_slot_addr_valid = 1;
               end
@@ -221,11 +229,11 @@ task lsu_driver::lsu_process();
 //    if(~lsu_if.rst_n) begin
 //    end else begin
       foreach(uops_tx_queue[uop_idx]) begin
-        `uvm_info("LSU_DRV",$sformatf("process uops_tx_queue[%0d]:\n%s",uop_idx,uops_tx_queue[uop_idx].sprint()),UVM_HIGH)
         if(uops_tx_queue[uop_idx].lsu2rvv_delay != 0) begin
           uops_tx_queue[uop_idx].lsu2rvv_delay--;
           break;
         end
+        `uvm_info("LSU_DRV",$sformatf("process uops_tx_queue[%0d]:\n%s",uop_idx,uops_tx_queue[uop_idx].sprint()),UVM_HIGH)
         case(uops_tx_queue[uop_idx].kind)
           lsu_transaction::LOAD: begin
             if(uops_tx_queue[uop_idx].lsu_slot_addr_valid === 0) begin
@@ -466,6 +474,8 @@ function int lsu_driver::lsu_uop_decode(ref rvs_transaction inst_tr);
 
         uop_tr.is_last_uop = (uops_cnt == uops_num) ? 1: 0;
         uop_tr.is_indexed = (inst_tr.lsu_mop inside {LSU_UXEI, LSU_OXEI}) ? 1 : 0;
+        uop_tr.total_uops_num = uops_num;
+        uop_tr.base_addr = addr_base;
 
         uop_tr.vm = inst_tr.vm;
         uop_tr.lsu_slot_strobe = '0;
@@ -495,8 +505,13 @@ function int lsu_driver::lsu_uop_decode(ref rvs_transaction inst_tr);
       end
 
       if(elm_idx * eew_max % `VLEN == `VLEN - eew_max) begin
-        uop_tr.data_vreg_byte_end = (data_byte_idx-1) % `VLENB;
-        uop_tr.vidx_vreg_byte_end = (vidx_byte_idx-1) % `VLENB;
+        if(elm_idx >= inst_tr.vstart && elm_idx < inst_tr.vl) begin
+          uop_tr.data_vreg_byte_end = (data_byte_idx-1) % `VLENB;
+          uop_tr.vidx_vreg_byte_end = (vidx_byte_idx-1) % `VLENB;
+        end else begin
+          uop_tr.data_vreg_byte_end = (data_byte_idx) % `VLENB;
+          uop_tr.vidx_vreg_byte_end = (vidx_byte_idx) % `VLENB;
+        end
         if(inst_tr.lsu_mop inside {LSU_E, LSU_SE} && inst_tr.vm == 1) begin
           uop_tr.lsu_slot_addr_valid = 1;
         end

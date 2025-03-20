@@ -309,7 +309,7 @@ typedef enum int {
   VLOXSEG,
   VSUXSEG,
   VSOXSEG,
-  VL,
+  VLR,
   VSR,
   LSU_UNUSE_INST
 } lsu_inst_e;

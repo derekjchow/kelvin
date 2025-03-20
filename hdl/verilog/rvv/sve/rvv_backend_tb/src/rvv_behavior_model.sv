@@ -2279,6 +2279,7 @@ class lsu_processor;
 
     decode(inst_tr);
     `uvm_info("MDL", "LSU decode done", UVM_HIGH)
+    inst_tr.print();
 
     for(int seg_idx=0; seg_idx<lsu_nf+1; seg_idx++) begin
       dest_reg_idx_base = inst_tr.dest_idx + seg_idx * int'($ceil(dest_emul));
@@ -2295,6 +2296,7 @@ class lsu_processor;
         src0 = rvm.elm_fetch(VRF, 0, elm_idx, src0_eew);
         
         `uvm_info("MDL", "\n---------------------------------------------------------------------------------------------------------------------------------\n", UVM_LOW)
+        `uvm_info("MDL", $sformatf("dest=0x%8x, src3=0x%8x, src2=0x%8x, src1=0x%8x, src0=0x%8x", dest, src3, src2, src1, src0), UVM_HIGH);
 
         // TODO:  fix negetive stride
         update_addr(inst_tr, seg_idx, elm_idx, data_size, src2, src1);
@@ -2382,7 +2384,7 @@ class lsu_processor;
             dest_eew  = sew;
             dest_emul = lmul;
             src2_eew  = inst_tr.lsu_eew;
-            src2_emul = dest_eew * lmul / sew;
+            src2_emul = src2_eew * lmul / sew;
             src1_eew  = EEW32;
             src1_emul = EMUL1;
             evl = inst_tr.vl;
@@ -2431,7 +2433,7 @@ class lsu_processor;
             src3_eew  = sew;
             src3_emul = lmul;
             src2_eew  = inst_tr.lsu_eew;
-            src2_emul = src3_eew * lmul / sew;
+            src2_emul = src2_eew * lmul / sew;
             src1_eew  = EEW32;
             src1_emul = EMUL1;
             evl = inst_tr.vl;
@@ -2449,6 +2451,7 @@ class lsu_processor;
   endfunction: decode
 
   function void update_addr(rvs_transaction inst_tr, int seg_idx, int elm_idx, int elm_size, sew_max_t src2, sew_max_t src1);
+    `uvm_info("MDL/LSU", $sformatf("pc=0x%8x, got src2=0x%8x(%0d), src1=0x%8x", inst_tr.pc, src2, $signed(src2), src1), UVM_HIGH)
     case(inst_tr.lsu_mop) 
       LSU_E   : begin
         // TODO: Whole reg?
@@ -2462,6 +2465,7 @@ class lsu_processor;
         this.address = src1 + src2 + elm_size * seg_idx;
       end      
     endcase
+    `uvm_info("MDL/LSU", $sformatf("pc=0x%8x, seg_idx=%0d, eml_idx=%0d, address update to 0x%8x", inst_tr.pc, seg_idx, elm_idx, this.address), UVM_HIGH)
   endfunction: update_addr
 
   task load_from_mem(
