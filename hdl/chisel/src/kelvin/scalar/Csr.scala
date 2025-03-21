@@ -30,6 +30,45 @@ object CsrOp extends ChiselEnum {
   val CSRRC = Value
 }
 
+object CsrAddress extends ChiselEnum {
+  val FFLAGS    = Value(0x001.U(12.W))
+  val FRM       = Value(0x002.U(12.W))
+  val FCSR      = Value(0x003.U(12.W))
+  val MSTATUS   = Value(0x300.U(12.W))
+  val MISA      = Value(0x301.U(12.W))
+  val MIE       = Value(0x304.U(12.W))
+  val MTVEC     = Value(0x305.U(12.W))
+  val MSCRATCH  = Value(0x340.U(12.W))
+  val MEPC      = Value(0x341.U(12.W))
+  val MCAUSE    = Value(0x342.U(12.W))
+  val MTVAL     = Value(0x343.U(12.W))
+  val MCONTEXT0 = Value(0x7C0.U(12.W))
+  val MCONTEXT1 = Value(0x7C1.U(12.W))
+  val MCONTEXT2 = Value(0x7C2.U(12.W))
+  val MCONTEXT3 = Value(0x7C3.U(12.W))
+  val MCONTEXT4 = Value(0x7C4.U(12.W))
+  val MCONTEXT5 = Value(0x7C5.U(12.W))
+  val MCONTEXT6 = Value(0x7C6.U(12.W))
+  val MCONTEXT7 = Value(0x7C7.U(12.W))
+  val MPC       = Value(0x7E0.U(12.W))
+  val MSP       = Value(0x7E1.U(12.W))
+  val MCYCLE    = Value(0xB00.U(12.W))
+  val MINSTRET  = Value(0xB02.U(12.W))
+  val MCYCLEH   = Value(0xB80.U(12.W))
+  val MINSTRETH = Value(0xB82.U(12.W))
+  val VLENB     = Value(0xC22.U(12.W))
+  val MVENDORID = Value(0xF11.U(12.W))
+  val MARCHID   = Value(0xF12.U(12.W))
+  val MIMPID    = Value(0xF13.U(12.W))
+  val MHARTID   = Value(0xF14.U(12.W))
+  val KISA      = Value(0xFC0.U(12.W))
+  val KSCM0     = Value(0xFC4.U(12.W))
+  val KSCM1     = Value(0xFC8.U(12.W))
+  val KSCM2     = Value(0xFCC.U(12.W))
+  val KSCM3     = Value(0xFD0.U(12.W))
+  val KSCM4     = Value(0xFD4.U(12.W))
+}
+
 object CsrMode extends ChiselEnum {
   val Machine = Value(0.U(1.W))
   val User = Value(1.U(1.W))
@@ -134,6 +173,7 @@ class Csr(p: Parameters) extends Module {
   val mtvec     = RegInit(0.U(32.W))
   val mscratch  = RegInit(0.U(32.W))
   val mepc      = RegInit(0.U(32.W))
+  val mpp       = RegInit(0.U(2.W))
 
   val mhartid   = RegInit(p.hartId.U(32.W))
 
@@ -161,45 +201,48 @@ class Csr(p: Parameters) extends Module {
   val fcsr = Cat(frm, fflags)
 
   // Decode the Index.
-  val fflagsEn    = req.bits.index === 0x001.U
-  val frmEn       = req.bits.index === 0x002.U
-  val fcsrEn      = req.bits.index === 0x003.U
-  val misaEn      = req.bits.index === 0x301.U
-  val mieEn       = req.bits.index === 0x304.U
-  val mtvecEn     = req.bits.index === 0x305.U
-  val mscratchEn  = req.bits.index === 0x340.U
-  val mepcEn      = req.bits.index === 0x341.U
-  val mcauseEn    = req.bits.index === 0x342.U
-  val mtvalEn     = req.bits.index === 0x343.U
-  val mcontext0En = req.bits.index === 0x7C0.U
-  val mcontext1En = req.bits.index === 0x7C1.U
-  val mcontext2En = req.bits.index === 0x7C2.U
-  val mcontext3En = req.bits.index === 0x7C3.U
-  val mcontext4En = req.bits.index === 0x7C4.U
-  val mcontext5En = req.bits.index === 0x7C5.U
-  val mcontext6En = req.bits.index === 0x7C6.U
-  val mcontext7En = req.bits.index === 0x7C7.U
-  val mpcEn       = req.bits.index === 0x7E0.U
-  val mspEn       = req.bits.index === 0x7E1.U
+  val (csr_address, csr_address_valid) = CsrAddress.safe(req.bits.index)
+  assert(!(req.valid && !csr_address_valid))
+  val fflagsEn    = csr_address === CsrAddress.FFLAGS
+  val frmEn       = csr_address === CsrAddress.FRM
+  val fcsrEn      = csr_address === CsrAddress.FCSR
+  val mstatusEn   = csr_address === CsrAddress.MSTATUS
+  val misaEn      = csr_address === CsrAddress.MISA
+  val mieEn       = csr_address === CsrAddress.MIE
+  val mtvecEn     = csr_address === CsrAddress.MTVEC
+  val mscratchEn  = csr_address === CsrAddress.MSCRATCH
+  val mepcEn      = csr_address === CsrAddress.MEPC
+  val mcauseEn    = csr_address === CsrAddress.MCAUSE
+  val mtvalEn     = csr_address === CsrAddress.MTVAL
+  val mcontext0En = csr_address === CsrAddress.MCONTEXT0
+  val mcontext1En = csr_address === CsrAddress.MCONTEXT1
+  val mcontext2En = csr_address === CsrAddress.MCONTEXT2
+  val mcontext3En = csr_address === CsrAddress.MCONTEXT3
+  val mcontext4En = csr_address === CsrAddress.MCONTEXT4
+  val mcontext5En = csr_address === CsrAddress.MCONTEXT5
+  val mcontext6En = csr_address === CsrAddress.MCONTEXT6
+  val mcontext7En = csr_address === CsrAddress.MCONTEXT7
+  val mpcEn       = csr_address === CsrAddress.MPC
+  val mspEn       = csr_address === CsrAddress.MSP
   // M-mode performance CSRs.
-  val mcycleEn    = req.bits.index === 0xB00.U
-  val minstretEn  = req.bits.index === 0xB02.U
-  val mcyclehEn   = req.bits.index === 0xB80.U
-  val minstrethEn = req.bits.index === 0xB82.U
+  val mcycleEn    = csr_address === CsrAddress.MCYCLE
+  val minstretEn  = csr_address === CsrAddress.MINSTRET
+  val mcyclehEn   = csr_address === CsrAddress.MCYCLEH
+  val minstrethEn = csr_address === CsrAddress.MINSTRETH
   // Vector CSRs.
-  val vlenbEn     = Option.when(p.enableRvv) { req.bits.index === 0xC22.U }
+  val vlenbEn     = Option.when(p.enableRvv) { csr_address === CsrAddress.VLENB }
   // M-mode information CSRs.
-  val mvendoridEn = req.bits.index === 0xF11.U
-  val marchidEn   = req.bits.index === 0xF12.U
-  val mimpidEn    = req.bits.index === 0xF13.U
-  val mhartidEn   = req.bits.index === 0xF14.U
+  val mvendoridEn = csr_address === CsrAddress.MVENDORID
+  val marchidEn   = csr_address === CsrAddress.MARCHID
+  val mimpidEn    = csr_address === CsrAddress.MIMPID
+  val mhartidEn   = csr_address === CsrAddress.MHARTID
   // Start of custom CSRs.
-  val kisaEn      = req.bits.index === 0xFC0.U
-  val kscm0En     = req.bits.index === 0xFC4.U
-  val kscm1En     = req.bits.index === 0xFC8.U
-  val kscm2En     = req.bits.index === 0xFCC.U
-  val kscm3En     = req.bits.index === 0xFD0.U
-  val kscm4En     = req.bits.index === 0xFD4.U
+  val kisaEn      = csr_address === CsrAddress.KISA
+  val kscm0En     = csr_address === CsrAddress.KSCM0
+  val kscm1En     = csr_address === CsrAddress.KSCM1
+  val kscm2En     = csr_address === CsrAddress.KSCM2
+  val kscm3En     = csr_address === CsrAddress.KSCM3
+  val kscm4En     = csr_address === CsrAddress.KSCM4
 
   // Pipeline Control.
   val vcoreUndef = if (p.enableVector) { io.vcore.get.undef } else { false.B }
@@ -222,12 +265,13 @@ class Csr(p: Parameters) extends Module {
   // Register state.
   val rs1 = io.rs1.data
 
-  val rdata = MuxCase(0.U, (Seq(
-      fflagsEn    -> fflags,
-      frmEn       -> frm,
-      fcsrEn      -> fcsr,
+  val rdata = MuxCase(0.U(32.W), Seq(
+      fflagsEn    -> Cat(0.U(27.W), fflags),
+      frmEn       -> Cat(0.U(29.W), frm),
+      fcsrEn      -> Cat(0.U(24.W), fcsr),
+      mstatusEn   -> Cat(0.U(19.W), mpp, 0.U(11.W)),
       misaEn      -> misa,
-      mieEn       -> mie,
+      mieEn       -> Cat(0.U(31.W), mie),
       mtvecEn     -> mtvec,
       mscratchEn  -> mscratch,
       mepcEn      -> mepc,
@@ -248,8 +292,8 @@ class Csr(p: Parameters) extends Module {
       minstretEn  -> minstret(31,0),
       minstrethEn -> minstret(63,32),
       mvendoridEn -> mvendorid,
-      marchidEn   -> marchid,
-      mimpidEn    -> mimpid,
+      marchidEn   -> Cat(0.U(31.W), marchid),
+      mimpidEn    -> Cat(0.U(31.W), mimpid),
       mhartidEn   -> mhartid,
       kisaEn      -> kisa,
       kscm0En     -> kscm(31,0),
@@ -260,10 +304,10 @@ class Csr(p: Parameters) extends Module {
     ) ++
       Option.when(p.enableRvv) {
         Seq(
-          vlenbEn.get -> 16.U,  // Vector length in Bytes
+          vlenbEn.get -> 16.U(32.W),  // Vector length in Bytes
         )
       }.getOrElse(Seq())
-  ))
+    )
 
   val wdata = MuxLookup(req.bits.op, 0.U)(Seq(
       CsrOp.CSRRW -> rs1,
@@ -276,6 +320,7 @@ class Csr(p: Parameters) extends Module {
     when (frmEn)        { frm       := wdata }
     when (fcsrEn)       { fflags    := wdata(4,0)
                           frm       := wdata(7,5) }
+    when (mstatusEn)    { mpp       := wdata(12,11) }
     when (mieEn)        { mie       := wdata }
     when (mtvecEn)      { mtvec     := wdata }
     when (mscratchEn)   { mscratch  := wdata }

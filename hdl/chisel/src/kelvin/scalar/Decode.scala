@@ -38,6 +38,9 @@ class DecodeSerializeIO extends Bundle {
   val brcond = Output(Bool())
   val vinst = Output(Bool())     // all vector instructions
   val wfi = Output(Bool())
+  val fence = Output(Bool())
+  val csr = Output(Bool())
+  val undef = Output(Bool())
 
   def defaults() = {
     lsu := false.B
@@ -46,6 +49,9 @@ class DecodeSerializeIO extends Bundle {
     brcond := false.B
     vinst := false.B
     wfi := false.B
+    fence := false.B
+    csr := false.B
+    undef := false.B
   }
 }
 
@@ -193,7 +199,7 @@ class DecodedInstruction(p: Parameters) extends Bundle {
   def readsRs1(): Bool = {
     // TODO(derekjchow): Refactor and add rvv
     isCondBr() || isAluReg() || isAluImm() || isAlu1Bit() || isAlu2Bit() ||
-    isCsr() || isMul() || isDvu() || slog || getvl || vld || vst ||
+    isCsr() || isMul() || isDvu() || slog || getvl || vld || vst || jalr ||
     (if (p.enableRvv) { rvv.get.valid && rvv.get.bits.readsRs1() } else { false.B })
   }
   def readsRs2(): Bool = {
@@ -220,6 +226,15 @@ class Dispatch(p: Parameters) extends Module {
 
     // Branch status.
     val branchTaken = Input(Bool())
+
+    // Fault status.
+    val csrFault = Output(Vec(p.instructionLanes, Bool()))
+    val jalFault = Output(Vec(p.instructionLanes, Bool()))
+    val jalrFault = Output(Vec(p.instructionLanes, Bool()))
+    val bxxFault = Output(Vec(p.instructionLanes, Bool()))
+    val undefFault = Output(Vec(p.instructionLanes, Bool()))
+    val bruTarget = Output(Vec(p.instructionLanes, UInt(32.W)))
+    val jalrTarget = Input(Vec(p.instructionLanes, new RegfileBranchTargetIO))
 
     val interlock = Input(Bool())
 
@@ -338,6 +353,8 @@ class DispatchV2(p: Parameters) extends Dispatch(p) {
   // Ensure undef op is only handled in the first slot
   val undefInterlock = (0 until p.instructionLanes).map(i =>
     if (i == 0) { false.B } else { decodedInsts(i).undef })
+  io.undefFault := (0 until p.instructionLanes).map(i =>
+    if (i == 0) { io.inst(i).valid && decodedInsts(i).undef } else { false.B })
 
   // ---------------------------------------------------------------------------
   // Combine above rules. This variable represents which instructions can be
@@ -420,16 +437,27 @@ class DispatchV2(p: Parameters) extends Dispatch(p) {
         d.mret   -> MakeValid(true.B, BruOp.MRET),
         d.fencei -> MakeValid(true.B, BruOp.FENCEI),
         d.wfi    -> MakeValid(true.B, BruOp.WFI),
-        d.undef  -> MakeValid(true.B, BruOp.UNDEF),
     ))
+    val bru_target = io.inst(i).bits.addr + Mux(
+        io.inst(i).bits.inst(2), d.immjal, d.immbr)
     io.bru(i).valid := tryDispatch && bru.valid
     io.bru(i).bits.fwd := io.inst(i).bits.brchFwd
     io.bru(i).bits.op := bru.bits
     io.bru(i).bits.pc := io.inst(i).bits.addr
-    io.bru(i).bits.target := io.inst(i).bits.addr + Mux(
-        io.inst(i).bits.inst(2), d.immjal, d.immbr)
+    io.bru(i).bits.target := bru_target
     io.bru(i).bits.link := rdAddr(i)
     io.bru(i).bits.inst := io.inst(i).bits.inst
+
+    val jalFault = tryDispatch && bru.valid && (bru.bits === BruOp.JAL) && ((bru_target & 0x3.U) =/= 0.U) && !io.branchTaken
+    val jalrFault = tryDispatch && bru.valid && (bru.bits === BruOp.JALR) && ((io.jalrTarget(i).data & 0x2.U) =/= 0.U) && !io.branchTaken
+    val bxxFault = tryDispatch && bru.valid &&
+                  bru.bits.isOneOf(BruOp.BEQ, BruOp.BNE, BruOp.BLT, BruOp.BGE, BruOp.BLTU, BruOp.BGEU) &&
+                  ((bru_target & 0x3.U) =/= 0.U) && !io.branchTaken
+    io.jalFault(i) := jalFault
+    io.jalrFault(i) := jalrFault
+    io.bxxFault(i) := bxxFault
+    io.bruTarget(i) := io.bru(i).bits.target
+
 
     // -------------------------------------------------------------------------
     // Mlu
@@ -486,10 +514,15 @@ class DispatchV2(p: Parameters) extends Dispatch(p) {
         d.csrrs -> MakeValid(true.B, CsrOp.CSRRS),
         d.csrrc -> MakeValid(true.B, CsrOp.CSRRC)
       ))
-      io.csr.valid := tryDispatch && csr.valid
+      val csr_bits_index = io.inst(0).bits.inst(31,20)
+      val (csr_address, csr_address_valid) = CsrAddress.safe(csr_bits_index)
+      io.csr.valid := tryDispatch && csr.valid && csr_address_valid
       io.csr.bits.addr := rdAddr(i)
-      io.csr.bits.index := io.inst(0).bits.inst(31,20)
+      io.csr.bits.index := csr_bits_index
       io.csr.bits.op := csr.bits
+      io.csrFault(0) := csr.valid && !csr_address_valid
+    } else {
+      io.csrFault(i) := false.B
     }
 
     // -------------------------------------------------------------------------
@@ -577,6 +610,13 @@ class DispatchV1(p: Parameters) extends Dispatch(p) {
 
     decode(i).io.branchTaken := io.branchTaken
     decode(i).io.halted := io.halted
+    decode(i).io.jalrTarget := io.jalrTarget(i)
+    io.csrFault(i) := decode(i).io.csrFault.getOrElse(false.B) && !io.branchTaken
+    io.jalrFault(i) := decode(i).io.jalrFault && !io.branchTaken && decode(i).io.inst.valid
+    io.jalFault(i) := decode(i).io.jalFault && !io.branchTaken && decode(i).io.inst.valid
+    io.bxxFault(i) := decode(i).io.bxxFault & !io.branchTaken && decode(i).io.inst.valid
+    io.undefFault(i) := decode(i).io.undefFault & !io.branchTaken && decode(i).io.inst.valid
+    io.bruTarget(i) := decode(i).io.bruTarget
   }
 
   // Interlock based on regfile write port dependencies.
@@ -653,6 +693,12 @@ class Decode(p: Parameters, pipeline: Int) extends Module {
     val rs2Set  = Flipped(new RegfileReadSetIO)
     val rdMark  = Flipped(new RegfileWriteAddrIO)
     val busRead = Flipped(new RegfileBusAddrIO)
+    val jalFault = Output(Bool())
+    val jalrFault = Output(Bool())
+    val bxxFault = Output(Bool())
+    val undefFault = Output(Bool())
+    val bruTarget = Output(UInt(32.W))
+    val jalrTarget = Input(new RegfileBranchTargetIO)
 
     // ALU interface.
     val alu = Valid(new AluCmd)
@@ -662,6 +708,7 @@ class Decode(p: Parameters, pipeline: Int) extends Module {
 
     // CSR interface.
     val csr = Valid(new CsrCmd)
+    val csrFault = if (pipeline == 0) { Some(Output(Bool())) } else { None }
 
     // LSU interface.
     val lsu = Decoupled(new LsuCmd)
@@ -727,7 +774,7 @@ class Decode(p: Parameters, pipeline: Int) extends Module {
 
   // Interlock jalr but special case return.
   val bruEn = !d.jalr || !io.scoreboard.regd(rs1Addr) ||
-              io.inst.bits.inst(31,20) === 0.U
+              (io.inst.bits.inst(31,20) === 0.U && rdAddr === 0.U && rs1Addr === 1.U)
 
   // Require interlock on address generation as there is no write forwarding.
   val lsuEn = !d.isLsu() ||
@@ -758,7 +805,7 @@ class Decode(p: Parameters, pipeline: Int) extends Module {
 
   // Fence interlock.
   // Input mactive used passthrough, prefer to avoid registers in Decode.
-  val fenceEn = !(d.isFency() && (io.mactive || io.lsuActive))
+  val fenceEn = !(d.isFency() && (io.mactive || io.lsuActive)) && !(io.serializeIn.fence)
 
   // ALU opcode.
   val alu = MuxCase(MakeValid(false.B, AluOp.ADD), Seq(
@@ -817,14 +864,26 @@ class Decode(p: Parameters, pipeline: Int) extends Module {
     d.mret   -> MakeValid(true.B, BruOp.MRET),
     d.fencei -> MakeValid(true.B, BruOp.FENCEI),
     d.wfi    -> MakeValid(true.B, BruOp.WFI),
-    d.undef  -> MakeValid(true.B, BruOp.UNDEF),
   ))
-  io.bru.valid := decodeEn && bru.valid
+  val bru_target = io.inst.bits.addr + Mux(
+      io.inst.bits.inst(2), d.immjal, d.immbr)
+  val jalr_fault = bruEn && bru.valid && (io.bru.bits.op === BruOp.JALR) && ((io.jalrTarget.data & 2.U) =/= 0.U)
+  io.jalrFault := jalr_fault
+  val jal_fault = bruEn && bru.valid && (io.bru.bits.op === BruOp.JAL) && ((bru_target & 0x3.U) =/= 0.U)
+  io.jalFault := jal_fault
+  io.bruTarget := bru_target
+  val bxx_fault =
+    bruEn && bru.valid &&
+    (io.bru.bits.op.isOneOf(BruOp.BEQ, BruOp.BNE, BruOp.BLT, BruOp.BGE, BruOp.BLTU, BruOp.BGEU)) &&
+    ((bru_target & 0x3.U) =/= 0.U)
+  io.bxxFault := bxx_fault
+  io.undefFault := io.inst.valid && d.undef && (pipeline.U === 0.U)
+
+  io.bru.valid := decodeEn && bru.valid && !(jalr_fault || jal_fault || bxx_fault)
   io.bru.bits.fwd := io.inst.bits.brchFwd
   io.bru.bits.op := bru.bits
   io.bru.bits.pc := io.inst.bits.addr
-  io.bru.bits.target := io.inst.bits.addr + Mux(
-      io.inst.bits.inst(2), d.immjal, d.immbr)
+  io.bru.bits.target := bru_target
   io.bru.bits.link := rdAddr
   io.bru.bits.inst := io.inst.bits.inst
 
@@ -834,10 +893,20 @@ class Decode(p: Parameters, pipeline: Int) extends Module {
     d.csrrs -> MakeValid(true.B, CsrOp.CSRRS),
     d.csrrc -> MakeValid(true.B, CsrOp.CSRRC)
   ))
-  io.csr.valid := decodeEn && csr.valid
   io.csr.bits.addr := rdAddr
   io.csr.bits.index := io.inst.bits.inst(31,20)
   io.csr.bits.op := csr.bits
+
+  var csr_fault = false.B
+  if (pipeline == 0) {
+    val (csr_address, csr_address_valid) = CsrAddress.safe(io.inst.bits.inst(31,20))
+    csr_fault = csr.valid && !csr_address_valid
+    io.csrFault.get := csr_fault
+    io.csr.valid := decodeEn && csr.valid && !csr_fault
+  } else {
+    io.csr.valid := decodeEn && csr.valid
+  }
+
 
   // LSU opcode.
   val lsu = MuxCase(MakeValid(false.B, LsuOp.LB), Seq(
@@ -930,7 +999,7 @@ class Decode(p: Parameters, pipeline: Int) extends Module {
   // Register file write address ports. We speculate without knowing the decode
   // enable status to improve timing, and under a branch is ignored anyway.
   val rdMark_valid =
-      alu.valid || csr.valid || mlu.valid || dvu.valid && io.dvu.ready ||
+      alu.valid || (csr.valid && io.csr.valid) || mlu.valid || dvu.valid && io.dvu.ready ||
       lsu.valid && d.isScalarLoad() ||
       d.getvl || d.getmaxvl || vldst_wb ||
       d.rvv.map(x => x.valid && x.bits.writesRd()).getOrElse(false.B) ||
@@ -963,14 +1032,18 @@ class Decode(p: Parameters, pipeline: Int) extends Module {
   // fetch unit. Note above decodeEn resolves for branch for execute usage.
   io.inst.ready := aluEn && bruEn && lsuEn && mulEn && dvuEn && vinstEn && fenceEn &&
                    rvvEn && !io.serializeIn.jump && !io.serializeIn.wfi &&
+                   !io.serializeIn.undef &&
+                   !io.serializeIn.csr &&
                    !io.halted && !io.interlock &&
-                   (pipeline.U === 0.U || !d.undef)
+                   (pipeline.U === 0.U || !d.undef) &&
+                   !(jal_fault || jalr_fault || csr_fault || bxx_fault)
 
   // Serialize Interface.
   // io.serializeOut.lsu  := io.serializeIn.lsu || lsu.valid || vldst  // vldst interlock for address generation cycle in vinst
   // io.serializeOut.lsu  := io.serializeIn.lsu || vldst  // vldst interlock for address generation cycle in vinst
   io.serializeOut.lsu  := io.serializeIn.lsu
   io.serializeOut.mul  := io.serializeIn.mul || mlu.valid
+  io.serializeOut.fence := d.isFency() || io.serializeIn.fence
   io.serializeOut.jump := io.serializeIn.jump || d.jal || d.jalr ||
                           d.ebreak || d.ecall || d.eexit ||
                           d.eyield || d.ectxsw || d.mpause || d.mret
@@ -978,6 +1051,8 @@ class Decode(p: Parameters, pipeline: Int) extends Module {
       d.beq || d.bne || d.blt || d.bge || d.bltu || d.bgeu
   io.serializeOut.vinst := io.serializeIn.vinst
   io.serializeOut.wfi := io.serializeIn.wfi || d.wfi
+  io.serializeOut.csr := io.serializeIn.csr || d.csrrw || d.csrrs || d.csrrc
+  io.serializeOut.undef := io.serializeIn.undef || d.undef
 }
 
 object DecodeInstruction {

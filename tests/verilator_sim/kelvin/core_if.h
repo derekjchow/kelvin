@@ -95,6 +95,8 @@ struct Core_if : Memory_if {
           io_ibus_fault_bits_addr = 0;
           io_ibus_fault_bits_epc = addr;
         }
+      } else {
+       io_ibus_fault_valid = false;
       }
 
       // Data bus read.

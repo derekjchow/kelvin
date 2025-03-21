@@ -58,7 +58,7 @@ static bool run(const char* name, const std::string binary, const int cycles,
 
   CHECK_OK(tb.LoadElfSync(binary));
   CHECK_OK(tb.ClockGateSync(false));
-  CHECK_OK(tb.ResetSync(false));
+  CHECK_OK(tb.ResetAsync(false));
 
   {
     absl::MutexLock lock_(&halted_mtx);

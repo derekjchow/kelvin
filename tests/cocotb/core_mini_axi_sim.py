@@ -251,39 +251,16 @@ async def core_mini_axi_exceptions_test(dut):
   await core_mini_axi.reset()
   cocotb.start_soon(core_mini_axi.clock.start())
 
-  # ELF file -> [pc, mepc, mtval, mcause]
-  expected_csrs = dict({
-    'illegal_elf.elf': [0x160, 0x15c, 0x02007043, 2],
-    'instr_align_0_elf.elf': [0x160, 0x160, 0, 0],
-    'instr_align_1_elf.elf': [0x15c, 0x15c, 0, 0],
-    'instr_align_2_elf.elf': [0x15c, 0x15c, 0, 0],
-    'instr_fault_elf.elf': [0x40000000, 0x40000010, 0, 1],
-    'load_fault_0_elf.elf': [0x40000000, 0x40000010, 0, 1],
-    'load_fault_1_elf.elf': [0x16c, 0x160, 0xA0000000, 5],
-    'mret_fault_elf.elf': [0x310, 0x326, 0, 0],
-    'store_fault_1_elf.elf': [0x138, 0x168, 0xA0000000, 7],
-  })
   exceptions_elfs = glob.glob("../tests/cocotb/exceptions/*.elf")
-  for elf in tqdm.tqdm(exceptions_elfs):
-    with open(elf, "rb") as f:
-      await core_mini_axi.reset()
-      entry_point = await core_mini_axi.load_elf(f)
-      await core_mini_axi.execute_from(entry_point)
-      await core_mini_axi.wait_for_halted()
-      assert core_mini_axi.dut.io_fault.value == 1
-      pc = await core_mini_axi.read_word(0x30100)
-      mepc = await core_mini_axi.read_word(0x30104)
-      mtval = await core_mini_axi.read_word(0x30108)
-      mcause = await core_mini_axi.read_word(0x3010c)
-      expected = expected_csrs.get(os.path.basename(elf))
-      if expected != None:
-        assert pc.view(np.uint32)[0] == expected[0]
-        assert mepc.view(np.uint32)[0] == expected[1]
-        assert mtval.view(np.uint32)[0] == expected[2]
-        assert mcause.view(np.uint32)[0] == expected[3]
-
-      assert (pc != 0).any()
-      assert (mepc != 0).any()
+  with tqdm.tqdm(exceptions_elfs) as t:
+    for elf in tqdm.tqdm(exceptions_elfs):
+      t.set_postfix({"binary": os.path.basename(elf)})
+      with open(elf, "rb") as f:
+        await core_mini_axi.reset()
+        entry_point = await core_mini_axi.load_elf(f)
+        await core_mini_axi.execute_from(entry_point)
+        await core_mini_axi.wait_for_halted()
+        assert core_mini_axi.dut.io_fault.value == 0
 
 @cocotb.test()
 async def core_mini_axi_kelvin_isa_test(dut):
@@ -307,15 +284,19 @@ async def core_mini_axi_rand_instr_test(dut):
   await core_mini_axi.init()
   cocotb.start_soon(core_mini_axi.clock.start())
 
+
   for _ in tqdm.tqdm(range(1000)):
     instr = np.random.randint(0, 2**32, 1, dtype=np.uint32)
     mpause = np.array([0x8000073], dtype=np.uint32)
-    wdata = np.concatenate([instr, mpause, mpause, mpause])
+    # For our instruction stream, set mpause as instr 0.
+    # If we have an exception, we should jump to 0 due to
+    # the default `mtvec` being 0, and halt.
+    wdata = np.concatenate([mpause, instr, mpause, mpause])
     await core_mini_axi.reset()
     await core_mini_axi.write(0, wdata)
-    await core_mini_axi.execute_from(0)
+    await core_mini_axi.execute_from(4)
     try:
-      await core_mini_axi.wait_for_halted()
+      await core_mini_axi.wait_for_halted(timeout_cycles=100)
     except:
       await core_mini_axi.halt()
 

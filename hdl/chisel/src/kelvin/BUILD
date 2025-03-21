@@ -280,6 +280,7 @@ chisel_library(
         "scalar/Debug.scala",
         "scalar/Decode.scala",
         "scalar/Dvu.scala",
+        "scalar/FaultManager.scala",
         "scalar/Fetch.scala",
         "scalar/Flush.scala",
         "scalar/Lsu.scala",

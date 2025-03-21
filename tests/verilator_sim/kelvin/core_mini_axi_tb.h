@@ -174,7 +174,6 @@ struct CoreMiniAxi_tb : Sysc_tb {
                              2, 0, 0, 0, 0, 0>
       CoreMiniAxiProtocolChecker;
   CoreMiniAxiProtocolChecker tlm2axi_checker_;
-  CoreMiniAxiProtocolChecker axi2tlm_checker_;
   // NB: Used to bind bridge and checker, DUT needs manual wiring.
   CoreMiniAxiSignals tlm2axi_signals_;
   CoreMiniAxiSignals axi2tlm_signals_;

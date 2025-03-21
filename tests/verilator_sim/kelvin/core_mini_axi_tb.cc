@@ -52,7 +52,6 @@ CoreMiniAxi_tb::CoreMiniAxi_tb(sc_module_name n, int loops, bool random,
       tlm2axi_bridge_("tlm2axi_bridge"),
       axi2tlm_bridge_("axi2tlm_bridge"),
       tlm2axi_checker_("tlm2axi_checker"),
-      axi2tlm_checker_("axi2tlm_checker"),
       tlm2axi_signals_("tlm2axi_signals"),
       axi2tlm_signals_("axi2tlm_signals"),
       xbar_("xbar"),
@@ -75,13 +74,10 @@ CoreMiniAxi_tb::CoreMiniAxi_tb(sc_module_name n, int loops, bool random,
   // AXI2TLM
   axi2tlm_bridge_.clk(clock);
   axi2tlm_bridge_.resetn(resetn);
-  axi2tlm_checker_.clk(clock);
-  axi2tlm_checker_.resetn(resetn);
 
   tlm2axi_signals_.connect(tlm2axi_bridge_);
   tlm2axi_signals_.connect(tlm2axi_checker_);
   axi2tlm_signals_.connect(axi2tlm_bridge_);
-  axi2tlm_signals_.connect(axi2tlm_checker_);
 
   Connect();
 

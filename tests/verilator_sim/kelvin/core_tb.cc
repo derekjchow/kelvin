@@ -39,7 +39,10 @@ struct Core_tb : Sysc_tb {
   sc_in<bool> io_halted;
   sc_in<bool> io_fault;
   sc_in<bool> io_ebus_dbus_valid;
+  sc_in<sc_bv<32>> io_ebus_dbus_addr;
   sc_out<bool> io_ebus_fault_valid;
+  sc_out<bool> io_ebus_dbus_ready;
+  sc_out<sc_bv<32>> io_ebus_fault_bits_addr;
 
   using Sysc_tb::Sysc_tb;  // constructor
 
@@ -47,6 +50,10 @@ struct Core_tb : Sysc_tb {
     check(!io_fault, "io_fault");
     if (io_ebus_dbus_valid) {
       io_ebus_fault_valid = true;
+      io_ebus_dbus_ready = true;
+      io_ebus_fault_bits_addr = io_ebus_dbus_addr;
+    } else {
+      io_ebus_fault_valid = false;
     }
     if (io_halted) sc_stop();
   }
@@ -185,7 +192,10 @@ static void Core_run(const char* name, const char* bin, const int cycles,
   tb.io_halted(io_halted);
   tb.io_fault(io_fault);
   tb.io_ebus_dbus_valid(io_ebus_dbus_valid);
+  tb.io_ebus_dbus_ready(io_ebus_dbus_ready);
   tb.io_ebus_fault_valid(io_ebus_fault_valid);
+  tb.io_ebus_fault_bits_addr(io_ebus_fault_bits_addr);
+  tb.io_ebus_dbus_addr(io_ebus_dbus_addr);
 
   core.clock(tb.clock);
   core.reset(tb.reset);

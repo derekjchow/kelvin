@@ -111,16 +111,25 @@ class SCore(p: Parameters) extends Module {
   dispatch.io.branchTaken := branchTaken
   dispatch.io.interlock := bru(0).io.interlock.get
 
-  // Connect fault signaling from IBUS/LSU to BRU.
-  bru(0).io.fault := MuxCase(MakeInvalid(new FaultInfo(p)), Array(
+  // Connect fault signaling to FaultManager.
+  val fault_manager = Module(new FaultManager(p))
+  for (i <- 0 until p.instructionLanes) {
+    fault_manager.io.in.fault(i).csr := dispatch.io.csrFault(i)
+    fault_manager.io.in.fault(i).jal := dispatch.io.jalFault(i)
+    fault_manager.io.in.fault(i).jalr := dispatch.io.jalrFault(i)
+    fault_manager.io.in.fault(i).bxx := dispatch.io.bxxFault(i)
+    fault_manager.io.in.fault(i).undef := dispatch.io.undefFault(i)
+    fault_manager.io.in.pc(i).pc := fetch.io.inst.lanes(i).bits.addr
+    fault_manager.io.in.jalr(i).target := regfile.io.target(i).data
+    fault_manager.io.in.undef(i).inst := fetch.io.inst.lanes(i).bits.inst
+    fault_manager.io.in.jal(i).target := dispatch.io.bruTarget(i)
+  }
+  fault_manager.io.in.memory_fault := MuxCase(MakeInvalid(new FaultInfo(p)), Array(
     io.ibus.fault.valid -> io.ibus.fault,
     lsu.io.fault.valid -> lsu.io.fault,
   ))
-  bru(0).io.ibus_fault := io.ibus.fault.valid
-  for (i <- 1 until p.instructionLanes) {
-    bru(i).io.fault := 0.U.asTypeOf(bru(i).io.fault)
-    bru(i).io.ibus_fault := 0.U.asTypeOf(bru(i).io.ibus_fault)
-  }
+  fault_manager.io.in.ibus_fault := io.ibus.fault.valid
+  bru(0).io.fault_manager.get := fault_manager.io.out
 
   // ---------------------------------------------------------------------------
   // ALU
@@ -137,6 +146,7 @@ class SCore(p: Parameters) extends Module {
     bru(i).io.rs1 := regfile.io.readData(2 * i + 0)
     bru(i).io.rs2 := regfile.io.readData(2 * i + 1)
     bru(i).io.target := regfile.io.target(i)
+    dispatch.io.jalrTarget(i) := regfile.io.target(i)
   }
 
   bru(0).io.csr.get <> csr.io.bru
@@ -310,6 +320,7 @@ class SCore(p: Parameters) extends Module {
   lsu.io.ibus.rdata := io.ibus.rdata
   fetch.io.ibus.rdata := io.ibus.rdata
 
+  // Tie-off ibus faults in fetch/lsu (unused)
   fetch.io.ibus.fault := MakeInvalid(new FaultInfo(p))
   lsu.io.ibus.fault := MakeInvalid(new FaultInfo(p))
 
