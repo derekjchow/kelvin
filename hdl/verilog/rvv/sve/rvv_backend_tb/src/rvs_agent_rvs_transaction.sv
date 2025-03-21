@@ -17,6 +17,7 @@ class rvs_transaction extends uvm_sequence_item;
   /* Tr config field */
   rand bit use_vlmax;
        bit is_rt = 0;
+       bit is_last_inst = 0;
 
   /* VCSR field */
   // vtype
@@ -605,6 +606,7 @@ class rvs_transaction extends uvm_sequence_item;
       `uvm_field_int(vxsat,UVM_ALL_ON)
     end
     `uvm_field_int(illegal_inst_en,UVM_ALL_ON)
+    `uvm_field_int(is_last_inst,UVM_ALL_ON)
   `uvm_object_utils_end
 
   extern function new(string name = "Trans");
@@ -634,6 +636,7 @@ endfunction: set_mem_range
 
 function rvs_transaction::new(string name = "Trans");
   super.new(name);
+  is_last_inst = 0;
 endfunction: new
 
 function void rvs_transaction::pre_randomize();

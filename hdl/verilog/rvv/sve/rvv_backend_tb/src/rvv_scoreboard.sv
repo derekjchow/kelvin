@@ -25,6 +25,8 @@ class rvv_scoreboard extends uvm_scoreboard;
   vrf_transaction vrf_queue_rvs[$];
   vrf_transaction vrf_queue_mdl[$];
 
+  rvs_transaction ctrl_tr;
+
   int rvv_total_inst;
   int rvv_executed_inst;
   int mdl_total_inst;
@@ -59,6 +61,7 @@ function void rvv_scoreboard::build_phase(uvm_phase phase);
   mdl_imp = new("mdl_imp", this);
   rvs_vrf_imp = new("rvs_vrf_imp", this);
   mdl_vrf_imp = new("mdl_vrf_imp", this);
+  ctrl_tr = new("ctrl_tr");
   if(!$cast(test_top, uvm_root::get().find("uvm_test_top")))
     `uvm_fatal(get_type_name(),"Get uvm_test_top fail")
 endfunction:build_phase
@@ -71,11 +74,24 @@ function void rvv_scoreboard::connect_phase(uvm_phase phase);
 endfunction:connect_phase
 
 task rvv_scoreboard::main_phase(uvm_phase phase);
+  phase.raise_objection( .obj( this ) );
   super.main_phase(phase);
   fork
     rt_checker();
     vrf_checker();
-  join
+    begin
+      forever begin
+        @(posedge rvs_if.clk);
+        if(ctrl_tr.is_last_inst) begin
+          if(rt_queue_rvs.size()==0 && rt_queue_mdl.size()==0) begin 
+            repeat(10) @(posedge rvs_if.clk);
+            break;
+          end
+        end
+      end
+    end
+  join_any
+  phase.drop_objection( .obj( this ) );
 endtask: main_phase 
 
 function void rvv_scoreboard::report_phase(uvm_phase phase);
@@ -130,6 +146,7 @@ task rvv_scoreboard::rt_checker();
     while(rt_queue_rvs.size()>0) begin 
       rvs_tr = rt_queue_rvs.pop_front();
       mdl_tr = rt_queue_mdl.pop_front();
+      ctrl_tr = rvs_tr;
 
       `uvm_info("RT_RECORDER", $sformatf("\nRetire check start. ====================================================================================================\n"),UVM_LOW)
       `uvm_info("RT_RECORDER", $sformatf("Got retire transaction from DUT:\n%s",rvs_tr.sprint()),UVM_LOW)

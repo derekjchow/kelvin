@@ -30,8 +30,8 @@ class rvs_driver extends uvm_driver # (rvs_transaction);
   int             inst_tx_delay_max = 8;
   int             inst_tx_delay = 0;
 
-  resp_mode_pkg::resp_mode_e       resp_mode_rt_xrf;
-  resp_mode_pkg::resp_mode_e       resp_mode_wr_vxsat;
+  delay_mode_pkg::delay_mode_e       delay_mode_rt_xrf;
+  delay_mode_pkg::delay_mode_e       delay_mode_wr_vxsat;
 
   extern function new(string name = "rvs_driver", uvm_component parent = null); 
  
@@ -69,17 +69,17 @@ function void rvs_driver::build_phase(uvm_phase phase);
   if(!$cast(test_top, uvm_root::get().find("uvm_test_top")))
     `uvm_fatal(get_type_name(),"Get uvm_test_top fail")
 
-  if(uvm_config_db#(resp_mode_pkg::resp_mode_e)::get(this, "", "resp_mode_rt_xrf", resp_mode_rt_xrf)) begin
-    `uvm_info(get_type_name(), $sformatf("resp_mode_rt_xrf of rvs_driver is set to %s.", resp_mode_rt_xrf.name()), UVM_LOW)
+  if(uvm_config_db#(delay_mode_pkg::delay_mode_e)::get(this, "", "delay_mode_rt_xrf", delay_mode_rt_xrf)) begin
+    `uvm_info(get_type_name(), $sformatf("delay_mode_rt_xrf of rvs_driver is set to %s.", delay_mode_rt_xrf.name()), UVM_LOW)
   end else begin
-    resp_mode_rt_xrf = resp_mode_pkg::NORMAL;
-    `uvm_info(get_type_name(), $sformatf("resp_mode_rt_xrf of rvs_driver is set to %s.", resp_mode_rt_xrf.name()), UVM_LOW)
+    delay_mode_rt_xrf = delay_mode_pkg::NORMAL;
+    `uvm_info(get_type_name(), $sformatf("delay_mode_rt_xrf of rvs_driver is set to %s.", delay_mode_rt_xrf.name()), UVM_LOW)
   end
-  if(uvm_config_db#(resp_mode_pkg::resp_mode_e)::get(this, "", "resp_mode_wr_vxsat", resp_mode_wr_vxsat)) begin
-    `uvm_info(get_type_name(), $sformatf("resp_mode_wr_vxsat of rvs_driver is set to %s.", resp_mode_wr_vxsat.name()), UVM_LOW)
+  if(uvm_config_db#(delay_mode_pkg::delay_mode_e)::get(this, "", "delay_mode_wr_vxsat", delay_mode_wr_vxsat)) begin
+    `uvm_info(get_type_name(), $sformatf("delay_mode_wr_vxsat of rvs_driver is set to %s.", delay_mode_wr_vxsat.name()), UVM_LOW)
   end else begin
-    resp_mode_wr_vxsat = resp_mode_pkg::NORMAL;
-    `uvm_info(get_type_name(), $sformatf("resp_mode_wr_vxsat of rvs_driver is set to %s.", resp_mode_wr_vxsat.name()), UVM_LOW)
+    delay_mode_wr_vxsat = delay_mode_pkg::NORMAL;
+    `uvm_info(get_type_name(), $sformatf("delay_mode_wr_vxsat of rvs_driver is set to %s.", delay_mode_wr_vxsat.name()), UVM_LOW)
   end
 endfunction: build_phase
 
@@ -211,24 +211,24 @@ task rvs_driver::rx_driver();
     @(posedge rvs_if.clk);
     // rt_xrf_ready response
     for(int i=0; i<`NUM_RT_UOP; i++) begin
-      case(resp_mode_rt_xrf)
-        resp_mode_pkg::SLOW: 
+      case(delay_mode_rt_xrf)
+        delay_mode_pkg::SLOW: 
           assert(std::randomize(rt_xrf_ready[i]) with {rt_xrf_ready[i] dist {0 := 90, 1 := 10};});
-        resp_mode_pkg::NORMAL: 
+        delay_mode_pkg::NORMAL: 
           assert(std::randomize(rt_xrf_ready[i]) with {rt_xrf_ready[i] dist {0 := 20, 1 := 80};});
-        resp_mode_pkg::FAST: 
+        delay_mode_pkg::FAST: 
           assert(std::randomize(rt_xrf_ready[i]) with {rt_xrf_ready[i] dist {0 := 0, 1 := 100};});
       endcase
       rvs_if.rt_xrf_ready_rvs2rvv[i] <= rt_xrf_ready[i];
     end
 
     // wr_vxsat_ready response
-    case(resp_mode_wr_vxsat)
-      resp_mode_pkg::SLOW: 
+    case(delay_mode_wr_vxsat)
+      delay_mode_pkg::SLOW: 
         assert(std::randomize(wr_vxsat_ready) with {wr_vxsat_ready dist {0 := 90, 1 := 10};});
-      resp_mode_pkg::NORMAL: 
+      delay_mode_pkg::NORMAL: 
         assert(std::randomize(wr_vxsat_ready) with {wr_vxsat_ready dist {0 := 20, 1 := 80};});
-      resp_mode_pkg::FAST: 
+      delay_mode_pkg::FAST: 
         assert(std::randomize(wr_vxsat_ready) with {wr_vxsat_ready dist {0 := 0, 1 := 100};});
     endcase
     rvs_if.wr_vxsat_ready <= wr_vxsat_ready;

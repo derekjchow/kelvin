@@ -23,6 +23,8 @@ class rvs_monitor extends uvm_monitor;
   rvs_transaction inst_tx_queue[$];
   rvs_transaction inst_rx_queue[$];
 
+  rvs_transaction ctrl_tr;
+
   int total_inst = 0;
   int executed_inst = 0;
 
@@ -38,6 +40,7 @@ class rvs_monitor extends uvm_monitor;
   extern virtual task reset_phase(uvm_phase phase);
   extern virtual task configure_phase(uvm_phase phase);
   extern virtual task run_phase(uvm_phase phase);
+  extern virtual task main_phase(uvm_phase phase);
   extern virtual function void final_phase(uvm_phase phase);
   extern protected virtual task tx_monitor();
   extern protected virtual task rx_monitor();
@@ -60,6 +63,7 @@ function void rvs_monitor::build_phase(uvm_phase phase);
   rvv_state_imp = new("rvv_state_imp", this);
   inst_ap = new ("inst_ap",this);
   rt_ap = new ("rt_ap",this);
+  ctrl_tr = new("ctrl_tr");
 endfunction: build_phase
 
 function void rvs_monitor::connect_phase(uvm_phase phase);
@@ -100,6 +104,23 @@ task rvs_monitor::run_phase(uvm_phase phase);
      rx_timeout_monitor();
   join
 endtask: run_phase
+
+task rvs_monitor::main_phase(uvm_phase phase);
+  rvv_state_pkg::rvv_state_e rvv_state;
+  phase.raise_objection( .obj( this ) );
+  super.main_phase(phase);
+  forever begin
+    @(posedge rvs_if.clk);
+    if(ctrl_tr.is_last_inst) begin
+      get_rvv_state(rvv_state);
+      if(inst_tx_queue.size()==0 && inst_rx_queue.size()==0 && rvv_state==rvv_state_pkg::IDLE) begin 
+        repeat(10) @(posedge rvs_if.clk);
+        break;
+      end
+    end
+  end
+  phase.drop_objection( .obj( this ) );
+endtask: main_phase
 
 task rvs_monitor::tx_monitor();
   rvs_transaction inst_tr;
@@ -192,6 +213,7 @@ task rvs_monitor::rx_monitor();
             `uvm_info(get_type_name(), $sformatf("Send rt transaction to scb"),UVM_HIGH)
             `uvm_info(get_type_name(), tr.sprint(),UVM_HIGH)
             rt_ap.write(tr); // write to scb
+            ctrl_tr = tr;
             this.executed_inst++;
             tr = new("tr");
           end

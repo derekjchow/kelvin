@@ -2078,4 +2078,47 @@ class lsu_base_seq extends base_sequence;
     end
   endtask
 endclass: lsu_base_seq 
+
+//===========================================================
+// Special usage sequences
+//===========================================================
+// Last sequence: to control objection & clean all queues
+class rvs_last_sequence extends base_sequence;
+  `uvm_object_utils(rvs_last_sequence)
+
+  function new(string name = "rvs_last_sequence");
+    super.new(name);
+	`ifdef UVM_POST_VERSION_1_1
+     set_automatic_phase_objection(1);
+    `endif
+  endfunction:new
+  
+  virtual task body();
+      req = new("req");
+      start_item(req);
+      req.is_last_inst = 1;
+      assert(req.randomize() with {
+        use_vlmax == 1;
+        pc == inst_cnt;
+
+        vill ==  'b0;
+        vma  ==  'b0;
+        vta  ==  'b0;
+        vsew ==  SEW8;
+        vlmul == LMUL1;
+
+        inst_type == ALU;
+        alu_inst  == VADD;
+        dest_type == VRF; dest_idx == 0;
+        src1_type == VRF; src1_idx == 0;
+        src2_type == VRF; src2_idx == 0;
+        vm == 1; 
+      });
+      finish_item(req);
+      inst_cnt++;
+  endtask
+endclass: rvs_last_sequence 
+
+
+
 `endif // RVS_SEQUENCER_SEQUENCE_LIBRARY__SV
