@@ -70,15 +70,12 @@ module rvv_backend_div_unit_divider
   logic [DIV_WIDTH-1:0]         quotient_r1;
   logic [DIV_WIDTH-1:0]         quotient_r2;
   logic [DIV_WIDTH-1:0]         quotient_r3;
-  logic [DIV_WIDTH-1:0]         quotient_r4;
   logic [DIV_WIDTH-1:0]         remainder_r1;
   logic [DIV_WIDTH-1:0]         remainder_r2;
   logic [DIV_WIDTH-1:0]         remainder_r3;
-  logic [DIV_WIDTH-1:0]         remainder_r4;
   logic [$clog2(DIV_WIDTH):0]   count_r1;
   logic [$clog2(DIV_WIDTH):0]   count_r2;
   logic [$clog2(DIV_WIDTH):0]   count_r3;
-  logic [$clog2(DIV_WIDTH):0]   count_r4;
 
   // register signals
   logic                         dividend_en;
@@ -298,15 +295,12 @@ module rvv_backend_div_unit_divider
     quotient_r1      = 'b0;
     quotient_r2      = 'b0;
     quotient_r3      = 'b0;
-    quotient_r4      = 'b0;
     remainder_r1     = 'b0;
     remainder_r2     = 'b0;
     remainder_r3     = 'b0;
-    remainder_r4     = 'b0;
     count_r1         = 'b0;
     count_r2         = 'b0;
     count_r3         = 'b0;
-    count_r4         = 'b0;
     result_quotient  = 'b0;
     result_remainder = 'b0;
     result_valid     = 'b0;
@@ -424,53 +418,32 @@ module rvv_backend_div_unit_divider
           f_div_step (remainder_q ,quotient_q ,divisor_q,remainder_r1,quotient_r1);
           f_div_step (remainder_r1,quotient_r1,divisor_q,remainder_r2,quotient_r2);
           f_div_step (remainder_r2,quotient_r2,divisor_q,remainder_r3,quotient_r3);
-          f_div_step (remainder_r3,quotient_r3,divisor_q,remainder_r4,quotient_r4);
           
           count_r1 = count_q - 'd1;
           count_r2 = count_q - 'd2;
           count_r3 = count_q - 'd3;
-          count_r4 = count_q - 'd4;
+          
+          quotient_en = 'b1;   
+          remainder_en = 'b1;
+          count_en = 'b1;
 
-          if(count_r1=='d1) begin
-            quotient_en = 'b1;   
-            quotient_d  = quotient_r1;
-
-            remainder_en = 'b1;
-            remainder_d  = remainder_r1;
-            
-            count_en = 'b1;
-            count_d  = 'b1;            
-          end
-          else if(count_r2=='d1) begin
-            quotient_en = 'b1;   
-            quotient_d  = quotient_r2;
-
-            remainder_en = 'b1;
-            remainder_d  = remainder_r2;
-            
-            count_en = 'b1;
-            count_d  = 'b1;            
-          end
-          else if(count_r3=='d1) begin
-            quotient_en = 'b1;   
-            quotient_d  = quotient_r3;
-
-            remainder_en = 'b1;
-            remainder_d  = remainder_r3;
-            
-            count_en = 'b1;
-            count_d  = 'b1;            
-          end
-          else begin
-            quotient_en = 'b1;   
-            quotient_d  = quotient_r4;
-
-            remainder_en = 'b1;
-            remainder_d  = remainder_r4;
-            
-            count_en = 'b1;
-            count_d  = count_r4;      
-          end
+          case({{($clog2(DIV_WIDTH)-1){1'b0}},1'b1})
+            count_r1: begin
+              quotient_d  = quotient_r1;
+              remainder_d = remainder_r1;
+              count_d     = 'b1; 
+            end
+            count_r2: begin
+              quotient_d  = quotient_r2;
+              remainder_d = remainder_r2;
+              count_d     = 'b1;            
+            end
+            default: begin
+              quotient_d  = quotient_r3;
+              remainder_d = remainder_r3;
+              count_d     = count_r3;            
+            end
+          endcase
         end  
       end
       // get result to ouput and wait for ready signal
@@ -596,8 +569,8 @@ module rvv_backend_div_unit_divider
     output logic [DIV_WIDTH-1:0] quotient_out
   );
 
-    logic [DIV_WIDTH  :0] diff;
     logic [DIV_WIDTH-1:0] remainder_tmp;
+    logic [DIV_WIDTH  :0] diff;
     
     remainder_tmp = {remainder_in[DIV_WIDTH-2:0],quotient_in[DIV_WIDTH-1]};
     diff = {1'b0,remainder_tmp} - {1'b0,divisor_in};
