@@ -43,3 +43,5 @@ alu_large_vstart_test
 
 
 lsu_unit_stride_test
+lsu_const_stride_test
+lsu_indexed_test
