@@ -317,9 +317,7 @@ module rvv_backend
         .T            (RVVCmd),
         .M            (`ISSUE_LANE),
         .N            (`NUM_DE_INST),
-      `ifdef ISSUE_3_READ_PORT_6
         .DATAOUT_REG  (1'b1),
-      `endif
         .DEPTH        (`CQ_DEPTH)
     ) u_command_queue (
       // global
