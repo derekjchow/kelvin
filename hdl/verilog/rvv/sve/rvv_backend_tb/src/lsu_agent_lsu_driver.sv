@@ -25,6 +25,9 @@ class lsu_driver extends uvm_driver # (lsu_transaction);
   int unsigned mem_addr_hi;
   byte mem[int unsigned];
   
+  delay_mode_pkg::delay_mode_e       delay_mode_rvv2lsu;
+  delay_mode_pkg::delay_mode_e       delay_mode_lsu2rvv;
+
   `uvm_component_utils_begin(lsu_driver)
   `uvm_component_utils_end
 
@@ -54,6 +57,20 @@ function void lsu_driver::build_phase(uvm_phase phase);
   super.build_phase(phase);
   inst_imp = new("inst_imp", this);
   lsu_ap = new("lsu_ap", this);
+
+  if(uvm_config_db#(delay_mode_pkg::delay_mode_e)::get(this, "", "delay_mode_rvv2lsu", delay_mode_rvv2lsu)) begin
+    `uvm_info(get_type_name(), $sformatf("delay_mode_rvv2lsu of delay_mode_rvv2lsu is set to %s.", delay_mode_rvv2lsu.name()), UVM_LOW)
+  end else begin
+    delay_mode_rvv2lsu = delay_mode_pkg::NORMAL;
+    `uvm_info(get_type_name(), $sformatf("delay_mode_rvv2lsu of is delay_mode_rvv2lsu set to %s.", delay_mode_rvv2lsu.name()), UVM_LOW)
+  end
+
+  if(uvm_config_db#(delay_mode_pkg::delay_mode_e)::get(this, "", "delay_mode_lsu2rvv", delay_mode_lsu2rvv)) begin
+    `uvm_info(get_type_name(), $sformatf("delay_mode_lsu2rvv of is delay_mode_lsu2rvv set to %s.", delay_mode_lsu2rvv.name()), UVM_LOW)
+  end else begin
+    delay_mode_lsu2rvv = delay_mode_pkg::NORMAL;
+    `uvm_info(get_type_name(), $sformatf("delay_mode_lsu2rvv of delay_mode_lsu2rvv is set to %s.", delay_mode_lsu2rvv.name()), UVM_LOW)
+  end
 endfunction: build_phase
 
 function void lsu_driver::connect_phase(uvm_phase phase);
@@ -181,12 +198,12 @@ task lsu_driver::rx_driver();
                 uop_tr.lsu_slot_addr_valid = 1;
               end
             end else begin
-              if(lsu_if.uop_lsu_rvv2lsu[i].v0_valid !== 0) begin
-                `uvm_fatal("LSU_DRV", "Uops need no v0_data but v0_valid is 1")
+              if(lsu_if.uop_lsu_rvv2lsu[i].v0_valid === 0) begin
+                `uvm_fatal("LSU_DRV", "RVV should always send v0_data to lsu.")
                 continue;
               end else if(uop_tr.lsu_slot_strobe !== lsu_if.uop_lsu_rvv2lsu[i].v0_data) begin
                 `uvm_error("LSU_DRV", $sformatf("uop_pc:0x%8x, uop_index:0x%8x, v0_data mismatch. lsu=0x%4x, dut=0x%4x",
-                                                uop_tr.uop_pc, uop_tr.uop_index, uop_tr.lsu_slot_strobe, lsu_if.uop_lsu_rvv2lsu[i].v0_data))
+                                                 uop_tr.uop_pc, uop_tr.uop_index, uop_tr.lsu_slot_strobe, lsu_if.uop_lsu_rvv2lsu[i].v0_data))
               end
             end
 
@@ -407,17 +424,33 @@ function int lsu_driver::lsu_uop_decode(ref rvs_transaction inst_tr);
   addr_base = inst_tr.rs1_data;
   lsu_nf = inst_tr.lsu_nf;
 
+  if(inst_tr.lsu_mop == LSU_E && inst_tr.lsu_umop == MASK && inst_tr.lsu_nf != NF1) begin
+    `uvm_warning("LSU_DRV/INST_CHECKER", $sformatf("nf=%s of unit stride mask load/store is reserved, ignored.", inst_tr.lsu_nf.name()))
+    return -1;
+  end
 
   case(inst_tr.lsu_mop) 
     LSU_E   : begin
-      data_eew = lsu_eew;
-      data_emul = data_eew * lmul / sew;
-      vidx_eew = EEW32;
-      vidx_emul = EMUL1;
-      eew_max  = lsu_eew;
-      emul_max = eew_max * lmul / sew;
-      uops_num = int'($ceil(emul_max));
-      const_stride = (lsu_nf+1) * data_eew/8;
+      case(inst_tr.lsu_umop)
+        MASK: begin
+          data_eew  = EEW8;
+          data_emul = EMUL1;
+          vidx_eew  = EEW32;
+          vidx_emul = EMUL1;
+          eew_max   = EEW8;
+          emul_max  = EMUL1;
+          const_stride = (lsu_nf+1) * data_eew/8;
+        end
+        default: begin
+          data_eew = lsu_eew;
+          data_emul = data_eew * lmul / sew;
+          vidx_eew = EEW32;
+          vidx_emul = EMUL1;
+          eew_max  = lsu_eew;
+          emul_max = eew_max * lmul / sew;
+          const_stride = (lsu_nf+1) * data_eew/8;
+        end
+      endcase
     end
     LSU_SE  : begin
       data_eew = lsu_eew;
@@ -426,7 +459,6 @@ function int lsu_driver::lsu_uop_decode(ref rvs_transaction inst_tr);
       vidx_emul = EMUL1;
       eew_max  = lsu_eew;
       emul_max = eew_max * lmul / sew;
-      uops_num = int'($ceil(emul_max));
       const_stride = inst_tr.rs2_data;
     end
     LSU_UXEI, 
@@ -437,26 +469,83 @@ function int lsu_driver::lsu_uop_decode(ref rvs_transaction inst_tr);
       vidx_emul = vidx_eew * lmul / sew;
       eew_max  = (data_eew > vidx_eew) ? data_eew : vidx_eew;
       emul_max = eew_max * lmul / sew;
-      uops_num = int'($ceil(emul_max));
       const_stride = 0;
     end      
   endcase
+  uops_num = int'($ceil(emul_max)) * (lsu_nf+1);
   
   elm_idx_max = int'($ceil(emul_max)) * `VLEN / eew_max;
   `uvm_info("LSU_DRV", $sformatf("eew_max=%0d, emul_max=%.2f, elm_idx_max=%0d", eew_max, emul_max, elm_idx_max), UVM_HIGH)
 
   `uvm_info("LSU_DRV","Start gen uops",UVM_HIGH)
   uops_cnt = 0;
-  data_byte_idx = inst_tr.vstart * data_eew / 8;
-  vidx_byte_idx = inst_tr.vstart * vidx_eew / 8;
   for(int seg_idx=0; seg_idx<lsu_nf+1; seg_idx++) begin
+    data_byte_idx = inst_tr.vstart * data_eew / 8;
+    vidx_byte_idx = inst_tr.vstart * vidx_eew / 8;
     for(int elm_idx=0; elm_idx<elm_idx_max; elm_idx++) begin
       
       `uvm_info("LSU_DRV",$sformatf("seg_idx=%0d, elm_idx=%0d", seg_idx, elm_idx),UVM_HIGH)
       if(elm_idx * eew_max % `VLEN == 0) begin
         `uvm_info("LSU_DRV","Gen new uop",UVM_HIGH)
         uop_tr = new();
-        assert(uop_tr.randomize());
+        case(delay_mode_rvv2lsu)
+          delay_mode_pkg::SLOW: begin
+            uop_tr.c_rvv2lsu_delay.constraint_mode(0);
+            assert(uop_tr.randomize(rvv2lsu_delay) with {
+              rvv2lsu_delay dist {
+                [1:50] :/ 20,
+                [50:100] :/ 80
+              };
+            });
+          end
+          delay_mode_pkg::NORMAL: begin
+            assert(uop_tr.randomize(rvv2lsu_delay) with {
+              rvv2lsu_delay dist {
+                [0:10] :/ 50,
+                [10:20] :/ 30,
+                [20:50] :/ 20
+              };
+            });
+          end
+          delay_mode_pkg::FAST: begin
+            assert(uop_tr.randomize(rvv2lsu_delay) with {
+              rvv2lsu_delay dist {
+                0      := 80,
+                [1:5]  :/ 15,
+                [5:20] :/ 5
+              };
+            });
+          end
+        endcase
+        case(delay_mode_lsu2rvv)
+          delay_mode_pkg::SLOW: begin
+            uop_tr.c_lsu2rvv_delay.constraint_mode(0);
+            assert(uop_tr.randomize(lsu2rvv_delay) with {
+              lsu2rvv_delay dist {
+                [1:50] :/ 20,
+                [50:100] :/ 80
+              };
+            });
+          end
+          delay_mode_pkg::NORMAL: begin
+            assert(uop_tr.randomize(lsu2rvv_delay) with {
+              lsu2rvv_delay dist {
+                [0:10] :/ 50,
+                [10:20] :/ 30,
+                [20:50] :/ 20
+              };
+            });
+          end
+          delay_mode_pkg::FAST: begin
+            assert(uop_tr.randomize(lsu2rvv_delay) with {
+              lsu2rvv_delay dist {
+                0      := 80,
+                [1:5]  :/ 15,
+                [5:20] :/ 5
+              };
+            });
+          end
+        endcase
         uops_cnt++;
         if(inst_tr.inst_type == LD) begin
           uop_tr.kind = lsu_transaction::LOAD;
@@ -481,12 +570,12 @@ function int lsu_driver::lsu_uop_decode(ref rvs_transaction inst_tr);
         uop_tr.lsu_slot_strobe = '0;
         
         uop_tr.data_vreg_valid      = 1;
-        uop_tr.data_vreg_idx        = data_vreg_idx_base + elm_idx * (data_eew/8) / `VLENB;
+        uop_tr.data_vreg_idx        = data_vreg_idx_base + elm_idx * (data_eew/8) / `VLENB + seg_idx * int'($ceil(data_emul));
         uop_tr.data_vreg_eew        = data_eew; 
         uop_tr.data_vreg_byte_start = data_byte_idx % `VLENB;
 
         uop_tr.vidx_vreg_valid      = (inst_tr.lsu_mop inside {LSU_UXEI, LSU_OXEI}) ? 1 : 0;
-        uop_tr.vidx_vreg_idx        = vidx_vreg_idx_base + elm_idx * (vidx_eew/8) / `VLENB; 
+        uop_tr.vidx_vreg_idx        = vidx_vreg_idx_base + elm_idx * (vidx_eew/8) / `VLENB + seg_idx * int'($ceil(vidx_emul)); 
         uop_tr.vidx_vreg_eew        = vidx_eew; 
         uop_tr.vidx_vreg_byte_start = vidx_byte_idx % `VLENB;
       end

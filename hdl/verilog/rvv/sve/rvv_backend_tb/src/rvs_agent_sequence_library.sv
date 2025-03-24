@@ -2064,14 +2064,6 @@ class lsu_base_seq extends base_sequence;
       assert(req.randomize() with {
         pc == inst_cnt;
         lsu_inst inside {inst_set};
-        if(inst_type inside {LD, ST} && lsu_mop == LSU_SE) {
-          rs2_data dist {
-            [0:32'h80] :/ 40, // 0~128
-            [32'hffff_ff80:32'hffff_ffff] :/ 40, // -128~-1
-            [32'h80:32'h7fff_ffff] :/ 10,     // >128
-            [32'h8000_0000:32'hffff_ff7f] :/ 10 // <-128
-          };
-        }
       });
       finish_item(req);
       inst_cnt++;

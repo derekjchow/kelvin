@@ -1209,7 +1209,7 @@ endclass : rvv_behavior_model
 
         // Vec load inst will retire all uops, including all pre-start inst, for now.
         if(rt_tr.dest_type == VRF) begin
-          for(int reg_idx=dest_reg_idx_base; reg_idx<dest_reg_idx_base+int'($ceil(dest_emul)); reg_idx++) begin
+          for(int reg_idx=dest_reg_idx_base; reg_idx<dest_reg_idx_base+int'($ceil(dest_emul))*(inst_tr.lsu_nf+1); reg_idx++) begin
             rt_tr.rt_vrf_index.push_back(reg_idx);
             rt_tr.rt_vrf_strobe.push_back(vrf_byte_strobe_temp[reg_idx]);
             rt_tr.rt_vrf_data.push_back(vrf_temp[reg_idx]);
@@ -2282,11 +2282,14 @@ class lsu_processor;
     inst_tr.print();
 
     for(int seg_idx=0; seg_idx<lsu_nf+1; seg_idx++) begin
-      dest_reg_idx_base = inst_tr.dest_idx + seg_idx * int'($ceil(dest_emul));
-      src3_reg_idx_base = inst_tr.src3_idx + seg_idx * int'($ceil(src3_emul));
-      src2_reg_idx_base = inst_tr.src2_idx + seg_idx * int'($ceil(src2_emul));
-      src1_reg_idx_base = inst_tr.src1_idx + seg_idx * int'($ceil(src1_emul));
+      dest_reg_idx_base = (inst_tr.dest_type == VRF) ? (inst_tr.dest_idx + seg_idx * int'($ceil(dest_emul))) : (inst_tr.dest_idx);
+      src3_reg_idx_base = (inst_tr.src3_type == VRF) ? (inst_tr.src3_idx + seg_idx * int'($ceil(src3_emul))) : (inst_tr.src3_idx);
+      src2_reg_idx_base = (inst_tr.src2_type == VRF) ? (inst_tr.src2_idx + seg_idx * int'($ceil(src2_emul))) : (inst_tr.src2_idx);
+      src1_reg_idx_base = (inst_tr.src1_type == VRF) ? (inst_tr.src1_idx + seg_idx * int'($ceil(src1_emul))) : (inst_tr.src1_idx);
 
+      `uvm_info("MDL", $sformatf("seg_idx=%0d: dest_reg_idx_base=%0d, src3_reg_idx_base=%0d, src2_reg_idx_base=%0d, src1_reg_idx_base=%0d",
+                                  seg_idx,     dest_reg_idx_base,     src3_reg_idx_base,     src2_reg_idx_base,     src1_reg_idx_base), UVM_HIGH)
+      `uvm_info("MDL", $sformatf("vreg[0]=0x%16h", rvm.vrf[0]), UVM_HIGH)
       for(int elm_idx=0; elm_idx<elm_idx_max; elm_idx++) begin
         // fetch
         dest = rvm.elm_fetch(inst_tr.dest_type, dest_reg_idx_base, elm_idx, dest_eew);

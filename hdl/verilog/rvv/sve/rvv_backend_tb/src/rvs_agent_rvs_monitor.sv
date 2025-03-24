@@ -72,6 +72,12 @@ function void rvs_monitor::connect_phase(uvm_phase phase);
     `uvm_fatal(get_type_name(), "Fail to get rvs_if!")
   if(!uvm_config_db#(v_if4)::get(this, "", "rvv_intern_if", rvv_intern_if))
     `uvm_fatal(get_type_name(), "Fail to get rvv_intern_if!")
+  if(uvm_config_db#(int)::get(this, "", "inst_tx_timeout_max", inst_tx_timeout_max))
+    `uvm_info(get_type_name(), $sformatf("inst_tx_timeout_max is set to = %0d",inst_tx_timeout_max), UVM_LOW)
+  else begin
+    inst_tx_timeout_max = 500;
+    `uvm_info(get_type_name(), $sformatf("inst_tx_timeout_max is set to = %0d",inst_tx_timeout_max), UVM_LOW)
+  end
 endfunction: connect_phase
 
 task rvs_monitor::reset_phase(uvm_phase phase);

@@ -49,11 +49,13 @@ class lsu_transaction extends uvm_sequence_item;
   rand int unsigned lsu2rvv_delay;
 
 // Constrain ----------------------------------------------------------
-  constraint c_delay {
+  constraint c_rvv2lsu_delay {
     rvv2lsu_delay dist {
       0      := 80,
       [1:10] :/ 20
     };
+  }
+  constraint c_lsu2rvv_delay {
     lsu2rvv_delay dist {
       0      := 80,
       [1:5]  :/ 15,
