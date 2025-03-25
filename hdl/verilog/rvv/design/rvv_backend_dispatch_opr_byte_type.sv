@@ -176,10 +176,10 @@ module rvv_backend_dispatch_opr_byte_type
               endcase
               uop_vd_end = uop_vd_start + (`VLENB/4-1);
             end
-            default: begin
+            default: begin  // {EEW1,EEW1}
               uop_v0_start = 'b0; 
-              uop_vd_start = 'b0; 
-              uop_vd_end = 'b0;
+              uop_vd_start = uop_info.vstart; 
+              uop_vd_end = uop_info.vl;
             end
           endcase
         end
