@@ -379,8 +379,7 @@ task lsu_driver::tx_driver();
 endtask : tx_driver
 
 function void lsu_driver::write_lsu_inst(rvs_transaction inst_tr);
-  if(inst_tr.inst_type inside {LD, ST} && 
-     (inst_tr.vstart < inst_tr.vl)) begin
+  if(inst_tr.inst_type inside {LD, ST}) begin
     `uvm_info("LSU_DRV",$sformatf("LSU driver got inst_tr:\n%s",inst_tr.sprint()),UVM_HIGH)
     inst_queue.push_back(inst_tr);
     lsu_uop_decode(inst_tr);
@@ -395,6 +394,9 @@ function int lsu_driver::lsu_uop_decode(ref rvs_transaction inst_tr);
   real lmul;
   int elm_idx_max;
   int lsu_nf;
+  int seg_idx_max;
+  int evl;
+  int vstart;
 
   int  data_eew;
   real data_emul;
@@ -411,11 +413,14 @@ function int lsu_driver::lsu_uop_decode(ref rvs_transaction inst_tr);
   int temp_idx;
   int data_vreg_idx_base;
   int vidx_vreg_idx_base;
+  int data_vreg_idx_last;
+  int vidx_vreg_idx_last;
 
   // load/store addres info
   int addr;
   int addr_base, const_stride;
 
+// Decode ---------------------------------------------------------------------- 
   `uvm_info("LSU_DRV","Start decode vtype",UVM_HIGH)
   sew = 8 << inst_tr.vsew;
   lsu_eew = inst_tr.lsu_eew;
@@ -423,11 +428,7 @@ function int lsu_driver::lsu_uop_decode(ref rvs_transaction inst_tr);
 
   addr_base = inst_tr.rs1_data;
   lsu_nf = inst_tr.lsu_nf;
-
-  if(inst_tr.lsu_mop == LSU_E && inst_tr.lsu_umop == MASK && inst_tr.lsu_nf != NF1) begin
-    `uvm_warning("LSU_DRV/INST_CHECKER", $sformatf("nf=%s of unit stride mask load/store is reserved, ignored.", inst_tr.lsu_nf.name()))
-    return -1;
-  end
+  vstart = inst_tr.vstart;
 
   case(inst_tr.lsu_mop) 
     LSU_E   : begin
@@ -440,6 +441,19 @@ function int lsu_driver::lsu_uop_decode(ref rvs_transaction inst_tr);
           eew_max   = EEW8;
           emul_max  = EMUL1;
           const_stride = (lsu_nf+1) * data_eew/8;
+          seg_idx_max  = lsu_nf + 1;
+          evl = int'($ceil(inst_tr.vl / 8.0));
+        end
+        WHOLE_REG: begin
+          data_eew  = lsu_eew;
+          data_emul = lsu_nf + 1;
+          vidx_eew  = EEW32;
+          vidx_emul = EMUL1;
+          eew_max   = lsu_eew;
+          emul_max  = data_emul;
+          const_stride = data_eew/8;
+          seg_idx_max  = 1;
+          evl = data_emul * `VLEN / data_eew;
         end
         default: begin
           data_eew = lsu_eew;
@@ -449,6 +463,8 @@ function int lsu_driver::lsu_uop_decode(ref rvs_transaction inst_tr);
           eew_max  = lsu_eew;
           emul_max = eew_max * lmul / sew;
           const_stride = (lsu_nf+1) * data_eew/8;
+          seg_idx_max  = lsu_nf + 1;
+          evl = inst_tr.vl;
         end
       endcase
     end
@@ -460,6 +476,8 @@ function int lsu_driver::lsu_uop_decode(ref rvs_transaction inst_tr);
       eew_max  = lsu_eew;
       emul_max = eew_max * lmul / sew;
       const_stride = inst_tr.rs2_data;
+      seg_idx_max  = lsu_nf + 1;
+      evl = inst_tr.vl;
     end
     LSU_UXEI, 
     LSU_OXEI: begin
@@ -470,18 +488,60 @@ function int lsu_driver::lsu_uop_decode(ref rvs_transaction inst_tr);
       eew_max  = (data_eew > vidx_eew) ? data_eew : vidx_eew;
       emul_max = eew_max * lmul / sew;
       const_stride = 0;
+      seg_idx_max  = lsu_nf + 1;
+      evl = inst_tr.vl;
     end      
   endcase
-  uops_num = int'($ceil(emul_max)) * (lsu_nf+1);
-  
+  uops_num = int'($ceil(emul_max)) * (seg_idx_max);
   elm_idx_max = int'($ceil(emul_max)) * `VLEN / eew_max;
+  
+  if(inst_tr.inst_type == LD) begin
+    data_vreg_idx_base = inst_tr.dest_idx;
+    data_vreg_idx_last = inst_tr.dest_idx + (seg_idx_max) * int'($ceil(data_emul)) - 1;
+    vidx_vreg_idx_base = inst_tr.src2_idx;
+    vidx_vreg_idx_last = inst_tr.src2_idx + int'($ceil(vidx_emul)) - 1;
+  end else if(inst_tr.inst_type == ST) begin
+    data_vreg_idx_base = inst_tr.src3_idx;
+    data_vreg_idx_last = inst_tr.src3_idx + (seg_idx_max) * int'($ceil(data_emul)) - 1;
+    vidx_vreg_idx_base = inst_tr.src2_idx;
+    vidx_vreg_idx_last = inst_tr.src2_idx + int'($ceil(vidx_emul)) - 1;
+  end else begin
+    `uvm_fatal("TB_ISSUE", "Decode inst_tr which is not load/store in lsu_driver.")
+  end
   `uvm_info("LSU_DRV", $sformatf("eew_max=%0d, emul_max=%.2f, elm_idx_max=%0d", eew_max, emul_max, elm_idx_max), UVM_HIGH)
 
+// Inst Check ------------------------------------------------------------------
+  if(inst_tr.lsu_mop == LSU_E && inst_tr.lsu_umop == MASK && inst_tr.lsu_nf != NF1) begin
+    `uvm_warning("LSU_DRV/INST_CHECKER", $sformatf("nf=%s of unit stride mask load/store is reserved, ignored.", inst_tr.lsu_nf.name()))
+    return -1;
+  end
+  if(inst_tr.inst_type == ST && inst_tr.lsu_mop == LSU_E && inst_tr.lsu_umop == WHOLE_REG && inst_tr.lsu_width != LSU_8BIT) begin
+    `uvm_warning("LSU_DRV/INST_CHECKER", $sformatf("lsu_width=%S of vs<nf>r.v is reserved, ignored.", inst_tr.lsu_width.name()))
+    return -1;
+  end
+  if(inst_tr.lsu_mop == LSU_E && inst_tr.lsu_umop == MASK && inst_tr.lsu_width != LSU_8BIT) begin
+    `uvm_warning("LSU_DRV/INST_CHECKER", $sformatf("lsu_width=%S of vlm/vsm.v is reserved, ignored.", inst_tr.lsu_width.name()))
+    return -1;
+  end
+  if(inst_tr.lsu_mop == LSU_E && inst_tr.lsu_umop inside {MASK, WHOLE_REG} && inst_tr.vm != 1) begin
+    `uvm_warning("LSU_DRV/INST_CHECKER", $sformatf("vm != 1 of vlm/vsm/vlr/vsr is reserved, ignored.", inst_tr.lsu_width.name()))
+    return -1;
+  end
+  if(vstart >= evl) begin
+    `uvm_warning("LSU_DRV/INST_CHECKER", $sformatf("vstart(%0d) >= evl(%0d), ignored", vstart, evl))
+    return -1;
+  end
+  if(data_vreg_idx_last > 31) begin
+    `uvm_warning("LSU_DRV/INST_CHECKER", $sformatf("data_idx(%0d~%0d) out of range, ignored", data_vreg_idx_base, data_vreg_idx_last))
+    return -1;
+  end
+
+// Uops Gen --------------------------------------------------------------------
   `uvm_info("LSU_DRV","Start gen uops",UVM_HIGH)
   uops_cnt = 0;
-  for(int seg_idx=0; seg_idx<lsu_nf+1; seg_idx++) begin
-    data_byte_idx = inst_tr.vstart * data_eew / 8;
-    vidx_byte_idx = inst_tr.vstart * vidx_eew / 8;
+  for(int seg_idx=0; seg_idx<seg_idx_max; seg_idx++) begin
+    data_byte_idx = vstart * data_eew / 8;
+    vidx_byte_idx = vstart * vidx_eew / 8;
     for(int elm_idx=0; elm_idx<elm_idx_max; elm_idx++) begin
       
       `uvm_info("LSU_DRV",$sformatf("seg_idx=%0d, elm_idx=%0d", seg_idx, elm_idx),UVM_HIGH)
@@ -549,12 +609,8 @@ function int lsu_driver::lsu_uop_decode(ref rvs_transaction inst_tr);
         uops_cnt++;
         if(inst_tr.inst_type == LD) begin
           uop_tr.kind = lsu_transaction::LOAD;
-          data_vreg_idx_base = inst_tr.dest_idx;
-          vidx_vreg_idx_base = inst_tr.src2_idx;
         end else if(inst_tr.inst_type == ST) begin
           uop_tr.kind = lsu_transaction::STORE;
-          data_vreg_idx_base = inst_tr.src3_idx;
-          vidx_vreg_idx_base = inst_tr.src2_idx;
         end else begin
           `uvm_fatal("TB_ISSUE", "Decode inst_tr which is not load/store in lsu_driver.")
         end
@@ -575,12 +631,12 @@ function int lsu_driver::lsu_uop_decode(ref rvs_transaction inst_tr);
         uop_tr.data_vreg_byte_start = data_byte_idx % `VLENB;
 
         uop_tr.vidx_vreg_valid      = (inst_tr.lsu_mop inside {LSU_UXEI, LSU_OXEI}) ? 1 : 0;
-        uop_tr.vidx_vreg_idx        = vidx_vreg_idx_base + elm_idx * (vidx_eew/8) / `VLENB + seg_idx * int'($ceil(vidx_emul)); 
+        uop_tr.vidx_vreg_idx        = vidx_vreg_idx_base + elm_idx * (vidx_eew/8) / `VLENB; 
         uop_tr.vidx_vreg_eew        = vidx_eew; 
         uop_tr.vidx_vreg_byte_start = vidx_byte_idx % `VLENB;
       end
 
-      if(elm_idx >= inst_tr.vstart && elm_idx < inst_tr.vl) begin
+      if(elm_idx >= vstart && elm_idx < evl) begin
         for(int byte_idx=0; byte_idx<data_eew/8; byte_idx++) begin
           addr = addr_base + const_stride * elm_idx + data_eew / 8 * seg_idx + byte_idx;
           temp_idx = data_byte_idx % `VLENB;
@@ -594,7 +650,7 @@ function int lsu_driver::lsu_uop_decode(ref rvs_transaction inst_tr);
       end
 
       if(elm_idx * eew_max % `VLEN == `VLEN - eew_max) begin
-        if(elm_idx >= inst_tr.vstart && elm_idx < inst_tr.vl) begin
+        if(elm_idx >= vstart && elm_idx < evl) begin
           uop_tr.data_vreg_byte_end = (data_byte_idx-1) % `VLENB;
           uop_tr.vidx_vreg_byte_end = (vidx_byte_idx-1) % `VLENB;
         end else begin

@@ -46,5 +46,7 @@ lsu_unit_stride_test
 lsu_const_stride_test
 lsu_indexed_test
 lsu_unit_stride_seg_test
-#lsu_const_stride_seg_test
+lsu_const_stride_seg_test
 #lsu_indexed_seg_test
+lsu_unit_stride_mask_test
+#lsu_whole_reg_test

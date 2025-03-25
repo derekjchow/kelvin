@@ -320,7 +320,8 @@ endclass : rvv_behavior_model
 
         // 1.0 illegal inst check
         // vstart
-        if(inst_tr.vstart >= inst_tr.vl && !(inst_tr.inst_type == ALU && inst_tr.alu_inst inside {VSMUL_VMVNRR} && inst_tr.alu_type == OPIVI)) begin
+        if(inst_tr.vstart >= inst_tr.vl && !(inst_tr.inst_type == ALU && inst_tr.alu_inst inside {VSMUL_VMVNRR} && inst_tr.alu_type == OPIVI || 
+                                            inst_tr.inst_type inside {LD,ST} && inst_tr.lsu_mop == LSU_E && inst_tr.src2_type == FUNC && inst_tr.src2_idx == WHOLE_REG)) begin
           if(inst_tr.dest_type == XRF) begin
           end else begin
             `uvm_warning("MDL/INST_CHECKER", $sformatf("pc=0x%8x: ignored since vstart(%0d) >= vl(%0d).", pc, inst_tr.vstart, inst_tr.vl))
@@ -328,7 +329,8 @@ endclass : rvv_behavior_model
           end
         end
         if(inst_tr.vstart >= vlmax && !(inst_tr.inst_type == ALU && inst_tr.alu_inst inside {VSMUL_VMVNRR} && inst_tr.alu_type == OPIVI || 
-                                        inst_tr.inst_type == ALU && inst_tr.alu_inst inside {VMAND, VMOR, VMXOR, VMORN, VMNAND, VMNOR, VMANDN, VMXNOR})) begin
+                                        inst_tr.inst_type == ALU && inst_tr.alu_inst inside {VMAND, VMOR, VMXOR, VMORN, VMNAND, VMNOR, VMANDN, VMXNOR} || 
+                                        inst_tr.inst_type inside {LD,ST} && inst_tr.lsu_mop == LSU_E && inst_tr.src2_type == FUNC && inst_tr.src2_idx == WHOLE_REG)) begin
           if(inst_tr.dest_type == XRF) begin
           end else begin
             `uvm_warning("MDL/INST_CHECKER", $sformatf("pc=0x%8x: ignored since vstart(%0d) >= vlmax(%0d).", pc, inst_tr.vstart, vlmax))
@@ -336,7 +338,8 @@ endclass : rvv_behavior_model
           end
         end
         if(inst_tr.vl > vlmax && !(inst_tr.alu_inst inside {VSMUL_VMVNRR} && inst_tr.alu_type == OPIVI || 
-                                   inst_tr.alu_inst inside {VMAND, VMOR, VMXOR, VMORN, VMNAND, VMNOR, VMANDN, VMXNOR})) begin
+                                   inst_tr.alu_inst inside {VMAND, VMOR, VMXOR, VMORN, VMNAND, VMNOR, VMANDN, VMXNOR} || 
+                                   inst_tr.inst_type inside {LD,ST} && inst_tr.lsu_mop == LSU_E && inst_tr.src2_type == FUNC && inst_tr.src2_idx == WHOLE_REG)) begin
           if(inst_tr.dest_type == XRF || inst_tr.vl == 0) begin
           end else begin
             `uvm_warning("MDL/INST_CHECKER", $sformatf("pc=0x%8x: ignored since vl(%0d) >= vlmax(%0d).", pc, inst_tr.vl, vlmax))
@@ -428,7 +431,29 @@ endclass : rvv_behavior_model
         case(inst_tr.inst_type)
           LD: begin
             // 1.1 unit-stride and constant-stride
-            if(inst_tr.lsu_mop == LSU_E || inst_tr.lsu_mop == LSU_SE) begin
+            if(inst_tr.lsu_mop == LSU_E) begin
+              case(inst_tr.lsu_umop)
+                MASK: begin
+                  dest_eew  = EEW8;
+                  dest_emul = EMUL1;
+                  src2_eew  = EEW_NONE;
+                  src2_emul = EMUL_NONE;
+                end
+                WHOLE_REG: begin
+                  dest_eew  = inst_tr.lsu_eew;
+                  dest_emul = inst_tr.lsu_nf + 1;
+                  src2_eew  = EEW_NONE;
+                  src2_emul = EMUL_NONE;
+                end
+                default: begin
+                  dest_eew  = inst_tr.lsu_eew;
+                  dest_emul = inst_tr.lsu_eew * emul / eew;
+                  src1_eew  = EEW32; // rs1 as base address
+                  src1_emul = LMUL1;
+                end
+              endcase
+            end
+            if(inst_tr.lsu_mop == LSU_SE) begin
               dest_eew  = inst_tr.lsu_eew;
               dest_emul = inst_tr.lsu_eew * emul / eew;
               src1_eew  = EEW32; // rs1 as base address
@@ -446,7 +471,29 @@ endclass : rvv_behavior_model
           end
           ST: begin
             // 1.1 unit-stride and constant-stride
-            if(inst_tr.lsu_mop == LSU_E || inst_tr.lsu_mop == LSU_SE) begin
+            if(inst_tr.lsu_mop == LSU_E) begin
+              case(inst_tr.lsu_umop)
+                MASK: begin
+                  src3_eew  = EEW8;
+                  src3_emul = EMUL1;
+                  src2_eew  = EEW_NONE;
+                  src2_emul = EMUL_NONE;
+                end
+                WHOLE_REG: begin
+                  src3_eew  = inst_tr.lsu_eew;
+                  src3_emul = inst_tr.lsu_nf + 1;
+                  src2_eew  = EEW_NONE;
+                  src2_emul = EMUL_NONE;
+                end
+                default: begin
+                  src3_eew  = inst_tr.lsu_eew;
+                  src3_emul = inst_tr.lsu_eew * emul / eew;
+                  src1_eew  = EEW32; // rs1 as base address
+                  src1_emul = LMUL1;
+                end
+              endcase
+            end
+            if(inst_tr.lsu_mop == LSU_SE) begin
               src3_eew = inst_tr.lsu_eew;
               src3_emul = src3_eew * emul / eew;
               src1_eew = EEW32; // rs1 as base address
@@ -1209,7 +1256,12 @@ endclass : rvv_behavior_model
 
         // Vec load inst will retire all uops, including all pre-start inst, for now.
         if(rt_tr.dest_type == VRF) begin
-          for(int reg_idx=dest_reg_idx_base; reg_idx<dest_reg_idx_base+int'($ceil(dest_emul))*(inst_tr.lsu_nf+1); reg_idx++) begin
+          int seg_num = 0;
+          if(inst_tr.lsu_mop == LSU_E && inst_tr.src2_type == FUNC && inst_tr.src2_idx == WHOLE_REG)
+            seg_num = 1;
+          else
+            seg_num = inst_tr.lsu_nf+1;
+          for(int reg_idx=dest_reg_idx_base; reg_idx<dest_reg_idx_base+int'($ceil(dest_emul))*(seg_num); reg_idx++) begin
             rt_tr.rt_vrf_index.push_back(reg_idx);
             rt_tr.rt_vrf_strobe.push_back(vrf_byte_strobe_temp[reg_idx]);
             rt_tr.rt_vrf_data.push_back(vrf_temp[reg_idx]);
@@ -1289,6 +1341,8 @@ endclass : rvv_behavior_model
     case(reg_type)
       VRF: begin
         reg_idx = elm_idx / (`VLEN / eew) + reg_idx;
+        if(!(reg_idx inside {[0:31]}))
+          `uvm_error("MDL", $sformatf("Try to fetch data from vrf[%0d]", reg_idx))
         elm_idx = elm_idx % (`VLEN / eew);
         // `uvm_info("MDL", $sformatf("reg_type=%0d, reg_idx=%0d, elm_idx=%0d, eew=%0d", reg_type, reg_idx, elm_idx, eew), UVM_HIGH)
         for(int i=0; i<bit_count; i++) begin
@@ -2238,8 +2292,6 @@ class lsu_processor;
   int src1_eew; real src1_emul;
   int src0_eew; real src0_emul;
 
-  int seg_size; // byte size
-
   vrf_t [31:0] vrf_temp;
 
   int dest_reg_idx_base = 0;
@@ -2262,7 +2314,10 @@ class lsu_processor;
   int  sew;
   real lmul;
   int elm_idx_max;
-  int data_size, vidx_size; // byte size
+  int seg_idx_max;
+  int seg_size;  // byte size
+  int data_size; // byte size
+  int vidx_size; // byte size
 
   bit vm;
 
@@ -2281,11 +2336,11 @@ class lsu_processor;
     `uvm_info("MDL", "LSU decode done", UVM_HIGH)
     inst_tr.print();
 
-    for(int seg_idx=0; seg_idx<lsu_nf+1; seg_idx++) begin
+    for(int seg_idx=0; seg_idx<seg_idx_max; seg_idx++) begin
       dest_reg_idx_base = (inst_tr.dest_type == VRF) ? (inst_tr.dest_idx + seg_idx * int'($ceil(dest_emul))) : (inst_tr.dest_idx);
       src3_reg_idx_base = (inst_tr.src3_type == VRF) ? (inst_tr.src3_idx + seg_idx * int'($ceil(src3_emul))) : (inst_tr.src3_idx);
-      src2_reg_idx_base = (inst_tr.src2_type == VRF) ? (inst_tr.src2_idx + seg_idx * int'($ceil(src2_emul))) : (inst_tr.src2_idx);
-      src1_reg_idx_base = (inst_tr.src1_type == VRF) ? (inst_tr.src1_idx + seg_idx * int'($ceil(src1_emul))) : (inst_tr.src1_idx);
+      src2_reg_idx_base = (inst_tr.src2_idx);
+      src1_reg_idx_base = (inst_tr.src1_idx);
 
       `uvm_info("MDL", $sformatf("seg_idx=%0d: dest_reg_idx_base=%0d, src3_reg_idx_base=%0d, src2_reg_idx_base=%0d, src1_reg_idx_base=%0d",
                                   seg_idx,     dest_reg_idx_base,     src3_reg_idx_base,     src2_reg_idx_base,     src1_reg_idx_base), UVM_HIGH)
@@ -2301,8 +2356,7 @@ class lsu_processor;
         `uvm_info("MDL", "\n---------------------------------------------------------------------------------------------------------------------------------\n", UVM_LOW)
         `uvm_info("MDL", $sformatf("dest=0x%8x, src3=0x%8x, src2=0x%8x, src1=0x%8x, src0=0x%8x", dest, src3, src2, src1, src0), UVM_HIGH);
 
-        // TODO:  fix negetive stride
-        update_addr(inst_tr, seg_idx, elm_idx, data_size, src2, src1);
+        update_addr(inst_tr, seg_idx, seg_size, elm_idx, data_size, src2, src1);
         if(elm_idx<vstart) begin
           // pre-start
         end else if(elm_idx >= evl) begin
@@ -2328,15 +2382,16 @@ class lsu_processor;
 
   function bit decode(ref rvs_transaction inst_tr);
   
+    int eew_max;
+    real emul_max;
+
     sew = 8 << inst_tr.vsew;
-    fraction_lmul = inst_tr.vlmul[2];
     lmul = 2.0 ** $signed(inst_tr.vlmul);
-    elm_idx_max = fraction_lmul ?        `VLEN / sew: 
-                                  lmul * `VLEN / sew;
 
     vl = inst_tr.vl;
     vstart = inst_tr.vstart;
     vm = inst_tr.vm;
+    lsu_nf = inst_tr.lsu_nf;
 
     dest_eew  = EEW_NONE;
     src3_eew  = EEW_NONE;
@@ -2360,7 +2415,22 @@ class lsu_processor;
                 src2_emul = EMUL_NONE;
                 src1_eew  = EEW32;
                 src1_emul = EMUL1;
+                eew_max   = dest_eew;
+                emul_max  = dest_emul;
+                seg_idx_max  = lsu_nf + 1;
                 evl = int'($ceil(inst_tr.vl / 8.0));
+              end
+              WHOLE_REG: begin
+                dest_eew  = inst_tr.lsu_eew;
+                dest_emul = lsu_nf + 1;
+                src2_eew  = EEW_NONE;
+                src2_emul = EMUL_NONE;
+                src1_eew  = EEW32;
+                src1_emul = EMUL1;
+                eew_max   = dest_eew;
+                emul_max  = dest_emul;
+                seg_idx_max  = 1;
+                evl = dest_emul * `VLEN / dest_eew;
               end
               default: begin
                 dest_eew  = inst_tr.lsu_eew;
@@ -2369,6 +2439,9 @@ class lsu_processor;
                 src2_emul = EMUL_NONE;
                 src1_eew  = EEW32;
                 src1_emul = EMUL1;
+                eew_max   = dest_eew;
+                emul_max  = dest_emul;
+                seg_idx_max  = lsu_nf + 1;
                 evl = inst_tr.vl;
               end
             endcase
@@ -2380,6 +2453,9 @@ class lsu_processor;
             src2_emul = EMUL1;
             src1_eew  = EEW32;
             src1_emul = EMUL1;
+            eew_max   = dest_eew;
+            emul_max  = dest_emul;
+            seg_idx_max  = lsu_nf + 1;
             evl = inst_tr.vl;
           end
           LSU_UXEI, 
@@ -2390,11 +2466,13 @@ class lsu_processor;
             src2_emul = src2_eew * lmul / sew;
             src1_eew  = EEW32;
             src1_emul = EMUL1;
+            eew_max   = (dest_eew > src2_eew) ? dest_eew : src2_eew;
+            emul_max  = (dest_eew > src2_eew) ? dest_emul: src2_emul;
+            seg_idx_max  = lsu_nf + 1;
             evl = inst_tr.vl;
           end      
         endcase
-        lsu_nf = inst_tr.lsu_nf;
-        seg_size = (lsu_nf+1) * dest_eew / 8;
+        seg_size = (seg_idx_max) * dest_eew / 8;
         data_size = dest_eew / 8;
         vidx_size = src2_eew / 8;
       end
@@ -2409,7 +2487,22 @@ class lsu_processor;
                 src2_emul = EMUL_NONE;
                 src1_eew  = EEW32;
                 src1_emul = EMUL1;
+                eew_max   = src3_eew;
+                emul_max  = src3_emul;
+                seg_idx_max  = lsu_nf + 1;
                 evl = int'($ceil(inst_tr.vl / 8.0));
+              end
+              WHOLE_REG: begin
+                src3_eew  = inst_tr.lsu_eew;
+                src3_emul = lsu_nf + 1;
+                src2_eew  = EEW_NONE;
+                src2_emul = EMUL_NONE;
+                src1_eew  = EEW32;
+                src1_emul = EMUL1;
+                eew_max   = src3_eew;
+                emul_max  = src3_emul;
+                seg_idx_max  = 1;
+                evl = src3_emul * `VLEN / src3_eew;
               end
               default: begin
                 src3_eew  = inst_tr.lsu_eew;
@@ -2418,6 +2511,9 @@ class lsu_processor;
                 src2_emul = EMUL_NONE;
                 src1_eew  = EEW32;
                 src1_emul = EMUL1;
+                eew_max   = src3_eew;
+                emul_max  = src3_emul;
+                seg_idx_max  = lsu_nf + 1;
                 evl = inst_tr.vl;
               end
             endcase
@@ -2429,6 +2525,9 @@ class lsu_processor;
             src2_emul = EMUL1;
             src1_eew  = EEW32;
             src1_emul = EMUL1;
+            eew_max   = src3_eew;
+            emul_max  = src3_emul;
+            seg_idx_max  = lsu_nf + 1;
             evl = inst_tr.vl;
           end
           LSU_UXEI, 
@@ -2439,25 +2538,26 @@ class lsu_processor;
             src2_emul = src2_eew * lmul / sew;
             src1_eew  = EEW32;
             src1_emul = EMUL1;
+            eew_max   = (src3_eew > src2_eew) ? src3_eew : src2_eew;
+            emul_max  = (src3_eew > src2_eew) ? src3_emul: src2_emul;
+            seg_idx_max  = lsu_nf + 1;
             evl = inst_tr.vl;
           end      
         endcase
-        lsu_nf = inst_tr.lsu_nf;
-        seg_size = (lsu_nf+1) * src3_eew / 8;
+        seg_size = (seg_idx_max) * dest_eew / 8;
         data_size = src3_eew / 8;
         vidx_size = src2_eew / 8;
       end
     endcase
-
+    elm_idx_max = int'($ceil(emul_max)) * `VLEN / eew_max;
 
     return 0;
   endfunction: decode
 
-  function void update_addr(rvs_transaction inst_tr, int seg_idx, int elm_idx, int elm_size, sew_max_t src2, sew_max_t src1);
+  function void update_addr(rvs_transaction inst_tr, int seg_idx, int seg_size, int elm_idx, int elm_size, sew_max_t src2, sew_max_t src1);
     `uvm_info("MDL/LSU", $sformatf("pc=0x%8x, got src2=0x%8x(%0d), src1=0x%8x", inst_tr.pc, src2, $signed(src2), src1), UVM_HIGH)
     case(inst_tr.lsu_mop) 
       LSU_E   : begin
-        // TODO: Whole reg?
         this.address = src1 + seg_size * elm_idx + elm_size * seg_idx;
       end
       LSU_SE  : begin

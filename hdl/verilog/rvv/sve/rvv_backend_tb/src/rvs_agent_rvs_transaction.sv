@@ -45,7 +45,7 @@ class rvs_transaction extends uvm_sequence_item;
   rand lsu_umop_e   lsu_umop; // src2_idx
   rand lsu_nf_e     lsu_nf;   // func6[31:29]
   rand lsu_width_e  lsu_width;// func3
-       eew_e        lsu_eew;  // func3
+  rand eew_e        lsu_eew;  // func3
   rand lmul_e       lsu_emul;
 
   // Algoritm inst
@@ -153,11 +153,19 @@ class rvs_transaction extends uvm_sequence_item;
     // vtype should be:
     //   vsew -> vlmul
     
-    solve lsu_inst before lsu_mop;
-    solve lsu_mop  before dest_type;
-    solve lsu_mop  before src3_type;
-    solve lsu_mop  before src2_type;
-    solve lsu_mop  before src1_type;    
+    solve lsu_inst  before lsu_mop;
+    solve lsu_mop   before dest_type;
+    solve lsu_mop   before src3_type;
+    solve lsu_mop   before src2_type;
+    solve lsu_mop   before src1_type; 
+    solve lsu_nf    before dest_type;
+    solve lsu_nf    before src3_type;
+    solve lsu_nf    before src2_type;
+    solve lsu_nf    before src1_type;    
+    solve lsu_width before dest_type;
+    solve lsu_width before src3_type;
+    solve lsu_width before src2_type;
+    solve lsu_width before src1_type;    
 
     solve dest_type before dest_idx;
     solve src3_type before src3_idx;
@@ -212,23 +220,36 @@ class rvs_transaction extends uvm_sequence_item;
 
     if(!illegal_inst_en) {
       // vl
-      if(!(alu_inst inside {VMAND, VMOR, VMXOR, VMORN, VMNAND, VMNOR, VMANDN, VMXNOR}))
+      if(!(inst_type == ALU && alu_inst inside {VMAND, VMOR, VMXOR, VMORN, VMNAND, VMNOR, VMANDN, VMXNOR})) {
         vl <= vlmax;
+      }
+
       // evl
-      if(alu_inst == VSMUL_VMVNRR && alu_type == OPIVI)
+      if(inst_type == ALU && alu_inst == VSMUL_VMVNRR && alu_type == OPIVI) {
         evl == ((src1_idx + 1) * `VLENB) >> vsew;
-      else 
+      } else if(inst_type inside {LD, ST} && lsu_mop == LSU_E && src2_type == FUNC && src2_idx == MASK) {
+        if(vl%8 > 3) evl == int'(vl/8) + 1;
+        else         evl == int'(vl/8);
+      } else if(inst_type inside {LD, ST} && lsu_mop == LSU_E && src2_type == FUNC && src2_idx == WHOLE_REG) {
+        evl == (lsu_nf+1) * `VLEN / lsu_eew;
+      } else {
         evl == vl;
+      }
+
       // vstart
-      if(alu_inst == VSMUL_VMVNRR && alu_type == OPIVI)
+      if(inst_type == ALU && alu_inst == VSMUL_VMVNRR && alu_type == OPIVI) {
         vstart < evl;
-      else if(inst_type == ALU && alu_inst inside {VWXUNARY0})
+      } else if(inst_type == ALU && alu_inst inside {VWXUNARY0}) {
         // for vcpop, vfirst, vmv.x.s, vmv.s.x, vstart >= vl is allowed
         vstart dist { 
           [0:vl-1] :/ 99,
           [vl:vlmax_max-1] :/ 1
         };
-      else {
+      } else if(inst_type inside {LD, ST} && lsu_mop == LSU_E && src2_type == FUNC && src2_idx == MASK) {
+        vstart < evl;
+      } else if(inst_type inside {LD, ST} && lsu_mop == LSU_E && src2_type == FUNC && src2_idx == WHOLE_REG) {
+        vstart < evl;
+      } else {
         vstart < vl;
       }
 
@@ -411,9 +432,9 @@ class rvs_transaction extends uvm_sequence_item;
       (lsu_inst == VLSEG)
       ->  (inst_type == LD && lsu_mop == LSU_E && lsu_nf inside {NF2, NF4, NF8} && dest_type == VRF && src2_type == FUNC && src2_idx == NORMAL && src1_type == XRF);
       (lsu_inst == VLM)
-      ->  (inst_type == LD && lsu_mop == LSU_E && lsu_nf == NF1 && dest_type == VRF && src2_type == FUNC && src2_idx == MASK && src1_type == XRF);
+      ->  (inst_type == LD && lsu_mop == LSU_E && lsu_nf == NF1 && dest_type == VRF && src2_type == FUNC && src2_idx == MASK && src1_type == XRF && vm == 1);
       (lsu_inst == VLR)
-      ->  (inst_type == LD && lsu_mop == LSU_E && lsu_nf == NF1 && dest_type == VRF && src2_type == FUNC && src2_idx == WHOLE_REG && src1_type == XRF);
+      ->  (inst_type == LD && lsu_mop == LSU_E && lsu_nf inside {NF1, NF2, NF4, NF8} && dest_type == VRF && src2_type == FUNC && src2_idx == WHOLE_REG && src1_type == XRF && vm == 1);
       (lsu_inst == VLEFF)
       ->  (inst_type == LD && lsu_mop == LSU_E && lsu_nf == NF1 && dest_type == VRF && src2_type == FUNC && src2_idx == FOF && src1_type == XRF);
 
@@ -439,9 +460,9 @@ class rvs_transaction extends uvm_sequence_item;
       (lsu_inst == VSSEG)
       ->  (inst_type == ST && lsu_mop == LSU_E && lsu_nf inside {NF2, NF4, NF8} && src3_type == VRF && src2_type == FUNC && src2_idx == NORMAL && src1_type == XRF);
       (lsu_inst == VSM)
-      ->  (inst_type == ST && lsu_mop == LSU_E && lsu_nf == NF1 && src3_type == VRF && src2_type == FUNC && src2_idx == MASK && src1_type == XRF);
+      ->  (inst_type == ST && lsu_mop == LSU_E && lsu_nf == NF1 && src3_type == VRF && src2_type == FUNC && src2_idx == MASK && src1_type == XRF && vm == 1);
       (lsu_inst == VSR)
-      ->  (inst_type == ST && lsu_mop == LSU_E && lsu_nf == NF1 && src3_type == VRF && src2_type == FUNC && src2_idx == WHOLE_REG && src1_type == XRF);
+      ->  (inst_type == ST && lsu_mop == LSU_E && lsu_nf inside {NF1, NF2, NF4, NF8} && src3_type == VRF && src2_type == FUNC && src2_idx == WHOLE_REG && src1_type == XRF && vm == 1);
 
       (lsu_inst == VSSE)
       ->  (inst_type == ST && lsu_mop == LSU_SE && lsu_nf == NF1 && src3_type == VRF && src2_type == XRF && src1_type == XRF);
@@ -487,6 +508,11 @@ class rvs_transaction extends uvm_sequence_item;
     lsu_width inside {LSU_8BIT, LSU_16BIT, LSU_32BIT};  
     vsew inside {SEW8, SEW16, SEW32};
     vlmul inside {LMUL1_4, LMUL1_2, LMUL1, LMUL2, LMUL4, LMUL8};
+    
+    (lsu_width == LSU_8BIT)  <-> (lsu_eew == EEW8);
+    (lsu_width == LSU_16BIT) <-> (lsu_eew == EEW16);
+    (lsu_width == LSU_32BIT) <-> (lsu_eew == EEW32);
+    (lsu_width == LSU_64BIT) <-> (lsu_eew == EEW64);
 
     if(!illegal_inst_en) {
       if(inst_type == ALU) {
@@ -567,6 +593,14 @@ class rvs_transaction extends uvm_sequence_item;
           (lsu_nf == NF4) -> (vlmul inside {LMUL1_4, LMUL1_2                            });
           (lsu_nf == NF8) -> (vlmul inside {LMUL1_4                                     });
         }
+
+        // For special inst
+        // vlm/vsm
+        (lsu_mop == LSU_E && src2_type == FUNC && src2_idx == MASK)
+        -> (lsu_width == LSU_8BIT);
+        // vsr
+        (inst_type == ST && lsu_mop == LSU_E && src2_type == FUNC && src2_idx == WHOLE_REG)
+        -> (lsu_width == LSU_8BIT);
       }
     } else {
       // TODO
@@ -717,13 +751,7 @@ function void rvs_transaction::post_randomize();
   if(src1_type == FUNC && inst_type == ALU && alu_inst == VMUNARY0) $cast(src1_func_vmunary0,src1_idx);
   if(src2_type == FUNC && inst_type inside {LD,ST} && lsu_mop == LSU_E) $cast(lsu_umop,src2_idx);
   
-  case(lsu_width)
-    LSU_8BIT  : lsu_eew = EEW8;
-    LSU_16BIT : lsu_eew = EEW16;
-    LSU_32BIT : lsu_eew = EEW32;
-    LSU_64BIT : lsu_eew = EEW64;
-    default   : lsu_eew = EEW_NONE;
-  endcase
+
 
   if(!illegal_inst_en) begin legal_inst_gen(); end
   
@@ -777,6 +805,8 @@ function void rvs_transaction::legal_inst_gen();
   bit is_mask_producing_inst;
   bit is_reduction_inst;
 
+  int seg_num;
+
   is_widen_inst           = inst_type == ALU &&  (alu_inst inside {VWADDU, VWADD, VWADDU_W, VWADD_W, VWSUBU, VWSUB, VWSUBU_W, VWSUB_W, 
                                                                    VWMUL, VWMULU, VWMULSU, VWMACCU, VWMACC, VWMACCUS, VWMACCSU,
                                                                    VWREDSUMU, VWREDSUM});
@@ -816,6 +846,16 @@ function void rvs_transaction::legal_inst_gen();
               src2_emul = EMUL_NONE;
               src1_eew  = EEW32;
               src1_emul = EMUL1;
+              seg_num = lsu_nf + 1;
+            end
+            WHOLE_REG: begin
+              dest_eew  = lsu_eew;
+              dest_emul = lsu_nf + 1;
+              src2_eew  = EEW_NONE;
+              src2_emul = EMUL_NONE;
+              src1_eew  = EEW32;
+              src1_emul = EMUL1;
+              seg_num = 1;
             end
             default: begin
               dest_eew  = lsu_eew;
@@ -824,6 +864,7 @@ function void rvs_transaction::legal_inst_gen();
               src2_emul = EMUL_NONE;
               src1_eew  = EEW32;
               src1_emul = EMUL1;
+              seg_num = lsu_nf + 1;
             end
           endcase
         end
@@ -834,6 +875,7 @@ function void rvs_transaction::legal_inst_gen();
           src2_emul = EMUL1;
           src1_eew  = EEW32;
           src1_emul = EMUL1;
+          seg_num = lsu_nf + 1;
         end
         LSU_UXEI, 
         LSU_OXEI: begin
@@ -843,6 +885,7 @@ function void rvs_transaction::legal_inst_gen();
           src2_emul = src2_eew * emul / eew;
           src1_eew  = EEW32;
           src1_emul = EMUL1;
+          seg_num = lsu_nf + 1;
         end      
       endcase
     end
@@ -857,6 +900,16 @@ function void rvs_transaction::legal_inst_gen();
               src2_emul = EMUL_NONE;
               src1_eew  = EEW32;
               src1_emul = EMUL1;
+              seg_num = lsu_nf + 1;
+            end
+            WHOLE_REG: begin
+              src3_eew  = lsu_eew;
+              src3_emul = lsu_nf + 1;
+              src2_eew  = EEW_NONE;
+              src2_emul = EMUL_NONE;
+              src1_eew  = EEW32;
+              src1_emul = EMUL1;
+              seg_num = 1;
             end
             default: begin
               src3_eew  = lsu_eew;
@@ -865,6 +918,7 @@ function void rvs_transaction::legal_inst_gen();
               src2_emul = EMUL_NONE;
               src1_eew  = EEW32;
               src1_emul = EMUL1;
+              seg_num = lsu_nf + 1;
             end
           endcase
         end
@@ -875,6 +929,7 @@ function void rvs_transaction::legal_inst_gen();
           src2_emul = EMUL1;
           src1_eew  = EEW32;
           src1_emul = EMUL1;
+          seg_num = lsu_nf + 1;
         end
         LSU_UXEI, 
         LSU_OXEI: begin
@@ -884,6 +939,7 @@ function void rvs_transaction::legal_inst_gen();
           src2_emul = src2_eew * emul / eew;
           src1_eew  = EEW32;
           src1_emul = EMUL1;
+          seg_num = lsu_nf + 1;
         end      
       endcase
     end
@@ -1006,16 +1062,18 @@ function void rvs_transaction::legal_inst_gen();
 
   // Alignment 
   if(inst_type inside {LD, ST}) begin
-    if(dest_type == VRF) dest_idx = dest_idx - dest_idx % (int'($ceil(dest_emul)) * (lsu_nf+1));
-    if(src3_type == VRF) src3_idx = src3_idx - src3_idx % (int'($ceil(src3_emul)) * (lsu_nf+1));
-    if(src2_type == VRF) src2_idx = src2_idx - src2_idx % (int'($ceil(src2_emul)) * (lsu_nf+1));
-    if(src1_type == VRF) src1_idx = src1_idx - src1_idx % (int'($ceil(src1_emul)) * (lsu_nf+1));
-  end else begin
-    if(dest_type == VRF) dest_idx = dest_idx - dest_idx % int'($ceil(dest_emul));
-    if(src3_type == VRF) src3_idx = src3_idx - src3_idx % int'($ceil(src3_emul));
-    if(src2_type == VRF) src2_idx = src2_idx - src2_idx % int'($ceil(src2_emul));
-    if(src1_type == VRF) src1_idx = src1_idx - src1_idx % int'($ceil(src1_emul));
+    // Over range of segment load/store
+    if(dest_type == VRF && (dest_idx + (seg_num) * int'($ceil(dest_emul)) - 1 > 31) ) begin
+      dest_idx = 32 - (seg_num) * int'($ceil(dest_emul));
+    end
+    if(src3_type == VRF && (src3_idx + (seg_num) * int'($ceil(src3_emul)) - 1 > 31) ) begin
+      src3_idx = 32 - (seg_num) * int'($ceil(src3_emul));
+    end
   end
+  if(dest_type == VRF) dest_idx = dest_idx - dest_idx % int'($ceil(dest_emul));
+  if(src3_type == VRF) src3_idx = src3_idx - src3_idx % int'($ceil(src3_emul));
+  if(src2_type == VRF) src2_idx = src2_idx - src2_idx % int'($ceil(src2_emul));
+  if(src1_type == VRF) src1_idx = src1_idx - src1_idx % int'($ceil(src1_emul));
 
   `uvm_info("TR_GEN",$sformatf("pc=0x%8x, dest_idx=%0d, src3_idx=%0d, src2_idx=%0d, src1_idx=%0d", pc, dest_idx, src3_idx, src2_idx, src1_idx), UVM_HIGH)
 
@@ -1073,6 +1131,25 @@ function void rvs_transaction::legal_inst_gen();
     else
       dest_idx = src1_idx;
   end
+  // Special cases
+  // For indexed segment load, vd can't overlap vs2
+  if(inst_type inside {LD} && lsu_mop inside {LSU_UXEI, LSU_OXEI} && lsu_nf inside {NF2, NF4, NF8} &&
+     dest_type == VRF && src2_type == VRF && 
+     ((src2_idx >= dest_idx) && (src2_idx < dest_idx+(seg_num)*int'($ceil(dest_emul))) || 
+      (src2_idx+int'($ceil(src2_emul)) >= dest_idx) && (src2_idx+int'($ceil(src2_emul)) < dest_idx+(seg_num)*int'($ceil(dest_emul)))) ) begin
+    int src2_idx_temp;
+      src2_idx_temp = dest_idx - int'($ceil(src2_emul));
+      src2_idx_temp = src2_idx_temp - src2_idx_temp % int'($ceil(src2_emul));
+    if(src2_idx_temp>=0) src2_idx = src2_idx_temp;
+    else begin
+      src2_idx_temp = dest_idx + int'($ceil(dest_emul)); 
+      src2_idx_temp = src2_idx_temp - src2_idx_temp % int'($ceil(src2_emul));
+      if(src2_idx_temp<32) src2_idx = src2_idx_temp;
+      else 
+        `uvm_fatal("TR_GEN", "Calculating overlap of indexed segment load fatal.")
+    end
+  end
+
   // FIXME: clean code
   // vd Overlap vs1 vs2 for 
   if(dest_type == VRF && src1_type == VRF && src2_type == VRF && inst_type == ALU && 
@@ -1122,11 +1199,19 @@ function void rvs_transaction::asm_string_gen();
   // Inst name
   case(inst_type)
     LD, ST: begin
-      inst = this.lsu_inst.name();
       case(lsu_mop)
         LSU_E   : begin
           case(lsu_umop)
             MASK: begin
+              inst = this.lsu_inst.name();
+            end
+            WHOLE_REG: begin
+              if(inst_type == LD) begin
+                inst = $sformatf("vl%0dre%0d", lsu_nf+1, lsu_eew);
+              end
+              if(inst_type == ST) begin
+                inst = $sformatf("vs%0dre%0d", lsu_nf+1, lsu_eew);
+              end
             end
             default: begin
               if(this.lsu_nf == NF1) begin
