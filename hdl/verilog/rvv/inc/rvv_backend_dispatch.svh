@@ -1,7 +1,9 @@
 `ifndef RVV_DISPATCH__SVH
 `define RVV_DISPATCH__SVH
 
+`ifndef HDL_VERILOG_RVV_DESIGN_RVV_DEFINE_SVH
 `include "rvv_backend_define.svh"
+`endif  // not defined HDL_VERILOG_RVV_DESIGN_RVV_DEFINE_SVH
 
 // input signals for RAW check
 typedef struct packed {

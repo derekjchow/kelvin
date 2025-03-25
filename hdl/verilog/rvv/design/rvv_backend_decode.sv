@@ -11,8 +11,12 @@
 // 6. Fault-only-first load instruction will be regarded as regular unit-stride load instruction.
 // 7. Vector segment vload/vstore instructions will be decoded to regular stride or indexed vload/vstore uops. 
 
+`ifndef HDL_VERILOG_RVV_DESIGN_RVV_SVH
 `include "rvv_backend.svh"
+`endif
+`ifndef RVV_ASSERT__SVH
 `include "rvv_backend_sva.svh"
+`endif
 
 module rvv_backend_decode
 (

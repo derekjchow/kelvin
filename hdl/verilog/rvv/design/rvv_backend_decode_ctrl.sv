@@ -5,7 +5,9 @@
 // features:
 // 1. decode_ctrl will push data to Uops Queue only when Uops Queue has 4 free spaces at least.
 
+`ifndef HDL_VERILOG_RVV_DESIGN_RVV_SVH
 `include "rvv_backend.svh"
+`endif
 
 module rvv_backend_decode_ctrl
 (

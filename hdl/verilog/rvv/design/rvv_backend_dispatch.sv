@@ -18,8 +18,12 @@
 //     b. Structure hazard:
 //         I. the src-operand number of uops is more than 4, then only issue uop0
 
+`ifndef HDL_VERILOG_RVV_DESIGN_RVV_SVH
 `include "rvv_backend.svh"
+`endif
+`ifndef RVV_DISPATCH__SVH
 `include "rvv_backend_dispatch.svh"
+`endif
 
 module rvv_backend_dispatch
 (

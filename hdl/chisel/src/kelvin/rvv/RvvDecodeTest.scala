@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package kelvin
+package kelvin.rvv
 
 import chisel3._
 import chisel3.experimental.BundleLiterals._
@@ -41,7 +41,7 @@ class RvvS1DecodeInstructionSpec extends AnyFreeSpec with ChiselScalatestTester 
     })
 
     io.out := RvvS1DecodeCompressedInstruction(
-        RvvCompressedInstruction.from_uncompressed(io.inst))
+        RvvCompressedInstruction.from_uncompressed(io.inst, 0.U))
   }
 
   private def test_decode(

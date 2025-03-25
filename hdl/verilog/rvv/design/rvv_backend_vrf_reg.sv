@@ -1,6 +1,10 @@
 // rvv_vrf_reg - 32 vector regsiter for V standard extention
+`ifndef HDL_VERILOG_RVV_DESIGN_RVV_SVH
 `include "rvv_backend.svh"
+`endif
+`ifndef RVV_ASSERT__SVH
 `include "rvv_backend_sva.svh"
+`endif
 module rvv_backend_vrf_reg (/*AUTOARG*/
    // Outputs
    vreg,

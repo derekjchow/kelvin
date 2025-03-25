@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// A module that assembles RVVInstructions into INST_t before storing into the
+// A module that assembles RVVInstructions into RVVCmd before storing into the
 // RVVInstructionQueue. It's also responsible for handling architectural
 // configuration state (ie. LMUL, SEW). Inputs to this module maybe unaligned
 // (ie [invalid, valid, valid, invalid]) while outputs will always be aligned
@@ -26,6 +26,10 @@ module RvvFrontEnd#(parameter N = 4,
 (
   input clk,
   input rstn,
+
+  input logic [`VSTART_WIDTH-1:0]     vstart_i,
+  input logic [`VCSR_VXRM_WIDTH-1:0]  vxrm_i,
+  input logic [`VCSR_VXSAT_WIDTH-1:0] vxsat_i,
 
   // Instruction input.
   input logic [N-1:0] inst_valid_i,
@@ -43,8 +47,8 @@ module RvvFrontEnd#(parameter N = 4,
 
   // Command output.
   output logic [N-1:0] cmd_valid_o,
-  output INST_t [N-1:0] cmd_data_o,
-  input logic [CAPACITYBITS-1:0] queue_capacity_i  // Number of elements in instruction queue
+  output RVVCmd [N-1:0] cmd_data_o,
+  input logic [CAPACITYBITS-1:0] queue_capacity_i  // Number of elements that can be enqueued
 );
   localparam COUNTBITS = $clog2(N + 1);
   typedef logic [COUNTBITS-1:0] count_t;
@@ -58,23 +62,18 @@ module RvvFrontEnd#(parameter N = 4,
   RVVInstruction inst_q [N-1:0];
 
   // Backpressure
-  count_t num_valid_inst;
   count_t valid_in_psum [N:0];
   always_comb begin
-    num_valid_inst = 0;
     valid_in_psum[0] = 0;
     for (int i = 0; i < N; i++) begin
-      num_valid_inst += valid_inst_q[i];
       valid_in_psum[i+1] = valid_in_psum[i] + inst_valid_i[i];
     end
   end
 
-  logic [CAPACITYBITS-1:0] valid_inst_sum = queue_capacity_i - num_valid_inst;
-
   logic inst_accepted [N-1:0];
   always_comb begin
     for (int i = 0; i < N; i++) begin
-      inst_accepted[i] = (valid_in_psum[i] < valid_inst_sum) && inst_valid_i[i];
+      inst_accepted[i] = (valid_in_psum[i] < queue_capacity_i) && inst_valid_i[i];
       inst_ready_o[i] = inst_accepted[i];
     end
   end
@@ -97,6 +96,9 @@ module RvvFrontEnd#(parameter N = 4,
   logic is_setvl [N-1:0];
   always_comb begin
     inst_config_state[0] = config_state_q;
+    inst_config_state[0].vstart = vstart_i;
+    inst_config_state[0].xrm = RVVXRM'(vxrm_i);
+    //inst_config_state[0].xsat = vxsat_i;
     for (int i = 0; i < N; i++) begin
       inst_config_state[i+1] = inst_config_state[i];
       is_setvl[i] = 0;
@@ -148,26 +150,20 @@ module RvvFrontEnd#(parameter N = 4,
 
   // Propagate outputs
   logic [N-1:0] unaligned_cmd_valid;
-  INST_t [N-1:0] unaligned_cmd_data;
+  RVVCmd [N-1:0] unaligned_cmd_data;
   always_comb begin
     for (int i = 0; i < N; i++) begin
       unaligned_cmd_valid[i] = valid_inst_q[i] && !is_setvl[i];
 
       // Combine instruction + arch state into command
+`ifdef TB_SUPPORT
       unaligned_cmd_data[i].insts_pc = inst_q[i].pc;
+`endif
       unaligned_cmd_data[i].opcode = inst_q[i].opcode;
       unaligned_cmd_data[i].bits = inst_q[i].bits;
-      unaligned_cmd_data[i].vector_csr.vstart = 0;  // TODO(derekjchow): Set me
-      unaligned_cmd_data[i].vector_csr.vl = inst_config_state[i].vl;
-      unaligned_cmd_data[i].vector_csr.vtype.vill = 0;  // TODO(derekjchow): Set me
-      unaligned_cmd_data[i].vector_csr.vtype.vma = inst_config_state[i].ma;
-      unaligned_cmd_data[i].vector_csr.vtype.vta = inst_config_state[i].ta;
-      unaligned_cmd_data[i].vector_csr.vtype.vsew = inst_config_state[i].sew;
-      unaligned_cmd_data[i].vector_csr.vtype.vlmul = inst_config_state[i].lmul;
-      unaligned_cmd_data[i].vector_csr.vcsr.vxrm = 0;  // TODO(derekjchow): Set me
-      unaligned_cmd_data[i].vector_csr.vcsr.vxsat = 0;  // TODO(derekjchow): Set me
+      unaligned_cmd_data[i].arch_state = inst_config_state[i];
       // TODO: Handle rs propagation for loads/stores
-      unaligned_cmd_data[i].rs1_data =
+      unaligned_cmd_data[i].rs1 =
           inst_q[i].bits[7] ? reg_read_data_i[2*i] : 0;
 
       // Write new value of vl into rd for configuration function.

@@ -1,19 +1,42 @@
+
 load("//rules:coco_tb.bzl", "vcs_cocotb_test", "verilator_cocotb_test")
+load("//rules:utils.bzl", "template_rule")
 load("@kelvin_pip_deps//:requirements.bzl", "requirement")
 
-verilator_cocotb_test(
-    name = "core_mini_axi_sim_cocotb",
-    size = "large",
+template_rule(
+    verilator_cocotb_test,
+    {
+        "core_mini_axi_sim_cocotb": {
+            "hdl_toplevel": "CoreMiniAxi",
+            "verilog_sources": [
+                "//hdl/chisel/src/kelvin:core_mini_axi_cc_library_verilog"
+            ],
+            "size": "large",
+        },
+        "rvv_core_mini_axi_sim_cocotb": {
+            "hdl_toplevel": "RvvCoreMiniAxi",
+            "verilog_sources": [
+                "//hdl/chisel/src/kelvin:rvv_core_mini_axi_cc_library_verilog"
+            ],
+            "size": "enormous",
+            "tags": ["manual"], # This suite takes a really long time
+        },
+    },
+    build_args = [
+        "-Wno-WIDTH",
+        "-Wno-CASEINCOMPLETE",
+        "-Wno-LATCH",
+        "-Wno-SIDEEFFECT",
+        "-Wno-MULTIDRIVEN",
+        "-Wno-UNOPTFLAT",
+        "-Wno-CASEOVERLAP",
+    ],
     defines = {
         "USE_GENERIC" : "",
     },
     waves = True,
-    hdl_toplevel = "CoreMiniAxi",
     seed = "42",
     test_module = ["core_mini_axi_sim.py"],
-    verilog_sources = [
-        "//hdl/chisel/src/kelvin:core_mini_axi_cc_library_verilog"
-    ],
     deps = [
         requirement("pyelftools"),
         requirement("tqdm"),

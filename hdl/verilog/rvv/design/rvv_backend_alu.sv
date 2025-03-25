@@ -5,8 +5,12 @@
 // 1. The number of ALU units (`NUM_ALU) is configurable.
 // 2. The size of vector length (`VLEN) is configurable.
 
+`ifndef HDL_VERILOG_RVV_DESIGN_RVV_SVH
 `include "rvv_backend.svh"
+`endif
+`ifndef RVV_ASSERT__SVH
 `include "rvv_backend_sva.svh"
+`endif
 
 module rvv_backend_alu
 (

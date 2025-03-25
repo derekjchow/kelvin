@@ -1,8 +1,12 @@
 // Description:
 // 1. the rvv_backend_dispatch_ctrl is responsible for push uop(s) to RS/ROB and pop uop(s) from UOP_Queue.
 
+`ifndef HDL_VERILOG_RVV_DESIGN_RVV_SVH
 `include "rvv_backend.svh"
+`endif
+`ifndef RVV_DISPATCH__SVH
 `include "rvv_backend_dispatch.svh"
+`endif
 
 module rvv_backend_dispatch_ctrl
 (

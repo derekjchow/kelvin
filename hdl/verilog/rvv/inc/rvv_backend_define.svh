@@ -1,8 +1,8 @@
 `ifndef HDL_VERILOG_RVV_DESIGN_RVV_DEFINE_SVH
 `define HDL_VERILOG_RVV_DESIGN_RVV_DEFINE_SVH
 
-`ifndef RVV_CONFIG_SVH^M
-`include "rvv_backend_config.svh"^M
+`ifndef RVV_CONFIG_SVH
+`include "rvv_backend_config.svh"
 `endif
 
 // number of scalar core issue lane
@@ -70,8 +70,8 @@
   `define ROB_DEPTH               8
 `endif
 
-// Uops Queue data width^M
-`define UQ_WIDTH                $bits(UOP_QUEUE_t)^M
+// Uops Queue data width
+`define UQ_WIDTH                $bits(UOP_QUEUE_t)
 
 // the max number of processor unit in EX stage
 `define NUM_LSU                 2
@@ -126,7 +126,7 @@
 `define FUNCT3_WIDTH            3
 `define OPCODE_WIDTH            7
 
-// V0 mask regsiter index^M
+// V0 mask regsiter index
 `define V0_INDEX                5'b00000
 
 `endif  // HDL_VERILOG_RVV_DESIGN_RVV_DEFINE_SVH

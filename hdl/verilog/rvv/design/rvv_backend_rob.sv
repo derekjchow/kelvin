@@ -13,7 +13,9 @@ feature list:
 4. the ROB infomation for dispatch need to be sorted, which depends on program order.
 */
 
+`ifndef HDL_VERILOG_RVV_DESIGN_RVV_SVH
 `include "rvv_backend.svh"
+`endif
 
 module rvv_backend_rob
 (
@@ -154,7 +156,7 @@ module rvv_backend_rob
         .fifo_data    (uop_info),
         .wptr         (uop_wptr),
         .rptr         (uop_rptr),
-        .entry_count  (),
+        .entry_count  ()
     );
 
     assign uop_index_rob2dp = uop_wptr;

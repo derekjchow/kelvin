@@ -23,6 +23,7 @@ package kelvin
 import chisel3._
 import chisel3.util._
 import common._
+import kelvin.rvv.RvvCompressedInstruction
 
 object Decode {
   def apply(p: Parameters, pipeline: Int): Decode = {
@@ -48,7 +49,7 @@ class DecodeSerializeIO extends Bundle {
   }
 }
 
-class DecodedInstruction extends Bundle {
+class DecodedInstruction(p: Parameters) extends Bundle {
   // Immediates
   val imm12  = UInt(32.W)
   val imm20  = UInt(32.W)
@@ -156,6 +157,8 @@ class DecodedInstruction extends Bundle {
   // Scalar logging.
   val slog = Bool()
 
+  val rvv = Option.when(p.enableRvv)(Valid(new RvvCompressedInstruction()))
+
   def isAluImm(): Bool = {
       addi || slti || sltiu || xori || ori || andi || slli || srli || srai || rori
   }
@@ -219,6 +222,11 @@ class Decode(p: Parameters, pipeline: Int) extends Module {
     // Vector interface.
     val vinst = if (p.enableVector) {
       Some(Decoupled(new VInstCmd))
+    } else { None }
+
+    // Rvv interface.
+    val rvv = if (p.enableRvv) {
+      Some(Decoupled(new RvvCompressedInstruction))
     } else { None }
 
     // Branch status.
@@ -292,6 +300,11 @@ class Decode(p: Parameters, pipeline: Int) extends Module {
     // Thus, always return true in that case.
     true.B
   }
+
+  // Rvv extension interlock
+  val rvvEn = if (p.enableRvv) {
+    !io.serializeIn.brcond && !(d.rvv.get.valid && !io.rvv.get.ready)
+  } else { true.B }
 
   // Fence interlock.
   // Input mactive used passthrough, prefer to avoid registers in Decode.
@@ -436,6 +449,12 @@ class Decode(p: Parameters, pipeline: Int) extends Module {
     io.vinst.get.bits.op := vinst.bits
   }
 
+  if (p.enableRvv) {
+    io.rvv.get.valid := d.rvv.get.valid && !io.branchTaken &&
+        !io.serializeIn.jump && !io.serializeOut.brcond && !io.serializeOut.wfi
+    io.rvv.get.bits := d.rvv.get.bits
+  }
+
   // Scalar logging.
   io.slog := decodeEn && d.slog
 
@@ -468,6 +487,7 @@ class Decode(p: Parameters, pipeline: Int) extends Module {
       alu.valid || csr.valid || mlu.valid || dvu.valid && io.dvu.ready ||
       lsu.valid && d.isLoad() ||
       d.getvl || d.getmaxvl || vldst_wb ||
+      d.rvv.map(x => x.valid && x.bits.writesRd()).getOrElse(false.B) ||
       bru.valid && (bru.bits.isOneOf(BruOp.JAL, BruOp.JALR)) && rdAddr =/= 0.U
 
   // val scoreboard_spec = Mux(rdMark_valid || d.io.vst, UIntToOH(rdAddr, 32), 0.U)  // TODO: why was d.io.vst included?
@@ -496,7 +516,7 @@ class Decode(p: Parameters, pipeline: Int) extends Module {
   // This must not factor branchTaken, which will be done directly in the
   // fetch unit. Note above decodeEn resolves for branch for execute usage.
   io.inst.ready := aluEn && bruEn && lsuEn && mulEn && dvuEn && vinstEn && fenceEn &&
-                   !io.serializeIn.jump && !io.serializeIn.wfi &&
+                   rvvEn && !io.serializeIn.jump && !io.serializeIn.wfi &&
                    !io.halted && !io.interlock &&
                    (pipeline.U === 0.U || !d.undef)
 
@@ -516,7 +536,7 @@ class Decode(p: Parameters, pipeline: Int) extends Module {
 
 object DecodeInstruction {
   def apply(p: Parameters, pipeline: Int, addr: UInt, op: UInt): DecodedInstruction = {
-    val d = Wire(new DecodedInstruction)
+    val d = Wire(new DecodedInstruction(p))
 
     // Immediates
     d.imm12  := Cat(Fill(20, op(31)), op(31,20))
@@ -678,6 +698,10 @@ object DecodeInstruction {
       d.slog := false.B
     }
 
+    if (p.enableRvv) {
+      d.rvv.get := RvvCompressedInstruction.from_uncompressed(op, addr)
+    }
+
     // Generate the undefined opcode.
     val decoded = Cat(d.lui, d.auipc,
                       d.jal, d.jalr,
@@ -696,7 +720,8 @@ object DecodeInstruction {
                       d.viop, d.vld, d.vst,
                       d.getvl, d.getmaxvl,
                       d.ebreak, d.ecall, d.eexit, d.eyield, d.ectxsw, d.wfi,
-                      d.mpause, d.mret, d.fencei, d.flushat, d.flushall, d.slog)
+                      d.mpause, d.mret, d.fencei, d.flushat, d.flushall, d.slog,
+                      d.rvv.map(_.valid).getOrElse(false.B))
 
     d.undef := decoded === 0.U
 

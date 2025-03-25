@@ -5,9 +5,15 @@
 // 1. Compare/Reduction/Compress instruction is optional based on parameters.
 // 2. the latency of all instructions is 2-cycles.
 
+`ifndef HDL_VERILOG_RVV_DESIGN_RVV_SVH
 `include "rvv_backend.svh"
+`endif
+`ifndef RVV_ASSERT__SVH
 `include "rvv_backend_sva.svh"
+`endif
+`ifndef PMTRDT_DEFINE_SVH
 `include "rvv_backend_pmtrdt.svh"
+`endif
 
 module rvv_backend_pmtrdt_unit
 (
@@ -2407,23 +2413,29 @@ module rvv_backend_pmtrdt_unit
             case (pmt_ctrl.pmt_opr)
               SLIDE_UP:begin
                 case (pmtrdt_uop.vs2_eew) // permutation instruction
-                  EEW32: pmt_res_d[i] = offset[i] >= 4*pmtrdt_uop.vlmax ? pmt_vs3_data[pmt_uop_done_cnt_q*`VLENB+i] : pmt_vs2_data[offset[i]];
-                  EEW16: pmt_res_d[i] = offset[i] >= 2*pmtrdt_uop.vlmax ? pmt_vs3_data[pmt_uop_done_cnt_q*`VLENB+i] : pmt_vs2_data[offset[i]];
-                  default: pmt_res_d[i] = offset[i] >= pmtrdt_uop.vlmax ? pmt_vs3_data[pmt_uop_done_cnt_q*`VLENB+i] : pmt_vs2_data[offset[i]];
+                  // TODO(derekjchow): Fix me
+                  // EEW32: pmt_res_d[i] = offset[i] >= 4*pmtrdt_uop.vlmax ? pmt_vs3_data[pmt_uop_done_cnt_q*`VLENB+i] : pmt_vs2_data[offset[i]];
+                  // EEW16: pmt_res_d[i] = offset[i] >= 2*pmtrdt_uop.vlmax ? pmt_vs3_data[pmt_uop_done_cnt_q*`VLENB+i] : pmt_vs2_data[offset[i]];
+                  // default: pmt_res_d[i] = offset[i] >= pmtrdt_uop.vlmax ? pmt_vs3_data[pmt_uop_done_cnt_q*`VLENB+i] : pmt_vs2_data[offset[i]];
+                  default: pmt_res_d[i] = 0;
                 endcase
               end
               SLIDE_DOWN:begin
                 case (pmtrdt_uop.vs2_eew)
-                  EEW32: pmt_res_d[i] = offset[i] >= 4*pmtrdt_uop.vlmax ? '0 : pmt_vs2_data[offset[i]-(pmtrdt_uop.uop_index*`VLENB)];
-                  EEW16: pmt_res_d[i] = offset[i] >= 2*pmtrdt_uop.vlmax ? '0 : pmt_vs2_data[offset[i]-(pmtrdt_uop.uop_index*`VLENB)];
-                  default: pmt_res_d[i] = offset[i] >= pmtrdt_uop.vlmax ? '0 : pmt_vs2_data[offset[i]-(pmtrdt_uop.uop_index*`VLENB)];
+                  // TODO(derekjchow): Fix me
+                  // EEW32: pmt_res_d[i] = offset[i] >= 4*pmtrdt_uop.vlmax ? '0 : pmt_vs2_data[offset[i]-(pmtrdt_uop.uop_index*`VLENB)];
+                  // EEW16: pmt_res_d[i] = offset[i] >= 2*pmtrdt_uop.vlmax ? '0 : pmt_vs2_data[offset[i]-(pmtrdt_uop.uop_index*`VLENB)];
+                  // default: pmt_res_d[i] = offset[i] >= pmtrdt_uop.vlmax ? '0 : pmt_vs2_data[offset[i]-(pmtrdt_uop.uop_index*`VLENB)];
+                  default: pmt_res_d[i] = 0;
                 endcase
               end
               default: begin
                 case (pmtrdt_uop.vs2_eew)
-                  EEW32: pmt_res_d[i] = offset[i] >= 4*pmtrdt_uop.vlmax ? '0 : pmt_vs2_data[offset[i]];
-                  EEW16: pmt_res_d[i] = offset[i] >= 2*pmtrdt_uop.vlmax ? '0 : pmt_vs2_data[offset[i]];
-                  default: pmt_res_d[i] = offset[i] >= pmtrdt_uop.vlmax ? '0 : pmt_vs2_data[offset[i]];
+                  // TODO(derekjchow): Fix me
+                  // EEW32: pmt_res_d[i] = offset[i] >= 4*pmtrdt_uop.vlmax ? '0 : pmt_vs2_data[offset[i]];
+                  // EEW16: pmt_res_d[i] = offset[i] >= 2*pmtrdt_uop.vlmax ? '0 : pmt_vs2_data[offset[i]];
+                  // default: pmt_res_d[i] = offset[i] >= pmtrdt_uop.vlmax ? '0 : pmt_vs2_data[offset[i]];
+                  default: pmt_res_d[i] = 0;
                 endcase
               end
             endcase

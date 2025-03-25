@@ -19,11 +19,11 @@
 module Aligner#(type T=logic [7:0], parameter N = 8)
 (
   // Command input.
-  input logic valid_in [N-1:0],
+  input logic [N-1:0] valid_in,
   input T [N-1:0] data_in,
 
   // Command output.
-  output logic valid_out [N-1:0],
+  output logic [N-1:0] valid_out,
   output T [N-1:0] data_out
 );
   localparam COUNTBITS = $clog2(N);

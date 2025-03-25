@@ -3,8 +3,12 @@
 //    for uop(s)
 //
 
+`ifndef HDL_VERILOG_RVV_DESIGN_RVV_SVH
 `include "rvv_backend.svh"
+`endif
+`ifndef RVV_DISPATCH__SVH
 `include "rvv_backend_dispatch.svh"
+`endif
 
 module rvv_backend_dispatch_structure_hazard
 (

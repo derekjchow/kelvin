@@ -19,6 +19,7 @@ package kelvin
 import chisel3._
 import chisel3.util._
 import common._
+import kelvin.rvv.{RvvCoreIO}
 import _root_.circt.stage.ChiselStage
 
 object SCore {
@@ -39,10 +40,10 @@ class SCore(p: Parameters) extends Module {
     val dbus = new DBusIO(p)
     val ebus = new EBusIO(p)
 
-    val vldst = if (p.enableVector) { Some(Output(Bool())) } else { None }
-    val vcore = if (p.enableVector) {
-        Some(Flipped(new VCoreIO(p)))
-    } else { None }
+    val vldst = Option.when(p.enableVector)(Output(Bool()))
+    val vcore = Option.when(p.enableVector)(Flipped(new VCoreIO(p)))
+
+    val rvvcore = Option.when(p.enableRvv)(Flipped(new RvvCoreIO(p)))
 
     val iflush = new IFlushIO(p)
     val dflush = new DFlushIO(p)
@@ -234,12 +235,18 @@ class SCore(p: Parameters) extends Module {
     val csr0Addr  = if (i == 0) csr.io.rd.bits.addr else 0.U
     val csr0Data  = if (i == 0) csr.io.rd.bits.data else 0.U
 
+    val rvvCoreRdValid = io.rvvcore.map(_.rd(i).valid).getOrElse(false.B)
+    val rvvCoreRdAddr = MuxOR(
+        rvvCoreRdValid, io.rvvcore.map(_.rd(i).bits.addr).getOrElse(0.U))
+    val rvvCoreRdData = MuxOR(
+        rvvCoreRdValid, io.rvvcore.map(_.rd(i).bits.data).getOrElse(0.U))
 
     regfile.io.writeData(i).valid := csr0Valid ||
                                      alu(i).io.rd.valid || bru(i).io.rd.valid ||
                                      (if (p.enableVector) {
                                         io.vcore.get.rd(i).valid
-                                      } else { false.B })
+                                      } else { false.B }) ||
+                                     rvvCoreRdValid
 
     regfile.io.writeData(i).bits.addr :=
         MuxOR(csr0Valid, csr0Addr) |
@@ -247,7 +254,8 @@ class SCore(p: Parameters) extends Module {
         MuxOR(bru(i).io.rd.valid, bru(i).io.rd.bits.addr) |
         (if (p.enableVector) {
            MuxOR(io.vcore.get.rd(i).valid, io.vcore.get.rd(i).bits.addr)
-         } else { false.B })
+         } else { false.B }) |
+        rvvCoreRdAddr
 
     regfile.io.writeData(i).bits.data :=
         MuxOR(csr0Valid, csr0Data) |
@@ -255,22 +263,33 @@ class SCore(p: Parameters) extends Module {
         MuxOR(bru(i).io.rd.valid, bru(i).io.rd.bits.data) |
         (if (p.enableVector) {
            MuxOR(io.vcore.get.rd(i).valid, io.vcore.get.rd(i).bits.data)
-         } else { false.B })
+         } else { false.B }) |
+        rvvCoreRdData
 
     if (p.enableVector) {
       assert((csr0Valid +&
               alu(i).io.rd.valid +& bru(i).io.rd.valid +&
               io.vcore.get.rd(i).valid) <= 1.U)
     } else {
-      assert((csr0Valid +&
-              alu(i).io.rd.valid +& bru(i).io.rd.valid) <= 1.U)
+      if (p.enableRvv) {
+        assert((csr0Valid +&
+                alu(i).io.rd.valid +& bru(i).io.rd.valid +&
+                io.rvvcore.get.rd(i).valid) <= 1.U)
+      } else {
+        assert((csr0Valid +&
+               alu(i).io.rd.valid +& bru(i).io.rd.valid) <= 1.U)
+      }
     }
   }
 
   val mluDvuOffset = p.instructionLanes
-  val arb = Module(new Arbiter(new RegfileWriteDataIO, 2))
+  val mluDvuInputs = if (p.enableRvv) { 3 } else { 2 }
+  val arb = Module(new Arbiter(new RegfileWriteDataIO, mluDvuInputs))
   arb.io.in(0) <> mlu.io.rd
   arb.io.in(1) <> dvu.io.rd
+  if (p.enableRvv) {
+    arb.io.in(2) <> io.rvvcore.get.async_rd
+  }
   arb.io.out.ready := true.B
   regfile.io.writeData(mluDvuOffset).valid := arb.io.out.valid
   regfile.io.writeData(mluDvuOffset).bits.addr := arb.io.out.bits.addr
@@ -291,6 +310,18 @@ class SCore(p: Parameters) extends Module {
   if (p.enableVector) {
     io.vcore.get.vinst <> decode.map(_.io.vinst.get)
     io.vcore.get.rs := regfile.io.readData
+  }
+
+  // ---------------------------------------------------------------------------
+  // Rvv Extension
+  if (p.enableRvv) {
+    // Connect decoder
+    for (i <- 0 until p.instructionLanes) {
+      decode(i).io.rvv.get <> io.rvvcore.get.inst(i)
+    }
+
+    // Register inputs
+    io.rvvcore.get.rs := regfile.io.readData
   }
 
   // ---------------------------------------------------------------------------

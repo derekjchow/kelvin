@@ -1,6 +1,10 @@
 
+`ifndef HDL_VERILOG_RVV_DESIGN_RVV_SVH
 `include "rvv_backend.svh"
+`endif
+`ifndef ALU_DEFINE_SVH
 `include "rvv_backend_alu.svh"
+`endif
 
 module rvv_backend_alu_unit_addsub
 (

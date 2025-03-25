@@ -2,8 +2,12 @@
 // 1. the rvv_backend_dispatch_bypass is a sub-module for rvv_backend_dispatch module
 //    a. select source operand(s) for uop(s) from ROB and VRF.
 
+`ifndef HDL_VERILOG_RVV_DESIGN_RVV_SVH
 `include "rvv_backend.svh"
+`endif
+`ifndef RVV_DISPATCH__SVH
 `include "rvv_backend_dispatch.svh"
+`endif
 
 module rvv_backend_dispatch_bypass
 (

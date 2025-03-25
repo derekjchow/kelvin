@@ -9,8 +9,12 @@
 // 4. If the instruction is in wrong encoding, it will be discarded directly without applying a trap, but take assertion in simulation.
 // 5. The vstart of the instruction will be calculated to a new value for every decoded uops.
 
+`ifndef HDL_VERILOG_RVV_DESIGN_RVV_SVH
 `include "rvv_backend.svh"
+`endif
+`ifndef RVV_ASSERT__SVH
 `include "rvv_backend_sva.svh"
+`endif
 
 module rvv_backend_decode_unit
 (

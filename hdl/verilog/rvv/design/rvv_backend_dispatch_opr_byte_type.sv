@@ -2,8 +2,12 @@
 // 1. rvv_backend_dispatch_opr_byte_type sub-module is for generating byte type for operand(s)
 //    a. it is convenient for PU&RT to check if byte data shoud be updated or used for uop(s)
 
+`ifndef HDL_VERILOG_RVV_DESIGN_RVV_SVH
 `include "rvv_backend.svh"
+`endif
+`ifndef RVV_DISPATCH__SVH
 `include "rvv_backend_dispatch.svh"
+`endif
 
 module rvv_backend_dispatch_opr_byte_type
 (

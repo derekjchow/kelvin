@@ -4,7 +4,9 @@ description:
 
 feature list:
 */
+`ifndef HDL_VERILOG_RVV_DESIGN_RVV_SVH
 `include "rvv_backend.svh"
+`endif
 
 module rvv_backend_vrf(/*AUTOARG*/
    // Outputs
