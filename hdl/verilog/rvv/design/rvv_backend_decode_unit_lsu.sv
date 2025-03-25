@@ -45,6 +45,7 @@ module rvv_backend_decode_unit_lsu
   RVVLMUL                                         csr_lmul;
   EMUL_e                                          emul_vd;          
   EMUL_e                                          emul_vs2;          
+  EMUL_e                                          emul_max_vd_vs2; 
   EMUL_e                                          emul_max;          
   EEW_e                                           eew_vd;          
   EEW_e                                           eew_vs2;          
@@ -136,18 +137,7 @@ module rvv_backend_decode_unit_lsu
             uop_funct6.lsu_funct6.lsu_mop    = US;
             uop_funct6.lsu_funct6.lsu_umop   = US_US;
             valid_lsu_mop                    = 1'b1;
-
-            case(inst_nf) 
-              NF2,
-              NF3,
-              NF4,
-              NF5,
-              NF6,
-              NF7,
-              NF8: begin
-                uop_funct6.lsu_funct6.lsu_is_seg = IS_SEGMENT;
-              end
-            endcase
+            uop_funct6.lsu_funct6.lsu_is_seg = (inst_nf!=NF1) ? IS_SEGMENT : NONE;
           end
           US_WHOLE_REGISTER: begin
             uop_funct6.lsu_funct6.lsu_mop    = US;
@@ -160,35 +150,27 @@ module rvv_backend_decode_unit_lsu
             valid_lsu_mop                    = 1'b1;
           end
           US_FAULT_FIRST: begin
-            uop_funct6.lsu_funct6.lsu_mop  = US;
-            uop_funct6.lsu_funct6.lsu_umop = US_FF;
-            valid_lsu_mop                  = 1'b1;
-
-            case(inst_nf) 
-              NF2,
-              NF3,
-              NF4,
-              NF5,
-              NF6,
-              NF7,
-              NF8: begin
-                uop_funct6.lsu_funct6.lsu_is_seg = IS_SEGMENT;
-              end
-            endcase
+            uop_funct6.lsu_funct6.lsu_mop    = US;
+            uop_funct6.lsu_funct6.lsu_umop   = US_FF;
+            valid_lsu_mop                    = 1'b1;
+            uop_funct6.lsu_funct6.lsu_is_seg = (inst_nf!=NF1) ? IS_SEGMENT : NONE;
           end
         endcase
       end
       UNORDERED_INDEX: begin
-        uop_funct6.lsu_funct6.lsu_mop = IU;
-        valid_lsu_mop                 = 1'b1;
+        uop_funct6.lsu_funct6.lsu_mop    = IU;
+        valid_lsu_mop                    = 1'b1;
+        uop_funct6.lsu_funct6.lsu_is_seg = (inst_nf!=NF1) ? IS_SEGMENT : NONE;
       end
       CONSTANT_STRIDE: begin
-        uop_funct6.lsu_funct6.lsu_mop = CS;
-        valid_lsu_mop                 = 1'b1;
+        uop_funct6.lsu_funct6.lsu_mop    = CS;
+        valid_lsu_mop                    = 1'b1;
+        uop_funct6.lsu_funct6.lsu_is_seg = (inst_nf!=NF1) ? IS_SEGMENT : NONE;
       end
       ORDERED_INDEX: begin
-        uop_funct6.lsu_funct6.lsu_mop = IO;
-        valid_lsu_mop                 = 1'b1;
+        uop_funct6.lsu_funct6.lsu_mop    = IO;
+        valid_lsu_mop                    = 1'b1;
+        uop_funct6.lsu_funct6.lsu_is_seg = (inst_nf!=NF1) ? IS_SEGMENT : NONE;
       end
     endcase
   end
@@ -196,9 +178,10 @@ module rvv_backend_decode_unit_lsu
 // get EMUL
   always_comb begin
     // initial
-    emul_vd  = EMUL_NONE;
-    emul_vs2 = EMUL_NONE;
-    emul_max = EMUL_NONE;
+    emul_vd         = EMUL_NONE;
+    emul_vs2        = EMUL_NONE;
+    emul_max_vd_vs2 = EMUL_NONE;
+    emul_max        = EMUL_NONE;
 
     if (valid_lsu) begin  
       case(uop_funct6.lsu_funct6.lsu_mop)
@@ -207,7 +190,8 @@ module rvv_backend_decode_unit_lsu
             US_US: begin
               case(inst_nf)
                 // EMUL_vd = ceil( inst_funct3/csr_sew*csr_lmul )
-                // EMUL_max = NF*EMUL_vd
+                // emul_max_vd_vs2 = EMUL_vd
+                // EMUL_max = NF*emul_max_vd_vs2
                 NF1: begin
                   case({inst_funct3,csr_sew})
                     // 1:1
@@ -218,20 +202,24 @@ module rvv_backend_decode_unit_lsu
                         LMUL1_4,
                         LMUL1_2,
                         LMUL1: begin
-                          emul_vd     = EMUL1;
-                          emul_max    = EMUL1;
+                          emul_vd         = EMUL1;
+                          emul_max_vd_vs2 = EMUL1;
+                          emul_max        = EMUL1;
                         end
                         LMUL2: begin
-                          emul_vd     = EMUL2;
-                          emul_max    = EMUL2;
+                          emul_vd         = EMUL2;
+                          emul_max_vd_vs2 = EMUL2;
+                          emul_max        = EMUL2;
                         end
                         LMUL4: begin
-                          emul_vd     = EMUL4;
-                          emul_max    = EMUL4;
+                          emul_vd         = EMUL4;
+                          emul_max_vd_vs2 = EMUL4;
+                          emul_max        = EMUL4;
                         end
                         LMUL8: begin
-                          emul_vd     = EMUL8;
-                          emul_max    = EMUL8;
+                          emul_vd         = EMUL8;
+                          emul_max_vd_vs2 = EMUL8;
+                          emul_max        = EMUL8;
                         end
                       endcase
                     end
@@ -241,20 +229,24 @@ module rvv_backend_decode_unit_lsu
                       case(csr_lmul)
                         LMUL1_4,
                         LMUL1_2: begin
-                          emul_vd     = EMUL1;
-                          emul_max    = EMUL1;
+                          emul_vd         = EMUL1;
+                          emul_max_vd_vs2 = EMUL1;
+                          emul_max        = EMUL1;
                         end
                         LMUL1: begin
-                          emul_vd     = EMUL2;
-                          emul_max    = EMUL2;
+                          emul_vd         = EMUL2;
+                          emul_max_vd_vs2 = EMUL2;
+                          emul_max        = EMUL2;
                         end
                         LMUL2: begin
-                          emul_vd     = EMUL4;
-                          emul_max    = EMUL4;
+                          emul_vd         = EMUL4;
+                          emul_max_vd_vs2 = EMUL4;
+                          emul_max        = EMUL4;
                         end
                         LMUL4: begin
-                          emul_vd     = EMUL8;
-                          emul_max    = EMUL8;
+                          emul_vd         = EMUL8;
+                          emul_max_vd_vs2 = EMUL8;
+                          emul_max        = EMUL8;
                         end
                       endcase
                     end
@@ -262,20 +254,24 @@ module rvv_backend_decode_unit_lsu
                     {SEW_32,SEW8}: begin            
                       case(csr_lmul)
                         LMUL1_4: begin
-                          emul_vd     = EMUL1;
-                          emul_max    = EMUL1;
+                          emul_vd         = EMUL1;
+                          emul_max_vd_vs2 = EMUL1;
+                          emul_max        = EMUL1;
                         end
-                        LMUL1_2: begin
-                          emul_vd     = EMUL2;
-                          emul_max    = EMUL2;
+                        LMUL1_2: begin    
+                          emul_vd         = EMUL2;
+                          emul_max_vd_vs2 = EMUL2;
+                          emul_max        = EMUL2;
                         end
                         LMUL1: begin
-                          emul_vd     = EMUL4;
-                          emul_max    = EMUL4;
+                          emul_vd         = EMUL4;
+                          emul_max_vd_vs2 = EMUL4;
+                          emul_max        = EMUL4;
                         end
                         LMUL2: begin
-                          emul_vd     = EMUL8;
-                          emul_max    = EMUL8;
+                          emul_vd         = EMUL8;
+                          emul_max_vd_vs2 = EMUL8;
+                          emul_max        = EMUL8;
                         end
                       endcase
                     end
@@ -286,16 +282,19 @@ module rvv_backend_decode_unit_lsu
                         LMUL1_2,
                         LMUL1,
                         LMUL2: begin
-                          emul_vd     = EMUL1;
-                          emul_max    = EMUL1;
+                          emul_vd         = EMUL1;
+                          emul_max_vd_vs2 = EMUL1;
+                          emul_max        = EMUL1;
                         end
                         LMUL4: begin
-                          emul_vd     = EMUL2;
-                          emul_max    = EMUL2;
+                          emul_vd         = EMUL2;
+                          emul_max_vd_vs2 = EMUL2;
+                          emul_max        = EMUL2;
                         end
                         LMUL8: begin
-                          emul_vd     = EMUL4;
-                          emul_max    = EMUL4;
+                          emul_vd         = EMUL4;
+                          emul_max_vd_vs2 = EMUL4;
+                          emul_max        = EMUL4;
                         end
                       endcase
                     end
@@ -305,12 +304,14 @@ module rvv_backend_decode_unit_lsu
                         LMUL1,
                         LMUL2,
                         LMUL4: begin
-                          emul_vd     = EMUL1;
-                          emul_max    = EMUL1;
+                          emul_vd         = EMUL1;
+                          emul_max_vd_vs2 = EMUL1;
+                          emul_max        = EMUL1;
                         end
                         LMUL8: begin
-                          emul_vd     = EMUL2;
-                          emul_max    = EMUL2;
+                          emul_vd         = EMUL2;
+                          emul_max_vd_vs2 = EMUL2;
+                          emul_max        = EMUL2;
                         end
                       endcase
                     end
@@ -326,16 +327,19 @@ module rvv_backend_decode_unit_lsu
                         LMUL1_4,
                         LMUL1_2,
                         LMUL1: begin
-                          emul_vd     = EMUL1;
-                          emul_max    = EMUL2;
+                          emul_vd         = EMUL1;
+                          emul_max_vd_vs2 = EMUL1;
+                          emul_max        = EMUL2;
                         end
                         LMUL2: begin
-                          emul_vd     = EMUL2;
-                          emul_max    = EMUL4;
+                          emul_vd         = EMUL2;
+                          emul_max_vd_vs2 = EMUL2;
+                          emul_max        = EMUL4;
                         end
                         LMUL4: begin
-                          emul_vd     = EMUL4;
-                          emul_max    = EMUL8;
+                          emul_vd         = EMUL4;
+                          emul_max_vd_vs2 = EMUL4;
+                          emul_max        = EMUL8;
                         end
                       endcase
                     end
@@ -345,16 +349,19 @@ module rvv_backend_decode_unit_lsu
                       case(csr_lmul)
                         LMUL1_4,
                         LMUL1_2: begin
-                          emul_vd     = EMUL1;
-                          emul_max    = EMUL2;
+                          emul_vd         = EMUL1;
+                          emul_max_vd_vs2 = EMUL1;
+                          emul_max        = EMUL2;
                         end
                         LMUL1: begin
-                          emul_vd     = EMUL2;
-                          emul_max    = EMUL4;
+                          emul_vd         = EMUL2;
+                          emul_max_vd_vs2 = EMUL2;
+                          emul_max        = EMUL4;
                         end
                         LMUL2: begin
-                          emul_vd     = EMUL4;
-                          emul_max    = EMUL8;
+                          emul_vd         = EMUL4;
+                          emul_max_vd_vs2 = EMUL4;
+                          emul_max        = EMUL8;
                         end
                       endcase
                     end
@@ -362,16 +369,19 @@ module rvv_backend_decode_unit_lsu
                     {SEW_32,SEW8}: begin            
                       case(csr_lmul)
                         LMUL1_4: begin
-                          emul_vd     = EMUL1;
-                          emul_max    = EMUL2;
+                          emul_vd         = EMUL1;
+                          emul_max_vd_vs2 = EMUL1;
+                          emul_max        = EMUL2;
                         end
-                        LMUL1_2: begin
-                          emul_vd     = EMUL2;
-                          emul_max    = EMUL4;
+                        LMUL1_2: begin    
+                          emul_vd         = EMUL2;
+                          emul_max_vd_vs2 = EMUL2;
+                          emul_max        = EMUL4;
                         end
                         LMUL1: begin
-                          emul_vd     = EMUL4;
-                          emul_max    = EMUL8;
+                          emul_vd         = EMUL4;
+                          emul_max_vd_vs2 = EMUL4;
+                          emul_max        = EMUL8;
                         end
                       endcase
                     end
@@ -382,16 +392,19 @@ module rvv_backend_decode_unit_lsu
                         LMUL1_2,
                         LMUL1,
                         LMUL2: begin
-                          emul_vd     = EMUL1;
-                          emul_max    = EMUL2;
+                          emul_vd         = EMUL1;
+                          emul_max_vd_vs2 = EMUL1;
+                          emul_max        = EMUL2;
                         end
                         LMUL4: begin
-                          emul_vd     = EMUL2;
-                          emul_max    = EMUL4;
+                          emul_vd         = EMUL2;
+                          emul_max_vd_vs2 = EMUL2;
+                          emul_max        = EMUL4;
                         end
                         LMUL8: begin
-                          emul_vd     = EMUL4;
-                          emul_max    = EMUL8;
+                          emul_vd         = EMUL4;
+                          emul_max_vd_vs2 = EMUL4;
+                          emul_max        = EMUL8;
                         end
                       endcase
                     end
@@ -401,12 +414,14 @@ module rvv_backend_decode_unit_lsu
                         LMUL1,
                         LMUL2,
                         LMUL4: begin
-                          emul_vd     = EMUL1;
-                          emul_max    = EMUL2;
+                          emul_vd         = EMUL1;
+                          emul_max_vd_vs2 = EMUL1;
+                          emul_max        = EMUL2;
                         end
                         LMUL8: begin
-                          emul_vd     = EMUL2;
-                          emul_max    = EMUL4;
+                          emul_vd         = EMUL2;
+                          emul_max_vd_vs2 = EMUL2;
+                          emul_max        = EMUL4;
                         end
                       endcase
                     end
@@ -422,12 +437,14 @@ module rvv_backend_decode_unit_lsu
                         LMUL1_4,
                         LMUL1_2,
                         LMUL1: begin
-                          emul_vd     = EMUL1;
-                          emul_max    = EMUL3;
+                          emul_vd         = EMUL1;
+                          emul_max_vd_vs2 = EMUL1;
+                          emul_max        = EMUL3;
                         end
                         LMUL2: begin
-                          emul_vd     = EMUL2;
-                          emul_max    = EMUL6;
+                          emul_vd         = EMUL2;
+                          emul_max_vd_vs2 = EMUL2;
+                          emul_max        = EMUL6;
                         end
                       endcase
                     end
@@ -437,12 +454,14 @@ module rvv_backend_decode_unit_lsu
                       case(csr_lmul)
                         LMUL1_4,
                         LMUL1_2: begin
-                          emul_vd     = EMUL1;
-                          emul_max    = EMUL3;
+                          emul_vd         = EMUL1;
+                          emul_max_vd_vs2 = EMUL1;
+                          emul_max        = EMUL3;
                         end
                         LMUL1: begin
-                          emul_vd     = EMUL2;
-                          emul_max    = EMUL6;
+                          emul_vd         = EMUL2;
+                          emul_max_vd_vs2 = EMUL2;
+                          emul_max        = EMUL6;
                         end
                       endcase
                     end
@@ -450,12 +469,14 @@ module rvv_backend_decode_unit_lsu
                     {SEW_32,SEW8}: begin            
                       case(csr_lmul)
                         LMUL1_4: begin
-                          emul_vd     = EMUL1;
-                          emul_max    = EMUL3;
+                          emul_vd         = EMUL1;
+                          emul_max_vd_vs2 = EMUL1;
+                          emul_max        = EMUL3;
                         end
-                        LMUL1_2: begin
-                          emul_vd     = EMUL2;
-                          emul_max    = EMUL6;
+                        LMUL1_2: begin    
+                          emul_vd         = EMUL2;
+                          emul_max_vd_vs2 = EMUL2;
+                          emul_max        = EMUL6;
                         end
                       endcase
                     end
@@ -466,12 +487,14 @@ module rvv_backend_decode_unit_lsu
                         LMUL1_2,
                         LMUL1,
                         LMUL2: begin
-                          emul_vd     = EMUL1;
-                          emul_max    = EMUL3;
+                          emul_vd         = EMUL1;
+                          emul_max_vd_vs2 = EMUL1;
+                          emul_max        = EMUL3;
                         end
                         LMUL4: begin
-                          emul_vd     = EMUL2;
-                          emul_max    = EMUL6;
+                          emul_vd         = EMUL2;
+                          emul_max_vd_vs2 = EMUL2;
+                          emul_max        = EMUL6;
                         end
                       endcase
                     end
@@ -481,12 +504,14 @@ module rvv_backend_decode_unit_lsu
                         LMUL1,
                         LMUL2,
                         LMUL4: begin
-                          emul_vd     = EMUL1;
-                          emul_max    = EMUL3;
+                          emul_vd         = EMUL1;
+                          emul_max_vd_vs2 = EMUL1;
+                          emul_max        = EMUL3;
                         end
                         LMUL8: begin
-                          emul_vd     = EMUL2;
-                          emul_max    = EMUL6;
+                          emul_vd         = EMUL2;
+                          emul_max_vd_vs2 = EMUL2;
+                          emul_max        = EMUL6;
                         end
                       endcase
                     end
@@ -502,12 +527,14 @@ module rvv_backend_decode_unit_lsu
                         LMUL1_4,
                         LMUL1_2,
                         LMUL1: begin
-                          emul_vd     = EMUL1;
-                          emul_max    = EMUL4;
+                          emul_vd         = EMUL1;
+                          emul_max_vd_vs2 = EMUL1;
+                          emul_max        = EMUL4;
                         end
                         LMUL2: begin
-                          emul_vd     = EMUL2;
-                          emul_max    = EMUL8;
+                          emul_vd         = EMUL2;
+                          emul_max_vd_vs2 = EMUL2;
+                          emul_max        = EMUL8;
                         end
                       endcase
                     end
@@ -517,12 +544,14 @@ module rvv_backend_decode_unit_lsu
                       case(csr_lmul)
                         LMUL1_4,
                         LMUL1_2: begin
-                          emul_vd     = EMUL1;
-                          emul_max    = EMUL4;
+                          emul_vd         = EMUL1;
+                          emul_max_vd_vs2 = EMUL1;
+                          emul_max        = EMUL4;
                         end
                         LMUL1: begin
-                          emul_vd     = EMUL2;
-                          emul_max    = EMUL8;
+                          emul_vd         = EMUL2;
+                          emul_max_vd_vs2 = EMUL2;
+                          emul_max        = EMUL8;
                         end
                       endcase
                     end
@@ -530,12 +559,14 @@ module rvv_backend_decode_unit_lsu
                     {SEW_32,SEW8}: begin            
                       case(csr_lmul)
                         LMUL1_4: begin
-                          emul_vd     = EMUL1;
-                          emul_max    = EMUL4;
+                          emul_vd         = EMUL1;
+                          emul_max_vd_vs2 = EMUL1;
+                          emul_max        = EMUL4;
                         end
-                        LMUL1_2: begin
-                          emul_vd     = EMUL2;
-                          emul_max    = EMUL8;
+                        LMUL1_2: begin    
+                          emul_vd         = EMUL2;
+                          emul_max_vd_vs2 = EMUL2;
+                          emul_max        = EMUL8;
                         end
                       endcase
                     end
@@ -546,12 +577,14 @@ module rvv_backend_decode_unit_lsu
                         LMUL1_2,
                         LMUL1,
                         LMUL2: begin
-                          emul_vd     = EMUL1;
-                          emul_max    = EMUL4;
+                          emul_vd         = EMUL1;
+                          emul_max_vd_vs2 = EMUL1;
+                          emul_max        = EMUL4;
                         end
                         LMUL4: begin
-                          emul_vd     = EMUL2;
-                          emul_max    = EMUL8;
+                          emul_vd         = EMUL2;
+                          emul_max_vd_vs2 = EMUL2;
+                          emul_max        = EMUL8;
                         end
                       endcase
                     end
@@ -561,12 +594,14 @@ module rvv_backend_decode_unit_lsu
                         LMUL1,
                         LMUL2,
                         LMUL4: begin
-                          emul_vd     = EMUL1;
-                          emul_max    = EMUL4;
+                          emul_vd         = EMUL1;
+                          emul_max_vd_vs2 = EMUL1;
+                          emul_max        = EMUL4;
                         end
                         LMUL8: begin
-                          emul_vd     = EMUL2;
-                          emul_max    = EMUL8;
+                          emul_vd         = EMUL2;
+                          emul_max_vd_vs2 = EMUL2;
+                          emul_max        = EMUL8;
                         end
                       endcase
                     end
@@ -582,8 +617,9 @@ module rvv_backend_decode_unit_lsu
                         LMUL1_4,
                         LMUL1_2,
                         LMUL1: begin
-                          emul_vd     = EMUL1;
-                          emul_max    = EMUL5;
+                          emul_vd         = EMUL1;
+                          emul_max_vd_vs2 = EMUL1;
+                          emul_max        = EMUL5;
                         end
                       endcase
                     end
@@ -593,8 +629,9 @@ module rvv_backend_decode_unit_lsu
                       case(csr_lmul)
                         LMUL1_4,
                         LMUL1_2: begin
-                          emul_vd     = EMUL1;
-                          emul_max    = EMUL5;
+                          emul_vd         = EMUL1;
+                          emul_max_vd_vs2 = EMUL1;
+                          emul_max        = EMUL5;
                         end
                       endcase
                     end
@@ -602,8 +639,9 @@ module rvv_backend_decode_unit_lsu
                     {SEW_32,SEW8}: begin            
                       case(csr_lmul)
                         LMUL1_4: begin
-                          emul_vd     = EMUL1;
-                          emul_max    = EMUL5;
+                          emul_vd         = EMUL1;
+                          emul_max_vd_vs2 = EMUL1;
+                          emul_max        = EMUL5;
                         end
                       endcase
                     end
@@ -614,8 +652,9 @@ module rvv_backend_decode_unit_lsu
                         LMUL1_2,
                         LMUL1,
                         LMUL2: begin
-                          emul_vd     = EMUL1;
-                          emul_max    = EMUL5;
+                          emul_vd         = EMUL1;
+                          emul_max_vd_vs2 = EMUL1;
+                          emul_max        = EMUL5;
                         end
                       endcase
                     end
@@ -625,8 +664,9 @@ module rvv_backend_decode_unit_lsu
                         LMUL1,
                         LMUL2,
                         LMUL4: begin
-                          emul_vd     = EMUL1;
-                          emul_max    = EMUL5;
+                          emul_vd         = EMUL1;
+                          emul_max_vd_vs2 = EMUL1;
+                          emul_max        = EMUL5;
                         end
                       endcase
                     end
@@ -642,8 +682,9 @@ module rvv_backend_decode_unit_lsu
                         LMUL1_4,
                         LMUL1_2,
                         LMUL1: begin
-                          emul_vd     = EMUL1;
-                          emul_max    = EMUL6;
+                          emul_vd         = EMUL1;
+                          emul_max_vd_vs2 = EMUL1;
+                          emul_max        = EMUL6;
                         end
                       endcase
                     end
@@ -653,8 +694,9 @@ module rvv_backend_decode_unit_lsu
                       case(csr_lmul)
                         LMUL1_4,
                         LMUL1_2: begin
-                          emul_vd     = EMUL1;
-                          emul_max    = EMUL6;
+                          emul_vd         = EMUL1;
+                          emul_max_vd_vs2 = EMUL1;
+                          emul_max        = EMUL6;
                         end
                       endcase
                     end                
@@ -662,8 +704,9 @@ module rvv_backend_decode_unit_lsu
                     {SEW_32,SEW8}: begin            
                       case(csr_lmul)
                         LMUL1_4: begin
-                          emul_vd     = EMUL1;
-                          emul_max    = EMUL6;
+                          emul_vd         = EMUL1;
+                          emul_max_vd_vs2 = EMUL1;
+                          emul_max        = EMUL6;
                         end
                       endcase
                     end
@@ -674,8 +717,9 @@ module rvv_backend_decode_unit_lsu
                         LMUL1_2,
                         LMUL1,
                         LMUL2: begin
-                          emul_vd     = EMUL1;
-                          emul_max    = EMUL6;
+                          emul_vd         = EMUL1;
+                          emul_max_vd_vs2 = EMUL1;
+                          emul_max        = EMUL6;
                         end
                       endcase
                     end
@@ -685,8 +729,9 @@ module rvv_backend_decode_unit_lsu
                         LMUL1,
                         LMUL2,
                         LMUL4: begin
-                          emul_vd     = EMUL1;
-                          emul_max    = EMUL6;
+                          emul_vd         = EMUL1;
+                          emul_max_vd_vs2 = EMUL1;
+                          emul_max        = EMUL6;
                         end
                       endcase
                     end
@@ -702,8 +747,9 @@ module rvv_backend_decode_unit_lsu
                         LMUL1_4,
                         LMUL1_2,
                         LMUL1: begin
-                          emul_vd     = EMUL1;
-                          emul_max    = EMUL7;
+                          emul_vd         = EMUL1;
+                          emul_max_vd_vs2 = EMUL1;
+                          emul_max        = EMUL7;
                         end
                       endcase
                     end
@@ -713,8 +759,9 @@ module rvv_backend_decode_unit_lsu
                       case(csr_lmul)
                         LMUL1_4,
                         LMUL1_2: begin
-                          emul_vd     = EMUL1;
-                          emul_max    = EMUL7;
+                          emul_vd         = EMUL1;
+                          emul_max_vd_vs2 = EMUL1;
+                          emul_max        = EMUL7;
                         end
                       endcase
                     end
@@ -722,8 +769,9 @@ module rvv_backend_decode_unit_lsu
                     {SEW_32,SEW8}: begin            
                       case(csr_lmul)
                         LMUL1_4: begin
-                          emul_vd     = EMUL1;
-                          emul_max    = EMUL7;
+                          emul_vd         = EMUL1;
+                          emul_max_vd_vs2 = EMUL1;
+                          emul_max        = EMUL7;
                         end
                       endcase
                     end
@@ -734,8 +782,9 @@ module rvv_backend_decode_unit_lsu
                         LMUL1_2,
                         LMUL1,
                         LMUL2: begin
-                          emul_vd     = EMUL1;
-                          emul_max    = EMUL7;
+                          emul_vd         = EMUL1;
+                          emul_max_vd_vs2 = EMUL1;
+                          emul_max        = EMUL7;
                         end
                       endcase
                     end
@@ -745,8 +794,9 @@ module rvv_backend_decode_unit_lsu
                         LMUL1,
                         LMUL2,
                         LMUL4: begin
-                          emul_vd     = EMUL1;
-                          emul_max    = EMUL7;
+                          emul_vd         = EMUL1;
+                          emul_max_vd_vs2 = EMUL1;
+                          emul_max        = EMUL7;
                         end
                       endcase
                     end
@@ -762,8 +812,9 @@ module rvv_backend_decode_unit_lsu
                         LMUL1_4,
                         LMUL1_2,
                         LMUL1: begin
-                          emul_vd     = EMUL1;
-                          emul_max    = EMUL8;
+                          emul_vd         = EMUL1;
+                          emul_max_vd_vs2 = EMUL1;
+                          emul_max        = EMUL8;
                         end
                       endcase
                     end
@@ -773,8 +824,9 @@ module rvv_backend_decode_unit_lsu
                       case(csr_lmul)
                         LMUL1_4,
                         LMUL1_2: begin
-                          emul_vd     = EMUL1;
-                          emul_max    = EMUL8;
+                          emul_vd         = EMUL1;
+                          emul_max_vd_vs2 = EMUL1;
+                          emul_max        = EMUL8;
                         end
                       endcase
                     end
@@ -782,8 +834,9 @@ module rvv_backend_decode_unit_lsu
                     {SEW_32,SEW8}: begin            
                       case(csr_lmul)
                         LMUL1_4: begin
-                          emul_vd     = EMUL1;
-                          emul_max    = EMUL8;
+                          emul_vd         = EMUL1;
+                          emul_max_vd_vs2 = EMUL1;
+                          emul_max        = EMUL8;
                         end
                       endcase
                     end
@@ -794,8 +847,9 @@ module rvv_backend_decode_unit_lsu
                         LMUL1_2,
                         LMUL1,
                         LMUL2: begin
-                          emul_vd     = EMUL1;
-                          emul_max    = EMUL8;
+                          emul_vd         = EMUL1;
+                          emul_max_vd_vs2 = EMUL1;
+                          emul_max        = EMUL8;
                         end
                       endcase
                     end
@@ -805,8 +859,9 @@ module rvv_backend_decode_unit_lsu
                         LMUL1,
                         LMUL2,
                         LMUL4: begin
-                          emul_vd     = EMUL1;
-                          emul_max    = EMUL8;
+                          emul_vd         = EMUL1;
+                          emul_max_vd_vs2 = EMUL1;
+                          emul_max        = EMUL8;
                         end
                       endcase
                     end
@@ -1466,7 +1521,8 @@ module rvv_backend_decode_unit_lsu
           case(inst_nf)
             // EMUL_vd  = ceil( csr_lmul )
             // EMUL_vs2 = ceil( inst_funct3/csr_sew*csr_lmul )
-            // EMUL_max = max(NF*EMUL_vd,EMUL_vs2)
+            // emul_max_vd_vs2 = max(EMUL_vd,EMUL_vs2)
+            // EMUL_max = NF*emul_max_vd_vs2
             NF1: begin
               case({inst_funct3,csr_sew})
                 // 1:1
@@ -1478,24 +1534,28 @@ module rvv_backend_decode_unit_lsu
                     LMUL1_4,
                     LMUL1_2,
                     LMUL1: begin
-                      emul_vd     = EMUL1;
-                      emul_vs2    = EMUL1;
-                      emul_max    = EMUL1;
+                      emul_vd         = EMUL1;
+                      emul_vs2        = EMUL1;
+                      emul_max_vd_vs2 = EMUL1;
+                      emul_max        = EMUL1;
                     end
                     LMUL2: begin
-                      emul_vd     = EMUL2;
-                      emul_vs2    = EMUL2;
-                      emul_max    = EMUL2;
+                      emul_vd         = EMUL2;
+                      emul_vs2        = EMUL2;
+                      emul_max_vd_vs2 = EMUL2;
+                      emul_max        = EMUL2;
                     end
                     LMUL4: begin
-                      emul_vd     = EMUL4;
-                      emul_vs2    = EMUL4;
-                      emul_max    = EMUL4;
+                      emul_vd         = EMUL4;
+                      emul_vs2        = EMUL4;
+                      emul_max_vd_vs2 = EMUL4;
+                      emul_max        = EMUL4;
                     end
                     LMUL8: begin
-                      emul_vd     = EMUL8;
-                      emul_vs2    = EMUL8;
-                      emul_max    = EMUL8;
+                      emul_vd         = EMUL8;
+                      emul_vs2        = EMUL8;
+                      emul_max_vd_vs2 = EMUL8;
+                      emul_max        = EMUL8;
                     end
                   endcase
                 end
@@ -1505,24 +1565,28 @@ module rvv_backend_decode_unit_lsu
                   case(csr_lmul)
                     LMUL1_4,
                     LMUL1_2: begin
-                      emul_vd     = EMUL1;
-                      emul_vs2    = EMUL1;
-                      emul_max    = EMUL1;
+                      emul_vd         = EMUL1;
+                      emul_vs2        = EMUL1;
+                      emul_max_vd_vs2 = EMUL1;
+                      emul_max        = EMUL1;
                     end
                     LMUL1: begin
-                      emul_vd     = EMUL1;
-                      emul_vs2    = EMUL2;
-                      emul_max    = EMUL2;
+                      emul_vd         = EMUL1;
+                      emul_vs2        = EMUL2;
+                      emul_max_vd_vs2 = EMUL2;
+                      emul_max        = EMUL2;
                     end
                     LMUL2: begin
-                      emul_vd     = EMUL2;
-                      emul_vs2    = EMUL4;
-                      emul_max    = EMUL4;
+                      emul_vd         = EMUL2;
+                      emul_vs2        = EMUL4;
+                      emul_max_vd_vs2 = EMUL4;
+                      emul_max        = EMUL4;
                     end
                     LMUL4: begin
-                      emul_vd     = EMUL4;
-                      emul_vs2    = EMUL8;
-                      emul_max    = EMUL8;
+                      emul_vd         = EMUL4;
+                      emul_vs2        = EMUL8;
+                      emul_max_vd_vs2 = EMUL8;
+                      emul_max        = EMUL8;
                     end
                   endcase
                 end
@@ -1530,24 +1594,28 @@ module rvv_backend_decode_unit_lsu
                 {SEW_32,SEW8}: begin            
                   case(csr_lmul)
                     LMUL1_4: begin
-                      emul_vd     = EMUL1;
-                      emul_vs2    = EMUL1;
-                      emul_max    = EMUL1;
+                      emul_vd         = EMUL1;
+                      emul_vs2        = EMUL1;
+                      emul_max_vd_vs2 = EMUL1;
+                      emul_max        = EMUL1;
                     end
-                    LMUL1_2: begin
-                      emul_vd     = EMUL1;
-                      emul_vs2    = EMUL2;
-                      emul_max    = EMUL2;
+                    LMUL1_2: begin    
+                      emul_vd         = EMUL1;
+                      emul_vs2        = EMUL2;
+                      emul_max_vd_vs2 = EMUL2;
+                      emul_max        = EMUL2;
                     end
                     LMUL1: begin
-                      emul_vd     = EMUL1;
-                      emul_vs2    = EMUL4;
-                      emul_max    = EMUL4;
+                      emul_vd         = EMUL1;
+                      emul_vs2        = EMUL4;
+                      emul_max_vd_vs2 = EMUL4;
+                      emul_max        = EMUL4;
                     end
                     LMUL2: begin
-                      emul_vd     = EMUL2;
-                      emul_vs2    = EMUL8;
-                      emul_max    = EMUL8;
+                      emul_vd         = EMUL2;
+                      emul_vs2        = EMUL8;
+                      emul_max_vd_vs2 = EMUL8;
+                      emul_max        = EMUL8;
                     end
                   endcase
                 end
@@ -1557,24 +1625,28 @@ module rvv_backend_decode_unit_lsu
                   case(csr_lmul)
                     LMUL1_2,
                     LMUL1: begin
-                      emul_vd     = EMUL1;
-                      emul_vs2    = EMUL1;
-                      emul_max    = EMUL1;
+                      emul_vd         = EMUL1;
+                      emul_vs2        = EMUL1;
+                      emul_max_vd_vs2 = EMUL1;
+                      emul_max        = EMUL1;
                     end
                     LMUL2: begin
-                      emul_vd     = EMUL2;
-                      emul_vs2    = EMUL1;
-                      emul_max    = EMUL2;
+                      emul_vd         = EMUL2;
+                      emul_vs2        = EMUL1;
+                      emul_max_vd_vs2 = EMUL2;
+                      emul_max        = EMUL2;
                     end
                     LMUL4: begin
-                      emul_vd     = EMUL4;
-                      emul_vs2    = EMUL2;
-                      emul_max    = EMUL4;
+                      emul_vd         = EMUL4;
+                      emul_vs2        = EMUL2;
+                      emul_max_vd_vs2 = EMUL4;
+                      emul_max        = EMUL4;
                     end
                     LMUL8: begin
-                      emul_vd     = EMUL8;
-                      emul_vs2    = EMUL4;
-                      emul_max    = EMUL8;
+                      emul_vd         = EMUL8;
+                      emul_vs2        = EMUL4;
+                      emul_max_vd_vs2 = EMUL8;
+                      emul_max        = EMUL8;
                     end
                   endcase
                 end
@@ -1582,24 +1654,28 @@ module rvv_backend_decode_unit_lsu
                 {SEW_8,SEW32}: begin            
                   case(csr_lmul)
                     LMUL1: begin
-                      emul_vd     = EMUL1;
-                      emul_vs2    = EMUL1;
-                      emul_max    = EMUL1;
+                      emul_vd         = EMUL1;
+                      emul_vs2        = EMUL1;
+                      emul_max_vd_vs2 = EMUL1;
+                      emul_max        = EMUL1;
                     end
                     LMUL2: begin
-                      emul_vd     = EMUL2;
-                      emul_vs2    = EMUL1;
-                      emul_max    = EMUL2;
+                      emul_vd         = EMUL2;
+                      emul_vs2        = EMUL1;
+                      emul_max_vd_vs2 = EMUL2;
+                      emul_max        = EMUL2;
                     end
                     LMUL4: begin
-                      emul_vd     = EMUL4;
-                      emul_vs2    = EMUL1;
-                      emul_max    = EMUL4;
+                      emul_vd         = EMUL4;
+                      emul_vs2        = EMUL1;
+                      emul_max_vd_vs2 = EMUL4;
+                      emul_max        = EMUL4;
                     end
                     LMUL8: begin
-                      emul_vd     = EMUL8;
-                      emul_vs2    = EMUL2;
-                      emul_max    = EMUL8;
+                      emul_vd         = EMUL8;
+                      emul_vs2        = EMUL2;
+                      emul_max_vd_vs2 = EMUL8;
+                      emul_max        = EMUL8;
                     end
                   endcase
                 end
@@ -1615,19 +1691,22 @@ module rvv_backend_decode_unit_lsu
                     LMUL1_4,
                     LMUL1_2,
                     LMUL1: begin
-                      emul_vd     = EMUL1;
-                      emul_vs2    = EMUL1;
-                      emul_max    = EMUL2;
+                      emul_vd         = EMUL1;
+                      emul_vs2        = EMUL1;
+                      emul_max_vd_vs2 = EMUL1;
+                      emul_max        = EMUL2;
                     end
                     LMUL2: begin
-                      emul_vd     = EMUL2;
-                      emul_vs2    = EMUL2;
-                      emul_max    = EMUL4;
+                      emul_vd         = EMUL2;
+                      emul_vs2        = EMUL2;
+                      emul_max_vd_vs2 = EMUL2;
+                      emul_max        = EMUL4;
                     end
                     LMUL4: begin
-                      emul_vd     = EMUL4;
-                      emul_vs2    = EMUL4;
-                      emul_max    = EMUL8;
+                      emul_vd         = EMUL4;
+                      emul_vs2        = EMUL4;
+                      emul_max_vd_vs2 = EMUL4;
+                      emul_max        = EMUL8;
                     end
                   endcase
                 end
@@ -1637,19 +1716,22 @@ module rvv_backend_decode_unit_lsu
                   case(csr_lmul)
                     LMUL1_4,
                     LMUL1_2: begin
-                      emul_vd     = EMUL1;
-                      emul_vs2    = EMUL1;
-                      emul_max    = EMUL2;
+                      emul_vd         = EMUL1;
+                      emul_vs2        = EMUL1;
+                      emul_max_vd_vs2 = EMUL1;
+                      emul_max        = EMUL2;
                     end
                     LMUL1: begin
-                      emul_vd     = EMUL1;
-                      emul_vs2    = EMUL2;
-                      emul_max    = EMUL2;
+                      emul_vd         = EMUL1;
+                      emul_vs2        = EMUL2;
+                      emul_max_vd_vs2 = EMUL2;
+                      emul_max        = EMUL4;
                     end
                     LMUL2: begin
-                      emul_vd     = EMUL2;
-                      emul_vs2    = EMUL4;
-                      emul_max    = EMUL4;
+                      emul_vd         = EMUL2;
+                      emul_vs2        = EMUL4;
+                      emul_max_vd_vs2 = EMUL4;
+                      emul_max        = EMUL8;
                     end
                   endcase
                 end
@@ -1657,19 +1739,22 @@ module rvv_backend_decode_unit_lsu
                 {SEW_32,SEW8}: begin            
                   case(csr_lmul)
                     LMUL1_4: begin
-                      emul_vd     = EMUL1;
-                      emul_vs2    = EMUL1;
-                      emul_max    = EMUL2;
+                      emul_vd         = EMUL1;
+                      emul_vs2        = EMUL1;
+                      emul_max_vd_vs2 = EMUL1;
+                      emul_max        = EMUL2;
                     end
-                    LMUL1_2: begin
-                      emul_vd     = EMUL1;
-                      emul_vs2    = EMUL2;
-                      emul_max    = EMUL2;
+                    LMUL1_2: begin    
+                      emul_vd         = EMUL1;
+                      emul_vs2        = EMUL2;
+                      emul_max_vd_vs2 = EMUL2;
+                      emul_max        = EMUL4;
                     end
                     LMUL1: begin
-                      emul_vd     = EMUL1;
-                      emul_vs2    = EMUL4;
-                      emul_max    = EMUL4;
+                      emul_vd         = EMUL1;
+                      emul_vs2        = EMUL4;
+                      emul_max_vd_vs2 = EMUL4;
+                      emul_max        = EMUL8;
                     end
                   endcase
                 end
@@ -1679,19 +1764,22 @@ module rvv_backend_decode_unit_lsu
                   case(csr_lmul)
                     LMUL1_2,
                     LMUL1: begin
-                      emul_vd     = EMUL1;
-                      emul_vs2    = EMUL1;
-                      emul_max    = EMUL2;
+                      emul_vd         = EMUL1;
+                      emul_vs2        = EMUL1;
+                      emul_max_vd_vs2 = EMUL1;
+                      emul_max        = EMUL2;
                     end
                     LMUL2: begin
-                      emul_vd     = EMUL2;
-                      emul_vs2    = EMUL1;
-                      emul_max    = EMUL4;
+                      emul_vd         = EMUL2;
+                      emul_vs2        = EMUL1;
+                      emul_max_vd_vs2 = EMUL2;
+                      emul_max        = EMUL4;
                     end
                     LMUL4: begin
-                      emul_vd     = EMUL4;
-                      emul_vs2    = EMUL2;
-                      emul_max    = EMUL8;
+                      emul_vd         = EMUL4;
+                      emul_vs2        = EMUL2;
+                      emul_max_vd_vs2 = EMUL4;
+                      emul_max        = EMUL8;
                     end
                   endcase
                 end
@@ -1699,19 +1787,22 @@ module rvv_backend_decode_unit_lsu
                 {SEW_8,SEW32}: begin            
                   case(csr_lmul)
                     LMUL1: begin
-                      emul_vd     = EMUL1;
-                      emul_vs2    = EMUL1;
-                      emul_max    = EMUL2;
+                      emul_vd         = EMUL1;
+                      emul_vs2        = EMUL1;
+                      emul_max_vd_vs2 = EMUL1;
+                      emul_max        = EMUL2;
                     end
                     LMUL2: begin
-                      emul_vd     = EMUL2;
-                      emul_vs2    = EMUL1;
-                      emul_max    = EMUL4;
+                      emul_vd         = EMUL2;
+                      emul_vs2        = EMUL1;
+                      emul_max_vd_vs2 = EMUL2;
+                      emul_max        = EMUL4;
                     end
                     LMUL4: begin
-                      emul_vd     = EMUL4;
-                      emul_vs2    = EMUL1;
-                      emul_max    = EMUL8;
+                      emul_vd         = EMUL4;
+                      emul_vs2        = EMUL1;
+                      emul_max_vd_vs2 = EMUL4;
+                      emul_max        = EMUL8;
                     end
                   endcase
                 end
@@ -1727,14 +1818,16 @@ module rvv_backend_decode_unit_lsu
                     LMUL1_4,
                     LMUL1_2,
                     LMUL1: begin
-                      emul_vd     = EMUL1;
-                      emul_vs2    = EMUL1;
-                      emul_max    = EMUL3;
+                      emul_vd         = EMUL1;
+                      emul_vs2        = EMUL1;
+                      emul_max_vd_vs2 = EMUL1;
+                      emul_max        = EMUL3;
                     end
                     LMUL2: begin
-                      emul_vd     = EMUL2;
-                      emul_vs2    = EMUL2;
-                      emul_max    = EMUL6;
+                      emul_vd         = EMUL2;
+                      emul_vs2        = EMUL2;
+                      emul_max_vd_vs2 = EMUL2;
+                      emul_max        = EMUL6;
                     end
                   endcase
                 end
@@ -1744,19 +1837,16 @@ module rvv_backend_decode_unit_lsu
                   case(csr_lmul)
                     LMUL1_4,
                     LMUL1_2: begin
-                      emul_vd     = EMUL1;
-                      emul_vs2    = EMUL1;
-                      emul_max    = EMUL3;
+                      emul_vd         = EMUL1;
+                      emul_vs2        = EMUL1;
+                      emul_max_vd_vs2 = EMUL1;
+                      emul_max        = EMUL3;
                     end
                     LMUL1: begin
-                      emul_vd     = EMUL1;
-                      emul_vs2    = EMUL2;
-                      emul_max    = EMUL3;
-                    end
-                    LMUL2: begin
-                      emul_vd     = EMUL2;
-                      emul_vs2    = EMUL4;
-                      emul_max    = EMUL6;
+                      emul_vd         = EMUL1;
+                      emul_vs2        = EMUL2;
+                      emul_max_vd_vs2 = EMUL2;
+                      emul_max        = EMUL6;
                     end
                   endcase
                 end
@@ -1764,24 +1854,16 @@ module rvv_backend_decode_unit_lsu
                 {SEW_32,SEW8}: begin            
                   case(csr_lmul)
                     LMUL1_4: begin
-                      emul_vd     = EMUL1;
-                      emul_vs2    = EMUL1;
-                      emul_max    = EMUL3;
+                      emul_vd         = EMUL1;
+                      emul_vs2        = EMUL1;
+                      emul_max_vd_vs2 = EMUL1;
+                      emul_max        = EMUL3;
                     end
-                    LMUL1_2: begin
-                      emul_vd     = EMUL1;
-                      emul_vs2    = EMUL2;
-                      emul_max    = EMUL3;
-                    end
-                    LMUL1: begin
-                      emul_vd     = EMUL1;
-                      emul_vs2    = EMUL4;
-                      emul_max    = EMUL4;
-                    end
-                    LMUL2: begin
-                      emul_vd     = EMUL2;
-                      emul_vs2    = EMUL8;
-                      emul_max    = EMUL8;
+                    LMUL1_2: begin    
+                      emul_vd         = EMUL1;
+                      emul_vs2        = EMUL2;
+                      emul_max_vd_vs2 = EMUL2;
+                      emul_max        = EMUL6;
                     end
                   endcase
                 end
@@ -1791,14 +1873,16 @@ module rvv_backend_decode_unit_lsu
                   case(csr_lmul)
                     LMUL1_2,
                     LMUL1: begin
-                      emul_vd     = EMUL1;
-                      emul_vs2    = EMUL1;
-                      emul_max    = EMUL3;
+                      emul_vd         = EMUL1;
+                      emul_vs2        = EMUL1;
+                      emul_max_vd_vs2 = EMUL1;
+                      emul_max        = EMUL3;
                     end
                     LMUL2: begin
-                      emul_vd     = EMUL2;
-                      emul_vs2    = EMUL1;
-                      emul_max    = EMUL6;
+                      emul_vd         = EMUL2;
+                      emul_vs2        = EMUL1;
+                      emul_max_vd_vs2 = EMUL2;
+                      emul_max        = EMUL6;
                     end
                   endcase
                 end
@@ -1806,14 +1890,16 @@ module rvv_backend_decode_unit_lsu
                 {SEW_8,SEW32}: begin            
                   case(csr_lmul)
                     LMUL1: begin
-                      emul_vd     = EMUL1;
-                      emul_vs2    = EMUL1;
-                      emul_max    = EMUL3;
+                      emul_vd         = EMUL1;
+                      emul_vs2        = EMUL1;
+                      emul_max_vd_vs2 = EMUL1;
+                      emul_max        = EMUL3;
                     end
                     LMUL2: begin
-                      emul_vd     = EMUL2;
-                      emul_vs2    = EMUL1;
-                      emul_max    = EMUL6;
+                      emul_vd         = EMUL2;
+                      emul_vs2        = EMUL1;
+                      emul_max_vd_vs2 = EMUL2;
+                      emul_max        = EMUL6;
                     end
                   endcase
                 end
@@ -1829,14 +1915,16 @@ module rvv_backend_decode_unit_lsu
                     LMUL1_4,
                     LMUL1_2,
                     LMUL1: begin
-                      emul_vd     = EMUL1;
-                      emul_vs2    = EMUL1;
-                      emul_max    = EMUL4;
+                      emul_vd         = EMUL1;
+                      emul_vs2        = EMUL1;
+                      emul_max_vd_vs2 = EMUL1;
+                      emul_max        = EMUL4;
                     end
                     LMUL2: begin
-                      emul_vd     = EMUL2;
-                      emul_vs2    = EMUL2;
-                      emul_max    = EMUL8;
+                      emul_vd         = EMUL2;
+                      emul_vs2        = EMUL2;
+                      emul_max_vd_vs2 = EMUL2;
+                      emul_max        = EMUL8;
                     end
                   endcase
                 end
@@ -1846,19 +1934,16 @@ module rvv_backend_decode_unit_lsu
                   case(csr_lmul)
                     LMUL1_4,
                     LMUL1_2: begin
-                      emul_vd     = EMUL1;
-                      emul_vs2    = EMUL1;
-                      emul_max    = EMUL4;
+                      emul_vd         = EMUL1;
+                      emul_vs2        = EMUL1;
+                      emul_max_vd_vs2 = EMUL1;
+                      emul_max        = EMUL4;
                     end
                     LMUL1: begin
-                      emul_vd     = EMUL1;
-                      emul_vs2    = EMUL2;
-                      emul_max    = EMUL4;
-                    end
-                    LMUL2: begin
-                      emul_vd     = EMUL2;
-                      emul_vs2    = EMUL4;
-                      emul_max    = EMUL8;
+                      emul_vd         = EMUL1;
+                      emul_vs2        = EMUL2;
+                      emul_max_vd_vs2 = EMUL2;
+                      emul_max        = EMUL8;
                     end
                   endcase
                 end
@@ -1866,24 +1951,16 @@ module rvv_backend_decode_unit_lsu
                 {SEW_32,SEW8}: begin            
                   case(csr_lmul)
                     LMUL1_4: begin
-                      emul_vd     = EMUL1;
-                      emul_vs2    = EMUL1;
-                      emul_max    = EMUL4;
+                      emul_vd         = EMUL1;
+                      emul_vs2        = EMUL1;
+                      emul_max_vd_vs2 = EMUL1;
+                      emul_max        = EMUL4;
                     end
-                    LMUL1_2: begin
-                      emul_vd     = EMUL1;
-                      emul_vs2    = EMUL2;
-                      emul_max    = EMUL4;
-                    end
-                    LMUL1: begin
-                      emul_vd     = EMUL1;
-                      emul_vs2    = EMUL4;
-                      emul_max    = EMUL4;
-                    end
-                    LMUL2: begin
-                      emul_vd     = EMUL2;
-                      emul_vs2    = EMUL8;
-                      emul_max    = EMUL8;
+                    LMUL1_2: begin    
+                      emul_vd         = EMUL1;
+                      emul_vs2        = EMUL2;
+                      emul_max_vd_vs2 = EMUL2;
+                      emul_max        = EMUL8;
                     end
                   endcase
                 end
@@ -1893,14 +1970,16 @@ module rvv_backend_decode_unit_lsu
                   case(csr_lmul)
                     LMUL1_2,
                     LMUL1: begin
-                      emul_vd     = EMUL1;
-                      emul_vs2    = EMUL1;
-                      emul_max    = EMUL4;
+                      emul_vd         = EMUL1;
+                      emul_vs2        = EMUL1;
+                      emul_max_vd_vs2 = EMUL1;
+                      emul_max        = EMUL4;
                     end
                     LMUL2: begin
-                      emul_vd     = EMUL2;
-                      emul_vs2    = EMUL1;
-                      emul_max    = EMUL8;
+                      emul_vd         = EMUL2;
+                      emul_vs2        = EMUL1;
+                      emul_max_vd_vs2 = EMUL2;
+                      emul_max        = EMUL8;
                     end
                   endcase
                 end
@@ -1908,14 +1987,16 @@ module rvv_backend_decode_unit_lsu
                 {SEW_8,SEW32}: begin            
                   case(csr_lmul)
                     LMUL1: begin
-                      emul_vd     = EMUL1;
-                      emul_vs2    = EMUL1;
-                      emul_max    = EMUL4;
+                      emul_vd         = EMUL1;
+                      emul_vs2        = EMUL1;
+                      emul_max_vd_vs2 = EMUL1;
+                      emul_max        = EMUL4;
                     end
                     LMUL2: begin
-                      emul_vd     = EMUL2;
-                      emul_vs2    = EMUL1;
-                      emul_max    = EMUL8;
+                      emul_vd         = EMUL2;
+                      emul_vs2        = EMUL1;
+                      emul_max_vd_vs2 = EMUL2;
+                      emul_max        = EMUL8;
                     end
                   endcase
                 end
@@ -1931,9 +2012,10 @@ module rvv_backend_decode_unit_lsu
                     LMUL1_4,
                     LMUL1_2,
                     LMUL1: begin
-                      emul_vd     = EMUL1;
-                      emul_vs2    = EMUL1;
-                      emul_max    = EMUL5;
+                      emul_vd         = EMUL1;
+                      emul_vs2        = EMUL1;
+                      emul_max_vd_vs2 = EMUL1;
+                      emul_max        = EMUL5;
                     end
                   endcase
                 end
@@ -1943,14 +2025,10 @@ module rvv_backend_decode_unit_lsu
                   case(csr_lmul)
                     LMUL1_4,
                     LMUL1_2: begin
-                      emul_vd     = EMUL1;
-                      emul_vs2    = EMUL1;
-                      emul_max    = EMUL5;
-                    end
-                    LMUL1: begin
-                      emul_vd     = EMUL1;
-                      emul_vs2    = EMUL2;
-                      emul_max    = EMUL5;
+                      emul_vd         = EMUL1;
+                      emul_vs2        = EMUL1;
+                      emul_max_vd_vs2 = EMUL1;
+                      emul_max        = EMUL5;
                     end
                   endcase
                 end
@@ -1958,19 +2036,10 @@ module rvv_backend_decode_unit_lsu
                 {SEW_32,SEW8}: begin            
                   case(csr_lmul)
                     LMUL1_4: begin
-                      emul_vd     = EMUL1;
-                      emul_vs2    = EMUL1;
-                      emul_max    = EMUL5;
-                    end
-                    LMUL1_2: begin
-                      emul_vd     = EMUL1;
-                      emul_vs2    = EMUL2;
-                      emul_max    = EMUL5;
-                    end
-                    LMUL1: begin
-                      emul_vd     = EMUL1;
-                      emul_vs2    = EMUL4;
-                      emul_max    = EMUL5;
+                      emul_vd         = EMUL1;
+                      emul_vs2        = EMUL1;
+                      emul_max_vd_vs2 = EMUL1;
+                      emul_max        = EMUL5;
                     end
                   endcase
                 end
@@ -1980,9 +2049,10 @@ module rvv_backend_decode_unit_lsu
                   case(csr_lmul)
                     LMUL1_2,
                     LMUL1: begin
-                      emul_vd     = EMUL1;
-                      emul_vs2    = EMUL1;
-                      emul_max    = EMUL5;
+                      emul_vd         = EMUL1;
+                      emul_vs2        = EMUL1;
+                      emul_max_vd_vs2 = EMUL1;
+                      emul_max        = EMUL5;
                     end
                   endcase
                 end
@@ -1990,9 +2060,10 @@ module rvv_backend_decode_unit_lsu
                 {SEW_8,SEW32}: begin            
                   case(csr_lmul)
                     LMUL1: begin
-                      emul_vd     = EMUL1;
-                      emul_vs2    = EMUL1;
-                      emul_max    = EMUL5;
+                      emul_vd         = EMUL1;
+                      emul_vs2        = EMUL1;
+                      emul_max_vd_vs2 = EMUL1;
+                      emul_max        = EMUL5;
                     end
                   endcase
                 end
@@ -2008,9 +2079,10 @@ module rvv_backend_decode_unit_lsu
                     LMUL1_4,
                     LMUL1_2,
                     LMUL1: begin
-                      emul_vd     = EMUL1;
-                      emul_vs2    = EMUL1;
-                      emul_max    = EMUL6;
+                      emul_vd         = EMUL1;
+                      emul_vs2        = EMUL1;
+                      emul_max_vd_vs2 = EMUL1;
+                      emul_max        = EMUL6;
                     end
                   endcase
                 end
@@ -2020,14 +2092,10 @@ module rvv_backend_decode_unit_lsu
                   case(csr_lmul)
                     LMUL1_4,
                     LMUL1_2: begin
-                      emul_vd     = EMUL1;
-                      emul_vs2    = EMUL1;
-                      emul_max    = EMUL6;
-                    end
-                    LMUL1: begin
-                      emul_vd     = EMUL1;
-                      emul_vs2    = EMUL2;
-                      emul_max    = EMUL6;
+                      emul_vd         = EMUL1;
+                      emul_vs2        = EMUL1;
+                      emul_max_vd_vs2 = EMUL1;
+                      emul_max        = EMUL6;
                     end
                   endcase
                 end                
@@ -2035,19 +2103,10 @@ module rvv_backend_decode_unit_lsu
                 {SEW_32,SEW8}: begin            
                   case(csr_lmul)
                     LMUL1_4: begin
-                      emul_vd     = EMUL1;
-                      emul_vs2    = EMUL1;
-                      emul_max    = EMUL6;
-                    end
-                    LMUL1_2: begin
-                      emul_vd     = EMUL1;
-                      emul_vs2    = EMUL2;
-                      emul_max    = EMUL6;
-                    end
-                    LMUL1: begin
-                      emul_vd     = EMUL1;
-                      emul_vs2    = EMUL4;
-                      emul_max    = EMUL6;
+                      emul_vd         = EMUL1;
+                      emul_vs2        = EMUL1;
+                      emul_max_vd_vs2 = EMUL1;
+                      emul_max        = EMUL6;
                     end
                   endcase
                 end
@@ -2057,9 +2116,10 @@ module rvv_backend_decode_unit_lsu
                   case(csr_lmul)
                     LMUL1_2,
                     LMUL1: begin
-                      emul_vd     = EMUL1;
-                      emul_vs2    = EMUL1;
-                      emul_max    = EMUL6;
+                      emul_vd         = EMUL1;
+                      emul_vs2        = EMUL1;
+                      emul_max_vd_vs2 = EMUL1;
+                      emul_max        = EMUL6;
                     end
                   endcase
                 end
@@ -2067,9 +2127,10 @@ module rvv_backend_decode_unit_lsu
                 {SEW_8,SEW32}: begin            
                   case(csr_lmul)
                     LMUL1: begin
-                      emul_vd     = EMUL1;
-                      emul_vs2    = EMUL1;
-                      emul_max    = EMUL6;
+                      emul_vd         = EMUL1;
+                      emul_vs2        = EMUL1;
+                      emul_max_vd_vs2 = EMUL1;
+                      emul_max        = EMUL6;
                     end
                   endcase
                 end
@@ -2085,9 +2146,10 @@ module rvv_backend_decode_unit_lsu
                     LMUL1_4,
                     LMUL1_2,
                     LMUL1: begin
-                      emul_vd     = EMUL1;
-                      emul_vs2    = EMUL1;
-                      emul_max    = EMUL7;
+                      emul_vd         = EMUL1;
+                      emul_vs2        = EMUL1;
+                      emul_max_vd_vs2 = EMUL1;
+                      emul_max        = EMUL7;
                     end
                   endcase
                 end
@@ -2097,14 +2159,10 @@ module rvv_backend_decode_unit_lsu
                   case(csr_lmul)
                     LMUL1_4,
                     LMUL1_2: begin
-                      emul_vd     = EMUL1;
-                      emul_vs2    = EMUL1;
-                      emul_max    = EMUL7;
-                    end
-                    LMUL1: begin
-                      emul_vd     = EMUL1;
-                      emul_vs2    = EMUL2;
-                      emul_max    = EMUL7;
+                      emul_vd         = EMUL1;
+                      emul_vs2        = EMUL1;
+                      emul_max_vd_vs2 = EMUL1;
+                      emul_max        = EMUL7;
                     end
                   endcase
                 end
@@ -2112,19 +2170,10 @@ module rvv_backend_decode_unit_lsu
                 {SEW_32,SEW8}: begin            
                   case(csr_lmul)
                     LMUL1_4: begin
-                      emul_vd     = EMUL1;
-                      emul_vs2    = EMUL1;
-                      emul_max    = EMUL7;
-                    end
-                    LMUL1_2: begin
-                      emul_vd     = EMUL1;
-                      emul_vs2    = EMUL2;
-                      emul_max    = EMUL7;
-                    end
-                    LMUL1: begin
-                      emul_vd     = EMUL1;
-                      emul_vs2    = EMUL4;
-                      emul_max    = EMUL7;
+                      emul_vd         = EMUL1;
+                      emul_vs2        = EMUL1;
+                      emul_max_vd_vs2 = EMUL1;
+                      emul_max        = EMUL7;
                     end
                   endcase
                 end
@@ -2134,9 +2183,10 @@ module rvv_backend_decode_unit_lsu
                   case(csr_lmul)
                     LMUL1_2,
                     LMUL1: begin
-                      emul_vd     = EMUL1;
-                      emul_vs2    = EMUL1;
-                      emul_max    = EMUL7;
+                      emul_vd         = EMUL1;
+                      emul_vs2        = EMUL1;
+                      emul_max_vd_vs2 = EMUL1;
+                      emul_max        = EMUL7;
                     end
                   endcase
                 end
@@ -2144,9 +2194,10 @@ module rvv_backend_decode_unit_lsu
                 {SEW_8,SEW32}: begin            
                   case(csr_lmul)
                     LMUL1: begin
-                      emul_vd     = EMUL1;
-                      emul_vs2    = EMUL1;
-                      emul_max    = EMUL7;
+                      emul_vd         = EMUL1;
+                      emul_vs2        = EMUL1;
+                      emul_max_vd_vs2 = EMUL1;
+                      emul_max        = EMUL7;
                     end
                   endcase
                 end
@@ -2162,9 +2213,10 @@ module rvv_backend_decode_unit_lsu
                     LMUL1_4,
                     LMUL1_2,
                     LMUL1: begin
-                      emul_vd     = EMUL1;
-                      emul_vs2    = EMUL1;
-                      emul_max    = EMUL8;
+                      emul_vd         = EMUL1;
+                      emul_vs2        = EMUL1;
+                      emul_max_vd_vs2 = EMUL1;
+                      emul_max        = EMUL8;
                     end
                   endcase
                 end
@@ -2174,14 +2226,10 @@ module rvv_backend_decode_unit_lsu
                   case(csr_lmul)
                     LMUL1_4,
                     LMUL1_2: begin
-                      emul_vd     = EMUL1;
-                      emul_vs2    = EMUL1;
-                      emul_max    = EMUL8;
-                    end
-                    LMUL1: begin
-                      emul_vd     = EMUL1;
-                      emul_vs2    = EMUL2;
-                      emul_max    = EMUL8;
+                      emul_vd         = EMUL1;
+                      emul_vs2        = EMUL1;
+                      emul_max_vd_vs2 = EMUL1;
+                      emul_max        = EMUL8;
                     end
                   endcase
                 end
@@ -2189,19 +2237,10 @@ module rvv_backend_decode_unit_lsu
                 {SEW_32,SEW8}: begin            
                   case(csr_lmul)
                     LMUL1_4: begin
-                      emul_vd     = EMUL1;
-                      emul_vs2    = EMUL1;
-                      emul_max    = EMUL8;
-                    end
-                    LMUL1_2: begin
-                      emul_vd     = EMUL1;
-                      emul_vs2    = EMUL2;
-                      emul_max    = EMUL8;
-                    end
-                    LMUL1: begin
-                      emul_vd     = EMUL1;
-                      emul_vs2    = EMUL4;
-                      emul_max    = EMUL8;
+                      emul_vd         = EMUL1;
+                      emul_vs2        = EMUL1;
+                      emul_max_vd_vs2 = EMUL1;
+                      emul_max        = EMUL8;
                     end
                   endcase
                 end
@@ -2211,9 +2250,10 @@ module rvv_backend_decode_unit_lsu
                   case(csr_lmul)
                     LMUL1_2,
                     LMUL1: begin
-                      emul_vd     = EMUL1;
-                      emul_vs2    = EMUL1;
-                      emul_max    = EMUL8;
+                      emul_vd         = EMUL1;
+                      emul_vs2        = EMUL1;
+                      emul_max_vd_vs2 = EMUL1;
+                      emul_max        = EMUL8;
                     end
                   endcase
                 end
@@ -2221,9 +2261,10 @@ module rvv_backend_decode_unit_lsu
                 {SEW_8,SEW32}: begin            
                   case(csr_lmul)
                     LMUL1: begin
-                      emul_vd     = EMUL1;
-                      emul_vs2    = EMUL1;
-                      emul_max    = EMUL8;
+                      emul_vd         = EMUL1;
+                      emul_vs2        = EMUL1;
+                      emul_max_vd_vs2 = EMUL1;
+                      emul_max        = EMUL8;
                     end
                   endcase
                 end
@@ -3040,14 +3081,14 @@ module rvv_backend_decode_unit_lsu
       if(uop_funct6.lsu_funct6.lsu_is_seg==IS_SEGMENT) begin
         case(inst_nf)
           NF2: begin
-            case(emul_vd)
+            case(emul_max_vd_vs2)
               EMUL2: uop[i].seg_field_index = {2'b0,uop_index_current[i][0]};
               EMUL4: uop[i].seg_field_index = {1'b0,uop_index_current[i][1:0]};
             endcase
           end
           NF3,
           NF4: begin
-            if (emul_vd==EMUL2)
+            if (emul_max_vd_vs2==EMUL2)
               uop[i].seg_field_index = {2'b0,uop_index_current[i][0]};
           end
         endcase

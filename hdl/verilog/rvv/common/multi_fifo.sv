@@ -132,13 +132,13 @@ module multi_fifo
     if(DATAOUT_REG) begin
       logic [DEPTH_BITS:0]          remain_count;
       logic [N-1:0][DEPTH_BITS-1:0] current_rptr_mem;   // pick data from fifo to output
-      logic [N-1:0][DEPTH_BITS-1:0] current_rptr_rvs;   // when fifo is empty, pick the pushing data from rvs
+      logic [N-1:0][DEPTH_BITS-1:0] current_rptr_psh;   // when fifo is empty, pick the pushing data 
 
       assign remain_count = entry_count-pop_count;
 
       for (i=0; i<N; i++) begin : gen_rptr
         assign current_rptr_mem[i] = next_rptr+i;
-        assign current_rptr_rvs[i] = i-remain_count;
+        assign current_rptr_psh[i] = i-remain_count;
       end
 
       if (CHAOS_PUSH) begin
@@ -146,8 +146,8 @@ module multi_fifo
           always_ff @(posedge clk) begin
             if ((i<remain_count)&((|pop)|(|push_seq))) 
               dataout[i] <= mem[current_rptr_mem[i]]; 
-            else if ((push_seq[i-remain_count]&((i-remain_count)<M))&((|pop)|(|push_seq)))
-              dataout[i] <= datain_seq[current_rptr_rvs[i]];
+            else if ((push_seq[current_rptr_psh[i]]&(current_rptr_psh[i]<M))&((|pop)|(|push_seq)))
+              dataout[i] <= datain_seq[current_rptr_psh[i]];
           end
         end
       end else begin
@@ -156,7 +156,7 @@ module multi_fifo
             if ((i<remain_count)&((|pop)|(|push)))
               dataout[i] <= mem[current_rptr_mem[i]]; 
             else if ((push[i-remain_count]&((i-remain_count)<M))&((|pop)|(|push)))
-              dataout[i] <= datain[current_rptr_rvs[i]];
+              dataout[i] <= datain[current_rptr_psh[i]];
           end
         end
       end
