@@ -2722,7 +2722,7 @@ module rvv_backend_decode_unit_lsu
   // check_vd_overlap_vs2=1 means that vd group does NOT overlap vs2 group fully
   // used in segment index load/store
   assign vd_index_start = {1'b0,inst_vd};
-  assign vd_index_end = {1'b0,inst_vd} + emul_max;
+  assign vd_index_end = {1'b0,inst_vd} + emul_vd_nf;
 
   always_comb begin                                                             
     check_vd_overlap_vs2 = 'b0;          
