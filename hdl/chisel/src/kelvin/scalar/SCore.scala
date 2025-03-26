@@ -56,7 +56,7 @@ class SCore(p: Parameters) extends Module {
   val regfile = Regfile(p)
   val fetch = if (p.enableFetchL0) { Fetch(p) } else { Module(new UncachedFetch(p)) }
 
-  val decode = (0 until p.instructionLanes).map(x => Seq(Decode(p, x))).reduce(_ ++ _)
+  val dispatch = Module(new Dispatch(p))
   val alu = Seq.fill(p.instructionLanes)(Alu(p))
   val bru = (0 until p.instructionLanes).map(x => Seq(Bru(p, x == 0))).reduce(_ ++ _)
   val csr = Csr(p)
@@ -97,30 +97,15 @@ class SCore(p: Parameters) extends Module {
 
   // ---------------------------------------------------------------------------
   // Decode
-  val mask = VecInit(decode.map(_.io.inst.ready).scan(true.B)(_ && _))
-
-  for (i <- 0 until p.instructionLanes) {
-    decode(i).io.inst.valid := fetch.io.inst.lanes(i).valid && mask(i)
-    fetch.io.inst.lanes(i).ready := decode(i).io.inst.ready && mask(i)
-    decode(i).io.inst.bits.addr := fetch.io.inst.lanes(i).bits.addr
-    decode(i).io.inst.bits.inst := fetch.io.inst.lanes(i).bits.inst
-    decode(i).io.inst.bits.brchFwd := fetch.io.inst.lanes(i).bits.brchFwd
-
-    decode(i).io.branchTaken := branchTaken
-    decode(i).io.halted := csr.io.halted || csr.io.wfi
-  }
-
-  // Interlock based on regfile write port dependencies.
-  decode(0).io.interlock := bru(0).io.interlock.get
-  for (i <- 1 until p.instructionLanes) {
-    decode(i).io.interlock := decode(i - 1).io.interlock
-  }
-
-  // Serialize opcodes with only one pipeline.
-  decode(0).io.serializeIn.defaults()
-  for (i <- 1 until p.instructionLanes) {
-    decode(i).io.serializeIn := decode(i - 1).io.serializeOut
-  }
+  // Decode/Dispatch
+  dispatch.io.inst <> fetch.io.inst.lanes
+  dispatch.io.halted := csr.io.halted || csr.io.wfi
+  dispatch.io.mactive := io.vcore.map(_.mactive).getOrElse(false.B)
+  dispatch.io.lsuActive := lsu.io.active
+  dispatch.io.scoreboard.comb := regfile.io.scoreboard.comb
+  dispatch.io.scoreboard.regd := regfile.io.scoreboard.regd
+  dispatch.io.branchTaken := branchTaken
+  dispatch.io.interlock := bru(0).io.interlock.get
 
   // Connect fault signaling from IBUS/LSU to BRU.
   bru(0).io.fault := MuxCase(MakeInvalid(new FaultInfo(p)), Array(
@@ -133,24 +118,10 @@ class SCore(p: Parameters) extends Module {
     bru(i).io.ibus_fault := 0.U.asTypeOf(bru(i).io.ibus_fault)
   }
 
-  // In decode update multi-issue scoreboard state.
-  val scoreboard_spec = decode.map(_.io.scoreboard.spec).scan(0.U)(_|_)
-  for (i <- 0 until p.instructionLanes) {
-    decode(i).io.scoreboard.comb := regfile.io.scoreboard.comb | scoreboard_spec(i)
-    decode(i).io.scoreboard.regd := regfile.io.scoreboard.regd | scoreboard_spec(i)
-  }
-
-  decode(0).io.mactive := (if (p.enableVector) { io.vcore.get.mactive } else { false.B })
-  decode(0).io.lsuActive := lsu.io.active
-  for (i <- 1 until p.instructionLanes) {
-    decode(i).io.mactive := false.B
-    decode(i).io.lsuActive := false.B
-  }
-
   // ---------------------------------------------------------------------------
   // ALU
   for (i <- 0 until p.instructionLanes) {
-    alu(i).io.req := decode(i).io.alu
+    alu(i).io.req := dispatch.io.alu(i)
     alu(i).io.rs1 := regfile.io.readData(2 * i + 0)
     alu(i).io.rs2 := regfile.io.readData(2 * i + 1)
   }
@@ -158,7 +129,7 @@ class SCore(p: Parameters) extends Module {
   // ---------------------------------------------------------------------------
   // Branch Unit
   for (i <- 0 until p.instructionLanes) {
-    bru(i).io.req := decode(i).io.bru
+    bru(i).io.req := dispatch.io.bru(i)
     bru(i).io.rs1 := regfile.io.readData(2 * i + 0)
     bru(i).io.rs2 := regfile.io.readData(2 * i + 1)
     bru(i).io.target := regfile.io.target(i)
@@ -182,7 +153,7 @@ class SCore(p: Parameters) extends Module {
   csr.io.csr <> io.csr
   csr.io.csr.in.value(12) := fetch.io.pc
 
-  csr.io.req <> decode(0).io.csr
+  csr.io.req <> dispatch.io.csr
   csr.io.rs1 := regfile.io.readData(0)
 
   if (p.enableVector) {
@@ -199,37 +170,37 @@ class SCore(p: Parameters) extends Module {
   // ---------------------------------------------------------------------------
   // Load/Store Unit
   lsu.io.busPort := regfile.io.busPort
-  lsu.io.req <> decode.map(_.io.lsu)
+  lsu.io.req <> dispatch.io.lsu
 
   // ---------------------------------------------------------------------------
   // Multiplier Unit
   for (i <- 0 until p.instructionLanes) {
-    mlu.io.req(i) <> decode(i).io.mlu
+    mlu.io.req(i) <> dispatch.io.mlu(i)
     mlu.io.rs1(i) := regfile.io.readData(2 * i)
     mlu.io.rs2(i) := regfile.io.readData((2 * i) + 1)
   }
 
   // ---------------------------------------------------------------------------
   // Divide Unit
-  dvu.io.req <> decode(0).io.dvu
+  dvu.io.req <> dispatch.io.dvu(0)
   dvu.io.rs1 := regfile.io.readData(0)
   dvu.io.rs2 := regfile.io.readData(1)
   dvu.io.rd.ready := !mlu.io.rd.valid
 
   // TODO: make port conditional on pipeline index.
   for (i <- 1 until p.instructionLanes) {
-    decode(i).io.dvu.ready := false.B
+    dispatch.io.dvu(i).ready := false.B
   }
 
   // ---------------------------------------------------------------------------
   // Register File
   for (i <- 0 until p.instructionLanes) {
-    regfile.io.readAddr(2 * i + 0) := decode(i).io.rs1Read
-    regfile.io.readAddr(2 * i + 1) := decode(i).io.rs2Read
-    regfile.io.readSet(2 * i + 0) := decode(i).io.rs1Set
-    regfile.io.readSet(2 * i + 1) := decode(i).io.rs2Set
-    regfile.io.writeAddr(i) := decode(i).io.rdMark
-    regfile.io.busAddr(i) := decode(i).io.busRead
+    regfile.io.readAddr(2 * i + 0) := dispatch.io.rs1Read(i)
+    regfile.io.readAddr(2 * i + 1) := dispatch.io.rs2Read(i)
+    regfile.io.readSet(2 * i + 0) := dispatch.io.rs1Set(i)
+    regfile.io.readSet(2 * i + 1) := dispatch.io.rs2Set(i)
+    regfile.io.writeAddr(i) := dispatch.io.rdMark(i)
+    regfile.io.busAddr(i) := dispatch.io.busRead(i)
 
     val csr0Valid = if (i == 0) csr.io.rd.valid else false.B
     val csr0Addr  = if (i == 0) csr.io.rd.bits.addr else 0.U
@@ -308,17 +279,15 @@ class SCore(p: Parameters) extends Module {
   // ---------------------------------------------------------------------------
   // Vector Extension
   if (p.enableVector) {
-    io.vcore.get.vinst <> decode.map(_.io.vinst.get)
+    io.vcore.get.vinst <> dispatch.io.vinst.get
     io.vcore.get.rs := regfile.io.readData
   }
 
   // ---------------------------------------------------------------------------
   // Rvv Extension
   if (p.enableRvv) {
-    // Connect decoder
-    for (i <- 0 until p.instructionLanes) {
-      decode(i).io.rvv.get <> io.rvvcore.get.inst(i)
-    }
+    // Connect dispatch
+    dispatch.io.rvv.get <> io.rvvcore.get.inst
 
     // Register inputs
     io.rvvcore.get.rs := regfile.io.readData
@@ -353,11 +322,11 @@ class SCore(p: Parameters) extends Module {
   // Scalar logging interface
   val slogValid = RegInit(false.B)
   val slogAddr = RegInit(0.U(2.W))
-  val slogEn = decode(0).io.slog
+  val slogEn = dispatch.io.slog
 
   slogValid := slogEn
   when (slogEn) {
-    slogAddr := decode(0).io.inst.bits.inst(14,12)
+    slogAddr := dispatch.io.inst(0).bits.inst(14,12)
   }
 
   io.slog.valid := slogValid

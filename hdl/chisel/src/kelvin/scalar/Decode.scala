@@ -178,6 +178,132 @@ class DecodedInstruction(p: Parameters) extends Bundle {
   def isFency(): Bool = { fencei || ebreak || wfi || mpause || flushat || flushall }
 }
 
+class Dispatch(p: Parameters) extends Module {
+  val io = IO(new Bundle {
+     // Core controls.
+     val halted = Input(Bool())
+     val mactive = Input(Bool())  // memory active
+     val lsuActive = Input(Bool()) // lsu active
+
+     val scoreboard = new Bundle {
+       val regd = Input(UInt(32.W))
+       val comb = Input(UInt(32.W))
+     }
+
+     // Branch status.
+     val branchTaken = Input(Bool())
+
+     val interlock = Input(Bool())
+
+     // Decode input interface.
+     val inst = Vec(p.instructionLanes, Flipped(Decoupled(new FetchInstruction(p))))
+
+     // Register file decode cycle interface.
+     val rs1Read = Vec(p.instructionLanes, Flipped(new RegfileReadAddrIO))
+     val rs1Set  = Vec(p.instructionLanes, Flipped(new RegfileReadSetIO))
+     val rs2Read = Vec(p.instructionLanes, Flipped(new RegfileReadAddrIO))
+     val rs2Set  = Vec(p.instructionLanes, Flipped(new RegfileReadSetIO))
+     val rdMark  = Vec(p.instructionLanes, Flipped(new RegfileWriteAddrIO))
+     val busRead = Vec(p.instructionLanes, Flipped(new RegfileBusAddrIO))
+
+     // ALU interface.
+     val alu = Vec(p.instructionLanes, Valid(new AluCmd))
+
+     // Branch interface.
+     val bru = Vec(p.instructionLanes, Valid(new BruCmd(p)))
+
+     // CSR interface.
+     val csr = Valid(new CsrCmd)
+
+     // LSU interface.
+     val lsu = Vec(p.instructionLanes, Decoupled(new LsuCmd))
+
+     // Multiplier interface.
+     val mlu = Vec(p.instructionLanes, Decoupled(new MluCmd))
+
+     // Divide interface.
+     val dvu = Vec(p.instructionLanes, Decoupled(new DvuCmd))
+
+     // Vector interface.
+     val vinst = if (p.enableVector) {
+       Some(Vec(p.instructionLanes, Decoupled(new VInstCmd)))
+     } else { None }
+
+     // Rvv interface.
+    val rvv = if (p.enableRvv) {
+      Some(Vec(p.instructionLanes, Decoupled(new RvvCompressedInstruction)))
+    } else { None }
+
+    // Scalar logging.
+    val slog = Output(Bool())
+  })
+
+  val decode = (0 until p.instructionLanes).map(x => Decode(p, x))
+
+  val mask = VecInit(decode.map(_.io.inst.ready).scan(true.B)(_ && _))
+  for (i <- 0 until p.instructionLanes) {
+    decode(i).io.inst.valid := io.inst(i).valid && mask(i)
+    io.inst(i).ready := decode(i).io.inst.ready && mask(i)
+    decode(i).io.inst.bits.addr := io.inst(i).bits.addr
+    decode(i).io.inst.bits.inst := io.inst(i).bits.inst
+    decode(i).io.inst.bits.brchFwd := io.inst(i).bits.brchFwd
+
+    decode(i).io.branchTaken := io.branchTaken
+    decode(i).io.halted := io.halted
+  }
+
+  // Interlock based on regfile write port dependencies.
+  decode(0).io.interlock := io.interlock
+  for (i <- 1 until p.instructionLanes) {
+    decode(i).io.interlock := decode(i - 1).io.interlock
+  }
+
+  // Serialize opcodes with only one pipeline.
+  decode(0).io.serializeIn.defaults()
+  for (i <- 1 until p.instructionLanes) {
+    decode(i).io.serializeIn := decode(i - 1).io.serializeOut
+  }
+
+  // In decode update multi-issue scoreboard state.
+  val scoreboard_spec = decode.map(_.io.scoreboard.spec).scan(0.U)(_|_)
+  for (i <- 0 until p.instructionLanes) {
+    decode(i).io.scoreboard.comb := io.scoreboard.comb | scoreboard_spec(i)
+    decode(i).io.scoreboard.regd := io.scoreboard.regd | scoreboard_spec(i)
+  }
+
+  // Active signals (for mpause, WFI)
+  decode(0).io.mactive := io.mactive
+  decode(0).io.lsuActive := io.lsuActive
+  for (i <- 1 until p.instructionLanes) {
+    decode(i).io.mactive := false.B
+    decode(i).io.lsuActive := false.B
+  }
+
+  // Connect Regfile inputs
+  io.rs1Read := decode.map(_.io.rs1Read)
+  io.rs1Set  := decode.map(_.io.rs1Set)
+  io.rs2Read := decode.map(_.io.rs2Read)
+  io.rs2Set  := decode.map(_.io.rs2Set)
+  io.rdMark  := decode.map(_.io.rdMark)
+  io.busRead := decode.map(_.io.busRead)
+
+  // Connect outputs
+  io.alu := decode.map(_.io.alu)
+  io.bru := decode.map(_.io.bru)
+  io.lsu <> decode.map(_.io.lsu)
+  io.mlu <> decode.map(_.io.mlu)
+  io.dvu <> decode.map(_.io.dvu)
+  if (p.enableVector) {
+    io.vinst.get <> decode.map(_.io.vinst.get)
+  }
+  if (p.enableRvv) {
+    io.rvv.get <> decode.map(_.io.rvv.get)
+  }
+
+  io.csr := decode(0).io.csr
+  io.slog := decode(0).io.slog
+}
+
 class Decode(p: Parameters, pipeline: Int) extends Module {
   val io = IO(new Bundle {
     // Core controls.
