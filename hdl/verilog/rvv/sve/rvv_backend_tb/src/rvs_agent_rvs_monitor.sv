@@ -22,6 +22,7 @@ class rvs_monitor extends uvm_monitor;
 
   rvs_transaction inst_tx_queue[$];
   rvs_transaction inst_rx_queue[$];
+  rvs_transaction inst_temp_queue[$];
 
   rvs_transaction ctrl_tr;
 
@@ -130,6 +131,7 @@ endtask: main_phase
 
 task rvs_monitor::tx_monitor();
   rvs_transaction inst_tr;
+  rvs_transaction temp_tr;
   rvs_transaction rt_tr;
   forever begin
     @(posedge rvs_if.clk);
@@ -143,11 +145,22 @@ task rvs_monitor::tx_monitor();
           `uvm_info("INST_TR", inst_tr.sprint(),UVM_LOW)
           `uvm_info("ASM_DUMP",$sformatf("0x%8x\t%s", inst_tr.pc, inst_tr.asm_string),UVM_LOW)
           inst_ap.write(inst_tr); // write to mdl
-          rt_tr = new("rt_tr");
-          rt_tr.copy(inst_tr);
-          // rt_tr.is_rt = 1;
-          inst_rx_queue.push_back(rt_tr);
+          temp_tr = new("temp_tr");
+          temp_tr.copy(inst_tr);
+          inst_temp_queue.push_back(temp_tr);
           this.total_inst++;
+        end
+      end
+      for(int i=0; i<`NUM_DE_INST; i++) begin
+        if(rvs_if.inst_correct[i]) begin
+          rt_tr = new("rt_tr");
+          rt_tr = inst_temp_queue.pop_front();
+          inst_rx_queue.push_back(rt_tr);
+          `uvm_info(get_type_name(), $sformatf("DUT will execute inst:\n%s",rt_tr.sprint()), UVM_LOW)
+        end else if(rvs_if.inst_discard[i]) begin
+          rt_tr = new("rt_tr");
+          rt_tr = inst_temp_queue.pop_front();
+          `uvm_info(get_type_name(), $sformatf("DUT discarded inst:\n%s",rt_tr.sprint()), UVM_LOW)
         end
       end
     end
@@ -159,19 +172,20 @@ task rvs_monitor::rx_monitor();
   logic [`VLENB-1:0] rt_vrf_byte_strobe;
   logic [`VLEN-1:0] rt_vrf_bit_strobe;
   bit vrf_overlap;
+  bit ready_to_new_inst;
   tr = new("tr");
   forever begin
     @(posedge rvs_if.clk);
-    if(rvs_if.rst_n) begin
+    if(~rvs_if.rst_n) begin
+      ready_to_new_inst = 1;
+    end else begin
       // `uvm_info(get_type_name(),$sformatf("rt_uop=0x%1x, rt_last_uop=0x%1x",rvs_if.rt_uop, rvs_if.rt_last_uop), UVM_HIGH)
       for(int rt_idx=0; rt_idx<`NUM_RT_UOP; rt_idx++) begin
         if(rvs_if.rt_uop[rt_idx]) begin
-          while(rvs_if.rd_valid_rob2rt[rt_idx] && rvs_if.rd_ready_rt2rob[rt_idx] && (rvs_if.rd_rob2rt[rt_idx].uop_pc !== tr.pc)) begin
-            if(tr.pc !== 'x) begin
-              `uvm_info(get_type_name(), $sformatf("Monitor rx_queue pc(0x%8x) mismatch with DUT pc(0x%8x), discarded.", tr.pc, rvs_if.rd_rob2rt[rt_idx].uop_pc), UVM_HIGH)
-              `uvm_info(get_type_name(), tr.sprint(),UVM_HIGH)
-            end
+          if(ready_to_new_inst) begin
+            tr = new("tr");
             tr = inst_rx_queue.pop_front();
+            ready_to_new_inst = 0;
           end
           // VRF
           if(rvs_if.rt_vrf_valid_rob2rt[rt_idx]) begin
@@ -220,8 +234,8 @@ task rvs_monitor::rx_monitor();
             `uvm_info(get_type_name(), tr.sprint(),UVM_HIGH)
             rt_ap.write(tr); // write to scb
             ctrl_tr = tr;
+            ready_to_new_inst = 1;
             this.executed_inst++;
-            tr = new("tr");
           end
         end
       end

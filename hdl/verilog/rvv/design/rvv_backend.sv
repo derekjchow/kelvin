@@ -922,31 +922,6 @@ module rvv_backend
         .rt2vrf_wr_data  (wr_data_rt2vrf)
     );
 
-  // testbench verification
-  `ifdef TB_SUPPORT
-    logic [`NUM_RT_UOP-1:0] rt_uop;
-    logic [`NUM_RT_UOP-1:0] rt_last_uop;
-    generate
-      for (i=0; i<`NUM_RT_UOP; i++)
-        always_comb begin
-          rt_last_uop[i] = rd_valid_rob2rt[i] & rd_ready_rt2rob[i] & rd_rob2rt[i].last_uop_valid;
-        end
-    endgenerate
-    always_comb begin
-        rt_uop = rd_valid_rob2rt & rd_ready_rt2rob;
-    end
-
-    logic single_inst_mode;
-    initial begin
-      if($test$plusargs("single_inst_mode"))
-        single_inst_mode = 1;
-      else 
-        single_inst_mode = 0;
-    end
-
-    LastUop:`rvv_expect(~single_inst_mode || single_inst_mode & ((rt_last_uop ^ rt_uop) inside {4'b0000,4'b0001,4'b0011,4'b0111,4'b1111}))
-      else $error("TB_ISSUE: get not-last uops retired after last uops.");
-  `endif
 `endif // TB_BRINGUP
 
 endmodule

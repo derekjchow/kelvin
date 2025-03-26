@@ -64,7 +64,8 @@ function void rvv_backend_env::connect_phase(uvm_phase phase);
   mdl.mem.mem_ap.connect(scb.mdl_mem_imp);
 
   // cov ap
-  rvs_agt.rvs_mon.rt_ap.connect(cov.cov_imp);
+  rvs_agt.rvs_mon.inst_ap.connect(cov.inst_tx_cov_imp);
+  rvs_agt.rvs_mon.rt_ap.connect(cov.inst_rx_cov_imp);
 endfunction: connect_phase
 
 function void rvv_backend_env::start_of_simulation_phase(uvm_phase phase);

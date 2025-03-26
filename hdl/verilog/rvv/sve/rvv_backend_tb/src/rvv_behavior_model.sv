@@ -2328,7 +2328,7 @@ class lsu_processor;
 
     decode(inst_tr);
     `uvm_info("MDL", "LSU decode done", UVM_HIGH)
-    inst_tr.print();
+    `uvm_info("MDL", $sformatf("\n%s", inst_tr.sprint()), UVM_HIGH);
 
     for(int seg_idx=0; seg_idx<seg_idx_max; seg_idx++) begin
       dest_reg_idx_base = (inst_tr.dest_type == VRF) ? (inst_tr.dest_idx + seg_idx * int'($ceil(dest_emul))) : (inst_tr.dest_idx);

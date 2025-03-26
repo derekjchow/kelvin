@@ -164,7 +164,9 @@ task rvs_driver::inst_manage();
   for(int i=0; i<`ISSUE_LANE; i++) begin
     if(i < inst_tx_queue.size()) begin
       // `uvm_info(get_type_name(), $sformatf("Assign to port inst[%d]",i),UVM_HIGH)
+`ifdef TB_SUPPORT
       inst[i].inst_pc               = inst_tx_queue[i].pc;
+`endif
       assert($cast(inst[i].opcode, inst_tx_queue[i].bin_inst[6:5]));
       inst[i].bits                  = inst_tx_queue[i].bin_inst[31:7];
       inst[i].rs1                   = inst_tx_queue[i].rs1_data;

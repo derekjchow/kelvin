@@ -117,6 +117,7 @@ else
 endif
 ifeq ($(coverage),on)
 	COV = -cm cond+line+branch+tgl -cm_dir $(COV_PATH) -cm_name $(TESTNAME)
+	DEFINES := $(filter-out +define+TB_SUPPORT, $(DEFINES))
 else
 	COV = 
 endif

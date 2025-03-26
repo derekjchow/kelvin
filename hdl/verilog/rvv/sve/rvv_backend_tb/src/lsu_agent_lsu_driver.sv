@@ -126,10 +126,12 @@ task lsu_driver::rx_driver();
             uop_tr = new();
             uop_tr = uops_rx_queue.pop_front();
             `uvm_info("LSU_DRV",$sformatf("Begin to accept vreg info to update uops_queque[%0d]:\n%s",i,uop_tr.sprint()),UVM_HIGH)
+`ifdef TB_SUPPORT
             if(lsu_if.uop_lsu_rvv2lsu[i].uop_pc !== uop_tr.uop_pc) begin
               `uvm_error("LSU_DRV", $sformatf("uop_pc mismatch: lsu=0x%8x, dut=0x%8x", uop_tr.uop_pc, lsu_if.uop_lsu_rvv2lsu[i].uop_pc))
               continue;
             end
+`endif
             // update address for indexed-stride from vidx_data
             if(uop_tr.is_indexed == 1) begin
               if(lsu_if.uop_lsu_rvv2lsu[i].vidx_valid !== 1) begin
@@ -323,8 +325,10 @@ task lsu_driver::tx_driver();
           if(uops_tx_queue[i].uop_done) begin
             `uvm_info("LSU_DRV",$sformatf("Assign uops_tx_queue[%0d] to lsu2rvv port:\n%s",i,uops_tx_queue[i].sprint()),UVM_HIGH)
             lsu_if.uop_lsu_valid_lsu2rvv[i] <= '1;
+`ifdef TB_SUPPORT
             lsu_if.uop_lsu_lsu2rvv[i].uop_pc <= uops_tx_queue[i].uop_pc;
             lsu_if.uop_lsu_lsu2rvv[i].uop_index <= uops_tx_queue[i].uop_index;
+`endif
             if(uops_tx_queue[i].kind == lsu_transaction::LOAD) begin
               lsu_if.uop_lsu_lsu2rvv[i].vregfile_write_valid  <= 1'b1;
               lsu_if.uop_lsu_lsu2rvv[i].vregfile_write_addr   <= uops_tx_queue[i].data_vreg_idx;

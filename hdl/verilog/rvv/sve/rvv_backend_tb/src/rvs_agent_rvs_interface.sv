@@ -44,6 +44,10 @@ interface rvs_interface (input bit clk, input bit rst_n);
   logic         [`NUM_RT_UOP-1:0] rt_uop;
   logic         [`NUM_RT_UOP-1:0] rt_last_uop;
 
+// decode result of inst
+  logic         [`NUM_DE_INST-1:0] inst_correct;
+  logic         [`NUM_DE_INST-1:0] inst_discard;
+
 endinterface: rvs_interface
 
 `endif // RVS_INTERFACE__SV

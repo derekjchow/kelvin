@@ -1,17 +1,21 @@
 `ifndef RVV_COV__SV
 `define RVV_COV__SV
 
+  `uvm_analysis_imp_decl(_inst_rx)
+  `uvm_analysis_imp_decl(_inst_tx)
 class rvv_cov extends uvm_component;
   event rx_cov_event, tx_cov_event;
   rvs_transaction tx_tr;
   rvs_transaction rx_tr;
   int vlmax_max = 8 * `VLEN / 8;
-  uvm_analysis_imp #(rvs_transaction, rvv_cov) cov_imp;
+  uvm_analysis_imp_inst_rx #(rvs_transaction, rvv_cov) inst_rx_cov_imp;
+  uvm_analysis_imp_inst_tx #(rvs_transaction, rvv_cov) inst_tx_cov_imp;
   `uvm_component_utils(rvv_cov)
 
   function new(string name, uvm_component parent);
     super.new(name,parent);
-    cov_imp = new("Coverage Analysis",this);
+    inst_rx_cov_imp = new("inst_rx_cov_imp ",this);
+    inst_tx_cov_imp = new("inst_tx_cov_imp ",this);
     cg_tx_trans = new();
     tx_tr = new();
     cg_rx_trans = new();
@@ -27,15 +31,14 @@ class rvv_cov extends uvm_component;
   endtask: main_phase
 
 // rvs_transaction cov -----------------------------------------------
-  virtual function write(rvs_transaction tr);
-    if(tr.is_rt) begin
-      this.rx_tr = tr;
-      -> rx_cov_event;
-    end else begin
-      this.tx_tr = tr;
-      -> tx_cov_event;
-    end
-  endfunction: write
+  virtual function write_inst_rx(rvs_transaction tr);
+    this.rx_tr = tr;
+    -> rx_cov_event;
+  endfunction: write_inst_rx
+  virtual function write_inst_tx(rvs_transaction tr);
+    this.tx_tr = tr;
+    -> tx_cov_event;
+  endfunction: write_inst_tx
 
   covergroup cg_tx_trans @(tx_cov_event);
     alu_inst:
@@ -101,17 +104,29 @@ class rvv_cov extends uvm_component;
     alu_inst:
       coverpoint rx_tr.alu_inst;
     alu_type:
-      coverpoint {rx_tr.inst_type, rx_tr.alu_type} {
-        bins OPIVV = {rvv_tb_pkg::ALU, rvv_tb_pkg::OPIVV};
-        bins OPIVI = {rvv_tb_pkg::ALU, rvv_tb_pkg::OPIVI};
-        bins OPIVX = {rvv_tb_pkg::ALU, rvv_tb_pkg::OPIVX};
+      // coverpoint {rx_tr.inst_type, rx_tr.alu_type} {
+      //   bins OPIVV = {rvv_tb_pkg::ALU, rvv_tb_pkg::OPIVV};
+      //   bins OPIVI = {rvv_tb_pkg::ALU, rvv_tb_pkg::OPIVI};
+      //   bins OPIVX = {rvv_tb_pkg::ALU, rvv_tb_pkg::OPIVX};
 
-        bins OPMVV = {rvv_tb_pkg::ALU, rvv_tb_pkg::OPMVV};
-        bins OPMVX = {rvv_tb_pkg::ALU, rvv_tb_pkg::OPMVX};
+      //   bins OPMVV = {rvv_tb_pkg::ALU, rvv_tb_pkg::OPMVV};
+      //   bins OPMVX = {rvv_tb_pkg::ALU, rvv_tb_pkg::OPMVX};
+      //   
+      //   illegal_bins OPFVV = {rvv_tb_pkg::ALU, rvv_tb_pkg::OPFVV};
+      //   illegal_bins OPFVF = {rvv_tb_pkg::ALU, rvv_tb_pkg::OPFVF};
+      //   illegal_bins OPCFG = {rvv_tb_pkg::ALU, rvv_tb_pkg::OPCFG};
+      // }                                        
+      coverpoint rx_tr.alu_type {
+        bins OPIVV = {rvv_tb_pkg::OPIVV};
+        bins OPIVI = {rvv_tb_pkg::OPIVI};
+        bins OPIVX = {rvv_tb_pkg::OPIVX};
+
+        bins OPMVV = {rvv_tb_pkg::OPMVV};
+        bins OPMVX = {rvv_tb_pkg::OPMVX};
         
-        illegal_bins OPFVV = {rvv_tb_pkg::ALU, rvv_tb_pkg::OPFVV};
-        illegal_bins OPFVF = {rvv_tb_pkg::ALU, rvv_tb_pkg::OPFVF};
-        illegal_bins OPCFG = {rvv_tb_pkg::ALU, rvv_tb_pkg::OPCFG};
+        illegal_bins OPFVV = {rvv_tb_pkg::OPFVV};
+        illegal_bins OPFVF = {rvv_tb_pkg::OPFVF};
+        illegal_bins OPCFG = {rvv_tb_pkg::OPCFG};
       }                                        
     vm:
       coverpoint rx_tr.vm;

@@ -72,9 +72,33 @@ module rvv_backend_top();
     .vcsr_ready               (1'b1            ) // FIXME
   );
 
+  logic [`NUM_RT_UOP-1:0] rt_uop;
+  logic [`NUM_RT_UOP-1:0] rt_last_uop;
+  always_comb begin
+    for (int i=0; i<`NUM_RT_UOP; i++) begin
+      rt_last_uop[i] = `ROB_PATH.rd_valid_rob2rt[i] & `ROB_PATH.rd_ready_rt2rob[i] & `ROB_PATH.uop_rob2rt[i].last_uop_valid;
+    end
+    rt_uop = `ROB_PATH.rd_valid_rob2rt & `ROB_PATH.rd_ready_rt2rob;
+  end
+
 // rvs interface -----------------------------------------------------
-  assign rvs_if.rt_uop      = `RT_UOP_PATH.rt_uop;
-  assign rvs_if.rt_last_uop = `RT_UOP_PATH.rt_last_uop;
+  assign rvs_if.rt_uop      = rt_uop;
+  assign rvs_if.rt_last_uop = rt_last_uop;
+  
+
+  assign rvs_if.inst_correct[0] = `DECODE_PATH.pop_de2cq[0] &&  (|`DECODE_PATH.uop_valid_de2uq[0]) ||
+                                  `DECODE_PATH.pop_de2cq[0] &&  (|`DECODE_PATH.uop_valid_de2uq[0]);
+  assign rvs_if.inst_discard[0] = `DECODE_PATH.pop_de2cq[0] && !(|`DECODE_PATH.uop_valid_de2uq[0]) ||
+                                  `DECODE_PATH.pop_de2cq[0] && !(|`DECODE_PATH.uop_valid_de2uq[0]);
+  generate 
+    genvar gv_i;
+    for(gv_i=1; gv_i<`NUM_DE_INST; gv_i++) begin
+      assign rvs_if.inst_correct[gv_i] = `DECODE_PATH.pop_de2cq[gv_i] &&  (|`DECODE_PATH.uop_valid_de2uq[gv_i]) ||
+                                         `DECODE_PATH.pop_de2cq[gv_i] &&  (|`DECODE_PATH.uop_valid_de2uq[gv_i]);
+      assign rvs_if.inst_discard[gv_i] = `DECODE_PATH.pop_de2cq[gv_i] && !(|`DECODE_PATH.uop_valid_de2uq[gv_i]) ||
+                                         `DECODE_PATH.pop_de2cq[gv_i] && !(|`DECODE_PATH.uop_valid_de2uq[gv_i]);
+    end
+  endgenerate
   
   // ROB dataout 
   assign rvs_if.rd_valid_rob2rt = DUT.rd_valid_rob2rt;
@@ -86,7 +110,9 @@ module rvv_backend_top();
   always_comb begin
     for(int i=0; i<`NUM_RT_UOP; i++) begin
       rvs_if.rt_vrf_valid_rob2rt[i] = `RT_VRF_PATH.rt2vrf_write_valid[i];
-      rvs_if.rt_vrf_data_rob2rt[i].uop_pc   = `RT_VRF_PATH.rob2rt_write_data[i].uop_pc;
+`ifdef TB_SUPPORT
+      rvs_if.rt_vrf_data_rob2rt[i].uop_pc   = `RT_VRF_PATH.rt2vrf_write_data[i].uop_pc;
+`endif
       rvs_if.rt_vrf_data_rob2rt[i].rt_data  = `RT_VRF_PATH.rt2vrf_write_data[i].rt_data;
       rvs_if.rt_vrf_data_rob2rt[i].rt_index = `RT_VRF_PATH.rt2vrf_write_data[i].rt_index;
     end
@@ -113,8 +139,8 @@ module rvv_backend_top();
       vrf_if.rt_uop      <= '0;
       vrf_if.rt_last_uop <= '0;
     end else begin
-      vrf_if.rt_uop      <= `RT_UOP_PATH.rt_uop;
-      vrf_if.rt_last_uop <= `RT_UOP_PATH.rt_last_uop;
+      vrf_if.rt_uop      <= rt_uop;
+      vrf_if.rt_last_uop <= rt_last_uop;
     end
   end
 

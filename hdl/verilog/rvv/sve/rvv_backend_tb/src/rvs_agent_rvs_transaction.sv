@@ -275,6 +275,8 @@ class rvs_transaction extends uvm_sequence_item;
   constraint c_oprand {
 
     (inst_type == ALU) -> (alu_type inside {OPIVV, OPIVX, OPIVI, OPMVV, OPMVX});
+    // FIXME
+    (inst_type inside {LD,ST}) -> (alu_type inside {OPIVV, OPIVX, OPIVI, OPMVV, OPMVX});
     vm inside {0, 1};
     (inst_type == ALU) -> (src3_type == UNUSE);
     (inst_type == LD)  -> (src3_type == UNUSE);
@@ -521,9 +523,11 @@ class rvs_transaction extends uvm_sequence_item;
       if(inst_type == ALU) {
         // widen
         (alu_inst inside {VWADDU, VWADD, VWADDU_W, VWADD_W, VWSUBU, VWSUB, VWSUBU_W, VWSUB_W, 
-                          VWMUL, VWMULU, VWMULSU, VWMACCU, VWMACC, VWMACCUS, VWMACCSU,
-                          VWREDSUMU, VWREDSUM})
+                          VWMUL, VWMULU, VWMULSU, VWMACCU, VWMACC, VWMACCUS, VWMACCSU})
         ->  (vsew inside {SEW8,SEW16} && vlmul inside {LMUL1_4,LMUL1_2,LMUL1,LMUL2,LMUL4});
+
+        (alu_inst inside {VWREDSUMU, VWREDSUM})
+        ->  (vsew inside {SEW8,SEW16});
 
         // narrow
         (alu_inst inside {VNSRL, VNSRA, VNCLIPU, VNCLIP})
@@ -831,10 +835,8 @@ function void rvs_transaction::legal_inst_gen();
   int seg_num;
 
   is_widen_inst           = inst_type == ALU &&  (alu_inst inside {VWADDU, VWADD, VWADDU_W, VWADD_W, VWSUBU, VWSUB, VWSUBU_W, VWSUB_W, 
-                                                                   VWMUL, VWMULU, VWMULSU, VWMACCU, VWMACC, VWMACCUS, VWMACCSU,
-                                                                   VWREDSUMU, VWREDSUM});
-  is_widen_vs2_inst       = inst_type == ALU &&  (alu_inst inside {VWADD_W, VWADDU_W, VWSUBU_W, VWSUB_W,
-                                                                   VWREDSUMU, VWREDSUM});
+                                                                   VWMUL, VWMULU, VWMULSU, VWMACCU, VWMACC, VWMACCUS, VWMACCSU});
+  is_widen_vs2_inst       = inst_type == ALU &&  (alu_inst inside {VWADD_W, VWADDU_W, VWSUBU_W, VWSUB_W});
   is_narrow_inst          = inst_type == ALU &&  (alu_inst inside {VNSRL, VNSRA, VNCLIPU, VNCLIP});
   is_mask_producing_inst  = inst_type == ALU && ((alu_inst inside {VMAND, VMOR, VMXOR, VMORN, VMNAND, VMNOR, VMANDN, VMXNOR,
                                                                    VMADC, VMSBC, 
