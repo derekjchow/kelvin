@@ -8,6 +8,9 @@
   `uvm_analysis_imp_decl(_mdl) 
   `uvm_analysis_imp_decl(_rvs_vrf)
   `uvm_analysis_imp_decl(_mdl_vrf) 
+  `uvm_analysis_imp_decl(_lsu_mem)
+  `uvm_analysis_imp_decl(_mdl_mem) 
+
 
 class rvv_scoreboard extends uvm_scoreboard;
 
@@ -18,12 +21,15 @@ class rvv_scoreboard extends uvm_scoreboard;
   uvm_analysis_imp_mdl #(rvs_transaction,rvv_scoreboard) mdl_imp;
   uvm_analysis_imp_rvs_vrf #(vrf_transaction,rvv_scoreboard) rvs_vrf_imp;
   uvm_analysis_imp_mdl_vrf #(vrf_transaction,rvv_scoreboard) mdl_vrf_imp;
-  // uvm_analysis_imp_mdl #(lsu_transaction,rvv_scoreboard) lsu_imp;
-  
+  uvm_analysis_imp_lsu_mem #(mem_transaction,rvv_scoreboard) lsu_mem_imp;
+  uvm_analysis_imp_mdl_mem #(mem_transaction,rvv_scoreboard) mdl_mem_imp;
+
   rvs_transaction rt_queue_rvs[$];
   rvs_transaction rt_queue_mdl[$];
   vrf_transaction vrf_queue_rvs[$];
   vrf_transaction vrf_queue_mdl[$];
+  mem_transaction mem_queue_lsu[$];
+  mem_transaction mem_queue_mdl[$];
 
   rvs_transaction ctrl_tr;
 
@@ -45,8 +51,11 @@ class rvv_scoreboard extends uvm_scoreboard;
 	extern function void write_mdl(rvs_transaction tr);
   extern function void write_rvs_vrf(vrf_transaction tr);
   extern function void write_mdl_vrf(vrf_transaction tr);
+  extern function void write_lsu_mem(mem_transaction tr);
+  extern function void write_mdl_mem(mem_transaction tr);
 	extern virtual task rt_checker();
 	extern virtual task vrf_checker();
+	extern virtual task mem_access_checker();
 
 endclass: rvv_scoreboard
 
@@ -61,6 +70,8 @@ function void rvv_scoreboard::build_phase(uvm_phase phase);
   mdl_imp = new("mdl_imp", this);
   rvs_vrf_imp = new("rvs_vrf_imp", this);
   mdl_vrf_imp = new("mdl_vrf_imp", this);
+  lsu_mem_imp = new("lsu_mem_imp", this);
+  mdl_mem_imp = new("mdl_mem_imp", this);
   ctrl_tr = new("ctrl_tr");
   if(!$cast(test_top, uvm_root::get().find("uvm_test_top")))
     `uvm_fatal(get_type_name(),"Get uvm_test_top fail")
@@ -79,6 +90,7 @@ task rvv_scoreboard::main_phase(uvm_phase phase);
   fork
     rt_checker();
     vrf_checker();
+    mem_access_checker();
     begin
       forever begin
         @(posedge rvs_if.clk);
@@ -120,6 +132,18 @@ function void rvv_scoreboard::write_mdl_vrf(vrf_transaction tr);
   `uvm_info(get_type_name(), "get a vrf check request from mdl", UVM_HIGH)
   `uvm_info(get_type_name(), tr.sprint(), UVM_HIGH)
   vrf_queue_mdl.push_back(tr);
+endfunction
+
+function void rvv_scoreboard::write_lsu_mem(mem_transaction tr);
+  `uvm_info(get_type_name(), "get a mem access check request from lsu", UVM_HIGH)
+  `uvm_info(get_type_name(), tr.sprint(), UVM_HIGH)
+  mem_queue_lsu.push_back(tr);
+endfunction
+
+function void rvv_scoreboard::write_mdl_mem(mem_transaction tr);
+  `uvm_info(get_type_name(), "get a mem access check request from mdl", UVM_HIGH)
+  `uvm_info(get_type_name(), tr.sprint(), UVM_HIGH)
+  mem_queue_mdl.push_back(tr);
 endfunction
 
 task rvv_scoreboard::rt_checker();
@@ -302,6 +326,42 @@ task rvv_scoreboard::vrf_checker();
   end
 endtask: vrf_checker 
 
+task rvv_scoreboard::mem_access_checker();
+  mem_transaction lsu_tr;
+  mem_transaction mdl_tr;
+  int err;
+  forever begin
+    @(posedge rvs_if.clk); 
+    err = 0;
+    while(mem_queue_mdl.size()>0) begin
+      if(mem_queue_lsu.size()>0) begin
+        lsu_tr = mem_queue_lsu.pop_front();
+        mdl_tr = mem_queue_mdl.pop_front();
+        `uvm_info("MEM_RECORDER", $sformatf("\nMEM check start. ====================================================================================================\n"),UVM_HIGH)
+        if(lsu_tr.kind != mdl_tr.kind) begin
+          `uvm_error("MEM_CHCKER", $sformatf("Memory access kind mismatch: lsu = %s, mdl = %s", lsu_tr.kind.name(), mdl_tr.kind.name()))
+          err++;
+        end else if(lsu_tr.addr != mdl_tr.addr) begin
+          `uvm_error("MEM_CHCKER", $sformatf("Memory access addr mismatch: lsu = 0x%8x, mdl = 0x%8x", lsu_tr.addr, mdl_tr.addr))
+          err++;
+        end else if(lsu_tr.data !== mdl_tr.data) begin
+          `uvm_error("MEM_CHCKER", $sformatf("Memory access data mismatch: lsu = 0x%2x, mdl = 0x%2x", lsu_tr.data, mdl_tr.data))
+          err++;
+        end else begin
+        end
+        `uvm_info("MEM_RECORDER", $sformatf("\nMEM check done.  ====================================================================================================\n"),UVM_HIGH)
+      end else begin
+        // Model will execute instruction only if DUT retires this inst.
+        // If we changed how model work, please update while condition.
+        `uvm_error("MEM_CHCKER", "MDL has accessed memory but LSU hasn't.")
+      end
+    end
+  end
+  if(err == 0) begin
+    `uvm_info("MEM_CHCKER", "Memory access check pass", UVM_LOW)
+  end
+endtask: mem_access_checker
+
 function void rvv_scoreboard::final_phase(uvm_phase phase);
   super.final_phase(phase);
 
@@ -320,9 +380,9 @@ function void rvv_scoreboard::final_phase(uvm_phase phase);
 
   // Memory compare
   `uvm_info("FINAL_CHECK", "Checking memory...", UVM_LOW)
-  foreach(test_top.env.lsu_agt.lsu_drv.mem[idx]) begin
-    if(test_top.env.lsu_agt.lsu_drv.mem[idx] !== test_top.env.mdl.mem[idx])
-      `uvm_error("FINAL_CHECK", $sformatf("Memory mismatch: lsu_mem[0x%8x] = 0x%2x, mdl_mem[0x%8x] = 0x%2x.", idx, test_top.env.lsu_agt.lsu_drv.mem[idx], idx, test_top.env.mdl.mem[idx]))
+  foreach(test_top.env.lsu_agt.lsu_drv.mem.mem[idx]) begin
+    if(test_top.env.lsu_agt.lsu_drv.mem.mem[idx] !== test_top.env.mdl.mem.mem[idx])
+      `uvm_error("FINAL_CHECK", $sformatf("Memory mismatch: lsu_mem[0x%8x] = 0x%2x, mdl_mem[0x%8x] = 0x%2x.", idx, test_top.env.lsu_agt.lsu_drv.mem.mem[idx], idx, test_top.env.mdl.mem.mem[idx]))
   end
   `uvm_info("FINAL_CHECK", "Memory check pass.", UVM_LOW)
 

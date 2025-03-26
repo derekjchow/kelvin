@@ -1,4 +1,6 @@
 
+`include "rvv_mem.sv"
+
 `include "rvs_agent_rvs_monitor.sv" 
 `include "rvs_agent_sequence_library.sv" 
 `include "rvs_agent_rvs_sequencer.sv" 

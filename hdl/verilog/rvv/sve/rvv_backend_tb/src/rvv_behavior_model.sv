@@ -49,9 +49,8 @@ class rvv_behavior_model extends uvm_component;
   logic [`XLEN-1:0] vlmax;
   logic [`XLEN-1:0] imm_data;
 
-  int unsigned mem_addr_lo;
-  int unsigned mem_addr_hi;
-  byte mem[int unsigned];
+  rvv_mem mem;
+
   rvs_transaction inst_queue [$];
 
 
@@ -92,6 +91,7 @@ endclass : rvv_behavior_model
     inst_imp = new("inst_imp", this);
     rt_ap = new("rt_ap", this);
     vrf_ap = new("vrf_ap", this);
+    mem = new("mdl_mem", this);
   endfunction : build_phase 
 
   function void rvv_behavior_model::connect_phase(uvm_phase phase);
@@ -2321,16 +2321,10 @@ class lsu_processor;
 
   bit vm;
 
-  int unsigned mem_addr_lo;
-  int unsigned mem_addr_hi;
-
   function new();
   endfunction: new 
   
   function void exe(rvv_behavior_model rvm, ref rvs_transaction inst_tr);
-
-    mem_addr_lo = rvm.mem_addr_lo;
-    mem_addr_hi = rvm.mem_addr_hi;
 
     decode(inst_tr);
     `uvm_info("MDL", "LSU decode done", UVM_HIGH)
@@ -2366,11 +2360,13 @@ class lsu_processor;
         end else begin
           case(inst_tr.inst_type)
             LD: begin
-              load_from_mem(dest, this.address, data_size, rvm.mem);
+              rvm.mem.pc = inst_tr.pc;
+              rvm.mem.load_from_mem(dest, this.address, data_size);
               rvm.elm_writeback(dest, inst_tr.dest_type, dest_reg_idx_base, elm_idx, dest_eew);
             end
             ST: begin
-              store_to_mem(src3, this.address, data_size, rvm.mem);
+              rvm.mem.pc = inst_tr.pc;
+              rvm.mem.store_to_mem(src3, this.address, data_size);
             end
           endcase
         end
@@ -2544,7 +2540,7 @@ class lsu_processor;
             evl = inst_tr.vl;
           end      
         endcase
-        seg_size = (seg_idx_max) * dest_eew / 8;
+        seg_size = (seg_idx_max) * src3_eew / 8;
         data_size = src3_eew / 8;
         vidx_size = src2_eew / 8;
       end
@@ -2570,47 +2566,6 @@ class lsu_processor;
     endcase
     `uvm_info("MDL/LSU", $sformatf("pc=0x%8x, seg_idx=%0d, eml_idx=%0d, address update to 0x%8x", inst_tr.pc, seg_idx, elm_idx, this.address), UVM_HIGH)
   endfunction: update_addr
-
-  task load_from_mem(
-    output sew_max_t load_data, 
-    input int unsigned address, 
-    input int unsigned byte_size, 
-    const ref byte mem[int unsigned]
-    ); 
-    
-    int unsigned addr_temp;
-    load_data = 'x;
-    for(int byte_cnt=0; byte_cnt<byte_size; byte_cnt++) begin
-      if(!(address+byte_cnt inside {[mem_addr_lo:mem_addr_hi]})) begin
-        addr_temp = (address+byte_cnt) % (mem_addr_hi - mem_addr_lo + 1) + mem_addr_lo;
-        `uvm_info("MDL/LSU", $sformatf("Wrap address from @0x%8x to @0x%8x.", address+byte_cnt, addr_temp), UVM_HIGH)
-      end else begin
-        addr_temp = (address+byte_cnt);
-      end
-      load_data[byte_cnt*8 +: 8] = mem[addr_temp];
-      `uvm_info("MDL/LSU",$sformatf("Load 0x%x from @0x%8x", load_data, addr_temp), UVM_LOW)
-    end
-  endtask: load_from_mem
-
-  task store_to_mem(
-    input sew_max_t store_data,
-    input int unsigned address, 
-    input int unsigned byte_size,
-    ref byte mem[int unsigned]
-    ); 
-    
-    int unsigned addr_temp;
-    for(int byte_cnt=0; byte_cnt<byte_size; byte_cnt++) begin
-      if(!(address+byte_cnt inside {[mem_addr_lo:mem_addr_hi]})) begin
-        addr_temp = (address+byte_cnt) % (mem_addr_hi - mem_addr_lo + 1) + mem_addr_lo;
-        `uvm_info("MDL/LSU", $sformatf("Wrap address from @0x%8x to @0x%8x.", address+byte_cnt, addr_temp), UVM_HIGH)
-      end else begin
-        addr_temp = (address+byte_cnt);
-      end
-      mem[addr_temp] = store_data[byte_cnt*8 +: 8];
-      `uvm_info("MDL/LSU",$sformatf("Store 0x%x to @0x%8x", store_data, addr_temp), UVM_LOW)
-    end
-  endtask: store_to_mem
 
 endclass: lsu_processor 
 

@@ -119,24 +119,14 @@ class rvv_backend_test extends uvm_test;
     end
   endtask: rand_vrf
 
-  virtual task set_mdl_mem(int unsigned addr, byte value);
-    env.mdl.mem[addr] = value;
-  endtask: set_mdl_mem
-
-  virtual task set_lsu_mem(int unsigned addr, byte value);
-    env.lsu_agt.lsu_drv.mem[addr] = value;
-  endtask: set_lsu_mem
-
   virtual task rand_mem(int unsigned mem_base, int unsigned mem_size);
     byte value;
-    env.lsu_agt.lsu_drv.mem_addr_lo = mem_base;
-    env.lsu_agt.lsu_drv.mem_addr_hi = mem_base + mem_size - 1;
-    env.mdl.mem_addr_lo = mem_base;
-    env.mdl.mem_addr_hi = mem_base + mem_size - 1;
+    env.lsu_agt.lsu_drv.mem.set_mem_range(mem_base, mem_size);
+    env.mdl.mem.set_mem_range(mem_base, mem_size);
     for(int byte_idx=mem_base; byte_idx<mem_size; byte_idx++) begin
       value = $urandom_range(0, 8'hFF);
-      set_lsu_mem(byte_idx, value);
-      set_mdl_mem(byte_idx, value);
+      env.lsu_agt.lsu_drv.mem.set_mem(byte_idx, value);
+      env.mdl.mem.set_mem(byte_idx, value);
     end
   endtask: rand_mem
 

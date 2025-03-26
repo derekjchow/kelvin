@@ -277,7 +277,11 @@ typedef enum logic [2:0] {
 typedef enum logic [2:0] {
   NR1 = 3'b000,  
   NR2 = 3'b001,  
+  NR3 = 3'b010,  
   NR4 = 3'b011,
+  NR5 = 3'b100,  
+  NR6 = 3'b101,  
+  NR7 = 3'b110,  
   NR8 = 3'b111
 } lsu_nr_e;
 

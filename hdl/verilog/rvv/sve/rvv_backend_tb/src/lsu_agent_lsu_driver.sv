@@ -21,9 +21,7 @@ class lsu_driver extends uvm_driver # (lsu_transaction);
   lsu_transaction uops_rx_queue[$];
   lsu_transaction uops_tx_queue[$];
 
-  int unsigned mem_addr_lo;
-  int unsigned mem_addr_hi;
-  byte mem[int unsigned];
+  rvv_mem mem;
   
   delay_mode_pkg::delay_mode_e       delay_mode_rvv2lsu;
   delay_mode_pkg::delay_mode_e       delay_mode_lsu2rvv;
@@ -40,8 +38,6 @@ class lsu_driver extends uvm_driver # (lsu_transaction);
   extern protected virtual task tx_driver();
   extern protected virtual task rx_driver();
   extern protected virtual task lsu_process();
-  extern protected virtual task load_byte(output logic [7:0] data, input int unsigned addr);
-  extern protected virtual task store_byte(input logic [7:0] data, input int unsigned addr);
 
   // receive & decode inst from rvs
   extern function void write_lsu_inst(rvs_transaction inst_tr);
@@ -57,6 +53,7 @@ function void lsu_driver::build_phase(uvm_phase phase);
   super.build_phase(phase);
   inst_imp = new("inst_imp", this);
   lsu_ap = new("lsu_ap", this);
+  mem = new("lsu_mem", this);
 
   if(uvm_config_db#(delay_mode_pkg::delay_mode_e)::get(this, "", "delay_mode_rvv2lsu", delay_mode_rvv2lsu)) begin
     `uvm_info(get_type_name(), $sformatf("delay_mode_rvv2lsu of delay_mode_rvv2lsu is set to %s.", delay_mode_rvv2lsu.name()), UVM_LOW)
@@ -260,7 +257,8 @@ task lsu_driver::lsu_process();
               // for(int byte_idx=0; byte_idx<`VLENB; byte_idx++) begin
               for(int byte_idx=uops_tx_queue[uop_idx].data_vreg_byte_start; byte_idx<=uops_tx_queue[uop_idx].data_vreg_byte_end; byte_idx++) begin
                 if(uops_tx_queue[uop_idx].lsu_slot_strobe[byte_idx] === 1'b1) begin
-                  load_byte(data_temp, uops_tx_queue[uop_idx].lsu_slot_addr[byte_idx]);
+                  mem.pc = uops_tx_queue[uop_idx].uop_pc;
+                  mem.load_byte(data_temp, uops_tx_queue[uop_idx].lsu_slot_addr[byte_idx]);
                   uops_tx_queue[uop_idx].lsu_slot_data[byte_idx] = data_temp;
                 end else begin
                   uops_tx_queue[uop_idx].lsu_slot_data[byte_idx] = 'x;
@@ -282,7 +280,8 @@ task lsu_driver::lsu_process();
               for(int byte_idx=uops_tx_queue[uop_idx].data_vreg_byte_start; byte_idx<=uops_tx_queue[uop_idx].data_vreg_byte_end; byte_idx++) begin
                 if(uops_tx_queue[uop_idx].lsu_slot_strobe[byte_idx] === 1'b1) begin
                   data_temp = uops_tx_queue[uop_idx].lsu_slot_data[byte_idx];
-                  store_byte(data_temp, uops_tx_queue[uop_idx].lsu_slot_addr[byte_idx]);
+                  mem.pc = uops_tx_queue[uop_idx].uop_pc;
+                  mem.store_byte(data_temp, uops_tx_queue[uop_idx].lsu_slot_addr[byte_idx]);
                 end else begin
                   data_temp = 'x;
                 end
@@ -298,34 +297,6 @@ task lsu_driver::lsu_process();
 //     end
 //   end // forever
 endtask: lsu_process
-
-task lsu_driver::load_byte(
-  output logic [7:0] data, 
-  input int unsigned addr 
-  ); 
-  int unsigned addr_temp;
-  if(!(addr inside {[mem_addr_lo:mem_addr_hi]})) begin
-    addr_temp = addr % (mem_addr_hi - mem_addr_lo + 1) + mem_addr_lo;
-    `uvm_info("LSU_DRV", $sformatf("Wrap address from @0x%8x to @0x%8x.", addr, addr_temp), UVM_HIGH)
-    addr = addr_temp;
-  end
-  data = this.mem[addr];
-  `uvm_info("LSU_DRV", $sformatf("Load 0x%2x from @0x%8x", data, addr), UVM_HIGH)
-endtask: load_byte
-
-task lsu_driver::store_byte(
-  input logic [7:0] data, 
-  input int unsigned addr
-  ); 
-  int unsigned addr_temp;
-  if(!(addr inside {[mem_addr_lo:mem_addr_hi]})) begin
-    addr_temp = addr % (mem_addr_hi - mem_addr_lo + 1) + mem_addr_lo;
-    `uvm_info("LSU_DRV", $sformatf("Wrap address from @0x%8x to @0x%8x.", addr, addr_temp), UVM_HIGH)
-    addr = addr_temp;
-  end
-  `uvm_info("LSU_DRV", $sformatf("Store 0x%2x to @0x%8x", data, addr), UVM_HIGH)
-  this.mem[addr] = data;
-endtask: store_byte
 
 task lsu_driver::tx_driver();
   lsu_transaction uop_tr;

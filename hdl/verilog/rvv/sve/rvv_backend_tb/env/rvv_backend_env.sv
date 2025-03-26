@@ -49,12 +49,19 @@ function void rvv_backend_env::connect_phase(uvm_phase phase);
   // rvs_agt.rvs_drv.inst_ap.connect(mdl.inst_imp);
   rvs_agt.rvs_drv.vrf_state_port.connect(rvs_agt.vrf_mon.vrf_state_imp);
   rvs_agt.rvs_drv.rvv_state_port.connect(rvs_agt.rvs_mon.rvv_state_imp);
-  // scb ap
-  rvs_agt.rvs_mon.rt_ap.connect(scb.rvs_imp);
-  rvs_agt.vrf_mon.vrf_ap.connect(scb.rvs_vrf_imp);
-  mdl.rt_ap.connect(scb.mdl_imp);
-  mdl.vrf_ap.connect(scb.mdl_vrf_imp);
   // lsu_agt.lsu_mon.mon_analysis_port.connect(scb.lsu_imp);
+
+  // retire check ap
+  rvs_agt.rvs_mon.rt_ap.connect(scb.rvs_imp);
+  mdl.rt_ap.connect(scb.mdl_imp);
+
+  // vrf check ap
+  rvs_agt.vrf_mon.vrf_ap.connect(scb.rvs_vrf_imp);
+  mdl.vrf_ap.connect(scb.mdl_vrf_imp);
+
+  // memory access check ap
+  lsu_agt.lsu_drv.mem.mem_ap.connect(scb.lsu_mem_imp);
+  mdl.mem.mem_ap.connect(scb.mdl_mem_imp);
 
   // cov ap
   rvs_agt.rvs_mon.rt_ap.connect(cov.cov_imp);
