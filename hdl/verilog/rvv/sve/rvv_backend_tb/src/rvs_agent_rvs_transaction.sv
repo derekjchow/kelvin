@@ -442,6 +442,8 @@ class rvs_transaction extends uvm_sequence_item;
       ->  (inst_type == LD && lsu_mop == LSU_E && lsu_nf inside {NF1, NF2, NF4, NF8} && dest_type == VRF && src2_type == FUNC && src2_idx == WHOLE_REG && src1_type == XRF && vm == 1);
       (lsu_inst == VLEFF)
       ->  (inst_type == LD && lsu_mop == LSU_E && lsu_nf == NF1 && dest_type == VRF && src2_type == FUNC && src2_idx == FOF && src1_type == XRF);
+      (lsu_inst == VLSEGFF)
+      ->  (inst_type == LD && lsu_mop == LSU_E && lsu_nf inside {NF2, NF3, NF4, NF5, NF6, NF7, NF8} && dest_type == VRF && src2_type == FUNC && src2_idx == FOF && src1_type == XRF);
 
       (lsu_inst == VLSE)
       ->  (inst_type == LD && lsu_mop == LSU_SE && lsu_nf == NF1 && dest_type == VRF && src2_type == XRF && src1_type == XRF);

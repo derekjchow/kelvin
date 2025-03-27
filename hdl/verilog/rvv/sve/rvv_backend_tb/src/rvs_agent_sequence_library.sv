@@ -1850,10 +1850,16 @@ class alu_random_base_sequence extends base_sequence;
   alu_inst_e alu_inst_set [$];
 
   function new(string name = "alu_random_base_sequence");
+    alu_inst_e inst;
     super.new(name);
-	  `ifdef UVM_POST_VERSION_1_1
-      set_automatic_phase_objection(1);
+	`ifdef UVM_POST_VERSION_1_1
+     set_automatic_phase_objection(1);
     `endif
+    inst = inst.first();
+    while(inst != inst.last()) begin
+      alu_inst_set.push_back(inst);
+      inst = inst.next();
+    end
   endfunction:new
   
   virtual task run_inst(uvm_sequencer_base sqr, int inst_num = 50);
@@ -2029,10 +2035,16 @@ class lsu_base_seq extends base_sequence;
   int inst_num = 1;
 
   function new(string name = "lsu_base_seq");
+    lsu_inst_e inst;
     super.new(name);
 	`ifdef UVM_POST_VERSION_1_1
      set_automatic_phase_objection(1);
     `endif
+    inst = inst.first();
+    while(inst != inst.last()) begin
+      inst_set.push_back(inst);
+      inst = inst.next();
+    end
   endfunction:new
   
   virtual task run_inst(lsu_inst_e inst, uvm_sequencer_base sqr, int inst_num = 50);

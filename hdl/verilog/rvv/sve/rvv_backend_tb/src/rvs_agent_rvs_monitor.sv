@@ -156,11 +156,11 @@ task rvs_monitor::tx_monitor();
           rt_tr = new("rt_tr");
           rt_tr = inst_temp_queue.pop_front();
           inst_rx_queue.push_back(rt_tr);
-          `uvm_info(get_type_name(), $sformatf("DUT will execute inst:\n%s",rt_tr.sprint()), UVM_LOW)
+          `uvm_info(get_type_name(), $sformatf("DUT will execute inst:\n%s",rt_tr.sprint()), UVM_HIGH)
         end else if(rvs_if.inst_discard[i]) begin
           rt_tr = new("rt_tr");
           rt_tr = inst_temp_queue.pop_front();
-          `uvm_info(get_type_name(), $sformatf("DUT discarded inst:\n%s",rt_tr.sprint()), UVM_LOW)
+          `uvm_info(get_type_name(), $sformatf("DUT discarded inst:\n%s",rt_tr.sprint()), UVM_HIGH)
         end
       end
     end

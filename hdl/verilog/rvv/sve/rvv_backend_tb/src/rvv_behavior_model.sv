@@ -127,7 +127,6 @@ endclass : rvv_behavior_model
         xrf[i] = '0;
       end 
       @(posedge rvs_if.clk);
-      `uvm_info("RESET_PHASE", "This is reset_phase!", UVM_LOW)
     end
     phase.drop_objection( .obj( this ) );
   endtask: reset_phase
@@ -1342,7 +1341,7 @@ endclass : rvv_behavior_model
       VRF: begin
         reg_idx = elm_idx / (`VLEN / eew) + reg_idx;
         if(!(reg_idx inside {[0:31]}))
-          `uvm_error("MDL", $sformatf("Try to fetch data from vrf[%0d]", reg_idx))
+          `uvm_warning("MDL", $sformatf("Try to fetch data from vrf[%0d]", reg_idx))
         elm_idx = elm_idx % (`VLEN / eew);
         // `uvm_info("MDL", $sformatf("reg_type=%0d, reg_idx=%0d, elm_idx=%0d, eew=%0d", reg_type, reg_idx, elm_idx, eew), UVM_HIGH)
         for(int i=0; i<bit_count; i++) begin

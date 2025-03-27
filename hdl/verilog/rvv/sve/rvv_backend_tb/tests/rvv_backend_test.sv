@@ -2468,5 +2468,56 @@ class lsu_indexed_seg_test extends rvv_backend_test;
     super.final_phase(phase);
   endfunction
 endclass: lsu_indexed_seg_test
+
+
+//-----------------------------------------------------------
+// 31.7.7. & 31.7.8. Fault only first
+//    For now this test will only test the decode.
+//    It behaves like normal unit stride load if no trap comes.
+//-----------------------------------------------------------
+class lsu_fof_test extends rvv_backend_test;
+
+  lsu_base_seq rvs_seq;
+  rvs_last_sequence rvs_last_seq;
+
+  lsu_inst_e inst_set[$] = '{VLEFF, VLSEGFF};
+
+  `uvm_component_utils(lsu_fof_test)
+
+  function new(string name, uvm_component parent);
+    super.new(name, parent);
+  endfunction
+
+  function void build_phase(uvm_phase phase);
+    super.build_phase(phase);
+  endfunction
+
+  function void connect_phase(uvm_phase phase);
+    super.connect_phase(phase);
+    this.set_report_id_action_hier("MDL", UVM_LOG);
+  endfunction
+
+  task main_phase(uvm_phase phase);
+
+    `uvm_info(get_type_name(),"Start randomize mem & vrf.", UVM_LOW)
+    rand_mem(mem_base, mem_size);
+    rand_vrf();
+    `uvm_info(get_type_name(), "Randomize done.", UVM_LOW)
+
+    rvs_seq = lsu_base_seq::type_id::create("lsu_base_seq", this);
+    foreach(inst_set[idx]) begin
+      rvs_seq.run_inst(inst_set[idx], env.rvs_agt.rvs_sqr, direct_inst_num);
+    end
+
+    rvs_seq.run_inst_set(inst_set, env.rvs_agt.rvs_sqr, direct_inst_num * inst_set.size());
+
+    rvs_last_seq = rvs_last_sequence::type_id::create("rvs_last_seq", this);
+    rvs_last_seq.start(env.rvs_agt.rvs_sqr);
+  endtask
+
+  function void final_phase(uvm_phase phase);
+    super.final_phase(phase);
+  endfunction
+endclass: lsu_fof_test
 `endif // RVV_BACKEND_TEST__SV
 

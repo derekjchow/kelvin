@@ -52,6 +52,13 @@ interface rvv_intern_interface (input bit clk, input bit rst_n);
   /* vrf */
   logic [31:0] [`VLEN-1:0] vrf_wr_wenb_full;
 
+// Dispatch status signals
+  logic [`NUM_DP_UOP-1:0] uop_valid_uop2dp; // Uops wait to be dispatched
+  logic [`NUM_DP_UOP-1:0] uop_valid_dp2rob; // Uops dispatched successfully
+  logic [`NUM_DP_UOP-1:0] uop_ready_rob2dp; // ROB reserve space
+  ARCH_HAZARD_t           arch_hazard;      
+
+
   function bit rvv_is_idle();
     rvv_is_idle = cmd_q_empty &
                   uop_q_empty &

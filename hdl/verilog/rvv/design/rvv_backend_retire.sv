@@ -216,10 +216,10 @@ assign w_vxsat3 = w_vxsaturate3!='b0;
 ////////////Main  ///////////////
 /////////////////////////////////
 //1. Check whether uop is a VRF req
-assign rob2rt_is_to_vrf[0] = rob2rt_write_valid[0] && !w_type0;
-assign rob2rt_is_to_vrf[1] = rob2rt_write_valid[1] && !w_type1;
-assign rob2rt_is_to_vrf[2] = rob2rt_write_valid[2] && !w_type2;
-assign rob2rt_is_to_vrf[3] = rob2rt_write_valid[3] && !w_type3;
+assign rob2rt_is_to_vrf[0] = rob2rt_write_valid[0] && !w_type0 && w_valid0;
+assign rob2rt_is_to_vrf[1] = rob2rt_write_valid[1] && !w_type1 && w_valid1;
+assign rob2rt_is_to_vrf[2] = rob2rt_write_valid[2] && !w_type2 && w_valid2;
+assign rob2rt_is_to_vrf[3] = rob2rt_write_valid[3] && !w_type3 && w_valid3;
 
 //2. Mask update if the bit is body-active
 always@(*) begin
