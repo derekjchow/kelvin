@@ -24,12 +24,7 @@ import _root_.circt.stage.ChiselStage
 
 class CoreAxi(p: Parameters, coreModuleName: String) extends RawModule {
   override val desiredName = coreModuleName + "Axi"
-  val memoryRegions = Seq(
-    new MemoryRegion(0x0000, 0x2000, MemoryRegionType.IMEM), // ITCM
-    new MemoryRegion(0x10000, 0x8000, MemoryRegionType.DMEM), // DTCM
-    new MemoryRegion(0x30000, 0x2000, MemoryRegionType.Peripheral), // CSR
-  )
-  p.m = memoryRegions
+  val memoryRegions = p.m
   val io = IO(new Bundle {
     // AXI
     val aclk = Input(Clock())
@@ -90,7 +85,7 @@ class CoreAxi(p: Parameters, coreModuleName: String) extends RawModule {
     core.io.iflush.ready := true.B
 
     // Build ITCM and connect to ibus
-    val itcmSizeBytes = 8 * 1024 // 8 kB
+    val itcmSizeBytes: Int = 1024 * (if (p.tcmHighmem) { 1024 } else { 8 }) // default 8 kB, highmem 1MB
     val itcmSubEntryWidth = 8
     val itcmWidth = p.axi2DataBits
     val itcmEntries = itcmSizeBytes / (itcmWidth / 8)

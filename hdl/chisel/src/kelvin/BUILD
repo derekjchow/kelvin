@@ -424,6 +424,31 @@ chisel_cc_library(
     ],
 )
 
+chisel_cc_library(
+    name = "core_mini_axi_highmem_cc_library",
+    chisel_lib = ":kelvin",
+    emit_class = "kelvin.EmitCore",
+    extra_outs = [
+        "VCoreMiniHighmemAxi_parameters.h",
+        "CoreMiniHighmemAxi.zip",
+    ],
+    gen_flags = [
+        "--enableFetchL0=False",
+        "--fetchDataBits=128",
+        "--lsuDataBits=128",
+        "--enableVector=False",
+        "--moduleName=CoreMiniHighmem",
+        "--useAxi",
+        "--tcmHighmem",
+    ],
+    module_name = "CoreMiniHighmemAxi",
+    verilog_file_path = "CoreMiniHighmemAxi.sv",
+    vopts = [
+        "-DUSE_GENERIC",
+    ],
+)
+
+
 CORE_MINI_AXI_BLACKBOX_DESIGNS = [
     "CKLNQD10BWP6T20P96CPDLVT",
     "TS1N12FFCLLMBLVTD2048X128M4SWBSHO",

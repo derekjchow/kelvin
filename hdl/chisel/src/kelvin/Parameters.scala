@@ -108,6 +108,9 @@ class Parameters(var m: Seq[MemoryRegion] = Seq(), val hartId: Int = 0) {
   val lsuDelayPipelineLen = 1
   def dbusSize: Int = { log2Ceil(lsuDataBits / 8) + 1 }
 
+  // TCM Size Configuration
+  var tcmHighmem = false
+
   // [External] Core AXI interface.
   val axiSysIdBits = 7
   val axiSysAddrBits = 32
