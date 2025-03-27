@@ -17,7 +17,7 @@ index be35f98..daa3987 100644
          seed_args +
 -        test_module_args
 +        test_module_args +
-+        "&& cp -fr `pwd`/sim_build/simv.vdb $TEST_UNDECLARED_OUTPUTS_DIR" if ctx.attr.sim_name == "vcs" else ""
++        ("&& cp -fr `pwd`/sim_build/simv.vdb $TEST_UNDECLARED_OUTPUTS_DIR" if ctx.attr.sim_name == "vcs" else "")
      )
  
      if ctx.attr.sim_name == "verilator":
