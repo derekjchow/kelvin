@@ -123,9 +123,9 @@ class Alu(p: Parameters) extends Module {
     AluOp.XOR  -> (rs1 ^ rs2),
     AluOp.OR   -> (rs1 | rs2),
     AluOp.AND  -> (rs1 & rs2),
-    AluOp.SLL  -> (rs1 << shamt),
-    AluOp.SRL  -> (rs1 >> shamt),
-    AluOp.SRA  -> (rs1.asSInt >> shamt).asUInt,
+    AluOp.SLL  -> ((rs1 << shamt)(31,0)),
+    AluOp.SRL  -> ((rs1 >> shamt)(31,0)),
+    AluOp.SRA  -> (((rs1.asSInt >> shamt).asUInt)(31,0)),
     AluOp.LUI  -> rs2,
     // ZBB
     AluOp.ANDN -> (rs1 & ~rs2),
