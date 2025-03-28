@@ -842,14 +842,14 @@ assign rt2vxsat_write_data = w_vxsat3 || w_vxsat2 || w_vxsat1 || w_vxsat0;
 //  b. has vxsat update while vxsat rdy == 1
 assign vxsat2rt_ready_int = !retire_has_vxsat || vxsat2rt_write_ready; 
 
-assign rt2rob_write_ready[0] = retire_has_trap ? vcsr2rt_write_ready :                         //use vcrs rdy
-                                       w_type0 ? xrf2rt_write_ready[0] && vxsat2rt_ready_int : //xrf rdy but check vxsat
+assign rt2rob_write_ready[0] = retire_has_trap ? vcsr2rt_write_ready :   //use vcrs rdy
+                                       w_type0 ? xrf2rt_write_ready[0] : //xrf rdy but check vxsat
                                                  vxsat2rt_ready_int;                           //vrf rdy but check vxsat, equals to (1'b1 && vxsat2rt_ready_int)
-assign rt2rob_write_ready[1] = w_type1 ? xrf2rt_write_ready[1] && vxsat2rt_ready_int :         //xrf rdy but check vxsat
+assign rt2rob_write_ready[1] = w_type1 ? xrf2rt_write_ready[1] :         //xrf rdy but check vxsat
                                          vxsat2rt_ready_int;                                   //vrf rdy but check vxsat, equals to (1'b1 && vxsat2rt_ready_int)
-assign rt2rob_write_ready[2] = w_type2 ? xrf2rt_write_ready[2] && vxsat2rt_ready_int :
+assign rt2rob_write_ready[2] = w_type2 ? xrf2rt_write_ready[2] :
                                          vxsat2rt_ready_int;
-assign rt2rob_write_ready[3] = w_type3 ? xrf2rt_write_ready[3] && vxsat2rt_ready_int : 
+assign rt2rob_write_ready[3] = w_type3 ? xrf2rt_write_ready[3] : 
                                          vxsat2rt_ready_int ;
 /////////////////////////////////
 
