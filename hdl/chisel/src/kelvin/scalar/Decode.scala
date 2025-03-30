@@ -50,6 +50,9 @@ class DecodeSerializeIO extends Bundle {
 }
 
 class DecodedInstruction(p: Parameters) extends Bundle {
+  // The original encoding
+  val inst = UInt(32.W)
+
   // Immediates
   val imm12  = UInt(32.W)
   val imm20  = UInt(32.W)
@@ -168,14 +171,29 @@ class DecodedInstruction(p: Parameters) extends Bundle {
   def isAlu1Bit(): Bool = { clz || ctz || cpop || sextb || sexth || zexth || orcb || rev8 }
   def isAlu2Bit(): Bool = { min || minu || max || maxu || rol || ror }
   def isCsr(): Bool = { csrrw || csrrs || csrrc }
+  def isCsrImm() = { isCsr() &&  inst(14) }
+  def isCsrReg() = { isCsr() && !inst(14) }
   def isCondBr(): Bool = { beq || bne || blt || bge || bltu || bgeu }
-  def isLoad(): Bool = { lb || lh || lw || lbu || lhu }
-  def isStore(): Bool = { sb || sh || sw }
-  def isLsu(): Bool = { isLoad() || isStore() || vld || vst || flushat || flushall }
+  def isScalarLoad(): Bool = { lb || lh || lw || lbu || lhu }
+  def isScalarStore(): Bool = { sb || sh || sw }
+  def isLsu(): Bool = { isScalarLoad() || isScalarStore() || vld || vst || flushat || flushall }
   def isMul(): Bool = { mul || mulh || mulhsu || mulhu }
   def isDvu(): Bool = { div || divu || rem || remu }
   def isVector(): Bool = { vld || vst || viop || getvl || getmaxvl }
   def isFency(): Bool = { fencei || ebreak || wfi || mpause || flushat || flushall }
+
+  def readsRs1(): Bool = {
+    isCondBr() || isAluReg() || isAluImm() || isAlu1Bit() || isAlu2Bit() ||
+    isCsr() || isMul() || isDvu() || slog || getvl || vld || vst
+  }
+  def readsRs2(): Bool = {
+    isCondBr() || isAluReg() || isAlu2Bit() || isScalarStore() || isCsrReg() ||
+    isMul() || isDvu() || slog || getvl || vld || vst || viop
+  }
+
+  // Check if argument should be set by immediate value
+  def rs1Set(): Bool = { auipc || isCsrImm() }
+  def rs2Set(): Bool = { rs1Set() || isAluImm() || isAlu1Bit() || lui }
 }
 
 class Dispatch(p: Parameters) extends Module {
@@ -382,9 +400,6 @@ class Decode(p: Parameters, pipeline: Int) extends Module {
   val rs2Addr = io.inst.bits.inst(24,20)
   val rs3Addr = io.inst.bits.inst(31,27)
 
-  val isCsrImm = d.isCsr() &&  io.inst.bits.inst(14)
-  val isCsrReg = d.isCsr() && !io.inst.bits.inst(14)
-
   val isVIop = if (p.enableVector) {
     io.vinst.get.bits.op === VInstOp.VIOP
   } else { false.B }
@@ -394,7 +409,7 @@ class Decode(p: Parameters, pipeline: Int) extends Module {
   val isVIopVs3 = isVIop && io.inst.bits.inst(2,0) === 1.U  // exclude: .vvv
 
   // Use the forwarded scoreboard to interlock on multicycle operations.
-  val aluRdEn  = !io.scoreboard.comb(rdAddr)  || isVIopVs1 || d.isStore() || d.isCondBr()
+  val aluRdEn  = !io.scoreboard.comb(rdAddr)  || isVIopVs1 || d.isScalarStore() || d.isCondBr()
   val aluRs1En = !io.scoreboard.comb(rs1Addr) || isVIopVs1 || d.isLsu() || d.auipc
   val aluRs2En = !io.scoreboard.comb(rs2Addr) || isVIopVs2 || d.isLsu() || d.auipc || d.isAluImm() || d.isAlu1Bit()
   // val aluRs3En = !io.scoreboard.comb(rs3Addr) || isVIopVs3
@@ -411,7 +426,7 @@ class Decode(p: Parameters, pipeline: Int) extends Module {
               (!d.isLsu() || !io.serializeIn.brcond) &&  // TODO: can this line be removed?
               !(Mux(io.busRead.bypass, io.scoreboard.comb(rs1Addr),
                     io.scoreboard.regd(rs1Addr)) ||
-                    io.scoreboard.comb(rs2Addr) && (d.isStore() || vldst))
+                    io.scoreboard.comb(rs2Addr) && (d.isScalarStore() || vldst))
 
   // Interlock mul, only one lane accepted.
   val mulEn = (!d.isMul() || !io.serializeIn.mul) && !io.serializeIn.brcond
@@ -585,12 +600,8 @@ class Decode(p: Parameters, pipeline: Int) extends Module {
   io.slog := decodeEn && d.slog
 
   // Register file read ports.
-  io.rs1Read.valid := decodeEn && (d.isCondBr() || d.isAluReg() || d.isAluImm() || d.isAlu1Bit() || d.isAlu2Bit() ||
-                      isCsrImm || isCsrReg || d.isMul() || d.isDvu() || d.slog ||
-                      d.getvl || d.vld || d.vst)
-  io.rs2Read.valid := decodeEn && (d.isCondBr() || d.isAluReg() || d.isAlu2Bit() || d.isStore() ||
-                      isCsrReg || d.isMul() || d.isDvu() || d.slog || d.getvl ||
-                      d.vld || d.vst || d.viop)
+  io.rs1Read.valid := decodeEn && d.readsRs1()
+  io.rs2Read.valid := decodeEn && d.readsRs2()
 
   // rs1 is on critical path to busPortAddr.
   io.rs1Read.addr := Mux(io.inst.bits.inst(0), rs1Addr, rs3Addr)
@@ -599,8 +610,8 @@ class Decode(p: Parameters, pipeline: Int) extends Module {
   io.rs2Read.addr := rs2Addr
 
   // Register file set ports.
-  io.rs1Set.valid := decodeEn && (d.auipc || isCsrImm)
-  io.rs2Set.valid := io.rs1Set.valid || decodeEn && (d.isAluImm() || d.isAlu1Bit() || d.lui)
+  io.rs1Set.valid := decodeEn && d.rs1Set()
+  io.rs2Set.valid := decodeEn && d.rs2Set()
 
   io.rs1Set.value := Mux(d.isCsr(), d.immcsr, io.inst.bits.addr)  // Program Counter (PC)
 
@@ -611,7 +622,7 @@ class Decode(p: Parameters, pipeline: Int) extends Module {
   // enable status to improve timing, and under a branch is ignored anyway.
   val rdMark_valid =
       alu.valid || csr.valid || mlu.valid || dvu.valid && io.dvu.ready ||
-      lsu.valid && d.isLoad() ||
+      lsu.valid && d.isScalarLoad() ||
       d.getvl || d.getmaxvl || vldst_wb ||
       d.rvv.map(x => x.valid && x.bits.writesRd()).getOrElse(false.B) ||
       bru.valid && (bru.bits.isOneOf(BruOp.JAL, BruOp.JALR)) && rdAddr =/= 0.U
@@ -663,6 +674,8 @@ class Decode(p: Parameters, pipeline: Int) extends Module {
 object DecodeInstruction {
   def apply(p: Parameters, pipeline: Int, addr: UInt, op: UInt): DecodedInstruction = {
     val d = Wire(new DecodedInstruction(p))
+
+    d.inst := op
 
     // Immediates
     d.imm12  := Cat(Fill(20, op(31)), op(31,20))
