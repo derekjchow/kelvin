@@ -56,7 +56,11 @@ class SCore(p: Parameters) extends Module {
   val regfile = Regfile(p)
   val fetch = if (p.enableFetchL0) { Fetch(p) } else { Module(new UncachedFetch(p)) }
 
-  val dispatch = Module(new Dispatch(p))
+  val dispatch = if (p.useDispatchV2) {
+      Module(new DispatchV2(p))
+  } else {
+      Module(new DispatchV1(p))
+  }
   val alu = Seq.fill(p.instructionLanes)(Alu(p))
   val bru = (0 until p.instructionLanes).map(x => Seq(Bru(p, x == 0))).reduce(_ ++ _)
   val csr = Csr(p)

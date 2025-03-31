@@ -186,6 +186,8 @@ class Csr(p: Parameters) extends Module {
   val minstretEn  = req.bits.index === 0xB02.U
   val mcyclehEn   = req.bits.index === 0xB80.U
   val minstrethEn = req.bits.index === 0xB82.U
+  // Vector CSRs.
+  val vlenbEn     = Option.when(p.enableRvv) { req.bits.index === 0xC22.U }
   // M-mode information CSRs.
   val mvendoridEn = req.bits.index === 0xF11.U
   val marchidEn   = req.bits.index === 0xF12.U
@@ -220,7 +222,7 @@ class Csr(p: Parameters) extends Module {
   // Register state.
   val rs1 = io.rs1.data
 
-  val rdata = MuxCase(0.U, Seq(
+  val rdata = MuxCase(0.U, (Seq(
       fflagsEn    -> fflags,
       frmEn       -> frm,
       fcsrEn      -> fcsr,
@@ -255,6 +257,12 @@ class Csr(p: Parameters) extends Module {
       kscm2En     -> kscm(95,64),
       kscm3En     -> kscm(127,96),
       kscm4En     -> kscm(159,128),
+    ) ++
+      Option.when(p.enableRvv) {
+        Seq(
+          vlenbEn.get -> 16.U,  // Vector length in Bytes
+        )
+      }.getOrElse(Seq())
   ))
 
   val wdata = MuxLookup(req.bits.op, 0.U)(Seq(

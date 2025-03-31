@@ -95,7 +95,8 @@ module RvvCore #(parameter N = 4,
   );
 
   // Back-pressure frontend
-  logic [$clog2(16+1)-1:0] cmd_buffer_empty_count =
+  logic [$clog2(16+1)-1:0] cmd_buffer_empty_count;
+  assign cmd_buffer_empty_count =
       (CMD_BUFFER_MAX_CAPACITY - N) - cmd_buffer_fill_level;
   always_comb begin
     if (cmd_buffer_empty_count > 2*N) begin
@@ -107,12 +108,15 @@ module RvvCore #(parameter N = 4,
 
   // Convert multi-fifo to rvv_backend interface
   logic   [`ISSUE_LANE-1:0] insts_valid_rvs2cq;
-  logic   [`ISSUE_LANE-1:0] insts_ready_cq2rvs;  
+  logic   [`ISSUE_LANE-1:0] insts_ready_cq2rvs;
   always_comb begin
     cmd_buffer_ready_out = 0;
     for (int i = 0; i < `ISSUE_LANE; i++) begin
       cmd_buffer_ready_out = cmd_buffer_ready_out + insts_ready_cq2rvs[i];
       insts_valid_rvs2cq[i] = i < cmd_buffer_fill_level;
+    end
+    if (cmd_buffer_ready_out > cmd_buffer_fill_level) begin
+      cmd_buffer_ready_out = cmd_buffer_fill_level;
     end
   end
 

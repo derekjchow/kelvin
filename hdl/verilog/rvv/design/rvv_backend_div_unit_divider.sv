@@ -58,7 +58,8 @@ module rvv_backend_div_unit_divider
 // internal signals
 //
   // FSM
-  enum  logic [1:0] {DIV_IDLE, DIV_WORKING, DIV_PRINT} state, next_state;
+  enum  logic [1:0] {DIV_IDLE, DIV_WORKING, DIV_PRINT, DIV_UNREACHABLE}
+      state, next_state;
   
   // number of leading zero bits
   logic [$clog2(DIV_WIDTH):0]   cnt_clzb;
@@ -249,6 +250,13 @@ module rvv_backend_div_unit_divider
           next_state = DIV_IDLE;
         else
           next_state = DIV_PRINT;
+      end
+      // Necessary to suppress FSM_COMPLETE errors
+      DIV_UNREACHABLE: begin
+        next_state = DIV_IDLE;
+      end
+      default: begin
+        next_state = DIV_IDLE;
       end
     endcase
   end

@@ -170,6 +170,7 @@ class DecodedInstruction(p: Parameters) extends Bundle {
   }
   def isAlu1Bit(): Bool = { clz || ctz || cpop || sextb || sexth || zexth || orcb || rev8 }
   def isAlu2Bit(): Bool = { min || minu || max || maxu || rol || ror }
+  def isAlu(): Bool = { isAluImm() || isAluReg() || isAlu1Bit() || isAlu2Bit() }
   def isCsr(): Bool = { csrrw || csrrs || csrrc }
   def isCsrImm() = { isCsr() &&  inst(14) }
   def isCsrReg() = { isCsr() && !inst(14) }
@@ -182,9 +183,18 @@ class DecodedInstruction(p: Parameters) extends Bundle {
   def isVector(): Bool = { vld || vst || viop || getvl || getmaxvl }
   def isFency(): Bool = { fencei || ebreak || wfi || mpause || flushat || flushall }
 
+  // Checks if an instruction is a jump or changes context switch. Instructions
+  // after these should not be executed on the same cycle.
+  def isJump(): Bool = {
+    jal || jalr || ebreak || ecall || eexit || eyield || ectxsw || mpause ||
+    mret
+  }
+
   def readsRs1(): Bool = {
+    // TODO(derekjchow): Refactor and add rvv
     isCondBr() || isAluReg() || isAluImm() || isAlu1Bit() || isAlu2Bit() ||
-    isCsr() || isMul() || isDvu() || slog || getvl || vld || vst
+    isCsr() || isMul() || isDvu() || slog || getvl || vld || vst ||
+    (if (p.enableRvv) { rvv.get.valid && rvv.get.bits.readsRs1() } else { false.B })
   }
   def readsRs2(): Bool = {
     isCondBr() || isAluReg() || isAlu2Bit() || isScalarStore() || isCsrReg() ||
@@ -198,64 +208,363 @@ class DecodedInstruction(p: Parameters) extends Bundle {
 
 class Dispatch(p: Parameters) extends Module {
   val io = IO(new Bundle {
-     // Core controls.
-     val halted = Input(Bool())
-     val mactive = Input(Bool())  // memory active
-     val lsuActive = Input(Bool()) // lsu active
+    // Core controls.
+    val halted = Input(Bool())
+    val mactive = Input(Bool())  // memory active
+    val lsuActive = Input(Bool()) // lsu active
 
-     val scoreboard = new Bundle {
-       val regd = Input(UInt(32.W))
-       val comb = Input(UInt(32.W))
-     }
+    val scoreboard = new Bundle {
+      val regd = Input(UInt(32.W))
+      val comb = Input(UInt(32.W))
+    }
 
-     // Branch status.
-     val branchTaken = Input(Bool())
+    // Branch status.
+    val branchTaken = Input(Bool())
 
-     val interlock = Input(Bool())
+    val interlock = Input(Bool())
 
-     // Decode input interface.
-     val inst = Vec(p.instructionLanes, Flipped(Decoupled(new FetchInstruction(p))))
+    // Decode input interface.
+    val inst = Vec(p.instructionLanes, Flipped(Decoupled(new FetchInstruction(p))))
 
-     // Register file decode cycle interface.
-     val rs1Read = Vec(p.instructionLanes, Flipped(new RegfileReadAddrIO))
-     val rs1Set  = Vec(p.instructionLanes, Flipped(new RegfileReadSetIO))
-     val rs2Read = Vec(p.instructionLanes, Flipped(new RegfileReadAddrIO))
-     val rs2Set  = Vec(p.instructionLanes, Flipped(new RegfileReadSetIO))
-     val rdMark  = Vec(p.instructionLanes, Flipped(new RegfileWriteAddrIO))
-     val busRead = Vec(p.instructionLanes, Flipped(new RegfileBusAddrIO))
+    // Register file decode cycle interface.
+    val rs1Read = Vec(p.instructionLanes, Flipped(new RegfileReadAddrIO))
+    val rs1Set  = Vec(p.instructionLanes, Flipped(new RegfileReadSetIO))
+    val rs2Read = Vec(p.instructionLanes, Flipped(new RegfileReadAddrIO))
+    val rs2Set  = Vec(p.instructionLanes, Flipped(new RegfileReadSetIO))
+    val rdMark  = Vec(p.instructionLanes, Flipped(new RegfileWriteAddrIO))
+    val busRead = Vec(p.instructionLanes, Flipped(new RegfileBusAddrIO))
 
-     // ALU interface.
-     val alu = Vec(p.instructionLanes, Valid(new AluCmd))
+    // ALU interface.
+    val alu = Vec(p.instructionLanes, Valid(new AluCmd))
 
-     // Branch interface.
-     val bru = Vec(p.instructionLanes, Valid(new BruCmd(p)))
+    // Branch interface.
+    val bru = Vec(p.instructionLanes, Valid(new BruCmd(p)))
 
-     // CSR interface.
-     val csr = Valid(new CsrCmd)
+    // CSR interface.
+    val csr = Valid(new CsrCmd)
 
-     // LSU interface.
-     val lsu = Vec(p.instructionLanes, Decoupled(new LsuCmd))
+    // LSU interface.
+    val lsu = Vec(p.instructionLanes, Decoupled(new LsuCmd))
 
-     // Multiplier interface.
-     val mlu = Vec(p.instructionLanes, Decoupled(new MluCmd))
+    // Multiplier interface.
+    val mlu = Vec(p.instructionLanes, Decoupled(new MluCmd))
 
-     // Divide interface.
-     val dvu = Vec(p.instructionLanes, Decoupled(new DvuCmd))
+    // Divide interface.
+    val dvu = Vec(p.instructionLanes, Decoupled(new DvuCmd))
 
-     // Vector interface.
-     val vinst = if (p.enableVector) {
-       Some(Vec(p.instructionLanes, Decoupled(new VInstCmd)))
-     } else { None }
+    // Rvv interface.
+    val rvv = Option.when(p.enableRvv)(
+        Vec(p.instructionLanes, Decoupled(new RvvCompressedInstruction)))
 
-     // Rvv interface.
-    val rvv = if (p.enableRvv) {
-      Some(Vec(p.instructionLanes, Decoupled(new RvvCompressedInstruction)))
+    // Vector interface, to maintain interface compatibility with old dispatch
+    // unit.
+    val vinst = if (p.enableVector) {
+      Some(Vec(p.instructionLanes, Decoupled(new VInstCmd)))
     } else { None }
 
     // Scalar logging.
     val slog = Output(Bool())
   })
+}
 
+class DispatchV2(p: Parameters) extends Dispatch(p) {
+  assert(!p.enableVector, "DispatchV2 does not support legacy vector core")
+  // Still need guard to tie-off
+  if (p.enableVector) {
+    for (i <- 0 until p.instructionLanes) {
+      io.vinst.get(i).valid := false.B
+      io.vinst.get(i).bits.op := VInstOp.VIOP
+      io.vinst.get(i).bits.addr := 0.U
+      io.vinst.get(i).bits.inst := 0.U
+    }
+  }
+
+  // Decode instructions
+  val decodedInsts = (0 until p.instructionLanes).map(i =>
+    DecodeInstruction(p, i, io.inst(i).bits.addr, io.inst(i).bits.inst)
+  )
+
+  // ---------------------------------------------------------------------------
+  // Jumps
+  // Determine if there has been a jump in the instruction stream. This can
+  // include instructions that trigger context switches. Treat fences as jumps
+  // as well.
+  val isJump = decodedInsts.map(x => x.isJump() || x.isFency())
+  val jumped = isJump.scan(false.B)(_ || _)
+
+  // ---------------------------------------------------------------------------
+  // Branching
+  // The operations that can be dispatched after branching are ones that can be
+  // completed in one cycle. In practice, this means Alu and Bru operations
+  val isBranch = decodedInsts.map(_.isCondBr())
+  val branched = isBranch.scan(false.B)(_ || _)
+  val branchInterlock = (0 until p.instructionLanes).map(i =>
+      branched(i) && !(decodedInsts(i).isCondBr() || decodedInsts(i).isAlu()))
+
+  // ---------------------------------------------------------------------------
+  // Scoreboard
+  val rdAddr = io.inst.map(_.bits.inst(11,7))
+  val writesRd = decodedInsts.map(d => !d.isScalarStore() && !d.isCondBr())
+  val rdScoreboard = (0 until p.instructionLanes).map(i =>
+      Mux(writesRd(i), UIntToOH(rdAddr(i), 32), 0.U(32.W)))
+  val scoreboardScan = rdScoreboard.scan(0.U(32.W))(_ | _)
+  // Note: regd comes from registers, comb includes write forwarding For the
+  // time being, use regd as it's safer for timing. Move to using comb for
+  // some instances once scoreboarding logic is stable.
+  val regd =  scoreboardScan.map(_ | io.scoreboard.regd)
+  val comb =  scoreboardScan.map(_ | io.scoreboard.comb)
+  val rs1Addr = io.inst.map(_.bits.inst(19,15))
+  // TODO(derekjchow): readsRs1 means "Rs1 depends on the combinatorial path
+  // from the regfile". jalr and LSU use the register direct path. Consider
+  // refactoring readsRs1 to account for this when old dispatch can be removed.
+  val usesRs1 = decodedInsts.map(d => d.readsRs1() || d.jalr || d.isLsu())
+  val rs2Addr = io.inst.map(_.bits.inst(24,20))
+  val usesRs2 = decodedInsts.map(d => d.readsRs2())
+  val readScoreboard = (0 until p.instructionLanes).map(i =>
+      MuxOR(usesRs1(i), UIntToOH(rs1Addr(i), 32)) |
+      MuxOR(usesRs2(i), UIntToOH(rs2Addr(i), 32)))
+
+  val readAfterWrite = (0 until p.instructionLanes).map(i =>
+      (readScoreboard(i) & regd(i)) =/= 0.U(32.W))
+  val writeAfterWrite = (0 until p.instructionLanes).map(i =>
+      (rdScoreboard(i) & regd(i)) =/= 0.U(32.W))
+
+  // ---------------------------------------------------------------------------
+  // Fence interlock
+  val fence = decodedInsts.map(x => x.isFency() && (io.mactive || io.lsuActive))
+
+  // ---------------------------------------------------------------------------
+  // Undef
+  // Ensure undef op is only handled in the first slot
+  val undefInterlock = (0 until p.instructionLanes).map(i =>
+    if (i == 0) { false.B } else { decodedInsts(i).undef })
+
+  // ---------------------------------------------------------------------------
+  // Combine above rules. This variable represents which instructions can be
+  // dispatched before in-orderness and back-pressure are considered.
+  val canDispatch = (0 until p.instructionLanes).map(i =>
+      io.inst(i).valid &&    // Instruction should be valid to dispatch
+      !jumped(i) &&          // Don't dispatch after a jump
+      !readAfterWrite(i) &&  // Avoid RAW hazards
+      !writeAfterWrite(i) && // Avoid WAW hazards
+      !branchInterlock(i) && // Only branch/alu can be dispatched after a branch
+      !fence(i) &&           // Don't dispatch if fence interlocked
+      !undefInterlock(i)     // Ensure undef is only dispatched from first slot
+  )
+
+  // ---------------------------------------------------------------------------
+  // Try-dispatch loop.
+  // Back-pressure from execution units gets applied here
+  val lastReady = Wire(Vec(p.instructionLanes + 1, Bool()))
+  lastReady(0) := true.B // TODO(derekjchow): Set to halted?
+  for (i <- 0 until p.instructionLanes) {
+    val tryDispatch = lastReady(i) && canDispatch(i)
+    val d = decodedInsts(i)
+
+    // -------------------------------------------------------------------------
+    // Alu
+    val alu = MuxCase(MakeValid(false.B, AluOp.ADD), Seq(
+        // RV32IM
+        (d.auipc || d.addi || d.add) -> MakeValid(true.B, AluOp.ADD),
+        d.sub                        -> MakeValid(true.B, AluOp.SUB),
+        (d.slti || d.slt)            -> MakeValid(true.B, AluOp.SLT),
+        (d.sltiu || d.sltu)          -> MakeValid(true.B, AluOp.SLTU),
+        (d.xori || d.xor)            -> MakeValid(true.B, AluOp.XOR),
+        (d.ori || d.or)              -> MakeValid(true.B, AluOp.OR),
+        (d.andi || d.and)            -> MakeValid(true.B, AluOp.AND),
+        (d.slli || d.sll)            -> MakeValid(true.B, AluOp.SLL),
+        (d.srli || d.srl)            -> MakeValid(true.B, AluOp.SRL),
+        (d.srai || d.sra)            -> MakeValid(true.B, AluOp.SRA),
+        d.lui                        -> MakeValid(true.B, AluOp.LUI),
+        // ZBB
+        d.andn                       -> MakeValid(true.B, AluOp.ANDN),
+        d.orn                        -> MakeValid(true.B, AluOp.ORN),
+        d.xnor                       -> MakeValid(true.B, AluOp.XNOR),
+        d.clz                        -> MakeValid(true.B, AluOp.CLZ),
+        d.ctz                        -> MakeValid(true.B, AluOp.CTZ),
+        d.cpop                       -> MakeValid(true.B, AluOp.CPOP),
+        d.max                        -> MakeValid(true.B, AluOp.MAX),
+        d.maxu                       -> MakeValid(true.B, AluOp.MAXU),
+        d.min                        -> MakeValid(true.B, AluOp.MIN),
+        d.minu                       -> MakeValid(true.B, AluOp.MINU),
+        d.sextb                      -> MakeValid(true.B, AluOp.SEXTB),
+        d.sexth                      -> MakeValid(true.B, AluOp.SEXTH),
+        d.rol                        -> MakeValid(true.B, AluOp.ROL),
+        d.ror                        -> MakeValid(true.B, AluOp.ROR),
+        d.orcb                       -> MakeValid(true.B, AluOp.ORCB),
+        d.rev8                       -> MakeValid(true.B, AluOp.REV8),
+        d.zexth                      -> MakeValid(true.B, AluOp.ZEXTH),
+        d.rori                       -> MakeValid(true.B, AluOp.ROR),
+    ))
+    io.alu(i).valid := tryDispatch && alu.valid
+    io.alu(i).bits.addr := rdAddr(i)
+    io.alu(i).bits.op := alu.bits
+
+    // -------------------------------------------------------------------------
+    // Bru
+    val bru = MuxCase(MakeValid(false.B, BruOp.JAL), Seq(
+        d.jal    -> MakeValid(true.B, BruOp.JAL),
+        d.jalr   -> MakeValid(true.B, BruOp.JALR),
+        d.beq    -> MakeValid(true.B, BruOp.BEQ),
+        d.bne    -> MakeValid(true.B, BruOp.BNE),
+        d.blt    -> MakeValid(true.B, BruOp.BLT),
+        d.bge    -> MakeValid(true.B, BruOp.BGE),
+        d.bltu   -> MakeValid(true.B, BruOp.BLTU),
+        d.bgeu   -> MakeValid(true.B, BruOp.BGEU),
+        d.ebreak -> MakeValid(true.B, BruOp.EBREAK),
+        d.ecall  -> MakeValid(true.B, BruOp.ECALL),
+        d.eexit  -> MakeValid(true.B, BruOp.EEXIT),
+        d.eyield -> MakeValid(true.B, BruOp.EYIELD),
+        d.ectxsw -> MakeValid(true.B, BruOp.ECTXSW),
+        d.mpause -> MakeValid(true.B, BruOp.MPAUSE),
+        d.mret   -> MakeValid(true.B, BruOp.MRET),
+        d.fencei -> MakeValid(true.B, BruOp.FENCEI),
+        d.wfi    -> MakeValid(true.B, BruOp.WFI),
+        d.undef  -> MakeValid(true.B, BruOp.UNDEF),
+    ))
+    io.bru(i).valid := tryDispatch && bru.valid
+    io.bru(i).bits.fwd := io.inst(i).bits.brchFwd
+    io.bru(i).bits.op := bru.bits
+    io.bru(i).bits.pc := io.inst(i).bits.addr
+    io.bru(i).bits.target := io.inst(i).bits.addr + Mux(
+        io.inst(i).bits.inst(2), d.immjal, d.immbr)
+    io.bru(i).bits.link := rdAddr(i)
+    io.bru(i).bits.inst := io.inst(i).bits.inst
+
+    // -------------------------------------------------------------------------
+    // Mlu
+    val mlu = MuxCase(MakeValid(false.B, MluOp.MUL), Seq(
+      d.mul     -> MakeValid(true.B, MluOp.MUL),
+      d.mulh    -> MakeValid(true.B, MluOp.MULH),
+      d.mulhsu  -> MakeValid(true.B, MluOp.MULHSU),
+      d.mulhu   -> MakeValid(true.B, MluOp.MULHU),
+    ))
+    io.mlu(i).valid := tryDispatch && mlu.valid
+    io.mlu(i).bits.addr := rdAddr(i)
+    io.mlu(i).bits.op := mlu.bits
+
+    // -------------------------------------------------------------------------
+    // Dvu
+    val dvu = MuxCase(MakeValid(false.B, DvuOp.DIV), Seq(
+      d.div  -> MakeValid(true.B, DvuOp.DIV),
+      d.divu -> MakeValid(true.B, DvuOp.DIVU),
+      d.rem  -> MakeValid(true.B, DvuOp.REM),
+      d.remu -> MakeValid(true.B, DvuOp.REMU)
+    ))
+    io.dvu(i).valid := tryDispatch && dvu.valid
+    io.dvu(i).bits.addr := rdAddr(i)
+    io.dvu(i).bits.op := dvu.bits
+
+
+    // -------------------------------------------------------------------------
+    // Lsu
+    val lsu = MuxCase(MakeValid(false.B, LsuOp.LB), Seq(
+      d.lb             -> MakeValid(true.B, LsuOp.LB),
+      d.lh             -> MakeValid(true.B, LsuOp.LH),
+      d.lw             -> MakeValid(true.B, LsuOp.LW),
+      d.lbu            -> MakeValid(true.B, LsuOp.LBU),
+      d.lhu            -> MakeValid(true.B, LsuOp.LHU),
+      d.sb             -> MakeValid(true.B, LsuOp.SB),
+      d.sh             -> MakeValid(true.B, LsuOp.SH),
+      d.sw             -> MakeValid(true.B, LsuOp.SW),
+      d.wfi            -> MakeValid(true.B, LsuOp.FENCEI),
+      d.fencei         -> MakeValid(true.B, LsuOp.FENCEI),
+      d.flushat        -> MakeValid(true.B, LsuOp.FLUSHAT),
+      d.flushall       -> MakeValid(true.B, LsuOp.FLUSHALL),
+    ))
+    io.lsu(i).valid := tryDispatch && lsu.valid
+    io.lsu(i).bits.store := io.inst(i).bits.inst(5)
+    io.lsu(i).bits.addr := rdAddr(i)
+    io.lsu(i).bits.op := lsu.bits
+    io.lsu(i).bits.pc := io.inst(i).bits.addr
+
+    // -------------------------------------------------------------------------
+    // Csr
+    if (i == 0) {
+      val csr = MuxCase(MakeValid(false.B, CsrOp.CSRRW), Seq(
+        d.csrrw -> MakeValid(true.B, CsrOp.CSRRW),
+        d.csrrs -> MakeValid(true.B, CsrOp.CSRRS),
+        d.csrrc -> MakeValid(true.B, CsrOp.CSRRC)
+      ))
+      io.csr.valid := tryDispatch && csr.valid
+      io.csr.bits.addr := rdAddr(i)
+      io.csr.bits.index := io.inst(0).bits.inst(31,20)
+      io.csr.bits.op := csr.bits
+    }
+
+    // -------------------------------------------------------------------------
+    // Slog
+    if (i == 0) {
+      io.slog := tryDispatch && d.slog
+    }
+
+    // -------------------------------------------------------------------------
+    // Rvv
+    if (p.enableRvv) {
+      io.rvv.get(i).valid := tryDispatch && d.rvv.get.valid
+      io.rvv.get(i).bits := d.rvv.get.bits
+    }
+
+    // -------------------------------------------------------------------------
+    // WFI
+    // wfi instruction is handled by the bru and lsu.
+
+    // -------------------------------------------------------------------------
+    // Fence
+    val fenceValid = if (i == 0) { tryDispatch && d.fence } else { false.B }
+
+    // Set next lastReady if dispatched.
+    val dispatched = Seq(io.alu(i).fire, io.bru(i).fire, io.mlu(i).fire, io.dvu(i).fire, io.lsu(i).fire) ++
+      Option.when(i == 0)(Seq(io.csr.valid, io.slog, fenceValid)).getOrElse(Seq()) ++
+      Option.when(p.enableRvv)(Seq(io.rvv.get(i).fire)).getOrElse(Seq())
+    lastReady(i + 1) := dispatched.reduce(_||_)
+  }
+
+  for (i <- 0 until p.instructionLanes) {
+    io.inst(i).ready := lastReady(i + 1)
+  }
+
+  for (i <- 0 until p.instructionLanes) {
+    val d = decodedInsts(i)
+    val rs3Addr = io.inst(i).bits.inst(31,27)
+    io.rs1Read(i).valid := io.inst(i).fire && (d.readsRs1() || d.jalr)
+    io.rs1Read(i).addr := Mux(io.inst(i).bits.inst(0), rs1Addr(i), rs3Addr(i))
+    io.rs2Read(i).valid := io.inst(i).fire && d.readsRs2()
+    io.rs2Read(i).addr := io.inst(i).bits.inst(24,20)
+
+    // Set immediates
+    io.rs1Set(i).valid := io.inst(i).fire && d.rs1Set
+    io.rs1Set(i).value := Mux(d.isCsr(), d.immcsr, io.inst(i).bits.addr)  // Program Counter (PC)
+    io.rs2Set(i).valid := io.inst(i).fire && d.rs2Set
+    io.rs2Set(i).value := MuxCase(d.imm12, IndexedSeq((d.auipc || d.lui) -> d.imm20))
+
+    // Set registers to write
+    val rdMark_valid =
+        io.alu(i).fire || io.mlu(i).fire || io.dvu(i).fire ||
+        io.lsu(i).fire && d.isScalarLoad() ||
+        (if (i == 0) { io.csr.valid } else { false.B }) ||
+        d.rvv.map(x => x.fire && x.bits.writesRd()).getOrElse(false.B) ||
+        (io.bru(i).valid && (io.bru(i).bits.op.isOneOf(BruOp.JAL, BruOp.JALR)) && rdAddr(i) =/= 0.U)
+
+    io.rdMark(i).valid := rdMark_valid
+    io.rdMark(i).addr  := rdAddr(i)
+
+    // Register file bus address port.
+    // Pointer chasing bypass if immediate is zero.
+    // Load/Store immediate selection keys off bit5, and RET off bit6.
+    io.busRead(i).valid := io.lsu(i).valid
+    io.busRead(i).bypass := d.inst(31,25) === 0.U &&
+        Mux(!d.inst(5) || d.inst(6), d.inst(24,20) === 0.U, d.inst(11,7) === 0.U)
+
+    // SB,SH,SW   0100011
+    val storeSelect = d.inst(6,3) === 4.U && d.inst(1,0) === 3.U
+    io.busRead(i).immen := !d.flushat
+    io.busRead(i).immed := Cat(d.imm12(31,5),
+                               Mux(storeSelect, d.immst(4,0), d.imm12(4,0)))
+  }
+}
+
+class DispatchV1(p: Parameters) extends Dispatch(p) {
   val decode = (0 until p.instructionLanes).map(x => Decode(p, x))
 
   val mask = VecInit(decode.map(_.io.inst.ready).scan(true.B)(_ && _))
