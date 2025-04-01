@@ -1,5 +1,8 @@
 #!/bin/sh
 
+set -x
+set -e
+
 mkdir -p rv32_out
 TOOLCHAIN_OUT_DIR="$(pwd)"/rv32_out
 
@@ -13,6 +16,7 @@ git submodule update gcc
 cd gcc || exit
 git fetch
 git checkout origin/master
+contrib/download_prerequisites
 cd .. || exit
 
 ./configure \
