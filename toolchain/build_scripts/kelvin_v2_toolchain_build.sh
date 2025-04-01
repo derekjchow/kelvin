@@ -103,3 +103,13 @@ cd riscv-newlib/ || exit
 make -j 32
 make install
 cd .. || exit
+
+git clone --depth=1 https://github.com/ucb-bar/libgloss-htif
+cd libgloss-htif || exit
+git checkout 39234a16247ab1fa234821b251f1f1870c3de343
+CC=${TOOLCHAIN_OUT_DIR}/bin/riscv32-unknown-elf-gcc \
+AR=${TOOLCHAIN_OUT_DIR}/bin/riscv32-unknown-elf-ar \
+SIZE=${TOOLCHAIN_OUT_DIR}/bin/riscv32-unknown-elf-size \
+./configure --prefix=${TOOLCHAIN_OUT_DIR}/riscv32-unknown-elf --host=riscv32-unknown-elf
+make && make install
+cd .. || exit
