@@ -16,6 +16,7 @@
 #define TESTS_VERILATOR_SIM_KELVIN_CORE_MINI_AXI_TB_H_
 
 #include <cstdint>
+#include <deque>
 #include <functional>
 #include <optional>
 #include <queue>
@@ -64,13 +65,55 @@ struct CoreMiniAxi_tb : Sysc_tb {
     sc_signal<sc_bv<32>> inst_1;
     sc_signal<sc_bv<32>> inst_2;
     sc_signal<sc_bv<32>> inst_3;
+    // DBus signals
     sc_signal<bool> dbus_valid;
     sc_signal<sc_bv<32>> dbus_bits_addr;
     sc_signal<sc_bv<KP_lsuDataBits>> dbus_bits_wdata;
     sc_signal<bool> dbus_bits_write;
+    // Dispatch signals
+    sc_signal<bool> dispatch_0_instFire;
+    sc_signal<bool> dispatch_1_instFire;
+    sc_signal<bool> dispatch_2_instFire;
+    sc_signal<bool> dispatch_3_instFire;
+    sc_signal<sc_bv<32>> dispatch_0_instAddr;
+    sc_signal<sc_bv<32>> dispatch_1_instAddr;
+    sc_signal<sc_bv<32>> dispatch_2_instAddr;
+    sc_signal<sc_bv<32>> dispatch_3_instAddr;
+    sc_signal<sc_bv<32>> dispatch_0_instInst;
+    sc_signal<sc_bv<32>> dispatch_1_instInst;
+    sc_signal<sc_bv<32>> dispatch_2_instInst;
+    sc_signal<sc_bv<32>> dispatch_3_instInst;
+    // Regfile signals
+    sc_signal<bool> regfile_writeAddr_0_valid;
+    sc_signal<bool> regfile_writeAddr_1_valid;
+    sc_signal<bool> regfile_writeAddr_2_valid;
+    sc_signal<bool> regfile_writeAddr_3_valid;
+    sc_signal<sc_bv<5>> regfile_writeAddr_0_bits;
+    sc_signal<sc_bv<5>> regfile_writeAddr_1_bits;
+    sc_signal<sc_bv<5>> regfile_writeAddr_2_bits;
+    sc_signal<sc_bv<5>> regfile_writeAddr_3_bits;
+    sc_signal<bool> regfile_writeData_0_valid;
+    sc_signal<bool> regfile_writeData_1_valid;
+    sc_signal<bool> regfile_writeData_2_valid;
+    sc_signal<bool> regfile_writeData_3_valid;
+    sc_signal<bool> regfile_writeData_4_valid;
+    sc_signal<bool> regfile_writeData_5_valid;
+    sc_signal<sc_bv<5>> regfile_writeData_0_bits_addr;
+    sc_signal<sc_bv<5>> regfile_writeData_1_bits_addr;
+    sc_signal<sc_bv<5>> regfile_writeData_2_bits_addr;
+    sc_signal<sc_bv<5>> regfile_writeData_3_bits_addr;
+    sc_signal<sc_bv<5>> regfile_writeData_4_bits_addr;
+    sc_signal<sc_bv<5>> regfile_writeData_5_bits_addr;
+    sc_signal<sc_bv<32>> regfile_writeData_0_bits_data;
+    sc_signal<sc_bv<32>> regfile_writeData_1_bits_data;
+    sc_signal<sc_bv<32>> regfile_writeData_2_bits_data;
+    sc_signal<sc_bv<32>> regfile_writeData_3_bits_data;
+    sc_signal<sc_bv<32>> regfile_writeData_4_bits_data;
+    sc_signal<sc_bv<32>> regfile_writeData_5_bits_data;
   };
 
   CoreMiniAxi_tb(sc_module_name n, int loops, bool random, bool debug_axi,
+                 bool instr_trace,
                  std::optional<std::function<void()>> wfi_cb,
                  std::optional<std::function<void()>> halted_cb);
   ~CoreMiniAxi_tb();
@@ -116,6 +159,8 @@ struct CoreMiniAxi_tb : Sysc_tb {
 
  private:
   void Connect();
+  void TraceInstructions();
+
   TLMTrafficGenerator tg_;
 
   tlm2axi_bridge<KP_axi2AddrBits, KP_lsuDataBits, KP_axi2IdBits, 8, 2, 0, 0, 0,
@@ -156,5 +201,17 @@ struct CoreMiniAxi_tb : Sysc_tb {
 
   std::optional<uint32_t> tohost_addr_;
   std::optional<uint32_t> fromhost_addr_;
+
+  struct Instruction {
+    uint32_t pc;
+    uint32_t inst;
+    uint32_t reg;
+    uint32_t cycle;
+    uint32_t data;
+    bool completed;
+  };
+  bool instr_trace_ = false;
+  std::vector<Instruction> committed_insts_;
+  std::deque<Instruction> retirement_buffer_;
 };
 #endif  // TESTS_VERILATOR_SIM_KELVIN_CORE_MINI_AXI_TB_H_

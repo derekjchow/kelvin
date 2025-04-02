@@ -39,10 +39,12 @@ namespace internal {
 using namespace internal;
 /* clang-format on */
 
+constexpr uint32_t kEcallInst = 0x00000073;
+
 #include "VCoreMiniAxi__Syms.h"
 
 CoreMiniAxi_tb::CoreMiniAxi_tb(sc_module_name n, int loops, bool random,
-                               bool debug_axi,
+                               bool debug_axi, bool instr_trace,
                                std::optional<std::function<void()>> wfi_cb,
                                std::optional<std::function<void()>> halted_cb)
     : Sysc_tb(n, loops, random),
@@ -55,7 +57,8 @@ CoreMiniAxi_tb::CoreMiniAxi_tb(sc_module_name n, int loops, bool random,
       axi2tlm_signals_("axi2tlm_signals"),
       xbar_("xbar"),
       wfi_cb_(wfi_cb),
-      halted_cb_(halted_cb) {
+      halted_cb_(halted_cb),
+      instr_trace_(instr_trace) {
   if (CoreMiniAxi_tb::singleton_ != nullptr) {
     CHECK(false);
   }
@@ -120,6 +123,44 @@ void CoreMiniAxi_tb::Connect() {
   core_->io_debug_dbus_bits_addr(debug_io_.dbus_bits_addr);
   core_->io_debug_dbus_bits_wdata(debug_io_.dbus_bits_wdata);
   core_->io_debug_dbus_bits_write(debug_io_.dbus_bits_write);
+  core_->io_debug_dispatch_0_instFire(debug_io_.dispatch_0_instFire);
+  core_->io_debug_dispatch_1_instFire(debug_io_.dispatch_1_instFire);
+  core_->io_debug_dispatch_2_instFire(debug_io_.dispatch_2_instFire);
+  core_->io_debug_dispatch_3_instFire(debug_io_.dispatch_3_instFire);
+  core_->io_debug_dispatch_0_instAddr(debug_io_.dispatch_0_instAddr);
+  core_->io_debug_dispatch_1_instAddr(debug_io_.dispatch_1_instAddr);
+  core_->io_debug_dispatch_2_instAddr(debug_io_.dispatch_2_instAddr);
+  core_->io_debug_dispatch_3_instAddr(debug_io_.dispatch_3_instAddr);
+  core_->io_debug_dispatch_0_instInst(debug_io_.dispatch_0_instInst);
+  core_->io_debug_dispatch_1_instInst(debug_io_.dispatch_1_instInst);
+  core_->io_debug_dispatch_2_instInst(debug_io_.dispatch_2_instInst);
+  core_->io_debug_dispatch_3_instInst(debug_io_.dispatch_3_instInst);
+  core_->io_debug_regfile_writeAddr_0_valid(debug_io_.regfile_writeAddr_0_valid);
+  core_->io_debug_regfile_writeAddr_1_valid(debug_io_.regfile_writeAddr_1_valid);
+  core_->io_debug_regfile_writeAddr_2_valid(debug_io_.regfile_writeAddr_2_valid);
+  core_->io_debug_regfile_writeAddr_3_valid(debug_io_.regfile_writeAddr_3_valid);
+  core_->io_debug_regfile_writeAddr_0_bits(debug_io_.regfile_writeAddr_0_bits);
+  core_->io_debug_regfile_writeAddr_1_bits(debug_io_.regfile_writeAddr_1_bits);
+  core_->io_debug_regfile_writeAddr_2_bits(debug_io_.regfile_writeAddr_2_bits);
+  core_->io_debug_regfile_writeAddr_3_bits(debug_io_.regfile_writeAddr_3_bits);
+  core_->io_debug_regfile_writeData_0_valid(debug_io_.regfile_writeData_0_valid);
+  core_->io_debug_regfile_writeData_1_valid(debug_io_.regfile_writeData_1_valid);
+  core_->io_debug_regfile_writeData_2_valid(debug_io_.regfile_writeData_2_valid);
+  core_->io_debug_regfile_writeData_3_valid(debug_io_.regfile_writeData_3_valid);
+  core_->io_debug_regfile_writeData_4_valid(debug_io_.regfile_writeData_4_valid);
+  core_->io_debug_regfile_writeData_5_valid(debug_io_.regfile_writeData_5_valid);
+  core_->io_debug_regfile_writeData_0_bits_addr(debug_io_.regfile_writeData_0_bits_addr);
+  core_->io_debug_regfile_writeData_1_bits_addr(debug_io_.regfile_writeData_1_bits_addr);
+  core_->io_debug_regfile_writeData_2_bits_addr(debug_io_.regfile_writeData_2_bits_addr);
+  core_->io_debug_regfile_writeData_3_bits_addr(debug_io_.regfile_writeData_3_bits_addr);
+  core_->io_debug_regfile_writeData_4_bits_addr(debug_io_.regfile_writeData_4_bits_addr);
+  core_->io_debug_regfile_writeData_5_bits_addr(debug_io_.regfile_writeData_5_bits_addr);
+  core_->io_debug_regfile_writeData_0_bits_data(debug_io_.regfile_writeData_0_bits_data);
+  core_->io_debug_regfile_writeData_1_bits_data(debug_io_.regfile_writeData_1_bits_data);
+  core_->io_debug_regfile_writeData_2_bits_data(debug_io_.regfile_writeData_2_bits_data);
+  core_->io_debug_regfile_writeData_3_bits_data(debug_io_.regfile_writeData_3_bits_data);
+  core_->io_debug_regfile_writeData_4_bits_data(debug_io_.regfile_writeData_4_bits_data);
+  core_->io_debug_regfile_writeData_5_bits_data(debug_io_.regfile_writeData_5_bits_data);
 
   // AR
   core_->io_axi_master_read_addr_ready(axi2tlm_signals_.arready);
@@ -329,6 +370,127 @@ absl::Status CoreMiniAxi_tb::CheckStatusAsync() {
   return absl::OkStatus();
 }
 
+void CoreMiniAxi_tb::TraceInstructions() {
+  // Dispatch cycle
+  bool instFires[4] = {
+    debug_io_.dispatch_0_instFire.read(),
+    debug_io_.dispatch_1_instFire.read(),
+    debug_io_.dispatch_2_instFire.read(),
+    debug_io_.dispatch_3_instFire.read()
+  };
+  uint32_t instAddrs[4] = {
+    debug_io_.dispatch_0_instAddr.read().get_word(0),
+    debug_io_.dispatch_1_instAddr.read().get_word(0),
+    debug_io_.dispatch_2_instAddr.read().get_word(0),
+    debug_io_.dispatch_3_instAddr.read().get_word(0)
+  };
+  uint32_t instInsts[4] = {
+    debug_io_.dispatch_0_instInst.read().get_word(0),
+    debug_io_.dispatch_1_instInst.read().get_word(0),
+    debug_io_.dispatch_2_instInst.read().get_word(0),
+    debug_io_.dispatch_3_instInst.read().get_word(0)
+  };
+
+  bool writeAddrValids[4] = {
+    debug_io_.regfile_writeAddr_0_valid.read(),
+    debug_io_.regfile_writeAddr_1_valid.read(),
+    debug_io_.regfile_writeAddr_2_valid.read(),
+    debug_io_.regfile_writeAddr_3_valid.read()
+  };
+  uint32_t writeAddrAddrs[4] = {
+    debug_io_.regfile_writeAddr_0_bits.read().get_word(0),
+    debug_io_.regfile_writeAddr_1_bits.read().get_word(0),
+    debug_io_.regfile_writeAddr_2_bits.read().get_word(0),
+    debug_io_.regfile_writeAddr_3_bits.read().get_word(0)
+  };
+  uint32_t cycle = debug_io_.cycles.read().get_word(0);
+
+  // Push data about the instructions that were dispatched this cycle into
+  // the retirement buffer. Newly queued instructions are marked as incomplete.
+  for (int i = 0; i < 4; ++i) {
+    if (instFires[i] && writeAddrValids[i] && writeAddrAddrs[i] != 0) {
+      Instruction in;
+      in.pc = instAddrs[i];
+      in.inst = instInsts[i];
+      in.reg = writeAddrAddrs[i];
+      in.cycle = cycle;
+      in.completed = false;
+      retirement_buffer_.push_back(in);
+    }
+    // Trace ecall, despite having no register write.
+    // RISCV-DV looks for an ecall as the end of a test case for co-sim.
+    if (instFires[i] && instInsts[i] == kEcallInst) {
+      Instruction in;
+      in.pc = instAddrs[i];
+      in.inst = instInsts[i];
+      in.reg = 32;
+      in.cycle = cycle;
+      in.data = 0;
+      in.completed = false;
+      retirement_buffer_.push_back(in);
+    }
+  }
+
+  // Execute Cycle
+  bool writeDataValids[6] = {
+    debug_io_.regfile_writeData_0_valid.read(),
+    debug_io_.regfile_writeData_1_valid.read(),
+    debug_io_.regfile_writeData_2_valid.read(),
+    debug_io_.regfile_writeData_3_valid.read(),
+    debug_io_.regfile_writeData_4_valid.read(),
+    debug_io_.regfile_writeData_5_valid.read()
+  };
+
+  uint32_t writeDataAddrs[6] = {
+    debug_io_.regfile_writeData_0_bits_addr.read().get_word(0),
+    debug_io_.regfile_writeData_1_bits_addr.read().get_word(0),
+    debug_io_.regfile_writeData_2_bits_addr.read().get_word(0),
+    debug_io_.regfile_writeData_3_bits_addr.read().get_word(0),
+    debug_io_.regfile_writeData_4_bits_addr.read().get_word(0),
+    debug_io_.regfile_writeData_5_bits_addr.read().get_word(0)
+  };
+
+  uint32_t writeDataData[6] = {
+    debug_io_.regfile_writeData_0_bits_data.read().get_word(0),
+    debug_io_.regfile_writeData_1_bits_data.read().get_word(0),
+    debug_io_.regfile_writeData_2_bits_data.read().get_word(0),
+    debug_io_.regfile_writeData_3_bits_data.read().get_word(0),
+    debug_io_.regfile_writeData_4_bits_data.read().get_word(0),
+    debug_io_.regfile_writeData_5_bits_data.read().get_word(0)
+  };
+
+  // Iterate over the write ports, and find the first incomplete instruction
+  // that matches the write. Mark that instruction as completed, and move
+  // to the next write port.
+  for (int i = 0; i < 6; ++i) {
+    for (auto& in : retirement_buffer_) {
+      if (in.completed) continue;
+      if (writeDataValids[i] && writeDataAddrs[i] == in.reg && in.reg != 0) {
+        in.data = writeDataData[i];
+        in.completed = true;
+        break;
+      }
+      if (in.inst == kEcallInst) {
+        in.completed = true;
+        break;
+      }
+    }
+  }
+
+  // Iterate over the retirement buffer, moving completed instructions
+  // from the front into the committed_insts_ buffer.
+  // When we see an incomplete instruction, stop.
+  while (!retirement_buffer_.empty()) {
+    auto in = retirement_buffer_.front();
+    if (in.completed) {
+      committed_insts_.push_back(in);
+      retirement_buffer_.pop_front();
+    } else {
+      break;
+    }
+  }
+}
+
 void CoreMiniAxi_tb::posedge() {
   const bool core_io_dbus_valid = debug_io_.dbus_valid;
   const bool core_io_dbus_write = debug_io_.dbus_bits_write;
@@ -341,8 +503,19 @@ void CoreMiniAxi_tb::posedge() {
     }
   }
 
+  if (instr_trace_) {
+    TraceInstructions();
+  }
+
   static bool invoked_halted_cb = false;
   if ((io_halted || io_fault || tohost_halt) && !invoked_halted_cb) {
+    // If instruction tracing is enabled,
+    // print the data about the instruction trace.
+    if (instr_trace_) {
+      for (Instruction inst : committed_insts_) {
+        printf("0x%x,0x%x,0x%x,0x%x\n", inst.pc, inst.inst, inst.reg, inst.data);
+      }
+    }
     invoked_halted_cb = true;
     if (halted_cb_) {
       halted_cb_.value()();

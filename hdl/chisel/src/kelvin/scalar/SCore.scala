@@ -359,6 +359,21 @@ class SCore(p: Parameters) extends Module {
   io.debug.dbus.bits.addr := io.dbus.addr
   io.debug.dbus.bits.wdata := io.dbus.wdata
   io.debug.dbus.bits.write := io.dbus.write
+
+  for (i <- 0 until p.instructionLanes) {
+    io.debug.dispatch(i).instFire := dispatch.io.inst(i).fire
+    io.debug.dispatch(i).instAddr := dispatch.io.inst(i).bits.addr
+    io.debug.dispatch(i).instInst := dispatch.io.inst(i).bits.inst
+  }
+
+  for (i <- 0 until p.instructionLanes) {
+    io.debug.regfile.writeAddr(i).valid := regfile.io.writeAddr(i).valid
+    io.debug.regfile.writeAddr(i).bits := regfile.io.writeAddr(i).addr
+  }
+
+  for (i <- 0 until p.instructionLanes + 2) {
+    io.debug.regfile.writeData(i) := regfile.io.writeData(i)
+  }
 }
 
 object EmitSCore extends App {

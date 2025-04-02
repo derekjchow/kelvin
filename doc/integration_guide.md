@@ -119,6 +119,32 @@ B channel
 
 Note: the USER signal is not supported on any of the channels.
 
+#### Debug Signals
+
+| Signal   | Behaviour |
+| -------- | --------- |
+| en       | 4-bit value, indicating which fetch lanes are active |
+| addr     | 32-bit values, containing the PC for each fetch lane |
+| inst     | 32-bit values, containing the instruction for each fetch lane |
+| cycles   | cycle counter |
+| dbus     | Information about internal LSU transactions |
+| -> valid | Whether the transaction is valid |
+| -> bits  | addr: The 32-bit address for the transaction |
+|          | write: If the transaction is a write |
+|          | wdata: 128-bit write data for the transaction |
+| dispatch | Information about instructions which are dispatched for execution |
+| -> fire  | If an instruction was dispatched in the slot, this cycle |
+| -> addr  | The 32-bit address of the instruction |
+| -> inst  | The 32-bit value of the instruction |
+| regfile  | Information about writes to the register file |
+| -> writeAddr | Register addresses to which a future write is expected |
+| ->-> valid | If an instruction was dispatched in this lane, which will write the regfile |
+| ->-> bits | The 5-bit register address to which the write is expected |
+| -> writeData | For each port in the register file, information about writes |
+| ->-> valid | If a write occurred on this port, this cycle |
+| ->-> bits_addr | The 5-bit register address to which the write occurred |
+| ->-> bits_data | The 32-bit value which was written to the register |
+
 ### Kelvin Memory Map
 
 Memory accesses to Kelvin are defined as follows:

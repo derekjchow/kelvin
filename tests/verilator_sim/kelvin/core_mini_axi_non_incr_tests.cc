@@ -23,7 +23,8 @@
 
 extern "C" int sc_main(int argc, char** argv) {
   CoreMiniAxi_tb tb("CoreMiniAxi_tb", 1000000, /* random= */ false,
-                    /*debug_axi=*/true, /*wfi_cb=*/std::nullopt, std::nullopt);
+                    /*debug_axi=*/true, /*instr_trace=*/false,
+                    /*wfi_cb=*/std::nullopt, std::nullopt);
 
   std::thread sc_main_thread([&tb]() { tb.start(); });
 

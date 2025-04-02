@@ -37,12 +37,14 @@ ABSL_FLAG(int, cycles, 100000000, "Simulation cycles");
 ABSL_FLAG(bool, trace, false, "Dump VCD trace");
 ABSL_FLAG(std::string, binary, "", "Binary to execute");
 ABSL_FLAG(bool, debug_axi, false, "Enable AXI traffic debugging");
+ABSL_FLAG(bool, instr_trace, false, "Log instructions to console");
 
 static bool run(const char* name, const std::string binary, const int cycles,
-                const bool trace, const bool debug_axi) {
+                const bool trace, const bool debug_axi, const bool instr_trace) {
   absl::Mutex halted_mtx;
   absl::CondVar halted_cv;
   CoreMiniAxi_tb tb("CoreMiniAxi_tb", cycles, /* random= */ false, debug_axi,
+                    instr_trace,
                     /*wfi_cb=*/std::nullopt,
                     /*halted_cb=*/[&halted_mtx, &halted_cv]() {
                       absl::MutexLock lock_(&halted_mtx);
@@ -86,5 +88,5 @@ extern "C" int sc_main(int argc, char** argv) {
 
   return run(Sysc_tb::get_name(argv[0]), absl::GetFlag(FLAGS_binary),
       absl::GetFlag(FLAGS_cycles), absl::GetFlag(FLAGS_trace),
-      absl::GetFlag(FLAGS_debug_axi)) ? 0 : 1;
+      absl::GetFlag(FLAGS_debug_axi), absl::GetFlag(FLAGS_instr_trace)) ? 0 : 1;
 }

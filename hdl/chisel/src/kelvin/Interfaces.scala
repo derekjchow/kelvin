@@ -176,6 +176,22 @@ class DebugIO(p: Parameters) extends Bundle {
     val wdata = UInt(p.axi2DataBits.W)
     val write = Bool()
   })
+
+  val dispatch = Vec(p.instructionLanes, new Bundle {
+    val instFire = Bool()
+    val instAddr = UInt(32.W)
+    val instInst = UInt(32.W)
+  })
+
+  val regfile = new Bundle {
+    // At decode time, what registers the instructions will write to.
+    val writeAddr = Vec(p.instructionLanes, Valid(UInt(5.W)))
+    // Writeback to the register file.
+    val writeData = Vec(p.instructionLanes + 2, Valid(new Bundle {
+      val addr = UInt(5.W)
+      val data = UInt(32.W)
+    }))
+  }
 }
 
 class RegfileReadDataIO extends Bundle {
