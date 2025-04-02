@@ -26,7 +26,7 @@ case "${PROG}" in
         ;;
 esac
 
-exec "external/${TOOLCHAIN}/out/bin/${PREFIX}-${PROG}" \
+exec "external/${TOOLCHAIN}/bin/${PREFIX}-${PROG}" \
     "${ARGS[@]}" \
     "$@"\
     "${POSTARGS[@]}"
