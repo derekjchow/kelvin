@@ -4,6 +4,7 @@
 `include "rvv_backend.svh"
 
   `uvm_analysis_imp_decl(_inst)
+  `uvm_analysis_imp_decl(_trap_mdl)
 
   typedef logic [0:0]  sew1_t;
   typedef logic [7:0]  sew8_t;
@@ -27,9 +28,11 @@ class rvv_behavior_model extends uvm_component;
   bit all_one_for_agn = 0;
 
   uvm_analysis_imp_inst #(rvs_transaction,rvv_behavior_model) inst_imp; 
+  uvm_analysis_imp_trap_mdl #(trap_info_transaction,rvv_behavior_model) trap_imp; 
   uvm_analysis_port #(rvs_transaction) rt_ap; 
   uvm_analysis_port #(vrf_transaction) vrf_ap;
 
+  // vcsr
   agnostic_e        vma;
   agnostic_e        vta;
   sew_e             vsew; 
@@ -39,20 +42,28 @@ class rvv_behavior_model extends uvm_component;
   vxrm_e            vxrm;
   logic [`XLEN-1:0] vxsat;  
   logic             vxsat_valid;
+
+  // Register file
   xrf_t [31:0] xrf;
   vrf_t [31:0] vrf;
   vrf_t [31:0] vrf_delay;
   vrf_t [31:0] vrf_temp;
   vrf_t [31:0] vrf_bit_strobe_temp;
   vrf_byte_t [31:0] vrf_byte_strobe_temp;
+  vrf_t [31:0] vrf_writeback_temp;
 
   logic [`XLEN-1:0] vlmax;
   logic [`XLEN-1:0] imm_data;
 
+  // Memory
   rvv_mem mem;
 
   rvs_transaction inst_queue [$];
 
+  // trap trace
+  trap_info_transaction trap_queue [$];
+  bit trap_occured;
+  int trap_occured_uop;
 
   int total_inst = 0;
   int executed_inst = 0;
@@ -73,10 +84,11 @@ class rvv_behavior_model extends uvm_component;
   extern virtual task vrf_mdl();
 
   extern function logic [31:0] elm_fetch(oprand_type_e reg_type, int reg_idx, int elm_idx, int eew);
-  extern task elm_writeback(logic [31:0] result, oprand_type_e reg_type, int reg_idx, int elm_idx, int eew);
+  extern task elm_writeback(logic [31:0] result, oprand_type_e reg_type, int reg_idx, int elm_idx, int eew, bit strobe=1);
 
   // imp task
   extern virtual function void write_inst(rvs_transaction inst_tr);
+  extern virtual function void write_trap_mdl(trap_info_transaction trap_tr);
 
 endclass : rvv_behavior_model
 
@@ -89,6 +101,7 @@ endclass : rvv_behavior_model
   function void rvv_behavior_model::build_phase(uvm_phase phase);
     super.build_phase(phase);
     inst_imp = new("inst_imp", this);
+    trap_imp = new("trap_imp", this);
     rt_ap = new("rt_ap", this);
     vrf_ap = new("vrf_ap", this);
     mem = new("mdl_mem", this);
@@ -161,6 +174,12 @@ endclass : rvv_behavior_model
     this.total_inst++;
   endfunction
 
+  function void rvv_behavior_model::write_trap_mdl(trap_info_transaction trap_tr);
+    `uvm_info("MDL", "get a trap", UVM_HIGH)
+    `uvm_info("MDL", trap_tr.sprint(), UVM_HIGH)
+    trap_queue.push_back(trap_tr);
+  endfunction
+
   task rvv_behavior_model::rx_mdl();
   endtask: rx_mdl
 
@@ -204,6 +223,7 @@ endclass : rvv_behavior_model
 
     logic [`NUM_RT_UOP-1:0] rt_uop;
     logic [`NUM_RT_UOP-1:0] rt_last_uop;
+    int exe_inst_num;
     rvs_transaction inst_tr;
     rvs_transaction rt_tr;
 
@@ -242,10 +262,10 @@ endclass : rvv_behavior_model
     forever begin
       @(posedge rvs_if.clk);
       if(rvs_if.rst_n) begin
-      rt_uop = rvs_if.rt_uop;
-      rt_last_uop = rvs_if.rt_last_uop;
-      while(|rt_last_uop) begin
-      if(rt_last_uop[0]) begin
+      exe_inst_num = 0;
+      foreach(rvs_if.rt_uop[i])
+        exe_inst_num += rvs_if.rt_last_uop[i] || rvs_if.rt_uop[i] & rvs_if.vcsr_valid & rvs_if.vcsr_ready;
+      while(exe_inst_num > 0) begin
         // --------------------------------------------------
         // 0. Get inst and update VCSR
         if(inst_queue.size()>0) begin
@@ -277,6 +297,8 @@ endclass : rvv_behavior_model
           `uvm_error(get_type_name(), "Pop inst_queue while empty.")
           break;
         end
+        
+
         // 0.2 Calculate & decode for this instr
         eew = 8 << vsew;
         fraction_lmul = vlmul[2];
@@ -932,10 +954,20 @@ endclass : rvv_behavior_model
           continue;
       end
 
+        if(trap_queue.size()>0 && trap_queue[0].trap_pc == inst_tr.pc) begin
+          trap_occured = 1;
+          trap_occured_uop = trap_queue[0].uop_idx;
+          inst_tr.trap_occured = 1;
+          inst_queue.delete();
+        end else begin
+          trap_occured = 0;
+        end
 
 
         vrf_temp = vrf;
         vrf_bit_strobe_temp = '0;
+        vrf_byte_strobe_temp = '0;
+        vrf_writeback_temp  = '0;
         `uvm_info("MDL",$sformatf("Check done!\nelm_idx_max=%0d\ndest_eew=%0d\nsrc2_eew=%0d\nsrc1_eew=%0d\nsrc0_eew=%0d\ndest_emul=%2.4f\nsrc2_emul=%2.4f\nsrc1_emul=%2.4f\nsrc0_emul=%2.4f\n",elm_idx_max,dest_eew,src2_eew,src1_eew,src0_eew,dest_emul,src2_emul,src1_emul,src0_emul),UVM_LOW)
         // --------------------------------------------------
         // 3. Operate elements
@@ -1256,20 +1288,37 @@ endclass : rvv_behavior_model
         // Vec load inst will retire all uops, including all pre-start inst, for now.
         if(rt_tr.dest_type == VRF) begin
           int seg_num = 0;
+          int dest_reg_num = 0;
           if(inst_tr.lsu_mop == LSU_E && inst_tr.src2_type == FUNC && inst_tr.src2_idx == WHOLE_REG)
             seg_num = 1;
           else
             seg_num = inst_tr.lsu_nf+1;
-          for(int reg_idx=dest_reg_idx_base; reg_idx<dest_reg_idx_base+int'($ceil(dest_emul))*(seg_num); reg_idx++) begin
-            rt_tr.rt_vrf_index.push_back(reg_idx);
-            rt_tr.rt_vrf_strobe.push_back(vrf_byte_strobe_temp[reg_idx]);
-            rt_tr.rt_vrf_data.push_back(vrf_temp[reg_idx]);
+          dest_reg_num = int'($ceil(dest_emul))*(seg_num);
+          for(int reg_idx=dest_reg_idx_base; reg_idx<dest_reg_idx_base+dest_reg_num; reg_idx++) begin
+            if(|vrf_writeback_temp[reg_idx]) begin
+              rt_tr.rt_vrf_index.push_back(reg_idx);
+              rt_tr.rt_vrf_strobe.push_back(vrf_byte_strobe_temp[reg_idx]);
+              rt_tr.rt_vrf_data.push_back(vrf_temp[reg_idx]);
+            end
           end
         end
         // VXSAT
         vxsat_valid = vxsat;
         rt_tr.vxsat = vxsat;
         rt_tr.vxsat_valid = vxsat_valid;
+
+        if(trap_occured == 1) begin
+          rt_tr.trap_occured  = 1;
+          rt_tr.trap_vma      = vma;
+          rt_tr.trap_vta      = vta;
+          rt_tr.trap_vsew     = vsew;
+          rt_tr.trap_vlmul    = vlmul;
+          rt_tr.trap_vl       = vl;
+          rt_tr.trap_vstart   = vstart;
+          rt_tr.trap_vxrm     = vxrm;
+          trap_queue.pop_front();
+          trap_occured = 0;
+        end
 
         `uvm_info("MDL",$sformatf("Complete calculation:\n%s",rt_tr.sprint()),UVM_LOW)
         rt_ap.write(rt_tr);
@@ -1324,9 +1373,8 @@ endclass : rvv_behavior_model
     end // else end is_permutation_inst
         
       //`uvm_info("MDL",$sformatf("Complete calculation:\n%s",rt_tr.sprint()),UVM_LOW)
-      end // if(rt_last_uop[0])
-        rt_last_uop = rt_last_uop >> 1;
-      end // while(|rt_last_uop)
+      exe_inst_num--;
+      end // while(exe_inst_num)
       end // rst_n
     end // forever
     // `uvm_fatal(get_type_name()),"Im here.")
@@ -1372,7 +1420,7 @@ endclass : rvv_behavior_model
     // `uvm_info("MDL", $sformatf("result=%0h", result), UVM_HIGH)
   endfunction: elm_fetch
 
-  task rvv_behavior_model::elm_writeback(logic [31:0] result, oprand_type_e reg_type, int reg_idx, int elm_idx, int eew);
+  task rvv_behavior_model::elm_writeback(logic [31:0] result, oprand_type_e reg_type, int reg_idx, int elm_idx, int eew, bit strobe = 1);
     int bit_count;
     bit_count = eew;
     case(reg_type)
@@ -1381,7 +1429,8 @@ endclass : rvv_behavior_model
         elm_idx = elm_idx % (`VLEN / eew);
         for(int i=0; i<bit_count; i++) begin
           this.vrf_temp[reg_idx][elm_idx*bit_count + i] = result[i];
-          this.vrf_bit_strobe_temp[reg_idx][elm_idx*bit_count + i] = 1'b1;
+          this.vrf_bit_strobe_temp[reg_idx][elm_idx*bit_count + i] = strobe;
+          this.vrf_writeback_temp[reg_idx][elm_idx*bit_count + i] = 1'b1;
         end
       end
       SCALAR: begin
@@ -2318,6 +2367,9 @@ class lsu_processor;
   int data_size; // byte size
   int vidx_size; // byte size
 
+  int uops_num;
+  int elm_per_uop;
+
   bit vm;
 
   function new();
@@ -2350,26 +2402,49 @@ class lsu_processor;
         `uvm_info("MDL", $sformatf("dest=0x%8x, src3=0x%8x, src2=0x%8x, src1=0x%8x, src0=0x%8x", dest, src3, src2, src1, src0), UVM_HIGH);
 
         update_addr(inst_tr, seg_idx, seg_size, elm_idx, data_size, src2, src1);
-        if(elm_idx<vstart) begin
-          // pre-start
-        end else if(elm_idx >= evl) begin
-          // tail
-        end else if(!(vm || src0)) begin
-          // body-inactive
-        end else begin
-          case(inst_tr.inst_type)
-            LD: begin
-              rvm.mem.pc = inst_tr.pc;
-              rvm.mem.load_from_mem(dest, this.address, data_size);
-              rvm.elm_writeback(dest, inst_tr.dest_type, dest_reg_idx_base, elm_idx, dest_eew);
-            end
-            ST: begin
-              rvm.mem.pc = inst_tr.pc;
-              rvm.mem.store_to_mem(src3, this.address, data_size);
-            end
-          endcase
+        if(rvm.trap_occured && (elm_idx/elm_per_uop)<rvm.trap_occured_uop || !rvm.trap_occured) begin
+          if(elm_idx<vstart) begin
+            // pre-start
+            case(inst_tr.inst_type)
+              LD: begin
+                rvm.elm_writeback(dest, inst_tr.dest_type, dest_reg_idx_base, elm_idx, dest_eew, 0);
+              end
+            endcase
+          end else if(elm_idx >= evl) begin
+            // tail
+            case(inst_tr.inst_type)
+              LD: begin
+                rvm.elm_writeback(dest, inst_tr.dest_type, dest_reg_idx_base, elm_idx, dest_eew, 0);
+              end
+            endcase
+          end else if(!(vm || src0)) begin
+            // body-inactive
+            case(inst_tr.inst_type)
+              LD: begin
+                rvm.elm_writeback(dest, inst_tr.dest_type, dest_reg_idx_base, elm_idx, dest_eew, 0);
+              end
+            endcase
+          end else begin
+            case(inst_tr.inst_type)
+              LD: begin
+                rvm.mem.pc = inst_tr.pc;
+                rvm.mem.load_from_mem(dest, this.address, data_size);
+                rvm.elm_writeback(dest, inst_tr.dest_type, dest_reg_idx_base, elm_idx, dest_eew);
+              end
+              ST: begin
+                rvm.mem.pc = inst_tr.pc;
+                rvm.mem.store_to_mem(src3, this.address, data_size);
+              end
+            endcase
+          end
         end
 
+        if(rvm.trap_occured) begin
+          if(inst_tr.lsu_mop inside {LSU_UXEI, LSU_OXEI} && lsu_nf+1 > 1) 
+            rvm.vstart = 0;
+          else 
+            rvm.vstart = rvm.trap_queue[0].vstart;
+        end 
         `uvm_info("MDL", "\n---------------------------------------------------------------------------------------------------------------------------------\n", UVM_LOW)
       end
     end
@@ -2379,6 +2454,9 @@ class lsu_processor;
   
     int eew_max;
     real emul_max;
+
+    `uvm_info("MDL/LSU", "lsu decode get a inst", UVM_HIGH)
+    `uvm_info("MDL/LSU", inst_tr.sprint(), UVM_HIGH)
 
     sew = 8 << inst_tr.vsew;
     lmul = 2.0 ** $signed(inst_tr.vlmul);
@@ -2545,6 +2623,8 @@ class lsu_processor;
       end
     endcase
     elm_idx_max = int'($ceil(emul_max)) * `VLEN / eew_max;
+    uops_num = int'($ceil(emul_max)) * (seg_idx_max);
+    elm_per_uop = `VLEN / eew_max;
 
     return 0;
   endfunction: decode

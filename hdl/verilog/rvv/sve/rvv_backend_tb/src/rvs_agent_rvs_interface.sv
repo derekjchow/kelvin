@@ -31,10 +31,6 @@ interface rvs_interface (input bit clk, input bit rst_n);
   logic                                             wr_vxsat_ready; // for all uops
 
 // exception handler
-  // trap signal handshake
-  logic                           trap_valid_rvs2rvv;
-  TRAP_t                          trap_rvs2rvv;
-  logic                           trap_ready_rvv2rvs;    
   // the vcsr of last retired uop in last cycle
   logic                           vcsr_valid;
   RVVConfigState                  vector_csr;

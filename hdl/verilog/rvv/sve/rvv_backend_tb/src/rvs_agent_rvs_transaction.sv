@@ -97,7 +97,15 @@ class rvs_transaction extends uvm_sequence_item;
        logic             vxsat_valid;  
 
   /* Trap field */
-  // TODO
+       bit          trap_occured;
+       agnostic_e   trap_vma;
+       agnostic_e   trap_vta;
+       sew_e        trap_vsew; 
+       lmul_e       trap_vlmul;
+       int          trap_vl;
+       int          trap_vstart;
+       vxrm_e       trap_vxrm;
+
 // Constrain ----------------------------------------------------------
 
   constraint c_solve_order {
@@ -729,6 +737,16 @@ class rvs_transaction extends uvm_sequence_item;
     end
     `uvm_field_int(illegal_inst_en,UVM_ALL_ON)
     `uvm_field_int(is_last_inst,UVM_ALL_ON)
+    `uvm_field_int(trap_occured, UVM_ALL_ON)
+    if(trap_occured) begin
+     `uvm_field_enum(agnostic_e, trap_vma, UVM_ALL_ON)
+     `uvm_field_enum(agnostic_e,trap_vta, UVM_ALL_ON)
+     `uvm_field_enum(sew_e, trap_vsew, UVM_ALL_ON) 
+     `uvm_field_enum(lmul_e, trap_vlmul, UVM_ALL_ON)
+     `uvm_field_int(trap_vl, UVM_ALL_ON)
+     `uvm_field_int(trap_vstart, UVM_ALL_ON)
+     `uvm_field_enum(vxrm_e, trap_vxrm, UVM_ALL_ON)
+    end
   `uvm_object_utils_end
 
   extern function new(string name = "Trans");

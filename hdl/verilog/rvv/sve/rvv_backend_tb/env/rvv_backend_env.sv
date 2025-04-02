@@ -51,9 +51,16 @@ function void rvv_backend_env::connect_phase(uvm_phase phase);
   rvs_agt.rvs_drv.rvv_state_port.connect(rvs_agt.rvs_mon.rvv_state_imp);
   // lsu_agt.lsu_mon.mon_analysis_port.connect(scb.lsu_imp);
 
+  // ctrl ap
+  rvs_agt.rvs_mon.ctrl_ap.connect(scb.ctrl_imp);
+
   // retire check ap
   rvs_agt.rvs_mon.rt_ap.connect(scb.rvs_imp);
   mdl.rt_ap.connect(scb.mdl_imp);
+
+  // trap info ap
+  lsu_agt.lsu_drv.trap_ap.connect(rvs_agt.rvs_drv.trap_imp);
+  lsu_agt.lsu_drv.trap_ap.connect(mdl.trap_imp);
 
   // vrf check ap
   rvs_agt.vrf_mon.vrf_ap.connect(scb.rvs_vrf_imp);

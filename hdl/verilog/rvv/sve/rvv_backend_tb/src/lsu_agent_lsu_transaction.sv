@@ -3,6 +3,8 @@
 
 class lsu_transaction extends uvm_sequence_item;
   /* Tracing info */
+  string inst_string;
+
   typedef enum {LOAD, STORE} kinds_e;
   kinds_e kind;
 
@@ -13,6 +15,7 @@ class lsu_transaction extends uvm_sequence_item;
 
   int total_uops_num;
   int unsigned base_addr;
+  int unsigned vstart;
 
   /* info about vreg */
   // v0.t
@@ -31,7 +34,6 @@ class lsu_transaction extends uvm_sequence_item;
   eew_e vidx_vreg_eew;
   int   vidx_vreg_byte_start;
   int   vidx_vreg_byte_end;
-  
 
   /* info about load/store address/data */
   bit  lsu_slot_addr_valid;
@@ -43,6 +45,7 @@ class lsu_transaction extends uvm_sequence_item;
   /* uop status */
   bit uop_rx_sent;
   bit uop_done;
+  rand bit trap_occured;
 
   /* LSU delay */
   rand int unsigned rvv2lsu_delay;
@@ -65,6 +68,7 @@ class lsu_transaction extends uvm_sequence_item;
 
 // Auto Field ---------------------------------------------------------
   `uvm_object_utils_begin(lsu_transaction) 
+    `uvm_field_string(inst_string,UVM_ALL_ON)
     `uvm_field_enum(kinds_e,kind,UVM_ALL_ON)
     `uvm_field_int(uop_pc,UVM_ALL_ON)
     `uvm_field_int(uop_index,UVM_ALL_ON)
@@ -72,6 +76,7 @@ class lsu_transaction extends uvm_sequence_item;
     `uvm_field_int(is_indexed,UVM_ALL_ON)
     `uvm_field_int(total_uops_num,UVM_ALL_ON)
     `uvm_field_int(base_addr,UVM_ALL_ON)
+    `uvm_field_int(vstart,UVM_ALL_ON)
     
     `uvm_field_int(vm,UVM_ALL_ON)
 
@@ -96,6 +101,7 @@ class lsu_transaction extends uvm_sequence_item;
 
     `uvm_field_int(uop_rx_sent,UVM_ALL_ON)
     `uvm_field_int(uop_done,UVM_ALL_ON)
+    `uvm_field_int(trap_occured,UVM_ALL_ON)
     `uvm_field_int(rvv2lsu_delay,UVM_ALL_ON)
     `uvm_field_int(lsu2rvv_delay,UVM_ALL_ON)
   `uvm_object_utils_end
@@ -154,4 +160,25 @@ function void lsu_transaction::do_print(uvm_printer printer);
     );
 endfunction: do_print
 
+class trap_info_transaction extends uvm_sequence_item;
+  int unsigned trap_pc;
+  int unsigned vstart;
+  int unsigned uop_idx;
+  
+  rand int unsigned vcsr_ready_delay;
+  rand int unsigned gen_inst_after_trap;
+  
+  `uvm_object_utils_begin(trap_info_transaction) 
+    `uvm_field_int(trap_pc,UVM_ALL_ON)
+    `uvm_field_int(vstart,UVM_ALL_ON)
+    `uvm_field_int(uop_idx,UVM_ALL_ON)
+  `uvm_object_utils_end
+
+  function new(string name = "Trans");
+    super.new(name);
+    trap_pc = 0;
+    vstart  = 0;
+  endfunction
+
+endclass: trap_info_transaction
 `endif // LSU_TRANSACTION__SV

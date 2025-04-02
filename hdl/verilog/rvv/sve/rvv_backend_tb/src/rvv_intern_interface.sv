@@ -58,17 +58,27 @@ interface rvv_intern_interface (input bit clk, input bit rst_n);
   logic [`NUM_DP_UOP-1:0] uop_ready_rob2dp; // ROB reserve space
   ARCH_HAZARD_t           arch_hazard;      
 
+// Trap
+  // trap signal handshake
+  logic                           trap_valid_rvs2rvv;
+  logic                           trap_ready_rvv2rvs;  
+
+  // the vcsr of last retired uop in last cycle
+  logic                           vcsr_valid;
+  logic                           vcsr_ready;
 
   function bit rvv_is_idle();
-    rvv_is_idle = cmd_q_empty &
-                  uop_q_empty &
-                  alu_rs_empty &
-                  mul_rs_empty &
-                  div_rs_empty &
-                  pmtrdt_rs_empty &
-                  lsu_rs_empty &
-                  rob_empty &
-                  (|vrf_wr_wenb_full === 1'b0);
+    rvv_is_idle = cmd_q_empty &&
+                  uop_q_empty &&
+                  alu_rs_empty &&
+                  mul_rs_empty &&
+                  div_rs_empty &&
+                  pmtrdt_rs_empty &&
+                  lsu_rs_empty &&
+                  rob_empty &&
+                  (|vrf_wr_wenb_full === 1'b0) &&
+                  !trap_valid_rvs2rvv && !trap_ready_rvv2rvs &&
+                  !vcsr_valid && !vcsr_ready;
   endfunction: rvv_is_idle
 endinterface: rvv_intern_interface
 `endif // RVV_INTERN_INTERFACE__SV

@@ -650,6 +650,32 @@ class lsu_random_test extends rvv_backend_test;
   endfunction
 endclass: lsu_random_test
 
+class lsu_random_test_trap_en extends lsu_random_test;
+
+  `uvm_component_utils(lsu_random_test_trap_en)
+
+  function new(string name, uvm_component parent);
+    super.new(name, parent);
+  endfunction
+
+  function void build_phase(uvm_phase phase);
+    super.build_phase(phase);
+    uvm_config_db#(bit)::set(uvm_root::get(), "*", "trap_en", 1'b1);
+  endfunction
+
+  function void connect_phase(uvm_phase phase);
+    super.connect_phase(phase);
+  endfunction
+
+  task main_phase(uvm_phase phase);
+    super.main_phase(phase);
+  endtask
+
+  function void final_phase(uvm_phase phase);
+    super.final_phase(phase);
+  endfunction
+endclass: lsu_random_test_trap_en
+
 //-----------------------------------------------------------
 // Normal random test
 //-----------------------------------------------------------
@@ -710,4 +736,30 @@ class rvv_random_test extends rvv_backend_test;
     super.final_phase(phase);
   endfunction
 endclass: rvv_random_test
+
+class rvv_random_test_trap_en extends rvv_random_test;
+
+  `uvm_component_utils(rvv_random_test_trap_en)
+
+  function new(string name, uvm_component parent);
+    super.new(name, parent);
+  endfunction
+
+  function void build_phase(uvm_phase phase);
+    super.build_phase(phase);
+    uvm_config_db#(bit)::set(uvm_root::get(), "*", "trap_en", 1'b1);
+  endfunction
+
+  function void connect_phase(uvm_phase phase);
+    super.connect_phase(phase);
+  endfunction
+
+  task main_phase(uvm_phase phase);
+    super.main_phase(phase);
+  endtask
+
+  function void final_phase(uvm_phase phase);
+    super.final_phase(phase);
+  endfunction
+endclass: rvv_random_test_trap_en
 `endif // RVV_BACKEND_RANDOM_TEST__SV

@@ -6,12 +6,15 @@
 typedef class rvs_transaction;
 typedef class rvs_driver;
 typedef class rvv_backend_test;
+typedef class trap_info_transaction;
 
+  `uvm_analysis_imp_decl(_trap_rvs)
 class rvs_driver extends uvm_driver # (rvs_transaction);
 
   uvm_analysis_port #(rvs_transaction) inst_ap; 
   uvm_blocking_get_port #(vrf_mon_pkg::vrf_state_e) vrf_state_port;
   uvm_blocking_get_port #(rvv_state_pkg::rvv_state_e) rvv_state_port;
+  uvm_analysis_imp_trap_rvs #(trap_info_transaction,rvs_driver) trap_imp; 
 
   rvv_backend_test test_top;
   
@@ -32,6 +35,11 @@ class rvs_driver extends uvm_driver # (rvs_transaction);
 
   delay_mode_pkg::delay_mode_e       delay_mode_rt_xrf;
   delay_mode_pkg::delay_mode_e       delay_mode_wr_vxsat;
+  delay_mode_pkg::delay_mode_e       delay_mode_vcsr_ready;
+
+  trap_info_transaction trap_queue [$];
+  int unsigned    vcsr_ready_delay;
+  int unsigned    gen_inst_after_trap;
 
   extern function new(string name = "rvs_driver", uvm_component parent = null); 
  
@@ -49,6 +57,8 @@ class rvs_driver extends uvm_driver # (rvs_transaction);
   extern protected virtual task rx_driver();
   extern protected virtual task vrf_driver();
 
+  extern virtual function void write_trap_rvs(trap_info_transaction trap_tr);
+
 endclass: rvs_driver
 
 function rvs_driver::new(string name = "rvs_driver", uvm_component parent = null);
@@ -56,6 +66,7 @@ function rvs_driver::new(string name = "rvs_driver", uvm_component parent = null
   inst_ap = new("inst_ap", this);
   vrf_state_port = new("vrf_state_port", this);
   rvv_state_port = new("rvv_state_port", this);
+  trap_imp = new("trap_imp", this);
 endfunction: new
 
 function void rvs_driver::build_phase(uvm_phase phase);
@@ -211,6 +222,17 @@ task rvs_driver::rx_driver();
   logic wr_vxsat_ready;
   forever begin
     @(posedge rvs_if.clk);
+    // trap handler
+    if(rvs_if.vcsr_ready) begin
+      if(rvs_if.vcsr_valid) begin
+        stall_tx = 0;
+        trap_queue.pop_front();
+      end else begin
+        `uvm_info(get_type_name(), "Stall rvs_driver tx to wait for vcsr_valid", UVM_LOW)
+        stall_tx = 1;
+      end
+    end
+
     // rt_xrf_ready response
     for(int i=0; i<`NUM_RT_UOP; i++) begin
       case(delay_mode_rt_xrf)
@@ -234,6 +256,18 @@ task rvs_driver::rx_driver();
         assert(std::randomize(wr_vxsat_ready) with {wr_vxsat_ready dist {0 := 0, 1 := 100};});
     endcase
     rvs_if.wr_vxsat_ready <= wr_vxsat_ready;
+
+    // vector_csr response
+    if(trap_queue.size() > 0) begin
+      if(trap_queue[0].vcsr_ready_delay == 0) begin
+        rvs_if.vcsr_ready <= 1'b1;
+      end else begin
+        trap_queue[0].vcsr_ready_delay--;
+        rvs_if.vcsr_ready <= 1'b0;
+      end
+    end else begin
+      rvs_if.vcsr_ready <= 1'b0;
+    end
   end
 endtask: rx_driver
 
@@ -270,6 +304,16 @@ task rvs_driver::vrf_driver();
 
 endtask: vrf_driver
 
+  function void rvs_driver::write_trap_rvs(trap_info_transaction trap_tr);
+    `uvm_info(get_type_name(), "get a trap", UVM_HIGH)
+    `uvm_info(get_type_name(), trap_tr.sprint(), UVM_HIGH)
+    assert(trap_tr.randomize(vcsr_ready_delay) with {
+      vcsr_ready_delay dist { 
+        [0:10] := 100
+      };
+    });
+    trap_queue.push_back(trap_tr);
+  endfunction
 `endif // RVS_DRIVER__SV
 
 

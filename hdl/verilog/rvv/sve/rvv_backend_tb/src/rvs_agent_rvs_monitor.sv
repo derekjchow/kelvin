@@ -14,6 +14,7 @@ class rvs_monitor extends uvm_monitor;
 
   uvm_analysis_port #(rvs_transaction) inst_ap; 
   uvm_analysis_port #(rvs_transaction) rt_ap;   
+  uvm_analysis_port #(rvs_transaction) ctrl_ap; 
 
   typedef virtual rvs_interface v_if;
   typedef virtual rvv_intern_interface v_if4;
@@ -64,6 +65,8 @@ function void rvs_monitor::build_phase(uvm_phase phase);
   rvv_state_imp = new("rvv_state_imp", this);
   inst_ap = new ("inst_ap",this);
   rt_ap = new ("rt_ap",this);
+  ctrl_ap = new("ctrl_ap", this);
+
   ctrl_tr = new("ctrl_tr");
 endfunction: build_phase
 
@@ -120,7 +123,11 @@ task rvs_monitor::main_phase(uvm_phase phase);
     @(posedge rvs_if.clk);
     if(ctrl_tr.is_last_inst) begin
       get_rvv_state(rvv_state);
-      if(inst_tx_queue.size()==0 && inst_rx_queue.size()==0 && rvv_state==rvv_state_pkg::IDLE) begin 
+      if(inst_tx_queue.size()==0 && inst_rx_queue.size()==0 && inst_temp_queue.size()==0 && rvv_state==rvv_state_pkg::IDLE) begin 
+        repeat(10) @(posedge rvs_if.clk);
+        ctrl_ap.write(ctrl_tr);
+        `uvm_info(get_type_name(), "ready to drop obj", UVM_HIGH)
+        `uvm_info(get_type_name(), $sformatf("rvv state=%s", rvv_state), UVM_HIGH)
         repeat(10) @(posedge rvs_if.clk);
         break;
       end
@@ -148,6 +155,7 @@ task rvs_monitor::tx_monitor();
           temp_tr = new("temp_tr");
           temp_tr.copy(inst_tr);
           inst_temp_queue.push_back(temp_tr);
+          ctrl_tr = inst_tr;
           this.total_inst++;
         end
       end
@@ -179,6 +187,37 @@ task rvs_monitor::rx_monitor();
     if(~rvs_if.rst_n) begin
       ready_to_new_inst = 1;
     end else begin
+      // if(rvs_if.vcsr_valid && rvs_if.vcsr_ready) begin
+      //   if(ready_to_new_inst) begin
+      //     tr = new("tr");
+      //     tr = inst_rx_queue.pop_front();
+      //     ready_to_new_inst = 0;
+      //   end
+      //   // TRAP
+      //   tr.trap_occured = 1;
+      //   tr.trap_vma     = rvs_if.vector_csr.ma;
+      //   tr.trap_vta     = rvs_if.vector_csr.ta;
+      //   assert($cast(tr.trap_vsew, rvs_if.vector_csr.sew)); 
+      //   assert($cast(tr.trap_vlmul, rvs_if.vector_csr.lmul));
+      //   tr.trap_vl      = rvs_if.vector_csr.vl;
+      //   tr.trap_vstart  = rvs_if.vector_csr.vstart;
+      //   assert($cast(tr.trap_vxrm, rvs_if.vector_csr.xrm));
+
+      //   tr.is_rt = 1;
+      //   // Avoid x-state
+      //   if(tr.vxsat !== 1) tr.vxsat = '0;
+      //   if(tr.vxsat_valid !== 1) tr.vxsat_valid = '0;
+      //   // tr.is_last_inst = 1;
+      //   `uvm_info(get_type_name(), $sformatf("Send rt transaction to scb"),UVM_HIGH)
+      //   `uvm_info(get_type_name(), tr.sprint(),UVM_HIGH)
+      //   rt_ap.write(tr); // write to scb
+      //   ready_to_new_inst = 1;
+      //   this.executed_inst++;
+
+      //   // Clean reset inst
+      //   inst_rx_queue.delete();
+      //   inst_temp_queue.delete();
+      // end
       // `uvm_info(get_type_name(),$sformatf("rt_uop=0x%1x, rt_last_uop=0x%1x",rvs_if.rt_uop, rvs_if.rt_last_uop), UVM_HIGH)
       for(int rt_idx=0; rt_idx<`NUM_RT_UOP; rt_idx++) begin
         if(rvs_if.rt_uop[rt_idx]) begin
@@ -187,6 +226,7 @@ task rvs_monitor::rx_monitor();
             tr = inst_rx_queue.pop_front();
             ready_to_new_inst = 0;
           end
+
           // VRF
           if(rvs_if.rt_vrf_valid_rob2rt[rt_idx]) begin
             vrf_overlap = 0;
@@ -224,16 +264,49 @@ task rvs_monitor::rx_monitor();
             tr.vxsat_valid  = tr.vxsat_valid;
           end
 
+          // TRAP
+          if(rvs_if.vcsr_valid && rvs_if.vcsr_ready) begin
+            if(ready_to_new_inst) begin
+              tr = new("tr");
+              tr = inst_rx_queue.pop_front();
+              ready_to_new_inst = 0;
+            end
+            tr.trap_occured = 1;
+            tr.trap_vma     = rvs_if.vector_csr.ma;
+            tr.trap_vta     = rvs_if.vector_csr.ta;
+            assert($cast(tr.trap_vsew, rvs_if.vector_csr.sew)); 
+            assert($cast(tr.trap_vlmul, rvs_if.vector_csr.lmul));
+            tr.trap_vl      = rvs_if.vector_csr.vl;
+            tr.trap_vstart  = rvs_if.vector_csr.vstart;
+            assert($cast(tr.trap_vxrm, rvs_if.vector_csr.xrm));
+
+            tr.is_rt = 1;
+            // Avoid x-state
+            if(tr.vxsat !== 1) tr.vxsat = '0;
+            if(tr.vxsat_valid !== 1) tr.vxsat_valid = '0;
+            // tr.is_last_inst = 1;
+            `uvm_info(get_type_name(), $sformatf("Send rt transaction to scb"),UVM_HIGH)
+            `uvm_info(get_type_name(), tr.sprint(),UVM_HIGH)
+            rt_ap.write(tr); // write to scb
+            ready_to_new_inst = 1;
+            this.executed_inst++;
+
+            // Clean reset inst
+            inst_rx_queue.delete();
+            inst_temp_queue.delete();
+            continue;
+          end
+
           // LAST_UOP
           if(rvs_if.rt_last_uop[rt_idx]) begin
             tr.is_rt = 1;
             // Avoid x-state
             if(tr.vxsat !== 1) tr.vxsat = '0;
             if(tr.vxsat_valid !== 1) tr.vxsat_valid = '0;
+            // tr.is_last_inst = 1;
             `uvm_info(get_type_name(), $sformatf("Send rt transaction to scb"),UVM_HIGH)
             `uvm_info(get_type_name(), tr.sprint(),UVM_HIGH)
             rt_ap.write(tr); // write to scb
-            ctrl_tr = tr;
             ready_to_new_inst = 1;
             this.executed_inst++;
           end

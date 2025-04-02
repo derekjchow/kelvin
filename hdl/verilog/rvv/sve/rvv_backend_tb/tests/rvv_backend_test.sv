@@ -2146,6 +2146,7 @@ class lsu_unit_stride_test extends rvv_backend_test;
   endfunction
 endclass: lsu_unit_stride_test
 
+
 class lsu_unit_stride_mask_test extends rvv_backend_test;
 
   lsu_base_seq rvs_seq;
@@ -2519,5 +2520,233 @@ class lsu_fof_test extends rvv_backend_test;
     super.final_phase(phase);
   endfunction
 endclass: lsu_fof_test
+
+//==========================================================
+// Trap tests
+//==========================================================
+class lsu_unit_stride_test_trap_en extends lsu_unit_stride_test;
+  `uvm_component_utils(lsu_unit_stride_test_trap_en)
+
+  function new(string name, uvm_component parent);
+    super.new(name, parent);
+  endfunction
+
+  function void build_phase(uvm_phase phase);
+    super.build_phase(phase);
+    uvm_config_db#(bit)::set(uvm_root::get(), "*", "trap_en", 1'b1);
+  endfunction
+
+  function void connect_phase(uvm_phase phase);
+    super.connect_phase(phase);
+  endfunction
+
+  task main_phase(uvm_phase phase);
+    super.main_phase(phase);
+  endtask
+
+  function void final_phase(uvm_phase phase);
+    super.final_phase(phase);
+  endfunction
+endclass: lsu_unit_stride_test_trap_en
+
+class lsu_const_stride_test_trap_en extends lsu_const_stride_test;
+  `uvm_component_utils(lsu_const_stride_test_trap_en)
+
+  function new(string name, uvm_component parent);
+    super.new(name, parent);
+  endfunction
+
+  function void build_phase(uvm_phase phase);
+    super.build_phase(phase);
+    uvm_config_db#(bit)::set(uvm_root::get(), "*", "trap_en", 1'b1);
+  endfunction
+
+  function void connect_phase(uvm_phase phase);
+    super.connect_phase(phase);
+  endfunction
+
+  task main_phase(uvm_phase phase);
+    super.main_phase(phase);
+  endtask
+
+  function void final_phase(uvm_phase phase);
+    super.final_phase(phase);
+  endfunction
+endclass: lsu_const_stride_test_trap_en
+
+class lsu_indexed_test_trap_en extends lsu_indexed_test;
+  `uvm_component_utils(lsu_indexed_test_trap_en)
+
+  function new(string name, uvm_component parent);
+    super.new(name, parent);
+  endfunction
+
+  function void build_phase(uvm_phase phase);
+    super.build_phase(phase);
+    uvm_config_db#(bit)::set(uvm_root::get(), "*", "trap_en", 1'b1);
+  endfunction
+
+  function void connect_phase(uvm_phase phase);
+    super.connect_phase(phase);
+  endfunction
+
+  task main_phase(uvm_phase phase);
+    super.main_phase(phase);
+  endtask
+
+  function void final_phase(uvm_phase phase);
+    super.final_phase(phase);
+  endfunction
+endclass: lsu_indexed_test_trap_en
+
+class lsu_unit_stride_seg_test_trap_en extends lsu_unit_stride_seg_test;
+  `uvm_component_utils(lsu_unit_stride_seg_test_trap_en)
+
+  function new(string name, uvm_component parent);
+    super.new(name, parent);
+  endfunction
+
+  function void build_phase(uvm_phase phase);
+    super.build_phase(phase);
+    uvm_config_db#(bit)::set(uvm_root::get(), "*", "trap_en", 1'b1);
+  endfunction
+
+  function void connect_phase(uvm_phase phase);
+    super.connect_phase(phase);
+  endfunction
+
+  task main_phase(uvm_phase phase);
+    super.main_phase(phase);
+  endtask
+
+  function void final_phase(uvm_phase phase);
+    super.final_phase(phase);
+  endfunction
+endclass: lsu_unit_stride_seg_test_trap_en
+
+class lsu_const_stride_seg_test_trap_en extends lsu_const_stride_seg_test;
+  `uvm_component_utils(lsu_const_stride_seg_test_trap_en)
+
+  function new(string name, uvm_component parent);
+    super.new(name, parent);
+  endfunction
+
+  function void build_phase(uvm_phase phase);
+    super.build_phase(phase);
+    uvm_config_db#(bit)::set(uvm_root::get(), "*", "trap_en", 1'b1);
+  endfunction
+
+  function void connect_phase(uvm_phase phase);
+    super.connect_phase(phase);
+  endfunction
+
+  task main_phase(uvm_phase phase);
+    super.main_phase(phase);
+  endtask
+
+  function void final_phase(uvm_phase phase);
+    super.final_phase(phase);
+  endfunction
+endclass: lsu_const_stride_seg_test_trap_en
+
+class lsu_indexed_seg_test_trap_en extends lsu_indexed_seg_test;
+  `uvm_component_utils(lsu_indexed_seg_test_trap_en)
+
+  function new(string name, uvm_component parent);
+    super.new(name, parent);
+  endfunction
+
+  function void build_phase(uvm_phase phase);
+    super.build_phase(phase);
+    uvm_config_db#(bit)::set(uvm_root::get(), "*", "trap_en", 1'b1);
+  endfunction
+
+  function void connect_phase(uvm_phase phase);
+    super.connect_phase(phase);
+  endfunction
+
+  task main_phase(uvm_phase phase);
+    super.main_phase(phase);
+  endtask
+
+  function void final_phase(uvm_phase phase);
+    super.final_phase(phase);
+  endfunction
+endclass: lsu_indexed_seg_test_trap_en
+
+class lsu_unit_stride_mask_test_trap_en extends lsu_unit_stride_mask_test;
+  `uvm_component_utils(lsu_unit_stride_mask_test_trap_en)
+
+  function new(string name, uvm_component parent);
+    super.new(name, parent);
+  endfunction
+
+  function void build_phase(uvm_phase phase);
+    super.build_phase(phase);
+    uvm_config_db#(bit)::set(uvm_root::get(), "*", "trap_en", 1'b1);
+  endfunction
+
+  function void connect_phase(uvm_phase phase);
+    super.connect_phase(phase);
+  endfunction
+
+  task main_phase(uvm_phase phase);
+    super.main_phase(phase);
+  endtask
+
+  function void final_phase(uvm_phase phase);
+    super.final_phase(phase);
+  endfunction
+endclass: lsu_unit_stride_mask_test_trap_en
+
+class lsu_whole_reg_test_trap_en extends lsu_whole_reg_test;
+  `uvm_component_utils(lsu_whole_reg_test_trap_en)
+
+  function new(string name, uvm_component parent);
+    super.new(name, parent);
+  endfunction
+
+  function void build_phase(uvm_phase phase);
+    super.build_phase(phase);
+    uvm_config_db#(bit)::set(uvm_root::get(), "*", "trap_en", 1'b1);
+  endfunction
+
+  function void connect_phase(uvm_phase phase);
+    super.connect_phase(phase);
+  endfunction
+
+  task main_phase(uvm_phase phase);
+    super.main_phase(phase);
+  endtask
+
+  function void final_phase(uvm_phase phase);
+    super.final_phase(phase);
+  endfunction
+endclass: lsu_whole_reg_test_trap_en
+
+class lsu_fof_test_trap_en extends lsu_fof_test;
+  `uvm_component_utils(lsu_fof_test_trap_en)
+
+  function new(string name, uvm_component parent);
+    super.new(name, parent);
+  endfunction
+
+  function void build_phase(uvm_phase phase);
+    super.build_phase(phase);
+    uvm_config_db#(bit)::set(uvm_root::get(), "*", "trap_en", 1'b1);
+  endfunction
+
+  function void connect_phase(uvm_phase phase);
+    super.connect_phase(phase);
+  endfunction
+
+  task main_phase(uvm_phase phase);
+    super.main_phase(phase);
+  endtask
+
+  function void final_phase(uvm_phase phase);
+    super.final_phase(phase);
+  endfunction
+endclass: lsu_fof_test_trap_en
 `endif // RVV_BACKEND_TEST__SV
 

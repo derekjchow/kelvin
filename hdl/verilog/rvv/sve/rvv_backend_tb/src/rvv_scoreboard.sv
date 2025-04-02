@@ -10,6 +10,7 @@
   `uvm_analysis_imp_decl(_mdl_vrf) 
   `uvm_analysis_imp_decl(_lsu_mem)
   `uvm_analysis_imp_decl(_mdl_mem) 
+  `uvm_analysis_imp_decl(_scb_ctrl) 
 
 
 class rvv_scoreboard extends uvm_scoreboard;
@@ -23,6 +24,7 @@ class rvv_scoreboard extends uvm_scoreboard;
   uvm_analysis_imp_mdl_vrf #(vrf_transaction,rvv_scoreboard) mdl_vrf_imp;
   uvm_analysis_imp_lsu_mem #(mem_transaction,rvv_scoreboard) lsu_mem_imp;
   uvm_analysis_imp_mdl_mem #(mem_transaction,rvv_scoreboard) mdl_mem_imp;
+  uvm_analysis_imp_scb_ctrl #(rvs_transaction,rvv_scoreboard) ctrl_imp;
 
   rvs_transaction rt_queue_rvs[$];
   rvs_transaction rt_queue_mdl[$];
@@ -53,6 +55,7 @@ class rvv_scoreboard extends uvm_scoreboard;
   extern function void write_mdl_vrf(vrf_transaction tr);
   extern function void write_lsu_mem(mem_transaction tr);
   extern function void write_mdl_mem(mem_transaction tr);
+	extern function void write_scb_ctrl(rvs_transaction tr);
 	extern virtual task rt_checker();
 	extern virtual task vrf_checker();
 	extern virtual task mem_access_checker();
@@ -72,6 +75,7 @@ function void rvv_scoreboard::build_phase(uvm_phase phase);
   mdl_vrf_imp = new("mdl_vrf_imp", this);
   lsu_mem_imp = new("lsu_mem_imp", this);
   mdl_mem_imp = new("mdl_mem_imp", this);
+  ctrl_imp = new("ctrl_imp", this);
   ctrl_tr = new("ctrl_tr");
   if(!$cast(test_top, uvm_root::get().find("uvm_test_top")))
     `uvm_fatal(get_type_name(),"Get uvm_test_top fail")
@@ -97,6 +101,7 @@ task rvv_scoreboard::main_phase(uvm_phase phase);
         if(ctrl_tr.is_last_inst) begin
           if(rt_queue_rvs.size()==0 && rt_queue_mdl.size()==0) begin 
             repeat(10) @(posedge rvs_if.clk);
+            `uvm_info(get_type_name(), "ready to drop obj", UVM_HIGH)
             break;
           end
         end
@@ -146,6 +151,12 @@ function void rvv_scoreboard::write_mdl_mem(mem_transaction tr);
   mem_queue_mdl.push_back(tr);
 endfunction
 
+function void rvv_scoreboard::write_scb_ctrl(rvs_transaction tr);
+  `uvm_info(get_type_name(), "get a ctrl transaction", UVM_HIGH)
+  `uvm_info(get_type_name(), tr.sprint(), UVM_HIGH)
+  ctrl_tr = tr;
+endfunction
+
 task rvv_scoreboard::rt_checker();
   rvs_transaction mdl_tr;
   rvs_transaction rvs_tr;
@@ -170,7 +181,6 @@ task rvv_scoreboard::rt_checker();
     while(rt_queue_rvs.size()>0) begin 
       rvs_tr = rt_queue_rvs.pop_front();
       mdl_tr = rt_queue_mdl.pop_front();
-      ctrl_tr = rvs_tr;
 
       `uvm_info("RT_RECORDER", $sformatf("\nRetire check start. ====================================================================================================\n"),UVM_LOW)
       `uvm_info("RT_RECORDER", $sformatf("Got retire transaction from DUT:\n%s",rvs_tr.sprint()),UVM_LOW)
@@ -278,6 +288,29 @@ task rvv_scoreboard::rt_checker();
         end else begin
           `uvm_info("RT_CHECKER", "Writeback vxsat check pass.", UVM_LOW)
         end
+      end
+
+      // TRAP check
+      if(rvs_tr.trap_occured !== mdl_tr.trap_occured) begin
+        `uvm_error("RT_CHECKER","RVV trap_occured mismatch with reference model.");
+      end else if(rvs_tr.trap_occured) begin
+        if(rvs_tr.trap_vma !== mdl_tr.trap_vma) begin
+          `uvm_error("RT_CHECKER","RVV trap_vma mismatch with reference model.");
+        end else if(rvs_tr.trap_vta !== mdl_tr.trap_vta) begin
+          `uvm_error("RT_CHECKER","RVV trap_vta mismatch with reference model.");
+        end else if(rvs_tr.trap_vsew !== mdl_tr.trap_vsew) begin
+          `uvm_error("RT_CHECKER","RVV trap_vsew mismatch with reference model."); 
+        end else if(rvs_tr.trap_vlmul !== mdl_tr.trap_vlmul) begin
+          `uvm_error("RT_CHECKER","RVV trap_vlmul mismatch with reference model.");
+        end else if(rvs_tr.trap_vl !== mdl_tr.trap_vl) begin
+          `uvm_error("RT_CHECKER","RVV trap_vl mismatch with reference model.");
+        end else if(rvs_tr.trap_vstart !== mdl_tr.trap_vstart) begin
+          `uvm_error("RT_CHECKER","RVV trap_vstart mismatch with reference model.");
+        end else if(rvs_tr.trap_vxrm !== mdl_tr.trap_vxrm) begin
+          `uvm_error("RT_CHECKER","RVV trap_vxrm mismatch with reference model.");
+        end else begin
+          `uvm_info("RT_CHECKER", "Trap check pass.", UVM_LOW)
+        end 
       end
       `uvm_info("RT_RECORDER", $sformatf("\nRetire check done.  ====================================================================================================\n\n"),UVM_LOW)
     end

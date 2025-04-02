@@ -59,17 +59,16 @@ module rvv_backend_top();
     .uop_lsu_ready_rvv2lsu    (lsu_if.uop_lsu_ready_rvv2lsu ),
 
     
-    .trap_valid_rvs2rvv       ('0                           ), // FIXME
-    .trap_rvs2rvv             ('0                           ), // FIXME
-    .trap_ready_rvv2rvs       (rvs_if.trap_ready_rvv2rvs    ), 
+    .trap_valid_rvs2rvv       (lsu_if.trap_valid_rvs2rvv    ),
+    .trap_ready_rvv2rvs       (lsu_if.trap_ready_rvv2rvs    ), 
 
-    .wr_vxsat_valid           (),
-    .wr_vxsat                 (),
+    .wr_vxsat_valid           (), // use internal signal   
+    .wr_vxsat                 (), // use internal signal   
     .wr_vxsat_ready           (rvs_if.wr_vxsat_ready),
 
     .vcsr_valid               (rvs_if.vcsr_valid            ),
     .vector_csr               (rvs_if.vector_csr            ),
-    .vcsr_ready               (1'b1            ) // FIXME
+    .vcsr_ready               (rvs_if.vcsr_ready            ) 
   );
 
   logic [`NUM_RT_UOP-1:0] rt_uop;
@@ -205,6 +204,16 @@ module rvv_backend_top();
   /* vrf */
   assign rvv_intern_if.vrf_wr_wenb_full = `VRF_PATH.vrf_wr_wenb_full;
 
+  // Trap
+  assign rvv_intern_if.trap_valid_rvs2rvv = DUT.trap_valid_rvs2rvv;
+  assign rvv_intern_if.trap_ready_rvv2rvs = DUT.trap_ready_rvv2rvs;  
+  assign rvv_intern_if.vcsr_valid         = DUT.vcsr_valid;        
+  assign rvv_intern_if.vcsr_ready         = DUT.vcsr_ready;        
+
+  
+  
+  
+  
 // Interface Coverage Collection ----------------------------------------
   rvv_interface_cov rvv_interface_cov(
     .clk(clk), 
