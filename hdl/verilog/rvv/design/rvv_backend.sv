@@ -824,8 +824,8 @@ module rvv_backend
     // PMTRDT
     rvv_backend_pmtrdt #(
     ) u_pmtrdt (
-        .clk(clk),
-        .rst_n(rst_n),
+        .clk                        (clk),
+        .rst_n                      (rst_n),
       // PMTRDT_RS to PMTRDT
         .pop_ex2rs                  (pop_pmtrdt2rs),
         .pmtrdt_uop_rs2ex           (uop_rs2pmtrdt),
@@ -836,7 +836,9 @@ module rvv_backend
       // PMTRDT to ROB
         .result_valid_ex2rob        (wr_valid_pmtrdt2rob),
         .result_ex2rob              (wr_pmtrdt2rob),
-        .result_ready_rob2ex        (wr_ready_rob2pmtrdt)
+        .result_ready_rob2ex        (wr_ready_rob2pmtrdt),
+      // trap-flush
+        .trap_flush_rvv             (trap_flush_rvv)
     );
     
     // MULMAC
@@ -851,7 +853,9 @@ module rvv_backend
     //MULMAC to ROB
       .ex2rob_valid               (wr_valid_mul2rob),
       .ex2rob_data                (wr_mul2rob),
-      .rob2ex_ready               (wr_ready_rob2mul)
+      .rob2ex_ready               (wr_ready_rob2mul),
+    // trap-flush
+      .trap_flush_rvv             (trap_flush_rvv)
     );
     
     // DIV
@@ -868,6 +872,7 @@ module rvv_backend
       .result_valid_ex2rob      (wr_valid_div2rob),
       .result_ex2rob            (wr_div2rob),
       .result_ready_rob2div     (wr_ready_rob2div),
+      // trap-flush
       .trap_flush_rvv           (trap_flush_rvv)
     );
 

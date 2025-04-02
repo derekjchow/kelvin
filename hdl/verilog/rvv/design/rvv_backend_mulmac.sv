@@ -22,12 +22,13 @@ module rvv_backend_mulmac (
   //Inputs
   clk, rst_n, rs2ex_uop_data, 
   rs2ex_fifo_empty, rs2ex_fifo_1left_to_empty, 
-  rob2ex_ready
+  rob2ex_ready, trap_flush_rvv
 );
 
 //global signals
 input             clk;
 input             rst_n;
+input             trap_flush_rvv;
 
 //MUL_RS to MUL_EX 
 input MUL_RS_t [`NUM_MUL-1:0] rs2ex_uop_data;
@@ -52,8 +53,8 @@ PU2ROB_t [`NUM_MUL-1:0]       mac2rob_uop_data;
 // empty        0  |  0  |  1  |  1
 // 1left2empty  0  |  1  |  0  |  1
 // dataLeft     >1 |  1  | N/A |  0
-assign rs2mac_uop_valid[0] = !rs2ex_fifo_empty;
-assign rs2mac_uop_valid[1] = !(rs2ex_fifo_empty || rs2ex_fifo_1left_to_empty);
+assign rs2mac_uop_valid[0] = !rs2ex_fifo_empty && !trap_flush_rvv; //clear d0 when trap flush
+assign rs2mac_uop_valid[1] = !(rs2ex_fifo_empty || rs2ex_fifo_1left_to_empty) && !trap_flush_rvv; //clear d0 when trap flush
 assign rs2mac_uop_data[0] = rs2ex_uop_data[0];
 assign rs2mac_uop_data[1] = rs2ex_uop_data[1];
 
@@ -86,11 +87,11 @@ assign ex2rs_fifo_pop[1] = rs2mac_uop_valid[1] && mac2rs_uop_ready[1] && ex2rs_f
 
 //Pack output to ROB
 //high pack MAC 1; low pack MAC 0
-assign ex2rob_valid[0] = mac2rob_uop_valid[0]; 
+assign ex2rob_valid[0] = mac2rob_uop_valid[0] && !trap_flush_rvv; //clear d1 when trap flush
 assign ex2rob_data[0] = mac2rob_uop_data[0];
 assign mac2rs_uop_ready[0] = !mac2rob_uop_valid[0] | rob2ex_ready[0];
 
-assign ex2rob_valid[1] = mac2rob_uop_valid[1];
+assign ex2rob_valid[1] = mac2rob_uop_valid[1] && !trap_flush_rvv; //clear d1 when trap flush
 assign ex2rob_data[1] = mac2rob_uop_data[1];
 assign mac2rs_uop_ready[1] = !mac2rob_uop_valid[1] | rob2ex_ready[1];
 

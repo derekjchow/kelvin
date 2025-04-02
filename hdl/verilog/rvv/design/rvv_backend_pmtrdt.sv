@@ -31,7 +31,9 @@ module rvv_backend_pmtrdt
 
   result_valid_ex2rob,
   result_ex2rob,
-  result_ready_rob2ex
+  result_ready_rob2ex,
+
+  trap_flush_rvv
 );
 // ---port definition-------------------------------------------------
 // global signal
@@ -50,6 +52,9 @@ module rvv_backend_pmtrdt
   output  logic        [`NUM_PMTRDT-1:0]  result_valid_ex2rob;
   output  PU2ROB_t     [`NUM_PMTRDT-1:0]  result_ex2rob;
   input   logic        [`NUM_PMTRDT-1:0]  result_ready_rob2ex;
+
+// trap-flush
+  input   logic                           trap_flush_rvv;
 
 // ---internal signal definition--------------------------------------
   logic         [`NUM_PMTRDT-1:0] pmtrdt_uop_valid;
@@ -94,7 +99,8 @@ module rvv_backend_pmtrdt
           .pmtrdt_res         (pmtrdt_res[i]),
           .pmtrdt_res_ready   (pmtrdt_res_ready[i]),
           .uop_data           (all_uop_data),
-          .uop_cnt            (all_uop_cnt)
+          .uop_cnt            (all_uop_cnt),
+          .trap_flush_rvv     (trap_flush_rvv)
         );
     end
   endgenerate
