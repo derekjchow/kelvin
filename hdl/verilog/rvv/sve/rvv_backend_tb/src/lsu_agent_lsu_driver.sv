@@ -107,13 +107,14 @@ task lsu_driver::rx_driver();
         uop_tr = new();
         uop_tr = uops_rx_queue[uop_idx];
         if(uop_tr.lsu_slot_addr_valid == 1 && uop_tr.kind == LOAD) begin
-          if(uop_tr.uop_rx_sent != 1) begin
-            uop_tr.uop_rx_sent = 1'b1;
-            `uvm_info("LSU_DRV",$sformatf("Sent unit-stride/const-stride load with vm==1 uop to uops_tx_queue ahead:\n%s",uop_tr.sprint()),UVM_HIGH)
-            uops_tx_queue.push_back(uop_tr);
-          end else begin
-            // Do nothing for sent uop. Wait for rvv2lsu handshake to pop.
-          end
+          // Do not send result before strobe info accepted. 
+          // if(uop_tr.uop_rx_sent != 1) begin
+          //   uop_tr.uop_rx_sent = 1'b1;
+          //   `uvm_info("LSU_DRV",$sformatf("Sent unit-stride/const-stride load with vm==1 uop to uops_tx_queue ahead:\n%s",uop_tr.sprint()),UVM_HIGH)
+          //   uops_tx_queue.push_back(uop_tr);
+          // end else begin
+          //   // Do nothing for sent uop. Wait for rvv2lsu handshake to pop.
+          // end
         end else begin
           // To make sure load/store is in-order executed
           break;

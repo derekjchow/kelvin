@@ -51,3 +51,13 @@ lsu_indexed_seg_test
 lsu_unit_stride_mask_test
 lsu_whole_reg_test
 lsu_fof_test
+
+lsu_unit_stride_test_trap_en
+lsu_const_stride_test_trap_en
+lsu_indexed_test_trap_en
+lsu_unit_stride_seg_test_trap_en
+lsu_const_stride_seg_test_trap_en
+lsu_indexed_seg_test_trap_en
+lsu_unit_stride_mask_test_trap_en
+lsu_whole_reg_test_trap_en
+lsu_fof_test_trap_en

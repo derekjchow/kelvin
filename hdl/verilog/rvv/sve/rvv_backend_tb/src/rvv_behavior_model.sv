@@ -2376,7 +2376,7 @@ class lsu_processor;
   endfunction: new 
   
   function void exe(rvv_behavior_model rvm, ref rvs_transaction inst_tr);
-
+    int uops_cnt = 0;
     decode(inst_tr);
     `uvm_info("MDL", "LSU decode done", UVM_HIGH)
     `uvm_info("MDL", $sformatf("\n%s", inst_tr.sprint()), UVM_HIGH);
@@ -2402,7 +2402,7 @@ class lsu_processor;
         `uvm_info("MDL", $sformatf("dest=0x%8x, src3=0x%8x, src2=0x%8x, src1=0x%8x, src0=0x%8x", dest, src3, src2, src1, src0), UVM_HIGH);
 
         update_addr(inst_tr, seg_idx, seg_size, elm_idx, data_size, src2, src1);
-        if(rvm.trap_occured && (elm_idx/elm_per_uop)<rvm.trap_occured_uop || !rvm.trap_occured) begin
+        if(rvm.trap_occured && uops_cnt<rvm.trap_occured_uop || !rvm.trap_occured) begin
           if(elm_idx<vstart) begin
             // pre-start
             case(inst_tr.inst_type)
@@ -2440,14 +2440,15 @@ class lsu_processor;
         end
 
         if(rvm.trap_occured) begin
-          if(inst_tr.lsu_mop inside {LSU_UXEI, LSU_OXEI} && lsu_nf+1 > 1) 
-            rvm.vstart = 0;
+          if(!(inst_tr.lsu_mop==LSU_E && inst_tr.lsu_umop===WHOLE_REG) && lsu_nf+1 > 1) 
+            rvm.vstart = inst_tr.vstart;
           else 
             rvm.vstart = rvm.trap_queue[0].vstart;
         end 
+        if(elm_idx%elm_per_uop == elm_per_uop-1) uops_cnt++;
         `uvm_info("MDL", "\n---------------------------------------------------------------------------------------------------------------------------------\n", UVM_LOW)
       end
-    end
+    end // seg-loop
   endfunction
 
   function bit decode(ref rvs_transaction inst_tr);

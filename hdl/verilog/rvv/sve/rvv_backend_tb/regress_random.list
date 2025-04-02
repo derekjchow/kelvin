@@ -7,3 +7,6 @@ alu_random_waw_test
 lsu_random_test
 
 rvv_random_test
+
+lsu_random_test_trap_en
+rvv_random_test_trap_en
