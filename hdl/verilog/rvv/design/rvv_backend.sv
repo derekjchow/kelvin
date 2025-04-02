@@ -776,7 +776,7 @@ module rvv_backend
         .clk          (clk),
         .rst_n        (rst_n),
       // write
-        .push         (uop_lsu_valid),
+        .push         (uop_lsu_valid&uop_lsu_ready_rvv2lsu),
         .datain       (uop_lsu),
       // read
         .pop          (pop_lsu_res),
@@ -895,39 +895,39 @@ module rvv_backend
     rvv_backend_rob #(
     ) u_rob (
       // global signal
-        .clk                 (clk),
-        .rst_n               (rst_n),
+        .clk                    (clk),
+        .rst_n                  (rst_n),
       // Dispatch to ROB
-        .uop_valid_dp2rob    (uop_valid_dp2rob),
-        .uop_dp2rob          (uop_dp2rob),
-        .uop_ready_rob2dp    (uop_ready_rob2dp),
-        .uop_index_rob2dp    (uop_index_rob2dp),
+        .uop_valid_dp2rob       (uop_valid_dp2rob),
+        .uop_dp2rob             (uop_dp2rob),
+        .uop_ready_rob2dp       (uop_ready_rob2dp),
+        .uop_index_rob2dp       (uop_index_rob2dp),
       // ALU to ROB
-        .wr_valid_alu2rob    (wr_valid_alu2rob),
-        .wr_alu2rob          (wr_alu2rob),
-        .wr_ready_rob2alu    (wr_ready_rob2alu),
+        .wr_valid_alu2rob       (wr_valid_alu2rob),
+        .wr_alu2rob             (wr_alu2rob),
+        .wr_ready_rob2alu       (wr_ready_rob2alu),
       // PMTRDT to ROB
-        .wr_valid_pmtrdt2rob (wr_valid_pmtrdt2rob),
-        .wr_pmtrdt2rob       (wr_pmtrdt2rob),
-        .wr_ready_rob2pmtrdt (wr_ready_rob2pmtrdt),
+        .wr_valid_pmtrdt2rob    (wr_valid_pmtrdt2rob),
+        .wr_pmtrdt2rob          (wr_pmtrdt2rob),
+        .wr_ready_rob2pmtrdt    (wr_ready_rob2pmtrdt),
       // MUL to ROB
-        .wr_valid_mul2rob    (wr_valid_mul2rob),
-        .wr_mul2rob          (wr_mul2rob),
-        .wr_ready_rob2mul    (wr_ready_rob2mul),
+        .wr_valid_mul2rob       (wr_valid_mul2rob),
+        .wr_mul2rob             (wr_mul2rob),
+        .wr_ready_rob2mul       (wr_ready_rob2mul),
       // DIV to ROB
-        .wr_valid_div2rob    (wr_valid_div2rob),
-        .wr_div2rob          (wr_div2rob),
-        .wr_ready_rob2div    (wr_ready_rob2div),
+        .wr_valid_div2rob       (wr_valid_div2rob),
+        .wr_div2rob             (wr_div2rob),
+        .wr_ready_rob2div       (wr_ready_rob2div),
       // LSU to ROB
-        .wr_valid_lsu2rob    (wr_valid_lsu2rob),
-        .wr_lsu2rob          (wr_lsu2rob),
-        .wr_ready_rob2lsu    (wr_ready_rob2lsu),
+        .wr_valid_lsu2rob       (wr_valid_lsu2rob),
+        .wr_lsu2rob             (wr_lsu2rob),
+        .wr_ready_rob2lsu       (wr_ready_rob2lsu),
       // ROB to RT
-        .rd_valid_rob2rt     (rd_valid_rob2rt),
-        .rd_rob2rt           (rd_rob2rt),
-        .rd_ready_rt2rob     (rd_ready_rt2rob),
+        .rd_valid_rob2rt        (rd_valid_rob2rt),
+        .rd_rob2rt              (rd_rob2rt),
+        .rd_ready_rt2rob        (rd_ready_rt2rob),
       // ROB to DP
-        .uop_rob2dp          (uop_rob2dp),
+        .uop_rob2dp             (uop_rob2dp),
       // Trap
         .trap_valid_rmp2rob     (trap_valid_rmp2rob),
         .trap_rob_entry_rmp2rob (trap_rob_entry_rmp2rob),
@@ -940,24 +940,24 @@ module rvv_backend
     rvv_backend_retire #(
     ) u_retire (
       // ROB to RT
-        .rob2rt_write_valid  (rd_valid_rob2rt),
-        .rob2rt_write_data   (rd_rob2rt),
-        .rt2rob_write_ready  (rd_ready_rt2rob),
+        .rob2rt_write_valid     (rd_valid_rob2rt),
+        .rob2rt_write_data      (rd_rob2rt),
+        .rt2rob_write_ready     (rd_ready_rt2rob),
       // RT to RVS.XRF
-        .rt2xrf_write_valid  (rt_xrf_valid_rvv2rvs),
-        .rt2xrf_write_data   (rt_xrf_rvv2rvs),
-        .xrf2rt_write_ready  (rt_xrf_ready_rvs2rvv),
+        .rt2xrf_write_valid     (rt_xrf_valid_rvv2rvs),
+        .rt2xrf_write_data      (rt_xrf_rvv2rvs),
+        .xrf2rt_write_ready     (rt_xrf_ready_rvs2rvv),
       // RT to VRF
-        .rt2vrf_write_valid  (wr_valid_rt2vrf),
-        .rt2vrf_write_data   (wr_data_rt2vrf),
-      // write to update vcsr
-        .rt2vcsr_write_valid (vcsr_valid),
-        .rt2vcsr_write_data  (vector_csr),
-        .vcsr2rt_write_ready (vcsr_ready),
+        .rt2vrf_write_valid     (wr_valid_rt2vrf),
+        .rt2vrf_write_data      (wr_data_rt2vrf),
+      // write to update vcsr   
+        .rt2vcsr_write_valid    (vcsr_valid),
+        .rt2vcsr_write_data     (vector_csr),
+        .vcsr2rt_write_ready    (vcsr_ready),
       // update to vxsat
-        .rt2vxsat_write_valid (wr_vxsat_valid),
-        .rt2vxsat_write_data  (wr_vxsat),
-        .vxsat2rt_write_ready(wr_vxsat_ready)
+        .rt2vxsat_write_valid   (wr_vxsat_valid),
+        .rt2vxsat_write_data    (wr_vxsat),
+        .vxsat2rt_write_ready   (wr_vxsat_ready)
     );
 
   // VRF, Vector Register File

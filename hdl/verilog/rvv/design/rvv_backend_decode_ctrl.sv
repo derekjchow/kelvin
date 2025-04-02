@@ -55,6 +55,7 @@ module rvv_backend_decode_ctrl
 // internal signals
 //
   // get last uop signal 
+  logic [`NUM_DE_UOP-1:0]         uop1_last_valid;
   logic [`NUM_DE_INST-1:0]        last_uop_unit;
   logic [`NUM_DE_UOP-1:0]         get_unit1_last_signal;
 
@@ -81,6 +82,15 @@ module rvv_backend_decode_ctrl
 // ctroller
 //
   generate
+    // get unit1 last uop signal
+    for (i=0;i<`NUM_DE_UOP;i++) begin: GET_UOP1_LAST
+      assign uop1_last_valid[i] = uop_de2uq[1][i].last_uop_valid;
+    end
+
+    for (i=0;i<`NUM_DE_UOP;i++) begin: GET_UNIT1_LAST
+      assign get_unit1_last_signal[i] = |uop1_last_valid[(`NUM_DE_UOP-1-i):0];
+    end
+
     if(`NUM_DE_UOP==6) begin
       // get unit0 last uop signal
       always_comb begin
@@ -94,14 +104,6 @@ module rvv_backend_decode_ctrl
           default   : last_uop_unit[0] = 'b0;
         endcase
       end
-      
-      // get unit1 last uop signal
-      assign get_unit1_last_signal[5] = uop_de2uq[1][0].last_uop_valid; 
-      assign get_unit1_last_signal[4] = uop_de2uq[1][1].last_uop_valid || get_unit1_last_signal[5]; 
-      assign get_unit1_last_signal[3] = uop_de2uq[1][2].last_uop_valid || get_unit1_last_signal[4]; 
-      assign get_unit1_last_signal[2] = uop_de2uq[1][3].last_uop_valid || get_unit1_last_signal[3]; 
-      assign get_unit1_last_signal[1] = uop_de2uq[1][4].last_uop_valid || get_unit1_last_signal[2]; 
-      assign get_unit1_last_signal[0] = uop_de2uq[1][5].last_uop_valid || get_unit1_last_signal[1]; 
     
       always_comb begin
         case(uop_valid_de2uq[0][`NUM_DE_UOP-1:0])
@@ -140,12 +142,6 @@ module rvv_backend_decode_ctrl
           default: last_uop_unit[0] = 'b0;
         endcase
       end
-      
-      // get unit1 last uop signal
-      assign get_unit1_last_signal[3] = uop_de2uq[1][0].last_uop_valid; 
-      assign get_unit1_last_signal[2] = uop_de2uq[1][1].last_uop_valid || get_unit1_last_signal[3]; 
-      assign get_unit1_last_signal[1] = uop_de2uq[1][2].last_uop_valid || get_unit1_last_signal[2]; 
-      assign get_unit1_last_signal[0] = uop_de2uq[1][3].last_uop_valid || get_unit1_last_signal[1]; 
     
       always_comb begin
         case(uop_valid_de2uq[0][`NUM_DE_UOP-1:0])
