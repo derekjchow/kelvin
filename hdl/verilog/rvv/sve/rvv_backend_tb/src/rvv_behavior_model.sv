@@ -1927,7 +1927,12 @@ class alu_processor#(
   endfunction : _vdivu
   function TD _vdiv(T2 src2, T1 src1);
     logic signed [$bits(TD)-1:0] dest;
-    dest = $signed(src2) / $signed(src1);
+    if(src2[$bits(T2)-1] == 1 && !(|src2[$bits(T2)-2:0]) && (&src1)) begin
+      // To avoid float exception
+      dest = $signed(src2);
+    end else begin
+      dest = $signed(src2) / $signed(src1);
+    end
     _vdiv = (src1 == 0) ? '1 : dest;
   endfunction : _vdiv
   function TD _vremu(T2 src2, T1 src1);
@@ -1937,7 +1942,12 @@ class alu_processor#(
   endfunction : _vremu
   function TD _vrem(T2 src2, T1 src1);
     logic signed [$bits(TD)-1:0] dest;
-    dest = $signed(src2) % $signed(src1);
+    if(src2[$bits(T2)-1] == 1 && !(|src2[$bits(T2)-2:0]) && (&src1)) begin
+      // To avoid float exception
+      dest = 0;
+    end else begin
+      dest = $signed(src2) % $signed(src1);
+    end
     _vrem = (src1 == 0) ? src2 : dest;
   endfunction : _vrem
 

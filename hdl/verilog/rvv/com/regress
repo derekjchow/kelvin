@@ -18,7 +18,7 @@ GetOptions (
   "queue|que=s" => \(my $opt_queue=undef),
   
   "repeat|rep=i" => \(my $opt_repeat=0),
-  "testlist|list=s" => \(my $opt_testlist=undef),
+  "testlist|list=s" => \(my @opt_testlists=()),
   "logdir|dir=s" => \(my $opt_logdir=undef),
 
   "show" => \(my $opt_show),
@@ -43,8 +43,8 @@ $workRoot =~ s%(\S+)/hdl/verilog/rvv/%$1%;
 my $base = "";
 if($scfg =~ m/(rvv_backend)/g) { $base = $1; }
 
-my $testList = "$workRoot/sve/${base}_tb/regress.list";
-if(defined $opt_testlist) { $testList = "$workRoot/$opt_testlist"; }
+my @testLists = map { "$workRoot/sve/${base}_tb/$_"; } ("regress.list", "regress_random.list", "regress_corner.list");
+if(scalar(@opt_testlists)) { @testLists = map { "$workRoot/$_"; } @opt_testlists; }
 
 $mon = $mon + 1;
 my $logDir = "outfiles_regress/${mon}_${mday}_${hour}_${min}";
@@ -106,9 +106,12 @@ if(!$exeShow) {
   }
 }
 
-open my $fh_testLile, '<', $testList, or die "Open $testList failed. $! ";
-my @tests = map { $_ =~ m/^\s*[^#\s].*$/g; } <$fh_testLile>;
-close $fh_testLile;
+my @tests = ();
+foreach my $testList (@testLists) {
+  open my $fh_testLile, '<', $testList, or die "Open $testList failed. $! ";
+  push @tests, map { $_ =~ m/^\s*[^#\s].*$/g; } <$fh_testLile>;
+  close $fh_testLile;
+}
 
 if($exeShow) {
   foreach (@tests) {
@@ -161,7 +164,7 @@ $startTimeStr = localtime();
 if($useLSF) { 
   my $regressCmdList = "./regress_cmdlist";
   my $useBash = 0;
-  open my $fh_regCmdList, "+>", $regressCmdList, or die "Open $testList failed. $! ";
+  open my $fh_regCmdList, "+>", $regressCmdList, or die "Open $regressCmdList failed. $! ";
   
   # packet tests
   my @cmd_compPkt;

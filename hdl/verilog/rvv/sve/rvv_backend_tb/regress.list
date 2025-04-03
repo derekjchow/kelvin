@@ -1,4 +1,4 @@
-#alu_smoke_test PLUS_ARGS=+all_case
+# alu tests
 alu_vaddsub_test
 alu_vwaddsub_test
 alu_vext_test
@@ -23,25 +23,18 @@ alu_mask_logic_test
 alu_vcpop_vfirst_test
 alu_vmunary0_test
 
+# pmt tests
 alu_vmvnr_test
 alu_vmv_test 
 alu_slide_test
 alu_gather_test
 alu_vcompress_test
 
+# rdt tests
 alu_vred_test
 alu_vwred_test
 
-alu_random_test
-alu_random_large_lmul_test
-alu_random_small_lmul_test
-alu_random_bypass_test
-alu_random_waw_test
-
-alu_div_zero_test
-alu_large_vstart_test
-
-
+# lsu tests
 lsu_unit_stride_test
 lsu_const_stride_test
 lsu_indexed_test
@@ -52,6 +45,7 @@ lsu_unit_stride_mask_test
 lsu_whole_reg_test
 lsu_fof_test
 
+# trap direct tests
 lsu_unit_stride_test_trap_en
 lsu_const_stride_test_trap_en
 lsu_indexed_test_trap_en

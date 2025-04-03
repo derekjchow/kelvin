@@ -145,6 +145,7 @@ module rvv_backend_top();
     end
     vrf_if.vrf_wr_wenb_full = `VRF_PATH.vrf_wr_wenb_full;
     vrf_if.vrf_wr_data_full = `VRF_PATH.vrf_wr_data_full;
+    vrf_if.vrf_rd_data_full = `VRF_PATH.vrf_rd_data_full;
   end: vrf_connect
 
 // Internal Signals connection ---------------------------------------

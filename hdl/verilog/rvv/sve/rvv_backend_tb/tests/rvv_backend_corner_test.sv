@@ -164,4 +164,623 @@ class alu_large_vstart_test extends rvv_backend_test;
 
 endclass: alu_large_vstart_test
 
+//-----------------------------------------------------------
+// signed div overflow test
+// to test -2^(width-1)/-1 == -2^(width-1)
+//         -2^(width-1)%-1 == 0
+//-----------------------------------------------------------
+class alu_div_overflow_seq extends base_sequence;
+  `uvm_object_utils(alu_div_overflow_seq)
+
+  int inst_num = 1;
+  sew_e vsew = SEW8;
+  function new(string name = "alu_div_overflow_seq");
+    super.new(name);
+	`ifdef UVM_POST_VERSION_1_1
+     set_automatic_phase_objection(1);
+    `endif
+  endfunction:new
+
+  virtual task body();
+    req = new("req");
+    start_item(req);
+    assert(req.randomize() with {
+      pc == inst_cnt;
+      use_vlmax == 1;
+
+      vlmul == LMUL1;
+      vsew == local::vsew;
+
+      inst_type == ALU;
+      alu_inst inside {VDIV};
+
+      dest_type == VRF; dest_idx == 3;
+      src2_type == VRF; src2_idx == 2;
+      src1_type == VRF; src1_idx == 1;
+      vm == 1;
+    });
+    finish_item(req);
+    inst_cnt++;
+    req = new("req");
+    start_item(req);
+    assert(req.randomize() with {
+      pc == inst_cnt;
+      use_vlmax == 1;
+
+      vlmul == LMUL1;
+      vsew == local::vsew;
+
+      inst_type == ALU;
+      alu_inst inside {VREM};
+
+      dest_type == VRF; dest_idx == 4;
+      src2_type == VRF; src2_idx == 2;
+      src1_type == VRF; src1_idx == 1;
+      vm == 1;
+    });
+    finish_item(req);
+    inst_cnt++;
+    req = new("req");
+    start_item(req);
+    assert(req.randomize() with {
+      pc == inst_cnt;
+      use_vlmax == 1;
+
+      vlmul == LMUL1;
+      vsew == local::vsew;
+
+      inst_type == ALU;
+      alu_inst inside {VDIV};
+
+      dest_type == VRF; dest_idx == 5;
+      src2_type == VRF; src2_idx == 2;
+      src1_type == XRF; rs1_data == -1;
+      vm == 1;
+    });
+    finish_item(req);
+    inst_cnt++;
+    req = new("req");
+    start_item(req);
+    assert(req.randomize() with {
+      pc == inst_cnt;
+      use_vlmax == 1;
+
+      vlmul == LMUL1;
+      vsew == local::vsew;
+
+      inst_type == ALU;
+      alu_inst inside {VREM};
+
+      dest_type == VRF; dest_idx == 6;
+      src2_type == VRF; src2_idx == 2;
+      src1_type == XRF; rs1_data == -1;
+      vm == 1;
+    });
+    finish_item(req);
+    inst_cnt++;
+  endtask
+
+endclass: alu_div_overflow_seq
+
+class alu_div_overflow_test extends rvv_backend_test;
+  
+  alu_div_overflow_seq rvs_seq;
+  rvs_last_sequence rvs_last_seq;
+
+  `uvm_component_utils(alu_div_overflow_test)
+
+  function new(string name, uvm_component parent);
+    super.new(name, parent);
+  endfunction
+
+  function void build_phase(uvm_phase phase);
+    super.build_phase(phase);
+  endfunction
+
+  function void connect_phase(uvm_phase phase);
+    super.connect_phase(phase);
+    this.set_report_id_action_hier("MDL", UVM_LOG);
+  endfunction
+
+  task main_phase(uvm_phase phase);
+    logic [`VLEN-1:0] act;
+    logic [`VLEN-1:0] exp;
+
+    rand_vrf();
+
+    rvs_seq = alu_div_overflow_seq::type_id::create("rvs_seq", this);
+
+    // vsew == SEW8
+    rvs_seq.vsew = SEW8;
+    set_vrf(2,128'h8080_8080_8080_8080_8080_8080_8080_8080);
+    set_vrf(1,'1);
+    set_vrf(3,128'hface_face_face_face_face_face_face_face);
+    set_vrf(4,128'hface_face_face_face_face_face_face_face);
+    set_vrf(5,128'hface_face_face_face_face_face_face_face);
+    set_vrf(6,128'hface_face_face_face_face_face_face_face);
+
+    rvs_seq.start(env.rvs_agt.rvs_sqr);
+    while(rvv_intern_if.rvv_is_idle()) begin
+      // wait to accept inst
+      @(posedge rvs_if.clk);
+    end
+    while(!rvv_intern_if.rvv_is_idle()) begin
+      // wait for done
+      @(posedge rvs_if.clk);
+    end
+    // quotient
+    exp = 128'h8080_8080_8080_8080_8080_8080_8080_8080;
+    act = vrf_if.get_dut_vrf(3);
+    if(act !== exp)
+      `uvm_error(get_type_name(), $sformatf("vrf[2]: act == 0x%16x, exp == 0x%16x.", act, exp))
+    else 
+      `uvm_info(get_type_name(), $sformatf("vrf[2]: act == 0x%16x, exp == 0x%16x.", act, exp), UVM_LOW)
+    act = vrf_if.get_dut_vrf(5);
+    if(act !== exp)
+      `uvm_error(get_type_name(), $sformatf("vrf[2]: act == 0x%16x, exp == 0x%16x.", act, exp))
+    else 
+      `uvm_info(get_type_name(), $sformatf("vrf[2]: act == 0x%16x, exp == 0x%16x.", act, exp), UVM_LOW)
+    // remainder 
+    exp = 128'h0;
+    act = vrf_if.get_dut_vrf(4);
+    if(act !== exp)
+      `uvm_error(get_type_name(), $sformatf("vrf[2]: act == 0x%16x, exp == 0x%16x.", act, exp))
+    else 
+      `uvm_info(get_type_name(), $sformatf("vrf[2]: act == 0x%16x, exp == 0x%16x.", act, exp), UVM_LOW)
+    act = vrf_if.get_dut_vrf(6);
+    if(act !== exp)
+      `uvm_error(get_type_name(), $sformatf("vrf[2]: act == 0x%16x, exp == 0x%16x.", act, exp))
+    else 
+      `uvm_info(get_type_name(), $sformatf("vrf[2]: act == 0x%16x, exp == 0x%16x.", act, exp), UVM_LOW)
+    repeat(10) @(posedge rvs_if.clk);
+
+    // vsew == SEW16
+    rvs_seq.vsew = SEW16;
+    set_vrf(2,128'h8000_8000_8000_8000_8000_8000_8000_8000);
+    set_vrf(1,'1);
+    set_vrf(3,128'hface_face_face_face_face_face_face_face);
+    set_vrf(4,128'hface_face_face_face_face_face_face_face);
+    set_vrf(5,128'hface_face_face_face_face_face_face_face);
+    set_vrf(6,128'hface_face_face_face_face_face_face_face);
+
+    rvs_seq.start(env.rvs_agt.rvs_sqr);
+    while(rvv_intern_if.rvv_is_idle()) begin
+      // wait to accept inst
+      @(posedge rvs_if.clk);
+    end
+    while(!rvv_intern_if.rvv_is_idle()) begin
+      // wait for done
+      @(posedge rvs_if.clk);
+    end
+    // quotient
+    exp = 128'h8000_8000_8000_8000_8000_8000_8000_8000;
+    act = vrf_if.get_dut_vrf(3);
+    if(act !== exp)
+      `uvm_error(get_type_name(), $sformatf("vrf[2]: act == 0x%16x, exp == 0x%16x.", act, exp))
+    else 
+      `uvm_info(get_type_name(), $sformatf("vrf[2]: act == 0x%16x, exp == 0x%16x.", act, exp), UVM_LOW)
+    act = vrf_if.get_dut_vrf(5);
+    if(act !== exp)
+      `uvm_error(get_type_name(), $sformatf("vrf[2]: act == 0x%16x, exp == 0x%16x.", act, exp))
+    else 
+      `uvm_info(get_type_name(), $sformatf("vrf[2]: act == 0x%16x, exp == 0x%16x.", act, exp), UVM_LOW)
+    // remainder 
+    exp = 128'h0;
+    act = vrf_if.get_dut_vrf(4);
+    if(act !== exp)
+      `uvm_error(get_type_name(), $sformatf("vrf[2]: act == 0x%16x, exp == 0x%16x.", act, exp))
+    else 
+      `uvm_info(get_type_name(), $sformatf("vrf[2]: act == 0x%16x, exp == 0x%16x.", act, exp), UVM_LOW)
+    act = vrf_if.get_dut_vrf(6);
+    if(act !== exp)
+      `uvm_error(get_type_name(), $sformatf("vrf[2]: act == 0x%16x, exp == 0x%16x.", act, exp))
+    else 
+      `uvm_info(get_type_name(), $sformatf("vrf[2]: act == 0x%16x, exp == 0x%16x.", act, exp), UVM_LOW)
+    repeat(10) @(posedge rvs_if.clk);
+
+    // vsew == SEW32
+    rvs_seq.vsew = SEW32;
+    set_vrf(2,128'h8000_0000_8000_0000_8000_0000_8000_0000);
+    set_vrf(1,'1);
+    set_vrf(3,128'hface_face_face_face_face_face_face_face);
+    set_vrf(4,128'hface_face_face_face_face_face_face_face);
+    set_vrf(5,128'hface_face_face_face_face_face_face_face);
+    set_vrf(6,128'hface_face_face_face_face_face_face_face);
+
+    rvs_seq.start(env.rvs_agt.rvs_sqr);
+    while(rvv_intern_if.rvv_is_idle()) begin
+      // wait to accept inst
+      @(posedge rvs_if.clk);
+    end
+    while(!rvv_intern_if.rvv_is_idle()) begin
+      // wait for done
+      @(posedge rvs_if.clk);
+    end
+    // quotient
+    exp = 128'h8000_0000_8000_0000_8000_0000_8000_0000;
+    act = vrf_if.get_dut_vrf(3);
+    if(act !== exp)
+      `uvm_error(get_type_name(), $sformatf("vrf[2]: act == 0x%16x, exp == 0x%16x.", act, exp))
+    else 
+      `uvm_info(get_type_name(), $sformatf("vrf[2]: act == 0x%16x, exp == 0x%16x.", act, exp), UVM_LOW)
+    act = vrf_if.get_dut_vrf(5);
+    if(act !== exp)
+      `uvm_error(get_type_name(), $sformatf("vrf[2]: act == 0x%16x, exp == 0x%16x.", act, exp))
+    else 
+      `uvm_info(get_type_name(), $sformatf("vrf[2]: act == 0x%16x, exp == 0x%16x.", act, exp), UVM_LOW)
+    // remainder 
+    exp = 128'h0;
+    act = vrf_if.get_dut_vrf(4);
+    if(act !== exp)
+      `uvm_error(get_type_name(), $sformatf("vrf[2]: act == 0x%16x, exp == 0x%16x.", act, exp))
+    else 
+      `uvm_info(get_type_name(), $sformatf("vrf[2]: act == 0x%16x, exp == 0x%16x.", act, exp), UVM_LOW)
+    act = vrf_if.get_dut_vrf(6);
+    if(act !== exp)
+      `uvm_error(get_type_name(), $sformatf("vrf[2]: act == 0x%16x, exp == 0x%16x.", act, exp))
+    else 
+      `uvm_info(get_type_name(), $sformatf("vrf[2]: act == 0x%16x, exp == 0x%16x.", act, exp), UVM_LOW)
+
+    repeat(10) @(posedge rvs_if.clk);
+    rvs_last_seq = rvs_last_sequence::type_id::create("rvs_last_seq", this);
+    rvs_last_seq.start(env.rvs_agt.rvs_sqr);
+  endtask
+
+  function void final_phase(uvm_phase phase);
+    super.final_phase(phase);
+  endfunction
+
+endclass: alu_div_overflow_test
+//-----------------------------------------------------------
+// Continuous divding
+//-----------------------------------------------------------
+class alu_cont_div_seq extends base_sequence;
+  `uvm_object_utils(alu_cont_div_seq)
+
+  int inst_num = 1;
+  alu_inst_e inst_set[];
+  sew_e vsew_set[];
+  function new(string name = "alu_cont_div_seq");
+    super.new(name);
+	`ifdef UVM_POST_VERSION_1_1
+     set_automatic_phase_objection(1);
+    `endif
+  endfunction:new
+
+  virtual task body();
+    repeat(inst_num) begin
+      req = new("req");
+      start_item(req);
+      assert(req.randomize() with {
+        pc == inst_cnt;
+
+        vlmul inside {LMUL1_2, LMUL1, LMUL2};
+        vsew inside {vsew_set};
+
+        inst_type == ALU;
+        alu_inst inside {inst_set};
+
+        dest_type == VRF; dest_idx inside {[2:11]};
+        src2_type == VRF; src2_idx inside {[12:21]};
+        src1_type == VRF; src1_idx inside {[22:31]};
+        vm dist {1:=80, 0:=20}; // to do more calcualtion
+      });
+      finish_item(req);
+      inst_cnt++;
+    end
+  endtask
+
+  task run_inst(uvm_sequencer_base sqr, int inst_num);
+    this.inst_num = inst_num;
+    this.start(sqr);
+  endtask: run_inst
+endclass: alu_cont_div_seq
+
+class alu_cont_div_test extends rvv_backend_test;
+  
+  alu_cont_div_seq rvs_seq;
+  rvs_last_sequence rvs_last_seq;
+
+  `uvm_component_utils(alu_cont_div_test)
+
+  function new(string name, uvm_component parent);
+    super.new(name, parent);
+  endfunction
+
+  function void build_phase(uvm_phase phase);
+    super.build_phase(phase);
+  endfunction
+
+  function void connect_phase(uvm_phase phase);
+    super.connect_phase(phase);
+    this.set_report_id_action_hier("MDL", UVM_LOG);
+  endfunction
+
+  task main_phase(uvm_phase phase);
+
+    logic [`VLEN-1:0] value;
+    logic [31:0] temp;
+    rand_vrf();
+    rvs_seq = alu_cont_div_seq::type_id::create("rvs_seq", this);
+    set_vrf(0,128'ha5a5_5a5a_a5a5_5a5a_a5a5_5a5a_a5a5_5a5a);
+
+    //-------------------------------------------------- 
+    // Unsigned test - sew8
+    // vs2
+    temp = $urandom_range(0, 8'hFF);
+    for(int j=0; j<`VLENB; j++) begin
+      value[j*8+:8] = temp;
+    end
+    for(int i=12; i<22; i++) begin
+      set_vrf(i,value);
+    end
+    // vs1
+    temp = $urandom_range(0, 8'hFF);
+    for(int j=0; j<`VLENB; j++) begin
+      value[j*8+:8] = temp;
+    end
+    for(int i=22; i<32; i++) begin
+      set_vrf(i,value);
+    end
+
+    rvs_seq.inst_set = new[2]('{VDIVU,VREMU});
+    rvs_seq.vsew_set = new[1]('{SEW8});
+    rvs_seq.run_inst(env.rvs_agt.rvs_sqr, 100);
+
+    while(!rvv_intern_if.rvv_is_idle()) begin
+      // wait for done
+      @(posedge rvs_if.clk);
+    end
+    rvs_seq.inst_set.delete();
+    rvs_seq.vsew_set.delete();
+
+    //-------------------------------------------------- 
+    // Unsigned test - sew16
+    // vs2
+    temp = $urandom_range(0, 16'hFFFF);
+    for(int j=0; j<`VLENB; j++) begin
+      value[j*16+:16] = temp;
+    end
+    for(int i=12; i<22; i++) begin
+      set_vrf(i,value);
+    end
+    // vs1
+    temp = $urandom_range(0, 16'hFFFF);
+    for(int j=0; j<`VLENB; j++) begin
+      value[j*16+:16] = temp;
+    end
+    for(int i=22; i<32; i++) begin
+      set_vrf(i,value);
+    end
+
+    rvs_seq.inst_set = new[2]('{VDIVU,VREMU});
+    rvs_seq.vsew_set = new[1]('{SEW16});
+    rvs_seq.run_inst(env.rvs_agt.rvs_sqr, 100);
+
+    while(!rvv_intern_if.rvv_is_idle()) begin
+      // wait for done
+      @(posedge rvs_if.clk);
+    end
+    rvs_seq.inst_set.delete();
+    rvs_seq.vsew_set.delete();
+
+    //-------------------------------------------------- 
+    // Unsigned test - sew32
+    // vs2
+    temp = $urandom_range(0, 32'hFFFFFFFF);
+    for(int j=0; j<`VLENB; j++) begin
+      value[j*32+:32] = temp;
+    end
+    for(int i=12; i<22; i++) begin
+      set_vrf(i,value);
+    end
+    // vs1
+    temp = $urandom_range(0, 32'hFFFFFFFF);
+    for(int j=0; j<`VLENB; j++) begin
+      value[j*32+:32] = temp;
+    end
+    for(int i=22; i<32; i++) begin
+      set_vrf(i,value);
+    end
+
+    rvs_seq.inst_set = new[2]('{VDIVU,VREMU});
+    rvs_seq.vsew_set = new[1]('{SEW32});
+    rvs_seq.run_inst(env.rvs_agt.rvs_sqr, 100);
+
+    while(!rvv_intern_if.rvv_is_idle()) begin
+      // wait for done
+      @(posedge rvs_if.clk);
+    end
+    rvs_seq.inst_set.delete();
+    rvs_seq.vsew_set.delete();
+
+    //-------------------------------------------------- 
+    // Signed test - sew8
+    // vs2
+    temp = $urandom_range(0, 8'hFF);
+    for(int j=0; j<`VLENB; j++) begin
+      value[j*8+:8] = temp;
+    end
+    for(int i=12; i<22; i++) begin
+      set_vrf(i,value);
+    end
+    // vs1
+    temp = $urandom_range(0, 8'hFF);
+    for(int j=0; j<`VLENB; j++) begin
+      value[j*8+:8] = temp;
+    end
+    for(int i=22; i<32; i++) begin
+      set_vrf(i,value);
+    end
+
+    rvs_seq.inst_set = new[2]('{VDIV,VREM});
+    rvs_seq.vsew_set = new[1]('{SEW8});
+    rvs_seq.run_inst(env.rvs_agt.rvs_sqr, 100);
+
+    while(!rvv_intern_if.rvv_is_idle()) begin
+      // wait for done
+      @(posedge rvs_if.clk);
+    end
+    rvs_seq.inst_set.delete();
+    rvs_seq.vsew_set.delete();
+
+    //-------------------------------------------------- 
+    // Signed test - sew16
+    // vs2
+    temp = $urandom_range(0, 16'hFFFF);
+    for(int j=0; j<`VLENB; j++) begin
+      value[j*16+:16] = temp;
+    end
+    for(int i=12; i<22; i++) begin
+      set_vrf(i,value);
+    end
+    // vs1
+    temp = $urandom_range(0, 16'hFFFF);
+    for(int j=0; j<`VLENB; j++) begin
+      value[j*16+:16] = temp;
+    end
+    for(int i=22; i<32; i++) begin
+      set_vrf(i,value);
+    end
+
+    rvs_seq.inst_set = new[2]('{VDIV,VREM});
+    rvs_seq.vsew_set = new[1]('{SEW16});
+    rvs_seq.run_inst(env.rvs_agt.rvs_sqr, 100);
+
+    while(!rvv_intern_if.rvv_is_idle()) begin
+      // wait for done
+      @(posedge rvs_if.clk);
+    end
+    rvs_seq.inst_set.delete();
+    rvs_seq.vsew_set.delete();
+
+    //-------------------------------------------------- 
+    // Signed test - sew32
+    // vs2
+    temp = $urandom_range(0, 32'hFFFFFFFF);
+    for(int j=0; j<`VLENB; j++) begin
+      value[j*32+:32] = temp;
+    end
+    for(int i=12; i<22; i++) begin
+      set_vrf(i,value);
+    end
+    // vs1
+    temp = $urandom_range(0, 32'hFFFFFFFF);
+    for(int j=0; j<`VLENB; j++) begin
+      value[j*32+:32] = temp;
+    end
+    for(int i=22; i<32; i++) begin
+      set_vrf(i,value);
+    end
+
+    rvs_seq.inst_set = new[2]('{VDIV,VREM});
+    rvs_seq.vsew_set = new[1]('{SEW32});
+    rvs_seq.run_inst(env.rvs_agt.rvs_sqr, 100);
+
+    while(!rvv_intern_if.rvv_is_idle()) begin
+      // wait for done
+      @(posedge rvs_if.clk);
+    end
+    rvs_seq.inst_set.delete();
+    rvs_seq.vsew_set.delete();
+
+    //-------------------------------------------------- 
+    // Signed & unsigned mix test - sew8
+    // vs2
+    temp = $urandom_range(0, 8'h7F);
+    for(int j=0; j<`VLENB; j++) begin
+      value[j*8+:8] = temp;
+    end
+    for(int i=12; i<22; i++) begin
+      set_vrf(i,value);
+    end
+    // vs1
+    temp = $urandom_range(0, 8'h7F);
+    for(int j=0; j<`VLENB; j++) begin
+      value[j*8+:8] = temp;
+    end
+    for(int i=22; i<32; i++) begin
+      set_vrf(i,value);
+    end
+
+    rvs_seq = alu_cont_div_seq::type_id::create("rvs_seq", this);
+    rvs_seq.inst_set = new[4]('{VDIV,VREM,VDIVU,VREMU});
+    rvs_seq.vsew_set = new[1]('{SEW8});
+    rvs_seq.run_inst(env.rvs_agt.rvs_sqr, 100);
+    while(!rvv_intern_if.rvv_is_idle()) begin
+      // wait for done
+      @(posedge rvs_if.clk);
+    end
+    rvs_seq.inst_set.delete();
+    rvs_seq.inst_set.delete();
+
+    //-------------------------------------------------- 
+    // Signed & unsigned mix test - sew16
+    // vs2
+    temp = $urandom_range(0, 16'h7FFF);
+    for(int j=0; j<`VLENB/2; j++) begin
+      value[j*16+:16] = temp;
+    end
+    for(int i=12; i<22; i++) begin
+      set_vrf(i,value);
+    end
+    // vs1
+    temp = $urandom_range(0, 16'h7FFF);
+    for(int j=0; j<`VLENB/2; j++) begin
+      value[j*16+:16] = temp;
+    end
+    for(int i=22; i<32; i++) begin
+      set_vrf(i,value);
+    end
+
+    rvs_seq = alu_cont_div_seq::type_id::create("rvs_seq", this);
+    rvs_seq.inst_set = new[4]('{VDIV,VREM,VDIVU,VREMU});
+    rvs_seq.vsew_set = new[1]('{SEW16});
+    rvs_seq.run_inst(env.rvs_agt.rvs_sqr, 100);
+    while(!rvv_intern_if.rvv_is_idle()) begin
+      // wait for done
+      @(posedge rvs_if.clk);
+    end
+    rvs_seq.inst_set.delete();
+    rvs_seq.inst_set.delete();
+
+    //-------------------------------------------------- 
+    // Signed & unsigned mix test - sew32
+    // vs2
+    temp = $urandom_range(0, 32'h7FFF_FFFF);
+    for(int j=0; j<`VLENB/4; j++) begin
+      value[j*32+:32] = temp;
+    end
+    for(int i=12; i<22; i++) begin
+      set_vrf(i,value);
+    end
+    // vs1
+    temp = $urandom_range(0, 32'h7FFF_FFFF);
+    for(int j=0; j<`VLENB/4; j++) begin
+      value[j*32+:32] = temp;
+    end
+    for(int i=22; i<32; i++) begin
+      set_vrf(i,value);
+    end
+
+    rvs_seq = alu_cont_div_seq::type_id::create("rvs_seq", this);
+    rvs_seq.inst_set = new[4]('{VDIV,VREM,VDIVU,VREMU});
+    rvs_seq.vsew_set = new[1]('{SEW32});
+    rvs_seq.run_inst(env.rvs_agt.rvs_sqr, 100);
+    while(!rvv_intern_if.rvv_is_idle()) begin
+      // wait for done
+      @(posedge rvs_if.clk);
+    end
+    rvs_seq.inst_set.delete();
+    rvs_seq.inst_set.delete();
+
+    rvs_last_seq = rvs_last_sequence::type_id::create("rvs_last_seq", this);
+    rvs_last_seq.start(env.rvs_agt.rvs_sqr);
+  endtask
+
+  function void final_phase(uvm_phase phase);
+    super.final_phase(phase);
+  endfunction
+
+endclass: alu_cont_div_test
 `endif // RVV_BACKEND_CORNER_TEST__SV

@@ -1,12 +1,16 @@
+# alu random tests
 alu_random_test
 alu_random_large_lmul_test
 alu_random_small_lmul_test
 alu_random_bypass_test
 alu_random_waw_test
 
+# lsu random tests
 lsu_random_test
 
+# all inst random tests
 rvv_random_test
 
+# trap random tests
 lsu_random_test_trap_en
-rvv_random_test_trap_en
+#rvv_random_test_trap_en

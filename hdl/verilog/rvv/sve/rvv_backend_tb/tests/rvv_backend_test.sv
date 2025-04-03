@@ -9,8 +9,10 @@ class rvv_backend_test extends uvm_test;
 
   typedef virtual rvs_interface v_if1;
   typedef virtual vrf_interface v_if3;
+  typedef virtual rvv_intern_interface v_if4;
   v_if1 rvs_if;
   v_if3 vrf_if;
+  v_if4 rvv_intern_if;
   rvv_backend_env env;
 
   UVM_FILE tb_logs [string];
@@ -32,6 +34,9 @@ class rvv_backend_test extends uvm_test;
       `uvm_fatal("TEST/NOVIF", "No virtual interface specified for this agent instance")
     end
     if(!uvm_config_db#(v_if3)::get(this, "", "vrf_if", vrf_if)) begin
+      `uvm_fatal("TEST/NOVIF", "No virtual interface specified for this agent instance")
+    end
+    if(!uvm_config_db#(v_if4)::get(this, "", "rvv_intern_if", rvv_intern_if)) begin
       `uvm_fatal("TEST/NOVIF", "No virtual interface specified for this agent instance")
     end
 
