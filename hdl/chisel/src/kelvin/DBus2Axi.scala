@@ -38,15 +38,6 @@ class WriteCtrl(p: Parameters) extends Bundle {
   val pc = UInt(p.programCounterBits.W)
 }
 
-object GenerateMasks {
-  def apply(nBytes: Int, addr: UInt, size: UInt, txnSizes: Vec[UInt]): (UInt, UInt) = {
-    val bottom = addr(log2Ceil(nBytes),0)
-    val mask0 = VecInit((0 until nBytes).map(i => i.U < txnSizes(0))).asUInt.rotateLeft(bottom)
-    val mask1 = VecInit((0 until nBytes).map(i => i.U < txnSizes(1))).asUInt.rotateLeft(bottom + txnSizes(0))
-    (mask0, mask1)
-  }
-}
-
 class DBus2Axi(p: Parameters) extends Module {
   val io = IO(new Bundle {
     val dbus = Flipped(new DBusIO(p))
@@ -69,7 +60,7 @@ class DBus2Axi(p: Parameters) extends Module {
   val sdata = RegInit(0.U(p.axi2DataBits.W))
 
   val misalignment = Mod2(io.dbus.addr, io.dbus.size)(p.dbusSize - 1,0)
-  val crossLineBoundary = Mod2(io.dbus.addr, p.axi2DataBytes.U) + io.dbus.size - 1.U >= p.axi2DataBytes.U
+  val crossLineBoundary = Mod2(io.dbus.addr, p.axi2DataBytes.U) + io.dbus.size > p.axi2DataBytes.U
   val belowLineBoundary = (p.axi2DataBytes.U - Mod2(io.dbus.addr, p.axi2DataBytes.U))(2,0)
   val txnCount = Mux(misalignment =/= 0.U || crossLineBoundary, 2.U, 1.U)
   val txnSizes = MuxCase(VecInit(io.dbus.size, 0.U), Seq(
@@ -115,7 +106,7 @@ class DBus2Axi(p: Parameters) extends Module {
   io.axi.read.addr.bits := readAddrQ.io.out.bits
 
   val (rmask0, rmask1) = GenerateMasks(
-      p.axi2DataBytes, io.dbus.addr, io.dbus.size, txnSizes)
+      p.axi2DataBytes, io.dbus.addr, txnSizes)
 
   val crossLineMask = MuxLookup(transactionsCompleted, 0.U)(Seq(
     0.U -> rmask0,
@@ -165,7 +156,7 @@ class DBus2Axi(p: Parameters) extends Module {
   assert(!(newTxn && writeDataQ.io.count =/= 0.U))
 
   val (wmask0, wmask1) = GenerateMasks(
-      p.axi2DataBytes, io.dbus.addr, io.dbus.size, txnSizes)
+      p.axi2DataBytes, io.dbus.addr, txnSizes)
   val wbitmask0 = VecInit(
       wmask0.asBools.map(Mux(_, 255.U(8.W), 0.U(8.W)))).asUInt
   val wbitmask1 = VecInit(

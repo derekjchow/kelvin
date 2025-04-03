@@ -355,3 +355,31 @@ object GateDecoupled {
     out
   }
 }
+
+/**
+   * Generates two bitmasks based on an address, transaction sizes, and the total number of bytes.
+   * These masks are typically used to identify which bytes are affected by two sequential transactions.
+   *
+   * @param nBytes The total number of bytes for which the mask is being generated.
+   * @param addr The starting address of the first transaction. The lower bits of this address are used as an offset.
+   * @param txnSizes A vector of UInts representing the sizes of the transactions.
+   * @return A tuple containing two UInts:
+   * - A bitmask for the first transaction.
+   * - A bitmask for the second transaction.
+   */
+object GenerateMasks {
+  def apply(nBytes: Int, addr: UInt, txnSizes: Vec[UInt]): (UInt, UInt) = {
+    val bottom = addr(log2Ceil(nBytes),0)
+    val mask0 = VecInit((0 until nBytes).map(i => i.U < txnSizes(0))).asUInt.rotateLeft(bottom)
+    val mask1 = VecInit((0 until nBytes).map(i => i.U < txnSizes(1))).asUInt.rotateLeft(bottom + txnSizes(0))
+    (mask0, mask1)
+  }
+}
+
+// Convert masks where each bit represents a byte,
+// to masks where each bit represents a bit.
+object BytemaskToBitmask {
+  def apply(bytemask: UInt): UInt = {
+    VecInit(bytemask.asBools.map(Mux(_, 255.U(8.W), 0.U(8.W)))).asUInt
+  }
+}

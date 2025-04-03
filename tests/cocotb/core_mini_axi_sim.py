@@ -195,12 +195,14 @@ async def core_mini_axi_riscv_dv(dut):
   cocotb.start_soon(core_mini_axi.clock.start())
 
   riscv_dv_elfs = glob.glob("../tests/cocotb/riscv-dv/*.o")
-  for elf in tqdm.tqdm(riscv_dv_elfs):
-    with open(elf, "rb") as f:
-      await core_mini_axi.reset()
-      entry_point = await core_mini_axi.load_elf(f)
-      await core_mini_axi.execute_from(entry_point)
-      await core_mini_axi.wait_for_halted_semihost(f)
+  with tqdm.tqdm(riscv_dv_elfs) as t:
+    for elf in tqdm.tqdm(riscv_dv_elfs):
+      t.set_postfix({"binary": os.path.basename(elf)})
+      with open(elf, "rb") as f:
+        await core_mini_axi.reset()
+        entry_point = await core_mini_axi.load_elf(f)
+        await core_mini_axi.execute_from(entry_point)
+        await core_mini_axi.wait_for_halted_semihost(f)
 
 @cocotb.test()
 async def core_mini_axi_csr_test(dut):
