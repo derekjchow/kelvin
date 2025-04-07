@@ -2565,7 +2565,8 @@ module rvv_backend_pmtrdt_unit
         .T            (COMPRESS_CTRL_t),
         .M            (1),
         .N            (1),
-        .DEPTH        (`EMUL_MAX)
+        .DEPTH        (`EMUL_MAX),
+        .ASYNC_RSTN   (1)
       ) compress_ctrl_fifo (
         // global
           .clk          (clk),
