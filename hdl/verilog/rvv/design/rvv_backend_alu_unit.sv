@@ -184,8 +184,7 @@ module rvv_backend_alu_unit
     endcase
   end
 
-
-  cdffr
+  edff
   #(
     .T      (PIPE_DATA_t)
   )
@@ -193,7 +192,6 @@ module rvv_backend_alu_unit
   (
     .clk    (clk),
     .rst_n  (rst_n),
-    .c      (1'b0), 
     .e      (alu_uop_p1_en), 
     .d      (alu_uop_p1_in),
     .q      (alu_uop_p1)

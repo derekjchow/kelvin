@@ -113,91 +113,85 @@ module rvv_backend_div_unit_divider
   // dividend
   edff
   #(
-  .WIDTH    (DIV_WIDTH)
+  .T        (logic [DIV_WIDTH-1:0])
   )
   dividend
   (
     .clk    (clk),
     .rst_n  (rst_n),
-    .en     (dividend_en),
+    .e      (dividend_en),
     .d      (dividend_d),
     .q      (dividend_q)
   );
   // divisor
   edff
   #(
-  .WIDTH    (DIV_WIDTH)
+  .T        (logic [DIV_WIDTH-1:0])
   )
   divisor
   (
     .clk    (clk),
     .rst_n  (rst_n),
-    .en     (divisor_en),
+    .e      (divisor_en),
     .d      (divisor_d),
     .q      (divisor_q)
   );
   // quotient
   edff
   #(
-  .WIDTH    (DIV_WIDTH)
+  .T        (logic [DIV_WIDTH-1:0])
   )
   quotient
   (
     .clk    (clk),
     .rst_n  (rst_n),
-    .en     (quotient_en),
+    .e      (quotient_en),
     .d      (quotient_d),
     .q      (quotient_q)
   );
   // remainder
   edff
   #(
-  .WIDTH    (DIV_WIDTH)
+  .T        (logic [DIV_WIDTH-1:0])
   )
   remainder
   (
     .clk    (clk),
     .rst_n  (rst_n),
-    .en     (remainder_en),
+    .e      (remainder_en),
     .d      (remainder_d),
     .q      (remainder_q)
   );
   // count
   edff
   #(
-  .WIDTH    ($clog2(DIV_WIDTH)+1)
+  .T        (logic [$clog2(DIV_WIDTH):0])
   )
   count
   (
     .clk    (clk),
     .rst_n  (rst_n),
-    .en     (count_en),
+    .e      (count_en),
     .d      (count_d),
     .q      (count_q)
   );
   // record quotient sgn-bit
   edff
-  #(
-  .WIDTH    (1)
-  )
   q_sgn
   (
     .clk    (clk),
     .rst_n  (rst_n),
-    .en     (q_sgn_en),
+    .e      (q_sgn_en),
     .d      (q_sgn_d),
     .q      (q_sgn_q)
   );
   // record remainder sgn-bit
   edff
-  #(
-  .WIDTH    (1)
-  )
   r_sgn
   (
     .clk    (clk),
     .rst_n  (rst_n),
-    .en     (r_sgn_en),
+    .e      (r_sgn_en),
     .d      (r_sgn_d),
     .q      (r_sgn_q)
   );

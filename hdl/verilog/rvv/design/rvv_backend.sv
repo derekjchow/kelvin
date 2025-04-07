@@ -769,7 +769,7 @@ module rvv_backend
         .T            (UOP_LSU_t),
         .M            (`NUM_LSU),
         .N            (`NUM_LSU),
-        .DEPTH        (`LSU_RS_DEPTH),
+        .DEPTH        (`NUM_LSU*2),
         .CHAOS_PUSH   (1'b1)
     ) u_lsu_res (
       // global

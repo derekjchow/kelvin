@@ -187,6 +187,40 @@ module rvv_backend_dispatch_opr_byte_type
         assign vd_enable_tmp  = v0_enable[uop_v0_start+:`VLENB]; 
 
         for (i=0; i<`VLENB; i++) begin : gen_vd_byte_type
+          if (i==0) begin
+            // ele_index = uop_index * (VLEN/vd_eew) + BYTE_INDEX[MSB:vd_eew]
+            assign vd_enable[0] = uop_info.vm ? 1'b1 : vd_enable_tmp[0];
+            assign vd_ele_index[0] = uop_v0_start;
+
+            always_comb begin
+              operand_byte_type.v0_strobe[0] = 'b0;
+
+              case (uop_info.uop_exe_unit)
+                RDT:begin
+                  case(uop_info.vd_eew)
+                    EEW32:operand_byte_type.vd[0]   = BODY_ACTIVE;
+                    EEW16:operand_byte_type.vd[0]   = BODY_ACTIVE;
+                    default:operand_byte_type.vd[0] = BODY_ACTIVE;
+                  endcase
+                end
+                default:begin
+                  if (uop_info.ignore_vta&uop_info.ignore_vma)
+                      operand_byte_type.vd[0] = BODY_ACTIVE;       
+                  else if (vd_ele_index[0] >= uop_info.vl) 
+                      operand_byte_type.vd[0] = TAIL;       
+                  else if ((vd_ele_index[0] < {1'b0, uop_info.vstart})&(uop_info.vstart>=uop_vd_start)) 
+                      operand_byte_type.vd[0] = NOT_CHANGE;     // prestart
+                  else if (vd_ele_index[0] < {1'b0, uop_vd_start}) // &(uop_info.vstart<uop_vd_start)
+                      operand_byte_type.vd[0] = NOT_CHANGE;     // prestart
+                  else begin 
+                      operand_byte_type.vd[0] = (vd_enable[0] || uop_info.ignore_vma) ? BODY_ACTIVE
+                                                                                      : BODY_INACTIVE;
+                      operand_byte_type.v0_strobe[0] = vd_enable[0] || uop_info.ignore_vma;
+                  end
+                end
+              endcase
+            end
+          end else begin
             // ele_index = uop_index * (VLEN/vd_eew) + BYTE_INDEX[MSB:vd_eew]
             assign vd_enable[i] = uop_info.vm ? 1'b1 : vd_enable_tmp[i >> vd_eew_shift];
             assign vd_ele_index[i] = uop_v0_start + (i >> vd_eew_shift);
@@ -221,6 +255,7 @@ module rvv_backend_dispatch_opr_byte_type
                 end
               endcase
             end
+          end
         end
     endgenerate
 

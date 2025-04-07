@@ -24,9 +24,9 @@ genvar i,j;
 generate
   for (i=0; i<32; i=i+1) begin
     for (j=0; j<`VLEN; j=j+1) begin
-      edff #(1) vrf_unit1_reg (
+      edff vrf_unit1_reg (
         .q      (vreg[i][j]),
-        .en     (wenb[i][j]),
+        .e      (wenb[i][j]),
         .d      (wdata[i][j]),
         .clk    (clk),
         .rst_n  (rst_n)
