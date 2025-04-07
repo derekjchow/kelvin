@@ -66,7 +66,7 @@ my $cpuNum = 1;
 my $mem   = 1000;
 my $host = qq("span[hosts=1] rusage[mem=$mem] select[type==rhel7]");
 my $queue = "";
-my $maxRunTime = 60;
+my $maxRunTime = 120;
 if(defined $opt_queue) { $queue = $opt_queue; }
 my $bsub  = $localRun ? "bsub -Is -q $queue -n $cpuNum -R $host"
                       : "bsub -q $queue -n $cpuNum -R $host";
@@ -151,11 +151,11 @@ if($exeCoverage) {
 
 my $modeOpt;
 if($opt_mode =~ m/slow/) {
-  $modeOpt = "PLUS_ARGS+=+resp_mode_all_slow";
+  $modeOpt = "PLUS_ARGS+=+delay_mode_all_slow";
   @cmd_sim = map { "$_  $modeOpt"; } @cmd_sim;
 }
 if($opt_mode =~ m/fast/) {
-  $modeOpt = "PLUS_ARGS+=+resp_mode_all_fast";
+  $modeOpt = "PLUS_ARGS+=+delay_mode_all_fast";
   @cmd_sim = map { "$_  $modeOpt"; } @cmd_sim;
 }
 

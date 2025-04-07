@@ -166,7 +166,6 @@ VCOMP = vcs -full64 -sverilog +define+SV	\
 				$(TIMESCALE)	\
 				$(PLI_OPTS)	\
 				$(UVM)	\
-				$(DEFINES) \
 				$(COV)	\
 				$(UVM_DEBUG_COMP)	\
 				-Mupdate -Mdir=$(BUILD_PATH)/csrc	\
@@ -180,7 +179,7 @@ VSIM  = $(BUILD_PATH)/simv	\
 				+vcs+lic+wait  \
 				$(ASSERT_OPTS)	\
 				$(SEED)	\
-				$(DEFINES) $(PLUS_ARGS)	\
+				$(PLUS_ARGS)	\
 				+UVM_TESTNAME=$(UVM_TEST) +UVM_VERBOSITY=$(UVM_VERBOSITY) \
 				$(DUMP) $(UVM_DEBUG_SIM)	\
 				+UVM_MAX_QUIT_COUNT=$(max_error),NO	\
@@ -228,8 +227,7 @@ list vlst:
 	@rm -rf $(scfg).vlst
 	@echo "$(RTL_INC)" > $(RVV_ROOT)/$(scfg).vlst
 	@echo "$(TB_INC)" >> $(RVV_ROOT)/$(scfg).vlst
-	@echo "$(RTL_DEFINE)" >> $(RVV_ROOT)/$(scfg).vlst
-	@echo "$(TB_DEFINE)" >> $(RVV_ROOT)/$(scfg).vlst
+	@echo "$(DEFINES)" >> $(RVV_ROOT)/$(scfg).vlst
 	@echo "$(RTLFILES)" >> $(RVV_ROOT)/$(scfg).vlst
 	@echo "$(TBFILES)" >> $(RVV_ROOT)/$(scfg).vlst
 	@perl -i -ane 's/\s+/\n/g; s/-(.)\n/-$$1 /g; s,//,/,g; print;' $(RVV_ROOT)/$(scfg).vlst
