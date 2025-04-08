@@ -253,12 +253,12 @@ absl::Status CoreMiniAxi_tb::LoadElfAsync(const std::string& file_name) {
         std::make_unique<TrafficDesc>(utils::merge(elf_transfers)));
     uint32_t tohost;
     if (::LookupSymbol(data8, "tohost", &tohost)) {
+      // NB: This alignment requirement is to simplify the watchpoint implementation.
       CHECK((tohost & 0xFFFFFFF0L) == tohost);
       tohost_addr_ = tohost;
     }
     uint32_t fromhost;
     if (::LookupSymbol(data8, "fromhost", &fromhost)) {
-      CHECK((fromhost & 0xFFFFFFF0L) == fromhost);
       fromhost_addr_ = fromhost;
     }
   } else {

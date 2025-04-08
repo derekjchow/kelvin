@@ -254,9 +254,6 @@ int sc_main(int argc, char** argv) {
       }
       uint32_t fromhost;
       if (::LookupSymbol(data8, "fromhost", &fromhost)) {
-        if ((fromhost & 0xFFFFFFF0L) != fromhost) {
-          return kRetSemihostError;
-        }
         top.fromhost_addr_ = fromhost;
       }
     } else {

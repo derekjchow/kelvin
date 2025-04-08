@@ -674,6 +674,21 @@ class CoreMiniAxiInterface:
       timeout_cycles = timeout_cycles - 1
     assert timeout_cycles > 0
 
+  async def wait_for_halted_semihost(self, elf, timeout_cycles=1000000):
+    tohost = self.lookup_symbol(elf, "tohost")
+    assert tohost != None
+    if cocotb.SIM_NAME == "Verilator":
+      rv = await self.watch(tohost, timeout_cycles=timeout_cycles)
+      assert np.sum(np.frombuffer(rv[0:4], dtype=np.uint8)) == 1
+    else:
+      initial_rv = await self.read_word(tohost)
+      while True:
+        await ClockCycles(self.dut.io_aclk, timeout_cycles)
+        rv = await self.read_word(tohost)
+        if not (rv == initial_rv).all():
+          assert np.sum(rv) == 1
+          break
+
   async def watch(self, addr, timeout_cycles=1_000_000):
     while timeout_cycles > 0:
       if self.dut.core.io_dbus_valid.value == 1:
@@ -813,7 +828,7 @@ async def core_mini_axi_master_write_alignment(dut):
     entry_point = await core_mini_axi.load_elf(f)
     await core_mini_axi.execute_from(entry_point)
 
-    await core_mini_axi.wait_for_halted(timeout_cycles=10000)
+    await core_mini_axi.wait_for_halted_semihost(f)
     assert core_mini_axi.dut.io_fault.value == 0
 
 @cocotb.test()
@@ -860,20 +875,8 @@ async def core_mini_axi_riscv_dv(dut):
     with open(elf, "rb") as f:
       await core_mini_axi.reset()
       entry_point = await core_mini_axi.load_elf(f)
-      tohost = core_mini_axi.lookup_symbol(f, "tohost")
-      assert tohost != None
       await core_mini_axi.execute_from(entry_point)
-      if cocotb.SIM_NAME == "Verilator":
-        rv = await core_mini_axi.watch(tohost)
-        assert np.sum(np.frombuffer(rv[0:4], dtype=np.uint8)) == 1
-      else:
-        initial_rv = await core_mini_axi.read_word(tohost)
-        while True:
-          await ClockCycles(dut.io_aclk, 1000)
-          rv = await core_mini_axi.read_word(tohost)
-          if not (rv == initial_rv).all():
-            assert np.sum(rv) == 1
-            break
+      await core_mini_axi.wait_for_halted_semihost(f)
 
 @cocotb.test()
 async def core_mini_axi_csr_test(dut):

@@ -119,4 +119,5 @@ filegroup(
 
 register_toolchains(
     "//toolchain:cc_kelvin_v2_toolchain",
+    "//toolchain:cc_kelvin_v2_semihosting_toolchain",
 )

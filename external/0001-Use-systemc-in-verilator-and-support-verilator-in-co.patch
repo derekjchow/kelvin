@@ -1,15 +1,15 @@
-From e792bdbdab5cedb6e4c47826a5324e6eeceac5b9 Mon Sep 17 00:00:00 2001
+From e625bad7c5bb1fcf1243fb69782f4e3f77776198 Mon Sep 17 00:00:00 2001
 From: Alex Van Damme <atv@google.com>
 Date: Wed, 5 Feb 2025 13:40:42 -0800
 Subject: [PATCH] Use systemc in verilator and support verilator in cocotb
 
 ---
  BUILD                                         |  11 +-
- cocotb/cocotb.bzl                             |  27 ++++-
+ cocotb/cocotb.bzl                             |  32 ++++-
  cocotb/cocotb_wrapper.py                      |   1 +
  .../verilator/verilator.BUILD.bazel           | 110 +++++++++++++++++-
  verilator/defs.bzl                            |  22 ++--
- 5 files changed, 157 insertions(+), 14 deletions(-)
+ 5 files changed, 161 insertions(+), 15 deletions(-)
 
 diff --git a/BUILD b/BUILD
 index bf28dd5..a6fe964 100644
@@ -42,7 +42,7 @@ index bf28dd5..a6fe964 100644
  
  licenses(["notice"])
 diff --git a/cocotb/cocotb.bzl b/cocotb/cocotb.bzl
-index 8ab664d..103eca7 100644
+index 8ab664d..6cddd81 100644
 --- a/cocotb/cocotb.bzl
 +++ b/cocotb/cocotb.bzl
 @@ -15,16 +15,20 @@
@@ -98,7 +98,7 @@ index 8ab664d..103eca7 100644
  
      # return the information about testing script and its dependencies
      return [
-@@ -292,6 +309,10 @@ _cocotb_test_attrs = {
+@@ -292,11 +309,18 @@ _cocotb_test_attrs = {
          doc = "Record signal traces",
          default = True,
      ),
@@ -109,6 +109,15 @@ index 8ab664d..103eca7 100644
  }
  
  cocotb_test = rule(
+     implementation = _cocotb_test_impl,
+     attrs = _cocotb_test_attrs,
+-    toolchains = ["@rules_python//python:toolchain_type"],
++    toolchains = [
++        "@rules_cc//cc:toolchain_type",
++        "@rules_python//python:toolchain_type",
++    ],
+     test = True,
+ )
 diff --git a/cocotb/cocotb_wrapper.py b/cocotb/cocotb_wrapper.py
 index ba37573..03d0dbc 100644
 --- a/cocotb/cocotb_wrapper.py
@@ -368,5 +377,5 @@ index c3e26d5..fc8af53 100644
              doc = "CC compiler.",
              default = Label("@bazel_tools//tools/cpp:current_cc_toolchain"),
 -- 
-2.48.1.711.g2feabab25a-goog
+2.49.0.504.g3bcea36a83-goog
 

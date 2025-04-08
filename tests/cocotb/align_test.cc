@@ -1,6 +1,5 @@
-typedef signed char int8_t;
-typedef signed short int16_t;
-typedef signed int int32_t;
+#include <cstddef>
+#include <cstdint>
 
 // Writes incrementing integers to an array, reads them back and returns the
 // the accumulated sum.
@@ -19,21 +18,21 @@ int WriteReadAccumulateArray(volatile T* data) {
 volatile int8_t* extmem = reinterpret_cast<volatile int8_t*>(0x20000000L);
 
 int main() {
-  for (int i = 0; i < sizeof(int32_t); i++) {
+  for (size_t i = 0; i < sizeof(int32_t); i++) {
     if (WriteReadAccumulateArray<int32_t, 4>(
             reinterpret_cast<volatile int32_t*>(extmem+i)) != 6) {
       return -1;
     }
   }
 
-  for (int i = 0; i < sizeof(int16_t); i++) {
+  for (size_t i = 0; i < sizeof(int16_t); i++) {
     if (WriteReadAccumulateArray<int16_t, 4>(
             reinterpret_cast<volatile int16_t*>(extmem+i)) != 6) {
       return -1;
     }
   }
 
-  for (int i = 0; i < sizeof(int8_t); i++) {
+  for (size_t i = 0; i < sizeof(int8_t); i++) {
     if (WriteReadAccumulateArray<int8_t, 4>(
             reinterpret_cast<volatile int8_t*>(extmem+i)) != 6) {
       return -1;
@@ -43,7 +42,7 @@ int main() {
   volatile int32_t* extmem_boundary = reinterpret_cast<volatile int32_t*>(0x20000ffe);
   *extmem_boundary = 0xdeadbeef;
 
-  if (*extmem_boundary != 0xdeadbeef) {
+  if (*extmem_boundary != static_cast<int32_t>(0xdeadbeef)) {
     return -1;
   }
   return 0;

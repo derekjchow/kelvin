@@ -80,6 +80,45 @@ def _impl(ctx):
             path = "/bin/false",
         ),
     ]
+
+    # This is huge. Won't fit in 8K itcm,
+    # but should fit in the highmem variant.
+    printf_float_feature = feature(
+        name = "printf_float",
+        enabled = False,
+        flag_sets = [
+            flag_set(
+                actions = all_link_actions,
+                flag_groups = [
+                    flag_group(
+                        flags = [
+                            "-u",
+                            "_printf_float",
+                        ],
+                    ),
+                ],
+            ),
+        ],
+    )
+
+    warnings_feature = feature(
+        name = "warnings",
+        enabled = True,
+        flag_sets = [
+            flag_set(
+                actions = all_compile_actions,
+                flag_groups = [
+                    flag_group(
+                        flags = [
+                            "-Wall",
+                            "-Werror",
+                        ],
+                    ),
+                ],
+            ),
+        ],
+    )
+
     includes_feature = feature(
         name = "includes",
         enabled = True,
@@ -90,13 +129,16 @@ def _impl(ctx):
                     flag_group(
                         flags = [
                             "-nostdinc",
-                            "-u",
-                            "_printf_float",
-                            "-lsemihosting",
                             "-isystem",
-                            "external/toolchain_kelvin_v2/riscv32-unknown-elf/include",
+                            "external/toolchain_kelvin_v2/riscv32-unknown-elf/include/c++/15.0.1",
+                            "-isystem",
+                            "external/toolchain_kelvin_v2/riscv32-unknown-elf/include/c++/15.0.1/backward",
+                            "-isystem",
+                            "external/toolchain_kelvin_v2/riscv32-unknown-elf/include/c++/15.0.1/riscv32-unknown-elf",
                             "-isystem",
                             "external/toolchain_kelvin_v2/lib/gcc/riscv32-unknown-elf/15.0.1/include",
+                            "-isystem",
+                            "external/toolchain_kelvin_v2/riscv32-unknown-elf/include",
                         ],
                     ),
                 ],
@@ -104,36 +146,85 @@ def _impl(ctx):
         ],
     )
 
+    optimization_compile_flag_set = flag_set(
+        actions = all_compile_actions,
+        flag_groups = [
+            flag_group(
+                flags = [
+                    "-Os",
+                    "-ffunction-sections",
+                    "-fdata-sections",
+                    "-ffreestanding",
+                ],
+            ),
+        ],
+    )
+
+    optimization_link_flag_set = flag_set(
+        actions = all_link_actions,
+        flag_groups = [
+            flag_group(
+                flags = [
+                    "-Wl,--gc-sections",
+                ],
+            ),
+        ],
+    )
+
+    architecture_flag_set = flag_set(
+        actions = all_compile_actions,
+        flag_groups = [
+            flag_group(
+                flags = [
+                    "-march=rv32im_zve32x_zicsr_zifencei_zbb",
+                    "-mabi=ilp32",
+                    "-mcmodel=medany",
+                    "-nostdlib",
+                ],
+            ),
+        ],
+    )
+
+    nano_spec_flag_set = flag_set(
+        actions = all_link_actions,
+        flag_groups = [
+            flag_group(
+                flags = [
+                    "--specs=nano.specs",
+                    "-lm",
+                    "-lc",
+                    "-lgcc",
+                    "-nostartfiles",
+                ],
+            ),
+        ],
+    )
+
+    semihosting_spec_flag_set = flag_set(
+        actions = all_link_actions,
+        flag_groups = [
+            flag_group(
+                flags = [
+                    "--specs=htif_nano.specs",
+                    "-lsemihost",
+                    "-lm",
+                    "-lc",
+                    "-lgcc",
+                ],
+            ),
+        ],
+    )
+
+    spec_flag_set = semihosting_spec_flag_set if ctx.attr.semihosting else nano_spec_flag_set
+
     sys_feature = feature(
         name = "sys_spec",
         enabled = True,
         flag_sets = [
-            flag_set(
-                actions = all_compile_actions,
-                flag_groups = [
-                    flag_group(
-                        flags = [
-                            "-march=rv32im_zve32x_zicsr",
-                            "-mabi=ilp32",
-                            "-mcmodel=medany",
-                        ],
-                    ),
-                ],
-            ),
-            flag_set(
-                actions = all_link_actions,
-                flag_groups = [
-                    flag_group(
-                        flags = [
-                            "--specs=semihost.specs",
-                            "-lsemihost",
-                            "-lm",
-                            "-lc",
-                            "-lgcc",
-                        ],
-                    ),
-                ],
-            ),
+            architecture_flag_set,
+            optimization_compile_flag_set,
+            optimization_link_flag_set,
+            spec_flag_set,
         ],
     )
 
@@ -149,13 +240,17 @@ def _impl(ctx):
         abi_libc_version = "ilp32",
         features = [
             includes_feature,
+            printf_float_feature,
             sys_feature,
+            warnings_feature,
         ],
         tool_paths = tool_paths,
     )
 
 kelvin_v2_cc_toolchain_config = rule(
     implementation = _impl,
-    attrs = {},
+    attrs = {
+        "semihosting": attr.bool()
+    },
     provides = [CcToolchainConfigInfo],
 )

@@ -1,4 +1,3 @@
-#!/bin/bash --norc
 # Copyright 2025 Google LLC
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -13,21 +12,16 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-#ln -sf driver.sh objcopy example linker cmd
+package(default_visibility = ["//visibility:public"])
 
-PROG=$(basename "$0")
-DRIVER_DIR=$(dirname "$0")
-TOOLCHAIN="toolchain_kelvin_v2"
-PREFIX="riscv32-unknown-elf"
-
-ARGS=()
-POSTARGS=()
-case "${PROG}" in
-    gcc)
-        ;;
-esac
-
-exec "external/${TOOLCHAIN}/bin/${PREFIX}-${PROG}" \
-    "${ARGS[@]}" \
-    "$@"\
-    "${POSTARGS[@]}"
+cc_library(
+    name = "crt",
+    srcs = [
+        "crt.S",
+        "kelvin_gloss.cc",
+        "kelvin_start.S",
+    ],
+    target_compatible_with = [
+        "//platforms/cpu:kelvin_v2"
+    ],
+)

@@ -1,5 +1,6 @@
 
 load("//rules:coco_tb.bzl", "vcs_cocotb_test", "verilator_cocotb_test")
+load("//rules:kelvin_v2.bzl", "kelvin_v2_binary")
 load("//rules:utils.bzl", "template_rule")
 load("@kelvin_pip_deps//:requirements.bzl", "requirement")
 
@@ -41,7 +42,9 @@ template_rule(
         requirement("pyelftools"),
         requirement("tqdm"),
     ],
-    data = glob(["**/*.elf"]) + glob(["**/*.o"]),
+    data = glob(["**/*.elf"]) + glob(["**/*.o"]) + [
+        ":align_test.elf",
+    ],
 )
 
 TESTCASES = [
@@ -93,4 +96,12 @@ vcs_cocotb_test(
         requirement("tqdm"),
     ],
     data = glob(["**/*.elf"]) + glob(["**/*.o"]),
+)
+
+kelvin_v2_binary(
+    name = "align_test",
+    srcs = [
+        "align_test.cc",
+    ],
+    semihosting = True,
 )
