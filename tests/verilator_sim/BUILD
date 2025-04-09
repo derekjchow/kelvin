@@ -244,7 +244,6 @@ cc_binary(
 
 cc_test(
     name = "dbus2axi_tb",
-    size = "small",
     srcs = [
         "kelvin/dbus2axi_tb.cc",
     ],
@@ -389,7 +388,6 @@ cc_test(
 
 cc_test(
     name = "vconvctrl_tb",
-    size = "small",
     srcs = [
         "kelvin/vconvctrl_tb.cc",
         "@kelvin_hw//hdl/chisel/src/kelvin:VCore_parameters.h",
@@ -405,7 +403,6 @@ cc_test(
 
 cc_test(
     name = "vdecodeinstruction_tb",
-    size = "small",
     srcs = [
         "kelvin/vdecodeinstruction_tb.cc",
     ],
@@ -449,7 +446,6 @@ cc_test(
 
 cc_test(
     name = "vregfilesegment_tb",
-    size = "small",
     srcs = [
         "kelvin/vregfilesegment_tb.cc",
     ],
