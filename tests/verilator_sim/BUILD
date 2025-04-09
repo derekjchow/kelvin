@@ -91,11 +91,11 @@ cc_library(
         "//hdl/chisel/src/kelvin:core_mini_axi_cc_library",
         "//tests/systemc:Xbar",
         "@accellera_systemc//:systemc",
+        "@com_google_absl//absl/log",
         "@com_google_absl//absl/log:check",
         "@com_google_absl//absl/log:initialize",
-        "@com_google_absl//absl/log",
         "@com_google_absl//absl/status",
-        "@libsystemctlm_soc//:libsystemctlm_soc",
+        "@libsystemctlm_soc",
     ],
 )
 
@@ -109,8 +109,8 @@ cc_binary(
         "@com_google_absl//absl/flags:flag",
         "@com_google_absl//absl/flags:parse",
         "@com_google_absl//absl/flags:usage",
+        "@com_google_absl//absl/log",
         "@com_google_absl//absl/log:check",
-        "@com_google_absl//absl/log:log",
     ],
 )
 
@@ -241,7 +241,6 @@ cc_binary(
         "@com_google_absl//absl/log:check",
     ],
 )
-
 
 cc_test(
     name = "dbus2axi_tb",
