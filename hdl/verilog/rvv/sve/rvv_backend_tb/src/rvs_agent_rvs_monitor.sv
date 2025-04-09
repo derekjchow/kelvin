@@ -142,7 +142,10 @@ task rvs_monitor::tx_monitor();
   rvs_transaction rt_tr;
   forever begin
     @(posedge rvs_if.clk);
-    if(rvs_if.rst_n) begin
+    if(~rvs_if.rst_n) begin
+      inst_temp_queue.delete();
+      inst_tx_queue.delete();
+    end else begin
       for(int i=0; i<`ISSUE_LANE; i++) begin
         if(rvs_if.insts_valid_rvs2cq[i] && rvs_if.insts_ready_cq2rvs[i]) begin
           inst_tr = new("inst_tr");
@@ -186,6 +189,7 @@ task rvs_monitor::rx_monitor();
     @(posedge rvs_if.clk);
     if(~rvs_if.rst_n) begin
       ready_to_new_inst = 1;
+      inst_rx_queue.delete();
     end else begin
       // if(rvs_if.vcsr_valid && rvs_if.vcsr_ready) begin
       //   if(ready_to_new_inst) begin
@@ -319,7 +323,9 @@ endtask: rx_monitor
 task rvs_monitor::rx_timeout_monitor();
   forever begin
     @(posedge rvs_if.clk);
-    if(rvs_if.rst_n) begin
+    if(~rvs_if.rst_n) begin
+      inst_tx_timeout_cnt = 0;
+    end else begin
       // Timeout of inst port handshake check.
       if(|rvs_if.insts_valid_rvs2cq) begin
         inst_tx_timeout_cnt++;

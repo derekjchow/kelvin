@@ -3,22 +3,27 @@
 
 `include "rvv_backend.svh"
 
-  `uvm_analysis_imp_decl(_inst)
-  `uvm_analysis_imp_decl(_trap_mdl)
-
   typedef logic [0:0]  sew1_t;
   typedef logic [7:0]  sew8_t;
   typedef logic [15:0] sew16_t;
   typedef logic [31:0] sew32_t;
   typedef logic [31:0] sew_max_t;
 
-typedef class alu_base;
-typedef class alu_processor;
-typedef class lsu_processor;
-typedef class pmt_processor;
-typedef class rdt_processor;
+  typedef class alu_base;
+  typedef class alu_processor;
+  typedef class lsu_processor;
+  typedef class pmt_processor;
+  typedef class rdt_processor;
 
+//------------------------------------------------------------------------------
+// CLASS: rvv_behavior_model
+//------------------------------------------------------------------------------
+  `uvm_analysis_imp_decl(_inst)
+  `uvm_analysis_imp_decl(_trap_mdl)
+  
 class rvv_behavior_model extends uvm_component;
+// Members ------------------------------------------------
+  // config
   typedef virtual rvs_interface v_if1;
   v_if1 rvs_if;  
   typedef virtual vrf_interface v_if3;
@@ -26,11 +31,6 @@ class rvv_behavior_model extends uvm_component;
 
   bit ill_inst_en = 0;
   bit all_one_for_agn = 0;
-
-  uvm_analysis_imp_inst #(rvs_transaction,rvv_behavior_model) inst_imp; 
-  uvm_analysis_imp_trap_mdl #(trap_info_transaction,rvv_behavior_model) trap_imp; 
-  uvm_analysis_port #(rvs_transaction) rt_ap; 
-  uvm_analysis_port #(vrf_transaction) vrf_ap;
 
   // vcsr
   agnostic_e        vma;
@@ -70,8 +70,16 @@ class rvv_behavior_model extends uvm_component;
   pmt_processor pmt_inst;
   rdt_processor rdt_inst;
       
+// TLM -----------------------------------------------------
+  uvm_analysis_imp_inst #(rvs_transaction,rvv_behavior_model) inst_imp; 
+  uvm_analysis_imp_trap_mdl #(trap_info_transaction,rvv_behavior_model) trap_imp; 
+  uvm_analysis_port #(rvs_transaction) rt_ap; 
+  uvm_analysis_port #(vrf_transaction) vrf_ap;
+
+// UVM Marocs ----------------------------------------------
   `uvm_component_utils(rvv_behavior_model)
 
+// Phases --------------------------------------------------
   extern function new(string name = "rvv_behavior_model", uvm_component parent);
   extern virtual function void build_phase(uvm_phase phase);
   extern virtual function void connect_phase(uvm_phase phase);
@@ -79,6 +87,11 @@ class rvv_behavior_model extends uvm_component;
   extern virtual task main_phase(uvm_phase phase);
   extern virtual function void final_phase(uvm_phase phase);
 
+// TLM Methods ---------------------------------------------
+  extern virtual function void write_inst(rvs_transaction inst_tr);
+  extern virtual function void write_trap_mdl(trap_info_transaction trap_tr);
+
+// Methods -------------------------------------------------
   extern virtual task rx_mdl();
   extern virtual task tx_mdl();
   extern virtual task vrf_mdl();
@@ -86,26 +99,34 @@ class rvv_behavior_model extends uvm_component;
   extern function logic [31:0] elm_fetch(oprand_type_e reg_type, int reg_idx, int elm_idx, int eew);
   extern task elm_writeback(logic [31:0] result, oprand_type_e reg_type, int reg_idx, int elm_idx, int eew, bit strobe=1);
 
-  // imp task
-  extern virtual function void write_inst(rvs_transaction inst_tr);
-  extern virtual function void write_trap_mdl(trap_info_transaction trap_tr);
+endclass: rvv_behavior_model
 
-endclass : rvv_behavior_model
-
+// Phases --------------------------------------------------
   function rvv_behavior_model::new(string name = "rvv_behavior_model", uvm_component parent);
     super.new(name, parent);
-    pmt_inst = new();// create a pmt inst.
-    rdt_inst = new();// create a rdt inst.
-  endfunction : new
+  endfunction: new
 
   function void rvv_behavior_model::build_phase(uvm_phase phase);
     super.build_phase(phase);
+    // TLM ports
     inst_imp = new("inst_imp", this);
     trap_imp = new("trap_imp", this);
-    rt_ap = new("rt_ap", this);
-    vrf_ap = new("vrf_ap", this);
+    rt_ap    = new("rt_ap", this);
+    vrf_ap   = new("vrf_ap", this);
+
+    // model classes
+    pmt_inst = new();
+    // rdt_inst = new();
     mem = new("mdl_mem", this);
-  endfunction : build_phase 
+
+    // config
+    if(uvm_config_db#(bit)::get(this, "", "ill_inst_en", ill_inst_en))begin
+      if(ill_inst_en) `uvm_info("MDL", "Enable operating illegal instruction in reference model!", UVM_LOW)
+    end
+    if(uvm_config_db#(bit)::get(this, "", "all_one_for_agn", all_one_for_agn))begin
+      if(all_one_for_agn) `uvm_info("MDL", "Enable overwriting agnostic emelements with 1s in reference model!", UVM_LOW)
+    end
+  endfunction: build_phase 
 
   function void rvv_behavior_model::connect_phase(uvm_phase phase);
     super.connect_phase(phase);
@@ -114,12 +135,6 @@ endclass : rvv_behavior_model
     end
     if(!uvm_config_db#(v_if3)::get(this, "", "vrf_if", vrf_if)) begin
       `uvm_fatal("MDL/NOVIF", "No virtual interface specified for this agent instance")
-    end
-    if(uvm_config_db#(bit)::get(this, "", "ill_inst_en", ill_inst_en))begin
-      if(ill_inst_en) `uvm_info(get_type_name(), "Enable operating illegal instruction in reference model!", UVM_LOW)
-    end
-    if(uvm_config_db#(bit)::get(this, "", "all_one_for_agn", all_one_for_agn))begin
-      if(all_one_for_agn) `uvm_info(get_type_name(), "Enable overwriting agnostic emelements with 1s in reference model!", UVM_LOW)
     end
   endfunction:connect_phase
 
@@ -167,6 +182,7 @@ endclass : rvv_behavior_model
                                         this.total_inst, this.executed_inst, real'(this.total_inst - this.executed_inst)*100.0/real'(this.total_inst)), UVM_NONE)
   endfunction: final_phase 
 
+// TLM Methods ---------------------------------------------
   function void rvv_behavior_model::write_inst(rvs_transaction inst_tr);
     `uvm_info("MDL", "get a inst", UVM_HIGH)
     `uvm_info("MDL", inst_tr.sprint(), UVM_HIGH)
@@ -180,6 +196,7 @@ endclass : rvv_behavior_model
     trap_queue.push_back(trap_tr);
   endfunction
 
+// Methods -------------------------------------------------
   task rvv_behavior_model::rx_mdl();
   endtask: rx_mdl
 
@@ -261,7 +278,19 @@ endclass : rvv_behavior_model
 
     forever begin
       @(posedge rvs_if.clk);
-      if(rvs_if.rst_n) begin
+      if(~rvs_if.rst_n) begin
+        vma         = '0;
+        vta         = '0;
+        vsew        = '0;
+        vlmul       = '0;
+        vl          = '0;
+        vstart      = '0;
+        vxrm        = RNU;
+        vxsat       = '0;
+        vxsat_valid = '0;
+        inst_queue.delete();
+        trap_queue.delete();
+      end else begin
       exe_inst_num = 0;
       foreach(rvs_if.rt_uop[i])
         exe_inst_num += rvs_if.rt_last_uop[i] || rvs_if.rt_uop[i] & rvs_if.vcsr_valid & rvs_if.vcsr_ready;
@@ -1453,7 +1482,19 @@ endclass : rvv_behavior_model
     tr = new();
     forever begin
       @(posedge vrf_if.clk);
-      if(vrf_if.rst_n) begin
+      if(~vrf_if.rst_n) begin
+        last_uop_idx_max = -1;
+        uop_idx_max = -1;
+        for(int i=0; i<32; i++) begin
+          xrf[i] = '0;
+          vrf[i] = '0;
+          vrf_delay[i] = '0;
+          vrf_temp[i] = '0;
+          vrf_bit_strobe_temp[i] = '0;
+          vrf_byte_strobe_temp[i] = '0;
+          vrf_writeback_temp[i] = '0;
+        end
+      end else begin
         last_uop_idx_max = -1;
         uop_idx_max = -1;
         for(int i=0; i<`NUM_RT_UOP; i++) begin
@@ -1471,7 +1512,9 @@ endclass : rvv_behavior_model
     end
   endtask
 
-// ALU inst part ------------------------------------------
+//------------------------------------------------------------------------------
+// CLASS: 
+//------------------------------------------------------------------------------
 virtual class alu_base; 
   parameter ALU_MAX_WIDTH = `VLEN;
 
@@ -1520,19 +1563,6 @@ class alu_processor#(
   type T0 = sew1_t
   ) extends alu_base;  
   
-//   virtual void function reset();
-//     super.reset();
-//   endfunction: reset
-//   virtual function void set_vxrm(vxrm_e val);
-//     super.set_vxrm(vxrm_e val);
-//   endfunction: set_vxrm
-//   virtual function void set_elm_idx(int val);
-//     super.set_elm_idx(int val);
-//   endfunction: set_elm_idx
-//   virtual function bit get_saturate();
-//     super.get_saturate();
-//   endfunction: get_saturate
-
   virtual function int get_xrf_wb_value(rvs_transaction inst_tr);
     super.get_xrf_wb_value(inst_tr);
     case(inst_tr.alu_inst)

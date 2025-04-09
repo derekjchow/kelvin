@@ -365,6 +365,11 @@ task rvv_scoreboard::mem_access_checker();
   int err;
   forever begin
     @(posedge rvs_if.clk); 
+    if(~rvs_if.rst_n) begin
+      mem_queue_lsu.delete();
+      mem_queue_mdl.delete();
+      err=0;
+    end else begin
     err = 0;
     while(mem_queue_mdl.size()>0) begin
       if(mem_queue_lsu.size()>0) begin
@@ -374,13 +379,20 @@ task rvv_scoreboard::mem_access_checker();
         if(lsu_tr.kind != mdl_tr.kind) begin
           `uvm_error("MEM_CHCKER", $sformatf("Memory access kind mismatch: lsu = %s, mdl = %s", lsu_tr.kind.name(), mdl_tr.kind.name()))
           err++;
-        end else if(lsu_tr.addr != mdl_tr.addr) begin
+        end else begin
+          `uvm_info("MEM_CHCKER", $sformatf("Memory access kind: lsu = %s, mdl = %s", lsu_tr.kind.name(), mdl_tr.kind.name()), UVM_HIGH)
+        end
+        if(lsu_tr.addr != mdl_tr.addr) begin
           `uvm_error("MEM_CHCKER", $sformatf("Memory access addr mismatch: lsu = 0x%8x, mdl = 0x%8x", lsu_tr.addr, mdl_tr.addr))
           err++;
-        end else if(lsu_tr.data !== mdl_tr.data) begin
+        end else begin
+          `uvm_info("MEM_CHCKER", $sformatf("Memory access addr: lsu = 0x%8x, mdl = 0x%8x", lsu_tr.addr, mdl_tr.addr), UVM_HIGH)
+        end
+        if(lsu_tr.data !== mdl_tr.data) begin
           `uvm_error("MEM_CHCKER", $sformatf("Memory access data mismatch: lsu = 0x%2x, mdl = 0x%2x", lsu_tr.data, mdl_tr.data))
           err++;
         end else begin
+          `uvm_info("MEM_CHCKER", $sformatf("Memory access data: lsu = 0x%2x, mdl = 0x%2x", lsu_tr.data, mdl_tr.data), UVM_HIGH)
         end
         `uvm_info("MEM_RECORDER", $sformatf("\nMEM check done.  ====================================================================================================\n"),UVM_HIGH)
       end else begin
@@ -388,6 +400,7 @@ task rvv_scoreboard::mem_access_checker();
         // If we changed how model work, please update while condition.
         `uvm_error("MEM_CHCKER", "MDL has accessed memory but LSU hasn't.")
       end
+    end
     end
   end
   if(err == 0) begin

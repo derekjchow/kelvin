@@ -102,6 +102,8 @@ task lsu_driver::rx_driver();
   forever begin
     @(negedge lsu_if.clk);
     if(~lsu_if.rst_n) begin
+      indexed_stride.delete();
+      uops_rx_queue.delete();
     end else begin
       foreach(uops_rx_queue[uop_idx]) begin
         uop_tr = new();
@@ -329,6 +331,8 @@ task lsu_driver::tx_driver();
   forever begin
     @(posedge lsu_if.clk);
     if(~lsu_if.rst_n) begin
+      uops_tx_queue.delete();
+      inst_queue.delete();
       for(int i=0; i<`NUM_LSU; i++) begin
         lsu_if.uop_lsu_valid_lsu2rvv[i] <= '0;
         lsu_if.uop_lsu_lsu2rvv[i]       <= 'x;

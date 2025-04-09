@@ -202,16 +202,30 @@ task rvs_driver::tx_driver();
   tr = new();
   forever begin
     @(posedge rvs_if.clk);
-    inst_manage();
-    if(stall_tx) begin
+    if(~rvs_if.rst_n) begin
+      inst_tx_queue.delete();
       for(int i=0; i<`ISSUE_LANE; i++) begin
-        rvs_if.insts_rvs2cq[i]         <= inst[i];
-        rvs_if.insts_valid_rvs2cq[i]   <= 1'b0;
+       inst[i] = 0;
+       inst_vld[i] = 0;
+      end
+      stall_tx = 1;
+      //Reset DUT
+      for(int i=0; i<`ISSUE_LANE; i++) begin
+        rvs_if.insts_rvs2cq[i]         <= '0;
+        rvs_if.insts_valid_rvs2cq[i]   <= '0;
       end
     end else begin
-      for(int i=0; i<`ISSUE_LANE; i++) begin
-        rvs_if.insts_rvs2cq[i]         <= inst[i];
-        rvs_if.insts_valid_rvs2cq[i]   <= inst_vld[i];
+      inst_manage();
+      if(stall_tx) begin
+        for(int i=0; i<`ISSUE_LANE; i++) begin
+          rvs_if.insts_rvs2cq[i]         <= inst[i];
+          rvs_if.insts_valid_rvs2cq[i]   <= 1'b0;
+        end
+      end else begin
+        for(int i=0; i<`ISSUE_LANE; i++) begin
+          rvs_if.insts_rvs2cq[i]         <= inst[i];
+          rvs_if.insts_valid_rvs2cq[i]   <= inst_vld[i];
+        end
       end
     end
   end
@@ -222,6 +236,13 @@ task rvs_driver::rx_driver();
   logic wr_vxsat_ready;
   forever begin
     @(posedge rvs_if.clk);
+    if(~rvs_if.rst_n) begin
+      for(int i=0; i<`NUM_RT_UOP; i++) begin
+        rvs_if.rt_xrf_ready_rvs2rvv[i] <= '0;
+      end
+      rvs_if.wr_vxsat_ready <= '0;
+      rvs_if.vcsr_ready <= 1'b0;
+    end
     // trap handler
     if(rvs_if.vcsr_ready) begin
       if(rvs_if.vcsr_valid) begin

@@ -4,7 +4,7 @@
 `include "rvv_backend_define.svh"
 `include "rvv_backend.svh"
 
-interface rvs_interface (input bit clk, input bit rst_n);
+interface rvs_interface (input bit clk, ref logic rst_n);
 
 // vector instruction and scalar operand . 
   logic         [`ISSUE_LANE-1:0] insts_valid_rvs2cq;
