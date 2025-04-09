@@ -13,4 +13,9 @@ rvv_random_test
 
 # trap random tests
 lsu_random_test_trap_en
-#rvv_random_test_trap_en
+rvv_random_test_trap_en
+
+# each alu PU test
+div_random_test
+div_random_test_trap_en
+

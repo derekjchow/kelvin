@@ -258,6 +258,46 @@ class alu_div_overflow_seq extends base_sequence;
     });
     finish_item(req);
     inst_cnt++;
+
+    // to cover unsigned condition
+    req = new("req");
+    start_item(req);
+    assert(req.randomize() with {
+      pc == inst_cnt;
+      use_vlmax == 1;
+
+      vlmul == LMUL1;
+      vsew == local::vsew;
+
+      inst_type == ALU;
+      alu_inst inside {VDIVU};
+
+      dest_type == VRF; dest_idx == 7;
+      src2_type == VRF; src2_idx == 2;
+      src1_type == VRF; src1_idx == 1;
+      vm == 1;
+    });
+    finish_item(req);
+    inst_cnt++;
+    req = new("req");
+    start_item(req);
+    assert(req.randomize() with {
+      pc == inst_cnt;
+      use_vlmax == 1;
+
+      vlmul == LMUL1;
+      vsew == local::vsew;
+
+      inst_type == ALU;
+      alu_inst inside {VREMU};
+
+      dest_type == VRF; dest_idx == 8;
+      src2_type == VRF; src2_idx == 2;
+      src1_type == VRF; src1_idx == 1;
+      vm == 1;
+    });
+    finish_item(req);
+    inst_cnt++;
   endtask
 
 endclass: alu_div_overflow_seq
@@ -298,6 +338,8 @@ class alu_div_overflow_test extends rvv_backend_test;
     set_vrf(4,128'hface_face_face_face_face_face_face_face);
     set_vrf(5,128'hface_face_face_face_face_face_face_face);
     set_vrf(6,128'hface_face_face_face_face_face_face_face);
+    set_vrf(7,128'hface_face_face_face_face_face_face_face);
+    set_vrf(8,128'hface_face_face_face_face_face_face_face);
 
     rvs_seq.start(env.rvs_agt.rvs_sqr);
     while(rvv_intern_if.rvv_is_idle()) begin
@@ -342,6 +384,8 @@ class alu_div_overflow_test extends rvv_backend_test;
     set_vrf(4,128'hface_face_face_face_face_face_face_face);
     set_vrf(5,128'hface_face_face_face_face_face_face_face);
     set_vrf(6,128'hface_face_face_face_face_face_face_face);
+    set_vrf(7,128'hface_face_face_face_face_face_face_face);
+    set_vrf(8,128'hface_face_face_face_face_face_face_face);
 
     rvs_seq.start(env.rvs_agt.rvs_sqr);
     while(rvv_intern_if.rvv_is_idle()) begin
@@ -386,6 +430,8 @@ class alu_div_overflow_test extends rvv_backend_test;
     set_vrf(4,128'hface_face_face_face_face_face_face_face);
     set_vrf(5,128'hface_face_face_face_face_face_face_face);
     set_vrf(6,128'hface_face_face_face_face_face_face_face);
+    set_vrf(7,128'hface_face_face_face_face_face_face_face);
+    set_vrf(8,128'hface_face_face_face_face_face_face_face);
 
     rvs_seq.start(env.rvs_agt.rvs_sqr);
     while(rvv_intern_if.rvv_is_idle()) begin

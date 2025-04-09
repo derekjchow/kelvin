@@ -21,7 +21,8 @@ class lsu_driver extends uvm_driver # (lsu_transaction);
 
   rvv_mem mem;
   
-  bit trap_en = 1;
+  bit trap_en = 0;
+  bit always_trap = 0;
   delay_mode_pkg::delay_mode_e       delay_mode_rvv2lsu;
   delay_mode_pkg::delay_mode_e       delay_mode_lsu2rvv;
 
@@ -74,6 +75,12 @@ function void lsu_driver::build_phase(uvm_phase phase);
   end else begin
     trap_en = 0;
     `uvm_info(get_type_name(), $sformatf("Trap_en of lsu_driver is set to %s.", trap_en), UVM_LOW)
+  end
+  if(uvm_config_db#(bit)::get(this, "", "always_trap",always_trap)) begin
+    `uvm_info(get_type_name(), $sformatf("Trap_en of lsu_driver is set to %s.", always_trap), UVM_LOW)
+  end else begin
+    always_trap = 0;
+    `uvm_info(get_type_name(), $sformatf("Trap_en of lsu_driver is set to %s.", always_trap), UVM_LOW)
   end
 
 endfunction: build_phase
@@ -638,13 +645,19 @@ function int lsu_driver::lsu_uop_decode(ref rvs_transaction inst_tr);
         endcase
         // Gen trap
         if(trap_en) begin
-          assert(uop_tr.randomize(trap_occured) with {
-            trap_occured dist {
-              // 0 := 99,
-              0 := 9,
-              1 := 1
-            };
-          });
+          if(always_trap) begin
+            assert(uop_tr.randomize(trap_occured) with {
+              trap_occured == 1;
+            });
+          end else begin
+            assert(uop_tr.randomize(trap_occured) with {
+              trap_occured dist {
+                // 0 := 99,
+                0 := 9,
+                1 := 1
+              };
+            });
+          end
         end else begin
           assert(uop_tr.randomize(trap_occured) with {
             trap_occured == 0;

@@ -2024,6 +2024,27 @@ class alu_random_waw_seq extends alu_random_base_sequence;
 
 endclass: alu_random_waw_seq
 
+class div_random_seq extends alu_random_base_sequence;
+  `uvm_object_utils(div_random_seq)
+  `uvm_add_to_seq_lib(div_random_seq,rvs_sequencer_sequence_library)
+
+  virtual task body();
+    repeat(inst_num) begin
+      req = new("req");
+      start_item(req);
+      assert(req.randomize() with {
+        pc == local::inst_cnt;
+
+        inst_type == ALU;
+        alu_inst inside {VDIVU, VDIV, VREMU, VREM};
+
+      });
+      finish_item(req);
+      inst_cnt++;
+    end // repeat(inst_num)
+  endtask
+
+endclass: div_random_seq
 //===========================================================
 // LSU sequence
 //===========================================================
