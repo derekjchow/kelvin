@@ -858,7 +858,9 @@ class rvv_reset_test extends rvv_backend_test;
     rvs_seq_lib.selection_mode = UVM_SEQ_LIB_RAND;
     rvs_seq_lib.sequence_count = 100;
     rvs_seq_lib.add_typewide_sequence(rvs_alu_seq.get_type());
-    rvs_seq_lib.add_typewide_sequence(rvs_lsu_seq.get_type());
+    // FIXME: For now, tb didn't support getting a reset while a store inst 
+    //    having sent the data to lsu but not retire yet.
+    // rvs_seq_lib.add_typewide_sequence(rvs_lsu_seq.get_type());
     rvs_seq_lib.init_sequence_library();
 
     `uvm_info(get_type_name(),"Start randomize mem & vrf.", UVM_LOW)
