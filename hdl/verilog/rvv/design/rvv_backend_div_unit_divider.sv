@@ -111,54 +111,58 @@ module rvv_backend_div_unit_divider
 // register
 //
   // dividend
-  edff
+  cdffr
   #(
-  .T        (logic [DIV_WIDTH-1:0])
+    .T      (logic [DIV_WIDTH-1:0])
   )
   dividend
   (
     .clk    (clk),
     .rst_n  (rst_n),
     .e      (dividend_en),
+    .c      (trap_flush_rvv),
     .d      (dividend_d),
     .q      (dividend_q)
   );
   // divisor
-  edff
+  cdffr
   #(
-  .T        (logic [DIV_WIDTH-1:0])
+    .T      (logic [DIV_WIDTH-1:0])
   )
   divisor
   (
     .clk    (clk),
     .rst_n  (rst_n),
     .e      (divisor_en),
+    .c      (trap_flush_rvv),
     .d      (divisor_d),
     .q      (divisor_q)
   );
   // quotient
-  edff
+  cdffr
   #(
-  .T        (logic [DIV_WIDTH-1:0])
+    .T      (logic [DIV_WIDTH-1:0])
   )
   quotient
   (
     .clk    (clk),
     .rst_n  (rst_n),
     .e      (quotient_en),
+    .c      (trap_flush_rvv),
     .d      (quotient_d),
     .q      (quotient_q)
   );
   // remainder
-  edff
+  cdffr
   #(
-  .T        (logic [DIV_WIDTH-1:0])
+    .T      (logic [DIV_WIDTH-1:0])
   )
   remainder
   (
     .clk    (clk),
     .rst_n  (rst_n),
     .e      (remainder_en),
+    .c      (trap_flush_rvv),
     .d      (remainder_d),
     .q      (remainder_q)
   );
@@ -176,22 +180,24 @@ module rvv_backend_div_unit_divider
     .q      (count_q)
   );
   // record quotient sgn-bit
-  edff
+  cdffr
   q_sgn
   (
     .clk    (clk),
     .rst_n  (rst_n),
     .e      (q_sgn_en),
+    .c      (trap_flush_rvv),
     .d      (q_sgn_d),
     .q      (q_sgn_q)
   );
   // record remainder sgn-bit
-  edff
+  cdffr
   r_sgn
   (
     .clk    (clk),
     .rst_n  (rst_n),
     .e      (r_sgn_en),
+    .c      (trap_flush_rvv),
     .d      (r_sgn_d),
     .q      (r_sgn_q)
   );
