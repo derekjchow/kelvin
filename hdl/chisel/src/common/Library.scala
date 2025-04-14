@@ -72,6 +72,17 @@ object MakeInvalid {
   )
 }
 
+object MakeDecoupled {
+  def apply[T <: Data](valid: Bool, ready: Bool, bits: T): DecoupledIO[T] = {
+    MakeWireBundle[DecoupledIO[T]](
+      Decoupled(chiselTypeOf(bits)),
+      _.valid -> valid,
+      _.ready -> ready,
+      _.bits -> bits
+    )
+  }
+}
+
 // Gate the bits of an interface based on it's validity bit. This prevents
 // invalid data from propagating down stream, thus reducing dynamic power
 object ForceZero {

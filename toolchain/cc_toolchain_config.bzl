@@ -176,7 +176,7 @@ def _impl(ctx):
         flag_groups = [
             flag_group(
                 flags = [
-                    "-march=rv32im_zve32x_zicsr_zifencei_zbb",
+                    "-march=rv32imf_zve32x_zicsr_zifencei_zbb",
                     "-mabi=ilp32",
                     "-mcmodel=medany",
                     "-nostdlib",

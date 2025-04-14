@@ -30,7 +30,7 @@ class FRegfileWrite extends Bundle {
   val data  = Input(new Fp32)
 }
 
-class FRegfile(n_read: Int, n_write: Int) extends Module {
+class FRegfile(p: Parameters, n_read: Int, n_write: Int) extends Module {
   val io = IO(new Bundle {
     val read_ports = Vec(n_read, new FRegfileRead)
     val write_ports = Vec(n_write, new FRegfileWrite)
@@ -38,9 +38,11 @@ class FRegfile(n_read: Int, n_write: Int) extends Module {
     val scoreboard_set = Input(UInt(32.W))
     val scoreboard = Output(UInt(32.W))
     val exception = Output(Bool())
+
+    val busPort = new RegfileBusPortIO(p)
   })
 
-  val fregfile = Reg(Vec(32, new Fp32))
+  val fregfile = RegInit(VecInit.fill(32)(Fp32.fromWord("x00000000".U(32.W))))
   val scoreboard = RegInit(0.U(32.W))
 
   // Update scoreboard
@@ -48,6 +50,10 @@ class FRegfile(n_read: Int, n_write: Int) extends Module {
       Mux(x.valid, UIntToOH(x.addr), 0.U)).reduce(_|_)
   scoreboard := (scoreboard & ~scoreboard_clr) | io.scoreboard_set
   io.scoreboard := scoreboard
+
+  val scoreboard_error = RegInit(false.B)
+  scoreboard_error := (scoreboard & scoreboard_clr) =/= scoreboard_clr
+  assert(!scoreboard_error)
 
   // Writes
   val register_write_error = Wire(Vec(32, Bool()))
@@ -67,5 +73,20 @@ class FRegfile(n_read: Int, n_write: Int) extends Module {
     read_port.data := Mux(read_port.valid,
                           fregfile(read_port.addr),
                           Fp32.Zero(false.B))
+  }
+
+  io.busPort.addr(0) := 0.U
+  // If there's a write in progress, forward the value. Otherwise, fetch from the regfile.
+  // TOOD(atv): Generalize this a bit, such that if there is an incoming write on any port for the addr, we fwd it.
+  io.busPort.data(0) := (if (n_read < 2) {
+    0.U
+  } else {
+    Mux(io.write_ports(0).valid && (io.write_ports(0).addr === io.read_ports(1).addr),
+        io.write_ports(0).data,
+        fregfile(io.read_ports(1).addr)).asWord
+  })
+  for (i <- 1 until p.instructionLanes) {
+    io.busPort.addr(i) := 0.U
+    io.busPort.data(i) := 0.U
   }
 }

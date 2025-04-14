@@ -30,12 +30,19 @@ chisel_library(
     srcs = [
         "scalar/FRegfile.scala",
         "scalar/Fpu.scala",
+        "float/FloatCore.scala",
+        "float/FloatCoreInterface.scala",
+    ],
+    resources = [
+        "@cvfpu//:all_srcs",
+        "@common_cells//:all_srcs",
+        "@fpu_div_sqrt_mvp//:all_srcs",
     ],
     deps = [
-        ":kelvin",
         ":kelvin_base",
         "//hdl/chisel/src/common:fma",
         "//hdl/chisel/src/common:fp",
+        "//hdl/chisel/src/common:library",
     ],
 )
 
@@ -52,6 +59,7 @@ chisel_test(
         "//hdl/chisel/src/common:fp",
     ],
 )
+
 
 chisel_library(
     name = "kelvin_rvv",
@@ -293,8 +301,10 @@ chisel_library(
     deps = [
         ":KelvinScmInfo",
         ":kelvin_base",
+        ":kelvin_float",
         ":kelvin_rvv",
         "//hdl/chisel/src/common",
+        "//hdl/chisel/src/common:fp",
         "//hdl/chisel/src/common:instruction_buffer",
     ],
 )
@@ -333,6 +343,7 @@ chisel_library(
         ":RstSync",
         ":clock_gate",
         ":kelvin_base",
+        ":kelvin_float",
         ":kelvin_rvv",
         ":kelvin_scalar",
         ":kelvin_vector",
@@ -415,6 +426,7 @@ chisel_cc_library(
         "--fetchDataBits=128",
         "--lsuDataBits=128",
         "--enableVector=False",
+        "--enableFloat=True",
         "--moduleName=CoreMini",
         "--useAxi",
     ],
@@ -422,6 +434,12 @@ chisel_cc_library(
     verilog_file_path = "CoreMiniAxi.sv",
     vopts = [
         "-DUSE_GENERIC",
+        # Warnings that we disable for fpnew
+        "-Wno-UNOPTFLAT",
+        "-Wno-ASCRANGE",
+        "-Wno-WIDTHEXPAND",
+        "-Wno-WIDTHTRUNC",
+        "-Wno-UNSIGNED",
     ],
 )
 

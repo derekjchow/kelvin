@@ -117,6 +117,8 @@ object EmitCore extends App {
       p.enableVector = arg.split("=")(1).toBoolean
     } else if (arg.startsWith("--enableRvv")) {
       p.enableRvv = arg.split("=")(1).toBoolean
+    } else if (arg.startsWith("--enableFloat")) {
+      p.enableFloat = arg.split("=")(1).toBoolean
     } else if (arg.startsWith("--lsuDataBits")) {
       p.lsuDataBits = arg.split("=")(1).toInt
     } else if (arg.startsWith("--tcmHighmem")) {

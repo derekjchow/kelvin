@@ -333,3 +333,17 @@ async def core_mini_axi_burst_types_test(dut):
     rdata = await core_mini_axi.read(read_offset, 16, burst=AxiBurst.WRAP)
     expected = np.concatenate([wdata[-write_offset:], wdata[-16:-write_offset]])
     assert (expected == np.roll(rdata, read_offset)).all()
+
+@cocotb.test()
+async def core_mini_axi_float_csr_test(dut):
+  core_mini_axi = CoreMiniAxiInterface(dut)
+  await core_mini_axi.init()
+  await core_mini_axi.reset()
+  cocotb.start_soon(core_mini_axi.clock.start())
+
+  with open("../tests/cocotb/float_csr_interlock_test.elf", "rb") as f:
+    entry_point = await core_mini_axi.load_elf(f)
+    await core_mini_axi.execute_from(entry_point)
+
+    await core_mini_axi.wait_for_halted()
+    assert core_mini_axi.dut.io_fault.value == 0

@@ -39,11 +39,6 @@ class RegfileReadSetIO extends Bundle {
   val value = Input(UInt(32.W))
 }
 
-class RegfileWriteAddrIO extends Bundle {
-  val valid = Input(Bool())
-  val addr  = Input(UInt(5.W))
-}
-
 class RegfileBusAddrIO extends Bundle {
   val valid = Input(Bool())
   val bypass = Input(Bool())
@@ -51,29 +46,28 @@ class RegfileBusAddrIO extends Bundle {
   val immed = Input(UInt(32.W))
 }
 
-class RegfileBusPortIO(p: Parameters) extends Bundle {
-  val addr = Output(Vec(p.instructionLanes, UInt(32.W)))
-  val data = Output(Vec(p.instructionLanes, UInt(32.W)))
-}
-
 class RegfileBranchTargetIO extends Bundle {
   val data = Output(UInt(32.W))
 }
 
 class Regfile(p: Parameters) extends Module {
+  // The register file has 1 write port per instruction lane.
+  // Additionally, there are two more write ports to service
+  // the MLU/DVU, and the LSU, as they may take more cycles.
+  val extraWritePorts = 2
   val io = IO(new Bundle {
     // Decode cycle.
     val readAddr = Vec(p.instructionLanes * 2, new RegfileReadAddrIO)
     val readSet  = Vec(p.instructionLanes * 2, new RegfileReadSetIO)
     val writeAddr = Vec(p.instructionLanes, new RegfileWriteAddrIO)
-    val busAddr = Vec(p.instructionLanes, new RegfileBusAddrIO)
+    val busAddr = Vec(p.instructionLanes, Input(new RegfileBusAddrIO))
     val target = Vec(p.instructionLanes, new RegfileBranchTargetIO)
     val linkPort = new RegfileLinkPortIO
     val busPort = new RegfileBusPortIO(p)
 
     // Execute cycle.
     val readData = Vec(p.instructionLanes * 2, new RegfileReadDataIO)
-    val writeData = Vec(p.instructionLanes + 2, new Bundle {
+    val writeData = Vec(p.instructionLanes + extraWritePorts, new Bundle {
       val valid = Input(Bool())
       val bits = new RegfileWriteDataIO
     })
@@ -142,7 +136,7 @@ class Regfile(p: Parameters) extends Module {
           (0 until p.instructionLanes).reverse.map(x => io.writeData(x).valid && io.writeData(x).bits.addr === i.U && !io.writeMask(x).valid)
     )
 
-    val data  = (0 until p.instructionLanes + 2).map(x => MuxOR(valid(x), io.writeData(x).bits.data)).reduce(_|_)
+    val data  = (0 until p.instructionLanes + extraWritePorts).map(x => MuxOR(valid(x), io.writeData(x).bits.data)).reduce(_|_)
 
     writeValid(i) := valid =/= 0.U
     writeData(i)  := data
@@ -163,7 +157,7 @@ class Regfile(p: Parameters) extends Module {
       io.writeData(x).valid &&
       io.writeData(x).bits.addr === 0.U &&
       !io.writeMask(x).valid) ++
-    (p.instructionLanes until p.instructionLanes + 2).map(x => io.writeData(x).valid && io.writeData(x).bits.addr === 0.U)
+    (p.instructionLanes until p.instructionLanes + extraWritePorts).map(x => io.writeData(x).valid && io.writeData(x).bits.addr === 0.U)
 
   io.rfwriteCount := PopCount(writeValid) - writeValid(0) + PopCount(x0)
 
@@ -225,8 +219,8 @@ class Regfile(p: Parameters) extends Module {
     assert(busAddr(i).getWidth == p.lsuAddrBits)
   }
 
-  for (i <- 0 until p.instructionLanes + 2) {
-    for (j <- (i + 1) until p.instructionLanes + 2) {
+  for (i <- 0 until p.instructionLanes + extraWritePorts) {
+    for (j <- (i + 1) until p.instructionLanes + extraWritePorts) {
       // Delay the failure a cycle for debugging purposes.
       val write_fail = RegInit(false.B)
       write_fail := io.writeData(i).valid && io.writeData(j).valid &&

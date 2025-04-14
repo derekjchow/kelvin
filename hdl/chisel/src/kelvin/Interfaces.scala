@@ -72,6 +72,11 @@ class RegfileLinkPortIO extends Bundle {
   val value = Output(UInt(32.W))
 }
 
+class RegfileBusPortIO(p: Parameters) extends Bundle {
+  val addr = Vec(p.instructionLanes, UInt(32.W))
+  val data = Vec(p.instructionLanes, UInt(32.W))
+}
+
 // When `valid` as asserted, `addr` must remain constant
 // until `ready` is fired.
 class IBusIO(p: Parameters) extends Bundle {
@@ -192,11 +197,26 @@ class DebugIO(p: Parameters) extends Bundle {
       val data = UInt(32.W)
     }))
   }
+
+  val float = Option.when(p.enableFloat)(new Bundle {
+    // Decode
+    val writeAddr = Valid(UInt(5.W))
+    // Execute
+    val writeData = Vec(2, Valid(new Bundle {
+      val addr = UInt(32.W)
+      val data = UInt(32.W)
+    }))
+  })
 }
 
 class RegfileReadDataIO extends Bundle {
   val valid = Output(Bool())
   val data  = Output(UInt(32.W))
+}
+
+class RegfileWriteAddrIO extends Bundle {
+  val valid = Input(Bool())
+  val addr  = Input(UInt(5.W))
 }
 
 class RegfileWriteDataIO extends Bundle {

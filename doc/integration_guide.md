@@ -136,7 +136,7 @@ Note: the USER signal is not supported on any of the channels.
 | -> fire  | If an instruction was dispatched in the slot, this cycle |
 | -> addr  | The 32-bit address of the instruction |
 | -> inst  | The 32-bit value of the instruction |
-| regfile  | Information about writes to the register file |
+| regfile  | Information about writes to the integer register file |
 | -> writeAddr | Register addresses to which a future write is expected |
 | ->-> valid | If an instruction was dispatched in this lane, which will write the regfile |
 | ->-> bits | The 5-bit register address to which the write is expected |
@@ -144,6 +144,15 @@ Note: the USER signal is not supported on any of the channels.
 | ->-> valid | If a write occurred on this port, this cycle |
 | ->-> bits_addr | The 5-bit register address to which the write occurred |
 | ->-> bits_data | The 32-bit value which was written to the register |
+| float | Information about write to the floating point register file |
+| -> writeAddr | Register addresses to which a future write is expected |
+| ->-> valid | If an instruction was dispatched to floating point on this cycle |
+| ->-> bits | The address of the register to which a write is expected |
+| -> writeData | For each port in the register file, information about writes |
+| ->-> valid | If a write occured on this port, this cycle |
+| ->-> bits_addr | The 5-bit register address to which the writh occurred |
+| ->-> bits_data | The 32-bit value which was written to the register |
+
 
 ### Kelvin Memory Map
 

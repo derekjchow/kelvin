@@ -27,7 +27,7 @@ template_rule(
             "verilog_sources": [
                 "//hdl/chisel/src/kelvin:core_mini_axi_cc_library_verilog"
             ],
-            "size": "large",
+            "size": "enormous",
         },
         "rvv_core_mini_axi_sim_cocotb": {
             "hdl_toplevel": "RvvCoreMiniAxi",
@@ -46,6 +46,11 @@ template_rule(
         "-Wno-MULTIDRIVEN",
         "-Wno-UNOPTFLAT",
         "-Wno-CASEOVERLAP",
+        # Warnings that we disable for fpnew
+        "-Wno-ASCRANGE",
+        "-Wno-WIDTHEXPAND",
+        "-Wno-WIDTHTRUNC",
+        "-Wno-UNSIGNED",
     ],
     defines = {
         "USE_GENERIC" : "",
@@ -59,6 +64,7 @@ template_rule(
     ],
     data = glob(["**/*.elf"]) + glob(["**/*.o"]) + [
         ":align_test.elf",
+        ":float_csr_interlock_test",
     ],
 )
 
@@ -119,4 +125,11 @@ kelvin_v2_binary(
         "align_test.cc",
     ],
     semihosting = True,
+)
+
+kelvin_v2_binary(
+    name = "float_csr_interlock_test",
+    srcs = [
+        "float_csr_interlock_test.S",
+    ],
 )

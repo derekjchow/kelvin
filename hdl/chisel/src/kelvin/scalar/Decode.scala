@@ -23,6 +23,7 @@ package kelvin
 import chisel3._
 import chisel3.util._
 import common._
+import kelvin.float.{FloatInstruction, FloatOpcode}
 import kelvin.rvv.RvvCompressedInstruction
 
 object Decode {
@@ -41,6 +42,7 @@ class DecodeSerializeIO extends Bundle {
   val fence = Output(Bool())
   val csr = Output(Bool())
   val undef = Output(Bool())
+  val float = Output(Bool())
 
   def defaults() = {
     lsu := false.B
@@ -52,6 +54,7 @@ class DecodeSerializeIO extends Bundle {
     fence := false.B
     csr := false.B
     undef := false.B
+    float := false.B
   }
 }
 
@@ -168,6 +171,8 @@ class DecodedInstruction(p: Parameters) extends Bundle {
 
   val rvv = Option.when(p.enableRvv)(Valid(new RvvCompressedInstruction()))
 
+  val float = Option.when(p.enableFloat)(Valid(new FloatInstruction()))
+
   def isAluImm(): Bool = {
       addi || slti || sltiu || xori || ori || andi || slli || srli || srai || rori
   }
@@ -183,7 +188,14 @@ class DecodedInstruction(p: Parameters) extends Bundle {
   def isCondBr(): Bool = { beq || bne || blt || bge || bltu || bgeu }
   def isScalarLoad(): Bool = { lb || lh || lw || lbu || lhu }
   def isScalarStore(): Bool = { sb || sh || sw }
-  def isLsu(): Bool = { isScalarLoad() || isScalarStore() || vld || vst || flushat || flushall }
+  def isFloat(): Bool = { float.map(f => f.valid).getOrElse(false.B) }
+  def isFloatLoad(): Bool = {
+    float.map(f => f.valid && f.bits.opcode === FloatOpcode.LOADFP).getOrElse(false.B)
+  }
+  def isFloatStore(): Bool = {
+    float.map(f => f.valid && f.bits.opcode === FloatOpcode.STOREFP).getOrElse(false.B)
+  }
+  def isLsu(): Bool = { isScalarLoad() || isScalarStore() || vld || vst || flushat || flushall || isFloatLoad() || isFloatStore() }
   def isMul(): Bool = { mul || mulh || mulhsu || mulhu }
   def isDvu(): Bool = { div || divu || rem || remu }
   def isVector(): Bool = { vld || vst || viop || getvl || getmaxvl }
@@ -196,10 +208,11 @@ class DecodedInstruction(p: Parameters) extends Bundle {
     mret
   }
 
+  def floatReadsRs1(): Bool = { float.map(f => f.valid && f.bits.scalar_rs1).getOrElse(false.B) }
   def readsRs1(): Bool = {
     // TODO(derekjchow): Refactor and add rvv
     isCondBr() || isAluReg() || isAluImm() || isAlu1Bit() || isAlu2Bit() ||
-    isCsr() || isMul() || isDvu() || slog || getvl || vld || vst || jalr ||
+    isCsr() || isMul() || isDvu() || slog || getvl || vld || vst || jalr || floatReadsRs1() ||
     (if (p.enableRvv) { rvv.get.valid && rvv.get.bits.readsRs1() } else { false.B })
   }
   def readsRs2(): Bool = {
@@ -223,6 +236,7 @@ class Dispatch(p: Parameters) extends Module {
       val regd = Input(UInt(32.W))
       val comb = Input(UInt(32.W))
     }
+    val fscoreboard = Option.when(p.enableFloat)(Input(UInt(32.W)))
 
     // Branch status.
     val branchTaken = Input(Bool())
@@ -248,6 +262,7 @@ class Dispatch(p: Parameters) extends Module {
     val rs2Set  = Vec(p.instructionLanes, Flipped(new RegfileReadSetIO))
     val rdMark  = Vec(p.instructionLanes, Flipped(new RegfileWriteAddrIO))
     val busRead = Vec(p.instructionLanes, Flipped(new RegfileBusAddrIO))
+    val rdMark_flt = Option.when(p.enableFloat)(Flipped(new RegfileWriteAddrIO))
 
     // ALU interface.
     val alu = Vec(p.instructionLanes, Valid(new AluCmd))
@@ -275,6 +290,10 @@ class Dispatch(p: Parameters) extends Module {
     // unit.
     val vinst = if (p.enableVector) {
       Some(Vec(p.instructionLanes, Decoupled(new VInstCmd)))
+    } else { None }
+
+    val float = if (p.enableFloat) {
+      Some(Decoupled(new FloatInstruction))
     } else { None }
 
     // Scalar logging.
@@ -653,6 +672,9 @@ class DispatchV1(p: Parameters) extends Dispatch(p) {
   io.rs2Set  := decode.map(_.io.rs2Set)
   io.rdMark  := decode.map(_.io.rdMark)
   io.busRead := decode.map(_.io.busRead)
+  if (p.enableFloat) {
+    io.rdMark_flt.get := decode(0).io.rdMark_flt.get
+  }
 
   // Connect outputs
   io.alu := decode.map(_.io.alu)
@@ -665,6 +687,11 @@ class DispatchV1(p: Parameters) extends Dispatch(p) {
   }
   if (p.enableRvv) {
     io.rvv.get <> decode.map(_.io.rvv.get)
+  }
+
+  if (p.enableFloat) {
+    io.float.get <> decode(0).io.float.get
+    decode(0).io.fscoreboard.get := io.fscoreboard.get
   }
 
   io.csr := decode(0).io.csr
@@ -683,6 +710,7 @@ class Decode(p: Parameters, pipeline: Int) extends Module {
       val comb = Input(UInt(32.W))
       val spec = Output(UInt(32.W))
     }
+    val fscoreboard = Option.when(p.enableFloat && pipeline == 0)(Input(UInt(32.W)))
     val mactive = Input(Bool())  // memory active
     val lsuActive = Input(Bool()) // lsu active
 
@@ -692,6 +720,7 @@ class Decode(p: Parameters, pipeline: Int) extends Module {
     val rs2Read = Flipped(new RegfileReadAddrIO)
     val rs2Set  = Flipped(new RegfileReadSetIO)
     val rdMark  = Flipped(new RegfileWriteAddrIO)
+    val rdMark_flt  = Option.when(p.enableFloat && pipeline == 0)(Flipped(new RegfileWriteAddrIO))
     val busRead = Flipped(new RegfileBusAddrIO)
     val jalFault = Output(Bool())
     val jalrFault = Output(Bool())
@@ -727,6 +756,10 @@ class Decode(p: Parameters, pipeline: Int) extends Module {
     // Rvv interface.
     val rvv = if (p.enableRvv) {
       Some(Decoupled(new RvvCompressedInstruction))
+    } else { None }
+
+    val float = if (p.enableFloat && pipeline == 0) {
+      Some(Decoupled(new FloatInstruction))
     } else { None }
 
     // Branch status.
@@ -766,8 +799,8 @@ class Decode(p: Parameters, pipeline: Int) extends Module {
 
   // Use the forwarded scoreboard to interlock on multicycle operations.
   val aluRdEn  = !io.scoreboard.comb(rdAddr)  || isVIopVs1 || d.isScalarStore() || d.isCondBr()
-  val aluRs1En = !io.scoreboard.comb(rs1Addr) || isVIopVs1 || d.isLsu() || d.auipc
-  val aluRs2En = !io.scoreboard.comb(rs2Addr) || isVIopVs2 || d.isLsu() || d.auipc || d.isAluImm() || d.isAlu1Bit()
+  val aluRs1En = !io.scoreboard.comb(rs1Addr) || isVIopVs1 || d.isLsu() || d.auipc || d.lui
+  val aluRs2En = !io.scoreboard.comb(rs2Addr) || isVIopVs2 || d.isLsu() || d.auipc || d.lui || d.isAluImm() || d.isAlu1Bit() || d.isFloat()
   // val aluRs3En = !io.scoreboard.comb(rs3Addr) || isVIopVs3
   // val aluEn = aluRdEn && aluRs1En && aluRs2En && aluRs3En  // TODO: is aluRs3En needed?
   val aluEn = aluRdEn && aluRs1En && aluRs2En
@@ -787,7 +820,6 @@ class Decode(p: Parameters, pipeline: Int) extends Module {
   // Interlock mul, only one lane accepted.
   val mulEn = (!d.isMul() || !io.serializeIn.mul) && !io.serializeIn.brcond
 
-
   // Vector extension interlock.
   val vinstEn = if (p.enableVector) {
       !(io.serializeIn.vinst || isVIop && io.serializeIn.brcond) &&
@@ -801,6 +833,17 @@ class Decode(p: Parameters, pipeline: Int) extends Module {
   // Rvv extension interlock
   val rvvEn = if (p.enableRvv) {
     !io.serializeIn.brcond && !(d.rvv.get.valid && !io.rvv.get.ready)
+  } else { true.B }
+
+  val floatEn = if (p.enableFloat && pipeline == 0) {
+    !d.float.get.valid ||
+    (d.float.get.valid && (d.isFloatLoad() || d.isFloatStore())) ||
+    (!io.serializeIn.float && io.float.get.ready) &&
+    !io.serializeIn.brcond &&
+    !(d.float.get.valid && d.float.get.bits.scalar_rd && io.scoreboard.comb(rdAddr)) &&
+    !(d.float.get.valid && d.float.get.bits.scalar_rs1 && io.scoreboard.comb(rs1Addr)) &&
+    !(d.float.get.valid && !d.float.get.bits.scalar_rd && io.fscoreboard.get(rdAddr)) &&
+    !(d.float.get.valid && !d.float.get.bits.scalar_rs1 && io.fscoreboard.get(rs1Addr))
   } else { true.B }
 
   // Fence interlock.
@@ -906,7 +949,7 @@ class Decode(p: Parameters, pipeline: Int) extends Module {
   } else {
     io.csr.valid := decodeEn && csr.valid
   }
-
+  val csrEn = (!d.isCsr()) || csr.valid && io.float.map(x => x.ready).getOrElse(true.B)
 
   // LSU opcode.
   val lsu = MuxCase(MakeValid(false.B, LsuOp.LB), Seq(
@@ -923,6 +966,7 @@ class Decode(p: Parameters, pipeline: Int) extends Module {
     d.flushat        -> MakeValid(true.B, LsuOp.FLUSHAT),
     d.flushall       -> MakeValid(true.B, LsuOp.FLUSHALL),
     (d.vld || d.vst) -> MakeValid(true.B, LsuOp.VLDST),
+    (d.isFloatLoad || d.isFloatStore) -> MakeValid(true.B, LsuOp.FLOAT)
   ))
   io.lsu.valid := decodeEn && lsu.valid
   io.lsu.bits.store := io.inst.bits.inst(5)
@@ -974,6 +1018,12 @@ class Decode(p: Parameters, pipeline: Int) extends Module {
     io.rvv.get.bits := d.rvv.get.bits
   }
 
+  if (p.enableFloat && pipeline == 0) {
+    io.float.get.valid := decodeEn && d.float.get.valid && !io.branchTaken &&
+                          !io.serializeIn.float && !(d.isFloatLoad())
+    io.float.get.bits := d.float.get.bits
+  }
+
   // Scalar logging.
   io.slog := decodeEn && d.slog
 
@@ -1003,7 +1053,14 @@ class Decode(p: Parameters, pipeline: Int) extends Module {
       lsu.valid && d.isScalarLoad() ||
       d.getvl || d.getmaxvl || vldst_wb ||
       d.rvv.map(x => x.valid && x.bits.writesRd()).getOrElse(false.B) ||
+      d.float.map(x => x.valid && x.bits.scalar_rd).getOrElse(false.B) ||
       bru.valid && (bru.bits.isOneOf(BruOp.JAL, BruOp.JALR)) && rdAddr =/= 0.U
+
+  if (p.enableFloat && pipeline == 0) {
+    val rdMark_flt_valid = d.float.get.valid && !d.float.get.bits.scalar_rd && (d.float.get.bits.opcode =/= FloatOpcode.STOREFP)
+    io.rdMark_flt.get.valid := decodeEn && rdMark_flt_valid
+    io.rdMark_flt.get.addr := rdAddr
+  }
 
   // val scoreboard_spec = Mux(rdMark_valid || d.io.vst, UIntToOH(rdAddr, 32), 0.U)  // TODO: why was d.io.vst included?
   val scoreboard_spec = Mux(rdMark_valid, UIntToOH(rdAddr, 32), 0.U)
@@ -1027,11 +1084,13 @@ class Decode(p: Parameters, pipeline: Int) extends Module {
   io.busRead.immed := Cat(d.imm12(31,5),
                           Mux(storeSelect, d.immst(4,0), d.imm12(4,0)))
 
+
   // Decode ready signalling to fetch.
   // This must not factor branchTaken, which will be done directly in the
   // fetch unit. Note above decodeEn resolves for branch for execute usage.
   io.inst.ready := aluEn && bruEn && lsuEn && mulEn && dvuEn && vinstEn && fenceEn &&
                    rvvEn && !io.serializeIn.jump && !io.serializeIn.wfi &&
+                   floatEn && csrEn &&
                    !io.serializeIn.undef &&
                    !io.serializeIn.csr &&
                    !io.halted && !io.interlock &&
@@ -1053,6 +1112,7 @@ class Decode(p: Parameters, pipeline: Int) extends Module {
   io.serializeOut.wfi := io.serializeIn.wfi || d.wfi
   io.serializeOut.csr := io.serializeIn.csr || d.csrrw || d.csrrs || d.csrrc
   io.serializeOut.undef := io.serializeIn.undef || d.undef
+  io.serializeOut.float := io.serializeIn.float || d.isFloat()
 }
 
 object DecodeInstruction {
@@ -1193,6 +1253,11 @@ object DecodeInstruction {
     // [extensions] Scalar logging.
     d.slog := slog
 
+
+    if (p.enableFloat) {
+      d.float.get := FloatInstruction.decode(op, addr)
+    }
+
     // Stub out decoder state not used beyond pipeline0.
     if (pipeline > 0) {
       d.csrrw := false.B
@@ -1219,6 +1284,10 @@ object DecodeInstruction {
       d.flushall := false.B
 
       d.slog := false.B
+
+      if (p.enableFloat) {
+        d.float.get := MakeInvalid(new FloatInstruction)
+      }
     }
 
     if (p.enableRvv) {
@@ -1244,7 +1313,8 @@ object DecodeInstruction {
                       d.getvl, d.getmaxvl,
                       d.ebreak, d.ecall, d.eexit, d.eyield, d.ectxsw, d.wfi,
                       d.mpause, d.mret, d.fencei, d.flushat, d.flushall, d.slog,
-                      d.rvv.map(_.valid).getOrElse(false.B))
+                      d.rvv.map(_.valid).getOrElse(false.B),
+                      d.float.map(_.valid).getOrElse(false.B))
 
     d.undef := decoded === 0.U
 

@@ -91,6 +91,12 @@ class Parameters(var m: Seq[MemoryRegion] = Seq(), val hartId: Int = 0) {
   // Dispatch unit
   def useDispatchV2: Boolean = { enableRvv }
 
+  // Scalar Floating point
+  var enableFloat = false
+  // Use the Div/Sqrt module from PULP instead of E906.
+  // It is smaller, but has small rounding errors.
+  val floatPulpDivsqrt = 0
+
   // L0ICache Fetch unit.
   var enableFetchL0 = true
   val fetchCacheBytes = 1024

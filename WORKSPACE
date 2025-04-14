@@ -14,7 +14,7 @@
 
 workspace(name = "kelvin_hw")
 
-load("//rules:repos.bzl", "kelvin_repos", "renode_repos")
+load("//rules:repos.bzl", "kelvin_repos", "renode_repos", "cvfpu_repos")
 
 kelvin_repos()
 
@@ -76,6 +76,8 @@ load("//rules:deps.bzl", "kelvin_deps")
 kelvin_deps()
 
 renode_repos()
+
+cvfpu_repos()
 
 load("@rules_python//python:repositories.bzl", "python_register_toolchains")
 

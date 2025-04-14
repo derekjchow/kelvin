@@ -157,6 +157,16 @@ void CoreMiniAxi_tb::Connect() {
   core_->io_debug_regfile_writeData_3_bits_data(debug_io_.regfile_writeData_3_bits_data);
   core_->io_debug_regfile_writeData_4_bits_data(debug_io_.regfile_writeData_4_bits_data);
   core_->io_debug_regfile_writeData_5_bits_data(debug_io_.regfile_writeData_5_bits_data);
+#if (KP_enableFloat == true)
+  core_->io_debug_float_writeAddr_valid(debug_io_.float_writeAddr_valid);
+  core_->io_debug_float_writeAddr_bits(debug_io_.float_writeAddr_bits);
+  core_->io_debug_float_writeData_0_valid(debug_io_.float_writeData_0_valid);
+  core_->io_debug_float_writeData_1_valid(debug_io_.float_writeData_1_valid);
+  core_->io_debug_float_writeData_0_bits_addr(debug_io_.float_writeData_0_bits_addr);
+  core_->io_debug_float_writeData_1_bits_addr(debug_io_.float_writeData_1_bits_addr);
+  core_->io_debug_float_writeData_0_bits_data(debug_io_.float_writeData_0_bits_data);
+  core_->io_debug_float_writeData_1_bits_data(debug_io_.float_writeData_1_bits_data);
+#endif
 
   // AR
   core_->io_axi_master_read_addr_ready(axi2tlm_signals_.arready);
@@ -366,6 +376,8 @@ absl::Status CoreMiniAxi_tb::CheckStatusAsync() {
   return absl::OkStatus();
 }
 
+// TODO(atv): Move me into the class
+std::unordered_map<uint32_t, bool> fflagsSetPCs;
 void CoreMiniAxi_tb::TraceInstructions() {
   // Dispatch cycle
   bool instFires[4] = {
@@ -399,10 +411,25 @@ void CoreMiniAxi_tb::TraceInstructions() {
     debug_io_.regfile_writeAddr_2_bits.read().get_word(0),
     debug_io_.regfile_writeAddr_3_bits.read().get_word(0)
   };
+
+  bool floatWriteAddrValid = debug_io_.float_writeAddr_valid.read();
+  uint32_t floatWriteAddr = debug_io_.float_writeAddr_bits.read().get_word(0);
+
   uint32_t cycle = debug_io_.cycles.read().get_word(0);
 
   // Push data about the instructions that were dispatched this cycle into
   // the retirement buffer. Newly queued instructions are marked as incomplete.
+  for (int i = 0; i < 1; ++i) {
+    if (instFires[i] && floatWriteAddrValid) {
+      Instruction in;
+      in.pc = instAddrs[i];
+      in.inst = instInsts[i];
+      in.reg = 32 + floatWriteAddr;
+      in.cycle = cycle;
+      in.completed = false;
+      retirement_buffer_.push_back(in);
+    }
+  }
   for (int i = 0; i < 4; ++i) {
     if (instFires[i] && writeAddrValids[i] && writeAddrAddrs[i] != 0) {
       Instruction in;
@@ -419,7 +446,7 @@ void CoreMiniAxi_tb::TraceInstructions() {
       Instruction in;
       in.pc = instAddrs[i];
       in.inst = instInsts[i];
-      in.reg = 32;
+      in.reg = 64;
       in.cycle = cycle;
       in.data = 0;
       in.completed = false;
@@ -455,18 +482,50 @@ void CoreMiniAxi_tb::TraceInstructions() {
     debug_io_.regfile_writeData_5_bits_data.read().get_word(0)
   };
 
+  bool floatWriteDataValids[2] = {
+    debug_io_.float_writeData_0_valid.read(),
+    debug_io_.float_writeData_1_valid.read()
+  };
+  uint32_t floatWriteDataAddrs[2] = {
+    debug_io_.float_writeData_0_bits_addr.read().get_word(0),
+    debug_io_.float_writeData_1_bits_addr.read().get_word(0)
+  };
+  uint32_t floatWriteDataDatas[2] = {
+    debug_io_.float_writeData_0_bits_data.read().get_word(0),
+    debug_io_.float_writeData_1_bits_data.read().get_word(0)
+  };
+
   // Iterate over the write ports, and find the first incomplete instruction
   // that matches the write. Mark that instruction as completed, and move
   // to the next write port.
+
+  // Integer write ports
   for (int i = 0; i < 6; ++i) {
     for (auto& in : retirement_buffer_) {
       if (in.completed) continue;
-      if (writeDataValids[i] && writeDataAddrs[i] == in.reg && in.reg != 0) {
+      if (writeDataValids[i] && writeDataAddrs[i] == in.reg && in.reg > 0 && in.reg < 32) {
         in.data = writeDataData[i];
         in.completed = true;
         break;
       }
       if (in.inst == kEcallInst) {
+        in.completed = true;
+        break;
+      }
+    }
+  }
+
+  // Float write ports
+  for (int i = 0; i < 2; ++i) {
+    for (auto& in : retirement_buffer_) {
+      if (in.completed) continue;
+      // Scalar float
+      if (floatWriteDataValids[i] && floatWriteDataAddrs[i] == (in.reg - 32)) {
+        in.data = floatWriteDataDatas[i];
+        in.completed = true;
+        break;
+      }
+      if (in.inst == /* ecall */0x00000073) {
         in.completed = true;
         break;
       }
@@ -510,6 +569,11 @@ void CoreMiniAxi_tb::posedge() {
     if (instr_trace_) {
       for (Instruction inst : committed_insts_) {
         printf("0x%x,0x%x,0x%x,0x%x\n", inst.pc, inst.inst, inst.reg, inst.data);
+      }
+      if (retirement_buffer_.size() > 0) {
+        for (Instruction inst : retirement_buffer_) {
+          printf("0x%x,0x%x,0x%x,0x%x\n", inst.pc, inst.inst, inst.reg, inst.data);
+        }
       }
     }
     invoked_halted_cb = true;

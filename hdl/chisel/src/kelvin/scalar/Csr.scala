@@ -17,6 +17,7 @@ package kelvin
 import chisel3._
 import chisel3.util._
 import common._
+import kelvin.float.{CsrFloatIO}
 
 object Csr {
   def apply(p: Parameters): Csr = {
@@ -126,6 +127,7 @@ class Csr(p: Parameters) extends Module {
     val rs1 = Flipped(new RegfileReadDataIO)
     val rd  = Valid(Flipped(new RegfileWriteDataIO))
     val bru = Flipped(new CsrBruIO(p))
+    val float = Option.when(p.enableFloat) { Flipped(new CsrFloatIO(p)) }
 
     // Vector core.
     val vcore = (if (p.enableVector) {
@@ -184,7 +186,8 @@ class Csr(p: Parameters) extends Module {
   val misa      = RegInit(((
       0x40001100 |
       (if (p.enableVector) { 1 << 23 /* 'X' */ } else { 0 }) |
-      (if (p.enableRvv) { 1 << 21 /* 'V' */ } else { 0 })
+      (if (p.enableRvv) { 1 << 21 /* 'V' */ } else { 0 }) |
+      (if (p.enableFloat) { 1 << 5 /* 'F' */ } else { 0 })
   ).U)(32.W))
   // Kelvin-specific ISA register.
   val kisa      = RegInit(0.U(32.W))
@@ -381,6 +384,12 @@ class Csr(p: Parameters) extends Module {
     mepc := io.bru.in.mepc.bits
   }
 
+  if (p.enableFloat) {
+    when (io.float.get.in.fflags.valid) {
+      fflags := io.float.get.in.fflags.bits | fflags
+    }
+  }
+
   // This pattern of separate when() blocks requires resets after the data.
   when (reset.asBool) {
     mpc       := io.csr.in.value(0)
@@ -401,6 +410,10 @@ class Csr(p: Parameters) extends Module {
   io.bru.out.mode  := mode
   io.bru.out.mepc  := Mux(mepcEn && req.valid, wdata, mepc)
   io.bru.out.mtvec := Mux(mtvecEn && req.valid, wdata, mtvec)
+
+  if (p.enableFloat) {
+    io.float.get.out.frm := Mux(frmEn && req.valid, wdata(2,0), frm)
+  }
 
   io.csr.out.value(0) := io.csr.in.value(12)
   io.csr.out.value(1) := mepc

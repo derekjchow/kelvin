@@ -1,0 +1,109 @@
+From f7128e4fb3588404e65229dcb7e5da047aea4dad Mon Sep 17 00:00:00 2001
+From: Alex Van Damme <atv@google.com>
+Date: Tue, 22 Apr 2025 14:32:51 -0700
+Subject: [PATCH 2/2] Remove SVH includes
+
+---
+ src/fpnew_cast_multi.sv             | 2 +-
+ src/fpnew_divsqrt_multi.sv          | 2 +-
+ src/fpnew_divsqrt_th_32.sv          | 2 +-
+ src/fpnew_fma.sv                    | 2 +-
+ src/fpnew_fma_multi.sv              | 2 +-
+ src/fpnew_noncomp.sv                | 2 +-
+ src/fpnew_opgroup_multifmt_slice.sv | 2 +-
+ 7 files changed, 7 insertions(+), 7 deletions(-)
+
+diff --git a/src/fpnew_cast_multi.sv b/src/fpnew_cast_multi.sv
+index 7abe330..faf10ae 100644
+--- a/src/fpnew_cast_multi.sv
++++ b/src/fpnew_cast_multi.sv
+@@ -13,7 +13,7 @@
+ 
+ // Author: Stefan Mach <smach@iis.ee.ethz.ch>
+ 
+-`include "common_cells/registers.svh"
++
+ 
+ module fpnew_cast_multi #(
+   parameter fpnew_pkg::fmt_logic_t   FpFmtConfig  = '1,
+diff --git a/src/fpnew_divsqrt_multi.sv b/src/fpnew_divsqrt_multi.sv
+index 56a2f5d..93dfe2d 100644
+--- a/src/fpnew_divsqrt_multi.sv
++++ b/src/fpnew_divsqrt_multi.sv
+@@ -13,7 +13,7 @@
+ 
+ // Author: Stefan Mach <smach@iis.ee.ethz.ch>
+ 
+-`include "common_cells/registers.svh"
++
+ 
+ module fpnew_divsqrt_multi #(
+   parameter fpnew_pkg::fmt_logic_t   FpFmtConfig  = '1,
+diff --git a/src/fpnew_divsqrt_th_32.sv b/src/fpnew_divsqrt_th_32.sv
+index 8ddb80e..a74e7e6 100644
+--- a/src/fpnew_divsqrt_th_32.sv
++++ b/src/fpnew_divsqrt_th_32.sv
+@@ -16,7 +16,7 @@
+ //          Jiang Lannan <jiangl@ethz.ch>
+ //          Kexin Li <likexi@ethz.ch>
+ 
+-`include "common_cells/registers.svh"
++
+ 
+ module fpnew_divsqrt_th_32 #(
+   // FP32-only DivSqrt
+diff --git a/src/fpnew_fma.sv b/src/fpnew_fma.sv
+index 6fdd890..505b2de 100644
+--- a/src/fpnew_fma.sv
++++ b/src/fpnew_fma.sv
+@@ -13,7 +13,7 @@
+ 
+ // Author: Stefan Mach <smach@iis.ee.ethz.ch>
+ 
+-`include "common_cells/registers.svh"
++
+ 
+ module fpnew_fma #(
+   parameter fpnew_pkg::fp_format_e   FpFormat    = fpnew_pkg::fp_format_e'(0),
+diff --git a/src/fpnew_fma_multi.sv b/src/fpnew_fma_multi.sv
+index 471d966..03bee3f 100644
+--- a/src/fpnew_fma_multi.sv
++++ b/src/fpnew_fma_multi.sv
+@@ -13,7 +13,7 @@
+ 
+ // Author: Stefan Mach <smach@iis.ee.ethz.ch>
+ 
+-`include "common_cells/registers.svh"
++
+ 
+ module fpnew_fma_multi #(
+   parameter fpnew_pkg::fmt_logic_t   FpFmtConfig = '1,
+diff --git a/src/fpnew_noncomp.sv b/src/fpnew_noncomp.sv
+index 4dabfaa..e5f2780 100644
+--- a/src/fpnew_noncomp.sv
++++ b/src/fpnew_noncomp.sv
+@@ -13,7 +13,7 @@
+ 
+ // Author: Stefan Mach <smach@iis.ee.ethz.ch>
+ 
+-`include "common_cells/registers.svh"
++
+ 
+ module fpnew_noncomp #(
+   parameter fpnew_pkg::fp_format_e   FpFormat    = fpnew_pkg::fp_format_e'(0),
+diff --git a/src/fpnew_opgroup_multifmt_slice.sv b/src/fpnew_opgroup_multifmt_slice.sv
+index cdc3e34..cd8447d 100644
+--- a/src/fpnew_opgroup_multifmt_slice.sv
++++ b/src/fpnew_opgroup_multifmt_slice.sv
+@@ -13,7 +13,7 @@
+ 
+ // Author: Stefan Mach <smach@iis.ee.ethz.ch>
+ 
+-`include "common_cells/registers.svh"
++
+ 
+ module fpnew_opgroup_multifmt_slice #(
+   parameter fpnew_pkg::opgroup_e     OpGroup       = fpnew_pkg::CONV,
+-- 
+2.49.0.805.g082f7c87e0-goog
+

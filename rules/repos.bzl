@@ -15,6 +15,7 @@
 # Kelvin repositories
 #
 
+load("@bazel_tools//tools/build_defs/repo:git.bzl", "git_repository")
 load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
 
 def kelvin_repos():
@@ -111,4 +112,34 @@ def renode_repos():
             "@kelvin_hw//third_party/renode:0003-Invert-AXI-reset-polarity.patch",
         ],
         patch_args = ["-p1"],
+    )
+
+def cvfpu_repos():
+    http_archive(
+        name = "cvfpu",
+        sha256 = "fe9278105886ed23ee889c58b2c28f89732e06a0d12f7fa4a8ce60dd680290f6",
+        urls = ["https://github.com/openhwgroup/cvfpu/archive/refs/tags/v0.8.1.zip"],
+        build_file = "@kelvin_hw//third_party/cvfpu:BUILD.bazel",
+        strip_prefix = "cvfpu-0.8.1",
+        patches = [
+            "@kelvin_hw//third_party/cvfpu:0001-Fix-max_num_lanes-issue-in-DC.patch",
+            "@kelvin_hw//third_party/cvfpu:0002-Remove-SVH-includes.patch",
+        ],
+        patch_args = ["-p1"],
+    )
+
+    http_archive(
+        name = "common_cells",
+        sha256 = "4d27dfb483e856556812bac7760308ea1b576adc4bd172d08f7421cea488e5ab",
+        urls = ["https://github.com/pulp-platform/common_cells/archive/6aeee85d0a34fedc06c14f04fd6363c9f7b4eeea.zip"],
+        strip_prefix = "common_cells-6aeee85d0a34fedc06c14f04fd6363c9f7b4eeea",
+        build_file = "@kelvin_hw//third_party/common_cells:BUILD.bazel",
+    )
+
+    http_archive(
+        name = "fpu_div_sqrt_mvp",
+        sha256 = "27bd475637d51215416acf6fdb78e613569f8de0b90040ccc0e3e4679572d8c4",
+        urls = ["https://github.com/pulp-platform/fpu_div_sqrt_mvp/archive/86e1f558b3c95e91577c41b2fc452c86b04e85ac.zip"],
+        build_file = "@kelvin_hw//third_party/fpu_div_sqrt_mvp:BUILD.bazel",
+        strip_prefix = "fpu_div_sqrt_mvp-86e1f558b3c95e91577c41b2fc452c86b04e85ac",
     )

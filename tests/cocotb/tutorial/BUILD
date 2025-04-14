@@ -29,5 +29,19 @@ verilator_cocotb_test(
     deps = [
         "//kelvin_test_utils:core_mini_axi_sim_interface",
     ],
+    build_args = [
+        "-Wno-WIDTH",
+        "-Wno-CASEINCOMPLETE",
+        "-Wno-LATCH",
+        "-Wno-SIDEEFFECT",
+        "-Wno-MULTIDRIVEN",
+        "-Wno-UNOPTFLAT",
+        "-Wno-CASEOVERLAP",
+        "-Wno-UNOPTFLAT",
+        "-Wno-ASCRANGE",
+        "-Wno-WIDTHEXPAND",
+        "-Wno-WIDTHTRUNC",
+        "-Wno-UNSIGNED",
+    ],
     data = glob(["**/*.elf"]),
 )

@@ -19,6 +19,7 @@ package kelvin
 import chisel3._
 import chisel3.util._
 import common._
+import kelvin.float.{FloatCore}
 import kelvin.rvv.{RvvCoreIO}
 import _root_.circt.stage.ChiselStage
 
@@ -267,14 +268,33 @@ class SCore(p: Parameters) extends Module {
     }
   }
 
-  val mluDvuOffset = p.instructionLanes
-  val mluDvuInputs = if (p.enableRvv) { 3 } else { 2 }
-  val arb = Module(new Arbiter(new RegfileWriteDataIO, mluDvuInputs))
-  arb.io.in(0) <> mlu.io.rd
-  arb.io.in(1) <> dvu.io.rd
-  if (p.enableRvv) {
-    arb.io.in(2) <> io.rvvcore.get.async_rd
+  // RV32F extension
+  val floatCore = Option.when(p.enableFloat)(FloatCore(p))
+  val fRegfile = Option.when(p.enableFloat)(Module(new FRegfile(p, 3, 2)))
+  if (p.enableFloat) {
+    lsu.io.busPort_flt.get := fRegfile.get.io.busPort
+    floatCore.get.io.read_ports <> fRegfile.get.io.read_ports
+    floatCore.get.io.write_ports <> fRegfile.get.io.write_ports
+    fRegfile.get.io.scoreboard_set :=
+      MuxOR(dispatch.io.rdMark_flt.get.valid, UIntToOH(dispatch.io.rdMark_flt.get.addr))
+
+    floatCore.get.io.inst <> dispatch.io.float.get
+    dispatch.io.fscoreboard.get := fRegfile.get.io.scoreboard
+    floatCore.get.io.csr <> csr.io.float.get
+    floatCore.get.io.rs1 := regfile.io.readData(0)
+    floatCore.get.io.rs2 := regfile.io.readData(1)
+
+    floatCore.get.io.lsu_rd.valid := lsu.io.rd_flt.valid
+    floatCore.get.io.lsu_rd.bits.addr := lsu.io.rd_flt.bits.addr
+    floatCore.get.io.lsu_rd.bits.data := lsu.io.rd_flt.bits.data
   }
+
+  val mluDvuOffset = p.instructionLanes
+  val mluDvuInputs = Seq(mlu.io.rd, dvu.io.rd) ++
+                     io.rvvcore.map(x => Seq(x.async_rd)).getOrElse(Seq()) ++
+                     floatCore.map(x => Seq(x.io.scalar_rd)).getOrElse(Seq())
+  val arb = Module(new Arbiter(new RegfileWriteDataIO, mluDvuInputs.length))
+  arb.io.in <> mluDvuInputs
   arb.io.out.ready := true.B
   regfile.io.writeData(mluDvuOffset).valid := arb.io.out.valid
   regfile.io.writeData(mluDvuOffset).bits.addr := arb.io.out.bits.addr
@@ -388,6 +408,16 @@ class SCore(p: Parameters) extends Module {
 
   for (i <- 0 until p.instructionLanes + 2) {
     io.debug.regfile.writeData(i) := regfile.io.writeData(i)
+  }
+
+  if (p.enableFloat) {
+    io.debug.float.get.writeAddr.valid := dispatch.io.rdMark_flt.get.valid
+    io.debug.float.get.writeAddr.bits := dispatch.io.rdMark_flt.get.addr
+    for (i <- 0 until 2) {
+      io.debug.float.get.writeData(i).valid := fRegfile.get.io.write_ports(i).valid
+      io.debug.float.get.writeData(i).bits.addr := fRegfile.get.io.write_ports(i).addr
+      io.debug.float.get.writeData(i).bits.data := fRegfile.get.io.write_ports(i).data.asWord
+    }
   }
 }
 

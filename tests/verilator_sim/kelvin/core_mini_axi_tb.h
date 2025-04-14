@@ -110,6 +110,17 @@ struct CoreMiniAxi_tb : Sysc_tb {
     sc_signal<sc_bv<32>> regfile_writeData_3_bits_data;
     sc_signal<sc_bv<32>> regfile_writeData_4_bits_data;
     sc_signal<sc_bv<32>> regfile_writeData_5_bits_data;
+#if (KP_enableFloat == true)
+    // Float signals
+    sc_signal<bool> float_writeAddr_valid;
+    sc_signal<sc_bv<5>> float_writeAddr_bits;
+    sc_signal<bool> float_writeData_0_valid;
+    sc_signal<bool> float_writeData_1_valid;
+    sc_signal<sc_bv<32>> float_writeData_0_bits_addr;
+    sc_signal<sc_bv<32>> float_writeData_1_bits_addr;
+    sc_signal<sc_bv<32>> float_writeData_0_bits_data;
+    sc_signal<sc_bv<32>> float_writeData_1_bits_data;
+#endif
   };
 
   CoreMiniAxi_tb(sc_module_name n, int loops, bool random, bool debug_axi,

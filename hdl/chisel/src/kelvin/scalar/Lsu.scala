@@ -37,6 +37,7 @@ object LsuOp extends ChiselEnum {
   val FLUSHAT = Value
   val FLUSHALL = Value
   val VLDST = Value
+  val FLOAT = Value
 }
 
 class LsuCmd extends Bundle {
@@ -62,6 +63,7 @@ class LsuCtrl(p: Parameters) extends Bundle {
   val flushall = Bool()
   val sldst = Bool()  // scalar load/store cached
   val vldst = Bool()  // vector load/store
+  val fldst = Bool() // float load/store
   val regionType = MemoryRegionType()
   val mask = UInt(p.lsuDataBytes.W)
   val last = Bool()
@@ -75,6 +77,7 @@ class LsuReadData(p: Parameters) extends Bundle {
   val sext = Bool()
   val iload = Bool()
   val sldst = Bool()
+  val fldst = Bool()
   val regionType = MemoryRegionType()
   val mask = UInt(p.lsuDataBytes.W)
   val last = Bool()
@@ -85,9 +88,11 @@ class Lsu(p: Parameters) extends Module {
     // Decode cycle.
     val req = Vec(p.instructionLanes, Flipped(Decoupled(new LsuCmd)))
     val busPort = Flipped(new RegfileBusPortIO(p))
+    val busPort_flt = Option.when(p.enableFloat)(Flipped(new RegfileBusPortIO(p)))
 
     // Execute cycle(s).
     val rd = Valid(Flipped(new RegfileWriteDataIO))
+    val rd_flt = Valid(Flipped(new RegfileWriteDataIO))
 
     // Cached interface.
     val ibus = new IBusIO(p)
@@ -141,16 +146,17 @@ class Lsu(p: Parameters) extends Module {
 
     val opstore = io.req(i).bits.op.isOneOf(LsuOp.SW, LsuOp.SH, LsuOp.SB)
     val opiload = io.req(i).bits.op.isOneOf(LsuOp.LW, LsuOp.LH, LsuOp.LB, LsuOp.LHU, LsuOp.LBU)
-    val opload  = opiload
+    val opload  = opiload || (io.req(i).bits.op === LsuOp.FLOAT && !io.req(i).bits.store)
     val opfencei   = (io.req(i).bits.op === LsuOp.FENCEI)
     val opflushat  = (io.req(i).bits.op === LsuOp.FLUSHAT)
     val opflushall = (io.req(i).bits.op === LsuOp.FLUSHALL)
-    val opsldst = opstore || opload
+    val opsldst = (opstore || opload) && (io.req(i).bits.op =/= LsuOp.FLOAT)
     val opvldst = (io.req(i).bits.op === LsuOp.VLDST)
     val opsext = io.req(i).bits.op.isOneOf(LsuOp.LB, LsuOp.LH)
-    val opsize = Cat(io.req(i).bits.op.isOneOf(LsuOp.LW, LsuOp.SW),
+    val opsize = Cat(io.req(i).bits.op.isOneOf(LsuOp.LW, LsuOp.SW, LsuOp.FLOAT),
                      io.req(i).bits.op.isOneOf(LsuOp.LH, LsuOp.LHU, LsuOp.SH),
                      io.req(i).bits.op.isOneOf(LsuOp.LB, LsuOp.LBU, LsuOp.SB))
+    val opfldst = (io.req(i).bits.op === LsuOp.FLOAT)
 
     val regionType = MuxCase(MemoryRegionType.External, Array(
       dtcm -> MemoryRegionType.DMEM,
@@ -168,7 +174,11 @@ class Lsu(p: Parameters) extends Module {
     ctrl.io.in.bits(i * 2 + 1).bits.pc := io.req(i).bits.pc
     ctrl.io.in.bits(i * 2 + 1).bits.addr := io.busPort.addr(i)
     ctrl.io.in.bits(i * 2 + 1).bits.adrx := io.busPort.addr(i) + lineoffset.U
-    ctrl.io.in.bits(i * 2 + 1).bits.data := io.busPort.data(i)
+    ctrl.io.in.bits(i * 2 + 1).bits.data := (if (p.enableFloat) {
+      Mux(opfldst, io.busPort_flt.get.data(i), io.busPort.data(i))
+    } else {
+      io.busPort.data(i)
+    })
     ctrl.io.in.bits(i * 2 + 1).bits.index := io.req(i).bits.addr
     ctrl.io.in.bits(i * 2 + 1).bits.sext := opsext
     ctrl.io.in.bits(i * 2 + 1).bits.size := txnSizes(0)
@@ -179,6 +189,7 @@ class Lsu(p: Parameters) extends Module {
     ctrl.io.in.bits(i * 2 + 1).bits.flushall := opflushall
     ctrl.io.in.bits(i * 2 + 1).bits.sldst := opsldst
     ctrl.io.in.bits(i * 2 + 1).bits.vldst := opvldst
+    ctrl.io.in.bits(i * 2 + 1).bits.fldst := opfldst
     ctrl.io.in.bits(i * 2 + 1).bits.write := !opload
     ctrl.io.in.bits(i * 2 + 1).bits.regionType := regionType
     ctrl.io.in.bits(i * 2 + 1).bits.mask := mask0
@@ -188,7 +199,11 @@ class Lsu(p: Parameters) extends Module {
     ctrl.io.in.bits(i * 2).bits.pc := io.req(i).bits.pc
     ctrl.io.in.bits(i * 2).bits.addr := Cat(io.busPort.addr(i)(31,linebit) + 1.U, 0.U(linebit.W))
     ctrl.io.in.bits(i * 2).bits.adrx := Cat(io.busPort.addr(i)(31,linebit) + 1.U, 0.U(linebit.W)) + lineoffset.U
-    ctrl.io.in.bits(i * 2).bits.data := io.busPort.data(i).rotateRight(txnSizes(0) * 8.U)
+    ctrl.io.in.bits(i * 2).bits.data := (if (p.enableFloat) {
+      Mux(opfldst, io.busPort_flt.get.data(i), io.busPort.data(i))
+    } else {
+      io.busPort.data(i)
+    }).rotateRight(txnSizes(0) * 8.U)
     ctrl.io.in.bits(i * 2).bits.index := io.req(i).bits.addr
     ctrl.io.in.bits(i * 2).bits.sext := opsext
     ctrl.io.in.bits(i * 2).bits.size := txnSizes(1)
@@ -199,6 +214,7 @@ class Lsu(p: Parameters) extends Module {
     ctrl.io.in.bits(i * 2).bits.flushall := opflushall
     ctrl.io.in.bits(i * 2).bits.sldst := opsldst
     ctrl.io.in.bits(i * 2).bits.vldst := opvldst
+    ctrl.io.in.bits(i * 2).bits.fldst := opfldst
     ctrl.io.in.bits(i * 2).bits.write := !opload
     ctrl.io.in.bits(i * 2).bits.regionType := regionType
     ctrl.io.in.bits(i * 2).bits.mask := mask1
@@ -239,7 +255,7 @@ class Lsu(p: Parameters) extends Module {
                   io.ebus.dbus.valid && io.ebus.dbus.ready ||
                   io.ibus.valid && io.ibus.ready)
 
-  io.dbus.valid := ctrl.io.out.valid && ctrl.io.out.bits.sldst && (ctrl.io.out.bits.regionType === MemoryRegionType.DMEM)
+  io.dbus.valid := ctrl.io.out.valid && (ctrl.io.out.bits.sldst || ctrl.io.out.bits.fldst) && (ctrl.io.out.bits.regionType === MemoryRegionType.DMEM)
   io.dbus.write := ctrl.io.out.bits.write
   io.dbus.addr  := Cat(0.U(1.W), ctrl.io.out.bits.addr(30,0))
   io.dbus.adrx  := Cat(0.U(1.W), ctrl.io.out.bits.adrx(30,0))
@@ -252,7 +268,7 @@ class Lsu(p: Parameters) extends Module {
   assert(!(io.dbus.valid && io.dbus.addr(31)))
   assert(!(io.dbus.valid && io.dbus.adrx(31)))
 
-  io.ebus.dbus.valid := ctrl.io.out.valid && ctrl.io.out.bits.sldst &&
+  io.ebus.dbus.valid := ctrl.io.out.valid && (ctrl.io.out.bits.sldst || ctrl.io.out.bits.fldst) &&
     ((ctrl.io.out.bits.regionType === MemoryRegionType.External) || (ctrl.io.out.bits.regionType === MemoryRegionType.Peripheral))
   io.ebus.dbus.write := ctrl.io.out.bits.write
   io.ebus.dbus.addr := ctrl.io.out.bits.addr
@@ -264,14 +280,14 @@ class Lsu(p: Parameters) extends Module {
   io.ebus.internal := ctrl.io.out.bits.regionType === MemoryRegionType.Peripheral
 
   io.ibus.valid :=
-    ctrl.io.out.valid && ctrl.io.out.bits.sldst &&
+    ctrl.io.out.valid && (ctrl.io.out.bits.sldst || ctrl.io.out.bits.fldst) &&
     (ctrl.io.out.bits.regionType === MemoryRegionType.IMEM) &&
     !ctrl.io.out.bits.write
   io.ibus.addr := ctrl.io.out.bits.addr
 
   // All stores to IMEM are disallowed.
   val imem_store_fault =
-    (ctrl.io.out.valid && ctrl.io.out.bits.sldst &&
+    (ctrl.io.out.valid && (ctrl.io.out.bits.sldst || ctrl.io.out.bits.fldst) &&
     (ctrl.io.out.bits.regionType === MemoryRegionType.IMEM) &&
     ctrl.io.out.bits.write)
   val ebus_fault = io.ebus.fault.valid
@@ -323,6 +339,7 @@ class Lsu(p: Parameters) extends Module {
   data.io.in.bits.fullsize  := ctrl.io.out.bits.fullsize
   data.io.in.bits.iload := ctrl.io.out.bits.iload
   data.io.in.bits.sldst := ctrl.io.out.bits.sldst
+  data.io.in.bits.fldst := ctrl.io.out.bits.fldst
   data.io.in.bits.regionType := ctrl.io.out.bits.regionType
   data.io.in.bits.mask := ctrl.io.out.bits.mask
   data.io.in.bits.last := ctrl.io.out.bits.last
@@ -380,8 +397,10 @@ class Lsu(p: Parameters) extends Module {
   val srdataMasked = (srdata & BytemaskToBitmask(data.io.out.bits.mask))
   val prevSrdataReg = RegNext(srdataMasked, 0.U(p.lsuDataBits.W))
   val prevSrdata = MuxOR(data.io.out.bits.fullsize =/= data.io.out.bits.size, prevSrdataReg(p.lsuDataBits-1,0))
+  val combinedSrdata = RotSignExt(srdataMasked | prevSrdata)
 
-  val rdata = RotSignExt(MuxOR(data.io.out.bits.sldst, srdataMasked | prevSrdata))
+  val rdata = MuxOR(data.io.out.bits.sldst, combinedSrdata)
+  val frdata = MuxOR(data.io.out.bits.fldst, combinedSrdata)
 
   // pass-through
   val io_rd_pre_pipe = Wire(Valid(Flipped(new RegfileWriteDataIO)))
@@ -393,6 +412,14 @@ class Lsu(p: Parameters) extends Module {
   val io_rd_pipe = Pipe(io_rd_pre_pipe, p.lsuDelayPipelineLen)
   io.rd := io_rd_pipe
 
-  assert(!ctrl.io.out.valid || PopCount(Cat(ctrl.io.out.bits.sldst, ctrl.io.out.bits.vldst)) <= 1.U)
-  assert(!data.io.out.valid || PopCount(Cat(data.io.out.bits.sldst)) <= 1.U)
+  val io_rd_flt_pre_pipe = Wire(Valid(Flipped(new RegfileWriteDataIO)))
+  io_rd_flt_pre_pipe.valid := rvalid && data.io.out.bits.fldst
+  io_rd_flt_pre_pipe.bits.addr := data.io.out.bits.index
+  io_rd_flt_pre_pipe.bits.data := frdata
+
+  val io_rd_flt_pipe = Pipe(io_rd_flt_pre_pipe, p.lsuDelayPipelineLen)
+  io.rd_flt := io_rd_flt_pipe
+
+  assert(!ctrl.io.out.valid || PopCount(Cat(ctrl.io.out.bits.fldst, ctrl.io.out.bits.sldst, ctrl.io.out.bits.vldst)) <= 1.U)
+  assert(!data.io.out.valid || PopCount(Cat(data.io.out.bits.fldst, data.io.out.bits.sldst)) <= 1.U)
 }
