@@ -1,5 +1,5 @@
 unreachables.el
-exfile_alu_div_lsu.el
+exfile_dec_alu_div_lsu.el
 exfile_pmtrdt.el
 exfile_dispatch_multififo.el
 exfile_misc.el
