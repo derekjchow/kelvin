@@ -15,7 +15,7 @@
 import cocotb
 import numpy as np
 
-from tests.cocotb.core_mini_axi_interface import CoreMiniAxiInterface
+from kelvin_test_utils.core_mini_axi_interface import CoreMiniAxiInterface
 
 @cocotb.test()
 async def core_mini_axi_tutorial(dut):

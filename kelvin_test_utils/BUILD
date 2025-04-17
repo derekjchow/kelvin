@@ -12,22 +12,17 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-load("//rules:coco_tb.bzl", "verilator_cocotb_test")
+load("@kelvin_pip_deps//:requirements.bzl", "requirement")
 
-verilator_cocotb_test(
-    name = "tutorial",
-    defines = {
-        "USE_GENERIC" : "",
-    },
-    waves = True,
-    hdl_toplevel = "CoreMiniAxi",
-    seed = "42",
-    test_module = ["tutorial.py"],
-    verilog_sources = [
-        "//hdl/chisel/src/kelvin:core_mini_axi_cc_library_verilog"
+py_library(
+    name = "core_mini_axi_sim_interface",
+    srcs = [
+        "core_mini_axi_interface.py",
     ],
     deps = [
-        "//kelvin_test_utils:core_mini_axi_sim_interface",
+        requirement("cocotb"),
+        requirement("numpy"),
+        requirement("pyelftools"),
     ],
-    data = glob(["**/*.elf"]),
+    visibility = [ "//visibility:public" ],
 )

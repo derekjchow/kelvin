@@ -19,7 +19,7 @@ import os
 import tqdm
 import random
 
-from tests.cocotb.core_mini_axi_interface import AxiBurst, AxiResp,CoreMiniAxiInterface
+from kelvin_test_utils.core_mini_axi_interface import AxiBurst, AxiResp,CoreMiniAxiInterface
 
 
 @cocotb.test()

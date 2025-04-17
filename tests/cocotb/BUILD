@@ -17,19 +17,6 @@ load("//rules:kelvin_v2.bzl", "kelvin_v2_binary")
 load("//rules:utils.bzl", "template_rule")
 load("@kelvin_pip_deps//:requirements.bzl", "requirement")
 
-py_library(
-    name = "core_mini_axi_sim_interface",
-    srcs = [
-        "core_mini_axi_interface.py",
-    ],
-    deps = [
-        requirement("cocotb"),
-        requirement("numpy"),
-        requirement("pyelftools"),
-    ],
-    visibility = [ "//visibility:public" ],
-)
-
 template_rule(
     verilator_cocotb_test,
     {
@@ -65,7 +52,7 @@ template_rule(
     seed = "42",
     test_module = ["core_mini_axi_sim.py"],
     deps = [
-        ":core_mini_axi_sim_interface",
+        "//kelvin_test_utils:core_mini_axi_sim_interface",
         requirement("tqdm"),
     ],
     data = glob(["**/*.elf"]) + glob(["**/*.o"]) + [
@@ -118,7 +105,7 @@ vcs_cocotb_test(
         "line+cond+tgl+branch+assert",
     ],
     deps = [
-        ":core_mini_axi_sim_interface",
+        "//kelvin_test_utils:core_mini_axi_sim_interface",
         requirement("tqdm"),
     ],
     data = glob(["**/*.elf"]) + glob(["**/*.o"]),
