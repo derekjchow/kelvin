@@ -42,8 +42,8 @@ static bool run(const char* name, const std::string binary, const int cycles,
                 const bool trace, const bool debug_axi) {
   absl::Mutex halted_mtx;
   absl::CondVar halted_cv;
-  CoreMiniAxi_tb tb("CoreMiniAxi_tb", cycles, /* random= */ false, binary,
-                    debug_axi, /*wfi_cb=*/std::nullopt,
+  CoreMiniAxi_tb tb("CoreMiniAxi_tb", cycles, /* random= */ false, debug_axi,
+                    /*wfi_cb=*/std::nullopt,
                     /*halted_cb=*/[&halted_mtx, &halted_cv]() {
                       absl::MutexLock lock_(&halted_mtx);
                       halted_cv.SignalAll();

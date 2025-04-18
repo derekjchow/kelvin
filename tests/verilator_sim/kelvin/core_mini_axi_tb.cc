@@ -42,7 +42,7 @@ using namespace internal;
 #include "VCoreMiniAxi__Syms.h"
 
 CoreMiniAxi_tb::CoreMiniAxi_tb(sc_module_name n, int loops, bool random,
-                               std::string binary, bool debug_axi,
+                               bool debug_axi,
                                std::optional<std::function<void()>> wfi_cb,
                                std::optional<std::function<void()>> halted_cb)
     : Sysc_tb(n, loops, random),

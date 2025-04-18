@@ -66,8 +66,8 @@ struct CoreMiniAxi_tb : Sysc_tb {
     sc_signal<sc_bv<32>> inst_3;
   };
 
-  CoreMiniAxi_tb(sc_module_name n, int loops, bool random, std::string binary,
-                 bool debug_axi, std::optional<std::function<void()>> wfi_cb,
+  CoreMiniAxi_tb(sc_module_name n, int loops, bool random, bool debug_axi,
+                 std::optional<std::function<void()>> wfi_cb,
                  std::optional<std::function<void()>> halted_cb);
   ~CoreMiniAxi_tb();
   static void axi_transaction_done_cb(TLMTrafficGenerator* gen, int threadId);

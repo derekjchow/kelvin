@@ -22,7 +22,7 @@
 /* clang-format on */
 
 extern "C" int sc_main(int argc, char** argv) {
-  CoreMiniAxi_tb tb("CoreMiniAxi_tb", 1000000, /* random= */ false, "",
+  CoreMiniAxi_tb tb("CoreMiniAxi_tb", 1000000, /* random= */ false,
                     /*debug_axi=*/true, /*wfi_cb=*/std::nullopt, std::nullopt);
 
   std::thread sc_main_thread([&tb]() { tb.start(); });
