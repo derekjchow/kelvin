@@ -13,6 +13,7 @@
 # limitations under the License.
 
 load("//rules:coco_tb.bzl", "verilator_cocotb_test")
+load("//rules:kelvin_v2.bzl", "kelvin_v2_binary")
 
 verilator_cocotb_test(
     name = "tutorial",
@@ -35,7 +36,6 @@ verilator_cocotb_test(
         "-Wno-LATCH",
         "-Wno-SIDEEFFECT",
         "-Wno-MULTIDRIVEN",
-        "-Wno-UNOPTFLAT",
         "-Wno-CASEOVERLAP",
         "-Wno-UNOPTFLAT",
         "-Wno-ASCRANGE",
@@ -44,4 +44,42 @@ verilator_cocotb_test(
         "-Wno-UNSIGNED",
     ],
     data = glob(["**/*.elf"]),
+)
+
+
+verilator_cocotb_test(
+    name = "hello_world_float_core_mini_axi",
+    defines = {
+        "USE_GENERIC" : "",
+    },
+    waves = True,
+    hdl_toplevel = "CoreMiniAxi",
+    seed = "42",
+    test_module = ["hello_world_float_core_mini_axi.py"],
+    verilog_sources = [
+        "//hdl/chisel/src/kelvin:core_mini_axi_cc_library_verilog"
+    ],
+    deps = [
+        "//kelvin_test_utils:core_mini_axi_sim_interface",
+    ],
+    build_args = [
+        "-Wno-WIDTH",
+        "-Wno-CASEINCOMPLETE",
+        "-Wno-LATCH",
+        "-Wno-SIDEEFFECT",
+        "-Wno-MULTIDRIVEN",
+        "-Wno-CASEOVERLAP",
+        "-Wno-UNOPTFLAT",
+        "-Wno-ASCRANGE",
+        "-Wno-WIDTHEXPAND",
+        "-Wno-WIDTHTRUNC",
+        "-Wno-UNSIGNED",
+    ],
+    data = glob(["**/*.elf"]),
+)
+
+
+kelvin_v2_binary(
+    name="kelvin_v2_program",
+    srcs = ["program.cc"],
 )

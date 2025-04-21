@@ -12,20 +12,15 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include <stdio.h>
 #include <string.h>
 
-int main() {
-  float input1[8] = {1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0};
-  float input2[8] = {1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0};
-  float output[8];
+float input1[8] __attribute__((section(".data")));
+float input2[8] __attribute__((section(".data")));
+float output[8] __attribute__((section(".data")));
 
-  printf(" Adding input1 and input2 please find the results below \n ");
+int main() {
   for (int i = 0; i < 8; i++) {
     output[i] = input1[i] + input2[i];
-    printf(" %d ", static_cast<int>(output[i]));
   }
-  // flush
-  printf("\n");
   return 0;
 }

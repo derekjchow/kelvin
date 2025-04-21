@@ -8,14 +8,14 @@ This tutorial introduces the basics of writing a Kelvin program. You will:
 
 ## Prerequistes
 
-This tutorial assumes you have clang-17 and bazel installed on your machine.
+This tutorial assumes you have completed opensecura [getting started guide](https://opensecura.googlesource.com/docs/+/refs/heads/master/GettingStarted.md).
 
 ## Writing a basic Kelvin program
 
-Open up [`tests/cocotb/tutorial/program.c`](../../tests/cocotb/tutorial/program.c),
+Open up [`tests/cocotb/tutorial/program.cc`](../../tests/cocotb/tutorial/program.cc),
 which is a skeleton program:
 
-```c
+```c++
 // TODO: Add two inputs buffers of 8 uint32_t's (input1_buffer, input2_buffer)
 // TODO: Add one output buffer of 8 uint32_t's (output_buffer)
 
@@ -41,11 +41,12 @@ The typical structure of a Kelvin program includes:
 
 For this tutorial we'll accept two input buffers and emit one output buffer,
 each consisting of 8 uint32_t. We define them outside of `main`.
+__attribute__((section(".data"))) defines buffer is stored in data section.
 
-```c
-uint32_t input1_buffer[8];
-uint32_t input2_buffer[8];
-uint32_t output_buffer[8];
+```c++
+uint32_t input1_buffer[8] __attribute__((section(".data")));
+uint32_t input2_buffer[8] __attribute__((section(".data")));
+uint32_t output_buffer[8] __attribute__((section(".data")));
 
 int main(int argc, char** argv) {
   // TODO: Add code to element wise add/subtract from input1_buffer and
@@ -64,10 +65,10 @@ locations in our test bench.
 As a simple example, let's add element-wise the elements from `input1_buffer`
 to `input2_buffer`:
 
-```c
-uint32_t input1_buffer[8];
-uint32_t input2_buffer[8];
-uint32_t output_buffer[8];
+```c++
+uint32_t input1_buffer[8] __attribute__((section(".data")));
+uint32_t input2_buffer[8] __attribute__((section(".data")));
+uint32_t output_buffer[8] __attribute__((section(".data")));
 
 int main(int argc, char** argv) {
   for (int i = 0; i < 8; i++) {
@@ -81,8 +82,8 @@ The core will halt when returning from `main`.
 
 ### Compiling the program
 
-A Makefile is included in `tests/cocotb/tutorial`. Simply run `make` in that
-directory to generate the program `program.elf`.
+Run `bazel build tests/cocotb/tutorial:kelvin_v2_program`
+to generate `kelvin_v2_program.elf`.
 
 ## Creating the test bench
 
@@ -104,58 +105,105 @@ First, we need to program ITCM with your program. A `load_elf` function is
 provided to copy all loadable sections into memory. Add the following to
 `core_mini_axi_tutorial`:
 
-```python
+```diff
 @cocotb.test()
 async def core_mini_axi_tutorial(dut):
     """Testbench to run your Kelvin program."""
-    ...
-    with open("../tests/cocotb/tutorial/program.elf", "rb") as f:
-        entry_point = await core_mini_axi.load_elf(f)
+    # Test bench setup
+    core_mini_axi = CoreMiniAxiInterface(dut)
+    await core_mini_axi.init()
+    await core_mini_axi.reset()
+    cocotb.start_soon(core_mini_axi.clock.start())
+
++   with open("../tests/cocotb/tutorial/program.elf", "rb") as f:
++     entry_point = await core_mini_axi.load_elf(f)
 ```
 
 Before we start the program, let's also write inputs into DTCM. We can
 determine the location of a buffer using `lookup_symbol` and write to DTCM with
 `write`:
 
-```python
+
+```diff
 @cocotb.test()
 async def core_mini_axi_tutorial(dut):
     """Testbench to run your Kelvin program."""
-    ...
-    with open("../tests/cocotb/tutorial/program.elf", "rb") as f:
-        ...
-        input1_addr = core_mini_axi.lookup_symbol(f, "input1_buffer")
-        input2_addr = core_mini_axi.lookup_symbol(f, "input2_buffer")
-        output_addr = core_mini_axi.lookup_symbol(f, "output_buffer")
+    # Test bench setup
+    core_mini_axi = CoreMiniAxiInterface(dut)
+    await core_mini_axi.init()
+    await core_mini_axi.reset()
+    cocotb.start_soon(core_mini_axi.clock.start())
 
-    input1_data = np.arange(8, dtype=np.uint32)
-    input2_data = 8994 * np.ones(8, dtype=np.uint32)
-    await core_mini_axi.write(input1_addr, input1_data)
-    await core_mini_axi.write(input2_addr, input2_data)
+    with open("../tests/cocotb/tutorial/program.elf", "rb") as f:
+      entry_point = await core_mini_axi.load_elf(f)
+
++   with open("../tests/cocotb/tutorial/program.elf", "rb") as f:
++     inputs1_addr = core_mini_axi.lookup_symbol(f, "input1_buffer")
++     inputs2_addr = core_mini_axi.lookup_symbol(f, "input2_buffer")
+
++   input1_data = np.arange(8, dtype=np.uint32)
++   input2_data = 8994 * np.ones(8, dtype=np.uint32)
++   await core_mini_axi.write(inputs1_addr, input1_data)
++   await core_mini_axi.write(inputs2_addr, input2_data)
 ```
 
 Now that input data has been written, let's actually run the program! Use
 `execute_from` to start the program on Kelvin. Once it's running, wait for the
 core to halt, so we know it's done work and we can read the result:
 
-```python
+```diff
 @cocotb.test()
 async def core_mini_axi_tutorial(dut):
     """Testbench to run your Kelvin program."""
-    ...
-    await core_mini_axi.execute_from(entry_point)
-    await core_mini_axi.wait_for_halted()
+    # Test bench setup
+    core_mini_axi = CoreMiniAxiInterface(dut)
+    await core_mini_axi.init()
+    await core_mini_axi.reset()
+    cocotb.start_soon(core_mini_axi.clock.start())
+
+    with open("../tests/cocotb/tutorial/program.elf", "rb") as f:
+      entry_point = await core_mini_axi.load_elf(f)
+
+    with open("../tests/cocotb/tutorial/program.elf", "rb") as f:
+      inputs1_addr = core_mini_axi.lookup_symbol(f, "input1_buffer")
+      inputs2_addr = core_mini_axi.lookup_symbol(f, "input2_buffer")
+
+    input1_data = np.arange(8, dtype=np.uint32)
+    input2_data = 8994 * np.ones(8, dtype=np.uint32)
+    await core_mini_axi.write(inputs1_addr, input1_data)
+    await core_mini_axi.write(inputs2_addr, input2_data)
+
++   await core_mini_axi.execute_from(entry_point)
++   await core_mini_axi.wait_for_halted()
 ```
 
 Finally, let's `read` and print the result:
 
-```python
-@cocotb.test()
+```diff
 async def core_mini_axi_tutorial(dut):
     """Testbench to run your Kelvin program."""
-    ...
-    rdata = (await core_mini_axi.read(outputs_addr, 4 * 8)).view(np.uint32)
-    print(f"I got {rdata}")
+    # Test bench setup
+    core_mini_axi = CoreMiniAxiInterface(dut)
+    await core_mini_axi.init()
+    await core_mini_axi.reset()
+    cocotb.start_soon(core_mini_axi.clock.start())
+
+    with open("../tests/cocotb/tutorial/program.elf", "rb") as f:
+      entry_point = await core_mini_axi.load_elf(f)
+
+    with open("../tests/cocotb/tutorial/program.elf", "rb") as f:
+      inputs1_addr = core_mini_axi.lookup_symbol(f, "input1_buffer")
+      inputs2_addr = core_mini_axi.lookup_symbol(f, "input2_buffer")
+
+    input1_data = np.arange(8, dtype=np.uint32)
+    input2_data = 8994 * np.ones(8, dtype=np.uint32)
+    await core_mini_axi.write(inputs1_addr, input1_data)
+    await core_mini_axi.write(inputs2_addr, input2_data)
+    await core_mini_axi.execute_from(entry_point)
+    await core_mini_axi.wait_for_halted()
+
++   rdata = (await core_mini_axi.read(outputs_addr, 4 * 8)).view(np.uint32)
++   print(f"I got {rdata}")
 ```
 
 ## Running the test bench

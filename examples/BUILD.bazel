@@ -11,14 +11,14 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-cc_binary(
-    name = "hello_world_add_floats",
+load("//rules:kelvin_v2.bzl", "kelvin_v2_binary")
+
+kelvin_v2_binary(
+    name = "kelvin_v2_hello_world_add_floats",
     srcs = ["hello_world_add_floats.cc"],
-    target_compatible_with = ["//platforms/cpu:kelvin_v2"],
 )
 
-cc_binary(
-    name = "rvv_add_intrinsic",
+kelvin_v2_binary(
+    name = "kelvin_v2_rvv_add_intrinsic",
     srcs = ["rvv_add_intrinsic.cc"],
-    target_compatible_with = ["//platforms/cpu:kelvin_v2"],
 )

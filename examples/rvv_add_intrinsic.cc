@@ -13,7 +13,6 @@
 // limitations under the License.
 
 #include <riscv_vector.h>
-#include <stdio.h>
 #include <string.h>
 
 int8_t input_1[1024];
@@ -21,7 +20,7 @@ int8_t input_2[1024];
 int16_t output[1024];
 
 int main() {
-  unsigned vlen = __riscv_vlenb();
+
   memset(input_1, 1, 1024);
   memset(input_2, 6, 1024);
   const int8_t* input1_ptr = &input_1[0];
@@ -33,12 +32,9 @@ int main() {
     vint8m4_t input_v1 = __riscv_vle8_v_i8m4(input1_ptr + idx, 32);
 
     vint16m8_t temp_sum = __riscv_vwadd_vv_i16m8(input_v1, input_v2, 32);
+    // results are stored back into the output vector
     __riscv_vse16_v_i16m8(output_ptr + idx, temp_sum, 32);
   }
 
-  printf("printing 1st 10 values of output");
-  for (int i = 0; i < 10; i++) {
-    printf(" %d ", output[i]);
-  }
   return 0;
 }
