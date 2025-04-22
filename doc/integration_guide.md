@@ -34,7 +34,9 @@ The interfaces to Kelvin are defined as follows:
 |      fault       | Output interface to determine if the Core hit a fault. These signals should be connected to a system control CPU interrupt-line or status register for notification when Kelvin faults or is halted. |
 
 #### AXI master signals
+
 AR / AW channel
+
 | Signal | Behaviour |
 | ------ | --------- |
 | addr   | Address Kelvin wishes to read/write |
@@ -49,6 +51,7 @@ AR / AW channel
 | region | Always 0 |
 
 R channel
+
 | Signal | Behaviour |
 | ------ | --------- |
 | data   | Response data from the slave |
@@ -57,6 +60,7 @@ R channel
 | last   | Whether the beat is the last in the burst |
 
 W channel
+
 | Signal | Behaviour |
 | ------ | --------- |
 | data   | Data Kelvin wishes to write |
@@ -64,6 +68,7 @@ W channel
 | strb   | Which bytes in the data are valid |
 
 B channel
+
 | Signal | Behaviour |
 | ------ | --------- |
 | id     | Ignored, but should be 0 as Kelvin only emits txns with an id of 0 (an RTL assertion exists for this) |
@@ -72,7 +77,9 @@ B channel
 Note: the USER signal is not supported on any of the channels.
 
 #### AXI slave signals
+
 AR / AW channel
+
 | Signal | Behaviour |
 | ------ | --------- |
 | addr   | Address the master wishes to read / write to |
@@ -87,6 +94,7 @@ AR / AW channel
 | region | Ignored |
 
 R channel
+
 | Signal | Behaviour |
 | ------ | --------- |
 | data   | Response data from Kelvin |
@@ -95,6 +103,7 @@ R channel
 | last   | Whether the beat is the last in the burst |
 
 W channel
+
 | Signal | Behaviour |
 | ------ | --------- |
 | data   | Data the master wishes to write to Kelvin |
@@ -102,6 +111,7 @@ W channel
 | strb   | Which bytes in data are valid |
 
 B channel
+
 | Signal | Behaviour |
 | ------ | --------- |
 | id     | Transaction ID, should match with the id field from AW |
@@ -127,7 +137,7 @@ A note first -- in these examples, Kelvin is located in the overall system memor
 
 1. The instruction memory of Kelvin must be initialized.
 ```c
-volatile uint8_t* kelvin_itcm = (uint8_t*)0x70000000L;
+volatile uint8_t* kelvin_itcm = (uint8_t*)0x00000000L;
 for (int i = 0; i < kelvin_binary_len; ++i) {
     kelvin_itcm[i] = kelvin_binary[i];
 }
@@ -139,13 +149,13 @@ If something like a DMA engine is present in your system, that is probably a bet
 If your program is linked such that the starting address is 0, you may skip this.
 
 ```c
-volatile uint32_t* kelvin_pc_csr = (uint32_t*)0x70030004L;
+volatile uint32_t* kelvin_pc_csr = (uint32_t*)0x00030004L;
 *kelvin_pc_csr = start_addr;
 ```
 
 3. Release clock gate
 ```c
-volatile uint32_t* kelvin_reset_csr = (uint32_t*)0x70030000L;
+volatile uint32_t* kelvin_reset_csr = (uint32_t*)0x00030000L;
 *kelvin_reset_csr = 1;
 ```
 
@@ -155,7 +165,7 @@ fault or halted outputs, this is a good time.
 
 4. Release reset
 ```c
-volatile uint32_t* kelvin_reset_csr = (uint32_t*)0x70030000L;
+volatile uint32_t* kelvin_reset_csr = (uint32_t*)0x00030000L;
 *kelvin_reset_csr = 0;
 ```
 
@@ -164,7 +174,7 @@ At this point, Kelvin will begin executing at the PC programmed in step 2.
 5. Monitor for `io_halted`
 The status of Kelvin's execution can be checked by reading the status CSR:
 ```c
-volatile uint32_t* kelvin_status_csr = (uint32_t*)0x70030008L;
+volatile uint32_t* kelvin_status_csr = (uint32_t*)0x00030008L;
 uint32_t status = *kelvin_status_csr;
 bool halted = status & 1;
 bool fault = status & 2;
