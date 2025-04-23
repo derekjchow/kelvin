@@ -37,7 +37,7 @@ class TCM128(tcmSizeBytes: Int, tcmSubEntryWidth: Int) extends Module {
   sram.io.addr := io.addr
   sram.io.enable := io.enable
   sram.io.write := Cat(io.write)
-  sram.io.wdata := Cat(io.wdata)
-  sram.io.wmask := Cat(io.wmask)
-  io.rdata := UIntToVec(sram.io.rdata, tcmSubEntryWidth)
+  sram.io.wdata := Cat(io.wdata.reverse)
+  sram.io.wmask := Cat(io.wmask.reverse)
+  io.rdata := UIntToVec(sram.io.rdata, tcmSubEntryWidth).reverse
 }
