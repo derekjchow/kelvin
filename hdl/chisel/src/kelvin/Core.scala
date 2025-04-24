@@ -78,7 +78,7 @@ class Core(p: Parameters, moduleName: String) extends Module with RequireAsyncRe
   io.iflush <> score.io.iflush
   io.dflush <> score.io.dflush
   io.slog   := score.io.slog
-  io.debug  := score.io.debug
+  io.debug  <> score.io.debug
 
   // ---------------------------------------------------------------------------
   // Vector core.

@@ -170,6 +170,12 @@ class DebugIO(p: Parameters) extends Bundle {
   val addr = Vec(p.instructionLanes, UInt(32.W))
   val inst = Vec(p.instructionLanes, UInt(32.W))
   val cycles = Output(UInt(32.W))
+
+  val dbus = Valid(new Bundle {
+    val addr = UInt(32.W)
+    val wdata = UInt(p.axi2DataBits.W)
+    val write = Bool()
+  })
 }
 
 class RegfileReadDataIO extends Bundle {

@@ -354,6 +354,11 @@ class SCore(p: Parameters) extends Module {
 
   io.debug.addr <> debugAddr
   io.debug.inst <> debugInst
+
+  io.debug.dbus.valid := io.dbus.valid
+  io.debug.dbus.bits.addr := io.dbus.addr
+  io.debug.dbus.bits.wdata := io.dbus.wdata
+  io.debug.dbus.bits.write := io.dbus.write
 }
 
 object EmitSCore extends App {

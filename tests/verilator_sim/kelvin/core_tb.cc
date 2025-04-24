@@ -129,6 +129,11 @@ static void Core_run(const char* name, const char* bin, const int cycles,
   sc_signal<sc_bv<32> > io_slog_data;
   sc_signal<sc_bv<4> > io_debug_en;
   sc_signal<sc_bv<32> > io_debug_cycles;
+  sc_signal<bool> io_debug_dbus_valid;
+  sc_signal<sc_bv<32>> io_debug_dbus_bits_addr;
+  sc_signal<sc_bv<KP_lsuDataBits>> io_debug_dbus_bits_wdata;
+  sc_signal<bool> io_debug_dbus_bits_write;
+
 
 #define IO_DEBUG(x)                       \
   sc_signal<sc_bv<32> > io_debug_addr##x; \
@@ -216,6 +221,10 @@ static void Core_run(const char* name, const char* bin, const int cycles,
   core.io_slog_data(io_slog_data);
   core.io_debug_en(io_debug_en);
   core.io_debug_cycles(io_debug_cycles);
+  core.io_debug_dbus_valid(io_debug_dbus_valid);
+  core.io_debug_dbus_bits_addr(io_debug_dbus_bits_addr);
+  core.io_debug_dbus_bits_wdata(io_debug_dbus_bits_wdata);
+  core.io_debug_dbus_bits_write(io_debug_dbus_bits_write);
 
 #define BIND_DEBUG(x)                       \
   core.io_debug_addr_##x(io_debug_addr##x); \

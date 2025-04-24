@@ -64,6 +64,10 @@ struct CoreMiniAxi_tb : Sysc_tb {
     sc_signal<sc_bv<32>> inst_1;
     sc_signal<sc_bv<32>> inst_2;
     sc_signal<sc_bv<32>> inst_3;
+    sc_signal<bool> dbus_valid;
+    sc_signal<sc_bv<32>> dbus_bits_addr;
+    sc_signal<sc_bv<KP_lsuDataBits>> dbus_bits_wdata;
+    sc_signal<bool> dbus_bits_write;
   };
 
   CoreMiniAxi_tb(sc_module_name n, int loops, bool random, bool debug_axi,

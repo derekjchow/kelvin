@@ -116,6 +116,10 @@ void CoreMiniAxi_tb::Connect() {
   core_->io_debug_inst_1(debug_io_.inst_1);
   core_->io_debug_inst_2(debug_io_.inst_2);
   core_->io_debug_inst_3(debug_io_.inst_3);
+  core_->io_debug_dbus_valid(debug_io_.dbus_valid);
+  core_->io_debug_dbus_bits_addr(debug_io_.dbus_bits_addr);
+  core_->io_debug_dbus_bits_wdata(debug_io_.dbus_bits_wdata);
+  core_->io_debug_dbus_bits_write(debug_io_.dbus_bits_write);
 
   // AR
   core_->io_axi_master_read_addr_ready(axi2tlm_signals_.arready);
@@ -326,11 +330,11 @@ absl::Status CoreMiniAxi_tb::CheckStatusAsync() {
 }
 
 void CoreMiniAxi_tb::posedge() {
-  bool core_io_dbus_valid = static_cast<bool>(core_->rootp->CoreMiniAxi__DOT___core_io_dbus_valid);
-  uint32_t core_io_dbus_addr = reinterpret_cast<uint32_t>(core_->rootp->CoreMiniAxi__DOT___core_io_dbus_addr);
-  if (tohost_addr_.has_value() && core_io_dbus_valid && (core_io_dbus_addr == tohost_addr_.value())) {
-    uint32_t wdata0;
-    wdata0 = reinterpret_cast<uint32_t>(core_->rootp->CoreMiniAxi__DOT___core_io_dbus_wdata[0]);
+  const bool core_io_dbus_valid = debug_io_.dbus_valid;
+  const bool core_io_dbus_write = debug_io_.dbus_bits_write;
+  const uint32_t core_io_dbus_addr = debug_io_.dbus_bits_addr.read().get_word(0);
+  if (tohost_addr_.has_value() && core_io_dbus_valid && core_io_dbus_write && (core_io_dbus_addr == tohost_addr_.value())) {
+    const uint32_t wdata0 = debug_io_.dbus_bits_wdata.read().get_word(0);
     if (wdata0 & 1) {
       tohost_halt = true;
       tohost_val = wdata0;
