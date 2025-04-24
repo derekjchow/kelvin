@@ -17,7 +17,7 @@
 #include <cstring>
 #include <elf.h>
 
-void LoadElf(uint8_t* data, CopyFn copy_fn) {
+uint32_t LoadElf(uint8_t* data, CopyFn copy_fn) {
   const Elf32_Ehdr* elf_header = reinterpret_cast<Elf32_Ehdr*>(data);
   for (int i = 0; i < elf_header->e_phnum; ++i) {
     const Elf32_Phdr* program_header = reinterpret_cast<Elf32_Phdr*>(
@@ -32,6 +32,7 @@ void LoadElf(uint8_t* data, CopyFn copy_fn) {
             reinterpret_cast<void*>(data + program_header->p_offset),
             program_header->p_filesz);
   }
+  return elf_header->e_entry;
 }
 
 bool LookupSymbol(const uint8_t* data, const std::string& symbol_name, uint32_t* symbol_addr) {
