@@ -51,3 +51,24 @@ cc_binary(
         "@com_google_absl//absl/types:span",
     ],
 )
+
+cc_library(
+  name = "kelvin_simulator_headers",
+  hdrs = ["kelvin_simulator.h"],
+)
+
+cc_library(
+  name = "core_mini_axi_simulator",
+  srcs = ["core_mini_axi_simulator.cc"],
+  deps = [
+    ":core_mini_axi_wrapper",
+    ":kelvin_simulator_headers",
+  ],
+)
+
+cc_shared_library(
+    name = "core_mini_axi_sim",
+    deps = [
+        ":core_mini_axi_simulator",
+    ],
+)
