@@ -1,24 +1,24 @@
 `ifndef RVS_TRANSACTION__SV
 `define RVS_TRANSACTION__SV
 
-
 class rvs_transaction extends uvm_sequence_item;
-
+// Members ---------------------------------------------------------------------
+// configs -------------------------------------------------
   /* Illegal control field*/
   static int unsigned illegal_rate = 0;
   static int unsigned legal_rate   = 100;
   rand bit illegal_inst_en;
 
-
-  /* Memory config */
+  /* Memory access range */
   static int unsigned mem_addr_lo = 32'h0000_0000;
   static int unsigned mem_addr_hi = 32'h0001_0000;
 
-  /* Tr config field */
+  /* Tr control field */
   rand bit use_vlmax;
        bit is_rt = 0;
        bit is_last_inst = 0;
 
+// inst descriptions ---------------------------------------
   /* VCSR field */
   // vtype
   rand bit               vill;
@@ -34,10 +34,7 @@ class rvs_transaction extends uvm_sequence_item;
   rand vxrm_e            vxrm;
 
   /* Instruction description field */
-  rand inst_type_e inst_type;// opcode
-       int uop_idx;
-       bit first_uop;
-       bit last_uop;
+  rand inst_type_e  inst_type;// opcode
 
   // Load/Store inst
   rand lsu_inst_e   lsu_inst;
@@ -45,7 +42,7 @@ class rvs_transaction extends uvm_sequence_item;
   rand lsu_umop_e   lsu_umop; // src2_idx
   rand lsu_nf_e     lsu_nf;   // func6[31:29]
   rand lsu_width_e  lsu_width;// func3
-  rand eew_e        lsu_eew;  // func3
+  rand eew_e        lsu_eew;  // func3 - decoded
   rand lmul_e       lsu_emul;
 
   // Algoritm inst
@@ -85,6 +82,7 @@ class rvs_transaction extends uvm_sequence_item;
        logic [31:0] bin_inst; 
        string asm_string;
 
+// info records --------------------------------------------
   /* Write back info */
        reg_idx_t  rt_vrf_index  [$];
        vrf_byte_t rt_vrf_strobe [$];
@@ -96,7 +94,7 @@ class rvs_transaction extends uvm_sequence_item;
        logic [`XLEN-1:0] vxsat;  
        logic             vxsat_valid;  
 
-  /* Trap field */
+  /* Trap info */
        bit          trap_occured;
        agnostic_e   trap_vma;
        agnostic_e   trap_vta;
@@ -106,8 +104,7 @@ class rvs_transaction extends uvm_sequence_item;
        int          trap_vstart;
        vxrm_e       trap_vxrm;
 
-// Constrain ----------------------------------------------------------
-
+// Constrain -------------------------------------------------------------------
   constraint c_solve_order {
     solve inst_type before src3_type;
     solve inst_type before alu_inst;
@@ -550,10 +547,10 @@ class rvs_transaction extends uvm_sequence_item;
         (alu_inst == VXUNARY0 && src1_idx inside {VSEXT_VF4, VZEXT_VF4})
         ->  (vsew inside {SEW32} && vlmul inside {LMUL1,LMUL2,LMUL4,LMUL8});
 
-        // vrgather
+        // vrgatherei16.vv
         (alu_inst == VSLIDEUP_RGATHEREI16 && alu_type inside {OPIVV})
         ->  ((vlmul inside {LMUL1_2,LMUL1,LMUL2,LMUL4,LMUL8} && vsew inside {SEW16,SEW32}) ||
-            (vlmul inside {LMUL1_4,LMUL1_2,LMUL1,LMUL2,LMUL4} && vsew inside {SEW8,SEW16})
+             (vlmul inside {LMUL1_4,LMUL1_2,LMUL1,LMUL2,LMUL4} && vsew inside {SEW8,SEW16})
         );
         
       }
@@ -649,7 +646,8 @@ class rvs_transaction extends uvm_sequence_item;
       (alu_inst inside {VSLIDEUP_RGATHEREI16, VSLIDEDOWN, VSLIDE1UP, VSLIDE1DOWN} && alu_type inside {OPIVX, OPMVX})
       -> (rs1_data >=0 && rs1_data <= 130);
   }
-// Auto Field ---------------------------------------------------------
+
+// UVM Marocs ------------------------------------------------------------------
   `uvm_object_utils_begin(rvs_transaction) 
     `uvm_field_int(pc,UVM_ALL_ON)
     `uvm_field_int(bin_inst,UVM_ALL_ON)
@@ -749,6 +747,7 @@ class rvs_transaction extends uvm_sequence_item;
     end
   `uvm_object_utils_end
 
+// Methods ---------------------------------------------------------------------
   extern function new(string name = "Trans");
   extern static function void set_ill_rate(int unsigned rate);
   extern static function void set_mem_range(int unsigned mem_base, int unsigned mem_size);

@@ -1,9 +1,11 @@
 `ifndef RVV_INTERFACE_COV__SV
 `define RVV_INTERFACE_COV__SV
+
 module rvv_interface_cov (
   input logic clk, 
   input logic rst_n, 
-  rvv_intern_interface rvv_intern_if);
+  rvv_intern_interface rvv_intern_if,
+  rvs_interface rvs_if);
 
 // Normal toggle cov -------------------------------------------------
   covergroup Cov_bit_toggle (ref logic in) @(posedge clk);
@@ -13,14 +15,17 @@ module rvv_interface_cov (
       bins bit_deassert = (0=>1);
     }
   endgroup
-  Cov_bit_toggle cg_alu_rs_full_toggle;
-  Cov_bit_toggle cg_mul_rs_full_toggle;
-  Cov_bit_toggle cg_div_rs_full_toggle;
-  Cov_bit_toggle cg_pmtrdt_rs_full_toggle;
-  Cov_bit_toggle cg_alu_rs_empty_toggle;
-  Cov_bit_toggle cg_mul_rs_empty_toggle;
-  Cov_bit_toggle cg_div_rs_empty_toggle;
-  Cov_bit_toggle cg_pmtrdt_rs_empty_toggle;
+
+  initial begin
+    Cov_bit_toggle cg_alu_rs_full_toggle     = new(rvv_intern_if.alu_rs_full);    
+    Cov_bit_toggle cg_mul_rs_full_toggle     = new(rvv_intern_if.mul_rs_full);    
+    Cov_bit_toggle cg_div_rs_full_toggle     = new(rvv_intern_if.div_rs_full);    
+    Cov_bit_toggle cg_pmtrdt_rs_full_toggle  = new(rvv_intern_if.pmtrdt_rs_full); 
+    Cov_bit_toggle cg_alu_rs_empty_toggle    = new(rvv_intern_if.alu_rs_empty);   
+    Cov_bit_toggle cg_mul_rs_empty_toggle    = new(rvv_intern_if.mul_rs_empty);   
+    Cov_bit_toggle cg_div_rs_empty_toggle    = new(rvv_intern_if.div_rs_empty);   
+    Cov_bit_toggle cg_pmtrdt_rs_empty_toggle = new(rvv_intern_if.pmtrdt_rs_empty);
+  end
 
 // WAW cov -----------------------------------------------------------
   logic [`NUM_RT_UOP-1:0] [`NUM_RT_UOP-1:0] vidx_eq;
@@ -75,7 +80,10 @@ module rvv_interface_cov (
 
       }
   endgroup
-  Cov_waw cg_waw;
+
+  initial begin
+    Cov_waw cg_waw = new();
+  end
 
 // Decode cov --------------------------------------------------------
 `ifdef ISSUE_3_READ_PORT_6
@@ -128,7 +136,9 @@ module rvv_interface_cov (
   endgroup
 `endif // ISSUE_*
 
-  Cov_uops_valid_de2uq cg_uops_valid_de2uq;
+  initial begin
+    Cov_uops_valid_de2uq cg_uops_valid_de2uq = new();
+  end
 
 // Dispatch cov ------------------------------------------------------
   logic [`NUM_DP_UOP-1:0] [4:0] dipsatch_unit;
@@ -165,7 +175,10 @@ module rvv_interface_cov (
       }
     cross uop0_dispatch_unit, uop1_dispatch_unit;
   endgroup
-  Cov_dispatch_unit cg_dispatch_unit;
+
+  initial begin
+    Cov_dispatch_unit cg_dispatch_unit = new();
+  end
 
 // FIFO cov ----------------------------------------------------------
   covergroup Cov_exe_unit_state @(posedge clk);
@@ -195,26 +208,13 @@ module rvv_interface_cov (
 
     cross alu, mul, div, pmtrdt;
   endgroup
-  Cov_exe_unit_state cg_exe_unit_state;
 
-// -------------------------------------------------------------------
   initial begin
-    cg_alu_rs_full_toggle = new(rvv_intern_if.alu_rs_full);
-    cg_mul_rs_full_toggle = new(rvv_intern_if.mul_rs_full);
-    cg_div_rs_full_toggle = new(rvv_intern_if.div_rs_full);
-    cg_pmtrdt_rs_full_toggle = new(rvv_intern_if.pmtrdt_rs_full);
-    cg_alu_rs_empty_toggle = new(rvv_intern_if.alu_rs_empty);
-    cg_mul_rs_empty_toggle = new(rvv_intern_if.mul_rs_empty);
-    cg_div_rs_empty_toggle = new(rvv_intern_if.div_rs_empty);
-    cg_pmtrdt_rs_empty_toggle = new(rvv_intern_if.pmtrdt_rs_empty);
-
-    cg_waw = new();
-    
-    cg_uops_valid_de2uq = new();
-    
-    cg_dispatch_unit = new();
-
-    cg_exe_unit_state = new();
+    Cov_exe_unit_state cg_exe_unit_state = new();
   end
+
+// Inst cov ----------------------------------------------------------
+`include "rvv_zve32x_coverage.svh"
+
 endmodule 
 `endif // RVV_INTERFACE_COV__SV

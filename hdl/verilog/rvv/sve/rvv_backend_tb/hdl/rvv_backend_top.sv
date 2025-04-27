@@ -219,7 +219,8 @@ module rvv_backend_top();
   rvv_interface_cov rvv_interface_cov(
     .clk(clk), 
     .rst_n(rst_n), 
-    .rvv_intern_if(rvv_intern_if)
+    .rvv_intern_if(rvv_intern_if),
+    .rvs_if(rvs_if)
   );
 
 
