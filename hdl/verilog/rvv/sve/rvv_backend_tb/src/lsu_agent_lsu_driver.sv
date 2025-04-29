@@ -466,7 +466,7 @@ function int lsu_driver::lsu_uop_decode(ref rvs_transaction inst_tr);
   vstart = inst_tr.vstart;
 
   case(inst_tr.lsu_mop) 
-    LSU_E   : begin
+    LSU_US   : begin
       case(inst_tr.lsu_umop)
         MASK: begin
           data_eew  = EEW8;
@@ -503,7 +503,7 @@ function int lsu_driver::lsu_uop_decode(ref rvs_transaction inst_tr);
         end
       endcase
     end
-    LSU_SE  : begin
+    LSU_CS  : begin
       data_eew = lsu_eew;
       data_emul = data_eew * lmul / sew;
       vidx_eew = EEW32;
@@ -514,8 +514,8 @@ function int lsu_driver::lsu_uop_decode(ref rvs_transaction inst_tr);
       seg_idx_max  = lsu_nf + 1;
       evl = inst_tr.vl;
     end
-    LSU_UXEI, 
-    LSU_OXEI: begin
+    LSU_UI, 
+    LSU_OI: begin
       data_eew = sew;
       data_emul = data_eew * lmul / sew;
       vidx_eew = lsu_eew;
@@ -546,19 +546,19 @@ function int lsu_driver::lsu_uop_decode(ref rvs_transaction inst_tr);
   `uvm_info("LSU_DRV", $sformatf("eew_max=%0d, emul_max=%.2f, elm_idx_max=%0d", eew_max, emul_max, elm_idx_max), UVM_HIGH)
 
 // Inst Check ------------------------------------------------------------------
-  if(inst_tr.lsu_mop == LSU_E && inst_tr.lsu_umop == MASK && inst_tr.lsu_nf != NF1) begin
+  if(inst_tr.lsu_mop == LSU_US && inst_tr.lsu_umop == MASK && inst_tr.lsu_nf != NF1) begin
     `uvm_warning("LSU_DRV/INST_CHECKER", $sformatf("nf=%s of unit stride mask load/store is reserved, ignored.", inst_tr.lsu_nf.name()))
     return -1;
   end
-  if(inst_tr.inst_type == ST && inst_tr.lsu_mop == LSU_E && inst_tr.lsu_umop == WHOLE_REG && inst_tr.lsu_width != LSU_8BIT) begin
+  if(inst_tr.inst_type == ST && inst_tr.lsu_mop == LSU_US && inst_tr.lsu_umop == WHOLE_REG && inst_tr.lsu_width != LSU_8BIT) begin
     `uvm_warning("LSU_DRV/INST_CHECKER", $sformatf("lsu_width=%S of vs<nf>r.v is reserved, ignored.", inst_tr.lsu_width.name()))
     return -1;
   end
-  if(inst_tr.lsu_mop == LSU_E && inst_tr.lsu_umop == MASK && inst_tr.lsu_width != LSU_8BIT) begin
+  if(inst_tr.lsu_mop == LSU_US && inst_tr.lsu_umop == MASK && inst_tr.lsu_width != LSU_8BIT) begin
     `uvm_warning("LSU_DRV/INST_CHECKER", $sformatf("lsu_width=%S of vlm/vsm.v is reserved, ignored.", inst_tr.lsu_width.name()))
     return -1;
   end
-  if(inst_tr.lsu_mop == LSU_E && inst_tr.lsu_umop inside {MASK, WHOLE_REG} && inst_tr.vm != 1) begin
+  if(inst_tr.lsu_mop == LSU_US && inst_tr.lsu_umop inside {MASK, WHOLE_REG} && inst_tr.vm != 1) begin
     `uvm_warning("LSU_DRV/INST_CHECKER", $sformatf("vm != 1 of vlm/vsm/vlr/vsr is reserved, ignored.", inst_tr.lsu_width.name()))
     return -1;
   end
@@ -676,7 +676,7 @@ function int lsu_driver::lsu_uop_decode(ref rvs_transaction inst_tr);
         uop_tr.uop_index = uops_cnt-1;
 
         uop_tr.is_last_uop = (uops_cnt == uops_num) ? 1: 0;
-        uop_tr.is_indexed = (inst_tr.lsu_mop inside {LSU_UXEI, LSU_OXEI}) ? 1 : 0;
+        uop_tr.is_indexed = (inst_tr.lsu_mop inside {LSU_UI, LSU_OI}) ? 1 : 0;
         uop_tr.total_uops_num = uops_num;
         uop_tr.base_addr = addr_base;
         uop_tr.vstart    = uop_vstart;
@@ -689,7 +689,7 @@ function int lsu_driver::lsu_uop_decode(ref rvs_transaction inst_tr);
         uop_tr.data_vreg_eew        = data_eew; 
         uop_tr.data_vreg_byte_start = data_byte_idx % `VLENB;
 
-        uop_tr.vidx_vreg_valid      = (inst_tr.lsu_mop inside {LSU_UXEI, LSU_OXEI}) ? 1 : 0;
+        uop_tr.vidx_vreg_valid      = (inst_tr.lsu_mop inside {LSU_UI, LSU_OI}) ? 1 : 0;
         uop_tr.vidx_vreg_idx        = vidx_vreg_idx_base + elm_idx * (vidx_eew/8) / `VLENB; 
         uop_tr.vidx_vreg_eew        = vidx_eew; 
         uop_tr.vidx_vreg_byte_start = vidx_byte_idx % `VLENB;
@@ -719,7 +719,7 @@ function int lsu_driver::lsu_uop_decode(ref rvs_transaction inst_tr);
           uop_tr.data_vreg_byte_end = (data_byte_idx) % `VLENB;
           uop_tr.vidx_vreg_byte_end = (vidx_byte_idx) % `VLENB;
         end
-        if(inst_tr.lsu_mop inside {LSU_E, LSU_SE} && inst_tr.vm == 1) begin
+        if(inst_tr.lsu_mop inside {LSU_US, LSU_CS} && inst_tr.vm == 1) begin
           uop_tr.lsu_slot_addr_valid = 1;
         end
         `uvm_info("LSU_DRV",$sformatf("Decode uop_tr to uops_rx_queque:\n%s",uop_tr.sprint()),UVM_HIGH)

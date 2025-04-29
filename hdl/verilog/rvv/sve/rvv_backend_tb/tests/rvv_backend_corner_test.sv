@@ -886,4 +886,126 @@ class rvv_reset_test extends rvv_backend_test;
     super.final_phase(phase);
   endfunction
 endclass: rvv_reset_test
+
+// -----------------------------------------------------------------------------
+class inst_rvv_zve32x_viota_m_vm1_large_vl_seq extends base_sequence;
+  `uvm_object_utils(inst_rvv_zve32x_viota_m_vm1_large_vl_seq)
+  `uvm_add_to_seq_lib(inst_rvv_zve32x_viota_m_vm1_large_vl_seq,rvv_inst_sequence_library)
+  `uvm_add_to_seq_lib(inst_rvv_zve32x_viota_m_vm1_large_vl_seq,rvv_alu_sequence_library)
+
+  function new(string name = "inst_rvv_zve32x_viota_m_vm1_large_vl_seq");
+    super.new(name);
+  endfunction: new
+  virtual task body();
+    req = new("req");
+    start_item(req);
+    assert(req.randomize() with {
+      // normal set
+      pc == inst_cnt;
+      
+      // special set
+      use_vlmax == 1;
+      /* vtype */
+      vsew  inside {SEW8};
+      vlmul inside {LMUL8};
+      /* inst */
+      inst_type == ALU;
+      alu_inst == VMUNARY0;
+      alu_type == OPMVV;
+      /* oprand */
+      dest_type ==    VRF; dest_idx inside {[0:31]};
+      src2_type ==    VRF; src2_idx inside {[0:31]};
+      src1_type ==   FUNC; src1_idx == 5'b10000;
+      vm inside {1};
+    });
+    finish_item(req);
+    inst_cnt++;
+  endtask: body
+
+endclass: inst_rvv_zve32x_viota_m_vm1_large_vl_seq
+
+class inst_rvv_zve32x_vcpop_m_vm1_large_vl_seq extends base_sequence;
+  `uvm_object_utils(inst_rvv_zve32x_vcpop_m_vm1_large_vl_seq)
+  `uvm_add_to_seq_lib(inst_rvv_zve32x_vcpop_m_vm1_large_vl_seq,rvv_inst_sequence_library)
+  `uvm_add_to_seq_lib(inst_rvv_zve32x_vcpop_m_vm1_large_vl_seq,rvv_alu_sequence_library)
+
+  function new(string name = "inst_rvv_zve32x_vcpop_m_vm1_large_vl_seq");
+    super.new(name);
+  endfunction: new
+  virtual task body();
+    req = new("req");
+    start_item(req);
+    assert(req.randomize() with {
+      // normal set
+      pc == inst_cnt;
+      
+      // special set
+      use_vlmax == 1;
+      /* vtype */
+      vsew  inside {SEW8};
+      vlmul inside {LMUL8};
+      /* inst */
+      inst_type == ALU;
+      alu_inst == VWXUNARY0;
+      alu_type == OPMVV;
+      /* oprand */
+      dest_type ==    XRF; dest_idx inside {[0:31]};
+      src2_type ==    VRF; src2_idx inside {[0:31]};
+      src1_type ==   FUNC; src1_idx == 5'b10000;
+      vm inside {1};
+    });
+    finish_item(req);
+    inst_cnt++;
+  endtask: body
+
+endclass: inst_rvv_zve32x_vcpop_m_vm1_large_vl_seq
+
+class vcpop_viota_vm1_test extends rvv_backend_test;
+
+  rvs_random_sequence_library rvs_seq_lib;
+  inst_rvv_zve32x_vcpop_m_vm1_large_vl_seq vcpop_m_vm1_seq;
+  inst_rvv_zve32x_viota_m_vm1_large_vl_seq viota_m_vm1_seq;
+  inst_rvv_zve32x_vadd_vx_seq              vadd_vx_seq;
+  rvs_last_sequence rvs_last_seq;
+  `uvm_component_utils(vcpop_viota_vm1_test)
+
+  function new(string name, uvm_component parent);
+    super.new(name, parent);
+  endfunction
+
+  function void build_phase(uvm_phase phase);
+    super.build_phase(phase);
+  endfunction
+
+  function void connect_phase(uvm_phase phase);
+    super.connect_phase(phase);
+    this.set_report_id_action_hier("MDL", UVM_LOG);
+  endfunction
+
+  task main_phase(uvm_phase phase);
+    super.main_phase(phase);
+
+    rvs_seq_lib = rvs_random_sequence_library::type_id::create("rvs_seq_lib");
+    rvs_seq_lib.selection_mode = UVM_SEQ_LIB_RAND;
+    rvs_seq_lib.sequence_count = direct_inst_num;
+    rvs_seq_lib.add_typewide_sequence(vcpop_m_vm1_seq.get_type());
+    rvs_seq_lib.add_typewide_sequence(viota_m_vm1_seq.get_type());
+    rvs_seq_lib.add_typewide_sequence(vadd_vx_seq.get_type());
+    rvs_seq_lib.init_sequence_library();
+    
+    `uvm_info(get_type_name(),"Start randomize mem & vrf.", UVM_LOW)
+    rand_mem(mem_base, mem_size);
+    rand_vrf();
+    `uvm_info(get_type_name(), "Randomize done.", UVM_LOW)
+
+    rvs_seq_lib.start(env.rvs_agt.rvs_sqr);
+    
+    rvs_last_seq = rvs_last_sequence::type_id::create("rvs_last_seq", this);
+    rvs_last_seq.start(env.rvs_agt.rvs_sqr);
+  endtask
+
+  function void final_phase(uvm_phase phase);
+    super.final_phase(phase);
+  endfunction
+endclass: vcpop_viota_vm1_test
 `endif // RVV_BACKEND_CORNER_TEST__SV

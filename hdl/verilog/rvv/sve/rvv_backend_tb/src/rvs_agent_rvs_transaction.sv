@@ -9,6 +9,16 @@ class rvs_transaction extends uvm_sequence_item;
   static int unsigned legal_rate   = 100;
   rand bit illegal_inst_en;
 
+  /* vtype sets */
+  static sew_e  vsew_set[]   = '{SEW8, SEW16, SEW32};
+  static lmul_e vlmul_set[]  = '{LMUL1_4, LMUL1_2, LMUL1, LMUL2, LMUL4, LMUL8};
+  static vxrm_e vxrm_set[]   = '{RNU, RNE, RDN, ROD};
+  static int    vl_min       = 0;
+  static int    vl_max       = 128;
+  static int    vstart_min   = 0;
+  static int    vstart_max   = 127;
+  static bit    vm_set[]     = '{0, 1};
+
   /* Memory access range */
   static int unsigned mem_addr_lo = 32'h0000_0000;
   static int unsigned mem_addr_hi = 32'h0001_0000;
@@ -212,6 +222,12 @@ class rvs_transaction extends uvm_sequence_item;
 
   constraint c_normal_set {
     vill == 0;
+    vsew   inside vsew_set;
+    vlmul  inside vlmul_set;
+    vxrm   inside vxrm_set;
+    vl     inside {[vl_min:vl_max]};
+    vstart inside {[vstart_min:vstart_max]};
+    vm     inside vm_set;
   }
 
   constraint c_vl {
@@ -232,10 +248,10 @@ class rvs_transaction extends uvm_sequence_item;
       // evl
       if(inst_type == ALU && alu_inst == VSMUL_VMVNRR && alu_type == OPIVI) {
         evl == ((src1_idx + 1) * `VLENB) >> vsew;
-      } else if(inst_type inside {LD, ST} && lsu_mop == LSU_E && src2_type == FUNC && src2_idx == MASK) {
+      } else if(inst_type inside {LD, ST} && lsu_mop == LSU_US && src2_type == FUNC && src2_idx == MASK) {
         if(vl%8 > 0) evl == int'(vl/8) + 1;
         else         evl == int'(vl/8);
-      } else if(inst_type inside {LD, ST} && lsu_mop == LSU_E && src2_type == FUNC && src2_idx == WHOLE_REG) {
+      } else if(inst_type inside {LD, ST} && lsu_mop == LSU_US && src2_type == FUNC && src2_idx == WHOLE_REG) {
         evl == (lsu_nf+1) * `VLEN / lsu_eew;
       } else {
         evl == vl;
@@ -250,9 +266,9 @@ class rvs_transaction extends uvm_sequence_item;
           [0:vl-1] :/ 99,
           [vl:vlmax_max-1] :/ 1
         };
-      } else if(inst_type inside {LD, ST} && lsu_mop == LSU_E && src2_type == FUNC && src2_idx == MASK) {
+      } else if(inst_type inside {LD, ST} && lsu_mop == LSU_US && src2_type == FUNC && src2_idx == MASK) {
         vstart < evl;
-      } else if(inst_type inside {LD, ST} && lsu_mop == LSU_E && src2_type == FUNC && src2_idx == WHOLE_REG) {
+      } else if(inst_type inside {LD, ST} && lsu_mop == LSU_US && src2_type == FUNC && src2_idx == WHOLE_REG) {
         vstart < evl;
       } else {
         vstart < vl;
@@ -437,59 +453,59 @@ class rvs_transaction extends uvm_sequence_item;
 
       // LSU
       // LD
-      (lsu_inst == VLE)
-      ->  (inst_type == LD && lsu_mop == LSU_E && lsu_nf == NF1 && dest_type == VRF && src2_type == FUNC && src2_idx == NORMAL && src1_type == XRF);
+      (lsu_inst == VL)
+      ->  (inst_type == LD && lsu_mop == LSU_US && lsu_nf == NF1 && dest_type == VRF && src2_type == FUNC && src2_idx == NORMAL && src1_type == XRF);
       (lsu_inst == VLSEG)
-      ->  (inst_type == LD && lsu_mop == LSU_E && lsu_nf inside {NF2, NF3, NF4, NF5, NF6, NF7, NF8} && dest_type == VRF && src2_type == FUNC && src2_idx == NORMAL && src1_type == XRF);
+      ->  (inst_type == LD && lsu_mop == LSU_US && lsu_nf inside {NF2, NF3, NF4, NF5, NF6, NF7, NF8} && dest_type == VRF && src2_type == FUNC && src2_idx == NORMAL && src1_type == XRF);
       (lsu_inst == VLM)
-      ->  (inst_type == LD && lsu_mop == LSU_E && lsu_nf == NF1 && dest_type == VRF && src2_type == FUNC && src2_idx == MASK && src1_type == XRF && vm == 1);
+      ->  (inst_type == LD && lsu_mop == LSU_US && lsu_nf == NF1 && dest_type == VRF && src2_type == FUNC && src2_idx == MASK && src1_type == XRF && vm == 1);
       (lsu_inst == VLR)
-      ->  (inst_type == LD && lsu_mop == LSU_E && lsu_nf inside {NF1, NF2, NF4, NF8} && dest_type == VRF && src2_type == FUNC && src2_idx == WHOLE_REG && src1_type == XRF && vm == 1);
-      (lsu_inst == VLEFF)
-      ->  (inst_type == LD && lsu_mop == LSU_E && lsu_nf == NF1 && dest_type == VRF && src2_type == FUNC && src2_idx == FOF && src1_type == XRF);
+      ->  (inst_type == LD && lsu_mop == LSU_US && lsu_nf inside {NF1, NF2, NF4, NF8} && dest_type == VRF && src2_type == FUNC && src2_idx == WHOLE_REG && src1_type == XRF && vm == 1);
+      (lsu_inst == VLFF)
+      ->  (inst_type == LD && lsu_mop == LSU_US && lsu_nf == NF1 && dest_type == VRF && src2_type == FUNC && src2_idx == FOF && src1_type == XRF);
       (lsu_inst == VLSEGFF)
-      ->  (inst_type == LD && lsu_mop == LSU_E && lsu_nf inside {NF2, NF3, NF4, NF5, NF6, NF7, NF8} && dest_type == VRF && src2_type == FUNC && src2_idx == FOF && src1_type == XRF);
+      ->  (inst_type == LD && lsu_mop == LSU_US && lsu_nf inside {NF2, NF3, NF4, NF5, NF6, NF7, NF8} && dest_type == VRF && src2_type == FUNC && src2_idx == FOF && src1_type == XRF);
 
-      (lsu_inst == VLSE)
-      ->  (inst_type == LD && lsu_mop == LSU_SE && lsu_nf == NF1 && dest_type == VRF && src2_type == XRF && src1_type == XRF);
+      (lsu_inst == VLS)
+      ->  (inst_type == LD && lsu_mop == LSU_CS && lsu_nf == NF1 && dest_type == VRF && src2_type == XRF && src1_type == XRF);
       (lsu_inst == VLSSEG)
-      ->  (inst_type == LD && lsu_mop == LSU_SE && lsu_nf inside {NF2, NF3, NF4, NF5, NF6, NF7, NF8} && dest_type == VRF && src2_type == XRF && src1_type == XRF);
+      ->  (inst_type == LD && lsu_mop == LSU_CS && lsu_nf inside {NF2, NF3, NF4, NF5, NF6, NF7, NF8} && dest_type == VRF && src2_type == XRF && src1_type == XRF);
 
-      (lsu_inst == VLUXEI)
-      ->  (inst_type == LD && lsu_mop == LSU_UXEI && lsu_nf == NF1 && dest_type == VRF && src2_type == VRF && src1_type == XRF);
+      (lsu_inst == VLUX)
+      ->  (inst_type == LD && lsu_mop == LSU_UI && lsu_nf == NF1 && dest_type == VRF && src2_type == VRF && src1_type == XRF);
       (lsu_inst == VLUXSEG)
-      ->  (inst_type == LD && lsu_mop == LSU_UXEI && lsu_nf inside {NF2, NF3, NF4, NF5, NF6, NF7, NF8} && dest_type == VRF && src2_type == VRF && src1_type == XRF);
+      ->  (inst_type == LD && lsu_mop == LSU_UI && lsu_nf inside {NF2, NF3, NF4, NF5, NF6, NF7, NF8} && dest_type == VRF && src2_type == VRF && src1_type == XRF);
 
-      (lsu_inst == VLOXEI)
-      ->  (inst_type == LD && lsu_mop == LSU_OXEI && lsu_nf == NF1 && dest_type == VRF && src2_type == VRF && src1_type == XRF);
+      (lsu_inst == VLOX)
+      ->  (inst_type == LD && lsu_mop == LSU_OI && lsu_nf == NF1 && dest_type == VRF && src2_type == VRF && src1_type == XRF);
       (lsu_inst == VLOXSEG)
-      ->  (inst_type == LD && lsu_mop == LSU_OXEI && lsu_nf inside {NF2, NF3, NF4, NF5, NF6, NF7, NF8} && dest_type == VRF && src2_type == VRF && src1_type == XRF);
+      ->  (inst_type == LD && lsu_mop == LSU_OI && lsu_nf inside {NF2, NF3, NF4, NF5, NF6, NF7, NF8} && dest_type == VRF && src2_type == VRF && src1_type == XRF);
 
 
       // ST
-      (lsu_inst == VSE)
-      ->  (inst_type == ST && lsu_mop == LSU_E && lsu_nf == NF1 && src3_type == VRF && src2_type == FUNC && src2_idx == NORMAL && src1_type == XRF);
+      (lsu_inst == VS)
+      ->  (inst_type == ST && lsu_mop == LSU_US && lsu_nf == NF1 && src3_type == VRF && src2_type == FUNC && src2_idx == NORMAL && src1_type == XRF);
       (lsu_inst == VSSEG)
-      ->  (inst_type == ST && lsu_mop == LSU_E && lsu_nf inside {NF2, NF3, NF4, NF5, NF6, NF7, NF8} && src3_type == VRF && src2_type == FUNC && src2_idx == NORMAL && src1_type == XRF);
+      ->  (inst_type == ST && lsu_mop == LSU_US && lsu_nf inside {NF2, NF3, NF4, NF5, NF6, NF7, NF8} && src3_type == VRF && src2_type == FUNC && src2_idx == NORMAL && src1_type == XRF);
       (lsu_inst == VSM)
-      ->  (inst_type == ST && lsu_mop == LSU_E && lsu_nf == NF1 && src3_type == VRF && src2_type == FUNC && src2_idx == MASK && src1_type == XRF && vm == 1);
+      ->  (inst_type == ST && lsu_mop == LSU_US && lsu_nf == NF1 && src3_type == VRF && src2_type == FUNC && src2_idx == MASK && src1_type == XRF && vm == 1);
       (lsu_inst == VSR)
-      ->  (inst_type == ST && lsu_mop == LSU_E && lsu_nf inside {NF1, NF2, NF4, NF8} && src3_type == VRF && src2_type == FUNC && src2_idx == WHOLE_REG && src1_type == XRF && vm == 1);
+      ->  (inst_type == ST && lsu_mop == LSU_US && lsu_nf inside {NF1, NF2, NF4, NF8} && src3_type == VRF && src2_type == FUNC && src2_idx == WHOLE_REG && src1_type == XRF && vm == 1);
 
-      (lsu_inst == VSSE)
-      ->  (inst_type == ST && lsu_mop == LSU_SE && lsu_nf == NF1 && src3_type == VRF && src2_type == XRF && src1_type == XRF);
+      (lsu_inst == VSS)
+      ->  (inst_type == ST && lsu_mop == LSU_CS && lsu_nf == NF1 && src3_type == VRF && src2_type == XRF && src1_type == XRF);
       (lsu_inst == VSSSEG)
-      ->  (inst_type == ST && lsu_mop == LSU_SE && lsu_nf inside {NF2, NF3, NF4, NF5, NF6, NF7, NF8} && src3_type == VRF && src2_type == XRF && src1_type == XRF);
+      ->  (inst_type == ST && lsu_mop == LSU_CS && lsu_nf inside {NF2, NF3, NF4, NF5, NF6, NF7, NF8} && src3_type == VRF && src2_type == XRF && src1_type == XRF);
 
-      (lsu_inst == VSUXEI)
-      ->  (inst_type == ST && lsu_mop == LSU_UXEI && lsu_nf == NF1 && src3_type == VRF && src2_type == VRF && src1_type == XRF);
+      (lsu_inst == VSUX)
+      ->  (inst_type == ST && lsu_mop == LSU_UI && lsu_nf == NF1 && src3_type == VRF && src2_type == VRF && src1_type == XRF);
       (lsu_inst == VSUXSEG)
-      ->  (inst_type == ST && lsu_mop == LSU_UXEI && lsu_nf inside {NF2, NF3, NF4, NF5, NF6, NF7, NF8} && src3_type == VRF && src2_type == VRF && src1_type == XRF);
+      ->  (inst_type == ST && lsu_mop == LSU_UI && lsu_nf inside {NF2, NF3, NF4, NF5, NF6, NF7, NF8} && src3_type == VRF && src2_type == VRF && src1_type == XRF);
 
-      (lsu_inst == VSOXEI)
-      ->  (inst_type == ST && lsu_mop == LSU_OXEI && lsu_nf == NF1 && src3_type == VRF && src2_type == VRF && src1_type == XRF);
+      (lsu_inst == VSOX)
+      ->  (inst_type == ST && lsu_mop == LSU_OI && lsu_nf == NF1 && src3_type == VRF && src2_type == VRF && src1_type == XRF);
       (lsu_inst == VSOXSEG)
-      ->  (inst_type == ST && lsu_mop == LSU_OXEI && lsu_nf inside {NF2, NF3, NF4, NF5, NF6, NF7, NF8} && src3_type == VRF && src2_type == VRF && src1_type == XRF);
+      ->  (inst_type == ST && lsu_mop == LSU_OI && lsu_nf inside {NF2, NF3, NF4, NF5, NF6, NF7, NF8} && src3_type == VRF && src2_type == VRF && src1_type == XRF);
 
     } else {
       // TODO
@@ -630,10 +646,10 @@ class rvs_transaction extends uvm_sequence_item;
 
         // For special inst
         // vlm/vsm
-        (lsu_mop == LSU_E && src2_type == FUNC && src2_idx == MASK)
+        (lsu_mop == LSU_US && src2_type == FUNC && src2_idx == MASK)
         -> (lsu_width == LSU_8BIT);
         // vsr
-        (inst_type == ST && lsu_mop == LSU_E && src2_type == FUNC && src2_idx == WHOLE_REG)
+        (inst_type == ST && lsu_mop == LSU_US && src2_type == FUNC && src2_idx == WHOLE_REG)
         -> (lsu_width == LSU_8BIT);
       }
     } else {
@@ -795,7 +811,7 @@ function void rvs_transaction::post_randomize();
   if(src1_type == FUNC && inst_type == ALU && alu_inst == VWXUNARY0) $cast(src1_func_vwxunary0,src1_idx);
   if(src2_type == FUNC && inst_type == ALU && alu_inst == VWXUNARY0) $cast(src2_func_vwxunary0,src2_idx);
   if(src1_type == FUNC && inst_type == ALU && alu_inst == VMUNARY0) $cast(src1_func_vmunary0,src1_idx);
-  if(src2_type == FUNC && inst_type inside {LD,ST} && lsu_mop == LSU_E) $cast(lsu_umop,src2_idx);
+  if(src2_type == FUNC && inst_type inside {LD,ST} && lsu_mop == LSU_US) $cast(lsu_umop,src2_idx);
   
 
 
@@ -881,7 +897,7 @@ function void rvs_transaction::legal_inst_gen();
   case(inst_type)
     LD: begin
       case(lsu_mop) 
-        LSU_E   : begin
+        LSU_US   : begin
           case(lsu_umop)
             MASK: begin
               dest_eew  = EEW8;
@@ -912,7 +928,7 @@ function void rvs_transaction::legal_inst_gen();
             end
           endcase
         end
-        LSU_SE  : begin
+        LSU_CS  : begin
           dest_eew  = lsu_eew;
           dest_emul = dest_eew * emul / eew;
           src2_eew  = EEW32;
@@ -921,8 +937,8 @@ function void rvs_transaction::legal_inst_gen();
           src1_emul = EMUL1;
           seg_num = lsu_nf + 1;
         end
-        LSU_UXEI, 
-        LSU_OXEI: begin
+        LSU_UI, 
+        LSU_OI: begin
           dest_eew  = eew;
           dest_emul = emul;
           src2_eew  = lsu_eew;
@@ -935,7 +951,7 @@ function void rvs_transaction::legal_inst_gen();
     end
     ST: begin
       case(lsu_mop) 
-        LSU_E   : begin
+        LSU_US   : begin
           case(lsu_umop)
             MASK: begin
               src3_eew  = EEW8;
@@ -966,7 +982,7 @@ function void rvs_transaction::legal_inst_gen();
             end
           endcase
         end
-        LSU_SE  : begin
+        LSU_CS  : begin
           src3_eew  = lsu_eew;
           src3_emul = src3_eew * emul / eew;
           src2_eew  = EEW32;
@@ -975,8 +991,8 @@ function void rvs_transaction::legal_inst_gen();
           src1_emul = EMUL1;
           seg_num = lsu_nf + 1;
         end
-        LSU_UXEI, 
-        LSU_OXEI: begin
+        LSU_UI, 
+        LSU_OI: begin
           src3_eew  = eew;
           src3_emul = emul;
           src2_eew  = lsu_eew;
@@ -1177,7 +1193,7 @@ function void rvs_transaction::legal_inst_gen();
   end
   // Special cases
   // For indexed segment load, vd can't overlap vs2
-  if(inst_type inside {LD} && lsu_mop inside {LSU_UXEI, LSU_OXEI} && 
+  if(inst_type inside {LD} && lsu_mop inside {LSU_UI, LSU_OI} && 
      dest_type == VRF && src2_type == VRF && 
      ((src2_idx >= dest_idx) && (src2_idx < dest_idx+(seg_num)*int'($ceil(dest_emul))) || 
       (src2_idx+int'($ceil(src2_emul)-1) >= dest_idx) && (src2_idx+int'($ceil(src2_emul)-1) < dest_idx+(seg_num)*int'($ceil(dest_emul)))) ) begin
@@ -1251,7 +1267,7 @@ function void rvs_transaction::asm_string_gen();
     LD, ST: begin
       inst = this.lsu_inst.name();
       case(lsu_mop)
-        LSU_E   : begin
+        LSU_US   : begin
           case(lsu_umop)
             MASK: begin
               inst = this.lsu_inst.name();
@@ -1273,15 +1289,15 @@ function void rvs_transaction::asm_string_gen();
             end
           endcase
         end
-        LSU_SE  : begin
+        LSU_CS  : begin
           if(this.lsu_nf == NF1) begin
             inst = $sformatf("%s%0d", inst, lsu_eew);
           end else begin
             inst = $sformatf("%s%0de%0d", inst, lsu_nf+1, lsu_eew);
           end
         end
-        LSU_UXEI, 
-        LSU_OXEI: begin
+        LSU_UI, 
+        LSU_OI: begin
           if(this.lsu_nf == NF1) begin
             inst = $sformatf("%s%0d", inst, lsu_eew);
           end else begin
@@ -1470,7 +1486,7 @@ function void rvs_transaction::asm_string_gen();
   // Comments
   comm = $sformatf("# vlmul=%0s, vsew=%0s, vstart=%0d, vl=%0d", vlmul.name(), vsew.name(), vstart, vl);
   if(inst_type inside {LD, ST} && src1_type == XRF) comm = $sformatf("%s, base=0x%8x", comm, rs1_data);
-  if(inst_type inside {LD, ST} && lsu_mop == LSU_SE && src2_type == XRF) comm = $sformatf("%s, const_stride=%0d", comm, $signed(rs2_data));
+  if(inst_type inside {LD, ST} && lsu_mop == LSU_CS && src2_type == XRF) comm = $sformatf("%s, const_stride=%0d", comm, $signed(rs2_data));
 
   // asm string
   if(inst_type == ST) dest = src3;

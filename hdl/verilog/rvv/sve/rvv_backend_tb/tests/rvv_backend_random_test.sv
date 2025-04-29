@@ -216,234 +216,6 @@ class alu_random_waw_test extends rvv_backend_test;
 endclass: alu_random_waw_test
 
 //-----------------------------------------------------------
-// DUT-ALU random test
-//-----------------------------------------------------------
-/*
-class alu_alu_random_test extends rvv_backend_test;
-
-  alu_random_seq  rvs_seq;
-  rvs_last_sequence rvs_last_seq;
-
-  alu_inst_e inst_set[$] = '{
-    VADD       ,
-    VSUB       ,
-    VRSUB      ,
-    
-    VADC       ,
-    VSBC       ,
-
-    VAND       ,
-    VOR        ,
-    VXOR       ,
-
-    VSLL       ,
-    VSRL       ,
-    VSRA       ,
-    VNSRL      ,
-    VNSRA      ,
-
-    VMSEQ      ,
-    VMSNE      ,
-    VMSLTU     ,
-    VMSLT      ,
-    VMSLEU     ,
-    VMSLE      ,
-    VMSGTU     ,
-    VMSGT      ,
-
-    VMINU      ,
-    VMIN       ,
-    VMAXU      ,
-    VMAX       ,
-
-    VMERGE_VMVV,
-
-    VSADDU     ,
-    VSADD      ,
-    VSSUBU     ,
-    VSSUB      ,
-
-    VSMUL_VMVNR,
-
-    VSSRL      ,
-    VSSRA      ,
-
-    VNCLIPU    ,
-    VNCLIP     ,
-
-    VWREDSUMU  ,
-    VWREDSUM   ,
-
-    VSLIDEUP_RG,
-    VSLIDEDOWN ,
-    VRGATHER   ,
-
-    VWADDU     ,
-    VWADD      ,
-    VWADDU_W   ,
-    VWADD_W    ,
-    VWSUBU     ,
-    VWSUB      ,
-    VWSUBU_W   ,
-    VWSUB_W    ,
-
-    VXUNARY0   ,
-
-    VMUL       ,
-    VMULH      ,
-    VMULHU     ,
-    VMULHSU    ,
-
-    VDIVU      ,
-    VDIV       ,
-    VREMU      ,
-    VREM       ,
-
-    VWMUL      ,
-    VWMULU     ,
-    VWMULSU    ,
-
-    VMACC      ,
-    VNMSAC     ,
-    VMADD      ,
-    VNMSUB     ,
-
-    VWMACCU    ,
-    VWMACC     ,
-    VWMACCUS   ,
-    VWMACCSU   ,
-
-    VAADDU     ,
-    VAADD      ,
-    VASUBU     ,
-    VASUB      ,
-
-    VREDSUM    ,
-    VREDAND    ,
-    VREDOR     ,
-    VREDXOR    ,
-    VREDMINU   ,
-    VREDMIN    ,
-    VREDMAXU   ,
-    VREDMAX    ,
-
-    VMAND      ,
-    VMOR       ,
-    VMXOR      ,
-    VMORN      ,
-    VMNAND     ,
-    VMNOR      ,
-    VMANDN     ,
-    VMXNOR     ,
-
-    VMUNARY0   ,
-    VSLIDE1UP  ,
-    VSLIDE1DOWN,
-    VCOMPRESS  ,
-
-    VWXUNARY0  ,
-      
-  };
-
-  `uvm_component_utils(alu_alu_random_test)
-
-  function new(string name, uvm_component parent);
-    super.new(name, parent);
-  endfunction
-
-  function void build_phase(uvm_phase phase);
-    super.build_phase(phase);
-  endfunction
-
-  function void connect_phase(uvm_phase phase);
-    super.connect_phase(phase);
-    this.set_report_id_action_hier("MDL", UVM_LOG);
-  endfunction
-
-  task main_phase(uvm_phase phase);
-
-    rand_vrf();
-
-    rvs_seq = alu_random_seq::type_id::create("rvs_seq", this);
-    rvs_transaction::set_ill_rate(0);
-    rvs_seq.run_inst(env.rvs_agt.rvs_sqr, random_inst_num);
-
-    rvs_last_seq = rvs_last_sequence::type_id::create("rvs_last_seq", this);
-    rvs_last_seq.start(env.rvs_agt.rvs_sqr);
-  endtask
-
-  function void final_phase(uvm_phase phase);
-    super.final_phase(phase);
-  endfunction
-endclass: alu_alu_random_test
-*/
-
-//-----------------------------------------------------------
-// DUT-MULMAC random test
-//-----------------------------------------------------------
-/*
-class alu_mulmac_random_test extends rvv_backend_test;
-
-  alu_random_seq  rvs_seq;
-  rvs_last_sequence rvs_last_seq;
-
-  alu_inst_e inst_set[$] = '{
-    VSMUL_VMVNR,
-
-    VMUL       ,
-    VMULH      ,
-    VMULHU     ,
-    VMULHSU    ,
-
-    VWMUL      ,
-    VWMULU     ,
-    VWMULSU    ,
-
-    VMACC      ,
-    VNMSAC     ,
-    VMADD      ,
-    VNMSUB     ,
-
-    VWMACCU    ,
-    VWMACC     ,
-    VWMACCUS   ,
-    VWMACCSU   
-  };
-
-  `uvm_component_utils(alu_mulmac_random_test)
-
-  function new(string name, uvm_component parent);
-    super.new(name, parent);
-  endfunction
-
-  function void build_phase(uvm_phase phase);
-    super.build_phase(phase);
-  endfunction
-
-  function void connect_phase(uvm_phase phase);
-    super.connect_phase(phase);
-    this.set_report_id_action_hier("MDL", UVM_LOG);
-  endfunction
-
-  task main_phase(uvm_phase phase);
-
-    rand_vrf();
-
-    rvs_seq = alu_random_seq::type_id::create("rvs_seq", this);
-    rvs_transaction::set_ill_rate(0);
-    rvs_seq.run_inst(env.rvs_agt.rvs_sqr, random_inst_num);
-
-    rvs_last_seq = rvs_last_sequence::type_id::create("rvs_last_seq", this);
-    rvs_last_seq.start(env.rvs_agt.rvs_sqr);
-  endtask
-
-  function void final_phase(uvm_phase phase);
-    super.final_phase(phase);
-  endfunction
-endclass: alu_mulmac_random_test
-*/
-
-//-----------------------------------------------------------
 // DIV random test
 //-----------------------------------------------------------
 class div_random_test extends rvv_backend_test;
@@ -547,11 +319,11 @@ class lsu_random_test extends rvv_backend_test;
   rvs_last_sequence rvs_last_seq;
 
   lsu_inst_e inst_set[$] = '{
-    VLE, VSE,
+    VL, VS,
     VLM, VSM,
-    VLSE, VSSE, 
-    VLUXEI, VLOXEI, VSUXEI, VSOXEI,
-    VLEFF,
+    VLS, VSS, 
+    VLUX, VLOX, VSUX, VSOX,
+    VLFF,
     VLSEG, VSSEG, 
     VLSSEG, VSSSEG, 
     VLUXSEG, VLOXSEG, VSUXSEG, VSOXSEG,
@@ -695,4 +467,458 @@ class rvv_random_test_trap_en extends rvv_random_test;
     super.final_phase(phase);
   endfunction
 endclass: rvv_random_test_trap_en
+
+// -----------------------------------------------------------------------------
+// PU random test
+// -----------------------------------------------------------------------------
+class pu_alu_random_test extends rvv_backend_test;
+
+  rvv_alu_sequence_library rvs_seq_lib;
+  rvs_last_sequence rvs_last_seq;
+  `uvm_component_utils(pu_alu_random_test)
+
+  function new(string name, uvm_component parent);
+    super.new(name, parent);
+  endfunction
+
+  function void build_phase(uvm_phase phase);
+    super.build_phase(phase);
+  endfunction
+
+  function void connect_phase(uvm_phase phase);
+    super.connect_phase(phase);
+    this.set_report_id_action_hier("MDL", UVM_LOG);
+  endfunction
+
+  task main_phase(uvm_phase phase);
+    super.main_phase(phase);
+
+    rvs_seq_lib = rvv_alu_sequence_library::type_id::create("rvs_seq_lib");
+    rvs_seq_lib.selection_mode = UVM_SEQ_LIB_RAND;
+    rvs_seq_lib.sequence_count = random_inst_num;
+    rvs_seq_lib.init_sequence_library();
+    
+    `uvm_info(get_type_name(),"Start randomize mem & vrf.", UVM_LOW)
+    rand_mem(mem_base, mem_size);
+    rand_vrf();
+    `uvm_info(get_type_name(), "Randomize done.", UVM_LOW)
+
+    rvs_seq_lib.start(env.rvs_agt.rvs_sqr);
+    
+    rvs_last_seq = rvs_last_sequence::type_id::create("rvs_last_seq", this);
+    rvs_last_seq.start(env.rvs_agt.rvs_sqr);
+  endtask
+
+  function void final_phase(uvm_phase phase);
+    super.final_phase(phase);
+  endfunction
+endclass: pu_alu_random_test
+
+class pu_alu_random_test_trap_en extends pu_alu_random_test;
+
+  rvv_alu_sequence_library rvs_seq_lib;
+  lsu_base_seq      rvs_lsu_seq;
+  rvs_last_sequence rvs_last_seq;
+  `uvm_component_utils(pu_alu_random_test_trap_en)
+
+  function new(string name, uvm_component parent);
+    super.new(name, parent);
+  endfunction
+
+  function void build_phase(uvm_phase phase);
+    super.build_phase(phase);
+    uvm_config_db#(bit)::set(uvm_root::get(), "*", "trap_en", 1'b1);
+    uvm_config_db#(bit)::set(uvm_root::get(), "*", "always_trap", 1'b1);
+  endfunction
+
+  function void connect_phase(uvm_phase phase);
+    super.connect_phase(phase);
+    this.set_report_id_action_hier("MDL", UVM_LOG);
+  endfunction
+
+  task main_phase(uvm_phase phase);
+    super.main_phase(phase);
+
+    rvs_seq_lib = rvv_alu_sequence_library::type_id::create("rvs_seq_lib");
+    rvs_seq_lib.selection_mode = UVM_SEQ_LIB_RAND;
+    rvs_seq_lib.sequence_count = random_inst_num;
+    rvs_seq_lib.add_typewide_sequence(rvs_lsu_seq.get_type());
+    rvs_seq_lib.init_sequence_library();
+    
+    `uvm_info(get_type_name(),"Start randomize mem & vrf.", UVM_LOW)
+    rand_mem(mem_base, mem_size);
+    rand_vrf();
+    `uvm_info(get_type_name(), "Randomize done.", UVM_LOW)
+
+    rvs_seq_lib.start(env.rvs_agt.rvs_sqr);
+    
+    rvs_last_seq = rvs_last_sequence::type_id::create("rvs_last_seq", this);
+    rvs_last_seq.start(env.rvs_agt.rvs_sqr);
+  endtask
+
+  function void final_phase(uvm_phase phase);
+    super.final_phase(phase);
+  endfunction
+endclass: pu_alu_random_test_trap_en
+
+// ---------------------------------------------------------
+class pu_pmtrdt_random_test extends rvv_backend_test;
+
+  rvv_pmtrdt_sequence_library rvs_seq_lib;
+  rvs_last_sequence rvs_last_seq;
+  `uvm_component_utils(pu_pmtrdt_random_test)
+
+  function new(string name, uvm_component parent);
+    super.new(name, parent);
+  endfunction
+
+  function void build_phase(uvm_phase phase);
+    super.build_phase(phase);
+  endfunction
+
+  function void connect_phase(uvm_phase phase);
+    super.connect_phase(phase);
+    this.set_report_id_action_hier("MDL", UVM_LOG);
+  endfunction
+
+  task main_phase(uvm_phase phase);
+    super.main_phase(phase);
+
+    rvs_seq_lib = rvv_pmtrdt_sequence_library::type_id::create("rvs_seq_lib");
+    rvs_seq_lib.selection_mode = UVM_SEQ_LIB_RAND;
+    rvs_seq_lib.sequence_count = random_inst_num;
+    rvs_seq_lib.init_sequence_library();
+    
+    `uvm_info(get_type_name(),"Start randomize mem & vrf.", UVM_LOW)
+    rand_mem(mem_base, mem_size);
+    rand_vrf();
+    `uvm_info(get_type_name(), "Randomize done.", UVM_LOW)
+
+    rvs_seq_lib.start(env.rvs_agt.rvs_sqr);
+    
+    rvs_last_seq = rvs_last_sequence::type_id::create("rvs_last_seq", this);
+    rvs_last_seq.start(env.rvs_agt.rvs_sqr);
+  endtask
+
+  function void final_phase(uvm_phase phase);
+    super.final_phase(phase);
+  endfunction
+endclass: pu_pmtrdt_random_test
+
+class pu_pmtrdt_random_test_trap_en extends pu_pmtrdt_random_test;
+
+  rvv_pmtrdt_sequence_library rvs_seq_lib;
+  lsu_base_seq      rvs_lsu_seq;
+  rvs_last_sequence rvs_last_seq;
+  `uvm_component_utils(pu_pmtrdt_random_test_trap_en)
+
+  function new(string name, uvm_component parent);
+    super.new(name, parent);
+  endfunction
+
+  function void build_phase(uvm_phase phase);
+    super.build_phase(phase);
+    uvm_config_db#(bit)::set(uvm_root::get(), "*", "trap_en", 1'b1);
+    uvm_config_db#(bit)::set(uvm_root::get(), "*", "always_trap", 1'b1);
+  endfunction
+
+  function void connect_phase(uvm_phase phase);
+    super.connect_phase(phase);
+    this.set_report_id_action_hier("MDL", UVM_LOG);
+  endfunction
+
+  task main_phase(uvm_phase phase);
+    super.main_phase(phase);
+
+    rvs_seq_lib = rvv_pmtrdt_sequence_library::type_id::create("rvs_seq_lib");
+    rvs_seq_lib.selection_mode = UVM_SEQ_LIB_RAND;
+    rvs_seq_lib.sequence_count = random_inst_num;
+    rvs_seq_lib.add_typewide_sequence(rvs_lsu_seq.get_type());
+    rvs_seq_lib.init_sequence_library();
+    
+    `uvm_info(get_type_name(),"Start randomize mem & vrf.", UVM_LOW)
+    rand_mem(mem_base, mem_size);
+    rand_vrf();
+    `uvm_info(get_type_name(), "Randomize done.", UVM_LOW)
+
+    rvs_seq_lib.start(env.rvs_agt.rvs_sqr);
+    
+    rvs_last_seq = rvs_last_sequence::type_id::create("rvs_last_seq", this);
+    rvs_last_seq.start(env.rvs_agt.rvs_sqr);
+  endtask
+
+  function void final_phase(uvm_phase phase);
+    super.final_phase(phase);
+  endfunction
+endclass: pu_pmtrdt_random_test_trap_en
+
+// ---------------------------------------------------------
+class pu_div_random_test extends rvv_backend_test;
+
+  rvv_div_sequence_library rvs_seq_lib;
+  rvs_last_sequence rvs_last_seq;
+  `uvm_component_utils(pu_div_random_test)
+
+  function new(string name, uvm_component parent);
+    super.new(name, parent);
+  endfunction
+
+  function void build_phase(uvm_phase phase);
+    super.build_phase(phase);
+  endfunction
+
+  function void connect_phase(uvm_phase phase);
+    super.connect_phase(phase);
+    this.set_report_id_action_hier("MDL", UVM_LOG);
+  endfunction
+
+  task main_phase(uvm_phase phase);
+    super.main_phase(phase);
+
+    rvs_seq_lib = rvv_div_sequence_library::type_id::create("rvs_seq_lib");
+    rvs_seq_lib.selection_mode = UVM_SEQ_LIB_RAND;
+    rvs_seq_lib.sequence_count = random_inst_num;
+    rvs_seq_lib.init_sequence_library();
+    
+    `uvm_info(get_type_name(),"Start randomize mem & vrf.", UVM_LOW)
+    rand_mem(mem_base, mem_size);
+    rand_vrf();
+    `uvm_info(get_type_name(), "Randomize done.", UVM_LOW)
+
+    rvs_seq_lib.start(env.rvs_agt.rvs_sqr);
+    
+    rvs_last_seq = rvs_last_sequence::type_id::create("rvs_last_seq", this);
+    rvs_last_seq.start(env.rvs_agt.rvs_sqr);
+  endtask
+
+  function void final_phase(uvm_phase phase);
+    super.final_phase(phase);
+  endfunction
+endclass: pu_div_random_test
+
+class pu_div_random_test_trap_en extends pu_div_random_test;
+
+  rvv_div_sequence_library rvs_seq_lib;
+  lsu_base_seq      rvs_lsu_seq;
+  rvs_last_sequence rvs_last_seq;
+  `uvm_component_utils(pu_div_random_test_trap_en)
+
+  function new(string name, uvm_component parent);
+    super.new(name, parent);
+  endfunction
+
+  function void build_phase(uvm_phase phase);
+    super.build_phase(phase);
+    uvm_config_db#(bit)::set(uvm_root::get(), "*", "trap_en", 1'b1);
+    uvm_config_db#(bit)::set(uvm_root::get(), "*", "always_trap", 1'b1);
+  endfunction
+
+  function void connect_phase(uvm_phase phase);
+    super.connect_phase(phase);
+    this.set_report_id_action_hier("MDL", UVM_LOG);
+  endfunction
+
+  task main_phase(uvm_phase phase);
+    super.main_phase(phase);
+
+    rvs_seq_lib = rvv_div_sequence_library::type_id::create("rvs_seq_lib");
+    rvs_seq_lib.selection_mode = UVM_SEQ_LIB_RAND;
+    rvs_seq_lib.sequence_count = random_inst_num;
+    rvs_seq_lib.add_typewide_sequence(rvs_lsu_seq.get_type());
+    rvs_seq_lib.init_sequence_library();
+    
+    `uvm_info(get_type_name(),"Start randomize mem & vrf.", UVM_LOW)
+    rand_mem(mem_base, mem_size);
+    rand_vrf();
+    `uvm_info(get_type_name(), "Randomize done.", UVM_LOW)
+
+    rvs_seq_lib.start(env.rvs_agt.rvs_sqr);
+    
+    rvs_last_seq = rvs_last_sequence::type_id::create("rvs_last_seq", this);
+    rvs_last_seq.start(env.rvs_agt.rvs_sqr);
+  endtask
+
+  function void final_phase(uvm_phase phase);
+    super.final_phase(phase);
+  endfunction
+endclass: pu_div_random_test_trap_en
+
+// ---------------------------------------------------------
+class pu_mulmac_random_test extends rvv_backend_test;
+
+  rvv_mulmac_sequence_library rvs_seq_lib;
+  rvs_last_sequence rvs_last_seq;
+  `uvm_component_utils(pu_mulmac_random_test)
+
+  function new(string name, uvm_component parent);
+    super.new(name, parent);
+  endfunction
+
+  function void build_phase(uvm_phase phase);
+    super.build_phase(phase);
+  endfunction
+
+  function void connect_phase(uvm_phase phase);
+    super.connect_phase(phase);
+    this.set_report_id_action_hier("MDL", UVM_LOG);
+  endfunction
+
+  task main_phase(uvm_phase phase);
+    super.main_phase(phase);
+
+    rvs_seq_lib = rvv_mulmac_sequence_library::type_id::create("rvs_seq_lib");
+    rvs_seq_lib.selection_mode = UVM_SEQ_LIB_RAND;
+    rvs_seq_lib.sequence_count = random_inst_num;
+    rvs_seq_lib.init_sequence_library();
+    
+    `uvm_info(get_type_name(),"Start randomize mem & vrf.", UVM_LOW)
+    rand_mem(mem_base, mem_size);
+    rand_vrf();
+    `uvm_info(get_type_name(), "Randomize done.", UVM_LOW)
+
+    rvs_seq_lib.start(env.rvs_agt.rvs_sqr);
+    
+    rvs_last_seq = rvs_last_sequence::type_id::create("rvs_last_seq", this);
+    rvs_last_seq.start(env.rvs_agt.rvs_sqr);
+  endtask
+
+  function void final_phase(uvm_phase phase);
+    super.final_phase(phase);
+  endfunction
+endclass: pu_mulmac_random_test
+
+class pu_mulmac_random_test_trap_en extends pu_mulmac_random_test;
+
+  rvv_mulmac_sequence_library rvs_seq_lib;
+  lsu_base_seq      rvs_lsu_seq;
+  rvs_last_sequence rvs_last_seq;
+  `uvm_component_utils(pu_mulmac_random_test_trap_en)
+
+  function new(string name, uvm_component parent);
+    super.new(name, parent);
+  endfunction
+
+  function void build_phase(uvm_phase phase);
+    super.build_phase(phase);
+    uvm_config_db#(bit)::set(uvm_root::get(), "*", "trap_en", 1'b1);
+    uvm_config_db#(bit)::set(uvm_root::get(), "*", "always_trap", 1'b1);
+  endfunction
+
+  function void connect_phase(uvm_phase phase);
+    super.connect_phase(phase);
+    this.set_report_id_action_hier("MDL", UVM_LOG);
+  endfunction
+
+  task main_phase(uvm_phase phase);
+    super.main_phase(phase);
+
+    rvs_seq_lib = rvv_mulmac_sequence_library::type_id::create("rvs_seq_lib");
+    rvs_seq_lib.selection_mode = UVM_SEQ_LIB_RAND;
+    rvs_seq_lib.sequence_count = random_inst_num;
+    rvs_seq_lib.add_typewide_sequence(rvs_lsu_seq.get_type());
+    rvs_seq_lib.init_sequence_library();
+    
+    `uvm_info(get_type_name(),"Start randomize mem & vrf.", UVM_LOW)
+    rand_mem(mem_base, mem_size);
+    rand_vrf();
+    `uvm_info(get_type_name(), "Randomize done.", UVM_LOW)
+
+    rvs_seq_lib.start(env.rvs_agt.rvs_sqr);
+    
+    rvs_last_seq = rvs_last_sequence::type_id::create("rvs_last_seq", this);
+    rvs_last_seq.start(env.rvs_agt.rvs_sqr);
+  endtask
+
+  function void final_phase(uvm_phase phase);
+    super.final_phase(phase);
+  endfunction
+endclass: pu_mulmac_random_test_trap_en
+
+// ---------------------------------------------------------
+class pu_lsu_random_test extends rvv_backend_test;
+
+  rvv_lsu_sequence_library rvs_seq_lib;
+  rvs_last_sequence rvs_last_seq;
+  `uvm_component_utils(pu_lsu_random_test)
+
+  function new(string name, uvm_component parent);
+    super.new(name, parent);
+  endfunction
+
+  function void build_phase(uvm_phase phase);
+    super.build_phase(phase);
+  endfunction
+
+  function void connect_phase(uvm_phase phase);
+    super.connect_phase(phase);
+    this.set_report_id_action_hier("MDL", UVM_LOG);
+  endfunction
+
+  task main_phase(uvm_phase phase);
+    super.main_phase(phase);
+
+    rvs_seq_lib = rvv_lsu_sequence_library::type_id::create("rvs_seq_lib");
+    rvs_seq_lib.selection_mode = UVM_SEQ_LIB_RAND;
+    rvs_seq_lib.sequence_count = random_inst_num;
+    rvs_seq_lib.init_sequence_library();
+    
+    `uvm_info(get_type_name(),"Start randomize mem & vrf.", UVM_LOW)
+    rand_mem(mem_base, mem_size);
+    rand_vrf();
+    `uvm_info(get_type_name(), "Randomize done.", UVM_LOW)
+
+    rvs_seq_lib.start(env.rvs_agt.rvs_sqr);
+    
+    rvs_last_seq = rvs_last_sequence::type_id::create("rvs_last_seq", this);
+    rvs_last_seq.start(env.rvs_agt.rvs_sqr);
+  endtask
+
+  function void final_phase(uvm_phase phase);
+    super.final_phase(phase);
+  endfunction
+endclass: pu_lsu_random_test
+
+class pu_lsu_random_test_trap_en extends rvv_backend_test;
+
+  rvv_lsu_sequence_library rvs_seq_lib;
+  rvs_last_sequence rvs_last_seq;
+  `uvm_component_utils(pu_lsu_random_test_trap_en)
+
+  function new(string name, uvm_component parent);
+    super.new(name, parent);
+  endfunction
+
+  function void build_phase(uvm_phase phase);
+    super.build_phase(phase);
+    uvm_config_db#(bit)::set(uvm_root::get(), "*", "trap_en", 1'b1);
+  endfunction
+
+  function void connect_phase(uvm_phase phase);
+    super.connect_phase(phase);
+    this.set_report_id_action_hier("MDL", UVM_LOG);
+  endfunction
+
+  task main_phase(uvm_phase phase);
+    super.main_phase(phase);
+
+    rvs_seq_lib = rvv_lsu_sequence_library::type_id::create("rvs_seq_lib");
+    rvs_seq_lib.selection_mode = UVM_SEQ_LIB_RAND;
+    rvs_seq_lib.sequence_count = random_inst_num;
+    rvs_seq_lib.init_sequence_library();
+    
+    `uvm_info(get_type_name(),"Start randomize mem & vrf.", UVM_LOW)
+    rand_mem(mem_base, mem_size);
+    rand_vrf();
+    `uvm_info(get_type_name(), "Randomize done.", UVM_LOW)
+
+    rvs_seq_lib.start(env.rvs_agt.rvs_sqr);
+    
+    rvs_last_seq = rvs_last_sequence::type_id::create("rvs_last_seq", this);
+    rvs_last_seq.start(env.rvs_agt.rvs_sqr);
+  endtask
+
+  function void final_phase(uvm_phase phase);
+    super.final_phase(phase);
+  endfunction
+endclass: pu_lsu_random_test_trap_en
 `endif // RVV_BACKEND_RANDOM_TEST__SV

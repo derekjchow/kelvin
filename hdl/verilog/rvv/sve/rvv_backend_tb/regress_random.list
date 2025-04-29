@@ -19,3 +19,13 @@ rvv_random_test_trap_en
 div_random_test
 div_random_test_trap_en
 
+pu_alu_random_test
+pu_alu_random_test_trap_en
+pu_div_random_test
+pu_div_random_test_trap_en
+pu_pmtrdt_random_test
+pu_pmtrdt_random_test_trap_en
+pu_mulmac_random_test
+pu_mulmac_random_test_trap_en
+pu_lsu_random_test
+pu_lsu_random_test_trap_en

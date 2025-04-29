@@ -371,7 +371,7 @@ endclass: rvv_behavior_model
         // 1.0 illegal inst check
         // vstart
         if(inst_tr.vstart >= inst_tr.vl && !(inst_tr.inst_type == ALU && inst_tr.alu_inst inside {VSMUL_VMVNRR} && inst_tr.alu_type == OPIVI || 
-                                            inst_tr.inst_type inside {LD,ST} && inst_tr.lsu_mop == LSU_E && inst_tr.src2_type == FUNC && inst_tr.src2_idx == WHOLE_REG)) begin
+                                            inst_tr.inst_type inside {LD,ST} && inst_tr.lsu_mop == LSU_US && inst_tr.src2_type == FUNC && inst_tr.src2_idx == WHOLE_REG)) begin
           if(inst_tr.dest_type == XRF) begin
           end else begin
             `uvm_warning("MDL/INST_CHECKER", $sformatf("pc=0x%8x: ignored since vstart(%0d) >= vl(%0d).", pc, inst_tr.vstart, inst_tr.vl))
@@ -380,7 +380,7 @@ endclass: rvv_behavior_model
         end
         if(inst_tr.vstart >= vlmax && !(inst_tr.inst_type == ALU && inst_tr.alu_inst inside {VSMUL_VMVNRR} && inst_tr.alu_type == OPIVI || 
                                         inst_tr.inst_type == ALU && inst_tr.alu_inst inside {VMAND, VMOR, VMXOR, VMORN, VMNAND, VMNOR, VMANDN, VMXNOR} || 
-                                        inst_tr.inst_type inside {LD,ST} && inst_tr.lsu_mop == LSU_E && inst_tr.src2_type == FUNC && inst_tr.src2_idx == WHOLE_REG)) begin
+                                        inst_tr.inst_type inside {LD,ST} && inst_tr.lsu_mop == LSU_US && inst_tr.src2_type == FUNC && inst_tr.src2_idx == WHOLE_REG)) begin
           if(inst_tr.dest_type == XRF) begin
           end else begin
             `uvm_warning("MDL/INST_CHECKER", $sformatf("pc=0x%8x: ignored since vstart(%0d) >= vlmax(%0d).", pc, inst_tr.vstart, vlmax))
@@ -389,7 +389,7 @@ endclass: rvv_behavior_model
         end
         if(inst_tr.vl > vlmax && !(inst_tr.alu_inst inside {VSMUL_VMVNRR} && inst_tr.alu_type == OPIVI || 
                                    inst_tr.alu_inst inside {VMAND, VMOR, VMXOR, VMORN, VMNAND, VMNOR, VMANDN, VMXNOR} || 
-                                   inst_tr.inst_type inside {LD,ST} && inst_tr.lsu_mop == LSU_E && inst_tr.src2_type == FUNC && inst_tr.src2_idx == WHOLE_REG)) begin
+                                   inst_tr.inst_type inside {LD,ST} && inst_tr.lsu_mop == LSU_US && inst_tr.src2_type == FUNC && inst_tr.src2_idx == WHOLE_REG)) begin
           if(inst_tr.dest_type == XRF || inst_tr.vl == 0) begin
           end else begin
             `uvm_warning("MDL/INST_CHECKER", $sformatf("pc=0x%8x: ignored since vl(%0d) >= vlmax(%0d).", pc, inst_tr.vl, vlmax))
@@ -481,7 +481,7 @@ endclass: rvv_behavior_model
         case(inst_tr.inst_type)
           LD: begin
             // 1.1 unit-stride and constant-stride
-            if(inst_tr.lsu_mop == LSU_E) begin
+            if(inst_tr.lsu_mop == LSU_US) begin
               case(inst_tr.lsu_umop)
                 MASK: begin
                   dest_eew  = EEW8;
@@ -503,14 +503,14 @@ endclass: rvv_behavior_model
                 end
               endcase
             end
-            if(inst_tr.lsu_mop == LSU_SE) begin
+            if(inst_tr.lsu_mop == LSU_CS) begin
               dest_eew  = inst_tr.lsu_eew;
               dest_emul = inst_tr.lsu_eew * emul / eew;
               src1_eew  = EEW32; // rs1 as base address
               src1_emul = LMUL1;
             end
             // 1.2 vector indexed
-            if(inst_tr.lsu_mop == LSU_UXEI || inst_tr.lsu_mop == LSU_OXEI) begin
+            if(inst_tr.lsu_mop == LSU_UI || inst_tr.lsu_mop == LSU_OI) begin
               dest_eew  = eew;   
               dest_emul = emul;
               src1_eew  = EEW32;    // rs1 as base address
@@ -521,7 +521,7 @@ endclass: rvv_behavior_model
           end
           ST: begin
             // 1.1 unit-stride and constant-stride
-            if(inst_tr.lsu_mop == LSU_E) begin
+            if(inst_tr.lsu_mop == LSU_US) begin
               case(inst_tr.lsu_umop)
                 MASK: begin
                   src3_eew  = EEW8;
@@ -543,14 +543,14 @@ endclass: rvv_behavior_model
                 end
               endcase
             end
-            if(inst_tr.lsu_mop == LSU_SE) begin
+            if(inst_tr.lsu_mop == LSU_CS) begin
               src3_eew = inst_tr.lsu_eew;
               src3_emul = src3_eew * emul / eew;
               src1_eew = EEW32; // rs1 as base address
               src1_emul= LMUL1;
             end
             // 1.2 vector indexed
-            if(inst_tr.lsu_mop == LSU_UXEI || inst_tr.lsu_mop == LSU_OXEI) begin
+            if(inst_tr.lsu_mop == LSU_UI || inst_tr.lsu_mop == LSU_OI) begin
               src3_eew  = eew;   
               src3_emul = emul;
               src1_eew  = EEW32;    // rs1 as base address
@@ -1318,7 +1318,7 @@ endclass: rvv_behavior_model
         if(rt_tr.dest_type == VRF) begin
           int seg_num = 0;
           int dest_reg_num = 0;
-          if(inst_tr.lsu_mop == LSU_E && inst_tr.src2_type == FUNC && inst_tr.src2_idx == WHOLE_REG)
+          if(inst_tr.lsu_mop == LSU_US && inst_tr.src2_type == FUNC && inst_tr.src2_idx == WHOLE_REG)
             seg_num = 1;
           else
             seg_num = inst_tr.lsu_nf+1;
@@ -2480,7 +2480,7 @@ class lsu_processor;
         end
 
         if(rvm.trap_occured) begin
-          if(!(inst_tr.lsu_mop==LSU_E && inst_tr.lsu_umop===WHOLE_REG) && lsu_nf+1 > 1) 
+          if(!(inst_tr.lsu_mop==LSU_US && inst_tr.lsu_umop===WHOLE_REG) && lsu_nf+1 > 1) 
             rvm.vstart = inst_tr.vstart;
           else 
             rvm.vstart = rvm.trap_queue[0].vstart;
@@ -2520,7 +2520,7 @@ class lsu_processor;
     case(inst_tr.inst_type)
       LD: begin
         case(inst_tr.lsu_mop) 
-          LSU_E   : begin
+          LSU_US   : begin
             case(inst_tr.lsu_umop)
               MASK: begin
                 dest_eew  = EEW8;
@@ -2560,7 +2560,7 @@ class lsu_processor;
               end
             endcase
           end
-          LSU_SE  : begin
+          LSU_CS  : begin
             dest_eew  = inst_tr.lsu_eew;
             dest_emul = dest_eew * lmul / sew;
             src2_eew  = EEW32;
@@ -2572,8 +2572,8 @@ class lsu_processor;
             seg_idx_max  = lsu_nf + 1;
             evl = inst_tr.vl;
           end
-          LSU_UXEI, 
-          LSU_OXEI: begin
+          LSU_UI, 
+          LSU_OI: begin
             dest_eew  = sew;
             dest_emul = lmul;
             src2_eew  = inst_tr.lsu_eew;
@@ -2592,7 +2592,7 @@ class lsu_processor;
       end
       ST: begin
         case(inst_tr.lsu_mop) 
-          LSU_E   : begin
+          LSU_US   : begin
             case(inst_tr.lsu_umop)
               MASK: begin
                 src3_eew  = EEW8;
@@ -2632,7 +2632,7 @@ class lsu_processor;
               end
             endcase
           end
-          LSU_SE  : begin
+          LSU_CS  : begin
             src3_eew  = inst_tr.lsu_eew;
             src3_emul = src3_eew * lmul / sew;
             src2_eew  = EEW32;
@@ -2644,8 +2644,8 @@ class lsu_processor;
             seg_idx_max  = lsu_nf + 1;
             evl = inst_tr.vl;
           end
-          LSU_UXEI, 
-          LSU_OXEI: begin
+          LSU_UI, 
+          LSU_OI: begin
             src3_eew  = sew;
             src3_emul = lmul;
             src2_eew  = inst_tr.lsu_eew;
@@ -2673,14 +2673,14 @@ class lsu_processor;
   function void update_addr(rvs_transaction inst_tr, int seg_idx, int seg_size, int elm_idx, int elm_size, sew_max_t src2, sew_max_t src1);
     `uvm_info("MDL/LSU", $sformatf("pc=0x%8x, got src2=0x%8x(%0d), src1=0x%8x", inst_tr.pc, src2, $signed(src2), src1), UVM_HIGH)
     case(inst_tr.lsu_mop) 
-      LSU_E   : begin
+      LSU_US   : begin
         this.address = src1 + seg_size * elm_idx + elm_size * seg_idx;
       end
-      LSU_SE  : begin
+      LSU_CS  : begin
         this.address = src1 + src2 * elm_idx + elm_size * seg_idx; 
       end
-      LSU_UXEI, 
-      LSU_OXEI: begin
+      LSU_UI, 
+      LSU_OI: begin
         this.address = src1 + src2 + elm_size * seg_idx;
       end      
     endcase

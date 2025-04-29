@@ -2111,7 +2111,7 @@ class lsu_unit_stride_test extends rvv_backend_test;
   lsu_base_seq rvs_seq;
   rvs_last_sequence rvs_last_seq;
 
-  lsu_inst_e inst_set[$] = '{VLE, VSE};
+  lsu_inst_e inst_set[$] = '{VL, VS};
 
   `uvm_component_utils(lsu_unit_stride_test)
 
@@ -2249,7 +2249,7 @@ class lsu_const_stride_test extends rvv_backend_test;
   lsu_base_seq rvs_seq;
   rvs_last_sequence rvs_last_seq;
 
-  lsu_inst_e inst_set[$] = '{VLSE, VSSE};
+  lsu_inst_e inst_set[$] = '{VLS, VSS};
 
   `uvm_component_utils(lsu_const_stride_test)
 
@@ -2297,7 +2297,7 @@ class lsu_indexed_test extends rvv_backend_test;
   lsu_base_seq rvs_seq;
   rvs_last_sequence rvs_last_seq;
 
-  lsu_inst_e inst_set[$] = '{VLUXEI, VLOXEI, VSUXEI, VSOXEI};
+  lsu_inst_e inst_set[$] = '{VLUX, VLOX, VSUX, VSOX};
 
   `uvm_component_utils(lsu_indexed_test)
 
@@ -2486,7 +2486,7 @@ class lsu_fof_test extends rvv_backend_test;
   lsu_base_seq rvs_seq;
   rvs_last_sequence rvs_last_seq;
 
-  lsu_inst_e inst_set[$] = '{VLEFF, VLSEGFF};
+  lsu_inst_e inst_set[$] = '{VLFF, VLSEGFF};
 
   `uvm_component_utils(lsu_fof_test)
 

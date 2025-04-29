@@ -257,10 +257,10 @@ typedef enum logic [4:0] {
 } vmunary0_e;
 
 typedef enum logic [1:0] {
-  LSU_E     = 2'b00, // unit-stride
-  LSU_UXEI  = 2'b01, // indexed-unordered
-  LSU_SE    = 2'b10, // strided
-  LSU_OXEI  = 2'b11  // indexed-ordered
+  LSU_US = 2'b00, // unit-stride
+  LSU_UI = 2'b01, // indexed-unordered
+  LSU_CS = 2'b10, // strided
+  LSU_OI = 2'b11  // indexed-ordered
 } lsu_mop_e;
 
 typedef enum logic [4:0] {
@@ -293,17 +293,17 @@ typedef enum logic [2:0]{
 } lsu_width_e;
 
 typedef enum int {
-  VLE,
-  VSE,
+  VL,
+  VS,
   VLM,
   VSM,
-  VLSE,
-  VSSE,
-  VLUXEI,
-  VLOXEI,
-  VSUXEI,
-  VSOXEI,
-  VLEFF,
+  VLS,
+  VSS,
+  VLUX,
+  VLOX,
+  VSUX,
+  VSOX,
+  VLFF,
   VLSEG,
   VSSEG,
   VLSEGFF,
