@@ -491,8 +491,6 @@ class pu_alu_random_test extends rvv_backend_test;
   endfunction
 
   task main_phase(uvm_phase phase);
-    super.main_phase(phase);
-
     rvs_seq_lib = rvv_alu_sequence_library::type_id::create("rvs_seq_lib");
     rvs_seq_lib.selection_mode = UVM_SEQ_LIB_RAND;
     rvs_seq_lib.sequence_count = random_inst_num;
@@ -537,8 +535,6 @@ class pu_alu_random_test_trap_en extends pu_alu_random_test;
   endfunction
 
   task main_phase(uvm_phase phase);
-    super.main_phase(phase);
-
     rvs_seq_lib = rvv_alu_sequence_library::type_id::create("rvs_seq_lib");
     rvs_seq_lib.selection_mode = UVM_SEQ_LIB_RAND;
     rvs_seq_lib.sequence_count = random_inst_num;
@@ -582,8 +578,6 @@ class pu_pmtrdt_random_test extends rvv_backend_test;
   endfunction
 
   task main_phase(uvm_phase phase);
-    super.main_phase(phase);
-
     rvs_seq_lib = rvv_pmtrdt_sequence_library::type_id::create("rvs_seq_lib");
     rvs_seq_lib.selection_mode = UVM_SEQ_LIB_RAND;
     rvs_seq_lib.sequence_count = random_inst_num;
@@ -628,8 +622,6 @@ class pu_pmtrdt_random_test_trap_en extends pu_pmtrdt_random_test;
   endfunction
 
   task main_phase(uvm_phase phase);
-    super.main_phase(phase);
-
     rvs_seq_lib = rvv_pmtrdt_sequence_library::type_id::create("rvs_seq_lib");
     rvs_seq_lib.selection_mode = UVM_SEQ_LIB_RAND;
     rvs_seq_lib.sequence_count = random_inst_num;
@@ -673,8 +665,6 @@ class pu_div_random_test extends rvv_backend_test;
   endfunction
 
   task main_phase(uvm_phase phase);
-    super.main_phase(phase);
-
     rvs_seq_lib = rvv_div_sequence_library::type_id::create("rvs_seq_lib");
     rvs_seq_lib.selection_mode = UVM_SEQ_LIB_RAND;
     rvs_seq_lib.sequence_count = random_inst_num;
@@ -719,8 +709,6 @@ class pu_div_random_test_trap_en extends pu_div_random_test;
   endfunction
 
   task main_phase(uvm_phase phase);
-    super.main_phase(phase);
-
     rvs_seq_lib = rvv_div_sequence_library::type_id::create("rvs_seq_lib");
     rvs_seq_lib.selection_mode = UVM_SEQ_LIB_RAND;
     rvs_seq_lib.sequence_count = random_inst_num;
@@ -764,8 +752,6 @@ class pu_mulmac_random_test extends rvv_backend_test;
   endfunction
 
   task main_phase(uvm_phase phase);
-    super.main_phase(phase);
-
     rvs_seq_lib = rvv_mulmac_sequence_library::type_id::create("rvs_seq_lib");
     rvs_seq_lib.selection_mode = UVM_SEQ_LIB_RAND;
     rvs_seq_lib.sequence_count = random_inst_num;
@@ -810,8 +796,6 @@ class pu_mulmac_random_test_trap_en extends pu_mulmac_random_test;
   endfunction
 
   task main_phase(uvm_phase phase);
-    super.main_phase(phase);
-
     rvs_seq_lib = rvv_mulmac_sequence_library::type_id::create("rvs_seq_lib");
     rvs_seq_lib.selection_mode = UVM_SEQ_LIB_RAND;
     rvs_seq_lib.sequence_count = random_inst_num;
@@ -855,8 +839,6 @@ class pu_lsu_random_test extends rvv_backend_test;
   endfunction
 
   task main_phase(uvm_phase phase);
-    super.main_phase(phase);
-
     rvs_seq_lib = rvv_lsu_sequence_library::type_id::create("rvs_seq_lib");
     rvs_seq_lib.selection_mode = UVM_SEQ_LIB_RAND;
     rvs_seq_lib.sequence_count = random_inst_num;
@@ -899,8 +881,6 @@ class pu_lsu_random_test_trap_en extends rvv_backend_test;
   endfunction
 
   task main_phase(uvm_phase phase);
-    super.main_phase(phase);
-
     rvs_seq_lib = rvv_lsu_sequence_library::type_id::create("rvs_seq_lib");
     rvs_seq_lib.selection_mode = UVM_SEQ_LIB_RAND;
     rvs_seq_lib.sequence_count = random_inst_num;
