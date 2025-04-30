@@ -89,7 +89,7 @@ class Parameters(var m: Seq[MemoryRegion] = Seq(), val hartId: Int = 0) {
   val rvvVlen = 128
 
   // Dispatch unit
-  var useDispatchV2 = enableRvv
+  def useDispatchV2: Boolean = { enableRvv }
 
   // L0ICache Fetch unit.
   var enableFetchL0 = true
