@@ -91,19 +91,21 @@ class CoreMiniAxiInterface:
     self.slave_rfifo = Queue()
     self.slave_wfifo = Queue()
     self.slave_bfifo = Queue()
+
   async def init(self):
-    await cocotb.start(self.master_awagent())
-    await cocotb.start(self.master_wagent())
-    await cocotb.start(self.master_bagent())
-    await cocotb.start(self.master_aragent())
-    await cocotb.start(self.master_ragent())
-    await cocotb.start(self.slave_awagent())
-    await cocotb.start(self.slave_wagent())
-    await cocotb.start(self.slave_bagent())
-    await cocotb.start(self.slave_aragent())
-    await cocotb.start(self.slave_ragent())
-    await cocotb.start(self.memory_write_agent())
-    await cocotb.start(self.memory_read_agent())
+    cocotb.start_soon(self.master_awagent())
+    cocotb.start_soon(self.master_wagent())
+    cocotb.start_soon(self.master_bagent())
+    cocotb.start_soon(self.master_aragent())
+    cocotb.start_soon(self.master_ragent())
+    cocotb.start_soon(self.slave_awagent())
+    cocotb.start_soon(self.slave_wagent())
+    cocotb.start_soon(self.slave_bagent())
+    cocotb.start_soon(self.slave_aragent())
+    cocotb.start_soon(self.slave_ragent())
+    cocotb.start_soon(self.memory_write_agent())
+    cocotb.start_soon(self.memory_read_agent())
+
   async def slave_awagent(self, timeout=4096):
     self.dut.io_axi_slave_write_addr_valid.value = 0
     self.dut.io_axi_slave_write_addr_bits_prot.value   = 2
@@ -131,6 +133,7 @@ class CoreMiniAxiInterface:
         timeout_count += 1
         if timeout_count >= timeout:
           assert False, "timeout waiting for awready"
+
   async def slave_wagent(self, timeout=4096):
     self.dut.io_axi_slave_write_data_valid.value = 0
     while True:
@@ -151,6 +154,7 @@ class CoreMiniAxiInterface:
         timeout_count += 1
         if timeout_count >= timeout:
           assert False, "timeout waiting for wready"
+
   async def slave_bagent(self):
     self.dut.io_axi_slave_write_resp_ready.value = 1
     while True:
@@ -163,6 +167,7 @@ class CoreMiniAxiInterface:
           await self.slave_bfifo.put(bdata)
       except Exception as e:
         print('X seen in slave_bagent: ' + str(e))
+
   async def slave_aragent(self, timeout=4096):
     self.dut.io_axi_slave_read_addr_valid.value = 0
     self.dut.io_axi_slave_read_addr_bits_prot.value   = 2
@@ -190,6 +195,7 @@ class CoreMiniAxiInterface:
         timeout_count += 1
         if timeout_count >= timeout:
           assert False, "timeout waiting for arready"
+
   async def slave_ragent(self):
     self.dut.io_axi_slave_read_data_ready.value = 1
     while True:
@@ -209,6 +215,7 @@ class CoreMiniAxiInterface:
           await self.slave_rfifo.put(rdata)
       except Exception as e:
         print('X seen in slave_ragent: ' + str(e))
+
   async def memory_read_agent(self):
     while True:
       while True:
@@ -233,6 +240,7 @@ class CoreMiniAxiInterface:
           rdata["resp"] = AxiResp.OKAY
           rdata["last"] = 1 if (i == ardata["len"]) else 0
           await self.master_rfifo.put(rdata)
+
   async def master_aragent(self):
     self.dut.io_axi_master_read_addr_ready.value = 1
     while True:
@@ -248,6 +256,7 @@ class CoreMiniAxiInterface:
           await self.master_arfifo.put(ardata)
       except Exception as e:
         print('X seen in master_aragent: ' + str(e))
+
   async def master_ragent(self, timeout=4096):
     while True:
       while True:
@@ -268,6 +277,7 @@ class CoreMiniAxiInterface:
         timeout_count += 1
         if timeout_count >= timeout:
           assert False, "timeout waiting for rready"
+
   async def memory_write_agent(self):
     while True:
       while True:
@@ -297,6 +307,7 @@ class CoreMiniAxiInterface:
       bdata["id"] = awdata["id"]
       bdata["resp"] = AxiResp.OKAY if ret else AxiResp.SLVERR
       await self.master_bfifo.put(bdata)
+
   async def master_awagent(self):
     self.dut.io_axi_master_write_addr_ready.value = 1
     while True:
@@ -311,6 +322,7 @@ class CoreMiniAxiInterface:
           await self.master_awfifo.put(awdata)
       except Exception as e:
         print('X seen in master_awagent: ' + str(e))
+
   async def master_wagent(self):
     self.dut.io_axi_master_write_data_ready.value = 1
     while True:
@@ -324,6 +336,7 @@ class CoreMiniAxiInterface:
           await self.master_wfifo.put(wdata)
       except Exception as e:
         print('X seen in master_wagent: ' + str(e))
+
   async def master_bagent(self, timeout=4096):
     while True:
       while True:
@@ -342,6 +355,7 @@ class CoreMiniAxiInterface:
         timeout_count += 1
         if timeout_count >= timeout:
           assert False, "timeout waiting for bready"
+
   async def reset(self):
     self.dut.io_aresetn.setimmediatevalue(1)
     await Timer(1, unit="us")
@@ -349,9 +363,11 @@ class CoreMiniAxiInterface:
     await Timer(1, unit="us")
     self.dut.io_aresetn.setimmediatevalue(1)
     await Timer(1, unit="us")
+
   async def halt(self):
     kelvin_reset_csr_addr = 0x30000
     await self.write_word(kelvin_reset_csr_addr, 3)
+
   async def _write_addr(self, addr, size, burst_len=1, axi_id=0, burst=AxiBurst.INCR):
     awdata = dict()
     awdata["addr"] = addr
@@ -360,6 +376,7 @@ class CoreMiniAxiInterface:
     awdata["size"] = size
     awdata["burst"] = burst
     await self.slave_awfifo.put(awdata)
+
   async def _wait_write_response(self, delay_bready: int = 0):
     self.dut.io_axi_slave_write_resp_ready.value = 0
     if delay_bready:
@@ -376,6 +393,7 @@ class CoreMiniAxiInterface:
     if cyclesawaited == 0:
       await ClockCycles(self.dut.io_aclk, 1)
     self.dut.io_axi_slave_write_resp_ready.value = 0
+
   async def _write_data_beat(self, data, mask, last):
     """Writes one beat to the write data line."""
     assert len(data) % 16 == 0
@@ -385,6 +403,7 @@ class CoreMiniAxiInterface:
     wdata["strb"] = get_strb(mask)
     wdata["last"] = last
     await self.slave_wfifo.put(wdata)
+
   def _determine_transaction_size(self, addr: int, data_len: int) -> int:
     # Transactions cannot cross 4k boundary
     offset4096 = addr % 4096
@@ -392,6 +411,7 @@ class CoreMiniAxiInterface:
     # Max transaction size is 256 beats * 16 bytes, but cannot cross 4kB boundary
     max_transaction_size_bytes = min(4096, remainder4096)
     return min(data_len, max_transaction_size_bytes)
+
   async def _write_data(self, addr, data, masks, beats):
     beats_sent = 0
     while len(data) > 0:
@@ -413,6 +433,7 @@ class CoreMiniAxiInterface:
       addr = addr + bytes_to_write
       beats_sent = beats_sent + 1
     assert beats_sent == beats
+
   async def _write_transaction(self,
                                addr: int,
                                data: np.array,
@@ -436,6 +457,7 @@ class CoreMiniAxiInterface:
     await write_data_task
     bdata = await self.slave_bfifo.get()
     assert bdata["id"].value == axi_id
+
   async def write(self,
                   addr: int,
                   data: np.array,
@@ -455,9 +477,11 @@ class CoreMiniAxiInterface:
       addr += len(local_data)
       data = data[transaction_size:]
       masks = masks[transaction_size:]
+
   async def write_word(self, addr: int, data: int) -> None:
     axi_id = random.randint(0,63)
     await self.write(addr, np.array([data], dtype=np.uint32), axi_id)
+
   async def _read_addr(self,
                        addr: int,
                        size: int,
@@ -471,6 +495,7 @@ class CoreMiniAxiInterface:
     ardata["size"] = size
     ardata["burst"] = burst
     await self.slave_arfifo.put(ardata)
+
   async def _read_data(self, expected_resp=AxiResp.OKAY, axi_id=0):
     rdata = await self.slave_rfifo.get()
     data = np.frombuffer(
@@ -480,6 +505,7 @@ class CoreMiniAxiInterface:
     assert rdata["resp"] == expected_resp
     assert rdata["id"] == axi_id
     return last, np.flip(data)
+
   async def _read_transaction(self,
                               addr: int,
                               bytes_to_read: int,
@@ -508,6 +534,7 @@ class CoreMiniAxiInterface:
       if beat == (beats - 1):
         assert last
     return np.concatenate(data)
+
   async def read(self, addr, bytes_to_read, burst: AxiBurst=AxiBurst.INCR):
     """Reads data from Kelvin Memory."""
     axi_id = random.randint(0,63)
@@ -520,6 +547,7 @@ class CoreMiniAxiInterface:
     if len(data) == 0:
       return data
     return np.concatenate(data)
+
   async def read_word(self, addr, expected_resp=AxiResp.OKAY):
     axi_id = random.randint(0,63)
     data = []
@@ -529,6 +557,7 @@ class CoreMiniAxiInterface:
     assert (last == True)
     data.append(beat_data[offset:offset+4])
     return np.concatenate(data)
+
   async def load_elf(self, f):
     """Loads an ELF file into DUT memory, and returns the entry point address."""
     elf_file = ELFFile(f)
@@ -538,6 +567,7 @@ class CoreMiniAxiInterface:
       data = np.frombuffer(segment.data(), dtype=np.uint8)
       await self.write(header["p_paddr"], data)
     return entry_point
+
   def lookup_symbol(self, f, symbol_name):
     elf_file = ELFFile(f)
     symtab_section = next(elf_file.iter_sections(type='SHT_SYMTAB'))
@@ -545,6 +575,7 @@ class CoreMiniAxiInterface:
     if i1:
       return i1[0].entry['st_value']
     return None
+
   def write_memory(self, wdata):
     """Write `wdata` to memory."""
     addr = int(wdata["addr"])
@@ -559,6 +590,7 @@ class CoreMiniAxiInterface:
       if flat_strb[i] == 1:
         self.memory[line_start + i] = flat_data[i]
     return True
+
   def read_memory(self, raddr):
     addr = int(raddr["addr"])
     size = (2 ** raddr["size"])
@@ -570,6 +602,7 @@ class CoreMiniAxiInterface:
     for i in range(0,size):
       data_flat = data_flat + (data[i] << (i * 8))
     return data_flat
+
   async def execute_from(self, start_pc):
     # Program starting address
     kelvin_pc_csr_addr = 0x30004
@@ -579,18 +612,22 @@ class CoreMiniAxiInterface:
     await self.write_word(kelvin_reset_csr_addr, 1)
     # Release reset
     await self.write_word(kelvin_reset_csr_addr, 0)
+
   async def wait_for_wfi(self):
     while self.dut.io_wfi.value != 1:
       await ClockCycles(self.dut.io_aclk, 1)
+
   async def raise_irq(self, cycles=1):
     self.dut.io_irq.value = 1
     await ClockCycles(self.dut.io_aclk, cycles)
     self.dut.io_irq.value = 0
+
   async def wait_for_halted(self, timeout_cycles=1000):
     while self.dut.io_halted.value != 1 and timeout_cycles > 0:
       await ClockCycles(self.dut.io_aclk, 1)
       timeout_cycles = timeout_cycles - 1
     assert timeout_cycles > 0
+
   async def wait_for_halted_semihost(self, elf, timeout_cycles=1000000):
     tohost = self.lookup_symbol(elf, "tohost")
     assert tohost != None
@@ -605,6 +642,7 @@ class CoreMiniAxiInterface:
         if not (rv == initial_rv).all():
           assert np.sum(rv) == 1
           break
+
   async def watch(self, addr, timeout_cycles=1_000_000):
     while timeout_cycles > 0:
       if self.dut.core.io_dbus_valid.value == 1:
