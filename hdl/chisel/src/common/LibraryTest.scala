@@ -19,6 +19,7 @@ import chisel3.util._
 import chiseltest._
 import org.scalatest.freespec.AnyFreeSpec
 import chisel3.experimental.BundleLiterals._
+import scala.util.Random
 
 class ForceZeroTester extends Module {
   val io = IO(new Bundle {
@@ -38,6 +39,26 @@ class Zip32Tester extends Module {
   })
 
   io.out := Zip32(io.sz, io.a, io.b)
+}
+
+class RotateVectorLeftTester extends Module {
+  val io = IO(new Bundle {
+    val in = Input(Vec(16, Valid(UInt(32.W))))
+    val shift = Input(UInt(4.W))
+    val out = Output(Vec(16, Valid(UInt(32.W))))
+  })
+
+  io.out := RotateVectorLeft(io.in, io.shift)
+}
+
+class RotateVectorRightTester extends Module {
+  val io = IO(new Bundle {
+    val in = Input(Vec(16, Valid(UInt(32.W))))
+    val shift = Input(UInt(4.W))
+    val out = Output(Vec(16, Valid(UInt(32.W))))
+  })
+
+  io.out := RotateVectorRight(io.in, io.shift)
 }
 
 class LibrarySpec extends AnyFreeSpec with ChiselScalatestTester {
@@ -86,6 +107,54 @@ class LibrarySpec extends AnyFreeSpec with ChiselScalatestTester {
       dut.io.b.poke((43L << 16L) | (11L << 8L) | 5)
       assertResult((43L << 40L) | (37L << 32L) | (11L << 24L) | (7L << 16L) | (5L << 8L) | 3L) {
         dut.io.out.peekInt()
+      }
+    }
+  }
+
+  "RotateVectorLeft" in {
+    test(new RotateVectorLeftTester) { dut =>
+      val valids = Seq.fill(16)(Random.between(0, 2))
+      val data = Seq.fill(16)(Random.between(0, 2147483647))
+      for (i <- 0 until 16) {
+        dut.io.in(i).valid.poke(valids(i))
+        dut.io.in(i).bits.poke(data(i))
+      }
+
+      // Check that for all possible shifts `t`, input[o] = output[o + t]
+      for (t <- 0 until 16) {
+        dut.io.shift.poke(t)
+        for (o <- 0 until 16) {
+          var targetIndex = o + t
+          if (targetIndex >= 16) {
+            targetIndex = targetIndex - 16
+          }
+          assertResult(valids(o)) {dut.io.out(targetIndex).valid.peekInt()}
+          assertResult(data(o)) {dut.io.out(targetIndex).bits.peekInt()}
+        }
+      }
+    }
+  }
+
+  "RotateVectorRight" in {
+    test(new RotateVectorRightTester) { dut =>
+      val valids = Seq.fill(16)(Random.between(0, 2))
+      val data = Seq.fill(16)(Random.between(0, 2147483647))
+      for (i <- 0 until 16) {
+        dut.io.in(i).valid.poke(valids(i))
+        dut.io.in(i).bits.poke(data(i))
+      }
+
+      // Check that for all possible shifts `t`, input[o] = output[o - t]
+      for (t <- 0 until 16) {
+        dut.io.shift.poke(t)
+        for (o <- 0 until 16) {
+          var targetIndex = o - t
+          if (targetIndex < 0) {
+            targetIndex = targetIndex + 16
+          }
+          assertResult(valids(o)) {dut.io.out(targetIndex).valid.peekInt()}
+          assertResult(data(o)) {dut.io.out(targetIndex).bits.peekInt()}
+        }
       }
     }
   }

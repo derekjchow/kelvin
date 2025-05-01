@@ -138,3 +138,24 @@ object Contains {
     (idx >= start) && (idx < end)
   }
 }
+
+// Rotates elements in a vector.
+// Result[i] = data[(i + shift) % data.size]
+object RotateVectorLeft {
+  def apply[T <: Data](data: Vec[T], shift: UInt): Vec[T] = {
+    val elemSize = data(0).asUInt.getWidth
+    val rotated = data.asUInt.rotateLeft(shift * elemSize.U)
+    rotated.asTypeOf(chiselTypeOf(data))
+  }
+}
+
+// Rotates elements in a vector.
+// Result[i] = data[(i - shift) % data.size]
+object RotateVectorRight {
+  def apply[T <: Data](data: Vec[T], shift: UInt): Vec[T] = {
+    val elemSize = data(0).asUInt.getWidth
+    val rotated = data.asUInt.rotateRight(shift * elemSize.U)
+    rotated.asTypeOf(chiselTypeOf(data))
+  }
+}
+
