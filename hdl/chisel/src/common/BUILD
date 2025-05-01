@@ -90,6 +90,17 @@ chisel_library(
     ],
 )
 
+chisel_library(
+    name = "circular_buffer_multi",
+    srcs = [
+        "CircularBufferMulti.scala",
+    ],
+    visibility = ["//visibility:public"],
+    deps = [
+        ":library",
+    ],
+)
+
 chisel_test(
     name = "common_test",
     srcs = [
@@ -118,6 +129,16 @@ chisel_test(
     ],
     deps = [
         ":instruction_buffer",
+    ],
+)
+
+chisel_test(
+    name = "circular_buffer_multi_test",
+    srcs = [
+        "CircularBufferMultiTest.scala",
+    ],
+    deps = [
+        ":circular_buffer_multi",
     ],
 )
 
