@@ -208,7 +208,10 @@ class DecodedInstruction(p: Parameters) extends Bundle {
     mret
   }
 
+  def floatWritesRd(): Bool = { float.map(f => f.valid && f.bits.scalar_rd).getOrElse(false.B) }
   def floatReadsRs1(): Bool = { float.map(f => f.valid && f.bits.scalar_rs1).getOrElse(false.B) }
+  def floatReadsRs2(): Bool = { float.map(f => f.valid && f.bits.uses_rs2).getOrElse(false.B) }
+  def floatReadsRs3(): Bool = { float.map(f => f.valid && f.bits.uses_rs3).getOrElse(false.B) }
   def readsRs1(): Bool = {
     // TODO(derekjchow): Refactor and add rvv
     isCondBr() || isAluReg() || isAluImm() || isAlu1Bit() || isAlu2Bit() ||
@@ -336,9 +339,9 @@ class DispatchV2(p: Parameters) extends Dispatch(p) {
       branched(i) && !(decodedInsts(i).isCondBr() || decodedInsts(i).isAlu()))
 
   // ---------------------------------------------------------------------------
-  // Scoreboard
+  // Scalar Scoreboard
   val rdAddr = io.inst.map(_.bits.inst(11,7))
-  val writesRd = decodedInsts.map(d => !d.isScalarStore() && !d.isCondBr())
+  val writesRd = decodedInsts.map(d => (!d.isScalarStore() && !d.isCondBr()) || (d.isFloat() && d.floatWritesRd()))
   val rdScoreboard = (0 until p.instructionLanes).map(i =>
       Mux(writesRd(i), UIntToOH(rdAddr(i), 32), 0.U(32.W)))
   val scoreboardScan = rdScoreboard.scan(0.U(32.W))(_ | _)
@@ -364,6 +367,23 @@ class DispatchV2(p: Parameters) extends Dispatch(p) {
       (rdScoreboard(i) & regd(i)) =/= 0.U(32.W))
 
   // ---------------------------------------------------------------------------
+  // Floating-point Scoreboard
+  val rs3Addr = io.inst.map(_.bits.inst(31,27))
+  val writesFloatRd = decodedInsts.map(d => d.isFloat() && !d.floatWritesRd())
+  val floatReadScoreboard = if (p.enableFloat) { (0 until p.instructionLanes).map(i =>
+    MuxOR(!decodedInsts(i).floatReadsRs1(), UIntToOH(rs1Addr(i), 32)) |
+    MuxOR(!decodedInsts(i).floatReadsRs2(), UIntToOH(rs2Addr(i), 32)) |
+    MuxOR(!decodedInsts(i).floatReadsRs3(), UIntToOH(rs3Addr(i), 32))
+  ) } else { (0 until p.instructionLanes).map(_ => 0.U(32.W)) }
+  val floatRdScoreboard = if (p.enableFloat) { (0 until p.instructionLanes).map(i =>
+    MuxOR(writesFloatRd(i), UIntToOH(rdAddr(i), 32))
+  ) } else { (0 until p.instructionLanes).map(_ => 0.U(32.W)) }
+  val floatReadAfterWrite = (0 until p.instructionLanes).map(i =>
+      (floatReadScoreboard(i) & io.fscoreboard.getOrElse(0.U)) =/= 0.U(32.W))
+  val floatWriteAfterWrite = (0 until p.instructionLanes).map(i =>
+      (floatRdScoreboard(i) & io.fscoreboard.getOrElse(0.U)) =/= 0.U(32.W))
+
+  // ---------------------------------------------------------------------------
   // Fence interlock
   val fence = decodedInsts.map(x => x.isFency() && (io.mactive || io.lsuActive))
 
@@ -383,6 +403,8 @@ class DispatchV2(p: Parameters) extends Dispatch(p) {
       !jumped(i) &&          // Don't dispatch after a jump
       !readAfterWrite(i) &&  // Avoid RAW hazards
       !writeAfterWrite(i) && // Avoid WAW hazards
+      !floatReadAfterWrite(i) &&  // Avoid RAW hazards
+      !floatWriteAfterWrite(i) && // Avoid WAW hazards
       !branchInterlock(i) && // Only branch/alu can be dispatched after a branch
       !fence(i) &&           // Don't dispatch if fence interlocked
       !undefInterlock(i)     // Ensure undef is only dispatched from first slot
@@ -535,7 +557,7 @@ class DispatchV2(p: Parameters) extends Dispatch(p) {
       ))
       val csr_bits_index = io.inst(0).bits.inst(31,20)
       val (csr_address, csr_address_valid) = CsrAddress.safe(csr_bits_index)
-      io.csr.valid := tryDispatch && csr.valid && csr_address_valid
+      io.csr.valid := tryDispatch && csr.valid && csr_address_valid && (if (p.enableFloat) { io.float.get.ready } else { true.B })
       io.csr.bits.addr := rdAddr(i)
       io.csr.bits.index := csr_bits_index
       io.csr.bits.op := csr.bits
@@ -558,6 +580,13 @@ class DispatchV2(p: Parameters) extends Dispatch(p) {
     }
 
     // -------------------------------------------------------------------------
+    // Floating point
+    if (p.enableFloat && (i == 0)) {
+      io.float.get.valid := tryDispatch && d.float.get.valid
+      io.float.get.bits := d.float.get.bits
+    }
+
+    // -------------------------------------------------------------------------
     // WFI
     // wfi instruction is handled by the bru and lsu.
 
@@ -568,7 +597,8 @@ class DispatchV2(p: Parameters) extends Dispatch(p) {
     // Set next lastReady if dispatched.
     val dispatched = Seq(io.alu(i).fire, io.bru(i).fire, io.mlu(i).fire, io.dvu(i).fire, io.lsu(i).fire) ++
       Option.when(i == 0)(Seq(io.csr.valid, io.slog, fenceValid)).getOrElse(Seq()) ++
-      Option.when(p.enableRvv)(Seq(io.rvv.get(i).fire)).getOrElse(Seq())
+      Option.when(p.enableRvv)(Seq(io.rvv.get(i).fire)).getOrElse(Seq()) ++
+      Option.when(p.enableFloat && i == 0)(Seq(io.float.get.fire)).getOrElse(Seq())
     lastReady(i + 1) := dispatched.reduce(_||_)
   }
 
@@ -590,16 +620,24 @@ class DispatchV2(p: Parameters) extends Dispatch(p) {
     io.rs2Set(i).valid := io.inst(i).fire && d.rs2Set
     io.rs2Set(i).value := MuxCase(d.imm12, IndexedSeq((d.auipc || d.lui) -> d.imm20))
 
-    // Set registers to write
+    // Set scalar registers to write
     val rdMark_valid =
         io.alu(i).fire || io.mlu(i).fire || io.dvu(i).fire ||
         io.lsu(i).fire && d.isScalarLoad() ||
         (if (i == 0) { io.csr.valid } else { false.B }) ||
         d.rvv.map(x => x.fire && x.bits.writesRd()).getOrElse(false.B) ||
+        (if (i == 0) { io.float.map(x => x.fire && x.bits.scalar_rd).getOrElse(false.B) } else { false.B }) ||
         (io.bru(i).valid && (io.bru(i).bits.op.isOneOf(BruOp.JAL, BruOp.JALR)) && rdAddr(i) =/= 0.U)
 
     io.rdMark(i).valid := rdMark_valid
     io.rdMark(i).addr  := rdAddr(i)
+
+    // Set floating point registers to write
+    if (p.enableFloat && (i == 0)) {
+      val rdMark_flt_valid = io.float.get.fire && !d.float.get.bits.scalar_rd && (d.float.get.bits.opcode =/= FloatOpcode.STOREFP)
+      io.rdMark_flt.get.valid := rdMark_flt_valid
+      io.rdMark_flt.get.addr := rdAddr(i)
+    }
 
     // Register file bus address port.
     // Pointer chasing bypass if immediate is zero.

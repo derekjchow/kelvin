@@ -512,6 +512,7 @@ chisel_cc_library(
         "--lsuDataBits=128",
         "--enableVector=False",
         "--enableRvv=True",
+        "--enableFloat=True",
         "--moduleName=RvvCoreMini",
         "--useAxi",
     ],

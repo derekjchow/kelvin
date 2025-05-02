@@ -51,6 +51,8 @@ class FloatInstruction extends Bundle {
     val scalar_rd = Bool()
     val scalar_rs1 = Bool()
     val rd = UInt(5.W)
+    val uses_rs3 = Bool()
+    val uses_rs2 = Bool()
 }
 
 object FloatInstruction {
@@ -89,6 +91,16 @@ object FloatInstruction {
         "b11010".U -> true.B, // FCVT.S.W
     ))
 
+    val uses_rs3 = opcode.bits.isOneOf(FloatOpcode.MADD, FloatOpcode.MSUB, FloatOpcode.NMADD, FloatOpcode.NMSUB)
+    val uses_rs2 = opcode.bits.isOneOf(FloatOpcode.STOREFP) || ((opcode.bits === FloatOpcode.OPFP) && MuxLookup(funct5, true.B)(Seq(
+      "b11100".U -> false.B, // FMV.X.W
+      "b11100".U -> false.B, // FCLASS
+      "b11000".U -> false.B, // FCVT.W.S
+      "b11110".U -> false.B, // FMV.W.X
+      "b11010".U -> false.B, // FCVT.S.W
+      "b01011".U -> false.B, // FSQRT.W
+    )))
+
     MakeWireBundle[ValidIO[FloatInstruction]](
       Valid(new FloatInstruction),
       // Non-load/store must have fmt == 2
@@ -103,7 +115,9 @@ object FloatInstruction {
       _.bits.pc -> addr,
       _.bits.scalar_rd -> scalar_rd,
       _.bits.scalar_rs1 -> scalar_rs1,
-      _.bits.rd -> rd
+      _.bits.rd -> rd,
+      _.bits.uses_rs3 -> uses_rs3,
+      _.bits.uses_rs2 -> uses_rs2,
     )
   }
 }
