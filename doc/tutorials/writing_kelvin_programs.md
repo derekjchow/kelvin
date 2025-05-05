@@ -17,7 +17,7 @@ which is a skeleton program:
 
 ```c
 // TODO: Add two inputs buffers of 8 uint32_t's (input1_buffer, input2_buffer)
-// TODO: Add one input buffer of 8 uint32_t's (output_buffer)
+// TODO: Add one output buffer of 8 uint32_t's (output_buffer)
 
 int main(int argc, char** argv) {
   // TODO: Add code to element wise add/subtract from input1_buffer and
@@ -81,7 +81,7 @@ The core will halt when returning from `main`.
 
 ### Compiling the program
 
-A Makefile is included in `test/cocotb/tutorial`. Simply run `make` in that
+A Makefile is included in `tests/cocotb/tutorial`. Simply run `make` in that
 directory to generate the program `program.elf`.
 
 ## Creating the test bench
@@ -110,7 +110,7 @@ async def core_mini_axi_tutorial(dut):
     """Testbench to run your Kelvin program."""
     ...
     with open("../tests/cocotb/tutorial/program.elf", "rb") as f:
-      entry_point = await core_mini_axi.load_elf(f)
+        entry_point = await core_mini_axi.load_elf(f)
 ```
 
 Before we start the program, let's also write inputs into DTCM. We can
@@ -123,14 +123,15 @@ async def core_mini_axi_tutorial(dut):
     """Testbench to run your Kelvin program."""
     ...
     with open("../tests/cocotb/tutorial/program.elf", "rb") as f:
-      ...
-      inputs1_addr = core_mini_axi.lookup_symbol(f, "input1_buffer")
-      inputs2_addr = core_mini_axi.lookup_symbol(f, "input2_buffer")
+        ...
+        input1_addr = core_mini_axi.lookup_symbol(f, "input1_buffer")
+        input2_addr = core_mini_axi.lookup_symbol(f, "input2_buffer")
+        output_addr = core_mini_axi.lookup_symbol(f, "output_buffer")
 
     input1_data = np.arange(8, dtype=np.uint32)
     input2_data = 8994 * np.ones(8, dtype=np.uint32)
-    await core_mini_axi.write(inputs1_addr, input1_data)
-    await core_mini_axi.write(inputs2_addr, input2_data)
+    await core_mini_axi.write(input1_addr, input1_data)
+    await core_mini_axi.write(input2_addr, input2_data)
 ```
 
 Now that input data has been written, let's actually run the program! Use
@@ -165,7 +166,7 @@ You can run the test bench with:
 bazel run //tests/cocotb/tutorial:tutorial
 ```
 
-You should the following in the console output:
+You should see the following in the console output:
 
 ```bash
 I got [8994 8995 8996 8997 8998 8999 9000 9001]
