@@ -630,7 +630,7 @@ class DispatchV1(p: Parameters) extends Dispatch(p) {
     decode(i).io.branchTaken := io.branchTaken
     decode(i).io.halted := io.halted
     decode(i).io.jalrTarget := io.jalrTarget(i)
-    io.csrFault(i) := decode(i).io.csrFault.getOrElse(false.B) && !io.branchTaken
+    io.csrFault(i) := decode(i).io.csrFault.getOrElse(false.B) && !io.branchTaken && decode(i).io.inst.valid
     io.jalrFault(i) := decode(i).io.jalrFault && !io.branchTaken && decode(i).io.inst.valid
     io.jalFault(i) := decode(i).io.jalFault && !io.branchTaken && decode(i).io.inst.valid
     io.bxxFault(i) := decode(i).io.bxxFault & !io.branchTaken && decode(i).io.inst.valid
@@ -941,15 +941,15 @@ class Decode(p: Parameters, pipeline: Int) extends Module {
   io.csr.bits.op := csr.bits
 
   var csr_fault = false.B
+  val csrEn = (!d.isCsr()) || csr.valid && io.float.map(x => x.ready).getOrElse(true.B)
   if (pipeline == 0) {
     val (csr_address, csr_address_valid) = CsrAddress.safe(io.inst.bits.inst(31,20))
     csr_fault = csr.valid && !csr_address_valid
-    io.csrFault.get := csr_fault
+    io.csrFault.get := csrEn && csr_fault
     io.csr.valid := decodeEn && csr.valid && !csr_fault
   } else {
     io.csr.valid := decodeEn && csr.valid
   }
-  val csrEn = (!d.isCsr()) || csr.valid && io.float.map(x => x.ready).getOrElse(true.B)
 
   // LSU opcode.
   val lsu = MuxCase(MakeValid(false.B, LsuOp.LB), Seq(
