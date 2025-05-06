@@ -267,3 +267,9 @@ ANNOTATION: "vcs_gen_start:i=2:vcs_gen_end:RS support multiple sorted push"
 Condition 8 "3799309418" "(rs_ready[(2 - 1)] & rs_ready_mul2dp[2]) 1 -1" (2 "10")
 ANNOTATION: "vcs_gen_start:i=2:vcs_gen_end:RS support multiple sorted push"
 Condition 11 "940996709" "(rs_ready[(2 - 1)] & rs_ready_lsu2dp[2] & mapinfo_ready_lsu2dp[2]) 1 -1" (2 "101")
+CHECKSUM: "7611515 2441656976"
+INSTANCE: rvv_backend_top.DUT.u_dispatch.u_ctrl
+ANNOTATION: "vcs_gen_start:i=0:vcs_gen_end:LSU_RS can be full only if MAPINFO is also full"
+Condition 1 "664134316" "(rs_ready_lsu2dp[0] & mapinfo_ready_lsu2dp[0]) 1 -1" (1 "01")
+ANNOTATION: "vcs_gen_start:i=1:vcs_gen_end:LSU_RS can be full only if MAPINFO is also full"
+Condition 6 "3210047768" "(rs_ready[(1 - 1)] & rs_ready_lsu2dp[1] & mapinfo_ready_lsu2dp[1]) 1 -1" (2 "101")
