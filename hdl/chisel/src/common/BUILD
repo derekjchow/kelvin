@@ -49,6 +49,14 @@ chisel_library(
 )
 
 chisel_library(
+    name = "scatter_gather",
+    srcs = [
+        "ScatterGather.scala",
+    ],
+    visibility = ["//visibility:public"],
+)
+
+chisel_library(
     name = "fp",
     srcs = [
         "Fp.scala",
@@ -121,6 +129,17 @@ chisel_test(
     deps = [
         ":library",
     ],
+)
+
+chisel_test(
+    name = "scatter_gather_test",
+    srcs = [
+        "ScatterGatherTest.scala",
+    ],
+    deps = [
+        ":scatter_gather",
+    ],
+    size = "large",
 )
 
 chisel_library(
