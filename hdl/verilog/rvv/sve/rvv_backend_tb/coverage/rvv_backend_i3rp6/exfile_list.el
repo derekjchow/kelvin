@@ -3,3 +3,4 @@ exfile_dec_alu_div_lsu.el
 exfile_pmtrdt.el
 exfile_dispatch_multififo.el
 exfile_misc.el
+exfile_mulmac_retire.el
