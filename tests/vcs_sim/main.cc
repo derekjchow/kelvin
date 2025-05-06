@@ -192,6 +192,16 @@ int sc_main(int argc, char** argv) {
   constexpr int kRetSemihostError = -5;
 
   if (!hdl_elaboration_only()) {
+    bool instr_trace = false;
+    const char* kKeyInstrTrace = "--instr_trace";
+    for (int i = 0; i < argc; ++i) {
+      if (strncmp(kKeyInstrTrace, argv[i], strlen(kKeyInstrTrace)) == 0) {
+        instr_trace = true;
+        break;
+      }
+    }
+    top.instr_trace_ = instr_trace;
+
     const char* kKeyFilename = "--filename";
     std::optional<std::string> filename;
     for (int i = 0; i < argc; ++i) {
@@ -279,6 +289,6 @@ int sc_main(int argc, char** argv) {
     tg.addTransfers(bin_transfer.get(), 0, bin_transfer_done_cb);
   }
 
-  sc_start(1000000, SC_NS);
+  sc_start();
   return 0;
 }

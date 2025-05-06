@@ -26,6 +26,7 @@
 #include "absl/synchronization/mutex.h"
 #include "hdl/chisel/src/kelvin/VCoreMiniAxi_parameters.h"
 #include "tests/systemc/Xbar.h"
+#include "tests/systemc/instruction_trace.h"
 #include "tests/verilator_sim/sysc_tb.h"
 
 // Headers for our Verilator model.
@@ -212,16 +213,7 @@ struct CoreMiniAxi_tb : Sysc_tb {
   std::optional<uint32_t> tohost_addr_;
   std::optional<uint32_t> fromhost_addr_;
 
-  struct Instruction {
-    uint32_t pc;
-    uint32_t inst;
-    uint32_t reg;
-    uint32_t cycle;
-    uint32_t data;
-    bool completed;
-  };
   bool instr_trace_ = false;
-  std::vector<Instruction> committed_insts_;
-  std::deque<Instruction> retirement_buffer_;
+  InstructionTrace tracer_;
 };
 #endif  // TESTS_VERILATOR_SIM_KELVIN_CORE_MINI_AXI_TB_H_

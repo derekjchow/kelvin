@@ -637,11 +637,13 @@ class CoreMiniAxiInterface:
     else:
       initial_rv = await self.read_word(tohost)
       while True:
-        await ClockCycles(self.dut.io_aclk, timeout_cycles)
+        await ClockCycles(self.dut.io_aclk, 1)
         rv = await self.read_word(tohost)
         if not (rv == initial_rv).all():
           assert np.sum(rv) == 1
           break
+        timeout_cycles = timeout_cycles - 1
+        assert timeout_cycles > 0
 
   async def watch(self, addr, timeout_cycles=1_000_000):
     while timeout_cycles > 0:

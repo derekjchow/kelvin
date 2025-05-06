@@ -5,10 +5,14 @@
 #include <systemc.h>
 #include <systemc_user.h>
 
+#include <deque>
 #include <optional>
+#include <vector>
 
 #include "CoreMiniAxi.h"
 #include "VCoreMiniAxi_parameters.h"
+
+#include "tests/systemc/instruction_trace.h"
 
 struct SlogIO {
   sc_signal<sc_logic> valid;
@@ -27,12 +31,75 @@ struct DebugIO {
   sc_signal<sc_lv<32>> inst_1;
   sc_signal<sc_lv<32>> inst_2;
   sc_signal<sc_lv<32>> inst_3;
+  sc_signal<sc_logic> dbus_valid;
+  sc_signal<sc_lv<32>> dbus_bits_addr;
+  sc_signal<sc_lv<128>> dbus_bits_wdata;
+  sc_signal<sc_logic> dbus_bits_write;
+  sc_signal<sc_logic> dispatch_0_instFire;
+  sc_signal<sc_logic> dispatch_1_instFire;
+  sc_signal<sc_logic> dispatch_2_instFire;
+  sc_signal<sc_logic> dispatch_3_instFire;
+  sc_signal<sc_lv<32>> dispatch_0_instAddr;
+  sc_signal<sc_lv<32>> dispatch_1_instAddr;
+  sc_signal<sc_lv<32>> dispatch_2_instAddr;
+  sc_signal<sc_lv<32>> dispatch_3_instAddr;
+  sc_signal<sc_lv<32>> dispatch_0_instInst;
+  sc_signal<sc_lv<32>> dispatch_1_instInst;
+  sc_signal<sc_lv<32>> dispatch_2_instInst;
+  sc_signal<sc_lv<32>> dispatch_3_instInst;
+  // Regfile signals
+  sc_signal<sc_logic> regfile_writeAddr_0_valid;
+  sc_signal<sc_logic> regfile_writeAddr_1_valid;
+  sc_signal<sc_logic> regfile_writeAddr_2_valid;
+  sc_signal<sc_logic> regfile_writeAddr_3_valid;
+  sc_signal<sc_lv<5>> regfile_writeAddr_0_bits;
+  sc_signal<sc_lv<5>> regfile_writeAddr_1_bits;
+  sc_signal<sc_lv<5>> regfile_writeAddr_2_bits;
+  sc_signal<sc_lv<5>> regfile_writeAddr_3_bits;
+  sc_signal<sc_logic> regfile_writeData_0_valid;
+  sc_signal<sc_logic> regfile_writeData_1_valid;
+  sc_signal<sc_logic> regfile_writeData_2_valid;
+  sc_signal<sc_logic> regfile_writeData_3_valid;
+  sc_signal<sc_logic> regfile_writeData_4_valid;
+  sc_signal<sc_logic> regfile_writeData_5_valid;
+  sc_signal<sc_lv<5>> regfile_writeData_0_bits_addr;
+  sc_signal<sc_lv<5>> regfile_writeData_1_bits_addr;
+  sc_signal<sc_lv<5>> regfile_writeData_2_bits_addr;
+  sc_signal<sc_lv<5>> regfile_writeData_3_bits_addr;
+  sc_signal<sc_lv<5>> regfile_writeData_4_bits_addr;
+  sc_signal<sc_lv<5>> regfile_writeData_5_bits_addr;
+  sc_signal<sc_lv<32>> regfile_writeData_0_bits_data;
+  sc_signal<sc_lv<32>> regfile_writeData_1_bits_data;
+  sc_signal<sc_lv<32>> regfile_writeData_2_bits_data;
+  sc_signal<sc_lv<32>> regfile_writeData_3_bits_data;
+  sc_signal<sc_lv<32>> regfile_writeData_4_bits_data;
+  sc_signal<sc_lv<32>> regfile_writeData_5_bits_data;
+#if (KP_enableFloat == true)
+  sc_signal<sc_logic> float_writeAddr_valid;
+  sc_signal<sc_lv<5>> float_writeAddr_bits;
+  sc_signal<sc_logic> float_writeData_0_valid;
+  sc_signal<sc_logic> float_writeData_1_valid;
+  sc_signal<sc_lv<32>> float_writeData_0_bits_addr;
+  sc_signal<sc_lv<32>> float_writeData_1_bits_addr;
+  sc_signal<sc_lv<32>> float_writeData_0_bits_data;
+  sc_signal<sc_lv<32>> float_writeData_1_bits_data;
+#endif
 };
 
 SC_MODULE(sc_top) {
   SC_CTOR(sc_top);
 
   void negedge();
+  struct Instruction {
+    uint32_t pc;
+    uint32_t inst;
+    uint32_t data;
+    int reg;
+    bool completed;
+  };
+  std::vector<Instruction> committed_insts_;
+  std::deque<Instruction> retirement_buffer_;
+  void TraceInstructions();
 
   void start_of_simulation() override;
 
@@ -226,6 +293,8 @@ SC_MODULE(sc_top) {
 
   std::optional<uint32_t> tohost_addr_;
   std::optional<uint32_t> fromhost_addr_;
+  bool instr_trace_;
+  InstructionTrace tracer_;
 };
 
 #endif  // TESTS_VCS_SIM_TOP_H_

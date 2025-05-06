@@ -82,6 +82,7 @@ TESTCASES = [
     "core_mini_axi_kelvin_isa_test",
     "core_mini_axi_rand_instr_test",
     "core_mini_axi_burst_types_test",
+    "core_mini_axi_float_csr_test",
 ]
 
 vcs_cocotb_test(
@@ -116,7 +117,10 @@ vcs_cocotb_test(
         "//kelvin_test_utils:core_mini_axi_sim_interface",
         requirement("tqdm"),
     ],
-    data = glob(["**/*.elf"]) + glob(["**/*.o"]),
+    data = glob(["**/*.elf"]) + glob(["**/*.o"]) + [
+        ":align_test.elf",
+        ":float_csr_interlock_test",
+    ],
 )
 
 kelvin_v2_binary(

@@ -18,3 +18,13 @@ cc_library(
     name = "Xbar",
     hdrs = ["Xbar.h"],
 )
+
+cc_library(
+    name = "instruction_trace",
+    srcs = [
+        "instruction_trace.cc",
+    ],
+    hdrs = [
+        "instruction_trace.h",
+    ],
+)

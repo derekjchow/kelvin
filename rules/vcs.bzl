@@ -119,7 +119,7 @@ def _vcs_systemc_binary_impl(ctx):
         "-q",
         "-incr_vlogan",
         "+define+SIMULATION",
-    ]
+    ] + ctx.attr.build_args
     vlogan_outputs = []
     verilog_files += ctx.files.verilog_srcs
     verilog_include_paths = []
@@ -211,6 +211,7 @@ _vcs_systemc_binary = rule(
             doc = "Verilog library dependencies",
             providers = [VerilogInfo],
         ),
+        "build_args": attr.string_list(allow_empty = True),
         "systemc_deps": attr.label_list(
             doc = "SystemC library dependencies",
             providers = [CcInfo],

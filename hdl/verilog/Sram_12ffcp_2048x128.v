@@ -73,6 +73,20 @@ module Sram_12ffcp_2048x128(
 
   assign rdata = mem[raddr];
 
+`ifndef SYNTHESIS
+  task randomMemoryAll;
+  for (int i = 0; i < 128; i++) begin
+    for (int j = 0; j < 2048; j++) begin
+      mem[i][j] = $random;
+    end
+  end
+  endtask
+
+  initial begin
+    randomMemoryAll;
+  end
+`endif
+
   always @(posedge clock) begin
     for (int i = 0; i < 16; i++) begin
       if (enable & write & wmask[i]) begin

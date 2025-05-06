@@ -24,6 +24,7 @@ vcs_systemc_binary(
         "@libsystemctlm_soc//:libsystemctlm_soc",
         "//tests/verilator_sim:elf",
         "//tests/systemc:Xbar",
+        "//tests/systemc:instruction_trace",
     ],
     systemc_srcs = [
         "top.cc",
@@ -36,5 +37,9 @@ vcs_systemc_binary(
         "//internal/syn:libs/tsmc12ffc/ts1n12ffcllsblvtd512x128m4swbsho_130b/VERILOG/ts1n12ffcllsblvtd512x128m4swbsho_130b.v",
         "//internal/syn:libs/tsmc12ffc/ts1n12ffcllmblvtd2048x128m4swbsho_130d/VERILOG/ts1n12ffcllmblvtd2048x128m4swbsho_130d.v",
         "//internal/syn:libs/tsmc12ffc/tcbn12ffcllbwp6t20p96cpdlvt.v",
+    ],
+    build_args = [
+        "+define+TSMC_INITIALIZE_MEM_USING_DEFAULT_TASKS",
+        "+define+TSMC_MEM_LOAD_RANDOM",
     ],
 )

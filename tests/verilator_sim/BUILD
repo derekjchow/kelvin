@@ -90,6 +90,7 @@ cc_library(
         ":sim_libs",
         "//hdl/chisel/src/kelvin:core_mini_axi_cc_library",
         "//tests/systemc:Xbar",
+        "//tests/systemc:instruction_trace",
         "@accellera_systemc//:systemc",
         "@com_google_absl//absl/log",
         "@com_google_absl//absl/log:check",

@@ -123,8 +123,8 @@ object GenerateCoreShimSource {
         |    .clk_i(clk_i),
         |    .rst_ni(rst_ni),
         |    .operands_i(operands_i),
-        |    .rnd_mode_i(rnd_mode_i),
-        |    .op_i(op_i),
+        |    .rnd_mode_i(fpnew_pkg::roundmode_e'(rnd_mode_i)),
+        |    .op_i(fpnew_pkg::operation_e'(op_i)),
         |    .op_mod_i(op_mod_i),
         |    .src_fmt_i(fpnew_pkg::FP32),
         |    .dst_fmt_i(fpnew_pkg::FP32),
@@ -334,7 +334,7 @@ class FloatCore(p: Parameters) extends Module {
     io.csr.in.fflags.bits := floatCoreWrapper.io.status_o
 
     val scalar_rd_pre_pipe = Wire(Decoupled(new RegfileWriteDataIO))
-    scalar_rd_pre_pipe.valid := (floatCoreWrapper.io.in_valid_i && floatCoreWrapper.io.in_ready_o && floatCoreWrapper.io.out_valid_o && floatCoreWrapper.io.out_ready_i && inst.bits.scalar_rd) || (fmv_x_w)
+    scalar_rd_pre_pipe.valid := (((floatCoreWrapper.io.in_valid_i && floatCoreWrapper.io.in_ready_o) || fpuActive) && floatCoreWrapper.io.out_valid_o && floatCoreWrapper.io.out_ready_i && inst.bits.scalar_rd) || (fmv_x_w)
     scalar_rd_pre_pipe.bits.addr := inst.bits.rd
     scalar_rd_pre_pipe.bits.data := Mux(fmv_x_w, io.read_ports(0).data.asWord, floatCoreWrapper.io.result_o)
 

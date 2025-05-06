@@ -39,8 +39,6 @@ namespace internal {
 using namespace internal;
 /* clang-format on */
 
-constexpr uint32_t kEcallInst = 0x00000073;
-
 #include "VCoreMiniAxi__Syms.h"
 
 CoreMiniAxi_tb::CoreMiniAxi_tb(sc_module_name n, int loops, bool random,
@@ -376,174 +374,101 @@ absl::Status CoreMiniAxi_tb::CheckStatusAsync() {
   return absl::OkStatus();
 }
 
-// TODO(atv): Move me into the class
-std::unordered_map<uint32_t, bool> fflagsSetPCs;
 void CoreMiniAxi_tb::TraceInstructions() {
-  // Dispatch cycle
-  bool instFires[4] = {
+  std::vector<bool> instFires = {
     debug_io_.dispatch_0_instFire.read(),
     debug_io_.dispatch_1_instFire.read(),
     debug_io_.dispatch_2_instFire.read(),
     debug_io_.dispatch_3_instFire.read()
   };
-  uint32_t instAddrs[4] = {
+  std::vector<uint32_t> instAddrs = {
     debug_io_.dispatch_0_instAddr.read().get_word(0),
     debug_io_.dispatch_1_instAddr.read().get_word(0),
     debug_io_.dispatch_2_instAddr.read().get_word(0),
     debug_io_.dispatch_3_instAddr.read().get_word(0)
   };
-  uint32_t instInsts[4] = {
+  std::vector<uint32_t> instInsts = {
     debug_io_.dispatch_0_instInst.read().get_word(0),
     debug_io_.dispatch_1_instInst.read().get_word(0),
     debug_io_.dispatch_2_instInst.read().get_word(0),
     debug_io_.dispatch_3_instInst.read().get_word(0)
   };
-
-  bool writeAddrValids[4] = {
+  std::vector<bool> scalarWriteAddrValids = {
     debug_io_.regfile_writeAddr_0_valid.read(),
     debug_io_.regfile_writeAddr_1_valid.read(),
     debug_io_.regfile_writeAddr_2_valid.read(),
     debug_io_.regfile_writeAddr_3_valid.read()
   };
-  uint32_t writeAddrAddrs[4] = {
+  std::vector<uint32_t> scalarWriteAddrAddrs = {
     debug_io_.regfile_writeAddr_0_bits.read().get_word(0),
     debug_io_.regfile_writeAddr_1_bits.read().get_word(0),
     debug_io_.regfile_writeAddr_2_bits.read().get_word(0),
     debug_io_.regfile_writeAddr_3_bits.read().get_word(0)
   };
+  std::vector<bool> floatWriteAddrValids = {
+    debug_io_.float_writeAddr_valid.read()
+  };
+  std::vector<uint32_t> floatWriteAddrAddrs = {
+    debug_io_.float_writeAddr_bits.read().get_word(0)
+  };
 
-  bool floatWriteAddrValid = debug_io_.float_writeAddr_valid.read();
-  uint32_t floatWriteAddr = debug_io_.float_writeAddr_bits.read().get_word(0);
-
-  uint32_t cycle = debug_io_.cycles.read().get_word(0);
-
-  // Push data about the instructions that were dispatched this cycle into
-  // the retirement buffer. Newly queued instructions are marked as incomplete.
-  for (int i = 0; i < 1; ++i) {
-    if (instFires[i] && floatWriteAddrValid) {
-      Instruction in;
-      in.pc = instAddrs[i];
-      in.inst = instInsts[i];
-      in.reg = 32 + floatWriteAddr;
-      in.cycle = cycle;
-      in.completed = false;
-      retirement_buffer_.push_back(in);
-    }
-  }
-  for (int i = 0; i < 4; ++i) {
-    if (instFires[i] && writeAddrValids[i] && writeAddrAddrs[i] != 0) {
-      Instruction in;
-      in.pc = instAddrs[i];
-      in.inst = instInsts[i];
-      in.reg = writeAddrAddrs[i];
-      in.cycle = cycle;
-      in.completed = false;
-      retirement_buffer_.push_back(in);
-    }
-    // Trace ecall, despite having no register write.
-    // RISCV-DV looks for an ecall as the end of a test case for co-sim.
-    if (instFires[i] && instInsts[i] == kEcallInst) {
-      Instruction in;
-      in.pc = instAddrs[i];
-      in.inst = instInsts[i];
-      in.reg = 64;
-      in.cycle = cycle;
-      in.data = 0;
-      in.completed = false;
-      retirement_buffer_.push_back(in);
-    }
-  }
-
-  // Execute Cycle
-  bool writeDataValids[6] = {
+  std::vector<bool> writeDataValids = {
     debug_io_.regfile_writeData_0_valid.read(),
     debug_io_.regfile_writeData_1_valid.read(),
     debug_io_.regfile_writeData_2_valid.read(),
     debug_io_.regfile_writeData_3_valid.read(),
     debug_io_.regfile_writeData_4_valid.read(),
-    debug_io_.regfile_writeData_5_valid.read()
+    debug_io_.regfile_writeData_5_valid.read(),
+    debug_io_.float_writeData_0_valid.read(),
+    debug_io_.float_writeData_1_valid.read()
   };
 
-  uint32_t writeDataAddrs[6] = {
+  std::vector<uint32_t> writeDataAddrs = {
     debug_io_.regfile_writeData_0_bits_addr.read().get_word(0),
     debug_io_.regfile_writeData_1_bits_addr.read().get_word(0),
     debug_io_.regfile_writeData_2_bits_addr.read().get_word(0),
     debug_io_.regfile_writeData_3_bits_addr.read().get_word(0),
     debug_io_.regfile_writeData_4_bits_addr.read().get_word(0),
-    debug_io_.regfile_writeData_5_bits_addr.read().get_word(0)
+    debug_io_.regfile_writeData_5_bits_addr.read().get_word(0),
+    debug_io_.float_writeData_0_bits_addr.read().get_word(0),
+    debug_io_.float_writeData_1_bits_addr.read().get_word(0)
   };
 
-  uint32_t writeDataData[6] = {
+  std::vector<uint32_t> writeDataDatas = {
     debug_io_.regfile_writeData_0_bits_data.read().get_word(0),
     debug_io_.regfile_writeData_1_bits_data.read().get_word(0),
     debug_io_.regfile_writeData_2_bits_data.read().get_word(0),
     debug_io_.regfile_writeData_3_bits_data.read().get_word(0),
     debug_io_.regfile_writeData_4_bits_data.read().get_word(0),
-    debug_io_.regfile_writeData_5_bits_data.read().get_word(0)
-  };
-
-  bool floatWriteDataValids[2] = {
-    debug_io_.float_writeData_0_valid.read(),
-    debug_io_.float_writeData_1_valid.read()
-  };
-  uint32_t floatWriteDataAddrs[2] = {
-    debug_io_.float_writeData_0_bits_addr.read().get_word(0),
-    debug_io_.float_writeData_1_bits_addr.read().get_word(0)
-  };
-  uint32_t floatWriteDataDatas[2] = {
+    debug_io_.regfile_writeData_5_bits_data.read().get_word(0),
     debug_io_.float_writeData_0_bits_data.read().get_word(0),
     debug_io_.float_writeData_1_bits_data.read().get_word(0)
   };
 
-  // Iterate over the write ports, and find the first incomplete instruction
-  // that matches the write. Mark that instruction as completed, and move
-  // to the next write port.
+  std::vector<int> executeRegBases = {
+    InstructionTrace::kScalarBaseReg,
+    InstructionTrace::kScalarBaseReg,
+    InstructionTrace::kScalarBaseReg,
+    InstructionTrace::kScalarBaseReg,
+    InstructionTrace::kScalarBaseReg,
+    InstructionTrace::kScalarBaseReg,
+    InstructionTrace::kFloatBaseReg,
+    InstructionTrace::kFloatBaseReg
+  };
 
-  // Integer write ports
-  for (int i = 0; i < 6; ++i) {
-    for (auto& in : retirement_buffer_) {
-      if (in.completed) continue;
-      if (writeDataValids[i] && writeDataAddrs[i] == in.reg && in.reg > 0 && in.reg < 32) {
-        in.data = writeDataData[i];
-        in.completed = true;
-        break;
-      }
-      if (in.inst == kEcallInst) {
-        in.completed = true;
-        break;
-      }
-    }
-  }
-
-  // Float write ports
-  for (int i = 0; i < 2; ++i) {
-    for (auto& in : retirement_buffer_) {
-      if (in.completed) continue;
-      // Scalar float
-      if (floatWriteDataValids[i] && floatWriteDataAddrs[i] == (in.reg - 32)) {
-        in.data = floatWriteDataDatas[i];
-        in.completed = true;
-        break;
-      }
-      if (in.inst == /* ecall */0x00000073) {
-        in.completed = true;
-        break;
-      }
-    }
-  }
-
-  // Iterate over the retirement buffer, moving completed instructions
-  // from the front into the committed_insts_ buffer.
-  // When we see an incomplete instruction, stop.
-  while (!retirement_buffer_.empty()) {
-    auto in = retirement_buffer_.front();
-    if (in.completed) {
-      committed_insts_.push_back(in);
-      retirement_buffer_.pop_front();
-    } else {
-      break;
-    }
-  }
+  tracer_.TraceInstruction(
+    instFires,
+    instAddrs,
+    instInsts,
+    scalarWriteAddrValids,
+    scalarWriteAddrAddrs,
+    floatWriteAddrValids,
+    floatWriteAddrAddrs,
+    writeDataValids,
+    writeDataAddrs,
+    writeDataDatas,
+    executeRegBases
+  );
 }
 
 void CoreMiniAxi_tb::posedge() {
@@ -567,14 +492,7 @@ void CoreMiniAxi_tb::posedge() {
     // If instruction tracing is enabled,
     // print the data about the instruction trace.
     if (instr_trace_) {
-      for (Instruction inst : committed_insts_) {
-        printf("0x%x,0x%x,0x%x,0x%x\n", inst.pc, inst.inst, inst.reg, inst.data);
-      }
-      if (retirement_buffer_.size() > 0) {
-        for (Instruction inst : retirement_buffer_) {
-          printf("0x%x,0x%x,0x%x,0x%x\n", inst.pc, inst.inst, inst.reg, inst.data);
-        }
-      }
+      tracer_.PrintTrace();
     }
     invoked_halted_cb = true;
     if (halted_cb_) {

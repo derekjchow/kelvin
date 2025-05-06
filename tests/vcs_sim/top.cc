@@ -25,6 +25,58 @@ sc_top::sc_top(sc_core::sc_module_name name)
   core.io_debug_inst_1(debug.inst_1);
   core.io_debug_inst_2(debug.inst_2);
   core.io_debug_inst_3(debug.inst_3);
+  core.io_debug_dbus_valid(debug.dbus_valid);
+  core.io_debug_dbus_bits_addr(debug.dbus_bits_addr);
+  core.io_debug_dbus_bits_wdata(debug.dbus_bits_wdata);
+  core.io_debug_dbus_bits_write(debug.dbus_bits_write);
+  core.io_debug_dispatch_0_instFire(debug.dispatch_0_instFire);
+  core.io_debug_dispatch_1_instFire(debug.dispatch_1_instFire);
+  core.io_debug_dispatch_2_instFire(debug.dispatch_2_instFire);
+  core.io_debug_dispatch_3_instFire(debug.dispatch_3_instFire);
+  core.io_debug_dispatch_0_instAddr(debug.dispatch_0_instAddr);
+  core.io_debug_dispatch_1_instAddr(debug.dispatch_1_instAddr);
+  core.io_debug_dispatch_2_instAddr(debug.dispatch_2_instAddr);
+  core.io_debug_dispatch_3_instAddr(debug.dispatch_3_instAddr);
+  core.io_debug_dispatch_0_instInst(debug.dispatch_0_instInst);
+  core.io_debug_dispatch_1_instInst(debug.dispatch_1_instInst);
+  core.io_debug_dispatch_2_instInst(debug.dispatch_2_instInst);
+  core.io_debug_dispatch_3_instInst(debug.dispatch_3_instInst);
+  core.io_debug_regfile_writeAddr_0_valid(debug.regfile_writeAddr_0_valid);
+  core.io_debug_regfile_writeAddr_1_valid(debug.regfile_writeAddr_1_valid);
+  core.io_debug_regfile_writeAddr_2_valid(debug.regfile_writeAddr_2_valid);
+  core.io_debug_regfile_writeAddr_3_valid(debug.regfile_writeAddr_3_valid);
+  core.io_debug_regfile_writeAddr_0_bits(debug.regfile_writeAddr_0_bits);
+  core.io_debug_regfile_writeAddr_1_bits(debug.regfile_writeAddr_1_bits);
+  core.io_debug_regfile_writeAddr_2_bits(debug.regfile_writeAddr_2_bits);
+  core.io_debug_regfile_writeAddr_3_bits(debug.regfile_writeAddr_3_bits);
+  core.io_debug_regfile_writeData_0_valid(debug.regfile_writeData_0_valid);
+  core.io_debug_regfile_writeData_1_valid(debug.regfile_writeData_1_valid);
+  core.io_debug_regfile_writeData_2_valid(debug.regfile_writeData_2_valid);
+  core.io_debug_regfile_writeData_3_valid(debug.regfile_writeData_3_valid);
+  core.io_debug_regfile_writeData_4_valid(debug.regfile_writeData_4_valid);
+  core.io_debug_regfile_writeData_5_valid(debug.regfile_writeData_5_valid);
+  core.io_debug_regfile_writeData_0_bits_addr(debug.regfile_writeData_0_bits_addr);
+  core.io_debug_regfile_writeData_1_bits_addr(debug.regfile_writeData_1_bits_addr);
+  core.io_debug_regfile_writeData_2_bits_addr(debug.regfile_writeData_2_bits_addr);
+  core.io_debug_regfile_writeData_3_bits_addr(debug.regfile_writeData_3_bits_addr);
+  core.io_debug_regfile_writeData_4_bits_addr(debug.regfile_writeData_4_bits_addr);
+  core.io_debug_regfile_writeData_5_bits_addr(debug.regfile_writeData_5_bits_addr);
+  core.io_debug_regfile_writeData_0_bits_data(debug.regfile_writeData_0_bits_data);
+  core.io_debug_regfile_writeData_1_bits_data(debug.regfile_writeData_1_bits_data);
+  core.io_debug_regfile_writeData_2_bits_data(debug.regfile_writeData_2_bits_data);
+  core.io_debug_regfile_writeData_3_bits_data(debug.regfile_writeData_3_bits_data);
+  core.io_debug_regfile_writeData_4_bits_data(debug.regfile_writeData_4_bits_data);
+  core.io_debug_regfile_writeData_5_bits_data(debug.regfile_writeData_5_bits_data);
+#if (KP_enableFloat == true)
+  core.io_debug_float_writeAddr_valid(debug.float_writeAddr_valid);
+  core.io_debug_float_writeAddr_bits(debug.float_writeAddr_bits);
+  core.io_debug_float_writeData_0_valid(debug.float_writeData_0_valid);
+  core.io_debug_float_writeData_1_valid(debug.float_writeData_1_valid);
+  core.io_debug_float_writeData_0_bits_addr(debug.float_writeData_0_bits_addr);
+  core.io_debug_float_writeData_1_bits_addr(debug.float_writeData_1_bits_addr);
+  core.io_debug_float_writeData_0_bits_data(debug.float_writeData_0_bits_data);
+  core.io_debug_float_writeData_1_bits_data(debug.float_writeData_1_bits_data);
+#endif
   // AR
   core.io_axi_master_read_addr_ready(master_arready_4);
   core.io_axi_master_read_addr_valid(master_arvalid_4);
@@ -120,7 +172,7 @@ sc_top::sc_top(sc_core::sc_module_name name)
 }
 
 void sc_top::start_of_simulation() {
-  resetn = 1;
+  resetn = 0;
   te = 0;
   irq = sc_dt::Log_0;
 }
@@ -132,17 +184,21 @@ void sc_top::negedge() {
 
   // Check for halt/fault, and if either are seen
   // report the state and stop the simulation.
+  bool faulted = false;
+  bool halt = false;
   if (halted.read().is_01() && halted.read().to_bool()) {
     if (fault.read().is_01() && fault.read().to_bool()) {
-      printf("Fault detected, halting.\n");
+      faulted = true;
     } else {
-      printf("Halted successfully.\n");
+      halt = true;
     }
-    sc_stop();
   }
 
   // Generate a reset pulse in the first few cycles.
   static int edge_count = 0;
+  if (edge_count == 1) {
+    resetn = 1;
+  }
   if (edge_count == 3) {
     resetn = 0;
   } else if (edge_count == 5) {
@@ -153,18 +209,42 @@ void sc_top::negedge() {
     return;
   }
 
+  bool tohost_halt = false;
   if (tohost_addr_.has_value()) {
-    sc_logic dbus_valid = tli_get_logic("top.core_mini_axi.core.io_dbus_valid");
+    sc_logic dbus_valid = debug.dbus_valid.read();
     if (dbus_valid.is_01() && dbus_valid.to_bool()) {
-      sc_lv<32> dbus_addr = tli_get_lv("top.core_mini_axi.core.io_dbus_addr");
+      sc_lv<32> dbus_addr = debug.dbus_bits_addr.read();
       if (dbus_addr.get_word(0) == tohost_addr_.value()) {
-        sc_lv<128> dbus_wdata = tli_get_lv("top.core_mini_axi.core.io_dbus_wdata");
+        sc_lv<128> dbus_wdata = debug.dbus_bits_wdata.read();
         if (dbus_wdata.get_word(0) & 1) {
-          printf("DUT requested halt.\n");
-          sc_stop();
+          tohost_halt = true;
         }
       }
     }
+  }
+
+  if (instr_trace_) {
+    TraceInstructions();
+  }
+
+  if (tohost_halt || halt || faulted) {
+    if (instr_trace_) {
+      tracer_.PrintTrace();
+    }
+  }
+
+  if (tohost_halt) {
+    printf("DUT requested halt.\n");
+    sc_stop();
+  }
+
+  if (halt) {
+    if (faulted) {
+      printf("Fault detected, halting.\n");
+    } else {
+      printf("Halted successfully (via mpause).\n");
+    }
+    sc_stop();
   }
 
   // The below sections move data between the SystemC world
@@ -399,4 +479,102 @@ void sc_top::negedge() {
   }
 
   edge_count++;
+}
+
+void sc_top::TraceInstructions() {
+  std::vector<bool> instFires = {
+    debug.dispatch_0_instFire.read().is_01() && debug.dispatch_0_instFire.read().to_bool(),
+    debug.dispatch_1_instFire.read().is_01() && debug.dispatch_1_instFire.read().to_bool(),
+    debug.dispatch_2_instFire.read().is_01() && debug.dispatch_2_instFire.read().to_bool(),
+    debug.dispatch_3_instFire.read().is_01() && debug.dispatch_3_instFire.read().to_bool()
+  };
+  std::vector<uint32_t> instAddrs = {
+    debug.dispatch_0_instAddr.read().is_01() ? debug.dispatch_0_instAddr.read().get_word(0) : 0,
+    debug.dispatch_1_instAddr.read().is_01() ? debug.dispatch_1_instAddr.read().get_word(0) : 0,
+    debug.dispatch_2_instAddr.read().is_01() ? debug.dispatch_2_instAddr.read().get_word(0) : 0,
+    debug.dispatch_3_instAddr.read().is_01() ? debug.dispatch_3_instAddr.read().get_word(0) : 0,
+  };
+  std::vector<uint32_t> instInsts = {
+    debug.dispatch_0_instInst.read().is_01() ? debug.dispatch_0_instInst.read().get_word(0) : 0,
+    debug.dispatch_1_instInst.read().is_01() ? debug.dispatch_1_instInst.read().get_word(0) : 0,
+    debug.dispatch_2_instInst.read().is_01() ? debug.dispatch_2_instInst.read().get_word(0) : 0,
+    debug.dispatch_3_instInst.read().is_01() ? debug.dispatch_3_instInst.read().get_word(0) : 0
+  };
+
+  std::vector<bool> scalarWriteAddrValids = {
+    debug.regfile_writeAddr_0_valid.read().is_01() && debug.regfile_writeAddr_0_valid.read().to_bool(),
+    debug.regfile_writeAddr_1_valid.read().is_01() && debug.regfile_writeAddr_1_valid.read().to_bool(),
+    debug.regfile_writeAddr_2_valid.read().is_01() && debug.regfile_writeAddr_2_valid.read().to_bool(),
+    debug.regfile_writeAddr_3_valid.read().is_01() && debug.regfile_writeAddr_3_valid.read().to_bool()
+  };
+  std::vector<uint32_t> scalarWriteAddrAddrs = {
+    debug.regfile_writeAddr_0_bits.read().is_01() ? debug.regfile_writeAddr_0_bits.read().get_word(0) : 0,
+    debug.regfile_writeAddr_1_bits.read().is_01() ? debug.regfile_writeAddr_1_bits.read().get_word(0) : 0,
+    debug.regfile_writeAddr_2_bits.read().is_01() ? debug.regfile_writeAddr_2_bits.read().get_word(0) : 0,
+    debug.regfile_writeAddr_3_bits.read().is_01() ? debug.regfile_writeAddr_3_bits.read().get_word(0) : 0
+  };
+  std::vector<bool> floatWriteAddrValids = {
+    debug.float_writeAddr_valid.read().is_01() && debug.float_writeAddr_valid.read().to_bool()
+  };
+  std::vector<uint32_t> floatWriteAddrAddrs = {
+    debug.float_writeAddr_bits.read().is_01() ? debug.float_writeAddr_bits.read().get_word(0) : 0
+  };
+
+  std::vector<bool> writeDataValids = {
+    debug.regfile_writeData_0_valid.read().is_01() && debug.regfile_writeData_0_valid.read().to_bool(),
+    debug.regfile_writeData_1_valid.read().is_01() && debug.regfile_writeData_1_valid.read().to_bool(),
+    debug.regfile_writeData_2_valid.read().is_01() && debug.regfile_writeData_2_valid.read().to_bool(),
+    debug.regfile_writeData_3_valid.read().is_01() && debug.regfile_writeData_3_valid.read().to_bool(),
+    debug.regfile_writeData_4_valid.read().is_01() && debug.regfile_writeData_4_valid.read().to_bool(),
+    debug.regfile_writeData_5_valid.read().is_01() && debug.regfile_writeData_5_valid.read().to_bool(),
+    debug.float_writeData_0_valid.read().is_01() && debug.float_writeData_0_valid.read().to_bool(),
+    debug.float_writeData_1_valid.read().is_01() && debug.float_writeData_1_valid.read().to_bool(),
+  };
+
+  std::vector<uint32_t> writeDataAddrs = {
+    debug.regfile_writeData_0_bits_addr.read().is_01() ? debug.regfile_writeData_0_bits_addr.read().get_word(0) : 0,
+    debug.regfile_writeData_1_bits_addr.read().is_01() ? debug.regfile_writeData_1_bits_addr.read().get_word(0) : 0,
+    debug.regfile_writeData_2_bits_addr.read().is_01() ? debug.regfile_writeData_2_bits_addr.read().get_word(0) : 0,
+    debug.regfile_writeData_3_bits_addr.read().is_01() ? debug.regfile_writeData_3_bits_addr.read().get_word(0) : 0,
+    debug.regfile_writeData_4_bits_addr.read().is_01() ? debug.regfile_writeData_4_bits_addr.read().get_word(0) : 0,
+    debug.regfile_writeData_5_bits_addr.read().is_01() ? debug.regfile_writeData_5_bits_addr.read().get_word(0) : 0,
+    debug.float_writeData_0_bits_addr.read().is_01() ? debug.float_writeData_0_bits_addr.read().get_word(0) : 0,
+    debug.float_writeData_1_bits_addr.read().is_01() ? debug.float_writeData_1_bits_addr.read().get_word(0) : 0
+  };
+
+  std::vector<uint32_t> writeDataDatas = {
+    debug.regfile_writeData_0_bits_data.read().is_01() ? debug.regfile_writeData_0_bits_data.read().get_word(0) : 0,
+    debug.regfile_writeData_1_bits_data.read().is_01() ? debug.regfile_writeData_1_bits_data.read().get_word(0) : 0,
+    debug.regfile_writeData_2_bits_data.read().is_01() ? debug.regfile_writeData_2_bits_data.read().get_word(0) : 0,
+    debug.regfile_writeData_3_bits_data.read().is_01() ? debug.regfile_writeData_3_bits_data.read().get_word(0) : 0,
+    debug.regfile_writeData_4_bits_data.read().is_01() ? debug.regfile_writeData_4_bits_data.read().get_word(0) : 0,
+    debug.regfile_writeData_5_bits_data.read().is_01() ? debug.regfile_writeData_5_bits_data.read().get_word(0) : 0,
+    debug.float_writeData_0_bits_data.read().is_01() ? debug.float_writeData_0_bits_data.read().get_word(0) : 0,
+    debug.float_writeData_1_bits_data.read().is_01() ? debug.float_writeData_1_bits_data.read().get_word(0) : 0
+  };
+
+  std::vector<int> executeRegBases = {
+    InstructionTrace::kScalarBaseReg,
+    InstructionTrace::kScalarBaseReg,
+    InstructionTrace::kScalarBaseReg,
+    InstructionTrace::kScalarBaseReg,
+    InstructionTrace::kScalarBaseReg,
+    InstructionTrace::kScalarBaseReg,
+    InstructionTrace::kFloatBaseReg,
+    InstructionTrace::kFloatBaseReg
+  };
+
+  tracer_.TraceInstruction(
+    instFires,
+    instAddrs,
+    instInsts,
+    scalarWriteAddrValids,
+    scalarWriteAddrAddrs,
+    floatWriteAddrValids,
+    floatWriteAddrAddrs,
+    writeDataValids,
+    writeDataAddrs,
+    writeDataDatas,
+    executeRegBases
+  );
 }
