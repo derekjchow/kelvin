@@ -561,7 +561,7 @@ class DispatchV2(p: Parameters) extends Dispatch(p) {
       io.csr.bits.addr := rdAddr(i)
       io.csr.bits.index := csr_bits_index
       io.csr.bits.op := csr.bits
-      io.csrFault(0) := csr.valid && !csr_address_valid
+      io.csrFault(0) := csr.valid && !csr_address_valid && tryDispatch
     } else {
       io.csrFault(i) := false.B
     }
