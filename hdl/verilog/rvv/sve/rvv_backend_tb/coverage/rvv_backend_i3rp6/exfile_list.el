@@ -4,4 +4,4 @@ exfile_pmtrdt.el
 exfile_dispatch_multififo.el
 exfile_misc.el
 exfile_mulmac_retire.el
-exfile_cq_alurs_lsurs_divrs_multififo.el
+exfile_cq_uq_alurs_lsurs_divrs_multififo.el
