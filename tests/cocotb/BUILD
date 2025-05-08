@@ -85,19 +85,29 @@ TESTCASES = [
     "core_mini_axi_float_csr_test",
 ]
 
-vcs_cocotb_test(
-    name = "vcs_core_mini_axi_sim_cocotb",
+template_rule(
+    vcs_cocotb_test,
+    {
+        "vcs_core_mini_axi_sim_cocotb": {
+            "hdl_toplevel": "CoreMiniAxi",
+            "verilog_sources": [
+                "//hdl/chisel/src/kelvin:core_mini_axi_cc_library_verilog"
+            ],
+        },
+        "vcs_rvv_core_mini_axi_sim_cocotb": {
+            "hdl_toplevel": "RvvCoreMiniAxi",
+            "verilog_sources": [
+                "//hdl/chisel/src/kelvin:rvv_core_mini_axi_cc_library_verilog"
+            ],
+        },
+    },
     size = "large",
     defines = {
         "USE_GENERIC" : "",
     },
     waves = True,
-    hdl_toplevel = "CoreMiniAxi",
     seed = "42",
     test_module = ["core_mini_axi_sim.py"],
-    verilog_sources = [
-        "//hdl/chisel/src/kelvin:core_mini_axi_cc_library_verilog"
-    ],
     testcases = TESTCASES,
     build_args = [
         "+define+SYNTHESIS=1",
