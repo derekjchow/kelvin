@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef TESTS_VERILATOR_SIM_UTIL_H_
-#define TESTS_VERILATOR_SIM_UTIL_H_
+#ifndef TESTS_VERILATOR_SIM_ELF_H_
+#define TESTS_VERILATOR_SIM_ELF_H_
 
 #include <cstdint>
 #include <functional>
@@ -25,4 +25,4 @@ typedef std::function<void*(void* /* dest */, const void* /* src */,
 uint32_t LoadElf(uint8_t* data, CopyFn copy_fn);
 bool LookupSymbol(const uint8_t* data, const std::string& symbol_name, uint32_t* symbol_addr);
 
-#endif  // TESTS_VERILATOR_SIM_UTIL_H_
+#endif  // TESTS_VERILATOR_SIM_ELF_H_

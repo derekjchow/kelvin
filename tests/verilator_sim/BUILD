@@ -12,6 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+load("//rules:utils.bzl", "template_rule")
+
 cc_library(
     name = "elf",
     srcs = [
@@ -76,42 +78,76 @@ cc_binary(
     ],
 )
 
-cc_library(
-    name = "core_mini_axi_tb",
-    srcs = [
+CORE_MINI_AXI_TB_CC_LIBRARY_COMMON_SRCS = [
         "kelvin/core_mini_axi_tb.cc",
-        "@kelvin_hw//hdl/chisel/src/kelvin:VCoreMiniAxi_parameters.h",
-    ],
+]
+CORE_MINI_AXI_TB_CC_LIBRARY_COMMON_DEPS = [
+    ":elf",
+    ":sim_libs",
+    ":util",
+    "//tests/systemc:Xbar",
+    "//tests/systemc:instruction_trace",
+    "@accellera_systemc//:systemc",
+    "@com_google_absl//absl/log",
+    "@com_google_absl//absl/log:check",
+    "@com_google_absl//absl/log:initialize",
+    "@com_google_absl//absl/status",
+    "@libsystemctlm_soc",
+]
+template_rule(
+    cc_library,
+    {
+        "core_mini_axi_tb": {
+            "srcs": [
+                "@kelvin_hw//hdl/chisel/src/kelvin:VCoreMiniAxi_parameters.h",
+            ] + CORE_MINI_AXI_TB_CC_LIBRARY_COMMON_SRCS,
+            "deps": [
+                "//hdl/chisel/src/kelvin:core_mini_axi_cc_library",
+            ] + CORE_MINI_AXI_TB_CC_LIBRARY_COMMON_DEPS,
+            "defines": [
+                "VERILATOR_MODEL=VCoreMiniAxi",
+            ],
+        },
+        "rvv_core_mini_axi_tb": {
+            "srcs": [
+                "@kelvin_hw//hdl/chisel/src/kelvin:VRvvCoreMiniAxi_parameters.h",
+            ] + CORE_MINI_AXI_TB_CC_LIBRARY_COMMON_SRCS,
+            "deps": [
+                "//hdl/chisel/src/kelvin:rvv_core_mini_axi_cc_library",
+            ] + CORE_MINI_AXI_TB_CC_LIBRARY_COMMON_DEPS,
+            "defines": [
+                "VERILATOR_MODEL=VRvvCoreMiniAxi",
+            ],
+        },
+    },
     hdrs = [
         "kelvin/core_mini_axi_tb.h",
     ],
-    deps = [
-        ":elf",
-        ":sim_libs",
-        "//hdl/chisel/src/kelvin:core_mini_axi_cc_library",
-        "//tests/systemc:Xbar",
-        "//tests/systemc:instruction_trace",
-        "@accellera_systemc//:systemc",
-        "@com_google_absl//absl/log",
-        "@com_google_absl//absl/log:check",
-        "@com_google_absl//absl/log:initialize",
-        "@com_google_absl//absl/status",
-        "@libsystemctlm_soc",
-    ],
 )
 
-cc_binary(
-    name = "core_mini_axi_sim",
+CORE_MINI_AXI_SIM_CC_BINARY_COMMON_DEPS = [
+    "@com_google_absl//absl/flags:flag",
+    "@com_google_absl//absl/flags:parse",
+    "@com_google_absl//absl/flags:usage",
+    "@com_google_absl//absl/log",
+    "@com_google_absl//absl/log:check",
+]
+template_rule(
+    cc_binary,
+    {
+        "core_mini_axi_sim": {
+            "deps": [
+                ":core_mini_axi_tb",
+            ] + CORE_MINI_AXI_SIM_CC_BINARY_COMMON_DEPS,
+        },
+        "rvv_core_mini_axi_sim": {
+            "deps": [
+                ":rvv_core_mini_axi_tb",
+            ] + CORE_MINI_AXI_SIM_CC_BINARY_COMMON_DEPS,
+        },
+    },
     srcs = [
         "kelvin/core_mini_axi_sim.cc",
-    ],
-    deps = [
-        ":core_mini_axi_tb",
-        "@com_google_absl//absl/flags:flag",
-        "@com_google_absl//absl/flags:parse",
-        "@com_google_absl//absl/flags:usage",
-        "@com_google_absl//absl/log",
-        "@com_google_absl//absl/log:check",
     ],
 )
 

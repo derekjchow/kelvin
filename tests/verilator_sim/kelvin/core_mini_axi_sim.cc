@@ -43,7 +43,7 @@ static bool run(const char* name, const std::string binary, const int cycles,
                 const bool trace, const bool debug_axi, const bool instr_trace) {
   absl::Mutex halted_mtx;
   absl::CondVar halted_cv;
-  CoreMiniAxi_tb tb("CoreMiniAxi_tb", cycles, /* random= */ false, debug_axi,
+  CoreMiniAxi_tb tb(CoreMiniAxi_tb::kCoreMiniAxiModelName, cycles, /* random= */ false, debug_axi,
                     instr_trace,
                     /*wfi_cb=*/std::nullopt,
                     /*halted_cb=*/[&halted_mtx, &halted_cv]() {

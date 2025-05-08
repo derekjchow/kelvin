@@ -24,13 +24,9 @@
 
 #include "absl/status/status.h"
 #include "absl/synchronization/mutex.h"
-#include "hdl/chisel/src/kelvin/VCoreMiniAxi_parameters.h"
 #include "tests/systemc/Xbar.h"
 #include "tests/systemc/instruction_trace.h"
 #include "tests/verilator_sim/sysc_tb.h"
-
-// Headers for our Verilator model.
-#include "VCoreMiniAxi.h"
 
 /* clang-format off */
 #include <systemc>
@@ -47,8 +43,19 @@
 #include "tests/test-modules/signals-axi.h"
 /* clang-format on */
 
+#include "tests/verilator_sim/util.h"
+#define MODEL_HEADER_SUFFIX .h
+#define MODEL_HEADER STRINGIFY(VERILATOR_MODEL MODEL_HEADER_SUFFIX)
+#include MODEL_HEADER
+
+#define PARAMS_HEADER_PREFIX hdl/chisel/src/kelvin/
+#define PARAMS_HEADER_SUFFIX _parameters.h
+#define PARAMS_HEADER STRINGIFY(PARAMS_HEADER_PREFIX VERILATOR_MODEL PARAMS_HEADER_SUFFIX)
+#include PARAMS_HEADER
+
 struct CoreMiniAxi_tb : Sysc_tb {
  public:
+  static const char* kCoreMiniAxiModelName;
   struct SlogIO {
     sc_signal<bool> valid;
     sc_signal<sc_bv<5>> addr;
@@ -161,7 +168,7 @@ struct CoreMiniAxi_tb : Sysc_tb {
   absl::Status CheckStatusSync();
   absl::Status CheckStatusAsync();
 
-  VCoreMiniAxi* core() { return core_.get(); }
+  VERILATOR_MODEL* core() { return core_.get(); }
 
   void EnqueueTransactionSync(std::vector<DataTransfer> transfers);
   void EnqueueTransactionAsync(std::vector<DataTransfer> transfers);
@@ -208,7 +215,7 @@ struct CoreMiniAxi_tb : Sysc_tb {
   static CoreMiniAxi_tb* singleton_;
   static CoreMiniAxi_tb* getSingleton() { return singleton_; }
   static constexpr uint32_t csr_addr_ = 0x30000;
-  std::unique_ptr<VCoreMiniAxi> core_;
+  std::unique_ptr<VERILATOR_MODEL> core_;
 
   std::optional<uint32_t> tohost_addr_;
   std::optional<uint32_t> fromhost_addr_;

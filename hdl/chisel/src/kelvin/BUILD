@@ -518,7 +518,19 @@ chisel_cc_library(
     ],
     vopts = [
         "-DUSE_GENERIC",
+        # RVV
         "-Wno-WIDTH",
+        "-Wno-CASEINCOMPLETE",
+        "-Wno-LATCH",
+        "-Wno-SIDEEFFECT",
+        "-Wno-MULTIDRIVEN",
+        "-Wno-UNOPTFLAT",
+        "-Wno-CASEOVERLAP",
+        # FPNEW
+        "-Wno-ASCRANGE",
+        "-Wno-WIDTHEXPAND",
+        "-Wno-WIDTHTRUNC",
+        "-Wno-UNSIGNED",
         "-Ihdl/verilog/rvv/inc",
     ],
     module_name = "RvvCoreMiniAxi",

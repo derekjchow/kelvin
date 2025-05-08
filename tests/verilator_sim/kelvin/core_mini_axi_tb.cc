@@ -26,7 +26,6 @@
 #include "absl/log/check.h"
 #include "absl/log/log.h"
 #include "absl/status/status.h"
-#include "hdl/chisel/src/kelvin/VCoreMiniAxi_parameters.h"
 #include "tests/verilator_sim/elf.h"
 #include "tests/verilator_sim/sysc_tb.h"
 
@@ -39,7 +38,7 @@ namespace internal {
 using namespace internal;
 /* clang-format on */
 
-#include "VCoreMiniAxi__Syms.h"
+const char* CoreMiniAxi_tb::kCoreMiniAxiModelName = STRINGIFY(VERILATOR_MODEL);
 
 CoreMiniAxi_tb::CoreMiniAxi_tb(sc_module_name n, int loops, bool random,
                                bool debug_axi, bool instr_trace,
@@ -60,7 +59,7 @@ CoreMiniAxi_tb::CoreMiniAxi_tb(sc_module_name n, int loops, bool random,
     CHECK(false);
   }
   CoreMiniAxi_tb::singleton_ = this;
-  core_ = std::make_unique<VCoreMiniAxi>("core");
+  core_ = std::make_unique<VERILATOR_MODEL>("core");
 
   // TLM2AXI
   tlm2axi_bridge_.clk(clock);
