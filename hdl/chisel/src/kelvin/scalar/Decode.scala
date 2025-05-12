@@ -399,6 +399,7 @@ class DispatchV2(p: Parameters) extends Dispatch(p) {
   // Combine above rules. This variable represents which instructions can be
   // dispatched before in-orderness and back-pressure are considered.
   val canDispatch = (0 until p.instructionLanes).map(i =>
+      !io.halted &&          // Don't dispatch if halted
       io.inst(i).valid &&    // Instruction should be valid to dispatch
       !jumped(i) &&          // Don't dispatch after a jump
       !readAfterWrite(i) &&  // Avoid RAW hazards
