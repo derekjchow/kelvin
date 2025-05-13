@@ -81,7 +81,7 @@ class Fetcher(p: Parameters) extends Module {
 class FetchControl(p: Parameters) extends Module {
     val io = IO(new Bundle {
         val csr = new CsrInIO(p)
-        val iflush = Input(Bool())
+        val iflush = Input(Valid(UInt(32.W)))
         val branch = Input(Valid(UInt(p.fetchAddrBits.W)))
         val fetchData = Input(Valid(new FetchResponse(p)))
         val linkPort = Flipped(new RegfileLinkPortIO)
@@ -169,6 +169,7 @@ class FetchControl(p: Parameters) extends Module {
     // We can fill up to p.fetchInstrSlots elements in the instruction buffer from each ibus
     // request. Use number of elements ready as a back-pressure signal.
     val fetchValid = !io.branch.valid &&
+                          !io.iflush.valid &&
                           pc.valid &&
                           (io.bufferRequest.nReady >= p.fetchInstrSlots.U)
     val fetch = RegInit(MakeInvalid(UInt(p.fetchAddrBits.W)))
@@ -188,6 +189,7 @@ class FetchControl(p: Parameters) extends Module {
     }
 
     pc := MuxCase(MakeValid(false.B, 0x0badd00d.U(p.fetchAddrBits.W)), Array(
+        io.iflush.valid -> MakeValid(true.B, io.iflush.bits),
         io.branch.valid -> MakeValid(true.B, io.branch.bits),
         branchLatch.valid -> MakeValid(true.B, branchLatch.bits),
         io.fetchData.valid -> MakeValid(true.B, predecode.nextPc),
@@ -213,7 +215,8 @@ class UncachedFetch(p: Parameters) extends FetchUnit(p) {
   val ctrl = Module(new FetchControl(p))
   ctrl.io.csr <> io.csr
   ctrl.io.branch := branch
-  ctrl.io.iflush <> io.iflush.valid
+  ctrl.io.iflush.valid := io.iflush.valid
+  ctrl.io.iflush.bits := io.iflush.pcNext
   ctrl.io.linkPort := io.linkPort
   // TODO(derekjchow): Maybe do something with back pressure?
   io.iflush.ready := true.B

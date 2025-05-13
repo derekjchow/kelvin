@@ -397,6 +397,7 @@ class DispatchV2(p: Parameters) extends Dispatch(p) {
   // dispatched before in-orderness and back-pressure are considered.
   val canDispatch = (0 until p.instructionLanes).map(i =>
       !io.halted &&          // Don't dispatch if halted
+      !io.interlock &&       // Don't dispatch when interlocked
       io.inst(i).valid &&    // Instruction should be valid to dispatch
       !jumped(i) &&          // Don't dispatch after a jump
       !readAfterWrite(i) &&  // Avoid RAW hazards
@@ -471,7 +472,6 @@ class DispatchV2(p: Parameters) extends Dispatch(p) {
         d.ecall  -> MakeValid(true.B, BruOp.ECALL),
         d.mpause -> MakeValid(true.B, BruOp.MPAUSE),
         d.mret   -> MakeValid(true.B, BruOp.MRET),
-        d.fencei -> MakeValid(true.B, BruOp.FENCEI),
         d.wfi    -> MakeValid(true.B, BruOp.WFI),
     ))
     val bru_target = io.inst(i).bits.addr + Mux(
@@ -938,7 +938,6 @@ class Decode(p: Parameters, pipeline: Int) extends Module {
     d.ecall  -> MakeValid(true.B, BruOp.ECALL),
     d.mpause -> MakeValid(true.B, BruOp.MPAUSE),
     d.mret   -> MakeValid(true.B, BruOp.MRET),
-    d.fencei -> MakeValid(true.B, BruOp.FENCEI),
     d.wfi    -> MakeValid(true.B, BruOp.WFI),
   ))
   val bru_target = io.inst.bits.addr + Mux(
