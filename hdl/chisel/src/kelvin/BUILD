@@ -88,8 +88,6 @@ chisel_library(
         "//hdl/verilog/rvv/common:fifo_flopped_2w2r.sv",
         "//hdl/verilog/rvv/common:fifo_flopped_4w2r.sv",
         "//hdl/verilog/rvv/common:multi_fifo.sv",
-        "//hdl/verilog/rvv/common:openFifo4_flopped_ptr.sv",
-        "//hdl/verilog/rvv/common:openFifo8_flopped_2w2r.sv",
         "//hdl/verilog/rvv/design:Aligner.sv",
         "//hdl/verilog/rvv/design:MultiFifo.sv",
         "//hdl/verilog/rvv/design:RvvCore.sv",

@@ -216,8 +216,6 @@ class RvvCoreWrapper(p: Parameters) extends BlackBox with HasBlackBoxInline
   addResource("hdl/verilog/rvv/common/fifo_flopped_2w2r.sv")
   addResource("hdl/verilog/rvv/common/fifo_flopped_4w2r.sv")
   addResource("hdl/verilog/rvv/common/multi_fifo.sv")
-  addResource("hdl/verilog/rvv/common/openFifo4_flopped_ptr.sv")
-  addResource("hdl/verilog/rvv/common/openFifo8_flopped_2w2r.sv")
   addResource("hdl/verilog/rvv/design/Aligner.sv")
   addResource("hdl/verilog/rvv/design/MultiFifo.sv")
   addResource("hdl/verilog/rvv/design/RvvFrontEnd.sv")
