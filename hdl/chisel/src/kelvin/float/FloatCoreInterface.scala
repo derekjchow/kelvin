@@ -67,9 +67,12 @@ object FloatInstruction {
     val rm = inst(14,12)
     val rd = inst(11,7)
 
+    // Guard load/store by the `width` field (encoded in `rm`).
+    // Other values are reserved for D, Q, and V extensions.
+    val load_store_rm_valid = (rm === "b01".U) || (rm === "b10".U)
     val opcode = MuxLookup(in_opcode, MakeInvalid(FloatOpcode()))(Seq(
-        "b00001".U -> MakeValid(FloatOpcode.LOADFP),
-        "b01001".U -> MakeValid(FloatOpcode.STOREFP),
+        "b00001".U -> Mux(load_store_rm_valid, MakeValid(FloatOpcode.LOADFP), MakeInvalid(FloatOpcode())),
+        "b01001".U -> Mux(load_store_rm_valid, MakeValid(FloatOpcode.STOREFP), MakeInvalid(FloatOpcode())),
         "b10100".U -> MakeValid(FloatOpcode.OPFP),
         "b10000".U -> MakeValid(FloatOpcode.MADD),
         "b10001".U -> MakeValid(FloatOpcode.MSUB),

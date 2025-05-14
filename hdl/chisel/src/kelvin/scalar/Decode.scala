@@ -583,7 +583,7 @@ class DispatchV2(p: Parameters) extends Dispatch(p) {
     // -------------------------------------------------------------------------
     // Floating point
     if (p.enableFloat && (i == 0)) {
-      io.float.get.valid := tryDispatch && d.float.get.valid
+      io.float.get.valid := tryDispatch && d.float.get.valid && !(d.isFloatLoad() || d.isFloatStore())
       io.float.get.bits := d.float.get.bits
     }
 
@@ -635,7 +635,7 @@ class DispatchV2(p: Parameters) extends Dispatch(p) {
 
     // Set floating point registers to write
     if (p.enableFloat && (i == 0)) {
-      val rdMark_flt_valid = io.float.get.fire && !d.float.get.bits.scalar_rd && (d.float.get.bits.opcode =/= FloatOpcode.STOREFP)
+      val rdMark_flt_valid = (io.float.get.fire && !d.float.get.bits.scalar_rd) || (io.lsu(i).fire && d.isFloatLoad())
       io.rdMark_flt.get.valid := rdMark_flt_valid
       io.rdMark_flt.get.addr := rdAddr(i)
     }
