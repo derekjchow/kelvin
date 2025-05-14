@@ -15,7 +15,7 @@
 load("//rules:coco_tb.bzl", "vcs_cocotb_test", "verilator_cocotb_test")
 load("//rules:kelvin_v2.bzl", "kelvin_v2_binary")
 load("//rules:utils.bzl", "template_rule")
-load("@kelvin_pip_deps//:requirements.bzl", "requirement")
+load("@kelvin_hw//third_party/python:requirements.bzl", "requirement")
 
 exports_files(["wfi_slot_0.elf"])
 

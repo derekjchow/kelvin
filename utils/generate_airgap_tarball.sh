@@ -85,7 +85,12 @@ ${WORKDIR}/bazel fetch \
     @remotejdk11_linux//:jdk \
     @rules_hdl//:all \
     @verilator//:all \
-    @com_github_grpc_grpc//:all
+    @com_github_grpc_grpc//:all \
+    @kelvin_pip_deps_cocotb//:all \
+    @kelvin_pip_deps_find_libpython//:all \
+    @kelvin_pip_deps_numpy//:all \
+    @kelvin_pip_deps_pyelftools//:all \
+    @kelvin_pip_deps_tqdm//:all
 
 cat <<EOF >${WORKDIR}/bazel.sh
 SCRIPT_DIR="\$(cd "\$(dirname "\${BASH_SOURCE[0]}")" && pwd)"

@@ -15,7 +15,7 @@
 """Convinence wrapper for Verilator driven cocotb."""
 
 load("@bazel_skylib//rules:copy_file.bzl", "copy_file")
-load("@kelvin_pip_deps//:requirements.bzl", "requirement")
+load("@kelvin_hw//third_party/python:requirements.bzl", "requirement")
 load("@rules_hdl//cocotb:cocotb.bzl", "cocotb_test")
 load("@rules_python//python:defs.bzl", "py_library")
 

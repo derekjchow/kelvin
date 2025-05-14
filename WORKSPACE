@@ -86,17 +86,7 @@ python_register_toolchains(
     python_version = "3.9",
 )
 
-load("@python39//:defs.bzl", "interpreter")
-load("@rules_python//python:pip.bzl", "pip_parse")
-
-pip_parse(
-    name = "kelvin_pip_deps",
-    python_interpreter_target = interpreter,
-    requirements_lock = "//external:requirements.txt",
-)
-
-load("@kelvin_pip_deps//:requirements.bzl", "install_deps")
-
+load("//third_party/python:requirements.bzl", "install_deps")
 install_deps()
 
 load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
