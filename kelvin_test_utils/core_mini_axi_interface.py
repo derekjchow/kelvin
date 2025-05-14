@@ -633,7 +633,7 @@ class CoreMiniAxiInterface:
     assert tohost != None
     if cocotb.SIM_NAME == "Verilator":
       rv = await self.watch(tohost, timeout_cycles=timeout_cycles)
-      assert np.sum(np.frombuffer(rv[0:4], dtype=np.uint8)) == 1
+      assert np.sum(np.frombuffer(rv[12:16], dtype=np.uint8)) == 1
     else:
       initial_rv = await self.read_word(tohost)
       while True:
