@@ -35,9 +35,6 @@ object BruOp extends ChiselEnum {
   val BGEU = Value
   val EBREAK = Value
   val ECALL = Value
-  val EEXIT = Value
-  val EYIELD = Value
-  val ECTXSW = Value
   val MPAUSE = Value
   val MRET = Value
   val FENCEI = Value
@@ -108,7 +105,7 @@ class Bru(p: Parameters, first: Boolean) extends Module {
   if (first) {
     val interlock = RegInit(false.B)
     interlock := io.req.valid && io.req.bits.op.isOneOf(
-        BruOp.EBREAK, BruOp.ECALL, BruOp.EEXIT, BruOp.EYIELD, BruOp.ECTXSW,
+        BruOp.EBREAK, BruOp.ECALL,
         BruOp.MPAUSE, BruOp.MRET)
     io.interlock.get := interlock
   }
@@ -138,8 +135,7 @@ class Bru(p: Parameters, first: Boolean) extends Module {
     val mret = (io.req.bits.op === BruOp.MRET) && mode === CsrMode.Machine
     val ecall = io.req.bits.op === BruOp.ECALL
     val call = ((io.req.bits.op === BruOp.MRET) && mode === CsrMode.User) ||
-        io.req.bits.op.isOneOf(BruOp.EBREAK, BruOp.EEXIT,
-                               BruOp.EYIELD, BruOp.ECTXSW, BruOp.MPAUSE)
+        io.req.bits.op.isOneOf(BruOp.EBREAK, BruOp.MPAUSE)
     MuxCase(io.req.bits.target, Seq(
       ecall -> mtvec,
       mret -> io.csr.get.out.mepc,
@@ -176,9 +172,6 @@ class Bru(p: Parameters, first: Boolean) extends Module {
     assert(!op.isOneOf(
       BruOp.EBREAK,
       BruOp.ECALL,
-      BruOp.EEXIT,
-      BruOp.EYIELD,
-      BruOp.ECTXSW,
       BruOp.MPAUSE,
       BruOp.MRET,
       BruOp.FENCEI,
@@ -192,9 +185,6 @@ class Bru(p: Parameters, first: Boolean) extends Module {
       BruOp.EBREAK -> (mode === CsrMode.User),
       // Any mode can execute `ecall`, but the value of `mcause` will be different.
       BruOp.ECALL  -> true.B,
-      BruOp.EEXIT  -> (mode === CsrMode.User),
-      BruOp.EYIELD -> (mode === CsrMode.User),
-      BruOp.ECTXSW -> (mode === CsrMode.User),
       BruOp.MPAUSE -> (mode === CsrMode.User),
       BruOp.MRET   -> (mode === CsrMode.Machine),
       BruOp.FENCEI -> true.B,
@@ -225,12 +215,11 @@ class Bru(p: Parameters, first: Boolean) extends Module {
     val usageFault = (stateReg.valid && Mux(
               (mode === CsrMode.User),
               op.isOneOf(BruOp.MPAUSE, BruOp.MRET),
-              op.isOneOf(BruOp.EBREAK, BruOp.EEXIT, BruOp.EYIELD,
-                         BruOp.ECTXSW)))
+              op.isOneOf(BruOp.EBREAK)))
 
     io.csr.get.in.mode.valid := stateReg.valid && Mux(
-        (mode === CsrMode.User), op.isOneOf(BruOp.EBREAK, BruOp.ECALL, BruOp.EEXIT, BruOp.EYIELD,
-                         BruOp.ECTXSW, BruOp.MPAUSE, BruOp.MRET, BruOp.FAULT),
+        (mode === CsrMode.User), op.isOneOf(BruOp.EBREAK, BruOp.ECALL,
+                                            BruOp.MPAUSE, BruOp.MRET, BruOp.FAULT),
               (op === BruOp.MRET))
     io.csr.get.in.mode.bits := Mux(((op === BruOp.MRET) && (mode === CsrMode.Machine)), CsrMode.Machine, CsrMode.User)
 
@@ -242,14 +231,12 @@ class Bru(p: Parameters, first: Boolean) extends Module {
     ))
 
     io.csr.get.in.mcause.valid := (stateReg.valid &&
-      (usageFault ||
-      op.isOneOf(BruOp.ECALL) ||
-      ((mode === CsrMode.User) &&
-            /* user mode mcause triggers */
-            op.isOneOf(BruOp.EBREAK,
-                       BruOp.EEXIT, BruOp.EYIELD,
-                       BruOp.ECTXSW),
-      )) || io.fault_manager.get.valid
+      (
+        usageFault ||
+        (op === BruOp.ECALL) ||
+        ((mode === CsrMode.User) && (op === (BruOp.EBREAK))) ||
+        io.fault_manager.get.valid
+      )
     )
 
     io.csr.get.in.mcause.bits := MuxCase(0.U, Seq(
@@ -260,9 +247,6 @@ class Bru(p: Parameters, first: Boolean) extends Module {
         (op === BruOp.EBREAK) -> 3.U,
         // Kelvin-specific things, use the custom reserved region of the encoding space.
         usageFault            -> (24 + 1).U,
-        (op === BruOp.EEXIT)  -> (24 + 2).U,
-        (op === BruOp.EYIELD) -> (24 + 3).U,
-        (op === BruOp.ECTXSW) -> (24 + 4).U,
     ))
 
     io.csr.get.in.mtval.valid :=
@@ -286,8 +270,8 @@ class Bru(p: Parameters, first: Boolean) extends Module {
 
   // Assertions.
   val ignore = op.isOneOf(BruOp.JAL, BruOp.JALR, BruOp.EBREAK, BruOp.ECALL,
-                          BruOp.EEXIT, BruOp.EYIELD, BruOp.ECTXSW, BruOp.MPAUSE,
-                          BruOp.MRET, BruOp.FENCEI, BruOp.WFI, BruOp.FAULT)
+                          BruOp.MPAUSE, BruOp.MRET, BruOp.FENCEI, BruOp.WFI,
+                          BruOp.FAULT)
 
   assert(!(stateReg.valid && !io.rs1.valid) || ignore)
   assert(!(stateReg.valid && !io.rs2.valid) || ignore)

@@ -153,9 +153,6 @@ class DecodedInstruction(p: Parameters) extends Bundle {
   // Core controls.
   val ebreak = Bool()
   val ecall  = Bool()
-  val eexit  = Bool()
-  val eyield = Bool()
-  val ectxsw = Bool()
   val mpause = Bool()
   val mret   = Bool()
   val undef  = Bool()
@@ -204,7 +201,7 @@ class DecodedInstruction(p: Parameters) extends Bundle {
   // Checks if an instruction is a jump or changes context switch. Instructions
   // after these should not be executed on the same cycle.
   def isJump(): Bool = {
-    jal || jalr || ebreak || ecall || eexit || eyield || ectxsw || mpause ||
+    jal || jalr || ebreak || ecall || mpause ||
     mret
   }
 
@@ -472,9 +469,6 @@ class DispatchV2(p: Parameters) extends Dispatch(p) {
         d.bgeu   -> MakeValid(true.B, BruOp.BGEU),
         d.ebreak -> MakeValid(true.B, BruOp.EBREAK),
         d.ecall  -> MakeValid(true.B, BruOp.ECALL),
-        d.eexit  -> MakeValid(true.B, BruOp.EEXIT),
-        d.eyield -> MakeValid(true.B, BruOp.EYIELD),
-        d.ectxsw -> MakeValid(true.B, BruOp.ECTXSW),
         d.mpause -> MakeValid(true.B, BruOp.MPAUSE),
         d.mret   -> MakeValid(true.B, BruOp.MRET),
         d.fencei -> MakeValid(true.B, BruOp.FENCEI),
@@ -939,9 +933,6 @@ class Decode(p: Parameters, pipeline: Int) extends Module {
     d.bgeu   -> MakeValid(true.B, BruOp.BGEU),
     d.ebreak -> MakeValid(true.B, BruOp.EBREAK),
     d.ecall  -> MakeValid(true.B, BruOp.ECALL),
-    d.eexit  -> MakeValid(true.B, BruOp.EEXIT),
-    d.eyield -> MakeValid(true.B, BruOp.EYIELD),
-    d.ectxsw -> MakeValid(true.B, BruOp.ECTXSW),
     d.mpause -> MakeValid(true.B, BruOp.MPAUSE),
     d.mret   -> MakeValid(true.B, BruOp.MRET),
     d.fencei -> MakeValid(true.B, BruOp.FENCEI),
@@ -1143,8 +1134,8 @@ class Decode(p: Parameters, pipeline: Int) extends Module {
   io.serializeOut.mul  := io.serializeIn.mul || mlu.valid
   io.serializeOut.fence := d.isFency() || io.serializeIn.fence
   io.serializeOut.jump := io.serializeIn.jump || d.jal || d.jalr ||
-                          d.ebreak || d.ecall || d.eexit ||
-                          d.eyield || d.ectxsw || d.mpause || d.mret
+                          d.ebreak || d.ecall ||
+                          d.mpause || d.mret
   io.serializeOut.brcond := io.serializeIn.brcond |
       d.beq || d.bne || d.blt || d.bge || d.bltu || d.bgeu
   io.serializeOut.vinst := io.serializeIn.vinst
@@ -1277,9 +1268,6 @@ object DecodeInstruction {
     // [extensions] Core controls.
     d.ebreak := op === BitPat("b000000000001_00000_000_00000_11100_11")
     d.ecall  := op === BitPat("b000000000000_00000_000_00000_11100_11")
-    d.eexit  := op === BitPat("b000000100000_00000_000_00000_11100_11")
-    d.eyield := op === BitPat("b000001000000_00000_000_00000_11100_11")
-    d.ectxsw := op === BitPat("b000001100000_00000_000_00000_11100_11")
     d.mpause := op === BitPat("b000010000000_00000_000_00000_11100_11")
     d.mret   := op === BitPat("b001100000010_00000_000_00000_11100_11")
     d.wfi    := op === BitPat("b000100000101_00000_000_00000_11100_11")
@@ -1310,9 +1298,6 @@ object DecodeInstruction {
 
       d.ebreak := false.B
       d.ecall  := false.B
-      d.eexit  := false.B
-      d.eyield := false.B
-      d.ectxsw := false.B
       d.mpause := false.B
       d.mret   := false.B
       d.wfi    := false.B
@@ -1350,7 +1335,7 @@ object DecodeInstruction {
                       d.rol, d.ror, d.orcb, d.rev8, d.rori,
                       d.viop, d.vld, d.vst,
                       d.getvl, d.getmaxvl,
-                      d.ebreak, d.ecall, d.eexit, d.eyield, d.ectxsw, d.wfi,
+                      d.ebreak, d.ecall, d.wfi,
                       d.mpause, d.mret, d.fencei, d.flushat, d.flushall, d.slog,
                       d.rvv.map(_.valid).getOrElse(false.B),
                       d.float.map(_.valid).getOrElse(false.B))

@@ -30,7 +30,7 @@ Memory today is limited to dispatching one instruction per cycle.
 ## Control Flow
 
 Conservatively, Kelvin will not dispatch past the following jump instructions:
-`jal`, `jalr`, `ebreak`, `ecall`, `eexit`, `eyield`, `ectxsw`, `mret`, `wfi`.
+`jal`, `jalr`, `ebreak`, `ecall`, `mret`, `wfi`.
 
 ## Special Instructions
 
@@ -38,5 +38,4 @@ Instructions that can affect the core state beyond the PC/RegisterFile are
 limited to executing out of the first slot. They are also typically treated as
 jump control flow instructions, so no other instructions should be dispatched in
 the same cycle as these. These instructions are: `csrrw`, `csrrs`, `csrrc`
-`ebreak`, `ecall`, `eexit`, `eyield`, `ectxsw`, `mret`, `fence`, `fenci` and
-`wfi`.
+`ebreak`, `ecall`, `mret`, `fence`, `fenci` and `wfi`.
