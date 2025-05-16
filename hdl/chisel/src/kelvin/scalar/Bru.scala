@@ -234,9 +234,8 @@ class Bru(p: Parameters, first: Boolean) extends Module {
       (
         usageFault ||
         (op === BruOp.ECALL) ||
-        ((mode === CsrMode.User) && (op === (BruOp.EBREAK))) ||
-        io.fault_manager.get.valid
-      )
+        ((mode === CsrMode.User) && (op === BruOp.EBREAK))
+      ) || io.fault_manager.get.valid
     )
 
     io.csr.get.in.mcause.bits := MuxCase(0.U, Seq(
