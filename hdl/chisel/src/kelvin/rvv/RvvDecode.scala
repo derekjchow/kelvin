@@ -59,9 +59,21 @@ object RvvCompressedInstruction {
     val old_opcode = inst(6, 0)
     val bits = inst(31, 7)
 
+    // mew must be 0 for valid load/stores
+    val mew = inst(28)
+    // RVVLOAD and RVVSTORE op codes are shared with "f" extension. Use "width"
+    // to discriminate between the two.
+    val width = inst(14, 12)
+    val validWidth = !mew && MuxCase(false.B, Seq(
+      (width === "b000".U) -> true.B,  // 8b
+      (width === "b101".U) -> true.B,  // 16b
+      (width === "b110".U) -> true.B,  // 32b
+      // "b111".U -> true.B,  // 64b, unused for kelvin
+    ))
+
     val new_opcode = MuxLookup(old_opcode, MakeInvalid(RvvCompressedOpcode()))(Seq(
-      "b0000111".U -> MakeValid(RvvCompressedOpcode.RVVLOAD),
-      "b0100111".U -> MakeValid(RvvCompressedOpcode.RVVSTORE),
+      "b0000111".U -> MakeValid(validWidth, RvvCompressedOpcode.RVVLOAD),
+      "b0100111".U -> MakeValid(validWidth, RvvCompressedOpcode.RVVSTORE),
       "b1010111".U -> MakeValid(RvvCompressedOpcode.RVVALU),
     ))
 

@@ -78,6 +78,20 @@ class RvvS1DecodeInstructionSpec extends AnyFreeSpec with ChiselScalatestTester 
     if (!ProcessTestResults(good, printfn = info(_))) fail
   }
 
+  "Doesn't decode float load/store" in {
+    test(new Tester) { dut =>
+      val testCases = Seq(
+        0x00052507L, // flw f10, 0(x10)
+        0x00a52027L, // fsw f10, 0(x10)
+      )
+
+      for (t <- testCases) {
+        dut.io.inst.poke(t)
+        assertResult (0) { dut.io.out.valid.peekInt() }
+      }
+    }
+  }
+
   "Decode VAlu ops (no mask) correctly" in {
     val test_cases = Seq(
       // Compiled on godbolt rv32gc clang 18.1.0 --target=riscv32-none-eabi -march=rv32im_zve32x -O3
