@@ -90,7 +90,13 @@ ${WORKDIR}/bazel fetch \
     @kelvin_pip_deps_find_libpython//:all \
     @kelvin_pip_deps_numpy//:all \
     @kelvin_pip_deps_pyelftools//:all \
-    @kelvin_pip_deps_tqdm//:all
+    @kelvin_pip_deps_tqdm//:all \
+    @kelvin_pip_deps_pytest//:all \
+    @kelvin_pip_deps_pluggy//:all \
+    @kelvin_pip_deps_iniconfig//:all \
+    @kelvin_pip_deps_packaging//:all \
+    @kelvin_pip_deps_exceptiongroup//:all \
+    @kelvin_pip_deps_extensions//:all
 
 cat <<EOF >${WORKDIR}/bazel.sh
 SCRIPT_DIR="\$(cd "\$(dirname "\${BASH_SOURCE[0]}")" && pwd)"

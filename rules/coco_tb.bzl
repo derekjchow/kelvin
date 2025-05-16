@@ -40,6 +40,7 @@ def verilator_cocotb_test(name,
         deps = deps + [
             requirement("cocotb"),
             requirement("numpy"),
+            requirement("pytest"),
         ],
         data = data,
     )
@@ -76,6 +77,7 @@ def vcs_cocotb_test(name,
         deps = deps + [
             requirement("cocotb"),
             requirement("numpy"),
+            requirement("pytest"),
         ],
         data = data,
     )
