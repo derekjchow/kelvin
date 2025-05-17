@@ -25,6 +25,13 @@ object RvvCompressedOpcode extends ChiselEnum {
   val RVVALU = Value(2.U)
 }
 
+object RvvAddressingMode extends ChiselEnum {
+  val UNIT_STRIDE = Value(0.U(2.W))
+  val INDEXED_UNORDERED = Value(1.U(2.W))
+  val STRIDED = Value(2.U(2.W))
+  val INDEXED_ORDERED = Value(3.U(2.W))
+}
+
 class RvvCompressedInstruction extends Bundle {
   val pc = UInt(32.W)
   val opcode = RvvCompressedOpcode()
@@ -38,9 +45,19 @@ class RvvCompressedInstruction extends Bundle {
     bits(7, 5)
   }
 
+  // "Addressing Mode" for loads/store (see Section 7.2 of RVV Spec)
+  def mop(): RvvAddressingMode.Type = {
+    RvvAddressingMode(bits(21, 19))
+  }
+
   def readsRs1(): Bool = {
     (opcode =/= RvvCompressedOpcode.RVVALU) ||
         (bits(7) && (bits(24, 23) =/= "b11".U))
+  }
+
+  def readsRs2(): Bool = {
+    ((opcode =/= RvvCompressedOpcode.RVVALU) && (mop() === RvvAddressingMode.STRIDED)) ||
+    ((funct3() === "b111".U) && (bits(24, 18) === "b1000000".U))
   }
 
   def writesRd(): Bool = {
