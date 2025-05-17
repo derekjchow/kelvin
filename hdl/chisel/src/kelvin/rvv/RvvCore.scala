@@ -70,12 +70,50 @@ object GenerateCoreShimSource {
         |    input async_rd_ready,
         |""".stripMargin
 
+    // RVV to LSU
+    for (i <- 0 until 2) {
+        moduleInterface += """    output rvv2lsu_GENI_valid,
+            |    output rvv2lsu_GENI_bits_idx_valid,
+            |    output [4:0] rvv2lsu_GENI_bits_idx_bits_addr,
+            |    output [127:0] rvv2lsu_GENI_bits_idx_bits_data,
+            |    output rvv2lsu_GENI_bits_vregfile_valid,
+            |    output [4:0] rvv2lsu_GENI_bits_vregfile_bits_addr,
+            |    output [127:0] rvv2lsu_GENI_bits_vregfile_bits_data,
+            |    output rvv2lsu_GENI_bits_mask_valid,
+            |    output [15:0] rvv2lsu_GENI_bits_mask_bits,
+            |    input rvv2lsu_GENI_ready,
+            |""".stripMargin.replaceAll("GENI", i.toString)
+    }
+
+    // LSU to RVV
+    for (i <- 0 until 2) {
+        moduleInterface += """    input lsu2rvv_GENI_valid,
+            |    input [4:0] lsu2rvv_GENI_bits_addr,
+            |    input [127:0] lsu2rvv_GENI_bits_data,
+            |    input  lsu2rvv_GENI_bits_last,
+            |    output lsu2rvv_GENI_ready,
+            |""".stripMargin.replaceAll("GENI", i.toString)
+    }
+
     // Add CSR output
     moduleInterface += """    output vcsr_valid,
         |    output [VSTART_LEN:0] vcsr_vstart,
         |    output [1:0] vcsr_xrm,
         |    input vcsr_ready,
         |""".stripMargin.replaceAll("VSTART_LEN", (log2Ceil(vlen) - 1).toString)
+
+    // Add RVV Config state output
+    //  TODO(derekjchow): Parameterize vl
+    moduleInterface += """    output configStateValid,
+        |    output [7:0] configVl,
+        |    output [VSTART_LEN:0] configVstart,
+        |    output configMa,
+        |    output configTa,
+        |    output [1:0] configXrm,
+        |    output [2:0] configSew,
+        |    output [2:0] configLmul,
+        |""".stripMargin.replaceAll("VSTART_LEN", (log2Ceil(vlen) - 1).toString)
+
 
     // Remove last comma/linebreak
     moduleInterface = moduleInterface.dropRight(2)
@@ -120,6 +158,51 @@ object GenerateCoreShimSource {
           "GENI", i.toString)
     }
 
+    // RVV2LSU
+    // TODO(derekjchow): Parameterize correctly
+    coreInstantiation += """  logic [2-1:0] uop_lsu_valid_rvv2lsu;
+      |  logic [2-1:0] uop_lsu_idx_valid_rvv2lsu;
+      |  logic [2-1:0][4:0] uop_lsu_idx_addr_rvv2lsu;
+      |  logic [2-1:0][127:0] uop_lsu_idx_data_rvv2lsu;
+      |  logic [2-1:0] uop_lsu_vregfile_valid_rvv2lsu;
+      |  logic [2-1:0][4:0] uop_lsu_vregfile_addr_rvv2lsu;
+      |  logic [2-1:0][127:0] uop_lsu_vregfile_data_rvv2lsu;
+      |  logic [2-1:0] uop_lsu_v0_valid_rvv2lsu;
+      |  logic [2-1:0][15:0] uop_lsu_v0_data_rvv2lsu;
+      |  logic [2-1:0] uop_lsu_ready_lsu2rvv;""".stripMargin
+    for (i <- 0 until 2) {
+      coreInstantiation += """
+          |  assign rvv2lsu_GENI_valid = uop_lsu_valid_rvv2lsu[GENI];
+          |  assign rvv2lsu_GENI_bits_idx_valid = uop_lsu_idx_valid_rvv2lsu[GENI];
+          |  assign rvv2lsu_GENI_bits_idx_bits_addr = uop_lsu_idx_addr_rvv2lsu[GENI];
+          |  assign rvv2lsu_GENI_bits_idx_bits_data = uop_lsu_idx_data_rvv2lsu[GENI];
+          |  assign rvv2lsu_GENI_bits_vregfile_valid = uop_lsu_vregfile_valid_rvv2lsu[GENI];
+          |  assign rvv2lsu_GENI_bits_vregfile_bits_addr = uop_lsu_vregfile_addr_rvv2lsu[GENI];
+          |  assign rvv2lsu_GENI_bits_vregfile_bits_data = uop_lsu_vregfile_data_rvv2lsu[GENI];
+          |  assign rvv2lsu_GENI_bits_mask_valid = uop_lsu_v0_valid_rvv2lsu[GENI];
+          |  assign rvv2lsu_GENI_bits_mask_bits = uop_lsu_v0_data_rvv2lsu[GENI];
+          |  assign uop_lsu_ready_lsu2rvv[GENI] = rvv2lsu_GENI_ready;
+          |""".stripMargin.replaceAll("GENI", i.toString)
+    }
+
+
+    // LSU2RVV
+    // TODO(derekjchow): Parameterize correctly
+    coreInstantiation += """  logic [2-1:0] uop_lsu_valid_lsu2rvv;
+      |  logic  [2-1:0][4:0]  uop_lsu_addr_lsu2rvv;
+      |  logic  [2-1:0][127:0] uop_lsu_wdata_lsu2rvv;
+      |  logic  [2-1:0] uop_lsu_last_lsu2rvv;
+      |  logic  [2-1:0] uop_lsu_ready_rvv2lsu;""".stripMargin
+    for (i <- 0 until 2) {
+      coreInstantiation += """
+          |  assign uop_lsu_valid_lsu2rvv[GENI] = lsu2rvv_GENI_valid;
+          |  assign uop_lsu_addr_lsu2rvv[GENI] = lsu2rvv_GENI_bits_addr;
+          |  assign uop_lsu_wdata_lsu2rvv[GENI] = lsu2rvv_GENI_bits_data;
+          |  assign uop_lsu_last_lsu2rvv[GENI] = lsu2rvv_GENI_bits_last;
+          |  assign lsu2rvv_GENI_ready = uop_lsu_ready_rvv2lsu[GENI];
+          |""".stripMargin.replaceAll("GENI", i.toString)
+    }
+
     // Scalar regfile write temp output
     coreInstantiation += """  logic [GENN-1:0] reg_write_valid;
         |  logic [GENN-1:0][4:0] reg_write_addr;
@@ -130,6 +213,9 @@ object GenerateCoreShimSource {
     coreInstantiation += """  RVVConfigState vector_csr;
         |  assign vcsr_vstart = vector_csr.vstart;
         |  assign vcsr_xrm = vector_csr.xrm;
+        |""".stripMargin
+    // RVV Config State temp output
+    coreInstantiation += """  RVVConfigState config_state;
         |""".stripMargin
 
     coreInstantiation += """  RvvCore#(.N (GENN)) core(
@@ -150,9 +236,26 @@ object GenerateCoreShimSource {
         |      .async_rd_addr(async_rd_bits_addr),
         |      .async_rd_data(async_rd_bits_data),
         |      .async_rd_ready(async_rd_ready),
+        |      .uop_lsu_valid_rvv2lsu(uop_lsu_valid_rvv2lsu),
+        |      .uop_lsu_idx_valid_rvv2lsu(uop_lsu_idx_valid_rvv2lsu),
+        |      .uop_lsu_idx_addr_rvv2lsu(uop_lsu_idx_addr_rvv2lsu),
+        |      .uop_lsu_idx_data_rvv2lsu(uop_lsu_idx_data_rvv2lsu),
+        |      .uop_lsu_vregfile_valid_rvv2lsu(uop_lsu_vregfile_valid_rvv2lsu),
+        |      .uop_lsu_vregfile_addr_rvv2lsu(uop_lsu_vregfile_addr_rvv2lsu),
+        |      .uop_lsu_vregfile_data_rvv2lsu(uop_lsu_vregfile_data_rvv2lsu),
+        |      .uop_lsu_v0_valid_rvv2lsu(uop_lsu_v0_valid_rvv2lsu),
+        |      .uop_lsu_v0_data_rvv2lsu(uop_lsu_v0_data_rvv2lsu),
+        |      .uop_lsu_ready_lsu2rvv(uop_lsu_ready_lsu2rvv),
+        |      .uop_lsu_valid_lsu2rvv(uop_lsu_valid_lsu2rvv),
+        |      .uop_lsu_addr_lsu2rvv(uop_lsu_addr_lsu2rvv),
+        |      .uop_lsu_wdata_lsu2rvv(uop_lsu_wdata_lsu2rvv),
+        |      .uop_lsu_last_lsu2rvv(uop_lsu_last_lsu2rvv),
+        |      .uop_lsu_ready_rvv2lsu(uop_lsu_ready_rvv2lsu),
         |      .vcsr_valid(vcsr_valid),
         |      .vector_csr(vector_csr),
-        |      .vcsr_ready(vcsr_ready)
+        |      .vcsr_ready(vcsr_ready),
+        |      .config_state_valid(configStateValid),
+        |      .config_state(config_state)
         |""".stripMargin.replaceAll("GENN", instructionLanes.toString)
     coreInstantiation += "  );\n"
 
@@ -166,6 +269,13 @@ object GenerateCoreShimSource {
       |  assign rd_GENI_bits_data = reg_write_data[GENI];
       |""".stripMargin.replaceAll("GENI", i.toString)
     }
+    coreInstantiation += "  assign configVl = config_state.vl;\n"
+    coreInstantiation += "  assign configVstart = config_state.vstart;\n"
+    coreInstantiation += "  assign configMa = config_state.ma;\n"
+    coreInstantiation += "  assign configTa = config_state.ta;\n"
+    coreInstantiation += "  assign configXrm = config_state.xrm;\n"
+    coreInstantiation += "  assign configSew = config_state.sew;\n"
+    coreInstantiation += "  assign configLmul = config_state.lmul;\n"
 
     moduleInterface + coreInstantiation + "endmodule\n"
   }
@@ -195,6 +305,20 @@ class RvvCoreWrapper(p: Parameters) extends BlackBox with HasBlackBoxInline
     val vcsr_vstart = Output(UInt(7.W))
     val vcsr_xrm = Output(UInt(2.W))
     val vcsr_ready = Input(Bool())
+
+    // TODO(derekjchow): Parameterize
+    val rvv2lsu = Vec(2, Decoupled(new Rvv2Lsu(p)))
+    val lsu2rvv = Vec(2, Flipped(Decoupled(new Lsu2Rvv(p))))
+
+    // Config state
+    val configStateValid = Output(Bool())
+    val configVl = Output(UInt(8.W))
+    val configVstart = Output(UInt(7.W))
+    val configMa = Output(Bool())
+    val configTa = Output(Bool())
+    val configXrm = Output(UInt(2.W))
+    val configSew = Output(UInt(3.W))
+    val configLmul = Output(UInt(3.W))
   })
 
   // Resources must be sorted topologically by dependency DAG
@@ -281,6 +405,18 @@ class RvvCoreShim(p: Parameters) extends Module {
   rvvCoreWrapper.io.vxrm := vxrm
   rvvCoreWrapper.io.vxsat := 0.U
   rvvCoreWrapper.io.vcsr_ready := true.B
+
+  io.rvv2lsu <> rvvCoreWrapper.io.rvv2lsu
+  io.lsu2rvv <> rvvCoreWrapper.io.lsu2rvv
+
+  io.configState.valid        := rvvCoreWrapper.io.configStateValid
+  io.configState.bits.vl      := rvvCoreWrapper.io.configVl
+  io.configState.bits.vstart  := rvvCoreWrapper.io.configVstart
+  io.configState.bits.ma      := rvvCoreWrapper.io.configMa
+  io.configState.bits.ta      := rvvCoreWrapper.io.configTa
+  io.configState.bits.xrm     := rvvCoreWrapper.io.configXrm
+  io.configState.bits.sew     := rvvCoreWrapper.io.configSew
+  io.configState.bits.lmul    := rvvCoreWrapper.io.configLmul
 
   vstart := Mux(rvvCoreWrapper.io.vcsr_valid, rvvCoreWrapper.io.vcsr_vstart, vstart)
   vxrm := Mux(rvvCoreWrapper.io.vcsr_valid, rvvCoreWrapper.io.vcsr_xrm, vxrm)

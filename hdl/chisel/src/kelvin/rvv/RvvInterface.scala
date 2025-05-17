@@ -18,6 +18,34 @@ import chisel3._
 import chisel3.util._
 import kelvin.{RegfileReadDataIO, RegfileWriteDataIO, Parameters}
 
+class RvvConfigState(p: Parameters) extends Bundle {
+  val vl = Output(UInt(log2Ceil(p.rvvVlen + 1).W))
+  val vstart = Output(UInt(log2Ceil(p.rvvVlen).W))
+  val ma = Output(Bool())
+  val ta = Output(Bool())
+  val xrm = Output(UInt(2.W))
+  val sew = Output(UInt(3.W))
+  val lmul = Output(UInt(3.W))
+}
+
+class Lsu2Rvv(p: Parameters) extends Bundle {
+  val addr = UInt(5.W)
+  val data = UInt(p.rvvVlen.W)
+  val last = Bool()
+}
+
+class Rvv2Lsu(p: Parameters) extends Bundle {
+  val idx = Valid(new Bundle {
+    val addr = UInt(5.W)
+    val data = UInt(p.rvvVlen.W)
+  })
+  val vregfile = Valid(new Bundle {
+    val addr = UInt(5.W)
+    val data = UInt(p.rvvVlen.W)
+  })
+  val mask = Valid(UInt(p.rvvVlenb.W))
+}
+
 class RvvCoreIO(p: Parameters) extends Bundle {
     // Decode Cycle.
     val inst = Vec(p.instructionLanes,
@@ -26,6 +54,12 @@ class RvvCoreIO(p: Parameters) extends Bundle {
     // Execute cycle.
     val rs = Vec(p.instructionLanes * 2, Flipped(new RegfileReadDataIO))
     val rd = Vec(p.instructionLanes, Valid(new RegfileWriteDataIO))
+
+    val rvv2lsu = Vec(2, Decoupled(new Rvv2Lsu(p)))
+    val lsu2rvv = Vec(2, Flipped(Decoupled(new Lsu2Rvv(p))))
+
+    // Config state.
+    val configState = Output(Valid(new RvvConfigState(p)))
 
     // Async scalar regfile writes.
     val async_rd = Decoupled(new RegfileWriteDataIO)

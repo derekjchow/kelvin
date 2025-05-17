@@ -87,6 +87,7 @@ class Parameters(var m: Seq[MemoryRegion] = Seq(), val hartId: Int = 0) {
   // spec instead of the Kelvin Custom vector ISA.
   var enableRvv = false
   val rvvVlen = 128
+  def rvvVlenb: Int = { rvvVlen / 8 }
 
   // Dispatch unit
   def useDispatchV2: Boolean = { enableRvv }
@@ -117,6 +118,7 @@ class Parameters(var m: Seq[MemoryRegion] = Seq(), val hartId: Int = 0) {
   def lsuDataBytes: Int = { lsuDataBits / 8 }
   val lsuDelayPipelineLen = 1
   def dbusSize: Int = { log2Ceil(lsuDataBits / 8) + 1 }
+  def useLsuV2: Boolean = { enableRvv }
 
   // TCM Size Configuration
   var tcmHighmem = false

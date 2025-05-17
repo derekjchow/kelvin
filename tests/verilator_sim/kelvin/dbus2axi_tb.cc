@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "VDBus2Axi.h"
+#include "VDBus2AxiV1.h"
 #include "tests/verilator_sim/sysc_tb.h"
 
 struct DBus2Axi_tb : Sysc_tb {
@@ -368,7 +368,7 @@ static void DBus2Axi_test(char* name, int loops, bool trace) {
   sc_signal<bool> io_axi_read_data_bits_last;
 
   DBus2Axi_tb tb("DBus2Axi_tb", loops, true /*random*/);
-  VDBus2Axi d2a(name);
+  VDBus2AxiV1 d2a(name);
 
   d2a.clock(tb.clock);
   d2a.reset(tb.reset);

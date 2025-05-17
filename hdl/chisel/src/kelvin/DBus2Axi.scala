@@ -23,7 +23,11 @@ import _root_.circt.stage.ChiselStage
 
 object DBus2Axi {
   def apply(p: Parameters): DBus2Axi = {
-    return Module(new DBus2Axi(p))
+    if (p.useLsuV2) {
+      return Module(new DBus2AxiV2(p))
+    } else {
+      return Module(new DBus2AxiV1(p))
+    }
   }
 }
 
@@ -44,7 +48,9 @@ class DBus2Axi(p: Parameters) extends Module {
     val axi = new AxiMasterIO(p.axi2AddrBits, p.axi2DataBits, p.axi2IdBits)
     val fault = Valid(new FaultInfo(p))
   })
+}
 
+class DBus2AxiV1(p: Parameters) extends DBus2Axi(p) {
   // Top-level state machine
   assert(!(io.dbus.valid && PopCount(io.dbus.size) =/= 1.U))
   val txnActive = RegInit(false.B)
@@ -202,7 +208,100 @@ class DBus2Axi(p: Parameters) extends Module {
   io.fault.bits.epc := io.dbus.pc
 }
 
+class DBus2AxiV2(p: Parameters) extends DBus2Axi(p) {
+  assert(!(io.dbus.valid && PopCount(io.dbus.size) =/= 1.U),
+         cf"Invalid dbus size=${io.dbus.size}")
+
+  // ---------------------------------------------------------------------------
+  // Write Path
+  val waddrFired = RegInit(false.B)
+  io.axi.write.addr.valid := !waddrFired && io.dbus.valid && io.dbus.write
+  io.axi.write.addr.bits.defaults()
+  io.axi.write.addr.bits.addr := io.dbus.addr
+  io.axi.write.addr.bits.size := Ctz(io.dbus.size)
+  io.axi.write.addr.bits.prot := 2.U
+  io.axi.write.addr.bits.id := 0.U
+
+  val wdataFired = RegInit(false.B)
+  io.axi.write.data.valid := !wdataFired && io.dbus.valid && io.dbus.write
+  io.axi.write.data.bits.data := io.dbus.wdata
+  io.axi.write.data.bits.strb := io.dbus.wmask
+  io.axi.write.data.bits.last := true.B
+
+  val wrespReceived = RegInit(false.B)
+  io.axi.write.resp.ready := !wrespReceived && io.dbus.valid && io.dbus.write
+
+  val writeFinished = (io.axi.write.addr.fire || waddrFired) &&
+                      (io.axi.write.data.fire || wdataFired) &&
+                      (io.axi.write.resp.fire || wrespReceived)
+  waddrFired := MuxCase(waddrFired, Seq(
+    writeFinished -> false.B,
+    io.axi.write.addr.fire -> true.B,
+  ))
+  wdataFired := MuxCase(wdataFired, Seq(
+    writeFinished -> false.B,
+    io.axi.write.data.fire -> true.B,
+  ))
+  wrespReceived := MuxCase(wrespReceived, Seq(
+    writeFinished -> false.B,
+    io.axi.write.resp.fire -> true.B,
+  ))
+
+  // ---------------------------------------------------------------------------
+  // Read Path
+  val raddrFired = RegInit(false.B)
+  io.axi.read.addr.valid := !raddrFired && io.dbus.valid && !io.dbus.write
+  io.axi.read.addr.bits.defaults()
+  io.axi.read.addr.bits.addr := io.dbus.addr
+  io.axi.read.addr.bits.size := Ctz(io.dbus.size)
+  io.axi.read.addr.bits.prot := 2.U
+  io.axi.read.addr.bits.id := 0.U
+
+  val rdataReceived = RegInit(MakeInvalid(UInt(p.axi2DataBits.W)))
+  io.axi.read.data.ready :=
+      !rdataReceived.valid && io.dbus.valid && !io.dbus.write
+  // Assert we only received single beat bursts.
+  assert(!io.axi.read.data.fire || io.axi.read.data.bits.last)
+
+  val readFinished = (io.axi.read.addr.fire || raddrFired) &&
+                     (io.axi.read.data.fire || rdataReceived.valid)
+  raddrFired := MuxCase(raddrFired, Seq(
+    readFinished -> false.B,
+    io.axi.read.addr.fire -> true.B,
+  ))
+  rdataReceived := MuxCase(rdataReceived, Seq(
+    readFinished -> MakeInvalid(UInt(p.axi2DataBits.W)),
+    io.axi.read.data.fire -> MakeValid(true.B, io.axi.read.data.bits.data),
+  ))
+  // Insert delay register to match dbus interface expecations, changing on
+  // fire.
+  val readNext = RegInit(0.U(p.axi2DataBits.W))
+  readNext := Mux(
+      readFinished,
+      Mux(io.axi.read.data.fire, io.axi.read.data.bits.data, rdataReceived.bits),
+      readNext)
+  io.dbus.rdata := readNext
+
+  // ---------------------------------------------------------------------------
+  // DBus Response
+  io.dbus.ready := Mux(io.dbus.write, writeFinished, readFinished)
+
+  // ---------------------------------------------------------------------------
+  // Fault Handling
+  io.fault.valid := io.dbus.valid && Mux(
+    io.dbus.write,
+    io.axi.write.resp.valid && (io.axi.write.resp.bits.resp =/= AxiResponseType.OKAY.asUInt),
+    // TODO(derekjchow): Does read resp come in last? If not, wait until
+    // transaction is totally complete before returning error.
+    io.axi.read.data.valid && (io.axi.read.data.bits.resp =/= AxiResponseType.OKAY.asUInt))
+  io.fault.bits.write := io.dbus.write
+  // TODO(derekjchow): Make sure this targets the actual address instead of
+  // line address (to report a more accurate exception).
+  io.fault.bits.addr := io.dbus.addr
+  io.fault.bits.epc := io.dbus.pc
+}
+
 object EmitDBus2Axi extends App {
   val p = new Parameters
-  ChiselStage.emitSystemVerilogFile(new DBus2Axi(p), args)
+  ChiselStage.emitSystemVerilogFile(new DBus2AxiV1(p), args)
 }

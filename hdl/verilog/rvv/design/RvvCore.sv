@@ -15,7 +15,10 @@
 module RvvCore #(parameter N = 4,
                  parameter CMD_BUFFER_MAX_CAPACITY = 16,
                  type RegDataT=logic [31:0],
-                 type RegAddrT=logic [4:0])
+                 type VRegDataT=logic [127:0],
+                 type RegAddrT=logic [4:0],
+                 type MaskT=logic [15:0]
+                 )
 (
   input clk,
   input rstn,
@@ -44,10 +47,33 @@ module RvvCore #(parameter N = 4,
   output RegDataT async_rd_data,
   input logic async_rd_ready,
 
+  // RVV to LSU
+  output  logic     [`NUM_LSU-1:0] uop_lsu_valid_rvv2lsu,
+  output  logic     [`NUM_LSU-1:0] uop_lsu_idx_valid_rvv2lsu,
+  output  RegAddrT  [`NUM_LSU-1:0] uop_lsu_idx_addr_rvv2lsu,
+  output  VRegDataT [`NUM_LSU-1:0] uop_lsu_idx_data_rvv2lsu,
+  output  logic     [`NUM_LSU-1:0] uop_lsu_vregfile_valid_rvv2lsu,
+  output  RegAddrT  [`NUM_LSU-1:0] uop_lsu_vregfile_addr_rvv2lsu,
+  output  VRegDataT [`NUM_LSU-1:0] uop_lsu_vregfile_data_rvv2lsu,
+  output  logic     [`NUM_LSU-1:0] uop_lsu_v0_valid_rvv2lsu,
+  output  MaskT     [`NUM_LSU-1:0] uop_lsu_v0_data_rvv2lsu,
+  input   logic     [`NUM_LSU-1:0] uop_lsu_ready_lsu2rvv,
+
+  // LSU to RVV
+  input  logic     [`NUM_LSU-1:0] uop_lsu_valid_lsu2rvv,
+  input  RegAddrT  [`NUM_LSU-1:0] uop_lsu_addr_lsu2rvv,
+  input  VRegDataT [`NUM_LSU-1:0] uop_lsu_wdata_lsu2rvv,
+  input  logic     [`NUM_LSU-1:0] uop_lsu_last_lsu2rvv,
+  output logic     [`NUM_LSU-1:0] uop_lsu_ready_rvv2lsu,
+
   // Vector CSR writeback
   output vcsr_valid,
   output RVVConfigState vector_csr,
-  input vcsr_ready
+  input vcsr_ready,
+
+  // Config state
+  output config_state_valid,
+  output RVVConfigState config_state
 );
   logic [N-1:0] frontend_cmd_valid;
   RVVCmd [N-1:0] frontend_cmd_data;
@@ -68,7 +94,9 @@ module RvvCore #(parameter N = 4,
       .reg_write_data_o(reg_write_data),
       .cmd_valid_o(frontend_cmd_valid),
       .cmd_data_o(frontend_cmd_data),
-      .queue_capacity_i(queue_capacity)
+      .queue_capacity_i(queue_capacity),
+      .config_state_valid(config_state_valid),
+      .config_state(config_state)
   );
 
   logic [$clog2(N+1)-1:0] frontend_cmd_valid_count;
@@ -124,27 +152,34 @@ module RvvCore #(parameter N = 4,
 
   // LSU Tie-offs
   // RVV send LSU uop to RVS
-    logic             [`NUM_LSU-1:0]          uop_lsu_valid_rvv2lsu;
     UOP_RVV2LSU_t     [`NUM_LSU-1:0]          uop_lsu_rvv2lsu;
-    logic             [`NUM_LSU-1:0]          uop_lsu_ready_lsu2rvv;
-  // LSU feedback to RVV
-    logic             [`NUM_LSU-1:0]          uop_lsu_valid_lsu2rvv;
-    UOP_LSU2RVV_t     [`NUM_LSU-1:0]          uop_lsu_lsu2rvv;
-    logic             [`NUM_LSU-1:0]          uop_lsu_ready_rvv2lsu;
-  always_comb begin
-    uop_lsu_ready_lsu2rvv = 0;
-    uop_lsu_valid_lsu2rvv = 0;
-    for (int i = 0; i < `NUM_LSU; i++) begin
-`ifdef TB_SUPPORT
-      uop_lsu_lsu2rvv[i].uop_pc = 0;
-      uop_lsu_lsu2rvv[i].uop_index = 0;
-`endif
-      uop_lsu_lsu2rvv[i].vregfile_write_valid = 0;
-      uop_lsu_lsu2rvv[i].vregfile_write_addr = 0;
-      uop_lsu_lsu2rvv[i].vregfile_write_data = 0;
-      uop_lsu_lsu2rvv[i].lsu_vstore_last = 0;
+    always_comb begin
+      for (int i = 0; i < `NUM_LSU; i++) begin
+        uop_lsu_idx_valid_rvv2lsu[i] = uop_lsu_rvv2lsu[i].vidx_valid;
+        uop_lsu_idx_addr_rvv2lsu[i] = uop_lsu_rvv2lsu[i].vidx_addr;
+        uop_lsu_idx_data_rvv2lsu[i] = uop_lsu_rvv2lsu[i].vidx_data;
+        uop_lsu_vregfile_valid_rvv2lsu[i] = uop_lsu_rvv2lsu[i].vregfile_read_valid;
+        uop_lsu_vregfile_addr_rvv2lsu[i] = uop_lsu_rvv2lsu[i].vregfile_read_addr;
+        uop_lsu_vregfile_data_rvv2lsu[i] = uop_lsu_rvv2lsu[i].vregfile_read_data;
+        uop_lsu_v0_valid_rvv2lsu[i] = uop_lsu_rvv2lsu[i].v0_valid;
+        uop_lsu_v0_data_rvv2lsu[i] = uop_lsu_rvv2lsu[i].v0_data;
+      end
     end
-  end
+
+  // LSU feedback to RVV
+    UOP_LSU2RVV_t     [`NUM_LSU-1:0]          uop_lsu_lsu2rvv;
+    always_comb begin
+      `ifdef TB_SUPPORT
+            uop_lsu_lsu2rvv[i].uop_pc = 0;
+            uop_lsu_lsu2rvv[i].uop_index = 0;
+      `endif
+      for (int i = 0; i < `NUM_LSU; i++) begin
+        uop_lsu_lsu2rvv[i].vregfile_write_valid = uop_lsu_valid_lsu2rvv[i];
+        uop_lsu_lsu2rvv[i].vregfile_write_addr = uop_lsu_addr_lsu2rvv[i];
+        uop_lsu_lsu2rvv[i].vregfile_write_data = uop_lsu_wdata_lsu2rvv[i];
+        uop_lsu_lsu2rvv[i].lsu_vstore_last = uop_lsu_last_lsu2rvv[i];
+      end
+    end
 
   // Scalar regfile write-back tie-offs
   // TODO(derekjchow): Properly arbitrate write-back tie-offs by extending
@@ -192,6 +227,7 @@ module RvvCore #(parameter N = 4,
       .uop_lsu_valid_rvv2lsu(uop_lsu_valid_rvv2lsu),
       .uop_lsu_rvv2lsu(uop_lsu_rvv2lsu),
       .uop_lsu_ready_lsu2rvv(uop_lsu_ready_lsu2rvv),
+
       .uop_lsu_valid_lsu2rvv(uop_lsu_valid_lsu2rvv),
       .uop_lsu_lsu2rvv(uop_lsu_lsu2rvv),
       .uop_lsu_ready_rvv2lsu(uop_lsu_ready_rvv2lsu),

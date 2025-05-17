@@ -180,6 +180,11 @@ class SCore(p: Parameters) extends Module {
   // Load/Store Unit
   lsu.io.busPort := regfile.io.busPort
   lsu.io.req <> dispatch.io.lsu
+  if (p.enableRvv) {
+    lsu.io.rvvState.get := io.rvvcore.get.configState
+    lsu.io.lsu2rvv.get <> io.rvvcore.get.lsu2rvv
+    io.rvvcore.get.rvv2lsu <> lsu.io.rvv2lsu.get
+  }
 
   // ---------------------------------------------------------------------------
   // Multiplier Unit
@@ -267,6 +272,7 @@ class SCore(p: Parameters) extends Module {
   val fRegfile = Option.when(p.enableFloat)(Module(new FRegfile(p, 3, 2)))
   if (p.enableFloat) {
     lsu.io.busPort_flt.get := fRegfile.get.io.busPort
+    fRegfile.get.io.busPortAddr := dispatch.io.fbusPortAddr.get
     floatCore.get.io.read_ports <> fRegfile.get.io.read_ports
     floatCore.get.io.write_ports <> fRegfile.get.io.write_ports
     fRegfile.get.io.scoreboard_set :=
@@ -316,6 +322,7 @@ class SCore(p: Parameters) extends Module {
   if (p.enableRvv) {
     // Connect dispatch
     dispatch.io.rvv.get <> io.rvvcore.get.inst
+    dispatch.io.rvvState.get := io.rvvcore.get.configState
 
     // Register inputs
     io.rvvcore.get.rs := regfile.io.readData

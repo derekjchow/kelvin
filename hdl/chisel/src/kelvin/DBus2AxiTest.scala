@@ -48,7 +48,7 @@ class DBus2AxiSpec extends AnyFreeSpec with ChiselScalatestTester {
 
   class Case(val addr: Int, val size: Int, val data: BigInt, val mask: Long) {}
   "Unaligned Write then Read" in {
-    test(new DBus2Axi(p)) { dut =>
+    test(new DBus2AxiV1(p)) { dut =>
       val cases = Array(
         new Case(0x00000001, 4, 0x11223344, 0x0000001EL),
         new Case(0x00000002, 4, 0x11223344, 0x0000003CL),
@@ -228,7 +228,7 @@ class DBus2AxiSpec extends AnyFreeSpec with ChiselScalatestTester {
   }
 
   "Aligned Write then Read" in {
-    test(new DBus2Axi(p)) { dut =>
+    test(new DBus2AxiV1(p)) { dut =>
       val cases = Array(
         new Case(0x00000000, 4, 0x11223344, 0x0000000fL),
         new Case(0x00000004, 4, 0x22334455, 0x000000f0L),

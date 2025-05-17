@@ -48,7 +48,11 @@ module RvvFrontEnd#(parameter N = 4,
   // Command output.
   output logic [N-1:0] cmd_valid_o,
   output RVVCmd [N-1:0] cmd_data_o,
-  input logic [CAPACITYBITS-1:0] queue_capacity_i  // Number of elements that can be enqueued
+  input logic [CAPACITYBITS-1:0] queue_capacity_i,  // Number of elements that can be enqueued
+
+  // Config state
+  output config_state_valid,
+  output RVVConfigState config_state
 );
   localparam COUNTBITS = $clog2(N + 1);
   typedef logic [COUNTBITS-1:0] count_t;
@@ -69,6 +73,17 @@ module RvvFrontEnd#(parameter N = 4,
       valid_in_psum[i+1] = valid_in_psum[i] + inst_valid_i[i];
     end
   end
+
+  // State, for time being lets do not state forwarding for timing
+  logic config_state_reduction;
+  always_comb begin
+    config_state_reduction = 1;
+    for (int i = 0; i < N; i++) begin
+      config_state_reduction = config_state_reduction & (!valid_inst_q[i]);
+    end
+  end
+  assign config_state_valid = config_state_reduction;
+  assign config_state = config_state_q;
 
   logic inst_accepted [N-1:0];
   always_comb begin
@@ -197,7 +212,7 @@ module RvvFrontEnd#(parameter N = 4,
 
   always @(posedge clk) begin
     for (int i = 0; i < N; i++) begin
-      assert(requires_reg_read[i] == reg_read_valid_i[i]);
+      assert(!requires_reg_read[i] || reg_read_valid_i[i]);
     end
   end
 `endif  // not def SYNTHESIS

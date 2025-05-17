@@ -223,8 +223,8 @@ class CoreMiniAxiInterface:
         if self.master_arfifo.qsize():
           break
       ardata = await self.master_arfifo.get()
-      word = self.read_memory(ardata)
-      if word is None:
+      data = self.read_memory(ardata)
+      if data is None:
         for i in range(0, ardata["len"] + 1):
           rdata = dict()
           rdata["id"] = ardata["id"]
@@ -236,7 +236,7 @@ class CoreMiniAxiInterface:
         for i in range(0, ardata["len"] + 1):
           rdata = dict()
           rdata["id"] = ardata["id"]
-          rdata["data"] = format_line_from_word(word, ardata["addr"])
+          rdata["data"] = convert_to_binary_value(data)
           rdata["resp"] = AxiResp.OKAY
           rdata["last"] = 1 if (i == ardata["len"]) else 0
           await self.master_rfifo.put(rdata)
@@ -597,11 +597,10 @@ class CoreMiniAxiInterface:
     if addr < self.memory_base_addr or addr >= (self.memory_base_addr + len(self.memory)):
       return None
     offset = (addr - self.memory_base_addr)
-    data = self.memory[offset:offset+size].astype(np.uint32)
-    data_flat = 0
-    for i in range(0,size):
-      data_flat = data_flat + (data[i] << (i * 8))
-    return data_flat
+    data = self.memory[offset:offset+size]
+    padded_data = pad_to_multiple(data, 16)
+    line_shift = addr % 16
+    return np.roll(padded_data.view(np.uint8), line_shift)
 
   async def execute_from(self, start_pc):
     # Program starting address
@@ -646,10 +645,17 @@ class CoreMiniAxiInterface:
         assert timeout_cycles > 0
 
   async def watch(self, addr, timeout_cycles=1_000_000):
+    elem_addr = addr % 16
+    line_addr = addr - elem_addr
+    expected_wmask = 0xF << elem_addr
     while timeout_cycles > 0:
       if self.dut.core.io_dbus_valid.value == 1:
-        if self.dut.core.io_dbus_addr.value == addr:
-          return self.dut.core.io_dbus_wdata.value.buff
+        if self.dut.core.io_dbus_addr.value == line_addr:
+          if self.dut.core.io_dbus_write.value == 1:
+            wmask = int(self.dut.core.io_dbus_wmask.value)
+            if (expected_wmask & wmask) == expected_wmask:
+              return self.dut.core.io_dbus_wdata.value.buff
+
       await ClockCycles(self.dut.io_aclk, 1)
       timeout_cycles = timeout_cycles - 1
     assert timeout_cycles > 0

@@ -24,7 +24,7 @@ import chisel3._
 import chisel3.util._
 import common._
 import kelvin.float.{FloatInstruction, FloatOpcode}
-import kelvin.rvv.RvvCompressedInstruction
+import kelvin.rvv._
 
 object Decode {
   def apply(p: Parameters, pipeline: Int): Decode = {
@@ -209,15 +209,24 @@ class DecodedInstruction(p: Parameters) extends Bundle {
   def floatReadsRs1(): Bool = { float.map(f => f.valid && f.bits.scalar_rs1).getOrElse(false.B) }
   def floatReadsRs2(): Bool = { float.map(f => f.valid && f.bits.uses_rs2).getOrElse(false.B) }
   def floatReadsRs3(): Bool = { float.map(f => f.valid && f.bits.uses_rs3).getOrElse(false.B) }
+
+  def rvvWritesRd(): Bool = {
+    if (p.enableRvv) {
+      rvv.get.valid && rvv.get.bits.writesRd()
+    } else {
+      false.B
+    }
+  }
+
   def readsRs1(): Bool = {
-    // TODO(derekjchow): Refactor and add rvv
     isCondBr() || isAluReg() || isAluImm() || isAlu1Bit() || isAlu2Bit() ||
     isCsr() || isMul() || isDvu() || slog || getvl || vld || vst || jalr || floatReadsRs1() ||
     (if (p.enableRvv) { rvv.get.valid && rvv.get.bits.readsRs1() } else { false.B })
   }
   def readsRs2(): Bool = {
     isCondBr() || isAluReg() || isAlu2Bit() || isScalarStore() || isCsrReg() ||
-    isMul() || isDvu() || slog || getvl || vld || vst || viop
+    isMul() || isDvu() || slog || getvl || vld || vst || viop ||
+    (if (p.enableRvv) { rvv.get.valid && rvv.get.bits.readsRs2() } else { false.B })
   }
 
   // Check if argument should be set by immediate value
@@ -285,6 +294,7 @@ class Dispatch(p: Parameters) extends Module {
     // Rvv interface.
     val rvv = Option.when(p.enableRvv)(
         Vec(p.instructionLanes, Decoupled(new RvvCompressedInstruction)))
+    val rvvState = Option.when(p.enableRvv)(Input(Valid(new RvvConfigState(p))))
 
     // Vector interface, to maintain interface compatibility with old dispatch
     // unit.
@@ -295,6 +305,8 @@ class Dispatch(p: Parameters) extends Module {
     val float = if (p.enableFloat) {
       Some(Decoupled(new FloatInstruction))
     } else { None }
+
+    val fbusPortAddr = Option.when(p.enableFloat)(Output(UInt(5.W)))
 
     // Scalar logging.
     val slog = Output(Bool())
@@ -337,7 +349,11 @@ class DispatchV2(p: Parameters) extends Dispatch(p) {
   // ---------------------------------------------------------------------------
   // Scalar Scoreboard
   val rdAddr = io.inst.map(_.bits.inst(11,7))
-  val writesRd = decodedInsts.map(d => (!d.isScalarStore() && !d.isCondBr()) || (d.isFloat() && d.floatWritesRd()))
+  val writesRd = decodedInsts.map(d =>
+      (!d.isScalarStore() && !d.isCondBr()) ||
+      (d.isFloat() && d.floatWritesRd()) ||
+      d.rvvWritesRd()
+  )
   val rdScoreboard = (0 until p.instructionLanes).map(i =>
       Mux(writesRd(i), UIntToOH(rdAddr(i), 32), 0.U(32.W)))
   val scoreboardScan = rdScoreboard.scan(0.U(32.W))(_ | _)
@@ -367,9 +383,9 @@ class DispatchV2(p: Parameters) extends Dispatch(p) {
   val rs3Addr = io.inst.map(_.bits.inst(31,27))
   val writesFloatRd = decodedInsts.map(d => d.isFloat() && !d.floatWritesRd())
   val floatReadScoreboard = if (p.enableFloat) { (0 until p.instructionLanes).map(i =>
-    MuxOR(!decodedInsts(i).floatReadsRs1(), UIntToOH(rs1Addr(i), 32)) |
-    MuxOR(!decodedInsts(i).floatReadsRs2(), UIntToOH(rs2Addr(i), 32)) |
-    MuxOR(!decodedInsts(i).floatReadsRs3(), UIntToOH(rs3Addr(i), 32))
+    MuxOR(decodedInsts(i).floatReadsRs1(), UIntToOH(rs1Addr(i), 32)) |
+    MuxOR(decodedInsts(i).floatReadsRs2(), UIntToOH(rs2Addr(i), 32)) |
+    MuxOR(decodedInsts(i).floatReadsRs3(), UIntToOH(rs3Addr(i), 32))
   ) } else { (0 until p.instructionLanes).map(_ => 0.U(32.W)) }
   val floatRdScoreboard = if (p.enableFloat) { (0 until p.instructionLanes).map(i =>
     MuxOR(writesFloatRd(i), UIntToOH(rdAddr(i), 32))
@@ -378,10 +394,29 @@ class DispatchV2(p: Parameters) extends Dispatch(p) {
       (floatReadScoreboard(i) & io.fscoreboard.getOrElse(0.U)) =/= 0.U(32.W))
   val floatWriteAfterWrite = (0 until p.instructionLanes).map(i =>
       (floatRdScoreboard(i) & io.fscoreboard.getOrElse(0.U)) =/= 0.U(32.W))
+  // For floating point store
+  io.fbusPortAddr.get := rs2Addr(0)
 
   // ---------------------------------------------------------------------------
   // Fence interlock
   val fence = decodedInsts.map(x => x.isFency() && (io.mactive || io.lsuActive))
+
+  // ---------------------------------------------------------------------------
+  // Rvv interlock rules
+  // RVV Load store unit requires valid config state on dispatch.
+  val rvvInterlock = if (p.enableRvv) {
+    val configChange = decodedInsts.map(
+        x => x.rvv.get.valid && x.rvv.get.bits.isVset())
+    val configInvalid = configChange.scan(!io.rvvState.get.valid)(_ || _)
+    val canDispatchRvv = (0 until p.instructionLanes).map(i =>
+        !decodedInsts(i).rvv.get.valid || // Don't lock non-rvv
+        !decodedInsts(i).rvv.get.bits.isLoadStore() || // Non-LSU can handle change
+        !configInvalid(i)  // If config is valid, can dispatch load store
+    )
+    canDispatchRvv
+  } else {
+    Seq.fill(p.instructionLanes)(true.B)
+  }
 
   // ---------------------------------------------------------------------------
   // Undef
@@ -405,6 +440,7 @@ class DispatchV2(p: Parameters) extends Dispatch(p) {
       !floatWriteAfterWrite(i) && // Avoid WAW hazards
       !branchInterlock(i) && // Only branch/alu can be dispatched after a branch
       !fence(i) &&           // Don't dispatch if fence interlocked
+      rvvInterlock(i) &&     // Rvv interlock rules
       !undefInterlock(i)     // Ensure undef is only dispatched from first slot
   )
 
@@ -535,7 +571,23 @@ class DispatchV2(p: Parameters) extends Dispatch(p) {
       d.flushat        -> MakeValid(true.B, LsuOp.FLUSHAT),
       d.flushall       -> MakeValid(true.B, LsuOp.FLUSHALL),
       (d.isFloatLoad || d.isFloatStore) -> MakeValid(true.B, LsuOp.FLOAT)
-    ))
+    ) ++ Option.when(p.enableRvv) {
+      val isRvvLoad = d.rvv.get.valid &&
+          (d.rvv.get.bits.opcode === RvvCompressedOpcode.RVVLOAD)
+      val isRvvStore = d.rvv.get.valid &&
+          (d.rvv.get.bits.opcode === RvvCompressedOpcode.RVVSTORE)
+      val mop = d.rvv.get.bits.mop
+      Seq(
+        (isRvvLoad && (mop === RvvAddressingMode.UNIT_STRIDE))        -> MakeValid(true.B, LsuOp.VLOAD_UNIT),
+        (isRvvLoad && (mop === RvvAddressingMode.INDEXED_UNORDERED))  -> MakeValid(true.B, LsuOp.VLOAD_UINDEXED),
+        (isRvvLoad && (mop === RvvAddressingMode.STRIDED))            -> MakeValid(true.B, LsuOp.VLOAD_STRIDED),
+        (isRvvLoad && (mop === RvvAddressingMode.INDEXED_ORDERED))    -> MakeValid(true.B, LsuOp.VLOAD_OINDEXED),
+        (isRvvStore && (mop === RvvAddressingMode.UNIT_STRIDE))       -> MakeValid(true.B, LsuOp.VSTORE_UNIT),
+        (isRvvStore && (mop === RvvAddressingMode.INDEXED_UNORDERED)) -> MakeValid(true.B, LsuOp.VSTORE_UINDEXED),
+        (isRvvStore && (mop === RvvAddressingMode.STRIDED))           -> MakeValid(true.B, LsuOp.VSTORE_STRIDED),
+        (isRvvStore && (mop === RvvAddressingMode.INDEXED_ORDERED))   -> MakeValid(true.B, LsuOp.VSTORE_OINDEXED),
+      )
+    }.getOrElse(Seq()))
     io.lsu(i).valid := tryDispatch && lsu.valid
     io.lsu(i).bits.store := io.inst(i).bits.inst(5)
     io.lsu(i).bits.addr := rdAddr(i)
@@ -644,8 +696,9 @@ class DispatchV2(p: Parameters) extends Dispatch(p) {
     // SB,SH,SW   0100011
     val storeSelect = d.inst(6,3) === 4.U && d.inst(1,0) === 3.U
     io.busRead(i).immen := !d.flushat
-    io.busRead(i).immed := Cat(d.imm12(31,5),
-                               Mux(storeSelect, d.immst(4,0), d.imm12(4,0)))
+    io.busRead(i).immed := Mux(d.rvv.get.valid,
+        0.U,
+        Cat(d.imm12(31,5), Mux(storeSelect, d.immst(4,0), d.imm12(4,0))))
   }
 }
 
@@ -707,6 +760,8 @@ class DispatchV1(p: Parameters) extends Dispatch(p) {
   io.busRead := decode.map(_.io.busRead)
   if (p.enableFloat) {
     io.rdMark_flt.get := decode(0).io.rdMark_flt.get
+    val rs2Addr = io.inst(0).bits.inst(24,20)
+    io.fbusPortAddr.get := rs2Addr
   }
 
   // Connect outputs

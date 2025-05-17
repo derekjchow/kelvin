@@ -304,6 +304,7 @@ chisel_library(
         "//hdl/chisel/src/common",
         "//hdl/chisel/src/common:fp",
         "//hdl/chisel/src/common:instruction_buffer",
+        "//hdl/chisel/src/common:scatter_gather",
     ],
 )
 
@@ -496,6 +497,16 @@ vcstatic_lint(
     waive_tags = ["UndrivenInTerm-ML"],
 )
 
+vcstatic_lint(
+    name = "rvv_core_mini_axi_cc_library_lint",
+    blackbox_designs = CORE_MINI_AXI_BLACKBOX_DESIGNS,
+    goal = "lint_rtl",
+    lint_tags = CORE_MINI_AXI_LINT_TAGS,
+    module = "RvvCoreMiniAxi",
+    package = "rvv_core_mini_axi_cc_library_verilog",
+    waive_tags = ["UndrivenInTerm-ML"],
+)
+
 chisel_cc_library(
     name = "rvv_core_mini_axi_cc_library",
     chisel_lib = ":kelvin",
@@ -544,7 +555,7 @@ chisel_cc_library(
     name = "dbus2axi_cc_library",
     chisel_lib = ":kelvin",
     emit_class = "kelvin.EmitDBus2Axi",
-    module_name = "DBus2Axi",
+    module_name = "DBus2AxiV1",
 )
 
 chisel_cc_library(

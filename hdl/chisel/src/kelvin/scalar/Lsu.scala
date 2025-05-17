@@ -17,10 +17,52 @@ package kelvin
 import chisel3._
 import chisel3.util._
 import common._
+import kelvin.rvv._
+
+class Lsu(p: Parameters) extends Module {
+  val io = IO(new Bundle {
+    // Decode cycle.
+    val req = Vec(p.instructionLanes, Flipped(Decoupled(new LsuCmd)))
+    val busPort = Flipped(new RegfileBusPortIO(p))
+    val busPort_flt = Option.when(p.enableFloat)(Flipped(new RegfileBusPortIO(p)))
+
+    // Execute cycle(s).
+    val rd = Valid(Flipped(new RegfileWriteDataIO))
+    val rd_flt = Valid(Flipped(new RegfileWriteDataIO))
+
+    // Cached interface.
+    val ibus = new IBusIO(p)
+    val dbus = new DBusIO(p)
+    val flush = new DFlushFenceiIO(p)
+    val fault = Valid(new FaultInfo(p))
+
+    // DBus that will eventually reach an external bus.
+    // Intended for sending a transaction to an external
+    // peripheral, likely on TileLink or AXI.
+    val ebus = new EBusIO(p)
+
+    // Vector switch.
+    val vldst = Output(Bool())
+
+    val rvv2lsu = Option.when(p.enableRvv)(
+        Vec(2, Flipped(Decoupled(new Rvv2Lsu(p)))))
+    val lsu2rvv = Option.when(p.enableRvv)(Vec(2, Decoupled(new Lsu2Rvv(p))))
+
+    // RVV config state
+    val rvvState = Option.when(p.enableRvv)(Input(Valid(new RvvConfigState(p))))
+
+    val storeCount = Output(UInt(2.W))
+    val active = Output(Bool())
+  })
+}
 
 object Lsu {
   def apply(p: Parameters): Lsu = {
-    return Module(new Lsu(p))
+    if (p.useLsuV2) {
+      return Module(new LsuV2(p))
+    } else {
+      return Module(new LsuV1(p))
+    }
   }
 }
 
@@ -38,6 +80,27 @@ object LsuOp extends ChiselEnum {
   val FLUSHALL = Value
   val VLDST = Value
   val FLOAT = Value
+
+  // Vector instructions.
+  val VLOAD_UNIT = Value
+  val VLOAD_STRIDED = Value
+  val VLOAD_OINDEXED = Value
+  val VLOAD_UINDEXED = Value
+  val VSTORE_UNIT = Value
+  val VSTORE_STRIDED = Value
+  val VSTORE_OINDEXED = Value
+  val VSTORE_UINDEXED = Value
+
+  def isVector(op: LsuOp.Type): Bool = {
+    op.isOneOf(LsuOp.VLOAD_UNIT, LsuOp.VLOAD_STRIDED,
+               LsuOp.VLOAD_OINDEXED, LsuOp.VLOAD_UINDEXED,
+               LsuOp.VSTORE_UNIT, LsuOp.VSTORE_STRIDED,
+               LsuOp.VSTORE_OINDEXED, LsuOp.VSTORE_UINDEXED)
+  }
+
+  def isFlush(op: LsuOp.Type): Bool = {
+    op.isOneOf(LsuOp.FENCEI, LsuOp.FLUSHAT, LsuOp.FLUSHALL)
+  }
 }
 
 class LsuCmd extends Bundle {
@@ -45,6 +108,265 @@ class LsuCmd extends Bundle {
   val addr = UInt(5.W)
   val op = LsuOp()
   val pc = UInt(32.W)
+}
+
+class LsuUOp extends Bundle {
+  val store = Bool()
+  val rd = UInt(5.W)
+  val op = LsuOp()
+  val pc = UInt(32.W)
+  val addr = UInt(32.W)
+  val data = UInt(32.W)  // Doubles as rs2
+
+  override def toPrintable: Printable = {
+    cf"LsuUOp(store -> ${store}, rd -> ${rd}, op -> ${op}, " +
+    cf"pc -> 0x${pc}%x, addr -> 0x${addr}%x, data -> ${data})"
+  }
+}
+
+object LsuUOp {
+  def apply(i: Int,
+            cmd: LsuCmd,
+            sbus: RegfileBusPortIO,
+            fbus: Option[RegfileBusPortIO]): LsuUOp = {
+    val result = Wire(new LsuUOp)
+    result.store := cmd.store
+    result.rd := cmd.addr
+    result.op := cmd.op
+    result.pc := cmd.pc
+    if (fbus.isDefined) {
+      result.addr := sbus.addr(i)
+      result.data := Mux(
+          cmd.op === LsuOp.FLOAT, fbus.get.data(i), sbus.data(i))
+    } else {
+      result.addr := sbus.addr(i)
+      result.data := sbus.data(i)
+    }
+
+    result
+  }
+}
+
+// bytesPerSlot is the number of bytes in a vector register
+// bytesPerLine is the number of bytes in the AXI bus
+class LsuSlot(bytesPerSlot: Int, bytesPerLine: Int) extends Bundle {
+  val elemBits = log2Ceil(bytesPerLine)
+
+  val op = LsuOp()
+  val rd = UInt(5.W)
+  val store = Bool()
+  val pc = UInt(32.W)
+  val active = Vec(bytesPerSlot, Bool())
+  val addrs = Vec(bytesPerSlot, UInt(32.W))
+  val data = Vec(bytesPerSlot, UInt(8.W))
+  val pendingVector = Bool()
+  val pendingWriteback = Bool()
+
+  // If the slot has no pending tasks and can accept a new operation
+  def slotIdle(): Bool = {
+    !(active.reduce(_||_) || pendingWriteback)
+  }
+
+  // If the slot has any active transactions.
+  def activeTransaction(): Bool = {
+    active.reduce(_||_)
+  }
+
+  def lineAddresses(): Vec[UInt] = {
+    VecInit(addrs.map(x => x(31, elemBits)))
+  }
+
+  def elemAddresses(): Vec[UInt] = {
+    VecInit(addrs.map(x => x(elemBits-1, 0)))
+  }
+
+  def targetLineAddress(lastRead: Valid[UInt]): Valid[UInt] = {
+    // Determine which lines are active. If a read was issued last cycle,
+    // supress those lines.
+    val lineAddrs = lineAddresses()
+    val lineActive = (0 until bytesPerSlot).map(i =>
+        active(i) && (!lastRead.valid || (lastRead.bits =/= lineAddrs(i))))
+
+    MuxCase(MakeInvalid(UInt((32-elemBits).W)), (0 until bytesPerSlot).map(
+        i => lineActive(i) -> MakeValid(true.B, lineAddrs(i))))
+  }
+
+  def vectorUpdate(updated: Bool, rvv2lsu: Rvv2Lsu): LsuSlot = {
+    val result = Wire(new LsuSlot(bytesPerSlot, bytesPerLine))
+    result.op := op
+    result.rd := rd
+    result.store := store
+    result.pc := pc
+    result.pendingWriteback := pendingWriteback
+    // TODO(derekjchow): Set addrs correctly for indexed
+    result.addrs := Mux(
+        updated && LsuOp.isVector(op) && rvv2lsu.idx.valid,
+        VecInit(UIntToVec(rvv2lsu.idx.bits.data, 8).map(x =>
+            Cat(0.U(24.W), x)
+        )),
+        addrs)
+
+    result.data := Mux(updated && LsuOp.isVector(op) && rvv2lsu.vregfile.valid,
+        UIntToVec(rvv2lsu.vregfile.bits.data, 8), data)
+    result.active := Mux(updated && LsuOp.isVector(op) && rvv2lsu.mask.valid,
+        VecInit(rvv2lsu.mask.bits.asBools), active)
+    result.pendingVector := pendingVector && !updated
+    result
+  }
+
+  // Updates the slot based on a previous read.
+  // TODO(derekjchow): Update me for vector
+  def loadUpdate(valid: Bool,
+                 lineAddr: UInt,
+                 lineData: UInt): LsuSlot = {
+    // TODO(derekjchow): Check ordering semantics
+    val lineAddrs = lineAddresses()
+    val lineActive = VecInit((0 until bytesPerSlot).map(i =>
+        !store &&     // Don't update if a store
+        (!LsuOp.isVector(op) || !pendingVector) &&  // Has vector data if needed
+        valid &&      // Update only if a valid read last cycle
+        active(i) &&  // Update only if active
+        (lineAddrs(i) === lineAddr)))  // Line must match read line
+    val lineDataVec = UIntToVec(lineData, 8)
+    val gatheredData = Gather(elemAddresses(), lineDataVec)
+
+    val result = Wire(new LsuSlot(bytesPerSlot, bytesPerLine))
+    result.op := op
+    result.rd := rd
+    result.store := store
+    result.pc := pc
+    result.addrs := addrs
+    result.pendingWriteback := pendingWriteback
+    result.pendingVector := pendingVector
+    result.active := (0 until bytesPerSlot).map(
+        i => active(i) & ~lineActive(i))
+    result.data := VecInit((0 until bytesPerSlot).map(
+        i => Mux(lineActive(i), gatheredData(i), data(i))))
+
+    result
+  }
+
+  // If the load transaction is finished, but the result needs to be written
+  // back to the regfile.
+  def shouldWriteback(): Bool = {
+    pendingWriteback && !pendingVector && !active.reduce(_||_)
+  }
+
+  // Updates the slot if its result is written back to the regfile.
+  def writebackUpdate(writeback: Bool): LsuSlot = {
+    val result = Wire(new LsuSlot(bytesPerSlot, bytesPerLine))
+    result.op := op
+    result.rd := rd
+    result.store := store
+    result.pc := pc
+    result.addrs := addrs
+    result.pendingWriteback := pendingWriteback && !writeback
+    result.pendingVector := pendingVector
+    result.active := active
+    result.data := data
+
+    result
+  }
+
+  // TODO(derekjchow): Update me for vector
+  def scatter(lineAddr: UInt): (Vec[UInt], Vec[Bool], Vec[Bool]) = {
+    val canScatter = store && (!LsuOp.isVector(op) || !pendingVector)
+    val lineAddrs = lineAddresses()
+    val lineActive = VecInit((0 until bytesPerSlot).map(i =>
+        canScatter && active(i) & (lineAddrs(i) === lineAddr)))
+    Scatter(lineActive, elemAddresses(), data)
+  }
+
+  // TODO(derekjchow): Update me for vector
+  def storeUpdate(selected: Vec[Bool]): LsuSlot = {
+    assert(selected.length == active.length)
+    val result = Wire(new LsuSlot(bytesPerSlot, bytesPerLine))
+    result.op := op
+    result.rd := rd
+    result.store := store
+    result.pc := pc
+    result.pendingWriteback := pendingWriteback
+    result.pendingVector := pendingVector
+    result.active := (0 until bytesPerSlot).map(i => active(i) & ~selected(i))
+    result.addrs := addrs
+    result.data := data
+    result
+  }
+
+  def scalarLoadResult(): UInt = {
+    val word = Cat(data(3), data(2), data(1), data(0))
+    val half = Cat(data(1), data(0))
+    val byte =  data(0)
+    // Sign extends the result of a load operation when necessary.
+    val halfSigned = Wire(SInt(32.W))
+    halfSigned := half.asSInt
+    val byteSigned = Wire(SInt(32.W))
+    byteSigned := byte.asSInt
+    MuxCase(0.U, Seq(
+      (op === LsuOp.LB) -> byteSigned.asUInt,
+      (op === LsuOp.LBU) -> byte,
+      (op === LsuOp.LH) -> halfSigned.asUInt,
+      (op === LsuOp.LHU) -> half,
+      (op === LsuOp.LW) -> word,
+      (op === LsuOp.FLOAT) -> word,
+    ))
+  }
+
+  override def toPrintable: Printable = {
+    val lines = (0 until bytesPerSlot).map(i =>
+        cf"  $i: ${active(i)}, 0x${addrs(i)}%x, 0x${data(i)}%x\n")
+    cf"store: $store\n  op: ${op}\n" + lines.reduce(_+_)
+  }
+}
+
+object LsuSlot {
+  def inactive(p: Parameters, bytesPerSlot: Int): LsuSlot = {
+    0.U.asTypeOf(new LsuSlot(bytesPerSlot, p.lsuDataBytes))
+  }
+
+  // TODO(derekjchow): UInt8 only today, Support all dtypes
+  def computeStridedAddrs(bytesPerSlot: Int,
+                          baseAddr: UInt,
+                          stride: UInt): Vec[UInt] = {
+    VecInit((0 until bytesPerSlot).map(i => (baseAddr + (i.U*stride))(31, 0)))
+  }
+
+  def fromLsuUOp(uop: LsuUOp, p: Parameters, bytesPerSlot: Int): LsuSlot = {
+    val result = Wire(new LsuSlot(bytesPerSlot, p.lsuDataBytes))
+    result.op := uop.op
+    result.rd := uop.rd
+    result.store := uop.store
+    result.pc := uop.pc
+
+    result.pendingWriteback := !uop.store
+    result.pendingVector := LsuOp.isVector(uop.op)
+
+    val active = MuxCase(0.U(bytesPerSlot.W), Seq(
+      uop.op.isOneOf(LsuOp.LB, LsuOp.LBU, LsuOp.SB) -> "b1".U(bytesPerSlot.W),
+      uop.op.isOneOf(LsuOp.LH, LsuOp.LHU, LsuOp.SH) -> "b11".U(bytesPerSlot.W),
+      uop.op.isOneOf(LsuOp.LW, LsuOp.SW, LsuOp.FLOAT) -> "b1111".U(bytesPerSlot.W),
+      // Vector
+      LsuOp.isVector(uop.op) -> ~0.U(bytesPerSlot.W),
+    ))
+    result.active := active.asBools
+
+    // Compute addrs
+    // TODO(derekjchow): Compute addrs for strided.
+    result.addrs := Mux(
+        uop.op.isOneOf(LsuOp.VLOAD_STRIDED, LsuOp.VSTORE_STRIDED),
+        computeStridedAddrs(bytesPerSlot, uop.addr, uop.data),
+        VecInit((0 until bytesPerSlot).map(i => uop.addr + i.U)))
+
+    result.data(0) := uop.data(7, 0)
+    result.data(1) := uop.data(15, 8)
+    result.data(2) := uop.data(23, 16)
+    result.data(3) := uop.data(31, 24)
+    for (i <- 4 until bytesPerSlot) {
+      result.data(i) := 0.U
+    }
+
+    result
+  }
 }
 
 class LsuCtrl(p: Parameters) extends Bundle {
@@ -83,35 +405,43 @@ class LsuReadData(p: Parameters) extends Bundle {
   val last = Bool()
 }
 
-class Lsu(p: Parameters) extends Module {
-  val io = IO(new Bundle {
-    // Decode cycle.
-    val req = Vec(p.instructionLanes, Flipped(Decoupled(new LsuCmd)))
-    val busPort = Flipped(new RegfileBusPortIO(p))
-    val busPort_flt = Option.when(p.enableFloat)(Flipped(new RegfileBusPortIO(p)))
+object LsuBus extends ChiselEnum {
+  val IBUS = Value
+  val DBUS = Value
+  val EXTERNAL = Value
+}
 
-    // Execute cycle(s).
-    val rd = Valid(Flipped(new RegfileWriteDataIO))
-    val rd_flt = Valid(Flipped(new RegfileWriteDataIO))
+class LsuRead(lineBits: Int) extends Bundle {
+  val bus = LsuBus()
+  val lineAddr = UInt(lineBits.W)
+}
 
-    // Cached interface.
-    val ibus = new IBusIO(p)
-    val dbus = new DBusIO(p)
-    val flush = new DFlushFenceiIO(p)
-    val fault = Valid(new FaultInfo(p))
+object LsuRead {
+  def apply(bus: LsuBus.Type, lineAddr: UInt): LsuRead = {
+    val result = Wire(new LsuRead(lineAddr.getWidth))
+    result.bus := bus
+    result.lineAddr := lineAddr
+    result
+  }
+}
 
-    // DBus that will eventually reach an external bus.
-    // Intended for sending a transaction to an external
-    // peripheral, likely on TileLink or AXI.
-    val ebus = new EBusIO(p)
+class FlushCmd extends Bundle {
+  val all = Bool()
+  val fencei = Bool()
+  val pcNext = UInt(32.W)
+}
 
-    // Vector switch.
-    val vldst = Output(Bool())
+object FlushCmd {
+  def apply(cmd: LsuCmd): FlushCmd = {
+    val result = Wire(new FlushCmd)
+    result.all    := cmd.op.isOneOf(LsuOp.FENCEI, LsuOp.FLUSHALL)
+    result.fencei := (cmd.op === LsuOp.FENCEI)
+    result.pcNext := cmd.pc + 4.U
+    result
+  }
+}
 
-    val storeCount = Output(UInt(2.W))
-    val active = Output(Bool())
-  })
-
+class LsuV1(p: Parameters) extends Lsu(p) {
   // AXI Queues.
   val n = 9
   val ctrl = FifoX(new LsuCtrl(p), p.instructionLanes * 2, n)
@@ -424,3 +754,190 @@ class Lsu(p: Parameters) extends Module {
   assert(!ctrl.io.out.valid || PopCount(Cat(ctrl.io.out.bits.fldst, ctrl.io.out.bits.sldst, ctrl.io.out.bits.vldst)) <= 1.U)
   assert(!data.io.out.valid || PopCount(Cat(data.io.out.bits.fldst, data.io.out.bits.sldst)) <= 1.U)
 }
+
+class LsuV2(p: Parameters) extends Lsu(p) {
+  // Tie-offs
+  io.vldst := 0.U
+  io.storeCount := 0.U
+
+  val opQueue = Module(new Queue(new LsuUOp, 4))
+
+  // Flush state
+  // DispatchV2 will only flush on first slot, when LSU is inactive.
+
+  val flushCmd = RegInit(MakeInvalid(new FlushCmd))  // Track pending flush + pc
+  io.flush.valid  := flushCmd.valid
+  io.flush.all    := flushCmd.bits.all
+  io.flush.clean  := true.B
+  io.flush.fencei := flushCmd.bits.fencei
+  io.flush.pcNext := flushCmd.bits.pcNext
+
+  flushCmd := MuxCase(flushCmd, Seq(
+    // New flush command
+    (io.req(0).fire && LsuOp.isFlush(io.req(0).bits.op))
+        -> MakeValid(true.B, FlushCmd(io.req(0).bits)),
+    // Finish flush command
+    (io.flush.valid && io.flush.ready) -> MakeInvalid(new FlushCmd),
+  ))
+
+  // Accept one instruction per cycle.
+  // TODO(derekjchow): Accept multiple when primitives are ready.
+  val canAccept = opQueue.io.enq.ready
+  val queueSpace = Mux(canAccept, 1.U, 0.U)
+  val validSum = io.req.map(_.valid).scan(
+      0.U(log2Ceil(p.instructionLanes + 1).W))(_+_)
+
+  for (i <- 0 until p.instructionLanes) {
+    io.req(i).ready := (validSum(i) < queueSpace) && !flushCmd.valid
+  }
+
+  val ops = (0 until p.instructionLanes).map(i =>
+      LsuUOp(i, io.req(i).bits, io.busPort, io.busPort_flt))
+  val enq = MuxCase(
+      MakeInvalid(new LsuUOp),
+      (0 until p.instructionLanes).map(i =>
+          ((io.req(i).fire && !io.req(i).bits.op.isOneOf(LsuOp.FENCEI, LsuOp.FLUSHAT, LsuOp.FLUSHALL)) -> MakeValid(true.B, ops(i)))))
+  opQueue.io.enq.valid := enq.valid
+  opQueue.io.enq.bits := enq.bits
+
+  val nextSlot = LsuSlot.fromLsuUOp(opQueue.io.deq.bits, p, 16)
+
+  // Tracks if a read has been fired last cycle.
+  val readFired = RegInit(MakeInvalid(new LsuRead(32 - nextSlot.elemBits)))
+  val slot = RegInit(LsuSlot.inactive(p, 16))
+  
+  val readData = MuxLookup(readFired.bits.bus, 0.U)(Seq(
+      LsuBus.IBUS -> io.ibus.rdata,
+      LsuBus.DBUS -> io.dbus.rdata,
+      LsuBus.EXTERNAL -> io.ebus.dbus.rdata,
+  ))
+
+  // TODO(derekjchow): Finish up store path
+  io.rvv2lsu.get(0).ready := slot.pendingVector
+  io.rvv2lsu.get(1).ready := false.B
+  val vectorUpdatedSlot = slot.vectorUpdate(
+      io.rvv2lsu.get(0).fire, io.rvv2lsu.get(0).bits)
+
+  // First stage of load update: Update results based on bus read
+  val loadUpdatedSlot = vectorUpdatedSlot.loadUpdate(
+      readFired.valid, readFired.bits.lineAddr, readData)
+
+  // Scalar writeback
+  io.rd.valid := loadUpdatedSlot.shouldWriteback() &&
+      loadUpdatedSlot.op.isOneOf(LsuOp.LB, LsuOp.LBU, LsuOp.LH, LsuOp.LHU,
+                                 LsuOp.LW)
+  io.rd.bits.data := loadUpdatedSlot.scalarLoadResult()
+  io.rd.bits.addr := loadUpdatedSlot.rd
+
+  // Float writeback
+  io.rd_flt.valid := loadUpdatedSlot.shouldWriteback() &&
+                     (loadUpdatedSlot.op === LsuOp.FLOAT) && !loadUpdatedSlot.store
+  io.rd_flt.bits.addr := loadUpdatedSlot.rd
+  io.rd_flt.bits.data := loadUpdatedSlot.scalarLoadResult()
+
+  // Vector writeback
+  if (p.enableRvv) {
+    io.lsu2rvv.get(0).valid := loadUpdatedSlot.shouldWriteback() &&
+        loadUpdatedSlot.op.isOneOf(LsuOp.VLOAD_UNIT, LsuOp.VLOAD_STRIDED,
+                                   LsuOp.VLOAD_OINDEXED, LsuOp.VLOAD_UINDEXED)
+    io.lsu2rvv.get(0).bits.addr := loadUpdatedSlot.rd
+    io.lsu2rvv.get(0).bits.data := Cat(loadUpdatedSlot.data.reverse)
+    io.lsu2rvv.get(0).bits.last := true.B
+
+    io.lsu2rvv.get(1).valid := false.B
+    io.lsu2rvv.get(1).bits.addr := 0.U
+    io.lsu2rvv.get(1).bits.data := 0.U
+    io.lsu2rvv.get(1).bits.last := true.B
+  }
+
+  // Second stage of load update: Update results based on regfile writeback
+  val loadUpdate2Slot = loadUpdatedSlot.writebackUpdate(
+      io.rd.valid || io.rd_flt.valid || io.lsu2rvv.get(0).fire)
+
+  val targetLine = loadUpdate2Slot.targetLineAddress(
+      MakeValid(readFired.valid, readFired.bits.lineAddr))
+  val targetLineAddr = targetLine.bits << 4
+  val itcm = p.m.filter(_.memType == MemoryRegionType.IMEM)
+                .map(_.contains(targetLineAddr)).reduceOption(_ || _).getOrElse(false.B)
+  val dtcm = p.m.filter(_.memType == MemoryRegionType.DMEM)
+                .map(_.contains(targetLineAddr)).reduceOption(_ || _).getOrElse(true.B)
+  val peri = p.m.filter(_.memType == MemoryRegionType.Peripheral)
+                .map(_.contains(targetLineAddr)).reduceOption(_ || _).getOrElse(false.B)
+  val external = !(itcm || dtcm || peri)
+  assert(PopCount(Cat(itcm | dtcm | peri)) <= 1.U)
+
+  // Use slot here for timing, as "loadUpdate2Slot" applies to loads only
+  val (wdata, wmask, wactive) = vectorUpdatedSlot.scatter(targetLine.bits)
+
+  // ibus data path
+  io.ibus.valid := loadUpdate2Slot.activeTransaction() && itcm && !slot.store
+  io.ibus.addr := targetLineAddr
+
+  // dbus data path
+  io.dbus.valid := dtcm && Mux(vectorUpdatedSlot.store,
+                               vectorUpdatedSlot.activeTransaction,
+                               loadUpdate2Slot.activeTransaction())
+  io.dbus.write := slot.store
+  io.dbus.pc := slot.pc
+  io.dbus.addr := targetLineAddr
+  io.dbus.adrx := targetLineAddr
+  io.dbus.size := 16.U  // TODO(derekjchow): Don't be lazy
+  io.dbus.wdata := Cat(wdata.reverse)
+  io.dbus.wmask := Cat(wmask.reverse)
+
+  // ebus data path
+  io.ebus.dbus.valid := loadUpdate2Slot.activeTransaction() && (external || peri)
+  io.ebus.dbus.write := slot.store
+  io.ebus.dbus.addr := targetLineAddr
+  io.ebus.dbus.adrx := targetLineAddr
+  io.ebus.dbus.size := 16.U  // TODO(derekjchow): Don't be lazy
+  // TODO(derekjchow): Check direction
+  io.ebus.dbus.wdata := Cat(wdata.reverse)
+  io.ebus.dbus.wmask := Cat(wmask.reverse)
+  io.ebus.dbus.pc := slot.pc
+  io.ebus.internal := peri
+
+  val ibusFired = io.ibus.valid && io.ibus.ready
+  val dbusFired = io.dbus.valid && io.dbus.ready
+  val ebusFired = io.ebus.dbus.valid && io.ebus.dbus.ready
+  assert(PopCount(Seq(ibusFired, dbusFired, ebusFired)) <= 1.U)
+  val slotFired = ebusFired || dbusFired || ibusFired
+
+  readFired := MuxCase(MakeInvalid(new LsuRead(32 - nextSlot.elemBits)), Seq(
+    (ibusFired) -> MakeValid(true.B, LsuRead(LsuBus.IBUS, targetLine.bits)),
+    (dbusFired && !io.dbus.write) -> MakeValid(true.B, LsuRead(LsuBus.DBUS, targetLine.bits)),
+    (ebusFired && !io.ebus.dbus.write) -> MakeValid(true.B, LsuRead(LsuBus.EXTERNAL, targetLine.bits)),
+  ))
+
+  // Fault handling
+  val ibusFault = Wire(Valid(new FaultInfo(p)))
+  ibusFault.valid := loadUpdate2Slot.activeTransaction() && itcm && slot.store
+  ibusFault.bits.write := true.B
+  ibusFault.bits.addr := targetLineAddr
+  ibusFault.bits.epc := slot.pc
+
+  io.fault := MuxCase(MakeInvalid(new FaultInfo(p)), Seq(
+      io.ebus.fault.valid -> io.ebus.fault,
+      ibusFault.valid -> ibusFault,
+  ))
+
+  // TODO(derekjchow): Improve timing?
+  opQueue.io.deq.ready := slot.slotIdle()
+
+  // Slot update
+  slot := MuxCase(slot, Seq(
+    // Move to inactive if error.
+    io.fault.valid -> LsuSlot.inactive(p, 16),
+    // When inactive, dequeue if possible
+    (vectorUpdatedSlot.slotIdle() && opQueue.io.deq.valid) -> nextSlot,
+    // Guard writes with slot fired as that when updates.
+    (!vectorUpdatedSlot.slotIdle() && vectorUpdatedSlot.store && slotFired) ->
+        vectorUpdatedSlot.storeUpdate(wactive),
+    // Updates based on readFired (high cycle after slotFired).
+    (!vectorUpdatedSlot.slotIdle() && !vectorUpdatedSlot.store) ->
+        loadUpdate2Slot,
+  ))
+
+  io.active := !slot.slotIdle() || (opQueue.io.count =/= 0.U)
+}
+
