@@ -75,7 +75,7 @@ verilator_cocotb_test(
         "-Wno-WIDTHTRUNC",
         "-Wno-UNSIGNED",
     ],
-    data = glob(["**/*.elf"]),
+    data = ["//examples:kelvin_v2_hello_world_add_floats.elf"],
 )
 
 
@@ -83,3 +83,4 @@ kelvin_v2_binary(
     name="kelvin_v2_program",
     srcs = ["program.cc"],
 )
+

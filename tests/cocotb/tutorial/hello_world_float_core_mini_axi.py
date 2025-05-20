@@ -27,7 +27,7 @@ async def core_mini_axi_tutorial(dut):
     cocotb.start_soon(core_mini_axi.clock.start())
 
     #Elf file is generated from bazel build //examples:kelvin_v2_hello_world_add_floats
-    elf_path = "../tests/cocotb/tutorial/kelvin_v2_hello_world_add_floats.elf"
+    elf_path = "../examples/kelvin_v2_hello_world_add_floats.elf"
     if not elf_path:
       raise ValueError("elf_path must consist a valid path ")
     #Load your program into ITCM with "load_elf"
@@ -41,8 +41,8 @@ async def core_mini_axi_tutorial(dut):
       outputs_addr = core_mini_axi.lookup_symbol(f, "output")
 
     # this example is passing inputs from dctm instead of defining in memory.
-    input1_data = np.arange(8, dtype=np.float32)
-    input2_data = 0.5 * np.ones(8, dtype=np.float32)
+    input1_data = np.arange(1,9, dtype=np.float32)
+    input2_data = 0.213 * np.ones(8, dtype=np.float32)
 
     await core_mini_axi.write(inputs1_addr, input1_data)
     await core_mini_axi.write(inputs2_addr, input2_data)
@@ -54,10 +54,12 @@ async def core_mini_axi_tutorial(dut):
     #Run your program and wait for halted
     await core_mini_axi.execute_from(entry_point)
     await core_mini_axi.wait_for_halted()
-
     #Read your program outputs and print the result
     expected = input1_data + input2_data
     routputs = (await core_mini_axi.read(outputs_addr, 4 * 8)).view(np.float32)
+    print(f"outputs are {routputs}")
+    rinput1 = (await core_mini_axi.read(inputs1_addr, 4 * 8)).view(np.float32)
+    rinput2 = (await core_mini_axi.read(inputs2_addr, 4 * 8)).view(np.float32)
     #check for correctness
     for idx in range(len(routputs)):
       if expected[idx] == routputs[idx]:
