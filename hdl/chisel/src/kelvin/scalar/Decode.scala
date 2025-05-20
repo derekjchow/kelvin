@@ -535,6 +535,7 @@ class DispatchV2(p: Parameters) extends Dispatch(p) {
       d.fencei         -> MakeValid(true.B, LsuOp.FENCEI),
       d.flushat        -> MakeValid(true.B, LsuOp.FLUSHAT),
       d.flushall       -> MakeValid(true.B, LsuOp.FLUSHALL),
+      (d.isFloatLoad || d.isFloatStore) -> MakeValid(true.B, LsuOp.FLOAT)
     ))
     io.lsu(i).valid := tryDispatch && lsu.valid
     io.lsu(i).bits.store := io.inst(i).bits.inst(5)
@@ -876,7 +877,9 @@ class Decode(p: Parameters, pipeline: Int) extends Module {
     !(d.float.get.valid && d.float.get.bits.scalar_rd && io.scoreboard.comb(rdAddr)) &&
     !(d.float.get.valid && d.float.get.bits.scalar_rs1 && io.scoreboard.comb(rs1Addr)) &&
     !(d.float.get.valid && !d.float.get.bits.scalar_rd && io.fscoreboard.get(rdAddr)) &&
-    !(d.float.get.valid && !d.float.get.bits.scalar_rs1 && io.fscoreboard.get(rs1Addr))
+    !(d.float.get.valid && !d.float.get.bits.scalar_rs1 && io.fscoreboard.get(rs1Addr)) &&
+    !(d.float.get.valid && io.fscoreboard.get(rs2Addr)) &&
+    !(d.float.get.valid && io.fscoreboard.get(rs3Addr))
   } else { true.B }
 
   // Fence interlock.
