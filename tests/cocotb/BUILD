@@ -16,9 +16,7 @@ load("//rules:coco_tb.bzl", "vcs_cocotb_test", "verilator_cocotb_test")
 load("//rules:kelvin_v2.bzl", "kelvin_v2_binary")
 load("//rules:utils.bzl", "template_rule")
 load("@kelvin_hw//third_party/python:requirements.bzl", "requirement")
-
-exports_files(["wfi_slot_0.elf"])
-
+package(default_visibility = ["//visibility:public"])
 template_rule(
     verilator_cocotb_test,
     {
@@ -64,7 +62,13 @@ template_rule(
     ],
     data = glob(["**/*.elf"]) + glob(["**/*.o"]) + [
         ":align_test.elf",
-        ":float_csr_interlock_test",
+        ":float_csr_interlock_test.elf",
+        ":finish_txn_before_halt.elf",
+        ":stress_test.elf",
+        ":wfi_slot_0.elf",
+        ":wfi_slot_1.elf",
+        ":wfi_slot_2.elf",
+        ":wfi_slot_3.elf",
     ],
 )
 
@@ -130,6 +134,10 @@ template_rule(
     data = glob(["**/*.elf"]) + glob(["**/*.o"]) + [
         ":align_test.elf",
         ":float_csr_interlock_test",
+        ":wfi_slot_0.elf",
+        ":wfi_slot_1.elf",
+        ":wfi_slot_2.elf",
+        ":wfi_slot_3.elf",
     ],
 )
 
@@ -139,6 +147,50 @@ kelvin_v2_binary(
         "align_test.cc",
     ],
     semihosting = True,
+)
+
+
+kelvin_v2_binary(
+    name = "wfi_slot_0",
+    srcs = [
+        "wfi_slot_0.c",
+    ],
+)
+
+
+kelvin_v2_binary(
+    name = "wfi_slot_1",
+    srcs = [
+        "wfi_slot_1.c",
+    ],
+)
+
+kelvin_v2_binary(
+    name = "wfi_slot_2",
+    srcs = [
+        "wfi_slot_2.c",
+    ],
+)
+
+kelvin_v2_binary(
+    name = "wfi_slot_3",
+    srcs = [
+        "wfi_slot_3.c",
+    ],
+)
+
+kelvin_v2_binary(
+    name = "finish_txn_before_halt",
+    srcs = [
+        "finish_txn_before_halt.cc",
+    ],
+)
+
+kelvin_v2_binary(
+    name = "stress_test",
+    srcs = [
+        "stress_test.cc",
+    ],
 )
 
 kelvin_v2_binary(

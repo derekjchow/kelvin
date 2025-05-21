@@ -1,7 +1,7 @@
 typedef unsigned int uint32_t;
 
 const volatile uint32_t itcm_vec[] = {1, 2, 3, 4, 5, 6, 7, 8};
-volatile uint32_t dtcm_vec[2048] = {0};
+volatile uint32_t dtcm_vec[2048] __attribute__((section(".data")));
 volatile uint32_t* extmem_vec = reinterpret_cast<uint32_t*>(0x20000000);
 uint32_t halt = 0;
 
