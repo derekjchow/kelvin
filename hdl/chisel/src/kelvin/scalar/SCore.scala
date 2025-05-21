@@ -73,18 +73,20 @@ class SCore(p: Parameters) extends Module {
   val branchTaken = bru.map(x => x.io.taken.valid).reduce(_||_)
 
   // ---------------------------------------------------------------------------
-  // Flush logic
-  io.dflush.valid := lsu.io.flush.valid && !lsu.io.flush.fencei
+  // IFlush
+  val iflush = RegInit(false.B)
+
+  when (bru(0).io.iflush.get) {
+    iflush := true.B
+  } .elsewhen (fetch.io.iflush.ready && io.iflush.ready &&
+               lsu.io.flush.ready && lsu.io.flush.fencei) {
+    iflush := false.B
+  }
+
+  io.dflush.valid := lsu.io.flush.valid
   io.dflush.all   := lsu.io.flush.all
   io.dflush.clean := lsu.io.flush.clean
-
-  io.iflush.valid  := lsu.io.flush.valid && lsu.io.flush.fencei
-  io.iflush.pcNext := lsu.io.flush.pcNext
-  fetch.io.iflush.valid := lsu.io.flush.valid && lsu.io.flush.fencei
-  fetch.io.iflush.pcNext := lsu.io.flush.pcNext
-
-  lsu.io.flush.ready := lsu.io.flush.valid &&
-      Mux(lsu.io.flush.fencei, fetch.io.iflush.ready, io.dflush.ready)
+  lsu.io.flush.ready := io.dflush.ready
 
   // ---------------------------------------------------------------------------
   // Fetch
@@ -96,6 +98,8 @@ class SCore(p: Parameters) extends Module {
 
   fetch.io.linkPort := regfile.io.linkPort
 
+  fetch.io.iflush.valid := iflush
+
   // ---------------------------------------------------------------------------
   // Decode
   // Decode/Dispatch
@@ -106,7 +110,7 @@ class SCore(p: Parameters) extends Module {
   dispatch.io.scoreboard.comb := regfile.io.scoreboard.comb
   dispatch.io.scoreboard.regd := regfile.io.scoreboard.regd
   dispatch.io.branchTaken := branchTaken
-  dispatch.io.interlock := bru(0).io.interlock.get || lsu.io.flush.valid
+  dispatch.io.interlock := bru(0).io.interlock.get
 
   // Connect fault signaling to FaultManager.
   val fault_manager = Module(new FaultManager(p))
@@ -147,6 +151,8 @@ class SCore(p: Parameters) extends Module {
   }
 
   bru(0).io.csr.get <> csr.io.bru
+
+  io.iflush.valid := iflush
 
   // Instruction counters
   csr.io.counters.rfwriteCount := regfile.io.rfwriteCount

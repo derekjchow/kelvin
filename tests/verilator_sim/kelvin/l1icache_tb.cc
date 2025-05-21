@@ -20,7 +20,6 @@
 
 struct L1ICache_tb : Sysc_tb {
   sc_out<bool> io_flush_valid;
-  sc_out<sc_bv<32> > io_flush_pcNext;
   sc_in<bool> io_flush_ready;
   sc_out<bool> io_ibus_valid;
   sc_in<bool> io_ibus_ready;
@@ -150,7 +149,6 @@ struct L1ICache_tb : Sysc_tb {
 
 static void L1ICache_test(char* name, int loops, bool trace) {
   sc_signal<bool> io_flush_valid;
-  sc_signal<sc_bv<32> > io_flush_pcNext;
   sc_signal<bool> io_flush_ready;
   sc_signal<bool> io_ibus_valid;
   sc_signal<bool> io_ibus_ready;
@@ -190,7 +188,6 @@ static void L1ICache_test(char* name, int loops, bool trace) {
   l1icache.clock(tb.clock);
   l1icache.reset(tb.reset);
   BIND2(tb, l1icache, io_flush_valid);
-  BIND2(tb, l1icache, io_flush_pcNext);
   BIND2(tb, l1icache, io_flush_ready);
   BIND2(tb, l1icache, io_ibus_valid);
   BIND2(tb, l1icache, io_ibus_ready);

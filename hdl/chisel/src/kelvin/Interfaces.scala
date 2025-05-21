@@ -153,7 +153,6 @@ class EBusIO(p: Parameters) extends Bundle {
 
 class IFlushIO(p: Parameters) extends Bundle {
   val valid = Output(Bool())
-  val pcNext = Output(UInt(32.W))
   val ready = Input(Bool())
 }
 

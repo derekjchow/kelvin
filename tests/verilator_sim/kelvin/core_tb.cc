@@ -84,7 +84,6 @@ static void Core_run(const char* name, const char* bin, const int cycles,
   sc_signal<bool> io_ebus_fault_valid;
   sc_signal<bool> io_ebus_fault_bits_write;
   sc_signal<bool> io_iflush_valid;
-  sc_signal<sc_bv<32> > io_iflush_pcNext;
   sc_signal<bool> io_iflush_ready;
   sc_signal<bool> io_dflush_valid;
   sc_signal<bool> io_dflush_ready;
@@ -222,7 +221,6 @@ static void Core_run(const char* name, const char* bin, const int cycles,
   core.io_ebus_fault_bits_addr(io_ebus_fault_bits_addr);
   core.io_ebus_fault_bits_epc(io_ebus_fault_bits_epc);
   core.io_iflush_valid(io_iflush_valid);
-  core.io_iflush_pcNext(io_iflush_pcNext);
   core.io_iflush_ready(io_iflush_ready);
   core.io_dflush_valid(io_dflush_valid);
   core.io_dflush_ready(io_dflush_ready);
