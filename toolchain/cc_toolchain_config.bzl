@@ -49,7 +49,7 @@ def _impl(ctx):
         ),
         tool_path(
             name = "gcc",
-            path = "wrappers/g++",
+            path = "wrappers/gcc",
         ),
         tool_path(
             name = "ld",
