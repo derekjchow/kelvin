@@ -317,6 +317,7 @@ class Lsu(p: Parameters) extends Module {
   io.flush.all    := ctrl.io.out.bits.fencei || ctrl.io.out.bits.flushall
   io.flush.clean  := true.B
   io.flush.fencei := ctrl.io.out.bits.fencei
+  io.flush.pcNext := ctrl.io.out.bits.pc + 4.U
 
   ctrl.io.out.ready := io.flush.valid && io.flush.ready ||
                        imem_store_fault ||

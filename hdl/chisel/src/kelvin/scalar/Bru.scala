@@ -37,7 +37,6 @@ object BruOp extends ChiselEnum {
   val ECALL = Value
   val MPAUSE = Value
   val MRET = Value
-  val FENCEI = Value
   val WFI = Value
   val FAULT = Value
 }
@@ -96,7 +95,6 @@ class Bru(p: Parameters, first: Boolean) extends Module {
     val taken = new BranchTakenIO(p)
     val target = Flipped(new RegfileBranchTargetIO)
     val interlock = Option.when(first)(Output(Bool()))
-    val iflush = Option.when(first)(Output(Bool()))
 
     val fault_manager = Option.when(first)(Input(Valid(Flipped(new FaultManagerOutput))))
   })
@@ -140,7 +138,7 @@ class Bru(p: Parameters, first: Boolean) extends Module {
       ecall -> mtvec,
       mret -> io.csr.get.out.mepc,
       call -> io.csr.get.out.mepc,
-      ((io.req.bits.op === BruOp.FENCEI) || (io.req.bits.op === BruOp.WFI)) -> pc4De,
+      (io.req.bits.op === BruOp.WFI) -> pc4De,
     ))
   } else { io.req.bits.target }
   nextState.target := MuxCase(pipeline0Target, Seq(
@@ -174,7 +172,6 @@ class Bru(p: Parameters, first: Boolean) extends Module {
       BruOp.ECALL,
       BruOp.MPAUSE,
       BruOp.MRET,
-      BruOp.FENCEI,
       BruOp.WFI,
     ))
   }
@@ -187,7 +184,6 @@ class Bru(p: Parameters, first: Boolean) extends Module {
       BruOp.ECALL  -> true.B,
       BruOp.MPAUSE -> (mode === CsrMode.User),
       BruOp.MRET   -> (mode === CsrMode.Machine),
-      BruOp.FENCEI -> true.B,
       BruOp.WFI    -> true.B,
     ))
   } else { false.B }
@@ -263,14 +259,11 @@ class Bru(p: Parameters, first: Boolean) extends Module {
     io.csr.get.in.fault :=
       ((usageFault && (mode === CsrMode.Machine)))
     io.csr.get.in.wfi := stateReg.valid && (op === BruOp.WFI)
-
-    io.iflush.get := stateReg.valid && op.isOneOf(BruOp.FENCEI, BruOp.WFI)
   }
 
   // Assertions.
   val ignore = op.isOneOf(BruOp.JAL, BruOp.JALR, BruOp.EBREAK, BruOp.ECALL,
-                          BruOp.MPAUSE, BruOp.MRET, BruOp.FENCEI, BruOp.WFI,
-                          BruOp.FAULT)
+                          BruOp.MPAUSE, BruOp.MRET, BruOp.WFI, BruOp.FAULT)
 
   assert(!(stateReg.valid && !io.rs1.valid) || ignore)
   assert(!(stateReg.valid && !io.rs2.valid) || ignore)

@@ -20,4 +20,5 @@ import common._
 
 class DFlushFenceiIO(p: Parameters) extends DFlushIO(p) {
   val fencei = Output(Bool())
+  val pcNext = Output(UInt(32.W))
 }
