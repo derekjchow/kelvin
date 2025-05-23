@@ -332,8 +332,7 @@ class DispatchV2(p: Parameters) extends Dispatch(p) {
   // completed in one cycle. In practice, this means Alu and Bru operations
   val isBranch = decodedInsts.map(_.isCondBr())
   val branched = isBranch.scan(false.B)(_ || _)
-  val branchInterlock = (0 until p.instructionLanes).map(i =>
-      branched(i) && !(decodedInsts(i).isCondBr() || decodedInsts(i).isAlu()))
+  val branchInterlock = (0 until p.instructionLanes).map(i => branched(i))
 
   // ---------------------------------------------------------------------------
   // Scalar Scoreboard
@@ -476,7 +475,6 @@ class DispatchV2(p: Parameters) extends Dispatch(p) {
     ))
     val bru_target = io.inst(i).bits.addr + Mux(
         io.inst(i).bits.inst(2), d.immjal, d.immbr)
-    io.bru(i).valid := tryDispatch && bru.valid
     io.bru(i).bits.fwd := io.inst(i).bits.brchFwd
     io.bru(i).bits.op := bru.bits
     io.bru(i).bits.pc := io.inst(i).bits.addr
@@ -493,6 +491,7 @@ class DispatchV2(p: Parameters) extends Dispatch(p) {
     io.jalrFault(i) := jalrFault
     io.bxxFault(i) := bxxFault
     io.bruTarget(i) := io.bru(i).bits.target
+    io.bru(i).valid := tryDispatch && bru.valid && !(jalFault || jalrFault || bxxFault)
 
 
     // -------------------------------------------------------------------------

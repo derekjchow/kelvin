@@ -99,15 +99,6 @@ class Bru(p: Parameters, first: Boolean) extends Module {
     val fault_manager = Option.when(first)(Input(Valid(Flipped(new FaultManagerOutput))))
   })
 
-  // Interlock
-  if (first) {
-    val interlock = RegInit(false.B)
-    interlock := io.req.valid && io.req.bits.op.isOneOf(
-        BruOp.EBREAK, BruOp.ECALL,
-        BruOp.MPAUSE, BruOp.MRET)
-    io.interlock.get := interlock
-  }
-
   // Assign state
   val mode = if (first) { io.csr.get.out.mode } else { CsrMode.Machine }
   val fault_manager_valid = io.fault_manager.map(_.valid).getOrElse(false.B)
@@ -207,6 +198,10 @@ class Bru(p: Parameters, first: Boolean) extends Module {
   io.rd.bits.data := stateReg.bits.linkData
 
   if (first) {
+    io.interlock.get := stateReg.valid &&
+      op.isOneOf(
+        BruOp.EBREAK, BruOp.ECALL,
+        BruOp.MPAUSE, BruOp.MRET, BruOp.FAULT)
     // Usage Fault.
     val usageFault = (stateReg.valid && Mux(
               (mode === CsrMode.User),
