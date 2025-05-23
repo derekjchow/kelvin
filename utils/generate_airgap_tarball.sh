@@ -96,7 +96,7 @@ ${WORKDIR}/bazel fetch \
     @kelvin_pip_deps_iniconfig//:all \
     @kelvin_pip_deps_packaging//:all \
     @kelvin_pip_deps_exceptiongroup//:all \
-    @kelvin_pip_deps_extensions//:all
+    @kelvin_pip_deps_typing_extensions//:all
 
 cat <<EOF >${WORKDIR}/bazel.sh
 SCRIPT_DIR="\$(cd "\$(dirname "\${BASH_SOURCE[0]}")" && pwd)"
