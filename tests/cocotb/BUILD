@@ -16,7 +16,20 @@ load("//rules:coco_tb.bzl", "vcs_cocotb_test", "verilator_cocotb_test")
 load("//rules:kelvin_v2.bzl", "kelvin_v2_binary")
 load("//rules:utils.bzl", "template_rule")
 load("@kelvin_hw//third_party/python:requirements.bzl", "requirement")
+
 package(default_visibility = ["//visibility:public"])
+
+COCOTB_TEST_BINARY_TARGETS = glob(["**/*.elf"]) + glob(["**/*.o"]) + [
+        ":align_test.elf",
+        ":float_csr_interlock_test.elf",
+        ":finish_txn_before_halt.elf",
+        ":stress_test.elf",
+        ":wfi_slot_0.elf",
+        ":wfi_slot_1.elf",
+        ":wfi_slot_2.elf",
+        ":wfi_slot_3.elf",
+    ]
+
 template_rule(
     verilator_cocotb_test,
     {
@@ -60,16 +73,7 @@ template_rule(
         "//kelvin_test_utils:core_mini_axi_sim_interface",
         requirement("tqdm"),
     ],
-    data = glob(["**/*.elf"]) + glob(["**/*.o"]) + [
-        ":align_test.elf",
-        ":float_csr_interlock_test.elf",
-        ":finish_txn_before_halt.elf",
-        ":stress_test.elf",
-        ":wfi_slot_0.elf",
-        ":wfi_slot_1.elf",
-        ":wfi_slot_2.elf",
-        ":wfi_slot_3.elf",
-    ],
+    data = COCOTB_TEST_BINARY_TARGETS,
 )
 
 TESTCASES = [
@@ -131,14 +135,7 @@ template_rule(
         "//kelvin_test_utils:core_mini_axi_sim_interface",
         requirement("tqdm"),
     ],
-    data = glob(["**/*.elf"]) + glob(["**/*.o"]) + [
-        ":align_test.elf",
-        ":float_csr_interlock_test",
-        ":wfi_slot_0.elf",
-        ":wfi_slot_1.elf",
-        ":wfi_slot_2.elf",
-        ":wfi_slot_3.elf",
-    ],
+    data = COCOTB_TEST_BINARY_TARGETS,
 )
 
 kelvin_v2_binary(
