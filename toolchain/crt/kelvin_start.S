@@ -78,6 +78,13 @@ init_array_loop:
         bltu s0, s1, init_array_loop
 init_array_loop_end:
 
+        # Set up a default trap vector, which will
+        # simply call ebreak.
+        # Users who require real trap handling should
+        # install their own trap vector.
+        la t0, failure
+        csrw mtvec, t0
+
         # Set up sentinel value in _ret
         # If we see this after an ebreak,
         # the break source is unlikely to
