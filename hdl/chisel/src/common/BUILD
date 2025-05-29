@@ -49,6 +49,27 @@ chisel_library(
 )
 
 chisel_library(
+    name = "aligner",
+    srcs = [
+        "Aligner.scala"
+    ],
+    resources = [
+        "//hdl/verilog/rvv/design:Aligner.sv",
+    ],
+    visibility = ["//visibility:public"],
+)
+
+chisel_test(
+    name = "aligner_test",
+    srcs = [
+        "AlignerTest.scala",
+    ],
+    deps = [
+        ":aligner",
+    ],
+)
+
+chisel_library(
     name = "scatter_gather",
     srcs = [
         "ScatterGather.scala",
