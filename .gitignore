@@ -14,3 +14,8 @@ ucli.key
 internal
 *vcst*
 novas*
+*csrc*
+# Build artifacts for UVM
+tests/uvm/rtl
+tests/uvm/sim_work
+tests/uvm/vc_hdrs.h

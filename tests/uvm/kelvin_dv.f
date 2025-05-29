@@ -33,7 +33,7 @@
 // --- Source Files ---
 
 // DUT RTL
-./rtl/RvvCoreMiniAxi.sv
+./rtl/RvvCoreMiniVerificationAxi.sv
 
 // Interfaces
 ./common/kelvin_axi_master/kelvin_axi_master_if.sv

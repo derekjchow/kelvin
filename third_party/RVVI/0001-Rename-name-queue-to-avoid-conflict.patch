@@ -1,0 +1,43 @@
+From 72f1a751fbab8cefdc39d4192e9a7db2102558b5 Mon Sep 17 00:00:00 2001
+From: Alex Van Damme <atv@google.com>
+Date: Thu, 29 May 2025 14:59:10 -0700
+Subject: [PATCH] Rename name queue to avoid conflict
+
+---
+ source/host/rvvi/rvviTrace.sv | 8 ++++----
+ 1 file changed, 4 insertions(+), 4 deletions(-)
+
+diff --git a/source/host/rvvi/rvviTrace.sv b/source/host/rvvi/rvviTrace.sv
+index 9e469ec..ca0d700 100644
+--- a/source/host/rvvi/rvviTrace.sv
++++ b/source/host/rvvi/rvviTrace.sv
+@@ -115,13 +115,13 @@ interface rvviTrace
+         vslot <= vslot + 1;
+     end
+ 
+-    string           name[$];
++    string           name_[$];
+     longint unsigned value[$];
+     longint unsigned tslot[$];
+     longint unsigned nets[string];
+ 
+     function automatic void net_push(input string pname, input longint unsigned pvalue);
+-        name.push_front(pname);
++        name_.push_front(pname);
+         value.push_front(pvalue);
+         tslot.push_front(vslot);
+     endfunction
+@@ -129,8 +129,8 @@ interface rvviTrace
+     function automatic int net_pop(output string pname, output longint unsigned pvalue, output longint unsigned pslot);
+         int  ok;
+         string msg;
+-        if (name.size() > 0) begin
+-            pname       = name.pop_back();
++        if (name_.size() > 0) begin
++            pname       = name_.pop_back();
+             pvalue      = value.pop_back();
+             pslot       = tslot.pop_back();
+             nets[pname] = pvalue;
+-- 
+2.49.0.1204.g71687c7c1d-goog
+

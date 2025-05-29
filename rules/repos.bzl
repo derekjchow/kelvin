@@ -145,3 +145,16 @@ def cvfpu_repos():
         build_file = "@kelvin_hw//third_party/fpu_div_sqrt_mvp:BUILD.bazel",
         strip_prefix = "fpu_div_sqrt_mvp-86e1f558b3c95e91577c41b2fc452c86b04e85ac",
     )
+
+def rvvi_repos():
+    http_archive(
+        name = "RVVI",
+        urls = ["https://github.com/riscv-verification/RVVI/archive/refs/heads/20240403.0.zip"],
+        sha256 = "23fe596757de0a7558eedf4ac872081462bb094e11abd2f5002a7e64f84982f9",
+        strip_prefix = "RVVI-20240403.0",
+        build_file = "@kelvin_hw//third_party/RVVI:BUILD.bazel",
+        patches = [
+            "@kelvin_hw//third_party/RVVI:0001-Rename-name-queue-to-avoid-conflict.patch",
+        ],
+        patch_args = ["-p1"],
+    )

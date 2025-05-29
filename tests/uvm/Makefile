@@ -30,7 +30,7 @@ LOG_DIR = $(SIM_DIR)/logs
 WAVE_DIR = $(SIM_DIR)/waves
 
 # Source Files
-DUT_RTL = $(RTL_DIR)/RvvCoreMiniAxi.sv
+DUT_RTL = $(RTL_DIR)/RvvCoreMiniVerificationAxi.sv
 IF_FILES = $(COMMON_DIR)/kelvin_axi_master/kelvin_axi_master_if.sv \
            $(COMMON_DIR)/kelvin_axi_slave/kelvin_axi_slave_if.sv \
            $(COMMON_DIR)/kelvin_irq/kelvin_irq_if.sv

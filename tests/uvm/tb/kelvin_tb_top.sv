@@ -71,7 +71,7 @@ module kelvin_tb_top;
   //--------------------------------------------------------------------------
   // DUT Instantiation
   //--------------------------------------------------------------------------
-  RvvCoreMiniAxi u_dut (
+  RvvCoreMiniVerificationAxi u_dut (
     .io_aclk(clk),
     .io_aresetn(resetn),
 
@@ -233,7 +233,7 @@ module kelvin_tb_top;
   //--------------------------------------------------------------------------
   initial begin
     // Assign virtual interface handle procedurally
-    rvvi_vif = u_dut.core.score.rvvi.rvviTraceBB.rvvi;
+    rvvi_vif = u_dut.core.score.rvvi.rvviTraceBlackBox.rvvi;
 
     // Set virtual interfaces in the config_db for the agents/test
     uvm_config_db#(virtual kelvin_axi_master_if.TB_MASTER_DRIVER)::set(null,

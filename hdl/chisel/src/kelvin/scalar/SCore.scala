@@ -443,6 +443,8 @@ class SCore(p: Parameters) extends Module {
 
   if (p.useRetirementBuffer) {
     io.debug.rb.get := retirement_buffer.get.io.debug
+    val rvvi = Module(new RvviTrace(p))
+    rvvi.io.rb := retirement_buffer.get.io.debug
   }
 }
 

@@ -63,6 +63,19 @@ chisel_test(
 )
 
 chisel_library(
+    name = "rvvi_trace",
+    srcs = [
+        "RvviTrace.scala",
+    ],
+    resources = [
+        "@RVVI//:all_srcs",
+    ],
+    deps = [
+        ":kelvin_base",
+    ],
+)
+
+chisel_library(
     name = "retirement_buffer",
     srcs = [
         "RetirementBuffer.scala",
@@ -312,6 +325,7 @@ chisel_library(
         ":kelvin_float",
         ":kelvin_rvv",
         ":retirement_buffer",
+        ":rvvi_trace",
         "//hdl/chisel/src/common",
         "//hdl/chisel/src/common:fp",
         "//hdl/chisel/src/common:instruction_buffer",

@@ -1,11 +1,11 @@
 # Kelvin UVM Testbench
 
-This document describes the structure and usage of the UVM testbench for verifying the `RvvCoreMiniAxi` DUT.
+This document describes the structure and usage of the UVM testbench for verifying the `RvvCoreMiniVerificationAxi` DUT.
 
 ## Overview
 
 This testbench provides a basic UVM environment to:
-* Instantiate the `RvvCoreMiniAxi` DUT.
+* Instantiate the `RvvCoreMiniVerificationAxi` DUT.
 * Connect AXI Master, AXI Slave, and IRQ interfaces to the DUT.
 * Provide basic stimulus generation via UVM sequences.
 * Include a simple reactive AXI Slave model.
@@ -17,11 +17,11 @@ This testbench provides a basic UVM environment to:
 
 * **Synopsys VCS:** This testbench is configured to run with Synopsys VCS.
 * **UVM:** VCS needs to be configured with UVM 1.2 support enabled.
-* **Kelvin Hardware Repository:** Access to the repository containing the `RvvCoreMiniAxi` source code is required to generate the DUT Verilog and the test binary.
+* **Kelvin Hardware Repository:** Access to the repository containing the `RvvCoreMiniVerificationAxi` source code is required to generate the DUT Verilog and the test binary.
 * **Bazel:** The build system used to generate the Verilog from the Chisel source in the Kelvin HW repository.
 * **RISC-V Toolchain:** A RISC-V toolchain (specifically `llvm-objcopy-17` or similar) compatible with the Kelvin project is needed to generate the `.bin` file.
 
-## Generating the DUT (RvvCoreMiniAxi.sv)
+## Generating the DUT (RvvCoreMiniVerificationAxi.sv)
 
 The Verilog file for the DUT needs to be generated from the Chisel source code located in the Kelvin hardware repository.
 
@@ -31,11 +31,11 @@ The Verilog file for the DUT needs to be generated from the Chisel source code l
     ```
 2.  Run the Bazel build command to emit the Verilog:
     ```bash
-    bazel build //hdl/chisel/src/kelvin:rvv_core_mini_axi_cc_library_emit_verilog
+    bazel build //hdl/chisel/src/kelvin:rvv_core_mini_verification_axi_cc_library_emit_verilog
     ```
 3.  The Verilog file will be generated at:
-    `bazel-bin/hdl/chisel/src/kelvin/RvvCoreMiniAxi.sv`
-4.  Copy this generated `RvvCoreMiniAxi.sv` file to the `rtl/` directory within this testbench structure.
+    `bazel-bin/hdl/chisel/src/kelvin/RvvCoreMiniVerificationAxi.sv`
+4.  Copy this generated `RvvCoreMiniVerificationAxi.sv` file to the `rtl/` directory within this testbench structure.
 
 ## Generating the Test Binary (program.bin)
 
@@ -82,7 +82,7 @@ The testbench follows a standard UVM directory structure:
 ├── env/                   # UVM Environment definition
 │   └── kelvin_env_pkg.sv
 ├── rtl/                   # DUT RTL source file(s)
-│   └── RvvCoreMiniAxi.sv     # (Needs to be generated and copied here)
+│   └── RvvCoreMiniVerificationAxi.sv     # (Needs to be generated and copied here)
 ├── tb/                    # Top-level testbench module
 │   └── kelvin_tb_top.sv
 ├── tests/                 # UVM Tests and Sequences
@@ -164,5 +164,5 @@ The provided `Makefile` simplifies the compilation and simulation process.
     rm -rf sim_work simv* csrc* *.log* *.key *.vpd *.fsdb ucli.key DVEfiles/ verdiLog/ novas.*
     ```
 
-This README should help you get started with compiling and running the basic test for the `RvvCoreMiniAxi` DUT. Remember to complete the remaining TODOs in the UVM code itself.
+This README should help you get started with compiling and running the basic test for the `RvvCoreMiniVerificationAxi` DUT. Remember to complete the remaining TODOs in the UVM code itself.
 
