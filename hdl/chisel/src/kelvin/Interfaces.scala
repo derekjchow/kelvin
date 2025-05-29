@@ -170,6 +170,15 @@ class SLogIO(p: Parameters) extends Bundle {
   val data = Output(UInt(32.W))
 }
 
+class RetirementBufferDebugIO(p: Parameters) extends Bundle {
+  val inst = Vec(p.retirementBufferSize, Valid(new Bundle {
+    val pc = UInt(32.W)
+    val inst = UInt(32.W)
+    val idx = UInt(p.retirementBufferIdxWidth.W)
+    val data = UInt(32.W)
+  }))
+}
+
 // Debug signals for HDL development.
 class DebugIO(p: Parameters) extends Bundle {
   val en = Output(UInt(4.W))
@@ -208,6 +217,8 @@ class DebugIO(p: Parameters) extends Bundle {
       val data = UInt(32.W)
     }))
   })
+
+  val rb = Option.when(p.useRetirementBuffer)(Output(new RetirementBufferDebugIO(p)))
 }
 
 class RegfileReadDataIO extends Bundle {

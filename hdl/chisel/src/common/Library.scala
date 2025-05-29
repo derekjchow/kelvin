@@ -159,3 +159,22 @@ object RotateVectorRight {
   }
 }
 
+// Shifts elements in a vector, and fills empty space w/ zeroes.
+// Result[i] = data[(i + shift) % data.size]
+object ShiftVectorLeft {
+  def apply[T <: Data](data: Vec[T], shift: UInt): Vec[T] = {
+    val elemSize = data(0).asUInt.getWidth
+    val shifted = data.asUInt << (shift * elemSize.U)
+    shifted.asTypeOf(chiselTypeOf(data))
+  }
+}
+
+// Shifts elements in a vector, and fills empty space w/ zeroes.
+// Result[i] = data[(i - shift) % data.size]
+object ShiftVectorRight {
+  def apply[T <: Data](data: Vec[T], shift: UInt): Vec[T] = {
+    val elemSize = data(0).asUInt.getWidth
+    val shifted = data.asUInt >> (shift * elemSize.U)
+    shifted.asTypeOf(chiselTypeOf(data))
+  }
+}

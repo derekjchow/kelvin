@@ -310,6 +310,8 @@ class Dispatch(p: Parameters) extends Module {
 
     // Scalar logging.
     val slog = Output(Bool())
+
+    val retirement_buffer_nSpace = Option.when(p.useRetirementBuffer)(Input(UInt(5.W)))
   })
 }
 
@@ -443,7 +445,8 @@ class DispatchV2(p: Parameters) extends Dispatch(p) {
       !branchInterlock(i) && // Only branch/alu can be dispatched after a branch
       !fence(i) &&           // Don't dispatch if fence interlocked
       rvvInterlock(i) &&     // Rvv interlock rules
-      !undefInterlock(i)     // Ensure undef is only dispatched from first slot
+      !undefInterlock(i) &&     // Ensure undef is only dispatched from first slot
+      io.retirement_buffer_nSpace.map(x => i.U < x).getOrElse(true.B) // Retirement buffer needs space for our slot
   )
 
   // ---------------------------------------------------------------------------

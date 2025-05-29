@@ -104,8 +104,14 @@ void InstructionTrace::TraceInstruction(
   }
 }
 
+void InstructionTrace::TraceInstructionRaw(uint32_t pc, uint32_t inst, uint32_t reg, uint32_t data) {
+  Instruction in(pc, inst, reg);
+  in.data = data;
+  committed_insts_.push_back(in);
+}
+
 void InstructionTrace::PrintTrace() const {
   for (auto& inst : committed_insts_) {
-    printf("0x%x,0x%x,0x%x,0x%x\n", inst.pc, inst.inst, inst.reg, inst.data);
+    printf("0x%08x,0x%08x,0x%02x,0x%08x\n", inst.pc, inst.inst, inst.reg, inst.data);
   }
 }

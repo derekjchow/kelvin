@@ -83,6 +83,9 @@ class Parameters(var m: Seq[MemoryRegion] = Seq(), val hartId: Int = 0) {
   // Vector queue.
   val vectorFifoDepth = 16
 
+  // Enable extra logic for verification purposes.
+  var enableVerification = false
+
   // Enable RVV. This differs from "Vector" in that it conforms to the RVV1.0
   // spec instead of the Kelvin Custom vector ISA.
   var enableRvv = false
@@ -92,11 +95,21 @@ class Parameters(var m: Seq[MemoryRegion] = Seq(), val hartId: Int = 0) {
   // Dispatch unit
   def useDispatchV2: Boolean = { enableRvv }
 
+  def useRetirementBuffer: Boolean = { useDispatchV2 && enableVerification }
+
   // Scalar Floating point
   var enableFloat = false
   // Use the Div/Sqrt module from PULP instead of E906.
   // It is smaller, but has small rounding errors.
   val floatPulpDivsqrt = 0
+
+  // Retirement buffer
+  val retirementBufferSize = 8
+  def retirementBufferIdxWidth: Int = {
+    val scalarRegCount = 32
+    val floatRegCount = (if (enableFloat) { 32 } else { 0 })
+    log2Ceil(scalarRegCount + floatRegCount + 1)
+  }
 
   // L0ICache Fetch unit.
   var enableFetchL0 = true
@@ -189,6 +202,9 @@ object EmitParametersHeader {
     // TODO(atv): See if we can improve the reflection above to execute
     // the methods for our dynamic parameters.
     builder = builder.append(s"#define KP_dbusSize ${p.dbusSize}\n")
+    builder = builder.append(s"#define KP_useDispatchV2 ${p.useDispatchV2}\n")
+    builder = builder.append(s"#define KP_useRetirementBuffer ${p.useRetirementBuffer}\n")
+    builder = builder.append(s"#define KP_retirementBufferIdxWidth ${p.retirementBufferIdxWidth}\n")
     builder = builder.append("#endif\n")
     builder.result()
   }

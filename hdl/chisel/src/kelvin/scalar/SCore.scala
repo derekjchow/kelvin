@@ -62,6 +62,17 @@ class SCore(p: Parameters) extends Module {
   } else {
       Module(new DispatchV1(p))
   }
+
+  val retirement_buffer = Option.when(p.useRetirementBuffer)(Module(new RetirementBuffer(p)))
+  if (p.useRetirementBuffer) {
+    retirement_buffer.get.io.inst := dispatch.io.inst
+    retirement_buffer.get.io.writeAddrScalar := dispatch.io.rdMark
+    (0 until p.instructionLanes + 2).foreach(i => {
+      retirement_buffer.get.io.writeDataScalar(i) := regfile.io.writeData(i)
+    })
+    dispatch.io.retirement_buffer_nSpace.get := retirement_buffer.get.io.nSpace
+  }
+
   val alu = Seq.fill(p.instructionLanes)(Alu(p))
   val bru = (0 until p.instructionLanes).map(x => Seq(Bru(p, x == 0))).reduce(_ ++ _)
   val csr = Csr(p)
@@ -287,6 +298,15 @@ class SCore(p: Parameters) extends Module {
     floatCore.get.io.lsu_rd.valid := lsu.io.rd_flt.valid
     floatCore.get.io.lsu_rd.bits.addr := lsu.io.rd_flt.bits.addr
     floatCore.get.io.lsu_rd.bits.data := lsu.io.rd_flt.bits.data
+
+    if (p.useRetirementBuffer) {
+      retirement_buffer.get.io.writeAddrFloat.get := dispatch.io.rdMark_flt.get
+      (0 until 2).foreach(i => {
+        retirement_buffer.get.io.writeDataFloat.get(i).valid := fRegfile.get.io.write_ports(i).valid
+        retirement_buffer.get.io.writeDataFloat.get(i).bits.addr := fRegfile.get.io.write_ports(i).addr
+        retirement_buffer.get.io.writeDataFloat.get(i).bits.data := fRegfile.get.io.write_ports(i).data.asWord
+      })
+    }
   }
 
   val mluDvuOffset = p.instructionLanes
@@ -419,6 +439,10 @@ class SCore(p: Parameters) extends Module {
       io.debug.float.get.writeData(i).bits.addr := fRegfile.get.io.write_ports(i).addr
       io.debug.float.get.writeData(i).bits.data := fRegfile.get.io.write_ports(i).data.asWord
     }
+  }
+
+  if (p.useRetirementBuffer) {
+    io.debug.rb.get := retirement_buffer.get.io.debug
   }
 }
 

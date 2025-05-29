@@ -22,6 +22,7 @@ load(
 )
 load("@kelvin_hw//rules:lint.bzl", "vcstatic_lint")
 load("@kelvin_hw//rules:verilog.bzl", "verilog_zip_bundle")
+load("@kelvin_hw//rules:utils.bzl", "template_rule")
 
 package(default_visibility = ["//visibility:public"])
 
@@ -61,6 +62,18 @@ chisel_test(
     ],
 )
 
+chisel_library(
+    name = "retirement_buffer",
+    srcs = [
+        "RetirementBuffer.scala",
+    ],
+    deps = [
+        ":kelvin_base",
+        "//hdl/chisel/src/common:aligner",
+        "//hdl/chisel/src/common:circular_buffer_multi",
+        "//hdl/chisel/src/common:library",
+    ],
+)
 
 chisel_library(
     name = "kelvin_rvv",
@@ -298,6 +311,7 @@ chisel_library(
         ":kelvin_base",
         ":kelvin_float",
         ":kelvin_rvv",
+        ":retirement_buffer",
         "//hdl/chisel/src/common",
         "//hdl/chisel/src/common:fp",
         "//hdl/chisel/src/common:instruction_buffer",
@@ -503,24 +517,45 @@ vcstatic_lint(
     waive_tags = ["UndrivenInTerm-ML"],
 )
 
-chisel_cc_library(
-    name = "rvv_core_mini_axi_cc_library",
+RVV_CORE_MINI_AXI_COMMON_GEN_FLAGS = [
+    "--enableFetchL0=False",
+    "--fetchDataBits=128",
+    "--lsuDataBits=128",
+    "--enableVector=False",
+    "--enableRvv=True",
+    "--enableFloat=True",
+    "--useAxi",
+]
+
+template_rule(
+    chisel_cc_library,
+    {
+        "rvv_core_mini_axi_cc_library": {
+            "verilog_file_path": "RvvCoreMiniAxi.sv",
+            "extra_outs": [
+                "VRvvCoreMiniAxi_parameters.h",
+                "RvvCoreMiniAxi.zip",
+            ],
+            "gen_flags": [
+                "--moduleName=RvvCoreMini",
+            ] + RVV_CORE_MINI_AXI_COMMON_GEN_FLAGS,
+            "module_name": "RvvCoreMiniAxi",
+        },
+        "rvv_core_mini_verification_axi_cc_library": {
+            "verilog_file_path": "RvvCoreMiniVerificationAxi.sv",
+            "extra_outs": [
+                "VRvvCoreMiniVerificationAxi_parameters.h",
+                "RvvCoreMiniVerificationAxi.zip",
+            ],
+            "gen_flags": [
+                "--moduleName=RvvCoreMiniVerification",
+                "--enableVerification=True",
+            ] + RVV_CORE_MINI_AXI_COMMON_GEN_FLAGS,
+            "module_name": "RvvCoreMiniVerificationAxi",
+        },
+    },
     chisel_lib = ":kelvin",
     emit_class = "kelvin.EmitCore",
-    extra_outs = [
-        "VRvvCoreMiniAxi_parameters.h",
-        "RvvCoreMiniAxi.zip",
-    ],
-    gen_flags = [
-        "--enableFetchL0=False",
-        "--fetchDataBits=128",
-        "--lsuDataBits=128",
-        "--enableVector=False",
-        "--enableRvv=True",
-        "--enableFloat=True",
-        "--moduleName=RvvCoreMini",
-        "--useAxi",
-    ],
     vopts = [
         "-DUSE_GENERIC",
         # RVV
@@ -538,8 +573,6 @@ chisel_cc_library(
         "-Wno-UNSIGNED",
         "-Ihdl/verilog/rvv/inc",
     ],
-    module_name = "RvvCoreMiniAxi",
-    verilog_file_path = "RvvCoreMiniAxi.sv",
 )
 
 verilog_zip_bundle(

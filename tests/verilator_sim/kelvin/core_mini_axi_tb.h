@@ -129,6 +129,16 @@ struct CoreMiniAxi_tb : Sysc_tb {
     sc_signal<sc_bv<32>> float_writeData_0_bits_data;
     sc_signal<sc_bv<32>> float_writeData_1_bits_data;
 #endif
+#if (KP_useRetirementBuffer == true)
+#define RB_DEBUG_IO(x) \
+  sc_signal<bool> rb_inst_##x##_valid; \
+  sc_signal<sc_bv<32>> rb_inst_##x##_bits_pc; \
+  sc_signal<sc_bv<32>> rb_inst_##x##_bits_inst; \
+  sc_signal<sc_bv<KP_retirementBufferIdxWidth>> rb_inst_##x##_bits_idx; \
+  sc_signal<sc_bv<32>> rb_inst_##x##_bits_data;
+  REPEAT(RB_DEBUG_IO, KP_retirementBufferSize);
+#undef RB_DEBUG_IO
+#endif
   };
 
   CoreMiniAxi_tb(sc_module_name n, int loops, bool random, bool debug_axi,

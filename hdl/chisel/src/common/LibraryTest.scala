@@ -61,6 +61,26 @@ class RotateVectorRightTester extends Module {
   io.out := RotateVectorRight(io.in, io.shift)
 }
 
+class ShiftVectorLeftTester extends Module {
+  val io = IO(new Bundle {
+    val in = Input(Vec(16, Valid(UInt(32.W))))
+    val shift = Input(UInt(4.W))
+    val out = Output(Vec(16, Valid(UInt(32.W))))
+  })
+
+  io.out := ShiftVectorLeft(io.in, io.shift)
+}
+
+class ShiftVectorRightTester extends Module {
+  val io = IO(new Bundle {
+    val in = Input(Vec(16, Valid(UInt(32.W))))
+    val shift = Input(UInt(4.W))
+    val out = Output(Vec(16, Valid(UInt(32.W))))
+  })
+
+  io.out := ShiftVectorRight(io.in, io.shift)
+}
+
 class LibrarySpec extends AnyFreeSpec with ChiselSim {
   "ForceZero when invalid" in {
     simulate(new ForceZeroTester) { dut =>
@@ -150,6 +170,62 @@ class LibrarySpec extends AnyFreeSpec with ChiselSim {
           }
           dut.io.out(targetIndex).valid.expect(valids(o))
           dut.io.out(targetIndex).bits.expect(data(o))
+        }
+      }
+    }
+  }
+
+  "ShiftVectorLeft" in {
+    simulate(new ShiftVectorLeftTester) { dut =>
+      val valids = Seq.fill(16)(Random.between(0, 2))
+      val data = Seq.fill(16)(Random.between(0, 2147483647))
+      for (i <- 0 until 16) {
+        dut.io.in(i).valid.poke(valids(i))
+        dut.io.in(i).bits.poke(data(i))
+      }
+
+      for (t <- 0 until 16) {
+        dut.io.shift.poke(t)
+        for (o <- 0 until 16) {
+          var targetIndex = o + t
+          if (targetIndex >= 16) {
+            targetIndex = targetIndex - 16
+          }
+          if (targetIndex < o) {
+            dut.io.out(targetIndex).valid.expect(0.U.asTypeOf(dut.io.out(0).valid))
+            dut.io.out(targetIndex).bits.expect(0.U.asTypeOf(dut.io.out(0).bits))
+          } else {
+            dut.io.out(targetIndex).valid.expect(valids(o))
+            dut.io.out(targetIndex).bits.expect(data(o))
+          }
+        }
+      }
+    }
+  }
+
+  "ShiftVectorRight" in {
+    simulate(new ShiftVectorRightTester) { dut =>
+      val valids = Seq.fill(16)(Random.between(0, 2))
+      val data = Seq.fill(16)(Random.between(0, 2147483647))
+      for (i <- 0 until 16) {
+        dut.io.in(i).valid.poke(valids(i))
+        dut.io.in(i).bits.poke(data(i))
+      }
+
+      for (t <- 0 until 16) {
+        dut.io.shift.poke(t)
+        for (o <- 0 until 16) {
+          var targetIndex = o - t
+          if (targetIndex < 0) {
+            targetIndex = targetIndex + 16
+          }
+          if (targetIndex > o) {
+            dut.io.out(targetIndex).valid.expect(0.U.asTypeOf(dut.io.out(0).valid))
+            dut.io.out(targetIndex).bits.expect(0.U.asTypeOf(dut.io.out(0).bits))
+          } else {
+            dut.io.out(targetIndex).valid.expect(valids(o))
+            dut.io.out(targetIndex).bits.expect(data(o))
+          }
         }
       }
     }

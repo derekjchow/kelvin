@@ -164,6 +164,16 @@ void CoreMiniAxi_tb::Connect() {
   core_->io_debug_float_writeData_0_bits_data(debug_io_.float_writeData_0_bits_data);
   core_->io_debug_float_writeData_1_bits_data(debug_io_.float_writeData_1_bits_data);
 #endif
+#if (KP_useRetirementBuffer == true)
+#define BIND_RB_DEBUG_IO(x) \
+  core_->io_debug_rb_inst_##x##_valid(debug_io_.rb_inst_##x##_valid); \
+  core_->io_debug_rb_inst_##x##_bits_pc(debug_io_.rb_inst_##x##_bits_pc); \
+  core_->io_debug_rb_inst_##x##_bits_inst(debug_io_.rb_inst_##x##_bits_inst); \
+  core_->io_debug_rb_inst_##x##_bits_idx(debug_io_.rb_inst_##x##_bits_idx); \
+  core_->io_debug_rb_inst_##x##_bits_data(debug_io_.rb_inst_##x##_bits_data);
+  REPEAT(BIND_RB_DEBUG_IO, KP_retirementBufferSize);
+#undef BIND_RB_DEBUG_IO
+#endif
 
   // AR
   core_->io_axi_master_read_addr_ready(axi2tlm_signals_.arready);
@@ -374,6 +384,20 @@ absl::Status CoreMiniAxi_tb::CheckStatusAsync() {
 }
 
 void CoreMiniAxi_tb::TraceInstructions() {
+#if (KP_useRetirementBuffer == true)
+#define TRACE_INSTRUCTION(x) do { \
+  uint32_t pc, inst, idx, data; \
+  pc = debug_io_.rb_inst_##x##_bits_pc.read().get_word(0); \
+  inst = debug_io_.rb_inst_##x##_bits_inst.read().get_word(0); \
+  idx = debug_io_.rb_inst_##x##_bits_idx.read().get_word(0); \
+  data = debug_io_.rb_inst_##x##_bits_data.read().get_word(0); \
+  if (debug_io_.rb_inst_##x##_valid.read()) { \
+    tracer_.TraceInstructionRaw(pc, inst, idx, data); \
+  } \
+} while (0);
+REPEAT(TRACE_INSTRUCTION, KP_retirementBufferSize);
+#undef TRACE_INSTRUCTION
+#else
   std::vector<bool> instFires = {
     debug_io_.dispatch_0_instFire.read(),
     debug_io_.dispatch_1_instFire.read(),
@@ -468,6 +492,7 @@ void CoreMiniAxi_tb::TraceInstructions() {
     writeDataDatas,
     executeRegBases
   );
+#endif
 }
 
 void CoreMiniAxi_tb::posedge() {
