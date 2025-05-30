@@ -81,7 +81,9 @@ SECTIONS {
        * Memory location for the return value from main,
        * which could be inspected by another core in the system.
        **/
+      . = ALIGN(4);
       _ret = .;
+      . += 4;
       . = ALIGN(16);
       __data_end__ = .;
       _edata = .;
