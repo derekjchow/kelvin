@@ -118,7 +118,6 @@ template_rule(
     test_module = ["core_mini_axi_sim.py"],
     testcases = TESTCASES,
     build_args = [
-        "+define+SYNTHESIS=1",
         "-timescale=1ns/1ps",
         "-kdb",
         "+vcs+fsdbon",
