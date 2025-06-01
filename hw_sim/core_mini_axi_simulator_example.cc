@@ -12,6 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include <fcntl.h>
+#include <sys/mman.h>
+#include <sys/stat.h>
+
 #include <bitset>
 #include <cstdint>
 #include <future>
@@ -21,38 +25,32 @@
 #include <queue>
 #include <vector>
 
-#include <fcntl.h>
-#include <sys/mman.h>
-#include <sys/stat.h>
-
-#include "hw_sim/core_mini_axi_wrapper.h"
-
-#include "absl/types/span.h"
-#include "tests/verilator_sim/elf.h"
 #include "VCoreMiniAxi.h"
-
+#include "absl/types/span.h"
+#include "hw_sim/kelvin_simulator.h"
+#include "tests/verilator_sim/elf.h"
 
 int main() {
-  VerilatedContext context;
-  CoreMiniAxiWrapper wrapper(&context);
-  wrapper.Reset();
+  KelvinSimulator* simulator = KelvinSimulator::Create();
 
   // Load elf
-  auto file_name = "../tests/cocotb/wfi_slot_0.elf";
+  auto file_name = "hw_sim/mailbox_example.elf";
   int fd = open(file_name, 0);
   if (fd < 0) {
+    std::cout << "Fail " << __LINE__ << std::endl;
     return -1;
   }
   struct stat sb;
   if (fstat(fd, &sb) != 0) {
+    std::cout << "Fail " << __LINE__ << std::endl;
     close(fd);
     return -1;
   }
   auto file_size = sb.st_size;
   auto file_data = mmap(nullptr, file_size, PROT_READ, MAP_PRIVATE, fd, 0);
-  CopyFn copy_fn = [&wrapper](void* dest, const void* src , size_t count) {
+  CopyFn copy_fn = [simulator](void* dest, const void* src, size_t count) {
     uint32_t addr = static_cast<uint32_t>(reinterpret_cast<uint64_t>(dest));
-    wrapper.Write(addr, count, reinterpret_cast<const char*>(src));
+    simulator->WriteTCM(addr, count, reinterpret_cast<const char*>(src));
     return dest;
   };
   uint32_t start_pc = LoadElf(reinterpret_cast<uint8_t*>(file_data), copy_fn);
@@ -63,16 +61,18 @@ int main() {
   std::cout << "Loaded " << file_name << std::endl;
 
   // Start Program
-  wrapper.WriteWord(0x30004, start_pc);
-  wrapper.WriteWord(0x30000, 1u);
-  wrapper.WriteWord(0x30000, 0u);
+  simulator->Run(start_pc);
 
   // Wait for interrupt
-  if (wrapper.WaitForTermination()) {
+  if (simulator->WaitForTermination(10000)) {
     std::cout << "Halted" << std::endl;
   } else {
     std::cout << "Didn't halt" << std::endl;
   }
+
+  Mailbox m = simulator->ReadMailbox();
+  std::cout << "Mailbox value[0]=0x" << std::hex << m.message[0] << std::endl;
+  std::cout << "Mailbox value[1]=0x" << std::hex << m.message[1] << std::endl;
 
   return 0;
 }

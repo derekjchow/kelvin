@@ -16,6 +16,7 @@
 #define HW_SIM_CORE_MINI_AXI_WRAPPER_H_
 
 #include "hw_sim/hw_primitives.h"
+#include "hw_sim/mailbox.h"
 
 class CoreMiniAxiWrapper {
  public:
@@ -116,14 +117,29 @@ class CoreMiniAxiWrapper {
 
   void Step() { clock_.Step(); }
 
-  void Write(uint32_t addr, absl::Span<const uint8_t> data) {
-    while (data.size() > 0) {
+  Mailbox& mailbox() { return mailbox_; }
+
+  const Mailbox& mailbox() const { return mailbox_; }
+
+  const Mailbox& ReadMailbox(void) { return mailbox_; }
+
+  void WriteMailbox(const Mailbox& mailbox) {
+    for (int i = 0; i < 4; i++) {
+      mailbox_.message[i] = mailbox.message[i];
+    }
+  }
+
+  void Write(uint32_t addr, uint32_t len, const char* data) {
+    auto write_data =
+        absl::Span<const uint8_t>(reinterpret_cast<const uint8_t*>(data), len);
+    while (write_data.size() > 0) {
       uint32_t offset4096 = addr % 4096;
       uint32_t remainder4096 = 4096 - offset4096;
       uint32_t max_transaction_bytes = std::min(4096u, remainder4096);
-      uint32_t transaction_bytes =
-          std::min(static_cast<uint32_t>(data.size()), max_transaction_bytes);
-      absl::Span<const uint8_t> local_data = data.subspan(0, transaction_bytes);
+      uint32_t transaction_bytes = std::min(
+          static_cast<uint32_t>(write_data.size()), max_transaction_bytes);
+      absl::Span<const uint8_t> local_data =
+          write_data.subspan(0, transaction_bytes);
 
       std::shared_ptr<bool> transaction =
           slave_write_driver_.WriteTransaction(0, addr, local_data);
@@ -131,7 +147,7 @@ class CoreMiniAxiWrapper {
         Step();
       }
 
-      data.remove_prefix(transaction_bytes);
+      write_data.remove_prefix(transaction_bytes);
       addr += transaction_bytes;
     }
   }
@@ -191,6 +207,7 @@ class CoreMiniAxiWrapper {
 
  private:
   VerilatedContext* const context_;
+  Mailbox mailbox_;
   VCoreMiniAxi core_;
   Clock clock_;
   AxiSlaveWriteDriver slave_write_driver_;

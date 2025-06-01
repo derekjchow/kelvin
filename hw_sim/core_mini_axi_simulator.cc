@@ -17,20 +17,34 @@
 
 class CoreMiniAxiSimulator : public KelvinSimulator {
  public:
-  CoreMiniAxiSimulator()
-    : context_(),
-      wrapper_(&context_) {
+  CoreMiniAxiSimulator() : context_(), wrapper_(&context_) {
+    auto read_cb = [this](const AxiAddr& axi_addr) {
+      return this->ReadCallback(axi_addr);
+    };
+    wrapper_.RegisterReadCallback(read_cb);
+
+    auto write_cb = [this](const AxiAddr& axi_addr, const AxiWData& axi_data) {
+      return this->WriteCallback(axi_addr, axi_data);
+    };
+    wrapper_.RegisterWriteCallback(write_cb);
+
     wrapper_.Reset();
   }
   ~CoreMiniAxiSimulator() final = default;
 
   void ReadTCM(uint32_t addr, size_t size, char* data) final;
+  const Mailbox& ReadMailbox(void) final;
   void WriteTCM(uint32_t addr, size_t size, const char* data) final;
+  void WriteMailbox(const Mailbox& mailbox) final;
   void Run(uint32_t start_addr) final;
+  bool WaitForTermination(int timeout) final;
 
  private:
   VerilatedContext context_;
   CoreMiniAxiWrapper wrapper_;
+
+  AxiWResp WriteCallback(const AxiAddr&, const AxiWData&);
+  AxiRData ReadCallback(const AxiAddr&);
 };
 
 void CoreMiniAxiSimulator::ReadTCM(uint32_t addr, size_t size, char* data) {
@@ -38,11 +52,17 @@ void CoreMiniAxiSimulator::ReadTCM(uint32_t addr, size_t size, char* data) {
   memcpy(data, read_result.data(), size);
 }
 
-void CoreMiniAxiSimulator::WriteTCM(
-    uint32_t addr, size_t size, const char* data) {
-  wrapper_.Write(
-      addr,
-      absl::Span<const uint8_t>(reinterpret_cast<const uint8_t*>(data), size));
+const Mailbox& CoreMiniAxiSimulator::ReadMailbox(void) {
+  return wrapper_.ReadMailbox();
+}
+
+void CoreMiniAxiSimulator::WriteTCM(uint32_t addr, size_t size,
+                                    const char* data) {
+  wrapper_.Write(addr, size, data);
+}
+
+void CoreMiniAxiSimulator::WriteMailbox(const Mailbox& mailbox) {
+  wrapper_.WriteMailbox(mailbox);
 }
 
 void CoreMiniAxiSimulator::Run(uint32_t start_addr) {
@@ -51,7 +71,47 @@ void CoreMiniAxiSimulator::Run(uint32_t start_addr) {
   wrapper_.WriteWord(0x30000, 0u);
 }
 
+bool CoreMiniAxiSimulator::WaitForTermination(int timeout = 10000) {
+  return wrapper_.WaitForTermination(timeout);
+}
+
+AxiWResp CoreMiniAxiSimulator::WriteCallback(const AxiAddr& addr,
+                                             const AxiWData& data) {
+  Mailbox& mailbox = wrapper_.mailbox();
+  uint8_t* mailbox_data = reinterpret_cast<uint8_t*>(mailbox.message);
+  const uint8_t* write_data =
+      reinterpret_cast<const uint8_t*>(&data.write_data_bits_data[0]);
+  for (int i = 0; i < 16; i++) {
+    if (data.write_data_bits_strb & (1 << i)) {
+      mailbox_data[i] = write_data[i];
+    }
+  }
+
+  AxiWResp resp;
+  resp.write_resp_bits_id = addr.addr_bits_id;
+  resp.write_resp_bits_resp = 1;
+  return resp;
+}
+
+AxiRData CoreMiniAxiSimulator::ReadCallback(const AxiAddr& addr) {
+  const Mailbox& mailbox = wrapper_.mailbox();
+  const uint8_t* mailbox_data =
+      reinterpret_cast<const uint8_t*>(mailbox.message);
+  AxiRData data;
+  uint8_t* read_data =
+      reinterpret_cast<uint8_t*>(&(data.read_data_bits_data[0]));
+  for (int i = 0; i < 16; i++) {
+    read_data[i] = mailbox_data[i];
+  }
+
+  data.read_data_bits_id = addr.addr_bits_id;
+  data.read_data_bits_resp = 0;
+  data.read_data_bits_last = 1;
+
+  return data;
+}
+
 // static
-KelvinSimulator* Create() {
+KelvinSimulator* KelvinSimulator::Create() {
   return new CoreMiniAxiSimulator();
 }

@@ -12,10 +12,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef HW_SIM_HW_KELVIN_SIMULATOR_H_
-#define HW_SIM_HW_KELVIN_SIMULATOR_H_
+#ifndef HW_SIM_KELVIN_SIMULATOR_H_
+#define HW_SIM_KELVIN_SIMULATOR_H_
 
 #include <cstdlib>
+
+#include "hw_sim/mailbox.h"
 
 class KelvinSimulator {
  public:
@@ -23,14 +25,18 @@ class KelvinSimulator {
 
   virtual ~KelvinSimulator() = default;
 
-  // Functions for reading/writing TCMs.
+  // Functions for reading/writing TCMs and Mailbox.
   virtual void ReadTCM(uint32_t addr, size_t size, char* data) = 0;
+  virtual const Mailbox& ReadMailbox(void) = 0;
   virtual void WriteTCM(uint32_t addr, size_t size, const char* data) = 0;
+  virtual void WriteMailbox(const Mailbox& mailbox) = 0;
+
+  // Wait for interrupt
+  virtual bool WaitForTermination(int timeout) = 0;
 
   // Begin executing starting with the PC set to the specified address. Returns
   // when the core halts.
   virtual void Run(uint32_t start_addr) = 0;
 };
 
-
-#endif  // HW_SIM_HW_KELVIN_SIMULATOR_H_
+#endif  // HW_SIM_KELVIN_SIMULATOR_H_

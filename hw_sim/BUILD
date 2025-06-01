@@ -12,6 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+load("//rules:kelvin_v2.bzl", "kelvin_v2_binary")
+
 cc_library(
     name = "hw_primitives",
     srcs = [
@@ -30,6 +32,7 @@ cc_library(
     name = "core_mini_axi_wrapper",
     hdrs = [
         "core_mini_axi_wrapper.h",
+        "mailbox.h",
     ],
     deps = [
         ":hw_primitives",
@@ -54,7 +57,10 @@ cc_binary(
 
 cc_library(
   name = "kelvin_simulator_headers",
-  hdrs = ["kelvin_simulator.h"],
+  hdrs = [
+    "kelvin_simulator.h",
+    "mailbox.h",
+  ],
 )
 
 cc_library(
@@ -70,5 +76,28 @@ cc_shared_library(
     name = "core_mini_axi_sim",
     deps = [
         ":core_mini_axi_simulator",
+    ],
+)
+
+kelvin_v2_binary(
+    name = "mailbox_example",
+    srcs = [
+        "mailbox_example.cc",
+    ],
+)
+
+cc_binary(
+    name = "core_mini_axi_simulator_example",
+    srcs = [
+        "core_mini_axi_simulator_example.cc",
+    ],
+    data = [
+        ":mailbox_example.elf",
+    ],
+    deps = [
+        ":core_mini_axi_simulator",
+        "//tests/verilator_sim:elf",
+        "//hdl/chisel/src/kelvin:core_mini_axi_cc_library_cc",
+        "@com_google_absl//absl/types:span",
     ],
 )
