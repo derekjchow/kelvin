@@ -434,7 +434,7 @@ module rvv_backend_dispatch
 `ifdef TB_SUPPORT
             assign mapinfo_dp2lsu[i].uop_pc     = uop_uop2dp[i].uop_pc; 
 `endif
-            assign mapinfo_dp2lsu[i].valid      = mapinfo_valid_dp2lsu;
+            assign mapinfo_dp2lsu[i].valid      = mapinfo_valid_dp2lsu[i];
             assign mapinfo_dp2lsu[i].rob_entry  = rob_address[i];
             assign mapinfo_dp2lsu[i].lsu_class  = uop_uop2dp[i].uop_funct6.lsu_funct6.lsu_is_store;
             assign mapinfo_dp2lsu[i].vregfile_write_addr = uop_uop2dp[i].vd_index;

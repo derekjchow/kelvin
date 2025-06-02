@@ -190,7 +190,8 @@ module rvv_backend_decode_unit_lsu
       case(uop_funct6.lsu_funct6.lsu_mop)
         US: begin
           case(uop_funct6.lsu_funct6.lsu_umop)
-            US_US: begin
+            US_US,
+            US_FF: begin
               case(inst_nf)
                 // EMUL_vd = ceil( inst_funct3/csr_sew*csr_lmul )
                 // emul_max_vd_vs2 = EMUL_vd
