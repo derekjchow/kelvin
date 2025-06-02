@@ -5307,4 +5307,10 @@ module rvv_backend_decode_unit_ari
     end
   end
 
+  // update segment_index
+  always_comb begin
+    for(int i=0;i<`NUM_DE_UOP;i=i+1) begin: ASSIGN_SEG_INDEX
+      uop[i].seg_field_index = 'b0;
+    end
+  end
 endmodule

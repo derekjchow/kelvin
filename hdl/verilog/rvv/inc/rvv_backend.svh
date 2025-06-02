@@ -361,8 +361,9 @@ typedef struct packed {
   logic        	                      rs1_data_valid;                                
           
   logic   [`UOP_INDEX_WIDTH-1:0]      uop_index;          // used for calculate v0_start in DP stage
-  logic                               first_uop_valid;     // one instruction may be split to many uops, this signal is used to specify the first uop in those uops of one instruction.
+  logic                               first_uop_valid;    // one instruction may be split to many uops, this signal is used to specify the first uop in those uops of one instruction.
   logic                               last_uop_valid;     // one instruction may be split to many uops, this signal is used to specify the last uop in those uops of one instruction.
+  logic   [`UOP_INDEX_WIDTH-1:0]      seg_field_index;    // used for calculate v0_start in DP stage for segment ld/st
 } UOP_QUEUE_t;    
 
 // specify whether the current byte belongs to 'prestart' or 'body-inactive' or 'body-active' or 'tail'

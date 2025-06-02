@@ -2773,9 +2773,7 @@ module rvv_backend_decode_unit_lsu
       uop[i].vector_csr = vector_csr_lsu;
 
       // update vstart of every uop
-      if(uop_funct6.lsu_funct6.lsu_is_seg==IS_SEGMENT)
-        uop[i].vector_csr.vstart = 'b0;
-      else begin
+      if(uop_funct6.lsu_funct6.lsu_is_seg!=IS_SEGMENT) begin
         case(eew_max)
           EEW8: begin
             uop[i].vector_csr.vstart  = {uop_index_current[i][`UOP_INDEX_WIDTH-1:0],{($clog2(`VLENB)){1'b0}}}<csr_vstart ? csr_vstart : 
@@ -2836,7 +2834,7 @@ module rvv_backend_decode_unit_lsu
   // some uop need v0 as the vector operand
   always_comb begin
     for(int i=0;i<`NUM_DE_UOP;i=i+1) begin: GET_UOP_V0
-      uop[i].v0_valid = !inst_vm;
+      uop[i].v0_valid = 'b1;
     end
   end
 
@@ -3031,6 +3029,29 @@ module rvv_backend_decode_unit_lsu
     for(int i=0;i<`NUM_DE_UOP;i=i+1) begin: GET_UOP_LAST
       uop[i].first_uop_valid = uop_index_current[i][`UOP_INDEX_WIDTH-1:0] == 'b0;
       uop[i].last_uop_valid = uop_index_current[i][`UOP_INDEX_WIDTH-1:0] == uop_index_max;
+    end
+  end
+
+  // update segment_index valid
+  always_comb begin
+    for(int i=0;i<`NUM_DE_UOP;i=i+1) begin: GET_SEG_INDEX
+      uop[i].seg_field_index = 'b0;
+
+      if(uop_funct6.lsu_funct6.lsu_is_seg==IS_SEGMENT) begin
+        case(inst_nf)
+          NF2: begin
+            case(emul_vd)
+              EMUL2: uop[i].seg_field_index = {2'b0,uop_index_current[i][0]};
+              EMUL4: uop[i].seg_field_index = {1'b0,uop_index_current[i][1:0]};
+            endcase
+          end
+          NF3,
+          NF4: begin
+            if (emul_vd==EMUL2)
+              uop[i].seg_field_index = {2'b0,uop_index_current[i][0]};
+          end
+        endcase
+      end
     end
   end
 
