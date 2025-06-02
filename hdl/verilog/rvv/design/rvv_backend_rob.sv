@@ -44,9 +44,11 @@ module rvv_backend_rob
     rd_rob2rt,
     rd_ready_rt2rob,
     uop_rob2dp,
-    trap_valid_rvs2rvv,
-    trap_rvs2rvv,
-    trap_ready_rvv2rvs
+    trap_valid_rmp2rob,
+    trap_rob_entry_rmp2rob,
+    trap_ready_rob2rmp,
+    trap_ready_rvv2rvs,
+    trap_flush_rvv
 );  
 // global signal
     input   logic                   clk;
@@ -96,39 +98,39 @@ module rvv_backend_rob
     output  ROB2DP_t  [`ROB_DEPTH-1:0]  uop_rob2dp;
 
 // trap signal handshake
-    input   logic                       trap_valid_rvs2rvv;
-    input   TRAP_t                      trap_rvs2rvv;
-    output  logic                       trap_ready_rvv2rvs;
+    input   logic                           trap_valid_rmp2rob;
+    input   logic   [`ROB_DEPTH_WIDTH-1:0]  trap_rob_entry_rmp2rob;
+    output  logic                           trap_ready_rob2rmp;
+    output  logic                           trap_ready_rvv2rvs;
+    output  logic                           trap_flush_rvv;
 
 // ---internal signal definition--------------------------------------
   // Uop info
-    DP2ROB_t  [`NUM_RT_UOP-1:0]       uop_rob2rt;
-    logic     [`NUM_RT_UOP-1:0]       uop_valid_rob2rt;
-    DP2ROB_t  [`ROB_DEPTH-1:0]        uop_info;
-    logic     [`ROB_DEPTH-1:0]        entry_valid;
+    DP2ROB_t  [`NUM_RT_UOP-1:0]         uop_rob2rt;
+    logic     [`NUM_RT_UOP-1:0]         uop_valid_rob2rt;
+    DP2ROB_t  [`ROB_DEPTH-1:0]          uop_info;
+    logic     [`ROB_DEPTH-1:0]          entry_valid;
 
-    logic     [`ROB_DEPTH_WIDTH-1:0]  uop_wptr;
-    logic     [`ROB_DEPTH_WIDTH-1:0]  uop_rptr;
-    logic                             uop_info_fifo_full;
-    logic     [`NUM_DP_UOP-1:0]       uop_info_fifo_almost_full;
+    logic     [`ROB_DEPTH_WIDTH-1:0]    uop_wptr;
+    logic     [`ROB_DEPTH_WIDTH-1:0]    uop_rptr;
+    logic                               uop_info_fifo_full;
+    logic     [`NUM_DP_UOP-1:0]         uop_info_fifo_almost_full;
 
   // Uop result
-    RES_ROB_t [`ROB_DEPTH-1:0]        res_mem;
-    logic     [`ROB_DEPTH-1:0]        uop_done;
+    RES_ROB_t [`ROB_DEPTH-1:0]          res_mem;
+    logic     [`ROB_DEPTH-1:0]          uop_done;
 
   // trap
-    logic     [`ROB_DEPTH-1:0]        trap_flag;
-    logic                             flush_rob;
-    logic     [`NUM_RT_UOP-1:0]       flush;
+    logic     [`ROB_DEPTH-1:0]          trap_flag;
 
   // retire uops
-    logic     [`NUM_RT_UOP-1:0]       uop_retire_valid;
+    logic     [`NUM_RT_UOP-1:0]         uop_retire_valid;
 
   // temp signal
-    logic     [`ROB_DEPTH_WIDTH-1:0]  wind_uop_wptr [`ROB_DEPTH-1:0];
-    logic     [`ROB_DEPTH_WIDTH-1:0]  wind_uop_rptr [`ROB_DEPTH-1:0];
+    logic     [`ROB_DEPTH_WIDTH-1:0]    wind_uop_wptr [`ROB_DEPTH-1:0];
+    logic     [`ROB_DEPTH_WIDTH-1:0]    wind_uop_rptr [`ROB_DEPTH-1:0];
 
-    genvar                            i,j;
+    genvar                              i,j;
 // ---code start------------------------------------------------------
   // Uop info FIFO
     multi_fifo #(
@@ -152,7 +154,7 @@ module rvv_backend_rob
         .empty        (),
         .almost_empty (),
       // fifo info
-        .clear        (1'b0),
+        .clear        (trap_flush_rvv),
         .fifo_data    (uop_info),
         .wptr         (uop_wptr),
         .rptr         (uop_rptr),
@@ -172,33 +174,33 @@ module rvv_backend_rob
   // clear if RT pop uop from ROB
   // reset once flush ROB
     multi_fifo #(
-        .T      (logic),
-        .M      (`NUM_DP_UOP),
-        .N      (`NUM_RT_UOP),
-        .DEPTH  (`ROB_DEPTH),
-        .POP_CLEAR (1'b1),
-        .ASYNC_RSTN (1'b1),
-        .CHAOS_PUSH (1'b1)
+        .T            (logic),
+        .M            (`NUM_DP_UOP),
+        .N            (`NUM_RT_UOP),
+        .DEPTH        (`ROB_DEPTH),
+        .POP_CLEAR    (1'b1),
+        .ASYNC_RSTN   (1'b1),
+        .CHAOS_PUSH   (1'b1)
     ) u_uop_valid_fifo (
       // global
-        .clk    (clk),
-        .rst_n  (rst_n),
+        .clk          (clk),
+        .rst_n        (rst_n),
       // push side
-        .push   (uop_valid_dp2rob & uop_ready_rob2dp),
-        .datain (uop_valid_dp2rob),
-        .full   (),
+        .push         (uop_valid_dp2rob & uop_ready_rob2dp),
+        .datain       (uop_valid_dp2rob),
+        .full         (),
         .almost_full  (),
       // pop side
-        .pop    (rd_valid_rob2rt & rd_ready_rt2rob),
-        .dataout(uop_valid_rob2rt),
-        .empty  (),
+        .pop          (rd_valid_rob2rt & rd_ready_rt2rob),
+        .dataout      (uop_valid_rob2rt),
+        .empty        (),
         .almost_empty (),
       // fifo info
-        .clear  (flush_rob),
+        .clear        (trap_flush_rvv),
         .fifo_data    (entry_valid),
-        .wptr   (),
-        .rptr   (),
-        .entry_count ()
+        .wptr         (),
+        .rptr         (),
+        .entry_count  ()
     );
 
   // update PU result to result memory
@@ -278,7 +280,7 @@ module rvv_backend_rob
      always_ff @(posedge clk or negedge rst_n) begin
         if (!rst_n)
             uop_done <= '0;
-        else if (flush_rob)
+        else if (trap_flush_rvv)
             uop_done <= '0;
         else begin
             for (int k=0; k<`NUM_RT_UOP; k++) begin
@@ -334,22 +336,27 @@ module rvv_backend_rob
   always_ff @(posedge clk or negedge rst_n) begin
       if (!rst_n)
           trap_flag <= '0;
-      else if (flush_rob)
+      else if (trap_flush_rvv)
           trap_flag <= '0;
-      else if (trap_valid_rvs2rvv & trap_ready_rvv2rvs)
-          trap_flag[trap_rvs2rvv.trap_uop_rob_entry] <= 1'b1;
+      else if (trap_valid_rmp2rob & trap_ready_rob2rmp)
+          trap_flag[trap_rob_entry_rmp2rob] <= 1'b1;
   end
 
   // trap ready is always 1
-  assign trap_ready_rvv2rvs = 1'b1;
+  assign trap_ready_rob2rmp = 1'b1;
 
   // retire uop(s)
   generate
       for (i=0; i<`NUM_RT_UOP; i++) begin : gen_rob2rt
         // retire_uop valid
-          assign uop_retire_valid[i] = uop_valid_rob2rt[i] & uop_done[wind_uop_rptr[i]];
-          if (i==0) assign rd_valid_rob2rt[0] = rd_ready_rt2rob[0] && uop_retire_valid[0];
-          else      assign rd_valid_rob2rt[i] = rd_ready_rt2rob[i] && uop_retire_valid[i] && rd_valid_rob2rt[i-1] && ~trap_flag[wind_uop_rptr[i]-1'b1];
+          if (i==0) begin
+            assign uop_retire_valid[0] = uop_valid_rob2rt[0] & (uop_done[wind_uop_rptr[0]]|trap_flag[wind_uop_rptr[i]]);
+            assign rd_valid_rob2rt[0] = rd_ready_rt2rob[0] && uop_retire_valid[0];
+          end
+          else begin
+            assign uop_retire_valid[i] = uop_valid_rob2rt[i] & uop_done[wind_uop_rptr[i]];
+            assign rd_valid_rob2rt[i] = rd_ready_rt2rob[i] && uop_retire_valid[i] && rd_valid_rob2rt[i-1] && ~trap_flag[wind_uop_rptr[i]-1'b1];
+          end
 
         // retire_uop data
 `ifdef TB_SUPPORT          
@@ -367,14 +374,9 @@ module rvv_backend_rob
       end
   endgenerate
   
-  // flush signal
-  // set when one uop in retired uops triggers a trap.
-  generate
-      for (i=0; i<`NUM_RT_UOP; i++) begin : gen_flush
-          assign flush[i] = rd_rob2rt[i].trap_flag & rd_valid_rob2rt[i] & rd_ready_rt2rob[i];
-      end
-  endgenerate
-  assign flush_rob = |flush;
+  // trap handle ready and flush signal
+  assign trap_ready_rvv2rvs = rd_rob2rt[0].trap_flag & rd_ready_rt2rob[0] & uop_retire_valid[0];
+  assign trap_flush_rvv = trap_ready_rvv2rvs;
 
   // bypass ROB info to Dispatch
   generate

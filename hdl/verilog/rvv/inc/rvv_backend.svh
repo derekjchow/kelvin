@@ -382,15 +382,12 @@ typedef enum logic [0:0] {
 
 // trap handle
 typedef enum logic [1:0] {
-  TRAP_DECODE,             // RVS find some illegal instructions when decoding, 
-                           // which means a trap occurs to the instruction that is NOT executing in RVV.
-                           // So RVV will stop receiving new instructions from RVS, and complete all instructions in RVV.
-  TRAP_LSU,                // RVS find some illegal instructions when complete LSU transaction, like bus error,
-                           // which means a trap occurs to the instruction that is executing in RVV.
-                           // So RVV will top CQ to receive new instructions and flush Command Queue and Uops Queue, 
-                           // and complete the instructions in EX, ME and WB stage. And RVS need to send rob_entry of that exception instruction.
-                           // After RVV retire all uops before that exception instruction, RVV response a ready signal for trap application.
-  TRAP_LSU_FF              // fault only first load, need to confirm whether has TLB or not.
+  TRAP_LSU,         // RVS find some illegal instructions when complete LSU transaction, like bus error,
+                    // which means a trap occurs to the instruction that is executing in RVV.
+                    // So RVV will top CQ to receive new instructions and flush Command Queue and Uops Queue,
+                    // and complete the instructions in EX, ME and WB stage. And RVS need to send rob_entry of that exception instruction.
+                    // After RVV retire all uops before that exception instruction, RVV response a ready signal for trap application.
+  TRAP_LSU_FF       // fault only first load, need to confirm whether has TLB or not.
 } TRAP_INFO_e;
 
 // the max number of byte in a vector register is VLENB
@@ -565,6 +562,11 @@ typedef struct packed {
 } UOP_LSU2RVV_t;  
 
 typedef struct packed {
+  UOP_LSU2RVV_t                       uop_lsu2rvv;
+  logic                               trap_valid;
+} UOP_LSU_t;
+
+typedef struct packed {
 `ifdef TB_SUPPORT
   logic   [`PC_WIDTH-1:0]             uop_pc;
 `endif
@@ -647,11 +649,5 @@ typedef struct packed {
   logic   [`VLEN-1:0]                 rt_data;
   logic   [`VLENB-1:0]                rt_strobe; 
 }RT2VRF_t;
-
-// trap handle
-typedef struct packed {
-  logic   [`ROB_DEPTH_WIDTH-1:0]      trap_uop_rob_entry;
-} TRAP_t;  
-
 
 `endif  // HDL_VERILOG_RVV_DESIGN_RVV_SVH

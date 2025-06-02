@@ -31,7 +31,6 @@ module rvv_backend
     wr_vxsat_ready,
 
     trap_valid_rvs2rvv,
-    trap_rvs2rvv,
     trap_ready_rvv2rvs,    
 
     vcsr_valid,
@@ -70,7 +69,6 @@ module rvv_backend
 // exception handler
   // trap signal handshake
     input   logic                                     trap_valid_rvs2rvv;
-    input   TRAP_t                                    trap_rvs2rvv;
     output  logic                                     trap_ready_rvv2rvs;    
   // the vcsr of last retired uop in last cycle
     output  logic                                     vcsr_valid;
@@ -176,6 +174,7 @@ module rvv_backend
   // RVV frontend to command queue
     logic                                 cq_full;
     logic        [`ISSUE_LANE-1:0]        cq_almost_full;
+    logic        [`ISSUE_LANE-1:0]        insts_ready;
   // Command queue to Decode
     RVVCmd       [`NUM_DE_INST-1:0]       inst_pkg_cq2de;
     logic                                 fifo_empty_cq2de;
@@ -226,6 +225,7 @@ module rvv_backend
     logic        [`NUM_DP_UOP-1:0]        rs_valid_dp2lsu;
     UOP_RVV2LSU_t [`NUM_DP_UOP-1:0]       rs_dp2lsu;
     logic        [`NUM_DP_UOP-1:0]        rs_ready_lsu2dp;
+    logic        [`NUM_LSU-1:0]           uop_lsu_valid_rvv2lsu_tmp;
     // LSU MAP INFO
     logic                                 mapinfo_full;
     logic        [`NUM_DP_UOP-1:0]        mapinfo_almost_full;
@@ -268,11 +268,16 @@ module rvv_backend
     logic        [`NUM_LSU-1:0]           mapinfo_almost_empty;
   // LSU result
     logic        [`NUM_LSU-1:0]           pop_lsu_res;
-    UOP_LSU2RVV_t   [`NUM_LSU-1:0]        lsu_res;
+    UOP_LSU_t    [`NUM_LSU-1:0]           lsu_res;
     logic                                 lsu_res_full;
     logic        [`NUM_LSU-1:0]           lsu_res_almost_full;
     logic                                 lsu_res_empty;
     logic        [`NUM_LSU-1:0]           lsu_res_almost_empty;
+    logic        [`NUM_LSU-1:0]           uop_lsu_valid;
+    UOP_LSU_t    [`NUM_LSU-1:0]           uop_lsu;
+    logic        [`NUM_LSU-1:0]           uop_lsu_ready;
+    logic                                 trap_valid_rmp2rob;
+    logic        [`ROB_DEPTH_WIDTH-1:0]   trap_rob_entry_rmp2rob;
 
   // execution unit submit result to ROB
   // ALU to ROB
@@ -309,6 +314,12 @@ module rvv_backend
     logic        [`NUM_RT_UOP-1:0]        wr_valid_rt2vrf;
     RT2VRF_t     [`NUM_RT_UOP-1:0]        wr_data_rt2vrf;
 
+  // trap handler
+    logic                                 trap_en;
+    logic                                 is_trapping;
+    logic                                 trap_ready_rob2rmp;   
+    logic                                 trap_flush_rvv;
+
     genvar i;
 
 // ---code start------------------------------------------------------
@@ -334,19 +345,21 @@ module rvv_backend
         .almost_full  (cq_almost_full),
         .empty        (fifo_empty_cq2de),
         .almost_empty (fifo_almost_empty_cq2de),
-        .clear        (1'b0),
+        .clear        (trap_flush_rvv),
         .fifo_data    (),
         .wptr         (),
         .rptr         (),
         .entry_count  ()
     );
 
-    assign insts_ready_cq2rvs[0] = ~cq_full;
+    assign insts_ready[0] = ~cq_full;
     generate
       for (i=1;i<`ISSUE_LANE;i++) begin: cmq_ready
-        assign insts_ready_cq2rvs[i] = !cq_almost_full[i];
+        assign insts_ready[i] = !cq_almost_full[i];
       end
     endgenerate
+
+    assign insts_ready_cq2rvs = is_trapping ? 'b0 : insts_ready;
 
   `ifdef ASSERT_ON
     PushToCMDQueue: `rvv_expect((insts_valid_rvs2cq & insts_ready_cq2rvs) inside {4'b1111, 4'b0111, 4'b0011, 4'b0001, 4'b0000})
@@ -371,7 +384,9 @@ module rvv_backend
         .push_de2uq               (push_de2uq),
         .data_de2uq               (data_de2uq),
         .fifo_full_uq2de          (fifo_full_uq2de),
-        .fifo_almost_full_uq2de   (fifo_almost_full_uq2de)
+        .fifo_almost_full_uq2de   (fifo_almost_full_uq2de),
+      // trap-flush
+        .trap_flush_rvv           (trap_flush_rvv)
     );
 
   // Uop queue
@@ -395,7 +410,7 @@ module rvv_backend
         .almost_full      (fifo_almost_full_uq2de),
         .empty            (uq_empty),
         .almost_empty     (uq_almost_empty),
-        .clear            (1'b0),
+        .clear            (trap_flush_rvv),
         .fifo_data        (),
         .wptr             (),
         .rptr             (),
@@ -487,7 +502,7 @@ module rvv_backend
         .clk          (clk),
         .rst_n        (rst_n),
       // write
-        .push         (rs_valid_dp2alu & rs_ready_alu2dp),
+        .push         (rs_valid_dp2alu),
         .datain       (rs_dp2alu),
       // read
         .pop          (pop_alu2rs),
@@ -497,7 +512,7 @@ module rvv_backend
         .almost_full  (alu_rs_almost_full),
         .empty        (fifo_empty_rs2alu),
         .almost_empty (fifo_almost_empty_rs2alu),
-        .clear        (1'b0),
+        .clear        (trap_flush_rvv),
         .fifo_data    (),
         .wptr         (),
         .rptr         (),
@@ -529,7 +544,7 @@ module rvv_backend
         .clk              (clk),
         .rst_n            (rst_n),
       // write
-        .push             (rs_valid_dp2pmtrdt & rs_ready_pmtrdt2dp),
+        .push             (rs_valid_dp2pmtrdt),
         .datain           (rs_dp2pmtrdt),
       // read
         .pop              (pop_pmtrdt2rs),
@@ -539,7 +554,7 @@ module rvv_backend
         .almost_full      (pmtrdt_rs_almost_full),
         .empty            (fifo_empty_rs2pmtrdt),
         .almost_empty     (fifo_almost_empty_rs2pmtrdt),
-        .clear            (1'b0),
+        .clear            (trap_flush_rvv),
         .fifo_data        (all_uop_rs2pmtrdt),
         .wptr             (),
         .rptr             (),
@@ -570,7 +585,7 @@ module rvv_backend
         .clk            (clk),
         .rst_n          (rst_n),
       // write
-        .push           (rs_valid_dp2mul & rs_ready_mul2dp),
+        .push           (rs_valid_dp2mul),
         .datain         (rs_dp2mul),
       // read
         .pop            (pop_mul2rs),
@@ -580,7 +595,7 @@ module rvv_backend
         .almost_full    (mul_rs_almost_full),
         .empty          (fifo_empty_rs2mul),
         .almost_empty   (fifo_almost_empty_rs2mul),
-        .clear          (1'b0),
+        .clear          (trap_flush_rvv),
         .fifo_data      (),
         .wptr           (),
         .rptr           (),
@@ -611,7 +626,7 @@ module rvv_backend
         .clk            (clk),
         .rst_n          (rst_n),
       // write
-        .push           (rs_valid_dp2div & rs_ready_div2dp),
+        .push           (rs_valid_dp2div),
         .datain         (rs_dp2div),
       // read
         .pop            (pop_div2rs),
@@ -621,7 +636,7 @@ module rvv_backend
         .almost_full    (div_rs_almost_full),
         .empty          (fifo_empty_rs2div),
         .almost_empty   (fifo_almost_empty_rs2div),
-        .clear          (1'b0),
+        .clear          (trap_flush_rvv),
         .fifo_data      (),
         .wptr           (),
         .rptr           (),
@@ -652,7 +667,7 @@ module rvv_backend
         .clk          (clk),
         .rst_n        (rst_n),
       // write
-        .push         (rs_valid_dp2lsu & rs_ready_lsu2dp),
+        .push         (rs_valid_dp2lsu),
         .datain       (rs_dp2lsu),
       // read
         .pop          (uop_lsu_valid_rvv2lsu & uop_lsu_ready_lsu2rvv),
@@ -662,7 +677,7 @@ module rvv_backend
         .almost_full  (lsu_rs_almost_full),
         .empty        (lsu_rs_empty),
         .almost_empty (lsu_rs_almost_empty),
-        .clear        (1'b0),
+        .clear        (trap_flush_rvv),
         .fifo_data    (),
         .wptr         (),
         .rptr         (),
@@ -677,13 +692,15 @@ module rvv_backend
     endgenerate
 
     // output valid and data to LSU
-    assign uop_lsu_valid_rvv2lsu[0] = ~lsu_rs_empty;
+    assign uop_lsu_valid_rvv2lsu_tmp[0] = ~lsu_rs_empty;
     generate
-      for (i=1;i<`NUM_LSU;i++) begin: uop_lsu_valid
-        assign uop_lsu_valid_rvv2lsu[i] = ~lsu_rs_almost_empty[i];
+      for (i=1;i<`NUM_LSU;i++) begin: gen_uop_lsu_valid
+        assign uop_lsu_valid_rvv2lsu_tmp[i] = ~lsu_rs_almost_empty[i];
       end
     endgenerate
-    
+
+    assign uop_lsu_valid_rvv2lsu = is_trapping ? 'b0 : uop_lsu_valid_rvv2lsu_tmp;
+
     // LSU MAP INFO
     multi_fifo #(
         .T            (LSU_MAP_INFO_t),
@@ -696,7 +713,7 @@ module rvv_backend
         .clk          (clk),
         .rst_n        (rst_n),
       // write
-        .push         (mapinfo_valid_dp2lsu & mapinfo_ready_lsu2dp),
+        .push         (mapinfo_valid_dp2lsu),
         .datain       (mapinfo_dp2lsu),
       // read
         .pop          (pop_mapinfo),
@@ -706,7 +723,7 @@ module rvv_backend
         .almost_full  (mapinfo_almost_full),
         .empty        (mapinfo_empty),
         .almost_empty (mapinfo_almost_empty),
-        .clear        (1'b0),
+        .clear        (trap_flush_rvv),
         .fifo_data    (),
         .wptr         (),
         .rptr         (),
@@ -720,9 +737,36 @@ module rvv_backend
       end
     endgenerate
 
+  // trap handler
+    // make sure all lsu uops before the trapping uop have been pushed into LSU_RES_FIFO
+    assign trap_en = trap_valid_rvs2rvv & (uop_lsu_valid_lsu2rvv=='b0) & (!lsu_res_full) & (!is_trapping);
+
+    cdffr
+    trap_valid
+    (
+      .clk            (clk),
+      .rst_n          (rst_n),
+      .e              (trap_en),
+      .c              (trap_flush_rvv),
+      .d              (1'b1),
+      .q              (is_trapping)
+    );
+
   // LSU feedback result
+    assign uop_lsu_valid = trap_en ? 'b1 : uop_lsu_valid_lsu2rvv;
+
+    generate
+      assign uop_lsu[0].trap_valid = trap_en;
+      assign uop_lsu[0].uop_lsu2rvv = trap_en ? 'b0 : uop_lsu_lsu2rvv[0];
+
+      for (i=1;i<`NUM_LSU;i++) begin: get_uop_lsu
+        assign uop_lsu[i].trap_valid = 'b0;
+        assign uop_lsu[i].uop_lsu2rvv = uop_lsu_lsu2rvv[i];
+      end
+    endgenerate
+
     multi_fifo #(
-        .T            (UOP_LSU2RVV_t),
+        .T            (UOP_LSU_t),
         .M            (`NUM_LSU),
         .N            (`NUM_LSU),
         .DEPTH        (`LSU_RS_DEPTH),
@@ -732,8 +776,8 @@ module rvv_backend
         .clk          (clk),
         .rst_n        (rst_n),
       // write
-        .push         (uop_lsu_valid_lsu2rvv & uop_lsu_ready_rvv2lsu),
-        .datain       (uop_lsu_lsu2rvv),
+        .push         (uop_lsu_valid),
+        .datain       (uop_lsu),
       // read
         .pop          (pop_lsu_res),
         .dataout      (lsu_res),
@@ -742,19 +786,21 @@ module rvv_backend
         .almost_full  (lsu_res_almost_full),
         .empty        (lsu_res_empty),
         .almost_empty (lsu_res_almost_empty),
-        .clear        (1'b0),
+        .clear        (trap_flush_rvv),
         .fifo_data    (),
         .wptr         (),
         .rptr         (),
         .entry_count  ()
     );
     // ready signal for LSU
-    assign uop_lsu_ready_rvv2lsu[0] = ~lsu_res_full;
+    assign uop_lsu_ready[0] = !lsu_res_full;
     generate
       for (i=1;i<`NUM_LSU;i++) begin: lsu_res_ready
-        assign uop_lsu_ready_rvv2lsu[i] = !lsu_res_almost_full[i];
+        assign uop_lsu_ready[i] = !lsu_res_almost_full[i];
       end
     endgenerate
+
+    assign uop_lsu_ready_rvv2lsu = is_trapping ? 'b0 : uop_lsu_ready;
 
   // PU, Process unit
     // ALU
@@ -770,7 +816,9 @@ module rvv_backend
       // ALU to ROB  
         .result_valid_ex2rob        (wr_valid_alu2rob),
         .result_ex2rob              (wr_alu2rob),
-        .result_ready_rob2alu       (wr_ready_rob2alu)
+        .result_ready_rob2alu       (wr_ready_rob2alu),
+      // trap-flush
+        .trap_flush_rvv             (trap_flush_rvv)
     );
 
     // PMTRDT
@@ -819,7 +867,8 @@ module rvv_backend
       // DIV to ROB
       .result_valid_ex2rob      (wr_valid_div2rob),
       .result_ex2rob            (wr_div2rob),
-      .result_ready_rob2div     (wr_ready_rob2div) 
+      .result_ready_rob2div     (wr_ready_rob2div),
+      .trap_flush_rvv           (trap_flush_rvv)
     );
 
     // LSU remap
@@ -836,7 +885,10 @@ module rvv_backend
       .pop_lsu_res            (pop_lsu_res),
       .result_valid_lsu2rob   (wr_valid_lsu2rob),
       .result_lsu2rob         (wr_lsu2rob),      
-      .result_ready_rob2lsu   (wr_ready_rob2lsu)
+      .result_ready_rob2lsu   (wr_ready_rob2lsu),
+      .trap_valid_rmp2rob     (trap_valid_rmp2rob),
+      .trap_rob_entry_rmp2rob (trap_rob_entry_rmp2rob),
+      .trap_ready_rob2rmp     (trap_ready_rob2rmp)
     );
 
   // ROB, Re-Order Buffer
@@ -877,9 +929,11 @@ module rvv_backend
       // ROB to DP
         .uop_rob2dp          (uop_rob2dp),
       // Trap
-        .trap_valid_rvs2rvv  (trap_valid_rvs2rvv),
-        .trap_rvs2rvv        (trap_rvs2rvv),
-        .trap_ready_rvv2rvs  (trap_ready_rvv2rvs)
+        .trap_valid_rmp2rob     (trap_valid_rmp2rob),
+        .trap_rob_entry_rmp2rob (trap_rob_entry_rmp2rob),
+        .trap_ready_rob2rmp     (trap_ready_rob2rmp),
+        .trap_ready_rvv2rvs     (trap_ready_rvv2rvs),
+        .trap_flush_rvv         (trap_flush_rvv)
     );
 
   // RT, Retire

@@ -12,7 +12,8 @@ module rvv_backend_alu_unit
   pop_rs,
   result_valid,
   result,
-  result_ready
+  result_ready,
+  trap_flush_rvv
 );
 //
 // interface signals
@@ -30,6 +31,9 @@ module rvv_backend_alu_unit
   output  logic           result_valid;
   output  PU2ROB_t        result;
   input   logic           result_ready;
+
+  // trap-flush
+  input   logic           trap_flush_rvv;
 
 //
 // internal signals
@@ -111,17 +115,15 @@ module rvv_backend_alu_unit
     endcase
   end
   
-  edff
-  #(
-    .WIDTH     (1)
-  )
-  result_valid_p1_edff
+  cdffr
+  result_valid_p1_cdffr
   ( 
-    .clk       (clk), 
-    .rst_n     (rst_n), 
-    .en        (result_valid_p1_en), 
-    .d         (result_valid_p1_in),
-    .q         (result_valid_p1)
+    .clk        (clk),
+    .rst_n      (rst_n),
+    .c          (trap_flush_rvv),
+    .e          (result_valid_p1_en),
+    .d          (result_valid_p1_in),
+    .q          (result_valid_p1)
   ); 
   
   // alu_uop_p1

@@ -23,7 +23,8 @@ module rvv_backend_div_unit_divider
 `ifdef TB_SUPPORT
   res_reuse_valid_p1,
 `endif
-  result_ready
+  result_ready,
+  trap_flush_rvv
 );
 //
 // parameter
@@ -53,6 +54,9 @@ module rvv_backend_div_unit_divider
   output  logic                 res_reuse_valid_p1;
 `endif
   input   logic                 result_ready;
+
+  // trap-flush
+  input   logic                 trap_flush_rvv;
 
 //
 // internal signals
@@ -227,7 +231,7 @@ module rvv_backend_div_unit_divider
 
     case(state)
       DIV_IDLE: begin
-        if(div_valid) begin
+        if(div_valid&(!trap_flush_rvv)) begin
           if ((count_en=='b1)&(count_d=='b1))
             next_state = DIV_PRINT;
           else
@@ -235,7 +239,9 @@ module rvv_backend_div_unit_divider
         end
       end
       DIV_WORKING: begin
-        if(div_valid) begin
+        if(trap_flush_rvv)
+          next_state = DIV_IDLE;
+        else if(div_valid) begin
           if ((count_en=='b1)&(count_d=='b1))
             next_state = DIV_PRINT;
           else
@@ -243,7 +249,9 @@ module rvv_backend_div_unit_divider
         end
       end
       DIV_PRINT: begin
-        if ((div_valid)&(result_ready))
+        if(trap_flush_rvv)
+          next_state = DIV_IDLE;
+        else if ((div_valid)&(result_ready))
           next_state = DIV_IDLE;
         else
           next_state = DIV_PRINT;

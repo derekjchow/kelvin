@@ -15,7 +15,8 @@ module rvv_backend_div
   fifo_almost_empty_rs2ex,
   result_valid_ex2rob,
   result_ex2rob,
-  result_ready_rob2div
+  result_ready_rob2div,
+  trap_flush_rvv
 );
 
 //
@@ -35,6 +36,9 @@ module rvv_backend_div
   output  logic     [`NUM_DIV-1:0]  result_valid_ex2rob;
   output  PU2ROB_t  [`NUM_DIV-1:0]  result_ex2rob;
   input   logic     [`NUM_DIV-1:0]  result_ready_rob2div;
+
+  // trap-flush
+  input   logic                     trap_flush_rvv;
 
 //
 // internal signals
@@ -77,7 +81,8 @@ module rvv_backend_div
           .div_uop        (div_uop_rs2ex[i]),
           .result_valid   (result_valid_ex2rob[i]),
           .result         (result_ex2rob[i]),
-          .result_ready   (result_ready_rob2div[i])
+          .result_ready   (result_ready_rob2div[i]),
+          .trap_flush_rvv (trap_flush_rvv)
         );
     end
   endgenerate

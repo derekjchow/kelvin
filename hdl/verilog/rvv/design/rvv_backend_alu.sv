@@ -22,7 +22,8 @@ module rvv_backend_alu
   fifo_almost_empty_rs2ex,
   result_valid_ex2rob,
   result_ex2rob,
-  result_ready_rob2alu
+  result_ready_rob2alu,
+  trap_flush_rvv
 );
 
 //
@@ -42,6 +43,9 @@ module rvv_backend_alu
   output  logic       [`NUM_ALU-1:0]    result_valid_ex2rob;
   output  PU2ROB_t    [`NUM_ALU-1:0]    result_ex2rob;
   input   logic       [`NUM_ALU-1:0]    result_ready_rob2alu;
+
+  // trap-flush
+  input   logic                         trap_flush_rvv;
 
 //
 // internal signals
@@ -80,7 +84,9 @@ module rvv_backend_alu
           // outputs
           .pop_rs         (pop_valid[i]),
           .result_valid   (result_valid_ex[i]),
-          .result         (result_ex2rob[i])
+          .result         (result_ex2rob[i]),
+          // trap-flush
+          .trap_flush_rvv (trap_flush_rvv)
         );
     end
   endgenerate

@@ -761,7 +761,7 @@ end
 
 //5. OutValid generation & OutData pack
 //  5.1. When trap, clean the latter valid
-assign w_valid0_chkTrap = w_valid0;
+assign w_valid0_chkTrap = !trap_flag0 && w_valid0;
 assign w_valid1_chkTrap = !trap_flag0 && w_valid1;
 assign w_valid2_chkTrap = !(trap_flag0 || trap_flag1) && w_valid2;
 assign w_valid3_chkTrap = !(trap_flag0 || trap_flag1 || trap_flag2) && w_valid3;
@@ -819,7 +819,7 @@ assign rt2xrf_write_data[3].uop_pc = rob2rt_write_data[3].uop_pc;
 //  5.4. To VCSR
 //In our current arch, only uop0 can contain a trap in each cycle
 //Valid
-assign retire_has_trap = w_valid0 && trap_flag0;
+assign retire_has_trap = trap_flag0;
 assign rt2vcsr_write_valid = rob2rt_write_valid[0] && retire_has_trap;
 //Data
 assign rt2vcsr_write_data =  w_vcsr0;

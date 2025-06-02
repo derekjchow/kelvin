@@ -17,7 +17,10 @@ module rvv_backend_lsu_remap
   pop_lsu_res,
   result_valid_lsu2rob,
   result_lsu2rob,
-  result_ready_rob2lsu
+  result_ready_rob2lsu,
+  trap_valid_rmp2rob,
+  trap_rob_entry_rmp2rob,
+  trap_ready_rob2rmp
 );
 
 //
@@ -25,7 +28,7 @@ module rvv_backend_lsu_remap
 //
   // MAP INFO and LSU RES
   input   LSU_MAP_INFO_t  [`NUM_LSU-1:0]  mapinfo;
-  input   UOP_LSU2RVV_t   [`NUM_LSU-1:0]  lsu_res;
+  input   UOP_LSU_t       [`NUM_LSU-1:0]  lsu_res;
   input   logic                           mapinfo_empty;
   input   logic           [`NUM_LSU-1:0]  mapinfo_almost_empty;
   input   logic                           lsu_res_empty;
@@ -37,6 +40,11 @@ module rvv_backend_lsu_remap
   output  logic           [`NUM_LSU-1:0]  result_valid_lsu2rob;
   output  PU2ROB_t        [`NUM_LSU-1:0]  result_lsu2rob;
   input   logic           [`NUM_LSU-1:0]  result_ready_rob2lsu;
+
+  // submit trap to ROB
+  output  logic                           trap_valid_rmp2rob;
+  output  logic   [`ROB_DEPTH_WIDTH-1:0]  trap_rob_entry_rmp2rob;
+  input   logic                           trap_ready_rob2rmp;
 
 //
 // internal signals
@@ -63,9 +71,9 @@ module rvv_backend_lsu_remap
   // result valid 
   generate
     for(i=0;i<`NUM_LSU;i++) begin: RES_VALID
-      assign result_valid_lsu2rob[i] = mapinfo_valid[i]&lsu_res_valid[i]&mapinfo[i].valid&(
-                                       (mapinfo[i].lsu_class==IS_LOAD) & lsu_res[i].vregfile_write_valid || 
-                                       (mapinfo[i].lsu_class==IS_STORE) & lsu_res[i].lsu_vstore_last);
+      assign result_valid_lsu2rob[i] = mapinfo_valid[i]&lsu_res_valid[i]&mapinfo[i].valid&(!lsu_res[i].trap_valid)&(
+                                       (mapinfo[i].lsu_class==IS_LOAD) & lsu_res[i].uop_lsu2rvv.vregfile_write_valid ||
+                                       (mapinfo[i].lsu_class==IS_STORE) & lsu_res[i].uop_lsu2rvv.lsu_vstore_last);
     end
   endgenerate
 
@@ -76,29 +84,33 @@ module rvv_backend_lsu_remap
         assign result_lsu2rob[i].uop_pc = mapinfo[i].uop_pc;
       `endif
         assign result_lsu2rob[i].rob_entry = mapinfo[i].rob_entry;
-        assign result_lsu2rob[i].w_data = lsu_res[i].vregfile_write_data;
-        assign result_lsu2rob[i].w_valid = (mapinfo[i].lsu_class==IS_LOAD)&lsu_res[i].vregfile_write_valid&(lsu_res[i].vregfile_write_addr==mapinfo[i].vregfile_write_addr);
+        assign result_lsu2rob[i].w_data = lsu_res[i].uop_lsu2rvv.vregfile_write_data;
+        assign result_lsu2rob[i].w_valid = (mapinfo[i].lsu_class==IS_LOAD)&
+                                            lsu_res[i].uop_lsu2rvv.vregfile_write_valid&
+                                           (lsu_res[i].uop_lsu2rvv.vregfile_write_addr==mapinfo[i].vregfile_write_addr);
         assign result_lsu2rob[i].vsaturate = 'b0;
     end
   endgenerate
 
+  always_comb begin
+    trap_valid_rmp2rob = 'b0;
+    trap_rob_entry_rmp2rob = 'b0;
+
+    for (int j=0;j<`NUM_LSU;j++) begin
+      if (lsu_res[j].trap_valid&lsu_res_valid[j]) begin
+        trap_valid_rmp2rob = 'b1;
+        trap_rob_entry_rmp2rob = mapinfo[j].rob_entry;
+      end
+    end
+  end
+
   // pop signal
   generate
     for(i=0;i<`NUM_LSU;i++) begin: GET_POP
-      assign pop_mapinfo[i] = result_valid_lsu2rob[i]&result_ready_rob2lsu[i];
+      assign pop_mapinfo[i] = (!lsu_res[i].trap_valid)&result_valid_lsu2rob[i]&result_ready_rob2lsu[i]||
+                                lsu_res[i].trap_valid&mapinfo_valid[i]&lsu_res_valid[i]&trap_ready_rob2rmp;
       assign pop_lsu_res[i] = pop_mapinfo[i];
     end
   endgenerate
-
-`ifdef ASSERT_ON
-  `ifdef TB_SUPPORT
-    `rvv_forbid(mapinfo_valid[0]&lsu_res_valid[0]&result_ready_rob2lsu[0]&(result_valid_lsu2rob[0]==1'b0))
-      else $error("pc(0x%h): something wrong in lsu remapping.\n",mapinfo[0].uop_pc);
-  `else
-    `rvv_forbid(mapinfo_valid[0]&lsu_res_valid[0]&result_ready_rob2lsu[0]&(result_valid_lsu2rob[0]==1'b0))
-      else $error("something wrong in lsu remapping.\n");
-  `endif
-`endif
-
 
 endmodule

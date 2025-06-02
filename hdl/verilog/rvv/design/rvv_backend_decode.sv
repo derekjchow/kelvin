@@ -29,7 +29,8 @@ module rvv_backend_decode
   push_de2uq,
   data_de2uq,
   fifo_full_uq2de, 
-  fifo_almost_full_uq2de
+  fifo_almost_full_uq2de,
+  trap_flush_rvv
 );
 //
 // interface signals
@@ -49,6 +50,9 @@ module rvv_backend_decode
   output  UOP_QUEUE_t [`NUM_DE_UOP-1:0] data_de2uq;
   input   logic                         fifo_full_uq2de;
   input   logic   [`NUM_DE_UOP-1:0]     fifo_almost_full_uq2de;
+
+  // trap-flush
+  input   logic                         trap_flush_rvv;
 
 //
 // internal signals
@@ -114,7 +118,8 @@ module rvv_backend_decode
     .push                   (push_de2uq),
     .dataout                (data_de2uq),
     .fifo_full_uq2de        (fifo_full_uq2de), 
-    .fifo_almost_full_uq2de (fifo_almost_full_uq2de)
+    .fifo_almost_full_uq2de (fifo_almost_full_uq2de),
+    .trap_flush_rvv         (trap_flush_rvv)
   );
 
 endmodule

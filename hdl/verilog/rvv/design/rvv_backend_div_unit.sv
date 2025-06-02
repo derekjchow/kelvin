@@ -17,7 +17,8 @@ module rvv_backend_div_unit
   div_uop,
   result_valid,
   result,
-  result_ready
+  result_ready,
+  trap_flush_rvv
 );
 //
 // interface signals
@@ -34,6 +35,9 @@ module rvv_backend_div_unit
   output  logic     result_valid;
   output  PU2ROB_t  result;
   input   logic     result_ready;
+
+  // trap-flush
+  input   logic                     trap_flush_rvv;
 
 //
 // internal signals
@@ -328,7 +332,8 @@ module rvv_backend_div_unit
         .result_quotient    (quotient8[j]),
         .result_remainder   (remainder8[j]),
         .result_valid       (result_valid8[j]),
-        .result_ready       (result_ready&result_valid)
+        .result_ready       (result_ready&result_valid),
+        .trap_flush_rvv     (trap_flush_rvv)
       );     
     end
   endgenerate 
@@ -350,7 +355,8 @@ module rvv_backend_div_unit
         .result_quotient    (quotient16[j]),
         .result_remainder   (remainder16[j]),
         .result_valid       (result_valid16[j]),
-        .result_ready       (result_ready&result_valid)
+        .result_ready       (result_ready&result_valid),
+        .trap_flush_rvv     (trap_flush_rvv)
       );     
     end
   endgenerate 
@@ -372,7 +378,8 @@ module rvv_backend_div_unit
         .result_quotient    (quotient32[j]),
         .result_remainder   (remainder32[j]),
         .result_valid       (result_valid32[j]),
-        .result_ready       (result_ready&result_valid)
+        .result_ready       (result_ready&result_valid),
+        .trap_flush_rvv     (trap_flush_rvv)
       );     
     end
   endgenerate
@@ -383,13 +390,13 @@ module rvv_backend_div_unit
     
     case(vs2_eew)
       EEW8: begin
-        result_all_valid = ({result_valid8,result_valid16,result_valid32}=='1);
+        result_all_valid = trap_flush_rvv ? 'b0 : ({result_valid8,result_valid16,result_valid32}=='1);
       end
       EEW16: begin
-        result_all_valid = ({result_valid16,result_valid32}=='1);
+        result_all_valid = trap_flush_rvv ? 'b0 : ({result_valid16,result_valid32}=='1);
       end
       EEW32: begin
-        result_all_valid = (result_valid32=='1);
+        result_all_valid = trap_flush_rvv ? 'b0 : (result_valid32=='1);
       end
     endcase
   end

@@ -210,11 +210,9 @@ module RvvCore #(parameter N = 4,
 
   // Trap handling tie-off
   logic  trap_valid_rvs2rvv;
-  TRAP_t trap_rvs2rvv;
   logic  trap_ready_rvv2rvs;
   always_comb begin
     trap_valid_rvs2rvv = 0;
-    trap_rvs2rvv.trap_uop_rob_entry = 0;
   end
 
   rvv_backend backend(
@@ -239,7 +237,6 @@ module RvvCore #(parameter N = 4,
       .wr_vxsat(wr_vxsat),
       .wr_vxsat_ready(wr_vxsat_ready),
       .trap_valid_rvs2rvv(trap_valid_rvs2rvv),
-      .trap_rvs2rvv(trap_rvs2rvv),
       .trap_ready_rvv2rvs(trap_ready_rvv2rvs),
       .vcsr_valid(vcsr_valid),
       .vector_csr(vector_csr),

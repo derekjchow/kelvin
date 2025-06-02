@@ -21,7 +21,8 @@ module rvv_backend_decode_ctrl
   push,
   dataout,
   fifo_full_uq2de, 
-  fifo_almost_full_uq2de
+  fifo_almost_full_uq2de,
+  trap_flush_rvv
 );
 //
 // interface signals
@@ -46,6 +47,9 @@ module rvv_backend_decode_ctrl
   output  UOP_QUEUE_t [`NUM_DE_UOP-1:0]                   dataout;
   input   logic                                           fifo_full_uq2de;
   input   logic       [`NUM_DE_UOP-1:0]                   fifo_almost_full_uq2de;
+
+  // trap-flush
+  input   logic                                           trap_flush_rvv;
 
 //
 // internal signals
@@ -189,10 +193,10 @@ module rvv_backend_decode_ctrl
     .T         (logic[`UOP_INDEX_WIDTH-1:0])
   )
   uop_index_cdffr
-  ( 
+  (
     .clk       (clk), 
     .rst_n     (rst_n), 
-    .c         (uop_index_clear), 
+    .c         (uop_index_clear|trap_flush_rvv),
     .e         (uop_index_enable), 
     .d         (uop_index_din),
     .q         (uop_index_remain)
