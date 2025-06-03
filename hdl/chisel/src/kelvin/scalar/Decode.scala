@@ -395,7 +395,9 @@ class DispatchV2(p: Parameters) extends Dispatch(p) {
   val floatWriteAfterWrite = (0 until p.instructionLanes).map(i =>
       (floatRdScoreboard(i) & io.fscoreboard.getOrElse(0.U)) =/= 0.U(32.W))
   // For floating point store
-  io.fbusPortAddr.get := rs2Addr(0)
+  if (p.enableFloat) {
+    io.fbusPortAddr.get := rs2Addr(0)
+  }
 
   // ---------------------------------------------------------------------------
   // Fence interlock
