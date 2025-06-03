@@ -204,7 +204,7 @@ object EmitCore extends App {
           StandardOpenOption.CREATE)
       var svRet = Files.write(
           Paths.get(targetDir + "/" + core.name + ".sv"),
-          strippedVerilogSource.getBytes(StandardCharsets.UTF_8),
+          strippedVerilogSource.replace("exclude_file", "exclude_module").getBytes(StandardCharsets.UTF_8),
           StandardOpenOption.CREATE)
 
       ()
