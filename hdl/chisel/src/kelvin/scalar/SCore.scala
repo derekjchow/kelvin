@@ -36,6 +36,7 @@ class SCore(p: Parameters) extends Module {
     val fault = Output(Bool())
     val wfi = Output(Bool())
     val irq = Input(Bool())
+    val dm = Option.when(p.useDebugModule)(new CoreDMIO(p))
 
     val ibus = new IBusIO(p)
     val dbus = new DBusIO(p)
@@ -57,6 +58,7 @@ class SCore(p: Parameters) extends Module {
   val regfile = Regfile(p)
   val fetch = if (p.enableFetchL0) { Fetch(p) } else { Module(new UncachedFetch(p)) }
 
+  val csr = Csr(p)
   val dispatch = if (p.useDispatchV2) {
       Module(new DispatchV2(p))
   } else {
@@ -73,9 +75,13 @@ class SCore(p: Parameters) extends Module {
     dispatch.io.retirement_buffer_nSpace.get := retirement_buffer.get.io.nSpace
   }
 
+  if (p.useDebugModule) {
+    dispatch.io.single_step.get := csr.io.dm.get.single_step || csr.io.dm.get.dcsr_step
+    dispatch.io.debug_mode.get := csr.io.dm.get.debug_mode
+  }
+
   val alu = Seq.fill(p.instructionLanes)(Alu(p))
   val bru = (0 until p.instructionLanes).map(x => Seq(Bru(p, x == 0))).reduce(_ ++ _)
-  val csr = Csr(p)
   val lsu = Lsu(p)
   val mlu = Mlu(p)
   val dvu = Dvu(p)
@@ -111,7 +117,7 @@ class SCore(p: Parameters) extends Module {
   // Decode
   // Decode/Dispatch
   dispatch.io.inst <> fetch.io.inst.lanes
-  dispatch.io.halted := csr.io.halted || csr.io.wfi
+  dispatch.io.halted := csr.io.halted || csr.io.wfi || csr.io.dm.map(_.debug_mode).getOrElse(false.B)
   dispatch.io.mactive := io.vcore.map(_.mactive).getOrElse(false.B)
   dispatch.io.lsuActive := lsu.io.active
   dispatch.io.scoreboard.comb := regfile.io.scoreboard.comb
@@ -173,8 +179,39 @@ class SCore(p: Parameters) extends Module {
   csr.io.csr <> io.csr
   csr.io.csr.in.value(12) := fetch.io.pc
 
-  csr.io.req <> dispatch.io.csr
-  csr.io.rs1 := regfile.io.readData(0)
+  // Arbitrate requests from Dispatch and DM
+  if (p.useDebugModule) {
+    val csrReqArbiter = Module(new Arbiter(new CsrCmd, 2))
+    csrReqArbiter.io.in(0).bits := dispatch.io.csr.bits
+    csrReqArbiter.io.in(0).valid := dispatch.io.csr.valid
+    csrReqArbiter.io.in(1).valid := io.dm.get.csr.valid
+    csrReqArbiter.io.in(1).bits := io.dm.get.csr.bits
+    csrReqArbiter.io.out.ready := true.B
+    csr.io.req.bits := csrReqArbiter.io.out.bits
+    csr.io.req.valid := csrReqArbiter.io.out.valid
+  } else {
+    csr.io.req.bits := dispatch.io.csr.bits
+    csr.io.req.valid := dispatch.io.csr.valid
+  }
+
+  if (p.useDebugModule) {
+    val dmRs1 = Wire(new RegfileReadDataIO)
+    dmRs1.valid := true.B
+    dmRs1.data := io.dm.get.csr_rs1
+    csr.io.rs1 := Mux(RegNext(dispatch.io.csr.valid, false.B), regfile.io.readData(0), dmRs1)
+    io.dm.get.csr_rd := MakeValid(csr.io.rd.valid, csr.io.rd.bits.data)
+    csr.io.dm.get.next_pc := MuxCase(dispatch.io.inst(0).bits.addr, Seq(
+      dispatch.io.inst(0).valid -> dispatch.io.inst(0).bits.addr,
+      fetch.io.branch(0).valid -> fetch.io.branch(0).value,
+      dispatch.io.bru(0).valid -> dispatch.io.bru(0).bits.target,
+    ))
+    csr.io.dm.get.debug_req := io.dm.get.debug_req || /* Request from external debugger */
+                               (!csr.io.dm.get.debug_mode && csr.io.dm.get.dcsr_step && dispatch.io.inst(0).fire) /* Single-step via CSR */
+    csr.io.dm.get.resume_req := io.dm.get.resume_req
+    io.dm.get.debug_mode := csr.io.dm.get.debug_mode
+  } else {
+    csr.io.rs1 := regfile.io.readData(0)
+  }
 
   if (p.enableVector) {
     csr.io.vcore.get.undef := io.vcore.get.undef
@@ -226,6 +263,10 @@ class SCore(p: Parameters) extends Module {
     regfile.io.readSet(2 * i + 1) := dispatch.io.rs2Set(i)
     regfile.io.writeAddr(i) := dispatch.io.rdMark(i)
     regfile.io.busAddr(i) := dispatch.io.busRead(i)
+
+    if (p.useDebugModule) {
+      regfile.io.debugBusPort.get <> io.dm.get.scalar_rs
+    }
 
     val csr0Valid = if (i == 0) csr.io.rd.valid else false.B
     val csr0Addr  = if (i == 0) csr.io.rd.bits.addr else 0.U
@@ -280,7 +321,9 @@ class SCore(p: Parameters) extends Module {
 
   // RV32F extension
   val floatCore = Option.when(p.enableFloat)(FloatCore(p))
-  val fRegfile = Option.when(p.enableFloat)(Module(new FRegfile(p, 3, 2)))
+  val floatReadPorts = 3
+  val floatWritePorts = 2
+  val fRegfile = Option.when(p.enableFloat)(Module(new FRegfile(p, floatReadPorts, floatWritePorts)))
   if (p.enableFloat) {
     lsu.io.busPort_flt.get := fRegfile.get.io.busPort
     fRegfile.get.io.busPortAddr := dispatch.io.fbusPortAddr.get
@@ -288,6 +331,36 @@ class SCore(p: Parameters) extends Module {
     floatCore.get.io.write_ports <> fRegfile.get.io.write_ports
     fRegfile.get.io.scoreboard_set :=
       MuxOR(dispatch.io.rdMark_flt.get.valid, UIntToOH(dispatch.io.rdMark_flt.get.addr))
+    if (p.useDebugModule) {
+      // Mux input to read port
+      fRegfile.get.io.read_ports(0).valid := MuxCase(false.B, Seq(
+        io.dm.get.float_rs.get.valid -> true.B,
+        floatCore.get.io.read_ports(0).valid -> true.B,
+      ))
+      fRegfile.get.io.read_ports(0).addr := MuxCase(0.U, Seq(
+        io.dm.get.float_rs.get.valid -> io.dm.get.float_rs.get.addr,
+        floatCore.get.io.read_ports(0).valid -> floatCore.get.io.read_ports(0).addr,
+      ))
+      // Broadcast data back from read port
+      io.dm.get.float_rs.get.data := fRegfile.get.io.read_ports(0).data
+      floatCore.get.io.read_ports(0).data := fRegfile.get.io.read_ports(0).data
+
+      // Mux input to write port
+      fRegfile.get.io.write_ports(0).valid := MuxCase(false.B, Seq(
+        io.dm.get.float_rd.get.valid -> true.B,
+        floatCore.get.io.write_ports(0).valid -> true.B,
+      ))
+      fRegfile.get.io.write_ports(0).addr := MuxCase(0.U, Seq(
+        io.dm.get.float_rd.get.valid -> io.dm.get.float_rd.get.addr,
+        floatCore.get.io.write_ports(0).valid -> floatCore.get.io.write_ports(0).addr,
+      ))
+      fRegfile.get.io.write_ports(0).data := MuxCase(Fp32.Zero(false.B), Seq(
+        io.dm.get.float_rd.get.valid -> io.dm.get.float_rd.get.data,
+        floatCore.get.io.write_ports(0).valid -> floatCore.get.io.write_ports(0).data,
+      ))
+      fRegfile.get.io.dm_write_valid.get := io.dm.get.float_rd.get.valid
+    }
+
 
     floatCore.get.io.inst <> dispatch.io.float.get
     dispatch.io.fscoreboard.get := fRegfile.get.io.scoreboard
@@ -312,7 +385,9 @@ class SCore(p: Parameters) extends Module {
   val mluDvuOffset = p.instructionLanes
   val mluDvuInputs = Seq(mlu.io.rd, dvu.io.rd) ++
                      io.rvvcore.map(x => Seq(x.async_rd)).getOrElse(Seq()) ++
-                     floatCore.map(x => Seq(x.io.scalar_rd)).getOrElse(Seq())
+                     floatCore.map(x => Seq(x.io.scalar_rd)).getOrElse(Seq()) ++
+                     io.dm.map(x => Seq(io.dm.get.scalar_rd)).getOrElse(Seq())
+
   val arb = Module(new Arbiter(new RegfileWriteDataIO, mluDvuInputs.length))
   arb.io.in <> mluDvuInputs
   arb.io.out.ready := true.B
@@ -328,6 +403,9 @@ class SCore(p: Parameters) extends Module {
   val writeMask = bru.map(_.io.taken.valid).scan(false.B)(_||_)
   for (i <- 0 until p.instructionLanes) {
     regfile.io.writeMask(i).valid := writeMask(i)
+  }
+  if (p.useDebugModule) {
+    regfile.io.debugWriteValid.get := io.dm.get.scalar_rd.valid
   }
 
   // ---------------------------------------------------------------------------

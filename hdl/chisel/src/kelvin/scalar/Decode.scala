@@ -312,6 +312,8 @@ class Dispatch(p: Parameters) extends Module {
     val slog = Output(Bool())
 
     val retirement_buffer_nSpace = Option.when(p.useRetirementBuffer)(Input(UInt(5.W)))
+    val single_step = Option.when(p.useDebugModule)(Input(Bool()))
+    val debug_mode = Option.when(p.useDebugModule)(Input(Bool()))
   })
 }
 
@@ -444,6 +446,25 @@ class DispatchV2(p: Parameters) extends Dispatch(p) {
     if (i == 0) { io.inst(i).valid && decodedInsts(i).undef } else { false.B })
 
   // ---------------------------------------------------------------------------
+  // Core idle
+  // Evaluate whether the core is idle.
+  // The general method of operation is to check that
+  // scoreboards for register files are clear, and no LSU operation is active.
+  // TODO(atv): Extend this to consider vector operations.
+  val coreIdle =
+        (
+          (io.scoreboard.regd === 0.U) &&
+          (io.fscoreboard.getOrElse(0.U) === 0.U) &&
+          // /* vec scoreboard clear */ &&
+          !io.lsuActive
+        )
+
+  // ---------------------------------------------------------------------------
+  // Single step
+  val singleStepInterlock = (0 until p.instructionLanes).map(i =>
+    !io.single_step.getOrElse(false.B) || ((i == 0).B && coreIdle))
+
+  // ---------------------------------------------------------------------------
   // Combine above rules. This variable represents which instructions can be
   // dispatched before in-orderness and back-pressure are considered.
   val canDispatch = (0 until p.instructionLanes).map(i =>
@@ -460,7 +481,8 @@ class DispatchV2(p: Parameters) extends Dispatch(p) {
       rvvInterlock(i) &&     // Rvv interlock rules
       rvvLsuInterlock(i) &&  // Dispatch only one Rvv LsuOp
       !undefInterlock(i) &&     // Ensure undef is only dispatched from first slot
-      io.retirement_buffer_nSpace.map(x => i.U < x).getOrElse(true.B) // Retirement buffer needs space for our slot
+      io.retirement_buffer_nSpace.map(x => i.U < x).getOrElse(true.B) && // Retirement buffer needs space for our slot
+      singleStepInterlock(i)
   )
 
   // ---------------------------------------------------------------------------

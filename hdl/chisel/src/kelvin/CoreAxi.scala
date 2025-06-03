@@ -40,6 +40,9 @@ class CoreAxi(p: Parameters, coreModuleName: String) extends RawModule {
     // String logging interface
     val slog = new SLogIO(p)
     val te = Input(Bool())
+
+    // DM-IF
+    val dm = Option.when(p.useDebugModule)(new DebugModuleIO(p))
   })
   dontTouch(io)
 
@@ -59,13 +62,23 @@ class CoreAxi(p: Parameters, coreModuleName: String) extends RawModule {
     val cg = Module(new ClockGate)
     cg.io.clk_i := rst_sync.io.clk_o
     cg.io.te := io.te
-    val core_reset = Mux(io.te, (!io.aresetn.asBool).asAsyncReset, csr.io.reset.asAsyncReset)
+
+    val dm = Option.when(p.useDebugModule)(Module(new DebugModule(p)))
+    if (p.useDebugModule) {
+      dontTouch(dm.get.io)
+      val dmEnable = RegInit(false.B)
+      dmEnable := true.B
+      dm.get.io.ext.req <> GateDecoupled(io.dm.get.req, dmEnable)
+      io.dm.get.rsp <> GateDecoupled(dm.get.io.ext.rsp, dmEnable)
+    }
+
+    val core_reset = Mux(io.te, (!io.aresetn.asBool).asAsyncReset, (csr.io.reset || dm.map(_.io.ndmreset).getOrElse(false.B)).asAsyncReset)
     val core = withClockAndReset(cg.io.clk_o, core_reset) { Core(p, coreModuleName) }
-    cg.io.enable := io.irq || (!csr.io.cg && !core.io.wfi)
+    cg.io.enable := io.irq || (!csr.io.cg && !core.io.wfi) || dm.map(_.io.haltreq(0)).getOrElse(false.B)
     io.halted := core.io.halted
     io.fault := core.io.fault
     io.wfi := core.io.wfi
-    core.io.irq := io.irq
+    core.io.irq := io.irq || dm.map(_.io.haltreq(0)).getOrElse(false.B)
     csr.io.halted := core.io.halted
     csr.io.fault := core.io.fault
     csr.io.kelvin_csr := core.io.csr.out
@@ -79,6 +92,25 @@ class CoreAxi(p: Parameters, coreModuleName: String) extends RawModule {
     // Tie-offs (no cache to flush)
     core.io.dflush.ready := true.B
     core.io.iflush.ready := true.B
+
+
+    if (p.useDebugModule) {
+      core.io.dm.get.debug_req := dm.get.io.haltreq(0)
+      core.io.dm.get.resume_req := dm.get.io.resumereq(0)
+      dm.get.io.resumeack(0) := !core.io.dm.get.debug_mode && RegNext(core.io.dm.get.debug_mode, false.B)
+      dm.get.io.halted(0) := core.io.dm.get.debug_mode
+      dm.get.io.running(0) := !core.io.dm.get.debug_mode
+      dm.get.io.havereset(0) := false.B
+      core.io.dm.get.csr := dm.get.io.csr
+      core.io.dm.get.csr_rs1 := dm.get.io.csr_rs1
+      dm.get.io.csr_rd := core.io.dm.get.csr_rd
+      dm.get.io.scalar_rd <> core.io.dm.get.scalar_rd
+      dm.get.io.scalar_rs <> core.io.dm.get.scalar_rs
+      if (p.enableFloat) {
+        dm.get.io.float_rd.get <> core.io.dm.get.float_rd.get
+        dm.get.io.float_rs.get <> core.io.dm.get.float_rs.get
+      }
+    }
 
     // Build ITCM and connect to ibus
     val itcmSizeBytes: Int = 1024 * (if (p.tcmHighmem) { 1024 } else { 8 }) // default 8 kB, highmem 1MB

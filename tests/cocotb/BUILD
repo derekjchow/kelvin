@@ -77,6 +77,42 @@ template_rule(
     data = COCOTB_TEST_BINARY_TARGETS,
 )
 
+verilator_cocotb_test(
+    name = "core_mini_axi_debug_cocotb",
+    hdl_toplevel = "CoreMiniDebugAxi",
+    verilog_sources = [
+                "//hdl/chisel/src/kelvin:core_mini_axi_debug_cc_library_verilog"
+    ],
+    build_args = [
+        "-Wno-WIDTH",
+        "-Wno-CASEINCOMPLETE",
+        "-Wno-LATCH",
+        "-Wno-SIDEEFFECT",
+        "-Wno-MULTIDRIVEN",
+        "-Wno-UNOPTFLAT",
+        "-Wno-CASEOVERLAP",
+        # Warnings that we disable for fpnew
+        "-Wno-ASCRANGE",
+        "-Wno-WIDTHEXPAND",
+        "-Wno-WIDTHTRUNC",
+        "-Wno-UNSIGNED",
+    ],
+    defines = {
+        "USE_GENERIC" : "",
+    },
+    waves = True,
+    seed = "42",
+    test_module = ["core_mini_axi_debug.py"],
+    size = "enormous",
+    deps = [
+        "//kelvin_test_utils:core_mini_axi_sim_interface",
+    ],
+    data = [
+        ":noop.elf",
+        ":registers.elf",
+    ],
+)
+
 TESTCASES = [
     "core_mini_axi_basic_write_read_memory",
     "core_mini_axi_run_wfi_in_all_slots",
@@ -227,6 +263,20 @@ kelvin_v2_binary(
     name = "float_csr_interlock_test",
     srcs = [
         "float_csr_interlock_test.S",
+    ],
+)
+
+kelvin_v2_binary(
+    name = "noop",
+    srcs = [
+        "noop.cc",
+    ],
+)
+
+kelvin_v2_binary(
+    name = "registers",
+    srcs = [
+        "registers.S",
     ],
 )
 

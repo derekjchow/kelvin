@@ -38,6 +38,26 @@ class AxiBurst:
   WRAP = 2
 
 
+class DmReqOp:
+  NOP = 0
+  READ = 1
+  WRITE = 2
+  RSVD = 3
+
+
+class DmRspOp:
+  SUCCESS = 0
+  RSVD = 1
+  FAILED = 2
+  BUSY = 3
+
+
+class DmCmdType:
+  ACCESS_REGISTER = 0
+  QUICK_ACCESS = 1
+  ACCESS_MEMORY = 2
+
+
 def format_line_from_word(word, addr):
   shift = addr % 16
   line = np.zeros([4], dtype=np.uint32)
@@ -92,6 +112,13 @@ class CoreMiniAxiInterface:
     self.slave_wfifo = Queue()
     self.slave_bfifo = Queue()
 
+    try:
+      self.debug_available = (self.dut.io_dm_req_valid != None)
+      self.dm_req_fifo = Queue()
+      self.dm_rsp_fifo = Queue()
+    except AttributeError as e:
+      self.debug_available = False
+
   async def init(self):
     cocotb.start_soon(self.master_awagent())
     cocotb.start_soon(self.master_wagent())
@@ -105,6 +132,9 @@ class CoreMiniAxiInterface:
     cocotb.start_soon(self.slave_ragent())
     cocotb.start_soon(self.memory_write_agent())
     cocotb.start_soon(self.memory_read_agent())
+    if self.debug_available:
+      cocotb.start_soon(self.dm_req_agent())
+      cocotb.start_soon(self.dm_rsp_agent())
 
   async def slave_awagent(self, timeout=4096):
     self.dut.io_axi_slave_write_addr_valid.value = 0
@@ -278,6 +308,43 @@ class CoreMiniAxiInterface:
         if timeout_count >= timeout:
           assert False, "timeout waiting for rready"
 
+  async def dm_req_agent(self, timeout=4096):
+    self.dut.io_dm_req_valid.value = 0
+    self.dut.io_dm_req_bits_address.value = 0
+    self.dut.io_dm_req_bits_data.value = 0
+    self.dut.io_dm_req_bits_op.value = 0
+    while True:
+      while True:
+        await RisingEdge(self.dut.io_aclk)
+        self.dut.io_dm_req_valid.value = 0
+        if self.dm_req_fifo.qsize():
+          break
+      req_data = await self.dm_req_fifo.get()
+      self.dut.io_dm_req_valid.value = 1
+      self.dut.io_dm_req_bits_address.value = req_data["address"]
+      self.dut.io_dm_req_bits_data.value = req_data["data"]
+      self.dut.io_dm_req_bits_op.value = req_data["op"]
+      await FallingEdge(self.dut.io_aclk)
+      timeout_count = 0
+      while self.dut.io_dm_req_ready.value == 0:
+        await FallingEdge(self.dut.io_aclk)
+        timeout_count += 1
+        if timeout_count >= timeout:
+          assert False, "timeout waiting for dm_req_ready"
+
+  async def dm_rsp_agent(self):
+    self.dut.io_dm_rsp_ready.value = 1
+    while True:
+      await RisingEdge(self.dut.io_aclk)
+      try:
+        if self.dut.io_dm_rsp_valid.value:
+          rsp = dict()
+          rsp["data"] = self.dut.io_dm_rsp_bits_data.value.to_unsigned()
+          rsp["op"] = self.dut.io_dm_rsp_bits_op.value.to_unsigned()
+          await self.dm_rsp_fifo.put(rsp)
+      except Exception as e:
+        print('X seen in dm_rsp_agent: ' + str(e))
+
   async def memory_write_agent(self):
     while True:
       while True:
@@ -367,6 +434,86 @@ class CoreMiniAxiInterface:
   async def halt(self):
     kelvin_reset_csr_addr = 0x30000
     await self.write_word(kelvin_reset_csr_addr, 3)
+
+  async def dm_read(self, addr):
+    req = dict()
+    req["address"] = addr
+    req["data"] = 0
+    req["op"] = DmReqOp.READ
+    await self.dm_req_fifo.put(req)
+    rsp = await self.dm_rsp_fifo.get()
+    assert rsp["op"] == DmRspOp.SUCCESS
+    return rsp["data"]
+
+  async def dm_write(self, addr, data):
+    req = dict()
+    req["address"] = addr
+    req["data"] = convert_to_binary_value(np.array([data], dtype=np.uint32).view(np.uint8))
+    req["op"] = DmReqOp.WRITE
+    await self.dm_req_fifo.put(req)
+    rsp = await self.dm_rsp_fifo.get()
+    return rsp
+
+  async def dm_read_reg(self, addr, expected_op=DmRspOp.SUCCESS):
+    command = ((DmCmdType.ACCESS_REGISTER << 24) & 0xFF) | (((2 << 20) | (1 << 17) | (addr)) & 0xFFFFFF)
+    rsp = await self.dm_write(0x17, command)
+    assert rsp["op"] == expected_op
+    if rsp["op"] != DmRspOp.SUCCESS:
+        return 0
+
+    data = await self.dm_read(0x04)
+    status = await self.dm_read(0x16)
+    cmderr = (status >> 8) & 0b111
+    assert (cmderr == 0)
+    return data
+
+  async def dm_write_reg(self, addr, data):
+    rsp = await self.dm_write(0x04, data)
+    assert rsp["op"] == DmRspOp.SUCCESS
+    command = ((DmCmdType.ACCESS_REGISTER << 24) & 0xFF) | (((2 << 20) | (1 << 17) | (1 << 16) | addr) & 0xFFFFFF)
+    rsp = await self.dm_write(0x17, command)
+    assert rsp["op"] == DmRspOp.SUCCESS
+    status = await self.dm_read(0x16)
+    cmderr = (status >> 8) & 0b111
+    assert (cmderr == 0)
+
+  async def dm_request_halt(self):
+    dmcontrol = await self.dm_read(0x10)
+    dmcontrol = dmcontrol | (1 << 31) & ~(1 << 30)
+    await self.dm_write(0x10, dmcontrol)
+
+  async def dm_wait_for_halted(self, retry_count=100):
+    retries = 0
+    while True:
+        dmstatus = await self.dm_read(0x11)
+        allhalted = dmstatus & (1 << 9)
+        anyhalted = dmstatus & (1 << 8)
+        if allhalted and anyhalted:
+            break
+        retries += 1
+        assert retries < retry_count
+
+  async def dm_request_resume(self):
+    dmcontrol = await self.dm_read(0x10)
+    dmcontrol = dmcontrol | (1 << 30) & ~(1 << 31)
+    await self.dm_write(0x10, dmcontrol)
+
+  async def dm_wait_for_resumed(self, retry_count=100):
+    retries = 0
+    while True:
+        dmstatus = await self.dm_read(0x11)
+        allrunning = dmstatus & (1 << 11)
+        anyrunning = dmstatus & (1 << 10)
+        if allrunning and anyrunning:
+            break
+        retries += 1
+        assert retries < retry_count
+
+  async def debug_req(self):
+    await RisingEdge(self.dut.io_aclk)
+    self.dut.io_debug_req.value = 1
+    await RisingEdge(self.dut.io_aclk)
+    self.dut.io_debug_req.value = 0
 
   async def _write_addr(self, addr, size, burst_len=1, axi_id=0, burst=AxiBurst.INCR):
     awdata = dict()

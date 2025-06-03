@@ -14,6 +14,7 @@
 
 package kelvin
 
+import common.Fp32
 import chisel3._
 import chisel3.util._
 
@@ -243,4 +244,44 @@ class FabricIO(p: Parameters) extends Bundle {
     val writeDataBits = Output(UInt(p.axi2DataBits.W))
     val writeDataStrb = Output(UInt((p.axi2DataBits / 8).W))
     val writeResp = Input(Bool())
+}
+
+object CsrOp extends ChiselEnum {
+  val CSRRW = Value
+  val CSRRS = Value
+  val CSRRC = Value
+}
+
+class CsrCmd extends Bundle {
+  val addr = UInt(5.W)
+  val index = UInt(12.W)
+  val op = CsrOp()
+}
+
+class FRegfileRead extends Bundle {
+  val valid = Input(Bool())
+  val addr  = Input(UInt(5.W))
+  val data  = Output(new Fp32)
+}
+
+class FRegfileWrite extends Bundle {
+  val valid = Input(Bool())
+  val addr  = Input(UInt(5.W))
+  val data  = Input(new Fp32)
+}
+
+class CoreDMIO(p: Parameters) extends Bundle {
+  val debug_req = Input(Bool())
+  val resume_req = Input(Bool())
+  val csr = Input(Valid(new CsrCmd))
+  val csr_rs1 = Input(UInt(32.W))
+  val csr_rd = Output(Valid(UInt(32.W)))
+  val scalar_rd = Flipped(Decoupled(new RegfileWriteDataIO))
+  val scalar_rs = new Bundle {
+    val idx = Input(UInt(5.W))
+    val data = Output(UInt(32.W))
+  }
+  val float_rd = Option.when(p.enableFloat)(new FRegfileWrite)
+  val float_rs = Option.when(p.enableFloat)(new FRegfileRead)
+  val debug_mode = Output(Bool())
 }

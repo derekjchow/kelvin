@@ -86,6 +86,18 @@ struct DebugIO {
 #endif
 };
 
+struct DebugModuleIO {
+  sc_signal<sc_logic> req_valid;
+  sc_signal<sc_logic> req_ready;
+  sc_signal<sc_lv<32>> req_bits_address;
+  sc_signal<sc_lv<32>> req_bits_data;
+  sc_signal<sc_lv<2>> req_bits_op;
+  sc_signal<sc_logic> rsp_valid;
+  sc_signal<sc_logic> rsp_ready;
+  sc_signal<sc_lv<32>> rsp_bits_data;
+  sc_signal<sc_lv<2>> rsp_bits_op;
+};
+
 SC_MODULE(sc_top) {
   SC_CTOR(sc_top);
 
@@ -113,6 +125,7 @@ SC_MODULE(sc_top) {
 
   SlogIO slog;
   DebugIO debug;
+  DebugModuleIO dm;
   CoreMiniAxi core;
 
   sc_signal<sc_logic> slave_awready_4;

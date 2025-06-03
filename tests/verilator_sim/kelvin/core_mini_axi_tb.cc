@@ -174,6 +174,17 @@ void CoreMiniAxi_tb::Connect() {
   REPEAT(BIND_RB_DEBUG_IO, KP_retirementBufferSize);
 #undef BIND_RB_DEBUG_IO
 #endif
+#if (KP_useDebugModule == true)
+  core_->io_dm_req_valid(dm_io_.req_valid);
+  core_->io_dm_req_ready(dm_io_.req_valid);
+  core_->io_dm_req_bits_address(dm_io_.req_bits_address);
+  core_->io_dm_req_bits_data(dm_io_.req_bits_data);
+  core_->io_dm_req_bits_op(dm_io_.req_bits_op);
+  core_->io_dm_rsp_valid(dm_io_.rsp_valid);
+  core_->io_dm_rsp_ready(dm_io_.rsp_valid);
+  core_->io_dm_rsp_bits_data(dm_io_.rsp_bits_data);
+  core_->io_dm_rsp_bits_op(dm_io_.rsp_bits_op);
+#endif
 
   // AR
   core_->io_axi_master_read_addr_ready(axi2tlm_signals_.arready);

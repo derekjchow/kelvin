@@ -71,6 +71,16 @@ io_debug_float_writeData_1_bits_addr         32      bit_vector  sc_lv
 io_debug_float_writeData_0_bits_data         32      bit_vector  sc_lv
 io_debug_float_writeData_1_bits_data         32      bit_vector  sc_lv
 
+io_dm_req_valid                              1       bit         sc_logic
+io_dm_req_ready                              1       bit         sc_logic
+io_dm_req_bits_address                       32      bit_vector  sc_lv
+io_dm_req_bits_data                          32      bit_vector  sc_lv
+io_dm_req_bits_op                            2       bit_vector  sc_lv
+io_dm_rsp_valid                              1       bit         sc_logic
+io_dm_rsp_ready                              1       bit         sc_logic
+io_dm_rsp_bits_data                          32      bit_vector  sc_lv
+io_dm_rsp_bits_op                            2       bit_vector  sc_lv
+
 io_axi_slave_write_addr_ready       1       bit         sc_logic
 io_axi_slave_write_addr_valid       1       bit         sc_logic
 io_axi_slave_write_addr_bits_addr   32      bit_vector  sc_lv

@@ -141,6 +141,18 @@ struct CoreMiniAxi_tb : Sysc_tb {
 #endif
   };
 
+  struct DebugModuleIO {
+    sc_signal<bool> req_valid;
+    sc_signal<bool> req_ready;
+    sc_signal<sc_bv<32>> req_bits_address;
+    sc_signal<sc_bv<32>> req_bits_data;
+    sc_signal<sc_bv<2>> req_bits_op;
+    sc_signal<bool> rsp_valid;
+    sc_signal<bool> rsp_ready;
+    sc_signal<sc_bv<32>> rsp_bits_data;
+    sc_signal<sc_bv<2>> rsp_bits_op;
+  };
+
   CoreMiniAxi_tb(sc_module_name n, int loops, bool random, bool debug_axi,
                  bool instr_trace,
                  std::optional<std::function<void()>> wfi_cb,
@@ -208,6 +220,7 @@ struct CoreMiniAxi_tb : Sysc_tb {
   CoreMiniAxiSignals axi2tlm_signals_;
   SlogIO slog_io_;
   DebugIO debug_io_;
+  DebugModuleIO dm_io_;
   Xbar xbar_;
   std::optional<std::function<void()>> wfi_cb_;
   std::optional<std::function<void()>> halted_cb_;

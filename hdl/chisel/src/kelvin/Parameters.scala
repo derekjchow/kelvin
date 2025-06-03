@@ -93,7 +93,8 @@ class Parameters(var m: Seq[MemoryRegion] = Seq(), val hartId: Int = 0) {
   def rvvVlenb: Int = { rvvVlen / 8 }
 
   // Dispatch unit
-  def useDispatchV2: Boolean = { enableRvv }
+  var enableDispatchV2 = false
+  def useDispatchV2: Boolean = { enableRvv || enableDispatchV2 }
 
   def useRetirementBuffer: Boolean = { useDispatchV2 && enableVerification }
 
@@ -132,6 +133,8 @@ class Parameters(var m: Seq[MemoryRegion] = Seq(), val hartId: Int = 0) {
   val lsuDelayPipelineLen = 1
   def dbusSize: Int = { log2Ceil(lsuDataBits / 8) + 1 }
   def useLsuV2: Boolean = { enableRvv }
+  var enableDebug = false
+  def useDebugModule: Boolean = { useDispatchV2 && enableDebug }
 
   // TCM Size Configuration
   var tcmHighmem = false
@@ -204,6 +207,7 @@ object EmitParametersHeader {
     builder = builder.append(s"#define KP_useDispatchV2 ${p.useDispatchV2}\n")
     builder = builder.append(s"#define KP_useRetirementBuffer ${p.useRetirementBuffer}\n")
     builder = builder.append(s"#define KP_retirementBufferIdxWidth ${p.retirementBufferIdxWidth}\n")
+    builder = builder.append(s"#define KP_useDebugModule ${p.useDebugModule}\n")
     builder = builder.append("#endif\n")
     builder.result()
   }

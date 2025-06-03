@@ -270,6 +270,7 @@ chisel_library(
         ":clock_gate",
         "//hdl/chisel/src/bus",
         "//hdl/chisel/src/common",
+        "//hdl/chisel/src/common:fp",
     ],
 )
 
@@ -306,6 +307,7 @@ chisel_library(
         "scalar/Alu.scala",
         "scalar/Bru.scala",
         "scalar/Csr.scala",
+        "scalar/Debug.scala",
         "scalar/Decode.scala",
         "scalar/Dvu.scala",
         "scalar/FaultManager.scala",
@@ -482,6 +484,32 @@ chisel_cc_library(
     ],
     module_name = "CoreMiniHighmemAxi",
     verilog_file_path = "CoreMiniHighmemAxi.sv",
+    vopts = [
+        "-DUSE_GENERIC",
+    ],
+)
+
+chisel_cc_library(
+    name = "core_mini_axi_debug_cc_library",
+    chisel_lib = ":kelvin",
+    emit_class = "kelvin.EmitCore",
+    extra_outs = [
+        "VCoreMiniDebugAxi_parameters.h",
+        "CoreMiniDebugAxi.zip",
+    ],
+    gen_flags = [
+        "--enableFetchL0=False",
+        "--fetchDataBits=128",
+        "--lsuDataBits=128",
+        "--enableVector=False",
+        "--enableDispatchV2=True",
+        "--enableDebug=True",
+        "--enableFloat=True",
+        "--moduleName=CoreMiniDebug",
+        "--useAxi",
+    ],
+    module_name = "CoreMiniDebugAxi",
+    verilog_file_path = "CoreMiniDebugAxi.sv",
     vopts = [
         "-DUSE_GENERIC",
     ],

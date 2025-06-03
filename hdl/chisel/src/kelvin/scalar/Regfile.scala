@@ -64,6 +64,11 @@ class Regfile(p: Parameters) extends Module {
     val target = Vec(p.instructionLanes, new RegfileBranchTargetIO)
     val linkPort = new RegfileLinkPortIO
     val busPort = new RegfileBusPortIO(p)
+    val debugBusPort = Option.when(p.useDebugModule)(new Bundle {
+      val idx = Input(UInt(5.W))
+      val data = Output(UInt(32.W))
+    })
+    val debugWriteValid = Option.when(p.useDebugModule)(Input(Bool()))
 
     // Execute cycle.
     val readData = Vec(p.instructionLanes * 2, new RegfileReadDataIO)
@@ -134,9 +139,9 @@ class Regfile(p: Parameters) extends Module {
       Seq(io.writeData(p.instructionLanes + 1).valid && io.writeData(p.instructionLanes + 1).bits.addr === i.U,
           io.writeData(p.instructionLanes).valid && io.writeData(p.instructionLanes).bits.addr === i.U) ++
           (0 until p.instructionLanes).reverse.map(x => io.writeData(x).valid && io.writeData(x).bits.addr === i.U && !io.writeMask(x).valid)
-    )
+      )
 
-    val data  = (0 until p.instructionLanes + extraWritePorts).map(x => MuxOR(valid(x), io.writeData(x).bits.data)).reduce(_|_)
+    val data = (0 until p.instructionLanes + extraWritePorts).map(x => MuxOR(valid(x), io.writeData(x).bits.data)).reduce(_|_)
 
     writeValid(i) := valid =/= 0.U
     writeData(i)  := data
@@ -173,6 +178,9 @@ class Regfile(p: Parameters) extends Module {
     rdata(i) := VecAt(regfile, idx)
     wdata(i) := VecAt(writeData, idx)
     rwdata(i) := Mux(write, wdata(i), rdata(i))
+  }
+  if (p.useDebugModule) {
+    io.debugBusPort.get.data := VecAt(regfile, io.debugBusPort.get.idx)
   }
 
   for (i <- 0 until (p.instructionLanes * 2)) {
@@ -231,7 +239,8 @@ class Regfile(p: Parameters) extends Module {
   }
 
   val scoreboard_error = RegInit(false.B)
-  scoreboard_error := (scoreboard & scoreboard_clr) =/= scoreboard_clr
+  val dm_write_valid = io.debugWriteValid.getOrElse(false.B)
+  scoreboard_error := ((scoreboard & scoreboard_clr) =/= scoreboard_clr) && !dm_write_valid
   assert(!scoreboard_error)
 }
 

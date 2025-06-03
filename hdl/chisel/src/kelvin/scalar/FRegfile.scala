@@ -18,22 +18,11 @@ import chisel3._
 import chisel3.util._
 import common.Fp32
 
-class FRegfileRead extends Bundle {
-  val valid = Input(Bool())
-  val addr  = Input(UInt(5.W))
-  val data  = Output(new Fp32)
-}
-
-class FRegfileWrite extends Bundle {
-  val valid = Input(Bool())
-  val addr  = Input(UInt(5.W))
-  val data  = Input(new Fp32)
-}
-
 class FRegfile(p: Parameters, n_read: Int, n_write: Int) extends Module {
   val io = IO(new Bundle {
     val read_ports = Vec(n_read, new FRegfileRead)
     val write_ports = Vec(n_write, new FRegfileWrite)
+    val dm_write_valid = Option.when(p.useDebugModule)(Input(Bool()))
 
     val scoreboard_set = Input(UInt(32.W))
     val scoreboard = Output(UInt(32.W))
@@ -53,7 +42,8 @@ class FRegfile(p: Parameters, n_read: Int, n_write: Int) extends Module {
   io.scoreboard := scoreboard
 
   val scoreboard_error = RegInit(false.B)
-  scoreboard_error := (scoreboard & scoreboard_clr) =/= scoreboard_clr
+  val dm_write_valid = io.dm_write_valid.getOrElse(false.B)
+  scoreboard_error := ((scoreboard & scoreboard_clr) =/= scoreboard_clr) && !dm_write_valid
   assert(!scoreboard_error)
 
   // Writes

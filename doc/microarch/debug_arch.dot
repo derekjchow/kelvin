@@ -1,0 +1,23 @@
+digraph debug_arch {
+  rankdir=LR;
+  node [shape=box, style=rounded];
+
+  subgraph cluster_debugger {
+    label="External Debugger";
+    debugger [shape=none, label=""];
+  }
+
+  subgraph cluster_debug_module {
+    label="Debug Module";
+    debug_module [shape=none, label=""];
+  }
+
+  subgraph cluster_core {
+    label="Kelvin Core";
+    core [shape=none, label=""];
+  }
+
+  debugger -> debug_module [label="ext.req / ext.rsp"];
+  debug_module -> core [label="csr, scalar_rd, float_rd, haltreq, resumereq, ndmreset"];
+  core -> debug_module [label="csr_rd, scalar_rs, float_rs, resumeack, halted, running, havereset"];
+}
