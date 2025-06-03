@@ -181,7 +181,7 @@ int sc_main(int argc, char** argv) {
 
   TLMTrafficGenerator tg("tg");
   tg.socket.bind(tlm2axi_bridge.tgt_socket);
-  tg.setStartDelay(sc_time(1, SC_US));
+  tg.setStartDelay(sc_time(5, SC_NS));
 
   axi2tlm_bridge.socket.bind(xbar.socket());
 

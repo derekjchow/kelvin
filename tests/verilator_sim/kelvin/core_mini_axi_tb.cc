@@ -78,7 +78,7 @@ CoreMiniAxi_tb::CoreMiniAxi_tb(sc_module_name n, int loops, bool random,
 
   Connect();
 
-  tg_.setStartDelay(sc_time(5, SC_US));
+  tg_.setStartDelay(sc_time(5, SC_NS));
   tg_.socket.bind(tlm2axi_bridge_.tgt_socket);
   if (debug_axi) {
     tg_.enableDebug();
