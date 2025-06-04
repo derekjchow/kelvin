@@ -64,6 +64,7 @@ chisel_test(
     srcs = [
         "AlignerTest.scala",
     ],
+    tags = ["verilator"],
     deps = [
         ":aligner",
     ],
