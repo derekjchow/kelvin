@@ -137,6 +137,44 @@ template_rule(
     data = COCOTB_TEST_BINARY_TARGETS,
 )
 
+RVV_TEST_BINARY_TARGETS = [
+        "//tests/cocotb/rvv:rvv_load.elf",
+        "//tests/cocotb/rvv:rvv_add.elf",
+    ]
+
+verilator_cocotb_test(
+    name = "rvv_assembly_cocotb_test",
+    hdl_toplevel = "RvvCoreMiniAxi",
+    verilog_sources = [
+        "//hdl/chisel/src/kelvin:rvv_core_mini_axi_cc_library_verilog"
+    ],
+    build_args = [
+        "-Wno-WIDTH",
+        "-Wno-CASEINCOMPLETE",
+        "-Wno-LATCH",
+        "-Wno-SIDEEFFECT",
+        "-Wno-MULTIDRIVEN",
+        "-Wno-UNOPTFLAT",
+        "-Wno-CASEOVERLAP",
+        # Warnings that we disable for fpnew
+        "-Wno-ASCRANGE",
+        "-Wno-WIDTHEXPAND",
+        "-Wno-WIDTHTRUNC",
+        "-Wno-UNSIGNED",
+    ],
+    defines = {
+        "USE_GENERIC" : "",
+    },
+    waves = True,
+    seed = "42",
+    test_module = ["rvv_assembly_cocotb_test.py"],
+    deps = [
+        "//kelvin_test_utils:core_mini_axi_sim_interface",
+        requirement("tqdm"),
+    ],
+    data = RVV_TEST_BINARY_TARGETS,
+)
+
 kelvin_v2_binary(
     name = "align_test",
     srcs = [
