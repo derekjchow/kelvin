@@ -1,5 +1,7 @@
 # Kelvin Microarchitecture
 
+![image](../images/microarch.png)
+
 ## Pipeline
 
 The Kelvin base processor is an in-order three-stage pipeline capable of
