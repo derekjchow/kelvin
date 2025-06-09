@@ -17,38 +17,38 @@
 // Defines
 +define+USE_GENERIC
 
-// Include directories
+// --- Include Directories ---
 +incdir+./common
-+incdir+./common/transaction_item
 +incdir+./common/kelvin_axi_master
 +incdir+./common/kelvin_axi_slave
 +incdir+./common/kelvin_irq
++incdir+./common/transaction_item
++incdir+./common/rvvi
++incdir+./common/cosim
 +incdir+./env
 +incdir+./tests
 +incdir+./tb
 +incdir+./rtl
 
+// --- Source Files ---
+
 // DUT RTL
-rtl/RvvCoreMiniAxi.sv
+./rtl/RvvCoreMiniAxi.sv
 
-// Interfaces (in common subdirs)
-common/kelvin_axi_master/kelvin_axi_master_if.sv
-common/kelvin_axi_slave/kelvin_axi_slave_if.sv
-common/kelvin_irq/kelvin_irq_if.sv
+// Interfaces
+./common/kelvin_axi_master/kelvin_axi_master_if.sv
+./common/kelvin_axi_slave/kelvin_axi_slave_if.sv
+./common/kelvin_irq/kelvin_irq_if.sv
 
-// Transaction Item Package (in common dir)
-common/transaction_item/transaction_item_pkg.sv
+// UVM Packages
+./common/transaction_item/transaction_item_pkg.sv
+./common/kelvin_axi_master/kelvin_axi_master_agent_pkg.sv
+./common/kelvin_axi_slave/kelvin_axi_slave_agent_pkg.sv
+./common/kelvin_irq/kelvin_irq_agent_pkg.sv
+./common/cosim/kelvin_rvvi_agent_pkg.sv
+./common/cosim/kelvin_cosim_checker_pkg.sv
+./env/kelvin_env_pkg.sv
+./tests/kelvin_test_pkg.sv
 
-// Agent Packages (in common dir)
-common/kelvin_axi_master/kelvin_axi_master_agent_pkg.sv
-common/kelvin_axi_slave/kelvin_axi_slave_agent_pkg.sv
-common/kelvin_irq/kelvin_irq_agent_pkg.sv
-
-// Environment Package
-env/kelvin_env_pkg.sv
-
-// Test Package
-tests/kelvin_test_pkg.sv
-
-// Top-Level TB
-tb/kelvin_tb_top.sv
+// Top-Level Testbench
+./tb/kelvin_tb_top.sv

@@ -29,30 +29,48 @@ package kelvin_axi_slave_agent_pkg;
     `uvm_component_utils(kelvin_axi_slave_model)
     virtual kelvin_axi_slave_if.TB_SLAVE_MODEL vif;
 
-    function new(string name = "kelvin_axi_slave_model", uvm_component parent = null);
+    // Handle to an event that is triggered when the signature address is written
+    uvm_event signature_written_event;
+    // The signature address to monitor for
+    logic [31:0] end_signature_addr;
+
+    function new(string name = "kelvin_axi_slave_model",
+                 uvm_component parent = null);
       super.new(name, parent);
     endfunction
 
     virtual function void build_phase(uvm_phase phase);
       super.build_phase(phase);
-      if (!uvm_config_db#(virtual kelvin_axi_slave_if.TB_SLAVE_MODEL)::get(this, "", "vif", vif)) begin
-         `uvm_fatal(get_type_name(), "Virtual interface 'vif' not found for TB_SLAVE_MODEL")
+      if (!uvm_config_db#(virtual kelvin_axi_slave_if.TB_SLAVE_MODEL)::get(
+          this, "", "vif", vif)) begin
+        `uvm_fatal(get_type_name(),
+                   "Virtual interface 'vif' not found for TB_SLAVE_MODEL")
+      end
+
+      // Get the signature address and event handle from the test
+      if (!uvm_config_db#(logic [31:0])::get(this, "", "end_signature_addr",
+          end_signature_addr)) begin
+        `uvm_fatal(get_type_name(), "end_signature_addr not found!")
+      end
+      if (!uvm_config_db#(uvm_event)::get(this, "", "signature_written_event",
+          signature_written_event)) begin
+        `uvm_fatal(get_type_name(), "signature_written_event not found!")
       end
     endfunction
 
     virtual task run_phase(uvm_phase phase);
-       vif.tb_slave_cb.awready <= 1'b0;
-       vif.tb_slave_cb.wready  <= 1'b0;
-       vif.tb_slave_cb.arready <= 1'b0;
-       vif.tb_slave_cb.bvalid  <= 1'b0;
-       vif.tb_slave_cb.rvalid  <= 1'b0;
-       vif.tb_slave_cb.bresp   <= 2'b00; // OKAY
-       vif.tb_slave_cb.rresp   <= 2'b00; // OKAY
-       vif.tb_slave_cb.rdata   <= '0;    // Return 0 data
-       fork
-         handle_writes();
-         handle_reads();
-       join_none
+      vif.tb_slave_cb.awready <= 1'b0;
+      vif.tb_slave_cb.wready  <= 1'b0;
+      vif.tb_slave_cb.arready <= 1'b0;
+      vif.tb_slave_cb.bvalid  <= 1'b0;
+      vif.tb_slave_cb.rvalid  <= 1'b0;
+      vif.tb_slave_cb.bresp   <= 2'b00; // OKAY
+      vif.tb_slave_cb.rresp   <= 2'b00; // OKAY
+      vif.tb_slave_cb.rdata   <= '0;    // Return 0 data
+      fork
+        handle_writes();
+        handle_reads();
+      join_none
     endtask
 
     // Slave agent: No internal memory model implemented. Incoming write data
@@ -60,41 +78,59 @@ package kelvin_axi_slave_agent_pkg;
     protected virtual task handle_writes();
       logic [IDWIDTH-1:0] current_bid; // Store ID for response
       forever begin
-        // --- Wait for Write Address ---
+        // Wait for write address
         vif.tb_slave_cb.awready <= 1'b0;
         @(vif.tb_slave_cb iff vif.tb_slave_cb.awvalid);
         current_bid = vif.tb_slave_cb.awid;
-        `uvm_info(get_type_name(), $sformatf("Slave Rcvd AW: Addr=0x%h ID=%0d", vif.tb_slave_cb.awaddr, current_bid), UVM_HIGH)
-        vif.tb_slave_cb.awready <= 1'b1;
-        @(vif.tb_slave_cb);
-        vif.tb_slave_cb.awready <= 1'b0;
+        `uvm_info(get_type_name(),
+                  $sformatf("Slave Rcvd AW: Addr=0x%h ID=%0d",
+                            vif.tb_slave_cb.awaddr, current_bid), UVM_HIGH)
 
-        // --- Wait for Write Data ---
-        // TODO: Add burst handling based on AWLEN
-        vif.tb_slave_cb.wready <= 1'b0;
-        @(vif.tb_slave_cb iff vif.tb_slave_cb.wvalid);
-        `uvm_info(get_type_name(), $sformatf("Slave Rcvd W: Data=0x%h WSTRB=0x%h LAST=%0b ID=%0d", vif.tb_slave_cb.wdata, vif.tb_slave_cb.wstrb, vif.tb_slave_cb.wlast, vif.tb_slave_cb.wid), UVM_HIGH)
-        vif.tb_slave_cb.wready <= 1'b1;
-        @(vif.tb_slave_cb);
-        vif.tb_slave_cb.wready <= 1'b0;
-        // TODO: Need loop and WLAST check for bursts
+        // Check for the magic signature address
+        if (vif.tb_slave_cb.awaddr == end_signature_addr) begin
+          `uvm_info(get_type_name(), "SIGNATURE ADDRESS WRITE DETECTED",
+                    UVM_LOW)
+          // Accept the address and data, then trigger the event
+          vif.tb_slave_cb.awready <= 1'b1;
+          @(vif.tb_slave_cb);
+          vif.tb_slave_cb.awready <= 1'b0;
 
-        // --- Send Write Response (OKAY) ---
+          vif.tb_slave_cb.wready <= 1'b0;
+          @(vif.tb_slave_cb iff vif.tb_slave_cb.wvalid);
+          // Pass the signature data back to the test for checking
+          uvm_config_db#(logic [127:0])::set(null, "*",
+              "final_signature_data", vif.tb_slave_cb.wdata);
+          // Trigger the event to end the test
+          signature_written_event.trigger();
+          vif.tb_slave_cb.wready <= 1'b1;
+          @(vif.tb_slave_cb);
+          vif.tb_slave_cb.wready <= 1'b0;
+        end else begin
+          // Standard write handling for non-signature addresses
+          vif.tb_slave_cb.awready <= 1'b1;
+          @(vif.tb_slave_cb);
+          vif.tb_slave_cb.awready <= 1'b0;
+
+          vif.tb_slave_cb.wready <= 1'b0;
+          @(vif.tb_slave_cb iff vif.tb_slave_cb.wvalid);
+          vif.tb_slave_cb.wready <= 1'b1;
+          @(vif.tb_slave_cb);
+          vif.tb_slave_cb.wready <= 1'b0;
+        end
+
+        // Send write response (OKAY)
         @(vif.tb_slave_cb);
         vif.tb_slave_cb.bvalid <= 1'b1; // Assert valid
         vif.tb_slave_cb.bresp  <= 2'b00; // OKAY
         vif.tb_slave_cb.bid    <= current_bid; // Respond with stored AWID
 
-        // Wait until the master is ready to accept the response
-        do begin
-            @(vif.tb_slave_cb);
-            // Add timeout here if needed
-        end while (!vif.tb_slave_cb.bready);
+        do @(vif.tb_slave_cb); while (!vif.tb_slave_cb.bready);
 
-        // Master accepted response, deassert valid in the next cycle
         @(vif.tb_slave_cb);
         vif.tb_slave_cb.bvalid <= 1'b0;
-        `uvm_info(get_type_name(), $sformatf("Slave Sent BResp OKAY ID=%0d", current_bid), UVM_HIGH)
+        `uvm_info(get_type_name(),
+                  $sformatf("Slave Sent BResp OKAY ID=%0d", current_bid),
+                  UVM_HIGH)
       end
     endtask
 
@@ -103,36 +139,34 @@ package kelvin_axi_slave_agent_pkg;
     protected virtual task handle_reads();
       logic [IDWIDTH-1:0] current_rid; // Store ID for response
       forever begin
-          // --- Wait for Read Address ---
-          vif.tb_slave_cb.arready <= 1'b0;
-          @(vif.tb_slave_cb iff vif.tb_slave_cb.arvalid);
-          current_rid = vif.tb_slave_cb.arid;
-          `uvm_info(get_type_name(), $sformatf("Slave Rcvd AR: Addr=0x%h ID=%0d", vif.tb_slave_cb.araddr, current_rid), UVM_HIGH)
-          vif.tb_slave_cb.arready <= 1'b1;
-          @(vif.tb_slave_cb);
-          vif.tb_slave_cb.arready <= 1'b0;
+        // Wait for read address
+        vif.tb_slave_cb.arready <= 1'b0;
+        @(vif.tb_slave_cb iff vif.tb_slave_cb.arvalid);
+        current_rid = vif.tb_slave_cb.arid;
+        `uvm_info(get_type_name(),
+                  $sformatf("Slave Rcvd AR: Addr=0x%h ID=%0d",
+                            vif.tb_slave_cb.araddr, current_rid), UVM_HIGH)
+        vif.tb_slave_cb.arready <= 1'b1;
+        @(vif.tb_slave_cb);
+        vif.tb_slave_cb.arready <= 1'b0;
 
-          // --- Send Read Data/Response (OKAY, Zero Data) ---
-          // TODO: Add burst handling based on ARLEN
-          @(vif.tb_slave_cb);
-          vif.tb_slave_cb.rvalid <= 1'b1; // Assert valid
-          vif.tb_slave_cb.rresp  <= 2'b00; // OKAY
-          vif.tb_slave_cb.rdata  <= '0;    // Return 0 data
-          vif.tb_slave_cb.rid    <= current_rid; // Respond with stored ARID
-          vif.tb_slave_cb.rlast  <= 1'b1; // Assume single beat for now
+        // Send read data/response (OKAY, Zero Data)
+        // TODO: Add burst handling based on ARLEN
+        @(vif.tb_slave_cb);
+        vif.tb_slave_cb.rvalid <= 1'b1; // Assert valid
+        vif.tb_slave_cb.rresp  <= 2'b00; // OKAY
+        vif.tb_slave_cb.rdata  <= '0;    // Return 0 data
+        vif.tb_slave_cb.rid    <= current_rid;
+        vif.tb_slave_cb.rlast  <= 1'b1; // Assume single beat
 
-          // ** FIXED: Wait for rready separately **
-          // Wait until the master is ready to accept the data
-          do begin
-              @(vif.tb_slave_cb);
-              // Add timeout here if needed
-          end while (!vif.tb_slave_cb.rready);
+        do @(vif.tb_slave_cb); while (!vif.tb_slave_cb.rready);
 
-          // Master accepted data, deassert valid in the next cycle
-          @(vif.tb_slave_cb);
-          vif.tb_slave_cb.rvalid <= 1'b0;
-          vif.tb_slave_cb.rlast  <= 1'b0; // Deassert RLAST
-          `uvm_info(get_type_name(), $sformatf("Slave Sent RData Zero OKAY ID=%0d", current_rid), UVM_HIGH)
+        @(vif.tb_slave_cb);
+        vif.tb_slave_cb.rvalid <= 1'b0;
+        vif.tb_slave_cb.rlast  <= 1'b0; // Deassert RLAST
+        `uvm_info(get_type_name(),
+                  $sformatf("Slave Sent RData Zero OKAY ID=%0d", current_rid),
+                  UVM_HIGH)
       end
     endtask
   endclass
@@ -144,13 +178,15 @@ package kelvin_axi_slave_agent_pkg;
     `uvm_component_utils(kelvin_axi_slave_agent)
     kelvin_axi_slave_model slave_model;
 
-    function new(string name = "kelvin_axi_slave_agent", uvm_component parent = null);
+    function new(string name = "kelvin_axi_slave_agent",
+                 uvm_component parent = null);
       super.new(name, parent);
     endfunction
 
     virtual function void build_phase(uvm_phase phase);
       super.build_phase(phase);
-      slave_model = kelvin_axi_slave_model::type_id::create("slave_model", this);
+      slave_model = kelvin_axi_slave_model::type_id::create("slave_model",
+                                                             this);
     endfunction
 
     virtual function void connect_phase(uvm_phase phase);

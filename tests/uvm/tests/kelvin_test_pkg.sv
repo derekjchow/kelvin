@@ -24,7 +24,6 @@ package kelvin_test_pkg;
   // Import required packages
   import transaction_item_pkg::*;
   import kelvin_env_pkg::*;
-  // Need access to agent sequencers, often via env handle
   import kelvin_axi_master_agent_pkg::*;
   import kelvin_irq_agent_pkg::*;
 
@@ -46,47 +45,57 @@ package kelvin_test_pkg;
       start_item(req);
       req.txn_type = AXI_WRITE;
       req.addr = 32'h00030004;
-      req.len  = 0; req.size = $clog2(32/8); // Assuming 32-bit write for PC address itself
+      req.len  = 0;
+      req.size = $clog2(128/8);
       req.burst = AXI_BURST_INCR;
-      req.id = 0; req.prot = 3'b000;
+      req.id = 0;
+      req.prot = 3'b000;
       req.data.delete();
       req.strb.delete();
-      // Data value (128'h34 << 32) placed in lower bytes for 32-bit write size
-      req.data.push_back(128'h00000034_00000000);
-      req.strb.push_back(16'h000F); // Strobe for lower 4 bytes (assuming DUT handles alignment)
+      req.data.push_back(128'h00000034_00000000); // PC value
+      req.strb.push_back('1); // Write all bytes
       finish_item(req);
-      `uvm_info(get_type_name(), $sformatf("Kickoff Write 1 (PC Data=0x%h) sent to addr 0x%h", req.data[0], req.addr), UVM_LOW)
+      `uvm_info(get_type_name(),
+                $sformatf("Kickoff Write 1 (PC Data=0x%h) sent to addr 0x%h",
+                          req.data[0], req.addr), UVM_LOW)
 
       // 2. Write Clock Gate Release
       req = axi_transaction::type_id::create("req_clk_gate");
       start_item(req);
       req.txn_type = AXI_WRITE;
       req.addr = 32'h00030000;
-      req.len  = 0; req.size = $clog2(32/8); // Assuming 32-bit write
+      req.len  = 0;
+      req.size = $clog2(32/8);
       req.burst = AXI_BURST_INCR;
-      req.id = 0; req.prot = 3'b000;
+      req.id = 0;
+      req.prot = 3'b000;
       req.data.delete();
       req.strb.delete();
-      // ** UPDATED: Set data to 0x1 **
       req.data.push_back(128'h1);
       req.strb.push_back(16'h000F); // Strobe for lower 4 bytes
       finish_item(req);
-      `uvm_info(get_type_name(), $sformatf("Kickoff Write 2 (ClkGate Data=0x%h) sent to addr 0x%h", req.data[0], req.addr), UVM_LOW)
+      `uvm_info(get_type_name(),
+                $sformatf("Kickoff Write 2 (ClkGate Data=0x%h) sent to addr 0x%h",
+                          req.data[0], req.addr), UVM_LOW)
 
       // 3. Write Reset Release
       req = axi_transaction::type_id::create("req_reset");
       start_item(req);
       req.txn_type = AXI_WRITE;
       req.addr = 32'h00030000;
-      req.len  = 0; req.size = $clog2(32/8); // Assuming 32-bit write
+      req.len  = 0;
+      req.size = $clog2(32/8);
       req.burst = AXI_BURST_INCR;
-      req.id = 0; req.prot = 3'b000;
+      req.id = 0;
+      req.prot = 3'b000;
       req.data.delete();
       req.strb.delete();
-      req.data.push_back(128'h0); // Place 0 in correct byte lanes
+      req.data.push_back(128'h0);
       req.strb.push_back(16'h000F); // Strobe for lower 4 bytes
       finish_item(req);
-      `uvm_info(get_type_name(), $sformatf("Kickoff Write 3 (Reset Data=0x%h) sent to addr 0x%h", req.data[0], req.addr), UVM_LOW)
+      `uvm_info(get_type_name(),
+                $sformatf("Kickoff Write 3 (Reset Data=0x%h) sent to addr 0x%h",
+                          req.data[0], req.addr), UVM_LOW)
       `uvm_info(get_type_name(), "Finished kickoff writes", UVM_MEDIUM)
     endtask
   endclass
@@ -99,183 +108,221 @@ package kelvin_test_pkg;
 
     kelvin_env env;
     string test_binary = "";
-    time   test_timeout = 10_000ns;
-    string dut_mem_path = "kelvin_tb_top.u_dut.itcm.sram.sramModules_0.mem";
+    time   test_timeout = 20_000_000ns;
+    logic [31:0] end_signature_addr = 32'h10000;
+    string dut_mem_path_prefix = "kelvin_tb_top.u_dut.itcm.sram.sramModules_";
+
     protected bit test_passed = 1'b0;
     protected bit test_timed_out = 1'b0;
     protected bit dut_halted_flag = 1'b0;
     protected bit dut_faulted_flag = 1'b0;
+    protected bit signature_written_flag = 1'b0;
+    protected logic [127:0] final_signature_data;
 
-    virtual kelvin_irq_if.DUT_IRQ_PORT irq_vif; // Keep for monitoring status
+    virtual kelvin_irq_if.DUT_IRQ_PORT irq_vif;
+    uvm_event signature_written_event;
 
     function new(string name = "kelvin_base_test", uvm_component parent = null);
       super.new(name, parent);
     endfunction
 
     virtual function void build_phase(uvm_phase phase);
-      string timeout_str;
-      int    timeout_int;
-      int    scan_count;
+      string timeout_str, sig_addr_str;
+      int timeout_int;
       uvm_cmdline_processor clp = uvm_cmdline_processor::get_inst();
+
       super.build_phase(phase);
       `uvm_info(get_type_name(), "Build phase starting", UVM_MEDIUM)
+
       if (!clp.get_arg_value("+TEST_BINARY=", test_binary)) begin
-         if (!uvm_config_db#(string)::get(this, "", "test_binary", test_binary)) begin
-            `uvm_info(get_type_name(), "No +TEST_BINARY specified, using default.", UVM_LOW)
-         end
+        uvm_config_db#(string)::get(this, "", "test_binary", test_binary);
       end
-      if (test_binary != "") `uvm_info(get_type_name(), $sformatf("Using Test Binary: %s", test_binary), UVM_MEDIUM) else `uvm_warning(get_type_name(), "No test binary specified!")
+      if (test_binary != "") `uvm_info(get_type_name(),
+          $sformatf("Using Test Binary: %s", test_binary), UVM_MEDIUM)
+      else `uvm_warning(get_type_name(), "No test binary specified!")
+
       if (clp.get_arg_value("+TEST_TIMEOUT=", timeout_str)) begin
-         scan_count = $sscanf(timeout_str, "%d", timeout_int);
-         if (scan_count == 1 && timeout_int > 0) begin
-             test_timeout = timeout_int * 1ns;
-             `uvm_info(get_type_name(), $sformatf("Using custom timeout: %t", test_timeout), UVM_MEDIUM)
-         end else begin
-             `uvm_warning(get_type_name(), $sformatf("Invalid or non-positive +TEST_TIMEOUT value: %s", timeout_str))
-         end
-      end else begin
-         `uvm_info(get_type_name(), $sformatf("Using default timeout: %t", test_timeout), UVM_MEDIUM)
+        if ($sscanf(timeout_str, "%d", timeout_int) == 1 && timeout_int > 0)
+        begin
+           test_timeout = timeout_int * 1ns;
+           `uvm_info(get_type_name(),
+                     $sformatf("Using custom timeout: %t", test_timeout),
+                     UVM_MEDIUM)
+        end else `uvm_warning(get_type_name(),
+                      $sformatf("Invalid +TEST_TIMEOUT value: %s", timeout_str))
       end
+
+      if (clp.get_arg_value("+END_SIGNATURE_ADDR=", sig_addr_str)) begin
+        if ($sscanf(sig_addr_str, "'h%h", end_signature_addr) == 1) begin
+          `uvm_info(get_type_name(),
+                    $sformatf("Using custom End Signature Addr: 0x%h",
+                              end_signature_addr), UVM_MEDIUM)
+        end else `uvm_warning(get_type_name(),
+                      $sformatf("Invalid +END_SIGNATURE_ADDR: %s", sig_addr_str))
+      end
+
       env = kelvin_env::type_id::create("env", this);
 
-      // Configure agents via config_db
-      uvm_config_db#(uvm_active_passive_enum)::set(this, "env.m_master_agent*", "is_active", UVM_ACTIVE);
-      uvm_config_db#(uvm_active_passive_enum)::set(this, "env.m_irq_agent*", "is_active", UVM_ACTIVE);
+      signature_written_event = new("signature_written_event");
+      uvm_config_db#(uvm_event)::set(this, "*.m_slave_agent.slave_model",
+          "signature_written_event", signature_written_event);
+      uvm_config_db#(logic [31:0])::set(this, "*.m_slave_agent.slave_model",
+          "end_signature_addr", end_signature_addr);
 
-      // Get the IRQ/Status virtual interface handle (still needed for monitoring)
-      if (!uvm_config_db#(virtual kelvin_irq_if.DUT_IRQ_PORT)::get(this, "", "irq_vif", irq_vif)) begin
-          `uvm_fatal(get_type_name(), "IRQ virtual interface 'irq_vif' not found via config_db")
-      end
-      if (irq_vif == null) begin
-          `uvm_fatal(get_type_name(), "IRQ virtual interface 'irq_vif' handle is null after get!")
-      end
+      if (!uvm_config_db#(virtual kelvin_irq_if.DUT_IRQ_PORT)::get(this, "",
+          "irq_vif", irq_vif))
+        `uvm_fatal(get_type_name(), "IRQ VIF 'irq_vif' not found")
+      if (irq_vif == null)
+        `uvm_fatal(get_type_name(), "IRQ VIF 'irq_vif' is null")
 
       `uvm_info(get_type_name(), "Build phase finished", UVM_MEDIUM)
     endfunction
 
-    virtual function void connect_phase(uvm_phase phase);
-        super.connect_phase(phase);
-    endfunction
-
-    // start_of_simulation_phase is a function in UVM 1.2
-    virtual function void start_of_simulation_phase(uvm_phase phase);
-        super.start_of_simulation_phase(phase);
-        `uvm_info(get_type_name(), "Start of simulation phase", UVM_DEBUG)
-    endfunction
-
     virtual task run_phase(uvm_phase phase);
       kelvin_kickoff_write_seq kickoff_seq;
-
       phase.raise_objection(this, "Base test running");
-      `uvm_info(get_type_name(), "Run phase starting", UVM_MEDIUM)
 
-      // Load memory at the beginning of run_phase
-      if (test_binary != "") begin
-          load_binary_to_mem(test_binary);
-      end else begin
-          `uvm_warning(get_type_name(), "Skipping memory load as no binary was specified.")
-      end
+      if (test_binary != "") load_binary_to_mem(test_binary);
 
-      // 1. Wait for reset to finish
       `uvm_info(get_type_name(), "Waiting for reset deassertion...", UVM_MEDIUM)
       @(posedge irq_vif.clk iff irq_vif.resetn == 1'b1);
       `uvm_info(get_type_name(), "Reset deasserted.", UVM_MEDIUM)
-      #100ns; // Delay after reset
 
-      // 2. Start the kickoff sequence
-      `uvm_info(get_type_name(), "Starting kickoff sequence", UVM_MEDIUM)
       kickoff_seq = kelvin_kickoff_write_seq::type_id::create("kickoff_seq");
       kickoff_seq.start(env.m_master_agent.sequencer);
-      `uvm_info(get_type_name(), "Kickoff sequence finished", UVM_MEDIUM)
 
-      // 3. Wait for DUT completion (halted/fault) or timeout
-      `uvm_info(get_type_name(), "Waiting for DUT completion or timeout...", UVM_MEDIUM)
+      `uvm_info(get_type_name(), "Waiting for completion or timeout...",
+                UVM_MEDIUM)
       fork
-        begin // Wait for DUT completion
+        begin
+          signature_written_event.wait_trigger();
+          signature_written_flag = 1'b1;
+        end
+        begin
           wait (irq_vif.halted == 1'b1 || irq_vif.fault == 1'b1);
           dut_halted_flag = irq_vif.halted;
           dut_faulted_flag = irq_vif.fault;
-          if (dut_halted_flag) `uvm_info(get_type_name(), "DUT halted signal observed", UVM_MEDIUM)
-          if (dut_faulted_flag) `uvm_error(get_type_name(), "DUT fault signal observed")
-          #10ns;
         end
-        begin // Timeout mechanism
+        begin
           #(test_timeout);
-          if (!dut_halted_flag && !dut_faulted_flag) begin
-              `uvm_error(get_type_name(), $sformatf("Test timed out after %t", test_timeout))
-              test_timed_out = 1'b1;
-          end
+          test_timed_out = 1'b1;
         end
       join_any
       disable fork;
+
+      #100ns;
+
       `uvm_info(get_type_name(), "Run phase finishing", UVM_MEDIUM)
       phase.drop_objection(this, "Base test finished");
     endtask
 
     virtual function void report_phase(uvm_phase phase);
-        super.report_phase(phase);
-        `uvm_info(get_type_name(), "Report phase starting", UVM_LOW)
-        if (test_timed_out) test_passed = 1'b0; else if (dut_faulted_flag) test_passed = 1'b0; else if (dut_halted_flag) test_passed = 1'b1; else test_passed = 1'b0; // Default to fail if no clear pass condition
-        if(test_passed) `uvm_info(get_type_name(), "** UVM TEST PASSED **", UVM_NONE) else `uvm_error(get_type_name(), "** UVM TEST FAILED **")
-        `uvm_info(get_type_name(), "Report phase finished", UVM_LOW)
+      super.report_phase(phase);
+      if (signature_written_flag) begin
+        if (uvm_config_db#(logic [127:0])::get(this, "",
+            "final_signature_data", final_signature_data)) begin
+          if (final_signature_data == 0) begin
+            test_passed = 1'b1;
+            `uvm_info(get_type_name(),
+              $sformatf("Signature write detected with PASS status (0x%h).",
+                        final_signature_data), UVM_LOW)
+          end else begin
+            test_passed = 1'b0;
+            `uvm_error(get_type_name(),
+              $sformatf("Signature write detected with FAIL status (0x%h).",
+                        final_signature_data))
+          end
+        end else `uvm_error(get_type_name(),
+                  "Signature event triggered, but final status not found!")
+      end else if (dut_halted_flag && !dut_faulted_flag) begin
+        `uvm_info(get_type_name(), "Halt without signature. Passing.", UVM_LOW)
+        test_passed = 1'b1;
+      end else if (dut_faulted_flag) begin
+        `uvm_error(get_type_name(), "Test ended on DUT fault.")
+        test_passed = 1'b0;
+      end else if (test_timed_out) begin
+        `uvm_error(get_type_name(),
+                   $sformatf("Test timed out after %t", test_timeout))
+        test_passed = 1'b0;
+      end else begin
+        `uvm_error(get_type_name(), "Test ended with no clear pass/fail.")
+        test_passed = 1'b0;
+      end
+
+      if(test_passed) `uvm_info(get_type_name(), "** UVM TEST PASSED **",
+                                UVM_NONE)
+      else `uvm_error(get_type_name(), "** UVM TEST FAILED **")
     endfunction
 
     virtual task load_binary_to_mem(string binary_path);
-        int unsigned file_handle;
-        int char_code; // Use int to check for EOF
-        int unsigned byte_count = 0;
-        logic [31:0] base_addr = 0; // Starting byte address for loading
-        logic [7:0] byte_val;
-        int unsigned mem_word_width_bytes = 128 / 8; // Memory width in bytes
+      int unsigned file_handle;
+      int unsigned byte_count = 0;
+      logic [31:0] base_addr = 0;
+      int unsigned num_sram_modules = 32;
+      int unsigned sram_module_size_bytes = (2048 * 128) / 8;
+      int unsigned total_mem_size_bytes = num_sram_modules *
+                                          sram_module_size_bytes;
+      int char_code;
+      logic [7:0] byte_val;
+      logic [31:0] current_byte_addr;
+      int unsigned sram_module_idx;
+      int unsigned addr_in_module;
+      string element_path;
+      int unsigned word_index;
+      int unsigned byte_offset_in_word;
+      int unsigned bit_offset_low;
+      int unsigned bit_offset_high;
 
-        logic [31:0] current_byte_addr;
-        int unsigned word_index;
-        int unsigned byte_offset_in_word;
-        int unsigned bit_offset_low;
-        int unsigned bit_offset_high;
-        string element_path;
+      `uvm_info(get_type_name(),
+                $sformatf("Attempting to load binary '%s'", binary_path),
+                UVM_MEDIUM)
+      file_handle = $fopen(binary_path, "rb");
+      if (file_handle == 0) begin
+        `uvm_fatal(get_type_name(),
+                   $sformatf("Failed to open binary file: %s", binary_path))
+        return;
+      end
 
-        `uvm_info(get_type_name(), $sformatf("Attempting to load binary '%s' to memory path '%s'", binary_path, dut_mem_path), UVM_MEDIUM)
-
-        file_handle = $fopen(binary_path, "rb");
-        if (file_handle == 0) begin
-            `uvm_fatal(get_type_name(), $sformatf("Failed to open binary file: %s", binary_path))
-            return;
+      forever begin
+        char_code = $fgetc(file_handle);
+        if ($feof(file_handle)) break;
+        if (byte_count >= total_mem_size_bytes) begin
+          `uvm_error(get_type_name(),
+            $sformatf("Binary file too large (%0d bytes). Truncating.",
+                      total_mem_size_bytes));
+          break;
         end
 
-        // Loop reading byte by byte until EOF
-        forever begin
-            char_code = $fgetc(file_handle);
-            if ($feof(file_handle)) begin
-                break; // Exit loop on End-Of-File
-            end
+        byte_val = char_code;
+        current_byte_addr = base_addr + byte_count;
 
-            byte_val = char_code; // Convert read character code to byte
+        sram_module_idx = current_byte_addr / sram_module_size_bytes;
+        addr_in_module = current_byte_addr % sram_module_size_bytes;
 
-            // Calculate target address and path
-            current_byte_addr = base_addr + byte_count;
-            word_index = current_byte_addr / mem_word_width_bytes;
-            byte_offset_in_word = current_byte_addr % mem_word_width_bytes;
-            bit_offset_low = byte_offset_in_word * 8;
-            bit_offset_high = bit_offset_low + 7;
-            element_path = $sformatf("%s[%0d][%0d:%0d]", dut_mem_path, word_index, bit_offset_high, bit_offset_low);
+        word_index = addr_in_module / 16;
+        byte_offset_in_word = addr_in_module % 16;
+        bit_offset_low = byte_offset_in_word * 8;
+        bit_offset_high = bit_offset_low + 7;
+        element_path = $sformatf("%s%0d.mem[%0d][%0d:%0d]",
+                                 dut_mem_path_prefix, sram_module_idx,
+                                 word_index, bit_offset_high, bit_offset_low);
 
-            // Deposit the byte
-            if (!uvm_hdl_deposit(element_path, byte_val)) begin
-                `uvm_error(get_type_name(), $sformatf("uvm_hdl_deposit failed for path: %s", element_path))
-            end
-            byte_count++;
-        end // forever loop
+        if (!uvm_hdl_deposit(element_path, byte_val))
+          `uvm_error(get_type_name(),
+                     $sformatf("uvm_hdl_deposit failed for path: %s",
+                               element_path))
 
-        $fclose(file_handle);
+        byte_count++;
+      end
 
-        if (byte_count > 0) begin
-             `uvm_info(get_type_name(), $sformatf("Finished loading %0d bytes to memory starting at byte address 0x%h.", byte_count, base_addr), UVM_MEDIUM)
-        end else begin
-            `uvm_warning(get_type_name(), "Binary file was empty or could not be read, no memory loaded.")
-        end
-
-    endtask : load_binary_to_mem
+      $fclose(file_handle);
+      if (byte_count > 0)
+        `uvm_info(get_type_name(),
+                  $sformatf("Finished loading %0d bytes.", byte_count),
+                  UVM_MEDIUM)
+      else
+        `uvm_warning(get_type_name(), "Binary file was empty or not read.")
+    endtask
 
   endclass
 

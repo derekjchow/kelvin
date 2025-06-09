@@ -18,7 +18,7 @@
 # Tool Configuration
 VCS = vcs
 
-# Directories (Adjust paths as needed)
+# Directories
 RTL_DIR = ./rtl
 COMMON_DIR = ./common
 TB_DIR = ./tb
@@ -53,7 +53,7 @@ UVM_VERBOSITY ?= UVM_MEDIUM
 TEST_TIMEOUT_NS ?= 20000
 PLUSARGS = +UVM_TESTNAME=$(UVM_TESTNAME) +TEST_BINARY=$(TEST_BINARY) +UVM_VERBOSITY=$(UVM_VERBOSITY) +TEST_TIMEOUT=$(TEST_TIMEOUT_NS)
 
-# Waveform Dumping (Optional)
+# Waveform Dumping
 DUMP_WAVES = 1
 WAVE_FILE = $(WAVE_DIR)/$(UVM_TESTNAME).fsdb
 
@@ -65,21 +65,19 @@ VCS_COMPILE_OPTS = \
 	+define+UVM_NO_DEPRECATED \
 	-ntb_opts uvm-1.2 \
 	-debug_access+all \
+	-kdb \
 	-timescale=1ns/1ps \
-	-LDFLAGS -Wl,--no-as-needed \
 	-o $(SIM_EXEC)
 
 # Base run options
 VCS_RUN_OPTS = \
 	$(PLUSARGS)
 
-# Add define to COMPILE options, keep runtime options separate
+# Add define to COMPILE options for waveform dumping
 ifeq ($(DUMP_WAVES),1)
 VCS_COMPILE_OPTS += +define+DUMP_WAVES
 VCS_RUN_OPTS += +fsdb+all \
                 +fsdbfile+$(WAVE_FILE)
-# Note: You might need to add the corresponding `ifdef DUMP_WAVES block
-#       in your kelvin_tb_top.sv for FSDB dumping.
 endif
 
 # --- Targets ---
@@ -93,7 +91,7 @@ all: run
 dirs:
 	@mkdir -p $(SIM_DIR) $(LOG_DIR) $(WAVE_DIR) $(BIN_DIR)
 
-# Compile the design (Depends on dirs and assumes FILE_LIST exists)
+# Compile the design
 compile: dirs
 	@echo "--- Compiling with VCS ---"
 	$(VCS) $(VCS_COMPILE_OPTS) -l $(LOG_DIR)/compile.log -f $(FILE_LIST)
@@ -114,7 +112,7 @@ endif
 	./$(SIM_EXEC) $(VCS_RUN_OPTS) -l $(LOG_DIR)/$(UVM_TESTNAME).log
 	@echo "--- Simulation Finished ---"
 
-# Clean up simulation files (Does NOT remove kelvin_dv.f)
+# Clean up simulation files
 clean:
 	@echo "--- Cleaning Simulation Files ---"
 	rm -rf $(SIM_DIR) simv* csrc* *.log* *.key *.vpd *.fsdb ucli.key DVEfiles/ verdiLog/ novas.*
@@ -125,6 +123,6 @@ help:
 	@echo "  make compile       : Compiles the DUT and testbench (using $(FILE_LIST))"
 	@echo "  make run           : Compiles (if needed) and runs the simulation"
 	@echo "                     :   Override defaults: make run UVM_TESTNAME=<test> TEST_BINARY=<path> UVM_VERBOSITY=<level>"
-	@echo "  make clean         : Removes generated simulation files (keeps $(FILE_LIST))"
+	@echo "  make clean         : Removes generated simulation files"
 	@echo "  make dirs          : Creates simulation directories"
 	@echo "  make help          : Shows this help message"

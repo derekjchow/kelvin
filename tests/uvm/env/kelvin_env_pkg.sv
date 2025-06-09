@@ -25,6 +25,8 @@ package kelvin_env_pkg;
   import kelvin_axi_master_agent_pkg::*;
   import kelvin_axi_slave_agent_pkg::*;
   import kelvin_irq_agent_pkg::*;
+  import kelvin_rvvi_agent_pkg::*;
+  import kelvin_cosim_checker_pkg::*;
 
   //--------------------------------------------------------------------------
   // Class: kelvin_env
@@ -32,12 +34,12 @@ package kelvin_env_pkg;
   class kelvin_env extends uvm_env;
     `uvm_component_utils(kelvin_env)
 
-    // Agent Handles
+    // Agent and Checker Handles
     kelvin_axi_master_agent m_master_agent; // Drives DUT Slave Port
     kelvin_axi_slave_agent  m_slave_agent;  // Responds to DUT Master Port
     kelvin_irq_agent        m_irq_agent;    // Drives IRQ/Control Signals
-
-    // Add configuration handle if needed: kelvin_env_config cfg;
+    kelvin_rvvi_agent       m_rvvi_agent;   // Passive agent for RVVI
+    kelvin_cosim_checker    m_cosim_checker; // Manages co-simulation against MPACT simulator
 
     // Constructor
     function new(string name = "kelvin_env", uvm_component parent = null);
@@ -49,10 +51,12 @@ package kelvin_env_pkg;
       super.build_phase(phase);
       `uvm_info(get_type_name(), "Build phase starting", UVM_MEDIUM)
 
-      // Create the agents
+      // Create the components
       m_master_agent = kelvin_axi_master_agent::type_id::create("m_master_agent", this);
       m_slave_agent  = kelvin_axi_slave_agent::type_id::create("m_slave_agent", this);
       m_irq_agent    = kelvin_irq_agent::type_id::create("m_irq_agent", this);
+      m_rvvi_agent   = kelvin_rvvi_agent::type_id::create("m_rvvi_agent", this);
+      m_cosim_checker = kelvin_cosim_checker::type_id::create("m_cosim_checker", this);
 
       `uvm_info(get_type_name(), "Build phase finished", UVM_MEDIUM)
     endfunction : build_phase
