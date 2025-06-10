@@ -324,7 +324,7 @@ always@(*) begin
           is_vsmul = 1'b0;
           is_vmac = 1'b0;
         end
-        default : begin //default use VMAC
+        default : begin //default use VMUL
           mac_src2 = mac_uop_vs2_data;
           mac_src1 = mac_uop_vs1_data;
           mac_addsrc = `VLEN'b0;
@@ -521,7 +521,7 @@ always@(*) begin
           is_vsmul = 1'b0;
           is_vmac = 1'b0;
         end
-        default : begin //default use Vmac
+        default : begin //default use VMUL
           mac_src2 = mac_uop_vs2_data;
           mac_src1 = {{(`VLEN-`XLEN){mac_uop_rs1_data[`XLEN-1]&&mac_src1_is_signed}},mac_uop_rs1_data}; //use rs1
           mac_addsrc = `VLEN'b0;
@@ -550,7 +550,7 @@ always@(*) begin
           is_vsmul = 1'b1;
           is_vmac = 1'b0;
         end
-        default : begin //currently put default the same as vsmul
+        default : begin //currently put default the same as VSMUL_VMVNRR
           mac_src2 = mac_uop_vs2_data;
           mac_src1 = mac_uop_vs1_data;
           mac_addsrc = `VLEN'b0;
@@ -579,7 +579,7 @@ always@(*) begin
           is_vsmul = 1'b1;
           is_vmac = 1'b0;
         end
-        default : begin //currently put default the same as vsmul
+        default : begin //currently put default the same as VSMUL_VMVNRR
           mac_src2 = mac_uop_vs2_data;
           mac_src1 = {{(`VLEN-`XLEN){mac_uop_rs1_data[`XLEN-1]&&mac_src1_is_signed}},mac_uop_rs1_data}; //use rs1
           mac_addsrc = `VLEN'b0;

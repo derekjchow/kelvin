@@ -37,7 +37,7 @@ module rvv_backend_div_unit
   input   logic     result_ready;
 
   // trap-flush
-  input   logic                     trap_flush_rvv;
+  input   logic     trap_flush_rvv;
 
 //
 // internal signals
@@ -390,13 +390,13 @@ module rvv_backend_div_unit
     
     case(vs2_eew)
       EEW8: begin
-        result_all_valid = trap_flush_rvv ? 'b0 : ({result_valid8,result_valid16,result_valid32}=='1);
+        result_all_valid = ({result_valid8,result_valid16,result_valid32}=='1);
       end
       EEW16: begin
-        result_all_valid = trap_flush_rvv ? 'b0 : ({result_valid16,result_valid32}=='1);
+        result_all_valid = ({result_valid16,result_valid32}=='1);
       end
       EEW32: begin
-        result_all_valid = trap_flush_rvv ? 'b0 : (result_valid32=='1);
+        result_all_valid = (result_valid32=='1);
       end
     endcase
   end

@@ -73,9 +73,6 @@ module rvv_backend_alu_unit_shift
   logic   [`VLENB-1:0]                                         underoverflow;
   logic   [`VLEN-1:0]                                          result_data; 
   SHIFT_e                                                      opcode;
-
-  // PU2ROB_t  struct signals
-  logic   [`VCSR_VXSAT_WIDTH-1:0] vxsat;     
   
   // for-loop
   genvar                          j;

@@ -202,7 +202,7 @@ module rvv_backend_alu_unit_other
               end
             end
             // vmerge.v
-            else if(vm==1'b0) begin
+            else begin
               src2_data = vs2_data;
               for(int i=0;i<`VLEN/`WORD_WIDTH;i=i+1) begin
                 case(vs2_eew)
@@ -260,7 +260,7 @@ module rvv_backend_alu_unit_other
               end
             end
             // vmerge.v
-            else if(vm==1'b0) begin
+            else begin
               src2_data = vs2_data;
               for(int i=0;i<`VLEN/`WORD_WIDTH;i=i+1) begin
                 case(vs2_eew)
