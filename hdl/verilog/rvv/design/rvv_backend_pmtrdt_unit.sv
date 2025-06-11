@@ -1662,12 +1662,12 @@ module rvv_backend_pmtrdt_unit
           endcase
         end
 
-        cdffr #(.T(logic[7:0])) sum_res_reg (.q(sum_res_ex1[i]), .d(sum_res_2stage[i][7:0]), .c(1'b0), .e(red_res_en), .clk(clk), .rst_n(rst_n));
-        cdffr #(.T(logic[7:0])) max_res_reg (.q(max_res_ex1[i]), .d(max_res_ex0[i]), .c(1'b0), .e(red_res_en), .clk(clk), .rst_n(rst_n));
-        cdffr #(.T(logic[7:0])) min_res_reg (.q(min_res_ex1[i]), .d(min_res_ex0[i]), .c(1'b0), .e(red_res_en), .clk(clk), .rst_n(rst_n));
-        cdffr #(.T(logic[7:0])) and_res_reg (.q(and_res_ex1[i]), .d(and_2stage[i]), .c(1'b0), .e(red_res_en), .clk(clk), .rst_n(rst_n));
-        cdffr #(.T(logic[7:0])) or_res_reg  (.q(or_res_ex1[i]),  .d(or_2stage[i]),  .c(1'b0), .e(red_res_en), .clk(clk), .rst_n(rst_n));
-        cdffr #(.T(logic[7:0])) xor_res_reg (.q(xor_res_ex1[i]), .d(xor_2stage[i]), .c(1'b0), .e(red_res_en), .clk(clk), .rst_n(rst_n));
+        edff #(.T(logic[7:0])) sum_res_reg (.q(sum_res_ex1[i]), .d(sum_res_2stage[i][7:0]), .e(red_res_en), .clk(clk), .rst_n(rst_n));
+        edff #(.T(logic[7:0])) max_res_reg (.q(max_res_ex1[i]), .d(max_res_ex0[i]), .e(red_res_en), .clk(clk), .rst_n(rst_n));
+        edff #(.T(logic[7:0])) min_res_reg (.q(min_res_ex1[i]), .d(min_res_ex0[i]), .e(red_res_en), .clk(clk), .rst_n(rst_n));
+        edff #(.T(logic[7:0])) and_res_reg (.q(and_res_ex1[i]), .d(and_2stage[i]), .e(red_res_en), .clk(clk), .rst_n(rst_n));
+        edff #(.T(logic[7:0])) or_res_reg  (.q(or_res_ex1[i]),  .d(or_2stage[i]),  .e(red_res_en), .clk(clk), .rst_n(rst_n));
+        edff #(.T(logic[7:0])) xor_res_reg (.q(xor_res_ex1[i]), .d(xor_2stage[i]), .e(red_res_en), .clk(clk), .rst_n(rst_n));
 
         // max_vs1_ex0/min_vs1_ex0 based on vs1_eew
         always_comb begin
@@ -1685,12 +1685,12 @@ module rvv_backend_pmtrdt_unit
           endcase
         end
 
-        cdffr #(.T(logic[7:0])) sum_vs1_reg (.q(sum_vs1_ex1[i]), .d(sum_vd_2stage[i][7:0]), .c(1'b0), .e(red_res_en), .clk(clk), .rst_n(rst_n));
-        cdffr #(.T(logic[7:0])) max_vs1_reg (.q(max_vs1_ex1[i]), .d(max_vs1_ex0[i]), .c(1'b0), .e(red_res_en), .clk(clk), .rst_n(rst_n));
-        cdffr #(.T(logic[7:0])) min_vs1_reg (.q(min_vs1_ex1[i]), .d(min_vs1_ex0[i]), .c(1'b0), .e(red_res_en), .clk(clk), .rst_n(rst_n));
-        cdffr #(.T(logic[7:0])) and_vs1_reg (.q(and_vs1_ex1[i]), .d(and_vd_2stage[i]), .c(1'b0), .e(red_res_en), .clk(clk), .rst_n(rst_n));
-        cdffr #(.T(logic[7:0])) or_vs1_reg  (.q(or_vs1_ex1[i]),  .d(or_vd_2stage[i]),  .c(1'b0), .e(red_res_en), .clk(clk), .rst_n(rst_n));
-        cdffr #(.T(logic[7:0])) xor_vs1_reg (.q(xor_vs1_ex1[i]), .d(xor_vd_2stage[i]), .c(1'b0), .e(red_res_en), .clk(clk), .rst_n(rst_n));
+        edff #(.T(logic[7:0])) sum_vs1_reg (.q(sum_vs1_ex1[i]), .d(sum_vd_2stage[i][7:0]), .e(red_res_en), .clk(clk), .rst_n(rst_n));
+        edff #(.T(logic[7:0])) max_vs1_reg (.q(max_vs1_ex1[i]), .d(max_vs1_ex0[i]), .e(red_res_en), .clk(clk), .rst_n(rst_n));
+        edff #(.T(logic[7:0])) min_vs1_reg (.q(min_vs1_ex1[i]), .d(min_vs1_ex0[i]), .e(red_res_en), .clk(clk), .rst_n(rst_n));
+        edff #(.T(logic[7:0])) and_vs1_reg (.q(and_vs1_ex1[i]), .d(and_vd_2stage[i]), .e(red_res_en), .clk(clk), .rst_n(rst_n));
+        edff #(.T(logic[7:0])) or_vs1_reg  (.q(or_vs1_ex1[i]),  .d(or_vd_2stage[i]),  .e(red_res_en), .clk(clk), .rst_n(rst_n));
+        edff #(.T(logic[7:0])) xor_vs1_reg (.q(xor_vs1_ex1[i]), .d(xor_vd_2stage[i]), .e(red_res_en), .clk(clk), .rst_n(rst_n));
       end
 
       // reduction result when vd_eew is 32b
@@ -1885,7 +1885,7 @@ module rvv_backend_pmtrdt_unit
                       cmp_src1[4*i][8]     = 1'b0;
                       cmp_src1[4*i+1][8]   = 1'b0;
                       cmp_src1[4*i+2][8]   = 1'b0;
-                      cmp_src1[4*i+3][8]   = rdt_ctrl.sign_opr ? pmtrdt_uop.rs1_data[8*3+7] : 1'b0;
+                      cmp_src1[4*i+3][8]   = 1'b0;
                     end
                     default:begin
                       cmp_src1[4*i][7:0]   = ~pmtrdt_uop.rs1_data[8*0+:8];
@@ -1907,9 +1907,9 @@ module rvv_backend_pmtrdt_unit
                       cmp_src1[4*i+2][7:0] = pmtrdt_uop.rs1_data[8*0+:8];
                       cmp_src1[4*i+3][7:0] = pmtrdt_uop.rs1_data[8*1+:8];
                       cmp_src1[4*i][8]     = 1'b0;
-                      cmp_src1[4*i+1][8]   = rdt_ctrl.sign_opr ? pmtrdt_uop.rs1_data[8*1+7] : 1'b0;
+                      cmp_src1[4*i+1][8]   = 1'b0;
                       cmp_src1[4*i+2][8]   = 1'b0;
-                      cmp_src1[4*i+3][8]   = rdt_ctrl.sign_opr ? pmtrdt_uop.rs1_data[8*1+7] : 1'b0;
+                      cmp_src1[4*i+3][8]   = 1'b0;
                     end
                     default:begin
                       cmp_src1[4*i][7:0]   = ~pmtrdt_uop.rs1_data[8*0+:8];
@@ -1930,10 +1930,10 @@ module rvv_backend_pmtrdt_unit
                       cmp_src1[4*i+1][7:0] = pmtrdt_uop.rs1_data[0+:8];
                       cmp_src1[4*i+2][7:0] = pmtrdt_uop.rs1_data[0+:8];
                       cmp_src1[4*i+3][7:0] = pmtrdt_uop.rs1_data[0+:8];
-                      cmp_src1[4*i][8]     = rdt_ctrl.sign_opr ? pmtrdt_uop.rs1_data[7] : 1'b0;
-                      cmp_src1[4*i+1][8]   = rdt_ctrl.sign_opr ? pmtrdt_uop.rs1_data[7] : 1'b0;
-                      cmp_src1[4*i+2][8]   = rdt_ctrl.sign_opr ? pmtrdt_uop.rs1_data[7] : 1'b0;
-                      cmp_src1[4*i+3][8]   = rdt_ctrl.sign_opr ? pmtrdt_uop.rs1_data[7] : 1'b0;
+                      cmp_src1[4*i][8]     = 1'b0;
+                      cmp_src1[4*i+1][8]   = 1'b0;
+                      cmp_src1[4*i+2][8]   = 1'b0;
+                      cmp_src1[4*i+3][8]   = 1'b0;
                     end
                     default:begin
                       cmp_src1[4*i][7:0]   = ~pmtrdt_uop.rs1_data[0+:8];
@@ -1971,7 +1971,7 @@ module rvv_backend_pmtrdt_unit
                       cmp_src1[4*i][8]   = 1'b0;
                       cmp_src1[4*i+1][8] = 1'b0;
                       cmp_src1[4*i+2][8] = 1'b0;
-                      cmp_src1[4*i+3][8] = rdt_ctrl.sign_opr ? pmtrdt_uop.vs1_data[8*(4*i+3)+7] : 1'b0;
+                      cmp_src1[4*i+3][8] = 1'b0;
                     end
                     default:begin
                       cmp_src1[4*i][8]   = 1'b0;
@@ -1985,9 +1985,9 @@ module rvv_backend_pmtrdt_unit
                   case (rdt_ctrl.cmp_opr)
                     COUT:begin
                       cmp_src1[4*i][8]   = 1'b0;
-                      cmp_src1[4*i+1][8] = rdt_ctrl.sign_opr ? pmtrdt_uop.vs1_data[8*(4*i+1)+7] : 1'b0;
+                      cmp_src1[4*i+1][8] = 1'b0;
                       cmp_src1[4*i+2][8] = 1'b0;
-                      cmp_src1[4*i+3][8] = rdt_ctrl.sign_opr ? pmtrdt_uop.vs1_data[8*(4*i+3)+7] : 1'b0;
+                      cmp_src1[4*i+3][8] = 1'b0;
                     end
                     default:begin
                       cmp_src1[4*i][8]   = 1'b0;
@@ -2000,10 +2000,10 @@ module rvv_backend_pmtrdt_unit
                 default:begin
                   case (rdt_ctrl.cmp_opr)
                     COUT:begin
-                      cmp_src1[4*i][8]   = rdt_ctrl.sign_opr ? pmtrdt_uop.vs1_data[8*(4*i)+7]   : 1'b0;
-                      cmp_src1[4*i+1][8] = rdt_ctrl.sign_opr ? pmtrdt_uop.vs1_data[8*(4*i+1)+7] : 1'b0;
-                      cmp_src1[4*i+2][8] = rdt_ctrl.sign_opr ? pmtrdt_uop.vs1_data[8*(4*i+2)+7] : 1'b0;
-                      cmp_src1[4*i+3][8] = rdt_ctrl.sign_opr ? pmtrdt_uop.vs1_data[8*(4*i+3)+7] : 1'b0;
+                      cmp_src1[4*i][8]   = 1'b0;
+                      cmp_src1[4*i+1][8] = 1'b0;
+                      cmp_src1[4*i+2][8] = 1'b0;
+                      cmp_src1[4*i+3][8] = 1'b0;
                     end
                     default:begin
                       cmp_src1[4*i][8]   = rdt_ctrl.sign_opr ? ~pmtrdt_uop.vs1_data[8*(4*i)+7] : ~1'b0;
@@ -2249,13 +2249,13 @@ module rvv_backend_pmtrdt_unit
       end
       assign cmp_res_d = {'0, cmp_res} << cmp_res_offset;
       for (i=0; i<`VLEN; i++) begin
-        cdffr #(.T(logic)) cmp_res_reg (.q(cmp_res_q[i]), .d(cmp_res_d[i]), .c(1'b0), .e(cmp_res_en[i] & pmtrdt_uop_valid & pmtrdt_uop_ready), .clk(clk), .rst_n(rst_n));
+        edff #(.T(logic)) cmp_res_reg (.q(cmp_res_q[i]), .d(cmp_res_d[i]), .e(cmp_res_en[i] & pmtrdt_uop_valid & pmtrdt_uop_ready), .clk(clk), .rst_n(rst_n));
       end
 
       // cmp_vstart value is from the first uop of compare instruction
       assign cmp_vstart_d = pmtrdt_uop.vstart;
       assign cmp_vstart_en = pmtrdt_uop.first_uop_valid & pmtrdt_uop_valid & pmtrdt_uop_ready;
-      cdffr #(.T(logic[`VSTART_WIDTH-1:0])) cmp_vstart_reg (.q(cmp_vstart_q), .d(cmp_vstart_d), .c(1'b0), .e(cmp_vstart_en), .clk(clk), .rst_n(rst_n));
+      edff #(.T(logic[`VSTART_WIDTH-1:0])) cmp_vstart_reg (.q(cmp_vstart_q), .d(cmp_vstart_d), .e(cmp_vstart_en), .clk(clk), .rst_n(rst_n));
       // pmtrdt_res_cmp
       for (i=0; i<`VLEN; i++) begin
         always_comb begin
@@ -2445,7 +2445,7 @@ module rvv_backend_pmtrdt_unit
               end
             endcase
         end
-        cdffr #(.T(logic[7:0])) pmt_res_reg (.q(pmt_res_q[i]), .d(pmt_res_d[i]), .c(1'b0), .e(pmt_res_en), .clk(clk), .rst_n(rst_n));
+        edff #(.T(logic[7:0])) pmt_res_reg (.q(pmt_res_q[i]), .d(pmt_res_d[i]), .e(pmt_res_en), .clk(clk), .rst_n(rst_n));
         assign pmtrdt_res_pmt[i*8+:8] = pmt_res_q[i];
       end
 
@@ -2465,7 +2465,7 @@ module rvv_backend_pmtrdt_unit
         endcase
       end
       assign compress_mask_en = pmtrdt_uop_valid & pmtrdt_uop_ready;
-      cdffr #(.T(logic[`VLEN-1:0])) compress_mask_reg (.q(compress_mask_q), .d(compress_mask_d), .c(1'b0), .e(compress_mask_en), .clk(clk), .rst_n(rst_n));
+      edff #(.T(logic[`VLEN-1:0])) compress_mask_reg (.q(compress_mask_q), .d(compress_mask_d), .e(compress_mask_en), .clk(clk), .rst_n(rst_n));
 
       // compress_enable is from vs1_data[0+:N] based on vs2_eew
       // and then be extended to `VLENB bits.
@@ -2529,7 +2529,7 @@ module rvv_backend_pmtrdt_unit
         else 
           compress_res_en = '0;
       end
-      for (i=0; i<2*`VLENB; i++) cdffr #(.T(logic[7:0])) compress_res_reg (.q(compress_res_q[i]), .d(compress_res_d[i]), .c(1'b0), .e(compress_res_en[i]), .clk(clk), .rst_n(rst_n));
+      for (i=0; i<2*`VLENB; i++) edff #(.T(logic[7:0])) compress_res_reg (.q(compress_res_q[i]), .d(compress_res_d[i]), .e(compress_res_en[i]), .clk(clk), .rst_n(rst_n));
 
       // pmtrdt_res_compress
       assign valid_num[1] = compress_cnt_q[VLENB_WIDTH:0] - `VLENB;

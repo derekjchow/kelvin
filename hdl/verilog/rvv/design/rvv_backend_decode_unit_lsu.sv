@@ -3414,14 +3414,14 @@ module rvv_backend_decode_unit_lsu
         case(inst_nf)
           NF2: begin
             case(emul_max_vd_vs2)
-              EMUL2: uop[i].seg_field_index = {2'b0,uop_index_current[i][0]};
-              EMUL4: uop[i].seg_field_index = {1'b0,uop_index_current[i][1:0]};
+              EMUL2: uop[i].seg_field_index = {1'b0,uop_index_current[i][0]};
+              EMUL4: uop[i].seg_field_index = uop_index_current[i][1:0];
             endcase
           end
           NF3,
           NF4: begin
             if (emul_max_vd_vs2==EMUL2)
-              uop[i].seg_field_index = {2'b0,uop_index_current[i][0]};
+              uop[i].seg_field_index = {1'b0,uop_index_current[i][0]};
           end
         endcase
       end

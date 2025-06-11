@@ -298,7 +298,7 @@ module rvv_backend_dispatch
     generate
         for (i=0; i<`NUM_DP_UOP; i++) begin : gen_opr_bype_type
             assign uop_info[i].uop_index  = (uop_uop2dp[i].uop_exe_unit==LSU)&(uop_uop2dp[i].uop_funct6.lsu_funct6.lsu_is_seg==IS_SEGMENT)?
-                                            uop_uop2dp[i].seg_field_index : uop_uop2dp[i].uop_index;
+                                            {1'b0,uop_uop2dp[i].seg_field_index} : uop_uop2dp[i].uop_index;
             assign uop_info[i].uop_exe_unit = uop_uop2dp[i].uop_exe_unit;
             assign uop_info[i].vd_eew     = uop_uop2dp[i].vd_eew;
             assign uop_info[i].vs1_eew    = uop_uop2dp[i].vs1_eew;
