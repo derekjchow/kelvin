@@ -173,6 +173,7 @@ verilator_cocotb_test(
         requirement("tqdm"),
     ],
     data = RVV_TEST_BINARY_TARGETS,
+    size = "large",
 )
 
 kelvin_v2_binary(
