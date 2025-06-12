@@ -90,10 +90,10 @@ module rvv_backend_pmtrdt_unit
   logic [`VLENB/2-1:0]      less_than_1stage, great_than_1stage;
   logic [`VLENB/4-1:0][8:0] sum_src1_2stage, sum_src2_2stage; // sum operation: source value for reduction sum_res_1stage[*]
   logic [`VLENB/4-1:0]      sum_cin_2stage;
-  logic [`VLENB/2-1:0][8:0] max_src1_2stage, max_src2_2stage; // max/min operation: source value for reduction max_res_1stage[*]
-  logic [`VLENB/2-1:0]      max_cin_2stage;
-  logic [`VLENB/2-1:0][8:0] min_src1_2stage, min_src2_2stage; // max/min operation: source value for reduction min_res_1stage[*]
-  logic [`VLENB/2-1:0]      min_cin_2stage;
+  logic [`VLENB/4-1:0][8:0] max_src1_2stage, max_src2_2stage; // max/min operation: source value for reduction max_res_1stage[*]
+  logic [`VLENB/4-1:0]      max_cin_2stage;
+  logic [`VLENB/4-1:0][8:0] min_src1_2stage, min_src2_2stage; // max/min operation: source value for reduction min_res_1stage[*]
+  logic [`VLENB/4-1:0]      min_cin_2stage;
   logic [`VLENB/4-1:0][8:0] sum_res_2stage, max_res_2stage, min_res_2stage;
   logic [`VLENB/4-1:0][7:0] and_2stage, or_2stage, xor_2stage;
   logic [`VLENB/4-1:0]      less_than_2stage, great_than_2stage;
