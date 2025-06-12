@@ -13,18 +13,33 @@
 # limitations under the License.
 
 load("//rules:kelvin_v2.bzl", "kelvin_v2_binary")
+load("//rules:utils.bzl", "template_rule")
+
 package(default_visibility = ["//visibility:public"])
 
-kelvin_v2_binary(
-    name = "rvv_load",
-    srcs = [
-        "rvv_load.S",
-    ],
-)
-
-kelvin_v2_binary(
-    name = "rvv_add",
-    srcs = [
-        "rvv_add.S",
-    ],
+template_rule(
+    kelvin_v2_binary,
+    {
+        "rvv_add": {
+            "srcs": ["rvv_add.S"],
+        },
+        "rvv_load": {
+            "srcs": ["rvv_load.S"],
+        },
+        "load8_stride2_m1": {
+            "srcs": ["load8_stride2_m1.cc"],
+        },
+        "load8_stride2_m1_partial": {
+            "srcs": ["load8_stride2_m1_partial.cc"],
+        },
+        "load8_stride2_mf4": {
+            "srcs": ["load8_stride2_mf4.cc"],
+        },
+        "load16_stride4_mf2": {
+            "srcs": ["load16_stride4_mf2.cc"],
+        },
+        "load32_stride8_m1": {
+            "srcs": ["load32_stride8_m1.cc"],
+        },
+    },
 )

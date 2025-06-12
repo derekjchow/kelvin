@@ -234,3 +234,43 @@ kelvin_v2_binary(
         "float_csr_interlock_test.S",
     ],
 )
+
+verilator_cocotb_test(
+    name = "rvv_load_store_test",
+    hdl_toplevel = "RvvCoreMiniAxi",
+    verilog_sources = [
+        "//hdl/chisel/src/kelvin:rvv_core_mini_axi_cc_library_verilog"
+    ],
+    build_args = [
+        "-Wno-WIDTH",
+        "-Wno-CASEINCOMPLETE",
+        "-Wno-LATCH",
+        "-Wno-SIDEEFFECT",
+        "-Wno-MULTIDRIVEN",
+        "-Wno-UNOPTFLAT",
+        "-Wno-CASEOVERLAP",
+        # Warnings that we disable for fpnew
+        "-Wno-ASCRANGE",
+        "-Wno-WIDTHEXPAND",
+        "-Wno-WIDTHTRUNC",
+        "-Wno-UNSIGNED",
+    ],
+    defines = {
+        "USE_GENERIC" : "",
+    },
+    waves = True,
+    seed = "42",
+    test_module = ["rvv_load_store_test.py"],
+    deps = [
+        "//kelvin_test_utils:core_mini_axi_sim_interface",
+        requirement("tqdm"),
+    ],
+    data = [
+        '//tests/cocotb/rvv:load8_stride2_m1.elf',
+        '//tests/cocotb/rvv:load8_stride2_m1_partial.elf',
+        '//tests/cocotb/rvv:load8_stride2_mf4.elf',
+        '//tests/cocotb/rvv:load16_stride4_mf2.elf',
+        '//tests/cocotb/rvv:load32_stride8_m1.elf',
+    ],
+    size = "large",
+)
