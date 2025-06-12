@@ -44,6 +44,8 @@ interface rvs_interface (input bit clk, ref logic rst_n);
   logic         [`NUM_DE_INST-1:0] inst_correct;
   logic         [`NUM_DE_INST-1:0] inst_discard;
 
+// rvv idle
+  logic         rvv_idle;
 endinterface: rvs_interface
 
 `endif // RVS_INTERFACE__SV

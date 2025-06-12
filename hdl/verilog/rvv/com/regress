@@ -72,7 +72,7 @@ my $bsub  = $localRun ? "bsub -Is -q $queue -n $cpuNum -R $host"
                       : "bsub -q $queue -n $cpuNum -R $host";
 ## for local server
 my $null = ' > /dev/null 2>&1';
-my $maxProcess = ($opt_max_job && $opt_max_job < 30) ? $opt_max_job : 20;
+my $maxProcess = ($opt_max_job && $opt_max_job <= 30) ? $opt_max_job : 20;
 
 # Execution Steps Config
 my $exeCompile = 1;

@@ -47,6 +47,7 @@ class rvs_monitor extends uvm_monitor;
   extern protected virtual task tx_monitor();
   extern protected virtual task rx_monitor();
   extern protected virtual task rx_timeout_monitor();
+  extern protected virtual task idle_monitor();
 
   // imp task
   extern virtual function void write_rvs_mon_inst(rvs_transaction inst_tr);
@@ -112,6 +113,7 @@ task rvs_monitor::run_phase(uvm_phase phase);
      tx_monitor();
      rx_monitor();
      rx_timeout_monitor();
+     idle_monitor();
   join
 endtask: run_phase
 
@@ -154,7 +156,11 @@ task rvs_monitor::tx_monitor();
           `uvm_info(get_type_name(), inst_tr.sprint(),UVM_HIGH)
           `uvm_info("INST_TR", inst_tr.sprint(),UVM_LOW)
           `uvm_info("ASM_DUMP",$sformatf("0x%8x\t%s", inst_tr.pc, inst_tr.asm_string),UVM_LOW)
-          inst_ap.write(inst_tr); // write to mdl
+          if(inst_tr.reserve_inst_check()) begin
+            inst_ap.write(inst_tr); // write to mdl/lsu
+          end else begin 
+            `uvm_info(get_type_name(), $sformatf("MON discarded inst:\n%s",inst_tr.sprint()), UVM_HIGH)
+          end
           temp_tr = new("temp_tr");
           temp_tr.copy(inst_tr);
           inst_temp_queue.push_back(temp_tr);
@@ -191,38 +197,6 @@ task rvs_monitor::rx_monitor();
       ready_to_new_inst = 1;
       inst_rx_queue.delete();
     end else begin
-      // if(rvs_if.vcsr_valid && rvs_if.vcsr_ready) begin
-      //   if(ready_to_new_inst) begin
-      //     tr = new("tr");
-      //     tr = inst_rx_queue.pop_front();
-      //     ready_to_new_inst = 0;
-      //   end
-      //   // TRAP
-      //   tr.trap_occured = 1;
-      //   tr.trap_vma     = rvs_if.vector_csr.ma;
-      //   tr.trap_vta     = rvs_if.vector_csr.ta;
-      //   assert($cast(tr.trap_vsew, rvs_if.vector_csr.sew)); 
-      //   assert($cast(tr.trap_vlmul, rvs_if.vector_csr.lmul));
-      //   tr.trap_vl      = rvs_if.vector_csr.vl;
-      //   tr.trap_vstart  = rvs_if.vector_csr.vstart;
-      //   assert($cast(tr.trap_vxrm, rvs_if.vector_csr.xrm));
-
-      //   tr.is_rt = 1;
-      //   // Avoid x-state
-      //   if(tr.vxsat !== 1) tr.vxsat = '0;
-      //   if(tr.vxsat_valid !== 1) tr.vxsat_valid = '0;
-      //   // tr.is_last_inst = 1;
-      //   `uvm_info(get_type_name(), $sformatf("Send rt transaction to scb"),UVM_HIGH)
-      //   `uvm_info(get_type_name(), tr.sprint(),UVM_HIGH)
-      //   rt_ap.write(tr); // write to scb
-      //   ready_to_new_inst = 1;
-      //   this.executed_inst++;
-
-      //   // Clean reset inst
-      //   inst_rx_queue.delete();
-      //   inst_temp_queue.delete();
-      // end
-      // `uvm_info(get_type_name(),$sformatf("rt_uop=0x%1x, rt_last_uop=0x%1x",rvs_if.rt_uop, rvs_if.rt_last_uop), UVM_HIGH)
       for(int rt_idx=0; rt_idx<`NUM_RT_UOP; rt_idx++) begin
         if(rvs_if.rt_uop[rt_idx]) begin
           if(ready_to_new_inst) begin
@@ -339,6 +313,21 @@ task rvs_monitor::rx_timeout_monitor();
     end
   end
 endtask: rx_timeout_monitor
+
+task rvs_monitor::idle_monitor();
+  forever begin
+    @(posedge rvs_if.clk);
+    if(~rvs_if.rst_n) begin
+      if(rvs_if.rvv_idle !== 1) begin
+        `uvm_error(get_type_name(), "rvv_idle != 1 while rst_n == 0.")
+      end
+    end else begin
+      if(rvs_if.rvv_idle && inst_rx_queue.size() != 0) begin
+        `uvm_error(get_type_name(), $sformatf("rvv_idle should be 1."))
+      end
+    end
+  end
+endtask: idle_monitor
 
 function void rvs_monitor::write_rvs_mon_inst(rvs_transaction inst_tr);
   `uvm_info(get_type_name(), "get a inst", UVM_HIGH)

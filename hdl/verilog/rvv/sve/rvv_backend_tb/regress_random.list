@@ -29,3 +29,10 @@ pu_mulmac_random_test
 pu_mulmac_random_test_trap_en
 pu_lsu_random_test
 pu_lsu_random_test_trap_en
+
+# reserve inst en test
+alu_random_test_rsv_en
+lsu_random_test_rsv_en
+rvv_random_test_rsv_en
+
+rvv_random_test_trap_en_rsv_en

@@ -17,6 +17,7 @@ class rvv_backend_test extends uvm_test;
 
   UVM_FILE tb_logs [string];
   int inst_tx_queue_depth = 4;
+  int inst_tx_timeout_max = 1000;
   int direct_inst_num = 1000;
   int random_inst_num = 50000;
 
@@ -63,7 +64,7 @@ class rvv_backend_test extends uvm_test;
       uvm_config_db#(delay_mode_pkg::delay_mode_e)::set(uvm_root::get(), "*", "delay_mode_wr_vxsat", delay_mode_pkg::SLOW);
       uvm_config_db#(delay_mode_pkg::delay_mode_e)::set(uvm_root::get(), "*", "delay_mode_rvv2lsu", delay_mode_pkg::SLOW);
       uvm_config_db#(delay_mode_pkg::delay_mode_e)::set(uvm_root::get(), "*", "delay_mode_lsu2rvv", delay_mode_pkg::SLOW);
-      uvm_config_db#(int)::set(uvm_root::get(), "*", "inst_tx_timeout_max", 5000);
+      inst_tx_timeout_max = 5000;
     end
     if($test$plusargs("delay_mode_all_fast")) begin
       uvm_config_db#(delay_mode_pkg::delay_mode_e)::set(uvm_root::get(), "*", "delay_mode_rt_xrf", delay_mode_pkg::FAST);
@@ -71,6 +72,11 @@ class rvv_backend_test extends uvm_test;
       uvm_config_db#(delay_mode_pkg::delay_mode_e)::set(uvm_root::get(), "*", "delay_mode_rvv2lsu", delay_mode_pkg::FAST);
       uvm_config_db#(delay_mode_pkg::delay_mode_e)::set(uvm_root::get(), "*", "delay_mode_lsu2rvv", delay_mode_pkg::FAST);
     end
+
+    if($value$plusargs("inst_tx_timeout_max=%d", inst_tx_timeout_max))
+      uvm_config_db#(int)::set(uvm_root::get(), "*", "inst_tx_timeout_max", inst_tx_timeout_max);
+    else
+      uvm_config_db#(int)::set(uvm_root::get(), "*", "inst_tx_timeout_max", inst_tx_timeout_max);
   endfunction
 
   virtual function void connect_phase(uvm_phase phase);
@@ -78,8 +84,8 @@ class rvv_backend_test extends uvm_test;
     tb_logs["MDL"] = $fopen("tb_model.log", "w");
     this.set_report_id_file_hier("MDL", tb_logs["MDL"]);
     this.set_report_id_action_hier("MDL", UVM_LOG);
-    this.set_report_id_file_hier("MDL/INST_CHECKER", tb_logs["MDL"]);
-    this.set_report_id_action_hier("MDL/INST_CHECKER", UVM_LOG|UVM_DISPLAY);
+    this.set_report_id_file_hier("MDL/LSU", tb_logs["MDL"]);
+    this.set_report_id_action_hier("MDL/LSU", UVM_LOG);
     tb_logs["ASM_DUMP"] = $fopen("tb_asm_dump.log", "w");
     this.env.rvs_agt.rvs_mon.set_report_id_file("ASM_DUMP", tb_logs["ASM_DUMP"]);
     this.env.rvs_agt.rvs_mon.set_report_id_action("ASM_DUMP", UVM_LOG);

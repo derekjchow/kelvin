@@ -235,16 +235,17 @@ typedef enum logic [4:0] {
   VSEXT_VF4       =   5'b00101,
   VZEXT_VF2       =   5'b00110,
   VSEXT_VF2       =   5'b00111,  
-  VXUNARY0_LAST   =   5'b11111
-} vext_e;
+  VXUNARY0_NONE   =   5'b11111
+} vxunary0_e;
 
 // vwxunary0, the uop could be vcpop.m, vfirst.m and vmv. They can be distinguished by vs1 field(inst_encoding[19:15]).
 typedef enum logic [4:0] {
   VMV_X_S         =   5'b00000,
   VCPOP           =   5'b10000,
   VFIRST          =   5'b10001,
-  VWXUNARY0_LAST  =   5'b11111
+  VWXUNARY0_NONE  =   5'b11111
 } vwxunary0_e;
+parameter logic [4:0] VMV_S_X = 5'b00000;
 
 // vmunary0, the uop could be vmsbf, vmsof, vmsif, viota, vid. They can be distinguished by vs1 field(inst_encoding[19:15]).
 typedef enum logic [4:0] {
@@ -253,7 +254,7 @@ typedef enum logic [4:0] {
   VMSIF           =   5'b00011,
   VIOTA           =   5'b10000,
   VID             =   5'b10001,
-  VMUNARY0_LAST   =   5'b11111
+  VMUNARY0_NONE   =   5'b11111
 } vmunary0_e;
 
 typedef enum logic [1:0] {
@@ -267,7 +268,8 @@ typedef enum logic [4:0] {
   NORMAL    = 5'b0_0000, // unit-stride load/store
   WHOLE_REG = 5'b0_1000, // unit-stride, whole register load/store
   MASK      = 5'b0_1011, // unit-stride, mask load/store, EEW=8
-  FOF       = 5'b1_0000  // unit-stride fault-only-first load
+  FOF       = 5'b1_0000, // unit-stride fault-only-first load
+  LSU_UMOP_NONE = 5'b1_1111
 } lsu_umop_e;
 
 typedef enum logic [2:0] {
@@ -320,7 +322,7 @@ typedef enum int {
 
 typedef enum {
   XRF, VRF, IMM, UIMM, FUNC, SCALAR, UNUSE
-} oprand_type_e;
+} operand_type_e;
 
 // Test description -----------------------------------------
 typedef enum { ITER, RAND, RAND_SET } test_rand_type_e;

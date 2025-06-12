@@ -7010,7 +7010,7 @@ class inst_rvv_zve32x_vmv_x_s_seq extends base_sequence;
       alu_type == OPMVV;
       /* oprand */
       dest_type ==    XRF; dest_idx inside {[0:31]};
-      src2_type ==    VRF; src2_idx inside {[0:31]};
+      src2_type == SCALAR; src2_idx inside {[0:31]};
       src1_type ==   FUNC; src1_idx == 5'b00000;
       vm inside {1};
     });
@@ -7045,7 +7045,7 @@ class inst_rvv_zve32x_vmv_s_x_seq extends base_sequence;
       alu_inst == VWXUNARY0;
       alu_type == OPMVX;
       /* oprand */
-      dest_type ==    VRF; dest_idx inside {[0:31]};
+      dest_type == SCALAR; dest_idx inside {[0:31]};
       src2_type ==   FUNC; src2_idx == 5'b00000;
       src1_type ==    XRF; src1_idx inside {[0:31]};
       vm inside {1};

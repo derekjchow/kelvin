@@ -178,7 +178,7 @@ class alu_smoke_ext_seq extends base_sequence;
   endfunction:new
 
   virtual task body();
-    for(vext_e vext_func = vext_func.first();vext_func != vext_func.last(); vext_func = vext_func.next()) begin
+    for(vxunary0_e vext_func = vext_func.first();vext_func != vext_func.last(); vext_func = vext_func.next()) begin
       req = new("req");
       start_item(req);
       assert(req.randomize() with {
@@ -554,7 +554,7 @@ class alu_iterate_base_sequence extends base_sequence;
   sew_e sew;
   lmul_e lmul;
   alu_inst_e alu_inst;
-  oprand_type_e src1_type;
+  operand_type_e src1_type;
 
   test_rand_type_e rand_type = ITER;
   int inst_num = 1;
@@ -1218,7 +1218,7 @@ class alu_iterate_ext_seq extends alu_iterate_base_sequence;
     end else begin
       for(lmul_e lmul = lmul.first(); lmul != lmul.last(); lmul =lmul.next()) begin
         for(sew_e sew = sew.first(); sew != sew.last(); sew =sew.next()) begin
-          for(vext_e vext_func = vext_func.first();vext_func != vext_func.last(); vext_func = vext_func.next()) begin
+          for(vxunary0_e vext_func = vext_func.first();vext_func != vext_func.last(); vext_func = vext_func.next()) begin
             if(vext_func inside {VZEXT_VF4, VSEXT_VF4}) begin 
               if(!(sew inside {SEW32})) continue;
               if(lmul inside {LMUL1_4, LMUL1_2}) continue;
@@ -1569,7 +1569,7 @@ class alu_iterate_vmunary0_seq extends alu_iterate_base_sequence;
           (src1_idx != VID) -> (src2_type == VRF);
           (src1_idx == VID) -> (src2_type == UNUSE);
           (src1_idx == VID) -> (src2_idx dist{0 := 9, 1 := 1});
-          src1_type == FUNC; src1_idx != VMUNARY0_LAST;
+          src1_type == FUNC; src1_idx != VMUNARY0_NONE;
         });
         finish_item(req);
         inst_cnt++;
@@ -1716,9 +1716,9 @@ class alu_iterate_vmv_xs_sx_seq extends alu_iterate_base_sequence;
 
           inst_type == ALU;
           alu_inst == local::alu_inst;
-          dest_type inside {VRF, XRF};
-          (dest_type == VRF) -> (src2_type == FUNC && src2_idx inside {VMV_X_S} && src1_type == XRF);
-          (dest_type == XRF) -> (src2_type == VRF && src1_type == FUNC && src1_idx inside {VMV_X_S});
+          alu_type inside {OPMVV, OPMVX};
+          (alu_type == OPMVV) -> (dest_type == XRF    && src2_type == SCALAR && src1_type == FUNC && src1_idx inside {VMV_X_S});
+          (alu_type == OPMVX) -> (dest_type == SCALAR && src2_type == FUNC   && src1_type == XRF  && src2_idx inside {VMV_S_X});
           vm == 1;
         });
         finish_item(req);
@@ -1739,8 +1739,8 @@ class alu_iterate_vmv_xs_sx_seq extends alu_iterate_base_sequence;
             inst_type == ALU;
             alu_inst == local::alu_inst;
 
-            dest_type == VRF;
-            src2_type == FUNC; src2_idx inside {VMV_X_S};
+            dest_type == SCALAR;
+            src2_type == FUNC; src2_idx inside {VMV_S_X};
             src1_type == XRF;
             vm == local::vm;
           });
@@ -1763,7 +1763,7 @@ class alu_iterate_vmv_xs_sx_seq extends alu_iterate_base_sequence;
             alu_inst == local::alu_inst;
 
             dest_type == XRF;
-            src2_type == VRF;
+            src2_type == SCALAR;
             src1_type == FUNC; src1_idx inside {VMV_X_S};
             vm == local::vm;
           });
@@ -2096,6 +2096,7 @@ class lsu_base_seq extends base_sequence;
       start_item(req);
       assert(req.randomize() with {
         pc == inst_cnt;
+        inst_type inside {LD, ST};
         lsu_inst inside {inst_set};
       });
       finish_item(req);

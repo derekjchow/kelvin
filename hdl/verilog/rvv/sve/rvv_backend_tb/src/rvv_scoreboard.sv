@@ -459,9 +459,6 @@ function void rvv_scoreboard::final_phase(uvm_phase phase);
   end
 
   // Executed inst num check
-  if(rvv_total_inst !== mdl_total_inst) begin
-    `uvm_error("FINAL_CHECK", "Total instruction number mismatch.")
-  end
   if(rvv_executed_inst !== mdl_executed_inst) begin
     `uvm_error("FINAL_CHECK", "Executed instruction number mismatch.")
   end

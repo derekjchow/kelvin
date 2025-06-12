@@ -100,7 +100,7 @@ class alu_large_vstart_seq extends base_sequence;
     repeat(inst_num) begin
       req = new("req");
       start_item(req);
-      req.c_vl.constraint_mode(0);
+      req.c_vl_vstart.constraint_mode(0);
       assert(req.randomize() with {
         pc == inst_cnt;
 
@@ -1008,4 +1008,61 @@ class vcpop_viota_vm1_test extends rvv_backend_test;
     super.final_phase(phase);
   endfunction
 endclass: vcpop_viota_vm1_test
+
+
+//-----------------------------------------------------------
+// small evl test
+//-----------------------------------------------------------
+class small_evl_test extends rvv_backend_test;
+
+  rvs_random_sequence_library rvs_seq_lib;
+
+  inst_rvv_zve32x_vmv_s_x_seq rvs_seq_5;
+  inst_rvv_zve32x_vadd_vv_seq rvs_seq_6;  
+
+  rvs_last_sequence rvs_last_seq;
+
+  `uvm_component_utils(small_evl_test)
+
+  function new(string name, uvm_component parent);
+    super.new(name, parent);
+  endfunction
+
+  function void build_phase(uvm_phase phase);
+    super.build_phase(phase);
+  endfunction
+
+  function void connect_phase(uvm_phase phase);
+    super.connect_phase(phase);
+    this.set_report_id_action_hier("MDL", UVM_LOG);
+  endfunction
+
+  task main_phase(uvm_phase phase);
+
+    rvs_seq_lib = rvs_random_sequence_library::type_id::create("rvs_seq_lib");
+    rvs_seq_lib.selection_mode = UVM_SEQ_LIB_RAND;
+    rvs_seq_lib.sequence_count = direct_inst_num;
+    rvs_seq_lib.add_typewide_sequence(rvs_seq_5.get_type());
+    rvs_seq_lib.add_typewide_sequence(rvs_seq_5.get_type());
+    rvs_seq_lib.add_typewide_sequence(rvs_seq_5.get_type());
+    rvs_seq_lib.add_typewide_sequence(rvs_seq_5.get_type());
+    rvs_seq_lib.add_typewide_sequence(rvs_seq_6.get_type());
+    rvs_seq_lib.init_sequence_library();
+
+    rand_vrf();
+
+    rvs_transaction::reserve_vl_vstart_en = 1;
+    rvs_transaction::vl_min = 0;
+    rvs_transaction::vl_max = 0;
+
+    rvs_seq_lib.start(env.rvs_agt.rvs_sqr);
+
+    rvs_last_seq = rvs_last_sequence::type_id::create("rvs_last_seq", this);
+    rvs_last_seq.start(env.rvs_agt.rvs_sqr);
+  endtask
+
+  function void final_phase(uvm_phase phase);
+    super.final_phase(phase);
+  endfunction
+endclass: small_evl_test
 `endif // RVV_BACKEND_CORNER_TEST__SV

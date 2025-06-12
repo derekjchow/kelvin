@@ -71,16 +71,16 @@ function void lsu_driver::build_phase(uvm_phase phase);
   end
 
   if(uvm_config_db#(bit)::get(this, "", "trap_en",trap_en)) begin
-    `uvm_info(get_type_name(), $sformatf("Trap_en of lsu_driver is set to %s.", trap_en), UVM_LOW)
+    `uvm_info(get_type_name(), $sformatf("Trap_en of lsu_driver is set to %0d.", trap_en), UVM_LOW)
   end else begin
     trap_en = 0;
-    `uvm_info(get_type_name(), $sformatf("Trap_en of lsu_driver is set to %s.", trap_en), UVM_LOW)
+    `uvm_info(get_type_name(), $sformatf("Trap_en of lsu_driver is set to %0d.", trap_en), UVM_LOW)
   end
   if(uvm_config_db#(bit)::get(this, "", "always_trap",always_trap)) begin
-    `uvm_info(get_type_name(), $sformatf("Trap_en of lsu_driver is set to %s.", always_trap), UVM_LOW)
+    `uvm_info(get_type_name(), $sformatf("Trap_en of lsu_driver is set to %0d.", always_trap), UVM_LOW)
   end else begin
     always_trap = 0;
-    `uvm_info(get_type_name(), $sformatf("Trap_en of lsu_driver is set to %s.", always_trap), UVM_LOW)
+    `uvm_info(get_type_name(), $sformatf("Trap_en of lsu_driver is set to %0d.", always_trap), UVM_LOW)
   end
 
 endfunction: build_phase
@@ -116,14 +116,14 @@ task lsu_driver::rx_driver();
         uop_tr = new();
         uop_tr = uops_rx_queue[uop_idx];
         if(uop_tr.lsu_slot_addr_valid == 1 && uop_tr.kind == LOAD) begin
-          // Do not send result before strobe info accepted. 
-          // if(uop_tr.uop_rx_sent != 1) begin
-          //   uop_tr.uop_rx_sent = 1'b1;
-          //   `uvm_info("LSU_DRV",$sformatf("Sent unit-stride/const-stride load with vm==1 uop to uops_tx_queue ahead:\n%s",uop_tr.sprint()),UVM_HIGH)
-          //   uops_tx_queue.push_back(uop_tr);
-          // end else begin
-          //   // Do nothing for sent uop. Wait for rvv2lsu handshake to pop.
-          // end
+          // Send result before strobe info accepted. 
+          if(uop_tr.uop_rx_sent != 1) begin
+            uop_tr.uop_rx_sent = 1'b1;
+            `uvm_info("LSU_DRV",$sformatf("Sent unit-stride/const-stride load with vm==1 uop to uops_tx_queue ahead:\n%s",uop_tr.sprint()),UVM_HIGH)
+            uops_tx_queue.push_back(uop_tr);
+          end else begin
+            // Do nothing for sent uop. Wait for rvv2lsu handshake to pop.
+          end
         end else begin
           // To make sure load/store is in-order executed
           break;
@@ -234,7 +234,6 @@ task lsu_driver::rx_driver();
         end
       end: rx_driver_logic_part
 
-      // TODO: clean code
       pre_uop_have_delay = 0;
       for(int i=0; i<`NUM_LSU; i++) begin
         if(i < uops_rx_queue.size()) begin 
@@ -335,6 +334,8 @@ endtask: lsu_process
 task lsu_driver::tx_driver();
   lsu_transaction uop_tr;
   bit has_trap;
+  int trap_pc;
+  int trap_uop_index;
   forever begin
     @(posedge lsu_if.clk);
     if(~lsu_if.rst_n) begin
@@ -401,12 +402,22 @@ task lsu_driver::tx_driver();
       for(int i=0; i<`NUM_LSU + 1; i++) begin
         if(i<uops_tx_queue.size()) begin
           if(uops_tx_queue[i].uop_done && uops_tx_queue[i].trap_occured) begin
-            has_trap = 1;
+            has_trap       = 1;
+            trap_pc        = uops_tx_queue[i].uop_pc;
+            trap_uop_index = uops_tx_queue[i].uop_index;
             `uvm_info("LSU_DRV", $sformatf("Assign uops_tx_queue[%0d] to trap port:\n%s", i, uops_tx_queue[i].sprint()), UVM_HIGH)
           end
         end
       end
-      lsu_if.trap_valid_rvs2rvv <= has_trap;
+      if(has_trap) begin
+        lsu_if.trap_valid_rvs2rvv <= 1'b1;
+        lsu_if.trap_pc            <= trap_pc;
+        lsu_if.trap_uop_index     <= trap_uop_index;
+      end else begin
+        lsu_if.trap_valid_rvs2rvv <= 1'b0;
+        lsu_if.trap_pc            <= 'x;
+        lsu_if.trap_uop_index     <= 'x;
+      end
 
     end
   end
@@ -544,32 +555,6 @@ function int lsu_driver::lsu_uop_decode(ref rvs_transaction inst_tr);
     `uvm_fatal("TB_ISSUE", "Decode inst_tr which is not load/store in lsu_driver.")
   end
   `uvm_info("LSU_DRV", $sformatf("eew_max=%0d, emul_max=%.2f, elm_idx_max=%0d", eew_max, emul_max, elm_idx_max), UVM_HIGH)
-
-// Inst Check ------------------------------------------------------------------
-  if(inst_tr.lsu_mop == LSU_US && inst_tr.lsu_umop == MASK && inst_tr.lsu_nf != NF1) begin
-    `uvm_warning("LSU_DRV/INST_CHECKER", $sformatf("nf=%s of unit stride mask load/store is reserved, ignored.", inst_tr.lsu_nf.name()))
-    return -1;
-  end
-  if(inst_tr.inst_type == ST && inst_tr.lsu_mop == LSU_US && inst_tr.lsu_umop == WHOLE_REG && inst_tr.lsu_width != LSU_8BIT) begin
-    `uvm_warning("LSU_DRV/INST_CHECKER", $sformatf("lsu_width=%S of vs<nf>r.v is reserved, ignored.", inst_tr.lsu_width.name()))
-    return -1;
-  end
-  if(inst_tr.lsu_mop == LSU_US && inst_tr.lsu_umop == MASK && inst_tr.lsu_width != LSU_8BIT) begin
-    `uvm_warning("LSU_DRV/INST_CHECKER", $sformatf("lsu_width=%S of vlm/vsm.v is reserved, ignored.", inst_tr.lsu_width.name()))
-    return -1;
-  end
-  if(inst_tr.lsu_mop == LSU_US && inst_tr.lsu_umop inside {MASK, WHOLE_REG} && inst_tr.vm != 1) begin
-    `uvm_warning("LSU_DRV/INST_CHECKER", $sformatf("vm != 1 of vlm/vsm/vlr/vsr is reserved, ignored.", inst_tr.lsu_width.name()))
-    return -1;
-  end
-  if(vstart >= evl) begin
-    `uvm_warning("LSU_DRV/INST_CHECKER", $sformatf("vstart(%0d) >= evl(%0d), ignored", vstart, evl))
-    return -1;
-  end
-  if(data_vreg_idx_last > 31) begin
-    `uvm_warning("LSU_DRV/INST_CHECKER", $sformatf("data_idx(%0d~%0d) out of range, ignored", data_vreg_idx_base, data_vreg_idx_last))
-    return -1;
-  end
 
 // Uops Gen --------------------------------------------------------------------
   `uvm_info("LSU_DRV","Start gen uops",UVM_HIGH)

@@ -6,3 +6,5 @@ alu_cont_div_test
 rvv_reset_test
 
 vcpop_viota_vm1_test
+
+small_evl_test

@@ -68,7 +68,8 @@ module rvv_backend_top();
 
     .vcsr_valid               (rvs_if.vcsr_valid            ),
     .vector_csr               (rvs_if.vector_csr            ),
-    .vcsr_ready               (rvs_if.vcsr_ready            ) 
+    .vcsr_ready               (rvs_if.vcsr_ready            ),
+    .rvv_idle                 (rvs_if.rvv_idle              ) 
   );
 
   logic [`NUM_RT_UOP-1:0] rt_uop;
@@ -126,6 +127,14 @@ module rvv_backend_top();
   assign rvs_if.wr_vxsat[1] = `RT_VXSAT_PATH.w_vxsat1;
   assign rvs_if.wr_vxsat[2] = `RT_VXSAT_PATH.w_vxsat2;
   assign rvs_if.wr_vxsat[3] = `RT_VXSAT_PATH.w_vxsat3;
+    
+// lsu interface -----------------------------------------------------
+  // trap pc tracer
+  logic             [31:0]        trap_pc;
+  logic             [2:0]         trap_uop_index;
+  assign trap_pc        = lsu_if.trap_pc;
+  assign trap_uop_index = lsu_if.trap_uop_index;
+
 
 // vrf interface -----------------------------------------------------
   // For VRF value check, we need to delay a cycle to wait for writeback finished.
@@ -210,9 +219,6 @@ module rvv_backend_top();
   assign rvv_intern_if.trap_ready_rvv2rvs = DUT.trap_ready_rvv2rvs;  
   assign rvv_intern_if.vcsr_valid         = DUT.vcsr_valid;        
   assign rvv_intern_if.vcsr_ready         = DUT.vcsr_ready;        
-
-  
-  
   
   
 // Interface Coverage Collection ----------------------------------------

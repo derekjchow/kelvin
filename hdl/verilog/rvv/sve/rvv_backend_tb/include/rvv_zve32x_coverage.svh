@@ -6,7 +6,7 @@ covergroup Cov_rvv_zve32x_vadd_vv with function sample(input logic [31:0] inst, 
     coverpoint (inst ==? {6'b000000, 1'b?, 5'b?????, 5'b?????, 3'b000, 5'b?????, 7'b1010111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -20,7 +20,7 @@ covergroup Cov_rvv_zve32x_vadd_vv with function sample(input logic [31:0] inst, 
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
       bins SEW32 = {rvv_tb_pkg::SEW32};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -31,7 +31,7 @@ covergroup Cov_rvv_zve32x_vadd_vv with function sample(input logic [31:0] inst, 
       bins LMUL2 = {rvv_tb_pkg::LMUL2};
       bins LMUL4 = {rvv_tb_pkg::LMUL4};
       bins LMUL8 = {rvv_tb_pkg::LMUL8};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -41,7 +41,7 @@ covergroup Cov_rvv_zve32x_vadd_vv with function sample(input logic [31:0] inst, 
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -50,7 +50,7 @@ covergroup Cov_rvv_zve32x_vadd_vv with function sample(input logic [31:0] inst, 
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -63,7 +63,7 @@ covergroup Cov_rvv_zve32x_vadd_vx with function sample(input logic [31:0] inst, 
     coverpoint (inst ==? {6'b000000, 1'b?, 5'b?????, 5'b?????, 3'b100, 5'b?????, 7'b1010111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -77,7 +77,7 @@ covergroup Cov_rvv_zve32x_vadd_vx with function sample(input logic [31:0] inst, 
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
       bins SEW32 = {rvv_tb_pkg::SEW32};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -88,7 +88,7 @@ covergroup Cov_rvv_zve32x_vadd_vx with function sample(input logic [31:0] inst, 
       bins LMUL2 = {rvv_tb_pkg::LMUL2};
       bins LMUL4 = {rvv_tb_pkg::LMUL4};
       bins LMUL8 = {rvv_tb_pkg::LMUL8};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -98,7 +98,7 @@ covergroup Cov_rvv_zve32x_vadd_vx with function sample(input logic [31:0] inst, 
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -107,7 +107,7 @@ covergroup Cov_rvv_zve32x_vadd_vx with function sample(input logic [31:0] inst, 
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -120,7 +120,7 @@ covergroup Cov_rvv_zve32x_vadd_vi with function sample(input logic [31:0] inst, 
     coverpoint (inst ==? {6'b000000, 1'b?, 5'b?????, 5'b?????, 3'b011, 5'b?????, 7'b1010111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -134,7 +134,7 @@ covergroup Cov_rvv_zve32x_vadd_vi with function sample(input logic [31:0] inst, 
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
       bins SEW32 = {rvv_tb_pkg::SEW32};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -145,7 +145,7 @@ covergroup Cov_rvv_zve32x_vadd_vi with function sample(input logic [31:0] inst, 
       bins LMUL2 = {rvv_tb_pkg::LMUL2};
       bins LMUL4 = {rvv_tb_pkg::LMUL4};
       bins LMUL8 = {rvv_tb_pkg::LMUL8};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -155,7 +155,7 @@ covergroup Cov_rvv_zve32x_vadd_vi with function sample(input logic [31:0] inst, 
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -164,7 +164,7 @@ covergroup Cov_rvv_zve32x_vadd_vi with function sample(input logic [31:0] inst, 
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -177,7 +177,7 @@ covergroup Cov_rvv_zve32x_vsub_vv with function sample(input logic [31:0] inst, 
     coverpoint (inst ==? {6'b000010, 1'b?, 5'b?????, 5'b?????, 3'b000, 5'b?????, 7'b1010111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -191,7 +191,7 @@ covergroup Cov_rvv_zve32x_vsub_vv with function sample(input logic [31:0] inst, 
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
       bins SEW32 = {rvv_tb_pkg::SEW32};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -202,7 +202,7 @@ covergroup Cov_rvv_zve32x_vsub_vv with function sample(input logic [31:0] inst, 
       bins LMUL2 = {rvv_tb_pkg::LMUL2};
       bins LMUL4 = {rvv_tb_pkg::LMUL4};
       bins LMUL8 = {rvv_tb_pkg::LMUL8};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -212,7 +212,7 @@ covergroup Cov_rvv_zve32x_vsub_vv with function sample(input logic [31:0] inst, 
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -221,7 +221,7 @@ covergroup Cov_rvv_zve32x_vsub_vv with function sample(input logic [31:0] inst, 
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -234,7 +234,7 @@ covergroup Cov_rvv_zve32x_vsub_vx with function sample(input logic [31:0] inst, 
     coverpoint (inst ==? {6'b000010, 1'b?, 5'b?????, 5'b?????, 3'b100, 5'b?????, 7'b1010111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -248,7 +248,7 @@ covergroup Cov_rvv_zve32x_vsub_vx with function sample(input logic [31:0] inst, 
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
       bins SEW32 = {rvv_tb_pkg::SEW32};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -259,7 +259,7 @@ covergroup Cov_rvv_zve32x_vsub_vx with function sample(input logic [31:0] inst, 
       bins LMUL2 = {rvv_tb_pkg::LMUL2};
       bins LMUL4 = {rvv_tb_pkg::LMUL4};
       bins LMUL8 = {rvv_tb_pkg::LMUL8};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -269,7 +269,7 @@ covergroup Cov_rvv_zve32x_vsub_vx with function sample(input logic [31:0] inst, 
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -278,7 +278,7 @@ covergroup Cov_rvv_zve32x_vsub_vx with function sample(input logic [31:0] inst, 
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -291,7 +291,7 @@ covergroup Cov_rvv_zve32x_vrsub_vx with function sample(input logic [31:0] inst,
     coverpoint (inst ==? {6'b000011, 1'b?, 5'b?????, 5'b?????, 3'b100, 5'b?????, 7'b1010111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -305,7 +305,7 @@ covergroup Cov_rvv_zve32x_vrsub_vx with function sample(input logic [31:0] inst,
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
       bins SEW32 = {rvv_tb_pkg::SEW32};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -316,7 +316,7 @@ covergroup Cov_rvv_zve32x_vrsub_vx with function sample(input logic [31:0] inst,
       bins LMUL2 = {rvv_tb_pkg::LMUL2};
       bins LMUL4 = {rvv_tb_pkg::LMUL4};
       bins LMUL8 = {rvv_tb_pkg::LMUL8};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -326,7 +326,7 @@ covergroup Cov_rvv_zve32x_vrsub_vx with function sample(input logic [31:0] inst,
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -335,7 +335,7 @@ covergroup Cov_rvv_zve32x_vrsub_vx with function sample(input logic [31:0] inst,
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -348,7 +348,7 @@ covergroup Cov_rvv_zve32x_vrsub_vi with function sample(input logic [31:0] inst,
     coverpoint (inst ==? {6'b000011, 1'b?, 5'b?????, 5'b?????, 3'b011, 5'b?????, 7'b1010111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -362,7 +362,7 @@ covergroup Cov_rvv_zve32x_vrsub_vi with function sample(input logic [31:0] inst,
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
       bins SEW32 = {rvv_tb_pkg::SEW32};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -373,7 +373,7 @@ covergroup Cov_rvv_zve32x_vrsub_vi with function sample(input logic [31:0] inst,
       bins LMUL2 = {rvv_tb_pkg::LMUL2};
       bins LMUL4 = {rvv_tb_pkg::LMUL4};
       bins LMUL8 = {rvv_tb_pkg::LMUL8};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -383,7 +383,7 @@ covergroup Cov_rvv_zve32x_vrsub_vi with function sample(input logic [31:0] inst,
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -392,7 +392,7 @@ covergroup Cov_rvv_zve32x_vrsub_vi with function sample(input logic [31:0] inst,
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -405,7 +405,7 @@ covergroup Cov_rvv_zve32x_vwaddu_vv with function sample(input logic [31:0] inst
     coverpoint (inst ==? {6'b110000, 1'b?, 5'b?????, 5'b?????, 3'b010, 5'b?????, 7'b1010111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -418,7 +418,7 @@ covergroup Cov_rvv_zve32x_vwaddu_vv with function sample(input logic [31:0] inst
       option.comment = "Value of vsew";
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -428,7 +428,7 @@ covergroup Cov_rvv_zve32x_vwaddu_vv with function sample(input logic [31:0] inst
       bins LMUL1 = {rvv_tb_pkg::LMUL1};
       bins LMUL2 = {rvv_tb_pkg::LMUL2};
       bins LMUL4 = {rvv_tb_pkg::LMUL4};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -438,7 +438,7 @@ covergroup Cov_rvv_zve32x_vwaddu_vv with function sample(input logic [31:0] inst
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -447,7 +447,7 @@ covergroup Cov_rvv_zve32x_vwaddu_vv with function sample(input logic [31:0] inst
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -460,7 +460,7 @@ covergroup Cov_rvv_zve32x_vwaddu_vx with function sample(input logic [31:0] inst
     coverpoint (inst ==? {6'b110000, 1'b?, 5'b?????, 5'b?????, 3'b110, 5'b?????, 7'b1010111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -473,7 +473,7 @@ covergroup Cov_rvv_zve32x_vwaddu_vx with function sample(input logic [31:0] inst
       option.comment = "Value of vsew";
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -483,7 +483,7 @@ covergroup Cov_rvv_zve32x_vwaddu_vx with function sample(input logic [31:0] inst
       bins LMUL1 = {rvv_tb_pkg::LMUL1};
       bins LMUL2 = {rvv_tb_pkg::LMUL2};
       bins LMUL4 = {rvv_tb_pkg::LMUL4};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -493,7 +493,7 @@ covergroup Cov_rvv_zve32x_vwaddu_vx with function sample(input logic [31:0] inst
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -502,7 +502,7 @@ covergroup Cov_rvv_zve32x_vwaddu_vx with function sample(input logic [31:0] inst
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -515,7 +515,7 @@ covergroup Cov_rvv_zve32x_vwsubu_vv with function sample(input logic [31:0] inst
     coverpoint (inst ==? {6'b110010, 1'b?, 5'b?????, 5'b?????, 3'b010, 5'b?????, 7'b1010111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -528,7 +528,7 @@ covergroup Cov_rvv_zve32x_vwsubu_vv with function sample(input logic [31:0] inst
       option.comment = "Value of vsew";
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -538,7 +538,7 @@ covergroup Cov_rvv_zve32x_vwsubu_vv with function sample(input logic [31:0] inst
       bins LMUL1 = {rvv_tb_pkg::LMUL1};
       bins LMUL2 = {rvv_tb_pkg::LMUL2};
       bins LMUL4 = {rvv_tb_pkg::LMUL4};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -548,7 +548,7 @@ covergroup Cov_rvv_zve32x_vwsubu_vv with function sample(input logic [31:0] inst
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -557,7 +557,7 @@ covergroup Cov_rvv_zve32x_vwsubu_vv with function sample(input logic [31:0] inst
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -570,7 +570,7 @@ covergroup Cov_rvv_zve32x_vwsubu_vx with function sample(input logic [31:0] inst
     coverpoint (inst ==? {6'b110010, 1'b?, 5'b?????, 5'b?????, 3'b110, 5'b?????, 7'b1010111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -583,7 +583,7 @@ covergroup Cov_rvv_zve32x_vwsubu_vx with function sample(input logic [31:0] inst
       option.comment = "Value of vsew";
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -593,7 +593,7 @@ covergroup Cov_rvv_zve32x_vwsubu_vx with function sample(input logic [31:0] inst
       bins LMUL1 = {rvv_tb_pkg::LMUL1};
       bins LMUL2 = {rvv_tb_pkg::LMUL2};
       bins LMUL4 = {rvv_tb_pkg::LMUL4};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -603,7 +603,7 @@ covergroup Cov_rvv_zve32x_vwsubu_vx with function sample(input logic [31:0] inst
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -612,7 +612,7 @@ covergroup Cov_rvv_zve32x_vwsubu_vx with function sample(input logic [31:0] inst
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -625,7 +625,7 @@ covergroup Cov_rvv_zve32x_vwadd_vv with function sample(input logic [31:0] inst,
     coverpoint (inst ==? {6'b110001, 1'b?, 5'b?????, 5'b?????, 3'b010, 5'b?????, 7'b1010111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -638,7 +638,7 @@ covergroup Cov_rvv_zve32x_vwadd_vv with function sample(input logic [31:0] inst,
       option.comment = "Value of vsew";
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -648,7 +648,7 @@ covergroup Cov_rvv_zve32x_vwadd_vv with function sample(input logic [31:0] inst,
       bins LMUL1 = {rvv_tb_pkg::LMUL1};
       bins LMUL2 = {rvv_tb_pkg::LMUL2};
       bins LMUL4 = {rvv_tb_pkg::LMUL4};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -658,7 +658,7 @@ covergroup Cov_rvv_zve32x_vwadd_vv with function sample(input logic [31:0] inst,
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -667,7 +667,7 @@ covergroup Cov_rvv_zve32x_vwadd_vv with function sample(input logic [31:0] inst,
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -680,7 +680,7 @@ covergroup Cov_rvv_zve32x_vwadd_vx with function sample(input logic [31:0] inst,
     coverpoint (inst ==? {6'b110001, 1'b?, 5'b?????, 5'b?????, 3'b110, 5'b?????, 7'b1010111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -693,7 +693,7 @@ covergroup Cov_rvv_zve32x_vwadd_vx with function sample(input logic [31:0] inst,
       option.comment = "Value of vsew";
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -703,7 +703,7 @@ covergroup Cov_rvv_zve32x_vwadd_vx with function sample(input logic [31:0] inst,
       bins LMUL1 = {rvv_tb_pkg::LMUL1};
       bins LMUL2 = {rvv_tb_pkg::LMUL2};
       bins LMUL4 = {rvv_tb_pkg::LMUL4};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -713,7 +713,7 @@ covergroup Cov_rvv_zve32x_vwadd_vx with function sample(input logic [31:0] inst,
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -722,7 +722,7 @@ covergroup Cov_rvv_zve32x_vwadd_vx with function sample(input logic [31:0] inst,
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -735,7 +735,7 @@ covergroup Cov_rvv_zve32x_vwsub_vv with function sample(input logic [31:0] inst,
     coverpoint (inst ==? {6'b110011, 1'b?, 5'b?????, 5'b?????, 3'b010, 5'b?????, 7'b1010111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -748,7 +748,7 @@ covergroup Cov_rvv_zve32x_vwsub_vv with function sample(input logic [31:0] inst,
       option.comment = "Value of vsew";
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -758,7 +758,7 @@ covergroup Cov_rvv_zve32x_vwsub_vv with function sample(input logic [31:0] inst,
       bins LMUL1 = {rvv_tb_pkg::LMUL1};
       bins LMUL2 = {rvv_tb_pkg::LMUL2};
       bins LMUL4 = {rvv_tb_pkg::LMUL4};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -768,7 +768,7 @@ covergroup Cov_rvv_zve32x_vwsub_vv with function sample(input logic [31:0] inst,
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -777,7 +777,7 @@ covergroup Cov_rvv_zve32x_vwsub_vv with function sample(input logic [31:0] inst,
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -790,7 +790,7 @@ covergroup Cov_rvv_zve32x_vwsub_vx with function sample(input logic [31:0] inst,
     coverpoint (inst ==? {6'b110011, 1'b?, 5'b?????, 5'b?????, 3'b110, 5'b?????, 7'b1010111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -803,7 +803,7 @@ covergroup Cov_rvv_zve32x_vwsub_vx with function sample(input logic [31:0] inst,
       option.comment = "Value of vsew";
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -813,7 +813,7 @@ covergroup Cov_rvv_zve32x_vwsub_vx with function sample(input logic [31:0] inst,
       bins LMUL1 = {rvv_tb_pkg::LMUL1};
       bins LMUL2 = {rvv_tb_pkg::LMUL2};
       bins LMUL4 = {rvv_tb_pkg::LMUL4};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -823,7 +823,7 @@ covergroup Cov_rvv_zve32x_vwsub_vx with function sample(input logic [31:0] inst,
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -832,7 +832,7 @@ covergroup Cov_rvv_zve32x_vwsub_vx with function sample(input logic [31:0] inst,
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -845,7 +845,7 @@ covergroup Cov_rvv_zve32x_vwaddu_wv with function sample(input logic [31:0] inst
     coverpoint (inst ==? {6'b110100, 1'b?, 5'b?????, 5'b?????, 3'b010, 5'b?????, 7'b1010111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -858,7 +858,7 @@ covergroup Cov_rvv_zve32x_vwaddu_wv with function sample(input logic [31:0] inst
       option.comment = "Value of vsew";
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -868,7 +868,7 @@ covergroup Cov_rvv_zve32x_vwaddu_wv with function sample(input logic [31:0] inst
       bins LMUL1 = {rvv_tb_pkg::LMUL1};
       bins LMUL2 = {rvv_tb_pkg::LMUL2};
       bins LMUL4 = {rvv_tb_pkg::LMUL4};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -878,7 +878,7 @@ covergroup Cov_rvv_zve32x_vwaddu_wv with function sample(input logic [31:0] inst
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -887,7 +887,7 @@ covergroup Cov_rvv_zve32x_vwaddu_wv with function sample(input logic [31:0] inst
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -900,7 +900,7 @@ covergroup Cov_rvv_zve32x_vwaddu_wx with function sample(input logic [31:0] inst
     coverpoint (inst ==? {6'b110100, 1'b?, 5'b?????, 5'b?????, 3'b110, 5'b?????, 7'b1010111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -913,7 +913,7 @@ covergroup Cov_rvv_zve32x_vwaddu_wx with function sample(input logic [31:0] inst
       option.comment = "Value of vsew";
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -923,7 +923,7 @@ covergroup Cov_rvv_zve32x_vwaddu_wx with function sample(input logic [31:0] inst
       bins LMUL1 = {rvv_tb_pkg::LMUL1};
       bins LMUL2 = {rvv_tb_pkg::LMUL2};
       bins LMUL4 = {rvv_tb_pkg::LMUL4};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -933,7 +933,7 @@ covergroup Cov_rvv_zve32x_vwaddu_wx with function sample(input logic [31:0] inst
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -942,7 +942,7 @@ covergroup Cov_rvv_zve32x_vwaddu_wx with function sample(input logic [31:0] inst
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -955,7 +955,7 @@ covergroup Cov_rvv_zve32x_vwsubu_wv with function sample(input logic [31:0] inst
     coverpoint (inst ==? {6'b110110, 1'b?, 5'b?????, 5'b?????, 3'b010, 5'b?????, 7'b1010111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -968,7 +968,7 @@ covergroup Cov_rvv_zve32x_vwsubu_wv with function sample(input logic [31:0] inst
       option.comment = "Value of vsew";
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -978,7 +978,7 @@ covergroup Cov_rvv_zve32x_vwsubu_wv with function sample(input logic [31:0] inst
       bins LMUL1 = {rvv_tb_pkg::LMUL1};
       bins LMUL2 = {rvv_tb_pkg::LMUL2};
       bins LMUL4 = {rvv_tb_pkg::LMUL4};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -988,7 +988,7 @@ covergroup Cov_rvv_zve32x_vwsubu_wv with function sample(input logic [31:0] inst
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -997,7 +997,7 @@ covergroup Cov_rvv_zve32x_vwsubu_wv with function sample(input logic [31:0] inst
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -1010,7 +1010,7 @@ covergroup Cov_rvv_zve32x_vwsubu_wx with function sample(input logic [31:0] inst
     coverpoint (inst ==? {6'b110110, 1'b?, 5'b?????, 5'b?????, 3'b110, 5'b?????, 7'b1010111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -1023,7 +1023,7 @@ covergroup Cov_rvv_zve32x_vwsubu_wx with function sample(input logic [31:0] inst
       option.comment = "Value of vsew";
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -1033,7 +1033,7 @@ covergroup Cov_rvv_zve32x_vwsubu_wx with function sample(input logic [31:0] inst
       bins LMUL1 = {rvv_tb_pkg::LMUL1};
       bins LMUL2 = {rvv_tb_pkg::LMUL2};
       bins LMUL4 = {rvv_tb_pkg::LMUL4};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -1043,7 +1043,7 @@ covergroup Cov_rvv_zve32x_vwsubu_wx with function sample(input logic [31:0] inst
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -1052,7 +1052,7 @@ covergroup Cov_rvv_zve32x_vwsubu_wx with function sample(input logic [31:0] inst
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -1065,7 +1065,7 @@ covergroup Cov_rvv_zve32x_vwadd_wv with function sample(input logic [31:0] inst,
     coverpoint (inst ==? {6'b110101, 1'b?, 5'b?????, 5'b?????, 3'b010, 5'b?????, 7'b1010111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -1078,7 +1078,7 @@ covergroup Cov_rvv_zve32x_vwadd_wv with function sample(input logic [31:0] inst,
       option.comment = "Value of vsew";
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -1088,7 +1088,7 @@ covergroup Cov_rvv_zve32x_vwadd_wv with function sample(input logic [31:0] inst,
       bins LMUL1 = {rvv_tb_pkg::LMUL1};
       bins LMUL2 = {rvv_tb_pkg::LMUL2};
       bins LMUL4 = {rvv_tb_pkg::LMUL4};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -1098,7 +1098,7 @@ covergroup Cov_rvv_zve32x_vwadd_wv with function sample(input logic [31:0] inst,
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -1107,7 +1107,7 @@ covergroup Cov_rvv_zve32x_vwadd_wv with function sample(input logic [31:0] inst,
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -1120,7 +1120,7 @@ covergroup Cov_rvv_zve32x_vwadd_wx with function sample(input logic [31:0] inst,
     coverpoint (inst ==? {6'b110101, 1'b?, 5'b?????, 5'b?????, 3'b110, 5'b?????, 7'b1010111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -1133,7 +1133,7 @@ covergroup Cov_rvv_zve32x_vwadd_wx with function sample(input logic [31:0] inst,
       option.comment = "Value of vsew";
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -1143,7 +1143,7 @@ covergroup Cov_rvv_zve32x_vwadd_wx with function sample(input logic [31:0] inst,
       bins LMUL1 = {rvv_tb_pkg::LMUL1};
       bins LMUL2 = {rvv_tb_pkg::LMUL2};
       bins LMUL4 = {rvv_tb_pkg::LMUL4};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -1153,7 +1153,7 @@ covergroup Cov_rvv_zve32x_vwadd_wx with function sample(input logic [31:0] inst,
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -1162,7 +1162,7 @@ covergroup Cov_rvv_zve32x_vwadd_wx with function sample(input logic [31:0] inst,
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -1175,7 +1175,7 @@ covergroup Cov_rvv_zve32x_vwsub_wv with function sample(input logic [31:0] inst,
     coverpoint (inst ==? {6'b110111, 1'b?, 5'b?????, 5'b?????, 3'b010, 5'b?????, 7'b1010111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -1188,7 +1188,7 @@ covergroup Cov_rvv_zve32x_vwsub_wv with function sample(input logic [31:0] inst,
       option.comment = "Value of vsew";
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -1198,7 +1198,7 @@ covergroup Cov_rvv_zve32x_vwsub_wv with function sample(input logic [31:0] inst,
       bins LMUL1 = {rvv_tb_pkg::LMUL1};
       bins LMUL2 = {rvv_tb_pkg::LMUL2};
       bins LMUL4 = {rvv_tb_pkg::LMUL4};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -1208,7 +1208,7 @@ covergroup Cov_rvv_zve32x_vwsub_wv with function sample(input logic [31:0] inst,
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -1217,7 +1217,7 @@ covergroup Cov_rvv_zve32x_vwsub_wv with function sample(input logic [31:0] inst,
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -1230,7 +1230,7 @@ covergroup Cov_rvv_zve32x_vwsub_wx with function sample(input logic [31:0] inst,
     coverpoint (inst ==? {6'b110111, 1'b?, 5'b?????, 5'b?????, 3'b110, 5'b?????, 7'b1010111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -1243,7 +1243,7 @@ covergroup Cov_rvv_zve32x_vwsub_wx with function sample(input logic [31:0] inst,
       option.comment = "Value of vsew";
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -1253,7 +1253,7 @@ covergroup Cov_rvv_zve32x_vwsub_wx with function sample(input logic [31:0] inst,
       bins LMUL1 = {rvv_tb_pkg::LMUL1};
       bins LMUL2 = {rvv_tb_pkg::LMUL2};
       bins LMUL4 = {rvv_tb_pkg::LMUL4};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -1263,7 +1263,7 @@ covergroup Cov_rvv_zve32x_vwsub_wx with function sample(input logic [31:0] inst,
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -1272,7 +1272,7 @@ covergroup Cov_rvv_zve32x_vwsub_wx with function sample(input logic [31:0] inst,
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -1285,7 +1285,7 @@ covergroup Cov_rvv_zve32x_vzext_vf2 with function sample(input logic [31:0] inst
     coverpoint (inst ==? {6'b010010, 1'b?, 5'b?????, 5'b00110, 3'b010, 5'b?????, 7'b1010111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -1298,7 +1298,7 @@ covergroup Cov_rvv_zve32x_vzext_vf2 with function sample(input logic [31:0] inst
       option.comment = "Value of vsew";
       bins SEW16 = {rvv_tb_pkg::SEW16};
       bins SEW32 = {rvv_tb_pkg::SEW32};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -1308,7 +1308,7 @@ covergroup Cov_rvv_zve32x_vzext_vf2 with function sample(input logic [31:0] inst
       bins LMUL2 = {rvv_tb_pkg::LMUL2};
       bins LMUL4 = {rvv_tb_pkg::LMUL4};
       bins LMUL8 = {rvv_tb_pkg::LMUL8};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -1318,7 +1318,7 @@ covergroup Cov_rvv_zve32x_vzext_vf2 with function sample(input logic [31:0] inst
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -1327,7 +1327,7 @@ covergroup Cov_rvv_zve32x_vzext_vf2 with function sample(input logic [31:0] inst
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -1340,7 +1340,7 @@ covergroup Cov_rvv_zve32x_vsext_vf2 with function sample(input logic [31:0] inst
     coverpoint (inst ==? {6'b010010, 1'b?, 5'b?????, 5'b00111, 3'b010, 5'b?????, 7'b1010111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -1353,7 +1353,7 @@ covergroup Cov_rvv_zve32x_vsext_vf2 with function sample(input logic [31:0] inst
       option.comment = "Value of vsew";
       bins SEW16 = {rvv_tb_pkg::SEW16};
       bins SEW32 = {rvv_tb_pkg::SEW32};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -1363,7 +1363,7 @@ covergroup Cov_rvv_zve32x_vsext_vf2 with function sample(input logic [31:0] inst
       bins LMUL2 = {rvv_tb_pkg::LMUL2};
       bins LMUL4 = {rvv_tb_pkg::LMUL4};
       bins LMUL8 = {rvv_tb_pkg::LMUL8};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -1373,7 +1373,7 @@ covergroup Cov_rvv_zve32x_vsext_vf2 with function sample(input logic [31:0] inst
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -1382,7 +1382,7 @@ covergroup Cov_rvv_zve32x_vsext_vf2 with function sample(input logic [31:0] inst
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -1395,7 +1395,7 @@ covergroup Cov_rvv_zve32x_vzext_vf4 with function sample(input logic [31:0] inst
     coverpoint (inst ==? {6'b010010, 1'b?, 5'b?????, 5'b00100, 3'b010, 5'b?????, 7'b1010111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -1407,7 +1407,7 @@ covergroup Cov_rvv_zve32x_vzext_vf4 with function sample(input logic [31:0] inst
     coverpoint vsew {
       option.comment = "Value of vsew";
       bins SEW32 = {rvv_tb_pkg::SEW32};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -1416,7 +1416,7 @@ covergroup Cov_rvv_zve32x_vzext_vf4 with function sample(input logic [31:0] inst
       bins LMUL2 = {rvv_tb_pkg::LMUL2};
       bins LMUL4 = {rvv_tb_pkg::LMUL4};
       bins LMUL8 = {rvv_tb_pkg::LMUL8};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -1426,7 +1426,7 @@ covergroup Cov_rvv_zve32x_vzext_vf4 with function sample(input logic [31:0] inst
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -1435,7 +1435,7 @@ covergroup Cov_rvv_zve32x_vzext_vf4 with function sample(input logic [31:0] inst
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -1448,7 +1448,7 @@ covergroup Cov_rvv_zve32x_vsext_vf4 with function sample(input logic [31:0] inst
     coverpoint (inst ==? {6'b010010, 1'b?, 5'b?????, 5'b00101, 3'b010, 5'b?????, 7'b1010111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -1460,7 +1460,7 @@ covergroup Cov_rvv_zve32x_vsext_vf4 with function sample(input logic [31:0] inst
     coverpoint vsew {
       option.comment = "Value of vsew";
       bins SEW32 = {rvv_tb_pkg::SEW32};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -1469,7 +1469,7 @@ covergroup Cov_rvv_zve32x_vsext_vf4 with function sample(input logic [31:0] inst
       bins LMUL2 = {rvv_tb_pkg::LMUL2};
       bins LMUL4 = {rvv_tb_pkg::LMUL4};
       bins LMUL8 = {rvv_tb_pkg::LMUL8};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -1479,7 +1479,7 @@ covergroup Cov_rvv_zve32x_vsext_vf4 with function sample(input logic [31:0] inst
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -1488,7 +1488,7 @@ covergroup Cov_rvv_zve32x_vsext_vf4 with function sample(input logic [31:0] inst
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -1501,7 +1501,7 @@ covergroup Cov_rvv_zve32x_vadc_vvm with function sample(input logic [31:0] inst,
     coverpoint (inst ==? {6'b010000, 1'b0, 5'b?????, 5'b?????, 3'b000, 5'b?????, 7'b1010111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -1514,7 +1514,7 @@ covergroup Cov_rvv_zve32x_vadc_vvm with function sample(input logic [31:0] inst,
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
       bins SEW32 = {rvv_tb_pkg::SEW32};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -1525,7 +1525,7 @@ covergroup Cov_rvv_zve32x_vadc_vvm with function sample(input logic [31:0] inst,
       bins LMUL2 = {rvv_tb_pkg::LMUL2};
       bins LMUL4 = {rvv_tb_pkg::LMUL4};
       bins LMUL8 = {rvv_tb_pkg::LMUL8};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -1535,7 +1535,7 @@ covergroup Cov_rvv_zve32x_vadc_vvm with function sample(input logic [31:0] inst,
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -1544,7 +1544,7 @@ covergroup Cov_rvv_zve32x_vadc_vvm with function sample(input logic [31:0] inst,
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -1557,7 +1557,7 @@ covergroup Cov_rvv_zve32x_vadc_vxm with function sample(input logic [31:0] inst,
     coverpoint (inst ==? {6'b010000, 1'b0, 5'b?????, 5'b?????, 3'b100, 5'b?????, 7'b1010111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -1570,7 +1570,7 @@ covergroup Cov_rvv_zve32x_vadc_vxm with function sample(input logic [31:0] inst,
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
       bins SEW32 = {rvv_tb_pkg::SEW32};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -1581,7 +1581,7 @@ covergroup Cov_rvv_zve32x_vadc_vxm with function sample(input logic [31:0] inst,
       bins LMUL2 = {rvv_tb_pkg::LMUL2};
       bins LMUL4 = {rvv_tb_pkg::LMUL4};
       bins LMUL8 = {rvv_tb_pkg::LMUL8};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -1591,7 +1591,7 @@ covergroup Cov_rvv_zve32x_vadc_vxm with function sample(input logic [31:0] inst,
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -1600,7 +1600,7 @@ covergroup Cov_rvv_zve32x_vadc_vxm with function sample(input logic [31:0] inst,
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -1613,7 +1613,7 @@ covergroup Cov_rvv_zve32x_vadc_vim with function sample(input logic [31:0] inst,
     coverpoint (inst ==? {6'b010000, 1'b0, 5'b?????, 5'b?????, 3'b011, 5'b?????, 7'b1010111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -1626,7 +1626,7 @@ covergroup Cov_rvv_zve32x_vadc_vim with function sample(input logic [31:0] inst,
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
       bins SEW32 = {rvv_tb_pkg::SEW32};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -1637,7 +1637,7 @@ covergroup Cov_rvv_zve32x_vadc_vim with function sample(input logic [31:0] inst,
       bins LMUL2 = {rvv_tb_pkg::LMUL2};
       bins LMUL4 = {rvv_tb_pkg::LMUL4};
       bins LMUL8 = {rvv_tb_pkg::LMUL8};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -1647,7 +1647,7 @@ covergroup Cov_rvv_zve32x_vadc_vim with function sample(input logic [31:0] inst,
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -1656,7 +1656,7 @@ covergroup Cov_rvv_zve32x_vadc_vim with function sample(input logic [31:0] inst,
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -1669,7 +1669,7 @@ covergroup Cov_rvv_zve32x_vmadc_vvm with function sample(input logic [31:0] inst
     coverpoint (inst ==? {6'b010001, 1'b0, 5'b?????, 5'b?????, 3'b000, 5'b?????, 7'b1010111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -1682,7 +1682,7 @@ covergroup Cov_rvv_zve32x_vmadc_vvm with function sample(input logic [31:0] inst
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
       bins SEW32 = {rvv_tb_pkg::SEW32};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -1693,7 +1693,7 @@ covergroup Cov_rvv_zve32x_vmadc_vvm with function sample(input logic [31:0] inst
       bins LMUL2 = {rvv_tb_pkg::LMUL2};
       bins LMUL4 = {rvv_tb_pkg::LMUL4};
       bins LMUL8 = {rvv_tb_pkg::LMUL8};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -1703,7 +1703,7 @@ covergroup Cov_rvv_zve32x_vmadc_vvm with function sample(input logic [31:0] inst
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -1712,7 +1712,7 @@ covergroup Cov_rvv_zve32x_vmadc_vvm with function sample(input logic [31:0] inst
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -1725,7 +1725,7 @@ covergroup Cov_rvv_zve32x_vmadc_vxm with function sample(input logic [31:0] inst
     coverpoint (inst ==? {6'b010001, 1'b0, 5'b?????, 5'b?????, 3'b100, 5'b?????, 7'b1010111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -1738,7 +1738,7 @@ covergroup Cov_rvv_zve32x_vmadc_vxm with function sample(input logic [31:0] inst
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
       bins SEW32 = {rvv_tb_pkg::SEW32};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -1749,7 +1749,7 @@ covergroup Cov_rvv_zve32x_vmadc_vxm with function sample(input logic [31:0] inst
       bins LMUL2 = {rvv_tb_pkg::LMUL2};
       bins LMUL4 = {rvv_tb_pkg::LMUL4};
       bins LMUL8 = {rvv_tb_pkg::LMUL8};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -1759,7 +1759,7 @@ covergroup Cov_rvv_zve32x_vmadc_vxm with function sample(input logic [31:0] inst
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -1768,7 +1768,7 @@ covergroup Cov_rvv_zve32x_vmadc_vxm with function sample(input logic [31:0] inst
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -1781,7 +1781,7 @@ covergroup Cov_rvv_zve32x_vmadc_vim with function sample(input logic [31:0] inst
     coverpoint (inst ==? {6'b010001, 1'b0, 5'b?????, 5'b?????, 3'b011, 5'b?????, 7'b1010111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -1794,7 +1794,7 @@ covergroup Cov_rvv_zve32x_vmadc_vim with function sample(input logic [31:0] inst
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
       bins SEW32 = {rvv_tb_pkg::SEW32};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -1805,7 +1805,7 @@ covergroup Cov_rvv_zve32x_vmadc_vim with function sample(input logic [31:0] inst
       bins LMUL2 = {rvv_tb_pkg::LMUL2};
       bins LMUL4 = {rvv_tb_pkg::LMUL4};
       bins LMUL8 = {rvv_tb_pkg::LMUL8};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -1815,7 +1815,7 @@ covergroup Cov_rvv_zve32x_vmadc_vim with function sample(input logic [31:0] inst
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -1824,7 +1824,7 @@ covergroup Cov_rvv_zve32x_vmadc_vim with function sample(input logic [31:0] inst
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -1837,7 +1837,7 @@ covergroup Cov_rvv_zve32x_vmadc_vv with function sample(input logic [31:0] inst,
     coverpoint (inst ==? {6'b010001, 1'b1, 5'b?????, 5'b?????, 3'b000, 5'b?????, 7'b1010111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -1850,7 +1850,7 @@ covergroup Cov_rvv_zve32x_vmadc_vv with function sample(input logic [31:0] inst,
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
       bins SEW32 = {rvv_tb_pkg::SEW32};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -1861,7 +1861,7 @@ covergroup Cov_rvv_zve32x_vmadc_vv with function sample(input logic [31:0] inst,
       bins LMUL2 = {rvv_tb_pkg::LMUL2};
       bins LMUL4 = {rvv_tb_pkg::LMUL4};
       bins LMUL8 = {rvv_tb_pkg::LMUL8};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -1871,7 +1871,7 @@ covergroup Cov_rvv_zve32x_vmadc_vv with function sample(input logic [31:0] inst,
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -1880,7 +1880,7 @@ covergroup Cov_rvv_zve32x_vmadc_vv with function sample(input logic [31:0] inst,
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -1893,7 +1893,7 @@ covergroup Cov_rvv_zve32x_vmadc_vx with function sample(input logic [31:0] inst,
     coverpoint (inst ==? {6'b010001, 1'b1, 5'b?????, 5'b?????, 3'b100, 5'b?????, 7'b1010111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -1906,7 +1906,7 @@ covergroup Cov_rvv_zve32x_vmadc_vx with function sample(input logic [31:0] inst,
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
       bins SEW32 = {rvv_tb_pkg::SEW32};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -1917,7 +1917,7 @@ covergroup Cov_rvv_zve32x_vmadc_vx with function sample(input logic [31:0] inst,
       bins LMUL2 = {rvv_tb_pkg::LMUL2};
       bins LMUL4 = {rvv_tb_pkg::LMUL4};
       bins LMUL8 = {rvv_tb_pkg::LMUL8};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -1927,7 +1927,7 @@ covergroup Cov_rvv_zve32x_vmadc_vx with function sample(input logic [31:0] inst,
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -1936,7 +1936,7 @@ covergroup Cov_rvv_zve32x_vmadc_vx with function sample(input logic [31:0] inst,
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -1949,7 +1949,7 @@ covergroup Cov_rvv_zve32x_vmadc_vi with function sample(input logic [31:0] inst,
     coverpoint (inst ==? {6'b010001, 1'b1, 5'b?????, 5'b?????, 3'b011, 5'b?????, 7'b1010111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -1962,7 +1962,7 @@ covergroup Cov_rvv_zve32x_vmadc_vi with function sample(input logic [31:0] inst,
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
       bins SEW32 = {rvv_tb_pkg::SEW32};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -1973,7 +1973,7 @@ covergroup Cov_rvv_zve32x_vmadc_vi with function sample(input logic [31:0] inst,
       bins LMUL2 = {rvv_tb_pkg::LMUL2};
       bins LMUL4 = {rvv_tb_pkg::LMUL4};
       bins LMUL8 = {rvv_tb_pkg::LMUL8};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -1983,7 +1983,7 @@ covergroup Cov_rvv_zve32x_vmadc_vi with function sample(input logic [31:0] inst,
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -1992,7 +1992,7 @@ covergroup Cov_rvv_zve32x_vmadc_vi with function sample(input logic [31:0] inst,
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -2005,7 +2005,7 @@ covergroup Cov_rvv_zve32x_vsbc_vvm with function sample(input logic [31:0] inst,
     coverpoint (inst ==? {6'b010010, 1'b0, 5'b?????, 5'b?????, 3'b000, 5'b?????, 7'b1010111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -2018,7 +2018,7 @@ covergroup Cov_rvv_zve32x_vsbc_vvm with function sample(input logic [31:0] inst,
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
       bins SEW32 = {rvv_tb_pkg::SEW32};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -2029,7 +2029,7 @@ covergroup Cov_rvv_zve32x_vsbc_vvm with function sample(input logic [31:0] inst,
       bins LMUL2 = {rvv_tb_pkg::LMUL2};
       bins LMUL4 = {rvv_tb_pkg::LMUL4};
       bins LMUL8 = {rvv_tb_pkg::LMUL8};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -2039,7 +2039,7 @@ covergroup Cov_rvv_zve32x_vsbc_vvm with function sample(input logic [31:0] inst,
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -2048,7 +2048,7 @@ covergroup Cov_rvv_zve32x_vsbc_vvm with function sample(input logic [31:0] inst,
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -2061,7 +2061,7 @@ covergroup Cov_rvv_zve32x_vsbc_vxm with function sample(input logic [31:0] inst,
     coverpoint (inst ==? {6'b010010, 1'b0, 5'b?????, 5'b?????, 3'b100, 5'b?????, 7'b1010111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -2074,7 +2074,7 @@ covergroup Cov_rvv_zve32x_vsbc_vxm with function sample(input logic [31:0] inst,
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
       bins SEW32 = {rvv_tb_pkg::SEW32};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -2085,7 +2085,7 @@ covergroup Cov_rvv_zve32x_vsbc_vxm with function sample(input logic [31:0] inst,
       bins LMUL2 = {rvv_tb_pkg::LMUL2};
       bins LMUL4 = {rvv_tb_pkg::LMUL4};
       bins LMUL8 = {rvv_tb_pkg::LMUL8};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -2095,7 +2095,7 @@ covergroup Cov_rvv_zve32x_vsbc_vxm with function sample(input logic [31:0] inst,
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -2104,7 +2104,7 @@ covergroup Cov_rvv_zve32x_vsbc_vxm with function sample(input logic [31:0] inst,
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -2117,7 +2117,7 @@ covergroup Cov_rvv_zve32x_vmsbc_vvm with function sample(input logic [31:0] inst
     coverpoint (inst ==? {6'b010011, 1'b0, 5'b?????, 5'b?????, 3'b000, 5'b?????, 7'b1010111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -2130,7 +2130,7 @@ covergroup Cov_rvv_zve32x_vmsbc_vvm with function sample(input logic [31:0] inst
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
       bins SEW32 = {rvv_tb_pkg::SEW32};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -2141,7 +2141,7 @@ covergroup Cov_rvv_zve32x_vmsbc_vvm with function sample(input logic [31:0] inst
       bins LMUL2 = {rvv_tb_pkg::LMUL2};
       bins LMUL4 = {rvv_tb_pkg::LMUL4};
       bins LMUL8 = {rvv_tb_pkg::LMUL8};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -2151,7 +2151,7 @@ covergroup Cov_rvv_zve32x_vmsbc_vvm with function sample(input logic [31:0] inst
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -2160,7 +2160,7 @@ covergroup Cov_rvv_zve32x_vmsbc_vvm with function sample(input logic [31:0] inst
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -2173,7 +2173,7 @@ covergroup Cov_rvv_zve32x_vmsbc_vxm with function sample(input logic [31:0] inst
     coverpoint (inst ==? {6'b010011, 1'b0, 5'b?????, 5'b?????, 3'b100, 5'b?????, 7'b1010111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -2186,7 +2186,7 @@ covergroup Cov_rvv_zve32x_vmsbc_vxm with function sample(input logic [31:0] inst
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
       bins SEW32 = {rvv_tb_pkg::SEW32};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -2197,7 +2197,7 @@ covergroup Cov_rvv_zve32x_vmsbc_vxm with function sample(input logic [31:0] inst
       bins LMUL2 = {rvv_tb_pkg::LMUL2};
       bins LMUL4 = {rvv_tb_pkg::LMUL4};
       bins LMUL8 = {rvv_tb_pkg::LMUL8};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -2207,7 +2207,7 @@ covergroup Cov_rvv_zve32x_vmsbc_vxm with function sample(input logic [31:0] inst
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -2216,7 +2216,7 @@ covergroup Cov_rvv_zve32x_vmsbc_vxm with function sample(input logic [31:0] inst
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -2229,7 +2229,7 @@ covergroup Cov_rvv_zve32x_vmsbc_vv with function sample(input logic [31:0] inst,
     coverpoint (inst ==? {6'b010011, 1'b1, 5'b?????, 5'b?????, 3'b000, 5'b?????, 7'b1010111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -2242,7 +2242,7 @@ covergroup Cov_rvv_zve32x_vmsbc_vv with function sample(input logic [31:0] inst,
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
       bins SEW32 = {rvv_tb_pkg::SEW32};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -2253,7 +2253,7 @@ covergroup Cov_rvv_zve32x_vmsbc_vv with function sample(input logic [31:0] inst,
       bins LMUL2 = {rvv_tb_pkg::LMUL2};
       bins LMUL4 = {rvv_tb_pkg::LMUL4};
       bins LMUL8 = {rvv_tb_pkg::LMUL8};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -2263,7 +2263,7 @@ covergroup Cov_rvv_zve32x_vmsbc_vv with function sample(input logic [31:0] inst,
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -2272,7 +2272,7 @@ covergroup Cov_rvv_zve32x_vmsbc_vv with function sample(input logic [31:0] inst,
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -2285,7 +2285,7 @@ covergroup Cov_rvv_zve32x_vmsbc_vx with function sample(input logic [31:0] inst,
     coverpoint (inst ==? {6'b010011, 1'b1, 5'b?????, 5'b?????, 3'b100, 5'b?????, 7'b1010111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -2298,7 +2298,7 @@ covergroup Cov_rvv_zve32x_vmsbc_vx with function sample(input logic [31:0] inst,
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
       bins SEW32 = {rvv_tb_pkg::SEW32};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -2309,7 +2309,7 @@ covergroup Cov_rvv_zve32x_vmsbc_vx with function sample(input logic [31:0] inst,
       bins LMUL2 = {rvv_tb_pkg::LMUL2};
       bins LMUL4 = {rvv_tb_pkg::LMUL4};
       bins LMUL8 = {rvv_tb_pkg::LMUL8};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -2319,7 +2319,7 @@ covergroup Cov_rvv_zve32x_vmsbc_vx with function sample(input logic [31:0] inst,
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -2328,7 +2328,7 @@ covergroup Cov_rvv_zve32x_vmsbc_vx with function sample(input logic [31:0] inst,
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -2341,7 +2341,7 @@ covergroup Cov_rvv_zve32x_vand_vv with function sample(input logic [31:0] inst, 
     coverpoint (inst ==? {6'b001001, 1'b?, 5'b?????, 5'b?????, 3'b000, 5'b?????, 7'b1010111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -2355,7 +2355,7 @@ covergroup Cov_rvv_zve32x_vand_vv with function sample(input logic [31:0] inst, 
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
       bins SEW32 = {rvv_tb_pkg::SEW32};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -2366,7 +2366,7 @@ covergroup Cov_rvv_zve32x_vand_vv with function sample(input logic [31:0] inst, 
       bins LMUL2 = {rvv_tb_pkg::LMUL2};
       bins LMUL4 = {rvv_tb_pkg::LMUL4};
       bins LMUL8 = {rvv_tb_pkg::LMUL8};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -2376,7 +2376,7 @@ covergroup Cov_rvv_zve32x_vand_vv with function sample(input logic [31:0] inst, 
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -2385,7 +2385,7 @@ covergroup Cov_rvv_zve32x_vand_vv with function sample(input logic [31:0] inst, 
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -2398,7 +2398,7 @@ covergroup Cov_rvv_zve32x_vand_vx with function sample(input logic [31:0] inst, 
     coverpoint (inst ==? {6'b001001, 1'b?, 5'b?????, 5'b?????, 3'b100, 5'b?????, 7'b1010111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -2412,7 +2412,7 @@ covergroup Cov_rvv_zve32x_vand_vx with function sample(input logic [31:0] inst, 
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
       bins SEW32 = {rvv_tb_pkg::SEW32};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -2423,7 +2423,7 @@ covergroup Cov_rvv_zve32x_vand_vx with function sample(input logic [31:0] inst, 
       bins LMUL2 = {rvv_tb_pkg::LMUL2};
       bins LMUL4 = {rvv_tb_pkg::LMUL4};
       bins LMUL8 = {rvv_tb_pkg::LMUL8};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -2433,7 +2433,7 @@ covergroup Cov_rvv_zve32x_vand_vx with function sample(input logic [31:0] inst, 
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -2442,7 +2442,7 @@ covergroup Cov_rvv_zve32x_vand_vx with function sample(input logic [31:0] inst, 
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -2455,7 +2455,7 @@ covergroup Cov_rvv_zve32x_vand_vi with function sample(input logic [31:0] inst, 
     coverpoint (inst ==? {6'b001001, 1'b?, 5'b?????, 5'b?????, 3'b011, 5'b?????, 7'b1010111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -2469,7 +2469,7 @@ covergroup Cov_rvv_zve32x_vand_vi with function sample(input logic [31:0] inst, 
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
       bins SEW32 = {rvv_tb_pkg::SEW32};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -2480,7 +2480,7 @@ covergroup Cov_rvv_zve32x_vand_vi with function sample(input logic [31:0] inst, 
       bins LMUL2 = {rvv_tb_pkg::LMUL2};
       bins LMUL4 = {rvv_tb_pkg::LMUL4};
       bins LMUL8 = {rvv_tb_pkg::LMUL8};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -2490,7 +2490,7 @@ covergroup Cov_rvv_zve32x_vand_vi with function sample(input logic [31:0] inst, 
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -2499,7 +2499,7 @@ covergroup Cov_rvv_zve32x_vand_vi with function sample(input logic [31:0] inst, 
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -2512,7 +2512,7 @@ covergroup Cov_rvv_zve32x_vor_vv with function sample(input logic [31:0] inst, l
     coverpoint (inst ==? {6'b001010, 1'b?, 5'b?????, 5'b?????, 3'b000, 5'b?????, 7'b1010111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -2526,7 +2526,7 @@ covergroup Cov_rvv_zve32x_vor_vv with function sample(input logic [31:0] inst, l
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
       bins SEW32 = {rvv_tb_pkg::SEW32};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -2537,7 +2537,7 @@ covergroup Cov_rvv_zve32x_vor_vv with function sample(input logic [31:0] inst, l
       bins LMUL2 = {rvv_tb_pkg::LMUL2};
       bins LMUL4 = {rvv_tb_pkg::LMUL4};
       bins LMUL8 = {rvv_tb_pkg::LMUL8};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -2547,7 +2547,7 @@ covergroup Cov_rvv_zve32x_vor_vv with function sample(input logic [31:0] inst, l
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -2556,7 +2556,7 @@ covergroup Cov_rvv_zve32x_vor_vv with function sample(input logic [31:0] inst, l
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -2569,7 +2569,7 @@ covergroup Cov_rvv_zve32x_vor_vx with function sample(input logic [31:0] inst, l
     coverpoint (inst ==? {6'b001010, 1'b?, 5'b?????, 5'b?????, 3'b100, 5'b?????, 7'b1010111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -2583,7 +2583,7 @@ covergroup Cov_rvv_zve32x_vor_vx with function sample(input logic [31:0] inst, l
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
       bins SEW32 = {rvv_tb_pkg::SEW32};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -2594,7 +2594,7 @@ covergroup Cov_rvv_zve32x_vor_vx with function sample(input logic [31:0] inst, l
       bins LMUL2 = {rvv_tb_pkg::LMUL2};
       bins LMUL4 = {rvv_tb_pkg::LMUL4};
       bins LMUL8 = {rvv_tb_pkg::LMUL8};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -2604,7 +2604,7 @@ covergroup Cov_rvv_zve32x_vor_vx with function sample(input logic [31:0] inst, l
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -2613,7 +2613,7 @@ covergroup Cov_rvv_zve32x_vor_vx with function sample(input logic [31:0] inst, l
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -2626,7 +2626,7 @@ covergroup Cov_rvv_zve32x_vor_vi with function sample(input logic [31:0] inst, l
     coverpoint (inst ==? {6'b001010, 1'b?, 5'b?????, 5'b?????, 3'b011, 5'b?????, 7'b1010111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -2640,7 +2640,7 @@ covergroup Cov_rvv_zve32x_vor_vi with function sample(input logic [31:0] inst, l
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
       bins SEW32 = {rvv_tb_pkg::SEW32};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -2651,7 +2651,7 @@ covergroup Cov_rvv_zve32x_vor_vi with function sample(input logic [31:0] inst, l
       bins LMUL2 = {rvv_tb_pkg::LMUL2};
       bins LMUL4 = {rvv_tb_pkg::LMUL4};
       bins LMUL8 = {rvv_tb_pkg::LMUL8};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -2661,7 +2661,7 @@ covergroup Cov_rvv_zve32x_vor_vi with function sample(input logic [31:0] inst, l
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -2670,7 +2670,7 @@ covergroup Cov_rvv_zve32x_vor_vi with function sample(input logic [31:0] inst, l
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -2683,7 +2683,7 @@ covergroup Cov_rvv_zve32x_vxor_vv with function sample(input logic [31:0] inst, 
     coverpoint (inst ==? {6'b001011, 1'b?, 5'b?????, 5'b?????, 3'b000, 5'b?????, 7'b1010111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -2697,7 +2697,7 @@ covergroup Cov_rvv_zve32x_vxor_vv with function sample(input logic [31:0] inst, 
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
       bins SEW32 = {rvv_tb_pkg::SEW32};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -2708,7 +2708,7 @@ covergroup Cov_rvv_zve32x_vxor_vv with function sample(input logic [31:0] inst, 
       bins LMUL2 = {rvv_tb_pkg::LMUL2};
       bins LMUL4 = {rvv_tb_pkg::LMUL4};
       bins LMUL8 = {rvv_tb_pkg::LMUL8};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -2718,7 +2718,7 @@ covergroup Cov_rvv_zve32x_vxor_vv with function sample(input logic [31:0] inst, 
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -2727,7 +2727,7 @@ covergroup Cov_rvv_zve32x_vxor_vv with function sample(input logic [31:0] inst, 
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -2740,7 +2740,7 @@ covergroup Cov_rvv_zve32x_vxor_vx with function sample(input logic [31:0] inst, 
     coverpoint (inst ==? {6'b001011, 1'b?, 5'b?????, 5'b?????, 3'b100, 5'b?????, 7'b1010111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -2754,7 +2754,7 @@ covergroup Cov_rvv_zve32x_vxor_vx with function sample(input logic [31:0] inst, 
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
       bins SEW32 = {rvv_tb_pkg::SEW32};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -2765,7 +2765,7 @@ covergroup Cov_rvv_zve32x_vxor_vx with function sample(input logic [31:0] inst, 
       bins LMUL2 = {rvv_tb_pkg::LMUL2};
       bins LMUL4 = {rvv_tb_pkg::LMUL4};
       bins LMUL8 = {rvv_tb_pkg::LMUL8};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -2775,7 +2775,7 @@ covergroup Cov_rvv_zve32x_vxor_vx with function sample(input logic [31:0] inst, 
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -2784,7 +2784,7 @@ covergroup Cov_rvv_zve32x_vxor_vx with function sample(input logic [31:0] inst, 
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -2797,7 +2797,7 @@ covergroup Cov_rvv_zve32x_vxor_vi with function sample(input logic [31:0] inst, 
     coverpoint (inst ==? {6'b001011, 1'b?, 5'b?????, 5'b?????, 3'b011, 5'b?????, 7'b1010111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -2811,7 +2811,7 @@ covergroup Cov_rvv_zve32x_vxor_vi with function sample(input logic [31:0] inst, 
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
       bins SEW32 = {rvv_tb_pkg::SEW32};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -2822,7 +2822,7 @@ covergroup Cov_rvv_zve32x_vxor_vi with function sample(input logic [31:0] inst, 
       bins LMUL2 = {rvv_tb_pkg::LMUL2};
       bins LMUL4 = {rvv_tb_pkg::LMUL4};
       bins LMUL8 = {rvv_tb_pkg::LMUL8};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -2832,7 +2832,7 @@ covergroup Cov_rvv_zve32x_vxor_vi with function sample(input logic [31:0] inst, 
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -2841,7 +2841,7 @@ covergroup Cov_rvv_zve32x_vxor_vi with function sample(input logic [31:0] inst, 
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -2854,7 +2854,7 @@ covergroup Cov_rvv_zve32x_vsll_vv with function sample(input logic [31:0] inst, 
     coverpoint (inst ==? {6'b100101, 1'b?, 5'b?????, 5'b?????, 3'b000, 5'b?????, 7'b1010111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -2868,7 +2868,7 @@ covergroup Cov_rvv_zve32x_vsll_vv with function sample(input logic [31:0] inst, 
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
       bins SEW32 = {rvv_tb_pkg::SEW32};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -2879,7 +2879,7 @@ covergroup Cov_rvv_zve32x_vsll_vv with function sample(input logic [31:0] inst, 
       bins LMUL2 = {rvv_tb_pkg::LMUL2};
       bins LMUL4 = {rvv_tb_pkg::LMUL4};
       bins LMUL8 = {rvv_tb_pkg::LMUL8};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -2889,7 +2889,7 @@ covergroup Cov_rvv_zve32x_vsll_vv with function sample(input logic [31:0] inst, 
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -2898,7 +2898,7 @@ covergroup Cov_rvv_zve32x_vsll_vv with function sample(input logic [31:0] inst, 
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -2911,7 +2911,7 @@ covergroup Cov_rvv_zve32x_vsll_vx with function sample(input logic [31:0] inst, 
     coverpoint (inst ==? {6'b100101, 1'b?, 5'b?????, 5'b?????, 3'b100, 5'b?????, 7'b1010111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -2925,7 +2925,7 @@ covergroup Cov_rvv_zve32x_vsll_vx with function sample(input logic [31:0] inst, 
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
       bins SEW32 = {rvv_tb_pkg::SEW32};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -2936,7 +2936,7 @@ covergroup Cov_rvv_zve32x_vsll_vx with function sample(input logic [31:0] inst, 
       bins LMUL2 = {rvv_tb_pkg::LMUL2};
       bins LMUL4 = {rvv_tb_pkg::LMUL4};
       bins LMUL8 = {rvv_tb_pkg::LMUL8};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -2946,7 +2946,7 @@ covergroup Cov_rvv_zve32x_vsll_vx with function sample(input logic [31:0] inst, 
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -2955,7 +2955,7 @@ covergroup Cov_rvv_zve32x_vsll_vx with function sample(input logic [31:0] inst, 
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -2968,7 +2968,7 @@ covergroup Cov_rvv_zve32x_vsll_vi with function sample(input logic [31:0] inst, 
     coverpoint (inst ==? {6'b100101, 1'b?, 5'b?????, 5'b?????, 3'b011, 5'b?????, 7'b1010111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -2982,7 +2982,7 @@ covergroup Cov_rvv_zve32x_vsll_vi with function sample(input logic [31:0] inst, 
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
       bins SEW32 = {rvv_tb_pkg::SEW32};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -2993,7 +2993,7 @@ covergroup Cov_rvv_zve32x_vsll_vi with function sample(input logic [31:0] inst, 
       bins LMUL2 = {rvv_tb_pkg::LMUL2};
       bins LMUL4 = {rvv_tb_pkg::LMUL4};
       bins LMUL8 = {rvv_tb_pkg::LMUL8};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -3003,7 +3003,7 @@ covergroup Cov_rvv_zve32x_vsll_vi with function sample(input logic [31:0] inst, 
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -3012,7 +3012,7 @@ covergroup Cov_rvv_zve32x_vsll_vi with function sample(input logic [31:0] inst, 
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -3025,7 +3025,7 @@ covergroup Cov_rvv_zve32x_vsrl_vv with function sample(input logic [31:0] inst, 
     coverpoint (inst ==? {6'b101000, 1'b?, 5'b?????, 5'b?????, 3'b000, 5'b?????, 7'b1010111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -3039,7 +3039,7 @@ covergroup Cov_rvv_zve32x_vsrl_vv with function sample(input logic [31:0] inst, 
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
       bins SEW32 = {rvv_tb_pkg::SEW32};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -3050,7 +3050,7 @@ covergroup Cov_rvv_zve32x_vsrl_vv with function sample(input logic [31:0] inst, 
       bins LMUL2 = {rvv_tb_pkg::LMUL2};
       bins LMUL4 = {rvv_tb_pkg::LMUL4};
       bins LMUL8 = {rvv_tb_pkg::LMUL8};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -3060,7 +3060,7 @@ covergroup Cov_rvv_zve32x_vsrl_vv with function sample(input logic [31:0] inst, 
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -3069,7 +3069,7 @@ covergroup Cov_rvv_zve32x_vsrl_vv with function sample(input logic [31:0] inst, 
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -3082,7 +3082,7 @@ covergroup Cov_rvv_zve32x_vsrl_vx with function sample(input logic [31:0] inst, 
     coverpoint (inst ==? {6'b101000, 1'b?, 5'b?????, 5'b?????, 3'b100, 5'b?????, 7'b1010111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -3096,7 +3096,7 @@ covergroup Cov_rvv_zve32x_vsrl_vx with function sample(input logic [31:0] inst, 
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
       bins SEW32 = {rvv_tb_pkg::SEW32};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -3107,7 +3107,7 @@ covergroup Cov_rvv_zve32x_vsrl_vx with function sample(input logic [31:0] inst, 
       bins LMUL2 = {rvv_tb_pkg::LMUL2};
       bins LMUL4 = {rvv_tb_pkg::LMUL4};
       bins LMUL8 = {rvv_tb_pkg::LMUL8};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -3117,7 +3117,7 @@ covergroup Cov_rvv_zve32x_vsrl_vx with function sample(input logic [31:0] inst, 
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -3126,7 +3126,7 @@ covergroup Cov_rvv_zve32x_vsrl_vx with function sample(input logic [31:0] inst, 
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -3139,7 +3139,7 @@ covergroup Cov_rvv_zve32x_vsrl_vi with function sample(input logic [31:0] inst, 
     coverpoint (inst ==? {6'b101000, 1'b?, 5'b?????, 5'b?????, 3'b011, 5'b?????, 7'b1010111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -3153,7 +3153,7 @@ covergroup Cov_rvv_zve32x_vsrl_vi with function sample(input logic [31:0] inst, 
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
       bins SEW32 = {rvv_tb_pkg::SEW32};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -3164,7 +3164,7 @@ covergroup Cov_rvv_zve32x_vsrl_vi with function sample(input logic [31:0] inst, 
       bins LMUL2 = {rvv_tb_pkg::LMUL2};
       bins LMUL4 = {rvv_tb_pkg::LMUL4};
       bins LMUL8 = {rvv_tb_pkg::LMUL8};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -3174,7 +3174,7 @@ covergroup Cov_rvv_zve32x_vsrl_vi with function sample(input logic [31:0] inst, 
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -3183,7 +3183,7 @@ covergroup Cov_rvv_zve32x_vsrl_vi with function sample(input logic [31:0] inst, 
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -3196,7 +3196,7 @@ covergroup Cov_rvv_zve32x_vsra_vv with function sample(input logic [31:0] inst, 
     coverpoint (inst ==? {6'b101001, 1'b?, 5'b?????, 5'b?????, 3'b000, 5'b?????, 7'b1010111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -3210,7 +3210,7 @@ covergroup Cov_rvv_zve32x_vsra_vv with function sample(input logic [31:0] inst, 
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
       bins SEW32 = {rvv_tb_pkg::SEW32};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -3221,7 +3221,7 @@ covergroup Cov_rvv_zve32x_vsra_vv with function sample(input logic [31:0] inst, 
       bins LMUL2 = {rvv_tb_pkg::LMUL2};
       bins LMUL4 = {rvv_tb_pkg::LMUL4};
       bins LMUL8 = {rvv_tb_pkg::LMUL8};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -3231,7 +3231,7 @@ covergroup Cov_rvv_zve32x_vsra_vv with function sample(input logic [31:0] inst, 
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -3240,7 +3240,7 @@ covergroup Cov_rvv_zve32x_vsra_vv with function sample(input logic [31:0] inst, 
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -3253,7 +3253,7 @@ covergroup Cov_rvv_zve32x_vsra_vx with function sample(input logic [31:0] inst, 
     coverpoint (inst ==? {6'b101001, 1'b?, 5'b?????, 5'b?????, 3'b100, 5'b?????, 7'b1010111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -3267,7 +3267,7 @@ covergroup Cov_rvv_zve32x_vsra_vx with function sample(input logic [31:0] inst, 
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
       bins SEW32 = {rvv_tb_pkg::SEW32};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -3278,7 +3278,7 @@ covergroup Cov_rvv_zve32x_vsra_vx with function sample(input logic [31:0] inst, 
       bins LMUL2 = {rvv_tb_pkg::LMUL2};
       bins LMUL4 = {rvv_tb_pkg::LMUL4};
       bins LMUL8 = {rvv_tb_pkg::LMUL8};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -3288,7 +3288,7 @@ covergroup Cov_rvv_zve32x_vsra_vx with function sample(input logic [31:0] inst, 
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -3297,7 +3297,7 @@ covergroup Cov_rvv_zve32x_vsra_vx with function sample(input logic [31:0] inst, 
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -3310,7 +3310,7 @@ covergroup Cov_rvv_zve32x_vsra_vi with function sample(input logic [31:0] inst, 
     coverpoint (inst ==? {6'b101001, 1'b?, 5'b?????, 5'b?????, 3'b011, 5'b?????, 7'b1010111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -3324,7 +3324,7 @@ covergroup Cov_rvv_zve32x_vsra_vi with function sample(input logic [31:0] inst, 
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
       bins SEW32 = {rvv_tb_pkg::SEW32};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -3335,7 +3335,7 @@ covergroup Cov_rvv_zve32x_vsra_vi with function sample(input logic [31:0] inst, 
       bins LMUL2 = {rvv_tb_pkg::LMUL2};
       bins LMUL4 = {rvv_tb_pkg::LMUL4};
       bins LMUL8 = {rvv_tb_pkg::LMUL8};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -3345,7 +3345,7 @@ covergroup Cov_rvv_zve32x_vsra_vi with function sample(input logic [31:0] inst, 
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -3354,7 +3354,7 @@ covergroup Cov_rvv_zve32x_vsra_vi with function sample(input logic [31:0] inst, 
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -3367,7 +3367,7 @@ covergroup Cov_rvv_zve32x_vnsrl_vv with function sample(input logic [31:0] inst,
     coverpoint (inst ==? {6'b101100, 1'b?, 5'b?????, 5'b?????, 3'b000, 5'b?????, 7'b1010111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -3380,7 +3380,7 @@ covergroup Cov_rvv_zve32x_vnsrl_vv with function sample(input logic [31:0] inst,
       option.comment = "Value of vsew";
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -3390,7 +3390,7 @@ covergroup Cov_rvv_zve32x_vnsrl_vv with function sample(input logic [31:0] inst,
       bins LMUL1 = {rvv_tb_pkg::LMUL1};
       bins LMUL2 = {rvv_tb_pkg::LMUL2};
       bins LMUL4 = {rvv_tb_pkg::LMUL4};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -3400,7 +3400,7 @@ covergroup Cov_rvv_zve32x_vnsrl_vv with function sample(input logic [31:0] inst,
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -3409,7 +3409,7 @@ covergroup Cov_rvv_zve32x_vnsrl_vv with function sample(input logic [31:0] inst,
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -3422,7 +3422,7 @@ covergroup Cov_rvv_zve32x_vnsrl_vx with function sample(input logic [31:0] inst,
     coverpoint (inst ==? {6'b101100, 1'b?, 5'b?????, 5'b?????, 3'b100, 5'b?????, 7'b1010111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -3435,7 +3435,7 @@ covergroup Cov_rvv_zve32x_vnsrl_vx with function sample(input logic [31:0] inst,
       option.comment = "Value of vsew";
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -3445,7 +3445,7 @@ covergroup Cov_rvv_zve32x_vnsrl_vx with function sample(input logic [31:0] inst,
       bins LMUL1 = {rvv_tb_pkg::LMUL1};
       bins LMUL2 = {rvv_tb_pkg::LMUL2};
       bins LMUL4 = {rvv_tb_pkg::LMUL4};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -3455,7 +3455,7 @@ covergroup Cov_rvv_zve32x_vnsrl_vx with function sample(input logic [31:0] inst,
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -3464,7 +3464,7 @@ covergroup Cov_rvv_zve32x_vnsrl_vx with function sample(input logic [31:0] inst,
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -3477,7 +3477,7 @@ covergroup Cov_rvv_zve32x_vnsrl_vi with function sample(input logic [31:0] inst,
     coverpoint (inst ==? {6'b101100, 1'b?, 5'b?????, 5'b?????, 3'b011, 5'b?????, 7'b1010111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -3490,7 +3490,7 @@ covergroup Cov_rvv_zve32x_vnsrl_vi with function sample(input logic [31:0] inst,
       option.comment = "Value of vsew";
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -3500,7 +3500,7 @@ covergroup Cov_rvv_zve32x_vnsrl_vi with function sample(input logic [31:0] inst,
       bins LMUL1 = {rvv_tb_pkg::LMUL1};
       bins LMUL2 = {rvv_tb_pkg::LMUL2};
       bins LMUL4 = {rvv_tb_pkg::LMUL4};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -3510,7 +3510,7 @@ covergroup Cov_rvv_zve32x_vnsrl_vi with function sample(input logic [31:0] inst,
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -3519,7 +3519,7 @@ covergroup Cov_rvv_zve32x_vnsrl_vi with function sample(input logic [31:0] inst,
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -3532,7 +3532,7 @@ covergroup Cov_rvv_zve32x_vnsra_vv with function sample(input logic [31:0] inst,
     coverpoint (inst ==? {6'b101101, 1'b?, 5'b?????, 5'b?????, 3'b000, 5'b?????, 7'b1010111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -3545,7 +3545,7 @@ covergroup Cov_rvv_zve32x_vnsra_vv with function sample(input logic [31:0] inst,
       option.comment = "Value of vsew";
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -3555,7 +3555,7 @@ covergroup Cov_rvv_zve32x_vnsra_vv with function sample(input logic [31:0] inst,
       bins LMUL1 = {rvv_tb_pkg::LMUL1};
       bins LMUL2 = {rvv_tb_pkg::LMUL2};
       bins LMUL4 = {rvv_tb_pkg::LMUL4};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -3565,7 +3565,7 @@ covergroup Cov_rvv_zve32x_vnsra_vv with function sample(input logic [31:0] inst,
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -3574,7 +3574,7 @@ covergroup Cov_rvv_zve32x_vnsra_vv with function sample(input logic [31:0] inst,
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -3587,7 +3587,7 @@ covergroup Cov_rvv_zve32x_vnsra_vx with function sample(input logic [31:0] inst,
     coverpoint (inst ==? {6'b101101, 1'b?, 5'b?????, 5'b?????, 3'b100, 5'b?????, 7'b1010111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -3600,7 +3600,7 @@ covergroup Cov_rvv_zve32x_vnsra_vx with function sample(input logic [31:0] inst,
       option.comment = "Value of vsew";
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -3610,7 +3610,7 @@ covergroup Cov_rvv_zve32x_vnsra_vx with function sample(input logic [31:0] inst,
       bins LMUL1 = {rvv_tb_pkg::LMUL1};
       bins LMUL2 = {rvv_tb_pkg::LMUL2};
       bins LMUL4 = {rvv_tb_pkg::LMUL4};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -3620,7 +3620,7 @@ covergroup Cov_rvv_zve32x_vnsra_vx with function sample(input logic [31:0] inst,
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -3629,7 +3629,7 @@ covergroup Cov_rvv_zve32x_vnsra_vx with function sample(input logic [31:0] inst,
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -3642,7 +3642,7 @@ covergroup Cov_rvv_zve32x_vnsra_vi with function sample(input logic [31:0] inst,
     coverpoint (inst ==? {6'b101101, 1'b?, 5'b?????, 5'b?????, 3'b011, 5'b?????, 7'b1010111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -3655,7 +3655,7 @@ covergroup Cov_rvv_zve32x_vnsra_vi with function sample(input logic [31:0] inst,
       option.comment = "Value of vsew";
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -3665,7 +3665,7 @@ covergroup Cov_rvv_zve32x_vnsra_vi with function sample(input logic [31:0] inst,
       bins LMUL1 = {rvv_tb_pkg::LMUL1};
       bins LMUL2 = {rvv_tb_pkg::LMUL2};
       bins LMUL4 = {rvv_tb_pkg::LMUL4};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -3675,7 +3675,7 @@ covergroup Cov_rvv_zve32x_vnsra_vi with function sample(input logic [31:0] inst,
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -3684,7 +3684,7 @@ covergroup Cov_rvv_zve32x_vnsra_vi with function sample(input logic [31:0] inst,
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -3697,7 +3697,7 @@ covergroup Cov_rvv_zve32x_vmseq_vv with function sample(input logic [31:0] inst,
     coverpoint (inst ==? {6'b011000, 1'b?, 5'b?????, 5'b?????, 3'b000, 5'b?????, 7'b1010111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -3711,7 +3711,7 @@ covergroup Cov_rvv_zve32x_vmseq_vv with function sample(input logic [31:0] inst,
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
       bins SEW32 = {rvv_tb_pkg::SEW32};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -3722,7 +3722,7 @@ covergroup Cov_rvv_zve32x_vmseq_vv with function sample(input logic [31:0] inst,
       bins LMUL2 = {rvv_tb_pkg::LMUL2};
       bins LMUL4 = {rvv_tb_pkg::LMUL4};
       bins LMUL8 = {rvv_tb_pkg::LMUL8};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -3732,7 +3732,7 @@ covergroup Cov_rvv_zve32x_vmseq_vv with function sample(input logic [31:0] inst,
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -3741,7 +3741,7 @@ covergroup Cov_rvv_zve32x_vmseq_vv with function sample(input logic [31:0] inst,
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -3754,7 +3754,7 @@ covergroup Cov_rvv_zve32x_vmseq_vx with function sample(input logic [31:0] inst,
     coverpoint (inst ==? {6'b011000, 1'b?, 5'b?????, 5'b?????, 3'b100, 5'b?????, 7'b1010111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -3768,7 +3768,7 @@ covergroup Cov_rvv_zve32x_vmseq_vx with function sample(input logic [31:0] inst,
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
       bins SEW32 = {rvv_tb_pkg::SEW32};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -3779,7 +3779,7 @@ covergroup Cov_rvv_zve32x_vmseq_vx with function sample(input logic [31:0] inst,
       bins LMUL2 = {rvv_tb_pkg::LMUL2};
       bins LMUL4 = {rvv_tb_pkg::LMUL4};
       bins LMUL8 = {rvv_tb_pkg::LMUL8};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -3789,7 +3789,7 @@ covergroup Cov_rvv_zve32x_vmseq_vx with function sample(input logic [31:0] inst,
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -3798,7 +3798,7 @@ covergroup Cov_rvv_zve32x_vmseq_vx with function sample(input logic [31:0] inst,
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -3811,7 +3811,7 @@ covergroup Cov_rvv_zve32x_vmseq_vi with function sample(input logic [31:0] inst,
     coverpoint (inst ==? {6'b011000, 1'b?, 5'b?????, 5'b?????, 3'b011, 5'b?????, 7'b1010111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -3825,7 +3825,7 @@ covergroup Cov_rvv_zve32x_vmseq_vi with function sample(input logic [31:0] inst,
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
       bins SEW32 = {rvv_tb_pkg::SEW32};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -3836,7 +3836,7 @@ covergroup Cov_rvv_zve32x_vmseq_vi with function sample(input logic [31:0] inst,
       bins LMUL2 = {rvv_tb_pkg::LMUL2};
       bins LMUL4 = {rvv_tb_pkg::LMUL4};
       bins LMUL8 = {rvv_tb_pkg::LMUL8};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -3846,7 +3846,7 @@ covergroup Cov_rvv_zve32x_vmseq_vi with function sample(input logic [31:0] inst,
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -3855,7 +3855,7 @@ covergroup Cov_rvv_zve32x_vmseq_vi with function sample(input logic [31:0] inst,
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -3868,7 +3868,7 @@ covergroup Cov_rvv_zve32x_vmsne_vv with function sample(input logic [31:0] inst,
     coverpoint (inst ==? {6'b011001, 1'b?, 5'b?????, 5'b?????, 3'b000, 5'b?????, 7'b1010111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -3882,7 +3882,7 @@ covergroup Cov_rvv_zve32x_vmsne_vv with function sample(input logic [31:0] inst,
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
       bins SEW32 = {rvv_tb_pkg::SEW32};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -3893,7 +3893,7 @@ covergroup Cov_rvv_zve32x_vmsne_vv with function sample(input logic [31:0] inst,
       bins LMUL2 = {rvv_tb_pkg::LMUL2};
       bins LMUL4 = {rvv_tb_pkg::LMUL4};
       bins LMUL8 = {rvv_tb_pkg::LMUL8};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -3903,7 +3903,7 @@ covergroup Cov_rvv_zve32x_vmsne_vv with function sample(input logic [31:0] inst,
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -3912,7 +3912,7 @@ covergroup Cov_rvv_zve32x_vmsne_vv with function sample(input logic [31:0] inst,
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -3925,7 +3925,7 @@ covergroup Cov_rvv_zve32x_vmsne_vx with function sample(input logic [31:0] inst,
     coverpoint (inst ==? {6'b011001, 1'b?, 5'b?????, 5'b?????, 3'b100, 5'b?????, 7'b1010111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -3939,7 +3939,7 @@ covergroup Cov_rvv_zve32x_vmsne_vx with function sample(input logic [31:0] inst,
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
       bins SEW32 = {rvv_tb_pkg::SEW32};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -3950,7 +3950,7 @@ covergroup Cov_rvv_zve32x_vmsne_vx with function sample(input logic [31:0] inst,
       bins LMUL2 = {rvv_tb_pkg::LMUL2};
       bins LMUL4 = {rvv_tb_pkg::LMUL4};
       bins LMUL8 = {rvv_tb_pkg::LMUL8};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -3960,7 +3960,7 @@ covergroup Cov_rvv_zve32x_vmsne_vx with function sample(input logic [31:0] inst,
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -3969,7 +3969,7 @@ covergroup Cov_rvv_zve32x_vmsne_vx with function sample(input logic [31:0] inst,
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -3982,7 +3982,7 @@ covergroup Cov_rvv_zve32x_vmsne_vi with function sample(input logic [31:0] inst,
     coverpoint (inst ==? {6'b011001, 1'b?, 5'b?????, 5'b?????, 3'b011, 5'b?????, 7'b1010111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -3996,7 +3996,7 @@ covergroup Cov_rvv_zve32x_vmsne_vi with function sample(input logic [31:0] inst,
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
       bins SEW32 = {rvv_tb_pkg::SEW32};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -4007,7 +4007,7 @@ covergroup Cov_rvv_zve32x_vmsne_vi with function sample(input logic [31:0] inst,
       bins LMUL2 = {rvv_tb_pkg::LMUL2};
       bins LMUL4 = {rvv_tb_pkg::LMUL4};
       bins LMUL8 = {rvv_tb_pkg::LMUL8};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -4017,7 +4017,7 @@ covergroup Cov_rvv_zve32x_vmsne_vi with function sample(input logic [31:0] inst,
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -4026,7 +4026,7 @@ covergroup Cov_rvv_zve32x_vmsne_vi with function sample(input logic [31:0] inst,
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -4039,7 +4039,7 @@ covergroup Cov_rvv_zve32x_vmsltu_vv with function sample(input logic [31:0] inst
     coverpoint (inst ==? {6'b011010, 1'b?, 5'b?????, 5'b?????, 3'b000, 5'b?????, 7'b1010111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -4053,7 +4053,7 @@ covergroup Cov_rvv_zve32x_vmsltu_vv with function sample(input logic [31:0] inst
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
       bins SEW32 = {rvv_tb_pkg::SEW32};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -4064,7 +4064,7 @@ covergroup Cov_rvv_zve32x_vmsltu_vv with function sample(input logic [31:0] inst
       bins LMUL2 = {rvv_tb_pkg::LMUL2};
       bins LMUL4 = {rvv_tb_pkg::LMUL4};
       bins LMUL8 = {rvv_tb_pkg::LMUL8};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -4074,7 +4074,7 @@ covergroup Cov_rvv_zve32x_vmsltu_vv with function sample(input logic [31:0] inst
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -4083,7 +4083,7 @@ covergroup Cov_rvv_zve32x_vmsltu_vv with function sample(input logic [31:0] inst
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -4096,7 +4096,7 @@ covergroup Cov_rvv_zve32x_vmsltu_vx with function sample(input logic [31:0] inst
     coverpoint (inst ==? {6'b011010, 1'b?, 5'b?????, 5'b?????, 3'b100, 5'b?????, 7'b1010111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -4110,7 +4110,7 @@ covergroup Cov_rvv_zve32x_vmsltu_vx with function sample(input logic [31:0] inst
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
       bins SEW32 = {rvv_tb_pkg::SEW32};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -4121,7 +4121,7 @@ covergroup Cov_rvv_zve32x_vmsltu_vx with function sample(input logic [31:0] inst
       bins LMUL2 = {rvv_tb_pkg::LMUL2};
       bins LMUL4 = {rvv_tb_pkg::LMUL4};
       bins LMUL8 = {rvv_tb_pkg::LMUL8};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -4131,7 +4131,7 @@ covergroup Cov_rvv_zve32x_vmsltu_vx with function sample(input logic [31:0] inst
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -4140,7 +4140,7 @@ covergroup Cov_rvv_zve32x_vmsltu_vx with function sample(input logic [31:0] inst
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -4153,7 +4153,7 @@ covergroup Cov_rvv_zve32x_vmslt_vv with function sample(input logic [31:0] inst,
     coverpoint (inst ==? {6'b011011, 1'b?, 5'b?????, 5'b?????, 3'b000, 5'b?????, 7'b1010111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -4167,7 +4167,7 @@ covergroup Cov_rvv_zve32x_vmslt_vv with function sample(input logic [31:0] inst,
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
       bins SEW32 = {rvv_tb_pkg::SEW32};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -4178,7 +4178,7 @@ covergroup Cov_rvv_zve32x_vmslt_vv with function sample(input logic [31:0] inst,
       bins LMUL2 = {rvv_tb_pkg::LMUL2};
       bins LMUL4 = {rvv_tb_pkg::LMUL4};
       bins LMUL8 = {rvv_tb_pkg::LMUL8};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -4188,7 +4188,7 @@ covergroup Cov_rvv_zve32x_vmslt_vv with function sample(input logic [31:0] inst,
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -4197,7 +4197,7 @@ covergroup Cov_rvv_zve32x_vmslt_vv with function sample(input logic [31:0] inst,
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -4210,7 +4210,7 @@ covergroup Cov_rvv_zve32x_vmslt_vx with function sample(input logic [31:0] inst,
     coverpoint (inst ==? {6'b011011, 1'b?, 5'b?????, 5'b?????, 3'b100, 5'b?????, 7'b1010111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -4224,7 +4224,7 @@ covergroup Cov_rvv_zve32x_vmslt_vx with function sample(input logic [31:0] inst,
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
       bins SEW32 = {rvv_tb_pkg::SEW32};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -4235,7 +4235,7 @@ covergroup Cov_rvv_zve32x_vmslt_vx with function sample(input logic [31:0] inst,
       bins LMUL2 = {rvv_tb_pkg::LMUL2};
       bins LMUL4 = {rvv_tb_pkg::LMUL4};
       bins LMUL8 = {rvv_tb_pkg::LMUL8};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -4245,7 +4245,7 @@ covergroup Cov_rvv_zve32x_vmslt_vx with function sample(input logic [31:0] inst,
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -4254,7 +4254,7 @@ covergroup Cov_rvv_zve32x_vmslt_vx with function sample(input logic [31:0] inst,
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -4267,7 +4267,7 @@ covergroup Cov_rvv_zve32x_vmsleu_vv with function sample(input logic [31:0] inst
     coverpoint (inst ==? {6'b011100, 1'b?, 5'b?????, 5'b?????, 3'b000, 5'b?????, 7'b1010111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -4281,7 +4281,7 @@ covergroup Cov_rvv_zve32x_vmsleu_vv with function sample(input logic [31:0] inst
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
       bins SEW32 = {rvv_tb_pkg::SEW32};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -4292,7 +4292,7 @@ covergroup Cov_rvv_zve32x_vmsleu_vv with function sample(input logic [31:0] inst
       bins LMUL2 = {rvv_tb_pkg::LMUL2};
       bins LMUL4 = {rvv_tb_pkg::LMUL4};
       bins LMUL8 = {rvv_tb_pkg::LMUL8};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -4302,7 +4302,7 @@ covergroup Cov_rvv_zve32x_vmsleu_vv with function sample(input logic [31:0] inst
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -4311,7 +4311,7 @@ covergroup Cov_rvv_zve32x_vmsleu_vv with function sample(input logic [31:0] inst
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -4324,7 +4324,7 @@ covergroup Cov_rvv_zve32x_vmsleu_vx with function sample(input logic [31:0] inst
     coverpoint (inst ==? {6'b011100, 1'b?, 5'b?????, 5'b?????, 3'b100, 5'b?????, 7'b1010111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -4338,7 +4338,7 @@ covergroup Cov_rvv_zve32x_vmsleu_vx with function sample(input logic [31:0] inst
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
       bins SEW32 = {rvv_tb_pkg::SEW32};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -4349,7 +4349,7 @@ covergroup Cov_rvv_zve32x_vmsleu_vx with function sample(input logic [31:0] inst
       bins LMUL2 = {rvv_tb_pkg::LMUL2};
       bins LMUL4 = {rvv_tb_pkg::LMUL4};
       bins LMUL8 = {rvv_tb_pkg::LMUL8};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -4359,7 +4359,7 @@ covergroup Cov_rvv_zve32x_vmsleu_vx with function sample(input logic [31:0] inst
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -4368,7 +4368,7 @@ covergroup Cov_rvv_zve32x_vmsleu_vx with function sample(input logic [31:0] inst
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -4381,7 +4381,7 @@ covergroup Cov_rvv_zve32x_vmsleu_vi with function sample(input logic [31:0] inst
     coverpoint (inst ==? {6'b011100, 1'b?, 5'b?????, 5'b?????, 3'b011, 5'b?????, 7'b1010111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -4395,7 +4395,7 @@ covergroup Cov_rvv_zve32x_vmsleu_vi with function sample(input logic [31:0] inst
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
       bins SEW32 = {rvv_tb_pkg::SEW32};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -4406,7 +4406,7 @@ covergroup Cov_rvv_zve32x_vmsleu_vi with function sample(input logic [31:0] inst
       bins LMUL2 = {rvv_tb_pkg::LMUL2};
       bins LMUL4 = {rvv_tb_pkg::LMUL4};
       bins LMUL8 = {rvv_tb_pkg::LMUL8};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -4416,7 +4416,7 @@ covergroup Cov_rvv_zve32x_vmsleu_vi with function sample(input logic [31:0] inst
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -4425,7 +4425,7 @@ covergroup Cov_rvv_zve32x_vmsleu_vi with function sample(input logic [31:0] inst
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -4438,7 +4438,7 @@ covergroup Cov_rvv_zve32x_vmsle_vv with function sample(input logic [31:0] inst,
     coverpoint (inst ==? {6'b011101, 1'b?, 5'b?????, 5'b?????, 3'b000, 5'b?????, 7'b1010111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -4452,7 +4452,7 @@ covergroup Cov_rvv_zve32x_vmsle_vv with function sample(input logic [31:0] inst,
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
       bins SEW32 = {rvv_tb_pkg::SEW32};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -4463,7 +4463,7 @@ covergroup Cov_rvv_zve32x_vmsle_vv with function sample(input logic [31:0] inst,
       bins LMUL2 = {rvv_tb_pkg::LMUL2};
       bins LMUL4 = {rvv_tb_pkg::LMUL4};
       bins LMUL8 = {rvv_tb_pkg::LMUL8};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -4473,7 +4473,7 @@ covergroup Cov_rvv_zve32x_vmsle_vv with function sample(input logic [31:0] inst,
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -4482,7 +4482,7 @@ covergroup Cov_rvv_zve32x_vmsle_vv with function sample(input logic [31:0] inst,
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -4495,7 +4495,7 @@ covergroup Cov_rvv_zve32x_vmsle_vx with function sample(input logic [31:0] inst,
     coverpoint (inst ==? {6'b011101, 1'b?, 5'b?????, 5'b?????, 3'b100, 5'b?????, 7'b1010111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -4509,7 +4509,7 @@ covergroup Cov_rvv_zve32x_vmsle_vx with function sample(input logic [31:0] inst,
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
       bins SEW32 = {rvv_tb_pkg::SEW32};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -4520,7 +4520,7 @@ covergroup Cov_rvv_zve32x_vmsle_vx with function sample(input logic [31:0] inst,
       bins LMUL2 = {rvv_tb_pkg::LMUL2};
       bins LMUL4 = {rvv_tb_pkg::LMUL4};
       bins LMUL8 = {rvv_tb_pkg::LMUL8};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -4530,7 +4530,7 @@ covergroup Cov_rvv_zve32x_vmsle_vx with function sample(input logic [31:0] inst,
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -4539,7 +4539,7 @@ covergroup Cov_rvv_zve32x_vmsle_vx with function sample(input logic [31:0] inst,
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -4552,7 +4552,7 @@ covergroup Cov_rvv_zve32x_vmsle_vi with function sample(input logic [31:0] inst,
     coverpoint (inst ==? {6'b011101, 1'b?, 5'b?????, 5'b?????, 3'b011, 5'b?????, 7'b1010111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -4566,7 +4566,7 @@ covergroup Cov_rvv_zve32x_vmsle_vi with function sample(input logic [31:0] inst,
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
       bins SEW32 = {rvv_tb_pkg::SEW32};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -4577,7 +4577,7 @@ covergroup Cov_rvv_zve32x_vmsle_vi with function sample(input logic [31:0] inst,
       bins LMUL2 = {rvv_tb_pkg::LMUL2};
       bins LMUL4 = {rvv_tb_pkg::LMUL4};
       bins LMUL8 = {rvv_tb_pkg::LMUL8};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -4587,7 +4587,7 @@ covergroup Cov_rvv_zve32x_vmsle_vi with function sample(input logic [31:0] inst,
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -4596,7 +4596,7 @@ covergroup Cov_rvv_zve32x_vmsle_vi with function sample(input logic [31:0] inst,
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -4609,7 +4609,7 @@ covergroup Cov_rvv_zve32x_vmsgtu_vx with function sample(input logic [31:0] inst
     coverpoint (inst ==? {6'b011110, 1'b?, 5'b?????, 5'b?????, 3'b100, 5'b?????, 7'b1010111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -4623,7 +4623,7 @@ covergroup Cov_rvv_zve32x_vmsgtu_vx with function sample(input logic [31:0] inst
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
       bins SEW32 = {rvv_tb_pkg::SEW32};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -4634,7 +4634,7 @@ covergroup Cov_rvv_zve32x_vmsgtu_vx with function sample(input logic [31:0] inst
       bins LMUL2 = {rvv_tb_pkg::LMUL2};
       bins LMUL4 = {rvv_tb_pkg::LMUL4};
       bins LMUL8 = {rvv_tb_pkg::LMUL8};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -4644,7 +4644,7 @@ covergroup Cov_rvv_zve32x_vmsgtu_vx with function sample(input logic [31:0] inst
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -4653,7 +4653,7 @@ covergroup Cov_rvv_zve32x_vmsgtu_vx with function sample(input logic [31:0] inst
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -4666,7 +4666,7 @@ covergroup Cov_rvv_zve32x_vmsgtu_vi with function sample(input logic [31:0] inst
     coverpoint (inst ==? {6'b011110, 1'b?, 5'b?????, 5'b?????, 3'b011, 5'b?????, 7'b1010111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -4680,7 +4680,7 @@ covergroup Cov_rvv_zve32x_vmsgtu_vi with function sample(input logic [31:0] inst
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
       bins SEW32 = {rvv_tb_pkg::SEW32};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -4691,7 +4691,7 @@ covergroup Cov_rvv_zve32x_vmsgtu_vi with function sample(input logic [31:0] inst
       bins LMUL2 = {rvv_tb_pkg::LMUL2};
       bins LMUL4 = {rvv_tb_pkg::LMUL4};
       bins LMUL8 = {rvv_tb_pkg::LMUL8};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -4701,7 +4701,7 @@ covergroup Cov_rvv_zve32x_vmsgtu_vi with function sample(input logic [31:0] inst
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -4710,7 +4710,7 @@ covergroup Cov_rvv_zve32x_vmsgtu_vi with function sample(input logic [31:0] inst
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -4723,7 +4723,7 @@ covergroup Cov_rvv_zve32x_vmsgt_vx with function sample(input logic [31:0] inst,
     coverpoint (inst ==? {6'b011111, 1'b?, 5'b?????, 5'b?????, 3'b100, 5'b?????, 7'b1010111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -4737,7 +4737,7 @@ covergroup Cov_rvv_zve32x_vmsgt_vx with function sample(input logic [31:0] inst,
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
       bins SEW32 = {rvv_tb_pkg::SEW32};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -4748,7 +4748,7 @@ covergroup Cov_rvv_zve32x_vmsgt_vx with function sample(input logic [31:0] inst,
       bins LMUL2 = {rvv_tb_pkg::LMUL2};
       bins LMUL4 = {rvv_tb_pkg::LMUL4};
       bins LMUL8 = {rvv_tb_pkg::LMUL8};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -4758,7 +4758,7 @@ covergroup Cov_rvv_zve32x_vmsgt_vx with function sample(input logic [31:0] inst,
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -4767,7 +4767,7 @@ covergroup Cov_rvv_zve32x_vmsgt_vx with function sample(input logic [31:0] inst,
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -4780,7 +4780,7 @@ covergroup Cov_rvv_zve32x_vmsgt_vi with function sample(input logic [31:0] inst,
     coverpoint (inst ==? {6'b011111, 1'b?, 5'b?????, 5'b?????, 3'b011, 5'b?????, 7'b1010111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -4794,7 +4794,7 @@ covergroup Cov_rvv_zve32x_vmsgt_vi with function sample(input logic [31:0] inst,
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
       bins SEW32 = {rvv_tb_pkg::SEW32};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -4805,7 +4805,7 @@ covergroup Cov_rvv_zve32x_vmsgt_vi with function sample(input logic [31:0] inst,
       bins LMUL2 = {rvv_tb_pkg::LMUL2};
       bins LMUL4 = {rvv_tb_pkg::LMUL4};
       bins LMUL8 = {rvv_tb_pkg::LMUL8};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -4815,7 +4815,7 @@ covergroup Cov_rvv_zve32x_vmsgt_vi with function sample(input logic [31:0] inst,
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -4824,7 +4824,7 @@ covergroup Cov_rvv_zve32x_vmsgt_vi with function sample(input logic [31:0] inst,
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -4837,7 +4837,7 @@ covergroup Cov_rvv_zve32x_vminu_vv with function sample(input logic [31:0] inst,
     coverpoint (inst ==? {6'b000100, 1'b?, 5'b?????, 5'b?????, 3'b000, 5'b?????, 7'b1010111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -4851,7 +4851,7 @@ covergroup Cov_rvv_zve32x_vminu_vv with function sample(input logic [31:0] inst,
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
       bins SEW32 = {rvv_tb_pkg::SEW32};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -4862,7 +4862,7 @@ covergroup Cov_rvv_zve32x_vminu_vv with function sample(input logic [31:0] inst,
       bins LMUL2 = {rvv_tb_pkg::LMUL2};
       bins LMUL4 = {rvv_tb_pkg::LMUL4};
       bins LMUL8 = {rvv_tb_pkg::LMUL8};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -4872,7 +4872,7 @@ covergroup Cov_rvv_zve32x_vminu_vv with function sample(input logic [31:0] inst,
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -4881,7 +4881,7 @@ covergroup Cov_rvv_zve32x_vminu_vv with function sample(input logic [31:0] inst,
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -4894,7 +4894,7 @@ covergroup Cov_rvv_zve32x_vminu_vx with function sample(input logic [31:0] inst,
     coverpoint (inst ==? {6'b000100, 1'b?, 5'b?????, 5'b?????, 3'b100, 5'b?????, 7'b1010111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -4908,7 +4908,7 @@ covergroup Cov_rvv_zve32x_vminu_vx with function sample(input logic [31:0] inst,
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
       bins SEW32 = {rvv_tb_pkg::SEW32};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -4919,7 +4919,7 @@ covergroup Cov_rvv_zve32x_vminu_vx with function sample(input logic [31:0] inst,
       bins LMUL2 = {rvv_tb_pkg::LMUL2};
       bins LMUL4 = {rvv_tb_pkg::LMUL4};
       bins LMUL8 = {rvv_tb_pkg::LMUL8};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -4929,7 +4929,7 @@ covergroup Cov_rvv_zve32x_vminu_vx with function sample(input logic [31:0] inst,
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -4938,7 +4938,7 @@ covergroup Cov_rvv_zve32x_vminu_vx with function sample(input logic [31:0] inst,
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -4951,7 +4951,7 @@ covergroup Cov_rvv_zve32x_vmin_vv with function sample(input logic [31:0] inst, 
     coverpoint (inst ==? {6'b000101, 1'b?, 5'b?????, 5'b?????, 3'b000, 5'b?????, 7'b1010111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -4965,7 +4965,7 @@ covergroup Cov_rvv_zve32x_vmin_vv with function sample(input logic [31:0] inst, 
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
       bins SEW32 = {rvv_tb_pkg::SEW32};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -4976,7 +4976,7 @@ covergroup Cov_rvv_zve32x_vmin_vv with function sample(input logic [31:0] inst, 
       bins LMUL2 = {rvv_tb_pkg::LMUL2};
       bins LMUL4 = {rvv_tb_pkg::LMUL4};
       bins LMUL8 = {rvv_tb_pkg::LMUL8};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -4986,7 +4986,7 @@ covergroup Cov_rvv_zve32x_vmin_vv with function sample(input logic [31:0] inst, 
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -4995,7 +4995,7 @@ covergroup Cov_rvv_zve32x_vmin_vv with function sample(input logic [31:0] inst, 
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -5008,7 +5008,7 @@ covergroup Cov_rvv_zve32x_vmin_vx with function sample(input logic [31:0] inst, 
     coverpoint (inst ==? {6'b000101, 1'b?, 5'b?????, 5'b?????, 3'b100, 5'b?????, 7'b1010111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -5022,7 +5022,7 @@ covergroup Cov_rvv_zve32x_vmin_vx with function sample(input logic [31:0] inst, 
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
       bins SEW32 = {rvv_tb_pkg::SEW32};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -5033,7 +5033,7 @@ covergroup Cov_rvv_zve32x_vmin_vx with function sample(input logic [31:0] inst, 
       bins LMUL2 = {rvv_tb_pkg::LMUL2};
       bins LMUL4 = {rvv_tb_pkg::LMUL4};
       bins LMUL8 = {rvv_tb_pkg::LMUL8};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -5043,7 +5043,7 @@ covergroup Cov_rvv_zve32x_vmin_vx with function sample(input logic [31:0] inst, 
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -5052,7 +5052,7 @@ covergroup Cov_rvv_zve32x_vmin_vx with function sample(input logic [31:0] inst, 
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -5065,7 +5065,7 @@ covergroup Cov_rvv_zve32x_vmaxu_vv with function sample(input logic [31:0] inst,
     coverpoint (inst ==? {6'b000110, 1'b?, 5'b?????, 5'b?????, 3'b000, 5'b?????, 7'b1010111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -5079,7 +5079,7 @@ covergroup Cov_rvv_zve32x_vmaxu_vv with function sample(input logic [31:0] inst,
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
       bins SEW32 = {rvv_tb_pkg::SEW32};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -5090,7 +5090,7 @@ covergroup Cov_rvv_zve32x_vmaxu_vv with function sample(input logic [31:0] inst,
       bins LMUL2 = {rvv_tb_pkg::LMUL2};
       bins LMUL4 = {rvv_tb_pkg::LMUL4};
       bins LMUL8 = {rvv_tb_pkg::LMUL8};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -5100,7 +5100,7 @@ covergroup Cov_rvv_zve32x_vmaxu_vv with function sample(input logic [31:0] inst,
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -5109,7 +5109,7 @@ covergroup Cov_rvv_zve32x_vmaxu_vv with function sample(input logic [31:0] inst,
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -5122,7 +5122,7 @@ covergroup Cov_rvv_zve32x_vmaxu_vx with function sample(input logic [31:0] inst,
     coverpoint (inst ==? {6'b000110, 1'b?, 5'b?????, 5'b?????, 3'b100, 5'b?????, 7'b1010111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -5136,7 +5136,7 @@ covergroup Cov_rvv_zve32x_vmaxu_vx with function sample(input logic [31:0] inst,
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
       bins SEW32 = {rvv_tb_pkg::SEW32};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -5147,7 +5147,7 @@ covergroup Cov_rvv_zve32x_vmaxu_vx with function sample(input logic [31:0] inst,
       bins LMUL2 = {rvv_tb_pkg::LMUL2};
       bins LMUL4 = {rvv_tb_pkg::LMUL4};
       bins LMUL8 = {rvv_tb_pkg::LMUL8};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -5157,7 +5157,7 @@ covergroup Cov_rvv_zve32x_vmaxu_vx with function sample(input logic [31:0] inst,
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -5166,7 +5166,7 @@ covergroup Cov_rvv_zve32x_vmaxu_vx with function sample(input logic [31:0] inst,
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -5179,7 +5179,7 @@ covergroup Cov_rvv_zve32x_vmax_vv with function sample(input logic [31:0] inst, 
     coverpoint (inst ==? {6'b000111, 1'b?, 5'b?????, 5'b?????, 3'b000, 5'b?????, 7'b1010111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -5193,7 +5193,7 @@ covergroup Cov_rvv_zve32x_vmax_vv with function sample(input logic [31:0] inst, 
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
       bins SEW32 = {rvv_tb_pkg::SEW32};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -5204,7 +5204,7 @@ covergroup Cov_rvv_zve32x_vmax_vv with function sample(input logic [31:0] inst, 
       bins LMUL2 = {rvv_tb_pkg::LMUL2};
       bins LMUL4 = {rvv_tb_pkg::LMUL4};
       bins LMUL8 = {rvv_tb_pkg::LMUL8};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -5214,7 +5214,7 @@ covergroup Cov_rvv_zve32x_vmax_vv with function sample(input logic [31:0] inst, 
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -5223,7 +5223,7 @@ covergroup Cov_rvv_zve32x_vmax_vv with function sample(input logic [31:0] inst, 
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -5236,7 +5236,7 @@ covergroup Cov_rvv_zve32x_vmax_vx with function sample(input logic [31:0] inst, 
     coverpoint (inst ==? {6'b000111, 1'b?, 5'b?????, 5'b?????, 3'b100, 5'b?????, 7'b1010111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -5250,7 +5250,7 @@ covergroup Cov_rvv_zve32x_vmax_vx with function sample(input logic [31:0] inst, 
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
       bins SEW32 = {rvv_tb_pkg::SEW32};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -5261,7 +5261,7 @@ covergroup Cov_rvv_zve32x_vmax_vx with function sample(input logic [31:0] inst, 
       bins LMUL2 = {rvv_tb_pkg::LMUL2};
       bins LMUL4 = {rvv_tb_pkg::LMUL4};
       bins LMUL8 = {rvv_tb_pkg::LMUL8};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -5271,7 +5271,7 @@ covergroup Cov_rvv_zve32x_vmax_vx with function sample(input logic [31:0] inst, 
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -5280,7 +5280,7 @@ covergroup Cov_rvv_zve32x_vmax_vx with function sample(input logic [31:0] inst, 
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -5293,7 +5293,7 @@ covergroup Cov_rvv_zve32x_vmul_vv with function sample(input logic [31:0] inst, 
     coverpoint (inst ==? {6'b100101, 1'b?, 5'b?????, 5'b?????, 3'b010, 5'b?????, 7'b1010111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -5307,7 +5307,7 @@ covergroup Cov_rvv_zve32x_vmul_vv with function sample(input logic [31:0] inst, 
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
       bins SEW32 = {rvv_tb_pkg::SEW32};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -5318,7 +5318,7 @@ covergroup Cov_rvv_zve32x_vmul_vv with function sample(input logic [31:0] inst, 
       bins LMUL2 = {rvv_tb_pkg::LMUL2};
       bins LMUL4 = {rvv_tb_pkg::LMUL4};
       bins LMUL8 = {rvv_tb_pkg::LMUL8};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -5328,7 +5328,7 @@ covergroup Cov_rvv_zve32x_vmul_vv with function sample(input logic [31:0] inst, 
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -5337,7 +5337,7 @@ covergroup Cov_rvv_zve32x_vmul_vv with function sample(input logic [31:0] inst, 
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -5350,7 +5350,7 @@ covergroup Cov_rvv_zve32x_vmul_vx with function sample(input logic [31:0] inst, 
     coverpoint (inst ==? {6'b100101, 1'b?, 5'b?????, 5'b?????, 3'b110, 5'b?????, 7'b1010111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -5364,7 +5364,7 @@ covergroup Cov_rvv_zve32x_vmul_vx with function sample(input logic [31:0] inst, 
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
       bins SEW32 = {rvv_tb_pkg::SEW32};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -5375,7 +5375,7 @@ covergroup Cov_rvv_zve32x_vmul_vx with function sample(input logic [31:0] inst, 
       bins LMUL2 = {rvv_tb_pkg::LMUL2};
       bins LMUL4 = {rvv_tb_pkg::LMUL4};
       bins LMUL8 = {rvv_tb_pkg::LMUL8};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -5385,7 +5385,7 @@ covergroup Cov_rvv_zve32x_vmul_vx with function sample(input logic [31:0] inst, 
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -5394,7 +5394,7 @@ covergroup Cov_rvv_zve32x_vmul_vx with function sample(input logic [31:0] inst, 
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -5407,7 +5407,7 @@ covergroup Cov_rvv_zve32x_vmulh_vv with function sample(input logic [31:0] inst,
     coverpoint (inst ==? {6'b100111, 1'b?, 5'b?????, 5'b?????, 3'b010, 5'b?????, 7'b1010111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -5421,7 +5421,7 @@ covergroup Cov_rvv_zve32x_vmulh_vv with function sample(input logic [31:0] inst,
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
       bins SEW32 = {rvv_tb_pkg::SEW32};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -5432,7 +5432,7 @@ covergroup Cov_rvv_zve32x_vmulh_vv with function sample(input logic [31:0] inst,
       bins LMUL2 = {rvv_tb_pkg::LMUL2};
       bins LMUL4 = {rvv_tb_pkg::LMUL4};
       bins LMUL8 = {rvv_tb_pkg::LMUL8};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -5442,7 +5442,7 @@ covergroup Cov_rvv_zve32x_vmulh_vv with function sample(input logic [31:0] inst,
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -5451,7 +5451,7 @@ covergroup Cov_rvv_zve32x_vmulh_vv with function sample(input logic [31:0] inst,
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -5464,7 +5464,7 @@ covergroup Cov_rvv_zve32x_vmulh_vx with function sample(input logic [31:0] inst,
     coverpoint (inst ==? {6'b100111, 1'b?, 5'b?????, 5'b?????, 3'b110, 5'b?????, 7'b1010111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -5478,7 +5478,7 @@ covergroup Cov_rvv_zve32x_vmulh_vx with function sample(input logic [31:0] inst,
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
       bins SEW32 = {rvv_tb_pkg::SEW32};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -5489,7 +5489,7 @@ covergroup Cov_rvv_zve32x_vmulh_vx with function sample(input logic [31:0] inst,
       bins LMUL2 = {rvv_tb_pkg::LMUL2};
       bins LMUL4 = {rvv_tb_pkg::LMUL4};
       bins LMUL8 = {rvv_tb_pkg::LMUL8};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -5499,7 +5499,7 @@ covergroup Cov_rvv_zve32x_vmulh_vx with function sample(input logic [31:0] inst,
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -5508,7 +5508,7 @@ covergroup Cov_rvv_zve32x_vmulh_vx with function sample(input logic [31:0] inst,
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -5521,7 +5521,7 @@ covergroup Cov_rvv_zve32x_vmulhu_vv with function sample(input logic [31:0] inst
     coverpoint (inst ==? {6'b100100, 1'b?, 5'b?????, 5'b?????, 3'b010, 5'b?????, 7'b1010111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -5535,7 +5535,7 @@ covergroup Cov_rvv_zve32x_vmulhu_vv with function sample(input logic [31:0] inst
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
       bins SEW32 = {rvv_tb_pkg::SEW32};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -5546,7 +5546,7 @@ covergroup Cov_rvv_zve32x_vmulhu_vv with function sample(input logic [31:0] inst
       bins LMUL2 = {rvv_tb_pkg::LMUL2};
       bins LMUL4 = {rvv_tb_pkg::LMUL4};
       bins LMUL8 = {rvv_tb_pkg::LMUL8};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -5556,7 +5556,7 @@ covergroup Cov_rvv_zve32x_vmulhu_vv with function sample(input logic [31:0] inst
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -5565,7 +5565,7 @@ covergroup Cov_rvv_zve32x_vmulhu_vv with function sample(input logic [31:0] inst
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -5578,7 +5578,7 @@ covergroup Cov_rvv_zve32x_vmulhu_vx with function sample(input logic [31:0] inst
     coverpoint (inst ==? {6'b100100, 1'b?, 5'b?????, 5'b?????, 3'b110, 5'b?????, 7'b1010111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -5592,7 +5592,7 @@ covergroup Cov_rvv_zve32x_vmulhu_vx with function sample(input logic [31:0] inst
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
       bins SEW32 = {rvv_tb_pkg::SEW32};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -5603,7 +5603,7 @@ covergroup Cov_rvv_zve32x_vmulhu_vx with function sample(input logic [31:0] inst
       bins LMUL2 = {rvv_tb_pkg::LMUL2};
       bins LMUL4 = {rvv_tb_pkg::LMUL4};
       bins LMUL8 = {rvv_tb_pkg::LMUL8};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -5613,7 +5613,7 @@ covergroup Cov_rvv_zve32x_vmulhu_vx with function sample(input logic [31:0] inst
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -5622,7 +5622,7 @@ covergroup Cov_rvv_zve32x_vmulhu_vx with function sample(input logic [31:0] inst
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -5635,7 +5635,7 @@ covergroup Cov_rvv_zve32x_vmulhsu_vv with function sample(input logic [31:0] ins
     coverpoint (inst ==? {6'b100110, 1'b?, 5'b?????, 5'b?????, 3'b010, 5'b?????, 7'b1010111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -5649,7 +5649,7 @@ covergroup Cov_rvv_zve32x_vmulhsu_vv with function sample(input logic [31:0] ins
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
       bins SEW32 = {rvv_tb_pkg::SEW32};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -5660,7 +5660,7 @@ covergroup Cov_rvv_zve32x_vmulhsu_vv with function sample(input logic [31:0] ins
       bins LMUL2 = {rvv_tb_pkg::LMUL2};
       bins LMUL4 = {rvv_tb_pkg::LMUL4};
       bins LMUL8 = {rvv_tb_pkg::LMUL8};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -5670,7 +5670,7 @@ covergroup Cov_rvv_zve32x_vmulhsu_vv with function sample(input logic [31:0] ins
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -5679,7 +5679,7 @@ covergroup Cov_rvv_zve32x_vmulhsu_vv with function sample(input logic [31:0] ins
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -5692,7 +5692,7 @@ covergroup Cov_rvv_zve32x_vmulhsu_vx with function sample(input logic [31:0] ins
     coverpoint (inst ==? {6'b100110, 1'b?, 5'b?????, 5'b?????, 3'b110, 5'b?????, 7'b1010111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -5706,7 +5706,7 @@ covergroup Cov_rvv_zve32x_vmulhsu_vx with function sample(input logic [31:0] ins
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
       bins SEW32 = {rvv_tb_pkg::SEW32};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -5717,7 +5717,7 @@ covergroup Cov_rvv_zve32x_vmulhsu_vx with function sample(input logic [31:0] ins
       bins LMUL2 = {rvv_tb_pkg::LMUL2};
       bins LMUL4 = {rvv_tb_pkg::LMUL4};
       bins LMUL8 = {rvv_tb_pkg::LMUL8};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -5727,7 +5727,7 @@ covergroup Cov_rvv_zve32x_vmulhsu_vx with function sample(input logic [31:0] ins
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -5736,7 +5736,7 @@ covergroup Cov_rvv_zve32x_vmulhsu_vx with function sample(input logic [31:0] ins
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -5749,7 +5749,7 @@ covergroup Cov_rvv_zve32x_vwmul_vv with function sample(input logic [31:0] inst,
     coverpoint (inst ==? {6'b111011, 1'b?, 5'b?????, 5'b?????, 3'b010, 5'b?????, 7'b1010111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -5762,7 +5762,7 @@ covergroup Cov_rvv_zve32x_vwmul_vv with function sample(input logic [31:0] inst,
       option.comment = "Value of vsew";
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -5772,7 +5772,7 @@ covergroup Cov_rvv_zve32x_vwmul_vv with function sample(input logic [31:0] inst,
       bins LMUL1 = {rvv_tb_pkg::LMUL1};
       bins LMUL2 = {rvv_tb_pkg::LMUL2};
       bins LMUL4 = {rvv_tb_pkg::LMUL4};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -5782,7 +5782,7 @@ covergroup Cov_rvv_zve32x_vwmul_vv with function sample(input logic [31:0] inst,
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -5791,7 +5791,7 @@ covergroup Cov_rvv_zve32x_vwmul_vv with function sample(input logic [31:0] inst,
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -5804,7 +5804,7 @@ covergroup Cov_rvv_zve32x_vwmul_vx with function sample(input logic [31:0] inst,
     coverpoint (inst ==? {6'b111011, 1'b?, 5'b?????, 5'b?????, 3'b110, 5'b?????, 7'b1010111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -5817,7 +5817,7 @@ covergroup Cov_rvv_zve32x_vwmul_vx with function sample(input logic [31:0] inst,
       option.comment = "Value of vsew";
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -5827,7 +5827,7 @@ covergroup Cov_rvv_zve32x_vwmul_vx with function sample(input logic [31:0] inst,
       bins LMUL1 = {rvv_tb_pkg::LMUL1};
       bins LMUL2 = {rvv_tb_pkg::LMUL2};
       bins LMUL4 = {rvv_tb_pkg::LMUL4};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -5837,7 +5837,7 @@ covergroup Cov_rvv_zve32x_vwmul_vx with function sample(input logic [31:0] inst,
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -5846,7 +5846,7 @@ covergroup Cov_rvv_zve32x_vwmul_vx with function sample(input logic [31:0] inst,
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -5859,7 +5859,7 @@ covergroup Cov_rvv_zve32x_vwmulu_vv with function sample(input logic [31:0] inst
     coverpoint (inst ==? {6'b111000, 1'b?, 5'b?????, 5'b?????, 3'b010, 5'b?????, 7'b1010111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -5872,7 +5872,7 @@ covergroup Cov_rvv_zve32x_vwmulu_vv with function sample(input logic [31:0] inst
       option.comment = "Value of vsew";
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -5882,7 +5882,7 @@ covergroup Cov_rvv_zve32x_vwmulu_vv with function sample(input logic [31:0] inst
       bins LMUL1 = {rvv_tb_pkg::LMUL1};
       bins LMUL2 = {rvv_tb_pkg::LMUL2};
       bins LMUL4 = {rvv_tb_pkg::LMUL4};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -5892,7 +5892,7 @@ covergroup Cov_rvv_zve32x_vwmulu_vv with function sample(input logic [31:0] inst
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -5901,7 +5901,7 @@ covergroup Cov_rvv_zve32x_vwmulu_vv with function sample(input logic [31:0] inst
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -5914,7 +5914,7 @@ covergroup Cov_rvv_zve32x_vwmulu_vx with function sample(input logic [31:0] inst
     coverpoint (inst ==? {6'b111000, 1'b?, 5'b?????, 5'b?????, 3'b110, 5'b?????, 7'b1010111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -5927,7 +5927,7 @@ covergroup Cov_rvv_zve32x_vwmulu_vx with function sample(input logic [31:0] inst
       option.comment = "Value of vsew";
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -5937,7 +5937,7 @@ covergroup Cov_rvv_zve32x_vwmulu_vx with function sample(input logic [31:0] inst
       bins LMUL1 = {rvv_tb_pkg::LMUL1};
       bins LMUL2 = {rvv_tb_pkg::LMUL2};
       bins LMUL4 = {rvv_tb_pkg::LMUL4};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -5947,7 +5947,7 @@ covergroup Cov_rvv_zve32x_vwmulu_vx with function sample(input logic [31:0] inst
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -5956,7 +5956,7 @@ covergroup Cov_rvv_zve32x_vwmulu_vx with function sample(input logic [31:0] inst
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -5969,7 +5969,7 @@ covergroup Cov_rvv_zve32x_vwmulsu_vv with function sample(input logic [31:0] ins
     coverpoint (inst ==? {6'b111010, 1'b?, 5'b?????, 5'b?????, 3'b010, 5'b?????, 7'b1010111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -5982,7 +5982,7 @@ covergroup Cov_rvv_zve32x_vwmulsu_vv with function sample(input logic [31:0] ins
       option.comment = "Value of vsew";
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -5992,7 +5992,7 @@ covergroup Cov_rvv_zve32x_vwmulsu_vv with function sample(input logic [31:0] ins
       bins LMUL1 = {rvv_tb_pkg::LMUL1};
       bins LMUL2 = {rvv_tb_pkg::LMUL2};
       bins LMUL4 = {rvv_tb_pkg::LMUL4};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -6002,7 +6002,7 @@ covergroup Cov_rvv_zve32x_vwmulsu_vv with function sample(input logic [31:0] ins
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -6011,7 +6011,7 @@ covergroup Cov_rvv_zve32x_vwmulsu_vv with function sample(input logic [31:0] ins
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -6024,7 +6024,7 @@ covergroup Cov_rvv_zve32x_vwmulsu_vx with function sample(input logic [31:0] ins
     coverpoint (inst ==? {6'b111010, 1'b?, 5'b?????, 5'b?????, 3'b110, 5'b?????, 7'b1010111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -6037,7 +6037,7 @@ covergroup Cov_rvv_zve32x_vwmulsu_vx with function sample(input logic [31:0] ins
       option.comment = "Value of vsew";
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -6047,7 +6047,7 @@ covergroup Cov_rvv_zve32x_vwmulsu_vx with function sample(input logic [31:0] ins
       bins LMUL1 = {rvv_tb_pkg::LMUL1};
       bins LMUL2 = {rvv_tb_pkg::LMUL2};
       bins LMUL4 = {rvv_tb_pkg::LMUL4};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -6057,7 +6057,7 @@ covergroup Cov_rvv_zve32x_vwmulsu_vx with function sample(input logic [31:0] ins
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -6066,7 +6066,7 @@ covergroup Cov_rvv_zve32x_vwmulsu_vx with function sample(input logic [31:0] ins
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -6079,7 +6079,7 @@ covergroup Cov_rvv_zve32x_vmacc_vv with function sample(input logic [31:0] inst,
     coverpoint (inst ==? {6'b101101, 1'b?, 5'b?????, 5'b?????, 3'b010, 5'b?????, 7'b1010111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -6093,7 +6093,7 @@ covergroup Cov_rvv_zve32x_vmacc_vv with function sample(input logic [31:0] inst,
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
       bins SEW32 = {rvv_tb_pkg::SEW32};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -6104,7 +6104,7 @@ covergroup Cov_rvv_zve32x_vmacc_vv with function sample(input logic [31:0] inst,
       bins LMUL2 = {rvv_tb_pkg::LMUL2};
       bins LMUL4 = {rvv_tb_pkg::LMUL4};
       bins LMUL8 = {rvv_tb_pkg::LMUL8};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -6114,7 +6114,7 @@ covergroup Cov_rvv_zve32x_vmacc_vv with function sample(input logic [31:0] inst,
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -6123,7 +6123,7 @@ covergroup Cov_rvv_zve32x_vmacc_vv with function sample(input logic [31:0] inst,
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -6136,7 +6136,7 @@ covergroup Cov_rvv_zve32x_vmacc_vx with function sample(input logic [31:0] inst,
     coverpoint (inst ==? {6'b101101, 1'b?, 5'b?????, 5'b?????, 3'b110, 5'b?????, 7'b1010111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -6150,7 +6150,7 @@ covergroup Cov_rvv_zve32x_vmacc_vx with function sample(input logic [31:0] inst,
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
       bins SEW32 = {rvv_tb_pkg::SEW32};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -6161,7 +6161,7 @@ covergroup Cov_rvv_zve32x_vmacc_vx with function sample(input logic [31:0] inst,
       bins LMUL2 = {rvv_tb_pkg::LMUL2};
       bins LMUL4 = {rvv_tb_pkg::LMUL4};
       bins LMUL8 = {rvv_tb_pkg::LMUL8};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -6171,7 +6171,7 @@ covergroup Cov_rvv_zve32x_vmacc_vx with function sample(input logic [31:0] inst,
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -6180,7 +6180,7 @@ covergroup Cov_rvv_zve32x_vmacc_vx with function sample(input logic [31:0] inst,
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -6193,7 +6193,7 @@ covergroup Cov_rvv_zve32x_vnmsac_vv with function sample(input logic [31:0] inst
     coverpoint (inst ==? {6'b101111, 1'b?, 5'b?????, 5'b?????, 3'b010, 5'b?????, 7'b1010111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -6207,7 +6207,7 @@ covergroup Cov_rvv_zve32x_vnmsac_vv with function sample(input logic [31:0] inst
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
       bins SEW32 = {rvv_tb_pkg::SEW32};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -6218,7 +6218,7 @@ covergroup Cov_rvv_zve32x_vnmsac_vv with function sample(input logic [31:0] inst
       bins LMUL2 = {rvv_tb_pkg::LMUL2};
       bins LMUL4 = {rvv_tb_pkg::LMUL4};
       bins LMUL8 = {rvv_tb_pkg::LMUL8};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -6228,7 +6228,7 @@ covergroup Cov_rvv_zve32x_vnmsac_vv with function sample(input logic [31:0] inst
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -6237,7 +6237,7 @@ covergroup Cov_rvv_zve32x_vnmsac_vv with function sample(input logic [31:0] inst
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -6250,7 +6250,7 @@ covergroup Cov_rvv_zve32x_vnmsac_vx with function sample(input logic [31:0] inst
     coverpoint (inst ==? {6'b101111, 1'b?, 5'b?????, 5'b?????, 3'b110, 5'b?????, 7'b1010111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -6264,7 +6264,7 @@ covergroup Cov_rvv_zve32x_vnmsac_vx with function sample(input logic [31:0] inst
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
       bins SEW32 = {rvv_tb_pkg::SEW32};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -6275,7 +6275,7 @@ covergroup Cov_rvv_zve32x_vnmsac_vx with function sample(input logic [31:0] inst
       bins LMUL2 = {rvv_tb_pkg::LMUL2};
       bins LMUL4 = {rvv_tb_pkg::LMUL4};
       bins LMUL8 = {rvv_tb_pkg::LMUL8};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -6285,7 +6285,7 @@ covergroup Cov_rvv_zve32x_vnmsac_vx with function sample(input logic [31:0] inst
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -6294,7 +6294,7 @@ covergroup Cov_rvv_zve32x_vnmsac_vx with function sample(input logic [31:0] inst
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -6307,7 +6307,7 @@ covergroup Cov_rvv_zve32x_vmadd_vv with function sample(input logic [31:0] inst,
     coverpoint (inst ==? {6'b101001, 1'b?, 5'b?????, 5'b?????, 3'b010, 5'b?????, 7'b1010111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -6321,7 +6321,7 @@ covergroup Cov_rvv_zve32x_vmadd_vv with function sample(input logic [31:0] inst,
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
       bins SEW32 = {rvv_tb_pkg::SEW32};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -6332,7 +6332,7 @@ covergroup Cov_rvv_zve32x_vmadd_vv with function sample(input logic [31:0] inst,
       bins LMUL2 = {rvv_tb_pkg::LMUL2};
       bins LMUL4 = {rvv_tb_pkg::LMUL4};
       bins LMUL8 = {rvv_tb_pkg::LMUL8};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -6342,7 +6342,7 @@ covergroup Cov_rvv_zve32x_vmadd_vv with function sample(input logic [31:0] inst,
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -6351,7 +6351,7 @@ covergroup Cov_rvv_zve32x_vmadd_vv with function sample(input logic [31:0] inst,
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -6364,7 +6364,7 @@ covergroup Cov_rvv_zve32x_vmadd_vx with function sample(input logic [31:0] inst,
     coverpoint (inst ==? {6'b101001, 1'b?, 5'b?????, 5'b?????, 3'b110, 5'b?????, 7'b1010111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -6378,7 +6378,7 @@ covergroup Cov_rvv_zve32x_vmadd_vx with function sample(input logic [31:0] inst,
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
       bins SEW32 = {rvv_tb_pkg::SEW32};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -6389,7 +6389,7 @@ covergroup Cov_rvv_zve32x_vmadd_vx with function sample(input logic [31:0] inst,
       bins LMUL2 = {rvv_tb_pkg::LMUL2};
       bins LMUL4 = {rvv_tb_pkg::LMUL4};
       bins LMUL8 = {rvv_tb_pkg::LMUL8};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -6399,7 +6399,7 @@ covergroup Cov_rvv_zve32x_vmadd_vx with function sample(input logic [31:0] inst,
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -6408,7 +6408,7 @@ covergroup Cov_rvv_zve32x_vmadd_vx with function sample(input logic [31:0] inst,
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -6421,7 +6421,7 @@ covergroup Cov_rvv_zve32x_vnmsub_vv with function sample(input logic [31:0] inst
     coverpoint (inst ==? {6'b101011, 1'b?, 5'b?????, 5'b?????, 3'b010, 5'b?????, 7'b1010111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -6435,7 +6435,7 @@ covergroup Cov_rvv_zve32x_vnmsub_vv with function sample(input logic [31:0] inst
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
       bins SEW32 = {rvv_tb_pkg::SEW32};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -6446,7 +6446,7 @@ covergroup Cov_rvv_zve32x_vnmsub_vv with function sample(input logic [31:0] inst
       bins LMUL2 = {rvv_tb_pkg::LMUL2};
       bins LMUL4 = {rvv_tb_pkg::LMUL4};
       bins LMUL8 = {rvv_tb_pkg::LMUL8};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -6456,7 +6456,7 @@ covergroup Cov_rvv_zve32x_vnmsub_vv with function sample(input logic [31:0] inst
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -6465,7 +6465,7 @@ covergroup Cov_rvv_zve32x_vnmsub_vv with function sample(input logic [31:0] inst
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -6478,7 +6478,7 @@ covergroup Cov_rvv_zve32x_vnmsub_vx with function sample(input logic [31:0] inst
     coverpoint (inst ==? {6'b101011, 1'b?, 5'b?????, 5'b?????, 3'b110, 5'b?????, 7'b1010111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -6492,7 +6492,7 @@ covergroup Cov_rvv_zve32x_vnmsub_vx with function sample(input logic [31:0] inst
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
       bins SEW32 = {rvv_tb_pkg::SEW32};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -6503,7 +6503,7 @@ covergroup Cov_rvv_zve32x_vnmsub_vx with function sample(input logic [31:0] inst
       bins LMUL2 = {rvv_tb_pkg::LMUL2};
       bins LMUL4 = {rvv_tb_pkg::LMUL4};
       bins LMUL8 = {rvv_tb_pkg::LMUL8};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -6513,7 +6513,7 @@ covergroup Cov_rvv_zve32x_vnmsub_vx with function sample(input logic [31:0] inst
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -6522,7 +6522,7 @@ covergroup Cov_rvv_zve32x_vnmsub_vx with function sample(input logic [31:0] inst
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -6535,7 +6535,7 @@ covergroup Cov_rvv_zve32x_vwmaccu_vv with function sample(input logic [31:0] ins
     coverpoint (inst ==? {6'b111100, 1'b?, 5'b?????, 5'b?????, 3'b010, 5'b?????, 7'b1010111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -6548,7 +6548,7 @@ covergroup Cov_rvv_zve32x_vwmaccu_vv with function sample(input logic [31:0] ins
       option.comment = "Value of vsew";
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -6558,7 +6558,7 @@ covergroup Cov_rvv_zve32x_vwmaccu_vv with function sample(input logic [31:0] ins
       bins LMUL1 = {rvv_tb_pkg::LMUL1};
       bins LMUL2 = {rvv_tb_pkg::LMUL2};
       bins LMUL4 = {rvv_tb_pkg::LMUL4};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -6568,7 +6568,7 @@ covergroup Cov_rvv_zve32x_vwmaccu_vv with function sample(input logic [31:0] ins
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -6577,7 +6577,7 @@ covergroup Cov_rvv_zve32x_vwmaccu_vv with function sample(input logic [31:0] ins
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -6590,7 +6590,7 @@ covergroup Cov_rvv_zve32x_vwmaccu_vx with function sample(input logic [31:0] ins
     coverpoint (inst ==? {6'b111100, 1'b?, 5'b?????, 5'b?????, 3'b110, 5'b?????, 7'b1010111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -6603,7 +6603,7 @@ covergroup Cov_rvv_zve32x_vwmaccu_vx with function sample(input logic [31:0] ins
       option.comment = "Value of vsew";
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -6613,7 +6613,7 @@ covergroup Cov_rvv_zve32x_vwmaccu_vx with function sample(input logic [31:0] ins
       bins LMUL1 = {rvv_tb_pkg::LMUL1};
       bins LMUL2 = {rvv_tb_pkg::LMUL2};
       bins LMUL4 = {rvv_tb_pkg::LMUL4};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -6623,7 +6623,7 @@ covergroup Cov_rvv_zve32x_vwmaccu_vx with function sample(input logic [31:0] ins
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -6632,7 +6632,7 @@ covergroup Cov_rvv_zve32x_vwmaccu_vx with function sample(input logic [31:0] ins
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -6645,7 +6645,7 @@ covergroup Cov_rvv_zve32x_vwmacc_vv with function sample(input logic [31:0] inst
     coverpoint (inst ==? {6'b111101, 1'b?, 5'b?????, 5'b?????, 3'b010, 5'b?????, 7'b1010111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -6658,7 +6658,7 @@ covergroup Cov_rvv_zve32x_vwmacc_vv with function sample(input logic [31:0] inst
       option.comment = "Value of vsew";
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -6668,7 +6668,7 @@ covergroup Cov_rvv_zve32x_vwmacc_vv with function sample(input logic [31:0] inst
       bins LMUL1 = {rvv_tb_pkg::LMUL1};
       bins LMUL2 = {rvv_tb_pkg::LMUL2};
       bins LMUL4 = {rvv_tb_pkg::LMUL4};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -6678,7 +6678,7 @@ covergroup Cov_rvv_zve32x_vwmacc_vv with function sample(input logic [31:0] inst
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -6687,7 +6687,7 @@ covergroup Cov_rvv_zve32x_vwmacc_vv with function sample(input logic [31:0] inst
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -6700,7 +6700,7 @@ covergroup Cov_rvv_zve32x_vwmacc_vx with function sample(input logic [31:0] inst
     coverpoint (inst ==? {6'b111101, 1'b?, 5'b?????, 5'b?????, 3'b110, 5'b?????, 7'b1010111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -6713,7 +6713,7 @@ covergroup Cov_rvv_zve32x_vwmacc_vx with function sample(input logic [31:0] inst
       option.comment = "Value of vsew";
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -6723,7 +6723,7 @@ covergroup Cov_rvv_zve32x_vwmacc_vx with function sample(input logic [31:0] inst
       bins LMUL1 = {rvv_tb_pkg::LMUL1};
       bins LMUL2 = {rvv_tb_pkg::LMUL2};
       bins LMUL4 = {rvv_tb_pkg::LMUL4};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -6733,7 +6733,7 @@ covergroup Cov_rvv_zve32x_vwmacc_vx with function sample(input logic [31:0] inst
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -6742,7 +6742,7 @@ covergroup Cov_rvv_zve32x_vwmacc_vx with function sample(input logic [31:0] inst
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -6755,7 +6755,7 @@ covergroup Cov_rvv_zve32x_vwmaccsu_vv with function sample(input logic [31:0] in
     coverpoint (inst ==? {6'b111111, 1'b?, 5'b?????, 5'b?????, 3'b010, 5'b?????, 7'b1010111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -6768,7 +6768,7 @@ covergroup Cov_rvv_zve32x_vwmaccsu_vv with function sample(input logic [31:0] in
       option.comment = "Value of vsew";
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -6778,7 +6778,7 @@ covergroup Cov_rvv_zve32x_vwmaccsu_vv with function sample(input logic [31:0] in
       bins LMUL1 = {rvv_tb_pkg::LMUL1};
       bins LMUL2 = {rvv_tb_pkg::LMUL2};
       bins LMUL4 = {rvv_tb_pkg::LMUL4};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -6788,7 +6788,7 @@ covergroup Cov_rvv_zve32x_vwmaccsu_vv with function sample(input logic [31:0] in
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -6797,7 +6797,7 @@ covergroup Cov_rvv_zve32x_vwmaccsu_vv with function sample(input logic [31:0] in
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -6810,7 +6810,7 @@ covergroup Cov_rvv_zve32x_vwmaccsu_vx with function sample(input logic [31:0] in
     coverpoint (inst ==? {6'b111111, 1'b?, 5'b?????, 5'b?????, 3'b110, 5'b?????, 7'b1010111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -6823,7 +6823,7 @@ covergroup Cov_rvv_zve32x_vwmaccsu_vx with function sample(input logic [31:0] in
       option.comment = "Value of vsew";
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -6833,7 +6833,7 @@ covergroup Cov_rvv_zve32x_vwmaccsu_vx with function sample(input logic [31:0] in
       bins LMUL1 = {rvv_tb_pkg::LMUL1};
       bins LMUL2 = {rvv_tb_pkg::LMUL2};
       bins LMUL4 = {rvv_tb_pkg::LMUL4};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -6843,7 +6843,7 @@ covergroup Cov_rvv_zve32x_vwmaccsu_vx with function sample(input logic [31:0] in
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -6852,7 +6852,7 @@ covergroup Cov_rvv_zve32x_vwmaccsu_vx with function sample(input logic [31:0] in
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -6865,7 +6865,7 @@ covergroup Cov_rvv_zve32x_vwmaccus_vx with function sample(input logic [31:0] in
     coverpoint (inst ==? {6'b111110, 1'b?, 5'b?????, 5'b?????, 3'b110, 5'b?????, 7'b1010111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -6878,7 +6878,7 @@ covergroup Cov_rvv_zve32x_vwmaccus_vx with function sample(input logic [31:0] in
       option.comment = "Value of vsew";
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -6888,7 +6888,7 @@ covergroup Cov_rvv_zve32x_vwmaccus_vx with function sample(input logic [31:0] in
       bins LMUL1 = {rvv_tb_pkg::LMUL1};
       bins LMUL2 = {rvv_tb_pkg::LMUL2};
       bins LMUL4 = {rvv_tb_pkg::LMUL4};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -6898,7 +6898,7 @@ covergroup Cov_rvv_zve32x_vwmaccus_vx with function sample(input logic [31:0] in
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -6907,7 +6907,7 @@ covergroup Cov_rvv_zve32x_vwmaccus_vx with function sample(input logic [31:0] in
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -6920,7 +6920,7 @@ covergroup Cov_rvv_zve32x_vdivu_vv with function sample(input logic [31:0] inst,
     coverpoint (inst ==? {6'b100000, 1'b?, 5'b?????, 5'b?????, 3'b010, 5'b?????, 7'b1010111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -6934,7 +6934,7 @@ covergroup Cov_rvv_zve32x_vdivu_vv with function sample(input logic [31:0] inst,
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
       bins SEW32 = {rvv_tb_pkg::SEW32};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -6945,7 +6945,7 @@ covergroup Cov_rvv_zve32x_vdivu_vv with function sample(input logic [31:0] inst,
       bins LMUL2 = {rvv_tb_pkg::LMUL2};
       bins LMUL4 = {rvv_tb_pkg::LMUL4};
       bins LMUL8 = {rvv_tb_pkg::LMUL8};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -6955,7 +6955,7 @@ covergroup Cov_rvv_zve32x_vdivu_vv with function sample(input logic [31:0] inst,
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -6964,7 +6964,7 @@ covergroup Cov_rvv_zve32x_vdivu_vv with function sample(input logic [31:0] inst,
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -6977,7 +6977,7 @@ covergroup Cov_rvv_zve32x_vdivu_vx with function sample(input logic [31:0] inst,
     coverpoint (inst ==? {6'b100000, 1'b?, 5'b?????, 5'b?????, 3'b110, 5'b?????, 7'b1010111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -6991,7 +6991,7 @@ covergroup Cov_rvv_zve32x_vdivu_vx with function sample(input logic [31:0] inst,
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
       bins SEW32 = {rvv_tb_pkg::SEW32};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -7002,7 +7002,7 @@ covergroup Cov_rvv_zve32x_vdivu_vx with function sample(input logic [31:0] inst,
       bins LMUL2 = {rvv_tb_pkg::LMUL2};
       bins LMUL4 = {rvv_tb_pkg::LMUL4};
       bins LMUL8 = {rvv_tb_pkg::LMUL8};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -7012,7 +7012,7 @@ covergroup Cov_rvv_zve32x_vdivu_vx with function sample(input logic [31:0] inst,
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -7021,7 +7021,7 @@ covergroup Cov_rvv_zve32x_vdivu_vx with function sample(input logic [31:0] inst,
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -7034,7 +7034,7 @@ covergroup Cov_rvv_zve32x_vdiv_vv with function sample(input logic [31:0] inst, 
     coverpoint (inst ==? {6'b100001, 1'b?, 5'b?????, 5'b?????, 3'b010, 5'b?????, 7'b1010111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -7048,7 +7048,7 @@ covergroup Cov_rvv_zve32x_vdiv_vv with function sample(input logic [31:0] inst, 
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
       bins SEW32 = {rvv_tb_pkg::SEW32};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -7059,7 +7059,7 @@ covergroup Cov_rvv_zve32x_vdiv_vv with function sample(input logic [31:0] inst, 
       bins LMUL2 = {rvv_tb_pkg::LMUL2};
       bins LMUL4 = {rvv_tb_pkg::LMUL4};
       bins LMUL8 = {rvv_tb_pkg::LMUL8};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -7069,7 +7069,7 @@ covergroup Cov_rvv_zve32x_vdiv_vv with function sample(input logic [31:0] inst, 
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -7078,7 +7078,7 @@ covergroup Cov_rvv_zve32x_vdiv_vv with function sample(input logic [31:0] inst, 
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -7091,7 +7091,7 @@ covergroup Cov_rvv_zve32x_vdiv_vx with function sample(input logic [31:0] inst, 
     coverpoint (inst ==? {6'b100001, 1'b?, 5'b?????, 5'b?????, 3'b110, 5'b?????, 7'b1010111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -7105,7 +7105,7 @@ covergroup Cov_rvv_zve32x_vdiv_vx with function sample(input logic [31:0] inst, 
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
       bins SEW32 = {rvv_tb_pkg::SEW32};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -7116,7 +7116,7 @@ covergroup Cov_rvv_zve32x_vdiv_vx with function sample(input logic [31:0] inst, 
       bins LMUL2 = {rvv_tb_pkg::LMUL2};
       bins LMUL4 = {rvv_tb_pkg::LMUL4};
       bins LMUL8 = {rvv_tb_pkg::LMUL8};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -7126,7 +7126,7 @@ covergroup Cov_rvv_zve32x_vdiv_vx with function sample(input logic [31:0] inst, 
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -7135,7 +7135,7 @@ covergroup Cov_rvv_zve32x_vdiv_vx with function sample(input logic [31:0] inst, 
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -7148,7 +7148,7 @@ covergroup Cov_rvv_zve32x_vremu_vv with function sample(input logic [31:0] inst,
     coverpoint (inst ==? {6'b100010, 1'b?, 5'b?????, 5'b?????, 3'b010, 5'b?????, 7'b1010111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -7162,7 +7162,7 @@ covergroup Cov_rvv_zve32x_vremu_vv with function sample(input logic [31:0] inst,
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
       bins SEW32 = {rvv_tb_pkg::SEW32};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -7173,7 +7173,7 @@ covergroup Cov_rvv_zve32x_vremu_vv with function sample(input logic [31:0] inst,
       bins LMUL2 = {rvv_tb_pkg::LMUL2};
       bins LMUL4 = {rvv_tb_pkg::LMUL4};
       bins LMUL8 = {rvv_tb_pkg::LMUL8};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -7183,7 +7183,7 @@ covergroup Cov_rvv_zve32x_vremu_vv with function sample(input logic [31:0] inst,
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -7192,7 +7192,7 @@ covergroup Cov_rvv_zve32x_vremu_vv with function sample(input logic [31:0] inst,
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -7205,7 +7205,7 @@ covergroup Cov_rvv_zve32x_vremu_vx with function sample(input logic [31:0] inst,
     coverpoint (inst ==? {6'b100010, 1'b?, 5'b?????, 5'b?????, 3'b110, 5'b?????, 7'b1010111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -7219,7 +7219,7 @@ covergroup Cov_rvv_zve32x_vremu_vx with function sample(input logic [31:0] inst,
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
       bins SEW32 = {rvv_tb_pkg::SEW32};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -7230,7 +7230,7 @@ covergroup Cov_rvv_zve32x_vremu_vx with function sample(input logic [31:0] inst,
       bins LMUL2 = {rvv_tb_pkg::LMUL2};
       bins LMUL4 = {rvv_tb_pkg::LMUL4};
       bins LMUL8 = {rvv_tb_pkg::LMUL8};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -7240,7 +7240,7 @@ covergroup Cov_rvv_zve32x_vremu_vx with function sample(input logic [31:0] inst,
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -7249,7 +7249,7 @@ covergroup Cov_rvv_zve32x_vremu_vx with function sample(input logic [31:0] inst,
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -7262,7 +7262,7 @@ covergroup Cov_rvv_zve32x_vrem_vv with function sample(input logic [31:0] inst, 
     coverpoint (inst ==? {6'b100011, 1'b?, 5'b?????, 5'b?????, 3'b010, 5'b?????, 7'b1010111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -7276,7 +7276,7 @@ covergroup Cov_rvv_zve32x_vrem_vv with function sample(input logic [31:0] inst, 
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
       bins SEW32 = {rvv_tb_pkg::SEW32};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -7287,7 +7287,7 @@ covergroup Cov_rvv_zve32x_vrem_vv with function sample(input logic [31:0] inst, 
       bins LMUL2 = {rvv_tb_pkg::LMUL2};
       bins LMUL4 = {rvv_tb_pkg::LMUL4};
       bins LMUL8 = {rvv_tb_pkg::LMUL8};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -7297,7 +7297,7 @@ covergroup Cov_rvv_zve32x_vrem_vv with function sample(input logic [31:0] inst, 
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -7306,7 +7306,7 @@ covergroup Cov_rvv_zve32x_vrem_vv with function sample(input logic [31:0] inst, 
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -7319,7 +7319,7 @@ covergroup Cov_rvv_zve32x_vrem_vx with function sample(input logic [31:0] inst, 
     coverpoint (inst ==? {6'b100011, 1'b?, 5'b?????, 5'b?????, 3'b110, 5'b?????, 7'b1010111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -7333,7 +7333,7 @@ covergroup Cov_rvv_zve32x_vrem_vx with function sample(input logic [31:0] inst, 
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
       bins SEW32 = {rvv_tb_pkg::SEW32};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -7344,7 +7344,7 @@ covergroup Cov_rvv_zve32x_vrem_vx with function sample(input logic [31:0] inst, 
       bins LMUL2 = {rvv_tb_pkg::LMUL2};
       bins LMUL4 = {rvv_tb_pkg::LMUL4};
       bins LMUL8 = {rvv_tb_pkg::LMUL8};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -7354,7 +7354,7 @@ covergroup Cov_rvv_zve32x_vrem_vx with function sample(input logic [31:0] inst, 
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -7363,7 +7363,7 @@ covergroup Cov_rvv_zve32x_vrem_vx with function sample(input logic [31:0] inst, 
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -7376,7 +7376,7 @@ covergroup Cov_rvv_zve32x_vmerge_vvm with function sample(input logic [31:0] ins
     coverpoint (inst ==? {6'b010111, 1'b0, 5'b?????, 5'b?????, 3'b000, 5'b?????, 7'b1010111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -7389,7 +7389,7 @@ covergroup Cov_rvv_zve32x_vmerge_vvm with function sample(input logic [31:0] ins
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
       bins SEW32 = {rvv_tb_pkg::SEW32};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -7400,7 +7400,7 @@ covergroup Cov_rvv_zve32x_vmerge_vvm with function sample(input logic [31:0] ins
       bins LMUL2 = {rvv_tb_pkg::LMUL2};
       bins LMUL4 = {rvv_tb_pkg::LMUL4};
       bins LMUL8 = {rvv_tb_pkg::LMUL8};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -7410,7 +7410,7 @@ covergroup Cov_rvv_zve32x_vmerge_vvm with function sample(input logic [31:0] ins
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -7419,7 +7419,7 @@ covergroup Cov_rvv_zve32x_vmerge_vvm with function sample(input logic [31:0] ins
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -7432,7 +7432,7 @@ covergroup Cov_rvv_zve32x_vmerge_vxm with function sample(input logic [31:0] ins
     coverpoint (inst ==? {6'b010111, 1'b0, 5'b?????, 5'b?????, 3'b100, 5'b?????, 7'b1010111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -7445,7 +7445,7 @@ covergroup Cov_rvv_zve32x_vmerge_vxm with function sample(input logic [31:0] ins
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
       bins SEW32 = {rvv_tb_pkg::SEW32};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -7456,7 +7456,7 @@ covergroup Cov_rvv_zve32x_vmerge_vxm with function sample(input logic [31:0] ins
       bins LMUL2 = {rvv_tb_pkg::LMUL2};
       bins LMUL4 = {rvv_tb_pkg::LMUL4};
       bins LMUL8 = {rvv_tb_pkg::LMUL8};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -7466,7 +7466,7 @@ covergroup Cov_rvv_zve32x_vmerge_vxm with function sample(input logic [31:0] ins
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -7475,7 +7475,7 @@ covergroup Cov_rvv_zve32x_vmerge_vxm with function sample(input logic [31:0] ins
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -7488,7 +7488,7 @@ covergroup Cov_rvv_zve32x_vmerge_vim with function sample(input logic [31:0] ins
     coverpoint (inst ==? {6'b010111, 1'b0, 5'b?????, 5'b?????, 3'b011, 5'b?????, 7'b1010111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -7501,7 +7501,7 @@ covergroup Cov_rvv_zve32x_vmerge_vim with function sample(input logic [31:0] ins
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
       bins SEW32 = {rvv_tb_pkg::SEW32};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -7512,7 +7512,7 @@ covergroup Cov_rvv_zve32x_vmerge_vim with function sample(input logic [31:0] ins
       bins LMUL2 = {rvv_tb_pkg::LMUL2};
       bins LMUL4 = {rvv_tb_pkg::LMUL4};
       bins LMUL8 = {rvv_tb_pkg::LMUL8};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -7522,7 +7522,7 @@ covergroup Cov_rvv_zve32x_vmerge_vim with function sample(input logic [31:0] ins
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -7531,7 +7531,7 @@ covergroup Cov_rvv_zve32x_vmerge_vim with function sample(input logic [31:0] ins
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -7544,7 +7544,7 @@ covergroup Cov_rvv_zve32x_vmv_v_v with function sample(input logic [31:0] inst, 
     coverpoint (inst ==? {6'b010111, 1'b1, 5'b00000, 5'b?????, 3'b000, 5'b?????, 7'b1010111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -7557,7 +7557,7 @@ covergroup Cov_rvv_zve32x_vmv_v_v with function sample(input logic [31:0] inst, 
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
       bins SEW32 = {rvv_tb_pkg::SEW32};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -7568,7 +7568,7 @@ covergroup Cov_rvv_zve32x_vmv_v_v with function sample(input logic [31:0] inst, 
       bins LMUL2 = {rvv_tb_pkg::LMUL2};
       bins LMUL4 = {rvv_tb_pkg::LMUL4};
       bins LMUL8 = {rvv_tb_pkg::LMUL8};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -7578,7 +7578,7 @@ covergroup Cov_rvv_zve32x_vmv_v_v with function sample(input logic [31:0] inst, 
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -7587,7 +7587,7 @@ covergroup Cov_rvv_zve32x_vmv_v_v with function sample(input logic [31:0] inst, 
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -7600,7 +7600,7 @@ covergroup Cov_rvv_zve32x_vmv_v_x with function sample(input logic [31:0] inst, 
     coverpoint (inst ==? {6'b010111, 1'b1, 5'b00000, 5'b?????, 3'b100, 5'b?????, 7'b1010111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -7613,7 +7613,7 @@ covergroup Cov_rvv_zve32x_vmv_v_x with function sample(input logic [31:0] inst, 
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
       bins SEW32 = {rvv_tb_pkg::SEW32};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -7624,7 +7624,7 @@ covergroup Cov_rvv_zve32x_vmv_v_x with function sample(input logic [31:0] inst, 
       bins LMUL2 = {rvv_tb_pkg::LMUL2};
       bins LMUL4 = {rvv_tb_pkg::LMUL4};
       bins LMUL8 = {rvv_tb_pkg::LMUL8};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -7634,7 +7634,7 @@ covergroup Cov_rvv_zve32x_vmv_v_x with function sample(input logic [31:0] inst, 
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -7643,7 +7643,7 @@ covergroup Cov_rvv_zve32x_vmv_v_x with function sample(input logic [31:0] inst, 
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -7656,7 +7656,7 @@ covergroup Cov_rvv_zve32x_vmv_v_i with function sample(input logic [31:0] inst, 
     coverpoint (inst ==? {6'b010111, 1'b1, 5'b00000, 5'b?????, 3'b011, 5'b?????, 7'b1010111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -7669,7 +7669,7 @@ covergroup Cov_rvv_zve32x_vmv_v_i with function sample(input logic [31:0] inst, 
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
       bins SEW32 = {rvv_tb_pkg::SEW32};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -7680,7 +7680,7 @@ covergroup Cov_rvv_zve32x_vmv_v_i with function sample(input logic [31:0] inst, 
       bins LMUL2 = {rvv_tb_pkg::LMUL2};
       bins LMUL4 = {rvv_tb_pkg::LMUL4};
       bins LMUL8 = {rvv_tb_pkg::LMUL8};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -7690,7 +7690,7 @@ covergroup Cov_rvv_zve32x_vmv_v_i with function sample(input logic [31:0] inst, 
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -7699,7 +7699,7 @@ covergroup Cov_rvv_zve32x_vmv_v_i with function sample(input logic [31:0] inst, 
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -7712,7 +7712,7 @@ covergroup Cov_rvv_zve32x_vsaddu_vv with function sample(input logic [31:0] inst
     coverpoint (inst ==? {6'b100000, 1'b?, 5'b?????, 5'b?????, 3'b000, 5'b?????, 7'b1010111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -7726,7 +7726,7 @@ covergroup Cov_rvv_zve32x_vsaddu_vv with function sample(input logic [31:0] inst
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
       bins SEW32 = {rvv_tb_pkg::SEW32};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -7737,7 +7737,7 @@ covergroup Cov_rvv_zve32x_vsaddu_vv with function sample(input logic [31:0] inst
       bins LMUL2 = {rvv_tb_pkg::LMUL2};
       bins LMUL4 = {rvv_tb_pkg::LMUL4};
       bins LMUL8 = {rvv_tb_pkg::LMUL8};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -7747,7 +7747,7 @@ covergroup Cov_rvv_zve32x_vsaddu_vv with function sample(input logic [31:0] inst
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -7756,7 +7756,7 @@ covergroup Cov_rvv_zve32x_vsaddu_vv with function sample(input logic [31:0] inst
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -7769,7 +7769,7 @@ covergroup Cov_rvv_zve32x_vsaddu_vx with function sample(input logic [31:0] inst
     coverpoint (inst ==? {6'b100000, 1'b?, 5'b?????, 5'b?????, 3'b100, 5'b?????, 7'b1010111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -7783,7 +7783,7 @@ covergroup Cov_rvv_zve32x_vsaddu_vx with function sample(input logic [31:0] inst
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
       bins SEW32 = {rvv_tb_pkg::SEW32};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -7794,7 +7794,7 @@ covergroup Cov_rvv_zve32x_vsaddu_vx with function sample(input logic [31:0] inst
       bins LMUL2 = {rvv_tb_pkg::LMUL2};
       bins LMUL4 = {rvv_tb_pkg::LMUL4};
       bins LMUL8 = {rvv_tb_pkg::LMUL8};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -7804,7 +7804,7 @@ covergroup Cov_rvv_zve32x_vsaddu_vx with function sample(input logic [31:0] inst
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -7813,7 +7813,7 @@ covergroup Cov_rvv_zve32x_vsaddu_vx with function sample(input logic [31:0] inst
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -7826,7 +7826,7 @@ covergroup Cov_rvv_zve32x_vsaddu_vi with function sample(input logic [31:0] inst
     coverpoint (inst ==? {6'b100000, 1'b?, 5'b?????, 5'b?????, 3'b011, 5'b?????, 7'b1010111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -7840,7 +7840,7 @@ covergroup Cov_rvv_zve32x_vsaddu_vi with function sample(input logic [31:0] inst
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
       bins SEW32 = {rvv_tb_pkg::SEW32};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -7851,7 +7851,7 @@ covergroup Cov_rvv_zve32x_vsaddu_vi with function sample(input logic [31:0] inst
       bins LMUL2 = {rvv_tb_pkg::LMUL2};
       bins LMUL4 = {rvv_tb_pkg::LMUL4};
       bins LMUL8 = {rvv_tb_pkg::LMUL8};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -7861,7 +7861,7 @@ covergroup Cov_rvv_zve32x_vsaddu_vi with function sample(input logic [31:0] inst
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -7870,7 +7870,7 @@ covergroup Cov_rvv_zve32x_vsaddu_vi with function sample(input logic [31:0] inst
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -7883,7 +7883,7 @@ covergroup Cov_rvv_zve32x_vsadd_vv with function sample(input logic [31:0] inst,
     coverpoint (inst ==? {6'b100001, 1'b?, 5'b?????, 5'b?????, 3'b000, 5'b?????, 7'b1010111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -7897,7 +7897,7 @@ covergroup Cov_rvv_zve32x_vsadd_vv with function sample(input logic [31:0] inst,
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
       bins SEW32 = {rvv_tb_pkg::SEW32};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -7908,7 +7908,7 @@ covergroup Cov_rvv_zve32x_vsadd_vv with function sample(input logic [31:0] inst,
       bins LMUL2 = {rvv_tb_pkg::LMUL2};
       bins LMUL4 = {rvv_tb_pkg::LMUL4};
       bins LMUL8 = {rvv_tb_pkg::LMUL8};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -7918,7 +7918,7 @@ covergroup Cov_rvv_zve32x_vsadd_vv with function sample(input logic [31:0] inst,
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -7927,7 +7927,7 @@ covergroup Cov_rvv_zve32x_vsadd_vv with function sample(input logic [31:0] inst,
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -7940,7 +7940,7 @@ covergroup Cov_rvv_zve32x_vsadd_vx with function sample(input logic [31:0] inst,
     coverpoint (inst ==? {6'b100001, 1'b?, 5'b?????, 5'b?????, 3'b100, 5'b?????, 7'b1010111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -7954,7 +7954,7 @@ covergroup Cov_rvv_zve32x_vsadd_vx with function sample(input logic [31:0] inst,
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
       bins SEW32 = {rvv_tb_pkg::SEW32};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -7965,7 +7965,7 @@ covergroup Cov_rvv_zve32x_vsadd_vx with function sample(input logic [31:0] inst,
       bins LMUL2 = {rvv_tb_pkg::LMUL2};
       bins LMUL4 = {rvv_tb_pkg::LMUL4};
       bins LMUL8 = {rvv_tb_pkg::LMUL8};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -7975,7 +7975,7 @@ covergroup Cov_rvv_zve32x_vsadd_vx with function sample(input logic [31:0] inst,
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -7984,7 +7984,7 @@ covergroup Cov_rvv_zve32x_vsadd_vx with function sample(input logic [31:0] inst,
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -7997,7 +7997,7 @@ covergroup Cov_rvv_zve32x_vsadd_vi with function sample(input logic [31:0] inst,
     coverpoint (inst ==? {6'b100001, 1'b?, 5'b?????, 5'b?????, 3'b011, 5'b?????, 7'b1010111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -8011,7 +8011,7 @@ covergroup Cov_rvv_zve32x_vsadd_vi with function sample(input logic [31:0] inst,
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
       bins SEW32 = {rvv_tb_pkg::SEW32};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -8022,7 +8022,7 @@ covergroup Cov_rvv_zve32x_vsadd_vi with function sample(input logic [31:0] inst,
       bins LMUL2 = {rvv_tb_pkg::LMUL2};
       bins LMUL4 = {rvv_tb_pkg::LMUL4};
       bins LMUL8 = {rvv_tb_pkg::LMUL8};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -8032,7 +8032,7 @@ covergroup Cov_rvv_zve32x_vsadd_vi with function sample(input logic [31:0] inst,
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -8041,7 +8041,7 @@ covergroup Cov_rvv_zve32x_vsadd_vi with function sample(input logic [31:0] inst,
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -8054,7 +8054,7 @@ covergroup Cov_rvv_zve32x_vssubu_vv with function sample(input logic [31:0] inst
     coverpoint (inst ==? {6'b100010, 1'b?, 5'b?????, 5'b?????, 3'b000, 5'b?????, 7'b1010111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -8068,7 +8068,7 @@ covergroup Cov_rvv_zve32x_vssubu_vv with function sample(input logic [31:0] inst
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
       bins SEW32 = {rvv_tb_pkg::SEW32};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -8079,7 +8079,7 @@ covergroup Cov_rvv_zve32x_vssubu_vv with function sample(input logic [31:0] inst
       bins LMUL2 = {rvv_tb_pkg::LMUL2};
       bins LMUL4 = {rvv_tb_pkg::LMUL4};
       bins LMUL8 = {rvv_tb_pkg::LMUL8};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -8089,7 +8089,7 @@ covergroup Cov_rvv_zve32x_vssubu_vv with function sample(input logic [31:0] inst
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -8098,7 +8098,7 @@ covergroup Cov_rvv_zve32x_vssubu_vv with function sample(input logic [31:0] inst
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -8111,7 +8111,7 @@ covergroup Cov_rvv_zve32x_vssubu_vx with function sample(input logic [31:0] inst
     coverpoint (inst ==? {6'b100010, 1'b?, 5'b?????, 5'b?????, 3'b100, 5'b?????, 7'b1010111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -8125,7 +8125,7 @@ covergroup Cov_rvv_zve32x_vssubu_vx with function sample(input logic [31:0] inst
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
       bins SEW32 = {rvv_tb_pkg::SEW32};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -8136,7 +8136,7 @@ covergroup Cov_rvv_zve32x_vssubu_vx with function sample(input logic [31:0] inst
       bins LMUL2 = {rvv_tb_pkg::LMUL2};
       bins LMUL4 = {rvv_tb_pkg::LMUL4};
       bins LMUL8 = {rvv_tb_pkg::LMUL8};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -8146,7 +8146,7 @@ covergroup Cov_rvv_zve32x_vssubu_vx with function sample(input logic [31:0] inst
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -8155,7 +8155,7 @@ covergroup Cov_rvv_zve32x_vssubu_vx with function sample(input logic [31:0] inst
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -8168,7 +8168,7 @@ covergroup Cov_rvv_zve32x_vssub_vv with function sample(input logic [31:0] inst,
     coverpoint (inst ==? {6'b100011, 1'b?, 5'b?????, 5'b?????, 3'b000, 5'b?????, 7'b1010111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -8182,7 +8182,7 @@ covergroup Cov_rvv_zve32x_vssub_vv with function sample(input logic [31:0] inst,
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
       bins SEW32 = {rvv_tb_pkg::SEW32};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -8193,7 +8193,7 @@ covergroup Cov_rvv_zve32x_vssub_vv with function sample(input logic [31:0] inst,
       bins LMUL2 = {rvv_tb_pkg::LMUL2};
       bins LMUL4 = {rvv_tb_pkg::LMUL4};
       bins LMUL8 = {rvv_tb_pkg::LMUL8};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -8203,7 +8203,7 @@ covergroup Cov_rvv_zve32x_vssub_vv with function sample(input logic [31:0] inst,
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -8212,7 +8212,7 @@ covergroup Cov_rvv_zve32x_vssub_vv with function sample(input logic [31:0] inst,
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -8225,7 +8225,7 @@ covergroup Cov_rvv_zve32x_vssub_vx with function sample(input logic [31:0] inst,
     coverpoint (inst ==? {6'b100011, 1'b?, 5'b?????, 5'b?????, 3'b100, 5'b?????, 7'b1010111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -8239,7 +8239,7 @@ covergroup Cov_rvv_zve32x_vssub_vx with function sample(input logic [31:0] inst,
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
       bins SEW32 = {rvv_tb_pkg::SEW32};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -8250,7 +8250,7 @@ covergroup Cov_rvv_zve32x_vssub_vx with function sample(input logic [31:0] inst,
       bins LMUL2 = {rvv_tb_pkg::LMUL2};
       bins LMUL4 = {rvv_tb_pkg::LMUL4};
       bins LMUL8 = {rvv_tb_pkg::LMUL8};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -8260,7 +8260,7 @@ covergroup Cov_rvv_zve32x_vssub_vx with function sample(input logic [31:0] inst,
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -8269,7 +8269,7 @@ covergroup Cov_rvv_zve32x_vssub_vx with function sample(input logic [31:0] inst,
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -8282,7 +8282,7 @@ covergroup Cov_rvv_zve32x_vaaddu_vv with function sample(input logic [31:0] inst
     coverpoint (inst ==? {6'b001000, 1'b?, 5'b?????, 5'b?????, 3'b010, 5'b?????, 7'b1010111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -8296,7 +8296,7 @@ covergroup Cov_rvv_zve32x_vaaddu_vv with function sample(input logic [31:0] inst
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
       bins SEW32 = {rvv_tb_pkg::SEW32};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -8307,7 +8307,7 @@ covergroup Cov_rvv_zve32x_vaaddu_vv with function sample(input logic [31:0] inst
       bins LMUL2 = {rvv_tb_pkg::LMUL2};
       bins LMUL4 = {rvv_tb_pkg::LMUL4};
       bins LMUL8 = {rvv_tb_pkg::LMUL8};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -8317,7 +8317,7 @@ covergroup Cov_rvv_zve32x_vaaddu_vv with function sample(input logic [31:0] inst
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -8326,7 +8326,7 @@ covergroup Cov_rvv_zve32x_vaaddu_vv with function sample(input logic [31:0] inst
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -8339,7 +8339,7 @@ covergroup Cov_rvv_zve32x_vaaddu_vx with function sample(input logic [31:0] inst
     coverpoint (inst ==? {6'b001000, 1'b?, 5'b?????, 5'b?????, 3'b110, 5'b?????, 7'b1010111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -8353,7 +8353,7 @@ covergroup Cov_rvv_zve32x_vaaddu_vx with function sample(input logic [31:0] inst
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
       bins SEW32 = {rvv_tb_pkg::SEW32};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -8364,7 +8364,7 @@ covergroup Cov_rvv_zve32x_vaaddu_vx with function sample(input logic [31:0] inst
       bins LMUL2 = {rvv_tb_pkg::LMUL2};
       bins LMUL4 = {rvv_tb_pkg::LMUL4};
       bins LMUL8 = {rvv_tb_pkg::LMUL8};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -8374,7 +8374,7 @@ covergroup Cov_rvv_zve32x_vaaddu_vx with function sample(input logic [31:0] inst
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -8383,7 +8383,7 @@ covergroup Cov_rvv_zve32x_vaaddu_vx with function sample(input logic [31:0] inst
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -8396,7 +8396,7 @@ covergroup Cov_rvv_zve32x_vaadd_vv with function sample(input logic [31:0] inst,
     coverpoint (inst ==? {6'b001001, 1'b?, 5'b?????, 5'b?????, 3'b010, 5'b?????, 7'b1010111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -8410,7 +8410,7 @@ covergroup Cov_rvv_zve32x_vaadd_vv with function sample(input logic [31:0] inst,
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
       bins SEW32 = {rvv_tb_pkg::SEW32};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -8421,7 +8421,7 @@ covergroup Cov_rvv_zve32x_vaadd_vv with function sample(input logic [31:0] inst,
       bins LMUL2 = {rvv_tb_pkg::LMUL2};
       bins LMUL4 = {rvv_tb_pkg::LMUL4};
       bins LMUL8 = {rvv_tb_pkg::LMUL8};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -8431,7 +8431,7 @@ covergroup Cov_rvv_zve32x_vaadd_vv with function sample(input logic [31:0] inst,
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -8440,7 +8440,7 @@ covergroup Cov_rvv_zve32x_vaadd_vv with function sample(input logic [31:0] inst,
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -8453,7 +8453,7 @@ covergroup Cov_rvv_zve32x_vaadd_vx with function sample(input logic [31:0] inst,
     coverpoint (inst ==? {6'b001001, 1'b?, 5'b?????, 5'b?????, 3'b110, 5'b?????, 7'b1010111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -8467,7 +8467,7 @@ covergroup Cov_rvv_zve32x_vaadd_vx with function sample(input logic [31:0] inst,
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
       bins SEW32 = {rvv_tb_pkg::SEW32};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -8478,7 +8478,7 @@ covergroup Cov_rvv_zve32x_vaadd_vx with function sample(input logic [31:0] inst,
       bins LMUL2 = {rvv_tb_pkg::LMUL2};
       bins LMUL4 = {rvv_tb_pkg::LMUL4};
       bins LMUL8 = {rvv_tb_pkg::LMUL8};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -8488,7 +8488,7 @@ covergroup Cov_rvv_zve32x_vaadd_vx with function sample(input logic [31:0] inst,
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -8497,7 +8497,7 @@ covergroup Cov_rvv_zve32x_vaadd_vx with function sample(input logic [31:0] inst,
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -8510,7 +8510,7 @@ covergroup Cov_rvv_zve32x_vasubu_vv with function sample(input logic [31:0] inst
     coverpoint (inst ==? {6'b001010, 1'b?, 5'b?????, 5'b?????, 3'b010, 5'b?????, 7'b1010111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -8524,7 +8524,7 @@ covergroup Cov_rvv_zve32x_vasubu_vv with function sample(input logic [31:0] inst
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
       bins SEW32 = {rvv_tb_pkg::SEW32};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -8535,7 +8535,7 @@ covergroup Cov_rvv_zve32x_vasubu_vv with function sample(input logic [31:0] inst
       bins LMUL2 = {rvv_tb_pkg::LMUL2};
       bins LMUL4 = {rvv_tb_pkg::LMUL4};
       bins LMUL8 = {rvv_tb_pkg::LMUL8};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -8545,7 +8545,7 @@ covergroup Cov_rvv_zve32x_vasubu_vv with function sample(input logic [31:0] inst
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -8554,7 +8554,7 @@ covergroup Cov_rvv_zve32x_vasubu_vv with function sample(input logic [31:0] inst
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -8567,7 +8567,7 @@ covergroup Cov_rvv_zve32x_vasubu_vx with function sample(input logic [31:0] inst
     coverpoint (inst ==? {6'b001010, 1'b?, 5'b?????, 5'b?????, 3'b110, 5'b?????, 7'b1010111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -8581,7 +8581,7 @@ covergroup Cov_rvv_zve32x_vasubu_vx with function sample(input logic [31:0] inst
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
       bins SEW32 = {rvv_tb_pkg::SEW32};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -8592,7 +8592,7 @@ covergroup Cov_rvv_zve32x_vasubu_vx with function sample(input logic [31:0] inst
       bins LMUL2 = {rvv_tb_pkg::LMUL2};
       bins LMUL4 = {rvv_tb_pkg::LMUL4};
       bins LMUL8 = {rvv_tb_pkg::LMUL8};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -8602,7 +8602,7 @@ covergroup Cov_rvv_zve32x_vasubu_vx with function sample(input logic [31:0] inst
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -8611,7 +8611,7 @@ covergroup Cov_rvv_zve32x_vasubu_vx with function sample(input logic [31:0] inst
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -8624,7 +8624,7 @@ covergroup Cov_rvv_zve32x_vasub_vv with function sample(input logic [31:0] inst,
     coverpoint (inst ==? {6'b001011, 1'b?, 5'b?????, 5'b?????, 3'b010, 5'b?????, 7'b1010111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -8638,7 +8638,7 @@ covergroup Cov_rvv_zve32x_vasub_vv with function sample(input logic [31:0] inst,
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
       bins SEW32 = {rvv_tb_pkg::SEW32};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -8649,7 +8649,7 @@ covergroup Cov_rvv_zve32x_vasub_vv with function sample(input logic [31:0] inst,
       bins LMUL2 = {rvv_tb_pkg::LMUL2};
       bins LMUL4 = {rvv_tb_pkg::LMUL4};
       bins LMUL8 = {rvv_tb_pkg::LMUL8};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -8659,7 +8659,7 @@ covergroup Cov_rvv_zve32x_vasub_vv with function sample(input logic [31:0] inst,
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -8668,7 +8668,7 @@ covergroup Cov_rvv_zve32x_vasub_vv with function sample(input logic [31:0] inst,
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -8681,7 +8681,7 @@ covergroup Cov_rvv_zve32x_vasub_vx with function sample(input logic [31:0] inst,
     coverpoint (inst ==? {6'b001011, 1'b?, 5'b?????, 5'b?????, 3'b110, 5'b?????, 7'b1010111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -8695,7 +8695,7 @@ covergroup Cov_rvv_zve32x_vasub_vx with function sample(input logic [31:0] inst,
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
       bins SEW32 = {rvv_tb_pkg::SEW32};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -8706,7 +8706,7 @@ covergroup Cov_rvv_zve32x_vasub_vx with function sample(input logic [31:0] inst,
       bins LMUL2 = {rvv_tb_pkg::LMUL2};
       bins LMUL4 = {rvv_tb_pkg::LMUL4};
       bins LMUL8 = {rvv_tb_pkg::LMUL8};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -8716,7 +8716,7 @@ covergroup Cov_rvv_zve32x_vasub_vx with function sample(input logic [31:0] inst,
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -8725,7 +8725,7 @@ covergroup Cov_rvv_zve32x_vasub_vx with function sample(input logic [31:0] inst,
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -8738,7 +8738,7 @@ covergroup Cov_rvv_zve32x_vsmul_vv with function sample(input logic [31:0] inst,
     coverpoint (inst ==? {6'b100111, 1'b?, 5'b?????, 5'b?????, 3'b000, 5'b?????, 7'b1010111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -8752,7 +8752,7 @@ covergroup Cov_rvv_zve32x_vsmul_vv with function sample(input logic [31:0] inst,
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
       bins SEW32 = {rvv_tb_pkg::SEW32};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -8763,7 +8763,7 @@ covergroup Cov_rvv_zve32x_vsmul_vv with function sample(input logic [31:0] inst,
       bins LMUL2 = {rvv_tb_pkg::LMUL2};
       bins LMUL4 = {rvv_tb_pkg::LMUL4};
       bins LMUL8 = {rvv_tb_pkg::LMUL8};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -8773,7 +8773,7 @@ covergroup Cov_rvv_zve32x_vsmul_vv with function sample(input logic [31:0] inst,
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -8782,7 +8782,7 @@ covergroup Cov_rvv_zve32x_vsmul_vv with function sample(input logic [31:0] inst,
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -8795,7 +8795,7 @@ covergroup Cov_rvv_zve32x_vsmul_vx with function sample(input logic [31:0] inst,
     coverpoint (inst ==? {6'b100111, 1'b?, 5'b?????, 5'b?????, 3'b100, 5'b?????, 7'b1010111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -8809,7 +8809,7 @@ covergroup Cov_rvv_zve32x_vsmul_vx with function sample(input logic [31:0] inst,
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
       bins SEW32 = {rvv_tb_pkg::SEW32};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -8820,7 +8820,7 @@ covergroup Cov_rvv_zve32x_vsmul_vx with function sample(input logic [31:0] inst,
       bins LMUL2 = {rvv_tb_pkg::LMUL2};
       bins LMUL4 = {rvv_tb_pkg::LMUL4};
       bins LMUL8 = {rvv_tb_pkg::LMUL8};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -8830,7 +8830,7 @@ covergroup Cov_rvv_zve32x_vsmul_vx with function sample(input logic [31:0] inst,
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -8839,7 +8839,7 @@ covergroup Cov_rvv_zve32x_vsmul_vx with function sample(input logic [31:0] inst,
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -8852,7 +8852,7 @@ covergroup Cov_rvv_zve32x_vssrl_vv with function sample(input logic [31:0] inst,
     coverpoint (inst ==? {6'b101010, 1'b?, 5'b?????, 5'b?????, 3'b000, 5'b?????, 7'b1010111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -8866,7 +8866,7 @@ covergroup Cov_rvv_zve32x_vssrl_vv with function sample(input logic [31:0] inst,
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
       bins SEW32 = {rvv_tb_pkg::SEW32};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -8877,7 +8877,7 @@ covergroup Cov_rvv_zve32x_vssrl_vv with function sample(input logic [31:0] inst,
       bins LMUL2 = {rvv_tb_pkg::LMUL2};
       bins LMUL4 = {rvv_tb_pkg::LMUL4};
       bins LMUL8 = {rvv_tb_pkg::LMUL8};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -8887,7 +8887,7 @@ covergroup Cov_rvv_zve32x_vssrl_vv with function sample(input logic [31:0] inst,
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -8896,7 +8896,7 @@ covergroup Cov_rvv_zve32x_vssrl_vv with function sample(input logic [31:0] inst,
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -8909,7 +8909,7 @@ covergroup Cov_rvv_zve32x_vssrl_vx with function sample(input logic [31:0] inst,
     coverpoint (inst ==? {6'b101010, 1'b?, 5'b?????, 5'b?????, 3'b100, 5'b?????, 7'b1010111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -8923,7 +8923,7 @@ covergroup Cov_rvv_zve32x_vssrl_vx with function sample(input logic [31:0] inst,
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
       bins SEW32 = {rvv_tb_pkg::SEW32};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -8934,7 +8934,7 @@ covergroup Cov_rvv_zve32x_vssrl_vx with function sample(input logic [31:0] inst,
       bins LMUL2 = {rvv_tb_pkg::LMUL2};
       bins LMUL4 = {rvv_tb_pkg::LMUL4};
       bins LMUL8 = {rvv_tb_pkg::LMUL8};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -8944,7 +8944,7 @@ covergroup Cov_rvv_zve32x_vssrl_vx with function sample(input logic [31:0] inst,
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -8953,7 +8953,7 @@ covergroup Cov_rvv_zve32x_vssrl_vx with function sample(input logic [31:0] inst,
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -8966,7 +8966,7 @@ covergroup Cov_rvv_zve32x_vssrl_vi with function sample(input logic [31:0] inst,
     coverpoint (inst ==? {6'b101010, 1'b?, 5'b?????, 5'b?????, 3'b011, 5'b?????, 7'b1010111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -8980,7 +8980,7 @@ covergroup Cov_rvv_zve32x_vssrl_vi with function sample(input logic [31:0] inst,
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
       bins SEW32 = {rvv_tb_pkg::SEW32};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -8991,7 +8991,7 @@ covergroup Cov_rvv_zve32x_vssrl_vi with function sample(input logic [31:0] inst,
       bins LMUL2 = {rvv_tb_pkg::LMUL2};
       bins LMUL4 = {rvv_tb_pkg::LMUL4};
       bins LMUL8 = {rvv_tb_pkg::LMUL8};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -9001,7 +9001,7 @@ covergroup Cov_rvv_zve32x_vssrl_vi with function sample(input logic [31:0] inst,
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -9010,7 +9010,7 @@ covergroup Cov_rvv_zve32x_vssrl_vi with function sample(input logic [31:0] inst,
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -9023,7 +9023,7 @@ covergroup Cov_rvv_zve32x_vssra_vv with function sample(input logic [31:0] inst,
     coverpoint (inst ==? {6'b101011, 1'b?, 5'b?????, 5'b?????, 3'b000, 5'b?????, 7'b1010111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -9037,7 +9037,7 @@ covergroup Cov_rvv_zve32x_vssra_vv with function sample(input logic [31:0] inst,
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
       bins SEW32 = {rvv_tb_pkg::SEW32};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -9048,7 +9048,7 @@ covergroup Cov_rvv_zve32x_vssra_vv with function sample(input logic [31:0] inst,
       bins LMUL2 = {rvv_tb_pkg::LMUL2};
       bins LMUL4 = {rvv_tb_pkg::LMUL4};
       bins LMUL8 = {rvv_tb_pkg::LMUL8};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -9058,7 +9058,7 @@ covergroup Cov_rvv_zve32x_vssra_vv with function sample(input logic [31:0] inst,
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -9067,7 +9067,7 @@ covergroup Cov_rvv_zve32x_vssra_vv with function sample(input logic [31:0] inst,
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -9080,7 +9080,7 @@ covergroup Cov_rvv_zve32x_vssra_vx with function sample(input logic [31:0] inst,
     coverpoint (inst ==? {6'b101011, 1'b?, 5'b?????, 5'b?????, 3'b100, 5'b?????, 7'b1010111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -9094,7 +9094,7 @@ covergroup Cov_rvv_zve32x_vssra_vx with function sample(input logic [31:0] inst,
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
       bins SEW32 = {rvv_tb_pkg::SEW32};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -9105,7 +9105,7 @@ covergroup Cov_rvv_zve32x_vssra_vx with function sample(input logic [31:0] inst,
       bins LMUL2 = {rvv_tb_pkg::LMUL2};
       bins LMUL4 = {rvv_tb_pkg::LMUL4};
       bins LMUL8 = {rvv_tb_pkg::LMUL8};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -9115,7 +9115,7 @@ covergroup Cov_rvv_zve32x_vssra_vx with function sample(input logic [31:0] inst,
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -9124,7 +9124,7 @@ covergroup Cov_rvv_zve32x_vssra_vx with function sample(input logic [31:0] inst,
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -9137,7 +9137,7 @@ covergroup Cov_rvv_zve32x_vssra_vi with function sample(input logic [31:0] inst,
     coverpoint (inst ==? {6'b101011, 1'b?, 5'b?????, 5'b?????, 3'b011, 5'b?????, 7'b1010111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -9151,7 +9151,7 @@ covergroup Cov_rvv_zve32x_vssra_vi with function sample(input logic [31:0] inst,
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
       bins SEW32 = {rvv_tb_pkg::SEW32};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -9162,7 +9162,7 @@ covergroup Cov_rvv_zve32x_vssra_vi with function sample(input logic [31:0] inst,
       bins LMUL2 = {rvv_tb_pkg::LMUL2};
       bins LMUL4 = {rvv_tb_pkg::LMUL4};
       bins LMUL8 = {rvv_tb_pkg::LMUL8};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -9172,7 +9172,7 @@ covergroup Cov_rvv_zve32x_vssra_vi with function sample(input logic [31:0] inst,
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -9181,7 +9181,7 @@ covergroup Cov_rvv_zve32x_vssra_vi with function sample(input logic [31:0] inst,
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -9194,7 +9194,7 @@ covergroup Cov_rvv_zve32x_vnclipu_wv with function sample(input logic [31:0] ins
     coverpoint (inst ==? {6'b101110, 1'b?, 5'b?????, 5'b?????, 3'b000, 5'b?????, 7'b1010111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -9207,7 +9207,7 @@ covergroup Cov_rvv_zve32x_vnclipu_wv with function sample(input logic [31:0] ins
       option.comment = "Value of vsew";
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -9217,7 +9217,7 @@ covergroup Cov_rvv_zve32x_vnclipu_wv with function sample(input logic [31:0] ins
       bins LMUL1 = {rvv_tb_pkg::LMUL1};
       bins LMUL2 = {rvv_tb_pkg::LMUL2};
       bins LMUL4 = {rvv_tb_pkg::LMUL4};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -9227,7 +9227,7 @@ covergroup Cov_rvv_zve32x_vnclipu_wv with function sample(input logic [31:0] ins
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -9236,7 +9236,7 @@ covergroup Cov_rvv_zve32x_vnclipu_wv with function sample(input logic [31:0] ins
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -9249,7 +9249,7 @@ covergroup Cov_rvv_zve32x_vnclipu_wx with function sample(input logic [31:0] ins
     coverpoint (inst ==? {6'b101110, 1'b?, 5'b?????, 5'b?????, 3'b100, 5'b?????, 7'b1010111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -9262,7 +9262,7 @@ covergroup Cov_rvv_zve32x_vnclipu_wx with function sample(input logic [31:0] ins
       option.comment = "Value of vsew";
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -9272,7 +9272,7 @@ covergroup Cov_rvv_zve32x_vnclipu_wx with function sample(input logic [31:0] ins
       bins LMUL1 = {rvv_tb_pkg::LMUL1};
       bins LMUL2 = {rvv_tb_pkg::LMUL2};
       bins LMUL4 = {rvv_tb_pkg::LMUL4};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -9282,7 +9282,7 @@ covergroup Cov_rvv_zve32x_vnclipu_wx with function sample(input logic [31:0] ins
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -9291,7 +9291,7 @@ covergroup Cov_rvv_zve32x_vnclipu_wx with function sample(input logic [31:0] ins
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -9304,7 +9304,7 @@ covergroup Cov_rvv_zve32x_vnclipu_wi with function sample(input logic [31:0] ins
     coverpoint (inst ==? {6'b101110, 1'b?, 5'b?????, 5'b?????, 3'b011, 5'b?????, 7'b1010111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -9317,7 +9317,7 @@ covergroup Cov_rvv_zve32x_vnclipu_wi with function sample(input logic [31:0] ins
       option.comment = "Value of vsew";
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -9327,7 +9327,7 @@ covergroup Cov_rvv_zve32x_vnclipu_wi with function sample(input logic [31:0] ins
       bins LMUL1 = {rvv_tb_pkg::LMUL1};
       bins LMUL2 = {rvv_tb_pkg::LMUL2};
       bins LMUL4 = {rvv_tb_pkg::LMUL4};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -9337,7 +9337,7 @@ covergroup Cov_rvv_zve32x_vnclipu_wi with function sample(input logic [31:0] ins
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -9346,7 +9346,7 @@ covergroup Cov_rvv_zve32x_vnclipu_wi with function sample(input logic [31:0] ins
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -9359,7 +9359,7 @@ covergroup Cov_rvv_zve32x_vnclip_wv with function sample(input logic [31:0] inst
     coverpoint (inst ==? {6'b101111, 1'b?, 5'b?????, 5'b?????, 3'b000, 5'b?????, 7'b1010111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -9372,7 +9372,7 @@ covergroup Cov_rvv_zve32x_vnclip_wv with function sample(input logic [31:0] inst
       option.comment = "Value of vsew";
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -9382,7 +9382,7 @@ covergroup Cov_rvv_zve32x_vnclip_wv with function sample(input logic [31:0] inst
       bins LMUL1 = {rvv_tb_pkg::LMUL1};
       bins LMUL2 = {rvv_tb_pkg::LMUL2};
       bins LMUL4 = {rvv_tb_pkg::LMUL4};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -9392,7 +9392,7 @@ covergroup Cov_rvv_zve32x_vnclip_wv with function sample(input logic [31:0] inst
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -9401,7 +9401,7 @@ covergroup Cov_rvv_zve32x_vnclip_wv with function sample(input logic [31:0] inst
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -9414,7 +9414,7 @@ covergroup Cov_rvv_zve32x_vnclip_wx with function sample(input logic [31:0] inst
     coverpoint (inst ==? {6'b101111, 1'b?, 5'b?????, 5'b?????, 3'b100, 5'b?????, 7'b1010111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -9427,7 +9427,7 @@ covergroup Cov_rvv_zve32x_vnclip_wx with function sample(input logic [31:0] inst
       option.comment = "Value of vsew";
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -9437,7 +9437,7 @@ covergroup Cov_rvv_zve32x_vnclip_wx with function sample(input logic [31:0] inst
       bins LMUL1 = {rvv_tb_pkg::LMUL1};
       bins LMUL2 = {rvv_tb_pkg::LMUL2};
       bins LMUL4 = {rvv_tb_pkg::LMUL4};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -9447,7 +9447,7 @@ covergroup Cov_rvv_zve32x_vnclip_wx with function sample(input logic [31:0] inst
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -9456,7 +9456,7 @@ covergroup Cov_rvv_zve32x_vnclip_wx with function sample(input logic [31:0] inst
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -9469,7 +9469,7 @@ covergroup Cov_rvv_zve32x_vnclip_wi with function sample(input logic [31:0] inst
     coverpoint (inst ==? {6'b101111, 1'b?, 5'b?????, 5'b?????, 3'b011, 5'b?????, 7'b1010111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -9482,7 +9482,7 @@ covergroup Cov_rvv_zve32x_vnclip_wi with function sample(input logic [31:0] inst
       option.comment = "Value of vsew";
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -9492,7 +9492,7 @@ covergroup Cov_rvv_zve32x_vnclip_wi with function sample(input logic [31:0] inst
       bins LMUL1 = {rvv_tb_pkg::LMUL1};
       bins LMUL2 = {rvv_tb_pkg::LMUL2};
       bins LMUL4 = {rvv_tb_pkg::LMUL4};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -9502,7 +9502,7 @@ covergroup Cov_rvv_zve32x_vnclip_wi with function sample(input logic [31:0] inst
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -9511,7 +9511,7 @@ covergroup Cov_rvv_zve32x_vnclip_wi with function sample(input logic [31:0] inst
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -9524,7 +9524,7 @@ covergroup Cov_rvv_zve32x_vredsum_vs with function sample(input logic [31:0] ins
     coverpoint (inst ==? {6'b000000, 1'b?, 5'b?????, 5'b?????, 3'b010, 5'b?????, 7'b1010111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -9538,7 +9538,7 @@ covergroup Cov_rvv_zve32x_vredsum_vs with function sample(input logic [31:0] ins
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
       bins SEW32 = {rvv_tb_pkg::SEW32};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -9549,7 +9549,7 @@ covergroup Cov_rvv_zve32x_vredsum_vs with function sample(input logic [31:0] ins
       bins LMUL2 = {rvv_tb_pkg::LMUL2};
       bins LMUL4 = {rvv_tb_pkg::LMUL4};
       bins LMUL8 = {rvv_tb_pkg::LMUL8};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -9559,7 +9559,7 @@ covergroup Cov_rvv_zve32x_vredsum_vs with function sample(input logic [31:0] ins
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -9568,7 +9568,7 @@ covergroup Cov_rvv_zve32x_vredsum_vs with function sample(input logic [31:0] ins
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -9581,7 +9581,7 @@ covergroup Cov_rvv_zve32x_vredmaxu_vs with function sample(input logic [31:0] in
     coverpoint (inst ==? {6'b000110, 1'b?, 5'b?????, 5'b?????, 3'b010, 5'b?????, 7'b1010111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -9595,7 +9595,7 @@ covergroup Cov_rvv_zve32x_vredmaxu_vs with function sample(input logic [31:0] in
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
       bins SEW32 = {rvv_tb_pkg::SEW32};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -9606,7 +9606,7 @@ covergroup Cov_rvv_zve32x_vredmaxu_vs with function sample(input logic [31:0] in
       bins LMUL2 = {rvv_tb_pkg::LMUL2};
       bins LMUL4 = {rvv_tb_pkg::LMUL4};
       bins LMUL8 = {rvv_tb_pkg::LMUL8};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -9616,7 +9616,7 @@ covergroup Cov_rvv_zve32x_vredmaxu_vs with function sample(input logic [31:0] in
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -9625,7 +9625,7 @@ covergroup Cov_rvv_zve32x_vredmaxu_vs with function sample(input logic [31:0] in
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -9638,7 +9638,7 @@ covergroup Cov_rvv_zve32x_vredmax_vs with function sample(input logic [31:0] ins
     coverpoint (inst ==? {6'b000111, 1'b?, 5'b?????, 5'b?????, 3'b010, 5'b?????, 7'b1010111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -9652,7 +9652,7 @@ covergroup Cov_rvv_zve32x_vredmax_vs with function sample(input logic [31:0] ins
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
       bins SEW32 = {rvv_tb_pkg::SEW32};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -9663,7 +9663,7 @@ covergroup Cov_rvv_zve32x_vredmax_vs with function sample(input logic [31:0] ins
       bins LMUL2 = {rvv_tb_pkg::LMUL2};
       bins LMUL4 = {rvv_tb_pkg::LMUL4};
       bins LMUL8 = {rvv_tb_pkg::LMUL8};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -9673,7 +9673,7 @@ covergroup Cov_rvv_zve32x_vredmax_vs with function sample(input logic [31:0] ins
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -9682,7 +9682,7 @@ covergroup Cov_rvv_zve32x_vredmax_vs with function sample(input logic [31:0] ins
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -9695,7 +9695,7 @@ covergroup Cov_rvv_zve32x_vredminu_vs with function sample(input logic [31:0] in
     coverpoint (inst ==? {6'b000100, 1'b?, 5'b?????, 5'b?????, 3'b010, 5'b?????, 7'b1010111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -9709,7 +9709,7 @@ covergroup Cov_rvv_zve32x_vredminu_vs with function sample(input logic [31:0] in
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
       bins SEW32 = {rvv_tb_pkg::SEW32};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -9720,7 +9720,7 @@ covergroup Cov_rvv_zve32x_vredminu_vs with function sample(input logic [31:0] in
       bins LMUL2 = {rvv_tb_pkg::LMUL2};
       bins LMUL4 = {rvv_tb_pkg::LMUL4};
       bins LMUL8 = {rvv_tb_pkg::LMUL8};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -9730,7 +9730,7 @@ covergroup Cov_rvv_zve32x_vredminu_vs with function sample(input logic [31:0] in
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -9739,7 +9739,7 @@ covergroup Cov_rvv_zve32x_vredminu_vs with function sample(input logic [31:0] in
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -9752,7 +9752,7 @@ covergroup Cov_rvv_zve32x_vredmin_vs with function sample(input logic [31:0] ins
     coverpoint (inst ==? {6'b000101, 1'b?, 5'b?????, 5'b?????, 3'b010, 5'b?????, 7'b1010111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -9766,7 +9766,7 @@ covergroup Cov_rvv_zve32x_vredmin_vs with function sample(input logic [31:0] ins
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
       bins SEW32 = {rvv_tb_pkg::SEW32};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -9777,7 +9777,7 @@ covergroup Cov_rvv_zve32x_vredmin_vs with function sample(input logic [31:0] ins
       bins LMUL2 = {rvv_tb_pkg::LMUL2};
       bins LMUL4 = {rvv_tb_pkg::LMUL4};
       bins LMUL8 = {rvv_tb_pkg::LMUL8};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -9787,7 +9787,7 @@ covergroup Cov_rvv_zve32x_vredmin_vs with function sample(input logic [31:0] ins
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -9796,7 +9796,7 @@ covergroup Cov_rvv_zve32x_vredmin_vs with function sample(input logic [31:0] ins
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -9809,7 +9809,7 @@ covergroup Cov_rvv_zve32x_vredand_vs with function sample(input logic [31:0] ins
     coverpoint (inst ==? {6'b000001, 1'b?, 5'b?????, 5'b?????, 3'b010, 5'b?????, 7'b1010111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -9823,7 +9823,7 @@ covergroup Cov_rvv_zve32x_vredand_vs with function sample(input logic [31:0] ins
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
       bins SEW32 = {rvv_tb_pkg::SEW32};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -9834,7 +9834,7 @@ covergroup Cov_rvv_zve32x_vredand_vs with function sample(input logic [31:0] ins
       bins LMUL2 = {rvv_tb_pkg::LMUL2};
       bins LMUL4 = {rvv_tb_pkg::LMUL4};
       bins LMUL8 = {rvv_tb_pkg::LMUL8};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -9844,7 +9844,7 @@ covergroup Cov_rvv_zve32x_vredand_vs with function sample(input logic [31:0] ins
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -9853,7 +9853,7 @@ covergroup Cov_rvv_zve32x_vredand_vs with function sample(input logic [31:0] ins
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -9866,7 +9866,7 @@ covergroup Cov_rvv_zve32x_vredor_vs with function sample(input logic [31:0] inst
     coverpoint (inst ==? {6'b000010, 1'b?, 5'b?????, 5'b?????, 3'b010, 5'b?????, 7'b1010111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -9880,7 +9880,7 @@ covergroup Cov_rvv_zve32x_vredor_vs with function sample(input logic [31:0] inst
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
       bins SEW32 = {rvv_tb_pkg::SEW32};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -9891,7 +9891,7 @@ covergroup Cov_rvv_zve32x_vredor_vs with function sample(input logic [31:0] inst
       bins LMUL2 = {rvv_tb_pkg::LMUL2};
       bins LMUL4 = {rvv_tb_pkg::LMUL4};
       bins LMUL8 = {rvv_tb_pkg::LMUL8};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -9901,7 +9901,7 @@ covergroup Cov_rvv_zve32x_vredor_vs with function sample(input logic [31:0] inst
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -9910,7 +9910,7 @@ covergroup Cov_rvv_zve32x_vredor_vs with function sample(input logic [31:0] inst
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -9923,7 +9923,7 @@ covergroup Cov_rvv_zve32x_vredxor_vs with function sample(input logic [31:0] ins
     coverpoint (inst ==? {6'b000011, 1'b?, 5'b?????, 5'b?????, 3'b010, 5'b?????, 7'b1010111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -9937,7 +9937,7 @@ covergroup Cov_rvv_zve32x_vredxor_vs with function sample(input logic [31:0] ins
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
       bins SEW32 = {rvv_tb_pkg::SEW32};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -9948,7 +9948,7 @@ covergroup Cov_rvv_zve32x_vredxor_vs with function sample(input logic [31:0] ins
       bins LMUL2 = {rvv_tb_pkg::LMUL2};
       bins LMUL4 = {rvv_tb_pkg::LMUL4};
       bins LMUL8 = {rvv_tb_pkg::LMUL8};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -9958,7 +9958,7 @@ covergroup Cov_rvv_zve32x_vredxor_vs with function sample(input logic [31:0] ins
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -9967,7 +9967,7 @@ covergroup Cov_rvv_zve32x_vredxor_vs with function sample(input logic [31:0] ins
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -9980,7 +9980,7 @@ covergroup Cov_rvv_zve32x_vwredsumu_vs with function sample(input logic [31:0] i
     coverpoint (inst ==? {6'b110000, 1'b?, 5'b?????, 5'b?????, 3'b000, 5'b?????, 7'b1010111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -9993,7 +9993,7 @@ covergroup Cov_rvv_zve32x_vwredsumu_vs with function sample(input logic [31:0] i
       option.comment = "Value of vsew";
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -10004,7 +10004,7 @@ covergroup Cov_rvv_zve32x_vwredsumu_vs with function sample(input logic [31:0] i
       bins LMUL2 = {rvv_tb_pkg::LMUL2};
       bins LMUL4 = {rvv_tb_pkg::LMUL4};
       bins LMUL8 = {rvv_tb_pkg::LMUL8};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -10014,7 +10014,7 @@ covergroup Cov_rvv_zve32x_vwredsumu_vs with function sample(input logic [31:0] i
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -10023,7 +10023,7 @@ covergroup Cov_rvv_zve32x_vwredsumu_vs with function sample(input logic [31:0] i
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -10036,7 +10036,7 @@ covergroup Cov_rvv_zve32x_vwredsum_vs with function sample(input logic [31:0] in
     coverpoint (inst ==? {6'b110001, 1'b?, 5'b?????, 5'b?????, 3'b000, 5'b?????, 7'b1010111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -10049,7 +10049,7 @@ covergroup Cov_rvv_zve32x_vwredsum_vs with function sample(input logic [31:0] in
       option.comment = "Value of vsew";
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -10060,7 +10060,7 @@ covergroup Cov_rvv_zve32x_vwredsum_vs with function sample(input logic [31:0] in
       bins LMUL2 = {rvv_tb_pkg::LMUL2};
       bins LMUL4 = {rvv_tb_pkg::LMUL4};
       bins LMUL8 = {rvv_tb_pkg::LMUL8};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -10070,7 +10070,7 @@ covergroup Cov_rvv_zve32x_vwredsum_vs with function sample(input logic [31:0] in
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -10079,7 +10079,7 @@ covergroup Cov_rvv_zve32x_vwredsum_vs with function sample(input logic [31:0] in
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -10092,7 +10092,7 @@ covergroup Cov_rvv_zve32x_vmand_mm with function sample(input logic [31:0] inst,
     coverpoint (inst ==? {6'b011001, 1'b1, 5'b?????, 5'b?????, 3'b010, 5'b?????, 7'b1010111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -10105,7 +10105,7 @@ covergroup Cov_rvv_zve32x_vmand_mm with function sample(input logic [31:0] inst,
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
       bins SEW32 = {rvv_tb_pkg::SEW32};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -10116,7 +10116,7 @@ covergroup Cov_rvv_zve32x_vmand_mm with function sample(input logic [31:0] inst,
       bins LMUL2 = {rvv_tb_pkg::LMUL2};
       bins LMUL4 = {rvv_tb_pkg::LMUL4};
       bins LMUL8 = {rvv_tb_pkg::LMUL8};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -10126,7 +10126,7 @@ covergroup Cov_rvv_zve32x_vmand_mm with function sample(input logic [31:0] inst,
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -10135,7 +10135,7 @@ covergroup Cov_rvv_zve32x_vmand_mm with function sample(input logic [31:0] inst,
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -10148,7 +10148,7 @@ covergroup Cov_rvv_zve32x_vmnand_mm with function sample(input logic [31:0] inst
     coverpoint (inst ==? {6'b011101, 1'b1, 5'b?????, 5'b?????, 3'b010, 5'b?????, 7'b1010111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -10161,7 +10161,7 @@ covergroup Cov_rvv_zve32x_vmnand_mm with function sample(input logic [31:0] inst
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
       bins SEW32 = {rvv_tb_pkg::SEW32};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -10172,7 +10172,7 @@ covergroup Cov_rvv_zve32x_vmnand_mm with function sample(input logic [31:0] inst
       bins LMUL2 = {rvv_tb_pkg::LMUL2};
       bins LMUL4 = {rvv_tb_pkg::LMUL4};
       bins LMUL8 = {rvv_tb_pkg::LMUL8};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -10182,7 +10182,7 @@ covergroup Cov_rvv_zve32x_vmnand_mm with function sample(input logic [31:0] inst
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -10191,7 +10191,7 @@ covergroup Cov_rvv_zve32x_vmnand_mm with function sample(input logic [31:0] inst
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -10204,7 +10204,7 @@ covergroup Cov_rvv_zve32x_vmandn_mm with function sample(input logic [31:0] inst
     coverpoint (inst ==? {6'b011000, 1'b1, 5'b?????, 5'b?????, 3'b010, 5'b?????, 7'b1010111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -10217,7 +10217,7 @@ covergroup Cov_rvv_zve32x_vmandn_mm with function sample(input logic [31:0] inst
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
       bins SEW32 = {rvv_tb_pkg::SEW32};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -10228,7 +10228,7 @@ covergroup Cov_rvv_zve32x_vmandn_mm with function sample(input logic [31:0] inst
       bins LMUL2 = {rvv_tb_pkg::LMUL2};
       bins LMUL4 = {rvv_tb_pkg::LMUL4};
       bins LMUL8 = {rvv_tb_pkg::LMUL8};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -10238,7 +10238,7 @@ covergroup Cov_rvv_zve32x_vmandn_mm with function sample(input logic [31:0] inst
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -10247,7 +10247,7 @@ covergroup Cov_rvv_zve32x_vmandn_mm with function sample(input logic [31:0] inst
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -10260,7 +10260,7 @@ covergroup Cov_rvv_zve32x_vmxor_mm with function sample(input logic [31:0] inst,
     coverpoint (inst ==? {6'b011011, 1'b1, 5'b?????, 5'b?????, 3'b010, 5'b?????, 7'b1010111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -10273,7 +10273,7 @@ covergroup Cov_rvv_zve32x_vmxor_mm with function sample(input logic [31:0] inst,
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
       bins SEW32 = {rvv_tb_pkg::SEW32};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -10284,7 +10284,7 @@ covergroup Cov_rvv_zve32x_vmxor_mm with function sample(input logic [31:0] inst,
       bins LMUL2 = {rvv_tb_pkg::LMUL2};
       bins LMUL4 = {rvv_tb_pkg::LMUL4};
       bins LMUL8 = {rvv_tb_pkg::LMUL8};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -10294,7 +10294,7 @@ covergroup Cov_rvv_zve32x_vmxor_mm with function sample(input logic [31:0] inst,
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -10303,7 +10303,7 @@ covergroup Cov_rvv_zve32x_vmxor_mm with function sample(input logic [31:0] inst,
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -10316,7 +10316,7 @@ covergroup Cov_rvv_zve32x_vmor_mm with function sample(input logic [31:0] inst, 
     coverpoint (inst ==? {6'b011010, 1'b1, 5'b?????, 5'b?????, 3'b010, 5'b?????, 7'b1010111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -10329,7 +10329,7 @@ covergroup Cov_rvv_zve32x_vmor_mm with function sample(input logic [31:0] inst, 
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
       bins SEW32 = {rvv_tb_pkg::SEW32};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -10340,7 +10340,7 @@ covergroup Cov_rvv_zve32x_vmor_mm with function sample(input logic [31:0] inst, 
       bins LMUL2 = {rvv_tb_pkg::LMUL2};
       bins LMUL4 = {rvv_tb_pkg::LMUL4};
       bins LMUL8 = {rvv_tb_pkg::LMUL8};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -10350,7 +10350,7 @@ covergroup Cov_rvv_zve32x_vmor_mm with function sample(input logic [31:0] inst, 
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -10359,7 +10359,7 @@ covergroup Cov_rvv_zve32x_vmor_mm with function sample(input logic [31:0] inst, 
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -10372,7 +10372,7 @@ covergroup Cov_rvv_zve32x_vmnor_mm with function sample(input logic [31:0] inst,
     coverpoint (inst ==? {6'b011110, 1'b1, 5'b?????, 5'b?????, 3'b010, 5'b?????, 7'b1010111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -10385,7 +10385,7 @@ covergroup Cov_rvv_zve32x_vmnor_mm with function sample(input logic [31:0] inst,
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
       bins SEW32 = {rvv_tb_pkg::SEW32};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -10396,7 +10396,7 @@ covergroup Cov_rvv_zve32x_vmnor_mm with function sample(input logic [31:0] inst,
       bins LMUL2 = {rvv_tb_pkg::LMUL2};
       bins LMUL4 = {rvv_tb_pkg::LMUL4};
       bins LMUL8 = {rvv_tb_pkg::LMUL8};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -10406,7 +10406,7 @@ covergroup Cov_rvv_zve32x_vmnor_mm with function sample(input logic [31:0] inst,
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -10415,7 +10415,7 @@ covergroup Cov_rvv_zve32x_vmnor_mm with function sample(input logic [31:0] inst,
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -10428,7 +10428,7 @@ covergroup Cov_rvv_zve32x_vmorn_mm with function sample(input logic [31:0] inst,
     coverpoint (inst ==? {6'b011100, 1'b1, 5'b?????, 5'b?????, 3'b010, 5'b?????, 7'b1010111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -10441,7 +10441,7 @@ covergroup Cov_rvv_zve32x_vmorn_mm with function sample(input logic [31:0] inst,
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
       bins SEW32 = {rvv_tb_pkg::SEW32};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -10452,7 +10452,7 @@ covergroup Cov_rvv_zve32x_vmorn_mm with function sample(input logic [31:0] inst,
       bins LMUL2 = {rvv_tb_pkg::LMUL2};
       bins LMUL4 = {rvv_tb_pkg::LMUL4};
       bins LMUL8 = {rvv_tb_pkg::LMUL8};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -10462,7 +10462,7 @@ covergroup Cov_rvv_zve32x_vmorn_mm with function sample(input logic [31:0] inst,
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -10471,7 +10471,7 @@ covergroup Cov_rvv_zve32x_vmorn_mm with function sample(input logic [31:0] inst,
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -10484,7 +10484,7 @@ covergroup Cov_rvv_zve32x_vmxnor_mm with function sample(input logic [31:0] inst
     coverpoint (inst ==? {6'b011111, 1'b1, 5'b?????, 5'b?????, 3'b010, 5'b?????, 7'b1010111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -10497,7 +10497,7 @@ covergroup Cov_rvv_zve32x_vmxnor_mm with function sample(input logic [31:0] inst
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
       bins SEW32 = {rvv_tb_pkg::SEW32};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -10508,7 +10508,7 @@ covergroup Cov_rvv_zve32x_vmxnor_mm with function sample(input logic [31:0] inst
       bins LMUL2 = {rvv_tb_pkg::LMUL2};
       bins LMUL4 = {rvv_tb_pkg::LMUL4};
       bins LMUL8 = {rvv_tb_pkg::LMUL8};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -10518,7 +10518,7 @@ covergroup Cov_rvv_zve32x_vmxnor_mm with function sample(input logic [31:0] inst
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -10527,7 +10527,7 @@ covergroup Cov_rvv_zve32x_vmxnor_mm with function sample(input logic [31:0] inst
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -10540,7 +10540,7 @@ covergroup Cov_rvv_zve32x_vcpop_m with function sample(input logic [31:0] inst, 
     coverpoint (inst ==? {6'b010000, 1'b?, 5'b?????, 5'b10000, 3'b010, 5'b?????, 7'b1010111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -10554,7 +10554,7 @@ covergroup Cov_rvv_zve32x_vcpop_m with function sample(input logic [31:0] inst, 
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
       bins SEW32 = {rvv_tb_pkg::SEW32};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -10565,7 +10565,7 @@ covergroup Cov_rvv_zve32x_vcpop_m with function sample(input logic [31:0] inst, 
       bins LMUL2 = {rvv_tb_pkg::LMUL2};
       bins LMUL4 = {rvv_tb_pkg::LMUL4};
       bins LMUL8 = {rvv_tb_pkg::LMUL8};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -10575,7 +10575,7 @@ covergroup Cov_rvv_zve32x_vcpop_m with function sample(input logic [31:0] inst, 
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -10584,7 +10584,7 @@ covergroup Cov_rvv_zve32x_vcpop_m with function sample(input logic [31:0] inst, 
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -10597,7 +10597,7 @@ covergroup Cov_rvv_zve32x_vfirst_m with function sample(input logic [31:0] inst,
     coverpoint (inst ==? {6'b010000, 1'b?, 5'b?????, 5'b10001, 3'b010, 5'b?????, 7'b1010111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -10611,7 +10611,7 @@ covergroup Cov_rvv_zve32x_vfirst_m with function sample(input logic [31:0] inst,
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
       bins SEW32 = {rvv_tb_pkg::SEW32};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -10622,7 +10622,7 @@ covergroup Cov_rvv_zve32x_vfirst_m with function sample(input logic [31:0] inst,
       bins LMUL2 = {rvv_tb_pkg::LMUL2};
       bins LMUL4 = {rvv_tb_pkg::LMUL4};
       bins LMUL8 = {rvv_tb_pkg::LMUL8};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -10632,7 +10632,7 @@ covergroup Cov_rvv_zve32x_vfirst_m with function sample(input logic [31:0] inst,
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -10641,7 +10641,7 @@ covergroup Cov_rvv_zve32x_vfirst_m with function sample(input logic [31:0] inst,
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -10654,7 +10654,7 @@ covergroup Cov_rvv_zve32x_vmsbf_m with function sample(input logic [31:0] inst, 
     coverpoint (inst ==? {6'b010100, 1'b?, 5'b?????, 5'b00001, 3'b010, 5'b?????, 7'b1010111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -10668,7 +10668,7 @@ covergroup Cov_rvv_zve32x_vmsbf_m with function sample(input logic [31:0] inst, 
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
       bins SEW32 = {rvv_tb_pkg::SEW32};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -10679,7 +10679,7 @@ covergroup Cov_rvv_zve32x_vmsbf_m with function sample(input logic [31:0] inst, 
       bins LMUL2 = {rvv_tb_pkg::LMUL2};
       bins LMUL4 = {rvv_tb_pkg::LMUL4};
       bins LMUL8 = {rvv_tb_pkg::LMUL8};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -10689,7 +10689,7 @@ covergroup Cov_rvv_zve32x_vmsbf_m with function sample(input logic [31:0] inst, 
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -10698,7 +10698,7 @@ covergroup Cov_rvv_zve32x_vmsbf_m with function sample(input logic [31:0] inst, 
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -10711,7 +10711,7 @@ covergroup Cov_rvv_zve32x_vmsif_m with function sample(input logic [31:0] inst, 
     coverpoint (inst ==? {6'b010100, 1'b?, 5'b?????, 5'b00011, 3'b010, 5'b?????, 7'b1010111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -10725,7 +10725,7 @@ covergroup Cov_rvv_zve32x_vmsif_m with function sample(input logic [31:0] inst, 
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
       bins SEW32 = {rvv_tb_pkg::SEW32};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -10736,7 +10736,7 @@ covergroup Cov_rvv_zve32x_vmsif_m with function sample(input logic [31:0] inst, 
       bins LMUL2 = {rvv_tb_pkg::LMUL2};
       bins LMUL4 = {rvv_tb_pkg::LMUL4};
       bins LMUL8 = {rvv_tb_pkg::LMUL8};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -10746,7 +10746,7 @@ covergroup Cov_rvv_zve32x_vmsif_m with function sample(input logic [31:0] inst, 
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -10755,7 +10755,7 @@ covergroup Cov_rvv_zve32x_vmsif_m with function sample(input logic [31:0] inst, 
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -10768,7 +10768,7 @@ covergroup Cov_rvv_zve32x_vmsof_m with function sample(input logic [31:0] inst, 
     coverpoint (inst ==? {6'b010100, 1'b?, 5'b?????, 5'b00010, 3'b010, 5'b?????, 7'b1010111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -10782,7 +10782,7 @@ covergroup Cov_rvv_zve32x_vmsof_m with function sample(input logic [31:0] inst, 
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
       bins SEW32 = {rvv_tb_pkg::SEW32};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -10793,7 +10793,7 @@ covergroup Cov_rvv_zve32x_vmsof_m with function sample(input logic [31:0] inst, 
       bins LMUL2 = {rvv_tb_pkg::LMUL2};
       bins LMUL4 = {rvv_tb_pkg::LMUL4};
       bins LMUL8 = {rvv_tb_pkg::LMUL8};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -10803,7 +10803,7 @@ covergroup Cov_rvv_zve32x_vmsof_m with function sample(input logic [31:0] inst, 
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -10812,7 +10812,7 @@ covergroup Cov_rvv_zve32x_vmsof_m with function sample(input logic [31:0] inst, 
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -10825,7 +10825,7 @@ covergroup Cov_rvv_zve32x_viota_m with function sample(input logic [31:0] inst, 
     coverpoint (inst ==? {6'b010100, 1'b?, 5'b?????, 5'b10000, 3'b010, 5'b?????, 7'b1010111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -10839,7 +10839,7 @@ covergroup Cov_rvv_zve32x_viota_m with function sample(input logic [31:0] inst, 
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
       bins SEW32 = {rvv_tb_pkg::SEW32};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -10850,7 +10850,7 @@ covergroup Cov_rvv_zve32x_viota_m with function sample(input logic [31:0] inst, 
       bins LMUL2 = {rvv_tb_pkg::LMUL2};
       bins LMUL4 = {rvv_tb_pkg::LMUL4};
       bins LMUL8 = {rvv_tb_pkg::LMUL8};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -10860,7 +10860,7 @@ covergroup Cov_rvv_zve32x_viota_m with function sample(input logic [31:0] inst, 
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -10869,7 +10869,7 @@ covergroup Cov_rvv_zve32x_viota_m with function sample(input logic [31:0] inst, 
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -10882,7 +10882,7 @@ covergroup Cov_rvv_zve32x_vid_v with function sample(input logic [31:0] inst, lo
     coverpoint (inst ==? {6'b010100, 1'b?, 5'b00000, 5'b10001, 3'b010, 5'b?????, 7'b1010111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -10896,7 +10896,7 @@ covergroup Cov_rvv_zve32x_vid_v with function sample(input logic [31:0] inst, lo
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
       bins SEW32 = {rvv_tb_pkg::SEW32};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -10907,7 +10907,7 @@ covergroup Cov_rvv_zve32x_vid_v with function sample(input logic [31:0] inst, lo
       bins LMUL2 = {rvv_tb_pkg::LMUL2};
       bins LMUL4 = {rvv_tb_pkg::LMUL4};
       bins LMUL8 = {rvv_tb_pkg::LMUL8};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -10917,7 +10917,7 @@ covergroup Cov_rvv_zve32x_vid_v with function sample(input logic [31:0] inst, lo
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -10926,7 +10926,7 @@ covergroup Cov_rvv_zve32x_vid_v with function sample(input logic [31:0] inst, lo
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -10939,7 +10939,7 @@ covergroup Cov_rvv_zve32x_vmv_x_s with function sample(input logic [31:0] inst, 
     coverpoint (inst ==? {6'b010000, 1'b1, 5'b?????, 5'b00000, 3'b010, 5'b?????, 7'b1010111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -10952,7 +10952,7 @@ covergroup Cov_rvv_zve32x_vmv_x_s with function sample(input logic [31:0] inst, 
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
       bins SEW32 = {rvv_tb_pkg::SEW32};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -10963,7 +10963,7 @@ covergroup Cov_rvv_zve32x_vmv_x_s with function sample(input logic [31:0] inst, 
       bins LMUL2 = {rvv_tb_pkg::LMUL2};
       bins LMUL4 = {rvv_tb_pkg::LMUL4};
       bins LMUL8 = {rvv_tb_pkg::LMUL8};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -10973,7 +10973,7 @@ covergroup Cov_rvv_zve32x_vmv_x_s with function sample(input logic [31:0] inst, 
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -10982,7 +10982,7 @@ covergroup Cov_rvv_zve32x_vmv_x_s with function sample(input logic [31:0] inst, 
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -10995,7 +10995,7 @@ covergroup Cov_rvv_zve32x_vmv_s_x with function sample(input logic [31:0] inst, 
     coverpoint (inst ==? {6'b010000, 1'b1, 5'b00000, 5'b?????, 3'b110, 5'b?????, 7'b1010111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -11008,7 +11008,7 @@ covergroup Cov_rvv_zve32x_vmv_s_x with function sample(input logic [31:0] inst, 
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
       bins SEW32 = {rvv_tb_pkg::SEW32};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -11019,7 +11019,7 @@ covergroup Cov_rvv_zve32x_vmv_s_x with function sample(input logic [31:0] inst, 
       bins LMUL2 = {rvv_tb_pkg::LMUL2};
       bins LMUL4 = {rvv_tb_pkg::LMUL4};
       bins LMUL8 = {rvv_tb_pkg::LMUL8};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -11029,7 +11029,7 @@ covergroup Cov_rvv_zve32x_vmv_s_x with function sample(input logic [31:0] inst, 
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -11038,7 +11038,7 @@ covergroup Cov_rvv_zve32x_vmv_s_x with function sample(input logic [31:0] inst, 
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -11051,7 +11051,7 @@ covergroup Cov_rvv_zve32x_vslideup_vx with function sample(input logic [31:0] in
     coverpoint (inst ==? {6'b001110, 1'b?, 5'b?????, 5'b?????, 3'b100, 5'b?????, 7'b1010111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -11065,7 +11065,7 @@ covergroup Cov_rvv_zve32x_vslideup_vx with function sample(input logic [31:0] in
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
       bins SEW32 = {rvv_tb_pkg::SEW32};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -11076,7 +11076,7 @@ covergroup Cov_rvv_zve32x_vslideup_vx with function sample(input logic [31:0] in
       bins LMUL2 = {rvv_tb_pkg::LMUL2};
       bins LMUL4 = {rvv_tb_pkg::LMUL4};
       bins LMUL8 = {rvv_tb_pkg::LMUL8};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -11086,7 +11086,7 @@ covergroup Cov_rvv_zve32x_vslideup_vx with function sample(input logic [31:0] in
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -11095,7 +11095,7 @@ covergroup Cov_rvv_zve32x_vslideup_vx with function sample(input logic [31:0] in
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -11108,7 +11108,7 @@ covergroup Cov_rvv_zve32x_vslideup_vi with function sample(input logic [31:0] in
     coverpoint (inst ==? {6'b001110, 1'b?, 5'b?????, 5'b?????, 3'b011, 5'b?????, 7'b1010111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -11122,7 +11122,7 @@ covergroup Cov_rvv_zve32x_vslideup_vi with function sample(input logic [31:0] in
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
       bins SEW32 = {rvv_tb_pkg::SEW32};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -11133,7 +11133,7 @@ covergroup Cov_rvv_zve32x_vslideup_vi with function sample(input logic [31:0] in
       bins LMUL2 = {rvv_tb_pkg::LMUL2};
       bins LMUL4 = {rvv_tb_pkg::LMUL4};
       bins LMUL8 = {rvv_tb_pkg::LMUL8};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -11143,7 +11143,7 @@ covergroup Cov_rvv_zve32x_vslideup_vi with function sample(input logic [31:0] in
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -11152,7 +11152,7 @@ covergroup Cov_rvv_zve32x_vslideup_vi with function sample(input logic [31:0] in
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -11165,7 +11165,7 @@ covergroup Cov_rvv_zve32x_vslidedown_vx with function sample(input logic [31:0] 
     coverpoint (inst ==? {6'b001111, 1'b?, 5'b?????, 5'b?????, 3'b100, 5'b?????, 7'b1010111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -11179,7 +11179,7 @@ covergroup Cov_rvv_zve32x_vslidedown_vx with function sample(input logic [31:0] 
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
       bins SEW32 = {rvv_tb_pkg::SEW32};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -11190,7 +11190,7 @@ covergroup Cov_rvv_zve32x_vslidedown_vx with function sample(input logic [31:0] 
       bins LMUL2 = {rvv_tb_pkg::LMUL2};
       bins LMUL4 = {rvv_tb_pkg::LMUL4};
       bins LMUL8 = {rvv_tb_pkg::LMUL8};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -11200,7 +11200,7 @@ covergroup Cov_rvv_zve32x_vslidedown_vx with function sample(input logic [31:0] 
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -11209,7 +11209,7 @@ covergroup Cov_rvv_zve32x_vslidedown_vx with function sample(input logic [31:0] 
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -11222,7 +11222,7 @@ covergroup Cov_rvv_zve32x_vslidedown_vi with function sample(input logic [31:0] 
     coverpoint (inst ==? {6'b001111, 1'b?, 5'b?????, 5'b?????, 3'b011, 5'b?????, 7'b1010111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -11236,7 +11236,7 @@ covergroup Cov_rvv_zve32x_vslidedown_vi with function sample(input logic [31:0] 
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
       bins SEW32 = {rvv_tb_pkg::SEW32};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -11247,7 +11247,7 @@ covergroup Cov_rvv_zve32x_vslidedown_vi with function sample(input logic [31:0] 
       bins LMUL2 = {rvv_tb_pkg::LMUL2};
       bins LMUL4 = {rvv_tb_pkg::LMUL4};
       bins LMUL8 = {rvv_tb_pkg::LMUL8};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -11257,7 +11257,7 @@ covergroup Cov_rvv_zve32x_vslidedown_vi with function sample(input logic [31:0] 
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -11266,7 +11266,7 @@ covergroup Cov_rvv_zve32x_vslidedown_vi with function sample(input logic [31:0] 
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -11279,7 +11279,7 @@ covergroup Cov_rvv_zve32x_vslide1up_vx with function sample(input logic [31:0] i
     coverpoint (inst ==? {6'b001110, 1'b?, 5'b?????, 5'b?????, 3'b110, 5'b?????, 7'b1010111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -11293,7 +11293,7 @@ covergroup Cov_rvv_zve32x_vslide1up_vx with function sample(input logic [31:0] i
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
       bins SEW32 = {rvv_tb_pkg::SEW32};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -11304,7 +11304,7 @@ covergroup Cov_rvv_zve32x_vslide1up_vx with function sample(input logic [31:0] i
       bins LMUL2 = {rvv_tb_pkg::LMUL2};
       bins LMUL4 = {rvv_tb_pkg::LMUL4};
       bins LMUL8 = {rvv_tb_pkg::LMUL8};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -11314,7 +11314,7 @@ covergroup Cov_rvv_zve32x_vslide1up_vx with function sample(input logic [31:0] i
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -11323,7 +11323,7 @@ covergroup Cov_rvv_zve32x_vslide1up_vx with function sample(input logic [31:0] i
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -11336,7 +11336,7 @@ covergroup Cov_rvv_zve32x_vslide1down_vx with function sample(input logic [31:0]
     coverpoint (inst ==? {6'b001111, 1'b?, 5'b?????, 5'b?????, 3'b110, 5'b?????, 7'b1010111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -11350,7 +11350,7 @@ covergroup Cov_rvv_zve32x_vslide1down_vx with function sample(input logic [31:0]
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
       bins SEW32 = {rvv_tb_pkg::SEW32};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -11361,7 +11361,7 @@ covergroup Cov_rvv_zve32x_vslide1down_vx with function sample(input logic [31:0]
       bins LMUL2 = {rvv_tb_pkg::LMUL2};
       bins LMUL4 = {rvv_tb_pkg::LMUL4};
       bins LMUL8 = {rvv_tb_pkg::LMUL8};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -11371,7 +11371,7 @@ covergroup Cov_rvv_zve32x_vslide1down_vx with function sample(input logic [31:0]
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -11380,7 +11380,7 @@ covergroup Cov_rvv_zve32x_vslide1down_vx with function sample(input logic [31:0]
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -11393,7 +11393,7 @@ covergroup Cov_rvv_zve32x_vrgather_vv with function sample(input logic [31:0] in
     coverpoint (inst ==? {6'b001100, 1'b?, 5'b?????, 5'b?????, 3'b000, 5'b?????, 7'b1010111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -11407,7 +11407,7 @@ covergroup Cov_rvv_zve32x_vrgather_vv with function sample(input logic [31:0] in
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
       bins SEW32 = {rvv_tb_pkg::SEW32};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -11418,7 +11418,7 @@ covergroup Cov_rvv_zve32x_vrgather_vv with function sample(input logic [31:0] in
       bins LMUL2 = {rvv_tb_pkg::LMUL2};
       bins LMUL4 = {rvv_tb_pkg::LMUL4};
       bins LMUL8 = {rvv_tb_pkg::LMUL8};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -11428,7 +11428,7 @@ covergroup Cov_rvv_zve32x_vrgather_vv with function sample(input logic [31:0] in
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -11437,7 +11437,7 @@ covergroup Cov_rvv_zve32x_vrgather_vv with function sample(input logic [31:0] in
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -11450,7 +11450,7 @@ covergroup Cov_rvv_zve32x_vrgatherei16_vv with function sample(input logic [31:0
     coverpoint (inst ==? {6'b001110, 1'b?, 5'b?????, 5'b?????, 3'b000, 5'b?????, 7'b1010111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -11464,7 +11464,7 @@ covergroup Cov_rvv_zve32x_vrgatherei16_vv with function sample(input logic [31:0
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
       bins SEW32 = {rvv_tb_pkg::SEW32};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -11475,7 +11475,7 @@ covergroup Cov_rvv_zve32x_vrgatherei16_vv with function sample(input logic [31:0
       bins LMUL2 = {rvv_tb_pkg::LMUL2};
       bins LMUL4 = {rvv_tb_pkg::LMUL4};
       bins LMUL8 = {rvv_tb_pkg::LMUL8};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -11485,7 +11485,7 @@ covergroup Cov_rvv_zve32x_vrgatherei16_vv with function sample(input logic [31:0
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -11494,7 +11494,7 @@ covergroup Cov_rvv_zve32x_vrgatherei16_vv with function sample(input logic [31:0
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -11507,7 +11507,7 @@ covergroup Cov_rvv_zve32x_vrgather_vx with function sample(input logic [31:0] in
     coverpoint (inst ==? {6'b001100, 1'b?, 5'b?????, 5'b?????, 3'b100, 5'b?????, 7'b1010111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -11521,7 +11521,7 @@ covergroup Cov_rvv_zve32x_vrgather_vx with function sample(input logic [31:0] in
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
       bins SEW32 = {rvv_tb_pkg::SEW32};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -11532,7 +11532,7 @@ covergroup Cov_rvv_zve32x_vrgather_vx with function sample(input logic [31:0] in
       bins LMUL2 = {rvv_tb_pkg::LMUL2};
       bins LMUL4 = {rvv_tb_pkg::LMUL4};
       bins LMUL8 = {rvv_tb_pkg::LMUL8};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -11542,7 +11542,7 @@ covergroup Cov_rvv_zve32x_vrgather_vx with function sample(input logic [31:0] in
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -11551,7 +11551,7 @@ covergroup Cov_rvv_zve32x_vrgather_vx with function sample(input logic [31:0] in
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -11564,7 +11564,7 @@ covergroup Cov_rvv_zve32x_vrgather_vi with function sample(input logic [31:0] in
     coverpoint (inst ==? {6'b001100, 1'b?, 5'b?????, 5'b?????, 3'b011, 5'b?????, 7'b1010111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -11578,7 +11578,7 @@ covergroup Cov_rvv_zve32x_vrgather_vi with function sample(input logic [31:0] in
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
       bins SEW32 = {rvv_tb_pkg::SEW32};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -11589,7 +11589,7 @@ covergroup Cov_rvv_zve32x_vrgather_vi with function sample(input logic [31:0] in
       bins LMUL2 = {rvv_tb_pkg::LMUL2};
       bins LMUL4 = {rvv_tb_pkg::LMUL4};
       bins LMUL8 = {rvv_tb_pkg::LMUL8};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -11599,7 +11599,7 @@ covergroup Cov_rvv_zve32x_vrgather_vi with function sample(input logic [31:0] in
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -11608,7 +11608,7 @@ covergroup Cov_rvv_zve32x_vrgather_vi with function sample(input logic [31:0] in
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -11621,7 +11621,7 @@ covergroup Cov_rvv_zve32x_vcompress_vm with function sample(input logic [31:0] i
     coverpoint (inst ==? {6'b010111, 1'b1, 5'b?????, 5'b?????, 3'b010, 5'b?????, 7'b1010111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -11634,7 +11634,7 @@ covergroup Cov_rvv_zve32x_vcompress_vm with function sample(input logic [31:0] i
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
       bins SEW32 = {rvv_tb_pkg::SEW32};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -11645,7 +11645,7 @@ covergroup Cov_rvv_zve32x_vcompress_vm with function sample(input logic [31:0] i
       bins LMUL2 = {rvv_tb_pkg::LMUL2};
       bins LMUL4 = {rvv_tb_pkg::LMUL4};
       bins LMUL8 = {rvv_tb_pkg::LMUL8};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -11655,7 +11655,7 @@ covergroup Cov_rvv_zve32x_vcompress_vm with function sample(input logic [31:0] i
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -11664,7 +11664,7 @@ covergroup Cov_rvv_zve32x_vcompress_vm with function sample(input logic [31:0] i
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -11677,7 +11677,7 @@ covergroup Cov_rvv_zve32x_vmv1r_v with function sample(input logic [31:0] inst, 
     coverpoint (inst ==? {6'b100111, 1'b1, 5'b?????, 5'b00000, 3'b011, 5'b?????, 7'b1010111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -11690,7 +11690,7 @@ covergroup Cov_rvv_zve32x_vmv1r_v with function sample(input logic [31:0] inst, 
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
       bins SEW32 = {rvv_tb_pkg::SEW32};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -11701,7 +11701,7 @@ covergroup Cov_rvv_zve32x_vmv1r_v with function sample(input logic [31:0] inst, 
       bins LMUL2 = {rvv_tb_pkg::LMUL2};
       bins LMUL4 = {rvv_tb_pkg::LMUL4};
       bins LMUL8 = {rvv_tb_pkg::LMUL8};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -11711,7 +11711,7 @@ covergroup Cov_rvv_zve32x_vmv1r_v with function sample(input logic [31:0] inst, 
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -11720,7 +11720,7 @@ covergroup Cov_rvv_zve32x_vmv1r_v with function sample(input logic [31:0] inst, 
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -11733,7 +11733,7 @@ covergroup Cov_rvv_zve32x_vmv2r_v with function sample(input logic [31:0] inst, 
     coverpoint (inst ==? {6'b100111, 1'b1, 5'b?????, 5'b00001, 3'b011, 5'b?????, 7'b1010111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -11746,7 +11746,7 @@ covergroup Cov_rvv_zve32x_vmv2r_v with function sample(input logic [31:0] inst, 
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
       bins SEW32 = {rvv_tb_pkg::SEW32};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -11757,7 +11757,7 @@ covergroup Cov_rvv_zve32x_vmv2r_v with function sample(input logic [31:0] inst, 
       bins LMUL2 = {rvv_tb_pkg::LMUL2};
       bins LMUL4 = {rvv_tb_pkg::LMUL4};
       bins LMUL8 = {rvv_tb_pkg::LMUL8};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -11767,7 +11767,7 @@ covergroup Cov_rvv_zve32x_vmv2r_v with function sample(input logic [31:0] inst, 
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -11776,7 +11776,7 @@ covergroup Cov_rvv_zve32x_vmv2r_v with function sample(input logic [31:0] inst, 
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -11789,7 +11789,7 @@ covergroup Cov_rvv_zve32x_vmv4r_v with function sample(input logic [31:0] inst, 
     coverpoint (inst ==? {6'b100111, 1'b1, 5'b?????, 5'b00011, 3'b011, 5'b?????, 7'b1010111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -11802,7 +11802,7 @@ covergroup Cov_rvv_zve32x_vmv4r_v with function sample(input logic [31:0] inst, 
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
       bins SEW32 = {rvv_tb_pkg::SEW32};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -11813,7 +11813,7 @@ covergroup Cov_rvv_zve32x_vmv4r_v with function sample(input logic [31:0] inst, 
       bins LMUL2 = {rvv_tb_pkg::LMUL2};
       bins LMUL4 = {rvv_tb_pkg::LMUL4};
       bins LMUL8 = {rvv_tb_pkg::LMUL8};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -11823,7 +11823,7 @@ covergroup Cov_rvv_zve32x_vmv4r_v with function sample(input logic [31:0] inst, 
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -11832,7 +11832,7 @@ covergroup Cov_rvv_zve32x_vmv4r_v with function sample(input logic [31:0] inst, 
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -11845,7 +11845,7 @@ covergroup Cov_rvv_zve32x_vmv8r_v with function sample(input logic [31:0] inst, 
     coverpoint (inst ==? {6'b100111, 1'b1, 5'b?????, 5'b00111, 3'b011, 5'b?????, 7'b1010111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -11858,7 +11858,7 @@ covergroup Cov_rvv_zve32x_vmv8r_v with function sample(input logic [31:0] inst, 
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
       bins SEW32 = {rvv_tb_pkg::SEW32};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -11869,7 +11869,7 @@ covergroup Cov_rvv_zve32x_vmv8r_v with function sample(input logic [31:0] inst, 
       bins LMUL2 = {rvv_tb_pkg::LMUL2};
       bins LMUL4 = {rvv_tb_pkg::LMUL4};
       bins LMUL8 = {rvv_tb_pkg::LMUL8};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -11879,7 +11879,7 @@ covergroup Cov_rvv_zve32x_vmv8r_v with function sample(input logic [31:0] inst, 
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -11888,7 +11888,7 @@ covergroup Cov_rvv_zve32x_vmv8r_v with function sample(input logic [31:0] inst, 
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -11901,7 +11901,7 @@ covergroup Cov_rvv_zve32x_vle8_v with function sample(input logic [31:0] inst, l
     coverpoint (inst ==? {6'b000000, 1'b?, 5'b00000, 5'b?????, 3'b000, 5'b?????, 7'b0000111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -11915,7 +11915,7 @@ covergroup Cov_rvv_zve32x_vle8_v with function sample(input logic [31:0] inst, l
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
       bins SEW32 = {rvv_tb_pkg::SEW32};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -11926,7 +11926,7 @@ covergroup Cov_rvv_zve32x_vle8_v with function sample(input logic [31:0] inst, l
       bins LMUL2 = {rvv_tb_pkg::LMUL2};
       bins LMUL4 = {rvv_tb_pkg::LMUL4};
       bins LMUL8 = {rvv_tb_pkg::LMUL8};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -11936,7 +11936,7 @@ covergroup Cov_rvv_zve32x_vle8_v with function sample(input logic [31:0] inst, l
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -11945,7 +11945,7 @@ covergroup Cov_rvv_zve32x_vle8_v with function sample(input logic [31:0] inst, l
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -11958,7 +11958,7 @@ covergroup Cov_rvv_zve32x_vle16_v with function sample(input logic [31:0] inst, 
     coverpoint (inst ==? {6'b000000, 1'b?, 5'b00000, 5'b?????, 3'b101, 5'b?????, 7'b0000111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -11972,7 +11972,7 @@ covergroup Cov_rvv_zve32x_vle16_v with function sample(input logic [31:0] inst, 
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
       bins SEW32 = {rvv_tb_pkg::SEW32};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -11983,7 +11983,7 @@ covergroup Cov_rvv_zve32x_vle16_v with function sample(input logic [31:0] inst, 
       bins LMUL2 = {rvv_tb_pkg::LMUL2};
       bins LMUL4 = {rvv_tb_pkg::LMUL4};
       bins LMUL8 = {rvv_tb_pkg::LMUL8};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -11993,7 +11993,7 @@ covergroup Cov_rvv_zve32x_vle16_v with function sample(input logic [31:0] inst, 
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -12002,7 +12002,7 @@ covergroup Cov_rvv_zve32x_vle16_v with function sample(input logic [31:0] inst, 
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -12015,7 +12015,7 @@ covergroup Cov_rvv_zve32x_vle32_v with function sample(input logic [31:0] inst, 
     coverpoint (inst ==? {6'b000000, 1'b?, 5'b00000, 5'b?????, 3'b110, 5'b?????, 7'b0000111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -12029,7 +12029,7 @@ covergroup Cov_rvv_zve32x_vle32_v with function sample(input logic [31:0] inst, 
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
       bins SEW32 = {rvv_tb_pkg::SEW32};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -12040,7 +12040,7 @@ covergroup Cov_rvv_zve32x_vle32_v with function sample(input logic [31:0] inst, 
       bins LMUL2 = {rvv_tb_pkg::LMUL2};
       bins LMUL4 = {rvv_tb_pkg::LMUL4};
       bins LMUL8 = {rvv_tb_pkg::LMUL8};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -12050,7 +12050,7 @@ covergroup Cov_rvv_zve32x_vle32_v with function sample(input logic [31:0] inst, 
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -12059,7 +12059,7 @@ covergroup Cov_rvv_zve32x_vle32_v with function sample(input logic [31:0] inst, 
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -12072,7 +12072,7 @@ covergroup Cov_rvv_zve32x_vse8_v with function sample(input logic [31:0] inst, l
     coverpoint (inst ==? {6'b000000, 1'b?, 5'b00000, 5'b?????, 3'b000, 5'b?????, 7'b0100111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -12086,7 +12086,7 @@ covergroup Cov_rvv_zve32x_vse8_v with function sample(input logic [31:0] inst, l
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
       bins SEW32 = {rvv_tb_pkg::SEW32};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -12097,7 +12097,7 @@ covergroup Cov_rvv_zve32x_vse8_v with function sample(input logic [31:0] inst, l
       bins LMUL2 = {rvv_tb_pkg::LMUL2};
       bins LMUL4 = {rvv_tb_pkg::LMUL4};
       bins LMUL8 = {rvv_tb_pkg::LMUL8};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -12107,7 +12107,7 @@ covergroup Cov_rvv_zve32x_vse8_v with function sample(input logic [31:0] inst, l
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -12116,7 +12116,7 @@ covergroup Cov_rvv_zve32x_vse8_v with function sample(input logic [31:0] inst, l
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -12129,7 +12129,7 @@ covergroup Cov_rvv_zve32x_vse16_v with function sample(input logic [31:0] inst, 
     coverpoint (inst ==? {6'b000000, 1'b?, 5'b00000, 5'b?????, 3'b101, 5'b?????, 7'b0100111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -12143,7 +12143,7 @@ covergroup Cov_rvv_zve32x_vse16_v with function sample(input logic [31:0] inst, 
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
       bins SEW32 = {rvv_tb_pkg::SEW32};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -12154,7 +12154,7 @@ covergroup Cov_rvv_zve32x_vse16_v with function sample(input logic [31:0] inst, 
       bins LMUL2 = {rvv_tb_pkg::LMUL2};
       bins LMUL4 = {rvv_tb_pkg::LMUL4};
       bins LMUL8 = {rvv_tb_pkg::LMUL8};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -12164,7 +12164,7 @@ covergroup Cov_rvv_zve32x_vse16_v with function sample(input logic [31:0] inst, 
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -12173,7 +12173,7 @@ covergroup Cov_rvv_zve32x_vse16_v with function sample(input logic [31:0] inst, 
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -12186,7 +12186,7 @@ covergroup Cov_rvv_zve32x_vse32_v with function sample(input logic [31:0] inst, 
     coverpoint (inst ==? {6'b000000, 1'b?, 5'b00000, 5'b?????, 3'b110, 5'b?????, 7'b0100111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -12200,7 +12200,7 @@ covergroup Cov_rvv_zve32x_vse32_v with function sample(input logic [31:0] inst, 
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
       bins SEW32 = {rvv_tb_pkg::SEW32};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -12211,7 +12211,7 @@ covergroup Cov_rvv_zve32x_vse32_v with function sample(input logic [31:0] inst, 
       bins LMUL2 = {rvv_tb_pkg::LMUL2};
       bins LMUL4 = {rvv_tb_pkg::LMUL4};
       bins LMUL8 = {rvv_tb_pkg::LMUL8};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -12221,7 +12221,7 @@ covergroup Cov_rvv_zve32x_vse32_v with function sample(input logic [31:0] inst, 
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -12230,7 +12230,7 @@ covergroup Cov_rvv_zve32x_vse32_v with function sample(input logic [31:0] inst, 
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -12243,7 +12243,7 @@ covergroup Cov_rvv_zve32x_vlm_v with function sample(input logic [31:0] inst, lo
     coverpoint (inst ==? {6'b000000, 1'b1, 5'b01011, 5'b?????, 3'b000, 5'b?????, 7'b0000111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -12256,7 +12256,7 @@ covergroup Cov_rvv_zve32x_vlm_v with function sample(input logic [31:0] inst, lo
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
       bins SEW32 = {rvv_tb_pkg::SEW32};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -12267,7 +12267,7 @@ covergroup Cov_rvv_zve32x_vlm_v with function sample(input logic [31:0] inst, lo
       bins LMUL2 = {rvv_tb_pkg::LMUL2};
       bins LMUL4 = {rvv_tb_pkg::LMUL4};
       bins LMUL8 = {rvv_tb_pkg::LMUL8};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -12277,7 +12277,7 @@ covergroup Cov_rvv_zve32x_vlm_v with function sample(input logic [31:0] inst, lo
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -12286,7 +12286,7 @@ covergroup Cov_rvv_zve32x_vlm_v with function sample(input logic [31:0] inst, lo
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -12299,7 +12299,7 @@ covergroup Cov_rvv_zve32x_vsm_v with function sample(input logic [31:0] inst, lo
     coverpoint (inst ==? {6'b000000, 1'b1, 5'b01011, 5'b?????, 3'b000, 5'b?????, 7'b0100111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -12312,7 +12312,7 @@ covergroup Cov_rvv_zve32x_vsm_v with function sample(input logic [31:0] inst, lo
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
       bins SEW32 = {rvv_tb_pkg::SEW32};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -12323,7 +12323,7 @@ covergroup Cov_rvv_zve32x_vsm_v with function sample(input logic [31:0] inst, lo
       bins LMUL2 = {rvv_tb_pkg::LMUL2};
       bins LMUL4 = {rvv_tb_pkg::LMUL4};
       bins LMUL8 = {rvv_tb_pkg::LMUL8};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -12333,7 +12333,7 @@ covergroup Cov_rvv_zve32x_vsm_v with function sample(input logic [31:0] inst, lo
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -12342,7 +12342,7 @@ covergroup Cov_rvv_zve32x_vsm_v with function sample(input logic [31:0] inst, lo
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -12355,7 +12355,7 @@ covergroup Cov_rvv_zve32x_vlse8_v with function sample(input logic [31:0] inst, 
     coverpoint (inst ==? {6'b000010, 1'b?, 5'b?????, 5'b?????, 3'b000, 5'b?????, 7'b0000111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -12369,7 +12369,7 @@ covergroup Cov_rvv_zve32x_vlse8_v with function sample(input logic [31:0] inst, 
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
       bins SEW32 = {rvv_tb_pkg::SEW32};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -12380,7 +12380,7 @@ covergroup Cov_rvv_zve32x_vlse8_v with function sample(input logic [31:0] inst, 
       bins LMUL2 = {rvv_tb_pkg::LMUL2};
       bins LMUL4 = {rvv_tb_pkg::LMUL4};
       bins LMUL8 = {rvv_tb_pkg::LMUL8};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -12390,7 +12390,7 @@ covergroup Cov_rvv_zve32x_vlse8_v with function sample(input logic [31:0] inst, 
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -12399,7 +12399,7 @@ covergroup Cov_rvv_zve32x_vlse8_v with function sample(input logic [31:0] inst, 
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -12412,7 +12412,7 @@ covergroup Cov_rvv_zve32x_vlse16_v with function sample(input logic [31:0] inst,
     coverpoint (inst ==? {6'b000010, 1'b?, 5'b?????, 5'b?????, 3'b101, 5'b?????, 7'b0000111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -12426,7 +12426,7 @@ covergroup Cov_rvv_zve32x_vlse16_v with function sample(input logic [31:0] inst,
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
       bins SEW32 = {rvv_tb_pkg::SEW32};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -12437,7 +12437,7 @@ covergroup Cov_rvv_zve32x_vlse16_v with function sample(input logic [31:0] inst,
       bins LMUL2 = {rvv_tb_pkg::LMUL2};
       bins LMUL4 = {rvv_tb_pkg::LMUL4};
       bins LMUL8 = {rvv_tb_pkg::LMUL8};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -12447,7 +12447,7 @@ covergroup Cov_rvv_zve32x_vlse16_v with function sample(input logic [31:0] inst,
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -12456,7 +12456,7 @@ covergroup Cov_rvv_zve32x_vlse16_v with function sample(input logic [31:0] inst,
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -12469,7 +12469,7 @@ covergroup Cov_rvv_zve32x_vlse32_v with function sample(input logic [31:0] inst,
     coverpoint (inst ==? {6'b000010, 1'b?, 5'b?????, 5'b?????, 3'b110, 5'b?????, 7'b0000111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -12483,7 +12483,7 @@ covergroup Cov_rvv_zve32x_vlse32_v with function sample(input logic [31:0] inst,
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
       bins SEW32 = {rvv_tb_pkg::SEW32};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -12494,7 +12494,7 @@ covergroup Cov_rvv_zve32x_vlse32_v with function sample(input logic [31:0] inst,
       bins LMUL2 = {rvv_tb_pkg::LMUL2};
       bins LMUL4 = {rvv_tb_pkg::LMUL4};
       bins LMUL8 = {rvv_tb_pkg::LMUL8};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -12504,7 +12504,7 @@ covergroup Cov_rvv_zve32x_vlse32_v with function sample(input logic [31:0] inst,
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -12513,7 +12513,7 @@ covergroup Cov_rvv_zve32x_vlse32_v with function sample(input logic [31:0] inst,
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -12526,7 +12526,7 @@ covergroup Cov_rvv_zve32x_vsse8_v with function sample(input logic [31:0] inst, 
     coverpoint (inst ==? {6'b000010, 1'b?, 5'b?????, 5'b?????, 3'b000, 5'b?????, 7'b0100111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -12540,7 +12540,7 @@ covergroup Cov_rvv_zve32x_vsse8_v with function sample(input logic [31:0] inst, 
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
       bins SEW32 = {rvv_tb_pkg::SEW32};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -12551,7 +12551,7 @@ covergroup Cov_rvv_zve32x_vsse8_v with function sample(input logic [31:0] inst, 
       bins LMUL2 = {rvv_tb_pkg::LMUL2};
       bins LMUL4 = {rvv_tb_pkg::LMUL4};
       bins LMUL8 = {rvv_tb_pkg::LMUL8};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -12561,7 +12561,7 @@ covergroup Cov_rvv_zve32x_vsse8_v with function sample(input logic [31:0] inst, 
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -12570,7 +12570,7 @@ covergroup Cov_rvv_zve32x_vsse8_v with function sample(input logic [31:0] inst, 
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -12583,7 +12583,7 @@ covergroup Cov_rvv_zve32x_vsse16_v with function sample(input logic [31:0] inst,
     coverpoint (inst ==? {6'b000010, 1'b?, 5'b?????, 5'b?????, 3'b101, 5'b?????, 7'b0100111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -12597,7 +12597,7 @@ covergroup Cov_rvv_zve32x_vsse16_v with function sample(input logic [31:0] inst,
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
       bins SEW32 = {rvv_tb_pkg::SEW32};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -12608,7 +12608,7 @@ covergroup Cov_rvv_zve32x_vsse16_v with function sample(input logic [31:0] inst,
       bins LMUL2 = {rvv_tb_pkg::LMUL2};
       bins LMUL4 = {rvv_tb_pkg::LMUL4};
       bins LMUL8 = {rvv_tb_pkg::LMUL8};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -12618,7 +12618,7 @@ covergroup Cov_rvv_zve32x_vsse16_v with function sample(input logic [31:0] inst,
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -12627,7 +12627,7 @@ covergroup Cov_rvv_zve32x_vsse16_v with function sample(input logic [31:0] inst,
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -12640,7 +12640,7 @@ covergroup Cov_rvv_zve32x_vsse32_v with function sample(input logic [31:0] inst,
     coverpoint (inst ==? {6'b000010, 1'b?, 5'b?????, 5'b?????, 3'b110, 5'b?????, 7'b0100111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -12654,7 +12654,7 @@ covergroup Cov_rvv_zve32x_vsse32_v with function sample(input logic [31:0] inst,
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
       bins SEW32 = {rvv_tb_pkg::SEW32};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -12665,7 +12665,7 @@ covergroup Cov_rvv_zve32x_vsse32_v with function sample(input logic [31:0] inst,
       bins LMUL2 = {rvv_tb_pkg::LMUL2};
       bins LMUL4 = {rvv_tb_pkg::LMUL4};
       bins LMUL8 = {rvv_tb_pkg::LMUL8};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -12675,7 +12675,7 @@ covergroup Cov_rvv_zve32x_vsse32_v with function sample(input logic [31:0] inst,
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -12684,7 +12684,7 @@ covergroup Cov_rvv_zve32x_vsse32_v with function sample(input logic [31:0] inst,
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -12697,7 +12697,7 @@ covergroup Cov_rvv_zve32x_vluxei8_v with function sample(input logic [31:0] inst
     coverpoint (inst ==? {6'b000001, 1'b?, 5'b?????, 5'b?????, 3'b000, 5'b?????, 7'b0000111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -12711,7 +12711,7 @@ covergroup Cov_rvv_zve32x_vluxei8_v with function sample(input logic [31:0] inst
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
       bins SEW32 = {rvv_tb_pkg::SEW32};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -12722,7 +12722,7 @@ covergroup Cov_rvv_zve32x_vluxei8_v with function sample(input logic [31:0] inst
       bins LMUL2 = {rvv_tb_pkg::LMUL2};
       bins LMUL4 = {rvv_tb_pkg::LMUL4};
       bins LMUL8 = {rvv_tb_pkg::LMUL8};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -12732,7 +12732,7 @@ covergroup Cov_rvv_zve32x_vluxei8_v with function sample(input logic [31:0] inst
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -12741,7 +12741,7 @@ covergroup Cov_rvv_zve32x_vluxei8_v with function sample(input logic [31:0] inst
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -12754,7 +12754,7 @@ covergroup Cov_rvv_zve32x_vluxei16_v with function sample(input logic [31:0] ins
     coverpoint (inst ==? {6'b000001, 1'b?, 5'b?????, 5'b?????, 3'b101, 5'b?????, 7'b0000111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -12768,7 +12768,7 @@ covergroup Cov_rvv_zve32x_vluxei16_v with function sample(input logic [31:0] ins
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
       bins SEW32 = {rvv_tb_pkg::SEW32};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -12779,7 +12779,7 @@ covergroup Cov_rvv_zve32x_vluxei16_v with function sample(input logic [31:0] ins
       bins LMUL2 = {rvv_tb_pkg::LMUL2};
       bins LMUL4 = {rvv_tb_pkg::LMUL4};
       bins LMUL8 = {rvv_tb_pkg::LMUL8};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -12789,7 +12789,7 @@ covergroup Cov_rvv_zve32x_vluxei16_v with function sample(input logic [31:0] ins
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -12798,7 +12798,7 @@ covergroup Cov_rvv_zve32x_vluxei16_v with function sample(input logic [31:0] ins
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -12811,7 +12811,7 @@ covergroup Cov_rvv_zve32x_vluxei32_v with function sample(input logic [31:0] ins
     coverpoint (inst ==? {6'b000001, 1'b?, 5'b?????, 5'b?????, 3'b110, 5'b?????, 7'b0000111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -12825,7 +12825,7 @@ covergroup Cov_rvv_zve32x_vluxei32_v with function sample(input logic [31:0] ins
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
       bins SEW32 = {rvv_tb_pkg::SEW32};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -12836,7 +12836,7 @@ covergroup Cov_rvv_zve32x_vluxei32_v with function sample(input logic [31:0] ins
       bins LMUL2 = {rvv_tb_pkg::LMUL2};
       bins LMUL4 = {rvv_tb_pkg::LMUL4};
       bins LMUL8 = {rvv_tb_pkg::LMUL8};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -12846,7 +12846,7 @@ covergroup Cov_rvv_zve32x_vluxei32_v with function sample(input logic [31:0] ins
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -12855,7 +12855,7 @@ covergroup Cov_rvv_zve32x_vluxei32_v with function sample(input logic [31:0] ins
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -12868,7 +12868,7 @@ covergroup Cov_rvv_zve32x_vloxei8_v with function sample(input logic [31:0] inst
     coverpoint (inst ==? {6'b000011, 1'b?, 5'b?????, 5'b?????, 3'b000, 5'b?????, 7'b0000111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -12882,7 +12882,7 @@ covergroup Cov_rvv_zve32x_vloxei8_v with function sample(input logic [31:0] inst
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
       bins SEW32 = {rvv_tb_pkg::SEW32};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -12893,7 +12893,7 @@ covergroup Cov_rvv_zve32x_vloxei8_v with function sample(input logic [31:0] inst
       bins LMUL2 = {rvv_tb_pkg::LMUL2};
       bins LMUL4 = {rvv_tb_pkg::LMUL4};
       bins LMUL8 = {rvv_tb_pkg::LMUL8};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -12903,7 +12903,7 @@ covergroup Cov_rvv_zve32x_vloxei8_v with function sample(input logic [31:0] inst
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -12912,7 +12912,7 @@ covergroup Cov_rvv_zve32x_vloxei8_v with function sample(input logic [31:0] inst
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -12925,7 +12925,7 @@ covergroup Cov_rvv_zve32x_vloxei16_v with function sample(input logic [31:0] ins
     coverpoint (inst ==? {6'b000011, 1'b?, 5'b?????, 5'b?????, 3'b101, 5'b?????, 7'b0000111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -12939,7 +12939,7 @@ covergroup Cov_rvv_zve32x_vloxei16_v with function sample(input logic [31:0] ins
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
       bins SEW32 = {rvv_tb_pkg::SEW32};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -12950,7 +12950,7 @@ covergroup Cov_rvv_zve32x_vloxei16_v with function sample(input logic [31:0] ins
       bins LMUL2 = {rvv_tb_pkg::LMUL2};
       bins LMUL4 = {rvv_tb_pkg::LMUL4};
       bins LMUL8 = {rvv_tb_pkg::LMUL8};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -12960,7 +12960,7 @@ covergroup Cov_rvv_zve32x_vloxei16_v with function sample(input logic [31:0] ins
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -12969,7 +12969,7 @@ covergroup Cov_rvv_zve32x_vloxei16_v with function sample(input logic [31:0] ins
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -12982,7 +12982,7 @@ covergroup Cov_rvv_zve32x_vloxei32_v with function sample(input logic [31:0] ins
     coverpoint (inst ==? {6'b000011, 1'b?, 5'b?????, 5'b?????, 3'b110, 5'b?????, 7'b0000111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -12996,7 +12996,7 @@ covergroup Cov_rvv_zve32x_vloxei32_v with function sample(input logic [31:0] ins
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
       bins SEW32 = {rvv_tb_pkg::SEW32};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -13007,7 +13007,7 @@ covergroup Cov_rvv_zve32x_vloxei32_v with function sample(input logic [31:0] ins
       bins LMUL2 = {rvv_tb_pkg::LMUL2};
       bins LMUL4 = {rvv_tb_pkg::LMUL4};
       bins LMUL8 = {rvv_tb_pkg::LMUL8};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -13017,7 +13017,7 @@ covergroup Cov_rvv_zve32x_vloxei32_v with function sample(input logic [31:0] ins
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -13026,7 +13026,7 @@ covergroup Cov_rvv_zve32x_vloxei32_v with function sample(input logic [31:0] ins
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -13039,7 +13039,7 @@ covergroup Cov_rvv_zve32x_vsuxei8_v with function sample(input logic [31:0] inst
     coverpoint (inst ==? {6'b000001, 1'b?, 5'b?????, 5'b?????, 3'b000, 5'b?????, 7'b0100111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -13053,7 +13053,7 @@ covergroup Cov_rvv_zve32x_vsuxei8_v with function sample(input logic [31:0] inst
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
       bins SEW32 = {rvv_tb_pkg::SEW32};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -13064,7 +13064,7 @@ covergroup Cov_rvv_zve32x_vsuxei8_v with function sample(input logic [31:0] inst
       bins LMUL2 = {rvv_tb_pkg::LMUL2};
       bins LMUL4 = {rvv_tb_pkg::LMUL4};
       bins LMUL8 = {rvv_tb_pkg::LMUL8};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -13074,7 +13074,7 @@ covergroup Cov_rvv_zve32x_vsuxei8_v with function sample(input logic [31:0] inst
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -13083,7 +13083,7 @@ covergroup Cov_rvv_zve32x_vsuxei8_v with function sample(input logic [31:0] inst
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -13096,7 +13096,7 @@ covergroup Cov_rvv_zve32x_vsuxei16_v with function sample(input logic [31:0] ins
     coverpoint (inst ==? {6'b000001, 1'b?, 5'b?????, 5'b?????, 3'b101, 5'b?????, 7'b0100111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -13110,7 +13110,7 @@ covergroup Cov_rvv_zve32x_vsuxei16_v with function sample(input logic [31:0] ins
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
       bins SEW32 = {rvv_tb_pkg::SEW32};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -13121,7 +13121,7 @@ covergroup Cov_rvv_zve32x_vsuxei16_v with function sample(input logic [31:0] ins
       bins LMUL2 = {rvv_tb_pkg::LMUL2};
       bins LMUL4 = {rvv_tb_pkg::LMUL4};
       bins LMUL8 = {rvv_tb_pkg::LMUL8};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -13131,7 +13131,7 @@ covergroup Cov_rvv_zve32x_vsuxei16_v with function sample(input logic [31:0] ins
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -13140,7 +13140,7 @@ covergroup Cov_rvv_zve32x_vsuxei16_v with function sample(input logic [31:0] ins
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -13153,7 +13153,7 @@ covergroup Cov_rvv_zve32x_vsuxei32_v with function sample(input logic [31:0] ins
     coverpoint (inst ==? {6'b000001, 1'b?, 5'b?????, 5'b?????, 3'b110, 5'b?????, 7'b0100111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -13167,7 +13167,7 @@ covergroup Cov_rvv_zve32x_vsuxei32_v with function sample(input logic [31:0] ins
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
       bins SEW32 = {rvv_tb_pkg::SEW32};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -13178,7 +13178,7 @@ covergroup Cov_rvv_zve32x_vsuxei32_v with function sample(input logic [31:0] ins
       bins LMUL2 = {rvv_tb_pkg::LMUL2};
       bins LMUL4 = {rvv_tb_pkg::LMUL4};
       bins LMUL8 = {rvv_tb_pkg::LMUL8};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -13188,7 +13188,7 @@ covergroup Cov_rvv_zve32x_vsuxei32_v with function sample(input logic [31:0] ins
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -13197,7 +13197,7 @@ covergroup Cov_rvv_zve32x_vsuxei32_v with function sample(input logic [31:0] ins
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -13210,7 +13210,7 @@ covergroup Cov_rvv_zve32x_vsoxei8_v with function sample(input logic [31:0] inst
     coverpoint (inst ==? {6'b000011, 1'b?, 5'b?????, 5'b?????, 3'b000, 5'b?????, 7'b0100111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -13224,7 +13224,7 @@ covergroup Cov_rvv_zve32x_vsoxei8_v with function sample(input logic [31:0] inst
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
       bins SEW32 = {rvv_tb_pkg::SEW32};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -13235,7 +13235,7 @@ covergroup Cov_rvv_zve32x_vsoxei8_v with function sample(input logic [31:0] inst
       bins LMUL2 = {rvv_tb_pkg::LMUL2};
       bins LMUL4 = {rvv_tb_pkg::LMUL4};
       bins LMUL8 = {rvv_tb_pkg::LMUL8};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -13245,7 +13245,7 @@ covergroup Cov_rvv_zve32x_vsoxei8_v with function sample(input logic [31:0] inst
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -13254,7 +13254,7 @@ covergroup Cov_rvv_zve32x_vsoxei8_v with function sample(input logic [31:0] inst
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -13267,7 +13267,7 @@ covergroup Cov_rvv_zve32x_vsoxei16_v with function sample(input logic [31:0] ins
     coverpoint (inst ==? {6'b000011, 1'b?, 5'b?????, 5'b?????, 3'b101, 5'b?????, 7'b0100111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -13281,7 +13281,7 @@ covergroup Cov_rvv_zve32x_vsoxei16_v with function sample(input logic [31:0] ins
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
       bins SEW32 = {rvv_tb_pkg::SEW32};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -13292,7 +13292,7 @@ covergroup Cov_rvv_zve32x_vsoxei16_v with function sample(input logic [31:0] ins
       bins LMUL2 = {rvv_tb_pkg::LMUL2};
       bins LMUL4 = {rvv_tb_pkg::LMUL4};
       bins LMUL8 = {rvv_tb_pkg::LMUL8};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -13302,7 +13302,7 @@ covergroup Cov_rvv_zve32x_vsoxei16_v with function sample(input logic [31:0] ins
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -13311,7 +13311,7 @@ covergroup Cov_rvv_zve32x_vsoxei16_v with function sample(input logic [31:0] ins
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -13324,7 +13324,7 @@ covergroup Cov_rvv_zve32x_vsoxei32_v with function sample(input logic [31:0] ins
     coverpoint (inst ==? {6'b000011, 1'b?, 5'b?????, 5'b?????, 3'b110, 5'b?????, 7'b0100111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -13338,7 +13338,7 @@ covergroup Cov_rvv_zve32x_vsoxei32_v with function sample(input logic [31:0] ins
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
       bins SEW32 = {rvv_tb_pkg::SEW32};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -13349,7 +13349,7 @@ covergroup Cov_rvv_zve32x_vsoxei32_v with function sample(input logic [31:0] ins
       bins LMUL2 = {rvv_tb_pkg::LMUL2};
       bins LMUL4 = {rvv_tb_pkg::LMUL4};
       bins LMUL8 = {rvv_tb_pkg::LMUL8};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -13359,7 +13359,7 @@ covergroup Cov_rvv_zve32x_vsoxei32_v with function sample(input logic [31:0] ins
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -13368,7 +13368,7 @@ covergroup Cov_rvv_zve32x_vsoxei32_v with function sample(input logic [31:0] ins
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -13381,7 +13381,7 @@ covergroup Cov_rvv_zve32x_vle8ff_v with function sample(input logic [31:0] inst,
     coverpoint (inst ==? {6'b000000, 1'b?, 5'b10000, 5'b?????, 3'b000, 5'b?????, 7'b0000111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -13395,7 +13395,7 @@ covergroup Cov_rvv_zve32x_vle8ff_v with function sample(input logic [31:0] inst,
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
       bins SEW32 = {rvv_tb_pkg::SEW32};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -13406,7 +13406,7 @@ covergroup Cov_rvv_zve32x_vle8ff_v with function sample(input logic [31:0] inst,
       bins LMUL2 = {rvv_tb_pkg::LMUL2};
       bins LMUL4 = {rvv_tb_pkg::LMUL4};
       bins LMUL8 = {rvv_tb_pkg::LMUL8};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -13416,7 +13416,7 @@ covergroup Cov_rvv_zve32x_vle8ff_v with function sample(input logic [31:0] inst,
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -13425,7 +13425,7 @@ covergroup Cov_rvv_zve32x_vle8ff_v with function sample(input logic [31:0] inst,
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -13438,7 +13438,7 @@ covergroup Cov_rvv_zve32x_vle16ff_v with function sample(input logic [31:0] inst
     coverpoint (inst ==? {6'b000000, 1'b?, 5'b10000, 5'b?????, 3'b101, 5'b?????, 7'b0000111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -13452,7 +13452,7 @@ covergroup Cov_rvv_zve32x_vle16ff_v with function sample(input logic [31:0] inst
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
       bins SEW32 = {rvv_tb_pkg::SEW32};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -13463,7 +13463,7 @@ covergroup Cov_rvv_zve32x_vle16ff_v with function sample(input logic [31:0] inst
       bins LMUL2 = {rvv_tb_pkg::LMUL2};
       bins LMUL4 = {rvv_tb_pkg::LMUL4};
       bins LMUL8 = {rvv_tb_pkg::LMUL8};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -13473,7 +13473,7 @@ covergroup Cov_rvv_zve32x_vle16ff_v with function sample(input logic [31:0] inst
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -13482,7 +13482,7 @@ covergroup Cov_rvv_zve32x_vle16ff_v with function sample(input logic [31:0] inst
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -13495,7 +13495,7 @@ covergroup Cov_rvv_zve32x_vle32ff_v with function sample(input logic [31:0] inst
     coverpoint (inst ==? {6'b000000, 1'b?, 5'b10000, 5'b?????, 3'b110, 5'b?????, 7'b0000111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -13509,7 +13509,7 @@ covergroup Cov_rvv_zve32x_vle32ff_v with function sample(input logic [31:0] inst
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
       bins SEW32 = {rvv_tb_pkg::SEW32};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -13520,7 +13520,7 @@ covergroup Cov_rvv_zve32x_vle32ff_v with function sample(input logic [31:0] inst
       bins LMUL2 = {rvv_tb_pkg::LMUL2};
       bins LMUL4 = {rvv_tb_pkg::LMUL4};
       bins LMUL8 = {rvv_tb_pkg::LMUL8};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -13530,7 +13530,7 @@ covergroup Cov_rvv_zve32x_vle32ff_v with function sample(input logic [31:0] inst
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -13539,7 +13539,7 @@ covergroup Cov_rvv_zve32x_vle32ff_v with function sample(input logic [31:0] inst
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -13552,7 +13552,7 @@ covergroup Cov_rvv_zve32x_vlseg2e8_v with function sample(input logic [31:0] ins
     coverpoint (inst ==? {6'b001000, 1'b?, 5'b00000, 5'b?????, 3'b000, 5'b?????, 7'b0000111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -13566,7 +13566,7 @@ covergroup Cov_rvv_zve32x_vlseg2e8_v with function sample(input logic [31:0] ins
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
       bins SEW32 = {rvv_tb_pkg::SEW32};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -13576,7 +13576,7 @@ covergroup Cov_rvv_zve32x_vlseg2e8_v with function sample(input logic [31:0] ins
       bins LMUL1 = {rvv_tb_pkg::LMUL1};
       bins LMUL2 = {rvv_tb_pkg::LMUL2};
       bins LMUL4 = {rvv_tb_pkg::LMUL4};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -13586,7 +13586,7 @@ covergroup Cov_rvv_zve32x_vlseg2e8_v with function sample(input logic [31:0] ins
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -13595,7 +13595,7 @@ covergroup Cov_rvv_zve32x_vlseg2e8_v with function sample(input logic [31:0] ins
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -13608,7 +13608,7 @@ covergroup Cov_rvv_zve32x_vlseg3e8_v with function sample(input logic [31:0] ins
     coverpoint (inst ==? {6'b010000, 1'b?, 5'b00000, 5'b?????, 3'b000, 5'b?????, 7'b0000111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -13622,7 +13622,7 @@ covergroup Cov_rvv_zve32x_vlseg3e8_v with function sample(input logic [31:0] ins
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
       bins SEW32 = {rvv_tb_pkg::SEW32};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -13631,7 +13631,7 @@ covergroup Cov_rvv_zve32x_vlseg3e8_v with function sample(input logic [31:0] ins
       bins LMUL1_2 = {rvv_tb_pkg::LMUL1_2};
       bins LMUL1 = {rvv_tb_pkg::LMUL1};
       bins LMUL2 = {rvv_tb_pkg::LMUL2};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -13641,7 +13641,7 @@ covergroup Cov_rvv_zve32x_vlseg3e8_v with function sample(input logic [31:0] ins
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -13650,7 +13650,7 @@ covergroup Cov_rvv_zve32x_vlseg3e8_v with function sample(input logic [31:0] ins
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -13663,7 +13663,7 @@ covergroup Cov_rvv_zve32x_vlseg4e8_v with function sample(input logic [31:0] ins
     coverpoint (inst ==? {6'b011000, 1'b?, 5'b00000, 5'b?????, 3'b000, 5'b?????, 7'b0000111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -13677,7 +13677,7 @@ covergroup Cov_rvv_zve32x_vlseg4e8_v with function sample(input logic [31:0] ins
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
       bins SEW32 = {rvv_tb_pkg::SEW32};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -13686,7 +13686,7 @@ covergroup Cov_rvv_zve32x_vlseg4e8_v with function sample(input logic [31:0] ins
       bins LMUL1_2 = {rvv_tb_pkg::LMUL1_2};
       bins LMUL1 = {rvv_tb_pkg::LMUL1};
       bins LMUL2 = {rvv_tb_pkg::LMUL2};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -13696,7 +13696,7 @@ covergroup Cov_rvv_zve32x_vlseg4e8_v with function sample(input logic [31:0] ins
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -13705,7 +13705,7 @@ covergroup Cov_rvv_zve32x_vlseg4e8_v with function sample(input logic [31:0] ins
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -13718,7 +13718,7 @@ covergroup Cov_rvv_zve32x_vlseg5e8_v with function sample(input logic [31:0] ins
     coverpoint (inst ==? {6'b100000, 1'b?, 5'b00000, 5'b?????, 3'b000, 5'b?????, 7'b0000111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -13732,7 +13732,7 @@ covergroup Cov_rvv_zve32x_vlseg5e8_v with function sample(input logic [31:0] ins
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
       bins SEW32 = {rvv_tb_pkg::SEW32};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -13740,7 +13740,7 @@ covergroup Cov_rvv_zve32x_vlseg5e8_v with function sample(input logic [31:0] ins
       bins LMUL1_4 = {rvv_tb_pkg::LMUL1_4};
       bins LMUL1_2 = {rvv_tb_pkg::LMUL1_2};
       bins LMUL1 = {rvv_tb_pkg::LMUL1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -13750,7 +13750,7 @@ covergroup Cov_rvv_zve32x_vlseg5e8_v with function sample(input logic [31:0] ins
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -13759,7 +13759,7 @@ covergroup Cov_rvv_zve32x_vlseg5e8_v with function sample(input logic [31:0] ins
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -13772,7 +13772,7 @@ covergroup Cov_rvv_zve32x_vlseg6e8_v with function sample(input logic [31:0] ins
     coverpoint (inst ==? {6'b101000, 1'b?, 5'b00000, 5'b?????, 3'b000, 5'b?????, 7'b0000111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -13786,7 +13786,7 @@ covergroup Cov_rvv_zve32x_vlseg6e8_v with function sample(input logic [31:0] ins
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
       bins SEW32 = {rvv_tb_pkg::SEW32};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -13794,7 +13794,7 @@ covergroup Cov_rvv_zve32x_vlseg6e8_v with function sample(input logic [31:0] ins
       bins LMUL1_4 = {rvv_tb_pkg::LMUL1_4};
       bins LMUL1_2 = {rvv_tb_pkg::LMUL1_2};
       bins LMUL1 = {rvv_tb_pkg::LMUL1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -13804,7 +13804,7 @@ covergroup Cov_rvv_zve32x_vlseg6e8_v with function sample(input logic [31:0] ins
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -13813,7 +13813,7 @@ covergroup Cov_rvv_zve32x_vlseg6e8_v with function sample(input logic [31:0] ins
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -13826,7 +13826,7 @@ covergroup Cov_rvv_zve32x_vlseg7e8_v with function sample(input logic [31:0] ins
     coverpoint (inst ==? {6'b110000, 1'b?, 5'b00000, 5'b?????, 3'b000, 5'b?????, 7'b0000111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -13840,7 +13840,7 @@ covergroup Cov_rvv_zve32x_vlseg7e8_v with function sample(input logic [31:0] ins
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
       bins SEW32 = {rvv_tb_pkg::SEW32};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -13848,7 +13848,7 @@ covergroup Cov_rvv_zve32x_vlseg7e8_v with function sample(input logic [31:0] ins
       bins LMUL1_4 = {rvv_tb_pkg::LMUL1_4};
       bins LMUL1_2 = {rvv_tb_pkg::LMUL1_2};
       bins LMUL1 = {rvv_tb_pkg::LMUL1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -13858,7 +13858,7 @@ covergroup Cov_rvv_zve32x_vlseg7e8_v with function sample(input logic [31:0] ins
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -13867,7 +13867,7 @@ covergroup Cov_rvv_zve32x_vlseg7e8_v with function sample(input logic [31:0] ins
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -13880,7 +13880,7 @@ covergroup Cov_rvv_zve32x_vlseg8e8_v with function sample(input logic [31:0] ins
     coverpoint (inst ==? {6'b111000, 1'b?, 5'b00000, 5'b?????, 3'b000, 5'b?????, 7'b0000111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -13894,7 +13894,7 @@ covergroup Cov_rvv_zve32x_vlseg8e8_v with function sample(input logic [31:0] ins
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
       bins SEW32 = {rvv_tb_pkg::SEW32};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -13902,7 +13902,7 @@ covergroup Cov_rvv_zve32x_vlseg8e8_v with function sample(input logic [31:0] ins
       bins LMUL1_4 = {rvv_tb_pkg::LMUL1_4};
       bins LMUL1_2 = {rvv_tb_pkg::LMUL1_2};
       bins LMUL1 = {rvv_tb_pkg::LMUL1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -13912,7 +13912,7 @@ covergroup Cov_rvv_zve32x_vlseg8e8_v with function sample(input logic [31:0] ins
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -13921,7 +13921,7 @@ covergroup Cov_rvv_zve32x_vlseg8e8_v with function sample(input logic [31:0] ins
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -13934,7 +13934,7 @@ covergroup Cov_rvv_zve32x_vlseg2e16_v with function sample(input logic [31:0] in
     coverpoint (inst ==? {6'b001000, 1'b?, 5'b00000, 5'b?????, 3'b101, 5'b?????, 7'b0000111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -13948,7 +13948,7 @@ covergroup Cov_rvv_zve32x_vlseg2e16_v with function sample(input logic [31:0] in
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
       bins SEW32 = {rvv_tb_pkg::SEW32};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -13958,7 +13958,7 @@ covergroup Cov_rvv_zve32x_vlseg2e16_v with function sample(input logic [31:0] in
       bins LMUL1 = {rvv_tb_pkg::LMUL1};
       bins LMUL2 = {rvv_tb_pkg::LMUL2};
       bins LMUL4 = {rvv_tb_pkg::LMUL4};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -13968,7 +13968,7 @@ covergroup Cov_rvv_zve32x_vlseg2e16_v with function sample(input logic [31:0] in
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -13977,7 +13977,7 @@ covergroup Cov_rvv_zve32x_vlseg2e16_v with function sample(input logic [31:0] in
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -13990,7 +13990,7 @@ covergroup Cov_rvv_zve32x_vlseg3e16_v with function sample(input logic [31:0] in
     coverpoint (inst ==? {6'b010000, 1'b?, 5'b00000, 5'b?????, 3'b101, 5'b?????, 7'b0000111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -14004,7 +14004,7 @@ covergroup Cov_rvv_zve32x_vlseg3e16_v with function sample(input logic [31:0] in
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
       bins SEW32 = {rvv_tb_pkg::SEW32};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -14013,7 +14013,7 @@ covergroup Cov_rvv_zve32x_vlseg3e16_v with function sample(input logic [31:0] in
       bins LMUL1_2 = {rvv_tb_pkg::LMUL1_2};
       bins LMUL1 = {rvv_tb_pkg::LMUL1};
       bins LMUL2 = {rvv_tb_pkg::LMUL2};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -14023,7 +14023,7 @@ covergroup Cov_rvv_zve32x_vlseg3e16_v with function sample(input logic [31:0] in
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -14032,7 +14032,7 @@ covergroup Cov_rvv_zve32x_vlseg3e16_v with function sample(input logic [31:0] in
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -14045,7 +14045,7 @@ covergroup Cov_rvv_zve32x_vlseg4e16_v with function sample(input logic [31:0] in
     coverpoint (inst ==? {6'b011000, 1'b?, 5'b00000, 5'b?????, 3'b101, 5'b?????, 7'b0000111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -14059,7 +14059,7 @@ covergroup Cov_rvv_zve32x_vlseg4e16_v with function sample(input logic [31:0] in
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
       bins SEW32 = {rvv_tb_pkg::SEW32};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -14068,7 +14068,7 @@ covergroup Cov_rvv_zve32x_vlseg4e16_v with function sample(input logic [31:0] in
       bins LMUL1_2 = {rvv_tb_pkg::LMUL1_2};
       bins LMUL1 = {rvv_tb_pkg::LMUL1};
       bins LMUL2 = {rvv_tb_pkg::LMUL2};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -14078,7 +14078,7 @@ covergroup Cov_rvv_zve32x_vlseg4e16_v with function sample(input logic [31:0] in
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -14087,7 +14087,7 @@ covergroup Cov_rvv_zve32x_vlseg4e16_v with function sample(input logic [31:0] in
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -14100,7 +14100,7 @@ covergroup Cov_rvv_zve32x_vlseg5e16_v with function sample(input logic [31:0] in
     coverpoint (inst ==? {6'b100000, 1'b?, 5'b00000, 5'b?????, 3'b101, 5'b?????, 7'b0000111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -14114,7 +14114,7 @@ covergroup Cov_rvv_zve32x_vlseg5e16_v with function sample(input logic [31:0] in
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
       bins SEW32 = {rvv_tb_pkg::SEW32};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -14122,7 +14122,7 @@ covergroup Cov_rvv_zve32x_vlseg5e16_v with function sample(input logic [31:0] in
       bins LMUL1_4 = {rvv_tb_pkg::LMUL1_4};
       bins LMUL1_2 = {rvv_tb_pkg::LMUL1_2};
       bins LMUL1 = {rvv_tb_pkg::LMUL1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -14132,7 +14132,7 @@ covergroup Cov_rvv_zve32x_vlseg5e16_v with function sample(input logic [31:0] in
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -14141,7 +14141,7 @@ covergroup Cov_rvv_zve32x_vlseg5e16_v with function sample(input logic [31:0] in
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -14154,7 +14154,7 @@ covergroup Cov_rvv_zve32x_vlseg6e16_v with function sample(input logic [31:0] in
     coverpoint (inst ==? {6'b101000, 1'b?, 5'b00000, 5'b?????, 3'b101, 5'b?????, 7'b0000111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -14168,7 +14168,7 @@ covergroup Cov_rvv_zve32x_vlseg6e16_v with function sample(input logic [31:0] in
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
       bins SEW32 = {rvv_tb_pkg::SEW32};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -14176,7 +14176,7 @@ covergroup Cov_rvv_zve32x_vlseg6e16_v with function sample(input logic [31:0] in
       bins LMUL1_4 = {rvv_tb_pkg::LMUL1_4};
       bins LMUL1_2 = {rvv_tb_pkg::LMUL1_2};
       bins LMUL1 = {rvv_tb_pkg::LMUL1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -14186,7 +14186,7 @@ covergroup Cov_rvv_zve32x_vlseg6e16_v with function sample(input logic [31:0] in
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -14195,7 +14195,7 @@ covergroup Cov_rvv_zve32x_vlseg6e16_v with function sample(input logic [31:0] in
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -14208,7 +14208,7 @@ covergroup Cov_rvv_zve32x_vlseg7e16_v with function sample(input logic [31:0] in
     coverpoint (inst ==? {6'b110000, 1'b?, 5'b00000, 5'b?????, 3'b101, 5'b?????, 7'b0000111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -14222,7 +14222,7 @@ covergroup Cov_rvv_zve32x_vlseg7e16_v with function sample(input logic [31:0] in
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
       bins SEW32 = {rvv_tb_pkg::SEW32};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -14230,7 +14230,7 @@ covergroup Cov_rvv_zve32x_vlseg7e16_v with function sample(input logic [31:0] in
       bins LMUL1_4 = {rvv_tb_pkg::LMUL1_4};
       bins LMUL1_2 = {rvv_tb_pkg::LMUL1_2};
       bins LMUL1 = {rvv_tb_pkg::LMUL1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -14240,7 +14240,7 @@ covergroup Cov_rvv_zve32x_vlseg7e16_v with function sample(input logic [31:0] in
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -14249,7 +14249,7 @@ covergroup Cov_rvv_zve32x_vlseg7e16_v with function sample(input logic [31:0] in
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -14262,7 +14262,7 @@ covergroup Cov_rvv_zve32x_vlseg8e16_v with function sample(input logic [31:0] in
     coverpoint (inst ==? {6'b111000, 1'b?, 5'b00000, 5'b?????, 3'b101, 5'b?????, 7'b0000111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -14276,7 +14276,7 @@ covergroup Cov_rvv_zve32x_vlseg8e16_v with function sample(input logic [31:0] in
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
       bins SEW32 = {rvv_tb_pkg::SEW32};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -14284,7 +14284,7 @@ covergroup Cov_rvv_zve32x_vlseg8e16_v with function sample(input logic [31:0] in
       bins LMUL1_4 = {rvv_tb_pkg::LMUL1_4};
       bins LMUL1_2 = {rvv_tb_pkg::LMUL1_2};
       bins LMUL1 = {rvv_tb_pkg::LMUL1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -14294,7 +14294,7 @@ covergroup Cov_rvv_zve32x_vlseg8e16_v with function sample(input logic [31:0] in
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -14303,7 +14303,7 @@ covergroup Cov_rvv_zve32x_vlseg8e16_v with function sample(input logic [31:0] in
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -14316,7 +14316,7 @@ covergroup Cov_rvv_zve32x_vlseg2e32_v with function sample(input logic [31:0] in
     coverpoint (inst ==? {6'b001000, 1'b?, 5'b00000, 5'b?????, 3'b110, 5'b?????, 7'b0000111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -14330,7 +14330,7 @@ covergroup Cov_rvv_zve32x_vlseg2e32_v with function sample(input logic [31:0] in
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
       bins SEW32 = {rvv_tb_pkg::SEW32};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -14340,7 +14340,7 @@ covergroup Cov_rvv_zve32x_vlseg2e32_v with function sample(input logic [31:0] in
       bins LMUL1 = {rvv_tb_pkg::LMUL1};
       bins LMUL2 = {rvv_tb_pkg::LMUL2};
       bins LMUL4 = {rvv_tb_pkg::LMUL4};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -14350,7 +14350,7 @@ covergroup Cov_rvv_zve32x_vlseg2e32_v with function sample(input logic [31:0] in
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -14359,7 +14359,7 @@ covergroup Cov_rvv_zve32x_vlseg2e32_v with function sample(input logic [31:0] in
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -14372,7 +14372,7 @@ covergroup Cov_rvv_zve32x_vlseg3e32_v with function sample(input logic [31:0] in
     coverpoint (inst ==? {6'b010000, 1'b?, 5'b00000, 5'b?????, 3'b110, 5'b?????, 7'b0000111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -14386,7 +14386,7 @@ covergroup Cov_rvv_zve32x_vlseg3e32_v with function sample(input logic [31:0] in
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
       bins SEW32 = {rvv_tb_pkg::SEW32};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -14395,7 +14395,7 @@ covergroup Cov_rvv_zve32x_vlseg3e32_v with function sample(input logic [31:0] in
       bins LMUL1_2 = {rvv_tb_pkg::LMUL1_2};
       bins LMUL1 = {rvv_tb_pkg::LMUL1};
       bins LMUL2 = {rvv_tb_pkg::LMUL2};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -14405,7 +14405,7 @@ covergroup Cov_rvv_zve32x_vlseg3e32_v with function sample(input logic [31:0] in
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -14414,7 +14414,7 @@ covergroup Cov_rvv_zve32x_vlseg3e32_v with function sample(input logic [31:0] in
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -14427,7 +14427,7 @@ covergroup Cov_rvv_zve32x_vlseg4e32_v with function sample(input logic [31:0] in
     coverpoint (inst ==? {6'b011000, 1'b?, 5'b00000, 5'b?????, 3'b110, 5'b?????, 7'b0000111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -14441,7 +14441,7 @@ covergroup Cov_rvv_zve32x_vlseg4e32_v with function sample(input logic [31:0] in
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
       bins SEW32 = {rvv_tb_pkg::SEW32};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -14450,7 +14450,7 @@ covergroup Cov_rvv_zve32x_vlseg4e32_v with function sample(input logic [31:0] in
       bins LMUL1_2 = {rvv_tb_pkg::LMUL1_2};
       bins LMUL1 = {rvv_tb_pkg::LMUL1};
       bins LMUL2 = {rvv_tb_pkg::LMUL2};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -14460,7 +14460,7 @@ covergroup Cov_rvv_zve32x_vlseg4e32_v with function sample(input logic [31:0] in
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -14469,7 +14469,7 @@ covergroup Cov_rvv_zve32x_vlseg4e32_v with function sample(input logic [31:0] in
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -14482,7 +14482,7 @@ covergroup Cov_rvv_zve32x_vlseg5e32_v with function sample(input logic [31:0] in
     coverpoint (inst ==? {6'b100000, 1'b?, 5'b00000, 5'b?????, 3'b110, 5'b?????, 7'b0000111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -14496,7 +14496,7 @@ covergroup Cov_rvv_zve32x_vlseg5e32_v with function sample(input logic [31:0] in
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
       bins SEW32 = {rvv_tb_pkg::SEW32};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -14504,7 +14504,7 @@ covergroup Cov_rvv_zve32x_vlseg5e32_v with function sample(input logic [31:0] in
       bins LMUL1_4 = {rvv_tb_pkg::LMUL1_4};
       bins LMUL1_2 = {rvv_tb_pkg::LMUL1_2};
       bins LMUL1 = {rvv_tb_pkg::LMUL1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -14514,7 +14514,7 @@ covergroup Cov_rvv_zve32x_vlseg5e32_v with function sample(input logic [31:0] in
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -14523,7 +14523,7 @@ covergroup Cov_rvv_zve32x_vlseg5e32_v with function sample(input logic [31:0] in
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -14536,7 +14536,7 @@ covergroup Cov_rvv_zve32x_vlseg6e32_v with function sample(input logic [31:0] in
     coverpoint (inst ==? {6'b101000, 1'b?, 5'b00000, 5'b?????, 3'b110, 5'b?????, 7'b0000111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -14550,7 +14550,7 @@ covergroup Cov_rvv_zve32x_vlseg6e32_v with function sample(input logic [31:0] in
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
       bins SEW32 = {rvv_tb_pkg::SEW32};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -14558,7 +14558,7 @@ covergroup Cov_rvv_zve32x_vlseg6e32_v with function sample(input logic [31:0] in
       bins LMUL1_4 = {rvv_tb_pkg::LMUL1_4};
       bins LMUL1_2 = {rvv_tb_pkg::LMUL1_2};
       bins LMUL1 = {rvv_tb_pkg::LMUL1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -14568,7 +14568,7 @@ covergroup Cov_rvv_zve32x_vlseg6e32_v with function sample(input logic [31:0] in
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -14577,7 +14577,7 @@ covergroup Cov_rvv_zve32x_vlseg6e32_v with function sample(input logic [31:0] in
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -14590,7 +14590,7 @@ covergroup Cov_rvv_zve32x_vlseg7e32_v with function sample(input logic [31:0] in
     coverpoint (inst ==? {6'b110000, 1'b?, 5'b00000, 5'b?????, 3'b110, 5'b?????, 7'b0000111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -14604,7 +14604,7 @@ covergroup Cov_rvv_zve32x_vlseg7e32_v with function sample(input logic [31:0] in
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
       bins SEW32 = {rvv_tb_pkg::SEW32};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -14612,7 +14612,7 @@ covergroup Cov_rvv_zve32x_vlseg7e32_v with function sample(input logic [31:0] in
       bins LMUL1_4 = {rvv_tb_pkg::LMUL1_4};
       bins LMUL1_2 = {rvv_tb_pkg::LMUL1_2};
       bins LMUL1 = {rvv_tb_pkg::LMUL1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -14622,7 +14622,7 @@ covergroup Cov_rvv_zve32x_vlseg7e32_v with function sample(input logic [31:0] in
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -14631,7 +14631,7 @@ covergroup Cov_rvv_zve32x_vlseg7e32_v with function sample(input logic [31:0] in
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -14644,7 +14644,7 @@ covergroup Cov_rvv_zve32x_vlseg8e32_v with function sample(input logic [31:0] in
     coverpoint (inst ==? {6'b111000, 1'b?, 5'b00000, 5'b?????, 3'b110, 5'b?????, 7'b0000111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -14658,7 +14658,7 @@ covergroup Cov_rvv_zve32x_vlseg8e32_v with function sample(input logic [31:0] in
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
       bins SEW32 = {rvv_tb_pkg::SEW32};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -14666,7 +14666,7 @@ covergroup Cov_rvv_zve32x_vlseg8e32_v with function sample(input logic [31:0] in
       bins LMUL1_4 = {rvv_tb_pkg::LMUL1_4};
       bins LMUL1_2 = {rvv_tb_pkg::LMUL1_2};
       bins LMUL1 = {rvv_tb_pkg::LMUL1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -14676,7 +14676,7 @@ covergroup Cov_rvv_zve32x_vlseg8e32_v with function sample(input logic [31:0] in
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -14685,7 +14685,7 @@ covergroup Cov_rvv_zve32x_vlseg8e32_v with function sample(input logic [31:0] in
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -14698,7 +14698,7 @@ covergroup Cov_rvv_zve32x_vsseg2e8_v with function sample(input logic [31:0] ins
     coverpoint (inst ==? {6'b001000, 1'b?, 5'b00000, 5'b?????, 3'b000, 5'b?????, 7'b0100111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -14712,7 +14712,7 @@ covergroup Cov_rvv_zve32x_vsseg2e8_v with function sample(input logic [31:0] ins
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
       bins SEW32 = {rvv_tb_pkg::SEW32};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -14722,7 +14722,7 @@ covergroup Cov_rvv_zve32x_vsseg2e8_v with function sample(input logic [31:0] ins
       bins LMUL1 = {rvv_tb_pkg::LMUL1};
       bins LMUL2 = {rvv_tb_pkg::LMUL2};
       bins LMUL4 = {rvv_tb_pkg::LMUL4};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -14732,7 +14732,7 @@ covergroup Cov_rvv_zve32x_vsseg2e8_v with function sample(input logic [31:0] ins
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -14741,7 +14741,7 @@ covergroup Cov_rvv_zve32x_vsseg2e8_v with function sample(input logic [31:0] ins
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -14754,7 +14754,7 @@ covergroup Cov_rvv_zve32x_vsseg3e8_v with function sample(input logic [31:0] ins
     coverpoint (inst ==? {6'b010000, 1'b?, 5'b00000, 5'b?????, 3'b000, 5'b?????, 7'b0100111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -14768,7 +14768,7 @@ covergroup Cov_rvv_zve32x_vsseg3e8_v with function sample(input logic [31:0] ins
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
       bins SEW32 = {rvv_tb_pkg::SEW32};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -14777,7 +14777,7 @@ covergroup Cov_rvv_zve32x_vsseg3e8_v with function sample(input logic [31:0] ins
       bins LMUL1_2 = {rvv_tb_pkg::LMUL1_2};
       bins LMUL1 = {rvv_tb_pkg::LMUL1};
       bins LMUL2 = {rvv_tb_pkg::LMUL2};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -14787,7 +14787,7 @@ covergroup Cov_rvv_zve32x_vsseg3e8_v with function sample(input logic [31:0] ins
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -14796,7 +14796,7 @@ covergroup Cov_rvv_zve32x_vsseg3e8_v with function sample(input logic [31:0] ins
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -14809,7 +14809,7 @@ covergroup Cov_rvv_zve32x_vsseg4e8_v with function sample(input logic [31:0] ins
     coverpoint (inst ==? {6'b011000, 1'b?, 5'b00000, 5'b?????, 3'b000, 5'b?????, 7'b0100111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -14823,7 +14823,7 @@ covergroup Cov_rvv_zve32x_vsseg4e8_v with function sample(input logic [31:0] ins
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
       bins SEW32 = {rvv_tb_pkg::SEW32};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -14832,7 +14832,7 @@ covergroup Cov_rvv_zve32x_vsseg4e8_v with function sample(input logic [31:0] ins
       bins LMUL1_2 = {rvv_tb_pkg::LMUL1_2};
       bins LMUL1 = {rvv_tb_pkg::LMUL1};
       bins LMUL2 = {rvv_tb_pkg::LMUL2};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -14842,7 +14842,7 @@ covergroup Cov_rvv_zve32x_vsseg4e8_v with function sample(input logic [31:0] ins
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -14851,7 +14851,7 @@ covergroup Cov_rvv_zve32x_vsseg4e8_v with function sample(input logic [31:0] ins
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -14864,7 +14864,7 @@ covergroup Cov_rvv_zve32x_vsseg5e8_v with function sample(input logic [31:0] ins
     coverpoint (inst ==? {6'b100000, 1'b?, 5'b00000, 5'b?????, 3'b000, 5'b?????, 7'b0100111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -14878,7 +14878,7 @@ covergroup Cov_rvv_zve32x_vsseg5e8_v with function sample(input logic [31:0] ins
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
       bins SEW32 = {rvv_tb_pkg::SEW32};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -14886,7 +14886,7 @@ covergroup Cov_rvv_zve32x_vsseg5e8_v with function sample(input logic [31:0] ins
       bins LMUL1_4 = {rvv_tb_pkg::LMUL1_4};
       bins LMUL1_2 = {rvv_tb_pkg::LMUL1_2};
       bins LMUL1 = {rvv_tb_pkg::LMUL1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -14896,7 +14896,7 @@ covergroup Cov_rvv_zve32x_vsseg5e8_v with function sample(input logic [31:0] ins
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -14905,7 +14905,7 @@ covergroup Cov_rvv_zve32x_vsseg5e8_v with function sample(input logic [31:0] ins
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -14918,7 +14918,7 @@ covergroup Cov_rvv_zve32x_vsseg6e8_v with function sample(input logic [31:0] ins
     coverpoint (inst ==? {6'b101000, 1'b?, 5'b00000, 5'b?????, 3'b000, 5'b?????, 7'b0100111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -14932,7 +14932,7 @@ covergroup Cov_rvv_zve32x_vsseg6e8_v with function sample(input logic [31:0] ins
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
       bins SEW32 = {rvv_tb_pkg::SEW32};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -14940,7 +14940,7 @@ covergroup Cov_rvv_zve32x_vsseg6e8_v with function sample(input logic [31:0] ins
       bins LMUL1_4 = {rvv_tb_pkg::LMUL1_4};
       bins LMUL1_2 = {rvv_tb_pkg::LMUL1_2};
       bins LMUL1 = {rvv_tb_pkg::LMUL1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -14950,7 +14950,7 @@ covergroup Cov_rvv_zve32x_vsseg6e8_v with function sample(input logic [31:0] ins
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -14959,7 +14959,7 @@ covergroup Cov_rvv_zve32x_vsseg6e8_v with function sample(input logic [31:0] ins
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -14972,7 +14972,7 @@ covergroup Cov_rvv_zve32x_vsseg7e8_v with function sample(input logic [31:0] ins
     coverpoint (inst ==? {6'b110000, 1'b?, 5'b00000, 5'b?????, 3'b000, 5'b?????, 7'b0100111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -14986,7 +14986,7 @@ covergroup Cov_rvv_zve32x_vsseg7e8_v with function sample(input logic [31:0] ins
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
       bins SEW32 = {rvv_tb_pkg::SEW32};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -14994,7 +14994,7 @@ covergroup Cov_rvv_zve32x_vsseg7e8_v with function sample(input logic [31:0] ins
       bins LMUL1_4 = {rvv_tb_pkg::LMUL1_4};
       bins LMUL1_2 = {rvv_tb_pkg::LMUL1_2};
       bins LMUL1 = {rvv_tb_pkg::LMUL1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -15004,7 +15004,7 @@ covergroup Cov_rvv_zve32x_vsseg7e8_v with function sample(input logic [31:0] ins
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -15013,7 +15013,7 @@ covergroup Cov_rvv_zve32x_vsseg7e8_v with function sample(input logic [31:0] ins
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -15026,7 +15026,7 @@ covergroup Cov_rvv_zve32x_vsseg8e8_v with function sample(input logic [31:0] ins
     coverpoint (inst ==? {6'b111000, 1'b?, 5'b00000, 5'b?????, 3'b000, 5'b?????, 7'b0100111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -15040,7 +15040,7 @@ covergroup Cov_rvv_zve32x_vsseg8e8_v with function sample(input logic [31:0] ins
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
       bins SEW32 = {rvv_tb_pkg::SEW32};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -15048,7 +15048,7 @@ covergroup Cov_rvv_zve32x_vsseg8e8_v with function sample(input logic [31:0] ins
       bins LMUL1_4 = {rvv_tb_pkg::LMUL1_4};
       bins LMUL1_2 = {rvv_tb_pkg::LMUL1_2};
       bins LMUL1 = {rvv_tb_pkg::LMUL1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -15058,7 +15058,7 @@ covergroup Cov_rvv_zve32x_vsseg8e8_v with function sample(input logic [31:0] ins
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -15067,7 +15067,7 @@ covergroup Cov_rvv_zve32x_vsseg8e8_v with function sample(input logic [31:0] ins
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -15080,7 +15080,7 @@ covergroup Cov_rvv_zve32x_vsseg2e16_v with function sample(input logic [31:0] in
     coverpoint (inst ==? {6'b001000, 1'b?, 5'b00000, 5'b?????, 3'b101, 5'b?????, 7'b0100111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -15094,7 +15094,7 @@ covergroup Cov_rvv_zve32x_vsseg2e16_v with function sample(input logic [31:0] in
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
       bins SEW32 = {rvv_tb_pkg::SEW32};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -15104,7 +15104,7 @@ covergroup Cov_rvv_zve32x_vsseg2e16_v with function sample(input logic [31:0] in
       bins LMUL1 = {rvv_tb_pkg::LMUL1};
       bins LMUL2 = {rvv_tb_pkg::LMUL2};
       bins LMUL4 = {rvv_tb_pkg::LMUL4};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -15114,7 +15114,7 @@ covergroup Cov_rvv_zve32x_vsseg2e16_v with function sample(input logic [31:0] in
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -15123,7 +15123,7 @@ covergroup Cov_rvv_zve32x_vsseg2e16_v with function sample(input logic [31:0] in
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -15136,7 +15136,7 @@ covergroup Cov_rvv_zve32x_vsseg3e16_v with function sample(input logic [31:0] in
     coverpoint (inst ==? {6'b010000, 1'b?, 5'b00000, 5'b?????, 3'b101, 5'b?????, 7'b0100111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -15150,7 +15150,7 @@ covergroup Cov_rvv_zve32x_vsseg3e16_v with function sample(input logic [31:0] in
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
       bins SEW32 = {rvv_tb_pkg::SEW32};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -15159,7 +15159,7 @@ covergroup Cov_rvv_zve32x_vsseg3e16_v with function sample(input logic [31:0] in
       bins LMUL1_2 = {rvv_tb_pkg::LMUL1_2};
       bins LMUL1 = {rvv_tb_pkg::LMUL1};
       bins LMUL2 = {rvv_tb_pkg::LMUL2};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -15169,7 +15169,7 @@ covergroup Cov_rvv_zve32x_vsseg3e16_v with function sample(input logic [31:0] in
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -15178,7 +15178,7 @@ covergroup Cov_rvv_zve32x_vsseg3e16_v with function sample(input logic [31:0] in
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -15191,7 +15191,7 @@ covergroup Cov_rvv_zve32x_vsseg4e16_v with function sample(input logic [31:0] in
     coverpoint (inst ==? {6'b011000, 1'b?, 5'b00000, 5'b?????, 3'b101, 5'b?????, 7'b0100111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -15205,7 +15205,7 @@ covergroup Cov_rvv_zve32x_vsseg4e16_v with function sample(input logic [31:0] in
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
       bins SEW32 = {rvv_tb_pkg::SEW32};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -15214,7 +15214,7 @@ covergroup Cov_rvv_zve32x_vsseg4e16_v with function sample(input logic [31:0] in
       bins LMUL1_2 = {rvv_tb_pkg::LMUL1_2};
       bins LMUL1 = {rvv_tb_pkg::LMUL1};
       bins LMUL2 = {rvv_tb_pkg::LMUL2};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -15224,7 +15224,7 @@ covergroup Cov_rvv_zve32x_vsseg4e16_v with function sample(input logic [31:0] in
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -15233,7 +15233,7 @@ covergroup Cov_rvv_zve32x_vsseg4e16_v with function sample(input logic [31:0] in
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -15246,7 +15246,7 @@ covergroup Cov_rvv_zve32x_vsseg5e16_v with function sample(input logic [31:0] in
     coverpoint (inst ==? {6'b100000, 1'b?, 5'b00000, 5'b?????, 3'b101, 5'b?????, 7'b0100111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -15260,7 +15260,7 @@ covergroup Cov_rvv_zve32x_vsseg5e16_v with function sample(input logic [31:0] in
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
       bins SEW32 = {rvv_tb_pkg::SEW32};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -15268,7 +15268,7 @@ covergroup Cov_rvv_zve32x_vsseg5e16_v with function sample(input logic [31:0] in
       bins LMUL1_4 = {rvv_tb_pkg::LMUL1_4};
       bins LMUL1_2 = {rvv_tb_pkg::LMUL1_2};
       bins LMUL1 = {rvv_tb_pkg::LMUL1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -15278,7 +15278,7 @@ covergroup Cov_rvv_zve32x_vsseg5e16_v with function sample(input logic [31:0] in
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -15287,7 +15287,7 @@ covergroup Cov_rvv_zve32x_vsseg5e16_v with function sample(input logic [31:0] in
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -15300,7 +15300,7 @@ covergroup Cov_rvv_zve32x_vsseg6e16_v with function sample(input logic [31:0] in
     coverpoint (inst ==? {6'b101000, 1'b?, 5'b00000, 5'b?????, 3'b101, 5'b?????, 7'b0100111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -15314,7 +15314,7 @@ covergroup Cov_rvv_zve32x_vsseg6e16_v with function sample(input logic [31:0] in
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
       bins SEW32 = {rvv_tb_pkg::SEW32};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -15322,7 +15322,7 @@ covergroup Cov_rvv_zve32x_vsseg6e16_v with function sample(input logic [31:0] in
       bins LMUL1_4 = {rvv_tb_pkg::LMUL1_4};
       bins LMUL1_2 = {rvv_tb_pkg::LMUL1_2};
       bins LMUL1 = {rvv_tb_pkg::LMUL1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -15332,7 +15332,7 @@ covergroup Cov_rvv_zve32x_vsseg6e16_v with function sample(input logic [31:0] in
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -15341,7 +15341,7 @@ covergroup Cov_rvv_zve32x_vsseg6e16_v with function sample(input logic [31:0] in
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -15354,7 +15354,7 @@ covergroup Cov_rvv_zve32x_vsseg7e16_v with function sample(input logic [31:0] in
     coverpoint (inst ==? {6'b110000, 1'b?, 5'b00000, 5'b?????, 3'b101, 5'b?????, 7'b0100111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -15368,7 +15368,7 @@ covergroup Cov_rvv_zve32x_vsseg7e16_v with function sample(input logic [31:0] in
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
       bins SEW32 = {rvv_tb_pkg::SEW32};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -15376,7 +15376,7 @@ covergroup Cov_rvv_zve32x_vsseg7e16_v with function sample(input logic [31:0] in
       bins LMUL1_4 = {rvv_tb_pkg::LMUL1_4};
       bins LMUL1_2 = {rvv_tb_pkg::LMUL1_2};
       bins LMUL1 = {rvv_tb_pkg::LMUL1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -15386,7 +15386,7 @@ covergroup Cov_rvv_zve32x_vsseg7e16_v with function sample(input logic [31:0] in
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -15395,7 +15395,7 @@ covergroup Cov_rvv_zve32x_vsseg7e16_v with function sample(input logic [31:0] in
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -15408,7 +15408,7 @@ covergroup Cov_rvv_zve32x_vsseg8e16_v with function sample(input logic [31:0] in
     coverpoint (inst ==? {6'b111000, 1'b?, 5'b00000, 5'b?????, 3'b101, 5'b?????, 7'b0100111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -15422,7 +15422,7 @@ covergroup Cov_rvv_zve32x_vsseg8e16_v with function sample(input logic [31:0] in
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
       bins SEW32 = {rvv_tb_pkg::SEW32};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -15430,7 +15430,7 @@ covergroup Cov_rvv_zve32x_vsseg8e16_v with function sample(input logic [31:0] in
       bins LMUL1_4 = {rvv_tb_pkg::LMUL1_4};
       bins LMUL1_2 = {rvv_tb_pkg::LMUL1_2};
       bins LMUL1 = {rvv_tb_pkg::LMUL1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -15440,7 +15440,7 @@ covergroup Cov_rvv_zve32x_vsseg8e16_v with function sample(input logic [31:0] in
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -15449,7 +15449,7 @@ covergroup Cov_rvv_zve32x_vsseg8e16_v with function sample(input logic [31:0] in
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -15462,7 +15462,7 @@ covergroup Cov_rvv_zve32x_vsseg2e32_v with function sample(input logic [31:0] in
     coverpoint (inst ==? {6'b001000, 1'b?, 5'b00000, 5'b?????, 3'b110, 5'b?????, 7'b0100111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -15476,7 +15476,7 @@ covergroup Cov_rvv_zve32x_vsseg2e32_v with function sample(input logic [31:0] in
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
       bins SEW32 = {rvv_tb_pkg::SEW32};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -15486,7 +15486,7 @@ covergroup Cov_rvv_zve32x_vsseg2e32_v with function sample(input logic [31:0] in
       bins LMUL1 = {rvv_tb_pkg::LMUL1};
       bins LMUL2 = {rvv_tb_pkg::LMUL2};
       bins LMUL4 = {rvv_tb_pkg::LMUL4};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -15496,7 +15496,7 @@ covergroup Cov_rvv_zve32x_vsseg2e32_v with function sample(input logic [31:0] in
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -15505,7 +15505,7 @@ covergroup Cov_rvv_zve32x_vsseg2e32_v with function sample(input logic [31:0] in
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -15518,7 +15518,7 @@ covergroup Cov_rvv_zve32x_vsseg3e32_v with function sample(input logic [31:0] in
     coverpoint (inst ==? {6'b010000, 1'b?, 5'b00000, 5'b?????, 3'b110, 5'b?????, 7'b0100111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -15532,7 +15532,7 @@ covergroup Cov_rvv_zve32x_vsseg3e32_v with function sample(input logic [31:0] in
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
       bins SEW32 = {rvv_tb_pkg::SEW32};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -15541,7 +15541,7 @@ covergroup Cov_rvv_zve32x_vsseg3e32_v with function sample(input logic [31:0] in
       bins LMUL1_2 = {rvv_tb_pkg::LMUL1_2};
       bins LMUL1 = {rvv_tb_pkg::LMUL1};
       bins LMUL2 = {rvv_tb_pkg::LMUL2};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -15551,7 +15551,7 @@ covergroup Cov_rvv_zve32x_vsseg3e32_v with function sample(input logic [31:0] in
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -15560,7 +15560,7 @@ covergroup Cov_rvv_zve32x_vsseg3e32_v with function sample(input logic [31:0] in
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -15573,7 +15573,7 @@ covergroup Cov_rvv_zve32x_vsseg4e32_v with function sample(input logic [31:0] in
     coverpoint (inst ==? {6'b011000, 1'b?, 5'b00000, 5'b?????, 3'b110, 5'b?????, 7'b0100111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -15587,7 +15587,7 @@ covergroup Cov_rvv_zve32x_vsseg4e32_v with function sample(input logic [31:0] in
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
       bins SEW32 = {rvv_tb_pkg::SEW32};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -15596,7 +15596,7 @@ covergroup Cov_rvv_zve32x_vsseg4e32_v with function sample(input logic [31:0] in
       bins LMUL1_2 = {rvv_tb_pkg::LMUL1_2};
       bins LMUL1 = {rvv_tb_pkg::LMUL1};
       bins LMUL2 = {rvv_tb_pkg::LMUL2};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -15606,7 +15606,7 @@ covergroup Cov_rvv_zve32x_vsseg4e32_v with function sample(input logic [31:0] in
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -15615,7 +15615,7 @@ covergroup Cov_rvv_zve32x_vsseg4e32_v with function sample(input logic [31:0] in
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -15628,7 +15628,7 @@ covergroup Cov_rvv_zve32x_vsseg5e32_v with function sample(input logic [31:0] in
     coverpoint (inst ==? {6'b100000, 1'b?, 5'b00000, 5'b?????, 3'b110, 5'b?????, 7'b0100111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -15642,7 +15642,7 @@ covergroup Cov_rvv_zve32x_vsseg5e32_v with function sample(input logic [31:0] in
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
       bins SEW32 = {rvv_tb_pkg::SEW32};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -15650,7 +15650,7 @@ covergroup Cov_rvv_zve32x_vsseg5e32_v with function sample(input logic [31:0] in
       bins LMUL1_4 = {rvv_tb_pkg::LMUL1_4};
       bins LMUL1_2 = {rvv_tb_pkg::LMUL1_2};
       bins LMUL1 = {rvv_tb_pkg::LMUL1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -15660,7 +15660,7 @@ covergroup Cov_rvv_zve32x_vsseg5e32_v with function sample(input logic [31:0] in
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -15669,7 +15669,7 @@ covergroup Cov_rvv_zve32x_vsseg5e32_v with function sample(input logic [31:0] in
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -15682,7 +15682,7 @@ covergroup Cov_rvv_zve32x_vsseg6e32_v with function sample(input logic [31:0] in
     coverpoint (inst ==? {6'b101000, 1'b?, 5'b00000, 5'b?????, 3'b110, 5'b?????, 7'b0100111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -15696,7 +15696,7 @@ covergroup Cov_rvv_zve32x_vsseg6e32_v with function sample(input logic [31:0] in
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
       bins SEW32 = {rvv_tb_pkg::SEW32};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -15704,7 +15704,7 @@ covergroup Cov_rvv_zve32x_vsseg6e32_v with function sample(input logic [31:0] in
       bins LMUL1_4 = {rvv_tb_pkg::LMUL1_4};
       bins LMUL1_2 = {rvv_tb_pkg::LMUL1_2};
       bins LMUL1 = {rvv_tb_pkg::LMUL1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -15714,7 +15714,7 @@ covergroup Cov_rvv_zve32x_vsseg6e32_v with function sample(input logic [31:0] in
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -15723,7 +15723,7 @@ covergroup Cov_rvv_zve32x_vsseg6e32_v with function sample(input logic [31:0] in
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -15736,7 +15736,7 @@ covergroup Cov_rvv_zve32x_vsseg7e32_v with function sample(input logic [31:0] in
     coverpoint (inst ==? {6'b110000, 1'b?, 5'b00000, 5'b?????, 3'b110, 5'b?????, 7'b0100111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -15750,7 +15750,7 @@ covergroup Cov_rvv_zve32x_vsseg7e32_v with function sample(input logic [31:0] in
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
       bins SEW32 = {rvv_tb_pkg::SEW32};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -15758,7 +15758,7 @@ covergroup Cov_rvv_zve32x_vsseg7e32_v with function sample(input logic [31:0] in
       bins LMUL1_4 = {rvv_tb_pkg::LMUL1_4};
       bins LMUL1_2 = {rvv_tb_pkg::LMUL1_2};
       bins LMUL1 = {rvv_tb_pkg::LMUL1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -15768,7 +15768,7 @@ covergroup Cov_rvv_zve32x_vsseg7e32_v with function sample(input logic [31:0] in
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -15777,7 +15777,7 @@ covergroup Cov_rvv_zve32x_vsseg7e32_v with function sample(input logic [31:0] in
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -15790,7 +15790,7 @@ covergroup Cov_rvv_zve32x_vsseg8e32_v with function sample(input logic [31:0] in
     coverpoint (inst ==? {6'b111000, 1'b?, 5'b00000, 5'b?????, 3'b110, 5'b?????, 7'b0100111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -15804,7 +15804,7 @@ covergroup Cov_rvv_zve32x_vsseg8e32_v with function sample(input logic [31:0] in
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
       bins SEW32 = {rvv_tb_pkg::SEW32};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -15812,7 +15812,7 @@ covergroup Cov_rvv_zve32x_vsseg8e32_v with function sample(input logic [31:0] in
       bins LMUL1_4 = {rvv_tb_pkg::LMUL1_4};
       bins LMUL1_2 = {rvv_tb_pkg::LMUL1_2};
       bins LMUL1 = {rvv_tb_pkg::LMUL1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -15822,7 +15822,7 @@ covergroup Cov_rvv_zve32x_vsseg8e32_v with function sample(input logic [31:0] in
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -15831,7 +15831,7 @@ covergroup Cov_rvv_zve32x_vsseg8e32_v with function sample(input logic [31:0] in
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -15844,7 +15844,7 @@ covergroup Cov_rvv_zve32x_vlseg2e8ff_v with function sample(input logic [31:0] i
     coverpoint (inst ==? {6'b001000, 1'b?, 5'b10000, 5'b?????, 3'b000, 5'b?????, 7'b0000111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -15858,7 +15858,7 @@ covergroup Cov_rvv_zve32x_vlseg2e8ff_v with function sample(input logic [31:0] i
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
       bins SEW32 = {rvv_tb_pkg::SEW32};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -15868,7 +15868,7 @@ covergroup Cov_rvv_zve32x_vlseg2e8ff_v with function sample(input logic [31:0] i
       bins LMUL1 = {rvv_tb_pkg::LMUL1};
       bins LMUL2 = {rvv_tb_pkg::LMUL2};
       bins LMUL4 = {rvv_tb_pkg::LMUL4};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -15878,7 +15878,7 @@ covergroup Cov_rvv_zve32x_vlseg2e8ff_v with function sample(input logic [31:0] i
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -15887,7 +15887,7 @@ covergroup Cov_rvv_zve32x_vlseg2e8ff_v with function sample(input logic [31:0] i
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -15900,7 +15900,7 @@ covergroup Cov_rvv_zve32x_vlseg3e8ff_v with function sample(input logic [31:0] i
     coverpoint (inst ==? {6'b010000, 1'b?, 5'b10000, 5'b?????, 3'b000, 5'b?????, 7'b0000111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -15914,7 +15914,7 @@ covergroup Cov_rvv_zve32x_vlseg3e8ff_v with function sample(input logic [31:0] i
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
       bins SEW32 = {rvv_tb_pkg::SEW32};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -15923,7 +15923,7 @@ covergroup Cov_rvv_zve32x_vlseg3e8ff_v with function sample(input logic [31:0] i
       bins LMUL1_2 = {rvv_tb_pkg::LMUL1_2};
       bins LMUL1 = {rvv_tb_pkg::LMUL1};
       bins LMUL2 = {rvv_tb_pkg::LMUL2};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -15933,7 +15933,7 @@ covergroup Cov_rvv_zve32x_vlseg3e8ff_v with function sample(input logic [31:0] i
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -15942,7 +15942,7 @@ covergroup Cov_rvv_zve32x_vlseg3e8ff_v with function sample(input logic [31:0] i
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -15955,7 +15955,7 @@ covergroup Cov_rvv_zve32x_vlseg4e8ff_v with function sample(input logic [31:0] i
     coverpoint (inst ==? {6'b011000, 1'b?, 5'b10000, 5'b?????, 3'b000, 5'b?????, 7'b0000111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -15969,7 +15969,7 @@ covergroup Cov_rvv_zve32x_vlseg4e8ff_v with function sample(input logic [31:0] i
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
       bins SEW32 = {rvv_tb_pkg::SEW32};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -15978,7 +15978,7 @@ covergroup Cov_rvv_zve32x_vlseg4e8ff_v with function sample(input logic [31:0] i
       bins LMUL1_2 = {rvv_tb_pkg::LMUL1_2};
       bins LMUL1 = {rvv_tb_pkg::LMUL1};
       bins LMUL2 = {rvv_tb_pkg::LMUL2};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -15988,7 +15988,7 @@ covergroup Cov_rvv_zve32x_vlseg4e8ff_v with function sample(input logic [31:0] i
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -15997,7 +15997,7 @@ covergroup Cov_rvv_zve32x_vlseg4e8ff_v with function sample(input logic [31:0] i
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -16010,7 +16010,7 @@ covergroup Cov_rvv_zve32x_vlseg5e8ff_v with function sample(input logic [31:0] i
     coverpoint (inst ==? {6'b100000, 1'b?, 5'b10000, 5'b?????, 3'b000, 5'b?????, 7'b0000111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -16024,7 +16024,7 @@ covergroup Cov_rvv_zve32x_vlseg5e8ff_v with function sample(input logic [31:0] i
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
       bins SEW32 = {rvv_tb_pkg::SEW32};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -16032,7 +16032,7 @@ covergroup Cov_rvv_zve32x_vlseg5e8ff_v with function sample(input logic [31:0] i
       bins LMUL1_4 = {rvv_tb_pkg::LMUL1_4};
       bins LMUL1_2 = {rvv_tb_pkg::LMUL1_2};
       bins LMUL1 = {rvv_tb_pkg::LMUL1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -16042,7 +16042,7 @@ covergroup Cov_rvv_zve32x_vlseg5e8ff_v with function sample(input logic [31:0] i
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -16051,7 +16051,7 @@ covergroup Cov_rvv_zve32x_vlseg5e8ff_v with function sample(input logic [31:0] i
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -16064,7 +16064,7 @@ covergroup Cov_rvv_zve32x_vlseg6e8ff_v with function sample(input logic [31:0] i
     coverpoint (inst ==? {6'b101000, 1'b?, 5'b10000, 5'b?????, 3'b000, 5'b?????, 7'b0000111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -16078,7 +16078,7 @@ covergroup Cov_rvv_zve32x_vlseg6e8ff_v with function sample(input logic [31:0] i
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
       bins SEW32 = {rvv_tb_pkg::SEW32};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -16086,7 +16086,7 @@ covergroup Cov_rvv_zve32x_vlseg6e8ff_v with function sample(input logic [31:0] i
       bins LMUL1_4 = {rvv_tb_pkg::LMUL1_4};
       bins LMUL1_2 = {rvv_tb_pkg::LMUL1_2};
       bins LMUL1 = {rvv_tb_pkg::LMUL1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -16096,7 +16096,7 @@ covergroup Cov_rvv_zve32x_vlseg6e8ff_v with function sample(input logic [31:0] i
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -16105,7 +16105,7 @@ covergroup Cov_rvv_zve32x_vlseg6e8ff_v with function sample(input logic [31:0] i
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -16118,7 +16118,7 @@ covergroup Cov_rvv_zve32x_vlseg7e8ff_v with function sample(input logic [31:0] i
     coverpoint (inst ==? {6'b110000, 1'b?, 5'b10000, 5'b?????, 3'b000, 5'b?????, 7'b0000111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -16132,7 +16132,7 @@ covergroup Cov_rvv_zve32x_vlseg7e8ff_v with function sample(input logic [31:0] i
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
       bins SEW32 = {rvv_tb_pkg::SEW32};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -16140,7 +16140,7 @@ covergroup Cov_rvv_zve32x_vlseg7e8ff_v with function sample(input logic [31:0] i
       bins LMUL1_4 = {rvv_tb_pkg::LMUL1_4};
       bins LMUL1_2 = {rvv_tb_pkg::LMUL1_2};
       bins LMUL1 = {rvv_tb_pkg::LMUL1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -16150,7 +16150,7 @@ covergroup Cov_rvv_zve32x_vlseg7e8ff_v with function sample(input logic [31:0] i
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -16159,7 +16159,7 @@ covergroup Cov_rvv_zve32x_vlseg7e8ff_v with function sample(input logic [31:0] i
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -16172,7 +16172,7 @@ covergroup Cov_rvv_zve32x_vlseg8e8ff_v with function sample(input logic [31:0] i
     coverpoint (inst ==? {6'b111000, 1'b?, 5'b10000, 5'b?????, 3'b000, 5'b?????, 7'b0000111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -16186,7 +16186,7 @@ covergroup Cov_rvv_zve32x_vlseg8e8ff_v with function sample(input logic [31:0] i
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
       bins SEW32 = {rvv_tb_pkg::SEW32};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -16194,7 +16194,7 @@ covergroup Cov_rvv_zve32x_vlseg8e8ff_v with function sample(input logic [31:0] i
       bins LMUL1_4 = {rvv_tb_pkg::LMUL1_4};
       bins LMUL1_2 = {rvv_tb_pkg::LMUL1_2};
       bins LMUL1 = {rvv_tb_pkg::LMUL1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -16204,7 +16204,7 @@ covergroup Cov_rvv_zve32x_vlseg8e8ff_v with function sample(input logic [31:0] i
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -16213,7 +16213,7 @@ covergroup Cov_rvv_zve32x_vlseg8e8ff_v with function sample(input logic [31:0] i
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -16226,7 +16226,7 @@ covergroup Cov_rvv_zve32x_vlseg2e16ff_v with function sample(input logic [31:0] 
     coverpoint (inst ==? {6'b001000, 1'b?, 5'b10000, 5'b?????, 3'b101, 5'b?????, 7'b0000111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -16240,7 +16240,7 @@ covergroup Cov_rvv_zve32x_vlseg2e16ff_v with function sample(input logic [31:0] 
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
       bins SEW32 = {rvv_tb_pkg::SEW32};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -16250,7 +16250,7 @@ covergroup Cov_rvv_zve32x_vlseg2e16ff_v with function sample(input logic [31:0] 
       bins LMUL1 = {rvv_tb_pkg::LMUL1};
       bins LMUL2 = {rvv_tb_pkg::LMUL2};
       bins LMUL4 = {rvv_tb_pkg::LMUL4};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -16260,7 +16260,7 @@ covergroup Cov_rvv_zve32x_vlseg2e16ff_v with function sample(input logic [31:0] 
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -16269,7 +16269,7 @@ covergroup Cov_rvv_zve32x_vlseg2e16ff_v with function sample(input logic [31:0] 
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -16282,7 +16282,7 @@ covergroup Cov_rvv_zve32x_vlseg3e16ff_v with function sample(input logic [31:0] 
     coverpoint (inst ==? {6'b010000, 1'b?, 5'b10000, 5'b?????, 3'b101, 5'b?????, 7'b0000111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -16296,7 +16296,7 @@ covergroup Cov_rvv_zve32x_vlseg3e16ff_v with function sample(input logic [31:0] 
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
       bins SEW32 = {rvv_tb_pkg::SEW32};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -16305,7 +16305,7 @@ covergroup Cov_rvv_zve32x_vlseg3e16ff_v with function sample(input logic [31:0] 
       bins LMUL1_2 = {rvv_tb_pkg::LMUL1_2};
       bins LMUL1 = {rvv_tb_pkg::LMUL1};
       bins LMUL2 = {rvv_tb_pkg::LMUL2};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -16315,7 +16315,7 @@ covergroup Cov_rvv_zve32x_vlseg3e16ff_v with function sample(input logic [31:0] 
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -16324,7 +16324,7 @@ covergroup Cov_rvv_zve32x_vlseg3e16ff_v with function sample(input logic [31:0] 
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -16337,7 +16337,7 @@ covergroup Cov_rvv_zve32x_vlseg4e16ff_v with function sample(input logic [31:0] 
     coverpoint (inst ==? {6'b011000, 1'b?, 5'b10000, 5'b?????, 3'b101, 5'b?????, 7'b0000111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -16351,7 +16351,7 @@ covergroup Cov_rvv_zve32x_vlseg4e16ff_v with function sample(input logic [31:0] 
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
       bins SEW32 = {rvv_tb_pkg::SEW32};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -16360,7 +16360,7 @@ covergroup Cov_rvv_zve32x_vlseg4e16ff_v with function sample(input logic [31:0] 
       bins LMUL1_2 = {rvv_tb_pkg::LMUL1_2};
       bins LMUL1 = {rvv_tb_pkg::LMUL1};
       bins LMUL2 = {rvv_tb_pkg::LMUL2};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -16370,7 +16370,7 @@ covergroup Cov_rvv_zve32x_vlseg4e16ff_v with function sample(input logic [31:0] 
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -16379,7 +16379,7 @@ covergroup Cov_rvv_zve32x_vlseg4e16ff_v with function sample(input logic [31:0] 
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -16392,7 +16392,7 @@ covergroup Cov_rvv_zve32x_vlseg5e16ff_v with function sample(input logic [31:0] 
     coverpoint (inst ==? {6'b100000, 1'b?, 5'b10000, 5'b?????, 3'b101, 5'b?????, 7'b0000111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -16406,7 +16406,7 @@ covergroup Cov_rvv_zve32x_vlseg5e16ff_v with function sample(input logic [31:0] 
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
       bins SEW32 = {rvv_tb_pkg::SEW32};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -16414,7 +16414,7 @@ covergroup Cov_rvv_zve32x_vlseg5e16ff_v with function sample(input logic [31:0] 
       bins LMUL1_4 = {rvv_tb_pkg::LMUL1_4};
       bins LMUL1_2 = {rvv_tb_pkg::LMUL1_2};
       bins LMUL1 = {rvv_tb_pkg::LMUL1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -16424,7 +16424,7 @@ covergroup Cov_rvv_zve32x_vlseg5e16ff_v with function sample(input logic [31:0] 
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -16433,7 +16433,7 @@ covergroup Cov_rvv_zve32x_vlseg5e16ff_v with function sample(input logic [31:0] 
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -16446,7 +16446,7 @@ covergroup Cov_rvv_zve32x_vlseg6e16ff_v with function sample(input logic [31:0] 
     coverpoint (inst ==? {6'b101000, 1'b?, 5'b10000, 5'b?????, 3'b101, 5'b?????, 7'b0000111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -16460,7 +16460,7 @@ covergroup Cov_rvv_zve32x_vlseg6e16ff_v with function sample(input logic [31:0] 
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
       bins SEW32 = {rvv_tb_pkg::SEW32};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -16468,7 +16468,7 @@ covergroup Cov_rvv_zve32x_vlseg6e16ff_v with function sample(input logic [31:0] 
       bins LMUL1_4 = {rvv_tb_pkg::LMUL1_4};
       bins LMUL1_2 = {rvv_tb_pkg::LMUL1_2};
       bins LMUL1 = {rvv_tb_pkg::LMUL1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -16478,7 +16478,7 @@ covergroup Cov_rvv_zve32x_vlseg6e16ff_v with function sample(input logic [31:0] 
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -16487,7 +16487,7 @@ covergroup Cov_rvv_zve32x_vlseg6e16ff_v with function sample(input logic [31:0] 
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -16500,7 +16500,7 @@ covergroup Cov_rvv_zve32x_vlseg7e16ff_v with function sample(input logic [31:0] 
     coverpoint (inst ==? {6'b110000, 1'b?, 5'b10000, 5'b?????, 3'b101, 5'b?????, 7'b0000111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -16514,7 +16514,7 @@ covergroup Cov_rvv_zve32x_vlseg7e16ff_v with function sample(input logic [31:0] 
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
       bins SEW32 = {rvv_tb_pkg::SEW32};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -16522,7 +16522,7 @@ covergroup Cov_rvv_zve32x_vlseg7e16ff_v with function sample(input logic [31:0] 
       bins LMUL1_4 = {rvv_tb_pkg::LMUL1_4};
       bins LMUL1_2 = {rvv_tb_pkg::LMUL1_2};
       bins LMUL1 = {rvv_tb_pkg::LMUL1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -16532,7 +16532,7 @@ covergroup Cov_rvv_zve32x_vlseg7e16ff_v with function sample(input logic [31:0] 
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -16541,7 +16541,7 @@ covergroup Cov_rvv_zve32x_vlseg7e16ff_v with function sample(input logic [31:0] 
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -16554,7 +16554,7 @@ covergroup Cov_rvv_zve32x_vlseg8e16ff_v with function sample(input logic [31:0] 
     coverpoint (inst ==? {6'b111000, 1'b?, 5'b10000, 5'b?????, 3'b101, 5'b?????, 7'b0000111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -16568,7 +16568,7 @@ covergroup Cov_rvv_zve32x_vlseg8e16ff_v with function sample(input logic [31:0] 
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
       bins SEW32 = {rvv_tb_pkg::SEW32};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -16576,7 +16576,7 @@ covergroup Cov_rvv_zve32x_vlseg8e16ff_v with function sample(input logic [31:0] 
       bins LMUL1_4 = {rvv_tb_pkg::LMUL1_4};
       bins LMUL1_2 = {rvv_tb_pkg::LMUL1_2};
       bins LMUL1 = {rvv_tb_pkg::LMUL1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -16586,7 +16586,7 @@ covergroup Cov_rvv_zve32x_vlseg8e16ff_v with function sample(input logic [31:0] 
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -16595,7 +16595,7 @@ covergroup Cov_rvv_zve32x_vlseg8e16ff_v with function sample(input logic [31:0] 
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -16608,7 +16608,7 @@ covergroup Cov_rvv_zve32x_vlseg2e32ff_v with function sample(input logic [31:0] 
     coverpoint (inst ==? {6'b001000, 1'b?, 5'b10000, 5'b?????, 3'b110, 5'b?????, 7'b0000111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -16622,7 +16622,7 @@ covergroup Cov_rvv_zve32x_vlseg2e32ff_v with function sample(input logic [31:0] 
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
       bins SEW32 = {rvv_tb_pkg::SEW32};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -16632,7 +16632,7 @@ covergroup Cov_rvv_zve32x_vlseg2e32ff_v with function sample(input logic [31:0] 
       bins LMUL1 = {rvv_tb_pkg::LMUL1};
       bins LMUL2 = {rvv_tb_pkg::LMUL2};
       bins LMUL4 = {rvv_tb_pkg::LMUL4};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -16642,7 +16642,7 @@ covergroup Cov_rvv_zve32x_vlseg2e32ff_v with function sample(input logic [31:0] 
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -16651,7 +16651,7 @@ covergroup Cov_rvv_zve32x_vlseg2e32ff_v with function sample(input logic [31:0] 
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -16664,7 +16664,7 @@ covergroup Cov_rvv_zve32x_vlseg3e32ff_v with function sample(input logic [31:0] 
     coverpoint (inst ==? {6'b010000, 1'b?, 5'b10000, 5'b?????, 3'b110, 5'b?????, 7'b0000111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -16678,7 +16678,7 @@ covergroup Cov_rvv_zve32x_vlseg3e32ff_v with function sample(input logic [31:0] 
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
       bins SEW32 = {rvv_tb_pkg::SEW32};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -16687,7 +16687,7 @@ covergroup Cov_rvv_zve32x_vlseg3e32ff_v with function sample(input logic [31:0] 
       bins LMUL1_2 = {rvv_tb_pkg::LMUL1_2};
       bins LMUL1 = {rvv_tb_pkg::LMUL1};
       bins LMUL2 = {rvv_tb_pkg::LMUL2};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -16697,7 +16697,7 @@ covergroup Cov_rvv_zve32x_vlseg3e32ff_v with function sample(input logic [31:0] 
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -16706,7 +16706,7 @@ covergroup Cov_rvv_zve32x_vlseg3e32ff_v with function sample(input logic [31:0] 
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -16719,7 +16719,7 @@ covergroup Cov_rvv_zve32x_vlseg4e32ff_v with function sample(input logic [31:0] 
     coverpoint (inst ==? {6'b011000, 1'b?, 5'b10000, 5'b?????, 3'b110, 5'b?????, 7'b0000111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -16733,7 +16733,7 @@ covergroup Cov_rvv_zve32x_vlseg4e32ff_v with function sample(input logic [31:0] 
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
       bins SEW32 = {rvv_tb_pkg::SEW32};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -16742,7 +16742,7 @@ covergroup Cov_rvv_zve32x_vlseg4e32ff_v with function sample(input logic [31:0] 
       bins LMUL1_2 = {rvv_tb_pkg::LMUL1_2};
       bins LMUL1 = {rvv_tb_pkg::LMUL1};
       bins LMUL2 = {rvv_tb_pkg::LMUL2};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -16752,7 +16752,7 @@ covergroup Cov_rvv_zve32x_vlseg4e32ff_v with function sample(input logic [31:0] 
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -16761,7 +16761,7 @@ covergroup Cov_rvv_zve32x_vlseg4e32ff_v with function sample(input logic [31:0] 
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -16774,7 +16774,7 @@ covergroup Cov_rvv_zve32x_vlseg5e32ff_v with function sample(input logic [31:0] 
     coverpoint (inst ==? {6'b100000, 1'b?, 5'b10000, 5'b?????, 3'b110, 5'b?????, 7'b0000111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -16788,7 +16788,7 @@ covergroup Cov_rvv_zve32x_vlseg5e32ff_v with function sample(input logic [31:0] 
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
       bins SEW32 = {rvv_tb_pkg::SEW32};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -16796,7 +16796,7 @@ covergroup Cov_rvv_zve32x_vlseg5e32ff_v with function sample(input logic [31:0] 
       bins LMUL1_4 = {rvv_tb_pkg::LMUL1_4};
       bins LMUL1_2 = {rvv_tb_pkg::LMUL1_2};
       bins LMUL1 = {rvv_tb_pkg::LMUL1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -16806,7 +16806,7 @@ covergroup Cov_rvv_zve32x_vlseg5e32ff_v with function sample(input logic [31:0] 
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -16815,7 +16815,7 @@ covergroup Cov_rvv_zve32x_vlseg5e32ff_v with function sample(input logic [31:0] 
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -16828,7 +16828,7 @@ covergroup Cov_rvv_zve32x_vlseg6e32ff_v with function sample(input logic [31:0] 
     coverpoint (inst ==? {6'b101000, 1'b?, 5'b10000, 5'b?????, 3'b110, 5'b?????, 7'b0000111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -16842,7 +16842,7 @@ covergroup Cov_rvv_zve32x_vlseg6e32ff_v with function sample(input logic [31:0] 
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
       bins SEW32 = {rvv_tb_pkg::SEW32};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -16850,7 +16850,7 @@ covergroup Cov_rvv_zve32x_vlseg6e32ff_v with function sample(input logic [31:0] 
       bins LMUL1_4 = {rvv_tb_pkg::LMUL1_4};
       bins LMUL1_2 = {rvv_tb_pkg::LMUL1_2};
       bins LMUL1 = {rvv_tb_pkg::LMUL1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -16860,7 +16860,7 @@ covergroup Cov_rvv_zve32x_vlseg6e32ff_v with function sample(input logic [31:0] 
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -16869,7 +16869,7 @@ covergroup Cov_rvv_zve32x_vlseg6e32ff_v with function sample(input logic [31:0] 
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -16882,7 +16882,7 @@ covergroup Cov_rvv_zve32x_vlseg7e32ff_v with function sample(input logic [31:0] 
     coverpoint (inst ==? {6'b110000, 1'b?, 5'b10000, 5'b?????, 3'b110, 5'b?????, 7'b0000111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -16896,7 +16896,7 @@ covergroup Cov_rvv_zve32x_vlseg7e32ff_v with function sample(input logic [31:0] 
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
       bins SEW32 = {rvv_tb_pkg::SEW32};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -16904,7 +16904,7 @@ covergroup Cov_rvv_zve32x_vlseg7e32ff_v with function sample(input logic [31:0] 
       bins LMUL1_4 = {rvv_tb_pkg::LMUL1_4};
       bins LMUL1_2 = {rvv_tb_pkg::LMUL1_2};
       bins LMUL1 = {rvv_tb_pkg::LMUL1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -16914,7 +16914,7 @@ covergroup Cov_rvv_zve32x_vlseg7e32ff_v with function sample(input logic [31:0] 
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -16923,7 +16923,7 @@ covergroup Cov_rvv_zve32x_vlseg7e32ff_v with function sample(input logic [31:0] 
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -16936,7 +16936,7 @@ covergroup Cov_rvv_zve32x_vlseg8e32ff_v with function sample(input logic [31:0] 
     coverpoint (inst ==? {6'b111000, 1'b?, 5'b10000, 5'b?????, 3'b110, 5'b?????, 7'b0000111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -16950,7 +16950,7 @@ covergroup Cov_rvv_zve32x_vlseg8e32ff_v with function sample(input logic [31:0] 
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
       bins SEW32 = {rvv_tb_pkg::SEW32};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -16958,7 +16958,7 @@ covergroup Cov_rvv_zve32x_vlseg8e32ff_v with function sample(input logic [31:0] 
       bins LMUL1_4 = {rvv_tb_pkg::LMUL1_4};
       bins LMUL1_2 = {rvv_tb_pkg::LMUL1_2};
       bins LMUL1 = {rvv_tb_pkg::LMUL1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -16968,7 +16968,7 @@ covergroup Cov_rvv_zve32x_vlseg8e32ff_v with function sample(input logic [31:0] 
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -16977,7 +16977,7 @@ covergroup Cov_rvv_zve32x_vlseg8e32ff_v with function sample(input logic [31:0] 
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -16990,7 +16990,7 @@ covergroup Cov_rvv_zve32x_vlsseg2e8_v with function sample(input logic [31:0] in
     coverpoint (inst ==? {6'b001010, 1'b?, 5'b?????, 5'b?????, 3'b000, 5'b?????, 7'b0000111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -17004,7 +17004,7 @@ covergroup Cov_rvv_zve32x_vlsseg2e8_v with function sample(input logic [31:0] in
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
       bins SEW32 = {rvv_tb_pkg::SEW32};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -17014,7 +17014,7 @@ covergroup Cov_rvv_zve32x_vlsseg2e8_v with function sample(input logic [31:0] in
       bins LMUL1 = {rvv_tb_pkg::LMUL1};
       bins LMUL2 = {rvv_tb_pkg::LMUL2};
       bins LMUL4 = {rvv_tb_pkg::LMUL4};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -17024,7 +17024,7 @@ covergroup Cov_rvv_zve32x_vlsseg2e8_v with function sample(input logic [31:0] in
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -17033,7 +17033,7 @@ covergroup Cov_rvv_zve32x_vlsseg2e8_v with function sample(input logic [31:0] in
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -17046,7 +17046,7 @@ covergroup Cov_rvv_zve32x_vlsseg3e8_v with function sample(input logic [31:0] in
     coverpoint (inst ==? {6'b010010, 1'b?, 5'b?????, 5'b?????, 3'b000, 5'b?????, 7'b0000111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -17060,7 +17060,7 @@ covergroup Cov_rvv_zve32x_vlsseg3e8_v with function sample(input logic [31:0] in
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
       bins SEW32 = {rvv_tb_pkg::SEW32};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -17069,7 +17069,7 @@ covergroup Cov_rvv_zve32x_vlsseg3e8_v with function sample(input logic [31:0] in
       bins LMUL1_2 = {rvv_tb_pkg::LMUL1_2};
       bins LMUL1 = {rvv_tb_pkg::LMUL1};
       bins LMUL2 = {rvv_tb_pkg::LMUL2};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -17079,7 +17079,7 @@ covergroup Cov_rvv_zve32x_vlsseg3e8_v with function sample(input logic [31:0] in
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -17088,7 +17088,7 @@ covergroup Cov_rvv_zve32x_vlsseg3e8_v with function sample(input logic [31:0] in
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -17101,7 +17101,7 @@ covergroup Cov_rvv_zve32x_vlsseg4e8_v with function sample(input logic [31:0] in
     coverpoint (inst ==? {6'b011010, 1'b?, 5'b?????, 5'b?????, 3'b000, 5'b?????, 7'b0000111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -17115,7 +17115,7 @@ covergroup Cov_rvv_zve32x_vlsseg4e8_v with function sample(input logic [31:0] in
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
       bins SEW32 = {rvv_tb_pkg::SEW32};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -17124,7 +17124,7 @@ covergroup Cov_rvv_zve32x_vlsseg4e8_v with function sample(input logic [31:0] in
       bins LMUL1_2 = {rvv_tb_pkg::LMUL1_2};
       bins LMUL1 = {rvv_tb_pkg::LMUL1};
       bins LMUL2 = {rvv_tb_pkg::LMUL2};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -17134,7 +17134,7 @@ covergroup Cov_rvv_zve32x_vlsseg4e8_v with function sample(input logic [31:0] in
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -17143,7 +17143,7 @@ covergroup Cov_rvv_zve32x_vlsseg4e8_v with function sample(input logic [31:0] in
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -17156,7 +17156,7 @@ covergroup Cov_rvv_zve32x_vlsseg5e8_v with function sample(input logic [31:0] in
     coverpoint (inst ==? {6'b100010, 1'b?, 5'b?????, 5'b?????, 3'b000, 5'b?????, 7'b0000111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -17170,7 +17170,7 @@ covergroup Cov_rvv_zve32x_vlsseg5e8_v with function sample(input logic [31:0] in
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
       bins SEW32 = {rvv_tb_pkg::SEW32};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -17178,7 +17178,7 @@ covergroup Cov_rvv_zve32x_vlsseg5e8_v with function sample(input logic [31:0] in
       bins LMUL1_4 = {rvv_tb_pkg::LMUL1_4};
       bins LMUL1_2 = {rvv_tb_pkg::LMUL1_2};
       bins LMUL1 = {rvv_tb_pkg::LMUL1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -17188,7 +17188,7 @@ covergroup Cov_rvv_zve32x_vlsseg5e8_v with function sample(input logic [31:0] in
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -17197,7 +17197,7 @@ covergroup Cov_rvv_zve32x_vlsseg5e8_v with function sample(input logic [31:0] in
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -17210,7 +17210,7 @@ covergroup Cov_rvv_zve32x_vlsseg6e8_v with function sample(input logic [31:0] in
     coverpoint (inst ==? {6'b101010, 1'b?, 5'b?????, 5'b?????, 3'b000, 5'b?????, 7'b0000111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -17224,7 +17224,7 @@ covergroup Cov_rvv_zve32x_vlsseg6e8_v with function sample(input logic [31:0] in
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
       bins SEW32 = {rvv_tb_pkg::SEW32};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -17232,7 +17232,7 @@ covergroup Cov_rvv_zve32x_vlsseg6e8_v with function sample(input logic [31:0] in
       bins LMUL1_4 = {rvv_tb_pkg::LMUL1_4};
       bins LMUL1_2 = {rvv_tb_pkg::LMUL1_2};
       bins LMUL1 = {rvv_tb_pkg::LMUL1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -17242,7 +17242,7 @@ covergroup Cov_rvv_zve32x_vlsseg6e8_v with function sample(input logic [31:0] in
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -17251,7 +17251,7 @@ covergroup Cov_rvv_zve32x_vlsseg6e8_v with function sample(input logic [31:0] in
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -17264,7 +17264,7 @@ covergroup Cov_rvv_zve32x_vlsseg7e8_v with function sample(input logic [31:0] in
     coverpoint (inst ==? {6'b110010, 1'b?, 5'b?????, 5'b?????, 3'b000, 5'b?????, 7'b0000111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -17278,7 +17278,7 @@ covergroup Cov_rvv_zve32x_vlsseg7e8_v with function sample(input logic [31:0] in
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
       bins SEW32 = {rvv_tb_pkg::SEW32};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -17286,7 +17286,7 @@ covergroup Cov_rvv_zve32x_vlsseg7e8_v with function sample(input logic [31:0] in
       bins LMUL1_4 = {rvv_tb_pkg::LMUL1_4};
       bins LMUL1_2 = {rvv_tb_pkg::LMUL1_2};
       bins LMUL1 = {rvv_tb_pkg::LMUL1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -17296,7 +17296,7 @@ covergroup Cov_rvv_zve32x_vlsseg7e8_v with function sample(input logic [31:0] in
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -17305,7 +17305,7 @@ covergroup Cov_rvv_zve32x_vlsseg7e8_v with function sample(input logic [31:0] in
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -17318,7 +17318,7 @@ covergroup Cov_rvv_zve32x_vlsseg8e8_v with function sample(input logic [31:0] in
     coverpoint (inst ==? {6'b111010, 1'b?, 5'b?????, 5'b?????, 3'b000, 5'b?????, 7'b0000111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -17332,7 +17332,7 @@ covergroup Cov_rvv_zve32x_vlsseg8e8_v with function sample(input logic [31:0] in
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
       bins SEW32 = {rvv_tb_pkg::SEW32};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -17340,7 +17340,7 @@ covergroup Cov_rvv_zve32x_vlsseg8e8_v with function sample(input logic [31:0] in
       bins LMUL1_4 = {rvv_tb_pkg::LMUL1_4};
       bins LMUL1_2 = {rvv_tb_pkg::LMUL1_2};
       bins LMUL1 = {rvv_tb_pkg::LMUL1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -17350,7 +17350,7 @@ covergroup Cov_rvv_zve32x_vlsseg8e8_v with function sample(input logic [31:0] in
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -17359,7 +17359,7 @@ covergroup Cov_rvv_zve32x_vlsseg8e8_v with function sample(input logic [31:0] in
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -17372,7 +17372,7 @@ covergroup Cov_rvv_zve32x_vlsseg2e16_v with function sample(input logic [31:0] i
     coverpoint (inst ==? {6'b001010, 1'b?, 5'b?????, 5'b?????, 3'b101, 5'b?????, 7'b0000111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -17386,7 +17386,7 @@ covergroup Cov_rvv_zve32x_vlsseg2e16_v with function sample(input logic [31:0] i
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
       bins SEW32 = {rvv_tb_pkg::SEW32};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -17396,7 +17396,7 @@ covergroup Cov_rvv_zve32x_vlsseg2e16_v with function sample(input logic [31:0] i
       bins LMUL1 = {rvv_tb_pkg::LMUL1};
       bins LMUL2 = {rvv_tb_pkg::LMUL2};
       bins LMUL4 = {rvv_tb_pkg::LMUL4};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -17406,7 +17406,7 @@ covergroup Cov_rvv_zve32x_vlsseg2e16_v with function sample(input logic [31:0] i
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -17415,7 +17415,7 @@ covergroup Cov_rvv_zve32x_vlsseg2e16_v with function sample(input logic [31:0] i
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -17428,7 +17428,7 @@ covergroup Cov_rvv_zve32x_vlsseg3e16_v with function sample(input logic [31:0] i
     coverpoint (inst ==? {6'b010010, 1'b?, 5'b?????, 5'b?????, 3'b101, 5'b?????, 7'b0000111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -17442,7 +17442,7 @@ covergroup Cov_rvv_zve32x_vlsseg3e16_v with function sample(input logic [31:0] i
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
       bins SEW32 = {rvv_tb_pkg::SEW32};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -17451,7 +17451,7 @@ covergroup Cov_rvv_zve32x_vlsseg3e16_v with function sample(input logic [31:0] i
       bins LMUL1_2 = {rvv_tb_pkg::LMUL1_2};
       bins LMUL1 = {rvv_tb_pkg::LMUL1};
       bins LMUL2 = {rvv_tb_pkg::LMUL2};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -17461,7 +17461,7 @@ covergroup Cov_rvv_zve32x_vlsseg3e16_v with function sample(input logic [31:0] i
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -17470,7 +17470,7 @@ covergroup Cov_rvv_zve32x_vlsseg3e16_v with function sample(input logic [31:0] i
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -17483,7 +17483,7 @@ covergroup Cov_rvv_zve32x_vlsseg4e16_v with function sample(input logic [31:0] i
     coverpoint (inst ==? {6'b011010, 1'b?, 5'b?????, 5'b?????, 3'b101, 5'b?????, 7'b0000111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -17497,7 +17497,7 @@ covergroup Cov_rvv_zve32x_vlsseg4e16_v with function sample(input logic [31:0] i
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
       bins SEW32 = {rvv_tb_pkg::SEW32};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -17506,7 +17506,7 @@ covergroup Cov_rvv_zve32x_vlsseg4e16_v with function sample(input logic [31:0] i
       bins LMUL1_2 = {rvv_tb_pkg::LMUL1_2};
       bins LMUL1 = {rvv_tb_pkg::LMUL1};
       bins LMUL2 = {rvv_tb_pkg::LMUL2};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -17516,7 +17516,7 @@ covergroup Cov_rvv_zve32x_vlsseg4e16_v with function sample(input logic [31:0] i
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -17525,7 +17525,7 @@ covergroup Cov_rvv_zve32x_vlsseg4e16_v with function sample(input logic [31:0] i
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -17538,7 +17538,7 @@ covergroup Cov_rvv_zve32x_vlsseg5e16_v with function sample(input logic [31:0] i
     coverpoint (inst ==? {6'b100010, 1'b?, 5'b?????, 5'b?????, 3'b101, 5'b?????, 7'b0000111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -17552,7 +17552,7 @@ covergroup Cov_rvv_zve32x_vlsseg5e16_v with function sample(input logic [31:0] i
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
       bins SEW32 = {rvv_tb_pkg::SEW32};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -17560,7 +17560,7 @@ covergroup Cov_rvv_zve32x_vlsseg5e16_v with function sample(input logic [31:0] i
       bins LMUL1_4 = {rvv_tb_pkg::LMUL1_4};
       bins LMUL1_2 = {rvv_tb_pkg::LMUL1_2};
       bins LMUL1 = {rvv_tb_pkg::LMUL1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -17570,7 +17570,7 @@ covergroup Cov_rvv_zve32x_vlsseg5e16_v with function sample(input logic [31:0] i
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -17579,7 +17579,7 @@ covergroup Cov_rvv_zve32x_vlsseg5e16_v with function sample(input logic [31:0] i
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -17592,7 +17592,7 @@ covergroup Cov_rvv_zve32x_vlsseg6e16_v with function sample(input logic [31:0] i
     coverpoint (inst ==? {6'b101010, 1'b?, 5'b?????, 5'b?????, 3'b101, 5'b?????, 7'b0000111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -17606,7 +17606,7 @@ covergroup Cov_rvv_zve32x_vlsseg6e16_v with function sample(input logic [31:0] i
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
       bins SEW32 = {rvv_tb_pkg::SEW32};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -17614,7 +17614,7 @@ covergroup Cov_rvv_zve32x_vlsseg6e16_v with function sample(input logic [31:0] i
       bins LMUL1_4 = {rvv_tb_pkg::LMUL1_4};
       bins LMUL1_2 = {rvv_tb_pkg::LMUL1_2};
       bins LMUL1 = {rvv_tb_pkg::LMUL1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -17624,7 +17624,7 @@ covergroup Cov_rvv_zve32x_vlsseg6e16_v with function sample(input logic [31:0] i
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -17633,7 +17633,7 @@ covergroup Cov_rvv_zve32x_vlsseg6e16_v with function sample(input logic [31:0] i
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -17646,7 +17646,7 @@ covergroup Cov_rvv_zve32x_vlsseg7e16_v with function sample(input logic [31:0] i
     coverpoint (inst ==? {6'b110010, 1'b?, 5'b?????, 5'b?????, 3'b101, 5'b?????, 7'b0000111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -17660,7 +17660,7 @@ covergroup Cov_rvv_zve32x_vlsseg7e16_v with function sample(input logic [31:0] i
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
       bins SEW32 = {rvv_tb_pkg::SEW32};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -17668,7 +17668,7 @@ covergroup Cov_rvv_zve32x_vlsseg7e16_v with function sample(input logic [31:0] i
       bins LMUL1_4 = {rvv_tb_pkg::LMUL1_4};
       bins LMUL1_2 = {rvv_tb_pkg::LMUL1_2};
       bins LMUL1 = {rvv_tb_pkg::LMUL1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -17678,7 +17678,7 @@ covergroup Cov_rvv_zve32x_vlsseg7e16_v with function sample(input logic [31:0] i
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -17687,7 +17687,7 @@ covergroup Cov_rvv_zve32x_vlsseg7e16_v with function sample(input logic [31:0] i
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -17700,7 +17700,7 @@ covergroup Cov_rvv_zve32x_vlsseg8e16_v with function sample(input logic [31:0] i
     coverpoint (inst ==? {6'b111010, 1'b?, 5'b?????, 5'b?????, 3'b101, 5'b?????, 7'b0000111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -17714,7 +17714,7 @@ covergroup Cov_rvv_zve32x_vlsseg8e16_v with function sample(input logic [31:0] i
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
       bins SEW32 = {rvv_tb_pkg::SEW32};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -17722,7 +17722,7 @@ covergroup Cov_rvv_zve32x_vlsseg8e16_v with function sample(input logic [31:0] i
       bins LMUL1_4 = {rvv_tb_pkg::LMUL1_4};
       bins LMUL1_2 = {rvv_tb_pkg::LMUL1_2};
       bins LMUL1 = {rvv_tb_pkg::LMUL1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -17732,7 +17732,7 @@ covergroup Cov_rvv_zve32x_vlsseg8e16_v with function sample(input logic [31:0] i
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -17741,7 +17741,7 @@ covergroup Cov_rvv_zve32x_vlsseg8e16_v with function sample(input logic [31:0] i
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -17754,7 +17754,7 @@ covergroup Cov_rvv_zve32x_vlsseg2e32_v with function sample(input logic [31:0] i
     coverpoint (inst ==? {6'b001010, 1'b?, 5'b?????, 5'b?????, 3'b110, 5'b?????, 7'b0000111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -17768,7 +17768,7 @@ covergroup Cov_rvv_zve32x_vlsseg2e32_v with function sample(input logic [31:0] i
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
       bins SEW32 = {rvv_tb_pkg::SEW32};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -17778,7 +17778,7 @@ covergroup Cov_rvv_zve32x_vlsseg2e32_v with function sample(input logic [31:0] i
       bins LMUL1 = {rvv_tb_pkg::LMUL1};
       bins LMUL2 = {rvv_tb_pkg::LMUL2};
       bins LMUL4 = {rvv_tb_pkg::LMUL4};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -17788,7 +17788,7 @@ covergroup Cov_rvv_zve32x_vlsseg2e32_v with function sample(input logic [31:0] i
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -17797,7 +17797,7 @@ covergroup Cov_rvv_zve32x_vlsseg2e32_v with function sample(input logic [31:0] i
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -17810,7 +17810,7 @@ covergroup Cov_rvv_zve32x_vlsseg3e32_v with function sample(input logic [31:0] i
     coverpoint (inst ==? {6'b010010, 1'b?, 5'b?????, 5'b?????, 3'b110, 5'b?????, 7'b0000111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -17824,7 +17824,7 @@ covergroup Cov_rvv_zve32x_vlsseg3e32_v with function sample(input logic [31:0] i
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
       bins SEW32 = {rvv_tb_pkg::SEW32};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -17833,7 +17833,7 @@ covergroup Cov_rvv_zve32x_vlsseg3e32_v with function sample(input logic [31:0] i
       bins LMUL1_2 = {rvv_tb_pkg::LMUL1_2};
       bins LMUL1 = {rvv_tb_pkg::LMUL1};
       bins LMUL2 = {rvv_tb_pkg::LMUL2};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -17843,7 +17843,7 @@ covergroup Cov_rvv_zve32x_vlsseg3e32_v with function sample(input logic [31:0] i
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -17852,7 +17852,7 @@ covergroup Cov_rvv_zve32x_vlsseg3e32_v with function sample(input logic [31:0] i
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -17865,7 +17865,7 @@ covergroup Cov_rvv_zve32x_vlsseg4e32_v with function sample(input logic [31:0] i
     coverpoint (inst ==? {6'b011010, 1'b?, 5'b?????, 5'b?????, 3'b110, 5'b?????, 7'b0000111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -17879,7 +17879,7 @@ covergroup Cov_rvv_zve32x_vlsseg4e32_v with function sample(input logic [31:0] i
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
       bins SEW32 = {rvv_tb_pkg::SEW32};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -17888,7 +17888,7 @@ covergroup Cov_rvv_zve32x_vlsseg4e32_v with function sample(input logic [31:0] i
       bins LMUL1_2 = {rvv_tb_pkg::LMUL1_2};
       bins LMUL1 = {rvv_tb_pkg::LMUL1};
       bins LMUL2 = {rvv_tb_pkg::LMUL2};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -17898,7 +17898,7 @@ covergroup Cov_rvv_zve32x_vlsseg4e32_v with function sample(input logic [31:0] i
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -17907,7 +17907,7 @@ covergroup Cov_rvv_zve32x_vlsseg4e32_v with function sample(input logic [31:0] i
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -17920,7 +17920,7 @@ covergroup Cov_rvv_zve32x_vlsseg5e32_v with function sample(input logic [31:0] i
     coverpoint (inst ==? {6'b100010, 1'b?, 5'b?????, 5'b?????, 3'b110, 5'b?????, 7'b0000111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -17934,7 +17934,7 @@ covergroup Cov_rvv_zve32x_vlsseg5e32_v with function sample(input logic [31:0] i
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
       bins SEW32 = {rvv_tb_pkg::SEW32};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -17942,7 +17942,7 @@ covergroup Cov_rvv_zve32x_vlsseg5e32_v with function sample(input logic [31:0] i
       bins LMUL1_4 = {rvv_tb_pkg::LMUL1_4};
       bins LMUL1_2 = {rvv_tb_pkg::LMUL1_2};
       bins LMUL1 = {rvv_tb_pkg::LMUL1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -17952,7 +17952,7 @@ covergroup Cov_rvv_zve32x_vlsseg5e32_v with function sample(input logic [31:0] i
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -17961,7 +17961,7 @@ covergroup Cov_rvv_zve32x_vlsseg5e32_v with function sample(input logic [31:0] i
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -17974,7 +17974,7 @@ covergroup Cov_rvv_zve32x_vlsseg6e32_v with function sample(input logic [31:0] i
     coverpoint (inst ==? {6'b101010, 1'b?, 5'b?????, 5'b?????, 3'b110, 5'b?????, 7'b0000111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -17988,7 +17988,7 @@ covergroup Cov_rvv_zve32x_vlsseg6e32_v with function sample(input logic [31:0] i
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
       bins SEW32 = {rvv_tb_pkg::SEW32};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -17996,7 +17996,7 @@ covergroup Cov_rvv_zve32x_vlsseg6e32_v with function sample(input logic [31:0] i
       bins LMUL1_4 = {rvv_tb_pkg::LMUL1_4};
       bins LMUL1_2 = {rvv_tb_pkg::LMUL1_2};
       bins LMUL1 = {rvv_tb_pkg::LMUL1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -18006,7 +18006,7 @@ covergroup Cov_rvv_zve32x_vlsseg6e32_v with function sample(input logic [31:0] i
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -18015,7 +18015,7 @@ covergroup Cov_rvv_zve32x_vlsseg6e32_v with function sample(input logic [31:0] i
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -18028,7 +18028,7 @@ covergroup Cov_rvv_zve32x_vlsseg7e32_v with function sample(input logic [31:0] i
     coverpoint (inst ==? {6'b110010, 1'b?, 5'b?????, 5'b?????, 3'b110, 5'b?????, 7'b0000111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -18042,7 +18042,7 @@ covergroup Cov_rvv_zve32x_vlsseg7e32_v with function sample(input logic [31:0] i
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
       bins SEW32 = {rvv_tb_pkg::SEW32};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -18050,7 +18050,7 @@ covergroup Cov_rvv_zve32x_vlsseg7e32_v with function sample(input logic [31:0] i
       bins LMUL1_4 = {rvv_tb_pkg::LMUL1_4};
       bins LMUL1_2 = {rvv_tb_pkg::LMUL1_2};
       bins LMUL1 = {rvv_tb_pkg::LMUL1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -18060,7 +18060,7 @@ covergroup Cov_rvv_zve32x_vlsseg7e32_v with function sample(input logic [31:0] i
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -18069,7 +18069,7 @@ covergroup Cov_rvv_zve32x_vlsseg7e32_v with function sample(input logic [31:0] i
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -18082,7 +18082,7 @@ covergroup Cov_rvv_zve32x_vlsseg8e32_v with function sample(input logic [31:0] i
     coverpoint (inst ==? {6'b111010, 1'b?, 5'b?????, 5'b?????, 3'b110, 5'b?????, 7'b0000111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -18096,7 +18096,7 @@ covergroup Cov_rvv_zve32x_vlsseg8e32_v with function sample(input logic [31:0] i
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
       bins SEW32 = {rvv_tb_pkg::SEW32};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -18104,7 +18104,7 @@ covergroup Cov_rvv_zve32x_vlsseg8e32_v with function sample(input logic [31:0] i
       bins LMUL1_4 = {rvv_tb_pkg::LMUL1_4};
       bins LMUL1_2 = {rvv_tb_pkg::LMUL1_2};
       bins LMUL1 = {rvv_tb_pkg::LMUL1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -18114,7 +18114,7 @@ covergroup Cov_rvv_zve32x_vlsseg8e32_v with function sample(input logic [31:0] i
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -18123,7 +18123,7 @@ covergroup Cov_rvv_zve32x_vlsseg8e32_v with function sample(input logic [31:0] i
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -18136,7 +18136,7 @@ covergroup Cov_rvv_zve32x_vssseg2e8_v with function sample(input logic [31:0] in
     coverpoint (inst ==? {6'b001010, 1'b?, 5'b?????, 5'b?????, 3'b000, 5'b?????, 7'b0100111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -18150,7 +18150,7 @@ covergroup Cov_rvv_zve32x_vssseg2e8_v with function sample(input logic [31:0] in
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
       bins SEW32 = {rvv_tb_pkg::SEW32};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -18160,7 +18160,7 @@ covergroup Cov_rvv_zve32x_vssseg2e8_v with function sample(input logic [31:0] in
       bins LMUL1 = {rvv_tb_pkg::LMUL1};
       bins LMUL2 = {rvv_tb_pkg::LMUL2};
       bins LMUL4 = {rvv_tb_pkg::LMUL4};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -18170,7 +18170,7 @@ covergroup Cov_rvv_zve32x_vssseg2e8_v with function sample(input logic [31:0] in
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -18179,7 +18179,7 @@ covergroup Cov_rvv_zve32x_vssseg2e8_v with function sample(input logic [31:0] in
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -18192,7 +18192,7 @@ covergroup Cov_rvv_zve32x_vssseg3e8_v with function sample(input logic [31:0] in
     coverpoint (inst ==? {6'b010010, 1'b?, 5'b?????, 5'b?????, 3'b000, 5'b?????, 7'b0100111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -18206,7 +18206,7 @@ covergroup Cov_rvv_zve32x_vssseg3e8_v with function sample(input logic [31:0] in
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
       bins SEW32 = {rvv_tb_pkg::SEW32};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -18215,7 +18215,7 @@ covergroup Cov_rvv_zve32x_vssseg3e8_v with function sample(input logic [31:0] in
       bins LMUL1_2 = {rvv_tb_pkg::LMUL1_2};
       bins LMUL1 = {rvv_tb_pkg::LMUL1};
       bins LMUL2 = {rvv_tb_pkg::LMUL2};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -18225,7 +18225,7 @@ covergroup Cov_rvv_zve32x_vssseg3e8_v with function sample(input logic [31:0] in
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -18234,7 +18234,7 @@ covergroup Cov_rvv_zve32x_vssseg3e8_v with function sample(input logic [31:0] in
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -18247,7 +18247,7 @@ covergroup Cov_rvv_zve32x_vssseg4e8_v with function sample(input logic [31:0] in
     coverpoint (inst ==? {6'b011010, 1'b?, 5'b?????, 5'b?????, 3'b000, 5'b?????, 7'b0100111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -18261,7 +18261,7 @@ covergroup Cov_rvv_zve32x_vssseg4e8_v with function sample(input logic [31:0] in
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
       bins SEW32 = {rvv_tb_pkg::SEW32};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -18270,7 +18270,7 @@ covergroup Cov_rvv_zve32x_vssseg4e8_v with function sample(input logic [31:0] in
       bins LMUL1_2 = {rvv_tb_pkg::LMUL1_2};
       bins LMUL1 = {rvv_tb_pkg::LMUL1};
       bins LMUL2 = {rvv_tb_pkg::LMUL2};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -18280,7 +18280,7 @@ covergroup Cov_rvv_zve32x_vssseg4e8_v with function sample(input logic [31:0] in
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -18289,7 +18289,7 @@ covergroup Cov_rvv_zve32x_vssseg4e8_v with function sample(input logic [31:0] in
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -18302,7 +18302,7 @@ covergroup Cov_rvv_zve32x_vssseg5e8_v with function sample(input logic [31:0] in
     coverpoint (inst ==? {6'b100010, 1'b?, 5'b?????, 5'b?????, 3'b000, 5'b?????, 7'b0100111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -18316,7 +18316,7 @@ covergroup Cov_rvv_zve32x_vssseg5e8_v with function sample(input logic [31:0] in
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
       bins SEW32 = {rvv_tb_pkg::SEW32};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -18324,7 +18324,7 @@ covergroup Cov_rvv_zve32x_vssseg5e8_v with function sample(input logic [31:0] in
       bins LMUL1_4 = {rvv_tb_pkg::LMUL1_4};
       bins LMUL1_2 = {rvv_tb_pkg::LMUL1_2};
       bins LMUL1 = {rvv_tb_pkg::LMUL1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -18334,7 +18334,7 @@ covergroup Cov_rvv_zve32x_vssseg5e8_v with function sample(input logic [31:0] in
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -18343,7 +18343,7 @@ covergroup Cov_rvv_zve32x_vssseg5e8_v with function sample(input logic [31:0] in
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -18356,7 +18356,7 @@ covergroup Cov_rvv_zve32x_vssseg6e8_v with function sample(input logic [31:0] in
     coverpoint (inst ==? {6'b101010, 1'b?, 5'b?????, 5'b?????, 3'b000, 5'b?????, 7'b0100111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -18370,7 +18370,7 @@ covergroup Cov_rvv_zve32x_vssseg6e8_v with function sample(input logic [31:0] in
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
       bins SEW32 = {rvv_tb_pkg::SEW32};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -18378,7 +18378,7 @@ covergroup Cov_rvv_zve32x_vssseg6e8_v with function sample(input logic [31:0] in
       bins LMUL1_4 = {rvv_tb_pkg::LMUL1_4};
       bins LMUL1_2 = {rvv_tb_pkg::LMUL1_2};
       bins LMUL1 = {rvv_tb_pkg::LMUL1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -18388,7 +18388,7 @@ covergroup Cov_rvv_zve32x_vssseg6e8_v with function sample(input logic [31:0] in
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -18397,7 +18397,7 @@ covergroup Cov_rvv_zve32x_vssseg6e8_v with function sample(input logic [31:0] in
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -18410,7 +18410,7 @@ covergroup Cov_rvv_zve32x_vssseg7e8_v with function sample(input logic [31:0] in
     coverpoint (inst ==? {6'b110010, 1'b?, 5'b?????, 5'b?????, 3'b000, 5'b?????, 7'b0100111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -18424,7 +18424,7 @@ covergroup Cov_rvv_zve32x_vssseg7e8_v with function sample(input logic [31:0] in
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
       bins SEW32 = {rvv_tb_pkg::SEW32};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -18432,7 +18432,7 @@ covergroup Cov_rvv_zve32x_vssseg7e8_v with function sample(input logic [31:0] in
       bins LMUL1_4 = {rvv_tb_pkg::LMUL1_4};
       bins LMUL1_2 = {rvv_tb_pkg::LMUL1_2};
       bins LMUL1 = {rvv_tb_pkg::LMUL1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -18442,7 +18442,7 @@ covergroup Cov_rvv_zve32x_vssseg7e8_v with function sample(input logic [31:0] in
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -18451,7 +18451,7 @@ covergroup Cov_rvv_zve32x_vssseg7e8_v with function sample(input logic [31:0] in
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -18464,7 +18464,7 @@ covergroup Cov_rvv_zve32x_vssseg8e8_v with function sample(input logic [31:0] in
     coverpoint (inst ==? {6'b111010, 1'b?, 5'b?????, 5'b?????, 3'b000, 5'b?????, 7'b0100111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -18478,7 +18478,7 @@ covergroup Cov_rvv_zve32x_vssseg8e8_v with function sample(input logic [31:0] in
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
       bins SEW32 = {rvv_tb_pkg::SEW32};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -18486,7 +18486,7 @@ covergroup Cov_rvv_zve32x_vssseg8e8_v with function sample(input logic [31:0] in
       bins LMUL1_4 = {rvv_tb_pkg::LMUL1_4};
       bins LMUL1_2 = {rvv_tb_pkg::LMUL1_2};
       bins LMUL1 = {rvv_tb_pkg::LMUL1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -18496,7 +18496,7 @@ covergroup Cov_rvv_zve32x_vssseg8e8_v with function sample(input logic [31:0] in
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -18505,7 +18505,7 @@ covergroup Cov_rvv_zve32x_vssseg8e8_v with function sample(input logic [31:0] in
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -18518,7 +18518,7 @@ covergroup Cov_rvv_zve32x_vssseg2e16_v with function sample(input logic [31:0] i
     coverpoint (inst ==? {6'b001010, 1'b?, 5'b?????, 5'b?????, 3'b101, 5'b?????, 7'b0100111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -18532,7 +18532,7 @@ covergroup Cov_rvv_zve32x_vssseg2e16_v with function sample(input logic [31:0] i
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
       bins SEW32 = {rvv_tb_pkg::SEW32};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -18542,7 +18542,7 @@ covergroup Cov_rvv_zve32x_vssseg2e16_v with function sample(input logic [31:0] i
       bins LMUL1 = {rvv_tb_pkg::LMUL1};
       bins LMUL2 = {rvv_tb_pkg::LMUL2};
       bins LMUL4 = {rvv_tb_pkg::LMUL4};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -18552,7 +18552,7 @@ covergroup Cov_rvv_zve32x_vssseg2e16_v with function sample(input logic [31:0] i
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -18561,7 +18561,7 @@ covergroup Cov_rvv_zve32x_vssseg2e16_v with function sample(input logic [31:0] i
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -18574,7 +18574,7 @@ covergroup Cov_rvv_zve32x_vssseg3e16_v with function sample(input logic [31:0] i
     coverpoint (inst ==? {6'b010010, 1'b?, 5'b?????, 5'b?????, 3'b101, 5'b?????, 7'b0100111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -18588,7 +18588,7 @@ covergroup Cov_rvv_zve32x_vssseg3e16_v with function sample(input logic [31:0] i
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
       bins SEW32 = {rvv_tb_pkg::SEW32};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -18597,7 +18597,7 @@ covergroup Cov_rvv_zve32x_vssseg3e16_v with function sample(input logic [31:0] i
       bins LMUL1_2 = {rvv_tb_pkg::LMUL1_2};
       bins LMUL1 = {rvv_tb_pkg::LMUL1};
       bins LMUL2 = {rvv_tb_pkg::LMUL2};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -18607,7 +18607,7 @@ covergroup Cov_rvv_zve32x_vssseg3e16_v with function sample(input logic [31:0] i
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -18616,7 +18616,7 @@ covergroup Cov_rvv_zve32x_vssseg3e16_v with function sample(input logic [31:0] i
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -18629,7 +18629,7 @@ covergroup Cov_rvv_zve32x_vssseg4e16_v with function sample(input logic [31:0] i
     coverpoint (inst ==? {6'b011010, 1'b?, 5'b?????, 5'b?????, 3'b101, 5'b?????, 7'b0100111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -18643,7 +18643,7 @@ covergroup Cov_rvv_zve32x_vssseg4e16_v with function sample(input logic [31:0] i
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
       bins SEW32 = {rvv_tb_pkg::SEW32};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -18652,7 +18652,7 @@ covergroup Cov_rvv_zve32x_vssseg4e16_v with function sample(input logic [31:0] i
       bins LMUL1_2 = {rvv_tb_pkg::LMUL1_2};
       bins LMUL1 = {rvv_tb_pkg::LMUL1};
       bins LMUL2 = {rvv_tb_pkg::LMUL2};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -18662,7 +18662,7 @@ covergroup Cov_rvv_zve32x_vssseg4e16_v with function sample(input logic [31:0] i
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -18671,7 +18671,7 @@ covergroup Cov_rvv_zve32x_vssseg4e16_v with function sample(input logic [31:0] i
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -18684,7 +18684,7 @@ covergroup Cov_rvv_zve32x_vssseg5e16_v with function sample(input logic [31:0] i
     coverpoint (inst ==? {6'b100010, 1'b?, 5'b?????, 5'b?????, 3'b101, 5'b?????, 7'b0100111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -18698,7 +18698,7 @@ covergroup Cov_rvv_zve32x_vssseg5e16_v with function sample(input logic [31:0] i
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
       bins SEW32 = {rvv_tb_pkg::SEW32};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -18706,7 +18706,7 @@ covergroup Cov_rvv_zve32x_vssseg5e16_v with function sample(input logic [31:0] i
       bins LMUL1_4 = {rvv_tb_pkg::LMUL1_4};
       bins LMUL1_2 = {rvv_tb_pkg::LMUL1_2};
       bins LMUL1 = {rvv_tb_pkg::LMUL1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -18716,7 +18716,7 @@ covergroup Cov_rvv_zve32x_vssseg5e16_v with function sample(input logic [31:0] i
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -18725,7 +18725,7 @@ covergroup Cov_rvv_zve32x_vssseg5e16_v with function sample(input logic [31:0] i
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -18738,7 +18738,7 @@ covergroup Cov_rvv_zve32x_vssseg6e16_v with function sample(input logic [31:0] i
     coverpoint (inst ==? {6'b101010, 1'b?, 5'b?????, 5'b?????, 3'b101, 5'b?????, 7'b0100111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -18752,7 +18752,7 @@ covergroup Cov_rvv_zve32x_vssseg6e16_v with function sample(input logic [31:0] i
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
       bins SEW32 = {rvv_tb_pkg::SEW32};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -18760,7 +18760,7 @@ covergroup Cov_rvv_zve32x_vssseg6e16_v with function sample(input logic [31:0] i
       bins LMUL1_4 = {rvv_tb_pkg::LMUL1_4};
       bins LMUL1_2 = {rvv_tb_pkg::LMUL1_2};
       bins LMUL1 = {rvv_tb_pkg::LMUL1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -18770,7 +18770,7 @@ covergroup Cov_rvv_zve32x_vssseg6e16_v with function sample(input logic [31:0] i
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -18779,7 +18779,7 @@ covergroup Cov_rvv_zve32x_vssseg6e16_v with function sample(input logic [31:0] i
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -18792,7 +18792,7 @@ covergroup Cov_rvv_zve32x_vssseg7e16_v with function sample(input logic [31:0] i
     coverpoint (inst ==? {6'b110010, 1'b?, 5'b?????, 5'b?????, 3'b101, 5'b?????, 7'b0100111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -18806,7 +18806,7 @@ covergroup Cov_rvv_zve32x_vssseg7e16_v with function sample(input logic [31:0] i
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
       bins SEW32 = {rvv_tb_pkg::SEW32};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -18814,7 +18814,7 @@ covergroup Cov_rvv_zve32x_vssseg7e16_v with function sample(input logic [31:0] i
       bins LMUL1_4 = {rvv_tb_pkg::LMUL1_4};
       bins LMUL1_2 = {rvv_tb_pkg::LMUL1_2};
       bins LMUL1 = {rvv_tb_pkg::LMUL1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -18824,7 +18824,7 @@ covergroup Cov_rvv_zve32x_vssseg7e16_v with function sample(input logic [31:0] i
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -18833,7 +18833,7 @@ covergroup Cov_rvv_zve32x_vssseg7e16_v with function sample(input logic [31:0] i
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -18846,7 +18846,7 @@ covergroup Cov_rvv_zve32x_vssseg8e16_v with function sample(input logic [31:0] i
     coverpoint (inst ==? {6'b111010, 1'b?, 5'b?????, 5'b?????, 3'b101, 5'b?????, 7'b0100111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -18860,7 +18860,7 @@ covergroup Cov_rvv_zve32x_vssseg8e16_v with function sample(input logic [31:0] i
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
       bins SEW32 = {rvv_tb_pkg::SEW32};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -18868,7 +18868,7 @@ covergroup Cov_rvv_zve32x_vssseg8e16_v with function sample(input logic [31:0] i
       bins LMUL1_4 = {rvv_tb_pkg::LMUL1_4};
       bins LMUL1_2 = {rvv_tb_pkg::LMUL1_2};
       bins LMUL1 = {rvv_tb_pkg::LMUL1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -18878,7 +18878,7 @@ covergroup Cov_rvv_zve32x_vssseg8e16_v with function sample(input logic [31:0] i
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -18887,7 +18887,7 @@ covergroup Cov_rvv_zve32x_vssseg8e16_v with function sample(input logic [31:0] i
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -18900,7 +18900,7 @@ covergroup Cov_rvv_zve32x_vssseg2e32_v with function sample(input logic [31:0] i
     coverpoint (inst ==? {6'b001010, 1'b?, 5'b?????, 5'b?????, 3'b110, 5'b?????, 7'b0100111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -18914,7 +18914,7 @@ covergroup Cov_rvv_zve32x_vssseg2e32_v with function sample(input logic [31:0] i
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
       bins SEW32 = {rvv_tb_pkg::SEW32};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -18924,7 +18924,7 @@ covergroup Cov_rvv_zve32x_vssseg2e32_v with function sample(input logic [31:0] i
       bins LMUL1 = {rvv_tb_pkg::LMUL1};
       bins LMUL2 = {rvv_tb_pkg::LMUL2};
       bins LMUL4 = {rvv_tb_pkg::LMUL4};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -18934,7 +18934,7 @@ covergroup Cov_rvv_zve32x_vssseg2e32_v with function sample(input logic [31:0] i
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -18943,7 +18943,7 @@ covergroup Cov_rvv_zve32x_vssseg2e32_v with function sample(input logic [31:0] i
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -18956,7 +18956,7 @@ covergroup Cov_rvv_zve32x_vssseg3e32_v with function sample(input logic [31:0] i
     coverpoint (inst ==? {6'b010010, 1'b?, 5'b?????, 5'b?????, 3'b110, 5'b?????, 7'b0100111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -18970,7 +18970,7 @@ covergroup Cov_rvv_zve32x_vssseg3e32_v with function sample(input logic [31:0] i
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
       bins SEW32 = {rvv_tb_pkg::SEW32};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -18979,7 +18979,7 @@ covergroup Cov_rvv_zve32x_vssseg3e32_v with function sample(input logic [31:0] i
       bins LMUL1_2 = {rvv_tb_pkg::LMUL1_2};
       bins LMUL1 = {rvv_tb_pkg::LMUL1};
       bins LMUL2 = {rvv_tb_pkg::LMUL2};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -18989,7 +18989,7 @@ covergroup Cov_rvv_zve32x_vssseg3e32_v with function sample(input logic [31:0] i
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -18998,7 +18998,7 @@ covergroup Cov_rvv_zve32x_vssseg3e32_v with function sample(input logic [31:0] i
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -19011,7 +19011,7 @@ covergroup Cov_rvv_zve32x_vssseg4e32_v with function sample(input logic [31:0] i
     coverpoint (inst ==? {6'b011010, 1'b?, 5'b?????, 5'b?????, 3'b110, 5'b?????, 7'b0100111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -19025,7 +19025,7 @@ covergroup Cov_rvv_zve32x_vssseg4e32_v with function sample(input logic [31:0] i
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
       bins SEW32 = {rvv_tb_pkg::SEW32};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -19034,7 +19034,7 @@ covergroup Cov_rvv_zve32x_vssseg4e32_v with function sample(input logic [31:0] i
       bins LMUL1_2 = {rvv_tb_pkg::LMUL1_2};
       bins LMUL1 = {rvv_tb_pkg::LMUL1};
       bins LMUL2 = {rvv_tb_pkg::LMUL2};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -19044,7 +19044,7 @@ covergroup Cov_rvv_zve32x_vssseg4e32_v with function sample(input logic [31:0] i
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -19053,7 +19053,7 @@ covergroup Cov_rvv_zve32x_vssseg4e32_v with function sample(input logic [31:0] i
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -19066,7 +19066,7 @@ covergroup Cov_rvv_zve32x_vssseg5e32_v with function sample(input logic [31:0] i
     coverpoint (inst ==? {6'b100010, 1'b?, 5'b?????, 5'b?????, 3'b110, 5'b?????, 7'b0100111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -19080,7 +19080,7 @@ covergroup Cov_rvv_zve32x_vssseg5e32_v with function sample(input logic [31:0] i
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
       bins SEW32 = {rvv_tb_pkg::SEW32};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -19088,7 +19088,7 @@ covergroup Cov_rvv_zve32x_vssseg5e32_v with function sample(input logic [31:0] i
       bins LMUL1_4 = {rvv_tb_pkg::LMUL1_4};
       bins LMUL1_2 = {rvv_tb_pkg::LMUL1_2};
       bins LMUL1 = {rvv_tb_pkg::LMUL1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -19098,7 +19098,7 @@ covergroup Cov_rvv_zve32x_vssseg5e32_v with function sample(input logic [31:0] i
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -19107,7 +19107,7 @@ covergroup Cov_rvv_zve32x_vssseg5e32_v with function sample(input logic [31:0] i
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -19120,7 +19120,7 @@ covergroup Cov_rvv_zve32x_vssseg6e32_v with function sample(input logic [31:0] i
     coverpoint (inst ==? {6'b101010, 1'b?, 5'b?????, 5'b?????, 3'b110, 5'b?????, 7'b0100111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -19134,7 +19134,7 @@ covergroup Cov_rvv_zve32x_vssseg6e32_v with function sample(input logic [31:0] i
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
       bins SEW32 = {rvv_tb_pkg::SEW32};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -19142,7 +19142,7 @@ covergroup Cov_rvv_zve32x_vssseg6e32_v with function sample(input logic [31:0] i
       bins LMUL1_4 = {rvv_tb_pkg::LMUL1_4};
       bins LMUL1_2 = {rvv_tb_pkg::LMUL1_2};
       bins LMUL1 = {rvv_tb_pkg::LMUL1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -19152,7 +19152,7 @@ covergroup Cov_rvv_zve32x_vssseg6e32_v with function sample(input logic [31:0] i
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -19161,7 +19161,7 @@ covergroup Cov_rvv_zve32x_vssseg6e32_v with function sample(input logic [31:0] i
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -19174,7 +19174,7 @@ covergroup Cov_rvv_zve32x_vssseg7e32_v with function sample(input logic [31:0] i
     coverpoint (inst ==? {6'b110010, 1'b?, 5'b?????, 5'b?????, 3'b110, 5'b?????, 7'b0100111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -19188,7 +19188,7 @@ covergroup Cov_rvv_zve32x_vssseg7e32_v with function sample(input logic [31:0] i
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
       bins SEW32 = {rvv_tb_pkg::SEW32};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -19196,7 +19196,7 @@ covergroup Cov_rvv_zve32x_vssseg7e32_v with function sample(input logic [31:0] i
       bins LMUL1_4 = {rvv_tb_pkg::LMUL1_4};
       bins LMUL1_2 = {rvv_tb_pkg::LMUL1_2};
       bins LMUL1 = {rvv_tb_pkg::LMUL1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -19206,7 +19206,7 @@ covergroup Cov_rvv_zve32x_vssseg7e32_v with function sample(input logic [31:0] i
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -19215,7 +19215,7 @@ covergroup Cov_rvv_zve32x_vssseg7e32_v with function sample(input logic [31:0] i
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -19228,7 +19228,7 @@ covergroup Cov_rvv_zve32x_vssseg8e32_v with function sample(input logic [31:0] i
     coverpoint (inst ==? {6'b111010, 1'b?, 5'b?????, 5'b?????, 3'b110, 5'b?????, 7'b0100111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -19242,7 +19242,7 @@ covergroup Cov_rvv_zve32x_vssseg8e32_v with function sample(input logic [31:0] i
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
       bins SEW32 = {rvv_tb_pkg::SEW32};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -19250,7 +19250,7 @@ covergroup Cov_rvv_zve32x_vssseg8e32_v with function sample(input logic [31:0] i
       bins LMUL1_4 = {rvv_tb_pkg::LMUL1_4};
       bins LMUL1_2 = {rvv_tb_pkg::LMUL1_2};
       bins LMUL1 = {rvv_tb_pkg::LMUL1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -19260,7 +19260,7 @@ covergroup Cov_rvv_zve32x_vssseg8e32_v with function sample(input logic [31:0] i
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -19269,7 +19269,7 @@ covergroup Cov_rvv_zve32x_vssseg8e32_v with function sample(input logic [31:0] i
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -19282,7 +19282,7 @@ covergroup Cov_rvv_zve32x_vluxseg2ei8_v with function sample(input logic [31:0] 
     coverpoint (inst ==? {6'b001001, 1'b?, 5'b?????, 5'b?????, 3'b000, 5'b?????, 7'b0000111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -19296,7 +19296,7 @@ covergroup Cov_rvv_zve32x_vluxseg2ei8_v with function sample(input logic [31:0] 
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
       bins SEW32 = {rvv_tb_pkg::SEW32};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -19306,7 +19306,7 @@ covergroup Cov_rvv_zve32x_vluxseg2ei8_v with function sample(input logic [31:0] 
       bins LMUL1 = {rvv_tb_pkg::LMUL1};
       bins LMUL2 = {rvv_tb_pkg::LMUL2};
       bins LMUL4 = {rvv_tb_pkg::LMUL4};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -19316,7 +19316,7 @@ covergroup Cov_rvv_zve32x_vluxseg2ei8_v with function sample(input logic [31:0] 
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -19325,7 +19325,7 @@ covergroup Cov_rvv_zve32x_vluxseg2ei8_v with function sample(input logic [31:0] 
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -19338,7 +19338,7 @@ covergroup Cov_rvv_zve32x_vluxseg3ei8_v with function sample(input logic [31:0] 
     coverpoint (inst ==? {6'b010001, 1'b?, 5'b?????, 5'b?????, 3'b000, 5'b?????, 7'b0000111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -19352,7 +19352,7 @@ covergroup Cov_rvv_zve32x_vluxseg3ei8_v with function sample(input logic [31:0] 
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
       bins SEW32 = {rvv_tb_pkg::SEW32};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -19361,7 +19361,7 @@ covergroup Cov_rvv_zve32x_vluxseg3ei8_v with function sample(input logic [31:0] 
       bins LMUL1_2 = {rvv_tb_pkg::LMUL1_2};
       bins LMUL1 = {rvv_tb_pkg::LMUL1};
       bins LMUL2 = {rvv_tb_pkg::LMUL2};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -19371,7 +19371,7 @@ covergroup Cov_rvv_zve32x_vluxseg3ei8_v with function sample(input logic [31:0] 
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -19380,7 +19380,7 @@ covergroup Cov_rvv_zve32x_vluxseg3ei8_v with function sample(input logic [31:0] 
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -19393,7 +19393,7 @@ covergroup Cov_rvv_zve32x_vluxseg4ei8_v with function sample(input logic [31:0] 
     coverpoint (inst ==? {6'b011001, 1'b?, 5'b?????, 5'b?????, 3'b000, 5'b?????, 7'b0000111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -19407,7 +19407,7 @@ covergroup Cov_rvv_zve32x_vluxseg4ei8_v with function sample(input logic [31:0] 
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
       bins SEW32 = {rvv_tb_pkg::SEW32};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -19416,7 +19416,7 @@ covergroup Cov_rvv_zve32x_vluxseg4ei8_v with function sample(input logic [31:0] 
       bins LMUL1_2 = {rvv_tb_pkg::LMUL1_2};
       bins LMUL1 = {rvv_tb_pkg::LMUL1};
       bins LMUL2 = {rvv_tb_pkg::LMUL2};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -19426,7 +19426,7 @@ covergroup Cov_rvv_zve32x_vluxseg4ei8_v with function sample(input logic [31:0] 
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -19435,7 +19435,7 @@ covergroup Cov_rvv_zve32x_vluxseg4ei8_v with function sample(input logic [31:0] 
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -19448,7 +19448,7 @@ covergroup Cov_rvv_zve32x_vluxseg5ei8_v with function sample(input logic [31:0] 
     coverpoint (inst ==? {6'b100001, 1'b?, 5'b?????, 5'b?????, 3'b000, 5'b?????, 7'b0000111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -19462,7 +19462,7 @@ covergroup Cov_rvv_zve32x_vluxseg5ei8_v with function sample(input logic [31:0] 
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
       bins SEW32 = {rvv_tb_pkg::SEW32};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -19470,7 +19470,7 @@ covergroup Cov_rvv_zve32x_vluxseg5ei8_v with function sample(input logic [31:0] 
       bins LMUL1_4 = {rvv_tb_pkg::LMUL1_4};
       bins LMUL1_2 = {rvv_tb_pkg::LMUL1_2};
       bins LMUL1 = {rvv_tb_pkg::LMUL1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -19480,7 +19480,7 @@ covergroup Cov_rvv_zve32x_vluxseg5ei8_v with function sample(input logic [31:0] 
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -19489,7 +19489,7 @@ covergroup Cov_rvv_zve32x_vluxseg5ei8_v with function sample(input logic [31:0] 
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -19502,7 +19502,7 @@ covergroup Cov_rvv_zve32x_vluxseg6ei8_v with function sample(input logic [31:0] 
     coverpoint (inst ==? {6'b101001, 1'b?, 5'b?????, 5'b?????, 3'b000, 5'b?????, 7'b0000111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -19516,7 +19516,7 @@ covergroup Cov_rvv_zve32x_vluxseg6ei8_v with function sample(input logic [31:0] 
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
       bins SEW32 = {rvv_tb_pkg::SEW32};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -19524,7 +19524,7 @@ covergroup Cov_rvv_zve32x_vluxseg6ei8_v with function sample(input logic [31:0] 
       bins LMUL1_4 = {rvv_tb_pkg::LMUL1_4};
       bins LMUL1_2 = {rvv_tb_pkg::LMUL1_2};
       bins LMUL1 = {rvv_tb_pkg::LMUL1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -19534,7 +19534,7 @@ covergroup Cov_rvv_zve32x_vluxseg6ei8_v with function sample(input logic [31:0] 
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -19543,7 +19543,7 @@ covergroup Cov_rvv_zve32x_vluxseg6ei8_v with function sample(input logic [31:0] 
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -19556,7 +19556,7 @@ covergroup Cov_rvv_zve32x_vluxseg7ei8_v with function sample(input logic [31:0] 
     coverpoint (inst ==? {6'b110001, 1'b?, 5'b?????, 5'b?????, 3'b000, 5'b?????, 7'b0000111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -19570,7 +19570,7 @@ covergroup Cov_rvv_zve32x_vluxseg7ei8_v with function sample(input logic [31:0] 
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
       bins SEW32 = {rvv_tb_pkg::SEW32};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -19578,7 +19578,7 @@ covergroup Cov_rvv_zve32x_vluxseg7ei8_v with function sample(input logic [31:0] 
       bins LMUL1_4 = {rvv_tb_pkg::LMUL1_4};
       bins LMUL1_2 = {rvv_tb_pkg::LMUL1_2};
       bins LMUL1 = {rvv_tb_pkg::LMUL1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -19588,7 +19588,7 @@ covergroup Cov_rvv_zve32x_vluxseg7ei8_v with function sample(input logic [31:0] 
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -19597,7 +19597,7 @@ covergroup Cov_rvv_zve32x_vluxseg7ei8_v with function sample(input logic [31:0] 
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -19610,7 +19610,7 @@ covergroup Cov_rvv_zve32x_vluxseg8ei8_v with function sample(input logic [31:0] 
     coverpoint (inst ==? {6'b111001, 1'b?, 5'b?????, 5'b?????, 3'b000, 5'b?????, 7'b0000111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -19624,7 +19624,7 @@ covergroup Cov_rvv_zve32x_vluxseg8ei8_v with function sample(input logic [31:0] 
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
       bins SEW32 = {rvv_tb_pkg::SEW32};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -19632,7 +19632,7 @@ covergroup Cov_rvv_zve32x_vluxseg8ei8_v with function sample(input logic [31:0] 
       bins LMUL1_4 = {rvv_tb_pkg::LMUL1_4};
       bins LMUL1_2 = {rvv_tb_pkg::LMUL1_2};
       bins LMUL1 = {rvv_tb_pkg::LMUL1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -19642,7 +19642,7 @@ covergroup Cov_rvv_zve32x_vluxseg8ei8_v with function sample(input logic [31:0] 
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -19651,7 +19651,7 @@ covergroup Cov_rvv_zve32x_vluxseg8ei8_v with function sample(input logic [31:0] 
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -19664,7 +19664,7 @@ covergroup Cov_rvv_zve32x_vluxseg2ei16_v with function sample(input logic [31:0]
     coverpoint (inst ==? {6'b001001, 1'b?, 5'b?????, 5'b?????, 3'b101, 5'b?????, 7'b0000111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -19678,7 +19678,7 @@ covergroup Cov_rvv_zve32x_vluxseg2ei16_v with function sample(input logic [31:0]
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
       bins SEW32 = {rvv_tb_pkg::SEW32};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -19688,7 +19688,7 @@ covergroup Cov_rvv_zve32x_vluxseg2ei16_v with function sample(input logic [31:0]
       bins LMUL1 = {rvv_tb_pkg::LMUL1};
       bins LMUL2 = {rvv_tb_pkg::LMUL2};
       bins LMUL4 = {rvv_tb_pkg::LMUL4};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -19698,7 +19698,7 @@ covergroup Cov_rvv_zve32x_vluxseg2ei16_v with function sample(input logic [31:0]
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -19707,7 +19707,7 @@ covergroup Cov_rvv_zve32x_vluxseg2ei16_v with function sample(input logic [31:0]
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -19720,7 +19720,7 @@ covergroup Cov_rvv_zve32x_vluxseg3ei16_v with function sample(input logic [31:0]
     coverpoint (inst ==? {6'b010001, 1'b?, 5'b?????, 5'b?????, 3'b101, 5'b?????, 7'b0000111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -19734,7 +19734,7 @@ covergroup Cov_rvv_zve32x_vluxseg3ei16_v with function sample(input logic [31:0]
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
       bins SEW32 = {rvv_tb_pkg::SEW32};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -19743,7 +19743,7 @@ covergroup Cov_rvv_zve32x_vluxseg3ei16_v with function sample(input logic [31:0]
       bins LMUL1_2 = {rvv_tb_pkg::LMUL1_2};
       bins LMUL1 = {rvv_tb_pkg::LMUL1};
       bins LMUL2 = {rvv_tb_pkg::LMUL2};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -19753,7 +19753,7 @@ covergroup Cov_rvv_zve32x_vluxseg3ei16_v with function sample(input logic [31:0]
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -19762,7 +19762,7 @@ covergroup Cov_rvv_zve32x_vluxseg3ei16_v with function sample(input logic [31:0]
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -19775,7 +19775,7 @@ covergroup Cov_rvv_zve32x_vluxseg4ei16_v with function sample(input logic [31:0]
     coverpoint (inst ==? {6'b011001, 1'b?, 5'b?????, 5'b?????, 3'b101, 5'b?????, 7'b0000111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -19789,7 +19789,7 @@ covergroup Cov_rvv_zve32x_vluxseg4ei16_v with function sample(input logic [31:0]
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
       bins SEW32 = {rvv_tb_pkg::SEW32};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -19798,7 +19798,7 @@ covergroup Cov_rvv_zve32x_vluxseg4ei16_v with function sample(input logic [31:0]
       bins LMUL1_2 = {rvv_tb_pkg::LMUL1_2};
       bins LMUL1 = {rvv_tb_pkg::LMUL1};
       bins LMUL2 = {rvv_tb_pkg::LMUL2};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -19808,7 +19808,7 @@ covergroup Cov_rvv_zve32x_vluxseg4ei16_v with function sample(input logic [31:0]
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -19817,7 +19817,7 @@ covergroup Cov_rvv_zve32x_vluxseg4ei16_v with function sample(input logic [31:0]
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -19830,7 +19830,7 @@ covergroup Cov_rvv_zve32x_vluxseg5ei16_v with function sample(input logic [31:0]
     coverpoint (inst ==? {6'b100001, 1'b?, 5'b?????, 5'b?????, 3'b101, 5'b?????, 7'b0000111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -19844,7 +19844,7 @@ covergroup Cov_rvv_zve32x_vluxseg5ei16_v with function sample(input logic [31:0]
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
       bins SEW32 = {rvv_tb_pkg::SEW32};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -19852,7 +19852,7 @@ covergroup Cov_rvv_zve32x_vluxseg5ei16_v with function sample(input logic [31:0]
       bins LMUL1_4 = {rvv_tb_pkg::LMUL1_4};
       bins LMUL1_2 = {rvv_tb_pkg::LMUL1_2};
       bins LMUL1 = {rvv_tb_pkg::LMUL1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -19862,7 +19862,7 @@ covergroup Cov_rvv_zve32x_vluxseg5ei16_v with function sample(input logic [31:0]
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -19871,7 +19871,7 @@ covergroup Cov_rvv_zve32x_vluxseg5ei16_v with function sample(input logic [31:0]
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -19884,7 +19884,7 @@ covergroup Cov_rvv_zve32x_vluxseg6ei16_v with function sample(input logic [31:0]
     coverpoint (inst ==? {6'b101001, 1'b?, 5'b?????, 5'b?????, 3'b101, 5'b?????, 7'b0000111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -19898,7 +19898,7 @@ covergroup Cov_rvv_zve32x_vluxseg6ei16_v with function sample(input logic [31:0]
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
       bins SEW32 = {rvv_tb_pkg::SEW32};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -19906,7 +19906,7 @@ covergroup Cov_rvv_zve32x_vluxseg6ei16_v with function sample(input logic [31:0]
       bins LMUL1_4 = {rvv_tb_pkg::LMUL1_4};
       bins LMUL1_2 = {rvv_tb_pkg::LMUL1_2};
       bins LMUL1 = {rvv_tb_pkg::LMUL1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -19916,7 +19916,7 @@ covergroup Cov_rvv_zve32x_vluxseg6ei16_v with function sample(input logic [31:0]
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -19925,7 +19925,7 @@ covergroup Cov_rvv_zve32x_vluxseg6ei16_v with function sample(input logic [31:0]
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -19938,7 +19938,7 @@ covergroup Cov_rvv_zve32x_vluxseg7ei16_v with function sample(input logic [31:0]
     coverpoint (inst ==? {6'b110001, 1'b?, 5'b?????, 5'b?????, 3'b101, 5'b?????, 7'b0000111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -19952,7 +19952,7 @@ covergroup Cov_rvv_zve32x_vluxseg7ei16_v with function sample(input logic [31:0]
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
       bins SEW32 = {rvv_tb_pkg::SEW32};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -19960,7 +19960,7 @@ covergroup Cov_rvv_zve32x_vluxseg7ei16_v with function sample(input logic [31:0]
       bins LMUL1_4 = {rvv_tb_pkg::LMUL1_4};
       bins LMUL1_2 = {rvv_tb_pkg::LMUL1_2};
       bins LMUL1 = {rvv_tb_pkg::LMUL1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -19970,7 +19970,7 @@ covergroup Cov_rvv_zve32x_vluxseg7ei16_v with function sample(input logic [31:0]
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -19979,7 +19979,7 @@ covergroup Cov_rvv_zve32x_vluxseg7ei16_v with function sample(input logic [31:0]
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -19992,7 +19992,7 @@ covergroup Cov_rvv_zve32x_vluxseg8ei16_v with function sample(input logic [31:0]
     coverpoint (inst ==? {6'b111001, 1'b?, 5'b?????, 5'b?????, 3'b101, 5'b?????, 7'b0000111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -20006,7 +20006,7 @@ covergroup Cov_rvv_zve32x_vluxseg8ei16_v with function sample(input logic [31:0]
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
       bins SEW32 = {rvv_tb_pkg::SEW32};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -20014,7 +20014,7 @@ covergroup Cov_rvv_zve32x_vluxseg8ei16_v with function sample(input logic [31:0]
       bins LMUL1_4 = {rvv_tb_pkg::LMUL1_4};
       bins LMUL1_2 = {rvv_tb_pkg::LMUL1_2};
       bins LMUL1 = {rvv_tb_pkg::LMUL1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -20024,7 +20024,7 @@ covergroup Cov_rvv_zve32x_vluxseg8ei16_v with function sample(input logic [31:0]
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -20033,7 +20033,7 @@ covergroup Cov_rvv_zve32x_vluxseg8ei16_v with function sample(input logic [31:0]
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -20046,7 +20046,7 @@ covergroup Cov_rvv_zve32x_vluxseg2ei32_v with function sample(input logic [31:0]
     coverpoint (inst ==? {6'b001001, 1'b?, 5'b?????, 5'b?????, 3'b110, 5'b?????, 7'b0000111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -20060,7 +20060,7 @@ covergroup Cov_rvv_zve32x_vluxseg2ei32_v with function sample(input logic [31:0]
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
       bins SEW32 = {rvv_tb_pkg::SEW32};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -20070,7 +20070,7 @@ covergroup Cov_rvv_zve32x_vluxseg2ei32_v with function sample(input logic [31:0]
       bins LMUL1 = {rvv_tb_pkg::LMUL1};
       bins LMUL2 = {rvv_tb_pkg::LMUL2};
       bins LMUL4 = {rvv_tb_pkg::LMUL4};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -20080,7 +20080,7 @@ covergroup Cov_rvv_zve32x_vluxseg2ei32_v with function sample(input logic [31:0]
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -20089,7 +20089,7 @@ covergroup Cov_rvv_zve32x_vluxseg2ei32_v with function sample(input logic [31:0]
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -20102,7 +20102,7 @@ covergroup Cov_rvv_zve32x_vluxseg3ei32_v with function sample(input logic [31:0]
     coverpoint (inst ==? {6'b010001, 1'b?, 5'b?????, 5'b?????, 3'b110, 5'b?????, 7'b0000111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -20116,7 +20116,7 @@ covergroup Cov_rvv_zve32x_vluxseg3ei32_v with function sample(input logic [31:0]
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
       bins SEW32 = {rvv_tb_pkg::SEW32};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -20125,7 +20125,7 @@ covergroup Cov_rvv_zve32x_vluxseg3ei32_v with function sample(input logic [31:0]
       bins LMUL1_2 = {rvv_tb_pkg::LMUL1_2};
       bins LMUL1 = {rvv_tb_pkg::LMUL1};
       bins LMUL2 = {rvv_tb_pkg::LMUL2};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -20135,7 +20135,7 @@ covergroup Cov_rvv_zve32x_vluxseg3ei32_v with function sample(input logic [31:0]
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -20144,7 +20144,7 @@ covergroup Cov_rvv_zve32x_vluxseg3ei32_v with function sample(input logic [31:0]
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -20157,7 +20157,7 @@ covergroup Cov_rvv_zve32x_vluxseg4ei32_v with function sample(input logic [31:0]
     coverpoint (inst ==? {6'b011001, 1'b?, 5'b?????, 5'b?????, 3'b110, 5'b?????, 7'b0000111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -20171,7 +20171,7 @@ covergroup Cov_rvv_zve32x_vluxseg4ei32_v with function sample(input logic [31:0]
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
       bins SEW32 = {rvv_tb_pkg::SEW32};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -20180,7 +20180,7 @@ covergroup Cov_rvv_zve32x_vluxseg4ei32_v with function sample(input logic [31:0]
       bins LMUL1_2 = {rvv_tb_pkg::LMUL1_2};
       bins LMUL1 = {rvv_tb_pkg::LMUL1};
       bins LMUL2 = {rvv_tb_pkg::LMUL2};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -20190,7 +20190,7 @@ covergroup Cov_rvv_zve32x_vluxseg4ei32_v with function sample(input logic [31:0]
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -20199,7 +20199,7 @@ covergroup Cov_rvv_zve32x_vluxseg4ei32_v with function sample(input logic [31:0]
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -20212,7 +20212,7 @@ covergroup Cov_rvv_zve32x_vluxseg5ei32_v with function sample(input logic [31:0]
     coverpoint (inst ==? {6'b100001, 1'b?, 5'b?????, 5'b?????, 3'b110, 5'b?????, 7'b0000111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -20226,7 +20226,7 @@ covergroup Cov_rvv_zve32x_vluxseg5ei32_v with function sample(input logic [31:0]
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
       bins SEW32 = {rvv_tb_pkg::SEW32};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -20234,7 +20234,7 @@ covergroup Cov_rvv_zve32x_vluxseg5ei32_v with function sample(input logic [31:0]
       bins LMUL1_4 = {rvv_tb_pkg::LMUL1_4};
       bins LMUL1_2 = {rvv_tb_pkg::LMUL1_2};
       bins LMUL1 = {rvv_tb_pkg::LMUL1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -20244,7 +20244,7 @@ covergroup Cov_rvv_zve32x_vluxseg5ei32_v with function sample(input logic [31:0]
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -20253,7 +20253,7 @@ covergroup Cov_rvv_zve32x_vluxseg5ei32_v with function sample(input logic [31:0]
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -20266,7 +20266,7 @@ covergroup Cov_rvv_zve32x_vluxseg6ei32_v with function sample(input logic [31:0]
     coverpoint (inst ==? {6'b101001, 1'b?, 5'b?????, 5'b?????, 3'b110, 5'b?????, 7'b0000111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -20280,7 +20280,7 @@ covergroup Cov_rvv_zve32x_vluxseg6ei32_v with function sample(input logic [31:0]
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
       bins SEW32 = {rvv_tb_pkg::SEW32};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -20288,7 +20288,7 @@ covergroup Cov_rvv_zve32x_vluxseg6ei32_v with function sample(input logic [31:0]
       bins LMUL1_4 = {rvv_tb_pkg::LMUL1_4};
       bins LMUL1_2 = {rvv_tb_pkg::LMUL1_2};
       bins LMUL1 = {rvv_tb_pkg::LMUL1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -20298,7 +20298,7 @@ covergroup Cov_rvv_zve32x_vluxseg6ei32_v with function sample(input logic [31:0]
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -20307,7 +20307,7 @@ covergroup Cov_rvv_zve32x_vluxseg6ei32_v with function sample(input logic [31:0]
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -20320,7 +20320,7 @@ covergroup Cov_rvv_zve32x_vluxseg7ei32_v with function sample(input logic [31:0]
     coverpoint (inst ==? {6'b110001, 1'b?, 5'b?????, 5'b?????, 3'b110, 5'b?????, 7'b0000111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -20334,7 +20334,7 @@ covergroup Cov_rvv_zve32x_vluxseg7ei32_v with function sample(input logic [31:0]
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
       bins SEW32 = {rvv_tb_pkg::SEW32};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -20342,7 +20342,7 @@ covergroup Cov_rvv_zve32x_vluxseg7ei32_v with function sample(input logic [31:0]
       bins LMUL1_4 = {rvv_tb_pkg::LMUL1_4};
       bins LMUL1_2 = {rvv_tb_pkg::LMUL1_2};
       bins LMUL1 = {rvv_tb_pkg::LMUL1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -20352,7 +20352,7 @@ covergroup Cov_rvv_zve32x_vluxseg7ei32_v with function sample(input logic [31:0]
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -20361,7 +20361,7 @@ covergroup Cov_rvv_zve32x_vluxseg7ei32_v with function sample(input logic [31:0]
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -20374,7 +20374,7 @@ covergroup Cov_rvv_zve32x_vluxseg8ei32_v with function sample(input logic [31:0]
     coverpoint (inst ==? {6'b111001, 1'b?, 5'b?????, 5'b?????, 3'b110, 5'b?????, 7'b0000111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -20388,7 +20388,7 @@ covergroup Cov_rvv_zve32x_vluxseg8ei32_v with function sample(input logic [31:0]
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
       bins SEW32 = {rvv_tb_pkg::SEW32};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -20396,7 +20396,7 @@ covergroup Cov_rvv_zve32x_vluxseg8ei32_v with function sample(input logic [31:0]
       bins LMUL1_4 = {rvv_tb_pkg::LMUL1_4};
       bins LMUL1_2 = {rvv_tb_pkg::LMUL1_2};
       bins LMUL1 = {rvv_tb_pkg::LMUL1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -20406,7 +20406,7 @@ covergroup Cov_rvv_zve32x_vluxseg8ei32_v with function sample(input logic [31:0]
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -20415,7 +20415,7 @@ covergroup Cov_rvv_zve32x_vluxseg8ei32_v with function sample(input logic [31:0]
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -20428,7 +20428,7 @@ covergroup Cov_rvv_zve32x_vloxseg2ei8_v with function sample(input logic [31:0] 
     coverpoint (inst ==? {6'b001011, 1'b?, 5'b?????, 5'b?????, 3'b000, 5'b?????, 7'b0000111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -20442,7 +20442,7 @@ covergroup Cov_rvv_zve32x_vloxseg2ei8_v with function sample(input logic [31:0] 
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
       bins SEW32 = {rvv_tb_pkg::SEW32};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -20452,7 +20452,7 @@ covergroup Cov_rvv_zve32x_vloxseg2ei8_v with function sample(input logic [31:0] 
       bins LMUL1 = {rvv_tb_pkg::LMUL1};
       bins LMUL2 = {rvv_tb_pkg::LMUL2};
       bins LMUL4 = {rvv_tb_pkg::LMUL4};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -20462,7 +20462,7 @@ covergroup Cov_rvv_zve32x_vloxseg2ei8_v with function sample(input logic [31:0] 
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -20471,7 +20471,7 @@ covergroup Cov_rvv_zve32x_vloxseg2ei8_v with function sample(input logic [31:0] 
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -20484,7 +20484,7 @@ covergroup Cov_rvv_zve32x_vloxseg3ei8_v with function sample(input logic [31:0] 
     coverpoint (inst ==? {6'b010011, 1'b?, 5'b?????, 5'b?????, 3'b000, 5'b?????, 7'b0000111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -20498,7 +20498,7 @@ covergroup Cov_rvv_zve32x_vloxseg3ei8_v with function sample(input logic [31:0] 
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
       bins SEW32 = {rvv_tb_pkg::SEW32};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -20507,7 +20507,7 @@ covergroup Cov_rvv_zve32x_vloxseg3ei8_v with function sample(input logic [31:0] 
       bins LMUL1_2 = {rvv_tb_pkg::LMUL1_2};
       bins LMUL1 = {rvv_tb_pkg::LMUL1};
       bins LMUL2 = {rvv_tb_pkg::LMUL2};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -20517,7 +20517,7 @@ covergroup Cov_rvv_zve32x_vloxseg3ei8_v with function sample(input logic [31:0] 
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -20526,7 +20526,7 @@ covergroup Cov_rvv_zve32x_vloxseg3ei8_v with function sample(input logic [31:0] 
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -20539,7 +20539,7 @@ covergroup Cov_rvv_zve32x_vloxseg4ei8_v with function sample(input logic [31:0] 
     coverpoint (inst ==? {6'b011011, 1'b?, 5'b?????, 5'b?????, 3'b000, 5'b?????, 7'b0000111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -20553,7 +20553,7 @@ covergroup Cov_rvv_zve32x_vloxseg4ei8_v with function sample(input logic [31:0] 
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
       bins SEW32 = {rvv_tb_pkg::SEW32};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -20562,7 +20562,7 @@ covergroup Cov_rvv_zve32x_vloxseg4ei8_v with function sample(input logic [31:0] 
       bins LMUL1_2 = {rvv_tb_pkg::LMUL1_2};
       bins LMUL1 = {rvv_tb_pkg::LMUL1};
       bins LMUL2 = {rvv_tb_pkg::LMUL2};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -20572,7 +20572,7 @@ covergroup Cov_rvv_zve32x_vloxseg4ei8_v with function sample(input logic [31:0] 
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -20581,7 +20581,7 @@ covergroup Cov_rvv_zve32x_vloxseg4ei8_v with function sample(input logic [31:0] 
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -20594,7 +20594,7 @@ covergroup Cov_rvv_zve32x_vloxseg5ei8_v with function sample(input logic [31:0] 
     coverpoint (inst ==? {6'b100011, 1'b?, 5'b?????, 5'b?????, 3'b000, 5'b?????, 7'b0000111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -20608,7 +20608,7 @@ covergroup Cov_rvv_zve32x_vloxseg5ei8_v with function sample(input logic [31:0] 
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
       bins SEW32 = {rvv_tb_pkg::SEW32};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -20616,7 +20616,7 @@ covergroup Cov_rvv_zve32x_vloxseg5ei8_v with function sample(input logic [31:0] 
       bins LMUL1_4 = {rvv_tb_pkg::LMUL1_4};
       bins LMUL1_2 = {rvv_tb_pkg::LMUL1_2};
       bins LMUL1 = {rvv_tb_pkg::LMUL1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -20626,7 +20626,7 @@ covergroup Cov_rvv_zve32x_vloxseg5ei8_v with function sample(input logic [31:0] 
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -20635,7 +20635,7 @@ covergroup Cov_rvv_zve32x_vloxseg5ei8_v with function sample(input logic [31:0] 
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -20648,7 +20648,7 @@ covergroup Cov_rvv_zve32x_vloxseg6ei8_v with function sample(input logic [31:0] 
     coverpoint (inst ==? {6'b101011, 1'b?, 5'b?????, 5'b?????, 3'b000, 5'b?????, 7'b0000111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -20662,7 +20662,7 @@ covergroup Cov_rvv_zve32x_vloxseg6ei8_v with function sample(input logic [31:0] 
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
       bins SEW32 = {rvv_tb_pkg::SEW32};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -20670,7 +20670,7 @@ covergroup Cov_rvv_zve32x_vloxseg6ei8_v with function sample(input logic [31:0] 
       bins LMUL1_4 = {rvv_tb_pkg::LMUL1_4};
       bins LMUL1_2 = {rvv_tb_pkg::LMUL1_2};
       bins LMUL1 = {rvv_tb_pkg::LMUL1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -20680,7 +20680,7 @@ covergroup Cov_rvv_zve32x_vloxseg6ei8_v with function sample(input logic [31:0] 
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -20689,7 +20689,7 @@ covergroup Cov_rvv_zve32x_vloxseg6ei8_v with function sample(input logic [31:0] 
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -20702,7 +20702,7 @@ covergroup Cov_rvv_zve32x_vloxseg7ei8_v with function sample(input logic [31:0] 
     coverpoint (inst ==? {6'b110011, 1'b?, 5'b?????, 5'b?????, 3'b000, 5'b?????, 7'b0000111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -20716,7 +20716,7 @@ covergroup Cov_rvv_zve32x_vloxseg7ei8_v with function sample(input logic [31:0] 
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
       bins SEW32 = {rvv_tb_pkg::SEW32};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -20724,7 +20724,7 @@ covergroup Cov_rvv_zve32x_vloxseg7ei8_v with function sample(input logic [31:0] 
       bins LMUL1_4 = {rvv_tb_pkg::LMUL1_4};
       bins LMUL1_2 = {rvv_tb_pkg::LMUL1_2};
       bins LMUL1 = {rvv_tb_pkg::LMUL1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -20734,7 +20734,7 @@ covergroup Cov_rvv_zve32x_vloxseg7ei8_v with function sample(input logic [31:0] 
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -20743,7 +20743,7 @@ covergroup Cov_rvv_zve32x_vloxseg7ei8_v with function sample(input logic [31:0] 
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -20756,7 +20756,7 @@ covergroup Cov_rvv_zve32x_vloxseg8ei8_v with function sample(input logic [31:0] 
     coverpoint (inst ==? {6'b111011, 1'b?, 5'b?????, 5'b?????, 3'b000, 5'b?????, 7'b0000111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -20770,7 +20770,7 @@ covergroup Cov_rvv_zve32x_vloxseg8ei8_v with function sample(input logic [31:0] 
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
       bins SEW32 = {rvv_tb_pkg::SEW32};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -20778,7 +20778,7 @@ covergroup Cov_rvv_zve32x_vloxseg8ei8_v with function sample(input logic [31:0] 
       bins LMUL1_4 = {rvv_tb_pkg::LMUL1_4};
       bins LMUL1_2 = {rvv_tb_pkg::LMUL1_2};
       bins LMUL1 = {rvv_tb_pkg::LMUL1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -20788,7 +20788,7 @@ covergroup Cov_rvv_zve32x_vloxseg8ei8_v with function sample(input logic [31:0] 
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -20797,7 +20797,7 @@ covergroup Cov_rvv_zve32x_vloxseg8ei8_v with function sample(input logic [31:0] 
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -20810,7 +20810,7 @@ covergroup Cov_rvv_zve32x_vloxseg2ei16_v with function sample(input logic [31:0]
     coverpoint (inst ==? {6'b001011, 1'b?, 5'b?????, 5'b?????, 3'b101, 5'b?????, 7'b0000111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -20824,7 +20824,7 @@ covergroup Cov_rvv_zve32x_vloxseg2ei16_v with function sample(input logic [31:0]
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
       bins SEW32 = {rvv_tb_pkg::SEW32};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -20834,7 +20834,7 @@ covergroup Cov_rvv_zve32x_vloxseg2ei16_v with function sample(input logic [31:0]
       bins LMUL1 = {rvv_tb_pkg::LMUL1};
       bins LMUL2 = {rvv_tb_pkg::LMUL2};
       bins LMUL4 = {rvv_tb_pkg::LMUL4};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -20844,7 +20844,7 @@ covergroup Cov_rvv_zve32x_vloxseg2ei16_v with function sample(input logic [31:0]
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -20853,7 +20853,7 @@ covergroup Cov_rvv_zve32x_vloxseg2ei16_v with function sample(input logic [31:0]
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -20866,7 +20866,7 @@ covergroup Cov_rvv_zve32x_vloxseg3ei16_v with function sample(input logic [31:0]
     coverpoint (inst ==? {6'b010011, 1'b?, 5'b?????, 5'b?????, 3'b101, 5'b?????, 7'b0000111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -20880,7 +20880,7 @@ covergroup Cov_rvv_zve32x_vloxseg3ei16_v with function sample(input logic [31:0]
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
       bins SEW32 = {rvv_tb_pkg::SEW32};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -20889,7 +20889,7 @@ covergroup Cov_rvv_zve32x_vloxseg3ei16_v with function sample(input logic [31:0]
       bins LMUL1_2 = {rvv_tb_pkg::LMUL1_2};
       bins LMUL1 = {rvv_tb_pkg::LMUL1};
       bins LMUL2 = {rvv_tb_pkg::LMUL2};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -20899,7 +20899,7 @@ covergroup Cov_rvv_zve32x_vloxseg3ei16_v with function sample(input logic [31:0]
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -20908,7 +20908,7 @@ covergroup Cov_rvv_zve32x_vloxseg3ei16_v with function sample(input logic [31:0]
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -20921,7 +20921,7 @@ covergroup Cov_rvv_zve32x_vloxseg4ei16_v with function sample(input logic [31:0]
     coverpoint (inst ==? {6'b011011, 1'b?, 5'b?????, 5'b?????, 3'b101, 5'b?????, 7'b0000111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -20935,7 +20935,7 @@ covergroup Cov_rvv_zve32x_vloxseg4ei16_v with function sample(input logic [31:0]
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
       bins SEW32 = {rvv_tb_pkg::SEW32};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -20944,7 +20944,7 @@ covergroup Cov_rvv_zve32x_vloxseg4ei16_v with function sample(input logic [31:0]
       bins LMUL1_2 = {rvv_tb_pkg::LMUL1_2};
       bins LMUL1 = {rvv_tb_pkg::LMUL1};
       bins LMUL2 = {rvv_tb_pkg::LMUL2};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -20954,7 +20954,7 @@ covergroup Cov_rvv_zve32x_vloxseg4ei16_v with function sample(input logic [31:0]
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -20963,7 +20963,7 @@ covergroup Cov_rvv_zve32x_vloxseg4ei16_v with function sample(input logic [31:0]
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -20976,7 +20976,7 @@ covergroup Cov_rvv_zve32x_vloxseg5ei16_v with function sample(input logic [31:0]
     coverpoint (inst ==? {6'b100011, 1'b?, 5'b?????, 5'b?????, 3'b101, 5'b?????, 7'b0000111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -20990,7 +20990,7 @@ covergroup Cov_rvv_zve32x_vloxseg5ei16_v with function sample(input logic [31:0]
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
       bins SEW32 = {rvv_tb_pkg::SEW32};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -20998,7 +20998,7 @@ covergroup Cov_rvv_zve32x_vloxseg5ei16_v with function sample(input logic [31:0]
       bins LMUL1_4 = {rvv_tb_pkg::LMUL1_4};
       bins LMUL1_2 = {rvv_tb_pkg::LMUL1_2};
       bins LMUL1 = {rvv_tb_pkg::LMUL1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -21008,7 +21008,7 @@ covergroup Cov_rvv_zve32x_vloxseg5ei16_v with function sample(input logic [31:0]
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -21017,7 +21017,7 @@ covergroup Cov_rvv_zve32x_vloxseg5ei16_v with function sample(input logic [31:0]
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -21030,7 +21030,7 @@ covergroup Cov_rvv_zve32x_vloxseg6ei16_v with function sample(input logic [31:0]
     coverpoint (inst ==? {6'b101011, 1'b?, 5'b?????, 5'b?????, 3'b101, 5'b?????, 7'b0000111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -21044,7 +21044,7 @@ covergroup Cov_rvv_zve32x_vloxseg6ei16_v with function sample(input logic [31:0]
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
       bins SEW32 = {rvv_tb_pkg::SEW32};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -21052,7 +21052,7 @@ covergroup Cov_rvv_zve32x_vloxseg6ei16_v with function sample(input logic [31:0]
       bins LMUL1_4 = {rvv_tb_pkg::LMUL1_4};
       bins LMUL1_2 = {rvv_tb_pkg::LMUL1_2};
       bins LMUL1 = {rvv_tb_pkg::LMUL1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -21062,7 +21062,7 @@ covergroup Cov_rvv_zve32x_vloxseg6ei16_v with function sample(input logic [31:0]
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -21071,7 +21071,7 @@ covergroup Cov_rvv_zve32x_vloxseg6ei16_v with function sample(input logic [31:0]
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -21084,7 +21084,7 @@ covergroup Cov_rvv_zve32x_vloxseg7ei16_v with function sample(input logic [31:0]
     coverpoint (inst ==? {6'b110011, 1'b?, 5'b?????, 5'b?????, 3'b101, 5'b?????, 7'b0000111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -21098,7 +21098,7 @@ covergroup Cov_rvv_zve32x_vloxseg7ei16_v with function sample(input logic [31:0]
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
       bins SEW32 = {rvv_tb_pkg::SEW32};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -21106,7 +21106,7 @@ covergroup Cov_rvv_zve32x_vloxseg7ei16_v with function sample(input logic [31:0]
       bins LMUL1_4 = {rvv_tb_pkg::LMUL1_4};
       bins LMUL1_2 = {rvv_tb_pkg::LMUL1_2};
       bins LMUL1 = {rvv_tb_pkg::LMUL1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -21116,7 +21116,7 @@ covergroup Cov_rvv_zve32x_vloxseg7ei16_v with function sample(input logic [31:0]
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -21125,7 +21125,7 @@ covergroup Cov_rvv_zve32x_vloxseg7ei16_v with function sample(input logic [31:0]
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -21138,7 +21138,7 @@ covergroup Cov_rvv_zve32x_vloxseg8ei16_v with function sample(input logic [31:0]
     coverpoint (inst ==? {6'b111011, 1'b?, 5'b?????, 5'b?????, 3'b101, 5'b?????, 7'b0000111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -21152,7 +21152,7 @@ covergroup Cov_rvv_zve32x_vloxseg8ei16_v with function sample(input logic [31:0]
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
       bins SEW32 = {rvv_tb_pkg::SEW32};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -21160,7 +21160,7 @@ covergroup Cov_rvv_zve32x_vloxseg8ei16_v with function sample(input logic [31:0]
       bins LMUL1_4 = {rvv_tb_pkg::LMUL1_4};
       bins LMUL1_2 = {rvv_tb_pkg::LMUL1_2};
       bins LMUL1 = {rvv_tb_pkg::LMUL1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -21170,7 +21170,7 @@ covergroup Cov_rvv_zve32x_vloxseg8ei16_v with function sample(input logic [31:0]
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -21179,7 +21179,7 @@ covergroup Cov_rvv_zve32x_vloxseg8ei16_v with function sample(input logic [31:0]
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -21192,7 +21192,7 @@ covergroup Cov_rvv_zve32x_vloxseg2ei32_v with function sample(input logic [31:0]
     coverpoint (inst ==? {6'b001011, 1'b?, 5'b?????, 5'b?????, 3'b110, 5'b?????, 7'b0000111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -21206,7 +21206,7 @@ covergroup Cov_rvv_zve32x_vloxseg2ei32_v with function sample(input logic [31:0]
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
       bins SEW32 = {rvv_tb_pkg::SEW32};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -21216,7 +21216,7 @@ covergroup Cov_rvv_zve32x_vloxseg2ei32_v with function sample(input logic [31:0]
       bins LMUL1 = {rvv_tb_pkg::LMUL1};
       bins LMUL2 = {rvv_tb_pkg::LMUL2};
       bins LMUL4 = {rvv_tb_pkg::LMUL4};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -21226,7 +21226,7 @@ covergroup Cov_rvv_zve32x_vloxseg2ei32_v with function sample(input logic [31:0]
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -21235,7 +21235,7 @@ covergroup Cov_rvv_zve32x_vloxseg2ei32_v with function sample(input logic [31:0]
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -21248,7 +21248,7 @@ covergroup Cov_rvv_zve32x_vloxseg3ei32_v with function sample(input logic [31:0]
     coverpoint (inst ==? {6'b010011, 1'b?, 5'b?????, 5'b?????, 3'b110, 5'b?????, 7'b0000111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -21262,7 +21262,7 @@ covergroup Cov_rvv_zve32x_vloxseg3ei32_v with function sample(input logic [31:0]
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
       bins SEW32 = {rvv_tb_pkg::SEW32};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -21271,7 +21271,7 @@ covergroup Cov_rvv_zve32x_vloxseg3ei32_v with function sample(input logic [31:0]
       bins LMUL1_2 = {rvv_tb_pkg::LMUL1_2};
       bins LMUL1 = {rvv_tb_pkg::LMUL1};
       bins LMUL2 = {rvv_tb_pkg::LMUL2};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -21281,7 +21281,7 @@ covergroup Cov_rvv_zve32x_vloxseg3ei32_v with function sample(input logic [31:0]
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -21290,7 +21290,7 @@ covergroup Cov_rvv_zve32x_vloxseg3ei32_v with function sample(input logic [31:0]
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -21303,7 +21303,7 @@ covergroup Cov_rvv_zve32x_vloxseg4ei32_v with function sample(input logic [31:0]
     coverpoint (inst ==? {6'b011011, 1'b?, 5'b?????, 5'b?????, 3'b110, 5'b?????, 7'b0000111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -21317,7 +21317,7 @@ covergroup Cov_rvv_zve32x_vloxseg4ei32_v with function sample(input logic [31:0]
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
       bins SEW32 = {rvv_tb_pkg::SEW32};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -21326,7 +21326,7 @@ covergroup Cov_rvv_zve32x_vloxseg4ei32_v with function sample(input logic [31:0]
       bins LMUL1_2 = {rvv_tb_pkg::LMUL1_2};
       bins LMUL1 = {rvv_tb_pkg::LMUL1};
       bins LMUL2 = {rvv_tb_pkg::LMUL2};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -21336,7 +21336,7 @@ covergroup Cov_rvv_zve32x_vloxseg4ei32_v with function sample(input logic [31:0]
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -21345,7 +21345,7 @@ covergroup Cov_rvv_zve32x_vloxseg4ei32_v with function sample(input logic [31:0]
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -21358,7 +21358,7 @@ covergroup Cov_rvv_zve32x_vloxseg5ei32_v with function sample(input logic [31:0]
     coverpoint (inst ==? {6'b100011, 1'b?, 5'b?????, 5'b?????, 3'b110, 5'b?????, 7'b0000111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -21372,7 +21372,7 @@ covergroup Cov_rvv_zve32x_vloxseg5ei32_v with function sample(input logic [31:0]
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
       bins SEW32 = {rvv_tb_pkg::SEW32};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -21380,7 +21380,7 @@ covergroup Cov_rvv_zve32x_vloxseg5ei32_v with function sample(input logic [31:0]
       bins LMUL1_4 = {rvv_tb_pkg::LMUL1_4};
       bins LMUL1_2 = {rvv_tb_pkg::LMUL1_2};
       bins LMUL1 = {rvv_tb_pkg::LMUL1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -21390,7 +21390,7 @@ covergroup Cov_rvv_zve32x_vloxseg5ei32_v with function sample(input logic [31:0]
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -21399,7 +21399,7 @@ covergroup Cov_rvv_zve32x_vloxseg5ei32_v with function sample(input logic [31:0]
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -21412,7 +21412,7 @@ covergroup Cov_rvv_zve32x_vloxseg6ei32_v with function sample(input logic [31:0]
     coverpoint (inst ==? {6'b101011, 1'b?, 5'b?????, 5'b?????, 3'b110, 5'b?????, 7'b0000111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -21426,7 +21426,7 @@ covergroup Cov_rvv_zve32x_vloxseg6ei32_v with function sample(input logic [31:0]
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
       bins SEW32 = {rvv_tb_pkg::SEW32};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -21434,7 +21434,7 @@ covergroup Cov_rvv_zve32x_vloxseg6ei32_v with function sample(input logic [31:0]
       bins LMUL1_4 = {rvv_tb_pkg::LMUL1_4};
       bins LMUL1_2 = {rvv_tb_pkg::LMUL1_2};
       bins LMUL1 = {rvv_tb_pkg::LMUL1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -21444,7 +21444,7 @@ covergroup Cov_rvv_zve32x_vloxseg6ei32_v with function sample(input logic [31:0]
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -21453,7 +21453,7 @@ covergroup Cov_rvv_zve32x_vloxseg6ei32_v with function sample(input logic [31:0]
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -21466,7 +21466,7 @@ covergroup Cov_rvv_zve32x_vloxseg7ei32_v with function sample(input logic [31:0]
     coverpoint (inst ==? {6'b110011, 1'b?, 5'b?????, 5'b?????, 3'b110, 5'b?????, 7'b0000111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -21480,7 +21480,7 @@ covergroup Cov_rvv_zve32x_vloxseg7ei32_v with function sample(input logic [31:0]
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
       bins SEW32 = {rvv_tb_pkg::SEW32};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -21488,7 +21488,7 @@ covergroup Cov_rvv_zve32x_vloxseg7ei32_v with function sample(input logic [31:0]
       bins LMUL1_4 = {rvv_tb_pkg::LMUL1_4};
       bins LMUL1_2 = {rvv_tb_pkg::LMUL1_2};
       bins LMUL1 = {rvv_tb_pkg::LMUL1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -21498,7 +21498,7 @@ covergroup Cov_rvv_zve32x_vloxseg7ei32_v with function sample(input logic [31:0]
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -21507,7 +21507,7 @@ covergroup Cov_rvv_zve32x_vloxseg7ei32_v with function sample(input logic [31:0]
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -21520,7 +21520,7 @@ covergroup Cov_rvv_zve32x_vloxseg8ei32_v with function sample(input logic [31:0]
     coverpoint (inst ==? {6'b111011, 1'b?, 5'b?????, 5'b?????, 3'b110, 5'b?????, 7'b0000111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -21534,7 +21534,7 @@ covergroup Cov_rvv_zve32x_vloxseg8ei32_v with function sample(input logic [31:0]
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
       bins SEW32 = {rvv_tb_pkg::SEW32};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -21542,7 +21542,7 @@ covergroup Cov_rvv_zve32x_vloxseg8ei32_v with function sample(input logic [31:0]
       bins LMUL1_4 = {rvv_tb_pkg::LMUL1_4};
       bins LMUL1_2 = {rvv_tb_pkg::LMUL1_2};
       bins LMUL1 = {rvv_tb_pkg::LMUL1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -21552,7 +21552,7 @@ covergroup Cov_rvv_zve32x_vloxseg8ei32_v with function sample(input logic [31:0]
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -21561,7 +21561,7 @@ covergroup Cov_rvv_zve32x_vloxseg8ei32_v with function sample(input logic [31:0]
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -21574,7 +21574,7 @@ covergroup Cov_rvv_zve32x_vsuxseg2ei8_v with function sample(input logic [31:0] 
     coverpoint (inst ==? {6'b001001, 1'b?, 5'b?????, 5'b?????, 3'b000, 5'b?????, 7'b0100111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -21588,7 +21588,7 @@ covergroup Cov_rvv_zve32x_vsuxseg2ei8_v with function sample(input logic [31:0] 
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
       bins SEW32 = {rvv_tb_pkg::SEW32};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -21598,7 +21598,7 @@ covergroup Cov_rvv_zve32x_vsuxseg2ei8_v with function sample(input logic [31:0] 
       bins LMUL1 = {rvv_tb_pkg::LMUL1};
       bins LMUL2 = {rvv_tb_pkg::LMUL2};
       bins LMUL4 = {rvv_tb_pkg::LMUL4};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -21608,7 +21608,7 @@ covergroup Cov_rvv_zve32x_vsuxseg2ei8_v with function sample(input logic [31:0] 
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -21617,7 +21617,7 @@ covergroup Cov_rvv_zve32x_vsuxseg2ei8_v with function sample(input logic [31:0] 
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -21630,7 +21630,7 @@ covergroup Cov_rvv_zve32x_vsuxseg3ei8_v with function sample(input logic [31:0] 
     coverpoint (inst ==? {6'b010001, 1'b?, 5'b?????, 5'b?????, 3'b000, 5'b?????, 7'b0100111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -21644,7 +21644,7 @@ covergroup Cov_rvv_zve32x_vsuxseg3ei8_v with function sample(input logic [31:0] 
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
       bins SEW32 = {rvv_tb_pkg::SEW32};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -21653,7 +21653,7 @@ covergroup Cov_rvv_zve32x_vsuxseg3ei8_v with function sample(input logic [31:0] 
       bins LMUL1_2 = {rvv_tb_pkg::LMUL1_2};
       bins LMUL1 = {rvv_tb_pkg::LMUL1};
       bins LMUL2 = {rvv_tb_pkg::LMUL2};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -21663,7 +21663,7 @@ covergroup Cov_rvv_zve32x_vsuxseg3ei8_v with function sample(input logic [31:0] 
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -21672,7 +21672,7 @@ covergroup Cov_rvv_zve32x_vsuxseg3ei8_v with function sample(input logic [31:0] 
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -21685,7 +21685,7 @@ covergroup Cov_rvv_zve32x_vsuxseg4ei8_v with function sample(input logic [31:0] 
     coverpoint (inst ==? {6'b011001, 1'b?, 5'b?????, 5'b?????, 3'b000, 5'b?????, 7'b0100111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -21699,7 +21699,7 @@ covergroup Cov_rvv_zve32x_vsuxseg4ei8_v with function sample(input logic [31:0] 
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
       bins SEW32 = {rvv_tb_pkg::SEW32};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -21708,7 +21708,7 @@ covergroup Cov_rvv_zve32x_vsuxseg4ei8_v with function sample(input logic [31:0] 
       bins LMUL1_2 = {rvv_tb_pkg::LMUL1_2};
       bins LMUL1 = {rvv_tb_pkg::LMUL1};
       bins LMUL2 = {rvv_tb_pkg::LMUL2};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -21718,7 +21718,7 @@ covergroup Cov_rvv_zve32x_vsuxseg4ei8_v with function sample(input logic [31:0] 
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -21727,7 +21727,7 @@ covergroup Cov_rvv_zve32x_vsuxseg4ei8_v with function sample(input logic [31:0] 
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -21740,7 +21740,7 @@ covergroup Cov_rvv_zve32x_vsuxseg5ei8_v with function sample(input logic [31:0] 
     coverpoint (inst ==? {6'b100001, 1'b?, 5'b?????, 5'b?????, 3'b000, 5'b?????, 7'b0100111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -21754,7 +21754,7 @@ covergroup Cov_rvv_zve32x_vsuxseg5ei8_v with function sample(input logic [31:0] 
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
       bins SEW32 = {rvv_tb_pkg::SEW32};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -21762,7 +21762,7 @@ covergroup Cov_rvv_zve32x_vsuxseg5ei8_v with function sample(input logic [31:0] 
       bins LMUL1_4 = {rvv_tb_pkg::LMUL1_4};
       bins LMUL1_2 = {rvv_tb_pkg::LMUL1_2};
       bins LMUL1 = {rvv_tb_pkg::LMUL1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -21772,7 +21772,7 @@ covergroup Cov_rvv_zve32x_vsuxseg5ei8_v with function sample(input logic [31:0] 
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -21781,7 +21781,7 @@ covergroup Cov_rvv_zve32x_vsuxseg5ei8_v with function sample(input logic [31:0] 
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -21794,7 +21794,7 @@ covergroup Cov_rvv_zve32x_vsuxseg6ei8_v with function sample(input logic [31:0] 
     coverpoint (inst ==? {6'b101001, 1'b?, 5'b?????, 5'b?????, 3'b000, 5'b?????, 7'b0100111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -21808,7 +21808,7 @@ covergroup Cov_rvv_zve32x_vsuxseg6ei8_v with function sample(input logic [31:0] 
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
       bins SEW32 = {rvv_tb_pkg::SEW32};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -21816,7 +21816,7 @@ covergroup Cov_rvv_zve32x_vsuxseg6ei8_v with function sample(input logic [31:0] 
       bins LMUL1_4 = {rvv_tb_pkg::LMUL1_4};
       bins LMUL1_2 = {rvv_tb_pkg::LMUL1_2};
       bins LMUL1 = {rvv_tb_pkg::LMUL1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -21826,7 +21826,7 @@ covergroup Cov_rvv_zve32x_vsuxseg6ei8_v with function sample(input logic [31:0] 
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -21835,7 +21835,7 @@ covergroup Cov_rvv_zve32x_vsuxseg6ei8_v with function sample(input logic [31:0] 
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -21848,7 +21848,7 @@ covergroup Cov_rvv_zve32x_vsuxseg7ei8_v with function sample(input logic [31:0] 
     coverpoint (inst ==? {6'b110001, 1'b?, 5'b?????, 5'b?????, 3'b000, 5'b?????, 7'b0100111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -21862,7 +21862,7 @@ covergroup Cov_rvv_zve32x_vsuxseg7ei8_v with function sample(input logic [31:0] 
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
       bins SEW32 = {rvv_tb_pkg::SEW32};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -21870,7 +21870,7 @@ covergroup Cov_rvv_zve32x_vsuxseg7ei8_v with function sample(input logic [31:0] 
       bins LMUL1_4 = {rvv_tb_pkg::LMUL1_4};
       bins LMUL1_2 = {rvv_tb_pkg::LMUL1_2};
       bins LMUL1 = {rvv_tb_pkg::LMUL1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -21880,7 +21880,7 @@ covergroup Cov_rvv_zve32x_vsuxseg7ei8_v with function sample(input logic [31:0] 
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -21889,7 +21889,7 @@ covergroup Cov_rvv_zve32x_vsuxseg7ei8_v with function sample(input logic [31:0] 
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -21902,7 +21902,7 @@ covergroup Cov_rvv_zve32x_vsuxseg8ei8_v with function sample(input logic [31:0] 
     coverpoint (inst ==? {6'b111001, 1'b?, 5'b?????, 5'b?????, 3'b000, 5'b?????, 7'b0100111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -21916,7 +21916,7 @@ covergroup Cov_rvv_zve32x_vsuxseg8ei8_v with function sample(input logic [31:0] 
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
       bins SEW32 = {rvv_tb_pkg::SEW32};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -21924,7 +21924,7 @@ covergroup Cov_rvv_zve32x_vsuxseg8ei8_v with function sample(input logic [31:0] 
       bins LMUL1_4 = {rvv_tb_pkg::LMUL1_4};
       bins LMUL1_2 = {rvv_tb_pkg::LMUL1_2};
       bins LMUL1 = {rvv_tb_pkg::LMUL1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -21934,7 +21934,7 @@ covergroup Cov_rvv_zve32x_vsuxseg8ei8_v with function sample(input logic [31:0] 
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -21943,7 +21943,7 @@ covergroup Cov_rvv_zve32x_vsuxseg8ei8_v with function sample(input logic [31:0] 
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -21956,7 +21956,7 @@ covergroup Cov_rvv_zve32x_vsuxseg2ei16_v with function sample(input logic [31:0]
     coverpoint (inst ==? {6'b001001, 1'b?, 5'b?????, 5'b?????, 3'b101, 5'b?????, 7'b0100111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -21970,7 +21970,7 @@ covergroup Cov_rvv_zve32x_vsuxseg2ei16_v with function sample(input logic [31:0]
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
       bins SEW32 = {rvv_tb_pkg::SEW32};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -21980,7 +21980,7 @@ covergroup Cov_rvv_zve32x_vsuxseg2ei16_v with function sample(input logic [31:0]
       bins LMUL1 = {rvv_tb_pkg::LMUL1};
       bins LMUL2 = {rvv_tb_pkg::LMUL2};
       bins LMUL4 = {rvv_tb_pkg::LMUL4};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -21990,7 +21990,7 @@ covergroup Cov_rvv_zve32x_vsuxseg2ei16_v with function sample(input logic [31:0]
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -21999,7 +21999,7 @@ covergroup Cov_rvv_zve32x_vsuxseg2ei16_v with function sample(input logic [31:0]
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -22012,7 +22012,7 @@ covergroup Cov_rvv_zve32x_vsuxseg3ei16_v with function sample(input logic [31:0]
     coverpoint (inst ==? {6'b010001, 1'b?, 5'b?????, 5'b?????, 3'b101, 5'b?????, 7'b0100111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -22026,7 +22026,7 @@ covergroup Cov_rvv_zve32x_vsuxseg3ei16_v with function sample(input logic [31:0]
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
       bins SEW32 = {rvv_tb_pkg::SEW32};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -22035,7 +22035,7 @@ covergroup Cov_rvv_zve32x_vsuxseg3ei16_v with function sample(input logic [31:0]
       bins LMUL1_2 = {rvv_tb_pkg::LMUL1_2};
       bins LMUL1 = {rvv_tb_pkg::LMUL1};
       bins LMUL2 = {rvv_tb_pkg::LMUL2};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -22045,7 +22045,7 @@ covergroup Cov_rvv_zve32x_vsuxseg3ei16_v with function sample(input logic [31:0]
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -22054,7 +22054,7 @@ covergroup Cov_rvv_zve32x_vsuxseg3ei16_v with function sample(input logic [31:0]
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -22067,7 +22067,7 @@ covergroup Cov_rvv_zve32x_vsuxseg4ei16_v with function sample(input logic [31:0]
     coverpoint (inst ==? {6'b011001, 1'b?, 5'b?????, 5'b?????, 3'b101, 5'b?????, 7'b0100111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -22081,7 +22081,7 @@ covergroup Cov_rvv_zve32x_vsuxseg4ei16_v with function sample(input logic [31:0]
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
       bins SEW32 = {rvv_tb_pkg::SEW32};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -22090,7 +22090,7 @@ covergroup Cov_rvv_zve32x_vsuxseg4ei16_v with function sample(input logic [31:0]
       bins LMUL1_2 = {rvv_tb_pkg::LMUL1_2};
       bins LMUL1 = {rvv_tb_pkg::LMUL1};
       bins LMUL2 = {rvv_tb_pkg::LMUL2};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -22100,7 +22100,7 @@ covergroup Cov_rvv_zve32x_vsuxseg4ei16_v with function sample(input logic [31:0]
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -22109,7 +22109,7 @@ covergroup Cov_rvv_zve32x_vsuxseg4ei16_v with function sample(input logic [31:0]
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -22122,7 +22122,7 @@ covergroup Cov_rvv_zve32x_vsuxseg5ei16_v with function sample(input logic [31:0]
     coverpoint (inst ==? {6'b100001, 1'b?, 5'b?????, 5'b?????, 3'b101, 5'b?????, 7'b0100111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -22136,7 +22136,7 @@ covergroup Cov_rvv_zve32x_vsuxseg5ei16_v with function sample(input logic [31:0]
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
       bins SEW32 = {rvv_tb_pkg::SEW32};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -22144,7 +22144,7 @@ covergroup Cov_rvv_zve32x_vsuxseg5ei16_v with function sample(input logic [31:0]
       bins LMUL1_4 = {rvv_tb_pkg::LMUL1_4};
       bins LMUL1_2 = {rvv_tb_pkg::LMUL1_2};
       bins LMUL1 = {rvv_tb_pkg::LMUL1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -22154,7 +22154,7 @@ covergroup Cov_rvv_zve32x_vsuxseg5ei16_v with function sample(input logic [31:0]
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -22163,7 +22163,7 @@ covergroup Cov_rvv_zve32x_vsuxseg5ei16_v with function sample(input logic [31:0]
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -22176,7 +22176,7 @@ covergroup Cov_rvv_zve32x_vsuxseg6ei16_v with function sample(input logic [31:0]
     coverpoint (inst ==? {6'b101001, 1'b?, 5'b?????, 5'b?????, 3'b101, 5'b?????, 7'b0100111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -22190,7 +22190,7 @@ covergroup Cov_rvv_zve32x_vsuxseg6ei16_v with function sample(input logic [31:0]
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
       bins SEW32 = {rvv_tb_pkg::SEW32};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -22198,7 +22198,7 @@ covergroup Cov_rvv_zve32x_vsuxseg6ei16_v with function sample(input logic [31:0]
       bins LMUL1_4 = {rvv_tb_pkg::LMUL1_4};
       bins LMUL1_2 = {rvv_tb_pkg::LMUL1_2};
       bins LMUL1 = {rvv_tb_pkg::LMUL1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -22208,7 +22208,7 @@ covergroup Cov_rvv_zve32x_vsuxseg6ei16_v with function sample(input logic [31:0]
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -22217,7 +22217,7 @@ covergroup Cov_rvv_zve32x_vsuxseg6ei16_v with function sample(input logic [31:0]
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -22230,7 +22230,7 @@ covergroup Cov_rvv_zve32x_vsuxseg7ei16_v with function sample(input logic [31:0]
     coverpoint (inst ==? {6'b110001, 1'b?, 5'b?????, 5'b?????, 3'b101, 5'b?????, 7'b0100111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -22244,7 +22244,7 @@ covergroup Cov_rvv_zve32x_vsuxseg7ei16_v with function sample(input logic [31:0]
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
       bins SEW32 = {rvv_tb_pkg::SEW32};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -22252,7 +22252,7 @@ covergroup Cov_rvv_zve32x_vsuxseg7ei16_v with function sample(input logic [31:0]
       bins LMUL1_4 = {rvv_tb_pkg::LMUL1_4};
       bins LMUL1_2 = {rvv_tb_pkg::LMUL1_2};
       bins LMUL1 = {rvv_tb_pkg::LMUL1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -22262,7 +22262,7 @@ covergroup Cov_rvv_zve32x_vsuxseg7ei16_v with function sample(input logic [31:0]
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -22271,7 +22271,7 @@ covergroup Cov_rvv_zve32x_vsuxseg7ei16_v with function sample(input logic [31:0]
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -22284,7 +22284,7 @@ covergroup Cov_rvv_zve32x_vsuxseg8ei16_v with function sample(input logic [31:0]
     coverpoint (inst ==? {6'b111001, 1'b?, 5'b?????, 5'b?????, 3'b101, 5'b?????, 7'b0100111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -22298,7 +22298,7 @@ covergroup Cov_rvv_zve32x_vsuxseg8ei16_v with function sample(input logic [31:0]
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
       bins SEW32 = {rvv_tb_pkg::SEW32};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -22306,7 +22306,7 @@ covergroup Cov_rvv_zve32x_vsuxseg8ei16_v with function sample(input logic [31:0]
       bins LMUL1_4 = {rvv_tb_pkg::LMUL1_4};
       bins LMUL1_2 = {rvv_tb_pkg::LMUL1_2};
       bins LMUL1 = {rvv_tb_pkg::LMUL1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -22316,7 +22316,7 @@ covergroup Cov_rvv_zve32x_vsuxseg8ei16_v with function sample(input logic [31:0]
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -22325,7 +22325,7 @@ covergroup Cov_rvv_zve32x_vsuxseg8ei16_v with function sample(input logic [31:0]
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -22338,7 +22338,7 @@ covergroup Cov_rvv_zve32x_vsuxseg2ei32_v with function sample(input logic [31:0]
     coverpoint (inst ==? {6'b001001, 1'b?, 5'b?????, 5'b?????, 3'b110, 5'b?????, 7'b0100111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -22352,7 +22352,7 @@ covergroup Cov_rvv_zve32x_vsuxseg2ei32_v with function sample(input logic [31:0]
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
       bins SEW32 = {rvv_tb_pkg::SEW32};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -22362,7 +22362,7 @@ covergroup Cov_rvv_zve32x_vsuxseg2ei32_v with function sample(input logic [31:0]
       bins LMUL1 = {rvv_tb_pkg::LMUL1};
       bins LMUL2 = {rvv_tb_pkg::LMUL2};
       bins LMUL4 = {rvv_tb_pkg::LMUL4};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -22372,7 +22372,7 @@ covergroup Cov_rvv_zve32x_vsuxseg2ei32_v with function sample(input logic [31:0]
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -22381,7 +22381,7 @@ covergroup Cov_rvv_zve32x_vsuxseg2ei32_v with function sample(input logic [31:0]
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -22394,7 +22394,7 @@ covergroup Cov_rvv_zve32x_vsuxseg3ei32_v with function sample(input logic [31:0]
     coverpoint (inst ==? {6'b010001, 1'b?, 5'b?????, 5'b?????, 3'b110, 5'b?????, 7'b0100111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -22408,7 +22408,7 @@ covergroup Cov_rvv_zve32x_vsuxseg3ei32_v with function sample(input logic [31:0]
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
       bins SEW32 = {rvv_tb_pkg::SEW32};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -22417,7 +22417,7 @@ covergroup Cov_rvv_zve32x_vsuxseg3ei32_v with function sample(input logic [31:0]
       bins LMUL1_2 = {rvv_tb_pkg::LMUL1_2};
       bins LMUL1 = {rvv_tb_pkg::LMUL1};
       bins LMUL2 = {rvv_tb_pkg::LMUL2};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -22427,7 +22427,7 @@ covergroup Cov_rvv_zve32x_vsuxseg3ei32_v with function sample(input logic [31:0]
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -22436,7 +22436,7 @@ covergroup Cov_rvv_zve32x_vsuxseg3ei32_v with function sample(input logic [31:0]
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -22449,7 +22449,7 @@ covergroup Cov_rvv_zve32x_vsuxseg4ei32_v with function sample(input logic [31:0]
     coverpoint (inst ==? {6'b011001, 1'b?, 5'b?????, 5'b?????, 3'b110, 5'b?????, 7'b0100111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -22463,7 +22463,7 @@ covergroup Cov_rvv_zve32x_vsuxseg4ei32_v with function sample(input logic [31:0]
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
       bins SEW32 = {rvv_tb_pkg::SEW32};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -22472,7 +22472,7 @@ covergroup Cov_rvv_zve32x_vsuxseg4ei32_v with function sample(input logic [31:0]
       bins LMUL1_2 = {rvv_tb_pkg::LMUL1_2};
       bins LMUL1 = {rvv_tb_pkg::LMUL1};
       bins LMUL2 = {rvv_tb_pkg::LMUL2};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -22482,7 +22482,7 @@ covergroup Cov_rvv_zve32x_vsuxseg4ei32_v with function sample(input logic [31:0]
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -22491,7 +22491,7 @@ covergroup Cov_rvv_zve32x_vsuxseg4ei32_v with function sample(input logic [31:0]
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -22504,7 +22504,7 @@ covergroup Cov_rvv_zve32x_vsuxseg5ei32_v with function sample(input logic [31:0]
     coverpoint (inst ==? {6'b100001, 1'b?, 5'b?????, 5'b?????, 3'b110, 5'b?????, 7'b0100111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -22518,7 +22518,7 @@ covergroup Cov_rvv_zve32x_vsuxseg5ei32_v with function sample(input logic [31:0]
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
       bins SEW32 = {rvv_tb_pkg::SEW32};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -22526,7 +22526,7 @@ covergroup Cov_rvv_zve32x_vsuxseg5ei32_v with function sample(input logic [31:0]
       bins LMUL1_4 = {rvv_tb_pkg::LMUL1_4};
       bins LMUL1_2 = {rvv_tb_pkg::LMUL1_2};
       bins LMUL1 = {rvv_tb_pkg::LMUL1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -22536,7 +22536,7 @@ covergroup Cov_rvv_zve32x_vsuxseg5ei32_v with function sample(input logic [31:0]
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -22545,7 +22545,7 @@ covergroup Cov_rvv_zve32x_vsuxseg5ei32_v with function sample(input logic [31:0]
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -22558,7 +22558,7 @@ covergroup Cov_rvv_zve32x_vsuxseg6ei32_v with function sample(input logic [31:0]
     coverpoint (inst ==? {6'b101001, 1'b?, 5'b?????, 5'b?????, 3'b110, 5'b?????, 7'b0100111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -22572,7 +22572,7 @@ covergroup Cov_rvv_zve32x_vsuxseg6ei32_v with function sample(input logic [31:0]
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
       bins SEW32 = {rvv_tb_pkg::SEW32};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -22580,7 +22580,7 @@ covergroup Cov_rvv_zve32x_vsuxseg6ei32_v with function sample(input logic [31:0]
       bins LMUL1_4 = {rvv_tb_pkg::LMUL1_4};
       bins LMUL1_2 = {rvv_tb_pkg::LMUL1_2};
       bins LMUL1 = {rvv_tb_pkg::LMUL1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -22590,7 +22590,7 @@ covergroup Cov_rvv_zve32x_vsuxseg6ei32_v with function sample(input logic [31:0]
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -22599,7 +22599,7 @@ covergroup Cov_rvv_zve32x_vsuxseg6ei32_v with function sample(input logic [31:0]
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -22612,7 +22612,7 @@ covergroup Cov_rvv_zve32x_vsuxseg7ei32_v with function sample(input logic [31:0]
     coverpoint (inst ==? {6'b110001, 1'b?, 5'b?????, 5'b?????, 3'b110, 5'b?????, 7'b0100111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -22626,7 +22626,7 @@ covergroup Cov_rvv_zve32x_vsuxseg7ei32_v with function sample(input logic [31:0]
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
       bins SEW32 = {rvv_tb_pkg::SEW32};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -22634,7 +22634,7 @@ covergroup Cov_rvv_zve32x_vsuxseg7ei32_v with function sample(input logic [31:0]
       bins LMUL1_4 = {rvv_tb_pkg::LMUL1_4};
       bins LMUL1_2 = {rvv_tb_pkg::LMUL1_2};
       bins LMUL1 = {rvv_tb_pkg::LMUL1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -22644,7 +22644,7 @@ covergroup Cov_rvv_zve32x_vsuxseg7ei32_v with function sample(input logic [31:0]
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -22653,7 +22653,7 @@ covergroup Cov_rvv_zve32x_vsuxseg7ei32_v with function sample(input logic [31:0]
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -22666,7 +22666,7 @@ covergroup Cov_rvv_zve32x_vsuxseg8ei32_v with function sample(input logic [31:0]
     coverpoint (inst ==? {6'b111001, 1'b?, 5'b?????, 5'b?????, 3'b110, 5'b?????, 7'b0100111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -22680,7 +22680,7 @@ covergroup Cov_rvv_zve32x_vsuxseg8ei32_v with function sample(input logic [31:0]
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
       bins SEW32 = {rvv_tb_pkg::SEW32};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -22688,7 +22688,7 @@ covergroup Cov_rvv_zve32x_vsuxseg8ei32_v with function sample(input logic [31:0]
       bins LMUL1_4 = {rvv_tb_pkg::LMUL1_4};
       bins LMUL1_2 = {rvv_tb_pkg::LMUL1_2};
       bins LMUL1 = {rvv_tb_pkg::LMUL1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -22698,7 +22698,7 @@ covergroup Cov_rvv_zve32x_vsuxseg8ei32_v with function sample(input logic [31:0]
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -22707,7 +22707,7 @@ covergroup Cov_rvv_zve32x_vsuxseg8ei32_v with function sample(input logic [31:0]
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -22720,7 +22720,7 @@ covergroup Cov_rvv_zve32x_vsoxseg2ei8_v with function sample(input logic [31:0] 
     coverpoint (inst ==? {6'b001011, 1'b?, 5'b?????, 5'b?????, 3'b000, 5'b?????, 7'b0100111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -22734,7 +22734,7 @@ covergroup Cov_rvv_zve32x_vsoxseg2ei8_v with function sample(input logic [31:0] 
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
       bins SEW32 = {rvv_tb_pkg::SEW32};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -22744,7 +22744,7 @@ covergroup Cov_rvv_zve32x_vsoxseg2ei8_v with function sample(input logic [31:0] 
       bins LMUL1 = {rvv_tb_pkg::LMUL1};
       bins LMUL2 = {rvv_tb_pkg::LMUL2};
       bins LMUL4 = {rvv_tb_pkg::LMUL4};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -22754,7 +22754,7 @@ covergroup Cov_rvv_zve32x_vsoxseg2ei8_v with function sample(input logic [31:0] 
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -22763,7 +22763,7 @@ covergroup Cov_rvv_zve32x_vsoxseg2ei8_v with function sample(input logic [31:0] 
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -22776,7 +22776,7 @@ covergroup Cov_rvv_zve32x_vsoxseg3ei8_v with function sample(input logic [31:0] 
     coverpoint (inst ==? {6'b010011, 1'b?, 5'b?????, 5'b?????, 3'b000, 5'b?????, 7'b0100111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -22790,7 +22790,7 @@ covergroup Cov_rvv_zve32x_vsoxseg3ei8_v with function sample(input logic [31:0] 
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
       bins SEW32 = {rvv_tb_pkg::SEW32};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -22799,7 +22799,7 @@ covergroup Cov_rvv_zve32x_vsoxseg3ei8_v with function sample(input logic [31:0] 
       bins LMUL1_2 = {rvv_tb_pkg::LMUL1_2};
       bins LMUL1 = {rvv_tb_pkg::LMUL1};
       bins LMUL2 = {rvv_tb_pkg::LMUL2};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -22809,7 +22809,7 @@ covergroup Cov_rvv_zve32x_vsoxseg3ei8_v with function sample(input logic [31:0] 
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -22818,7 +22818,7 @@ covergroup Cov_rvv_zve32x_vsoxseg3ei8_v with function sample(input logic [31:0] 
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -22831,7 +22831,7 @@ covergroup Cov_rvv_zve32x_vsoxseg4ei8_v with function sample(input logic [31:0] 
     coverpoint (inst ==? {6'b011011, 1'b?, 5'b?????, 5'b?????, 3'b000, 5'b?????, 7'b0100111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -22845,7 +22845,7 @@ covergroup Cov_rvv_zve32x_vsoxseg4ei8_v with function sample(input logic [31:0] 
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
       bins SEW32 = {rvv_tb_pkg::SEW32};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -22854,7 +22854,7 @@ covergroup Cov_rvv_zve32x_vsoxseg4ei8_v with function sample(input logic [31:0] 
       bins LMUL1_2 = {rvv_tb_pkg::LMUL1_2};
       bins LMUL1 = {rvv_tb_pkg::LMUL1};
       bins LMUL2 = {rvv_tb_pkg::LMUL2};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -22864,7 +22864,7 @@ covergroup Cov_rvv_zve32x_vsoxseg4ei8_v with function sample(input logic [31:0] 
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -22873,7 +22873,7 @@ covergroup Cov_rvv_zve32x_vsoxseg4ei8_v with function sample(input logic [31:0] 
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -22886,7 +22886,7 @@ covergroup Cov_rvv_zve32x_vsoxseg5ei8_v with function sample(input logic [31:0] 
     coverpoint (inst ==? {6'b100011, 1'b?, 5'b?????, 5'b?????, 3'b000, 5'b?????, 7'b0100111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -22900,7 +22900,7 @@ covergroup Cov_rvv_zve32x_vsoxseg5ei8_v with function sample(input logic [31:0] 
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
       bins SEW32 = {rvv_tb_pkg::SEW32};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -22908,7 +22908,7 @@ covergroup Cov_rvv_zve32x_vsoxseg5ei8_v with function sample(input logic [31:0] 
       bins LMUL1_4 = {rvv_tb_pkg::LMUL1_4};
       bins LMUL1_2 = {rvv_tb_pkg::LMUL1_2};
       bins LMUL1 = {rvv_tb_pkg::LMUL1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -22918,7 +22918,7 @@ covergroup Cov_rvv_zve32x_vsoxseg5ei8_v with function sample(input logic [31:0] 
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -22927,7 +22927,7 @@ covergroup Cov_rvv_zve32x_vsoxseg5ei8_v with function sample(input logic [31:0] 
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -22940,7 +22940,7 @@ covergroup Cov_rvv_zve32x_vsoxseg6ei8_v with function sample(input logic [31:0] 
     coverpoint (inst ==? {6'b101011, 1'b?, 5'b?????, 5'b?????, 3'b000, 5'b?????, 7'b0100111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -22954,7 +22954,7 @@ covergroup Cov_rvv_zve32x_vsoxseg6ei8_v with function sample(input logic [31:0] 
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
       bins SEW32 = {rvv_tb_pkg::SEW32};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -22962,7 +22962,7 @@ covergroup Cov_rvv_zve32x_vsoxseg6ei8_v with function sample(input logic [31:0] 
       bins LMUL1_4 = {rvv_tb_pkg::LMUL1_4};
       bins LMUL1_2 = {rvv_tb_pkg::LMUL1_2};
       bins LMUL1 = {rvv_tb_pkg::LMUL1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -22972,7 +22972,7 @@ covergroup Cov_rvv_zve32x_vsoxseg6ei8_v with function sample(input logic [31:0] 
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -22981,7 +22981,7 @@ covergroup Cov_rvv_zve32x_vsoxseg6ei8_v with function sample(input logic [31:0] 
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -22994,7 +22994,7 @@ covergroup Cov_rvv_zve32x_vsoxseg7ei8_v with function sample(input logic [31:0] 
     coverpoint (inst ==? {6'b110011, 1'b?, 5'b?????, 5'b?????, 3'b000, 5'b?????, 7'b0100111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -23008,7 +23008,7 @@ covergroup Cov_rvv_zve32x_vsoxseg7ei8_v with function sample(input logic [31:0] 
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
       bins SEW32 = {rvv_tb_pkg::SEW32};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -23016,7 +23016,7 @@ covergroup Cov_rvv_zve32x_vsoxseg7ei8_v with function sample(input logic [31:0] 
       bins LMUL1_4 = {rvv_tb_pkg::LMUL1_4};
       bins LMUL1_2 = {rvv_tb_pkg::LMUL1_2};
       bins LMUL1 = {rvv_tb_pkg::LMUL1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -23026,7 +23026,7 @@ covergroup Cov_rvv_zve32x_vsoxseg7ei8_v with function sample(input logic [31:0] 
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -23035,7 +23035,7 @@ covergroup Cov_rvv_zve32x_vsoxseg7ei8_v with function sample(input logic [31:0] 
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -23048,7 +23048,7 @@ covergroup Cov_rvv_zve32x_vsoxseg8ei8_v with function sample(input logic [31:0] 
     coverpoint (inst ==? {6'b111011, 1'b?, 5'b?????, 5'b?????, 3'b000, 5'b?????, 7'b0100111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -23062,7 +23062,7 @@ covergroup Cov_rvv_zve32x_vsoxseg8ei8_v with function sample(input logic [31:0] 
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
       bins SEW32 = {rvv_tb_pkg::SEW32};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -23070,7 +23070,7 @@ covergroup Cov_rvv_zve32x_vsoxseg8ei8_v with function sample(input logic [31:0] 
       bins LMUL1_4 = {rvv_tb_pkg::LMUL1_4};
       bins LMUL1_2 = {rvv_tb_pkg::LMUL1_2};
       bins LMUL1 = {rvv_tb_pkg::LMUL1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -23080,7 +23080,7 @@ covergroup Cov_rvv_zve32x_vsoxseg8ei8_v with function sample(input logic [31:0] 
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -23089,7 +23089,7 @@ covergroup Cov_rvv_zve32x_vsoxseg8ei8_v with function sample(input logic [31:0] 
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -23102,7 +23102,7 @@ covergroup Cov_rvv_zve32x_vsoxseg2ei16_v with function sample(input logic [31:0]
     coverpoint (inst ==? {6'b001011, 1'b?, 5'b?????, 5'b?????, 3'b101, 5'b?????, 7'b0100111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -23116,7 +23116,7 @@ covergroup Cov_rvv_zve32x_vsoxseg2ei16_v with function sample(input logic [31:0]
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
       bins SEW32 = {rvv_tb_pkg::SEW32};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -23126,7 +23126,7 @@ covergroup Cov_rvv_zve32x_vsoxseg2ei16_v with function sample(input logic [31:0]
       bins LMUL1 = {rvv_tb_pkg::LMUL1};
       bins LMUL2 = {rvv_tb_pkg::LMUL2};
       bins LMUL4 = {rvv_tb_pkg::LMUL4};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -23136,7 +23136,7 @@ covergroup Cov_rvv_zve32x_vsoxseg2ei16_v with function sample(input logic [31:0]
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -23145,7 +23145,7 @@ covergroup Cov_rvv_zve32x_vsoxseg2ei16_v with function sample(input logic [31:0]
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -23158,7 +23158,7 @@ covergroup Cov_rvv_zve32x_vsoxseg3ei16_v with function sample(input logic [31:0]
     coverpoint (inst ==? {6'b010011, 1'b?, 5'b?????, 5'b?????, 3'b101, 5'b?????, 7'b0100111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -23172,7 +23172,7 @@ covergroup Cov_rvv_zve32x_vsoxseg3ei16_v with function sample(input logic [31:0]
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
       bins SEW32 = {rvv_tb_pkg::SEW32};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -23181,7 +23181,7 @@ covergroup Cov_rvv_zve32x_vsoxseg3ei16_v with function sample(input logic [31:0]
       bins LMUL1_2 = {rvv_tb_pkg::LMUL1_2};
       bins LMUL1 = {rvv_tb_pkg::LMUL1};
       bins LMUL2 = {rvv_tb_pkg::LMUL2};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -23191,7 +23191,7 @@ covergroup Cov_rvv_zve32x_vsoxseg3ei16_v with function sample(input logic [31:0]
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -23200,7 +23200,7 @@ covergroup Cov_rvv_zve32x_vsoxseg3ei16_v with function sample(input logic [31:0]
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -23213,7 +23213,7 @@ covergroup Cov_rvv_zve32x_vsoxseg4ei16_v with function sample(input logic [31:0]
     coverpoint (inst ==? {6'b011011, 1'b?, 5'b?????, 5'b?????, 3'b101, 5'b?????, 7'b0100111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -23227,7 +23227,7 @@ covergroup Cov_rvv_zve32x_vsoxseg4ei16_v with function sample(input logic [31:0]
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
       bins SEW32 = {rvv_tb_pkg::SEW32};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -23236,7 +23236,7 @@ covergroup Cov_rvv_zve32x_vsoxseg4ei16_v with function sample(input logic [31:0]
       bins LMUL1_2 = {rvv_tb_pkg::LMUL1_2};
       bins LMUL1 = {rvv_tb_pkg::LMUL1};
       bins LMUL2 = {rvv_tb_pkg::LMUL2};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -23246,7 +23246,7 @@ covergroup Cov_rvv_zve32x_vsoxseg4ei16_v with function sample(input logic [31:0]
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -23255,7 +23255,7 @@ covergroup Cov_rvv_zve32x_vsoxseg4ei16_v with function sample(input logic [31:0]
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -23268,7 +23268,7 @@ covergroup Cov_rvv_zve32x_vsoxseg5ei16_v with function sample(input logic [31:0]
     coverpoint (inst ==? {6'b100011, 1'b?, 5'b?????, 5'b?????, 3'b101, 5'b?????, 7'b0100111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -23282,7 +23282,7 @@ covergroup Cov_rvv_zve32x_vsoxseg5ei16_v with function sample(input logic [31:0]
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
       bins SEW32 = {rvv_tb_pkg::SEW32};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -23290,7 +23290,7 @@ covergroup Cov_rvv_zve32x_vsoxseg5ei16_v with function sample(input logic [31:0]
       bins LMUL1_4 = {rvv_tb_pkg::LMUL1_4};
       bins LMUL1_2 = {rvv_tb_pkg::LMUL1_2};
       bins LMUL1 = {rvv_tb_pkg::LMUL1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -23300,7 +23300,7 @@ covergroup Cov_rvv_zve32x_vsoxseg5ei16_v with function sample(input logic [31:0]
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -23309,7 +23309,7 @@ covergroup Cov_rvv_zve32x_vsoxseg5ei16_v with function sample(input logic [31:0]
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -23322,7 +23322,7 @@ covergroup Cov_rvv_zve32x_vsoxseg6ei16_v with function sample(input logic [31:0]
     coverpoint (inst ==? {6'b101011, 1'b?, 5'b?????, 5'b?????, 3'b101, 5'b?????, 7'b0100111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -23336,7 +23336,7 @@ covergroup Cov_rvv_zve32x_vsoxseg6ei16_v with function sample(input logic [31:0]
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
       bins SEW32 = {rvv_tb_pkg::SEW32};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -23344,7 +23344,7 @@ covergroup Cov_rvv_zve32x_vsoxseg6ei16_v with function sample(input logic [31:0]
       bins LMUL1_4 = {rvv_tb_pkg::LMUL1_4};
       bins LMUL1_2 = {rvv_tb_pkg::LMUL1_2};
       bins LMUL1 = {rvv_tb_pkg::LMUL1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -23354,7 +23354,7 @@ covergroup Cov_rvv_zve32x_vsoxseg6ei16_v with function sample(input logic [31:0]
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -23363,7 +23363,7 @@ covergroup Cov_rvv_zve32x_vsoxseg6ei16_v with function sample(input logic [31:0]
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -23376,7 +23376,7 @@ covergroup Cov_rvv_zve32x_vsoxseg7ei16_v with function sample(input logic [31:0]
     coverpoint (inst ==? {6'b110011, 1'b?, 5'b?????, 5'b?????, 3'b101, 5'b?????, 7'b0100111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -23390,7 +23390,7 @@ covergroup Cov_rvv_zve32x_vsoxseg7ei16_v with function sample(input logic [31:0]
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
       bins SEW32 = {rvv_tb_pkg::SEW32};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -23398,7 +23398,7 @@ covergroup Cov_rvv_zve32x_vsoxseg7ei16_v with function sample(input logic [31:0]
       bins LMUL1_4 = {rvv_tb_pkg::LMUL1_4};
       bins LMUL1_2 = {rvv_tb_pkg::LMUL1_2};
       bins LMUL1 = {rvv_tb_pkg::LMUL1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -23408,7 +23408,7 @@ covergroup Cov_rvv_zve32x_vsoxseg7ei16_v with function sample(input logic [31:0]
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -23417,7 +23417,7 @@ covergroup Cov_rvv_zve32x_vsoxseg7ei16_v with function sample(input logic [31:0]
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -23430,7 +23430,7 @@ covergroup Cov_rvv_zve32x_vsoxseg8ei16_v with function sample(input logic [31:0]
     coverpoint (inst ==? {6'b111011, 1'b?, 5'b?????, 5'b?????, 3'b101, 5'b?????, 7'b0100111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -23444,7 +23444,7 @@ covergroup Cov_rvv_zve32x_vsoxseg8ei16_v with function sample(input logic [31:0]
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
       bins SEW32 = {rvv_tb_pkg::SEW32};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -23452,7 +23452,7 @@ covergroup Cov_rvv_zve32x_vsoxseg8ei16_v with function sample(input logic [31:0]
       bins LMUL1_4 = {rvv_tb_pkg::LMUL1_4};
       bins LMUL1_2 = {rvv_tb_pkg::LMUL1_2};
       bins LMUL1 = {rvv_tb_pkg::LMUL1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -23462,7 +23462,7 @@ covergroup Cov_rvv_zve32x_vsoxseg8ei16_v with function sample(input logic [31:0]
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -23471,7 +23471,7 @@ covergroup Cov_rvv_zve32x_vsoxseg8ei16_v with function sample(input logic [31:0]
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -23484,7 +23484,7 @@ covergroup Cov_rvv_zve32x_vsoxseg2ei32_v with function sample(input logic [31:0]
     coverpoint (inst ==? {6'b001011, 1'b?, 5'b?????, 5'b?????, 3'b110, 5'b?????, 7'b0100111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -23498,7 +23498,7 @@ covergroup Cov_rvv_zve32x_vsoxseg2ei32_v with function sample(input logic [31:0]
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
       bins SEW32 = {rvv_tb_pkg::SEW32};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -23508,7 +23508,7 @@ covergroup Cov_rvv_zve32x_vsoxseg2ei32_v with function sample(input logic [31:0]
       bins LMUL1 = {rvv_tb_pkg::LMUL1};
       bins LMUL2 = {rvv_tb_pkg::LMUL2};
       bins LMUL4 = {rvv_tb_pkg::LMUL4};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -23518,7 +23518,7 @@ covergroup Cov_rvv_zve32x_vsoxseg2ei32_v with function sample(input logic [31:0]
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -23527,7 +23527,7 @@ covergroup Cov_rvv_zve32x_vsoxseg2ei32_v with function sample(input logic [31:0]
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -23540,7 +23540,7 @@ covergroup Cov_rvv_zve32x_vsoxseg3ei32_v with function sample(input logic [31:0]
     coverpoint (inst ==? {6'b010011, 1'b?, 5'b?????, 5'b?????, 3'b110, 5'b?????, 7'b0100111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -23554,7 +23554,7 @@ covergroup Cov_rvv_zve32x_vsoxseg3ei32_v with function sample(input logic [31:0]
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
       bins SEW32 = {rvv_tb_pkg::SEW32};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -23563,7 +23563,7 @@ covergroup Cov_rvv_zve32x_vsoxseg3ei32_v with function sample(input logic [31:0]
       bins LMUL1_2 = {rvv_tb_pkg::LMUL1_2};
       bins LMUL1 = {rvv_tb_pkg::LMUL1};
       bins LMUL2 = {rvv_tb_pkg::LMUL2};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -23573,7 +23573,7 @@ covergroup Cov_rvv_zve32x_vsoxseg3ei32_v with function sample(input logic [31:0]
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -23582,7 +23582,7 @@ covergroup Cov_rvv_zve32x_vsoxseg3ei32_v with function sample(input logic [31:0]
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -23595,7 +23595,7 @@ covergroup Cov_rvv_zve32x_vsoxseg4ei32_v with function sample(input logic [31:0]
     coverpoint (inst ==? {6'b011011, 1'b?, 5'b?????, 5'b?????, 3'b110, 5'b?????, 7'b0100111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -23609,7 +23609,7 @@ covergroup Cov_rvv_zve32x_vsoxseg4ei32_v with function sample(input logic [31:0]
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
       bins SEW32 = {rvv_tb_pkg::SEW32};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -23618,7 +23618,7 @@ covergroup Cov_rvv_zve32x_vsoxseg4ei32_v with function sample(input logic [31:0]
       bins LMUL1_2 = {rvv_tb_pkg::LMUL1_2};
       bins LMUL1 = {rvv_tb_pkg::LMUL1};
       bins LMUL2 = {rvv_tb_pkg::LMUL2};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -23628,7 +23628,7 @@ covergroup Cov_rvv_zve32x_vsoxseg4ei32_v with function sample(input logic [31:0]
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -23637,7 +23637,7 @@ covergroup Cov_rvv_zve32x_vsoxseg4ei32_v with function sample(input logic [31:0]
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -23650,7 +23650,7 @@ covergroup Cov_rvv_zve32x_vsoxseg5ei32_v with function sample(input logic [31:0]
     coverpoint (inst ==? {6'b100011, 1'b?, 5'b?????, 5'b?????, 3'b110, 5'b?????, 7'b0100111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -23664,7 +23664,7 @@ covergroup Cov_rvv_zve32x_vsoxseg5ei32_v with function sample(input logic [31:0]
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
       bins SEW32 = {rvv_tb_pkg::SEW32};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -23672,7 +23672,7 @@ covergroup Cov_rvv_zve32x_vsoxseg5ei32_v with function sample(input logic [31:0]
       bins LMUL1_4 = {rvv_tb_pkg::LMUL1_4};
       bins LMUL1_2 = {rvv_tb_pkg::LMUL1_2};
       bins LMUL1 = {rvv_tb_pkg::LMUL1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -23682,7 +23682,7 @@ covergroup Cov_rvv_zve32x_vsoxseg5ei32_v with function sample(input logic [31:0]
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -23691,7 +23691,7 @@ covergroup Cov_rvv_zve32x_vsoxseg5ei32_v with function sample(input logic [31:0]
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -23704,7 +23704,7 @@ covergroup Cov_rvv_zve32x_vsoxseg6ei32_v with function sample(input logic [31:0]
     coverpoint (inst ==? {6'b101011, 1'b?, 5'b?????, 5'b?????, 3'b110, 5'b?????, 7'b0100111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -23718,7 +23718,7 @@ covergroup Cov_rvv_zve32x_vsoxseg6ei32_v with function sample(input logic [31:0]
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
       bins SEW32 = {rvv_tb_pkg::SEW32};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -23726,7 +23726,7 @@ covergroup Cov_rvv_zve32x_vsoxseg6ei32_v with function sample(input logic [31:0]
       bins LMUL1_4 = {rvv_tb_pkg::LMUL1_4};
       bins LMUL1_2 = {rvv_tb_pkg::LMUL1_2};
       bins LMUL1 = {rvv_tb_pkg::LMUL1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -23736,7 +23736,7 @@ covergroup Cov_rvv_zve32x_vsoxseg6ei32_v with function sample(input logic [31:0]
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -23745,7 +23745,7 @@ covergroup Cov_rvv_zve32x_vsoxseg6ei32_v with function sample(input logic [31:0]
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -23758,7 +23758,7 @@ covergroup Cov_rvv_zve32x_vsoxseg7ei32_v with function sample(input logic [31:0]
     coverpoint (inst ==? {6'b110011, 1'b?, 5'b?????, 5'b?????, 3'b110, 5'b?????, 7'b0100111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -23772,7 +23772,7 @@ covergroup Cov_rvv_zve32x_vsoxseg7ei32_v with function sample(input logic [31:0]
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
       bins SEW32 = {rvv_tb_pkg::SEW32};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -23780,7 +23780,7 @@ covergroup Cov_rvv_zve32x_vsoxseg7ei32_v with function sample(input logic [31:0]
       bins LMUL1_4 = {rvv_tb_pkg::LMUL1_4};
       bins LMUL1_2 = {rvv_tb_pkg::LMUL1_2};
       bins LMUL1 = {rvv_tb_pkg::LMUL1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -23790,7 +23790,7 @@ covergroup Cov_rvv_zve32x_vsoxseg7ei32_v with function sample(input logic [31:0]
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -23799,7 +23799,7 @@ covergroup Cov_rvv_zve32x_vsoxseg7ei32_v with function sample(input logic [31:0]
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -23812,7 +23812,7 @@ covergroup Cov_rvv_zve32x_vsoxseg8ei32_v with function sample(input logic [31:0]
     coverpoint (inst ==? {6'b111011, 1'b?, 5'b?????, 5'b?????, 3'b110, 5'b?????, 7'b0100111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -23826,7 +23826,7 @@ covergroup Cov_rvv_zve32x_vsoxseg8ei32_v with function sample(input logic [31:0]
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
       bins SEW32 = {rvv_tb_pkg::SEW32};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -23834,7 +23834,7 @@ covergroup Cov_rvv_zve32x_vsoxseg8ei32_v with function sample(input logic [31:0]
       bins LMUL1_4 = {rvv_tb_pkg::LMUL1_4};
       bins LMUL1_2 = {rvv_tb_pkg::LMUL1_2};
       bins LMUL1 = {rvv_tb_pkg::LMUL1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -23844,7 +23844,7 @@ covergroup Cov_rvv_zve32x_vsoxseg8ei32_v with function sample(input logic [31:0]
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -23853,7 +23853,7 @@ covergroup Cov_rvv_zve32x_vsoxseg8ei32_v with function sample(input logic [31:0]
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -23866,7 +23866,7 @@ covergroup Cov_rvv_zve32x_vl1re8_v with function sample(input logic [31:0] inst,
     coverpoint (inst ==? {6'b000000, 1'b1, 5'b01000, 5'b?????, 3'b000, 5'b?????, 7'b0000111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -23879,7 +23879,7 @@ covergroup Cov_rvv_zve32x_vl1re8_v with function sample(input logic [31:0] inst,
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
       bins SEW32 = {rvv_tb_pkg::SEW32};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -23890,7 +23890,7 @@ covergroup Cov_rvv_zve32x_vl1re8_v with function sample(input logic [31:0] inst,
       bins LMUL2 = {rvv_tb_pkg::LMUL2};
       bins LMUL4 = {rvv_tb_pkg::LMUL4};
       bins LMUL8 = {rvv_tb_pkg::LMUL8};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -23900,7 +23900,7 @@ covergroup Cov_rvv_zve32x_vl1re8_v with function sample(input logic [31:0] inst,
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -23909,7 +23909,7 @@ covergroup Cov_rvv_zve32x_vl1re8_v with function sample(input logic [31:0] inst,
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -23922,7 +23922,7 @@ covergroup Cov_rvv_zve32x_vl2re8_v with function sample(input logic [31:0] inst,
     coverpoint (inst ==? {6'b001000, 1'b1, 5'b01000, 5'b?????, 3'b000, 5'b?????, 7'b0000111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -23935,7 +23935,7 @@ covergroup Cov_rvv_zve32x_vl2re8_v with function sample(input logic [31:0] inst,
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
       bins SEW32 = {rvv_tb_pkg::SEW32};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -23945,7 +23945,7 @@ covergroup Cov_rvv_zve32x_vl2re8_v with function sample(input logic [31:0] inst,
       bins LMUL1 = {rvv_tb_pkg::LMUL1};
       bins LMUL2 = {rvv_tb_pkg::LMUL2};
       bins LMUL4 = {rvv_tb_pkg::LMUL4};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -23955,7 +23955,7 @@ covergroup Cov_rvv_zve32x_vl2re8_v with function sample(input logic [31:0] inst,
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -23964,7 +23964,7 @@ covergroup Cov_rvv_zve32x_vl2re8_v with function sample(input logic [31:0] inst,
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -23977,7 +23977,7 @@ covergroup Cov_rvv_zve32x_vl4re8_v with function sample(input logic [31:0] inst,
     coverpoint (inst ==? {6'b011000, 1'b1, 5'b01000, 5'b?????, 3'b000, 5'b?????, 7'b0000111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -23990,7 +23990,7 @@ covergroup Cov_rvv_zve32x_vl4re8_v with function sample(input logic [31:0] inst,
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
       bins SEW32 = {rvv_tb_pkg::SEW32};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -23999,7 +23999,7 @@ covergroup Cov_rvv_zve32x_vl4re8_v with function sample(input logic [31:0] inst,
       bins LMUL1_2 = {rvv_tb_pkg::LMUL1_2};
       bins LMUL1 = {rvv_tb_pkg::LMUL1};
       bins LMUL2 = {rvv_tb_pkg::LMUL2};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -24009,7 +24009,7 @@ covergroup Cov_rvv_zve32x_vl4re8_v with function sample(input logic [31:0] inst,
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -24018,7 +24018,7 @@ covergroup Cov_rvv_zve32x_vl4re8_v with function sample(input logic [31:0] inst,
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -24031,7 +24031,7 @@ covergroup Cov_rvv_zve32x_vl8re8_v with function sample(input logic [31:0] inst,
     coverpoint (inst ==? {6'b111000, 1'b1, 5'b01000, 5'b?????, 3'b000, 5'b?????, 7'b0000111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -24044,7 +24044,7 @@ covergroup Cov_rvv_zve32x_vl8re8_v with function sample(input logic [31:0] inst,
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
       bins SEW32 = {rvv_tb_pkg::SEW32};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -24052,7 +24052,7 @@ covergroup Cov_rvv_zve32x_vl8re8_v with function sample(input logic [31:0] inst,
       bins LMUL1_4 = {rvv_tb_pkg::LMUL1_4};
       bins LMUL1_2 = {rvv_tb_pkg::LMUL1_2};
       bins LMUL1 = {rvv_tb_pkg::LMUL1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -24062,7 +24062,7 @@ covergroup Cov_rvv_zve32x_vl8re8_v with function sample(input logic [31:0] inst,
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -24071,7 +24071,7 @@ covergroup Cov_rvv_zve32x_vl8re8_v with function sample(input logic [31:0] inst,
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -24084,7 +24084,7 @@ covergroup Cov_rvv_zve32x_vl1re16_v with function sample(input logic [31:0] inst
     coverpoint (inst ==? {6'b000000, 1'b1, 5'b01000, 5'b?????, 3'b101, 5'b?????, 7'b0000111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -24097,7 +24097,7 @@ covergroup Cov_rvv_zve32x_vl1re16_v with function sample(input logic [31:0] inst
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
       bins SEW32 = {rvv_tb_pkg::SEW32};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -24108,7 +24108,7 @@ covergroup Cov_rvv_zve32x_vl1re16_v with function sample(input logic [31:0] inst
       bins LMUL2 = {rvv_tb_pkg::LMUL2};
       bins LMUL4 = {rvv_tb_pkg::LMUL4};
       bins LMUL8 = {rvv_tb_pkg::LMUL8};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -24118,7 +24118,7 @@ covergroup Cov_rvv_zve32x_vl1re16_v with function sample(input logic [31:0] inst
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -24127,7 +24127,7 @@ covergroup Cov_rvv_zve32x_vl1re16_v with function sample(input logic [31:0] inst
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -24140,7 +24140,7 @@ covergroup Cov_rvv_zve32x_vl2re16_v with function sample(input logic [31:0] inst
     coverpoint (inst ==? {6'b001000, 1'b1, 5'b01000, 5'b?????, 3'b101, 5'b?????, 7'b0000111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -24153,7 +24153,7 @@ covergroup Cov_rvv_zve32x_vl2re16_v with function sample(input logic [31:0] inst
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
       bins SEW32 = {rvv_tb_pkg::SEW32};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -24163,7 +24163,7 @@ covergroup Cov_rvv_zve32x_vl2re16_v with function sample(input logic [31:0] inst
       bins LMUL1 = {rvv_tb_pkg::LMUL1};
       bins LMUL2 = {rvv_tb_pkg::LMUL2};
       bins LMUL4 = {rvv_tb_pkg::LMUL4};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -24173,7 +24173,7 @@ covergroup Cov_rvv_zve32x_vl2re16_v with function sample(input logic [31:0] inst
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -24182,7 +24182,7 @@ covergroup Cov_rvv_zve32x_vl2re16_v with function sample(input logic [31:0] inst
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -24195,7 +24195,7 @@ covergroup Cov_rvv_zve32x_vl4re16_v with function sample(input logic [31:0] inst
     coverpoint (inst ==? {6'b011000, 1'b1, 5'b01000, 5'b?????, 3'b101, 5'b?????, 7'b0000111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -24208,7 +24208,7 @@ covergroup Cov_rvv_zve32x_vl4re16_v with function sample(input logic [31:0] inst
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
       bins SEW32 = {rvv_tb_pkg::SEW32};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -24217,7 +24217,7 @@ covergroup Cov_rvv_zve32x_vl4re16_v with function sample(input logic [31:0] inst
       bins LMUL1_2 = {rvv_tb_pkg::LMUL1_2};
       bins LMUL1 = {rvv_tb_pkg::LMUL1};
       bins LMUL2 = {rvv_tb_pkg::LMUL2};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -24227,7 +24227,7 @@ covergroup Cov_rvv_zve32x_vl4re16_v with function sample(input logic [31:0] inst
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -24236,7 +24236,7 @@ covergroup Cov_rvv_zve32x_vl4re16_v with function sample(input logic [31:0] inst
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -24249,7 +24249,7 @@ covergroup Cov_rvv_zve32x_vl8re16_v with function sample(input logic [31:0] inst
     coverpoint (inst ==? {6'b111000, 1'b1, 5'b01000, 5'b?????, 3'b101, 5'b?????, 7'b0000111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -24262,7 +24262,7 @@ covergroup Cov_rvv_zve32x_vl8re16_v with function sample(input logic [31:0] inst
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
       bins SEW32 = {rvv_tb_pkg::SEW32};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -24270,7 +24270,7 @@ covergroup Cov_rvv_zve32x_vl8re16_v with function sample(input logic [31:0] inst
       bins LMUL1_4 = {rvv_tb_pkg::LMUL1_4};
       bins LMUL1_2 = {rvv_tb_pkg::LMUL1_2};
       bins LMUL1 = {rvv_tb_pkg::LMUL1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -24280,7 +24280,7 @@ covergroup Cov_rvv_zve32x_vl8re16_v with function sample(input logic [31:0] inst
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -24289,7 +24289,7 @@ covergroup Cov_rvv_zve32x_vl8re16_v with function sample(input logic [31:0] inst
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -24302,7 +24302,7 @@ covergroup Cov_rvv_zve32x_vl1re32_v with function sample(input logic [31:0] inst
     coverpoint (inst ==? {6'b000000, 1'b1, 5'b01000, 5'b?????, 3'b110, 5'b?????, 7'b0000111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -24315,7 +24315,7 @@ covergroup Cov_rvv_zve32x_vl1re32_v with function sample(input logic [31:0] inst
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
       bins SEW32 = {rvv_tb_pkg::SEW32};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -24326,7 +24326,7 @@ covergroup Cov_rvv_zve32x_vl1re32_v with function sample(input logic [31:0] inst
       bins LMUL2 = {rvv_tb_pkg::LMUL2};
       bins LMUL4 = {rvv_tb_pkg::LMUL4};
       bins LMUL8 = {rvv_tb_pkg::LMUL8};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -24336,7 +24336,7 @@ covergroup Cov_rvv_zve32x_vl1re32_v with function sample(input logic [31:0] inst
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -24345,7 +24345,7 @@ covergroup Cov_rvv_zve32x_vl1re32_v with function sample(input logic [31:0] inst
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -24358,7 +24358,7 @@ covergroup Cov_rvv_zve32x_vl2re32_v with function sample(input logic [31:0] inst
     coverpoint (inst ==? {6'b001000, 1'b1, 5'b01000, 5'b?????, 3'b110, 5'b?????, 7'b0000111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -24371,7 +24371,7 @@ covergroup Cov_rvv_zve32x_vl2re32_v with function sample(input logic [31:0] inst
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
       bins SEW32 = {rvv_tb_pkg::SEW32};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -24381,7 +24381,7 @@ covergroup Cov_rvv_zve32x_vl2re32_v with function sample(input logic [31:0] inst
       bins LMUL1 = {rvv_tb_pkg::LMUL1};
       bins LMUL2 = {rvv_tb_pkg::LMUL2};
       bins LMUL4 = {rvv_tb_pkg::LMUL4};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -24391,7 +24391,7 @@ covergroup Cov_rvv_zve32x_vl2re32_v with function sample(input logic [31:0] inst
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -24400,7 +24400,7 @@ covergroup Cov_rvv_zve32x_vl2re32_v with function sample(input logic [31:0] inst
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -24413,7 +24413,7 @@ covergroup Cov_rvv_zve32x_vl4re32_v with function sample(input logic [31:0] inst
     coverpoint (inst ==? {6'b011000, 1'b1, 5'b01000, 5'b?????, 3'b110, 5'b?????, 7'b0000111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -24426,7 +24426,7 @@ covergroup Cov_rvv_zve32x_vl4re32_v with function sample(input logic [31:0] inst
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
       bins SEW32 = {rvv_tb_pkg::SEW32};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -24435,7 +24435,7 @@ covergroup Cov_rvv_zve32x_vl4re32_v with function sample(input logic [31:0] inst
       bins LMUL1_2 = {rvv_tb_pkg::LMUL1_2};
       bins LMUL1 = {rvv_tb_pkg::LMUL1};
       bins LMUL2 = {rvv_tb_pkg::LMUL2};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -24445,7 +24445,7 @@ covergroup Cov_rvv_zve32x_vl4re32_v with function sample(input logic [31:0] inst
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -24454,7 +24454,7 @@ covergroup Cov_rvv_zve32x_vl4re32_v with function sample(input logic [31:0] inst
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -24467,7 +24467,7 @@ covergroup Cov_rvv_zve32x_vl8re32_v with function sample(input logic [31:0] inst
     coverpoint (inst ==? {6'b111000, 1'b1, 5'b01000, 5'b?????, 3'b110, 5'b?????, 7'b0000111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -24480,7 +24480,7 @@ covergroup Cov_rvv_zve32x_vl8re32_v with function sample(input logic [31:0] inst
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
       bins SEW32 = {rvv_tb_pkg::SEW32};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -24488,7 +24488,7 @@ covergroup Cov_rvv_zve32x_vl8re32_v with function sample(input logic [31:0] inst
       bins LMUL1_4 = {rvv_tb_pkg::LMUL1_4};
       bins LMUL1_2 = {rvv_tb_pkg::LMUL1_2};
       bins LMUL1 = {rvv_tb_pkg::LMUL1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -24498,7 +24498,7 @@ covergroup Cov_rvv_zve32x_vl8re32_v with function sample(input logic [31:0] inst
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -24507,7 +24507,7 @@ covergroup Cov_rvv_zve32x_vl8re32_v with function sample(input logic [31:0] inst
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -24520,7 +24520,7 @@ covergroup Cov_rvv_zve32x_vs1r_v with function sample(input logic [31:0] inst, l
     coverpoint (inst ==? {6'b000000, 1'b1, 5'b01000, 5'b?????, 3'b000, 5'b?????, 7'b0100111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -24533,7 +24533,7 @@ covergroup Cov_rvv_zve32x_vs1r_v with function sample(input logic [31:0] inst, l
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
       bins SEW32 = {rvv_tb_pkg::SEW32};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -24544,7 +24544,7 @@ covergroup Cov_rvv_zve32x_vs1r_v with function sample(input logic [31:0] inst, l
       bins LMUL2 = {rvv_tb_pkg::LMUL2};
       bins LMUL4 = {rvv_tb_pkg::LMUL4};
       bins LMUL8 = {rvv_tb_pkg::LMUL8};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -24554,7 +24554,7 @@ covergroup Cov_rvv_zve32x_vs1r_v with function sample(input logic [31:0] inst, l
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -24563,7 +24563,7 @@ covergroup Cov_rvv_zve32x_vs1r_v with function sample(input logic [31:0] inst, l
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -24576,7 +24576,7 @@ covergroup Cov_rvv_zve32x_vs2r_v with function sample(input logic [31:0] inst, l
     coverpoint (inst ==? {6'b001000, 1'b1, 5'b01000, 5'b?????, 3'b000, 5'b?????, 7'b0100111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -24589,7 +24589,7 @@ covergroup Cov_rvv_zve32x_vs2r_v with function sample(input logic [31:0] inst, l
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
       bins SEW32 = {rvv_tb_pkg::SEW32};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -24599,7 +24599,7 @@ covergroup Cov_rvv_zve32x_vs2r_v with function sample(input logic [31:0] inst, l
       bins LMUL1 = {rvv_tb_pkg::LMUL1};
       bins LMUL2 = {rvv_tb_pkg::LMUL2};
       bins LMUL4 = {rvv_tb_pkg::LMUL4};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -24609,7 +24609,7 @@ covergroup Cov_rvv_zve32x_vs2r_v with function sample(input logic [31:0] inst, l
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -24618,7 +24618,7 @@ covergroup Cov_rvv_zve32x_vs2r_v with function sample(input logic [31:0] inst, l
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -24631,7 +24631,7 @@ covergroup Cov_rvv_zve32x_vs4r_v with function sample(input logic [31:0] inst, l
     coverpoint (inst ==? {6'b011000, 1'b1, 5'b01000, 5'b?????, 3'b000, 5'b?????, 7'b0100111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -24644,7 +24644,7 @@ covergroup Cov_rvv_zve32x_vs4r_v with function sample(input logic [31:0] inst, l
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
       bins SEW32 = {rvv_tb_pkg::SEW32};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -24653,7 +24653,7 @@ covergroup Cov_rvv_zve32x_vs4r_v with function sample(input logic [31:0] inst, l
       bins LMUL1_2 = {rvv_tb_pkg::LMUL1_2};
       bins LMUL1 = {rvv_tb_pkg::LMUL1};
       bins LMUL2 = {rvv_tb_pkg::LMUL2};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -24663,7 +24663,7 @@ covergroup Cov_rvv_zve32x_vs4r_v with function sample(input logic [31:0] inst, l
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -24672,7 +24672,7 @@ covergroup Cov_rvv_zve32x_vs4r_v with function sample(input logic [31:0] inst, l
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
@@ -24685,7 +24685,7 @@ covergroup Cov_rvv_zve32x_vs8r_v with function sample(input logic [31:0] inst, l
     coverpoint (inst ==? {6'b111000, 1'b1, 5'b01000, 5'b?????, 3'b000, 5'b?????, 7'b0100111}) {
       option.comment = "Instruction executed times";
       bins hit = {1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vm:
     coverpoint inst[25] {
@@ -24698,7 +24698,7 @@ covergroup Cov_rvv_zve32x_vs8r_v with function sample(input logic [31:0] inst, l
       bins SEW8 = {rvv_tb_pkg::SEW8};
       bins SEW16 = {rvv_tb_pkg::SEW16};
       bins SEW32 = {rvv_tb_pkg::SEW32};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vlmul:
     coverpoint vlmul {
@@ -24706,7 +24706,7 @@ covergroup Cov_rvv_zve32x_vs8r_v with function sample(input logic [31:0] inst, l
       bins LMUL1_4 = {rvv_tb_pkg::LMUL1_4};
       bins LMUL1_2 = {rvv_tb_pkg::LMUL1_2};
       bins LMUL1 = {rvv_tb_pkg::LMUL1};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vl:
     coverpoint vl {
@@ -24716,7 +24716,7 @@ covergroup Cov_rvv_zve32x_vs8r_v with function sample(input logic [31:0] inst, l
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
       bins part_128 = {128};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   cp_vstart:
     coverpoint vstart {
@@ -24725,7 +24725,7 @@ covergroup Cov_rvv_zve32x_vs8r_v with function sample(input logic [31:0] inst, l
       bins part_32_to_63 = {[32:63]};
       bins part_64_to_95 = {[64:95]};
       bins part_96_to_127 = {[96:127]};
-      illegal_bins misc = default;
+      bins misc = default;
     }
   
   // Cross coverages
