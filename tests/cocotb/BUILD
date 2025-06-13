@@ -30,6 +30,21 @@ COCOTB_TEST_BINARY_TARGETS = glob(["**/*.elf"]) + glob(["**/*.o"]) + [
         ":wfi_slot_3.elf",
     ]
 
+VERILATOR_BUILD_ARGS = [
+    "-Wno-WIDTH",
+    "-Wno-CASEINCOMPLETE",
+    "-Wno-LATCH",
+    "-Wno-SIDEEFFECT",
+    "-Wno-MULTIDRIVEN",
+    "-Wno-UNOPTFLAT",
+    "-Wno-CASEOVERLAP",
+    # Warnings that we disable for fpnew
+    "-Wno-ASCRANGE",
+    "-Wno-WIDTHEXPAND",
+    "-Wno-WIDTHTRUNC",
+    "-Wno-UNSIGNED",
+]
+
 template_rule(
     verilator_cocotb_test,
     {
@@ -49,20 +64,7 @@ template_rule(
             "tags": ["manual"], # This suite takes a really long time
         },
     },
-    build_args = [
-        "-Wno-WIDTH",
-        "-Wno-CASEINCOMPLETE",
-        "-Wno-LATCH",
-        "-Wno-SIDEEFFECT",
-        "-Wno-MULTIDRIVEN",
-        "-Wno-UNOPTFLAT",
-        "-Wno-CASEOVERLAP",
-        # Warnings that we disable for fpnew
-        "-Wno-ASCRANGE",
-        "-Wno-WIDTHEXPAND",
-        "-Wno-WIDTHTRUNC",
-        "-Wno-UNSIGNED",
-    ],
+    build_args = VERILATOR_BUILD_ARGS,
     defines = {
         "USE_GENERIC" : "",
     },
@@ -148,20 +150,7 @@ verilator_cocotb_test(
     verilog_sources = [
         "//hdl/chisel/src/kelvin:rvv_core_mini_axi_cc_library_verilog"
     ],
-    build_args = [
-        "-Wno-WIDTH",
-        "-Wno-CASEINCOMPLETE",
-        "-Wno-LATCH",
-        "-Wno-SIDEEFFECT",
-        "-Wno-MULTIDRIVEN",
-        "-Wno-UNOPTFLAT",
-        "-Wno-CASEOVERLAP",
-        # Warnings that we disable for fpnew
-        "-Wno-ASCRANGE",
-        "-Wno-WIDTHEXPAND",
-        "-Wno-WIDTHTRUNC",
-        "-Wno-UNSIGNED",
-    ],
+    build_args = VERILATOR_BUILD_ARGS,
     defines = {
         "USE_GENERIC" : "",
     },
@@ -241,20 +230,7 @@ verilator_cocotb_test(
     verilog_sources = [
         "//hdl/chisel/src/kelvin:rvv_core_mini_axi_cc_library_verilog"
     ],
-    build_args = [
-        "-Wno-WIDTH",
-        "-Wno-CASEINCOMPLETE",
-        "-Wno-LATCH",
-        "-Wno-SIDEEFFECT",
-        "-Wno-MULTIDRIVEN",
-        "-Wno-UNOPTFLAT",
-        "-Wno-CASEOVERLAP",
-        # Warnings that we disable for fpnew
-        "-Wno-ASCRANGE",
-        "-Wno-WIDTHEXPAND",
-        "-Wno-WIDTHTRUNC",
-        "-Wno-UNSIGNED",
-    ],
+    build_args = VERILATOR_BUILD_ARGS,
     defines = {
         "USE_GENERIC" : "",
     },
