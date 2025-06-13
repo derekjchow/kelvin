@@ -283,7 +283,7 @@ class Dispatch(p: Parameters) extends Module {
     val csr = Valid(new CsrCmd)
 
     // LSU interface.
-    val lsu = Vec(p.instructionLanes, Decoupled(new LsuCmd))
+    val lsu = Vec(p.instructionLanes, Decoupled(new LsuCmd(p)))
 
     // Multiplier interface.
     val mlu = Vec(p.instructionLanes, Decoupled(new MluCmd))
@@ -595,6 +595,9 @@ class DispatchV2(p: Parameters) extends Dispatch(p) {
     io.lsu(i).bits.addr := rdAddr(i)
     io.lsu(i).bits.op := lsu.bits
     io.lsu(i).bits.pc := io.inst(i).bits.addr
+    if (p.enableRvv) {
+      io.lsu(i).bits.elemWidth.get := io.inst(i).bits.inst(14,12)
+    }
 
     // -------------------------------------------------------------------------
     // Csr
@@ -830,7 +833,7 @@ class Decode(p: Parameters, pipeline: Int) extends Module {
     val csrFault = if (pipeline == 0) { Some(Output(Bool())) } else { None }
 
     // LSU interface.
-    val lsu = Decoupled(new LsuCmd)
+    val lsu = Decoupled(new LsuCmd(p))
 
     // Multiplier interface.
     val mlu = Decoupled(new MluCmd)
@@ -1061,6 +1064,9 @@ class Decode(p: Parameters, pipeline: Int) extends Module {
   io.lsu.bits.addr := rdAddr
   io.lsu.bits.op := lsu.bits
   io.lsu.bits.pc := io.inst.bits.addr
+  if (p.enableRvv) {
+    io.lsu.bits.elemWidth.get := io.inst.bits.inst(14,12)
+  }
 
   // MLU opcode.
   val mlu = MuxCase(MakeValid(false.B, MluOp.MUL), Seq(

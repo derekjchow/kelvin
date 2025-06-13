@@ -22,7 +22,7 @@ import kelvin.rvv._
 class Lsu(p: Parameters) extends Module {
   val io = IO(new Bundle {
     // Decode cycle.
-    val req = Vec(p.instructionLanes, Flipped(Decoupled(new LsuCmd)))
+    val req = Vec(p.instructionLanes, Flipped(Decoupled(new LsuCmd(p))))
     val busPort = Flipped(new RegfileBusPortIO(p))
     val busPort_flt = Option.when(p.enableFloat)(Flipped(new RegfileBusPortIO(p)))
 
@@ -103,11 +103,12 @@ object LsuOp extends ChiselEnum {
   }
 }
 
-class LsuCmd extends Bundle {
+class LsuCmd(p: Parameters) extends Bundle {
   val store = Bool()
   val addr = UInt(5.W)
   val op = LsuOp()
   val pc = UInt(32.W)
+  val elemWidth = Option.when(p.enableRvv) { UInt(3.W) }
 }
 
 class LsuUOp extends Bundle {
