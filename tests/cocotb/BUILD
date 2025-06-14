@@ -242,15 +242,14 @@ verilator_cocotb_test(
     seed = "42",
     test_module = ["rvv_load_store_test.py"],
     deps = [
-        "//kelvin_test_utils:core_mini_axi_sim_interface",
-        requirement("tqdm"),
+        "//kelvin_test_utils:sim_test_fixture",
     ],
     data = [
-        '//tests/cocotb/rvv:load8_stride2_m1.elf',
-        '//tests/cocotb/rvv:load8_stride2_m1_partial.elf',
-        '//tests/cocotb/rvv:load8_stride2_mf4.elf',
-        '//tests/cocotb/rvv:load16_stride4_mf2.elf',
-        '//tests/cocotb/rvv:load32_stride8_m1.elf',
+        '//tests/cocotb/rvv/load_store:load8_stride2_m1.elf',
+        '//tests/cocotb/rvv/load_store:load8_stride2_m1_partial.elf',
+        '//tests/cocotb/rvv/load_store:load8_stride2_mf4.elf',
+        '//tests/cocotb/rvv/load_store:load16_stride4_mf2.elf',
+        '//tests/cocotb/rvv/load_store:load32_stride8_m1.elf',
     ],
     size = "large",
 )

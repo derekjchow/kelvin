@@ -20,11 +20,20 @@ package(default_visibility = ["//visibility:public"])
 template_rule(
     kelvin_v2_binary,
     {
-        "rvv_add": {
-            "srcs": ["rvv_add.S"],
+        "load8_stride2_m1": {
+            "srcs": ["load8_stride2_m1.cc"],
         },
-        "rvv_load": {
-            "srcs": ["rvv_load.S"],
+        "load8_stride2_m1_partial": {
+            "srcs": ["load8_stride2_m1_partial.cc"],
+        },
+        "load8_stride2_mf4": {
+            "srcs": ["load8_stride2_mf4.cc"],
+        },
+        "load16_stride4_mf2": {
+            "srcs": ["load16_stride4_mf2.cc"],
+        },
+        "load32_stride8_m1": {
+            "srcs": ["load32_stride8_m1.cc"],
         },
     },
 )

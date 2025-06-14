@@ -26,3 +26,16 @@ py_library(
     ],
     visibility = [ "//visibility:public" ],
 )
+
+py_library(
+    name = "sim_test_fixture",
+    srcs = [
+        "sim_test_fixture.py",
+    ],
+    deps = [
+        requirement("cocotb"),
+        requirement("numpy"),
+        ':core_mini_axi_sim_interface'
+    ],
+    visibility = [ "//visibility:public" ],
+)
