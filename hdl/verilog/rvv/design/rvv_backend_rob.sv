@@ -24,6 +24,7 @@ module rvv_backend_rob
     uop_valid_dp2rob,
     uop_dp2rob,
     uop_ready_rob2dp,
+    rob_empty,
     uop_index_rob2dp,
     wr_valid_alu2rob,
     wr_alu2rob,
@@ -59,6 +60,7 @@ module rvv_backend_rob
     input   logic     [`NUM_DP_UOP-1:0] uop_valid_dp2rob;
     input   DP2ROB_t  [`NUM_DP_UOP-1:0] uop_dp2rob;
     output  logic     [`NUM_DP_UOP-1:0] uop_ready_rob2dp;
+    output  logic                       rob_empty;
     output  logic     [`ROB_DEPTH_WIDTH-1:0] uop_index_rob2dp;
 
 // push uop result to ROB
@@ -151,7 +153,7 @@ module rvv_backend_rob
       // pop side
         .pop          (rd_valid_rob2rt & rd_ready_rt2rob),
         .dataout      (uop_rob2rt),
-        .empty        (),
+        .empty        (rob_empty),
         .almost_empty (),
       // fifo info
         .clear        (trap_flush_rvv),

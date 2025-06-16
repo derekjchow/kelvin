@@ -35,7 +35,9 @@ module rvv_backend
 
     vcsr_valid,
     vector_csr,
-    vcsr_ready
+    vcsr_ready,
+
+    rvv_idle
 );
 // global signal
     input   logic                                     clk;
@@ -74,6 +76,9 @@ module rvv_backend
     output  logic                                     vcsr_valid;
     output  RVVConfigState                            vector_csr;
     input   logic                                     vcsr_ready;
+
+// rvv_backend is not active.(IDLE)
+    output  logic                                     rvv_idle;
 
 `ifdef TB_BRINGUP
   // inst queue
@@ -225,7 +230,6 @@ module rvv_backend
     logic        [`NUM_DP_UOP-1:0]        rs_valid_dp2lsu;
     UOP_RVV2LSU_t [`NUM_DP_UOP-1:0]       rs_dp2lsu;
     logic        [`NUM_DP_UOP-1:0]        rs_ready_lsu2dp;
-    logic        [`NUM_LSU-1:0]           uop_lsu_valid_rvv2lsu_tmp;
     // LSU MAP INFO
     logic                                 mapinfo_full;
     logic        [`NUM_DP_UOP-1:0]        mapinfo_almost_full;
@@ -306,6 +310,7 @@ module rvv_backend
     logic [`VLEN-1:0]                                 v0_mask_vrf2dp;
   // ROB to dispatch
     ROB2DP_t     [`ROB_DEPTH-1:0]         uop_rob2dp;
+    logic                                 rob_empty;
   // ROB to RT
     logic        [`NUM_RT_UOP-1:0]        rd_valid_rob2rt;
     ROB2RT_t     [`NUM_RT_UOP-1:0]        rd_rob2rt;
@@ -692,14 +697,12 @@ module rvv_backend
     endgenerate
 
     // output valid and data to LSU
-    assign uop_lsu_valid_rvv2lsu_tmp[0] = ~lsu_rs_empty;
+    assign uop_lsu_valid_rvv2lsu[0] = ~lsu_rs_empty;
     generate
       for (i=1;i<`NUM_LSU;i++) begin: gen_uop_lsu_valid
-        assign uop_lsu_valid_rvv2lsu_tmp[i] = ~lsu_rs_almost_empty[i];
+        assign uop_lsu_valid_rvv2lsu[i] = ~lsu_rs_almost_empty[i];
       end
     endgenerate
-
-    assign uop_lsu_valid_rvv2lsu = is_trapping ? 'b0 : uop_lsu_valid_rvv2lsu_tmp;
 
     // LSU MAP INFO
     multi_fifo #(
@@ -906,6 +909,7 @@ module rvv_backend
         .uop_valid_dp2rob       (uop_valid_dp2rob),
         .uop_dp2rob             (uop_dp2rob),
         .uop_ready_rob2dp       (uop_ready_rob2dp),
+        .rob_empty              (rob_empty),
         .uop_index_rob2dp       (uop_index_rob2dp),
       // ALU to ROB
         .wr_valid_alu2rob       (wr_valid_alu2rob),
@@ -980,6 +984,9 @@ module rvv_backend
         .rt2vrf_wr_valid (wr_valid_rt2vrf),
         .rt2vrf_wr_data  (wr_data_rt2vrf)
     );
+
+  // rvv_backend IDLE
+  assign rvv_idle = fifo_empty_cq2de&uq_empty&rob_empty;
 
 `endif // TB_BRINGUP
 

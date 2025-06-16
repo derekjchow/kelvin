@@ -97,7 +97,7 @@ module rvv_backend_lsu_remap
     trap_rob_entry_rmp2rob = 'b0;
 
     for (int j=0;j<`NUM_LSU;j++) begin
-      if (lsu_res[j].trap_valid&lsu_res_valid[j]) begin
+      if (lsu_res[j].trap_valid&lsu_res_valid[j]&mapinfo_valid[j]) begin
         trap_valid_rmp2rob = 'b1;
         trap_rob_entry_rmp2rob = mapinfo[j].rob_entry;
       end

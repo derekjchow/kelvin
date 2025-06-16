@@ -215,6 +215,8 @@ module RvvCore #(parameter N = 4,
     trap_valid_rvs2rvv = 0;
   end
 
+  logic rvv_idle;
+
   rvv_backend backend(
       .clk(clk),
       .rst_n(rstn),
@@ -240,7 +242,8 @@ module RvvCore #(parameter N = 4,
       .trap_ready_rvv2rvs(trap_ready_rvv2rvs),
       .vcsr_valid(vcsr_valid),
       .vector_csr(vector_csr),
-      .vcsr_ready(vcsr_ready)
+      .vcsr_ready(vcsr_ready),
+      .rvv_idle(rvv_idle)
   );
 
 endmodule

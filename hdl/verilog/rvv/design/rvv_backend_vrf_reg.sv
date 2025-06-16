@@ -12,17 +12,17 @@ module rvv_backend_vrf_reg (/*AUTOARG*/
    wenb, wdata, clk, rst_n
    );
 
-  output logic [31:0][`VLEN-1:0]  vreg;
+  output logic [`NUM_VRF-1:0][`VLEN-1:0]  vreg;
 
-  input  logic [31:0][`VLEN-1:0]  wenb; // bit en
-  input  logic [31:0][`VLEN-1:0]  wdata;
-  input  logic                    clk;
-  input  logic                    rst_n;
+  input  logic [`NUM_VRF-1:0][`VLEN-1:0]  wenb; // bit en
+  input  logic [`NUM_VRF-1:0][`VLEN-1:0]  wdata;
+  input  logic                            clk;
+  input  logic                            rst_n;
 
 // -- 32 vector registers --------------------------------------------
 genvar i,j;
 generate
-  for (i=0; i<32; i=i+1) begin
+  for (i=0; i<`NUM_VRF; i=i+1) begin
     for (j=0; j<`VLEN; j=j+1) begin
       edff vrf_unit1_reg (
         .q      (vreg[i][j]),

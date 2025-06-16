@@ -14,61 +14,64 @@
 // multi-issue and multi-read-ports of VRF
 `ifdef ISSUE_3_READ_PORT_6
   // the max number of uops are written to Uops Queue per cycle in DE stage
-  `define NUM_DE_UOP              6
-  `define NUM_DE_UOP_WIDTH        3
+  `define NUM_DE_UOP            6
+  `define NUM_DE_UOP_WIDTH      3
   // the max number of uops are dispated per cycle in DP stage.
-  `define NUM_DP_UOP              3
+  `define NUM_DP_UOP            3
   // the number of read ports for VRF
-  `define NUM_DP_VRF              6
+  `define NUM_DP_VRF            6
 
   // the depth of queue/station/buffer
-  `define CQ_DEPTH                16
-  `define UQ_DEPTH                16
-  `define ALU_RS_DEPTH            8
-  `define PMTRDT_RS_DEPTH         8
-  `define MUL_RS_DEPTH            8
-  `define DIV_RS_DEPTH            8
-  `define LSU_RS_DEPTH            8
-  `define ROB_DEPTH               8
+  `define CQ_DEPTH              16
+  `define UQ_DEPTH              16
+  `define ALU_RS_DEPTH          8
+  `define PMTRDT_RS_DEPTH       8
+  `define MUL_RS_DEPTH          8
+  `define DIV_RS_DEPTH          8
+  `define LSU_RS_DEPTH          8
+  `define ROB_DEPTH             8
 
 `elsif ISSUE_2_READ_PORT_6
   // the max number of uops are written to Uops Queue per cycle in DE stage
-  `define NUM_DE_UOP              4
-  `define NUM_DE_UOP_WIDTH        3
+  `define NUM_DE_UOP            4
+  `define NUM_DE_UOP_WIDTH      3
   // the max number of uops are dispated per cycle in DP stage
-  `define NUM_DP_UOP              2
+  `define NUM_DP_UOP            2
   // the number of read ports for VRF
-  `define NUM_DP_VRF              6
+  `define NUM_DP_VRF            6
 
   // the depth of queue/station/buffer
-  `define CQ_DEPTH                16
-  `define UQ_DEPTH                16
-  `define ALU_RS_DEPTH            4
-  `define PMTRDT_RS_DEPTH         8
-  `define MUL_RS_DEPTH            4
-  `define DIV_RS_DEPTH            4
-  `define LSU_RS_DEPTH            4
-  `define ROB_DEPTH               8
+  `define CQ_DEPTH              16
+  `define UQ_DEPTH              16
+  `define ALU_RS_DEPTH          4
+  `define PMTRDT_RS_DEPTH       8
+  `define MUL_RS_DEPTH          4
+  `define DIV_RS_DEPTH          4
+  `define LSU_RS_DEPTH          4
+  `define ROB_DEPTH             8
 
 `else  //ISSUE_2_READ_PORT_4
   // the max number of uops are written to Uops Queue per cycle in DE stage
-  `define NUM_DE_UOP              4
-  `define NUM_DE_UOP_WIDTH        3
+  `define NUM_DE_UOP            4
+  `define NUM_DE_UOP_WIDTH      3
   // the max number of uops are dispated per cycle in DP stage
-  `define NUM_DP_UOP              2
+  `define NUM_DP_UOP            2
   // the number of read ports for VRF
-  `define NUM_DP_VRF              4
+  `define NUM_DP_VRF            4
 
   // the depth of queue/station/buffer
-  `define CQ_DEPTH                16
-  `define UQ_DEPTH                16
-  `define ALU_RS_DEPTH            4
-  `define PMTRDT_RS_DEPTH         8
-  `define MUL_RS_DEPTH            4
-  `define DIV_RS_DEPTH            4
-  `define LSU_RS_DEPTH            4
-  `define ROB_DEPTH               8
+  `define CQ_DEPTH              16
+  `define UQ_DEPTH              16
+  `define ALU_RS_DEPTH          4
+  `define PMTRDT_RS_DEPTH       8
+  `define MUL_RS_DEPTH          4
+  `define DIV_RS_DEPTH          4
+  `define LSU_RS_DEPTH          4
+  `define ROB_DEPTH             8
 `endif
+
+// VRF REG depth
+`define NUM_VRF                 32
 
 // Uops Queue data width
 `define UQ_WIDTH                $bits(UOP_QUEUE_t)

@@ -2804,7 +2804,7 @@ module rvv_backend_decode_unit_lsu
             check_special = inst_vm&((inst_opcode==LOAD)||((inst_opcode==STORE)&(inst_funct3==SEW_8)));
           end
           US_MASK: begin
-            check_special = inst_vm&(inst_funct3==SEW_8);
+            check_special = inst_vm&(inst_funct3==SEW_8)&(inst_funct6[5:3]=='b0);
           end
           US_FAULT_FIRST: begin
             check_special = check_vd_overlap_v0&(inst_opcode==LOAD);
