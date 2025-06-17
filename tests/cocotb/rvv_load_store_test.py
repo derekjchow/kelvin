@@ -93,6 +93,28 @@ async def load8_stride2_mf4(dut):
     )
 
 @cocotb.test()
+async def load16_stride4_m1(dut):
+    await vector_load_store(
+        dut = dut,
+        elf_name = 'load16_stride4_m1.elf',
+        dtype = np.uint16,
+        in_size = 16,
+        out_size = 8,
+        pattern = list(range(0, 15, 2)),
+    )
+
+@cocotb.test()
+async def load16_stride4_m1_partial(dut):
+    await vector_load_store(
+        dut = dut,
+        elf_name = 'load16_stride4_m1_partial.elf',
+        dtype = np.uint16,
+        in_size = 16,
+        out_size = 8,
+        pattern = list(range(0, 13, 2)),
+    )
+
+@cocotb.test()
 async def load16_stride4_mf2(dut):
     await vector_load_store(
         dut = dut,
@@ -112,4 +134,15 @@ async def load32_stride8_m1(dut):
         in_size = 8,
         out_size = 4,
         pattern = [0, 2, 4, 6],
+    )
+
+@cocotb.test()
+async def load32_stride8_m1_partial(dut):
+    await vector_load_store(
+        dut = dut,
+        elf_name = 'load32_stride8_m1_partial.elf',
+        dtype = np.uint32,
+        in_size = 8,
+        out_size = 4,
+        pattern = [0, 2, 4],
     )

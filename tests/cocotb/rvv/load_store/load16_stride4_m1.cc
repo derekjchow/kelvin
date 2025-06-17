@@ -15,18 +15,22 @@
 #include <riscv_vector.h>
 #include <stdint.h>
 
-// vector size needs to be power of 2, and it's currently not possible to
-// express a partial store. A fully portable impl of this test case is not
-// possible.
+typedef uint16_t uint16x8_t __attribute__((vector_size(16)));
 
-// Enough space for full m1.
-uint8_t in_buf[32] __attribute__((section(".data")));   // 29 in use.
-uint8_t out_buf[16] __attribute__((section(".data")));  // 15 in use.
+uint16_t in_buf[16] __attribute__((section(".data")));  // 15 in use.
+uint16_t out_buf[8] __attribute__((section(".data")));  // 8 in use.
 
-__attribute__((used, retain)) void test_intrinsic(const uint8_t *x,
-                                                  uint8_t *y) {
-  vuint8m1_t v = __riscv_vlse8_v_u8m1(x, /*stride=*/2, /*vl=*/15);
-  __riscv_vse8_v_u8m1(y, v, 15);
+__attribute__((used, retain)) void test_intrinsic(const uint16_t *x,
+                                                  uint16_t *y) {
+  vuint16m1_t v = __riscv_vlse16_v_u16m1(x, /*stride=*/4, /*vl=*/8);
+  __riscv_vse16_v_u16m1(y, v, 8);
+}
+
+__attribute__((used, retain)) void test_vector(const uint16_t *x, uint16_t *y) {
+  uint16x8_t v = {
+      x[0], x[2], x[4], x[6], x[8], x[10], x[12], x[14],
+  };
+  *reinterpret_cast<uint16x8_t *>(y) = v;
 }
 
 int main(int argc, char **argv) {

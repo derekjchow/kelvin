@@ -20,13 +20,13 @@
 // possible.
 
 // Enough space for full m1.
-uint8_t in_buf[32] __attribute__((section(".data")));   // 29 in use.
-uint8_t out_buf[16] __attribute__((section(".data")));  // 15 in use.
+uint32_t in_buf[8] __attribute__((section(".data")));   // 5 in use.
+uint32_t out_buf[4] __attribute__((section(".data")));  // 3 in use.
 
-__attribute__((used, retain)) void test_intrinsic(const uint8_t *x,
-                                                  uint8_t *y) {
-  vuint8m1_t v = __riscv_vlse8_v_u8m1(x, /*stride=*/2, /*vl=*/15);
-  __riscv_vse8_v_u8m1(y, v, 15);
+__attribute__((used, retain)) void test_intrinsic(const uint32_t *x,
+                                                  uint32_t *y) {
+  vuint32m1_t v = __riscv_vlse32_v_u32m1(x, /*stride=*/8, /*vl=*/3);
+  __riscv_vse32_v_u32m1(y, v, 3);
 }
 
 int main(int argc, char **argv) {
