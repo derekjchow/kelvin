@@ -40,7 +40,7 @@ class AxiAddress(addrWidthBits: Int, dataWidthBits: Int, idBits: Int) extends Bu
   val len    = UInt(8.W)
   val size   = UInt(3.W)
   val burst  = UInt(2.W)
-  val lock   = UInt(2.W)
+  val lock   = UInt(1.W)
   val cache  = UInt(4.W)
   val qos    = UInt(4.W)
   val region = UInt(4.W)

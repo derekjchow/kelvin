@@ -123,7 +123,7 @@ SC_MODULE(sc_top) {
   sc_signal<sc_lv<8>> slave_awlen_4;
   sc_signal<sc_lv<3>> slave_awsize_4;
   sc_signal<sc_lv<2>> slave_awburst_4;
-  sc_signal<sc_lv<2>> slave_awlock_4;
+  sc_signal<sc_logic> slave_awlock_4;
   sc_signal<sc_lv<4>> slave_awcache_4;
   sc_signal<sc_lv<4>> slave_awqos_4;
   sc_signal<sc_lv<4>> slave_awregion_4;
@@ -136,7 +136,7 @@ SC_MODULE(sc_top) {
   sc_in<sc_bv<8>> slave_awlen;
   sc_in<sc_bv<3>> slave_awsize;
   sc_in<sc_bv<2>> slave_awburst;
-  sc_in<sc_bv<2>> slave_awlock;
+  sc_in<bool> slave_awlock;
   sc_in<sc_bv<4>> slave_awcache;
   sc_in<sc_bv<4>> slave_awqos;
   sc_in<sc_bv<4>> slave_awregion;
@@ -171,7 +171,7 @@ SC_MODULE(sc_top) {
   sc_signal<sc_lv<8>> slave_arlen_4;
   sc_signal<sc_lv<3>> slave_arsize_4;
   sc_signal<sc_lv<2>> slave_arburst_4;
-  sc_signal<sc_lv<2>> slave_arlock_4;
+  sc_signal<sc_logic> slave_arlock_4;
   sc_signal<sc_lv<4>> slave_arcache_4;
   sc_signal<sc_lv<4>> slave_arqos_4;
   sc_signal<sc_lv<4>> slave_arregion_4;
@@ -184,7 +184,7 @@ SC_MODULE(sc_top) {
   sc_in<sc_bv<8>> slave_arlen;
   sc_in<sc_bv<3>> slave_arsize;
   sc_in<sc_bv<2>> slave_arburst;
-  sc_in<sc_bv<2>> slave_arlock;
+  sc_in<bool> slave_arlock;
   sc_in<sc_bv<4>> slave_arcache;
   sc_in<sc_bv<4>> slave_arqos;
   sc_in<sc_bv<4>> slave_arregion;
@@ -211,7 +211,7 @@ SC_MODULE(sc_top) {
   sc_out<sc_bv<8>> master_awlen;
   sc_out<sc_bv<3>> master_awsize;
   sc_out<sc_bv<2>> master_awburst;
-  sc_out<sc_bv<2>> master_awlock;
+  sc_out<bool> master_awlock;
   sc_out<sc_bv<4>> master_awcache;
   sc_out<sc_bv<4>> master_awqos;
   sc_out<sc_bv<4>> master_awregion;
@@ -224,7 +224,7 @@ SC_MODULE(sc_top) {
   sc_signal<sc_lv<8>> master_awlen_4;
   sc_signal<sc_lv<3>> master_awsize_4;
   sc_signal<sc_lv<2>> master_awburst_4;
-  sc_signal<sc_lv<2>> master_awlock_4;
+  sc_signal<sc_logic> master_awlock_4;
   sc_signal<sc_lv<4>> master_awcache_4;
   sc_signal<sc_lv<4>> master_awqos_4;
   sc_signal<sc_lv<4>> master_awregion_4;
@@ -259,7 +259,7 @@ SC_MODULE(sc_top) {
   sc_out<sc_bv<8>> master_arlen;
   sc_out<sc_bv<3>> master_arsize;
   sc_out<sc_bv<2>> master_arburst;
-  sc_out<sc_bv<2>> master_arlock;
+  sc_out<bool> master_arlock;
   sc_out<sc_bv<4>> master_arcache;
   sc_out<sc_bv<4>> master_arqos;
   sc_out<sc_bv<4>> master_arregion;
@@ -272,7 +272,7 @@ SC_MODULE(sc_top) {
   sc_signal<sc_lv<8>> master_arlen_4;
   sc_signal<sc_lv<3>> master_arsize_4;
   sc_signal<sc_lv<2>> master_arburst_4;
-  sc_signal<sc_lv<2>> master_arlock_4;
+  sc_signal<sc_logic> master_arlock_4;
   sc_signal<sc_lv<4>> master_arcache_4;
   sc_signal<sc_lv<4>> master_arqos_4;
   sc_signal<sc_lv<4>> master_arregion_4;

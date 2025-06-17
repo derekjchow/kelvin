@@ -50,15 +50,15 @@ int sc_main(int argc, char** argv) {
   sc_clock clock("clock", 100, SC_NS);
 
   Xbar xbar("xbar");
-  tlm2axi_bridge<KP_axi2AddrBits, KP_lsuDataBits, KP_axi2IdBits, 8, 2, 0, 0, 0,
+  tlm2axi_bridge<KP_axi2AddrBits, KP_lsuDataBits, KP_axi2IdBits, 8, 1, 0, 0, 0,
                  0, 0>
       tlm2axi_bridge("tlm2axi_bridge");
-  axi2tlm_bridge<KP_axi2AddrBits, KP_lsuDataBits, KP_axi2IdBits, 8, 2, 0, 0, 0,
+  axi2tlm_bridge<KP_axi2AddrBits, KP_lsuDataBits, KP_axi2IdBits, 8, 1, 0, 0, 0,
                  0, 0>
       axi2tlm_bridge("axi2tlm_bridge");
 
   typedef AXIProtocolChecker<KP_axi2AddrBits, KP_lsuDataBits, KP_axi2IdBits, 8,
-                             2, 0, 0, 0, 0, 0>
+                             1, 0, 0, 0, 0, 0>
       CoreMiniAxiProtocolChecker;
   CoreMiniAxiProtocolChecker tlm2axi_checker("tlm2axi_checker");
   CoreMiniAxiProtocolChecker axi2tlm_checker("axi2tlm_checker");
@@ -66,7 +66,7 @@ int sc_main(int argc, char** argv) {
                      KP_lsuDataBits,   // DATA_WIDTH
                      KP_axi2IdBits,    // ID_WIDTH
                      8,                // AxLEN_WIDTH
-                     2,                // AxLOCK_WIDTH
+                     1,                // AxLOCK_WIDTH
                      0, 0, 0, 0, 0     // User
                      >
       CoreMiniAxiSignals;

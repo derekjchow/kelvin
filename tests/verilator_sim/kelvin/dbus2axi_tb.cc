@@ -46,7 +46,7 @@ struct DBus2Axi_tb : Sysc_tb {
   sc_in<sc_bv<4> > io_axi_write_addr_bits_qos;
   sc_in<sc_bv<3> > io_axi_write_addr_bits_prot;
   sc_in<sc_bv<4> > io_axi_write_addr_bits_cache;
-  sc_in<sc_bv<2> > io_axi_write_addr_bits_lock;
+  sc_in<bool> io_axi_write_addr_bits_lock;
   sc_in<sc_bv<2> > io_axi_write_addr_bits_burst;
   sc_in<sc_bv<3> > io_axi_write_addr_bits_size;
   sc_in<sc_bv<8> > io_axi_write_addr_bits_len;
@@ -61,7 +61,7 @@ struct DBus2Axi_tb : Sysc_tb {
   sc_in<sc_bv<4> > io_axi_read_addr_bits_qos;
   sc_in<sc_bv<3> > io_axi_read_addr_bits_prot;
   sc_in<sc_bv<4> > io_axi_read_addr_bits_cache;
-  sc_in<sc_bv<2> > io_axi_read_addr_bits_lock;
+  sc_in<bool> io_axi_read_addr_bits_lock;
   sc_in<sc_bv<2> > io_axi_read_addr_bits_burst;
   sc_in<sc_bv<3> > io_axi_read_addr_bits_size;
   sc_in<sc_bv<8> > io_axi_read_addr_bits_len;
@@ -343,7 +343,7 @@ static void DBus2Axi_test(char* name, int loops, bool trace) {
   sc_signal<sc_bv<4> > io_axi_write_addr_bits_qos;
   sc_signal<sc_bv<3> > io_axi_write_addr_bits_prot;
   sc_signal<sc_bv<4> > io_axi_write_addr_bits_cache;
-  sc_signal<sc_bv<2> > io_axi_write_addr_bits_lock;
+  sc_signal<bool> io_axi_write_addr_bits_lock;
   sc_signal<sc_bv<2> > io_axi_write_addr_bits_burst;
   sc_signal<sc_bv<3> > io_axi_write_addr_bits_size;
   sc_signal<sc_bv<8> > io_axi_write_addr_bits_len;
@@ -358,7 +358,7 @@ static void DBus2Axi_test(char* name, int loops, bool trace) {
   sc_signal<sc_bv<4> > io_axi_read_addr_bits_qos;
   sc_signal<sc_bv<3> > io_axi_read_addr_bits_prot;
   sc_signal<sc_bv<4> > io_axi_read_addr_bits_cache;
-  sc_signal<sc_bv<2> > io_axi_read_addr_bits_lock;
+  sc_signal<bool> io_axi_read_addr_bits_lock;
   sc_signal<sc_bv<2> > io_axi_read_addr_bits_burst;
   sc_signal<sc_bv<3> > io_axi_read_addr_bits_size;
   sc_signal<sc_bv<8> > io_axi_read_addr_bits_len;

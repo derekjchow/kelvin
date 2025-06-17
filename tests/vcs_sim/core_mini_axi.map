@@ -79,7 +79,7 @@ io_axi_slave_write_addr_bits_id     6       bit_vector  sc_lv
 io_axi_slave_write_addr_bits_len    8       bit_vector  sc_lv
 io_axi_slave_write_addr_bits_size   3       bit_vector  sc_lv
 io_axi_slave_write_addr_bits_burst  2       bit_vector  sc_lv
-io_axi_slave_write_addr_bits_lock   2       bit_vector  sc_lv
+io_axi_slave_write_addr_bits_lock   1       bit         sc_logic
 io_axi_slave_write_addr_bits_cache  4       bit_vector  sc_lv
 io_axi_slave_write_addr_bits_qos    4       bit_vector  sc_lv
 io_axi_slave_write_addr_bits_region 4       bit_vector  sc_lv
@@ -103,7 +103,7 @@ io_axi_slave_read_addr_bits_id     6       bit_vector  sc_lv
 io_axi_slave_read_addr_bits_len    8       bit_vector  sc_lv
 io_axi_slave_read_addr_bits_size   3       bit_vector  sc_lv
 io_axi_slave_read_addr_bits_burst  2       bit_vector  sc_lv
-io_axi_slave_read_addr_bits_lock   2       bit_vector  sc_lv
+io_axi_slave_read_addr_bits_lock   1       bit         sc_logic
 io_axi_slave_read_addr_bits_cache  4       bit_vector  sc_lv
 io_axi_slave_read_addr_bits_qos    4       bit_vector  sc_lv
 io_axi_slave_read_addr_bits_region 4       bit_vector  sc_lv
@@ -123,7 +123,7 @@ io_axi_master_write_addr_bits_id     6       bit_vector  sc_lv
 io_axi_master_write_addr_bits_len    8       bit_vector  sc_lv
 io_axi_master_write_addr_bits_size   3       bit_vector  sc_lv
 io_axi_master_write_addr_bits_burst  2       bit_vector  sc_lv
-io_axi_master_write_addr_bits_lock   2       bit_vector  sc_lv
+io_axi_master_write_addr_bits_lock   1       bit         sc_logic
 io_axi_master_write_addr_bits_cache  4       bit_vector  sc_lv
 io_axi_master_write_addr_bits_qos    4       bit_vector  sc_lv
 io_axi_master_write_addr_bits_region 4       bit_vector  sc_lv
@@ -147,7 +147,7 @@ io_axi_master_read_addr_bits_id     6       bit_vector  sc_lv
 io_axi_master_read_addr_bits_len    8       bit_vector  sc_lv
 io_axi_master_read_addr_bits_size   3       bit_vector  sc_lv
 io_axi_master_read_addr_bits_burst  2       bit_vector  sc_lv
-io_axi_master_read_addr_bits_lock   2       bit_vector  sc_lv
+io_axi_master_read_addr_bits_lock   1       bit         sc_logic
 io_axi_master_read_addr_bits_cache  4       bit_vector  sc_lv
 io_axi_master_read_addr_bits_qos    4       bit_vector  sc_lv
 io_axi_master_read_addr_bits_region 4       bit_vector  sc_lv

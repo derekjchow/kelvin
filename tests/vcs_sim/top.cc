@@ -288,7 +288,7 @@ void sc_top::negedge() {
              "top.core_mini_axi.io_axi_slave_read_addr_bits_size");
   tli_set_lv(sc_lv<2>(slave_arburst.read().get_word(0)),
              "top.core_mini_axi.io_axi_slave_read_addr_bits_burst");
-  tli_set_lv(sc_lv<2>(slave_arlock.read().get_word(0)),
+  tli_set_logic(sc_logic(slave_arlock),
              "top.core_mini_axi.io_axi_slave_read_addr_bits_lock");
   tli_set_lv(sc_lv<4>(slave_arcache.read().get_word(0)),
              "top.core_mini_axi.io_axi_slave_read_addr_bits_cache");
@@ -315,7 +315,7 @@ void sc_top::negedge() {
              "top.core_mini_axi.io_axi_slave_write_addr_bits_size");
   tli_set_lv(sc_lv<2>(slave_awburst.read().get_word(0)),
              "top.core_mini_axi.io_axi_slave_write_addr_bits_burst");
-  tli_set_lv(sc_lv<2>(slave_awlock.read().get_word(0)),
+  tli_set_logic(sc_logic(slave_awlock),
              "top.core_mini_axi.io_axi_slave_write_addr_bits_lock");
   tli_set_lv(sc_lv<4>(slave_awcache.read().get_word(0)),
              "top.core_mini_axi.io_axi_slave_write_addr_bits_cache");
@@ -402,7 +402,7 @@ void sc_top::negedge() {
     master_awburst = master_awburst_4.read();
   }
   if (master_awlock_4.read().is_01()) {
-    master_awlock = master_awlock_4.read();
+    master_awlock = master_awlock_4.read().to_bool();
   }
   if (master_awcache_4.read().is_01()) {
     master_awcache = master_awcache_4.read();
@@ -439,7 +439,7 @@ void sc_top::negedge() {
     master_arburst = master_arburst_4.read();
   }
   if (master_arlock_4.read().is_01()) {
-    master_arlock = master_arlock_4.read();
+    master_arlock = master_arlock_4.read().to_bool();
   }
   if (master_arcache_4.read().is_01()) {
     master_arcache = master_arcache_4.read();

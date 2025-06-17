@@ -152,7 +152,7 @@ struct CoreMiniAxi_tb : Sysc_tb {
                      KP_lsuDataBits,   // DATA_WIDTH
                      KP_axi2IdBits,    // ID_WIDTH
                      8,                // AxLEN_WIDTH
-                     2,                // AxLOCK_WIDTH
+                     1,                // AxLOCK_WIDTH
                      0, 0, 0, 0, 0     // User
                      >
       CoreMiniAxiSignals;
@@ -192,15 +192,15 @@ struct CoreMiniAxi_tb : Sysc_tb {
 
   TLMTrafficGenerator tg_;
 
-  tlm2axi_bridge<KP_axi2AddrBits, KP_lsuDataBits, KP_axi2IdBits, 8, 2, 0, 0, 0,
+  tlm2axi_bridge<KP_axi2AddrBits, KP_lsuDataBits, KP_axi2IdBits, 8, 1, 0, 0, 0,
                  0, 0>
       tlm2axi_bridge_;
-  axi2tlm_bridge<KP_axi2AddrBits, KP_lsuDataBits, KP_axi2IdBits, 8, 2, 0, 0, 0,
+  axi2tlm_bridge<KP_axi2AddrBits, KP_lsuDataBits, KP_axi2IdBits, 8, 1, 0, 0, 0,
                  0, 0>
       axi2tlm_bridge_;
 
   typedef AXIProtocolChecker<KP_axi2AddrBits, KP_lsuDataBits, KP_axi2IdBits, 8,
-                             2, 0, 0, 0, 0, 0>
+                             1, 0, 0, 0, 0, 0>
       CoreMiniAxiProtocolChecker;
   CoreMiniAxiProtocolChecker tlm2axi_checker_;
   // NB: Used to bind bridge and checker, DUT needs manual wiring.
