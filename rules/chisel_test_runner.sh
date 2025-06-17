@@ -18,6 +18,5 @@ chmod +x ${PWD}/external/verilator/verilator
 
 export PATH=${PWD}/external/verilator:$PATH
 export CHISEL_FIRTOOL_PATH=third_party/llvm-firtool
-find .
 SCALATEST_BIN=$(find . -name ${TEST_NAME}_scalatest)
 ${SCALATEST_BIN}
