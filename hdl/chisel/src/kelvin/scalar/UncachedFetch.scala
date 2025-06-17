@@ -232,11 +232,10 @@ class UncachedFetch(p: Parameters) extends FetchUnit(p) {
 
   val window = p.fetchInstrSlots * 2
   val instructionBuffer = Module(new InstructionBuffer(
-      new FetchInstruction(p), p.fetchInstrSlots, window, true))
+      new FetchInstruction(p), p.fetchInstrSlots, window))
   instructionBuffer.io.feedIn <> ctrl.io.bufferRequest
   io.inst.lanes <> instructionBuffer.io.out.take(4)
-  instructionBuffer.io.flush.get := io.iflush.valid || branch.valid
-  instructionBuffer.io.out.takeRight(window - 4).foreach(x => x.ready := false.B)
+  instructionBuffer.io.flush := io.iflush.valid || branch.valid
 
   val pc = RegInit(0.U(p.fetchAddrBits.W))
   pc := Mux(instructionBuffer.io.out(0).valid, instructionBuffer.io.out(0).bits.addr, pc)

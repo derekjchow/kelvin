@@ -107,6 +107,7 @@ chisel_library(
     visibility = ["//visibility:public"],
     deps = [
         ":library",
+        ":circular_buffer_multi",
     ],
 )
 

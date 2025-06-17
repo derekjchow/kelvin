@@ -33,6 +33,7 @@ class CircularBufferMulti[T <: Data](t: T, n: Int, capacity: Int) extends Module
 
     val flush = Input(Bool())
   })
+  dontTouch(io)
 
   // Note first assert below should be sufficient it allows enqueueing items when buffer
   // is full or close to full provided deqReady >= enqValid.

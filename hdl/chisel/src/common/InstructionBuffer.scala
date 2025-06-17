@@ -16,6 +16,7 @@ package common
 
 import chisel3._
 import chisel3.util._
+import common.CircularBufferMulti
 
 /** An interface which encapsulates up-to n DecoupledIO interfaces. The
   * convention is that the first nValid interfaces are considered valid.
@@ -30,11 +31,7 @@ object DecoupledVectorIO {
   def apply[T <: Data](gen: T, n: Int): DecoupledVectorIO[T] = new DecoupledVectorIO(gen, n)
 }
 
-/** Returns the one-hot vec with only the least significant valid bit set, or
-  * all false if all bits are false.
-  * @param in A sequences of booleans
-  * @return The priority selected boolean.
-  */
+//TODO: Consider removing this here and in UnchachedFetch?
 object PrioritySelect {
   def apply(in: Seq[Bool]): Vec[Bool] = {
     val seenValid = in.scan(false.B)(_ || _).take(in.length)
@@ -42,162 +39,44 @@ object PrioritySelect {
   }
 }
 
-/** A FIFO queue that enqueues/dequeues multiple elements a cycle, but also
-  * contains a bypass interface that allows dequeuing elements out of order and
-  * optional flush.
-  * The general structure of this module looks as follows:
-  *
-  *                       Out
-  *                        ^
-  *                        |
-  *               +-----------------------------+
-  *               |        |                    |
-  *               |        |                    |
-  *               |        |                    |
-  *               |        |                    |
-  *               |        |   New Buffer       |
-  *               |        |    |     ^         |
-  *               |        |    V     |         |
-  *               |        Buffer     |         |
-  *               |         |         |         |
-  *               |         +------> Align -----|-> feedOut
-  *               |                   ^         |
-  *               |                   |         |
-  *       feedIn -|-------------------+         |
-  *               |                             |
-  *               +-----------------------------+
-  *
-  * We can compose InstructionBufferSlice's together to create a bigger window
-  * to extract elements from. This looks like:
-  *
-  *                                   Out
-  *                                    ^
-  *                                    |
-  *                     +--------------+------------+
-  *                     |            Concat         |
-  *                     +--------------+------------+
-  *                        ^                     ^
-  *                        |                     |
-  *         +------------------------+    +------------------------+
-  * feedIn -| InstructionBufferSlice | -> | InstructionBufferSlice | -> feedOut
-  *         +------------------------+    +------------------------+
-  */
-class InstructionBufferSlice[T <: Data](
-    val gen: T, val n: Int, val hasFlush: Boolean = false) extends Module {
-  val io = IO(new Bundle {
-    val feedIn = Flipped(DecoupledVectorIO(gen, n))
-    val feedOut = DecoupledVectorIO(gen, n)
-    val out = Vec(n, Decoupled(gen))
-    val flush = if (hasFlush) { Some(Input(Bool())) } else { None }
-  })
-  val buffer = RegInit(VecInit.fill(n)(MakeValid(false.B, 0.U.asTypeOf(gen))))
-
-  // Withdraw elements from buffer
-  val remainderValid = Wire(Vec(n, Bool()))
-  for (i <- 0 until n) {
-    if (hasFlush) {
-      io.out(i).valid := buffer(i).valid && !io.flush.get
-    } else {
-      io.out(i).valid := buffer(i).valid
-    }
-    io.out(i).bits := buffer(i).bits
-
-    remainderValid(i) := buffer(i).valid && !io.out(i).ready
-  }
-
-  // Sort remainder buffer
-  val sortedRemainderBuffer = Wire(Vec(n, gen))
-  var prevValids = remainderValid
-  for (i <- 0 until n) {
-    val selectHot = PrioritySelect(prevValids)
-    sortedRemainderBuffer(i) := MuxCase(
-        0.U.asTypeOf(gen), (0 until n).map(x => selectHot(x) -> buffer(x).bits))
-    prevValids = VecInit((prevValids zip selectHot).map(
-        {case (p, s) => p && !s}))
-  }
-
-  // Request buffers from feedIn
-  val nRemaining = PopCount(remainderValid)
-  val nRequesting = io.feedOut.nReady +& n.U - nRemaining
-  val satRequesting = Mux(nRequesting > n.U, n.U, nRequesting)
-  io.feedIn.nReady := satRequesting
-  assert(io.feedIn.nValid <= satRequesting)
-
-  // Sort available elements
-  val nAvailable = io.feedIn.nValid +& nRemaining
-  val available = Wire(Vec(2*n, gen))
-  for (i <- 0 until 2*n) {
-    available(i) := MuxCase(
-        /* i.U < nRemaining */ sortedRemainderBuffer(i.U(log2Ceil(n) - 1, 0)),
-        Seq(
-            (i.U >= nAvailable) -> 0.U.asTypeOf(gen),
-            (i.U >= nRemaining) -> io.feedIn.bits((i.U - nRemaining)(log2Ceil(n) - 1, 0)),
-    ))
-  }
-
-  // Populate feedOut
-  val nFeedOut = Mux(
-      nAvailable > io.feedOut.nReady, io.feedOut.nReady, nAvailable)
-  io.feedOut.nValid := nFeedOut
-  for (i <- 0 until n) {
-    io.feedOut.bits(i) := Mux(i.U < nFeedOut, available(i), 0.U.asTypeOf(gen))
-  }
-
-  // Populate new buffer
-  val nextBuffer = Wire(Vec(n, Valid(gen)))
-  for (i <- 0 until n) {
-    val idx = i.U +& nFeedOut
-    val valid = idx < nAvailable
-    nextBuffer(i).valid := valid
-    nextBuffer(i).bits := Mux(valid, available(idx(log2Ceil(2*n) - 1, 0)), 0.U.asTypeOf(gen))
-  }
-  if (hasFlush) {
-    buffer := Mux(io.flush.get,
-                  VecInit.fill(n)(MakeValid(false.B, 0.U.asTypeOf(gen))),
-                  nextBuffer)
-  } else {
-    buffer := nextBuffer
-  }
-}
-
-/** A data structure where elements are inserted in order, but can be removed
-  * in an arbitrary order. This can be used to implement the instruction window
-  * of a processor.
-  *
-  * There are a few of notable limitations for this module:
-  * 1) It is expected that up to "n" elements can be removed each cycle.
-  *    Downstream consumers of the out interface should be sure to only  set up
-  *    to "n" ready signals.
-  * 2) The window parameter must be a multiple of n.
-  */
+// Note any instruction will be available to dequeu one full cycle follong enqueuing.
+// This must be accounted for when using the instruction buffer as there is no backpressure.
 class InstructionBuffer[T <: Data](val gen: T,
                                    val n: Int,
-                                   val window: Int,
-                                   val hasFlush: Boolean = false) extends Module {
-  val slices: Int = window / n
+                                   val window: Int) extends Module {
   assert(window % n == 0)
-  assert(slices > 0)
+
   val io = IO(new Bundle {
     val feedIn = Flipped(DecoupledVectorIO(gen, n))
-    val out = Vec(window, Decoupled(gen))
-    val flush = if (hasFlush) { Some(Input(Bool())) } else { None }
-  })
+    val out = Vec(n, Decoupled(gen))
+    val flush = Input(Bool())
 
-  // Compose InstructionBufferSlices
-  var feedIn = io.feedIn
-  var outputs: Seq[DecoupledIO[T]] = Seq()
-  for (s <- 0 until slices) {
-    val slice = Module(new InstructionBufferSlice(gen, n, hasFlush))
-    if (hasFlush) {
-      slice.io.flush.get := io.flush.get
-    }
-    slice.io.feedIn <> feedIn
-    feedIn = slice.io.feedOut
-    outputs = slice.io.out ++ outputs
+    val nEnqueued = Output(UInt(log2Ceil(window + 1).W))
+    val nSpace = Output(UInt(log2Ceil(window + 1).W))
+  })
+  dontTouch(io)
+
+  val circularBuffer = Module(new CircularBufferMulti(t = gen, n = n, capacity = window))
+
+  // Enqueue Logic
+  val feedInReady = Mux(circularBuffer.io.nSpace < n.U, circularBuffer.io.nSpace, n.U)
+  io.feedIn.nReady := feedInReady
+  circularBuffer.io.enqValid := io.feedIn.nValid
+  circularBuffer.io.enqData := io.feedIn.bits
+
+  circularBuffer.io.flush := io.flush
+
+  // Dequeue Logic: Always make n elements visible, but only set valid the lesser n nEnqueud and n
+  // Don't show data is valid if flushing
+  for (nIndex <- 0 until n) {
+    io.out(nIndex).valid := (nIndex.U < circularBuffer.io.nEnqueued) && !io.flush
+    io.out(nIndex).bits := circularBuffer.io.dataOut(nIndex)
   }
 
-  // Terminate
-  feedIn.nReady := 0.U
+  //TODO: Confirm ready signals are contiguous with assert (ex only ready(0) and ready(2) set should fail)
+  val nReady = PopCount(io.out.map(_.fire))
+  circularBuffer.io.deqReady := nReady
 
-  io.out <> VecInit(outputs)
+  io.nEnqueued := circularBuffer.io.nEnqueued
+  io.nSpace := circularBuffer.io.nSpace
 }
