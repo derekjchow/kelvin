@@ -111,13 +111,14 @@ class LsuCmd(p: Parameters) extends Bundle {
   val elemWidth = Option.when(p.enableRvv) { UInt(3.W) }
 }
 
-class LsuUOp extends Bundle {
+class LsuUOp(p: Parameters) extends Bundle {
   val store = Bool()
   val rd = UInt(5.W)
   val op = LsuOp()
   val pc = UInt(32.W)
   val addr = UInt(32.W)
   val data = UInt(32.W)  // Doubles as rs2
+  val elemWidth = Option.when(p.enableRvv) { UInt(3.W) }
 
   override def toPrintable: Printable = {
     cf"LsuUOp(store -> ${store}, rd -> ${rd}, op -> ${op}, " +
@@ -126,11 +127,12 @@ class LsuUOp extends Bundle {
 }
 
 object LsuUOp {
-  def apply(i: Int,
+  def apply(p: Parameters,
+            i: Int,
             cmd: LsuCmd,
             sbus: RegfileBusPortIO,
             fbus: Option[RegfileBusPortIO]): LsuUOp = {
-    val result = Wire(new LsuUOp)
+    val result = Wire(new LsuUOp(p))
     result.store := cmd.store
     result.rd := cmd.addr
     result.op := cmd.op
@@ -142,6 +144,9 @@ object LsuUOp {
     } else {
       result.addr := sbus.addr(i)
       result.data := sbus.data(i)
+    }
+    if (p.enableRvv) {
+      result.elemWidth.get := cmd.elemWidth.get
     }
 
     result
@@ -325,11 +330,17 @@ object LsuSlot {
     0.U.asTypeOf(new LsuSlot(bytesPerSlot, p.lsuDataBytes))
   }
 
-  // TODO(derekjchow): UInt8 only today, Support all dtypes
   def computeStridedAddrs(bytesPerSlot: Int,
                           baseAddr: UInt,
-                          stride: UInt): Vec[UInt] = {
-    VecInit((0 until bytesPerSlot).map(i => (baseAddr + (i.U*stride))(31, 0)))
+                          stride: UInt,
+                          elemWidth: UInt): Vec[UInt] = {
+    MuxCase(VecInit.fill(bytesPerSlot)(0.U(32.W)), Seq(
+      // elemWidth validation is done at decode time.
+      // TODO: pass this as an enum.
+      (elemWidth === "b000".U) -> VecInit((0 until bytesPerSlot).map(i => (baseAddr + (i.U*stride))(31, 0))),  // 1-byte elements
+      (elemWidth === "b101".U) -> VecInit((0 until bytesPerSlot).map(i => (baseAddr + ((i >> 1).U*stride))(31, 0) + (i & 1).U)),  // 2-byte elements
+      (elemWidth === "b110".U) -> VecInit((0 until bytesPerSlot).map(i => (baseAddr + ((i >> 2).U*stride))(31, 0) + (i & 3).U)),  // 4-byte elements
+    ))
   }
 
   def fromLsuUOp(uop: LsuUOp, p: Parameters, bytesPerSlot: Int): LsuSlot = {
@@ -352,10 +363,9 @@ object LsuSlot {
     result.active := active.asBools
 
     // Compute addrs
-    // TODO(derekjchow): Compute addrs for strided.
     result.addrs := Mux(
         uop.op.isOneOf(LsuOp.VLOAD_STRIDED, LsuOp.VSTORE_STRIDED),
-        computeStridedAddrs(bytesPerSlot, uop.addr, uop.data),
+        computeStridedAddrs(bytesPerSlot, uop.addr, uop.data, uop.elemWidth.get),
         VecInit((0 until bytesPerSlot).map(i => uop.addr + i.U)))
 
     result.data(0) := uop.data(7, 0)
@@ -761,7 +771,7 @@ class LsuV2(p: Parameters) extends Lsu(p) {
   io.vldst := 0.U
   io.storeCount := 0.U
 
-  val opQueue = Module(new Queue(new LsuUOp, 4))
+  val opQueue = Module(new Queue(new LsuUOp(p), 4))
 
   // Flush state
   // DispatchV2 will only flush on first slot, when LSU is inactive.
@@ -793,9 +803,9 @@ class LsuV2(p: Parameters) extends Lsu(p) {
   }
 
   val ops = (0 until p.instructionLanes).map(i =>
-      LsuUOp(i, io.req(i).bits, io.busPort, io.busPort_flt))
+      LsuUOp(p, i, io.req(i).bits, io.busPort, io.busPort_flt))
   val enq = MuxCase(
-      MakeInvalid(new LsuUOp),
+      MakeInvalid(new LsuUOp(p)),
       (0 until p.instructionLanes).map(i =>
           ((io.req(i).fire && !io.req(i).bits.op.isOneOf(LsuOp.FENCEI, LsuOp.FLUSHAT, LsuOp.FLUSHALL)) -> MakeValid(true.B, ops(i)))))
   opQueue.io.enq.valid := enq.valid

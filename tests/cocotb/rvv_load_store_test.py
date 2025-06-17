@@ -92,8 +92,7 @@ async def load8_stride2_mf4(dut):
         pattern = [0, 2, 4, 6],
     )
 
-# TODO: enable this test once stride fix is in.
-# @cocotb.test()
+@cocotb.test()
 async def load16_stride4_mf2(dut):
     await vector_load_store(
         dut = dut,
@@ -104,8 +103,7 @@ async def load16_stride4_mf2(dut):
         pattern = [0, 2, 4, 6],
     )
 
-# TODO: enable this test once stride fix is in.
-# @cocotb.test()
+@cocotb.test()
 async def load32_stride8_m1(dut):
     await vector_load_store(
         dut = dut,
