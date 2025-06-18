@@ -19,6 +19,7 @@ import chisel3.util._
 import common._
 import _root_.circt.stage.{ChiselStage,FirtoolOption}
 import chisel3.stage.ChiselGeneratorAnnotation
+import scala.annotation.nowarn
 
 object Alu {
   def apply(p: Parameters): Alu = {
@@ -159,6 +160,7 @@ class Alu(p: Parameters) extends Module {
   assert(!(valid && !io.rs2.valid && !rs1Only))
 }
 
+@nowarn
 object EmitAlu extends App {
   val p = new Parameters
   (new ChiselStage).execute(

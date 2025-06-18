@@ -30,7 +30,6 @@ object KelvinToTlul {
 }
 
 class KelvinToTlul(tlul_p: TLULParameters, kelvin_p: kelvin.Parameters) extends Module {
-  import KelvinToTlul.State
   import KelvinToTlul.State._
 
   val io = IO(new Bundle {

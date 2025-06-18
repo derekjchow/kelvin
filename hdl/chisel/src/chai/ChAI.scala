@@ -20,8 +20,7 @@ import chisel3.util._
 import bus._
 import java.nio.file.{Paths, Files, StandardOpenOption}
 import java.nio.charset.{StandardCharsets}
-import _root_.circt.stage.{ChiselStage,FirtoolOption}
-import chisel3.stage.ChiselGeneratorAnnotation
+import _root_.circt.stage.{ChiselStage}
 
 case class Parameters() {
   val sramReadPorts = 1
@@ -145,7 +144,7 @@ object EmitChAI extends App {
 
   targetDir match {
     case Some(targetDir) => {
-      var svRet = Files.write(
+      Files.write(
           Paths.get(targetDir + "/" + core.name + ".sv"),
           strippedVerilogSource.getBytes(StandardCharsets.UTF_8),
           StandardOpenOption.CREATE)

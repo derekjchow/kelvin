@@ -17,7 +17,6 @@ package kelvin
 import chisel3._
 import chisel3.util._
 
-import bus.{AxiBurstType, AxiMasterIO}
 import common._
 
 class SRAMIO(p: Parameters, sramAddressWidth: Int) extends Bundle {
@@ -36,7 +35,7 @@ class SRAM(p: Parameters, sramAddressWidth: Int) extends Module {
   })
 
   val lsb = log2Ceil(p.axi2DataBits / 8)
-  io.sram.address := MuxCase(0.U, Array(
+  io.sram.address := MuxCase(0.U, Seq(
     io.fabric.writeDataAddr.valid -> io.fabric.writeDataAddr.bits(sramAddressWidth + lsb - 1, lsb),
     io.fabric.readDataAddr.valid -> io.fabric.readDataAddr.bits(sramAddressWidth + lsb - 1, lsb)
   ))

@@ -15,10 +15,7 @@
 package kelvin
 
 import chisel3._
-import chisel3.util._
 
-import bus.AxiMasterIO
-import common._
 import java.io.{File, FileOutputStream}
 import java.util.zip._
 import java.nio.file.{Paths, Files, StandardOpenOption}
@@ -212,11 +209,11 @@ object EmitCore extends App {
         zip.close()
       }
 
-      var headerRet = Files.write(
+      Files.write(
           Paths.get(targetDir + "/V" + core.name + "_parameters.h"),
           header_str.getBytes(StandardCharsets.UTF_8),
           StandardOpenOption.CREATE)
-      var svRet = Files.write(
+      Files.write(
           Paths.get(targetDir + "/" + core.name + ".sv"),
           strippedVerilogSource.replace("exclude_file", "exclude_module").getBytes(StandardCharsets.UTF_8),
           StandardOpenOption.CREATE)

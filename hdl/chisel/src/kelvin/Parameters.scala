@@ -195,7 +195,6 @@ object EmitParametersHeader {
         case _ => None
       }
       if (ctype != None) {
-        val ctypeStr = ctype.get
         builder = builder.append(s"#define KP_${x.name} ${value}\n")
       }
     }

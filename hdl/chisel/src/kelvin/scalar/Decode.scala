@@ -575,7 +575,7 @@ class DispatchV2(p: Parameters) extends Dispatch(p) {
       d.fencei         -> MakeValid(true.B, LsuOp.FENCEI),
       d.flushat        -> MakeValid(true.B, LsuOp.FLUSHAT),
       d.flushall       -> MakeValid(true.B, LsuOp.FLUSHALL),
-      (d.isFloatLoad || d.isFloatStore) -> MakeValid(true.B, LsuOp.FLOAT)
+      (d.isFloatLoad() || d.isFloatStore()) -> MakeValid(true.B, LsuOp.FLOAT)
     ) ++ Option.when(p.enableRvv) {
       val isRvvLoad = d.rvv.get.valid &&
           (d.rvv.get.bits.opcode === RvvCompressedOpcode.RVVLOAD)
@@ -670,9 +670,9 @@ class DispatchV2(p: Parameters) extends Dispatch(p) {
     io.rs2Read(i).addr := io.inst(i).bits.inst(24,20)
 
     // Set immediates
-    io.rs1Set(i).valid := io.inst(i).fire && d.rs1Set
+    io.rs1Set(i).valid := io.inst(i).fire && d.rs1Set()
     io.rs1Set(i).value := Mux(d.isCsr(), d.immcsr, io.inst(i).bits.addr)  // Program Counter (PC)
-    io.rs2Set(i).valid := io.inst(i).fire && d.rs2Set
+    io.rs2Set(i).valid := io.inst(i).fire && d.rs2Set()
     io.rs2Set(i).value := MuxCase(d.imm12, IndexedSeq((d.auipc || d.lui) -> d.imm20))
 
     // Set scalar registers to write
@@ -1060,7 +1060,7 @@ class Decode(p: Parameters, pipeline: Int) extends Module {
     d.flushat        -> MakeValid(true.B, LsuOp.FLUSHAT),
     d.flushall       -> MakeValid(true.B, LsuOp.FLUSHALL),
     (d.vld || d.vst) -> MakeValid(true.B, LsuOp.VLDST),
-    (d.isFloatLoad || d.isFloatStore) -> MakeValid(true.B, LsuOp.FLOAT)
+    (d.isFloatLoad() || d.isFloatStore()) -> MakeValid(true.B, LsuOp.FLOAT)
   ))
   io.lsu.valid := decodeEn && lsu.valid
   io.lsu.bits.store := io.inst.bits.inst(5)

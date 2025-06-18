@@ -19,6 +19,11 @@ import chisel3.util._
 import common._
 import kelvin.rvv._
 
+class DFlushFenceiIO(p: Parameters) extends DFlushIO(p) {
+  val fencei = Output(Bool())
+  val pcNext = Output(UInt(32.W))
+}
+
 class Lsu(p: Parameters) extends Module {
   val io = IO(new Bundle {
     // Decode cycle.
@@ -482,7 +487,6 @@ class LsuV1(p: Parameters) extends Lsu(p) {
                   .map(_.contains(io.busPort.addr(i))).reduceOption(_ || _).getOrElse(true.B)
     val peri = p.m.filter(_.memType == MemoryRegionType.Peripheral)
                   .map(_.contains(io.busPort.addr(i))).reduceOption(_ || _).getOrElse(false.B)
-    val external = !(itcm || dtcm || peri)
     assert(PopCount(Cat(itcm | dtcm | peri)) <= 1.U)
 
     val opstore = io.req(i).bits.op.isOneOf(LsuOp.SW, LsuOp.SH, LsuOp.SB)
@@ -499,7 +503,7 @@ class LsuV1(p: Parameters) extends Lsu(p) {
                      io.req(i).bits.op.isOneOf(LsuOp.LB, LsuOp.LBU, LsuOp.SB))
     val opfldst = (io.req(i).bits.op === LsuOp.FLOAT)
 
-    val regionType = MuxCase(MemoryRegionType.External, Array(
+    val regionType = MuxCase(MemoryRegionType.External, Seq(
       dtcm -> MemoryRegionType.DMEM,
       itcm -> MemoryRegionType.IMEM,
       peri -> MemoryRegionType.Peripheral,
@@ -632,7 +636,7 @@ class LsuV1(p: Parameters) extends Lsu(p) {
     (ctrl.io.out.bits.regionType === MemoryRegionType.IMEM) &&
     ctrl.io.out.bits.write)
   val ebus_fault = io.ebus.fault.valid
-  io.fault := MuxCase(MakeInvalid(new FaultInfo(p)), Array(
+  io.fault := MuxCase(MakeInvalid(new FaultInfo(p)), Seq(
     imem_store_fault -> (MakeWireBundle[ValidIO[FaultInfo]](
       Valid(new FaultInfo(p)),
       _.valid -> true.B,
@@ -886,7 +890,7 @@ class LsuV2(p: Parameters) extends Lsu(p) {
 
   // dbus data path
   io.dbus.valid := dtcm && Mux(vectorUpdatedSlot.store,
-                               vectorUpdatedSlot.activeTransaction,
+                               vectorUpdatedSlot.activeTransaction(),
                                loadUpdate2Slot.activeTransaction())
   io.dbus.write := slot.store
   io.dbus.pc := slot.pc

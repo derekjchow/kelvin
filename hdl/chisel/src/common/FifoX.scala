@@ -38,7 +38,7 @@ object FifoXValid {
         )
       )
     }
-    inx
+    inx.toIndexedSeq
   }
 }
 
@@ -61,7 +61,8 @@ class FifoX[T <: Data](t: T, x: Int, n: Int) extends Module {
   val mslice = Slice(t, false, true)
 
   val inxpos = RegInit(VecInit((0 until x).map(x => x.U(log2Ceil(m).W))))
-  val outpos = RegInit(0.U(log2Ceil(m).W))
+  // val outpos = RegInit(0.U(log2Ceil(m).W))
+  val outpos = RegInit(0.U(log2Ceil(n).W))
   val mcount = RegInit(0.U(log2Ceil(n+1).W))
 
   io.count := mcount + io.out.valid

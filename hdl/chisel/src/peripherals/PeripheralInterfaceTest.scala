@@ -16,12 +16,9 @@ package peripheral
 
 import chisel3._
 import chisel3.simulator.scalatest.ChiselSim
-import chisel3.util._
 import org.scalatest.freespec.AnyFreeSpec
-import chisel3.experimental.BundleLiterals._
 
 import bus._
-import common._
 
 class CounterAxiPeripheral extends Module { //extends AxiCsrInterface(3) {
   val io = IO(new Bundle{

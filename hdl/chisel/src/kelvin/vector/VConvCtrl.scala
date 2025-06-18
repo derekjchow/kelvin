@@ -21,6 +21,7 @@ import chisel3.util._
 import common._
 import _root_.circt.stage.{ChiselStage,FirtoolOption}
 import chisel3.stage.ChiselGeneratorAnnotation
+import scala.annotation.nowarn
 
 object VConvCtrl {
   def apply(p: Parameters): VConvCtrl = {
@@ -138,7 +139,6 @@ class VConvCtrl(p: Parameters) extends Module {
     val active2 = Wire(UInt(64.W))
 
     val addr1 = in.addr1
-    val addr2 = in.addr2
 
     // (mark2 & (mark2 << step)) clears the lsb bits.
     if (p.vectorBits == 128) {
@@ -209,6 +209,7 @@ class VConvCtrl(p: Parameters) extends Module {
   io.active := q.io.active
 }
 
+@nowarn
 object EmitVConvCtrl extends App {
   val p = new Parameters
   (new ChiselStage).execute(

@@ -16,11 +16,7 @@ package kelvin
 
 import chisel3._
 import chisel3.simulator.scalatest.ChiselSim
-import chisel3.util._
 import org.scalatest.freespec.AnyFreeSpec
-import chisel3.experimental.BundleLiterals._
-
-import common.Fp32
 
 class FRegfileSpec extends AnyFreeSpec with ChiselSim {
   val p = new Parameters

@@ -18,7 +18,6 @@ import chisel3._
 import chisel3.util._
 
 import kelvin.MemoryRegion
-import _root_.circt.stage.ChiselStage
 
 case class TLULParameters() {
   val w = 32
@@ -119,7 +118,6 @@ class TileLinkUL(p: TLULParameters, m: Seq[MemoryRegion], hosts: Int) extends Mo
     val device_d = io.devices_d(dValidIndex)
     val device_a = io.devices_a(dValidIndex)
     val source = device_d.d_source
-    val sink = device_d.d_sink
     val host_d = io.hosts_d(source)
     val host_a = io.hosts_a(source)
 

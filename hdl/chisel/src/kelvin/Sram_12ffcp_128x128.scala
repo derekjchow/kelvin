@@ -14,8 +14,7 @@
 
 package kelvin
 
-import chisel3._
-import chisel3.util._
+import chisel3.util.HasBlackBoxResource
 
 class Sram_12ffcp_128x128 extends SRAM128(7) with HasBlackBoxResource {
   addResource("hdl/verilog/Sram_12ffcp_128x128.v")

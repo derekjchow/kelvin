@@ -15,8 +15,7 @@
 package common
 
 import chisel3._
-import chisel3.util._
-import common._
+import chisel3.util.{Cat, Decoupled}
 import _root_.circt.stage.ChiselStage
 
 // An integer divide unit, to be fused with fdiv.
@@ -78,7 +77,6 @@ class IDiv(n: Int) extends Module {
   for (i <- 0 until n) {
     val ina = io.ina.bits(i)
     val inb = io.inb.bits(i)
-    val st = state(i)
 
     when (ivalid) {
       val divide = io.req(dvu.DIV) || io.req(dvu.DIVU)

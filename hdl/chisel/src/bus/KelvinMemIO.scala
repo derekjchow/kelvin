@@ -15,7 +15,6 @@
 package bus
 
 import chisel3._
-import chisel3.util._
 
 class KelvinMemIO(p: kelvin.Parameters) extends Bundle {
   val cvalid = (Output(Bool()))

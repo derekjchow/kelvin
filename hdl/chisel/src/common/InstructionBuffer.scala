@@ -128,10 +128,10 @@ class InstructionBufferSlice[T <: Data](
   val available = Wire(Vec(2*n, gen))
   for (i <- 0 until 2*n) {
     available(i) := MuxCase(
-        /* i.U < nRemaining */ sortedRemainderBuffer(i.U),
-        Array(
+        /* i.U < nRemaining */ sortedRemainderBuffer(i.U(log2Ceil(n) - 1, 0)),
+        Seq(
             (i.U >= nAvailable) -> 0.U.asTypeOf(gen),
-            (i.U >= nRemaining) -> io.feedIn.bits(i.U - nRemaining),
+            (i.U >= nRemaining) -> io.feedIn.bits((i.U - nRemaining)(log2Ceil(n) - 1, 0)),
     ))
   }
 
@@ -149,7 +149,7 @@ class InstructionBufferSlice[T <: Data](
     val idx = i.U +& nFeedOut
     val valid = idx < nAvailable
     nextBuffer(i).valid := valid
-    nextBuffer(i).bits := Mux(valid, available(idx), 0.U.asTypeOf(gen))
+    nextBuffer(i).bits := Mux(valid, available(idx(log2Ceil(2*n) - 1, 0)), 0.U.asTypeOf(gen))
   }
   if (hasFlush) {
     buffer := Mux(io.flush.get,

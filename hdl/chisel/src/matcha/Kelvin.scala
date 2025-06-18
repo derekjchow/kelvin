@@ -15,14 +15,11 @@
 package matcha
 
 import chisel3._
-import chisel3.util._
 
 import bus.KelvinMemIO
-import common._
 import java.nio.file.{Paths, Files, StandardOpenOption}
 import java.nio.charset.{StandardCharsets}
-import _root_.circt.stage.{ChiselStage,FirtoolOption}
-import chisel3.stage.ChiselGeneratorAnnotation
+import _root_.circt.stage.{ChiselStage}
 
 object Kelvin {
   def apply(p: kelvin.Parameters): Kelvin = {
@@ -196,11 +193,11 @@ object EmitKelvin extends App {
   val header_str = kelvin.EmitParametersHeader(core_p)
   targetDir match {
     case Some(targetDir) => {
-      var headerRet = Files.write(
+      Files.write(
           Paths.get(targetDir + "/V" + moduleName + "_parameters.h"),
           header_str.getBytes(StandardCharsets.UTF_8),
           StandardOpenOption.CREATE)
-      var svRet = Files.write(
+      Files.write(
           Paths.get(targetDir + "/" + core.name + ".sv"),
           strippedVerilogSource.getBytes(StandardCharsets.UTF_8),
           StandardOpenOption.CREATE)

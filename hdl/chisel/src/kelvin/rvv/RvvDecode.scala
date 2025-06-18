@@ -46,13 +46,13 @@ class RvvCompressedInstruction extends Bundle {
   }
 
   // "Addressing Mode" for loads/store (see Section 7.2 of RVV Spec)
-  def mop(): RvvAddressingMode.Type = {
+  def mop: RvvAddressingMode.Type = {
     RvvAddressingMode(bits(20, 19))
   }
 
   // Is vsetvli, vsetivli or vsetvl
   def isVset(): Bool = {
-    (opcode === RvvCompressedOpcode.RVVALU && funct3 === "b111".U)
+    (opcode === RvvCompressedOpcode.RVVALU && funct3() === "b111".U)
   }
 
   def isLoadStore(): Bool = {
@@ -64,14 +64,14 @@ class RvvCompressedInstruction extends Bundle {
   }
 
   def readsRs2(): Bool = {
-    (isLoadStore() && (mop() === RvvAddressingMode.STRIDED)) ||
+    (isLoadStore() && (mop === RvvAddressingMode.STRIDED)) ||
         ((funct3() === "b111".U) && (bits(24, 18) === "b1000000".U))
   }
 
   def writesRd(): Bool = {
     isVset() ||
     // OP MVV, VWXUNARY0
-    (opcode === RvvCompressedOpcode.RVVALU && funct3 === "b010".U && funct6 === "b010000".U)
+    (opcode === RvvCompressedOpcode.RVVALU && funct3() === "b010".U && funct6() === "b010000".U)
     // TODO(derekjchow): Add all cases that write scalar rd.
   }
 

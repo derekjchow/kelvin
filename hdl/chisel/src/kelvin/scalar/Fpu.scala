@@ -15,7 +15,6 @@
 package kelvin
 
 import chisel3._
-import chisel3.experimental.BundleLiterals._
 import chisel3.util._
 import common.Fp32
 import common.Fma

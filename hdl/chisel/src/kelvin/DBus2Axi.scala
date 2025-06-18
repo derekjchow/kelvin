@@ -21,6 +21,7 @@ import bus.{AxiAddress, AxiMasterIO, AxiResponseType, AxiWriteData}
 import common._
 import _root_.circt.stage.{ChiselStage,FirtoolOption}
 import chisel3.stage.ChiselGeneratorAnnotation
+import scala.annotation.nowarn
 
 object DBus2Axi {
   def apply(p: Parameters): DBus2Axi = {
@@ -55,7 +56,7 @@ class DBus2AxiV1(p: Parameters) extends DBus2Axi(p) {
   // Top-level state machine
   assert(!(io.dbus.valid && PopCount(io.dbus.size) =/= 1.U))
   val txnActive = RegInit(false.B)
-  txnActive := MuxCase(txnActive, Array(
+  txnActive := MuxCase(txnActive, Seq(
     (io.dbus.valid && io.dbus.ready) -> false.B,
     (io.dbus.valid) -> true.B,
   ))
@@ -123,7 +124,7 @@ class DBus2AxiV1(p: Parameters) extends DBus2Axi(p) {
       (rmask1 === 0.U) || !io.axi.read.data.bits.last, rmask0, rmask1))
   val rbytemask = VecInit(
       rbitmask.asBools.map(Mux(_, 255.U(8.W), 0.U(8.W)))).asUInt
-  sdata := MuxCase(sdata, Array(
+  sdata := MuxCase(sdata, Seq(
     (io.axi.read.data.valid && io.axi.read.data.ready) -> ((sdata & ~rbytemask) | (io.axi.read.data.bits.data & rbytemask)),
     newTxn -> 0.U,
   ))
@@ -196,7 +197,7 @@ class DBus2AxiV1(p: Parameters) extends DBus2Axi(p) {
 
 
   // Fault reporting
-  io.fault.valid := MuxCase(false.B, Array(
+  io.fault.valid := MuxCase(false.B, Seq(
     io.axi.write.resp.valid ->
       ((io.axi.write.resp.bits.resp =/= AxiResponseType.OKAY.asUInt) &&
       (io.axi.write.resp.bits.resp =/= AxiResponseType.EXOKAY.asUInt)),
@@ -302,6 +303,7 @@ class DBus2AxiV2(p: Parameters) extends DBus2Axi(p) {
   io.fault.bits.epc := io.dbus.pc
 }
 
+@nowarn
 object EmitDBus2Axi extends App {
   val p = new Parameters
   (new ChiselStage).execute(

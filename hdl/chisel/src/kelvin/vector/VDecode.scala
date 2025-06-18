@@ -21,6 +21,7 @@ import chisel3.util._
 import common.FifoIxO
 import _root_.circt.stage.{ChiselStage,FirtoolOption}
 import chisel3.stage.ChiselGeneratorAnnotation
+import scala.annotation.nowarn
 
 object VDecode {
   def apply(p: Parameters): VDecode = {
@@ -314,6 +315,7 @@ class SData extends Bundle {
   val data = UInt(32.W)
 }
 
+@nowarn
 object EmitVDecode extends App {
   val p = new Parameters
   (new ChiselStage).execute(

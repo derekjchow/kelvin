@@ -17,7 +17,7 @@ package kelvin.float
 import common._
 import chisel3._
 import chisel3.util._
-import kelvin.{FRegfile, RegfileWriteAddrIO, RegfileWriteDataIO, Parameters}
+import kelvin.{RegfileWriteDataIO, Parameters}
 
 object FloatCore {
     def apply(p: Parameters): FloatCore = {

@@ -21,6 +21,7 @@ import chisel3.util._
 import common._
 import _root_.circt.stage.{ChiselStage,FirtoolOption}
 import chisel3.stage.ChiselGeneratorAnnotation
+import scala.annotation.nowarn
 
 object VLdSt {
   def apply(p: Parameters): VLdSt = {
@@ -144,7 +145,6 @@ class VLdSt(p: Parameters) extends Module {
 
     val out = Wire(new VLdStCmdq)
     val vstq = in.op === e.vstq.U
-    val stride = in.f2(1)
 
     val fmaxvlb = Mux(in.op === e.vstq.U, maxvlb >> 2, maxvlb)
 
@@ -319,6 +319,7 @@ class VLdSt(p: Parameters) extends Module {
   io.active := q.io.active
 }
 
+@nowarn
 object EmitVLdSt extends App {
   val p = new Parameters
   (new ChiselStage).execute(

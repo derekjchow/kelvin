@@ -17,7 +17,6 @@ package kelvin
 import chisel3._
 import chisel3.util._
 import common._
-import _root_.circt.stage.ChiselStage
 
 class PredecodeOutput(p: Parameters) extends Bundle {
     val addr = UInt(p.fetchAddrBits.W)
@@ -188,7 +187,7 @@ class FetchControl(p: Parameters) extends Module {
       (!fetch.valid) -> MakeValid(false.B, 0.U(p.fetchAddrBits.W)),
     ))
 
-    pc := MuxCase(MakeValid(false.B, 0x0badd00d.U(p.fetchAddrBits.W)), Array(
+    pc := MuxCase(MakeValid(false.B, 0x0badd00d.U(p.fetchAddrBits.W)), Seq(
         io.iflush.valid -> MakeValid(true.B, io.iflush.bits),
         io.branch.valid -> MakeValid(true.B, io.branch.bits),
         branchLatch.valid -> MakeValid(true.B, branchLatch.bits),

@@ -14,9 +14,6 @@
 
 package kelvin
 
-import chisel3._
-import chisel3.util._
-
 class MatchaParameters(m: Seq[MemoryRegion] = Seq(),
         hartId: Int = 2) extends Parameters(m, hartId) {
 

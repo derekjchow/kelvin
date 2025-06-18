@@ -18,7 +18,6 @@ import chisel3._
 import chisel3.simulator.scalatest.ChiselSim
 import chisel3.util._
 import org.scalatest.freespec.AnyFreeSpec
-import chisel3.experimental.BundleLiterals._
 import scala.util.Random
 
 class GatherTester extends Module {
@@ -90,7 +89,7 @@ class ScatterSpec extends AnyFreeSpec with ChiselSim {
         }
 
         // Check results
-        var indicesSet = Array.fill(16)(false)
+        val indicesSet = Array.fill(16)(false)
         var nIndicesSet = 0
         for (i <- 0 until 16) {
           if (dut.io.indicesSelected(i).peek().litValue == 1) {

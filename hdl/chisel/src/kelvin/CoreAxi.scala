@@ -16,11 +16,9 @@ package kelvin
 
 import chisel3._
 import chisel3.util._
-import chisel3.util.experimental.decode._
 
 import bus._
 import common._
-import _root_.circt.stage.ChiselStage
 
 class CoreAxi(p: Parameters, coreModuleName: String) extends RawModule {
   override val desiredName = coreModuleName + "Axi"
@@ -53,8 +51,6 @@ class CoreAxi(p: Parameters, coreModuleName: String) extends RawModule {
 
   val global_reset = (!Mux(io.te, io.aresetn, rst_sync.io.rstn_o).asBool).asAsyncReset
   withClockAndReset(rst_sync.io.clk_o, global_reset) {
-    val lsb = log2Ceil(p.axi2DataBits / 8)
-
     // Build CSR
     val csr = Module(new CoreCSR(p))
     csr.io.internal := false.B
@@ -89,7 +85,6 @@ class CoreAxi(p: Parameters, coreModuleName: String) extends RawModule {
     val itcmSubEntryWidth = 8
     val itcmWidth = p.axi2DataBits
     val itcmEntries = itcmSizeBytes / (itcmWidth / 8)
-    val itcmSubEntries = itcmWidth / itcmSubEntryWidth
     val itcm = Module(new TCM128(itcmSizeBytes, itcmSubEntryWidth))
     dontTouch(itcm.io)
     val itcmWrapper = Module(new SRAM(p, log2Ceil(itcmEntries)))
@@ -121,7 +116,6 @@ class CoreAxi(p: Parameters, coreModuleName: String) extends RawModule {
     val dtcmWidth = p.axi2DataBits
     val dtcmEntries = dtcmSizeBytes / (dtcmWidth / 8)
     val dtcmSubEntryWidth = 8
-    val dtcmSubEntries = dtcmWidth / dtcmSubEntryWidth
     val dtcm = Module(new TCM128(dtcmSizeBytes, dtcmSubEntryWidth))
     dontTouch(dtcm.io)
     val dtcmWrapper = Module(new SRAM(p, log2Ceil(dtcmEntries)))

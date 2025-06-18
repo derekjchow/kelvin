@@ -67,7 +67,7 @@ object ConnectAxiWrite {
     axiWrite.resp.valid := writeDataReq.valid && writeAddrReq.valid
     val writeAddr = writeAddrReq.bits.addr
     val writeData = writeDataReq.bits.data
-    val writes = writeMap.mapValues(_.U(32.W) === writeAddr)
+    val writes = writeMap.view.mapValues(_.U(32.W) === writeAddr)
     axiWrite.resp.bits.id := writeAddrReq.bits.id
     axiWrite.resp.bits.resp := Mux(writes.values.toSeq.reduce(_||_),
                                    0.U(2.W), "b10".asUInt(2.W))

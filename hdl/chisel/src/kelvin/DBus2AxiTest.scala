@@ -83,11 +83,11 @@ class DBus2AxiSpec extends AnyFreeSpec with ChiselSim {
         val txnCount = if (misalignment != 0) { 2 } else { 1 }
         val txnSizes =
           if (crossLineBoundary) {
-            Array(belowLineBoundary, c.size - belowLineBoundary)
+            Seq(belowLineBoundary, c.size - belowLineBoundary)
           } else if (misalignment != 0) {
-            Array(c.size - misalignment, misalignment)
+            Seq(c.size - misalignment, misalignment)
           } else {
-            Array(c.size, 0)
+            Seq(c.size, 0)
           }
         val rotatedData = rotateLeft(c.data, 8 * c.addr, p.axi2DataBits)
 

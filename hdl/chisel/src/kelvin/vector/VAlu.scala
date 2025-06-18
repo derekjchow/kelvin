@@ -21,6 +21,7 @@ import chisel3.util._
 import common._
 import _root_.circt.stage.{ChiselStage,FirtoolOption}
 import chisel3.stage.ChiselGeneratorAnnotation
+import scala.annotation.nowarn
 
 object VAlu {
   def apply(p: Parameters): VAlu = {
@@ -358,6 +359,7 @@ class VAlu(p: Parameters) extends Module {
   io.active := q0.io.active | q1.io.active
 }
 
+@nowarn
 object EmitVAlu extends App {
   val p = new Parameters
   (new ChiselStage).execute(

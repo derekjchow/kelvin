@@ -21,6 +21,7 @@ import chisel3.util._
 import common._
 import _root_.circt.stage.{ChiselStage,FirtoolOption}
 import chisel3.stage.ChiselGeneratorAnnotation
+import scala.annotation.nowarn
 
 // VAluInt is foremost an ML depthwise and activiation unit with pipelining
 // behaviors optimized to this functionality. All operations are pipelined with
@@ -647,7 +648,6 @@ class VAluInt(p: Parameters, aluid: Int) extends Module {
     assert(sel == 0 || sel == 1)
 
     val cnt = a.getWidth / size
-    val h = a.getWidth / 2
     val evnodd = Wire(Vec(cnt, UInt(size.W)))
 
     for (i <- 0 until cnt / 2) {
@@ -877,7 +877,6 @@ class VAluIntLane extends Module {
     val bw = b
     val cw = c
     val dw = d
-    val ew = e
     val fw = f
 
     val acc_a = MuxOR(io.op.acc, aw)
@@ -1506,6 +1505,7 @@ class VAluIntLane extends Module {
   io.write(1).data := Accum(waccvalid1, wdata1, waccm1)
 }
 
+@nowarn
 object EmitVAluInt extends App {
   val p = new Parameters
   (new ChiselStage).execute(

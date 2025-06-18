@@ -21,6 +21,7 @@ import bus.AxiMasterIO
 import common._
 import _root_.circt.stage.{ChiselStage,FirtoolOption}
 import chisel3.stage.ChiselGeneratorAnnotation
+import scala.annotation.nowarn
 
 object L1DCache {
   def apply(p: Parameters): L1DCache = {
@@ -706,6 +707,7 @@ class L1DCacheBank(p: Parameters) extends Module {
   assert(PopCount(busread +& buswrite +& axiread) <= 1.U)
 }
 
+@nowarn
 object EmitL1DCache extends App {
   val p = new Parameters
   (new ChiselStage).execute(
@@ -714,6 +716,7 @@ object EmitL1DCache extends App {
   )
 }
 
+@nowarn
 object EmitL1DCacheBank extends App {
   val p = new Parameters
   (new ChiselStage).execute(

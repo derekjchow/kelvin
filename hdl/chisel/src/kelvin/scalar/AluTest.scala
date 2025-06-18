@@ -16,11 +16,9 @@ package kelvin
 
 import chisel3._
 import chisel3.simulator.scalatest.ChiselSim
-import chisel3.experimental.BundleLiterals._
-import chisel3.util._
 import org.scalatest.freespec.AnyFreeSpec
 
-import common.{AssertPartial, ProcessTestResults}
+import common.{ProcessTestResults}
 
 
 class AluSpec extends AnyFreeSpec with ChiselSim {
@@ -55,7 +53,7 @@ class AluSpec extends AnyFreeSpec with ChiselSim {
       }
       good1 & good2
     }
-    if (!ProcessTestResults(good, printfn = info(_))) fail
+    if (!ProcessTestResults(good, printfn = info(_))) fail()
   }
 
   "Sign Extend Byte" in {
@@ -193,7 +191,7 @@ class AluSpec extends AnyFreeSpec with ChiselSim {
       dut.clock.step()
       (dut.io.rd.valid.peek().litValue == 1) && (dut.io.rd.bits.data.peek().litValue == exp_rd) && (dut.io.rd.bits.addr.peek().litValue == addr.litValue)
     }
-    if (!ProcessTestResults(good, printfn = info(_))) fail
+    if (!ProcessTestResults(good, printfn = info(_))) fail()
   }
 
   "XNOR(Not XOR)" in {

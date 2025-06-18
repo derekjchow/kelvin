@@ -217,7 +217,7 @@ class Bru(p: Parameters, first: Boolean) extends Module {
     io.csr.get.in.mepc.valid :=
       (stateReg.valid && (op === BruOp.ECALL)) ||
       io.fault_manager.get.valid
-    io.csr.get.in.mepc.bits := MuxCase(stateReg.bits.pcEx, Array(
+    io.csr.get.in.mepc.bits := MuxCase(stateReg.bits.pcEx, Seq(
       io.fault_manager.get.valid -> io.fault_manager.get.bits.mepc,
     ))
 
@@ -241,7 +241,7 @@ class Bru(p: Parameters, first: Boolean) extends Module {
 
     io.csr.get.in.mtval.valid :=
       (stateReg.valid && usageFault) || io.fault_manager.get.valid
-    io.csr.get.in.mtval.bits := MuxCase(stateReg.bits.pcEx, Array(
+    io.csr.get.in.mtval.bits := MuxCase(stateReg.bits.pcEx, Seq(
       io.fault_manager.get.valid -> io.fault_manager.get.bits.mtval,
     ))
 

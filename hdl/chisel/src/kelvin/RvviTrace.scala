@@ -203,7 +203,6 @@ class RvviTrace(p: Parameters) extends Module {
             ///////////////////////////////////
             // TODO(atv): This is just generally not tracked.
             ///////////////////////////////////
-            val v_wb_valid = false.B
             v_wdata(i)(j) := 0.U.asTypeOf(rvviTraceBlackBox.io.v_wdata_i(i)(j))
             v_wb(i)(j) := false.B
         }
@@ -212,7 +211,6 @@ class RvviTrace(p: Parameters) extends Module {
         // TODO(atv): This is just generally not tracked.
         ///////////////////////////////////
         for (j <- 0 until 4096) {
-            val csr_wb_valid = false.B
             csr(i)(j) := 0.U.asTypeOf(csr(i)(j))
             csr_wb(i)(j) := false.B
         }

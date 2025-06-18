@@ -68,10 +68,8 @@ object Fma {
     state.significand := cmd.ina.significand() * cmd.inb.significand()
     val product_exponent = (cmd.ina.exponent +& cmd.inb.exponent).zext - 127.S
 
-    // Preshift c for addition.
-    val sum_shift = cmd.inc.exponent.zext -& product_exponent
     // Right pad c significand to match product, no propagation delay.
-    val padded_c_significand = cmd.inc.significand << 23.U
+    val padded_c_significand = cmd.inc.significand() << 23.U
     // Compute shift, saturate and take 6 bits to barrel shift.
     // We saturate to 6 bits max as ceil(log2(48)) = 5.
     val raw_right_shift = product_exponent -& cmd.inc.exponent.zext
@@ -153,7 +151,7 @@ object Fma {
 
     MuxCase(
         Fp32(state.sign, exponent(7, 0), mantissa),
-        Array(
+        Seq(
             nan -> Fp32.NaN(),
             inf -> Fp32.Inf(state.sign),
             zero -> Fp32.Zero(state.sign)

@@ -21,6 +21,7 @@ import chisel3.util._
 import common._
 import _root_.circt.stage.{ChiselStage,FirtoolOption}
 import chisel3.stage.ChiselGeneratorAnnotation
+import scala.annotation.nowarn
 
 object VRegfile {
   def apply(p: Parameters): VRegfile = {
@@ -446,6 +447,7 @@ class VRegfile(p: Parameters) extends Module {
   io.vrfsb.data := vrfsb
 }
 
+@nowarn
 object EmitVRegfile extends App {
   val p = new Parameters
   (new ChiselStage).execute(

@@ -20,6 +20,7 @@ import chisel3._
 import chisel3.util._
 import _root_.circt.stage.{ChiselStage,FirtoolOption}
 import chisel3.stage.ChiselGeneratorAnnotation
+import scala.annotation.nowarn
 
 class VRegfileSegment(p: Parameters) extends Module {
   val readPorts = p.vectorReadPorts
@@ -115,6 +116,7 @@ class VRegfileSegment(p: Parameters) extends Module {
   }
 }
 
+@nowarn
 object EmitVRegfileSegment extends App {
   val p = new Parameters
   (new ChiselStage).execute(

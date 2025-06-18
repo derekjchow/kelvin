@@ -21,6 +21,7 @@ import chisel3.util._
 import common._
 import _root_.circt.stage.{ChiselStage,FirtoolOption}
 import chisel3.stage.ChiselGeneratorAnnotation
+import scala.annotation.nowarn
 
 // A queue of commands, reducing VDecodeBits to just the necessary fields.
 // <fin> retains just the needed fields or modifications.
@@ -177,9 +178,13 @@ object EmitVCmdq extends App {
     active
   }
 
-  val p = kelvin.Parameters()
-  (new ChiselStage).execute(
-    Array("--target", "systemverilog") ++ args,
-    Seq(ChiselGeneratorAnnotation(() => new VCmdq(p, 8, new VCmdqTestBundle, VCmdqTestFin, VCmdqTestFout, VCmdqTestFactive))) ++ Seq(FirtoolOption("-enable-layers=Verification"))
-  )
+  @nowarn
+  def emit() = {
+    val p = kelvin.Parameters()
+    (new ChiselStage).execute(
+      Array("--target", "systemverilog") ++ args,
+      Seq(ChiselGeneratorAnnotation(() => new VCmdq(p, 8, new VCmdqTestBundle, VCmdqTestFin, VCmdqTestFout, VCmdqTestFactive))) ++ Seq(FirtoolOption("-enable-layers=Verification"))
+    )
+  }
+  emit()
 }

@@ -16,9 +16,6 @@
 
 package kelvin
 
-import chisel3._
-import chisel3.util._
-
 case class VDecodeOp() {
   // Format0
   val vadd = 0

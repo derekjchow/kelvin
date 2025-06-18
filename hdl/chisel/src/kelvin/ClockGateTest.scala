@@ -3,10 +3,8 @@ package kelvin
 import chisel3._
 import chisel3.simulator.scalatest.ChiselSim
 import chisel3.simulator.scalatest.HasCliOptions
-import svsim.CommonSettingsModifications
 import svsim.CommonCompilationSettings
 import svsim.CommonCompilationSettings.VerilogPreprocessorDefine
-import chisel3.util._
 import org.scalatest.freespec.AnyFreeSpec
 
 class ClockGateTester extends Module with RequireAsyncReset {

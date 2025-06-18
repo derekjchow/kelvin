@@ -16,7 +16,6 @@ package kelvin
 
 import chisel3._
 import chisel3.util._
-import scala.math.{ceil}
 
 class Sram_Nx128(tcmEntries: Int) extends Module {
   override val desiredName = "SRAM_" + tcmEntries + "x128"

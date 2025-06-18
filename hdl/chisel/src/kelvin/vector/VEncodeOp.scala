@@ -16,8 +16,7 @@
 
 package kelvin
 
-import chisel3._
-import chisel3.util._
+import chisel3.util.log2Ceil
 
 // Opcode list will maintain unique IDs even if not populated in command queue.
 case class VEncodeOp() {

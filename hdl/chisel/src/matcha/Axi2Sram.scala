@@ -19,7 +19,6 @@ import chisel3.util._
 
 import bus._
 import common._
-import kelvin._
 import _root_.circt.stage.ChiselStage
 
 object Axi2Sram {

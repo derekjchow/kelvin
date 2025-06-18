@@ -17,7 +17,6 @@ package kelvin.rvv
 import chisel3._
 import chisel3.util._
 import kelvin.{Parameters,RegfileReadDataIO,RegfileWriteDataIO}
-import common.{MakeInvalid}
 
 object RvvCore {
   def apply(p: Parameters): RvvCoreShim = {

@@ -16,7 +16,6 @@ package kelvin
 
 import chisel3._
 import chisel3.simulator.scalatest.ChiselSim
-import chisel3.util._
 import org.scalatest.freespec.AnyFreeSpec
 
 class FabricArbiterSpec extends AnyFreeSpec with ChiselSim {

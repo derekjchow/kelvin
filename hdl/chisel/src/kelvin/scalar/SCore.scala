@@ -132,7 +132,7 @@ class SCore(p: Parameters) extends Module {
     fault_manager.io.in.undef(i).inst := fetch.io.inst.lanes(i).bits.inst
     fault_manager.io.in.jal(i).target := dispatch.io.bruTarget(i)
   }
-  fault_manager.io.in.memory_fault := MuxCase(MakeInvalid(new FaultInfo(p)), Array(
+  fault_manager.io.in.memory_fault := MuxCase(MakeInvalid(new FaultInfo(p)), Seq(
     io.ibus.fault.valid -> io.ibus.fault,
     lsu.io.fault.valid -> lsu.io.fault,
   ))

@@ -22,7 +22,7 @@ class Fp32 extends Bundle {
   val exponent = UInt(8.W)
   val sign     = Bool()
 
-  def asWord(): UInt = {
+  def asWord: UInt = {
     Cat(sign, exponent, mantissa)
   }
 
@@ -89,7 +89,6 @@ object Fp32 {
     if (intLength >= 25) {
       preround := (absInt << leadingZeros)(intLength - 1, intLength - 25)
     } else {
-      val shift = (25 - intLength).U + leadingZeros
       preround := (absInt << leadingZeros)(24, 0)
     }
 

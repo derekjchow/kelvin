@@ -15,7 +15,6 @@
 package common
 
 import chisel3._
-import chisel3.util._
 
 /** Effectively "reinterpret_casts" a float32 into a BigInt. BigInt is used
   * because there's no easy uint32 type in scala, but BigInt works well enough
@@ -41,7 +40,7 @@ object Float2BigInt {
 object Float2Bits {
   def apply(f: Float): (Boolean, Int, Int) = {
     val abs = f.abs
-    var int = java.lang.Float.floatToIntBits(abs)
+    val int = java.lang.Float.floatToIntBits(abs)
 
     val sign: Boolean = (f < 0)
     val exponent: Int = int >> 23

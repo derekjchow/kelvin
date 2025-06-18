@@ -16,10 +16,7 @@ package kelvin
 
 import chisel3._
 import chisel3.simulator.scalatest.ChiselSim
-import chisel3.util._
-import common._
 import org.scalatest.freespec.AnyFreeSpec
-import chisel3.experimental.BundleLiterals._
 
 
 class FetchControlSpec extends AnyFreeSpec with ChiselSim {

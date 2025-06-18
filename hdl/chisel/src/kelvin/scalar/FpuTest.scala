@@ -14,17 +14,13 @@
 
 package kelvin
 
-import chisel3._
 import chisel3.simulator.scalatest.ChiselSim
-import chisel3.util._
 import org.scalatest.freespec.AnyFreeSpec
-import chisel3.experimental.BundleLiterals._
-import common.Fp32
 
 class FpuSpec extends AnyFreeSpec with ChiselSim {
   def Float2Bits(x: Float): (Boolean, Int, Int) = {
     val abs = x.abs
-    var int = java.lang.Float.floatToIntBits(abs)
+    val int = java.lang.Float.floatToIntBits(abs)
 
     val sign: Boolean = (x < 0)
     val exponent: Int = int >> 23

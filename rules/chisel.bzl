@@ -25,8 +25,11 @@ SCALA_COPTS = [
     "-feature",
     "-language:reflectiveCalls",
     "-unchecked",
+    "-deprecation",
     "-Xcheckinit",
     "-Xlint:infer-any",
+    "-Xlint:unused",
+    "-Xfatal-warnings",
 ]
 
 def chisel_library(

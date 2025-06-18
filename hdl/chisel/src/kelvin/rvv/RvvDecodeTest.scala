@@ -16,12 +16,11 @@ package kelvin.rvv
 
 import chisel3._
 import chisel3.simulator.scalatest.ChiselSim
-import chisel3.experimental.BundleLiterals._
 import chisel3.util._
 import org.scalatest.ParallelTestExecution
 import org.scalatest.freespec.AnyFreeSpec
 
-import common.{AssertPartial, ProcessTestResults}
+import common.{ProcessTestResults}
 
 
 class RvvS1DecodeInstructionSpec extends AnyFreeSpec with ChiselSim with ParallelTestExecution {
@@ -60,7 +59,7 @@ class RvvS1DecodeInstructionSpec extends AnyFreeSpec with ChiselSim with Paralle
       dut.io.inst.poke(inst)
       ((dut.io.out_valid.peek().litValue == 1) && (dut.io.out_op.peek().litValue == op.litValue))
     }
-    if (!ProcessTestResults(good, printfn = info(_))) fail
+    if (!ProcessTestResults(good, printfn = info(_))) fail()
   }
 
   private def test_decode_compressed(
@@ -71,7 +70,7 @@ class RvvS1DecodeInstructionSpec extends AnyFreeSpec with ChiselSim with Paralle
       dut.io.inst.poke(inst)
       ((dut.io.out_valid.peek().litValue == 1) && (dut.io.out_op.peek().litValue == op.litValue))
     }
-    if (!ProcessTestResults(good, printfn = info(_))) fail
+    if (!ProcessTestResults(good, printfn = info(_))) fail()
   }
 
   "Doesn't decode float load/store" in {
