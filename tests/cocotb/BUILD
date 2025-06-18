@@ -37,7 +37,6 @@ VERILATOR_BUILD_ARGS = [
     "-Wno-SIDEEFFECT",
     "-Wno-MULTIDRIVEN",
     "-Wno-UNOPTFLAT",
-    "-Wno-CASEOVERLAP",
     # Warnings that we disable for fpnew
     "-Wno-ASCRANGE",
     "-Wno-WIDTHEXPAND",

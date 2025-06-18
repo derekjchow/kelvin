@@ -565,7 +565,6 @@ template_rule(
         "-Wno-SIDEEFFECT",
         "-Wno-MULTIDRIVEN",
         "-Wno-UNOPTFLAT",
-        "-Wno-CASEOVERLAP",
         # FPNEW
         "-Wno-ASCRANGE",
         "-Wno-WIDTHEXPAND",
