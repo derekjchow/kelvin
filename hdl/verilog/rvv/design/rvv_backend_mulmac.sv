@@ -37,9 +37,9 @@ input logic                   rs2ex_fifo_1left_to_empty;
 output logic [`NUM_MUL-1:0]   ex2rs_fifo_pop;
 
 //MUL_EX to ROB
-output  logic       [`NUM_ALU-1:0] ex2rob_valid;
-output  PU2ROB_t    [`NUM_ALU-1:0] ex2rob_data;
-input   logic       [`NUM_ALU-1:0] rob2ex_ready;
+output  logic       [`NUM_MUL-1:0] ex2rob_valid;
+output  PU2ROB_t    [`NUM_MUL-1:0] ex2rob_data;
+input   logic       [`NUM_MUL-1:0] rob2ex_ready;
 
 // Wires & Regs
 logic [`NUM_MUL-1:0]          rs2mac_uop_valid;
