@@ -255,3 +255,33 @@ verilator_cocotb_test(
     ],
     size = "large",
 )
+
+verilator_cocotb_test(
+    name = "rvv_arithmetic_cocotb_test",
+    hdl_toplevel = "RvvCoreMiniAxi",
+    verilog_sources = [
+        "//hdl/chisel/src/kelvin:rvv_core_mini_axi_cc_library_verilog"
+    ],
+    build_args = VERILATOR_BUILD_ARGS,
+    defines = {
+        "USE_GENERIC" : "",
+    },
+    waves = True,
+    seed = "42",
+    test_module = ["rvv_arithmetic_cocotb_test.py"],
+    deps = [
+        "//kelvin_test_utils:sim_test_fixture",
+    ],
+    data = [
+        '//tests/cocotb/rvv/arithmetics:rvv_add_i8_m1.elf',
+        '//tests/cocotb/rvv/arithmetics:rvv_add_i16_m1.elf',
+        '//tests/cocotb/rvv/arithmetics:rvv_add_i32_m1.elf',
+        '//tests/cocotb/rvv/arithmetics:rvv_sub_i8_m1.elf',
+        '//tests/cocotb/rvv/arithmetics:rvv_sub_i16_m1.elf',
+        '//tests/cocotb/rvv/arithmetics:rvv_sub_i32_m1.elf',
+        '//tests/cocotb/rvv/arithmetics:rvv_mul_i8_m1.elf',
+        '//tests/cocotb/rvv/arithmetics:rvv_mul_i16_m1.elf',
+        '//tests/cocotb/rvv/arithmetics:rvv_mul_i32_m1.elf',
+    ],
+    size = "large",
+)
