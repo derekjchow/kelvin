@@ -99,52 +99,14 @@ module RvvCore #(parameter N = 4,
       .config_state(config_state)
   );
 
-  logic [$clog2(N+1)-1:0] frontend_cmd_valid_count;
-  always_comb begin
-    frontend_cmd_valid_count = 0;
-    for (int i = 0; i < N; i++) begin
-      frontend_cmd_valid_count = frontend_cmd_valid_count + frontend_cmd_valid[i];
-    end
-  end
-
-  RVVCmd [N-1:0] cmd_buffer_data;
-  logic [$clog2(N+1)-1:0] cmd_buffer_ready_out;
-  logic [$clog2(16+1)-1:0] cmd_buffer_fill_level;
-  MultiFifo#(.T(RVVCmd),
-             .N(N),
-             .MAX_CAPACITY(CMD_BUFFER_MAX_CAPACITY)) cmd_buffer(
-      .clk(clk),
-      .rstn(rstn),
-      .valid_in(frontend_cmd_valid_count),
-      .data_in(frontend_cmd_data),
-      .fill_level(cmd_buffer_fill_level),
-      .data_out(cmd_buffer_data),
-      .ready_out(cmd_buffer_ready_out)
-  );
-
+  // Backpressure from backend fifo
+  logic   [$clog2(`CQ_DEPTH):0] remaining_count_cq2rvs;
   // Back-pressure frontend
-  logic [$clog2(16+1)-1:0] cmd_buffer_empty_count;
-  assign cmd_buffer_empty_count =
-      (CMD_BUFFER_MAX_CAPACITY - N) - cmd_buffer_fill_level;
   always_comb begin
-    if (cmd_buffer_empty_count > 2*N) begin
+    if (remaining_count_cq2rvs > 2*N) begin
       queue_capacity = 2*N;
     end else begin
-      queue_capacity = cmd_buffer_empty_count;
-    end
-  end
-
-  // Convert multi-fifo to rvv_backend interface
-  logic   [`ISSUE_LANE-1:0] insts_valid_rvs2cq;
-  logic   [`ISSUE_LANE-1:0] insts_ready_cq2rvs;
-  always_comb begin
-    cmd_buffer_ready_out = 0;
-    for (int i = 0; i < `ISSUE_LANE; i++) begin
-      cmd_buffer_ready_out = cmd_buffer_ready_out + insts_ready_cq2rvs[i];
-      insts_valid_rvs2cq[i] = i < cmd_buffer_fill_level;
-    end
-    if (cmd_buffer_ready_out > cmd_buffer_fill_level) begin
-      cmd_buffer_ready_out = cmd_buffer_fill_level;
+      queue_capacity = remaining_count_cq2rvs;
     end
   end
 
@@ -216,13 +178,14 @@ module RvvCore #(parameter N = 4,
   end
 
   logic rvv_idle;
-
+  logic   [`ISSUE_LANE-1:0] insts_ready_cq2rvs;
   rvv_backend backend(
       .clk(clk),
       .rst_n(rstn),
-      .insts_valid_rvs2cq(insts_valid_rvs2cq),
-      .insts_rvs2cq(cmd_buffer_data),
+      .insts_valid_rvs2cq(frontend_cmd_valid),
+      .insts_rvs2cq(frontend_cmd_data),
       .insts_ready_cq2rvs(insts_ready_cq2rvs),
+      .remaining_count_cq2rvs(remaining_count_cq2rvs),
 
       .uop_lsu_valid_rvv2lsu(uop_lsu_valid_rvv2lsu),
       .uop_lsu_rvv2lsu(uop_lsu_rvv2lsu),

@@ -13,6 +13,7 @@ module rvv_backend
     insts_valid_rvs2cq,
     insts_rvs2cq,
     insts_ready_cq2rvs,
+    remaining_count_cq2rvs,
 
     uop_lsu_valid_rvv2lsu,
     uop_lsu_rvv2lsu,
@@ -47,6 +48,7 @@ module rvv_backend
     input   logic             [`ISSUE_LANE-1:0]       insts_valid_rvs2cq;
     input   RVVCmd            [`ISSUE_LANE-1:0]       insts_rvs2cq;
     output  logic             [`ISSUE_LANE-1:0]       insts_ready_cq2rvs;  
+    output  logic             [$clog2(`CQ_DEPTH):0]   remaining_count_cq2rvs;
 
 // load/store unit interface
   // RVV send LSU uop to RVS
@@ -180,6 +182,7 @@ module rvv_backend
     logic                                 cq_full;
     logic        [`ISSUE_LANE-1:0]        cq_almost_full;
     logic        [`ISSUE_LANE-1:0]        insts_ready;
+    logic        [$clog2(`CQ_DEPTH):0]    used_count_cq;
   // Command queue to Decode
     RVVCmd       [`NUM_DE_INST-1:0]       inst_pkg_cq2de;
     logic                                 fifo_empty_cq2de;
@@ -354,7 +357,7 @@ module rvv_backend
         .fifo_data    (),
         .wptr         (),
         .rptr         (),
-        .entry_count  ()
+        .entry_count  (used_count_cq)
     );
 
     assign insts_ready[0] = ~cq_full;
@@ -365,6 +368,9 @@ module rvv_backend
     endgenerate
 
     assign insts_ready_cq2rvs = is_trapping ? 'b0 : insts_ready;
+
+    // output the remaining count in CQ
+    assign remaining_count_cq2rvs = `CQ_DEPTH - used_count_cq;
 
   `ifdef ASSERT_ON
     PushToCMDQueue: `rvv_expect((insts_valid_rvs2cq & insts_ready_cq2rvs) inside {4'b1111, 4'b0111, 4'b0011, 4'b0001, 4'b0000})
