@@ -355,14 +355,17 @@ class Csr(p: Parameters) extends Module {
   val minstret_th = Mux(minstrethEn, wdata, minstret(63,32))
   val minstret_tl = Mux(minstretEn, wdata, minstret(31,0))
   val minstret_t = Cat(minstret_th, minstret_tl)
-  minstret := Mux(req.valid, minstret_t, minstret) +
-    io.counters.rfwriteCount +
+  val minstretThisCycle = io.counters.rfwriteCount +
     io.counters.storeCount +
     io.counters.branchCount +
     (if (p.enableVector) {
       io.counters.vrfwriteCount.get +
       io.counters.vstoreCount.get
     } else { 0.U })
+  minstret := MuxCase(minstret, Seq(
+    req.valid -> minstret_t,
+    (minstretThisCycle =/= 0.U) -> (minstret + minstretThisCycle),
+  ))
 
   when (io.bru.in.mode.valid) {
     mode := io.bru.in.mode.bits

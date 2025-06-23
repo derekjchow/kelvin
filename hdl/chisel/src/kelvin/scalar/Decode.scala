@@ -704,7 +704,7 @@ class DispatchV2(p: Parameters) extends Dispatch(p) {
     // SB,SH,SW   0100011
     val storeSelect = d.inst(6,3) === 4.U && d.inst(1,0) === 3.U
     io.busRead(i).immen := !d.flushat
-    io.busRead(i).immed := Mux(d.rvv.get.valid,
+    io.busRead(i).immed := Mux(d.rvv.map(_.valid).getOrElse(false.B),
         0.U,
         Cat(d.imm12(31,5), Mux(storeSelect, d.immst(4,0), d.imm12(4,0))))
   }

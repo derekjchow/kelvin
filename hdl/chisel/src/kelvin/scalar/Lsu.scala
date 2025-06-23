@@ -370,7 +370,7 @@ object LsuSlot {
     // Compute addrs
     result.addrs := Mux(
         uop.op.isOneOf(LsuOp.VLOAD_STRIDED, LsuOp.VSTORE_STRIDED),
-        computeStridedAddrs(bytesPerSlot, uop.addr, uop.data, uop.elemWidth.get),
+        computeStridedAddrs(bytesPerSlot, uop.addr, uop.data, uop.elemWidth.getOrElse(0.U(3.W))),
         VecInit((0 until bytesPerSlot).map(i => uop.addr + i.U)))
 
     result.data(0) := uop.data(7, 0)
@@ -828,10 +828,15 @@ class LsuV2(p: Parameters) extends Lsu(p) {
   ))
 
   // TODO(derekjchow): Finish up store path
-  io.rvv2lsu.get(0).ready := slot.pendingVector
-  io.rvv2lsu.get(1).ready := false.B
-  val vectorUpdatedSlot = slot.vectorUpdate(
-      io.rvv2lsu.get(0).fire, io.rvv2lsu.get(0).bits)
+  val vectorUpdatedSlot =
+  if (p.enableRvv) {
+    io.rvv2lsu.get(0).ready := slot.pendingVector
+    io.rvv2lsu.get(1).ready := false.B
+    slot.vectorUpdate(
+        io.rvv2lsu.get(0).fire, io.rvv2lsu.get(0).bits)
+  } else {
+    slot.vectorUpdate(false.B, 0.U.asTypeOf(new Rvv2Lsu(p)))
+  }
 
   // First stage of load update: Update results based on bus read
   val loadUpdatedSlot = vectorUpdatedSlot.loadUpdate(
@@ -867,7 +872,7 @@ class LsuV2(p: Parameters) extends Lsu(p) {
 
   // Second stage of load update: Update results based on regfile writeback
   val loadUpdate2Slot = loadUpdatedSlot.writebackUpdate(
-      io.rd.valid || io.rd_flt.valid || io.lsu2rvv.get(0).fire)
+      io.rd.valid || io.rd_flt.valid || (if (p.enableRvv) { io.lsu2rvv.get(0).fire } else { false.B }))
 
   val targetLine = loadUpdate2Slot.targetLineAddress(
       MakeValid(readFired.valid, readFired.bits.lineAddr))
@@ -918,11 +923,13 @@ class LsuV2(p: Parameters) extends Lsu(p) {
   assert(PopCount(Seq(ibusFired, dbusFired, ebusFired)) <= 1.U)
   val slotFired = ebusFired || dbusFired || ibusFired
 
-  readFired := MuxCase(MakeInvalid(new LsuRead(32 - nextSlot.elemBits)), Seq(
-    (ibusFired) -> MakeValid(true.B, LsuRead(LsuBus.IBUS, targetLine.bits)),
-    (dbusFired && !io.dbus.write) -> MakeValid(true.B, LsuRead(LsuBus.DBUS, targetLine.bits)),
-    (ebusFired && !io.ebus.dbus.write) -> MakeValid(true.B, LsuRead(LsuBus.EXTERNAL, targetLine.bits)),
-  ))
+  val readFiredValid = ibusFired || (dbusFired && !io.dbus.write) || (ebusFired && !io.ebus.dbus.write)
+  readFired := MakeValid(readFiredValid,
+    MuxCase(readFired.bits, Seq(
+      (ibusFired) -> LsuRead(LsuBus.IBUS, targetLine.bits),
+      (dbusFired && !io.dbus.write) -> LsuRead(LsuBus.DBUS, targetLine.bits),
+      (ebusFired && !io.ebus.dbus.write) -> LsuRead(LsuBus.EXTERNAL, targetLine.bits),
+    )))
 
   // Fault handling
   val ibusFault = Wire(Valid(new FaultInfo(p)))

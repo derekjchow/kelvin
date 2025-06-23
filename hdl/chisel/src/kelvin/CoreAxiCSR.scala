@@ -18,7 +18,6 @@ import chisel3._
 import chisel3.util._
 
 import bus.AxiMasterIO
-import common._
 
 class CoreCSR(p: Parameters) extends Module {
   val io = IO(new Bundle {
@@ -57,8 +56,7 @@ class CoreCSR(p: Parameters) extends Module {
     ) ++ ((0 until p.csrOutCount).map(x => ((0x100 + 4*x).U -> true.B))))
 
   // Delay reads by one cycle
-  val readDataNext = RegInit(MakeValid(false.B, 0.U(p.axi2DataBits.W)))
-  readDataNext := MakeValid(readDataValid, readData)
+  val readDataNext = Pipe(readDataValid, readData, 1)
   io.fabric.readData := readDataNext
 
   io.reset := resetReg(0)

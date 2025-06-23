@@ -139,8 +139,9 @@ class Bru(p: Parameters, first: Boolean) extends Module {
       io.req.bits.fwd -> pc4De,
       ((io.req.bits.op === BruOp.JALR)) -> (io.target.data & "xFFFFFFFE".U),
   ))
-  stateReg.valid := io.req.valid || fault_manager_valid
-  stateReg.bits := nextState
+  val stateRegValid = io.req.valid || fault_manager_valid
+  stateReg.valid := stateRegValid
+  stateReg.bits := Mux(stateRegValid, nextState, stateReg.bits)
 
   // This mux sits on the critical path.
   // val rs1 = Mux(readRs, io.rs1.data, 0.U)

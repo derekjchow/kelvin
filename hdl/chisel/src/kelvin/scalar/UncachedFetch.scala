@@ -73,7 +73,7 @@ class Fetcher(p: Parameters) extends Module {
   io.ctrl.ready := io.ibus.ready
 
   val ibusFired = io.ctrl.valid && io.ibus.ready
-  ibusCmd := MakeValid(ibusFired, Mux(ibusFired, io.ctrl.bits, 0.U))
+  ibusCmd := MakeValid(ibusFired, Mux(ibusFired, io.ctrl.bits, ibusCmd.bits))
   io.ibusFired := ibusFired
 }
 

@@ -402,8 +402,8 @@ class SCore(p: Parameters) extends Module {
   debugEn := Cat(fetch.io.inst.lanes.map(x => x.valid && x.ready && !branchTaken))
 
   for (i <- 0 until p.instructionLanes) {
-    debugAddr(i) := fetch.io.inst.lanes(i).bits.addr
-    debugInst(i) := fetch.io.inst.lanes(i).bits.inst
+    debugAddr(i) := Mux(debugEn(i), fetch.io.inst.lanes(i).bits.addr, debugAddr(i))
+    debugInst(i) := Mux(debugEn(i), fetch.io.inst.lanes(i).bits.inst, debugInst(i))
   }
 
   io.debug.en := debugEn & ~debugBrch
