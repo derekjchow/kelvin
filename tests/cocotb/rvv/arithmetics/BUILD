@@ -17,114 +17,31 @@ load("//rules:utils.bzl", "template_rule")
 load(":rvv_arithmetic.bzl", "rvv_arithmetic_test")
 package(default_visibility = ["//visibility:public"])
 
+MATH_OPS = ["add", "sub", "mul"]
+DTYPES = [("8", "16"), ("16","8"), ("32","4")]
+OP_TYPE_PAIRS = [(op, dtype, vl) for op in MATH_OPS for (dtype, vl) in DTYPES]
 
 template_rule(
     rvv_arithmetic_test,
     {
-        "template_add_i8_m1": {
-            "dtype": "int8",
-            "sew": "8",
-            "num_operands": "16",
-            "math_op": "add",
+        "template_{}_i{}_m1".format(op, dtype): {
+            "dtype": "int{}".format(dtype),
+            "sew": dtype,
+            "num_operands": vl,
+            "math_op": op,
             "in_data_size": "16",
             "out_data_size": "16",
-        },
-        "template_add_i16_m1": {
-            "dtype": "int16",
-            "sew": "16",
-            "num_operands": "8",
-            "math_op": "add",
-            "in_data_size": "16",
-            "out_data_size": "16",
-        },
-        "template_add_i32_m1": {
-            "dtype": "int32",
-            "sew": "32",
-            "num_operands": "4",
-            "math_op": "add",
-            "in_data_size": "16",
-            "out_data_size": "16",
-        },
-        "template_sub_i8_m1": {
-            "dtype": "int8",
-            "sew": "8",
-            "num_operands": "16",
-            "math_op": "sub",
-            "in_data_size": "16",
-            "out_data_size": "16",
-        },
-        "template_sub_i16_m1": {
-            "dtype": "int16",
-            "sew": "16",
-            "num_operands": "8",
-            "math_op": "sub",
-            "in_data_size": "16",
-            "out_data_size": "16",
-        },
-        "template_sub_i32_m1": {
-            "dtype": "int32",
-            "sew": "32",
-            "num_operands": "4",
-            "math_op": "sub",
-            "in_data_size": "16",
-            "out_data_size": "16",
-        },
-        "template_mul_i8_m1": {
-            "dtype": "int8",
-            "sew": "8",
-            "num_operands": "16",
-            "math_op": "mul",
-            "in_data_size": "16",
-            "out_data_size": "16",
-        },
-        "template_mul_i16_m1": {
-            "dtype": "int16",
-            "sew": "16",
-            "num_operands": "8",
-            "math_op": "mul",
-            "in_data_size": "16",
-            "out_data_size": "16",
-        },
-        "template_mul_i32_m1": {
-            "dtype": "int32",
-            "sew": "32",
-            "num_operands": "4",
-            "math_op": "mul",
-            "in_data_size": "16",
-            "out_data_size": "16",
-        },
+        }
+        for (op, dtype, vl) in OP_TYPE_PAIRS
     }
 )
 
 template_rule(
     kelvin_v2_binary,
     {
-        "rvv_add_i8_m1": {
-            "srcs": ["template_add_i8_m1.cc"],
-        },
-        "rvv_add_i16_m1": {
-            "srcs": ["template_add_i16_m1.cc"],
-        },
-        "rvv_add_i32_m1": {
-            "srcs": ["template_add_i32_m1.cc"],
-        },
-        "rvv_sub_i8_m1": {
-            "srcs": ["template_sub_i8_m1.cc"],
-        },
-        "rvv_sub_i16_m1": {
-            "srcs": ["template_sub_i16_m1.cc"],
-        },
-        "rvv_sub_i32_m1": {
-            "srcs": ["template_sub_i32_m1.cc"],
-        },
-        "rvv_mul_i8_m1": {
-            "srcs": ["template_mul_i8_m1.cc"],
-        },
-        "rvv_mul_i16_m1": {
-            "srcs": ["template_mul_i16_m1.cc"],
-        },
-        "rvv_mul_i32_m1": {
-            "srcs": ["template_mul_i32_m1.cc"],
-        },
-    },
+        "rvv_{}_i{}_m1".format(op, dtype): {
+            "srcs": ["template_{}_i{}_m1".format(op, dtype)],
+        }
+        for (op, dtype, _) in OP_TYPE_PAIRS
+    }
 )

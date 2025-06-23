@@ -144,8 +144,10 @@ template_rule(
 
 RVV_TEST_BINARY_TARGETS = [
         "//tests/cocotb/rvv:rvv_load.elf",
-        "//tests/cocotb/rvv:rvv_add.elf",
-    ]
+        "//tests/cocotb/rvv:rvv_add.elf"] + [
+        "//tests/cocotb/rvv/arithmetics:rvv_{}_i{}_m1.elf".format(TEST_OP, SEW) for SEW in [8, 16, 32]
+        for TEST_OP in ["add", "sub", "mul"]
+        ]
 
 verilator_cocotb_test(
     name = "rvv_assembly_cocotb_test",
@@ -272,16 +274,6 @@ verilator_cocotb_test(
     deps = [
         "//kelvin_test_utils:sim_test_fixture",
     ],
-    data = [
-        '//tests/cocotb/rvv/arithmetics:rvv_add_i8_m1.elf',
-        '//tests/cocotb/rvv/arithmetics:rvv_add_i16_m1.elf',
-        '//tests/cocotb/rvv/arithmetics:rvv_add_i32_m1.elf',
-        '//tests/cocotb/rvv/arithmetics:rvv_sub_i8_m1.elf',
-        '//tests/cocotb/rvv/arithmetics:rvv_sub_i16_m1.elf',
-        '//tests/cocotb/rvv/arithmetics:rvv_sub_i32_m1.elf',
-        '//tests/cocotb/rvv/arithmetics:rvv_mul_i8_m1.elf',
-        '//tests/cocotb/rvv/arithmetics:rvv_mul_i16_m1.elf',
-        '//tests/cocotb/rvv/arithmetics:rvv_mul_i32_m1.elf',
-    ],
+    data = RVV_TEST_BINARY_TARGETS,
     size = "large",
 )
