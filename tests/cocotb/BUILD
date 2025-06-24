@@ -145,8 +145,9 @@ template_rule(
 RVV_TEST_BINARY_TARGETS = [
         "//tests/cocotb/rvv:rvv_load.elf",
         "//tests/cocotb/rvv:rvv_add.elf"] + [
-        "//tests/cocotb/rvv/arithmetics:rvv_{}_i{}_m1.elf".format(TEST_OP, SEW) for SEW in [8, 16, 32]
-        for TEST_OP in ["add", "sub", "mul"]
+        "//tests/cocotb/rvv/arithmetics:rvv_{}_{}_m1.elf".format(TEST_OP, DTYPE)
+        for DTYPE in ["int8", "int16", "int32", "uint8", "uint16", "uint32"]
+        for TEST_OP in ["add", "sub", "mul", "div"]
         ]
 
 verilator_cocotb_test(
@@ -273,6 +274,7 @@ verilator_cocotb_test(
     test_module = ["rvv_arithmetic_cocotb_test.py"],
     deps = [
         "//kelvin_test_utils:sim_test_fixture",
+        requirement("tqdm"),
     ],
     data = RVV_TEST_BINARY_TARGETS,
     size = "large",

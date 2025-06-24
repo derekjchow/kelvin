@@ -17,6 +17,7 @@ def rvv_arithmetic_template_impl(ctx):
             "{MATH_OP}" : ctx.attr.math_op,
             "{NUM_OPERANDS}" : ctx.attr.num_operands,
             "{SEW}" : ctx.attr.sew,
+            "{SIGN}" : ctx.attr.sign,
         },
     )
 
@@ -29,6 +30,7 @@ rvv_arithmetic_template = rule(
         "math_op" : attr.string(mandatory = True),
         "num_operands" : attr.string(mandatory = True),
         "sew" : attr.string(mandatory = True),
+        "sign" : attr.string(mandatory = True),
         "_template": attr.label(
             default = ":rvv_arithmetic_template.cc",
             allow_single_file = True,

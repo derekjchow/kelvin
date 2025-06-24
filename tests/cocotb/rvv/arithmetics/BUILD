@@ -17,31 +17,41 @@ load("//rules:utils.bzl", "template_rule")
 load(":rvv_arithmetic.bzl", "rvv_arithmetic_test")
 package(default_visibility = ["//visibility:public"])
 
-MATH_OPS = ["add", "sub", "mul"]
-DTYPES = [("8", "16"), ("16","8"), ("32","4")]
-OP_TYPE_PAIRS = [(op, dtype, vl) for op in MATH_OPS for (dtype, vl) in DTYPES]
+MATH_OPS = ["add", "sub", "mul","div"]
+# tuple format DTYPE (sew, sign, dtype, vl)
+DTYPES = [
+    ("8", "i", "int8", "16"),
+    ("16", "i", "int16", "8"),
+    ("32", "i", "int32", "4"),
+    ("8", "u", "uint8", "16"),
+    ("16", "u", "uint16", "8"),
+    ("32", "u", "uint32", "4"),
+]
+OP_TYPE_PAIRS = [(op, sew, sign, dtype, vl) for op in MATH_OPS for (sew, sign, dtype, vl) in DTYPES]
 
+# Division has different op code for signed and usigned
 template_rule(
     rvv_arithmetic_test,
     {
-        "template_{}_i{}_m1".format(op, dtype): {
-            "dtype": "int{}".format(dtype),
-            "sew": dtype,
+        "template_{}_{}_m1".format(op, dtype): {
+            "dtype": dtype,
+            "sew": sew,
+            "sign": sign,
             "num_operands": vl,
-            "math_op": op,
+            "math_op": ['divu' if op == 'div' and dtype[0] == "u" else op][0],
             "in_data_size": "16",
             "out_data_size": "16",
         }
-        for (op, dtype, vl) in OP_TYPE_PAIRS
+        for (op, sew, sign, dtype, vl) in OP_TYPE_PAIRS
     }
 )
 
 template_rule(
     kelvin_v2_binary,
     {
-        "rvv_{}_i{}_m1".format(op, dtype): {
-            "srcs": ["template_{}_i{}_m1".format(op, dtype)],
+        "rvv_{}_{}_m1".format(op, dtype): {
+            "srcs": ["template_{}_{}_m1".format(op, dtype)],
         }
-        for (op, dtype, _) in OP_TYPE_PAIRS
+        for (op, _, _, dtype, _) in OP_TYPE_PAIRS
     }
 )
