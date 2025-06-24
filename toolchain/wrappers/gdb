@@ -1,3 +1,4 @@
+#!/bin/bash --norc
 # Copyright 2025 Google LLC
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,24 +13,16 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-package(default_visibility = ["//visibility:public"])
+PROG=$(basename "$0")
+DRIVER_DIR=$(dirname "$0")
+TOOLCHAIN="toolchain_kelvin_v2"
+PREFIX="riscv32-unknown-elf"
 
-exports_files(glob(["*"]))
+LIBMPFR_PATH=$(ldconfig -p | grep 'mpfr.so$' | awk '{print $4}')
+WORKDIR=$(mktemp -d)
+trap "rm -rf ${WORKDIR}" EXIT
+ln -sf ${LIBMPFR_PATH} ${WORKDIR}/libmpfr.so.4
 
-filegroup(
-    name = "all",
-    srcs = [
-        "ar",
-        "clang",
-        "cpp",
-        "g++",
-        "gcc",
-        "gdb",
-        "gcov",
-        "ld",
-        "nm",
-        "objcopy",
-        "objdump",
-        "strip",
-    ],
-)
+export LD_LIBRARY_PATH=${WORKDIR}:$LD_LIBRARY_PATH
+exec "${DRIVER_DIR}/../external/${TOOLCHAIN}/bin/${PREFIX}-gdb" \
+    "$@"\

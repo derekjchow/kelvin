@@ -17,6 +17,51 @@ import random
 
 from cocotb.triggers import ClockCycles
 from kelvin_test_utils.core_mini_axi_interface import CoreMiniAxiInterface, DmCmdType, DmRspOp
+from kelvin_test_utils.core_mini_axi_pyocd_gdbserver import CoreMiniAxiGDBServer
+
+@cocotb.test()
+async def core_mini_axi_debug_gdbserver(dut):
+    core_mini_axi = CoreMiniAxiInterface(dut)
+    await core_mini_axi.init()
+    await core_mini_axi.reset()
+    cocotb.start_soon(core_mini_axi.clock.start())
+
+    gdbserver = CoreMiniAxiGDBServer(core_mini_axi)
+
+    # Just poke some FPU register.
+    with open("../tests/cocotb/registers.elf", "rb") as f:
+        cmds = [
+            "info reg f0",
+        ]
+        assert await gdbserver.run(f, cmds)
+
+    # Test which calls memcpy through a function pointer.
+    # Ensure we correctly break in memcpy.
+    with open("../tests/cocotb/fptr.elf", "rb") as f:
+        memcpy = core_mini_axi.lookup_symbol(f, "memcpy")
+        cmds = [
+            f"break *{hex(memcpy)}",
+            "continue",
+            f"if $pc != {hex(memcpy)}",
+            "quit 1",
+            "end",
+        ]
+        assert await gdbserver.run(f, cmds)
+
+    # Test which calls a computation function repeatedly.
+    # Check the result of the second iteration, which should be 5.
+    with open("../tests/cocotb/math.elf", "rb") as f:
+        cmds = [
+            f"break math",
+            "continue",
+            "continue",
+            "delete",
+            "finish",
+            "if $a0 != 5",
+            "quit 1",
+            "end",
+        ]
+        assert await gdbserver.run(f, cmds)
 
 @cocotb.test()
 async def core_mini_axi_debug_dmactive(dut):

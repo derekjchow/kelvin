@@ -35,53 +35,18 @@ class DebugModuleReqIO(p: Parameters) extends Bundle {
     val data = UInt(32.W)
     val op = DmReqOp()
 
-    def isRead: Bool = {
-        (op === DmReqOp.READ)
-    }
-
-    def isWrite: Bool = {
-        (op === DmReqOp.WRITE)
-    }
-
-    def isOp: Bool = {
-        op.isOneOf(DmReqOp.READ, DmReqOp.WRITE)
-    }
-
-    def isAddrData0: Bool = {
-        address === 0x4.U
-    }
-
-    def isAddrDmcontrol: Bool = {
-        address === 0x10.U
-    }
-
-    def isAddrDmstatus: Bool = {
-        address === 0x11.U
-    }
-
-    def isAddrHartinfo: Bool = {
-        address === 0x12.U
-    }
-
-    def isAddrAbstractcs: Bool = {
-        address === 0x16.U
-    }
-
-    def isAddrCommand: Bool = {
-        address === 0x17.U
-    }
-
-    def cmdtype: UInt = {
-        data(31,24)
-    }
-
-    def write: Bool = {
-        data(16)
-    }
-
-    def regno: UInt = {
-        data(15,0)
-    }
+    def isRead: Bool = (op === DmReqOp.READ)
+    def isWrite: Bool = (op === DmReqOp.WRITE)
+    def isOp: Bool = op.isOneOf(DmReqOp.READ, DmReqOp.WRITE)
+    def isAddrData0: Bool = (address === 0x4.U)
+    def isAddrDmcontrol: Bool = (address === 0x10.U)
+    def isAddrDmstatus: Bool = (address === 0x11.U)
+    def isAddrHartinfo: Bool = (address === 0x12.U)
+    def isAddrAbstractcs: Bool = (address === 0x16.U)
+    def isAddrCommand: Bool = (address === 0x17.U)
+    def cmdtype: UInt = data(31,24)
+    def write: Bool = data(16)
+    def regno: UInt = data(15,0)
 }
 
 class DebugModuleRspIO(p: Parameters) extends Bundle {

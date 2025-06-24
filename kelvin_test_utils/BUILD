@@ -35,7 +35,22 @@ py_library(
     deps = [
         requirement("cocotb"),
         requirement("numpy"),
-        ':core_mini_axi_sim_interface'
+        ":core_mini_axi_sim_interface",
     ],
     visibility = [ "//visibility:public" ],
+)
+
+py_library(
+    name = "core_mini_axi_pyocd_gdbserver",
+    srcs = [
+        "core_mini_axi_pyocd_gdbserver.py",
+    ],
+    deps = [
+        requirement("cocotb"),
+        requirement("pyocd"),
+    ],
+    data = [
+        "//toolchain:gdb",
+    ],
+    visibility = ["//visibility:public"],
 )

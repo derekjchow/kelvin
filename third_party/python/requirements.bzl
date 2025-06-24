@@ -165,3 +165,194 @@ def install_deps():
         type = "zip",
         build_file_content = _build_file_content(pypi_name = "typing_extensions", pypi_version = "4.13.2"),
     )
+
+    http_archive(
+        name = "kelvin_pip_deps_sortedcontainers",
+        urls = [
+            "https://files.pythonhosted.org/packages/32/46/9cb0e58b2deb7f82b84065f37f3bffeb12413f947f9388e4cac22c4621ce/sortedcontainers-2.4.0-py2.py3-none-any.whl",
+        ],
+        sha256 = "a163dcaede0f1c021485e957a39245190e74249897e2ae4b2aa38595db237ee0",
+        type = "zip",
+        build_file_content = _build_file_content(pypi_name = "sortedcontainers", pypi_version = "2.4.0"),
+    )
+
+    http_archive(
+        name = "kelvin_pip_deps_intervaltree",
+        strip_prefix = "intervaltree-3.1.0",
+        urls = [
+            "https://files.pythonhosted.org/packages/50/fb/396d568039d21344639db96d940d40eb62befe704ef849b27949ded5c3bb/intervaltree-3.1.0.tar.gz",
+        ],
+        sha256 = "902b1b88936918f9b2a19e0e5eb7ccb430ae45cde4f39ea4b36932920d33952d",
+        build_file_content = _build_file_content(
+            pypi_name = "intervaltree",
+            pypi_version = "3.1.0",
+            deps = [
+                "@kelvin_pip_deps_sortedcontainers//:pkg",
+            ],
+        ),
+    )
+
+    http_archive(
+        name = "kelvin_pip_deps_pyyaml",
+        urls = [
+            "https://files.pythonhosted.org/packages/3d/32/e7bd8535d22ea2874cef6a81021ba019474ace0d13a4819c2a4bce79bd6a/PyYAML-6.0.2-cp39-cp39-manylinux_2_17_x86_64.manylinux2014_x86_64.whl",
+        ],
+        sha256 = "3b1fdb9dc17f5a7677423d508ab4f243a726dea51fa5e70992e59a7411c89d19",
+        type = "zip",
+        build_file_content = _build_file_content(pypi_name = "PyYAML", pypi_version = "6.0.2"),
+    )
+
+    http_archive(
+        name = "kelvin_pip_deps_importlib_metadata",
+        urls = [
+            "https://files.pythonhosted.org/packages/20/b0/36bd937216ec521246249be3bf9855081de4c5e06a0c9b4219dbeda50373/importlib_metadata-8.7.0-py3-none-any.whl",
+        ],
+        sha256 = "e5dd1551894c77868a30651cef00984d50e1002d06942a7101d34870c5f02afd",
+        type = "zip",
+        build_file_content = _build_file_content(pypi_name = "importlib_metadata", pypi_version = "8.7.0"),
+    )
+
+    http_archive(
+        name = "kelvin_pip_deps_importlib_resources",
+        urls = [
+            "https://files.pythonhosted.org/packages/a4/ed/1f1afb2e9e7f38a545d628f864d562a5ae64fe6f7a10e28ffb9b185b4e89/importlib_resources-6.5.2-py3-none-any.whl",
+        ],
+        sha256 = "789cfdc3ed28c78b67a06acb8126751ced69a3d5f79c095a98298cd8a760ccec",
+        type = "zip",
+        build_file_content = _build_file_content(pypi_name = "importlib_resources", pypi_version = "6.5.2"),
+    )
+
+    http_archive(
+        name = "kelvin_pip_deps_six",
+        urls = [
+            "https://files.pythonhosted.org/packages/b7/ce/149a00dd41f10bc29e5921b496af8b574d8413afcd5e30dfa0ed46c2cc5e/six-1.17.0-py2.py3-none-any.whl",
+        ],
+        sha256 = "4721f391ed90541fddacab5acf947aa0d3dc7d27b2e1e8eda2be8970586c3274",
+        type = "zip",
+        build_file_content = _build_file_content(pypi_name = "six", pypi_version = "1.17.0"),
+    )
+
+    http_archive(
+        name = "kelvin_pip_deps_colorama",
+        urls = [
+            "https://files.pythonhosted.org/packages/d1/d6/3965ed04c63042e047cb6a3e6ed1a63a35087b6a609aa3a15ed8ac56c221/colorama-0.4.6-py2.py3-none-any.whl",
+        ],
+        sha256 = "4f1d9991f5acc0ca119f9d443620b77f9d6b33703e51011c16baf57afb285fc6",
+        type = "zip",
+        build_file_content = _build_file_content(pypi_name = "colorama", pypi_version = "0.4.6"),
+    )
+
+    http_archive(
+        name = "kelvin_pip_deps_prettytable",
+        urls = [
+            "https://files.pythonhosted.org/packages/02/c7/5613524e606ea1688b3bdbf48aa64bafb6d0a4ac3750274c43b6158a390f/prettytable-3.16.0-py3-none-any.whl",
+        ],
+        sha256 = "b5eccfabb82222f5aa46b798ff02a8452cf530a352c31bddfa29be41242863aa",
+        type = "zip",
+        build_file_content = _build_file_content(pypi_name = "prettytable", pypi_version = "3.16.0"),
+    )
+
+    http_archive(
+        name = "kelvin_pip_deps_pyusb",
+        urls = [
+            "https://files.pythonhosted.org/packages/28/b8/27e6312e86408a44fe16bd28ee12dd98608b39f7e7e57884a24e8f29b573/pyusb-1.3.1-py3-none-any.whl",
+        ],
+        sha256 = "bf9b754557af4717fe80c2b07cc2b923a9151f5c08d17bdb5345dac09d6a0430",
+        type = "zip",
+        build_file_content = _build_file_content(pypi_name = "pyusb", pypi_version = "1.3.1"),
+    )
+
+    http_archive(
+        name = "kelvin_pip_deps_intelhex",
+        urls = [
+            "https://files.pythonhosted.org/packages/97/78/79461288da2b13ed0a13deb65c4ad1428acb674b95278fa9abf1cefe62a2/intelhex-2.3.0-py2.py3-none-any.whl",
+        ],
+        sha256 = "87cc5225657524ec6361354be928adfd56bcf2a3dcc646c40f8f094c39c07db4",
+        type = "zip",
+        build_file_content = _build_file_content(pypi_name = "intelhex", pypi_version = "2.3.0"),
+    )
+
+    http_archive(
+        name = "kelvin_pip_deps_lark",
+        urls = [
+            "https://files.pythonhosted.org/packages/2d/00/d90b10b962b4277f5e64a78b6609968859ff86889f5b898c1a778c06ec00/lark-1.2.2-py3-none-any.whl",
+        ],
+        sha256 = "c2276486b02f0f1b90be155f2c8ba4a8e194d42775786db622faccd652d8e80c",
+        type = "zip",
+        build_file_content = _build_file_content(pypi_name = "lark", pypi_version = "1.2.2"),
+    )
+
+    http_archive(
+        name = "kelvin_pip_deps_libusb_package",
+        urls = [
+            "https://files.pythonhosted.org/packages/23/90/a5bd0f6b656e39177f1848192d54bda3b2f2c55ea36609f7ccc3f0425642/libusb_package-1.0.26.3-cp39-cp39-manylinux_2_17_x86_64.manylinux2014_x86_64.whl",
+        ],
+        sha256 = "ba0f04df25340349137ac3e857a9221ecc189941c36cb103d988bf2cac8bb8d9",
+        type = "zip",
+        build_file_content = _build_file_content(pypi_name = "libusb_package", pypi_version = "1.0.26.3"),
+    )
+
+    http_archive(
+        name = "kelvin_pip_deps_psutil",
+        urls = [
+            "https://files.pythonhosted.org/packages/bf/b9/b0eb3f3cbcb734d930fdf839431606844a825b23eaf9a6ab371edac8162c/psutil-7.0.0-cp36-abi3-manylinux_2_12_x86_64.manylinux2010_x86_64.manylinux_2_17_x86_64.manylinux2014_x86_64.whl",
+        ],
+        sha256 = "4b1388a4f6875d7e2aff5c4ca1cc16c545ed41dd8bb596cefea80111db353a34",
+        type = "zip",
+        build_file_content = _build_file_content(pypi_name = "psutil", pypi_version = "7.0.0"),
+    )
+
+    http_archive(
+        name = "kelvin_pip_deps_natsort",
+        urls = [
+            "https://files.pythonhosted.org/packages/ef/82/7a9d0550484a62c6da82858ee9419f3dd1ccc9aa1c26a1e43da3ecd20b0d/natsort-8.4.0-py3-none-any.whl",
+        ],
+        sha256 = "4732914fb471f56b5cce04d7bae6f164a592c7712e1c85f9ef585e197299521c",
+        type = "zip",
+        build_file_content = _build_file_content(pypi_name = "natsort", pypi_version = "8.4.0"),
+    )
+
+    http_archive(
+        name = "kelvin_pip_deps_pylink_square",
+        urls = [
+            "https://files.pythonhosted.org/packages/04/3c/0e587060301ff24c67cd06d7bc3479b85dbb46d9e334aa020bef340753da/pylink_square-1.6.0-py2.py3-none-any.whl",
+        ],
+        sha256 = "4ec26cc02ac22cbe9acbc317ea221d1e586d1db40cbdc257e2b3ac30adaeaded",
+        type = "zip",
+        build_file_content = _build_file_content(
+            pypi_name = "pylink_square",
+            pypi_version = "1.6.0",
+            deps = [
+                "@kelvin_pip_deps_psutil//:pkg",
+            ],
+        ),
+    )
+
+    http_archive(
+        name = "kelvin_pip_deps_pyocd",
+        urls = [
+            "https://files.pythonhosted.org/packages/94/9b/9ee42675ecc933f1ac6a2b518bdc8d3b77eb8eef49e5e342c88562ab8533/pyocd-0.36.0-py3-none-any.whl",
+        ],
+        sha256 = "422ec017f1c0be2fe8f7d43e7e73dfe8fdb413d53685a24d68d09c7d95ac11b3",
+        type = "zip",
+        build_file_content = _build_file_content(
+            pypi_name = "pyocd",
+            pypi_version = "0.36.0",
+            deps = [
+                "@kelvin_pip_deps_colorama//:pkg",
+                "@kelvin_pip_deps_intervaltree//:pkg",
+                "@kelvin_pip_deps_importlib_metadata//:pkg",
+                "@kelvin_pip_deps_importlib_resources//:pkg",
+                "@kelvin_pip_deps_intelhex//:pkg",
+                "@kelvin_pip_deps_lark//:pkg",
+                "@kelvin_pip_deps_libusb_package//:pkg",
+                "@kelvin_pip_deps_natsort//:pkg",
+                "@kelvin_pip_deps_prettytable//:pkg",
+                "@kelvin_pip_deps_six//:pkg",
+                "@kelvin_pip_deps_typing_extensions//:pkg",
+                "@kelvin_pip_deps_pylink_square//:pkg",
+                "@kelvin_pip_deps_pyusb//:pkg",
+                "@kelvin_pip_deps_pyyaml//:pkg",
+            ],
+        ),
+    )

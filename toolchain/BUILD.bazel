@@ -92,3 +92,13 @@ toolchain(
     toolchain = ":kelvin_v2_semihosting_toolchain",
     toolchain_type = "@bazel_tools//tools/cpp:toolchain_type",
 )
+
+sh_binary(
+    name = "gdb",
+    srcs = [
+        "//toolchain/wrappers:gdb",
+    ],
+    data = [
+        ":kelvin_v2_toolchain",
+    ],
+)

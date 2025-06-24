@@ -106,11 +106,14 @@ verilator_cocotb_test(
     size = "enormous",
     deps = [
         "//kelvin_test_utils:core_mini_axi_sim_interface",
+        "//kelvin_test_utils:core_mini_axi_pyocd_gdbserver",
     ],
     data = [
+        ":fptr.elf",
+        ":math.elf",
         ":noop.elf",
         ":registers.elf",
-    ],
+    ] + COCOTB_TEST_BINARY_TARGETS,
 )
 
 TESTCASES = [
@@ -263,6 +266,20 @@ kelvin_v2_binary(
     name = "float_csr_interlock_test",
     srcs = [
         "float_csr_interlock_test.S",
+    ],
+)
+
+kelvin_v2_binary(
+    name = "fptr",
+    srcs = [
+        "fptr.cc",
+    ],
+)
+
+kelvin_v2_binary(
+    name = "math",
+    srcs = [
+        "math.cc",
     ],
 )
 

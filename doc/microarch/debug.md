@@ -92,6 +92,7 @@ The `dmcontrol` register is used to control the debug module and the core.
 |-------|-----------|-----------------------------------------------------------------------------|
 | 31    | haltreq   | Request to halt the core.                                                   |
 | 30    | resumereq | Request to resume the core.                                                 |
+| 29:2  | reserved  | Reserved for future use.                                                    |
 | 1     | ndmreset  | Reset the debug module.                                                     |
 | 0     | dmactive  | Activate the debug module.                                                  |
 
@@ -105,16 +106,19 @@ The `dmstatus` register provides the status of the debug module and the core.
 | 10    | anyrunning | Any hart is running.                                                        |
 | 9     | allhalted  | All harts are halted.                                                       |
 | 8     | anyhalted  | Any hart is halted.                                                         |
+| 7:4   | reserved   | Reserved for future use.                                                    |
 | 3:0   | version    | Debug module version.                                                       |
 
 ### abstractcs (0x16)
 
 The `abstractcs` register provides the status of abstract commands.
 
-| Bits  | Name   | Description                                                                 |
-|-------|--------|-----------------------------------------------------------------------------|
-| 12    | busy   | The abstract command is currently executing.                                |
-| 10:8  | cmderr | Abstract command error code.                                                |
+| Bits  | Name     | Description                                                                 |
+|-------|----------|-----------------------------------------------------------------------------|
+| 12    | busy     | The abstract command is currently executing.                                |
+| 11    | reserved | Reserved for future use.                                                    |
+| 10:8  | cmderr   | Abstract command error code.                                                |
+| 7:0   | reserved | Reserved for future use.                                                    |
 
 ### command (0x17)
 

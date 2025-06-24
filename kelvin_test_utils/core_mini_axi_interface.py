@@ -480,7 +480,15 @@ class CoreMiniAxiInterface:
   async def dm_request_halt(self):
     dmcontrol = await self.dm_read(0x10)
     dmcontrol = dmcontrol | (1 << 31) & ~(1 << 30)
-    await self.dm_write(0x10, dmcontrol)
+    return await self.dm_write(0x10, dmcontrol)
+
+  async def dm_check_for_halted(self):
+        dmstatus = await self.dm_read(0x11)
+        allhalted = dmstatus & (1 << 9)
+        anyhalted = dmstatus & (1 << 8)
+        if allhalted and anyhalted:
+          return True
+        return False
 
   async def dm_wait_for_halted(self, retry_count=100):
     retries = 0
