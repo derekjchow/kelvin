@@ -45,6 +45,7 @@ module rvv_backend_top();
     .insts_valid_rvs2cq       (rvs_if.insts_valid_rvs2cq    ),
     .insts_rvs2cq             (rvs_if.insts_rvs2cq          ),
     .insts_ready_cq2rvs       (rvs_if.insts_ready_cq2rvs    ),
+    .remaining_count_cq2rvs   (),
     
     .rt_xrf_rvv2rvs           (rvs_if.rt_xrf_rvv2rvs        ),
     .rt_xrf_valid_rvv2rvs     (rvs_if.rt_xrf_valid_rvv2rvs  ),
@@ -158,6 +159,9 @@ module rvv_backend_top();
   end: vrf_connect
 
 // Internal Signals connection ---------------------------------------
+  // CMD queue push
+  assign rvv_intern_if.cmdq_push = DUT.u_command_queue.push;
+
   // ROB to Retire
   assign rvv_intern_if.rob2rt_write_valid = DUT.u_retire.rob2rt_write_valid;
   assign rvv_intern_if.rob2rt_write_data  = DUT.u_retire.rob2rt_write_data;

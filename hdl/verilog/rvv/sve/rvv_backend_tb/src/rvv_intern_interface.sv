@@ -3,6 +3,9 @@
 interface rvv_intern_interface (input bit clk, input bit rst_n);
 // This interface will connect to RVV internal signals to collect coverage.
 
+// CMD queue push
+  logic    [`ISSUE_LANE-1:0]  cmdq_push;
+
 // ROB to Retire
   logic    [`NUM_RT_UOP-1:0]  rob2rt_write_valid;
   ROB2RT_t [`NUM_RT_UOP-1:0]  rob2rt_write_data;
@@ -68,7 +71,7 @@ interface rvv_intern_interface (input bit clk, input bit rst_n);
   logic                           vcsr_ready;
 
   function bit rvv_is_idle();
-    rvv_is_idle = cmd_q_empty &&
+    rvv_is_idle = cmd_q_empty && !(|cmdq_push) &&
                   uop_q_empty &&
                   alu_rs_empty &&
                   mul_rs_empty &&

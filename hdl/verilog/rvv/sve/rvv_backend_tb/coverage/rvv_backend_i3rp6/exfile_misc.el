@@ -9,3 +9,4 @@ CHECKSUM: "612623884 3779502554"
 INSTANCE: rvv_backend_top.DUT.trap_valid
 ANNOTATION: "tied to 1"
 Toggle d "logic d"
+
