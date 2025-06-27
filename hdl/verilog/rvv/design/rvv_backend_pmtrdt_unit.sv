@@ -128,8 +128,9 @@ module rvv_backend_pmtrdt_unit
   logic [`VLENB-1:0][8:0]   cmp_sum;
   logic [`VLENB-1:0]        less_than, great_than_equal, equal, not_equal, out_data;
   logic [`VLENB-1:0]        cmp_res;
-  logic [`VSTART_WIDTH-1:0] cmp_res_offset;
-  logic [`VLEN-1:0]         cmp_res_d, cmp_res_q, cmp_res_en;
+  logic [`VSTART_WIDTH-1:0] cmp_res_offset, cmp_res_en_offset;
+  logic [`VLEN-1:0]         cmp_res_d, cmp_res_q;
+  logic [2*`VLENB-1:0]      cmp_res_en;
   logic [`VLEN-1:0]         pmtrdt_res_cmp; // pmtrdt result of compare
   // Permutation operation
   // slide+gather instruction
@@ -2230,7 +2231,7 @@ module rvv_backend_pmtrdt_unit
         endcase
       end
 
-      // cmp_res_offset
+      // cmp_res_offset/cmp_res_en_offset
       always_comb begin
         case (pmtrdt_uop.vs2_eew)
           EEW32: cmp_res_offset = pmtrdt_uop.uop_index * `VLENB/4;
@@ -2238,18 +2239,19 @@ module rvv_backend_pmtrdt_unit
           default: cmp_res_offset = pmtrdt_uop.uop_index * `VLENB;
         endcase
       end
+      assign cmp_res_en_offset = cmp_res_offset >> 2; // max eew is 32b or 4B, then VLEN/EEW_max = 4.
 
       // cmp_res_d/cmp_res_q
       always_comb begin
         case (pmtrdt_uop.vs2_eew)
-          EEW32: cmp_res_en = {'0, {(`VLENB/4){1'b1}}} << cmp_res_offset;
-          EEW16: cmp_res_en = {'0, {(`VLENB/2){1'b1}}} << cmp_res_offset;
-          default: cmp_res_en = {'0, {(`VLENB){1'b1}}} << cmp_res_offset;
+          EEW32: cmp_res_en = {'0, 1'b1} << cmp_res_en_offset;
+          EEW16: cmp_res_en = {'0, 2'b11} << cmp_res_en_offset;
+          default: cmp_res_en = {'0, 4'b1111} << cmp_res_en_offset;
         endcase
       end
       assign cmp_res_d = {'0, cmp_res} << cmp_res_offset;
-      for (i=0; i<`VLEN; i++) begin
-        edff #(.T(logic)) cmp_res_reg (.q(cmp_res_q[i]), .d(cmp_res_d[i]), .e(cmp_res_en[i] & pmtrdt_uop_valid & pmtrdt_uop_ready), .clk(clk), .rst_n(rst_n));
+      for (i=0; i<(2*`VLENB); i++) begin
+        edff #(.T(logic[`VLEN/32-1:0])) cmp_res_reg (.q(cmp_res_q[`VLEN/32*i+:`VLEN/32]), .d(cmp_res_d[`VLEN/32*i+:`VLEN/32]), .e(cmp_res_en[i] & pmtrdt_uop_valid & pmtrdt_uop_ready), .clk(clk), .rst_n(rst_n));
       end
 
       // cmp_vstart value is from the first uop of compare instruction
