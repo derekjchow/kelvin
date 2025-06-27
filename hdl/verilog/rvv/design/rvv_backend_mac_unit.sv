@@ -12,7 +12,8 @@ module rvv_backend_mac_unit (
   // Outputs
   mac2rob_uop_valid, mac2rob_uop_data,
   // Inputs
-  clk, rst_n, rs2mac_uop_valid, rs2mac_uop_data
+  clk, rst_n, rs2mac_uop_valid, rs2mac_uop_data,
+  mac_stg0_vld_en, mac_stg0_data_en
   );
 
 input             clk;
@@ -20,6 +21,9 @@ input             rst_n;
 
 input             rs2mac_uop_valid;
 input MUL_RS_t    rs2mac_uop_data;
+
+input             mac_stg0_vld_en;
+input             mac_stg0_data_en;
 
 output            mac2rob_uop_valid;
 output PU2ROB_t   mac2rob_uop_data;
@@ -664,35 +668,36 @@ generate
           .in1(mac8_in1[z*4+y]), 
           .in1_is_signed(mac8_in1_is_signed[z*4+y]));
 
-        dff #(16) u_mul8_delay (
+        edff #(.T(logic [16-1:0])) u_mul8_delay (
           .q(mac8_out_d1[z*16+y*4+x]), 
           .clk(clk), 
           .rst_n(rst_n), 
+          .e(mac_stg0_data_en),
           .d(mac8_out[z*16+y*4+x]));
       end
     end
   end
 endgenerate
 
-dff #(`VLEN) u_addsrc_delay (.q(mac_addsrc_d1), .clk(clk), .rst_n(rst_n), .d(mac_addsrc));
+edff #(.T(logic [`VLEN-1:0])) u_addsrc_delay (.q(mac_addsrc_d1), .clk(clk), .rst_n(rst_n), .e(mac_stg0_data_en), .d(mac_addsrc));
 assign mac_addsrc_widen_d1 = {2{mac_addsrc_d1}}; //when widen, copy low half to high, for widen add
-dff #(1) u_valid_delay (.q(rs2mac_uop_valid_d1), .clk(clk), .rst_n(rst_n), .d(rs2mac_uop_valid));
-dff #(1) u_src2_is_signed_delay (.q(mac_src2_is_signed_d1), .clk(clk), .rst_n(rst_n), .d(mac_src2_is_signed));
-dff #(1) u_src1_is_signed_delay (.q(mac_src1_is_signed_d1), .clk(clk), .rst_n(rst_n), .d(mac_src1_is_signed));
-dff #(1) u_is_widen_delay (.q(mac_is_widen_d1), .clk(clk), .rst_n(rst_n), .d(mac_is_widen));
-dff #(1) u_keep_low_bits_delay (.q(mac_keep_low_bits_d1), .clk(clk), .rst_n(rst_n), .d(mac_keep_low_bits));
-dff #(1) u_is_vsmul_delay (.q(is_vsmul_d1), .clk(clk), .rst_n(rst_n), .d(is_vsmul));
-dff #(1) u_mul_reverse_delay (.q(mac_mul_reverse_d1), .clk(clk), .rst_n(rst_n), .d(mac_mul_reverse));
-dff #(1) u_is_vmac_delay (.q(is_vmac_d1), .clk(clk), .rst_n(rst_n), .d(is_vmac));
+edff #(.T(logic)) u_valid_delay (.q(rs2mac_uop_valid_d1), .clk(clk), .rst_n(rst_n), .e(mac_stg0_vld_en), .d(rs2mac_uop_valid));
+edff #(.T(logic)) u_src2_is_signed_delay (.q(mac_src2_is_signed_d1), .clk(clk), .rst_n(rst_n), .e(mac_stg0_data_en), .d(mac_src2_is_signed));
+edff #(.T(logic)) u_src1_is_signed_delay (.q(mac_src1_is_signed_d1), .clk(clk), .rst_n(rst_n), .e(mac_stg0_data_en), .d(mac_src1_is_signed));
+edff #(.T(logic)) u_is_widen_delay (.q(mac_is_widen_d1), .clk(clk), .rst_n(rst_n), .e(mac_stg0_data_en), .d(mac_is_widen));
+edff #(.T(logic)) u_keep_low_bits_delay (.q(mac_keep_low_bits_d1), .clk(clk), .rst_n(rst_n), .e(mac_stg0_data_en), .d(mac_keep_low_bits));
+edff #(.T(logic)) u_is_vsmul_delay (.q(is_vsmul_d1), .clk(clk), .rst_n(rst_n), .e(mac_stg0_data_en), .d(is_vsmul));
+edff #(.T(logic)) u_mul_reverse_delay (.q(mac_mul_reverse_d1), .clk(clk), .rst_n(rst_n), .e(mac_stg0_data_en), .d(mac_mul_reverse));
+edff #(.T(logic)) u_is_vmac_delay (.q(is_vmac_d1), .clk(clk), .rst_n(rst_n), .e(mac_stg0_data_en), .d(is_vmac));
 
-dff #(2) u_xrm_delay (.q(mac_uop_xrm_d1), .clk(clk), .rst_n(rst_n), .d(mac_uop_xrm));
-dff #(3) u_eew_delay (.q(mac_top_vs_eew_d1), .clk(clk), .rst_n(rst_n), .d(mac_top_vs_eew));
+edff #(.T(logic [2-1:0])) u_xrm_delay (.q(mac_uop_xrm_d1), .clk(clk), .rst_n(rst_n), .e(mac_stg0_data_en), .d(mac_uop_xrm));
+edff #(.T(logic [3-1:0])) u_eew_delay (.q(mac_top_vs_eew_d1), .clk(clk), .rst_n(rst_n), .e(mac_stg0_data_en), .d(mac_top_vs_eew));
 
 
-dff #(`ROB_DEPTH_WIDTH) u_rob_entry_delay (.q(mac_uop_rob_entry_d1), .clk(clk), .rst_n(rst_n), .d(mac_uop_rob_entry));
+edff #(.T(logic [`ROB_DEPTH_WIDTH-1:0])) u_rob_entry_delay (.q(mac_uop_rob_entry_d1), .clk(clk), .rst_n(rst_n), .e(mac_stg0_data_en), .d(mac_uop_rob_entry));
 
 `ifdef TB_SUPPORT
-dff #(`PC_WIDTH) u_PC_delay (.q(mac_uop_pc_d1), .clk(clk), .rst_n(rst_n), .d(mac_uop_pc));
+edff #(.T(logic [`PC_WIDTH-1:0])) u_PC_delay (.q(mac_uop_pc_d1), .clk(clk), .rst_n(rst_n), .e(mac_stg0_data_en), .d(mac_uop_pc));
 `endif
 
 

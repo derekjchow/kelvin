@@ -49,6 +49,8 @@ MUL_RS_t [`NUM_MUL-1:0]       rs2mac_uop_data;
 logic [`NUM_MUL-1:0]          mac2rob_uop_valid;
 PU2ROB_t [`NUM_MUL-1:0]       mac2rob_uop_data;
 
+logic [`NUM_MUL-1:0]          mac_stg0_vld_en;
+logic [`NUM_MUL-1:0]          mac_stg0_data_en;
 //Generate uop valid
 // empty        0  |  0  |  1  |  1
 // 1left2empty  0  |  1  |  0  |  1
@@ -68,7 +70,9 @@ rvv_backend_mac_unit u_mac0 (
   .clk(clk), 
   .rst_n(rst_n), 
   .rs2mac_uop_valid(rs2mac_uop_valid[0]), 
-  .rs2mac_uop_data(rs2mac_uop_data[0]));
+  .rs2mac_uop_data(rs2mac_uop_data[0]),
+  .mac_stg0_vld_en (mac_stg0_vld_en[0]),
+  .mac_stg0_data_en(mac_stg0_data_en[0]));
 
 //MAC 1
 rvv_backend_mac_unit u_mac1 (
@@ -79,11 +83,19 @@ rvv_backend_mac_unit u_mac1 (
   .clk(clk), 
   .rst_n(rst_n), 
   .rs2mac_uop_valid(rs2mac_uop_valid[1]), 
-  .rs2mac_uop_data(rs2mac_uop_data[1]));
+  .rs2mac_uop_data(rs2mac_uop_data[1]),
+  .mac_stg0_vld_en (mac_stg0_vld_en[1]),
+  .mac_stg0_data_en(mac_stg0_data_en[1]));
 
 // Pop RS fifo generation
 assign ex2rs_fifo_pop[0] = rs2mac_uop_valid[0] && mac2rs_uop_ready[0];
 assign ex2rs_fifo_pop[1] = rs2mac_uop_valid[1] && mac2rs_uop_ready[1] && ex2rs_fifo_pop[0];//forbid pop1=1 while pop0=0
+
+assign mac_stg0_data_en[0] = ex2rs_fifo_pop[0]; //generate stg_data_en for MAC0
+assign mac_stg0_data_en[1] = ex2rs_fifo_pop[1]; //generate stg_data_en for MAC1
+
+assign mac_stg0_vld_en[0] = ex2rs_fifo_pop[0] || mac2rob_uop_valid[0] && mac2rs_uop_ready[0]; //generate vld_en for MAC0 handshake
+assign mac_stg0_vld_en[1] = ex2rs_fifo_pop[1] || mac2rob_uop_valid[1] && mac2rs_uop_ready[1]; //generate vld_en for MAC1 handshake
 
 //Pack output to ROB
 //high pack MAC 1; low pack MAC 0
