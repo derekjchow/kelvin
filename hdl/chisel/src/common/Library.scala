@@ -178,3 +178,11 @@ object ShiftVectorRight {
     shifted.asTypeOf(chiselTypeOf(data))
   }
 }
+
+// Check valids, fires, or other bool vec/seq is set in order, fail if not (1100 OK, 1101 NOT OK)
+object OneHotInOrder {
+  def apply(oneHotBits: Seq[Bool]): Bool = {
+    val failed = (0 until oneHotBits.length - 1).map(i => !oneHotBits(i) && oneHotBits(i + 1)).reduce(_||_)
+    !failed
+  }
+}

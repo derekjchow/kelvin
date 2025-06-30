@@ -73,7 +73,8 @@ class InstructionBuffer[T <: Data](val gen: T,
     io.out(nIndex).bits := circularBuffer.io.dataOut(nIndex)
   }
 
-  //TODO: Confirm ready signals are contiguous with assert (ex only ready(0) and ready(2) set should fail)
+  // Confirm ready signals are contiguous with assert (ex only ready(0) and ready(2) set should fail)
+  assert(OneHotInOrder(io.out.map(_.fire)), p"OneHotInOrder - Instructions not dispatched in order.")
   val nReady = PopCount(io.out.map(_.fire))
   circularBuffer.io.deqReady := nReady
 
