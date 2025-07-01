@@ -355,7 +355,8 @@ object LsuSlot {
     result.store := uop.store
     result.pc := uop.pc
 
-    result.pendingWriteback := !uop.store
+    // TODO(derekjchow): Fix me
+    result.pendingWriteback := !uop.store || LsuOp.isVector(uop.op)
     result.pendingVector := LsuOp.isVector(uop.op)
 
     val active = MuxCase(0.U(bytesPerSlot.W), Seq(
@@ -856,13 +857,22 @@ class LsuV2(p: Parameters) extends Lsu(p) {
   io.rd_flt.bits.data := loadUpdatedSlot.scalarLoadResult()
 
   // Vector writeback
+  // TODO(derekjchow): Write back for stores
   if (p.enableRvv) {
     io.lsu2rvv.get(0).valid := loadUpdatedSlot.shouldWriteback() &&
-        loadUpdatedSlot.op.isOneOf(LsuOp.VLOAD_UNIT, LsuOp.VLOAD_STRIDED,
-                                   LsuOp.VLOAD_OINDEXED, LsuOp.VLOAD_UINDEXED)
+        LsuOp.isVector(loadUpdatedSlot.op)
+    // io.lsu2rvv.get(0).valid := loadUpdatedSlot.shouldWriteback() &&
+    //     loadUpdatedSlot.op.isOneOf(LsuOp.VLOAD_UNIT, LsuOp.VLOAD_STRIDED,
+    //                                LsuOp.VLOAD_OINDEXED, LsuOp.VLOAD_UINDEXED)
     io.lsu2rvv.get(0).bits.addr := loadUpdatedSlot.rd
     io.lsu2rvv.get(0).bits.data := Cat(loadUpdatedSlot.data.reverse)
-    io.lsu2rvv.get(0).bits.last := true.B
+    io.lsu2rvv.get(0).bits.last := loadUpdatedSlot.shouldWriteback() &&
+        loadUpdatedSlot.op.isOneOf(LsuOp.VSTORE_UNIT, LsuOp.VSTORE_STRIDED,
+                                   LsuOp.VSTORE_OINDEXED, LsuOp.VSTORE_UINDEXED)
+
+    // when (io.lsu2rvv.get(0).fire) {
+    //   printf(cf"Fire to rvv ${io.lsu2rvv.get(0).bits}\n")
+    // }
 
     io.lsu2rvv.get(1).valid := false.B
     io.lsu2rvv.get(1).bits.addr := 0.U
@@ -946,12 +956,18 @@ class LsuV2(p: Parameters) extends Lsu(p) {
   // TODO(derekjchow): Improve timing?
   opQueue.io.deq.ready := slot.slotIdle()
 
+  // when (opQueue.io.deq.fire) {
+  //   printf(cf"Handling op ${opQueue.io.deq.bits}\n")
+  // }
+
   // Slot update
   slot := MuxCase(slot, Seq(
     // Move to inactive if error.
     io.fault.valid -> LsuSlot.inactive(p, 16),
     // When inactive, dequeue if possible
     (vectorUpdatedSlot.slotIdle() && opQueue.io.deq.valid) -> nextSlot,
+    // Handle pending writeback here?
+    (vectorUpdatedSlot.shouldWriteback() && vectorUpdatedSlot.store) -> loadUpdate2Slot,
     // Guard writes with slot fired as that when updates.
     (!vectorUpdatedSlot.slotIdle() && vectorUpdatedSlot.store && slotFired) ->
         vectorUpdatedSlot.storeUpdate(wactive),
