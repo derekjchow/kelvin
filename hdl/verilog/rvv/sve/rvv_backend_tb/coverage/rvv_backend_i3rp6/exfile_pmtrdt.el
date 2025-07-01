@@ -148,6 +148,10 @@ ANNOTATION: "vcs_gen_start:i=1:vcs_gen_end:uop only done when uop is valid"
 Condition 136 "852704532" "(uop_valid_rob2rt[1] & uop_done[wind_uop_rptr[1]]) 1 -1" (1 "01")
 ANNOTATION: "uop record trap only when uop is valid"
 Condition 2 "2993166929" "(rd_rob2rt[0].trap_flag & rd_ready_rt2rob[0] & uop_retire_valid[0]) 1 -1" (3 "110")
+ANNOTATION: "vcs_gen_start:i=2:vcs_gen_end:uops with trap_flag can only be retired when it is rt_uop[0]"
+Condition 140 "1254123907" "(rd_ready_rt2rob[2] && uop_retire_valid[2] && rd_valid_rob2rt[(2 - 1)] && ((~trap_flag[(wind_uop_rptr[2] - 1'b1)]))) 1 -1" (4 "1110")
+ANNOTATION: "vcs_gen_start:i=3:vcs_gen_end:uops with trap_flag can only be retired when it is rt_uop[0]"
+Condition 143 "959074004" "(rd_ready_rt2rob[3] && uop_retire_valid[3] && rd_valid_rob2rt[(3 - 1)] && ((~trap_flag[(wind_uop_rptr[3] - 1'b1)]))) 1 -1" (4 "1110")
 
 CHECKSUM: "1112454279 2712915609"
 INSTANCE: rvv_backend_top.DUT.u_rob
