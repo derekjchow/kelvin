@@ -612,9 +612,11 @@ class CoreMiniAxiInterface:
     # Release reset
     await self.write_word(kelvin_reset_csr_addr, 0)
 
-  async def wait_for_wfi(self):
-    while self.dut.io_wfi.value != 1:
+  async def wait_for_wfi(self, timeout_cycles=1000):
+    while self.dut.io_wfi.value != 1 and timeout_cycles > 0:
       await ClockCycles(self.dut.io_aclk, 1)
+      timeout_cycles = timeout_cycles - 1
+    assert timeout_cycles > 0
 
   async def raise_irq(self, cycles=1):
     self.dut.io_irq.value = 1

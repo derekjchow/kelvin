@@ -26,5 +26,8 @@ template_rule(
         "rvv_load": {
             "srcs": ["rvv_load.S"],
         },
+        "rvv_load2": {
+            "srcs": ["rvv_load2.S"],
+        },
     },
 )
