@@ -423,6 +423,19 @@ class DispatchV2(p: Parameters) extends Dispatch(p) {
   }
 
   // ---------------------------------------------------------------------------
+  // Load/Store interlock
+  // Only dispatch one RVV load/store per cycle.
+  // TODO(derekjchow): Relax this when LsuV2 can accept multiple ops
+  val rvvLsuInterlock = if (p.enableRvv) {
+    val isRvvLsu = decodedInsts.map(
+        x => x.rvv.get.valid && x.rvv.get.bits.isLoadStore())
+    val rvvSet = isRvvLsu.scan(false.B)(_ || _)
+    rvvSet.map(!_).take(p.instructionLanes)
+  } else {
+    Seq.fill(p.instructionLanes)(true.B)
+  }
+
+  // ---------------------------------------------------------------------------
   // Undef
   // Ensure undef op is only handled in the first slot
   val undefInterlock = (0 until p.instructionLanes).map(i =>
@@ -445,6 +458,7 @@ class DispatchV2(p: Parameters) extends Dispatch(p) {
       !branchInterlock(i) && // Only branch/alu can be dispatched after a branch
       !fence(i) &&           // Don't dispatch if fence interlocked
       rvvInterlock(i) &&     // Rvv interlock rules
+      rvvLsuInterlock(i) &&  // Dispatch only one Rvv LsuOp
       !undefInterlock(i) &&     // Ensure undef is only dispatched from first slot
       io.retirement_buffer_nSpace.map(x => i.U < x).getOrElse(true.B) // Retirement buffer needs space for our slot
   )

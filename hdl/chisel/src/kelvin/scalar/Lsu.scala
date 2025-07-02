@@ -114,6 +114,11 @@ class LsuCmd(p: Parameters) extends Bundle {
   val op = LsuOp()
   val pc = UInt(32.W)
   val elemWidth = Option.when(p.enableRvv) { UInt(3.W) }
+
+  override def toPrintable: Printable = {
+    cf"LsuCmd(store -> ${store}, addr -> 0x${addr}%x, op -> ${op}, " +
+    cf"pc -> 0x${pc}%x, elemWidth -> ${elemWidth})"
+  }
 }
 
 class LsuUOp(p: Parameters) extends Bundle {
@@ -226,7 +231,6 @@ class LsuSlot(bytesPerSlot: Int, bytesPerLine: Int) extends Bundle {
   }
 
   // Updates the slot based on a previous read.
-  // TODO(derekjchow): Update me for vector
   def loadUpdate(valid: Bool,
                  lineAddr: UInt,
                  lineData: UInt): LsuSlot = {
@@ -279,7 +283,6 @@ class LsuSlot(bytesPerSlot: Int, bytesPerLine: Int) extends Bundle {
     result
   }
 
-  // TODO(derekjchow): Update me for vector
   def scatter(lineAddr: UInt): (Vec[UInt], Vec[Bool], Vec[Bool]) = {
     val canScatter = store && (!LsuOp.isVector(op) || !pendingVector)
     val lineAddrs = lineAddresses()
@@ -288,7 +291,6 @@ class LsuSlot(bytesPerSlot: Int, bytesPerLine: Int) extends Bundle {
     Scatter(lineActive, elemAddresses(), data)
   }
 
-  // TODO(derekjchow): Update me for vector
   def storeUpdate(selected: Vec[Bool]): LsuSlot = {
     assert(selected.length == active.length)
     val result = Wire(new LsuSlot(bytesPerSlot, bytesPerLine))
@@ -355,7 +357,9 @@ object LsuSlot {
     result.store := uop.store
     result.pc := uop.pc
 
-    result.pendingWriteback := !uop.store
+    // All vector ops require writeback. Lsu needs to inform RVV core store uop
+    // has completed.
+    result.pendingWriteback := !uop.store || LsuOp.isVector(uop.op)
     result.pendingVector := LsuOp.isVector(uop.op)
 
     val active = MuxCase(0.U(bytesPerSlot.W), Seq(
@@ -820,14 +824,13 @@ class LsuV2(p: Parameters) extends Lsu(p) {
   // Tracks if a read has been fired last cycle.
   val readFired = RegInit(MakeInvalid(new LsuRead(32 - nextSlot.elemBits)))
   val slot = RegInit(LsuSlot.inactive(p, 16))
-  
+
   val readData = MuxLookup(readFired.bits.bus, 0.U)(Seq(
       LsuBus.IBUS -> io.ibus.rdata,
       LsuBus.DBUS -> io.dbus.rdata,
       LsuBus.EXTERNAL -> io.ebus.dbus.rdata,
   ))
 
-  // TODO(derekjchow): Finish up store path
   val vectorUpdatedSlot =
   if (p.enableRvv) {
     io.rvv2lsu.get(0).ready := slot.pendingVector
@@ -858,11 +861,12 @@ class LsuV2(p: Parameters) extends Lsu(p) {
   // Vector writeback
   if (p.enableRvv) {
     io.lsu2rvv.get(0).valid := loadUpdatedSlot.shouldWriteback() &&
-        loadUpdatedSlot.op.isOneOf(LsuOp.VLOAD_UNIT, LsuOp.VLOAD_STRIDED,
-                                   LsuOp.VLOAD_OINDEXED, LsuOp.VLOAD_UINDEXED)
+        LsuOp.isVector(loadUpdatedSlot.op)
     io.lsu2rvv.get(0).bits.addr := loadUpdatedSlot.rd
     io.lsu2rvv.get(0).bits.data := Cat(loadUpdatedSlot.data.reverse)
-    io.lsu2rvv.get(0).bits.last := true.B
+    io.lsu2rvv.get(0).bits.last := loadUpdatedSlot.shouldWriteback() &&
+        loadUpdatedSlot.op.isOneOf(LsuOp.VSTORE_UNIT, LsuOp.VSTORE_STRIDED,
+                                   LsuOp.VSTORE_OINDEXED, LsuOp.VSTORE_UINDEXED)
 
     io.lsu2rvv.get(1).valid := false.B
     io.lsu2rvv.get(1).bits.addr := 0.U
@@ -911,7 +915,6 @@ class LsuV2(p: Parameters) extends Lsu(p) {
   io.ebus.dbus.addr := targetLineAddr
   io.ebus.dbus.adrx := targetLineAddr
   io.ebus.dbus.size := 16.U  // TODO(derekjchow): Don't be lazy
-  // TODO(derekjchow): Check direction
   io.ebus.dbus.wdata := Cat(wdata.reverse)
   io.ebus.dbus.wmask := Cat(wmask.reverse)
   io.ebus.dbus.pc := slot.pc
@@ -952,6 +955,8 @@ class LsuV2(p: Parameters) extends Lsu(p) {
     io.fault.valid -> LsuSlot.inactive(p, 16),
     // When inactive, dequeue if possible
     (vectorUpdatedSlot.slotIdle() && opQueue.io.deq.valid) -> nextSlot,
+    // Handle pending writeback here?
+    (vectorUpdatedSlot.shouldWriteback() && vectorUpdatedSlot.store) -> loadUpdate2Slot,
     // Guard writes with slot fired as that when updates.
     (!vectorUpdatedSlot.slotIdle() && vectorUpdatedSlot.store && slotFired) ->
         vectorUpdatedSlot.storeUpdate(wactive),

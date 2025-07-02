@@ -136,10 +136,13 @@ module RvvCore #(parameter N = 4,
             uop_lsu_lsu2rvv[i].uop_index = 0;
       `endif
       for (int i = 0; i < `NUM_LSU; i++) begin
-        uop_lsu_lsu2rvv[i].vregfile_write_valid = uop_lsu_valid_lsu2rvv[i];
+        // TODO(derekjchow): Modify me
+        uop_lsu_lsu2rvv[i].vregfile_write_valid = (
+            uop_lsu_valid_lsu2rvv[i] && !uop_lsu_last_lsu2rvv[i]);
         uop_lsu_lsu2rvv[i].vregfile_write_addr = uop_lsu_addr_lsu2rvv[i];
         uop_lsu_lsu2rvv[i].vregfile_write_data = uop_lsu_wdata_lsu2rvv[i];
-        uop_lsu_lsu2rvv[i].lsu_vstore_last = uop_lsu_last_lsu2rvv[i];
+        uop_lsu_lsu2rvv[i].lsu_vstore_last = (
+            uop_lsu_valid_lsu2rvv[i] && uop_lsu_last_lsu2rvv[i]);
       end
     end
 
