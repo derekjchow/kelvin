@@ -151,6 +151,7 @@ def _impl(ctx):
         flag_groups = [
             flag_group(
                 flags = [
+                    "-g3",
                     "-Os",
                     "-ffunction-sections",
                     "-fdata-sections",
@@ -222,11 +223,68 @@ def _impl(ctx):
         enabled = True,
         flag_sets = [
             architecture_flag_set,
-            optimization_compile_flag_set,
-            optimization_link_flag_set,
             spec_flag_set,
         ],
     )
+
+    dbg_flag_set = flag_set(
+        actions = all_compile_actions,
+        flag_groups = [
+            flag_group(
+                flags = [
+                    "-g3",
+                    "-O0",
+                ],
+            ),
+        ],
+    )
+
+    dbg_feature = feature(
+        name = "dbg",
+        enabled = False,
+        flag_sets = [
+            dbg_flag_set,
+        ],
+        provides = ["compilation_mode"],
+    )
+
+    fastbuild_feature = feature(
+        name = "fastbuild",
+        enabled = False,
+        flag_sets = [
+            optimization_compile_flag_set,
+            optimization_link_flag_set,
+        ],
+        provides = ["compilation_mode"],
+    )
+
+    opt_feature = feature(
+        name = "opt",
+        enabled = False,
+        flag_sets = [
+            optimization_compile_flag_set,
+            optimization_link_flag_set,
+        ],
+        provides = ["compilation_mode"],
+    )
+
+
+    strip_debug_symbols_feature = feature(
+        name = "strip_debug_symbols",
+        flag_sets = [
+            flag_set(
+                actions = all_link_actions,
+                flag_groups = [
+                    flag_group(
+                        flags = ["-g"],
+                        expand_if_available = "strip_debug_symbols",
+                    ),
+                ],
+            ),
+        ],
+    )
+
+
 
     return cc_common.create_cc_toolchain_config_info(
         ctx = ctx,
@@ -243,6 +301,10 @@ def _impl(ctx):
             printf_float_feature,
             sys_feature,
             warnings_feature,
+            dbg_feature,
+            fastbuild_feature,
+            opt_feature,
+            strip_debug_symbols_feature,
         ],
         tool_paths = tool_paths,
     )
