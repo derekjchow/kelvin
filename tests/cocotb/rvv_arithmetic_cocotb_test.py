@@ -30,7 +30,11 @@ def _get_math_result(x: np.array,
     elif symbol == 'mul':
         return np.multiply(x,y)
     elif symbol == 'div':
-        return np.divide(x, y)
+        orig_settings = np.seterr(divide='ignore')
+        divide_output = np.divide(x, y)
+        np.seterr(**orig_settings)
+
+        return divide_output
     return 0 # todo raise error
 
 async def arithmetic_m1_vanilla_ops_test(dut,
@@ -69,6 +73,14 @@ async def arithmetic_m1_vanilla_ops_test(dut,
             input_1 = np.random.randint(min_value, max_value, num_values, dtype=np_type)
             input_2 = np.random.randint(min_value, max_value, num_values, dtype=np_type)
             expected_output = np.asarray(_get_math_result(input_1, input_2, math_op), dtype=np_type)
+            if math_op == "div":
+                # riscv_vdiv clobbers divide by zero with -1
+                # riscv_vdivu clobbers divide by zero with max value of SEW
+                for idx, divisor in enumerate(input_2):
+                    if divisor == 0 and dtype[:3] == "int":
+                        expected_output[idx] = -1
+                    elif  divisor == 0 and dtype[:4] == "uint":
+                        expected_output[idx] = max_value - 1
 
             await fixture.write('in_buf_1', input_1)
             await fixture.write('in_buf_2', input_2)
