@@ -400,8 +400,10 @@ class RvvCoreShim(p: Parameters) extends Module {
   rvvCoreWrapper.io.rd <> io.rd
   rvvCoreWrapper.io.async_rd <> io.async_rd
 
-  rvvCoreWrapper.io.vstart := vstart
-  rvvCoreWrapper.io.vxrm := vxrm
+  rvvCoreWrapper.io.vstart := Mux(
+      io.csr.csr_vstart.valid, io.csr.csr_vstart.bits, vstart)
+  rvvCoreWrapper.io.vxrm := Mux(
+      io.csr.csr_vxrm.valid, io.csr.csr_vxrm.bits, vxrm)
   rvvCoreWrapper.io.vxsat := 0.U
   rvvCoreWrapper.io.vcsr_ready := true.B
 
@@ -418,6 +420,18 @@ class RvvCoreShim(p: Parameters) extends Module {
   io.configState.bits.lmul    := rvvCoreWrapper.io.configLmul
   io.rvv_idle                 := rvvCoreWrapper.io.rvv_idle
 
-  vstart := Mux(rvvCoreWrapper.io.vcsr_valid, rvvCoreWrapper.io.vcsr_vstart, vstart)
-  vxrm := Mux(rvvCoreWrapper.io.vcsr_valid, rvvCoreWrapper.io.vcsr_xrm, vxrm)
+  val vstart_wdata = MuxCase(vstart, Seq(
+      rvvCoreWrapper.io.vcsr_valid -> rvvCoreWrapper.io.vcsr_vstart,
+      io.csr.csr_vstart.valid -> io.csr.csr_vstart.bits,
+  ))
+  vstart := vstart_wdata
+
+  val vxrm_wdata = MuxCase(vxrm, Seq(
+      rvvCoreWrapper.io.vcsr_valid -> rvvCoreWrapper.io.vcsr_xrm,
+      io.csr.csr_vxrm.valid -> io.csr.csr_vxrm.bits,
+  ))
+  vxrm := vxrm_wdata
+
+  io.csr.vstart := vstart
+  io.csr.vxrm := vxrm
 }

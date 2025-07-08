@@ -18,6 +18,15 @@ import chisel3._
 import chisel3.util._
 import kelvin.float.{CsrFloatIO}
 
+class CsrRvvIO(p: Parameters) extends Bundle {
+  // To Csr from RvvCore
+  val vstart = Input(UInt(log2Ceil(p.rvvVlen).W))
+  val vxrm = Input(UInt(2.W))
+  // From Csr to RvvCore
+  val vstart_write = Output(Valid(UInt(log2Ceil(p.rvvVlen).W)))
+  val vxrm_write = Output(Valid(UInt(2.W)))
+}
+
 object Csr {
   def apply(p: Parameters): Csr = {
     return Module(new Csr(p))
@@ -28,6 +37,8 @@ object CsrAddress extends ChiselEnum {
   val FFLAGS    = Value(0x001.U(12.W))
   val FRM       = Value(0x002.U(12.W))
   val FCSR      = Value(0x003.U(12.W))
+  val VSTART    = Value(0x008.U(12.W))
+  val VXRM      = Value(0x009.U(12.W))
   val MSTATUS   = Value(0x300.U(12.W))
   val MISA      = Value(0x301.U(12.W))
   val MIE       = Value(0x304.U(12.W))
@@ -170,6 +181,7 @@ class Csr(p: Parameters) extends Module {
     val rd  = Valid(Flipped(new RegfileWriteDataIO))
     val bru = Flipped(new CsrBruIO(p))
     val float = Option.when(p.enableFloat) { Flipped(new CsrFloatIO(p)) }
+    val rvv = Option.when(p.enableRvv) { new CsrRvvIO(p) }
 
     // Vector core.
     val vcore = (if (p.enableVector) {
@@ -282,6 +294,8 @@ class Csr(p: Parameters) extends Module {
   val fflagsEn    = csr_address === CsrAddress.FFLAGS
   val frmEn       = csr_address === CsrAddress.FRM
   val fcsrEn      = csr_address === CsrAddress.FCSR
+  val vstartEn    = Option.when(p.enableRvv) { csr_address === CsrAddress.VSTART }
+  val vxrmEn      = Option.when(p.enableRvv) { csr_address === CsrAddress.VXRM }
   val mstatusEn   = csr_address === CsrAddress.MSTATUS
   val misaEn      = csr_address === CsrAddress.MISA
   val mieEn       = csr_address === CsrAddress.MIE
@@ -389,6 +403,8 @@ class Csr(p: Parameters) extends Module {
     ) ++
       Option.when(p.enableRvv) {
         Seq(
+          vstartEn.get -> io.rvv.get.vstart,
+          vxrmEn.get   -> io.rvv.get.vxrm,
           vlenbEn.get -> 16.U(32.W),  // Vector length in Bytes
         )
       }.getOrElse(Seq())
@@ -441,6 +457,13 @@ class Csr(p: Parameters) extends Module {
       when (tdata1En.get)     { tdata1.get := LegalizeTdata1(wdata) }
       when (tdata2En.get)     { tdata2.get := wdata }
     }
+  }
+
+  if (p.enableRvv) {
+    io.rvv.get.vstart_write.valid := req.valid && vstartEn.get
+    io.rvv.get.vstart_write.bits  := wdata(log2Ceil(p.rvvVlen)-1, 0)
+    io.rvv.get.vxrm_write.valid   := req.valid && vxrmEn.get
+    io.rvv.get.vxrm_write.bits    := wdata(1,0)
   }
 
   // mcycle implementation

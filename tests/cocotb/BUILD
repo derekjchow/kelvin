@@ -183,7 +183,8 @@ template_rule(
 
 RVV_TEST_BINARY_TARGETS = [
         "//tests/cocotb/rvv:rvv_load.elf",
-        "//tests/cocotb/rvv:rvv_add.elf"] + [
+        "//tests/cocotb/rvv:rvv_add.elf",
+        "//tests/cocotb/rvv:vstart_store.elf"] + [
         "//tests/cocotb/rvv/arithmetics:rvv_{}_{}_m1.elf".format(TEST_OP, DTYPE)
         for DTYPE in ["int8", "int16", "int32", "uint8", "uint16", "uint32"]
         for TEST_OP in ["add", "sub", "mul", "div"]
