@@ -202,6 +202,7 @@ object EmitCore extends App {
             } else {
               val zipName = name.getPath().replace(targetDir + "/", "")
               zip.putNextEntry(new ZipEntry(zipName))
+              zip.write(Files.readAllBytes(Paths.get(name.getPath())))
               zip.closeEntry()
             }
           }
