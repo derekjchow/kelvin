@@ -77,7 +77,10 @@ module RvvCore #(parameter N = 4,
 
   // Idle
   output logic rvv_idle,
-  output logic [$clog2(2*N + 1)-1:0] queue_capacity
+  output logic [$clog2(2*N + 1)-1:0] queue_capacity,
+
+  // Writeback from reorder buffer
+  output ROB2RT_t [`NUM_RT_UOP-1:0] rd_rob2rt_o
 );
   logic [N-1:0] frontend_cmd_valid;
   RVVCmd [N-1:0] frontend_cmd_data;
@@ -185,6 +188,9 @@ module RvvCore #(parameter N = 4,
     trap_valid_rvs2rvv = 0;
   end
 
+  ROB2RT_t [`NUM_RT_UOP-1:0] rd_rob2rt;
+  assign rd_rob2rt_o = rd_rob2rt;
+
   logic   [`ISSUE_LANE-1:0] insts_ready_cq2rvs;
   rvv_backend backend(
       .clk(clk),
@@ -213,7 +219,8 @@ module RvvCore #(parameter N = 4,
       .vcsr_valid(vcsr_valid),
       .vector_csr(vector_csr),
       .vcsr_ready(vcsr_ready),
-      .rvv_idle(rvv_idle)
+      .rvv_idle(rvv_idle),
+      .rd_rob2rt_o(rd_rob2rt)
   );
 
 endmodule

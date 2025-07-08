@@ -197,15 +197,13 @@ class RvviTrace(p: Parameters) extends Module {
             x_wdata(i)(j) := MuxOR(x_wb_valid, wdata)
             x_wb(i)(j) := x_wb_valid
 
-            val f_wb_valid = valid && (wb_idx === j.U + (32.U))
+            val f_wb_valid = valid && (wb_idx === j.U + p.floatRegfileBaseAddr.U)
             f_wdata(i)(j) := MuxOR(f_wb_valid, wdata)
             f_wb(i)(j) := f_wb_valid
 
-            ///////////////////////////////////
-            // TODO(atv): This is just generally not tracked.
-            ///////////////////////////////////
-            v_wdata(i)(j) := 0.U.asTypeOf(rvviTraceBlackBox.io.v_wdata_i(i)(j))
-            v_wb(i)(j) := false.B
+            val v_wb_valid = valid && (wb_idx === j.U + p.rvvRegfileBaseAddr.U)
+            v_wdata(i)(j) := MuxOR(v_wb_valid, wdata)
+            v_wb(i)(j) := v_wb_valid
         }
 
         for (j <- 0 until 4096) {

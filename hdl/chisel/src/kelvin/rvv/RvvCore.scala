@@ -40,6 +40,7 @@ object GenerateCoreShimSource {
             |    input [31:0] inst_GENI_bits_pc,
             |    input [1:0] inst_GENI_bits_opcode,
             |    input [24:0] inst_GENI_bits_bits,
+            |    input [31:0] inst_GENI_bits_vd,
             |""".stripMargin.replaceAll("GENI", i.toString)
     }
 
@@ -117,12 +118,29 @@ object GenerateCoreShimSource {
         |    output logic [3:0] queue_capacity,
         |""".stripMargin.replaceAll("VSTART_LEN", (log2Ceil(vlen) - 1).toString)
 
+    // Add rd_rob2rt_o interface outputs
+    for (i <- 0 until instructionLanes) {
+        moduleInterface += """
+            |    output rd_rob2rt_o_GENI_w_valid,
+            |    output [4:0] rd_rob2rt_o_GENI_w_index,
+            |    output [127:0] rd_rob2rt_o_GENI_w_data,
+            |    output rd_rob2rt_o_GENI_w_type,
+            |    output [15:0] rd_rob2rt_o_GENI_vd_type,
+            |    output rd_rob2rt_o_GENI_trap_flag,
+            |    output rd_rob2rt_o_GENI_vector_csr_vl,
+            |    output rd_rob2rt_o_GENI_vector_csr_vstart,
+            |    output rd_rob2rt_o_GENI_vector_csr_ma,
+            |    output rd_rob2rt_o_GENI_vector_csr_ta,
+            |    output rd_rob2rt_o_GENI_vector_csr_xrm,
+            |    output rd_rob2rt_o_GENI_vector_csr_sew,
+            |    output rd_rob2rt_o_GENI_vector_csr_lmul,
+            |    output [15:0] rd_rob2rt_o_GENI_vxsaturate,""".stripMargin.replaceAll("GENI", i.toString)
+    }
 
     // Remove last comma/linebreak
-    moduleInterface = moduleInterface.dropRight(2)
+    moduleInterface = moduleInterface.dropRight(1)
     moduleInterface += "\n);\n"
 
-    // Inst valid
     var coreInstantiation = "  logic [GENN-1:0] inst_valid;\n".replaceAll(
             "GENN", instructionLanes.toString)
     for (i <- 0 until instructionLanes) {
@@ -222,6 +240,8 @@ object GenerateCoreShimSource {
     coreInstantiation += """  RVVConfigState config_state;
         |""".stripMargin
 
+    coreInstantiation += "  ROB2RT_t [3:0] rd_rob2rt_o;\n"
+
     coreInstantiation += """  RvvCore#(.N (GENN)) core(
         |      .clk(clk),
         |      .rstn(rstn),
@@ -261,11 +281,28 @@ object GenerateCoreShimSource {
         |      .config_state_valid(configStateValid),
         |      .config_state(config_state),
         |      .rvv_idle(rvv_idle),
-        |      .queue_capacity(queue_capacity)
+        |      .queue_capacity(queue_capacity),
+        |      .rd_rob2rt_o(rd_rob2rt_o)
         |""".stripMargin.replaceAll("GENN", instructionLanes.toString)
     coreInstantiation += "  );\n"
 
-    // Connect temp outputs
+    for (i <- 0 until instructionLanes) {
+      coreInstantiation += """  assign rd_rob2rt_o_GENI_w_valid = rd_rob2rt_o[GENI].w_valid;
+      |  assign rd_rob2rt_o_GENI_w_index = rd_rob2rt_o[GENI].w_index;
+      |  assign rd_rob2rt_o_GENI_w_data = rd_rob2rt_o[GENI].w_data;
+      |  assign rd_rob2rt_o_GENI_w_type = rd_rob2rt_o[GENI].w_type;
+      |  assign rd_rob2rt_o_GENI_vd_type = rd_rob2rt_o[GENI].vd_type;
+      |  assign rd_rob2rt_o_GENI_trap_flag = rd_rob2rt_o[GENI].trap_flag;
+      |  assign rd_rob2rt_o_GENI_vector_csr_vl = rd_rob2rt_o[GENI].vector_csr.vl;
+      |  assign rd_rob2rt_o_GENI_vector_csr_vstart = rd_rob2rt_o[GENI].vector_csr.vstart;
+      |  assign rd_rob2rt_o_GENI_vector_csr_ma = rd_rob2rt_o[GENI].vector_csr.ma;
+      |  assign rd_rob2rt_o_GENI_vector_csr_ta = rd_rob2rt_o[GENI].vector_csr.ta;
+      |  assign rd_rob2rt_o_GENI_vector_csr_xrm = rd_rob2rt_o[GENI].vector_csr.xrm;
+      |  assign rd_rob2rt_o_GENI_vector_csr_sew = rd_rob2rt_o[GENI].vector_csr.sew;
+      |  assign rd_rob2rt_o_GENI_vector_csr_lmul = rd_rob2rt_o[GENI].vector_csr.lmul;
+      |  assign rd_rob2rt_o_GENI_vxsaturate = rd_rob2rt_o[GENI].vxsaturate;
+      |""".stripMargin.replaceAll("GENI", i.toString)
+    }
     for (i <- 0 until instructionLanes) {
       coreInstantiation += "  assign inst_GENI_ready = inst_ready[GENI];\n".replaceAll("GENI", i.toString)
     }
@@ -307,6 +344,8 @@ class RvvCoreWrapper(p: Parameters) extends BlackBox with HasBlackBoxInline
 
     val async_rd = Decoupled(new RegfileWriteDataIO)
 
+    val rd_rob2rt_o = Vec(4, new Rob2Rt(p))
+
     val vcsr_valid = Output(Bool())
     val vcsr_vstart = Output(UInt(7.W))
     val vcsr_xrm = Output(UInt(2.W))
@@ -329,6 +368,7 @@ class RvvCoreWrapper(p: Parameters) extends BlackBox with HasBlackBoxInline
     val rvv_idle = Output(Bool())
     val queue_capacity = Output(UInt(4.W))
   })
+  dontTouch(io.rd_rob2rt_o)
 
   // Resources must be sorted topologically by dependency DAG
   addResource("hdl/verilog/rvv/inc/rvv_backend_config.svh")
@@ -407,6 +447,7 @@ class RvvCoreShim(p: Parameters) extends Module {
   rvvCoreWrapper.io.rs <> io.rs
   rvvCoreWrapper.io.rd <> io.rd
   rvvCoreWrapper.io.async_rd <> io.async_rd
+  rvvCoreWrapper.io.rd_rob2rt_o <> io.rd_rob2rt_o
 
   rvvCoreWrapper.io.vstart := Mux(
       io.csr.vstart_write.valid, io.csr.vstart_write.bits, vstart)

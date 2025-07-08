@@ -397,13 +397,22 @@ absl::Status CoreMiniAxi_tb::CheckStatusAsync() {
 void CoreMiniAxi_tb::TraceInstructions() {
 #if (KP_useRetirementBuffer == true)
 #define TRACE_INSTRUCTION(x) do { \
-  uint32_t pc, inst, idx, data; \
+  uint32_t pc, inst, idx; \
   pc = debug_io_.rb_inst_##x##_bits_pc.read().get_word(0); \
   inst = debug_io_.rb_inst_##x##_bits_inst.read().get_word(0); \
   idx = debug_io_.rb_inst_##x##_bits_idx.read().get_word(0); \
-  data = debug_io_.rb_inst_##x##_bits_data.read().get_word(0); \
   if (debug_io_.rb_inst_##x##_valid.read()) { \
-    tracer_.TraceInstructionRaw(pc, inst, idx, data); \
+    auto data = debug_io_.rb_inst_##x##_bits_data.read(); \
+    std::vector<uint8_t> data_vec(data.length() / 8); \
+    int num_words = data.length() / 32; \
+    for (int i = 0; i < num_words; ++i) { \
+      uint32_t word = data.get_word((num_words - 1) - i); \
+      data_vec[i*4+0] = (word >> 24) & 0xff; \
+      data_vec[i*4+1] = (word >> 16) & 0xff; \
+      data_vec[i*4+2] = (word >> 8) & 0xff; \
+      data_vec[i*4+3] = word & 0xff; \
+    } \
+    tracer_.TraceInstructionRaw(pc, inst, idx, data_vec); \
   } \
 } while (0);
 REPEAT(TRACE_INSTRUCTION, KP_retirementBufferSize);

@@ -79,7 +79,11 @@ void InstructionTrace::TraceInstruction(
     for (auto& in : retirement_buffer_) {
       if (in.completed) continue;
       if (valid && (addr == in.reg)) {
-        in.data = data;
+        in.data.resize(4);
+        in.data[0] = (data >> 24) & 0xff;
+        in.data[1] = (data >> 16) & 0xff;
+        in.data[2] = (data >> 8) & 0xff;
+        in.data[3] = data & 0xff;
         in.completed = true;
         break;
       }
@@ -104,7 +108,9 @@ void InstructionTrace::TraceInstruction(
   }
 }
 
-void InstructionTrace::TraceInstructionRaw(uint32_t pc, uint32_t inst, uint32_t reg, uint32_t data) {
+void InstructionTrace::TraceInstructionRaw(uint32_t pc, uint32_t inst,
+                                           uint32_t reg,
+                                           const std::vector<uint8_t>& data) {
   Instruction in(pc, inst, reg);
   in.data = data;
   committed_insts_.push_back(in);
@@ -112,6 +118,10 @@ void InstructionTrace::TraceInstructionRaw(uint32_t pc, uint32_t inst, uint32_t 
 
 void InstructionTrace::PrintTrace() const {
   for (auto& inst : committed_insts_) {
-    printf("0x%08x,0x%08x,0x%02x,0x%08x\n", inst.pc, inst.inst, inst.reg, inst.data);
+    printf("0x%08x,0x%08x,0x%02x,0x", inst.pc, inst.inst, inst.reg);
+    for (auto d : inst.data) {
+      printf("%02x", d);
+    }
+    printf("\n");
   }
 }

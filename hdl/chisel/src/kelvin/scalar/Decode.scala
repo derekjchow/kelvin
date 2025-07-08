@@ -279,6 +279,7 @@ class Dispatch(p: Parameters) extends Module {
     val rdMark  = Vec(p.instructionLanes, Flipped(new RegfileWriteAddrIO))
     val busRead = Vec(p.instructionLanes, Flipped(new RegfileBusAddrIO))
     val rdMark_flt = Option.when(p.enableFloat)(Flipped(new RegfileWriteAddrIO))
+    val rvvRdMark = Option.when(p.enableRvv)(Vec(p.instructionLanes, Flipped(new RegfileWriteAddrIO)))
 
     // ALU interface.
     val alu = Vec(p.instructionLanes, Valid(new AluCmd))
@@ -751,6 +752,13 @@ class DispatchV2(p: Parameters) extends Dispatch(p) {
       val rdMark_flt_valid = (io.float.get.fire && !d.float.get.bits.scalar_rd) || (io.lsu(i).fire && d.isFloatLoad())
       io.rdMark_flt.get.valid := rdMark_flt_valid
       io.rdMark_flt.get.addr := rdAddr(i)
+    }
+
+    // Set RVV vector registers to write
+    if (p.enableRvv) {
+      val rvvRdMark_valid = io.rvv.get(i).fire && d.rvv.get.bits.writesVectorRegister()
+      io.rvvRdMark.get(i).valid := rvvRdMark_valid
+      io.rvvRdMark.get(i).addr := d.rvv.get.bits.vd
     }
 
     // Register file bus address port.

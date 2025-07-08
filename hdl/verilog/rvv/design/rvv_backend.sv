@@ -38,7 +38,9 @@ module rvv_backend
     vector_csr,
     vcsr_ready,
 
-    rvv_idle
+    rvv_idle,
+
+    rd_rob2rt_o
 );
 // global signal
     input   logic                                     clk;
@@ -81,6 +83,7 @@ module rvv_backend
 
 // rvv_backend is not active.(IDLE)
     output  logic                                     rvv_idle;
+    output ROB2RT_t [`NUM_RT_UOP-1:0]                 rd_rob2rt_o;
 
 `ifdef TB_BRINGUP
   // inst queue
@@ -993,6 +996,7 @@ module rvv_backend
 
   // rvv_backend IDLE
   assign rvv_idle = fifo_empty_cq2de&uq_empty&rob_empty;
+  assign rd_rob2rt_o = rd_rob2rt;
 
 `endif // TB_BRINGUP
 

@@ -130,14 +130,20 @@ struct CoreMiniAxi_tb : Sysc_tb {
     sc_signal<sc_bv<32>> float_writeData_1_bits_data;
 #endif
 #if (KP_useRetirementBuffer == true)
+#if (KP_enableRvv == true)
+#define RB_DEBUG_IO_DATA_WIDTH KP_rvvVlen
+#else
+#define RB_DEBUG_IO_DATA_WIDTH 32
+#endif
 #define RB_DEBUG_IO(x) \
   sc_signal<bool> rb_inst_##x##_valid; \
   sc_signal<sc_bv<32>> rb_inst_##x##_bits_pc; \
   sc_signal<sc_bv<32>> rb_inst_##x##_bits_inst; \
   sc_signal<sc_bv<KP_retirementBufferIdxWidth>> rb_inst_##x##_bits_idx; \
-  sc_signal<sc_bv<32>> rb_inst_##x##_bits_data;
+  sc_signal<sc_bv<RB_DEBUG_IO_DATA_WIDTH>> rb_inst_##x##_bits_data;
   REPEAT(RB_DEBUG_IO, KP_retirementBufferSize);
 #undef RB_DEBUG_IO
+#undef RB_DEBUG_IO_DATA_WIDTH
 #endif
   };
 

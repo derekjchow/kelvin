@@ -33,7 +33,8 @@ class InstructionTrace {
     const std::vector<uint32_t>& writeDataAddrs,
     const std::vector<uint32_t>& writeDataDatas,
     const std::vector<int>& executeRegBases);
-  void TraceInstructionRaw(uint32_t pc, uint32_t inst, uint32_t reg, uint32_t data);
+  void TraceInstructionRaw(uint32_t pc, uint32_t inst, uint32_t reg,
+                           const std::vector<uint8_t>& data);
   void PrintTrace() const;
 
   static const int kScalarBaseReg = 0;
@@ -49,13 +50,12 @@ class InstructionTrace {
       pc(pc),
       inst(inst),
       reg(reg),
-      data(0),
       completed(false) {}
 
     uint32_t pc;
     uint32_t inst;
     uint32_t reg;
-    uint32_t data;
+    std::vector<uint8_t> data;
     bool completed;
   };
   std::vector<Instruction> committed_insts_;

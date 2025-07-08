@@ -105,11 +105,14 @@ class Parameters(var m: Seq[MemoryRegion] = Seq(), val hartId: Int = 0) {
   val floatPulpDivsqrt = 0
 
   // Retirement buffer
+  val floatRegfileBaseAddr = 32
+  val rvvRegfileBaseAddr = 64
+  val rvvRegCount = 32
   val retirementBufferSize = 8
   def retirementBufferIdxWidth: Int = {
     val scalarRegCount = 32
     val floatRegCount = (if (enableFloat) { 32 } else { 0 })
-    log2Ceil(scalarRegCount + floatRegCount + 1)
+    log2Ceil(scalarRegCount + floatRegCount + rvvRegCount + 1)
   }
 
   // L0ICache Fetch unit.

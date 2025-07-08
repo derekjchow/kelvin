@@ -73,6 +73,14 @@ class SCore(p: Parameters) extends Module {
       retirement_buffer.get.io.writeDataScalar(i) := regfile.io.writeData(i)
     })
     dispatch.io.retirement_buffer_nSpace.get := retirement_buffer.get.io.nSpace
+    if (p.enableRvv) {
+      retirement_buffer.get.io.writeAddrVector.get := dispatch.io.rvvRdMark.get
+      (0 until p.instructionLanes).foreach(i => {
+        retirement_buffer.get.io.writeDataVector.get(i).valid := io.rvvcore.get.rd_rob2rt_o(i).w_valid
+        retirement_buffer.get.io.writeDataVector.get(i).bits.addr := io.rvvcore.get.rd_rob2rt_o(i).w_index
+        retirement_buffer.get.io.writeDataVector.get(i).bits.data := io.rvvcore.get.rd_rob2rt_o(i).w_data
+      })
+    }
   }
 
   if (p.useDebugModule) {

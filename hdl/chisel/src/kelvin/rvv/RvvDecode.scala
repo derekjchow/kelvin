@@ -36,6 +36,7 @@ class RvvCompressedInstruction extends Bundle {
   val pc = UInt(32.W)
   val opcode = RvvCompressedOpcode()
   val bits = UInt(25.W)
+  val vd = UInt(5.W)
 
   def funct6(): UInt = {
     bits(24, 19)
@@ -75,6 +76,13 @@ class RvvCompressedInstruction extends Bundle {
     // TODO(derekjchow): Add all cases that write scalar rd.
   }
 
+  def writesVectorRegister(): Bool = {
+    // A vector instruction writes to a vector register if it's an ALU operation
+    // or a load operation. Store operations do not write to a vector register.
+    // vset* instructions write to a scalar register (rd), not a vector register.
+    opcode === RvvCompressedOpcode.RVVLOAD || (opcode === RvvCompressedOpcode.RVVALU && !isVset())
+  }
+
   override def toPrintable: Printable = {
     cf"[opcode=$opcode, bits=$bits%b]"
   }
@@ -110,6 +118,7 @@ object RvvCompressedInstruction {
       _.bits.opcode -> new_opcode.bits,
       _.bits.pc -> pc,
       _.bits.bits -> bits,
+      _.bits.vd -> bits(4, 0),
     )
   }
 }

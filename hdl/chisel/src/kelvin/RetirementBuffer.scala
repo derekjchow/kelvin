@@ -25,12 +25,16 @@ class RetirementBuffer(p: Parameters) extends Module {
     val writeDataScalar = Input(Vec(p.instructionLanes + 2, Valid(new RegfileWriteDataIO)))
     val writeAddrFloat = Option.when(p.enableFloat)(Input(new RegfileWriteAddrIO))
     val writeDataFloat = Option.when(p.enableFloat)(Input(Vec(2, Valid(new RegfileWriteDataIO))))
+    val writeAddrVector = Option.when(p.enableRvv)(Input(Vec(p.instructionLanes, new RegfileWriteAddrIO)))
+    val writeDataVector = Option.when(p.enableRvv)(Input(Vec(p.instructionLanes, Valid(new VectorWriteDataIO(p)))))
     val nSpace = Output(UInt(32.W))
     val debug = Output(new RetirementBufferDebugIO(p))
   })
+  if (p.enableRvv) {
+    dontTouch(io.writeAddrVector.get)
+  }
 
   val idxWidth = p.retirementBufferIdxWidth
-  val floatRegisterBase = 32.U
   val noWriteRegIdx = ~0.U(idxWidth.W)
   class Instruction extends Bundle {
     val addr = UInt(32.W) // Memory address
@@ -58,12 +62,16 @@ class RetirementBuffer(p: Parameters) extends Module {
     val scalarValid = io.writeAddrScalar(i).valid
     val scalarAddr = io.writeAddrScalar(i).addr
 
+    val vectorValid = io.writeAddrVector.map(x => x(i).valid).getOrElse(false.B)
+    val vectorAddr = io.writeAddrVector.map(x => x(i).addr).getOrElse(0.U)
+
     val instr = Wire(new Instruction)
     instr.addr := io.inst(i).bits.addr
     instr.inst := io.inst(i).bits.inst
     instr.idx := MuxCase(noWriteRegIdx, Seq(
-      floatValid -> (floatAddr +& floatRegisterBase),
+      floatValid -> (floatAddr +& p.floatRegfileBaseAddr.U),
       (scalarValid && scalarAddr =/= 0.U) -> scalarAddr,
+      (vectorValid && vectorAddr =/= 0.U) -> (vectorAddr +& p.rvvRegfileBaseAddr.U),
     ))
     instr
   }
@@ -84,10 +92,11 @@ class RetirementBuffer(p: Parameters) extends Module {
   // Maintain a re-order buffer of instruction completion result.
   // The order and alignment of these buffers should correspond to the
   // output of `instBuffer`.
-  val resultBuffer = RegInit(VecInit(Seq.fill(bufferSize)(MakeInvalid(UInt(32.W)))))
+  val dataWidth = if (p.enableRvv) p.lsuDataBits else 32
+  val resultBuffer = RegInit(VecInit(Seq.fill(bufferSize)(MakeInvalid(UInt(dataWidth.W)))))
   // Compute update based on register writeback.
   // Note: The shift when committing instructions will be handled in a later block.
-  val resultUpdate = Wire(Vec(bufferSize, Valid(UInt(32.W))))
+  val resultUpdate = Wire(Vec(bufferSize, Valid(UInt(dataWidth.W))))
 
   for (i <- 0 until bufferSize) {
     val bufferEntry = instBuffer.io.dataOut(i)
@@ -95,7 +104,10 @@ class RetirementBuffer(p: Parameters) extends Module {
     val scalarWriteIdxMap = io.writeDataScalar.map(
         x => x.valid && (x.bits.addr === bufferEntry.idx))
     val floatWriteIdxMap = io.writeDataFloat.map(y => y.map(
-        x => x.valid && ((x.bits.addr +& floatRegisterBase) ===
+        x => x.valid && ((x.bits.addr +& p.floatRegfileBaseAddr.U) ===
+            bufferEntry.idx))).getOrElse(Seq(false.B))
+    val vectorWriteIdxMap = io.writeDataVector.map(y => y.map(
+        x => x.valid && ((x.bits.addr +& p.rvvRegfileBaseAddr.U) ===
             bufferEntry.idx))).getOrElse(Seq(false.B))
     // Check if this entry is an operation that doesn't require a register write (e.g., a store).
     val nonWritingInstr = bufferEntry.idx === noWriteRegIdx
@@ -103,19 +115,24 @@ class RetirementBuffer(p: Parameters) extends Module {
     val validBufferEntry = (i.U < instBuffer.io.nEnqueued) && (!resultBuffer(i).valid)
 
     // If the entry is active and its data dependency is met (or it has no dependency)...
-    val updated = (validBufferEntry && (scalarWriteIdxMap.reduce(_|_) || floatWriteIdxMap.reduce(_|_) || nonWritingInstr))
+    val updated = (validBufferEntry && (scalarWriteIdxMap.reduce(_|_) || floatWriteIdxMap.reduce(_|_) || vectorWriteIdxMap.reduce(_|_) || nonWritingInstr))
     // Find the index of the first write port that provides the needed data.
     val scalarWriteIdx = PriorityEncoder(scalarWriteIdxMap)
     val floatWriteIdx = PriorityEncoder(floatWriteIdxMap)
+    val vectorWriteIdx = PriorityEncoder(vectorWriteIdxMap)
     // Select the actual data from the winning write port.
     val writeDataScalar = io.writeDataScalar(scalarWriteIdx).bits.data
     val writeDataFloat = io.writeDataFloat.map(x => x(floatWriteIdx).bits.data).getOrElse(0.U)
+    val writeDataVector = io.writeDataVector.map(x => x(vectorWriteIdx).bits.data).getOrElse(0.U)
     // If updated, mark this buffer entry as complete for the next cycle.
     resultUpdate(i).valid := Mux(updated, true.B, resultBuffer(i).valid) // true.B
     // Select the correct write-back data to store, if updated (FP has priority).
+    val sdata = if (p.enableRvv) Cat(0.U((p.lsuDataBits - 32).W), writeDataScalar) else writeDataScalar
+    val fdata = if (p.enableRvv) Cat(0.U((p.lsuDataBits - 32).W), writeDataFloat) else writeDataFloat
     resultUpdate(i).bits := Mux(updated, MuxCase(0.U, Seq(
-      floatWriteIdxMap.reduce(_|_) -> writeDataFloat,
-      scalarWriteIdxMap.reduce(_|_) -> writeDataScalar,
+      floatWriteIdxMap.reduce(_|_) -> fdata,
+      vectorWriteIdxMap.reduce(_|_) -> writeDataVector,
+      scalarWriteIdxMap.reduce(_|_) -> sdata,
     )), resultBuffer(i).bits)
   }
 

@@ -176,7 +176,7 @@ class RetirementBufferDebugIO(p: Parameters) extends Bundle {
     val pc = UInt(32.W)
     val inst = UInt(32.W)
     val idx = UInt(p.retirementBufferIdxWidth.W)
-    val data = UInt(32.W)
+    val data = if (p.enableRvv) UInt(p.rvvVlen.W) else UInt(32.W)
   }))
 }
 
@@ -235,6 +235,11 @@ class RegfileWriteAddrIO extends Bundle {
 class RegfileWriteDataIO extends Bundle {
   val addr  = Input(UInt(5.W))
   val data  = Input(UInt(32.W))
+}
+
+class VectorWriteDataIO(p: Parameters) extends Bundle {
+  val addr  = Input(UInt(5.W))
+  val data  = Input(UInt(p.lsuDataBits.W))
 }
 
 class FabricIO(p: Parameters) extends Bundle {
