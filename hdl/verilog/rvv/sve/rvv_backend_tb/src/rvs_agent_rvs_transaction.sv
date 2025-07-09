@@ -702,7 +702,7 @@ class rvs_transaction extends uvm_sequence_item;
           (alu_type == OPMVV && dest_type == VRF && src2_type == VRF && src1_type == FUNC && src1_idx inside {VIOTA}) || 
           (alu_type == OPMVV && dest_type == VRF && src2_type == UNUSE && src1_type == FUNC && src2_idx == 0 && src1_idx inside {VID}) ||
           (alu_type == OPMVV && dest_type == VRF && src2_type == VRF && src1_type == FUNC && src1_idx inside {VMSBF, VMSOF, VMSIF}) ||
-          (alu_type == OPMVV && dest_type == VRF && src2_type == VRF && src1_type == FUNC && src1_idx inside {[0:31]}) || // rsv
+          (alu_type == OPMVV && dest_type == VRF && src2_type == VRF && src1_type == FUNC && src1_idx inside {[0:31]} && !(src1_idx inside {VIOTA, VID})) || // rsv
           (alu_type == OPMVX && dest_type == VRF && src2_type == VRF && src1_type == XRF) ; // rsv
         }
 
