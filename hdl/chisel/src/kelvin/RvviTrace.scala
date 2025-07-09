@@ -142,6 +142,7 @@ class RvviTraceBlackBox(p: Parameters) extends BlackBox with HasBlackBoxInline
 class RvviTrace(p: Parameters) extends Module {
     val io = IO(new Bundle {
         val rb = Input(new RetirementBufferDebugIO(p))
+        val csr = Input(new CsrTraceIO(p))
     })
     val x_wdata = Wire(Vec(p.retirementBufferSize, Vec(32, UInt(32.W))))
     val x_wb = Wire(Vec(p.retirementBufferSize, Vec(32, Bool())))
@@ -207,12 +208,10 @@ class RvviTrace(p: Parameters) extends Module {
             v_wb(i)(j) := false.B
         }
 
-        ///////////////////////////////////
-        // TODO(atv): This is just generally not tracked.
-        ///////////////////////////////////
         for (j <- 0 until 4096) {
-            csr(i)(j) := 0.U.asTypeOf(csr(i)(j))
-            csr_wb(i)(j) := false.B
+            val csr_wb_valid = valid && io.csr.valid && (io.csr.addr === j.U)
+            csr(i)(j) := MuxOR(csr_wb_valid, io.csr.data)
+            csr_wb(i)(j) := csr_wb_valid
         }
     }
 }

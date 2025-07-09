@@ -203,6 +203,7 @@ class Csr(p: Parameters) extends Module {
       val dcsr_step = Output(Bool())
       val next_pc = Input(UInt(32.W))
     })
+    val trace = Option.when(p.useRetirementBuffer)(Output(new CsrTraceIO(p)))
   })
 
   def LegalizeTdata1(wdata: UInt): Tdata1 = {
@@ -576,6 +577,12 @@ class Csr(p: Parameters) extends Module {
   io.rd.valid := req.valid
   io.rd.bits.addr  := req.bits.addr
   io.rd.bits.data  := rdata
+
+  if (p.useRetirementBuffer) {
+    io.trace.get.valid := req.valid
+    io.trace.get.addr := req.bits.index
+    io.trace.get.data := wdata
+  }
 
   // Assertions.
   assert(!(req.valid && !io.rs1.valid))

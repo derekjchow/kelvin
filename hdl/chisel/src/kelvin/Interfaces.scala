@@ -285,3 +285,9 @@ class CoreDMIO(p: Parameters) extends Bundle {
   val float_rs = Option.when(p.enableFloat)(new FRegfileRead)
   val debug_mode = Output(Bool())
 }
+
+class CsrTraceIO(p: Parameters) extends Bundle {
+  val valid = Bool()
+  val addr = UInt(12.W)
+  val data = UInt(32.W)
+}
