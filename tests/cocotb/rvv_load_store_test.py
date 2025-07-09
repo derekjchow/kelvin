@@ -146,3 +146,14 @@ async def load32_stride8_m1_partial(dut):
         out_size = 4,
         pattern = [0, 2, 4],
     )
+
+@cocotb.test()
+async def load_store8_unit_m2(dut):
+    await vector_load_store(
+        dut = dut,
+        elf_name = 'load_store8_unit_m2.elf',
+        dtype = np.uint8,
+        in_size = 64,
+        out_size = 64,
+        pattern = list(range(0, 32)),
+    )

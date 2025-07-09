@@ -300,6 +300,7 @@ verilator_cocotb_test(
         '//tests/cocotb/rvv/load_store:load8_stride2_m1.elf',
         '//tests/cocotb/rvv/load_store:load8_stride2_m1_partial.elf',
         '//tests/cocotb/rvv/load_store:load8_stride2_mf4.elf',
+        '//tests/cocotb/rvv/load_store:load_store8_unit_m2.elf',
         '//tests/cocotb/rvv/load_store:load16_stride4_m1.elf',
         '//tests/cocotb/rvv/load_store:load16_stride4_m1_partial.elf',
         '//tests/cocotb/rvv/load_store:load16_stride4_mf2.elf',
