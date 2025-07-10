@@ -48,6 +48,7 @@ py_library(
     deps = [
         requirement("cocotb"),
         requirement("pyocd"),
+        "@bazel_tools//tools/python/runfiles",
     ],
     data = [
         "//toolchain:gdb",

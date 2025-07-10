@@ -31,6 +31,14 @@ py_library(
     deps = {deps},
     tags = ["pypi_name={pypi_name}","pypi_version={pypi_version}"],
 )
+filegroup(
+    name = "verilator_srcs",
+    srcs = glob(["cocotb/share/lib/verilator/*.cpp"]),
+)
+filegroup(
+    name = "verilator_libs",
+    srcs = glob(["cocotb/libs/*.so"]),
+)
 """.format(pypi_name = pypi_name, pypi_version = pypi_version, deps = deps)
 
 def install_deps():

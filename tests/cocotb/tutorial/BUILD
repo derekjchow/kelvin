@@ -17,67 +17,30 @@ load("//rules:kelvin_v2.bzl", "kelvin_v2_binary")
 
 verilator_cocotb_test(
     name = "tutorial",
-    defines = {
-        "USE_GENERIC" : "",
-    },
     waves = True,
     hdl_toplevel = "CoreMiniAxi",
     seed = "42",
     test_module = ["tutorial.py"],
-    verilog_sources = [
-        "//hdl/chisel/src/kelvin:core_mini_axi_cc_library_verilog"
-    ],
+    model = "//tests/cocotb:core_mini_axi_model",
     deps = [
         "//kelvin_test_utils:core_mini_axi_sim_interface",
-    ],
-    build_args = [
-        "-Wno-WIDTH",
-        "-Wno-CASEINCOMPLETE",
-        "-Wno-LATCH",
-        "-Wno-SIDEEFFECT",
-        "-Wno-MULTIDRIVEN",
-        "-Wno-CASEOVERLAP",
-        "-Wno-UNOPTFLAT",
-        "-Wno-ASCRANGE",
-        "-Wno-WIDTHEXPAND",
-        "-Wno-WIDTHTRUNC",
-        "-Wno-UNSIGNED",
     ],
     data = glob(["**/*.elf"]),
 )
 
-
 verilator_cocotb_test(
     name = "hello_world_float_core_mini_axi",
-    defines = {
-        "USE_GENERIC" : "",
-    },
     waves = True,
     hdl_toplevel = "CoreMiniAxi",
     seed = "42",
     test_module = ["hello_world_float_core_mini_axi.py"],
-    verilog_sources = [
-        "//hdl/chisel/src/kelvin:core_mini_axi_cc_library_verilog"
-    ],
+    model = "//tests/cocotb:core_mini_axi_model",
     deps = [
         "//kelvin_test_utils:core_mini_axi_sim_interface",
-    ],
-    build_args = [
-        "-Wno-WIDTH",
-        "-Wno-CASEINCOMPLETE",
-        "-Wno-LATCH",
-        "-Wno-SIDEEFFECT",
-        "-Wno-MULTIDRIVEN",
-        "-Wno-CASEOVERLAP",
-        "-Wno-UNOPTFLAT",
-        "-Wno-ASCRANGE",
-        "-Wno-WIDTHEXPAND",
-        "-Wno-WIDTHTRUNC",
-        "-Wno-UNSIGNED",
+        "@bazel_tools//tools/python/runfiles",
     ],
     data = ["//examples:kelvin_v2_hello_world_add_floats.elf"],
 )
-
 
 kelvin_v2_binary(
     name="kelvin_v2_program",

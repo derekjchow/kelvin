@@ -2,6 +2,7 @@ import cocotb
 import numpy as np
 import argparse
 from kelvin_test_utils.core_mini_axi_interface import CoreMiniAxiInterface
+from bazel_tools.tools.python.runfiles import runfiles
 
 @cocotb.test()
 async def core_mini_rvv_load(dut):
@@ -15,8 +16,9 @@ async def core_mini_rvv_load(dut):
     await core_mini_axi.init()
     await core_mini_axi.reset()
     cocotb.start_soon(core_mini_axi.clock.start())
+    r = runfiles.Create()
 
-    elf_path = "../tests/cocotb/rvv/rvv_load.elf"
+    elf_path = r.Rlocation("kelvin_hw/tests/cocotb/rvv/rvv_load.elf")
     num_test_bytes = 16
     intial_pass = True
     if not elf_path:
@@ -62,8 +64,9 @@ async def core_mini_rvv_add(dut):
     await core_mini_axi.init()
     await core_mini_axi.reset()
     cocotb.start_soon(core_mini_axi.clock.start())
+    r = runfiles.Create()
 
-    elf_path = "../tests/cocotb/rvv/rvv_add.elf"
+    elf_path = r.Rlocation("kelvin_hw/tests/cocotb/rvv/rvv_add.elf")
     num_test_bytes = 16
     intial_pass = True
 
@@ -111,8 +114,9 @@ async def core_mini_vstart_store(dut):
     await core_mini_axi.init()
     await core_mini_axi.reset()
     cocotb.start_soon(core_mini_axi.clock.start())
+    r = runfiles.Create()
 
-    elf_path = "../tests/cocotb/rvv/vstart_store.elf"
+    elf_path = r.Rlocation("kelvin_hw/tests/cocotb/rvv/vstart_store.elf")
     if not elf_path:
         raise ValueError("elf_path must consist a valid path")
     with open(elf_path, "rb") as f:

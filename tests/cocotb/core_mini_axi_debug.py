@@ -18,6 +18,7 @@ import random
 from cocotb.triggers import ClockCycles
 from kelvin_test_utils.core_mini_axi_interface import CoreMiniAxiInterface, DmCmdType, DmRspOp
 from kelvin_test_utils.core_mini_axi_pyocd_gdbserver import CoreMiniAxiGDBServer
+from bazel_tools.tools.python.runfiles import runfiles
 
 @cocotb.test()
 async def core_mini_axi_debug_gdbserver(dut):
@@ -27,9 +28,10 @@ async def core_mini_axi_debug_gdbserver(dut):
     cocotb.start_soon(core_mini_axi.clock.start())
 
     gdbserver = CoreMiniAxiGDBServer(core_mini_axi)
+    r = runfiles.Create()
 
     # Just poke some FPU register.
-    with open("../tests/cocotb/registers.elf", "rb") as f:
+    with open(r.Rlocation("kelvin_hw/tests/cocotb/registers.elf"), "rb") as f:
         cmds = [
             "info reg f0",
         ]
@@ -37,7 +39,7 @@ async def core_mini_axi_debug_gdbserver(dut):
 
     # Test which calls memcpy through a function pointer.
     # Ensure we correctly break in memcpy.
-    with open("../tests/cocotb/fptr.elf", "rb") as f:
+    with open(r.Rlocation("kelvin_hw/tests/cocotb/fptr.elf"), "rb") as f:
         memcpy = core_mini_axi.lookup_symbol(f, "memcpy")
         cmds = [
             f"break *{hex(memcpy)}",
@@ -50,7 +52,7 @@ async def core_mini_axi_debug_gdbserver(dut):
 
     # Test which calls a computation function repeatedly.
     # Check the result of the second iteration, which should be 5.
-    with open("../tests/cocotb/math.elf", "rb") as f:
+    with open(r.Rlocation("kelvin_hw/tests/cocotb/math.elf"), "rb") as f:
         cmds = [
             f"break math",
             "continue",
@@ -170,7 +172,8 @@ async def core_mini_axi_debug_ndmreset(dut):
     rsp = await core_mini_axi.dm_write(0x10, dmcontrol)
     assert rsp["op"] == DmRspOp.SUCCESS
 
-    with open("../tests/cocotb/noop.elf", "rb") as f:
+    r = runfiles.Create()
+    with open(r.Rlocation("kelvin_hw/tests/cocotb/noop.elf"), "rb") as f:
         entry_point = await core_mini_axi.load_elf(f)
         await core_mini_axi.execute_from(entry_point)
         wait_for_halted_asserted = False
@@ -191,7 +194,8 @@ async def core_mini_axi_debug_halt_resume(dut):
     await core_mini_axi.reset()
     cocotb.start_soon(core_mini_axi.clock.start())
 
-    with open("../tests/cocotb/noop.elf", "rb") as f:
+    r = runfiles.Create()
+    with open(r.Rlocation("kelvin_hw/tests/cocotb/noop.elf"), "rb") as f:
         entry_point = await core_mini_axi.load_elf(f)
 
         await core_mini_axi.dm_request_halt()
@@ -239,7 +243,8 @@ async def core_mini_axi_debug_abstract_access_registers(dut):
     await core_mini_axi.reset()
     cocotb.start_soon(core_mini_axi.clock.start())
 
-    with open("../tests/cocotb/noop.elf", "rb") as f:
+    r = runfiles.Create()
+    with open(r.Rlocation("kelvin_hw/tests/cocotb/noop.elf"), "rb") as f:
         entry_point = await core_mini_axi.load_elf(f)
         await core_mini_axi.dm_request_halt()
 
@@ -282,7 +287,8 @@ async def core_mini_axi_debug_abstract_access_nonexistent_register(dut):
     await core_mini_axi.reset()
     cocotb.start_soon(core_mini_axi.clock.start())
 
-    with open("../tests/cocotb/noop.elf", "rb") as f:
+    r = runfiles.Create()
+    with open(r.Rlocation("kelvin_hw/tests/cocotb/noop.elf"), "rb") as f:
         entry_point = await core_mini_axi.load_elf(f)
         await core_mini_axi.dm_request_halt()
         await core_mini_axi.execute_from(entry_point)
@@ -298,7 +304,8 @@ async def core_mini_axi_debug_single_step(dut):
     await core_mini_axi.reset()
     cocotb.start_soon(core_mini_axi.clock.start())
 
-    with open("../tests/cocotb/noop.elf", "rb") as f:
+    r = runfiles.Create()
+    with open(r.Rlocation("kelvin_hw/tests/cocotb/noop.elf"), "rb") as f:
         entry_point = await core_mini_axi.load_elf(f)
         await core_mini_axi.dm_request_halt()
 
@@ -349,7 +356,8 @@ async def core_mini_axi_debug_breakpoint(dut):
     await core_mini_axi.reset()
     cocotb.start_soon(core_mini_axi.clock.start())
 
-    with open("../tests/cocotb/noop.elf", "rb") as f:
+    r = runfiles.Create()
+    with open(r.Rlocation("kelvin_hw/tests/cocotb/noop.elf"), "rb") as f:
         entry_point = await core_mini_axi.load_elf(f)
         await core_mini_axi.dm_request_halt()
 
@@ -422,7 +430,8 @@ async def core_mini_axi_debug_scalar_registers(dut):
     await core_mini_axi.init()
     await core_mini_axi.reset()
     cocotb.start_soon(core_mini_axi.clock.start())
-    with open("../tests/cocotb/registers.elf", "rb") as f:
+    r = runfiles.Create()
+    with open(r.Rlocation("kelvin_hw/tests/cocotb/registers.elf"), "rb") as f:
         entry_point = await core_mini_axi.load_elf(f)
         await core_mini_axi.execute_from(entry_point)
         await core_mini_axi.wait_for_wfi()

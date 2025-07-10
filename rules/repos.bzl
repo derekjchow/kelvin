@@ -40,7 +40,8 @@ def kelvin_repos():
             "@kelvin_hw//external:0002-Update-cocotb-script-to-support-newer-version.patch",
             "@kelvin_hw//external:0003-Export-vdb-via-undeclared-test-outputs.patch",
             "@kelvin_hw//external:0004-More-jobs-for-cocotb.patch",
-            "@kelvin_hw//external:0005-Use-num_failed-for-exit-code.patch"
+            "@kelvin_hw//external:0005-Use-num_failed-for-exit-code.patch",
+            "@kelvin_hw//external:0006-Separate-build-from-test-for-Verilator.patch",
         ],
         patch_args = ["-p1"],
     )

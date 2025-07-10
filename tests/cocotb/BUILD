@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-load("//rules:coco_tb.bzl", "vcs_cocotb_test", "verilator_cocotb_test")
+load("//rules:coco_tb.bzl", "vcs_cocotb_test", "verilator_cocotb_test", "verilator_cocotb_model")
 load("//rules:kelvin_v2.bzl", "kelvin_v2_binary")
 load("//rules:utils.bzl", "template_rule")
 load("@kelvin_hw//third_party/python:requirements.bzl", "requirement")
@@ -42,30 +42,44 @@ VERILATOR_BUILD_ARGS = [
     "-Wno-WIDTHEXPAND",
     "-Wno-WIDTHTRUNC",
     "-Wno-UNSIGNED",
+    "-DUSE_GENERIC=\"\"",
 ]
+
+verilator_cocotb_model(
+    name = "core_mini_axi_model",
+    hdl_toplevel = "CoreMiniAxi",
+    verilog_source = "//hdl/chisel/src/kelvin:CoreMiniAxi.sv",
+    cflags = VERILATOR_BUILD_ARGS,
+)
+
+verilator_cocotb_model(
+    name = "core_mini_debug_axi_model",
+    hdl_toplevel = "CoreMiniDebugAxi",
+    verilog_source = "//hdl/chisel/src/kelvin:CoreMiniDebugAxi.sv",
+    cflags = VERILATOR_BUILD_ARGS,
+)
+
+verilator_cocotb_model(
+    name = "rvv_core_mini_axi_model",
+    hdl_toplevel = "RvvCoreMiniAxi",
+    verilog_source = "//hdl/chisel/src/kelvin:RvvCoreMiniAxi.sv",
+    cflags = VERILATOR_BUILD_ARGS,
+)
 
 template_rule(
     verilator_cocotb_test,
     {
         "core_mini_axi_sim_cocotb": {
             "hdl_toplevel": "CoreMiniAxi",
-            "verilog_sources": [
-                "//hdl/chisel/src/kelvin:core_mini_axi_cc_library_verilog"
-            ],
+            "model": ":core_mini_axi_model",
             "size": "enormous",
         },
         "rvv_core_mini_axi_sim_cocotb": {
             "hdl_toplevel": "RvvCoreMiniAxi",
-            "verilog_sources": [
-                "//hdl/chisel/src/kelvin:rvv_core_mini_axi_cc_library_verilog"
-            ],
+            "model": ":rvv_core_mini_axi_model",
             "size": "enormous",
             "tags": ["manual"], # This suite takes a really long time
         },
-    },
-    build_args = VERILATOR_BUILD_ARGS,
-    defines = {
-        "USE_GENERIC" : "",
     },
     waves = True,
     seed = "42",
@@ -73,6 +87,7 @@ template_rule(
     deps = [
         "//kelvin_test_utils:core_mini_axi_sim_interface",
         requirement("tqdm"),
+        "@bazel_tools//tools/python/runfiles",
     ],
     data = COCOTB_TEST_BINARY_TARGETS,
 )
@@ -80,26 +95,7 @@ template_rule(
 verilator_cocotb_test(
     name = "core_mini_axi_debug_cocotb",
     hdl_toplevel = "CoreMiniDebugAxi",
-    verilog_sources = [
-                "//hdl/chisel/src/kelvin:core_mini_axi_debug_cc_library_verilog"
-    ],
-    build_args = [
-        "-Wno-WIDTH",
-        "-Wno-CASEINCOMPLETE",
-        "-Wno-LATCH",
-        "-Wno-SIDEEFFECT",
-        "-Wno-MULTIDRIVEN",
-        "-Wno-UNOPTFLAT",
-        "-Wno-CASEOVERLAP",
-        # Warnings that we disable for fpnew
-        "-Wno-ASCRANGE",
-        "-Wno-WIDTHEXPAND",
-        "-Wno-WIDTHTRUNC",
-        "-Wno-UNSIGNED",
-    ],
-    defines = {
-        "USE_GENERIC" : "",
-    },
+    model = ":core_mini_debug_axi_model",
     waves = True,
     seed = "42",
     test_module = ["core_mini_axi_debug.py"],
@@ -107,6 +103,7 @@ verilator_cocotb_test(
     deps = [
         "//kelvin_test_utils:core_mini_axi_sim_interface",
         "//kelvin_test_utils:core_mini_axi_pyocd_gdbserver",
+        "@bazel_tools//tools/python/runfiles",
     ],
     data = [
         ":fptr.elf",
@@ -175,6 +172,7 @@ template_rule(
     deps = [
         "//kelvin_test_utils:core_mini_axi_sim_interface",
         requirement("tqdm"),
+        "@bazel_tools//tools/python/runfiles",
     ],
     data = COCOTB_TEST_BINARY_TARGETS + [
         ":coverage_exclude.cfg",
@@ -193,19 +191,14 @@ RVV_TEST_BINARY_TARGETS = [
 verilator_cocotb_test(
     name = "rvv_assembly_cocotb_test",
     hdl_toplevel = "RvvCoreMiniAxi",
-    verilog_sources = [
-        "//hdl/chisel/src/kelvin:rvv_core_mini_axi_cc_library_verilog"
-    ],
-    build_args = VERILATOR_BUILD_ARGS,
-    defines = {
-        "USE_GENERIC" : "",
-    },
+    model = ":rvv_core_mini_axi_model",
     waves = True,
     seed = "42",
     test_module = ["rvv_assembly_cocotb_test.py"],
     deps = [
         "//kelvin_test_utils:core_mini_axi_sim_interface",
         requirement("tqdm"),
+        "@bazel_tools//tools/python/runfiles",
     ],
     data = RVV_TEST_BINARY_TARGETS,
     size = "large",
@@ -301,18 +294,13 @@ kelvin_v2_binary(
 verilator_cocotb_test(
     name = "rvv_load_store_test",
     hdl_toplevel = "RvvCoreMiniAxi",
-    verilog_sources = [
-        "//hdl/chisel/src/kelvin:rvv_core_mini_axi_cc_library_verilog"
-    ],
-    build_args = VERILATOR_BUILD_ARGS,
-    defines = {
-        "USE_GENERIC" : "",
-    },
+    model = ":rvv_core_mini_axi_model",
     waves = True,
     seed = "42",
     test_module = ["rvv_load_store_test.py"],
     deps = [
         "//kelvin_test_utils:sim_test_fixture",
+        "@bazel_tools//tools/python/runfiles",
     ],
     data = [
         '//tests/cocotb/rvv/load_store:load8_indexed_m1.elf',
@@ -343,18 +331,13 @@ verilator_cocotb_test(
 verilator_cocotb_test(
     name = "rvv_arithmetic_cocotb_test",
     hdl_toplevel = "RvvCoreMiniAxi",
-    verilog_sources = [
-        "//hdl/chisel/src/kelvin:rvv_core_mini_axi_cc_library_verilog"
-    ],
-    build_args = VERILATOR_BUILD_ARGS,
-    defines = {
-        "USE_GENERIC" : "",
-    },
+    model = ":rvv_core_mini_axi_model",
     waves = True,
     seed = "42",
     test_module = ["rvv_arithmetic_cocotb_test.py"],
     deps = [
         "//kelvin_test_utils:sim_test_fixture",
+        "@bazel_tools//tools/python/runfiles",
         requirement("tqdm"),
     ],
     data = RVV_TEST_BINARY_TARGETS,

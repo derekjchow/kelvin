@@ -20,6 +20,7 @@ import tqdm
 import random
 
 from kelvin_test_utils.core_mini_axi_interface import AxiBurst, AxiResp,CoreMiniAxiInterface
+from bazel_tools.tools.python.runfiles import runfiles
 
 
 @cocotb.test()
@@ -72,9 +73,10 @@ async def core_mini_axi_run_wfi_in_all_slots(dut):
     core_mini_axi = CoreMiniAxiInterface(dut)
     cocotb.start_soon(core_mini_axi.clock.start())
     await core_mini_axi.init()
+    r = runfiles.Create()
 
     for slot in range(0,4):
-      with open(f"../tests/cocotb/wfi_slot_{slot}.elf", "rb") as f:
+      with open(r.Rlocation(f"kelvin_hw/tests/cocotb/wfi_slot_{slot}.elf"), "rb") as f:
         await core_mini_axi.reset()
         entry_point = await core_mini_axi.load_elf(f)
         await core_mini_axi.execute_from(entry_point)
@@ -107,8 +109,9 @@ async def core_mini_axi_write_read_memory_stress_test(dut):
     await core_mini_axi.init()
     await core_mini_axi.reset()
     cocotb.start_soon(core_mini_axi.clock.start())
+    r = runfiles.Create()
 
-    with open(f"../tests/cocotb/stress_test.elf", "rb") as f:
+    with open(r.Rlocation("kelvin_hw/tests/cocotb/stress_test.elf"), "rb") as f:
       halt = core_mini_axi.lookup_symbol(f, "halt")
       dtcm_vec = core_mini_axi.lookup_symbol(f, "dtcm_vec")
       entry_point = await core_mini_axi.load_elf(f)
@@ -147,8 +150,9 @@ async def core_mini_axi_master_write_alignment(dut):
   await core_mini_axi.init()
   await core_mini_axi.reset()
   cocotb.start_soon(core_mini_axi.clock.start())
+  r = runfiles.Create()
 
-  with open("../tests/cocotb/align_test.elf", "rb") as f:
+  with open(r.Rlocation("kelvin_hw/tests/cocotb/align_test.elf"), "rb") as f:
     entry_point = await core_mini_axi.load_elf(f)
     await core_mini_axi.execute_from(entry_point)
 
@@ -161,8 +165,9 @@ async def core_mini_axi_finish_txn_before_halt_test(dut):
   await core_mini_axi.init()
   await core_mini_axi.reset()
   cocotb.start_soon(core_mini_axi.clock.start())
+  r = runfiles.Create()
 
-  with open("../tests/cocotb/finish_txn_before_halt.elf", "rb") as f:
+  with open(r.Rlocation("kelvin_hw/tests/cocotb/finish_txn_before_halt.elf"), "rb") as f:
     entry_point = await core_mini_axi.load_elf(f)
     await core_mini_axi.execute_from(entry_point)
     await core_mini_axi.wait_for_halted()
@@ -178,8 +183,10 @@ async def core_mini_axi_riscv_tests(dut):
   core_mini_axi = CoreMiniAxiInterface(dut)
   await core_mini_axi.init()
   cocotb.start_soon(core_mini_axi.clock.start())
+  r = runfiles.Create()
 
-  riscv_test_elfs = glob.glob("../tests/cocotb/riscv-tests/*.elf")
+  riscv_test_path = r.Rlocation("kelvin_hw/tests/cocotb/riscv-tests")
+  riscv_test_elfs = [os.path.join(riscv_test_path, f) for f in os.listdir(riscv_test_path) if f.endswith(".elf")]
   for elf in tqdm.tqdm(riscv_test_elfs):
     with open(elf, "rb") as f:
       await core_mini_axi.reset()
@@ -193,8 +200,10 @@ async def core_mini_axi_riscv_dv(dut):
   core_mini_axi = CoreMiniAxiInterface(dut)
   await core_mini_axi.init()
   cocotb.start_soon(core_mini_axi.clock.start())
+  r = runfiles.Create()
 
-  riscv_dv_elfs = glob.glob("../tests/cocotb/riscv-dv/*.o")
+  riscv_dv_path = r.Rlocation("kelvin_hw/tests/cocotb/riscv-dv")
+  riscv_dv_elfs = [os.path.join(riscv_dv_path, f) for f in os.listdir(riscv_dv_path) if f.endswith(".o")]
   with tqdm.tqdm(riscv_dv_elfs) as t:
     for elf in tqdm.tqdm(riscv_dv_elfs):
       t.set_postfix({"binary": os.path.basename(elf)})
@@ -250,8 +259,10 @@ async def core_mini_axi_exceptions_test(dut):
   await core_mini_axi.init()
   await core_mini_axi.reset()
   cocotb.start_soon(core_mini_axi.clock.start())
+  r = runfiles.Create()
 
-  exceptions_elfs = glob.glob("../tests/cocotb/exceptions/*.elf")
+  exceptions_path = r.Rlocation("kelvin_hw/tests/cocotb/exceptions")
+  exceptions_elfs = [os.path.join(exceptions_path, f) for f in os.listdir(exceptions_path) if f.endswith(".elf")]
   with tqdm.tqdm(exceptions_elfs) as t:
     for elf in tqdm.tqdm(exceptions_elfs):
       t.set_postfix({"binary": os.path.basename(elf)})
@@ -268,8 +279,10 @@ async def core_mini_axi_kelvin_isa_test(dut):
   await core_mini_axi.init()
   await core_mini_axi.reset()
   cocotb.start_soon(core_mini_axi.clock.start())
+  r = runfiles.Create()
 
-  kelvin_isa_elfs = glob.glob("../tests/cocotb/kelvin_isa/*.elf")
+  kelvin_isa_path = r.Rlocation("kelvin_hw/tests/cocotb/kelvin_isa")
+  kelvin_isa_elfs = [os.path.join(kelvin_isa_path, f) for f in os.listdir(kelvin_isa_path) if f.endswith(".elf")]
   for elf in tqdm.tqdm(kelvin_isa_elfs):
     with open(elf, "rb") as f:
       await core_mini_axi.reset()
@@ -340,8 +353,9 @@ async def core_mini_axi_float_csr_test(dut):
   await core_mini_axi.init()
   await core_mini_axi.reset()
   cocotb.start_soon(core_mini_axi.clock.start())
+  r = runfiles.Create()
 
-  with open("../tests/cocotb/float_csr_interlock_test.elf", "rb") as f:
+  with open(r.Rlocation("kelvin_hw/tests/cocotb/float_csr_interlock_test.elf"), "rb") as f:
     entry_point = await core_mini_axi.load_elf(f)
     await core_mini_axi.execute_from(entry_point)
 

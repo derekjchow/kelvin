@@ -17,6 +17,7 @@ import tqdm
 import re
 import numpy as np
 
+from bazel_tools.tools.python.runfiles import runfiles
 from kelvin_test_utils.sim_test_fixture import Fixture
 
 
@@ -58,11 +59,13 @@ async def arithmetic_m1_vanilla_ops_test(dut,
     pattern_extract = re.compile("rvv_(.*)_(.*)_m1.elf")
 
 
+    r = runfiles.Create()
     fixture = await Fixture.Create(dut)
     with tqdm.tqdm(m1_vanilla_op_elfs) as t:
         for elf_name in tqdm.tqdm(m1_vanilla_op_elfs):
+            elf_path = r.Rlocation("kelvin_hw/tests/cocotb/rvv/arithmetics/" + elf_name)
             await fixture.load_elf_and_lookup_symbols(
-                '../tests/cocotb/rvv/arithmetics/' + elf_name,
+                elf_path,
                 ['in_buf_1', 'in_buf_2', 'out_buf'],
             )
             math_op, dtype = pattern_extract.match(elf_name).groups()

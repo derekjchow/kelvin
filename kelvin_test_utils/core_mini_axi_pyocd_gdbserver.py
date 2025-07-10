@@ -361,7 +361,7 @@ class CoreMiniAxiGDBServer(object):
                     cmdfile.write(f'{cmd}\n')
                 cmdfile.flush()
                 args = [
-                    '../toolchain/gdb',
+                    '../../../toolchain/gdb',
                     '-x',
                     cmdfile.name,
                     elf.name,

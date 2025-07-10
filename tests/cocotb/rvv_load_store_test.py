@@ -16,6 +16,7 @@ import cocotb
 import numpy as np
 
 from kelvin_test_utils.sim_test_fixture import Fixture
+from bazel_tools.tools.python.runfiles import runfiles
 
 
 async def vector_load_store(
@@ -31,8 +32,9 @@ async def vector_load_store(
     Each test performs some kind of patterned copy from `in_buf` to `out_buf`.
     """
     fixture = await Fixture.Create(dut)
+    r = runfiles.Create()
     await fixture.load_elf_and_lookup_symbols(
-        '../tests/cocotb/rvv/load_store/' + elf_name,
+        r.Rlocation('kelvin_hw/tests/cocotb/rvv/load_store/' + elf_name),
         ['in_buf', 'out_buf'],
     )
 
@@ -69,8 +71,9 @@ async def vector_load_indexed(
     Each test performs a gather operation and writes the result to an output.
     """
     fixture = await Fixture.Create(dut)
+    r = runfiles.Create()
     await fixture.load_elf_and_lookup_symbols(
-        '../tests/cocotb/rvv/load_store/' + elf_name,
+        r.Rlocation('kelvin_hw/tests/cocotb/rvv/load_store/' + elf_name),
         ['input_indices', 'input_data', 'output_data'],
     )
 
@@ -108,8 +111,9 @@ async def vector_store_indexed(
     Each test loads indices and data and performs a scatter operation.
     """
     fixture = await Fixture.Create(dut)
+    r = runfiles.Create()
     await fixture.load_elf_and_lookup_symbols(
-        '../tests/cocotb/rvv/load_store/' + elf_name,
+        r.Rlocation('kelvin_hw/tests/cocotb/rvv/load_store/' + elf_name),
         ['input_indices', 'input_data', 'output_data'],
     )
 
