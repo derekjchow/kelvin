@@ -42,9 +42,9 @@ logic [`NUM_RT_UOP-1:0][`REGFILE_INDEX_WIDTH-1:0] wr_addr;
 logic [`NUM_RT_UOP-1:0][`VLEN-1:0]                wr_data;
 logic [`NUM_RT_UOP-1:0][`VLENB-1:0]               wr_we;              // byte enable
 logic [`NUM_RT_UOP-1:0][`VLEN-1:0]                wr_web;             // bit enable
-logic [`NUM_RT_UOP-1:0][`NUM_VRF-1:0][`VLEN-1:0]  vrf_wr_wenb;
+logic [`NUM_RT_UOP-1:0][`NUM_VRF-1:0][`VLENB-1:0] vrf_wr_wen;
 logic [`NUM_RT_UOP-1:0][`NUM_VRF-1:0][`VLEN-1:0]  vrf_wr_data;
-logic [`NUM_VRF-1:0][`VLEN-1:0]                   vrf_wr_wenb_full;
+logic [`NUM_VRF-1:0][`VLENB-1:0]                  vrf_wr_wen_full;
 logic [`NUM_VRF-1:0][`VLEN-1:0]                   vrf_wr_data_full;
 logic [`NUM_DP_VRF-1:0][`REGFILE_INDEX_WIDTH-1:0] rd_addr;
 logic [`NUM_VRF-1:0][`VLEN-1:0]                   vrf_rd_data_full;   // full 32 VLEN data from VRF
@@ -64,11 +64,11 @@ generate
 
     // access VRF. Only write will update input
     always_comb begin
-      vrf_wr_wenb[j] = 'b0;
+      vrf_wr_wen[j]  = 'b0;
       vrf_wr_data[j] = 'b0;
 
       if(wr_valid[j]) begin
-        vrf_wr_wenb[j][wr_addr[j]] = wr_web[j];
+        vrf_wr_wen[j][wr_addr[j]] = wr_we[j];
         vrf_wr_data[j][wr_addr[j]] = wr_data[j]&wr_web[j];
       end
     end
@@ -77,12 +77,12 @@ endgenerate
 
 // merge all retire data
 always_comb begin
-  vrf_wr_wenb_full = 'b0;
+  vrf_wr_wen_full = 'b0;
   vrf_wr_data_full = 'b0;
 
   for(int i=0; i<`NUM_VRF; i++) begin
     for(int h=0; h<`NUM_RT_UOP; h++) begin
-      vrf_wr_wenb_full[i] = vrf_wr_wenb_full[i] | vrf_wr_wenb[h][i];
+      vrf_wr_wen_full[i] = vrf_wr_wen_full[i] | vrf_wr_wen[h][i];
       vrf_wr_data_full[i] = vrf_wr_data_full[i] | vrf_wr_data[h][i];
     end
   end
@@ -96,7 +96,7 @@ vrf_reg (
   //Inputs
   .clk    (clk), 
   .rst_n  (rst_n),
-  .wenb   (vrf_wr_wenb_full),
+  .wen    (vrf_wr_wen_full),
   .wdata  (vrf_wr_data_full)
 );
 

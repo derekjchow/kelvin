@@ -15,10 +15,10 @@ interface vrf_interface (input bit clk, input bit rst_n);
   logic [`NUM_RT_UOP-1:0]  rt_last_uop;
 
   task set_dut_vrf(input int reg_idx, input logic[`VLEN-1:0] value);
-    `VRF_PATH.vrf_wr_wenb_full[reg_idx] = '1;
+    `VRF_PATH.vrf_wr_wen_full[reg_idx] = '1;
     `VRF_PATH.vrf_wr_data_full[reg_idx] = value;
     @(posedge clk);
-    `VRF_PATH.vrf_wr_wenb_full[reg_idx] = '0;
+    `VRF_PATH.vrf_wr_wen_full[reg_idx] = '0;
     @(posedge clk);
   endtask: set_dut_vrf
 

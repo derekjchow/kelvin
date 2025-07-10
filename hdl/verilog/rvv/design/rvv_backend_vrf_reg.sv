@@ -9,12 +9,12 @@ module rvv_backend_vrf_reg (/*AUTOARG*/
    // Outputs
    vreg,
    // Inputs
-   wenb, wdata, clk, rst_n
+   wen, wdata, clk, rst_n
    );
 
   output logic [`NUM_VRF-1:0][`VLEN-1:0]  vreg;
 
-  input  logic [`NUM_VRF-1:0][`VLEN-1:0]  wenb; // bit en
+  input  logic [`NUM_VRF-1:0][`VLENB-1:0] wen; // byte enable
   input  logic [`NUM_VRF-1:0][`VLEN-1:0]  wdata;
   input  logic                            clk;
   input  logic                            rst_n;
@@ -23,17 +23,20 @@ module rvv_backend_vrf_reg (/*AUTOARG*/
 genvar i,j;
 generate
   for (i=0; i<`NUM_VRF; i=i+1) begin
-    for (j=0; j<`VLEN; j=j+1) begin
-      edff vrf_unit1_reg (
-        .q      (vreg[i][j]),
-        .e      (wenb[i][j]),
-        .d      (wdata[i][j]),
+    for (j=0; j<`VLENB; j=j+1) begin
+      edff #(
+        .T      (logic [`BYTE_WIDTH-1:0])
+      )
+      vrf_unit1_reg (
+        .q      (vreg[i][j*`BYTE_WIDTH +: `BYTE_WIDTH]),
+        .e      (wen[i][j]),
+        .d      (wdata[i][j*`BYTE_WIDTH +: `BYTE_WIDTH]),
         .clk    (clk),
         .rst_n  (rst_n)
         );
     `ifdef ASSERT_ON
-      `rvv_forbid($isunknown(vreg[i][j]))
-        else $error("VREG: data is unknow at vreg[%0d][%0d]",i,j);
+      `rvv_forbid($isunknown(vreg[i][j*`BYTE_WIDTH +: `BYTE_WIDTH]))
+        else $error("VREG: data is unknow at vreg[%0d][%0d:%0d]",i,8*j+7,8*j);
     `endif //ASSERT_ON
     end //end for loop j
   end //end for loop i

@@ -153,7 +153,11 @@ module rvv_backend_top();
     for(int i=0; i<32; i++) begin
       vrf_if.vreg[i] = `VRF_PATH.vrf_rd_data_full[i];
     end
-    vrf_if.vrf_wr_wenb_full = `VRF_PATH.vrf_wr_wenb_full;
+    for(int i=0; i<32; i++) begin
+      for(int j=0; j<`VLENB; j++) begin
+        vrf_if.vrf_wr_wenb_full[i][j*`BYTE_WIDTH +: `BYTE_WIDTH] = {`BYTE_WIDTH{`VRF_PATH.vrf_wr_wen_full[i][j]}};
+      end
+    end
     vrf_if.vrf_wr_data_full = `VRF_PATH.vrf_wr_data_full;
     vrf_if.vrf_rd_data_full = `VRF_PATH.vrf_rd_data_full;
   end: vrf_connect
@@ -216,7 +220,13 @@ module rvv_backend_top();
   assign rvv_intern_if.rob_empty = DUT.u_rob.u_uop_valid_fifo.empty;
 
   /* vrf */
-  assign rvv_intern_if.vrf_wr_wenb_full = `VRF_PATH.vrf_wr_wenb_full;
+  always_comb begin
+    for(int i=0; i<32; i++) begin
+      for(int j=0; j<`VLENB; j++) begin
+        rvv_intern_if.vrf_wr_wenb_full[i][j*`BYTE_WIDTH +: `BYTE_WIDTH] = {`BYTE_WIDTH{`VRF_PATH.vrf_wr_wen_full[i][j]}};
+      end
+    end
+  end
 
   // Trap
   assign rvv_intern_if.trap_valid_rvs2rvv = DUT.trap_valid_rvs2rvv;

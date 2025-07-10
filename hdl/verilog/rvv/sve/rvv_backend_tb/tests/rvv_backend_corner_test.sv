@@ -1065,4 +1065,66 @@ class small_evl_test extends rvv_backend_test;
     super.final_phase(phase);
   endfunction
 endclass: small_evl_test
+
+
+//-----------------------------------------------------------
+// rob_entry_trap_test
+//-----------------------------------------------------------
+class rob_entry_trap_test extends rvv_backend_test;
+
+  rvs_random_sequence_library rvs_seq_lib;
+  inst_rvv_zve32x_vcpop_m_seq   vcpop_m_seq;
+  inst_rvv_zve32x_viota_m_seq   viota_m_seq;
+  inst_rvv_zve32x_vmv_x_s_seq   vmv_x_s_seq;
+  inst_rvv_zve32x_vadd_vx_seq   vadd_vx_seq;
+  inst_rvv_zve32x_vse8_v_seq    vse8_v_seq;
+  rvs_last_sequence             rvs_last_seq;
+
+  `uvm_component_utils(rob_entry_trap_test)
+
+  function new(string name, uvm_component parent);
+    super.new(name, parent);
+  endfunction
+
+  function void build_phase(uvm_phase phase);
+    super.build_phase(phase);
+    uvm_config_db#(bit)::set(uvm_root::get(), "*", "trap_en", 1'b1);
+    uvm_config_db#(bit)::set(uvm_root::get(), "*", "always_trap", 1'b1);
+  endfunction
+
+  function void connect_phase(uvm_phase phase);
+    super.connect_phase(phase);
+    this.set_report_id_action_hier("MDL", UVM_LOG);
+  endfunction
+
+  task main_phase(uvm_phase phase);
+
+    rvs_seq_lib = rvs_random_sequence_library::type_id::create("rvs_seq_lib");
+    rvs_seq_lib.selection_mode = UVM_SEQ_LIB_RAND;
+    rvs_seq_lib.sequence_count = random_inst_num;
+    rvs_seq_lib.add_typewide_sequence(vcpop_m_seq.get_type());
+    rvs_seq_lib.add_typewide_sequence(vcpop_m_seq.get_type());
+    rvs_seq_lib.add_typewide_sequence(vcpop_m_seq.get_type());
+    rvs_seq_lib.add_typewide_sequence(viota_m_seq.get_type());
+    rvs_seq_lib.add_typewide_sequence(viota_m_seq.get_type());
+    rvs_seq_lib.add_typewide_sequence(viota_m_seq.get_type());
+    rvs_seq_lib.add_typewide_sequence(vmv_x_s_seq.get_type());
+    rvs_seq_lib.add_typewide_sequence(vmv_x_s_seq.get_type());
+    rvs_seq_lib.add_typewide_sequence(vmv_x_s_seq.get_type());
+    rvs_seq_lib.add_typewide_sequence(vadd_vx_seq.get_type());
+    rvs_seq_lib.add_typewide_sequence(vse8_v_seq.get_type());
+    rvs_seq_lib.init_sequence_library();
+
+    rand_vrf();
+
+    rvs_seq_lib.start(env.rvs_agt.rvs_sqr);
+
+    rvs_last_seq = rvs_last_sequence::type_id::create("rvs_last_seq", this);
+    rvs_last_seq.start(env.rvs_agt.rvs_sqr);
+  endtask
+
+  function void final_phase(uvm_phase phase);
+    super.final_phase(phase);
+  endfunction
+endclass: rob_entry_trap_test
 `endif // RVV_BACKEND_CORNER_TEST__SV
