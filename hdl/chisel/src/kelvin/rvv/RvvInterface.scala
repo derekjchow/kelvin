@@ -63,4 +63,6 @@ class RvvCoreIO(p: Parameters) extends Bundle {
 
     // Async scalar regfile writes.
     val async_rd = Decoupled(new RegfileWriteDataIO)
+
+    val rvv_idle = Output(Bool())
 }

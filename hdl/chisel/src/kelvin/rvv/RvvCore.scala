@@ -111,6 +111,7 @@ object GenerateCoreShimSource {
         |    output [1:0] configXrm,
         |    output [2:0] configSew,
         |    output [2:0] configLmul,
+        |    output logic rvv_idle,
         |""".stripMargin.replaceAll("VSTART_LEN", (log2Ceil(vlen) - 1).toString)
 
 
@@ -254,7 +255,8 @@ object GenerateCoreShimSource {
         |      .vector_csr(vector_csr),
         |      .vcsr_ready(vcsr_ready),
         |      .config_state_valid(configStateValid),
-        |      .config_state(config_state)
+        |      .config_state(config_state),
+        |      .rvv_idle(rvv_idle)
         |""".stripMargin.replaceAll("GENN", instructionLanes.toString)
     coreInstantiation += "  );\n"
 
@@ -318,6 +320,7 @@ class RvvCoreWrapper(p: Parameters) extends BlackBox with HasBlackBoxInline
     val configXrm = Output(UInt(2.W))
     val configSew = Output(UInt(3.W))
     val configLmul = Output(UInt(3.W))
+    val rvv_idle = Output(Bool())
   })
 
   // Resources must be sorted topologically by dependency DAG
@@ -413,6 +416,7 @@ class RvvCoreShim(p: Parameters) extends Module {
   io.configState.bits.xrm     := rvvCoreWrapper.io.configXrm
   io.configState.bits.sew     := rvvCoreWrapper.io.configSew
   io.configState.bits.lmul    := rvvCoreWrapper.io.configLmul
+  io.rvv_idle                 := rvvCoreWrapper.io.rvv_idle
 
   vstart := Mux(rvvCoreWrapper.io.vcsr_valid, rvvCoreWrapper.io.vcsr_vstart, vstart)
   vxrm := Mux(rvvCoreWrapper.io.vcsr_valid, rvvCoreWrapper.io.vcsr_xrm, vxrm)

@@ -295,6 +295,7 @@ class Dispatch(p: Parameters) extends Module {
     val rvv = Option.when(p.enableRvv)(
         Vec(p.instructionLanes, Decoupled(new RvvCompressedInstruction)))
     val rvvState = Option.when(p.enableRvv)(Input(Valid(new RvvConfigState(p))))
+    val rvvIdle = Option.when(p.enableRvv)(Input(Bool()))
 
     // Vector interface, to maintain interface compatibility with old dispatch
     // unit.
@@ -450,12 +451,11 @@ class DispatchV2(p: Parameters) extends Dispatch(p) {
   // Evaluate whether the core is idle.
   // The general method of operation is to check that
   // scoreboards for register files are clear, and no LSU operation is active.
-  // TODO(atv): Extend this to consider vector operations.
   val coreIdle =
         (
           (io.scoreboard.regd === 0.U) &&
           (io.fscoreboard.getOrElse(0.U) === 0.U) &&
-          // /* vec scoreboard clear */ &&
+          io.rvvIdle.getOrElse(true.B) &&
           !io.lsuActive
         )
 

@@ -73,7 +73,10 @@ module RvvCore #(parameter N = 4,
 
   // Config state
   output config_state_valid,
-  output RVVConfigState config_state
+  output RVVConfigState config_state,
+
+  // Idle
+  output logic rvv_idle
 );
   logic [N-1:0] frontend_cmd_valid;
   RVVCmd [N-1:0] frontend_cmd_data;
@@ -180,7 +183,6 @@ module RvvCore #(parameter N = 4,
     trap_valid_rvs2rvv = 0;
   end
 
-  logic rvv_idle;
   logic   [`ISSUE_LANE-1:0] insts_ready_cq2rvs;
   rvv_backend backend(
       .clk(clk),
