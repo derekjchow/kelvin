@@ -187,6 +187,30 @@ object ComputeStridedAddrs {
   }
 }
 
+object ComputeIndexedAddrs {
+  def apply(bytesPerSlot: Int,
+            baseAddr: UInt,
+            indices: UInt,
+            elemWidth: UInt): Vec[UInt] = {
+    val indices8 = UIntToVec(indices, 8)
+    val indices16 = UIntToVec(indices, 16)
+    val indices32 = UIntToVec(indices, 32)
+
+    MuxCase(VecInit.fill(bytesPerSlot)(0.U(32.W)), Seq(
+      // elemWidth validation is done at decode time.
+      // 8-bit indices. Each byte has its own offset.
+      (elemWidth === "b000".U) -> VecInit((0 until bytesPerSlot).map(
+          i => (baseAddr + indices8(i))(31, 0))),
+      // 16-bit indices. Each 2-byte element has an offset.
+      (elemWidth === "b101".U) -> VecInit((0 until bytesPerSlot).map(
+          i => (baseAddr + indices16(i >> 1))(31, 0) + (i & 1).U)),
+      // 32-bit indices. Each 4-byte element has an offset.
+      (elemWidth === "b110".U) -> VecInit((0 until bytesPerSlot).map(
+          i => (baseAddr + indices32(i >> 2))(31, 0) + (i & 3).U))
+    ))
+  }
+}
+
 // bytesPerSlot is the number of bytes in a vector register
 // bytesPerLine is the number of bytes in the AXI bus
 class LsuSlot(bytesPerSlot: Int, bytesPerLine: Int) extends Bundle {
@@ -253,8 +277,11 @@ class LsuSlot(bytesPerSlot: Int, bytesPerLine: Int) extends Bundle {
         op.isOneOf(LsuOp.VLOAD_UNIT, LsuOp.VSTORE_UNIT) ->
             VecInit((0 until bytesPerSlot).map(i => baseAddr + i.U)),
         op.isOneOf(LsuOp.VLOAD_STRIDED, LsuOp.VSTORE_STRIDED) ->
-            ComputeStridedAddrs(bytesPerSlot, baseAddr, stride, elemWidth)
-        // TODO(derekjchow): Support indexed
+            ComputeStridedAddrs(bytesPerSlot, baseAddr, stride, elemWidth),
+        op.isOneOf(LsuOp.VLOAD_OINDEXED, LsuOp.VLOAD_UINDEXED,
+                   LsuOp.VSTORE_OINDEXED, LsuOp.VSTORE_UINDEXED) ->
+            ComputeIndexedAddrs(bytesPerSlot, baseAddr, rvv2lsu.idx.bits.data,
+                                elemWidth)
         // TODO(derekjchow): Support segmented
     ))
     result.elemWidth := elemWidth

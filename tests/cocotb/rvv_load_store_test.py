@@ -59,6 +59,88 @@ async def vector_load_store(
 
     assert (actual_outputs == expected_outputs).all(), debug_msg
 
+async def vector_load_indexed(
+        dut,
+        elf_name: str,
+        dtype,
+):
+    """RVV load-store test template for indexed loads.
+
+    Each test performs a gather operation and writes the result to an output.
+    """
+    fixture = await Fixture.Create(dut)
+    await fixture.load_elf_and_lookup_symbols(
+        '../tests/cocotb/rvv/load_store/' + elf_name,
+        ['input_indices', 'input_data', 'output_data'],
+    )
+
+    indices_count = 16 // np.dtype(dtype).itemsize
+    in_data_count = 4096 // np.dtype(dtype).itemsize
+    out_data_count = 16 // np.dtype(dtype).itemsize
+
+    min_value = np.iinfo(dtype).min
+    max_value = np.iinfo(dtype).max + 1  # One above.
+    rng = np.random.default_rng()
+    input_data = rng.integers(min_value, max_value, in_data_count, dtype=dtype)
+    input_indices = rng.integers(
+        0, min(max_value, in_data_count-1), indices_count, dtype=dtype)
+
+    expected_outputs = np.take(input_data, input_indices)
+
+    await fixture.write('input_data', input_data)
+    await fixture.write('input_indices', input_indices)
+    await fixture.write('output_data', np.zeros([out_data_count], dtype=dtype))
+
+    await fixture.run_to_halt()
+
+    actual_outputs = (await fixture.read(
+        'output_data', out_data_count * np.dtype(dtype).itemsize)).view(dtype)
+
+    assert (actual_outputs == expected_outputs).all()
+
+async def vector_store_indexed(
+        dut,
+        elf_name: str,
+        dtype,
+):
+    """RVV load-store test template for indexed stores.
+
+    Each test loads indices and data and performs a scatter operation.
+    """
+    fixture = await Fixture.Create(dut)
+    await fixture.load_elf_and_lookup_symbols(
+        '../tests/cocotb/rvv/load_store/' + elf_name,
+        ['input_indices', 'input_data', 'output_data'],
+    )
+
+    indices_count = 16 // np.dtype(dtype).itemsize
+    in_data_count = 16 // np.dtype(dtype).itemsize
+    out_data_count = 4096 // np.dtype(dtype).itemsize
+
+    min_value = np.iinfo(dtype).min
+    max_value = np.iinfo(dtype).max + 1  # One above.
+    rng = np.random.default_rng()
+    input_data = rng.integers(min_value, max_value, in_data_count, dtype=dtype)
+    input_indices = rng.integers(
+        0, min(max_value, out_data_count-1), indices_count, dtype=dtype)
+    original_outputs = rng.integers(
+        min_value, max_value, out_data_count, dtype=dtype)
+
+    await fixture.write('input_data', input_data)
+    await fixture.write('input_indices', input_indices)
+    await fixture.write('output_data', original_outputs)
+
+    expected_outputs = np.copy(original_outputs)
+    for idx, data in zip(input_indices, input_data):
+      expected_outputs[idx] = data
+
+    await fixture.run_to_halt()
+
+    actual_outputs = (await fixture.read(
+        'output_data', out_data_count * np.dtype(dtype).itemsize)).view(dtype)
+
+    assert (actual_outputs == expected_outputs).all()
+
 @cocotb.test()
 async def load8_stride2_m1(dut):
     await vector_load_store(
@@ -156,4 +238,20 @@ async def load_store8_unit_m2(dut):
         in_size = 64,
         out_size = 64,
         pattern = list(range(0, 32)),
+    )
+
+@cocotb.test()
+async def load8_indexed_m1(dut):
+    await vector_load_indexed(
+        dut = dut,
+        elf_name = 'load8_indexed_m1.elf',
+        dtype = np.uint8,
+    )
+
+@cocotb.test()
+async def store8_indexed_m1(dut):
+    await vector_store_indexed(
+        dut = dut,
+        elf_name = 'store8_indexed_m1.elf',
+        dtype = np.uint8,
     )

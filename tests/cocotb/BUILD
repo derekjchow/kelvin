@@ -315,6 +315,7 @@ verilator_cocotb_test(
         "//kelvin_test_utils:sim_test_fixture",
     ],
     data = [
+        '//tests/cocotb/rvv/load_store:load8_indexed_m1.elf',
         '//tests/cocotb/rvv/load_store:load8_stride2_m1.elf',
         '//tests/cocotb/rvv/load_store:load8_stride2_m1_partial.elf',
         '//tests/cocotb/rvv/load_store:load8_stride2_mf4.elf',
@@ -324,6 +325,7 @@ verilator_cocotb_test(
         '//tests/cocotb/rvv/load_store:load16_stride4_mf2.elf',
         '//tests/cocotb/rvv/load_store:load32_stride8_m1.elf',
         '//tests/cocotb/rvv/load_store:load32_stride8_m1_partial.elf',
+        '//tests/cocotb/rvv/load_store:store8_indexed_m1.elf',
     ],
     size = "large",
 )

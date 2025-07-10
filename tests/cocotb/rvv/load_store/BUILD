@@ -20,6 +20,9 @@ package(default_visibility = ["//visibility:public"])
 template_rule(
     kelvin_v2_binary,
     {
+        "load8_indexed_m1": {
+            "srcs": ["load8_indexed_m1.cc"],
+        },
         "load8_stride2_m1": {
             "srcs": ["load8_stride2_m1.cc"],
         },
@@ -46,6 +49,9 @@ template_rule(
         },
         "load32_stride8_m1_partial": {
             "srcs": ["load32_stride8_m1_partial.cc"],
+        },
+        "store8_indexed_m1": {
+            "srcs": ["store8_indexed_m1.cc"],
         },
     },
 )
