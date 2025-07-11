@@ -106,6 +106,32 @@ object LsuOp extends ChiselEnum {
   def isFlush(op: LsuOp.Type): Bool = {
     op.isOneOf(LsuOp.FENCEI, LsuOp.FLUSHAT, LsuOp.FLUSHALL)
   }
+
+  def opSize(op: LsuOp.Type, address: UInt): (UInt, UInt) = {
+    val halfAligned = (address(0) === 0.U)
+    val wordAligned = (address(1, 0) === 0.U)
+
+    val size = MuxCase(16.U, Seq(
+      op.isOneOf(LsuOp.LB, LsuOp.LBU, LsuOp.SB) -> 1.U,
+      op.isOneOf(LsuOp.LH, LsuOp.LHU, LsuOp.SH) -> Mux(halfAligned, 2.U, 16.U),
+      op.isOneOf(LsuOp.LW, LsuOp.SW, LsuOp.FLOAT) ->
+          Mux(wordAligned, 4.U, 16.U),
+      LsuOp.isVector(op) -> 16.U,
+    ))
+
+    val halfAlignedAddress = address(31, 1) << 1.U
+    val wordAlignedAddress = address(31, 2) << 2.U
+    val lineAlignedAddress = address(31, 4) << 4.U
+    val alignedAddress = MuxCase(lineAlignedAddress, Seq(
+      op.isOneOf(LsuOp.LB, LsuOp.LBU, LsuOp.SB) -> address,
+      (op.isOneOf(LsuOp.LH, LsuOp.LHU, LsuOp.SH) && halfAligned) ->
+          halfAlignedAddress,
+      (op.isOneOf(LsuOp.LW, LsuOp.SW, LsuOp.FLOAT) && wordAligned) ->
+          wordAlignedAddress,
+    ))
+
+    (size, alignedAddress)
+  }
 }
 
 class LsuCmd(p: Parameters) extends Bundle {
@@ -252,15 +278,15 @@ class LsuSlot(bytesPerSlot: Int, bytesPerLine: Int) extends Bundle {
     VecInit(addrs.map(x => x(elemBits-1, 0)))
   }
 
-  def targetLineAddress(lastRead: Valid[UInt]): Valid[UInt] = {
+  def targetAddress(lastRead: Valid[UInt]): Valid[UInt] = {
     // Determine which lines are active. If a read was issued last cycle,
     // supress those lines.
     val lineAddrs = lineAddresses()
     val lineActive = (0 until bytesPerSlot).map(i =>
         active(i) && (!lastRead.valid || (lastRead.bits =/= lineAddrs(i))))
 
-    MuxCase(MakeInvalid(UInt((32-elemBits).W)), (0 until bytesPerSlot).map(
-        i => lineActive(i) -> MakeValid(true.B, lineAddrs(i))))
+    MuxCase(MakeInvalid(UInt(32.W)), (0 until bytesPerSlot).map(
+        i => lineActive(i) -> MakeValid(true.B, addrs(i))))
   }
 
   def vectorUpdate(updated: Bool, rvv2lsu: Rvv2Lsu): LsuSlot = {
@@ -943,8 +969,10 @@ class LsuV2(p: Parameters) extends Lsu(p) {
       readFired.valid, readFired.bits.lineAddr, readData)
 
   // Compute next target transaction
-  val targetLine = loadUpdatedSlot.targetLineAddress(
+  val targetAddress = loadUpdatedSlot.targetAddress(
       MakeValid(readFired.valid, readFired.bits.lineAddr))
+  val targetLine = MakeValid(
+      targetAddress.valid, targetAddress.bits(31, nextSlot.elemBits))
   val targetLineAddr = targetLine.bits << 4
   val itcm = p.m.filter(_.memType == MemoryRegionType.IMEM)
                 .map(_.contains(targetLineAddr)).reduceOption(_ || _).getOrElse(false.B)
@@ -956,6 +984,8 @@ class LsuV2(p: Parameters) extends Lsu(p) {
   assert(PopCount(Cat(itcm | dtcm | peri)) <= 1.U)
 
   val (wdata, wmask, wactive) = slot.scatter(targetLine.bits)
+
+  val (opSize, alignedAddress) = LsuOp.opSize(slot.op, targetAddress.bits)
 
   // ibus data path
   io.ibus.valid := loadUpdatedSlot.activeTransaction() && itcm && !slot.store
@@ -969,7 +999,7 @@ class LsuV2(p: Parameters) extends Lsu(p) {
   io.dbus.pc := slot.pc
   io.dbus.addr := targetLineAddr
   io.dbus.adrx := targetLineAddr
-  io.dbus.size := 16.U  // TODO(derekjchow): Don't be lazy
+  io.dbus.size := opSize
   io.dbus.wdata := Cat(wdata.reverse)
   io.dbus.wmask := Cat(wmask.reverse)
 
@@ -978,9 +1008,9 @@ class LsuV2(p: Parameters) extends Lsu(p) {
                                                   slot.activeTransaction(),
                                                   loadUpdatedSlot.activeTransaction())
   io.ebus.dbus.write := slot.store
-  io.ebus.dbus.addr := targetLineAddr
+  io.ebus.dbus.addr := alignedAddress
   io.ebus.dbus.adrx := targetLineAddr
-  io.ebus.dbus.size := 16.U  // TODO(derekjchow): Don't be lazy
+  io.ebus.dbus.size := opSize
   io.ebus.dbus.wdata := Cat(wdata.reverse)
   io.ebus.dbus.wmask := Cat(wmask.reverse)
   io.ebus.dbus.pc := slot.pc
