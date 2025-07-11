@@ -636,6 +636,7 @@ class DispatchV2(p: Parameters) extends Dispatch(p) {
     io.lsu(i).bits.pc := io.inst(i).bits.addr
     if (p.enableRvv) {
       io.lsu(i).bits.elemWidth.get := io.inst(i).bits.inst(14,12)
+      io.lsu(i).bits.nfields.get := io.inst(i).bits.inst(31,29)
     }
 
     // -------------------------------------------------------------------------
@@ -1105,6 +1106,7 @@ class Decode(p: Parameters, pipeline: Int) extends Module {
   io.lsu.bits.pc := io.inst.bits.addr
   if (p.enableRvv) {
     io.lsu.bits.elemWidth.get := io.inst.bits.inst(14,12)
+    io.lsu.bits.nfields.get := io.inst.bits.inst(31,29)
   }
 
   // MLU opcode.

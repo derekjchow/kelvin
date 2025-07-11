@@ -23,6 +23,30 @@ template_rule(
         "load8_indexed_m1": {
             "srcs": ["load8_indexed_m1.cc"],
         },
+        "load8_segment2_unit_m1": {
+            "srcs": ["load8_segment2_unit_m1.cc"],
+        },
+        "load16_segment2_unit_m1": {
+            "srcs": ["load16_segment2_unit_m1.cc"],
+        },
+        "load32_segment2_unit_m1": {
+            "srcs": ["load32_segment2_unit_m1.cc"],
+        },
+        "load8_segment2_unit_m2": {
+            "srcs": ["load8_segment2_unit_m2.cc"],
+        },
+        "load16_segment2_unit_m2": {
+            "srcs": ["load16_segment2_unit_m2.cc"],
+        },
+        "load32_segment2_unit_m2": {
+            "srcs": ["load32_segment2_unit_m2.cc"],
+        },
+        "load8_segment2_stride6_m1": {
+            "srcs": ["load8_segment2_stride6_m1.cc"],
+        },
+        "load16_segment2_stride6_m1": {
+            "srcs": ["load16_segment2_stride6_m1.cc"],
+        },
         "load8_stride2_m1": {
             "srcs": ["load8_stride2_m1.cc"],
         },
@@ -34,6 +58,12 @@ template_rule(
         },
         "load_store8_unit_m2": {
             "srcs": ["load_store8_unit_m2.cc"],
+        },
+        "load_store16_unit_m2": {
+            "srcs": ["load_store16_unit_m2.cc"],
+        },
+        "load_store32_unit_m2": {
+            "srcs": ["load_store32_unit_m2.cc"],
         },
         "load16_stride4_m1": {
             "srcs": ["load16_stride4_m1.cc"],

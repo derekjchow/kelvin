@@ -240,6 +240,129 @@ async def load_store8_unit_m2(dut):
         pattern = list(range(0, 32)),
     )
 
+
+@cocotb.test()
+async def load_store16_unit_m2(dut):
+    await vector_load_store(
+        dut=dut,
+        elf_name='load_store16_unit_m2.elf',
+        dtype=np.uint16,
+        in_size=32,
+        out_size=32,
+        pattern=list(range(0, 16)),
+    )
+
+
+@cocotb.test()
+async def load_store32_unit_m2(dut):
+    await vector_load_store(
+        dut=dut,
+        elf_name='load_store32_unit_m2.elf',
+        dtype=np.uint32,
+        in_size=16,
+        out_size=16,
+        pattern=list(range(0, 8)),
+    )
+
+@cocotb.test()
+async def load8_segment2_unit_m1(dut):
+    await vector_load_store(
+        dut=dut,
+        elf_name='load8_segment2_unit_m1.elf',
+        dtype=np.uint8,
+        in_size=64,
+        out_size=64,
+        pattern=(list(range(0, 32, 2)) + list(range(1, 32, 2))),
+    )
+
+
+@cocotb.test()
+async def load16_segment2_unit_m1(dut):
+    await vector_load_store(
+        dut=dut,
+        elf_name='load16_segment2_unit_m1.elf',
+        dtype=np.uint16,
+        in_size=32,
+        out_size=32,
+        pattern=(list(range(0, 16, 2)) + list(range(1, 16, 2))),
+    )
+
+
+@cocotb.test()
+async def load32_segment2_unit_m1(dut):
+    await vector_load_store(
+        dut=dut,
+        elf_name='load32_segment2_unit_m1.elf',
+        dtype=np.uint32,
+        in_size=16,
+        out_size=16,
+        pattern=(list(range(0, 8, 2)) + list(range(1, 8, 2))),
+    )
+
+
+@cocotb.test()
+async def load8_segment2_unit_m2(dut):
+    await vector_load_store(
+        dut=dut,
+        elf_name='load8_segment2_unit_m2.elf',
+        dtype=np.uint8,
+        in_size=128,
+        out_size=128,
+        pattern=(list(range(0, 32, 2)) + list(range(1, 32, 2)) +
+                 list(range(32, 64, 2)) + list(range(33, 64, 2))),
+    )
+
+
+@cocotb.test()
+async def load16_segment2_unit_m2(dut):
+    await vector_load_store(
+        dut=dut,
+        elf_name='load16_segment2_unit_m2.elf',
+        dtype=np.uint16,
+        in_size=64,
+        out_size=64,
+        pattern=(list(range(0, 16, 2)) + list(range(1, 16, 2)) +
+                 list(range(16, 32, 2)) + list(range(17, 32, 2))),
+    )
+
+
+@cocotb.test()
+async def load32_segment2_unit_m2(dut):
+    await vector_load_store(
+        dut=dut,
+        elf_name='load32_segment2_unit_m2.elf',
+        dtype=np.uint32,
+        in_size=32,
+        out_size=32,
+        pattern=(list(range(0, 8, 2)) + list(range(1, 8, 2)) +
+                 list(range(8, 16, 2)) + list(range(9, 16, 2))),
+    )
+
+
+@cocotb.test()
+async def load8_segment2_stride6_m1(dut):
+    await vector_load_store(
+        dut=dut,
+        elf_name='load8_segment2_stride6_m1.elf',
+        dtype=np.uint8,
+        in_size=256,
+        out_size=64,
+        pattern=([i * 6 for i in range(16)] + [i * 6 + 1 for i in range(16)]),
+    )
+
+
+@cocotb.test()
+async def load16_segment2_stride6_m1(dut):
+    await vector_load_store(
+        dut=dut,
+        elf_name='load16_segment2_stride6_m1.elf',
+        dtype=np.uint16,
+        in_size=128,
+        out_size=32,
+        pattern=([i * 3 for i in range(8)] + [i * 3 + 1 for i in range(8)]),
+    )
+
+
 @cocotb.test()
 async def load8_indexed_m1(dut):
     await vector_load_indexed(

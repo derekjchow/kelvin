@@ -140,10 +140,11 @@ class LsuCmd(p: Parameters) extends Bundle {
   val op = LsuOp()
   val pc = UInt(32.W)
   val elemWidth = Option.when(p.enableRvv) { UInt(3.W) }
+  val nfields = Option.when(p.enableRvv) { UInt(3.W) }
 
   override def toPrintable: Printable = {
     cf"LsuCmd(store -> ${store}, addr -> 0x${addr}%x, op -> ${op}, " +
-    cf"pc -> 0x${pc}%x, elemWidth -> ${elemWidth})"
+    cf"pc -> 0x${pc}%x, elemWidth -> ${elemWidth}, nfields -> ${nfields})"
   }
 }
 
@@ -156,6 +157,7 @@ class LsuUOp(p: Parameters) extends Bundle {
   val data = UInt(32.W)  // Doubles as rs2
   val elemWidth = Option.when(p.enableRvv) { UInt(3.W) }
   val lmul = Option.when(p.enableRvv) { UInt(4.W) }
+  val nfields = Option.when(p.enableRvv) { UInt(3.W) }
 
   override def toPrintable: Printable = {
     cf"LsuUOp(store -> ${store}, rd -> ${rd}, op -> ${op}, " +
@@ -185,6 +187,7 @@ object LsuUOp {
     }
     if (p.enableRvv) {
       result.elemWidth.get := cmd.elemWidth.get
+      result.nfields.get := cmd.nfields.get
       // Treat fractional LMULs as LMUL=1
       val effectiveLmul = Mux(rvvState.get.bits.lmul(2),
                               0.U(2.W), rvvState.get.bits.lmul(1, 0))
@@ -253,14 +256,18 @@ class LsuSlot(bytesPerSlot: Int, bytesPerLine: Int) extends Bundle {
   val pendingVector = Bool()
   val pendingWriteback = Bool()
   val lmul = UInt(4.W)
-  val stride = UInt(32.W)
+  val elemStride = UInt(32.W)     // Stride between lanes in a vector
+  val segmentStride = UInt(32.W)  // Stride between base addr between segments
   val elemWidth = UInt(3.W)
+  val nfields = UInt(3.W)
+  val segment = UInt(3.W)
 
   // If the slot has no pending tasks and can accept a new operation
   def slotIdle(): Bool = {
     !(pendingVector ||                        // Awaiting data from RVV Core
       active.reduce(_||_) ||                  // Active transaction
       pendingWriteback ||                     // Send result back to regfile
+      (nfields =/= segment) ||                // No pending segments
       (LsuOp.isVector(op) && (lmul =/= 0.U))  // More operations in progress
     )
   }
@@ -298,17 +305,20 @@ class LsuSlot(bytesPerSlot: Int, bytesPerLine: Int) extends Bundle {
     result.pendingWriteback := pendingWriteback
     result.lmul := lmul
     result.baseAddr := baseAddr
-    result.stride := stride
+    result.elemStride := elemStride
+    result.segmentStride := segmentStride
+
+
+    val segmentBaseAddr = baseAddr + (segmentStride * segment)
     result.addrs := MuxCase(addrs, Seq(
         op.isOneOf(LsuOp.VLOAD_UNIT, LsuOp.VSTORE_UNIT) ->
-            VecInit((0 until bytesPerSlot).map(i => baseAddr + i.U)),
+            ComputeStridedAddrs(bytesPerSlot, segmentBaseAddr, elemStride, elemWidth),
         op.isOneOf(LsuOp.VLOAD_STRIDED, LsuOp.VSTORE_STRIDED) ->
-            ComputeStridedAddrs(bytesPerSlot, baseAddr, stride, elemWidth),
+            ComputeStridedAddrs(bytesPerSlot, segmentBaseAddr, elemStride, elemWidth),
         op.isOneOf(LsuOp.VLOAD_OINDEXED, LsuOp.VLOAD_UINDEXED,
                    LsuOp.VSTORE_OINDEXED, LsuOp.VSTORE_UINDEXED) ->
             ComputeIndexedAddrs(bytesPerSlot, baseAddr, rvv2lsu.idx.bits.data,
                                 elemWidth)
-        // TODO(derekjchow): Support segmented
     ))
     result.elemWidth := elemWidth
 
@@ -317,6 +327,9 @@ class LsuSlot(bytesPerSlot: Int, bytesPerLine: Int) extends Bundle {
     result.active := Mux(updated && LsuOp.isVector(op) && rvv2lsu.mask.valid,
         VecInit(rvv2lsu.mask.bits.asBools), active)
     result.pendingVector := pendingVector && !updated
+    result.nfields := nfields
+    result.segment := segment
+
     result
   }
 
@@ -349,8 +362,11 @@ class LsuSlot(bytesPerSlot: Int, bytesPerLine: Int) extends Bundle {
         i => active(i) & ~lineActive(i))
     result.data := VecInit((0 until bytesPerSlot).map(
         i => Mux(lineActive(i), gatheredData(i), data(i))))
-    result.stride := stride
+    result.elemStride := elemStride
+    result.segmentStride := segmentStride
     result.elemWidth := elemWidth
+    result.nfields := nfields
+    result.segment := segment
 
     result
   }
@@ -370,35 +386,51 @@ class LsuSlot(bytesPerSlot: Int, bytesPerLine: Int) extends Bundle {
     result.addrs := addrs
     result.active := active
     result.data := data
-    result.stride := stride
+    result.elemStride := elemStride
+    result.segmentStride := segmentStride
     result.elemWidth := elemWidth
+    result.nfields := nfields
 
     val vectorWriteback = writeback && LsuOp.isVector(op)
+
+    val segmentNext = MuxCase(segment, Seq(
+      // Final segment, No next LMUL: don't reset segment
+      (vectorWriteback && (segment === nfields) && (lmul === 1.U)) -> segment,
+      // Final segment, next LMUL: reset segment
+      (vectorWriteback && (segment === nfields)) -> 0.U,
+      // Next segment
+      vectorWriteback -> (segment + 1.U),
+    ))
+    result.segment := segmentNext
+
+    val lmulUpdate = vectorWriteback && (segment === nfields)
     val lmulNext = MuxCase(lmul, Seq(
+        // Don't decrease below 0!
         (lmul === 0.U) -> 0.U,
-        vectorWriteback -> (lmul - 1.U),
+        // Move to next LMUL if final segment
+        (lmulUpdate) -> (lmul - 1.U),
     ))
     result.lmul := lmulNext
     result.pendingVector := MuxCase(pendingVector, Seq(
         (!writeback) -> pendingWriteback,
-        (!LsuOp.isVector(op)) -> false.B, // No vector update for non-vector
-        (lmulNext =/= 0.U) -> true.B,     // Next LMUL
-        (lmulNext === 0.U) -> false.B,    // Final LMUL
+        (!LsuOp.isVector(op)) -> false.B,    // No vector update for non-vector
+        (lmulNext =/= 0.U) -> true.B,        // Next LMUL
+        (lmulNext === 0.U) -> false.B,       // Final LMUL
     ))
     result.pendingWriteback := MuxCase(pendingWriteback, Seq(
       (!writeback) -> pendingWriteback,
-      (!LsuOp.isVector(op)) -> false.B, // One writeback for non-vector ops
-      (lmulNext =/= 0.U) -> true.B,     // Next LMUL
-      (lmulNext === 0.U) -> false.B,    // Final LMUL
+      (!LsuOp.isVector(op)) -> false.B,    // One writeback for non-vector ops
+      (lmulNext =/= 0.U) -> true.B,        // Next LMUL
+      (lmulNext === 0.U) -> false.B,       // Final LMUL
     ))
 
     result.baseAddr := MuxCase(baseAddr, Seq(
-      !writeback -> baseAddr,
-      // For Unit Updates
-      op.isOneOf(LsuOp.VLOAD_UNIT, LsuOp.VSTORE_UNIT) -> (baseAddr + 16.U),
-      // For Strided Updates
-      op.isOneOf(LsuOp.VLOAD_STRIDED, LsuOp.VSTORE_STRIDED) ->
-          (baseAddr + (stride*16.U)),
+      (!writeback || !lmulUpdate) -> baseAddr,
+      // For Unit and strided updates
+      op.isOneOf(LsuOp.VLOAD_UNIT, LsuOp.VSTORE_UNIT,
+                 LsuOp.VLOAD_STRIDED, LsuOp.VSTORE_STRIDED) ->
+          (baseAddr + (nfields * 16.U) + 16.U),
+      // Indexed don't have base addr changed.
     ))
     result.rd := rd + 1.U  // Move to next vector register
 
@@ -427,8 +459,11 @@ class LsuSlot(bytesPerSlot: Int, bytesPerLine: Int) extends Bundle {
     result.addrs := addrs
     result.data := data
     result.lmul := lmul
-    result.stride := stride
+    result.elemStride := elemStride
+    result.segmentStride := segmentStride
     result.elemWidth := elemWidth
+    result.nfields := nfields
+    result.segment := segment
     result
   }
 
@@ -456,6 +491,8 @@ class LsuSlot(bytesPerSlot: Int, bytesPerLine: Int) extends Bundle {
         cf"  $i: ${active(i)}, 0x${addrs(i)}%x, 0x${data(i)}%x\n")
     cf"store: $store\n  op: ${op}\n  pendingVector: ${pendingVector}\n" +
     cf"  pendingWriteback: ${pendingWriteback}\n  lmul: ${lmul}\n" +
+    cf"  nfields: ${nfields}\n  segment: ${segment}\n" +
+    cf"  elemWidth: 0b${elemWidth}%b elemStride: ${elemStride}\n" +
     lines.reduce(_+_)
   }
 }
@@ -471,7 +508,13 @@ object LsuSlot {
     result.rd := uop.rd
     result.store := uop.store
     result.pc := uop.pc
-    result.lmul := uop.lmul.getOrElse(0.U)
+    if (p.enableRvv) {
+      result.lmul := uop.lmul.getOrElse(0.U)
+      result.nfields := Mux(LsuOp.isVector(uop.op), uop.nfields.get, 0.U)
+      result.segment := 0.U
+    } else {
+      result.lmul := 0.U
+    }
 
     // All vector ops require writeback. Lsu needs to inform RVV core store uop
     // has completed.
@@ -494,7 +537,18 @@ object LsuSlot {
         uop.op.isOneOf(LsuOp.VLOAD_STRIDED, LsuOp.VSTORE_STRIDED),
         ComputeStridedAddrs(bytesPerSlot, uop.addr, uop.data, uop.elemWidth.getOrElse(0.U(3.W))),
         VecInit((0 until bytesPerSlot).map(i => uop.addr + i.U)))
-    result.stride := uop.data
+
+    val unitStride = MuxCase(1.U, Seq(
+        (uop.elemWidth.get === "b000".U) -> 1.U,  // 1-byte elements
+        (uop.elemWidth.get === "b101".U) -> 2.U,  // 2-byte elements
+        (uop.elemWidth.get === "b110".U) -> 4.U,  // 4-byte elements
+    ))
+
+    result.segmentStride := unitStride
+    result.elemStride := Mux(
+        uop.op.isOneOf(LsuOp.VLOAD_UNIT, LsuOp.VSTORE_UNIT),
+        unitStride + (uop.nfields.get * unitStride),
+        uop.data)
 
     result.data(0) := uop.data(7, 0)
     result.data(1) := uop.data(15, 8)
