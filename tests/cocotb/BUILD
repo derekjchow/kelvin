@@ -415,3 +415,31 @@ pkg_zip(
         "//tests/cocotb/rvv/load_store:rvv_load_store_tests",
     ],
 )
+
+cocotb_test_suite(
+    name = "rvv_ml_ops_cocotb_test",
+    simulators = [
+        "verilator",
+        "vcs",
+    ],
+    testcases = RVV_LOAD_STORE_TESTCASES,
+    testcases_vname = "RVV_LOAD_STORE_TESTCASES",
+    tests_kwargs = {
+        "hdl_toplevel": "RvvCoreMiniAxi",
+        "waves": True,
+        "seed": "42",
+        "test_module": ["rvv_ml_ops_cocotb_test.py"],
+        "deps": [
+            "//kelvin_test_utils:sim_test_fixture",
+            "@bazel_tools//tools/python/runfiles",
+        ],
+        "data": ["//tests/cocotb/rvv/ml_ops:rvv_matmul_assembly"],
+        "size": "large",
+    },
+    vcs_data = ["//tests/cocotb/rvv/ml_ops:rvv_matmul_assembly"] + [":coverage_exclude.cfg"],
+    vcs_build_args = VCS_BUILD_ARGS,
+    vcs_test_args = VCS_TEST_ARGS,
+    vcs_defines = VCS_DEFINES,
+    vcs_verilog_sources = ["//hdl/chisel/src/kelvin:rvv_core_mini_axi_cc_library_verilog"],
+    verilator_model = ":rvv_core_mini_axi_model",
+)
