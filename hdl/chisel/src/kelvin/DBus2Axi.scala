@@ -225,16 +225,18 @@ class DBus2AxiV2(p: Parameters) extends DBus2Axi(p) {
   io.axi.write.addr.bits.id := 0.U
 
   val wdataFired = RegInit(false.B)
-  io.axi.write.data.valid := !wdataFired && io.dbus.valid && io.dbus.write
-  io.axi.write.data.bits.data := io.dbus.wdata
-  io.axi.write.data.bits.strb := io.dbus.wmask
-  io.axi.write.data.bits.last := true.B
+  val wdataQueue = Module(new Queue(new AxiWriteData(p.axi2DataBits, p.axi2IdBits), 2))
+  wdataQueue.io.enq.valid := !wdataFired && io.dbus.valid && io.dbus.write
+  wdataQueue.io.enq.bits.data := io.dbus.wdata
+  wdataQueue.io.enq.bits.strb := io.dbus.wmask
+  wdataQueue.io.enq.bits.last := true.B
+  io.axi.write.data <> wdataQueue.io.deq
 
   val wrespReceived = RegInit(false.B)
   io.axi.write.resp.ready := !wrespReceived && io.dbus.valid && io.dbus.write
 
   val writeFinished = (io.axi.write.addr.fire || waddrFired) &&
-                      (io.axi.write.data.fire || wdataFired) &&
+                      (wdataQueue.io.enq.fire || wdataFired) &&
                       (io.axi.write.resp.fire || wrespReceived)
   waddrFired := MuxCase(waddrFired, Seq(
     writeFinished -> false.B,
@@ -242,7 +244,7 @@ class DBus2AxiV2(p: Parameters) extends DBus2Axi(p) {
   ))
   wdataFired := MuxCase(wdataFired, Seq(
     writeFinished -> false.B,
-    io.axi.write.data.fire -> true.B,
+    wdataQueue.io.enq.fire -> true.B,
   ))
   wrespReceived := MuxCase(wrespReceived, Seq(
     writeFinished -> false.B,
