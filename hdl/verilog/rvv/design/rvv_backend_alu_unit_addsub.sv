@@ -1627,21 +1627,14 @@ module rvv_backend_alu_unit_addsub
 //
 // submit result to ROB
 //
-`ifdef TB_SUPPORT
-  assign result.uop_pc = alu_uop.uop_pc;
-`endif
-
-  assign result.rob_entry = rob_entry;
-
-  // result data 
-  assign result.w_data = result_data;
-
-  // result type and valid signal
-  assign result.w_valid = result_valid;
-
-  // saturate signal
   always_comb begin
     // initial
+  `ifdef TB_SUPPORT
+    result.uop_pc    = alu_uop.uop_pc;
+  `endif
+    result.rob_entry = rob_entry;
+    result.w_data    = result_data;
+    result.w_valid   = result_valid;
     result.vsaturate = 'b0;
 
     case(uop_funct3) 

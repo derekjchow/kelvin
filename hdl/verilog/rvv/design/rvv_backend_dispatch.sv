@@ -65,47 +65,47 @@ module rvv_backend_dispatch
     input  logic           rst_n;
 
 // Uops Queue to Dispatch unit
-    input  logic        [`NUM_DP_UOP-1:0] uop_valid_uop2dp;
-    input  UOP_QUEUE_t  [`NUM_DP_UOP-1:0] uop_uop2dp;
-    output logic        [`NUM_DP_UOP-1:0] uop_ready_dp2uop;
+    input  logic        [`NUM_DP_UOP-1:0]         uop_valid_uop2dp;
+    input  UOP_QUEUE_t  [`NUM_DP_UOP-1:0]         uop_uop2dp;
+    output logic        [`NUM_DP_UOP-1:0]         uop_ready_dp2uop;
 
 // Dispatch unit sends oprations to reservation stations
 // Dispatch unit to ALU reservation station
 // rs_*: reservation station
-    output logic          [`NUM_DP_UOP-1:0]   rs_valid_dp2alu;
-    output ALU_RS_t       [`NUM_DP_UOP-1:0]   rs_dp2alu;
-    input  logic          [`NUM_DP_UOP-1:0]   rs_ready_alu2dp;
+    output logic          [`NUM_DP_UOP-1:0]       rs_valid_dp2alu;
+    output ALU_RS_t       [`NUM_DP_UOP-1:0]       rs_dp2alu;
+    input  logic          [`NUM_DP_UOP-1:0]       rs_ready_alu2dp;
 
 // Dispatch unit to PMT+RDT reservation station
-    output logic          [`NUM_DP_UOP-1:0]   rs_valid_dp2pmtrdt;
-    output PMT_RDT_RS_t   [`NUM_DP_UOP-1:0]   rs_dp2pmtrdt;
-    input  logic          [`NUM_DP_UOP-1:0]   rs_ready_pmtrdt2dp;
+    output logic          [`NUM_DP_UOP-1:0]       rs_valid_dp2pmtrdt;
+    output PMT_RDT_RS_t   [`NUM_DP_UOP-1:0]       rs_dp2pmtrdt;
+    input  logic          [`NUM_DP_UOP-1:0]       rs_ready_pmtrdt2dp;
 
 // Dispatch unit to MUL reservation station
-    output logic          [`NUM_DP_UOP-1:0]   rs_valid_dp2mul;
-    output MUL_RS_t       [`NUM_DP_UOP-1:0]   rs_dp2mul;
-    input  logic          [`NUM_DP_UOP-1:0]   rs_ready_mul2dp;
+    output logic          [`NUM_DP_UOP-1:0]       rs_valid_dp2mul;
+    output MUL_RS_t       [`NUM_DP_UOP-1:0]       rs_dp2mul;
+    input  logic          [`NUM_DP_UOP-1:0]       rs_ready_mul2dp;
 
 // Dispatch unit to DIV reservation station
-    output logic          [`NUM_DP_UOP-1:0]   rs_valid_dp2div;
-    output DIV_RS_t       [`NUM_DP_UOP-1:0]   rs_dp2div;
-    input  logic          [`NUM_DP_UOP-1:0]   rs_ready_div2dp;
+    output logic          [`NUM_DP_UOP-1:0]       rs_valid_dp2div;
+    output DIV_RS_t       [`NUM_DP_UOP-1:0]       rs_dp2div;
+    input  logic          [`NUM_DP_UOP-1:0]       rs_ready_div2dp;
 
 // Dispatch unit to LSU 
     // to LSU RS
-    output logic          [`NUM_DP_UOP-1:0]   rs_valid_dp2lsu;
-    output UOP_RVV2LSU_t  [`NUM_DP_UOP-1:0]   rs_dp2lsu;
-    input  logic          [`NUM_DP_UOP-1:0]   rs_ready_lsu2dp;
+    output logic          [`NUM_DP_UOP-1:0]       rs_valid_dp2lsu;
+    output UOP_RVV2LSU_t  [`NUM_DP_UOP-1:0]       rs_dp2lsu;
+    input  logic          [`NUM_DP_UOP-1:0]       rs_ready_lsu2dp;
     // to LSU MAP INFO
-    output logic          [`NUM_DP_UOP-1:0]   mapinfo_valid_dp2lsu;
-    output LSU_MAP_INFO_t [`NUM_DP_UOP-1:0]   mapinfo_dp2lsu;
-    input  logic          [`NUM_DP_UOP-1:0]   mapinfo_ready_lsu2dp;
+    output logic          [`NUM_DP_UOP-1:0]       mapinfo_valid_dp2lsu;
+    output LSU_MAP_INFO_t [`NUM_DP_UOP-1:0]       mapinfo_dp2lsu;
+    input  logic          [`NUM_DP_UOP-1:0]       mapinfo_ready_lsu2dp;
 
-// Dispatch unit pushes operations to ROB unit
-    output logic          [`NUM_DP_UOP-1:0]   uop_valid_dp2rob;
-    output DP2ROB_t       [`NUM_DP_UOP-1:0]   uop_dp2rob;
-    input  logic          [`NUM_DP_UOP-1:0]   uop_ready_rob2dp;
-    input  logic          [`ROB_DEPTH_WIDTH-1:0] uop_index_rob2dp;
+// Dispatch unit pushes operations to ROB unit    
+    output logic          [`NUM_DP_UOP-1:0]       uop_valid_dp2rob;
+    output DP2ROB_t       [`NUM_DP_UOP-1:0]       uop_dp2rob;
+    input  logic          [`NUM_DP_UOP-1:0]       uop_ready_rob2dp;
+    input  logic          [`ROB_DEPTH_WIDTH-1:0]  uop_index_rob2dp;
 
 // Dispatch unit sends read request to VRF for vector data.
 // Dispatch unit to VRF unit
@@ -116,32 +116,32 @@ module rvv_backend_dispatch
 
 // Dispatch unit accept all ROB entry to determine if vs_data of RS is from ROB or not
 // ROB unit to Dispatch unit
-    input  ROB2DP_t [`ROB_DEPTH-1:0]      rob_entry;
+    input  ROB2DP_t     [`ROB_DEPTH-1:0]          rob_entry;
 
 // ---internal signal definition--------------------------------------
-    SUC_UOP_RAW_t [`NUM_DP_UOP-1:0]   suc_uop;
-    PRE_UOP_RAW_t [`ROB_DEPTH-1:0]    pre_uop_rob;
-    PRE_UOP_RAW_t [`NUM_DP_UOP-2:0]   pre_uop_uop;
-    RAW_UOP_ROB_t [`NUM_DP_UOP-1:0]   raw_uop_rob; 
+    SUC_UOP_RAW_t       [`NUM_DP_UOP-1:0]   suc_uop;
+    PRE_UOP_RAW_t       [`ROB_DEPTH-1:0]    pre_uop_rob;
+    PRE_UOP_RAW_t       [`NUM_DP_UOP-2:0]   pre_uop_uop;
+    RAW_UOP_ROB_t       [`NUM_DP_UOP-1:0]   raw_uop_rob; 
     // uop0 is the first uop so no need raw check between uops for it
-    RAW_UOP_UOP_t [`NUM_DP_UOP-1:1]   raw_uop_uop; 
+    RAW_UOP_UOP_t       [`NUM_DP_UOP-1:1]   raw_uop_uop; 
 
-    STRCT_UOP_t   [`NUM_DP_UOP-1:0]   strct_uop;
-    ARCH_HAZARD_t                     arch_hazard;
+    STRCT_UOP_t         [`NUM_DP_UOP-1:0]   strct_uop;
+    ARCH_HAZARD_t                           arch_hazard;
 
-    UOP_OPN_t     [`NUM_DP_UOP-1:0]   uop_operand;
-    UOP_OPN_t     [`NUM_DP_UOP-1:0]   vrf_byp;
-    ROB_BYP_t     [`ROB_DEPTH-1:0]    rob_byp;
+    UOP_OPN_t           [`NUM_DP_UOP-1:0]   uop_operand;
+    UOP_OPN_t           [`NUM_DP_UOP-1:0]   vrf_byp;
+    ROB_BYP_t           [`ROB_DEPTH-1:0]    rob_byp;
 
-    UOP_CTRL_t    [`NUM_DP_UOP-1:0]   uop_ctrl;
+    UOP_CTRL_t          [`NUM_DP_UOP-1:0]   uop_ctrl;
 
-    UOP_INFO_t    [`NUM_DP_UOP-1:0]   uop_info;
-    UOP_OPN_BYTE_TYPE_t [`NUM_DP_UOP-1:0] uop_operand_byte_type;
+    UOP_INFO_t          [`NUM_DP_UOP-1:0]   uop_info;
+    UOP_OPN_BYTE_TYPE_t [`NUM_DP_UOP-1:0]   uop_operand_byte_type;
 
-    logic         [`NUM_DP_UOP-1:0][`VL_WIDTH-1:0]             vlmax;
-    logic         [`NUM_DP_UOP-1:0][$clog2(`VSTART_WIDTH)-1:0] vlmax_shift;
+    logic [`NUM_DP_UOP-1:0][`VL_WIDTH-1:0]             vlmax;
+    logic [`NUM_DP_UOP-1:0][$clog2(`VSTART_WIDTH)-1:0] vlmax_shift;
 
-    logic         [`NUM_DP_UOP-1:0][`ROB_DEPTH_WIDTH-1:0]      rob_address;
+    logic [`NUM_DP_UOP-1:0][`ROB_DEPTH_WIDTH-1:0]      rob_address;
 
 // ---code start------------------------------------------------------
     genvar i;
@@ -246,7 +246,7 @@ module rvv_backend_dispatch
         .rd_data_vrf2dp (rd_data_vrf2dp),
         .v0_mask_vrf2dp (v0_mask_vrf2dp)
       );
-      
+
       for (i=0;i<`NUM_DP_UOP;i++) begin: gen_bypass_data
         rvv_backend_dispatch_bypass 
         #(
@@ -297,7 +297,7 @@ module rvv_backend_dispatch
 // determine the type for each byte in uop's vector operands 
     generate
         for (i=0; i<`NUM_DP_UOP; i++) begin : gen_opr_bype_type
-            assign uop_info[i].uop_index  = (uop_uop2dp[i].uop_exe_unit==LSU)&(uop_uop2dp[i].uop_funct6.lsu_funct6.lsu_is_seg==IS_SEGMENT)?
+            assign uop_info[i].uop_index  = (uop_uop2dp[i].uop_exe_unit==LSU)&(uop_uop2dp[i].uop_funct6.lsu_funct6.lsu_is_seg==IS_SEGMENT)? 
                                             {1'b0,uop_uop2dp[i].seg_field_index} : uop_uop2dp[i].uop_index;
             assign uop_info[i].uop_exe_unit = uop_uop2dp[i].uop_exe_unit;
             assign uop_info[i].vd_eew     = uop_uop2dp[i].vd_eew;
@@ -356,32 +356,32 @@ module rvv_backend_dispatch
 
           // PMTRDT RS
 `ifdef TB_SUPPORT
-            assign rs_dp2pmtrdt[i].uop_pc        = uop_uop2dp[i].uop_pc; 
+            assign rs_dp2pmtrdt[i].uop_pc          = uop_uop2dp[i].uop_pc; 
 `endif
-            assign rs_dp2pmtrdt[i].rob_entry     = rob_address[i]; 
-            assign rs_dp2pmtrdt[i].uop_exe_unit  = uop_uop2dp[i].uop_exe_unit; 
-            assign rs_dp2pmtrdt[i].uop_funct6    = uop_uop2dp[i].uop_funct6;
-            assign rs_dp2pmtrdt[i].uop_funct3    = uop_uop2dp[i].uop_funct3;
-            assign rs_dp2pmtrdt[i].vstart        = uop_uop2dp[i].vector_csr.vstart;
-            assign rs_dp2pmtrdt[i].vl            = uop_uop2dp[i].vs_evl;
-            assign rs_dp2pmtrdt[i].vlmax         = vlmax[i];
-            assign rs_dp2pmtrdt[i].vm            = uop_uop2dp[i].vm;
-            assign rs_dp2pmtrdt[i].v0_data       = uop_operand[i].v0;
-            assign rs_dp2pmtrdt[i].v0_data_valid = uop_uop2dp[i].v0_valid;
-            assign rs_dp2pmtrdt[i].vs1_data      = uop_operand[i].vs1;
-            assign rs_dp2pmtrdt[i].vs1_eew       = uop_uop2dp[i].vs1_eew;
-            assign rs_dp2pmtrdt[i].vs1_data_valid= uop_uop2dp[i].vs1_index_valid;
-            assign rs_dp2pmtrdt[i].vs2_data      = uop_operand[i].vs2;
-            assign rs_dp2pmtrdt[i].vs2_eew       = uop_uop2dp[i].vs2_eew;
-            assign rs_dp2pmtrdt[i].vs2_type      = uop_operand_byte_type[i].vs2;
-            assign rs_dp2pmtrdt[i].vs2_data_valid= uop_uop2dp[i].vs2_valid;
-            assign rs_dp2pmtrdt[i].vs3_data      = uop_operand[i].vd;
-            assign rs_dp2pmtrdt[i].vs3_data_valid= uop_uop2dp[i].vs3_valid;
-            assign rs_dp2pmtrdt[i].rs1_data      = uop_uop2dp[i].rs1_data;
-            assign rs_dp2pmtrdt[i].rs1_data_valid= uop_uop2dp[i].rs1_data_valid;
+            assign rs_dp2pmtrdt[i].rob_entry       = rob_address[i]; 
+            assign rs_dp2pmtrdt[i].uop_exe_unit    = uop_uop2dp[i].uop_exe_unit; 
+            assign rs_dp2pmtrdt[i].uop_funct6      = uop_uop2dp[i].uop_funct6;
+            assign rs_dp2pmtrdt[i].uop_funct3      = uop_uop2dp[i].uop_funct3;
+            assign rs_dp2pmtrdt[i].vstart          = uop_uop2dp[i].vector_csr.vstart;
+            assign rs_dp2pmtrdt[i].vl              = uop_uop2dp[i].vs_evl;
+            assign rs_dp2pmtrdt[i].vlmax           = vlmax[i];
+            assign rs_dp2pmtrdt[i].vm              = uop_uop2dp[i].vm;
+            assign rs_dp2pmtrdt[i].v0_data         = uop_operand[i].v0;
+            assign rs_dp2pmtrdt[i].v0_data_valid   = uop_uop2dp[i].v0_valid;
+            assign rs_dp2pmtrdt[i].vs1_data        = uop_operand[i].vs1;
+            assign rs_dp2pmtrdt[i].vs1_eew         = uop_uop2dp[i].vs1_eew;
+            assign rs_dp2pmtrdt[i].vs1_data_valid  = uop_uop2dp[i].vs1_index_valid;
+            assign rs_dp2pmtrdt[i].vs2_data        = uop_operand[i].vs2;
+            assign rs_dp2pmtrdt[i].vs2_eew         = uop_uop2dp[i].vs2_eew;
+            assign rs_dp2pmtrdt[i].vs2_type        = uop_operand_byte_type[i].vs2;
+            assign rs_dp2pmtrdt[i].vs2_data_valid  = uop_uop2dp[i].vs2_valid;
+            assign rs_dp2pmtrdt[i].vs3_data        = uop_operand[i].vd;
+            assign rs_dp2pmtrdt[i].vs3_data_valid  = uop_uop2dp[i].vs3_valid;
+            assign rs_dp2pmtrdt[i].rs1_data        = uop_uop2dp[i].rs1_data;
+            assign rs_dp2pmtrdt[i].rs1_data_valid  = uop_uop2dp[i].rs1_data_valid;
             assign rs_dp2pmtrdt[i].first_uop_valid = uop_uop2dp[i].first_uop_valid;
             assign rs_dp2pmtrdt[i].last_uop_valid  = uop_uop2dp[i].last_uop_valid;
-            assign rs_dp2pmtrdt[i].uop_index     = uop_uop2dp[i].uop_index;
+            assign rs_dp2pmtrdt[i].uop_index       = uop_uop2dp[i].uop_index;
             
           // MUL/MAC RS
 `ifdef TB_SUPPORT
@@ -419,34 +419,34 @@ module rvv_backend_dispatch
 
           // LSU RS
 `ifdef TB_SUPPORT
-            assign rs_dp2lsu[i].uop_pc        = uop_uop2dp[i].uop_pc; 
+            assign rs_dp2lsu[i].uop_pc              = uop_uop2dp[i].uop_pc; 
 `endif
-            assign rs_dp2lsu[i].vidx_valid    = uop_uop2dp[i].vs2_valid;
-            assign rs_dp2lsu[i].vidx_addr     = uop_uop2dp[i].vs2_index;
-            assign rs_dp2lsu[i].vidx_data     = uop_operand[i].vs2;
+            assign rs_dp2lsu[i].vidx_valid          = uop_uop2dp[i].vs2_valid;
+            assign rs_dp2lsu[i].vidx_addr           = uop_uop2dp[i].vs2_index;
+            assign rs_dp2lsu[i].vidx_data           = uop_operand[i].vs2;
             assign rs_dp2lsu[i].vregfile_read_valid = uop_uop2dp[i].vs3_valid;
             assign rs_dp2lsu[i].vregfile_read_addr  = uop_uop2dp[i].vd_index;
             assign rs_dp2lsu[i].vregfile_read_data  = uop_operand[i].vd;
-            assign rs_dp2lsu[i].v0_valid      = uop_uop2dp[i].v0_valid;
-            assign rs_dp2lsu[i].v0_data       = uop_operand_byte_type[i].v0_strobe;
+            assign rs_dp2lsu[i].v0_valid            = uop_uop2dp[i].v0_valid;
+            assign rs_dp2lsu[i].v0_data             = uop_operand_byte_type[i].v0_strobe;
 
           // LSU MAP INFO
 `ifdef TB_SUPPORT
-            assign mapinfo_dp2lsu[i].uop_pc     = uop_uop2dp[i].uop_pc; 
+            assign mapinfo_dp2lsu[i].uop_pc              = uop_uop2dp[i].uop_pc; 
 `endif
-            assign mapinfo_dp2lsu[i].valid      = mapinfo_valid_dp2lsu[i];
-            assign mapinfo_dp2lsu[i].rob_entry  = rob_address[i];
-            assign mapinfo_dp2lsu[i].lsu_class  = uop_uop2dp[i].uop_funct6.lsu_funct6.lsu_is_store;
+            assign mapinfo_dp2lsu[i].valid               = mapinfo_valid_dp2lsu[i];
+            assign mapinfo_dp2lsu[i].rob_entry           = rob_address[i];
+            assign mapinfo_dp2lsu[i].lsu_class           = uop_uop2dp[i].uop_funct6.lsu_funct6.lsu_is_store;
             assign mapinfo_dp2lsu[i].vregfile_write_addr = uop_uop2dp[i].vd_index;
 
           // ROB
 `ifdef TB_SUPPORT
-            assign uop_dp2rob[i].uop_pc       = uop_uop2dp[i].uop_pc; 
+            assign uop_dp2rob[i].uop_pc         = uop_uop2dp[i].uop_pc; 
 `endif
-            assign uop_dp2rob[i].w_index      = uop_uop2dp[i].rd_index_valid ? uop_uop2dp[i].rd_index : uop_uop2dp[i].vd_index;
-            assign uop_dp2rob[i].w_type       = uop_uop2dp[i].rd_index_valid ? XRF : VRF;
-            assign uop_dp2rob[i].byte_type    = uop_operand_byte_type[i].vd;
-            assign uop_dp2rob[i].vector_csr   = uop_uop2dp[i].vector_csr;
+            assign uop_dp2rob[i].w_index        = uop_uop2dp[i].rd_index_valid ? uop_uop2dp[i].rd_index : uop_uop2dp[i].vd_index;
+            assign uop_dp2rob[i].w_type         = uop_uop2dp[i].rd_index_valid ? XRF : VRF;
+            assign uop_dp2rob[i].byte_type      = uop_operand_byte_type[i].vd;
+            assign uop_dp2rob[i].vector_csr     = uop_uop2dp[i].vector_csr;
             assign uop_dp2rob[i].last_uop_valid = uop_uop2dp[i].last_uop_valid;
         end
     endgenerate

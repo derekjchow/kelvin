@@ -58,15 +58,15 @@ module rvv_backend_alu_unit_execution_p1
 //
 // submit result to ROB
 //
-`ifdef TB_SUPPORT
-  assign  result.uop_pc = alu_uop.uop_pc;
-`endif
-  assign  result.rob_entry = alu_uop.rob_entry;
-
   // get result_uop
   always_comb begin
     // initial the data
-    result.w_data = alu_uop.result_data; 
+    `ifdef TB_SUPPORT
+    result.uop_pc    = alu_uop.uop_pc;
+    `endif
+    result.rob_entry = alu_uop.rob_entry;
+    result.w_valid   = alu_uop_valid;
+    result.w_data    = alu_uop.result_data;
     result.vsaturate = alu_uop.vsaturate;
 
     // calculate result data
@@ -98,8 +98,5 @@ module rvv_backend_alu_unit_execution_p1
       end
     endcase
   end
-
-  assign  result.w_valid = alu_uop_valid;
-
 
 endmodule

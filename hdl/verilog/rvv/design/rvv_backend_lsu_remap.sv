@@ -81,13 +81,13 @@ module rvv_backend_lsu_remap
   generate
     for(i=0;i<`NUM_LSU;i++) begin: GET_RESULT
       `ifdef TB_SUPPORT
-        assign result_lsu2rob[i].uop_pc = mapinfo[i].uop_pc;
+        assign result_lsu2rob[i].uop_pc    = mapinfo[i].uop_pc;
       `endif
         assign result_lsu2rob[i].rob_entry = mapinfo[i].rob_entry;
-        assign result_lsu2rob[i].w_data = lsu_res[i].uop_lsu2rvv.vregfile_write_data;
-        assign result_lsu2rob[i].w_valid = (mapinfo[i].lsu_class==IS_LOAD)&
-                                            lsu_res[i].uop_lsu2rvv.vregfile_write_valid&
-                                           (lsu_res[i].uop_lsu2rvv.vregfile_write_addr==mapinfo[i].vregfile_write_addr);
+        assign result_lsu2rob[i].w_data    = lsu_res[i].uop_lsu2rvv.vregfile_write_data;
+        assign result_lsu2rob[i].w_valid   = (mapinfo[i].lsu_class==IS_LOAD)&
+                                             lsu_res[i].uop_lsu2rvv.vregfile_write_valid&
+                                             (lsu_res[i].uop_lsu2rvv.vregfile_write_addr==mapinfo[i].vregfile_write_addr);
         assign result_lsu2rob[i].vsaturate = 'b0;
     end
   endgenerate
@@ -98,7 +98,7 @@ module rvv_backend_lsu_remap
 
     for (int j=0;j<`NUM_LSU;j++) begin
       if (lsu_res[j].trap_valid&lsu_res_valid[j]&mapinfo_valid[j]) begin
-        trap_valid_rmp2rob = 'b1;
+        trap_valid_rmp2rob     = 'b1;
         trap_rob_entry_rmp2rob = mapinfo[j].rob_entry;
       end
     end

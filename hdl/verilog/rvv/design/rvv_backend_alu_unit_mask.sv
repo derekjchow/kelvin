@@ -502,24 +502,21 @@ module rvv_backend_alu_unit_mask
 //
 // submit result to ROB
 //
-`ifdef TB_SUPPORT
-  assign  result.uop_pc = alu_uop.uop_pc;
-`endif
-  assign  result.rob_entry = rob_entry;
-
-  assign  result.vd_eew = vd_eew;
-
-  assign  result.uop_index = uop_index;
-
-  assign  result.alu_sub_opcode = alu_sub_opcode;
-
-  // result data
   assign vstart_onehot = 1'b1<<vstart;
   assign vstart_onehot_sub1 = vstart_onehot - 1'b1;
 
   always_comb begin
     // initial
-    result.result_data = 'b0;
+    `ifdef TB_SUPPORT
+    result.uop_pc           = alu_uop.uop_pc;
+    `endif
+    result.rob_entry        = rob_entry;
+    result.vd_eew           = vd_eew;
+    result.uop_index        = uop_index;
+    result.alu_sub_opcode   = alu_sub_opcode;
+    result.data_viota_per64 = data_viota_per64;
+    result.vsaturate        = 'b0;
+    result.result_data      = 'b0;
 
     case(uop_funct3)
       OPIVV,
@@ -574,10 +571,5 @@ module rvv_backend_alu_unit_mask
       end
     endcase
   end   
-
-  assign result.data_viota_per64 = data_viota_per64;
-  
-  // saturate signal
-  assign result.vsaturate = 'b0;
 
 endmodule

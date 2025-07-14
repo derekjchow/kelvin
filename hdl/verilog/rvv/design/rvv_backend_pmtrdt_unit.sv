@@ -2602,23 +2602,29 @@ module rvv_backend_pmtrdt_unit
       default: pmtrdt_res_valid = rdt_ctrl_q.last_uop_valid;
     endcase
   end
-`ifdef TB_SUPPORT
+
   always_comb begin
+    `ifdef TB_SUPPORT
+    // uop_pc
     case (uop_type_q)
       PERMUTATION: pmtrdt_res.uop_pc = rdt_ctrl_q.compress ? compress_ctrl_ex1.uop_pc : pmt_ctrl_q.uop_pc;
-      default: pmtrdt_res.uop_pc = rdt_ctrl_q.uop_pc; 
+      default:     pmtrdt_res.uop_pc = rdt_ctrl_q.uop_pc; 
     endcase
-  end
-`endif
-  always_comb begin
+    `endif
+    
+    // rob_entry
     case (uop_type_q)
       PERMUTATION:pmtrdt_res.rob_entry = rdt_ctrl_q.compress ? compress_ctrl_ex1.rob_entry : pmt_ctrl_q.rob_entry;
-      default:pmtrdt_res.rob_entry = rdt_ctrl_q.rob_entry;
+      default:    pmtrdt_res.rob_entry = rdt_ctrl_q.rob_entry;
     endcase
-  end
-  assign pmtrdt_res.w_valid = 1'b1;
-  assign pmtrdt_res.vsaturate = '0;
-  always_comb begin
+
+    // write valid
+    pmtrdt_res.w_valid = 1'b1;
+
+    // saturate
+    pmtrdt_res.vsaturate = '0;
+
+    // data
     case (uop_type_q)
       PERMUTATION: pmtrdt_res.w_data = rdt_ctrl_q.compress ? pmtrdt_res_compress : pmtrdt_res_pmt;
       REDUCTION:   pmtrdt_res.w_data = pmtrdt_res_red;

@@ -509,10 +509,10 @@ module rvv_backend_alu_unit_other
 // submit result to ROB
 //
 `ifdef TB_SUPPORT
-  assign  result.uop_pc = alu_uop.uop_pc;
+  assign result.uop_pc = alu_uop.uop_pc;
 `endif
 
-  assign  result.rob_entry = rob_entry;
+  assign result.rob_entry = rob_entry;
 
   assign result.w_data = result_data;
 

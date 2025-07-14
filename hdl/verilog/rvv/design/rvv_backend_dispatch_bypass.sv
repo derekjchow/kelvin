@@ -73,8 +73,7 @@ module rvv_backend_dispatch_bypass
                     vs1_sel[0][j]: uop_operand.vs1[8*j+:8] = agnostic[0][j] ? 8'hFF : rob_byp[0].w_data[8*j+:8];
                     default:       uop_operand.vs1[8*j+:8] = vrf_byp.vs1[8*j+:8];
                 endcase
-            end
-            always_comb begin
+
                 priority case (1'b1)
                     vs2_sel[7][j]: uop_operand.vs2[8*j+:8] = agnostic[7][j] ? 8'hFF : rob_byp[7].w_data[8*j+:8];
                     vs2_sel[6][j]: uop_operand.vs2[8*j+:8] = agnostic[6][j] ? 8'hFF : rob_byp[6].w_data[8*j+:8];
@@ -86,8 +85,7 @@ module rvv_backend_dispatch_bypass
                     vs2_sel[0][j]: uop_operand.vs2[8*j+:8] = agnostic[0][j] ? 8'hFF : rob_byp[0].w_data[8*j+:8];
                     default:       uop_operand.vs2[8*j+:8] = vrf_byp.vs2[8*j+:8];
                 endcase
-            end
-            always_comb begin
+
                 priority case (1'b1)
                     vd_sel[7][j]:  uop_operand.vd[8*j+:8]  = agnostic[7][j] ? 8'hFF : rob_byp[7].w_data[8*j+:8];
                     vd_sel[6][j]:  uop_operand.vd[8*j+:8]  = agnostic[6][j] ? 8'hFF : rob_byp[6].w_data[8*j+:8];
@@ -99,8 +97,7 @@ module rvv_backend_dispatch_bypass
                     vd_sel[0][j]:  uop_operand.vd[8*j+:8]  = agnostic[0][j] ? 8'hFF : rob_byp[0].w_data[8*j+:8];
                     default:       uop_operand.vd[8*j+:8]  = vrf_byp.vd[8*j+:8];
                 endcase
-            end
-            always_comb begin
+
                 priority case (1'b1)
                     v0_sel[7][j]:  uop_operand.v0[8*j+:8]  = agnostic[7][j] ? 8'hFF : rob_byp[7].w_data[8*j+:8];
                     v0_sel[6][j]:  uop_operand.v0[8*j+:8]  = agnostic[6][j] ? 8'hFF : rob_byp[6].w_data[8*j+:8];

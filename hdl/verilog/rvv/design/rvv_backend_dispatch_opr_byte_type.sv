@@ -38,6 +38,11 @@ module rvv_backend_dispatch_opr_byte_type
     logic  [`VSTART_WIDTH-1:0]          uop_vd_end;
     logic  [`VLENB-1:0][`VL_WIDTH-1:0]  vd_ele_index; // element index
     logic  [`VLENB-1:0]                 vd_enable, vd_enable_tmp;
+    
+    // result
+    BYTE_TYPE_t                         vs2;
+    BYTE_TYPE_t                         vd;
+    logic [`VLENB-1:0]                  v0_strobe;
 
 // ---code start------------------------------------------------------
     // find eew_max and shift amount
@@ -116,13 +121,13 @@ module rvv_backend_dispatch_opr_byte_type
             assign vs2_ele_index[i] = uop_vs2_start + (i >> vs2_eew_shift);
             always_comb begin
                 if (uop_info.ignore_vta&uop_info.ignore_vma)
-                    operand_byte_type.vs2[i] = BODY_ACTIVE;       
+                    vs2[i] = BODY_ACTIVE;       
                 else if (vs2_ele_index[i] >= uop_info.vl) 
-                    operand_byte_type.vs2[i] = TAIL; 
+                    vs2[i] = TAIL; 
                 else if (vs2_ele_index[i] < {1'b0, uop_info.vstart}) 
-                    operand_byte_type.vs2[i] = NOT_CHANGE; // prestart
+                    vs2[i] = NOT_CHANGE; // prestart
                 else begin 
-                    operand_byte_type.vs2[i] = (vs2_enable[i] || uop_info.ignore_vma) ? BODY_ACTIVE
+                    vs2[i] = (vs2_enable[i] || uop_info.ignore_vma) ? BODY_ACTIVE
                                                                                      : BODY_INACTIVE;
                 end
             end
@@ -193,29 +198,29 @@ module rvv_backend_dispatch_opr_byte_type
             assign vd_ele_index[0] = uop_v0_start;
 
             always_comb begin
-              operand_byte_type.v0_strobe[0] = 'b0;
+              v0_strobe[0] = 'b0;
 
               case (uop_info.uop_exe_unit)
                 RDT:begin
                   case(uop_info.vd_eew)
-                    EEW32:operand_byte_type.vd[0]   = BODY_ACTIVE;
-                    EEW16:operand_byte_type.vd[0]   = BODY_ACTIVE;
-                    default:operand_byte_type.vd[0] = BODY_ACTIVE;
+                    EEW32:vd[0]   = BODY_ACTIVE;
+                    EEW16:vd[0]   = BODY_ACTIVE;
+                    default:vd[0] = BODY_ACTIVE;
                   endcase
                 end
                 default:begin
                   if (uop_info.ignore_vta&uop_info.ignore_vma)
-                      operand_byte_type.vd[0] = BODY_ACTIVE;       
+                      vd[0] = BODY_ACTIVE;       
                   else if (vd_ele_index[0] >= uop_info.vl) 
-                      operand_byte_type.vd[0] = TAIL;       
+                      vd[0] = TAIL;       
                   else if ((vd_ele_index[0] < {1'b0, uop_info.vstart})&(uop_info.vstart>=uop_vd_start)) 
-                      operand_byte_type.vd[0] = NOT_CHANGE;     // prestart
+                      vd[0] = NOT_CHANGE;     // prestart
                   else if (vd_ele_index[0] < {1'b0, uop_vd_start}) // &(uop_info.vstart<uop_vd_start)
-                      operand_byte_type.vd[0] = NOT_CHANGE;     // prestart
+                      vd[0] = NOT_CHANGE;     // prestart
                   else begin 
-                      operand_byte_type.vd[0] = (vd_enable[0] || uop_info.ignore_vma) ? BODY_ACTIVE
+                      vd[0] = (vd_enable[0] || uop_info.ignore_vma) ? BODY_ACTIVE
                                                                                       : BODY_INACTIVE;
-                      operand_byte_type.v0_strobe[0] = vd_enable[0] || uop_info.ignore_vma;
+                      v0_strobe[0] = vd_enable[0] || uop_info.ignore_vma;
                   end
                 end
               endcase
@@ -226,31 +231,31 @@ module rvv_backend_dispatch_opr_byte_type
             assign vd_ele_index[i] = uop_v0_start + (i >> vd_eew_shift);
 
             always_comb begin
-              operand_byte_type.v0_strobe[i] = 'b0;
+              v0_strobe[i] = 'b0;
 
               case (uop_info.uop_exe_unit)
                 RDT:begin
                   case(uop_info.vd_eew)
-                    EEW32:operand_byte_type.vd[i] = i<4 ? BODY_ACTIVE : TAIL;
-                    EEW16:operand_byte_type.vd[i] = i<2 ? BODY_ACTIVE : TAIL;
-                    default:operand_byte_type.vd[i] = i<1 ? BODY_ACTIVE : TAIL;
+                    EEW32:vd[i] = i<4 ? BODY_ACTIVE : TAIL;
+                    EEW16:vd[i] = i<2 ? BODY_ACTIVE : TAIL;
+                    default:vd[i] = i<1 ? BODY_ACTIVE : TAIL;
                   endcase
                 end
                 default:begin
                   if (uop_info.ignore_vta&uop_info.ignore_vma)
-                      operand_byte_type.vd[i] = BODY_ACTIVE;       
+                      vd[i] = BODY_ACTIVE;       
                   else if (vd_ele_index[i] >= uop_info.vl) 
-                      operand_byte_type.vd[i] = TAIL;       
+                      vd[i] = TAIL;       
                   else if ((vd_ele_index[i] < {1'b0, uop_info.vstart})&(uop_info.vstart>=uop_vd_start)) 
-                      operand_byte_type.vd[i] = NOT_CHANGE;     // prestart
+                      vd[i] = NOT_CHANGE;     // prestart
                   else if (vd_ele_index[i] < {1'b0, uop_vd_start}) // &(uop_info.vstart<uop_vd_start)
-                      operand_byte_type.vd[i] = NOT_CHANGE;     // prestart
+                      vd[i] = NOT_CHANGE;     // prestart
                   else if (vd_ele_index[i] > {1'b0, uop_vd_end}) 
-                      operand_byte_type.vd[i] = BODY_INACTIVE;
+                      vd[i] = BODY_INACTIVE;
                   else begin 
-                      operand_byte_type.vd[i] = (vd_enable[i] || uop_info.ignore_vma) ? BODY_ACTIVE
+                      vd[i] = (vd_enable[i] || uop_info.ignore_vma) ? BODY_ACTIVE
                                                                                       : BODY_INACTIVE;
-                      operand_byte_type.v0_strobe[i] = vd_enable[i] || uop_info.ignore_vma;
+                      v0_strobe[i] = vd_enable[i] || uop_info.ignore_vma;
                   end
                 end
               endcase
@@ -258,5 +263,9 @@ module rvv_backend_dispatch_opr_byte_type
           end
         end
     endgenerate
+
+    assign operand_byte_type.vs2       = vs2;
+    assign operand_byte_type.vd        = vd;
+    assign operand_byte_type.v0_strobe = v0_strobe;
 
 endmodule
