@@ -592,6 +592,18 @@ template_rule(
             ] + RVV_CORE_MINI_AXI_COMMON_GEN_FLAGS,
             "module_name": "RvvCoreMiniVerificationAxi",
         },
+        "rvv_core_mini_debug_axi_cc_library": {
+            "verilog_file_path": "RvvCoreMiniDebugAxi.sv",
+            "extra_outs": [
+                "VRvvCoreMiniDebugAxi_parameters.h",
+                "RvvCoreMiniDebugAxi.zip",
+            ],
+            "gen_flags": [
+                "--moduleName=RvvCoreMiniDebug",
+                "--enableDebug=True",
+            ] + RVV_CORE_MINI_AXI_COMMON_GEN_FLAGS,
+            "module_name": "RvvCoreMiniDebugAxi",
+        },
     },
     chisel_lib = ":kelvin",
     emit_class = "kelvin.EmitCore",
