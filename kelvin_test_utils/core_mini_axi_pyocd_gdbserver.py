@@ -17,6 +17,7 @@ import subprocess
 import tempfile
 import threading
 
+from bazel_tools.tools.python.runfiles import runfiles
 from enum import Enum
 from cocotb.triggers import ClockCycles
 from pyocd.board.board import Board
@@ -349,6 +350,8 @@ class CoreMiniAxiGDBServer(object):
 
         def exec_gdb():
             with tempfile.NamedTemporaryFile(mode='w+') as cmdfile:
+                r = runfiles.Create()
+                gdb_path = r.Rlocation("kelvin_hw/toolchain/gdb")
                 cmds_pre = [
                     'set architecture riscv:rv32',
                     'target remote :3333',
@@ -361,7 +364,7 @@ class CoreMiniAxiGDBServer(object):
                     cmdfile.write(f'{cmd}\n')
                 cmdfile.flush()
                 args = [
-                    '../../../toolchain/gdb',
+                    gdb_path,
                     '-x',
                     cmdfile.name,
                     elf.name,

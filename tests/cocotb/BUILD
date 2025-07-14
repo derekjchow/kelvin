@@ -12,109 +12,56 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-load("//rules:coco_tb.bzl", "vcs_cocotb_test", "verilator_cocotb_test", "verilator_cocotb_model")
-load("//rules:kelvin_v2.bzl", "kelvin_v2_binary")
-load("//rules:utils.bzl", "template_rule")
 load("@kelvin_hw//third_party/python:requirements.bzl", "requirement")
 load("@rules_pkg//:pkg.bzl", "pkg_zip")
+load("//rules:coco_tb.bzl", "cocotb_test_suite", "verilator_cocotb_model")
+load("//rules:kelvin_v2.bzl", "kelvin_v2_binary")
+load("//rules:utils.bzl", "template_rule")
+
+load(
+    "//tests/cocotb:build_defs.bzl",
+    "VCS_BUILD_ARGS",
+    "VCS_DEFINES",
+    "VCS_TEST_ARGS",
+    "VERILATOR_BUILD_ARGS",
+)
 
 package(default_visibility = ["//visibility:public"])
 
 COCOTB_TEST_BINARY_TARGETS = glob(["**/*.elf"]) + glob(["**/*.o"]) + [
-        ":align_test.elf",
-        ":float_csr_interlock_test.elf",
-        ":finish_txn_before_halt.elf",
-        ":stress_test.elf",
-        ":wfi_slot_0.elf",
-        ":wfi_slot_1.elf",
-        ":wfi_slot_2.elf",
-        ":wfi_slot_3.elf",
-    ]
-
-VERILATOR_BUILD_ARGS = [
-    "-Wno-WIDTH",
-    "-Wno-CASEINCOMPLETE",
-    "-Wno-LATCH",
-    "-Wno-SIDEEFFECT",
-    "-Wno-MULTIDRIVEN",
-    "-Wno-UNOPTFLAT",
-    # Warnings that we disable for fpnew
-    "-Wno-ASCRANGE",
-    "-Wno-WIDTHEXPAND",
-    "-Wno-WIDTHTRUNC",
-    "-Wno-UNSIGNED",
-    "-DUSE_GENERIC=\"\"",
+    ":align_test.elf",
+    ":float_csr_interlock_test.elf",
+    ":finish_txn_before_halt.elf",
+    ":stress_test.elf",
+    ":wfi_slot_0.elf",
+    ":wfi_slot_1.elf",
+    ":wfi_slot_2.elf",
+    ":wfi_slot_3.elf",
 ]
 
 verilator_cocotb_model(
     name = "core_mini_axi_model",
+    cflags = VERILATOR_BUILD_ARGS,
     hdl_toplevel = "CoreMiniAxi",
     verilog_source = "//hdl/chisel/src/kelvin:CoreMiniAxi.sv",
-    cflags = VERILATOR_BUILD_ARGS,
 )
 
 verilator_cocotb_model(
     name = "core_mini_debug_axi_model",
+    cflags = VERILATOR_BUILD_ARGS,
     hdl_toplevel = "CoreMiniDebugAxi",
     verilog_source = "//hdl/chisel/src/kelvin:CoreMiniDebugAxi.sv",
-    cflags = VERILATOR_BUILD_ARGS,
 )
 
 verilator_cocotb_model(
     name = "rvv_core_mini_axi_model",
+    cflags = VERILATOR_BUILD_ARGS,
     hdl_toplevel = "RvvCoreMiniAxi",
     verilog_source = "//hdl/chisel/src/kelvin:RvvCoreMiniAxi.sv",
-    cflags = VERILATOR_BUILD_ARGS,
 )
 
-template_rule(
-    verilator_cocotb_test,
-    {
-        "core_mini_axi_sim_cocotb": {
-            "hdl_toplevel": "CoreMiniAxi",
-            "model": ":core_mini_axi_model",
-            "size": "enormous",
-        },
-        "rvv_core_mini_axi_sim_cocotb": {
-            "hdl_toplevel": "RvvCoreMiniAxi",
-            "model": ":rvv_core_mini_axi_model",
-            "size": "enormous",
-            "tags": ["manual"], # This suite takes a really long time
-        },
-    },
-    waves = True,
-    seed = "42",
-    test_module = ["core_mini_axi_sim.py"],
-    deps = [
-        "//kelvin_test_utils:core_mini_axi_sim_interface",
-        requirement("tqdm"),
-        "@bazel_tools//tools/python/runfiles",
-    ],
-    data = COCOTB_TEST_BINARY_TARGETS,
-)
-
-verilator_cocotb_test(
-    name = "core_mini_axi_debug_cocotb",
-    hdl_toplevel = "CoreMiniDebugAxi",
-    model = ":core_mini_debug_axi_model",
-    waves = True,
-    seed = "42",
-    test_module = ["core_mini_axi_debug.py"],
-    size = "enormous",
-    deps = [
-        "//kelvin_test_utils:core_mini_axi_sim_interface",
-        "//kelvin_test_utils:core_mini_axi_pyocd_gdbserver",
-        "@bazel_tools//tools/python/runfiles",
-    ],
-    data = [
-        ":fptr.elf",
-        ":math.elf",
-        ":noop.elf",
-        ":registers.elf",
-    ] + COCOTB_TEST_BINARY_TARGETS,
-)
-
-TESTCASES = [
+# BEGIN_TESTCASES_FOR_core_mini_axi_sim_cocotb
+CORE_MINI_AXI_SIM_TESTCASES = [
     "core_mini_axi_basic_write_read_memory",
     "core_mini_axi_run_wfi_in_all_slots",
     "core_mini_axi_slow_bready",
@@ -130,76 +77,193 @@ TESTCASES = [
     "core_mini_axi_burst_types_test",
     "core_mini_axi_float_csr_test",
 ]
+# END_TESTCASES_FOR_core_mini_axi_sim_cocotb
 
-template_rule(
-    vcs_cocotb_test,
-    {
-        "vcs_core_mini_axi_sim_cocotb": {
-            "hdl_toplevel": "CoreMiniAxi",
-            "verilog_sources": [
-                "//hdl/chisel/src/kelvin:core_mini_axi_cc_library_verilog"
-            ],
-        },
-        "vcs_rvv_core_mini_axi_sim_cocotb": {
-            "hdl_toplevel": "RvvCoreMiniAxi",
-            "verilog_sources": [
-                "//hdl/chisel/src/kelvin:rvv_core_mini_axi_cc_library_verilog"
-            ],
-        },
-    },
-    size = "large",
-    defines = {
-        "USE_GENERIC" : "",
-    },
-    waves = True,
-    seed = "42",
-    test_module = ["core_mini_axi_sim.py"],
-    testcases = TESTCASES,
-    build_args = [
-        "-timescale=1ns/1ps",
-        "-kdb",
-        "+vcs+fsdbon",
-        "-debug_access+all",
-        "-cm",
-        "line+cond+tgl+branch+assert",
-        "-cm_hier",
-        "../tests/cocotb/coverage_exclude.cfg",
-    ],
-    test_args = [
-        "+vcs+fsdbon",
-        "-cm",
-        "line+cond+tgl+branch+assert",
-    ],
-    deps = [
+# BEGIN_TESTCASES_FOR_rvv_core_mini_axi_sim_cocotb
+RVV_CORE_MINI_AXI_SIM_TESTCASES = [
+    "core_mini_axi_basic_write_read_memory",
+    "core_mini_axi_run_wfi_in_all_slots",
+    "core_mini_axi_slow_bready",
+    "core_mini_axi_write_read_memory_stress_test",
+    "core_mini_axi_master_write_alignment",
+    "core_mini_axi_finish_txn_before_halt_test",
+    "core_mini_axi_riscv_tests",
+    "core_mini_axi_riscv_dv",
+    "core_mini_axi_csr_test",
+    "core_mini_axi_exceptions_test",
+    "core_mini_axi_kelvin_isa_test",
+    "core_mini_axi_rand_instr_test",
+    "core_mini_axi_burst_types_test",
+    "core_mini_axi_float_csr_test",
+]
+# END_TESTCASES_FOR_rvv_core_mini_axi_sim_cocotb
+
+CORE_MINI_AXI_SIM_COMMON_TEST_KWARGS = {
+    "waves": True,
+    "seed": "42",
+    "test_module": ["core_mini_axi_sim.py"],
+    "deps": [
         "//kelvin_test_utils:core_mini_axi_sim_interface",
         requirement("tqdm"),
         "@bazel_tools//tools/python/runfiles",
     ],
-    data = COCOTB_TEST_BINARY_TARGETS + [
-        ":coverage_exclude.cfg",
+    "data": COCOTB_TEST_BINARY_TARGETS,
+    "size": "enormous",
+}
+
+template_rule(
+    cocotb_test_suite,
+    {
+        "core_mini_axi_sim_cocotb": {
+            "tests_kwargs": dict(CORE_MINI_AXI_SIM_COMMON_TEST_KWARGS, hdl_toplevel = "CoreMiniAxi"),
+            "vcs_verilog_sources": ["//hdl/chisel/src/kelvin:core_mini_axi_cc_library_verilog"],
+            "verilator_model": ":core_mini_axi_model",
+            "testcases": CORE_MINI_AXI_SIM_TESTCASES,
+            "testcases_vname": "CORE_MINI_AXI_SIM_TESTCASES",
+        },
+        "rvv_core_mini_axi_sim_cocotb": {
+            "tests_kwargs": dict(CORE_MINI_AXI_SIM_COMMON_TEST_KWARGS, hdl_toplevel = "RvvCoreMiniAxi", tags = ["manual"]),
+            "vcs_verilog_sources": ["//hdl/chisel/src/kelvin:rvv_core_mini_axi_cc_library_verilog"],
+            "verilator_model": ":rvv_core_mini_axi_model",
+            "testcases": RVV_CORE_MINI_AXI_SIM_TESTCASES,
+            "testcases_vname": "RVV_CORE_MINI_AXI_SIM_TESTCASES",
+        },
+    },
+    simulators = ["verilator", "vcs"],
+    vcs_data = COCOTB_TEST_BINARY_TARGETS + [":coverage_exclude.cfg"],
+    vcs_build_args = VCS_BUILD_ARGS,
+    vcs_test_args = VCS_TEST_ARGS,
+    vcs_defines = VCS_DEFINES,
+)
+
+# BEGIN_TESTCASES_FOR_core_mini_axi_debug_cocotb
+CORE_MINI_AXI_DEBUG_TESTCASES = [
+    "core_mini_axi_debug_gdbserver",
+    "core_mini_axi_debug_dmactive",
+    "core_mini_axi_debug_probe_impl",
+    "core_mini_axi_debug_ndmreset",
+    "core_mini_axi_debug_halt_resume",
+    "core_mini_axi_debug_hartsel",
+    "core_mini_axi_debug_abstract_access_registers",
+    "core_mini_axi_debug_abstract_access_nonexistent_register",
+    "core_mini_axi_debug_single_step",
+    "core_mini_axi_debug_breakpoint",
+]
+# END_TESTCASES_FOR_core_mini_axi_debug_cocotb
+
+# BEGIN_TESTCASES_FOR_rvv_assembly_cocotb_test
+RVV_ASSEMBLY_TESTCASES = [
+    "core_mini_rvv_load",
+    "core_mini_rvv_add",
+    "core_mini_vstart_store",
+]
+# END_TESTCASES_FOR_rvv_assembly_cocotb_test
+
+# BEGIN_TESTCASES_FOR_rvv_load_store_test
+RVV_LOAD_STORE_TESTCASES = [
+    "load8_stride2_m1",
+    "load8_stride2_m1_partial",
+    "load8_stride2_mf4",
+    "load16_stride4_m1",
+    "load16_stride4_m1_partial",
+    "load16_stride4_mf2",
+    "load32_stride8_m1",
+    "load32_stride8_m1_partial",
+    "load_store8_unit_m2",
+    "load_store16_unit_m2",
+    "load_store32_unit_m2",
+    "load8_segment2_unit_m1",
+    "load16_segment2_unit_m1",
+    "load32_segment2_unit_m1",
+    "load8_segment2_unit_m2",
+    "load16_segment2_unit_m2",
+    "load32_segment2_unit_m2",
+    "load8_segment2_stride6_m1",
+    "load16_segment2_stride6_m1",
+    "load8_indexed_m1",
+    "store8_indexed_m1",
+]
+# END_TESTCASES_FOR_rvv_load_store_test
+
+# BEGIN_TESTCASES_FOR_rvv_arithmetic_cocotb_test
+RVV_ARITHMETIC_TESTCASES = [
+    "arithmetic_m1_vanilla_ops",
+    "reduction_m1_vanilla_ops",
+]
+# END_TESTCASES_FOR_rvv_arithmetic_cocotb_test
+
+cocotb_test_suite(
+    name = "core_mini_axi_debug_cocotb",
+    simulators = [
+        "verilator",
+        "vcs",
     ],
+    testcases = CORE_MINI_AXI_DEBUG_TESTCASES,
+    testcases_vname = "CORE_MINI_AXI_DEBUG_TESTCASES",
+    tests_kwargs = {
+        "hdl_toplevel": "CoreMiniDebugAxi",
+        "waves": True,
+        "seed": "42",
+        "test_module": ["core_mini_axi_debug.py"],
+        "size": "enormous",
+        "deps": [
+            "//kelvin_test_utils:core_mini_axi_sim_interface",
+            "//kelvin_test_utils:core_mini_axi_pyocd_gdbserver",
+            "@bazel_tools//tools/python/runfiles",
+        ],
+        "data": [
+            ":fptr.elf",
+            ":math.elf",
+            ":noop.elf",
+            ":registers.elf",
+        ],
+    },
+    vcs_data = [
+            ":fptr.elf",
+            ":math.elf",
+            ":noop.elf",
+            ":registers.elf",
+    ] + [":coverage_exclude.cfg"],
+    vcs_build_args = VCS_BUILD_ARGS,
+    vcs_test_args = VCS_TEST_ARGS,
+    vcs_defines = VCS_DEFINES,
+    vcs_verilog_sources = ["//hdl/chisel/src/kelvin:core_mini_axi_debug_cc_library_verilog"],
+    verilator_model = ":core_mini_debug_axi_model",
 )
 
 RVV_TEST_BINARY_TARGETS = [
-        "//tests/cocotb/rvv:rvv_load.elf",
-        "//tests/cocotb/rvv:rvv_add.elf",
-        "//tests/cocotb/rvv:vstart_store.elf",
-        ]
+    "//tests/cocotb/rvv:rvv_load.elf",
+    "//tests/cocotb/rvv:rvv_add.elf",
+    "//tests/cocotb/rvv:vstart_store.elf",
+]
 
-verilator_cocotb_test(
+cocotb_test_suite(
     name = "rvv_assembly_cocotb_test",
-    hdl_toplevel = "RvvCoreMiniAxi",
-    model = ":rvv_core_mini_axi_model",
-    waves = True,
-    seed = "42",
-    test_module = ["rvv_assembly_cocotb_test.py"],
-    deps = [
-        "//kelvin_test_utils:core_mini_axi_sim_interface",
-        requirement("tqdm"),
-        "@bazel_tools//tools/python/runfiles",
+    simulators = [
+        "verilator",
+        "vcs",
     ],
-    data = RVV_TEST_BINARY_TARGETS,
-    size = "large",
+    testcases = RVV_ASSEMBLY_TESTCASES,
+    testcases_vname = "RVV_ASSEMBLY_TESTCASES",
+    tests_kwargs = {
+        "hdl_toplevel": "RvvCoreMiniAxi",
+        "waves": True,
+        "seed": "42",
+        "test_module": ["rvv_assembly_cocotb_test.py"],
+        "deps": [
+            "//kelvin_test_utils:core_mini_axi_sim_interface",
+            requirement("tqdm"),
+            "@bazel_tools//tools/python/runfiles",
+        ],
+        "data": RVV_TEST_BINARY_TARGETS,
+        "size": "large",
+    },
+    vcs_data = RVV_TEST_BINARY_TARGETS + [":coverage_exclude.cfg"],
+    vcs_build_args = VCS_BUILD_ARGS,
+    vcs_test_args = VCS_TEST_ARGS,
+    vcs_defines = VCS_DEFINES,
+    vcs_verilog_sources = ["//hdl/chisel/src/kelvin:rvv_core_mini_axi_cc_library_verilog"],
+    verilator_model = ":rvv_core_mini_axi_model",
 )
 
 kelvin_v2_binary(
@@ -210,14 +274,12 @@ kelvin_v2_binary(
     semihosting = True,
 )
 
-
 kelvin_v2_binary(
     name = "wfi_slot_0",
     srcs = [
         "wfi_slot_0.c",
     ],
 )
-
 
 kelvin_v2_binary(
     name = "wfi_slot_1",
@@ -289,37 +351,61 @@ kelvin_v2_binary(
     ],
 )
 
-verilator_cocotb_test(
+cocotb_test_suite(
     name = "rvv_load_store_test",
-    hdl_toplevel = "RvvCoreMiniAxi",
-    model = ":rvv_core_mini_axi_model",
-    waves = True,
-    seed = "42",
-    test_module = ["rvv_load_store_test.py"],
-    deps = [
-        "//kelvin_test_utils:sim_test_fixture",
-        "@bazel_tools//tools/python/runfiles",
+    simulators = [
+        "verilator",
+        "vcs",
     ],
-    data = [
-        "//tests/cocotb/rvv/load_store:rvv_load_store_tests",
-    ],
-    size = "large",
+    testcases = RVV_LOAD_STORE_TESTCASES,
+    testcases_vname = "RVV_LOAD_STORE_TESTCASES",
+    tests_kwargs = {
+        "hdl_toplevel": "RvvCoreMiniAxi",
+        "waves": True,
+        "seed": "42",
+        "test_module": ["rvv_load_store_test.py"],
+        "deps": [
+            "//kelvin_test_utils:sim_test_fixture",
+            "@bazel_tools//tools/python/runfiles",
+        ],
+        "data": ["//tests/cocotb/rvv/load_store:rvv_load_store_tests"],
+        "size": "large",
+    },
+    vcs_data = ["//tests/cocotb/rvv/load_store:rvv_load_store_tests"] + [":coverage_exclude.cfg"],
+    vcs_build_args = VCS_BUILD_ARGS,
+    vcs_test_args = VCS_TEST_ARGS,
+    vcs_defines = VCS_DEFINES,
+    vcs_verilog_sources = ["//hdl/chisel/src/kelvin:rvv_core_mini_axi_cc_library_verilog"],
+    verilator_model = ":rvv_core_mini_axi_model",
 )
 
-verilator_cocotb_test(
+cocotb_test_suite(
     name = "rvv_arithmetic_cocotb_test",
-    hdl_toplevel = "RvvCoreMiniAxi",
-    model = ":rvv_core_mini_axi_model",
-    waves = True,
-    seed = "42",
-    test_module = ["rvv_arithmetic_cocotb_test.py"],
-    deps = [
-        "//kelvin_test_utils:sim_test_fixture",
-        "@bazel_tools//tools/python/runfiles",
-        requirement("tqdm"),
+    simulators = [
+        "verilator",
+        "vcs",
     ],
-    data = [ "//tests/cocotb/rvv/arithmetics:rvv_arith_tests" ],
-    size = "large",
+    testcases = RVV_ARITHMETIC_TESTCASES,
+    testcases_vname = "RVV_ARITHMETIC_TESTCASES",
+    tests_kwargs = {
+        "hdl_toplevel": "RvvCoreMiniAxi",
+        "waves": True,
+        "seed": "42",
+        "test_module": ["rvv_arithmetic_cocotb_test.py"],
+        "deps": [
+            "//kelvin_test_utils:sim_test_fixture",
+            "@bazel_tools//tools/python/runfiles",
+            requirement("tqdm"),
+        ],
+        "data": ["//tests/cocotb/rvv/arithmetics:rvv_arith_tests"],
+        "size": "large",
+    },
+    vcs_data = ["//tests/cocotb/rvv/arithmetics:rvv_arith_tests"] + [":coverage_exclude.cfg"],
+    vcs_build_args = VCS_BUILD_ARGS,
+    vcs_test_args = VCS_TEST_ARGS,
+    vcs_defines = VCS_DEFINES,
+    vcs_verilog_sources = ["//hdl/chisel/src/kelvin:rvv_core_mini_axi_cc_library_verilog"],
+    verilator_model = ":rvv_core_mini_axi_model",
 )
 
 pkg_zip(
