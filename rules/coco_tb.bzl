@@ -39,6 +39,7 @@ def _verilator_cocotb_model_impl(ctx):
             --prefix Vtop \
             -o {hdl_toplevel} \
             -LDFLAGS "-Wl,-rpath external/kelvin_pip_deps_cocotb/cocotb/lib -L{cocotb_lib_path} -lcocotbvpi_verilator" \
+            {trace} \
             {cflags} \
             $PWD/{verilator_cpp} \
             {verilog_source}
@@ -51,12 +52,14 @@ def _verilator_cocotb_model_impl(ctx):
         cflags = " ".join(ctx.attr.cflags),
         verilator_cpp = ctx.files._cocotb_verilator_cpp[0].path,
         verilog_source = ctx.file.verilog_source.path,
+        trace = "--trace" if ctx.attr.trace else "",
     )
 
-    make_cmd = "PATH=`dirname $(which ld)`:$PATH make -j $(nproc) -C {outdir} -f Vtop.mk CXX=`which g++` AR=`which ar` LINK=`which g++` > {make_log} 2>&1".format(
+    make_cmd = "PATH=`dirname $(which ld)`:$PATH make -j $(nproc) -C {outdir} -f Vtop.mk {trace} CXX=`which g++` AR=`which ar` LINK=`which g++` > {make_log} 2>&1".format(
         outdir=outdir,
         cocotb_lib_path=cocotb_lib_path,
         make_log=make_log.path,
+        trace = "VM_TRACE=1" if ctx.attr.trace else "",
     )
 
     script = " && ".join([verilator_cmd.strip(), make_cmd])
@@ -93,6 +96,7 @@ verilator_cocotb_model = rule(
         "verilog_source": attr.label(allow_single_file = True, mandatory = True),
         "hdl_toplevel": attr.string(mandatory = True),
         "cflags": attr.string_list(default = []),
+        "trace": attr.bool(default = False),
         "_verilator": attr.label(
             default = "@verilator//:verilator",
             executable = True,
