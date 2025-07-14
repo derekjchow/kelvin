@@ -85,3 +85,30 @@ template_rule(
         },
     },
 )
+
+filegroup(
+    name = "rvv_load_store_tests",
+    srcs = [
+        ":load8_indexed_m1.elf",
+        ":load8_segment2_unit_m1.elf",
+        ":load16_segment2_unit_m1.elf",
+        ":load32_segment2_unit_m1.elf",
+        ":load8_segment2_unit_m2.elf",
+        ":load16_segment2_unit_m2.elf",
+        ":load32_segment2_unit_m2.elf",
+        ":load8_segment2_stride6_m1.elf",
+        ":load16_segment2_stride6_m1.elf",
+        ":load8_stride2_m1.elf",
+        ":load8_stride2_m1_partial.elf",
+        ":load8_stride2_mf4.elf",
+        ":load_store8_unit_m2.elf",
+        ":load_store16_unit_m2.elf",
+        ":load_store32_unit_m2.elf",
+        ":load16_stride4_m1.elf",
+        ":load16_stride4_m1_partial.elf",
+        ":load16_stride4_mf2.elf",
+        ":load32_stride8_m1.elf",
+        ":load32_stride8_m1_partial.elf",
+        ":store8_indexed_m1.elf",
+    ],
+)

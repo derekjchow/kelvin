@@ -16,6 +16,7 @@ load("//rules:coco_tb.bzl", "vcs_cocotb_test", "verilator_cocotb_test", "verilat
 load("//rules:kelvin_v2.bzl", "kelvin_v2_binary")
 load("//rules:utils.bzl", "template_rule")
 load("@kelvin_hw//third_party/python:requirements.bzl", "requirement")
+load("@rules_pkg//:pkg.bzl", "pkg_zip")
 
 package(default_visibility = ["//visibility:public"])
 
@@ -182,10 +183,7 @@ template_rule(
 RVV_TEST_BINARY_TARGETS = [
         "//tests/cocotb/rvv:rvv_load.elf",
         "//tests/cocotb/rvv:rvv_add.elf",
-        "//tests/cocotb/rvv:vstart_store.elf"] + [
-        "//tests/cocotb/rvv/arithmetics:rvv_{}_{}_m1.elf".format(TEST_OP, DTYPE)
-            for DTYPE in ["int8", "int16", "int32", "uint8", "uint16", "uint32"]
-            for TEST_OP in ["add", "sub", "mul", "div", "redsum", "redmin", "redmax"]
+        "//tests/cocotb/rvv:vstart_store.elf",
         ]
 
 verilator_cocotb_test(
@@ -303,27 +301,7 @@ verilator_cocotb_test(
         "@bazel_tools//tools/python/runfiles",
     ],
     data = [
-        '//tests/cocotb/rvv/load_store:load8_indexed_m1.elf',
-        '//tests/cocotb/rvv/load_store:load8_segment2_unit_m1.elf',
-        '//tests/cocotb/rvv/load_store:load16_segment2_unit_m1.elf',
-        '//tests/cocotb/rvv/load_store:load32_segment2_unit_m1.elf',
-        '//tests/cocotb/rvv/load_store:load8_segment2_unit_m2.elf',
-        '//tests/cocotb/rvv/load_store:load16_segment2_unit_m2.elf',
-        '//tests/cocotb/rvv/load_store:load32_segment2_unit_m2.elf',
-        '//tests/cocotb/rvv/load_store:load8_segment2_stride6_m1.elf',
-        '//tests/cocotb/rvv/load_store:load16_segment2_stride6_m1.elf',
-        '//tests/cocotb/rvv/load_store:load8_stride2_m1.elf',
-        '//tests/cocotb/rvv/load_store:load8_stride2_m1_partial.elf',
-        '//tests/cocotb/rvv/load_store:load8_stride2_mf4.elf',
-        '//tests/cocotb/rvv/load_store:load_store8_unit_m2.elf',
-        '//tests/cocotb/rvv/load_store:load_store16_unit_m2.elf',
-        '//tests/cocotb/rvv/load_store:load_store32_unit_m2.elf',
-        '//tests/cocotb/rvv/load_store:load16_stride4_m1.elf',
-        '//tests/cocotb/rvv/load_store:load16_stride4_m1_partial.elf',
-        '//tests/cocotb/rvv/load_store:load16_stride4_mf2.elf',
-        '//tests/cocotb/rvv/load_store:load32_stride8_m1.elf',
-        '//tests/cocotb/rvv/load_store:load32_stride8_m1_partial.elf',
-        '//tests/cocotb/rvv/load_store:store8_indexed_m1.elf',
+        "//tests/cocotb/rvv/load_store:rvv_load_store_tests",
     ],
     size = "large",
 )
@@ -340,7 +318,14 @@ verilator_cocotb_test(
         "@bazel_tools//tools/python/runfiles",
         requirement("tqdm"),
     ],
-    data = RVV_TEST_BINARY_TARGETS,
+    data = [ "//tests/cocotb/rvv/arithmetics:rvv_arith_tests" ],
     size = "large",
 )
 
+pkg_zip(
+    name = "rvv_test_binaries",
+    srcs = [
+        "//tests/cocotb/rvv/arithmetics:rvv_arith_tests",
+        "//tests/cocotb/rvv/load_store:rvv_load_store_tests",
+    ],
+)

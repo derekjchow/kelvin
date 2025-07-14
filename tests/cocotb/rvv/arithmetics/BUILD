@@ -75,3 +75,11 @@ template_rule(
         for (op, _, _, dtype, _) in MATH_OP_TYPE_PAIRS + REDUCTION_OP_TYPE_PAIRS
     }
 )
+
+filegroup(
+    name = "rvv_arith_tests",
+    srcs = [
+        ":rvv_{}_{}_m1.elf".format(op, dtype)
+        for (op, _, _, dtype, _) in MATH_OP_TYPE_PAIRS + REDUCTION_OP_TYPE_PAIRS
+    ],
+)
