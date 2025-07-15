@@ -1,4 +1,4 @@
-From 30c00282d60839706f72e21aa5903f6443286af2 Mon Sep 17 00:00:00 2001
+From 4e7de9e20892973b46be2fb9761a670cf0509003 Mon Sep 17 00:00:00 2001
 From: Alex Van Damme <atv@google.com>
 Date: Thu, 10 Jul 2025 16:03:33 -0700
 Subject: [PATCH 6/6] Separate build from test for Verilator
@@ -6,8 +6,8 @@ Subject: [PATCH 6/6] Separate build from test for Verilator
 ---
  cocotb/BUILD.bazel       |  2 +-
  cocotb/cocotb.bzl        |  9 ++++++++-
- cocotb/cocotb_wrapper.py | 16 +++++++++++++++-
- 3 files changed, 24 insertions(+), 3 deletions(-)
+ cocotb/cocotb_wrapper.py | 17 ++++++++++++++++-
+ 3 files changed, 25 insertions(+), 3 deletions(-)
 
 diff --git a/cocotb/BUILD.bazel b/cocotb/BUILD.bazel
 index ed8a3a0..72b19fb 100644
@@ -55,7 +55,7 @@ index 2b0a3c2..90c70bc 100644
          doc = "Verilog parameters or VHDL generics",
          default = {},
 diff --git a/cocotb/cocotb_wrapper.py b/cocotb/cocotb_wrapper.py
-index ce392a9..fce1b6e 100644
+index ce392a9..1703e4f 100644
 --- a/cocotb/cocotb_wrapper.py
 +++ b/cocotb/cocotb_wrapper.py
 @@ -165,6 +165,11 @@ def cocotb_argument_parser():
@@ -70,7 +70,7 @@ index ce392a9..fce1b6e 100644
  
      return parser
  
-@@ -188,7 +193,16 @@ if __name__ == "__main__":
+@@ -188,7 +193,17 @@ if __name__ == "__main__":
  
      cocotb_tools.runner.MAX_PARALLEL_BUILD_JOBS = 32
      runner = get_runner(args.sim)
@@ -82,7 +82,8 @@ index ce392a9..fce1b6e 100644
 +        r = runfiles.Create()
 +        sim_build = os.path.dirname(r.Rlocation(f"kelvin_hw/{args.model}"))
 +        test_flags['build_dir'] = sim_build
-+        test_flags['extra_env']['LD_LIBRARY_PATH'] = r.Rlocation("kelvin_hw/external/kelvin_pip_deps_cocotb/cocotb/libs")
++        test_flags['extra_env']['LD_LIBRARY_PATH'] = "{}:{}".format(r.Rlocation("kelvin_hw/external/kelvin_pip_deps_cocotb/cocotb/libs"), os.environ.get("LD_LIBRARY_PATH", ""))
++        os.environ.pop('LD_LIBRARY_PATH', None)
 +    else:
 +        runner.build(**build_flags)
      results_xml = runner.test(**test_flags)
