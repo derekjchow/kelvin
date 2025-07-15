@@ -58,6 +58,16 @@ class DmCmdType:
   ACCESS_MEMORY = 2
 
 
+# See RISC-V Debug Specification v0.13.2
+class DmAddress:
+  DATA0       = 0x04
+  DMCONTROL   = 0x10
+  DMSTATUS    = 0x11
+  HARTINFO    = 0x12
+  ABSTRACTCS  = 0x16
+  COMMAND     = 0x17
+
+
 def format_line_from_word(word, addr):
   shift = addr % 16
   line = np.zeros([4], dtype=np.uint32)
@@ -456,34 +466,34 @@ class CoreMiniAxiInterface:
 
   async def dm_read_reg(self, addr, expected_op=DmRspOp.SUCCESS):
     command = ((DmCmdType.ACCESS_REGISTER << 24) & 0xFF) | (((2 << 20) | (1 << 17) | (addr)) & 0xFFFFFF)
-    rsp = await self.dm_write(0x17, command)
+    rsp = await self.dm_write(DmAddress.COMMAND, command)
     assert rsp["op"] == expected_op
     if rsp["op"] != DmRspOp.SUCCESS:
         return 0
 
-    data = await self.dm_read(0x04)
-    status = await self.dm_read(0x16)
+    data = await self.dm_read(DmAddress.DATA0)
+    status = await self.dm_read(DmAddress.ABSTRACTCS)
     cmderr = (status >> 8) & 0b111
     assert (cmderr == 0)
     return data
 
   async def dm_write_reg(self, addr, data):
-    rsp = await self.dm_write(0x04, data)
+    rsp = await self.dm_write(DmAddress.DATA0, data)
     assert rsp["op"] == DmRspOp.SUCCESS
     command = ((DmCmdType.ACCESS_REGISTER << 24) & 0xFF) | (((2 << 20) | (1 << 17) | (1 << 16) | addr) & 0xFFFFFF)
-    rsp = await self.dm_write(0x17, command)
+    rsp = await self.dm_write(DmAddress.COMMAND, command)
     assert rsp["op"] == DmRspOp.SUCCESS
-    status = await self.dm_read(0x16)
+    status = await self.dm_read(DmAddress.ABSTRACTCS)
     cmderr = (status >> 8) & 0b111
     assert (cmderr == 0)
 
   async def dm_request_halt(self):
-    dmcontrol = await self.dm_read(0x10)
+    dmcontrol = await self.dm_read(DmAddress.DMCONTROL)
     dmcontrol = dmcontrol | (1 << 31) & ~(1 << 30)
-    return await self.dm_write(0x10, dmcontrol)
+    return await self.dm_write(DmAddress.DMCONTROL, dmcontrol)
 
   async def dm_check_for_halted(self):
-        dmstatus = await self.dm_read(0x11)
+        dmstatus = await self.dm_read(DmAddress.DMSTATUS)
         allhalted = dmstatus & (1 << 9)
         anyhalted = dmstatus & (1 << 8)
         if allhalted and anyhalted:
@@ -493,7 +503,7 @@ class CoreMiniAxiInterface:
   async def dm_wait_for_halted(self, retry_count=100):
     retries = 0
     while True:
-        dmstatus = await self.dm_read(0x11)
+        dmstatus = await self.dm_read(DmAddress.DMSTATUS)
         allhalted = dmstatus & (1 << 9)
         anyhalted = dmstatus & (1 << 8)
         if allhalted and anyhalted:
@@ -502,14 +512,14 @@ class CoreMiniAxiInterface:
         assert retries < retry_count
 
   async def dm_request_resume(self):
-    dmcontrol = await self.dm_read(0x10)
+    dmcontrol = await self.dm_read(DmAddress.DMCONTROL)
     dmcontrol = dmcontrol | (1 << 30) & ~(1 << 31)
-    await self.dm_write(0x10, dmcontrol)
+    await self.dm_write(DmAddress.DMCONTROL, dmcontrol)
 
   async def dm_wait_for_resumed(self, retry_count=100):
     retries = 0
     while True:
-        dmstatus = await self.dm_read(0x11)
+        dmstatus = await self.dm_read(DmAddress.DMSTATUS)
         allrunning = dmstatus & (1 << 11)
         anyrunning = dmstatus & (1 << 10)
         if allrunning and anyrunning:
