@@ -93,8 +93,8 @@ class DebugModule(p: Parameters) extends Module {
     val dmcontrol = RegInit(1.U(32.W))
     val dmactive = dmcontrol(0)
 
-    val data0 = withReset(!dmactive) { RegInit(0.U(32.W)) }
-    val cmderr = withReset(!dmactive) { RegInit(0.U(3.W)) }
+    val data0 = RegInit(0.U(32.W))
+    val cmderr = RegInit(0.U(32.W))
 
     val dmcontrol_wvalid = (req.fire && req.bits.isAddrDmcontrol && req.bits.isWrite)
     for (i <- 0 until nHart) {
@@ -172,6 +172,7 @@ class DebugModule(p: Parameters) extends Module {
     cmderr := MuxCase(cmderr, Seq(
         abstractcs_wvalid -> (cmderr & ~(req.bits.data(10,8))), // cmderr is W1C
         (abstractCmdValid && !io.halted(0)) -> 4.U(3.W),
+        !dmactive -> 0.U(3.W),
     ))
     val busy = abstractCmdValid && !abstractCmdComplete
     val abstractcs = Wire(UInt(32.W))
@@ -206,6 +207,7 @@ class DebugModule(p: Parameters) extends Module {
         (io.halted(0) && req.valid && !req.bits.write && regnoIsCsr && io.csr_rd.valid) -> io.csr_rd.bits,
         (io.halted(0) && req.valid && !req.bits.write && regnoIsScalar) -> io.scalar_rs.data,
         (io.halted(0) && req.valid && !req.bits.write && regnoIsFloat) -> io.float_rs.map(_.data).getOrElse(Fp32.Zero(false.B)).asWord,
+        !dmactive -> 0.U(32.W),
     ))
 
     val rsp = req.map(reqBits => {
