@@ -3337,7 +3337,7 @@ module rvv_backend_decode_unit_lsu
   always_comb begin
     // initial
     vs2_index = 'b0; 
-    vs2_eew   = 'b0; 
+    vs2_eew   = EEW_NONE;
     vs2_valid = 'b0; 
     
     for(int i=0;i<`NUM_DE_UOP;i++) begin: GET_VS2

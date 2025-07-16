@@ -4189,7 +4189,7 @@ module rvv_backend_decode_unit_ari
   always_comb begin
     // initial
     vd_index = 'b0;
-    vd_eew   = 'b0; 
+    vd_eew   = EEW_NONE;
     vd_valid = 'b0;
       
     for(int i=0;i<`NUM_DE_UOP;i++) begin: GET_VD
@@ -4617,7 +4617,7 @@ module rvv_backend_decode_unit_ari
   always_comb begin
     // initial
     vs1             = 'b0; 
-    vs1_eew         = 'b0; 
+    vs1_eew         = EEW_NONE;
     vs1_index_valid = 'b0;
       
     for(int i=0;i<`NUM_DE_UOP;i++) begin: GET_VS1
@@ -4837,7 +4837,7 @@ module rvv_backend_decode_unit_ari
   always_comb begin
     // initial
     vs2_index = 'b0; 
-    vs2_eew   = 'b0; 
+    vs2_eew   = EEW_NONE;
     vs2_valid = 'b0; 
       
     for(int i=0;i<`NUM_DE_UOP;i++) begin: GET_VS2
