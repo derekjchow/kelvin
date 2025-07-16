@@ -198,21 +198,40 @@ module RvvFrontEnd#(parameter N = 4,
 
   // Assertions
 `ifndef SYNTHESIS
-  logic [N-1:0] requires_reg_read;
+  logic [N-1:0] lsu_requires_rs1_read;
+  logic [N-1:0] non_lsu_requires_rs1_read;
+  logic [N-1:0] requires_rs1_read;
+  logic [N-1:0] lsu_requires_rs2_read;
+  logic [N-1:0] non_lsu_requires_rs2_read;
+  logic [N-1:0] requires_rs2_read;
   always_comb begin
     for (int i = 0; i < N; i++) begin
-      requires_reg_read[i] = valid_inst_q && (
-          (inst_q[i].opcode != RVV) ||  // LOAD/STORE
-          (inst_q[i].bits[7] && inst_q[i].bits[6:5] != 2'b11) ||  // non vset
-          // vset instructions
-          ((inst_q[i].bits[7:5] == 3'b111) && (inst_q[i].bits[24:23] != 2'b11))
-      );
+      // All LSU instructions read from rs1
+      lsu_requires_rs1_read[i] = (inst_q[i].opcode != RVV);
+      // Non LSU rs1 check
+      non_lsu_requires_rs1_read[i] = (inst_q[i].opcode == RVV) &&
+          (inst_q[i].bits[7] && inst_q[i].bits[6:5] != 2'b11);
+      requires_rs1_read[i] =
+          lsu_requires_rs1_read[i] || non_lsu_requires_rs1_read[i];
+
+      // Only strided loads/stores (mop=0b10) read rs2
+      lsu_requires_rs2_read[i] = (inst_q[i].opcode != RVV) &&
+          (inst_q[i].bits[20:19] == 2'b10);
+      // vsetvl is only non LSU instruction that reads rs2
+      non_lsu_requires_rs2_read[i] = (inst_q[i].opcode == RVV) &&
+          (inst_q[i].bits[7:5] == 3'b111) &&
+          (inst_q[i].bits[24:18] == 7'b1000000);
+      requires_rs2_read[i] =
+          lsu_requires_rs2_read[i] || non_lsu_requires_rs2_read[i];
     end
   end
 
   always @(posedge clk) begin
     for (int i = 0; i < N; i++) begin
-      assert(!requires_reg_read[i] || reg_read_valid_i[i]);
+      assert(!valid_inst_q[i] || !requires_rs1_read[i] ||
+              reg_read_valid_i[2*i]);
+      assert(!valid_inst_q[i] || !requires_rs2_read[i] ||
+              reg_read_valid_i[(2*i) + 1]);
     end
   end
 `endif  // not def SYNTHESIS
