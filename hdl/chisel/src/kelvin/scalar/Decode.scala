@@ -970,9 +970,9 @@ class Decode(p: Parameters, pipeline: Int) extends Module {
 
   val floatEn = if (p.enableFloat && pipeline == 0) {
     !d.float.get.valid ||
-    (d.float.get.valid && (d.isFloatLoad() || d.isFloatStore())) ||
+    (d.float.get.valid && d.isFloatLoad()) ||
     (!io.serializeIn.float && io.float.get.ready) &&
-    !io.serializeIn.brcond &&
+    !io.serializeIn.brcond && !io.lsuActive &&
     !(d.float.get.valid && d.float.get.bits.scalar_rd && io.scoreboard.comb(rdAddr)) &&
     !(d.float.get.valid && d.float.get.bits.scalar_rs1 && io.scoreboard.comb(rs1Addr)) &&
     !(d.float.get.valid && !d.float.get.bits.scalar_rd && io.fscoreboard.get(rdAddr)) &&
