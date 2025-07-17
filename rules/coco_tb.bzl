@@ -19,6 +19,10 @@ load("@rules_hdl//cocotb:cocotb.bzl", "cocotb_test")
 load("@rules_python//python:defs.bzl", "py_library")
 
 def _verilator_cocotb_model_impl(ctx):
+    cc_toolchain = ctx.toolchains["@bazel_tools//tools/cpp:toolchain_type"].cc
+    ar_executable = cc_toolchain.ar_executable
+    compiler_executable = cc_toolchain.compiler_executable
+    ld_executable = cc_toolchain.ld_executable
     hdl_toplevel = ctx.attr.hdl_toplevel
     outdir_name = hdl_toplevel + "_build"
 
@@ -38,7 +42,7 @@ def _verilator_cocotb_model_impl(ctx):
             --public-flat-rw \
             --prefix Vtop \
             -o {hdl_toplevel} \
-            -LDFLAGS "-Wl,-rpath external/kelvin_pip_deps_cocotb/cocotb/lib -L{cocotb_lib_path} -lcocotbvpi_verilator" \
+            -LDFLAGS "-Wl,-rpath {cocotb_lib_path} -L{cocotb_lib_path} -lcocotbvpi_verilator" \
             {trace} \
             {cflags} \
             $PWD/{verilator_cpp} \
@@ -55,11 +59,14 @@ def _verilator_cocotb_model_impl(ctx):
         trace = "--trace" if ctx.attr.trace else "",
     )
 
-    make_cmd = "PATH=`dirname $(which ld)`:$PATH make -j $(nproc) -C {outdir} -f Vtop.mk {trace} CXX=`which g++` AR=`which ar` LINK=`which g++` > {make_log} 2>&1".format(
-        outdir=outdir,
-        cocotb_lib_path=cocotb_lib_path,
-        make_log=make_log.path,
+    make_cmd = "PATH=`dirname {ld}`:$PATH make -j $(nproc) -C {outdir} -f Vtop.mk {trace} CXX={cxx} AR={ar} LINK={cxx} > {make_log} 2>&1".format(
+        outdir = outdir,
+        cocotb_lib_path = cocotb_lib_path,
+        make_log = make_log.path,
         trace = "VM_TRACE=1" if ctx.attr.trace else "",
+        ar = ar_executable,
+        ld = ld_executable,
+        cxx = compiler_executable,
     )
 
     script = " && ".join([verilator_cmd.strip(), make_cmd])
