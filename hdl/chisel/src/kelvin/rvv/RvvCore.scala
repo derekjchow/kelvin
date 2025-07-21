@@ -74,24 +74,26 @@ object GenerateCoreShimSource {
         moduleInterface += """    output rvv2lsu_GENI_valid,
             |    output rvv2lsu_GENI_bits_idx_valid,
             |    output [4:0] rvv2lsu_GENI_bits_idx_bits_addr,
-            |    output [127:0] rvv2lsu_GENI_bits_idx_bits_data,
+            |    output [VLEN-1:0] rvv2lsu_GENI_bits_idx_bits_data,
             |    output rvv2lsu_GENI_bits_vregfile_valid,
             |    output [4:0] rvv2lsu_GENI_bits_vregfile_bits_addr,
-            |    output [127:0] rvv2lsu_GENI_bits_vregfile_bits_data,
+            |    output [VLEN-1:0] rvv2lsu_GENI_bits_vregfile_bits_data,
             |    output rvv2lsu_GENI_bits_mask_valid,
-            |    output [15:0] rvv2lsu_GENI_bits_mask_bits,
+            |    output [(VLEN/8)-1:0] rvv2lsu_GENI_bits_mask_bits,
             |    input rvv2lsu_GENI_ready,
-            |""".stripMargin.replaceAll("GENI", i.toString)
+            |""".stripMargin.replaceAll("GENI", i.toString).replaceAll(
+                "VLEN", vlen.toString)
     }
 
     // LSU to RVV
     for (i <- 0 until 2) {
         moduleInterface += """    input lsu2rvv_GENI_valid,
             |    input [4:0] lsu2rvv_GENI_bits_addr,
-            |    input [127:0] lsu2rvv_GENI_bits_data,
+            |    input [VLEN-1:0] lsu2rvv_GENI_bits_data,
             |    input  lsu2rvv_GENI_bits_last,
             |    output lsu2rvv_GENI_ready,
-            |""".stripMargin.replaceAll("GENI", i.toString)
+            |""".stripMargin.replaceAll("GENI", i.toString).replaceAll(
+                "VLEN", vlen.toString)
     }
 
     // Add CSR output
@@ -102,7 +104,6 @@ object GenerateCoreShimSource {
         |""".stripMargin.replaceAll("VSTART_LEN", (log2Ceil(vlen) - 1).toString)
 
     // Add RVV Config state output
-    //  TODO(derekjchow): Parameterize vl
     moduleInterface += """    output configStateValid,
         |    output [7:0] configVl,
         |    output [VSTART_LEN:0] configVstart,
@@ -159,17 +160,17 @@ object GenerateCoreShimSource {
     }
 
     // RVV2LSU
-    // TODO(derekjchow): Parameterize correctly
     coreInstantiation += """  logic [2-1:0] uop_lsu_valid_rvv2lsu;
       |  logic [2-1:0] uop_lsu_idx_valid_rvv2lsu;
       |  logic [2-1:0][4:0] uop_lsu_idx_addr_rvv2lsu;
-      |  logic [2-1:0][127:0] uop_lsu_idx_data_rvv2lsu;
+      |  logic [2-1:0][VLEN-1:0] uop_lsu_idx_data_rvv2lsu;
       |  logic [2-1:0] uop_lsu_vregfile_valid_rvv2lsu;
       |  logic [2-1:0][4:0] uop_lsu_vregfile_addr_rvv2lsu;
-      |  logic [2-1:0][127:0] uop_lsu_vregfile_data_rvv2lsu;
+      |  logic [2-1:0][VLEN-1:0] uop_lsu_vregfile_data_rvv2lsu;
       |  logic [2-1:0] uop_lsu_v0_valid_rvv2lsu;
-      |  logic [2-1:0][15:0] uop_lsu_v0_data_rvv2lsu;
-      |  logic [2-1:0] uop_lsu_ready_lsu2rvv;""".stripMargin
+      |  logic [2-1:0][(VLEN/8)-1:0] uop_lsu_v0_data_rvv2lsu;
+      |  logic [2-1:0] uop_lsu_ready_lsu2rvv;""".stripMargin.replaceAll(
+          "VLEN", vlen.toString)
     for (i <- 0 until 2) {
       coreInstantiation += """
           |  assign rvv2lsu_GENI_valid = uop_lsu_valid_rvv2lsu[GENI];
@@ -187,12 +188,12 @@ object GenerateCoreShimSource {
 
 
     // LSU2RVV
-    // TODO(derekjchow): Parameterize correctly
     coreInstantiation += """  logic [2-1:0] uop_lsu_valid_lsu2rvv;
       |  logic  [2-1:0][4:0]  uop_lsu_addr_lsu2rvv;
-      |  logic  [2-1:0][127:0] uop_lsu_wdata_lsu2rvv;
+      |  logic  [2-1:0][VLEN-1:0] uop_lsu_wdata_lsu2rvv;
       |  logic  [2-1:0] uop_lsu_last_lsu2rvv;
-      |  logic  [2-1:0] uop_lsu_ready_rvv2lsu;""".stripMargin
+      |  logic  [2-1:0] uop_lsu_ready_rvv2lsu;""".stripMargin.replaceAll(
+          "VLEN", vlen.toString)
     for (i <- 0 until 2) {
       coreInstantiation += """
           |  assign uop_lsu_valid_lsu2rvv[GENI] = lsu2rvv_GENI_valid;
