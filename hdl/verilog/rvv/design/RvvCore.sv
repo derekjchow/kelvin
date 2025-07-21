@@ -76,11 +76,11 @@ module RvvCore #(parameter N = 4,
   output RVVConfigState config_state,
 
   // Idle
-  output logic rvv_idle
+  output logic rvv_idle,
+  output logic [$clog2(2*N + 1)-1:0] queue_capacity
 );
   logic [N-1:0] frontend_cmd_valid;
   RVVCmd [N-1:0] frontend_cmd_data;
-  logic [$clog2(2*N + 1)-1:0] queue_capacity;
   RvvFrontEnd#(.N(N)) frontend(
       .clk(clk),
       .rstn(rstn),
@@ -97,19 +97,21 @@ module RvvCore #(parameter N = 4,
       .reg_write_data_o(reg_write_data),
       .cmd_valid_o(frontend_cmd_valid),
       .cmd_data_o(frontend_cmd_data),
-      .queue_capacity_i(queue_capacity),
+      .queue_capacity_i(queue_capacity_internal),
+      .queue_capacity_o(queue_capacity),
       .config_state_valid(config_state_valid),
       .config_state(config_state)
   );
 
   // Backpressure from backend fifo
   logic   [$clog2(`CQ_DEPTH):0] remaining_count_cq2rvs;
+  logic [$clog2(2*N + 1)-1:0] queue_capacity_internal;
   // Back-pressure frontend
   always_comb begin
     if (remaining_count_cq2rvs > 2*N) begin
-      queue_capacity = 2*N;
+      queue_capacity_internal = 2*N;
     end else begin
-      queue_capacity = remaining_count_cq2rvs;
+      queue_capacity_internal = remaining_count_cq2rvs;
     end
   end
 

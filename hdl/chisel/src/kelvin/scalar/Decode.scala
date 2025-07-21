@@ -192,7 +192,14 @@ class DecodedInstruction(p: Parameters) extends Bundle {
   def isFloatStore(): Bool = {
     float.map(f => f.valid && f.bits.opcode === FloatOpcode.STOREFP).getOrElse(false.B)
   }
-  def isLsu(): Bool = { isScalarLoad() || isScalarStore() || vld || vst || flushat || flushall || isFloatLoad() || isFloatStore() }
+  def isLsu(): Bool = {
+      isScalarLoad() || isScalarStore() || vld || vst || flushat || flushall ||
+      isFloatLoad() || isFloatStore() || (if (p.enableRvv) {
+        rvv.get.valid && rvv.get.bits.isLoadStore()
+      } else {
+        false.B
+      })
+  }
   def isMul(): Bool = { mul || mulh || mulhsu || mulhu }
   def isDvu(): Bool = { div || divu || rem || remu }
   def isVector(): Bool = { vld || vst || viop || getvl || getmaxvl }
@@ -284,6 +291,7 @@ class Dispatch(p: Parameters) extends Module {
 
     // LSU interface.
     val lsu = Vec(p.instructionLanes, Decoupled(new LsuCmd(p)))
+    val lsuQueueCapacity = Input(UInt(3.W))
 
     // Multiplier interface.
     val mlu = Vec(p.instructionLanes, Decoupled(new MluCmd))
@@ -296,6 +304,7 @@ class Dispatch(p: Parameters) extends Module {
         Vec(p.instructionLanes, Decoupled(new RvvCompressedInstruction)))
     val rvvState = Option.when(p.enableRvv)(Input(Valid(new RvvConfigState(p))))
     val rvvIdle = Option.when(p.enableRvv)(Input(Bool()))
+    val rvvQueueCapacity = Option.when(p.enableRvv)(Input(UInt(4.W)))
 
     // Vector interface, to maintain interface compatibility with old dispatch
     // unit.
@@ -409,9 +418,9 @@ class DispatchV2(p: Parameters) extends Dispatch(p) {
   val fence = decodedInsts.map(x => x.isFency() && (io.mactive || io.lsuActive))
 
   // ---------------------------------------------------------------------------
-  // Rvv interlock rules
+  // Rvv config interlock rules
   // RVV Load store unit requires valid config state on dispatch.
-  val rvvInterlock = if (p.enableRvv) {
+  val rvvConfigInterlock = if (p.enableRvv) {
     val configChange = decodedInsts.map(
         x => x.rvv.get.valid && x.rvv.get.bits.isVset())
     val configInvalid = configChange.scan(!io.rvvState.get.valid)(_ || _)
@@ -426,15 +435,25 @@ class DispatchV2(p: Parameters) extends Dispatch(p) {
   }
 
   // ---------------------------------------------------------------------------
-  // Load/Store interlock
-  // Only dispatch one RVV load/store per cycle.
-  // TODO(derekjchow): Relax this when LsuV2 can accept multiple ops
-  val rvvLsuInterlock = if (p.enableRvv) {
-    val isRvvLsu = decodedInsts.map(
-        x => x.rvv.get.valid && x.rvv.get.bits.isLoadStore())
-    val rvvSet = isRvvLsu.scan(false.B)(_ || _)
-    rvvSet.map(!_).take(p.instructionLanes)
+  // Rvv Interlock
+  val rvvInterlock = if (p.enableRvv) {
+    val isRvv = decodedInsts.map(x => x.rvv.get.valid)
+    val isRvvCount = isRvv.scan(0.U(4.W))(_+_)
+    (0 until p.instructionLanes).map(
+        i => isRvvCount(i) < io.rvvQueueCapacity.get)
   } else {
+    Seq.fill(p.instructionLanes)(true.B)
+  }
+
+  // ---------------------------------------------------------------------------
+  // LSU Interlock
+  val isLsu = decodedInsts.map(x => x.isLsu())
+  val isLsuCount = isLsu.scan(0.U(4.W))(_+_)
+  val lsuInterlock = if (p.useLsuV2) {
+      (0 until p.instructionLanes).map(
+          i => isLsuCount(i) < io.lsuQueueCapacity)
+  } else {
+    // For LSU V1, backpressure from ready/valid handshake to interlock LSU.
     Seq.fill(p.instructionLanes)(true.B)
   }
 
@@ -478,8 +497,10 @@ class DispatchV2(p: Parameters) extends Dispatch(p) {
       !floatWriteAfterWrite(i) && // Avoid WAW hazards
       !branchInterlock(i) && // Only branch/alu can be dispatched after a branch
       !fence(i) &&           // Don't dispatch if fence interlocked
-      rvvInterlock(i) &&     // Rvv interlock rules
-      rvvLsuInterlock(i) &&  // Dispatch only one Rvv LsuOp
+      rvvConfigInterlock(i) &&     // Rvv interlock rules
+      // rvvLsuInterlock(i) &&  // Dispatch only one Rvv LsuOp
+      lsuInterlock(i) && // Ensure lsu instructions can be dispatched into queue
+      rvvInterlock(i) && // Ensure rvv instructions can be dispatched into queue
       !undefInterlock(i) &&     // Ensure undef is only dispatched from first slot
       io.retirement_buffer_nSpace.map(x => i.U < x).getOrElse(true.B) && // Retirement buffer needs space for our slot
       singleStepInterlock(i)

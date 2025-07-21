@@ -68,6 +68,7 @@ class RvvCoreIO(p: Parameters) extends Bundle {
     val csr = new RvvCsrIO(p)
 
     val rvv_idle = Output(Bool())
+    val queue_capacity = Output(UInt(4.W))
 }
 
 class RvvCsrIO(p: Parameters) extends Bundle {

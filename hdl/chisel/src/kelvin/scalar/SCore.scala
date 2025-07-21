@@ -120,6 +120,7 @@ class SCore(p: Parameters) extends Module {
   dispatch.io.halted := csr.io.halted || csr.io.wfi || csr.io.dm.map(_.debug_mode).getOrElse(false.B)
   dispatch.io.mactive := io.vcore.map(_.mactive).getOrElse(false.B)
   dispatch.io.lsuActive := lsu.io.active
+  dispatch.io.lsuQueueCapacity := lsu.io.queueCapacity
   dispatch.io.scoreboard.comb := regfile.io.scoreboard.comb
   dispatch.io.scoreboard.regd := regfile.io.scoreboard.regd
   dispatch.io.branchTaken := branchTaken
@@ -422,6 +423,7 @@ class SCore(p: Parameters) extends Module {
     dispatch.io.rvv.get <> io.rvvcore.get.inst
     dispatch.io.rvvState.get := io.rvvcore.get.configState
     dispatch.io.rvvIdle.get := io.rvvcore.get.rvv_idle
+    dispatch.io.rvvQueueCapacity.get := io.rvvcore.get.queue_capacity
 
     // Register inputs
     io.rvvcore.get.rs := regfile.io.readData

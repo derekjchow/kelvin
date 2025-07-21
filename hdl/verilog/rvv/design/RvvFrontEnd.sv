@@ -49,6 +49,7 @@ module RvvFrontEnd#(parameter N = 4,
   output logic [N-1:0] cmd_valid_o,
   output RVVCmd [N-1:0] cmd_data_o,
   input logic [CAPACITYBITS-1:0] queue_capacity_i,  // Number of elements that can be enqueued
+  output logic [CAPACITYBITS-1:0] queue_capacity_o,
 
   // Config state
   output config_state_valid,
@@ -62,8 +63,9 @@ module RvvFrontEnd#(parameter N = 4,
   RVVConfigState config_state_q;
 
   // Instructions to assemble into commands
-  logic [N-1:0] valid_inst_q;
-  RVVInstruction inst_q [N-1:0];
+  logic [N-1:0] valid_inst_q;     // If the instruction in this slot is valid
+  count_t valid_inst_count_q;     // The sum of valid_inst_q
+  RVVInstruction inst_q [N-1:0];  // The instruction in the slot
 
   // Backpressure
   count_t valid_in_psum [N:0];
@@ -85,22 +87,33 @@ module RvvFrontEnd#(parameter N = 4,
   assign config_state_valid = config_state_reduction;
   assign config_state = config_state_q;
 
+  logic [CAPACITYBITS-1:0] queue_capacity;
+  assign queue_capacity_o = queue_capacity;
+  always_comb begin
+    queue_capacity = queue_capacity_i - valid_inst_count_q;
+  end
+
   logic inst_accepted [N-1:0];
+  count_t valid_inst_count_d;
   always_comb begin
     for (int i = 0; i < N; i++) begin
-      inst_accepted[i] = (valid_in_psum[i] < queue_capacity_i) && inst_valid_i[i];
+      inst_accepted[i] = (valid_in_psum[i] < queue_capacity) && inst_valid_i[i];
       inst_ready_o[i] = inst_accepted[i];
     end
+    valid_inst_count_d = (valid_in_psum[N] < queue_capacity) ?
+        valid_in_psum[N] : queue_capacity;
   end
 
   always_ff @(posedge clk or negedge rstn) begin
     if (!rstn) begin
       for (int i = 0; i < N; i++) begin
         valid_inst_q[i] <= 0;
+        valid_inst_count_q <= 0;
       end;
     end else begin
       for (int i = 0; i < N; i++) begin
         valid_inst_q[i] <= inst_accepted[i];
+        valid_inst_count_q <= valid_inst_count_d;
         inst_q[i] <= inst_data_i[i];
       end
     end

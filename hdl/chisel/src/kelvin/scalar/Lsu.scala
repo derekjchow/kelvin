@@ -57,6 +57,7 @@ class Lsu(p: Parameters) extends Module {
     val rvvState = Option.when(p.enableRvv)(Input(Valid(new RvvConfigState(p))))
 
     val storeCount = Output(UInt(2.W))
+    val queueCapacity = Output(UInt(3.W))
     val active = Output(Bool())
   })
 }
@@ -943,6 +944,8 @@ class LsuV1(p: Parameters) extends Lsu(p) {
   val io_rd_flt_pipe = Pipe(io_rd_flt_pre_pipe, p.lsuDelayPipelineLen)
   io.rd_flt := io_rd_flt_pipe
 
+  io.queueCapacity := 0.U
+
   assert(!ctrl.io.out.valid || PopCount(Cat(ctrl.io.out.bits.fldst, ctrl.io.out.bits.sldst, ctrl.io.out.bits.vldst)) <= 1.U)
   assert(!data.io.out.valid || PopCount(Cat(data.io.out.bits.fldst, data.io.out.bits.sldst)) <= 1.U)
 }
@@ -953,6 +956,7 @@ class LsuV2(p: Parameters) extends Lsu(p) {
   io.storeCount := 0.U
 
   val opQueue = Module(new Queue(new LsuUOp(p), 4))
+  io.queueCapacity := opQueue.entries.U - opQueue.io.count
 
   // Flush state
   // DispatchV2 will only flush on first slot, when LSU is inactive.
