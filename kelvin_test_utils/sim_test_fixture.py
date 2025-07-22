@@ -16,7 +16,9 @@ import cocotb
 
 from kelvin_test_utils.core_mini_axi_interface import CoreMiniAxiInterface
 
+
 class Fixture:
+
     def __init__(self, dut):
         self.core_mini_axi = CoreMiniAxiInterface(dut)
         self.entry_point = None
@@ -49,6 +51,6 @@ class Fixture:
     async def read(self, symbol: str, size: int):
         return await self.core_mini_axi.read(self.symbols[symbol], size)
 
-    async def run_to_halt(self):
+    async def run_to_halt(self, timeout_cycles=10000):
         await self.core_mini_axi.execute_from(self.entry_point)
-        await self.core_mini_axi.wait_for_halted()
+        await self.core_mini_axi.wait_for_halted(timeout_cycles=timeout_cycles)

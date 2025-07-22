@@ -14,11 +14,22 @@
 
 load("//rules:kelvin_v2.bzl", "kelvin_v2_binary")
 load("//rules:utils.bzl", "template_rule")
-load("//tests/cocotb/rvv/arithmetics:rvv_arithmetic.bzl", "rvv_arithmetic_test", "rvv_reduction_test")
+load("//tests/cocotb/rvv/arithmetics:rvv_arithmetic.bzl", "rvv_arithmetic_test", "rvv_reduction_test", "rvv_widen_arithmetic_test")
+
 package(default_visibility = ["//visibility:public"])
 
-MATH_OPS = ["add", "sub", "mul","div"]
-REDUCTION_OPS = ["redsum", "redmin", "redmax"]
+MATH_OPS = [
+    "add",
+    "sub",
+    "mul",
+    "div",
+]
+
+REDUCTION_OPS = [
+    "redsum",
+    "redmin",
+    "redmax",
+]
 
 # tuple format DTYPE (sew, sign, dtype, vl)
 DTYPES = [
@@ -29,8 +40,29 @@ DTYPES = [
     ("16", "u", "uint16", "8"),
     ("32", "u", "uint32", "4"),
 ]
-MATH_OP_TYPE_PAIRS = [(op, sew, sign, dtype, vl) for op in MATH_OPS for (sew, sign, dtype, vl) in DTYPES]
-REDUCTION_OP_TYPE_PAIRS = [(op, sew, sign, dtype, vl) for op in REDUCTION_OPS for (sew, sign, dtype, vl) in DTYPES]
+
+WIDEN_DTYPES = [
+    ("i", "int8", "int16", "8", "16", "8", "256"),
+    ("i", "int16", "int32", "16", "32", "4", "256"),
+]
+
+MATH_OP_TYPE_PAIRS = [
+    (op, sew, sign, dtype, vl)
+    for op in MATH_OPS
+    for (sew, sign, dtype, vl) in DTYPES
+]
+
+MATH_WIDEN_OP_TYPE_PAIRS = [
+    (op, sign, in_dtype, out_dtype, in_sew, out_sew, vl_step, num_test_values)
+    for op in MATH_OPS[:3]
+    for (sign, in_dtype, out_dtype, in_sew, out_sew, vl_step, num_test_values) in WIDEN_DTYPES
+]
+
+REDUCTION_OP_TYPE_PAIRS = [
+    (op, sew, sign, dtype, vl)
+    for op in REDUCTION_OPS
+    for (sew, sign, dtype, vl) in DTYPES
+]
 
 # Division has different op code for signed and usigned
 template_rule(
@@ -41,12 +73,12 @@ template_rule(
             "sew": sew,
             "sign": sign,
             "num_operands": vl,
-            "math_op": ['divu' if op == 'div' and dtype[0] == "u" else op][0],
+            "math_op": ["divu" if op == "div" and dtype[0] == "u" else op][0],
             "in_data_size": "16",
             "out_data_size": "16",
         }
         for (op, sew, sign, dtype, vl) in MATH_OP_TYPE_PAIRS
-    }
+    },
 )
 
 template_rule(
@@ -63,7 +95,24 @@ template_rule(
             "out_data_size": "16",
         }
         for (op, sew, sign, dtype, vl) in REDUCTION_OP_TYPE_PAIRS
-    }
+    },
+)
+
+template_rule(
+    rvv_widen_arithmetic_test,
+    {
+        "template_widen_{}_{}_{}".format(op, in_dtype, out_dtype): {
+            "in_dtype": in_dtype,
+            "out_dtype": out_dtype,
+            "in_sew": in_sew,
+            "out_sew": out_sew,
+            "sign": sign,
+            "step_operands": vl_step,
+            "math_op": op,
+            "num_test_values": num_test_values,
+        }
+        for (op, sign, in_dtype, out_dtype, in_sew, out_sew, vl_step, num_test_values) in MATH_WIDEN_OP_TYPE_PAIRS
+    },
 )
 
 template_rule(
@@ -73,7 +122,17 @@ template_rule(
             "srcs": ["template_{}_{}_m1".format(op, dtype)],
         }
         for (op, _, _, dtype, _) in MATH_OP_TYPE_PAIRS + REDUCTION_OP_TYPE_PAIRS
-    }
+    },
+)
+
+template_rule(
+    kelvin_v2_binary,
+    {
+        "rvv_widen_{}_{}_{}".format(op, in_dtype, out_dtype): {
+            "srcs": ["template_widen_{}_{}_{}".format(op, in_dtype, out_dtype)],
+        }
+        for (op, _, in_dtype, out_dtype, _, _, _, _) in MATH_WIDEN_OP_TYPE_PAIRS
+    },
 )
 
 filegroup(
@@ -81,5 +140,8 @@ filegroup(
     srcs = [
         ":rvv_{}_{}_m1.elf".format(op, dtype)
         for (op, _, _, dtype, _) in MATH_OP_TYPE_PAIRS + REDUCTION_OP_TYPE_PAIRS
+    ] + [
+        "rvv_widen_{}_{}_{}".format(op, in_dtype, out_dtype)
+        for (op, _, in_dtype, out_dtype, _, _, _, _) in MATH_WIDEN_OP_TYPE_PAIRS
     ],
 )
