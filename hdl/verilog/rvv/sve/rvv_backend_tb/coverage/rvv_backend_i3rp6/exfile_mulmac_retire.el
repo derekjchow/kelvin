@@ -331,3 +331,10 @@ ANNOTATION: "sew[2]==0 in zve32x"
 Toggle rob2rt_write_data[2].vector_csr.sew [2] "logic rob2rt_write_data[2].vector_csr.sew[2:0]"
 ANNOTATION: "sew[2]==0 in zve32x"
 Toggle rob2rt_write_data[1].vector_csr.sew [2] "logic rob2rt_write_data[1].vector_csr.sew[2:0]"
+
+CHECKSUM: "422098002 429448440"
+INSTANCE: rvv_backend_top.DUT.u_mulmac
+ANNOTATION: "mac2rs_uop_ready is always 1"
+Condition 8 "2850154482" "(mac2rob_uop_valid[0] && mac2rs_uop_ready[0]) 1 -1"
+ANNOTATION: "mac2rs_uop_ready is always 1"
+Condition 10 "3420602918" "(mac2rob_uop_valid[1] && mac2rs_uop_ready[1]) 1 -1"

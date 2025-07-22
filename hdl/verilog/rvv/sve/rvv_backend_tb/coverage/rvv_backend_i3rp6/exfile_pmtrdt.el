@@ -275,3 +275,10 @@ ANNOTATION: "sew[2]==0 in zve32x"
 Toggle 0to1 datain[1].vector_csr.sew [2] "logic datain[1].vector_csr.sew[2:0]"
 ANNOTATION: "sew[2]==0 in zve32x"
 Toggle datain[1].vector_csr.sew [2] "logic datain[1].vector_csr.sew[2:0]"
+
+CHECKSUM: "3345021061 2701748790"
+INSTANCE: rvv_backend_top.DUT.u_pmtrdt.gen_pmtrdt_unit[0].u_pmtrdt_unit0
+ANNOTATION: "cmp_res_en_offset = cmp_res_offset >> 2"
+Toggle cmp_res_en_offset [6] "logic cmp_res_en_offset[6:0]"
+ANNOTATION: "cmp_res_en_offset = cmp_res_offset >> 2"
+Toggle cmp_res_en_offset [5] "logic cmp_res_en_offset[6:0]"
