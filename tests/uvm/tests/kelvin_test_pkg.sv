@@ -52,7 +52,7 @@ package kelvin_test_pkg;
       req.prot = 3'b000;
       req.data.delete();
       req.strb.delete();
-      req.data.push_back(128'h00000034_00000000); // PC value
+      req.data.push_back(128'h00000000_00000000); // PC value
       req.strb.push_back('1); // Write all bytes
       finish_item(req);
       `uvm_info(get_type_name(),

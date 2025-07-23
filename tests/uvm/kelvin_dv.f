@@ -39,8 +39,9 @@
 ./common/kelvin_axi_master/kelvin_axi_master_if.sv
 ./common/kelvin_axi_slave/kelvin_axi_slave_if.sv
 ./common/kelvin_irq/kelvin_irq_if.sv
+./common/cosim/kelvin_cosim_dpi_if.sv
 
-// UVM Packages
+// UVM Packages (in dependency order)
 ./common/transaction_item/transaction_item_pkg.sv
 ./common/kelvin_axi_master/kelvin_axi_master_agent_pkg.sv
 ./common/kelvin_axi_slave/kelvin_axi_slave_agent_pkg.sv

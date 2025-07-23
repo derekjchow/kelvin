@@ -20,6 +20,19 @@ package kelvin_cosim_checker_pkg;
 
   import uvm_pkg::*;
   `include "uvm_macros.svh"
+  import kelvin_cosim_dpi_if::*;
+
+  //----------------------------------------------------------------------------
+  // Struct: retired_instr_info_s
+  // Description: A struct to hold information about a single retired
+  //              instruction, captured from the RVVI trace.
+  //----------------------------------------------------------------------------
+  typedef struct {
+    logic [31:0] pc;
+    logic [31:0] insn;
+    logic [31:0] x_wb;
+    int          retire_index; // Original index from the RVVI bus
+  } retired_instr_info_s;
 
   //----------------------------------------------------------------------------
   // Class: kelvin_cosim_checker
@@ -66,43 +79,123 @@ package kelvin_cosim_checker_pkg;
 
     // Run phase: Contains the main co-simulation loop
     virtual task run_phase(uvm_phase phase);
-      // TODO: Initialize the MPACT simulator.
-      `uvm_info("COSIM_STUB", "MPACT simulator would be initialized now.",
-                UVM_MEDIUM);
+      retired_instr_info_s retired_instr_q[$];
+      int unsigned num_retired_this_cycle;
+      int unsigned mpact_pc;
+      logic [31:0] rtl_instr;
 
+      if (mpact_init() != 0)
+        `uvm_fatal(get_type_name(), "MPACT simulator DPI init failed.")
 
       // Main co-simulation loop
       forever begin
         // Wait for the RVVI monitor to signal an instruction retirement
         instruction_retired_event.wait_trigger();
+        retired_instr_q.delete();
 
-        // This is a simplified example for one retirement channel (channel 0).
-        // A full implementation would loop through all NRET channels.
-        if (rvvi_vif.valid[0][0]) begin // Assuming NHART=1, check hart 0
-            // Get the retired instruction from the DUT's trace
-            logic [31:0] retired_instruction = rvvi_vif.insn[0][0];
+        // Collect all retired instructions and their state from the RVVI trace
+        for (int i = 0; i < rvvi_vif.RETIRE; i++) begin
+          if (rvvi_vif.valid[0][i]) begin
+            retired_instr_info_s info;
+            info.pc = rvvi_vif.pc_rdata[0][i];
+            info.insn = rvvi_vif.insn[0][i];
+            info.x_wb = rvvi_vif.x_wb[0][i];
+            info.retire_index = i; // Store the original channel index
+            retired_instr_q.push_back(info);
+            `uvm_info(get_type_name(),
+              $sformatf("RTL Retired: PC=0x%h, Insn=0x%h", info.pc, info.insn),
+              UVM_HIGH)
+          end
+        end
+        num_retired_this_cycle = retired_instr_q.size();
 
-            `uvm_info("COSIM_STUB",
-                      $sformatf("DUT retired instruction 0x%h",
-                                retired_instruction), UVM_HIGH);
+        for (int i = 0; i < num_retired_this_cycle; i++) begin
+          bit pc_match_found = 0;
+          int match_index = -1;
 
-            // TODO: Send this specific instruction to the MPACT simulator to
-            //       execute, then call comparison task.
-            step_and_compare();
+          mpact_pc = mpact_get_pc();
+
+          foreach (retired_instr_q[j]) begin
+            if (retired_instr_q[j].pc == mpact_pc) begin
+              pc_match_found = 1;
+              match_index = j;
+              break;
+            end
+          end
+
+          if (!pc_match_found) begin
+            string rtl_pcs_str = "[ ";
+            foreach (retired_instr_q[j]) begin
+              rtl_pcs_str = $sformatf("%s0x%h ", rtl_pcs_str,
+                                      retired_instr_q[j].pc);
+            end
+            rtl_pcs_str = {rtl_pcs_str, "]"};
+            `uvm_error("COSIM_PC_MISMATCH",
+              $sformatf("MPACT PC 0x%h mismatches retired RTL PCs: %s",
+                        mpact_pc, rtl_pcs_str))
+            phase.drop_objection(this, "Terminating on PC mismatch.");
+            return;
+          end
+
+          rtl_instr = retired_instr_q[match_index].insn;
+          `uvm_info(get_type_name(),
+                    $sformatf("PC match (0x%h). Stepping MPACT with 0x%h",
+                              mpact_pc, rtl_instr), UVM_HIGH)
+
+          if (mpact_step(rtl_instr) != 0) begin
+            `uvm_error("COSIM_STEP_FAIL", "mpact_step() DPI call failed.")
+            phase.drop_objection(this, "Terminating on MPACT step fail.");
+            return;
+          end
+
+          // Check return status and terminate on failure
+          if (!step_and_compare(retired_instr_q[match_index])) begin
+            phase.drop_objection(this, "Terminating on GPR mismatch.");
+            return;
+          end
+
+          retired_instr_q.delete(match_index);
         end
       end
     endtask
 
-    // Task to get state from DUT and MPACT simulator and compare them
-    virtual task step_and_compare();
-      // TODO: Implement the full state comparison.
-      //       1. Make DPI calls to get post-execution state (PC, GPRs, CSRs)
-      //          from MPACT simulator.
-      //       2. Get the same post-execution state from the DUT via the RVVI
-      //          virtual interface.
-      //       3. Compare the RTL state against the MPACT simulator state and
-      //          report any mismatches.
-    endtask
+    virtual function bit step_and_compare(retired_instr_info_s rtl_info);
+      int unsigned mpact_gpr_val;
+      int unsigned rd_index;
+      logic [31:0] rtl_wdata;
+
+      `uvm_info(get_type_name(), "Comparing GPR writeback state...", UVM_HIGH)
+
+      if (!$onehot0(rtl_info.x_wb)) begin
+        `uvm_error("COSIM_GPR_MISMATCH",
+          $sformatf("Invalid GPR writeback flag at PC 0x%h. x_wb is not one-hot: 0x%h",
+                    rtl_info.pc, rtl_info.x_wb))
+        return 0; // FAIL
+      end
+
+      if (rtl_info.x_wb == 1) begin
+        `uvm_error("COSIM_GPR_MISMATCH",
+          $sformatf("Illegal write to x0 detected at PC 0x%h.", rtl_info.pc))
+        return 0; // FAIL
+      end
+      else if (rtl_info.x_wb != 0) begin
+        rd_index = $clog2(rtl_info.x_wb);
+        mpact_gpr_val = mpact_get_gpr(rd_index);
+
+        // Get the specific write data from the correct retire channel and register index
+        rtl_wdata = rvvi_vif.x_wdata[0][rtl_info.retire_index][rd_index];
+
+        if (mpact_gpr_val != rtl_wdata) begin
+          `uvm_error("COSIM_GPR_MISMATCH",
+            $sformatf("GPR[x%0d] mismatch at PC 0x%h. RTL: 0x%h, MPACT: 0x%h",
+                      rd_index, rtl_info.pc,
+                      rtl_wdata, mpact_gpr_val))
+          return 0; // FAIL
+        end
+      end
+      // If we reach here, all checks passed for this instruction.
+      return 1; // PASS
+    endfunction
 
   endclass : kelvin_cosim_checker
 

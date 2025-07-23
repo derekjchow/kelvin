@@ -12,37 +12,36 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# Makefile for Kelvin UVM Testbench
+# Makefile for Kelvin UVM Testbench (Integrates with MPACT-Sim)
 
-# --- User Configuration ---
-# Tool Configuration
+# Check if ROOTDIR is set. If not, exit with an error.
+ifndef ROOTDIR
+    $(error ROOTDIR is not set. Please define it, e.g., export ROOTDIR=$(abspath ../../../..))
+endif
+
+# User Configuration
 VCS = vcs
+CXX = clang++
 
-# Directories
+# UVM DV Directories
 RTL_DIR = ./rtl
 COMMON_DIR = ./common
 TB_DIR = ./tb
 ENV_DIR = ./env
 TESTS_DIR = ./tests
 BIN_DIR = ./bin
+
+# Simulation Work Directory
 SIM_DIR = ./sim_work
 LOG_DIR = $(SIM_DIR)/logs
 WAVE_DIR = $(SIM_DIR)/waves
 
-# Source Files
-DUT_RTL = $(RTL_DIR)/RvvCoreMiniVerificationAxi.sv
-IF_FILES = $(COMMON_DIR)/kelvin_axi_master/kelvin_axi_master_if.sv \
-           $(COMMON_DIR)/kelvin_axi_slave/kelvin_axi_slave_if.sv \
-           $(COMMON_DIR)/kelvin_irq/kelvin_irq_if.sv
-TRANS_PKG_FILE = $(COMMON_DIR)/transaction_item/transaction_item_pkg.sv
-AXI_MASTER_AGENT_PKG = $(COMMON_DIR)/kelvin_axi_master/kelvin_axi_master_agent_pkg.sv
-AXI_SLAVE_AGENT_PKG = $(COMMON_DIR)/kelvin_axi_slave/kelvin_axi_slave_agent_pkg.sv
-IRQ_AGENT_PKG = $(COMMON_DIR)/kelvin_irq/kelvin_irq_agent_pkg.sv
-ENV_PKG = $(ENV_DIR)/kelvin_env_pkg.sv
-TEST_PKG = $(TESTS_DIR)/kelvin_test_pkg.sv
-TB_TOP_FILE = $(TB_DIR)/kelvin_tb_top.sv
+# MPACT-Sim Integration Paths
+MPACT_DIR = $(ROOTDIR)/sim/kelvin
+MPACT_BAZEL_BIN_DIR = $(MPACT_DIR)/bazel-bin/sim/cosim
+MPACT_COSIM_LIB_NAME = kelvin_cosim_lib_static
 
-# File List for VCS -f option (Assumed to exist and be checked in)
+# File List for VCS -f option
 FILE_LIST = ./kelvin_dv.f
 
 # Simulation Settings
@@ -51,14 +50,14 @@ UVM_TESTNAME ?= kelvin_base_test
 TEST_BINARY ?= $(BIN_DIR)/program.bin
 UVM_VERBOSITY ?= UVM_MEDIUM
 TEST_TIMEOUT_NS ?= 20000
-PLUSARGS = +UVM_TESTNAME=$(UVM_TESTNAME) +TEST_BINARY=$(TEST_BINARY) +UVM_VERBOSITY=$(UVM_VERBOSITY) +TEST_TIMEOUT=$(TEST_TIMEOUT_NS)
+PLUSARGS = +UVM_TESTNAME=$(UVM_TESTNAME) +TEST_BINARY=$(TEST_BINARY) \
+           +UVM_VERBOSITY=$(UVM_VERBOSITY) +TEST_TIMEOUT=$(TEST_TIMEOUT_NS)
 
 # Waveform Dumping
 DUMP_WAVES = 1
 WAVE_FILE = $(WAVE_DIR)/$(UVM_TESTNAME).fsdb
 
-# --- VCS Options ---
-# Base compile options
+# VCS Options
 VCS_COMPILE_OPTS = \
 	-full64 \
 	-sverilog \
@@ -69,7 +68,14 @@ VCS_COMPILE_OPTS = \
 	-timescale=1ns/1ps \
 	-o $(SIM_EXEC)
 
-# Base run options
+# Add C++ compiler/linker options for MPACT-Sim
+VCS_COMPILE_OPTS += \
+    -cpp $(CXX) \
+    -cppflags "-std=c++17" \
+    -CFLAGS "-I$(MPACT_DIR)" \
+    -L$(MPACT_BAZEL_BIN_DIR) \
+    -l$(MPACT_COSIM_LIB_NAME)
+
 VCS_RUN_OPTS = \
 	$(PLUSARGS)
 
@@ -80,9 +86,9 @@ VCS_RUN_OPTS += +fsdb+all \
                 +fsdbfile+$(WAVE_FILE)
 endif
 
-# --- Targets ---
+# Targets
 
-.PHONY: all compile run clean dirs help
+.PHONY: all compile run clean dirs help build_mpact_lib
 
 # Default target
 all: run
@@ -91,8 +97,13 @@ all: run
 dirs:
 	@mkdir -p $(SIM_DIR) $(LOG_DIR) $(WAVE_DIR) $(BIN_DIR)
 
+# Build the MPACT-Sim library using Bazel with CC=clang
+build_mpact_lib:
+	@echo "--- Building MPACT-Sim Co-sim Library via Bazel ---"
+	cd $(MPACT_DIR) && CC=clang bazel build //sim/cosim:$(MPACT_COSIM_LIB_NAME)
+
 # Compile the design
-compile: dirs
+compile: dirs build_mpact_lib
 	@echo "--- Compiling with VCS ---"
 	$(VCS) $(VCS_COMPILE_OPTS) -l $(LOG_DIR)/compile.log -f $(FILE_LIST)
 	@echo "--- Compilation Finished ---"
@@ -116,13 +127,16 @@ endif
 clean:
 	@echo "--- Cleaning Simulation Files ---"
 	rm -rf $(SIM_DIR) simv* csrc* *.log* *.key *.vpd *.fsdb ucli.key DVEfiles/ verdiLog/ novas.*
+	@echo "--- Cleaning MPACT-Sim Bazel cache ---"
+	cd $(MPACT_DIR) && bazel clean
 
-# --- Help ---
+# Help
 help:
 	@echo "Makefile Targets:"
-	@echo "  make compile       : Compiles the DUT and testbench (using $(FILE_LIST))"
-	@echo "  make run           : Compiles (if needed) and runs the simulation"
-	@echo "                     :   Override defaults: make run UVM_TESTNAME=<test> TEST_BINARY=<path> UVM_VERBOSITY=<level>"
-	@echo "  make clean         : Removes generated simulation files"
-	@echo "  make dirs          : Creates simulation directories"
-	@echo "  make help          : Shows this help message"
+	@echo "  make compile          : Builds MPACT lib and compiles DUT/testbench"
+	@echo "  make run              : Builds and runs the full co-simulation"
+	@echo "                        :   Override defaults: make run UVM_TESTNAME=<test> TEST_BINARY=<path> UVM_VERBOSITY=<level>"
+	@echo "  make build_mpact_lib  : Only builds the MPACT-Sim C++ library"
+	@echo "  make clean            : Removes generated simulation and MPACT-Sim files"
+	@echo "  make dirs             : Creates simulation directories"
+	@echo "  make help             : Shows this help message"

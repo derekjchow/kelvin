@@ -75,10 +75,10 @@ package kelvin_rvvi_agent_pkg;
         @(posedge rvvi_vif.clk);
 
         for (int i = 0; i < RETIRE; i++) begin
-          if (rvvi_vif.valid[i][0]) begin // Assuming NHART=1
+          if (rvvi_vif.valid[0][i]) begin // Assuming NHART=1
             `uvm_info(get_type_name(),
                       $sformatf("Instruction retired on channel %0d, PC: 0x%h",
-                                i, rvvi_vif.pc_rdata[i][0]), UVM_HIGH)
+                                i, rvvi_vif.pc_rdata[0][i]), UVM_HIGH)
             any_instruction_retired = 1'b1;
           end
         end
