@@ -119,6 +119,9 @@ class Parameters(var m: Seq[MemoryRegion] = Seq(), val hartId: Int = 0) {
   // Scalar Core Fetch bus.
   val fetchAddrBits = 32   // do not change
   var fetchDataBits = 256  // do not change
+  def fetchDataBytes: Int = {
+    fetchDataBits / 8
+  }
   def fetchInstrSlots: Int = {
     assert(fetchDataBits % 32 == 0)
     assert(instructionBits % 32 == 0)

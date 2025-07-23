@@ -18,6 +18,41 @@ import chisel3._
 import chisel3.util._
 import common._
 
+def PredictJump(p: Parameters, addr: UInt, inst: UInt): ValidIO[UInt] = {
+  assert(p.instructionBits == 32)
+  val jal = inst === BitPat("b????????????????????_?????_1101111")
+  val immjal = Cat(Fill(12, inst(31)), inst(19,12), inst(20), inst(30,21), 0.U(1.W))
+  val bxx = inst === BitPat("b???????_?????_?????_???_?????_1100011") &&
+              inst(31) && inst(14,13) =/= 1.U
+  val immbxx = Cat(Fill(20, inst(31)), inst(7), inst(30,25), inst(11,8), 0.U(1.W))
+  val immed = Mux(inst(2), immjal, immbxx)
+
+  val valid = jal || bxx
+  val target = addr + immed
+
+  MakeValid(valid, target)
+}
+
+class PredecodedInstruction(p: Parameters) extends Bundle {
+  val addr = UInt(p.fetchAddrBits.W)
+  val inst = UInt(p.instructionBits.W)
+  val pcNext = UInt(p.fetchAddrBits.W)
+  val branchFwd = Bool()
+}
+
+object PredecodedInstruction {
+  def apply(p: Parameters, addr: UInt, inst: UInt): PredecodedInstruction = {
+    val jump = PredictJump(p, addr, inst)
+    val result = Wire(new PredecodedInstruction(p))
+    result.addr := addr
+    result.inst := inst
+    result.pcNext := Mux(jump.valid, jump.target, addr + 4.U)
+    result.branchFwd := jump.valid
+
+    result := inst
+  }
+}
+
 class PredecodeOutput(p: Parameters) extends Bundle {
     val addr = UInt(p.fetchAddrBits.W)
     val inst = Vec(p.fetchInstrSlots, UInt(p.instructionBits.W))
@@ -90,21 +125,6 @@ class FetchControl(p: Parameters) extends Module {
         val bufferRequest = DecoupledVectorIO(new FetchInstruction(p), p.fetchInstrSlots)
     })
 
-    def PredictJump(addr: UInt, inst: UInt): ValidIO[UInt] = {
-      assert(p.instructionBits == 32)
-      val jal = inst === BitPat("b????????????????????_?????_1101111")
-      val immjal = Cat(Fill(12, inst(31)), inst(19,12), inst(20), inst(30,21), 0.U(1.W))
-      val bxx = inst === BitPat("b???????_?????_?????_???_?????_1100011") &&
-                  inst(31) && inst(14,13) =/= 1.U
-      val immbxx = Cat(Fill(20, inst(31)), inst(7), inst(30,25), inst(11,8), 0.U(1.W))
-      val immed = Mux(inst(2), immjal, immbxx)
-
-      val valid = jal || bxx
-      val target = addr + immed
-
-      MakeValid(valid, target)
-    }
-
     def Predecode(fetchResponse: FetchResponse): (PredecodeOutput, Vec[Bool]) = {
       val insts = (0 until p.fetchInstrSlots).map(i => fetchResponse.inst(i))
       val addr = fetchResponse.addr
@@ -116,7 +136,7 @@ class FetchControl(p: Parameters) extends Module {
 
       val branchTargets = (addrs zip insts).map {
           case (addr, inst) => {
-            val jump = PredictJump(addr, inst)
+            val jump = PredictJump(p, addr, inst)
             jump
           }
       }
@@ -240,4 +260,46 @@ class UncachedFetch(p: Parameters) extends FetchUnit(p) {
   val pc = RegInit(0.U(p.fetchAddrBits.W))
   pc := Mux(instructionBuffer.io.out(0).valid, instructionBuffer.io.out(0).bits.addr, pc)
   io.pc := pc
+}
+
+class UncachedFetchV2(p.Parameters) extends FetchUnit(p) {
+  // Register to track what ibus read was issued last cycle (if any).
+  val issuedRead = RegInit(MakeValid(false.B, 0.U(32.W)))
+  issuedRead := MakeValid(io.ibus.valid && io.ibus.ready, io.ibus.addr)
+
+  // Register to track which instruction we want to fetch next (if any).
+  val desiredPc = RegInit(MakeValid(false.B, 0.U(32.W)))
+
+  // Register to track which PC to read next
+  val insts = UIntToVec(io.ibus.rdata, 32)
+  val predecodedInsts = VecInit((0 until p.fetchInstrSlots).map(i =>
+    PredecodedInstruction(issuedRead.bits + (4.U * i.U), insts(i))
+  ))
+  val fetchLineAddrBits = log2Ceil(p.fetchDataBytes)
+  val lineAddr = issuedRead.bits(fetchLineAddrBits-1, 2)
+  val alignedPredecodedInsts = ShiftVectorLeft(predecodedInsts, lineAddr)
+  val targetNext = MuxCase(
+      MakeValid(true.B, issuedRead.bits + p.fetchDataBytes.U),
+      Seq((0 until p.fetchInstrSlots).map(i =>
+        val inst = predecodedInsts(i)
+        ((i.U >= lineAddr) && inst.branchFwd) -> pcNext
+      ))
+  )
+
+  val nextRead = MuxCase(desiredPc, Seq(
+    // If an instruction flush has been issued, go to instruction after flush.
+    io.iflush.valid -> MakeValid(true.B, io.iflush.bits),
+    // If a branch instruction has been issued, go to branch
+    io.branch.valid -> MakeValid(true.B, io.branch.bits),
+    // If no branch/flush but valid read last cycle, get targetNext PC
+    issuedRead.valid -> targetNext,
+  ))
+
+  // Define next read
+  io.ibus.valid := nextRead.valid
+  io.ibus.addr := nextRead
+
+  desiredPc := Mux(io.ibus.valid && io.ibus.ready,
+                   MakeValid(false.B, 0.U(32.W)),
+                   nextRead)
 }
