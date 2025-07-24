@@ -14,7 +14,7 @@ The following diagram illustrates the high-level architecture of the debug modul
 
 ## Interfaces
 
-The following table describes the inputs and outputs of the debug module:
+The following table describes the internal hardware interfaces of the debug module:
 
 | Name           | Direction | Type                  | Width | Description                               |
 |----------------|-----------|-----------------------|-------|-------------------------------------------|
@@ -61,19 +61,48 @@ The following table describes the inputs and outputs of the debug module:
 
 ## Command Protocol
 
-An external debugger communicates with the debug module by reading and writing its internal registers. The `ext.req` and `ext.rsp` interfaces are used for this purpose.
+An external debugger communicates with the debug module by reading and writing a set of memory-mapped Control and Status Registers (CSRs) over the AXI interface. These CSRs provide a communication channel to the debug module's internal registers.
 
-To issue a command, the debugger sends a request on the `ext.req` interface. The `address` field specifies the register to access, and the `op` field specifies the operation (read or write). For write operations, the `data` field contains the value to write.
+### Write Operation
 
-The debug module responds on the `ext.rsp` interface. The `op` field indicates the status of the operation, and for read operations, the `data` field contains the value read from the register.
+To write to an internal debug module register (e.g., writing `0x1` to `dmcontrol` at address `0x10`):
 
-All debug operations, including halting the core, resuming the core, and executing abstract commands, are performed by reading and writing the debug module's registers via this protocol.
+1.  **Poll for readiness:** Read the `status` CSR at `0x31014` and wait for bit 0 to be `1`.
+2.  **Set address:** Write the target internal register address (`0x10`) to the `req_addr` CSR at `0x31000`.
+3.  **Set data:** Write the data (`0x1`) to the `req_data` CSR at `0x31004`.
+4.  **Initiate write:** Write the `WRITE` operation code (`2`) to the `req_op` CSR at `0x31008`.
+5.  **Poll for response:** Read the `status` CSR at `0x31014` and wait for bit 1 to be `1`.
+6.  **Check status:** Read the `rsp_op` CSR at `0x31010` to confirm the operation was successful.
+7.  **Acknowledge response:** Write to the `status` CSR at `0x31014` to clear the response.
 
-## Registers
+### Read Operation
 
-The debug module implements a set of registers that are accessible to an external debugger. These registers are used to control and monitor the core.
+To read from an internal debug module register (e.g., reading from `dmstatus` at address `0x11`):
 
-The following table lists the debug module registers:
+1.  **Poll for readiness:** Read the `status` CSR at `0x31014` and wait for bit 0 to be `1`.
+2.  **Set address:** Write the target internal register address (`0x11`) to the `req_addr` CSR at `0x31000`.
+3.  **Initiate read:** Write the `READ` operation code (`1`) to the `req_op` CSR at `0x31008`.
+4.  **Poll for response:** Read the `status` CSR at `0x31014` and wait for bit 1 to be `1`.
+5.  **Check status:** Read the `rsp_op` CSR at `0x31010` to confirm the operation was successful.
+6.  **Read data:** Read the result from the `rsp_data` CSR at `0x3100c`.
+7.  **Acknowledge response:** Write to the `status` CSR at `0x31014` to clear the response.
+
+## AXI CSR Interface
+
+These registers are mapped into the Kelvin CSR address space and are used to communicate with the debug module.
+
+| Address    | Name       | Description                                                                                                |
+|------------|------------|------------------------------------------------------------------------------------------------------------|
+| 0x31000    | req_addr   | Write the target debug module register address here.                                                       |
+| 0x31004    | req_data   | Write data for the debug module operation here.                                                            |
+| 0x31008    | req_op     | Write the operation type (e.g., READ, WRITE) to this register to initiate a debug module command.          |
+| 0x3100c    | rsp_data   | After a command completes, the data result is available here.                                              |
+| 0x31010    | rsp_op     | After a command completes, the status result (e.g., SUCCESS, FAILED) is available here.                    |
+| 0x31014    | status     | A read-only register to check the status of the debug module. Bit 0 indicates if the module is ready for a new request. Bit 1 indicates if a response is available. |
+
+## Internal Debug Module Registers
+
+The debug module implements a set of internal registers that are accessible to an external debugger via the AXI CSR interface. These registers are used to control and monitor the core.
 
 | Address | Name         | Description                               |
 |---------|--------------|-------------------------------------------|
@@ -173,6 +202,3 @@ The register numbers are defined as follows:
     *   `regno` (bits 15:0): `0x100A` (for `a0`)
 3.  **Wait for completion:** Poll the `abstractcs` register (address `0x16`) until the `busy` bit (bit 12) is cleared.
 4.  **Check for errors:** Read the `abstractcs` register again and check that the `cmderr` field (bits 10:8) is `0`.
-
-
-

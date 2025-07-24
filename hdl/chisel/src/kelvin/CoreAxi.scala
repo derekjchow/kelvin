@@ -40,9 +40,6 @@ class CoreAxi(p: Parameters, coreModuleName: String) extends RawModule {
     // String logging interface
     val slog = new SLogIO(p)
     val te = Input(Bool())
-
-    // DM-IF
-    val dm = Option.when(p.useDebugModule)(new DebugModuleIO(p))
   })
   dontTouch(io)
 
@@ -68,8 +65,8 @@ class CoreAxi(p: Parameters, coreModuleName: String) extends RawModule {
       dontTouch(dm.get.io)
       val dmEnable = RegInit(false.B)
       dmEnable := true.B
-      dm.get.io.ext.req <> GateDecoupled(io.dm.get.req, dmEnable)
-      io.dm.get.rsp <> GateDecoupled(dm.get.io.ext.rsp, dmEnable)
+      dm.get.io.ext.req <> GateDecoupled(csr.io.debug.get.req, dmEnable)
+      csr.io.debug.get.rsp <> GateDecoupled(dm.get.io.ext.rsp, dmEnable)
     }
 
     val core_reset = Mux(io.te, (!io.aresetn.asBool).asAsyncReset, (csr.io.reset || dm.map(_.io.ndmreset).getOrElse(false.B)).asAsyncReset)

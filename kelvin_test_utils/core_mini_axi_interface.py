@@ -122,13 +122,6 @@ class CoreMiniAxiInterface:
     self.slave_wfifo = Queue()
     self.slave_bfifo = Queue()
 
-    try:
-      self.debug_available = (self.dut.io_dm_req_valid != None)
-      self.dm_req_fifo = Queue()
-      self.dm_rsp_fifo = Queue()
-    except AttributeError as e:
-      self.debug_available = False
-
   async def init(self):
     cocotb.start_soon(self.master_awagent())
     cocotb.start_soon(self.master_wagent())
@@ -142,9 +135,13 @@ class CoreMiniAxiInterface:
     cocotb.start_soon(self.slave_ragent())
     cocotb.start_soon(self.memory_write_agent())
     cocotb.start_soon(self.memory_read_agent())
-    if self.debug_available:
-      cocotb.start_soon(self.dm_req_agent())
-      cocotb.start_soon(self.dm_rsp_agent())
+
+  async def read_csr(self, addr):
+    val = await self.read_word(0x30000 + addr)
+    return val
+
+  async def write_csr(self, addr, data):
+    await self.write_word(0x30000 + addr, data)
 
   async def slave_awagent(self, timeout=4096):
     self.dut.io_axi_slave_write_addr_valid.value = 0
@@ -318,43 +315,6 @@ class CoreMiniAxiInterface:
         if timeout_count >= timeout:
           assert False, "timeout waiting for rready"
 
-  async def dm_req_agent(self, timeout=4096):
-    self.dut.io_dm_req_valid.value = 0
-    self.dut.io_dm_req_bits_address.value = 0
-    self.dut.io_dm_req_bits_data.value = 0
-    self.dut.io_dm_req_bits_op.value = 0
-    while True:
-      while True:
-        await RisingEdge(self.dut.io_aclk)
-        self.dut.io_dm_req_valid.value = 0
-        if self.dm_req_fifo.qsize():
-          break
-      req_data = await self.dm_req_fifo.get()
-      self.dut.io_dm_req_valid.value = 1
-      self.dut.io_dm_req_bits_address.value = req_data["address"]
-      self.dut.io_dm_req_bits_data.value = req_data["data"]
-      self.dut.io_dm_req_bits_op.value = req_data["op"]
-      await FallingEdge(self.dut.io_aclk)
-      timeout_count = 0
-      while self.dut.io_dm_req_ready.value == 0:
-        await FallingEdge(self.dut.io_aclk)
-        timeout_count += 1
-        if timeout_count >= timeout:
-          assert False, "timeout waiting for dm_req_ready"
-
-  async def dm_rsp_agent(self):
-    self.dut.io_dm_rsp_ready.value = 1
-    while True:
-      await RisingEdge(self.dut.io_aclk)
-      try:
-        if self.dut.io_dm_rsp_valid.value:
-          rsp = dict()
-          rsp["data"] = self.dut.io_dm_rsp_bits_data.value.to_unsigned()
-          rsp["op"] = self.dut.io_dm_rsp_bits_op.value.to_unsigned()
-          await self.dm_rsp_fifo.put(rsp)
-      except Exception as e:
-        print('X seen in dm_rsp_agent: ' + str(e))
-
   async def memory_write_agent(self):
     while True:
       while True:
@@ -445,23 +405,43 @@ class CoreMiniAxiInterface:
     kelvin_reset_csr_addr = 0x30000
     await self.write_word(kelvin_reset_csr_addr, 3)
 
+  async def _poll_dm_status(self, bit, value):
+    while True:
+      status = await self.read_csr(0x1014)
+      if (status[0] & (1 << bit)) == value:
+        break
+      await ClockCycles(self.dut.io_aclk, 10)
+
   async def dm_read(self, addr):
-    req = dict()
-    req["address"] = addr
-    req["data"] = 0
-    req["op"] = DmReqOp.READ
-    await self.dm_req_fifo.put(req)
-    rsp = await self.dm_rsp_fifo.get()
+    await self._poll_dm_status(0, 1)
+
+    await self.write_csr(0x1000, addr)
+    await self.write_csr(0x1004, 0)
+    await self.write_csr(0x1008, DmReqOp.READ)
+
+    await self._poll_dm_status(1, 2)
+
+    rsp = dict()
+    rsp["data"] = int((await self.read_csr(0x100c)).view(np.uint32)[0])
+    rsp["op"] = (await self.read_csr(0x1010)).view(np.uint32)[0]
+    await self.write_csr(0x1014, 0)  # Acknowledge response.
+
     assert rsp["op"] == DmRspOp.SUCCESS
     return rsp["data"]
 
   async def dm_write(self, addr, data):
-    req = dict()
-    req["address"] = addr
-    req["data"] = convert_to_binary_value(np.array([data], dtype=np.uint32).view(np.uint8))
-    req["op"] = DmReqOp.WRITE
-    await self.dm_req_fifo.put(req)
-    rsp = await self.dm_rsp_fifo.get()
+    await self._poll_dm_status(0, 1)
+
+    await self.write_csr(0x1000, addr)
+    await self.write_csr(0x1004, data)
+    await self.write_csr(0x1008, DmReqOp.WRITE)
+
+    await self._poll_dm_status(1, 2)
+
+    rsp = dict()
+    rsp["data"] = int((await self.read_csr(0x100c)).view(np.uint32)[0])
+    rsp["op"] = (await self.read_csr(0x1010)).view(np.uint32)[0]
+    await self.write_csr(0x1014, 0)  # Acknowledge response.
     return rsp
 
   async def dm_read_reg(self, addr, expected_op=DmRspOp.SUCCESS):
