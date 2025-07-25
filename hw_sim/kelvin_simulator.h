@@ -27,9 +27,9 @@ class KelvinSimulator {
 
   // Functions for reading/writing TCMs and Mailbox.
   virtual void ReadTCM(uint32_t addr, size_t size, char* data) = 0;
-  virtual const Mailbox& ReadMailbox(void) = 0;
+  virtual const KelvinMailbox& ReadMailbox(void) = 0;
   virtual void WriteTCM(uint32_t addr, size_t size, const char* data) = 0;
-  virtual void WriteMailbox(const Mailbox& mailbox) = 0;
+  virtual void WriteMailbox(const KelvinMailbox& mailbox) = 0;
 
   // Wait for interrupt
   virtual bool WaitForTermination(int timeout) = 0;

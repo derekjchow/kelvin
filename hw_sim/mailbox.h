@@ -15,7 +15,7 @@
 #ifndef HW_SIM_MAILBOX_H_
 #define HW_SIM_MAILBOX_H_
 
-struct Mailbox {
+struct KelvinMailbox {
   uint32_t message[4] = {0, 0, 0, 0};
 };
 

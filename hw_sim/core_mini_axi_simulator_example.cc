@@ -15,6 +15,7 @@
 #include <fcntl.h>
 #include <sys/mman.h>
 #include <sys/stat.h>
+#include <unistd.h>
 
 #include <bitset>
 #include <cstdint>
@@ -25,7 +26,6 @@
 #include <queue>
 #include <vector>
 
-#include "VCoreMiniAxi.h"
 #include "absl/types/span.h"
 #include "hw_sim/kelvin_simulator.h"
 #include "tests/verilator_sim/elf.h"
@@ -70,7 +70,7 @@ int main() {
     std::cout << "Didn't halt" << std::endl;
   }
 
-  Mailbox m = simulator->ReadMailbox();
+  KelvinMailbox m = simulator->ReadMailbox();
   std::cout << "Mailbox value[0]=0x" << std::hex << m.message[0] << std::endl;
   std::cout << "Mailbox value[1]=0x" << std::hex << m.message[1] << std::endl;
 

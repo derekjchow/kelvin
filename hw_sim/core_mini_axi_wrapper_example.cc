@@ -12,6 +12,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include <fcntl.h>
+#include <sys/mman.h>
+#include <sys/stat.h>
+#include <unistd.h>
+
 #include <bitset>
 #include <cstdint>
 #include <future>
@@ -21,16 +26,9 @@
 #include <queue>
 #include <vector>
 
-#include <fcntl.h>
-#include <sys/mman.h>
-#include <sys/stat.h>
-
-#include "hw_sim/core_mini_axi_wrapper.h"
-
 #include "absl/types/span.h"
+#include "hw_sim/core_mini_axi_wrapper.h"
 #include "tests/verilator_sim/elf.h"
-#include "VCoreMiniAxi.h"
-
 
 int main() {
   VerilatedContext context;

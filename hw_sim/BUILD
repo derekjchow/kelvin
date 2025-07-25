@@ -70,6 +70,8 @@ cc_library(
     ":core_mini_axi_wrapper",
     ":kelvin_simulator_headers",
   ],
+  linkstatic = True,
+  alwayslink = True,
 )
 
 cc_shared_library(
@@ -97,7 +99,13 @@ cc_binary(
     deps = [
         ":core_mini_axi_simulator",
         "//tests/verilator_sim:elf",
-        "//hdl/chisel/src/kelvin:core_mini_axi_cc_library_cc",
         "@com_google_absl//absl/types:span",
     ],
+)
+
+cc_binary(
+    name = "libkelvin_simulator.so",
+    linkshared = 1,
+    visibility = ["//visibility:public"],
+    deps = [":core_mini_axi_simulator"],
 )

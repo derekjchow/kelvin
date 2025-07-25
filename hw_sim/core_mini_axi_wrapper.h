@@ -117,13 +117,13 @@ class CoreMiniAxiWrapper {
 
   void Step() { clock_.Step(); }
 
-  Mailbox& mailbox() { return mailbox_; }
+  KelvinMailbox& mailbox() { return mailbox_; }
 
-  const Mailbox& mailbox() const { return mailbox_; }
+  const KelvinMailbox& mailbox() const { return mailbox_; }
 
-  const Mailbox& ReadMailbox(void) { return mailbox_; }
+  const KelvinMailbox& ReadMailbox(void) { return mailbox_; }
 
-  void WriteMailbox(const Mailbox& mailbox) {
+  void WriteMailbox(const KelvinMailbox& mailbox) {
     for (int i = 0; i < 4; i++) {
       mailbox_.message[i] = mailbox.message[i];
     }
@@ -207,7 +207,7 @@ class CoreMiniAxiWrapper {
 
  private:
   VerilatedContext* const context_;
-  Mailbox mailbox_;
+  KelvinMailbox mailbox_;
   VCoreMiniAxi core_;
   Clock clock_;
   AxiSlaveWriteDriver slave_write_driver_;
