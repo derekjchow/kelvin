@@ -15,6 +15,7 @@
 import cocotb
 import numpy as np
 
+from bazel_tools.tools.python.runfiles import runfiles
 from kelvin_test_utils.core_mini_axi_interface import CoreMiniAxiInterface
 
 @cocotb.test()

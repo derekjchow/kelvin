@@ -48,10 +48,11 @@ cocotb_test_suite(
         "test_module": ["tutorial.py"],
         "deps": [
             "//kelvin_test_utils:core_mini_axi_sim_interface",
+            "@rules_python//python/runfiles",
         ],
         "data": glob(["**/*.elf"]),
     },
-    vcs_data = [
+    vcs_data = glob(["**/*.elf"]) + [
         "//tests/cocotb:coverage_exclude.cfg",
     ],
     vcs_build_args = VCS_BUILD_ARGS,

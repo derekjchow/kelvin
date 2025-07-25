@@ -115,7 +115,10 @@ async def core_mini_axi_tutorial(dut):
     await core_mini_axi.reset()
     cocotb.start_soon(core_mini_axi.clock.start())
 
-+   with open("../tests/cocotb/tutorial/kelvin_v2_program.elf", "rb") as f:
++   r = runfiles.Create()
++   elf_path = r.Rlocation(
++       "kelvin_hw/tests/cocotb/tutorial/kelvin_v2_program.elf")
++   with open(elf_path, "rb") as f:
 +     entry_point = await core_mini_axi.load_elf(f)
 ```
 
@@ -134,10 +137,11 @@ async def core_mini_axi_tutorial(dut):
     await core_mini_axi.reset()
     cocotb.start_soon(core_mini_axi.clock.start())
 
-    with open("../tests/cocotb/tutorial/kelvin_v2_program.elf", "rb") as f:
+    r = runfiles.Create()
+    elf_path = r.Rlocation(
+        "kelvin_hw/tests/cocotb/tutorial/kelvin_v2_program.elf")
+    with open(elf_path, "rb") as f:
       entry_point = await core_mini_axi.load_elf(f)
-
-+   with open("../tests/cocotb/tutorial/kelvin_v2_program.elf", "rb") as f:
 +     inputs1_addr = core_mini_axi.lookup_symbol(f, "input1_buffer")
 +     inputs2_addr = core_mini_axi.lookup_symbol(f, "input2_buffer")
 
@@ -161,10 +165,11 @@ async def core_mini_axi_tutorial(dut):
     await core_mini_axi.reset()
     cocotb.start_soon(core_mini_axi.clock.start())
 
-    with open("../tests/cocotb/tutorial/kelvin_v2_program.elf", "rb") as f:
+    r = runfiles.Create()
+    elf_path = r.Rlocation(
+        "kelvin_hw/tests/cocotb/tutorial/kelvin_v2_program.elf")
+    with open(elf_path, "rb") as f:
       entry_point = await core_mini_axi.load_elf(f)
-
-    with open("../tests/cocotb/tutorial/kelvin_v2_program.elf", "rb") as f:
       inputs1_addr = core_mini_axi.lookup_symbol(f, "input1_buffer")
       inputs2_addr = core_mini_axi.lookup_symbol(f, "input2_buffer")
 
@@ -188,10 +193,11 @@ async def core_mini_axi_tutorial(dut):
     await core_mini_axi.reset()
     cocotb.start_soon(core_mini_axi.clock.start())
 
-    with open("../tests/cocotb/tutorial/kelvin_v2_program.elf", "rb") as f:
+    r = runfiles.Create()
+    elf_path = r.Rlocation(
+        "kelvin_hw/tests/cocotb/tutorial/kelvin_v2_program.elf")
+    with open(elf_path, "rb") as f:
       entry_point = await core_mini_axi.load_elf(f)
-
-    with open("../tests/cocotb/tutorial/kelvin_v2_program.elf", "rb") as f:
       inputs1_addr = core_mini_axi.lookup_symbol(f, "input1_buffer")
       inputs2_addr = core_mini_axi.lookup_symbol(f, "input2_buffer")
 
