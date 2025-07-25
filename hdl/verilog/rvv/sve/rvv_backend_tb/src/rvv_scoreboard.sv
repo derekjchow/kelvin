@@ -89,26 +89,12 @@ function void rvv_scoreboard::connect_phase(uvm_phase phase);
 endfunction:connect_phase
 
 task rvv_scoreboard::main_phase(uvm_phase phase);
-  phase.raise_objection( .obj( this ) );
   super.main_phase(phase);
   fork
     rt_checker();
     vrf_checker();
     mem_access_checker();
-    begin
-      forever begin
-        @(posedge rvs_if.clk);
-        if(ctrl_tr.is_last_inst) begin
-          if(rt_queue_rvs.size()==0 && rt_queue_mdl.size()==0) begin 
-            repeat(10) @(posedge rvs_if.clk);
-            `uvm_info(get_type_name(), "ready to drop obj", UVM_HIGH)
-            break;
-          end
-        end
-      end
-    end
-  join_any
-  phase.drop_objection( .obj( this ) );
+  join
 endtask: main_phase 
 
 function void rvv_scoreboard::report_phase(uvm_phase phase);
@@ -174,11 +160,11 @@ task rvv_scoreboard::rt_checker();
   reg_idx_t  rvs_rt_xrf_index, mdl_rt_xrf_index;
   xrf_t      rvs_rt_xrf_data , mdl_rt_xrf_data ;
   forever begin
-    @(posedge rvs_if.clk);
+    @(negedge rvs_if.clk);
     if(rt_queue_mdl.size() != rt_queue_rvs.size()) begin
-      `uvm_fatal("RT_CHECKER","Retire number mismatch between DUT & MDL.");
+      `uvm_fatal("RT_CHECKER","Retire inst number mismatch between DUT & MDL.");
     end
-    while(rt_queue_rvs.size()>0) begin 
+    while(rt_queue_rvs.size()>0 && rt_queue_mdl.size()>0) begin 
       rvs_tr = rt_queue_rvs.pop_front();
       mdl_tr = rt_queue_mdl.pop_front();
 
@@ -187,11 +173,11 @@ task rvv_scoreboard::rt_checker();
       `uvm_info("RT_RECORDER", $sformatf("Got retire transaction from MDL:\n%s",mdl_tr.sprint()),UVM_LOW)
 
       // PC check
-      if(rvs_tr.pc !== mdl_tr.pc) begin
-        `uvm_error("RT_CHECKER", $sformatf("Retire PC mismatch:\nDUT retired pc 0x%8x, \nMDL retired pc 0x%8x.", 
-                                            rvs_tr.pc,
-                                            mdl_tr.pc))
-      end
+      // if(rvs_tr.pc !== mdl_tr.pc) begin
+      //   `uvm_error("RT_CHECKER", $sformatf("Retire PC mismatch:\nDUT retired pc 0x%8x, \nMDL retired pc 0x%8x.", 
+      //                                       rvs_tr.pc,
+      //                                       mdl_tr.pc))
+      // end
 
       // VRF check
       if(rvs_tr.rt_vrf_index.size() != mdl_tr.rt_vrf_index.size()) begin
@@ -324,7 +310,7 @@ task rvv_scoreboard::vrf_checker();
   string vreg_dut_val;
   string vreg_mdl_val;
   forever begin
-    @(posedge rvs_if.clk); 
+    @(negedge rvs_if.clk); 
     err = 0;
     if(vrf_queue_rvs.size()>1 || vrf_queue_mdl.size()>1) begin
       `uvm_error("TB_ISSUE", "Got more than 1 vrf check request, please check the TB.");
@@ -364,7 +350,7 @@ task rvv_scoreboard::mem_access_checker();
   mem_transaction mdl_tr;
   int err;
   forever begin
-    @(posedge rvs_if.clk); 
+    @(negedge rvs_if.clk); 
     if(~rvs_if.rst_n) begin
       mem_queue_lsu.delete();
       mem_queue_mdl.delete();

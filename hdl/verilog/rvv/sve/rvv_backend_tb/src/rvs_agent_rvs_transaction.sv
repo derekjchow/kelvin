@@ -72,7 +72,7 @@ class rvs_transaction extends uvm_sequence_item;
   rand logic [4:0] src1_idx;
   rand logic [4:0] src2_idx;
   rand logic [4:0] src3_idx;
-       vxunary0_e src1_func_vext;
+       vxunary0_e  src1_func_vext;
        vwxunary0_e src2_func_vwxunary0;
        vwxunary0_e src1_func_vwxunary0;
        vmunary0_e  src1_func_vmunary0;
@@ -91,7 +91,7 @@ class rvs_transaction extends uvm_sequence_item;
 
        int    eew_max;
        real   emul_max;
-      int     elm_idx_max;
+       int    elm_idx_max;
 
        int    dest_eew;
        int    src3_eew;
@@ -1172,8 +1172,9 @@ class rvs_transaction extends uvm_sequence_item;
   extern function void pre_randomize();
   extern function void post_randomize();
   extern function void tr2bin();
-  extern function void bin2tr();
-  extern function void decode_vtype(bit dec_evl = 0);
+  extern function bit bin2tr(logic [31:0] inst_in, logic [`XLEN-1:0] rs_data);
+  extern function void set_config_state(logic [`XLEN-1:0] vma, logic [`XLEN-1:0] vta, logic [`XLEN-1:0] vsew, logic [`XLEN-1:0] vlmul, logic [`XLEN-1:0] vl, logic [`XLEN-1:0] vstart, logic [`XLEN-1:0] vxrm);
+  extern function void decode_vtype(bit dec_evl = 0, bit dec_vlmax = 0);
   extern function void get_vec_group_range();
   extern protected function void overlap_unalign_correct();
   extern function bit reserve_inst_check();
@@ -1250,13 +1251,12 @@ function void rvs_transaction::post_randomize();
     vstart = 0;
   end
 
-  decode_vtype(0);
+  decode_vtype(0, 0);
   get_vec_group_range();
 
   // check overlap
   if(!overlap_unalign_en) begin overlap_unalign_correct(); end
   get_vec_group_range();
-
 
   // gen bin_inst
   tr2bin();
@@ -1291,13 +1291,227 @@ function void rvs_transaction::tr2bin();
   bin_inst[6:0]   = inst_type;
 endfunction: tr2bin
 
-function void rvs_transaction::bin2tr();
-  //TODO
-  decode_vtype(1);
+function bit rvs_transaction::bin2tr(logic [31:0] inst_in, logic [`XLEN-1:0] rs_data);
+  bin_inst = inst_in;
+
+  // decode bin field
+  inst_type = bin_inst[6:0];
+  /* func6 */
+  case(inst_type)
+    LD, ST: begin
+      lsu_nf        = bin_inst[31:29];
+      lsu_mop       = bin_inst[27:26];
+    end
+    ALU: begin
+      alu_inst[5:0] = bin_inst[31:26];
+    end 
+  endcase
+  /* vm */
+  vm            = bin_inst[25];
+  src2_idx      = bin_inst[24:20];
+  src1_idx      = bin_inst[19:15];
+  case(inst_type)
+    LD, ST: begin
+      lsu_width = bin_inst[14:12];
+      if(lsu_width == LSU_8BIT)  lsu_eew = EEW8;
+      if(lsu_width == LSU_16BIT) lsu_eew = EEW16;
+      if(lsu_width == LSU_32BIT) lsu_eew = EEW32;
+      if(lsu_width == LSU_64BIT) lsu_eew = EEW64;
+    end 
+    ALU: alu_type = bin_inst[14:12];
+  endcase
+  case(inst_type)
+    ST:      src3_idx = bin_inst[11:7]; 
+    ALU, LD: dest_idx = bin_inst[11:7];
+  endcase
+
+  if(inst_type == ALU) begin
+    src3_type = UNUSE;
+    // OPI
+    if(alu_type inside {OPIVV, OPIVX, OPIVI}) begin
+      alu_inst[7:6] = 2'b00;
+      if(alu_type == OPIVV) begin
+        dest_type = VRF;
+        src2_type = VRF;
+        src1_type = VRF;
+        if(alu_inst inside {VMERGE_VMVV} && vm == 1) begin
+          src2_type = UNUSE;
+        end
+        if(alu_inst inside {VWREDSUMU, VWREDSUM}) begin
+          dest_type = SCALAR;
+          src1_type = SCALAR;
+        end
+      end
+      if(alu_type == OPIVX) begin
+        dest_type = VRF;
+        src2_type = VRF;
+        src1_type = XRF;
+        if(alu_inst inside {VMERGE_VMVV} && vm == 1) begin
+          src2_type = UNUSE;
+        end
+      end
+      if(alu_type == OPIVI) begin
+        dest_type = VRF;
+        src2_type = VRF;
+        src1_type = IMM;
+        if(alu_inst inside {VMERGE_VMVV} && vm == 1) begin
+          src2_type = UNUSE;
+        end
+        if(alu_inst inside {
+          VSLL, VSRL, VSRA, VNSRL, VNSRA,
+          VSSRL, VSSRA, VNCLIPU, VNCLIP
+        }) begin
+          src1_type = UIMM;
+        end
+        if(alu_inst inside {VRGATHER}) begin
+          src1_type = UIMM;
+        end
+        if(alu_inst inside {VSMUL_VMVNRR}) begin
+          src1_type = FUNC;
+        end
+      end
+    end
+
+    // OPM
+    if(alu_type inside {OPMVV, OPMVX}) begin
+      alu_inst[7:6] = 2'b01;      
+      if(alu_type == OPMVV) begin
+        dest_type = VRF;
+        src2_type = VRF;
+        src1_type = VRF;
+        if(alu_inst == VXUNARY0) begin
+          src1_type = FUNC;
+        end
+        if(alu_inst == VMUNARY0) begin
+          src1_type = FUNC;
+          if(src1_idx == VID) begin
+            src2_type = UNUSE;
+          end
+        end
+        if(alu_inst == VWXUNARY0) begin
+          dest_type = XRF;
+          src1_type = FUNC;
+          if(src1_idx == VMV_X_S) begin
+            src2_type = SCALAR;
+          end
+        end
+        if(alu_inst inside {
+          VREDSUM, VREDAND, VREDOR, VREDXOR,
+          VREDMINU,VREDMIN,VREDMAXU,VREDMAX
+        }) begin
+          dest_type = SCALAR;
+          src2_type = VRF;
+          src1_type = SCALAR;
+        end
+      end
+      if(alu_type == OPMVX) begin
+        dest_type = VRF;
+        src2_type = VRF;
+        src1_type = XRF;
+        if(alu_inst == VWXUNARY0) begin
+          dest_type = SCALAR;
+          src2_type = FUNC;
+          src1_type = XRF;
+        end
+      end
+    end
+  end // ALU
+
+  if(inst_type == LD) begin
+    src3_type = UNUSE;
+    case(lsu_mop)
+      LSU_US: begin
+        dest_type = VRF;
+        src2_type = FUNC;
+        src1_type = XRF;
+      end
+      LSU_CS: begin
+        dest_type = VRF;
+        src2_type = XRF;
+        src1_type = XRF;
+      end
+      LSU_UI, 
+      LSU_OI: begin
+        dest_type = VRF;
+        src2_type = VRF;
+        src1_type = XRF;
+      end
+    endcase
+  end // LD
+
+  if(inst_type == ST) begin
+    dest_type = UNUSE;
+    case(lsu_mop)
+      LSU_US: begin
+        src3_type = VRF;
+        src2_type = FUNC;
+        src1_type = XRF;
+      end
+      LSU_CS: begin
+        src3_type = VRF;
+        src2_type = XRF;
+        src1_type = XRF;
+      end
+      LSU_UI, 
+      LSU_OI: begin
+        src3_type = VRF;
+        src2_type = VRF;
+        src1_type = XRF;
+      end
+    endcase
+  end // ST
+
+  // misc
+  if(src1_type == FUNC && inst_type == ALU && alu_inst == VXUNARY0) begin
+    if(!$cast(src1_func_vext,src1_idx))
+      src1_func_vext = VXUNARY0_NONE;
+  end
+  if(src1_type == FUNC && inst_type == ALU && alu_inst == VWXUNARY0) begin
+    if(!$cast(src1_func_vwxunary0,src1_idx))
+      src1_func_vwxunary0 = VWXUNARY0_NONE;
+  end
+  if(src2_type == FUNC && inst_type == ALU && alu_inst == VWXUNARY0) begin
+    if(!$cast(src2_func_vwxunary0,src2_idx))
+      src2_func_vwxunary0 = VWXUNARY0_NONE;
+  end
+  if(src1_type == FUNC && inst_type == ALU && alu_inst == VMUNARY0) begin
+    if(!$cast(src1_func_vmunary0,src1_idx))
+      src1_func_vmunary0 = VMUNARY0_NONE;
+  end
+  if(src2_type == FUNC && inst_type inside {LD,ST} && lsu_mop == LSU_US) begin
+    if(!$cast(lsu_umop,src2_idx))
+      lsu_umop = LSU_UMOP_NONE;
+  end
+    
+  if(src2_type == XRF) rs2_data = rs_data; else rs2_data = 'x;
+  if(src1_type == XRF) rs1_data = rs_data; else rs1_data = 'x;
+
+  decode_vtype(1, 1);
   get_vec_group_range();
+  asm_string_gen();
+
+  return 0;
 endfunction: bin2tr
 
-function void rvs_transaction::decode_vtype(bit dec_evl);      
+function void rvs_transaction::set_config_state(
+  logic [`XLEN-1:0] vma,
+  logic [`XLEN-1:0] vta,
+  logic [`XLEN-1:0] vsew, 
+  logic [`XLEN-1:0] vlmul,
+  logic [`XLEN-1:0] vl,
+  logic [`XLEN-1:0] vstart,
+  logic [`XLEN-1:0] vxrm
+);      
+  this.vma    = vma;
+  this.vta    = vta;
+  this.vsew   = vsew; 
+  this.vlmul  = vlmul;
+  this.vl     = vl;
+  this.vstart = vstart;
+  this.vxrm   = vxrm;
+endfunction: set_config_state
+
+function void rvs_transaction::decode_vtype(bit dec_evl, bit dec_vlmax);      
   // Calculate eew/emul
   if(inst_type == ALU && (alu_inst inside {VADC, VSBC, VMADC, VMSBC, VMERGE_VMVV}))
     use_vm_to_cal = 1;
@@ -1431,7 +1645,7 @@ function void rvs_transaction::decode_vtype(bit dec_evl);
               eew_max   = src3_eew;
               emul_max  = src3_emul;
               seg_num   = 1;
-              evl       = dec_evl ? dest_emul * `VLEN / dest_eew : evl;
+              evl       = dec_evl ? src3_emul * `VLEN / src3_eew : evl;
             end
             default: begin
               src3_eew  = lsu_eew;
@@ -1586,6 +1800,26 @@ function void rvs_transaction::decode_vtype(bit dec_evl);
     elm_idx_max = `VLEN;
   end else begin
     elm_idx_max = int'($ceil(emul_max)) * `VLEN / eew_max;
+  end
+
+  // decode vlmax
+  if(dec_vlmax) begin
+    vlmax_max = 8 * `VLEN / 8;
+    if(inst_type == ALU && alu_inst inside {VMAND, VMOR, VMXOR, VMORN, VMNAND, VMNOR, VMANDN, VMXNOR}) begin
+      vlmax = vlmax_max;  
+    end else if(inst_type == ALU && alu_inst inside {VMUNARY0} && src1_idx inside {VMSBF, VMSOF, VMSIF}) begin
+      vlmax = vlmax_max;  
+    end else if(inst_type == ALU && alu_inst inside {VMSEQ, VMSNE, VMSLTU, VMSLT, VMSLEU, VMSLE, VMSGTU, VMSGT, VMADC, VMSBC}) begin
+      if(vlmul[2]) // fraction_lmul
+        vlmax = (`VLENB >> vsew);
+      else  
+        vlmax = ((`VLENB << vlmul) >> vsew);
+    end else begin
+      if(vlmul[2]) // fraction_lmul
+        vlmax = ((`VLENB >> (~vlmul +3'b1)) >> vsew);
+      else  
+        vlmax = ((`VLENB << vlmul) >> vsew);
+    end
   end
 
 endfunction: decode_vtype
@@ -2453,6 +2687,7 @@ function bit rvs_transaction::reserve_inst_check();
     end
   end
 
+  `uvm_info("TR/ISNT_CHECK", $sformatf("Check pass:\n%s", this.sprint()), UVM_HIGH)
   return PASS;
 endfunction: reserve_inst_check
 

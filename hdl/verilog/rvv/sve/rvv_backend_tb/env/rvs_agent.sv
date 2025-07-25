@@ -26,6 +26,9 @@ class rvs_agent extends uvm_agent;
     if(is_active == UVM_ACTIVE) begin
       rvs_sqr = rvs_sequencer::type_id::create("rvs_sqr", this);
       rvs_drv = rvs_driver::type_id::create("rvs_drv", this);
+      rvs_mon.is_active = UVM_ACTIVE;
+    end else begin
+      rvs_mon.is_active = UVM_PASSIVE;
     end
     if(!uvm_config_db#(v_if1)::get(this, "", "rvs_if", rvs_agt_if)) begin
       `uvm_fatal("AGT/NOVIF", "No virtual interface specified for this agent instance")

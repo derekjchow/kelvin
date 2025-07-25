@@ -8,7 +8,7 @@ typedef class rvs_monitor;
   `uvm_analysis_imp_decl(_rvs_mon_inst)
   `uvm_blocking_get_imp_decl(_rvv_state)
 class rvs_monitor extends uvm_monitor;
-
+  uvm_active_passive_enum is_active = UVM_ACTIVE;
   uvm_analysis_imp_rvs_mon_inst #(rvs_transaction,rvs_monitor) inst_imp; 
   uvm_blocking_get_imp_rvv_state #(rvv_state_pkg::rvv_state_e, rvs_monitor) rvv_state_imp;
 
@@ -33,7 +33,9 @@ class rvs_monitor extends uvm_monitor;
   int inst_tx_timeout_max = 500;
   int inst_tx_timeout_cnt = 0;
 
-  `uvm_component_utils_begin(rvs_monitor)
+  bit use_tr_from_drv;
+
+  `uvm_component_param_utils_begin(rvs_monitor)
   `uvm_component_utils_end
 
   extern function new(string name = "rvs_monitor",uvm_component parent);
@@ -69,6 +71,11 @@ function void rvs_monitor::build_phase(uvm_phase phase);
   ctrl_ap = new("ctrl_ap", this);
 
   ctrl_tr = new("ctrl_tr");
+  if($test$plusargs("use_tr_from_drv")) begin
+    use_tr_from_drv = 1;
+  end else begin
+    use_tr_from_drv = 0;
+  end
 endfunction: build_phase
 
 function void rvs_monitor::connect_phase(uvm_phase phase);
@@ -118,24 +125,26 @@ task rvs_monitor::run_phase(uvm_phase phase);
 endtask: run_phase
 
 task rvs_monitor::main_phase(uvm_phase phase);
-  rvv_state_pkg::rvv_state_e rvv_state;
-  phase.raise_objection( .obj( this ) );
-  super.main_phase(phase);
-  forever begin
-    @(posedge rvs_if.clk);
-    if(ctrl_tr.is_last_inst) begin
-      get_rvv_state(rvv_state);
-      if(inst_tx_queue.size()==0 && inst_rx_queue.size()==0 && inst_temp_queue.size()==0 && rvv_state==rvv_state_pkg::IDLE) begin 
-        repeat(10) @(posedge rvs_if.clk);
-        ctrl_ap.write(ctrl_tr);
-        `uvm_info(get_type_name(), "ready to drop obj", UVM_HIGH)
-        `uvm_info(get_type_name(), $sformatf("rvv state=%s", rvv_state), UVM_HIGH)
-        repeat(10) @(posedge rvs_if.clk);
-        break;
+  if(is_active) begin
+    rvv_state_pkg::rvv_state_e rvv_state;
+    phase.raise_objection( .obj( this ) );
+    super.main_phase(phase);
+    forever begin
+      @(posedge rvs_if.clk);
+      if(ctrl_tr.is_last_inst) begin
+        get_rvv_state(rvv_state);
+        if(inst_tx_queue.size()==0 && inst_rx_queue.size()==0 && inst_temp_queue.size()==0 && rvv_state==rvv_state_pkg::IDLE) begin 
+          repeat(10) @(posedge rvs_if.clk);
+          ctrl_ap.write(ctrl_tr);
+          `uvm_info(get_type_name(), "ready to drop obj", UVM_HIGH)
+          `uvm_info(get_type_name(), $sformatf("rvv state=%s", rvv_state), UVM_HIGH)
+          repeat(10) @(posedge rvs_if.clk);
+          break;
+        end
       end
     end
+    phase.drop_objection( .obj( this ) );
   end
-  phase.drop_objection( .obj( this ) );
 endtask: main_phase
 
 task rvs_monitor::tx_monitor();
@@ -150,21 +159,50 @@ task rvs_monitor::tx_monitor();
     end else begin
       for(int i=0; i<`ISSUE_LANE; i++) begin
         if(rvs_if.insts_valid_rvs2cq[i] && rvs_if.insts_ready_cq2rvs[i]) begin
+          logic [31:0] inst_32;
           inst_tr = new("inst_tr");
-          inst_tr = inst_tx_queue.pop_front();
-          `uvm_info(get_type_name(), $sformatf("Send transaction to mdl"),UVM_HIGH)
-          `uvm_info(get_type_name(), inst_tr.sprint(),UVM_HIGH)
+          temp_tr = new("temp_tr");
+
+          if(use_tr_from_drv && is_active) begin
+            inst_tr = inst_tx_queue.pop_front();
+          end else begin
+            // Got inst from interface
+            inst_tr.constraint_mode(0);
+            inst_tr.set_config_state(
+              rvs_if.insts_rvs2cq[i].arch_state.ma,
+              rvs_if.insts_rvs2cq[i].arch_state.ta,
+              rvs_if.insts_rvs2cq[i].arch_state.sew,
+              rvs_if.insts_rvs2cq[i].arch_state.lmul,
+              rvs_if.insts_rvs2cq[i].arch_state.vl,
+              rvs_if.insts_rvs2cq[i].arch_state.vstart,
+              rvs_if.insts_rvs2cq[i].arch_state.xrm
+            );
+            inst_32[31:7] = rvs_if.insts_rvs2cq[i].bits;
+            case(rvs_if.insts_rvs2cq[i].opcode)
+              2'b00: inst_32[6:0] = 7'b000_0111; // LOAD
+              2'b01: inst_32[6:0] = 7'b010_0111; // STORE
+              2'b10: inst_32[6:0] = 7'b101_0111; // ARI
+            endcase
+            inst_tr.bin2tr(inst_32, rvs_if.insts_rvs2cq[i].rs1);
+            inst_tr.pc = rvs_if.insts_rvs2cq[i].inst_pc;
+
+            if(is_active) begin
+              inst_tr.is_last_inst = inst_tx_queue[0].is_last_inst;
+              inst_tx_queue.pop_front();
+            end
+          end
+
           `uvm_info("INST_TR", inst_tr.sprint(),UVM_LOW)
           `uvm_info("ASM_DUMP",$sformatf("0x%8x\t%s", inst_tr.pc, inst_tr.asm_string),UVM_LOW)
           if(inst_tr.reserve_inst_check()) begin
+            `uvm_info(get_type_name(), $sformatf("Send transaction to mdl:\n%s", inst_tr.sprint()), UVM_HIGH)
             inst_ap.write(inst_tr); // write to mdl/lsu
           end else begin 
-            `uvm_info(get_type_name(), $sformatf("MON discarded inst:\n%s",inst_tr.sprint()), UVM_HIGH)
+            `uvm_info(get_type_name(), $sformatf("MON discarded inst:\n%s", inst_tr.sprint()), UVM_HIGH)
           end
-          temp_tr = new("temp_tr");
           temp_tr.copy(inst_tr);
           inst_temp_queue.push_back(temp_tr);
-          ctrl_tr = inst_tr;
+          ctrl_tr = temp_tr;
           this.total_inst++;
         end
       end
@@ -332,7 +370,9 @@ endtask: idle_monitor
 function void rvs_monitor::write_rvs_mon_inst(rvs_transaction inst_tr);
   `uvm_info(get_type_name(), "get a inst", UVM_HIGH)
   `uvm_info(get_type_name(), inst_tr.sprint(), UVM_HIGH)
-  inst_tx_queue.push_back(inst_tr);
+  if(is_active) begin
+    inst_tx_queue.push_back(inst_tr);
+  end
 endfunction
 
 task rvs_monitor::get_rvv_state(output rvv_state_pkg::rvv_state_e rvv_state);
