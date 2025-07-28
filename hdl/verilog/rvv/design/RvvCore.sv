@@ -81,6 +81,7 @@ module RvvCore #(parameter N = 4,
 );
   logic [N-1:0] frontend_cmd_valid;
   RVVCmd [N-1:0] frontend_cmd_data;
+  logic [$clog2(2*N + 1)-1:0] queue_capacity_internal;
   RvvFrontEnd#(.N(N)) frontend(
       .clk(clk),
       .rstn(rstn),
@@ -105,7 +106,6 @@ module RvvCore #(parameter N = 4,
 
   // Backpressure from backend fifo
   logic   [$clog2(`CQ_DEPTH):0] remaining_count_cq2rvs;
-  logic [$clog2(2*N + 1)-1:0] queue_capacity_internal;
   // Back-pressure frontend
   always_comb begin
     if (remaining_count_cq2rvs > 2*N) begin
