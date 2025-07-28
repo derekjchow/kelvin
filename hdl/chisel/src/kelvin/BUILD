@@ -326,6 +326,8 @@ chisel_library(
         ":retirement_buffer",
         ":rvvi_trace",
         "//hdl/chisel/src/common",
+        "//hdl/chisel/src/common:aligner",
+        "//hdl/chisel/src/common:circular_buffer_multi",
         "//hdl/chisel/src/common:fp",
         "//hdl/chisel/src/common:instruction_buffer",
         "//hdl/chisel/src/common:scatter_gather",

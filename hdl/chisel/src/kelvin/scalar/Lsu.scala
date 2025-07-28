@@ -955,8 +955,9 @@ class LsuV2(p: Parameters) extends Lsu(p) {
   io.vldst := 0.U
   io.storeCount := 0.U
 
-  val opQueue = Module(new Queue(new LsuUOp(p), 4))
-  io.queueCapacity := opQueue.entries.U - opQueue.io.count
+  val opQueue = Module(new CircularBufferMulti(new LsuUOp(p), p.instructionLanes, 4))
+  opQueue.io.flush := false.B
+  io.queueCapacity := opQueue.io.nSpace
 
   // Flush state
   // DispatchV2 will only flush on first slot, when LSU is inactive.
@@ -977,26 +978,25 @@ class LsuV2(p: Parameters) extends Lsu(p) {
   ))
 
   // Accept one instruction per cycle.
-  // TODO(derekjchow): Accept multiple when primitives are ready.
-  val canAccept = opQueue.io.enq.ready
-  val queueSpace = Mux(canAccept, 1.U, 0.U)
+  val queueSpace = opQueue.io.nSpace
   val validSum = io.req.map(_.valid).scan(
       0.U(log2Ceil(p.instructionLanes + 1).W))(_+_)
-
   for (i <- 0 until p.instructionLanes) {
     io.req(i).ready := (validSum(i) < queueSpace) && !flushCmd.valid
   }
 
   val ops = (0 until p.instructionLanes).map(i =>
-      LsuUOp(p, i, io.req(i).bits, io.busPort, io.busPort_flt, io.rvvState))
-  val enq = MuxCase(
-      MakeInvalid(new LsuUOp(p)),
-      (0 until p.instructionLanes).map(i =>
-          ((io.req(i).fire && !io.req(i).bits.op.isOneOf(LsuOp.FENCEI, LsuOp.FLUSHAT, LsuOp.FLUSHALL)) -> MakeValid(true.B, ops(i)))))
-  opQueue.io.enq.valid := enq.valid
-  opQueue.io.enq.bits := enq.bits
+    MakeValid(
+        io.req(i).fire && !LsuOp.isFlush(io.req(i).bits.op),
+        LsuUOp(p, i, io.req(i).bits, io.busPort, io.busPort_flt, io.rvvState))
+  )
+  val alignedOps = Aligner(ops)
 
-  val nextSlot = LsuSlot.fromLsuUOp(opQueue.io.deq.bits, p, 16)
+  opQueue.io.enqValid := PopCount(alignedOps.map(_.valid))
+  opQueue.io.enqData := alignedOps.map(_.bits)
+  assert(opQueue.io.enqValid <= opQueue.io.nSpace)
+
+  val nextSlot = LsuSlot.fromLsuUOp(opQueue.io.dataOut(0), p, 16)
 
   // Tracks if a read has been fired last cycle.
   val readFired = RegInit(MakeInvalid(new LsuRead(32 - nextSlot.elemBits)))
@@ -1142,7 +1142,7 @@ class LsuV2(p: Parameters) extends Lsu(p) {
   val writebackUpdatedSlot = slot.writebackUpdate(writebackFired)
 
   // TODO(derekjchow): Improve timing?
-  opQueue.io.deq.ready := slot.slotIdle()
+  opQueue.io.deqReady := Mux(slot.slotIdle() && (opQueue.io.nEnqueued > 0.U), 1.U, 0.U)
 
   // ==========================================================================
   // State transition
@@ -1152,7 +1152,7 @@ class LsuV2(p: Parameters) extends Lsu(p) {
     // Move to inactive if error.
     io.fault.valid -> LsuSlot.inactive(p, 16),
     // When inactive, dequeue if possible
-    (slot.slotIdle() && opQueue.io.deq.valid) -> nextSlot,
+    (slot.slotIdle() && (opQueue.io.nEnqueued > 0.U)) -> nextSlot,
     // Vector update.
     slot.pendingVector -> vectorUpdatedSlot,
     // Active transaction update.
@@ -1163,6 +1163,6 @@ class LsuV2(p: Parameters) extends Lsu(p) {
 
   slot := slotNext
 
-  io.active := !slot.slotIdle() || (opQueue.io.count =/= 0.U)
+  io.active := !slot.slotIdle() || (opQueue.io.nEnqueued =/= 0.U)
 }
 

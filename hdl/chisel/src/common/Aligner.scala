@@ -82,3 +82,12 @@ class Aligner[T <: Data](t: T, n: Int) extends BlackBox with HasBlackBoxInline
     addResource("hdl/verilog/rvv/design/Aligner.sv")
     setInline(s"$desiredName.sv", GenerateAlignerSource(t, n))
 }
+
+object Aligner {
+    def apply[T <: Data](in: Seq[ValidIO[T]]): Vec[ValidIO[T]] = {
+        val t = chiselTypeOf(in(0).bits)
+        val aligner = Module(new Aligner(t, in.length))
+        aligner.io.in := in.map(v => v.map(_.asUInt))
+        VecInit(aligner.io.out.map(v => v.map(_.asTypeOf(t))))
+    }
+}
