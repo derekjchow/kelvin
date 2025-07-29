@@ -142,7 +142,8 @@ module RvvFrontEnd#(parameter N = 4,
           inst_config_state[i+1].ma = inst_q[i].bits[20];
           is_setvl[i] = 1;
         end else if (inst_q[i].bits[24:23] == 2'b11) begin  // vsetivli
-          inst_config_state[i+1].vl = inst_q[i].bits[12:8];
+          inst_config_state[i+1].vl =
+              {{(`VL_WIDTH - 5){1'b0}}, inst_q[i].bits[12:8]};
           inst_config_state[i+1].lmul = RVVLMUL'(inst_q[i].bits[15:13]);
           inst_config_state[i+1].sew = RVVSEW'(inst_q[i].bits[18:16]);
           inst_config_state[i+1].ta = inst_q[i].bits[19];
@@ -197,7 +198,8 @@ module RvvFrontEnd#(parameter N = 4,
       // Write new value of vl into rd for configuration function.
       reg_write_valid_o[i] = is_setvl[i];
       reg_write_addr_o[i] = inst_q[i].bits[4:0];
-      reg_write_data_o[i] = inst_config_state[i].vl;
+      reg_write_data_o[i] =
+          {{(`XLEN-`VL_WIDTH){1'b0}}, inst_config_state[i].vl};
     end
   end
 
