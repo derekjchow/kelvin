@@ -368,6 +368,7 @@ class DispatchV2(p: Parameters) extends Dispatch(p) {
       (d.isFloat() && d.floatWritesRd()) ||
       d.rvvWritesRd()
   )
+
   val rdScoreboard = (0 until p.instructionLanes).map(i =>
       Mux(writesRd(i), UIntToOH(rdAddr(i), 32), 0.U(32.W)))
   val scoreboardScan = rdScoreboard.scan(0.U(32.W))(_ | _)
@@ -738,7 +739,7 @@ class DispatchV2(p: Parameters) extends Dispatch(p) {
         io.alu(i).fire || io.mlu(i).fire || io.dvu(i).fire ||
         io.lsu(i).fire && d.isScalarLoad() ||
         (if (i == 0) { io.csr.valid } else { false.B }) ||
-        d.rvv.map(x => x.fire && x.bits.writesRd()).getOrElse(false.B) ||
+        io.rvv.map(x => x(i).fire && x(i).bits.writesRd()).getOrElse(false.B) ||
         (if (i == 0) { io.float.map(x => x.fire && x.bits.scalar_rd).getOrElse(false.B) } else { false.B }) ||
         (io.bru(i).valid && (io.bru(i).bits.op.isOneOf(BruOp.JAL, BruOp.JALR)) && rdAddr(i) =/= 0.U)
 
