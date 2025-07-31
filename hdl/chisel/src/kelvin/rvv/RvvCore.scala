@@ -100,6 +100,7 @@ object GenerateCoreShimSource {
     moduleInterface += """    output vcsr_valid,
         |    output [VSTART_LEN:0] vcsr_vstart,
         |    output [1:0] vcsr_xrm,
+        |    output vcsr_vxsat,
         |    input vcsr_ready,
         |""".stripMargin.replaceAll("VSTART_LEN", (log2Ceil(vlen) - 1).toString)
 
@@ -215,6 +216,7 @@ object GenerateCoreShimSource {
     coreInstantiation += """  RVVConfigState vector_csr;
         |  assign vcsr_vstart = vector_csr.vstart;
         |  assign vcsr_xrm = vector_csr.xrm;
+        |  assign vcsr_vxsat = vector_csr.xsat;
         |""".stripMargin
     // RVV Config State temp output
     coreInstantiation += """  RVVConfigState config_state;
@@ -308,6 +310,7 @@ class RvvCoreWrapper(p: Parameters) extends BlackBox with HasBlackBoxInline
     val vcsr_valid = Output(Bool())
     val vcsr_vstart = Output(UInt(7.W))
     val vcsr_xrm = Output(UInt(2.W))
+    val vcsr_vxsat = Output(Bool())
     val vcsr_ready = Input(Bool())
 
     // TODO(derekjchow): Parameterize
@@ -394,6 +397,7 @@ class RvvCoreShim(p: Parameters) extends Module {
 
   val vstart = RegInit(0.U(log2Ceil(p.rvvVlen).W))
   val vxrm = RegInit(0.U(2.W))
+  val vxsat = RegInit(false.B)
 
   val rstn = (!reset.asBool).asAsyncReset
   val rvvCoreWrapper = Module(new RvvCoreWrapper(p))
@@ -405,10 +409,11 @@ class RvvCoreShim(p: Parameters) extends Module {
   rvvCoreWrapper.io.async_rd <> io.async_rd
 
   rvvCoreWrapper.io.vstart := Mux(
-      io.csr.csr_vstart.valid, io.csr.csr_vstart.bits, vstart)
+      io.csr.vstart_write.valid, io.csr.vstart_write.bits, vstart)
   rvvCoreWrapper.io.vxrm := Mux(
-      io.csr.csr_vxrm.valid, io.csr.csr_vxrm.bits, vxrm)
-  rvvCoreWrapper.io.vxsat := 0.U
+      io.csr.vxrm_write.valid, io.csr.vxrm_write.bits, vxrm)
+  rvvCoreWrapper.io.vxsat := Mux(
+      io.csr.vxsat_write.valid, io.csr.vxsat_write.bits, vxsat)
   rvvCoreWrapper.io.vcsr_ready := true.B
 
   io.rvv2lsu <> rvvCoreWrapper.io.rvv2lsu
@@ -427,17 +432,24 @@ class RvvCoreShim(p: Parameters) extends Module {
 
   val vstart_wdata = MuxCase(vstart, Seq(
       rvvCoreWrapper.io.vcsr_valid -> rvvCoreWrapper.io.vcsr_vstart,
-      io.csr.csr_vstart.valid -> io.csr.csr_vstart.bits,
+      io.csr.vstart_write.valid -> io.csr.vstart_write.bits,
   ))
   vstart := vstart_wdata
 
   val vxrm_wdata = MuxCase(vxrm, Seq(
       rvvCoreWrapper.io.vcsr_valid -> rvvCoreWrapper.io.vcsr_xrm,
-      io.csr.csr_vxrm.valid -> io.csr.csr_vxrm.bits,
+      io.csr.vxrm_write.valid -> io.csr.vxrm_write.bits,
   ))
   vxrm := vxrm_wdata
 
+  val vxsat_wdata = MuxCase(vxsat, Seq(
+      rvvCoreWrapper.io.vcsr_valid -> rvvCoreWrapper.io.vcsr_vxsat,
+      io.csr.vxsat_write.valid -> io.csr.vxsat_write.bits,
+  ))
+  vxsat := vxsat_wdata
+
   io.csr.vstart := vstart
   io.csr.vxrm := vxrm
+  io.csr.vxsat := vxsat
 }
 

@@ -428,10 +428,12 @@ class SCore(p: Parameters) extends Module {
     // Register inputs
     io.rvvcore.get.rs := regfile.io.readData
 
-    io.rvvcore.get.csr.csr_vstart <> csr.io.rvv.get.vstart_write
-    io.rvvcore.get.csr.csr_vxrm <> csr.io.rvv.get.vxrm_write
+    io.rvvcore.get.csr.vstart_write <> csr.io.rvv.get.vstart_write
+    io.rvvcore.get.csr.vxrm_write <> csr.io.rvv.get.vxrm_write
+    io.rvvcore.get.csr.vxsat_write <> csr.io.rvv.get.vxsat_write
     csr.io.rvv.get.vstart := io.rvvcore.get.csr.vstart
     csr.io.rvv.get.vxrm := io.rvvcore.get.csr.vxrm
+    csr.io.rvv.get.vxsat := io.rvvcore.get.csr.vxsat
   }
 
   // ---------------------------------------------------------------------------

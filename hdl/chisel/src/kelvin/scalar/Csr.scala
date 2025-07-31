@@ -22,9 +22,11 @@ class CsrRvvIO(p: Parameters) extends Bundle {
   // To Csr from RvvCore
   val vstart = Input(UInt(log2Ceil(p.rvvVlen).W))
   val vxrm = Input(UInt(2.W))
+  val vxsat = Input(Bool())
   // From Csr to RvvCore
   val vstart_write = Output(Valid(UInt(log2Ceil(p.rvvVlen).W)))
   val vxrm_write = Output(Valid(UInt(2.W)))
+  val vxsat_write = Output(Valid(Bool()))
 }
 
 object Csr {
@@ -38,7 +40,8 @@ object CsrAddress extends ChiselEnum {
   val FRM       = Value(0x002.U(12.W))
   val FCSR      = Value(0x003.U(12.W))
   val VSTART    = Value(0x008.U(12.W))
-  val VXRM      = Value(0x009.U(12.W))
+  val VXSAT     = Value(0x009.U(12.W))
+  val VXRM      = Value(0x00A.U(12.W))
   val MSTATUS   = Value(0x300.U(12.W))
   val MISA      = Value(0x301.U(12.W))
   val MIE       = Value(0x304.U(12.W))
@@ -297,6 +300,7 @@ class Csr(p: Parameters) extends Module {
   val fcsrEn      = csr_address === CsrAddress.FCSR
   val vstartEn    = Option.when(p.enableRvv) { csr_address === CsrAddress.VSTART }
   val vxrmEn      = Option.when(p.enableRvv) { csr_address === CsrAddress.VXRM }
+  val vxsatEn     = Option.when(p.enableRvv) { csr_address === CsrAddress.VXSAT }
   val mstatusEn   = csr_address === CsrAddress.MSTATUS
   val misaEn      = csr_address === CsrAddress.MISA
   val mieEn       = csr_address === CsrAddress.MIE
@@ -406,6 +410,7 @@ class Csr(p: Parameters) extends Module {
         Seq(
           vstartEn.get -> io.rvv.get.vstart,
           vxrmEn.get   -> io.rvv.get.vxrm,
+          vxsatEn.get  -> io.rvv.get.vxsat,
           vlenbEn.get -> 16.U(32.W),  // Vector length in Bytes
         )
       }.getOrElse(Seq())
@@ -465,6 +470,8 @@ class Csr(p: Parameters) extends Module {
     io.rvv.get.vstart_write.bits  := wdata(log2Ceil(p.rvvVlen)-1, 0)
     io.rvv.get.vxrm_write.valid   := req.valid && vxrmEn.get
     io.rvv.get.vxrm_write.bits    := wdata(1,0)
+    io.rvv.get.vxsat_write.valid  := req.valid && vxsatEn.get
+    io.rvv.get.vxsat_write.bits   := wdata(0)
   }
 
   // mcycle implementation
