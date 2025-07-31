@@ -432,6 +432,7 @@ class SCore(p: Parameters) extends Module {
     io.rvvcore.get.csr.vxrm_write <> csr.io.rvv.get.vxrm_write
     io.rvvcore.get.csr.vxsat_write <> csr.io.rvv.get.vxsat_write
     csr.io.rvv.get.vstart := io.rvvcore.get.csr.vstart
+    csr.io.rvv.get.vl := io.rvvcore.get.configState.bits.vl
     csr.io.rvv.get.vxrm := io.rvvcore.get.csr.vxrm
     csr.io.rvv.get.vxsat := io.rvvcore.get.csr.vxsat
   }

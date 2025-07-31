@@ -21,6 +21,7 @@ import kelvin.float.{CsrFloatIO}
 class CsrRvvIO(p: Parameters) extends Bundle {
   // To Csr from RvvCore
   val vstart = Input(UInt(log2Ceil(p.rvvVlen).W))
+  val vl = Input(UInt(log2Ceil(p.rvvVlen).W))
   val vxrm = Input(UInt(2.W))
   val vxsat = Input(Bool())
   // From Csr to RvvCore
@@ -72,6 +73,7 @@ object CsrAddress extends ChiselEnum {
   val MINSTRET  = Value(0xB02.U(12.W))
   val MCYCLEH   = Value(0xB80.U(12.W))
   val MINSTRETH = Value(0xB82.U(12.W))
+  val VL        = Value(0xC20.U(12.W))
   val VLENB     = Value(0xC22.U(12.W))
   val MVENDORID = Value(0xF11.U(12.W))
   val MARCHID   = Value(0xF12.U(12.W))
@@ -299,6 +301,7 @@ class Csr(p: Parameters) extends Module {
   val frmEn       = csr_address === CsrAddress.FRM
   val fcsrEn      = csr_address === CsrAddress.FCSR
   val vstartEn    = Option.when(p.enableRvv) { csr_address === CsrAddress.VSTART }
+  val vlEn        = Option.when(p.enableRvv) { csr_address === CsrAddress.VL }
   val vxrmEn      = Option.when(p.enableRvv) { csr_address === CsrAddress.VXRM }
   val vxsatEn     = Option.when(p.enableRvv) { csr_address === CsrAddress.VXSAT }
   val mstatusEn   = csr_address === CsrAddress.MSTATUS
@@ -409,6 +412,7 @@ class Csr(p: Parameters) extends Module {
       Option.when(p.enableRvv) {
         Seq(
           vstartEn.get -> io.rvv.get.vstart,
+          vlEn.get     -> io.rvv.get.vl,
           vxrmEn.get   -> io.rvv.get.vxrm,
           vxsatEn.get  -> io.rvv.get.vxsat,
           vlenbEn.get -> 16.U(32.W),  // Vector length in Bytes
