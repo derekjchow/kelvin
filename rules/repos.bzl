@@ -127,6 +127,7 @@ def cvfpu_repos():
         patches = [
             "@kelvin_hw//third_party/cvfpu:0001-Fix-max_num_lanes-issue-in-DC.patch",
             "@kelvin_hw//third_party/cvfpu:0002-Remove-SVH-includes.patch",
+            "@kelvin_hw//third_party/cvfpu:0003-Fill-in-unreachable-state-in-fpnew_divsqrt_th_32-fsm.patch",
         ],
         patch_args = ["-p1"],
     )
