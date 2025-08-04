@@ -110,6 +110,7 @@ object EmitCore extends App {
   var chiselArgs = List[String]()
   var targetDir: Option[String] = None
   var useAxi = false
+  var useTlul = false
   for (arg <- args) {
     if (arg.startsWith("--enableFetchL0")) {
       p.enableFetchL0 = arg.split("=")(1).toBoolean
@@ -135,12 +136,15 @@ object EmitCore extends App {
       p.tcmHighmem = true
     } else if (arg.startsWith("--useAxi")) {
       useAxi = true
+    } else if (arg.startsWith("--useTlul")) {
+      useTlul = true
     } else if (arg.startsWith("--target-dir")) {
       targetDir = Some(arg.split("=")(1))
     } else {
       chiselArgs = chiselArgs :+ arg
     }
   }
+  assert(!(useAxi && useTlul))
 
   // The core module must be created in the ChiselStage context. Use lazy here
   // so it's created in ChiselStage, but referencable afterwards.
@@ -161,7 +165,15 @@ object EmitCore extends App {
       )
       p.m = memoryRegions
     }
-      new CoreAxi(p, moduleName)
+    new CoreAxi(p, moduleName)
+  } else if (useTlul) {
+      val memoryRegions = Seq(
+        new MemoryRegion(0x0000, 0x2000, MemoryRegionType.IMEM), // ITCM
+        new MemoryRegion(0x10000, 0x8000, MemoryRegionType.DMEM), // DTCM
+        new MemoryRegion(0x30000, 0x2000, MemoryRegionType.Peripheral), // CSR
+      )
+      p.m = memoryRegions
+      new CoreTlul(p, moduleName)
   } else {
     // "Matcha" memory layout
     p.m = Seq(

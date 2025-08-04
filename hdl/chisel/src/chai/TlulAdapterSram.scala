@@ -18,6 +18,8 @@ import chisel3._
 
 import bus._
 
+
+
 package object sram_params {
   val SramAw = 17
   val SramDw = 256
@@ -27,15 +29,14 @@ package object sram_params {
   val EnableDataIntgPt = 0
 }
 
-class TlulAdapterSram extends BlackBox {
-  val tlul_p = new TLULParameters()
+class TlulAdapterSram(p: TLULParameters) extends BlackBox {
   val io = IO(new Bundle {
     val clk_i = Input(Clock())
     val rst_ni = Input(AsyncReset())
 
     // TL-UL
-    val tl_i = Input(new TileLinkULIO_H2D(tlul_p))
-    val tl_o = Output(new TileLinkULIO_D2H(tlul_p))
+    val tl_i = Input(new TileLinkULIO_H2D(p))
+    val tl_o = Output(new TileLinkULIO_D2H(p))
 
     // control
     val en_ifetch_i = Input(UInt(4.W)) // mubi4_t

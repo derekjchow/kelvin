@@ -80,13 +80,13 @@ class ChAI(p: Parameters) extends RawModule {
   io.fault := u_kelvin.fault
 
   withClockAndReset(io.clk_i, rst_i) {
-    val tlul_p = new TLULParameters()
+    val tlul_p = new TLULParameters(kelvin_p)
     val kelvin_to_tlul = KelvinToTlul(tlul_p, kelvin_p)
     kelvin_to_tlul.io.kelvin <> u_kelvin.mem
 
     val tlul_sram =
       SRAM(p.sramDataEntries(), UInt(p.sramDataBits.W), p.sramReadPorts, p.sramWritePorts, p.sramReadWritePorts)
-    val tlul_adapter_sram = Module(new chai.TlulAdapterSram())
+    val tlul_adapter_sram = Module(new chai.TlulAdapterSram(tlul_p))
     tlul_adapter_sram.io.clk_i := io.clk_i
     tlul_adapter_sram.io.rst_ni := io.rst_ni
     tlul_adapter_sram.io.en_ifetch_i := 9.U // MuBi4False

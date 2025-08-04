@@ -20,8 +20,8 @@ import prim_mubi_pkg::mubi4_t;
   input tl_i_a_valid,
   input [2:0] tl_i_a_opcode,
   input [2:0] tl_i_a_param,
-  input [5:0] tl_i_a_size,
-  input [9:0] tl_i_a_source,
+  input [4:0] tl_i_a_size,
+  input [5:0] tl_i_a_source,
   input [31:0] tl_i_a_address,
   input [31:0] tl_i_a_mask,
   input [255:0] tl_i_a_data,
@@ -38,8 +38,8 @@ import prim_mubi_pkg::mubi4_t;
   output tl_o_d_valid,
   output [2:0] tl_o_d_opcode,
   output [2:0] tl_o_d_param,
-  output [5:0] tl_o_d_size,
-  output [9:0] tl_o_d_source,
+  output [4:0] tl_o_d_size,
+  output [5:0] tl_o_d_source,
   output tl_o_d_sink,
   output [255:0] tl_o_d_data,
   output [6:0] tl_o_d_user_rsp_intg,
@@ -54,6 +54,16 @@ import prim_mubi_pkg::mubi4_t;
   output [255:0] wmask_o,
   output intg_error_o
 );
+
+logic [5:0] tl_i_a_size_padded;
+logic [9:0] tl_i_a_source_padded;
+logic [5:0] tl_o_d_size_unpadded;
+logic [9:0] tl_o_d_source_unpadded;
+
+assign tl_i_a_size_padded = {1'b0, tl_i_a_size};
+assign tl_i_a_source_padded = {4'b0, tl_i_a_source};
+assign tl_o_d_size = tl_o_d_size_unpadded[4:0];
+assign tl_o_d_source = tl_o_d_source_unpadded[5:0];
 
 mubi4_t en_ifetch_i_ = mubi4_t'(en_ifetch_i);
 
@@ -72,8 +82,8 @@ tlul_adapter_sram #(
         tl_i_a_valid,
         tl_i_a_opcode,
         tl_i_a_param,
-        tl_i_a_size,
-        tl_i_a_source,
+        tl_i_a_size_padded,
+        tl_i_a_source_padded,
         tl_i_a_address,
         tl_i_a_mask,
         tl_i_a_data,
@@ -87,8 +97,8 @@ tlul_adapter_sram #(
     tl_o_d_valid,
     tl_o_d_opcode,
     tl_o_d_param,
-    tl_o_d_size,
-    tl_o_d_source,
+    tl_o_d_size_unpadded,
+    tl_o_d_source_unpadded,
     tl_o_d_sink,
     tl_o_d_data,
     tl_o_d_user_rsp_intg,

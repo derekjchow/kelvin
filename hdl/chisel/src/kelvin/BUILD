@@ -359,6 +359,7 @@ chisel_library(
         "Core.scala",
         "CoreAxi.scala",
         "CoreAxiCSR.scala",
+        "CoreTlul.scala",
         "Fabric.scala",
         "TCM.scala",
         "SRAM.scala",
@@ -571,6 +572,24 @@ RVV_CORE_MINI_AXI_COMMON_GEN_FLAGS = [
 template_rule(
     chisel_cc_library,
     {
+        "rvv_core_mini_tlul_cc_library": {
+            "verilog_file_path": "RvvCoreMiniTlul.sv",
+            "extra_outs": [
+                "VRvvCoreMiniTlul_parameters.h",
+                "RvvCoreMiniTlul.zip",
+            ],
+            "gen_flags": [
+                "--moduleName=RvvCoreMini",
+                "--enableFetchL0=False",
+                "--fetchDataBits=128",
+                "--lsuDataBits=128",
+                "--enableVector=False",
+                "--enableRvv=True",
+                "--enableFloat=True",
+                "--useTlul=True",
+            ],
+            "module_name": "RvvCoreMiniTlul",
+        },
         "rvv_core_mini_axi_cc_library": {
             "verilog_file_path": "RvvCoreMiniAxi.sv",
             "extra_outs": [
@@ -625,6 +644,11 @@ template_rule(
         "-Wno-UNSIGNED",
         "-Ihdl/verilog/rvv/inc",
     ],
+)
+
+filegroup(
+    name = "rvv_core_mini_tlul_verilog",
+    srcs = [":rvv_core_mini_tlul_cc_library_verilog"],
 )
 
 verilog_zip_bundle(
