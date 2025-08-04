@@ -126,7 +126,7 @@ class CoreAxiCSRSpec extends AnyFreeSpec with ChiselSim {
       while (dut.io.axi.read.data.valid.peek().litValue != 1) {
         dut.clock.step()
       }
-      dut.io.axi.read.data.bits.data.expect(BigInt(0x20000000) << 32)
+      assert((dut.io.axi.read.data.bits.data.peek().litValue >> 32) == 0x20000000)
       dut.io.axi.read.data.bits.last.expect(1)
       dut.io.axi.read.data.bits.resp.expect(0)
 
