@@ -1,0 +1,14 @@
+CAPI=2:
+name: "kelvinv2:ip:sram:0.1"
+description: "SRAM for Kelvin"
+
+filesets:
+  rtl:
+    files:
+      - Sram.sv
+    file_type: systemVerilogSource
+
+targets:
+  default:
+    filesets:
+      - rtl
