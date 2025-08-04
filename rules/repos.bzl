@@ -160,3 +160,15 @@ def rvvi_repos():
         ],
         patch_args = ["-p1"],
     )
+
+def fpga_repos():
+    http_archive(
+        name = "lowrisc_opentitan_gh",
+        urls = ["https://github.com/lowRISC/opentitan/archive/1b1945fd76799666156f817e163222725c518c59.zip"],
+        sha256 = "b881378cdffee2284a88c2032c9fb13e68c889f1cac38cf715b0cff7b40fcf7e",
+        strip_prefix = "opentitan-1b1945fd76799666156f817e163222725c518c59",
+        patches = [
+            "@kelvin_hw//fpga:0001-Export-hw-ip_templates.patch",
+        ],
+        patch_args = ["-p1"],
+    )

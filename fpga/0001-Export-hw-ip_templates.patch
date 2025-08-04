@@ -1,0 +1,44 @@
+From 626a4c6e202972b7930797cb7a43f8ee6ac6b991 Mon Sep 17 00:00:00 2001
+From: Alex Van Damme <atv@google.com>
+Date: Fri, 18 Jul 2025 14:48:57 -0700
+Subject: [PATCH] Export hw/ip_templates
+
+---
+ hw/BUILD              | 3 +--
+ hw/ip_templates/BUILD | 2 ++
+ 2 files changed, 3 insertions(+), 2 deletions(-)
+
+diff --git a/hw/BUILD b/hw/BUILD
+index 2fb71c7d81..d7e28a91a8 100644
+--- a/hw/BUILD
++++ b/hw/BUILD
+@@ -15,7 +15,7 @@ load("@bazel_skylib//rules:common_settings.bzl", "string_list_flag")
+ 
+ package(default_visibility = ["//visibility:public"])
+ 
+-exports_files(["tool_requirements.py"])
++exports_files(["tool_requirements.py"] + glob(["vendor/lowrisc_ibex/**"]))
+ 
+ filegroup(
+     name = "doc_files",
+@@ -177,7 +177,6 @@ filegroup(
+         # dv_macros are needed by Ibex, so include this back in.
+         "//hw/dv/sv:dv_macros",
+         "//hw/ip:rtl_files",
+-        "//hw/top_earlgrey:rtl_files",
+     ],
+     visibility = ["//visibility:public"],
+ )
+diff --git a/hw/ip_templates/BUILD b/hw/ip_templates/BUILD
+index 3e8bb41965..a9431cda2e 100644
+--- a/hw/ip_templates/BUILD
++++ b/hw/ip_templates/BUILD
+@@ -1,3 +1,5 @@
+ # Copyright lowRISC contributors (OpenTitan project).
+ # Licensed under the Apache License, Version 2.0, see LICENSE for details.
+ # SPDX-License-Identifier: Apache-2.0
++
++exports_files(glob(["**"]))
+-- 
+2.50.0.727.gbf7dc18ff4-goog
+

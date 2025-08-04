@@ -87,14 +87,23 @@ def _kelvin_v2_binary_impl(ctx):
         if CcInfo in dep:
             compilation_contexts.append(dep[CcInfo].compilation_context)
             linking_contexts.append(dep[CcInfo].linking_context)
+
+    sources = []
+    headers = []
+    for src in ctx.files.srcs:
+        if src.extension in ["h", "hh", "hpp"]:
+            headers.append(src)
+        else:
+            sources.append(src)
+
     (_compilation_context, compilation_outputs) = cc_common.compile(
         actions = ctx.actions,
         cc_toolchain = cc_toolchain,
         feature_configuration = feature_configuration,
         name = ctx.label.name,
-        srcs = ctx.files.srcs,
+        srcs = sources,
         compilation_contexts = compilation_contexts,
-        private_hdrs = ctx.files.hdrs,
+        private_hdrs = headers + ctx.files.hdrs,
         user_compile_flags = ctx.attr.copts,
         defines = ctx.attr.defines,
     )
@@ -112,13 +121,58 @@ def _kelvin_v2_binary_impl(ctx):
         output_type = "executable",
     )
 
+    out_bin = ctx.actions.declare_file("{}.bin".format(ctx.label.name))
+    objcopy_tool = cc_toolchain.objcopy_executable
+
+    ctx.actions.run(
+        outputs = [out_bin],
+        inputs = [linking_outputs.executable] + cc_toolchain.all_files.to_list(),
+        executable = objcopy_tool,
+        arguments = [
+            "-O",
+            "binary",
+            linking_outputs.executable.path,
+            out_bin.path,
+        ],
+        mnemonic = "ObjCopy",
+    )
+
+    out_vmem = ctx.actions.declare_file("{}.vmem".format(ctx.label.name))
+    word_size = ctx.attr.word_size
+    srec_cat_vmem_args = [
+        out_bin.path,
+        "-binary",
+        "-byte-swap",
+        str(word_size // 8),
+        "-fill",
+        "0xff",
+        "-within",
+        out_bin.path,
+        "-binary",
+        "-range-pad",
+        str(word_size // 8),
+        "-o",
+        out_vmem.path,
+        "-vmem",
+        str(word_size),
+    ]
+    ctx.actions.run(
+        outputs = [out_vmem],
+        inputs = [out_bin],
+        executable = "srec_cat",
+        arguments = srec_cat_vmem_args,
+        mnemonic = "SrecCat",
+    )
+
     return [
         DefaultInfo(
-            files = depset([linking_outputs.executable]),
+            files = depset([linking_outputs.executable, out_bin, out_vmem]),
         ),
         OutputGroupInfo(
-            all_files = depset([linking_outputs.executable]),
+            all_files = depset([linking_outputs.executable, out_bin, out_vmem]),
             elf_file = depset([linking_outputs.executable]),
+            bin_file = depset([out_bin]),
+            vmem_file = depset([out_vmem]),
         ),
     ]
 
@@ -134,6 +188,7 @@ _kelvin_v2_binary = _kelvin_v2_rule(
         "linker_script": attr.label(allow_single_file = True),
         "linker_script_includes": attr.label_list(default = [], allow_files = True),
         "semihosting": attr.bool(),
+        "word_size": attr.int(default = 32),
         "_cc_toolchain": attr.label(default = Label("@bazel_tools//tools/cpp:current_cc_toolchain")),
     },
     fragments = ["cpp"],
@@ -145,6 +200,8 @@ def kelvin_v2_binary(
         srcs,
         tags = [],
         semihosting = False,
+        linker_script = "@kelvin_hw//toolchain:kelvin_tcm.ld",
+        word_size = 32,
         **kwargs):
     """A helper macro for generating binary artifacts for the Kelvin V2 core.
 
@@ -156,6 +213,7 @@ def kelvin_v2_binary(
       srcs: The c source files.
       tags: build tags.
       semihosting: Enable htif-style semihosting
+      linker_script: Linker script to construct the final binary.
       **kwargs: Additional arguments forward to cc_binary.
     Emits rules:
       filegroup              named: <name>.bin
@@ -171,10 +229,11 @@ def kelvin_v2_binary(
     _kelvin_v2_binary(
         name = name,
         srcs = srcs,
-        linker_script = "@kelvin_hw//toolchain:kelvin_tcm.ld",
+        linker_script = linker_script,
         semihosting = semihosting,
         tags = tags,
         deps = deps,
+        word_size = word_size,
         **kwargs
     )
 
@@ -182,5 +241,19 @@ def kelvin_v2_binary(
         name = "{}.elf".format(name),
         srcs = [name],
         output_group = "elf_file",
+        tags = tags,
+    )
+
+    native.filegroup(
+        name = "{}.vmem".format(name),
+        srcs = [name],
+        output_group = "vmem_file",
+        tags = tags,
+    )
+
+    native.filegroup(
+        name = "{}.bin".format(name),
+        srcs = [name],
+        output_group = "bin_file",
         tags = tags,
     )

@@ -76,6 +76,10 @@ def _impl(ctx):
             path = "/bin/false",
         ),
         tool_path(
+            name = "objcopy",
+            path = "wrappers/objcopy",
+        ),
+        tool_path(
             name = "strip",
             path = "/bin/false",
         ),

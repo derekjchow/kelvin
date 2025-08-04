@@ -31,16 +31,19 @@ build --action_env=VCS_HOME
 build --action_env=VC_STATIC_HOME
 build --action_env=VERDI_HOME
 build --action_env=LM_LICENSE_FILE
+build --action_env=XILINXD_LICENSE_FILE
 test --build_tag_filters="-vcs,-renode,-verilator,-synthesis"
 test --test_tag_filters="-vcs,-renode,-verilator,-synthesis"
 test --action_env=VCS_HOME
 test --action_env=VC_STATIC_HOME
 test --action_env=VERDI_HOME
 test --action_env=LM_LICENSE_FILE
+test --action_env=XILINXD_LICENSE_FILE
 run --action_env=VCS_HOME
 run --action_env=VC_STATIC_HOME
 run --action_env=VERDI_HOME
 run --action_env=LM_LICENSE_FILE
+run --action_env=XILINXD_LICENSE_FILE
 
 # Add config to enable VCS targets.
 build:vcs --build_tag_filters="vcs"

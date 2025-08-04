@@ -14,7 +14,7 @@
 
 workspace(name = "kelvin_hw")
 
-load("//rules:repos.bzl", "kelvin_repos", "renode_repos", "cvfpu_repos", "rvvi_repos")
+load("//rules:repos.bzl", "kelvin_repos", "renode_repos", "cvfpu_repos", "rvvi_repos", "fpga_repos")
 
 kelvin_repos()
 
@@ -88,10 +88,47 @@ python_register_toolchains(
     python_version = "3.9",
 )
 
+fpga_repos()
+
+load("@lowrisc_opentitan_gh//rules:nonhermetic.bzl", "nonhermetic_repo")
+
+nonhermetic_repo(name = "nonhermetic")
+
+load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
+
+load("@rules_python//python:pip.bzl", "pip_parse")
+
+pip_parse(
+   name = "ot_python_deps",
+   requirements_lock = "@lowrisc_opentitan_gh//:python-requirements.txt",
+   python_interpreter_target = "@python39_x86_64-unknown-linux-gnu//:python",
+)
+
 load("//third_party/python:requirements.bzl", "install_deps")
 install_deps()
 
-load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
+# OpenTitan's requirements need this, but for some reason do not provide it.
+http_archive(
+    name = "ot_python_deps_importlib_metadata",
+    urls = [
+        "https://files.pythonhosted.org/packages/20/b0/36bd937216ec521246249be3bf9855081de4c5e06a0c9b4219dbeda50373/importlib_metadata-8.7.0-py3-none-any.whl",
+    ],
+    sha256 = "e5dd1551894c77868a30651cef00984d50e1002d06942a7101d34870c5f02afd",
+    type = "zip",
+    build_file_content = """
+package(default_visibility = ["//visibility:public"])
+py_library(
+    name = "pkg",
+    srcs = glob(["**/*.py"]),
+    data = [] + glob(["**/*"], exclude=["**/* *", "**/*.dist-info/RECORD", "**/*.py", "**/*.pyc"]),
+    imports = ["."],
+    tags = ["pypi_name=importlib_metadata","pypi_version=8.7.0"],
+)
+""",
+)
+
+load("@ot_python_deps//:requirements.bzl", ot_install_deps = "install_deps")
+ot_install_deps()
 
 http_archive(
     name = "toolchain_kelvin_v2",

@@ -45,3 +45,33 @@ def template_rule(rule, name_map, **kwargs):
         name = rule_name,
         **rule_kwargs
     )
+
+def cc_embed_data(
+        name,
+        srcs,
+        var_name = "data",
+        testonly = False,
+        **kwargs):
+    """A rule to merge binary files into a C include file.
+    Args:
+        name: The name of the target.
+        srcs: The input binary source files.
+        var_name: The variable name of the array in output C include file.
+        testonly: The target is built for test only.
+        **kwargs: Extra arguments forwards to genrule.
+    """
+    xxd_cmd = """
+        xxd -i $< > $@;
+        sed -i -e 's#\\w*_len#{}_len#g' $@;
+        sed -i -e "s#\\w*\\[\\]#{}\\[\\]#g" $@;
+        sed -i -e 's/unsigned/const unsigned/g' $@
+        """.format(var_name, var_name)
+    outs = ["{}.{}".format(name, "h")]
+    native.genrule(
+        name = name,
+        srcs = srcs,
+        outs = outs,
+        cmd = xxd_cmd,
+        testonly = testonly,
+        **kwargs
+    )

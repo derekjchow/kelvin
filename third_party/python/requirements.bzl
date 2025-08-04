@@ -364,3 +364,40 @@ def install_deps():
             ],
         ),
     )
+
+    # FPGA
+    http_archive(
+        name = "kelvin_pip_deps_mako",
+        urls = [
+            "https://files.pythonhosted.org/packages/87/fb/99f81ac72ae23375f22b7afdb7642aba97c00a713c217124420147681a2f/mako-1.3.10-py3-none-any.whl",
+        ],
+        sha256 = "baef24a52fc4fc514a0887ac600f9f1cff3d82c61d4d700a1fa84d597b88db59",
+        type = "zip",
+        build_file_content = _build_file_content(pypi_name = "mako", pypi_version = "1.3.10"),
+    )
+
+    http_archive(
+        name = "kelvin_pip_deps_hjson",
+        urls = [
+            "https://files.pythonhosted.org/packages/1f/7f/13cd798d180af4bf4c0ceddeefba2b864a63c71645abc0308b768d67bb81/hjson-3.1.0-py3-none-any.whl",
+        ],
+        sha256 = "65713cdcf13214fb554eb8b4ef803419733f4f5e551047c9b711098ab7186b89",
+        type = "zip",
+        build_file_content = _build_file_content(pypi_name = "hjson", pypi_version = "3.1.0"),
+    )
+
+    http_archive(
+        name = "kelvin_pip_deps_fusesoc",
+        urls = [
+            "https://files.pythonhosted.org/packages/cb/a8/10f62458dda2ca07c49477448e643b10f30825b7741fdb6ec3e6188b6999/fusesoc-2.4.3-py3-none-any.whl",
+        ],
+        sha256 = "9ab4a82a5b7d4decbeb8f76049673a1b0806732ab8f807fee285bbc0452b3dc3",
+        type = "zip",
+        build_file_content = _build_file_content(
+            pypi_name = "fusesoc",
+            pypi_version = "2.4.3",
+            deps = [
+                "@kelvin_pip_deps_hjson//:pkg",
+            ],
+        ),
+    )
