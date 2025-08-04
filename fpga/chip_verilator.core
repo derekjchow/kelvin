@@ -1,0 +1,60 @@
+CAPI=2:
+name: "com.google.kelvin:fpga:chip_verilator:0.1"
+description: "Verilator-specific top-level for Kelvin."
+
+filesets:
+  files_rtl:
+    depend:
+      - com.google.kelvin:fpga:kelvin_soc:0.2
+      - kelvinv2:ip:sram:0.1
+      - kelvinv2:ip:kelvin_tlul:0.1
+      - lowrisc:dv_dpi_c:uartdpi:0.1
+      - lowrisc:dv_dpi_sv:uartdpi:0.1
+    files:
+      - rtl/chip_verilator.sv
+    file_type: systemVerilogSource
+  sim_src:
+    depend:
+      - lowrisc:dv_verilator:memutil_verilator
+      - lowrisc:dv_verilator:simutil_verilator
+    files:
+      - main.cc
+    file_type: cppSource
+
+parameters:
+  ClockFrequencyMhz:
+    datatype: int
+    description: "Target clock frequency in MHz."
+    default: 10
+    paramtype: vlogparam
+  MemInitFile:
+    datatype: str
+    description: Path to ROM
+    default: "fpga/wfi.bin"
+    paramtype: vlogparam
+
+targets:
+  default: &default_target
+    filesets:
+      - files_rtl
+  sim:
+    <<: *default_target
+    filesets:
+      - files_rtl
+      - sim_src
+    toplevel: chip_verilator
+    default_tool: verilator
+    parameters:
+      - ClockFrequencyMhz
+      - MemInitFile
+    tools:
+      verilator:
+        mode: cc
+        verilator_options:
+          - '--trace'
+          - '--trace-fst'
+          - '-CFLAGS "-DTOPLEVEL_NAME=chip_verilator -std=c++17 -Wall -DVM_TRACE_FMT_FST"'
+          - '-LDFLAGS "-lelf -lutil"'
+          - '-Wall'
+          - '--threads 16'
+          - '-Wno-fatal'

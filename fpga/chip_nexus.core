@@ -1,0 +1,63 @@
+CAPI=2:
+name: "com.google.kelvin:fpga:chip_nexus:0.1"
+description: "Nexus-specific top-level for Kelvin."
+
+filesets:
+  files_rtl:
+    depend:
+      - com.google.kelvin:fpga:kelvin_soc
+    files:
+      - rtl/chip_nexus.sv
+      - rtl/clkgen_wrapper.sv
+      - rtl/clkgen_xilultrascaleplus.sv
+    file_type: systemVerilogSource
+
+  files_constraints:
+    files:
+      - pins.xdc
+    file_type: xdc
+
+  files_tcl:
+    files:
+      - vivado_setup_hooks.tcl: { file_type: tclSource }
+
+parameters:
+  ClockFrequencyMhz:
+    datatype: int
+    description: "Target clock frequency in MHz."
+    default: 10
+    paramtype: vlogparam
+  MemInitFile:
+    datatype: str
+    description: Path to ROM
+    default: "fpga/wfi.bin"
+    paramtype: vlogparam
+  USE_GENERIC:
+    datatype: bool
+    description: "Use generic primitives"
+    default: false
+    paramtype: vlogdefine
+  FPGA_XILINX:
+    datatype: bool
+    description: "Use Xilinx FPGA primitives"
+    default: false
+    paramtype: vlogdefine
+
+targets:
+  default: &default_target
+    filesets:
+      - files_rtl
+      - files_constraints
+      - files_tcl
+  synth:
+    <<: *default_target
+    toplevel: chip_nexus
+    default_tool: vivado
+    parameters:
+      - ClockFrequencyMhz
+      - MemInitFile
+      - USE_GENERIC=true
+      - FPGA_XILINX=true
+    tools:
+      vivado:
+        part: "xcvu13p-fhga2104-2-e"

@@ -1,0 +1,95 @@
+{
+  // Top-level configuration for the Kelvin SoC crossbar.
+  name: "kelvin_soc_xbar",
+  clock: "clk_i",
+  reset: "rst_ni",
+
+  // Define all the hosts (masters) and devices (slaves) in the system.
+  nodes: [
+    // Hosts (CPU Cores)
+    { name: "kelvin_core", type: "host", clock: "clk_i", reset: "rst_ni", addr_space: "asid0" },
+    { name: "ibex_core_i", type: "host", clock: "clk_i", reset: "rst_ni", addr_space: "asid0" },
+    { name: "ibex_core_d", type: "host", clock: "clk_i", reset: "rst_ni", addr_space: "asid0" },
+
+    // Devices (Peripherals and Memory)
+    {
+      name: "kelvin_device",
+      type: "device",
+      clock: "clk_i",
+      reset: "rst_ni",
+      xbar: false,
+      addr_range: [
+        { base_addrs: {"asid0": "0x00000000"}, size_byte: "0x2000" }, // 8kB
+        { base_addrs: {"asid0": "0x00010000"}, size_byte: "0x8000" }, // 32kB
+        { base_addrs: {"asid0": "0x00030000"}, size_byte: "0x1000" }  // 4kB
+      ]
+    },
+    {
+      name: "rom",
+      type: "device",
+      clock: "clk_i",
+      reset: "rst_ni",
+      xbar: false,
+      addr_range: [{ base_addrs: {"asid0": "0x10000000"}, size_byte: "0x8000" }] // 32kB
+    },
+    {
+      name: "sram",
+      type: "device",
+      clock: "clk_i",
+      reset: "rst_ni",
+      xbar: false,
+      addr_range: [{ base_addrs: {"asid0": "0x20000000"}, size_byte: "0x400000" }] // 4MB
+    },
+    {
+      name: "uart0",
+      type: "device",
+      clock: "clk_i",
+      reset: "rst_ni",
+      xbar: false,
+      addr_range: [{ base_addrs: {"asid0": "0x40000000"}, size_byte: "0x1000" }]
+    },
+    {
+      name: "uart1",
+      type: "device",
+      clock: "clk_i",
+      reset: "rst_ni",
+      xbar: false,
+      addr_range: [{ base_addrs: {"asid0": "0x40010000"}, size_byte: "0x1000" }]
+    },
+    {
+      name: "spi0",
+      type: "device",
+      clock: "spi_clk_i", // Using a separate clock for the SPI peripheral
+      reset: "rst_ni",
+      xbar: false,
+      addr_range: [{ base_addrs: {"asid0": "0x40020000"}, size_byte: "0x1000" }]
+    }
+  ],
+
+  // Define which hosts can access which devices.
+  connections: {
+    kelvin_core: [ "sram", "uart1", "spi0" ],
+    ibex_core_i: [ "rom", "sram" ],
+    ibex_core_d: [ "rom", "sram", "uart0", "kelvin_device" ]
+  },
+
+  // Define clock connections for all components.
+  clock_connections: {
+    clk_i: [
+      "kelvin_core",
+      "ibex_core_i",
+      "ibex_core_d",
+      "kelvin_device",
+      "rom",
+      "sram",
+      "uart0",
+      "uart1"
+    ],
+    spi_clk_i: [
+      "spi0"
+    ]
+  },
+  reset_connections: {
+    rst_ni: "rst_ni"
+  }
+}
