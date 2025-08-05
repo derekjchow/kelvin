@@ -191,11 +191,11 @@ module rvv_backend_alu_unit_mask
                 result_valid = alu_uop_valid&(vs1_data_valid==1'b0)&vs2_data_valid&((vm==1'b1)||((vm==1'b0)&v0_data_valid));
                 alu_sub_opcode = OP_VIOTA;
                 // it can get the viota result in one cycle whose element index in vd belongs to 0-31.
-                // Otherwise, it will get the result in next cycle.
+                // Otherwise, it will get the result in the next cycle.
                 case(vd_eew)
-                  EEW8   : result_2cycle = uop_index >= 32/(`VLEN/8);
-                  EEW16  : result_2cycle = uop_index >= 32/(`VLEN/16);
-                  default: result_2cycle = uop_index >= 32/(`VLEN/32);  //EEW32
+                  EEW8   : result_2cycle = uop_index >= (`UOP_INDEX_WIDTH)'(32/(`VLEN/8));
+                  EEW16  : result_2cycle = uop_index >= (`UOP_INDEX_WIDTH)'(32/(`VLEN/16));
+                  default: result_2cycle = uop_index >= (`UOP_INDEX_WIDTH)'(32/(`VLEN/32));  //EEW32
                 endcase
               end
               VID: begin
@@ -330,7 +330,7 @@ module rvv_backend_alu_unit_mask
     else begin
       for(int i=0;i<`VLEN;i++) begin
         if (result_data_vmsof[i]==1'b1)
-          result_data_vfirst = i;         // one-hot to 8421BCD. get the index of first 1
+          result_data_vfirst = (`VLEN)'(i);         // one-hot to 8421BCD. get the index of first 1
       end
     end
   end
@@ -347,24 +347,24 @@ module rvv_backend_alu_unit_mask
     end
 
     for(j=0; j<`VLENB;j++) begin: GET_VIOTA8
-      if ($clog2(32/`VLENB)<=3) // There may be up to 8 uops, so RHS in if-condition is $clog2(8)=3
-        assign result_data_viota8[j] = data_viota_per32[0][{alu_uop.uop_index[$clog2(32/`VLENB)-1:0],j[$clog2(`VLENB)-1:0]}];
+      if ((3)'($clog2(32/`VLENB)) <= 3'd3) // There may be up to 8 uops, so RHS in if-condition is $clog2(8)=3
+        assign result_data_viota8[j] = ($clog2(`VLEN)+1)'(data_viota_per32[0][{alu_uop.uop_index[$clog2(32/`VLENB)-1:0],j[$clog2(`VLENB)-1:0]}]);
       else
-        assign result_data_viota8[j] = data_viota_per32[0][{alu_uop.uop_index[2:0],j[$clog2(`VLENB)-1:0]}];
+        assign result_data_viota8[j] = ($clog2(`VLEN)+1)'(data_viota_per32[0][{alu_uop.uop_index[2:0],j[$clog2(`VLENB)-1:0]}]);
     end
 
     for(j=0; j<`VLEN/`HWORD_WIDTH;j++) begin: GET_VIOTA16
-      if ($clog2(32/(`VLEN/`HWORD_WIDTH))<=3)
-        assign result_data_viota16[j] = data_viota_per32[0][{alu_uop.uop_index[$clog2(32/(`VLEN/`HWORD_WIDTH))-1:0],j[$clog2(`VLEN/`HWORD_WIDTH)-1:0]}];
+      if ((3)'($clog2(32/(`VLEN/`HWORD_WIDTH))) <= 3'd3)
+        assign result_data_viota16[j] = ($clog2(`VLEN)+1)'(data_viota_per32[0][{alu_uop.uop_index[$clog2(32/(`VLEN/`HWORD_WIDTH))-1:0],j[$clog2(`VLEN/`HWORD_WIDTH)-1:0]}]);
       else
-        assign result_data_viota16[j] = data_viota_per32[0][{alu_uop.uop_index[2:0],j[$clog2(`VLEN/`HWORD_WIDTH)-1:0]}];
+        assign result_data_viota16[j] = ($clog2(`VLEN)+1)'(data_viota_per32[0][{alu_uop.uop_index[2:0],j[$clog2(`VLEN/`HWORD_WIDTH)-1:0]}]);
     end
 
     for(j=0; j<`VLEN/`WORD_WIDTH;j++) begin: GET_VIOTA32
-      if ($clog2(32/(`VLEN/`WORD_WIDTH))<=3)
-        assign result_data_viota32[j] = data_viota_per32[0][{alu_uop.uop_index[$clog2(32/(`VLEN/`WORD_WIDTH))-1:0],j[$clog2(`VLEN/`WORD_WIDTH)-1:0]}];
+      if ((3)'($clog2(32/(`VLEN/`WORD_WIDTH))) <= 3'd3)
+        assign result_data_viota32[j] = ($clog2(`VLEN)+1)'(data_viota_per32[0][{alu_uop.uop_index[$clog2(32/(`VLEN/`WORD_WIDTH))-1:0],j[$clog2(`VLEN/`WORD_WIDTH)-1:0]}]);
       else
-        assign result_data_viota32[j] = data_viota_per32[0][{alu_uop.uop_index[2:0],j[$clog2(`VLEN/`WORD_WIDTH)-1:0]}];
+        assign result_data_viota32[j] = ($clog2(`VLEN)+1)'(data_viota_per32[0][{alu_uop.uop_index[2:0],j[$clog2(`VLEN/`WORD_WIDTH)-1:0]}]);
     end
 
     for(j=0;j<`VLEN/64;j++) begin: GET_VIOTA_PER64_J
@@ -378,19 +378,19 @@ module rvv_backend_alu_unit_mask
   // vid
   generate
     for(j=0;j<`VLENB;j++) begin: GET_VID8
-      assign result_data_vid8[j*`BYTE_WIDTH +: `BYTE_WIDTH] = {uop_index, j[$clog2(`VLENB)-1:0]};
+      assign result_data_vid8[j*`BYTE_WIDTH +: `BYTE_WIDTH] = (`BYTE_WIDTH)'({uop_index, j[$clog2(`VLENB)-1:0]});
     end
   endgenerate
 
   generate
     for(j=0;j<`VLEN/`HWORD_WIDTH;j++) begin: GET_VID16
-      assign result_data_vid16[j*`HWORD_WIDTH +: `HWORD_WIDTH] = {uop_index, j[$clog2(`VLEN/`HWORD_WIDTH)-1:0]};
+      assign result_data_vid16[j*`HWORD_WIDTH +: `HWORD_WIDTH] = (`HWORD_WIDTH)'({uop_index, j[$clog2(`VLEN/`HWORD_WIDTH)-1:0]});
     end
   endgenerate
 
   generate
     for(j=0;j<`VLEN/`WORD_WIDTH;j++) begin: GET_VID32
-      assign result_data_vid32[j*`WORD_WIDTH +: `WORD_WIDTH] = {uop_index, j[$clog2(`VLEN/`WORD_WIDTH)-1:0]};
+      assign result_data_vid32[j*`WORD_WIDTH +: `WORD_WIDTH] = (`WORD_WIDTH)'({uop_index, j[$clog2(`VLEN/`WORD_WIDTH)-1:0]});
     end
   endgenerate
 
@@ -464,17 +464,17 @@ module rvv_backend_alu_unit_mask
                 case(vd_eew)
                   EEW8: begin
                     for(int i=0; i<`VLENB;i++) begin
-                      result_data[i*`BYTE_WIDTH +: `BYTE_WIDTH] = result_data_viota8[i];
+                      result_data[i*`BYTE_WIDTH +: `BYTE_WIDTH] = (`BYTE_WIDTH)'(result_data_viota8[i]);
                     end
                   end
                   EEW16: begin
                     for(int i=0; i<`VLEN/`HWORD_WIDTH;i++) begin
-                      result_data[i*`HWORD_WIDTH +: `HWORD_WIDTH] = result_data_viota16[i];
+                      result_data[i*`HWORD_WIDTH +: `HWORD_WIDTH] = (`HWORD_WIDTH)'(result_data_viota16[i]);
                     end
                   end
                   EEW32: begin
                     for(int i=0; i<`VLEN/`WORD_WIDTH;i++) begin
-                      result_data[i*`WORD_WIDTH +: `WORD_WIDTH] = result_data_viota32[i];
+                      result_data[i*`WORD_WIDTH +: `WORD_WIDTH] = (`WORD_WIDTH)'(result_data_viota32[i]);
                     end
                   end
                 endcase
@@ -502,7 +502,7 @@ module rvv_backend_alu_unit_mask
 //
 // submit result to ROB
 //
-  assign vstart_onehot = 1'b1<<vstart;
+  assign vstart_onehot = (`VLEN)'('b1)<<vstart;
   assign vstart_onehot_sub1 = vstart_onehot - 1'b1;
 
   always_comb begin

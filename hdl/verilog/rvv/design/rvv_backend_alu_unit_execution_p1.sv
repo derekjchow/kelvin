@@ -32,8 +32,8 @@ module rvv_backend_alu_unit_execution_p1
   generate
     if(`VLEN==128) begin
       for(j=0;j<64;j++) begin: GET_VIOTA128
-        assign result_data_viota[j] = alu_uop.data_viota_per64[0][j];
-        assign result_data_viota[j+64] = {1'b0,alu_uop.data_viota_per64[1][j]} + {1'b0,alu_uop.data_viota_per64[0][63]};
+        assign result_data_viota[j] = ($clog2(`VLEN)+1)'(alu_uop.data_viota_per64[0][j]);
+        assign result_data_viota[j+64] = ($clog2(`VLEN)+1)'({1'b0,alu_uop.data_viota_per64[1][j]} + {1'b0,alu_uop.data_viota_per64[0][63]});
       end
     end
   endgenerate
@@ -53,7 +53,7 @@ module rvv_backend_alu_unit_execution_p1
   endgenerate
   
   // vcpop
-  assign result_data_vcpop = result_data_viota[`VLEN-1];
+  assign result_data_vcpop = (`XLEN)'(result_data_viota[`VLEN-1]);
 
 //
 // submit result to ROB
@@ -72,7 +72,7 @@ module rvv_backend_alu_unit_execution_p1
     // calculate result data
     case(alu_uop.alu_sub_opcode)
       OP_VCPOP: begin
-        result.w_data = result_data_vcpop;
+        result.w_data = (`VLEN)'(result_data_vcpop);
         result.vsaturate = 'b0;
       end
       OP_VIOTA: begin
@@ -81,17 +81,17 @@ module rvv_backend_alu_unit_execution_p1
         case(alu_uop.vd_eew)
           EEW8: begin
             for(int i=0; i<`VLENB;i++) begin
-              result.w_data[i*`BYTE_WIDTH +: `BYTE_WIDTH] = result_data_viota8[i];
+              result.w_data[i*`BYTE_WIDTH +: `BYTE_WIDTH] = (`BYTE_WIDTH)'(result_data_viota8[i]);
             end
           end
           EEW16: begin
             for(int i=0; i<`VLEN/`HWORD_WIDTH;i++) begin
-              result.w_data[i*`HWORD_WIDTH +: `HWORD_WIDTH] = result_data_viota16[i];
+              result.w_data[i*`HWORD_WIDTH +: `HWORD_WIDTH] = (`HWORD_WIDTH)'(result_data_viota16[i]);
             end
           end
           EEW32: begin
             for(int i=0; i<`VLEN/`WORD_WIDTH;i++) begin
-              result.w_data[i*`WORD_WIDTH +: `WORD_WIDTH] = result_data_viota32[i];
+              result.w_data[i*`WORD_WIDTH +: `WORD_WIDTH] = (`WORD_WIDTH)'(result_data_viota32[i]);
             end
           end
         endcase

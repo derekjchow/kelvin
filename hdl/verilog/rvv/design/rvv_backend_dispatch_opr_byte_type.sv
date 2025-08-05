@@ -86,7 +86,7 @@ module rvv_backend_dispatch_opr_byte_type
         always_comb begin
           case (uop_info.uop_exe_unit)
             RDT:begin
-              uop_vs2_start = uop_info.uop_index << (VLENB_WIDTH - vs2_eew_shift);
+              uop_vs2_start = (`VSTART_WIDTH)'(uop_info.uop_index) << (VLENB_WIDTH - vs2_eew_shift);
             end
             default:begin
               case({eew_max,uop_info.vs2_eew})
@@ -94,16 +94,16 @@ module rvv_backend_dispatch_opr_byte_type
                 {EEW16,EEW16},
                 {EEW8,EEW8}: begin
                   // regular and narrowing instruction
-                  uop_vs2_start = uop_info.uop_index << (VLENB_WIDTH - vs2_eew_shift);
+                  uop_vs2_start = (`VSTART_WIDTH)'(uop_info.uop_index) << (VLENB_WIDTH - vs2_eew_shift);
                 end
                 {EEW32,EEW16},
                 {EEW16,EEW8}: begin
                   // widening instruction: EEW_vd:EEW_vs = 2:1
-                  uop_vs2_start = uop_info.uop_index[`UOP_INDEX_WIDTH-1:1] << (VLENB_WIDTH - vs2_eew_shift);
+                  uop_vs2_start = (`VSTART_WIDTH)'(uop_info.uop_index[`UOP_INDEX_WIDTH-1:1]) << (VLENB_WIDTH - vs2_eew_shift);
                 end
                 {EEW32,EEW8}: begin
                   // widening instruction: EEW_vd:EEW_vs = 4:1
-                  uop_vs2_start = uop_info.uop_index[`UOP_INDEX_WIDTH-1:2] << (VLENB_WIDTH - vs2_eew_shift);
+                  uop_vs2_start = (`VSTART_WIDTH)'(uop_info.uop_index[`UOP_INDEX_WIDTH-1:2]) << (VLENB_WIDTH - vs2_eew_shift);
                 end
                 default: begin
                   uop_vs2_start = 'b0;
@@ -118,7 +118,7 @@ module rvv_backend_dispatch_opr_byte_type
         for (i=0; i<`VLENB; i++) begin : gen_vs2_byte_type
             // ele_index = uop_index * (VLEN/vs2_eew) + BYTE_INDEX[MSB:vs2_eew]
             assign vs2_enable[i] = uop_info.vm ? 1'b1 : vs2_enable_tmp[i >> vs2_eew_shift];
-            assign vs2_ele_index[i] = uop_vs2_start + (i >> vs2_eew_shift);
+            assign vs2_ele_index[i] = (`VL_WIDTH)'(uop_vs2_start) + (i >> vs2_eew_shift);
             always_comb begin
                 if (uop_info.ignore_vta&uop_info.ignore_vma)
                     vs2[i] = BODY_ACTIVE;       
@@ -127,8 +127,7 @@ module rvv_backend_dispatch_opr_byte_type
                 else if (vs2_ele_index[i] < {1'b0, uop_info.vstart}) 
                     vs2[i] = NOT_CHANGE; // prestart
                 else begin 
-                    vs2[i] = (vs2_enable[i] || uop_info.ignore_vma) ? BODY_ACTIVE
-                                                                                     : BODY_INACTIVE;
+                    vs2[i] = (vs2_enable[i] || uop_info.ignore_vma) ? BODY_ACTIVE : BODY_INACTIVE;
                 end
             end
         end
@@ -150,21 +149,21 @@ module rvv_backend_dispatch_opr_byte_type
             {EEW32,EEW32},
             {EEW16,EEW16},
             {EEW8,EEW8}: begin
-              uop_v0_start = uop_info.uop_index << (VLENB_WIDTH - vd_eew_shift);
+              uop_v0_start = (`VSTART_WIDTH)'(uop_info.uop_index) << (VLENB_WIDTH - vd_eew_shift);
               uop_vd_start = uop_v0_start; 
               uop_vd_end = uop_vd_start + (`VLENB >> eew_max_shift) - 1'b1;
             end
             {EEW32,EEW16},
             {EEW16,EEW8}: begin
               // narrowing instruction: EEW_vd:EEW_vs = 1:2
-              uop_v0_start = uop_info.uop_index[`UOP_INDEX_WIDTH-1:1] << (VLENB_WIDTH - vd_eew_shift);
+              uop_v0_start = (`VSTART_WIDTH)'(uop_info.uop_index[`UOP_INDEX_WIDTH-1:1]) << (VLENB_WIDTH - vd_eew_shift);
               uop_vd_start = uop_info.uop_index[0] ? uop_v0_start + (`VLENB >> eew_max_shift):
                                                      uop_v0_start;
               uop_vd_end = uop_vd_start + (`VLENB >> eew_max_shift) - 1'b1 ; 
             end
             {EEW32,EEW8}: begin
               // narrowing instruction: EEW_vd:EEW_vs = 1:4
-              uop_v0_start = uop_info.uop_index[`UOP_INDEX_WIDTH-1:2] << VLENB_WIDTH;
+              uop_v0_start = (`VSTART_WIDTH)'(uop_info.uop_index[`UOP_INDEX_WIDTH-1:2]) << VLENB_WIDTH;
               case(uop_info.uop_index[1:0])
                 2'd3: begin
                   uop_vd_start = uop_v0_start + `VLENB*3/4;
@@ -195,7 +194,7 @@ module rvv_backend_dispatch_opr_byte_type
           if (i==0) begin
             // ele_index = uop_index * (VLEN/vd_eew) + BYTE_INDEX[MSB:vd_eew]
             assign vd_enable[0] = uop_info.vm ? 1'b1 : vd_enable_tmp[0];
-            assign vd_ele_index[0] = uop_v0_start;
+            assign vd_ele_index[0] = (`VL_WIDTH)'(uop_v0_start);
 
             always_comb begin
               v0_strobe[0] = 'b0;
@@ -228,7 +227,7 @@ module rvv_backend_dispatch_opr_byte_type
           end else begin
             // ele_index = uop_index * (VLEN/vd_eew) + BYTE_INDEX[MSB:vd_eew]
             assign vd_enable[i] = uop_info.vm ? 1'b1 : vd_enable_tmp[i >> vd_eew_shift];
-            assign vd_ele_index[i] = uop_v0_start + (i >> vd_eew_shift);
+            assign vd_ele_index[i] = (`VL_WIDTH)'(uop_v0_start) + (i >> vd_eew_shift);
 
             always_comb begin
               v0_strobe[i] = 'b0;

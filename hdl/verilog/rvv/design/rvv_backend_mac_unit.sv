@@ -726,12 +726,12 @@ always@(*) begin
                                                                                       mac_rslt_full_eew8_d1[i*4+j][7+:8] + {7'b0,vsmul_round_incr_eew8_d1[i*4+j]};//right shift 7bit then +"1"
         vsmul_sat_eew8_d1[i*4+j] = mac_rslt_full_eew8_d1[i*4+j][15:14] == 2'b01;
         //Below are for vmac related instructions
-        vmac_mul_add_eew8_no_widen_d1[i*4+j] = mac_addsrc_d1[8*(i*4+j) +: 8] + mac_rslt_eew8_no_widen_d1[8*(i*4+j) +: 8];//9bit
-        vmac_mul_sub_eew8_no_widen_d1[i*4+j] = mac_addsrc_d1[8*(i*4+j) +: 8] - mac_rslt_eew8_no_widen_d1[8*(i*4+j) +: 8];
+        vmac_mul_add_eew8_no_widen_d1[i*4+j] = {1'b0,mac_addsrc_d1[8*(i*4+j) +: 8]} + {1'b0,mac_rslt_eew8_no_widen_d1[8*(i*4+j) +: 8]};//9bit
+        vmac_mul_sub_eew8_no_widen_d1[i*4+j] = {1'b0,mac_addsrc_d1[8*(i*4+j) +: 8]} - {1'b0,mac_rslt_eew8_no_widen_d1[8*(i*4+j) +: 8]};
         vmac_rslt_eew8_no_widen_d1[8*(i*4+j) +:8] = mac_mul_reverse_d1 ? vmac_mul_sub_eew8_no_widen_d1[i*4+j][7:0] :
                                                                          vmac_mul_add_eew8_no_widen_d1[i*4+j][7:0];
-        vmac_mul_add_eew8_widen_d1[i*4+j] = mac_addsrc_widen_d1[16*(i*4+j) +: 16] + mac_rslt_eew8_widen_d1[16*(i*4+j) +: 16];//17bit
-        vmac_mul_sub_eew8_widen_d1[i*4+j] = mac_addsrc_widen_d1[16*(i*4+j) +: 16] - mac_rslt_eew8_widen_d1[16*(i*4+j) +: 16];
+        vmac_mul_add_eew8_widen_d1[i*4+j] = {1'b0,mac_addsrc_widen_d1[16*(i*4+j) +: 16]} + {1'b0,mac_rslt_eew8_widen_d1[16*(i*4+j) +: 16]};//17bit
+        vmac_mul_sub_eew8_widen_d1[i*4+j] = {1'b0,mac_addsrc_widen_d1[16*(i*4+j) +: 16]} - {1'b0,mac_rslt_eew8_widen_d1[16*(i*4+j) +: 16]};
         vmac_rslt_eew8_widen_d1[16*(i*4+j) +: 16] = mac_mul_reverse_d1 ? vmac_mul_sub_eew8_widen_d1[i*4+j][15:0] :
                                                                         vmac_mul_add_eew8_widen_d1[i*4+j][15:0];
     end
@@ -765,12 +765,12 @@ always@(*) begin
                                                                                        mac_rslt_full_eew16_d1[i*2+j][15+:16] + {15'b0,vsmul_round_incr_eew16_d1[i*2+j]};//right shift 15bit then +"1"
       vsmul_sat_eew16_d1[i*2+j] = mac_rslt_full_eew16_d1[i*2+j][31:30] == 2'b01;
       //Below are for vmac related instructions
-      vmac_mul_add_eew16_no_widen_d1[i*2+j] = mac_addsrc_d1[16*(i*2+j) +: 16] + mac_rslt_eew16_no_widen_d1[16*(i*2+j) +: 16];//17bit
-      vmac_mul_sub_eew16_no_widen_d1[i*2+j] = mac_addsrc_d1[16*(i*2+j) +: 16] - mac_rslt_eew16_no_widen_d1[16*(i*2+j) +: 16];
+      vmac_mul_add_eew16_no_widen_d1[i*2+j] = {1'b0,mac_addsrc_d1[16*(i*2+j) +: 16]} + {1'b0,mac_rslt_eew16_no_widen_d1[16*(i*2+j) +: 16]};//17bit
+      vmac_mul_sub_eew16_no_widen_d1[i*2+j] = {1'b0,mac_addsrc_d1[16*(i*2+j) +: 16]} - {1'b0,mac_rslt_eew16_no_widen_d1[16*(i*2+j) +: 16]};
       vmac_rslt_eew16_no_widen_d1[16*(i*2+j) +:16] = mac_mul_reverse_d1 ? vmac_mul_sub_eew16_no_widen_d1[i*2+j][15:0] :
                                                                           vmac_mul_add_eew16_no_widen_d1[i*2+j][15:0];
-      vmac_mul_add_eew16_widen_d1[i*2+j] = mac_addsrc_widen_d1[32*(i*2+j) +: 32] + mac_rslt_eew16_widen_d1[32*(i*2+j) +: 32];//33bit
-      vmac_mul_sub_eew16_widen_d1[i*2+j] = mac_addsrc_widen_d1[32*(i*2+j) +: 32] - mac_rslt_eew16_widen_d1[32*(i*2+j) +: 32];
+      vmac_mul_add_eew16_widen_d1[i*2+j] = {1'b0,mac_addsrc_widen_d1[32*(i*2+j) +: 32]} + {1'b0,mac_rslt_eew16_widen_d1[32*(i*2+j) +: 32]};//33bit
+      vmac_mul_sub_eew16_widen_d1[i*2+j] = {1'b0,mac_addsrc_widen_d1[32*(i*2+j) +: 32]} - {1'b0,mac_rslt_eew16_widen_d1[32*(i*2+j) +: 32]};
       vmac_rslt_eew16_widen_d1[32*(i*2+j) +: 32] = mac_mul_reverse_d1 ? vmac_mul_sub_eew16_widen_d1[i*2+j][31:0] :
                                                                        vmac_mul_add_eew16_widen_d1[i*2+j][31:0];
     end
@@ -822,12 +822,12 @@ always@(*) begin
                                                                              mac_rslt_full_eew32_d1[i][31+:32] + {31'b0,vsmul_round_incr_eew32_d1[i]};//right shift 31bit then +"1"
     vsmul_sat_eew32_d1[i] = mac_rslt_full_eew32_d1[i][63:62] == 2'b01;
     //Below are for vmac related instructions
-    vmac_mul_add_eew32_no_widen_d1[i] = mac_addsrc_d1[32*i +: 32] + mac_rslt_eew32_no_widen_d1[32*i +: 32];//33bit
-    vmac_mul_sub_eew32_no_widen_d1[i] = mac_addsrc_d1[32*i +: 32] - mac_rslt_eew32_no_widen_d1[32*i +: 32];
+    vmac_mul_add_eew32_no_widen_d1[i] = {1'b0,mac_addsrc_d1[32*i +: 32]} + {1'b0,mac_rslt_eew32_no_widen_d1[32*i +: 32]};//33bit
+    vmac_mul_sub_eew32_no_widen_d1[i] = {1'b0,mac_addsrc_d1[32*i +: 32]} - {1'b0,mac_rslt_eew32_no_widen_d1[32*i +: 32]};
     vmac_rslt_eew32_no_widen_d1[32*i +:32] = mac_mul_reverse_d1 ? vmac_mul_sub_eew32_no_widen_d1[i][31:0] :
                                                                   vmac_mul_add_eew32_no_widen_d1[i][31:0];
-    vmac_mul_add_eew32_widen_d1[i] = mac_addsrc_widen_d1[64*i +: 64] + mac_rslt_eew32_widen_d1[64*i +: 64];//65bit
-    vmac_mul_sub_eew32_widen_d1[i] = mac_addsrc_widen_d1[64*i +: 64] - mac_rslt_eew32_widen_d1[64*i +: 64];
+    vmac_mul_add_eew32_widen_d1[i] = {1'b0,mac_addsrc_widen_d1[64*i +: 64]} + {1'b0,mac_rslt_eew32_widen_d1[64*i +: 64]};//65bit
+    vmac_mul_sub_eew32_widen_d1[i] = {1'b0,mac_addsrc_widen_d1[64*i +: 64]} - {1'b0,mac_rslt_eew32_widen_d1[64*i +: 64]};
     vmac_rslt_eew32_widen_d1[64*i +: 64] = mac_mul_reverse_d1 ? vmac_mul_sub_eew32_widen_d1[i][63:0] :
                                                                vmac_mul_add_eew32_widen_d1[i][63:0];
   end

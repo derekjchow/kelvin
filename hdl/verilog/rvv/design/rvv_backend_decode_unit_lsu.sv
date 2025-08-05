@@ -3049,7 +3049,7 @@ module rvv_backend_decode_unit_lsu
   // calculate the uop_index used in decoding uops 
   generate
     for(j=0;j<`NUM_DE_UOP;j++) begin: GET_UOP_INDEX
-      assign uop_index_current[j] = j[`UOP_INDEX_WIDTH-1:0]+uop_index_base;
+      assign uop_index_current[j] = (`UOP_INDEX_WIDTH+1)'(j[`UOP_INDEX_WIDTH-1:0]+uop_index_base);
     end
   endgenerate
 
@@ -3061,29 +3061,26 @@ module rvv_backend_decode_unit_lsu
     uop_index_max = 'b0;
     
     case(emul_max)
-      EMUL1: begin
-        uop_index_max = 'd0;
-      end
       EMUL2: begin
-        uop_index_max = 'd1;
+        uop_index_max = (`UOP_INDEX_WIDTH)'('d1);
       end
       EMUL3: begin
-        uop_index_max = 'd2;
+        uop_index_max = (`UOP_INDEX_WIDTH)'('d2);
       end
       EMUL4: begin
-        uop_index_max = 'd3;
+        uop_index_max = (`UOP_INDEX_WIDTH)'('d3);
       end
       EMUL5: begin
-        uop_index_max = 'd4;
+        uop_index_max = (`UOP_INDEX_WIDTH)'('d4);
       end
       EMUL6: begin
-        uop_index_max = 'd5;
+        uop_index_max = (`UOP_INDEX_WIDTH)'('d5);
       end
       EMUL7: begin
-        uop_index_max = 'd6;
+        uop_index_max = (`UOP_INDEX_WIDTH)'('d6);
       end
       EMUL8: begin
-        uop_index_max = 'd7;
+        uop_index_max = (`UOP_INDEX_WIDTH)'('d7);
       end
     endcase
   end

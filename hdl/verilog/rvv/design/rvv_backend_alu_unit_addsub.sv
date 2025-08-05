@@ -1674,9 +1674,9 @@ module rvv_backend_alu_unit_addsub
     logic                         cout;
 
     if (opcode==ADDSUB_VADD) 
-      {cout,result} = src_x + src_y + src_cin;
+      {cout,result} = (`BYTE_WIDTH+1)'(src_x) + (`BYTE_WIDTH+1)'(src_y) + (`BYTE_WIDTH+1)'(src_cin);
     else //(opcode==ADDSUB_VSUB)
-      {cout,result} = src_x - src_y - src_cin;
+      {cout,result} = (`BYTE_WIDTH+1)'(src_x) - (`BYTE_WIDTH+1)'(src_y) - (`BYTE_WIDTH+1)'(src_cin);
     
     return {cout,result};
 
@@ -1726,7 +1726,7 @@ module rvv_backend_alu_unit_addsub
     logic [`HWORD_WIDTH:0]   res_lo;
 
     res_hi = src_x[`WORD_WIDTH-1:`HWORD_WIDTH] + 1'b1;
-    res_lo = src_x[`HWORD_WIDTH-1:0] + 1'b1;
+    res_lo = (`HWORD_WIDTH+1)'(src_x[`HWORD_WIDTH-1:0]) + 1'b1;
     
     if (res_lo[`HWORD_WIDTH])
       return {res_hi,res_lo[`HWORD_WIDTH-1:0]};

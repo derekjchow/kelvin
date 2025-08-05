@@ -371,36 +371,36 @@ module rvv_backend_alu_unit_other
           VZEXT_VF2: begin
             case(vs2_eew)
               EEW8: begin
-                result_data_extend[(2*j  )*`HWORD_WIDTH +: `HWORD_WIDTH] = src2_data[(2*j  )*`BYTE_WIDTH +: `BYTE_WIDTH];
-                result_data_extend[(2*j+1)*`HWORD_WIDTH +: `HWORD_WIDTH] = src2_data[(2*j+1)*`BYTE_WIDTH +: `BYTE_WIDTH];
+                result_data_extend[(2*j  )*`HWORD_WIDTH +: `HWORD_WIDTH] = {8'b0, src2_data[(2*j  )*`BYTE_WIDTH +: `BYTE_WIDTH]};
+                result_data_extend[(2*j+1)*`HWORD_WIDTH +: `HWORD_WIDTH] = {8'b0, src2_data[(2*j+1)*`BYTE_WIDTH +: `BYTE_WIDTH]};
               end
               EEW16: begin
-                result_data_extend[j*`WORD_WIDTH +: `WORD_WIDTH] = src2_data[j*`HWORD_WIDTH +: `HWORD_WIDTH];
+                result_data_extend[j*`WORD_WIDTH +: `WORD_WIDTH] = {16'b0, src2_data[j*`HWORD_WIDTH +: `HWORD_WIDTH]};
               end
             endcase
           end
           VSEXT_VF2: begin
             case(vs2_eew)
               EEW8: begin
-                result_data_extend[(2*j  )*`HWORD_WIDTH +: `HWORD_WIDTH] = $signed(src2_data[(2*j  )*`BYTE_WIDTH +: `BYTE_WIDTH]);
-                result_data_extend[(2*j+1)*`HWORD_WIDTH +: `HWORD_WIDTH] = $signed(src2_data[(2*j+1)*`BYTE_WIDTH +: `BYTE_WIDTH]);
+                result_data_extend[(2*j  )*`HWORD_WIDTH +: `HWORD_WIDTH] = {{8{src2_data[(2*j+1)*`BYTE_WIDTH-1]}}, src2_data[(2*j  )*`BYTE_WIDTH +: `BYTE_WIDTH]};
+                result_data_extend[(2*j+1)*`HWORD_WIDTH +: `HWORD_WIDTH] = {{8{src2_data[(2*j+2)*`BYTE_WIDTH-1]}}, src2_data[(2*j+1)*`BYTE_WIDTH +: `BYTE_WIDTH]};
               end
               EEW16: begin
-                result_data_extend[j*`WORD_WIDTH +: `WORD_WIDTH] = $signed(src2_data[j*`HWORD_WIDTH +: `HWORD_WIDTH]);
+                result_data_extend[j*`WORD_WIDTH +: `WORD_WIDTH] = {{16{src2_data[(j+1)*`HWORD_WIDTH-1]}},src2_data[j*`HWORD_WIDTH +: `HWORD_WIDTH]};
               end
             endcase
           end
           VZEXT_VF4: begin
             case(vs2_eew)
               EEW8: begin
-                result_data_extend[j*`WORD_WIDTH +: `WORD_WIDTH] = src2_data[j*`BYTE_WIDTH +: `BYTE_WIDTH];
+                result_data_extend[j*`WORD_WIDTH +: `WORD_WIDTH] = {24'b0, src2_data[j*`BYTE_WIDTH +: `BYTE_WIDTH]};
               end
             endcase
           end
           VSEXT_VF4: begin       
             case(vs2_eew)
               EEW8: begin
-                result_data_extend[j*`WORD_WIDTH +: `WORD_WIDTH] = $signed(src2_data[j*`BYTE_WIDTH +: `BYTE_WIDTH]);
+                result_data_extend[j*`WORD_WIDTH +: `WORD_WIDTH] = {{24{src2_data[(j+1)*`BYTE_WIDTH-1]}}, src2_data[j*`BYTE_WIDTH +: `BYTE_WIDTH]};
               end
             endcase
           end

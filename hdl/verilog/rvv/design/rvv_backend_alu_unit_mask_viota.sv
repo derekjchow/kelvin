@@ -143,10 +143,11 @@ module rvv_backend_alu_unit_mask_viota32
 
   generate
     for(j=0;j<7;j++) begin: GET_VIOTA32_27_0
-      assign result_viota32[j] = result_viota7[0][j];
-      assign result_viota32[j+7] = result_viota7[1][j]+result_viota7[0][6];
-      assign result_viota32[j+14] = sum_20to14[j]+{carry_20to14[j],1'b0};
-      assign result_viota32[j+21] = sum_27to21[j]+{({1'b0,carry_27to21[j]}+{1'b0,cout_27to21[j]}),1'b0};
+      assign result_viota32[j] = ($clog2(32)+1)'(result_viota7[0][j]);
+      assign result_viota32[j+7] = ($clog2(32)+1)'(result_viota7[1][j])+($clog2(32)+1)'(result_viota7[0][6]);
+      assign result_viota32[j+14] = ($clog2(32)+1)'(sum_20to14[j])+($clog2(32)+1)'({carry_20to14[j],1'b0});
+      assign result_viota32[j+21] = ($clog2(32)+1)'(sum_27to21[j])+($clog2(32)+1)'({({1'b0,carry_27to21[j]})+($clog2(32)+1)'({1'b0,cout_27to21[j]}),1'b0});
+
 
       compressor_3_2
       #(
@@ -179,7 +180,9 @@ module rvv_backend_alu_unit_mask_viota32
     end
 
     for(j=0;j<4;j++) begin: GET_VIOTA32_31_28
-      assign result_viota32[j+28] = sum_31to28[j]+{({1'b0,carry_31to28[j]}+{1'b0,cout_31to28[j]}),1'b0};
+      assign result_viota32[j+28] = ($clog2(32)+1)'(sum_31to28[j])+
+                                    ($clog2(32)+1)'({({1'b0,carry_31to28[j]})+
+                                    ($clog2(32)+1)'({1'b0,cout_31to28[j]}),1'b0});
 
       compressor_4_2
       #(

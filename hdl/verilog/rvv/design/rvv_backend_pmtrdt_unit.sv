@@ -138,6 +138,7 @@ module rvv_backend_pmtrdt_unit
   logic                         pmt_go, pmt_go_q; // start to execute pmt inst when all uop(s) are in RS
   logic [`UOP_INDEX_WIDTH-1:0]  pmt_uop_done_cnt_d, pmt_uop_done_cnt_q;
   logic [`VLENB-1:0][`XLEN+1:0] offset;
+  logic [`VLENB-1:0][`XLEN+1:0] slide_down_offset;
   logic [`VLENB-1:0]            sel_scalar;
   BYTE_TYPE_t                   vd_type;
   logic [`VLMAX_MAX-1:0][7:0]   pmt_vs2_data, pmt_vs3_data;
@@ -2244,12 +2245,12 @@ module rvv_backend_pmtrdt_unit
       // cmp_res_d/cmp_res_q
       always_comb begin
         case (pmtrdt_uop.vs2_eew)
-          EEW32: cmp_res_en = {'0, 1'b1} << cmp_res_en_offset;
-          EEW16: cmp_res_en = {'0, 2'b11} << cmp_res_en_offset;
-          default: cmp_res_en = {'0, 4'b1111} << cmp_res_en_offset;
+          EEW32: cmp_res_en = (2*`VLENB)'('b1)  << cmp_res_en_offset;
+          EEW16: cmp_res_en = (2*`VLENB)'('b11) << cmp_res_en_offset;
+          default: cmp_res_en = (2*`VLENB)'('b1111) << cmp_res_en_offset;
         endcase
       end
-      assign cmp_res_d = {'0, cmp_res} << cmp_res_offset;
+      assign cmp_res_d = (`VLEN)'(cmp_res) << cmp_res_offset;
       for (i=0; i<(2*`VLENB); i++) begin
         edff #(.T(logic[`VLEN/32-1:0])) cmp_res_reg (.q(cmp_res_q[`VLEN/32*i+:`VLEN/32]), .d(cmp_res_d[`VLEN/32*i+:`VLEN/32]), .e(cmp_res_en[i] & pmtrdt_uop_valid & pmtrdt_uop_ready), .clk(clk), .rst_n(rst_n));
       end
@@ -2302,29 +2303,29 @@ module rvv_backend_pmtrdt_unit
             SLIDE_UP:begin
               if (pmtrdt_uop.uop_funct3 == OPMVX)
                 case (pmtrdt_uop.vs2_eew) // Permutation instruction: vd_eew == vs2_eew
-                  EEW32:offset[i] = uop_data[pmt_uop_done_cnt_q].uop_index*`VLENB+i-4;
-                  EEW16:offset[i] = uop_data[pmt_uop_done_cnt_q].uop_index*`VLENB+i-2;
-                  default:offset[i] = uop_data[pmt_uop_done_cnt_q].uop_index*`VLENB+i-1; 
+                  EEW32:offset[i] = (`XLEN+2)'(uop_data[pmt_uop_done_cnt_q].uop_index*`VLENB+i-4);
+                  EEW16:offset[i] = (`XLEN+2)'(uop_data[pmt_uop_done_cnt_q].uop_index*`VLENB+i-2);
+                  default:offset[i] = (`XLEN+2)'(uop_data[pmt_uop_done_cnt_q].uop_index*`VLENB+i-1);
                 endcase
               else
                 case (pmtrdt_uop.vs2_eew) // Permutation instruction: vd_eew == vs2_eew
-                  EEW32:offset[i] = uop_data[pmt_uop_done_cnt_q].uop_index*`VLENB + i - (4*pmtrdt_uop.rs1_data);
-                  EEW16:offset[i] = uop_data[pmt_uop_done_cnt_q].uop_index*`VLENB + i - (2*pmtrdt_uop.rs1_data);
-                  default:offset[i] = uop_data[pmt_uop_done_cnt_q].uop_index*`VLENB+ i - pmtrdt_uop.rs1_data; 
+                  EEW32:offset[i] = (`XLEN+2)'(uop_data[pmt_uop_done_cnt_q].uop_index*`VLENB + i - (4*pmtrdt_uop.rs1_data));
+                  EEW16:offset[i] = (`XLEN+2)'(uop_data[pmt_uop_done_cnt_q].uop_index*`VLENB + i - (2*pmtrdt_uop.rs1_data));
+                  default:offset[i] = (`XLEN+2)'(uop_data[pmt_uop_done_cnt_q].uop_index*`VLENB+ i - pmtrdt_uop.rs1_data);
                 endcase
             end
             SLIDE_DOWN:begin
               if (pmtrdt_uop.uop_funct3 == OPMVX)
                 case (pmtrdt_uop.vs2_eew) // Permutation instruction: vd_eew == vs2_eew
-                  EEW32:offset[i] = uop_data[pmt_uop_done_cnt_q].uop_index*`VLENB+i+4;
-                  EEW16:offset[i] = uop_data[pmt_uop_done_cnt_q].uop_index*`VLENB+i+2;
-                  default:offset[i] = uop_data[pmt_uop_done_cnt_q].uop_index*`VLENB+i+1;
+                  EEW32:offset[i] = (`XLEN+2)'(uop_data[pmt_uop_done_cnt_q].uop_index*`VLENB+i+4);
+                  EEW16:offset[i] = (`XLEN+2)'(uop_data[pmt_uop_done_cnt_q].uop_index*`VLENB+i+2);
+                  default:offset[i] = (`XLEN+2)'(uop_data[pmt_uop_done_cnt_q].uop_index*`VLENB+i+1);
                 endcase
               else
                 case (pmtrdt_uop.vs2_eew) // Permutation instruction: vd_eew == vs2_eew
-                  EEW32:offset[i] = uop_data[pmt_uop_done_cnt_q].uop_index*`VLENB + i + (4*pmtrdt_uop.rs1_data);
-                  EEW16:offset[i] = uop_data[pmt_uop_done_cnt_q].uop_index*`VLENB + i + (2*pmtrdt_uop.rs1_data);
-                  default:offset[i] = uop_data[pmt_uop_done_cnt_q].uop_index*`VLENB + i + pmtrdt_uop.rs1_data;
+                  EEW32:offset[i] = (`XLEN+2)'(uop_data[pmt_uop_done_cnt_q].uop_index*`VLENB + i + (4*pmtrdt_uop.rs1_data));
+                  EEW16:offset[i] = (`XLEN+2)'(uop_data[pmt_uop_done_cnt_q].uop_index*`VLENB + i + (2*pmtrdt_uop.rs1_data));
+                  default:offset[i] = (`XLEN+2)'(uop_data[pmt_uop_done_cnt_q].uop_index*`VLENB + i + pmtrdt_uop.rs1_data);
                 endcase
             end
             GATHER:begin
@@ -2332,27 +2333,27 @@ module rvv_backend_pmtrdt_unit
                 OPIVX,
                 OPIVI:begin
                   case (pmtrdt_uop.vs2_eew) // Permutation instruction: vd_eew == vs2_eew
-                    EEW32:offset[i] = i%4 + {pmtrdt_uop.rs1_data,2'b0};
-                    EEW16:offset[i] = i%2 + {pmtrdt_uop.rs1_data,1'b0};
-                    default:offset[i] = pmtrdt_uop.rs1_data;
+                    EEW32:offset[i] = (`XLEN+2)'(i%4 + {pmtrdt_uop.rs1_data,2'b0});
+                    EEW16:offset[i] = (`XLEN+2)'(i%2 + {pmtrdt_uop.rs1_data,1'b0});
+                    default:offset[i] = (`XLEN+2)'(pmtrdt_uop.rs1_data);
                   endcase
                 end
                 default:begin
                   case (pmtrdt_uop.vs1_eew)
-                    EEW32: offset[i] = i%4 + (4*{{(`XLEN-32){1'b0}}, uop_data[(pmt_uop_done_cnt_q*`VLENB/4+i/4)/(`VLENB/4)].vs1_data[32*((i/4)%(`VLENB/4))+:32]});
+                    EEW32: offset[i] = (`XLEN+2)'(i%4 + (4*{{(`XLEN-32){1'b0}}, uop_data[(pmt_uop_done_cnt_q*`VLENB/4+i/4)/(`VLENB/4)].vs1_data[32*((i/4)%(`VLENB/4))+:32]}));
                     EEW16: begin
                       case (pmtrdt_uop.vs2_eew) // vrgatherei16
-                        EEW32:offset[i] = i%4 + (4*{{(`XLEN-16){1'b0}}, uop_data[(pmt_uop_done_cnt_q*`VLENB/4+i/4)/(`VLENB/4)].vs1_data[16*((pmt_uop_done_cnt_q*`VLENB/4+i/4)%(`VLENB/2))+:16]});
-                        EEW16:offset[i] = i%2 + (2*{{(`XLEN-16){1'b0}}, uop_data[(pmt_uop_done_cnt_q*`VLENB/2+i/2)/(`VLENB/2)].vs1_data[16*((i/2)%(`VLENB/2))+:16]});
-                        default:offset[i] = {{(`XLEN-16){1'b0}}, uop_data[(pmt_uop_done_cnt_q*`VLENB+i)/(`VLENB)].vs1_data[16*(i%(`VLENB/2))+:16]};
+                        EEW32:offset[i] = (`XLEN+2)'(i%4 + (4*{{(`XLEN-16){1'b0}}, uop_data[(pmt_uop_done_cnt_q*`VLENB/4+i/4)/(`VLENB/4)].vs1_data[16*((pmt_uop_done_cnt_q*`VLENB/4+i/4)%(`VLENB/2))+:16]}));
+                        EEW16:offset[i] = (`XLEN+2)'(i%2 + (2*{{(`XLEN-16){1'b0}}, uop_data[(pmt_uop_done_cnt_q*`VLENB/2+i/2)/(`VLENB/2)].vs1_data[16*((i/2)%(`VLENB/2))+:16]}));
+                        default:offset[i] = (`XLEN+2)'({{(`XLEN-16){1'b0}}, uop_data[(pmt_uop_done_cnt_q*`VLENB+i)/(`VLENB)].vs1_data[16*(i%(`VLENB/2))+:16]});
                       endcase
                     end
-                    default: offset[i] = {{(`XLEN-8){1'b0}}, uop_data[(pmt_uop_done_cnt_q*`VLENB+i)/(`VLENB)].vs1_data[8*(i%(`VLENB))+:8]};
+                    default: offset[i] = (`XLEN+2)'({{(`XLEN-8){1'b0}}, uop_data[(pmt_uop_done_cnt_q*`VLENB+i)/(`VLENB)].vs1_data[8*(i%(`VLENB))+:8]});
                   endcase
                 end
               endcase
             end
-            default: offset[i] = i;
+            default: offset[i] = (`XLEN+2)'(i);
           endcase
         end
       end
@@ -2366,18 +2367,21 @@ module rvv_backend_pmtrdt_unit
             SLIDE_UP:begin
               if (pmt_uop_done_cnt_q == 0)
                 case (pmtrdt_uop.vs2_eew) // Permutation instruction: vd_eew == vs2_eew
-                  EEW32:sel_scalar = 'hF;
-                  EEW16:sel_scalar = 'h3;
-                  default:sel_scalar = 'h1;
+                  EEW32:sel_scalar = (`VLENB)'('hF);
+                  EEW16:sel_scalar = (`VLENB)'('h3);
+                  default:sel_scalar = (`VLENB)'('h1);
                 endcase
               else
                 sel_scalar = '0;
             end
             SLIDE_DOWN:begin
               case (pmtrdt_uop.vs2_eew) // Permutation instruction: vd_eew == vs2_eew
-                EEW32:sel_scalar = (uop_data[pmt_uop_done_cnt_q].uop_index+1'b1)*(`VLENB/4) >= rdt_ctrl.vl ? 'hF << ((rdt_ctrl.vl-1)%(`VLENB/4))*4 : '0;
-                EEW16:sel_scalar = (uop_data[pmt_uop_done_cnt_q].uop_index+1'b1)*(`VLENB/2) >= rdt_ctrl.vl ? 'h3 << ((rdt_ctrl.vl-1)%(`VLENB/2))*2 : '0;
-                default:sel_scalar = (uop_data[pmt_uop_done_cnt_q].uop_index+1'b1)*`VLENB >= rdt_ctrl.vl ? 'h1 << ((rdt_ctrl.vl-1)%(`VLENB))*1 : '0;
+                EEW32:sel_scalar = (uop_data[pmt_uop_done_cnt_q].uop_index+1'b1)*(`VLENB/4) >= rdt_ctrl.vl ?
+                                    (`VLENB)'('hF) << ((rdt_ctrl.vl-1)%(`VLENB/4))*4 : '0;
+                EEW16:sel_scalar = (uop_data[pmt_uop_done_cnt_q].uop_index+1'b1)*(`VLENB/2) >= rdt_ctrl.vl ?
+                                    (`VLENB)'('h3) << ((rdt_ctrl.vl-1)%(`VLENB/2))*2 : '0;
+                default:sel_scalar = (uop_data[pmt_uop_done_cnt_q].uop_index+1'b1)*`VLENB >= rdt_ctrl.vl ?
+                                    (`VLENB)'('h1) << ((rdt_ctrl.vl-1)%(`VLENB))*1 : '0;
               endcase
             end
             default:sel_scalar = '0;
@@ -2415,34 +2419,29 @@ module rvv_backend_pmtrdt_unit
       assign pmt_res_en = pmt_go;
       for (i=0; i<`VLENB; i++) begin
         always_comb begin
+          slide_down_offset[i] = offset[i]-(pmtrdt_uop.uop_index*`VLENB);
           if (sel_scalar[i]) pmt_res_d[i] = pmt_rs1_data[8*(i%4)+:8];
           else
             case (pmt_ctrl.pmt_opr)
               SLIDE_UP:begin
                 case (pmtrdt_uop.vs2_eew) // permutation instruction
-                  // TODO(derekjchow): Fix me
-                  // EEW32: pmt_res_d[i] = offset[i] >= 4*pmtrdt_uop.vlmax ? pmt_vs3_data[pmt_uop_done_cnt_q*`VLENB+i] : pmt_vs2_data[offset[i]];
-                  // EEW16: pmt_res_d[i] = offset[i] >= 2*pmtrdt_uop.vlmax ? pmt_vs3_data[pmt_uop_done_cnt_q*`VLENB+i] : pmt_vs2_data[offset[i]];
-                  // default: pmt_res_d[i] = offset[i] >= pmtrdt_uop.vlmax ? pmt_vs3_data[pmt_uop_done_cnt_q*`VLENB+i] : pmt_vs2_data[offset[i]];
-                  default: pmt_res_d[i] = 0;
+                  EEW32: pmt_res_d[i] = offset[i] >= (`XLEN+2)'(4*pmtrdt_uop.vlmax) ? pmt_vs3_data[pmt_uop_done_cnt_q*`VLENB+i] : pmt_vs2_data[offset[i][7:0]];
+                  EEW16: pmt_res_d[i] = offset[i] >= (`XLEN+2)'(2*pmtrdt_uop.vlmax) ? pmt_vs3_data[pmt_uop_done_cnt_q*`VLENB+i] : pmt_vs2_data[offset[i][7:0]];
+                  default: pmt_res_d[i] = offset[i] >= (`XLEN+2)'(pmtrdt_uop.vlmax) ? pmt_vs3_data[pmt_uop_done_cnt_q*`VLENB+i] : pmt_vs2_data[offset[i][7:0]];
                 endcase
               end
               SLIDE_DOWN:begin
                 case (pmtrdt_uop.vs2_eew)
-                  // TODO(derekjchow): Fix me
-                  // EEW32: pmt_res_d[i] = offset[i] >= 4*pmtrdt_uop.vlmax ? '0 : pmt_vs2_data[offset[i]-(pmtrdt_uop.uop_index*`VLENB)];
-                  // EEW16: pmt_res_d[i] = offset[i] >= 2*pmtrdt_uop.vlmax ? '0 : pmt_vs2_data[offset[i]-(pmtrdt_uop.uop_index*`VLENB)];
-                  // default: pmt_res_d[i] = offset[i] >= pmtrdt_uop.vlmax ? '0 : pmt_vs2_data[offset[i]-(pmtrdt_uop.uop_index*`VLENB)];
-                  default: pmt_res_d[i] = 0;
+                  EEW32: pmt_res_d[i] = offset[i] >= (`XLEN+2)'(4*pmtrdt_uop.vlmax) ? '0 : pmt_vs2_data[slide_down_offset[i][7:0]];
+                  EEW16: pmt_res_d[i] = offset[i] >= (`XLEN+2)'(2*pmtrdt_uop.vlmax) ? '0 : pmt_vs2_data[slide_down_offset[i][7:0]];
+                  default: pmt_res_d[i] = offset[i] >= (`XLEN+2)'(pmtrdt_uop.vlmax) ? '0 : pmt_vs2_data[slide_down_offset[i][7:0]];
                 endcase
               end
               default: begin
                 case (pmtrdt_uop.vs2_eew)
-                  // TODO(derekjchow): Fix me
-                  // EEW32: pmt_res_d[i] = offset[i] >= 4*pmtrdt_uop.vlmax ? '0 : pmt_vs2_data[offset[i]];
-                  // EEW16: pmt_res_d[i] = offset[i] >= 2*pmtrdt_uop.vlmax ? '0 : pmt_vs2_data[offset[i]];
-                  // default: pmt_res_d[i] = offset[i] >= pmtrdt_uop.vlmax ? '0 : pmt_vs2_data[offset[i]];
-                  default: pmt_res_d[i] = 0;
+                  EEW32: pmt_res_d[i] = offset[i] >= (`XLEN+2)'(4*pmtrdt_uop.vlmax) ? '0 : pmt_vs2_data[offset[i][7:0]];
+                  EEW16: pmt_res_d[i] = offset[i] >= (`XLEN+2)'(2*pmtrdt_uop.vlmax) ? '0 : pmt_vs2_data[offset[i][7:0]];
+                  default: pmt_res_d[i] = offset[i] >= (`XLEN+2)'(pmtrdt_uop.vlmax) ? '0 : pmt_vs2_data[offset[i][7:0]];
                 endcase
               end
             endcase
@@ -2519,14 +2518,14 @@ module rvv_backend_pmtrdt_unit
 
       // compress_res is driven by compress_value and compress_cnt.
       always_comb begin
-        if (pmtrdt_uop.first_uop_valid) compress_res_d = {'0, compress_value};
+        if (pmtrdt_uop.first_uop_valid) compress_res_d = (2*`VLENB*8)'(compress_value);
         else                            compress_res_d = f_circular_shift(compress_value, compress_cnt_q);
       end
 
       // compress_res_en
       always_comb begin
         if (compress_ctrl_push)
-          if (pmtrdt_uop.first_uop_valid) compress_res_en = {'0, f_pack_1s(compress_enable)};
+          if (pmtrdt_uop.first_uop_valid) compress_res_en = (2*`VLENB)'(f_pack_1s(compress_enable));
           else                            compress_res_en = f_circular_en(compress_enable,compress_cnt_q);
         else 
           compress_res_en = '0;
@@ -2681,7 +2680,7 @@ module rvv_backend_pmtrdt_unit
       for (i=0; i<`VLENB; i++) results[i] = '1;
       for (i=0; i<`VLENB; i++) begin
         if (enables[i]) begin
-          results[j] = i;
+          results[j] = (VLENB_WIDTH+1)'(i);
           j++;
         end
       end
@@ -2699,7 +2698,7 @@ module rvv_backend_pmtrdt_unit
     logic [1:0][`VLEN-1:0]  result;
     begin
       value_tmp = value;
-      {buf2,buf1,buf0} = value_tmp << (shift*8);
+      {buf2,buf1,buf0} = (3*`VLEN)'(value_tmp) << (shift*8);
       result = shift[VLENB_WIDTH] ? {buf1, buf2} : {buf1,buf0};
       f_circular_shift = result;
     end
@@ -2733,7 +2732,7 @@ module rvv_backend_pmtrdt_unit
     logic [1:0][`VLENB-1:0] result;
     begin
       value_pack_1s = f_pack_1s(value);
-      {en2,en1,en0} = value_pack_1s << shift;
+      {en2,en1,en0} = (3*`VLENB)'(value_pack_1s) << shift;
       result = shift[VLENB_WIDTH] ? {en1, en2} : {en1, en0};
       f_circular_en = result;
     end

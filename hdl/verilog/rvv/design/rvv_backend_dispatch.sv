@@ -150,7 +150,7 @@ module rvv_backend_dispatch
     generate
       for (i=0; i<`NUM_DP_UOP; i++) begin : gen_vlmax
         assign vlmax_shift[i] ={1'b0, uop_uop2dp[i].vector_csr.lmul[1:0]} + $clog2(`VLENB) - uop_uop2dp[i].vector_csr.sew - {uop_uop2dp[i].vector_csr.lmul[2],2'b00};
-        assign vlmax[i] = 'h1 << vlmax_shift[i];
+        assign vlmax[i] = (`VL_WIDTH)'(1) << vlmax_shift[i];
       end
     endgenerate
 

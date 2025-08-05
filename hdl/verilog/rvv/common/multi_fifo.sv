@@ -121,7 +121,7 @@ module multi_fifo
   endgenerate
   // dataout
   always_comb begin
-    pop_count = pop[0];
+    pop_count = {(DEPTH_BITS)'(0), pop[0]};
     for (int j=1; j<N; j++) pop_count = pop_count + pop[j];
   end
   
@@ -146,7 +146,9 @@ module multi_fifo
           always_ff @(posedge clk) begin
             if ((i<remain_count)&(|pop))
               dataout[i] <= mem[current_rptr_mem[i]]; 
-            else if ((push_seq[current_rptr_psh[i]]&(current_rptr_psh[i]<M))&((|pop)|(|push_seq)))
+            else if ((push_seq[current_rptr_psh[i]]&(current_rptr_psh[i]<(DEPTH_BITS)'(M)))&
+                     ((|pop)|(|push_seq))
+                    )
               dataout[i] <= datain_seq[current_rptr_psh[i]];
           end
         end
@@ -155,7 +157,9 @@ module multi_fifo
           always_ff @(posedge clk) begin
             if ((i<remain_count)&(|pop))
               dataout[i] <= mem[current_rptr_mem[i]]; 
-            else if ((push[current_rptr_psh[i]]&(current_rptr_psh[i]<M))&((|pop)|(|push)))
+            else if ((push[current_rptr_psh[i]]&(current_rptr_psh[i]<(DEPTH_BITS)'(M)))&
+                     ((|pop)|(|push))
+                    )
               dataout[i] <= datain[current_rptr_psh[i]];
           end
         end
@@ -170,7 +174,7 @@ module multi_fifo
 
   // datain
   always_comb begin
-    push_count = push[0];
+    push_count = {(DEPTH_BITS)'(0), push[0]};
     for (int j=1; j<M; j++) push_count = push_count + push[j];
   end
 

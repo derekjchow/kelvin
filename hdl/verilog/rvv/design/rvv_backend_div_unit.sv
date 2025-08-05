@@ -319,7 +319,7 @@ module rvv_backend_div_unit
     for(j=0;j<`VLENB/2;j++) begin: DIVIDER8
       rvv_backend_div_unit_divider
       #(
-        .DIV_WIDTH          (`BYTE_WIDTH)
+        .DIV_WIDTH          (8'd`BYTE_WIDTH)
       )
       divider_8bit
       (
@@ -342,7 +342,7 @@ module rvv_backend_div_unit
     for(j=0;j<`VLEN/`HWORD_WIDTH/2;j++) begin: DIVIDER16
       rvv_backend_div_unit_divider
       #(
-        .DIV_WIDTH          (`HWORD_WIDTH)
+        .DIV_WIDTH          (8'd`HWORD_WIDTH)
       )
       divider_16bit
       (
@@ -365,7 +365,7 @@ module rvv_backend_div_unit
     for(j=0;j<`VLEN/`WORD_WIDTH;j++) begin: DIVIDER32
       rvv_backend_div_unit_divider
       #(
-        .DIV_WIDTH          (`WORD_WIDTH)
+        .DIV_WIDTH          (8'd`WORD_WIDTH)
       )
       divider_32bit
       (

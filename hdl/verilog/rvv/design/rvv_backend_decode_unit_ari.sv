@@ -3616,17 +3616,14 @@ module rvv_backend_decode_unit_ari
     uop_index_max = 'b0;
     
     case(emul_max)
-      EMUL1: begin
-        uop_index_max = 'b0;
-      end
       EMUL2: begin
-        uop_index_max = 'd1;
+        uop_index_max = (`UOP_INDEX_WIDTH)'('d1);
       end
       EMUL4: begin
-        uop_index_max = 'd3;
+        uop_index_max = (`UOP_INDEX_WIDTH)'('d3);
       end
       EMUL8: begin
-        uop_index_max = 'd7;
+        uop_index_max = (`UOP_INDEX_WIDTH)'('d7);
       end
     endcase
   end

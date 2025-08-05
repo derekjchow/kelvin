@@ -20,16 +20,13 @@ module rvv_backend_div_unit_divider
   result_quotient,
   result_remainder,
   result_valid,
-`ifdef TB_SUPPORT
-  res_reuse_valid_p1,
-`endif
   result_ready,
   trap_flush_rvv
 );
 //
 // parameter
 //
-  parameter DIV_WIDTH = `WORD_WIDTH;
+  parameter logic[7:0] DIV_WIDTH = `WORD_WIDTH;
 
 //
 // interface signals
@@ -50,9 +47,6 @@ module rvv_backend_div_unit_divider
   output  logic [DIV_WIDTH-1:0] result_quotient;
   output  logic [DIV_WIDTH-1:0] result_remainder;
   output  logic                 result_valid;
-`ifdef TB_SUPPORT
-  output  logic                 res_reuse_valid_p1;
-`endif
   input   logic                 result_ready;
 
   // trap-flush
@@ -202,19 +196,6 @@ module rvv_backend_div_unit_divider
     .q      (r_sgn_q)
   );
 
-`ifdef TB_SUPPORT
-  always_ff @(posedge clk, negedge rst_n) begin
-    if(rst_n=='b0)
-      res_reuse_valid_p1 = 'b0;
-    else if(next_state==DIV_IDLE)
-      res_reuse_valid_p1 = 'b0;
-    else if((state==DIV_IDLE)&div_valid)
-      res_reuse_valid_p1 = res_reuse_valid_p0;
-    else
-      res_reuse_valid_p1 = res_reuse_valid_p1;
-  end
-`endif
-
 //
 // FSM
 //
@@ -266,17 +247,17 @@ module rvv_backend_div_unit_divider
     endcase
   end
 
-  // computational logic in every state
+  // count leading zero
   generate 
-    if (DIV_WIDTH==`WORD_WIDTH) begin
+    if (DIV_WIDTH== 'd`WORD_WIDTH) begin
       assign clzb = f_clzb32(dividend_d);
       assign count_shift = 'd33 - clzb;            
     end
-    else if (DIV_WIDTH==`HWORD_WIDTH) begin
+    else if (DIV_WIDTH== 'd`HWORD_WIDTH) begin
       assign clzb = f_clzb16(dividend_d);
       assign count_shift = 'd17 - clzb;            
     end
-    else if (DIV_WIDTH==`BYTE_WIDTH) begin
+    else if (DIV_WIDTH== 'd`BYTE_WIDTH) begin
       assign clzb = f_clzb8(dividend_d);
       assign count_shift = 'd9 - clzb;            
     end
