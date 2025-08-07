@@ -93,12 +93,12 @@ These registers are mapped into the Kelvin CSR address space and are used to com
 
 | Address    | Name       | Description                                                                                                |
 |------------|------------|------------------------------------------------------------------------------------------------------------|
-| 0x31000    | req_addr   | Write the target debug module register address here.                                                       |
-| 0x31004    | req_data   | Write data for the debug module operation here.                                                            |
-| 0x31008    | req_op     | Write the operation type (e.g., READ, WRITE) to this register to initiate a debug module command.          |
-| 0x3100c    | rsp_data   | After a command completes, the data result is available here.                                              |
-| 0x31010    | rsp_op     | After a command completes, the status result (e.g., SUCCESS, FAILED) is available here.                    |
-| 0x31014    | status     | A read-only register to check the status of the debug module. Bit 0 indicates if the module is ready for a new request. Bit 1 indicates if a response is available. |
+| 0x30800    | req_addr   | Write the target debug module register address here.                                                       |
+| 0x30804    | req_data   | Write data for the debug module operation here.                                                            |
+| 0x30808    | req_op     | Write the operation type (e.g., READ, WRITE) to this register to initiate a debug module command.          |
+| 0x3080c    | rsp_data   | After a command completes, the data result is available here.                                              |
+| 0x30810    | rsp_op     | After a command completes, the status result (e.g., SUCCESS, FAILED) is available here.                    |
+| 0x30814    | status     | A read-only register to check the status of the debug module. Bit 0 indicates if the module is ready for a new request. Bit 1 indicates if a response is available. |
 
 ## Internal Debug Module Registers
 
