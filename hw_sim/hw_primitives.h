@@ -15,13 +15,15 @@
 #ifndef HW_SIM_HW_PRIMITIVES_H_
 #define HW_SIM_HW_PRIMITIVES_H_
 
-#include <functional>
+#include <verilated.h>
+
+#include <algorithm>
+#include <map>
+#include <memory>
 #include <queue>
 #include <vector>
 
 #include "absl/types/span.h"
-#include "VCoreMiniAxi.h"
-
 
 // A class that wraps and controls a verilator clock signal. Also provides an
 // observer mechanism
@@ -548,9 +550,8 @@ class AxiMasterWriteDriver : Clock::Observer {
         write_resp_bits_id_(write_resp_bits_id),
         write_resp_bits_resp_(write_resp_bits_resp),
         write_resp_ready_(write_resp_ready) {
-    // Always ready to accept address and data
-    *write_addr_ready_ = 1;
-    *write_data_ready_ = 1;
+    *write_addr_ready_ = 0;
+    *write_data_ready_ = 0;
   }
   ~AxiMasterWriteDriver() final = default;
 
@@ -595,12 +596,17 @@ class AxiMasterWriteDriver : Clock::Observer {
     }
 
     if (*write_addr_valid_ && *write_data_valid_) {
+      *write_addr_ready_ = 1;
+      *write_data_ready_ = 1;
       if (write_cb_) {
         AxiWResp resp_result = write_cb_(axi_addr_, axi_data_);
         resp_queue_.push(resp_result);
       } else {
         assert(false && "Write callback is empty!");
       }
+    } else {
+      *write_addr_ready_ = 0;
+      *write_data_ready_ = 0;
     }
   }
 

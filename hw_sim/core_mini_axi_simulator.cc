@@ -12,6 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include <vector>
+
 #include "hw_sim/core_mini_axi_wrapper.h"
 #include "hw_sim/kelvin_simulator.h"
 
@@ -89,7 +91,7 @@ AxiWResp CoreMiniAxiSimulator::WriteCallback(const AxiAddr& addr,
 
   AxiWResp resp;
   resp.write_resp_bits_id = addr.addr_bits_id;
-  resp.write_resp_bits_resp = 1;
+  resp.write_resp_bits_resp = 0;
   return resp;
 }
 

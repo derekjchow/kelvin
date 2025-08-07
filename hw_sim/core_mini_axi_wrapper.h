@@ -15,8 +15,18 @@
 #ifndef HW_SIM_CORE_MINI_AXI_WRAPPER_H_
 #define HW_SIM_CORE_MINI_AXI_WRAPPER_H_
 
+#include <algorithm>
+#include <memory>
+#include <vector>
+
 #include "hw_sim/hw_primitives.h"
 #include "hw_sim/mailbox.h"
+
+#ifdef ENABLE_RVV
+#include "VRvvCoreMiniAxi.h"
+#else
+#include "VCoreMiniAxi.h"
+#endif
 
 class CoreMiniAxiWrapper {
  public:
@@ -208,7 +218,11 @@ class CoreMiniAxiWrapper {
  private:
   VerilatedContext* const context_;
   KelvinMailbox mailbox_;
+#ifdef ENABLE_RVV
+  VRvvCoreMiniAxi core_;
+#else
   VCoreMiniAxi core_;
+#endif
   Clock clock_;
   AxiSlaveWriteDriver slave_write_driver_;
   AxiSlaveReadDriver slave_read_driver_;

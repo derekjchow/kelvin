@@ -23,8 +23,8 @@ cc_library(
         "hw_primitives.h",
     ],
     deps = [
-        "//hdl/chisel/src/kelvin:core_mini_axi_cc_library_cc",
         "@com_google_absl//absl/types:span",
+        "@verilator//:libverilator",
     ],
 )
 
@@ -36,6 +36,8 @@ cc_library(
     ],
     deps = [
         ":hw_primitives",
+        "//hdl/chisel/src/kelvin:core_mini_axi_cc_library_cc",
+        "//hdl/chisel/src/kelvin:rvv_core_mini_axi_cc_library_cc",
     ],
 )
 
@@ -50,35 +52,38 @@ cc_binary(
     deps = [
         ":core_mini_axi_wrapper",
         "//tests/verilator_sim:elf",
-        "//hdl/chisel/src/kelvin:core_mini_axi_cc_library_cc",
-        "@com_google_absl//absl/types:span",
     ],
 )
 
 cc_library(
-  name = "kelvin_simulator_headers",
-  hdrs = [
-    "kelvin_simulator.h",
-    "mailbox.h",
-  ],
+    name = "kelvin_simulator_headers",
+    hdrs = [
+        "kelvin_simulator.h",
+        "mailbox.h",
+    ],
 )
 
 cc_library(
-  name = "core_mini_axi_simulator",
-  srcs = ["core_mini_axi_simulator.cc"],
-  deps = [
-    ":core_mini_axi_wrapper",
-    ":kelvin_simulator_headers",
-  ],
-  linkstatic = True,
-  alwayslink = True,
-)
-
-cc_shared_library(
-    name = "core_mini_axi_sim",
+    name = "core_mini_axi_simulator",
+    srcs = ["core_mini_axi_simulator.cc"],
+    linkstatic = True,
     deps = [
-        ":core_mini_axi_simulator",
+        ":core_mini_axi_wrapper",
+        ":kelvin_simulator_headers",
     ],
+    alwayslink = True,
+)
+
+cc_library(
+    name = "core_mini_axi_simulator_rvv",
+    srcs = ["core_mini_axi_simulator.cc"],
+    copts = ["-DENABLE_RVV"],
+    linkstatic = True,
+    deps = [
+        ":core_mini_axi_wrapper",
+        ":kelvin_simulator_headers",
+    ],
+    alwayslink = True,
 )
 
 kelvin_v2_binary(
@@ -99,13 +104,20 @@ cc_binary(
     deps = [
         ":core_mini_axi_simulator",
         "//tests/verilator_sim:elf",
-        "@com_google_absl//absl/types:span",
     ],
 )
 
+# generate libraries for external projects
 cc_binary(
     name = "libkelvin_simulator.so",
-    linkshared = 1,
+    linkshared = True,
     visibility = ["//visibility:public"],
     deps = [":core_mini_axi_simulator"],
+)
+
+cc_binary(
+    name = "libkelvin_simulator_rvv.so",
+    linkshared = True,
+    visibility = ["//visibility:public"],
+    deps = [":core_mini_axi_simulator_rvv"],
 )

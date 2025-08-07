@@ -17,16 +17,9 @@
 #include <sys/stat.h>
 #include <unistd.h>
 
-#include <bitset>
 #include <cstdint>
-#include <future>
 #include <iostream>
-#include <memory>
-#include <optional>
-#include <queue>
-#include <vector>
 
-#include "absl/types/span.h"
 #include "hw_sim/kelvin_simulator.h"
 #include "tests/verilator_sim/elf.h"
 

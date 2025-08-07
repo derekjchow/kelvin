@@ -15,8 +15,6 @@
 #ifndef HW_SIM_KELVIN_SIMULATOR_H_
 #define HW_SIM_KELVIN_SIMULATOR_H_
 
-#include <cstdlib>
-
 #include "hw_sim/mailbox.h"
 
 class KelvinSimulator {
