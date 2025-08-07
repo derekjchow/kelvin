@@ -20,12 +20,12 @@ import chisel3.util._
 import bus.AxiMasterIO
 
 object CoreCsrAddrs {
-  val DbgReqAddr = 0x1000.U
-  val DbgReqData = 0x1004.U
-  val DbgReqOp   = 0x1008.U
-  val DbgRspData = 0x100c.U
-  val DbgRspOp   = 0x1010.U
-  val DbgStatus  = 0x1014.U
+  val DbgReqAddr = 0x800.U
+  val DbgReqData = 0x804.U
+  val DbgReqOp   = 0x808.U
+  val DbgRspData = 0x80c.U
+  val DbgRspOp   = 0x810.U
+  val DbgStatus  = 0x814.U
 }
 
 class CoreCSR(p: Parameters) extends Module {

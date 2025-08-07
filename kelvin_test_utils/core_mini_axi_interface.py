@@ -68,6 +68,15 @@ class DmAddress:
   COMMAND     = 0x17
 
 
+class DebugCsrAddr:
+  REQ_ADDR   = 0x800
+  REQ_DATA   = 0x804
+  REQ_OP     = 0x808
+  RSP_DATA   = 0x80C
+  RSP_OP     = 0x810
+  STATUS     = 0x814
+
+
 def format_line_from_word(word, addr):
   shift = addr % 16
   line = np.zeros([4], dtype=np.uint32)
@@ -407,7 +416,7 @@ class CoreMiniAxiInterface:
 
   async def _poll_dm_status(self, bit, value):
     while True:
-      status = await self.read_csr(0x1014)
+      status = await self.read_csr(DebugCsrAddr.STATUS)
       if (status[0] & (1 << bit)) == value:
         break
       await ClockCycles(self.dut.io_aclk, 10)
@@ -415,16 +424,16 @@ class CoreMiniAxiInterface:
   async def dm_read(self, addr):
     await self._poll_dm_status(0, 1)
 
-    await self.write_csr(0x1000, addr)
-    await self.write_csr(0x1004, 0)
-    await self.write_csr(0x1008, DmReqOp.READ)
+    await self.write_csr(DebugCsrAddr.REQ_ADDR, addr)
+    await self.write_csr(DebugCsrAddr.REQ_DATA, 0)
+    await self.write_csr(DebugCsrAddr.REQ_OP, DmReqOp.READ)
 
     await self._poll_dm_status(1, 2)
 
     rsp = dict()
-    rsp["data"] = int((await self.read_csr(0x100c)).view(np.uint32)[0])
-    rsp["op"] = (await self.read_csr(0x1010)).view(np.uint32)[0]
-    await self.write_csr(0x1014, 0)  # Acknowledge response.
+    rsp["data"] = int((await self.read_csr(DebugCsrAddr.RSP_DATA)).view(np.uint32)[0])
+    rsp["op"] = (await self.read_csr(DebugCsrAddr.RSP_OP)).view(np.uint32)[0]
+    await self.write_csr(DebugCsrAddr.STATUS, 0)  # Acknowledge response.
 
     assert rsp["op"] == DmRspOp.SUCCESS
     return rsp["data"]
@@ -432,16 +441,16 @@ class CoreMiniAxiInterface:
   async def dm_write(self, addr, data):
     await self._poll_dm_status(0, 1)
 
-    await self.write_csr(0x1000, addr)
-    await self.write_csr(0x1004, data)
-    await self.write_csr(0x1008, DmReqOp.WRITE)
+    await self.write_csr(DebugCsrAddr.REQ_ADDR, addr)
+    await self.write_csr(DebugCsrAddr.REQ_DATA, data)
+    await self.write_csr(DebugCsrAddr.REQ_OP, DmReqOp.WRITE)
 
     await self._poll_dm_status(1, 2)
 
     rsp = dict()
-    rsp["data"] = int((await self.read_csr(0x100c)).view(np.uint32)[0])
-    rsp["op"] = (await self.read_csr(0x1010)).view(np.uint32)[0]
-    await self.write_csr(0x1014, 0)  # Acknowledge response.
+    rsp["data"] = int((await self.read_csr(DebugCsrAddr.RSP_DATA)).view(np.uint32)[0])
+    rsp["op"] = (await self.read_csr(DebugCsrAddr.RSP_OP)).view(np.uint32)[0]
+    await self.write_csr(DebugCsrAddr.STATUS, 0)  # Acknowledge response.
     return rsp
 
   async def dm_read_reg(self, addr, expected_op=DmRspOp.SUCCESS):
