@@ -15,6 +15,7 @@
 import cocotb
 import numpy as np
 
+from kelvin_test_utils.core_mini_axi_interface import CoreMiniAxiInterface
 from kelvin_test_utils.sim_test_fixture import Fixture
 from bazel_tools.tools.python.runfiles import runfiles
 
@@ -382,3 +383,47 @@ async def store8_indexed_m1(dut):
         elf_name = 'store8_indexed_m1.elf',
         dtype = np.uint8,
     )
+
+@cocotb.test()
+async def load_store8_test(
+        dut,
+        # elf_name: str,
+        # dtype,
+        # in_size: int,
+        # out_size: int,
+        # pattern: list[int],
+):
+    """Testbench to test RVV load."""
+    # Test bench setup
+    core_mini_axi = CoreMiniAxiInterface(dut)
+    await core_mini_axi.init()
+    await core_mini_axi.reset()
+    cocotb.start_soon(core_mini_axi.clock.start())
+    r = runfiles.Create()
+
+    elf_path = r.Rlocation("kelvin_hw/tests/cocotb/rvv/load_store/load_store8_test.elf")
+    with open(elf_path, "rb") as f:
+        entry_point = await core_mini_axi.load_elf(f)
+        buffer_addr = core_mini_axi.lookup_symbol(f, "buffer")
+        in_addr = core_mini_axi.lookup_symbol(f, "in_ptr")
+        out_addr = core_mini_axi.lookup_symbol(f, "out_ptr")
+        vl_addr = core_mini_axi.lookup_symbol(f, "vl")
+
+    vl = 16
+    input_data = np.random.randint(0, 255, vl, dtype=np.uint8)
+    target_in_addr = buffer_addr + 16
+    target_out_addr = buffer_addr + 64
+
+    await core_mini_axi.write(target_in_addr, input_data)
+    await core_mini_axi.write(
+        in_addr, np.array([target_in_addr], dtype=np.uint32))
+    await core_mini_axi.write(
+        out_addr, np.array([target_out_addr], dtype=np.uint32))
+    await core_mini_axi.write(
+        vl_addr, np.array([vl], dtype=np.uint32))
+
+    await core_mini_axi.execute_from(entry_point)
+    await core_mini_axi.wait_for_halted()
+
+    routputs = (await core_mini_axi.read(target_out_addr, vl)).view(np.uint8)
+    assert (input_data == routputs).all()

@@ -430,6 +430,7 @@ cocotb_test_suite(
         "seed": "42",
         "test_module": ["rvv_ml_ops_cocotb_test.py"],
         "deps": [
+            "//kelvin_test_utils:core_mini_axi_sim_interface",
             "//kelvin_test_utils:sim_test_fixture",
             "@bazel_tools//tools/python/runfiles",
         ],

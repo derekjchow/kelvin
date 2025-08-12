@@ -56,6 +56,9 @@ template_rule(
         "load8_stride2_mf4": {
             "srcs": ["load8_stride2_mf4.cc"],
         },
+        "load_store8_test": {
+            "srcs": ["load_store8_test.cc"],
+        },
         "load_store8_unit_m2": {
             "srcs": ["load_store8_unit_m2.cc"],
         },
@@ -101,6 +104,7 @@ filegroup(
         ":load8_stride2_m1.elf",
         ":load8_stride2_m1_partial.elf",
         ":load8_stride2_mf4.elf",
+        ":load_store8_test.elf",
         ":load_store8_unit_m2.elf",
         ":load_store16_unit_m2.elf",
         ":load_store32_unit_m2.elf",
