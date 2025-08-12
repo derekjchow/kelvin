@@ -17,21 +17,13 @@ void MatMul(size_t lhs_rows, size_t inner, size_t rhs_cols, const int8_t* lhs,
             const int8_t* rhs, int32_t* result) {
   const size_t vlenb = __riscv_vlenb();
 
-  // Create zero register for vredsum
-  asm("vsetvli zero, %0, e32, m4, ta, ma;"
-      "vmv.v.i v0, 0;"
-      :
-      : "r"(vlenb));
-
   for (size_t r = 0; r < lhs_rows; r++) {
     const int8_t* lhs_data = lhs + (r * inner);
     int32_t* result_row = result + (r * rhs_cols);
     for (size_t c = 0; c < rhs_cols; c++) {
       const int8_t* rhs_data = rhs + (c * inner);
-
       // Reset accumulators
-      asm("vsetvli zero, %0, e32, m4, ta, ma" : : "r"(vlenb));
-      asm("vmv.v.i v8, 0");
+      vint32m1_t vacc = __riscv_vmv_v_x_i32m1(0, 1);
 
       // Inner dot product loop
       size_t k = 0;
@@ -41,32 +33,14 @@ void MatMul(size_t lhs_rows, size_t inner, size_t rhs_cols, const int8_t* lhs,
           vl = inner - k;
         }
         // Load weights/activations
-        asm("vsetvli zero, %0, e8, m1, ta, ma" : : "r"(vl));
-        asm("vle8.v  v14, (%0)" : : "r"(lhs_data + k));
-        asm("vle8.v  v15, (%0)" : : "r"(rhs_data + k));
-
-        // Multiply-accumulate
-        asm("vsetvli zero, %0, e8, m1, ta, ma;"
-            "vwmul.vv v12, v14, v15;"
-            "vsetvli zero, %0, e16, m2, ta, ma;"
-            "vwadd.wv v8, v8, v12;"
-            :
-            : "r"(vl));
-
+        vint8m1_t vlhs_data = __riscv_vle8_v_i8m1(lhs_data + k, vl);
+        vint8m1_t vrhs_data =
+            __riscv_vle8_v_i8m1(rhs_data + k, vl);  // input rhs is transposed
+        vint16m2_t vmul_16 = __riscv_vwmul_vv_i16m2(vlhs_data, vrhs_data, vl);
+        vacc = __riscv_vwredsum_vs_i16m2_i32m1(vmul_16, vacc, vlenb);
         k += vl;
       }
-
-      // Reduction
-      asm("vsetvli zero, %0, e32, m4, ta, ma;"
-          "vredsum.vs v8, v8, v0;"
-          :
-          : "r"(vlenb));
-
-      // Store
-      asm("vsetivli zero, 1, e32, m1, ta, ma;"
-          "vse32.v v8, (%0);"
-          :
-          : "r"(result_row + c));
+      __riscv_vse32_v_i32m1(result_row + c, vacc, 1);
     }
   }
 }

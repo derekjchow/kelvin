@@ -776,10 +776,13 @@ class CoreMiniAxiInterface:
     self.dut.io_irq.value = 0
 
   async def wait_for_halted(self, timeout_cycles=1000):
+    cycle_count = 0
     while self.dut.io_halted.value != 1 and timeout_cycles > 0:
       await ClockCycles(self.dut.io_aclk, 1)
       timeout_cycles = timeout_cycles - 1
+      cycle_count += 1
     assert timeout_cycles > 0
+    return cycle_count
 
   async def wait_for_halted_semihost(self, elf, timeout_cycles=1000000):
     tohost = self.lookup_symbol(elf, "tohost")

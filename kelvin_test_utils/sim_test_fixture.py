@@ -53,4 +53,4 @@ class Fixture:
 
     async def run_to_halt(self, timeout_cycles=10000):
         await self.core_mini_axi.execute_from(self.entry_point)
-        await self.core_mini_axi.wait_for_halted(timeout_cycles=timeout_cycles)
+        return (await self.core_mini_axi.wait_for_halted(timeout_cycles=timeout_cycles))

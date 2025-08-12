@@ -23,5 +23,16 @@ template_rule(
         "rvv_matmul_assembly": {
             "srcs": ["rvv_matmul_assembly.cc"],
         },
+        "rvv_matmul": {
+            "srcs": ["rvv_matmul.cc"],
+        },
     },
+)
+
+filegroup(
+    name = "rvv_mlop_tests",
+    srcs = [
+        ":rvv_matmul_assembly.elf",
+        ":rvv_matmul.elf"
+    ],
 )
