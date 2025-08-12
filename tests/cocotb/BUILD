@@ -182,6 +182,7 @@ RVV_LOAD_STORE_TESTCASES = [
     "load16_segment2_stride6_m1",
     "load8_indexed_m1",
     "store8_indexed_m1",
+    "load_store8_test",
 ]
 # END_TESTCASES_FOR_rvv_load_store_test
 
@@ -189,6 +190,7 @@ RVV_LOAD_STORE_TESTCASES = [
 RVV_ARITHMETIC_TESTCASES = [
     "arithmetic_m1_vanilla_ops",
     "reduction_m1_vanilla_ops",
+    "widen_math_ops_test_impl",
 ]
 # END_TESTCASES_FOR_rvv_arithmetic_cocotb_test
 

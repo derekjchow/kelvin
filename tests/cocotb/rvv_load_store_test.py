@@ -382,3 +382,29 @@ async def store8_indexed_m1(dut):
         elf_name = 'store8_indexed_m1.elf',
         dtype = np.uint8,
     )
+
+@cocotb.test()
+async def load_store8_test(dut):
+    """Testbench to test RVV load."""
+    fixture = await Fixture.Create(dut)
+    r = runfiles.Create()
+    await fixture.load_elf_and_lookup_symbols(
+        r.Rlocation('kelvin_hw/tests/cocotb/rvv/load_store/load_store8_test.elf'),
+        ['buffer', 'in_ptr', 'out_ptr', 'vl'],
+    )
+
+    vl = 16
+    input_data = np.random.randint(0, 255, vl, dtype=np.uint8)
+    target_in_addr = fixture.symbols['buffer'] + 16
+    target_out_addr = fixture.symbols['buffer'] + 64
+
+    await fixture.core_mini_axi.write(target_in_addr, input_data)
+    await fixture.write('in_ptr', np.array([target_in_addr], dtype=np.uint32))
+    await fixture.write('out_ptr', np.array([target_out_addr], dtype=np.uint32))
+    await fixture.write('vl', np.array([vl], dtype=np.uint32))
+
+    await fixture.run_to_halt()
+
+    routputs = (await fixture.core_mini_axi.read(target_out_addr, vl)).view(
+        np.uint8)
+    assert (input_data == routputs).all()

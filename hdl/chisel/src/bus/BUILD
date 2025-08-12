@@ -100,6 +100,7 @@ verilator_cocotb_model(
 AXI2TLUL_TESTCASES = [
     "test_write_request",
     "test_read_request",
+    "test_read_error",
 ]
 # END_TESTCASES_FOR_axi2tlul_cocotb_test
 
