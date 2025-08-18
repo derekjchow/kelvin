@@ -758,7 +758,7 @@ class DispatchV2(p: Parameters) extends Dispatch(p) {
     if (p.enableRvv) {
       val rvvRdMark_valid = io.rvv.get(i).fire && d.rvv.get.bits.writesVectorRegister()
       io.rvvRdMark.get(i).valid := rvvRdMark_valid
-      io.rvvRdMark.get(i).addr := d.rvv.get.bits.vd
+      io.rvvRdMark.get(i).addr := d.rvv.get.bits.bits(4,0) // vd
     }
 
     // Register file bus address port.

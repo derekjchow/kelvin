@@ -40,7 +40,6 @@ object GenerateCoreShimSource {
             |    input [31:0] inst_GENI_bits_pc,
             |    input [1:0] inst_GENI_bits_opcode,
             |    input [24:0] inst_GENI_bits_bits,
-            |    input [31:0] inst_GENI_bits_vd,
             |""".stripMargin.replaceAll("GENI", i.toString)
     }
 

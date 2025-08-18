@@ -36,7 +36,6 @@ class RvvCompressedInstruction extends Bundle {
   val pc = UInt(32.W)
   val opcode = RvvCompressedOpcode()
   val bits = UInt(25.W)
-  val vd = UInt(5.W)
 
   def funct6(): UInt = {
     bits(24, 19)
@@ -118,7 +117,6 @@ object RvvCompressedInstruction {
       _.bits.opcode -> new_opcode.bits,
       _.bits.pc -> pc,
       _.bits.bits -> bits,
-      _.bits.vd -> bits(4, 0),
     )
   }
 }
