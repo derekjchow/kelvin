@@ -12,4 +12,4 @@ open toolchain_test container in interactive mode and mount current directory
 $ docker run -v `pwd`:/toolchain/build_scripts -w /toolchain/build_scripts toolchain_test bash kelvin_v2_toolchain_build.sh
 ```
 
-The toolchain artifacts will be located at rv32_out
+Output toolchain artifacts will be exported to rv32_out

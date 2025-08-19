@@ -28,18 +28,23 @@ all_link_actions = [
     ACTION_NAMES.cpp_link_nodeps_dynamic_library,
 ]
 
-all_compile_actions = [
-    ACTION_NAMES.c_compile,
-    ACTION_NAMES.assemble,
-    ACTION_NAMES.preprocess_assemble,
-    ACTION_NAMES.linkstamp_compile,
+cpp_compile_actions = [
     ACTION_NAMES.cpp_compile,
     ACTION_NAMES.cpp_header_parsing,
     ACTION_NAMES.cpp_module_compile,
     ACTION_NAMES.cpp_module_codegen,
+]
+
+other_compile_actions = [
+    ACTION_NAMES.c_compile,
+    ACTION_NAMES.assemble,
+    ACTION_NAMES.preprocess_assemble,
+    ACTION_NAMES.linkstamp_compile,
     ACTION_NAMES.lto_backend,
     ACTION_NAMES.clif_match,
 ]
+
+all_compile_actions = cpp_compile_actions + other_compile_actions
 
 def _impl(ctx):
     tool_paths = [
@@ -150,8 +155,8 @@ def _impl(ctx):
         ],
     )
 
-    optimization_compile_flag_set = flag_set(
-        actions = all_compile_actions,
+    optimization_cpp_compile_flag_set = flag_set(
+        actions = cpp_compile_actions,
         flag_groups = [
             flag_group(
                 flags = [
@@ -159,7 +164,22 @@ def _impl(ctx):
                     "-Os",
                     "-ffunction-sections",
                     "-fdata-sections",
-                    "-ffreestanding",
+                    "-fno-exceptions",
+                    "-fno-rtti",
+                ],
+            ),
+        ],
+    )
+
+    optimization_other_compile_flag_set = flag_set(
+        actions = other_compile_actions,
+        flag_groups = [
+            flag_group(
+                flags = [
+                    "-g3",
+                    "-Os",
+                    "-ffunction-sections",
+                    "-fdata-sections",
                 ],
             ),
         ],
@@ -256,7 +276,8 @@ def _impl(ctx):
         name = "fastbuild",
         enabled = False,
         flag_sets = [
-            optimization_compile_flag_set,
+            optimization_cpp_compile_flag_set,
+            optimization_other_compile_flag_set,
             optimization_link_flag_set,
         ],
         provides = ["compilation_mode"],
@@ -266,7 +287,8 @@ def _impl(ctx):
         name = "opt",
         enabled = False,
         flag_sets = [
-            optimization_compile_flag_set,
+            optimization_cpp_compile_flag_set,
+            optimization_other_compile_flag_set,
             optimization_link_flag_set,
         ],
         provides = ["compilation_mode"],

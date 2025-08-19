@@ -21,6 +21,7 @@ filegroup(
     srcs = [
         "//toolchain/wrappers:all",
         "//toolchain:kelvin_tcm.ld",
+        "//toolchain:kelvin_tcm_highmem.ld",
         "@toolchain_kelvin_v2//:all_files",
     ],
 )

@@ -17,6 +17,7 @@
 
 load("@bazel_tools//tools/build_defs/repo:git.bzl", "git_repository")
 load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
+load("@bazel_tools//tools/build_defs/repo:utils.bzl", "maybe")
 
 def kelvin_repos():
     http_archive(
@@ -189,4 +190,40 @@ def fpga_repos():
             "@kelvin_hw//fpga:0001-Export-hw-ip_templates.patch",
         ],
         patch_args = ["-p1"],
+    )
+
+def tflite_repos():
+    http_archive(
+        name = "tflite_micro",
+        url = "https://github.com/tensorflow/tflite-micro/archive/b75c6ff4e2270047f2b48fa01f833c8101c31f43.zip",
+        sha256 = "ac3e675b71c55529a32d19a8cf0912413c1d1b9a551512e2665883a1666fb0ba",
+        strip_prefix = "tflite-micro-b75c6ff4e2270047f2b48fa01f833c8101c31f43",
+        patches = [
+            "@kelvin_hw//third_party/tflite-micro:Tflite-Micro-Kelvin-integration.patch",
+            "@kelvin_hw//third_party/tflite-micro:0001-Remove-xtensa-and-hifi-kernels.patch",
+        ],
+        patch_args = ["-p1"],
+    )
+
+    http_archive(
+        name = "hedron_compile_commands",
+        sha256 = "bacabfe758676fdc19e4bea7c4a3ac99c7e7378d259a9f1054d341c6a6b44ff6",
+        strip_prefix = "bazel-compile-commands-extractor-1266d6a25314d165ca78d0061d3399e909b7920e",
+        url = "https://github.com/hedronvision/bazel-compile-commands-extractor/archive/1266d6a25314d165ca78d0061d3399e909b7920e.tar.gz",
+    )
+
+    maybe(
+        http_archive,
+        name = "rules_python",
+        sha256 = "9d04041ac92a0985e344235f5d946f71ac543f1b1565f2cdbc9a2aaee8adf55b",
+        strip_prefix = "rules_python-0.26.0",
+        url = "https://github.com/bazelbuild/rules_python/archive/refs/tags/0.26.0.tar.gz",
+    )
+
+    maybe(
+        http_archive,
+        name = "pybind11_bazel",
+        strip_prefix = "pybind11_bazel-faf56fb3df11287f26dbc66fdedf60a2fc2c6631",
+        urls = ["https://github.com/pybind/pybind11_bazel/archive/faf56fb3df11287f26dbc66fdedf60a2fc2c6631.zip"],
+        sha256 = "a185aa68c93b9f62c80fcb3aadc3c83c763854750dc3f38be1dadcb7be223837",
     )

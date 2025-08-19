@@ -1,0 +1,141 @@
+From 9ceb5fda8112ab23d3410f6bfe3adbc364f26ff8 Mon Sep 17 00:00:00 2001
+From: Naveen Dodda <ndodda@google.com>
+Date: Wed, 24 Sep 2025 19:51:04 +0000
+Subject: [PATCH] Remove xtensa and hifi kernels
+
+---
+ tensorflow/lite/micro/kernels/BUILD | 88 +----------------------------
+ 1 file changed, 1 insertion(+), 87 deletions(-)
+
+diff --git a/tensorflow/lite/micro/kernels/BUILD b/tensorflow/lite/micro/kernels/BUILD
+index 1bb25088..9671c204 100644
+--- a/tensorflow/lite/micro/kernels/BUILD
++++ b/tensorflow/lite/micro/kernels/BUILD
+@@ -9,11 +9,6 @@ load(
+ load(
+     "//tensorflow:extra_rules.bzl",
+     "tflm_kernel_friends",
+-    "xtensa_fusion_f1_config",
+-    "xtensa_hifi_3_config",
+-    "xtensa_hifi_3z_config",
+-    "xtensa_hifi_5_config",
+-    "xtensa_vision_p6_config",
+ )
+ 
+ package(
+@@ -191,26 +186,6 @@ tflm_cc_library(
+     ],
+ )
+ 
+-HIFI3_COPTS = [
+-    "-DXTENSA=1",
+-    "-DHIFI3=1",
+-]
+-
+-HIFI4_COPTS = [
+-    "-DXTENSA=1",
+-    "-DHIFI4=1",
+-]
+-
+-HIFI5_COPTS = [
+-    "-DXTENSA=1",
+-    "-DHIFI5=1",
+-]
+-
+-VP6_COPTS = [
+-    "-DXTENSA=1",
+-    "-DVISION_P6=1",
+-]
+-
+ tflm_kernel_cc_library(
+     name = "micro_ops",
+     srcs = [
+@@ -354,26 +329,10 @@ tflm_kernel_cc_library(
+         "transpose_conv.h",
+         "unidirectional_sequence_lstm.h",
+     ] + select({
+-        xtensa_fusion_f1_config(): glob(["xtensa/**/*.h"]),
+-        xtensa_hifi_3_config(): glob(["xtensa/**/*.h"]),
+-        xtensa_hifi_3z_config(): glob(["xtensa/**/*.h"]),
+-        xtensa_hifi_5_config(): glob(["xtensa/**/*.h"]),
+-        xtensa_vision_p6_config(): glob(["xtensa/**/*.h"]),
+         "//conditions:default": [],
+     }),
+-    accelerated_srcs = {
+-        xtensa_fusion_f1_config(): glob(["xtensa/**/*.cc"]),
+-        xtensa_hifi_3_config(): glob(["xtensa/**/*.cc"]),
+-        xtensa_hifi_3z_config(): glob(["xtensa/**/*.cc"]),
+-        xtensa_hifi_5_config(): glob(["xtensa/**/*.cc"]),
+-        xtensa_vision_p6_config(): glob(["xtensa/**/*.cc"]),
+-    },
++    accelerated_srcs = {},
+     copts = tflm_copts() + select({
+-        xtensa_fusion_f1_config(): HIFI4_COPTS,
+-        xtensa_hifi_3_config(): HIFI3_COPTS,
+-        xtensa_hifi_3z_config(): HIFI4_COPTS,
+-        xtensa_hifi_5_config(): HIFI5_COPTS,
+-        xtensa_vision_p6_config(): VP6_COPTS,
+         "//conditions:default": [],
+     }),
+     visibility = [
+@@ -405,11 +364,6 @@ tflm_kernel_cc_library(
+         "//tensorflow/lite/schema:schema_fbs",
+         "@flatbuffers//:runtime_cc",
+     ] + select({
+-        xtensa_fusion_f1_config(): ["//third_party/xtensa/nnlib_hifi4:nnlib_hifi4_lib"],
+-        xtensa_hifi_3_config(): ["//third_party/xtensa/nnlib_hifi4:nnlib_hifi4_lib"],
+-        xtensa_hifi_3z_config(): ["//third_party/xtensa/nnlib_hifi4:nnlib_hifi4_lib"],
+-        xtensa_hifi_5_config(): ["//third_party/xtensa/nnlib_hifi5:nnlib_hifi5_lib"],
+-        xtensa_vision_p6_config(): ["//third_party/xtensa/xi_tflmlib_vision_p6:xi_tflmlib_vision_p6_lib"],
+         "//conditions:default": [],
+     }),
+ )
+@@ -1538,45 +1492,5 @@ string_flag(
+     build_setting_default = "",
+     values = [
+         "",
+-        "xtensa_fusion_f1",
+-        "xtensa_hifi_3",
+-        "xtensa_hifi_3z",
+-        "xtensa_hifi_5",
+-        "xtensa_vision_p6",
+     ],
+ )
+-
+-config_setting(
+-    name = "xtensa_fusion_f1_default",
+-    flag_values = {
+-        ":optimized_kernels": "xtensa_fusion_f1",
+-    },
+-)
+-
+-config_setting(
+-    name = "xtensa_hifi_3_default",
+-    flag_values = {
+-        ":optimized_kernels": "xtensa_hifi_3",
+-    },
+-)
+-
+-config_setting(
+-    name = "xtensa_hifi_3z_default",
+-    flag_values = {
+-        ":optimized_kernels": "xtensa_hifi_3z",
+-    },
+-)
+-
+-config_setting(
+-    name = "xtensa_hifi_5_default",
+-    flag_values = {
+-        ":optimized_kernels": "xtensa_hifi_5",
+-    },
+-)
+-
+-config_setting(
+-    name = "xtensa_vision_p6_default",
+-    flag_values = {
+-        ":optimized_kernels": "xtensa_vision_p6",
+-    },
+-)
+-- 
+2.51.0.536.g15c5d4f767-goog
+

@@ -13,38 +13,38 @@
 # limitations under the License.
 
 def template_rule(rule, name_map, **kwargs):
-  """ Macro for creating multiple instances of a rule template.
+    """ Macro for creating multiple instances of a rule template.
 
-      Usage:
-        template_rule(
-            example_rule,
-            {
-                "foo": {
-                    "varying_param1": 42,
-                    "varying_param2": [ "//some/source:file" ],
-                },
-                "bar": {
-                    "varying_param1": 9001,
-                    "varying_param2": [ "//different/source:file" ],
-                },
-            },
-            common_param1: "same_for_both_rules"
-            common_param2: [ "//also:same", "//for/both:rules" ]
+        Usage:
+          template_rule(
+              example_rule,
+              {
+                  "foo": {
+                      "varying_param1": 42,
+                      "varying_param2": [ "//some/source:file" ],
+                  },
+                  "bar": {
+                      "varying_param1": 9001,
+                      "varying_param2": [ "//different/source:file" ],
+                  },
+              },
+              common_param1: "same_for_both_rules"
+              common_param2: [ "//also:same", "//for/both:rules" ]
+          )
+
+        Args:
+          rule: The base rule for the template
+          name_map: A map of rule name -> (map of parameter name -> argument)
+          **kwargs: Arguments that remain the same for each instance of the rule.
+    """
+    for rule_name, argmap in name_map.items():
+        rule_kwargs = argmap
+        for k, v in kwargs.items():
+            rule_kwargs.update([(k, v)])
+        rule(
+            name = rule_name,
+            **rule_kwargs
         )
-
-      Args:
-        rule: The base rule for the template
-        name_map: A map of rule name -> (map of parameter name -> argument)
-        **kwargs: Arguments that remain the same for each instance of the rule.
-  """
-  for rule_name, argmap in name_map.items():
-    rule_kwargs = argmap
-    for k, v in kwargs.items():
-      rule_kwargs.update([(k, v)])
-    rule(
-        name = rule_name,
-        **rule_kwargs
-    )
 
 def cc_embed_data(
         name,
@@ -74,4 +74,21 @@ def cc_embed_data(
         cmd = xxd_cmd,
         testonly = testonly,
         **kwargs
+    )
+
+# From @tflite_micro//tensorflow/lite/micro/build_def.bzl, and paths.
+# Modified to point to the external repo as visibility of the package is restricted
+# TODO upstream changes to tflite-micro to fix this.
+def generate_cc_arrays(name, src, out, tags = []):
+    native.genrule(
+        name = name,
+        srcs = [
+            src,
+        ],
+        outs = [
+            out,
+        ],
+        tags = tags,
+        cmd = "$(location @tflite_micro//tensorflow/lite/micro/tools:generate_cc_arrays) $@ $<",
+        tools = ["@tflite_micro//tensorflow/lite/micro/tools:generate_cc_arrays"],
     )

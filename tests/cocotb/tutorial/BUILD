@@ -14,6 +14,7 @@
 
 load("//rules:coco_tb.bzl", "cocotb_test_suite")
 load("//rules:kelvin_v2.bzl", "kelvin_v2_binary")
+load("//rules:utils.bzl", "generate_cc_arrays")
 load(
     "//tests/cocotb:build_defs.bzl",
     "VCS_BUILD_ARGS",
@@ -52,12 +53,12 @@ cocotb_test_suite(
         ],
         "data": glob(["**/*.elf"]),
     },
+    vcs_build_args = VCS_BUILD_ARGS,
     vcs_data = glob(["**/*.elf"]) + [
         "//tests/cocotb:coverage_exclude.cfg",
     ],
-    vcs_build_args = VCS_BUILD_ARGS,
-    vcs_test_args = VCS_TEST_ARGS,
     vcs_defines = VCS_DEFINES,
+    vcs_test_args = VCS_TEST_ARGS,
     vcs_verilog_sources = ["//hdl/chisel/src/kelvin:core_mini_axi_cc_library_verilog"],
     verilator_model = "//tests/cocotb:core_mini_axi_model",
 )
@@ -81,13 +82,13 @@ cocotb_test_suite(
         ],
         "data": ["//examples:kelvin_v2_hello_world_add_floats.elf"],
     },
+    vcs_build_args = VCS_BUILD_ARGS,
     vcs_data = [
         "//examples:kelvin_v2_hello_world_add_floats.elf",
         "//tests/cocotb:coverage_exclude.cfg",
     ],
-    vcs_build_args = VCS_BUILD_ARGS,
-    vcs_test_args = VCS_TEST_ARGS,
     vcs_defines = VCS_DEFINES,
+    vcs_test_args = VCS_TEST_ARGS,
     vcs_verilog_sources = ["//hdl/chisel/src/kelvin:core_mini_axi_cc_library_verilog"],
     verilator_model = "//tests/cocotb:core_mini_axi_model",
 )
@@ -95,4 +96,33 @@ cocotb_test_suite(
 kelvin_v2_binary(
     name = "kelvin_v2_program",
     srcs = ["program.cc"],
+)
+
+kelvin_v2_binary(
+    name = "tflite_micro_test",
+    srcs = [
+        "hello_world_tflite_cc",
+        "tflite_micro_test.cc",
+    ],
+    hdrs = ["hello_world_tflite.h"],
+    linker_script = "@kelvin_hw//toolchain:kelvin_tcm_highmem.ld",
+    deps = [
+        "@tflite_micro//tensorflow/lite/micro:micro_framework",
+        "@tflite_micro//tensorflow/lite/micro:micro_log",
+        "@tflite_micro//tensorflow/lite/micro:micro_profiler",
+        "@tflite_micro//tensorflow/lite/micro:op_resolvers",
+        "@tflite_micro//tensorflow/lite/micro:system_setup",
+    ],
+)
+
+generate_cc_arrays(
+    name = "hello_world_tflite_cc",
+    src = "@tflite_micro//tensorflow/lite/micro/examples/hello_world/models:hello_world_int8.tflite",
+    out = "hello_world_tflite.cc",
+)
+
+generate_cc_arrays(
+    name = "hello_world_tflite_h",
+    src = "@tflite_micro//tensorflow/lite/micro/examples/hello_world/models:hello_world_int8.tflite",
+    out = "hello_world_tflite.h",
 )

@@ -59,6 +59,14 @@ test:synthesis --test_tag_filters="synthesis"
 run:synthesis --build_tag_filters="synthesis"
 run:synthesis --test_tag_filters="synthesis"
 
+# Set preprocessor defines for tflite-micro.
+build --copt=-DTF_LITE_USE_GLOBAL_CMATH_FUNCTIONS
+build --copt=-DTF_LITE_USE_GLOBAL_MIN
+build --copt=-DTF_LITE_USE_GLOBAL_MAX
+build --copt=-DTF_LITE_MCU_DEBUG_LOG
+build:opt --copt=-DTF_LITE_STRIP_ERROR_STRINGS
+
+
 # Selecting kelvin platform with custom toolchain.
 build:kelvin_v2 --platforms=//platforms:kelvin_v2
 
