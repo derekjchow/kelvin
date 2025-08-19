@@ -16,6 +16,7 @@ package bus
 
 import chisel3._
 import chisel3.util._
+import common.KelvinRRArbiter
 
 import kelvin.Parameters
 
@@ -47,39 +48,45 @@ class Axi2TLUL[A_USER <: Data, D_USER <: Data](p: Parameters, userAGen: () => A_
   val write_addr_q = Queue(io.axi.write.addr, entries = 2)
   val write_data_q = Queue(io.axi.write.data, entries = 2)
 
-  // Prioritize reads over writes.
-  val is_write = write_addr_q.valid && write_data_q.valid
-  val is_read = read_addr_q.valid
+  private def axiToTl(addr: AxiAddress, data: Option[AxiWriteData]): TileLink_A_ChannelBase[A_USER] = {
+    val tl_a = Wire(new TileLink_A_ChannelBase(tlul_p, userAGen))
+    tl_a.opcode  := data.map(_ => TLULOpcodesA.PutFullData.asUInt).getOrElse(TLULOpcodesA.Get.asUInt)
+    tl_a.param   := 0.U
+    tl_a.address := addr.addr
+    tl_a.source  := addr.id
+    tl_a.size    := addr.size
+    tl_a.mask    := data.map(_.strb).getOrElse(0.U(tlul_p.w.W))
+    tl_a.data    := data.map(_.data).getOrElse(0.U((8 * p.axi2DataBits).W))
+    tl_a.user    := 0.U.asTypeOf(io.tl_a.bits.user)
+    tl_a
+  }
 
-  io.tl_a.valid := is_read || is_write
-  read_addr_q.ready := false.B
-  write_addr_q.ready := false.B
-  write_data_q.ready := false.B
+  val read_stream = read_addr_q.map(axiToTl(_, None))
 
-  read_addr_q.ready := Mux(is_read, io.tl_a.ready, false.B)
-  write_addr_q.ready := !is_read && io.tl_a.ready
-  write_data_q.ready := !is_read && io.tl_a.ready
+  val write_stream = Wire(Decoupled(new TileLink_A_ChannelBase(tlul_p, userAGen)))
+  write_stream.valid := write_addr_q.valid && write_data_q.valid
+  write_stream.bits  := axiToTl(write_addr_q.bits, Some(write_data_q.bits))
 
-  io.tl_a.bits.opcode := Mux(is_read, TLULOpcodesA.Get.asUInt, TLULOpcodesA.PutFullData.asUInt)
-  io.tl_a.bits.param := 0.U
-  io.tl_a.bits.address := Mux(is_read, read_addr_q.bits.addr, write_addr_q.bits.addr)
-  io.tl_a.bits.source := Mux(is_read, read_addr_q.bits.id, write_addr_q.bits.id)
-  io.tl_a.bits.size := Mux(is_read, read_addr_q.bits.size, write_addr_q.bits.size)
-  io.tl_a.bits.mask := Mux(is_read, 0.U, write_data_q.bits.strb)
-  io.tl_a.bits.data := Mux(is_read, 0.U, write_data_q.bits.data)
-  io.tl_a.bits.user      := 0.U.asTypeOf(io.tl_a.bits.user)
+  // Reads are given higher priority.
+  val arb = Module(new KelvinRRArbiter(new TileLink_A_ChannelBase(tlul_p, userAGen), 2))
+  arb.io.in(0) <> read_stream
+  arb.io.in(1) <> write_stream
+  io.tl_a <> arb.io.out
+
+  write_addr_q.ready := write_stream.fire
+  write_data_q.ready := write_stream.fire
 
   val d_is_write = io.tl_d.bits.opcode === TLULOpcodesD.AccessAck.asUInt
   val d_is_read = io.tl_d.bits.opcode === TLULOpcodesD.AccessAckData.asUInt
 
   io.axi.write.resp.valid := io.tl_d.valid && d_is_write
   io.axi.write.resp.bits.id := io.tl_d.bits.source
-  io.axi.write.resp.bits.resp := 0.U
+  io.axi.write.resp.bits.resp := Mux(io.tl_d.bits.error, AxiResponseType.SLVERR.asUInt, AxiResponseType.OKAY.asUInt)
 
   io.axi.read.data.valid := io.tl_d.valid && d_is_read
   io.axi.read.data.bits.id := io.tl_d.bits.source
   io.axi.read.data.bits.data := io.tl_d.bits.data
-  io.axi.read.data.bits.resp := Mux(io.tl_d.bits.error, "b10".U, "b00".U)
+  io.axi.read.data.bits.resp := Mux(io.tl_d.bits.error, AxiResponseType.SLVERR.asUInt, AxiResponseType.OKAY.asUInt)
   io.axi.read.data.bits.last := true.B
 
   io.tl_d.ready := Mux(d_is_read, io.axi.read.data.ready, io.axi.write.resp.ready)

@@ -24,6 +24,73 @@ load(
     "VCS_TEST_ARGS",
 )
 
+# BEGIN_TESTCASES_FOR_tlul2axi_cocotb_test
+TLUL2AXI_TESTCASES = [
+    "test_put_request",
+    "test_get_request",
+    "test_backpressure",
+    "test_put_then_get",
+]
+# END_TESTCASES_FOR_tlul2axi_cocotb_test
+
+cocotb_test_suite(
+    name = "tlul2axi_cocotb_test",
+    simulators = [
+        "verilator",
+        "vcs",
+    ],
+    testcases = TLUL2AXI_TESTCASES,
+    testcases_vname = "TLUL2AXI_TESTCASES",
+    tests_kwargs = {
+        "hdl_toplevel": "TLUL2Axi",
+        "test_module": ["tlul2axi_cocotb_test.py"],
+        "size": "large",
+        "deps": [
+            "@bazel_tools//tools/python/runfiles",
+            requirement("tqdm"),
+        ],
+        "waves": True,
+    },
+    vcs_verilog_sources = ["//hdl/chisel/src/bus:tlul2axi_cc_library_verilog"],
+    verilator_model = "//hdl/chisel/src/bus:tlul2axi_model",
+    vcs_build_args = VCS_BUILD_ARGS,
+    vcs_test_args = VCS_TEST_ARGS,
+    vcs_defines = VCS_DEFINES,
+)
+
+# BEGIN_TESTCASES_FOR_axi2tlul_cocotb_test
+AXI2TLUL_TESTCASES = [
+    "test_write_request",
+    "test_read_request",
+    "test_read_error",
+]
+# END_TESTCASES_FOR_axi2tlul_cocotb_test
+
+cocotb_test_suite(
+    name = "axi2tlul_cocotb_test",
+    simulators = [
+        "verilator",
+        "vcs",
+    ],
+    testcases = AXI2TLUL_TESTCASES,
+    testcases_vname = "AXI2TLUL_TESTCASES",
+    tests_kwargs = {
+        "hdl_toplevel": "Axi2TLUL",
+        "test_module": ["axi2tlul_cocotb_test.py"],
+        "size": "large",
+        "deps": [
+            "@bazel_tools//tools/python/runfiles",
+            requirement("tqdm"),
+        ],
+        "waves": True,
+    },
+    vcs_verilog_sources = ["//hdl/chisel/src/bus:axi2tlul_cc_library_verilog"],
+    verilator_model = "//hdl/chisel/src/bus:axi2tlul_model",
+    vcs_build_args = VCS_BUILD_ARGS,
+    vcs_test_args = VCS_TEST_ARGS,
+    vcs_defines = VCS_DEFINES,
+)
+
 # BEGIN_TESTCASES_FOR_tlul_integrity_cocotb_test
 TLUL_INTEGRITY_TESTCASES = [
     "test_request_integrity_gen",

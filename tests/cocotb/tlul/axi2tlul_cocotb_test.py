@@ -179,6 +179,7 @@ async def test_read_request(dut):
     dut.io_tl_d_bits_opcode.value = TLUL_OpcodeD.AccessAckData
     dut.io_tl_d_bits_source.value = test_source
     dut.io_tl_d_bits_data.value = test_data
+    dut.io_tl_d_bits_error.value = 0
 
     dut.io_axi_read_data_ready.value = 1
 

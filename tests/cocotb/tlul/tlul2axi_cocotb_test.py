@@ -165,6 +165,7 @@ async def test_put_request(dut):
     assert not dut.io_tl_d_bits_error.value, "TL D_ERROR should be low"
     dut.io_tl_d_ready.value = 0
 
+    # Allow a few extra cycles for waveform viewing.
     await ClockCycles(dut.clock, 5)
 
 @cocotb.test()
@@ -240,6 +241,7 @@ async def test_get_request(dut):
     assert not dut.io_tl_d_bits_error.value, "TL D_ERROR should be low"
     dut.io_tl_d_ready.value = 0
 
+    # Allow a few extra cycles for waveform viewing.
     await ClockCycles(dut.clock, 5)
 
 
@@ -326,6 +328,7 @@ async def test_backpressure(dut):
     assert not dut.io_tl_d_bits_error.value, "TL D_ERROR should be low"
     dut.io_tl_d_ready.value = 0
 
+    # Allow a few extra cycles for waveform viewing.
     await ClockCycles(dut.clock, 5)
 
 
@@ -417,4 +420,5 @@ async def test_put_then_get(dut):
     assert dut.io_tl_d_bits_opcode.value == TLUL_OpcodeD.AccessAckData, "TL D_OPCODE should be AccessAckData for Get"
     dut.io_tl_d_ready.value = 0
 
+    # Allow a few extra cycles for waveform viewing.
     await ClockCycles(dut.clock, 5)
