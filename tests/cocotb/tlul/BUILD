@@ -291,3 +291,47 @@ cocotb_test_suite(
     vcs_test_args = VCS_TEST_ARGS,
     vcs_defines = VCS_DEFINES,
 )
+
+# --- Rules for KelvinXbar cocotb test ---
+
+verilator_cocotb_model(
+    name = "kelvin_xbar_model",
+    cflags = ["-Wno-fatal"],
+    hdl_toplevel = "KelvinXbar",
+    trace = True,
+    verilog_source = "//hdl/chisel/src/soc:KelvinXbar.sv",
+)
+
+# BEGIN_TESTCASES_FOR_kelvin_xbar_cocotb
+KELVIN_XBAR_TESTCASES = [
+    "test_kelvin_core_to_sram",
+    "test_ibex_d_to_kelvin_device_csr_read",
+    "test_wide_to_narrow_integrity",
+    "test_kelvin_core_to_kelvin_device",
+    "test_kelvin_core_to_uart1",
+    "test_ibex_d_to_kelvin_device",
+    "test_ibex_d_to_invalid_addr",
+]
+# END_TESTCASES_FOR_kelvin_xbar_cocotb
+
+cocotb_test_suite(
+    name = "kelvin_xbar_cocotb",
+    simulators = ["verilator", "vcs"],
+    testcases = KELVIN_XBAR_TESTCASES,
+    testcases_vname = "KELVIN_XBAR_TESTCASES",
+    tests_kwargs = {
+        "hdl_toplevel": "KelvinXbar",
+        "waves": True,
+        "seed": "42",
+        "test_module": ["kelvin_xbar_test.py"],
+        "deps": [
+            "//kelvin_test_utils:TileLinkULInterface",
+            "//kelvin_test_utils:secded_golden",
+        ],
+    },
+    verilator_model = ":kelvin_xbar_model",
+    vcs_verilog_sources = ["//hdl/chisel/src/soc:kelvin_xbar_cc_library_verilog"],
+    vcs_build_args = VCS_BUILD_ARGS,
+    vcs_test_args = VCS_TEST_ARGS,
+    vcs_defines = VCS_DEFINES,
+)
