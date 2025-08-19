@@ -29,7 +29,6 @@ SCALA_COPTS = [
     "-Xcheckinit",
     "-Xlint:infer-any",
     "-Xlint:unused",
-    "-Xfatal-warnings",
 ]
 
 def chisel_library(
@@ -39,7 +38,11 @@ def chisel_library(
         exports = [],
         resources = [],
         resource_strip_prefix = "",
-        visibility = None):
+        visibility = None,
+        allow_warnings = False):
+    warn_opts = []
+    if not allow_warnings:
+        warn_opts += ["-Xfatal-warnings"]
     scala_library(
         name = name,
         srcs = srcs,
@@ -50,7 +53,7 @@ def chisel_library(
         resources = resources,
         resource_strip_prefix = resource_strip_prefix,
         exports = exports,
-        scalacopts = SCALA_COPTS,
+        scalacopts = SCALA_COPTS + warn_opts,
         visibility = visibility,
     )
 

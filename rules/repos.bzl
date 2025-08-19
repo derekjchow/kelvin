@@ -102,6 +102,24 @@ def kelvin_repos():
         build_file = "@kelvin_hw//third_party/libsystemctlm-soc:BUILD.bazel",
     )
 
+    http_archive(
+        name = "chipsalliance_rocket_chip",
+        build_file = "@kelvin_hw//third_party/rocket_chip:BUILD.bazel",
+        urls = ["https://github.com/chipsalliance/rocket-chip/archive/f517abbf41abb65cea37421d3559f9739efd00a9.zip"],
+        sha256 = "e77bb13328e919ca43ba83a1c110b5314900841125b9ff22813a4b9fe73672a2",
+        strip_prefix = "rocket-chip-f517abbf41abb65cea37421d3559f9739efd00a9",
+    )
+
+    http_archive(
+        name = "chipsalliance_diplomacy",
+        urls = ["https://github.com/chipsalliance/diplomacy/archive/6590276fa4dac315ae7c7c01371b954c5687a473.zip"],
+        sha256 = "3f536b2eba360eb71a542d2a201eabe3a45cfa86302f14d1d565def0ed43ee20",
+        strip_prefix = "diplomacy-6590276fa4dac315ae7c7c01371b954c5687a473",
+        build_file_content = """
+exports_files(["diplomacy/src/diplomacy/nodes/HeterogeneousBag.scala"])
+        """,
+    )
+
 def renode_repos():
     http_archive(
         name = "renode",

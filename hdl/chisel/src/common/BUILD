@@ -45,6 +45,7 @@ chisel_library(
     ],
     deps = [
         ":library",
+        "@chipsalliance_rocket_chip//:asyncqueue",
     ],
 )
 
@@ -213,4 +214,13 @@ chisel_library(
         "TestingUtils.scala",
     ],
     visibility = ["//visibility:public"],
+)
+
+chisel_test(
+    name = "async_queue_smoke_test",
+    srcs = ["AsyncQueueSmokeTest.scala"],
+    deps = [
+        ":common",
+        "@chipsalliance_rocket_chip//:asyncqueue",
+    ],
 )
