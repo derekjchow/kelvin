@@ -20,6 +20,7 @@ import bus._
 class CoreTlul(p: Parameters, coreModuleName: String) extends RawModule {
     override val desiredName = coreModuleName + "Tlul"
     val memoryRegions = p.m
+    val tlul_p = new TLULParameters(p)
     val io = IO(new Bundle {
         val clk = Input(Clock())
         val rst_ni = Input(AsyncReset())
@@ -51,9 +52,22 @@ class CoreTlul(p: Parameters, coreModuleName: String) extends RawModule {
     hostBridge.io.axi <> coreAxi.io.axi_master
     deviceBridge.io.axi <> coreAxi.io.axi_slave
 
-    io.tl_host.a <> hostBridge.io.tl_a
+    val host_req_intg_gen = withClockAndReset(io.clk, (!io.rst_ni.asBool).asAsyncReset) {
+        Module(new RequestIntegrityGen(tlul_p))
+    }
+    io.tl_host.a.valid := hostBridge.io.tl_a.valid
+    hostBridge.io.tl_a.ready := io.tl_host.a.ready
+    host_req_intg_gen.io.a_i := hostBridge.io.tl_a.bits
+    host_req_intg_gen.io.a_i.user.instr_type := 9.U // MuBi4False
+    io.tl_host.a.bits := host_req_intg_gen.io.a_o
     hostBridge.io.tl_d <> io.tl_host.d
 
+    val device_rsp_intg_gen = withClockAndReset(io.clk, (!io.rst_ni.asBool).asAsyncReset) {
+        Module(new ResponseIntegrityGen(tlul_p))
+    }
     deviceBridge.io.tl_a <> io.tl_device.a
-    io.tl_device.d <> deviceBridge.io.tl_d
+    io.tl_device.d.valid := deviceBridge.io.tl_d.valid 
+    deviceBridge.io.tl_d.ready := io.tl_device.d.ready 
+    device_rsp_intg_gen.io.d_i := deviceBridge.io.tl_d.bits
+    io.tl_device.d.bits := device_rsp_intg_gen.io.d_o
 }

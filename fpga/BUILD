@@ -16,57 +16,10 @@ load("@bazel_skylib//rules:common_settings.bzl", "string_list_flag")
 load("@lowrisc_opentitan_gh//rules:fusesoc.bzl", "fusesoc_build")
 load("//rules:kelvin_v2.bzl", "kelvin_v2_binary")
 load("//rules:utils.bzl", "cc_embed_data")
-load(":rules.bzl", "tlgen_rule")
 
 package(default_visibility = ["//visibility:public"])
 
-_CLOCK_FREQUENCY_MHZ = "10"
-
-# This is the tlgen.py script itself
-py_binary(
-    name = "tlgen_tool",
-    srcs = ["@lowrisc_opentitan_gh//util:tlgen.py"],
-    main = "@lowrisc_opentitan_gh//util:tlgen.py",
-    deps = [
-        "@kelvin_pip_deps_hjson//:pkg",
-        "@lowrisc_opentitan_gh//util/tlgen",
-    ],
-)
-
-tlgen_rule(
-    name = "tl_crossbar_generated",
-    topcfg = "tl_config.hjson",
-)
-
-py_binary(
-    name = "post_process_xbar",
-    srcs = ["post_process_xbar.py"],
-)
-
-genrule(
-    name = "tl_crossbar_processed",
-    srcs = [":tl_crossbar_generated"],
-    outs = [
-        "tl_crossbar_processed_out",
-    ],
-    cmd = "$(execpath :post_process_xbar) " +
-          "--input-dir $(location :tl_crossbar_generated) " +
-          "--output-dir $(location tl_crossbar_processed_out) " +
-          "--cores kelvinv2:ip:kelvin_tlul:0.1",
-    tools = [":post_process_xbar"],
-)
-
-filegroup(
-    name = "tl_crossbar",
-    srcs = [
-        ":tl_crossbar_processed_out",
-    ],
-)
-
-filegroup(
-    name = "tl_crossbar_core",
-    srcs = [":tl_crossbar"],
-)
+_CLOCK_FREQUENCY_MHZ = "80"
 
 filegroup(
     name = "rtl_files",
@@ -75,7 +28,7 @@ filegroup(
         "//fpga/ip/rv_core_ibex:rtl_files",
         "//fpga/ip/rvv_core_mini_tlul:rtl_files",
         "//fpga/ip/sram:rtl_files",
-        "//fpga/ip/tlul_width_bridge:rtl_files",
+        "//fpga/ip/xbar_kelvin_soc_chisel:rtl_files",
         "//fpga/rtl:rtl_files",
     ],
 )
@@ -144,10 +97,11 @@ filegroup(
 
 KELVIN_SOC_CORES = [
     "//fpga/ip/rv_core_ibex:rv_core_ibex.core",
+    "//fpga/ip/rvv_core_mini_tlul:rvv_core_mini_tlul.core",
+    "//fpga/ip/xbar_kelvin_soc_chisel:xbar_kelvin_soc_chisel.core",
     ":kelvin_soc.core",
     ":kelvin_soc_pkg.core",
     ":racl_pkg.core",
-    ":tl_crossbar_core",
     "@lowrisc_opentitan_gh//hw:check_tool_requirements.core",
 ]
 
@@ -202,8 +156,6 @@ fusesoc_build(
 
 _PREFIX = "../../../../../../../../.."
 
-#          "../../../../../../../"bazel-out/k8-fastbuild-ST-be77d280135c/bin/fpga
-#          "../../../../../../../"bazel-out/k8-fastbuild-ST-be77d280135c/bin/fpga/wfi.vmem
 _IBEX_BOOT_ROM_VMEM = ":ibex_boot_rom.vmem"
 
 IBEX_BOOT_ROM_VMEM_PATH = "{}/$(location {})".format(_PREFIX, _IBEX_BOOT_ROM_VMEM)
@@ -221,15 +173,7 @@ fusesoc_build(
         "--ClockFrequencyMhz=" + _CLOCK_FREQUENCY_MHZ,
     ],
     output_groups = {
-        # /home/atv/.cache/bazel/_bazel_atv/cb485e413f28624e05d5dee28237de6d/sandbox/
-        # linux-sandbox/34/execroot/kelvin_hw/bazel-out/k8-fastbuild/bin/fpga/
-        # build.build_chip_nexus_bitstream/
-        # com.google.kelvin_fpga_chip_nexus_0.1/synth-vivado/com.google.kelvin_fpga_chip_nexus_0.1.runs/impl_1/chip_nexus.bit
         "bitstream": ["com.google.kelvin_fpga_chip_nexus_0.1/synth-vivado/com.google.kelvin_fpga_chip_nexus_0.1.runs/impl_1/chip_nexus.bit"],
-        # /home/atv/.cache/bazel/_bazel_atv/cb485e413f28624e05d5dee28237de6d/sandbox/
-        # linux-sandbox/34/execroot/kelvin_hw/bazel-out/k8-fastbuild/bin/fpga/
-        # build.build_chip_nexus_bitstream/
-        # com.google.kelvin_fpga_chip_nexus_0.1/synth-vivado/com.google.kelvin_fpga_chip_nexus_0.1.runs/
         "logs": ["com.google.kelvin_fpga_chip_nexus_0.1/synth-vivado/com.google.kelvin_fpga_chip_nexus_0.1.runs/"],
     },
     systems = ["com.google.kelvin:fpga:chip_nexus:0.1"],

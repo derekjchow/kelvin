@@ -45,7 +45,7 @@ int main(int argc, char **argv) {
   memutil.RegisterMemoryArea("dtcm", 0x00010000, &dtcm);
   simctrl.RegisterExtension(&memutil);
 
-  simctrl.SetInitialResetDelay(20000);
+  simctrl.SetInitialResetDelay(2000);
   simctrl.SetResetDuration(10);
 
   std::cout << "Simulation of Kelvin SoC" << std::endl

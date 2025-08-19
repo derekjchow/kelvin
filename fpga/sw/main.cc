@@ -6,8 +6,15 @@
 
 extern "C" int main() {
   // Copy the embedded binary to Kelvin's ITCM at 0x0.
-  void *itcm_base = reinterpret_cast<void *>(static_cast<uintptr_t>(0x0));
-  memcpy(itcm_base, add_uint32_m1_bin, add_uint32_m1_bin_len);
+  // NB: Use this copy loop instead of memcpy to get word writes
+  // instead of byte writes.
+  uint32_t* itcm_base =
+      reinterpret_cast<uint32_t*>(static_cast<uintptr_t>(0x0));
+  const uint32_t* add_uint32_m1_bin_u32 =
+      reinterpret_cast<const uint32_t*>(add_uint32_m1_bin);
+  for (unsigned int i = 0; i < add_uint32_m1_bin_len / 4; i++) {
+    *(itcm_base + i) = add_uint32_m1_bin_u32[i];
+  }
 
   // Kelvin run sequence
   volatile unsigned int *kelvin_reset_csr =

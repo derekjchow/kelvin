@@ -6,7 +6,6 @@ filesets:
   files_rtl:
     depend:
       - com.google.kelvin:fpga:kelvin_soc:0.2
-      - kelvinv2:ip:sram:0.1
       - kelvinv2:ip:kelvin_tlul:0.1
       - lowrisc:dv_dpi_c:uartdpi:0.1
       - lowrisc:dv_dpi_sv:uartdpi:0.1
@@ -25,7 +24,7 @@ parameters:
   ClockFrequencyMhz:
     datatype: int
     description: "Target clock frequency in MHz."
-    default: 10
+    default: 80
     paramtype: vlogparam
   MemInitFile:
     datatype: str

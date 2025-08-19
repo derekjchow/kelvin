@@ -14,7 +14,7 @@
 // limitations under the License.
 
 module clkgen_xilultrascaleplus
-    #(parameter int ClockFrequencyMhz = 10,
+    #(parameter int ClockFrequencyMhz = 80,
       // Add BUFG if not done by downstream logic
       parameter bit AddClkBuf = 1)
     (input clk_i,
@@ -24,6 +24,7 @@ module clkgen_xilultrascaleplus
      output clk_main_o,
      output clk_48MHz_o,
      output clk_aon_o,
+     output clk_ibex_o,
      output rst_no);
   logic locked_pll;
   logic io_clk_buf;
@@ -36,6 +37,8 @@ module clkgen_xilultrascaleplus
   logic clk_48_unbuf;
   logic clk_aon_buf;
   logic clk_aon_unbuf;
+  logic clk_ibex_buf;
+  logic clk_ibex_unbuf;
   logic clk_ibufds_o;
 
   // Input IBUFDS conver diff-pair to single-end
@@ -44,6 +47,7 @@ module clkgen_xilultrascaleplus
                     .O(clk_ibufds_o));
 
   localparam real CLKOUT0_DIVIDE_F_CALC = 1200.0 / ClockFrequencyMhz;
+  localparam int CLKOUT2_DIVIDE_CALC = CLKOUT0_DIVIDE_F_CALC * 4;
 
   MMCME2_ADV #(
           .BANDWIDTH("OPTIMIZED"),
@@ -58,6 +62,9 @@ module clkgen_xilultrascaleplus
           .CLKOUT1_DIVIDE(25),
           .CLKOUT1_PHASE(0.000),
           .CLKOUT1_DUTY_CYCLE(0.500),
+          .CLKOUT2_DIVIDE(CLKOUT2_DIVIDE_CALC),
+          .CLKOUT2_PHASE(0.000),
+          .CLKOUT2_DUTY_CYCLE(0.500),
           // With CLKOUT4_CASCADE, CLKOUT6's divider is an input to CLKOUT4's
           // divider. The effective ratio is a multiplication of the two.
           .CLKOUT4_DIVIDE(40),
@@ -72,7 +79,7 @@ module clkgen_xilultrascaleplus
           .CLKOUT0B(),
           .CLKOUT1(clk_48_unbuf),
           .CLKOUT1B(),
-          .CLKOUT2(),
+          .CLKOUT2(clk_ibex_unbuf),
           .CLKOUT2B(),
           .CLKOUT3(),
           .CLKOUT3B(),
@@ -120,10 +127,14 @@ module clkgen_xilultrascaleplus
 
     BUFGCE clk_48_bufgce(.I(clk_48_unbuf),
                          .O(clk_48_buf));
+
+    BUFGCE clk_ibex_bufgce(.I(clk_ibex_unbuf),
+                         .O(clk_ibex_buf));
   end else begin : gen_no_clk_bufs
     // BUFGs added by downstream modules, no need to add here
     assign clk_10_buf = clk_10_unbuf;
     assign clk_48_buf = clk_48_unbuf;
+    assign clk_ibex_buf = clk_ibex_unbuf;
   end
 
   // outputs
@@ -131,6 +142,7 @@ module clkgen_xilultrascaleplus
   assign clk_main_o = clk_10_buf;
   assign clk_48MHz_o = clk_48_buf;
   assign clk_aon_o = clk_aon_buf;
+  assign clk_ibex_o = clk_ibex_buf;
 
   // reset
   assign rst_no = locked_pll & rst_ni & srst_ni;

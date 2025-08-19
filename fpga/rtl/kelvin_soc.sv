@@ -14,9 +14,11 @@
 
 module kelvin_soc
     #(parameter MemInitFile = "",
-      parameter int ClockFrequencyMhz = 10)
+      parameter int ClockFrequencyMhz = 80)
     (input clk_i,
      input rst_ni,
+     input ibex_clk_i,
+     input ibex_rst_ni,
      input spi_clk_i,
      input prim_mubi_pkg::mubi4_t scanmode_i,
      input top_pkg::uart_sideband_i_t[1 : 0] uart_sideband_i,
@@ -34,102 +36,257 @@ module kelvin_soc
 
   kelvin_tlul_pkg_32::tl_h2d_t tl_ibex_core_i_o_32;
   kelvin_tlul_pkg_32::tl_d2h_t tl_ibex_core_i_i_32;
-  kelvin_tlul_pkg_128::tl_h2d_t tl_ibex_core_i_o_xbar;
-  kelvin_tlul_pkg_128::tl_d2h_t tl_ibex_core_i_i_xbar;
-
-  tlul_host_upsizer i_ibex_core_i_upsizer(.clk_i(clk_i),
-                                          .rst_ni(rst_ni),
-                                          .s_tl_i(tl_ibex_core_i_o_32),
-                                          .s_tl_o(tl_ibex_core_i_i_32),
-                                          .m_tl_o(tl_ibex_core_i_o_xbar),
-                                          .m_tl_i(tl_ibex_core_i_i_xbar));
 
   kelvin_tlul_pkg_32::tl_h2d_t tl_rom_o_32;
   kelvin_tlul_pkg_32::tl_d2h_t tl_rom_i_32;
-  kelvin_tlul_pkg_128::tl_h2d_t tl_rom_o_xbar;
-  kelvin_tlul_pkg_128::tl_d2h_t tl_rom_i_xbar;
-  tlul_device_downsizer i_rom_downsizer(.clk_i(clk_i),
-                                        .rst_ni(rst_ni),
-                                        .s_tl_i(tl_rom_o_xbar),
-                                        .s_tl_o(tl_rom_i_xbar),
-                                        .m_tl_o(tl_rom_o_32),
-                                        .m_tl_i(tl_rom_i_32));
 
   kelvin_tlul_pkg_32::tl_h2d_t tl_ibex_core_d_o_32;
   kelvin_tlul_pkg_32::tl_d2h_t tl_ibex_core_d_i_32;
 
-  kelvin_tlul_pkg_128::tl_h2d_t tl_ibex_core_d_o_xbar;
-  kelvin_tlul_pkg_128::tl_d2h_t tl_ibex_core_d_i_xbar;
-  tlul_host_upsizer i_ibex_core_d_upsizer(.clk_i(clk_i),
-                                          .rst_ni(rst_ni),
-                                          .s_tl_i(tl_ibex_core_d_o_32),
-                                          .s_tl_o(tl_ibex_core_d_i_32),
-                                          .m_tl_o(tl_ibex_core_d_o_xbar),
-                                          .m_tl_i(tl_ibex_core_d_i_xbar));
-
-  kelvin_tlul_pkg_128::tl_h2d_t tl_sram_o_xbar;
-  kelvin_tlul_pkg_128::tl_d2h_t tl_sram_i_xbar;
   tl_h2d_t tl_sram_o;
   tl_d2h_t tl_sram_i;
-  tlul_device_downsizer i_sram_downsizer(.clk_i(clk_i),
-                                         .rst_ni(rst_ni),
-                                         .s_tl_i(tl_sram_o_xbar),
-                                         .s_tl_o(tl_sram_i_xbar),
-                                         .m_tl_o(tl_sram_o),
-                                         .m_tl_i(tl_sram_i));
-  kelvin_tlul_pkg_128::tl_h2d_t tl_uart0_o_xbar;
-  kelvin_tlul_pkg_128::tl_d2h_t tl_uart0_i_xbar;
+
   tl_h2d_t tl_uart0_o;
   tl_d2h_t tl_uart0_i;
-  tlul_device_downsizer i_uart0_downsizer(.clk_i(clk_i),
-                                          .rst_ni(rst_ni),
-                                          .s_tl_i(tl_uart0_o_xbar),
-                                          .s_tl_o(tl_uart0_i_xbar),
-                                          .m_tl_o(tl_uart0_o),
-                                          .m_tl_i(tl_uart0_i));
-  kelvin_tlul_pkg_128::tl_h2d_t tl_uart1_o_xbar;
-  kelvin_tlul_pkg_128::tl_d2h_t tl_uart1_i_xbar;
+
   tl_h2d_t tl_uart1_o;
   tl_d2h_t tl_uart1_i;
-  tlul_device_downsizer i_uart1_downsizer(.clk_i(clk_i),
-                                          .rst_ni(rst_ni),
-                                          .s_tl_i(tl_uart1_o_xbar),
-                                          .s_tl_o(tl_uart1_i_xbar),
-                                          .m_tl_o(tl_uart1_o),
-                                          .m_tl_i(tl_uart1_i));
-  kelvin_tlul_pkg_128::tl_h2d_t tl_spi0_o_xbar;
-  kelvin_tlul_pkg_128::tl_d2h_t tl_spi0_i_xbar;
+
   tl_h2d_t tl_spi0_o;
   tl_d2h_t tl_spi0_i;
-  tlul_device_downsizer i_spi0_downsizer(.clk_i(clk_i),
-                                         .rst_ni(rst_ni),
-                                         .s_tl_i(tl_spi0_o_xbar),
-                                         .s_tl_o(tl_spi0_i_xbar),
-                                         .m_tl_o(tl_spi0_o),
-                                         .m_tl_i(tl_spi0_i));
 
-  xbar_kelvin_soc_xbar i_xbar(.clk_i(clk_i),
-                              .rst_ni(rst_ni),
-                              .spi_clk_i(spi_clk_i),
-                              .scanmode_i(scanmode_i),
-                              .tl_kelvin_core_i(tl_kelvin_core_i),
-                              .tl_kelvin_core_o(tl_kelvin_core_o),
-                              .tl_ibex_core_i_o(tl_ibex_core_i_i_xbar),
-                              .tl_ibex_core_i_i(tl_ibex_core_i_o_xbar),
-                              .tl_ibex_core_d_o(tl_ibex_core_d_i_xbar),
-                              .tl_ibex_core_d_i(tl_ibex_core_d_o_xbar),
-                              .tl_kelvin_device_o(tl_kelvin_device_o),
-                              .tl_kelvin_device_i(tl_kelvin_device_i),
-                              .tl_rom_o(tl_rom_o_xbar),
-                              .tl_rom_i(tl_rom_i_xbar),
-                              .tl_sram_o(tl_sram_o_xbar),
-                              .tl_sram_i(tl_sram_i_xbar),
-                              .tl_uart0_o(tl_uart0_o_xbar),
-                              .tl_uart0_i(tl_uart0_i_xbar),
-                              .tl_uart1_o(tl_uart1_o_xbar),
-                              .tl_uart1_i(tl_uart1_i_xbar),
-                              .tl_spi0_o(tl_spi0_o_xbar),
-                              .tl_spi0_i(tl_spi0_i_xbar));
+  KelvinXbar i_xbar(
+    .io_clk_i(clk_i),
+    .io_rst_ni(rst_ni),
+    .io_async_ports_devices_0_clock(spi_clk_i),
+    .io_async_ports_devices_0_reset(rst_ni),
+    .io_async_ports_hosts_0_clock(ibex_clk_i),
+    .io_async_ports_hosts_0_reset(ibex_rst_ni),
+
+    // Host connections
+    .io_hosts_0_a_valid(tl_kelvin_core_i.a_valid),
+    .io_hosts_0_a_bits_opcode(tl_kelvin_core_i.a_opcode),
+    .io_hosts_0_a_bits_param(tl_kelvin_core_i.a_param),
+    .io_hosts_0_a_bits_size(tl_kelvin_core_i.a_size),
+    .io_hosts_0_a_bits_source(tl_kelvin_core_i.a_source),
+    .io_hosts_0_a_bits_address(tl_kelvin_core_i.a_address),
+    .io_hosts_0_a_bits_mask(tl_kelvin_core_i.a_mask),
+    .io_hosts_0_a_bits_data(tl_kelvin_core_i.a_data),
+    .io_hosts_0_a_bits_user_rsvd(tl_kelvin_core_i.a_user.rsvd),
+    .io_hosts_0_a_bits_user_instr_type(tl_kelvin_core_i.a_user.instr_type),
+    .io_hosts_0_a_bits_user_cmd_intg(tl_kelvin_core_i.a_user.cmd_intg),
+    .io_hosts_0_a_bits_user_data_intg(tl_kelvin_core_i.a_user.data_intg),
+    .io_hosts_0_d_ready(tl_kelvin_core_i.d_ready),
+    .io_hosts_1_a_valid(tl_ibex_core_i_o_32.a_valid),
+    .io_hosts_1_a_bits_opcode(tl_ibex_core_i_o_32.a_opcode),
+    .io_hosts_1_a_bits_param(tl_ibex_core_i_o_32.a_param),
+    .io_hosts_1_a_bits_size(tl_ibex_core_i_o_32.a_size),
+    .io_hosts_1_a_bits_source(tl_ibex_core_i_o_32.a_source),
+    .io_hosts_1_a_bits_address(tl_ibex_core_i_o_32.a_address),
+    .io_hosts_1_a_bits_mask(tl_ibex_core_i_o_32.a_mask),
+    .io_hosts_1_a_bits_data(tl_ibex_core_i_o_32.a_data),
+    .io_hosts_1_a_bits_user_rsvd(tl_ibex_core_i_o_32.a_user.rsvd),
+    .io_hosts_1_a_bits_user_instr_type(tl_ibex_core_i_o_32.a_user.instr_type),
+    .io_hosts_1_a_bits_user_cmd_intg(tl_ibex_core_i_o_32.a_user.cmd_intg),
+    .io_hosts_1_a_bits_user_data_intg(tl_ibex_core_i_o_32.a_user.data_intg),
+    .io_hosts_1_d_ready(tl_ibex_core_i_o_32.d_ready),
+    .io_hosts_2_a_valid(tl_ibex_core_d_o_32.a_valid),
+    .io_hosts_2_a_bits_opcode(tl_ibex_core_d_o_32.a_opcode),
+    .io_hosts_2_a_bits_param(tl_ibex_core_d_o_32.a_param),
+    .io_hosts_2_a_bits_size(tl_ibex_core_d_o_32.a_size),
+    .io_hosts_2_a_bits_source(tl_ibex_core_d_o_32.a_source),
+    .io_hosts_2_a_bits_address(tl_ibex_core_d_o_32.a_address),
+    .io_hosts_2_a_bits_mask(tl_ibex_core_d_o_32.a_mask),
+    .io_hosts_2_a_bits_data(tl_ibex_core_d_o_32.a_data),
+    .io_hosts_2_a_bits_user_rsvd(tl_ibex_core_d_o_32.a_user.rsvd),
+    .io_hosts_2_a_bits_user_instr_type(tl_ibex_core_d_o_32.a_user.instr_type),
+    .io_hosts_2_a_bits_user_cmd_intg(tl_ibex_core_d_o_32.a_user.cmd_intg),
+    .io_hosts_2_a_bits_user_data_intg(tl_ibex_core_d_o_32.a_user.data_intg),
+    .io_hosts_2_d_ready(tl_ibex_core_d_o_32.d_ready),
+
+    // Host response connections
+    .io_hosts_0_a_ready(tl_kelvin_core_o.a_ready),
+    .io_hosts_0_d_valid(tl_kelvin_core_o.d_valid),
+    .io_hosts_0_d_bits_opcode(tl_kelvin_core_o.d_opcode),
+    .io_hosts_0_d_bits_param(tl_kelvin_core_o.d_param),
+    .io_hosts_0_d_bits_size(tl_kelvin_core_o.d_size),
+    .io_hosts_0_d_bits_source(tl_kelvin_core_o.d_source),
+    .io_hosts_0_d_bits_sink(tl_kelvin_core_o.d_sink),
+    .io_hosts_0_d_bits_data(tl_kelvin_core_o.d_data),
+    .io_hosts_0_d_bits_error(tl_kelvin_core_o.d_error),
+    .io_hosts_0_d_bits_user_rsp_intg(tl_kelvin_core_o.d_user.rsp_intg),
+    .io_hosts_0_d_bits_user_data_intg(tl_kelvin_core_o.d_user.data_intg),
+    .io_hosts_1_a_ready(tl_ibex_core_i_i_32.a_ready),
+    .io_hosts_1_d_valid(tl_ibex_core_i_i_32.d_valid),
+    .io_hosts_1_d_bits_opcode(tl_ibex_core_i_i_32.d_opcode),
+    .io_hosts_1_d_bits_param(tl_ibex_core_i_i_32.d_param),
+    .io_hosts_1_d_bits_size(tl_ibex_core_i_i_32.d_size),
+    .io_hosts_1_d_bits_source(tl_ibex_core_i_i_32.d_source),
+    .io_hosts_1_d_bits_sink(tl_ibex_core_i_i_32.d_sink),
+    .io_hosts_1_d_bits_data(tl_ibex_core_i_i_32.d_data),
+    .io_hosts_1_d_bits_error(tl_ibex_core_i_i_32.d_error),
+    .io_hosts_1_d_bits_user_rsp_intg(tl_ibex_core_i_i_32.d_user.rsp_intg),
+    .io_hosts_1_d_bits_user_data_intg(tl_ibex_core_i_i_32.d_user.data_intg),
+    .io_hosts_2_a_ready(tl_ibex_core_d_i_32.a_ready),
+    .io_hosts_2_d_valid(tl_ibex_core_d_i_32.d_valid),
+    .io_hosts_2_d_bits_opcode(tl_ibex_core_d_i_32.d_opcode),
+    .io_hosts_2_d_bits_param(tl_ibex_core_d_i_32.d_param),
+    .io_hosts_2_d_bits_size(tl_ibex_core_d_i_32.d_size),
+    .io_hosts_2_d_bits_source(tl_ibex_core_d_i_32.d_source),
+    .io_hosts_2_d_bits_sink(tl_ibex_core_d_i_32.d_sink),
+    .io_hosts_2_d_bits_data(tl_ibex_core_d_i_32.d_data),
+    .io_hosts_2_d_bits_error(tl_ibex_core_d_i_32.d_error),
+    .io_hosts_2_d_bits_user_rsp_intg(tl_ibex_core_d_i_32.d_user.rsp_intg),
+    .io_hosts_2_d_bits_user_data_intg(tl_ibex_core_d_i_32.d_user.data_intg),
+
+    // Device connections
+    .io_devices_0_a_ready(tl_kelvin_device_i.a_ready),
+    .io_devices_0_d_valid(tl_kelvin_device_i.d_valid),
+    .io_devices_0_d_bits_opcode(tl_kelvin_device_i.d_opcode),
+    .io_devices_0_d_bits_param(tl_kelvin_device_i.d_param),
+    .io_devices_0_d_bits_size(tl_kelvin_device_i.d_size),
+    .io_devices_0_d_bits_source(tl_kelvin_device_i.d_source),
+    .io_devices_0_d_bits_sink(tl_kelvin_device_i.d_sink),
+    .io_devices_0_d_bits_data(tl_kelvin_device_i.d_data),
+    .io_devices_0_d_bits_error(tl_kelvin_device_i.d_error),
+    .io_devices_0_d_bits_user_rsp_intg(tl_kelvin_device_i.d_user.rsp_intg),
+    .io_devices_0_d_bits_user_data_intg(tl_kelvin_device_i.d_user.data_intg),
+    .io_devices_1_a_ready(tl_rom_i_32.a_ready),
+    .io_devices_1_d_valid(tl_rom_i_32.d_valid),
+    .io_devices_1_d_bits_opcode(tl_rom_i_32.d_opcode),
+    .io_devices_1_d_bits_param(tl_rom_i_32.d_param),
+    .io_devices_1_d_bits_size(tl_rom_i_32.d_size),
+    .io_devices_1_d_bits_source(tl_rom_i_32.d_source),
+    .io_devices_1_d_bits_sink(tl_rom_i_32.d_sink),
+    .io_devices_1_d_bits_data(tl_rom_i_32.d_data),
+    .io_devices_1_d_bits_error(tl_rom_i_32.d_error),
+    .io_devices_1_d_bits_user_rsp_intg(tl_rom_i_32.d_user.rsp_intg),
+    .io_devices_1_d_bits_user_data_intg(tl_rom_i_32.d_user.data_intg),
+    .io_devices_2_a_ready(tl_sram_i.a_ready),
+    .io_devices_2_d_valid(tl_sram_i.d_valid),
+    .io_devices_2_d_bits_opcode(tl_sram_i.d_opcode),
+    .io_devices_2_d_bits_param(tl_sram_i.d_param),
+    .io_devices_2_d_bits_size(tl_sram_i.d_size),
+    .io_devices_2_d_bits_source(tl_sram_i.d_source),
+    .io_devices_2_d_bits_sink(tl_sram_i.d_sink),
+    .io_devices_2_d_bits_data(tl_sram_i.d_data),
+    .io_devices_2_d_bits_error(tl_sram_i.d_error),
+    .io_devices_2_d_bits_user_rsp_intg(tl_sram_i.d_user.rsp_intg),
+    .io_devices_2_d_bits_user_data_intg(tl_sram_i.d_user.data_intg),
+    .io_devices_3_a_ready(tl_uart0_i.a_ready),
+    .io_devices_3_d_valid(tl_uart0_i.d_valid),
+    .io_devices_3_d_bits_opcode(tl_uart0_i.d_opcode),
+    .io_devices_3_d_bits_param(tl_uart0_i.d_param),
+    .io_devices_3_d_bits_size(tl_uart0_i.d_size),
+    .io_devices_3_d_bits_source(tl_uart0_i.d_source),
+    .io_devices_3_d_bits_sink(tl_uart0_i.d_sink),
+    .io_devices_3_d_bits_data(tl_uart0_i.d_data),
+    .io_devices_3_d_bits_error(tl_uart0_i.d_error),
+    .io_devices_3_d_bits_user_rsp_intg(tl_uart0_i.d_user.rsp_intg),
+    .io_devices_3_d_bits_user_data_intg(tl_uart0_i.d_user.data_intg),
+    .io_devices_4_a_ready(tl_uart1_i.a_ready),
+    .io_devices_4_d_valid(tl_uart1_i.d_valid),
+    .io_devices_4_d_bits_opcode(tl_uart1_i.d_opcode),
+    .io_devices_4_d_bits_param(tl_uart1_i.d_param),
+    .io_devices_4_d_bits_size(tl_uart1_i.d_size),
+    .io_devices_4_d_bits_source(tl_uart1_i.d_source),
+    .io_devices_4_d_bits_sink(tl_uart1_i.d_sink),
+    .io_devices_4_d_bits_data(tl_uart1_i.d_data),
+    .io_devices_4_d_bits_error(tl_uart1_i.d_error),
+    .io_devices_4_d_bits_user_rsp_intg(tl_uart1_i.d_user.rsp_intg),
+    .io_devices_4_d_bits_user_data_intg(tl_uart1_i.d_user.data_intg),
+    .io_devices_5_a_ready(tl_spi0_i.a_ready),
+    .io_devices_5_d_valid(tl_spi0_i.d_valid),
+    .io_devices_5_d_bits_opcode(tl_spi0_i.d_opcode),
+    .io_devices_5_d_bits_param(tl_spi0_i.d_param),
+    .io_devices_5_d_bits_size(tl_spi0_i.d_size),
+    .io_devices_5_d_bits_source(tl_spi0_i.d_source),
+    .io_devices_5_d_bits_sink(tl_spi0_i.d_sink),
+    .io_devices_5_d_bits_data(tl_spi0_i.d_data),
+    .io_devices_5_d_bits_error(tl_spi0_i.d_error),
+    .io_devices_5_d_bits_user_rsp_intg(tl_spi0_i.d_user.rsp_intg),
+    .io_devices_5_d_bits_user_data_intg(tl_spi0_i.d_user.data_intg),
+
+    // Device response connections
+    .io_devices_0_a_valid(tl_kelvin_device_o.a_valid),
+    .io_devices_0_a_bits_opcode(tl_kelvin_device_o.a_opcode),
+    .io_devices_0_a_bits_param(tl_kelvin_device_o.a_param),
+    .io_devices_0_a_bits_size(tl_kelvin_device_o.a_size),
+    .io_devices_0_a_bits_source(tl_kelvin_device_o.a_source),
+    .io_devices_0_a_bits_address(tl_kelvin_device_o.a_address),
+    .io_devices_0_a_bits_mask(tl_kelvin_device_o.a_mask),
+    .io_devices_0_a_bits_data(tl_kelvin_device_o.a_data),
+    .io_devices_0_a_bits_user_rsvd(tl_kelvin_device_o.a_user.rsvd),
+    .io_devices_0_a_bits_user_instr_type(tl_kelvin_device_o.a_user.instr_type),
+    .io_devices_0_a_bits_user_cmd_intg(tl_kelvin_device_o.a_user.cmd_intg),
+    .io_devices_0_a_bits_user_data_intg(tl_kelvin_device_o.a_user.data_intg),
+    .io_devices_0_d_ready(tl_kelvin_device_o.d_ready),
+    .io_devices_1_a_valid(tl_rom_o_32.a_valid),
+    .io_devices_1_a_bits_opcode(tl_rom_o_32.a_opcode),
+    .io_devices_1_a_bits_param(tl_rom_o_32.a_param),
+    .io_devices_1_a_bits_size(tl_rom_o_32.a_size),
+    .io_devices_1_a_bits_source(tl_rom_o_32.a_source),
+    .io_devices_1_a_bits_address(tl_rom_o_32.a_address),
+    .io_devices_1_a_bits_mask(tl_rom_o_32.a_mask),
+    .io_devices_1_a_bits_data(tl_rom_o_32.a_data),
+    .io_devices_1_a_bits_user_rsvd(tl_rom_o_32.a_user.rsvd),
+    .io_devices_1_a_bits_user_instr_type(tl_rom_o_32.a_user.instr_type),
+    .io_devices_1_a_bits_user_cmd_intg(tl_rom_o_32.a_user.cmd_intg),
+    .io_devices_1_a_bits_user_data_intg(tl_rom_o_32.a_user.data_intg),
+    .io_devices_1_d_ready(tl_rom_o_32.d_ready),
+    .io_devices_2_a_valid(tl_sram_o.a_valid),
+    .io_devices_2_a_bits_opcode(tl_sram_o.a_opcode),
+    .io_devices_2_a_bits_param(tl_sram_o.a_param),
+    .io_devices_2_a_bits_size(tl_sram_o.a_size),
+    .io_devices_2_a_bits_source(tl_sram_o.a_source),
+    .io_devices_2_a_bits_address(tl_sram_o.a_address),
+    .io_devices_2_a_bits_mask(tl_sram_o.a_mask),
+    .io_devices_2_a_bits_data(tl_sram_o.a_data),
+    .io_devices_2_a_bits_user_rsvd(tl_sram_o.a_user.rsvd),
+    .io_devices_2_a_bits_user_instr_type(tl_sram_o.a_user.instr_type),
+    .io_devices_2_a_bits_user_cmd_intg(tl_sram_o.a_user.cmd_intg),
+    .io_devices_2_a_bits_user_data_intg(tl_sram_o.a_user.data_intg),
+    .io_devices_2_d_ready(tl_sram_o.d_ready),
+    .io_devices_3_a_valid(tl_uart0_o.a_valid),
+    .io_devices_3_a_bits_opcode(tl_uart0_o.a_opcode),
+    .io_devices_3_a_bits_param(tl_uart0_o.a_param),
+    .io_devices_3_a_bits_size(tl_uart0_o.a_size),
+    .io_devices_3_a_bits_source(tl_uart0_o.a_source),
+    .io_devices_3_a_bits_address(tl_uart0_o.a_address),
+    .io_devices_3_a_bits_mask(tl_uart0_o.a_mask),
+    .io_devices_3_a_bits_data(tl_uart0_o.a_data),
+    .io_devices_3_a_bits_user_rsvd(tl_uart0_o.a_user.rsvd),
+    .io_devices_3_a_bits_user_instr_type(tl_uart0_o.a_user.instr_type),
+    .io_devices_3_a_bits_user_cmd_intg(tl_uart0_o.a_user.cmd_intg),
+    .io_devices_3_a_bits_user_data_intg(tl_uart0_o.a_user.data_intg),
+    .io_devices_3_d_ready(tl_uart0_o.d_ready),
+    .io_devices_4_a_valid(tl_uart1_o.a_valid),
+    .io_devices_4_a_bits_opcode(tl_uart1_o.a_opcode),
+    .io_devices_4_a_bits_param(tl_uart1_o.a_param),
+    .io_devices_4_a_bits_size(tl_uart1_o.a_size),
+    .io_devices_4_a_bits_source(tl_uart1_o.a_source),
+    .io_devices_4_a_bits_address(tl_uart1_o.a_address),
+    .io_devices_4_a_bits_mask(tl_uart1_o.a_mask),
+    .io_devices_4_a_bits_data(tl_uart1_o.a_data),
+    .io_devices_4_a_bits_user_rsvd(tl_uart1_o.a_user.rsvd),
+    .io_devices_4_a_bits_user_instr_type(tl_uart1_o.a_user.instr_type),
+    .io_devices_4_a_bits_user_cmd_intg(tl_uart1_o.a_user.cmd_intg),
+    .io_devices_4_a_bits_user_data_intg(tl_uart1_o.a_user.data_intg),
+    .io_devices_4_d_ready(tl_uart1_o.d_ready),
+    .io_devices_5_a_valid(tl_spi0_o.a_valid),
+    .io_devices_5_a_bits_opcode(tl_spi0_o.a_opcode),
+    .io_devices_5_a_bits_param(tl_spi0_o.a_param),
+    .io_devices_5_a_bits_size(tl_spi0_o.a_size),
+    .io_devices_5_a_bits_source(tl_spi0_o.a_source),
+    .io_devices_5_a_bits_address(tl_spi0_o.a_address),
+    .io_devices_5_a_bits_mask(tl_spi0_o.a_mask),
+    .io_devices_5_a_bits_data(tl_spi0_o.a_data),
+    .io_devices_5_a_bits_user_rsvd(tl_spi0_o.a_user.rsvd),
+    .io_devices_5_a_bits_user_instr_type(tl_spi0_o.a_user.instr_type),
+    .io_devices_5_a_bits_user_cmd_intg(tl_spi0_o.a_user.cmd_intg),
+    .io_devices_5_a_bits_user_data_intg(tl_spi0_o.a_user.data_intg),
+    .io_devices_5_d_ready(tl_spi0_o.d_ready)
+  );
 
   uart i_uart0(.clk_i(clk_i),
                .rst_ni(rst_ni),
@@ -308,225 +465,10 @@ module kelvin_soc
 
   logic rst_cpu_n;
 
-  // Data and Response integrity generation for Kelvin Device Port
-  localparam int XbarSourceWidth = kelvin_tlul_pkg_128::TL_AIW;
-  localparam int XbarSourceCount = 1 << XbarSourceWidth;
-  logic [1 : 0] host_lane_reg[XbarSourceCount - 1 : 0];
-
-  logic [38 : 0] dev_ecc_full_0, dev_ecc_full_1, dev_ecc_full_2, dev_ecc_full_3;
-  logic [6 : 0] dev_ecc_0, dev_ecc_1, dev_ecc_2, dev_ecc_3;
-  logic [6 : 0] dev_selected_ecc;
-  tl_d2h_rsp_intg_t dev_rsp_metadata;
-  logic [63 : 0] dev_rsp_ecc_full;
-  logic [6 : 0] dev_rsp_ecc;
-
-  assign dev_ecc_0 = dev_ecc_full_0[38 : 32];
-  assign dev_ecc_1 = dev_ecc_full_1[38 : 32];
-  assign dev_ecc_2 = dev_ecc_full_2[38 : 32];
-  assign dev_ecc_3 = dev_ecc_full_3[38 : 32];
-  assign dev_rsp_ecc = dev_rsp_ecc_full[63 : 57];
-
-  prim_secded_inv_39_32_enc dev_enc0(.data_i(tl_kelvin_device_i.d_data[31 : 0]),
-                                     .data_o(dev_ecc_full_0));
-  prim_secded_inv_39_32_enc dev_enc1(.data_i(
-                                         tl_kelvin_device_i.d_data[63 : 32]),
-                                     .data_o(dev_ecc_full_1));
-  prim_secded_inv_39_32_enc dev_enc2(.data_i(
-                                         tl_kelvin_device_i.d_data[95 : 64]),
-                                     .data_o(dev_ecc_full_2));
-  prim_secded_inv_39_32_enc dev_enc3(.data_i(
-                                         tl_kelvin_device_i.d_data[127 : 96]),
-                                     .data_o(dev_ecc_full_3));
-
-  always_ff @(posedge clk_i or negedge rst_ni) begin
-    if (!rst_ni) begin
-      for (int i = 0; i < XbarSourceCount; i++) begin
-        host_lane_reg[i] <= 2'b0;
-      end
-    end else begin
-      // Capture lane index from Ibex data core requests
-      if (tl_ibex_core_d_o_xbar.a_valid && tl_ibex_core_d_i_xbar.a_ready) begin
-        unique case (4'hF)
-          tl_ibex_core_d_o_xbar.a_mask[3 : 0]:
-            host_lane_reg[tl_ibex_core_d_o_xbar.a_source] <= 2'b00;
-          tl_ibex_core_d_o_xbar.a_mask[7 : 4]:
-            host_lane_reg[tl_ibex_core_d_o_xbar.a_source] <= 2'b01;
-          tl_ibex_core_d_o_xbar.a_mask[11 : 8]:
-            host_lane_reg[tl_ibex_core_d_o_xbar.a_source] <= 2'b10;
-          tl_ibex_core_d_o_xbar.a_mask[15 : 12]:
-            host_lane_reg[tl_ibex_core_d_o_xbar.a_source] <= 2'b11;
-        endcase
-      end
-
-      // Capture lane index from Ibex instruction core requests
-      if (tl_ibex_core_i_o_xbar.a_valid && tl_ibex_core_i_i_xbar.a_ready) begin
-        unique case (4'hF)
-          tl_ibex_core_i_o_xbar.a_mask[3 : 0]:
-            host_lane_reg[tl_ibex_core_i_o_xbar.a_source] <= 2'b00;
-          tl_ibex_core_i_o_xbar.a_mask[7 : 4]:
-            host_lane_reg[tl_ibex_core_i_o_xbar.a_source] <= 2'b01;
-          tl_ibex_core_i_o_xbar.a_mask[11 : 8]:
-            host_lane_reg[tl_ibex_core_i_o_xbar.a_source] <= 2'b10;
-          tl_ibex_core_i_o_xbar.a_mask[15 : 12]:
-            host_lane_reg[tl_ibex_core_i_o_xbar.a_source] <= 2'b11;
-        endcase
-      end
-
-      // Capture lane index from Kelvin core requests
-      if (tl_kelvin_core_i.a_valid && tl_kelvin_core_o.a_ready) begin
-        unique case (4'hF)
-          tl_kelvin_core_i.a_mask[3 : 0]:
-            host_lane_reg[tl_kelvin_core_i.a_source] <= 2'b00;
-          tl_kelvin_core_i.a_mask[7 : 4]:
-            host_lane_reg[tl_kelvin_core_i.a_source] <= 2'b01;
-          tl_kelvin_core_i.a_mask[11 : 8]:
-            host_lane_reg[tl_kelvin_core_i.a_source] <= 2'b10;
-          tl_kelvin_core_i.a_mask[15 : 12]:
-            host_lane_reg[tl_kelvin_core_i.a_source] <= 2'b11;
-        endcase
-      end
-    end
-  end
-
-  always_comb begin
-    logic [1 : 0] lane_idx;
-    lane_idx = host_lane_reg[tl_from_kelvin_core.d_source];
-    case (lane_idx)
-      2'b00:
-        dev_selected_ecc = dev_ecc_0;
-      2'b01:
-        dev_selected_ecc = dev_ecc_1;
-      2'b10:
-        dev_selected_ecc = dev_ecc_2;
-      2'b11:
-        dev_selected_ecc = dev_ecc_3;
-      default:
-        dev_selected_ecc = dev_ecc_0;
-    endcase
-  end
-
-  assign dev_rsp_metadata = '{
-    opcode: tl_from_kelvin_core.d_opcode,
-    size: 2'b10,
-    error: tl_from_kelvin_core.d_error
-  };
-
-  prim_secded_inv_64_57_enc dev_enc_rsp(.data_i(
-                                            D2HRspMaxWidth'(dev_rsp_metadata)),
-                                        .data_o(dev_rsp_ecc_full));
-
   // Kelvin Core Instantiation
   logic kelvin_halted, kelvin_fault, kelvin_wfi;
-  kelvin_tlul_pkg_128::tl_d2h_t tl_from_kelvin_core;
-
   assign io_halted = kelvin_halted;
   assign io_fault = kelvin_fault;
-
-  // Assign all fields for the device D-channel from the Kelvin core's output,
-  // except for the user integrity bits, which we override with our generated
-  // ECC.
-  assign tl_kelvin_device_i.d_valid = tl_from_kelvin_core.d_valid;
-  assign tl_kelvin_device_i.d_opcode = tl_from_kelvin_core.d_opcode;
-  assign tl_kelvin_device_i.d_param = tl_from_kelvin_core.d_param;
-  assign tl_kelvin_device_i.d_size = tl_from_kelvin_core.d_size;
-  assign tl_kelvin_device_i.d_source = tl_from_kelvin_core.d_source;
-  assign tl_kelvin_device_i.d_sink = tl_from_kelvin_core.d_sink;
-  assign tl_kelvin_device_i.d_data = tl_from_kelvin_core.d_data;
-  assign tl_kelvin_device_i.d_error = tl_from_kelvin_core.d_error;
-  assign tl_kelvin_device_i.a_ready = tl_from_kelvin_core.a_ready;
-  assign tl_kelvin_device_i.d_user.rsp_intg = dev_rsp_ecc;
-  assign tl_kelvin_device_i.d_user.data_intg = dev_selected_ecc;
-
-  // Command and Data integrity generation for Kelvin Host Port
-  logic [38 : 0] host_a_data_ecc_full_0, host_a_data_ecc_full_1,
-                 host_a_data_ecc_full_2, host_a_data_ecc_full_3;
-  logic [6 : 0] host_a_data_ecc_0, host_a_data_ecc_1, host_a_data_ecc_2,
-                host_a_data_ecc_3;
-  logic [6 : 0] host_a_data_selected_ecc;
-  tl_h2d_cmd_intg_t host_a_cmd_metadata;
-  logic [63 : 0] host_a_cmd_ecc_full;
-  logic [6 : 0] host_a_cmd_ecc;
-
-  assign host_a_data_ecc_0 = host_a_data_ecc_full_0[38 : 32];
-  assign host_a_data_ecc_1 = host_a_data_ecc_full_1[38 : 32];
-  assign host_a_data_ecc_2 = host_a_data_ecc_full_2[38 : 32];
-  assign host_a_data_ecc_3 = host_a_data_ecc_full_3[38 : 32];
-  assign host_a_cmd_ecc = host_a_cmd_ecc_full[63 : 57];
-
-  prim_secded_inv_39_32_enc host_a_data_enc0(
-                                    .data_i(tl_kelvin_core_i.a_data[31 : 0]),
-                                    .data_o(host_a_data_ecc_full_0));
-  prim_secded_inv_39_32_enc host_a_data_enc1(
-                                    .data_i(tl_kelvin_core_i.a_data[63 : 32]),
-                                    .data_o(host_a_data_ecc_full_1));
-  prim_secded_inv_39_32_enc host_a_data_enc2(
-                                    .data_i(tl_kelvin_core_i.a_data[95 : 64]),
-                                    .data_o(host_a_data_ecc_full_2));
-  prim_secded_inv_39_32_enc host_a_data_enc3(
-                                    .data_i(tl_kelvin_core_i.a_data[127 : 96]),
-                                    .data_o(host_a_data_ecc_full_3));
-
-  logic [top_pkg::TL_DBW - 1 : 0] host_a_cmd_mask;
-
-  localparam logic [top_pkg::TL_AW - 1 : 0] Uart1BaseAddr = 32'h40010000;
-  logic [15 : 0] computed_mask;
-  logic [3 : 0] host_a_cmd_mask_4b;
-  logic [1 : 0] host_a_cmd_lane;
-  tl_h2d_cmd_intg_t host_a_cmd_payload;
-  logic [15 : 0] kelvin_core_i_a_mask;
-
-  always_comb begin
-    if (tl_kelvin_core_i.a_opcode == tlul_pkg::Get) begin
-      computed_mask = ((1 << (1 << tl_kelvin_core_i.a_size)) - 1)
-                      << (tl_kelvin_core_i.a_address[3 : 0]);
-    end else begin
-      computed_mask = kelvin_core_i_a_mask;
-    end
-    host_a_data_selected_ecc = 7'b0;
-    host_a_cmd_mask_4b = '0;
-    host_a_cmd_lane = '0;
-    // This is a priority mux, which is what we want.
-    if (|computed_mask[3 : 0]) begin
-      host_a_data_selected_ecc = host_a_data_ecc_0;
-      host_a_cmd_mask_4b = computed_mask[3 : 0];
-      host_a_cmd_lane = 2'b00;
-    end else if (|computed_mask[7 : 4]) begin
-      host_a_data_selected_ecc = host_a_data_ecc_1;
-      host_a_cmd_mask_4b = computed_mask[7 : 4];
-      host_a_cmd_lane = 2'b01;
-    end else if (|computed_mask[11 : 8]) begin
-      host_a_data_selected_ecc = host_a_data_ecc_2;
-      host_a_cmd_mask_4b = computed_mask[11 : 8];
-      host_a_cmd_lane = 2'b10;
-    end else if (|computed_mask[15 : 12]) begin
-      host_a_data_selected_ecc = host_a_data_ecc_3;
-      host_a_cmd_mask_4b = computed_mask[15 : 12];
-      host_a_cmd_lane = 2'b11;
-    end
-  end
-
-  // Manually pack the command integrity payload to match the 32-bit
-  // peripheral's view. The packing order is derived from the tl_h2d_cmd_intg_t
-  // struct definition.
-  assign host_a_cmd_payload = '{
-    instr_type: prim_mubi_pkg::MuBi4False,  // instr_type (4 bits)
-    addr: tl_kelvin_core_i.a_address,       // addr (32 bits)
-    opcode: tl_kelvin_core_i.a_opcode,      // opcode (3 bits)
-    mask: host_a_cmd_mask_4b                // mask (4 bits)
-  };
-  logic [31 : 0] dbg_uart1_addr = host_a_cmd_payload.addr;
-  logic [2 : 0] dbg_uart1_opcode = host_a_cmd_payload.opcode;
-  logic [3 : 0] dbg_uart1_mask = host_a_cmd_payload.mask;
-  logic [3 : 0] dbg_uart1_instr_type = host_a_cmd_payload.instr_type;
-
-  prim_secded_inv_64_57_enc host_a_cmd_enc(.data_i(H2DCmdMaxWidth'(
-                                               host_a_cmd_payload)),
-                                           .data_o(host_a_cmd_ecc_full));
-
-  assign tl_kelvin_core_i.a_user.cmd_intg = host_a_cmd_ecc;
-  assign tl_kelvin_core_i.a_user.data_intg = host_a_data_selected_ecc;
-  assign tl_kelvin_core_i.a_user.instr_type = prim_mubi_pkg::MuBi4False;
-  assign tl_kelvin_core_i.a_mask = computed_mask;
 
   RvvCoreMiniTlul
       i_kelvin_core(
@@ -539,12 +481,12 @@ module kelvin_soc
               .io_tl_host_a_bits_size(tl_kelvin_core_i.a_size),
               .io_tl_host_a_bits_source(tl_kelvin_core_i.a_source),
               .io_tl_host_a_bits_address(tl_kelvin_core_i.a_address),
-              .io_tl_host_a_bits_mask(kelvin_core_i_a_mask),
+              .io_tl_host_a_bits_mask(tl_kelvin_core_i.a_mask),
               .io_tl_host_a_bits_data(tl_kelvin_core_i.a_data),
               .io_tl_host_a_bits_user_rsvd(tl_kelvin_core_i.a_user.rsvd),
-              .io_tl_host_a_bits_user_instr_type(),
-              .io_tl_host_a_bits_user_cmd_intg(),
-              .io_tl_host_a_bits_user_data_intg(),
+              .io_tl_host_a_bits_user_instr_type(tl_kelvin_core_i.a_user.instr_type),
+              .io_tl_host_a_bits_user_cmd_intg(tl_kelvin_core_i.a_user.cmd_intg),
+              .io_tl_host_a_bits_user_data_intg(tl_kelvin_core_i.a_user.data_intg),
               .io_tl_host_d_ready(tl_kelvin_core_i.d_ready),
               .io_tl_host_d_valid(tl_kelvin_core_o.d_valid),
               .io_tl_host_d_bits_opcode(tl_kelvin_core_o.d_opcode),
@@ -574,17 +516,17 @@ module kelvin_soc
               .io_tl_device_a_bits_user_data_intg(
                   tl_kelvin_device_o.a_user.data_intg),
               .io_tl_device_d_ready(tl_kelvin_device_o.d_ready),
-              .io_tl_device_a_ready(tl_from_kelvin_core.a_ready),
-              .io_tl_device_d_valid(tl_from_kelvin_core.d_valid),
-              .io_tl_device_d_bits_opcode(tl_from_kelvin_core.d_opcode),
-              .io_tl_device_d_bits_param(tl_from_kelvin_core.d_param),
-              .io_tl_device_d_bits_size(tl_from_kelvin_core.d_size),
-              .io_tl_device_d_bits_source(tl_from_kelvin_core.d_source),
-              .io_tl_device_d_bits_sink(tl_from_kelvin_core.d_sink),
-              .io_tl_device_d_bits_data(tl_from_kelvin_core.d_data),
-              .io_tl_device_d_bits_error(tl_from_kelvin_core.d_error),
-              .io_tl_device_d_bits_user_rsp_intg(),
-              .io_tl_device_d_bits_user_data_intg(),
+              .io_tl_device_a_ready(tl_kelvin_device_i.a_ready),
+              .io_tl_device_d_valid(tl_kelvin_device_i.d_valid),
+              .io_tl_device_d_bits_opcode(tl_kelvin_device_i.d_opcode),
+              .io_tl_device_d_bits_param(tl_kelvin_device_i.d_param),
+              .io_tl_device_d_bits_size(tl_kelvin_device_i.d_size),
+              .io_tl_device_d_bits_source(tl_kelvin_device_i.d_source),
+              .io_tl_device_d_bits_sink(tl_kelvin_device_i.d_sink),
+              .io_tl_device_d_bits_data(tl_kelvin_device_i.d_data),
+              .io_tl_device_d_bits_error(tl_kelvin_device_i.d_error),
+              .io_tl_device_d_bits_user_rsp_intg(tl_kelvin_device_i.d_user.rsp_intg),
+              .io_tl_device_d_bits_user_data_intg(tl_kelvin_device_i.d_user.data_intg),
               .io_halted(kelvin_halted),
               .io_fault(kelvin_fault),
               .io_wfi(kelvin_wfi),
@@ -594,8 +536,8 @@ module kelvin_soc
   // Ibex Core Instantiation
   rv_core_ibex #(.PipeLine(1'b1),
                  .PMPEnable(1'b0))
-      i_ibex_core(.clk_i(clk_i),
-                  .rst_ni(rst_ni),
+      i_ibex_core(.clk_i(ibex_clk_i),
+                  .rst_ni(ibex_rst_ni),
                   .corei_tl_h_o(tl_ibex_core_i_o_32),
                   .corei_tl_h_i(tl_ibex_core_i_i_32),
                   .cored_tl_h_o(tl_ibex_core_d_o_32),

@@ -14,7 +14,7 @@
 
 module chip_nexus
     #(parameter MemInitFile = "",
-      parameter int ClockFrequencyMhz = 10)
+      parameter int ClockFrequencyMhz = 80)
     (input clk_p_i,
      input clk_n_i,
      input rst_ni,
@@ -28,6 +28,8 @@ module chip_nexus
 
   logic clk;
   logic rst_n;
+  logic clk_ibex;
+  logic rst_ibex_n;
   logic clk_48MHz;
   logic clk_aon;
 
@@ -50,12 +52,27 @@ module chip_nexus
                .clk_main_o(clk),
                .clk_48MHz_o(clk_48MHz),
                .clk_aon_o(clk_aon),
+               .clk_ibex_o(clk_ibex),
                .rst_no(rst_n));
+
+  // Reset synchronizer for Ibex reset.
+  logic rst_n_sync;
+  always_ff @(posedge clk_ibex or negedge rst_n) begin
+    if (!rst_n) begin
+      rst_n_sync <= 1'b0;
+      rst_ibex_n <= 1'b0;
+    end else begin
+      rst_n_sync <= 1'b1;
+      rst_ibex_n <= rst_n_sync;
+    end
+  end
 
   kelvin_soc #(.MemInitFile(MemInitFile),
                .ClockFrequencyMhz(ClockFrequencyMhz))
       i_kelvin_soc(.clk_i(clk),
                    .rst_ni(rst_n),
+                   .ibex_clk_i(clk_ibex),
+                   .ibex_rst_ni(rst_ibex_n),
                    .spi_clk_i(spi_clk_i),
                    .scanmode_i(prim_mubi_pkg::MuBi4False),
                    .uart_sideband_i(uart_sideband_i),

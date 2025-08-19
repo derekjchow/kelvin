@@ -14,7 +14,7 @@
 
 module chip_verilator
     #(parameter MemInitFile = "",
-      parameter int ClockFrequencyMhz = 10)
+      parameter int ClockFrequencyMhz = 80)
     (input clk_i,
      input rst_ni,
      input spi_clk_i,
@@ -52,6 +52,8 @@ module chip_verilator
                .ClockFrequencyMhz(ClockFrequencyMhz))
       i_kelvin_soc(.clk_i(clk_i),
                    .rst_ni(rst_ni),
+                   .ibex_clk_i(ibex_clk_i),
+                   .ibex_rst_ni(ibex_rst_ni),
                    .spi_clk_i(spi_clk_i),
                    .scanmode_i(scanmode_i),
                    .uart_sideband_i(
@@ -62,4 +64,29 @@ module chip_verilator
 
   assign uart0_tx = uart_sideband_o[0].cio_tx;
   assign uart1_tx = uart_sideband_o[1].cio_tx;
+
+  // Clock divider for Ibex clock.
+  logic [1:0] clk_divider;
+  always_ff @(posedge clk_i or negedge rst_ni) begin
+    if (!rst_ni) begin
+      clk_divider <= 2'b0;
+    end else begin
+      clk_divider <= clk_divider + 1;
+    end
+  end
+  logic ibex_clk_i;
+  assign ibex_clk_i = clk_divider[1];
+
+  // Reset synchronizer for Ibex reset.
+  logic ibex_rst_ni;
+  logic rst_n_sync;
+  always_ff @(posedge ibex_clk_i or negedge rst_ni) begin
+    if (!rst_ni) begin
+      rst_n_sync <= 1'b0;
+      ibex_rst_ni <= 1'b0;
+    end else begin
+      rst_n_sync <= 1'b1;
+      ibex_rst_ni <= rst_n_sync;
+    end
+  end
 endmodule

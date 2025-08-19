@@ -5,7 +5,7 @@ description: "The Kelvin SoC for FPGA."
 filesets:
   rtl:
     depend:
-      - lowrisc:ip:xbar_kelvin_soc_xbar:0.1
+      - kelvinv2:ip:xbar_kelvin_soc_chisel:0.1
       - com.google.kelvin:fpga:kelvin_soc_pkg:0.1
       - com.google.kelvin:fpga:racl_pkg:0.1
       - lowrisc:ip:uart:0.1
@@ -15,8 +15,6 @@ filesets:
       - lowrisc:ip:spi_device:0.1
       - lowrisc:kelvin_ip:rv_core_ibex:0.1
       - google:kelvin:rvv_core_mini_tlul
-      - kelvinv2:ip:tlul_host_upsizer
-      - kelvinv2:ip:tlul_device_downsizer
       - lowrisc:ibex:ibex_tracer
       - kelvinv2:ip:sram:0.1
       - kelvinv2:ip:kelvin_tlul:0.1

@@ -14,10 +14,29 @@
 
 package(default_visibility = ["//visibility:public"])
 
+genrule(
+    name = "kelvin_xbar",
+    srcs = ["//hdl/chisel/src/soc:KelvinXbar.sv"],
+    outs = ["KelvinXbar.sv"],
+    cmd = "cp $< $@",
+)
+
+genrule(
+    name = "generate_core_file",
+    srcs = [
+        "xbar_kelvin_soc_chisel.core.tpl",
+        ":kelvin_xbar",
+    ],
+    outs = ["xbar_kelvin_soc_chisel.core"],
+    cmd = "sed 's|__VERILOG_FILE__|KelvinXbar.sv|' $(location xbar_kelvin_soc_chisel.core.tpl) > $@",
+)
+
 filegroup(
     name = "rtl_files",
     srcs = glob([
         "*.sv",
         "*.core",
-    ]),
+    ]) + [
+        ":KelvinXbar.sv",
+    ],
 )

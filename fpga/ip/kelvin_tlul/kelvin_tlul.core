@@ -9,10 +9,6 @@ filesets:
     files:
       - kelvin_tlul_pkg_128.sv
       - kelvin_tlul_pkg_32.sv
-      - tlul_fifo_async_128.sv
-      - tlul_fifo_sync_128.sv
-      - tlul_socket_1n_128.sv
-      - tlul_socket_m1_128.sv
     file_type: systemVerilogSource
 
 targets:

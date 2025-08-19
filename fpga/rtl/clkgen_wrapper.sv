@@ -3,7 +3,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 module clkgen_wrapper
-    #(parameter int ClockFrequencyMhz = 10)
+    #(parameter int ClockFrequencyMhz = 80)
     (input clk_p_i,
      input clk_n_i,
      input rst_ni,
@@ -11,6 +11,7 @@ module clkgen_wrapper
      output clk_main_o,
      output clk_48MHz_o,
      output clk_aon_o,
+     output clk_ibex_o,
      output rst_no);
 
   clkgen_xilultrascaleplus #(.ClockFrequencyMhz(ClockFrequencyMhz))
@@ -21,5 +22,6 @@ module clkgen_wrapper
                .clk_main_o(clk_main_o),
                .clk_48MHz_o(clk_48MHz_o),
                .clk_aon_o(clk_aon_o),
+               .clk_ibex_o(clk_ibex_o),
                .rst_no(rst_no));
 endmodule
