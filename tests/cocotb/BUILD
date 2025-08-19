@@ -418,14 +418,20 @@ pkg_zip(
     ],
 )
 
+# BEGIN_TESTCASES_FOR_rvv_ml_ops_cocotb_test
+RVV_ML_OPS_TESTCASES = [
+    "core_mini_rvv_matmul_test",
+]
+# END_TESTCASES_FOR_rvv_ml_ops_cocotb_test
+
 cocotb_test_suite(
     name = "rvv_ml_ops_cocotb_test",
     simulators = [
         "verilator",
         "vcs",
     ],
-    testcases = RVV_LOAD_STORE_TESTCASES,
-    testcases_vname = "RVV_LOAD_STORE_TESTCASES",
+    testcases = RVV_ML_OPS_TESTCASES,
+    testcases_vname = "RVV_ML_OPS_TESTCASES",
     tests_kwargs = {
         "hdl_toplevel": "RvvCoreMiniAxi",
         "waves": True,

@@ -252,11 +252,16 @@ cocotb_test_suite(
     vcs_defines = VCS_DEFINES,
 )
 
+# BEGIN_TESTCASES_FOR_secded_encoder_32_cocotb_test
+SECDED_ENCODER_32_TESTCASES = [
+    "test_secded_encoder",
+]
+# END_TESTCASES_FOR_secded_encoder_32_cocotb_test
 cocotb_test_suite(
     name = "secded_encoder_32_cocotb_test",
     simulators = ["verilator", "vcs"],
-    testcases = SECDED_ENCODER_TESTCASES,
-    testcases_vname = "SECDED_ENCODER_TESTCASES",
+    testcases = SECDED_ENCODER_32_TESTCASES,
+    testcases_vname = "SECDED_ENCODER_32_TESTCASES",
     tests_kwargs = {
         "hdl_toplevel": "SecdedEncoderTestbench32",
         "test_module": ["test_secded_encoder.py"],
@@ -272,11 +277,16 @@ cocotb_test_suite(
     vcs_defines = VCS_DEFINES,
 )
 
+# BEGIN_TESTCASES_FOR_secded_encoder_57_cocotb_test
+SECDED_ENCODER_57_TESTCASES = [
+    "test_secded_encoder",
+]
+# END_TESTCASES_FOR_secded_encoder_57_cocotb_test
 cocotb_test_suite(
     name = "secded_encoder_57_cocotb_test",
     simulators = ["verilator", "vcs"],
-    testcases = SECDED_ENCODER_TESTCASES,
-    testcases_vname = "SECDED_ENCODER_TESTCASES",
+    testcases = SECDED_ENCODER_57_TESTCASES,
+    testcases_vname = "SECDED_ENCODER_57_TESTCASES",
     tests_kwargs = {
         "hdl_toplevel": "SecdedEncoderTestbench57",
         "test_module": ["test_secded_encoder.py"],
@@ -305,12 +315,13 @@ verilator_cocotb_model(
 # BEGIN_TESTCASES_FOR_kelvin_xbar_cocotb
 KELVIN_XBAR_TESTCASES = [
     "test_kelvin_core_to_sram",
-    "test_ibex_d_to_kelvin_device_csr_read",
-    "test_wide_to_narrow_integrity",
-    "test_kelvin_core_to_kelvin_device",
+    "test_ibex_d_to_invalid_addr",
     "test_kelvin_core_to_uart1",
     "test_ibex_d_to_kelvin_device",
-    "test_ibex_d_to_invalid_addr",
+    "test_kelvin_core_to_kelvin_device",
+    "test_ibex_d_to_kelvin_device_csr_read",
+    "test_ibex_d_to_kelvin_device_specific_addr",
+    "test_wide_to_narrow_integrity",
 ]
 # END_TESTCASES_FOR_kelvin_xbar_cocotb
 
