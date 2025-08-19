@@ -15,6 +15,22 @@
 load("@kelvin_hw//third_party/python:requirements.bzl", "requirement")
 
 py_library(
+    name = "TileLinkULInterface",
+    srcs = ["TileLinkULInterface.py"],
+    deps = [
+        requirement("cocotb"),
+        "//kelvin_test_utils:secded_golden",
+    ],
+    visibility = ["//visibility:public"],
+)
+
+py_library(
+    name = "secded_golden",
+    srcs = ["secded_golden.py"],
+    visibility = ["//visibility:public"],
+)
+
+py_library(
     name = "core_mini_axi_sim_interface",
     srcs = [
         "core_mini_axi_interface.py",

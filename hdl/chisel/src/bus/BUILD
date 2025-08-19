@@ -22,6 +22,11 @@ load("@kelvin_hw//third_party/python:requirements.bzl", "requirement")
 
 package(default_visibility = ["//visibility:public"])
 
+load(
+    "//tests/cocotb:build_defs.bzl",
+    "VERILATOR_BUILD_ARGS",
+)
+
 chisel_library(
     name = "bus",
     srcs = [
@@ -30,7 +35,10 @@ chisel_library(
         "Axi2TLUL.scala",
         "KelvinMemIO.scala",
         "KelvinToTlul.scala",
+        "SecdedEncoderTestbench.scala",
         "TileLinkUL.scala",
+        "TlulIntegrity.scala",
+        "TlulIntegrityTestbench.scala",
     ],
     deps = [
         "//hdl/chisel/src/kelvin:kelvin_params",
@@ -121,4 +129,64 @@ cocotb_test_suite(
     },
     vcs_verilog_sources = ["//hdl/chisel/src/bus:axi2tlul_cc_library_verilog"],
     verilator_model = ":axi2tlul_model",
+)
+
+chisel_cc_library(
+    name = "tlul_integrity_testbench_cc_library",
+    chisel_lib = ":bus",
+    emit_class = "bus.EmitTlulIntegrityTestbench",
+    module_name = "TlulIntegrityTestbench",
+)
+
+verilator_cocotb_model(
+    name = "tlul_integrity_testbench_model",
+    cflags = VERILATOR_BUILD_ARGS,
+    hdl_toplevel = "TlulIntegrityTestbench",
+    trace = True,
+    verilog_source = "//hdl/chisel/src/bus:TlulIntegrityTestbench.sv",
+)
+
+chisel_cc_library(
+    name = "secded_encoder_testbench_cc_library",
+    chisel_lib = ":bus",
+    emit_class = "bus.EmitSecdedEncoderTestbench",
+    module_name = "SecdedEncoderTestbench128",
+)
+
+verilator_cocotb_model(
+    name = "secded_encoder_testbench_model",
+    cflags = VERILATOR_BUILD_ARGS,
+    hdl_toplevel = "SecdedEncoderTestbench128",
+    trace = True,
+    verilog_source = "//hdl/chisel/src/bus:SecdedEncoderTestbench128.sv",
+)
+
+chisel_cc_library(
+    name = "secded_encoder_testbench_32_cc_library",
+    chisel_lib = ":bus",
+    emit_class = "bus.EmitSecdedEncoderTestbench32",
+    module_name = "SecdedEncoderTestbench32",
+)
+
+verilator_cocotb_model(
+    name = "secded_encoder_testbench_32_model",
+    cflags = VERILATOR_BUILD_ARGS,
+    hdl_toplevel = "SecdedEncoderTestbench32",
+    trace = True,
+    verilog_source = "//hdl/chisel/src/bus:SecdedEncoderTestbench32.sv",
+)
+
+chisel_cc_library(
+    name = "secded_encoder_testbench_57_cc_library",
+    chisel_lib = ":bus",
+    emit_class = "bus.EmitSecdedEncoderTestbench57",
+    module_name = "SecdedEncoderTestbench57",
+)
+
+verilator_cocotb_model(
+    name = "secded_encoder_testbench_57_model",
+    cflags = VERILATOR_BUILD_ARGS,
+    hdl_toplevel = "SecdedEncoderTestbench57",
+    trace = True,
+    verilog_source = "//hdl/chisel/src/bus:SecdedEncoderTestbench57.sv",
 )
