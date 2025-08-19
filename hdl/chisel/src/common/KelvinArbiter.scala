@@ -49,4 +49,6 @@ class InitedLockingRRArbiter[T <: Data](gen: T, n: Int, count: Int, needsLock: O
     when(validMask(i)) { choice := i.asUInt }
 }
 
-class KelvinRRArbiter[T <: Data](val gen: T, val n: Int) extends InitedLockingRRArbiter[T](gen, n, 1)
+class KelvinRRArbiter[T <: Data](val gen: T, val n: Int, moduleName: Option[String] = None) extends InitedLockingRRArbiter[T](gen, n, 1) {
+  override val desiredName = moduleName.getOrElse(super.desiredName)
+}

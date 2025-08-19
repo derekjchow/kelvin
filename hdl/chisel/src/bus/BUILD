@@ -37,12 +37,18 @@ chisel_library(
         "KelvinToTlul.scala",
         "SecdedEncoderTestbench.scala",
         "TileLinkUL.scala",
+        "TlulFifoAsync.scala",
+        "TlulFifoSync.scala",
         "TlulIntegrity.scala",
         "TlulIntegrityTestbench.scala",
+        "TlulSocket1N.scala",
+        "TlulSocketM1.scala",
+        "TlulWidthBridge.scala",
     ],
     deps = [
-        "//hdl/chisel/src/kelvin:kelvin_params",
         "//hdl/chisel/src/common",
+        "//hdl/chisel/src/kelvin:kelvin_params",
+        "@chipsalliance_rocket_chip//:asyncqueue",
     ],
 )
 
@@ -58,6 +64,65 @@ chisel_cc_library(
     chisel_lib = ":bus",
     emit_class = "bus.EmitTLUL2Axi",
     module_name = "TLUL2Axi",
+)
+
+chisel_cc_library(
+    name = "tlul_fifo_async_128_cc_library",
+    chisel_lib = ":bus",
+    emit_class = "bus.TlulFifoAsync128Emitter",
+    module_name = "TlulFifoAsync128",
+)
+
+chisel_cc_library(
+    name = "tlul_socket_1n_128_cc_library",
+    chisel_lib = ":bus",
+    emit_class = "bus.TlulSocket1N_128Emitter",
+    module_name = "TlulSocket1N_128",
+)
+
+chisel_cc_library(
+    name = "tlul_fifo_sync_cc_library",
+    chisel_lib = ":bus",
+    emit_class = "bus.TlulFifoSyncEmitter",
+    module_name = "TlulFifoSync",
+)
+
+chisel_cc_library(
+    name = "tlul_socket_m1_2_128_cc_library",
+    chisel_lib = ":bus",
+    emit_class = "bus.TlulSocketM1_2_128Emitter",
+    module_name = "TlulSocketM1_2_128",
+)
+
+chisel_cc_library(
+    name = "tlul_socket_m1_3_128_cc_library",
+    chisel_lib = ":bus",
+    emit_class = "bus.TlulSocketM1_3_128Emitter",
+    module_name = "TlulSocketM1_3_128",
+)
+
+verilator_cocotb_model(
+    name = "tlul_socket_m1_2_128_model",
+    cflags = VERILATOR_BUILD_ARGS,
+    hdl_toplevel = "TlulSocketM1_2_128",
+    trace = True,
+    verilog_source = "//hdl/chisel/src/bus:TlulSocketM1_2_128.sv",
+)
+
+verilator_cocotb_model(
+    name = "tlul_fifo_async_128_model",
+    cflags = VERILATOR_BUILD_ARGS,
+    hdl_toplevel = "TlulFifoAsync128",
+    trace = True,
+    verilog_source = "//hdl/chisel/src/bus:TlulFifoAsync128.sv",
+)
+
+verilator_cocotb_model(
+    name = "tlul_fifo_sync_model",
+    cflags = VERILATOR_BUILD_ARGS,
+    hdl_toplevel = "TlulFifoSync",
+    trace = True,
+    verilog_source = "//hdl/chisel/src/bus:TlulFifoSync.sv",
 )
 
 verilator_cocotb_model(
@@ -89,6 +154,14 @@ verilator_cocotb_model(
     hdl_toplevel = "TlulIntegrityTestbench",
     trace = True,
     verilog_source = "//hdl/chisel/src/bus:TlulIntegrityTestbench.sv",
+)
+
+verilator_cocotb_model(
+    name = "tlul_socket_1n_128_model",
+    cflags = VERILATOR_BUILD_ARGS,
+    hdl_toplevel = "TlulSocket1N_128",
+    trace = True,
+    verilog_source = "//hdl/chisel/src/bus:TlulSocket1N_128.sv",
 )
 
 chisel_cc_library(

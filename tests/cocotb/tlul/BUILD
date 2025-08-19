@@ -91,6 +91,111 @@ cocotb_test_suite(
     vcs_defines = VCS_DEFINES,
 )
 
+# BEGIN_TESTCASES_FOR_tlul_fifo_async_128_cocotb_test
+TLUL_FIFO_ASYNC_TESTCASES = [
+    "test_async_crossing",
+]
+# END_TESTCASES_FOR_tlul_fifo_async_128_cocotb_test
+
+cocotb_test_suite(
+    name = "tlul_fifo_async_128_cocotb_test",
+    simulators = ["verilator", "vcs"],
+    testcases = TLUL_FIFO_ASYNC_TESTCASES,
+    testcases_vname = "TLUL_FIFO_ASYNC_TESTCASES",
+    tests_kwargs = {
+        "hdl_toplevel": "TlulFifoAsync128",
+        "test_module": ["test_tlul_fifo_async.py"],
+        "deps": [
+            "//kelvin_test_utils:TileLinkULInterface",
+        ],
+        "waves": True,
+    },
+    verilator_model = "//hdl/chisel/src/bus:tlul_fifo_async_128_model",
+    vcs_verilog_sources = ["//hdl/chisel/src/bus:tlul_fifo_async_128_cc_library_verilog"],
+    vcs_build_args = VCS_BUILD_ARGS,
+    vcs_test_args = VCS_TEST_ARGS,
+    vcs_defines = VCS_DEFINES,
+)
+
+# BEGIN_TESTCASES_FOR_tlul_fifo_sync_cocotb_test
+TLUL_FIFO_SYNC_TESTCASES = [
+    "test_passthrough_with_spare",
+]
+# END_TESTCASES_FOR_tlul_fifo_sync_cocotb_test
+
+cocotb_test_suite(
+    name = "tlul_fifo_sync_cocotb_test",
+    simulators = ["verilator", "vcs"],
+    testcases = TLUL_FIFO_SYNC_TESTCASES,
+    testcases_vname = "TLUL_FIFO_SYNC_TESTCASES",
+    tests_kwargs = {
+        "hdl_toplevel": "TlulFifoSync",
+        "test_module": ["test_tlul_fifo_sync.py"],
+        "deps": [
+            "//kelvin_test_utils:TileLinkULInterface",
+        ],
+        "waves": True,
+    },
+    verilator_model = "//hdl/chisel/src/bus:tlul_fifo_sync_model",
+    vcs_verilog_sources = ["//hdl/chisel/src/bus:tlul_fifo_sync_cc_library_verilog"],
+    vcs_build_args = VCS_BUILD_ARGS,
+    vcs_test_args = VCS_TEST_ARGS,
+    vcs_defines = VCS_DEFINES,
+)
+
+# BEGIN_TESTCASES_FOR_tlul_socket_1n_128_cocotb_test
+TLUL_SOCKET_1N_TESTCASES = [
+    "test_steering",
+    "test_error_response",
+]
+# END_TESTCASES_FOR_tlul_socket_1n_128_cocotb_test
+
+cocotb_test_suite(
+    name = "tlul_socket_1n_128_cocotb_test",
+    simulators = ["verilator", "vcs"],
+    testcases = TLUL_SOCKET_1N_TESTCASES,
+    testcases_vname = "TLUL_SOCKET_1N_TESTCASES",
+    tests_kwargs = {
+        "hdl_toplevel": "TlulSocket1N_128",
+        "test_module": ["test_tlul_socket_1n.py"],
+        "deps": [
+            "//kelvin_test_utils:TileLinkULInterface",
+        ],
+        "waves": True,
+    },
+    verilator_model = "//hdl/chisel/src/bus:tlul_socket_1n_128_model",
+    vcs_verilog_sources = ["//hdl/chisel/src/bus:tlul_socket_1n_128_cc_library_verilog"],
+    vcs_build_args = VCS_BUILD_ARGS,
+    vcs_test_args = VCS_TEST_ARGS,
+    vcs_defines = VCS_DEFINES,
+)
+
+# BEGIN_TESTCASES_FOR_tlul_socket_m1_2_128_cocotb_test
+TLUL_SOCKET_M1_2_TESTCASES = [
+    "test_arbitration",
+]
+# END_TESTCASES_FOR_tlul_socket_m1_2_128_cocotb_test
+
+cocotb_test_suite(
+    name = "tlul_socket_m1_2_128_cocotb_test",
+    simulators = ["verilator", "vcs"],
+    testcases = TLUL_SOCKET_M1_2_TESTCASES,
+    testcases_vname = "TLUL_SOCKET_M1_2_TESTCASES",
+    tests_kwargs = {
+        "hdl_toplevel": "TlulSocketM1_2_128",
+        "test_module": ["test_tlul_socket_m1.py"],
+        "deps": [
+            "//kelvin_test_utils:TileLinkULInterface",
+        ],
+        "waves": True,
+    },
+    verilator_model = "//hdl/chisel/src/bus:tlul_socket_m1_2_128_model",
+    vcs_verilog_sources = ["//hdl/chisel/src/bus:tlul_socket_m1_2_128_cc_library_verilog"],
+    vcs_build_args = VCS_BUILD_ARGS,
+    vcs_test_args = VCS_TEST_ARGS,
+    vcs_defines = VCS_DEFINES,
+)
+
 # BEGIN_TESTCASES_FOR_tlul_integrity_cocotb_test
 TLUL_INTEGRITY_TESTCASES = [
     "test_request_integrity_gen",
@@ -120,8 +225,6 @@ cocotb_test_suite(
     vcs_test_args = VCS_TEST_ARGS,
     vcs_defines = VCS_DEFINES,
 )
-
-
 
 # BEGIN_TESTCASES_FOR_secded_encoder_cocotb_test
 SECDED_ENCODER_TESTCASES = [
