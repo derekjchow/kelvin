@@ -123,6 +123,15 @@ chisel_library(
     ],
 )
 
+chisel_library(
+    name = "sv_generation_utils",
+    srcs = [
+        "SvGenerationUtils.scala",
+    ],
+    visibility = ["//visibility:public"],
+    deps = [],
+)
+
 chisel_test(
     name = "common_test",
     srcs = [
@@ -205,6 +214,17 @@ chisel_test(
     deps = [
         ":fma",
         ":fp",
+    ],
+)
+
+chisel_test(
+    name = "sv_generation_utils_test",
+    srcs = [
+        "SvGenerationUtilsTest.scala",
+    ],
+    visibility = ["//visibility:public"],
+    deps = [
+        ":sv_generation_utils",
     ],
 )
 
