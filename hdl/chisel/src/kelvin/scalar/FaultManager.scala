@@ -32,6 +32,7 @@ class FaultManager(p: Parameters) extends Module {
         val jalr = Bool()
         val bxx = Bool()
         val undef = Bool()
+        val rvv = if (p.enableRvv) Some(Bool()) else None
       }))
       val pc = Input(Vec(p.instructionLanes, new Bundle {
         val pc = UInt(32.W)
@@ -51,7 +52,13 @@ class FaultManager(p: Parameters) extends Module {
     val out = Output(Valid(new FaultManagerOutput))
   })
 
-  val faults = VecInit((0 until p.instructionLanes).map(x => (io.in.fault(x).csr | io.in.fault(x).jal | io.in.fault(x).jalr | io.in.fault(x).bxx | io.in.fault(x).undef)))
+  val faults = VecInit((0 until p.instructionLanes).map(x => (
+      io.in.fault(x).csr |
+      io.in.fault(x).jal |
+      io.in.fault(x).jalr |
+      io.in.fault(x).bxx |
+      io.in.fault(x).undef |
+      io.in.fault(x).rvv.getOrElse(false.B))))
   val fault = faults.reduce(_|_)
   val first_fault = PriorityEncoder(faults)
   val undef_fault = io.in.fault.map(_.undef).reduce(_|_)
@@ -64,6 +71,8 @@ class FaultManager(p: Parameters) extends Module {
   val jalr_fault_idx = PriorityEncoder(io.in.fault.map(_.jalr))
   val bxx_fault = io.in.fault.map(_.bxx).reduce(_|_)
   val bxx_fault_idx = PriorityEncoder(io.in.fault.map(_.bxx))
+  val rvv_fault = io.in.fault.map(_.rvv.getOrElse(false.B)).reduce(_|_)
+  val rvv_fault_idx = PriorityEncoder(io.in.fault.map(_.rvv.getOrElse(false.B)))
   val instr_access_fault = io.in.memory_fault.valid && io.in.ibus_fault
   val load_fault = io.in.memory_fault.valid && !io.in.memory_fault.bits.write && !io.in.ibus_fault
   val store_fault = io.in.memory_fault.valid && io.in.memory_fault.bits.write && !io.in.ibus_fault
@@ -84,6 +93,7 @@ class FaultManager(p: Parameters) extends Module {
     (jalr_fault && (jalr_fault_idx === first_fault)) -> 0.U(32.W),
     (bxx_fault && (bxx_fault_idx === first_fault)) -> 0.U(32.W),
     (undef_fault && (undef_fault_idx === first_fault)) -> 2.U(32.W),
+    (rvv_fault && (rvv_fault_idx === first_fault)) -> 2.U(32.W),
   ))
   io.out.bits.mtval := MuxCase(0.U(32.W), Seq(
     load_fault -> io.in.memory_fault.bits.addr,
@@ -94,5 +104,6 @@ class FaultManager(p: Parameters) extends Module {
     (jalr_fault && (jalr_fault_idx === first_fault)) -> (io.in.jalr(jalr_fault_idx).target & "xFFFFFFFE".U),
     (bxx_fault && (bxx_fault_idx === first_fault)) -> 0.U(32.W),
     (undef_fault && (undef_fault_idx === first_fault)) -> io.in.undef(undef_fault_idx).inst,
+    (rvv_fault && (rvv_fault_idx === first_fault)) -> io.in.undef(rvv_fault_idx).inst,
   ))
 }

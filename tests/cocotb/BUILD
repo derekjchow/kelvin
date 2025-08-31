@@ -190,6 +190,7 @@ RVV_LOAD_STORE_TESTCASES = [
 RVV_ARITHMETIC_TESTCASES = [
     "arithmetic_m1_vanilla_ops",
     "reduction_m1_vanilla_ops",
+    "reduction_m1_failure_ops",
     "widen_math_ops_test_impl",
 ]
 # END_TESTCASES_FOR_rvv_arithmetic_cocotb_test

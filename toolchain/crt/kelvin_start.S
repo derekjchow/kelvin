@@ -16,6 +16,8 @@
 
 // A starting functions for simple kelvin programs.
 
+.extern kelvin_exception_handler
+
 /**
  * Entry point.
  */
@@ -82,7 +84,7 @@ init_array_loop_end:
         # simply call ebreak.
         # Users who require real trap handling should
         # install their own trap vector.
-        la t0, failure
+        la t0, kelvin_exception_handler
         csrw mtvec, t0
 
         # Set up sentinel value in _ret

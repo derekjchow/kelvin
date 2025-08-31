@@ -801,6 +801,15 @@ class CoreMiniAxiInterface:
         timeout_cycles = timeout_cycles - 1
         assert timeout_cycles > 0
 
+  async def wait_for_fault(self, timeout_cycles=1000):
+    cycle_count = 0
+    while self.dut.io_fault.value != 1 and timeout_cycles > 0:
+      await ClockCycles(self.dut.io_aclk, 1)
+      timeout_cycles = timeout_cycles - 1
+      cycle_count += 1
+    assert timeout_cycles > 0
+    return cycle_count
+
   async def watch(self, addr, timeout_cycles=1_000_000):
     elem_addr = addr % 16
     line_addr = addr - elem_addr

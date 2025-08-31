@@ -16,16 +16,36 @@
 
 #include <riscv_vector.h>
 
+#define __ATTRIBUTE_IN_DTCM__ \
+    __attribute__((section(".data"))) __attribute__((aligned(16)))
 
-{DTYPE}_t in_buf_1[{IN_DATA_SIZE}] __attribute__((section(".data"))) __attribute__((aligned(16)));
-{DTYPE}_t scalar_input __attribute__((section(".data"))) __attribute__((aligned(16)));
-{DTYPE}_t out_buf __attribute__((section(".data"))) __attribute__((aligned(16)));
+{DTYPE}_t in_buf_1[{IN_DATA_SIZE}] __ATTRIBUTE_IN_DTCM__;
+{DTYPE}_t scalar_input __ATTRIBUTE_IN_DTCM__;
+{DTYPE}_t out_buf __ATTRIBUTE_IN_DTCM__;
+uint32_t vstart __ATTRIBUTE_IN_DTCM__ = 0;
+uint32_t vl __ATTRIBUTE_IN_DTCM__ = {NUM_OPERANDS};
+uint32_t faulted __ATTRIBUTE_IN_DTCM__ = 0;
+uint32_t mcause __ATTRIBUTE_IN_DTCM__ = 0;
+
+// Fault handler to log fault
+extern "C" {
+void kelvin_exception_handler() {
+  faulted = 1;
+  uint32_t local_mcause;
+  asm volatile("csrr %0, mcause" : "=r"(local_mcause));
+  mcause = local_mcause;
+
+  asm volatile("ebreak");
+  while (1) {}
+}
+}
 
 void {REDUCTION_OP}_{SIGN}{SEW}_m1(const {DTYPE}_t* in_buf_1, const {DTYPE}_t scalar_input, {DTYPE}_t* out_buf){
 
-    v{DTYPE}m1_t input_v1 = __riscv_vle{SEW}_v_{SIGN}{SEW}m1(in_buf_1, {NUM_OPERANDS});
-    v{DTYPE}m1_t input_s1 = __riscv_vmv_v_x_{SIGN}{SEW}m1(scalar_input, {NUM_OPERANDS});
-    v{DTYPE}m1_t {REDUCTION_OP}_result = __riscv_v{REDUCTION_OP}_vs_{SIGN}{SEW}m1_{SIGN}{SEW}m1(input_v1, input_s1, {NUM_OPERANDS});
+    v{DTYPE}m1_t input_v1 = __riscv_vle{SEW}_v_{SIGN}{SEW}m1(in_buf_1, vl);
+    v{DTYPE}m1_t input_s1 = __riscv_vmv_v_x_{SIGN}{SEW}m1(scalar_input, vl);
+    asm("csrw vstart, %0" : : "r"(vstart));
+    v{DTYPE}m1_t {REDUCTION_OP}_result = __riscv_v{REDUCTION_OP}_vs_{SIGN}{SEW}m1_{SIGN}{SEW}m1(input_v1, input_s1, vl);
     *out_buf = __riscv_vmv_x_s_{SIGN}{SEW}m1_{SIGN}{SEW}({REDUCTION_OP}_result);
 }
 

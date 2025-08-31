@@ -263,6 +263,8 @@ class Dispatch(p: Parameters) extends Module {
     val jalrFault = Output(Vec(p.instructionLanes, Bool()))
     val bxxFault = Output(Vec(p.instructionLanes, Bool()))
     val undefFault = Output(Vec(p.instructionLanes, Bool()))
+    val rvvFault = Option.when(p.enableRvv)(
+        Output(Vec(p.instructionLanes, Bool())))
     val bruTarget = Output(Vec(p.instructionLanes, UInt(32.W)))
     val jalrTarget = Input(Vec(p.instructionLanes, new RegfileBranchTargetIO))
 
@@ -420,18 +422,48 @@ class DispatchV2(p: Parameters) extends Dispatch(p) {
   val fence = decodedInsts.map(x => x.isFency() && (io.mactive || io.lsuActive))
 
   // ---------------------------------------------------------------------------
+  // Csr interlock
+  val csrInterlock = (0 until p.instructionLanes).map(i =>
+    if (i == 0) {
+      true.B
+    } else {
+      !decodedInsts(0).isCsr()
+    }
+  )
+
+  // ---------------------------------------------------------------------------
   // Rvv config interlock rules
   // RVV Load store unit requires valid config state on dispatch.
-  val rvvConfigInterlock = if (p.enableRvv) {
+  val configInvalid = if (p.enableRvv) {
     val configChange = decodedInsts.map(
         x => x.rvv.get.valid && x.rvv.get.bits.isVset())
-    val configInvalid = configChange.scan(!io.rvvState.get.valid)(_ || _)
+    configChange.scan(!io.rvvState.get.valid)(_ || _)
+  } else {
+    Seq.fill(p.instructionLanes)(false.B)
+  }
+
+  val rvvConfigInterlock = if (p.enableRvv) {
     val canDispatchRvv = (0 until p.instructionLanes).map(i =>
         !decodedInsts(i).rvv.get.valid || // Don't lock non-rvv
         !decodedInsts(i).rvv.get.bits.isLoadStore() || // Non-LSU can handle change
         !configInvalid(i)  // If config is valid, can dispatch load store
     )
     canDispatchRvv
+  } else {
+    Seq.fill(p.instructionLanes)(true.B)
+  }
+
+  // ---------------------------------------------------------------------------
+  // Rvv reduction
+  // Don't allow reduction instructions to execute if vstart != 0
+  val rvvReductionInterlock = if (p.enableRvv) {
+    (0 until p.instructionLanes).map(i => {
+        val invalidReduction =
+            decodedInsts(i).rvv.get.valid &&
+            decodedInsts(i).rvv.get.bits.isReduction() &&
+            (configInvalid(i) || (io.rvvState.get.bits.vstart =/= 0.U))
+        !invalidReduction
+    })
   } else {
     Seq.fill(p.instructionLanes)(true.B)
   }
@@ -499,7 +531,9 @@ class DispatchV2(p: Parameters) extends Dispatch(p) {
       !floatWriteAfterWrite(i) && // Avoid WAW hazards
       !branchInterlock(i) && // Only branch/alu can be dispatched after a branch
       !fence(i) &&           // Don't dispatch if fence interlocked
+      csrInterlock(i) &&
       rvvConfigInterlock(i) &&     // Rvv interlock rules
+      rvvReductionInterlock(i) && // Don't dispatch reduction if vstart != 0
       // rvvLsuInterlock(i) &&  // Dispatch only one Rvv LsuOp
       lsuInterlock(i) && // Ensure lsu instructions can be dispatched into queue
       rvvInterlock(i) && // Ensure rvv instructions can be dispatched into queue
@@ -721,6 +755,22 @@ class DispatchV2(p: Parameters) extends Dispatch(p) {
     io.inst(i).ready := lastReady(i + 1)
   }
 
+  // Fault handling for RVV
+  if (p.enableRvv) {
+    for (i <- 0 until p.instructionLanes) {
+      io.rvvFault.get(i) := (if (i == 0) {
+        // Return fault if vstart != 0
+        val isReduction = decodedInsts(i).rvv.get.valid &&
+            decodedInsts(0).rvv.get.bits.isReduction()
+        val vStartNotZero = io.rvvState.get.valid &&
+            (io.rvvState.get.bits.vstart =/= 0.U)
+        io.inst(0).valid && isReduction && vStartNotZero
+      } else {
+        false.B
+      })
+    }
+  }
+
   for (i <- 0 until p.instructionLanes) {
     val d = decodedInsts(i)
     val rs3Addr = io.inst(i).bits.inst(31,27)
@@ -796,6 +846,8 @@ class DispatchV1(p: Parameters) extends Dispatch(p) {
     io.jalFault(i) := decode(i).io.jalFault && !io.branchTaken && decode(i).io.inst.valid
     io.bxxFault(i) := decode(i).io.bxxFault & !io.branchTaken && decode(i).io.inst.valid
     io.undefFault(i) := decode(i).io.undefFault & !io.branchTaken && decode(i).io.inst.valid
+    if (p.enableRvv) { io.rvvFault.get(i) := false.B }
+
     io.bruTarget(i) := decode(i).io.bruTarget
   }
 

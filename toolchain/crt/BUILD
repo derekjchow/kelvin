@@ -18,6 +18,7 @@ cc_library(
     name = "crt",
     srcs = [
         "crt.S",
+        "kelvin_exceptions.cc",
         "kelvin_gloss.cc",
         "kelvin_start.S",
     ],

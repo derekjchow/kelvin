@@ -142,6 +142,9 @@ class SCore(p: Parameters) extends Module {
     fault_manager.io.in.fault(i).jalr := dispatch.io.jalrFault(i)
     fault_manager.io.in.fault(i).bxx := dispatch.io.bxxFault(i)
     fault_manager.io.in.fault(i).undef := dispatch.io.undefFault(i)
+    if (p.enableRvv) {
+      fault_manager.io.in.fault(i).rvv.get := dispatch.io.rvvFault.get(i)
+    }
     fault_manager.io.in.pc(i).pc := fetch.io.inst.lanes(i).bits.addr
     fault_manager.io.in.jalr(i).target := regfile.io.target(i).data
     fault_manager.io.in.undef(i).inst := fetch.io.inst.lanes(i).bits.inst

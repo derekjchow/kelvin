@@ -191,6 +191,64 @@ async def reduction_m1_vanilla_ops(dut):
         num_bytes=16)
 
 
+async def reduction_m1_failure_test(dut, dtypes, math_ops: str, num_bytes: int):
+    """RVV reduction test template.
+
+    Each test performs a reduction op loading `in_buf_1` and storing the output to `out_buf`.
+    """
+    m1_failure_op_elfs = [
+        f"rvv_{math_op}_{dtype}_m1.elf" for math_op in math_ops
+        for dtype in dtypes
+    ]
+    pattern_extract = re.compile("rvv_(.*)_(.*)_m1.elf")
+
+    r = runfiles.Create()
+    fixture = await Fixture.Create(dut)
+
+    with tqdm.tqdm(m1_failure_op_elfs) as t:
+        for elf_name in t:
+            t.set_postfix({"binary": os.path.basename(elf_name)})
+            elf_path = r.Rlocation(
+                f"kelvin_hw/tests/cocotb/rvv/arithmetics/{elf_name}")
+            await fixture.load_elf_and_lookup_symbols(
+                elf_path,
+                ['in_buf_1', 'scalar_input', 'out_buf', 'vstart', 'vl',
+                 'faulted', 'mcause'],
+            )
+            math_op, dtype = pattern_extract.match(elf_name).groups()
+            np_type = STR_TO_NP_TYPE[dtype]
+            itemsize = np.dtype(np_type).itemsize
+            num_test_values = int(num_bytes / np.dtype(np_type).itemsize)
+
+            min_value = np.iinfo(np_type).min
+            max_value = np.iinfo(np_type).max + 1  # One above.
+            input_1 = np.random.randint(min_value,
+                                        max_value,
+                                        num_test_values,
+                                        dtype=np_type)
+            input_2 = np.random.randint(min_value, max_value, 1, dtype=np_type)
+
+            await fixture.write('in_buf_1', input_1)
+            await fixture.write('scalar_input', input_2)
+            await fixture.write('vstart', np.array([1], dtype=np.uint32))
+            await fixture.write('out_buf', np.zeros(1, dtype=np_type))
+
+            await fixture.run_to_halt()
+            faulted = (await fixture.read('faulted', 4)).view(np.uint32)
+            mcause = (await fixture.read('mcause', 4)).view(np.uint32)
+            assert(faulted == True)
+            assert(mcause == 0x2) # Invalid instruction
+
+
+@cocotb.test()
+async def reduction_m1_failure_ops(dut):
+    await reduction_m1_failure_test(
+        dut=dut,
+        dtypes=["int8", "int16", "int32", "uint8", "uint16", "uint32"],
+        math_ops=["redsum", "redmin", "redmax"],
+        num_bytes=16)
+
+
 async def _widen_math_ops_test_impl(
     dut,
     dtypes,

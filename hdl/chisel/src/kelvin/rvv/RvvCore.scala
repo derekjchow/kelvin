@@ -459,16 +459,22 @@ class RvvCoreShim(p: Parameters) extends Module {
   io.rvv2lsu <> rvvCoreWrapper.io.rvv2lsu
   io.lsu2rvv <> rvvCoreWrapper.io.lsu2rvv
 
-  io.configState.valid        := rvvCoreWrapper.io.configStateValid
-  io.configState.bits.vl      := rvvCoreWrapper.io.configVl
-  io.configState.bits.vstart  := rvvCoreWrapper.io.configVstart
-  io.configState.bits.ma      := rvvCoreWrapper.io.configMa
-  io.configState.bits.ta      := rvvCoreWrapper.io.configTa
-  io.configState.bits.xrm     := rvvCoreWrapper.io.configXrm
-  io.configState.bits.sew     := rvvCoreWrapper.io.configSew
-  io.configState.bits.lmul    := rvvCoreWrapper.io.configLmul
-  io.rvv_idle                 := rvvCoreWrapper.io.rvv_idle
-  io.queue_capacity           := rvvCoreWrapper.io.queue_capacity
+  // Conservatively mark config state as invalid the cycle when CSR instruction
+  // updates vstart, vxrm or vxsat.
+  io.configState.valid := rvvCoreWrapper.io.configStateValid &&
+      !rvvCoreWrapper.io.vcsr_valid &&
+      !io.csr.vstart_write.valid &&
+      !io.csr.vxrm_write.valid &&
+      !io.csr.vxsat_write.valid
+  io.configState.bits.vl     := rvvCoreWrapper.io.configVl
+  io.configState.bits.vstart := rvvCoreWrapper.io.configVstart
+  io.configState.bits.ma     := rvvCoreWrapper.io.configMa
+  io.configState.bits.ta     := rvvCoreWrapper.io.configTa
+  io.configState.bits.xrm    := rvvCoreWrapper.io.configXrm
+  io.configState.bits.sew    := rvvCoreWrapper.io.configSew
+  io.configState.bits.lmul   := rvvCoreWrapper.io.configLmul
+  io.rvv_idle                := rvvCoreWrapper.io.rvv_idle
+  io.queue_capacity          := rvvCoreWrapper.io.queue_capacity
 
   val vstart_wdata = MuxCase(vstart, Seq(
       rvvCoreWrapper.io.vcsr_valid -> rvvCoreWrapper.io.vcsr_vstart,

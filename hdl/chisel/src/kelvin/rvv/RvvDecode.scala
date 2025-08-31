@@ -45,6 +45,23 @@ class RvvCompressedInstruction extends Bundle {
     bits(7, 5)
   }
 
+  // If this instruction is a "reduction" instruction, that requires vstart=0
+  def isReduction(): Bool = {
+    (opcode === RvvCompressedOpcode.RVVALU) && (funct3() === "b010".U) &&
+        MuxLookup(funct6(), false.B)(Seq(
+            "b000000".U -> true.B,  // vredsum
+            "b000001".U -> true.B,  // vredand
+            "b000010".U -> true.B,  // vredor
+            "b000011".U -> true.B,  // vredxor
+            "b000100".U -> true.B,  // vredminu
+            "b000101".U -> true.B,  // vredmin
+            "b000110".U -> true.B,  // vredmaxu
+            "b000111".U -> true.B,  // vredmax
+            "b110000".U -> true.B,  // vwredsumu
+            "b110001".U -> true.B,  // vwredsum
+        ))
+  }
+
   // "Addressing Mode" for loads/store (see Section 7.2 of RVV Spec)
   def mop: RvvAddressingMode.Type = {
     RvvAddressingMode(bits(20, 19))
