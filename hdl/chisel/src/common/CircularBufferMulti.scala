@@ -63,17 +63,10 @@ class CircularBufferMulti[T <: Data](t: T, n: Int, capacity: Int) extends Module
     buffer(i) := Mux(rotatedInput(i).valid, rotatedInput(i).bits, buffer(i))
   }
 
-
   var nEnqueued = RegInit(0.U(io.nEnqueued.getWidth.W))
-  when(io.flush) {
-    enqPtr := 0.U
-    deqPtr := 0.U
-    nEnqueued := 0.U
-  } .otherwise {
-    enqPtr := enqPtr + io.enqValid
-    deqPtr := deqPtr + io.deqReady
-    nEnqueued := nEnqueued + io.enqValid - io.deqReady
-  }
+  enqPtr    := Mux(io.flush, 0.U, enqPtr + io.enqValid)
+  deqPtr    := Mux(io.flush, 0.U, deqPtr + io.deqReady)
+  nEnqueued := Mux(io.flush, 0.U, nEnqueued + io.enqValid - io.deqReady)
 
   io.nEnqueued := nEnqueued
   io.nSpace := capacity.U - nEnqueued
