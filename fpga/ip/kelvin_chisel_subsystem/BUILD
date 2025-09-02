@@ -15,20 +15,20 @@
 package(default_visibility = ["//visibility:public"])
 
 genrule(
-    name = "rvv_core_mini_tlul_verilog",
-    srcs = ["//hdl/chisel/src/kelvin:RvvCoreMiniTlul.sv"],
-    outs = ["RvvCoreMiniTlul.sv"],
+    name = "kelvin_chisel_subsystem_verilog",
+    srcs = ["//hdl/chisel/src/soc:KelvinChiselSubsystem.sv"],
+    outs = ["KelvinChiselSubsystem.sv"],
     cmd = "cp $< $@",
 )
 
 genrule(
-    name = "rvv_core_mini_tlul_core",
+    name = "generate_core_file",
     srcs = [
-        "rvv_core_mini_tlul.core.tpl",
-        ":rvv_core_mini_tlul_verilog",
+        "kelvin_chisel_subsystem.core.tpl",
+        ":kelvin_chisel_subsystem_verilog",
     ],
-    outs = ["rvv_core_mini_tlul.core"],
-    cmd = "sed 's|__VERILOG_FILE__|RvvCoreMiniTlul.sv|' $(location rvv_core_mini_tlul.core.tpl) > $@",
+    outs = ["kelvin_chisel_subsystem.core"],
+    cmd = "sed 's|__VERILOG_FILE__|KelvinChiselSubsystem.sv|' $(location kelvin_chisel_subsystem.core.tpl) > $@",
 )
 
 filegroup(
@@ -37,6 +37,6 @@ filegroup(
         "*.sv",
         "*.core",
     ]) + [
-        ":RvvCoreMiniTlul.sv",
+        ":KelvinChiselSubsystem.sv",
     ],
 )

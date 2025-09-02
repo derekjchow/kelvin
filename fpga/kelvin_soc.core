@@ -5,17 +5,13 @@ description: "The Kelvin SoC for FPGA."
 filesets:
   rtl:
     depend:
-      - kelvinv2:ip:xbar_kelvin_soc_chisel:0.1
+      - kelvinv2:ip:kelvin_chisel_subsystem:0.1
       - com.google.kelvin:fpga:kelvin_soc_pkg:0.1
       - com.google.kelvin:fpga:racl_pkg:0.1
       - lowrisc:ip:uart:0.1
       - lowrisc:prim:rom_adv
       - lowrisc:prim_generic:rom
       - lowrisc:tlul:adapter_sram
-      - lowrisc:ip:spi_device:0.1
-      - lowrisc:kelvin_ip:rv_core_ibex:0.1
-      - google:kelvin:rvv_core_mini_tlul
-      - lowrisc:ibex:ibex_tracer
       - kelvinv2:ip:sram:0.1
       - kelvinv2:ip:kelvin_tlul:0.1
     files:
@@ -37,12 +33,12 @@ parameters:
   ClockFrequencyMhz:
     datatype: int
     description: "Target clock frequency in MHz."
-    default: 10
+    default: 80
     paramtype: vlogparam
   MemInitFile:
     datatype: str
     description: Path to ROM
-    default: "fpga/wfi.bin"
+    default: ""
     paramtype: vlogparam
   USE_GENERIC:
     datatype: bool

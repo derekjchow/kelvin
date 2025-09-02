@@ -32,7 +32,7 @@ module Sram
 
   // The rvalid signal is simply a delayed version of req_i.
   always_ff @(posedge clk_i) begin
-    rvalid_o <= req_i;
+    rvalid_o <= req_i & ~we_i;
   end
 
   localparam MemInitFile = "";

@@ -30,7 +30,7 @@ parameters:
   MemInitFile:
     datatype: str
     description: Path to ROM
-    default: "fpga/wfi.bin"
+    default: ""
     paramtype: vlogparam
   USE_GENERIC:
     datatype: bool

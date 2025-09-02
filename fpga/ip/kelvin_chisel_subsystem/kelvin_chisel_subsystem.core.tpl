@@ -7,25 +7,24 @@ CAPI=2:
 #
 #     http://www.apache.org/licenses/LICENSE-2.0
 #
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
+# Unless required by applicable law of an "AS IS" BASIS,
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-name: "google:kelvin:rvv_core_mini_tlul"
-description: "RvvCoreMini with TileLink interface"
+name: "kelvinv2:ip:kelvin_chisel_subsystem:0.1"
+description: "Kelvin SoC Unified Chisel Subsystem"
 
 filesets:
-  files_rtl:
+  rtl:
     depend:
-      - "lowrisc:prim:all"
-      - "lowrisc:prim_generic:all"
+      - lowrisc:prim:all
+      - lowrisc:prim_generic:all
     files:
-      - RvvCoreMiniTlul.sv: { file_type: systemVerilogSource }
+      - __VERILOG_FILE__
     file_type: systemVerilogSource
 
 targets:
   default:
     filesets:
-      - files_rtl
+      - rtl

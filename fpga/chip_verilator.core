@@ -9,6 +9,7 @@ filesets:
       - kelvinv2:ip:kelvin_tlul:0.1
       - lowrisc:dv_dpi_c:uartdpi:0.1
       - lowrisc:dv_dpi_sv:uartdpi:0.1
+      - com.google.kelvin:fpga:spi_dpi_master:0.1
     files:
       - rtl/chip_verilator.sv
     file_type: systemVerilogSource
@@ -29,7 +30,7 @@ parameters:
   MemInitFile:
     datatype: str
     description: Path to ROM
-    default: "fpga/wfi.bin"
+    default: ""
     paramtype: vlogparam
 
 targets:

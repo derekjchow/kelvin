@@ -20,15 +20,15 @@ load("//rules:utils.bzl", "cc_embed_data")
 package(default_visibility = ["//visibility:public"])
 
 _CLOCK_FREQUENCY_MHZ = "80"
+_NEXUS_CLOCK_FREQUENCY_MHZ = "80"
 
 filegroup(
     name = "rtl_files",
     srcs = glob(["**/*.sv"]) + glob(["**/*.core"]) + [
+        "//fpga/ip/spi_dpi_master:rtl_files",
         "//fpga/ip/kelvin_tlul:rtl_files",
-        "//fpga/ip/rv_core_ibex:rtl_files",
-        "//fpga/ip/rvv_core_mini_tlul:rtl_files",
+        "//fpga/ip/kelvin_chisel_subsystem:rtl_files",
         "//fpga/ip/sram:rtl_files",
-        "//fpga/ip/xbar_kelvin_soc_chisel:rtl_files",
         "//fpga/rtl:rtl_files",
     ],
 )
@@ -48,6 +48,8 @@ string_list_flag(
         # "-Wno-MULTIDRIVEN",
         "-Wno-UNOPTTHREADS",
         "-Wno-GENUNNAMED",
+        "-Wno-DECLFILENAME",
+        "-Wno-ASCRANGE",
         "-DRVFI",
         "-DUSE_GENERIC",
     ],
@@ -67,26 +69,9 @@ cc_embed_data(
 )
 
 kelvin_v2_binary(
-    name = "ibex_boot_rom",
-    srcs = [
-        "sw/ibex_boot_rom.S",
-        "sw/main.cc",
-    ],
-    hdrs = [":add_uint32_m1_bin_header"],
-    copts = ["-DCLOCK_FREQUENCY_MHZ=" + _CLOCK_FREQUENCY_MHZ],
-    linker_script = "sw/ibex_boot_rom.ld",
-)
-
-kelvin_v2_binary(
     name = "add_uint32_m1",
     srcs = ["sw/add_uint32_m1.cc"],
     copts = ["-DCLOCK_FREQUENCY_MHZ=" + _CLOCK_FREQUENCY_MHZ],
-)
-
-filegroup(
-    name = "ibex_boot_rom_bin",
-    srcs = [":ibex_boot_rom"],
-    output_group = "bin_file",
 )
 
 filegroup(
@@ -96,9 +81,7 @@ filegroup(
 )
 
 KELVIN_SOC_CORES = [
-    "//fpga/ip/rv_core_ibex:rv_core_ibex.core",
-    "//fpga/ip/rvv_core_mini_tlul:rvv_core_mini_tlul.core",
-    "//fpga/ip/xbar_kelvin_soc_chisel:xbar_kelvin_soc_chisel.core",
+    "//fpga/ip/kelvin_chisel_subsystem:kelvin_chisel_subsystem.core",
     ":kelvin_soc.core",
     ":kelvin_soc_pkg.core",
     ":racl_pkg.core",
@@ -132,16 +115,16 @@ KELVIN_SOC_SRCS = [
 fusesoc_build(
     name = "build_chip_verilator",
     srcs = KELVIN_SOC_SRCS + [
-        ":ibex_boot_rom.vmem",
+        "//fpga/ip/spi_dpi_master:dpi_files",
         "@lowrisc_opentitan_gh//hw:dpi_files",
     ],
     cores = KELVIN_SOC_CORES + [
         ":chip_verilator.core",
+        "//fpga/ip/spi_dpi_master:spi_dpi_master.core",
         "@lowrisc_opentitan_gh//hw/dv:dpi/uartdpi/uartdpi.core",
         "@lowrisc_opentitan_gh//hw/dv:dpi/uartdpi/uartdpi_sv.core",
     ],
     flags = [
-        "--MemInitFile=$(location :ibex_boot_rom.vmem)",
         "--ClockFrequencyMhz=" + _CLOCK_FREQUENCY_MHZ,
     ],
     make_options = ":make_options",
@@ -156,21 +139,15 @@ fusesoc_build(
 
 _PREFIX = "../../../../../../../../.."
 
-_IBEX_BOOT_ROM_VMEM = ":ibex_boot_rom.vmem"
-
-IBEX_BOOT_ROM_VMEM_PATH = "{}/$(location {})".format(_PREFIX, _IBEX_BOOT_ROM_VMEM)
-
 fusesoc_build(
     name = "build_chip_nexus_bitstream",
     srcs = KELVIN_SOC_SRCS + [
         "pins.xdc",
         "vivado_setup_hooks.tcl",
-        ":ibex_boot_rom.vmem",
     ],
     cores = KELVIN_SOC_CORES + [":chip_nexus.core"],
     flags = [
-        "--MemInitFile=" + IBEX_BOOT_ROM_VMEM_PATH,
-        "--ClockFrequencyMhz=" + _CLOCK_FREQUENCY_MHZ,
+        "--ClockFrequencyMhz=" + _NEXUS_CLOCK_FREQUENCY_MHZ,
     ],
     output_groups = {
         "bitstream": ["com.google.kelvin_fpga_chip_nexus_0.1/synth-vivado/com.google.kelvin_fpga_chip_nexus_0.1.runs/impl_1/chip_nexus.bit"],
@@ -178,5 +155,20 @@ fusesoc_build(
     },
     systems = ["com.google.kelvin:fpga:chip_nexus:0.1"],
     target = "synth",
+    tags = ["manual"],
+)
+
+filegroup(
+    name = "chip_verilator_binary",
+    srcs = [":build_chip_verilator"],
+    output_group = "binary",
+    tags = ["manual"],
+)
+
+genrule(
+    name = "copy_chip_verilator_binary",
+    srcs = [":chip_verilator_binary"],
+    outs = ["Vchip_verilator"],
+    cmd = "cp $< $@",
     tags = ["manual"],
 )

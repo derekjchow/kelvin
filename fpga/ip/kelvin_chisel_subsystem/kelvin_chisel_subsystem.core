@@ -13,19 +13,19 @@ CAPI=2:
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-name: "google:kelvin:rvv_core_mini_tlul"
-description: "RvvCoreMini with TileLink interface"
+name: "kelvinv2:ip:kelvin_chisel_subsystem:0.1"
+description: "Kelvin SoC Unified Chisel Subsystem"
 
 filesets:
-  files_rtl:
+  rtl:
     depend:
-      - "lowrisc:prim:all"
-      - "lowrisc:prim_generic:all"
+      - lowrisc:prim:all
+      - lowrisc:prim_generic:all
     files:
-      - __VERILOG_FILE__: { file_type: systemVerilogSource }
+      - KelvinChiselSubsystem.sv
     file_type: systemVerilogSource
 
 targets:
   default:
     filesets:
-      - files_rtl
+      - rtl
