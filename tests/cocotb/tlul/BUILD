@@ -346,3 +346,35 @@ cocotb_test_suite(
     vcs_test_args = VCS_TEST_ARGS,
     vcs_defines = VCS_DEFINES,
 )
+
+# BEGIN_TESTCASES_FOR_spi2tlul_cocotb
+SPI2TLUL_TESTCASES = [
+    "test_register_read_write",
+    "test_tlul_read",
+    "test_tlul_multi_beat_read",
+    "test_tlul_write",
+    "test_tlul_multi_beat_write",
+]
+# END_TESTCASES_FOR_spi2tlul_cocotb
+
+cocotb_test_suite(
+    name = "spi2tlul_cocotb",
+    simulators = ["verilator", "vcs"],
+    testcases = SPI2TLUL_TESTCASES,
+    testcases_vname = "SPI2TLUL_TESTCASES",
+    tests_kwargs = {
+        "hdl_toplevel": "Spi2TLUL",
+        "waves": True,
+        "seed": "42",
+        "test_module": ["test_spi_to_tlul.py"],
+        "deps": [
+            "//kelvin_test_utils:TileLinkULInterface",
+            "//kelvin_test_utils:spi_master",
+        ],
+    },
+    verilator_model = "//hdl/chisel/src/bus:spi2tlul_128_model",
+    vcs_verilog_sources = ["//hdl/chisel/src/bus:Spi2TLUL.sv"],
+    vcs_build_args = VCS_BUILD_ARGS,
+    vcs_test_args = VCS_TEST_ARGS,
+    vcs_defines = VCS_DEFINES,
+)

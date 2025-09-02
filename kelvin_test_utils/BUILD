@@ -25,6 +25,15 @@ py_library(
 )
 
 py_library(
+    name = "spi_master",
+    srcs = ["spi_master.py"],
+    deps = [
+        requirement("cocotb"),
+    ],
+    visibility = ["//visibility:public"],
+)
+
+py_library(
     name = "secded_golden",
     srcs = ["secded_golden.py"],
     visibility = ["//visibility:public"],

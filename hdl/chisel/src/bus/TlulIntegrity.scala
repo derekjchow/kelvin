@@ -112,6 +112,14 @@ class SecdedEncoder(val DATA_W: Int) extends Module {
 /**
   * Generates TileLink integrity fields for the A-channel (Request).
   */
+object RequestIntegrityGen {
+  def apply(tlul_p: TLULParameters, a_i: OpenTitanTileLink.A_Channel): OpenTitanTileLink.A_Channel = {
+    val req_intg_gen = Module(new RequestIntegrityGen(tlul_p))
+    req_intg_gen.io.a_i := a_i
+    req_intg_gen.io.a_o
+  }
+}
+
 class RequestIntegrityGen(p: TLULParameters) extends Module {
   override val desiredName = s"RequestIntegrityGen_${p.w}"
   val io = IO(new Bundle {
