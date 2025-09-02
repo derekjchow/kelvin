@@ -1,0 +1,19 @@
+CAPI=2:
+name: "com.google.kelvin:fpga:spi_dpi_master:0.1"
+description: "SPI DPI Master for Verilator simulations."
+
+filesets:
+  files_rtl:
+    files:
+      - spi_dpi_master.sv
+    file_type: systemVerilogSource
+
+  files_c:
+    files:
+      - spi_dpi_master.cc: { file_type: cppSource }
+
+targets:
+  default:
+    filesets:
+      - files_c
+      - files_rtl
