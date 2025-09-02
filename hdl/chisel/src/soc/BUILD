@@ -13,12 +13,24 @@
 # limitations under the License.
 
 load("@kelvin_hw//rules:chisel.bzl", "chisel_binary", "chisel_cc_library", "chisel_library")
+load("@kelvin_hw//rules:coco_tb.bzl", "verilator_cocotb_model")
 
 package(default_visibility = ["//visibility:public"])
 
+load(
+    "//tests/cocotb:build_defs.bzl",
+    "VERILATOR_BUILD_ARGS",
+)
+
 chisel_library(
     name = "crossbar_config_lib",
-    srcs = ["CrossbarConfig.scala"],
+    srcs = [
+        "CrossbarConfig.scala",
+        "SoCChiselConfig.scala",
+    ],
+    deps = [
+        "//hdl/chisel/src/kelvin:kelvin_params",
+    ],
 )
 
 chisel_binary(
@@ -43,4 +55,64 @@ chisel_cc_library(
     chisel_lib = ":kelvin_xbar_lib",
     emit_class = "kelvin.soc.KelvinXbarEmitter",
     module_name = "KelvinXbar",
+)
+
+chisel_cc_library(
+    name = "kelvin_xbar_testharness_cc_library",
+    chisel_lib = ":kelvin_xbar_lib",
+    emit_class = "kelvin.soc.KelvinXbarEmitter",
+    module_name = "KelvinXbarTestHarness",
+    gen_flags = ["--enableTestHarness"],
+)
+
+verilator_cocotb_model(
+    name = "kelvin_xbar_testharness_model",
+    cflags = VERILATOR_BUILD_ARGS,
+    hdl_toplevel = "KelvinXbarTestHarness",
+    trace = True,
+    verilog_source = ":kelvin_xbar_testharness_cc_library_emit_verilog",
+)
+
+chisel_library(
+    name = "kelvin_chisel_subsystem_lib",
+    srcs = ["KelvinChiselSubsystem.scala"],
+    deps = [
+        ":crossbar_config_lib",
+        ":kelvin_xbar_lib",
+        "//hdl/chisel/src/bus",
+        "//hdl/chisel/src/kelvin",
+        "//hdl/chisel/src/kelvin:kelvin_params",
+    ],
+)
+
+chisel_cc_library(
+    name = "kelvin_chisel_subsystem_cc_library",
+    chisel_lib = ":kelvin_chisel_subsystem_lib",
+    emit_class = "kelvin.soc.KelvinChiselSubsystemEmitter",
+    module_name = "KelvinChiselSubsystem",
+)
+
+
+verilator_cocotb_model(
+    name = "kelvin_chisel_subsystem_model",
+    cflags = VERILATOR_BUILD_ARGS,
+    hdl_toplevel = "KelvinChiselSubsystem",
+    trace = True,
+    verilog_source = "//hdl/chisel/src/soc:KelvinChiselSubsystem.sv",
+)
+
+chisel_cc_library(
+    name = "kelvin_chisel_subsystem_testharness_cc_library",
+    chisel_lib = ":kelvin_chisel_subsystem_lib",
+    emit_class = "kelvin.soc.KelvinChiselSubsystemEmitter",
+    module_name = "KelvinChiselSubsystemTestHarness",
+    gen_flags = ["--enableTestHarness"],
+)
+
+verilator_cocotb_model(
+    name = "kelvin_chisel_subsystem_testharness_model",
+    cflags = VERILATOR_BUILD_ARGS,
+    hdl_toplevel = "KelvinChiselSubsystemTestHarness",
+    trace = True,
+    verilog_source = ":kelvin_chisel_subsystem_testharness_cc_library_emit_verilog",
 )

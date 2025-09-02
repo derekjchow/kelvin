@@ -155,6 +155,7 @@ class TileLinkULInterface:
         """Monitors the host D channel and puts transactions into host_d_fifo."""
         d_valid = getattr(self.dut, f"{prefix}_d_valid")
         d_ready = getattr(self.dut, f"{prefix}_d_ready")
+        x_count = 0
 
         d_ready.value = 1
         while True:
@@ -173,14 +174,17 @@ class TileLinkULInterface:
 
                     await self.host_d_fifo.put(txn)
             except Exception as e:
-                print('X seen in _host_d_monitor: ' + str(e) + ' ' + prefix)
-                # raise e
+                x_count += 1
+                self.dut._log.warning(f"X seen in _host_d_monitor ({prefix}): {e} ({x_count}/3)")
+                if x_count >= 3:
+                    assert False, f"Too many 'X' values detected in _host_d_monitor on {prefix}"
 
     # master_aragent
     async def _device_a_monitor(self, prefix):
         """Monitors the device A channel and puts transactions into device_a_fifo."""
         a_valid = getattr(self.dut, f"{prefix}_a_valid")
         a_ready = getattr(self.dut, f"{prefix}_a_ready")
+        x_count = 0
 
         a_ready.value = 1
         while True:
@@ -198,7 +202,10 @@ class TileLinkULInterface:
                                                          signal_name).value
                     await self.device_a_fifo.put(txn)
             except Exception as e:
-                print('X seen in _device_a_monitor: ' + str(e) + ' ' + prefix)
+                x_count += 1
+                self.dut._log.warning(f"X seen in _device_a_monitor ({prefix}): {e} ({x_count}/3)")
+                if x_count >= 3:
+                    assert False, f"Too many 'X' values detected in _device_a_monitor on {prefix}"
 
     # master_bagent
     async def _device_d_driver(self, prefix, timeout=4096):

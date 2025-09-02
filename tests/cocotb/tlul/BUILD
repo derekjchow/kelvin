@@ -315,12 +315,12 @@ verilator_cocotb_model(
 # BEGIN_TESTCASES_FOR_kelvin_xbar_cocotb
 KELVIN_XBAR_TESTCASES = [
     "test_kelvin_core_to_sram",
-    "test_ibex_d_to_invalid_addr",
+    "test_kelvin_core_to_invalid_addr",
     "test_kelvin_core_to_uart1",
-    "test_ibex_d_to_kelvin_device",
+    "test_test_host_32_to_kelvin_device",
     "test_kelvin_core_to_kelvin_device",
-    "test_ibex_d_to_kelvin_device_csr_read",
-    "test_ibex_d_to_kelvin_device_specific_addr",
+    "test_test_host_32_to_kelvin_device_csr_read",
+    "test_test_host_32_to_kelvin_device_specific_addr",
     "test_wide_to_narrow_integrity",
 ]
 # END_TESTCASES_FOR_kelvin_xbar_cocotb
@@ -331,7 +331,7 @@ cocotb_test_suite(
     testcases = KELVIN_XBAR_TESTCASES,
     testcases_vname = "KELVIN_XBAR_TESTCASES",
     tests_kwargs = {
-        "hdl_toplevel": "KelvinXbar",
+        "hdl_toplevel": "KelvinXbarTestHarness",
         "waves": True,
         "seed": "42",
         "test_module": ["kelvin_xbar_test.py"],
@@ -340,8 +340,8 @@ cocotb_test_suite(
             "//kelvin_test_utils:secded_golden",
         ],
     },
-    verilator_model = ":kelvin_xbar_model",
-    vcs_verilog_sources = ["//hdl/chisel/src/soc:kelvin_xbar_cc_library_verilog"],
+    verilator_model = "//hdl/chisel/src/soc:kelvin_xbar_testharness_model",
+    vcs_verilog_sources = ["//hdl/chisel/src/soc:kelvin_xbar_testharness_cc_library_emit_verilog"],
     vcs_build_args = VCS_BUILD_ARGS,
     vcs_test_args = VCS_TEST_ARGS,
     vcs_defines = VCS_DEFINES,
@@ -382,6 +382,44 @@ cocotb_test_suite(
     },
     verilator_model = "//hdl/chisel/src/bus:spi2tlul_128_model",
     vcs_verilog_sources = ["//hdl/chisel/src/bus:Spi2TLUL.sv"],
+    vcs_build_args = VCS_BUILD_ARGS,
+    vcs_test_args = VCS_TEST_ARGS,
+    vcs_defines = VCS_DEFINES,
+)
+
+# BEGIN_TESTCASES_FOR_kelvin_chisel_subsystem_cocotb
+KELVIN_CHISEL_SUBSYSTEM_TESTCASES = [
+    "test_tlul_passthrough",
+    "test_program_execution_via_host",
+    "test_program_execution_via_spi",
+]
+# END_TESTCASES_FOR_kelvin_chisel_subsystem_cocotb
+
+cocotb_test_suite(
+    name = "kelvin_chisel_subsystem_cocotb",
+    simulators = ["verilator", "vcs"],
+    testcases = KELVIN_CHISEL_SUBSYSTEM_TESTCASES,
+    testcases_vname = "KELVIN_CHISEL_SUBSYSTEM_TESTCASES",
+    tests_kwargs = {
+        "hdl_toplevel": "KelvinChiselSubsystemTestHarness",
+        "waves": True,
+        "seed": "42",
+        "test_module": ["test_subsystem.py"],
+        "deps": [
+            "//kelvin_test_utils:TileLinkULInterface",
+            "//kelvin_test_utils:spi_master",
+            requirement("pyelftools"),
+            "@bazel_tools//tools/python/runfiles",
+        ],
+        "data": [
+            "//tests/cocotb/rvv/arithmetics:rvv_add_int32_m1.elf",
+        ],
+    },
+    verilator_model = "//hdl/chisel/src/soc:kelvin_chisel_subsystem_testharness_model",
+    vcs_verilog_sources = ["//hdl/chisel/src/soc:kelvin_chisel_subsystem_testharness_cc_library_emit_verilog"],
+    vcs_data = [
+        "//tests/cocotb/rvv/arithmetics:rvv_add_int32_m1.elf",
+    ],
     vcs_build_args = VCS_BUILD_ARGS,
     vcs_test_args = VCS_TEST_ARGS,
     vcs_defines = VCS_DEFINES,

@@ -60,11 +60,17 @@ case class DeviceConfig(
  */
 object CrossbarConfig {
   // List of all host (master) interfaces.
-  val hosts = Seq(
-    HostConfig("kelvin_core", width = 128),
-    HostConfig("ibex_core_i", width = 32, clockDomain = "ibex"),
-    HostConfig("ibex_core_d", width = 32, clockDomain = "ibex")
-  )
+  def hosts(enableTestHarness: Boolean): Seq[HostConfig] = {
+    val baseHosts = Seq(
+      HostConfig("kelvin_core", width = 128),
+      HostConfig("spi2tlul", width = 128)
+    )
+    if (enableTestHarness) {
+      baseHosts :+ HostConfig("test_host_32", width = 32, clockDomain = "test")
+    } else {
+      baseHosts
+    }
+  }
 
   // List of all device (slave) interfaces with their address maps.
   val devices = Seq(
@@ -76,20 +82,21 @@ object CrossbarConfig {
     DeviceConfig("rom",  Seq(AddressRange(0x10000000, 0x8000))),      // 32kB
     DeviceConfig("sram", Seq(AddressRange(0x20000000, 0x400000))),    // 4MB
     DeviceConfig("uart0", Seq(AddressRange(0x40000000, 0x1000))),
-    DeviceConfig("uart1", Seq(AddressRange(0x40010000, 0x1000))),
-    DeviceConfig(
-      name = "spi0",
-      addr = Seq(AddressRange(0x40020000, 0x1000)),
-      clockDomain = "spi" // This device is on a separate clock domain
-    )
+    DeviceConfig("uart1", Seq(AddressRange(0x40010000, 0x1000)))
   )
 
   // A map defining which hosts are allowed to connect to which devices.
-  val connections = Map(
-    "kelvin_core" -> Seq("sram", "uart1", "spi0", "kelvin_device"),
-    "ibex_core_i" -> Seq("rom", "sram"),
-    "ibex_core_d" -> Seq("rom", "sram", "uart0", "kelvin_device")
-  )
+  def connections(enableTestHarness: Boolean): Map[String, Seq[String]] = {
+    val baseConnections = Map(
+      "kelvin_core" -> Seq("sram", "uart1", "kelvin_device", "rom", "uart0"),
+      "spi2tlul" -> Seq("kelvin_device", "sram")
+    )
+    if (enableTestHarness) {
+      baseConnections + ("test_host_32" -> Seq("rom", "sram", "uart0", "kelvin_device"))
+    } else {
+      baseConnections
+    }
+  }
 }
 
 /**
@@ -125,7 +132,7 @@ object CrossbarConfigValidator extends App {
                  |FATAL: Address range collision detected!
                  |  Device 1: ${dev1.name} -> Range [0x${start1.toString(16)}, 0x${(end1 - 1).toString(16)}]
                  |  Device 2: ${dev2.name} -> Range [0x${start2.toString(16)}, 0x${(end2 - 1).toString(16)}]
-               """.stripMargin
+               """
             System.err.println(errorMsg)
             throw new Exception("Crossbar configuration validation failed.")
           }
@@ -136,25 +143,29 @@ object CrossbarConfigValidator extends App {
 
   println("Validation successful: No address range collisions found.")
 
-  // Pretty-print the configuration
-  println("\n--- Crossbar Configuration ---")
-  println("Hosts:")
-  CrossbarConfig.hosts.foreach(h => println(s"  - ${h.name}"))
+  def printConfig(enableTestHarness: Boolean): Unit = {
+    println(s"\n--- Crossbar Configuration (TestHarness: $enableTestHarness) ---")
+    println("Hosts:")
+    CrossbarConfig.hosts(enableTestHarness).foreach(h => println(s"  - ${h.name}"))
 
-  println("\nDevices:")
-  CrossbarConfig.devices.foreach {
-    d =>
-      println(s"  - ${d.name} (${d.clockDomain} clock domain)")
-      d.addr.foreach {
-        a =>
-          println(f"    - 0x${a.base}%08x - 0x${a.base + a.size - 1}%08x (Size: ${a.size / 1024}kB)")
-      }
+    println("\nDevices:")
+    CrossbarConfig.devices.foreach {
+      d =>
+        println(s"  - ${d.name} (${d.clockDomain} clock domain)")
+        d.addr.foreach {
+          a =>
+            println(f"    - 0x${a.base}%08x - 0x${a.base + a.size - 1}%08x (Size: ${a.size / 1024}kB)")
+        }
+    }
+
+    println("\nConnections:")
+    CrossbarConfig.connections(enableTestHarness).foreach {
+      case (host, devices) =>
+        println(s"  - ${host} -> [${devices.mkString(", ")}]")
+    }
+    println("\n--------------------------")
   }
 
-  println("\nConnections:")
-  CrossbarConfig.connections.foreach {
-    case (host, devices) =>
-      println(s"  - ${host} -> [${devices.mkString(", ")}]")
-  }
-  println("\n--------------------------")
+  printConfig(false)
+  printConfig(true)
 }

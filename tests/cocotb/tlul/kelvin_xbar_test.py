@@ -12,18 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# BEGIN_TESTCASES_FOR_kelvin_xbar_cocotb
-KELVIN_XBAR_TESTCASES = [
-    "test_kelvin_core_to_sram",
-    "test_ibex_d_to_invalid_addr",
-    "test_kelvin_core_to_uart1",
-    "test_ibex_d_to_kelvin_device",
-    "test_kelvin_core_to_kelvin_device",
-    "test_ibex_d_to_kelvin_device_specific_addr",
-    "test_wide_to_narrow_integrity",
-]
-# END_TESTCASES_FOR_kelvin_xbar_cocotb
-
 import cocotb
 from cocotb.clock import Clock
 from cocotb.triggers import RisingEdge, ClockCycles, with_timeout
@@ -33,19 +21,17 @@ from kelvin_test_utils.secded_golden import get_cmd_intg, get_data_intg, get_rsp
 
 # --- Configuration Constants ---
 # These constants are derived from CrossbarConfig.scala to make tests readable.
-HOST_MAP = {"kelvin_core": 0, "ibex_core_i": 1, "ibex_core_d": 2}
+HOST_MAP = {"kelvin_core": 0, "spi2tlul": 1, "test_host_32": 2}
 DEVICE_MAP = {
     "kelvin_device": 0,
     "rom": 1,
     "sram": 2,
     "uart0": 3,
     "uart1": 4,
-    "spi0": 5,
 }
 SRAM_BASE = 0x20000000
 UART1_BASE = 0x40010000
 KELVIN_DEVICE_BASE = 0x00000000
-SPI0_BASE = 0x40020000
 INVALID_ADDR = 0xDEADBEEF
 TIMEOUT_CYCLES = 500
 
@@ -57,38 +43,28 @@ async def setup_dut(dut):
     clock = Clock(dut.io_clk_i, 5)
     cocotb.start_soon(clock.start())
 
-    # Start the asynchronous SPI clock
-    spi_clock = Clock(dut.io_async_ports_devices_0_clock, 20)
-    cocotb.start_soon(spi_clock.start())
-
-    # Start the asynchronous Ibex clock
-    ibex_clock = Clock(dut.io_async_ports_hosts_0_clock, 10)
-    cocotb.start_soon(ibex_clock.start())
+    # Start the asynchronous test clock
+    test_clock = Clock(dut.io_async_ports_hosts_0_clock, 10)
+    cocotb.start_soon(test_clock.start())
 
     # Create a dictionary of TileLink interfaces for all hosts and devices
-    host_widths = {"kelvin_core": 128, "ibex_core_i": 32, "ibex_core_d": 32}
+    host_widths = {"kelvin_core": 128, "spi2tlul": 128, "test_host_32": 32}
     device_widths = {
         "kelvin_device": 128,
         "rom": 32,
         "sram": 32,
         "uart0": 32,
         "uart1": 32,
-        "spi0": 32
     }
 
     interfaces = {
         "hosts": [
             TileLinkULInterface(dut,
                                 host_if_name=f"io_hosts_{i}",
-                                clock_name="io_clk_i",
-                                reset_name="io_rst_ni",
+                                clock_name="io_clk_i" if name != "test_host_32" else "io_async_ports_hosts_0_clock",
+                                reset_name="io_rst_ni" if name != "test_host_32" else "io_async_ports_hosts_0_reset",
                                 width=host_widths[name])
-            if name == "kelvin_core" else TileLinkULInterface(
-                dut,
-                host_if_name=f"io_hosts_{i}",
-                clock_name="io_async_ports_hosts_0_clock",
-                reset_name="io_async_ports_hosts_0_reset",
-                width=host_widths[name]) for name, i in HOST_MAP.items()
+            for name, i in HOST_MAP.items()
         ],
         "devices": [
             TileLinkULInterface(dut,
@@ -99,25 +75,17 @@ async def setup_dut(dut):
             for name, i in DEVICE_MAP.items()
         ],
     }
-    # Special case for the async SPI port
-    interfaces["devices"][DEVICE_MAP["spi0"]] = TileLinkULInterface(
-        dut,
-        device_if_name=f"io_devices_{DEVICE_MAP['spi0']}",
-        clock_name="io_async_ports_devices_0_clock",
-        reset_name="io_async_ports_devices_0_reset",
-        width=32)
 
     # Reset the DUT
     dut.io_rst_ni.value = 0
-    dut.io_async_ports_devices_0_reset.value = 0
     dut.io_async_ports_hosts_0_reset.value = 0
     await ClockCycles(dut.io_clk_i, 5)
     dut.io_rst_ni.value = 1
-    dut.io_async_ports_devices_0_reset.value = 1
     dut.io_async_ports_hosts_0_reset.value = 1
     await ClockCycles(dut.io_clk_i, 5)
 
     return interfaces, clock
+
 
 
 # --- Test Cases ---
@@ -170,10 +138,10 @@ async def test_kelvin_core_to_sram(dut):
 
 
 @cocotb.test(timeout_time=10, timeout_unit="us")
-async def test_ibex_d_to_invalid_addr(dut):
+async def test_kelvin_core_to_invalid_addr(dut):
     """Verify that a request to an unmapped address gets an error response."""
     interfaces, clock = await setup_dut(dut)
-    host_if = interfaces["hosts"][HOST_MAP["ibex_core_d"]]
+    host_if = interfaces["hosts"][HOST_MAP["kelvin_core"]]
     timeout_ns = TIMEOUT_CYCLES * clock.period
 
     # Send a write request to an invalid address
@@ -242,10 +210,10 @@ async def test_kelvin_core_to_uart1(dut):
 
 
 @cocotb.test(timeout_time=10, timeout_unit="us")
-async def test_ibex_d_to_kelvin_device(dut):
+async def test_test_host_32_to_kelvin_device(dut):
     """Verify a 32-bit to 128-bit write transaction."""
     interfaces, clock = await setup_dut(dut)
-    host_if = interfaces["hosts"][HOST_MAP["ibex_core_d"]]
+    host_if = interfaces["hosts"][HOST_MAP["test_host_32"]]
     device_if = interfaces["devices"][DEVICE_MAP["kelvin_device"]]
     timeout_ns = TIMEOUT_CYCLES * clock.period
 
@@ -310,13 +278,13 @@ async def test_kelvin_core_to_kelvin_device(dut):
 
 
 @cocotb.test(timeout_time=10, timeout_unit="us")
-async def test_ibex_d_to_kelvin_device_csr_read(dut):
-    """Verify that Ibex can correctly read a CSR from the Kelvin device.
+async def test_test_host_32_to_kelvin_device_csr_read(dut):
+    """Verify that test_host_32 can correctly read a CSR from the Kelvin device.
 
     This test specifically checks the return path through the width bridge.
     """
     interfaces, clock = await setup_dut(dut)
-    host_if = interfaces["hosts"][HOST_MAP["ibex_core_d"]]
+    host_if = interfaces["hosts"][HOST_MAP["test_host_32"]]
     device_if = interfaces["devices"][DEVICE_MAP["kelvin_device"]]
     timeout_ns = TIMEOUT_CYCLES * clock.period
     csr_addr = KELVIN_DEVICE_BASE + 0x8  # Match the CSR address
@@ -374,10 +342,10 @@ async def test_ibex_d_to_kelvin_device_csr_read(dut):
 
 
 @cocotb.test(timeout_time=10, timeout_unit="us")
-async def test_ibex_d_to_kelvin_device_specific_addr(dut):
+async def test_test_host_32_to_kelvin_device_specific_addr(dut):
     """Verify a write to a specific address in the kelvin_device range."""
     interfaces, clock = await setup_dut(dut)
-    host_if = interfaces["hosts"][HOST_MAP["ibex_core_d"]]
+    host_if = interfaces["hosts"][HOST_MAP["test_host_32"]]
     device_if = interfaces["devices"][DEVICE_MAP["kelvin_device"]]
     timeout_ns = TIMEOUT_CYCLES * clock.period
 

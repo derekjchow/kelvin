@@ -28,7 +28,7 @@ import bus.TlulWidthBridge
  * @param hostParams A sequence of TileLink parameters, one for each host.
  * @param deviceParams A sequence of TileLink parameters, one for each device.
  */
-class KelvinXbarIO(val hostParams: Seq[bus.TLULParameters], val deviceParams: Seq[bus.TLULParameters]) extends Bundle {
+class KelvinXbarIO(val hostParams: Seq[bus.TLULParameters], val deviceParams: Seq[bus.TLULParameters], val enableTestHarness: Boolean) extends Bundle {
   val cfg = CrossbarConfig
 
   // --- Primary Clock and Reset ---
@@ -44,7 +44,7 @@ class KelvinXbarIO(val hostParams: Seq[bus.TLULParameters], val deviceParams: Se
   // --- Dynamic Asynchronous Clock/Reset Ports ---
   // Find all unique clock domains from the config, excluding the main one.
   val asyncDeviceDomains = cfg.devices.map(_.clockDomain).distinct.filter(_ != "main")
-  val asyncHostDomains = cfg.hosts.map(_.clockDomain).distinct.filter(_ != "main")
+  val asyncHostDomains = cfg.hosts(enableTestHarness).map(_.clockDomain).distinct.filter(_ != "main")
 
   // Create a Vec of Bundles for clock and reset inputs for each async domain.
   val async_ports_devices = Input(Vec(asyncDeviceDomains.length, new Bundle {
@@ -67,27 +67,28 @@ class KelvinXbarIO(val hostParams: Seq[bus.TLULParameters], val deviceParams: Se
  *
  * @param p The TileLink UL parameters for the bus.
  */
-class KelvinXbar(val hostParams: Seq[bus.TLULParameters], val deviceParams: Seq[bus.TLULParameters]) extends RawModule {
+class KelvinXbar(val hostParams: Seq[bus.TLULParameters], val deviceParams: Seq[bus.TLULParameters], val enableTestHarness: Boolean) extends RawModule {
+  override val desiredName = if (enableTestHarness) "KelvinXbarTestHarness" else "KelvinXbar"
   // Load the single source of truth for the crossbar configuration.
   val cfg = CrossbarConfig
 
   // Create simple maps from name to index for easy port access.
-  val hostMap = cfg.hosts.map(_.name).zipWithIndex.toMap
+  val hostMap = cfg.hosts(enableTestHarness).map(_.name).zipWithIndex.toMap
   val deviceMap = cfg.devices.map(_.name).zipWithIndex.toMap
 
   // Instantiate the dynamically generated IO bundle.
-  val io = IO(new KelvinXbarIO(hostParams, deviceParams))
+  val io = IO(new KelvinXbarIO(hostParams, deviceParams, enableTestHarness))
 
   // Find all unique clock domains from the config, excluding the main one.
   val asyncDeviceDomains = cfg.devices.map(_.clockDomain).distinct.filter(_ != "main")
-  val asyncHostDomains = cfg.hosts.map(_.clockDomain).distinct.filter(_ != "main")
+  val asyncHostDomains = cfg.hosts(enableTestHarness).map(_.clockDomain).distinct.filter(_ != "main")
 
   // --- 1. Graph Analysis ---
   // Analyze the configuration to understand the connection topology. This will be
   // used to determine the size of sockets and how to wire them up.
-  val hostConnections = cfg.connections
+  val hostConnections = cfg.connections(enableTestHarness)
   val deviceFanIn = cfg.devices.map { device =>
-    device.name -> cfg.hosts.filter(h => hostConnections(h.name).contains(device.name))
+    device.name -> cfg.hosts(enableTestHarness).filter(h => hostConnections(h.name).contains(device.name))
   }.toMap
 
   // --- 2. Programmatic Instantiation (within the main clock domain) ---
@@ -115,7 +116,7 @@ class KelvinXbar(val hostParams: Seq[bus.TLULParameters], val deviceParams: Seq[
     }.toMap
 
     // Create an asynchronous FIFO for each host in a different clock domain.
-    val asyncHostFifo = cfg.hosts.filter(_.clockDomain != "main").map { host =>
+    val asyncHostFifo = cfg.hosts(enableTestHarness).filter(_.clockDomain != "main").map { host =>
       val hostId = hostMap(host.name)
       host.name -> Module(new TlulFifoAsync(hostParams(hostId)))
     }.toMap
@@ -173,7 +174,7 @@ class KelvinXbar(val hostParams: Seq[bus.TLULParameters], val deviceParams: Seq[
 
   // Connect top-level host IOs to the host-side of the 1-to-N sockets.
   for ((hostName, socket) <- hostSockets) {
-    val hostConfig = cfg.hosts.find(_.name == hostName).get
+    val hostConfig = cfg.hosts(enableTestHarness).find(_.name == hostName).get
     if (hostConfig.clockDomain != "main") {
       asyncHostFifos(hostName).io.tl_h <> io.hosts(hostMap(hostName))
       socket.io.tl_h <> asyncHostFifos(hostName).io.tl_d
@@ -193,7 +194,7 @@ class KelvinXbar(val hostParams: Seq[bus.TLULParameters], val deviceParams: Seq[
   }
 
   for ((hostName, fifo) <- asyncHostFifos) {
-    val hostConfig = cfg.hosts.find(_.name == hostName).get
+    val hostConfig = cfg.hosts(enableTestHarness).find(_.name == hostName).get
     val domainIndex = asyncHostDomainMap(hostConfig.clockDomain)
     fifo.io.clk_h_i := io.async_ports_hosts(domainIndex).clock
     fifo.io.rst_h_i := !io.async_ports_hosts(domainIndex).reset.asBool
@@ -263,8 +264,12 @@ import scala.annotation.nowarn
  */
 @nowarn
 object KelvinXbarEmitter extends App {
+  // Basic argument parsing for --enableTestHarness
+  val enableTestHarness = args.contains("--enableTestHarness")
+  val chiselArgs = args.filterNot(_ == "--enableTestHarness")
+
   // Create a sequence of TLULParameters for hosts and devices based on the config.
-  val hostParams = CrossbarConfig.hosts.map { host =>
+  val hostParams = CrossbarConfig.hosts(enableTestHarness).map { host =>
     val p = new Parameters
     p.lsuDataBits = host.width
     new bus.TLULParameters(p)
@@ -277,10 +282,10 @@ object KelvinXbarEmitter extends App {
 
   // Use ChiselStage to generate the Verilog.
   (new ChiselStage).execute(
-    Array("--target", "systemverilog") ++ args,
+    Array("--target", "systemverilog") ++ chiselArgs,
     Seq(
       ChiselGeneratorAnnotation(() =>
-        new KelvinXbar(hostParams, deviceParams)
+        new KelvinXbar(hostParams, deviceParams, enableTestHarness)
       )
     ) ++ Seq(FirtoolOption("-enable-layers=Verification"))
   )
