@@ -401,3 +401,30 @@ def install_deps():
             ],
         ),
     )
+
+    http_archive(
+        name = "coralnpu_pip_deps_pyserial",
+        urls = [
+            "https://files.pythonhosted.org/packages/07/bc/587a445451b253b285629263eb51c2d8e9bcea4fc97826266d186f96f558/pyserial-3.5-py2.py3-none-any.whl",
+        ],
+        sha256 = "c4451db6ba391ca6ca299fb3ec7bae67a5c55dde170964c7a14ceefec02f2cf0",
+        type = "zip",
+        build_file_content = _build_file_content(pypi_name = "pyserial", pypi_version = "3.5"),
+    )
+
+    http_archive(
+        name = "coralnpu_pip_deps_pyftdi",
+        urls = [
+            "https://files.pythonhosted.org/packages/16/cd/0731490946e037e954ef83719f07c7672cf32bc90dd9c75201c40b827664/pyftdi-0.57.1-py3-none-any.whl",
+        ],
+        sha256 = "efd3f5a7d43202dc883ff261a7b1cb4dcbbe65b19628f8603a8b1183a7bc2841",
+        type = "zip",
+        build_file_content = _build_file_content(
+            pypi_name = "pyftdi",
+            pypi_version = "0.55.0",
+            deps = [
+                "@coralnpu_pip_deps_pyserial//:pkg",
+                "@coralnpu_pip_deps_pyusb//:pkg",
+            ],
+        ),
+    )

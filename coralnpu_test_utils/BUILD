@@ -96,3 +96,40 @@ py_library(
     ],
     visibility = ["//visibility:public"],
 )
+
+py_library(
+    name = "ftdi_spi_master_lib",
+    srcs = ["ftdi_spi_master.py"],
+    deps = [
+        requirement("pyftdi"),
+        requirement("pyelftools"),
+        ":spi_constants",
+    ],
+)
+
+py_binary(
+    name = "ftdi_spi_master",
+    srcs = ["ftdi_spi_master.py"],
+    deps = [
+        ":ftdi_spi_master_lib",
+    ],
+)
+
+py_binary(
+    name = "run_matmul_test",
+    srcs = ["run_matmul_test.py"],
+    deps = [
+        ":ftdi_spi_master_lib",
+        requirement("numpy"),
+        requirement("pyelftools"),
+    ],
+)
+
+py_binary(
+    name = "run_sram_test",
+    srcs = ["run_sram_test.py"],
+    deps = [
+        ":ftdi_spi_master_lib",
+        requirement("numpy"),
+    ],
+)

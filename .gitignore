@@ -8,6 +8,7 @@ tests/renode/rv_core/coralnpu_hello_world_cc.c
 tests/renode/rv_core/*.elf
 tests/renode/rv_core/*.bin
 tests/renode/__pycache__
+__pycache__
 # VCS generated things
 novas.fsdb
 ucli.key
