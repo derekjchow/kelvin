@@ -148,6 +148,7 @@ CORE_MINI_AXI_DEBUG_TESTCASES = [
     "core_mini_axi_debug_abstract_access_nonexistent_register",
     "core_mini_axi_debug_single_step",
     "core_mini_axi_debug_breakpoint",
+    "core_mini_axi_debug_scalar_registers",
 ]
 # END_TESTCASES_FOR_core_mini_axi_debug_cocotb
 

@@ -424,7 +424,7 @@ async def core_mini_axi_debug_breakpoint(dut):
         # Assert that the program eventually terminates successfully.
         await core_mini_axi.wait_for_halted()
 
-@cocotb.test
+@cocotb.test()
 async def core_mini_axi_debug_scalar_registers(dut):
     core_mini_axi = CoreMiniAxiInterface(dut)
     await core_mini_axi.init()
