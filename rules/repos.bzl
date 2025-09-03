@@ -30,6 +30,40 @@ def coralnpu_repos():
     )
 
     http_archive(
+        name = "com_google_absl",
+        urls = ["https://storage.googleapis.com/grpc-bazel-mirror/github.com/abseil/abseil-cpp/archive/20230802.0.tar.gz", "https://github.com/abseil/abseil-cpp/archive/20230802.0.tar.gz"],
+        sha256 = "59d2976af9d6ecf001a81a35749a6e551a335b949d34918cfade07737b9d93c5",
+        strip_prefix = "abseil-cpp-20230802.0",
+    )
+
+    http_archive(
+        name = "rules_java",
+        urls = ["https://github.com/bazelbuild/rules_java/archive/981f06c3d2bd10225e85209904090eb7b5fb26bd.zip"],
+        sha256 = "7979ece89e82546b0dcd1dff7538c34b5a6ebc9148971106f0e3705444f00665",
+        strip_prefix = "rules_java-981f06c3d2bd10225e85209904090eb7b5fb26bd",
+    )
+
+    http_archive(
+        name = "rules_pkg",
+        urls = ["https://mirror.bazel.build/github.com/bazelbuild/rules_pkg/releases/download/0.7.0/rules_pkg-0.7.0.tar.gz", "https://github.com/bazelbuild/rules_pkg/releases/download/0.7.0/rules_pkg-0.7.0.tar.gz"],
+        sha256 = "8a298e832762eda1830597d64fe7db58178aa84cd5926d76d5b744d6558941c2",
+    )
+
+    http_archive(
+        name = "rules_proto",
+        urls = ["https://github.com/bazelbuild/rules_proto/archive/f7a30f6f80006b591fa7c437fe5a951eb10bcbcf.zip"],
+        sha256 = "a4382f78723af788f0bc19fd4c8411f44ffe0a72723670a34692ffad56ada3ac",
+        strip_prefix = "rules_proto-f7a30f6f80006b591fa7c437fe5a951eb10bcbcf",
+    )
+
+    http_archive(
+        name = "rules_python",
+        urls = ["https://github.com/bazelbuild/rules_python/archive/912a5051f51581784fd64094f6bdabf93f6d698f.zip"],
+        sha256 = "a3e4b4ade7c4a52e757b16a16e94d0b2640333062180cba577d81fac087a501d",
+        strip_prefix = "rules_python-912a5051f51581784fd64094f6bdabf93f6d698f",
+    )
+
+    http_archive(
         name = "rules_hdl",
         sha256 = "1b560fe7d4100486784d6f2329e82a63dd37301e185ba77d0fd69b3ecc299649",
         strip_prefix = "bazel_rules_hdl-7a1ba0e8d229200b4628e8a676917fc6b8e165d1",
@@ -72,15 +106,6 @@ def coralnpu_repos():
     )
 
     http_archive(
-        name = "com_github_grpc_grpc",
-        urls = [
-            "https://github.com/grpc/grpc/archive/v1.58.0.tar.gz",
-        ],
-        strip_prefix = "grpc-1.58.0",
-        sha256 = "ec64fdab22726d50fc056474dd29401d914cc616f53ab8f2fe4866772881d581",
-    )
-
-    http_archive(
         name = "libsystemctlm_soc",
         urls = [
             "https://github.com/Xilinx/libsystemctlm-soc/archive/79d624f3c7300a2ead97ca35e683c38f0b6f5021.zip",
@@ -106,21 +131,6 @@ def coralnpu_repos():
         build_file_content = """
 exports_files(["diplomacy/src/diplomacy/nodes/HeterogeneousBag.scala"])
         """,
-    )
-
-def renode_repos():
-    http_archive(
-        name = "renode",
-        sha256 = "ca98b8df2ed09e225b72f35c616c85207e451d8a4b00d96594064e5065493cf1",
-        strip_prefix = "renode_1.15.2_source",
-        urls = ["https://github.com/renode/renode/releases/download/v1.15.2/renode_1.15.2_source.tar.xz"],
-        build_file = "@coralnpu_hw//third_party/renode:BUILD.bazel",
-        patches = [
-            "@coralnpu_hw//third_party/renode:0001-Tweaks-to-AXI.patch",
-            "@coralnpu_hw//third_party/renode:0002-AXI-S-fixups.patch",
-            "@coralnpu_hw//third_party/renode:0003-Invert-AXI-reset-polarity.patch",
-        ],
-        patch_args = ["-p1"],
     )
 
 def cvfpu_repos():

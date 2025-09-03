@@ -20,7 +20,7 @@
 # An example command which will build and test is as follows:
 # bazel test --distdir=coralnpu_airgap_7d188ddd04e3ecd80527a41889e0c6175102af8b/bazel-distdir \
 #            --repository_cache=coralnpu_airgap_7d188ddd04e3ecd80527a41889e0c6175102af8b/bazel-cachedir \
-#            --build_tag_filters="-renode,-verilator" --test_tag_filters="-renode,-verilator" //...
+#            --build_tag_filters="-verilator" --test_tag_filters="-verilator" //...
 # Additionally, the bazel binary is included in the tarball, in case
 # it is not available on your system.
 
@@ -85,7 +85,6 @@ ${WORKDIR}/bazel fetch \
     @remotejdk11_linux//:jdk \
     @rules_hdl//:all \
     @verilator//:all \
-    @com_github_grpc_grpc//:all \
     @coralnpu_pip_deps_cocotb//:all \
     @coralnpu_pip_deps_find_libpython//:all \
     @coralnpu_pip_deps_numpy//:all \
@@ -103,10 +102,10 @@ SCRIPT_DIR="\$(cd "\$(dirname "\${BASH_SOURCE[0]}")" && pwd)"
 \${SCRIPT_DIR}/bazel \$* \\
     --distdir=\${SCRIPT_DIR}/bazel-distdir \\
     --repository_cache=\${SCRIPT_DIR}/bazel-cachedir \\
-    --test_tag_filters="-renode,-verilator" \\
-    --build_tag_filters="-renode,-verilator"
+    --test_tag_filters="-verilator" \\
+    --build_tag_filters="-verilator"
 EOF
 chmod +x ${WORKDIR}/bazel.sh
 
-tar --transform="s|/|/coralnpu_airgap_${CORALNPU_VERSION}/|" -cf "${REPO_TOP}/coralnpu_airgap_${CORALNPU_VERSION}.tar" -C ${WORKDIR}  .
+tar --transform="s|/|/coralnpu_airgap_${CORALNPU_VERSION}/|" -cf "${REPO_TOP}/kelvin_airgap_${CORALNPU_VERSION}.tar" -C ${WORKDIR}  .
 echo "Tarball containing dependencies for building CoralNPU offline are available at ${REPO_TOP}/coralnpu_airgap_${CORALNPU_VERSION}.tar"

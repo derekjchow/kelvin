@@ -26,14 +26,14 @@ test --repo_env BAZEL_JVM_FETCH_SOURCES=false
 
 # Skip VCS by default as most workstations will not have licenses.
 # Skip renode by default until dependencies can be sandboxed appropriately.
-build --build_tag_filters="-vcs,-renode,-verilator,-synthesis"
+build --build_tag_filters="-vcs,-verilator,-synthesis"
 build --action_env=VCS_HOME
 build --action_env=VC_STATIC_HOME
 build --action_env=VERDI_HOME
 build --action_env=LM_LICENSE_FILE
 build --action_env=XILINXD_LICENSE_FILE
-test --build_tag_filters="-vcs,-renode,-verilator,-synthesis"
-test --test_tag_filters="-vcs,-renode,-verilator,-synthesis"
+test --build_tag_filters="-vcs,-verilator,-synthesis"
+test --test_tag_filters="-vcs,-verilator,-synthesis"
 test --action_env=VCS_HOME
 test --action_env=VC_STATIC_HOME
 test --action_env=VERDI_HOME

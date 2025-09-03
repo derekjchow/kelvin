@@ -1,4 +1,0 @@
-#!/bin/bash
-# No-op to replace stty when running renode-test.
-# When running via `bazel test`, we are disconnected
-# from the terminal, and a real stty may hang indefinitely.
