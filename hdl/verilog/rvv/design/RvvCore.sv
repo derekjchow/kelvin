@@ -192,6 +192,8 @@ module RvvCore #(parameter N = 4,
   assign rd_rob2rt_o = rd_rob2rt;
 
   logic   [`ISSUE_LANE-1:0] insts_ready_cq2rvs;
+  logic rvv_backend_idle;
+  assign rvv_idle = rvv_backend_idle && (frontend_cmd_valid == 0);
   rvv_backend backend(
       .clk(clk),
       .rst_n(rstn),
@@ -219,7 +221,7 @@ module RvvCore #(parameter N = 4,
       .vcsr_valid(vcsr_valid),
       .vector_csr(vector_csr),
       .vcsr_ready(vcsr_ready),
-      .rvv_idle(rvv_idle),
+      .rvv_idle(rvv_backend_idle),
       .rd_rob2rt_o(rd_rob2rt)
   );
 

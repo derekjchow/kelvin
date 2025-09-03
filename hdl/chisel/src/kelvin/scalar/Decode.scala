@@ -205,6 +205,12 @@ class DecodedInstruction(p: Parameters) extends Bundle {
   def isVector(): Bool = { vld || vst || viop || getvl || getmaxvl }
   def isFency(): Bool = { fencei || ebreak || wfi || mpause || flushat || flushall }
 
+  // Instructions that should dispatch out of slot 0, with no other instructions
+  // dispatched on the same cycle.
+  def forceSlot0Only(): Bool = {
+    isFency() || isCsr()
+  }
+
   // Checks if an instruction is a jump or changes context switch. Instructions
   // after these should not be executed on the same cycle.
   def isJump(): Bool = {
@@ -422,12 +428,12 @@ class DispatchV2(p: Parameters) extends Dispatch(p) {
   val fence = decodedInsts.map(x => x.isFency() && (io.mactive || io.lsuActive))
 
   // ---------------------------------------------------------------------------
-  // Csr interlock
-  val csrInterlock = (0 until p.instructionLanes).map(i =>
+  // Slot 0 interlock
+  val slot0Interlock = (0 until p.instructionLanes).map(i =>
     if (i == 0) {
       true.B
     } else {
-      !decodedInsts(0).isCsr()
+      !decodedInsts(0).forceSlot0Only() && !decodedInsts(i).forceSlot0Only()
     }
   )
 
@@ -518,6 +524,10 @@ class DispatchV2(p: Parameters) extends Dispatch(p) {
     !io.single_step.getOrElse(false.B) || ((i == 0).B && coreIdle))
 
   // ---------------------------------------------------------------------------
+  // MPAUSE
+  val mpauseInterlock = decodedInsts.map(x => (!x.mpause || coreIdle))
+
+  // ---------------------------------------------------------------------------
   // Combine above rules. This variable represents which instructions can be
   // dispatched before in-orderness and back-pressure are considered.
   val canDispatch = (0 until p.instructionLanes).map(i =>
@@ -531,7 +541,7 @@ class DispatchV2(p: Parameters) extends Dispatch(p) {
       !floatWriteAfterWrite(i) && // Avoid WAW hazards
       !branchInterlock(i) && // Only branch/alu can be dispatched after a branch
       !fence(i) &&           // Don't dispatch if fence interlocked
-      csrInterlock(i) &&
+      slot0Interlock(i) &&   // Special instructions execute out of slot 0 only
       rvvConfigInterlock(i) &&     // Rvv interlock rules
       rvvReductionInterlock(i) && // Don't dispatch reduction if vstart != 0
       // rvvLsuInterlock(i) &&  // Dispatch only one Rvv LsuOp
@@ -539,7 +549,8 @@ class DispatchV2(p: Parameters) extends Dispatch(p) {
       rvvInterlock(i) && // Ensure rvv instructions can be dispatched into queue
       !undefInterlock(i) &&     // Ensure undef is only dispatched from first slot
       io.retirement_buffer_nSpace.map(x => i.U < x).getOrElse(true.B) && // Retirement buffer needs space for our slot
-      singleStepInterlock(i)
+      singleStepInterlock(i) &&
+      mpauseInterlock(i)
   )
 
   // ---------------------------------------------------------------------------
