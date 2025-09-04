@@ -1,6 +1,5 @@
 import cocotb
 import numpy as np
-import argparse
 from kelvin_test_utils.core_mini_axi_interface import CoreMiniAxiInterface
 from bazel_tools.tools.python.runfiles import runfiles
 
@@ -139,10 +138,74 @@ async def core_mini_vstart_store(dut):
 
     # vstart is 4, so first 4 elements are skipped.
     # 12 elements are stored.
-    print(f"input_data={input_data}", flush=True)
-    print(f"output_data={output_data}", flush=True)
     assert np.array_equal(output_data[0:4], np.zeros(4, dtype=np.uint8))
     assert np.array_equal(output_data[4:], input_data[4:])
 
     await core_mini_axi.raise_irq()
     await core_mini_axi.wait_for_halted()
+
+
+@cocotb.test()
+async def core_mini_vcsr_test(dut):
+    """Testbench to test vstart store.
+    """
+    # Test bench setup
+    core_mini_axi = CoreMiniAxiInterface(dut)
+    await core_mini_axi.init()
+    await core_mini_axi.reset()
+    cocotb.start_soon(core_mini_axi.clock.start())
+    r = runfiles.Create()
+
+    elf_path = r.Rlocation("kelvin_hw/tests/cocotb/rvv/vcsr_test.elf")
+    if not elf_path:
+        raise ValueError("elf_path must consist a valid path")
+    with open(elf_path, "rb") as f:
+        entry_point = await core_mini_axi.load_elf(f)
+        vma_addr = core_mini_axi.lookup_symbol(f, "vma")
+        vta_addr = core_mini_axi.lookup_symbol(f, "vta")
+        sew_addr = core_mini_axi.lookup_symbol(f, "sew")
+        lmul_addr = core_mini_axi.lookup_symbol(f, "lmul")
+        vl_addr = core_mini_axi.lookup_symbol(f, "vl")
+        vtype_addr = core_mini_axi.lookup_symbol(f, "vtype")
+
+    SEWS = [
+        0b000,  # SEW8
+        0b001,  # SEW16
+        0b010,  # SEW32
+    ]
+
+    LMULS = [
+        0b101,  # LMUL1/8
+        0b110,  # LMUL1/4
+        0b111,  # LMUL1/2
+        0b000,  # LMUL1
+        0b001,  # LMUL2
+        0b010,  # LMUL4
+        0b011,  # LMUL8
+    ]
+
+    for ma in range(2):
+      for ta in range(2):
+        for sew in SEWS:
+          for lmul in LMULS:
+            await core_mini_axi.write_word(vma_addr, ma)
+            await core_mini_axi.write_word(vta_addr, ta)
+            await core_mini_axi.write_word(sew_addr, sew)
+            await core_mini_axi.write_word(lmul_addr, lmul)
+            # TODO(derekjchow): Pick random VL
+            await core_mini_axi.write_word(vl_addr, 1)
+
+            await core_mini_axi.execute_from(entry_point)
+            await core_mini_axi.wait_for_halted()
+
+            vtype_result = (
+                await core_mini_axi.read_word(vtype_addr)).view(np.uint32)[0]
+            ma_result = (vtype_result & (1 << 7)) >> 7
+            ta_result = (vtype_result & (1 << 6)) >> 6
+            sew_result = (vtype_result & (0b111 << 3)) >> 3
+            lmul_result = (vtype_result & 0b111)
+
+            assert (ma == ma_result)
+            assert (ta == ta_result)
+            assert (sew == sew_result)
+            assert (lmul == lmul_result)

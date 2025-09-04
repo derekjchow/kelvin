@@ -157,6 +157,7 @@ RVV_ASSEMBLY_TESTCASES = [
     "core_mini_rvv_load",
     "core_mini_rvv_add",
     "core_mini_vstart_store",
+    "core_mini_vcsr_test",
 ]
 # END_TESTCASES_FOR_rvv_assembly_cocotb_test
 
@@ -235,12 +236,6 @@ cocotb_test_suite(
     verilator_model = ":core_mini_debug_axi_model",
 )
 
-RVV_TEST_BINARY_TARGETS = [
-    "//tests/cocotb/rvv:rvv_load.elf",
-    "//tests/cocotb/rvv:rvv_add.elf",
-    "//tests/cocotb/rvv:vstart_store.elf",
-]
-
 cocotb_test_suite(
     name = "rvv_assembly_cocotb_test",
     simulators = [
@@ -259,10 +254,10 @@ cocotb_test_suite(
             requirement("tqdm"),
             "@bazel_tools//tools/python/runfiles",
         ],
-        "data": RVV_TEST_BINARY_TARGETS,
+        "data": ["//tests/cocotb/rvv:rvv_assem_tests"],
         "size": "large",
     },
-    vcs_data = RVV_TEST_BINARY_TARGETS + [":coverage_exclude.cfg"],
+    vcs_data = ["//tests/cocotb/rvv:rvv_assem_tests"] + [":coverage_exclude.cfg"],
     vcs_build_args = VCS_BUILD_ARGS,
     vcs_test_args = VCS_TEST_ARGS,
     vcs_defines = VCS_DEFINES,

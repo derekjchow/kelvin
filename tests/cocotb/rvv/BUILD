@@ -29,5 +29,18 @@ template_rule(
         "vstart_store": {
             "srcs": ["vstart_store.S"],
         },
+        "vcsr_test": {
+            "srcs": ["vcsr_test.cc"],
+        },
     },
+)
+
+filegroup(
+    name = "rvv_assem_tests",
+    srcs = [
+        "rvv_add.elf",
+        "rvv_load.elf",
+        "vstart_store.elf",
+        "vcsr_test.elf",
+    ],
 )
