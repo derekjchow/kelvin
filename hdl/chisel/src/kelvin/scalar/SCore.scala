@@ -406,19 +406,21 @@ class SCore(p: Parameters) extends Module {
   regfile.io.writeData(mluDvuOffset).valid := arb.io.out.valid
   regfile.io.writeData(mluDvuOffset).bits.addr := arb.io.out.bits.addr
   regfile.io.writeData(mluDvuOffset).bits.data := arb.io.out.bits.data
+  // MLU/DVU port is never masked
+  regfile.io.writeMask(p.instructionLanes).valid := false.B
 
   val lsuOffset = p.instructionLanes + 1
   regfile.io.writeData(lsuOffset).valid := lsu.io.rd.valid
   regfile.io.writeData(lsuOffset).bits.addr  := lsu.io.rd.bits.addr
   regfile.io.writeData(lsuOffset).bits.data  := lsu.io.rd.bits.data
+  // Mask LSU based on fault for LsuV2 only
+  regfile.io.writeMask(lsuOffset).valid := (
+      if (p.useLsuV2) { lsu.io.fault.valid } else { false.B })
 
   val writeMask = bru.map(_.io.taken.valid).scan(false.B)(_||_)
   for (i <- 0 until p.instructionLanes) {
     regfile.io.writeMask(i).valid := writeMask(i)
   }
-  // MLU/DVU and LSU ports are never masked
-  regfile.io.writeMask(p.instructionLanes).valid := false.B
-  regfile.io.writeMask(p.instructionLanes + 1).valid := false.B
   if (p.useDebugModule) {
     regfile.io.debugWriteValid.get := io.dm.get.scalar_rd.valid
   }

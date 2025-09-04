@@ -1109,7 +1109,8 @@ class LsuV2(p: Parameters) extends Lsu(p) {
   // Writeback update
 
   // Scalar writeback
-  io.rd.valid := slot.shouldWriteback() &&
+  // Write back on error. io.fault.valid will mask
+  io.rd.valid := (io.fault.valid || slot.shouldWriteback()) &&
       slot.op.isOneOf(LsuOp.LB, LsuOp.LBU, LsuOp.LH, LsuOp.LHU, LsuOp.LW)
   io.rd.bits.data := slot.scalarLoadResult()
   io.rd.bits.addr := slot.rd
