@@ -416,6 +416,9 @@ class SCore(p: Parameters) extends Module {
   for (i <- 0 until p.instructionLanes) {
     regfile.io.writeMask(i).valid := writeMask(i)
   }
+  // MLU/DVU and LSU ports are never masked
+  regfile.io.writeMask(p.instructionLanes).valid := false.B
+  regfile.io.writeMask(p.instructionLanes + 1).valid := false.B
   if (p.useDebugModule) {
     regfile.io.debugWriteValid.get := io.dm.get.scalar_rd.valid
   }

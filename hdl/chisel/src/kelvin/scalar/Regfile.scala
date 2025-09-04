@@ -76,7 +76,7 @@ class Regfile(p: Parameters) extends Module {
       val valid = Input(Bool())
       val bits = new RegfileWriteDataIO
     })
-    val writeMask = Vec(p.instructionLanes, new Bundle {val valid = Input(Bool())})
+    val writeMask = Vec(p.instructionLanes + extraWritePorts, new Bundle {val valid = Input(Bool())})
     val scoreboard = new Bundle {
       val regd = Output(UInt(32.W))
       val comb = Output(UInt(32.W))
@@ -135,15 +135,14 @@ class Regfile(p: Parameters) extends Module {
   writeData(0)  := 0.U     // regfile(0) is optimized away
 
   for (i <- 1 until 32) {
-    val valid = Cat(
-      Seq(io.writeData(p.instructionLanes + 1).valid && io.writeData(p.instructionLanes + 1).bits.addr === i.U,
-          io.writeData(p.instructionLanes).valid && io.writeData(p.instructionLanes).bits.addr === i.U) ++
-          (0 until p.instructionLanes).reverse.map(x => io.writeData(x).valid && io.writeData(x).bits.addr === i.U && !io.writeMask(x).valid)
-      )
+    val valid = (0 until p.instructionLanes + extraWritePorts).map(j => {
+        val addrValid = (io.writeData(j).bits.addr === i.U)
+        (io.writeData(j).valid && addrValid && !io.writeMask(j).valid)})
 
-    val data = (0 until p.instructionLanes + extraWritePorts).map(x => MuxOR(valid(x), io.writeData(x).bits.data)).reduce(_|_)
+    val data = (0 until p.instructionLanes + extraWritePorts).map(
+        x => MuxOR(valid(x), io.writeData(x).bits.data)).reduce(_|_)
 
-    writeValid(i) := valid =/= 0.U
+    writeValid(i) := Cat(valid) =/= 0.U
     writeData(i)  := data
 
     assert(PopCount(valid) <= 1.U)
@@ -157,12 +156,10 @@ class Regfile(p: Parameters) extends Module {
 
   // We care if someone tried to write x0 (e.g. nop is encoded this way), but want
   // it separate for above mentioned optimization.
-  val x0 =
-    (0 until p.instructionLanes).map(x =>
+  val x0 = (0 until p.instructionLanes).map(x =>
       io.writeData(x).valid &&
       io.writeData(x).bits.addr === 0.U &&
-      !io.writeMask(x).valid) ++
-    (p.instructionLanes until p.instructionLanes + extraWritePorts).map(x => io.writeData(x).valid && io.writeData(x).bits.addr === 0.U)
+      !io.writeMask(x).valid)
 
   io.rfwriteCount := PopCount(writeValid) - writeValid(0) + PopCount(x0)
 
