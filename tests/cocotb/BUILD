@@ -158,6 +158,13 @@ RVV_ASSEMBLY_TESTCASES = [
     "core_mini_rvv_add",
     "core_mini_vstart_store",
     "core_mini_vcsr_test",
+    "core_mini_viota_test",
+    "core_mini_vfirst_test",
+    "core_mini_vcpop_test",
+    "core_mini_vcompress_test",
+    "core_mini_vmsbf_test",
+    "core_mini_vmsof_test",
+    "core_mini_vmsif_test",
 ]
 # END_TESTCASES_FOR_rvv_assembly_cocotb_test
 

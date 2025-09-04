@@ -460,15 +460,16 @@ class DispatchV2(p: Parameters) extends Dispatch(p) {
   }
 
   // ---------------------------------------------------------------------------
-  // Rvv reduction
-  // Don't allow reduction instructions to execute if vstart != 0
-  val rvvReductionInterlock = if (p.enableRvv) {
+  // Rvv Vstart
+  // If an instruction requires vstart == 0, don't allow that instruction to
+  // execute when vstart != 0
+  val rvvVstartInterlock = if (p.enableRvv) {
     (0 until p.instructionLanes).map(i => {
-        val invalidReduction =
+        val invalidVstart =
             decodedInsts(i).rvv.get.valid &&
-            decodedInsts(i).rvv.get.bits.isReduction() &&
+            decodedInsts(i).rvv.get.bits.requireZeroVstart() &&
             (configInvalid(i) || (io.rvvState.get.bits.vstart =/= 0.U))
-        !invalidReduction
+        !invalidVstart
     })
   } else {
     Seq.fill(p.instructionLanes)(true.B)
@@ -543,7 +544,7 @@ class DispatchV2(p: Parameters) extends Dispatch(p) {
       !fence(i) &&           // Don't dispatch if fence interlocked
       slot0Interlock(i) &&   // Special instructions execute out of slot 0 only
       rvvConfigInterlock(i) &&     // Rvv interlock rules
-      rvvReductionInterlock(i) && // Don't dispatch reduction if vstart != 0
+      rvvVstartInterlock(i) && // Don't dispatch illegal vstart != 0
       // rvvLsuInterlock(i) &&  // Dispatch only one Rvv LsuOp
       lsuInterlock(i) && // Ensure lsu instructions can be dispatched into queue
       rvvInterlock(i) && // Ensure rvv instructions can be dispatched into queue
@@ -771,11 +772,11 @@ class DispatchV2(p: Parameters) extends Dispatch(p) {
     for (i <- 0 until p.instructionLanes) {
       io.rvvFault.get(i) := (if (i == 0) {
         // Return fault if vstart != 0
-        val isReduction = decodedInsts(i).rvv.get.valid &&
-            decodedInsts(0).rvv.get.bits.isReduction()
+        val requireZeroVstart = decodedInsts(i).rvv.get.valid &&
+            decodedInsts(0).rvv.get.bits.requireZeroVstart()
         val vStartNotZero = io.rvvState.get.valid &&
             (io.rvvState.get.bits.vstart =/= 0.U)
-        io.inst(0).valid && isReduction && vStartNotZero
+        io.inst(0).valid && requireZeroVstart && vStartNotZero
       } else {
         false.B
       })

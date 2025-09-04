@@ -3,6 +3,22 @@ import numpy as np
 from kelvin_test_utils.core_mini_axi_interface import CoreMiniAxiInterface
 from bazel_tools.tools.python.runfiles import runfiles
 
+SEWS = [
+    0b000,  # SEW8
+    0b001,  # SEW16
+    0b010,  # SEW32
+]
+
+LMULS = [
+    0b101,  # LMUL1/8
+    0b110,  # LMUL1/4
+    0b111,  # LMUL1/2
+    0b000,  # LMUL1
+    0b001,  # LMUL2
+    0b010,  # LMUL4
+    0b011,  # LMUL8
+]
+
 @cocotb.test()
 async def core_mini_rvv_load(dut):
     """Testbench to test RVV load intrinsics.
@@ -147,8 +163,7 @@ async def core_mini_vstart_store(dut):
 
 @cocotb.test()
 async def core_mini_vcsr_test(dut):
-    """Testbench to test vstart store.
-    """
+    """Testbench to test vcsr is set correctly."""
     # Test bench setup
     core_mini_axi = CoreMiniAxiInterface(dut)
     await core_mini_axi.init()
@@ -167,22 +182,6 @@ async def core_mini_vcsr_test(dut):
         lmul_addr = core_mini_axi.lookup_symbol(f, "lmul")
         vl_addr = core_mini_axi.lookup_symbol(f, "vl")
         vtype_addr = core_mini_axi.lookup_symbol(f, "vtype")
-
-    SEWS = [
-        0b000,  # SEW8
-        0b001,  # SEW16
-        0b010,  # SEW32
-    ]
-
-    LMULS = [
-        0b101,  # LMUL1/8
-        0b110,  # LMUL1/4
-        0b111,  # LMUL1/2
-        0b000,  # LMUL1
-        0b001,  # LMUL2
-        0b010,  # LMUL4
-        0b011,  # LMUL8
-    ]
 
     for ma in range(2):
       for ta in range(2):
@@ -209,3 +208,98 @@ async def core_mini_vcsr_test(dut):
             assert (ta == ta_result)
             assert (sew == sew_result)
             assert (lmul == lmul_result)
+
+
+async def test_vstart_not_zero_failure(dut, binary):
+    core_mini_axi = CoreMiniAxiInterface(dut)
+    await core_mini_axi.init()
+    await core_mini_axi.reset()
+    cocotb.start_soon(core_mini_axi.clock.start())
+    r = runfiles.Create()
+
+    elf_path = r.Rlocation(binary)
+    if not elf_path:
+        raise ValueError("elf_path must consist a valid path")
+    with open(elf_path, "rb") as f:
+        entry_point = await core_mini_axi.load_elf(f)
+        vma_addr = core_mini_axi.lookup_symbol(f, "vma")
+        vta_addr = core_mini_axi.lookup_symbol(f, "vta")
+        sew_addr = core_mini_axi.lookup_symbol(f, "sew")
+        lmul_addr = core_mini_axi.lookup_symbol(f, "lmul")
+        vl_addr = core_mini_axi.lookup_symbol(f, "vl")
+        vstart_addr = core_mini_axi.lookup_symbol(f, "vstart")
+        faulted_addr = core_mini_axi.lookup_symbol(f, "faulted")
+        mcause_addr = core_mini_axi.lookup_symbol(f, "mcause")
+
+    for ma in range(2):
+      for ta in range(2):
+        for sew in SEWS:
+          for lmul in LMULS:
+            vl = 4 # TODO(derekjchow): Pick random VL
+            vstart = 1 # Non-zero to trigger failure
+
+            await core_mini_axi.write_word(vma_addr, ma)
+            await core_mini_axi.write_word(vta_addr, ta)
+            await core_mini_axi.write_word(sew_addr, sew)
+            await core_mini_axi.write_word(lmul_addr, lmul)
+            await core_mini_axi.write_word(vl_addr, vl)
+            await core_mini_axi.write_word(vstart_addr, vstart)
+
+            await core_mini_axi.execute_from(entry_point)
+            await core_mini_axi.wait_for_halted()
+
+            faulted_result = (
+                await core_mini_axi.read_word(faulted_addr)).view(np.uint32)[0]
+            assert (faulted_result == 1)
+            mcause_result = (
+                await core_mini_axi.read_word(mcause_addr)).view(np.uint32)[0]
+            assert (mcause_result == 0x2)
+
+
+@cocotb.test()
+async def core_mini_viota_test(dut):
+    """Testbench to test vstart!=0 viota."""
+    await test_vstart_not_zero_failure(
+        dut, "kelvin_hw/tests/cocotb/rvv/viota_test.elf")
+
+
+@cocotb.test()
+async def core_mini_vfirst_test(dut):
+    """Testbench to test vstart!=0 vfirst."""
+    await test_vstart_not_zero_failure(
+        dut, "kelvin_hw/tests/cocotb/rvv/vfirst_test.elf")
+
+
+@cocotb.test()
+async def core_mini_vcpop_test(dut):
+    """Testbench to test vstart!=0 vcpop."""
+    await test_vstart_not_zero_failure(
+        dut, "kelvin_hw/tests/cocotb/rvv/vcpop_test.elf")
+
+
+@cocotb.test()
+async def core_mini_vcompress_test(dut):
+    """Testbench to test vstart!=0 vcompress."""
+    await test_vstart_not_zero_failure(
+        dut, "kelvin_hw/tests/cocotb/rvv/vcompress_test.elf")
+
+
+@cocotb.test()
+async def core_mini_vmsbf_test(dut):
+    """Testbench to test vstart!=0 vmsbf."""
+    await test_vstart_not_zero_failure(
+        dut, "kelvin_hw/tests/cocotb/rvv/vmsbf_test.elf")
+
+
+@cocotb.test()
+async def core_mini_vmsof_test(dut):
+    """Testbench to test vstart!=0 vmsof."""
+    await test_vstart_not_zero_failure(
+        dut, "kelvin_hw/tests/cocotb/rvv/vmsof_test.elf")
+
+
+@cocotb.test()
+async def core_mini_vmsif_test(dut):
+    """Testbench to test vstart!=0 vmsbf."""
+    await test_vstart_not_zero_failure(
+        dut, "kelvin_hw/tests/cocotb/rvv/vmsif_test.elf")

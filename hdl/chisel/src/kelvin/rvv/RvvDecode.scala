@@ -41,13 +41,19 @@ class RvvCompressedInstruction extends Bundle {
     bits(24, 19)
   }
 
+  def vs1(): UInt = {
+    bits(12, 8)
+  }
+
   def funct3(): UInt = {
     bits(7, 5)
   }
 
-  // If this instruction is a "reduction" instruction, that requires vstart=0
-  def isReduction(): Bool = {
+  // These instructions need to trap when vstart is not zero. This includes
+  // all reduction instructions.
+  def requireZeroVstart(): Bool = {
     (opcode === RvvCompressedOpcode.RVVALU) && (funct3() === "b010".U) &&
+        // OPMVV
         MuxLookup(funct6(), false.B)(Seq(
             "b000000".U -> true.B,  // vredsum
             "b000001".U -> true.B,  // vredand
@@ -57,6 +63,17 @@ class RvvCompressedInstruction extends Bundle {
             "b000101".U -> true.B,  // vredmin
             "b000110".U -> true.B,  // vredmaxu
             "b000111".U -> true.B,  // vredmax
+            "b010000".U -> MuxLookup(vs1(), false.B)(Seq(  // VWXUNARY0
+                "b10000".U -> true.B,  // vcpop
+                "b10001".U -> true.B,  // vfirst
+            )),
+            "b010100".U -> MuxLookup(vs1(), false.B)(Seq(  // VMUNARY0
+                "b00001".U -> true.B,  // vmsbf
+                "b00010".U -> true.B,  // vmsof
+                "b00011".U -> true.B,  // vmsif
+                "b10000".U -> true.B,  // viota
+            )),
+            "b010111".U -> true.B,  // vcompress
             "b110000".U -> true.B,  // vwredsumu
             "b110001".U -> true.B,  // vwredsum
         ))

@@ -32,6 +32,27 @@ template_rule(
         "vcsr_test": {
             "srcs": ["vcsr_test.cc"],
         },
+        "viota_test": {
+            "srcs": ["viota_test.cc"],
+        },
+        "vfirst_test": {
+            "srcs": ["vfirst_test.cc"],
+        },
+        "vcpop_test": {
+            "srcs": ["vcpop_test.cc"],
+        },
+        "vcompress_test": {
+            "srcs": ["vcompress_test.cc"],
+        },
+        "vmsbf_test": {
+            "srcs": ["vmsbf_test.cc"],
+        },
+        "vmsof_test": {
+            "srcs": ["vmsof_test.cc"],
+        },
+        "vmsif_test": {
+            "srcs": ["vmsif_test.cc"],
+        },
     },
 )
 
@@ -42,5 +63,12 @@ filegroup(
         "rvv_load.elf",
         "vstart_store.elf",
         "vcsr_test.elf",
+        "viota_test.elf",
+        "vfirst_test.elf",
+        "vcpop_test.elf",
+        "vcompress_test.elf",
+        "vmsbf_test.elf",
+        "vmsof_test.elf",
+        "vmsif_test.elf",
     ],
 )
