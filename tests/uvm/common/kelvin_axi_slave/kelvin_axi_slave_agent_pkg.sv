@@ -29,11 +29,6 @@ package kelvin_axi_slave_agent_pkg;
     `uvm_component_utils(kelvin_axi_slave_model)
     virtual kelvin_axi_slave_if.TB_SLAVE_MODEL vif;
 
-    // Handle to an event that is triggered when the signature address is written
-    uvm_event signature_written_event;
-    // The signature address to monitor for
-    logic [31:0] end_signature_addr;
-
     function new(string name = "kelvin_axi_slave_model",
                  uvm_component parent = null);
       super.new(name, parent);
@@ -45,16 +40,6 @@ package kelvin_axi_slave_agent_pkg;
           this, "", "vif", vif)) begin
         `uvm_fatal(get_type_name(),
                    "Virtual interface 'vif' not found for TB_SLAVE_MODEL")
-      end
-
-      // Get the signature address and event handle from the test
-      if (!uvm_config_db#(logic [31:0])::get(this, "", "end_signature_addr",
-          end_signature_addr)) begin
-        `uvm_fatal(get_type_name(), "end_signature_addr not found!")
-      end
-      if (!uvm_config_db#(uvm_event)::get(this, "", "signature_written_event",
-          signature_written_event)) begin
-        `uvm_fatal(get_type_name(), "signature_written_event not found!")
       end
     endfunction
 
@@ -85,38 +70,15 @@ package kelvin_axi_slave_agent_pkg;
         `uvm_info(get_type_name(),
                   $sformatf("Slave Rcvd AW: Addr=0x%h ID=%0d",
                             vif.tb_slave_cb.awaddr, current_bid), UVM_HIGH)
+        vif.tb_slave_cb.awready <= 1'b1;
+        @(vif.tb_slave_cb);
+        vif.tb_slave_cb.awready <= 1'b0;
 
-        // Check for the magic signature address
-        if (vif.tb_slave_cb.awaddr == end_signature_addr) begin
-          `uvm_info(get_type_name(), "SIGNATURE ADDRESS WRITE DETECTED",
-                    UVM_LOW)
-          // Accept the address and data, then trigger the event
-          vif.tb_slave_cb.awready <= 1'b1;
-          @(vif.tb_slave_cb);
-          vif.tb_slave_cb.awready <= 1'b0;
-
-          vif.tb_slave_cb.wready <= 1'b0;
-          @(vif.tb_slave_cb iff vif.tb_slave_cb.wvalid);
-          // Pass the signature data back to the test for checking
-          uvm_config_db#(logic [127:0])::set(null, "*",
-              "final_signature_data", vif.tb_slave_cb.wdata);
-          // Trigger the event to end the test
-          signature_written_event.trigger();
-          vif.tb_slave_cb.wready <= 1'b1;
-          @(vif.tb_slave_cb);
-          vif.tb_slave_cb.wready <= 1'b0;
-        end else begin
-          // Standard write handling for non-signature addresses
-          vif.tb_slave_cb.awready <= 1'b1;
-          @(vif.tb_slave_cb);
-          vif.tb_slave_cb.awready <= 1'b0;
-
-          vif.tb_slave_cb.wready <= 1'b0;
-          @(vif.tb_slave_cb iff vif.tb_slave_cb.wvalid);
-          vif.tb_slave_cb.wready <= 1'b1;
-          @(vif.tb_slave_cb);
-          vif.tb_slave_cb.wready <= 1'b0;
-        end
+        vif.tb_slave_cb.wready <= 1'b0;
+        @(vif.tb_slave_cb iff vif.tb_slave_cb.wvalid);
+        vif.tb_slave_cb.wready <= 1'b1;
+        @(vif.tb_slave_cb);
+        vif.tb_slave_cb.wready <= 1'b0;
 
         // Send write response (OKAY)
         @(vif.tb_slave_cb);

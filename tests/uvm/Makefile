@@ -30,11 +30,14 @@ TB_DIR = ./tb
 ENV_DIR = ./env
 TESTS_DIR = ./tests
 BIN_DIR = ./bin
+UTILS_DIR = $(ROOTDIR)/hw/kelvin/utils
 
 # Simulation Work Directory
 SIM_DIR = ./sim_work
 LOG_DIR = $(SIM_DIR)/logs
 WAVE_DIR = $(SIM_DIR)/waves
+MEM_FILE_DIR = $(SIM_DIR)/mem_files
+RUN_OPTS_FILE = $(MEM_FILE_DIR)/elf_run_opts.f
 
 # MPACT-Sim Integration Paths
 MPACT_DIR = $(ROOTDIR)/sim/kelvin
@@ -47,11 +50,12 @@ FILE_LIST = ./kelvin_dv.f
 # Simulation Settings
 SIM_EXEC = $(SIM_DIR)/simv
 UVM_TESTNAME ?= kelvin_base_test
-TEST_BINARY ?= $(BIN_DIR)/program.bin
+TEST_ELF ?= $(BIN_DIR)/program.elf
 UVM_VERBOSITY ?= UVM_MEDIUM
 TEST_TIMEOUT_NS ?= 20000
-PLUSARGS = +UVM_TESTNAME=$(UVM_TESTNAME) +TEST_BINARY=$(TEST_BINARY) \
-           +UVM_VERBOSITY=$(UVM_VERBOSITY) +TEST_TIMEOUT=$(TEST_TIMEOUT_NS)
+PLUSARGS = +UVM_TESTNAME=$(UVM_TESTNAME) \
+           +UVM_VERBOSITY=$(UVM_VERBOSITY) +TEST_TIMEOUT=$(TEST_TIMEOUT_NS) \
+           +TEST_ELF=$(TEST_ELF)
 
 # Waveform Dumping
 DUMP_WAVES = 1
@@ -77,7 +81,8 @@ VCS_COMPILE_OPTS += \
     -l$(MPACT_COSIM_LIB_NAME)
 
 VCS_RUN_OPTS = \
-	$(PLUSARGS)
+	$(PLUSARGS) \
+	-f $(RUN_OPTS_FILE)
 
 # Add define to COMPILE options for waveform dumping
 ifeq ($(DUMP_WAVES),1)
@@ -88,19 +93,25 @@ endif
 
 # Targets
 
-.PHONY: all compile run clean dirs help build_mpact_lib
+.PHONY: all compile run clean dirs help build_mpact_lib gen_mem_files
 
 # Default target
 all: run
 
 # Create necessary directories
 dirs:
-	@mkdir -p $(SIM_DIR) $(LOG_DIR) $(WAVE_DIR) $(BIN_DIR)
+	@mkdir -p $(SIM_DIR) $(LOG_DIR) $(WAVE_DIR) $(BIN_DIR) $(MEM_FILE_DIR)
 
 # Build the MPACT-Sim library using Bazel with CC=clang
 build_mpact_lib:
 	@echo "--- Building MPACT-Sim Co-sim Library via Bazel ---"
 	cd $(MPACT_DIR) && CC=clang bazel build //sim/cosim:$(MPACT_COSIM_LIB_NAME)
+
+# Generate memory and run option files from the ELF file
+gen_mem_files: dirs
+	@echo "--- Generating Memory and Run Option Files from ELF ---"
+	@rm -f $(MEM_FILE_DIR)/*
+	python3 $(UTILS_DIR)/elf_to_mem.py --elf_file $(TEST_ELF) --out_dir $(MEM_FILE_DIR)
 
 # Compile the design
 compile: dirs build_mpact_lib
@@ -109,10 +120,10 @@ compile: dirs build_mpact_lib
 	@echo "--- Compilation Finished ---"
 
 # Run the simulation
-run: compile
+run: compile gen_mem_files
 	@echo "--- Running Simulation ---"
 	@echo "Test:      $(UVM_TESTNAME)"
-	@echo "Binary:    $(TEST_BINARY)"
+	@echo "ELF File:  $(TEST_ELF)"
 	@echo "Verbosity: $(UVM_VERBOSITY)"
 	@echo "Timeout:   $(TEST_TIMEOUT_NS) ns"
 	@echo "Plusargs:  $(PLUSARGS)"
@@ -134,9 +145,10 @@ clean:
 help:
 	@echo "Makefile Targets:"
 	@echo "  make compile          : Builds MPACT lib and compiles DUT/testbench"
-	@echo "  make run              : Builds and runs the full co-simulation"
-	@echo "                        :   Override defaults: make run UVM_TESTNAME=<test> TEST_BINARY=<path> UVM_VERBOSITY=<level>"
+	@echo "  make run              : Generates mem files, builds, and runs the simulation"
+	@echo "                        :   Override defaults: make run UVM_TESTNAME=<test> TEST_ELF=<path> UVM_VERBOSITY=<level>"
 	@echo "  make build_mpact_lib  : Only builds the MPACT-Sim C++ library"
+	@echo "  make gen_mem_files    : Only generates ITCM/DTCM and run opt files"
 	@echo "  make clean            : Removes generated simulation and MPACT-Sim files"
 	@echo "  make dirs             : Creates simulation directories"
 	@echo "  make help             : Shows this help message"

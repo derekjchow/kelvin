@@ -229,6 +229,70 @@ module kelvin_tb_top;
   `endif
 
   //--------------------------------------------------------------------------
+  // ELF Memory Loading and `tohost` Monitor
+  //--------------------------------------------------------------------------
+  initial begin
+    string itcm_mem_file;
+    string dtcm_mem_file;
+    string tohost_addr_str;
+    logic [31:0] tohost_addr;
+    uvm_event tohost_written_event;
+
+    tohost_written_event = new("tohost_written_event");
+    uvm_config_db#(uvm_event)::set(null, "*",
+                                   "tohost_written_event",
+                                   tohost_written_event);
+
+    // Load memories at time 0
+    if ($value$plusargs("ITCM_MEM_FILE=%s", itcm_mem_file)) begin
+      `uvm_info("TB_TOP", $sformatf("Loading ITCM from %s", itcm_mem_file), UVM_LOW)
+      $readmemh(itcm_mem_file, kelvin_tb_top.u_dut.itcm.sram.sramModules_0.mem);
+    end
+    if ($value$plusargs("DTCM_MEM_FILE=%s", dtcm_mem_file)) begin
+      `uvm_info("TB_TOP", $sformatf("Loading DTCM from %s", dtcm_mem_file), UVM_LOW)
+      $readmemh(dtcm_mem_file, kelvin_tb_top.u_dut.dtcm.sram.sramModules_0.mem);
+    end
+
+    // Get the tohost address from the plusargs
+    if ($value$plusargs("TOHOST_ADDR=%s", tohost_addr_str)) begin
+      if ($sscanf(tohost_addr_str, "'h%h", tohost_addr) != 1) begin
+        `uvm_fatal("TB_TOP", "Invalid +TOHOST_ADDR format.")
+      end
+    end
+
+    // Fork a process that waits for the write
+    fork
+      forever begin
+        @(posedge clk);
+        // Check internal data bus (dbus)
+        if (u_dut.core.io_dbus_valid && u_dut.core.io_dbus_write &&
+            u_dut.core.io_dbus_addr == tohost_addr) begin
+          if (u_dut.core.io_dbus_wdata[0] == 1'b1) begin
+            `uvm_info("TB_TOP_MONITOR", "tohost write detected on DBUS.", UVM_LOW)
+            uvm_config_db#(logic [127:0])::set(null, "*",
+                "final_tohost_data", u_dut.core.io_dbus_wdata);
+            tohost_written_event.trigger();
+            break; // Stop monitoring once triggered
+          end
+        end
+
+        // Check external bus (ebus)
+        if (u_dut.core.io_ebus_dbus_valid && u_dut.core.io_ebus_dbus_ready &&
+            u_dut.core.io_ebus_dbus_write && u_dut.core.io_ebus_dbus_addr == tohost_addr) begin
+          if (u_dut.core.io_ebus_dbus_wdata[0] == 1'b1) begin
+            `uvm_info("TB_TOP_MONITOR", "tohost write detected on EBUS.", UVM_LOW)
+            uvm_config_db#(logic [127:0])::set(null, "*",
+                "final_tohost_data", u_dut.core.io_ebus_dbus_wdata);
+            tohost_written_event.trigger();
+            break; // Stop monitoring once triggered
+          end
+        end
+      end
+    join
+  end
+
+
+  //--------------------------------------------------------------------------
   // UVM Test Execution
   //--------------------------------------------------------------------------
   initial begin
