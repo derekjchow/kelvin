@@ -30,7 +30,7 @@ TB_DIR = ./tb
 ENV_DIR = ./env
 TESTS_DIR = ./tests
 BIN_DIR = ./bin
-UTILS_DIR = $(ROOTDIR)/hw/kelvin/utils
+UTILS_DIR = $(ROOTDIR)/hw/kelvin/tests/uvm/utils
 
 # Simulation Work Directory
 SIM_DIR = ./sim_work
