@@ -155,6 +155,13 @@ class SCore(p: Parameters) extends Module {
     lsu.io.fault.valid -> lsu.io.fault,
   ))
   fault_manager.io.in.ibus_fault := io.ibus.fault.valid
+  if (p.enableRvv) {
+    fault_manager.io.in.rvv_fault.get.valid := io.rvvcore.get.trap.valid
+    fault_manager.io.in.rvv_fault.get.bits.mepc := io.rvvcore.get.trap.bits.pc
+    fault_manager.io.in.rvv_fault.get.bits.mcause := 2.U(32.W)
+    fault_manager.io.in.rvv_fault.get.bits.mtval :=
+        io.rvvcore.get.trap.bits.originalEncoding()
+  }
   bru(0).io.fault_manager.get := fault_manager.io.out
 
   // ---------------------------------------------------------------------------

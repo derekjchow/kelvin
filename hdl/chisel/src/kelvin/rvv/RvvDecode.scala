@@ -37,6 +37,15 @@ class RvvCompressedInstruction extends Bundle {
   val opcode = RvvCompressedOpcode()
   val bits = UInt(25.W)
 
+  def originalEncoding(): UInt = {
+    val lower7bits = MuxLookup(opcode, 0.U)(Seq(
+        RvvCompressedOpcode.RVVLOAD  -> "b0000111".U,
+        RvvCompressedOpcode.RVVSTORE -> "b0100111".U,
+        RvvCompressedOpcode.RVVALU   -> "b1010111".U,
+    ))
+    Cat(bits, lower7bits)
+  }
+
   def funct6(): UInt = {
     bits(24, 19)
   }

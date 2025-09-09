@@ -41,6 +41,7 @@ typedef enum logic [1:0] {
 
 // The architectural configuration state of the RVV core.
 typedef struct packed {
+  logic                         vill; // This configuration is illegal
   logic [`VL_WIDTH-1:0]         vl;       // Max 128, need one extra bit
   logic [`VSTART_WIDTH-1:0]     vstart;
   logic [`VTYPE_VMA_WIDTH-1:0]  ma;        // 0:inactive element undisturbed, 1:inactive element agnostic
@@ -61,6 +62,7 @@ typedef enum logic [1:0] {
 
 // A decoded instruction forwarded to the RVVCore from the scalar core.
 typedef struct packed {
+  logic [`PC_WIDTH-1:0] pc;
   RVVOpCode             opcode;   // effectively bits [6:0] from instruction
   logic [24:0]          bits;     // bits [31:7] from instruction
 } RVVInstruction;

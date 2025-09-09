@@ -303,3 +303,30 @@ async def core_mini_vmsif_test(dut):
     """Testbench to test vstart!=0 vmsbf."""
     await test_vstart_not_zero_failure(
         dut, "kelvin_hw/tests/cocotb/rvv/vmsif_test.elf")
+
+
+@cocotb.test()
+async def core_mini_vill_test(dut):
+    core_mini_axi = CoreMiniAxiInterface(dut)
+    await core_mini_axi.init()
+    await core_mini_axi.reset()
+    cocotb.start_soon(core_mini_axi.clock.start())
+    r = runfiles.Create()
+
+    elf_path = r.Rlocation("kelvin_hw/tests/cocotb/rvv/vill_test.elf")
+    if not elf_path:
+        raise ValueError("elf_path must consist a valid path")
+    with open(elf_path, "rb") as f:
+        entry_point = await core_mini_axi.load_elf(f)
+        faulted_addr = core_mini_axi.lookup_symbol(f, "faulted")
+        mcause_addr = core_mini_axi.lookup_symbol(f, "mcause")
+
+    await core_mini_axi.execute_from(entry_point)
+    await core_mini_axi.wait_for_halted()
+
+    faulted_result = (
+        await core_mini_axi.read_word(faulted_addr)).view(np.uint32)[0]
+    assert (faulted_result == 1)
+    mcause_result = (
+        await core_mini_axi.read_word(mcause_addr)).view(np.uint32)[0]
+    assert (mcause_result == 0x2)

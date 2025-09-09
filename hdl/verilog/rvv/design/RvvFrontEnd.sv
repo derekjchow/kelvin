@@ -51,6 +51,10 @@ module RvvFrontEnd#(parameter N = 4,
   input logic [CAPACITYBITS-1:0] queue_capacity_i,  // Number of elements that can be enqueued
   output logic [CAPACITYBITS-1:0] queue_capacity_o,
 
+  // Trap output.
+  output logic trap_valid_o,
+  output RVVInstruction trap_data_o,
+
   // Config state
   output config_state_valid,
   output RVVConfigState config_state
@@ -135,6 +139,7 @@ module RvvFrontEnd#(parameter N = 4,
           (inst_q[i].opcode == RVV) &&
           (inst_q[i].bits[7:5] == 3'b111)) begin
         if (inst_q[i].bits[24] == 0) begin  // vsetvli
+          inst_config_state[i+1].vill = 0;
           inst_config_state[i+1].vl = reg_read_data_i[2*i];
           inst_config_state[i+1].lmul = RVVLMUL'(inst_q[i].bits[15:13]);
           inst_config_state[i+1].sew = RVVSEW'(inst_q[i].bits[18:16]);
@@ -142,6 +147,7 @@ module RvvFrontEnd#(parameter N = 4,
           inst_config_state[i+1].ma = inst_q[i].bits[20];
           is_setvl[i] = 1;
         end else if (inst_q[i].bits[24:23] == 2'b11) begin  // vsetivli
+          inst_config_state[i+1].vill = 0;
           inst_config_state[i+1].vl =
               {{(`VL_WIDTH - 5){1'b0}}, inst_q[i].bits[12:8]};
           inst_config_state[i+1].lmul = RVVLMUL'(inst_q[i].bits[15:13]);
@@ -150,6 +156,7 @@ module RvvFrontEnd#(parameter N = 4,
           inst_config_state[i+1].ma = inst_q[i].bits[20];
           is_setvl[i] = 1;
         end else if (inst_q[i].bits[24:23] == 2'b10) begin  // vsetvl
+          inst_config_state[i+1].vill = 0;
           inst_config_state[i+1].vl = reg_read_data_i[2*i];
           inst_config_state[i+1].lmul =
               RVVLMUL'(reg_read_data_i[(2*i) + 1][2:0]);
@@ -165,7 +172,7 @@ module RvvFrontEnd#(parameter N = 4,
 
   always_ff @(posedge clk or negedge rstn) begin
     if (!rstn) begin
-      // TODO(derekjchow): check if RVV spec specifies arch state on reset.
+      config_state_q.vill <= 1;  // Config is illegal on reset.
       config_state_q.ma <= 0;
       config_state_q.ta <= 0;
       config_state_q.sew <= SEW8;
@@ -180,13 +187,19 @@ module RvvFrontEnd#(parameter N = 4,
   // Propagate outputs
   logic [N-1:0] unaligned_cmd_valid;
   RVVCmd [N-1:0] unaligned_cmd_data;
+  logic [N-1:0] unaligned_trap_valid;  // Should this instruction trap
+  RVVInstruction [N-1:0] unaligned_trap_data;
   always_comb begin
     for (int i = 0; i < N; i++) begin
-      unaligned_cmd_valid[i] = valid_inst_q[i] && !is_setvl[i];
+      unaligned_trap_valid[i] = valid_inst_q[i] && !is_setvl[i] &&
+          inst_config_state[i].vill;
+      unaligned_trap_data[i] = inst_q[i];
+      unaligned_cmd_valid[i] = valid_inst_q[i] && !is_setvl[i] &&
+          !inst_config_state[i].vill;
 
       // Combine instruction + arch state into command
 `ifdef TB_SUPPORT
-      unaligned_cmd_data[i].insts_pc = inst_q[i].pc;
+      unaligned_cmd_data[i].inst_pc = inst_q[i].pc;
 `endif
       unaligned_cmd_data[i].opcode = inst_q[i].opcode;
       unaligned_cmd_data[i].bits = inst_q[i].bits;
@@ -210,6 +223,27 @@ module RvvFrontEnd#(parameter N = 4,
       .valid_out(cmd_valid_o),
       .data_out(cmd_data_o)
   );
+
+  // Trap
+  logic trap_occurred;
+  RVVInstruction trap_data;
+  assign trap_valid_o = trap_occurred;
+  assign trap_data_o = trap_data;
+  always_comb begin
+    trap_occurred = (unaligned_trap_valid != 0);
+    // Initialize all trap_data fields to some zero value
+    trap_data.pc = '0;
+    trap_data.bits = '0;
+    trap_data.opcode = RVV;
+
+    for (int i = 0; i < N; i++) begin
+      if (unaligned_trap_valid[i]) begin
+        trap_occurred = 1'b1;
+        trap_data = unaligned_trap_data[i];
+        break;
+      end
+    end
+  end
 
   // Assertions
 `ifndef SYNTHESIS

@@ -32,6 +32,9 @@ template_rule(
         "vcsr_test": {
             "srcs": ["vcsr_test.cc"],
         },
+        "vill_test": {
+            "srcs": ["vill_test.cc"],
+        },
         "viota_test": {
             "srcs": ["viota_test.cc"],
         },
@@ -63,6 +66,7 @@ filegroup(
         "rvv_load.elf",
         "vstart_store.elf",
         "vcsr_test.elf",
+        "vill_test.elf",
         "viota_test.elf",
         "vfirst_test.elf",
         "vcpop_test.elf",

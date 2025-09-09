@@ -72,6 +72,9 @@ class RvvCoreIO(p: Parameters) extends Bundle {
     // Async scalar regfile writes.
     val async_rd = Decoupled(new RegfileWriteDataIO)
 
+    // Async trap.
+    val trap = Output(Valid(new RvvCompressedInstruction))
+
     // Csr Interface.
     val csr = new RvvCsrIO(p)
 

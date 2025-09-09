@@ -136,6 +136,13 @@ object GenerateCoreShimSource {
             |    output [15:0] rd_rob2rt_o_GENI_vxsaturate,""".stripMargin.replaceAll("GENI", i.toString)
     }
 
+    // Add trap interface outputs
+    moduleInterface += """
+        |    output trap_valid,
+        |    output [31:0] trap_bits_pc,
+        |    output [1:0] trap_bits_opcode,
+        |    output [24:0] trap_bits_bits,""".stripMargin
+
     // Remove last comma/linebreak
     moduleInterface = moduleInterface.dropRight(1)
     moduleInterface += "\n);\n"
@@ -151,9 +158,8 @@ object GenerateCoreShimSource {
     coreInstantiation += "  RVVInstruction [GENN-1:0] inst_data;\n".replaceAll(
             "GENN", instructionLanes.toString)
     for (i <- 0 until instructionLanes) {
-      // TODO(derekjchow): Plumb in pc later
-      // coreInstantiation += "  assign inst_data[GENI].pc = inst_GENI_bits_pc;\n".replaceAll(
-      //     "GENI", i.toString)
+      coreInstantiation += "  assign inst_data[GENI].pc = inst_GENI_bits_pc;\n".replaceAll(
+          "GENI", i.toString)
       coreInstantiation += "  assign inst_data[GENI].opcode = RVVOpCode'(inst_GENI_bits_opcode);\n".replaceAll(
           "GENI", i.toString)
       coreInstantiation += "  assign inst_data[GENI].bits = inst_GENI_bits_bits;\n".replaceAll(
@@ -240,6 +246,7 @@ object GenerateCoreShimSource {
         |""".stripMargin
 
     coreInstantiation += "  ROB2RT_t [3:0] rd_rob2rt_o;\n"
+    coreInstantiation += "  RVVInstruction trap_data;\n"
 
     coreInstantiation += """  RvvCore#(.N (GENN)) core(
         |      .clk(clk),
@@ -281,7 +288,9 @@ object GenerateCoreShimSource {
         |      .config_state(config_state),
         |      .rvv_idle(rvv_idle),
         |      .queue_capacity(queue_capacity),
-        |      .rd_rob2rt_o(rd_rob2rt_o)
+        |      .rd_rob2rt_o(rd_rob2rt_o),
+        |      .trap_valid_o(trap_valid),
+        |      .trap_data_o(trap_data)
         |""".stripMargin.replaceAll("GENN", instructionLanes.toString)
     coreInstantiation += "  );\n"
 
@@ -302,6 +311,10 @@ object GenerateCoreShimSource {
       |  assign rd_rob2rt_o_GENI_vxsaturate = rd_rob2rt_o[GENI].vxsaturate;
       |""".stripMargin.replaceAll("GENI", i.toString)
     }
+    coreInstantiation += """  assign trap_bits_pc = trap_data.pc;
+      |  assign trap_bits_opcode = trap_data.opcode;
+      |  assign trap_bits_bits = trap_data.bits;
+      |""".stripMargin
     for (i <- 0 until instructionLanes) {
       coreInstantiation += "  assign inst_GENI_ready = inst_ready[GENI];\n".replaceAll("GENI", i.toString)
     }
@@ -344,6 +357,7 @@ class RvvCoreWrapper(p: Parameters) extends BlackBox with HasBlackBoxInline
     val async_rd = Decoupled(new RegfileWriteDataIO)
 
     val rd_rob2rt_o = Vec(4, new Rob2Rt(p))
+    val trap = Output(Valid(new RvvCompressedInstruction))
 
     val vcsr_valid = Output(Bool())
     val vcsr_vstart = Output(UInt(7.W))
@@ -447,6 +461,7 @@ class RvvCoreShim(p: Parameters) extends Module {
   rvvCoreWrapper.io.rd <> io.rd
   rvvCoreWrapper.io.async_rd <> io.async_rd
   rvvCoreWrapper.io.rd_rob2rt_o <> io.rd_rob2rt_o
+  io.trap := rvvCoreWrapper.io.trap
 
   rvvCoreWrapper.io.vstart := Mux(
       io.csr.vstart_write.valid, io.csr.vstart_write.bits, vstart)

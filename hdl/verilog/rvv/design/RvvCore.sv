@@ -80,7 +80,11 @@ module RvvCore #(parameter N = 4,
   output logic [$clog2(2*N + 1)-1:0] queue_capacity,
 
   // Writeback from reorder buffer
-  output ROB2RT_t [`NUM_RT_UOP-1:0] rd_rob2rt_o
+  output ROB2RT_t [`NUM_RT_UOP-1:0] rd_rob2rt_o,
+
+  // Trap output
+  output logic trap_valid_o,
+  output RVVInstruction trap_data_o
 );
   logic [N-1:0] frontend_cmd_valid;
   RVVCmd [N-1:0] frontend_cmd_data;
@@ -103,6 +107,8 @@ module RvvCore #(parameter N = 4,
       .cmd_data_o(frontend_cmd_data),
       .queue_capacity_i(queue_capacity_internal),
       .queue_capacity_o(queue_capacity),
+      .trap_valid_o(trap_valid_o),
+      .trap_data_o(trap_data_o),
       .config_state_valid(config_state_valid),
       .config_state(config_state)
   );

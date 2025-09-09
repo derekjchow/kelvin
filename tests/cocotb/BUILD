@@ -165,6 +165,7 @@ RVV_ASSEMBLY_TESTCASES = [
     "core_mini_vmsbf_test",
     "core_mini_vmsof_test",
     "core_mini_vmsif_test",
+    "core_mini_vill_test",
 ]
 # END_TESTCASES_FOR_rvv_assembly_cocotb_test
 
