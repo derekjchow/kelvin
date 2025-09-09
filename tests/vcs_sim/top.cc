@@ -77,6 +77,7 @@ sc_top::sc_top(sc_core::sc_module_name name)
   core.io_debug_float_writeData_0_bits_data(debug.float_writeData_0_bits_data);
   core.io_debug_float_writeData_1_bits_data(debug.float_writeData_1_bits_data);
 #endif
+#if (KP_useDebugModule == true)
   core.io_dm_req_valid(dm.req_valid);
   core.io_dm_req_ready(dm.req_valid);
   core.io_dm_req_bits_address(dm.req_bits_address);
@@ -86,6 +87,7 @@ sc_top::sc_top(sc_core::sc_module_name name)
   core.io_dm_rsp_ready(dm.rsp_valid);
   core.io_dm_rsp_bits_data(dm.rsp_bits_data);
   core.io_dm_rsp_bits_op(dm.rsp_bits_op);
+#endif
   // AR
   core.io_axi_master_read_addr_ready(master_arready_4);
   core.io_axi_master_read_addr_valid(master_arvalid_4);
