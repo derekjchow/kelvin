@@ -43,18 +43,21 @@ class Spi2TLUL(p: Parameters) extends Module {
     // Reset is active when csb is high (inactive) OR when the main reset is active.
     val combined_reset = io.spi.csb || spi_domain_reset.asBool
 
-    val (mosi_data_reg, miso_data_reg, miso_valid_reg, bit_count_reg, deq_attempted_reg) =
+    val (mosi_data_reg, bit_count_reg) =
         withClockAndReset(io.spi.clk, combined_reset.asAsyncReset) {
             val mosi = RegInit(0.U(8.W))
-            val miso = RegInit(0.U(8.W))
-            // Gate MISO output until the first SPI clock cycle to prevent X propagation.
-            val miso_valid = RegInit(false.B)
             val bit_count = RegInit(0.U(3.W))
-            val deq_attempted = RegInit(false.B)
-            (mosi, miso, miso_valid, bit_count, deq_attempted)
+            (mosi, bit_count)
         }
-    miso_valid_reg := miso_valid_reg || !io.spi.csb
-    io.spi.miso := Mux(miso_valid_reg, miso_data_reg(7), 0.U)
+
+    val miso_buffer_reg = withClockAndReset(io.spi.clk, spi_domain_reset.asAsyncReset) {
+        RegInit(0.U.asTypeOf(Valid(UInt(8.W))))
+    }
+    val next_miso_byte_reg = withClockAndReset(io.spi.clk, spi_domain_reset.asAsyncReset) {
+        RegInit(0.U.asTypeOf(Valid(UInt(8.W))))
+    }
+
+    io.spi.miso := Mux(miso_buffer_reg.valid, miso_buffer_reg.bits(7), 0.U)
 
     val spi2tlul_q = Module(new AsyncQueue(UInt(8.W), AsyncQueueParams(depth = 2, safe = false)))
     spi2tlul_q.io.enq_clock := io.spi.clk
@@ -63,12 +66,50 @@ class Spi2TLUL(p: Parameters) extends Module {
     spi2tlul_q.io.deq_reset := reset.asBool
 
     val completed_byte = Cat(mosi_data_reg(6,0), io.spi.mosi)
-    spi2tlul_q.io.enq.valid := bit_count_reg === 7.U
+    val byte_received = bit_count_reg === 7.U
+
+    val spi_bulk_read_len_reg = withClockAndReset(io.spi.clk, spi_domain_reset.asAsyncReset) {
+        RegInit(0.U(8.W))
+    }
+    val spi_bulk_read_sent_count_reg = withClockAndReset(io.spi.clk, spi_domain_reset.asAsyncReset) {
+        RegInit(0.U(8.W))
+    }
+
+    object SpiCmdState extends ChiselEnum {
+        val sIdle, sGotBulkReadAddr, sSendData, sGotOtherCmd = Value
+    }
+    val spi_cmd_state = withClock(io.spi.clk) { RegInit(SpiCmdState.sIdle) }
+
+    val is_first_byte_reg = withClockAndReset(io.spi.clk, io.spi.csb.asAsyncReset) {
+        RegInit(true.B)
+    }
+    is_first_byte_reg := Mux(byte_received, false.B, is_first_byte_reg)
+    val is_first_byte = is_first_byte_reg && byte_received
+
+    val is_write_cmd = completed_byte(7)
+    val cmd_addr = completed_byte(6,0)
+    val is_truly_a_bulk_read_cmd = (spi_cmd_state === SpiCmdState.sIdle) && is_first_byte && is_write_cmd && (cmd_addr === SpiRegAddress.BULK_READ_PORT.asUInt)
+
+    val next_spi_cmd_state = MuxCase(spi_cmd_state, Seq(
+      (spi_cmd_state === SpiCmdState.sIdle && is_truly_a_bulk_read_cmd) -> SpiCmdState.sGotBulkReadAddr,
+      (spi_cmd_state === SpiCmdState.sIdle && !is_truly_a_bulk_read_cmd && is_first_byte && is_write_cmd) -> SpiCmdState.sGotOtherCmd,
+      (spi_cmd_state === SpiCmdState.sGotBulkReadAddr) -> SpiCmdState.sSendData,
+      (spi_cmd_state === SpiCmdState.sSendData && spi_bulk_read_sent_count_reg === spi_bulk_read_len_reg) -> SpiCmdState.sIdle,
+      (spi_cmd_state === SpiCmdState.sGotOtherCmd) -> SpiCmdState.sIdle,
+    ))
+    spi_cmd_state := Mux(byte_received, next_spi_cmd_state, spi_cmd_state)
+
+    val is_bulk_read_start = byte_received && (spi_cmd_state === SpiCmdState.sGotBulkReadAddr)
+    val block_cmd_enqueue = (spi_cmd_state === SpiCmdState.sGotBulkReadAddr) || (is_truly_a_bulk_read_cmd && byte_received)
+
+    val is_bulk_status_read = is_first_byte && !completed_byte(7) && (completed_byte(6,0) === SpiRegAddress.BULK_READ_STATUS_REG.asUInt) && (spi_cmd_state =/= SpiCmdState.sGotOtherCmd)
+
+    spi2tlul_q.io.enq.valid := byte_received && !is_bulk_status_read && !block_cmd_enqueue
     spi2tlul_q.io.enq.bits  := completed_byte
     dontTouch(spi2tlul_q.io.enq)
 
     object SpiState extends ChiselEnum {
-        val sIDLE, sWAIT_WRITE_DATA, sSEND_READ_DATA = Value
+        val sIDLE, sWAIT_WRITE_DATA, sSEND_READ_DATA, sBULK_WRITE_DATA, sBULK_READ_DATA = Value
     }
     val spi_state_reg = RegInit(SpiState.sIDLE)
 
@@ -83,15 +124,33 @@ class Spi2TLUL(p: Parameters) extends Module {
         val TL_STATUS_REG = 0x06.U
         val DATA_BUF_PORT = 0x07.U
         val TL_WRITE_STATUS_REG = 0x08.U
+        val BULK_WRITE_PORT = 0x09.U
+        val BULK_READ_PORT = 0x0A.U
+        val BULK_READ_STATUS_REG = 0x0B.U
     }
 
     // Physical registers backing the map
     val tl_addr_reg = RegInit(VecInit(Seq.fill(4)(0.U(8.W))))
     val tl_len_reg = RegInit(0.U(8.W))
+    val bulk_len_reg = RegInit(0.U(8.W))
+    val bulk_count_reg = RegInit(0.U(8.W))
     // Command and Status registers are handled by the TL FSM, not stored directly here.
-    val data_buffer = RegInit(VecInit(Seq.fill(16)(0.U(128.W))))
-    val bulk_read_ptr = RegInit(0.U(8.W)) // Byte pointer into the data buffer
+    val write_data_buffer = RegInit(VecInit(Seq.fill(16)(0.U(128.W))))
+    val read_data_buffer = withClockAndReset(io.spi.clk, spi_domain_reset.asAsyncReset) {
+        RegInit(VecInit(Seq.fill(16)(0.U(128.W))))
+    }
+    val bulk_read_write_ptr = withClockAndReset(io.spi.clk, spi_domain_reset.asAsyncReset) {
+        RegInit(0.U(4.W))
+    }
+    val spi_bulk_read_ptr = withClockAndReset(io.spi.clk, spi_domain_reset.asAsyncReset) {
+        RegInit(0.U(8.W)) // Byte pointer into the data buffer
+    }
     val bulk_write_ptr = RegInit(0.U(8.W)) // Byte pointer for writes
+
+    val bytes_written = Cat(bulk_read_write_ptr, 0.U(4.W))
+    val bytes_read = spi_bulk_read_ptr
+    val bulk_read_bytes_available = Wire(UInt(9.W))
+    bulk_read_bytes_available := bytes_written - bytes_read
 
     val addr_reg = RegInit(0.U(7.W))
 
@@ -122,11 +181,11 @@ class Spi2TLUL(p: Parameters) extends Module {
     val tl_cmd_reg_write = do_write && (addr_reg === SpiRegAddress.TL_CMD_REG.asUInt)
     val tl_cmd_reg_data  = spi2tlul_q.io.deq.bits
 
-    val tlul2spi_q = Module(new AsyncQueue(UInt(8.W), AsyncQueueParams.singleton(safe = false)))
-    tlul2spi_q.io.enq_clock := clock
-    tlul2spi_q.io.enq_reset := reset.asBool
-    tlul2spi_q.io.deq_clock := io.spi.clk
-    tlul2spi_q.io.deq_reset := reset.asBool
+    val tl_to_spi_bulk_q = Module(new AsyncQueue(UInt(128.W), AsyncQueueParams(depth = 2, safe = false)))
+    tl_to_spi_bulk_q.io.enq_clock := clock
+    tl_to_spi_bulk_q.io.enq_reset := reset.asBool
+    tl_to_spi_bulk_q.io.deq_clock := io.spi.clk
+    tl_to_spi_bulk_q.io.deq_reset := spi_domain_reset.asBool
 
     // Add queues for TileLink channels to handle backpressure
     val tl_a_q = Module(new Queue(new OpenTitanTileLink.A_Channel(tlul_p), 1))
@@ -134,21 +193,43 @@ class Spi2TLUL(p: Parameters) extends Module {
     io.tl.a <> tl_a_q.io.deq
     io.tl.a.bits := RequestIntegrityGen(tlul_p, tl_a_q.io.deq.bits)
     tl_d_q.io.enq <> io.tl.d
-    tlul2spi_q.io.deq.ready := !io.spi.csb && !deq_attempted_reg
+
+    val tlul2spi_q = Module(new AsyncQueue(UInt(8.W), AsyncQueueParams.singleton(safe = false)))
+    tlul2spi_q.io.enq_clock := clock
+    tlul2spi_q.io.enq_reset := reset.asBool
+    tlul2spi_q.io.deq_clock := io.spi.clk
+    tlul2spi_q.io.deq_reset := reset.asBool
+
+    // Connect TL D-channel to the bulk queue enqueue port
+    tl_to_spi_bulk_q.io.enq.valid := tl_d_q.io.deq.valid && (tl_read_state_reg === TlReadState.sWaitBeatAck)
+    tl_to_spi_bulk_q.io.enq.bits  := tl_d_q.io.deq.bits.data
+
+    tlul2spi_q.io.deq.ready := !next_miso_byte_reg.valid && !io.spi.csb && (spi_cmd_state =/= SpiCmdState.sSendData)
+
+    // Always be ready to receive read data from the TL domain
+    tl_to_spi_bulk_q.io.deq.ready := true.B
 
     // FSM logic
     val deq_ready = spi_state_reg === SpiState.sIDLE ||
-                    spi_state_reg === SpiState.sWAIT_WRITE_DATA
+                    spi_state_reg === SpiState.sWAIT_WRITE_DATA ||
+                    spi_state_reg === SpiState.sBULK_WRITE_DATA
     spi2tlul_q.io.deq.ready := deq_ready
-    tlul2spi_q.io.enq.valid := (spi_state_reg === SpiState.sSEND_READ_DATA)
+    tlul2spi_q.io.enq.valid := (spi_state_reg === SpiState.sSEND_READ_DATA) ||
+                           (spi_state_reg === SpiState.sBULK_READ_DATA)
 
     val is_write = spi2tlul_q.io.deq.bits(7)
     val state_next = MuxCase(spi_state_reg, Seq(
       (spi_state_reg === SpiState.sIDLE && spi2tlul_q.io.deq.fire) ->
         Mux(is_write, SpiState.sWAIT_WRITE_DATA, SpiState.sSEND_READ_DATA),
       (spi_state_reg === SpiState.sWAIT_WRITE_DATA && spi2tlul_q.io.deq.fire) ->
-        SpiState.sIDLE,
+        Mux(addr_reg === SpiRegAddress.BULK_WRITE_PORT.asUInt, SpiState.sBULK_WRITE_DATA,
+        Mux(addr_reg === SpiRegAddress.BULK_READ_PORT.asUInt, SpiState.sBULK_READ_DATA,
+            SpiState.sIDLE)),
       (spi_state_reg === SpiState.sSEND_READ_DATA && tlul2spi_q.io.enq.fire) ->
+        SpiState.sIDLE,
+      (spi_state_reg === SpiState.sBULK_WRITE_DATA && spi2tlul_q.io.deq.fire && ((bulk_count_reg +& 1.U) === (bulk_len_reg +& 1.U))) ->
+        SpiState.sIDLE,
+      (spi_state_reg === SpiState.sBULK_READ_DATA && tlul2spi_q.io.enq.fire && ((bulk_count_reg +& 1.U) === (bulk_len_reg +& 1.U))) ->
         SpiState.sIDLE
     ))
     spi_state_reg := state_next
@@ -169,21 +250,28 @@ class Spi2TLUL(p: Parameters) extends Module {
     val writing_len_reg = do_write && addr_reg === SpiRegAddress.TL_LEN_REG.asUInt
     tl_len_reg := Mux(writing_len_reg, data, tl_len_reg)
 
+    val writing_bulk_write_port = do_write && addr_reg === SpiRegAddress.BULK_WRITE_PORT.asUInt
+    val writing_bulk_read_port = do_write && addr_reg === SpiRegAddress.BULK_READ_PORT.asUInt
+    bulk_len_reg := Mux(writing_bulk_write_port || writing_bulk_read_port, data, bulk_len_reg)
+
     val write_word_index = bulk_write_ptr(7,4)
     val write_byte_index = bulk_write_ptr(3,0)
     val write_shift = write_byte_index << 3
     val write_mask = ~(0xFF.U << write_shift)
-    val write_old_word = data_buffer(write_word_index)
+    val write_old_word = write_data_buffer(write_word_index)
     val write_new_word = (write_old_word & write_mask) | (data << write_shift)
     val write_cmd_fire = tl_cmd_reg_write && tl_cmd_reg_data === 2.U
-    val writing_data_buf = do_write && addr_reg === SpiRegAddress.DATA_BUF_PORT.asUInt
-    bulk_write_ptr := Mux(write_cmd_fire, 0.U,
+    val writing_data_buf_single = do_write && addr_reg === SpiRegAddress.DATA_BUF_PORT.asUInt
+    val writing_bulk_data = spi_state_reg === SpiState.sBULK_WRITE_DATA && spi2tlul_q.io.deq.fire
+    val writing_data_buf = writing_data_buf_single || writing_bulk_data
+    val start_bulk_write = do_write && addr_reg === SpiRegAddress.BULK_WRITE_PORT.asUInt
+    bulk_write_ptr := Mux(write_cmd_fire || start_bulk_write, 0.U,
                       Mux(writing_data_buf, bulk_write_ptr + 1.U, bulk_write_ptr))
 
     // sSEND_READ_DATA
-    val word_index = bulk_read_ptr(7,4)
-    val byte_index = bulk_read_ptr(3,0)
-    val selected_word = data_buffer(word_index)
+    val word_index = spi_bulk_read_ptr(7,4)
+    val byte_index = spi_bulk_read_ptr(3,0)
+    val selected_word = write_data_buffer(word_index)
 
     val status_map = Seq(
         TlReadState.sIdle.asUInt -> 0x00.U,
@@ -211,26 +299,74 @@ class Spi2TLUL(p: Parameters) extends Module {
         SpiRegAddress.TL_WRITE_STATUS_REG.asUInt ->
             MuxLookup(tl_write_state_reg.asUInt, 0.U)(write_status_map),
         SpiRegAddress.DATA_BUF_PORT.asUInt -> (selected_word.asUInt >> (byte_index << 3.U))(7,0),
+        SpiRegAddress.BULK_READ_PORT.asUInt -> (selected_word.asUInt >> (byte_index << 3.U))(7,0),
     )
     tlul2spi_q.io.enq.bits := MuxLookup(addr_reg, 0.U(8.W))(read_map)
 
     val read_cmd_fire = tl_cmd_reg_write && tl_cmd_reg_data === 1.U
-    val reading_data_buf = spi_state_reg === SpiState.sSEND_READ_DATA &&
-                           tlul2spi_q.io.enq.fire &&
-                           addr_reg === SpiRegAddress.DATA_BUF_PORT.asUInt
-    bulk_read_ptr := Mux(read_cmd_fire, 0.U,
-                     Mux(reading_data_buf, bulk_read_ptr + 1.U, bulk_read_ptr))
+    val reading_bulk_data = spi_state_reg === SpiState.sBULK_READ_DATA && tlul2spi_q.io.enq.fire
+    val start_bulk_read = do_write && addr_reg === SpiRegAddress.BULK_READ_PORT.asUInt
+
+    bulk_count_reg := Mux(start_bulk_write || start_bulk_read, 0.U,
+                      Mux(writing_bulk_data || reading_bulk_data, bulk_count_reg + 1.U, bulk_count_reg))
 
     withClock(io.spi.clk) {
+        // Combinational signal for decrementing byte counter
+        val reading_bulk_data_byte = spi_cmd_state === SpiCmdState.sSendData && byte_received
+
+        read_data_buffer(bulk_read_write_ptr) := Mux(tl_to_spi_bulk_q.io.deq.fire, tl_to_spi_bulk_q.io.deq.bits, read_data_buffer(bulk_read_write_ptr))
+        bulk_read_write_ptr := Mux(tl_to_spi_bulk_q.io.deq.fire, bulk_read_write_ptr + 1.U, bulk_read_write_ptr)
+
+        spi_bulk_read_ptr := Mux(reading_bulk_data_byte, spi_bulk_read_ptr + 1.U, spi_bulk_read_ptr)
+
+        val reset_sent_count = spi_cmd_state === SpiCmdState.sGotBulkReadAddr && byte_received
+        spi_bulk_read_sent_count_reg := Mux(reset_sent_count, 0.U,
+                                          Mux(reading_bulk_data_byte, spi_bulk_read_sent_count_reg + 1.U, spi_bulk_read_sent_count_reg))
+
+        spi_bulk_read_len_reg := Mux(is_bulk_read_start, completed_byte, spi_bulk_read_len_reg)
+
         mosi_data_reg := Cat(mosi_data_reg(6,0), io.spi.mosi)
         bit_count_reg := bit_count_reg + 1.U
 
-        deq_attempted_reg := Mux(bit_count_reg === 0.U, true.B, deq_attempted_reg)
+        val read_word_index = spi_bulk_read_ptr(7,4)
+        val read_byte_index = spi_bulk_read_ptr(3,0)
+        val selected_read_word = read_data_buffer(read_word_index)
+        val selected_read_byte = (selected_read_word >> (read_byte_index << 3.U))(7,0)
 
-        miso_data_reg := MuxCase(miso_data_reg, Seq(
-            (bit_count_reg === 0.U && tlul2spi_q.io.deq.fire) -> tlul2spi_q.io.deq.bits,
-            (bit_count_reg =/= 0.U)                           -> Cat(miso_data_reg(6,0), 0.U(1.W)),
+        // --- MISO Path Refactor with Forwarding ---
+
+        // 1. Define the single source of new data and its validity
+        val miso_data_source_bits = MuxCase(0.U, Seq(
+            (is_bulk_read_start || reading_bulk_data_byte) -> selected_read_byte,
+            is_bulk_status_read     -> bulk_read_bytes_available,
+            tlul2spi_q.io.deq.fire  -> tlul2spi_q.io.deq.bits
         ))
+        val miso_data_source_valid = is_bulk_read_start || reading_bulk_data_byte || is_bulk_status_read || tlul2spi_q.io.deq.fire
+
+        // 2. Define the key conditions
+        val load_shifter = bit_count_reg === 0.U
+
+        // 3. Logic for the shifter register (miso_buffer_reg)
+        // It loads at the start of a byte. It must take new data if available (forwarding),
+        // otherwise it takes data from the staging register.
+        val shifter_valid_source = Mux(miso_data_source_valid, true.B, next_miso_byte_reg.valid)
+        val shifter_bits_source  = Mux(miso_data_source_valid, miso_data_source_bits, next_miso_byte_reg.bits)
+
+        val miso_buffer_reg_valid_next = Mux(load_shifter, shifter_valid_source, miso_buffer_reg.valid)
+        val miso_buffer_reg_bits_next  = Mux(load_shifter, shifter_bits_source, Cat(miso_buffer_reg.bits(6,0), 0.U))
+
+        // 4. Logic for the staging register (next_miso_byte_reg)
+        // It is cleared ONLY if the shifter consumes its data AND no new data arrives to replace it.
+        val stage_is_consumed = load_shifter && !miso_data_source_valid
+        val next_miso_byte_reg_valid_next = Mux(miso_data_source_valid, true.B,
+                                              Mux(stage_is_consumed, false.B, next_miso_byte_reg.valid))
+        val next_miso_byte_reg_bits_next = Mux(miso_data_source_valid, miso_data_source_bits, next_miso_byte_reg.bits)
+
+        // 5. Make the single, unconditional assignments to the registers
+        next_miso_byte_reg.valid := next_miso_byte_reg_valid_next
+        next_miso_byte_reg.bits  := next_miso_byte_reg_bits_next
+        miso_buffer_reg.valid    := miso_buffer_reg_valid_next
+        miso_buffer_reg.bits     := miso_buffer_reg_bits_next
     }
 
     // === TileLink FSM Logic ===
@@ -243,7 +379,7 @@ class Spi2TLUL(p: Parameters) extends Module {
     ))
 
     tl_d_q.io.deq.ready := MuxCase(false.B, Seq(
-      read_fsm_active  -> (tl_read_state_reg === TlReadState.sWaitBeatAck),
+      read_fsm_active  -> (tl_read_state_reg === TlReadState.sWaitBeatAck && tl_to_spi_bulk_q.io.enq.ready),
       write_fsm_active -> (tl_write_state_reg === TlWriteState.sWaitBeatAck)
     ))
 
@@ -259,20 +395,13 @@ class Spi2TLUL(p: Parameters) extends Module {
     a_bits.address  := Mux(write_fsm_active,
                            tl_write_addr_fsm_reg + (tl_write_beat_count_reg << log2Ceil(tlul_p.w)),
                            tl_addr_fsm_reg + (tl_beat_count_reg << log2Ceil(tlul_p.w)))
-    a_bits.data     := Mux(write_fsm_active, data_buffer(tl_write_beat_count_reg(3,0)), 0.U)
+    a_bits.data     := Mux(write_fsm_active, write_data_buffer(tl_write_beat_count_reg(3,0)), 0.U)
 
     tl_a_q.io.enq.bits := a_bits
 
-    val reading_tl = tl_read_state_reg === TlReadState.sWaitBeatAck &&
-                     tl_d_q.io.deq.fire &&
-                     !tl_d_q.io.deq.bits.error
-    for (i <- 0 until data_buffer.length) {
+    for (i <- 0 until write_data_buffer.length) {
         val write_to_buffer = i.U === write_word_index && writing_data_buf
-        val read_from_buffer = i.U === tl_beat_count_reg(3,0) && reading_tl
-        data_buffer(i) := MuxCase(data_buffer(i), Seq(
-            write_to_buffer -> write_new_word,
-            read_from_buffer -> tl_d_q.io.deq.bits.data,
-        ))
+        write_data_buffer(i) := Mux(write_to_buffer, write_new_word, write_data_buffer(i))
     }
 
     val clear_command = tl_cmd_reg_write && tl_cmd_reg_data === 0.U

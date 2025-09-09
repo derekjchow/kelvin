@@ -355,6 +355,9 @@ SPI2TLUL_TESTCASES = [
     "test_tlul_write",
     "test_tlul_multi_beat_write",
     "test_packed_write_transaction",
+    "test_tlul_bulk_write",
+    "test_tlul_bulk_read",
+    "test_large_tlul_transfer",
 ]
 # END_TESTCASES_FOR_spi2tlul_cocotb
 

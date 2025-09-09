@@ -15,6 +15,8 @@
 import cocotb
 from cocotb.clock import Clock
 from cocotb.triggers import ClockCycles, FallingEdge
+from kelvin_test_utils.spi_constants import SpiRegAddress, SpiCommand, TlStatus, CMD_WRITE
+
 
 class SPIMaster:
     def __init__(self, clk, csb, mosi, miso, main_clk, log):
@@ -65,7 +67,6 @@ class SPIMaster:
 
         await self.start_clock()
         byte_in = await self._clock_byte(byte_out)
-        await ClockCycles(self.clk, 2)
         await self.stop_clock()
 
         # Provide a hold time for CSb after the clock stops
@@ -76,7 +77,7 @@ class SPIMaster:
 
     async def write_reg(self, reg_addr, data, wait_cycles=10):
         """Writes a byte to a register via SPI."""
-        write_cmd = (1 << 7) | reg_addr
+        write_cmd = CMD_WRITE | reg_addr
         await self.spi_transaction(write_cmd)
         await self.spi_transaction(data)
         if wait_cycles > 0:
@@ -90,6 +91,19 @@ class SPIMaster:
         await self.idle_clocking(5)
         await ClockCycles(self.main_clk, 10)
         read_data = await self.spi_transaction(0x00)
+        return read_data
+
+    async def read_spi_domain_reg(self, reg_addr):
+        """Reads a byte from a register that lives in the SPI clock domain."""
+        await self._set_cs(True)
+        await ClockCycles(self.main_clk, 1)
+        await self.start_clock()
+        await self._clock_byte(reg_addr)
+        read_data = await self._clock_byte(0x00)
+        await self.stop_clock()
+        await ClockCycles(self.main_clk, 1)
+        await self._set_cs(False)
+        await ClockCycles(self.main_clk, 1)
         return read_data
 
     async def poll_reg_for_value(self, reg_addr, expected_value, max_polls=20):
@@ -112,69 +126,102 @@ class SPIMaster:
         self.log.error(f"Timed out after {max_polls} polls waiting for register 0x{reg_addr:x} to be 0x{expected_value:x}, got 0x{read_data:x}")
         return False
 
-    async def bulk_read_data(self, reg_addr, num_bytes):
-        """Reads a block of data from a pipelined port."""
-        read_cmd = reg_addr
+    async def packed_write_transaction(self, target_addr, data):
+        """Writes a block of data using a packed SPI transaction.
 
-        # The read pipeline is two stages deep. We need to send two commands
-        # to discard two junk bytes before the first valid data byte is received.
-        for _ in range(2):
-            await self.spi_transaction(read_cmd)
-            await ClockCycles(self.main_clk, 10)
-            await self.idle_clocking(5)
-            await ClockCycles(self.main_clk, 10)
-
-        # Read the valid bytes.
-        received_bytes = []
-        for _ in range(num_bytes):
-            read_byte = await self.spi_transaction(read_cmd)
-            received_bytes.append(read_byte)
-            await ClockCycles(self.main_clk, 5)
-
-        # Assemble the received bytes into a single large integer
-        read_data = 0
-        for i, byte in enumerate(received_bytes):
-            read_data |= (byte << (i * 8))
-
-        return read_data
-
-    async def bulk_write_data(self, reg_addr, data, num_bytes):
-        """Writes a block of data to a port."""
-        for i in range(num_bytes):
-            byte = (data >> (i * 8)) & 0xFF
-            await self.write_reg(reg_addr, byte, wait_cycles=5)
-
-    async def packed_write_transaction(self, target_addr, num_beats, data_generator):
+        Args:
+            target_addr: The starting address for the write.
+            data: A list of 128-bit integers to write.
+        """
         await self._set_cs(True)
         await ClockCycles(self.main_clk, 1)
 
         await self.start_clock()
 
         # Write addr
-        await self._clock_byte(0x80)
+        await self._clock_byte(CMD_WRITE | SpiRegAddress.TL_ADDR_REG_0)
         await self._clock_byte((target_addr >> 0) & 0xFF)
-        await self._clock_byte(0x81)
+        await self._clock_byte(CMD_WRITE | SpiRegAddress.TL_ADDR_REG_1)
         await self._clock_byte((target_addr >> 8) & 0xFF)
-        await self._clock_byte(0x82)
+        await self._clock_byte(CMD_WRITE | SpiRegAddress.TL_ADDR_REG_2)
         await self._clock_byte((target_addr >> 16) & 0xFF)
-        await self._clock_byte(0x83)
+        await self._clock_byte(CMD_WRITE | SpiRegAddress.TL_ADDR_REG_3)
         await self._clock_byte((target_addr >> 24) & 0xFF)
 
         # Write beats
-        await self._clock_byte(0x84)
-        await self._clock_byte(num_beats - 1)
+        await self._clock_byte(CMD_WRITE | SpiRegAddress.TL_LEN_REG)
+        await self._clock_byte(len(data) - 1)
 
-        # Write data
-        for j in range(num_beats):
-            data = data_generator(j)
+        # Write data using bulk transfer
+        all_data_bytes = []
+        for beat in data:
             for i in range(16):
-                byte = (data >> (i * 8)) & 0xFF
-                await self._clock_byte(0x87)
-                await self._clock_byte(byte)
+                all_data_bytes.append((beat >> (i * 8)) & 0xFF)
 
-        await self._clock_byte(0x85)
-        await self._clock_byte(0x02)
+        # Command for bulk write
+        await self._clock_byte(CMD_WRITE | SpiRegAddress.BULK_WRITE_PORT)
+        # Length
+        await self._clock_byte(len(all_data_bytes) - 1)
+        # Data stream
+        for byte in all_data_bytes:
+            await self._clock_byte(byte)
+
+        await self._clock_byte(CMD_WRITE | SpiRegAddress.TL_CMD_REG)
+        await self._clock_byte(SpiCommand.CMD_WRITE_START)
 
         await self.stop_clock()
         await ClockCycles(self.main_clk, 1)
         await self._set_cs(False)
+
+    async def bulk_write(self, data: list[int]):
+        """Writes a block of data using a single bulk SPI transaction."""
+        await self._set_cs(True)
+        await ClockCycles(self.main_clk, 1)
+
+        await self.start_clock()
+
+        # Command byte for bulk write
+        await self._clock_byte(CMD_WRITE | SpiRegAddress.BULK_WRITE_PORT)
+
+        # Length byte
+        num_bytes = len(data)
+        await self._clock_byte(num_bytes - 1)
+
+        # Data stream
+        for byte in data:
+            await self._clock_byte(byte)
+
+        await self.stop_clock()
+        await ClockCycles(self.main_clk, 1)
+        await self._set_cs(False)
+
+    async def bulk_read(self, num_bytes: int) -> list[int]:
+        """Reads a block of data using a single bulk SPI transaction."""
+        await self._set_cs(True)
+        await ClockCycles(self.main_clk, 1)
+
+        await self.start_clock()
+
+        # Command byte to initiate a bulk read (this is a WRITE command)
+        await self._clock_byte(CMD_WRITE | SpiRegAddress.BULK_READ_PORT)
+
+        # Length byte
+        await self._clock_byte(num_bytes - 1)
+
+        # The MISO pipeline is two bytes deep. We need to send two dummy transfers
+        # to discard the junk bytes from the command/length phases before the
+        # first valid data byte is received.
+        await self._clock_byte(0x00) # Flush junk from command phase
+
+        # Read data stream
+        received_bytes = []
+        for _ in range(num_bytes):
+            # The data is clocked out on MISO during this dummy byte transfer
+            byte_in = await self._clock_byte(0x00)
+            received_bytes.append(byte_in)
+
+        await self.stop_clock()
+        await ClockCycles(self.main_clk, 1)
+        await self._set_cs(False)
+
+        return received_bytes

@@ -29,7 +29,14 @@ py_library(
     srcs = ["spi_master.py"],
     deps = [
         requirement("cocotb"),
+        ":spi_constants",
     ],
+    visibility = ["//visibility:public"],
+)
+
+py_library(
+    name = "spi_constants",
+    srcs = ["spi_constants.py"],
     visibility = ["//visibility:public"],
 )
 
