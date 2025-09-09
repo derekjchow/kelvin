@@ -94,13 +94,22 @@ class SPIMaster:
 
     async def poll_reg_for_value(self, reg_addr, expected_value, max_polls=20):
         """Polls a register until it reads an expected value."""
-        status = -1
-        for _ in range(max_polls):
-            status = await self.read_reg(reg_addr)
-            if status == expected_value:
+        read_cmd = reg_addr # MSB is 0 for read
+        read_data = -1
+
+        # The first transaction just kicks off the read pipeline. The data is junk.
+        await self.spi_transaction(read_cmd)
+
+        for i in range(max_polls):
+            # Each subsequent transaction sends a new read command and receives the
+            # result of the PREVIOUS command.
+            read_data = await self.spi_transaction(read_cmd)
+            if read_data == expected_value:
+                self.log.info(f"Successfully polled 0x{reg_addr:x} and got 0x{expected_value:x} after {i+1} attempts.")
                 return True
             await ClockCycles(self.main_clk, 5) # Wait before next poll
-        self.log.error(f"Timed out after {max_polls} polls waiting for register 0x{reg_addr:x} to be 0x{expected_value:x}, got 0x{status:x}")
+
+        self.log.error(f"Timed out after {max_polls} polls waiting for register 0x{reg_addr:x} to be 0x{expected_value:x}, got 0x{read_data:x}")
         return False
 
     async def bulk_read_data(self, reg_addr, num_bytes):
@@ -134,3 +143,38 @@ class SPIMaster:
         for i in range(num_bytes):
             byte = (data >> (i * 8)) & 0xFF
             await self.write_reg(reg_addr, byte, wait_cycles=5)
+
+    async def packed_write_transaction(self, target_addr, num_beats, data_generator):
+        await self._set_cs(True)
+        await ClockCycles(self.main_clk, 1)
+
+        await self.start_clock()
+
+        # Write addr
+        await self._clock_byte(0x80)
+        await self._clock_byte((target_addr >> 0) & 0xFF)
+        await self._clock_byte(0x81)
+        await self._clock_byte((target_addr >> 8) & 0xFF)
+        await self._clock_byte(0x82)
+        await self._clock_byte((target_addr >> 16) & 0xFF)
+        await self._clock_byte(0x83)
+        await self._clock_byte((target_addr >> 24) & 0xFF)
+
+        # Write beats
+        await self._clock_byte(0x84)
+        await self._clock_byte(num_beats - 1)
+
+        # Write data
+        for j in range(num_beats):
+            data = data_generator(j)
+            for i in range(16):
+                byte = (data >> (i * 8)) & 0xFF
+                await self._clock_byte(0x87)
+                await self._clock_byte(byte)
+
+        await self._clock_byte(0x85)
+        await self._clock_byte(0x02)
+
+        await self.stop_clock()
+        await ClockCycles(self.main_clk, 1)
+        await self._set_cs(False)

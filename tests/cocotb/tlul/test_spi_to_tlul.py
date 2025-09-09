@@ -363,3 +363,53 @@ async def test_tlul_multi_beat_write(dut):
 
     # 4. Clear the status to return FSM to Idle
     await spi_master.write_reg(0x05, 0x00)
+
+@cocotb.test()
+async def test_packed_write_transaction(dut):
+    clock = Clock(dut.clock, 10)
+    cocotb.start_soon(clock.start())
+
+    await setup_dut(dut)
+    spi_master = SPIMaster(
+        clk=dut.io_spi_clk,
+        csb=dut.io_spi_csb,
+        mosi=dut.io_spi_mosi,
+        miso=dut.io_spi_miso,
+        main_clk=dut.clock,
+        log=dut._log
+    )
+    tl_device = TileLinkULInterface(dut, device_if_name="io_tl", width=128)
+    await tl_device.init()
+
+    num_beats = 16
+    async def device_responder():
+        for i in range(num_beats):
+            req = await tl_device.device_get_request()
+            assert int(req['opcode']) in [0, 1], f"Expected PutFullData or PutPartialData, got opcode {req['opcode']}"
+            assert req['data'] == 0xDEADBEEF_CAFEF00D_ABAD1DEA_C0DED00D + i
+
+            # Send an AccessAck after each beat
+            await tl_device.device_respond(
+                opcode=0,  # AccessAck
+                param=0,
+                size=req['size'],
+                source=req['source'],
+                error=0,
+                width=128
+            )
+
+    responder_task = cocotb.start_soon(device_responder())
+
+    def data_generator(beat):
+        return 0xDEADBEEF_CAFEF00D_ABAD1DEA_C0DED00D + beat
+
+    await spi_master.packed_write_transaction(
+        target_addr=0x40001000,
+        num_beats=num_beats,
+        data_generator=data_generator
+    )
+
+    assert await spi_master.poll_reg_for_value(0x08, 0x02), "Timed out waiting for write status to be Done"
+    await spi_master.write_reg(0x05, 0x00)
+    await responder_task
+
