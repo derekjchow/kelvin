@@ -113,9 +113,8 @@ class RvvCompressedInstruction extends Bundle {
 
   def writesRd(): Bool = {
     isVset() ||
-    // OP MVV, VWXUNARY0
+    // OP MVV, VWXUNARY0 (all): vmv.x.s, vcpop, vfirst.
     (opcode === RvvCompressedOpcode.RVVALU && funct3() === "b010".U && funct6() === "b010000".U)
-    // TODO(derekjchow): Add all cases that write scalar rd.
   }
 
   def writesVectorRegister(): Bool = {

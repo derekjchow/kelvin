@@ -41,6 +41,9 @@ template_rule(
         "vfirst_test": {
             "srcs": ["vfirst_test.cc"],
         },
+        "vcpop_exception_test": {
+            "srcs": ["vcpop_exception_test.cc"],
+        },
         "vcpop_test": {
             "srcs": ["vcpop_test.cc"],
         },
@@ -69,6 +72,7 @@ filegroup(
         "vill_test.elf",
         "viota_test.elf",
         "vfirst_test.elf",
+        "vcpop_exception_test.elf",
         "vcpop_test.elf",
         "vcompress_test.elf",
         "vmsbf_test.elf",

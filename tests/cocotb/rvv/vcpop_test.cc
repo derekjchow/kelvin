@@ -15,47 +15,49 @@
 #include <riscv_vector.h>
 #include <stdint.h>
 
-uint32_t vma __attribute__((section(".data"))) = 0;
-uint32_t vta __attribute__((section(".data"))) = 0;
-uint32_t sew __attribute__((section(".data"))) = 0;
-uint32_t lmul __attribute__((section(".data"))) = 0;
-uint32_t vl __attribute__((section(".data"))) = 16;
-uint32_t vstart __attribute__((section(".data"))) = 0;
+namespace {
+constexpr size_t buf_size = 128;
+}
 
-uint8_t mask_data[16] __attribute__((section(".data")));
+size_t vl __attribute__((section(".data"))) = buf_size;
+uint8_t in_buf[buf_size] __attribute__((section(".data")));
 uint32_t result __attribute__((section(".data")));
+void (*impl)() __attribute__((section(".data"))) = nullptr;
 
-uint32_t faulted __attribute__((section(".data"))) = 0;
-uint32_t mcause __attribute__((section(".data"))) = 0;
-
-// Fault handler to log fault
 extern "C" {
-void kelvin_exception_handler() {
-  faulted = 1;
-  uint32_t local_mcause;
-  asm volatile("csrr %0, mcause" : "=r"(local_mcause));
-  mcause = local_mcause;
+__attribute__((used, retain)) void vcpop_m_b1() {
+  auto data = __riscv_vlm_v_b1(in_buf, vl);
+  result = __riscv_vcpop_m_b1(data, vl);
+}
 
-  asm volatile("ebreak");
-  while (1) {}
+__attribute__((used, retain)) void vcpop_m_b2() {
+  auto data = __riscv_vlm_v_b2(in_buf, vl);
+  result = __riscv_vcpop_m_b2(data, vl);
+}
+
+__attribute__((used, retain)) void vcpop_m_b4() {
+  auto data = __riscv_vlm_v_b4(in_buf, vl);
+  result = __riscv_vcpop_m_b4(data, vl);
+}
+
+__attribute__((used, retain)) void vcpop_m_b8() {
+  auto data = __riscv_vlm_v_b8(in_buf, vl);
+  result = __riscv_vcpop_m_b8(data, vl);
+}
+
+__attribute__((used, retain)) void vcpop_m_b16() {
+  auto data = __riscv_vlm_v_b16(in_buf, vl);
+  result = __riscv_vcpop_m_b16(data, vl);
+}
+
+__attribute__((used, retain)) void vcpop_m_b32() {
+  auto data = __riscv_vlm_v_b32(in_buf, vl);
+  result = __riscv_vcpop_m_b32(data, vl);
 }
 }
 
-int main(int argc, char **argv) {
-  // Load mask data
-  asm volatile("vsetivli x0, 16, e8, m1, ta, ma");
-  asm volatile("vle8.v v0, (%0)" : : "r"(mask_data));
-
-  // Set configuration state
-  uint32_t vtype_to_write = (vma << 7) | (vta << 6) | (sew << 3) | lmul;
-  asm volatile("vsetvl x0, %0, %1": : "r"(vl), "r"(vtype_to_write));
-  uint32_t local_vstart = vstart;
-  asm volatile("csrw vstart, %0" : : "r"(local_vstart));
-
-  // Run vcpop
-  uint32_t local_result;
-  asm volatile("vcpop.m %0, v0" : "=r"(local_result));
-  result = local_result;
+int main(int argc, char** argv) {
+  impl();
 
   return 0;
 }

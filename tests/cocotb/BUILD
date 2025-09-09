@@ -160,6 +160,7 @@ RVV_ASSEMBLY_TESTCASES = [
     "core_mini_vcsr_test",
     "core_mini_viota_test",
     "core_mini_vfirst_test",
+    "core_mini_vcpop_exception_test",
     "core_mini_vcpop_test",
     "core_mini_vcompress_test",
     "core_mini_vmsbf_test",
@@ -259,6 +260,7 @@ cocotb_test_suite(
         "test_module": ["rvv_assembly_cocotb_test.py"],
         "deps": [
             "//kelvin_test_utils:core_mini_axi_sim_interface",
+            "//kelvin_test_utils:sim_test_fixture",
             requirement("tqdm"),
             "@bazel_tools//tools/python/runfiles",
         ],

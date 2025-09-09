@@ -1,6 +1,7 @@
 import cocotb
 import numpy as np
 from kelvin_test_utils.core_mini_axi_interface import CoreMiniAxiInterface
+from kelvin_test_utils.sim_test_fixture import Fixture
 from bazel_tools.tools.python.runfiles import runfiles
 
 SEWS = [
@@ -271,10 +272,60 @@ async def core_mini_vfirst_test(dut):
 
 
 @cocotb.test()
-async def core_mini_vcpop_test(dut):
+async def core_mini_vcpop_exception_test(dut):
     """Testbench to test vstart!=0 vcpop."""
     await test_vstart_not_zero_failure(
-        dut, "kelvin_hw/tests/cocotb/rvv/vcpop_test.elf")
+        dut, "kelvin_hw/tests/cocotb/rvv/vcpop_exception_test.elf")
+
+
+@cocotb.test()
+async def core_mini_vcpop_test(dut):
+    """Test vcpop usage accessible from intrinsics."""
+    # mask is not accessible from here.
+    fixture = await Fixture.Create(dut)
+    r = runfiles.Create()
+    cases = [
+        # lmul>1 currently fail
+        # {'impl': 'vcpop_m_b1', 'vl': 1024},
+        # {'impl': 'vcpop_m_b2', 'vl': 512},
+        # {'impl': 'vcpop_m_b4', 'vl': 256},
+        {'impl': 'vcpop_m_b8', 'vl': 128},
+        {'impl': 'vcpop_m_b16', 'vl': 64},
+        {'impl': 'vcpop_m_b32', 'vl': 32},
+    ]
+    await fixture.load_elf_and_lookup_symbols(
+        r.Rlocation('kelvin_hw/tests/cocotb/rvv/vcpop_test.elf'),
+        ['vl', 'in_buf', 'result', 'impl'] + [c['impl'] for c in cases],
+    )
+    rng = np.random.default_rng()
+    for c in cases:
+        impl = c['impl']
+        vl = c['vl']
+        # TODO(davidgao): test other vl. Need special handling of expected
+        # output if not full bytes.
+        in_bytes = vl // 8
+
+        input_data = rng.integers(
+            low=0, high=256, size=in_bytes, dtype=np.uint8)
+        expected_output = np.sum(
+            np.bitwise_count(input_data), dtype=np.uint32)
+
+        await fixture.write_ptr('impl', impl)
+        await fixture.write_word('vl', vl)
+        await fixture.write('in_buf', input_data)
+        await fixture.write_word('result', 0)
+
+        await fixture.run_to_halt()
+
+        actual_output = (await fixture.read_word('result')).view(np.uint32)
+
+        debug_msg = str({
+            'impl': impl,
+            'input': input_data,
+            'expected': expected_output,
+            'actual': actual_output,
+        })
+        assert (actual_output == expected_output), debug_msg
 
 
 @cocotb.test()
