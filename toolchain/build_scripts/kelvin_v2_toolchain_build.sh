@@ -7,15 +7,11 @@ mkdir -p rv32_out
 TOOLCHAIN_OUT_DIR="$(pwd)"/rv32_out
 
 # Build gcc
-git clone --branch 2025.01.20 https://github.com/riscv-collab/riscv-gnu-toolchain.git
+git clone --branch 2025.08.29 https://github.com/riscv-collab/riscv-gnu-toolchain.git
 cd riscv-gnu-toolchain/ || exit
-git submodule update --init
-git submodule update gcc
-
+git submodule update --init --recursive
 # Update gcc
 cd gcc || exit
-git fetch
-git checkout origin/master
 contrib/download_prerequisites
 cd .. || exit
 
@@ -31,7 +27,7 @@ make -C "$(pwd)" -j 32  newlib
 cd .. || exit
 
 # Build LLVM + compiler-rt
-git clone --depth=1 https://github.com/llvm/llvm-project -b llvmorg-19.1.7
+git clone --depth=1 https://github.com/llvm/llvm-project -b llvmorg-20.1.0
 cd llvm-project/ || exit
 
 # Build LLVM
@@ -88,25 +84,6 @@ if [ ! -f "${TOOLCHAIN_OUT_DIR}"/bin/riscv32-unknown-elf-gcc ]; then
   echo "ERROR: ${TOOLCHAIN_OUT_DIR}/bin/riscv32-unknown-elf-gcc does not exits"
   exit 1
 fi
-
-# Build newlib
-git clone --depth=1 https://github.com/riscvarchive/riscv-newlib -b newlib-4.1.0
-cd riscv-newlib/ || exit
-./configure \
-  --target=riscv32-unknown-elf \
-  --prefix="${TOOLCHAIN_OUT_DIR}" \
-  --enable-newlib-io-long-double \
-  --enable-newlib-io-long-long \
-  --enable-newlib-io-float \
-  --enable-newlib-io-c99-formats \
-  --enable-newlib-register-fini \
-  CC_FOR_TARGET=riscv32-unknown-elf-gcc \
-  CXX_FOR_TARGET=riscv32-unknown-elf-g++ \
-  CFLAGS_FOR_TARGET="-march=rv32im_zve32x_zicsr -O2 -D_POSIX_MODE -mno-relax -Wno-error=implicit-function-declaration -Wno-error=int-conversion" \
-  CXXFLAGS_FOR_TARGET="-march=rv32im_zve32x_zicsr -O2 -D_POSIX_MODE -mno-relax -Wno-error=implicit-function-declaration -Wno-error=int-conversion"
-make -j 32
-make install
-cd .. || exit
 
 git clone --depth=1 https://github.com/ucb-bar/libgloss-htif
 cd libgloss-htif || exit

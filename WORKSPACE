@@ -141,9 +141,9 @@ filegroup(
     srcs = glob(["**"]),
 )
 """,
-    sha256 = "1940ed35120ecf76eec74b85d95b06dedb93771d9974d1647eabdf5931002c41",
+    sha256 = "c9c85f8361e9d02d64474c51e3b3730ba09807cf4610d6d002c49a270458b49c",
     urls = [
-        "https://storage.googleapis.com/shodan-public-artifacts/toolchain_kelvin_tar_files/toolchain_kelvin_v2-2025-04-01.tar.gz",
+        "https://storage.googleapis.com/shodan-public-artifacts/toolchain_kelvin_tar_files/toolchain_kelvin_v2-2025-09-11.tar.gz",
     ],
     strip_prefix = "toolchain_kelvin_v2",
 )
