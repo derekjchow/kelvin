@@ -142,6 +142,16 @@ class LsuCmd(p: Parameters) extends Bundle {
   val pc = UInt(32.W)
   val elemWidth = Option.when(p.enableRvv) { UInt(3.W) }
   val nfields = Option.when(p.enableRvv) { UInt(3.W) }
+  val umop = Option.when(p.enableRvv) { UInt(5.W) }
+
+  def isMaskOperation(): Bool = {
+    if (p.enableRvv) {
+      (umop.get === "b01011".U) &&
+      op.isOneOf(LsuOp.VLOAD_UNIT, LsuOp.VSTORE_UNIT)
+    } else {
+      false.B
+    }
+  }
 
   override def toPrintable: Printable = {
     cf"LsuCmd(store -> ${store}, addr -> 0x${addr}%x, op -> ${op}, " +
@@ -188,11 +198,15 @@ object LsuUOp {
     }
     if (p.enableRvv) {
       result.elemWidth.get := cmd.elemWidth.get
-      result.nfields.get := cmd.nfields.get
-      // Treat fractional LMULs as LMUL=1
-      val effectiveLmul = Mux(rvvState.get.bits.lmul(2),
-                              0.U(2.W), rvvState.get.bits.lmul(1, 0))
+      val effectiveLmul = MuxCase(rvvState.get.bits.lmul(1, 0), Seq(
+        // Treat fractional LMULs as LMUL=1
+        (rvvState.get.bits.lmul(2)) -> 0.U(2.W),
+        // If mask operation, always force LMUL=1.
+        (cmd.isMaskOperation()) -> 0.U(2.W),
+      ))
       result.lmul.get := 1.U(1.W) << effectiveLmul
+      // If mask operation, force fields to zero
+      result.nfields.get := Mux(cmd.isMaskOperation(), 0.U, cmd.nfields.get)
     }
 
     result
