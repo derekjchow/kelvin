@@ -285,13 +285,22 @@ async def core_mini_vcpop_test(dut):
     fixture = await Fixture.Create(dut)
     r = runfiles.Create()
     cases = [
-        # lmul>1 currently fail
-        # {'impl': 'vcpop_m_b1', 'vl': 1024},
-        # {'impl': 'vcpop_m_b2', 'vl': 512},
-        # {'impl': 'vcpop_m_b4', 'vl': 256},
-        {'impl': 'vcpop_m_b8', 'vl': 128},
-        {'impl': 'vcpop_m_b16', 'vl': 64},
-        {'impl': 'vcpop_m_b32', 'vl': 32},
+        {'impl': 'vcpop_m_b1', 'vl': 128},
+        {'impl': 'vcpop_m_b1', 'vl': 121},
+        {'impl': 'vcpop_m_b1', 'vl': 120},
+        {'impl': 'vcpop_m_b2', 'vl': 64},
+        {'impl': 'vcpop_m_b2', 'vl': 57},
+        {'impl': 'vcpop_m_b2', 'vl': 56},
+        {'impl': 'vcpop_m_b4', 'vl': 32},
+        {'impl': 'vcpop_m_b4', 'vl': 25},
+        {'impl': 'vcpop_m_b4', 'vl': 24},
+        {'impl': 'vcpop_m_b8', 'vl': 16},
+        {'impl': 'vcpop_m_b8', 'vl': 9},
+        {'impl': 'vcpop_m_b8', 'vl': 8},
+        {'impl': 'vcpop_m_b16', 'vl': 8},
+        {'impl': 'vcpop_m_b16', 'vl': 1},
+        {'impl': 'vcpop_m_b32', 'vl': 4},
+        {'impl': 'vcpop_m_b32', 'vl': 1},
     ]
     await fixture.load_elf_and_lookup_symbols(
         r.Rlocation('kelvin_hw/tests/cocotb/rvv/vcpop_test.elf'),
@@ -301,12 +310,13 @@ async def core_mini_vcpop_test(dut):
     for c in cases:
         impl = c['impl']
         vl = c['vl']
-        # TODO(davidgao): test other vl. Need special handling of expected
-        # output if not full bytes.
-        in_bytes = vl // 8
+        in_bytes = (vl + 7) // 8
+        last_byte_mask = (1 << (vl % 8) - 1) if vl % 8 else 0xFF
 
         input_data = rng.integers(
             low=0, high=256, size=in_bytes, dtype=np.uint8)
+        input_data_trimmed = input_data
+        input_data_trimmed[-1] = input_data_trimmed[-1] & last_byte_mask
         expected_output = np.sum(
             np.bitwise_count(input_data), dtype=np.uint32)
 

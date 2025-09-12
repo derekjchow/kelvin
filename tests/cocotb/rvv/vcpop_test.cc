@@ -16,7 +16,7 @@
 #include <stdint.h>
 
 namespace {
-constexpr size_t buf_size = 128;
+constexpr size_t buf_size = 16;
 }
 
 size_t vl __attribute__((section(".data"))) = buf_size;
@@ -26,32 +26,38 @@ void (*impl)() __attribute__((section(".data"))) = nullptr;
 
 extern "C" {
 __attribute__((used, retain)) void vcpop_m_b1() {
-  auto data = __riscv_vlm_v_b1(in_buf, vl);
+  auto data =
+      __riscv_vreinterpret_v_u8m1_b1(__riscv_vle8_v_u8m1(in_buf, (vl + 7) / 8));
   result = __riscv_vcpop_m_b1(data, vl);
 }
 
 __attribute__((used, retain)) void vcpop_m_b2() {
-  auto data = __riscv_vlm_v_b2(in_buf, vl);
+  auto data =
+      __riscv_vreinterpret_v_u8m1_b2(__riscv_vle8_v_u8m1(in_buf, (vl + 7) / 8));
   result = __riscv_vcpop_m_b2(data, vl);
 }
 
 __attribute__((used, retain)) void vcpop_m_b4() {
-  auto data = __riscv_vlm_v_b4(in_buf, vl);
+  auto data =
+      __riscv_vreinterpret_v_u8m1_b4(__riscv_vle8_v_u8m1(in_buf, (vl + 7) / 8));
   result = __riscv_vcpop_m_b4(data, vl);
 }
 
 __attribute__((used, retain)) void vcpop_m_b8() {
-  auto data = __riscv_vlm_v_b8(in_buf, vl);
+  auto data =
+      __riscv_vreinterpret_v_u8m1_b8(__riscv_vle8_v_u8m1(in_buf, (vl + 7) / 8));
   result = __riscv_vcpop_m_b8(data, vl);
 }
 
 __attribute__((used, retain)) void vcpop_m_b16() {
-  auto data = __riscv_vlm_v_b16(in_buf, vl);
+  auto data = __riscv_vreinterpret_v_u8m1_b16(
+      __riscv_vle8_v_u8m1(in_buf, (vl + 7) / 8));
   result = __riscv_vcpop_m_b16(data, vl);
 }
 
 __attribute__((used, retain)) void vcpop_m_b32() {
-  auto data = __riscv_vlm_v_b32(in_buf, vl);
+  auto data = __riscv_vreinterpret_v_u8m1_b32(
+      __riscv_vle8_v_u8m1(in_buf, (vl + 7) / 8));
   result = __riscv_vcpop_m_b32(data, vl);
 }
 }
