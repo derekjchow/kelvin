@@ -114,12 +114,15 @@ class RetirementBuffer(p: Parameters) extends Module {
     // The entry is active if it's validly enqueued and not already complete.
     val validBufferEntry = (i.U < instBuffer.io.nEnqueued) && (!resultBuffer(i).valid)
 
-    // If the entry is active and its data dependency is met (or it has no dependency)...
-    val updated = (validBufferEntry && (scalarWriteIdxMap.reduce(_|_) || floatWriteIdxMap.reduce(_|_) || vectorWriteIdxMap.reduce(_|_) || nonWritingInstr))
     // Find the index of the first write port that provides the needed data.
     val scalarWriteIdx = PriorityEncoder(scalarWriteIdxMap)
     val floatWriteIdx = PriorityEncoder(floatWriteIdxMap)
     val vectorWriteIdx = PriorityEncoder(vectorWriteIdxMap)
+
+    // If the entry is active and its data dependency is met (or it has no dependency)...
+    // Special care here for vector, as multiple instructions are allowed to be dispatched for the same destination register.
+    // This differs from how the scalar/float scoreboards restrict dispatch.
+    val updated = (validBufferEntry && (scalarWriteIdxMap.reduce(_|_) || floatWriteIdxMap.reduce(_|_) || (vectorWriteIdxMap.reduce(_|_) && vectorWriteIdx === i.U) || nonWritingInstr))
     // Select the actual data from the winning write port.
     val writeDataScalar = io.writeDataScalar(scalarWriteIdx).bits.data
     val writeDataFloat = io.writeDataFloat.map(x => x(floatWriteIdx).bits.data).getOrElse(0.U)
