@@ -61,6 +61,56 @@ async def vector_load_store(
 
     assert (actual_outputs == expected_outputs).all(), debug_msg
 
+async def vector_load_store_v2(
+        dut,
+        elf_name: str,
+        cases: list[dict],  # keys: impl, vl, in_size, out_size, pattern.
+        dtype,
+):
+    """RVV load-store test template.
+
+    Each test performs some kind of patterned copy from `in_buf` to `out_buf`.
+    """
+    fixture = await Fixture.Create(dut)
+    r = runfiles.Create()
+    await fixture.load_elf_and_lookup_symbols(
+        r.Rlocation('kelvin_hw/tests/cocotb/rvv/load_store/' + elf_name),
+        ['impl', 'vl', 'in_buf', 'out_buf'] + [c['impl'] for c in cases],
+    )
+
+    min_value = np.iinfo(dtype).min
+    max_value = np.iinfo(dtype).max + 1  # One above.
+    rng = np.random.default_rng()
+    for c in cases:
+        impl = c['impl']
+        vl = c['vl']
+        in_size = c['in_size']
+        out_size = c['out_size']
+        pattern = c['pattern']
+
+        input_data = rng.integers(min_value, max_value, in_size, dtype=dtype)
+        expected_outputs = input_data[pattern]
+        sbz = np.zeros(out_size - len(pattern), dtype=dtype)
+        expected_outputs = np.concat((expected_outputs, sbz))
+
+        await fixture.write_ptr('impl', impl)
+        await fixture.write_word('vl', vl)
+        await fixture.write('in_buf', input_data)
+        await fixture.write('out_buf', np.zeros([out_size], dtype=dtype))
+
+        await fixture.run_to_halt()
+
+        actual_outputs = (await fixture.read(
+            'out_buf', out_size * np.dtype(dtype).itemsize)).view(dtype)
+
+        debug_msg = str({
+            'impl': impl,
+            'input': input_data,
+            'expected': expected_outputs,
+            'actual': actual_outputs,
+        })
+        assert (actual_outputs == expected_outputs).all(), debug_msg
+
 async def vector_load_indexed(
         dut,
         elf_name: str,
@@ -442,6 +492,85 @@ async def store8_indexed_m1(dut):
         elf_name = 'store8_indexed_m1.elf',
         dtype = np.uint8,
     )
+
+
+@cocotb.test()
+async def store8_seg_unit(dut):
+    """Test vsseg*e8  usage accessible from intrinsics."""
+    def make_test_case(impl: str, vl: int, n_segs: int):
+        return {
+            'impl': impl,
+            'vl': vl,
+            'in_size': vl * n_segs * 2,
+            'out_size': vl * n_segs * 2,
+            'pattern': [i * vl + j for j in range(vl) for i in range(n_segs)]
+        }
+
+    await vector_load_store_v2(
+        dut = dut,
+        elf_name = 'store8_seg_unit.elf',
+        cases = [
+            # Seg 2
+            make_test_case('vsseg2e8_v_u8mf4x2', vl=4, n_segs=2),
+            make_test_case('vsseg2e8_v_u8mf4x2', vl=3, n_segs=2),
+            make_test_case('vsseg2e8_v_u8mf2x2', vl=8, n_segs=2),
+            make_test_case('vsseg2e8_v_u8mf2x2', vl=7, n_segs=2),
+            make_test_case('vsseg2e8_v_u8m1x2', vl=16, n_segs=2),
+            make_test_case('vsseg2e8_v_u8m1x2', vl=15, n_segs=2),
+            # make_test_case('vsseg2e8_v_u8m2x2', vl=32, n_segs=2),
+            # make_test_case('vsseg2e8_v_u8m2x2', vl=31, n_segs=2),
+            # make_test_case('vsseg2e8_v_u8m4x2', vl=64, n_segs=2),
+            # make_test_case('vsseg2e8_v_u8m4x2', vl=63, n_segs=2),
+            # Seg 3
+            make_test_case('vsseg3e8_v_u8mf4x3', vl=4, n_segs=3),
+            make_test_case('vsseg3e8_v_u8mf4x3', vl=3, n_segs=3),
+            make_test_case('vsseg3e8_v_u8mf2x3', vl=8, n_segs=3),
+            make_test_case('vsseg3e8_v_u8mf2x3', vl=7, n_segs=3),
+            make_test_case('vsseg3e8_v_u8m1x3', vl=16, n_segs=3),
+            make_test_case('vsseg3e8_v_u8m1x3', vl=15, n_segs=3),
+            # make_test_case('vsseg3e8_v_u8m2x3', vl=32, n_segs=3),
+            # make_test_case('vsseg3e8_v_u8m2x3', vl=31, n_segs=3),
+            # Seg 4
+            make_test_case('vsseg4e8_v_u8mf4x4', vl=4, n_segs=4),
+            make_test_case('vsseg4e8_v_u8mf4x4', vl=3, n_segs=4),
+            make_test_case('vsseg4e8_v_u8mf2x4', vl=8, n_segs=4),
+            make_test_case('vsseg4e8_v_u8mf2x4', vl=7, n_segs=4),
+            make_test_case('vsseg4e8_v_u8m1x4', vl=16, n_segs=4),
+            make_test_case('vsseg4e8_v_u8m1x4', vl=15, n_segs=4),
+            # make_test_case('vsseg4e8_v_u8m2x4', vl=32, n_segs=4),
+            # make_test_case('vsseg4e8_v_u8m2x4', vl=31, n_segs=4),
+            # Seg 5
+            make_test_case('vsseg5e8_v_u8mf4x5', vl=4, n_segs=5),
+            make_test_case('vsseg5e8_v_u8mf4x5', vl=3, n_segs=5),
+            make_test_case('vsseg5e8_v_u8mf2x5', vl=8, n_segs=5),
+            make_test_case('vsseg5e8_v_u8mf2x5', vl=7, n_segs=5),
+            make_test_case('vsseg5e8_v_u8m1x5', vl=16, n_segs=5),
+            make_test_case('vsseg5e8_v_u8m1x5', vl=15, n_segs=5),
+            # Seg 6
+            make_test_case('vsseg6e8_v_u8mf4x6', vl=4, n_segs=6),
+            make_test_case('vsseg6e8_v_u8mf4x6', vl=3, n_segs=6),
+            make_test_case('vsseg6e8_v_u8mf2x6', vl=8, n_segs=6),
+            make_test_case('vsseg6e8_v_u8mf2x6', vl=7, n_segs=6),
+            make_test_case('vsseg6e8_v_u8m1x6', vl=16, n_segs=6),
+            make_test_case('vsseg6e8_v_u8m1x6', vl=15, n_segs=6),
+            # Seg 7
+            make_test_case('vsseg7e8_v_u8mf4x7', vl=4, n_segs=7),
+            make_test_case('vsseg7e8_v_u8mf4x7', vl=3, n_segs=7),
+            make_test_case('vsseg7e8_v_u8mf2x7', vl=8, n_segs=7),
+            make_test_case('vsseg7e8_v_u8mf2x7', vl=7, n_segs=7),
+            make_test_case('vsseg7e8_v_u8m1x7', vl=16, n_segs=7),
+            make_test_case('vsseg7e8_v_u8m1x7', vl=15, n_segs=7),
+            # Seg 8
+            make_test_case('vsseg8e8_v_u8mf4x8', vl=4, n_segs=8),
+            make_test_case('vsseg8e8_v_u8mf4x8', vl=3, n_segs=8),
+            make_test_case('vsseg8e8_v_u8mf2x8', vl=8, n_segs=8),
+            make_test_case('vsseg8e8_v_u8mf2x8', vl=7, n_segs=8),
+            make_test_case('vsseg8e8_v_u8m1x8', vl=16, n_segs=8),
+            make_test_case('vsseg8e8_v_u8m1x8', vl=15, n_segs=8),
+        ],
+        dtype = np.uint8,
+    )
+
 
 @cocotb.test()
 async def load_store8_test(dut):

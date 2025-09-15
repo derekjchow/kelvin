@@ -89,6 +89,9 @@ template_rule(
         "store8_indexed_m1": {
             "srcs": ["store8_indexed_m1.cc"],
         },
+        "store8_seg_unit": {
+            "srcs": ["store8_seg_unit.cc"],
+        },
     },
 )
 
@@ -118,5 +121,6 @@ filegroup(
         ":load32_stride8_m1.elf",
         ":load32_stride8_m1_partial.elf",
         ":store8_indexed_m1.elf",
+        ":store8_seg_unit",
     ],
 )

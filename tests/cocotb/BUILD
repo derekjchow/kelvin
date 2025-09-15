@@ -195,6 +195,7 @@ RVV_LOAD_STORE_TESTCASES = [
     "load16_segment2_stride6_m1",
     "load8_indexed_m1",
     "store8_indexed_m1",
+    "store8_seg_unit",
     "load_store8_test",
 ]
 # END_TESTCASES_FOR_rvv_load_store_test
