@@ -20,6 +20,9 @@ package(default_visibility = ["//visibility:public"])
 template_rule(
     kelvin_v2_binary,
     {
+        "load_store_bits": {
+            "srcs": ["load_store_bits.cc"],
+        },
         "load8_indexed_m1": {
             "srcs": ["load8_indexed_m1.cc"],
         },
@@ -92,6 +95,7 @@ template_rule(
 filegroup(
     name = "rvv_load_store_tests",
     srcs = [
+        ":load_store_bits.elf",
         ":load8_indexed_m1.elf",
         ":load8_segment2_unit_m1.elf",
         ":load16_segment2_unit_m1.elf",

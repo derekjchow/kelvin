@@ -145,6 +145,66 @@ async def vector_store_indexed(
 
     assert (actual_outputs == expected_outputs).all()
 
+
+@cocotb.test()
+async def load_store_bits(dut):
+    """Test vlm/vsm usage accessible from intrinsics."""
+    # mask is not accessible from here.
+    fixture = await Fixture.Create(dut)
+    r = runfiles.Create()
+    cases = [
+        {'impl': 'vlm_vsm_v_b1', 'vl': 128},
+        {'impl': 'vlm_vsm_v_b1', 'vl': 121},
+        {'impl': 'vlm_vsm_v_b1', 'vl': 120},
+        {'impl': 'vlm_vsm_v_b2', 'vl': 64},
+        {'impl': 'vlm_vsm_v_b2', 'vl': 57},
+        {'impl': 'vlm_vsm_v_b2', 'vl': 56},
+        {'impl': 'vlm_vsm_v_b4', 'vl': 32},
+        {'impl': 'vlm_vsm_v_b4', 'vl': 25},
+        {'impl': 'vlm_vsm_v_b4', 'vl': 24},
+        {'impl': 'vlm_vsm_v_b8', 'vl': 16},
+        {'impl': 'vlm_vsm_v_b8', 'vl': 9},
+        {'impl': 'vlm_vsm_v_b8', 'vl': 8},
+        {'impl': 'vlm_vsm_v_b16', 'vl': 8},
+        {'impl': 'vlm_vsm_v_b16', 'vl': 1},
+        {'impl': 'vlm_vsm_v_b32', 'vl': 4},
+        {'impl': 'vlm_vsm_v_b32', 'vl': 1},
+    ]
+    await fixture.load_elf_and_lookup_symbols(
+        r.Rlocation(
+            'kelvin_hw/tests/cocotb/rvv/load_store/load_store_bits.elf'),
+        ['vl', 'in_buf', 'out_buf', 'impl'] + [c['impl'] for c in cases],
+    )
+    rng = np.random.default_rng()
+    for c in cases:
+        impl = c['impl']
+        vl = c['vl']
+        in_bytes = (vl + 7) // 8
+        last_byte_mask = (1 << (vl % 8) - 1) if vl % 8 else 0xFF
+
+        input_data = rng.integers(
+            low=0, high=256, size=in_bytes, dtype=np.uint8)
+        expected_output = input_data
+        expected_output[-1] = expected_output[-1] & last_byte_mask
+
+        await fixture.write_ptr('impl', impl)
+        await fixture.write_word('vl', vl)
+        await fixture.write('in_buf', input_data)
+        await fixture.write('out_buf', np.zeros([in_bytes], dtype=np.uint8))
+
+        await fixture.run_to_halt()
+
+        actual_output = (await fixture.read('out_buf', in_bytes)).view(np.uint8)
+
+        debug_msg = str({
+            'impl': impl,
+            'input': input_data,
+            'expected': expected_output,
+            'actual': actual_output,
+        })
+        assert (actual_output == expected_output).all(), debug_msg
+
+
 @cocotb.test()
 async def load8_stride2_m1(dut):
     await vector_load_store(

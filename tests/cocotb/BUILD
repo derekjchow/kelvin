@@ -172,6 +172,7 @@ RVV_ASSEMBLY_TESTCASES = [
 
 # BEGIN_TESTCASES_FOR_rvv_load_store_test
 RVV_LOAD_STORE_TESTCASES = [
+    "load_store_bits",
     "load8_stride2_m1",
     "load8_stride2_m1_partial",
     "load8_stride2_mf4",
