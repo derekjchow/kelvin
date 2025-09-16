@@ -187,10 +187,9 @@ RVV_LOAD_STORE_TESTCASES = [
     "load8_segment2_unit_m1",
     "load16_segment2_unit_m1",
     "load32_segment2_unit_m1",
-    # TODO(davidgao): re-enable once fixes are in.
-    # "load8_segment2_unit_m2",
-    # "load16_segment2_unit_m2",
-    # "load32_segment2_unit_m2",
+    "load8_segment2_unit_m2",
+    "load16_segment2_unit_m2",
+    "load32_segment2_unit_m2",
     "load8_segment2_stride6_m1",
     "load16_segment2_stride6_m1",
     "load8_indexed_m1",

@@ -276,6 +276,10 @@ class LsuSlot(bytesPerSlot: Int, bytesPerLine: Int) extends Bundle {
   val elemWidth = UInt(3.W)
   val nfields = UInt(3.W)
   val segment = UInt(3.W)
+  // Add this to find the next segment.
+  val nextSegmentVectorOffset = UInt(3.W)
+  // Subtract this to find the first segment in the next lmul.
+  val nextLmulVectorRewind = UInt(3.W)
 
   // If the slot has no pending tasks and can accept a new operation
   def slotIdle(): Bool = {
@@ -322,6 +326,8 @@ class LsuSlot(bytesPerSlot: Int, bytesPerLine: Int) extends Bundle {
     result.baseAddr := baseAddr
     result.elemStride := elemStride
     result.segmentStride := segmentStride
+    result.nextSegmentVectorOffset := nextSegmentVectorOffset
+    result.nextLmulVectorRewind := nextLmulVectorRewind
 
 
     val segmentBaseAddr = baseAddr + (segmentStride * segment)
@@ -382,6 +388,8 @@ class LsuSlot(bytesPerSlot: Int, bytesPerLine: Int) extends Bundle {
     result.elemWidth := elemWidth
     result.nfields := nfields
     result.segment := segment
+    result.nextSegmentVectorOffset := nextSegmentVectorOffset
+    result.nextLmulVectorRewind := nextLmulVectorRewind
 
     result
   }
@@ -405,6 +413,8 @@ class LsuSlot(bytesPerSlot: Int, bytesPerLine: Int) extends Bundle {
     result.segmentStride := segmentStride
     result.elemWidth := elemWidth
     result.nfields := nfields
+    result.nextSegmentVectorOffset := nextSegmentVectorOffset
+    result.nextLmulVectorRewind := nextLmulVectorRewind
 
     val vectorWriteback = writeback && LsuOp.isVector(op)
 
@@ -447,7 +457,12 @@ class LsuSlot(bytesPerSlot: Int, bytesPerLine: Int) extends Bundle {
           (baseAddr + (nfields * 16.U) + 16.U),
       // Indexed don't have base addr changed.
     ))
-    result.rd := rd + 1.U  // Move to next vector register
+    result.rd := MuxCase(rd, Seq(
+      // Finished one lmul, start from segment 0 again
+      lmulUpdate -> (rd - nextLmulVectorRewind + 1.U),
+      // Finished one segment, proceed to next
+      vectorWriteback -> (rd + nextSegmentVectorOffset),
+    ))
 
     result
   }
@@ -479,6 +494,8 @@ class LsuSlot(bytesPerSlot: Int, bytesPerLine: Int) extends Bundle {
     result.elemWidth := elemWidth
     result.nfields := nfields
     result.segment := segment
+    result.nextSegmentVectorOffset := nextSegmentVectorOffset
+    result.nextLmulVectorRewind := nextLmulVectorRewind
     result
   }
 
@@ -524,11 +541,17 @@ object LsuSlot {
     result.store := uop.store
     result.pc := uop.pc
     if (p.enableRvv) {
-      result.lmul := uop.lmul.getOrElse(0.U)
-      result.nfields := Mux(LsuOp.isVector(uop.op), uop.nfields.get, 0.U)
+      val lmul = uop.lmul.getOrElse(0.U)
+      result.lmul := lmul
+      val nfields = Mux(LsuOp.isVector(uop.op), uop.nfields.get, 0.U)
+      result.nfields := nfields
       result.segment := 0.U
+      result.nextSegmentVectorOffset := lmul
+      result.nextLmulVectorRewind := nfields * lmul
     } else {
       result.lmul := 0.U
+      result.nextSegmentVectorOffset := 0.U
+      result.nextLmulVectorRewind := 0.U
     }
 
     // All vector ops require writeback. Lsu needs to inform RVV core store uop

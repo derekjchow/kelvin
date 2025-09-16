@@ -414,8 +414,7 @@ async def load32_segment2_unit_m1(dut):
     )
 
 
-# TODO(davidgao): re-enable once fixes are in.
-@cocotb.test(skip=True)
+@cocotb.test()
 async def load8_segment2_unit_m2(dut):
     await vector_load_store(
         dut=dut,
@@ -427,8 +426,7 @@ async def load8_segment2_unit_m2(dut):
     )
 
 
-# TODO(davidgao): re-enable once fixes are in.
-@cocotb.test(skip=True)
+@cocotb.test()
 async def load16_segment2_unit_m2(dut):
     await vector_load_store(
         dut=dut,
@@ -440,8 +438,7 @@ async def load16_segment2_unit_m2(dut):
     )
 
 
-# TODO(davidgao): re-enable once fixes are in.
-@cocotb.test(skip=True)
+@cocotb.test()
 async def load32_segment2_unit_m2(dut):
     await vector_load_store(
         dut=dut,
@@ -517,10 +514,10 @@ async def store8_seg_unit(dut):
             make_test_case('vsseg2e8_v_u8mf2x2', vl=7, n_segs=2),
             make_test_case('vsseg2e8_v_u8m1x2', vl=16, n_segs=2),
             make_test_case('vsseg2e8_v_u8m1x2', vl=15, n_segs=2),
-            # make_test_case('vsseg2e8_v_u8m2x2', vl=32, n_segs=2),
-            # make_test_case('vsseg2e8_v_u8m2x2', vl=31, n_segs=2),
-            # make_test_case('vsseg2e8_v_u8m4x2', vl=64, n_segs=2),
-            # make_test_case('vsseg2e8_v_u8m4x2', vl=63, n_segs=2),
+            make_test_case('vsseg2e8_v_u8m2x2', vl=32, n_segs=2),
+            make_test_case('vsseg2e8_v_u8m2x2', vl=31, n_segs=2),
+            make_test_case('vsseg2e8_v_u8m4x2', vl=64, n_segs=2),
+            make_test_case('vsseg2e8_v_u8m4x2', vl=63, n_segs=2),
             # Seg 3
             make_test_case('vsseg3e8_v_u8mf4x3', vl=4, n_segs=3),
             make_test_case('vsseg3e8_v_u8mf4x3', vl=3, n_segs=3),
@@ -528,8 +525,8 @@ async def store8_seg_unit(dut):
             make_test_case('vsseg3e8_v_u8mf2x3', vl=7, n_segs=3),
             make_test_case('vsseg3e8_v_u8m1x3', vl=16, n_segs=3),
             make_test_case('vsseg3e8_v_u8m1x3', vl=15, n_segs=3),
-            # make_test_case('vsseg3e8_v_u8m2x3', vl=32, n_segs=3),
-            # make_test_case('vsseg3e8_v_u8m2x3', vl=31, n_segs=3),
+            make_test_case('vsseg3e8_v_u8m2x3', vl=32, n_segs=3),
+            make_test_case('vsseg3e8_v_u8m2x3', vl=31, n_segs=3),
             # Seg 4
             make_test_case('vsseg4e8_v_u8mf4x4', vl=4, n_segs=4),
             make_test_case('vsseg4e8_v_u8mf4x4', vl=3, n_segs=4),
@@ -537,8 +534,8 @@ async def store8_seg_unit(dut):
             make_test_case('vsseg4e8_v_u8mf2x4', vl=7, n_segs=4),
             make_test_case('vsseg4e8_v_u8m1x4', vl=16, n_segs=4),
             make_test_case('vsseg4e8_v_u8m1x4', vl=15, n_segs=4),
-            # make_test_case('vsseg4e8_v_u8m2x4', vl=32, n_segs=4),
-            # make_test_case('vsseg4e8_v_u8m2x4', vl=31, n_segs=4),
+            make_test_case('vsseg4e8_v_u8m2x4', vl=32, n_segs=4),
+            make_test_case('vsseg4e8_v_u8m2x4', vl=31, n_segs=4),
             # Seg 5
             make_test_case('vsseg5e8_v_u8mf4x5', vl=4, n_segs=5),
             make_test_case('vsseg5e8_v_u8mf4x5', vl=3, n_segs=5),
