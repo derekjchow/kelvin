@@ -121,7 +121,9 @@ package kelvin_cosim_checker_pkg;
           bit pc_match_found = 0;
           int match_index = -1;
 
-          mpact_pc = mpact_get_pc();
+          if (mpact_get_register("pc", mpact_pc) != 0) begin
+            `uvm_error("COSIM_API_FAIL", "Failed to get PC from MPACT simulator.")
+          end
 
           foreach (retired_instr_q[j]) begin
             if (retired_instr_q[j].pc == mpact_pc) begin
@@ -171,6 +173,7 @@ package kelvin_cosim_checker_pkg;
       int unsigned mpact_gpr_val;
       int unsigned rd_index;
       logic [31:0] rtl_wdata;
+      string reg_name;
 
       `uvm_info(get_type_name(), "Comparing GPR writeback state...", UVM_HIGH)
 
@@ -188,7 +191,10 @@ package kelvin_cosim_checker_pkg;
       end
       else if (rtl_info.x_wb != 0) begin
         rd_index = $clog2(rtl_info.x_wb);
-        mpact_gpr_val = mpact_get_gpr(rd_index);
+        reg_name = $sformatf("x%0d", rd_index);
+        if (mpact_get_register(reg_name, mpact_gpr_val) != 0) begin
+          `uvm_error("COSIM_API_FAIL", $sformatf("Failed to get GPR '%s'", reg_name))
+        end
 
         // Get the specific write data from the correct retire channel and register index
         rtl_wdata = rvvi_vif.x_wdata[0][rtl_info.retire_index][rd_index];

@@ -41,17 +41,11 @@ package kelvin_cosim_dpi_if;
   // Returns '1' (true) if halted.
   import "DPI-C" context function bit mpact_is_halted();
 
-  // Function to get the program counter.
-  import "DPI-C" context function int unsigned mpact_get_pc();
-
-  // Function to get a general-purpose register value.
-  import "DPI-C" context function int unsigned mpact_get_gpr(
-    input int unsigned index
-  );
-
-  // Function to get a control and status register value.
-  import "DPI-C" context function int unsigned mpact_get_csr(
-    input int unsigned address
+  // Function to get a register value (GPR, PC, CSR) by its string name.
+  // The C pointer 'uint32_t* value' maps to an 'output' argument in SV.
+  import "DPI-C" context function int mpact_get_register(
+    input string name,
+    output int unsigned value
   );
 
   // Function to finalize the MPACT simulator.
