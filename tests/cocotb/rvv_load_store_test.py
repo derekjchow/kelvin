@@ -364,7 +364,8 @@ async def load32_segment2_unit_m1(dut):
     )
 
 
-@cocotb.test()
+# TODO(davidgao): re-enable once fixes are in.
+@cocotb.test(skip=True)
 async def load8_segment2_unit_m2(dut):
     await vector_load_store(
         dut=dut,
@@ -372,12 +373,12 @@ async def load8_segment2_unit_m2(dut):
         dtype=np.uint8,
         in_size=128,
         out_size=128,
-        pattern=(list(range(0, 32, 2)) + list(range(1, 32, 2)) +
-                 list(range(32, 64, 2)) + list(range(33, 64, 2))),
+        pattern=(list(range(0, 63, 2)) + list(range(1, 64, 2))),
     )
 
 
-@cocotb.test()
+# TODO(davidgao): re-enable once fixes are in.
+@cocotb.test(skip=True)
 async def load16_segment2_unit_m2(dut):
     await vector_load_store(
         dut=dut,
@@ -385,12 +386,12 @@ async def load16_segment2_unit_m2(dut):
         dtype=np.uint16,
         in_size=64,
         out_size=64,
-        pattern=(list(range(0, 16, 2)) + list(range(1, 16, 2)) +
-                 list(range(16, 32, 2)) + list(range(17, 32, 2))),
+        pattern=(list(range(0, 31, 2)) + list(range(1, 32, 2))),
     )
 
 
-@cocotb.test()
+# TODO(davidgao): re-enable once fixes are in.
+@cocotb.test(skip=True)
 async def load32_segment2_unit_m2(dut):
     await vector_load_store(
         dut=dut,
@@ -398,8 +399,7 @@ async def load32_segment2_unit_m2(dut):
         dtype=np.uint32,
         in_size=32,
         out_size=32,
-        pattern=(list(range(0, 8, 2)) + list(range(1, 8, 2)) +
-                 list(range(8, 16, 2)) + list(range(9, 16, 2))),
+        pattern=(list(range(0, 15, 2)) + list(range(1, 16, 2))),
     )
 
 

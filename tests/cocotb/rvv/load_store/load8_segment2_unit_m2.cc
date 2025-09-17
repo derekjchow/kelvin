@@ -21,7 +21,7 @@ uint8_t out_buf[128] __attribute__((section(".data")));
 
 __attribute__((used, retain)) void test_intrinsic(const uint8_t *x,
                                                   uint8_t *y) {
-  vuint8m2x2_t v = __riscv_vlseg2e8_v_u8m2x2(in_buf, 64);
+  auto v = __riscv_vlseg2e8_v_u8m2x2(in_buf, 32);
 
   vuint8m4_t vv = __riscv_vcreate_v_u8m2_u8m4(
       __riscv_vget_v_u8m2x2_u8m2(v, 0),

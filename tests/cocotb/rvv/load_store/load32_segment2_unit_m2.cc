@@ -21,7 +21,7 @@ uint32_t out_buf[32] __attribute__((section(".data")));
 
 __attribute__((used, retain)) void test_intrinsic(const uint32_t *x,
                                                   uint32_t *y) {
-  vuint32m2x2_t v = __riscv_vlseg2e32_v_u32m2x2(in_buf, 16);
+  vuint32m2x2_t v = __riscv_vlseg2e32_v_u32m2x2(in_buf, 8);
 
   vuint32m4_t vv = __riscv_vcreate_v_u32m2_u32m4(
       __riscv_vget_v_u32m2x2_u32m2(v, 0),
