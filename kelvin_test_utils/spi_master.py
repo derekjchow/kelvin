@@ -83,6 +83,13 @@ class SPIMaster:
         if wait_cycles > 0:
             await ClockCycles(self.main_clk, wait_cycles)
 
+    async def write_reg_16b(self, base_addr, data, wait_cycles=10):
+        """Writes a 16-bit value to a register pair via SPI."""
+        await self.write_reg(base_addr, data & 0xFF, wait_cycles=0)
+        await self.write_reg(base_addr + 1, (data >> 8) & 0xFF, wait_cycles=0)
+        if wait_cycles > 0:
+            await ClockCycles(self.main_clk, wait_cycles)
+
     async def read_reg(self, reg_addr):
         """Reads a byte from a register via SPI."""
         read_cmd = reg_addr # MSB is 0 for read
@@ -105,6 +112,12 @@ class SPIMaster:
         await self._set_cs(False)
         await ClockCycles(self.main_clk, 1)
         return read_data
+
+    async def read_spi_domain_reg_16b(self, base_addr):
+        """Reads a 16-bit value from a register pair in the SPI clock domain."""
+        val_l = await self.read_spi_domain_reg(base_addr)
+        val_h = await self.read_spi_domain_reg(base_addr + 1)
+        return (val_h << 8) | val_l
 
     async def poll_reg_for_value(self, reg_addr, expected_value, max_polls=20):
         """Polls a register until it reads an expected value."""
@@ -149,8 +162,11 @@ class SPIMaster:
         await self._clock_byte((target_addr >> 24) & 0xFF)
 
         # Write beats
-        await self._clock_byte(CMD_WRITE | SpiRegAddress.TL_LEN_REG)
-        await self._clock_byte(len(data) - 1)
+        num_beats = len(data)
+        await self._clock_byte(CMD_WRITE | SpiRegAddress.TL_LEN_REG_L)
+        await self._clock_byte((num_beats - 1) & 0xFF)
+        await self._clock_byte(CMD_WRITE | SpiRegAddress.TL_LEN_REG_H)
+        await self._clock_byte(((num_beats - 1) >> 8) & 0xFF)
 
         # Write data using bulk transfer
         all_data_bytes = []
@@ -159,9 +175,11 @@ class SPIMaster:
                 all_data_bytes.append((beat >> (i * 8)) & 0xFF)
 
         # Command for bulk write
-        await self._clock_byte(CMD_WRITE | SpiRegAddress.BULK_WRITE_PORT)
-        # Length
-        await self._clock_byte(len(all_data_bytes) - 1)
+        num_bytes = len(all_data_bytes)
+        await self._clock_byte(CMD_WRITE | SpiRegAddress.BULK_WRITE_PORT_L)
+        await self._clock_byte((num_bytes - 1) & 0xFF)
+        await self._clock_byte(CMD_WRITE | SpiRegAddress.BULK_WRITE_PORT_H)
+        await self._clock_byte(((num_bytes - 1) >> 8) & 0xFF)
         # Data stream
         for byte in all_data_bytes:
             await self._clock_byte(byte)
@@ -180,12 +198,12 @@ class SPIMaster:
 
         await self.start_clock()
 
-        # Command byte for bulk write
-        await self._clock_byte(CMD_WRITE | SpiRegAddress.BULK_WRITE_PORT)
-
-        # Length byte
+        # Command and Length for bulk write (L, H)
         num_bytes = len(data)
-        await self._clock_byte(num_bytes - 1)
+        await self._clock_byte(CMD_WRITE | SpiRegAddress.BULK_WRITE_PORT_L)
+        await self._clock_byte((num_bytes - 1) & 0xFF)
+        await self._clock_byte(CMD_WRITE | SpiRegAddress.BULK_WRITE_PORT_H)
+        await self._clock_byte(((num_bytes - 1) >> 8) & 0xFF)
 
         # Data stream
         for byte in data:
@@ -202,21 +220,18 @@ class SPIMaster:
 
         await self.start_clock()
 
-        # Command byte to initiate a bulk read (this is a WRITE command)
-        await self._clock_byte(CMD_WRITE | SpiRegAddress.BULK_READ_PORT)
+        # Command and Length to initiate a bulk read (L, H)
+        await self._clock_byte(CMD_WRITE | SpiRegAddress.BULK_READ_PORT_L)
+        await self._clock_byte((num_bytes - 1) & 0xFF)
+        await self._clock_byte(CMD_WRITE | SpiRegAddress.BULK_READ_PORT_H)
+        await self._clock_byte(((num_bytes - 1) >> 8) & 0xFF)
 
-        # Length byte
-        await self._clock_byte(num_bytes - 1)
+        # The MISO pipeline has latency. The first dummy transfer flushes a junk byte.
+        await self._clock_byte(0x00)
 
-        # The MISO pipeline is two bytes deep. We need to send two dummy transfers
-        # to discard the junk bytes from the command/length phases before the
-        # first valid data byte is received.
-        await self._clock_byte(0x00) # Flush junk from command phase
-
-        # Read data stream
+        # The subsequent transfers clock in the actual data.
         received_bytes = []
         for _ in range(num_bytes):
-            # The data is clocked out on MISO during this dummy byte transfer
             byte_in = await self._clock_byte(0x00)
             received_bytes.append(byte_in)
 

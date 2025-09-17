@@ -358,6 +358,9 @@ SPI2TLUL_TESTCASES = [
     "test_tlul_bulk_write",
     "test_tlul_bulk_read",
     "test_large_tlul_transfer",
+    "test_large_packed_write_transaction",
+    "test_large_pipelined_read",
+    "test_large_write_then_pipelined_read",
 ]
 # END_TESTCASES_FOR_spi2tlul_cocotb
 
@@ -374,6 +377,7 @@ cocotb_test_suite(
         "deps": [
             "//kelvin_test_utils:TileLinkULInterface",
             "//kelvin_test_utils:spi_master",
+            "//kelvin_test_utils:spi_constants",
         ],
     },
     verilator_model = "//hdl/chisel/src/bus:spi2tlul_128_model",

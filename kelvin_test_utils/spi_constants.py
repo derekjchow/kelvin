@@ -19,14 +19,18 @@ class SpiRegAddress(IntEnum):
     TL_ADDR_REG_1 = 0x01
     TL_ADDR_REG_2 = 0x02
     TL_ADDR_REG_3 = 0x03
-    TL_LEN_REG    = 0x04
-    TL_CMD_REG    = 0x05
-    TL_STATUS_REG = 0x06
-    DATA_BUF_PORT = 0x07
-    TL_WRITE_STATUS_REG = 0x08
-    BULK_WRITE_PORT = 0x09
-    BULK_READ_PORT = 0x0A
-    BULK_READ_STATUS_REG = 0x0B
+    TL_LEN_REG_L  = 0x04
+    TL_LEN_REG_H  = 0x05
+    TL_CMD_REG    = 0x06
+    TL_STATUS_REG = 0x07
+    DATA_BUF_PORT = 0x08
+    TL_WRITE_STATUS_REG = 0x09
+    BULK_WRITE_PORT_L = 0x0A
+    BULK_WRITE_PORT_H = 0x0B
+    BULK_READ_PORT_L = 0x0C
+    BULK_READ_PORT_H = 0x0D
+    BULK_READ_STATUS_REG_L = 0x0E
+    BULK_READ_STATUS_REG_H = 0x0F
 
 class SpiCommand(IntEnum):
     CMD_NULL = 0x00
