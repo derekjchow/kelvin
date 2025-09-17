@@ -2728,7 +2728,7 @@ function void rvs_transaction::asm_string_gen();
               if(this.lsu_nf == NF1) begin
                 inst = $sformatf("%se%0d", inst, lsu_eew);
               end else begin
-                inst = $sformatf("%s%0de%0d", inst, lsu_nf+1, lsu_eew);
+                inst = $sformatf("%sseg%0de%0d", inst, lsu_nf+1, lsu_eew);
               end
             end
           endcase
@@ -2737,7 +2737,7 @@ function void rvs_transaction::asm_string_gen();
           if(this.lsu_nf == NF1) begin
             inst = $sformatf("%se%0d", inst, lsu_eew);
           end else begin
-            inst = $sformatf("%s%0de%0d", inst, lsu_nf+1, lsu_eew);
+            inst = $sformatf("%sseg%0de%0d", inst, lsu_nf+1, lsu_eew);
           end
         end
         LSU_UI, 
@@ -2745,7 +2745,7 @@ function void rvs_transaction::asm_string_gen();
           if(this.lsu_nf == NF1) begin
             inst = $sformatf("%sei%0d", inst, lsu_eew);
           end else begin
-            inst = $sformatf("%s%0dei%0d", inst, lsu_nf+1, lsu_eew);
+            inst = $sformatf("%sseg%0dei%0d", inst, lsu_nf+1, lsu_eew);
           end
         end      
       endcase

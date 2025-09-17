@@ -95,6 +95,7 @@ module rvv_backend_decode_unit_lsu
   logic   [`NUM_DE_UOP-1:0]                           vm;                 
   logic   [`NUM_DE_UOP-1:0]                           v0_valid;           
   logic   [`NUM_DE_UOP-1:0][`REGFILE_INDEX_WIDTH-1:0] vd_index;           
+  logic   [`NUM_DE_UOP-1:0][`UOP_INDEX_WIDTH-1:0]     vd_offset;
   EEW_e   [`NUM_DE_UOP-1:0]                           vd_eew;  
   logic   [`NUM_DE_UOP-1:0]                           vd_valid;
   logic   [`NUM_DE_UOP-1:0]                           vs3_valid;          
@@ -103,6 +104,7 @@ module rvv_backend_decode_unit_lsu
   logic   [`NUM_DE_UOP-1:0]                           vs1_index_valid;
   logic   [`NUM_DE_UOP-1:0]                           vs1_opcode_valid;
   logic   [`NUM_DE_UOP-1:0][`REGFILE_INDEX_WIDTH-1:0] vs2_index; 	        
+  logic   [`NUM_DE_UOP-1:0][`UOP_INDEX_WIDTH-1:0]     vs2_offset;
   EEW_e   [`NUM_DE_UOP-1:0]                           vs2_eew;
   logic   [`NUM_DE_UOP-1:0]                           vs2_valid;
   logic   [`NUM_DE_UOP-1:0][`REGFILE_INDEX_WIDTH-1:0] rd_index; 	        
@@ -228,10 +230,11 @@ module rvv_backend_decode_unit_lsu
             US_US,
             US_FF: begin
               case(inst_nf)
-                // EMUL_vd = ceil( inst_funct3/csr_sew*csr_lmul )
-                // emul_max_vd_vs2 = EMUL_vd
-                // emul_vd_nf = EMUL_vd*NF
-                // EMUL_max = NF*emul_max_vd_vs2
+                // emul_vd = ceil(inst_funct3/csr_sew*csr_lmul)
+                // emul_vs2: no emul_vs2 for unit
+                // emul_max_vd_vs2 = max(emul_vd,emul_vs2) = emul_vd
+                // emul_vd_nf = NF*emul_vd
+                // emul_max = NF*emul_max_vd_vs2
                 NF1: begin
                   case({inst_funct3,csr_sew})
                     // 1:1
@@ -1028,8 +1031,11 @@ module rvv_backend_decode_unit_lsu
 
         CS: begin
           case(inst_nf)
-            // EMUL_vd = ceil( inst_funct3/csr_sew*csr_lmul )
-            // EMUL_max = NF*EMUL_vd
+            // emul_vd = ceil(inst_funct3/csr_sew*csr_lmul)
+            // emul_vs2: no emul_vs2 for stride
+            // emul_max_vd_vs2 = max(emul_vd,emul_vs2) = emul_vd
+            // emul_vd_nf = NF*emul_vd
+            // emul_max = NF*emul_max_vd_vs2
             NF1: begin
               case({inst_funct3,csr_sew})
                 // 1:1
@@ -1782,10 +1788,11 @@ module rvv_backend_decode_unit_lsu
         IU,
         IO: begin
           case(inst_nf)
-            // EMUL_vd  = ceil( csr_lmul )
-            // EMUL_vs2 = ceil( inst_funct3/csr_sew*csr_lmul )
+            // emul_vd  = ceil(csr_lmul)
+            // emul_vs2 = ceil(inst_funct3/csr_sew*csr_lmul)
             // emul_max_vd_vs2 = max(EMUL_vd,EMUL_vs2)
-            // EMUL_max = NF*emul_max_vd_vs2
+            // emul_vd_nf = NF*emul_vd
+            // emul_max = NF*emul_max_vd_vs2
             NF1: begin
               case({inst_funct3,csr_sew})
                 // 1:1
@@ -3233,68 +3240,207 @@ module rvv_backend_decode_unit_lsu
     end
   end
 
-  // update vd_index and eew 
+  // update vd_offset
   always_comb begin
-    for(int i=0;i<`NUM_DE_UOP;i++) begin: GET_VD
+    for(int i=0;i<`NUM_DE_UOP;i++) begin: GET_VD_OFFSET
       // initial
-      vd_index[i] = 'b0;
-      vd_eew[i]   = eew_vd;
+      vd_offset[i] = 'b0;
 
       case(inst_funct6[2:0])
         UNIT_STRIDE: begin
           case(inst_umop)
             US_REGULAR,          
-            US_FAULT_FIRST,
+            US_FAULT_FIRST: begin
+              case({inst_nf,emul_vd})
+                {NF2,EMUL4}: begin 
+                  case(uop_index_current[i][`UOP_INDEX_WIDTH-1:0])
+                    3'd1   : vd_offset[i] = 3'd4;
+                    3'd2   : vd_offset[i] = 3'd1;
+                    3'd3   : vd_offset[i] = 3'd5;
+                    3'd4   : vd_offset[i] = 3'd2;
+                    3'd5   : vd_offset[i] = 3'd6;
+                    3'd6   : vd_offset[i] = 3'd3;
+                    default: vd_offset[i] = uop_index_current[i][`UOP_INDEX_WIDTH-1:0];
+                  endcase   
+                end
+                {NF2,EMUL2}: begin
+                  case(uop_index_current[i][`UOP_INDEX_WIDTH-1:0])
+                    3'd1   : vd_offset[i] = 3'd2;
+                    3'd2   : vd_offset[i] = 3'd1;
+                    default: vd_offset[i] = uop_index_current[i][`UOP_INDEX_WIDTH-1:0];
+                  endcase   
+                end
+                {NF3,EMUL2}: begin
+                  case(uop_index_current[i][`UOP_INDEX_WIDTH-1:0])
+                    3'd1   : vd_offset[i] = 3'd2;
+                    3'd2   : vd_offset[i] = 3'd4;
+                    3'd3   : vd_offset[i] = 3'd1;
+                    3'd4   : vd_offset[i] = 3'd3;
+                    default: vd_offset[i] = uop_index_current[i][`UOP_INDEX_WIDTH-1:0];
+                  endcase   
+                end
+                {NF4,EMUL2}: begin
+                  case(uop_index_current[i][`UOP_INDEX_WIDTH-1:0])
+                    3'd1   : vd_offset[i] = 3'd2;
+                    3'd2   : vd_offset[i] = 3'd4;
+                    3'd3   : vd_offset[i] = 3'd6;
+                    3'd4   : vd_offset[i] = 3'd1;
+                    3'd5   : vd_offset[i] = 3'd3;
+                    3'd6   : vd_offset[i] = 3'd5;
+                    default: vd_offset[i] = uop_index_current[i][`UOP_INDEX_WIDTH-1:0];
+                  endcase
+                end
+                default: 
+                  vd_offset[i] = uop_index_current[i][`UOP_INDEX_WIDTH-1:0];
+              endcase
+            end
             US_WHOLE_REGISTER: begin
-              vd_index[i] = inst_vd + uop_index_current[i][`UOP_INDEX_WIDTH-1:0];
+              vd_offset[i] = uop_index_current[i][`UOP_INDEX_WIDTH-1:0];
             end
             US_MASK: begin
-              vd_index[i] = inst_vd;
+              vd_offset[i] = 'b0;
             end
           endcase
         end
 
         CONSTANT_STRIDE: begin
-          vd_index[i] = inst_vd + uop_index_current[i][`UOP_INDEX_WIDTH-1:0];
+          case({inst_nf,emul_vd})
+            {NF2,EMUL4}: begin 
+              case(uop_index_current[i][`UOP_INDEX_WIDTH-1:0])
+                3'd1   : vd_offset[i] = 3'd4;
+                3'd2   : vd_offset[i] = 3'd1;
+                3'd3   : vd_offset[i] = 3'd5;
+                3'd4   : vd_offset[i] = 3'd2;
+                3'd5   : vd_offset[i] = 3'd6;
+                3'd6   : vd_offset[i] = 3'd3;
+                default: vd_offset[i] = uop_index_current[i][`UOP_INDEX_WIDTH-1:0];
+              endcase   
+            end
+            {NF2,EMUL2}: begin
+              case(uop_index_current[i][`UOP_INDEX_WIDTH-1:0])
+                3'd1   : vd_offset[i] = 3'd2;
+                3'd2   : vd_offset[i] = 3'd1;
+                default: vd_offset[i] = uop_index_current[i][`UOP_INDEX_WIDTH-1:0];
+              endcase   
+            end
+            {NF3,EMUL2}: begin
+              case(uop_index_current[i][`UOP_INDEX_WIDTH-1:0])
+                3'd1   : vd_offset[i] = 3'd2;
+                3'd2   : vd_offset[i] = 3'd4;
+                3'd3   : vd_offset[i] = 3'd1;
+                3'd4   : vd_offset[i] = 3'd3;
+                default: vd_offset[i] = uop_index_current[i][`UOP_INDEX_WIDTH-1:0];
+              endcase   
+            end
+            {NF4,EMUL2}: begin
+              case(uop_index_current[i][`UOP_INDEX_WIDTH-1:0])
+                3'd1   : vd_offset[i] = 3'd2;
+                3'd2   : vd_offset[i] = 3'd4;
+                3'd3   : vd_offset[i] = 3'd6;
+                3'd4   : vd_offset[i] = 3'd1;
+                3'd5   : vd_offset[i] = 3'd3;
+                3'd6   : vd_offset[i] = 3'd5;
+                default: vd_offset[i] = uop_index_current[i][`UOP_INDEX_WIDTH-1:0];
+              endcase
+            end
+            default: 
+              vd_offset[i] = uop_index_current[i][`UOP_INDEX_WIDTH-1:0];
+          endcase
         end
         
         UNORDERED_INDEX,
         ORDERED_INDEX: begin
-          case({inst_funct3,csr_sew})
+          case({eew_vs2,eew_vd})
             // EEW_vs2:EEW_vd=1:1
-            {SEW_8,SEW8},
-            {SEW_16,SEW16},
-            {SEW_32,SEW32},            
+            {EEW8,EEW8},
+            {EEW16,EEW16},
+            {EEW32,EEW32},
             // 1:2
-            {SEW_8,SEW16},
-            {SEW_16,SEW32},
+            {EEW8,EEW16},
+            {EEW16,EEW32},
             // 1:4
-            {SEW_8,SEW32}: begin            
-              vd_index[i] = inst_vd + uop_index_current[i][`UOP_INDEX_WIDTH-1:0];
+            {EEW8,EEW32}: begin            
+              case({inst_nf,emul_vd})
+                {NF2,EMUL4}: begin 
+                  case(uop_index_current[i][`UOP_INDEX_WIDTH-1:0])
+                    3'd1   : vd_offset[i] = 3'd4;
+                    3'd2   : vd_offset[i] = 3'd1;
+                    3'd3   : vd_offset[i] = 3'd5;
+                    3'd4   : vd_offset[i] = 3'd2;
+                    3'd5   : vd_offset[i] = 3'd6;
+                    3'd6   : vd_offset[i] = 3'd3;
+                    default: vd_offset[i] = uop_index_current[i][`UOP_INDEX_WIDTH-1:0];
+                  endcase   
+                end
+                {NF2,EMUL2}: begin
+                  case(uop_index_current[i][`UOP_INDEX_WIDTH-1:0])
+                    3'd1   : vd_offset[i] = 3'd2;
+                    3'd2   : vd_offset[i] = 3'd1;
+                    default: vd_offset[i] = uop_index_current[i][`UOP_INDEX_WIDTH-1:0];
+                  endcase   
+                end
+                {NF3,EMUL2}: begin
+                  case(uop_index_current[i][`UOP_INDEX_WIDTH-1:0])
+                    3'd1   : vd_offset[i] = 3'd2;
+                    3'd2   : vd_offset[i] = 3'd4;
+                    3'd3   : vd_offset[i] = 3'd1;
+                    3'd4   : vd_offset[i] = 3'd3;
+                    default: vd_offset[i] = uop_index_current[i][`UOP_INDEX_WIDTH-1:0];
+                  endcase   
+                end
+                {NF4,EMUL2}: begin
+                  case(uop_index_current[i][`UOP_INDEX_WIDTH-1:0])
+                    3'd1   : vd_offset[i] = 3'd2;
+                    3'd2   : vd_offset[i] = 3'd4;
+                    3'd3   : vd_offset[i] = 3'd6;
+                    3'd4   : vd_offset[i] = 3'd1;
+                    3'd5   : vd_offset[i] = 3'd3;
+                    3'd6   : vd_offset[i] = 3'd5;
+                    default: vd_offset[i] = uop_index_current[i][`UOP_INDEX_WIDTH-1:0];
+                  endcase
+                end
+                default: 
+                  vd_offset[i] = uop_index_current[i][`UOP_INDEX_WIDTH-1:0];
+              endcase
             end
             // 2:1
-            {SEW_16,SEW8},
-            {SEW_32,SEW16},
+            {EEW16,EEW8},
+            {EEW32,EEW16},
             // 4:1
-            {SEW_32,SEW8}: begin            
+            {EEW32,EEW8}: begin            
               case({emul_vs2,emul_vd})
-                {EMUL1,EMUL1}: begin
-                  vd_index[i] = inst_vd + uop_index_current[i][`UOP_INDEX_WIDTH-1:0];
-                end
+                {EMUL1,EMUL1}: 
+                  vd_offset[i] = uop_index_current[i][`UOP_INDEX_WIDTH-1:0];
                 {EMUL2,EMUL1},
-                {EMUL4,EMUL2},
-                {EMUL8,EMUL4}: begin
-                  vd_index[i] = inst_vd + uop_index_current[i][`UOP_INDEX_WIDTH-1:1];
+                {EMUL8,EMUL4}: 
+                  vd_offset[i] = {1'b0, uop_index_current[i][`UOP_INDEX_WIDTH-1:1]};
+                {EMUL4,EMUL2}: begin
+                  if (inst_nf==NF2) begin
+                    case(uop_index_current[i][`UOP_INDEX_WIDTH-1:1])
+                      2'd1   : vd_offset[i] = 3'd2;
+                      2'd2   : vd_offset[i] = 3'd1;
+                      default: vd_offset[i] = {1'b0, uop_index_current[i][`UOP_INDEX_WIDTH-1:1]};
+                    endcase   
+                  end
+                  else
+                    vd_offset[i] = {1'b0, uop_index_current[i][`UOP_INDEX_WIDTH-1:1]};
                 end
                 {EMUL4,EMUL1},
-                {EMUL8,EMUL2}: begin
-                  vd_index[i] = inst_vd + uop_index_current[i][`UOP_INDEX_WIDTH-1:2];
-                end
+                {EMUL8,EMUL2}: 
+                  vd_offset[i] = {2'b0, uop_index_current[i][`UOP_INDEX_WIDTH-1:2]};
               endcase
             end
           endcase
         end
       endcase
+    end
+  end
+
+  // update vd_index and eew
+  always_comb begin
+    for(int i=0;i<`NUM_DE_UOP;i++) begin: GET_VD
+      vd_index[i] = inst_vd + {2'b0, vd_offset[i]};
+      vd_eew[i]   = eew_vd;
     end
   end
 
@@ -3330,89 +3476,140 @@ module rvv_backend_decode_unit_lsu
     end
   end
 
-  // update vs2 index, eew and valid  
+  // update vs2 offset and valid
   always_comb begin
     // initial
-    vs2_index = 'b0; 
-    vs2_eew   = EEW_NONE;
-    vs2_valid = 'b0; 
+    vs2_offset = 'b0;
+    vs2_valid  = 'b0;
     
-    for(int i=0;i<`NUM_DE_UOP;i++) begin: GET_VS2
+    for(int i=0;i<`NUM_DE_UOP;i++) begin: GET_VS2_OFFSET
       case(inst_funct6[2:0])
         UNORDERED_INDEX,
         ORDERED_INDEX: begin
-          case({inst_funct3,csr_sew})
+          case({eew_vs2,eew_vd})
             // EEW_vs2:EEW_vd=1:1
-            {SEW_8,SEW8},
-            {SEW_16,SEW16},
-            {SEW_32,SEW32},            
-            // 2:1
-            {SEW_16,SEW8},
-            {SEW_32,SEW16},            
-            // 4:1
-            {SEW_32,SEW8}: begin    
+            {EEW8,EEW8},
+            {EEW16,EEW16},
+            {EEW32,EEW32}: begin
               case(emul_vs2)
-                EMUL1: begin
-                  vs2_index[i] = inst_vs2;
-                  vs2_eew[i]   = eew_vs2; 
-                  vs2_valid[i] = 1'b1; 
-                end
                 EMUL2: begin
-                  vs2_index[i] = inst_vs2+uop_index_current[i][0];
-                  vs2_eew[i]   = eew_vs2; 
-                  vs2_valid[i] = 1'b1; 
+                  case(inst_nf)
+                    NF2: vs2_offset[i] = {2'b0, uop_index_current[i][1]};
+                    NF3: vs2_offset[i] = (uop_index_current[i]>='d3) ? 3'd1 : 3'b0;
+                    NF4: vs2_offset[i] = {2'b0, uop_index_current[i][2]};
+                    default: vs2_offset[i] = {2'b0, uop_index_current[i][0]};
+                  endcase
+                  vs2_valid[i]  = 1'b1; 
                 end
                 EMUL4: begin
-                  vs2_index[i] = inst_vs2+uop_index_current[i][1:0];
-                  vs2_eew[i]   = eew_vs2; 
-                  vs2_valid[i] = 1'b1; 
+                  vs2_offset[i] = (inst_nf==NF2) ? {1'b0, uop_index_current[i][2:1]} : {1'b0, uop_index_current[i][1:0]};
+                  vs2_valid[i]  = 1'b1; 
                 end
                 EMUL8: begin
-                  vs2_index[i] = inst_vs2+uop_index_current[i][2:0];
-                  vs2_eew[i]   = eew_vs2; 
-                  vs2_valid[i] = 1'b1; 
+                  vs2_offset[i] = uop_index_current[i][2:0];
+                  vs2_valid[i]  = 1'b1; 
+                end
+                default: begin //EMUL1
+                  vs2_offset[i] = 'b0;
+                  vs2_valid[i]  = 1'b1; 
+                end
+              endcase
+            end           
+            // 2:1
+            {EEW16,EEW8},
+            {EEW32,EEW16}: begin
+              case(emul_vs2)
+                EMUL2: begin
+                  case(inst_nf)
+                    NF2: vs2_offset[i] = {1'b0, uop_index_current[i][2], uop_index_current[i][0]};
+                    NF3,
+                    NF4: vs2_offset[i] = {2'b0, uop_index_current[i][0]};
+                    default: vs2_offset[i] = uop_index_current[i];  //NF1
+                  endcase
+                  vs2_valid[i]  = 1'b1; 
+                end
+                EMUL4: begin
+                  vs2_offset[i] = (inst_nf==NF2) ? {1'b0, uop_index_current[i][2], uop_index_current[i][0]} : uop_index_current[i];
+                  vs2_valid[i]  = 1'b1; 
+                end
+                EMUL8: begin
+                  vs2_offset[i] = uop_index_current[i];
+                  vs2_valid[i]  = 1'b1; 
+                end
+                default: begin //EMUL1
+                  vs2_offset[i] = 'b0;
+                  vs2_valid[i]  = 1'b1; 
+                end
+              endcase
+            end          
+            // 4:1
+            {EEW32,EEW8}: begin    
+              case(emul_vs2)
+                EMUL2: begin
+                  case(inst_nf)
+                    NF2: vs2_offset[i] = {1'b0, uop_index_current[i][2], uop_index_current[i][0]};
+                    NF3,
+                    NF4: vs2_offset[i] = {2'b0, uop_index_current[i][0]};
+                    default: vs2_offset[i] = uop_index_current[i];  //NF1
+                  endcase
+                  vs2_valid[i]  = 1'b1; 
+                end
+                EMUL4: begin
+                  vs2_offset[i] = (inst_nf==NF2) ? {1'b0, uop_index_current[i][1:0]} : uop_index_current[i];
+                  vs2_valid[i]  = 1'b1; 
+                end
+                EMUL8: begin
+                  vs2_offset[i] = uop_index_current[i];
+                  vs2_valid[i]  = 1'b1; 
+                end
+                default: begin //EMUL1
+                  vs2_offset[i] = 'b0;
+                  vs2_valid[i]  = 1'b1; 
                 end
               endcase
             end
             // 1:2
-            {SEW_8,SEW16},
-            {SEW_16,SEW32}: begin
+            {EEW8,EEW16},
+            {EEW16,EEW32}: begin
               case(emul_vs2)
                 EMUL1: begin
-                  vs2_index[i] = inst_vs2;
-                  vs2_eew[i]   = eew_vs2; 
-                  vs2_valid[i] = 1'b1; 
+                  vs2_offset[i] = 'b0;
+                  vs2_valid[i]  = 1'b1; 
                 end
                 EMUL2: begin
-                  vs2_index[i] = inst_vs2+uop_index_current[i][1];
-                  vs2_eew[i]   = eew_vs2; 
-                  vs2_valid[i] = 1'b1; 
+                  vs2_offset[i] = (inst_nf==NF2) ? {2'b0, uop_index_current[i][2]} : {2'b0, uop_index_current[i][1]};
+                  vs2_valid[i]  = 1'b1; 
                 end
                 EMUL4: begin
-                  vs2_index[i] = inst_vs2+uop_index_current[i][2:1];
-                  vs2_eew[i]   = eew_vs2; 
-                  vs2_valid[i] = 1'b1; 
+                  vs2_offset[i] = {1'b0, uop_index_current[i][2:1]};
+                  vs2_valid[i]  = 1'b1; 
                 end
               endcase
             end
             // 1:4
-            {SEW_8,SEW32}: begin     
+            {EEW8,EEW32}: begin     
               case(emul_vs2)
                 EMUL1: begin
-                  vs2_index[i] = inst_vs2;
-                  vs2_eew[i]   = eew_vs2; 
-                  vs2_valid[i] = 1'b1; 
+                  vs2_offset[i] = 'b0;
+                  vs2_valid[i]  = 1'b1; 
                 end
                 EMUL2: begin
-                  vs2_index[i] = inst_vs2+uop_index_current[i][2];
-                  vs2_eew[i]   = eew_vs2; 
-                  vs2_valid[i] = 1'b1; 
+                  vs2_offset[i] = {2'b0, uop_index_current[i][2]};
+                  vs2_valid[i]  = 1'b1; 
                 end
               endcase
             end
           endcase
         end
       endcase
+    end
+  end
+
+  // update vs2 index and eew 
+  always_comb begin
+    for(int i=0;i<`NUM_DE_UOP;i++) begin: GET_VS2
+      vs2_index[i] = inst_vs2 + {2'b0, vs2_offset[i]}; 
+      vs2_eew[i]   = eew_vs2; 
     end
   end
 
@@ -3450,24 +3647,39 @@ module rvv_backend_decode_unit_lsu
   // update segment_index valid
   always_comb begin
     for(int i=0;i<`NUM_DE_UOP;i++) begin: GET_SEG_INDEX
-      // initial 
-      seg_field_index[i] = 'b0;
+      // default
+      if (inst_nf==NF2)
+        seg_field_index[i] = {1'b0,uop_index_current[i][2:1]};
+      else if (inst_nf==NF3)
+        seg_field_index[i] = (uop_index_current[i]>=4'd3) ? 'd1 : 'b0;
+      else if (inst_nf==NF4)
+        seg_field_index[i] = {2'b0,uop_index_current[i][2]};
+      else
+        seg_field_index[i] = 'b0;
 
-      if(funct6_lsu.lsu_funct6.lsu_is_seg==IS_SEGMENT) begin
-        case(inst_nf)
-          NF2: begin
-            case(emul_max_vd_vs2)
-              EMUL2: seg_field_index[i] = {1'b0,uop_index_current[i][0]};
-              EMUL4: seg_field_index[i] = uop_index_current[i][1:0];
-            endcase
-          end
-          NF3,
-          NF4: begin
-            if (emul_max_vd_vs2==EMUL2)
-              seg_field_index[i] = {1'b0,uop_index_current[i][0]};
-          end
-        endcase
-      end
+      // EEW_vs2>EEW_vd for index load/store
+      case(inst_funct6[2:0])
+        UNORDERED_INDEX,
+        ORDERED_INDEX: begin
+          case({eew_vs2,eew_vd})
+            // 2:1
+            {EEW16,EEW8},
+            {EEW32,EEW16}: begin
+              case(emul_vs2)
+                EMUL2: seg_field_index[i] = {2'b0, uop_index_current[i][0]};
+                EMUL4: seg_field_index[i] = {1'b0, uop_index_current[i][2], uop_index_current[i][0]};
+              endcase
+            end
+            // 4:1
+            {EEW32,EEW8}: begin
+              case(emul_vs2)
+                EMUL2: seg_field_index[i] = {2'b0, uop_index_current[i][0]};
+                EMUL4: seg_field_index[i] = {1'b0, uop_index_current[i][1:0]};
+              endcase
+            end
+          endcase
+        end
+      endcase
     end
   end
 

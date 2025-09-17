@@ -362,6 +362,10 @@ task rvv_scoreboard::mem_access_checker();
         lsu_tr = mem_queue_lsu.pop_front();
         mdl_tr = mem_queue_mdl.pop_front();
         `uvm_info("MEM_RECORDER", $sformatf("\nMEM check start. ====================================================================================================\n"),UVM_HIGH)
+        `uvm_info("MEM_RECORDER", "lsu memory tr:", UVM_HIGH)
+        `uvm_info("MEM_RECORDER", lsu_tr.sprint(), UVM_HIGH)
+        `uvm_info("MEM_RECORDER", "mdl memory tr:", UVM_HIGH)
+        `uvm_info("MEM_RECORDER", mdl_tr.sprint(), UVM_HIGH)
         if(lsu_tr.kind != mdl_tr.kind) begin
           `uvm_error("MEM_CHCKER", $sformatf("Memory access kind mismatch: lsu = %s, mdl = %s", lsu_tr.kind.name(), mdl_tr.kind.name()))
           err++;

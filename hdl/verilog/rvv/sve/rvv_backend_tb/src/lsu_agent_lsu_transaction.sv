@@ -25,15 +25,15 @@ class lsu_transaction extends uvm_sequence_item;
   bit   data_vreg_valid;
   int   data_vreg_idx;
   eew_e data_vreg_eew;
-  int   data_vreg_byte_start;
-  int   data_vreg_byte_end;
+  int   data_vreg_byte_head;
+  int   data_vreg_byte_tail;
 
   // vs2
   bit   vidx_vreg_valid;
   int   vidx_vreg_idx;
   eew_e vidx_vreg_eew;
-  int   vidx_vreg_byte_start;
-  int   vidx_vreg_byte_end;
+  int   vidx_vreg_byte_head;
+  int   vidx_vreg_byte_tail;
 
   /* info about load/store address/data */
   bit  lsu_slot_addr_valid;
@@ -82,15 +82,15 @@ class lsu_transaction extends uvm_sequence_item;
 
     `uvm_field_int(data_vreg_idx,UVM_ALL_ON)
     `uvm_field_enum(eew_e,data_vreg_eew,UVM_ALL_ON)
-    `uvm_field_int(data_vreg_byte_start,UVM_ALL_ON)
-    `uvm_field_int(data_vreg_byte_end  ,UVM_ALL_ON)
+    `uvm_field_int(data_vreg_byte_head,UVM_ALL_ON)
+    `uvm_field_int(data_vreg_byte_tail,UVM_ALL_ON)
     `uvm_field_int(data_vreg_valid,UVM_ALL_ON)
 
     if(is_indexed) begin
       `uvm_field_int(vidx_vreg_idx  ,UVM_ALL_ON)
       `uvm_field_enum(eew_e, vidx_vreg_eew,UVM_ALL_ON)
-      `uvm_field_int(vidx_vreg_byte_start,UVM_ALL_ON)
-      `uvm_field_int(vidx_vreg_byte_end  ,UVM_ALL_ON)
+      `uvm_field_int(vidx_vreg_byte_head,UVM_ALL_ON)
+      `uvm_field_int(vidx_vreg_byte_tail,UVM_ALL_ON)
       `uvm_field_int(vidx_vreg_valid,UVM_ALL_ON)
     end 
     `uvm_field_int(lsu_slot_addr_valid, UVM_ALL_ON)
@@ -125,14 +125,14 @@ function lsu_transaction::new(string name = "Trans");
   data_vreg_valid      = 0;
   data_vreg_idx        = 0;
   data_vreg_eew        = EEW_NONE;
-  data_vreg_byte_start = 0;
-  data_vreg_byte_end   = 0;
+  data_vreg_byte_head  = 0;
+  data_vreg_byte_tail  = 0;
 
   vidx_vreg_valid      = 0;
   vidx_vreg_idx        = 0;
   vidx_vreg_eew        = EEW_NONE;
-  vidx_vreg_byte_start = 0;
-  vidx_vreg_byte_end   = 0;
+  vidx_vreg_byte_head  = 0;
+  vidx_vreg_byte_tail  = 0;
 
 
   lsu_slot_addr_valid = 1'b0;

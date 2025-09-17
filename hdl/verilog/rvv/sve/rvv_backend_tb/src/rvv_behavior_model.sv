@@ -413,6 +413,7 @@ endclass: rvv_behavior_model
           end
             
           `uvm_info("MDL",$sformatf("Prepare done!\nelm_idx_max=%0d\ndest_eew=%0d\nsrc2_eew=%0d\nsrc1_eew=%0d\ndest_emul=%2.4f\nsrc2_emul=%2.4f\nsrc1_emul=%2.4f\n",elm_idx_max,dest_eew,src2_eew,src1_eew,dest_emul,src2_emul,src1_emul),UVM_LOW)
+          `uvm_info("MDL",$sformatf("pc = 0x%8x, v0 = 0x%16x\n", inst_tr.pc, this.vrf[0]),UVM_LOW)
 
           // 2.2 Check VRF index
           dest_reg_idx_base = inst_tr.dest_idx_base;
@@ -1773,6 +1774,7 @@ endclass: alu_processor
 //------------------------------------------------------------------------------
 class lsu_processor extends uvm_component;  
 
+  parameter int MAX_SEG = 8;
   `uvm_component_utils(lsu_processor)
 
   int dest_eew; real dest_emul;
@@ -1780,6 +1782,9 @@ class lsu_processor extends uvm_component;
   int src2_eew; real src2_emul;
   int src1_eew; real src1_emul;
   int src0_eew; real src0_emul;
+
+  int data_eew; real data_emul;
+  int vidx_eew; real vidx_emul;
 
   vrf_t [31:0] vrf_temp;
 
@@ -1800,11 +1805,16 @@ class lsu_processor extends uvm_component;
   int address;
 
   int elm_idx_max;
+  int seg_idx;
   int seg_num;
   int seg_size;  // byte size
   int data_size; // byte size
   int vidx_size; // byte size
 
+  int elm_idx_head[MAX_SEG]; // elm pointer
+  int elm_idx_tail[MAX_SEG]; // elm pointer
+  int data_byte_idx[MAX_SEG];
+  int vidx_byte_idx[MAX_SEG];
   int uops_num;
   int elm_per_uop;
 
@@ -1815,12 +1825,28 @@ class lsu_processor extends uvm_component;
   endfunction: new 
   
   function void exe(rvv_behavior_model rvm, ref rvs_transaction inst_tr);
-    int uops_cnt = 0;
+    int seg_switch_gap = 0;
+    int switch_seg = 0;
+
     decode(inst_tr);
     `uvm_info("MDL/LSU", "LSU decode done", UVM_HIGH)
     `uvm_info("MDL/LSU", $sformatf("\n%s", inst_tr.sprint()), UVM_HIGH);
 
+    if(data_emul < 1) begin
+      seg_switch_gap = data_emul * `VLENB;
+    end else begin
+      seg_switch_gap = `VLENB;
+    end
+
     for(int seg_idx=0; seg_idx<seg_num; seg_idx++) begin
+      elm_idx_head[seg_idx]  = 0;
+      elm_idx_tail[seg_idx]  = elm_per_uop;
+      data_byte_idx[seg_idx] = 0;
+      vidx_byte_idx[seg_idx] = 0;
+    end
+
+    seg_idx = 0;
+    for(int uops_idx=0; uops_idx<uops_num; uops_idx++) begin
       dest_reg_idx_base = (inst_tr.dest_type == VRF) ? (inst_tr.dest_idx + seg_idx * int'($ceil(dest_emul))) : (inst_tr.dest_idx);
       src3_reg_idx_base = (inst_tr.src3_type == VRF) ? (inst_tr.src3_idx + seg_idx * int'($ceil(src3_emul))) : (inst_tr.src3_idx);
       src2_reg_idx_base = (inst_tr.src2_idx);
@@ -1829,7 +1855,13 @@ class lsu_processor extends uvm_component;
       `uvm_info("MDL/LSU", $sformatf("seg_idx=%0d: dest_reg_idx_base=%0d, src3_reg_idx_base=%0d, src2_reg_idx_base=%0d, src1_reg_idx_base=%0d",
                                   seg_idx,     dest_reg_idx_base,     src3_reg_idx_base,     src2_reg_idx_base,     src1_reg_idx_base), UVM_HIGH)
       `uvm_info("MDL/LSU", $sformatf("vreg[0]=0x%16h", rvm.vrf[0]), UVM_HIGH)
-      for(int elm_idx=0; elm_idx<elm_idx_max; elm_idx++) begin
+
+      `uvm_info("MDL/LSU", $sformatf("seg_idx           = %0d\n", seg_idx      ), UVM_HIGH)
+      `uvm_info("MDL/LSU", $sformatf("seg_switch_gap    = %0d\n", seg_switch_gap), UVM_HIGH)
+      `uvm_info("MDL/LSU", $sformatf("elm_idx_head[%0d] = %0d\n", seg_idx, elm_idx_head[seg_idx]), UVM_HIGH)
+      `uvm_info("MDL/LSU", $sformatf("elm_idx_tail[%0d] = %0d\n", seg_idx, elm_idx_tail[seg_idx]), UVM_HIGH)
+
+      for(int elm_idx=elm_idx_head[seg_idx]; elm_idx<elm_idx_tail[seg_idx]; elm_idx++) begin
         // fetch
         dest = rvm.elm_fetch(inst_tr.dest_type, dest_reg_idx_base, elm_idx, dest_eew);
         src3 = rvm.elm_fetch(inst_tr.src3_type, src3_reg_idx_base, elm_idx, src3_eew); 
@@ -1841,7 +1873,8 @@ class lsu_processor extends uvm_component;
         `uvm_info("MDL/LSU", $sformatf("dest=0x%8x, src3=0x%8x, src2=0x%8x, src1=0x%8x, src0=0x%8x", dest, src3, src2, src1, src0), UVM_HIGH);
 
         update_addr(inst_tr, seg_idx, seg_size, elm_idx, data_size, src2, src1);
-        if(rvm.trap_occured && uops_cnt<rvm.trap_occured_uop || !rvm.trap_occured) begin
+
+        if(rvm.trap_occured && uops_idx<rvm.trap_occured_uop || !rvm.trap_occured) begin
           if(elm_idx<vstart) begin
             // pre-start
             case(inst_tr.inst_type)
@@ -1884,10 +1917,28 @@ class lsu_processor extends uvm_component;
           else 
             rvm.vstart = rvm.trap_queue[0].vstart;
         end 
-        if(elm_idx%elm_per_uop == elm_per_uop-1) uops_cnt++;
+                
+        data_byte_idx[seg_idx] += data_eew/8;
+        vidx_byte_idx[seg_idx] += vidx_eew/8;
         `uvm_info("MDL/LSU", "\n---------------------------------------------------------------------------------------------------------------------------------\n", UVM_HIGH)
+      end // elm-loop
+        
+      switch_seg = data_byte_idx[seg_idx] >= seg_switch_gap;
+    
+      data_byte_idx[seg_idx] = (data_byte_idx[seg_idx] % `VLENB);
+      vidx_byte_idx[seg_idx] = (vidx_byte_idx[seg_idx] % `VLENB);
+
+      elm_idx_head[seg_idx] += elm_per_uop;
+      elm_idx_tail[seg_idx] += elm_per_uop;
+
+      if(switch_seg) begin
+        if(seg_idx == seg_num-1) begin
+          seg_idx = 0;
+        end else begin
+          seg_idx += 1;
+        end
       end
-    end // seg-loop
+    end // uops-loop
   endfunction
 
   function bit decode(ref rvs_transaction inst_tr);
@@ -1927,14 +1978,22 @@ class lsu_processor extends uvm_component;
 
     case(inst_tr.inst_type)
       LD: begin
-        seg_size = (seg_num) * dest_eew / 8;
+        seg_size  = (seg_num) * dest_eew / 8;
         data_size = dest_eew / 8;
         vidx_size = src2_eew / 8;
+        data_eew  = dest_eew;
+        vidx_eew  = src2_eew;
+        data_emul = dest_emul;
+        vidx_emul = src2_emul;
       end
       ST: begin
         seg_size = (seg_num) * src3_eew / 8;
         data_size = src3_eew / 8;
         vidx_size = src2_eew / 8;
+        data_eew  = src3_eew;
+        vidx_eew  = src2_eew;
+        data_emul = src3_emul;
+        vidx_emul = src2_emul;
       end
     endcase
     return 0;
