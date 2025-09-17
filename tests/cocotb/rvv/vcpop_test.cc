@@ -19,10 +19,9 @@ namespace {
 constexpr size_t buf_size = 16;
 }
 
-size_t vl __attribute__((section(".data"))) = buf_size;
+size_t vl __attribute__((section(".data"))) = 16;
 uint8_t in_buf[buf_size] __attribute__((section(".data")));
 uint32_t result __attribute__((section(".data")));
-void (*impl)() __attribute__((section(".data"))) = nullptr;
 
 extern "C" {
 __attribute__((used, retain)) void vcpop_m_b1() {
@@ -61,6 +60,8 @@ __attribute__((used, retain)) void vcpop_m_b32() {
   result = __riscv_vcpop_m_b32(data, vl);
 }
 }
+
+void (*impl)() __attribute__((section(".data"))) = vcpop_m_b8;
 
 int main(int argc, char** argv) {
   impl();

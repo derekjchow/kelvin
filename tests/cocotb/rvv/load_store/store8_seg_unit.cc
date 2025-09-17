@@ -20,7 +20,7 @@ namespace {
 constexpr size_t buf_size = 256;
 }  // namespace
 
-size_t vl __attribute__((section(".data"))) = 64;
+size_t vl __attribute__((section(".data"))) = 16;
 // These instructions don't differentiate signed/unsigned so we only need to
 // test one. The types come from intrinsic level.
 uint8_t in_buf[buf_size] __attribute__((section(".data")));
