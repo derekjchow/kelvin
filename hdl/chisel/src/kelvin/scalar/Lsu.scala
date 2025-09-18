@@ -166,7 +166,12 @@ class LsuUOp(p: Parameters) extends Bundle {
   val pc = UInt(32.W)
   val addr = UInt(32.W)
   val data = UInt(32.W)  // Doubles as rs2
+  // This aligns with "width" in the spec. It controls index width in
+  // indexed loads/stores and data width otherwise.
   val elemWidth = Option.when(p.enableRvv) { UInt(3.W) }
+  // This is the sew from vtype. It controls data width in indexed
+  // loads/stores and is unused in other ops.
+  val sew = Option.when(p.enableRvv) { UInt(3.W) }
   val lmul = Option.when(p.enableRvv) { UInt(4.W) }
   val nfields = Option.when(p.enableRvv) { UInt(3.W) }
 
@@ -207,6 +212,7 @@ object LsuUOp {
       result.lmul.get := 1.U(1.W) << effectiveLmul
       // If mask operation, force fields to zero
       result.nfields.get := Mux(cmd.isMaskOperation(), 0.U, cmd.nfields.get)
+      result.sew.get := rvvState.get.bits.sew
     }
 
     result
@@ -235,22 +241,35 @@ object ComputeIndexedAddrs {
   def apply(bytesPerSlot: Int,
             baseAddr: UInt,
             indices: UInt,
-            elemWidth: UInt): Vec[UInt] = {
+            indexWidth: UInt,
+            sew: UInt): Vec[UInt] = {
     val indices8 = UIntToVec(indices, 8)
-    val indices16 = UIntToVec(indices, 16)
-    val indices32 = UIntToVec(indices, 32)
+    val indices16 = UIntToVec(indices, 16).padTo(bytesPerSlot, 0.U)
+    val indices32 = UIntToVec(indices, 32).padTo(bytesPerSlot, 0.U)
+
+    val indices_v = MuxCase(VecInit.fill(bytesPerSlot)(0.U(32.W)), Seq(
+      // 8-bit indices.
+      (indexWidth === "b000".U) -> VecInit((0 until bytesPerSlot).map(
+        i => Cat(0.U(24.W), indices8(i)))),
+      // 16-bit indices.
+      (indexWidth === "b101".U) -> VecInit((0 until bytesPerSlot).map(
+        i => Cat(0.U(16.W), indices16(i)))),
+      // 32-bit indices.
+      (indexWidth === "b110".U) -> VecInit((0 until bytesPerSlot).map(
+        i => indices32(i))),
+    ))
 
     MuxCase(VecInit.fill(bytesPerSlot)(0.U(32.W)), Seq(
       // elemWidth validation is done at decode time.
       // 8-bit indices. Each byte has its own offset.
-      (elemWidth === "b000".U) -> VecInit((0 until bytesPerSlot).map(
-          i => (baseAddr + indices8(i))(31, 0))),
+      (sew === "b000".U) -> VecInit((0 until bytesPerSlot).map(
+          i => (baseAddr + indices_v(i)))),
       // 16-bit indices. Each 2-byte element has an offset.
-      (elemWidth === "b101".U) -> VecInit((0 until bytesPerSlot).map(
-          i => (baseAddr + indices16(i >> 1))(31, 0) + (i & 1).U)),
+      (sew === "b001".U) -> VecInit((0 until bytesPerSlot).map(
+          i => (baseAddr + indices_v(i >> 1) + (i & 1).U))),
       // 32-bit indices. Each 4-byte element has an offset.
-      (elemWidth === "b110".U) -> VecInit((0 until bytesPerSlot).map(
-          i => (baseAddr + indices32(i >> 2))(31, 0) + (i & 3).U))
+      (sew === "b010".U) -> VecInit((0 until bytesPerSlot).map(
+          i => (baseAddr + indices_v(i >> 2) + (i & 3).U)))
     ))
   }
 }
@@ -273,7 +292,12 @@ class LsuSlot(bytesPerSlot: Int, bytesPerLine: Int) extends Bundle {
   val lmul = UInt(4.W)
   val elemStride = UInt(32.W)     // Stride between lanes in a vector
   val segmentStride = UInt(32.W)  // Stride between base addr between segments
+  // This aligns with "width" in the spec. It controls index width in
+  // indexed loads/stores and data width otherwise.
   val elemWidth = UInt(3.W)
+  // This controls data width in indexed loads/stores and is unused in
+  // other ops.
+  val sew = UInt(3.W)
   val nfields = UInt(3.W)
   val segment = UInt(3.W)
   // Add this to find the next segment.
@@ -339,9 +363,10 @@ class LsuSlot(bytesPerSlot: Int, bytesPerLine: Int) extends Bundle {
         op.isOneOf(LsuOp.VLOAD_OINDEXED, LsuOp.VLOAD_UINDEXED,
                    LsuOp.VSTORE_OINDEXED, LsuOp.VSTORE_UINDEXED) ->
             ComputeIndexedAddrs(bytesPerSlot, baseAddr, rvv2lsu.idx.bits.data,
-                                elemWidth)
+                                elemWidth, sew),
     ))
     result.elemWidth := elemWidth
+    result.sew := sew
 
     result.data := Mux(updated && LsuOp.isVector(op) && rvv2lsu.vregfile.valid,
         UIntToVec(rvv2lsu.vregfile.bits.data, 8), data)
@@ -386,6 +411,7 @@ class LsuSlot(bytesPerSlot: Int, bytesPerLine: Int) extends Bundle {
     result.elemStride := elemStride
     result.segmentStride := segmentStride
     result.elemWidth := elemWidth
+    result.sew := sew
     result.nfields := nfields
     result.segment := segment
     result.nextSegmentVectorOffset := nextSegmentVectorOffset
@@ -412,6 +438,7 @@ class LsuSlot(bytesPerSlot: Int, bytesPerLine: Int) extends Bundle {
     result.elemStride := elemStride
     result.segmentStride := segmentStride
     result.elemWidth := elemWidth
+    result.sew := sew
     result.nfields := nfields
     result.nextSegmentVectorOffset := nextSegmentVectorOffset
     result.nextLmulVectorRewind := nextLmulVectorRewind
@@ -492,6 +519,7 @@ class LsuSlot(bytesPerSlot: Int, bytesPerLine: Int) extends Bundle {
     result.elemStride := elemStride
     result.segmentStride := segmentStride
     result.elemWidth := elemWidth
+    result.sew := sew
     result.nfields := nfields
     result.segment := segment
     result.nextSegmentVectorOffset := nextSegmentVectorOffset
@@ -571,6 +599,7 @@ object LsuSlot {
     // Compute addrs
     result.baseAddr := uop.addr
     result.elemWidth := uop.elemWidth.getOrElse(0.U(3.W))
+    result.sew := uop.sew.getOrElse(0.U(3.W))
     result.addrs := Mux(
         uop.op.isOneOf(LsuOp.VLOAD_STRIDED, LsuOp.VSTORE_STRIDED),
         ComputeStridedAddrs(bytesPerSlot, uop.addr, uop.data, uop.elemWidth.getOrElse(0.U(3.W))),

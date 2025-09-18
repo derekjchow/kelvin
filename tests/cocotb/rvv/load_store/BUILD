@@ -23,8 +23,14 @@ template_rule(
         "load_store_bits": {
             "srcs": ["load_store_bits.cc"],
         },
-        "load8_indexed_m1": {
-            "srcs": ["load8_indexed_m1.cc"],
+        "load8_index8": {
+            "srcs": ["load8_index8.cc"],
+        },
+        "load8_index16": {
+            "srcs": ["load8_index16.cc"],
+        },
+        "load8_index32": {
+            "srcs": ["load8_index32.cc"],
         },
         "load8_seg_unit": {
             "srcs": ["load8_seg_unit.cc"],
@@ -96,7 +102,9 @@ filegroup(
     name = "rvv_load_store_tests",
     srcs = [
         ":load_store_bits.elf",
-        ":load8_indexed_m1.elf",
+        ":load8_index8.elf",
+        ":load8_index16.elf",
+        ":load8_index32.elf",
         ":load8_seg_unit.elf",
         ":load8_segment2_stride6_m1.elf",
         ":load16_segment2_stride6_m1.elf",

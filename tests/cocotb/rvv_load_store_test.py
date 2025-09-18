@@ -14,6 +14,7 @@
 
 import cocotb
 import numpy as np
+import tqdm
 
 from bazel_tools.tools.python.runfiles import runfiles
 from kelvin_test_utils.sim_test_fixture import Fixture
@@ -75,13 +76,14 @@ async def vector_load_store_v2(
     r = runfiles.Create()
     await fixture.load_elf_and_lookup_symbols(
         r.Rlocation('kelvin_hw/tests/cocotb/rvv/load_store/' + elf_name),
-        ['impl', 'vl', 'in_buf', 'out_buf'] + [c['impl'] for c in cases],
+        ['impl', 'vl', 'in_buf', 'out_buf'] +
+            list(set([c['impl'] for c in cases])),
     )
 
     min_value = np.iinfo(dtype).min
     max_value = np.iinfo(dtype).max + 1  # One above.
     rng = np.random.default_rng()
-    for c in cases:
+    for c in tqdm.tqdm(cases):
         impl = c['impl']
         vl = c['vl']
         in_size = c['in_size']
@@ -111,10 +113,13 @@ async def vector_load_store_v2(
         })
         assert (actual_outputs == expected_outputs).all(), debug_msg
 
+
 async def vector_load_indexed(
         dut,
         elf_name: str,
+        cases: list[dict],  # keys: impl, vl, in_size, out_size.
         dtype,
+        index_dtype,
 ):
     """RVV load-store test template for indexed loads.
 
@@ -124,32 +129,47 @@ async def vector_load_indexed(
     r = runfiles.Create()
     await fixture.load_elf_and_lookup_symbols(
         r.Rlocation('kelvin_hw/tests/cocotb/rvv/load_store/' + elf_name),
-        ['input_indices', 'input_data', 'output_data'],
+        ['impl', 'vl', 'in_buf', 'out_buf', 'index_buf'] +
+            list(set([c['impl'] for c in cases])),
     )
-
-    indices_count = 16 // np.dtype(dtype).itemsize
-    in_data_count = 4096 // np.dtype(dtype).itemsize
-    out_data_count = 16 // np.dtype(dtype).itemsize
 
     min_value = np.iinfo(dtype).min
     max_value = np.iinfo(dtype).max + 1  # One above.
     rng = np.random.default_rng()
-    input_data = rng.integers(min_value, max_value, in_data_count, dtype=dtype)
-    input_indices = rng.integers(
-        0, min(max_value, in_data_count-1), indices_count, dtype=dtype)
+    for c in tqdm.tqdm(cases):
+        impl = c['impl']
+        vl = c['vl']
+        in_size = c['in_size']
+        out_size = c['out_size']
 
-    expected_outputs = np.take(input_data, input_indices)
+        # TODO(davidgao): currently assuming the vl is supported.
+        # We'll eventually want to test unsupported vl.
+        indices = rng.integers(0, in_size, vl, dtype=index_dtype)
+        input_data = rng.integers(min_value, max_value, in_size, dtype=dtype)
+        expected_outputs = input_data[indices[:vl]]
+        sbz = np.zeros(out_size - vl, dtype=dtype)
+        expected_outputs = np.concat((expected_outputs, sbz))
 
-    await fixture.write('input_data', input_data)
-    await fixture.write('input_indices', input_indices)
-    await fixture.write('output_data', np.zeros([out_data_count], dtype=dtype))
+        await fixture.write_ptr('impl', impl)
+        await fixture.write_word('vl', vl)
+        await fixture.write('index_buf', indices)
+        await fixture.write('in_buf', input_data)
+        await fixture.write('out_buf', np.zeros([out_size], dtype=dtype))
 
-    await fixture.run_to_halt()
+        await fixture.run_to_halt()
 
-    actual_outputs = (await fixture.read(
-        'output_data', out_data_count * np.dtype(dtype).itemsize)).view(dtype)
+        actual_outputs = (await fixture.read(
+            'out_buf', out_size * np.dtype(dtype).itemsize)).view(dtype)
 
-    assert (actual_outputs == expected_outputs).all()
+        debug_msg = str({
+            'impl': impl,
+            'input': input_data,
+            'indices': indices,
+            'expected': expected_outputs,
+            'actual': actual_outputs,
+        })
+        assert (actual_outputs == expected_outputs).all(), debug_msg
+
 
 async def vector_store_indexed(
         dut,
@@ -223,7 +243,8 @@ async def load_store_bits(dut):
     await fixture.load_elf_and_lookup_symbols(
         r.Rlocation(
             'kelvin_hw/tests/cocotb/rvv/load_store/load_store_bits.elf'),
-        ['vl', 'in_buf', 'out_buf', 'impl'] + [c['impl'] for c in cases],
+        ['vl', 'in_buf', 'out_buf', 'impl'] +
+            list(set([c['impl'] for c in cases])),
     )
     rng = np.random.default_rng()
     for c in cases:
@@ -460,6 +481,139 @@ async def load8_seg_unit(dut):
 
 
 @cocotb.test()
+async def load8_index8(dut):
+    """Test vl*xei8_v_u8 usage accessible from intrinsics."""
+    def make_test_case(impl: str, vl: int):
+        return {
+            'impl': impl,
+            'vl': vl,
+            'in_size': 256,
+            'out_size': vl * 2,
+        }
+
+    await vector_load_indexed(
+        dut = dut,
+        elf_name = 'load8_index8.elf',
+        cases = [
+            # Unordered
+            make_test_case('vluxei8_v_u8mf4', vl = 4),
+            make_test_case('vluxei8_v_u8mf4', vl = 3),
+            make_test_case('vluxei8_v_u8mf2', vl = 8),
+            make_test_case('vluxei8_v_u8mf2', vl = 7),
+            make_test_case('vluxei8_v_u8m1', vl = 16),
+            make_test_case('vluxei8_v_u8m1', vl = 15),
+            make_test_case('vluxei8_v_u8m2', vl = 32),
+            make_test_case('vluxei8_v_u8m2', vl = 31),
+            make_test_case('vluxei8_v_u8m4', vl = 64),
+            make_test_case('vluxei8_v_u8m4', vl = 63),
+            make_test_case('vluxei8_v_u8m8', vl = 128),
+            make_test_case('vluxei8_v_u8m8', vl = 127),
+            # Ordered
+            make_test_case('vloxei8_v_u8mf4', vl = 4),
+            make_test_case('vloxei8_v_u8mf4', vl = 3),
+            make_test_case('vloxei8_v_u8mf2', vl = 8),
+            make_test_case('vloxei8_v_u8mf2', vl = 7),
+            make_test_case('vloxei8_v_u8m1', vl = 16),
+            make_test_case('vloxei8_v_u8m1', vl = 15),
+            make_test_case('vloxei8_v_u8m2', vl = 32),
+            make_test_case('vloxei8_v_u8m2', vl = 31),
+            make_test_case('vloxei8_v_u8m4', vl = 64),
+            make_test_case('vloxei8_v_u8m4', vl = 63),
+            make_test_case('vloxei8_v_u8m8', vl = 128),
+            make_test_case('vloxei8_v_u8m8', vl = 127),
+        ],
+        dtype = np.uint8,
+        index_dtype = np.uint8,
+    )
+
+
+@cocotb.test()
+async def load8_index16(dut):
+    """Test vl*xei16_v_u8 usage accessible from intrinsics."""
+    def make_test_case(impl: str, vl: int):
+        return {
+            'impl': impl,
+            'vl': vl,
+            'in_size': 32000,  # DTCM is 32KB
+            'out_size': vl * 2,
+        }
+
+    await vector_load_indexed(
+        dut = dut,
+        elf_name = 'load8_index16.elf',
+        cases = [
+            # Unordered
+            make_test_case('vluxei16_v_u8mf4', vl = 4),
+            make_test_case('vluxei16_v_u8mf4', vl = 3),
+            make_test_case('vluxei16_v_u8mf2', vl = 8),
+            make_test_case('vluxei16_v_u8mf2', vl = 7),
+            # make_test_case('vluxei16_v_u8m1', vl = 16),
+            # make_test_case('vluxei16_v_u8m1', vl = 15),
+            # make_test_case('vluxei16_v_u8m2', vl = 32),
+            # make_test_case('vluxei16_v_u8m2', vl = 31),
+            # make_test_case('vluxei16_v_u8m4', vl = 64),
+            # make_test_case('vluxei16_v_u8m4', vl = 63),
+            # Ordered
+            make_test_case('vloxei16_v_u8mf4', vl = 4),
+            make_test_case('vloxei16_v_u8mf4', vl = 3),
+            make_test_case('vloxei16_v_u8mf2', vl = 8),
+            make_test_case('vloxei16_v_u8mf2', vl = 7),
+            # make_test_case('vloxei16_v_u8m1', vl = 16),
+            # make_test_case('vloxei16_v_u8m1', vl = 15),
+            # make_test_case('vloxei16_v_u8m2', vl = 32),
+            # make_test_case('vloxei16_v_u8m2', vl = 31),
+            # make_test_case('vloxei16_v_u8m4', vl = 64),
+            # make_test_case('vloxei16_v_u8m4', vl = 63),
+        ],
+        dtype = np.uint8,
+        index_dtype = np.uint16,
+    )
+
+
+@cocotb.test()
+async def load8_index32(dut):
+    """Test vl*xei32_v_u8 usage accessible from intrinsics."""
+    def make_test_case(impl: str, vl: int):
+        return {
+            'impl': impl,
+            'vl': vl,
+            'in_size': 32000,  # DTCM is 32KB
+            'out_size': vl * 2,
+        }
+
+    await vector_load_indexed(
+        dut = dut,
+        elf_name = 'load8_index32.elf',
+        cases = [
+            # Unordered
+            make_test_case('vluxei32_v_u8mf4', vl = 4),
+            make_test_case('vluxei32_v_u8mf4', vl = 3),
+            # make_test_case('vluxei32_v_u8mf2', vl = 8),
+            # make_test_case('vluxei32_v_u8mf2', vl = 7),
+            # make_test_case('vluxei32_v_u8m1', vl = 16),
+            # make_test_case('vluxei32_v_u8m1', vl = 15),
+            # make_test_case('vluxei32_v_u8m2', vl = 32),
+            # make_test_case('vluxei32_v_u8m2', vl = 31),
+            # make_test_case('vluxei32_v_u8m4', vl = 64),
+            # make_test_case('vluxei32_v_u8m4', vl = 63),
+            # Ordered
+            make_test_case('vloxei32_v_u8mf4', vl = 4),
+            make_test_case('vloxei32_v_u8mf4', vl = 3),
+            # make_test_case('vloxei32_v_u8mf2', vl = 8),
+            # make_test_case('vloxei32_v_u8mf2', vl = 7),
+            # make_test_case('vloxei32_v_u8m1', vl = 16),
+            # make_test_case('vloxei32_v_u8m1', vl = 15),
+            # make_test_case('vloxei32_v_u8m2', vl = 32),
+            # make_test_case('vloxei32_v_u8m2', vl = 31),
+            # make_test_case('vloxei32_v_u8m4', vl = 64),
+            # make_test_case('vloxei32_v_u8m4', vl = 63),
+        ],
+        dtype = np.uint8,
+        index_dtype = np.uint32,
+    )
+
+
+@cocotb.test()
 async def load16_seg_unit(dut):
     """Test vlseg*e16 usage accessible from intrinsics."""
     def make_test_case(impl: str, vl: int, n_segs: int):
@@ -600,14 +754,6 @@ async def load16_segment2_stride6_m1(dut):
         pattern=([i * 3 for i in range(8)] + [i * 3 + 1 for i in range(8)]),
     )
 
-
-@cocotb.test()
-async def load8_indexed_m1(dut):
-    await vector_load_indexed(
-        dut = dut,
-        elf_name = 'load8_indexed_m1.elf',
-        dtype = np.uint8,
-    )
 
 @cocotb.test()
 async def store8_indexed_m1(dut):
