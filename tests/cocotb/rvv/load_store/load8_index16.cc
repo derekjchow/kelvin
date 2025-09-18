@@ -44,21 +44,51 @@ __attribute__((used, retain)) void vluxei16_v_u8mf2() {
 }
 
 __attribute__((used, retain)) void vluxei16_v_u8m1() {
-  auto indices = __riscv_vle16_v_u16m2(index_buf, vl);
-  auto data = __riscv_vluxei16_v_u8m1(in_buf, indices, vl);
-  __riscv_vse8_v_u8m1(out_buf, data, vl);
+  asm volatile("vsetvli zero, %0, e16, m2, ta, ma;"
+               "vle16.v v2, (%1);"
+               "vsetvli zero, %0, e8, m1, ta, ma;"
+               "vluxei16.v v2, (%2), v2;"
+               "vse8.v v2, (%3);"
+               :
+               : "r" (vl), "r" (index_buf), "r" (in_buf), "r" (out_buf)
+               : "v2");
+
+  // TODO: Revert once compiler bug is eliminated
+  // auto indices = __riscv_vle16_v_u16m2(index_buf, vl);
+  // auto data = __riscv_vluxei16_v_u8m1(in_buf, indices, vl);
+  // __riscv_vse8_v_u8m1(out_buf, data, vl);
 }
 
 __attribute__((used, retain)) void vluxei16_v_u8m2() {
-  auto indices = __riscv_vle16_v_u16m4(index_buf, vl);
-  auto data = __riscv_vluxei16_v_u8m2(in_buf, indices, vl);
-  __riscv_vse8_v_u8m2(out_buf, data, vl);
+  asm volatile("vsetvli zero, %0, e16, m4, ta, ma;"
+               "vle16.v v4, (%1);"
+               "vsetvli zero, %0, e8, m2, ta, ma;"
+               "vluxei16.v v4, (%2), v4;"
+               "vse8.v v4, (%3);"
+               :
+               : "r" (vl), "r" (index_buf), "r" (in_buf), "r" (out_buf)
+               : "v4");
+
+  // TODO: Revert once compiler bug is eliminated
+  // auto indices = __riscv_vle16_v_u16m4(index_buf, vl);
+  // auto data = __riscv_vluxei16_v_u8m2(in_buf, indices, vl);
+  // __riscv_vse8_v_u8m2(out_buf, data, vl);
 }
 
 __attribute__((used, retain)) void vluxei16_v_u8m4() {
-  auto indices = __riscv_vle16_v_u16m8(index_buf, vl);
-  auto data = __riscv_vluxei16_v_u8m4(in_buf, indices, vl);
-  __riscv_vse8_v_u8m4(out_buf, data, vl);
+  asm volatile("vsetvli zero, %0, e16, m8, ta, ma;"
+               "vle16.v v8, (%1);"
+               "vsetvli zero, %0, e8, m4, ta, ma;"
+               "vluxei16.v v8, (%2), v8;"
+               "vse8.v v8, (%3);"
+               :
+               : "r" (vl), "r" (index_buf), "r" (in_buf), "r" (out_buf)
+               : "v8");
+
+  // TODO: Revert once compiler bug is eliminated
+  // auto indices = __riscv_vle16_v_u16m8(index_buf, vl);
+  // auto data = __riscv_vluxei16_v_u8m4(in_buf, indices, vl);
+  // __riscv_vse8_v_u8m4(out_buf, data, vl);
 }
 
 // Ordered
@@ -75,21 +105,51 @@ __attribute__((used, retain)) void vloxei16_v_u8mf2() {
 }
 
 __attribute__((used, retain)) void vloxei16_v_u8m1() {
-  auto indices = __riscv_vle16_v_u16m2(index_buf, vl);
-  auto data = __riscv_vloxei16_v_u8m1(in_buf, indices, vl);
-  __riscv_vse8_v_u8m1(out_buf, data, vl);
+  asm volatile("vsetvli zero, %0, e16, m2, ta, ma;"
+               "vle16.v v2, (%1);"
+               "vsetvli zero, %0, e8, m1, ta, ma;"
+               "vloxei16.v v2, (%2), v2;"
+               "vse8.v v2, (%3);"
+               :
+               : "r" (vl), "r" (index_buf), "r" (in_buf), "r" (out_buf)
+               : "v2");
+
+  // TODO: Revert once compiler bug is eliminated
+  // auto indices = __riscv_vle16_v_u16m2(index_buf, vl);
+  // auto data = __riscv_vloxei16_v_u8m1(in_buf, indices, vl);
+  // __riscv_vse8_v_u8m1(out_buf, data, vl);
 }
 
 __attribute__((used, retain)) void vloxei16_v_u8m2() {
-  auto indices = __riscv_vle16_v_u16m4(index_buf, vl);
-  auto data = __riscv_vloxei16_v_u8m2(in_buf, indices, vl);
-  __riscv_vse8_v_u8m2(out_buf, data, vl);
+  asm volatile("vsetvli zero, %0, e16, m4, ta, ma;"
+               "vle16.v v4, (%1);"
+               "vsetvli zero, %0, e8, m2, ta, ma;"
+               "vloxei16.v v4, (%2), v4;"
+               "vse8.v v4, (%3);"
+               :
+               : "r" (vl), "r" (index_buf), "r" (in_buf), "r" (out_buf)
+               : "v4");
+
+  // TODO: Revert once compiler bug is eliminated
+  // auto indices = __riscv_vle16_v_u16m4(index_buf, vl);
+  // auto data = __riscv_vloxei16_v_u8m2(in_buf, indices, vl);
+  // __riscv_vse8_v_u8m2(out_buf, data, vl);
 }
 
 __attribute__((used, retain)) void vloxei16_v_u8m4() {
-  auto indices = __riscv_vle16_v_u16m8(index_buf, vl);
-  auto data = __riscv_vloxei16_v_u8m4(in_buf, indices, vl);
-  __riscv_vse8_v_u8m4(out_buf, data, vl);
+  asm volatile("vsetvli zero, %0, e16, m8, ta, ma;"
+               "vle16.v v8, (%1);"
+               "vsetvli zero, %0, e8, m4, ta, ma;"
+               "vloxei16.v v8, (%2), v8;"
+               "vse8.v v8, (%3);"
+               :
+               : "r" (vl), "r" (index_buf), "r" (in_buf), "r" (out_buf)
+               : "v8");
+
+  // TODO: Revert once compiler bug is eliminated
+  // auto indices = __riscv_vle16_v_u16m8(index_buf, vl);
+  // auto data = __riscv_vloxei16_v_u8m4(in_buf, indices, vl);
+  // __riscv_vse8_v_u8m4(out_buf, data, vl);
 }
 }
 

@@ -104,6 +104,16 @@ object LsuOp extends ChiselEnum {
                LsuOp.VSTORE_OINDEXED, LsuOp.VSTORE_UINDEXED)
   }
 
+  def isIndexedVector(op: LsuOp.Type): Bool = {
+    op.isOneOf(LsuOp.VLOAD_OINDEXED, LsuOp.VLOAD_UINDEXED,
+               LsuOp.VSTORE_OINDEXED, LsuOp.VSTORE_UINDEXED)
+  }
+
+  def isNonindexedVector(op: LsuOp.Type): Bool = {
+    op.isOneOf(LsuOp.VLOAD_UNIT, LsuOp.VLOAD_STRIDED,
+               LsuOp.VSTORE_UNIT, LsuOp.VSTORE_STRIDED)
+  }
+
   def isFlush(op: LsuOp.Type): Bool = {
     op.isOneOf(LsuOp.FENCEI, LsuOp.FLUSHAT, LsuOp.FLUSHALL)
   }
@@ -172,7 +182,7 @@ class LsuUOp(p: Parameters) extends Bundle {
   // This is the sew from vtype. It controls data width in indexed
   // loads/stores and is unused in other ops.
   val sew = Option.when(p.enableRvv) { UInt(3.W) }
-  val lmul = Option.when(p.enableRvv) { UInt(4.W) }
+  val lmul = Option.when(p.enableRvv) { UInt(3.W) }
   val nfields = Option.when(p.enableRvv) { UInt(3.W) }
 
   override def toPrintable: Printable = {
@@ -203,13 +213,9 @@ object LsuUOp {
     }
     if (p.enableRvv) {
       result.elemWidth.get := cmd.elemWidth.get
-      val effectiveLmul = MuxCase(rvvState.get.bits.lmul(1, 0), Seq(
-        // Treat fractional LMULs as LMUL=1
-        (rvvState.get.bits.lmul(2)) -> 0.U(2.W),
-        // If mask operation, always force LMUL=1.
-        (cmd.isMaskOperation()) -> 0.U(2.W),
-      ))
-      result.lmul.get := 1.U(1.W) << effectiveLmul
+      // If mask operation, always make LMUL=1.
+      result.lmul.get := Mux(cmd.isMaskOperation(), 0.U, rvvState.get.bits.lmul)
+
       // If mask operation, force fields to zero
       result.nfields.get := Mux(cmd.isMaskOperation(), 0.U, cmd.nfields.get)
       result.sew.get := rvvState.get.bits.sew
@@ -243,20 +249,18 @@ object ComputeIndexedAddrs {
             indices: UInt,
             indexWidth: UInt,
             sew: UInt): Vec[UInt] = {
-    val indices8 = UIntToVec(indices, 8)
-    val indices16 = UIntToVec(indices, 16).padTo(bytesPerSlot, 0.U)
-    val indices32 = UIntToVec(indices, 32).padTo(bytesPerSlot, 0.U)
+    val indices8 = UIntToVec(indices, 8).map(x => Cat(0.U(24.W), x))
+    val indices16 = UIntToVec(indices, 16).map(x => Cat(0.U(16.W), x))
+    val indices32 = UIntToVec(indices, 32)
 
     val indices_v = MuxCase(VecInit.fill(bytesPerSlot)(0.U(32.W)), Seq(
       // 8-bit indices.
-      (indexWidth === "b000".U) -> VecInit((0 until bytesPerSlot).map(
-        i => Cat(0.U(24.W), indices8(i)))),
+      (indexWidth === "b000".U) -> VecInit(indices8),
       // 16-bit indices.
-      (indexWidth === "b101".U) -> VecInit((0 until bytesPerSlot).map(
-        i => Cat(0.U(16.W), indices16(i)))),
+      (indexWidth === "b101".U) -> VecInit(indices16 ++ indices16),
       // 32-bit indices.
-      (indexWidth === "b110".U) -> VecInit((0 until bytesPerSlot).map(
-        i => indices32(i))),
+      (indexWidth === "b110".U) -> VecInit(
+          indices32 ++ indices32 ++ indices32 ++ indices32),
     ))
 
     MuxCase(VecInit.fill(bytesPerSlot)(0.U(32.W)), Seq(
@@ -289,6 +293,8 @@ class LsuSlot(bytesPerSlot: Int, bytesPerLine: Int) extends Bundle {
   val data = Vec(bytesPerSlot, UInt(8.W))
   val pendingVector = Bool()
   val pendingWriteback = Bool()
+  val subvector = UInt(3.W)
+  val subvectors = UInt(3.W)
   val lmul = UInt(4.W)
   val elemStride = UInt(32.W)     // Stride between lanes in a vector
   val segmentStride = UInt(32.W)  // Stride between base addr between segments
@@ -311,6 +317,7 @@ class LsuSlot(bytesPerSlot: Int, bytesPerLine: Int) extends Bundle {
       active.reduce(_||_) ||                  // Active transaction
       pendingWriteback ||                     // Send result back to regfile
       (nfields =/= segment) ||                // No pending segments
+      (subvector =/= subvectors) ||           // No pending subvectors
       (LsuOp.isVector(op) && (lmul =/= 0.U))  // More operations in progress
     )
   }
@@ -346,6 +353,8 @@ class LsuSlot(bytesPerSlot: Int, bytesPerLine: Int) extends Bundle {
     result.store := store
     result.pc := pc
     result.pendingWriteback := pendingWriteback
+    result.subvector := subvector
+    result.subvectors := subvectors
     result.lmul := lmul
     result.baseAddr := baseAddr
     result.elemStride := elemStride
@@ -368,11 +377,16 @@ class LsuSlot(bytesPerSlot: Int, bytesPerLine: Int) extends Bundle {
     result.elemWidth := elemWidth
     result.sew := sew
 
-    result.data := Mux(updated && LsuOp.isVector(op) && rvv2lsu.vregfile.valid,
+    val shouldUpdate = updated && (
+        LsuOp.isNonindexedVector(op) ||
+        (subvectors === 1.U) ||
+        rvv2lsu.idx.valid)
+
+    result.data := Mux(shouldUpdate && LsuOp.isVector(op) && rvv2lsu.vregfile.valid,
         UIntToVec(rvv2lsu.vregfile.bits.data, 8), data)
-    result.active := Mux(updated && LsuOp.isVector(op) && rvv2lsu.mask.valid,
+    result.active := Mux(shouldUpdate && LsuOp.isVector(op) && rvv2lsu.mask.valid,
         VecInit(rvv2lsu.mask.bits.asBools), active)
-    result.pendingVector := pendingVector && !updated
+    result.pendingVector := pendingVector && !shouldUpdate
     result.nfields := nfields
     result.segment := segment
 
@@ -402,6 +416,8 @@ class LsuSlot(bytesPerSlot: Int, bytesPerLine: Int) extends Bundle {
     result.baseAddr := baseAddr
     result.addrs := addrs
     result.pendingWriteback := pendingWriteback
+    result.subvector := subvector
+    result.subvectors := subvectors
     result.pendingVector := pendingVector
     result.lmul := lmul
     result.active := (0 until bytesPerSlot).map(
@@ -445,17 +461,26 @@ class LsuSlot(bytesPerSlot: Int, bytesPerLine: Int) extends Bundle {
 
     val vectorWriteback = writeback && LsuOp.isVector(op)
 
+    val subvectorDone = ((subvector + 1.U) === subvectors)
+    val subvectorNext = Mux(subvectorDone, 0.U, subvector + 1.U)
+    result.subvectors := subvectors
+    result.subvector := MuxCase(subvectorNext, Seq(
+      (!vectorWriteback) -> subvector,
+      // Final subvector, final segment, final lmul, don't reset subvector.
+      ((segment === nfields) && (lmul === 1.U) && ((subvector + 1.U) === subvectors)) -> (subvector + 1.U),
+    ))
+
     val segmentNext = MuxCase(segment, Seq(
       // Final segment, No next LMUL: don't reset segment
-      (vectorWriteback && (segment === nfields) && (lmul === 1.U)) -> segment,
+      (subvectorDone && (segment === nfields) && (lmul === 1.U)) -> segment,
       // Final segment, next LMUL: reset segment
-      (vectorWriteback && (segment === nfields)) -> 0.U,
+      (subvectorDone && (segment === nfields)) -> 0.U,
       // Next segment
-      vectorWriteback -> (segment + 1.U),
+      subvectorDone -> (segment + 1.U),
     ))
     result.segment := segmentNext
 
-    val lmulUpdate = vectorWriteback && (segment === nfields)
+    val lmulUpdate = subvectorDone && (segment === nfields)
     val lmulNext = MuxCase(lmul, Seq(
         // Don't decrease below 0!
         (lmul === 0.U) -> 0.U,
@@ -488,7 +513,7 @@ class LsuSlot(bytesPerSlot: Int, bytesPerLine: Int) extends Bundle {
       // Finished one lmul, start from segment 0 again
       lmulUpdate -> (rd - nextLmulVectorRewind + 1.U),
       // Finished one segment, proceed to next
-      vectorWriteback -> (rd + nextSegmentVectorOffset),
+      subvectorDone -> (rd + nextSegmentVectorOffset),
     ))
 
     result
@@ -511,6 +536,8 @@ class LsuSlot(bytesPerSlot: Int, bytesPerLine: Int) extends Bundle {
     result.pc := pc
     result.pendingWriteback := pendingWriteback
     result.pendingVector := pendingVector
+    result.subvector := subvector
+    result.subvectors := subvectors
     result.active := (0 until bytesPerSlot).map(i => active(i) & ~selected(i))
     result.baseAddr := baseAddr
     result.addrs := addrs
@@ -551,6 +578,7 @@ class LsuSlot(bytesPerSlot: Int, bytesPerLine: Int) extends Bundle {
         cf"  $i: ${active(i)}, 0x${addrs(i)}%x, 0x${data(i)}%x\n")
     cf"store: $store\n  op: ${op}\n  pendingVector: ${pendingVector}\n" +
     cf"  pendingWriteback: ${pendingWriteback}\n  lmul: ${lmul}\n" +
+    cf"  subvector: ${subvector}\n  subvectors: ${subvectors}\n" +
     cf"  nfields: ${nfields}\n  segment: ${segment}\n" +
     cf"  elemWidth: 0b${elemWidth}%b elemStride: ${elemStride}\n" +
     lines.reduce(_+_)
@@ -569,23 +597,50 @@ object LsuSlot {
     result.store := uop.store
     result.pc := uop.pc
     if (p.enableRvv) {
-      val lmul = uop.lmul.getOrElse(0.U)
-      result.lmul := lmul
+      val effectiveLmul = MuxCase(uop.lmul.getOrElse(0.U)(1, 0), Seq(
+        // Treat fractional LMULs as LMUL=1
+        (uop.lmul.getOrElse(0.U)(2)) -> 0.U(2.W),
+      ))
+      result.lmul := 1.U(1.W) << effectiveLmul
+
       val nfields = Mux(LsuOp.isVector(uop.op), uop.nfields.get, 0.U)
       result.nfields := nfields
       result.segment := 0.U
-      result.nextSegmentVectorOffset := lmul
-      result.nextLmulVectorRewind := nfields * lmul
+      result.nextSegmentVectorOffset := result.lmul
+      result.nextLmulVectorRewind := nfields * result.lmul
     } else {
       result.lmul := 0.U
       result.nextSegmentVectorOffset := 0.U
       result.nextLmulVectorRewind := 0.U
     }
 
+    // Determine number of rvv2lsu interactions required for one vector for
+    // indexed loads. This occurs when the index dtype is greater than data
+    // dtype.
+    val elemWidth = uop.elemWidth.get
+    val elemMultiplier = MuxCase(1.U, Seq(
+      // 8-bit data, 16-bit indices
+      ((elemWidth === "b101".U) && (uop.sew.get === 0.U)) -> 2.U,
+      // 8-bit data, 32-bit indices
+      ((elemWidth === "b110".U) && (uop.sew.get === 0.U)) -> 4.U,
+      // 16-bit data, 32-bit indices
+      ((elemWidth === "b110".U) && (uop.sew.get === 1.U)) -> 2.U,
+    ))
+    val subvectors = MuxCase(1.U, Seq(
+      ((elemMultiplier === 2.U) && (uop.lmul.get.asSInt >= 0.S)) -> 2.U,
+      ((elemMultiplier === 4.U) && (uop.lmul.get.asSInt >= 0.S)) -> 4.U,
+      ((elemMultiplier === 4.U) && (uop.lmul.get.asSInt === -1.S)) -> 2.U,
+    ))
+
     // All vector ops require writeback. Lsu needs to inform RVV core store uop
     // has completed.
     result.pendingWriteback := !uop.store || LsuOp.isVector(uop.op)
     result.pendingVector := LsuOp.isVector(uop.op)
+    result.subvector := 0.U
+    result.subvectors := MuxCase(0.U, Seq(
+      LsuOp.isIndexedVector(uop.op) -> subvectors,
+      LsuOp.isNonindexedVector(uop.op) -> 1.U,
+    ))
 
     val active = MuxCase(0.U(bytesPerSlot.W), Seq(
       uop.op.isOneOf(LsuOp.LB, LsuOp.LBU, LsuOp.SB) -> "b1".U(bytesPerSlot.W),
