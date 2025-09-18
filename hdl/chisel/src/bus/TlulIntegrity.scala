@@ -70,7 +70,7 @@ object Secded {
 /**
   * A parameterized SECDED encoder.
   *
-  * @param DATA_W The width of the data input. Supported values are 32, 57, 128.
+  * @param DATA_W The width of the data input. Supported values are 32, 57, 128, 256.
   */
 class SecdedEncoder(val DATA_W: Int) extends Module {
   override val desiredName = s"SecdedEncoder_${DATA_W}"
@@ -78,6 +78,7 @@ class SecdedEncoder(val DATA_W: Int) extends Module {
     case 32 => 39
     case 57 => 64
     case 128 => 128 + 7 // 128-bit data uses a 7-bit folded ECC.
+    case 256 => 256 + 7 // 256-bit data uses a 7-bit folded ECC.
   }
   val ECC_W = IO_W - DATA_W
 
@@ -94,11 +95,13 @@ class SecdedEncoder(val DATA_W: Int) extends Module {
   } else if (DATA_W == 128) {
     // For 128-bit data, we use the "folding" scheme: the data is split into
     // four 32-bit chunks, and their 7-bit ECC codes are XORed together.
-    val ecc0 = Secded.ecc39_32(io.data_i(31, 0))(38, 32)
-    val ecc1 = Secded.ecc39_32(io.data_i(63, 32))(38, 32)
-    val ecc2 = Secded.ecc39_32(io.data_i(95, 64))(38, 32)
-    val ecc3 = Secded.ecc39_32(io.data_i(127, 96))(38, 32)
-    io.data_o := Cat(ecc0 ^ ecc1 ^ ecc2 ^ ecc3, io.data_i)
+    val ecc = io.data_i.asTypeOf(Vec(4, UInt(32.W))).map(x => Secded.ecc39_32(x)(38, 32)).reduce(_^_)
+    io.data_o := Cat(ecc, io.data_i)
+  } else if (DATA_W == 256) {
+    // For 256-bit data, we use the "folding" scheme: the data is split into
+    // eight 32-bit chunks, and their 7-bit ECC codes are XORed together.
+    val ecc = io.data_i.asTypeOf(Vec(8, UInt(32.W))).map(x => Secded.ecc39_32(x)(38, 32)).reduce(_^_)
+    io.data_o := Cat(ecc, io.data_i)
   } else {
     // Ensure we don't try to synthesize for an unsupported width.
     assert(false, "Unsupported DATA_W for SecdedEncoder")

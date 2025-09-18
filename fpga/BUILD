@@ -144,14 +144,24 @@ fusesoc_build(
     srcs = CORALNPU_SOC_SRCS + [
         "pins.xdc",
         "vivado_setup_hooks.tcl",
+        "vivado_hook_write_bitstream_post.tcl",
+        "//internal/fpga/ip/ddr4:elf_files",
+        "//internal/fpga/ip/ddr4:rtl_files",
+        "//internal/fpga/ip/ddr4_phy:rtl_files",
     ],
-    cores = CORALNPU_SOC_CORES + [":chip_nexus.core"],
+    cores = CORALNPU_SOC_CORES + [
+        ":chip_nexus.core",
+        "//internal/fpga/ip/ddr4:ddr4.core",
+        "//internal/fpga/ip/ddr4_phy:ddr4_phy.core",
+    ],
     flags = [
         "--ClockFrequencyMhz=" + _NEXUS_CLOCK_FREQUENCY_MHZ,
     ],
     output_groups = {
         "bitstream": ["com.google.coralnpu_fpga_chip_nexus_0.1/synth-vivado/com.google.coralnpu_fpga_chip_nexus_0.1.runs/impl_1/chip_nexus.bit"],
         "logs": ["com.google.coralnpu_fpga_chip_nexus_0.1/synth-vivado/com.google.coralnpu_fpga_chip_nexus_0.1.runs/"],
+        "synth": ["com.google.coralnpu_fpga_chip_nexus_0.1/synth-vivado/"],
+        "all": ["com.google.coralnpu_fpga_chip_nexus_0.1/"],
     },
     systems = ["com.google.coralnpu:fpga:chip_nexus:0.1"],
     target = "synth",

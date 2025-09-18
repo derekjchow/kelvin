@@ -12,9 +12,16 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-## Elevate warning for not finding file for readmemh to ERROR.
-set_msg_config -id {[Synth 8-4445]} -new_severity ERROR
+set input_bit_file "./com.google.coralnpu_fpga_chip_nexus_0.1.runs/impl_1/chip_nexus.bit"
+set output_bin_file "chip_nexus.bin"
 
-set workroot [pwd]
+if {![file exists $input_bit_file]} {
+    puts "ERROR: Input file not found: $input_bit_file"
+    exit 1
+}
 
-set_property STEPS.WRITE_BITSTREAM.TCL.POST "${workroot}/vivado_hook_write_bitstream_post.tcl" [get_runs impl_1]
+write_cfgmem -format BIN -disablebitswap -loadbit "up 0x0 ${input_bit_file}" -file ${output_bin_file} -force
+
+puts "Successfully converted ${input_bit_file} to ${output_bin_file}"
+
+exit

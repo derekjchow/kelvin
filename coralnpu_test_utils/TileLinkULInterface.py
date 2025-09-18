@@ -23,19 +23,25 @@ from coralnpu_test_utils.secded_golden import get_cmd_intg, get_data_intg, get_r
 
 
 def create_a_channel_req(address,
-                         data,
-                         mask,
+                         data=0,
+                         mask=0,
                          source=1,
                          size=None,
                          param=0,
-                         width=32):
-    """Creates a standard TileLink-UL PutFullData request dictionary."""
+                         width=32,
+                         is_read=False):
+    """Creates a standard TileLink-UL request dictionary."""
     num_bytes = width // 8
     if size is None:
         size = int(math.log2(num_bytes))
 
-    full_mask = (1 << num_bytes) - 1
-    opcode = 0 if mask == full_mask else 1  # PutFull vs PutPartial
+    if is_read:
+        opcode = 4  # Get
+        mask = 0
+        data = 0
+    else:
+        full_mask = (1 << num_bytes) - 1
+        opcode = 0 if mask == full_mask else 1  # PutFull vs PutPartial
     txn = {
         "opcode": opcode,
         "param": param,

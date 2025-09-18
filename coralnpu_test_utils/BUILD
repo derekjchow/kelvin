@@ -133,3 +133,12 @@ py_binary(
         requirement("numpy"),
     ],
 )
+
+py_library(
+    name = "axi_slave",
+    srcs = ["axi_slave.py"],
+    deps = [
+        requirement("cocotb"),
+    ],
+    visibility = ["//visibility:public"],
+)

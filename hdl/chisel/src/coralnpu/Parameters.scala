@@ -161,7 +161,7 @@ class Parameters(var m: Seq[MemoryRegion] = Seq(), val hartId: Int = 0) {
   def axi1DataBits: Int = { lsuDataBits } /* axiSysDataBits */ /* vectorBits */
 
   // [Internal] TCM[Vector,Scalar] interface.
-  val axi2IdBits = 6
+  var axi2IdBits = 6
   val axi2AddrBits = 32
   def axi2DataBits: Int = { lsuDataBits } // vectorBits
   def axi2DataBytes: Int = { axi2DataBits / 8 }

@@ -13,12 +13,15 @@
 # limitations under the License.
 
 import cocotb
+import numpy as np
 from cocotb.clock import Clock
-from cocotb.triggers import ClockCycles
+from cocotb.queue import Queue
+from cocotb.triggers import ClockCycles, RisingEdge, FallingEdge, with_timeout
 from elftools.elf.elffile import ELFFile
 from bazel_tools.tools.python.runfiles import runfiles
 
 from coralnpu_test_utils.TileLinkULInterface import TileLinkULInterface, create_a_channel_req
+from coralnpu_test_utils.axi_slave import AxiSlave
 from coralnpu_test_utils.spi_master import SPIMaster
 from coralnpu_test_utils.spi_constants import SpiRegAddress, SpiCommand, TlStatus
 
@@ -42,10 +45,10 @@ async def setup_dut(dut):
 
     # Reset the DUT
     dut.io_rst_ni.value = 0
-    dut.io_async_ports_hosts_resets_0.value = 0
+    dut.io_async_ports_hosts_resets_0.value = 1
     await ClockCycles(dut.io_clk_i, 5)
     dut.io_rst_ni.value = 1
-    dut.io_async_ports_hosts_resets_0.value = 1
+    dut.io_async_ports_hosts_resets_0.value = 0
     await ClockCycles(dut.io_clk_i, 5)
 
     # Add a final delay to ensure all reset synchronizers have settled
@@ -227,7 +230,7 @@ async def test_tlul_passthrough(dut):
         req = await device_if.device_get_request()
 
         # Verify the incoming request
-        assert req["opcode"] == 0, f"Expected PutFullData opcode (0), got {req['opcode']}"
+        assert (req["opcode"] == 0) or (req["opcode"] == 1), f"Expected Put-type opcode (0 or 1), got {req['opcode']}"
         assert req["address"] == ROM_BASE_ADDR, f"Expected address {ROM_BASE_ADDR:X}, got {req['address']:X}"
         assert req["data"] == TEST_DATA, f"Expected data {TEST_DATA:X}, got {req['data']:X}"
 
@@ -404,3 +407,127 @@ async def test_program_execution_via_spi(dut):
 
     dut._log.info("Program halted.")
     assert dut.io_external_ports_1.value == 0, "Program halted with fault!"
+
+@cocotb.test()
+async def test_ddr_access(dut):
+    """Tests TileLink transactions to the DDR domain."""
+    await setup_dut(dut)
+
+    # --- DDR Clock and Reset Setup ---
+    ddr_clk_signal = dut.io_async_ports_devices_clocks_0
+    ddr_rst_signal = dut.io_async_ports_devices_resets_0
+    ddr_rst_signal.value = 1
+
+    ddr_clock = Clock(ddr_clk_signal, 2)
+    cocotb.start_soon(ddr_clock.start())
+
+    ddr_rst_signal.value = 0
+    await ClockCycles(dut.io_clk_i, 5)
+    ddr_rst_signal.value = 1
+    await ClockCycles(dut.io_clk_i, 5)
+    ddr_rst_signal.value = 0
+    await ClockCycles(dut.io_clk_i, 5)
+
+    # Instantiate a TL-UL host to drive transactions
+    host_if = TileLinkULInterface(
+        dut,
+        host_if_name="io_external_hosts_ports_0",
+        clock_name="io_async_ports_hosts_clocks_0",
+        reset_name="io_async_ports_hosts_resets_0",
+        width=32)
+    await host_if.init()
+
+    # --- AXI Responder Models ---
+    DDR_CTRL_BASE = 0x70000000
+    DDR_MEM_BASE = 0x80000000
+    TEST_DATA = 0x12345678
+
+    ddr_ctrl_slave = AxiSlave(dut, "ddr_ctrl_axi", ddr_clk_signal, ddr_rst_signal, dut._log, has_memory=True, mem_base_addr=DDR_CTRL_BASE)
+    ddr_mem_slave = AxiSlave(dut, "ddr_mem_axi", ddr_clk_signal, ddr_rst_signal, dut._log, has_memory=True, mem_base_addr=DDR_MEM_BASE)
+    ddr_ctrl_slave.start()
+    ddr_mem_slave.start()
+
+    # Allow the AXI slave coroutines to start and initialize signals
+    await RisingEdge(ddr_clk_signal)
+
+    # --- Stimulus ---
+    # Write to ddr_ctrl
+    dut._log.info("Sending write to ddr_ctrl...")
+    write_txn = create_a_channel_req(address=DDR_CTRL_BASE, data=TEST_DATA, mask=0xF, width=host_if.width)
+    await host_if.host_put(write_txn)
+    resp = await with_timeout(host_if.host_get_response(), 10000)
+    assert resp["error"] == 0, "ddr_ctrl write response indicated an error"
+    dut._log.info("Write to ddr_ctrl successful.")
+
+    # Write to ddr_mem
+    dut._log.info("Sending write to ddr_mem...")
+    write_txn = create_a_channel_req(address=DDR_MEM_BASE, data=TEST_DATA, mask=0xF, width=host_if.width)
+    await host_if.host_put(write_txn)
+    resp = await host_if.host_get_response()
+    assert resp["error"] == 0, "ddr_mem write response indicated an error"
+    dut._log.info("Write to ddr_mem successful.")
+
+    dut._log.info("Sending read to ddr_ctrl...")
+    read_txn = create_a_channel_req(address=DDR_CTRL_BASE, width=host_if.width, is_read=True)
+    await host_if.host_put(read_txn)
+    resp = await with_timeout(host_if.host_get_response(), 10000)
+    assert resp["error"] == 0, "ddr_ctrl read response had error"
+    dut._log.info("Read from ddr_ctrl successful.")
+
+    dut._log.info("Sending read to ddr_mem...")
+    read_txn = create_a_channel_req(address=DDR_MEM_BASE, width=host_if.width, is_read=True)
+    await host_if.host_put(read_txn)
+    resp = await with_timeout(host_if.host_get_response(), 10000)
+    assert resp["error"] == 0, "ddr_mem read response had error"
+    dut._log.info("Read from ddr_mem successful.")
+
+    await ClockCycles(dut.io_clk_i, 20)
+
+@cocotb.test()
+async def test_ddr_access_via_spi(dut):
+    clock = await setup_dut(dut)
+
+    spi_master = SPIMaster(
+        clk=dut.io_external_ports_5,
+        csb=dut.io_external_ports_6,
+        mosi=dut.io_external_ports_7,
+        miso=dut.io_external_ports_8,
+        main_clk=dut.io_clk_i,
+        log=dut._log
+    )
+    await spi_master.idle_clocking(20)
+
+    # --- DDR Clock and Reset Setup ---
+    ddr_clk_signal = dut.io_async_ports_devices_clocks_0
+    ddr_rst_signal = dut.io_async_ports_devices_resets_0
+    ddr_rst_signal.value = 1
+
+    ddr_clock = Clock(ddr_clk_signal, 2)
+    cocotb.start_soon(ddr_clock.start())
+
+    ddr_rst_signal.value = 0
+    await ClockCycles(dut.io_clk_i, 5)
+    ddr_rst_signal.value = 1
+    await ClockCycles(dut.io_clk_i, 5)
+    ddr_rst_signal.value = 0
+    await ClockCycles(dut.io_clk_i, 5)
+
+    # --- AXI Responder Models ---
+    DDR_MEM_BASE = 0x80000000
+    ddr_mem_slave = AxiSlave(dut, "ddr_mem_axi", ddr_clk_signal, ddr_rst_signal, dut._log, has_memory=True, mem_base_addr=DDR_MEM_BASE)
+    ddr_mem_slave.start()
+
+    # Allow the AXI slave coroutines to start and initialize signals
+    await RisingEdge(ddr_clk_signal)
+
+
+    data0 = 0x00112233445566778899AABBCCDDEEFF
+    data1 = 0xFFEEDDCCBBAA99887766554433221100
+    await write_line_via_spi(spi_master, DDR_MEM_BASE, data0)
+    await write_line_via_spi(spi_master, DDR_MEM_BASE + 0x10, data1)
+
+    rdata0 = await read_line_via_spi(spi_master, DDR_MEM_BASE)
+    rdata1 = await read_line_via_spi(spi_master, DDR_MEM_BASE + 0x10)
+
+    assert (data0 == rdata0)
+    assert (data1 == rdata1)

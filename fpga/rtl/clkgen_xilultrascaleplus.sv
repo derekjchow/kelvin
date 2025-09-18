@@ -24,7 +24,8 @@ module clkgen_xilultrascaleplus
      output clk_main_o,
      output clk_48MHz_o,
      output clk_aon_o,
-     output rst_no);
+     output rst_no,
+     output locked_o);
   logic locked_pll;
   logic io_clk_buf;
   logic io_rst_buf_n;
@@ -135,4 +136,5 @@ module clkgen_xilultrascaleplus
 
   // reset
   assign rst_no = locked_pll & rst_ni & srst_ni;
+  assign locked_o = locked_pll;
 endmodule

@@ -6,6 +6,7 @@ filesets:
   files_rtl:
     depend:
       - com.google.coralnpu:fpga:coralnpu_soc
+      - xilinx:ddr4_0:0.1
     files:
       - rtl/chip_nexus.sv
       - rtl/clkgen_wrapper.sv
@@ -20,6 +21,7 @@ filesets:
   files_tcl:
     files:
       - vivado_setup_hooks.tcl: { file_type: tclSource }
+      - vivado_hook_write_bitstream_post.tcl: { file_type: user, copyto: vivado_hook_write_bitstream_post.tcl }
 
 parameters:
   ClockFrequencyMhz:

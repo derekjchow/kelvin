@@ -82,17 +82,19 @@ object CrossbarConfig {
     DeviceConfig("rom",  Seq(AddressRange(0x10000000, 0x8000))),      // 32kB
     DeviceConfig("sram", Seq(AddressRange(0x20000000, 0x400000))),    // 4MB
     DeviceConfig("uart0", Seq(AddressRange(0x40000000, 0x1000))),
-    DeviceConfig("uart1", Seq(AddressRange(0x40010000, 0x1000)))
+    DeviceConfig("uart1", Seq(AddressRange(0x40010000, 0x1000))),
+    DeviceConfig("ddr_ctrl", Seq(AddressRange(0x70000000, 0x1000)), clockDomain = "ddr", width = 32), // 4kB for DDR Control
+    DeviceConfig("ddr_mem",  Seq(AddressRange(BigInt("80000000", 16), BigInt("80000000", 16))), clockDomain = "ddr", width = 128)     // 2GB for DDR Memory
   )
 
   // A map defining which hosts are allowed to connect to which devices.
   def connections(enableTestHarness: Boolean): Map[String, Seq[String]] = {
     val baseConnections = Map(
-      "coralnpu_core" -> Seq("sram", "uart1", "coralnpu_device", "rom", "uart0"),
-      "spi2tlul" -> Seq("coralnpu_device", "sram")
+      "coralnpu_core" -> Seq("sram", "uart1", "coralnpu_device", "rom", "uart0", "ddr_ctrl", "ddr_mem"),
+      "spi2tlul" -> Seq("coralnpu_device", "sram", "ddr_ctrl", "ddr_mem")
     )
     if (enableTestHarness) {
-      baseConnections + ("test_host_32" -> Seq("rom", "sram", "uart0", "coralnpu_device"))
+      baseConnections + ("test_host_32" -> Seq("rom", "sram", "uart0", "coralnpu_device", "ddr_ctrl", "ddr_mem"))
     } else {
       baseConnections
     }

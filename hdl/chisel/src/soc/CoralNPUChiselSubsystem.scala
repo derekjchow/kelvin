@@ -33,8 +33,14 @@ class CoralNPUChiselSubsystemIO(val hostParams: Seq[bus.TLULParameters], val dev
   val internalHosts = SoCChiselConfig.modules.flatMap(_.hostConnections.values).toSet
   val internalDevices = SoCChiselConfig.modules.flatMap(_.deviceConnections.values).toSet
 
+  // These devices are handled specially within the subsystem (e.g., converted to AXI)
+  // and should not have external TileLink ports created for them.
+  val speciallyHandledDevices = Set("ddr_ctrl", "ddr_mem")
+
   val externalHostPorts = cfg.hosts(enableTestHarness).filterNot(h => internalHosts.contains(h.name))
-  val externalDevicePorts = cfg.devices.filterNot(d => internalDevices.contains(d.name))
+  val externalDevicePorts = cfg.devices.filterNot(d =>
+    internalDevices.contains(d.name) || speciallyHandledDevices.contains(d.name)
+  )
 
   // --- Create External TileLink Ports ---
   val external_hosts = Flipped(new Bundle {
@@ -58,6 +64,15 @@ class CoralNPUChiselSubsystemIO(val hostParams: Seq[bus.TLULParameters], val dev
     }
     if (p.direction == coralnpu.soc.In) Input(port) else Output(port)
   })
+
+  val p = new Parameters
+  val ddrCtrlWidth = cfg.devices.find(_.name == "ddr_ctrl").get.width
+  val ddrMemWidth = cfg.devices.find(_.name == "ddr_mem").get.width
+  val ddr_ctrl_axi = new AxiMasterIO(32, ddrCtrlWidth, p.axi2IdBits)
+  // We specify the 256-bit AXI width and 1-bit ID for DDR here.
+  // The output from the Xbar is 128-bits / 6-bits, and we instantiate
+  // width and TL->AXI bridges elsewhere to adapt the interfaces.
+  val ddr_mem_axi = new AxiMasterIO(32, 256, 1)
 }
 
 import chisel3.experimental.BaseModule
@@ -135,13 +150,11 @@ class CoralNPUChiselSubsystem(val hostParams: Seq[bus.TLULParameters], val devic
     }
 
     // --- Clock & Reset Connections ---
-    xbar.io.clk_i := io.clk_i
-    xbar.io.rst_ni := io.rst_ni
     instantiatedModules.foreach { case (name, module) =>
       modulePorts.get(s"$name.io.clk").foreach(_ := io.clk_i)
       modulePorts.get(s"$name.io.clock").foreach(_ := io.clk_i)
       modulePorts.get(s"$name.io.rst_ni").foreach(_ := io.rst_ni)
-      modulePorts.get(s"$name.io.reset").foreach(_ := io.rst_ni)
+      modulePorts.get(s"$name.io.reset").foreach(_ := (!io.rst_ni.asBool).asAsyncReset)
     }
 
     // Connect all modules based on the configuration.
@@ -191,6 +204,57 @@ class CoralNPUChiselSubsystem(val hostParams: Seq[bus.TLULParameters], val devic
         xbarPort(index).reset := ioPort.resets(index)
       }
     }
+
+    // --- DDR AXI Interface ---
+    val ddrDomain = asyncDeviceDomainMap("ddr")
+    val ddr_clk = io.async_ports_devices.clocks(ddrDomain)
+    val ddr_rst = io.async_ports_devices.resets(ddrDomain)
+
+    val ddr_ctrl_tlul_p = deviceParams(deviceMap("ddr_ctrl"))
+    val ddr_ctrl_tl_p = new Parameters
+    ddr_ctrl_tl_p.lsuDataBits = ddr_ctrl_tlul_p.w * 8
+    val ddr_ctrl_axi_p = new Parameters
+    ddr_ctrl_axi_p.lsuDataBits = ddr_ctrl_tlul_p.w * 8
+    val ddr_ctrl_axi_conv = Module(new TLUL2Axi(ddr_ctrl_tl_p, ddr_ctrl_axi_p, () => new OpenTitanTileLink_A_User, () => new OpenTitanTileLink_D_User))
+    ddr_ctrl_axi_conv.clock := ddr_clk
+    ddr_ctrl_axi_conv.reset := ddr_rst
+    ddr_ctrl_axi_conv.io.tl_a <> xbar.io.devices(deviceMap("ddr_ctrl")).a
+    ddr_ctrl_axi_conv.io.tl_d <> xbar.io.devices(deviceMap("ddr_ctrl")).d
+    io.ddr_ctrl_axi <> ddr_ctrl_axi_conv.io.axi
+
+    // --- DDR Memory AXI Interface (128-bit TL -> 256-bit TL -> 256-bit AXI) ---
+    // Define parameters for the 256-bit bus that exists AFTER the width bridge.
+    val ddr_mem_256_coralnpu_p = {
+      val p = new Parameters
+      p.lsuDataBits = 256
+      p
+    }
+    val ddr_mem_256_tlul_p = new bus.TLULParameters(ddr_mem_256_coralnpu_p)
+
+    // Define parameters for the final 256-bit AXI port.
+    val ddr_mem_axi_p = {
+      val p = new Parameters
+      p.lsuDataBits = 256
+      p.axi2IdBits = 1
+      p
+    }
+
+    // Instantiate the bridge: 128-bit (from xbar) to 256-bit.
+    val ddr_mem_bridge = Module(new TlulWidthBridge(xbar.commonParams, ddr_mem_256_tlul_p))
+
+    // Instantiate the AXI converter: 256-bit TL to 256-bit AXI.
+    val ddr_mem_axi_conv = Module(new TLUL2Axi(ddr_mem_256_coralnpu_p, ddr_mem_axi_p, () => new OpenTitanTileLink_A_User, () => new OpenTitanTileLink_D_User))
+
+    ddr_mem_bridge.clock := ddr_clk
+    ddr_mem_bridge.reset := ddr_rst
+    ddr_mem_axi_conv.clock := ddr_clk
+    ddr_mem_axi_conv.reset := ddr_rst
+
+    // Wire the components together: Xbar (128) -> Bridge -> AXI Conv (256) -> IO (256)
+    ddr_mem_bridge.io.tl_h <> xbar.io.devices(deviceMap("ddr_mem"))
+    ddr_mem_axi_conv.io.tl_a <> ddr_mem_bridge.io.tl_d.a
+    ddr_mem_bridge.io.tl_d.d <> ddr_mem_axi_conv.io.tl_d
+    io.ddr_mem_axi <> ddr_mem_axi_conv.io.axi
   }
 }
 
@@ -226,7 +290,11 @@ object CoralNPUChiselSubsystemEmitter extends App {
   // The subsystem module must be created in the ChiselStage context.
   lazy val subsystem = new CoralNPUChiselSubsystem(hostParams, deviceParams, enableTestHarness)
 
-  val firtoolOpts = Array("-enable-layers=Verification")
+  val firtoolOpts = Array(
+      // Disable `automatic logic =`, Suppress location comments
+      "--lowering-options=disallowLocalVariables,locationInfoStyle=none",
+      "-enable-layers=Verification",
+  )
   val systemVerilogSource = ChiselStage.emitSystemVerilog(
     subsystem, chiselArgs.toArray, firtoolOpts)
 

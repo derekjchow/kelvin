@@ -39,7 +39,7 @@ class CoreTlul(p: Parameters, coreModuleName: String) extends RawModule {
 
     val coreAxi = withClockAndReset(io.clk, io.rst_ni) { Module(new CoreAxi(p, coreModuleName)) }
     val hostBridge = withClockAndReset(io.clk, (!io.rst_ni.asBool).asAsyncReset) { Module(new Axi2TLUL(p, () => new OpenTitanTileLink_A_User, () => new OpenTitanTileLink_D_User)) }
-    val deviceBridge = withClockAndReset(io.clk, (!io.rst_ni.asBool).asAsyncReset) { Module(new TLUL2Axi(p, () => new OpenTitanTileLink_A_User, () => new OpenTitanTileLink_D_User)) }
+    val deviceBridge = withClockAndReset(io.clk, (!io.rst_ni.asBool).asAsyncReset) { Module(new TLUL2Axi(p, p, () => new OpenTitanTileLink_A_User, () => new OpenTitanTileLink_D_User)) }
 
     coreAxi.io.aclk := io.clk
     coreAxi.io.aresetn := io.rst_ni

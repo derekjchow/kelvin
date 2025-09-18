@@ -11,7 +11,8 @@ module clkgen_wrapper
      output clk_main_o,
      output clk_48MHz_o,
      output clk_aon_o,
-     output rst_no);
+     output rst_no,
+     output locked_o);
 
   clkgen_xilultrascaleplus #(.ClockFrequencyMhz(ClockFrequencyMhz))
       i_clkgen(.clk_i(clk_p_i),
@@ -21,5 +22,6 @@ module clkgen_wrapper
                .clk_main_o(clk_main_o),
                .clk_48MHz_o(clk_48MHz_o),
                .clk_aon_o(clk_aon_o),
-               .rst_no(rst_no));
+               .rst_no(rst_no),
+               .locked_o(locked_o));
 endmodule

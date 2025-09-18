@@ -31,6 +31,7 @@ chisel_library(
     name = "bus",
     srcs = [
         "Axi.scala",
+        "TlulIdRemapper.scala",
         "TLUL2Axi.scala",
         "Axi2TLUL.scala",
         "CoralNPUMemIO.scala",

@@ -392,6 +392,8 @@ CORALNPU_CHISEL_SUBSYSTEM_TESTCASES = [
     "test_tlul_passthrough",
     "test_program_execution_via_host",
     "test_program_execution_via_spi",
+    "test_ddr_access",
+    "test_ddr_access_via_spi",
 ]
 # END_TESTCASES_FOR_coralnpu_chisel_subsystem_cocotb
 
@@ -407,6 +409,7 @@ cocotb_test_suite(
         "test_module": ["test_subsystem.py"],
         "deps": [
             "//coralnpu_test_utils:TileLinkULInterface",
+            "//coralnpu_test_utils:axi_slave",
             "//coralnpu_test_utils:spi_master",
             requirement("pyelftools"),
             "@bazel_tools//tools/python/runfiles",

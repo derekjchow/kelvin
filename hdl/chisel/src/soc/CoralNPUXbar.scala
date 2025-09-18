@@ -18,6 +18,7 @@ import chisel3._
 import chisel3.util.{MixedVec, MuxCase}
 import bus._
 import bus.TlulWidthBridge
+import coralnpu.Parameters
 
 /**
  * A dynamically generated IO bundle for the CoralNPUXbar.
@@ -30,10 +31,6 @@ import bus.TlulWidthBridge
  */
 class CoralNPUXbarIO(val hostParams: Seq[bus.TLULParameters], val deviceParams: Seq[bus.TLULParameters], val enableTestHarness: Boolean) extends Bundle {
   val cfg = CrossbarConfig
-
-  // --- Primary Clock and Reset ---
-  val clk_i = Input(Clock())
-  val rst_ni = Input(AsyncReset()) // Use AsyncReset for concrete reset type
 
   // --- Host (Master) Ports ---
   val hosts = Flipped(MixedVec(hostParams.map(p => new OpenTitanTileLink.Host2Device(p))))
@@ -67,7 +64,7 @@ class CoralNPUXbarIO(val hostParams: Seq[bus.TLULParameters], val deviceParams: 
  *
  * @param p The TileLink UL parameters for the bus.
  */
-class CoralNPUXbar(val hostParams: Seq[bus.TLULParameters], val deviceParams: Seq[bus.TLULParameters], val enableTestHarness: Boolean) extends RawModule {
+class CoralNPUXbar(val hostParams: Seq[bus.TLULParameters], val deviceParams: Seq[bus.TLULParameters], val enableTestHarness: Boolean) extends Module {
   override val desiredName = if (enableTestHarness) "CoralNPUXbarTestHarness" else "CoralNPUXbar"
   // Load the single source of truth for the crossbar configuration.
   val cfg = CrossbarConfig
@@ -82,6 +79,8 @@ class CoralNPUXbar(val hostParams: Seq[bus.TLULParameters], val deviceParams: Se
   // Find all unique clock domains from the config, excluding the main one.
   val asyncDeviceDomains = cfg.devices.map(_.clockDomain).distinct.filter(_ != "main")
   val asyncHostDomains = cfg.hosts(enableTestHarness).map(_.clockDomain).distinct.filter(_ != "main")
+  val asyncDeviceDomainMap = asyncDeviceDomains.zipWithIndex.toMap
+  val asyncHostDomainMap = asyncHostDomains.zipWithIndex.toMap
 
   // --- 1. Graph Analysis ---
   // Analyze the configuration to understand the connection topology. This will be
@@ -96,49 +95,104 @@ class CoralNPUXbar(val hostParams: Seq[bus.TLULParameters], val deviceParams: Se
   // required by the child modules, as CoralNPUXbar itself is a RawModule.
   // The top-level reset is active-low, so we invert it for the active-high
   // modules instantiated within this block.
-  val (hostSockets, deviceSockets, asyncDeviceFifos, asyncHostFifos, widthBridges) = withClockAndReset(io.clk_i, (!io.rst_ni.asBool).asAsyncReset) {
-    // Create a 1-to-N socket for each host.
-    val hostSocket = hostConnections.map { case (name, devices) =>
-      val hostId = hostMap(name)
-      name -> Module(new TlulSocket1N(hostParams(hostId), N = devices.length))
-    }.toMap
+  // Define common parameters for the unified internal bus.
+  val commonParams = {
+    val p = new Parameters
+    p.lsuDataBits = 128
+    new bus.TLULParameters(p)
+  }
+  val commonWidth = 128
 
-    // Create an M-to-1 socket for each device with more than one master.
-    val deviceSocket = deviceFanIn.collect { case (name, hosts) if hosts.length > 1 =>
-      val deviceId = deviceMap(name)
-      name -> Module(new TlulSocketM1(deviceParams(deviceId), M = hosts.length))
-    }.toMap
+  // --- 2. Programmatic Instantiation and Interface Standardization ---
+  // All modules are instantiated and wired within their correct clock domains.
+  // This process produces two maps of standardized TileLink interfaces, one for
+  // hosts and one for devices, that are all in the main clock domain and use
+  // the common bus width. This greatly simplifies the final wiring stage.
+  val (hostInterfaces, deviceInterfaces, hostSockets, deviceSockets) = withClockAndReset(clock, reset) {
 
-    // Create an asynchronous FIFO for each device in a different clock domain.
-    val asyncDeviceFifo = cfg.devices.filter(_.clockDomain != "main").map { device =>
-      val deviceId = deviceMap(device.name)
-      device.name -> Module(new TlulFifoAsync(deviceParams(deviceId)))
-    }.toMap
-
-    // Create an asynchronous FIFO for each host in a different clock domain.
-    val asyncHostFifo = cfg.hosts(enableTestHarness).filter(_.clockDomain != "main").map { host =>
+    // A. Standardize Host Interfaces
+    val hostInterfaces = cfg.hosts(enableTestHarness).map { host =>
       val hostId = hostMap(host.name)
-      host.name -> Module(new TlulFifoAsync(hostParams(hostId)))
+      var currentIface: bus.OpenTitanTileLink.Host2Device = io.hosts(hostId)
+
+      // Step 1: Clock Domain Crossing (if necessary)
+      // Host-side FIFOs are at the host's native width. The FIFO output is in the main clock domain.
+      if (host.clockDomain != "main") {
+        val domainIndex = asyncHostDomainMap(host.clockDomain)
+        val fifo = Module(new TlulFifoAsync(hostParams(hostId)))
+        fifo.io.clk_h_i := io.async_ports_hosts(domainIndex).clock
+        fifo.io.rst_h_i := io.async_ports_hosts(domainIndex).reset.asBool
+        fifo.io.clk_d_i := clock
+        fifo.io.rst_d_i := reset.asBool
+        fifo.io.tl_h <> currentIface
+        currentIface = fifo.io.tl_d
+      }
+
+      // Step 2: Width Conversion (if necessary)
+      // All interfaces are brought up to the common bus width.
+      if ((hostParams(hostId).w * 8) < commonWidth) {
+        val bridge = Module(new TlulWidthBridge(hostParams(hostId), commonParams))
+        bridge.io.tl_h <> currentIface
+        currentIface = bridge.io.tl_d
+      }
+      host.name -> currentIface
     }.toMap
 
-    // Create a width bridge for each host-device connection with mismatched widths.
-    val widthBridge = hostConnections.flatMap { case (hostName, deviceNames) =>
-      deviceNames.map { deviceName =>
-        val hostId = hostMap(hostName)
-        val deviceId = deviceMap(deviceName)
-        val hostWidth = hostParams(hostId).w * 8
-        val deviceWidth = deviceParams(deviceId).w * 8
-        if (hostWidth != deviceWidth) {
-          val bridge = Module(new TlulWidthBridge(hostParams(hostId), deviceParams(deviceId)))
-          bridge.io.clk_i := io.clk_i
-          bridge.io.rst_ni := io.rst_ni
-          Some((s"${hostName}_to_${deviceName}", bridge))
-        } else {
-          None
-        }
+    // B. Standardize Device Interfaces
+    // We create a set of standardized input interfaces (from the Xbar's perspective).
+    // The conversion logic is wired up here, connecting these standardized interfaces
+    // to the final output ports.
+    val deviceInterfaces = cfg.devices.map { device =>
+      val deviceId = deviceMap(device.name)
+      // This is the standardized interface, in the main clock domain at the common width.
+      val standardizedIface = Wire(new bus.OpenTitanTileLink.Host2Device(commonParams))
+      var currentIface: bus.OpenTitanTileLink.Host2Device = standardizedIface
+
+      // Step 1: Clock Domain Crossing (if necessary)
+      // The FIFO input is at the common width and in the main clock domain.
+      if (device.clockDomain != "main") {
+        val domainIndex = asyncDeviceDomainMap(device.clockDomain)
+        val fifo = Module(new TlulFifoAsync(commonParams))
+        fifo.io.clk_h_i := clock
+        fifo.io.rst_h_i := reset.asBool
+        fifo.io.clk_d_i := io.async_ports_devices(domainIndex).clock
+        fifo.io.rst_d_i := io.async_ports_devices(domainIndex).reset.asBool
+        fifo.io.tl_h <> currentIface
+        currentIface = fifo.io.tl_d
       }
-    }.flatten.toMap
-    (hostSocket, deviceSocket, asyncDeviceFifo, asyncHostFifo, widthBridge)
+
+      // Step 2: Width Conversion (if necessary)
+      // This bridge is in the device's clock domain.
+      if ((deviceParams(deviceId).w * 8) != commonWidth) {
+        val bridge = if (device.clockDomain != "main") {
+          val domainIndex = asyncDeviceDomainMap(device.clockDomain)
+          withClockAndReset(io.async_ports_devices(domainIndex).clock, io.async_ports_devices(domainIndex).reset) {
+            Module(new TlulWidthBridge(commonParams, deviceParams(deviceId)))
+          }
+        } else {
+          Module(new TlulWidthBridge(commonParams, deviceParams(deviceId)))
+        }
+        bridge.io.tl_h <> currentIface
+        currentIface = bridge.io.tl_d
+      }
+
+      // Connect the end of the conversion chain to the actual device IO port.
+      io.devices(deviceId) <> currentIface
+
+      device.name -> standardizedIface
+    }.toMap
+
+    // C. Instantiate Sockets
+    // All sockets are now instantiated with the common parameters.
+    val hostSockets = hostConnections.map { case (name, devices) =>
+      name -> Module(new TlulSocket1N(commonParams, N = devices.length))
+    }.toMap
+
+    val deviceSockets = deviceFanIn.collect { case (name, hosts) if hosts.length > 1 =>
+      name -> Module(new TlulSocketM1(commonParams, M = hosts.length))
+    }.toMap
+
+    (hostInterfaces, deviceInterfaces, hostSockets, deviceSockets)
   }
 
   // --- 3. Programmatic Address Decoding ---
@@ -152,103 +206,46 @@ class CoralNPUXbar(val hostParams: Seq[bus.TLULParameters], val deviceParams: Se
     // devices, which routes the request to the internal error responder.
     val errorIdx = connectedDevices.length.U
 
-    socket.io.dev_select_i := errorIdx
-    when(socket.io.tl_h.a.valid) {
-      socket.io.dev_select_i := MuxCase(errorIdx,
-        connectedDevices.zipWithIndex.map { case (devName, idx) =>
-          val devConfig = cfg.devices.find(_.name == devName).get
-          // Check if the address falls within any of the device's address ranges.
-          val addrMatch = devConfig.addr.map(_.contains(address)).reduce(_ || _)
-          addrMatch -> idx.U
-        }
-      )
-    }
+    // Make the logic purely combinational by removing the 'when' block.
+    // This ensures the select signal is stable in the same cycle as a_valid.
+    socket.io.dev_select_i := MuxCase(errorIdx,
+      connectedDevices.zipWithIndex.map { case (devName, idx) =>
+        val devConfig = cfg.devices.find(_.name == devName).get
+        // Check if the address falls within any of the device's address ranges.
+        val addrMatch = devConfig.addr.map(_.contains(address)).reduce(_ || _)
+        addrMatch -> idx.U
+      }
+    )
   }
 
   // --- 4. Programmatic Wiring ---
-  // This section programmatically connects the entire crossbar graph.
+  // With standardized interfaces, wiring is now straightforward.
 
-  // A map from async domain name to its index in the IO bundle's Vec.
-  val asyncDeviceDomainMap = asyncDeviceDomains.zipWithIndex.toMap
-  val asyncHostDomainMap = asyncHostDomains.zipWithIndex.toMap
-
-  // Connect top-level host IOs to the host-side of the 1-to-N sockets.
-  for ((hostName, socket) <- hostSockets) {
-    val hostConfig = cfg.hosts(enableTestHarness).find(_.name == hostName).get
-    if (hostConfig.clockDomain != "main") {
-      asyncHostFifos(hostName).io.tl_h <> io.hosts(hostMap(hostName))
-      socket.io.tl_h <> asyncHostFifos(hostName).io.tl_d
-    } else {
-      socket.io.tl_h <> io.hosts(hostMap(hostName))
-    }
+  // A. Connect Hosts -> Host Sockets
+  for ((hostName, hostSocket) <- hostSockets) {
+    hostSocket.io.tl_h <> hostInterfaces(hostName)
   }
 
-  // Connect the async FIFOs to their specific clocks and resets.
-  for ((deviceName, fifo) <- asyncDeviceFifos) {
-    val deviceConfig = cfg.devices.find(_.name == deviceName).get
-    val domainIndex = asyncDeviceDomainMap(deviceConfig.clockDomain)
-    fifo.io.clk_h_i := io.clk_i
-    fifo.io.rst_h_i := !io.rst_ni.asBool
-    fifo.io.clk_d_i := io.async_ports_devices(domainIndex).clock
-    fifo.io.rst_d_i := !io.async_ports_devices(domainIndex).reset.asBool
-  }
-
-  for ((hostName, fifo) <- asyncHostFifos) {
-    val hostConfig = cfg.hosts(enableTestHarness).find(_.name == hostName).get
-    val domainIndex = asyncHostDomainMap(hostConfig.clockDomain)
-    fifo.io.clk_h_i := io.async_ports_hosts(domainIndex).clock
-    fifo.io.rst_h_i := !io.async_ports_hosts(domainIndex).reset.asBool
-    fifo.io.clk_d_i := io.clk_i
-    fifo.io.rst_d_i := !io.rst_ni.asBool
-  }
-
-  // Connect the device-side outputs of the M-to-1 sockets.
-  for ((deviceName, socket) <- deviceSockets) {
-    val deviceConfig = cfg.devices.find(_.name == deviceName).get
-    if (deviceConfig.clockDomain != "main") {
-      // If the device is async, connect the socket to the async FIFO.
-      asyncDeviceFifos(deviceName).io.tl_h <> socket.io.tl_d
-    } else {
-      // Otherwise, connect it directly to the top-level device IO.
-      io.devices(deviceMap(deviceName)) <> socket.io.tl_d
-    }
-  }
-
-  // Connect the device-side of the async FIFOs to the top-level device IOs.
-  for ((deviceName, fifo) <- asyncDeviceFifos) {
-    io.devices(deviceMap(deviceName)) <> fifo.io.tl_d
-  }
-
-  // Connect the device-side outputs of the 1-to-N host sockets.
+  // B. Connect Host Sockets -> Device Sockets (or Devices)
   for ((hostName, hostSocket) <- hostSockets) {
     val connections = hostConnections(hostName)
     for ((deviceName, portIndex) <- connections.zipWithIndex) {
-      val deviceConfig = cfg.devices.find(_.name == deviceName).get
       val fanIn = deviceFanIn(deviceName).length
+      val socketOut = hostSocket.io.tl_d(portIndex)
 
-      val hostWidth = hostParams(hostMap(hostName)).w * 8
-      val deviceWidth = deviceParams(deviceMap(deviceName)).w * 8
-
-      val socket_out = Wire(new OpenTitanTileLink.Host2Device(hostParams(hostMap(hostName))))
-      socket_out <> hostSocket.io.tl_d(portIndex)
-
-      val finalPort =
-        if (fanIn > 1) {
-          deviceSockets(deviceName).io.tl_h(deviceFanIn(deviceName).indexWhere(_.name == hostName))
-        } else if (deviceConfig.clockDomain != "main") {
-          asyncDeviceFifos(deviceName).io.tl_h
-        } else {
-          io.devices(deviceMap(deviceName))
-        }
-
-      if (hostWidth != deviceWidth) {
-        val bridge = widthBridges(s"${hostName}_to_${deviceName}")
-        bridge.io.tl_h <> socket_out
-        finalPort <> bridge.io.tl_d
+      if (fanIn > 1) {
+        val fanInIndex = deviceFanIn(deviceName).indexWhere(_.name == hostName)
+        deviceSockets(deviceName).io.tl_h(fanInIndex) <> socketOut
       } else {
-        finalPort <> socket_out
+        // Direct connection for 1:1 cases
+        deviceInterfaces(deviceName) <> socketOut
       }
     }
+  }
+
+  // C. Connect Device Sockets -> Devices
+  for ((deviceName, deviceSocket) <- deviceSockets) {
+    deviceInterfaces(deviceName) <> deviceSocket.io.tl_d
   }
 }
 

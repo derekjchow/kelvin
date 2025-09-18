@@ -32,7 +32,7 @@ DEVICE_MAP = {
 SRAM_BASE = 0x20000000
 UART1_BASE = 0x40010000
 CORALNPU_DEVICE_BASE = 0x00000000
-INVALID_ADDR = 0xDEADBEEF
+INVALID_ADDR = 0x50000000
 TIMEOUT_CYCLES = 500
 
 
@@ -40,7 +40,7 @@ TIMEOUT_CYCLES = 500
 async def setup_dut(dut):
     """Common setup logic for all tests."""
     # Start the main clock
-    clock = Clock(dut.io_clk_i, 5)
+    clock = Clock(dut.clock, 5)
     cocotb.start_soon(clock.start())
 
     # Start the asynchronous test clock
@@ -61,28 +61,28 @@ async def setup_dut(dut):
         "hosts": [
             TileLinkULInterface(dut,
                                 host_if_name=f"io_hosts_{i}",
-                                clock_name="io_clk_i" if name != "test_host_32" else "io_async_ports_hosts_0_clock",
-                                reset_name="io_rst_ni" if name != "test_host_32" else "io_async_ports_hosts_0_reset",
+                                clock_name="clock" if name != "test_host_32" else "io_async_ports_hosts_0_clock",
+                                reset_name="reset" if name != "test_host_32" else "io_async_ports_hosts_0_reset",
                                 width=host_widths[name])
             for name, i in HOST_MAP.items()
         ],
         "devices": [
             TileLinkULInterface(dut,
                                 device_if_name=f"io_devices_{i}",
-                                clock_name="io_clk_i",
-                                reset_name="io_rst_ni",
+                                clock_name="clock",
+                                reset_name="reset",
                                 width=device_widths[name])
             for name, i in DEVICE_MAP.items()
         ],
     }
 
     # Reset the DUT
-    dut.io_rst_ni.value = 0
-    dut.io_async_ports_hosts_0_reset.value = 0
-    await ClockCycles(dut.io_clk_i, 5)
-    dut.io_rst_ni.value = 1
+    dut.reset.value = 1
     dut.io_async_ports_hosts_0_reset.value = 1
-    await ClockCycles(dut.io_clk_i, 5)
+    await ClockCycles(dut.clock, 5)
+    dut.reset.value = 0
+    dut.io_async_ports_hosts_0_reset.value = 0
+    await ClockCycles(dut.clock, 5)
 
     return interfaces, clock
 
@@ -159,7 +159,7 @@ async def test_coralnpu_core_to_invalid_addr(dut):
         assert resp["source"] == write_txn["source"]
     except Exception as e:
         # Allow the simulation to run for a few more cycles to get a clean waveform
-        await ClockCycles(dut.io_clk_i, 20)
+        await ClockCycles(dut.clock, 20)
         raise e
 
 @cocotb.test(timeout_time=10, timeout_unit="us")
@@ -294,7 +294,9 @@ async def test_test_host_32_to_coralnpu_device_csr_read(dut):
         """A mock responder for the coralnpu_device."""
         req = await with_timeout(device_if.device_get_request(), timeout_ns,
                                  "ns")
-        assert req["address"] == csr_addr
+        # The address should be aligned to the device width (128-bit)
+        aligned_addr = csr_addr & ~((device_if.width // 8) - 1)
+        assert req["address"] == aligned_addr, f"Expected aligned address 0x{aligned_addr:X}, but got 0x{req['address'].integer:X}"
         # The CSR data is in the third 32-bit lane of the 128-bit bus.
         resp_data = halted_status << 64
         await with_timeout(
