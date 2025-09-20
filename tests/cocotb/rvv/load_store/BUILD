@@ -89,8 +89,14 @@ template_rule(
         "load32_stride8_m1_partial": {
             "srcs": ["load32_stride8_m1_partial.cc"],
         },
-        "store8_indexed_m1": {
-            "srcs": ["store8_indexed_m1.cc"],
+        "store8_index8": {
+            "srcs": ["store8_index8.cc"],
+        },
+        "store16_index16": {
+            "srcs": ["store16_index16.cc"],
+        },
+        "store32_index32": {
+            "srcs": ["store32_index32.cc"],
         },
         "store8_seg_unit": {
             "srcs": ["store8_seg_unit.cc"],
@@ -130,7 +136,9 @@ filegroup(
         ":load32_seg_unit.elf",
         ":load32_stride8_m1.elf",
         ":load32_stride8_m1_partial.elf",
-        ":store8_indexed_m1.elf",
+        ":store8_index8.elf",
+        ":store16_index16.elf",
+        ":store32_index32.elf",
         ":store8_seg_unit",
         ":store16_seg_unit",
         ":store32_seg_unit",
