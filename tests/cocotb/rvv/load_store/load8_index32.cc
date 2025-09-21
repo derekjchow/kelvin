@@ -32,112 +32,100 @@ uint8_t out_buf[buf_size] __attribute__((section(".data")));
 extern "C" {
 // Unordered
 __attribute__((used, retain)) void vluxei32_v_u8mf4() {
-  auto indices = __riscv_vle32_v_u32m1(index_buf, vl);
+  vuint32m1_t indices;
+  asm("vsetvli zero, %[vl], e32, m1, ta, ma;"
+      "vle32.v %[index], %[index_buf];"
+      : [index] "=vr"(indices)
+      : [vl] "r"(vl), [index_buf] "m"(index_buf));
+  // TODO: Revert once compiler bug is eliminated
+  // auto indices = __riscv_vle32_v_u32m1(index_buf, vl);
   auto data = __riscv_vluxei32_v_u8mf4(in_buf, indices, vl);
   __riscv_vse8_v_u8mf4(out_buf, data, vl);
 }
 
 __attribute__((used, retain)) void vluxei32_v_u8mf2() {
-  asm volatile("vsetvli zero, %0, e32, m2, ta, ma;"
-               "vle32.v v2, (%1);"
-               "vsetvli zero, %0, e8, mf2, ta, ma;"
-               "vluxei32.v v2, (%2), v2;"
-               "vse8.v v2, (%3);"
-               :
-               : "r" (vl), "r" (index_buf), "r" (in_buf), "r" (out_buf)
-               : "v2");
-
+  vuint32m2_t indices;
+  asm("vsetvli zero, %[vl], e32, m2, ta, ma;"
+      "vle32.v %[index], %[index_buf];"
+      : [index] "=vr"(indices)
+      : [vl] "r"(vl), [index_buf] "m"(index_buf));
   // TODO: Revert once compiler bug is eliminated
   // auto indices = __riscv_vle32_v_u32m2(index_buf, vl);
-  // auto data = __riscv_vluxei32_v_u8mf2(in_buf, indices, vl);
-  // __riscv_vse8_v_u8mf2(out_buf, data, vl);
+  auto data = __riscv_vluxei32_v_u8mf2(in_buf, indices, vl);
+  __riscv_vse8_v_u8mf2(out_buf, data, vl);
 }
 
 __attribute__((used, retain)) void vluxei32_v_u8m1() {
-  asm volatile("vsetvli zero, %0, e32, m4, ta, ma;"
-               "vle32.v v4, (%1);"
-               "vsetvli zero, %0, e8, m1, ta, ma;"
-               "vluxei32.v v4, (%2), v4;"
-               "vse8.v v4, (%3);"
-               :
-               : "r" (vl), "r" (index_buf), "r" (in_buf), "r" (out_buf)
-               : "v4");
-
+  vuint32m4_t indices;
+  asm("vsetvli zero, %[vl], e32, m4, ta, ma;"
+      "vle32.v %[index], %[index_buf];"
+      : [index] "=vr"(indices)
+      : [vl] "r"(vl), [index_buf] "m"(index_buf));
   // TODO: Revert once compiler bug is eliminated
   // auto indices = __riscv_vle32_v_u32m4(index_buf, vl);
-  // auto data = __riscv_vluxei32_v_u8m1(in_buf, indices, vl);
-  // __riscv_vse8_v_u8m1(out_buf, data, vl);
+  auto data = __riscv_vluxei32_v_u8m1(in_buf, indices, vl);
+  __riscv_vse8_v_u8m1(out_buf, data, vl);
 }
 
 __attribute__((used, retain)) void vluxei32_v_u8m2() {
-  asm volatile("vsetvli zero, %0, e32, m8, ta, ma;"
-               "vle32.v v8, (%1);"
-               "vsetvli zero, %0, e8, m2, ta, ma;"
-               "vluxei32.v v8, (%2), v8;"
-               "vse8.v v8, (%3);"
-               :
-               : "r" (vl), "r" (index_buf), "r" (in_buf), "r" (out_buf)
-               : "v8");
-
+  vuint32m8_t indices;
+  asm("vsetvli zero, %[vl], e32, m8, ta, ma;"
+      "vle32.v %[index], %[index_buf];"
+      : [index] "=vr"(indices)
+      : [vl] "r"(vl), [index_buf] "m"(index_buf));
   // TODO: Revert once compiler bug is eliminated
   // auto indices = __riscv_vle32_v_u32m8(index_buf, vl);
-  // auto data = __riscv_vluxei32_v_u8m2(in_buf, indices, vl);
-  // __riscv_vse8_v_u8m2(out_buf, data, vl);
+  auto data = __riscv_vluxei32_v_u8m2(in_buf, indices, vl);
+  __riscv_vse8_v_u8m2(out_buf, data, vl);
 }
 
 // Ordered
 __attribute__((used, retain)) void vloxei32_v_u8mf4() {
-  auto indices = __riscv_vle32_v_u32m1(index_buf, vl);
+  vuint32m1_t indices;
+  asm("vsetvli zero, %[vl], e32, m1, ta, ma;"
+      "vle32.v %[index], %[index_buf];"
+      : [index] "=vr"(indices)
+      : [vl] "r"(vl), [index_buf] "m"(index_buf));
+  // TODO: Revert once compiler bug is eliminated
+  // auto indices = __riscv_vle32_v_u32m1(index_buf, vl);
   auto data = __riscv_vloxei32_v_u8mf4(in_buf, indices, vl);
   __riscv_vse8_v_u8mf4(out_buf, data, vl);
 }
 
 __attribute__((used, retain)) void vloxei32_v_u8mf2() {
-  asm volatile("vsetvli zero, %0, e32, m2, ta, ma;"
-               "vle32.v v2, (%1);"
-               "vsetvli zero, %0, e8, mf2, ta, ma;"
-               "vloxei32.v v2, (%2), v2;"
-               "vse8.v v2, (%3);"
-               :
-               : "r" (vl), "r" (index_buf), "r" (in_buf), "r" (out_buf)
-               : "v2");
-
+  vuint32m2_t indices;
+  asm("vsetvli zero, %[vl], e32, m2, ta, ma;"
+      "vle32.v %[index], %[index_buf];"
+      : [index] "=vr"(indices)
+      : [vl] "r"(vl), [index_buf] "m"(index_buf));
   // TODO: Revert once compiler bug is eliminated
   // auto indices = __riscv_vle32_v_u32m2(index_buf, vl);
-  // auto data = __riscv_vloxei32_v_u8mf2(in_buf, indices, vl);
-  // __riscv_vse8_v_u8mf2(out_buf, data, vl);
+  auto data = __riscv_vloxei32_v_u8mf2(in_buf, indices, vl);
+  __riscv_vse8_v_u8mf2(out_buf, data, vl);
 }
 
 __attribute__((used, retain)) void vloxei32_v_u8m1() {
-  asm volatile("vsetvli zero, %0, e32, m4, ta, ma;"
-               "vle32.v v4, (%1);"
-               "vsetvli zero, %0, e8, m1, ta, ma;"
-               "vloxei32.v v4, (%2), v4;"
-               "vse8.v v4, (%3);"
-               :
-               : "r" (vl), "r" (index_buf), "r" (in_buf), "r" (out_buf)
-               : "v4");
-
+  vuint32m4_t indices;
+  asm("vsetvli zero, %[vl], e32, m4, ta, ma;"
+      "vle32.v %[index], %[index_buf];"
+      : [index] "=vr"(indices)
+      : [vl] "r"(vl), [index_buf] "m"(index_buf));
   // TODO: Revert once compiler bug is eliminated
   // auto indices = __riscv_vle32_v_u32m4(index_buf, vl);
-  // auto data = __riscv_vloxei32_v_u8m1(in_buf, indices, vl);
-  // __riscv_vse8_v_u8m1(out_buf, data, vl);
+  auto data = __riscv_vloxei32_v_u8m1(in_buf, indices, vl);
+  __riscv_vse8_v_u8m1(out_buf, data, vl);
 }
 
 __attribute__((used, retain)) void vloxei32_v_u8m2() {
-  asm volatile("vsetvli zero, %0, e32, m8, ta, ma;"
-               "vle32.v v8, (%1);"
-               "vsetvli zero, %0, e8, m2, ta, ma;"
-               "vluxei32.v v8, (%2), v8;"
-               "vse8.v v8, (%3);"
-               :
-               : "r" (vl), "r" (index_buf), "r" (in_buf), "r" (out_buf)
-               : "v8");
-
+  vuint32m8_t indices;
+  asm("vsetvli zero, %[vl], e32, m8, ta, ma;"
+      "vle32.v %[index], %[index_buf];"
+      : [index] "=vr"(indices)
+      : [vl] "r"(vl), [index_buf] "m"(index_buf));
   // TODO: Revert once compiler bug is eliminated
   // auto indices = __riscv_vle32_v_u32m8(index_buf, vl);
-  // auto data = __riscv_vloxei32_v_u8m2(in_buf, indices, vl);
-  // __riscv_vse8_v_u8m2(out_buf, data, vl);
+  auto data = __riscv_vloxei32_v_u8m2(in_buf, indices, vl);
+  __riscv_vse8_v_u8m2(out_buf, data, vl);
 }
 }
 

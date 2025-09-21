@@ -147,10 +147,11 @@ async def vector_load_indexed(
         indices = rng.integers(0, index_max, out_size, dtype=index_dtype)
         # Index is in bytes so input needs to be in bytes.
         input_data = rng.integers(0, 256, in_bytes, dtype=np.uint8)
-        # Input needs to be reinterpreted.
+        # Input needs to be reinterpreted. Note indices in use can reach
+        # beyond index_dtype when dtype is wider than uint8.
         indices_in_use = np.array([
             np.arange(x, x + np.dtype(dtype).itemsize)
-            for x in indices[:vl].astype(np.uint32)]).astype(index_dtype)
+            for x in indices[:vl].astype(np.uint32)])
         expected_outputs = input_data[indices_in_use].view(dtype)[..., 0]
         sbz = np.zeros(out_size - vl, dtype=dtype)
         expected_outputs = np.concat((expected_outputs, sbz))
@@ -621,7 +622,7 @@ async def load16_index8(dut):
         return {
             'impl': impl,
             'vl': vl,
-            'in_bytes': 256,
+            'in_bytes': 257,  # 2 bytes at offset 255 reachable.
             'out_size': vl * 2,
         }
 
@@ -730,7 +731,7 @@ async def load32_index8(dut):
         return {
             'impl': impl,
             'vl': vl,
-            'in_bytes': 256,
+            'in_bytes': 259,  # 4 bytes at offset 255 reachable.
             'out_size': vl * 2,
         }
 
