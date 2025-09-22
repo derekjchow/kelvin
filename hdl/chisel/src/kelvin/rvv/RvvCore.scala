@@ -113,6 +113,7 @@ object GenerateCoreShimSource {
         |    output [1:0] configXrm,
         |    output [2:0] configSew,
         |    output [2:0] configLmul,
+        |    output configVill,
         |    output logic rvv_idle,
         |    output logic [3:0] queue_capacity,
         |""".stripMargin.replaceAll("VSTART_LEN", (log2Ceil(vlen) - 1).toString)
@@ -133,6 +134,7 @@ object GenerateCoreShimSource {
             |    output rd_rob2rt_o_GENI_vector_csr_xrm,
             |    output rd_rob2rt_o_GENI_vector_csr_sew,
             |    output rd_rob2rt_o_GENI_vector_csr_lmul,
+            |    output rd_rob2rt_o_GENI_vector_csr_vill,
             |    output [15:0] rd_rob2rt_o_GENI_vxsaturate,""".stripMargin.replaceAll("GENI", i.toString)
     }
 
@@ -308,6 +310,7 @@ object GenerateCoreShimSource {
       |  assign rd_rob2rt_o_GENI_vector_csr_xrm = rd_rob2rt_o[GENI].vector_csr.xrm;
       |  assign rd_rob2rt_o_GENI_vector_csr_sew = rd_rob2rt_o[GENI].vector_csr.sew;
       |  assign rd_rob2rt_o_GENI_vector_csr_lmul = rd_rob2rt_o[GENI].vector_csr.lmul;
+      |  assign rd_rob2rt_o_GENI_vector_csr_vill = rd_rob2rt_o[GENI].vector_csr.vill;
       |  assign rd_rob2rt_o_GENI_vxsaturate = rd_rob2rt_o[GENI].vxsaturate;
       |""".stripMargin.replaceAll("GENI", i.toString)
     }
@@ -331,6 +334,7 @@ object GenerateCoreShimSource {
     coreInstantiation += "  assign configXrm = config_state.xrm;\n"
     coreInstantiation += "  assign configSew = config_state.sew;\n"
     coreInstantiation += "  assign configLmul = config_state.lmul;\n"
+    coreInstantiation += "  assign configVill = config_state.vill;\n"
 
     moduleInterface + coreInstantiation + "endmodule\n"
   }
@@ -378,6 +382,7 @@ class RvvCoreWrapper(p: Parameters) extends BlackBox with HasBlackBoxInline
     val configXrm = Output(UInt(2.W))
     val configSew = Output(UInt(3.W))
     val configLmul = Output(UInt(3.W))
+    val configVill = Output(Bool())
     val rvv_idle = Output(Bool())
     val queue_capacity = Output(UInt(4.W))
   })
@@ -488,6 +493,7 @@ class RvvCoreShim(p: Parameters) extends Module {
   io.configState.bits.xrm    := rvvCoreWrapper.io.configXrm
   io.configState.bits.sew    := rvvCoreWrapper.io.configSew
   io.configState.bits.lmul   := rvvCoreWrapper.io.configLmul
+  io.configState.bits.vill   := rvvCoreWrapper.io.configVill
   io.rvv_idle                := rvvCoreWrapper.io.rvv_idle
   io.queue_capacity          := rvvCoreWrapper.io.queue_capacity
 

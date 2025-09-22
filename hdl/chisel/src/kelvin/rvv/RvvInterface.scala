@@ -26,13 +26,14 @@ class RvvConfigState(p: Parameters) extends Bundle {
   val xrm = Output(UInt(2.W))
   val sew = Output(UInt(3.W))
   val lmul = Output(UInt(3.W))
+  val vill = Output(Bool())
 
   /**
    * Construct the vtype CSR value.
    * See section 3.4 of the RISC-V Vector Specification v1.0.
    */
   def vtype: UInt = {
-    Cat(0.U(24.W), ma, ta, sew, lmul)
+    Cat(vill, 0.U(23.W), ma, ta, sew, lmul)
   }
 }
 

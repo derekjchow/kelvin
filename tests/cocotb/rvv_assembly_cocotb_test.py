@@ -1,5 +1,7 @@
 import cocotb
+import itertools
 import numpy as np
+import tqdm
 from kelvin_test_utils.core_mini_axi_interface import CoreMiniAxiInterface
 from kelvin_test_utils.sim_test_fixture import Fixture
 from bazel_tools.tools.python.runfiles import runfiles
@@ -10,7 +12,9 @@ SEWS = [
     0b010,  # SEW32
 ]
 
+# See 3.4.2. Vector Register Grouping of RVV Spec
 LMULS = [
+    0b100,  # Reserved
     0b101,  # LMUL1/8
     0b110,  # LMUL1/4
     0b111,  # LMUL1/2
@@ -19,6 +23,26 @@ LMULS = [
     0b010,  # LMUL4
     0b011,  # LMUL8
 ]
+
+def _illegal_vtype(sew, lmul):
+    # SEW must be SEW8,16,32. Others are illegal
+    if not ((sew == 0b000) or (sew == 0b001) or (sew == 0b010)):
+      return True
+
+    # Reserved or LMUL=1/8 always illegal
+    if (lmul == 0b100) or (lmul == 0b101):
+      return True
+
+    # LMUL=1/4 is illegal for SEW16 and SEW32
+    if (sew != 0b000) and (lmul == 0b110):
+      return True
+
+    # LMUL=1/2 is illegal for SEW32
+    if (sew == 0b010) and (lmul == 0b111):
+      return True
+
+    return False
+
 
 @cocotb.test()
 async def core_mini_rvv_load(dut):
@@ -184,10 +208,12 @@ async def core_mini_vcsr_test(dut):
         vl_addr = core_mini_axi.lookup_symbol(f, "vl")
         vtype_addr = core_mini_axi.lookup_symbol(f, "vtype")
 
-    for ma in range(2):
-      for ta in range(2):
-        for sew in SEWS:
-          for lmul in LMULS:
+    combined_loops = itertools.product(range(2), range(2), SEWS, LMULS)
+    total_loops = 2 * 2 * len(SEWS) * len(LMULS)
+    with tqdm.tqdm(combined_loops, total=total_loops) as t:
+        for ma, ta, sew, lmul in t:
+            t.set_postfix(
+                {'ma': ma, 'ta': ta, 'sew': bin(sew), 'lmul': bin(lmul) })
             await core_mini_axi.write_word(vma_addr, ma)
             await core_mini_axi.write_word(vta_addr, ta)
             await core_mini_axi.write_word(sew_addr, sew)
@@ -200,15 +226,24 @@ async def core_mini_vcsr_test(dut):
 
             vtype_result = (
                 await core_mini_axi.read_word(vtype_addr)).view(np.uint32)[0]
-            ma_result = (vtype_result & (1 << 7)) >> 7
-            ta_result = (vtype_result & (1 << 6)) >> 6
-            sew_result = (vtype_result & (0b111 << 3)) >> 3
-            lmul_result = (vtype_result & 0b111)
 
-            assert (ma == ma_result)
-            assert (ta == ta_result)
-            assert (sew == sew_result)
-            assert (lmul == lmul_result)
+            # Check if vtype is legal
+            expected_illegal = _illegal_vtype(sew, lmul)
+            result_illegal = (vtype_result & (1 << 31)) >> 31
+            assert (expected_illegal == result_illegal)
+
+            if expected_illegal:
+                ma_result = (vtype_result & (1 << 7)) >> 7
+                ta_result = (vtype_result & (1 << 6)) >> 6
+                sew_result = (vtype_result & (0b111 << 3)) >> 3
+                lmul_result = (vtype_result & 0b111)
+
+                assert (ma == ma_result)
+                assert (ta == ta_result)
+                assert (sew == sew_result)
+                assert (lmul == lmul_result)
+
+
 
 
 async def test_vstart_not_zero_failure(dut, binary):

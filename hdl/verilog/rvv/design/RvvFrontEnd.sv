@@ -139,7 +139,6 @@ module RvvFrontEnd#(parameter N = 4,
           (inst_q[i].opcode == RVV) &&
           (inst_q[i].bits[7:5] == 3'b111)) begin
         if (inst_q[i].bits[24] == 0) begin  // vsetvli
-          inst_config_state[i+1].vill = 0;
           inst_config_state[i+1].vl = reg_read_data_i[2*i];
           inst_config_state[i+1].lmul = RVVLMUL'(inst_q[i].bits[15:13]);
           inst_config_state[i+1].sew = RVVSEW'(inst_q[i].bits[18:16]);
@@ -147,7 +146,6 @@ module RvvFrontEnd#(parameter N = 4,
           inst_config_state[i+1].ma = inst_q[i].bits[20];
           is_setvl[i] = 1;
         end else if (inst_q[i].bits[24:23] == 2'b11) begin  // vsetivli
-          inst_config_state[i+1].vill = 0;
           inst_config_state[i+1].vl =
               {{(`VL_WIDTH - 5){1'b0}}, inst_q[i].bits[12:8]};
           inst_config_state[i+1].lmul = RVVLMUL'(inst_q[i].bits[15:13]);
@@ -156,7 +154,6 @@ module RvvFrontEnd#(parameter N = 4,
           inst_config_state[i+1].ma = inst_q[i].bits[20];
           is_setvl[i] = 1;
         end else if (inst_q[i].bits[24:23] == 2'b10) begin  // vsetvl
-          inst_config_state[i+1].vill = 0;
           inst_config_state[i+1].vl = reg_read_data_i[2*i];
           inst_config_state[i+1].lmul =
               RVVLMUL'(reg_read_data_i[(2*i) + 1][2:0]);
@@ -167,6 +164,35 @@ module RvvFrontEnd#(parameter N = 4,
           is_setvl[i] = 1;
         end
       end
+
+      // Compute legality of vtype.
+      if (is_setvl[i]) begin
+        unique case (inst_config_state[i+1].sew)
+          SEW8:
+            unique case(inst_config_state[i+1].lmul)
+              LMULRESERVED: inst_config_state[i+1].vill = 1;
+              LMUL1_8: inst_config_state[i+1].vill = 1;
+              default: inst_config_state[i+1].vill = 0;
+            endcase
+          SEW16:
+            unique case(inst_config_state[i+1].lmul)
+              LMULRESERVED: inst_config_state[i+1].vill = 1;
+              LMUL1_8: inst_config_state[i+1].vill = 1;
+              LMUL1_4: inst_config_state[i+1].vill = 1;
+              default: inst_config_state[i+1].vill = 0;
+            endcase
+          SEW32:
+            unique case(inst_config_state[i+1].lmul)
+              LMULRESERVED: inst_config_state[i+1].vill = 1;
+              LMUL1_8: inst_config_state[i+1].vill = 1;
+              LMUL1_4: inst_config_state[i+1].vill = 1;
+              LMUL1_2: inst_config_state[i+1].vill = 1;
+              default: inst_config_state[i+1].vill = 0;
+            endcase
+          default: inst_config_state[i+1].vill = 1;
+        endcase
+      end
+
     end
   end
 
