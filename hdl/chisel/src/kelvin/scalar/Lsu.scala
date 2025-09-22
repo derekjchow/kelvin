@@ -291,6 +291,7 @@ class LsuVectorLoop extends Bundle {
   // Additional internal states to help drive derived outputs.
   val rdStart = UInt(5.W)
   val rd = UInt(5.W)
+  val indexParition = new LoopingCounter(2.W)
 
   def subvectorDone(): Bool = subvector.isFull()
   def segmentDone(): Bool = subvectorDone() && segment.isFull()
@@ -308,7 +309,8 @@ class LsuVectorLoop extends Bundle {
           segmentDone() -> (rdStart + lmul.next().curr),
           // Jump all lmuls to next seg.
           subvectorDone() -> (rd + lmul.max + 1.U),
-      ))
+      )),
+      _.indexParition -> Mux(segmentDone(), indexParition.next(), indexParition),
   )
 
   override def toPrintable: Printable = {
@@ -390,6 +392,17 @@ class LsuSlot(bytesPerSlot: Int, bytesPerLine: Int) extends Bundle {
     result.vectorLoop := vectorLoop
 
     val segmentBaseAddr = baseAddr + (segmentStride * vectorLoop.segment.curr)
+    val bitsPerSlot = bytesPerSlot * 8
+    val indices = MuxCase(rvv2lsu.idx.bits.data, Seq(
+        // 2 of 2
+        ((vectorLoop.indexParition.curr === 1.U) && (vectorLoop.indexParition.max === 1.U)) -> (rvv2lsu.idx.bits.data(bitsPerSlot - 1, bitsPerSlot / 2)),
+        // 2 of 4
+        ((vectorLoop.indexParition.curr === 1.U) && (vectorLoop.indexParition.max === 3.U)) -> (rvv2lsu.idx.bits.data(bitsPerSlot / 2 - 1, bitsPerSlot / 4)),
+        // 3 of 4
+        ((vectorLoop.indexParition.curr === 2.U) && (vectorLoop.indexParition.max === 3.U)) -> (rvv2lsu.idx.bits.data(bitsPerSlot * 3 / 4 - 1, bitsPerSlot / 2)),
+        // 4 of 4
+        ((vectorLoop.indexParition.curr === 3.U) && (vectorLoop.indexParition.max === 3.U)) -> (rvv2lsu.idx.bits.data(bitsPerSlot - 1, bitsPerSlot * 3 / 4)),
+    ))
     result.addrs := MuxCase(addrs, Seq(
         op.isOneOf(LsuOp.VLOAD_UNIT, LsuOp.VSTORE_UNIT) ->
             ComputeStridedAddrs(bytesPerSlot, segmentBaseAddr, elemStride, elemWidth),
@@ -397,7 +410,7 @@ class LsuSlot(bytesPerSlot: Int, bytesPerLine: Int) extends Bundle {
             ComputeStridedAddrs(bytesPerSlot, segmentBaseAddr, elemStride, elemWidth),
         op.isOneOf(LsuOp.VLOAD_OINDEXED, LsuOp.VLOAD_UINDEXED,
                    LsuOp.VSTORE_OINDEXED, LsuOp.VSTORE_UINDEXED) ->
-            ComputeIndexedAddrs(bytesPerSlot, baseAddr, rvv2lsu.idx.bits.data,
+            ComputeIndexedAddrs(bytesPerSlot, baseAddr, indices,
                                 elemWidth, sew),
     ))
     result.elemWidth := elemWidth
@@ -595,6 +608,15 @@ object LsuSlot {
         ((elemMultiplier === 4.U) && (uop.lmul.get.asSInt >= 0.S)) -> 3.U,
         ((elemMultiplier === 4.U) && (uop.lmul.get.asSInt === -1.S)) -> 1.U,
       ))
+      // [0..x] data vecs we can operate on with one index vec
+      val indexParitions = MuxCase(0.U, Seq(
+        // 16-bit data, 8-bit indices
+        ((elemWidth === "b000".U) && (uop.sew.get === 1.U)) -> 1.U,
+        // 32-bit data, 8-bit indices
+        ((elemWidth === "b000".U) && (uop.sew.get === 2.U)) -> 3.U,
+        // 32-bit data, 16-bit indices
+        ((elemWidth === "b101".U) && (uop.sew.get === 2.U)) -> 1.U,
+      ))
       result.vectorLoop := MakeWireBundle[LsuVectorLoop](
           new LsuVectorLoop,
           _.isActive -> LsuOp.isVector(uop.op),
@@ -604,6 +626,7 @@ object LsuSlot {
           _.lmul -> LoopingCounter((1.U(4.W) << effectiveLmul) - 1.U),
           _.rdStart -> uop.rd,
           _.rd -> uop.rd,
+          _.indexParition -> LoopingCounter(indexParitions),
       )
     }
 
