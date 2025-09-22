@@ -186,3 +186,28 @@ object OneHotInOrder {
     !failed
   }
 }
+
+// A simple state machine that loops. Used for creating more complex state
+// machines.
+class LoopingCounter(w: Width) extends Bundle {
+    val curr = UInt(w)
+    val max = UInt(w)  // Reachable.
+
+    def isEnabled(): Bool = (max === 0.U)
+
+    def isFull(): Bool = (curr === max)
+
+    def next(): LoopingCounter = MakeWireBundle[LoopingCounter](
+        new LoopingCounter(Width(max.getWidth)),
+        _.curr -> Mux(isFull(), 0.U, curr + 1.U),
+        _.max -> max,
+    )
+}
+
+object LoopingCounter {
+    def apply(max: UInt): LoopingCounter = MakeWireBundle[LoopingCounter](
+        new LoopingCounter(Width(max.getWidth)),
+        _.curr -> 0.U,
+        _.max -> max,
+    )
+}
