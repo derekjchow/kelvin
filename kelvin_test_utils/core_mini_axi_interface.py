@@ -103,7 +103,7 @@ def convert_to_binary_value(data):
 
 
 class CoreMiniAxiInterface:
-  def __init__(self, dut):
+  def __init__(self, dut, clock_ns=1.25):
     self.dut = dut
     self.dut.io_aclk.value = 0
     self.dut.io_irq.value = 0
@@ -117,7 +117,7 @@ class CoreMiniAxiInterface:
     self.dut.io_axi_slave_write_resp_ready.value = 0
     self.dut.io_axi_master_read_data_valid.value = 0
     self.dut.io_axi_master_write_resp_valid.value = 0
-    self.clock = Clock(dut.io_aclk, 10, unit="us")
+    self.clock = Clock(dut.io_aclk, clock_ns, unit="ns")
     self.memory_base_addr = 0x20000000
     self.memory = np.zeros([4 * 1024 * 1024], dtype=np.uint8)
     self.master_arfifo = Queue()
