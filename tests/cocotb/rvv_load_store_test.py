@@ -909,6 +909,48 @@ async def store8_index8(dut):
 
 
 @cocotb.test()
+async def store16_index8(dut):
+    """Test vs*xei8_v_u16 usage accessible from intrinsics."""
+    def make_test_case(impl: str, vl: int):
+        return {
+            'impl': impl,
+            'vl': vl,
+            'out_size': 256,
+        }
+
+    await vector_store_indexed(
+        dut = dut,
+        elf_name = 'store16_index8.elf',
+        cases = [
+            # Unordered
+            make_test_case('vsuxei8_v_u16mf2', vl = 4),
+            make_test_case('vsuxei8_v_u16mf2', vl = 3),
+            make_test_case('vsuxei8_v_u16m1', vl = 8),
+            make_test_case('vsuxei8_v_u16m1', vl = 7),
+            make_test_case('vsuxei8_v_u16m2', vl = 16),
+            make_test_case('vsuxei8_v_u16m2', vl = 15),
+            make_test_case('vsuxei8_v_u16m4', vl = 32),
+            make_test_case('vsuxei8_v_u16m4', vl = 31),
+            make_test_case('vsuxei8_v_u16m8', vl = 64),
+            make_test_case('vsuxei8_v_u16m8', vl = 63),
+            # Ordered
+            make_test_case('vsoxei8_v_u16mf2', vl = 4),
+            make_test_case('vsoxei8_v_u16mf2', vl = 3),
+            make_test_case('vsoxei8_v_u16m1', vl = 8),
+            make_test_case('vsoxei8_v_u16m1', vl = 7),
+            make_test_case('vsoxei8_v_u16m2', vl = 16),
+            make_test_case('vsoxei8_v_u16m2', vl = 15),
+            make_test_case('vsoxei8_v_u16m4', vl = 32),
+            make_test_case('vsoxei8_v_u16m4', vl = 31),
+            make_test_case('vsoxei8_v_u16m8', vl = 64),
+            make_test_case('vsoxei8_v_u16m8', vl = 63),
+        ],
+        data_dtype = np.uint16,
+        index_dtype = np.uint8,
+    )
+
+
+@cocotb.test()
 async def store16_index16(dut):
     """Test vs*xei16_v_u16 usage accessible from intrinsics."""
     def make_test_case(impl: str, vl: int):
@@ -946,6 +988,82 @@ async def store16_index16(dut):
             make_test_case('vsoxei16_v_u16m8', vl = 63),
         ],
         data_dtype = np.uint16,
+        index_dtype = np.uint16,
+    )
+
+
+@cocotb.test()
+async def store32_index8(dut):
+    """Test vs*xei8_v_u32 usage accessible from intrinsics."""
+    def make_test_case(impl: str, vl: int):
+        return {
+            'impl': impl,
+            'vl': vl,
+            'out_size': 257,
+        }
+
+    await vector_store_indexed(
+        dut = dut,
+        elf_name = 'store32_index8.elf',
+        cases = [
+            # Unordered
+            make_test_case('vsuxei8_v_u32m1', vl = 4),
+            make_test_case('vsuxei8_v_u32m1', vl = 3),
+            make_test_case('vsuxei8_v_u32m2', vl = 8),
+            make_test_case('vsuxei8_v_u32m2', vl = 7),
+            make_test_case('vsuxei8_v_u32m4', vl = 16),
+            make_test_case('vsuxei8_v_u32m4', vl = 15),
+            make_test_case('vsuxei8_v_u32m8', vl = 32),
+            make_test_case('vsuxei8_v_u32m8', vl = 31),
+            # Ordered
+            make_test_case('vsoxei8_v_u32m1', vl = 4),
+            make_test_case('vsoxei8_v_u32m1', vl = 3),
+            make_test_case('vsoxei8_v_u32m2', vl = 8),
+            make_test_case('vsoxei8_v_u32m2', vl = 7),
+            make_test_case('vsoxei8_v_u32m4', vl = 16),
+            make_test_case('vsoxei8_v_u32m4', vl = 15),
+            make_test_case('vsoxei8_v_u32m8', vl = 32),
+            make_test_case('vsoxei8_v_u32m8', vl = 31),
+        ],
+        data_dtype = np.uint32,
+        index_dtype = np.uint8,
+    )
+
+
+@cocotb.test()
+async def store32_index16(dut):
+    """Test vs*xei16_v_u32 usage accessible from intrinsics."""
+    def make_test_case(impl: str, vl: int):
+        return {
+            'impl': impl,
+            'vl': vl,
+            'out_size': 4000,
+        }
+
+    await vector_store_indexed(
+        dut = dut,
+        elf_name = 'store32_index16.elf',
+        cases = [
+            # Unordered
+            make_test_case('vsuxei16_v_u32m1', vl = 4),
+            make_test_case('vsuxei16_v_u32m1', vl = 3),
+            make_test_case('vsuxei16_v_u32m2', vl = 8),
+            make_test_case('vsuxei16_v_u32m2', vl = 7),
+            make_test_case('vsuxei16_v_u32m4', vl = 16),
+            make_test_case('vsuxei16_v_u32m4', vl = 15),
+            make_test_case('vsuxei16_v_u32m8', vl = 32),
+            make_test_case('vsuxei16_v_u32m8', vl = 31),
+            # Ordered
+            make_test_case('vsoxei16_v_u32m1', vl = 4),
+            make_test_case('vsoxei16_v_u32m1', vl = 3),
+            make_test_case('vsoxei16_v_u32m2', vl = 8),
+            make_test_case('vsoxei16_v_u32m2', vl = 7),
+            make_test_case('vsoxei16_v_u32m4', vl = 16),
+            make_test_case('vsoxei16_v_u32m4', vl = 15),
+            make_test_case('vsoxei16_v_u32m8', vl = 32),
+            make_test_case('vsoxei16_v_u32m8', vl = 31),
+        ],
+        data_dtype = np.uint32,
         index_dtype = np.uint16,
     )
 

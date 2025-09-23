@@ -92,8 +92,17 @@ template_rule(
         "store8_index8": {
             "srcs": ["store8_index8.cc"],
         },
+        "store16_index8": {
+            "srcs": ["store16_index8.cc"],
+        },
         "store16_index16": {
             "srcs": ["store16_index16.cc"],
+        },
+        "store32_index8": {
+            "srcs": ["store32_index8.cc"],
+        },
+        "store32_index16": {
+            "srcs": ["store32_index16.cc"],
         },
         "store32_index32": {
             "srcs": ["store32_index32.cc"],
@@ -137,7 +146,10 @@ filegroup(
         ":load32_stride8_m1.elf",
         ":load32_stride8_m1_partial.elf",
         ":store8_index8.elf",
+        ":store16_index8.elf",
         ":store16_index16.elf",
+        ":store32_index8.elf",
+        ":store32_index16.elf",
         ":store32_index32.elf",
         ":store8_seg_unit",
         ":store16_seg_unit",
