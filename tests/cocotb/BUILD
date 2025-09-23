@@ -174,6 +174,7 @@ RVV_ASSEMBLY_TESTCASES = [
 RVV_LOAD_STORE_TESTCASES = [
     "load_store_bits",
     "load8_index8",
+    "load8_index8_seg",
     "load8_index16",
     "load8_index32",
     "load8_seg_unit",

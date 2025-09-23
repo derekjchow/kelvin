@@ -391,7 +391,7 @@ class LsuSlot(bytesPerSlot: Int, bytesPerLine: Int) extends Bundle {
     result.segmentStride := segmentStride
     result.vectorLoop := vectorLoop
 
-    val segmentBaseAddr = baseAddr + (segmentStride * vectorLoop.segment.curr)
+    val segmentBaseAddr = baseAddr + (segmentStride * vectorLoop.segment.curr)(31, 0)
     val bitsPerSlot = bytesPerSlot * 8
     val indices = MuxCase(rvv2lsu.idx.bits.data, Seq(
         // 2 of 2
@@ -410,7 +410,7 @@ class LsuSlot(bytesPerSlot: Int, bytesPerLine: Int) extends Bundle {
             ComputeStridedAddrs(bytesPerSlot, segmentBaseAddr, elemStride, elemWidth),
         op.isOneOf(LsuOp.VLOAD_OINDEXED, LsuOp.VLOAD_UINDEXED,
                    LsuOp.VSTORE_OINDEXED, LsuOp.VSTORE_UINDEXED) ->
-            ComputeIndexedAddrs(bytesPerSlot, baseAddr, indices,
+            ComputeIndexedAddrs(bytesPerSlot, segmentBaseAddr, indices,
                                 elemWidth, sew),
     ))
     result.elemWidth := elemWidth

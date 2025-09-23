@@ -26,6 +26,9 @@ template_rule(
         "load8_index8": {
             "srcs": ["load8_index8.cc"],
         },
+        "load8_index8_seg": {
+            "srcs": ["load8_index8_seg.cc"],
+        },
         "load8_index16": {
             "srcs": ["load8_index16.cc"],
         },
@@ -124,6 +127,7 @@ filegroup(
     srcs = [
         ":load_store_bits.elf",
         ":load8_index8.elf",
+        ":load8_index8_seg.elf",
         ":load8_index16.elf",
         ":load8_index32.elf",
         ":load8_seg_unit.elf",
