@@ -681,6 +681,185 @@ async def load8_index8_seg(dut):
 
 
 @cocotb.test()
+async def load8_index16(dut):
+    """Test vl*xei16_v_u8 usage accessible from intrinsics."""
+    def make_test_case(impl: str, vl: int):
+        return {
+            'impl': impl,
+            'vl': vl,
+            'in_bytes': 32000,  # DTCM is 32KB
+            'out_size': vl * 2,
+        }
+
+    await vector_load_indexed(
+        dut = dut,
+        elf_name = 'load8_index16.elf',
+        cases = [
+            # Unordered
+            make_test_case('vluxei16_v_u8mf4', vl = 4),
+            make_test_case('vluxei16_v_u8mf4', vl = 3),
+            make_test_case('vluxei16_v_u8mf2', vl = 8),
+            make_test_case('vluxei16_v_u8mf2', vl = 7),
+            make_test_case('vluxei16_v_u8m1', vl = 16),
+            make_test_case('vluxei16_v_u8m1', vl = 15),
+            make_test_case('vluxei16_v_u8m2', vl = 32),
+            make_test_case('vluxei16_v_u8m2', vl = 31),
+            make_test_case('vluxei16_v_u8m4', vl = 64),
+            make_test_case('vluxei16_v_u8m4', vl = 63),
+            # Ordered
+            make_test_case('vloxei16_v_u8mf4', vl = 4),
+            make_test_case('vloxei16_v_u8mf4', vl = 3),
+            make_test_case('vloxei16_v_u8mf2', vl = 8),
+            make_test_case('vloxei16_v_u8mf2', vl = 7),
+            make_test_case('vloxei16_v_u8m1', vl = 16),
+            make_test_case('vloxei16_v_u8m1', vl = 15),
+            make_test_case('vloxei16_v_u8m2', vl = 32),
+            make_test_case('vloxei16_v_u8m2', vl = 31),
+            make_test_case('vloxei16_v_u8m4', vl = 64),
+            make_test_case('vloxei16_v_u8m4', vl = 63),
+        ],
+        dtype = np.uint8,
+        index_dtype = np.uint16,
+    )
+
+
+@cocotb.test()
+async def load8_index16_seg(dut):
+    """Test vl*xseg*ei16_v_u8 usage accessible from intrinsics."""
+    def make_test_case(impl: str, vl: int, n_segs: int):
+        return {
+            'impl': impl,
+            'vl': vl,
+            'segments': n_segs,
+            'in_bytes': 30000,
+            'out_size': vl * n_segs * 2,
+        }
+
+    await vector_load_segmented_indexed(
+        dut = dut,
+        elf_name = 'load8_index16_seg.elf',
+        cases = [
+            # Unordered, segment 2
+            make_test_case('vluxseg2ei16_v_u8mf4x2', vl=4, n_segs=2),
+            make_test_case('vluxseg2ei16_v_u8mf4x2', vl=3, n_segs=2),
+            make_test_case('vluxseg2ei16_v_u8mf2x2', vl=8, n_segs=2),
+            make_test_case('vluxseg2ei16_v_u8mf2x2', vl=7, n_segs=2),
+            make_test_case('vluxseg2ei16_v_u8m1x2', vl=16, n_segs=2),
+            make_test_case('vluxseg2ei16_v_u8m1x2', vl=15, n_segs=2),
+            make_test_case('vluxseg2ei16_v_u8m2x2', vl=32, n_segs=2),
+            make_test_case('vluxseg2ei16_v_u8m2x2', vl=31, n_segs=2),
+            # make_test_case('vluxseg2ei16_v_u8m4x2', vl=64, n_segs=2),
+            # make_test_case('vluxseg2ei16_v_u8m4x2', vl=63, n_segs=2),
+            # Unordered, segment 3
+            make_test_case('vluxseg3ei16_v_u8mf4x3', vl=4, n_segs=3),
+            make_test_case('vluxseg3ei16_v_u8mf4x3', vl=3, n_segs=3),
+            make_test_case('vluxseg3ei16_v_u8mf2x3', vl=8, n_segs=3),
+            make_test_case('vluxseg3ei16_v_u8mf2x3', vl=7, n_segs=3),
+            make_test_case('vluxseg3ei16_v_u8m1x3', vl=16, n_segs=3),
+            make_test_case('vluxseg3ei16_v_u8m1x3', vl=15, n_segs=3),
+            # make_test_case('vluxseg3ei16_v_u8m2x3', vl=32, n_segs=3),
+            # make_test_case('vluxseg3ei16_v_u8m2x3', vl=31, n_segs=3),
+            # # Unordered, segment 4
+            make_test_case('vluxseg4ei16_v_u8mf4x4', vl=4, n_segs=4),
+            make_test_case('vluxseg4ei16_v_u8mf4x4', vl=3, n_segs=4),
+            make_test_case('vluxseg4ei16_v_u8mf2x4', vl=8, n_segs=4),
+            make_test_case('vluxseg4ei16_v_u8mf2x4', vl=7, n_segs=4),
+            make_test_case('vluxseg4ei16_v_u8m1x4', vl=16, n_segs=4),
+            make_test_case('vluxseg4ei16_v_u8m1x4', vl=15, n_segs=4),
+            # make_test_case('vluxseg4ei16_v_u8m2x4', vl=32, n_segs=4),
+            # make_test_case('vluxseg4ei16_v_u8m2x4', vl=31, n_segs=4),
+            # # Unordered, segment 5
+            make_test_case('vluxseg5ei16_v_u8mf4x5', vl=4, n_segs=5),
+            make_test_case('vluxseg5ei16_v_u8mf4x5', vl=3, n_segs=5),
+            make_test_case('vluxseg5ei16_v_u8mf2x5', vl=8, n_segs=5),
+            make_test_case('vluxseg5ei16_v_u8mf2x5', vl=7, n_segs=5),
+            # make_test_case('vluxseg5ei16_v_u8m1x5', vl=16, n_segs=5),
+            # make_test_case('vluxseg5ei16_v_u8m1x5', vl=15, n_segs=5),
+            # # Unordered, segment 6
+            make_test_case('vluxseg6ei16_v_u8mf4x6', vl=4, n_segs=6),
+            make_test_case('vluxseg6ei16_v_u8mf4x6', vl=3, n_segs=6),
+            make_test_case('vluxseg6ei16_v_u8mf2x6', vl=8, n_segs=6),
+            make_test_case('vluxseg6ei16_v_u8mf2x6', vl=7, n_segs=6),
+            # make_test_case('vluxseg6ei16_v_u8m1x6', vl=16, n_segs=6),
+            # make_test_case('vluxseg6ei16_v_u8m1x6', vl=15, n_segs=6),
+            # # Unordered, segment 7
+            make_test_case('vluxseg7ei16_v_u8mf4x7', vl=4, n_segs=7),
+            make_test_case('vluxseg7ei16_v_u8mf4x7', vl=3, n_segs=7),
+            make_test_case('vluxseg7ei16_v_u8mf2x7', vl=8, n_segs=7),
+            make_test_case('vluxseg7ei16_v_u8mf2x7', vl=7, n_segs=7),
+            # make_test_case('vluxseg7ei16_v_u8m1x7', vl=16, n_segs=7),
+            # make_test_case('vluxseg7ei16_v_u8m1x7', vl=15, n_segs=7),
+            # # Unordered, segment 8
+            make_test_case('vluxseg8ei16_v_u8mf4x8', vl=4, n_segs=8),
+            make_test_case('vluxseg8ei16_v_u8mf4x8', vl=3, n_segs=8),
+            make_test_case('vluxseg8ei16_v_u8mf2x8', vl=8, n_segs=8),
+            make_test_case('vluxseg8ei16_v_u8mf2x8', vl=7, n_segs=8),
+            # make_test_case('vluxseg8ei16_v_u8m1x8', vl=16, n_segs=8),
+            # make_test_case('vluxseg8ei16_v_u8m1x8', vl=15, n_segs=8),
+            # # Ordered, segment 2
+            make_test_case('vloxseg2ei16_v_u8mf4x2', vl=4, n_segs=2),
+            make_test_case('vloxseg2ei16_v_u8mf4x2', vl=3, n_segs=2),
+            make_test_case('vloxseg2ei16_v_u8mf2x2', vl=8, n_segs=2),
+            make_test_case('vloxseg2ei16_v_u8mf2x2', vl=7, n_segs=2),
+            make_test_case('vloxseg2ei16_v_u8m1x2', vl=16, n_segs=2),
+            make_test_case('vloxseg2ei16_v_u8m1x2', vl=15, n_segs=2),
+            make_test_case('vloxseg2ei16_v_u8m2x2', vl=32, n_segs=2),
+            make_test_case('vloxseg2ei16_v_u8m2x2', vl=31, n_segs=2),
+            # make_test_case('vloxseg2ei16_v_u8m4x2', vl=64, n_segs=2),
+            # make_test_case('vloxseg2ei16_v_u8m4x2', vl=63, n_segs=2),
+            # # Ordered, segment 3
+            make_test_case('vloxseg3ei16_v_u8mf4x3', vl=4, n_segs=3),
+            make_test_case('vloxseg3ei16_v_u8mf4x3', vl=3, n_segs=3),
+            make_test_case('vloxseg3ei16_v_u8mf2x3', vl=8, n_segs=3),
+            make_test_case('vloxseg3ei16_v_u8mf2x3', vl=7, n_segs=3),
+            make_test_case('vloxseg3ei16_v_u8m1x3', vl=16, n_segs=3),
+            make_test_case('vloxseg3ei16_v_u8m1x3', vl=15, n_segs=3),
+            # make_test_case('vloxseg3ei16_v_u8m2x3', vl=32, n_segs=3),
+            # make_test_case('vloxseg3ei16_v_u8m2x3', vl=31, n_segs=3),
+            # # Ordered, segment 4
+            make_test_case('vloxseg4ei16_v_u8mf4x4', vl=4, n_segs=4),
+            make_test_case('vloxseg4ei16_v_u8mf4x4', vl=3, n_segs=4),
+            make_test_case('vloxseg4ei16_v_u8mf2x4', vl=8, n_segs=4),
+            make_test_case('vloxseg4ei16_v_u8mf2x4', vl=7, n_segs=4),
+            make_test_case('vloxseg4ei16_v_u8m1x4', vl=16, n_segs=4),
+            make_test_case('vloxseg4ei16_v_u8m1x4', vl=15, n_segs=4),
+            # make_test_case('vloxseg4ei16_v_u8m2x4', vl=32, n_segs=4),
+            # make_test_case('vloxseg4ei16_v_u8m2x4', vl=31, n_segs=4),
+            # # Ordered, segment 5
+            make_test_case('vloxseg5ei16_v_u8mf4x5', vl=4, n_segs=5),
+            make_test_case('vloxseg5ei16_v_u8mf4x5', vl=3, n_segs=5),
+            make_test_case('vloxseg5ei16_v_u8mf2x5', vl=8, n_segs=5),
+            make_test_case('vloxseg5ei16_v_u8mf2x5', vl=7, n_segs=5),
+            # make_test_case('vloxseg5ei16_v_u8m1x5', vl=16, n_segs=5),
+            # make_test_case('vloxseg5ei16_v_u8m1x5', vl=15, n_segs=5),
+            # # Ordered, segment 6
+            make_test_case('vloxseg6ei16_v_u8mf4x6', vl=4, n_segs=6),
+            make_test_case('vloxseg6ei16_v_u8mf4x6', vl=3, n_segs=6),
+            make_test_case('vloxseg6ei16_v_u8mf2x6', vl=8, n_segs=6),
+            make_test_case('vloxseg6ei16_v_u8mf2x6', vl=7, n_segs=6),
+            # make_test_case('vloxseg6ei16_v_u8m1x6', vl=16, n_segs=6),
+            # make_test_case('vloxseg6ei16_v_u8m1x6', vl=15, n_segs=6),
+            # # Ordered, segment 7
+            make_test_case('vloxseg7ei16_v_u8mf4x7', vl=4, n_segs=7),
+            make_test_case('vloxseg7ei16_v_u8mf4x7', vl=3, n_segs=7),
+            make_test_case('vloxseg7ei16_v_u8mf2x7', vl=8, n_segs=7),
+            make_test_case('vloxseg7ei16_v_u8mf2x7', vl=7, n_segs=7),
+            # make_test_case('vloxseg7ei16_v_u8m1x7', vl=16, n_segs=7),
+            # make_test_case('vloxseg7ei16_v_u8m1x7', vl=15, n_segs=7),
+            # # Ordered, segment 8
+            make_test_case('vloxseg8ei16_v_u8mf4x8', vl=4, n_segs=8),
+            make_test_case('vloxseg8ei16_v_u8mf4x8', vl=3, n_segs=8),
+            make_test_case('vloxseg8ei16_v_u8mf2x8', vl=8, n_segs=8),
+            make_test_case('vloxseg8ei16_v_u8mf2x8', vl=7, n_segs=8),
+            # make_test_case('vloxseg8ei16_v_u8m1x8', vl=16, n_segs=8),
+            # make_test_case('vloxseg8ei16_v_u8m1x8', vl=15, n_segs=8),
+        ],
+        dtype = np.uint8,
+        index_dtype = np.uint16,
+    )
+
+
+@cocotb.test()
 async def load8_seg_unit(dut):
     """Test vlseg*e8 usage accessible from intrinsics."""
     def make_test_case(impl: str, vl: int, n_segs: int):
@@ -757,49 +936,6 @@ async def load8_seg_unit(dut):
             make_test_case('vlseg8e8_v_u8m1x8', vl=15, n_segs=8),
         ],
         dtype = np.uint8,
-    )
-
-
-@cocotb.test()
-async def load8_index16(dut):
-    """Test vl*xei16_v_u8 usage accessible from intrinsics."""
-    def make_test_case(impl: str, vl: int):
-        return {
-            'impl': impl,
-            'vl': vl,
-            'in_bytes': 32000,  # DTCM is 32KB
-            'out_size': vl * 2,
-        }
-
-    await vector_load_indexed(
-        dut = dut,
-        elf_name = 'load8_index16.elf',
-        cases = [
-            # Unordered
-            make_test_case('vluxei16_v_u8mf4', vl = 4),
-            make_test_case('vluxei16_v_u8mf4', vl = 3),
-            make_test_case('vluxei16_v_u8mf2', vl = 8),
-            make_test_case('vluxei16_v_u8mf2', vl = 7),
-            make_test_case('vluxei16_v_u8m1', vl = 16),
-            make_test_case('vluxei16_v_u8m1', vl = 15),
-            make_test_case('vluxei16_v_u8m2', vl = 32),
-            make_test_case('vluxei16_v_u8m2', vl = 31),
-            make_test_case('vluxei16_v_u8m4', vl = 64),
-            make_test_case('vluxei16_v_u8m4', vl = 63),
-            # Ordered
-            make_test_case('vloxei16_v_u8mf4', vl = 4),
-            make_test_case('vloxei16_v_u8mf4', vl = 3),
-            make_test_case('vloxei16_v_u8mf2', vl = 8),
-            make_test_case('vloxei16_v_u8mf2', vl = 7),
-            make_test_case('vloxei16_v_u8m1', vl = 16),
-            make_test_case('vloxei16_v_u8m1', vl = 15),
-            make_test_case('vloxei16_v_u8m2', vl = 32),
-            make_test_case('vloxei16_v_u8m2', vl = 31),
-            make_test_case('vloxei16_v_u8m4', vl = 64),
-            make_test_case('vloxei16_v_u8m4', vl = 63),
-        ],
-        dtype = np.uint8,
-        index_dtype = np.uint16,
     )
 
 

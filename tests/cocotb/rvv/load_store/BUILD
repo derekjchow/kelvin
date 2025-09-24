@@ -32,6 +32,9 @@ template_rule(
         "load8_index16": {
             "srcs": ["load8_index16.cc"],
         },
+        "load8_index16_seg": {
+            "srcs": ["load8_index16_seg.cc"],
+        },
         "load8_index32": {
             "srcs": ["load8_index32.cc"],
         },
@@ -135,6 +138,7 @@ filegroup(
         ":load8_index8.elf",
         ":load8_index8_seg.elf",
         ":load8_index16.elf",
+        ":load8_index16_seg.elf",
         ":load8_index32.elf",
         ":load8_seg_unit.elf",
         ":load8_segment2_stride6_m1.elf",

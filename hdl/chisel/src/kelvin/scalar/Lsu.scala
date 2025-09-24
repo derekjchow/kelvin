@@ -265,13 +265,13 @@ object ComputeIndexedAddrs {
 
     MuxCase(VecInit.fill(bytesPerSlot)(0.U(32.W)), Seq(
       // elemWidth validation is done at decode time.
-      // 8-bit indices. Each byte has its own offset.
+      // 8-bit data. Each byte has its own offset.
       (sew === "b000".U) -> VecInit((0 until bytesPerSlot).map(
           i => (baseAddr + indices_v(i)))),
-      // 16-bit indices. Each 2-byte element has an offset.
+      // 16-bit data. Each 2-byte element has an offset.
       (sew === "b001".U) -> VecInit((0 until bytesPerSlot).map(
           i => (baseAddr + indices_v(i >> 1) + (i & 1).U))),
-      // 32-bit indices. Each 4-byte element has an offset.
+      // 32-bit data. Each 4-byte element has an offset.
       (sew === "b010".U) -> VecInit((0 until bytesPerSlot).map(
           i => (baseAddr + indices_v(i >> 2) + (i & 3).U)))
     ))
@@ -653,11 +653,22 @@ object LsuSlot {
         ComputeStridedAddrs(bytesPerSlot, uop.addr, uop.data, uop.elemWidth.getOrElse(0.U(3.W))),
         VecInit((0 until bytesPerSlot).map(i => uop.addr + i.U)))
 
-    val unitStride = MuxCase(1.U, Seq(
-        (uop.elemWidth.get === "b000".U) -> 1.U,  // 1-byte elements
-        (uop.elemWidth.get === "b101".U) -> 2.U,  // 2-byte elements
-        (uop.elemWidth.get === "b110".U) -> 4.U,  // 4-byte elements
-    ))
+    val unitStride = Mux(
+        uop.op.isOneOf(LsuOp.VLOAD_OINDEXED, LsuOp.VLOAD_UINDEXED,
+                       LsuOp.VSTORE_OINDEXED, LsuOp.VSTORE_UINDEXED),
+        // Indexed load. The unit stride also controls segment stride.
+        MuxCase(1.U, Seq(
+            (result.sew === "b000".U) -> 1.U,  // 1-byte elements
+            (result.sew === "b001".U) -> 2.U,  // 2-byte elements
+            (result.sew === "b010".U) -> 4.U,  // 4-byte elements
+        )),
+        // Non-indexed load.
+        MuxCase(1.U, Seq(
+            (uop.elemWidth.get === "b000".U) -> 1.U,  // 1-byte elements
+            (uop.elemWidth.get === "b101".U) -> 2.U,  // 2-byte elements
+            (uop.elemWidth.get === "b110".U) -> 4.U,  // 4-byte elements
+        )),
+    )
 
     result.segmentStride := unitStride
     result.elemStride := Mux(
