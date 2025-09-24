@@ -18,8 +18,8 @@ exports_files(
     srcs = [
         "ClockGate.sv",
         "Sram_12ffcp_128x128.v",
-        "Sram_12ffcp_512x128.v",
-        "Sram_12ffcp_2048x128.v",
+        "Sram_512x128.v",
+        "Sram_2048x128.v",
         "Sram_1rw_256x256.v",
         "Sram_1rwm_256x288.v",
         "RstSync.sv",

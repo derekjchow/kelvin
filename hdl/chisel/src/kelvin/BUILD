@@ -338,13 +338,13 @@ chisel_library(
     srcs = [
         "SramNx128.scala",
         "Sram_12ffcp_128x128.scala",
-        "Sram_12ffcp_2048x128.scala",
-        "Sram_12ffcp_512x128.scala",
+        "Sram_2048x128.scala",
+        "Sram_512x128.scala",
     ],
     resources = [
         "//hdl/verilog:Sram_12ffcp_128x128.v",
-        "//hdl/verilog:Sram_12ffcp_2048x128.v",
-        "//hdl/verilog:Sram_12ffcp_512x128.v",
+        "//hdl/verilog:Sram_2048x128.v",
+        "//hdl/verilog:Sram_512x128.v",
     ],
     deps = [
         ":kelvin_base",
@@ -521,6 +521,8 @@ CORE_MINI_AXI_BLACKBOX_DESIGNS = [
     "CKLNQD10BWP6T20P96CPDLVT",
     "TS1N12FFCLLMBLVTD2048X128M4SWBSHO",
     "TS1N12FFCLLSBLVTD512X128M4SWBSHO",
+    "sasdulssd8LOW1p512x128m4b1w0c0p0d0l0rm3sdrw01",
+    "sasdulssd8LOW1p2048x128m4b2w0c0p0d0l0rm3sdrw01",
 ]
 
 CORE_MINI_AXI_LINT_TAGS = [

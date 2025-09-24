@@ -51,8 +51,8 @@ class Sram_Nx128(tcmEntries: Int) extends Module {
 
   val sramModules = (0 until nSramModules).map(x =>
         (mod2048, mod512) match {
-           case (true, _) => Module(new Sram_12ffcp_2048x128)
-           case (_, true) => Module(new Sram_12ffcp_512x128)
+           case (true, _) => Module(new Sram_2048x128)
+           case (_, true) => Module(new Sram_512x128)
            case (false, false) => Module(new Sram_12ffcp_128x128)
         }
       )
