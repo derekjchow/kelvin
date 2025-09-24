@@ -51,6 +51,7 @@ package kelvin_cosim_checker_pkg;
 
     // Event to wait on, which will be triggered by the RVVI monitor
     uvm_event instruction_retired_event;
+    string test_elf;
 
     // Constructor
     function new(string name = "kelvin_cosim_checker",
@@ -69,6 +70,11 @@ package kelvin_cosim_checker_pkg;
          `uvm_fatal(get_type_name(), "RVVI virtual interface not found!")
       end
 
+      // Get the ELF file path
+      if (!uvm_config_db#(string)::get(this, "", "elf_file_for_iss", test_elf)) begin
+        `uvm_fatal(get_type_name(), "TEST_ELF file path not found!")
+      end
+
       // Create the event that this component will wait on.
       instruction_retired_event = new("instruction_retired_event");
       // Pass the event to the monitor using an absolute path
@@ -85,6 +91,8 @@ package kelvin_cosim_checker_pkg;
       logic [31:0] rtl_instr;
 
       if (mpact_init() != 0)
+        `uvm_fatal(get_type_name(), "MPACT simulator DPI init failed.")
+      if (mpact_load_program(test_elf) != 0)
         `uvm_fatal(get_type_name(), "MPACT simulator DPI init failed.")
 
       // Main co-simulation loop

@@ -23,6 +23,10 @@ package kelvin_cosim_dpi_if;
   // Returns 0 on success.
   import "DPI-C" context function int mpact_init();
 
+  // Function to load an ELF program.
+  // Returns 0 on success.
+  import "DPI-C" context function int mpact_load_program(input string elf_file);
+
   // Function to reset the MPACT simulator.
   // Returns 0 on success.
   import "DPI-C" context function int mpact_reset();

@@ -124,12 +124,16 @@ package kelvin_test_pkg;
     endfunction
 
     virtual function void build_phase(uvm_phase phase);
+      string test_elf;
       string timeout_str;
       int timeout_int;
       uvm_cmdline_processor clp = uvm_cmdline_processor::get_inst();
 
       super.build_phase(phase);
       `uvm_info(get_type_name(), "Build phase starting", UVM_MEDIUM)
+      if (!clp.get_arg_value("+TEST_ELF=", test_elf)) begin
+        `uvm_fatal(get_type_name(), "+TEST_ELF plusarg not specified.")
+      end
 
       if (clp.get_arg_value("+TEST_TIMEOUT=", timeout_str)) begin
         if ($sscanf(timeout_str, "%d", timeout_int) == 1 && timeout_int > 0)
@@ -143,6 +147,9 @@ package kelvin_test_pkg;
       end
 
       env = kelvin_env::type_id::create("env", this);
+
+      uvm_config_db#(string)::set(this, "*.m_cosim_checker",
+                                  "elf_file_for_iss", test_elf);
 
       // Get the event handle that was created and set by tb_top
       if (!uvm_config_db#(uvm_event)::get(this, "",
