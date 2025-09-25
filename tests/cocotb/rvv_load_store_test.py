@@ -13,10 +13,12 @@
 # limitations under the License.
 
 import cocotb
+import itertools
 import numpy as np
 import tqdm
 
 from bazel_tools.tools.python.runfiles import runfiles
+from kelvin_test_utils.rvv_type_util import construct_vtype, DTYPE_TO_SEW
 from kelvin_test_utils.sim_test_fixture import Fixture
 
 
@@ -372,6 +374,193 @@ async def load_store_bits(dut):
             'actual': actual_output,
         })
         assert (actual_output == expected_output).all(), debug_msg
+
+@cocotb.test()
+async def load_unit_masked(dut):
+    """Test masked unit stores."""
+
+    fixture = await Fixture.Create(dut)
+    r = runfiles.Create()
+
+    await fixture.load_elf_and_lookup_symbols(
+        r.Rlocation(
+            'kelvin_hw/tests/cocotb/rvv/load_store/load_unit_masked.elf'),
+        [ "impl", "vtype", "load_data", "load_addr", "vl", "load_filler",
+          "mask_data", "store_data", "test_unit_load8", "test_unit_load16",
+          "test_unit_load32"],
+    )
+
+    cases = [
+        (np.uint8, 0b110, 4), # SEW8, mf4
+        (np.uint8, 0b110, 3), # SEW8, mf4
+        (np.uint8, 0b111, 8), # SEW8, mf2
+        (np.uint8, 0b111, 7), # SEW8, mf2
+        (np.uint8, 0b000, 16), # SEW8, m1
+        (np.uint8, 0b000, 15), # SEW8, m1
+        (np.uint8, 0b001, 32), # SEW8, m2
+        (np.uint8, 0b001, 31), # SEW8, m2
+        (np.uint8, 0b010, 64), # SEW8, m4
+        (np.uint8, 0b010, 63), # SEW8, m4
+        (np.uint8, 0b011, 128), # SEW8, m8
+        (np.uint8, 0b011, 127), # SEW8, m8
+        (np.uint16, 0b111, 4), # SEW16, mf2
+        (np.uint16, 0b111, 3), # SEW16, mf2
+        (np.uint16, 0b000, 8), # SEW16, m1
+        (np.uint16, 0b000, 7), # SEW16, m1
+        (np.uint16, 0b001, 16), # SEW16, m2
+        (np.uint16, 0b001, 15), # SEW16, m2
+        (np.uint16, 0b010, 32), # SEW16, m4
+        (np.uint16, 0b010, 31), # SEW16, m4
+        (np.uint16, 0b011, 64), # SEW16, m8
+        (np.uint16, 0b011, 63), # SEW16, m8
+        (np.uint32, 0b000, 4), # SEW32, m1
+        (np.uint32, 0b000, 3), # SEW32, m1
+        (np.uint32, 0b001, 8), # SEW32, m2
+        (np.uint32, 0b001, 7), # SEW32, m2
+        (np.uint32, 0b010, 16), # SEW32, m4
+        (np.uint32, 0b010, 15), # SEW32, m4
+        (np.uint32, 0b011, 32), # SEW32, m8
+        (np.uint32, 0b011, 31), # SEW32, m8
+    ]
+
+    dtype_to_function = {
+        np.uint8: "test_unit_load8",
+        np.uint16: "test_unit_load16",
+        np.uint32: "test_unit_load32",
+    }
+
+    all_cases = itertools.product([False, True], cases)
+    total_loops = 2 * len(cases)
+
+    rng = np.random.default_rng()
+    for use_axi, (dtype, lmul, vl) in tqdm.tqdm(all_cases, total=total_loops):
+        vtype = construct_vtype(1, 1, DTYPE_TO_SEW[dtype], lmul)
+        mask_bytes = (vl + 7) // 8
+        mask_data = rng.integers(0, 256, mask_bytes, dtype=np.uint8)
+        min_value = np.iinfo(dtype).min
+        max_value = np.iinfo(dtype).max + 1
+        load_data = rng.integers(min_value, max_value, vl, dtype=dtype)
+        load_filler = np.iinfo(dtype).max
+
+        if use_axi:
+            await fixture.write_word(
+                'load_addr', fixture.core_mini_axi.memory_base_addr)
+
+        await fixture.write_ptr('impl', dtype_to_function[dtype])
+        await fixture.write_word('vl', vl)
+        await fixture.write_word('load_filler', load_filler)
+        await fixture.write_word('vtype', vtype)
+        if use_axi:
+            load_data_size = vl * np.dtype(dtype).itemsize
+            fixture.core_mini_axi.memory[0:load_data_size] = \
+                load_data.view(np.uint8)
+        else:
+            await fixture.write('load_data', load_data)
+        await fixture.write('mask_data', mask_data)
+
+        await fixture.run_to_halt()
+
+        actual_output = (await fixture.read(
+            'store_data', vl * np.dtype(dtype).itemsize)).view(dtype)
+
+        mask_bits = np.concat([
+            list(reversed(np.unpackbits(x))) for x in mask_data])
+        for i in range(vl):
+            if mask_bits[i]:
+                assert load_data[i] == actual_output[i]
+            else:
+                assert load_filler == actual_output[i]
+
+@cocotb.test()
+async def store_unit_masked(dut):
+    """Test masked unit stores."""
+    fixture = await Fixture.Create(dut)
+    r = runfiles.Create()
+
+    await fixture.load_elf_and_lookup_symbols(
+        r.Rlocation(
+            'kelvin_hw/tests/cocotb/rvv/load_store/store_unit_masked.elf'),
+        [ "impl", "vtype", "load_data", "vl", "mask_data", "store_data",
+          "store_addr", "test_unit_store8", "test_unit_store16",
+          "test_unit_store32" ],
+    )
+
+    cases = [
+        (np.uint8, 0b110, 4), # SEW8, mf4
+        (np.uint8, 0b110, 3), # SEW8, mf4
+        (np.uint8, 0b111, 8), # SEW8, mf2
+        (np.uint8, 0b111, 7), # SEW8, mf2
+        (np.uint8, 0b000, 16), # SEW8, m1
+        (np.uint8, 0b000, 15), # SEW8, m1
+        (np.uint8, 0b001, 32), # SEW8, m2
+        (np.uint8, 0b001, 31), # SEW8, m2
+        (np.uint8, 0b010, 64), # SEW8, m4
+        (np.uint8, 0b010, 63), # SEW8, m4
+        (np.uint8, 0b011, 128), # SEW8, m8
+        (np.uint8, 0b011, 127), # SEW8, m8
+        (np.uint16, 0b111, 4), # SEW16, mf2
+        (np.uint16, 0b111, 3), # SEW16, mf2
+        (np.uint16, 0b000, 8), # SEW16, m1
+        (np.uint16, 0b000, 7), # SEW16, m1
+        (np.uint16, 0b001, 16), # SEW16, m2
+        (np.uint16, 0b001, 15), # SEW16, m2
+        (np.uint16, 0b010, 32), # SEW16, m4
+        (np.uint16, 0b010, 31), # SEW16, m4
+        (np.uint16, 0b011, 64), # SEW16, m8
+        (np.uint16, 0b011, 63), # SEW16, m8
+        (np.uint32, 0b000, 4), # SEW32, m1
+        (np.uint32, 0b000, 3), # SEW32, m1
+        (np.uint32, 0b001, 8), # SEW32, m2
+        (np.uint32, 0b001, 7), # SEW32, m2
+        (np.uint32, 0b010, 16), # SEW32, m4
+        (np.uint32, 0b010, 15), # SEW32, m4
+        (np.uint32, 0b011, 32), # SEW32, m8
+        (np.uint32, 0b011, 31), # SEW32, m8
+    ]
+
+    dtype_to_function = {
+        np.uint8: "test_unit_store8",
+        np.uint16: "test_unit_store16",
+        np.uint32: "test_unit_store32",
+    }
+
+    all_cases = itertools.product([False, True], cases)
+    total_loops = 2 * len(cases)
+
+    rng = np.random.default_rng()
+    for use_axi, (dtype, lmul, vl) in tqdm.tqdm(all_cases, total=total_loops):
+        vtype = construct_vtype(1, 1, DTYPE_TO_SEW[dtype], lmul)
+        mask_bytes = (vl + 7) // 8
+        mask_data = rng.integers(0, 256, mask_bytes, dtype=np.uint8)
+        min_value = np.iinfo(dtype).min
+        max_value = np.iinfo(dtype).max + 1
+        load_data = rng.integers(min_value, max_value, vl, dtype=dtype)
+
+        if use_axi:
+            await fixture.write_word(
+                'store_addr', fixture.core_mini_axi.memory_base_addr)
+
+        await fixture.write_ptr('impl', dtype_to_function[dtype])
+        await fixture.write_word('vl', vl)
+        await fixture.write_word('vtype', vtype)
+        await fixture.write('load_data', load_data)
+        await fixture.write('mask_data', mask_data)
+
+        await fixture.run_to_halt()
+
+        if use_axi:
+            output_size = vl * np.dtype(dtype).itemsize
+            actual_output = \
+                fixture.core_mini_axi.memory[0:output_size].view(dtype)
+        else:
+            actual_output = (await fixture.read(
+                'store_data', vl * np.dtype(dtype).itemsize)).view(dtype)
+
+        mask_bits = np.concat([
+            list(reversed(np.unpackbits(x))) for x in mask_data])
+        for i in range(vl):
+            if mask_bits[i]:
+                assert load_data[i] == actual_output[i]
 
 
 @cocotb.test()

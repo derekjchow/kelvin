@@ -173,6 +173,7 @@ RVV_ASSEMBLY_TESTCASES = [
 # BEGIN_TESTCASES_FOR_rvv_load_store_test
 RVV_LOAD_STORE_TESTCASES = [
     "load_store_bits",
+    "load_unit_masked",
     "load8_index8",
     "load8_index8_seg",
     "load8_index16",
@@ -198,6 +199,7 @@ RVV_LOAD_STORE_TESTCASES = [
     "load_store32_unit_m2",
     "load8_segment2_stride6_m1",
     "load16_segment2_stride6_m1",
+    "store_unit_masked",
     "store8_index8",
     "store16_index8",
     "store16_index16",
@@ -388,6 +390,7 @@ cocotb_test_suite(
         "seed": "42",
         "test_module": ["rvv_load_store_test.py"],
         "deps": [
+            "//kelvin_test_utils:rvv_type_util",
             "//kelvin_test_utils:sim_test_fixture",
             "@bazel_tools//tools/python/runfiles",
             requirement("tqdm"),

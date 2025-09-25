@@ -25,6 +25,15 @@ py_library(
 )
 
 py_library(
+    name = "rvv_type_util",
+    srcs = ["rvv_type_util.py"],
+    deps = [
+        requirement("numpy"),
+    ],
+    visibility = ["//visibility:public"],
+)
+
+py_library(
     name = "spi_master",
     srcs = ["spi_master.py"],
     deps = [
