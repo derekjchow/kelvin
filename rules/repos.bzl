@@ -170,9 +170,10 @@ def cvfpu_repos():
 def rvvi_repos():
     http_archive(
         name = "RVVI",
-        urls = ["https://github.com/riscv-verification/RVVI/archive/refs/heads/20240403.0.zip"],
-        sha256 = "23fe596757de0a7558eedf4ac872081462bb094e11abd2f5002a7e64f84982f9",
-        strip_prefix = "RVVI-20240403.0",
+        # Reflects tag 20240403.0 (before it's update)
+        urls = ["https://github.com/riscv-verification/RVVI/archive/5786f0d39b84f3fd15ef75b792bdea4281941afe.zip"],
+        sha256 = "18090eed44752f88e84d7631dc525c130ba6c6a5143d7cc2004dc2ca3641eaa2",
+        strip_prefix = "RVVI-5786f0d39b84f3fd15ef75b792bdea4281941afe",
         build_file = "@kelvin_hw//third_party/RVVI:BUILD.bazel",
         patches = [
             "@kelvin_hw//third_party/RVVI:0001-Rename-name-queue-to-avoid-conflict.patch",
