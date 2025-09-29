@@ -31,106 +31,66 @@ uint32_t out_buf[buf_size] __attribute__((section(".data")));
 extern "C" {
 // Unordered
 __attribute__((used, retain)) void vsuxei16_v_u32m1() {
-  vuint16mf2_t indices;
-  asm("vsetvli zero, %[vl], e16, mf2, ta, ma;"
-      "vle16.v %[index], %[index_buf];"
-      : [index] "=vr"(indices)
-      : [vl] "r"(vl), [index_buf] "m"(index_buf)
-      : "vl", "vtype");
-  // TODO: Revert once compiler bug is eliminated
-  // auto indices = __riscv_vle16_v_u16mf2(index_buf, vl);
+  auto indices = __riscv_vle16_v_u16mf2(index_buf, vl);
+  // TODO(davidgao): Remove once compiler bug is eliminated
+  asm volatile("" ::: "vtype");
   auto data = __riscv_vle32_v_u32m1(in_buf, vl);
   __riscv_vsuxei16_v_u32m1(out_buf, indices, data, vl);
 }
 
 __attribute__((used, retain)) void vsuxei16_v_u32m2() {
-  vuint16m1_t indices;
-  asm("vsetvli zero, %[vl], e16, m1, ta, ma;"
-      "vle16.v %[index], %[index_buf];"
-      : [index] "=vr"(indices)
-      : [vl] "r"(vl), [index_buf] "m"(index_buf)
-      : "vl", "vtype");
-  // TODO: Revert once compiler bug is eliminated
-  // auto indices = __riscv_vle16_v_u16m1(index_buf, vl);
+  auto indices = __riscv_vle16_v_u16m1(index_buf, vl);
+  // TODO(davidgao): Remove once compiler bug is eliminated
+  asm volatile("" ::: "vtype");
   auto data = __riscv_vle32_v_u32m2(in_buf, vl);
   __riscv_vsuxei16_v_u32m2(out_buf, indices, data, vl);
 }
 
 __attribute__((used, retain)) void vsuxei16_v_u32m4() {
-  vuint16m2_t indices;
-  asm("vsetvli zero, %[vl], e16, m2, ta, ma;"
-      "vle16.v %[index], %[index_buf];"
-      : [index] "=vr"(indices)
-      : [vl] "r"(vl), [index_buf] "m"(index_buf)
-      : "vl", "vtype");
-  // TODO: Revert once compiler bug is eliminated
-  // auto indices = __riscv_vle16_v_u16m1(index_buf, vl);
+  auto indices = __riscv_vle16_v_u16m2(index_buf, vl);
+  // TODO(davidgao): Remove once compiler bug is eliminated
+  asm volatile("" ::: "vtype");
   auto data = __riscv_vle32_v_u32m4(in_buf, vl);
   __riscv_vsuxei16_v_u32m4(out_buf, indices, data, vl);
 }
 
 __attribute__((used, retain)) void vsuxei16_v_u32m8() {
-  vuint16m4_t indices;
-  asm("vsetvli zero, %[vl], e16, m4, ta, ma;"
-      "vle16.v %[index], %[index_buf];"
-      : [index] "=vr"(indices)
-      : [vl] "r"(vl), [index_buf] "m"(index_buf)
-      : "vl", "vtype");
-  // TODO: Revert once compiler bug is eliminated
-  // auto indices = __riscv_vle16_v_u16m2(index_buf, vl);
+  auto indices = __riscv_vle16_v_u16m4(index_buf, vl);
+  // TODO(davidgao): Remove once compiler bug is eliminated
+  asm volatile("" ::: "vtype");
   auto data = __riscv_vle32_v_u32m8(in_buf, vl);
   __riscv_vsuxei16_v_u32m8(out_buf, indices, data, vl);
 }
 
 // Ordered
 __attribute__((used, retain)) void vsoxei16_v_u32m1() {
-  vuint16mf2_t indices;
-  asm("vsetvli zero, %[vl], e16, mf2, ta, ma;"
-      "vle16.v %[index], %[index_buf];"
-      : [index] "=vr"(indices)
-      : [vl] "r"(vl), [index_buf] "m"(index_buf)
-      : "vl", "vtype");
-  // TODO: Revert once compiler bug is eliminated
-  // auto indices = __riscv_vle16_v_u16mf2(index_buf, vl);
+  auto indices = __riscv_vle16_v_u16mf2(index_buf, vl);
+  // TODO(davidgao): Remove once compiler bug is eliminated
+  asm volatile("" ::: "vtype");
   auto data = __riscv_vle32_v_u32m1(in_buf, vl);
   __riscv_vsoxei16_v_u32m1(out_buf, indices, data, vl);
 }
 
 __attribute__((used, retain)) void vsoxei16_v_u32m2() {
-  vuint16m1_t indices;
-  asm("vsetvli zero, %[vl], e16, m1, ta, ma;"
-      "vle16.v %[index], %[index_buf];"
-      : [index] "=vr"(indices)
-      : [vl] "r"(vl), [index_buf] "m"(index_buf)
-      : "vl", "vtype");
-  // TODO: Revert once compiler bug is eliminated
-  // auto indices = __riscv_vle16_v_u8mf2(index_buf, vl);
+  auto indices = __riscv_vle16_v_u16m1(index_buf, vl);
+  // TODO(davidgao): Remove once compiler bug is eliminated
+  asm volatile("" ::: "vtype");
   auto data = __riscv_vle32_v_u32m2(in_buf, vl);
   __riscv_vsoxei16_v_u32m2(out_buf, indices, data, vl);
 }
 
 __attribute__((used, retain)) void vsoxei16_v_u32m4() {
-  vuint16m2_t indices;
-  asm("vsetvli zero, %[vl], e16, m2, ta, ma;"
-      "vle16.v %[index], %[index_buf];"
-      : [index] "=vr"(indices)
-      : [vl] "r"(vl), [index_buf] "m"(index_buf)
-      : "vl", "vtype");
-  // TODO: Revert once compiler bug is eliminated
-  // auto indices = __riscv_vle16_v_u8m1(index_buf, vl);
+  auto indices = __riscv_vle16_v_u16m2(index_buf, vl);
+  // TODO(davidgao): Remove once compiler bug is eliminated
+  asm volatile("" ::: "vtype");
   auto data = __riscv_vle32_v_u32m4(in_buf, vl);
   __riscv_vsoxei16_v_u32m4(out_buf, indices, data, vl);
 }
 
 __attribute__((used, retain)) void vsoxei16_v_u32m8() {
-  vuint16m4_t indices;
-  asm("vsetvli zero, %[vl], e16, m4, ta, ma;"
-      "vle16.v %[index], %[index_buf];"
-      : [index] "=vr"(indices)
-      : [vl] "r"(vl), [index_buf] "m"(index_buf)
-      : "vl", "vtype");
-  // TODO: Revert once compiler bug is eliminated
-  // auto indices = __riscv_vle16_v_u8m2(index_buf, vl);
+  auto indices = __riscv_vle16_v_u16m4(index_buf, vl);
+  // TODO(davidgao): Remove once compiler bug is eliminated
+  asm volatile("" ::: "vtype");
   auto data = __riscv_vle32_v_u32m8(in_buf, vl);
   __riscv_vsoxei16_v_u32m8(out_buf, indices, data, vl);
 }
