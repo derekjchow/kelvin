@@ -186,14 +186,14 @@ async def vector_load_segmented_indexed(
         assert (actual_outputs == expected_outputs).all(), debug_msg
 
 
-async def vector_store_indexed(
+async def vector_store_segmented_indexed(
         dut,
         elf_name: str,
-        cases: list[dict],  # keys: impl, vl, out_size.
+        cases: list[dict],  # keys: impl, vl, segments, out_size.
         data_dtype,
         index_dtype,
 ):
-    """RVV load-store test template for indexed stores.
+    """RVV load-store test template for segmented indexed stores.
 
     Each test loads indices and data and performs a scatter operation.
     """
@@ -209,19 +209,49 @@ async def vector_store_indexed(
     for c in tqdm.tqdm(cases):
         impl = c['impl']
         vl = c['vl']
+        segments = c['segments']
         out_size = c['out_size']
-        in_bytes = np.dtype(data_dtype).itemsize * vl
 
+        struct_bytes = np.dtype(data_dtype).itemsize * segments
         # Don't go beyond the buffer.
         index_max = min(np.iinfo(index_dtype).max, out_size)
-        index_max = index_max - np.dtype(index_dtype).itemsize
+        assert vl * struct_bytes <= index_max
+        index_max = index_max - struct_bytes
         # TODO(davidgao): currently assuming the vl is supported.
         # We'll eventually want to test unsupported vl.
-        indices = rng.integers(0, index_max+1, vl, dtype=index_dtype)
-        # Index is in bytes so input needs to be in bytes.
-        input_data = rng.integers(0, np.iinfo(data_dtype).max + 1, vl,
+        indices = rng.integers(0, index_max + 1, vl, dtype=index_dtype)
+        # Deal with overlapping indices by rerunning them
+        exclusion_set = set()
+        retries = 0
+        for i in range(vl):
+            # If the scatter range is too dense and we're struggling to find
+            # space, the test could timeout and become flaky. Flag it here
+            # to be reconfigured.
+            assert retries < 10000
+            while (indices[i] in exclusion_set or \
+               indices[i] + struct_bytes - 1 in exclusion_set):
+                indices[i] = rng.integers(0, index_max + 1, 1)[0]
+                retries = retries + 1
+            exclusion_set = exclusion_set.union(
+                range(indices[i], indices[i] + struct_bytes))
+        input_data = rng.integers(0, np.iinfo(data_dtype).max + 1,
+                                  segments * vl,
                                   dtype=data_dtype)
-        output_data = np.zeros(out_size, dtype=data_dtype)
+        # Index is in bytes so output needs to be in bytes.
+        output_data = np.zeros(
+            out_size * np.dtype(data_dtype).itemsize,
+            dtype=np.uint8)
+        # Compute expected outputs. Note that indices are in bytes for all stores.
+        expected_outputs = output_data.copy()
+        elem_size = np.dtype(data_dtype).itemsize
+        input_data_bytes = input_data.view(np.uint8)
+        indices_in_use = indices.astype(np.uint32)
+        indices_in_use = np.arange(segments).reshape(-1, 1, 1) * elem_size + \
+                         indices_in_use.reshape(1, -1, 1) + \
+                         np.arange(elem_size).reshape(1, 1, -1)
+        indices_in_use = indices_in_use.reshape(-1)
+        np.put_along_axis(expected_outputs, indices_in_use, input_data_bytes, None)
+        expected_outputs = expected_outputs.view(data_dtype)
 
         await fixture.write_ptr('impl', impl)
         await fixture.write_word('vl', vl)
@@ -233,15 +263,6 @@ async def vector_store_indexed(
 
         actual_outputs = (await fixture.read(
             'out_buf', out_size * np.dtype(data_dtype).itemsize)).view(data_dtype)
-
-        # Compute expected outputs. Note that indices are in bytes for all stores.
-        expected_outputs = output_data.copy().view(np.uint8)
-        elem_size = np.dtype(data_dtype).itemsize
-        input_data_bytes = input_data.view(np.uint8)
-        indices_bytes = np.repeat(indices, elem_size) + \
-                        np.tile(np.arange(elem_size), len(indices))
-        np.put_along_axis(expected_outputs, indices_bytes, input_data_bytes, None)
-        expected_outputs = expected_outputs.view(data_dtype)
 
         debug_msg = str({
             'impl': impl,
@@ -1773,10 +1794,11 @@ async def store8_index8(dut):
         return {
             'impl': impl,
             'vl': vl,
+            'segments': 1,
             'out_size': 512,
         }
 
-    await vector_store_indexed(
+    await vector_store_segmented_indexed(
         dut = dut,
         elf_name = 'store8_index8.elf',
         cases = [
@@ -1813,16 +1835,152 @@ async def store8_index8(dut):
 
 
 @cocotb.test()
+async def store8_index8_seg(dut):
+    """Test vs*xseg*ei8_v_u8 usage accessible from intrinsics."""
+    def make_test_case(impl: str, vl: int, segs: int):
+        return {
+            'impl': impl,
+            'vl': vl,
+            'segments': segs,
+            'out_size': 512,
+        }
+
+    await vector_store_segmented_indexed(
+        dut = dut,
+        elf_name = 'store8_index8_seg.elf',
+        cases = [
+            # Unordered, segment 2
+            make_test_case('vsuxseg2ei8_v_u8mf4x2', vl = 4, segs = 2),
+            make_test_case('vsuxseg2ei8_v_u8mf4x2', vl = 3, segs = 2),
+            make_test_case('vsuxseg2ei8_v_u8mf2x2', vl = 8, segs = 2),
+            make_test_case('vsuxseg2ei8_v_u8mf2x2', vl = 7, segs = 2),
+            make_test_case('vsuxseg2ei8_v_u8m1x2', vl = 16, segs = 2),
+            make_test_case('vsuxseg2ei8_v_u8m1x2', vl = 15, segs = 2),
+            make_test_case('vsuxseg2ei8_v_u8m2x2', vl = 32, segs = 2),
+            make_test_case('vsuxseg2ei8_v_u8m2x2', vl = 31, segs = 2),
+            make_test_case('vsuxseg2ei8_v_u8m4x2', vl = 64, segs = 2),
+            make_test_case('vsuxseg2ei8_v_u8m4x2', vl = 63, segs = 2),
+            # Unordered, segment 3
+            make_test_case('vsuxseg3ei8_v_u8mf4x3', vl = 4, segs = 3),
+            make_test_case('vsuxseg3ei8_v_u8mf4x3', vl = 3, segs = 3),
+            make_test_case('vsuxseg3ei8_v_u8mf2x3', vl = 8, segs = 3),
+            make_test_case('vsuxseg3ei8_v_u8mf2x3', vl = 7, segs = 3),
+            make_test_case('vsuxseg3ei8_v_u8m1x3', vl = 16, segs = 3),
+            make_test_case('vsuxseg3ei8_v_u8m1x3', vl = 15, segs = 3),
+            make_test_case('vsuxseg3ei8_v_u8m2x3', vl = 32, segs = 3),
+            make_test_case('vsuxseg3ei8_v_u8m2x3', vl = 31, segs = 3),
+            # Unordered, segment 4
+            make_test_case('vsuxseg4ei8_v_u8mf4x4', vl = 4, segs = 4),
+            make_test_case('vsuxseg4ei8_v_u8mf4x4', vl = 3, segs = 4),
+            make_test_case('vsuxseg4ei8_v_u8mf2x4', vl = 8, segs = 4),
+            make_test_case('vsuxseg4ei8_v_u8mf2x4', vl = 7, segs = 4),
+            make_test_case('vsuxseg4ei8_v_u8m1x4', vl = 16, segs = 4),
+            make_test_case('vsuxseg4ei8_v_u8m1x4', vl = 15, segs = 4),
+            make_test_case('vsuxseg4ei8_v_u8m2x4', vl = 32, segs = 4),
+            make_test_case('vsuxseg4ei8_v_u8m2x4', vl = 31, segs = 4),
+            # Unordered, segment 5
+            make_test_case('vsuxseg5ei8_v_u8mf4x5', vl = 4, segs = 5),
+            make_test_case('vsuxseg5ei8_v_u8mf4x5', vl = 3, segs = 5),
+            make_test_case('vsuxseg5ei8_v_u8mf2x5', vl = 8, segs = 5),
+            make_test_case('vsuxseg5ei8_v_u8mf2x5', vl = 7, segs = 5),
+            make_test_case('vsuxseg5ei8_v_u8m1x5', vl = 16, segs = 5),
+            make_test_case('vsuxseg5ei8_v_u8m1x5', vl = 15, segs = 5),
+            # Unordered, segment 6
+            make_test_case('vsuxseg6ei8_v_u8mf4x6', vl = 4, segs = 6),
+            make_test_case('vsuxseg6ei8_v_u8mf4x6', vl = 3, segs = 6),
+            make_test_case('vsuxseg6ei8_v_u8mf2x6', vl = 8, segs = 6),
+            make_test_case('vsuxseg6ei8_v_u8mf2x6', vl = 7, segs = 6),
+            make_test_case('vsuxseg6ei8_v_u8m1x6', vl = 16, segs = 6),
+            make_test_case('vsuxseg6ei8_v_u8m1x6', vl = 15, segs = 6),
+            # Unordered, segment 7
+            make_test_case('vsuxseg7ei8_v_u8mf4x7', vl = 4, segs = 7),
+            make_test_case('vsuxseg7ei8_v_u8mf4x7', vl = 3, segs = 7),
+            make_test_case('vsuxseg7ei8_v_u8mf2x7', vl = 8, segs = 7),
+            make_test_case('vsuxseg7ei8_v_u8mf2x7', vl = 7, segs = 7),
+            make_test_case('vsuxseg7ei8_v_u8m1x7', vl = 16, segs = 7),
+            make_test_case('vsuxseg7ei8_v_u8m1x7', vl = 15, segs = 7),
+            # Unordered, segment 8
+            make_test_case('vsuxseg8ei8_v_u8mf4x8', vl = 4, segs = 8),
+            make_test_case('vsuxseg8ei8_v_u8mf4x8', vl = 3, segs = 8),
+            make_test_case('vsuxseg8ei8_v_u8mf2x8', vl = 8, segs = 8),
+            make_test_case('vsuxseg8ei8_v_u8mf2x8', vl = 7, segs = 8),
+            make_test_case('vsuxseg8ei8_v_u8m1x8', vl = 16, segs = 8),
+            make_test_case('vsuxseg8ei8_v_u8m1x8', vl = 15, segs = 8),
+            # Ordered, segment 2
+            make_test_case('vsoxseg2ei8_v_u8mf4x2', vl = 4, segs = 2),
+            make_test_case('vsoxseg2ei8_v_u8mf4x2', vl = 3, segs = 2),
+            make_test_case('vsoxseg2ei8_v_u8mf2x2', vl = 8, segs = 2),
+            make_test_case('vsoxseg2ei8_v_u8mf2x2', vl = 7, segs = 2),
+            make_test_case('vsoxseg2ei8_v_u8m1x2', vl = 16, segs = 2),
+            make_test_case('vsoxseg2ei8_v_u8m1x2', vl = 15, segs = 2),
+            make_test_case('vsoxseg2ei8_v_u8m2x2', vl = 32, segs = 2),
+            make_test_case('vsoxseg2ei8_v_u8m2x2', vl = 31, segs = 2),
+            make_test_case('vsoxseg2ei8_v_u8m4x2', vl = 64, segs = 2),
+            make_test_case('vsoxseg2ei8_v_u8m4x2', vl = 63, segs = 2),
+            # Ordered, segment 3
+            make_test_case('vsoxseg3ei8_v_u8mf4x3', vl = 4, segs = 3),
+            make_test_case('vsoxseg3ei8_v_u8mf4x3', vl = 3, segs = 3),
+            make_test_case('vsoxseg3ei8_v_u8mf2x3', vl = 8, segs = 3),
+            make_test_case('vsoxseg3ei8_v_u8mf2x3', vl = 7, segs = 3),
+            make_test_case('vsoxseg3ei8_v_u8m1x3', vl = 16, segs = 3),
+            make_test_case('vsoxseg3ei8_v_u8m1x3', vl = 15, segs = 3),
+            make_test_case('vsoxseg3ei8_v_u8m2x3', vl = 32, segs = 3),
+            make_test_case('vsoxseg3ei8_v_u8m2x3', vl = 31, segs = 3),
+            # Ordered, segment 4
+            make_test_case('vsoxseg4ei8_v_u8mf4x4', vl = 4, segs = 4),
+            make_test_case('vsoxseg4ei8_v_u8mf4x4', vl = 3, segs = 4),
+            make_test_case('vsoxseg4ei8_v_u8mf2x4', vl = 8, segs = 4),
+            make_test_case('vsoxseg4ei8_v_u8mf2x4', vl = 7, segs = 4),
+            make_test_case('vsoxseg4ei8_v_u8m1x4', vl = 16, segs = 4),
+            make_test_case('vsoxseg4ei8_v_u8m1x4', vl = 15, segs = 4),
+            make_test_case('vsoxseg4ei8_v_u8m2x4', vl = 32, segs = 4),
+            make_test_case('vsoxseg4ei8_v_u8m2x4', vl = 31, segs = 4),
+            # Ordered, segment 5
+            make_test_case('vsoxseg5ei8_v_u8mf4x5', vl = 4, segs = 5),
+            make_test_case('vsoxseg5ei8_v_u8mf4x5', vl = 3, segs = 5),
+            make_test_case('vsoxseg5ei8_v_u8mf2x5', vl = 8, segs = 5),
+            make_test_case('vsoxseg5ei8_v_u8mf2x5', vl = 7, segs = 5),
+            make_test_case('vsoxseg5ei8_v_u8m1x5', vl = 16, segs = 5),
+            make_test_case('vsoxseg5ei8_v_u8m1x5', vl = 15, segs = 5),
+            # Ordered, segment 6
+            make_test_case('vsoxseg6ei8_v_u8mf4x6', vl = 4, segs = 6),
+            make_test_case('vsoxseg6ei8_v_u8mf4x6', vl = 3, segs = 6),
+            make_test_case('vsoxseg6ei8_v_u8mf2x6', vl = 8, segs = 6),
+            make_test_case('vsoxseg6ei8_v_u8mf2x6', vl = 7, segs = 6),
+            make_test_case('vsoxseg6ei8_v_u8m1x6', vl = 16, segs = 6),
+            make_test_case('vsoxseg6ei8_v_u8m1x6', vl = 15, segs = 6),
+            # Ordered, segment 7
+            make_test_case('vsoxseg7ei8_v_u8mf4x7', vl = 4, segs = 7),
+            make_test_case('vsoxseg7ei8_v_u8mf4x7', vl = 3, segs = 7),
+            make_test_case('vsoxseg7ei8_v_u8mf2x7', vl = 8, segs = 7),
+            make_test_case('vsoxseg7ei8_v_u8mf2x7', vl = 7, segs = 7),
+            make_test_case('vsoxseg7ei8_v_u8m1x7', vl = 16, segs = 7),
+            make_test_case('vsoxseg7ei8_v_u8m1x7', vl = 15, segs = 7),
+            # Ordered, segment 8
+            make_test_case('vsoxseg8ei8_v_u8mf4x8', vl = 4, segs = 8),
+            make_test_case('vsoxseg8ei8_v_u8mf4x8', vl = 3, segs = 8),
+            make_test_case('vsoxseg8ei8_v_u8mf2x8', vl = 8, segs = 8),
+            make_test_case('vsoxseg8ei8_v_u8mf2x8', vl = 7, segs = 8),
+            make_test_case('vsoxseg8ei8_v_u8m1x8', vl = 16, segs = 8),
+            make_test_case('vsoxseg8ei8_v_u8m1x8', vl = 15, segs = 8),
+        ],
+        data_dtype = np.uint8,
+        index_dtype = np.uint8,
+    )
+
+
+@cocotb.test()
 async def store16_index8(dut):
     """Test vs*xei8_v_u16 usage accessible from intrinsics."""
     def make_test_case(impl: str, vl: int):
         return {
             'impl': impl,
             'vl': vl,
+            'segments': 1,
             'out_size': 256,
         }
 
-    await vector_store_indexed(
+    await vector_store_segmented_indexed(
         dut = dut,
         elf_name = 'store16_index8.elf',
         cases = [
@@ -1861,10 +2019,11 @@ async def store16_index16(dut):
         return {
             'impl': impl,
             'vl': vl,
+            'segments': 1,
             'out_size': 16000,
         }
 
-    await vector_store_indexed(
+    await vector_store_segmented_indexed(
         dut = dut,
         elf_name = 'store16_index16.elf',
         cases = [
@@ -1903,10 +2062,11 @@ async def store32_index8(dut):
         return {
             'impl': impl,
             'vl': vl,
+            'segments': 1,
             'out_size': 257,
         }
 
-    await vector_store_indexed(
+    await vector_store_segmented_indexed(
         dut = dut,
         elf_name = 'store32_index8.elf',
         cases = [
@@ -1941,10 +2101,11 @@ async def store32_index16(dut):
         return {
             'impl': impl,
             'vl': vl,
+            'segments': 1,
             'out_size': 4000,
         }
 
-    await vector_store_indexed(
+    await vector_store_segmented_indexed(
         dut = dut,
         elf_name = 'store32_index16.elf',
         cases = [
@@ -1979,10 +2140,11 @@ async def store32_index32(dut):
         return {
             'impl': impl,
             'vl': vl,
+            'segments': 1,
             'out_size': 8000,
         }
 
-    await vector_store_indexed(
+    await vector_store_segmented_indexed(
         dut = dut,
         elf_name = 'store32_index32.elf',
         cases = [
