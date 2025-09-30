@@ -17,7 +17,7 @@
 
 namespace {
 constexpr size_t scatter_count = 64;
-constexpr size_t buf_size = 16000;
+constexpr size_t buf_size = 15000;
 }  // namespace
 
 size_t vl __attribute__((section(".data"))) = 8;

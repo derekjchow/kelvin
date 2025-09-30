@@ -214,7 +214,9 @@ async def vector_store_segmented_indexed(
 
         struct_bytes = np.dtype(data_dtype).itemsize * segments
         # Don't go beyond the buffer.
-        index_max = min(np.iinfo(index_dtype).max, out_size)
+        index_max = min(
+            np.iinfo(index_dtype).max,
+            out_size * np.dtype(data_dtype).itemsize)
         assert vl * struct_bytes <= index_max
         index_max = index_max - struct_bytes
         # TODO(davidgao): currently assuming the vl is supported.
@@ -2229,6 +2231,88 @@ async def store8_index8_seg(dut):
 
 
 @cocotb.test()
+async def store8_index16(dut):
+    """Test vs*xei16_v_u8 usage accessible from intrinsics."""
+    def make_test_case(impl: str, vl: int):
+        return {
+            'impl': impl,
+            'vl': vl,
+            'segments': 1,
+            'out_size': 30000,
+        }
+
+    await vector_store_segmented_indexed(
+        dut = dut,
+        elf_name = 'store8_index16.elf',
+        cases = [
+            # Unordered
+            make_test_case('vsuxei16_v_u8mf4', vl = 4),
+            make_test_case('vsuxei16_v_u8mf4', vl = 3),
+            make_test_case('vsuxei16_v_u8mf2', vl = 8),
+            make_test_case('vsuxei16_v_u8mf2', vl = 7),
+            make_test_case('vsuxei16_v_u8m1', vl = 16),
+            make_test_case('vsuxei16_v_u8m1', vl = 15),
+            make_test_case('vsuxei16_v_u8m2', vl = 32),
+            make_test_case('vsuxei16_v_u8m2', vl = 31),
+            make_test_case('vsuxei16_v_u8m4', vl = 64),
+            make_test_case('vsuxei16_v_u8m4', vl = 63),
+            # Ordered
+            make_test_case('vsoxei16_v_u8mf2', vl = 4),
+            make_test_case('vsoxei16_v_u8mf2', vl = 3),
+            make_test_case('vsoxei16_v_u8mf2', vl = 8),
+            make_test_case('vsoxei16_v_u8mf2', vl = 7),
+            make_test_case('vsoxei16_v_u8m1', vl = 16),
+            make_test_case('vsoxei16_v_u8m1', vl = 15),
+            make_test_case('vsoxei16_v_u8m2', vl = 32),
+            make_test_case('vsoxei16_v_u8m2', vl = 31),
+            make_test_case('vsoxei16_v_u8m4', vl = 64),
+            make_test_case('vsoxei16_v_u8m4', vl = 63),
+        ],
+        data_dtype = np.uint8,
+        index_dtype = np.uint16,
+    )
+
+
+@cocotb.test()
+async def store8_index32(dut):
+    """Test vs*xei32_v_u8 usage accessible from intrinsics."""
+    def make_test_case(impl: str, vl: int):
+        return {
+            'impl': impl,
+            'vl': vl,
+            'segments': 1,
+            'out_size': 30000,
+        }
+
+    await vector_store_segmented_indexed(
+        dut = dut,
+        elf_name = 'store8_index32.elf',
+        cases = [
+            # Unordered
+            make_test_case('vsuxei32_v_u8mf4', vl = 4),
+            make_test_case('vsuxei32_v_u8mf4', vl = 3),
+            make_test_case('vsuxei32_v_u8mf2', vl = 8),
+            make_test_case('vsuxei32_v_u8mf2', vl = 7),
+            make_test_case('vsuxei32_v_u8m1', vl = 16),
+            make_test_case('vsuxei32_v_u8m1', vl = 15),
+            make_test_case('vsuxei32_v_u8m2', vl = 32),
+            make_test_case('vsuxei32_v_u8m2', vl = 31),
+            # Ordered
+            make_test_case('vsoxei32_v_u8mf2', vl = 4),
+            make_test_case('vsoxei32_v_u8mf2', vl = 3),
+            make_test_case('vsoxei32_v_u8mf2', vl = 8),
+            make_test_case('vsoxei32_v_u8mf2', vl = 7),
+            make_test_case('vsoxei32_v_u8m1', vl = 16),
+            make_test_case('vsoxei32_v_u8m1', vl = 15),
+            make_test_case('vsoxei32_v_u8m2', vl = 32),
+            make_test_case('vsoxei32_v_u8m2', vl = 31),
+        ],
+        data_dtype = np.uint8,
+        index_dtype = np.uint32,
+    )
+
+
+@cocotb.test()
 async def store16_index8(dut):
     """Test vs*xei8_v_u16 usage accessible from intrinsics."""
     def make_test_case(impl: str, vl: int):
@@ -2279,7 +2363,7 @@ async def store16_index16(dut):
             'impl': impl,
             'vl': vl,
             'segments': 1,
-            'out_size': 16000,
+            'out_size': 15000,
         }
 
     await vector_store_segmented_indexed(
@@ -2315,6 +2399,45 @@ async def store16_index16(dut):
 
 
 @cocotb.test()
+async def store16_index32(dut):
+    """Test vs*xei32_v_u16 usage accessible from intrinsics."""
+    def make_test_case(impl: str, vl: int):
+        return {
+            'impl': impl,
+            'vl': vl,
+            'segments': 1,
+            'out_size': 15000,
+        }
+
+    await vector_store_segmented_indexed(
+        dut = dut,
+        elf_name = 'store16_index32.elf',
+        cases = [
+            # Unordered
+            make_test_case('vsuxei32_v_u16mf2', vl = 4),
+            make_test_case('vsuxei32_v_u16mf2', vl = 3),
+            make_test_case('vsuxei32_v_u16m1', vl = 8),
+            make_test_case('vsuxei32_v_u16m1', vl = 7),
+            make_test_case('vsuxei32_v_u16m2', vl = 16),
+            make_test_case('vsuxei32_v_u16m2', vl = 15),
+            make_test_case('vsuxei32_v_u16m4', vl = 32),
+            make_test_case('vsuxei32_v_u16m4', vl = 31),
+            # Ordered
+            make_test_case('vsoxei32_v_u16mf2', vl = 4),
+            make_test_case('vsoxei32_v_u16mf2', vl = 3),
+            make_test_case('vsoxei32_v_u16m1', vl = 8),
+            make_test_case('vsoxei32_v_u16m1', vl = 7),
+            make_test_case('vsoxei32_v_u16m2', vl = 16),
+            make_test_case('vsoxei32_v_u16m2', vl = 15),
+            make_test_case('vsoxei32_v_u16m4', vl = 32),
+            make_test_case('vsoxei32_v_u16m4', vl = 31),
+        ],
+        data_dtype = np.uint16,
+        index_dtype = np.uint32,
+    )
+
+
+@cocotb.test()
 async def store32_index8(dut):
     """Test vs*xei8_v_u32 usage accessible from intrinsics."""
     def make_test_case(impl: str, vl: int):
@@ -2322,7 +2445,7 @@ async def store32_index8(dut):
             'impl': impl,
             'vl': vl,
             'segments': 1,
-            'out_size': 257,
+            'out_size': 512,
         }
 
     await vector_store_segmented_indexed(
@@ -2361,7 +2484,7 @@ async def store32_index16(dut):
             'impl': impl,
             'vl': vl,
             'segments': 1,
-            'out_size': 4000,
+            'out_size': 7000,
         }
 
     await vector_store_segmented_indexed(
@@ -2400,7 +2523,7 @@ async def store32_index32(dut):
             'impl': impl,
             'vl': vl,
             'segments': 1,
-            'out_size': 8000,
+            'out_size': 7000,
         }
 
     await vector_store_segmented_indexed(
