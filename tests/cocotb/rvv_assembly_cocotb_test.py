@@ -426,3 +426,68 @@ async def core_mini_vill_test(dut):
     mcause_result = (
         await core_mini_axi.read_word(mcause_addr)).view(np.uint32)[0]
     assert (mcause_result == 0x2)
+
+@cocotb.test()
+async def core_mini_vl_test(dut):
+    """Testbench to test vsetvl instruciton saturate vl correctly."""
+    # Test bench setup
+    core_mini_axi = CoreMiniAxiInterface(dut)
+    await core_mini_axi.init()
+    await core_mini_axi.reset()
+    cocotb.start_soon(core_mini_axi.clock.start())
+    r = runfiles.Create()
+
+    elf_path = r.Rlocation("kelvin_hw/tests/cocotb/rvv/vcsr_test.elf")
+    with open(elf_path, "rb") as f:
+        entry_point = await core_mini_axi.load_elf(f)
+        sew_addr = core_mini_axi.lookup_symbol(f, "sew")
+        lmul_addr = core_mini_axi.lookup_symbol(f, "lmul")
+        vl_addr = core_mini_axi.lookup_symbol(f, "vl")
+        vtype_addr = core_mini_axi.lookup_symbol(f, "vtype")
+        result_vl_addr = core_mini_axi.lookup_symbol(f, "result_vl")
+
+    cases = [
+        (0b000, 0b110, 4),   # SEW8, mf4, vlmax=4
+        (0b000, 0b111, 8),   # SEW8, mf2, vlmax=8
+        (0b000, 0b000, 16),  # SEW8, m1, vlmax=16
+        (0b000, 0b001, 32),  # SEW8, m2, vlmax=32
+        (0b000, 0b010, 64),  # SEW8, m4, vlmax=64
+        (0b000, 0b011, 128), # SEW8, m8, vlmax=128
+        (0b001, 0b111, 4),   # SEW16, mf2, vlmax=4
+        (0b001, 0b000, 8),   # SEW16, m1, vlmax=8
+        (0b001, 0b001, 16),  # SEW16, m2, vlmax=16
+        (0b001, 0b010, 32),  # SEW16, m4, vlmax=32
+        (0b001, 0b011, 64),  # SEW16, m8, vlmax=64
+        (0b010, 0b000, 4),   # SEW32, m1, vlmax=4
+        (0b010, 0b001, 8),   # SEW32, m2, vlmax=8
+        (0b010, 0b010, 16),  # SEW32, m4, vlmax=16
+        (0b010, 0b011, 32),  # SEW32, m8, vlmax=32
+    ]
+    for sew, lmul, vlmax in tqdm.tqdm(cases):
+        await core_mini_axi.write_word(sew_addr, sew)
+        await core_mini_axi.write_word(lmul_addr, lmul)
+
+        # Test saturation above vlmax
+        vl_to_set = vlmax + 1
+        await core_mini_axi.write_word(vl_addr, vl_to_set)
+        await core_mini_axi.execute_from(entry_point)
+        await core_mini_axi.wait_for_halted()
+        vl_result = (
+            await core_mini_axi.read_word(result_vl_addr)).view(np.uint32)[0]
+        assert(vl_result == vlmax)
+
+        # Test vlmax
+        await core_mini_axi.write_word(vl_addr, vlmax)
+        await core_mini_axi.execute_from(entry_point)
+        await core_mini_axi.wait_for_halted()
+        vl_result = (
+            await core_mini_axi.read_word(result_vl_addr)).view(np.uint32)[0]
+        assert(vl_result == vlmax)
+
+        # Test below vlmax
+        await core_mini_axi.write_word(vl_addr, vlmax - 1)
+        await core_mini_axi.execute_from(entry_point)
+        await core_mini_axi.wait_for_halted()
+        vl_result = (
+            await core_mini_axi.read_word(result_vl_addr)).view(np.uint32)[0]
+        assert(vl_result == (vlmax - 1))

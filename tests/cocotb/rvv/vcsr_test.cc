@@ -21,12 +21,16 @@ uint32_t sew __attribute__((section(".data"))) = 0;
 uint32_t lmul __attribute__((section(".data"))) = 0;
 uint32_t vl __attribute__((section(".data"))) = 16;
 uint32_t vtype __attribute__((section(".data"))) = ~0;
+uint32_t result_vl __attribute__((section(".data"))) = ~0;
 
 int main(int argc, char **argv) {
   uint32_t vtype_to_write = (vma << 7) | (vta << 6) | (sew << 3) | lmul;
-  asm volatile("vsetvl x0, %0, %1": : "r"(vl), "r"(vtype_to_write));
-  uint32_t vtype_to_read;
-  asm volatile("csrr %0, vtype" : "=r"(vtype_to_read));
-  vtype = vtype_to_read;
+  asm volatile(
+      "vsetvl %[result_vl], %[vl], %[vtype_to_write];"
+      "csrr %[vtype], vtype;"
+      : [result_vl] "=r" (result_vl),
+        [vtype] "=r" (vtype)
+      : [vl] "r"(vl),
+        [vtype_to_write] "r"(vtype_to_write));
   return 0;
 }

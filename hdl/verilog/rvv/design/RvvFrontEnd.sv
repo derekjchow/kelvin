@@ -130,6 +130,8 @@ module RvvFrontEnd#(parameter N = 4,
 
   // Update configuration architectural state
   RVVConfigState inst_config_state [N:0];
+  logic [31:0] avl [N-1:0];
+  logic [31:0] vlmax [N-1:0];
   logic is_setvl [N-1:0];
   always_comb begin
     inst_config_state[0] = config_state_q;
@@ -138,20 +140,31 @@ module RvvFrontEnd#(parameter N = 4,
     inst_config_state[0].xsat = vxsat_i;
     for (int i = 0; i < N; i++) begin
       inst_config_state[i+1] = inst_config_state[i];
+      avl[i] = 0;
+      vlmax[i] = 0;
       is_setvl[i] = 0;
 
       if (valid_inst_q[i] &&
           (inst_q[i].opcode == RVV) &&
           (inst_q[i].bits[7:5] == 3'b111)) begin
         if (inst_q[i].bits[24] == 0) begin  // vsetvli
-          inst_config_state[i+1].vl = reg_read_data_i[2*i];
+          // Set AVL based on encoding (see Section 6.2 of RVV spec)
+          unique case (inst_q[i].bits[12:8])
+            0: unique case (inst_q[i].bits[4:0])
+              0:  avl[i] = inst_config_state[i].vl;  // rd = x0, rs1 = x0
+              default: avl[i] = 32'hFFFFFFFF;        // rd != x0, rs1 = x0
+            endcase
+            default: avl[i] = reg_read_data_i[2*i];  // rs1 != x0
+          endcase
+
+          avl[i] = reg_read_data_i[2*i];
           inst_config_state[i+1].lmul = RVVLMUL'(inst_q[i].bits[15:13]);
           inst_config_state[i+1].sew = RVVSEW'(inst_q[i].bits[18:16]);
           inst_config_state[i+1].ta = inst_q[i].bits[19];
           inst_config_state[i+1].ma = inst_q[i].bits[20];
           is_setvl[i] = 1;
         end else if (inst_q[i].bits[24:23] == 2'b11) begin  // vsetivli
-          inst_config_state[i+1].vl =
+          avl[i] =
               {{(`VL_WIDTH - 5){1'b0}}, inst_q[i].bits[12:8]};
           inst_config_state[i+1].lmul = RVVLMUL'(inst_q[i].bits[15:13]);
           inst_config_state[i+1].sew = RVVSEW'(inst_q[i].bits[18:16]);
@@ -159,7 +172,14 @@ module RvvFrontEnd#(parameter N = 4,
           inst_config_state[i+1].ma = inst_q[i].bits[20];
           is_setvl[i] = 1;
         end else if (inst_q[i].bits[24:23] == 2'b10) begin  // vsetvl
-          inst_config_state[i+1].vl = reg_read_data_i[2*i];
+          // Set AVL based on encoding (see Section 6.2 of RVV spec)
+          unique case (inst_q[i].bits[12:8])
+            0: unique case (inst_q[i].bits[4:0])
+              0:  avl[i] = inst_config_state[i].vl;  // rd = x0, rs1 = x0
+              default: avl[i] = 32'hFFFFFFFF;        // rd != x0, rs1 = x0
+            endcase
+            default: avl[i] = reg_read_data_i[2*i];  // rs1 != x0
+          endcase
           inst_config_state[i+1].lmul =
               RVVLMUL'(reg_read_data_i[(2*i) + 1][2:0]);
           inst_config_state[i+1].sew =
@@ -170,8 +190,8 @@ module RvvFrontEnd#(parameter N = 4,
         end
       end
 
-      // Compute legality of vtype.
       if (is_setvl[i]) begin
+        // Compute legality of vtype.
         unique case (inst_config_state[i+1].sew)
           SEW8:
             unique case(inst_config_state[i+1].lmul)
@@ -196,15 +216,38 @@ module RvvFrontEnd#(parameter N = 4,
             endcase
           default: inst_config_state[i+1].vill = 1;
         endcase
-      end
 
+        // Compute vl to set (saturating with necessary)
+        unique case (inst_config_state[i+1].lmul)
+          LMUL1_8: vlmax[i] = ((`VLENB)/8) >> inst_config_state[i+1].sew;
+          LMUL1_4: vlmax[i] = ((`VLENB)/4) >> inst_config_state[i+1].sew;
+          LMUL1_2: vlmax[i] = ((`VLENB)/2) >> inst_config_state[i+1].sew;
+          LMUL1: vlmax[i] = (`VLENB) >> inst_config_state[i+1].sew;
+          LMUL2: vlmax[i] = (2*(`VLENB)) >> inst_config_state[i+1].sew;
+          LMUL4: vlmax[i] = (4*(`VLENB)) >> inst_config_state[i+1].sew;
+          LMUL8: vlmax[i] = (8*(`VLENB)) >> inst_config_state[i+1].sew;
+          default: vlmax[i] = 0;
+        endcase
+
+        if (inst_config_state[i+1].vill) begin
+          // If illegal, set to 0. See end of section 6.1 of RVV spec.
+          inst_config_state[i+1].vl = 0;
+        end else if (avl[i] > vlmax[i]) begin
+          // One possible valid impl according to 6.3 of RVV spec.
+          inst_config_state[i+1].vl = vlmax[i];
+        end else begin
+          inst_config_state[i+1].vl = avl[i];
+        end
+      end
     end
   end
 
   always_ff @(posedge clk or negedge rstn) begin
     if (!rstn) begin
-      config_state_q.vill <= 1;  // Config is illegal on reset.
-      config_state_q.vl <= 16;
+      // Per Section 3.11 of RVV spec, the recommended state on reset is
+      // vill is set, with the remain vtype bits and vl being set to 0.
+      config_state_q.vill <= 1;
+      config_state_q.vl <= 0;
       config_state_q.vstart <= 0;
       config_state_q.ma <= 0;
       config_state_q.ta <= 0;
@@ -226,10 +269,10 @@ module RvvFrontEnd#(parameter N = 4,
   always_comb begin
     for (int i = 0; i < N; i++) begin
       unaligned_trap_valid[i] = valid_inst_q[i] && !is_setvl[i] &&
-          inst_config_state[i].vill;
+          inst_config_state[i+1].vill;
       unaligned_trap_data[i] = inst_q[i];
       unaligned_cmd_valid[i] = valid_inst_q[i] && !is_setvl[i] &&
-          !inst_config_state[i].vill;
+          !inst_config_state[i+1].vill;
 
       // Combine instruction + arch state into command
 `ifdef TB_SUPPORT
@@ -237,7 +280,7 @@ module RvvFrontEnd#(parameter N = 4,
 `endif
       unaligned_cmd_data[i].opcode = inst_q[i].opcode;
       unaligned_cmd_data[i].bits = inst_q[i].bits;
-      unaligned_cmd_data[i].arch_state = inst_config_state[i];
+      unaligned_cmd_data[i].arch_state = inst_config_state[i+1];
       // TODO: Handle rs propagation for loads/stores
       unaligned_cmd_data[i].rs1 =
           inst_q[i].bits[7] ? reg_read_data_i[2*i] : 0;
@@ -246,7 +289,7 @@ module RvvFrontEnd#(parameter N = 4,
       reg_write_valid_o[i] = is_setvl[i];
       reg_write_addr_o[i] = inst_q[i].bits[4:0];
       reg_write_data_o[i] =
-          {{(`XLEN-`VL_WIDTH){1'b0}}, inst_config_state[i].vl};
+          {{(`XLEN-`VL_WIDTH){1'b0}}, inst_config_state[i+1].vl};
     end
   end
 
