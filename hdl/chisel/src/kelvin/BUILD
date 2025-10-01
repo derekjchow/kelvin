@@ -113,7 +113,6 @@ chisel_library(
         "//hdl/verilog/rvv/common:edff_2d.sv",
         "//hdl/verilog/rvv/common:multi_fifo.sv",
         "//hdl/verilog/rvv/design:Aligner.sv",
-        "//hdl/verilog/rvv/design:MultiFifo.sv",
         "//hdl/verilog/rvv/design:RvvCore.sv",
         "//hdl/verilog/rvv/design:RvvFrontEnd.sv",
         "//hdl/verilog/rvv/design:rvv_backend.sv",

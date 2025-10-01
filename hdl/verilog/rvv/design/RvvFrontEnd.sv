@@ -118,8 +118,13 @@ module RvvFrontEnd#(parameter N = 4,
       for (int i = 0; i < N; i++) begin
         valid_inst_q[i] <= inst_accepted[i];
         valid_inst_count_q <= valid_inst_count_d;
-        inst_q[i] <= inst_data_i[i];
       end
+    end
+  end
+
+  always_ff @(posedge clk) begin
+    for (int i = 0; i < N; i++) begin
+      inst_q[i] <= inst_data_i[i];
     end
   end
 
@@ -199,11 +204,14 @@ module RvvFrontEnd#(parameter N = 4,
   always_ff @(posedge clk or negedge rstn) begin
     if (!rstn) begin
       config_state_q.vill <= 1;  // Config is illegal on reset.
+      config_state_q.vl <= 16;
+      config_state_q.vstart <= 0;
       config_state_q.ma <= 0;
       config_state_q.ta <= 0;
+      config_state_q.xrm <= RNU;
+      config_state_q.xsat <= 0;
       config_state_q.sew <= SEW8;
       config_state_q.lmul <= LMUL1;
-      config_state_q.vl <= 16;
     end else begin
       // Update config state next cycle
       config_state_q <= inst_config_state[N];

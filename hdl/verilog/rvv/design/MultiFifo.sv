@@ -64,14 +64,16 @@ module MultiFifo#(type T=logic [7:0],
     end else begin
       head <= WrapAroundSum(head, valid_in);
       tail <= WrapAroundSum(tail, ready_out);
-
-      // Update buffer
-      for (int i = 0; i < N; i++) begin
-        if (i < valid_in) begin
-          buffer[WrapAroundSum(head, i)] <= data_in[i];
-        end
-      end
       m_fill_level <= m_fill_level + valid_in - ready_out;
+    end
+  end
+
+  always_ff @(posedge clk) begin
+    // Update buffer
+    for (int i = 0; i < N; i++) begin
+      if (i < valid_in) begin
+        buffer[WrapAroundSum(head, i)] <= data_in[i];
+      end
     end
   end
 
