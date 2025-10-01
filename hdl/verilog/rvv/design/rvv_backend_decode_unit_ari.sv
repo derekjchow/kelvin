@@ -3567,13 +3567,13 @@ module rvv_backend_decode_unit_ari
     else begin
       case(eew_max)
         EEW8: begin
-          uop_vstart = csr_vstart[4 +: `UOP_INDEX_WIDTH];
+          uop_vstart = csr_vstart[4 +: `UOP_INDEX_WIDTH_ARI];
         end
         EEW16: begin
-          uop_vstart = csr_vstart[3 +: `UOP_INDEX_WIDTH];
+          uop_vstart = csr_vstart[3 +: `UOP_INDEX_WIDTH_ARI];
         end
         EEW32: begin
-          uop_vstart = csr_vstart[2 +: `UOP_INDEX_WIDTH];
+          uop_vstart = csr_vstart[2 +: `UOP_INDEX_WIDTH_ARI];
         end
         default: begin
           uop_vstart = 'b0;

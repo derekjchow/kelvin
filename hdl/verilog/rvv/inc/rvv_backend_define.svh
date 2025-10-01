@@ -98,9 +98,10 @@
 `define HWORD_WIDTH             16
 `define WORD_WIDTH              32
 
-// an instruction will be split to EMUL_max=8 uops at most
+// an instruction will be split to 4xEMUL_max=32 uops at most
 `define EMUL_MAX                8
-`define UOP_INDEX_WIDTH         $clog2(`EMUL_MAX)
+`define UOP_INDEX_WIDTH         5
+`define UOP_INDEX_WIDTH_ARI     $clog2(`EMUL_MAX)
 
 // Vector CSR
 `define VLEN                    128
