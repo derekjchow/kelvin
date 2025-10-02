@@ -174,7 +174,7 @@ chisel_test(
 
 chisel_test(
     name = "kelvin_scalar_tests",
-    size = "medium",
+    size = "large",
     srcs = [
         "scalar/AluTest.scala",
         "scalar/MluTest.scala",
