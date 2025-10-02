@@ -79,8 +79,9 @@ cc_binary(
 )
 
 CORE_MINI_AXI_TB_CC_LIBRARY_COMMON_SRCS = [
-        "kelvin/core_mini_axi_tb.cc",
+    "kelvin/core_mini_axi_tb.cc",
 ]
+
 CORE_MINI_AXI_TB_CC_LIBRARY_COMMON_DEPS = [
     ":elf",
     ":sim_libs",
@@ -94,6 +95,7 @@ CORE_MINI_AXI_TB_CC_LIBRARY_COMMON_DEPS = [
     "@com_google_absl//absl/status",
     "@libsystemctlm_soc",
 ]
+
 template_rule(
     cc_library,
     {
@@ -143,6 +145,7 @@ CORE_MINI_AXI_SIM_CC_BINARY_COMMON_DEPS = [
     "@com_google_absl//absl/log",
     "@com_google_absl//absl/log:check",
 ]
+
 template_rule(
     cc_binary,
     {
