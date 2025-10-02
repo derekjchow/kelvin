@@ -29,14 +29,14 @@ package(default_visibility = ["//visibility:public"])
 chisel_library(
     name = "kelvin_float",
     srcs = [
-        "scalar/FRegfile.scala",
-        "scalar/Fpu.scala",
         "float/FloatCore.scala",
         "float/FloatCoreInterface.scala",
+        "scalar/FRegfile.scala",
+        "scalar/Fpu.scala",
     ],
     resources = [
-        "@cvfpu//:all_srcs",
         "@common_cells//:all_srcs",
+        "@cvfpu//:all_srcs",
         "@fpu_div_sqrt_mvp//:all_srcs",
     ],
     deps = [
@@ -49,11 +49,11 @@ chisel_library(
 
 chisel_test(
     name = "kelvin_float_tests",
+    size = "medium",
     srcs = [
         "scalar/FRegfileTest.scala",
         "scalar/FpuTest.scala",
     ],
-    size = "medium",
     deps = [
         ":kelvin",
         ":kelvin_base",
@@ -97,14 +97,6 @@ chisel_library(
         "rvv/RvvInterface.scala",
     ],
     resources = [
-        "//hdl/verilog/rvv/inc:rvv_backend.svh",
-        "//hdl/verilog/rvv/inc:rvv_backend_alu.svh",
-        "//hdl/verilog/rvv/inc:rvv_backend_div.svh",
-        "//hdl/verilog/rvv/inc:rvv_backend_define.svh",
-        "//hdl/verilog/rvv/inc:rvv_backend_config.svh",
-        "//hdl/verilog/rvv/inc:rvv_backend_dispatch.svh",
-        "//hdl/verilog/rvv/inc:rvv_backend_pmtrdt.svh",
-        "//hdl/verilog/rvv/inc:rvv_backend_sva.svh",
         "//hdl/verilog/rvv/common:cdffr.sv",
         "//hdl/verilog/rvv/common:compressor_3_2.sv",
         "//hdl/verilog/rvv/common:compressor_4_2.sv",
@@ -148,9 +140,17 @@ chisel_library(
         "//hdl/verilog/rvv/design:rvv_backend_pmtrdt.sv",
         "//hdl/verilog/rvv/design:rvv_backend_pmtrdt_unit.sv",
         "//hdl/verilog/rvv/design:rvv_backend_retire.sv",
+        "//hdl/verilog/rvv/design:rvv_backend_rob.sv",
         "//hdl/verilog/rvv/design:rvv_backend_vrf.sv",
         "//hdl/verilog/rvv/design:rvv_backend_vrf_reg.sv",
-        "//hdl/verilog/rvv/design:rvv_backend_rob.sv",
+        "//hdl/verilog/rvv/inc:rvv_backend.svh",
+        "//hdl/verilog/rvv/inc:rvv_backend_alu.svh",
+        "//hdl/verilog/rvv/inc:rvv_backend_config.svh",
+        "//hdl/verilog/rvv/inc:rvv_backend_define.svh",
+        "//hdl/verilog/rvv/inc:rvv_backend_dispatch.svh",
+        "//hdl/verilog/rvv/inc:rvv_backend_div.svh",
+        "//hdl/verilog/rvv/inc:rvv_backend_pmtrdt.svh",
+        "//hdl/verilog/rvv/inc:rvv_backend_sva.svh",
     ],
     deps = [
         ":kelvin_base",
@@ -174,6 +174,7 @@ chisel_test(
 
 chisel_test(
     name = "kelvin_scalar_tests",
+    size = "medium",
     srcs = [
         "scalar/AluTest.scala",
         "scalar/MluTest.scala",
@@ -181,7 +182,6 @@ chisel_test(
     args = [
         "-P",  # Allows parallel tests.
     ],
-    size = "medium",
     deps = [
         ":kelvin_base",
         ":kelvin_scalar",
@@ -191,10 +191,10 @@ chisel_test(
 
 chisel_test(
     name = "kelvin_uncached_fetch_tests",
+    size = "medium",
     srcs = [
         "scalar/UncachedFetchTest.scala",
     ],
-    size = "medium",
     deps = [
         ":kelvin_base",
         ":kelvin_scalar",
@@ -360,8 +360,8 @@ chisel_library(
         "CoreAxiCSR.scala",
         "CoreTlul.scala",
         "Fabric.scala",
-        "TCM.scala",
         "SRAM.scala",
+        "TCM.scala",
     ],
     deps = [
         ":RstSync",
@@ -516,7 +516,6 @@ chisel_cc_library(
         "-DUSE_GENERIC",
     ],
 )
-
 
 CORE_MINI_AXI_BLACKBOX_DESIGNS = [
     "CKLNQD10BWP6T20P96CPDLVT",
