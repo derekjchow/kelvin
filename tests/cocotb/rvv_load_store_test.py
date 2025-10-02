@@ -1734,6 +1734,161 @@ async def load32_index8(dut):
         index_dtype = np.uint8,
     )
 
+@cocotb.test()
+async def load32_index8_seg(dut):
+    """Test vl*xseg*ei32_v_u32 usage accessible from intrinsics."""
+    def make_test_case(impl: str, vl: int, n_segs: int):
+        return {
+            'impl': impl,
+            'vl': vl,
+            'segments': n_segs,
+            'in_bytes': 271,
+            'out_size': vl * n_segs * 2,
+        }
+
+    await vector_load_segmented_indexed(
+        dut = dut,
+        elf_name = 'load32_index8_seg.elf',
+        cases = [
+            # Unordered, segment 2
+            make_test_case('vluxseg2ei8_v_u32m1x2', vl=4, n_segs=2),
+            make_test_case('vluxseg2ei8_v_u32m1x2', vl=3, n_segs=2),
+            make_test_case('vluxseg2ei8_v_u32m2x2', vl=8, n_segs=2),
+            make_test_case('vluxseg2ei8_v_u32m2x2', vl=7, n_segs=2),
+            make_test_case('vluxseg2ei8_v_u32m4x2', vl=16, n_segs=2),
+            make_test_case('vluxseg2ei8_v_u32m4x2', vl=15, n_segs=2),
+            # Unordered, segment 3
+            make_test_case('vluxseg3ei8_v_u32m1x3', vl=4, n_segs=3),
+            make_test_case('vluxseg3ei8_v_u32m1x3', vl=3, n_segs=3),
+            make_test_case('vluxseg3ei8_v_u32m2x3', vl=8, n_segs=3),
+            make_test_case('vluxseg3ei8_v_u32m2x3', vl=7, n_segs=3),
+            # Unordered, segment 4
+            make_test_case('vluxseg4ei8_v_u32m1x4', vl=4, n_segs=4),
+            make_test_case('vluxseg4ei8_v_u32m1x4', vl=3, n_segs=4),
+            make_test_case('vluxseg4ei8_v_u32m2x4', vl=8, n_segs=4),
+            make_test_case('vluxseg4ei8_v_u32m2x4', vl=7, n_segs=4),
+            # Unordered, segment 5
+            make_test_case('vluxseg5ei8_v_u32m1x5', vl=4, n_segs=5),
+            make_test_case('vluxseg5ei8_v_u32m1x5', vl=3, n_segs=5),
+            # Unordered, segment 6
+            make_test_case('vluxseg6ei8_v_u32m1x6', vl=4, n_segs=6),
+            make_test_case('vluxseg6ei8_v_u32m1x6', vl=3, n_segs=6),
+            # Unordered, segment 7
+            make_test_case('vluxseg7ei8_v_u32m1x7', vl=4, n_segs=7),
+            make_test_case('vluxseg7ei8_v_u32m1x7', vl=3, n_segs=7),
+            # Unordered, segment 8
+            make_test_case('vluxseg8ei8_v_u32m1x8', vl=4, n_segs=8),
+            make_test_case('vluxseg8ei8_v_u32m1x8', vl=3, n_segs=8),
+            # Ordered, segment 2
+            make_test_case('vloxseg2ei8_v_u32m1x2', vl=4, n_segs=2),
+            make_test_case('vloxseg2ei8_v_u32m1x2', vl=3, n_segs=2),
+            make_test_case('vloxseg2ei8_v_u32m2x2', vl=8, n_segs=2),
+            make_test_case('vloxseg2ei8_v_u32m2x2', vl=7, n_segs=2),
+            make_test_case('vloxseg2ei8_v_u32m4x2', vl=16, n_segs=2),
+            make_test_case('vloxseg2ei8_v_u32m4x2', vl=15, n_segs=2),
+            # Ordered, segment 3
+            make_test_case('vloxseg3ei8_v_u32m1x3', vl=4, n_segs=3),
+            make_test_case('vloxseg3ei8_v_u32m1x3', vl=3, n_segs=3),
+            make_test_case('vloxseg3ei8_v_u32m2x3', vl=8, n_segs=3),
+            make_test_case('vloxseg3ei8_v_u32m2x3', vl=7, n_segs=3),
+            # Ordered, segment 4
+            make_test_case('vloxseg4ei8_v_u32m1x4', vl=4, n_segs=4),
+            make_test_case('vloxseg4ei8_v_u32m1x4', vl=3, n_segs=4),
+            make_test_case('vloxseg4ei8_v_u32m2x4', vl=8, n_segs=4),
+            make_test_case('vloxseg4ei8_v_u32m2x4', vl=7, n_segs=4),
+            # Ordered, segment 5
+            make_test_case('vloxseg5ei8_v_u32m1x5', vl=4, n_segs=5),
+            make_test_case('vloxseg5ei8_v_u32m1x5', vl=3, n_segs=5),
+            # Ordered, segment 6
+            make_test_case('vloxseg6ei8_v_u32m1x6', vl=4, n_segs=6),
+            make_test_case('vloxseg6ei8_v_u32m1x6', vl=3, n_segs=6),
+            # Ordered, segment 7
+            make_test_case('vloxseg7ei8_v_u32m1x7', vl=4, n_segs=7),
+            make_test_case('vloxseg7ei8_v_u32m1x7', vl=3, n_segs=7),
+            # Ordered, segment 8
+            make_test_case('vloxseg8ei8_v_u32m1x8', vl=4, n_segs=8),
+            make_test_case('vloxseg8ei8_v_u32m1x8', vl=3, n_segs=8),
+        ],
+        dtype = np.uint32,
+        index_dtype = np.uint8,
+    )
+
+@cocotb.test()
+async def load32_index16_seg(dut):
+    """Test vl*xseg*ei32_v_u32 usage accessible from intrinsics."""
+    def make_test_case(impl: str, vl: int, n_segs: int):
+        return {
+            'impl': impl,
+            'vl': vl,
+            'segments': n_segs,
+            'in_bytes': 28000,
+            'out_size': vl * n_segs * 2,
+        }
+
+    await vector_load_segmented_indexed(
+        dut = dut,
+        elf_name = 'load32_index16_seg.elf',
+        cases = [
+            # Unordered, segment 2
+            make_test_case('vluxseg2ei16_v_u32m1x2', vl=4, n_segs=2),
+            make_test_case('vluxseg2ei16_v_u32m1x2', vl=3, n_segs=2),
+            make_test_case('vluxseg2ei16_v_u32m2x2', vl=8, n_segs=2),
+            make_test_case('vluxseg2ei16_v_u32m2x2', vl=7, n_segs=2),
+            # Unordered, segment 3
+            make_test_case('vluxseg3ei16_v_u32m1x3', vl=4, n_segs=3),
+            make_test_case('vluxseg3ei16_v_u32m1x3', vl=3, n_segs=3),
+            make_test_case('vluxseg3ei16_v_u32m2x3', vl=8, n_segs=3),
+            make_test_case('vluxseg3ei16_v_u32m2x3', vl=7, n_segs=3),
+            # Unordered, segment 4
+            make_test_case('vluxseg4ei16_v_u32m1x4', vl=4, n_segs=4),
+            make_test_case('vluxseg4ei16_v_u32m1x4', vl=3, n_segs=4),
+            make_test_case('vluxseg4ei16_v_u32m2x4', vl=8, n_segs=4),
+            make_test_case('vluxseg4ei16_v_u32m2x4', vl=7, n_segs=4),
+            # Unordered, segment 5
+            make_test_case('vluxseg5ei16_v_u32m1x5', vl=4, n_segs=5),
+            make_test_case('vluxseg5ei16_v_u32m1x5', vl=3, n_segs=5),
+            # Unordered, segment 6
+            make_test_case('vluxseg6ei16_v_u32m1x6', vl=4, n_segs=6),
+            make_test_case('vluxseg6ei16_v_u32m1x6', vl=3, n_segs=6),
+            # Unordered, segment 7
+            make_test_case('vluxseg7ei16_v_u32m1x7', vl=4, n_segs=7),
+            make_test_case('vluxseg7ei16_v_u32m1x7', vl=3, n_segs=7),
+            # Unordered, segment 8
+            make_test_case('vluxseg8ei16_v_u32m1x8', vl=4, n_segs=8),
+            make_test_case('vluxseg8ei16_v_u32m1x8', vl=3, n_segs=8),
+            # Ordered, segment 2
+            make_test_case('vloxseg2ei16_v_u32m1x2', vl=4, n_segs=2),
+            make_test_case('vloxseg2ei16_v_u32m1x2', vl=3, n_segs=2),
+            make_test_case('vloxseg2ei16_v_u32m2x2', vl=8, n_segs=2),
+            make_test_case('vloxseg2ei16_v_u32m2x2', vl=7, n_segs=2),
+            # Ordered, segment 3
+            make_test_case('vloxseg3ei16_v_u32m1x3', vl=4, n_segs=3),
+            make_test_case('vloxseg3ei16_v_u32m1x3', vl=3, n_segs=3),
+            make_test_case('vloxseg3ei16_v_u32m2x3', vl=8, n_segs=3),
+            make_test_case('vloxseg3ei16_v_u32m2x3', vl=7, n_segs=3),
+            # Ordered, segment 4
+            make_test_case('vloxseg4ei16_v_u32m1x4', vl=4, n_segs=4),
+            make_test_case('vloxseg4ei16_v_u32m1x4', vl=3, n_segs=4),
+            make_test_case('vloxseg4ei16_v_u32m2x4', vl=8, n_segs=4),
+            make_test_case('vloxseg4ei16_v_u32m2x4', vl=7, n_segs=4),
+            # Ordered, segment 5
+            make_test_case('vloxseg5ei16_v_u32m1x5', vl=4, n_segs=5),
+            make_test_case('vloxseg5ei16_v_u32m1x5', vl=3, n_segs=5),
+            # Ordered, segment 6
+            make_test_case('vloxseg6ei16_v_u32m1x6', vl=4, n_segs=6),
+            make_test_case('vloxseg6ei16_v_u32m1x6', vl=3, n_segs=6),
+            # Ordered, segment 7
+            make_test_case('vloxseg7ei16_v_u32m1x7', vl=4, n_segs=7),
+            make_test_case('vloxseg7ei16_v_u32m1x7', vl=3, n_segs=7),
+            # Ordered, segment 8
+            make_test_case('vloxseg8ei16_v_u32m1x8', vl=4, n_segs=8),
+            make_test_case('vloxseg8ei16_v_u32m1x8', vl=3, n_segs=8),
+        ],
+        dtype = np.uint32,
+        index_dtype = np.uint16,
+    )
+
+
 
 @cocotb.test()
 async def load32_index32_seg(dut):

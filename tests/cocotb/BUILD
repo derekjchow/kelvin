@@ -206,6 +206,8 @@ RVV_LOAD_STORE_TESTCASES = [
     "load16_stride4_m1_partial",
     "load16_stride4_mf2",
     "load32_index8",
+    "load32_index8_seg",
+    "load32_index16_seg",
     "load32_index32_seg",
     "load32_seg_unit",
     "load32_stride8_m1",
