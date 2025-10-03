@@ -625,6 +625,18 @@ template_rule(
             ] + RVV_CORE_MINI_AXI_COMMON_GEN_FLAGS,
             "module_name": "RvvCoreMiniDebugAxi",
         },
+        "rvv_core_mini_highmem_axi_cc_library": {
+            "verilog_file_path": "RvvCoreMiniHighmemAxi.sv",
+            "extra_outs": [
+                "VRvvCoreMiniHighmemAxi_parameters.h",
+                "RvvCoreMiniHighmemAxi.zip",
+            ],
+            "gen_flags": [
+                "--moduleName=RvvCoreMiniHighmem",
+                "--tcmHighmem=True",
+            ] + RVV_CORE_MINI_AXI_COMMON_GEN_FLAGS,
+            "module_name": "RvvCoreMiniHighmemAxi",
+        },
     },
     chisel_lib = ":coralnpu",
     emit_class = "coralnpu.EmitCore",

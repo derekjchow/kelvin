@@ -5,13 +5,14 @@
 MEMORY {
     ITCM(rx): ORIGIN = 0x00000000, LENGTH = 1024K
     DTCM(rw): ORIGIN = 0x00100000, LENGTH = 1024K
+    EXTMEM(rw): ORIGIN = 0x20000000, LENGTH = 4096K
 }
 
-STACK_SIZE = DEFINED(__stack_size__) ? __stack_size__ : 0x80;
+STACK_SIZE = DEFINED(__stack_size__) ? __stack_size__ : 0x1000;
 __stack_size = STACK_SIZE;
 __stack_shift = 7;
 __boot_hart = 0;
-HEAP_SIZE = DEFINED(__heap_size__) ? __heap_size__ : 0x80;
+HEAP_SIZE = DEFINED(__heap_size__) ? __heap_size__ : 0x1000;
 
 ENTRY(_start)
 
@@ -117,4 +118,13 @@ SECTIONS {
       . += STACK_SIZE;
       __stack_end__ = .;
     } > DTCM
+
+     /* EXTMEM data here */
+    . = ORIGIN(EXTMEM);
+    .extdata (NOLOAD) : ALIGN(16) {
+      __extdata_start__ = .;
+      *(.extdata)
+      *(.extdata.*)
+      __extdata_end__ = .;
+    } > EXTMEM
 }

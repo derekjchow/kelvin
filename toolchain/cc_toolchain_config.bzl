@@ -161,7 +161,7 @@ def _impl(ctx):
             flag_group(
                 flags = [
                     "-g3",
-                    "-Os",
+                    "-O3",
                     "-ffunction-sections",
                     "-fdata-sections",
                     "-fno-exceptions",
@@ -177,7 +177,7 @@ def _impl(ctx):
             flag_group(
                 flags = [
                     "-g3",
-                    "-Os",
+                    "-O3",
                     "-ffunction-sections",
                     "-fdata-sections",
                 ],

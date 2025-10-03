@@ -19,14 +19,17 @@ from coralnpu_test_utils.core_mini_axi_interface import CoreMiniAxiInterface
 
 class Fixture:
 
-    def __init__(self, dut):
-        self.core_mini_axi = CoreMiniAxiInterface(dut)
+    def __init__(self, dut, **kwargs):
+        self.core_mini_axi = CoreMiniAxiInterface(dut, **kwargs)
         self.entry_point = None
         self.symbols = {}
 
     @classmethod
-    async def Create(cls, dut):
-        inst = cls(dut)
+    async def Create(cls, dut, **kwargs):
+        if kwargs.get("highmem"):
+            inst = cls(dut, csr_base_addr=0x200000)
+        else:
+            inst = cls(dut, **kwargs)
         await inst.core_mini_axi.init()
         await inst.core_mini_axi.reset()
         cocotb.start_soon(inst.core_mini_axi.clock.start())

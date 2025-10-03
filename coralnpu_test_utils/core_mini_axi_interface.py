@@ -103,7 +103,13 @@ def convert_to_binary_value(data):
 
 
 class CoreMiniAxiInterface:
-  def __init__(self, dut, clock_ns=1.25):
+  def __init__(self,
+               dut,
+               clock_ns=1.25,
+               csr_base_addr=0x30000,
+               base_addr = 0x20000000,
+               ext_mem_size=(4 * 1024 * 1024),
+               **kwargs):
     self.dut = dut
     self.dut.io_aclk.value = 0
     self.dut.io_irq.value = 0
@@ -118,8 +124,9 @@ class CoreMiniAxiInterface:
     self.dut.io_axi_master_read_data_valid.value = 0
     self.dut.io_axi_master_write_resp_valid.value = 0
     self.clock = Clock(dut.io_aclk, clock_ns, unit="ns")
-    self.memory_base_addr = 0x20000000
-    self.memory = np.zeros([4 * 1024 * 1024], dtype=np.uint8)
+    self.csr_base_addr = csr_base_addr
+    self.memory_base_addr = base_addr
+    self.memory = np.zeros([ext_mem_size], dtype=np.uint8)
     self.master_arfifo = Queue()
     self.master_awfifo = Queue()
     self.master_rfifo = Queue()
@@ -146,11 +153,11 @@ class CoreMiniAxiInterface:
     cocotb.start_soon(self.memory_read_agent())
 
   async def read_csr(self, addr):
-    val = await self.read_word(0x30000 + addr)
+    val = await self.read_word(self.csr_base_addr + addr)
     return val
 
   async def write_csr(self, addr, data):
-    await self.write_word(0x30000 + addr, data)
+    await self.write_word(self.csr_base_addr + addr, data)
 
   async def slave_awagent(self, timeout=4096):
     self.dut.io_axi_slave_write_addr_valid.value = 0
@@ -411,7 +418,7 @@ class CoreMiniAxiInterface:
     await Timer(1, unit="us")
 
   async def halt(self):
-    coralnpu_reset_csr_addr = 0x30000
+    coralnpu_reset_csr_addr = self.csr_base_addr
     await self.write_word(coralnpu_reset_csr_addr, 3)
 
   async def _poll_dm_status(self, bit, value):
@@ -612,6 +619,9 @@ class CoreMiniAxiInterface:
     bdata = await self.slave_bfifo.get()
     assert bdata["id"].value == axi_id
 
+  async def _axi_valid_memory_addr(self, addr, data_len) -> bool:
+    return (addr >= self.memory_base_addr) and (addr + data_len < self.memory_base_addr + len(self.memory))
+
   async def write(self,
                   addr: int,
                   data: np.array,
@@ -627,7 +637,11 @@ class CoreMiniAxiInterface:
       transaction_size = self._determine_transaction_size(addr, len(data))
       local_data = data[0:transaction_size]
       local_masks = masks[0:transaction_size]
-      await self._write_transaction(addr, local_data, local_masks, delay_bready, axi_id, burst)
+      if await self._axi_valid_memory_addr(addr, len(local_data)):
+        for i in range(len(local_data)):
+          self.memory[addr - self.memory_base_addr + i] = local_data[i]
+      else:
+        await self._write_transaction(addr, local_data, local_masks, delay_bready, axi_id, burst)
       addr += len(local_data)
       data = data[transaction_size:]
       masks = masks[transaction_size:]
@@ -658,6 +672,7 @@ class CoreMiniAxiInterface:
     last = rdata["last"]
     assert rdata["resp"] == expected_resp
     assert rdata["id"] == axi_id
+
     return last, np.flip(data)
 
   async def _read_transaction(self,
@@ -695,10 +710,14 @@ class CoreMiniAxiInterface:
     data = []
     while bytes_to_read > 0:
       transaction_size = self._determine_transaction_size(addr, bytes_to_read)
-      data.append(await self._read_transaction(addr, transaction_size, 0, axi_id, burst))
+      if await self._axi_valid_memory_addr(addr, bytes_to_read):
+        for i in range(bytes_to_read):
+          data.append(self.memory[addr - self.memory_base_addr + i])
+      else:
+        data.append(await self._read_transaction(addr, transaction_size, 0, axi_id, burst))
       bytes_to_read -= transaction_size
       addr += transaction_size
-    if len(data) == 0:
+    if len(data) == 0 :
       return data
     return np.concatenate(data)
 
@@ -719,8 +738,19 @@ class CoreMiniAxiInterface:
     for segment in elf_file.iter_segments(type="PT_LOAD"):
       header = segment.header
       data = np.frombuffer(segment.data(), dtype=np.uint8)
+      if self._axi_memory_contains(header["p_paddr"]) and \
+         self._axi_memory_contains(header["p_paddr"] + len(data) -1):
+        memory_start = header["p_paddr"] - self.memory_base_addr
+        memory_end = memory_start + len(data)
+        self.memory[memory_start:memory_end] = data
+        continue
       await self.write(header["p_paddr"], data)
     return entry_point
+
+  def _axi_memory_contains(self, x):
+    """Checks if an address is contained in the AXI memory region"""
+    return (x >= self.memory_base_addr) and \
+        (x < (self.memory_base_addr + len(self.memory)))
 
   def lookup_symbol(self, f, symbol_name):
     elf_file = ELFFile(f)
@@ -758,10 +788,10 @@ class CoreMiniAxiInterface:
 
   async def execute_from(self, start_pc):
     # Program starting address
-    coralnpu_pc_csr_addr = 0x30004
+    coralnpu_pc_csr_addr = self.csr_base_addr + 4
     await self.write_word(coralnpu_pc_csr_addr, start_pc)
     # Release clock gate
-    coralnpu_reset_csr_addr = 0x30000
+    coralnpu_reset_csr_addr = self.csr_base_addr
     await self.write_word(coralnpu_reset_csr_addr, 1)
     # Release reset
     await self.write_word(coralnpu_reset_csr_addr, 0)

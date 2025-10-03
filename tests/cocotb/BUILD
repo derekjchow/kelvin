@@ -59,6 +59,13 @@ verilator_cocotb_model(
     verilog_source = "//hdl/chisel/src/coralnpu:RvvCoreMiniAxi.sv",
 )
 
+verilator_cocotb_model(
+    name = "rvv_core_mini_highmem_axi_model",
+    cflags = VERILATOR_BUILD_ARGS,
+    hdl_toplevel = "RvvCoreMiniHighmemAxi",
+    verilog_source = "//hdl/chisel/src/coralnpu:RvvCoreMiniHighmemAxi.sv",
+)
+
 # BEGIN_TESTCASES_FOR_core_mini_axi_sim_cocotb
 CORE_MINI_AXI_SIM_TESTCASES = [
     "core_mini_axi_basic_write_read_memory",
