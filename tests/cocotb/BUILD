@@ -175,6 +175,7 @@ RVV_ASSEMBLY_TESTCASES = [
 RVV_LOAD_STORE_TESTCASES = [
     "load_store_bits",
     "load_unit_masked",
+    "load_unit_all_vtypes_test",
     "load8_index8",
     "load8_index8_seg",
     "load8_index16",
@@ -204,6 +205,7 @@ RVV_LOAD_STORE_TESTCASES = [
     "load8_segment2_stride6_m1",
     "load16_segment2_stride6_m1",
     "store_unit_masked",
+    "store_unit_all_vtypes_test",
     "store8_index8",
     "store8_index8_seg",
     "store16_index8",

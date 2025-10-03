@@ -18,7 +18,7 @@ import numpy as np
 import tqdm
 
 from bazel_tools.tools.python.runfiles import runfiles
-from kelvin_test_utils.rvv_type_util import construct_vtype, DTYPE_TO_SEW
+from kelvin_test_utils.rvv_type_util import construct_vtype, DTYPE_TO_SEW, SEWS, SEW_TO_LMULS_AND_VLMAXS, LMUL_TO_EMUL
 from kelvin_test_utils.sim_test_fixture import Fixture
 
 
@@ -2500,3 +2500,160 @@ async def load_store8_test(dut):
     routputs = (await fixture.core_mini_axi.read(target_out_addr, vl)).view(
         np.uint8)
     assert (input_data == routputs).all()
+
+@cocotb.test()
+async def load_unit_all_vtypes_test(dut):
+    """Testbench to test RVV Unit/segmented loads, with all vtypes."""
+    fixture = await Fixture.Create(dut)
+    r = runfiles.Create()
+    functions = [
+        ("test_vle8",      np.uint8, 1),
+        ("test_vlseg2e8",  np.uint8, 2),
+        ("test_vlseg3e8",  np.uint8, 3),
+        ("test_vlseg4e8",  np.uint8, 4),
+        ("test_vlseg5e8",  np.uint8, 5),
+        ("test_vlseg6e8",  np.uint8, 6),
+        ("test_vlseg7e8",  np.uint8, 7),
+        ("test_vlseg8e8",  np.uint8, 8),
+        ("test_vle16",     np.uint16, 1),
+        ("test_vlseg2e16", np.uint16, 2),
+        ("test_vlseg3e16", np.uint16, 3),
+        ("test_vlseg4e16", np.uint16, 4),
+        ("test_vlseg5e16", np.uint16, 5),
+        ("test_vlseg6e16", np.uint16, 6),
+        ("test_vlseg7e16", np.uint16, 7),
+        ("test_vlseg8e16", np.uint16, 8),
+        ("test_vle32",     np.uint32, 1),
+        ("test_vlseg2e32", np.uint32, 2),
+        ("test_vlseg3e32", np.uint32, 3),
+        ("test_vlseg4e32", np.uint32, 4),
+        ("test_vlseg5e32", np.uint32, 5),
+        ("test_vlseg6e32", np.uint32, 6),
+        ("test_vlseg7e32", np.uint32, 7),
+        ("test_vlseg8e32", np.uint32, 8),
+    ]
+
+    await fixture.load_elf_and_lookup_symbols(
+        r.Rlocation('kelvin_hw/tests/cocotb/rvv/load_store/load_unit_vtype.elf'),
+        ['vl', 'vtype', 'load_data', 'store_data', 'impl'] +
+            list(f[0] for f in functions),
+    )
+
+    vlenb = 16
+    with tqdm.tqdm(functions) as t:
+      for (function, dtype, segments) in t:
+        for sew in SEWS:
+          for lmul, vlmax in SEW_TO_LMULS_AND_VLMAXS[DTYPE_TO_SEW[dtype]]:
+            if (LMUL_TO_EMUL[lmul] * segments) > 8:
+              continue
+
+            # TODO(derekjchow): Remove this when bug is fixed
+            if sew != DTYPE_TO_SEW[dtype]:
+              continue
+
+            t.set_postfix({
+                'function': function,
+                'sew': sew,
+                'lmul': lmul,
+            })
+            vtype = construct_vtype(1, 1, sew, lmul)
+            await fixture.write_ptr('impl', function)
+            await fixture.write_word('vtype', vtype)
+            await fixture.write_word('vl', vlmax)
+            load_data = np.random.randint(
+                0, 255, 256, dtype=np.uint8).view(dtype)
+            await fixture.write('load_data', load_data)
+            await fixture.write('store_data',
+                                np.zeros(256, dtype=np.uint8))
+
+            await fixture.run_to_halt()
+
+            store_data = (await fixture.read('store_data', 256))
+
+            regsize = vlenb * LMUL_TO_EMUL[lmul]
+            for segment in range(segments):
+              segment_reg = store_data[segment*regsize:(segment+1)*regsize]
+              store_result = segment_reg.view(dtype)[0:vlmax]
+              expected_result = load_data[segment:segments*vlmax:segments]
+              assert (store_result == expected_result).all()
+
+
+@cocotb.test()
+async def store_unit_all_vtypes_test(dut):
+    """Testbench to test RVV Unit/segmented stores, with all vtypes."""
+    fixture = await Fixture.Create(dut)
+    r = runfiles.Create()
+    functions = [
+        ("test_vse8",      np.uint8, 1),
+        ("test_vsseg2e8",  np.uint8, 2),
+        ("test_vsseg3e8",  np.uint8, 3),
+        ("test_vsseg4e8",  np.uint8, 4),
+        ("test_vsseg5e8",  np.uint8, 5),
+        ("test_vsseg6e8",  np.uint8, 6),
+        ("test_vsseg7e8",  np.uint8, 7),
+        ("test_vsseg8e8",  np.uint8, 8),
+        ("test_vse16",     np.uint16, 1),
+        ("test_vsseg2e16", np.uint16, 2),
+        ("test_vsseg3e16", np.uint16, 3),
+        ("test_vsseg4e16", np.uint16, 4),
+        ("test_vsseg5e16", np.uint16, 5),
+        ("test_vsseg6e16", np.uint16, 6),
+        ("test_vsseg7e16", np.uint16, 7),
+        ("test_vsseg8e16", np.uint16, 8),
+        ("test_vse32",     np.uint32, 1),
+        ("test_vsseg2e32", np.uint32, 2),
+        ("test_vsseg3e32", np.uint32, 3),
+        ("test_vsseg4e32", np.uint32, 4),
+        ("test_vsseg5e32", np.uint32, 5),
+        ("test_vsseg6e32", np.uint32, 6),
+        ("test_vsseg7e32", np.uint32, 7),
+        ("test_vsseg8e32", np.uint32, 8),
+    ]
+
+    await fixture.load_elf_and_lookup_symbols(
+        r.Rlocation('kelvin_hw/tests/cocotb/rvv/load_store/store_unit_vtype.elf'),
+        ['vl', 'vtype', 'load_data', 'store_data', 'impl'] +
+            list(f[0] for f in functions),
+    )
+
+    vlenb = 16
+    with tqdm.tqdm(functions) as t:
+      for (function, dtype, segments) in t:
+        for sew in SEWS:
+          for lmul, vlmax in SEW_TO_LMULS_AND_VLMAXS[DTYPE_TO_SEW[dtype]]:
+            if (LMUL_TO_EMUL[lmul] * segments) > 8:
+              continue
+
+            # TODO(derekjchow): Remove this when bug is fixed
+            if sew != DTYPE_TO_SEW[dtype]:
+              continue
+
+            t.set_postfix({
+                'function': function,
+                'sew': sew,
+                'lmul': lmul,
+            })
+
+            vtype = construct_vtype(1, 1, sew, lmul)
+            await fixture.write_ptr('impl', function)
+            await fixture.write_word('vtype', vtype)
+            await fixture.write_word('vl', vlmax)
+            load_data = np.random.randint(
+                0, 255, 256, dtype=np.uint8).view(dtype)
+            await fixture.write('load_data', load_data)
+            await fixture.write('store_data',
+                                np.zeros(256, dtype=np.uint8))
+
+            await fixture.run_to_halt()
+
+            store_data = (await fixture.read(
+                'store_data',
+                segments * vlmax * np.dtype(dtype).itemsize)).view(dtype)
+
+            # Load and transpose stored segments
+            regsize = vlenb * LMUL_TO_EMUL[lmul] // np.dtype(dtype).itemsize
+            segment_regs = [
+                load_data[x*regsize:(x*regsize)+vlmax] for x in range(segments)
+            ]
+            expected_result = np.transpose(np.stack(segment_regs)).flatten()
+            assert (expected_result == store_data).all()
