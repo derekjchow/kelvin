@@ -29,6 +29,9 @@ template_rule(
         "load_unit_vtype": {
             "srcs": ["load_unit_vtype.cc"],
         },
+        "load_stride_vtype": {
+            "srcs": ["load_stride_vtype.cc"],
+        },
         "load8_index8": {
             "srcs": ["load8_index8.cc"],
         },
@@ -152,6 +155,9 @@ template_rule(
         "store_unit_vtype": {
             "srcs": ["store_unit_vtype.cc"],
         },
+        "store_strided_vtype": {
+            "srcs": ["store_strided_vtype.cc"],
+        },
     },
 )
 
@@ -161,6 +167,7 @@ filegroup(
         ":load_store_bits.elf",
         ":load_unit_masked.elf",
         ":load_unit_vtype.elf",
+        ":load_stride_vtype.elf",
         ":load8_index8.elf",
         ":load8_index8_seg.elf",
         ":load8_index16.elf",
@@ -202,5 +209,6 @@ filegroup(
         ":store32_seg_unit",
         ":store_unit_masked.elf",
         ":store_unit_vtype.elf",
+        ":store_strided_vtype.elf",
     ],
 )

@@ -504,9 +504,19 @@ class LsuSlot(bytesPerSlot: Int, bytesPerLine: Int) extends Bundle {
     result.baseAddr := MuxCase(baseAddr, Seq(
       (!writeback || !lmulUpdate) -> baseAddr,
       // For Unit and strided updates
-      op.isOneOf(LsuOp.VLOAD_UNIT, LsuOp.VSTORE_UNIT,
-                 LsuOp.VLOAD_STRIDED, LsuOp.VSTORE_STRIDED) ->
+      op.isOneOf(LsuOp.VLOAD_UNIT, LsuOp.VSTORE_UNIT) ->
           (baseAddr + (vectorLoop.segment.max * 16.U) + 16.U),
+      op.isOneOf(LsuOp.VLOAD_STRIDED, LsuOp.VSTORE_STRIDED) ->
+          MuxCase(baseAddr + (elemStride * bytesPerSlot.U), Seq(
+            (elemWidth === "b000".U) ->
+                (baseAddr + (elemStride * bytesPerSlot.U)),
+            (elemWidth === "b101".U) ->
+                (baseAddr + (elemStride * (bytesPerSlot/2).U)),
+            (elemWidth === "b110".U) ->
+                (baseAddr + (elemStride * (bytesPerSlot/4).U)),
+          ))
+          // (baseAddr + (vectorLoop.segment.max * elemStride)(31, 0)),
+
       // Indexed don't have base addr changed.
     ))
     result.rd := result.vectorLoop.rd
