@@ -174,6 +174,7 @@ RVV_ASSEMBLY_TESTCASES = [
 # BEGIN_TESTCASES_FOR_rvv_load_store_test
 RVV_LOAD_STORE_TESTCASES = [
     "load_store_bits",
+    "load_store_whole_register_test",
     "load_unit_masked",
     "load_unit_all_vtypes_test",
     "load_strided_all_vtypes_test",

@@ -163,6 +163,16 @@ class LsuCmd(p: Parameters) extends Bundle {
     }
   }
 
+  def isWholeRegister(): Bool = {
+    if (p.enableRvv) {
+      (umop.get === "b01000".U) &&
+      op.isOneOf(LsuOp.VLOAD_UNIT, LsuOp.VSTORE_UNIT)
+    } else {
+      false.B
+    }
+
+  }
+
   override def toPrintable: Printable = {
     cf"LsuCmd(store -> ${store}, addr -> 0x${addr}%x, op -> ${op}, " +
     cf"pc -> 0x${pc}%x, elemWidth -> ${elemWidth}, nfields -> ${nfields})"
@@ -215,9 +225,23 @@ object LsuUOp {
       result.elemWidth.get := cmd.elemWidth.get
       // If mask operation, always make LMUL=1.
       result.lmul.get := Mux(cmd.isMaskOperation(), 0.U, rvvState.get.bits.lmul)
+      result.lmul.get := MuxCase(rvvState.get.bits.lmul, Seq(
+          cmd.isMaskOperation() -> 0.U,
+          // Section 7.9 of RVV Spec: "The nf field encoders how many vector
+          // registers to load and store".
+          cmd.isWholeRegister() -> MuxCase(0.U, Seq(
+              (cmd.nfields.get === 0.U) -> 0.U,  // NF1 -> LMUL1
+              (cmd.nfields.get === 1.U) -> 1.U,  // NF2 -> LMUL2
+              (cmd.nfields.get === 3.U) -> 2.U,  // NF4 -> LMUL4
+              (cmd.nfields.get === 7.U) -> 3.U,  // NF8 -> LMUL8
+          )),
+      ))
 
       // If mask operation, force fields to zero
-      result.nfields.get := Mux(cmd.isMaskOperation(), 0.U, cmd.nfields.get)
+      result.nfields.get := MuxCase(cmd.nfields.get, Seq(
+          cmd.isMaskOperation() -> 0.U,
+          cmd.isWholeRegister() -> 0.U,
+      ))
       result.sew.get := rvvState.get.bits.sew
     }
 

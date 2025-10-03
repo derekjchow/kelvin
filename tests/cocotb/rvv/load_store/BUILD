@@ -23,6 +23,9 @@ template_rule(
         "load_store_bits": {
             "srcs": ["load_store_bits.cc"],
         },
+        "load_store_whole_register": {
+            "srcs": ["load_store_whole_register.cc"],
+        },
         "load_unit_masked": {
             "srcs": ["load_unit_masked.cc"],
         },
@@ -165,6 +168,7 @@ filegroup(
     name = "rvv_load_store_tests",
     srcs = [
         ":load_store_bits.elf",
+        ":load_store_whole_register.elf",
         ":load_unit_masked.elf",
         ":load_unit_vtype.elf",
         ":load_stride_vtype.elf",

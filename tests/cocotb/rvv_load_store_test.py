@@ -2816,3 +2816,58 @@ async def store_strided_all_vtypes_test(dut):
 
             store_data = (await fixture.read('store_data', 8192))
             assert (expected_store_data == store_data).all()
+
+@cocotb.test()
+async def load_store_whole_register_test(dut):
+    """Testbench to test RVV strided/segmented store, with all vtypes."""
+    fixture = await Fixture.Create(dut)
+    r = runfiles.Create()
+    functions = [
+        # Name, store, n_registers
+        ("test_vl1r", False, 1),
+        ("test_vl2r", False, 2),
+        ("test_vl4r", False, 4),
+        ("test_vl8r", False, 8),
+        ("test_vs1r", True, 1),
+        ("test_vs2r", True, 2),
+        ("test_vs4r", True, 4),
+        ("test_vs8r", True, 8),
+    ]
+
+    await fixture.load_elf_and_lookup_symbols(
+        r.Rlocation('kelvin_hw/tests/cocotb/rvv/load_store/load_store_whole_register.elf'),
+        ['vl', 'vtype', 'stride', 'load_data', 'store_data', 'impl'] +
+            list(f[0] for f in functions),
+    )
+
+    vlenb = 16
+    with tqdm.tqdm(functions) as t:
+      for (function, store, n_registers) in t:
+        for sew in SEWS:
+          for lmul, _ in SEW_TO_LMULS_AND_VLMAXS[sew]:
+            t.set_postfix({
+                'function': function,
+                'sew': sew,
+                'lmul': lmul,
+            })
+
+            await fixture.write_ptr('impl', function)
+            vtype = construct_vtype(1, 1, sew, lmul)
+            await fixture.write_word('vtype', vtype)
+            await fixture.write_word('vl', 1)
+
+            load_data = np.random.randint(0, 255, 128, dtype=np.uint8)
+            await fixture.write('load_data', load_data)
+            await fixture.write('store_data', 0xFF*np.ones(128, dtype=np.uint8))
+
+            await fixture.run_to_halt()
+
+            store_data = (await fixture.read('store_data', 128))
+
+            data_written = vlenb * n_registers
+            assert (load_data[0:data_written] ==
+                    store_data[0:data_written]).all()
+            if store:
+                assert(store_data[data_written:] == 0xFF).all()
+            else:
+                assert(store_data[data_written:] == 0x00).all()
