@@ -229,7 +229,6 @@ module rvv_backend_decode_unit_lsu
           case(funct6_lsu.lsu_funct6.lsu_umop)
             US_US,
             US_FF: begin
-              // TODO(davidgao): rearrange the cases based on reachability
               case(inst_nf)
                 // emul_vd = ceil(inst_funct3/csr_sew*csr_lmul)
                 // emul_vs2: no emul_vs2 for unit
@@ -237,748 +236,140 @@ module rvv_backend_decode_unit_lsu
                 // emul_vd_nf = NF*emul_vd
                 // emul_max = NF*emul_max_vd_vs2
                 NF1: begin
-                  case({inst_funct3,csr_sew})
-                    // 1:1
-                    {SEW_8,SEW8},
-                    {SEW_16,SEW16},
-                    {SEW_32,SEW32}: begin            
-                      case(csr_lmul)
-                        LMUL1_4,
-                        LMUL1_2,
-                        LMUL1: begin
-                          emul_vd         = EMUL1;
-                          emul_max_vd_vs2 = EMUL1;
-                          emul_vd_nf      = EMUL1;
-                          emul_max        = (`UOP_INDEX_WIDTH+1)'('d1);
-                        end
-                        LMUL2: begin
-                          emul_vd         = EMUL2;
-                          emul_max_vd_vs2 = EMUL2;
-                          emul_vd_nf      = EMUL2;
-                          emul_max        = (`UOP_INDEX_WIDTH+1)'('d2);
-                        end
-                        LMUL4: begin
-                          emul_vd         = EMUL4;
-                          emul_max_vd_vs2 = EMUL4;
-                          emul_vd_nf      = EMUL4;
-                          emul_max        = (`UOP_INDEX_WIDTH+1)'('d4);
-                        end
-                        LMUL8: begin
-                          emul_vd         = EMUL8;
-                          emul_max_vd_vs2 = EMUL8;
-                          emul_vd_nf      = EMUL8;
-                          emul_max        = (`UOP_INDEX_WIDTH+1)'('d8);
-                        end
-                      endcase
+                  case(csr_lmul)
+                    LMUL1_4,
+                    LMUL1_2,
+                    LMUL1: begin
+                      emul_vd         = EMUL1;
+                      emul_max_vd_vs2 = EMUL1;
+                      emul_vd_nf      = EMUL1;
+                      emul_max        = (`UOP_INDEX_WIDTH+1)'('d1);
                     end
-                    // 2:1
-                    {SEW_16,SEW8},
-                    {SEW_32,SEW16}: begin            
-                      case(csr_lmul)
-                        LMUL1_4,
-                        LMUL1_2: begin
-                          emul_vd         = EMUL1;
-                          emul_max_vd_vs2 = EMUL1;
-                          emul_vd_nf      = EMUL1;
-                          emul_max        = (`UOP_INDEX_WIDTH+1)'('d1);
-                        end
-                        LMUL1: begin
-                          emul_vd         = EMUL2;
-                          emul_max_vd_vs2 = EMUL2;
-                          emul_vd_nf      = EMUL2;
-                          emul_max        = (`UOP_INDEX_WIDTH+1)'('d2);
-                        end
-                        LMUL2: begin
-                          emul_vd         = EMUL4;
-                          emul_max_vd_vs2 = EMUL4;
-                          emul_vd_nf      = EMUL4;
-                          emul_max        = (`UOP_INDEX_WIDTH+1)'('d4);
-                        end
-                        LMUL4: begin
-                          emul_vd         = EMUL8;
-                          emul_max_vd_vs2 = EMUL8;
-                          emul_vd_nf      = EMUL8;
-                          emul_max        = (`UOP_INDEX_WIDTH+1)'('d8);
-                        end
-                      endcase
+                    LMUL2: begin
+                      emul_vd         = EMUL2;
+                      emul_max_vd_vs2 = EMUL2;
+                      emul_vd_nf      = EMUL2;
+                      emul_max        = (`UOP_INDEX_WIDTH+1)'('d2);
                     end
-                    // 4:1
-                    {SEW_32,SEW8}: begin            
-                      case(csr_lmul)
-                        LMUL1_4: begin
-                          emul_vd         = EMUL1;
-                          emul_max_vd_vs2 = EMUL1;
-                          emul_vd_nf      = EMUL1;
-                          emul_max        = (`UOP_INDEX_WIDTH+1)'('d1);
-                        end
-                        LMUL1_2: begin    
-                          emul_vd         = EMUL2;
-                          emul_max_vd_vs2 = EMUL2;
-                          emul_vd_nf      = EMUL2;
-                          emul_max        = (`UOP_INDEX_WIDTH+1)'('d2);
-                        end
-                        LMUL1: begin
-                          emul_vd         = EMUL4;
-                          emul_max_vd_vs2 = EMUL4;
-                          emul_vd_nf      = EMUL4;
-                          emul_max        = (`UOP_INDEX_WIDTH+1)'('d4);
-                        end
-                        LMUL2: begin
-                          emul_vd         = EMUL8;
-                          emul_max_vd_vs2 = EMUL8;
-                          emul_vd_nf      = EMUL8;
-                          emul_max        = (`UOP_INDEX_WIDTH+1)'('d8);
-                        end
-                      endcase
+                    LMUL4: begin
+                      emul_vd         = EMUL4;
+                      emul_max_vd_vs2 = EMUL4;
+                      emul_vd_nf      = EMUL4;
+                      emul_max        = (`UOP_INDEX_WIDTH+1)'('d4);
                     end
-                    // 1:2
-                    {SEW_8,SEW16},
-                    {SEW_16,SEW32}: begin            
-                      case(csr_lmul)
-                        LMUL1_2,
-                        LMUL1,
-                        LMUL2: begin
-                          emul_vd         = EMUL1;
-                          emul_max_vd_vs2 = EMUL1;
-                          emul_vd_nf      = EMUL1;
-                          emul_max        = (`UOP_INDEX_WIDTH+1)'('d1);
-                        end
-                        LMUL4: begin
-                          emul_vd         = EMUL2;
-                          emul_max_vd_vs2 = EMUL2;
-                          emul_vd_nf      = EMUL2;
-                          emul_max        = (`UOP_INDEX_WIDTH+1)'('d2);
-                        end
-                        LMUL8: begin
-                          emul_vd         = EMUL4;
-                          emul_max_vd_vs2 = EMUL4;
-                          emul_vd_nf      = EMUL4;
-                          emul_max        = (`UOP_INDEX_WIDTH+1)'('d4);
-                        end
-                      endcase
-                    end
-                    // 1:4
-                    {SEW_8,SEW32}: begin            
-                      case(csr_lmul)
-                        LMUL1,
-                        LMUL2,
-                        LMUL4: begin
-                          emul_vd         = EMUL1;
-                          emul_max_vd_vs2 = EMUL1;
-                          emul_vd_nf      = EMUL1;
-                          emul_max        = (`UOP_INDEX_WIDTH+1)'('d1);
-                        end
-                        LMUL8: begin
-                          emul_vd         = EMUL2;
-                          emul_max_vd_vs2 = EMUL2;
-                          emul_vd_nf      = EMUL2;
-                          emul_max        = (`UOP_INDEX_WIDTH+1)'('d2);
-                        end
-                      endcase
+                    LMUL8: begin
+                      emul_vd         = EMUL8;
+                      emul_max_vd_vs2 = EMUL8;
+                      emul_vd_nf      = EMUL8;
+                      emul_max        = (`UOP_INDEX_WIDTH+1)'('d8);
                     end
                   endcase
                 end
                 NF2: begin
-                  case({inst_funct3,csr_sew})
-                    // 1:1
-                    {SEW_8,SEW8},
-                    {SEW_16,SEW16},
-                    {SEW_32,SEW32}: begin            
-                      case(csr_lmul)
-                        LMUL1_4,
-                        LMUL1_2,
-                        LMUL1: begin
-                          emul_vd         = EMUL1;
-                          emul_max_vd_vs2 = EMUL1;
-                          emul_vd_nf      = EMUL2;
-                          emul_max        = (`UOP_INDEX_WIDTH+1)'('d2);
-                        end
-                        LMUL2: begin
-                          emul_vd         = EMUL2;
-                          emul_max_vd_vs2 = EMUL2;
-                          emul_vd_nf      = EMUL4;
-                          emul_max        = (`UOP_INDEX_WIDTH+1)'('d4);
-                        end
-                        LMUL4: begin
-                          emul_vd         = EMUL4;
-                          emul_max_vd_vs2 = EMUL4;
-                          emul_vd_nf      = EMUL8;
-                          emul_max        = (`UOP_INDEX_WIDTH+1)'('d8);
-                        end
-                      endcase
+                  case(csr_lmul)
+                    LMUL1_4,
+                    LMUL1_2,
+                    LMUL1: begin
+                      emul_vd         = EMUL1;
+                      emul_max_vd_vs2 = EMUL1;
+                      emul_vd_nf      = EMUL2;
+                      emul_max        = (`UOP_INDEX_WIDTH+1)'('d2);
                     end
-                    // 2:1
-                    {SEW_16,SEW8},
-                    {SEW_32,SEW16}: begin            
-                      case(csr_lmul)
-                        LMUL1_4,
-                        LMUL1_2: begin
-                          emul_vd         = EMUL1;
-                          emul_max_vd_vs2 = EMUL1;
-                          emul_vd_nf      = EMUL2;
-                          emul_max        = (`UOP_INDEX_WIDTH+1)'('d2);
-                        end
-                        LMUL1: begin
-                          emul_vd         = EMUL2;
-                          emul_max_vd_vs2 = EMUL2;
-                          emul_vd_nf      = EMUL4;
-                          emul_max        = (`UOP_INDEX_WIDTH+1)'('d4);
-                        end
-                        LMUL2: begin
-                          emul_vd         = EMUL4;
-                          emul_max_vd_vs2 = EMUL4;
-                          emul_vd_nf      = EMUL8;
-                          emul_max        = (`UOP_INDEX_WIDTH+1)'('d8);
-                        end
-                      endcase
+                    LMUL2: begin
+                      emul_vd         = EMUL2;
+                      emul_max_vd_vs2 = EMUL2;
+                      emul_vd_nf      = EMUL4;
+                      emul_max        = (`UOP_INDEX_WIDTH+1)'('d4);
                     end
-                    // 4:1
-                    {SEW_32,SEW8}: begin            
-                      case(csr_lmul)
-                        LMUL1_4: begin
-                          emul_vd         = EMUL1;
-                          emul_max_vd_vs2 = EMUL1;
-                          emul_vd_nf      = EMUL2;
-                          emul_max        = (`UOP_INDEX_WIDTH+1)'('d2);
-                        end
-                        LMUL1_2: begin    
-                          emul_vd         = EMUL2;
-                          emul_max_vd_vs2 = EMUL2;
-                          emul_vd_nf      = EMUL4;
-                          emul_max        = (`UOP_INDEX_WIDTH+1)'('d4);
-                        end
-                        LMUL1: begin
-                          emul_vd         = EMUL4;
-                          emul_max_vd_vs2 = EMUL4;
-                          emul_vd_nf      = EMUL8;
-                          emul_max        = (`UOP_INDEX_WIDTH+1)'('d8);
-                        end
-                      endcase
-                    end
-                    // 1:2
-                    {SEW_8,SEW16},
-                    {SEW_16,SEW32}: begin            
-                      case(csr_lmul)
-                        LMUL1_2,
-                        LMUL1,
-                        LMUL2: begin
-                          emul_vd         = EMUL1;
-                          emul_max_vd_vs2 = EMUL1;
-                          emul_vd_nf      = EMUL2;
-                          emul_max        = (`UOP_INDEX_WIDTH+1)'('d2);
-                        end
-                        LMUL4: begin
-                          emul_vd         = EMUL2;
-                          emul_max_vd_vs2 = EMUL2;
-                          emul_vd_nf      = EMUL4;
-                          emul_max        = (`UOP_INDEX_WIDTH+1)'('d4);
-                        end
-                        LMUL8: begin
-                          emul_vd         = EMUL4;
-                          emul_max_vd_vs2 = EMUL4;
-                          emul_vd_nf      = EMUL8;
-                          emul_max        = (`UOP_INDEX_WIDTH+1)'('d8);
-                        end
-                      endcase
-                    end
-                    // 1:4
-                    {SEW_8,SEW32}: begin            
-                      case(csr_lmul)
-                        LMUL1,
-                        LMUL2,
-                        LMUL4: begin
-                          emul_vd         = EMUL1;
-                          emul_max_vd_vs2 = EMUL1;
-                          emul_vd_nf      = EMUL2;
-                          emul_max        = (`UOP_INDEX_WIDTH+1)'('d2);
-                        end
-                        LMUL8: begin
-                          emul_vd         = EMUL2;
-                          emul_max_vd_vs2 = EMUL2;
-                          emul_vd_nf      = EMUL4;
-                          emul_max        = (`UOP_INDEX_WIDTH+1)'('d4);
-                        end
-                      endcase
+                    LMUL4: begin
+                      emul_vd         = EMUL4;
+                      emul_max_vd_vs2 = EMUL4;
+                      emul_vd_nf      = EMUL8;
+                      emul_max        = (`UOP_INDEX_WIDTH+1)'('d8);
                     end
                   endcase
                 end
                 NF3: begin
-                  case({inst_funct3,csr_sew})
-                    // 1:1
-                    {SEW_8,SEW8},
-                    {SEW_16,SEW16},
-                    {SEW_32,SEW32}: begin            
-                      case(csr_lmul)
-                        LMUL1_4,
-                        LMUL1_2,
-                        LMUL1: begin
-                          emul_vd         = EMUL1;
-                          emul_max_vd_vs2 = EMUL1;
-                          emul_vd_nf      = EMUL3;
-                          emul_max        = (`UOP_INDEX_WIDTH+1)'('d3);
-                        end
-                        LMUL2: begin
-                          emul_vd         = EMUL2;
-                          emul_max_vd_vs2 = EMUL2;
-                          emul_vd_nf      = EMUL6;
-                          emul_max        = (`UOP_INDEX_WIDTH+1)'('d6);
-                        end
-                      endcase
+                  case(csr_lmul)
+                    LMUL1_4,
+                    LMUL1_2,
+                    LMUL1: begin
+                      emul_vd         = EMUL1;
+                      emul_max_vd_vs2 = EMUL1;
+                      emul_vd_nf      = EMUL3;
+                      emul_max        = (`UOP_INDEX_WIDTH+1)'('d3);
                     end
-                    // 2:1
-                    {SEW_16,SEW8},
-                    {SEW_32,SEW16}: begin            
-                      case(csr_lmul)
-                        LMUL1_4,
-                        LMUL1_2: begin
-                          emul_vd         = EMUL1;
-                          emul_max_vd_vs2 = EMUL1;
-                          emul_vd_nf      = EMUL3;
-                          emul_max        = (`UOP_INDEX_WIDTH+1)'('d3);
-                        end
-                        LMUL1: begin
-                          emul_vd         = EMUL2;
-                          emul_max_vd_vs2 = EMUL2;
-                          emul_vd_nf      = EMUL6;
-                          emul_max        = (`UOP_INDEX_WIDTH+1)'('d6);
-                        end
-                      endcase
-                    end
-                    // 4:1
-                    {SEW_32,SEW8}: begin            
-                      case(csr_lmul)
-                        LMUL1_4: begin
-                          emul_vd         = EMUL1;
-                          emul_max_vd_vs2 = EMUL1;
-                          emul_vd_nf      = EMUL3;
-                          emul_max        = (`UOP_INDEX_WIDTH+1)'('d3);
-                        end
-                        LMUL1_2: begin    
-                          emul_vd         = EMUL2;
-                          emul_max_vd_vs2 = EMUL2;
-                          emul_vd_nf      = EMUL6;
-                          emul_max        = (`UOP_INDEX_WIDTH+1)'('d6);
-                        end
-                      endcase
-                    end
-                    // 1:2
-                    {SEW_8,SEW16},
-                    {SEW_16,SEW32}: begin            
-                      case(csr_lmul)
-                        LMUL1_2,
-                        LMUL1,
-                        LMUL2: begin
-                          emul_vd         = EMUL1;
-                          emul_max_vd_vs2 = EMUL1;
-                          emul_vd_nf      = EMUL3;
-                          emul_max        = (`UOP_INDEX_WIDTH+1)'('d3);
-                        end
-                        LMUL4: begin
-                          emul_vd         = EMUL2;
-                          emul_max_vd_vs2 = EMUL2;
-                          emul_vd_nf      = EMUL6;
-                          emul_max        = (`UOP_INDEX_WIDTH+1)'('d6);
-                        end
-                      endcase
-                    end
-                    // 1:4
-                    {SEW_8,SEW32}: begin            
-                      case(csr_lmul)
-                        LMUL1,
-                        LMUL2,
-                        LMUL4: begin
-                          emul_vd         = EMUL1;
-                          emul_max_vd_vs2 = EMUL1;
-                          emul_vd_nf      = EMUL3;
-                          emul_max        = (`UOP_INDEX_WIDTH+1)'('d3);
-                        end
-                        LMUL8: begin
-                          emul_vd         = EMUL2;
-                          emul_max_vd_vs2 = EMUL2;
-                          emul_vd_nf      = EMUL6;
-                          emul_max        = (`UOP_INDEX_WIDTH+1)'('d6);
-                        end
-                      endcase
+                    LMUL2: begin
+                      emul_vd         = EMUL2;
+                      emul_max_vd_vs2 = EMUL2;
+                      emul_vd_nf      = EMUL6;
+                      emul_max        = (`UOP_INDEX_WIDTH+1)'('d6);
                     end
                   endcase
                 end
                 NF4: begin
-                  case({inst_funct3,csr_sew})
-                    // 1:1
-                    {SEW_8,SEW8},
-                    {SEW_16,SEW16},
-                    {SEW_32,SEW32}: begin            
-                      case(csr_lmul)
-                        LMUL1_4,
-                        LMUL1_2,
-                        LMUL1: begin
-                          emul_vd         = EMUL1;
-                          emul_max_vd_vs2 = EMUL1;
-                          emul_vd_nf      = EMUL4;
-                          emul_max        = (`UOP_INDEX_WIDTH+1)'('d4);
-                        end
-                        LMUL2: begin
-                          emul_vd         = EMUL2;
-                          emul_max_vd_vs2 = EMUL2;
-                          emul_vd_nf      = EMUL8;
-                          emul_max        = (`UOP_INDEX_WIDTH+1)'('d8);
-                        end
-                      endcase
+                  case(csr_lmul)
+                    LMUL1_4,
+                    LMUL1_2,
+                    LMUL1: begin
+                      emul_vd         = EMUL1;
+                      emul_max_vd_vs2 = EMUL1;
+                      emul_vd_nf      = EMUL4;
+                      emul_max        = (`UOP_INDEX_WIDTH+1)'('d4);
                     end
-                    // 2:1
-                    {SEW_16,SEW8},
-                    {SEW_32,SEW16}: begin            
-                      case(csr_lmul)
-                        LMUL1_4,
-                        LMUL1_2: begin
-                          emul_vd         = EMUL1;
-                          emul_max_vd_vs2 = EMUL1;
-                          emul_vd_nf      = EMUL4;
-                          emul_max        = (`UOP_INDEX_WIDTH+1)'('d4);
-                        end
-                        LMUL1: begin
-                          emul_vd         = EMUL2;
-                          emul_max_vd_vs2 = EMUL2;
-                          emul_vd_nf      = EMUL8;
-                          emul_max        = (`UOP_INDEX_WIDTH+1)'('d8);
-                        end
-                      endcase
-                    end
-                    // 4:1
-                    {SEW_32,SEW8}: begin            
-                      case(csr_lmul)
-                        LMUL1_4: begin
-                          emul_vd         = EMUL1;
-                          emul_max_vd_vs2 = EMUL1;
-                          emul_vd_nf      = EMUL4;
-                          emul_max        = (`UOP_INDEX_WIDTH+1)'('d4);
-                        end
-                        LMUL1_2: begin    
-                          emul_vd         = EMUL2;
-                          emul_max_vd_vs2 = EMUL2;
-                          emul_vd_nf      = EMUL8;
-                          emul_max        = (`UOP_INDEX_WIDTH+1)'('d8);
-                        end
-                      endcase
-                    end
-                    // 1:2
-                    {SEW_8,SEW16},
-                    {SEW_16,SEW32}: begin            
-                      case(csr_lmul)
-                        LMUL1_2,
-                        LMUL1,
-                        LMUL2: begin
-                          emul_vd         = EMUL1;
-                          emul_max_vd_vs2 = EMUL1;
-                          emul_vd_nf      = EMUL4;
-                          emul_max        = (`UOP_INDEX_WIDTH+1)'('d4);
-                        end
-                        LMUL4: begin
-                          emul_vd         = EMUL2;
-                          emul_max_vd_vs2 = EMUL2;
-                          emul_vd_nf      = EMUL8;
-                          emul_max        = (`UOP_INDEX_WIDTH+1)'('d8);
-                        end
-                      endcase
-                    end
-                    // 1:4
-                    {SEW_8,SEW32}: begin            
-                      case(csr_lmul)
-                        LMUL1,
-                        LMUL2,
-                        LMUL4: begin
-                          emul_vd         = EMUL1;
-                          emul_max_vd_vs2 = EMUL1;
-                          emul_vd_nf      = EMUL4;
-                          emul_max        = (`UOP_INDEX_WIDTH+1)'('d4);
-                        end
-                        LMUL8: begin
-                          emul_vd         = EMUL2;
-                          emul_max_vd_vs2 = EMUL2;
-                          emul_vd_nf      = EMUL8;
-                          emul_max        = (`UOP_INDEX_WIDTH+1)'('d8);
-                        end
-                      endcase
+                    LMUL2: begin
+                      emul_vd         = EMUL2;
+                      emul_max_vd_vs2 = EMUL2;
+                      emul_vd_nf      = EMUL8;
+                      emul_max        = (`UOP_INDEX_WIDTH+1)'('d8);
                     end
                   endcase
                 end
                 NF5: begin
-                  case({inst_funct3,csr_sew})
-                    // 1:1
-                    {SEW_8,SEW8},
-                    {SEW_16,SEW16},
-                    {SEW_32,SEW32}: begin            
-                      case(csr_lmul)
-                        LMUL1_4,
-                        LMUL1_2,
-                        LMUL1: begin
-                          emul_vd         = EMUL1;
-                          emul_max_vd_vs2 = EMUL1;
-                          emul_vd_nf      = EMUL5;
-                          emul_max        = (`UOP_INDEX_WIDTH+1)'('d5);
-                        end
-                      endcase
-                    end
-                    // 2:1
-                    {SEW_16,SEW8},
-                    {SEW_32,SEW16}: begin            
-                      case(csr_lmul)
-                        LMUL1_4,
-                        LMUL1_2: begin
-                          emul_vd         = EMUL1;
-                          emul_max_vd_vs2 = EMUL1;
-                          emul_vd_nf      = EMUL5;
-                          emul_max        = (`UOP_INDEX_WIDTH+1)'('d5);
-                        end
-                      endcase
-                    end
-                    // 4:1
-                    {SEW_32,SEW8}: begin            
-                      case(csr_lmul)
-                        LMUL1_4: begin
-                          emul_vd         = EMUL1;
-                          emul_max_vd_vs2 = EMUL1;
-                          emul_vd_nf      = EMUL5;
-                          emul_max        = (`UOP_INDEX_WIDTH+1)'('d5);
-                        end
-                      endcase
-                    end
-                    // 1:2
-                    {SEW_8,SEW16},
-                    {SEW_16,SEW32}: begin            
-                      case(csr_lmul)
-                        LMUL1_2,
-                        LMUL1,
-                        LMUL2: begin
-                          emul_vd         = EMUL1;
-                          emul_max_vd_vs2 = EMUL1;
-                          emul_vd_nf      = EMUL5;
-                          emul_max        = (`UOP_INDEX_WIDTH+1)'('d5);
-                        end
-                      endcase
-                    end
-                    // 1:4
-                    {SEW_8,SEW32}: begin            
-                      case(csr_lmul)
-                        LMUL1,
-                        LMUL2,
-                        LMUL4: begin
-                          emul_vd         = EMUL1;
-                          emul_max_vd_vs2 = EMUL1;
-                          emul_vd_nf      = EMUL5;
-                          emul_max        = (`UOP_INDEX_WIDTH+1)'('d5);
-                        end
-                      endcase
+                  case(csr_lmul)
+                    LMUL1_4,
+                    LMUL1_2,
+                    LMUL1: begin
+                      emul_vd         = EMUL1;
+                      emul_max_vd_vs2 = EMUL1;
+                      emul_vd_nf      = EMUL5;
+                      emul_max        = (`UOP_INDEX_WIDTH+1)'('d5);
                     end
                   endcase
                 end
                 NF6: begin
-                  case({inst_funct3,csr_sew})
-                    // 1:1
-                    {SEW_8,SEW8},
-                    {SEW_16,SEW16},
-                    {SEW_32,SEW32}: begin            
-                      case(csr_lmul)
-                        LMUL1_4,
-                        LMUL1_2,
-                        LMUL1: begin
-                          emul_vd         = EMUL1;
-                          emul_max_vd_vs2 = EMUL1;
-                          emul_vd_nf      = EMUL6;
-                          emul_max        = (`UOP_INDEX_WIDTH+1)'('d6);
-                        end
-                      endcase
-                    end
-                    // 2:1
-                    {SEW_16,SEW8},
-                    {SEW_32,SEW16}: begin            
-                      case(csr_lmul)
-                        LMUL1_4,
-                        LMUL1_2: begin
-                          emul_vd         = EMUL1;
-                          emul_max_vd_vs2 = EMUL1;
-                          emul_vd_nf      = EMUL6;
-                          emul_max        = (`UOP_INDEX_WIDTH+1)'('d6);
-                        end
-                      endcase
-                    end                
-                    // 4:1
-                    {SEW_32,SEW8}: begin            
-                      case(csr_lmul)
-                        LMUL1_4: begin
-                          emul_vd         = EMUL1;
-                          emul_max_vd_vs2 = EMUL1;
-                          emul_vd_nf      = EMUL6;
-                          emul_max        = (`UOP_INDEX_WIDTH+1)'('d6);
-                        end
-                      endcase
-                    end
-                    // 1:2
-                    {SEW_8,SEW16},
-                    {SEW_16,SEW32}: begin            
-                      case(csr_lmul)
-                        LMUL1_2,
-                        LMUL1,
-                        LMUL2: begin
-                          emul_vd         = EMUL1;
-                          emul_max_vd_vs2 = EMUL1;
-                          emul_vd_nf      = EMUL6;
-                          emul_max        = (`UOP_INDEX_WIDTH+1)'('d6);
-                        end
-                      endcase
-                    end
-                    // 1:4
-                    {SEW_8,SEW32}: begin            
-                      case(csr_lmul)
-                        LMUL1,
-                        LMUL2,
-                        LMUL4: begin
-                          emul_vd         = EMUL1;
-                          emul_max_vd_vs2 = EMUL1;
-                          emul_vd_nf      = EMUL6;
-                          emul_max        = (`UOP_INDEX_WIDTH+1)'('d6);
-                        end
-                      endcase
+                  case(csr_lmul)
+                    LMUL1_4,
+                    LMUL1_2,
+                    LMUL1: begin
+                      emul_vd         = EMUL1;
+                      emul_max_vd_vs2 = EMUL1;
+                      emul_vd_nf      = EMUL6;
+                      emul_max        = (`UOP_INDEX_WIDTH+1)'('d6);
                     end
                   endcase
                 end
                 NF7: begin
-                  case({inst_funct3,csr_sew})
-                    // 1:1
-                    {SEW_8,SEW8},
-                    {SEW_16,SEW16},
-                    {SEW_32,SEW32}: begin            
-                      case(csr_lmul)
-                        LMUL1_4,
-                        LMUL1_2,
-                        LMUL1: begin
-                          emul_vd         = EMUL1;
-                          emul_max_vd_vs2 = EMUL1;
-                          emul_vd_nf      = EMUL7;
-                          emul_max        = (`UOP_INDEX_WIDTH+1)'('d7);
-                        end
-                      endcase
-                    end
-                    // 2:1
-                    {SEW_16,SEW8},
-                    {SEW_32,SEW16}: begin            
-                      case(csr_lmul)
-                        LMUL1_4,
-                        LMUL1_2: begin
-                          emul_vd         = EMUL1;
-                          emul_max_vd_vs2 = EMUL1;
-                          emul_vd_nf      = EMUL7;
-                          emul_max        = (`UOP_INDEX_WIDTH+1)'('d7);
-                        end
-                      endcase
-                    end
-                    // 4:1
-                    {SEW_32,SEW8}: begin            
-                      case(csr_lmul)
-                        LMUL1_4: begin
-                          emul_vd         = EMUL1;
-                          emul_max_vd_vs2 = EMUL1;
-                          emul_vd_nf      = EMUL7;
-                          emul_max        = (`UOP_INDEX_WIDTH+1)'('d7);
-                        end
-                      endcase
-                    end
-                    // 1:2
-                    {SEW_8,SEW16},
-                    {SEW_16,SEW32}: begin            
-                      case(csr_lmul)
-                        LMUL1_2,
-                        LMUL1,
-                        LMUL2: begin
-                          emul_vd         = EMUL1;
-                          emul_max_vd_vs2 = EMUL1;
-                          emul_vd_nf      = EMUL7;
-                          emul_max        = (`UOP_INDEX_WIDTH+1)'('d7);
-                        end
-                      endcase
-                    end
-                    // 1:4
-                    {SEW_8,SEW32}: begin            
-                      case(csr_lmul)
-                        LMUL1,
-                        LMUL2,
-                        LMUL4: begin
-                          emul_vd         = EMUL1;
-                          emul_max_vd_vs2 = EMUL1;
-                          emul_vd_nf      = EMUL7;
-                          emul_max        = (`UOP_INDEX_WIDTH+1)'('d7);
-                        end
-                      endcase
+                  case(csr_lmul)
+                    LMUL1_4,
+                    LMUL1_2,
+                    LMUL1: begin
+                      emul_vd         = EMUL1;
+                      emul_max_vd_vs2 = EMUL1;
+                      emul_vd_nf      = EMUL7;
+                      emul_max        = (`UOP_INDEX_WIDTH+1)'('d7);
                     end
                   endcase
                 end
                 NF8: begin
-                  case({inst_funct3,csr_sew})
-                    // 1:1
-                    {SEW_8,SEW8},
-                    {SEW_16,SEW16},
-                    {SEW_32,SEW32}: begin            
-                      case(csr_lmul)
-                        LMUL1_4,
-                        LMUL1_2,
-                        LMUL1: begin
-                          emul_vd         = EMUL1;
-                          emul_max_vd_vs2 = EMUL1;
-                          emul_vd_nf      = EMUL8;
-                          emul_max        = (`UOP_INDEX_WIDTH+1)'('d8);
-                        end
-                      endcase
-                    end
-                    // 2:1
-                    {SEW_16,SEW8},
-                    {SEW_32,SEW16}: begin            
-                      case(csr_lmul)
-                        LMUL1_4,
-                        LMUL1_2: begin
-                          emul_vd         = EMUL1;
-                          emul_max_vd_vs2 = EMUL1;
-                          emul_vd_nf      = EMUL8;
-                          emul_max        = (`UOP_INDEX_WIDTH+1)'('d8);
-                        end
-                      endcase
-                    end
-                    // 4:1
-                    {SEW_32,SEW8}: begin            
-                      case(csr_lmul)
-                        LMUL1_4: begin
-                          emul_vd         = EMUL1;
-                          emul_max_vd_vs2 = EMUL1;
-                          emul_vd_nf      = EMUL8;
-                          emul_max        = (`UOP_INDEX_WIDTH+1)'('d8);
-                        end
-                      endcase
-                    end
-                    // 1:2
-                    {SEW_8,SEW16},
-                    {SEW_16,SEW32}: begin            
-                      case(csr_lmul)
-                        LMUL1_2,
-                        LMUL1,
-                        LMUL2: begin
-                          emul_vd         = EMUL1;
-                          emul_max_vd_vs2 = EMUL1;
-                          emul_vd_nf      = EMUL8;
-                          emul_max        = (`UOP_INDEX_WIDTH+1)'('d8);
-                        end
-                      endcase
-                    end
-                    // 1:4
-                    {SEW_8,SEW32}: begin            
-                      case(csr_lmul)
-                        LMUL1,
-                        LMUL2,
-                        LMUL4: begin
-                          emul_vd         = EMUL1;
-                          emul_max_vd_vs2 = EMUL1;
-                          emul_vd_nf      = EMUL8;
-                          emul_max        = (`UOP_INDEX_WIDTH+1)'('d8);
-                        end
-                      endcase
+                  case(csr_lmul)
+                    LMUL1_4,
+                    LMUL1_2,
+                    LMUL1: begin
+                      emul_vd         = EMUL1;
+                      emul_max_vd_vs2 = EMUL1;
+                      emul_vd_nf      = EMUL8;
+                      emul_max        = (`UOP_INDEX_WIDTH+1)'('d8);
                     end
                   endcase
                 end
@@ -1031,7 +422,6 @@ module rvv_backend_decode_unit_lsu
         end
 
         CS: begin
-          // TODO(davidgao): rearrange the cases based on reachability
           case(inst_nf)
             // emul_vd = ceil(inst_funct3/csr_sew*csr_lmul)
             // emul_vs2: no emul_vs2 for stride
@@ -1039,748 +429,140 @@ module rvv_backend_decode_unit_lsu
             // emul_vd_nf = NF*emul_vd
             // emul_max = NF*emul_max_vd_vs2
             NF1: begin
-              case({inst_funct3,csr_sew})
-                // 1:1
-                {SEW_8,SEW8},
-                {SEW_16,SEW16},
-                {SEW_32,SEW32}: begin            
-                  case(csr_lmul)
-                    LMUL1_4,
-                    LMUL1_2,
-                    LMUL1: begin
-                      emul_vd         = EMUL1;
-                      emul_max_vd_vs2 = EMUL1;
-                      emul_vd_nf      = EMUL1;
-                      emul_max        = (`UOP_INDEX_WIDTH+1)'('d1);
-                    end
-                    LMUL2: begin
-                      emul_vd         = EMUL2;
-                      emul_max_vd_vs2 = EMUL2;
-                      emul_vd_nf      = EMUL2;
-                      emul_max        = (`UOP_INDEX_WIDTH+1)'('d2);
-                    end
-                    LMUL4: begin
-                      emul_vd         = EMUL4;
-                      emul_max_vd_vs2 = EMUL4;
-                      emul_vd_nf      = EMUL4;
-                      emul_max        = (`UOP_INDEX_WIDTH+1)'('d4);
-                    end
-                    LMUL8: begin
-                      emul_vd         = EMUL8;
-                      emul_max_vd_vs2 = EMUL8;
-                      emul_vd_nf      = EMUL8;
-                      emul_max        = (`UOP_INDEX_WIDTH+1)'('d8);
-                    end
-                  endcase
+              case(csr_lmul)
+                LMUL1_4,
+                LMUL1_2,
+                LMUL1: begin
+                  emul_vd         = EMUL1;
+                  emul_max_vd_vs2 = EMUL1;
+                  emul_vd_nf      = EMUL1;
+                  emul_max        = (`UOP_INDEX_WIDTH+1)'('d1);
                 end
-                // 2:1
-                {SEW_16,SEW8},
-                {SEW_32,SEW16}: begin            
-                  case(csr_lmul)
-                    LMUL1_4,
-                    LMUL1_2: begin
-                      emul_vd         = EMUL1;
-                      emul_max_vd_vs2 = EMUL1;
-                      emul_vd_nf      = EMUL1;
-                      emul_max        = (`UOP_INDEX_WIDTH+1)'('d1);
-                    end
-                    LMUL1: begin
-                      emul_vd         = EMUL2;
-                      emul_max_vd_vs2 = EMUL2;
-                      emul_vd_nf      = EMUL2;
-                      emul_max        = (`UOP_INDEX_WIDTH+1)'('d2);
-                    end
-                    LMUL2: begin
-                      emul_vd         = EMUL4;
-                      emul_max_vd_vs2 = EMUL4;
-                      emul_vd_nf      = EMUL4;
-                      emul_max        = (`UOP_INDEX_WIDTH+1)'('d4);
-                    end
-                    LMUL4: begin
-                      emul_vd         = EMUL8;
-                      emul_max_vd_vs2 = EMUL8;
-                      emul_vd_nf      = EMUL8;
-                      emul_max        = (`UOP_INDEX_WIDTH+1)'('d8);
-                    end
-                  endcase
+                LMUL2: begin
+                  emul_vd         = EMUL2;
+                  emul_max_vd_vs2 = EMUL2;
+                  emul_vd_nf      = EMUL2;
+                  emul_max        = (`UOP_INDEX_WIDTH+1)'('d2);
                 end
-                // 4:1
-                {SEW_32,SEW8}: begin            
-                  case(csr_lmul)
-                    LMUL1_4: begin
-                      emul_vd         = EMUL1;
-                      emul_max_vd_vs2 = EMUL1;
-                      emul_vd_nf      = EMUL1;
-                      emul_max        = (`UOP_INDEX_WIDTH+1)'('d1);
-                    end
-                    LMUL1_2: begin    
-                      emul_vd         = EMUL2;
-                      emul_max_vd_vs2 = EMUL2;
-                      emul_vd_nf      = EMUL2;
-                      emul_max        = (`UOP_INDEX_WIDTH+1)'('d2);
-                    end
-                    LMUL1: begin
-                      emul_vd         = EMUL4;
-                      emul_max_vd_vs2 = EMUL4;
-                      emul_vd_nf      = EMUL4;
-                      emul_max        = (`UOP_INDEX_WIDTH+1)'('d4);
-                    end
-                    LMUL2: begin
-                      emul_vd         = EMUL8;
-                      emul_max_vd_vs2 = EMUL8;
-                      emul_vd_nf      = EMUL8;
-                      emul_max        = (`UOP_INDEX_WIDTH+1)'('d8);
-                    end
-                  endcase
+                LMUL4: begin
+                  emul_vd         = EMUL4;
+                  emul_max_vd_vs2 = EMUL4;
+                  emul_vd_nf      = EMUL4;
+                  emul_max        = (`UOP_INDEX_WIDTH+1)'('d4);
                 end
-                // 1:2
-                {SEW_8,SEW16},
-                {SEW_16,SEW32}: begin            
-                  case(csr_lmul)
-                    LMUL1_2,
-                    LMUL1,
-                    LMUL2: begin
-                      emul_vd         = EMUL1;
-                      emul_max_vd_vs2 = EMUL1;
-                      emul_vd_nf      = EMUL1;
-                      emul_max        = (`UOP_INDEX_WIDTH+1)'('d1);
-                    end
-                    LMUL4: begin
-                      emul_vd         = EMUL2;
-                      emul_max_vd_vs2 = EMUL2;
-                      emul_vd_nf      = EMUL2;
-                      emul_max        = (`UOP_INDEX_WIDTH+1)'('d2);
-                    end
-                    LMUL8: begin
-                      emul_vd         = EMUL4;
-                      emul_max_vd_vs2 = EMUL4;
-                      emul_vd_nf      = EMUL4;
-                      emul_max        = (`UOP_INDEX_WIDTH+1)'('d4);
-                    end
-                  endcase
-                end
-                // 1:4
-                {SEW_8,SEW32}: begin            
-                  case(csr_lmul)
-                    LMUL1,
-                    LMUL2,
-                    LMUL4: begin
-                      emul_vd         = EMUL1;
-                      emul_max_vd_vs2 = EMUL1;
-                      emul_vd_nf      = EMUL1;
-                      emul_max        = (`UOP_INDEX_WIDTH+1)'('d1);
-                    end
-                    LMUL8: begin
-                      emul_vd         = EMUL2;
-                      emul_max_vd_vs2 = EMUL2;
-                      emul_vd_nf      = EMUL2;
-                      emul_max        = (`UOP_INDEX_WIDTH+1)'('d2);
-                    end
-                  endcase
+                LMUL8: begin
+                  emul_vd         = EMUL8;
+                  emul_max_vd_vs2 = EMUL8;
+                  emul_vd_nf      = EMUL8;
+                  emul_max        = (`UOP_INDEX_WIDTH+1)'('d8);
                 end
               endcase
             end
             NF2: begin
-              case({inst_funct3,csr_sew})
-                // 1:1
-                {SEW_8,SEW8},
-                {SEW_16,SEW16},
-                {SEW_32,SEW32}: begin            
-                  case(csr_lmul)
-                    LMUL1_4,
-                    LMUL1_2,
-                    LMUL1: begin
-                      emul_vd         = EMUL1;
-                      emul_max_vd_vs2 = EMUL1;
-                      emul_vd_nf      = EMUL2;
-                      emul_max        = (`UOP_INDEX_WIDTH+1)'('d2);
-                    end
-                    LMUL2: begin
-                      emul_vd         = EMUL2;
-                      emul_max_vd_vs2 = EMUL2;
-                      emul_vd_nf      = EMUL4;
-                      emul_max        = (`UOP_INDEX_WIDTH+1)'('d4);
-                    end
-                    LMUL4: begin
-                      emul_vd         = EMUL4;
-                      emul_max_vd_vs2 = EMUL4;
-                      emul_vd_nf      = EMUL8;
-                      emul_max        = (`UOP_INDEX_WIDTH+1)'('d8);
-                    end
-                  endcase
+              case(csr_lmul)
+                LMUL1_4,
+                LMUL1_2,
+                LMUL1: begin
+                  emul_vd         = EMUL1;
+                  emul_max_vd_vs2 = EMUL1;
+                  emul_vd_nf      = EMUL2;
+                  emul_max        = (`UOP_INDEX_WIDTH+1)'('d2);
                 end
-                // 2:1
-                {SEW_16,SEW8},
-                {SEW_32,SEW16}: begin            
-                  case(csr_lmul)
-                    LMUL1_4,
-                    LMUL1_2: begin
-                      emul_vd         = EMUL1;
-                      emul_max_vd_vs2 = EMUL1;
-                      emul_vd_nf      = EMUL2;
-                      emul_max        = (`UOP_INDEX_WIDTH+1)'('d2);
-                    end
-                    LMUL1: begin
-                      emul_vd         = EMUL2;
-                      emul_max_vd_vs2 = EMUL2;
-                      emul_vd_nf      = EMUL4;
-                      emul_max        = (`UOP_INDEX_WIDTH+1)'('d4);
-                    end
-                    LMUL2: begin
-                      emul_vd         = EMUL4;
-                      emul_max_vd_vs2 = EMUL4;
-                      emul_vd_nf      = EMUL8;
-                      emul_max        = (`UOP_INDEX_WIDTH+1)'('d8);
-                    end
-                  endcase
+                LMUL2: begin
+                  emul_vd         = EMUL2;
+                  emul_max_vd_vs2 = EMUL2;
+                  emul_vd_nf      = EMUL4;
+                  emul_max        = (`UOP_INDEX_WIDTH+1)'('d4);
                 end
-                // 4:1
-                {SEW_32,SEW8}: begin            
-                  case(csr_lmul)
-                    LMUL1_4: begin
-                      emul_vd         = EMUL1;
-                      emul_max_vd_vs2 = EMUL1;
-                      emul_vd_nf      = EMUL2;
-                      emul_max        = (`UOP_INDEX_WIDTH+1)'('d2);
-                    end
-                    LMUL1_2: begin    
-                      emul_vd         = EMUL2;
-                      emul_max_vd_vs2 = EMUL2;
-                      emul_vd_nf      = EMUL4;
-                      emul_max        = (`UOP_INDEX_WIDTH+1)'('d4);
-                    end
-                    LMUL1: begin
-                      emul_vd         = EMUL4;
-                      emul_max_vd_vs2 = EMUL4;
-                      emul_vd_nf      = EMUL8;
-                      emul_max        = (`UOP_INDEX_WIDTH+1)'('d8);
-                    end
-                  endcase
-                end
-                // 1:2
-                {SEW_8,SEW16},
-                {SEW_16,SEW32}: begin            
-                  case(csr_lmul)
-                    LMUL1_2,
-                    LMUL1,
-                    LMUL2: begin
-                      emul_vd         = EMUL1;
-                      emul_max_vd_vs2 = EMUL1;
-                      emul_vd_nf      = EMUL2;
-                      emul_max        = (`UOP_INDEX_WIDTH+1)'('d2);
-                    end
-                    LMUL4: begin
-                      emul_vd         = EMUL2;
-                      emul_max_vd_vs2 = EMUL2;
-                      emul_vd_nf      = EMUL4;
-                      emul_max        = (`UOP_INDEX_WIDTH+1)'('d4);
-                    end
-                    LMUL8: begin
-                      emul_vd         = EMUL4;
-                      emul_max_vd_vs2 = EMUL4;
-                      emul_vd_nf      = EMUL8;
-                      emul_max        = (`UOP_INDEX_WIDTH+1)'('d8);
-                    end
-                  endcase
-                end
-                // 1:4
-                {SEW_8,SEW32}: begin            
-                  case(csr_lmul)
-                    LMUL1,
-                    LMUL2,
-                    LMUL4: begin
-                      emul_vd         = EMUL1;
-                      emul_max_vd_vs2 = EMUL1;
-                      emul_vd_nf      = EMUL2;
-                      emul_max        = (`UOP_INDEX_WIDTH+1)'('d2);
-                    end
-                    LMUL8: begin
-                      emul_vd         = EMUL2;
-                      emul_max_vd_vs2 = EMUL2;
-                      emul_vd_nf      = EMUL4;
-                      emul_max        = (`UOP_INDEX_WIDTH+1)'('d4);
-                    end
-                  endcase
+                LMUL4: begin
+                  emul_vd         = EMUL4;
+                  emul_max_vd_vs2 = EMUL4;
+                  emul_vd_nf      = EMUL8;
+                  emul_max        = (`UOP_INDEX_WIDTH+1)'('d8);
                 end
               endcase
             end
             NF3: begin
-              case({inst_funct3,csr_sew})
-                // 1:1
-                {SEW_8,SEW8},
-                {SEW_16,SEW16},
-                {SEW_32,SEW32}: begin            
-                  case(csr_lmul)
-                    LMUL1_4,
-                    LMUL1_2,
-                    LMUL1: begin
-                      emul_vd         = EMUL1;
-                      emul_max_vd_vs2 = EMUL1;
-                      emul_vd_nf      = EMUL3;
-                      emul_max        = (`UOP_INDEX_WIDTH+1)'('d3);
-                    end
-                    LMUL2: begin
-                      emul_vd         = EMUL2;
-                      emul_max_vd_vs2 = EMUL2;
-                      emul_vd_nf      = EMUL6;
-                      emul_max        = (`UOP_INDEX_WIDTH+1)'('d6);
-                    end
-                  endcase
+              case(csr_lmul)
+                LMUL1_4,
+                LMUL1_2,
+                LMUL1: begin
+                  emul_vd         = EMUL1;
+                  emul_max_vd_vs2 = EMUL1;
+                  emul_vd_nf      = EMUL3;
+                  emul_max        = (`UOP_INDEX_WIDTH+1)'('d3);
                 end
-                // 2:1
-                {SEW_16,SEW8},
-                {SEW_32,SEW16}: begin            
-                  case(csr_lmul)
-                    LMUL1_4,
-                    LMUL1_2: begin
-                      emul_vd         = EMUL1;
-                      emul_max_vd_vs2 = EMUL1;
-                      emul_vd_nf      = EMUL3;
-                      emul_max        = (`UOP_INDEX_WIDTH+1)'('d3);
-                    end
-                    LMUL1: begin
-                      emul_vd         = EMUL2;
-                      emul_max_vd_vs2 = EMUL2;
-                      emul_vd_nf      = EMUL6;
-                      emul_max        = (`UOP_INDEX_WIDTH+1)'('d6);
-                    end
-                  endcase
-                end
-                // 4:1
-                {SEW_32,SEW8}: begin            
-                  case(csr_lmul)
-                    LMUL1_4: begin
-                      emul_vd         = EMUL1;
-                      emul_max_vd_vs2 = EMUL1;
-                      emul_vd_nf      = EMUL3;
-                      emul_max        = (`UOP_INDEX_WIDTH+1)'('d3);
-                    end
-                    LMUL1_2: begin    
-                      emul_vd         = EMUL2;
-                      emul_max_vd_vs2 = EMUL2;
-                      emul_vd_nf      = EMUL6;
-                      emul_max        = (`UOP_INDEX_WIDTH+1)'('d6);
-                    end
-                  endcase
-                end
-                // 1:2
-                {SEW_8,SEW16},
-                {SEW_16,SEW32}: begin            
-                  case(csr_lmul)
-                    LMUL1_2,
-                    LMUL1,
-                    LMUL2: begin
-                      emul_vd         = EMUL1;
-                      emul_max_vd_vs2 = EMUL1;
-                      emul_vd_nf      = EMUL3;
-                      emul_max        = (`UOP_INDEX_WIDTH+1)'('d3);
-                    end
-                    LMUL4: begin
-                      emul_vd         = EMUL2;
-                      emul_max_vd_vs2 = EMUL2;
-                      emul_vd_nf      = EMUL6;
-                      emul_max        = (`UOP_INDEX_WIDTH+1)'('d6);
-                    end
-                  endcase
-                end
-                // 1:4
-                {SEW_8,SEW32}: begin            
-                  case(csr_lmul)
-                    LMUL1,
-                    LMUL2,
-                    LMUL4: begin
-                      emul_vd         = EMUL1;
-                      emul_max_vd_vs2 = EMUL1;
-                      emul_vd_nf      = EMUL3;
-                      emul_max        = (`UOP_INDEX_WIDTH+1)'('d3);
-                    end
-                    LMUL8: begin
-                      emul_vd         = EMUL2;
-                      emul_max_vd_vs2 = EMUL2;
-                      emul_vd_nf      = EMUL6;
-                      emul_max        = (`UOP_INDEX_WIDTH+1)'('d6);
-                    end
-                  endcase
+                LMUL2: begin
+                  emul_vd         = EMUL2;
+                  emul_max_vd_vs2 = EMUL2;
+                  emul_vd_nf      = EMUL6;
+                  emul_max        = (`UOP_INDEX_WIDTH+1)'('d6);
                 end
               endcase
             end
             NF4: begin
-              case({inst_funct3,csr_sew})
-                // 1:1
-                {SEW_8,SEW8},
-                {SEW_16,SEW16},
-                {SEW_32,SEW32}: begin            
-                  case(csr_lmul)
-                    LMUL1_4,
-                    LMUL1_2,
-                    LMUL1: begin
-                      emul_vd         = EMUL1;
-                      emul_max_vd_vs2 = EMUL1;
-                      emul_vd_nf      = EMUL4;
-                      emul_max        = (`UOP_INDEX_WIDTH+1)'('d4);
-                    end
-                    LMUL2: begin
-                      emul_vd         = EMUL2;
-                      emul_max_vd_vs2 = EMUL2;
-                      emul_vd_nf      = EMUL8;
-                      emul_max        = (`UOP_INDEX_WIDTH+1)'('d8);
-                    end
-                  endcase
+              case(csr_lmul)
+                LMUL1_4,
+                LMUL1_2,
+                LMUL1: begin
+                  emul_vd         = EMUL1;
+                  emul_max_vd_vs2 = EMUL1;
+                  emul_vd_nf      = EMUL4;
+                  emul_max        = (`UOP_INDEX_WIDTH+1)'('d4);
                 end
-                // 2:1
-                {SEW_16,SEW8},
-                {SEW_32,SEW16}: begin            
-                  case(csr_lmul)
-                    LMUL1_4,
-                    LMUL1_2: begin
-                      emul_vd         = EMUL1;
-                      emul_max_vd_vs2 = EMUL1;
-                      emul_vd_nf      = EMUL4;
-                      emul_max        = (`UOP_INDEX_WIDTH+1)'('d4);
-                    end
-                    LMUL1: begin
-                      emul_vd         = EMUL2;
-                      emul_max_vd_vs2 = EMUL2;
-                      emul_vd_nf      = EMUL8;
-                      emul_max        = (`UOP_INDEX_WIDTH+1)'('d8);
-                    end
-                  endcase
-                end
-                // 4:1
-                {SEW_32,SEW8}: begin            
-                  case(csr_lmul)
-                    LMUL1_4: begin
-                      emul_vd         = EMUL1;
-                      emul_max_vd_vs2 = EMUL1;
-                      emul_vd_nf      = EMUL4;
-                      emul_max        = (`UOP_INDEX_WIDTH+1)'('d4);
-                    end
-                    LMUL1_2: begin    
-                      emul_vd         = EMUL2;
-                      emul_max_vd_vs2 = EMUL2;
-                      emul_vd_nf      = EMUL8;
-                      emul_max        = (`UOP_INDEX_WIDTH+1)'('d8);
-                    end
-                  endcase
-                end
-                // 1:2
-                {SEW_8,SEW16},
-                {SEW_16,SEW32}: begin            
-                  case(csr_lmul)
-                    LMUL1_2,
-                    LMUL1,
-                    LMUL2: begin
-                      emul_vd         = EMUL1;
-                      emul_max_vd_vs2 = EMUL1;
-                      emul_vd_nf      = EMUL4;
-                      emul_max        = (`UOP_INDEX_WIDTH+1)'('d4);
-                    end
-                    LMUL4: begin
-                      emul_vd         = EMUL2;
-                      emul_max_vd_vs2 = EMUL2;
-                      emul_vd_nf      = EMUL8;
-                      emul_max        = (`UOP_INDEX_WIDTH+1)'('d8);
-                    end
-                  endcase
-                end
-                // 1:4
-                {SEW_8,SEW32}: begin            
-                  case(csr_lmul)
-                    LMUL1,
-                    LMUL2,
-                    LMUL4: begin
-                      emul_vd         = EMUL1;
-                      emul_max_vd_vs2 = EMUL1;
-                      emul_vd_nf      = EMUL4;
-                      emul_max        = (`UOP_INDEX_WIDTH+1)'('d4);
-                    end
-                    LMUL8: begin
-                      emul_vd         = EMUL2;
-                      emul_max_vd_vs2 = EMUL2;
-                      emul_vd_nf      = EMUL8;
-                      emul_max        = (`UOP_INDEX_WIDTH+1)'('d8);
-                    end
-                  endcase
+                LMUL2: begin
+                  emul_vd         = EMUL2;
+                  emul_max_vd_vs2 = EMUL2;
+                  emul_vd_nf      = EMUL8;
+                  emul_max        = (`UOP_INDEX_WIDTH+1)'('d8);
                 end
               endcase
             end
             NF5: begin
-              case({inst_funct3,csr_sew})
-                // 1:1
-                {SEW_8,SEW8},
-                {SEW_16,SEW16},
-                {SEW_32,SEW32}: begin            
-                  case(csr_lmul)
-                    LMUL1_4,
-                    LMUL1_2,
-                    LMUL1: begin
-                      emul_vd         = EMUL1;
-                      emul_max_vd_vs2 = EMUL1;
-                      emul_vd_nf      = EMUL5;
-                      emul_max        = (`UOP_INDEX_WIDTH+1)'('d5);
-                    end
-                  endcase
-                end
-                // 2:1
-                {SEW_16,SEW8},
-                {SEW_32,SEW16}: begin            
-                  case(csr_lmul)
-                    LMUL1_4,
-                    LMUL1_2: begin
-                      emul_vd         = EMUL1;
-                      emul_max_vd_vs2 = EMUL1;
-                      emul_vd_nf      = EMUL5;
-                      emul_max        = (`UOP_INDEX_WIDTH+1)'('d5);
-                    end
-                  endcase
-                end
-                // 4:1
-                {SEW_32,SEW8}: begin            
-                  case(csr_lmul)
-                    LMUL1_4: begin
-                      emul_vd         = EMUL1;
-                      emul_max_vd_vs2 = EMUL1;
-                      emul_vd_nf      = EMUL5;
-                      emul_max        = (`UOP_INDEX_WIDTH+1)'('d5);
-                    end
-                  endcase
-                end
-                // 1:2
-                {SEW_8,SEW16},
-                {SEW_16,SEW32}: begin            
-                  case(csr_lmul)
-                    LMUL1_2,
-                    LMUL1,
-                    LMUL2: begin
-                      emul_vd         = EMUL1;
-                      emul_max_vd_vs2 = EMUL1;
-                      emul_vd_nf      = EMUL5;
-                      emul_max        = (`UOP_INDEX_WIDTH+1)'('d5);
-                    end
-                  endcase
-                end
-                // 1:4
-                {SEW_8,SEW32}: begin            
-                  case(csr_lmul)
-                    LMUL1,
-                    LMUL2,
-                    LMUL4: begin
-                      emul_vd         = EMUL1;
-                      emul_max_vd_vs2 = EMUL1;
-                      emul_vd_nf      = EMUL5;
-                      emul_max        = (`UOP_INDEX_WIDTH+1)'('d5);
-                    end
-                  endcase
+              case(csr_lmul)
+                LMUL1_4,
+                LMUL1_2,
+                LMUL1: begin
+                  emul_vd         = EMUL1;
+                  emul_max_vd_vs2 = EMUL1;
+                  emul_vd_nf      = EMUL5;
+                  emul_max        = (`UOP_INDEX_WIDTH+1)'('d5);
                 end
               endcase
             end
             NF6: begin
-              case({inst_funct3,csr_sew})
-                // 1:1
-                {SEW_8,SEW8},
-                {SEW_16,SEW16},
-                {SEW_32,SEW32}: begin            
-                  case(csr_lmul)
-                    LMUL1_4,
-                    LMUL1_2,
-                    LMUL1: begin
-                      emul_vd         = EMUL1;
-                      emul_max_vd_vs2 = EMUL1;
-                      emul_vd_nf      = EMUL6;
-                      emul_max        = (`UOP_INDEX_WIDTH+1)'('d6);
-                    end
-                  endcase
-                end
-                // 2:1
-                {SEW_16,SEW8},
-                {SEW_32,SEW16}: begin            
-                  case(csr_lmul)
-                    LMUL1_4,
-                    LMUL1_2: begin
-                      emul_vd         = EMUL1;
-                      emul_max_vd_vs2 = EMUL1;
-                      emul_vd_nf      = EMUL6;
-                      emul_max        = (`UOP_INDEX_WIDTH+1)'('d6);
-                    end
-                  endcase
-                end                
-                // 4:1
-                {SEW_32,SEW8}: begin            
-                  case(csr_lmul)
-                    LMUL1_4: begin
-                      emul_vd         = EMUL1;
-                      emul_max_vd_vs2 = EMUL1;
-                      emul_vd_nf      = EMUL6;
-                      emul_max        = (`UOP_INDEX_WIDTH+1)'('d6);
-                    end
-                  endcase
-                end
-                // 1:2
-                {SEW_8,SEW16},
-                {SEW_16,SEW32}: begin            
-                  case(csr_lmul)
-                    LMUL1_2,
-                    LMUL1,
-                    LMUL2: begin
-                      emul_vd         = EMUL1;
-                      emul_max_vd_vs2 = EMUL1;
-                      emul_vd_nf      = EMUL6;
-                      emul_max        = (`UOP_INDEX_WIDTH+1)'('d6);
-                    end
-                  endcase
-                end
-                // 1:4
-                {SEW_8,SEW32}: begin            
-                  case(csr_lmul)
-                    LMUL1,
-                    LMUL2,
-                    LMUL4: begin
-                      emul_vd         = EMUL1;
-                      emul_max_vd_vs2 = EMUL1;
-                      emul_vd_nf      = EMUL6;
-                      emul_max        = (`UOP_INDEX_WIDTH+1)'('d6);
-                    end
-                  endcase
+              case(csr_lmul)
+                LMUL1_4,
+                LMUL1_2,
+                LMUL1: begin
+                  emul_vd         = EMUL1;
+                  emul_max_vd_vs2 = EMUL1;
+                  emul_vd_nf      = EMUL6;
+                  emul_max        = (`UOP_INDEX_WIDTH+1)'('d6);
                 end
               endcase
             end
             NF7: begin
-              case({inst_funct3,csr_sew})
-                // 1:1
-                {SEW_8,SEW8},
-                {SEW_16,SEW16},
-                {SEW_32,SEW32}: begin            
-                  case(csr_lmul)
-                    LMUL1_4,
-                    LMUL1_2,
-                    LMUL1: begin
-                      emul_vd         = EMUL1;
-                      emul_max_vd_vs2 = EMUL1;
-                      emul_vd_nf      = EMUL7;
-                      emul_max        = (`UOP_INDEX_WIDTH+1)'('d7);
-                    end
-                  endcase
-                end
-                // 2:1
-                {SEW_16,SEW8},
-                {SEW_32,SEW16}: begin            
-                  case(csr_lmul)
-                    LMUL1_4,
-                    LMUL1_2: begin
-                      emul_vd         = EMUL1;
-                      emul_max_vd_vs2 = EMUL1;
-                      emul_vd_nf      = EMUL7;
-                      emul_max        = (`UOP_INDEX_WIDTH+1)'('d7);
-                    end
-                  endcase
-                end
-                // 4:1
-                {SEW_32,SEW8}: begin            
-                  case(csr_lmul)
-                    LMUL1_4: begin
-                      emul_vd         = EMUL1;
-                      emul_max_vd_vs2 = EMUL1;
-                      emul_vd_nf      = EMUL7;
-                      emul_max        = (`UOP_INDEX_WIDTH+1)'('d7);
-                    end
-                  endcase
-                end
-                // 1:2
-                {SEW_8,SEW16},
-                {SEW_16,SEW32}: begin            
-                  case(csr_lmul)
-                    LMUL1_2,
-                    LMUL1,
-                    LMUL2: begin
-                      emul_vd         = EMUL1;
-                      emul_max_vd_vs2 = EMUL1;
-                      emul_vd_nf      = EMUL7;
-                      emul_max        = (`UOP_INDEX_WIDTH+1)'('d7);
-                    end
-                  endcase
-                end
-                // 1:4
-                {SEW_8,SEW32}: begin            
-                  case(csr_lmul)
-                    LMUL1,
-                    LMUL2,
-                    LMUL4: begin
-                      emul_vd         = EMUL1;
-                      emul_max_vd_vs2 = EMUL1;
-                      emul_vd_nf      = EMUL7;
-                      emul_max        = (`UOP_INDEX_WIDTH+1)'('d7);
-                    end
-                  endcase
+              case(csr_lmul)
+                LMUL1_4,
+                LMUL1_2,
+                LMUL1: begin
+                  emul_vd         = EMUL1;
+                  emul_max_vd_vs2 = EMUL1;
+                  emul_vd_nf      = EMUL7;
+                  emul_max        = (`UOP_INDEX_WIDTH+1)'('d7);
                 end
               endcase
             end
             NF8: begin
-              case({inst_funct3,csr_sew})
-                // 1:1
-                {SEW_8,SEW8},
-                {SEW_16,SEW16},
-                {SEW_32,SEW32}: begin            
-                  case(csr_lmul)
-                    LMUL1_4,
-                    LMUL1_2,
-                    LMUL1: begin
-                      emul_vd         = EMUL1;
-                      emul_max_vd_vs2 = EMUL1;
-                      emul_vd_nf      = EMUL8;
-                      emul_max        = (`UOP_INDEX_WIDTH+1)'('d8);
-                    end
-                  endcase
-                end
-                // 2:1
-                {SEW_16,SEW8},
-                {SEW_32,SEW16}: begin            
-                  case(csr_lmul)
-                    LMUL1_4,
-                    LMUL1_2: begin
-                      emul_vd         = EMUL1;
-                      emul_max_vd_vs2 = EMUL1;
-                      emul_vd_nf      = EMUL8;
-                      emul_max        = (`UOP_INDEX_WIDTH+1)'('d8);
-                    end
-                  endcase
-                end
-                // 4:1
-                {SEW_32,SEW8}: begin            
-                  case(csr_lmul)
-                    LMUL1_4: begin
-                      emul_vd         = EMUL1;
-                      emul_max_vd_vs2 = EMUL1;
-                      emul_vd_nf      = EMUL8;
-                      emul_max        = (`UOP_INDEX_WIDTH+1)'('d8);
-                    end
-                  endcase
-                end
-                // 1:2
-                {SEW_8,SEW16},
-                {SEW_16,SEW32}: begin            
-                  case(csr_lmul)
-                    LMUL1_2,
-                    LMUL1,
-                    LMUL2: begin
-                      emul_vd         = EMUL1;
-                      emul_max_vd_vs2 = EMUL1;
-                      emul_vd_nf      = EMUL8;
-                      emul_max        = (`UOP_INDEX_WIDTH+1)'('d8);
-                    end
-                  endcase
-                end
-                // 1:4
-                {SEW_8,SEW32}: begin            
-                  case(csr_lmul)
-                    LMUL1,
-                    LMUL2,
-                    LMUL4: begin
-                      emul_vd         = EMUL1;
-                      emul_max_vd_vs2 = EMUL1;
-                      emul_vd_nf      = EMUL8;
-                      emul_max        = (`UOP_INDEX_WIDTH+1)'('d8);
-                    end
-                  endcase
+              case(csr_lmul)
+                LMUL1_4,
+                LMUL1_2,
+                LMUL1: begin
+                  emul_vd         = EMUL1;
+                  emul_max_vd_vs2 = EMUL1;
+                  emul_vd_nf      = EMUL8;
+                  emul_max        = (`UOP_INDEX_WIDTH+1)'('d8);
                 end
               endcase
             end
