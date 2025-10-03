@@ -363,7 +363,7 @@ cc_library(
 
 cc_test(
     name = "valu_tb",
-    size = "large",
+    size = "enormous",
     srcs = [
         "kelvin/valu_tb.cc",
         "@kelvin_hw//hdl/chisel/src/kelvin:VCore_parameters.h",
@@ -515,6 +515,7 @@ cc_test(
 
 cc_test(
     name = "vregfile_tb",
+    size = "large",
     srcs = [
         "kelvin/vregfile_tb.cc",
     ],

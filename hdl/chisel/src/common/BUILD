@@ -208,6 +208,7 @@ chisel_library(
 
 chisel_test(
     name = "fma_test",
+    size = "large",
     srcs = [
         "FmaTest.scala",
     ],

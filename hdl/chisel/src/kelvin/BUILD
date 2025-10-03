@@ -205,7 +205,7 @@ chisel_test(
 
 chisel_test(
     name = "kelvin_core_axi_tests",
-    size = "medium",
+    size = "large",
     srcs = [
         "CoreAxiCSRTest.scala",
         "DBus2AxiTest.scala",

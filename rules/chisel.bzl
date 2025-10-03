@@ -81,7 +81,7 @@ def chisel_test(
         deps = [],
         args = [],
         tags = [],
-        size = "small",
+        size = "medium",
         visibility = None):
     scalatest_name = name + "_scalatest"
     scala_test(
@@ -124,6 +124,7 @@ def chisel_test(
             "OBJCACHE": "",
             "CHISEL_FIRTOOL_PATH": "third_party/llvm-firtool",
         },
+        size = size,
     )
 
 def chisel_cc_library(
