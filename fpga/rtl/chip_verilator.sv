@@ -62,9 +62,9 @@ module chip_verilator
   assign uart0_tx = uart_sideband_o[0].cio_tx;
   assign uart1_tx = uart_sideband_o[1].cio_tx;
 
-  kelvin_soc #(.MemInitFile(MemInitFile),
+  coralnpu_soc #(.MemInitFile(MemInitFile),
                .ClockFrequencyMhz(ClockFrequencyMhz))
-    i_kelvin_soc (
+    i_coralnpu_soc (
       .clk_i(clk_i),
       .rst_ni(rst_ni),
       .spi_clk_i(sck),

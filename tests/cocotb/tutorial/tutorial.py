@@ -16,11 +16,11 @@ import cocotb
 import numpy as np
 
 from bazel_tools.tools.python.runfiles import runfiles
-from kelvin_test_utils.core_mini_axi_interface import CoreMiniAxiInterface
+from coralnpu_test_utils.core_mini_axi_interface import CoreMiniAxiInterface
 
 @cocotb.test()
 async def core_mini_axi_tutorial(dut):
-    """Testbench to run your Kelvin program."""
+    """Testbench to run your CoralNPU program."""
     # Test bench setup
     core_mini_axi = CoreMiniAxiInterface(dut)
     await core_mini_axi.init()

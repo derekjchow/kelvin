@@ -15,8 +15,8 @@
 # limitations under the License.
 
 import grpc
-import tests.renode.kelvin_pb2 as kelvin_pb2
-import tests.renode.kelvin_pb2_grpc as kelvin_pb2_grpc
+import tests.renode.coralnpu_pb2 as coralnpu_pb2
+import tests.renode.coralnpu_pb2_grpc as coralnpu_pb2_grpc
 
 import sys
 
@@ -27,11 +27,11 @@ def main():
     address = sys.argv[3] if len(sys.argv) > 3 else "127.0.0.1"
     receiverPort = int(sys.argv[1])
     senderPort = int(sys.argv[2])
-    agent_type = kelvin_pb2.AgentType.Master if "master" in sys.argv[0] else kelvin_pb2.AgentType.Slave
+    agent_type = coralnpu_pb2.AgentType.Master if "master" in sys.argv[0] else coralnpu_pb2.AgentType.Slave
 
     with grpc.insecure_channel("127.0.0.1:9003") as channel:
-        stub = kelvin_pb2_grpc.KelvinStub(channel)
-        response = stub.StartAgent(kelvin_pb2.StartAgentRequest(
+        stub = coralnpu_pb2_grpc.CoralNPUStub(channel)
+        response = stub.StartAgent(coralnpu_pb2.StartAgentRequest(
             type=agent_type,
             receiverPort=receiverPort,
             senderPort=senderPort,

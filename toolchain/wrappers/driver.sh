@@ -17,7 +17,7 @@
 
 PROG=$(basename "$0")
 DRIVER_DIR=$(dirname "$0")
-TOOLCHAIN="toolchain_kelvin_v2"
+TOOLCHAIN="toolchain_coralnpu_v2"
 PREFIX="riscv32-unknown-elf"
 
 ARGS=()

@@ -21,6 +21,6 @@ package(
 constraint_setting(name = "cpu")
 
 constraint_value(
-    name = "kelvin_v2",
+    name = "coralnpu_v2",
     constraint_setting = ":cpu",
 )

@@ -19,7 +19,7 @@ import numpy as np
 import os
 
 from bazel_tools.tools.python.runfiles import runfiles
-from kelvin_test_utils.sim_test_fixture import Fixture
+from coralnpu_test_utils.sim_test_fixture import Fixture
 
 STR_TO_NP_TYPE = {
     "int8": np.int8,
@@ -69,7 +69,7 @@ async def arithmetic_m1_vanilla_ops_test(dut, dtypes, math_ops: str,
     with tqdm.tqdm(m1_vanilla_op_elfs) as t:
         for elf_name in tqdm.tqdm(m1_vanilla_op_elfs):
             t.set_postfix({"binary": os.path.basename(elf_name)})
-            elf_path = r.Rlocation("kelvin_hw/tests/cocotb/rvv/arithmetics/" +
+            elf_path = r.Rlocation("coralnpu_hw/tests/cocotb/rvv/arithmetics/" +
                                    elf_name)
             await fixture.load_elf_and_lookup_symbols(
                 elf_path,
@@ -146,7 +146,7 @@ async def reduction_m1_vanilla_ops_test(dut, dtypes, math_ops: str,
         for elf_name in tqdm.tqdm(m1_vanilla_op_elfs):
             t.set_postfix({"binary": os.path.basename(elf_name)})
             elf_path = r.Rlocation(
-                f"kelvin_hw/tests/cocotb/rvv/arithmetics/{elf_name}")
+                f"coralnpu_hw/tests/cocotb/rvv/arithmetics/{elf_name}")
             await fixture.load_elf_and_lookup_symbols(
                 elf_path,
                 ['in_buf_1', 'scalar_input', 'out_buf'],
@@ -209,7 +209,7 @@ async def reduction_m1_failure_test(dut, dtypes, math_ops: str, num_bytes: int):
         for elf_name in t:
             t.set_postfix({"binary": os.path.basename(elf_name)})
             elf_path = r.Rlocation(
-                f"kelvin_hw/tests/cocotb/rvv/arithmetics/{elf_name}")
+                f"coralnpu_hw/tests/cocotb/rvv/arithmetics/{elf_name}")
             await fixture.load_elf_and_lookup_symbols(
                 elf_path,
                 ['in_buf_1', 'scalar_input', 'out_buf', 'vstart', 'vl',
@@ -270,7 +270,7 @@ async def _widen_math_ops_test_impl(
     with tqdm.tqdm(widen_op_elfs) as t:
         for elf_name in tqdm.tqdm(widen_op_elfs):
             t.set_postfix({"binary": os.path.basename(elf_name)})
-            elf_path = r.Rlocation("kelvin_hw/tests/cocotb/rvv/arithmetics/" +
+            elf_path = r.Rlocation("coralnpu_hw/tests/cocotb/rvv/arithmetics/" +
                                    elf_name)
             await fixture.load_elf_and_lookup_symbols(
                 elf_path,

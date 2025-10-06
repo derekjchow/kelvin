@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package kelvin.soc
+package coralnpu.soc
 
 import chisel3._
 
@@ -55,14 +55,14 @@ case class DeviceConfig(
 )
 
 /**
- * This object contains the complete, concrete configuration for the Kelvin SoC crossbar,
+ * This object contains the complete, concrete configuration for the CoralNPU SoC crossbar,
  * translated from the original tl_config.hjson file.
  */
 object CrossbarConfig {
   // List of all host (master) interfaces.
   def hosts(enableTestHarness: Boolean): Seq[HostConfig] = {
     val baseHosts = Seq(
-      HostConfig("kelvin_core", width = 128),
+      HostConfig("coralnpu_core", width = 128),
       HostConfig("spi2tlul", width = 128)
     )
     if (enableTestHarness) {
@@ -74,7 +74,7 @@ object CrossbarConfig {
 
   // List of all device (slave) interfaces with their address maps.
   val devices = Seq(
-    DeviceConfig("kelvin_device", Seq(
+    DeviceConfig("coralnpu_device", Seq(
       AddressRange(0x00000000, 0x2000),    // 8kB
       AddressRange(0x00010000, 0x8000),    // 32kB
       AddressRange(0x00030000, 0x1000)     // 4kB
@@ -88,11 +88,11 @@ object CrossbarConfig {
   // A map defining which hosts are allowed to connect to which devices.
   def connections(enableTestHarness: Boolean): Map[String, Seq[String]] = {
     val baseConnections = Map(
-      "kelvin_core" -> Seq("sram", "uart1", "kelvin_device", "rom", "uart0"),
-      "spi2tlul" -> Seq("kelvin_device", "sram")
+      "coralnpu_core" -> Seq("sram", "uart1", "coralnpu_device", "rom", "uart0"),
+      "spi2tlul" -> Seq("coralnpu_device", "sram")
     )
     if (enableTestHarness) {
-      baseConnections + ("test_host_32" -> Seq("rom", "sram", "uart0", "kelvin_device"))
+      baseConnections + ("test_host_32" -> Seq("rom", "sram", "uart0", "coralnpu_device"))
     } else {
       baseConnections
     }

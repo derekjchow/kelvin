@@ -17,8 +17,8 @@ package bus
 import chisel3._
 import chisel3.util._
 
-import kelvin.Parameters
-import kelvin.MemoryRegion
+import coralnpu.Parameters
+import coralnpu.MemoryRegion
 
 class TLULParameters(p: Parameters) {
   val w = p.axi2DataBits / 8

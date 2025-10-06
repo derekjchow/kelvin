@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-load("@kelvin_hw//rules:vcs.bzl", "vcs_systemc_binary")
+load("@coralnpu_hw//rules:vcs.bzl", "vcs_systemc_binary")
 
 package(default_visibility = ["//visibility:public"])
 
@@ -31,7 +31,7 @@ vcs_systemc_binary(
         "main.cc",
     ],
     verilog_deps = [
-        "//hdl/chisel/src/kelvin:core_mini_axi_cc_library_verilog",
+        "//hdl/chisel/src/coralnpu:core_mini_axi_cc_library_verilog",
     ],
     verilog_srcs = [
         "//internal/syn/libs/tsmc12ffc:ts1n12ffcllsblvtd512x128m4swbsho_130b/VERILOG/ts1n12ffcllsblvtd512x128m4swbsho_130b.v",

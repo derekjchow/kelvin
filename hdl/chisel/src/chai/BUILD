@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-load("@kelvin_hw//rules:chisel.bzl", "chisel_cc_library", "chisel_library")
+load("@coralnpu_hw//rules:chisel.bzl", "chisel_cc_library", "chisel_library")
 
 package(default_visibility = ["//visibility:public"])
 
@@ -25,8 +25,8 @@ chisel_library(
     ],
     deps = [
         "//hdl/chisel/src/bus:bus",
-        "//hdl/chisel/src/kelvin:kelvin",
-        "//hdl/chisel/src/kelvin:kelvin_params",
+        "//hdl/chisel/src/coralnpu:coralnpu",
+        "//hdl/chisel/src/coralnpu:coralnpu_params",
         "//hdl/chisel/src/matcha:matcha",
     ],
 )

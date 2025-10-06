@@ -22,13 +22,13 @@ import common._
 import _root_.circt.stage.ChiselStage
 
 object Axi2Sram {
-  def apply(p: kelvin.Parameters): Axi2Sram = {
+  def apply(p: coralnpu.Parameters): Axi2Sram = {
     return Module(new Axi2Sram(p))
   }
 }
 
 // AXI Bridge.
-class Axi2Sram(p: kelvin.Parameters) extends Module {
+class Axi2Sram(p: coralnpu.Parameters) extends Module {
   val io = IO(new Bundle {
     // L1DCache
     val l1d = Flipped(new AxiMasterIO(p.axiSysAddrBits, p.axi1DataBits, p.axiSysIdBits))
@@ -211,6 +211,6 @@ class Axi2Sram(p: kelvin.Parameters) extends Module {
 }
 
 object EmitAxi2Sram extends App {
-  val p = new kelvin.Parameters
+  val p = new coralnpu.Parameters
   ChiselStage.emitSystemVerilogFile(new Axi2Sram(p), args)
 }

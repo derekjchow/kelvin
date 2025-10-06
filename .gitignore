@@ -4,7 +4,7 @@ log.html
 report.html
 robot_output.xml
 # Generated sources
-tests/renode/rv_core/kelvin_hello_world_cc.c
+tests/renode/rv_core/coralnpu_hello_world_cc.c
 tests/renode/rv_core/*.elf
 tests/renode/rv_core/*.bin
 tests/renode/__pycache__

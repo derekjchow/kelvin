@@ -1,20 +1,20 @@
-# Kelvin
+# CoralNPU
 
-Kelvin is a RISCV CPU built with custom SIMD instructions and microarchitectural
+CoralNPU is a RISCV CPU built with custom SIMD instructions and microarchitectural
 decisions that align with the dataplane properties of an ML accelerator. The design
-of Kelvin starts with domain and matrix capabilities; vector and scalar
+of CoralNPU starts with domain and matrix capabilities; vector and scalar
 capabilities are then added for a fused design.
 
 ## Block Diagram
 
-![Kelvin block diagram](images/kelvin_block.png)
+![CoralNPU block diagram](images/coralnpu_block.png)
 
 ## Scalar Core
 
 A simple RISC-V scalar frontend drives the command queues of the ML+SIMD
 backend.
 
-Kelvin utilizes a custom RISC-V frontend (rv32im) that runs the minimal set of
+CoralNPU utilizes a custom RISC-V frontend (rv32im) that runs the minimal set of
 instructions to support an executor run-to-completion model (eg. no OS, no
 interrupts), with all control tasks onloaded to the SMC . The C extension
 encoding is reclaimed (as per the risc-v specification) to provide the necessary
@@ -54,7 +54,7 @@ to memory accesses. On one axis is a parallel broadcast (“wide”, convolution
 weights), and the other axis the transpose shifted inputs of a number of batches
 (“narrow”, eg. MobileNet XY batching).
 
-![Kelvin MAC](images/kelvin_aconv.png)
+![CoralNPU MAC](images/coralnpu_aconv.png)
 
 The outer-product construction is a vertical arrangement of multiple VDOT
 opcodes which utilize 4x 8bit multiplies reduced into 32 bit accumulators and

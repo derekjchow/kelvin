@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-load("@kelvin_hw//rules:chisel.bzl", "chisel_library", "chisel_test")
+load("@coralnpu_hw//rules:chisel.bzl", "chisel_library", "chisel_test")
 
 chisel_library(
     name = "peripheral",

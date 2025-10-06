@@ -1,4 +1,4 @@
-# Docker container to build kelvin_v2 toolchain in Rocky linux.
+# Docker container to build coralnpu_v2 toolchain in Rocky linux.
 # Run at toolchain/build_scripts directory :
 # docker build --no-cache -t toolchain_test -f toolchain_rockylinux_image.dockerfile .
 

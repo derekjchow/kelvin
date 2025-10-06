@@ -15,25 +15,25 @@
 package(default_visibility = ["//visibility:public"])
 
 platform(
-    name = "kelvin_v2",
+    name = "coralnpu_v2",
     constraint_values = [
-        "//platforms/cpu:kelvin_v2",
+        "//platforms/cpu:coralnpu_v2",
         "@platforms//os:none",
     ],
 )
 
 platform(
-    name = "kelvin_v2_semihosting",
+    name = "coralnpu_v2_semihosting",
     constraint_values = [
-        "//platforms/cpu:kelvin_v2",
+        "//platforms/cpu:coralnpu_v2",
         "//platforms/os:semihosting",
     ],
 )
 
 config_setting(
-    name = "kelvin_config",
+    name = "coralnpu_config",
     constraint_values = [
-        "//platforms/cpu:kelvin_v2",
+        "//platforms/cpu:coralnpu_v2",
         "@platforms//os:none",
     ],
 )

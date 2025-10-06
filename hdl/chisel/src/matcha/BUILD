@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-load("@kelvin_hw//rules:chisel.bzl", "chisel_cc_library", "chisel_library")
+load("@coralnpu_hw//rules:chisel.bzl", "chisel_cc_library", "chisel_library")
 
 package(default_visibility = ["//visibility:public"])
 
@@ -21,29 +21,29 @@ chisel_library(
     srcs = [
         "Axi2Sram.scala",
         "Crossbar.scala",
-        "Kelvin.scala",
+        "CoralNPU.scala",
         "MatchaParameters.scala",
     ],
     deps = [
         "//hdl/chisel/src/bus:bus",
         "//hdl/chisel/src/common:common",
-        "//hdl/chisel/src/kelvin:clock_gate",
-        "//hdl/chisel/src/kelvin:kelvin",
-        "//hdl/chisel/src/kelvin:kelvin_base",
+        "//hdl/chisel/src/coralnpu:clock_gate",
+        "//hdl/chisel/src/coralnpu:coralnpu",
+        "//hdl/chisel/src/coralnpu:coralnpu_base",
     ],
 )
 
 chisel_cc_library(
-    name = "kelvin_cc_library",
+    name = "coralnpu_cc_library",
     chisel_lib = ":matcha",
-    emit_class = "matcha.EmitKelvin",
-    module_name = "Kelvin",
+    emit_class = "matcha.EmitCoralNPU",
+    module_name = "CoralNPU",
     verilog_deps = [
         "//hdl/verilog:sram_1rw_256x256",
         "//hdl/verilog:sram_1rw_256x288",
     ],
     extra_outs = [
-        "VKelvin_parameters.h",
+        "VCoralNPU_parameters.h",
     ],
     vopts = [
         "-DUSE_GENERIC",
@@ -51,21 +51,21 @@ chisel_cc_library(
 )
 
 chisel_cc_library(
-    name = "kelvin_scalar_cc_library",
+    name = "coralnpu_scalar_cc_library",
     chisel_lib = ":matcha",
-    emit_class = "matcha.EmitKelvin",
-    module_name = "KelvinScalar",
+    emit_class = "matcha.EmitCoralNPU",
+    module_name = "CoralNPUScalar",
     verilog_deps = [
         "//hdl/verilog:sram_1rw_256x256",
         "//hdl/verilog:sram_1rw_256x288",
     ],
-    verilog_file_path = "KelvinScalar.sv",
+    verilog_file_path = "CoralNPUScalar.sv",
     gen_flags = [
         "--enableVector=False",
-        "--moduleName=KelvinScalar",
+        "--moduleName=CoralNPUScalar",
     ],
     extra_outs = [
-        "VKelvinScalar_parameters.h",
+        "VCoralNPUScalar_parameters.h",
     ],
     vopts = [
         "-DUSE_GENERIC",
@@ -73,24 +73,24 @@ chisel_cc_library(
 )
 
 chisel_cc_library(
-    name = "kelvin_mini_cc_library",
+    name = "coralnpu_mini_cc_library",
     chisel_lib = ":matcha",
-    emit_class = "matcha.EmitKelvin",
-    module_name = "KelvinMini",
+    emit_class = "matcha.EmitCoralNPU",
+    module_name = "CoralNPUMini",
     verilog_deps = [
         "//hdl/verilog:sram_1rw_256x256",
         "//hdl/verilog:sram_1rw_256x288",
     ],
-    verilog_file_path = "KelvinMini.sv",
+    verilog_file_path = "CoralNPUMini.sv",
     gen_flags = [
         "--enableFetchL0=False",
         "--fetchDataBits=128",
         "--lsuDataBits=128",
         "--enableVector=False",
-        "--moduleName=KelvinMini",
+        "--moduleName=CoralNPUMini",
     ],
     extra_outs = [
-        "VKelvinMini_parameters.h",
+        "VCoralNPUMini_parameters.h",
     ],
     vopts = [
         "-DUSE_GENERIC",

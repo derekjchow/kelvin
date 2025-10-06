@@ -2,7 +2,7 @@ package bus
 
 import chisel3._
 import freechips.rocketchip.util.{AsyncQueue, AsyncQueueParams}
-import kelvin.Parameters
+import coralnpu.Parameters
 
 class TlulFifoAsync(
     p: TLULParameters,

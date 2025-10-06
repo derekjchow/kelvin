@@ -18,7 +18,7 @@ def _clean_name(name):
     return name.replace("-", "_").replace(".", "_").lower()
 
 def requirement(name):
-    return "@kelvin_pip_deps_" + _clean_name(name) + "//:pkg"
+    return "@coralnpu_pip_deps_" + _clean_name(name) + "//:pkg"
 
 def _build_file_content(pypi_name, pypi_version, deps = []):
     return """
@@ -43,7 +43,7 @@ filegroup(
 
 def install_deps():
     http_archive(
-        name = "kelvin_pip_deps_tqdm",
+        name = "coralnpu_pip_deps_tqdm",
         urls = [
             "https://files.pythonhosted.org/packages/d0/30/dc54f88dd4a2b5dc8a0279bdd7270e735851848b762aeb1c1184ed1f6b14/tqdm-4.67.1-py3-none-any.whl",
         ],
@@ -53,7 +53,7 @@ def install_deps():
     )
 
     http_archive(
-        name = "kelvin_pip_deps_cocotb",
+        name = "coralnpu_pip_deps_cocotb",
         urls = [
             "https://storage.googleapis.com/shodan-public-artifacts/cocotb-2.0.0.dev0-cp39-cp39-linux_x86_64.whl",
         ],
@@ -63,14 +63,14 @@ def install_deps():
             pypi_name = "cocotb",
             pypi_version = "20.0.0.dev0",
             deps = [
-                "@kelvin_pip_deps_find_libpython//:pkg",
-                "@kelvin_pip_deps_pytest//:pkg",
+                "@coralnpu_pip_deps_find_libpython//:pkg",
+                "@coralnpu_pip_deps_pytest//:pkg",
             ],
         ),
     )
 
     http_archive(
-        name = "kelvin_pip_deps_find_libpython",
+        name = "coralnpu_pip_deps_find_libpython",
         urls = [
             "https://files.pythonhosted.org/packages/1d/89/6b4624122d5c61a86e8aebcebd377866338b705ce4f115c45b046dc09b99/find_libpython-0.4.0-py3-none-any.whl",
         ],
@@ -80,7 +80,7 @@ def install_deps():
     )
 
     http_archive(
-        name = "kelvin_pip_deps_numpy",
+        name = "coralnpu_pip_deps_numpy",
         urls = [
             "https://files.pythonhosted.org/packages/87/d3/74e627205462a170f39e7d7ddd2b4166a0d8ab163377592c7f4fa935cc8c/numpy-2.0.0-cp39-cp39-manylinux_2_17_x86_64.manylinux2014_x86_64.whl",
         ],
@@ -90,7 +90,7 @@ def install_deps():
     )
 
     http_archive(
-        name = "kelvin_pip_deps_pyelftools",
+        name = "coralnpu_pip_deps_pyelftools",
         urls = [
             "https://files.pythonhosted.org/packages/04/7c/867630e6e6293793f838b31034aa1875e1c3bd8c1ec34a0929a2506f350c/pyelftools-0.29-py2.py3-none-any.whl",
         ],
@@ -100,7 +100,7 @@ def install_deps():
     )
 
     http_archive(
-        name = "kelvin_pip_deps_pytest",
+        name = "coralnpu_pip_deps_pytest",
         urls = [
             "https://files.pythonhosted.org/packages/30/3d/64ad57c803f1fa1e963a7946b6e0fea4a70df53c1a7fed304586539c2bac/pytest-8.3.5-py3-none-any.whl",
         ],
@@ -110,16 +110,16 @@ def install_deps():
             pypi_name = "pytest",
             pypi_version = "8.3.5",
             deps = [
-                "@kelvin_pip_deps_pluggy//:pkg",
-                "@kelvin_pip_deps_iniconfig//:pkg",
-                "@kelvin_pip_deps_packaging//:pkg",
-                "@kelvin_pip_deps_exceptiongroup//:pkg",
+                "@coralnpu_pip_deps_pluggy//:pkg",
+                "@coralnpu_pip_deps_iniconfig//:pkg",
+                "@coralnpu_pip_deps_packaging//:pkg",
+                "@coralnpu_pip_deps_exceptiongroup//:pkg",
             ],
         ),
     )
 
     http_archive(
-        name = "kelvin_pip_deps_pluggy",
+        name = "coralnpu_pip_deps_pluggy",
         urls = [
             "https://files.pythonhosted.org/packages/54/20/4d324d65cc6d9205fabedc306948156824eb9f0ee1633355a8f7ec5c66bf/pluggy-1.6.0-py3-none-any.whl",
         ],
@@ -129,7 +129,7 @@ def install_deps():
     )
 
     http_archive(
-        name = "kelvin_pip_deps_iniconfig",
+        name = "coralnpu_pip_deps_iniconfig",
         urls = [
             "https://files.pythonhosted.org/packages/2c/e1/e6716421ea10d38022b952c159d5161ca1193197fb744506875fbb87ea7b/iniconfig-2.1.0-py3-none-any.whl",
         ],
@@ -139,7 +139,7 @@ def install_deps():
     )
 
     http_archive(
-        name = "kelvin_pip_deps_packaging",
+        name = "coralnpu_pip_deps_packaging",
         urls = [
             "https://files.pythonhosted.org/packages/20/12/38679034af332785aac8774540895e234f4d07f7545804097de4b666afd8/packaging-25.0-py3-none-any.whl",
         ],
@@ -149,7 +149,7 @@ def install_deps():
     )
 
     http_archive(
-        name = "kelvin_pip_deps_exceptiongroup",
+        name = "coralnpu_pip_deps_exceptiongroup",
         urls = [
             "https://files.pythonhosted.org/packages/36/f4/c6e662dade71f56cd2f3735141b265c3c79293c109549c1e6933b0651ffc/exceptiongroup-1.3.0-py3-none-any.whl",
         ],
@@ -159,13 +159,13 @@ def install_deps():
             pypi_name = "exceptiongroup",
             pypi_version = "1.3.0",
             deps = [
-                "@kelvin_pip_deps_typing_extensions//:pkg",
+                "@coralnpu_pip_deps_typing_extensions//:pkg",
             ],
         ),
     )
 
     http_archive(
-        name = "kelvin_pip_deps_typing_extensions",
+        name = "coralnpu_pip_deps_typing_extensions",
         urls = [
             "https://files.pythonhosted.org/packages/8b/54/b1ae86c0973cc6f0210b53d508ca3641fb6d0c56823f288d108bc7ab3cc8/typing_extensions-4.13.2-py3-none-any.whl",
         ],
@@ -175,7 +175,7 @@ def install_deps():
     )
 
     http_archive(
-        name = "kelvin_pip_deps_sortedcontainers",
+        name = "coralnpu_pip_deps_sortedcontainers",
         urls = [
             "https://files.pythonhosted.org/packages/32/46/9cb0e58b2deb7f82b84065f37f3bffeb12413f947f9388e4cac22c4621ce/sortedcontainers-2.4.0-py2.py3-none-any.whl",
         ],
@@ -185,7 +185,7 @@ def install_deps():
     )
 
     http_archive(
-        name = "kelvin_pip_deps_intervaltree",
+        name = "coralnpu_pip_deps_intervaltree",
         strip_prefix = "intervaltree-3.1.0",
         urls = [
             "https://files.pythonhosted.org/packages/50/fb/396d568039d21344639db96d940d40eb62befe704ef849b27949ded5c3bb/intervaltree-3.1.0.tar.gz",
@@ -195,13 +195,13 @@ def install_deps():
             pypi_name = "intervaltree",
             pypi_version = "3.1.0",
             deps = [
-                "@kelvin_pip_deps_sortedcontainers//:pkg",
+                "@coralnpu_pip_deps_sortedcontainers//:pkg",
             ],
         ),
     )
 
     http_archive(
-        name = "kelvin_pip_deps_pyyaml",
+        name = "coralnpu_pip_deps_pyyaml",
         urls = [
             "https://files.pythonhosted.org/packages/3d/32/e7bd8535d22ea2874cef6a81021ba019474ace0d13a4819c2a4bce79bd6a/PyYAML-6.0.2-cp39-cp39-manylinux_2_17_x86_64.manylinux2014_x86_64.whl",
         ],
@@ -211,7 +211,7 @@ def install_deps():
     )
 
     http_archive(
-        name = "kelvin_pip_deps_importlib_metadata",
+        name = "coralnpu_pip_deps_importlib_metadata",
         urls = [
             "https://files.pythonhosted.org/packages/20/b0/36bd937216ec521246249be3bf9855081de4c5e06a0c9b4219dbeda50373/importlib_metadata-8.7.0-py3-none-any.whl",
         ],
@@ -221,7 +221,7 @@ def install_deps():
     )
 
     http_archive(
-        name = "kelvin_pip_deps_importlib_resources",
+        name = "coralnpu_pip_deps_importlib_resources",
         urls = [
             "https://files.pythonhosted.org/packages/a4/ed/1f1afb2e9e7f38a545d628f864d562a5ae64fe6f7a10e28ffb9b185b4e89/importlib_resources-6.5.2-py3-none-any.whl",
         ],
@@ -231,7 +231,7 @@ def install_deps():
     )
 
     http_archive(
-        name = "kelvin_pip_deps_six",
+        name = "coralnpu_pip_deps_six",
         urls = [
             "https://files.pythonhosted.org/packages/b7/ce/149a00dd41f10bc29e5921b496af8b574d8413afcd5e30dfa0ed46c2cc5e/six-1.17.0-py2.py3-none-any.whl",
         ],
@@ -241,7 +241,7 @@ def install_deps():
     )
 
     http_archive(
-        name = "kelvin_pip_deps_colorama",
+        name = "coralnpu_pip_deps_colorama",
         urls = [
             "https://files.pythonhosted.org/packages/d1/d6/3965ed04c63042e047cb6a3e6ed1a63a35087b6a609aa3a15ed8ac56c221/colorama-0.4.6-py2.py3-none-any.whl",
         ],
@@ -251,7 +251,7 @@ def install_deps():
     )
 
     http_archive(
-        name = "kelvin_pip_deps_prettytable",
+        name = "coralnpu_pip_deps_prettytable",
         urls = [
             "https://files.pythonhosted.org/packages/02/c7/5613524e606ea1688b3bdbf48aa64bafb6d0a4ac3750274c43b6158a390f/prettytable-3.16.0-py3-none-any.whl",
         ],
@@ -261,7 +261,7 @@ def install_deps():
     )
 
     http_archive(
-        name = "kelvin_pip_deps_pyusb",
+        name = "coralnpu_pip_deps_pyusb",
         urls = [
             "https://files.pythonhosted.org/packages/28/b8/27e6312e86408a44fe16bd28ee12dd98608b39f7e7e57884a24e8f29b573/pyusb-1.3.1-py3-none-any.whl",
         ],
@@ -271,7 +271,7 @@ def install_deps():
     )
 
     http_archive(
-        name = "kelvin_pip_deps_intelhex",
+        name = "coralnpu_pip_deps_intelhex",
         urls = [
             "https://files.pythonhosted.org/packages/97/78/79461288da2b13ed0a13deb65c4ad1428acb674b95278fa9abf1cefe62a2/intelhex-2.3.0-py2.py3-none-any.whl",
         ],
@@ -281,7 +281,7 @@ def install_deps():
     )
 
     http_archive(
-        name = "kelvin_pip_deps_lark",
+        name = "coralnpu_pip_deps_lark",
         urls = [
             "https://files.pythonhosted.org/packages/2d/00/d90b10b962b4277f5e64a78b6609968859ff86889f5b898c1a778c06ec00/lark-1.2.2-py3-none-any.whl",
         ],
@@ -291,7 +291,7 @@ def install_deps():
     )
 
     http_archive(
-        name = "kelvin_pip_deps_libusb_package",
+        name = "coralnpu_pip_deps_libusb_package",
         urls = [
             "https://files.pythonhosted.org/packages/23/90/a5bd0f6b656e39177f1848192d54bda3b2f2c55ea36609f7ccc3f0425642/libusb_package-1.0.26.3-cp39-cp39-manylinux_2_17_x86_64.manylinux2014_x86_64.whl",
         ],
@@ -301,7 +301,7 @@ def install_deps():
     )
 
     http_archive(
-        name = "kelvin_pip_deps_psutil",
+        name = "coralnpu_pip_deps_psutil",
         urls = [
             "https://files.pythonhosted.org/packages/bf/b9/b0eb3f3cbcb734d930fdf839431606844a825b23eaf9a6ab371edac8162c/psutil-7.0.0-cp36-abi3-manylinux_2_12_x86_64.manylinux2010_x86_64.manylinux_2_17_x86_64.manylinux2014_x86_64.whl",
         ],
@@ -311,7 +311,7 @@ def install_deps():
     )
 
     http_archive(
-        name = "kelvin_pip_deps_natsort",
+        name = "coralnpu_pip_deps_natsort",
         urls = [
             "https://files.pythonhosted.org/packages/ef/82/7a9d0550484a62c6da82858ee9419f3dd1ccc9aa1c26a1e43da3ecd20b0d/natsort-8.4.0-py3-none-any.whl",
         ],
@@ -321,7 +321,7 @@ def install_deps():
     )
 
     http_archive(
-        name = "kelvin_pip_deps_pylink_square",
+        name = "coralnpu_pip_deps_pylink_square",
         urls = [
             "https://files.pythonhosted.org/packages/04/3c/0e587060301ff24c67cd06d7bc3479b85dbb46d9e334aa020bef340753da/pylink_square-1.6.0-py2.py3-none-any.whl",
         ],
@@ -331,13 +331,13 @@ def install_deps():
             pypi_name = "pylink_square",
             pypi_version = "1.6.0",
             deps = [
-                "@kelvin_pip_deps_psutil//:pkg",
+                "@coralnpu_pip_deps_psutil//:pkg",
             ],
         ),
     )
 
     http_archive(
-        name = "kelvin_pip_deps_pyocd",
+        name = "coralnpu_pip_deps_pyocd",
         urls = [
             "https://files.pythonhosted.org/packages/94/9b/9ee42675ecc933f1ac6a2b518bdc8d3b77eb8eef49e5e342c88562ab8533/pyocd-0.36.0-py3-none-any.whl",
         ],
@@ -347,27 +347,27 @@ def install_deps():
             pypi_name = "pyocd",
             pypi_version = "0.36.0",
             deps = [
-                "@kelvin_pip_deps_colorama//:pkg",
-                "@kelvin_pip_deps_intervaltree//:pkg",
-                "@kelvin_pip_deps_importlib_metadata//:pkg",
-                "@kelvin_pip_deps_importlib_resources//:pkg",
-                "@kelvin_pip_deps_intelhex//:pkg",
-                "@kelvin_pip_deps_lark//:pkg",
-                "@kelvin_pip_deps_libusb_package//:pkg",
-                "@kelvin_pip_deps_natsort//:pkg",
-                "@kelvin_pip_deps_prettytable//:pkg",
-                "@kelvin_pip_deps_six//:pkg",
-                "@kelvin_pip_deps_typing_extensions//:pkg",
-                "@kelvin_pip_deps_pylink_square//:pkg",
-                "@kelvin_pip_deps_pyusb//:pkg",
-                "@kelvin_pip_deps_pyyaml//:pkg",
+                "@coralnpu_pip_deps_colorama//:pkg",
+                "@coralnpu_pip_deps_intervaltree//:pkg",
+                "@coralnpu_pip_deps_importlib_metadata//:pkg",
+                "@coralnpu_pip_deps_importlib_resources//:pkg",
+                "@coralnpu_pip_deps_intelhex//:pkg",
+                "@coralnpu_pip_deps_lark//:pkg",
+                "@coralnpu_pip_deps_libusb_package//:pkg",
+                "@coralnpu_pip_deps_natsort//:pkg",
+                "@coralnpu_pip_deps_prettytable//:pkg",
+                "@coralnpu_pip_deps_six//:pkg",
+                "@coralnpu_pip_deps_typing_extensions//:pkg",
+                "@coralnpu_pip_deps_pylink_square//:pkg",
+                "@coralnpu_pip_deps_pyusb//:pkg",
+                "@coralnpu_pip_deps_pyyaml//:pkg",
             ],
         ),
     )
 
     # FPGA
     http_archive(
-        name = "kelvin_pip_deps_mako",
+        name = "coralnpu_pip_deps_mako",
         urls = [
             "https://files.pythonhosted.org/packages/87/fb/99f81ac72ae23375f22b7afdb7642aba97c00a713c217124420147681a2f/mako-1.3.10-py3-none-any.whl",
         ],
@@ -377,7 +377,7 @@ def install_deps():
     )
 
     http_archive(
-        name = "kelvin_pip_deps_hjson",
+        name = "coralnpu_pip_deps_hjson",
         urls = [
             "https://files.pythonhosted.org/packages/1f/7f/13cd798d180af4bf4c0ceddeefba2b864a63c71645abc0308b768d67bb81/hjson-3.1.0-py3-none-any.whl",
         ],
@@ -387,7 +387,7 @@ def install_deps():
     )
 
     http_archive(
-        name = "kelvin_pip_deps_fusesoc",
+        name = "coralnpu_pip_deps_fusesoc",
         urls = [
             "https://files.pythonhosted.org/packages/cb/a8/10f62458dda2ca07c49477448e643b10f30825b7741fdb6ec3e6188b6999/fusesoc-2.4.3-py3-none-any.whl",
         ],
@@ -397,7 +397,7 @@ def install_deps():
             pypi_name = "fusesoc",
             pypi_version = "2.4.3",
             deps = [
-                "@kelvin_pip_deps_hjson//:pkg",
+                "@coralnpu_pip_deps_hjson//:pkg",
             ],
         ),
     )

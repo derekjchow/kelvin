@@ -1,5 +1,5 @@
 CAPI=2:
-name: "com.google.kelvin:fpga:spi_dpi_master:0.1"
+name: "com.google.coralnpu:fpga:spi_dpi_master:0.1"
 description: "SPI DPI Master for Verilator simulations."
 
 filesets:

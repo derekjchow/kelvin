@@ -18,7 +18,7 @@ import chisel3._
 import chisel3.util._
 import freechips.rocketchip.util._
 
-import kelvin.Parameters
+import coralnpu.Parameters
 
 class Spi2TLUL(p: Parameters) extends Module {
     val tlul_p = new TLULParameters(p)

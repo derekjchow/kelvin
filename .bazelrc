@@ -67,8 +67,8 @@ build --copt=-DTF_LITE_MCU_DEBUG_LOG
 build:opt --copt=-DTF_LITE_STRIP_ERROR_STRINGS
 
 
-# Selecting kelvin platform with custom toolchain.
-build:kelvin_v2 --platforms=//platforms:kelvin_v2
+# Selecting coralnpu platform with custom toolchain.
+build:coralnpu_v2 --platforms=//platforms:coralnpu_v2
 
 build --incompatible_enable_cc_toolchain_resolution
 build --use_top_level_targets_for_symlinks=false

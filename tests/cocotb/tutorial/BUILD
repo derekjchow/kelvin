@@ -13,7 +13,7 @@
 # limitations under the License.
 
 load("//rules:coco_tb.bzl", "cocotb_test_suite")
-load("//rules:kelvin_v2.bzl", "kelvin_v2_binary")
+load("//rules:coralnpu_v2.bzl", "coralnpu_v2_binary")
 load("//rules:utils.bzl", "generate_cc_arrays")
 load(
     "//tests/cocotb:build_defs.bzl",
@@ -48,7 +48,7 @@ cocotb_test_suite(
         "seed": "42",
         "test_module": ["tutorial.py"],
         "deps": [
-            "//kelvin_test_utils:core_mini_axi_sim_interface",
+            "//coralnpu_test_utils:core_mini_axi_sim_interface",
             "@rules_python//python/runfiles",
         ],
         "data": glob(["**/*.elf"]),
@@ -59,7 +59,7 @@ cocotb_test_suite(
     ],
     vcs_defines = VCS_DEFINES,
     vcs_test_args = VCS_TEST_ARGS,
-    vcs_verilog_sources = ["//hdl/chisel/src/kelvin:core_mini_axi_cc_library_verilog"],
+    vcs_verilog_sources = ["//hdl/chisel/src/coralnpu:core_mini_axi_cc_library_verilog"],
     verilator_model = "//tests/cocotb:core_mini_axi_model",
 )
 
@@ -77,35 +77,35 @@ cocotb_test_suite(
         "seed": "42",
         "test_module": ["hello_world_float_core_mini_axi.py"],
         "deps": [
-            "//kelvin_test_utils:core_mini_axi_sim_interface",
+            "//coralnpu_test_utils:core_mini_axi_sim_interface",
             "@bazel_tools//tools/python/runfiles",
         ],
-        "data": ["//examples:kelvin_v2_hello_world_add_floats.elf"],
+        "data": ["//examples:coralnpu_v2_hello_world_add_floats.elf"],
     },
     vcs_build_args = VCS_BUILD_ARGS,
     vcs_data = [
-        "//examples:kelvin_v2_hello_world_add_floats.elf",
+        "//examples:coralnpu_v2_hello_world_add_floats.elf",
         "//tests/cocotb:coverage_exclude.cfg",
     ],
     vcs_defines = VCS_DEFINES,
     vcs_test_args = VCS_TEST_ARGS,
-    vcs_verilog_sources = ["//hdl/chisel/src/kelvin:core_mini_axi_cc_library_verilog"],
+    vcs_verilog_sources = ["//hdl/chisel/src/coralnpu:core_mini_axi_cc_library_verilog"],
     verilator_model = "//tests/cocotb:core_mini_axi_model",
 )
 
-kelvin_v2_binary(
-    name = "kelvin_v2_program",
+coralnpu_v2_binary(
+    name = "coralnpu_v2_program",
     srcs = ["program.cc"],
 )
 
-kelvin_v2_binary(
+coralnpu_v2_binary(
     name = "tflite_micro_test",
     srcs = [
         "hello_world_tflite_cc",
         "tflite_micro_test.cc",
     ],
     hdrs = ["hello_world_tflite.h"],
-    linker_script = "@kelvin_hw//toolchain:kelvin_tcm_highmem.ld",
+    linker_script = "@coralnpu_hw//toolchain:coralnpu_tcm_highmem.ld",
     deps = [
         "@tflite_micro//tensorflow/lite/micro:micro_framework",
         "@tflite_micro//tensorflow/lite/micro:micro_log",

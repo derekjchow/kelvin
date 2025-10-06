@@ -20,46 +20,46 @@ load("@rules_proto//proto:defs.bzl", "proto_library")
 
 exports_files([
     "stty",
-    "kelvin-verilator.resc",
-    "kelvin-verilator.repl",
+    "coralnpu-verilator.resc",
+    "coralnpu-verilator.repl",
     "Vtop_bin.py",
     "Vtop_master.py",
     "Vtop_slave.py",
 ])
 
 grpc_proto_library(
-    name = "kelvin_grpc_cc",
-    srcs = [":kelvin.proto"],
+    name = "coralnpu_grpc_cc",
+    srcs = [":coralnpu.proto"],
 )
 
 proto_library(
-    name = "kelvin_proto_descriptor",
-    srcs = [":kelvin.proto"],
+    name = "coralnpu_proto_descriptor",
+    srcs = [":coralnpu.proto"],
 )
 
 py_proto_library(
-    name = "kelvin_py_pb2",
-    deps = [":kelvin_proto_descriptor"],
+    name = "coralnpu_py_pb2",
+    deps = [":coralnpu_proto_descriptor"],
 )
 
 py_grpc_library(
-    name = "kelvin_grpc_py",
-    deps = [":kelvin_py_pb2"],
-    srcs = [":kelvin_proto_descriptor"],
+    name = "coralnpu_grpc_py",
+    deps = [":coralnpu_py_pb2"],
+    srcs = [":coralnpu_proto_descriptor"],
 )
 
 py_binary(
     name = "Vtop_master",
     main = "Vtop_master.py",
     srcs = [":Vtop_master.py"],
-    deps = [":kelvin_grpc_py"],
+    deps = [":coralnpu_grpc_py"],
 )
 
 py_binary(
     name = "Vtop_slave",
     main = "Vtop_slave.py",
     srcs = [":Vtop_slave.py"],
-    deps = [":kelvin_grpc_py"],
+    deps = [":coralnpu_grpc_py"],
 )
 
 cc_library(
@@ -79,9 +79,9 @@ cc_library(
       "@renode//:src/Plugins/VerilatorPlugin/VerilatorIntegrationLibrary/libs/socket-cpp/Socket/Socket.cpp",
     ],
     deps = [
-        ":kelvin_grpc_cc",
+        ":coralnpu_grpc_cc",
         "@com_github_grpc_grpc//:grpc++",
-        "@kelvin_hw//hdl/chisel/src/kelvin:core_mini_axi_cc_library_cc",
+        "@coralnpu_hw//hdl/chisel/src/coralnpu:core_mini_axi_cc_library_cc",
         "@renode//:VerilatorIntegrationLibrary",
         "@verilator//:libverilator",
     ],
@@ -91,7 +91,7 @@ cc_binary(
     name = "Vtop_bin",
     deps = [
         ":Vtop_internal",
-        "@kelvin_hw//hdl/chisel/src/kelvin:core_mini_axi_cc_library_cc",
+        "@coralnpu_hw//hdl/chisel/src/coralnpu:core_mini_axi_cc_library_cc",
         "@renode//:VerilatorIntegrationLibrary",
         "@verilator//:libverilator",
     ],

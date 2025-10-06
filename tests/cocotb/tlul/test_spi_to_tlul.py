@@ -18,9 +18,9 @@ import os
 import math
 from cocotb.clock import Clock
 from cocotb.triggers import RisingEdge, ClockCycles, FallingEdge
-from kelvin_test_utils.TileLinkULInterface import TileLinkULInterface
-from kelvin_test_utils.spi_master import SPIMaster
-from kelvin_test_utils.spi_constants import SpiRegAddress, SpiCommand, TlStatus
+from coralnpu_test_utils.TileLinkULInterface import TileLinkULInterface
+from coralnpu_test_utils.spi_master import SPIMaster
+from coralnpu_test_utils.spi_constants import SpiRegAddress, SpiCommand, TlStatus
 
 async def setup_dut(dut, spi_master):
     # Main clock started by the test

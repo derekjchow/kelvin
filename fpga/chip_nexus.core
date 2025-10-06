@@ -1,11 +1,11 @@
 CAPI=2:
-name: "com.google.kelvin:fpga:chip_nexus:0.1"
-description: "Nexus-specific top-level for Kelvin."
+name: "com.google.coralnpu:fpga:chip_nexus:0.1"
+description: "Nexus-specific top-level for CoralNPU."
 
 filesets:
   files_rtl:
     depend:
-      - com.google.kelvin:fpga:kelvin_soc
+      - com.google.coralnpu:fpga:coralnpu_soc
     files:
       - rtl/chip_nexus.sv
       - rtl/clkgen_wrapper.sv

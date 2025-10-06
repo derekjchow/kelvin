@@ -3,7 +3,7 @@ package bus
 import chisel3._
 import chisel3.util._
 import common.MakeInvalid
-import kelvin.Parameters
+import coralnpu.Parameters
 
 // A simple error responder that immediately generates an error response
 // for any incoming request.

@@ -80,9 +80,9 @@ index ce392a9..1703e4f 100644
 +        import os
 +        from bazel_tools.tools.python.runfiles import runfiles
 +        r = runfiles.Create()
-+        sim_build = os.path.dirname(r.Rlocation(f"kelvin_hw/{args.model}"))
++        sim_build = os.path.dirname(r.Rlocation(f"coralnpu_hw/{args.model}"))
 +        test_flags['build_dir'] = sim_build
-+        test_flags['extra_env']['LD_LIBRARY_PATH'] = "{}:{}".format(r.Rlocation("kelvin_hw/external/kelvin_pip_deps_cocotb/cocotb/libs"), os.environ.get("LD_LIBRARY_PATH", ""))
++        test_flags['extra_env']['LD_LIBRARY_PATH'] = "{}:{}".format(r.Rlocation("coralnpu_hw/external/coralnpu_pip_deps_cocotb/cocotb/libs"), os.environ.get("LD_LIBRARY_PATH", ""))
 +        os.environ.pop('LD_LIBRARY_PATH', None)
 +    else:
 +        runner.build(**build_flags)

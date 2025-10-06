@@ -15,7 +15,7 @@
 package top_pkg;
 
   // This is a placeholder file.
-  // Toplevel constants for the Kelvin SoC will be added here.
+  // Toplevel constants for the CoralNPU SoC will be added here.
   localparam int TL_AW = 32;
   localparam int TL_DW = 32;
   localparam int TL_AIW = 8;

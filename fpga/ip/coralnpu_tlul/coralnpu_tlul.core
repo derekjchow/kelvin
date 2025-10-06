@@ -1,0 +1,17 @@
+CAPI=2:
+name: "coralnpuv2:ip:coralnpu_tlul:0.1"
+description: "CoralNPU TL-UL components"
+
+filesets:
+  rtl:
+    depend:
+      - "lowrisc:tlul:headers"
+    files:
+      - coralnpu_tlul_pkg_128.sv
+      - coralnpu_tlul_pkg_32.sv
+    file_type: systemVerilogSource
+
+targets:
+  default:
+    filesets:
+      - rtl

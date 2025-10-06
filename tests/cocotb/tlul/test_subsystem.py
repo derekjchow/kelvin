@@ -18,9 +18,9 @@ from cocotb.triggers import ClockCycles
 from elftools.elf.elffile import ELFFile
 from bazel_tools.tools.python.runfiles import runfiles
 
-from kelvin_test_utils.TileLinkULInterface import TileLinkULInterface, create_a_channel_req
-from kelvin_test_utils.spi_master import SPIMaster
-from kelvin_test_utils.spi_constants import SpiRegAddress, SpiCommand, TlStatus
+from coralnpu_test_utils.TileLinkULInterface import TileLinkULInterface, create_a_channel_req
+from coralnpu_test_utils.spi_master import SPIMaster
+from coralnpu_test_utils.spi_constants import SpiRegAddress, SpiCommand, TlStatus
 
 # --- Constants ---
 BUS_WIDTH_BITS = 128
@@ -281,7 +281,7 @@ async def test_program_execution_via_host(dut):
 
     # Find and load the ELF file
     r = runfiles.Create()
-    elf_path = r.Rlocation("kelvin_hw/tests/cocotb/rvv/arithmetics/rvv_add_int32_m1.elf")
+    elf_path = r.Rlocation("coralnpu_hw/tests/cocotb/rvv/arithmetics/rvv_add_int32_m1.elf")
     assert elf_path, "Could not find ELF file"
 
     with open(elf_path, "rb") as f:
@@ -295,13 +295,13 @@ async def test_program_execution_via_host(dut):
     # 2. Release clock gate
     # 3. Release reset
 
-    kelvin_pc_csr_addr = 0x30004
-    kelvin_reset_csr_addr = 0x30000
+    coralnpu_pc_csr_addr = 0x30004
+    coralnpu_reset_csr_addr = 0x30000
 
     # Program the start PC
     dut._log.info(f"Programming start PC to 0x{entry_point:08x}")
     write_txn = create_a_channel_req(
-        address=kelvin_pc_csr_addr,
+        address=coralnpu_pc_csr_addr,
         data=entry_point,
         mask=0xF,
         width=host_if.width
@@ -313,7 +313,7 @@ async def test_program_execution_via_host(dut):
     # Release clock gate
     dut._log.info("Releasing clock gate...")
     write_txn = create_a_channel_req(
-        address=kelvin_reset_csr_addr,
+        address=coralnpu_reset_csr_addr,
         data=1,
         mask=0xF,
         width=host_if.width
@@ -327,7 +327,7 @@ async def test_program_execution_via_host(dut):
     # Release reset
     dut._log.info("Releasing reset...")
     write_txn = create_a_channel_req(
-        address=kelvin_reset_csr_addr,
+        address=coralnpu_reset_csr_addr,
         data=0,
         mask=0xF,
         width=host_if.width
@@ -366,7 +366,7 @@ async def test_program_execution_via_spi(dut):
 
     # Find and load the ELF file
     r = runfiles.Create()
-    elf_path = r.Rlocation("kelvin_hw/tests/cocotb/rvv/arithmetics/rvv_add_int32_m1.elf")
+    elf_path = r.Rlocation("coralnpu_hw/tests/cocotb/rvv/arithmetics/rvv_add_int32_m1.elf")
     assert elf_path, "Could not find ELF file"
 
     with open(elf_path, "rb") as f:
@@ -375,22 +375,22 @@ async def test_program_execution_via_spi(dut):
     dut._log.info(f"Program loaded via SPI. Entry point: 0x{entry_point:08x}")
 
     # --- Execute Program ---
-    kelvin_pc_csr_addr = 0x30004
-    kelvin_reset_csr_addr = 0x30000
+    coralnpu_pc_csr_addr = 0x30004
+    coralnpu_reset_csr_addr = 0x30000
 
     # Program the start PC
     dut._log.info(f"Programming start PC to 0x{entry_point:08x}")
-    await write_word_via_spi(spi_master, kelvin_pc_csr_addr, entry_point)
+    await write_word_via_spi(spi_master, coralnpu_pc_csr_addr, entry_point)
 
     # Release clock gate
     dut._log.info("Releasing clock gate...")
-    await write_word_via_spi(spi_master, kelvin_reset_csr_addr, 1)
+    await write_word_via_spi(spi_master, coralnpu_reset_csr_addr, 1)
 
     await ClockCycles(dut.io_clk_i, 1)
 
     # Release reset
     dut._log.info("Releasing reset...")
-    await write_word_via_spi(spi_master, kelvin_reset_csr_addr, 0)
+    await write_word_via_spi(spi_master, coralnpu_reset_csr_addr, 0)
 
     # --- Wait for Completion ---
     dut._log.info("Waiting for program to halt...")

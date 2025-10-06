@@ -139,15 +139,15 @@ def _impl(ctx):
                         flags = [
                             "-nostdinc",
                             "-isystem",
-                            "external/toolchain_kelvin_v2/riscv32-unknown-elf/include/c++/15.1.0",
+                            "external/toolchain_coralnpu_v2/riscv32-unknown-elf/include/c++/15.1.0",
                             "-isystem",
-                            "external/toolchain_kelvin_v2/riscv32-unknown-elf/include/c++/15.1.0/backward",
+                            "external/toolchain_coralnpu_v2/riscv32-unknown-elf/include/c++/15.1.0/backward",
                             "-isystem",
-                            "external/toolchain_kelvin_v2/riscv32-unknown-elf/include/c++/15.1.0/riscv32-unknown-elf",
+                            "external/toolchain_coralnpu_v2/riscv32-unknown-elf/include/c++/15.1.0/riscv32-unknown-elf",
                             "-isystem",
-                            "external/toolchain_kelvin_v2/lib/gcc/riscv32-unknown-elf/15.1.0/include",
+                            "external/toolchain_coralnpu_v2/lib/gcc/riscv32-unknown-elf/15.1.0/include",
                             "-isystem",
-                            "external/toolchain_kelvin_v2/riscv32-unknown-elf/include",
+                            "external/toolchain_coralnpu_v2/riscv32-unknown-elf/include",
                         ],
                     ),
                 ],
@@ -314,9 +314,9 @@ def _impl(ctx):
 
     return cc_common.create_cc_toolchain_config_info(
         ctx = ctx,
-        toolchain_identifier = "kelvin_v2_toolchain",
+        toolchain_identifier = "coralnpu_v2_toolchain",
         host_system_name = "local",
-        target_system_name = "kelvin_v2",
+        target_system_name = "coralnpu_v2",
         target_cpu = "riscv32",
         target_libc = "newlib",
         compiler = "clang",
@@ -335,7 +335,7 @@ def _impl(ctx):
         tool_paths = tool_paths,
     )
 
-kelvin_v2_cc_toolchain_config = rule(
+coralnpu_v2_cc_toolchain_config = rule(
     implementation = _impl,
     attrs = {
         "semihosting": attr.bool()

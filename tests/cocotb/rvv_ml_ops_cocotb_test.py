@@ -2,7 +2,7 @@ import cocotb
 import numpy as np
 import argparse
 
-from kelvin_test_utils.sim_test_fixture import Fixture
+from coralnpu_test_utils.sim_test_fixture import Fixture
 from bazel_tools.tools.python.runfiles import runfiles
 
 
@@ -24,7 +24,7 @@ async def core_mini_rvv_matmul_test(dut):
     for elf_file in elf_files:
 
         await fixture.load_elf_and_lookup_symbols(
-            r.Rlocation('kelvin_hw/tests/cocotb/rvv/ml_ops/' + elf_file),
+            r.Rlocation('coralnpu_hw/tests/cocotb/rvv/ml_ops/' + elf_file),
             ['lhs_input', 'rhs_input', 'result_output'])
         np_type = np.int8
         min_value = np.iinfo(np_type).min

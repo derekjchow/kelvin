@@ -16,7 +16,7 @@
 
 #include <cstdint>
 
-#include "kelvin_hello_world_cc.h"
+#include "coralnpu_hello_world_cc.h"
 
 volatile uint32_t* uart0 = (uint32_t*)0x54000000L;
 void putc(char ch) {
@@ -43,48 +43,48 @@ void print_string(const char* s) {
 }
 
 void main(void) {
-  volatile uint8_t* kelvin_itcm = (uint8_t*)0x70000000L;
-  for (int i = 0; i < kelvin_hello_world_cc_bin_len; ++i) {
-      kelvin_itcm[i] = kelvin_hello_world_cc_bin[i];
+  volatile uint8_t* coralnpu_itcm = (uint8_t*)0x70000000L;
+  for (int i = 0; i < coralnpu_hello_world_cc_bin_len; ++i) {
+      coralnpu_itcm[i] = coralnpu_hello_world_cc_bin[i];
   }
-  volatile uint32_t* kelvin_reset_csr = (uint32_t*)0x70030000L;
+  volatile uint32_t* coralnpu_reset_csr = (uint32_t*)0x70030000L;
   // Disable clock gate
-  *kelvin_reset_csr = 1;
+  *coralnpu_reset_csr = 1;
 
-  // Tick a few cycles to allow Kelvin to reset.
+  // Tick a few cycles to allow CoralNPU to reset.
   for (volatile int i = 0; i < 10; ++i) {
     asm volatile("nop");
   }
 
   // Release reset
-  *kelvin_reset_csr = 0;
+  *coralnpu_reset_csr = 0;
 
-  // Spin a while to let Kelvin execute.
+  // Spin a while to let CoralNPU execute.
   for (volatile int i = 0; i < 2; ++i) {
       for (int i = 0; i < 100; i++) {
           asm volatile ("nop");
       }
   }
 
-  volatile uint32_t* kelvin_status_csr = (uint32_t*)0x70030008L;
+  volatile uint32_t* coralnpu_status_csr = (uint32_t*)0x70030008L;
   while (true) {
-    uint32_t status = *kelvin_status_csr;
+    uint32_t status = *coralnpu_status_csr;
     if (status) break;
   }
 
-  volatile uint32_t* kelvin_csrs = (uint32_t*)0x70030100L;
+  volatile uint32_t* coralnpu_csrs = (uint32_t*)0x70030100L;
   for (int i = 0; i < 8; ++i) {
-    print_uint32(*(kelvin_csrs + i));
+    print_uint32(*(coralnpu_csrs + i));
   }
 
-  uint32_t status = *kelvin_status_csr;
+  uint32_t status = *coralnpu_status_csr;
   if ((status & 3) == 3) {
     print_string("FAIL\n");
   } else if ((status & 1) == 1) {
     print_string("PASS\n");
   }
 
-  *kelvin_reset_csr = 3;
+  *coralnpu_reset_csr = 3;
   while (true) {
     asm volatile("wfi");
   }

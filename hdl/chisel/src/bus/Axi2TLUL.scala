@@ -16,9 +16,9 @@ package bus
 
 import chisel3._
 import chisel3.util._
-import common.KelvinRRArbiter
+import common.CoralNPURRArbiter
 
-import kelvin.Parameters
+import coralnpu.Parameters
 
 /**
   * Axi2TLUL: A Chisel module that serves as a bridge between an AXI4 master
@@ -31,7 +31,7 @@ import kelvin.Parameters
   * Note: This implementation handles single-beat AXI transactions (len=0). AXI
   * bursting would require more complex logic to be added.
   *
-  * @param p The Kelvin parameters.
+  * @param p The CoralNPU parameters.
   */
 class Axi2TLUL[A_USER <: Data, D_USER <: Data](p: Parameters, userAGen: () => A_USER, userDGen: () => D_USER) extends Module {
   val tlul_p = new TLULParameters(p)
@@ -68,7 +68,7 @@ class Axi2TLUL[A_USER <: Data, D_USER <: Data](p: Parameters, userAGen: () => A_
   write_stream.bits  := axiToTl(write_addr_q.bits, Some(write_data_q.bits))
 
   // Reads are given higher priority.
-  val arb = Module(new KelvinRRArbiter(new TileLink_A_ChannelBase(tlul_p, userAGen), 2))
+  val arb = Module(new CoralNPURRArbiter(new TileLink_A_ChannelBase(tlul_p, userAGen), 2))
   arb.io.in(0) <> read_stream
   arb.io.in(1) <> write_stream
   io.tl_a <> arb.io.out

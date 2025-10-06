@@ -8,7 +8,7 @@ appropriate subsystem.
 
 ## Slots
 
-The Kelvin LSU uses a concept called _slots_ to handle memory transactions. A
+The CoralNPU LSU uses a concept called _slots_ to handle memory transactions. A
 slot is a data structure which manages the state of a single dispatched LSU
 operation and determines what memory transaction should be performed. At its
 core, there exists a table in each slot which tracks which part of the memory
@@ -50,7 +50,7 @@ be written back to register files. Additionally, vector stores are
 stage. Once writeback is completed, the slot moves back into the
 **Vector Update** state for LMUL > 1, or the **Idle** state.
 
-Kelvin currently uses one "slot" in the LSU. In the future, multiple slots maybe
+CoralNPU currently uses one "slot" in the LSU. In the future, multiple slots maybe
 added to allow multiple operations to partake in the same transaction.
 
 ## Interfaces

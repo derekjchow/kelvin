@@ -1,6 +1,6 @@
 CAPI=2:
-name: "kelvinv2:ip:sram:0.1"
-description: "SRAM for Kelvin"
+name: "coralnpuv2:ip:sram:0.1"
+description: "SRAM for CoralNPU"
 
 filesets:
   rtl:

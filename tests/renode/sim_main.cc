@@ -25,11 +25,11 @@
 #include <thread>
 #include <signal.h>
 
-#include "tests/renode/kelvin.grpc.pb.h"
+#include "tests/renode/coralnpu.grpc.pb.h"
 #include <grpcpp/grpcpp.h>
 
-RenodeAgent* kelvin_slave;
-RenodeAgent* kelvin_master;
+RenodeAgent* coralnpu_slave;
+RenodeAgent* coralnpu_master;
 auto* axi_slave = new Axi(128, 32);
 auto* axi_master = new AxiSlave(128, 32);
 VCoreMiniAxi* top = new VCoreMiniAxi;
@@ -86,21 +86,21 @@ void tick() {
 
 void axiSlaveEval() {
   tick();
-  if (kelvin_slave) {
-    kelvin_slave->handleInterrupts();
+  if (coralnpu_slave) {
+    coralnpu_slave->handleInterrupts();
   }
 }
 
 void axiMasterEval() {
   tick();
-  if (kelvin_master) {
-    kelvin_master->handleInterrupts();
+  if (coralnpu_master) {
+    coralnpu_master->handleInterrupts();
   }
 }
 
 RenodeAgent* Init(bool slave) {
   if (slave) {
-    kelvin_slave = new RenodeAgent(axi_slave);
+    coralnpu_slave = new RenodeAgent(axi_slave);
     axi_slave->aclk = &top->io_aclk;
     axi_slave->aresetn = &top->io_aresetn;
 
@@ -153,10 +153,10 @@ RenodeAgent* Init(bool slave) {
     axi_slave->rvalid = &top->io_axi_slave_read_data_valid;
     axi_slave->rready = &top->io_axi_slave_read_data_ready;
     axi_slave->evaluateModel = &axiSlaveEval;
-    return kelvin_slave;
+    return coralnpu_slave;
   } else {
-    kelvin_master = new RenodeAgent(axi_master);
-    kelvin_slave->addBus(axi_master);
+    coralnpu_master = new RenodeAgent(axi_master);
+    coralnpu_slave->addBus(axi_master);
     axi_master->aclk = &top->io_aclk;
     axi_master->aresetn = &top->io_aresetn;
 
@@ -209,7 +209,7 @@ RenodeAgent* Init(bool slave) {
     axi_master->rvalid = &top->io_axi_master_read_data_valid;
     axi_master->rready = &top->io_axi_master_read_data_ready;
     axi_master->evaluateModel = &axiMasterEval;
-    return kelvin_master;
+    return coralnpu_master;
   }
 }
 
@@ -220,34 +220,34 @@ RenodeAgent* Init() {
   return nullptr;
 }
 
-std::thread kelvin_slave_thread;
-std::thread kelvin_master_thread;
-std::string kelvin_slave_address;
-std::string kelvin_master_address;
+std::thread coralnpu_slave_thread;
+std::thread coralnpu_master_thread;
+std::string coralnpu_slave_address;
+std::string coralnpu_master_address;
 
-class KelvinServiceImpl final : public kelvin::Kelvin::Service {
+class CoralNPUServiceImpl final : public coralnpu::CoralNPU::Service {
   grpc::Status StartAgent(
     grpc::ServerContext* context,
-    const kelvin::StartAgentRequest* request,
-    kelvin::StartAgentResponse* response) override {
+    const coralnpu::StartAgentRequest* request,
+    coralnpu::StartAgentResponse* response) override {
       auto type = request->type();
       auto receiverPort = request->receiverport();
       auto senderPort = request->senderport();
       auto address = request->address().c_str();
       switch (type) {
-        case kelvin::AgentType::Slave: {
-          kelvin_slave_address = address;
+        case coralnpu::AgentType::Slave: {
+          coralnpu_slave_address = address;
           Init(true);
-          kelvin_slave_thread = std::thread([=]() {
-            kelvin_slave->simulate(receiverPort, senderPort, kelvin_slave_address.c_str());
+          coralnpu_slave_thread = std::thread([=]() {
+            coralnpu_slave->simulate(receiverPort, senderPort, coralnpu_slave_address.c_str());
           });
         }
           break;
-        case kelvin::AgentType::Master: {
-          kelvin_master_address = address;
+        case coralnpu::AgentType::Master: {
+          coralnpu_master_address = address;
           Init(false);
-          kelvin_master_thread = std::thread([=]() {
-            kelvin_master->simulate(receiverPort, senderPort, kelvin_master_address.c_str());
+          coralnpu_master_thread = std::thread([=]() {
+            coralnpu_master->simulate(receiverPort, senderPort, coralnpu_master_address.c_str());
           });
         }
           break;
@@ -278,7 +278,7 @@ extern "C" int main(int argc, char** argv) {
 
   // TODO(atv): How to fix this port?
   std::string server_address = "127.0.0.1:9003";
-  KelvinServiceImpl service;
+  CoralNPUServiceImpl service;
 
   grpc::ServerBuilder builder;
   builder.AddListeningPort(server_address, grpc::InsecureServerCredentials());
@@ -294,10 +294,10 @@ extern "C" int main(int argc, char** argv) {
   sigaction(SIGTERM, &act, NULL);
 
   server->Wait();
-  if (kelvin_master_thread.joinable())
-    kelvin_master_thread.join();
-  if (kelvin_slave_thread.joinable())
-    kelvin_slave_thread.join();
+  if (coralnpu_master_thread.joinable())
+    coralnpu_master_thread.join();
+  if (coralnpu_slave_thread.joinable())
+    coralnpu_slave_thread.join();
 
   top->final();
 #if VM_TRACE

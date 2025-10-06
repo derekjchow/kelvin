@@ -12,8 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-load("@kelvin_hw//rules:coco_tb.bzl", "cocotb_test_suite", "verilator_cocotb_model")
-load("@kelvin_hw//third_party/python:requirements.bzl", "requirement")
+load("@coralnpu_hw//rules:coco_tb.bzl", "cocotb_test_suite", "verilator_cocotb_model")
+load("@coralnpu_hw//third_party/python:requirements.bzl", "requirement")
 
 package(default_visibility = ["//visibility:public"])
 
@@ -106,7 +106,7 @@ cocotb_test_suite(
         "hdl_toplevel": "TlulFifoAsync128",
         "test_module": ["test_tlul_fifo_async.py"],
         "deps": [
-            "//kelvin_test_utils:TileLinkULInterface",
+            "//coralnpu_test_utils:TileLinkULInterface",
         ],
         "waves": True,
     },
@@ -132,7 +132,7 @@ cocotb_test_suite(
         "hdl_toplevel": "TlulFifoSync",
         "test_module": ["test_tlul_fifo_sync.py"],
         "deps": [
-            "//kelvin_test_utils:TileLinkULInterface",
+            "//coralnpu_test_utils:TileLinkULInterface",
         ],
         "waves": True,
     },
@@ -159,7 +159,7 @@ cocotb_test_suite(
         "hdl_toplevel": "TlulSocket1N_128",
         "test_module": ["test_tlul_socket_1n.py"],
         "deps": [
-            "//kelvin_test_utils:TileLinkULInterface",
+            "//coralnpu_test_utils:TileLinkULInterface",
         ],
         "waves": True,
     },
@@ -185,7 +185,7 @@ cocotb_test_suite(
         "hdl_toplevel": "TlulSocketM1_2_128",
         "test_module": ["test_tlul_socket_m1.py"],
         "deps": [
-            "//kelvin_test_utils:TileLinkULInterface",
+            "//coralnpu_test_utils:TileLinkULInterface",
         ],
         "waves": True,
     },
@@ -214,8 +214,8 @@ cocotb_test_suite(
         "hdl_toplevel": "TlulIntegrityTestbench",
         "test_module": ["test_tlul_integrity.py"],
         "deps": [
-            "//kelvin_test_utils:TileLinkULInterface",
-            "//kelvin_test_utils:secded_golden",
+            "//coralnpu_test_utils:TileLinkULInterface",
+            "//coralnpu_test_utils:secded_golden",
         ],
         "waves": True,
     },
@@ -241,7 +241,7 @@ cocotb_test_suite(
         "hdl_toplevel": "SecdedEncoderTestbench128",
         "test_module": ["test_secded_encoder.py"],
         "deps": [
-            "//kelvin_test_utils:secded_golden",
+            "//coralnpu_test_utils:secded_golden",
         ],
         "waves": True,
     },
@@ -266,7 +266,7 @@ cocotb_test_suite(
         "hdl_toplevel": "SecdedEncoderTestbench32",
         "test_module": ["test_secded_encoder.py"],
         "deps": [
-            "//kelvin_test_utils:secded_golden",
+            "//coralnpu_test_utils:secded_golden",
         ],
         "waves": True,
     },
@@ -291,7 +291,7 @@ cocotb_test_suite(
         "hdl_toplevel": "SecdedEncoderTestbench57",
         "test_module": ["test_secded_encoder.py"],
         "deps": [
-            "//kelvin_test_utils:secded_golden",
+            "//coralnpu_test_utils:secded_golden",
         ],
         "waves": True,
     },
@@ -302,46 +302,46 @@ cocotb_test_suite(
     vcs_defines = VCS_DEFINES,
 )
 
-# --- Rules for KelvinXbar cocotb test ---
+# --- Rules for CoralNPUXbar cocotb test ---
 
 verilator_cocotb_model(
-    name = "kelvin_xbar_model",
+    name = "coralnpu_xbar_model",
     cflags = ["-Wno-fatal"],
-    hdl_toplevel = "KelvinXbar",
+    hdl_toplevel = "CoralNPUXbar",
     trace = True,
-    verilog_source = "//hdl/chisel/src/soc:KelvinXbar.sv",
+    verilog_source = "//hdl/chisel/src/soc:CoralNPUXbar.sv",
 )
 
-# BEGIN_TESTCASES_FOR_kelvin_xbar_cocotb
-KELVIN_XBAR_TESTCASES = [
-    "test_kelvin_core_to_sram",
-    "test_kelvin_core_to_invalid_addr",
-    "test_kelvin_core_to_uart1",
-    "test_test_host_32_to_kelvin_device",
-    "test_kelvin_core_to_kelvin_device",
-    "test_test_host_32_to_kelvin_device_csr_read",
-    "test_test_host_32_to_kelvin_device_specific_addr",
+# BEGIN_TESTCASES_FOR_coralnpu_xbar_cocotb
+CORALNPU_XBAR_TESTCASES = [
+    "test_coralnpu_core_to_sram",
+    "test_coralnpu_core_to_invalid_addr",
+    "test_coralnpu_core_to_uart1",
+    "test_test_host_32_to_coralnpu_device",
+    "test_coralnpu_core_to_coralnpu_device",
+    "test_test_host_32_to_coralnpu_device_csr_read",
+    "test_test_host_32_to_coralnpu_device_specific_addr",
     "test_wide_to_narrow_integrity",
 ]
-# END_TESTCASES_FOR_kelvin_xbar_cocotb
+# END_TESTCASES_FOR_coralnpu_xbar_cocotb
 
 cocotb_test_suite(
-    name = "kelvin_xbar_cocotb",
+    name = "coralnpu_xbar_cocotb",
     simulators = ["verilator", "vcs"],
-    testcases = KELVIN_XBAR_TESTCASES,
-    testcases_vname = "KELVIN_XBAR_TESTCASES",
+    testcases = CORALNPU_XBAR_TESTCASES,
+    testcases_vname = "CORALNPU_XBAR_TESTCASES",
     tests_kwargs = {
-        "hdl_toplevel": "KelvinXbarTestHarness",
+        "hdl_toplevel": "CoralNPUXbarTestHarness",
         "waves": True,
         "seed": "42",
-        "test_module": ["kelvin_xbar_test.py"],
+        "test_module": ["coralnpu_xbar_test.py"],
         "deps": [
-            "//kelvin_test_utils:TileLinkULInterface",
-            "//kelvin_test_utils:secded_golden",
+            "//coralnpu_test_utils:TileLinkULInterface",
+            "//coralnpu_test_utils:secded_golden",
         ],
     },
-    verilator_model = "//hdl/chisel/src/soc:kelvin_xbar_testharness_model",
-    vcs_verilog_sources = ["//hdl/chisel/src/soc:kelvin_xbar_testharness_cc_library_emit_verilog"],
+    verilator_model = "//hdl/chisel/src/soc:coralnpu_xbar_testharness_model",
+    vcs_verilog_sources = ["//hdl/chisel/src/soc:coralnpu_xbar_testharness_cc_library_emit_verilog"],
     vcs_build_args = VCS_BUILD_ARGS,
     vcs_test_args = VCS_TEST_ARGS,
     vcs_defines = VCS_DEFINES,
@@ -375,9 +375,9 @@ cocotb_test_suite(
         "seed": "42",
         "test_module": ["test_spi_to_tlul.py"],
         "deps": [
-            "//kelvin_test_utils:TileLinkULInterface",
-            "//kelvin_test_utils:spi_master",
-            "//kelvin_test_utils:spi_constants",
+            "//coralnpu_test_utils:TileLinkULInterface",
+            "//coralnpu_test_utils:spi_master",
+            "//coralnpu_test_utils:spi_constants",
         ],
     },
     verilator_model = "//hdl/chisel/src/bus:spi2tlul_128_model",
@@ -387,27 +387,27 @@ cocotb_test_suite(
     vcs_defines = VCS_DEFINES,
 )
 
-# BEGIN_TESTCASES_FOR_kelvin_chisel_subsystem_cocotb
-KELVIN_CHISEL_SUBSYSTEM_TESTCASES = [
+# BEGIN_TESTCASES_FOR_coralnpu_chisel_subsystem_cocotb
+CORALNPU_CHISEL_SUBSYSTEM_TESTCASES = [
     "test_tlul_passthrough",
     "test_program_execution_via_host",
     "test_program_execution_via_spi",
 ]
-# END_TESTCASES_FOR_kelvin_chisel_subsystem_cocotb
+# END_TESTCASES_FOR_coralnpu_chisel_subsystem_cocotb
 
 cocotb_test_suite(
-    name = "kelvin_chisel_subsystem_cocotb",
+    name = "coralnpu_chisel_subsystem_cocotb",
     simulators = ["verilator", "vcs"],
-    testcases = KELVIN_CHISEL_SUBSYSTEM_TESTCASES,
-    testcases_vname = "KELVIN_CHISEL_SUBSYSTEM_TESTCASES",
+    testcases = CORALNPU_CHISEL_SUBSYSTEM_TESTCASES,
+    testcases_vname = "CORALNPU_CHISEL_SUBSYSTEM_TESTCASES",
     tests_kwargs = {
-        "hdl_toplevel": "KelvinChiselSubsystemTestHarness",
+        "hdl_toplevel": "CoralNPUChiselSubsystemTestHarness",
         "waves": True,
         "seed": "42",
         "test_module": ["test_subsystem.py"],
         "deps": [
-            "//kelvin_test_utils:TileLinkULInterface",
-            "//kelvin_test_utils:spi_master",
+            "//coralnpu_test_utils:TileLinkULInterface",
+            "//coralnpu_test_utils:spi_master",
             requirement("pyelftools"),
             "@bazel_tools//tools/python/runfiles",
         ],
@@ -415,8 +415,8 @@ cocotb_test_suite(
             "//tests/cocotb/rvv/arithmetics:rvv_add_int32_m1.elf",
         ],
     },
-    verilator_model = "//hdl/chisel/src/soc:kelvin_chisel_subsystem_testharness_model",
-    vcs_verilog_sources = ["//hdl/chisel/src/soc:kelvin_chisel_subsystem_testharness_cc_library_emit_verilog"],
+    verilator_model = "//hdl/chisel/src/soc:coralnpu_chisel_subsystem_testharness_model",
+    vcs_verilog_sources = ["//hdl/chisel/src/soc:coralnpu_chisel_subsystem_testharness_cc_library_emit_verilog"],
     vcs_data = [
         "//tests/cocotb/rvv/arithmetics:rvv_add_int32_m1.elf",
     ],

@@ -15,7 +15,7 @@
 package bus
 
 import chisel3._
-import kelvin.Parameters
+import coralnpu.Parameters
 
 /**
   * A testbench DUT that instantiates a single SecdedEncoder so it can be

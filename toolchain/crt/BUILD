@@ -18,11 +18,11 @@ cc_library(
     name = "crt",
     srcs = [
         "crt.S",
-        "kelvin_exceptions.cc",
-        "kelvin_gloss.cc",
-        "kelvin_start.S",
+        "coralnpu_exceptions.cc",
+        "coralnpu_gloss.cc",
+        "coralnpu_start.S",
     ],
     target_compatible_with = [
-        "//platforms/cpu:kelvin_v2"
+        "//platforms/cpu:coralnpu_v2"
     ],
 )

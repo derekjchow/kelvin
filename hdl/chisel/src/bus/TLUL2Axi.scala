@@ -16,8 +16,8 @@ package bus
 
 import chisel3._
 import chisel3.util._
-import kelvin.Parameters
-import common.KelvinRRArbiter
+import coralnpu.Parameters
+import common.CoralNPURRArbiter
 import _root_.circt.stage.{ChiselStage,FirtoolOption}
 import chisel3.stage.ChiselGeneratorAnnotation
 import scala.annotation.nowarn
@@ -30,7 +30,7 @@ import scala.annotation.nowarn
   * transactions, respectively. It uses a dataflow approach with queues and an
   * arbiter to manage the protocol conversion.
   *
-  * @param p The Kelvin parameters.
+  * @param p The CoralNPU parameters.
   */
 class TLUL2Axi[A_USER <: Data, D_USER <: Data](p: Parameters, userAGen: () => A_USER, userDGen: () => D_USER) extends Module {
   val tlul_p = new TLULParameters(p)
@@ -136,7 +136,7 @@ class TLUL2Axi[A_USER <: Data, D_USER <: Data](p: Parameters, userAGen: () => A_
   write_response.bits.user := 0.U.asTypeOf(write_response.bits.user)
 
   // Arbitrate between read and write responses for the D-channel
-  val d_channel_arb = Module(new KelvinRRArbiter(new TileLink_D_ChannelBase(tlul_p, userDGen), 2))
+  val d_channel_arb = Module(new CoralNPURRArbiter(new TileLink_D_ChannelBase(tlul_p, userDGen), 2))
   d_channel_arb.io.in(0) <> read_response
   d_channel_arb.io.in(1) <> write_response
   io.tl_d <> Queue(d_channel_arb.io.out, 2)

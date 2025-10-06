@@ -1,0 +1,63 @@
+CAPI=2:
+# Copyright 2023 Google LLC
+# Licensed under the Apache License, Version 2.0, see LICENSE for details.
+# SPDX-License-Identifier: Apache-2.0
+name: "google:ip:coralnpu:0.1"
+description: "CoralNPU Core Level"
+filesets:
+  files_rtl:
+    files:
+      - coralnpu.sv
+      - Sram_1rw_256x256.v
+      - Sram_1rwm_256x288.v
+    file_type: systemVerilogSource
+
+parameters:
+  SYNTHESIS:
+    datatype: bool
+    paramtype: vlogdefine
+
+  FPGA_XILINX:
+    datatype: bool
+    description: Identifies Xilinx FPGA targets to set DSP pragmas for performance counters.
+    default: false
+    paramtype: vlogdefine
+
+  LOWRISC_PRIM_DEFAULT_IMPL:
+    datatype: str
+    paramtype: vlogdefine
+    description: lowRISC primitives implementation to use, e.g. "lowrisc_prim_pkg::ImplGeneric"
+
+  USE_GENERIC:
+    datatype: bool
+    paramtype: vlogdefine
+
+targets:
+  default: &default_target
+    filesets:
+      - files_rtl
+    toplevel: coralnpu
+    parameters:
+      - tool_vivado ? (FPGA_XILINX=true)
+      - USE_GENERIC=true
+
+  synth:
+    default_tool: vivado
+    filesets:
+      - files_rtl
+    toplevel: coralnpu
+    parameters:
+      - tool_vivado ? (FPGA_XILINX=true)
+      - LOWRISC_PRIM_DEFAULT_IMPL=lowrisc_prim_pkg::ImplXilinx
+      - USE_GENERIC=true
+
+  lint:
+    <<: *default_target
+    default_tool: verilator
+    parameters:
+      - SYNTHESIS=true
+    tools:
+      verilator:
+        mode: lint-only
+        verilator_options:
+          - "-Wall"

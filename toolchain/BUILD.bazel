@@ -14,30 +14,30 @@
 
 package(default_visibility = ["//visibility:public"])
 
-load(":cc_toolchain_config.bzl", "kelvin_v2_cc_toolchain_config")
+load(":cc_toolchain_config.bzl", "coralnpu_v2_cc_toolchain_config")
 
 filegroup(
     name = "all_files",
     srcs = [
         "//toolchain/wrappers:all",
-        "//toolchain:kelvin_tcm.ld",
-        "//toolchain:kelvin_tcm_highmem.ld",
-        "@toolchain_kelvin_v2//:all_files",
+        "//toolchain:coralnpu_tcm.ld",
+        "//toolchain:coralnpu_tcm_highmem.ld",
+        "@toolchain_coralnpu_v2//:all_files",
     ],
 )
 
-kelvin_v2_cc_toolchain_config(
-    name = "kelvin_v2_toolchain_config",
+coralnpu_v2_cc_toolchain_config(
+    name = "coralnpu_v2_toolchain_config",
     semihosting = False,
 )
 
-kelvin_v2_cc_toolchain_config(
-    name = "kelvin_v2_semihosting_toolchain_config",
+coralnpu_v2_cc_toolchain_config(
+    name = "coralnpu_v2_semihosting_toolchain_config",
     semihosting = True,
 )
 
 cc_toolchain(
-    name = "kelvin_v2_toolchain",
+    name = "coralnpu_v2_toolchain",
     all_files = ":all_files",
     ar_files = ":all_files",
     as_files = ":all_files",
@@ -47,12 +47,12 @@ cc_toolchain(
     objcopy_files = ":all_files",
     strip_files = ":all_files",
     supports_param_files = 0,
-    toolchain_config = ":kelvin_v2_toolchain_config",
-    toolchain_identifier = "kelvin_v2_toolchain",
+    toolchain_config = ":coralnpu_v2_toolchain_config",
+    toolchain_identifier = "coralnpu_v2_toolchain",
 )
 
 cc_toolchain(
-    name = "kelvin_v2_semihosting_toolchain",
+    name = "coralnpu_v2_semihosting_toolchain",
     all_files = ":all_files",
     ar_files = ":all_files",
     as_files = ":all_files",
@@ -62,35 +62,35 @@ cc_toolchain(
     objcopy_files = ":all_files",
     strip_files = ":all_files",
     supports_param_files = 0,
-    toolchain_config = ":kelvin_v2_semihosting_toolchain_config",
-    toolchain_identifier = "kelvin_v2_semihosting_toolchain",
+    toolchain_config = ":coralnpu_v2_semihosting_toolchain_config",
+    toolchain_identifier = "coralnpu_v2_semihosting_toolchain",
 )
 
 toolchain(
-    name = "cc_kelvin_v2_toolchain",
+    name = "cc_coralnpu_v2_toolchain",
     exec_compatible_with = [
         "@platforms//cpu:x86_64",
         "@platforms//os:linux",
     ],
     target_compatible_with = [
-        "//platforms/cpu:kelvin_v2",
+        "//platforms/cpu:coralnpu_v2",
         "@platforms//os:none",
     ],
-    toolchain = ":kelvin_v2_toolchain",
+    toolchain = ":coralnpu_v2_toolchain",
     toolchain_type = "@bazel_tools//tools/cpp:toolchain_type",
 )
 
 toolchain(
-    name = "cc_kelvin_v2_semihosting_toolchain",
+    name = "cc_coralnpu_v2_semihosting_toolchain",
     exec_compatible_with = [
         "@platforms//cpu:x86_64",
         "@platforms//os:linux",
     ],
     target_compatible_with = [
-        "//platforms/cpu:kelvin_v2",
+        "//platforms/cpu:coralnpu_v2",
         "//platforms/os:semihosting",
     ],
-    toolchain = ":kelvin_v2_semihosting_toolchain",
+    toolchain = ":coralnpu_v2_semihosting_toolchain",
     toolchain_type = "@bazel_tools//tools/cpp:toolchain_type",
 )
 
@@ -100,6 +100,6 @@ sh_binary(
         "//toolchain/wrappers:gdb",
     ],
     data = [
-        ":kelvin_v2_toolchain",
+        ":coralnpu_v2_toolchain",
     ],
 )

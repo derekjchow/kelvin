@@ -1,15 +1,15 @@
 CAPI=2:
-name: "com.google.kelvin:fpga:chip_verilator:0.1"
-description: "Verilator-specific top-level for Kelvin."
+name: "com.google.coralnpu:fpga:chip_verilator:0.1"
+description: "Verilator-specific top-level for CoralNPU."
 
 filesets:
   files_rtl:
     depend:
-      - com.google.kelvin:fpga:kelvin_soc:0.2
-      - kelvinv2:ip:kelvin_tlul:0.1
+      - com.google.coralnpu:fpga:coralnpu_soc:0.2
+      - coralnpuv2:ip:coralnpu_tlul:0.1
       - lowrisc:dv_dpi_c:uartdpi:0.1
       - lowrisc:dv_dpi_sv:uartdpi:0.1
-      - com.google.kelvin:fpga:spi_dpi_master:0.1
+      - com.google.coralnpu:fpga:spi_dpi_master:0.1
     files:
       - rtl/chip_verilator.sv
     file_type: systemVerilogSource

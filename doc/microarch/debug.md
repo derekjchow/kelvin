@@ -2,7 +2,7 @@
 
 ## Overview
 
-The debug module implements a subset of the RISC-V Debug Specification, providing external debug support for the Kelvin core. It allows a debugger to halt, resume, and single-step the core, as well as read and write core registers and memory.
+The debug module implements a subset of the RISC-V Debug Specification, providing external debug support for the CoralNPU core. It allows a debugger to halt, resume, and single-step the core, as well as read and write core registers and memory.
 
 ## Architecture
 
@@ -89,7 +89,7 @@ To read from an internal debug module register (e.g., reading from `dmstatus` at
 
 ## AXI CSR Interface
 
-These registers are mapped into the Kelvin CSR address space and are used to communicate with the debug module.
+These registers are mapped into the CoralNPU CSR address space and are used to communicate with the debug module.
 
 | Address    | Name       | Description                                                                                                |
 |------------|------------|------------------------------------------------------------------------------------------------------------|

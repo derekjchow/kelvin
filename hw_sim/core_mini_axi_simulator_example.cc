@@ -20,11 +20,11 @@
 #include <cstdint>
 #include <iostream>
 
-#include "hw_sim/kelvin_simulator.h"
+#include "hw_sim/coralnpu_simulator.h"
 #include "tests/verilator_sim/elf.h"
 
 int main() {
-  KelvinSimulator* simulator = KelvinSimulator::Create();
+  CoralNPUSimulator* simulator = CoralNPUSimulator::Create();
 
   // Load elf
   auto file_name = "hw_sim/mailbox_example.elf";
@@ -63,7 +63,7 @@ int main() {
     std::cout << "Didn't halt" << std::endl;
   }
 
-  KelvinMailbox m = simulator->ReadMailbox();
+  CoralNPUMailbox m = simulator->ReadMailbox();
   std::cout << "Mailbox value[0]=0x" << std::hex << m.message[0] << std::endl;
   std::cout << "Mailbox value[1]=0x" << std::hex << m.message[1] << std::endl;
 

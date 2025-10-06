@@ -16,8 +16,8 @@ import cocotb
 from cocotb.clock import Clock
 from cocotb.triggers import RisingEdge, ClockCycles, with_timeout
 
-from kelvin_test_utils.TileLinkULInterface import TileLinkULInterface, create_a_channel_req
-from kelvin_test_utils.secded_golden import get_cmd_intg, get_data_intg, get_rsp_intg
+from coralnpu_test_utils.TileLinkULInterface import TileLinkULInterface, create_a_channel_req
+from coralnpu_test_utils.secded_golden import get_cmd_intg, get_data_intg, get_rsp_intg
 
 
 def create_d_channel_rsp(opcode,

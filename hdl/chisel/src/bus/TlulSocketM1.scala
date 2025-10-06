@@ -2,8 +2,8 @@ package bus
 
 import chisel3._
 import chisel3.util._
-import common.KelvinRRArbiter
-import kelvin.Parameters
+import common.CoralNPURRArbiter
+import coralnpu.Parameters
 
 
 class TlulFifoSync_(p: TLULParameters,
@@ -74,7 +74,7 @@ class TlulSocketM1(
   }
 
   // Arbiter
-  val arb = Module(new KelvinRRArbiter(new OpenTitanTileLink.A_Channel(p), M, moduleName = Some(s"${moduleName}_KelvinRRArbiter_${M}")))
+  val arb = Module(new CoralNPURRArbiter(new OpenTitanTileLink.A_Channel(p), M, moduleName = Some(s"${moduleName}_CoralNPURRArbiter_${M}")))
   for (i <- 0 until M) {
     arb.io.in(i) <> hreq_fifo_o(i)
   }

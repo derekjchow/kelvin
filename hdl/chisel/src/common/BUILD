@@ -13,7 +13,7 @@
 # limitations under the License.
 
 load(
-    "@kelvin_hw//rules:chisel.bzl",
+    "@coralnpu_hw//rules:chisel.bzl",
     "chisel_cc_library",
     "chisel_library",
     "chisel_test",
@@ -35,7 +35,7 @@ chisel_library(
         "FifoX.scala",
         "FifoXe.scala",
         "IDiv.scala",
-        "KelvinArbiter.scala",
+        "CoralNPUArbiter.scala",
         "MathUtil.scala",
         "Slice.scala",
     ],
@@ -135,7 +135,7 @@ chisel_library(
 chisel_test(
     name = "common_test",
     srcs = [
-        "KelvinArbiterTest.scala",
+        "CoralNPUArbiterTest.scala",
     ],
     deps = [
         ":common",

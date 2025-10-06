@@ -17,7 +17,7 @@ from cocotb.clock import Clock
 from cocotb.triggers import RisingEdge, ClockCycles
 import random
 
-from kelvin_test_utils.secded_golden import get_data_intg, secded_inv_39_32_enc, secded_inv_64_57_enc
+from coralnpu_test_utils.secded_golden import get_data_intg, secded_inv_39_32_enc, secded_inv_64_57_enc
 
 
 async def setup_dut(dut):

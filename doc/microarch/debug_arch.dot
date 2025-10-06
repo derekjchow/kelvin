@@ -13,7 +13,7 @@ digraph debug_arch {
   }
 
   subgraph cluster_core {
-    label="Kelvin Core";
+    label="CoralNPU Core";
     core [shape=none, label=""];
   }
 

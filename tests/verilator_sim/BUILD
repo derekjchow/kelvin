@@ -48,30 +48,30 @@ cc_library(
 )
 
 cc_library(
-    name = "kelvin_if",
+    name = "coralnpu_if",
     hdrs = [
-        "kelvin/core_if.h",
-        "kelvin/debug_if.h",
-        "kelvin/kelvin_cfg.h",
-        "kelvin/memory_if.h",
+        "coralnpu/core_if.h",
+        "coralnpu/debug_if.h",
+        "coralnpu/coralnpu_cfg.h",
+        "coralnpu/memory_if.h",
     ],
-    defines = ["KELVIN_SIMD=256"],
+    defines = ["CORALNPU_SIMD=256"],
 )
 
 cc_binary(
     name = "core_sim",
     srcs = [
-        "kelvin/core_tb.cc",
-        "@kelvin_hw//hdl/chisel/src/kelvin:VCore_parameters.h",
+        "coralnpu/core_tb.cc",
+        "@coralnpu_hw//hdl/chisel/src/coralnpu:VCore_parameters.h",
     ],
     defines = [
         "VERILATOR_MODEL=VCore",
     ],
     deps = [
-        ":kelvin_if",
+        ":coralnpu_if",
         ":sim_libs",
         ":util",
-        "//hdl/chisel/src/kelvin:core_cc_library",
+        "//hdl/chisel/src/coralnpu:core_cc_library",
         "@com_google_absl//absl/flags:flag",
         "@com_google_absl//absl/flags:parse",
         "@com_google_absl//absl/flags:usage",
@@ -79,7 +79,7 @@ cc_binary(
 )
 
 CORE_MINI_AXI_TB_CC_LIBRARY_COMMON_SRCS = [
-    "kelvin/core_mini_axi_tb.cc",
+    "coralnpu/core_mini_axi_tb.cc",
 ]
 
 CORE_MINI_AXI_TB_CC_LIBRARY_COMMON_DEPS = [
@@ -101,10 +101,10 @@ template_rule(
     {
         "core_mini_axi_tb": {
             "srcs": [
-                "@kelvin_hw//hdl/chisel/src/kelvin:VCoreMiniAxi_parameters.h",
+                "@coralnpu_hw//hdl/chisel/src/coralnpu:VCoreMiniAxi_parameters.h",
             ] + CORE_MINI_AXI_TB_CC_LIBRARY_COMMON_SRCS,
             "deps": [
-                "//hdl/chisel/src/kelvin:core_mini_axi_cc_library",
+                "//hdl/chisel/src/coralnpu:core_mini_axi_cc_library",
             ] + CORE_MINI_AXI_TB_CC_LIBRARY_COMMON_DEPS,
             "defines": [
                 "VERILATOR_MODEL=VCoreMiniAxi",
@@ -112,10 +112,10 @@ template_rule(
         },
         "rvv_core_mini_axi_tb": {
             "srcs": [
-                "@kelvin_hw//hdl/chisel/src/kelvin:VRvvCoreMiniAxi_parameters.h",
+                "@coralnpu_hw//hdl/chisel/src/coralnpu:VRvvCoreMiniAxi_parameters.h",
             ] + CORE_MINI_AXI_TB_CC_LIBRARY_COMMON_SRCS,
             "deps": [
-                "//hdl/chisel/src/kelvin:rvv_core_mini_axi_cc_library",
+                "//hdl/chisel/src/coralnpu:rvv_core_mini_axi_cc_library",
             ] + CORE_MINI_AXI_TB_CC_LIBRARY_COMMON_DEPS,
             "defines": [
                 "VERILATOR_MODEL=VRvvCoreMiniAxi",
@@ -123,10 +123,10 @@ template_rule(
         },
         "rvv_core_mini_verification_axi_tb": {
             "srcs": [
-                "@kelvin_hw//hdl/chisel/src/kelvin:VRvvCoreMiniVerificationAxi_parameters.h",
+                "@coralnpu_hw//hdl/chisel/src/coralnpu:VRvvCoreMiniVerificationAxi_parameters.h",
             ] + CORE_MINI_AXI_TB_CC_LIBRARY_COMMON_SRCS,
             "deps": [
-                "//hdl/chisel/src/kelvin:rvv_core_mini_verification_axi_cc_library",
+                "//hdl/chisel/src/coralnpu:rvv_core_mini_verification_axi_cc_library",
             ] + CORE_MINI_AXI_TB_CC_LIBRARY_COMMON_DEPS,
             "defines": [
                 "VERILATOR_MODEL=VRvvCoreMiniVerificationAxi",
@@ -134,7 +134,7 @@ template_rule(
         },
     },
     hdrs = [
-        "kelvin/core_mini_axi_tb.h",
+        "coralnpu/core_mini_axi_tb.h",
     ],
 )
 
@@ -166,14 +166,14 @@ template_rule(
         },
     },
     srcs = [
-        "kelvin/core_mini_axi_sim.cc",
+        "coralnpu/core_mini_axi_sim.cc",
     ],
 )
 
 cc_test(
     name = "core_mini_axi_non_incr_tests",
     srcs = [
-        "kelvin/core_mini_axi_non_incr_tests.cc",
+        "coralnpu/core_mini_axi_non_incr_tests.cc",
     ],
     deps = [
         ":core_mini_axi_tb",
@@ -183,17 +183,17 @@ cc_test(
 cc_binary(
     name = "core_scalar_sim",
     srcs = [
-        "kelvin/core_tb.cc",
-        "@kelvin_hw//hdl/chisel/src/kelvin:VCoreScalar_parameters.h",
+        "coralnpu/core_tb.cc",
+        "@coralnpu_hw//hdl/chisel/src/coralnpu:VCoreScalar_parameters.h",
     ],
     defines = [
         "VERILATOR_MODEL=VCoreScalar",
     ],
     deps = [
-        ":kelvin_if",
+        ":coralnpu_if",
         ":sim_libs",
         ":util",
-        "//hdl/chisel/src/kelvin:core_scalar_cc_library",
+        "//hdl/chisel/src/coralnpu:core_scalar_cc_library",
         "@com_google_absl//absl/flags:flag",
         "@com_google_absl//absl/flags:parse",
         "@com_google_absl//absl/flags:usage",
@@ -203,17 +203,17 @@ cc_binary(
 cc_binary(
     name = "core_mini_sim",
     srcs = [
-        "kelvin/core_tb.cc",
-        "@kelvin_hw//hdl/chisel/src/kelvin:VCoreMini_parameters.h",
+        "coralnpu/core_tb.cc",
+        "@coralnpu_hw//hdl/chisel/src/coralnpu:VCoreMini_parameters.h",
     ],
     defines = [
         "VERILATOR_MODEL=VCoreMini",
     ],
     deps = [
-        ":kelvin_if",
+        ":coralnpu_if",
         ":sim_libs",
         ":util",
-        "//hdl/chisel/src/kelvin:core_mini_cc_library",
+        "//hdl/chisel/src/coralnpu:core_mini_cc_library",
         "@com_google_absl//absl/flags:flag",
         "@com_google_absl//absl/flags:parse",
         "@com_google_absl//absl/flags:usage",
@@ -221,19 +221,19 @@ cc_binary(
 )
 
 cc_binary(
-    name = "kelvin_tb",
+    name = "coralnpu_tb",
     srcs = [
-        "matcha/kelvin_if.h",
-        "matcha/kelvin_tb.cc",
-        "@kelvin_hw//hdl/chisel/src/matcha:VKelvin_parameters.h",
+        "matcha/coralnpu_if.h",
+        "matcha/coralnpu_tb.cc",
+        "@coralnpu_hw//hdl/chisel/src/matcha:VCoralNPU_parameters.h",
     ],
     defines = [
-        "VERILATOR_MODEL=VKelvin",
+        "VERILATOR_MODEL=VCoralNPU",
     ],
     deps = [
-        ":kelvin_if",
+        ":coralnpu_if",
         ":sim_libs",
-        "//hdl/chisel/src/matcha:kelvin_cc_library",
+        "//hdl/chisel/src/matcha:coralnpu_cc_library",
         "@com_google_absl//absl/flags:flag",
         "@com_google_absl//absl/flags:parse",
         "@com_google_absl//absl/flags:usage",
@@ -241,19 +241,19 @@ cc_binary(
 )
 
 cc_binary(
-    name = "kelvin_scalar_tb",
+    name = "coralnpu_scalar_tb",
     srcs = [
-        "matcha/kelvin_if.h",
-        "matcha/kelvin_tb.cc",
-        "@kelvin_hw//hdl/chisel/src/matcha:VKelvinScalar_parameters.h",
+        "matcha/coralnpu_if.h",
+        "matcha/coralnpu_tb.cc",
+        "@coralnpu_hw//hdl/chisel/src/matcha:VCoralNPUScalar_parameters.h",
     ],
     defines = [
-        "VERILATOR_MODEL=VKelvinScalar",
+        "VERILATOR_MODEL=VCoralNPUScalar",
     ],
     deps = [
-        ":kelvin_if",
+        ":coralnpu_if",
         ":sim_libs",
-        "//hdl/chisel/src/matcha:kelvin_scalar_cc_library",
+        "//hdl/chisel/src/matcha:coralnpu_scalar_cc_library",
         "@com_google_absl//absl/flags:flag",
         "@com_google_absl//absl/flags:parse",
         "@com_google_absl//absl/flags:usage",
@@ -261,19 +261,19 @@ cc_binary(
 )
 
 cc_binary(
-    name = "kelvin_mini_tb",
+    name = "coralnpu_mini_tb",
     srcs = [
-        "matcha/kelvin_if.h",
-        "matcha/kelvin_tb.cc",
-        "@kelvin_hw//hdl/chisel/src/matcha:VKelvinMini_parameters.h",
+        "matcha/coralnpu_if.h",
+        "matcha/coralnpu_tb.cc",
+        "@coralnpu_hw//hdl/chisel/src/matcha:VCoralNPUMini_parameters.h",
     ],
     defines = [
-        "VERILATOR_MODEL=VKelvinMini",
+        "VERILATOR_MODEL=VCoralNPUMini",
     ],
     deps = [
-        "kelvin_if",
+        "coralnpu_if",
         ":sim_libs",
-        "//hdl/chisel/src/matcha:kelvin_mini_cc_library",
+        "//hdl/chisel/src/matcha:coralnpu_mini_cc_library",
         "@com_google_absl//absl/flags:flag",
         "@com_google_absl//absl/flags:parse",
         "@com_google_absl//absl/flags:usage",
@@ -287,7 +287,7 @@ cc_binary(
         "chai/chai_tb.cc",
     ],
     deps = [
-        ":kelvin_if",
+        ":coralnpu_if",
         ":sim_libs",
         "//hdl/chisel/src/chai:chai_cc_library",
         "@com_google_absl//absl/flags:flag",
@@ -301,11 +301,11 @@ cc_binary(
 cc_test(
     name = "dbus2axi_tb",
     srcs = [
-        "kelvin/dbus2axi_tb.cc",
+        "coralnpu/dbus2axi_tb.cc",
     ],
     deps = [
         ":sim_libs",
-        "//hdl/chisel/src/kelvin:dbus2axi_cc_library",
+        "//hdl/chisel/src/coralnpu:dbus2axi_cc_library",
     ],
 )
 
@@ -313,12 +313,12 @@ cc_test(
     name = "l1dcache_tb",
     size = "large",
     srcs = [
-        "kelvin/l1dcache_tb.cc",
+        "coralnpu/l1dcache_tb.cc",
     ],
     deps = [
-        ":kelvin_if",
+        ":coralnpu_if",
         ":sim_libs",
-        "//hdl/chisel/src/kelvin:l1dcache_cc_library",
+        "//hdl/chisel/src/coralnpu:l1dcache_cc_library",
     ],
 )
 
@@ -326,35 +326,35 @@ cc_test(
     name = "l1dcachebank_tb",
     size = "large",
     srcs = [
-        "kelvin/l1dcache_tb.cc",
+        "coralnpu/l1dcache_tb.cc",
     ],
     defines = [
         "L1DCACHEBANK",
     ],
     deps = [
-        ":kelvin_if",
+        ":coralnpu_if",
         ":sim_libs",
-        "//hdl/chisel/src/kelvin:l1dcachebank_cc_library",
+        "//hdl/chisel/src/coralnpu:l1dcachebank_cc_library",
     ],
 )
 
 cc_test(
     name = "l1icache_tb",
     srcs = [
-        "kelvin/l1icache_tb.cc",
+        "coralnpu/l1icache_tb.cc",
     ],
     deps = [
-        ":kelvin_if",
+        ":coralnpu_if",
         ":sim_libs",
-        "//hdl/chisel/src/kelvin:l1icache_cc_library",
+        "//hdl/chisel/src/coralnpu:l1icache_cc_library",
     ],
 )
 
 cc_library(
     name = "valu",
     hdrs = [
-        "kelvin/alu_ref.h",
-        "kelvin/valu.h",
+        "coralnpu/alu_ref.h",
+        "coralnpu/valu.h",
     ],
     deps = [
         ":vencodeop",
@@ -365,15 +365,15 @@ cc_test(
     name = "valu_tb",
     size = "enormous",
     srcs = [
-        "kelvin/valu_tb.cc",
-        "@kelvin_hw//hdl/chisel/src/kelvin:VCore_parameters.h",
+        "coralnpu/valu_tb.cc",
+        "@coralnpu_hw//hdl/chisel/src/coralnpu:VCore_parameters.h",
     ],
     deps = [
-        ":kelvin_if",
+        ":coralnpu_if",
         ":sim_libs",
         ":util",
         ":valu",
-        "//hdl/chisel/src/kelvin:valu_cc_library",
+        "//hdl/chisel/src/coralnpu:valu_cc_library",
     ],
 )
 
@@ -381,20 +381,20 @@ cc_test(
     name = "valuint_tb",
     size = "large",
     srcs = [
-        "kelvin/valuint_tb.cc",
+        "coralnpu/valuint_tb.cc",
     ],
     deps = [
-        ":kelvin_if",
+        ":coralnpu_if",
         ":sim_libs",
         ":valu",
-        "//hdl/chisel/src/kelvin:valuint_cc_library",
+        "//hdl/chisel/src/coralnpu:valuint_cc_library",
     ],
 )
 
 cc_library(
     name = "vdecode",
     hdrs = [
-        "kelvin/vdecode.h",
+        "coralnpu/vdecode.h",
     ],
     deps = [
         ":vdecodeop",
@@ -405,111 +405,111 @@ cc_library(
 cc_library(
     name = "vdecodeop",
     hdrs = [
-        "kelvin/vdecodeop.h",
+        "coralnpu/vdecodeop.h",
     ],
 )
 
 cc_library(
     name = "vencodeop",
     hdrs = [
-        "kelvin/vencodeop.h",
+        "coralnpu/vencodeop.h",
     ],
 )
 
 cc_test(
     name = "vcmdq_tb",
     srcs = [
-        "kelvin/vcmdq_tb.cc",
-        "@kelvin_hw//hdl/chisel/src/kelvin:VCore_parameters.h",
+        "coralnpu/vcmdq_tb.cc",
+        "@coralnpu_hw//hdl/chisel/src/coralnpu:VCore_parameters.h",
     ],
     deps = [
-        ":kelvin_if",
+        ":coralnpu_if",
         ":sim_libs",
         ":util",
         ":vencodeop",
-        "//hdl/chisel/src/kelvin:vcmdq_cc_library",
+        "//hdl/chisel/src/coralnpu:vcmdq_cc_library",
     ],
 )
 
 cc_test(
     name = "vconvalu_tb",
     srcs = [
-        "kelvin/vconvalu_tb.cc",
+        "coralnpu/vconvalu_tb.cc",
     ],
     deps = [
-        ":kelvin_if",
+        ":coralnpu_if",
         ":sim_libs",
-        "//hdl/chisel/src/kelvin:vconvalu_cc_library",
+        "//hdl/chisel/src/coralnpu:vconvalu_cc_library",
     ],
 )
 
 cc_test(
     name = "vconvctrl_tb",
     srcs = [
-        "kelvin/vconvctrl_tb.cc",
-        "@kelvin_hw//hdl/chisel/src/kelvin:VCore_parameters.h",
+        "coralnpu/vconvctrl_tb.cc",
+        "@coralnpu_hw//hdl/chisel/src/coralnpu:VCore_parameters.h",
     ],
     deps = [
-        ":kelvin_if",
+        ":coralnpu_if",
         ":sim_libs",
         ":util",
         ":vencodeop",
-        "//hdl/chisel/src/kelvin:vconvctrl_cc_library",
+        "//hdl/chisel/src/coralnpu:vconvctrl_cc_library",
     ],
 )
 
 cc_test(
     name = "vdecodeinstruction_tb",
     srcs = [
-        "kelvin/vdecodeinstruction_tb.cc",
+        "coralnpu/vdecodeinstruction_tb.cc",
     ],
     deps = [
-        ":kelvin_if",
+        ":coralnpu_if",
         ":sim_libs",
         ":vdecode",
-        "//hdl/chisel/src/kelvin:vdecodeinstruction_cc_library",
+        "//hdl/chisel/src/coralnpu:vdecodeinstruction_cc_library",
     ],
 )
 
 cc_test(
     name = "vdecode_tb",
     srcs = [
-        "kelvin/vdecode_tb.cc",
-        "@kelvin_hw//hdl/chisel/src/kelvin:VCore_parameters.h",
+        "coralnpu/vdecode_tb.cc",
+        "@coralnpu_hw//hdl/chisel/src/coralnpu:VCore_parameters.h",
     ],
     deps = [
-        ":kelvin_if",
+        ":coralnpu_if",
         ":sim_libs",
         ":util",
         ":vdecode",
-        "//hdl/chisel/src/kelvin:vdecode_cc_library",
+        "//hdl/chisel/src/coralnpu:vdecode_cc_library",
     ],
 )
 
 cc_test(
     name = "vldst_tb",
     srcs = [
-        "kelvin/vldst_tb.cc",
-        "@kelvin_hw//hdl/chisel/src/kelvin:VCore_parameters.h",
+        "coralnpu/vldst_tb.cc",
+        "@coralnpu_hw//hdl/chisel/src/coralnpu:VCore_parameters.h",
     ],
     deps = [
-        ":kelvin_if",
+        ":coralnpu_if",
         ":sim_libs",
         ":util",
         ":vencodeop",
-        "//hdl/chisel/src/kelvin:vldst_cc_library",
+        "//hdl/chisel/src/coralnpu:vldst_cc_library",
     ],
 )
 
 cc_test(
     name = "vregfilesegment_tb",
     srcs = [
-        "kelvin/vregfilesegment_tb.cc",
+        "coralnpu/vregfilesegment_tb.cc",
     ],
     deps = [
-        ":kelvin_if",
+        ":coralnpu_if",
         ":sim_libs",
-        "//hdl/chisel/src/kelvin:vregfilesegment_cc_library",
+        "//hdl/chisel/src/coralnpu:vregfilesegment_cc_library",
     ],
 )
 
@@ -517,11 +517,11 @@ cc_test(
     name = "vregfile_tb",
     size = "large",
     srcs = [
-        "kelvin/vregfile_tb.cc",
+        "coralnpu/vregfile_tb.cc",
     ],
     deps = [
-        ":kelvin_if",
+        ":coralnpu_if",
         ":sim_libs",
-        "//hdl/chisel/src/kelvin:vregfile_cc_library",
+        "//hdl/chisel/src/coralnpu:vregfile_cc_library",
     ],
 )

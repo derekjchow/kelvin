@@ -14,7 +14,7 @@
 
 """Convenience wrapper for Verilator driven cocotb."""
 
-load("@kelvin_hw//third_party/python:requirements.bzl", "requirement")
+load("@coralnpu_hw//third_party/python:requirements.bzl", "requirement")
 load("@rules_hdl//cocotb:cocotb.bzl", "cocotb_test")
 load("@rules_python//python:defs.bzl", "py_library")
 
@@ -31,7 +31,7 @@ def _verilator_cocotb_model_impl(ctx):
     make_log = ctx.actions.declare_file(outdir_name + "/make.log")
     outdir = output_file.dirname
 
-    verilator_root = "$PWD/{}.runfiles/kelvin_hw/external/verilator".format(ctx.executable._verilator_bin.path)
+    verilator_root = "$PWD/{}.runfiles/coralnpu_hw/external/verilator".format(ctx.executable._verilator_bin.path)
     cocotb_lib_path = "$PWD/{}".format(ctx.files._cocotb_verilator_lib[0].dirname)
     verilator_cmd = " ".join("""
         VERILATOR_ROOT={verilator_root} {verilator} \
@@ -129,11 +129,11 @@ verilator_cocotb_model = rule(
             cfg = "exec",
         ),
         "_cocotb_verilator_lib": attr.label(
-            default = "@kelvin_pip_deps_cocotb//:verilator_libs",
+            default = "@coralnpu_pip_deps_cocotb//:verilator_libs",
             allow_files = True,
         ),
         "_cocotb_verilator_cpp": attr.label(
-            default = "@kelvin_pip_deps_cocotb//:verilator_srcs",
+            default = "@coralnpu_pip_deps_cocotb//:verilator_srcs",
             allow_files = True,
         ),
     },

@@ -27,4 +27,4 @@ if [[ $? != 0 ]];
 then
   exit 1
 fi
-echo "KELVIN_BUILD_GIT_VERSION ${git_rev}"
+echo "CORALNPU_BUILD_GIT_VERSION ${git_rev}"

@@ -18,8 +18,8 @@ import numpy as np
 import tqdm
 
 from bazel_tools.tools.python.runfiles import runfiles
-from kelvin_test_utils.rvv_type_util import construct_vtype, DTYPE_TO_SEW, SEWS, SEW_TO_LMULS_AND_VLMAXS, LMUL_TO_EMUL
-from kelvin_test_utils.sim_test_fixture import Fixture
+from coralnpu_test_utils.rvv_type_util import construct_vtype, DTYPE_TO_SEW, SEWS, SEW_TO_LMULS_AND_VLMAXS, LMUL_TO_EMUL
+from coralnpu_test_utils.sim_test_fixture import Fixture
 
 
 async def vector_load_store(
@@ -37,7 +37,7 @@ async def vector_load_store(
     fixture = await Fixture.Create(dut)
     r = runfiles.Create()
     await fixture.load_elf_and_lookup_symbols(
-        r.Rlocation('kelvin_hw/tests/cocotb/rvv/load_store/' + elf_name),
+        r.Rlocation('coralnpu_hw/tests/cocotb/rvv/load_store/' + elf_name),
         ['in_buf', 'out_buf'],
     )
 
@@ -77,7 +77,7 @@ async def vector_load_store_v2(
     fixture = await Fixture.Create(dut)
     r = runfiles.Create()
     await fixture.load_elf_and_lookup_symbols(
-        r.Rlocation('kelvin_hw/tests/cocotb/rvv/load_store/' + elf_name),
+        r.Rlocation('coralnpu_hw/tests/cocotb/rvv/load_store/' + elf_name),
         ['impl', 'vl', 'in_buf', 'out_buf'] +
             list({c['impl'] for c in cases}),
     )
@@ -130,7 +130,7 @@ async def vector_load_segmented_indexed(
     fixture = await Fixture.Create(dut)
     r = runfiles.Create()
     await fixture.load_elf_and_lookup_symbols(
-        r.Rlocation('kelvin_hw/tests/cocotb/rvv/load_store/' + elf_name),
+        r.Rlocation('coralnpu_hw/tests/cocotb/rvv/load_store/' + elf_name),
         ['impl', 'vl', 'in_buf', 'out_buf', 'index_buf'] +
             list({c['impl'] for c in cases}),
     )
@@ -200,7 +200,7 @@ async def vector_store_segmented_indexed(
     fixture = await Fixture.Create(dut)
     r = runfiles.Create()
     await fixture.load_elf_and_lookup_symbols(
-        r.Rlocation('kelvin_hw/tests/cocotb/rvv/load_store/' + elf_name),
+        r.Rlocation('coralnpu_hw/tests/cocotb/rvv/load_store/' + elf_name),
         ['impl', 'vl', 'in_buf', 'out_buf', 'index_buf'] +
             list({c['impl'] for c in cases}),
     )
@@ -303,7 +303,7 @@ async def load_store_bits(dut):
     ]
     await fixture.load_elf_and_lookup_symbols(
         r.Rlocation(
-            'kelvin_hw/tests/cocotb/rvv/load_store/load_store_bits.elf'),
+            'coralnpu_hw/tests/cocotb/rvv/load_store/load_store_bits.elf'),
         ['vl', 'in_buf', 'out_buf', 'impl'] +
             list({c['impl'] for c in cases}),
     )
@@ -345,7 +345,7 @@ async def load_unit_masked(dut):
 
     await fixture.load_elf_and_lookup_symbols(
         r.Rlocation(
-            'kelvin_hw/tests/cocotb/rvv/load_store/load_unit_masked.elf'),
+            'coralnpu_hw/tests/cocotb/rvv/load_store/load_unit_masked.elf'),
         [ "impl", "vtype", "load_data", "load_addr", "vl", "load_filler",
           "mask_data", "store_data", "test_unit_load8", "test_unit_load16",
           "test_unit_load32"],
@@ -440,7 +440,7 @@ async def store_unit_masked(dut):
 
     await fixture.load_elf_and_lookup_symbols(
         r.Rlocation(
-            'kelvin_hw/tests/cocotb/rvv/load_store/store_unit_masked.elf'),
+            'coralnpu_hw/tests/cocotb/rvv/load_store/store_unit_masked.elf'),
         [ "impl", "vtype", "load_data", "vl", "mask_data", "store_data",
           "store_addr", "test_unit_store8", "test_unit_store16",
           "test_unit_store32" ],
@@ -2758,7 +2758,7 @@ async def load_store8_test(dut):
     fixture = await Fixture.Create(dut)
     r = runfiles.Create()
     await fixture.load_elf_and_lookup_symbols(
-        r.Rlocation('kelvin_hw/tests/cocotb/rvv/load_store/load_store8_test.elf'),
+        r.Rlocation('coralnpu_hw/tests/cocotb/rvv/load_store/load_store8_test.elf'),
         ['buffer', 'in_ptr', 'out_ptr', 'vl'],
     )
 
@@ -2812,7 +2812,7 @@ async def load_unit_all_vtypes_test(dut):
     ]
 
     await fixture.load_elf_and_lookup_symbols(
-        r.Rlocation('kelvin_hw/tests/cocotb/rvv/load_store/load_unit_vtype.elf'),
+        r.Rlocation('coralnpu_hw/tests/cocotb/rvv/load_store/load_unit_vtype.elf'),
         ['vl', 'vtype', 'load_data', 'store_data', 'impl'] +
             list(f[0] for f in functions),
     )
@@ -2886,7 +2886,7 @@ async def store_unit_all_vtypes_test(dut):
     ]
 
     await fixture.load_elf_and_lookup_symbols(
-        r.Rlocation('kelvin_hw/tests/cocotb/rvv/load_store/store_unit_vtype.elf'),
+        r.Rlocation('coralnpu_hw/tests/cocotb/rvv/load_store/store_unit_vtype.elf'),
         ['vl', 'vtype', 'load_data', 'store_data', 'impl'] +
             list(f[0] for f in functions),
     )
@@ -2964,7 +2964,7 @@ async def load_strided_all_vtypes_test(dut):
     ]
 
     await fixture.load_elf_and_lookup_symbols(
-        r.Rlocation('kelvin_hw/tests/cocotb/rvv/load_store/load_stride_vtype.elf'),
+        r.Rlocation('coralnpu_hw/tests/cocotb/rvv/load_store/load_stride_vtype.elf'),
         ['vl', 'vtype', 'stride', 'load_data', 'store_data', 'impl'] +
             list(f[0] for f in functions),
     )
@@ -3047,7 +3047,7 @@ async def store_strided_all_vtypes_test(dut):
     ]
 
     await fixture.load_elf_and_lookup_symbols(
-        r.Rlocation('kelvin_hw/tests/cocotb/rvv/load_store/store_strided_vtype.elf'),
+        r.Rlocation('coralnpu_hw/tests/cocotb/rvv/load_store/store_strided_vtype.elf'),
         ['vl', 'vtype', 'stride', 'load_data', 'store_data', 'impl'] +
             list(f[0] for f in functions),
     )
@@ -3113,7 +3113,7 @@ async def load_store_whole_register_test(dut):
     ]
 
     await fixture.load_elf_and_lookup_symbols(
-        r.Rlocation('kelvin_hw/tests/cocotb/rvv/load_store/load_store_whole_register.elf'),
+        r.Rlocation('coralnpu_hw/tests/cocotb/rvv/load_store/load_store_whole_register.elf'),
         ['vl', 'vtype', 'stride', 'load_data', 'store_data', 'impl'] +
             list(f[0] for f in functions),
     )

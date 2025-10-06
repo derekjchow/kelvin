@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-load("//rules:kelvin_v2.bzl", "kelvin_v2_binary")
+load("//rules:coralnpu_v2.bzl", "coralnpu_v2_binary")
 
 cc_library(
     name = "hw_primitives",
@@ -36,8 +36,8 @@ cc_library(
     ],
     deps = [
         ":hw_primitives",
-        "//hdl/chisel/src/kelvin:core_mini_axi_cc_library_cc",
-        "//hdl/chisel/src/kelvin:rvv_core_mini_axi_cc_library_cc",
+        "//hdl/chisel/src/coralnpu:core_mini_axi_cc_library_cc",
+        "//hdl/chisel/src/coralnpu:rvv_core_mini_axi_cc_library_cc",
     ],
 )
 
@@ -56,9 +56,9 @@ cc_binary(
 )
 
 cc_library(
-    name = "kelvin_simulator_headers",
+    name = "coralnpu_simulator_headers",
     hdrs = [
-        "kelvin_simulator.h",
+        "coralnpu_simulator.h",
         "mailbox.h",
     ],
 )
@@ -69,7 +69,7 @@ cc_library(
     linkstatic = True,
     deps = [
         ":core_mini_axi_wrapper",
-        ":kelvin_simulator_headers",
+        ":coralnpu_simulator_headers",
     ],
     alwayslink = True,
 )
@@ -81,12 +81,12 @@ cc_library(
     linkstatic = True,
     deps = [
         ":core_mini_axi_wrapper",
-        ":kelvin_simulator_headers",
+        ":coralnpu_simulator_headers",
     ],
     alwayslink = True,
 )
 
-kelvin_v2_binary(
+coralnpu_v2_binary(
     name = "mailbox_example",
     srcs = [
         "mailbox_example.cc",
@@ -109,14 +109,14 @@ cc_binary(
 
 # generate libraries for external projects
 cc_binary(
-    name = "libkelvin_simulator.so",
+    name = "libcoralnpu_simulator.so",
     linkshared = True,
     visibility = ["//visibility:public"],
     deps = [":core_mini_axi_simulator"],
 )
 
 cc_binary(
-    name = "libkelvin_simulator_rvv.so",
+    name = "libcoralnpu_simulator_rvv.so",
     linkshared = True,
     visibility = ["//visibility:public"],
     deps = [":core_mini_axi_simulator_rvv"],

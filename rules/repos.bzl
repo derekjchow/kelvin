@@ -12,14 +12,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# Kelvin repositories
+# CoralNPU repositories
 #
 
 load("@bazel_tools//tools/build_defs/repo:git.bzl", "git_repository")
 load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
 load("@bazel_tools//tools/build_defs/repo:utils.bzl", "maybe")
 
-def kelvin_repos():
+def coralnpu_repos():
     http_archive(
         name = "bazel_skylib",
         sha256 = "b8a1527901774180afc798aeb28c4634bdccf19c4d98e7bdd1ce79d1fe9aaad7",
@@ -37,12 +37,12 @@ def kelvin_repos():
             "https://github.com/hdl/bazel_rules_hdl/archive/7a1ba0e8d229200b4628e8a676917fc6b8e165d1.tar.gz",
         ],
         patches = [
-            "@kelvin_hw//external:0001-Use-systemc-in-verilator-and-support-verilator-in-co.patch",
-            "@kelvin_hw//external:0002-Update-cocotb-script-to-support-newer-version.patch",
-            "@kelvin_hw//external:0003-Export-vdb-via-undeclared-test-outputs.patch",
-            "@kelvin_hw//external:0004-More-jobs-for-cocotb.patch",
-            "@kelvin_hw//external:0005-Use-num_failed-for-exit-code.patch",
-            "@kelvin_hw//external:0006-Separate-build-from-test-for-Verilator.patch",
+            "@coralnpu_hw//external:0001-Use-systemc-in-verilator-and-support-verilator-in-co.patch",
+            "@coralnpu_hw//external:0002-Update-cocotb-script-to-support-newer-version.patch",
+            "@coralnpu_hw//external:0003-Export-vdb-via-undeclared-test-outputs.patch",
+            "@coralnpu_hw//external:0004-More-jobs-for-cocotb.patch",
+            "@coralnpu_hw//external:0005-Use-num_failed-for-exit-code.patch",
+            "@coralnpu_hw//external:0006-Separate-build-from-test-for-Verilator.patch",
         ],
         patch_args = ["-p1"],
     )
@@ -67,7 +67,7 @@ def kelvin_repos():
     http_archive(
         name = "llvm_firtool",
         urls = ["https://repo1.maven.org/maven2/org/chipsalliance/llvm-firtool/1.114.0/llvm-firtool-1.114.0.jar"],
-        build_file = "@kelvin_hw//third_party/llvm-firtool:BUILD.bazel",
+        build_file = "@coralnpu_hw//third_party/llvm-firtool:BUILD.bazel",
         sha256 = "f93a831e6b5696df2e3327626df3cc183e223bf0c9c0fddf9ae9e51f502d0492",
     )
 
@@ -77,9 +77,9 @@ def kelvin_repos():
         strip_prefix = "opentitan-f243e6802143374741739d2c164c4f2f61697669",
         urls = ["https://github.com/lowrisc/opentitan/archive/f243e6802143374741739d2c164c4f2f61697669.zip"],
         patches = [
-            "@kelvin_hw//third_party/ip/lowrisc:0001-Add-BUILD.bazel.patch",
-            "@kelvin_hw//third_party/ip/lowrisc:0002-Modify-TLUL-and-SRAM-adapter-for-ChAI.patch",
-            "@kelvin_hw//third_party/ip/lowrisc:0003-Modify-UART-for-ChAI.patch",
+            "@coralnpu_hw//third_party/ip/lowrisc:0001-Add-BUILD.bazel.patch",
+            "@coralnpu_hw//third_party/ip/lowrisc:0002-Modify-TLUL-and-SRAM-adapter-for-ChAI.patch",
+            "@coralnpu_hw//third_party/ip/lowrisc:0003-Modify-UART-for-ChAI.patch",
         ],
         patch_args = ["-p1"],
     )
@@ -100,12 +100,12 @@ def kelvin_repos():
         ],
         strip_prefix = "libsystemctlm-soc-79d624f3c7300a2ead97ca35e683c38f0b6f5021",
         sha256 = "5c9d08bd33eb6738e3b4a0dda81e24a6d30067e8149bada6ae05aedcab5b786c",
-        build_file = "@kelvin_hw//third_party/libsystemctlm-soc:BUILD.bazel",
+        build_file = "@coralnpu_hw//third_party/libsystemctlm-soc:BUILD.bazel",
     )
 
     http_archive(
         name = "chipsalliance_rocket_chip",
-        build_file = "@kelvin_hw//third_party/rocket_chip:BUILD.bazel",
+        build_file = "@coralnpu_hw//third_party/rocket_chip:BUILD.bazel",
         urls = ["https://github.com/chipsalliance/rocket-chip/archive/f517abbf41abb65cea37421d3559f9739efd00a9.zip"],
         sha256 = "e77bb13328e919ca43ba83a1c110b5314900841125b9ff22813a4b9fe73672a2",
         strip_prefix = "rocket-chip-f517abbf41abb65cea37421d3559f9739efd00a9",
@@ -127,11 +127,11 @@ def renode_repos():
         sha256 = "ca98b8df2ed09e225b72f35c616c85207e451d8a4b00d96594064e5065493cf1",
         strip_prefix = "renode_1.15.2_source",
         urls = ["https://github.com/renode/renode/releases/download/v1.15.2/renode_1.15.2_source.tar.xz"],
-        build_file = "@kelvin_hw//third_party/renode:BUILD.bazel",
+        build_file = "@coralnpu_hw//third_party/renode:BUILD.bazel",
         patches = [
-            "@kelvin_hw//third_party/renode:0001-Tweaks-to-AXI.patch",
-            "@kelvin_hw//third_party/renode:0002-AXI-S-fixups.patch",
-            "@kelvin_hw//third_party/renode:0003-Invert-AXI-reset-polarity.patch",
+            "@coralnpu_hw//third_party/renode:0001-Tweaks-to-AXI.patch",
+            "@coralnpu_hw//third_party/renode:0002-AXI-S-fixups.patch",
+            "@coralnpu_hw//third_party/renode:0003-Invert-AXI-reset-polarity.patch",
         ],
         patch_args = ["-p1"],
     )
@@ -141,12 +141,12 @@ def cvfpu_repos():
         name = "cvfpu",
         sha256 = "fe9278105886ed23ee889c58b2c28f89732e06a0d12f7fa4a8ce60dd680290f6",
         urls = ["https://github.com/openhwgroup/cvfpu/archive/refs/tags/v0.8.1.zip"],
-        build_file = "@kelvin_hw//third_party/cvfpu:BUILD.bazel",
+        build_file = "@coralnpu_hw//third_party/cvfpu:BUILD.bazel",
         strip_prefix = "cvfpu-0.8.1",
         patches = [
-            "@kelvin_hw//third_party/cvfpu:0001-Fix-max_num_lanes-issue-in-DC.patch",
-            "@kelvin_hw//third_party/cvfpu:0002-Remove-SVH-includes.patch",
-            "@kelvin_hw//third_party/cvfpu:0003-Fill-in-unreachable-state-in-fpnew_divsqrt_th_32-fsm.patch",
+            "@coralnpu_hw//third_party/cvfpu:0001-Fix-max_num_lanes-issue-in-DC.patch",
+            "@coralnpu_hw//third_party/cvfpu:0002-Remove-SVH-includes.patch",
+            "@coralnpu_hw//third_party/cvfpu:0003-Fill-in-unreachable-state-in-fpnew_divsqrt_th_32-fsm.patch",
         ],
         patch_args = ["-p1"],
     )
@@ -156,14 +156,14 @@ def cvfpu_repos():
         sha256 = "4d27dfb483e856556812bac7760308ea1b576adc4bd172d08f7421cea488e5ab",
         urls = ["https://github.com/pulp-platform/common_cells/archive/6aeee85d0a34fedc06c14f04fd6363c9f7b4eeea.zip"],
         strip_prefix = "common_cells-6aeee85d0a34fedc06c14f04fd6363c9f7b4eeea",
-        build_file = "@kelvin_hw//third_party/common_cells:BUILD.bazel",
+        build_file = "@coralnpu_hw//third_party/common_cells:BUILD.bazel",
     )
 
     http_archive(
         name = "fpu_div_sqrt_mvp",
         sha256 = "27bd475637d51215416acf6fdb78e613569f8de0b90040ccc0e3e4679572d8c4",
         urls = ["https://github.com/pulp-platform/fpu_div_sqrt_mvp/archive/86e1f558b3c95e91577c41b2fc452c86b04e85ac.zip"],
-        build_file = "@kelvin_hw//third_party/fpu_div_sqrt_mvp:BUILD.bazel",
+        build_file = "@coralnpu_hw//third_party/fpu_div_sqrt_mvp:BUILD.bazel",
         strip_prefix = "fpu_div_sqrt_mvp-86e1f558b3c95e91577c41b2fc452c86b04e85ac",
     )
 
@@ -174,9 +174,9 @@ def rvvi_repos():
         urls = ["https://github.com/riscv-verification/RVVI/archive/5786f0d39b84f3fd15ef75b792bdea4281941afe.zip"],
         sha256 = "18090eed44752f88e84d7631dc525c130ba6c6a5143d7cc2004dc2ca3641eaa2",
         strip_prefix = "RVVI-5786f0d39b84f3fd15ef75b792bdea4281941afe",
-        build_file = "@kelvin_hw//third_party/RVVI:BUILD.bazel",
+        build_file = "@coralnpu_hw//third_party/RVVI:BUILD.bazel",
         patches = [
-            "@kelvin_hw//third_party/RVVI:0001-Rename-name-queue-to-avoid-conflict.patch",
+            "@coralnpu_hw//third_party/RVVI:0001-Rename-name-queue-to-avoid-conflict.patch",
         ],
         patch_args = ["-p1"],
     )
@@ -188,7 +188,7 @@ def fpga_repos():
         sha256 = "b881378cdffee2284a88c2032c9fb13e68c889f1cac38cf715b0cff7b40fcf7e",
         strip_prefix = "opentitan-1b1945fd76799666156f817e163222725c518c59",
         patches = [
-            "@kelvin_hw//fpga:0001-Export-hw-ip_templates.patch",
+            "@coralnpu_hw//fpga:0001-Export-hw-ip_templates.patch",
         ],
         patch_args = ["-p1"],
     )
@@ -200,8 +200,8 @@ def tflite_repos():
         sha256 = "ac3e675b71c55529a32d19a8cf0912413c1d1b9a551512e2665883a1666fb0ba",
         strip_prefix = "tflite-micro-b75c6ff4e2270047f2b48fa01f833c8101c31f43",
         patches = [
-            "@kelvin_hw//third_party/tflite-micro:Tflite-Micro-Kelvin-integration.patch",
-            "@kelvin_hw//third_party/tflite-micro:0001-Remove-xtensa-and-hifi-kernels.patch",
+            "@coralnpu_hw//third_party/tflite-micro:Tflite-Micro-CoralNPU-integration.patch",
+            "@coralnpu_hw//third_party/tflite-micro:0001-Remove-xtensa-and-hifi-kernels.patch",
         ],
         patch_args = ["-p1"],
     )

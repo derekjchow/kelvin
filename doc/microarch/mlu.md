@@ -6,7 +6,7 @@ and MULHU.
 ## Interfaces
 
 Inputs to the MLU are instructions from the Dispatch Unit or data reads from the
-Register File. The single MLU in the Kelvin core can service instructions from
+Register File. The single MLU in the CoralNPU core can service instructions from
 any of the four instruction lanes, but only one command is dispatched in any
 cycle.
 

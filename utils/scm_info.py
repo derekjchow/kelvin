@@ -31,7 +31,7 @@ class VersionInformation():
             raise SystemExit(sys.exc_info()[1])
 
     def scm_revision(self, default: Union[str, None] = None) -> Union[str, None]:
-        return self.version_stamp.get('KELVIN_BUILD_GIT_VERSION', default)
+        return self.version_stamp.get('CORALNPU_BUILD_GIT_VERSION', default)
 
 def main():
     parser = argparse.ArgumentParser()
@@ -42,7 +42,7 @@ def main():
     version_info = VersionInformation(args.infile)
     scm_revision = version_info.scm_revision('f' * 40)
     tpl = f"""
-package kelvin
+package coralnpu
 
 class ScmInfo {{
     val revision = BigInt("{scm_revision}", 16)

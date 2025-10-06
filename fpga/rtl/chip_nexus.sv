@@ -64,7 +64,7 @@ module chip_nexus
                .clk_aon_o(clk_aon),
                .rst_no(rst_n));
 
-  kelvin_soc i_kelvin_soc (
+  coralnpu_soc i_coralnpu_soc (
     .clk_i(clk),
     .rst_ni(rst_n),
     .spi_clk_i(spi_clk_i),

@@ -18,7 +18,7 @@ from cocotb.triggers import RisingEdge, ClockCycles, with_timeout
 import math
 import random
 
-from kelvin_test_utils.TileLinkULInterface import TileLinkULInterface, create_a_channel_req
+from coralnpu_test_utils.TileLinkULInterface import TileLinkULInterface, create_a_channel_req
 
 
 async def setup_dut(dut):

@@ -4,7 +4,7 @@
 
 package(default_visibility = ["//visibility:public"])
 
-exports_files(["kelvin_rv_core_ibex.ipconfig.hjson"])
+exports_files(["coralnpu_rv_core_ibex.ipconfig.hjson"])
 
 filegroup(
     name = "doc_files",

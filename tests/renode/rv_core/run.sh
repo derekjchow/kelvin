@@ -17,20 +17,20 @@
 set -e
 
 SCRIPT_DIR=$(cd "$(dirname "$0")" && pwd)
-KELVIN_DIR=${SCRIPT_DIR}/../../../
+CORALNPU_DIR=${SCRIPT_DIR}/../../../
 
-BAZEL_BIN_DIR=$(cd ${KELVIN_DIR}; bazel info bazel-bin)
-(cd ${KELVIN_DIR}; bazel build //tests/renode:Vtop_bin)
-(cd ${KELVIN_DIR}; bazel build //tests/renode:Vtop_master)
-(cd ${KELVIN_DIR}; bazel build //tests/renode:Vtop_slave)
-(cd ${KELVIN_DIR}; bazel build //tests/renode/rv_core:rv_core.elf)
+BAZEL_BIN_DIR=$(cd ${CORALNPU_DIR}; bazel info bazel-bin)
+(cd ${CORALNPU_DIR}; bazel build //tests/renode:Vtop_bin)
+(cd ${CORALNPU_DIR}; bazel build //tests/renode:Vtop_master)
+(cd ${CORALNPU_DIR}; bazel build //tests/renode:Vtop_slave)
+(cd ${CORALNPU_DIR}; bazel build //tests/renode/rv_core:rv_core.elf)
 
-${KELVIN_DIR}/bazel-bin/tests/renode/Vtop_bin &
+${CORALNPU_DIR}/bazel-bin/tests/renode/Vtop_bin &
 VTOP_PID=$!
 trap "kill ${VTOP_PID}" exit
 
-(cd ${KELVIN_DIR}; renode --disable-xwt -e " \
-    i @tests/renode/kelvin-verilator.resc; \
+(cd ${CORALNPU_DIR}; renode --disable-xwt -e " \
+    i @tests/renode/coralnpu-verilator.resc; \
     core_mini_axi_slave SimulationFilePathLinux @${BAZEL_BIN_DIR}/tests/renode/Vtop_slave; \
     core_mini_axi_master SimulationFilePathLinux @${BAZEL_BIN_DIR}/tests/renode/Vtop_master; \
     sysbus LoadELF @${BAZEL_BIN_DIR}/tests/renode/rv_core/rv_core.elf false true rv_core; \

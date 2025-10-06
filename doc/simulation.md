@@ -2,7 +2,7 @@
 
 ## VCS Support
 
-Kelvin supports using VCS simulator. To enable VCS support, the following
+CoralNPU supports using VCS simulator. To enable VCS support, the following
 environment variables need to be set:
 
 ```

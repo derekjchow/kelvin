@@ -13,12 +13,12 @@
 # limitations under the License.
 
 load(
-    "@kelvin_hw//rules:chisel.bzl",
+    "@coralnpu_hw//rules:chisel.bzl",
     "chisel_library",
     "chisel_cc_library",
 )
-load("@kelvin_hw//rules:coco_tb.bzl", "cocotb_test_suite", "verilator_cocotb_model")
-load("@kelvin_hw//third_party/python:requirements.bzl", "requirement")
+load("@coralnpu_hw//rules:coco_tb.bzl", "cocotb_test_suite", "verilator_cocotb_model")
+load("@coralnpu_hw//third_party/python:requirements.bzl", "requirement")
 
 package(default_visibility = ["//visibility:public"])
 
@@ -33,8 +33,8 @@ chisel_library(
         "Axi.scala",
         "TLUL2Axi.scala",
         "Axi2TLUL.scala",
-        "KelvinMemIO.scala",
-        "KelvinToTlul.scala",
+        "CoralNPUMemIO.scala",
+        "CoralNPUToTlul.scala",
         "SecdedEncoderTestbench.scala",
         "Spi2TLUL.scala",
         "TileLinkUL.scala",
@@ -48,7 +48,7 @@ chisel_library(
     ],
     deps = [
         "//hdl/chisel/src/common",
-        "//hdl/chisel/src/kelvin:kelvin_params",
+        "//hdl/chisel/src/coralnpu:coralnpu_params",
         "@chipsalliance_rocket_chip//:asyncqueue",
     ],
 )

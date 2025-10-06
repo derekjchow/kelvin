@@ -14,14 +14,14 @@
 
 package(default_visibility = ["//visibility:public"])
 
-load("//rules:kelvin_v2.bzl", "kelvin_v2_binary")
+load("//rules:coralnpu_v2.bzl", "coralnpu_v2_binary")
 
-kelvin_v2_binary(
-    name = "kelvin_v2_hello_world_add_floats",
+coralnpu_v2_binary(
+    name = "coralnpu_v2_hello_world_add_floats",
     srcs = ["hello_world_add_floats.cc"],
 )
 
-kelvin_v2_binary(
-    name = "kelvin_v2_rvv_add_intrinsic",
+coralnpu_v2_binary(
+    name = "coralnpu_v2_rvv_add_intrinsic",
     srcs = ["rvv_add_intrinsic.cc"],
 )

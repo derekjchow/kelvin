@@ -12,13 +12,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-load("//rules:kelvin_v2.bzl", "kelvin_v2_binary")
+load("//rules:coralnpu_v2.bzl", "coralnpu_v2_binary")
 load("//rules:utils.bzl", "template_rule")
 
 package(default_visibility = ["//visibility:public"])
 
 template_rule(
-    kelvin_v2_binary,
+    coralnpu_v2_binary,
     {
         "rvv_matmul_assembly": {
             "srcs": ["rvv_matmul_assembly.cc"],

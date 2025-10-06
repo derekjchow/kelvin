@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-load("//rules:kelvin_v2.bzl", "kelvin_v2_binary")
+load("//rules:coralnpu_v2.bzl", "coralnpu_v2_binary")
 load("//rules:utils.bzl", "template_rule")
 load("//tests/cocotb/rvv/arithmetics:rvv_arithmetic.bzl", "rvv_arithmetic_test", "rvv_reduction_test", "rvv_widen_arithmetic_test")
 
@@ -116,7 +116,7 @@ template_rule(
 )
 
 template_rule(
-    kelvin_v2_binary,
+    coralnpu_v2_binary,
     {
         "rvv_{}_{}_m1".format(op, dtype): {
             "srcs": ["template_{}_{}_m1".format(op, dtype)],
@@ -126,7 +126,7 @@ template_rule(
 )
 
 template_rule(
-    kelvin_v2_binary,
+    coralnpu_v2_binary,
     {
         "rvv_widen_{}_{}_{}".format(op, in_dtype, out_dtype): {
             "srcs": ["template_widen_{}_{}_{}".format(op, in_dtype, out_dtype)],

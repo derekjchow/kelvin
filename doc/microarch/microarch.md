@@ -1,10 +1,10 @@
-# Kelvin Microarchitecture
+# CoralNPU Microarchitecture
 
 ![image](../images/microarch.png)
 
 ## Pipeline
 
-The Kelvin base processor is an in-order three-stage pipeline capable of
+The CoralNPU base processor is an in-order three-stage pipeline capable of
 dispatching up to 4 instructions per cycle. The instruction stages are:
 
 * **Instruction fetch:** Instructions are fetched from memory into an

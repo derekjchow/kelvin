@@ -16,7 +16,7 @@ package top_racl_pkg;
   import tlul_pkg::*;
 
   // This is a placeholder file.
-  // Toplevel RAC-L constants for the Kelvin SoC will be added here.
+  // Toplevel RAC-L constants for the CoralNPU SoC will be added here.
   parameter int unsigned NrRaclPolicies = 1;
 
   // RACL Policy selector bits

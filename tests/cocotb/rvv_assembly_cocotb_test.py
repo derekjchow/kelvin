@@ -2,8 +2,8 @@ import cocotb
 import itertools
 import numpy as np
 import tqdm
-from kelvin_test_utils.core_mini_axi_interface import CoreMiniAxiInterface
-from kelvin_test_utils.sim_test_fixture import Fixture
+from coralnpu_test_utils.core_mini_axi_interface import CoreMiniAxiInterface
+from coralnpu_test_utils.sim_test_fixture import Fixture
 from bazel_tools.tools.python.runfiles import runfiles
 
 SEWS = [
@@ -58,7 +58,7 @@ async def core_mini_rvv_load(dut):
     cocotb.start_soon(core_mini_axi.clock.start())
     r = runfiles.Create()
 
-    elf_path = r.Rlocation("kelvin_hw/tests/cocotb/rvv/rvv_load.elf")
+    elf_path = r.Rlocation("coralnpu_hw/tests/cocotb/rvv/rvv_load.elf")
     num_test_bytes = 16
     intial_pass = True
     if not elf_path:
@@ -106,7 +106,7 @@ async def core_mini_rvv_add(dut):
     cocotb.start_soon(core_mini_axi.clock.start())
     r = runfiles.Create()
 
-    elf_path = r.Rlocation("kelvin_hw/tests/cocotb/rvv/rvv_add.elf")
+    elf_path = r.Rlocation("coralnpu_hw/tests/cocotb/rvv/rvv_add.elf")
     num_test_bytes = 16
     intial_pass = True
 
@@ -156,7 +156,7 @@ async def core_mini_vstart_store(dut):
     cocotb.start_soon(core_mini_axi.clock.start())
     r = runfiles.Create()
 
-    elf_path = r.Rlocation("kelvin_hw/tests/cocotb/rvv/vstart_store.elf")
+    elf_path = r.Rlocation("coralnpu_hw/tests/cocotb/rvv/vstart_store.elf")
     if not elf_path:
         raise ValueError("elf_path must consist a valid path")
     with open(elf_path, "rb") as f:
@@ -196,7 +196,7 @@ async def core_mini_vcsr_test(dut):
     cocotb.start_soon(core_mini_axi.clock.start())
     r = runfiles.Create()
 
-    elf_path = r.Rlocation("kelvin_hw/tests/cocotb/rvv/vcsr_test.elf")
+    elf_path = r.Rlocation("coralnpu_hw/tests/cocotb/rvv/vcsr_test.elf")
     if not elf_path:
         raise ValueError("elf_path must consist a valid path")
     with open(elf_path, "rb") as f:
@@ -296,21 +296,21 @@ async def test_vstart_not_zero_failure(dut, binary):
 async def core_mini_viota_test(dut):
     """Testbench to test vstart!=0 viota."""
     await test_vstart_not_zero_failure(
-        dut, "kelvin_hw/tests/cocotb/rvv/viota_test.elf")
+        dut, "coralnpu_hw/tests/cocotb/rvv/viota_test.elf")
 
 
 @cocotb.test()
 async def core_mini_vfirst_test(dut):
     """Testbench to test vstart!=0 vfirst."""
     await test_vstart_not_zero_failure(
-        dut, "kelvin_hw/tests/cocotb/rvv/vfirst_test.elf")
+        dut, "coralnpu_hw/tests/cocotb/rvv/vfirst_test.elf")
 
 
 @cocotb.test()
 async def core_mini_vcpop_exception_test(dut):
     """Testbench to test vstart!=0 vcpop."""
     await test_vstart_not_zero_failure(
-        dut, "kelvin_hw/tests/cocotb/rvv/vcpop_exception_test.elf")
+        dut, "coralnpu_hw/tests/cocotb/rvv/vcpop_exception_test.elf")
 
 
 @cocotb.test()
@@ -338,7 +338,7 @@ async def core_mini_vcpop_test(dut):
         {'impl': 'vcpop_m_b32', 'vl': 1},
     ]
     await fixture.load_elf_and_lookup_symbols(
-        r.Rlocation('kelvin_hw/tests/cocotb/rvv/vcpop_test.elf'),
+        r.Rlocation('coralnpu_hw/tests/cocotb/rvv/vcpop_test.elf'),
         ['vl', 'in_buf', 'result', 'impl'] + [c['impl'] for c in cases],
     )
     rng = np.random.default_rng()
@@ -377,28 +377,28 @@ async def core_mini_vcpop_test(dut):
 async def core_mini_vcompress_test(dut):
     """Testbench to test vstart!=0 vcompress."""
     await test_vstart_not_zero_failure(
-        dut, "kelvin_hw/tests/cocotb/rvv/vcompress_test.elf")
+        dut, "coralnpu_hw/tests/cocotb/rvv/vcompress_test.elf")
 
 
 @cocotb.test()
 async def core_mini_vmsbf_test(dut):
     """Testbench to test vstart!=0 vmsbf."""
     await test_vstart_not_zero_failure(
-        dut, "kelvin_hw/tests/cocotb/rvv/vmsbf_test.elf")
+        dut, "coralnpu_hw/tests/cocotb/rvv/vmsbf_test.elf")
 
 
 @cocotb.test()
 async def core_mini_vmsof_test(dut):
     """Testbench to test vstart!=0 vmsof."""
     await test_vstart_not_zero_failure(
-        dut, "kelvin_hw/tests/cocotb/rvv/vmsof_test.elf")
+        dut, "coralnpu_hw/tests/cocotb/rvv/vmsof_test.elf")
 
 
 @cocotb.test()
 async def core_mini_vmsif_test(dut):
     """Testbench to test vstart!=0 vmsbf."""
     await test_vstart_not_zero_failure(
-        dut, "kelvin_hw/tests/cocotb/rvv/vmsif_test.elf")
+        dut, "coralnpu_hw/tests/cocotb/rvv/vmsif_test.elf")
 
 
 @cocotb.test()
@@ -409,7 +409,7 @@ async def core_mini_vill_test(dut):
     cocotb.start_soon(core_mini_axi.clock.start())
     r = runfiles.Create()
 
-    elf_path = r.Rlocation("kelvin_hw/tests/cocotb/rvv/vill_test.elf")
+    elf_path = r.Rlocation("coralnpu_hw/tests/cocotb/rvv/vill_test.elf")
     if not elf_path:
         raise ValueError("elf_path must consist a valid path")
     with open(elf_path, "rb") as f:
@@ -437,7 +437,7 @@ async def core_mini_vl_test(dut):
     cocotb.start_soon(core_mini_axi.clock.start())
     r = runfiles.Create()
 
-    elf_path = r.Rlocation("kelvin_hw/tests/cocotb/rvv/vcsr_test.elf")
+    elf_path = r.Rlocation("coralnpu_hw/tests/cocotb/rvv/vcsr_test.elf")
     with open(elf_path, "rb") as f:
         entry_point = await core_mini_axi.load_elf(f)
         sew_addr = core_mini_axi.lookup_symbol(f, "sew")

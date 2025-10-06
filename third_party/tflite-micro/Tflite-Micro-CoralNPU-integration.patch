@@ -1,0 +1,158 @@
+From 8bc9af42f6f20e6a2a3e83d512e918c6f85239c8 Mon Sep 17 00:00:00 2001
+From: Naveen Dodda <ndodda@google.com>
+Date: Fri, 12 Sep 2025 23:04:51 +0000
+Subject: [PATCH] TFmicro CoralNPU integration
+
+---
+ .../micro/examples/hello_world/models/BUILD   |  5 +---
+ tensorflow/lite/micro/tools/BUILD             |  2 +-
+ tensorflow/workspace.bzl                      |  1 +
+ third_party/gemmlowp/BUILD                    |  6 +++++
+ .../gemmlowp/remove-pthreads-as-default.patch | 25 +++++++++++++++++++
+ third_party/ruy/BUILD                         |  2 ++
+ .../ruy/remove-pthreads-as-default.patch      | 23 +++++++++++++++++
+ third_party/ruy/workspace.bzl                 |  2 ++
+ 8 files changed, 61 insertions(+), 5 deletions(-)
+ create mode 100644 third_party/gemmlowp/BUILD
+ create mode 100644 third_party/gemmlowp/remove-pthreads-as-default.patch
+ create mode 100644 third_party/ruy/remove-pthreads-as-default.patch
+
+diff --git a/tensorflow/lite/micro/examples/hello_world/models/BUILD b/tensorflow/lite/micro/examples/hello_world/models/BUILD
+index 4c9441b8..457cf190 100644
+--- a/tensorflow/lite/micro/examples/hello_world/models/BUILD
++++ b/tensorflow/lite/micro/examples/hello_world/models/BUILD
+@@ -9,10 +9,7 @@ exports_files(
+         "hello_world_float.tflite",
+         "hello_world_int8.tflite",
+     ],
+-    visibility = [
+-        "//codegen/examples/hello_world:__subpackages__",
+-        "//tensorflow/lite/micro/examples/hello_world:__subpackages__",
+-    ],
++    visibility = ["//visibility:public"] ,
+ )
+ 
+ generate_cc_arrays(
+diff --git a/tensorflow/lite/micro/tools/BUILD b/tensorflow/lite/micro/tools/BUILD
+index c3b2f981..8e10f866 100644
+--- a/tensorflow/lite/micro/tools/BUILD
++++ b/tensorflow/lite/micro/tools/BUILD
+@@ -5,7 +5,7 @@ load("@pybind11_bazel//:build_defs.bzl", "pybind_extension")
+ load("//tensorflow:extra_rules.bzl", "tflm_application_friends")
+ 
+ package(
+-    default_visibility = ["//:__subpackages__"],
++    default_visibility = ["//visibility:public"],
+     licenses = ["notice"],
+ )
+ 
+diff --git a/tensorflow/workspace.bzl b/tensorflow/workspace.bzl
+index b799523b..4aed7b03 100644
+--- a/tensorflow/workspace.bzl
++++ b/tensorflow/workspace.bzl
+@@ -35,6 +35,7 @@ def tf_repositories(path_prefix = "", tf_repo_name = ""):
+             "https://storage.googleapis.com/mirror.tensorflow.org/github.com/google/gemmlowp/archive/fda83bdc38b118cc6b56753bd540caa49e570745.zip",
+             "https://github.com/google/gemmlowp/archive/fda83bdc38b118cc6b56753bd540caa49e570745.zip",
+         ],
++        patch_file = "@tflite_micro//third_party/gemmlowp:remove-pthreads-as-default.patch",
+     )
+ 
+     tf_http_archive(
+diff --git a/third_party/gemmlowp/BUILD b/third_party/gemmlowp/BUILD
+new file mode 100644
+index 00000000..b4ea97ae
+--- /dev/null
++++ b/third_party/gemmlowp/BUILD
+@@ -0,0 +1,6 @@
++ackage(
++    default_visibility = ["//visibility:public"],
++    licenses = ["notice"],
++)
++
++exports_files(glob(["*.patch"]))
+\ No newline at end of file
+diff --git a/third_party/gemmlowp/remove-pthreads-as-default.patch b/third_party/gemmlowp/remove-pthreads-as-default.patch
+new file mode 100644
+index 00000000..e32ac209
+--- /dev/null
++++ b/third_party/gemmlowp/remove-pthreads-as-default.patch
+@@ -0,0 +1,25 @@
++From 6f094c09fe6ae26306f1b376ceeed02f3af52d01 Mon Sep 17 00:00:00 2001
++From: Naveen Dodda <ndodda@google.com>
++Date: Mon, 8 Sep 2025 21:30:52 +0000
++Subject: [PATCH] Changes to turn off default threads option
++
++---
++ flags.bzl | 2 +-
++ 1 file changed, 1 insertion(+), 1 deletion(-)
++
++diff --git a/flags.bzl b/flags.bzl
++index e35fe9e..e26a448 100644
++--- a/flags.bzl
+++++ b/flags.bzl
++@@ -4,7 +4,7 @@ LIB_COPTS = []
++ LIB_LINKOPTS = select({
++     ":android": [],
++     ":windows": [],
++-    "//conditions:default": ["-lpthread"],
+++    "//conditions:default": [],
++ })
++ 
++ BIN_LINKOPTS = LIB_LINKOPTS
++-- 
++2.51.0.384.g4c02a37b29-goog
++
+diff --git a/third_party/ruy/BUILD b/third_party/ruy/BUILD
+index 518fea8f..f4ab327d 100644
+--- a/third_party/ruy/BUILD
++++ b/third_party/ruy/BUILD
+@@ -4,3 +4,5 @@ package(
+     default_visibility = ["//visibility:public"],
+     licenses = ["notice"],
+ )
++
++exports_files(glob(["*.patch"]) + ["LICENSE"])
+\ No newline at end of file
+diff --git a/third_party/ruy/remove-pthreads-as-default.patch b/third_party/ruy/remove-pthreads-as-default.patch
+new file mode 100644
+index 00000000..5c834007
+--- /dev/null
++++ b/third_party/ruy/remove-pthreads-as-default.patch
+@@ -0,0 +1,23 @@
++From 621a1914d61159f2b4461aaf87a5a0e35156180f Mon Sep 17 00:00:00 2001
++From: Naveen Dodda <ndodda@google.com>
++Date: Fri, 12 Sep 2025 22:13:17 +0000
++Subject: [PATCH] remove pthreads as default
++
++---
++ ruy/build_defs.oss.bzl | 2 +-
++ 1 file changed, 1 insertion(+), 1 deletion(-)
++
++diff --git a/ruy/build_defs.oss.bzl b/ruy/build_defs.oss.bzl
++index e405b41..83097b7 100644
++--- a/ruy/build_defs.oss.bzl
+++++ b/ruy/build_defs.oss.bzl
++@@ -11,5 +11,5 @@ def ruy_linkopts_thread_standard_library():
++     # https://github.com/abseil/abseil-cpp/blob/1112609635037a32435de7aa70a9188dcb591458/absl/base/BUILD.bazel#L155
++     return select({
++         "@bazel_tools//src/conditions:windows": [],
++-        "//conditions:default": ["-pthread"],
+++        "//conditions:default": [""],
++     })
++-- 
++2.51.0.384.g4c02a37b29-goog
++
+diff --git a/third_party/ruy/workspace.bzl b/third_party/ruy/workspace.bzl
+index 50769621..b5274df9 100644
+--- a/third_party/ruy/workspace.bzl
++++ b/third_party/ruy/workspace.bzl
+@@ -12,4 +12,6 @@ def repo():
+             "https://github.com/google/ruy/archive/54774a7a2cf85963777289193629d4bd42de4a59.zip",
+         ],
+         build_file = "//third_party/ruy:BUILD",
++        patch_file = "@tflite_micro//third_party/ruy:remove-pthreads-as-default.patch",
++
+     )
+-- 
+2.51.0.534.gc79095c0ca-goog
+

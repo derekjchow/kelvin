@@ -15,7 +15,7 @@
 # NB: Before running this test, you must build Vtop_bin.
 # bazel build //tests/renode:Vtop_bin
 *** Variables ***
-${SCRIPT}       ${CURDIR}/../kelvin-verilator.resc
+${SCRIPT}       ${CURDIR}/../coralnpu-verilator.resc
 
 *** Keywords ***
 Create Machine
@@ -23,7 +23,7 @@ Create Machine
     Set Test Variable   ${vtop_slave_bin}             ${CURDIR}/../Vtop_slave
     Set Test Variable   ${vtop_master_bin}             ${CURDIR}/../Vtop_master
 
-    ExecuteCommand      $repl_file="${CURDIR}/../kelvin-verilator.repl"
+    ExecuteCommand      $repl_file="${CURDIR}/../coralnpu-verilator.repl"
     Execute Script      ${SCRIPT}
     Execute Command     core_mini_axi_slave SimulationFilePathLinux "${vtop_slave_bin}"
     Execute Command     core_mini_axi_master SimulationFilePathLinux "${vtop_master_bin}"

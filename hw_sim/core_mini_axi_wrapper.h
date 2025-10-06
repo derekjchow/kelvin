@@ -127,13 +127,13 @@ class CoreMiniAxiWrapper {
 
   void Step() { clock_.Step(); }
 
-  KelvinMailbox& mailbox() { return mailbox_; }
+  CoralNPUMailbox& mailbox() { return mailbox_; }
 
-  const KelvinMailbox& mailbox() const { return mailbox_; }
+  const CoralNPUMailbox& mailbox() const { return mailbox_; }
 
-  const KelvinMailbox& ReadMailbox(void) { return mailbox_; }
+  const CoralNPUMailbox& ReadMailbox(void) { return mailbox_; }
 
-  void WriteMailbox(const KelvinMailbox& mailbox) {
+  void WriteMailbox(const CoralNPUMailbox& mailbox) {
     for (int i = 0; i < 4; i++) {
       mailbox_.message[i] = mailbox.message[i];
     }
@@ -217,7 +217,7 @@ class CoreMiniAxiWrapper {
 
  private:
   VerilatedContext* const context_;
-  KelvinMailbox mailbox_;
+  CoralNPUMailbox mailbox_;
 #ifdef ENABLE_RVV
   VRvvCoreMiniAxi core_;
 #else

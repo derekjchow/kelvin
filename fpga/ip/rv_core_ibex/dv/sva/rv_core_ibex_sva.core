@@ -2,13 +2,13 @@ CAPI=2:
 # Copyright lowRISC contributors (OpenTitan project).
 # Licensed under the Apache License, Version 2.0, see LICENSE for details.
 # SPDX-License-Identifier: Apache-2.0
-name: lowrisc:kelvin_dv:rv_core_ibex_sva:0.1
+name: lowrisc:coralnpu_dv:rv_core_ibex_sva:0.1
 description: "RV_CORE_IBEX assertion modules and bind file."
 filesets:
   files_dv:
     depend:
       - lowrisc:fpv:csr_assert_gen
-      - lowrisc:kelvin_ip:rv_core_ibex:0.1
+      - lowrisc:coralnpu_ip:rv_core_ibex:0.1
       - lowrisc:tlul:headers
       - lowrisc:prim:assert
     files:
@@ -17,7 +17,7 @@ filesets:
 
   files_formal:
     depend:
-      - lowrisc:kelvin_ip:rv_core_ibex:0.1
+      - lowrisc:coralnpu_ip:rv_core_ibex:0.1
 
 generate:
   csr_assert_gen:

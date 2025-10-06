@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""Kelvin HW dependent repositories."""
+"""CoralNPU HW dependent repositories."""
 
 load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
 load(
@@ -32,7 +32,7 @@ load(
     rules_hdl_dependency_support = "dependency_support",
 )
 
-def kelvin_chisel_deps():
+def coralnpu_chisel_deps():
     """Dependent repositories to build chisel"""
 
     # scala-reflect
@@ -225,18 +225,18 @@ def kelvin_chisel_deps():
         licenses = ["notice"],
     )
 
-def kelvin_deps():
-    """Full kelvin dependent repositories
+def coralnpu_deps():
+    """Full coralnpu dependent repositories
 
     Including chisel and systemC test code
     """
     rules_foreign_cc_dependencies()
     rules_hdl_dependency_support()
-    kelvin_chisel_deps()
+    coralnpu_chisel_deps()
 
     http_archive(
         name = "accellera_systemc",
-        build_file = "@kelvin_hw//external:systemc.BUILD",
+        build_file = "@coralnpu_hw//external:systemc.BUILD",
         sha256 = "bfb309485a8ad35a08ee78827d1647a451ec5455767b25136e74522a6f41e0ea",
         strip_prefix = "systemc-2.3.4",
         urls = [

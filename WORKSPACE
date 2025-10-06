@@ -12,19 +12,19 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-workspace(name = "kelvin_hw")
+workspace(name = "coralnpu_hw")
 
 load(
     "//rules:repos.bzl",
     "cvfpu_repos",
     "fpga_repos",
-    "kelvin_repos",
+    "coralnpu_repos",
     "renode_repos",
     "rvvi_repos",
     "tflite_repos",
 )
 
-kelvin_repos()
+coralnpu_repos()
 
 load("@com_github_grpc_grpc//bazel:grpc_deps.bzl", "grpc_deps")
 
@@ -79,9 +79,9 @@ rules_proto_dependencies()
 
 rules_proto_toolchains()
 
-load("//rules:deps.bzl", "kelvin_deps")
+load("//rules:deps.bzl", "coralnpu_deps")
 
-kelvin_deps()
+coralnpu_deps()
 
 renode_repos()
 
@@ -140,7 +140,7 @@ load("@ot_python_deps//:requirements.bzl", ot_install_deps = "install_deps")
 ot_install_deps()
 
 http_archive(
-    name = "toolchain_kelvin_v2",
+    name = "toolchain_coralnpu_v2",
     build_file_content = """
 licenses(["notice"])
 exports_files(glob(["**"]))
@@ -158,8 +158,8 @@ filegroup(
 )
 
 register_toolchains(
-    "//toolchain:cc_kelvin_v2_toolchain",
-    "//toolchain:cc_kelvin_v2_semihosting_toolchain",
+    "//toolchain:cc_coralnpu_v2_toolchain",
+    "//toolchain:cc_coralnpu_v2_semihosting_toolchain",
 )
 
 tflite_repos()

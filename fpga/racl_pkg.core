@@ -13,15 +13,15 @@ CAPI=2:
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-name: "com.google.kelvin:fpga:racl_pkg:0.1"
-description: "Toplevel-wide RAC-L constants for the Kelvin SoC"
+name: "com.google.coralnpu:fpga:racl_pkg:0.1"
+description: "Toplevel-wide RAC-L constants for the CoralNPU SoC"
 virtual:
   - lowrisc:virtual_constants:top_racl_pkg
 
 filesets:
   files_rtl:
     depend:
-      - com.google.kelvin:fpga:kelvin_soc_pkg:0.1
+      - com.google.coralnpu:fpga:coralnpu_soc_pkg:0.1
       - lowrisc:tlul:headers
       - lowrisc:prim:util
     files:

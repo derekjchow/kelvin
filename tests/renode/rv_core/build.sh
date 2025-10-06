@@ -20,18 +20,18 @@ OUTPUT_DIR=$(dirname ${OUTPUT_DIR})
 
 set -e
 
-# Build Kelvin binary
+# Build CoralNPU binary
 riscv32-unknown-elf-gcc \
     -march=rv32im \
     -nostdlib \
     -ffreestanding \
     -I. \
-    -o ${SCRIPT_DIR}/kelvin.elf \
-    -T ${SCRIPT_DIR}/kelvin_tcm.ld \
-    ${SCRIPT_DIR}/kelvin_start.S \
-    ${SCRIPT_DIR}/kelvin_hello_world.c
-riscv32-unknown-elf-objcopy ${SCRIPT_DIR}/kelvin.elf -O binary ${SCRIPT_DIR}/kelvin.bin
-xxd -i -n kelvin_hello_world_cc_bin ${SCRIPT_DIR}/kelvin.bin > ${SCRIPT_DIR}/kelvin_hello_world_cc.c
+    -o ${SCRIPT_DIR}/coralnpu.elf \
+    -T ${SCRIPT_DIR}/coralnpu_tcm.ld \
+    ${SCRIPT_DIR}/coralnpu_start.S \
+    ${SCRIPT_DIR}/coralnpu_hello_world.c
+riscv32-unknown-elf-objcopy ${SCRIPT_DIR}/coralnpu.elf -O binary ${SCRIPT_DIR}/coralnpu.bin
+xxd -i -n coralnpu_hello_world_cc_bin ${SCRIPT_DIR}/coralnpu.bin > ${SCRIPT_DIR}/coralnpu_hello_world_cc.c
 
 # Build RV core binary
 riscv32-unknown-elf-gcc \
@@ -43,4 +43,4 @@ riscv32-unknown-elf-gcc \
     -T ${SCRIPT_DIR}/link.ld \
     ${SCRIPT_DIR}/main.cc \
     ${SCRIPT_DIR}/start.S \
-    ${SCRIPT_DIR}/kelvin_hello_world_cc.c
+    ${SCRIPT_DIR}/coralnpu_hello_world_cc.c

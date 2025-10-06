@@ -13,29 +13,29 @@
 # limitations under the License.
 
 genrule(
-    name = "matcha_kelvin_verilog",
+    name = "matcha_coralnpu_verilog",
     srcs = [
-        "//hdl/chisel/src/matcha:Kelvin.sv",
+        "//hdl/chisel/src/matcha:CoralNPU.sv",
         "//hdl/chisel/src/matcha:Crossbar.sv",
         "//hdl/verilog:ClockGate.sv",
         "//hdl/verilog:Sram_1rw_256x256.v",
         "//hdl/verilog:Sram_1rwm_256x288.v",
     ],
     outs = [
-        "kelvin.sv",
+        "coralnpu.sv",
         "crossbar.sv",
         "ClockGate.sv",
         "Sram_1rw_256x256.v",
         "Sram_1rwm_256x288.v",
     ],
-    # Prepend extra definition on Kelvin.v for DV. Collect other verilog files
-    # to the GenDir so they can be referenced by kelvin.core.
+    # Prepend extra definition on CoralNPU.v for DV. Collect other verilog files
+    # to the GenDir so they can be referenced by coralnpu.core.
     cmd = """
     echo "\\`define STOP_COND 0
 \\`define PRINTF_COND 0
 \\`define ASSERT_VERBOSE_COND 0
-" > $(location kelvin.sv)
-    cat $(location //hdl/chisel/src/matcha:Kelvin.sv) >> $(location kelvin.sv)
+" > $(location coralnpu.sv)
+    cat $(location //hdl/chisel/src/matcha:CoralNPU.sv) >> $(location coralnpu.sv)
     echo "\\`define STOP_COND 0
 \\`define PRINTF_COND 0
 \\`define ASSERT_VERBOSE_COND 0
@@ -48,21 +48,21 @@ genrule(
     visibility = ["//visibility:public"],
 )
 
-# Generate kelvin.core from this template so it can sit at the same GenDir as
+# Generate coralnpu.core from this template so it can sit at the same GenDir as
 # the RTL files.
 genrule(
-    name = "kelvin_core",
+    name = "coralnpu_core",
     srcs = [
         "crossbar.core.in",
-        "kelvin.core.in",
-        "matcha_kelvin_verilog",
+        "coralnpu.core.in",
+        "matcha_coralnpu_verilog",
     ],
     outs = [
         "crossbar.core",
-        "kelvin.core",
+        "coralnpu.core",
     ],
     cmd = """
-    cp -f $(location kelvin.core.in) $(location kelvin.core)
+    cp -f $(location coralnpu.core.in) $(location coralnpu.core)
     cp -f $(location crossbar.core.in) $(location crossbar.core)
     """,
     visibility = ["//visibility:public"],

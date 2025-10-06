@@ -13,13 +13,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# Generates a tar file containing required artifacts to build and test Kelvin without
+# Generates a tar file containing required artifacts to build and test CoralNPU without
 # an internet connection.
 # To use the artifacts, extract them to a known location, and use the --distdir and --repository_cache
 # arguments for Bazel.
 # An example command which will build and test is as follows:
-# bazel test --distdir=kelvin_airgap_7d188ddd04e3ecd80527a41889e0c6175102af8b/bazel-distdir \
-#            --repository_cache=kelvin_airgap_7d188ddd04e3ecd80527a41889e0c6175102af8b/bazel-cachedir \
+# bazel test --distdir=coralnpu_airgap_7d188ddd04e3ecd80527a41889e0c6175102af8b/bazel-distdir \
+#            --repository_cache=coralnpu_airgap_7d188ddd04e3ecd80527a41889e0c6175102af8b/bazel-cachedir \
 #            --build_tag_filters="-renode,-verilator" --test_tag_filters="-renode,-verilator" //...
 # Additionally, the bazel binary is included in the tarball, in case
 # it is not available on your system.
@@ -33,7 +33,7 @@ function clean {
 }
 
 REPO_TOP="$(git rev-parse --show-toplevel)"
-KELVIN_VERSION="$(git rev-parse HEAD)"
+CORALNPU_VERSION="$(git rev-parse HEAD)"
 BAZEL_VERSION="$(cat ${REPO_TOP}/.bazelversion)"
 WORKDIR=$(mktemp -d)
 trap clean EXIT
@@ -86,17 +86,17 @@ ${WORKDIR}/bazel fetch \
     @rules_hdl//:all \
     @verilator//:all \
     @com_github_grpc_grpc//:all \
-    @kelvin_pip_deps_cocotb//:all \
-    @kelvin_pip_deps_find_libpython//:all \
-    @kelvin_pip_deps_numpy//:all \
-    @kelvin_pip_deps_pyelftools//:all \
-    @kelvin_pip_deps_tqdm//:all \
-    @kelvin_pip_deps_pytest//:all \
-    @kelvin_pip_deps_pluggy//:all \
-    @kelvin_pip_deps_iniconfig//:all \
-    @kelvin_pip_deps_packaging//:all \
-    @kelvin_pip_deps_exceptiongroup//:all \
-    @kelvin_pip_deps_typing_extensions//:all
+    @coralnpu_pip_deps_cocotb//:all \
+    @coralnpu_pip_deps_find_libpython//:all \
+    @coralnpu_pip_deps_numpy//:all \
+    @coralnpu_pip_deps_pyelftools//:all \
+    @coralnpu_pip_deps_tqdm//:all \
+    @coralnpu_pip_deps_pytest//:all \
+    @coralnpu_pip_deps_pluggy//:all \
+    @coralnpu_pip_deps_iniconfig//:all \
+    @coralnpu_pip_deps_packaging//:all \
+    @coralnpu_pip_deps_exceptiongroup//:all \
+    @coralnpu_pip_deps_typing_extensions//:all
 
 cat <<EOF >${WORKDIR}/bazel.sh
 SCRIPT_DIR="\$(cd "\$(dirname "\${BASH_SOURCE[0]}")" && pwd)"
@@ -108,5 +108,5 @@ SCRIPT_DIR="\$(cd "\$(dirname "\${BASH_SOURCE[0]}")" && pwd)"
 EOF
 chmod +x ${WORKDIR}/bazel.sh
 
-tar --transform="s|/|/kelvin_airgap_${KELVIN_VERSION}/|" -cf "${REPO_TOP}/kelvin_airgap_${KELVIN_VERSION}.tar" -C ${WORKDIR}  .
-echo "Tarball containing dependencies for building Kelvin offline are available at ${REPO_TOP}/kelvin_airgap_${KELVIN_VERSION}.tar"
+tar --transform="s|/|/coralnpu_airgap_${CORALNPU_VERSION}/|" -cf "${REPO_TOP}/coralnpu_airgap_${CORALNPU_VERSION}.tar" -C ${WORKDIR}  .
+echo "Tarball containing dependencies for building CoralNPU offline are available at ${REPO_TOP}/coralnpu_airgap_${CORALNPU_VERSION}.tar"

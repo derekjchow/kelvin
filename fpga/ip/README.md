@@ -1,6 +1,6 @@
 # Generating the Ibex Core
 
-This document describes the process for generating the custom `rv_core_ibex` IP block for the Kelvin SoC.
+This document describes the process for generating the custom `rv_core_ibex` IP block for the CoralNPU SoC.
 
 The IP is generated using the `ipgen.py` script from the OpenTitan repository. This script takes an IP template and a configuration file as input and generates a concrete IP block in an output directory.
 
@@ -11,7 +11,7 @@ To generate the `rv_core_ibex` IP, run the following command from the root of th
 ```bash
 python3 opentitan/util/ipgen.py generate \
     -C opentitan/hw/ip_templates/rv_core_ibex \
-    -c fpga/ip/kelvin_rv_core_ibex.ipconfig.hjson \
+    -c fpga/ip/coralnpu_rv_core_ibex.ipconfig.hjson \
     -o fpga/ip/rv_core_ibex \
     --force
 ```

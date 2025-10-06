@@ -12,10 +12,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-load("@kelvin_hw//third_party/python:requirements.bzl", "requirement")
+load("@coralnpu_hw//third_party/python:requirements.bzl", "requirement")
 load("@rules_pkg//:pkg.bzl", "pkg_zip")
 load("//rules:coco_tb.bzl", "cocotb_test_suite", "verilator_cocotb_model")
-load("//rules:kelvin_v2.bzl", "kelvin_v2_binary")
+load("//rules:coralnpu_v2.bzl", "coralnpu_v2_binary")
 load("//rules:utils.bzl", "template_rule")
 load(
     "//tests/cocotb:build_defs.bzl",
@@ -42,21 +42,21 @@ verilator_cocotb_model(
     name = "core_mini_axi_model",
     cflags = VERILATOR_BUILD_ARGS,
     hdl_toplevel = "CoreMiniAxi",
-    verilog_source = "//hdl/chisel/src/kelvin:CoreMiniAxi.sv",
+    verilog_source = "//hdl/chisel/src/coralnpu:CoreMiniAxi.sv",
 )
 
 verilator_cocotb_model(
     name = "core_mini_debug_axi_model",
     cflags = VERILATOR_BUILD_ARGS,
     hdl_toplevel = "CoreMiniDebugAxi",
-    verilog_source = "//hdl/chisel/src/kelvin:CoreMiniDebugAxi.sv",
+    verilog_source = "//hdl/chisel/src/coralnpu:CoreMiniDebugAxi.sv",
 )
 
 verilator_cocotb_model(
     name = "rvv_core_mini_axi_model",
     cflags = VERILATOR_BUILD_ARGS,
     hdl_toplevel = "RvvCoreMiniAxi",
-    verilog_source = "//hdl/chisel/src/kelvin:RvvCoreMiniAxi.sv",
+    verilog_source = "//hdl/chisel/src/coralnpu:RvvCoreMiniAxi.sv",
 )
 
 # BEGIN_TESTCASES_FOR_core_mini_axi_sim_cocotb
@@ -71,7 +71,7 @@ CORE_MINI_AXI_SIM_TESTCASES = [
     "core_mini_axi_riscv_dv",
     "core_mini_axi_csr_test",
     "core_mini_axi_exceptions_test",
-    "core_mini_axi_kelvin_isa_test",
+    "core_mini_axi_coralnpu_isa_test",
     "core_mini_axi_rand_instr_test",
     "core_mini_axi_burst_types_test",
     "core_mini_axi_float_csr_test",
@@ -90,7 +90,7 @@ RVV_CORE_MINI_AXI_SIM_TESTCASES = [
     "core_mini_axi_riscv_dv",
     "core_mini_axi_csr_test",
     "core_mini_axi_exceptions_test",
-    "core_mini_axi_kelvin_isa_test",
+    "core_mini_axi_coralnpu_isa_test",
     "core_mini_axi_rand_instr_test",
     "core_mini_axi_burst_types_test",
     "core_mini_axi_float_csr_test",
@@ -102,7 +102,7 @@ CORE_MINI_AXI_SIM_COMMON_TEST_KWARGS = {
     "seed": "42",
     "test_module": ["core_mini_axi_sim.py"],
     "deps": [
-        "//kelvin_test_utils:core_mini_axi_sim_interface",
+        "//coralnpu_test_utils:core_mini_axi_sim_interface",
         requirement("tqdm"),
         "@bazel_tools//tools/python/runfiles",
     ],
@@ -118,7 +118,7 @@ template_rule(
                 CORE_MINI_AXI_SIM_COMMON_TEST_KWARGS,
                 hdl_toplevel = "CoreMiniAxi",
             ),
-            "vcs_verilog_sources": ["//hdl/chisel/src/kelvin:core_mini_axi_cc_library_verilog"],
+            "vcs_verilog_sources": ["//hdl/chisel/src/coralnpu:core_mini_axi_cc_library_verilog"],
             "verilator_model": ":core_mini_axi_model",
             "testcases": CORE_MINI_AXI_SIM_TESTCASES,
             "testcases_vname": "CORE_MINI_AXI_SIM_TESTCASES",
@@ -129,7 +129,7 @@ template_rule(
                 hdl_toplevel = "RvvCoreMiniAxi",
                 tags = ["manual"],
             ),
-            "vcs_verilog_sources": ["//hdl/chisel/src/kelvin:rvv_core_mini_axi_cc_library_verilog"],
+            "vcs_verilog_sources": ["//hdl/chisel/src/coralnpu:rvv_core_mini_axi_cc_library_verilog"],
             "verilator_model": ":rvv_core_mini_axi_model",
             "testcases": RVV_CORE_MINI_AXI_SIM_TESTCASES,
             "testcases_vname": "RVV_CORE_MINI_AXI_SIM_TESTCASES",
@@ -261,8 +261,8 @@ cocotb_test_suite(
         "test_module": ["core_mini_axi_debug.py"],
         "size": "enormous",
         "deps": [
-            "//kelvin_test_utils:core_mini_axi_sim_interface",
-            "//kelvin_test_utils:core_mini_axi_pyocd_gdbserver",
+            "//coralnpu_test_utils:core_mini_axi_sim_interface",
+            "//coralnpu_test_utils:core_mini_axi_pyocd_gdbserver",
             "@bazel_tools//tools/python/runfiles",
         ],
         "data": [
@@ -281,7 +281,7 @@ cocotb_test_suite(
     ] + [":coverage_exclude.cfg"],
     vcs_defines = VCS_DEFINES,
     vcs_test_args = VCS_TEST_ARGS,
-    vcs_verilog_sources = ["//hdl/chisel/src/kelvin:core_mini_axi_debug_cc_library_verilog"],
+    vcs_verilog_sources = ["//hdl/chisel/src/coralnpu:core_mini_axi_debug_cc_library_verilog"],
     verilator_model = ":core_mini_debug_axi_model",
 )
 
@@ -299,8 +299,8 @@ cocotb_test_suite(
         "seed": "42",
         "test_module": ["rvv_assembly_cocotb_test.py"],
         "deps": [
-            "//kelvin_test_utils:core_mini_axi_sim_interface",
-            "//kelvin_test_utils:sim_test_fixture",
+            "//coralnpu_test_utils:core_mini_axi_sim_interface",
+            "//coralnpu_test_utils:sim_test_fixture",
             requirement("tqdm"),
             "@bazel_tools//tools/python/runfiles",
         ],
@@ -311,11 +311,11 @@ cocotb_test_suite(
     vcs_data = ["//tests/cocotb/rvv:rvv_assem_tests"] + [":coverage_exclude.cfg"],
     vcs_defines = VCS_DEFINES,
     vcs_test_args = VCS_TEST_ARGS,
-    vcs_verilog_sources = ["//hdl/chisel/src/kelvin:rvv_core_mini_axi_cc_library_verilog"],
+    vcs_verilog_sources = ["//hdl/chisel/src/coralnpu:rvv_core_mini_axi_cc_library_verilog"],
     verilator_model = ":rvv_core_mini_axi_model",
 )
 
-kelvin_v2_binary(
+coralnpu_v2_binary(
     name = "align_test",
     srcs = [
         "align_test.cc",
@@ -323,77 +323,77 @@ kelvin_v2_binary(
     semihosting = True,
 )
 
-kelvin_v2_binary(
+coralnpu_v2_binary(
     name = "wfi_slot_0",
     srcs = [
         "wfi_slot_0.c",
     ],
 )
 
-kelvin_v2_binary(
+coralnpu_v2_binary(
     name = "wfi_slot_1",
     srcs = [
         "wfi_slot_1.c",
     ],
 )
 
-kelvin_v2_binary(
+coralnpu_v2_binary(
     name = "wfi_slot_2",
     srcs = [
         "wfi_slot_2.c",
     ],
 )
 
-kelvin_v2_binary(
+coralnpu_v2_binary(
     name = "wfi_slot_3",
     srcs = [
         "wfi_slot_3.c",
     ],
 )
 
-kelvin_v2_binary(
+coralnpu_v2_binary(
     name = "finish_txn_before_halt",
     srcs = [
         "finish_txn_before_halt.cc",
     ],
 )
 
-kelvin_v2_binary(
+coralnpu_v2_binary(
     name = "stress_test",
     srcs = [
         "stress_test.cc",
     ],
 )
 
-kelvin_v2_binary(
+coralnpu_v2_binary(
     name = "float_csr_interlock_test",
     srcs = [
         "float_csr_interlock_test.S",
     ],
 )
 
-kelvin_v2_binary(
+coralnpu_v2_binary(
     name = "fptr",
     srcs = [
         "fptr.cc",
     ],
 )
 
-kelvin_v2_binary(
+coralnpu_v2_binary(
     name = "math",
     srcs = [
         "math.cc",
     ],
 )
 
-kelvin_v2_binary(
+coralnpu_v2_binary(
     name = "noop",
     srcs = [
         "noop.cc",
     ],
 )
 
-kelvin_v2_binary(
+coralnpu_v2_binary(
     name = "registers",
     srcs = [
         "registers.S",
@@ -414,8 +414,8 @@ cocotb_test_suite(
         "seed": "42",
         "test_module": ["rvv_load_store_test.py"],
         "deps": [
-            "//kelvin_test_utils:rvv_type_util",
-            "//kelvin_test_utils:sim_test_fixture",
+            "//coralnpu_test_utils:rvv_type_util",
+            "//coralnpu_test_utils:sim_test_fixture",
             "@bazel_tools//tools/python/runfiles",
             requirement("tqdm"),
         ],
@@ -427,7 +427,7 @@ cocotb_test_suite(
     vcs_data = ["//tests/cocotb/rvv/load_store:rvv_load_store_tests"] + [":coverage_exclude.cfg"],
     vcs_defines = VCS_DEFINES,
     vcs_test_args = VCS_TEST_ARGS,
-    vcs_verilog_sources = ["//hdl/chisel/src/kelvin:rvv_core_mini_axi_cc_library_verilog"],
+    vcs_verilog_sources = ["//hdl/chisel/src/coralnpu:rvv_core_mini_axi_cc_library_verilog"],
     verilator_model = ":rvv_core_mini_axi_model",
 )
 
@@ -445,7 +445,7 @@ cocotb_test_suite(
         "seed": "42",
         "test_module": ["rvv_arithmetic_cocotb_test.py"],
         "deps": [
-            "//kelvin_test_utils:sim_test_fixture",
+            "//coralnpu_test_utils:sim_test_fixture",
             "@bazel_tools//tools/python/runfiles",
             requirement("tqdm"),
         ],
@@ -456,7 +456,7 @@ cocotb_test_suite(
     vcs_data = ["//tests/cocotb/rvv/arithmetics:rvv_arith_tests"] + [":coverage_exclude.cfg"],
     vcs_defines = VCS_DEFINES,
     vcs_test_args = VCS_TEST_ARGS,
-    vcs_verilog_sources = ["//hdl/chisel/src/kelvin:rvv_core_mini_axi_cc_library_verilog"],
+    vcs_verilog_sources = ["//hdl/chisel/src/coralnpu:rvv_core_mini_axi_cc_library_verilog"],
     verilator_model = ":rvv_core_mini_axi_model",
 )
 
@@ -488,7 +488,7 @@ cocotb_test_suite(
         "seed": "42",
         "test_module": ["rvv_ml_ops_cocotb_test.py"],
         "deps": [
-            "//kelvin_test_utils:sim_test_fixture",
+            "//coralnpu_test_utils:sim_test_fixture",
             "@bazel_tools//tools/python/runfiles",
         ],
         "data": ["//tests/cocotb/rvv/ml_ops:rvv_mlop_tests"],
@@ -498,6 +498,6 @@ cocotb_test_suite(
     vcs_data = ["//tests/cocotb/rvv/ml_ops:rvv_mlop_tests"] + [":coverage_exclude.cfg"],
     vcs_defines = VCS_DEFINES,
     vcs_test_args = VCS_TEST_ARGS,
-    vcs_verilog_sources = ["//hdl/chisel/src/kelvin:rvv_core_mini_axi_cc_library_verilog"],
+    vcs_verilog_sources = ["//hdl/chisel/src/coralnpu:rvv_core_mini_axi_cc_library_verilog"],
     verilator_model = ":rvv_core_mini_axi_model",
 )

@@ -61,28 +61,28 @@ class ChAI(p: Parameters) extends RawModule {
 
   // TODO(atv): Compute that we don't have any overlaps in regions.
   val memoryRegions = Seq(
-    new kelvin.MemoryRegion(0, 4 * 1024 * 1024, kelvin.MemoryRegionType.DMEM), // SRAM
-    new kelvin.MemoryRegion(4 * 1024 * 1024, 4 * 1024 * 1024, kelvin.MemoryRegionType.Peripheral) // UART
+    new coralnpu.MemoryRegion(0, 4 * 1024 * 1024, coralnpu.MemoryRegionType.DMEM), // SRAM
+    new coralnpu.MemoryRegion(4 * 1024 * 1024, 4 * 1024 * 1024, coralnpu.MemoryRegionType.Peripheral) // UART
   )
-  val kelvin_p = kelvin.Parameters(memoryRegions)
+  val coralnpu_p = coralnpu.Parameters(memoryRegions)
   val rst_i = (!io.rst_ni.asBool).asAsyncReset
 
-  val u_kelvin = matcha.Kelvin(kelvin_p)
-  u_kelvin.clk_i := io.clk_i
-  u_kelvin.rst_ni := io.rst_ni
-  u_kelvin.clk_freeze := io.freeze
-  u_kelvin.ml_reset := 0.U
-  u_kelvin.pc_start := 0.U
-  u_kelvin.volt_sel := 0.U
-  u_kelvin.debug_req := 0.U
+  val u_coralnpu = matcha.CoralNPU(coralnpu_p)
+  u_coralnpu.clk_i := io.clk_i
+  u_coralnpu.rst_ni := io.rst_ni
+  u_coralnpu.clk_freeze := io.freeze
+  u_coralnpu.ml_reset := 0.U
+  u_coralnpu.pc_start := 0.U
+  u_coralnpu.volt_sel := 0.U
+  u_coralnpu.debug_req := 0.U
 
-  io.finish := u_kelvin.finish
-  io.fault := u_kelvin.fault
+  io.finish := u_coralnpu.finish
+  io.fault := u_coralnpu.fault
 
   withClockAndReset(io.clk_i, rst_i) {
-    val tlul_p = new TLULParameters(kelvin_p)
-    val kelvin_to_tlul = KelvinToTlul(tlul_p, kelvin_p)
-    kelvin_to_tlul.io.kelvin <> u_kelvin.mem
+    val tlul_p = new TLULParameters(coralnpu_p)
+    val coralnpu_to_tlul = CoralNPUToTlul(tlul_p, coralnpu_p)
+    coralnpu_to_tlul.io.coralnpu <> u_coralnpu.mem
 
     val tlul_sram =
       SRAM(p.sramDataEntries(), UInt(p.sramDataBits.W), p.sramReadPorts, p.sramWritePorts, p.sramReadWritePorts)
@@ -108,9 +108,9 @@ class ChAI(p: Parameters) extends RawModule {
     io.uart_tx := uart.io.cio_tx_o
 
     val crossbar =
-      Module(new TileLinkUL(tlul_p, kelvin_p.m, /* hosts= */ 1))
-    crossbar.io.hosts_a(0) <> kelvin_to_tlul.io.tl_o
-    crossbar.io.hosts_d(0) <> kelvin_to_tlul.io.tl_i
+      Module(new TileLinkUL(tlul_p, coralnpu_p.m, /* hosts= */ 1))
+    crossbar.io.hosts_a(0) <> coralnpu_to_tlul.io.tl_o
+    crossbar.io.hosts_d(0) <> coralnpu_to_tlul.io.tl_i
     crossbar.io.devices_a(0) <> tlul_adapter_sram.io.tl_i
     crossbar.io.devices_d(0) <> tlul_adapter_sram.io.tl_o
     crossbar.io.devices_a(1) <> uart.io.tl_i

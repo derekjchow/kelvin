@@ -22,7 +22,7 @@ import os
 import logging
 from elftools.elf.elffile import ELFFile
 
-# Define the memory map for the Kelvin core
+# Define the memory map for the CoralNPU core
 MEM_MAP = {
     'itcm': {'base': 0x00000000, 'size': 8 * 1024, 'file': 'itcm.mem'},
     'dtcm': {'base': 0x00010000, 'size': 32 * 1024, 'file': 'dtcm.mem'},

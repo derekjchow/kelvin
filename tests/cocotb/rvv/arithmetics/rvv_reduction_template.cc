@@ -29,7 +29,7 @@ uint32_t mcause __ATTRIBUTE_IN_DTCM__ = 0;
 
 // Fault handler to log fault
 extern "C" {
-void kelvin_exception_handler() {
+void coralnpu_exception_handler() {
   faulted = 1;
   uint32_t local_mcause;
   asm volatile("csrr %0, mcause" : "=r"(local_mcause));

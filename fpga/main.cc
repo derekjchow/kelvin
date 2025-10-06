@@ -27,15 +27,15 @@ int main(int argc, char **argv) {
 
   // NB: Final parameter here is "width" of your memory, penultimate parameter
   // is "depth".
-  MemArea rom("TOP.chip_verilator.i_kelvin_soc.i_rom.u_prim_rom", 0x8000 / 4,
+  MemArea rom("TOP.chip_verilator.i_coralnpu_soc.i_rom.u_prim_rom", 0x8000 / 4,
               4);
-  MemArea sram("TOP.chip_verilator.i_kelvin_soc.i_sram", 0x400000 / 4, 4);
+  MemArea sram("TOP.chip_verilator.i_coralnpu_soc.i_sram", 0x400000 / 4, 4);
   MemArea itcm(
-      "TOP.chip_verilator.i_kelvin_soc.i_kelvin_core.coreAxi.itcm.sram."
+      "TOP.chip_verilator.i_coralnpu_soc.i_coralnpu_core.coreAxi.itcm.sram."
       "sramModules_0",
       0x2000 / 16, 16);
   MemArea dtcm(
-      "TOP.chip_verilator.i_kelvin_soc.i_kelvin_core.coreAxi.dtcm.sram."
+      "TOP.chip_verilator.i_coralnpu_soc.i_coralnpu_core.coreAxi.dtcm.sram."
       "sramModules_0",
       0x8000 / 16, 16);
 
@@ -48,7 +48,7 @@ int main(int argc, char **argv) {
   simctrl.SetInitialResetDelay(2000);
   simctrl.SetResetDuration(10);
 
-  std::cout << "Simulation of Kelvin SoC" << std::endl
+  std::cout << "Simulation of CoralNPU SoC" << std::endl
             << "======================" << std::endl
             << std::endl;
 

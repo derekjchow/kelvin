@@ -55,7 +55,7 @@ int main(int argc, char **argv) {
     }
   };
 
-  uart_print("Hello from Kelvin!\n");
+  uart_print("Hello from CoralNPU!\n");
 
   return 0;
 }

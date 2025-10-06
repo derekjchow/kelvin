@@ -15,12 +15,12 @@
 import cocotb
 import numpy as np
 import argparse
-from kelvin_test_utils.core_mini_axi_interface import CoreMiniAxiInterface
+from coralnpu_test_utils.core_mini_axi_interface import CoreMiniAxiInterface
 from bazel_tools.tools.python.runfiles import runfiles
 
 @cocotb.test()
 async def core_mini_axi_tutorial(dut):
-    """Testbench to run your Kelvin program."""
+    """Testbench to run your CoralNPU program."""
     # Test bench setup
     core_mini_axi = CoreMiniAxiInterface(dut)
     await core_mini_axi.init()
@@ -28,8 +28,8 @@ async def core_mini_axi_tutorial(dut):
     cocotb.start_soon(core_mini_axi.clock.start())
     r = runfiles.Create()
 
-    #Elf file is generated from bazel build //examples:kelvin_v2_hello_world_add_floats
-    elf_path = r.Rlocation("kelvin_hw/examples/kelvin_v2_hello_world_add_floats.elf")
+    #Elf file is generated from bazel build //examples:coralnpu_v2_hello_world_add_floats
+    elf_path = r.Rlocation("coralnpu_hw/examples/coralnpu_v2_hello_world_add_floats.elf")
     if not elf_path:
       raise ValueError("elf_path must consist a valid path ")
     #Load your program into ITCM with "load_elf"

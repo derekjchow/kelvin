@@ -6,7 +6,7 @@
 PROJECT_NAME = rvv_fifo
 ################################################################################
 
-DESIGN_ROOT = /workspace/IDC_IPDCD_ZSPHW01/perforce/cn9399/RVV_perforce_dk/RISCV/kelvin_RVV/hdl/verilog/rvv
+DESIGN_ROOT = /workspace/IDC_IPDCD_ZSPHW01/perforce/cn9399/RVV_perforce_dk/RISCV/coralnpu_RVV/hdl/verilog/rvv
 RTL_PATH = $(DESIGN_ROOT)/common
 #RTLFILES = $(shell ls ../../common/*.sv)
 RTLFILES := $(RTL_PATH)/fifo_flopped.sv \

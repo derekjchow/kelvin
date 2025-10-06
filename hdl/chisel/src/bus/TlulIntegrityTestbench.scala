@@ -16,7 +16,7 @@ package bus
 
 import chisel3._
 import chisel3.util._
-import kelvin.Parameters
+import coralnpu.Parameters
 
 /**
   * A testbench DUT that instantiates all TlulIntegrity modules so they can be

@@ -12,8 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-load("@kelvin_hw//rules:chisel.bzl", "chisel_binary", "chisel_cc_library", "chisel_library")
-load("@kelvin_hw//rules:coco_tb.bzl", "verilator_cocotb_model")
+load("@coralnpu_hw//rules:chisel.bzl", "chisel_binary", "chisel_cc_library", "chisel_library")
+load("@coralnpu_hw//rules:coco_tb.bzl", "verilator_cocotb_model")
 
 package(default_visibility = ["//visibility:public"])
 
@@ -29,90 +29,90 @@ chisel_library(
         "SoCChiselConfig.scala",
     ],
     deps = [
-        "//hdl/chisel/src/kelvin:kelvin_params",
+        "//hdl/chisel/src/coralnpu:coralnpu_params",
     ],
 )
 
 chisel_binary(
     name = "validate_crossbar_config",
-    main_class = "kelvin.soc.CrossbarConfigValidator",
+    main_class = "coralnpu.soc.CrossbarConfigValidator",
     deps = [":crossbar_config_lib"],
 )
 
 chisel_library(
-    name = "kelvin_xbar_lib",
-    srcs = ["KelvinXbar.scala"],
+    name = "coralnpu_xbar_lib",
+    srcs = ["CoralNPUXbar.scala"],
     deps = [
         ":crossbar_config_lib",
         "//hdl/chisel/src/bus",
-        "//hdl/chisel/src/kelvin",
-        "//hdl/chisel/src/kelvin:kelvin_params",
+        "//hdl/chisel/src/coralnpu",
+        "//hdl/chisel/src/coralnpu:coralnpu_params",
     ],
 )
 
 chisel_cc_library(
-    name = "kelvin_xbar_cc_library",
-    chisel_lib = ":kelvin_xbar_lib",
-    emit_class = "kelvin.soc.KelvinXbarEmitter",
-    module_name = "KelvinXbar",
+    name = "coralnpu_xbar_cc_library",
+    chisel_lib = ":coralnpu_xbar_lib",
+    emit_class = "coralnpu.soc.CoralNPUXbarEmitter",
+    module_name = "CoralNPUXbar",
 )
 
 chisel_cc_library(
-    name = "kelvin_xbar_testharness_cc_library",
-    chisel_lib = ":kelvin_xbar_lib",
-    emit_class = "kelvin.soc.KelvinXbarEmitter",
-    module_name = "KelvinXbarTestHarness",
+    name = "coralnpu_xbar_testharness_cc_library",
+    chisel_lib = ":coralnpu_xbar_lib",
+    emit_class = "coralnpu.soc.CoralNPUXbarEmitter",
+    module_name = "CoralNPUXbarTestHarness",
     gen_flags = ["--enableTestHarness"],
 )
 
 verilator_cocotb_model(
-    name = "kelvin_xbar_testharness_model",
+    name = "coralnpu_xbar_testharness_model",
     cflags = VERILATOR_BUILD_ARGS,
-    hdl_toplevel = "KelvinXbarTestHarness",
+    hdl_toplevel = "CoralNPUXbarTestHarness",
     trace = True,
-    verilog_source = ":kelvin_xbar_testharness_cc_library_emit_verilog",
+    verilog_source = ":coralnpu_xbar_testharness_cc_library_emit_verilog",
 )
 
 chisel_library(
-    name = "kelvin_chisel_subsystem_lib",
-    srcs = ["KelvinChiselSubsystem.scala"],
+    name = "coralnpu_chisel_subsystem_lib",
+    srcs = ["CoralNPUChiselSubsystem.scala"],
     deps = [
         ":crossbar_config_lib",
-        ":kelvin_xbar_lib",
+        ":coralnpu_xbar_lib",
         "//hdl/chisel/src/bus",
-        "//hdl/chisel/src/kelvin",
-        "//hdl/chisel/src/kelvin:kelvin_params",
+        "//hdl/chisel/src/coralnpu",
+        "//hdl/chisel/src/coralnpu:coralnpu_params",
     ],
 )
 
 chisel_cc_library(
-    name = "kelvin_chisel_subsystem_cc_library",
-    chisel_lib = ":kelvin_chisel_subsystem_lib",
-    emit_class = "kelvin.soc.KelvinChiselSubsystemEmitter",
-    module_name = "KelvinChiselSubsystem",
+    name = "coralnpu_chisel_subsystem_cc_library",
+    chisel_lib = ":coralnpu_chisel_subsystem_lib",
+    emit_class = "coralnpu.soc.CoralNPUChiselSubsystemEmitter",
+    module_name = "CoralNPUChiselSubsystem",
 )
 
 
 verilator_cocotb_model(
-    name = "kelvin_chisel_subsystem_model",
+    name = "coralnpu_chisel_subsystem_model",
     cflags = VERILATOR_BUILD_ARGS,
-    hdl_toplevel = "KelvinChiselSubsystem",
+    hdl_toplevel = "CoralNPUChiselSubsystem",
     trace = True,
-    verilog_source = "//hdl/chisel/src/soc:KelvinChiselSubsystem.sv",
+    verilog_source = "//hdl/chisel/src/soc:CoralNPUChiselSubsystem.sv",
 )
 
 chisel_cc_library(
-    name = "kelvin_chisel_subsystem_testharness_cc_library",
-    chisel_lib = ":kelvin_chisel_subsystem_lib",
-    emit_class = "kelvin.soc.KelvinChiselSubsystemEmitter",
-    module_name = "KelvinChiselSubsystemTestHarness",
+    name = "coralnpu_chisel_subsystem_testharness_cc_library",
+    chisel_lib = ":coralnpu_chisel_subsystem_lib",
+    emit_class = "coralnpu.soc.CoralNPUChiselSubsystemEmitter",
+    module_name = "CoralNPUChiselSubsystemTestHarness",
     gen_flags = ["--enableTestHarness"],
 )
 
 verilator_cocotb_model(
-    name = "kelvin_chisel_subsystem_testharness_model",
+    name = "coralnpu_chisel_subsystem_testharness_model",
     cflags = VERILATOR_BUILD_ARGS,
-    hdl_toplevel = "KelvinChiselSubsystemTestHarness",
+    hdl_toplevel = "CoralNPUChiselSubsystemTestHarness",
     trace = True,
-    verilog_source = ":kelvin_chisel_subsystem_testharness_cc_library_emit_verilog",
+    verilog_source = ":coralnpu_chisel_subsystem_testharness_cc_library_emit_verilog",
 )

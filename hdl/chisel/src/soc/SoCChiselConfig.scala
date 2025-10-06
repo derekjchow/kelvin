@@ -1,6 +1,6 @@
-package kelvin.soc
+package coralnpu.soc
 
-import kelvin.{MemoryRegion, MemoryRegionType}
+import coralnpu.{MemoryRegion, MemoryRegionType}
 
 // --- External Port Definitions ---
 
@@ -81,7 +81,7 @@ object SoCChiselConfig {
   val modules = Seq(
     ChiselModuleConfig(
       name = "rvv_core",
-      moduleClass = "kelvin.CoreTlul",
+      moduleClass = "coralnpu.CoreTlul",
       params = CoreTlulParameters(
         lsuDataBits = 128,
         enableRvv = true,
@@ -95,8 +95,8 @@ object SoCChiselConfig {
           new MemoryRegion(0x30000, 0x2000, MemoryRegionType.Peripheral)
         )
       ),
-      hostConnections = Map("io.tl_host" -> "kelvin_core"),
-      deviceConnections = Map("io.tl_device" -> "kelvin_device"),
+      hostConnections = Map("io.tl_host" -> "coralnpu_core"),
+      deviceConnections = Map("io.tl_device" -> "coralnpu_device"),
       externalPorts = Seq(
         ExternalPort("halted", Bool, Out, "io.halted"),
         ExternalPort("fault",  Bool, Out, "io.fault"),

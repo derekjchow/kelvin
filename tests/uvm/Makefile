@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# Makefile for Kelvin UVM Testbench (Integrates with MPACT-Sim)
+# Makefile for CoralNPU UVM Testbench (Integrates with MPACT-Sim)
 
 # Check if ROOTDIR is set. If not, exit with an error.
 ifndef ROOTDIR
@@ -30,7 +30,7 @@ TB_DIR = ./tb
 ENV_DIR = ./env
 TESTS_DIR = ./tests
 BIN_DIR = ./bin
-UTILS_DIR = $(ROOTDIR)/hw/kelvin/tests/uvm/utils
+UTILS_DIR = $(ROOTDIR)/hw/coralnpu/tests/uvm/utils
 
 # Simulation Work Directory
 SIM_DIR = ./sim_work
@@ -40,16 +40,16 @@ MEM_FILE_DIR = $(SIM_DIR)/mem_files
 RUN_OPTS_FILE = $(MEM_FILE_DIR)/elf_run_opts.f
 
 # MPACT-Sim Integration Paths
-MPACT_DIR = $(ROOTDIR)/sim/kelvin
+MPACT_DIR = $(ROOTDIR)/sim/coralnpu
 MPACT_BAZEL_BIN_DIR = $(MPACT_DIR)/bazel-bin/sim/cosim
-MPACT_COSIM_LIB_NAME = kelvin_cosim_lib_static
+MPACT_COSIM_LIB_NAME = coralnpu_cosim_lib_static
 
 # File List for VCS -f option
-FILE_LIST = ./kelvin_dv.f
+FILE_LIST = ./coralnpu_dv.f
 
 # Simulation Settings
 SIM_EXEC = $(SIM_DIR)/simv
-UVM_TESTNAME ?= kelvin_base_test
+UVM_TESTNAME ?= coralnpu_base_test
 TEST_ELF ?= $(BIN_DIR)/program.elf
 UVM_VERBOSITY ?= UVM_MEDIUM
 TEST_TIMEOUT_NS ?= 20000

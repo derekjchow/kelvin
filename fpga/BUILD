@@ -14,7 +14,7 @@
 
 load("@bazel_skylib//rules:common_settings.bzl", "string_list_flag")
 load("@lowrisc_opentitan_gh//rules:fusesoc.bzl", "fusesoc_build")
-load("//rules:kelvin_v2.bzl", "kelvin_v2_binary")
+load("//rules:coralnpu_v2.bzl", "coralnpu_v2_binary")
 load("//rules:utils.bzl", "cc_embed_data")
 
 package(default_visibility = ["//visibility:public"])
@@ -26,8 +26,8 @@ filegroup(
     name = "rtl_files",
     srcs = glob(["**/*.sv"]) + glob(["**/*.core"]) + [
         "//fpga/ip/spi_dpi_master:rtl_files",
-        "//fpga/ip/kelvin_tlul:rtl_files",
-        "//fpga/ip/kelvin_chisel_subsystem:rtl_files",
+        "//fpga/ip/coralnpu_tlul:rtl_files",
+        "//fpga/ip/coralnpu_chisel_subsystem:rtl_files",
         "//fpga/ip/sram:rtl_files",
         "//fpga/rtl:rtl_files",
     ],
@@ -68,7 +68,7 @@ cc_embed_data(
     var_name = "add_uint32_m1_bin",
 )
 
-kelvin_v2_binary(
+coralnpu_v2_binary(
     name = "add_uint32_m1",
     srcs = ["sw/add_uint32_m1.cc"],
     copts = ["-DCLOCK_FREQUENCY_MHZ=" + _CLOCK_FREQUENCY_MHZ],
@@ -80,15 +80,15 @@ filegroup(
     output_group = "bin_file",
 )
 
-KELVIN_SOC_CORES = [
-    "//fpga/ip/kelvin_chisel_subsystem:kelvin_chisel_subsystem.core",
-    ":kelvin_soc.core",
-    ":kelvin_soc_pkg.core",
+CORALNPU_SOC_CORES = [
+    "//fpga/ip/coralnpu_chisel_subsystem:coralnpu_chisel_subsystem.core",
+    ":coralnpu_soc.core",
+    ":coralnpu_soc_pkg.core",
     ":racl_pkg.core",
     "@lowrisc_opentitan_gh//hw:check_tool_requirements.core",
 ]
 
-KELVIN_SOC_SRCS = [
+CORALNPU_SOC_SRCS = [
     ":rtl_files",
     "@lowrisc_opentitan_gh//hw/dv/sv:dv_macros",
     "@lowrisc_opentitan_gh//hw/dv:verilator_files",
@@ -114,11 +114,11 @@ KELVIN_SOC_SRCS = [
 
 fusesoc_build(
     name = "build_chip_verilator",
-    srcs = KELVIN_SOC_SRCS + [
+    srcs = CORALNPU_SOC_SRCS + [
         "//fpga/ip/spi_dpi_master:dpi_files",
         "@lowrisc_opentitan_gh//hw:dpi_files",
     ],
-    cores = KELVIN_SOC_CORES + [
+    cores = CORALNPU_SOC_CORES + [
         ":chip_verilator.core",
         "//fpga/ip/spi_dpi_master:spi_dpi_master.core",
         "@lowrisc_opentitan_gh//hw/dv:dpi/uartdpi/uartdpi.core",
@@ -129,9 +129,9 @@ fusesoc_build(
     ],
     make_options = ":make_options",
     output_groups = {
-        "binary": ["com.google.kelvin_fpga_chip_verilator_0.1/sim-verilator/Vchip_verilator"],
+        "binary": ["com.google.coralnpu_fpga_chip_verilator_0.1/sim-verilator/Vchip_verilator"],
     },
-    systems = ["com.google.kelvin:fpga:chip_verilator:0.1"],
+    systems = ["com.google.coralnpu:fpga:chip_verilator:0.1"],
     target = "sim",
     verilator_options = ":verilator_options",
     tags = ["manual"],
@@ -141,19 +141,19 @@ _PREFIX = "../../../../../../../../.."
 
 fusesoc_build(
     name = "build_chip_nexus_bitstream",
-    srcs = KELVIN_SOC_SRCS + [
+    srcs = CORALNPU_SOC_SRCS + [
         "pins.xdc",
         "vivado_setup_hooks.tcl",
     ],
-    cores = KELVIN_SOC_CORES + [":chip_nexus.core"],
+    cores = CORALNPU_SOC_CORES + [":chip_nexus.core"],
     flags = [
         "--ClockFrequencyMhz=" + _NEXUS_CLOCK_FREQUENCY_MHZ,
     ],
     output_groups = {
-        "bitstream": ["com.google.kelvin_fpga_chip_nexus_0.1/synth-vivado/com.google.kelvin_fpga_chip_nexus_0.1.runs/impl_1/chip_nexus.bit"],
-        "logs": ["com.google.kelvin_fpga_chip_nexus_0.1/synth-vivado/com.google.kelvin_fpga_chip_nexus_0.1.runs/"],
+        "bitstream": ["com.google.coralnpu_fpga_chip_nexus_0.1/synth-vivado/com.google.coralnpu_fpga_chip_nexus_0.1.runs/impl_1/chip_nexus.bit"],
+        "logs": ["com.google.coralnpu_fpga_chip_nexus_0.1/synth-vivado/com.google.coralnpu_fpga_chip_nexus_0.1.runs/"],
     },
-    systems = ["com.google.kelvin:fpga:chip_nexus:0.1"],
+    systems = ["com.google.coralnpu:fpga:chip_nexus:0.1"],
     target = "synth",
     tags = ["manual"],
 )
