@@ -50,31 +50,25 @@ class Fetcher(p: Parameters) extends Module {
     val ibusFired = Output(Bool())
   })
 
-  val ibusCmd = RegInit(MakeValid(false.B, 0.U(32.W)))
-
-  io.fetch.valid := ibusCmd.valid
-  io.fetch.bits.addr := Mux(ibusCmd.valid, ibusCmd.bits, 0.U)
-  val data = Mux(ibusCmd.valid, io.ibus.rdata, 0.U)
-  for (i <- 0 until p.fetchInstrSlots) {
-    val offset = p.instructionBits * i
-    io.fetch.bits.inst(i) := data(offset + p.instructionBits - 1, offset)
-  }
-
-  val ctrlValid = RegInit(false.B)
-  val ctrlAddr = RegInit(0.U(p.fetchAddrBits.W))
-  ctrlValid := io.ctrl.valid || ctrlValid && !io.ibus.ready
-  ctrlAddr := Mux(io.ctrl.valid || ctrlValid && !io.ibus.ready,
-    ctrlAddr, io.ctrl.bits
-  )
   val lsb = log2Ceil(p.fetchDataBits / 8)
   assert((p.fetchDataBits == 128 && lsb == 4) || (p.fetchDataBits == 256 && lsb == 5))
+
+  // The actual fetch transaction goes through without stopping.
   io.ibus.valid := io.ctrl.valid
   io.ibus.addr := Cat(io.ctrl.bits(p.fetchAddrBits - 1, lsb), 0.U(lsb.W))
   io.ctrl.ready := io.ibus.ready
 
+  // Address is buffered to accompany results.
   val ibusFired = io.ctrl.valid && io.ibus.ready
-  ibusCmd := MakeValid(ibusFired, Mux(ibusFired, io.ctrl.bits, ibusCmd.bits))
   io.ibusFired := ibusFired
+  val ibusCmd = RegInit(MakeInvalid(UInt(32.W)))
+  ibusCmd := ForceZero(MakeValid(ibusFired, io.ctrl.bits))
+  io.fetch.valid := ibusCmd.valid
+  io.fetch.bits.addr := ibusCmd.bits
+  for (i <- 0 until p.fetchInstrSlots) {
+    val offset = p.instructionBits * i
+    io.fetch.bits.inst(i) := io.ibus.rdata(offset + p.instructionBits - 1, offset)
+  }
 }
 
 class FetchControl(p: Parameters) extends Module {
@@ -210,9 +204,9 @@ class FetchControl(p: Parameters) extends Module {
 class UncachedFetch(p: Parameters) extends FetchUnit(p) {
   // TODO(derekjchow): Make Bru use valid interface
   val branch = MuxCase(
-      MakeValid(false.B, 0.U(p.fetchAddrBits.W)),
+      MakeInvalid(UInt(p.fetchAddrBits.W)),
       (0 until p.instructionLanes).map(i =>
-          io.branch(i).valid -> MakeValid(true.B, io.branch(i).value)
+          io.branch(i).valid -> MakeValid(io.branch(i).value)
       ))
 
   val ctrl = Module(new FetchControl(p))
