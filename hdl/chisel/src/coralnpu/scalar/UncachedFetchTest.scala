@@ -30,15 +30,16 @@ class FetchControlSpec extends AnyFreeSpec with ChiselSim {
 
   "ResetPC" in {
     simulate(new FetchControl(p)) { dut =>
-      dut.io.bufferRequest.nReady.poke(8.U)  // Upstream can accept 8 buffers
+      // Upstream can accept 8 buffers
+      dut.io.bufferRequest.nReady.poke(8.U)
+      dut.io.bufferSpaces.poke(8.U)
       dut.io.csr.value(0).poke(0x20000000.U)
-      dut.io.fetchAddr.ready.poke(true.B)
       dut.reset.poke(true.B)
       dut.clock.step()
       dut.io.fetchAddr.valid.expect(0)
       dut.reset.poke(false.B)
       dut.clock.step()
-      dut.clock.step()
+      dut.io.bufferRequest.nValid.expect(0.U)
       dut.io.fetchAddr.valid.expect(1)
       dut.io.fetchAddr.bits.expect(0x20000000)
     }
@@ -46,65 +47,107 @@ class FetchControlSpec extends AnyFreeSpec with ChiselSim {
 
   "Branch" in {
     simulate(new FetchControl(p)) { dut =>
-      dut.io.fetchAddr.valid.expect(0)
-      dut.io.bufferRequest.nReady.poke(8.U)  // Upstream can accept 8 buffers
+      dut.clock.step()  // Clear reset.
+      // Upstream can accept 16 buffers
+      dut.io.bufferRequest.nReady.poke(8.U)
+      dut.io.bufferSpaces.poke(16.U)
       dut.io.branch.valid.poke(true.B)
       dut.io.branch.bits.poke(0x30000000.U)
-      dut.io.fetchAddr.ready.poke(true.B)
-      dut.clock.step()
-      dut.io.branch.valid.poke(false.B)
-      dut.clock.step()
-      dut.io.fetchAddr.valid.expect(1)
-      dut.io.fetchAddr.bits.expect(0x30000000)
-    }
-  }
-
-  "FetchAligned" in {
-    simulate(new FetchControl(p)) { dut =>
-      dut.io.fetchAddr.valid.expect(0)
-      dut.io.fetchData.valid.expect(0)
       dut.io.fetchData.valid.poke(true.B)
       dut.io.fetchData.bits.addr.poke(0x20000000)
       for (i <- 0 until dut.io.fetchData.bits.inst.length) {
         dut.io.fetchData.bits.inst(i).poke(i.U)
       }
+      dut.io.fetchAddr.valid.expect(0)
       dut.clock.step()
+      dut.io.branch.valid.poke(false.B)
+      // We should initiate new fetch now, but old results should still be
+      // discarded.
+      dut.io.bufferRequest.nValid.expect(0.U)
+      dut.io.fetchAddr.valid.expect(1)
+      dut.io.fetchAddr.bits.expect(0x30000000)
+      dut.io.fetchData.bits.addr.poke(0x30000000)
       dut.clock.step()
-      dut.clock.step()
+      // Now we can accept results
+      dut.io.bufferRequest.nValid.expect(8.U)
+      dut.io.fetchAddr.valid.expect(1)
+      dut.io.fetchAddr.bits.expect(0x30000020)
+    }
+  }
+
+  "FetchAligned" in {
+    simulate(new FetchControl(p)) { dut =>
+      dut.clock.step()  // Clear reset.
+      // Upstream can accept 16 buffers
+      dut.io.bufferRequest.nReady.poke(8.U)
+      dut.io.bufferSpaces.poke(16.U)
+      dut.io.fetchData.valid.poke(true.B)
+      dut.io.fetchData.bits.addr.poke(0x20000000)
+      for (i <- 0 until dut.io.fetchData.bits.inst.length) {
+        dut.io.fetchData.bits.inst(i).poke(i.U)
+      }
+      dut.io.bufferRequest.nValid.expect(8.U)
+      dut.io.fetchAddr.valid.expect(1)
       dut.io.fetchAddr.bits.expect(0x20000020)
     }
   }
 
   "FetchWithBranch" in {
     simulate(new FetchControl(p)) { dut =>
-      dut.io.fetchAddr.valid.expect(0)
-      dut.io.fetchData.valid.expect(0)
+      dut.clock.step()  // Clear reset.
+      // Upstream can accept 12 buffers
+      dut.io.bufferRequest.nReady.poke(8.U)
+      dut.io.bufferSpaces.poke(12.U)
       dut.io.fetchData.valid.poke(true.B)
       dut.io.fetchData.bits.addr.poke(0x20000000)
       for (i <- 0 until dut.io.fetchData.bits.inst.length) {
         dut.io.fetchData.bits.inst(i).poke(i.U)
       }
       dut.io.fetchData.bits.inst(3).poke("x0000006f".U)
-      dut.clock.step()
-      dut.clock.step()
-      dut.clock.step()
+      dut.io.bufferRequest.nValid.expect(4.U)
+      dut.io.fetchAddr.valid.expect(1)
       dut.io.fetchAddr.bits.expect(0x2000000c)
     }
   }
 
   "Backpressure" in {
     simulate(new FetchControl(p)) { dut =>
-      dut.io.fetchAddr.valid.expect(0)
       dut.io.csr.value(0).poke(0x20000000.U)
       dut.io.fetchAddr.ready.poke(true.B)
       dut.reset.poke(true.B)
       dut.clock.step()
       dut.reset.poke(false.B)
-      dut.io.bufferRequest.nReady.poke(4)  // Upstream accepts < 8 buffers
       dut.clock.step()
+      // Cannot fetch the first 8.
+      dut.io.bufferRequest.nReady.poke(4)
+      dut.io.bufferSpaces.poke(4.U)
       dut.io.fetchAddr.valid.expect(0)
-      dut.io.bufferRequest.nReady.poke(9)
       dut.clock.step()
+      // Can now fetch the first 8.
+      dut.io.bufferRequest.nReady.poke(8)
+      dut.io.bufferSpaces.poke(8.U)
+      dut.io.fetchAddr.valid.expect(1)
+    }
+  }
+
+  "BackpressureStaged" in {
+    simulate(new FetchControl(p)) { dut =>
+      dut.clock.step()  // Clear reset.
+      dut.io.fetchData.valid.poke(true.B)
+      dut.io.fetchData.bits.addr.poke(0x20000000)
+      for (i <- 0 until dut.io.fetchData.bits.inst.length) {
+        dut.io.fetchData.bits.inst(i).poke(i.U)
+      }
+      // Just fetched 8, cannot fetch another 8.
+      dut.io.bufferRequest.nReady.poke(8)
+      dut.io.bufferSpaces.poke(8.U)
+      dut.io.bufferRequest.nValid.expect(8)
+      dut.io.fetchAddr.valid.expect(0)
+      dut.clock.step()
+      dut.io.fetchData.valid.poke(false.B)  // Prev fetched instructions buffered.
+      // Can now fetch another 8.
+      dut.io.bufferRequest.nReady.poke(8)
+      dut.io.bufferSpaces.poke(8.U)
       dut.io.fetchAddr.valid.expect(1)
     }
   }
