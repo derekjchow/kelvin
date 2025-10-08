@@ -19,3 +19,5 @@ novas*
 tests/uvm/rtl
 tests/uvm/sim_work
 tests/uvm/vc_hdrs.h
+# python
+__pycache__
