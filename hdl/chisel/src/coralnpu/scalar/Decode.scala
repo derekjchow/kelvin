@@ -381,26 +381,29 @@ class DispatchV2(p: Parameters) extends Dispatch(p) {
   val rdScoreboard = (0 until p.instructionLanes).map(i =>
       Mux(writesRd(i), UIntToOH(rdAddr(i), 32), 0.U(32.W)))
   val scoreboardScan = rdScoreboard.scan(0.U(32.W))(_ | _)
-  // Note: regd comes from registers, comb includes write forwarding For the
-  // time being, use regd as it's safer for timing. Move to using comb for
-  // some instances once scoreboarding logic is stable.
+  // Note: regd comes from directly from registers, accessible on the same cycle
+  // via the busPort of the register file. comb includes write forwarding.
   val regd =  scoreboardScan.map(_ | io.scoreboard.regd)
   val comb =  scoreboardScan.map(_ | io.scoreboard.comb)
   val rs1Addr = io.inst.map(_.bits.inst(19,15))
-  // TODO(derekjchow): readsRs1 means "Rs1 depends on the combinatorial path
-  // from the regfile". jalr and LSU use the register direct path. Consider
-  // refactoring readsRs1 to account for this when old dispatch can be removed.
-  val usesRs1 = decodedInsts.map(d => d.readsRs1() || d.jalr || d.isLsu())
   val rs2Addr = io.inst.map(_.bits.inst(24,20))
-  val usesRs2 = decodedInsts.map(d => d.readsRs2())
-  val readScoreboard = (0 until p.instructionLanes).map(i =>
-      MuxOR(usesRs1(i), UIntToOH(rs1Addr(i), 32)) |
-      MuxOR(usesRs2(i), UIntToOH(rs2Addr(i), 32)))
+  val usesRs1Regd = decodedInsts.map(d => d.jalr || d.isLsu())
+  val usesRs2Regd = decodedInsts.map(d => d.isScalarStore())
+  val readScoreboardRegd = (0 until p.instructionLanes).map(i =>
+      MuxOR(usesRs1Regd(i), UIntToOH(rs1Addr(i), 32)) |
+      MuxOR(usesRs2Regd(i), UIntToOH(rs2Addr(i), 32)))
+
+  val usesRs1Comb = decodedInsts.map(d => d.readsRs1())
+  val usesRs2Comb = decodedInsts.map(d => d.readsRs2())
+  val readScoreboardComb = (0 until p.instructionLanes).map(i =>
+      MuxOR(usesRs1Comb(i), UIntToOH(rs1Addr(i), 32)) |
+      MuxOR(usesRs2Comb(i), UIntToOH(rs2Addr(i), 32)))
 
   val readAfterWrite = (0 until p.instructionLanes).map(i =>
-      (readScoreboard(i) & regd(i)) =/= 0.U(32.W))
+      (readScoreboardRegd(i) & regd(i)) =/= 0.U(32.W) ||
+      (readScoreboardComb(i) & comb(i)) =/= 0.U(32.W))
   val writeAfterWrite = (0 until p.instructionLanes).map(i =>
-      (rdScoreboard(i) & regd(i)) =/= 0.U(32.W))
+      (rdScoreboard(i) & comb(i)) =/= 0.U(32.W))
 
   // ---------------------------------------------------------------------------
   // Floating-point Scoreboard
