@@ -33,6 +33,7 @@ coralnpu_v2_binary(
     hdrs = ["mobilenet_v1_025_partial_layers.h"],
     linker_script = "@coralnpu_hw//toolchain:coralnpu_tcm_highmem.ld",
     deps = [
+        "//sw/opt/litert-micro:depthwise_conv",
         "@tflite_micro//tensorflow/lite/micro:micro_framework",
         "@tflite_micro//tensorflow/lite/micro:micro_log",
         "@tflite_micro//tensorflow/lite/micro:micro_profiler",
@@ -80,6 +81,56 @@ cocotb_test_suite(
             "@rules_python//python/runfiles",
         ],
         "data": ["run_mobilenet_v1_025_partial_binary.elf"],
+    },
+    vcs_build_args = VCS_BUILD_ARGS,
+    vcs_data = glob(["**/*.elf"]) + [
+        "//tests/cocotb:coverage_exclude.cfg",
+    ],
+    vcs_defines = VCS_DEFINES,
+    vcs_test_args = VCS_TEST_ARGS,
+    vcs_verilog_sources = ["//hdl/chisel/src/coralnpu:rvv_core_mini_highmem_axi_cc_library_verilog"],
+    verilator_model = "//tests/cocotb:rvv_core_mini_highmem_axi_model",
+)
+
+coralnpu_v2_binary(
+    name = "depthwise_conv_test",
+    srcs = ["depthwise_conv_test.cc"],
+    linker_script = "@coralnpu_hw//toolchain:coralnpu_tcm_highmem.ld",
+    deps = [
+        "//sw/opt/litert-micro:depthwise_conv",
+        "@tflite_micro//tensorflow/lite/kernels/internal:reference_base"
+    ],
+)
+
+cocotb_test_suite(
+    name = "cocotb_depthwise_conv",
+    simulators = [
+        "verilator",
+        "vcs",
+    ],
+    testcases = [
+        ("test_dwconv8to8stride1", "small"),
+        ("test_dwconv8to8stride2", "small"),
+        "test_dwconv32to32stride1",
+        "test_dwconv32to32stride2",
+        "test_dwconv64to64stride1",
+        "test_dwconv64to64stride2",
+        "test_dwconv16to32stride2",
+        # Benchmarks are skipped.
+    ],
+    # testcases_vname = "RUN_MOBILENET_TEST",
+    tests_kwargs = {
+        "waves": False,
+        "hdl_toplevel": "RvvCoreMiniHighmemAxi",
+        "size": "enormous",
+        "default_testcase_size": "medium",
+        "test_module": ["cocotb_depthwise_conv.py"],
+        "deps": [
+            "//coralnpu_test_utils:core_mini_axi_sim_interface",
+            "//coralnpu_test_utils:sim_test_fixture",
+            "@rules_python//python/runfiles",
+        ],
+        "data": ["depthwise_conv_test.elf"],
     },
     vcs_build_args = VCS_BUILD_ARGS,
     vcs_data = glob(["**/*.elf"]) + [

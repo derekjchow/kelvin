@@ -16,6 +16,7 @@
 #include <stdint.h>
 #include <stdio.h>
 
+#include "sw/opt/litert-micro/depthwise_conv.h"
 #include "tensorflow/lite/core/c/common.h"
 #include "tensorflow/lite/micro/micro_interpreter.h"
 #include "tensorflow/lite/micro/micro_mutable_op_resolver.h"
@@ -24,9 +25,11 @@
 
 namespace {
 using MobilenetOpResolver = tflite::MicroMutableOpResolver<2>;
+using coralnpu_v2::opt::litert_micro::Register_DEPTHWISE_CONV_2D;
 TfLiteStatus RegisterOps(MobilenetOpResolver& op_resolver) {
   TF_LITE_ENSURE_STATUS(op_resolver.AddConv2D());
-  TF_LITE_ENSURE_STATUS(op_resolver.AddDepthwiseConv2D());
+  TF_LITE_ENSURE_STATUS(
+      op_resolver.AddDepthwiseConv2D(Register_DEPTHWISE_CONV_2D()));
   return kTfLiteOk;
 }
 }  // namespace
