@@ -135,6 +135,24 @@ template_rule(
     },
 )
 
+template_rule(
+    coralnpu_v2_binary,
+    {
+        "vnclip_test": {
+            "srcs": ["vnclip_test.cc"],
+        },
+        "vnclipu_test": {
+            "srcs": ["vnclipu_test.cc"],
+        },
+        "vnsra_test": {
+            "srcs": ["vnsra_test.cc"],
+        },
+        "vnsrl_test": {
+            "srcs": ["vnsrl_test.cc"],
+        },
+    },
+)
+
 filegroup(
     name = "rvv_arith_tests",
     srcs = [
@@ -143,5 +161,10 @@ filegroup(
     ] + [
         "rvv_widen_{}_{}_{}".format(op, in_dtype, out_dtype)
         for (op, _, in_dtype, out_dtype, _, _, _, _) in MATH_WIDEN_OP_TYPE_PAIRS
+    ] + [
+        "vnclip_test.elf",
+        "vnclipu_test.elf",
+        "vnsra_test.elf",
+        "vnsrl_test.elf",
     ],
 )

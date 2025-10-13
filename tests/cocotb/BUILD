@@ -251,6 +251,10 @@ RVV_ARITHMETIC_TESTCASES = [
     "reduction_m1_vanilla_ops",
     "reduction_m1_failure_ops",
     "widen_math_ops_test_impl",
+    "vnclip_test",
+    "vnclipu_test",
+    "vnsra_test",
+    "vnsrl_test",
 ]
 # END_TESTCASES_FOR_rvv_arithmetic_cocotb_test
 

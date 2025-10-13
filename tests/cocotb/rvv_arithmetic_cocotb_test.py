@@ -322,3 +322,364 @@ async def widen_math_ops_test_impl(dut):
                                     dtypes=[['int8', 'int16'],
                                             ['int16', 'int32']],
                                     math_ops=['add', 'sub', 'mul'])
+
+
+async def test_narrowing_math_op(
+        dut,
+        elf_name: str,
+        cases: list[dict],  # keys: impl, vl, in_dtype, maxshift, vxs, saturate
+):
+    """RVV narrowing instructions test template.
+
+    All these instructions narrow down the input vector elements into half
+    width output elements, with:
+    - a right shift (A or L, by immediate, scalar or vector)
+    - an optional saturation (signed or unsigned accordingly)
+      if saturation is selected, the shift result is rounded (see vxrm)
+    """
+    fixture = await Fixture.Create(dut)
+    r = runfiles.Create()
+    await fixture.load_elf_and_lookup_symbols(
+        r.Rlocation('coralnpu_hw/tests/cocotb/rvv/arithmetics/' + elf_name),
+        [
+            'impl', 'vl', 'shift_scalar',
+            'buf8', 'buf16', 'buf32',
+            'buf_shift8', 'buf_shift16'
+        ] + list({c['impl'] for c in cases}),
+    )
+
+    rng = np.random.default_rng()
+    for c in tqdm.tqdm(cases):
+        impl = c['impl']
+        vl = c['vl']
+        in_dtype = c['in_dtype']
+        maxshift = c['maxshift']
+        vxs = c['vxs']
+        saturate = c['saturate']
+        if in_dtype == np.int16:
+            out_dtype = np.int8
+        elif in_dtype == np.uint16:
+            out_dtype = np.uint8
+        elif in_dtype == np.int32:
+            out_dtype = np.int16
+        elif in_dtype == np.uint32:
+            out_dtype = np.uint16
+        else:
+            assert False, f"Unsupported in_dtype {in_dtype}"
+
+        input_data = rng.integers(
+            0, np.iinfo(in_dtype).max + 1, vl, dtype=in_dtype)
+        shift_scalar = rng.integers(0, maxshift + 1, 1, dtype=np.uint32)[0]
+        shifts = rng.integers(0, maxshift + 1, vl, dtype=out_dtype)
+        if (vxs):
+            shift_results = np.bitwise_right_shift(input_data, shift_scalar)
+        else:
+            shift_results = np.bitwise_right_shift(input_data, shifts)
+        if saturate:
+            shift_results = np.minimum(shift_results, np.iinfo(out_dtype).max)
+            shift_results = np.maximum(shift_results, np.iinfo(out_dtype).min)
+        expected_outputs = shift_results.astype(out_dtype)
+
+        await fixture.write_ptr('impl', impl)
+        await fixture.write_word('vl', vl)
+        await fixture.write_word('shift_scalar', shift_scalar)
+        if (in_dtype == np.int16) or (in_dtype == np.uint16):
+            await fixture.write('buf16', input_data)
+            await fixture.write('buf_shift8', shifts)
+        elif (in_dtype == np.int32) or (in_dtype == np.uint32):
+            await fixture.write('buf32', input_data)
+            await fixture.write('buf_shift16', shifts)
+
+        await fixture.run_to_halt()
+
+        if (out_dtype == np.int8) or (out_dtype == np.uint8):
+            actual_outputs = (await fixture.read('buf8', vl))
+        elif (out_dtype == np.int16) or (out_dtype == np.uint16):
+            actual_outputs = (await fixture.read('buf16', vl * 2))
+        actual_outputs = actual_outputs.view(out_dtype)
+
+        debug_msg = str({
+            'impl': impl,
+            'input': input_data,
+            'shift_scalar': shift_scalar,
+            'shifts': shifts,
+            'expected': expected_outputs,
+            'actual': actual_outputs,
+        })
+        assert (actual_outputs == expected_outputs).all(), debug_msg
+
+
+@cocotb.test()
+async def vnsra_test(dut):
+    """Test vnsra usage accessible from intrinsics.
+
+    This covers vncvt (signed).
+    """
+    def make_test_case(impl, vl, in_dtype, vxs):
+        if in_dtype == np.int16:
+            maxshift = 15
+        elif in_dtype == np.int32:
+            maxshift = 31
+        else:
+            assert False, "Unsupported in_dtype"
+        return {
+            'impl': impl,
+            'vl': vl,
+            'in_dtype': in_dtype,
+            'maxshift': maxshift,
+            'vxs': vxs,
+            'saturate': False,
+        }
+
+    await test_narrowing_math_op(
+        dut = dut,
+        elf_name = 'vnsra_test.elf',
+        cases = [
+            # 32 to 16, vxv
+            make_test_case('vnsra_wv_i16mf2', 4, np.int32, vxs=False),
+            make_test_case('vnsra_wv_i16mf2', 3, np.int32, vxs=False),
+            make_test_case('vnsra_wv_i16m1', 8, np.int32, vxs=False),
+            make_test_case('vnsra_wv_i16m1', 7, np.int32, vxs=False),
+            make_test_case('vnsra_wv_i16m2', 16, np.int32, vxs=False),
+            make_test_case('vnsra_wv_i16m2', 15, np.int32, vxs=False),
+            make_test_case('vnsra_wv_i16m4', 32, np.int32, vxs=False),
+            make_test_case('vnsra_wv_i16m4', 31, np.int32, vxs=False),
+            # 32 to 16, vxs
+            make_test_case('vnsra_wx_i16mf2', 4, np.int32, vxs=True),
+            make_test_case('vnsra_wx_i16mf2', 3, np.int32, vxs=True),
+            make_test_case('vnsra_wx_i16m1', 8, np.int32, vxs=True),
+            make_test_case('vnsra_wx_i16m1', 7, np.int32, vxs=True),
+            make_test_case('vnsra_wx_i16m2', 16, np.int32, vxs=True),
+            make_test_case('vnsra_wx_i16m2', 15, np.int32, vxs=True),
+            make_test_case('vnsra_wx_i16m4', 32, np.int32, vxs=True),
+            make_test_case('vnsra_wx_i16m4', 31, np.int32, vxs=True),
+            # 16 to 8, vxv
+            make_test_case('vnsra_wv_i8mf4', 4, np.int16, vxs=False),
+            make_test_case('vnsra_wv_i8mf4', 3, np.int16, vxs=False),
+            make_test_case('vnsra_wv_i8mf2', 8, np.int16, vxs=False),
+            make_test_case('vnsra_wv_i8mf2', 7, np.int16, vxs=False),
+            make_test_case('vnsra_wv_i8m1', 16, np.int16, vxs=False),
+            make_test_case('vnsra_wv_i8m1', 15, np.int16, vxs=False),
+            make_test_case('vnsra_wv_i8m2', 32, np.int16, vxs=False),
+            make_test_case('vnsra_wv_i8m2', 31, np.int16, vxs=False),
+            make_test_case('vnsra_wv_i8m4', 64, np.int16, vxs=False),
+            make_test_case('vnsra_wv_i8m4', 63, np.int16, vxs=False),
+            # 16 to 8, vxv
+            make_test_case('vnsra_wx_i8mf4', 4, np.int16, vxs=True),
+            make_test_case('vnsra_wx_i8mf4', 3, np.int16, vxs=True),
+            make_test_case('vnsra_wx_i8mf2', 8, np.int16, vxs=True),
+            make_test_case('vnsra_wx_i8mf2', 7, np.int16, vxs=True),
+            make_test_case('vnsra_wx_i8m1', 16, np.int16, vxs=True),
+            make_test_case('vnsra_wx_i8m1', 15, np.int16, vxs=True),
+            make_test_case('vnsra_wx_i8m2', 32, np.int16, vxs=True),
+            make_test_case('vnsra_wx_i8m2', 31, np.int16, vxs=True),
+            make_test_case('vnsra_wx_i8m4', 64, np.int16, vxs=True),
+            make_test_case('vnsra_wx_i8m4', 63, np.int16, vxs=True),
+        ],
+    )
+
+
+@cocotb.test()
+async def vnsrl_test(dut):
+    """Test vnsrl usage accessible from intrinsics.
+
+    This covers vncvt (unsigned).
+    """
+    def make_test_case(impl, vl, in_dtype, vxs):
+        if in_dtype == np.uint16:
+            maxshift = 15
+        elif in_dtype == np.uint32:
+            maxshift = 31
+        else:
+            assert False, "Unsupported in_dtype"
+        return {
+            'impl': impl,
+            'vl': vl,
+            'in_dtype': in_dtype,
+            'maxshift': maxshift,
+            'vxs': vxs,
+            'saturate': False,
+        }
+
+    await test_narrowing_math_op(
+        dut = dut,
+        elf_name = 'vnsrl_test.elf',
+        cases = [
+            # 32 to 16, vxv
+            make_test_case('vnsrl_wv_u16mf2', 4, np.uint32, vxs=False),
+            make_test_case('vnsrl_wv_u16mf2', 3, np.uint32, vxs=False),
+            make_test_case('vnsrl_wv_u16m1', 8, np.uint32, vxs=False),
+            make_test_case('vnsrl_wv_u16m1', 7, np.uint32, vxs=False),
+            make_test_case('vnsrl_wv_u16m2', 16, np.uint32, vxs=False),
+            make_test_case('vnsrl_wv_u16m2', 15, np.uint32, vxs=False),
+            make_test_case('vnsrl_wv_u16m4', 32, np.uint32, vxs=False),
+            make_test_case('vnsrl_wv_u16m4', 31, np.uint32, vxs=False),
+            # 32 to 16, vxs
+            make_test_case('vnsrl_wx_u16mf2', 4, np.uint32, vxs=True),
+            make_test_case('vnsrl_wx_u16mf2', 3, np.uint32, vxs=True),
+            make_test_case('vnsrl_wx_u16m1', 8, np.uint32, vxs=True),
+            make_test_case('vnsrl_wx_u16m1', 7, np.uint32, vxs=True),
+            make_test_case('vnsrl_wx_u16m2', 16, np.uint32, vxs=True),
+            make_test_case('vnsrl_wx_u16m2', 15, np.uint32, vxs=True),
+            make_test_case('vnsrl_wx_u16m4', 32, np.uint32, vxs=True),
+            make_test_case('vnsrl_wx_u16m4', 31, np.uint32, vxs=True),
+            # 16 to 8, vxv
+            make_test_case('vnsrl_wv_u8mf4', 4, np.uint16, vxs=False),
+            make_test_case('vnsrl_wv_u8mf4', 3, np.uint16, vxs=False),
+            make_test_case('vnsrl_wv_u8mf2', 8, np.uint16, vxs=False),
+            make_test_case('vnsrl_wv_u8mf2', 7, np.uint16, vxs=False),
+            make_test_case('vnsrl_wv_u8m1', 16, np.uint16, vxs=False),
+            make_test_case('vnsrl_wv_u8m1', 15, np.uint16, vxs=False),
+            make_test_case('vnsrl_wv_u8m2', 32, np.uint16, vxs=False),
+            make_test_case('vnsrl_wv_u8m2', 31, np.uint16, vxs=False),
+            make_test_case('vnsrl_wv_u8m4', 64, np.uint16, vxs=False),
+            make_test_case('vnsrl_wv_u8m4', 63, np.uint16, vxs=False),
+            # 16 to 8, vxv
+            make_test_case('vnsrl_wx_u8mf4', 4, np.uint16, vxs=True),
+            make_test_case('vnsrl_wx_u8mf4', 3, np.uint16, vxs=True),
+            make_test_case('vnsrl_wx_u8mf2', 8, np.uint16, vxs=True),
+            make_test_case('vnsrl_wx_u8mf2', 7, np.uint16, vxs=True),
+            make_test_case('vnsrl_wx_u8m1', 16, np.uint16, vxs=True),
+            make_test_case('vnsrl_wx_u8m1', 15, np.uint16, vxs=True),
+            make_test_case('vnsrl_wx_u8m2', 32, np.uint16, vxs=True),
+            make_test_case('vnsrl_wx_u8m2', 31, np.uint16, vxs=True),
+            make_test_case('vnsrl_wx_u8m4', 64, np.uint16, vxs=True),
+            make_test_case('vnsrl_wx_u8m4', 63, np.uint16, vxs=True),
+        ],
+    )
+
+
+@cocotb.test()
+async def vnclip_test(dut):
+    """Test vnclip usage accessible from intrinsics."""
+    # TODO(davidgao): test different vxrm here too.
+    def make_test_case(impl, vl, in_dtype, vxs):
+        if in_dtype == np.int16:
+            maxshift = 15
+        elif in_dtype == np.int32:
+            maxshift = 31
+        else:
+            assert False, "Unsupported in_dtype"
+        return {
+            'impl': impl,
+            'vl': vl,
+            'in_dtype': in_dtype,
+            'maxshift': maxshift,
+            'vxs': vxs,
+            'saturate': True,
+        }
+
+    await test_narrowing_math_op(
+        dut = dut,
+        elf_name = 'vnclip_test.elf',
+        cases = [
+            # 32 to 16, vxv
+            # make_test_case('vnclip_wv_i16mf2', 4, np.int32, vxs=False),
+            # make_test_case('vnclip_wv_i16mf2', 3, np.int32, vxs=False),
+            # make_test_case('vnclip_wv_i16m1', 8, np.int32, vxs=False),
+            # make_test_case('vnclip_wv_i16m1', 7, np.int32, vxs=False),
+            # make_test_case('vnclip_wv_i16m2', 16, np.int32, vxs=False),
+            # make_test_case('vnclip_wv_i16m2', 15, np.int32, vxs=False),
+            # make_test_case('vnclip_wv_i16m4', 32, np.int32, vxs=False),
+            # make_test_case('vnclip_wv_i16m4', 31, np.int32, vxs=False),
+            # 32 to 16, vxs
+            # make_test_case('vnclip_wx_i16mf2', 4, np.int32, vxs=True),
+            # make_test_case('vnclip_wx_i16mf2', 3, np.int32, vxs=True),
+            # make_test_case('vnclip_wx_i16m1', 8, np.int32, vxs=True),
+            # make_test_case('vnclip_wx_i16m1', 7, np.int32, vxs=True),
+            # make_test_case('vnclip_wx_i16m2', 16, np.int32, vxs=True),
+            # make_test_case('vnclip_wx_i16m2', 15, np.int32, vxs=True),
+            # make_test_case('vnclip_wx_i16m4', 32, np.int32, vxs=True),
+            # make_test_case('vnclip_wx_i16m4', 31, np.int32, vxs=True),
+            # 16 to 8, vxv
+            # make_test_case('vnclip_wv_i8mf4', 4, np.int16, vxs=False),
+            # make_test_case('vnclip_wv_i8mf4', 3, np.int16, vxs=False),
+            # make_test_case('vnclip_wv_i8mf2', 8, np.int16, vxs=False),
+            # make_test_case('vnclip_wv_i8mf2', 7, np.int16, vxs=False),
+            # make_test_case('vnclip_wv_i8m1', 16, np.int16, vxs=False),
+            # make_test_case('vnclip_wv_i8m1', 15, np.int16, vxs=False),
+            # make_test_case('vnclip_wv_i8m2', 32, np.int16, vxs=False),
+            # make_test_case('vnclip_wv_i8m2', 31, np.int16, vxs=False),
+            # make_test_case('vnclip_wv_i8m4', 64, np.int16, vxs=False),
+            # make_test_case('vnclip_wv_i8m4', 63, np.int16, vxs=False),
+            # 16 to 8, vxv
+            # make_test_case('vnclip_wx_i8mf4', 4, np.int16, vxs=True),
+            # make_test_case('vnclip_wx_i8mf4', 3, np.int16, vxs=True),
+            # make_test_case('vnclip_wx_i8mf2', 8, np.int16, vxs=True),
+            # make_test_case('vnclip_wx_i8mf2', 7, np.int16, vxs=True),
+            # make_test_case('vnclip_wx_i8m1', 16, np.int16, vxs=True),
+            # make_test_case('vnclip_wx_i8m1', 15, np.int16, vxs=True),
+            # make_test_case('vnclip_wx_i8m2', 32, np.int16, vxs=True),
+            # make_test_case('vnclip_wx_i8m2', 31, np.int16, vxs=True),
+            # make_test_case('vnclip_wx_i8m4', 64, np.int16, vxs=True),
+            # make_test_case('vnclip_wx_i8m4', 63, np.int16, vxs=True),
+        ],
+    )
+
+
+@cocotb.test()
+async def vnclipu_test(dut):
+    """Test vnclipu usage accessible from intrinsics."""
+    # TODO(davidgao): test different vxrm here too.
+    def make_test_case(impl, vl, in_dtype, vxs):
+        if in_dtype == np.uint16:
+            maxshift = 15
+        elif in_dtype == np.uint32:
+            maxshift = 31
+        else:
+            assert False, "Unsupported in_dtype"
+        return {
+            'impl': impl,
+            'vl': vl,
+            'in_dtype': in_dtype,
+            'maxshift': maxshift,
+            'vxs': vxs,
+            'saturate': True,
+        }
+
+    await test_narrowing_math_op(
+        dut = dut,
+        elf_name = 'vnclipu_test.elf',
+        cases = [
+            # 32 to 16, vxv
+            make_test_case('vnclipu_wv_u16mf2', 4, np.uint32, vxs=False),
+            make_test_case('vnclipu_wv_u16mf2', 3, np.uint32, vxs=False),
+            make_test_case('vnclipu_wv_u16m1', 8, np.uint32, vxs=False),
+            make_test_case('vnclipu_wv_u16m1', 7, np.uint32, vxs=False),
+            make_test_case('vnclipu_wv_u16m2', 16, np.uint32, vxs=False),
+            make_test_case('vnclipu_wv_u16m2', 15, np.uint32, vxs=False),
+            make_test_case('vnclipu_wv_u16m4', 32, np.uint32, vxs=False),
+            make_test_case('vnclipu_wv_u16m4', 31, np.uint32, vxs=False),
+            # 32 to 16, vxs
+            make_test_case('vnclipu_wx_u16mf2', 4, np.uint32, vxs=True),
+            make_test_case('vnclipu_wx_u16mf2', 3, np.uint32, vxs=True),
+            make_test_case('vnclipu_wx_u16m1', 8, np.uint32, vxs=True),
+            make_test_case('vnclipu_wx_u16m1', 7, np.uint32, vxs=True),
+            make_test_case('vnclipu_wx_u16m2', 16, np.uint32, vxs=True),
+            make_test_case('vnclipu_wx_u16m2', 15, np.uint32, vxs=True),
+            make_test_case('vnclipu_wx_u16m4', 32, np.uint32, vxs=True),
+            make_test_case('vnclipu_wx_u16m4', 31, np.uint32, vxs=True),
+            # 16 to 8, vxv
+            make_test_case('vnclipu_wv_u8mf4', 4, np.uint16, vxs=False),
+            make_test_case('vnclipu_wv_u8mf4', 3, np.uint16, vxs=False),
+            make_test_case('vnclipu_wv_u8mf2', 8, np.uint16, vxs=False),
+            make_test_case('vnclipu_wv_u8mf2', 7, np.uint16, vxs=False),
+            make_test_case('vnclipu_wv_u8m1', 16, np.uint16, vxs=False),
+            make_test_case('vnclipu_wv_u8m1', 15, np.uint16, vxs=False),
+            make_test_case('vnclipu_wv_u8m2', 32, np.uint16, vxs=False),
+            make_test_case('vnclipu_wv_u8m2', 31, np.uint16, vxs=False),
+            make_test_case('vnclipu_wv_u8m4', 64, np.uint16, vxs=False),
+            make_test_case('vnclipu_wv_u8m4', 63, np.uint16, vxs=False),
+            # 16 to 8, vxv
+            make_test_case('vnclipu_wx_u8mf4', 4, np.uint16, vxs=True),
+            make_test_case('vnclipu_wx_u8mf4', 3, np.uint16, vxs=True),
+            make_test_case('vnclipu_wx_u8mf2', 8, np.uint16, vxs=True),
+            make_test_case('vnclipu_wx_u8mf2', 7, np.uint16, vxs=True),
+            make_test_case('vnclipu_wx_u8m1', 16, np.uint16, vxs=True),
+            make_test_case('vnclipu_wx_u8m1', 15, np.uint16, vxs=True),
+            make_test_case('vnclipu_wx_u8m2', 32, np.uint16, vxs=True),
+            make_test_case('vnclipu_wx_u8m2', 31, np.uint16, vxs=True),
+            make_test_case('vnclipu_wx_u8m4', 64, np.uint16, vxs=True),
+            make_test_case('vnclipu_wx_u8m4', 63, np.uint16, vxs=True),
+        ],
+    )
