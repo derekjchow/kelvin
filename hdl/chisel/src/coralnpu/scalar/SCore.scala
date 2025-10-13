@@ -161,8 +161,13 @@ class SCore(p: Parameters) extends Module {
     fault_manager.io.in.rvv_fault.get.bits.mcause := 2.U(32.W)
     fault_manager.io.in.rvv_fault.get.bits.mtval :=
         io.rvvcore.get.trap.bits.originalEncoding()
+    fault_manager.io.in.rvv_fault.get.bits.decode := false.B
   }
   bru(0).io.fault_manager.get := fault_manager.io.out
+  if (p.useRetirementBuffer) {
+    retirement_buffer.get.io.fault := fault_manager.io.out
+    retirement_buffer.get.io.storeComplete := lsu.io.storeComplete
+  }
 
   // ---------------------------------------------------------------------------
   // ALU

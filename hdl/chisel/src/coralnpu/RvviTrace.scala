@@ -178,15 +178,16 @@ class RvviTrace(p: Parameters) extends Module {
         val pc_rdata = io.rb.inst(i).bits.pc
         val wb_idx = io.rb.inst(i).bits.idx
         val wdata = io.rb.inst(i).bits.data
+        val trap = io.rb.inst(i).bits.trap
 
         rvviTraceBlackBox.io.valid_i(i) := valid
         rvviTraceBlackBox.io.order_i(i) := MuxOR(valid, count + i.U)
         rvviTraceBlackBox.io.insn_i(i) := MuxOR(valid, insn)
+        rvviTraceBlackBox.io.trap_i(i) := MuxOR(valid, trap)
 
         ///////////////////////////////////
         // TODO(atv): This is just generally not tracked.
         ///////////////////////////////////
-        rvviTraceBlackBox.io.trap_i(i) := false.B
         rvviTraceBlackBox.io.debug_mode_i(i) := false.B
         ///////////////////////////////////
 

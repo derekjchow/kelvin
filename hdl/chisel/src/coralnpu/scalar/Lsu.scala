@@ -59,6 +59,7 @@ class Lsu(p: Parameters) extends Module {
     val storeCount = Output(UInt(2.W))
     val queueCapacity = Output(UInt(3.W))
     val active = Output(Bool())
+    val storeComplete = Output(Valid(UInt(32.W)))
   })
 }
 
@@ -1012,6 +1013,7 @@ class LsuV1(p: Parameters) extends Lsu(p) {
     io.dbus.valid && io.dbus.write,
     io.ebus.dbus.valid && io.ebus.dbus.write
   ))
+  io.storeComplete := MakeInvalid(UInt(32.W))
 
   io.flush.valid  := ctrl.io.out.valid && (ctrl.io.out.bits.fencei || ctrl.io.out.bits.flushat || ctrl.io.out.bits.flushall)
   io.flush.all    := ctrl.io.out.bits.fencei || ctrl.io.out.bits.flushall
@@ -1281,6 +1283,8 @@ class LsuV2(p: Parameters) extends Lsu(p) {
   val storeUpdate = Mux(slotFired, wactive, VecInit.fill(16)(false.B))
   val transactionUpdatedSlot = Mux(slot.store,
       slot.storeUpdate(storeUpdate), loadUpdatedSlot)
+  val storeComplete = slotFired && slot.store && !slot.slotIdle() && transactionUpdatedSlot.slotIdle() && (!LsuOp.isVector(slot.op) || io.lsu2rvv.get(0).fire)
+  io.storeComplete := Mux(storeComplete, MakeValid(slot.pc), MakeInvalid(UInt(32.W)))
 
   // ==========================================================================
   // Writeback update

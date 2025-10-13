@@ -17,12 +17,6 @@ package coralnpu
 import chisel3._
 import chisel3.util._
 
-class FaultManagerOutput extends Bundle {
-  val mepc = UInt(32.W)
-  val mtval = UInt(32.W)
-  val mcause = UInt(32.W)
-}
-
 class FaultManager(p: Parameters) extends Module {
   val io = IO(new Bundle {
     val in = new Bundle {
@@ -88,28 +82,43 @@ class FaultManager(p: Parameters) extends Module {
     rvv_fault -> io.in.rvv_fault.map(_.bits.mepc).getOrElse(0.U),
     fault -> io.in.pc(first_fault).pc,
   ))
+
+  val first_fault_is_csr          = (csr_fault && (csr_fault_idx === first_fault))
+  val first_fault_is_jal          = (jal_fault && (jal_fault_idx === first_fault))
+  val first_fault_is_jalr         = (jalr_fault && (jalr_fault_idx === first_fault))
+  val first_fault_is_bxx          = (bxx_fault && (bxx_fault_idx === first_fault))
+  val first_fault_is_undef        = (undef_fault && (undef_fault_idx === first_fault))
+  val first_fault_is_rvv_dispatch = (rvv_dispatch_fault && (rvv_dispatch_fault_idx === first_fault))
   io.out.bits.mcause := MuxCase(0.U(32.W), Seq(
     load_fault -> 5.U(32.W),
     store_fault -> 7.U(32.W),
     instr_access_fault -> 1.U(32.W),
     rvv_fault -> io.in.rvv_fault.map(_.bits.mcause).getOrElse(2.U(32.W)),
-    (csr_fault && (csr_fault_idx === first_fault)) -> 2.U(32.W),
-    (jal_fault && (jal_fault_idx === first_fault)) -> 0.U(32.W),
-    (jalr_fault && (jalr_fault_idx === first_fault)) -> 0.U(32.W),
-    (bxx_fault && (bxx_fault_idx === first_fault)) -> 0.U(32.W),
-    (undef_fault && (undef_fault_idx === first_fault)) -> 2.U(32.W),
-    (rvv_dispatch_fault && (rvv_dispatch_fault_idx === first_fault)) -> 2.U(32.W),
+    first_fault_is_csr -> 2.U(32.W),
+    first_fault_is_jal -> 0.U(32.W),
+    first_fault_is_jalr -> 0.U(32.W),
+    first_fault_is_bxx -> 0.U(32.W),
+    first_fault_is_undef -> 2.U(32.W),
+    first_fault_is_rvv_dispatch -> 2.U(32.W),
   ))
   io.out.bits.mtval := MuxCase(0.U(32.W), Seq(
     load_fault -> io.in.memory_fault.bits.addr,
     store_fault -> io.in.memory_fault.bits.addr,
     instr_access_fault -> 0.U(32.W),
     rvv_fault -> io.in.rvv_fault.map(_.bits.mtval).getOrElse(0.U),
-    (csr_fault && (csr_fault_idx === first_fault)) -> 0.U,
-    (jal_fault && (jal_fault_idx === first_fault)) -> io.in.jal(jal_fault_idx).target,
-    (jalr_fault && (jalr_fault_idx === first_fault)) -> (io.in.jalr(jalr_fault_idx).target & "xFFFFFFFE".U),
-    (bxx_fault && (bxx_fault_idx === first_fault)) -> 0.U(32.W),
-    (undef_fault && (undef_fault_idx === first_fault)) -> io.in.undef(undef_fault_idx).inst,
-    (rvv_dispatch_fault && (rvv_dispatch_fault_idx === first_fault)) -> io.in.undef(rvv_dispatch_fault_idx).inst,
+    first_fault_is_csr -> 0.U,
+    first_fault_is_jal -> io.in.jal(jal_fault_idx).target,
+    first_fault_is_jalr -> (io.in.jalr(jalr_fault_idx).target & "xFFFFFFFE".U),
+    first_fault_is_bxx -> 0.U(32.W),
+    first_fault_is_undef -> io.in.undef(undef_fault_idx).inst,
+    first_fault_is_rvv_dispatch -> io.in.undef(rvv_dispatch_fault_idx).inst,
+  ))
+  io.out.bits.decode := MuxCase(false.B, Seq(
+    first_fault_is_csr -> true.B,
+    first_fault_is_jal -> true.B,
+    first_fault_is_jalr -> true.B,
+    first_fault_is_bxx -> true.B,
+    first_fault_is_undef -> true.B,
+    first_fault_is_rvv_dispatch -> true.B,
   ))
 }

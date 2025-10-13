@@ -125,7 +125,8 @@ class Parameters(var m: Seq[MemoryRegion] = Seq(), val hartId: Int = 0) {
   def retirementBufferIdxWidth: Int = {
     val scalarRegCount = 32
     val floatRegCount = (if (enableFloat) { 32 } else { 0 })
-    log2Ceil(scalarRegCount + floatRegCount + rvvRegCount + 1)
+    // +2 is for the "no write" and "store" dummy registers.
+    log2Ceil(scalarRegCount + floatRegCount + rvvRegCount + 2)
   }
 
   // L0ICache Fetch unit.

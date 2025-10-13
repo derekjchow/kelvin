@@ -437,25 +437,49 @@ chisel_cc_library(
     verilog_file_path = "CoreMini.sv",
 )
 
-chisel_cc_library(
-    name = "core_mini_axi_cc_library",
+template_rule(
+    chisel_cc_library,
+    {
+        "core_mini_axi_cc_library": {
+            "extra_outs": [
+                "VCoreMiniAxi_parameters.h",
+                "CoreMiniAxi.zip",
+            ],
+            "gen_flags": [
+                "--enableFetchL0=False",
+                "--fetchDataBits=128",
+                "--lsuDataBits=128",
+                "--enableVector=False",
+                "--enableFloat=True",
+                "--moduleName=CoreMini",
+                "--useAxi",
+            ],
+            "module_name": "CoreMiniAxi",
+            "verilog_file_path": "CoreMiniAxi.sv",
+        },
+        "core_mini_verification_axi_cc_library": {
+            "extra_outs": [
+                "VCoreMiniVerificationAxi_parameters.h",
+                "CoreMiniVerificationAxi.zip",
+            ],
+            "gen_flags": [
+                "--enableFetchL0=False",
+                "--fetchDataBits=128",
+                "--lsuDataBits=128",
+                "--enableVector=False",
+                "--enableFloat=True",
+                "--moduleName=CoreMiniVerification",
+                "--useAxi",
+                "--enableVerification=True",
+                # Verification requires DispatchV2 and LsuV2
+                "--enableDispatchV2=True",
+            ],
+            "module_name": "CoreMiniVerificationAxi",
+            "verilog_file_path": "CoreMiniVerificationAxi.sv",
+        },
+    },
     chisel_lib = ":coralnpu",
     emit_class = "coralnpu.EmitCore",
-    extra_outs = [
-        "VCoreMiniAxi_parameters.h",
-        "CoreMiniAxi.zip",
-    ],
-    gen_flags = [
-        "--enableFetchL0=False",
-        "--fetchDataBits=128",
-        "--lsuDataBits=128",
-        "--enableVector=False",
-        "--enableFloat=True",
-        "--moduleName=CoreMini",
-        "--useAxi",
-    ],
-    module_name = "CoreMiniAxi",
-    verilog_file_path = "CoreMiniAxi.sv",
     vopts = [
         "-DUSE_GENERIC",
         # Warnings that we disable for fpnew

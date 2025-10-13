@@ -170,7 +170,8 @@ void CoreMiniAxi_tb::Connect() {
   core_->io_debug_rb_inst_##x##_bits_pc(debug_io_.rb_inst_##x##_bits_pc); \
   core_->io_debug_rb_inst_##x##_bits_inst(debug_io_.rb_inst_##x##_bits_inst); \
   core_->io_debug_rb_inst_##x##_bits_idx(debug_io_.rb_inst_##x##_bits_idx); \
-  core_->io_debug_rb_inst_##x##_bits_data(debug_io_.rb_inst_##x##_bits_data);
+  core_->io_debug_rb_inst_##x##_bits_data(debug_io_.rb_inst_##x##_bits_data); \
+  core_->io_debug_rb_inst_##x##_bits_trap(debug_io_.rb_inst_##x##_bits_trap);
   REPEAT(BIND_RB_DEBUG_IO, KP_retirementBufferSize);
 #undef BIND_RB_DEBUG_IO
 #endif
@@ -401,6 +402,7 @@ void CoreMiniAxi_tb::TraceInstructions() {
   pc = debug_io_.rb_inst_##x##_bits_pc.read().get_word(0); \
   inst = debug_io_.rb_inst_##x##_bits_inst.read().get_word(0); \
   idx = debug_io_.rb_inst_##x##_bits_idx.read().get_word(0); \
+  bool trap = debug_io_.rb_inst_##x##_bits_trap.read(); \
   if (debug_io_.rb_inst_##x##_valid.read()) { \
     auto data = debug_io_.rb_inst_##x##_bits_data.read(); \
     std::vector<uint8_t> data_vec(data.length() / 8); \
@@ -412,7 +414,7 @@ void CoreMiniAxi_tb::TraceInstructions() {
       data_vec[i*4+2] = (word >> 8) & 0xff; \
       data_vec[i*4+3] = word & 0xff; \
     } \
-    tracer_.TraceInstructionRaw(pc, inst, idx, data_vec); \
+    tracer_.TraceInstructionRaw(pc, inst, idx, data_vec, trap); \
   } \
 } while (0);
 REPEAT(TRACE_INSTRUCTION, KP_retirementBufferSize);

@@ -110,6 +110,17 @@ template_rule(
                 "VERILATOR_MODEL=VCoreMiniAxi",
             ],
         },
+        "core_mini_verification_axi_tb": {
+            "srcs": [
+                "@coralnpu_hw//hdl/chisel/src/coralnpu:VCoreMiniVerificationAxi_parameters.h",
+            ] + CORE_MINI_AXI_TB_CC_LIBRARY_COMMON_SRCS,
+            "deps": [
+                "//hdl/chisel/src/coralnpu:core_mini_verification_axi_cc_library",
+            ] + CORE_MINI_AXI_TB_CC_LIBRARY_COMMON_DEPS,
+            "defines": [
+                "VERILATOR_MODEL=VCoreMiniVerificationAxi",
+            ],
+        },
         "rvv_core_mini_axi_tb": {
             "srcs": [
                 "@coralnpu_hw//hdl/chisel/src/coralnpu:VRvvCoreMiniAxi_parameters.h",
@@ -152,6 +163,11 @@ template_rule(
         "core_mini_axi_sim": {
             "deps": [
                 ":core_mini_axi_tb",
+            ] + CORE_MINI_AXI_SIM_CC_BINARY_COMMON_DEPS,
+        },
+        "core_mini_verification_axi_sim": {
+            "deps": [
+                ":core_mini_verification_axi_tb",
             ] + CORE_MINI_AXI_SIM_CC_BINARY_COMMON_DEPS,
         },
         "rvv_core_mini_axi_sim": {

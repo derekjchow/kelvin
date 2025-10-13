@@ -177,6 +177,7 @@ class RetirementBufferDebugIO(p: Parameters) extends Bundle {
     val inst = UInt(32.W)
     val idx = UInt(p.retirementBufferIdxWidth.W)
     val data = if (p.enableRvv) UInt(p.rvvVlen.W) else UInt(32.W)
+    val trap = Bool()
   }))
 }
 
@@ -295,4 +296,11 @@ class CsrTraceIO(p: Parameters) extends Bundle {
   val valid = Bool()
   val addr = UInt(12.W)
   val data = UInt(32.W)
+}
+
+class FaultManagerOutput extends Bundle {
+  val mepc = UInt(32.W)
+  val mtval = UInt(32.W)
+  val mcause = UInt(32.W)
+  val decode = Bool()
 }

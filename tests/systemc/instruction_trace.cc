@@ -112,8 +112,9 @@ void InstructionTrace::TraceInstruction(
 
 void InstructionTrace::TraceInstructionRaw(uint32_t pc, uint32_t inst,
                                            uint32_t reg,
-                                           const std::vector<uint8_t>& data) {
-  Instruction in(pc, inst, reg);
+                                           const std::vector<uint8_t>& data,
+                                           const bool trap) {
+  Instruction in(pc, inst, reg, trap);
   in.data = data;
   committed_insts_.push_back(in);
 }
@@ -125,6 +126,6 @@ void InstructionTrace::PrintTrace() const {
     for (auto d : inst.data) {
       printf("%02x", d);
     }
-    printf("\n");
+    printf(",trap=%s\n", inst.trap ? "yes" : "no");
   }
 }

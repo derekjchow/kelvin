@@ -414,6 +414,16 @@ coralnpu_v2_binary(
     ],
 )
 
+coralnpu_v2_binary(
+    name = "float_store",
+    srcs = ["float_store.cc"],
+)
+
+coralnpu_v2_binary(
+    name = "vector_store",
+    srcs = ["vector_store.cc"],
+)
+
 cocotb_test_suite(
     name = "rvv_load_store_test",
     simulators = [

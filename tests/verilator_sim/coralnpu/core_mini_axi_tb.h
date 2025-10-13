@@ -140,7 +140,8 @@ struct CoreMiniAxi_tb : Sysc_tb {
   sc_signal<sc_bv<32>> rb_inst_##x##_bits_pc; \
   sc_signal<sc_bv<32>> rb_inst_##x##_bits_inst; \
   sc_signal<sc_bv<KP_retirementBufferIdxWidth>> rb_inst_##x##_bits_idx; \
-  sc_signal<sc_bv<RB_DEBUG_IO_DATA_WIDTH>> rb_inst_##x##_bits_data;
+  sc_signal<sc_bv<RB_DEBUG_IO_DATA_WIDTH>> rb_inst_##x##_bits_data; \
+  sc_signal<bool> rb_inst_##x##_bits_trap;
   REPEAT(RB_DEBUG_IO, KP_retirementBufferSize);
 #undef RB_DEBUG_IO
 #undef RB_DEBUG_IO_DATA_WIDTH
