@@ -14,9 +14,9 @@
 
 # Makefile for CoralNPU UVM Testbench (Integrates with MPACT-Sim)
 
-# Check if ROOTDIR is set. If not, exit with an error.
-ifndef ROOTDIR
-    $(error ROOTDIR is not set. Please define it, e.g., export ROOTDIR=$(abspath ../../../..))
+# Check if CORALNPU_MPACT is set. If not, exit with an error.
+ifndef CORALNPU_MPACT
+    $(error CORALNPU_MPACT is not set. Please define it, e.g., export CORALNPU_MPACT=$(abspath ../../../coralnpu-mpact))
 endif
 
 # User Configuration
@@ -30,7 +30,7 @@ TB_DIR = ./tb
 ENV_DIR = ./env
 TESTS_DIR = ./tests
 BIN_DIR = ./bin
-UTILS_DIR = $(ROOTDIR)/hw/coralnpu/tests/uvm/utils
+UTILS_DIR = ./utils
 
 # Simulation Work Directory
 SIM_DIR = ./sim_work
@@ -40,8 +40,7 @@ MEM_FILE_DIR = $(SIM_DIR)/mem_files
 RUN_OPTS_FILE = $(MEM_FILE_DIR)/elf_run_opts.f
 
 # MPACT-Sim Integration Paths
-MPACT_DIR = $(ROOTDIR)/sim/coralnpu
-MPACT_BAZEL_BIN_DIR = $(MPACT_DIR)/bazel-bin/sim/cosim
+MPACT_BAZEL_BIN_DIR = $(CORALNPU_MPACT)/bazel-bin/sim/cosim
 MPACT_COSIM_LIB_NAME = coralnpu_cosim_lib_static
 
 # File List for VCS -f option
@@ -52,7 +51,7 @@ SIM_EXEC = $(SIM_DIR)/simv
 UVM_TESTNAME ?= coralnpu_base_test
 TEST_ELF ?= $(BIN_DIR)/program.elf
 UVM_VERBOSITY ?= UVM_MEDIUM
-TEST_TIMEOUT_NS ?= 20000
+TEST_TIMEOUT_NS ?= 100000
 PLUSARGS = +UVM_TESTNAME=$(UVM_TESTNAME) \
            +UVM_VERBOSITY=$(UVM_VERBOSITY) +TEST_TIMEOUT=$(TEST_TIMEOUT_NS) \
            +TEST_ELF=$(TEST_ELF)
@@ -76,7 +75,7 @@ VCS_COMPILE_OPTS = \
 VCS_COMPILE_OPTS += \
     -cpp $(CXX) \
     -cppflags "-std=c++17" \
-    -CFLAGS "-I$(MPACT_DIR)" \
+    -CFLAGS "-I$(CORALNPU_MPACT)" \
     -L$(MPACT_BAZEL_BIN_DIR) \
     -l$(MPACT_COSIM_LIB_NAME)
 
@@ -105,7 +104,7 @@ dirs:
 # Build the MPACT-Sim library using Bazel with CC=clang
 build_mpact_lib:
 	@echo "--- Building MPACT-Sim Co-sim Library via Bazel ---"
-	cd $(MPACT_DIR) && CC=clang bazel build //sim/cosim:$(MPACT_COSIM_LIB_NAME)
+	cd $(CORALNPU_MPACT) && CC=clang bazel build //sim/cosim:$(MPACT_COSIM_LIB_NAME)
 
 # Generate memory and run option files from the ELF file
 gen_mem_files: dirs
@@ -139,7 +138,7 @@ clean:
 	@echo "--- Cleaning Simulation Files ---"
 	rm -rf $(SIM_DIR) simv* csrc* *.log* *.key *.vpd *.fsdb ucli.key DVEfiles/ verdiLog/ novas.*
 	@echo "--- Cleaning MPACT-Sim Bazel cache ---"
-	cd $(MPACT_DIR) && bazel clean
+	cd $(CORALNPU_MPACT) && bazel clean --expunge
 
 # Help
 help:

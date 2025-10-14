@@ -1,6 +1,7 @@
 # CoralNPU UVM Testbench
 
-This document describes the structure and usage of the UVM testbench for verifying the `RvvCoreMiniVerificationAxi` DUT.
+This document describes the structure and usage of the UVM testbench for
+verifying the `RvvCoreMiniVerificationAxi` DUT.
 
 ## Overview
 
@@ -11,19 +12,25 @@ This testbench provides a basic UVM environment to:
 * Include a simple reactive AXI Slave model.
 * Load a binary file into the DUT's memory using backdoor access.
 * Kick off the DUT execution using initial AXI writes.
-* Check for basic test completion via DUT status signals (`halted`, `fault`) or a timeout.
+* Check for basic test completion via DUT status signals (`halted`, `fault`) or
+  a timeout.
 
 ## Prerequisites
 
 * **Synopsys VCS:** This testbench is configured to run with Synopsys VCS.
 * **UVM:** VCS needs to be configured with UVM 1.2 support enabled.
-* **CoralNPU Hardware Repository:** Access to the repository containing the `RvvCoreMiniVerificationAxi` source code is required to generate the DUT Verilog and the test binary.
-* **Bazel:** The build system used to generate the Verilog from the Chisel source in the CoralNPU HW repository.
-* **RISC-V Toolchain:** A RISC-V toolchain (specifically `llvm-objcopy-17` or similar) compatible with the CoralNPU project is needed to generate the `.bin` file.
+* **CoralNPU Hardware Repository:** Access to the repository containing the
+  `RvvCoreMiniVerificationAxi` source code is required to generate the DUT
+  Verilog and the test binary.
+* **Bazel:** The build system used to generate the Verilog from the Chisel
+  source in the CoralNPU HW repository.
+* **RISC-V Toolchain:** A RISC-V toolchain compatible with the CoralNPU
+  project is needed to generate the `.elf` file.
 
 ## Generating the DUT (RvvCoreMiniVerificationAxi.sv)
 
-The Verilog file for the DUT needs to be generated from the Chisel source code located in the CoralNPU hardware repository.
+The Verilog file for the DUT needs to be generated from the Chisel source code
+located in the CoralNPU hardware repository.
 
 1.  Navigate to the root directory of your CoralNPU HW repository clone:
     ```bash
@@ -35,31 +42,26 @@ The Verilog file for the DUT needs to be generated from the Chisel source code l
     ```
 3.  The Verilog file will be generated at:
     `bazel-bin/hdl/chisel/src/coralnpu/RvvCoreMiniVerificationAxi.sv`
-4.  Copy this generated `RvvCoreMiniVerificationAxi.sv` file to the `rtl/` directory within this testbench structure.
+4.  Copy this generated `RvvCoreMiniVerificationAxi.sv` file to the `rtl/`
+    directory within this testbench structure.
 
-## Generating the Test Binary (program.bin)
+## Generating the Test Binary (program.elf)
 
-The test program run by the DUT needs to be compiled and converted to a flat binary format.
+The test program run by the DUT needs to be compiled to an elf format.
 
 1.  Navigate to the CoralNPU HW repository root:
     ```bash
     cd /path/to/your/coralnpu/hw/repo
     ```
-2.  Navigate to the example test directory:
+2.  Run the Bazel build command to compile the test program:
     ```bash
-    cd tests/cocotb/tutorial
+    bazel build //tests/cocotb/tutorial:coralnpu_v2_program
     ```
-    *(Note: Adapt this path if using a different test program)*
-3.  Compile the test program (this typically generates `program.elf`):
-    ```bash
-    make
-    ```
-4.  Convert the ELF file to a binary file using `llvm-objcopy-17`, extracting only the `.text` section. **Note:** Ensure the path to `llvm-objcopy-17` is correct for your environment.
-    ```bash
-    llvm-objcopy-17 -O binary --only-section=.text -S program.elf program.bin
-    ```
-5.  The `program.bin` file is generated in the current directory (`tests/cocotb/tutorial`).
-6.  Copy this `program.bin` file to the `bin/` directory of this UVM testbench structure (or update the `TEST_BINARY` path in the `Makefile` or run command).
+3.  The `coralnpu_v2_program.elf` file is generated in the bazel output
+    directory.
+4.  Copy this `coralnpu_v2_program.elf` file to the `bin/` directory of this
+    UVM testbench structure (or update the `TEST_ELF` path in the `Makefile` or
+    run command).
 
 ## Directory Structure
 
@@ -67,7 +69,7 @@ The testbench follows a standard UVM directory structure:
 
 ```
 .
-├── common/                # Common components
+├── common/                  # Common components
 │   ├── coralnpu_axi_master/ # Files related to the TB acting as AXI Master
 │   │   ├── coralnpu_axi_master_if.sv
 │   │   └── coralnpu_axi_master_agent_pkg.sv
@@ -77,20 +79,20 @@ The testbench follows a standard UVM directory structure:
 │   ├── coralnpu_irq/        # Files related to the IRQ/Control interface
 │   │   ├── coralnpu_irq_if.sv
 │   │   └── coralnpu_irq_agent_pkg.sv
-│   └── transaction_item/  # Transaction item definitions
+│   └── transaction_item/    # Transaction item definitions
 │       └── transaction_item_pkg.sv
-├── env/                   # UVM Environment definition
+├── env/                     # UVM Environment definition
 │   └── coralnpu_env_pkg.sv
-├── rtl/                   # DUT RTL source file(s)
-│   └── RvvCoreMiniVerificationAxi.sv     # (Needs to be generated and copied here)
-├── tb/                    # Top-level testbench module
+├── rtl/                     # DUT RTL source file(s)
+│   └── RvvCoreMiniVerificationAxi.sv  # (Needs to be generated and copied)
+├── tb/                      # Top-level testbench module
 │   └── coralnpu_tb_top.sv
-├── tests/                 # UVM Tests and Sequences
+├── tests/                   # UVM Tests and Sequences
 │   └── coralnpu_test_pkg.sv
-├── Makefile               # Makefile for compilation and simulation
+├── Makefile                 # Makefile for compilation and simulation
 ├── coralnpu_dv.f            # File list for compilation
-└── bin/                   # Directory for test binaries
-    └── program.bin        # (Needs to be generated and copied here)
+└── bin/                     # Directory for test binaries
+    └── program.elf          # (Needs to be generated and copied here)
 ```
 
 ## Running the Testbench using the Makefile
@@ -100,7 +102,9 @@ The provided `Makefile` simplifies the compilation and simulation process.
 **1. Compilation:**
 
 * **Command:** `make compile`
-* **Action:** Creates necessary directories (`sim_work`, `logs`, `waves`), and compiles the DUT and testbench using VCS based on `coralnpu_dv.f`. Creates the `sim_work/simv` executable.
+* **Action:** Creates necessary directories (`sim_work`, `logs`, `waves`), and
+  compiles the DUT and testbench using VCS based on `coralnpu_dv.f`. Creates
+  the `sim_work/simv` executable.
 * **Expected Output:**
     ```
     --- Compiling with VCS ---
@@ -119,50 +123,60 @@ The provided `Makefile` simplifies the compilation and simulation process.
 
 * **Command (Default Test):** `make run`
     * Runs the default test (`coralnpu_base_test`) defined in the Makefile.
-    * Uses the default binary (`bin/program.bin`).
+    * Uses the default program (`bin/program.elf`).
     * Uses `UVM_MEDIUM` verbosity.
 * **Command (Specific Test & Binary):**
     ```bash
-    make run UVM_TESTNAME=<your_specific_test> TEST_BINARY=/path/to/another.bin UVM_VERBOSITY=UVM_HIGH
+    make run UVM_TESTNAME=<your_specific_test> \
+             TEST_ELF=/path/to/another.elf \
+             UVM_VERBOSITY=UVM_HIGH
     ```
     * Overrides the default test name, binary path, and verbosity level.
-* **Action:** Executes the compiled `simv` executable with the specified UVM runtime options.
+* **Action:** Executes the compiled `simv` executable with the specified UVM
+  runtime options.
 * **Expected Output:**
     ```
     --- Running Simulation ---
     Test:      coralnpu_base_test
-    Binary:    bin/program.bin
+    ELF File:  ./bin/program.elf
     Verbosity: UVM_MEDIUM
     Timeout:   20000 ns
-    Plusargs:  +UVM_TESTNAME=coralnpu_base_test +TEST_BINARY=bin/program.bin +UVM_VERBOSITY=UVM_MEDIUM +TEST_TIMEOUT=20000
-    Log File:  sim_work/logs/coralnpu_base_test.log
-    Wave File: sim_work/waves/coralnpu_base_test.fsdb
+    Plusargs:  +UVM_TESTNAME=coralnpu_base_test +UVM_VERBOSITY=UVM_MEDIUM \
+               +TEST_TIMEOUT=20000 +TEST_ELF=./bin/program.elf
+    Log File:  ./sim_work/logs/coralnpu_base_test.log
+    Wave File: ./sim_work/waves/coralnpu_base_test.fsdb
     Chronologic VCS simulator copyright 1991-202X
     Contains Synopsys proprietary information.
     Simulator version ... ; Runtime version ...
     UVM_INFO @ 0: reporter [RNTST] Running test coralnpu_base_test...
     ... (UVM simulation messages based on verbosity) ...
-    UVM_INFO tests/coralnpu_test_pkg.sv(LINE#) @ TIME: uvm_test_top.env.m_master_agent.sequencer@@req_pc [coralnpu_kickoff_write_seq] Kickoff Write 1 (PC=0x00000034) sent to addr 0x00030004
-    ...
-    UVM_INFO tests/coralnpu_test_pkg.sv(LINE#) @ TIME: uvm_test_top [coralnpu_base_test] DUT halted signal observed
-    UVM_INFO tests/coralnpu_test_pkg.sv(LINE#) @ TIME: uvm_test_top [coralnpu_base_test] Run phase finishing
+    UVM_INFO ./tests/coralnpu_test_pkg.sv(LINE#) @ TIME: uvm_test_top \
+        [coralnpu_base_test] Run phase finishing
+    UVM_INFO ./tests/coralnpu_test_pkg.sv(LINE#) @ TIME: uvm_test_top \
+        [coralnpu_base_test] Test ended on DUT halt.
     --- UVM Report Summary ---
     ...
-    UVM_INFO tests/coralnpu_test_pkg.sv(LINE#) @ TIME: uvm_test_top [coralnpu_base_test] ** UVM TEST PASSED **
+    UVM_INFO ./tests/coralnpu_test_pkg.sv(241) @ TIME: uvm_test_top \
+        [coralnpu_base_test] ** UVM TEST PASSED **
     --- Simulation Finished ---
     ```
-    * Look for the `** UVM TEST PASSED **` or `** UVM TEST FAILED **` message at the end of the simulation log (`sim_work/logs/<testname>.log`).
-    * If enabled, a waveform file (`sim_work/waves/<testname>.fsdb`) will be generated.
+    * Look for the `** UVM TEST PASSED **` or `** UVM TEST FAILED **` message
+      at the end of the simulation log (`sim_work/logs/<testname>.log`).
+    * If enabled, a waveform file (`sim_work/waves/<testname>.fsdb`) will be
+      generated.
 
 **3. Cleaning:**
 
 * **Command:** `make clean`
-* **Action:** Removes the `sim_work` directory and other simulation-generated files (`simv`, `csrc`, logs, waveforms, etc.). `coralnpu_dv.f` is *not* removed if it's checked in.
+* **Action:** Removes the `sim_work` directory and other simulation-generated
+  files (`simv`, `csrc`, logs, waveforms, etc.). `coralnpu_dv.f` is *not*
+  removed if it's checked in.
 * **Expected Output:**
     ```
     --- Cleaning Simulation Files ---
-    rm -rf sim_work simv* csrc* *.log* *.key *.vpd *.fsdb ucli.key DVEfiles/ verdiLog/ novas.*
+    rm -rf sim_work simv* csrc* *.log* *.key *.vpd *.fsdb ucli.key DVEfiles/ \
+           verdiLog/ novas.*
     ```
 
-This README should help you get started with compiling and running the basic test for the `RvvCoreMiniVerificationAxi` DUT. Remember to complete the remaining TODOs in the UVM code itself.
-
+This README should help you get started with compiling and running the basic
+test for the `RvvCoreMiniVerificationAxi` DUT.
