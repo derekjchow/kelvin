@@ -6,7 +6,8 @@ Coral NPU is a neural processing unit (NPU), also known as an AI accelerator or 
 
 Coral NPU includes three distinct processor components that work together: matrix, vector (SIMD), and scalar.
 
-![Coral NPU Archicture](doc/images/SimpleArchDiagram-v2.jpg)
+![Coral NPU Archicture](doc/images/arch_overview_alpha.png)
+[Coral NPU Architecture Datasheet](https://developers.google.com/coral/guides/hardware/datasheet)
 
 ## Coral NPU Features
 Coral NPU offers the following top-level feature set:
