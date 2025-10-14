@@ -710,9 +710,9 @@ class CoreMiniAxiInterface:
     data = []
     while bytes_to_read > 0:
       transaction_size = self._determine_transaction_size(addr, bytes_to_read)
-      if await self._axi_valid_memory_addr(addr, bytes_to_read):
-        for i in range(bytes_to_read):
-          data.append(self.memory[addr - self.memory_base_addr + i])
+      if await self._axi_valid_memory_addr(addr, transaction_size):
+        rel_addr = addr - self.memory_base_addr
+        data.append(self.memory[rel_addr : rel_addr + transaction_size])
       else:
         data.append(await self._read_transaction(addr, transaction_size, 0, axi_id, burst))
       bytes_to_read -= transaction_size
