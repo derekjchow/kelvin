@@ -123,9 +123,8 @@ extern "C" int _getpid(void) {
   return -1;
 }
 
-char* _heap_ptr;  // Set to __heap_start__ in coralnpu_start.S
-
 extern "C" void* _sbrk(int bytes) {
+  extern char* _heap_ptr;  // Set to __heap_start__ in coralnpu_start.S
   extern char __heap_end__;
   char* prev_heap_end;
   if ((bytes < 0) || (_heap_ptr + bytes > &__heap_end__)) {

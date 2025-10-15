@@ -105,7 +105,6 @@ SECTIONS {
 
     .heap : ALIGN(16) {
       __heap_start__ = .;
-      _heap_ptr = .;
       . += HEAP_SIZE;
       __heap_end__ = .;
       __heap_end = .;

@@ -65,10 +65,6 @@ _start:
         la   a1, __bss_end__
         call crt_section_clear
 
-        # Initialize the heap ptr after clearing BSS
-        la   s0, __heap_start__
-        sw   s0, _heap_ptr, s1
-
         # Initialize arrays
         la   s0, __init_array_start__
         la   s1, __init_array_end__
@@ -113,3 +109,9 @@ success:
         .word 0x08000073 # mpause
 loop:
         j    loop
+
+        # Heap ptr for sbrk use
+        .section .data
+.globl _heap_ptr
+_heap_ptr:
+        .word __heap_start__
