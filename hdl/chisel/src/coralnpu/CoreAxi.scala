@@ -141,7 +141,7 @@ class CoreAxi(p: Parameters, coreModuleName: String) extends RawModule {
     core.io.ibus.fault.bits.epc := core.io.ibus.addr
 
     // Build DTCM and connect to dbus
-    val dtcmSizeBytes = 32 * 1024 // 32 kB
+    val dtcmSizeBytes: Int = 1024 * (if (p.tcmHighmem) { 1024 } else { 32 }) // default 32 kB, highmem 1MB
     val dtcmWidth = p.axi2DataBits
     val dtcmEntries = dtcmSizeBytes / (dtcmWidth / 8)
     val dtcmSubEntryWidth = 8
