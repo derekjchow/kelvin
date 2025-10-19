@@ -155,6 +155,7 @@ package coralnpu_test_pkg;
       string test_elf;
       string timeout_str;
       int timeout_int;
+      int unsigned initial_misa_value;
       uvm_cmdline_processor clp = uvm_cmdline_processor::get_inst();
 
       super.build_phase(phase);
@@ -174,10 +175,24 @@ package coralnpu_test_pkg;
                       $sformatf("Invalid +TEST_TIMEOUT value: %s", timeout_str))
       end
 
+      begin
+        string misa_value_str;
+        if (clp.get_arg_value("+MISA_VALUE=", misa_value_str)) begin
+          if ($sscanf(misa_value_str, "'h%h", initial_misa_value) != 1) begin
+            `uvm_fatal(get_type_name(),
+              "Invalid +MISA_VALUE format. Use hex format (e.g., 'h40201120).")
+          end
+        end else begin
+          initial_misa_value = 32'h40201120;
+        end
+      end
+
       env = coralnpu_env::type_id::create("env", this);
 
       uvm_config_db#(string)::set(this, "*.m_cosim_checker",
                                   "elf_file_for_iss", test_elf);
+      uvm_config_db#(int unsigned)::set(this, "*.m_cosim_checker",
+                                        "initial_misa_value", initial_misa_value);
 
       // Get the event handle that was created and set by tb_top
       if (!uvm_config_db#(uvm_event)::get(this, "",

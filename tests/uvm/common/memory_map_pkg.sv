@@ -20,15 +20,14 @@ package memory_map_pkg;
 
   // Instruction Tightly Coupled Memory (ITCM)
   localparam logic [31:0] ITCM_START_ADDR = 32'h0000_0000;
-  localparam logic [31:0] ITCM_END_ADDR   = 32'h0000_1FFF;
+  localparam logic [31:0] ITCM_LENGTH     = 32'h0000_2000;
 
   // Data Tightly Coupled Memory (DTCM)
   localparam logic [31:0] DTCM_START_ADDR = 32'h0001_0000;
-  localparam logic [31:0] DTCM_END_ADDR   = 32'h0001_7FFF;
+  localparam logic [31:0] DTCM_LENGTH     = 32'h0000_8000;
 
   // Control and Status Registers (CSR)
   localparam logic [31:0] CSR_START_ADDR  = 32'h0003_0000;
-  // CSR end address is TBD, but we can define a range for the testbench
-  localparam logic [31:0] CSR_END_ADDR    = 32'h0003_FFFF;
+  localparam logic [31:0] CSR_LENGTH      = 32'h0001_0000;
 
 endpackage : memory_map_pkg

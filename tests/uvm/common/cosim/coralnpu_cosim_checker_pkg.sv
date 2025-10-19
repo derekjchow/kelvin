@@ -21,6 +21,7 @@ package coralnpu_cosim_checker_pkg;
   import uvm_pkg::*;
   `include "uvm_macros.svh"
   import coralnpu_cosim_dpi_if::*;
+  import memory_map_pkg::*;
 
   //----------------------------------------------------------------------------
   // Struct: retired_instr_info_s
@@ -52,6 +53,7 @@ package coralnpu_cosim_checker_pkg;
     // Event to wait on, which will be triggered by the RVVI monitor
     uvm_event instruction_retired_event;
     string test_elf;
+    int unsigned initial_misa_value;
 
     // Constructor
     function new(string name = "coralnpu_cosim_checker",
@@ -71,8 +73,15 @@ package coralnpu_cosim_checker_pkg;
       end
 
       // Get the ELF file path
-      if (!uvm_config_db#(string)::get(this, "", "elf_file_for_iss", test_elf)) begin
+      if (!uvm_config_db#(string)::get(this, "",
+          "elf_file_for_iss", test_elf)) begin
         `uvm_fatal(get_type_name(), "TEST_ELF file path not found!")
+      end
+
+      if (!uvm_config_db#(int unsigned)::get(this, "",
+          "initial_misa_value", initial_misa_value)) begin
+        `uvm_fatal(get_type_name(),
+          "'initial_misa_value' not found in config_db")
       end
 
       // Create the event that this component will wait on.
@@ -89,11 +98,38 @@ package coralnpu_cosim_checker_pkg;
       int unsigned num_retired_this_cycle;
       int unsigned mpact_pc;
       logic [31:0] rtl_instr;
+      sim_config_t dpi_cfg_s;
+      logic [31:0] itcm_start_address;
+      logic [31:0] itcm_length;
+      logic [31:0] dtcm_start_address;
+      logic [31:0] dtcm_length;
+
+      itcm_start_address = memory_map_pkg::ITCM_START_ADDR;
+      itcm_length = memory_map_pkg::ITCM_LENGTH;
+      dtcm_start_address = memory_map_pkg::DTCM_START_ADDR;
+      dtcm_length = memory_map_pkg::DTCM_LENGTH;
+
+      `uvm_info("DPI_CALL",
+        $sformatf({"Configuring MPACT with: MISA=0x%h, ITCM Start=0x%h, ",
+                   "ITCM Length=0x%h, DTCM Start=0x%h, DTCM Length=0x%h"},
+                  initial_misa_value, itcm_start_address,
+                  itcm_length, dtcm_start_address, dtcm_length),
+        UVM_MEDIUM)
+
+      dpi_cfg_s = {<<32{
+          itcm_start_address,
+          itcm_length,
+          initial_misa_value,
+          dtcm_start_address,
+          dtcm_length
+      }};
 
       if (mpact_init() != 0)
         `uvm_fatal(get_type_name(), "MPACT simulator DPI init failed.")
       if (mpact_load_program(test_elf) != 0)
         `uvm_fatal(get_type_name(), "MPACT simulator DPI init failed.")
+      if (mpact_config(dpi_cfg_s) != 0)
+        `uvm_fatal(get_type_name(), "MPACT simulator DPI config failed.")
 
       // Main co-simulation loop
       forever begin
@@ -122,7 +158,8 @@ package coralnpu_cosim_checker_pkg;
           int match_index = -1;
 
           if (mpact_get_register("pc", mpact_pc) != 0) begin
-            `uvm_error("COSIM_API_FAIL", "Failed to get PC from MPACT simulator.")
+            `uvm_error("COSIM_API_FAIL",
+              "Failed to get PC from MPACT simulator.")
           end
 
           foreach (retired_instr_q[j]) begin
@@ -179,7 +216,8 @@ package coralnpu_cosim_checker_pkg;
 
       if (!$onehot0(rtl_info.x_wb)) begin
         `uvm_error("COSIM_GPR_MISMATCH",
-          $sformatf("Invalid GPR writeback flag at PC 0x%h. x_wb is not one-hot: 0x%h",
+          $sformatf({"Invalid GPR writeback flag at PC 0x%h. ",
+                     "x_wb is not one-hot: 0x%h"},
                     rtl_info.pc, rtl_info.x_wb))
         return 0; // FAIL
       end
@@ -193,15 +231,19 @@ package coralnpu_cosim_checker_pkg;
         rd_index = $clog2(rtl_info.x_wb);
         reg_name = $sformatf("x%0d", rd_index);
         if (mpact_get_register(reg_name, mpact_gpr_val) != 0) begin
-          `uvm_error("COSIM_API_FAIL", $sformatf("Failed to get GPR '%s'", reg_name))
+          `uvm_error("COSIM_API_FAIL",
+            $sformatf("Failed to get GPR '%s'", reg_name));
+          return 0; // FAIL
         end
 
-        // Get the specific write data from the correct retire channel and register index
+        // Get the specific write data from the correct retire channel and
+        // register index
         rtl_wdata = rvvi_vif.x_wdata[0][rtl_info.retire_index][rd_index];
 
         if (mpact_gpr_val != rtl_wdata) begin
           `uvm_error("COSIM_GPR_MISMATCH",
-            $sformatf("GPR[x%0d] mismatch at PC 0x%h. RTL: 0x%h, MPACT: 0x%h",
+            $sformatf({"GPR[x%0d] mismatch at PC 0x%h. ",
+                       "RTL: 0x%h, MPACT: 0x%h"},
                       rd_index, rtl_info.pc,
                       rtl_wdata, mpact_gpr_val))
           return 0; // FAIL

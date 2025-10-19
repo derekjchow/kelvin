@@ -81,8 +81,8 @@ package coralnpu_axi_slave_agent_pkg;
                             vif.tb_slave_cb.awaddr, current_bid), UVM_HIGH)
 
         // Memory protection logic
-        if (vif.tb_slave_cb.awaddr >= ITCM_START_ADDR &&
-            vif.tb_slave_cb.awaddr <= ITCM_END_ADDR) begin
+        if (vif.tb_slave_cb.awaddr inside
+            {[ITCM_START_ADDR : (ITCM_START_ADDR + ITCM_LENGTH - 1)]}) begin
           resp = AXI_SLVERR;
           `uvm_info(get_type_name(),
                        $sformatf("Write to Read-Only ITCM region: 0x%h",
@@ -100,8 +100,8 @@ package coralnpu_axi_slave_agent_pkg;
 
         // Write to DTCM memory model
         if (resp == AXI_OKAY &&
-            vif.tb_slave_cb.awaddr >= DTCM_START_ADDR &&
-            vif.tb_slave_cb.awaddr <= DTCM_END_ADDR) begin
+            vif.tb_slave_cb.awaddr inside
+            {[DTCM_START_ADDR : (DTCM_START_ADDR + DTCM_LENGTH - 1)]}) begin
           for (int i = 0; i < (vif.DWIDTH / 8); i++) begin
             if (vif.tb_slave_cb.wstrb[i]) begin
               dtcm_mem[vif.tb_slave_cb.awaddr + i] =
@@ -152,8 +152,8 @@ package coralnpu_axi_slave_agent_pkg;
 
         // Read from DTCM memory model
         read_data = 'X;
-        if (vif.tb_slave_cb.araddr >= DTCM_START_ADDR &&
-            vif.tb_slave_cb.araddr <= DTCM_END_ADDR) begin
+        if (vif.tb_slave_cb.araddr inside
+            {[DTCM_START_ADDR : (DTCM_START_ADDR + DTCM_LENGTH - 1)]}) begin
           for (int i = 0; i < (vif.DWIDTH / 8); i++) begin
             if (dtcm_mem.exists(vif.tb_slave_cb.araddr + i)) begin
               read_data[i*8 +: 8] = dtcm_mem[vif.tb_slave_cb.araddr + i];
