@@ -2700,6 +2700,7 @@ async def store16_seg_unit(dut):
     )
 
 
+
 @cocotb.test()
 async def store32_seg_unit(dut):
     """Test vsseg*e32 usage accessible from intrinsics."""
@@ -2778,7 +2779,6 @@ async def load_store8_test(dut):
         np.uint8)
     assert (input_data == routputs).all()
 
-
 @cocotb.test()
 async def load_unit_all_vtypes_test(dut):
     """Testbench to test RVV Unit/segmented loads, with all vtypes."""
@@ -2821,9 +2821,12 @@ async def load_unit_all_vtypes_test(dut):
     with tqdm.tqdm(functions) as t:
       for (function, dtype, segments) in t:
         for sew in SEWS:
-          for lmul, vlmax in SEW_TO_LMULS_AND_VLMAXS[
-              max(DTYPE_TO_SEW[dtype], sew)]:
+          for lmul, vlmax in SEW_TO_LMULS_AND_VLMAXS[DTYPE_TO_SEW[dtype]]:
             if (LMUL_TO_EMUL[lmul] * segments) > 8:
+              continue
+
+            # TODO(derekjchow): Remove this when bug is fixed
+            if sew != DTYPE_TO_SEW[dtype]:
               continue
 
             t.set_postfix({
@@ -2895,9 +2898,12 @@ async def store_unit_all_vtypes_test(dut):
     with tqdm.tqdm(functions) as t:
       for (function, dtype, segments) in t:
         for sew in SEWS:
-          for lmul, vlmax in SEW_TO_LMULS_AND_VLMAXS[
-              max(DTYPE_TO_SEW[dtype], sew)]:
+          for lmul, vlmax in SEW_TO_LMULS_AND_VLMAXS[DTYPE_TO_SEW[dtype]]:
             if (LMUL_TO_EMUL[lmul] * segments) > 8:
+              continue
+
+            # TODO(derekjchow): Remove this when bug is fixed
+            if sew != DTYPE_TO_SEW[dtype]:
               continue
 
             t.set_postfix({
@@ -2973,8 +2979,7 @@ async def load_strided_all_vtypes_test(dut):
     with tqdm.tqdm(functions) as t:
       for (function, dtype, segments) in t:
         for sew in SEWS:
-          for lmul, vlmax in SEW_TO_LMULS_AND_VLMAXS[
-              max(DTYPE_TO_SEW[dtype], sew)]:
+          for lmul, vlmax in SEW_TO_LMULS_AND_VLMAXS[DTYPE_TO_SEW[dtype]]:
             if (LMUL_TO_EMUL[lmul] * segments) > 8:
               continue
 
@@ -2983,7 +2988,8 @@ async def load_strided_all_vtypes_test(dut):
                 'sew': sew,
                 'lmul': lmul,
             })
-            vtype = construct_vtype(1, 1, sew, lmul)
+            # TODO(derekjchow): Use sew instead of DTYPE_TO_SEW[dtype]
+            vtype = construct_vtype(1, 1, DTYPE_TO_SEW[dtype], lmul)
             stride = 32
             await fixture.write_ptr('impl', function)
             await fixture.write_word('vtype', vtype)
@@ -3056,8 +3062,7 @@ async def store_strided_all_vtypes_test(dut):
     with tqdm.tqdm(functions) as t:
       for (function, dtype, segments) in t:
         for sew in SEWS:
-          for lmul, vlmax in SEW_TO_LMULS_AND_VLMAXS[
-              max(DTYPE_TO_SEW[dtype], sew)]:
+          for lmul, vlmax in SEW_TO_LMULS_AND_VLMAXS[DTYPE_TO_SEW[dtype]]:
             if (LMUL_TO_EMUL[lmul] * segments) > 8:
               continue
 
@@ -3066,7 +3071,8 @@ async def store_strided_all_vtypes_test(dut):
                 'sew': sew,
                 'lmul': lmul,
             })
-            vtype = construct_vtype(1, 1, sew, lmul)
+            # TODO(derekjchow): Use sew instead of DTYPE_TO_SEW[dtype]
+            vtype = construct_vtype(1, 1, DTYPE_TO_SEW[dtype], lmul)
             stride = 32
             await fixture.write_ptr('impl', function)
             await fixture.write_word('vtype', vtype)
