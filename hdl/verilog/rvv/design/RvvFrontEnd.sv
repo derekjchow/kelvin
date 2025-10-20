@@ -157,7 +157,6 @@ module RvvFrontEnd#(parameter N = 4,
             default: avl[i] = reg_read_data_i[2*i];  // rs1 != x0
           endcase
 
-          avl[i] = reg_read_data_i[2*i];
           inst_config_state[i+1].lmul = RVVLMUL'(inst_q[i].bits[15:13]);
           inst_config_state[i+1].sew = RVVSEW'(inst_q[i].bits[18:16]);
           inst_config_state[i+1].ta = inst_q[i].bits[19];

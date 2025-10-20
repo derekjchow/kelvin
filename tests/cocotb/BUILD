@@ -184,6 +184,7 @@ RVV_ASSEMBLY_TESTCASES = [
     "core_mini_vmsif_test",
     "core_mini_vill_test",
     "core_mini_vl_test",
+    "vsetvl_test",
 ]
 # END_TESTCASES_FOR_rvv_assembly_cocotb_test
 
@@ -307,6 +308,7 @@ cocotb_test_suite(
         "test_module": ["rvv_assembly_cocotb_test.py"],
         "deps": [
             "//coralnpu_test_utils:core_mini_axi_sim_interface",
+            "//coralnpu_test_utils:rvv_type_util",
             "//coralnpu_test_utils:sim_test_fixture",
             requirement("tqdm"),
             "@bazel_tools//tools/python/runfiles",

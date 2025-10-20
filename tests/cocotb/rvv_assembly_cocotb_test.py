@@ -3,6 +3,7 @@ import itertools
 import numpy as np
 import tqdm
 from coralnpu_test_utils.core_mini_axi_interface import CoreMiniAxiInterface
+from coralnpu_test_utils.rvv_type_util import construct_vtype, DTYPE_TO_SEW, SEWS, SEW_TO_LMULS_AND_VLMAXS, LMUL_TO_EMUL
 from coralnpu_test_utils.sim_test_fixture import Fixture
 from bazel_tools.tools.python.runfiles import runfiles
 
@@ -244,8 +245,6 @@ async def core_mini_vcsr_test(dut):
                 assert (lmul == lmul_result)
 
 
-
-
 async def test_vstart_not_zero_failure(dut, binary):
     core_mini_axi = CoreMiniAxiInterface(dut)
     await core_mini_axi.init()
@@ -427,6 +426,7 @@ async def core_mini_vill_test(dut):
         await core_mini_axi.read_word(mcause_addr)).view(np.uint32)[0]
     assert (mcause_result == 0x2)
 
+
 @cocotb.test()
 async def core_mini_vl_test(dut):
     """Testbench to test vsetvl instruciton saturate vl correctly."""
@@ -491,3 +491,147 @@ async def core_mini_vl_test(dut):
         vl_result = (
             await core_mini_axi.read_word(result_vl_addr)).view(np.uint32)[0]
         assert(vl_result == (vlmax - 1))
+
+
+@cocotb.test()
+async def vsetvl_test(dut):
+    cases = [
+        {
+            'impl': 'vsetvl_max',
+            'vtype': construct_vtype(1, 1, sew, lmul),
+            'vlmax': vlmax,
+        }
+        for sew, t in SEW_TO_LMULS_AND_VLMAXS.items()
+        for lmul, vlmax in t
+    ] + [
+        {
+            'impl': 'vsetvl_keep',
+            'vtype': construct_vtype(1, 1, sew, lmul),
+            'avl': vlmax - 1,
+            'vlmax': vlmax,
+        }
+        for sew, t in SEW_TO_LMULS_AND_VLMAXS.items()
+        for lmul, vlmax in t
+    ] + [
+        # TODO(davidgao): lookup vlmax and generate impl names
+        {
+            'impl': 'vsetvli_max_e8mf4',
+            'vtype': construct_vtype(1, 1, sew=0b000, lmul=0b110),
+            'vlmax': 4,
+        },
+        {
+            'impl': 'vsetvli_max_e8mf2',
+            'vtype': construct_vtype(1, 1, sew=0b000, lmul=0b111),
+            'vlmax': 8,
+        },
+        {
+            'impl': 'vsetvli_max_e8m1',
+            'vtype': construct_vtype(1, 1, sew=0b000, lmul=0b000),
+            'vlmax': 16,
+        },
+        {
+            'impl': 'vsetvli_max_e8m2',
+            'vtype': construct_vtype(1, 1, sew=0b000, lmul=0b001),
+            'vlmax': 32,
+        },
+        {
+            'impl': 'vsetvli_max_e8m4',
+            'vtype': construct_vtype(1, 1, sew=0b000, lmul=0b010),
+            'vlmax': 64,
+        },
+        {
+            'impl': 'vsetvli_max_e8m8',
+            'vtype': construct_vtype(1, 1, sew=0b000, lmul=0b011),
+            'vlmax': 128,
+        },
+        {
+            'impl': 'vsetvli_max_e16mf2',
+            'vtype': construct_vtype(1, 1, sew=0b001, lmul=0b111),
+            'vlmax': 4,
+        },
+        {
+            'impl': 'vsetvli_max_e16m1',
+            'vtype': construct_vtype(1, 1, sew=0b001, lmul=0b000),
+            'vlmax': 8,
+        },
+        {
+            'impl': 'vsetvli_max_e16m2',
+            'vtype': construct_vtype(1, 1, sew=0b001, lmul=0b001),
+            'vlmax': 16,
+        },
+        {
+            'impl': 'vsetvli_max_e16m4',
+            'vtype': construct_vtype(1, 1, sew=0b001, lmul=0b010),
+            'vlmax': 32,
+        },
+        {
+            'impl': 'vsetvli_max_e16m8',
+            'vtype': construct_vtype(1, 1, sew=0b001, lmul=0b011),
+            'vlmax': 64,
+        },
+        {
+            'impl': 'vsetvli_max_e32m1',
+            'vtype': construct_vtype(1, 1, sew=0b010, lmul=0b000),
+            'vlmax': 4,
+        },
+        {
+            'impl': 'vsetvli_max_e32m2',
+            'vtype': construct_vtype(1, 1, sew=0b010, lmul=0b001),
+            'vlmax': 8,
+        },
+        {
+            'impl': 'vsetvli_max_e32m4',
+            'vtype': construct_vtype(1, 1, sew=0b010, lmul=0b010),
+            'vlmax': 16,
+        },
+        {
+            'impl': 'vsetvli_max_e32m8',
+            'vtype': construct_vtype(1, 1, sew=0b010, lmul=0b011),
+            'vlmax': 32,
+        },
+        # TODO(davidgao): do we wan to test all vtype pairs for this one?
+        {
+            'impl': 'vsetvli_keep',
+            'vtype': construct_vtype(1, 1, sew=0b000, lmul=0b000),
+            'avl': 15,
+            'vlmax': 16,
+        },
+    ]
+
+    fixture = await Fixture.Create(dut)
+    r = runfiles.Create()
+    await fixture.load_elf_and_lookup_symbols(
+        r.Rlocation('coralnpu_hw/tests/cocotb/rvv/vsetvl_test.elf'),
+        ['impl', 'vtype', 'avl', 'vl_out1', 'vl_out2', 'vtype_out'] +
+            list({c['impl'] for c in cases}),
+    )
+
+    with tqdm.tqdm(cases) as t:
+        for c in t:
+            impl = c['impl']
+            vtype = c['vtype']
+            vlmax = c['vlmax']
+
+            t.set_postfix({
+                'impl': impl,
+                'vtype': vtype,
+            })
+
+            await fixture.write_ptr('impl', impl)
+            await fixture.write_word('vtype', vtype)
+            if 'avl' in c:
+                avl = c['avl']
+                expected_vl = min(avl, vlmax)
+                await fixture.write_word('avl', avl)
+            else:
+                expected_vl = vlmax
+
+            await fixture.run_to_halt()
+
+            actual_vl1 = (await fixture.read_word('vl_out1')).view(np.uint32)
+            actual_vl2 = (await fixture.read_word('vl_out1')).view(np.uint32)
+            actual_vtype = (await fixture.read_word('vtype_out')).view(np.uint32)
+
+            assert(actual_vl1 == expected_vl)
+            assert(actual_vl2 == expected_vl)
+            assert(actual_vtype == vtype)

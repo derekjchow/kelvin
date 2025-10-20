@@ -26,20 +26,11 @@ template_rule(
         "rvv_load": {
             "srcs": ["rvv_load.S"],
         },
-        "vstart_store": {
-            "srcs": ["vstart_store.S"],
-        },
         "vcsr_test": {
             "srcs": ["vcsr_test.cc"],
         },
-        "vill_test": {
-            "srcs": ["vill_test.cc"],
-        },
-        "viota_test": {
-            "srcs": ["viota_test.cc"],
-        },
-        "vfirst_test": {
-            "srcs": ["vfirst_test.cc"],
+        "vcompress_test": {
+            "srcs": ["vcompress_test.cc"],
         },
         "vcpop_exception_test": {
             "srcs": ["vcpop_exception_test.cc"],
@@ -47,17 +38,29 @@ template_rule(
         "vcpop_test": {
             "srcs": ["vcpop_test.cc"],
         },
-        "vcompress_test": {
-            "srcs": ["vcompress_test.cc"],
+        "vfirst_test": {
+            "srcs": ["vfirst_test.cc"],
+        },
+        "vill_test": {
+            "srcs": ["vill_test.cc"],
+        },
+        "viota_test": {
+            "srcs": ["viota_test.cc"],
         },
         "vmsbf_test": {
             "srcs": ["vmsbf_test.cc"],
         },
+        "vmsif_test": {
+            "srcs": ["vmsif_test.cc"],
+        },
         "vmsof_test": {
             "srcs": ["vmsof_test.cc"],
         },
-        "vmsif_test": {
-            "srcs": ["vmsif_test.cc"],
+        "vsetvl_test": {
+            "srcs": ["vsetvl_test.cc"],
+        },
+        "vstart_store": {
+            "srcs": ["vstart_store.S"],
         },
     },
 )
@@ -67,16 +70,17 @@ filegroup(
     srcs = [
         "rvv_add.elf",
         "rvv_load.elf",
-        "vstart_store.elf",
-        "vcsr_test.elf",
-        "vill_test.elf",
-        "viota_test.elf",
-        "vfirst_test.elf",
+        "vcompress_test.elf",
         "vcpop_exception_test.elf",
         "vcpop_test.elf",
-        "vcompress_test.elf",
+        "vcsr_test.elf",
+        "vfirst_test.elf",
+        "vill_test.elf",
+        "viota_test.elf",
         "vmsbf_test.elf",
-        "vmsof_test.elf",
         "vmsif_test.elf",
+        "vmsof_test.elf",
+        "vsetvl_test.elf",
+        "vstart_store.elf",
     ],
 )
