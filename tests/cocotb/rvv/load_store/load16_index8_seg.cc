@@ -33,8 +33,6 @@ extern "C" {
 // Unordered, segment 2
 __attribute__((used, retain)) void vluxseg2ei8_v_u16mf2x2() {
   auto indices = __riscv_vle8_v_u8mf4(index_buf, vl);
-  // TODO(davidgao): Remove once compiler bug is eliminated
-  asm volatile("" ::: "vtype");
   auto data = __riscv_vluxseg2ei8_v_u16mf2x2(in_buf, indices, vl);
   __riscv_vse16_v_u16mf2(out_buf, __riscv_vget_v_u16mf2x2_u16mf2(data, 0), vl);
   __riscv_vse16_v_u16mf2(out_buf + vl, __riscv_vget_v_u16mf2x2_u16mf2(data, 1),
@@ -43,8 +41,6 @@ __attribute__((used, retain)) void vluxseg2ei8_v_u16mf2x2() {
 
 __attribute__((used, retain)) void vluxseg2ei8_v_u16m1x2() {
   auto indices = __riscv_vle8_v_u8mf2(index_buf, vl);
-  // TODO(davidgao): Remove once compiler bug is eliminated
-  asm volatile("" ::: "vtype");
   auto data = __riscv_vluxseg2ei8_v_u16m1x2(in_buf, indices, vl);
   __riscv_vse16_v_u16m1(out_buf, __riscv_vget_v_u16m1x2_u16m1(data, 0), vl);
   __riscv_vse16_v_u16m1(out_buf + vl, __riscv_vget_v_u16m1x2_u16m1(data, 1),
@@ -53,8 +49,6 @@ __attribute__((used, retain)) void vluxseg2ei8_v_u16m1x2() {
 
 __attribute__((used, retain)) void vluxseg2ei8_v_u16m2x2() {
   auto indices = __riscv_vle8_v_u8m1(index_buf, vl);
-  // TODO(davidgao): Remove once compiler bug is eliminated
-  asm volatile("" ::: "vtype");
   auto data = __riscv_vluxseg2ei8_v_u16m2x2(in_buf, indices, vl);
   __riscv_vse16_v_u16m2(out_buf, __riscv_vget_v_u16m2x2_u16m2(data, 0), vl);
   __riscv_vse16_v_u16m2(out_buf + vl, __riscv_vget_v_u16m2x2_u16m2(data, 1),
@@ -63,8 +57,6 @@ __attribute__((used, retain)) void vluxseg2ei8_v_u16m2x2() {
 
 __attribute__((used, retain)) void vluxseg2ei8_v_u16m4x2() {
   auto indices = __riscv_vle8_v_u8m2(index_buf, vl);
-  // TODO(davidgao): Remove once compiler bug is eliminated
-  asm volatile("" ::: "vtype");
   auto data = __riscv_vluxseg2ei8_v_u16m4x2(in_buf, indices, vl);
   __riscv_vse16_v_u16m4(out_buf, __riscv_vget_v_u16m4x2_u16m4(data, 0), vl);
   __riscv_vse16_v_u16m4(out_buf + vl, __riscv_vget_v_u16m4x2_u16m4(data, 1),
@@ -74,8 +66,6 @@ __attribute__((used, retain)) void vluxseg2ei8_v_u16m4x2() {
 // // Unordered, segment 3
 __attribute__((used, retain)) void vluxseg3ei8_v_u16mf2x3() {
   auto indices = __riscv_vle8_v_u8mf4(index_buf, vl);
-  // TODO(davidgao): Remove once compiler bug is eliminated
-  asm volatile("" ::: "vtype");
   auto data = __riscv_vluxseg3ei8_v_u16mf2x3(in_buf, indices, vl);
   __riscv_vse16_v_u16mf2(out_buf, __riscv_vget_v_u16mf2x3_u16mf2(data, 0), vl);
   __riscv_vse16_v_u16mf2(out_buf + vl, __riscv_vget_v_u16mf2x3_u16mf2(data, 1),
@@ -86,8 +76,6 @@ __attribute__((used, retain)) void vluxseg3ei8_v_u16mf2x3() {
 
 __attribute__((used, retain)) void vluxseg3ei8_v_u16m1x3() {
   auto indices = __riscv_vle8_v_u8mf2(index_buf, vl);
-  // TODO(davidgao): Remove once compiler bug is eliminated
-  asm volatile("" ::: "vtype");
   auto data = __riscv_vluxseg3ei8_v_u16m1x3(in_buf, indices, vl);
   __riscv_vse16_v_u16m1(out_buf, __riscv_vget_v_u16m1x3_u16m1(data, 0), vl);
   __riscv_vse16_v_u16m1(out_buf + vl, __riscv_vget_v_u16m1x3_u16m1(data, 1),
@@ -98,8 +86,6 @@ __attribute__((used, retain)) void vluxseg3ei8_v_u16m1x3() {
 
 __attribute__((used, retain)) void vluxseg3ei8_v_u16m2x3() {
   auto indices = __riscv_vle8_v_u8m1(index_buf, vl);
-  // TODO(davidgao): Remove once compiler bug is eliminated
-  asm volatile("" ::: "vtype");
   auto data = __riscv_vluxseg3ei8_v_u16m2x3(in_buf, indices, vl);
   __riscv_vse16_v_u16m2(out_buf, __riscv_vget_v_u16m2x3_u16m2(data, 0), vl);
   __riscv_vse16_v_u16m2(out_buf + vl, __riscv_vget_v_u16m2x3_u16m2(data, 1),
@@ -111,8 +97,6 @@ __attribute__((used, retain)) void vluxseg3ei8_v_u16m2x3() {
 // Unordered, segment 4
 __attribute__((used, retain)) void vluxseg4ei8_v_u16mf2x4() {
   auto indices = __riscv_vle8_v_u8mf4(index_buf, vl);
-  // TODO(davidgao): Remove once compiler bug is eliminated
-  asm volatile("" ::: "vtype");
   auto data = __riscv_vluxseg4ei8_v_u16mf2x4(in_buf, indices, vl);
   __riscv_vse16_v_u16mf2(out_buf, __riscv_vget_v_u16mf2x4_u16mf2(data, 0), vl);
   __riscv_vse16_v_u16mf2(out_buf + vl, __riscv_vget_v_u16mf2x4_u16mf2(data, 1),
@@ -125,8 +109,6 @@ __attribute__((used, retain)) void vluxseg4ei8_v_u16mf2x4() {
 
 __attribute__((used, retain)) void vluxseg4ei8_v_u16m1x4() {
   auto indices = __riscv_vle8_v_u8mf2(index_buf, vl);
-  // TODO(davidgao): Remove once compiler bug is eliminated
-  asm volatile("" ::: "vtype");
   auto data = __riscv_vluxseg4ei8_v_u16m1x4(in_buf, indices, vl);
   __riscv_vse16_v_u16m1(out_buf, __riscv_vget_v_u16m1x4_u16m1(data, 0), vl);
   __riscv_vse16_v_u16m1(out_buf + vl, __riscv_vget_v_u16m1x4_u16m1(data, 1),
@@ -139,8 +121,6 @@ __attribute__((used, retain)) void vluxseg4ei8_v_u16m1x4() {
 
 __attribute__((used, retain)) void vluxseg4ei8_v_u16m2x4() {
   auto indices = __riscv_vle8_v_u8m1(index_buf, vl);
-  // TODO(davidgao): Remove once compiler bug is eliminated
-  asm volatile("" ::: "vtype");
   auto data = __riscv_vluxseg4ei8_v_u16m2x4(in_buf, indices, vl);
   __riscv_vse16_v_u16m2(out_buf, __riscv_vget_v_u16m2x4_u16m2(data, 0), vl);
   __riscv_vse16_v_u16m2(out_buf + vl, __riscv_vget_v_u16m2x4_u16m2(data, 1),
@@ -154,8 +134,6 @@ __attribute__((used, retain)) void vluxseg4ei8_v_u16m2x4() {
 // Unordered, segment 5
 __attribute__((used, retain)) void vluxseg5ei8_v_u16mf2x5() {
   auto indices = __riscv_vle8_v_u8mf4(index_buf, vl);
-  // TODO(davidgao): Remove once compiler bug is eliminated
-  asm volatile("" ::: "vtype");
   auto data = __riscv_vluxseg5ei8_v_u16mf2x5(in_buf, indices, vl);
   __riscv_vse16_v_u16mf2(out_buf, __riscv_vget_v_u16mf2x5_u16mf2(data, 0), vl);
   __riscv_vse16_v_u16mf2(out_buf + vl, __riscv_vget_v_u16mf2x5_u16mf2(data, 1),
@@ -170,8 +148,6 @@ __attribute__((used, retain)) void vluxseg5ei8_v_u16mf2x5() {
 
 __attribute__((used, retain)) void vluxseg5ei8_v_u16m1x5() {
   auto indices = __riscv_vle8_v_u8mf2(index_buf, vl);
-  // TODO(davidgao): Remove once compiler bug is eliminated
-  asm volatile("" ::: "vtype");
   auto data = __riscv_vluxseg5ei8_v_u16m1x5(in_buf, indices, vl);
   __riscv_vse16_v_u16m1(out_buf, __riscv_vget_v_u16m1x5_u16m1(data, 0), vl);
   __riscv_vse16_v_u16m1(out_buf + vl, __riscv_vget_v_u16m1x5_u16m1(data, 1),
@@ -187,8 +163,6 @@ __attribute__((used, retain)) void vluxseg5ei8_v_u16m1x5() {
 // Unordered, segment 6
 __attribute__((used, retain)) void vluxseg6ei8_v_u16mf2x6() {
   auto indices = __riscv_vle8_v_u8mf4(index_buf, vl);
-  // TODO(davidgao): Remove once compiler bug is eliminated
-  asm volatile("" ::: "vtype");
   auto data = __riscv_vluxseg6ei8_v_u16mf2x6(in_buf, indices, vl);
   __riscv_vse16_v_u16mf2(out_buf, __riscv_vget_v_u16mf2x6_u16mf2(data, 0), vl);
   __riscv_vse16_v_u16mf2(out_buf + vl, __riscv_vget_v_u16mf2x6_u16mf2(data, 1),
@@ -205,8 +179,6 @@ __attribute__((used, retain)) void vluxseg6ei8_v_u16mf2x6() {
 
 __attribute__((used, retain)) void vluxseg6ei8_v_u16m1x6() {
   auto indices = __riscv_vle8_v_u8mf2(index_buf, vl);
-  // TODO(davidgao): Remove once compiler bug is eliminated
-  asm volatile("" ::: "vtype");
   auto data = __riscv_vluxseg6ei8_v_u16m1x6(in_buf, indices, vl);
   __riscv_vse16_v_u16m1(out_buf, __riscv_vget_v_u16m1x6_u16m1(data, 0), vl);
   __riscv_vse16_v_u16m1(out_buf + vl, __riscv_vget_v_u16m1x6_u16m1(data, 1),
@@ -224,8 +196,6 @@ __attribute__((used, retain)) void vluxseg6ei8_v_u16m1x6() {
 // Unordered, segment 7
 __attribute__((used, retain)) void vluxseg7ei8_v_u16mf2x7() {
   auto indices = __riscv_vle8_v_u8mf4(index_buf, vl);
-  // TODO(davidgao): Remove once compiler bug is eliminated
-  asm volatile("" ::: "vtype");
   auto data = __riscv_vluxseg7ei8_v_u16mf2x7(in_buf, indices, vl);
   __riscv_vse16_v_u16mf2(out_buf, __riscv_vget_v_u16mf2x7_u16mf2(data, 0), vl);
   __riscv_vse16_v_u16mf2(out_buf + vl, __riscv_vget_v_u16mf2x7_u16mf2(data, 1),
@@ -244,8 +214,6 @@ __attribute__((used, retain)) void vluxseg7ei8_v_u16mf2x7() {
 
 __attribute__((used, retain)) void vluxseg7ei8_v_u16m1x7() {
   auto indices = __riscv_vle8_v_u8mf2(index_buf, vl);
-  // TODO(davidgao): Remove once compiler bug is eliminated
-  asm volatile("" ::: "vtype");
   auto data = __riscv_vluxseg7ei8_v_u16m1x7(in_buf, indices, vl);
   __riscv_vse16_v_u16m1(out_buf, __riscv_vget_v_u16m1x7_u16m1(data, 0), vl);
   __riscv_vse16_v_u16m1(out_buf + vl, __riscv_vget_v_u16m1x7_u16m1(data, 1),
@@ -265,8 +233,6 @@ __attribute__((used, retain)) void vluxseg7ei8_v_u16m1x7() {
 // Unordered, segment 8
 __attribute__((used, retain)) void vluxseg8ei8_v_u16mf2x8() {
   auto indices = __riscv_vle8_v_u8mf4(index_buf, vl);
-  // TODO(davidgao): Remove once compiler bug is eliminated
-  asm volatile("" ::: "vtype");
   auto data = __riscv_vluxseg8ei8_v_u16mf2x8(in_buf, indices, vl);
   __riscv_vse16_v_u16mf2(out_buf, __riscv_vget_v_u16mf2x8_u16mf2(data, 0), vl);
   __riscv_vse16_v_u16mf2(out_buf + vl, __riscv_vget_v_u16mf2x8_u16mf2(data, 1),
@@ -287,8 +253,6 @@ __attribute__((used, retain)) void vluxseg8ei8_v_u16mf2x8() {
 
 __attribute__((used, retain)) void vluxseg8ei8_v_u16m1x8() {
   auto indices = __riscv_vle8_v_u8mf2(index_buf, vl);
-  // TODO(davidgao): Remove once compiler bug is eliminated
-  asm volatile("" ::: "vtype");
   auto data = __riscv_vluxseg8ei8_v_u16m1x8(in_buf, indices, vl);
   __riscv_vse16_v_u16m1(out_buf, __riscv_vget_v_u16m1x8_u16m1(data, 0), vl);
   __riscv_vse16_v_u16m1(out_buf + vl, __riscv_vget_v_u16m1x8_u16m1(data, 1),
@@ -310,8 +274,6 @@ __attribute__((used, retain)) void vluxseg8ei8_v_u16m1x8() {
 // Ordered, segment 2
 __attribute__((used, retain)) void vloxseg2ei8_v_u16mf2x2() {
   auto indices = __riscv_vle8_v_u8mf4(index_buf, vl);
-  // TODO(davidgao): Remove once compiler bug is eliminated
-  asm volatile("" ::: "vtype");
   auto data = __riscv_vloxseg2ei8_v_u16mf2x2(in_buf, indices, vl);
   __riscv_vse16_v_u16mf2(out_buf, __riscv_vget_v_u16mf2x2_u16mf2(data, 0), vl);
   __riscv_vse16_v_u16mf2(out_buf + vl, __riscv_vget_v_u16mf2x2_u16mf2(data, 1),
@@ -320,8 +282,6 @@ __attribute__((used, retain)) void vloxseg2ei8_v_u16mf2x2() {
 
 __attribute__((used, retain)) void vloxseg2ei8_v_u16m1x2() {
   auto indices = __riscv_vle8_v_u8mf2(index_buf, vl);
-  // TODO(davidgao): Remove once compiler bug is eliminated
-  asm volatile("" ::: "vtype");
   auto data = __riscv_vloxseg2ei8_v_u16m1x2(in_buf, indices, vl);
   __riscv_vse16_v_u16m1(out_buf, __riscv_vget_v_u16m1x2_u16m1(data, 0), vl);
   __riscv_vse16_v_u16m1(out_buf + vl, __riscv_vget_v_u16m1x2_u16m1(data, 1),
@@ -330,8 +290,6 @@ __attribute__((used, retain)) void vloxseg2ei8_v_u16m1x2() {
 
 __attribute__((used, retain)) void vloxseg2ei8_v_u16m2x2() {
   auto indices = __riscv_vle8_v_u8m1(index_buf, vl);
-  // TODO(davidgao): Remove once compiler bug is eliminated
-  asm volatile("" ::: "vtype");
   auto data = __riscv_vloxseg2ei8_v_u16m2x2(in_buf, indices, vl);
   __riscv_vse16_v_u16m2(out_buf, __riscv_vget_v_u16m2x2_u16m2(data, 0), vl);
   __riscv_vse16_v_u16m2(out_buf + vl, __riscv_vget_v_u16m2x2_u16m2(data, 1),
@@ -340,8 +298,6 @@ __attribute__((used, retain)) void vloxseg2ei8_v_u16m2x2() {
 
 __attribute__((used, retain)) void vloxseg2ei8_v_u16m4x2() {
   auto indices = __riscv_vle8_v_u8m2(index_buf, vl);
-  // TODO(davidgao): Remove once compiler bug is eliminated
-  asm volatile("" ::: "vtype");
   auto data = __riscv_vloxseg2ei8_v_u16m4x2(in_buf, indices, vl);
   __riscv_vse16_v_u16m4(out_buf, __riscv_vget_v_u16m4x2_u16m4(data, 0), vl);
   __riscv_vse16_v_u16m4(out_buf + vl, __riscv_vget_v_u16m4x2_u16m4(data, 1),
@@ -351,8 +307,6 @@ __attribute__((used, retain)) void vloxseg2ei8_v_u16m4x2() {
 // // Ordered, segment 3
 __attribute__((used, retain)) void vloxseg3ei8_v_u16mf2x3() {
   auto indices = __riscv_vle8_v_u8mf4(index_buf, vl);
-  // TODO(davidgao): Remove once compiler bug is eliminated
-  asm volatile("" ::: "vtype");
   auto data = __riscv_vloxseg3ei8_v_u16mf2x3(in_buf, indices, vl);
   __riscv_vse16_v_u16mf2(out_buf, __riscv_vget_v_u16mf2x3_u16mf2(data, 0), vl);
   __riscv_vse16_v_u16mf2(out_buf + vl, __riscv_vget_v_u16mf2x3_u16mf2(data, 1),
@@ -363,8 +317,6 @@ __attribute__((used, retain)) void vloxseg3ei8_v_u16mf2x3() {
 
 __attribute__((used, retain)) void vloxseg3ei8_v_u16m1x3() {
   auto indices = __riscv_vle8_v_u8mf2(index_buf, vl);
-  // TODO(davidgao): Remove once compiler bug is eliminated
-  asm volatile("" ::: "vtype");
   auto data = __riscv_vloxseg3ei8_v_u16m1x3(in_buf, indices, vl);
   __riscv_vse16_v_u16m1(out_buf, __riscv_vget_v_u16m1x3_u16m1(data, 0), vl);
   __riscv_vse16_v_u16m1(out_buf + vl, __riscv_vget_v_u16m1x3_u16m1(data, 1),
@@ -375,8 +327,6 @@ __attribute__((used, retain)) void vloxseg3ei8_v_u16m1x3() {
 
 __attribute__((used, retain)) void vloxseg3ei8_v_u16m2x3() {
   auto indices = __riscv_vle8_v_u8m1(index_buf, vl);
-  // TODO(davidgao): Remove once compiler bug is eliminated
-  asm volatile("" ::: "vtype");
   auto data = __riscv_vloxseg3ei8_v_u16m2x3(in_buf, indices, vl);
   __riscv_vse16_v_u16m2(out_buf, __riscv_vget_v_u16m2x3_u16m2(data, 0), vl);
   __riscv_vse16_v_u16m2(out_buf + vl, __riscv_vget_v_u16m2x3_u16m2(data, 1),
@@ -388,8 +338,6 @@ __attribute__((used, retain)) void vloxseg3ei8_v_u16m2x3() {
 // Ordered, segment 4
 __attribute__((used, retain)) void vloxseg4ei8_v_u16mf2x4() {
   auto indices = __riscv_vle8_v_u8mf4(index_buf, vl);
-  // TODO(davidgao): Remove once compiler bug is eliminated
-  asm volatile("" ::: "vtype");
   auto data = __riscv_vloxseg4ei8_v_u16mf2x4(in_buf, indices, vl);
   __riscv_vse16_v_u16mf2(out_buf, __riscv_vget_v_u16mf2x4_u16mf2(data, 0), vl);
   __riscv_vse16_v_u16mf2(out_buf + vl, __riscv_vget_v_u16mf2x4_u16mf2(data, 1),
@@ -402,8 +350,6 @@ __attribute__((used, retain)) void vloxseg4ei8_v_u16mf2x4() {
 
 __attribute__((used, retain)) void vloxseg4ei8_v_u16m1x4() {
   auto indices = __riscv_vle8_v_u8mf2(index_buf, vl);
-  // TODO(davidgao): Remove once compiler bug is eliminated
-  asm volatile("" ::: "vtype");
   auto data = __riscv_vloxseg4ei8_v_u16m1x4(in_buf, indices, vl);
   __riscv_vse16_v_u16m1(out_buf, __riscv_vget_v_u16m1x4_u16m1(data, 0), vl);
   __riscv_vse16_v_u16m1(out_buf + vl, __riscv_vget_v_u16m1x4_u16m1(data, 1),
@@ -416,8 +362,6 @@ __attribute__((used, retain)) void vloxseg4ei8_v_u16m1x4() {
 
 __attribute__((used, retain)) void vloxseg4ei8_v_u16m2x4() {
   auto indices = __riscv_vle8_v_u8m1(index_buf, vl);
-  // TODO(davidgao): Remove once compiler bug is eliminated
-  asm volatile("" ::: "vtype");
   auto data = __riscv_vloxseg4ei8_v_u16m2x4(in_buf, indices, vl);
   __riscv_vse16_v_u16m2(out_buf, __riscv_vget_v_u16m2x4_u16m2(data, 0), vl);
   __riscv_vse16_v_u16m2(out_buf + vl, __riscv_vget_v_u16m2x4_u16m2(data, 1),
@@ -431,8 +375,6 @@ __attribute__((used, retain)) void vloxseg4ei8_v_u16m2x4() {
 // Ordered, segment 5
 __attribute__((used, retain)) void vloxseg5ei8_v_u16mf2x5() {
   auto indices = __riscv_vle8_v_u8mf4(index_buf, vl);
-  // TODO(davidgao): Remove once compiler bug is eliminated
-  asm volatile("" ::: "vtype");
   auto data = __riscv_vloxseg5ei8_v_u16mf2x5(in_buf, indices, vl);
   __riscv_vse16_v_u16mf2(out_buf, __riscv_vget_v_u16mf2x5_u16mf2(data, 0), vl);
   __riscv_vse16_v_u16mf2(out_buf + vl, __riscv_vget_v_u16mf2x5_u16mf2(data, 1),
@@ -447,8 +389,6 @@ __attribute__((used, retain)) void vloxseg5ei8_v_u16mf2x5() {
 
 __attribute__((used, retain)) void vloxseg5ei8_v_u16m1x5() {
   auto indices = __riscv_vle8_v_u8mf2(index_buf, vl);
-  // TODO(davidgao): Remove once compiler bug is eliminated
-  asm volatile("" ::: "vtype");
   auto data = __riscv_vloxseg5ei8_v_u16m1x5(in_buf, indices, vl);
   __riscv_vse16_v_u16m1(out_buf, __riscv_vget_v_u16m1x5_u16m1(data, 0), vl);
   __riscv_vse16_v_u16m1(out_buf + vl, __riscv_vget_v_u16m1x5_u16m1(data, 1),
@@ -464,8 +404,6 @@ __attribute__((used, retain)) void vloxseg5ei8_v_u16m1x5() {
 // Ordered, segment 6
 __attribute__((used, retain)) void vloxseg6ei8_v_u16mf2x6() {
   auto indices = __riscv_vle8_v_u8mf4(index_buf, vl);
-  // TODO(davidgao): Remove once compiler bug is eliminated
-  asm volatile("" ::: "vtype");
   auto data = __riscv_vloxseg6ei8_v_u16mf2x6(in_buf, indices, vl);
   __riscv_vse16_v_u16mf2(out_buf, __riscv_vget_v_u16mf2x6_u16mf2(data, 0), vl);
   __riscv_vse16_v_u16mf2(out_buf + vl, __riscv_vget_v_u16mf2x6_u16mf2(data, 1),
@@ -482,8 +420,6 @@ __attribute__((used, retain)) void vloxseg6ei8_v_u16mf2x6() {
 
 __attribute__((used, retain)) void vloxseg6ei8_v_u16m1x6() {
   auto indices = __riscv_vle8_v_u8mf2(index_buf, vl);
-  // TODO(davidgao): Remove once compiler bug is eliminated
-  asm volatile("" ::: "vtype");
   auto data = __riscv_vloxseg6ei8_v_u16m1x6(in_buf, indices, vl);
   __riscv_vse16_v_u16m1(out_buf, __riscv_vget_v_u16m1x6_u16m1(data, 0), vl);
   __riscv_vse16_v_u16m1(out_buf + vl, __riscv_vget_v_u16m1x6_u16m1(data, 1),
@@ -501,8 +437,6 @@ __attribute__((used, retain)) void vloxseg6ei8_v_u16m1x6() {
 // Ordered, segment 7
 __attribute__((used, retain)) void vloxseg7ei8_v_u16mf2x7() {
   auto indices = __riscv_vle8_v_u8mf4(index_buf, vl);
-  // TODO(davidgao): Remove once compiler bug is eliminated
-  asm volatile("" ::: "vtype");
   auto data = __riscv_vloxseg7ei8_v_u16mf2x7(in_buf, indices, vl);
   __riscv_vse16_v_u16mf2(out_buf, __riscv_vget_v_u16mf2x7_u16mf2(data, 0), vl);
   __riscv_vse16_v_u16mf2(out_buf + vl, __riscv_vget_v_u16mf2x7_u16mf2(data, 1),
@@ -521,8 +455,6 @@ __attribute__((used, retain)) void vloxseg7ei8_v_u16mf2x7() {
 
 __attribute__((used, retain)) void vloxseg7ei8_v_u16m1x7() {
   auto indices = __riscv_vle8_v_u8mf2(index_buf, vl);
-  // TODO(davidgao): Remove once compiler bug is eliminated
-  asm volatile("" ::: "vtype");
   auto data = __riscv_vloxseg7ei8_v_u16m1x7(in_buf, indices, vl);
   __riscv_vse16_v_u16m1(out_buf, __riscv_vget_v_u16m1x7_u16m1(data, 0), vl);
   __riscv_vse16_v_u16m1(out_buf + vl, __riscv_vget_v_u16m1x7_u16m1(data, 1),
@@ -542,8 +474,6 @@ __attribute__((used, retain)) void vloxseg7ei8_v_u16m1x7() {
 // Ordered, segment 8
 __attribute__((used, retain)) void vloxseg8ei8_v_u16mf2x8() {
   auto indices = __riscv_vle8_v_u8mf4(index_buf, vl);
-  // TODO(davidgao): Remove once compiler bug is eliminated
-  asm volatile("" ::: "vtype");
   auto data = __riscv_vloxseg8ei8_v_u16mf2x8(in_buf, indices, vl);
   __riscv_vse16_v_u16mf2(out_buf, __riscv_vget_v_u16mf2x8_u16mf2(data, 0), vl);
   __riscv_vse16_v_u16mf2(out_buf + vl, __riscv_vget_v_u16mf2x8_u16mf2(data, 1),
@@ -564,8 +494,6 @@ __attribute__((used, retain)) void vloxseg8ei8_v_u16mf2x8() {
 
 __attribute__((used, retain)) void vloxseg8ei8_v_u16m1x8() {
   auto indices = __riscv_vle8_v_u8mf2(index_buf, vl);
-  // TODO(davidgao): Remove once compiler bug is eliminated
-  asm volatile("" ::: "vtype");
   auto data = __riscv_vloxseg8ei8_v_u16m1x8(in_buf, indices, vl);
   __riscv_vse16_v_u16m1(out_buf, __riscv_vget_v_u16m1x8_u16m1(data, 0), vl);
   __riscv_vse16_v_u16m1(out_buf + vl, __riscv_vget_v_u16m1x8_u16m1(data, 1),

@@ -2700,7 +2700,6 @@ async def store16_seg_unit(dut):
     )
 
 
-
 @cocotb.test()
 async def store32_seg_unit(dut):
     """Test vsseg*e32 usage accessible from intrinsics."""
@@ -2778,6 +2777,7 @@ async def load_store8_test(dut):
     routputs = (await fixture.core_mini_axi.read(target_out_addr, vl)).view(
         np.uint8)
     assert (input_data == routputs).all()
+
 
 @cocotb.test()
 async def load_unit_all_vtypes_test(dut):

@@ -33,32 +33,24 @@ extern "C" {
 // Unordered
 __attribute__((used, retain)) void vluxei32_v_u8mf4() {
   auto indices = __riscv_vle32_v_u32m1(index_buf, vl);
-  // TODO(davidgao): Remove once compiler bug is eliminated
-  asm volatile("" ::: "vtype");
   auto data = __riscv_vluxei32_v_u8mf4(in_buf, indices, vl);
   __riscv_vse8_v_u8mf4(out_buf, data, vl);
 }
 
 __attribute__((used, retain)) void vluxei32_v_u8mf2() {
   auto indices = __riscv_vle32_v_u32m2(index_buf, vl);
-  // TODO(davidgao): Remove once compiler bug is eliminated
-  asm volatile("" ::: "vtype");
   auto data = __riscv_vluxei32_v_u8mf2(in_buf, indices, vl);
   __riscv_vse8_v_u8mf2(out_buf, data, vl);
 }
 
 __attribute__((used, retain)) void vluxei32_v_u8m1() {
   auto indices = __riscv_vle32_v_u32m4(index_buf, vl);
-  // TODO(davidgao): Remove once compiler bug is eliminated
-  asm volatile("" ::: "vtype");
   auto data = __riscv_vluxei32_v_u8m1(in_buf, indices, vl);
   __riscv_vse8_v_u8m1(out_buf, data, vl);
 }
 
 __attribute__((used, retain)) void vluxei32_v_u8m2() {
   auto indices = __riscv_vle32_v_u32m8(index_buf, vl);
-  // TODO(davidgao): Remove once compiler bug is eliminated
-  asm volatile("" ::: "vtype");
   auto data = __riscv_vluxei32_v_u8m2(in_buf, indices, vl);
   __riscv_vse8_v_u8m2(out_buf, data, vl);
 }
@@ -66,32 +58,24 @@ __attribute__((used, retain)) void vluxei32_v_u8m2() {
 // Ordered
 __attribute__((used, retain)) void vloxei32_v_u8mf4() {
   auto indices = __riscv_vle32_v_u32m1(index_buf, vl);
-  // TODO(davidgao): Remove once compiler bug is eliminated
-  asm volatile("" ::: "vtype");
   auto data = __riscv_vloxei32_v_u8mf4(in_buf, indices, vl);
   __riscv_vse8_v_u8mf4(out_buf, data, vl);
 }
 
 __attribute__((used, retain)) void vloxei32_v_u8mf2() {
   auto indices = __riscv_vle32_v_u32m2(index_buf, vl);
-  // TODO(davidgao): Remove once compiler bug is eliminated
-  asm volatile("" ::: "vtype");
   auto data = __riscv_vloxei32_v_u8mf2(in_buf, indices, vl);
   __riscv_vse8_v_u8mf2(out_buf, data, vl);
 }
 
 __attribute__((used, retain)) void vloxei32_v_u8m1() {
   auto indices = __riscv_vle32_v_u32m4(index_buf, vl);
-  // TODO(davidgao): Remove once compiler bug is eliminated
-  asm volatile("" ::: "vtype");
   auto data = __riscv_vloxei32_v_u8m1(in_buf, indices, vl);
   __riscv_vse8_v_u8m1(out_buf, data, vl);
 }
 
 __attribute__((used, retain)) void vloxei32_v_u8m2() {
   auto indices = __riscv_vle32_v_u32m8(index_buf, vl);
-  // TODO(davidgao): Remove once compiler bug is eliminated
-  asm volatile("" ::: "vtype");
   auto data = __riscv_vloxei32_v_u8m2(in_buf, indices, vl);
   __riscv_vse8_v_u8m2(out_buf, data, vl);
 }
