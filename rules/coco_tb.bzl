@@ -27,6 +27,13 @@ def _verilator_cocotb_model_impl(ctx):
     hdl_toplevel = ctx.attr.hdl_toplevel
     outdir_name = hdl_toplevel + "_build"
 
+    vlt_file = ctx.actions.declare_file(hdl_toplevel + ".vlt")
+    ctx.actions.expand_template(
+        output = vlt_file,
+        template = ctx.file.vlt_tpl,
+        substitutions = {"{HDL_TOPLEVEL}": hdl_toplevel},
+    )
+
     output_file = ctx.actions.declare_file(outdir_name + "/" + hdl_toplevel)
     make_log = ctx.actions.declare_file(outdir_name + "/make.log")
     outdir = output_file.dirname
@@ -40,13 +47,13 @@ def _verilator_cocotb_model_impl(ctx):
             -Mdir {outdir} \
             --top-module {hdl_toplevel} \
             --vpi \
-            --public-flat-rw \
             --prefix Vtop \
             -o {hdl_toplevel} \
             -LDFLAGS "-Wl,-rpath {cocotb_lib_path} -L{cocotb_lib_path} -lcocotbvpi_verilator" \
             {trace} \
             {cflags} \
             $PWD/{verilator_cpp} \
+            {vlt_file} \
             {verilog_source}
     """.strip().split("\n")).format(
         verilator = ctx.executable._verilator_bin.path,
@@ -56,6 +63,7 @@ def _verilator_cocotb_model_impl(ctx):
         cocotb_lib_path = cocotb_lib_path,
         cflags = " ".join(ctx.attr.cflags),
         verilator_cpp = ctx.files._cocotb_verilator_cpp[0].path,
+        vlt_file = vlt_file.path,
         verilog_source = ctx.file.verilog_source.path,
         trace = "--trace" if ctx.attr.trace else "",
     )
@@ -81,6 +89,7 @@ def _verilator_cocotb_model_impl(ctx):
                 depset(ctx.files._cocotb_verilator_lib),
                 depset(ctx.files._cocotb_verilator_cpp),
                 depset([ctx.file.verilog_source]),
+                depset([vlt_file]),
             ],
         ),
         command = script,
@@ -118,6 +127,10 @@ verilator_cocotb_model = rule(
         "hdl_toplevel": attr.string(mandatory = True),
         "cflags": attr.string_list(default = []),
         "trace": attr.bool(default = False),
+        "vlt_tpl": attr.label(
+            default = "@coralnpu_hw//rules:default.vlt.tpl",
+            allow_single_file = True,
+        ),
         "_verilator": attr.label(
             default = "@verilator//:verilator",
             executable = True,

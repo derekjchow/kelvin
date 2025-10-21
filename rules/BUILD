@@ -14,4 +14,7 @@
 
 package(default_visibility = ["//visibility:public"])
 
-exports_files(["chisel_test_runner.sh"])
+exports_files([
+    "chisel_test_runner.sh",
+    "default.vlt.tpl",
+])

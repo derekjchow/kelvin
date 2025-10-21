@@ -817,19 +817,15 @@ class CoreMiniAxiInterface:
   async def wait_for_halted_semihost(self, elf, timeout_cycles=1000000):
     tohost = self.lookup_symbol(elf, "tohost")
     assert tohost != None
-    if cocotb.SIM_NAME == "Verilator":
-      rv = await self.watch(tohost, timeout_cycles=timeout_cycles)
-      assert np.sum(np.frombuffer(rv[12:16], dtype=np.uint8)) == 1
-    else:
-      initial_rv = await self.read_word(tohost)
-      while True:
-        await ClockCycles(self.dut.io_aclk, 1)
-        rv = await self.read_word(tohost)
-        if not (rv == initial_rv).all():
-          assert np.sum(rv) == 1
-          break
-        timeout_cycles = timeout_cycles - 1
-        assert timeout_cycles > 0
+    initial_rv = await self.read_word(tohost)
+    while True:
+      await ClockCycles(self.dut.io_aclk, 1)
+      rv = await self.read_word(tohost)
+      if not (rv == initial_rv).all():
+        assert np.sum(rv) == 1
+        break
+      timeout_cycles = timeout_cycles - 1
+      assert timeout_cycles > 0
 
   async def wait_for_fault(self, timeout_cycles=1000):
     cycle_count = 0
@@ -839,19 +835,3 @@ class CoreMiniAxiInterface:
       cycle_count += 1
     assert timeout_cycles > 0
     return cycle_count
-
-  async def watch(self, addr, timeout_cycles=1_000_000):
-    elem_addr = addr % 16
-    line_addr = addr - elem_addr
-    expected_wmask = 0xF << elem_addr
-    while timeout_cycles > 0:
-      if self.dut.core.io_dbus_valid.value == 1:
-        if self.dut.core.io_dbus_addr.value == line_addr:
-          if self.dut.core.io_dbus_write.value == 1:
-            wmask = int(self.dut.core.io_dbus_wmask.value)
-            if (expected_wmask & wmask) == expected_wmask:
-              return self.dut.core.io_dbus_wdata.value.buff
-
-      await ClockCycles(self.dut.io_aclk, 1)
-      timeout_cycles = timeout_cycles - 1
-    assert timeout_cycles > 0
