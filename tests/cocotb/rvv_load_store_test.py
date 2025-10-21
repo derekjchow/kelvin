@@ -2821,12 +2821,14 @@ async def load_unit_all_vtypes_test(dut):
     with tqdm.tqdm(functions) as t:
       for (function, dtype, segments) in t:
         for sew in SEWS:
-          for lmul, vlmax in SEW_TO_LMULS_AND_VLMAXS[DTYPE_TO_SEW[dtype]]:
-            if (LMUL_TO_EMUL[lmul] * segments) > 8:
-              continue
-
-            # TODO(derekjchow): Remove this when bug is fixed
-            if sew != DTYPE_TO_SEW[dtype]:
+          for lmul, vlmax in SEW_TO_LMULS_AND_VLMAXS[sew]:
+            eew = DTYPE_TO_SEW[dtype]  # eew in sew encoding
+            emul_data = (lmul + 8 + eew - sew) % 8
+            # emul_data's lower limit is controlled with lmul.
+            if (emul_data in [0b100, 0b101]):
+                continue
+            # The fictional operand is not going through segments
+            if (LMUL_TO_EMUL[emul_data] * segments) > 8:
               continue
 
             t.set_postfix({
@@ -2848,7 +2850,7 @@ async def load_unit_all_vtypes_test(dut):
 
             store_data = (await fixture.read('store_data', 256))
 
-            regsize = vlenb * LMUL_TO_EMUL[lmul]
+            regsize = vlenb * LMUL_TO_EMUL[emul_data]
             for segment in range(segments):
               segment_reg = store_data[segment*regsize:(segment+1)*regsize]
               store_result = segment_reg.view(dtype)[0:vlmax]
@@ -2898,12 +2900,14 @@ async def store_unit_all_vtypes_test(dut):
     with tqdm.tqdm(functions) as t:
       for (function, dtype, segments) in t:
         for sew in SEWS:
-          for lmul, vlmax in SEW_TO_LMULS_AND_VLMAXS[DTYPE_TO_SEW[dtype]]:
-            if (LMUL_TO_EMUL[lmul] * segments) > 8:
-              continue
-
-            # TODO(derekjchow): Remove this when bug is fixed
-            if sew != DTYPE_TO_SEW[dtype]:
+          for lmul, vlmax in SEW_TO_LMULS_AND_VLMAXS[sew]:
+            eew = DTYPE_TO_SEW[dtype]  # eew in sew encoding
+            emul_data = (lmul + 8 + eew - sew) % 8
+            # emul_data's lower limit is controlled with lmul.
+            if (emul_data in [0b100, 0b101]):
+                continue
+            # The fictional operand is not going through segments
+            if (LMUL_TO_EMUL[emul_data] * segments) > 8:
               continue
 
             t.set_postfix({
@@ -2929,7 +2933,7 @@ async def store_unit_all_vtypes_test(dut):
                 segments * vlmax * np.dtype(dtype).itemsize)).view(dtype)
 
             # Load and transpose stored segments
-            regsize = vlenb * LMUL_TO_EMUL[lmul] // np.dtype(dtype).itemsize
+            regsize = vlenb * LMUL_TO_EMUL[emul_data] // np.dtype(dtype).itemsize
             segment_regs = [
                 load_data[x*regsize:(x*regsize)+vlmax] for x in range(segments)
             ]
@@ -2979,8 +2983,14 @@ async def load_strided_all_vtypes_test(dut):
     with tqdm.tqdm(functions) as t:
       for (function, dtype, segments) in t:
         for sew in SEWS:
-          for lmul, vlmax in SEW_TO_LMULS_AND_VLMAXS[DTYPE_TO_SEW[dtype]]:
-            if (LMUL_TO_EMUL[lmul] * segments) > 8:
+          for lmul, vlmax in SEW_TO_LMULS_AND_VLMAXS[sew]:
+            eew = DTYPE_TO_SEW[dtype]  # eew in sew encoding
+            emul_data = (lmul + 8 + eew - sew) % 8
+            # emul_data's lower limit is controlled with lmul.
+            if (emul_data in [0b100, 0b101]):
+                continue
+            # The fictional operand is not going through segments
+            if (LMUL_TO_EMUL[emul_data] * segments) > 8:
               continue
 
             t.set_postfix({
@@ -2988,8 +2998,7 @@ async def load_strided_all_vtypes_test(dut):
                 'sew': sew,
                 'lmul': lmul,
             })
-            # TODO(derekjchow): Use sew instead of DTYPE_TO_SEW[dtype]
-            vtype = construct_vtype(1, 1, DTYPE_TO_SEW[dtype], lmul)
+            vtype = construct_vtype(1, 1, sew, lmul)
             stride = 32
             await fixture.write_ptr('impl', function)
             await fixture.write_word('vtype', vtype)
@@ -3012,7 +3021,7 @@ async def load_strided_all_vtypes_test(dut):
 
             store_data = (await fixture.read('store_data', 256))
 
-            regsize = vlenb * LMUL_TO_EMUL[lmul]
+            regsize = vlenb * LMUL_TO_EMUL[emul_data]
             for segment in range(segments):
               segment_reg = store_data[segment*regsize:(segment+1)*regsize]
               store_result = segment_reg.view(dtype)[0:vlmax]
@@ -3062,8 +3071,14 @@ async def store_strided_all_vtypes_test(dut):
     with tqdm.tqdm(functions) as t:
       for (function, dtype, segments) in t:
         for sew in SEWS:
-          for lmul, vlmax in SEW_TO_LMULS_AND_VLMAXS[DTYPE_TO_SEW[dtype]]:
-            if (LMUL_TO_EMUL[lmul] * segments) > 8:
+          for lmul, vlmax in SEW_TO_LMULS_AND_VLMAXS[sew]:
+            eew = DTYPE_TO_SEW[dtype]  # eew in sew encoding
+            emul_data = (lmul + 8 + eew - sew) % 8
+            # emul_data's lower limit is controlled with lmul.
+            if (emul_data in [0b100, 0b101]):
+                continue
+            # The fictional operand is not going through segments
+            if (LMUL_TO_EMUL[emul_data] * segments) > 8:
               continue
 
             t.set_postfix({
@@ -3071,8 +3086,7 @@ async def store_strided_all_vtypes_test(dut):
                 'sew': sew,
                 'lmul': lmul,
             })
-            # TODO(derekjchow): Use sew instead of DTYPE_TO_SEW[dtype]
-            vtype = construct_vtype(1, 1, DTYPE_TO_SEW[dtype], lmul)
+            vtype = construct_vtype(1, 1, sew, lmul)
             stride = 32
             await fixture.write_ptr('impl', function)
             await fixture.write_word('vtype', vtype)
@@ -3086,7 +3100,7 @@ async def store_strided_all_vtypes_test(dut):
 
             await fixture.run_to_halt()
 
-            regstride = vlenb * LMUL_TO_EMUL[lmul]
+            regstride = vlenb * LMUL_TO_EMUL[emul_data]
             regsize = vlmax * np.dtype(dtype).itemsize
             regs = [
                 load_data[(i*regstride):(i*regstride)+regsize].view(dtype)

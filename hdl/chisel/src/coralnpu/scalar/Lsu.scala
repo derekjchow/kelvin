@@ -170,7 +170,6 @@ class LsuCmd(p: Parameters) extends Bundle {
     } else {
       false.B
     }
-
   }
 
   override def toPrintable: Printable = {
@@ -192,7 +191,8 @@ class LsuUOp(p: Parameters) extends Bundle {
   // This is the sew from vtype. It controls data width in indexed
   // loads/stores and is unused in other ops.
   val sew = Option.when(p.enableRvv) { UInt(3.W) }
-  val lmul = Option.when(p.enableRvv) { UInt(3.W) }
+  // How many data registers (per segment if applicable) to operate on.
+  val emul_data = Option.when(p.enableRvv) { UInt(3.W) }
   val nfields = Option.when(p.enableRvv) { UInt(3.W) }
 
   override def toPrintable: Printable = {
@@ -222,12 +222,28 @@ object LsuUOp {
       result.data := sbus.data(i)
     }
     if (p.enableRvv) {
-      result.elemWidth.get := cmd.elemWidth.get
-      // If mask operation, always make LMUL=1.
-      result.lmul.get := Mux(cmd.isMaskOperation(), 0.U, rvvState.get.bits.lmul)
-      result.lmul.get := MuxCase(rvvState.get.bits.lmul, Seq(
+      val eew = cmd.elemWidth.get  // From instruction encoding
+      val sew = rvvState.get.bits.sew  // From vtype
+      val lmul = rvvState.get.bits.lmul
+      // TODO(davidgao): Add checks for illegal LMUL values in the frontend.
+      // Unit-stride, const-stride. Default value applies when eew == sew.
+      val emul_data = MuxCase(lmul, Seq(
+          // eew == 1/4 sew
+          (eew === "b000".U && sew === "b010".U) -> (lmul - 2.U),
+          // eew == 1/2 sew
+          ((eew === "b000".U && sew === "b001".U) ||
+           (eew === "b101".U && sew === "b010".U)) -> (lmul - 1.U),
+          // eew == 2 sew
+          ((eew === "b101".U && sew === "b000".U) ||
+           (eew === "b110".U && sew === "b001".U)) -> (lmul + 1.U),
+          // eew == 4 sew
+          (eew === "b110".U && sew === "b000".U) -> (lmul + 2.U),
+      ))
+      result.elemWidth.get := eew
+      result.emul_data.get := MuxCase(lmul, Seq(
+          // If mask operation, always make LMUL=1.
           cmd.isMaskOperation() -> 0.U,
-          // Section 7.9 of RVV Spec: "The nf field encoders how many vector
+          // Section 7.9 of RVV Spec: "The nf field encodes how many vector
           // registers to load and store".
           cmd.isWholeRegister() -> MuxCase(0.U, Seq(
               (cmd.nfields.get === 0.U) -> 0.U,  // NF1 -> LMUL1
@@ -235,6 +251,8 @@ object LsuUOp {
               (cmd.nfields.get === 3.U) -> 2.U,  // NF4 -> LMUL4
               (cmd.nfields.get === 7.U) -> 3.U,  // NF8 -> LMUL8
           )),
+          LsuOp.isNonindexedVector(cmd.op) -> emul_data,
+          // default: indexed vector and scalar
       ))
 
       // If mask operation, force fields to zero
@@ -619,9 +637,9 @@ object LsuSlot {
     result.store := uop.store
     result.pc := uop.pc
     if (p.enableRvv) {
-      val effectiveLmul = MuxCase(uop.lmul.getOrElse(0.U)(1, 0), Seq(
-        // Treat fractional LMULs as LMUL=1
-        (uop.lmul.getOrElse(0.U)(2)) -> 0.U(2.W),
+      val effectiveLmul = MuxCase(uop.emul_data.getOrElse(0.U)(1, 0), Seq(
+        // Treat fractional EMULs as EMUL=1
+        (uop.emul_data.getOrElse(0.U)(2)) -> 0.U(2.W),
       ))
 
       val nfields = Mux(LsuOp.isVector(uop.op), uop.nfields.get, 0.U)
@@ -638,9 +656,9 @@ object LsuSlot {
         ((elemWidth === "b110".U) && (uop.sew.get === 1.U)) -> 2.U,
       ))
       val max_subvector = MuxCase(0.U, Seq(
-        ((elemMultiplier === 2.U) && (uop.lmul.get.asSInt >= 0.S)) -> 1.U,
-        ((elemMultiplier === 4.U) && (uop.lmul.get.asSInt >= 0.S)) -> 3.U,
-        ((elemMultiplier === 4.U) && (uop.lmul.get.asSInt === -1.S)) -> 1.U,
+        ((elemMultiplier === 2.U) && (uop.emul_data.get.asSInt >= 0.S)) -> 1.U,
+        ((elemMultiplier === 4.U) && (uop.emul_data.get.asSInt >= 0.S)) -> 3.U,
+        ((elemMultiplier === 4.U) && (uop.emul_data.get.asSInt === -1.S)) -> 1.U,
       ))
       // [0..x] data vecs we can operate on with one index vec
       val indexParitions = MuxCase(0.U, Seq(
