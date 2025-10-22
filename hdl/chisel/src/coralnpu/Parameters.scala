@@ -154,7 +154,7 @@ class Parameters(var m: Seq[MemoryRegion] = Seq(), val hartId: Int = 0) {
   val itcmMemoryFile = ""
 
   val csrInCount = 13
-  val csrOutCount = 8
+  val csrOutCount = 9
 }
 
 import scala.reflect.runtime.{universe => ru}

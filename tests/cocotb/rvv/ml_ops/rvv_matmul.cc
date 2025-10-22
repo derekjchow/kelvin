@@ -5,6 +5,10 @@ constexpr size_t kLhsRows = 16;
 constexpr size_t kRhsCols = 16;
 constexpr size_t kInner = 48;
 
+// mcontext0 val used in test for power period extraction
+// mcontext0 is io_coralnpu_csr_value_8 in waveform
+uint32_t mcontext0_write_value;
+
 int8_t lhs_input[kLhsRows * kInner] __attribute__((section(".data")))
 __attribute__((aligned(16)));
 int8_t rhs_input[kInner * kRhsCols] __attribute__((section(".data")))
@@ -46,6 +50,10 @@ void MatMul(size_t lhs_rows, size_t inner, size_t rhs_cols, const int8_t* lhs,
 }
 
 int main() {
+  mcontext0_write_value = 0x01;
+  asm volatile("csrw 0x7C0, %0" : : "r"(mcontext0_write_value));
   MatMul(kLhsRows, kInner, kRhsCols, lhs_input, rhs_input, result_output);
+  mcontext0_write_value = 0x00;
+  asm volatile("csrw 0x7C0, %0" : : "r"(mcontext0_write_value));
   return 0;
 }

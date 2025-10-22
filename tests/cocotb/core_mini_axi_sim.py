@@ -254,7 +254,7 @@ async def core_mini_axi_csr_test(dut):
   # Read invalid CSRs, expect error response
   for i in range(3, 0x100 // 4):
     misc_csr_rdata = await core_mini_axi.read_word(0x30000 + (4 * i), expected_resp=AxiResp.SLVERR)
-  for i in range(8, 0x2000 // 4):
+  for i in range(9, 0x2000 // 4):
     misc_csr_rdata = await core_mini_axi.read_word(0x30100 + (4 * i), expected_resp=AxiResp.SLVERR)
 
 @cocotb.test()

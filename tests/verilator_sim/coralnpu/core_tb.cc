@@ -112,6 +112,7 @@ static void Core_run(const char* name, const char* bin, const int cycles,
   sc_signal<sc_bv<32> > io_csr_out_value_5;
   sc_signal<sc_bv<32> > io_csr_out_value_6;
   sc_signal<sc_bv<32> > io_csr_out_value_7;
+  sc_signal<sc_bv<32> > io_csr_out_value_8;
   sc_signal<sc_bv<32> > io_ibus_addr;
   sc_signal<sc_bv<KP_fetchDataBits> > io_ibus_rdata;
   sc_signal<sc_bv<32>> io_ibus_fault_bits_epc;
@@ -250,6 +251,7 @@ static void Core_run(const char* name, const char* bin, const int cycles,
   core.io_csr_out_value_5(io_csr_out_value_5);
   core.io_csr_out_value_6(io_csr_out_value_6);
   core.io_csr_out_value_7(io_csr_out_value_7);
+  core.io_csr_out_value_8(io_csr_out_value_8);
   core.io_ibus_addr(io_ibus_addr);
   core.io_ibus_rdata(io_ibus_rdata);
   core.io_dbus_addr(io_dbus_addr);

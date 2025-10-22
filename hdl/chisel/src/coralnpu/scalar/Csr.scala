@@ -574,6 +574,7 @@ class Csr(p: Parameters) extends Module {
   io.csr.out.value(5) := mcycle(63,32)
   io.csr.out.value(6) := minstret(31,0)
   io.csr.out.value(7) := minstret(63,32)
+  io.csr.out.value(8) := mcontext0
 
   // Write port.
   io.rd.valid := req.valid
