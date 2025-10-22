@@ -38,6 +38,7 @@ RUN ln -snf "/usr/share/zoneinfo/${TZ}" /etc/localtime && \
         sudo \
         tzdata \
         unzip \
+        xxd \
         zip && \
     update-ca-certificates && \
     curl -fsSL https://bazel.build/bazel-release.pub.gpg | gpg --dearmor > /tmp/bazel-archive-keyring.gpg && \
