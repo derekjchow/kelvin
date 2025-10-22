@@ -30,6 +30,7 @@ RUN ln -snf "/usr/share/zoneinfo/${TZ}" /etc/localtime && \
         gawk \
         git \
         gnupg \
+        libmpfr-dev \
         lsb-release \
         python-is-python3 \
         python3 \
@@ -60,6 +61,8 @@ RUN ln -snf "/usr/share/zoneinfo/${TZ}" /etc/localtime && \
         --gid ${_GID} \
         ${_USERNAME} && \
     chown ${_USERNAME}:${_USERNAME} ${HOME}
+# Work around differeing libmpfr versions between distros
+RUN ln -sf /lib/x86_64-linux-gnu/libmpfr.so.6.2.0 /lib/x86_64-linux-gnu/libmpfr.so.4
 USER ${_USERNAME}
 WORKDIR /home/${_USERNAME}/
 RUN git clone https://github.com/google-coral/coralnpu.git
