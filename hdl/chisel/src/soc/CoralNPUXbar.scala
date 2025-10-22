@@ -29,8 +29,8 @@ import coralnpu.Parameters
  * @param hostParams A sequence of TileLink parameters, one for each host.
  * @param deviceParams A sequence of TileLink parameters, one for each device.
  */
-class CoralNPUXbarIO(val hostParams: Seq[bus.TLULParameters], val deviceParams: Seq[bus.TLULParameters], val enableTestHarness: Boolean) extends Bundle {
-  val cfg = CrossbarConfig
+class CoralNPUXbarIO(val hostParams: Seq[bus.TLULParameters], val deviceParams: Seq[bus.TLULParameters], val enableTestHarness: Boolean, val enableHighmem: Boolean) extends Bundle {
+  val cfg = CrossbarConfig(enableHighmem)
 
   // --- Host (Master) Ports ---
   val hosts = Flipped(MixedVec(hostParams.map(p => new OpenTitanTileLink.Host2Device(p))))
@@ -64,17 +64,17 @@ class CoralNPUXbarIO(val hostParams: Seq[bus.TLULParameters], val deviceParams: 
  *
  * @param p The TileLink UL parameters for the bus.
  */
-class CoralNPUXbar(val hostParams: Seq[bus.TLULParameters], val deviceParams: Seq[bus.TLULParameters], val enableTestHarness: Boolean) extends Module {
+class CoralNPUXbar(val hostParams: Seq[bus.TLULParameters], val deviceParams: Seq[bus.TLULParameters], val enableTestHarness: Boolean, val enableHighmem: Boolean) extends Module {
   override val desiredName = if (enableTestHarness) "CoralNPUXbarTestHarness" else "CoralNPUXbar"
   // Load the single source of truth for the crossbar configuration.
-  val cfg = CrossbarConfig
+  val cfg = CrossbarConfig(enableHighmem)
 
   // Create simple maps from name to index for easy port access.
   val hostMap = cfg.hosts(enableTestHarness).map(_.name).zipWithIndex.toMap
   val deviceMap = cfg.devices.map(_.name).zipWithIndex.toMap
 
   // Instantiate the dynamically generated IO bundle.
-  val io = IO(new CoralNPUXbarIO(hostParams, deviceParams, enableTestHarness))
+  val io = IO(new CoralNPUXbarIO(hostParams, deviceParams, enableTestHarness, enableHighmem))
 
   // Find all unique clock domains from the config, excluding the main one.
   val asyncDeviceDomains = cfg.devices.map(_.clockDomain).distinct.filter(_ != "main")
@@ -266,12 +266,12 @@ object CoralNPUXbarEmitter extends App {
   val chiselArgs = args.filterNot(_ == "--enableTestHarness")
 
   // Create a sequence of TLULParameters for hosts and devices based on the config.
-  val hostParams = CrossbarConfig.hosts(enableTestHarness).map { host =>
+  val hostParams = CrossbarConfig().hosts(enableTestHarness).map { host =>
     val p = new Parameters
     p.lsuDataBits = host.width
     new bus.TLULParameters(p)
   }
-  val deviceParams = CrossbarConfig.devices.map { device =>
+  val deviceParams = CrossbarConfig().devices.map { device =>
     val p = new Parameters
     p.lsuDataBits = device.width
     new bus.TLULParameters(p)
@@ -282,7 +282,7 @@ object CoralNPUXbarEmitter extends App {
     Array("--target", "systemverilog") ++ chiselArgs,
     Seq(
       ChiselGeneratorAnnotation(() =>
-        new CoralNPUXbar(hostParams, deviceParams, enableTestHarness)
+        new CoralNPUXbar(hostParams, deviceParams, enableTestHarness, false)
       )
     ) ++ Seq(FirtoolOption("-enable-layers=Verification"))
   )

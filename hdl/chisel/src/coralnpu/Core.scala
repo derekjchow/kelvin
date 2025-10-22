@@ -146,34 +146,15 @@ object EmitCore extends App {
   }
   assert(!(useAxi && useTlul))
 
+  val memoryRegions = if (p.tcmHighmem) { MemoryRegions.tcmHighmem } else { MemoryRegions.default }
   // The core module must be created in the ChiselStage context. Use lazy here
   // so it's created in ChiselStage, but referencable afterwards.
   lazy val core = if (useAxi) {
-    if (p.tcmHighmem == false) {   // default case
-      val memoryRegions = Seq(
-        new MemoryRegion(0x0000, 0x2000, MemoryRegionType.IMEM), // ITCM
-        new MemoryRegion(0x10000, 0x8000, MemoryRegionType.DMEM), // DTCM
-        new MemoryRegion(0x30000, 0x2000, MemoryRegionType.Peripheral), // CSR
-      )
-      p.m = memoryRegions
-    }
-    else if (p.tcmHighmem == true) {   // highmem case TODO: consider parameterizing this. Has its risks.
-      val memoryRegions = Seq(
-        new MemoryRegion(0x000000, 0x100000, MemoryRegionType.IMEM), // ITCM
-        new MemoryRegion(0x100000, 0x100000, MemoryRegionType.DMEM), // DTCM
-        new MemoryRegion(0x200000, 0x2000, MemoryRegionType.Peripheral), // CSR
-      )
-      p.m = memoryRegions
-    }
+    p.m = memoryRegions
     new CoreAxi(p, moduleName)
   } else if (useTlul) {
-      val memoryRegions = Seq(
-        new MemoryRegion(0x0000, 0x2000, MemoryRegionType.IMEM), // ITCM
-        new MemoryRegion(0x10000, 0x8000, MemoryRegionType.DMEM), // DTCM
-        new MemoryRegion(0x30000, 0x2000, MemoryRegionType.Peripheral), // CSR
-      )
-      p.m = memoryRegions
-      new CoreTlul(p, moduleName)
+    p.m = memoryRegions
+    new CoreTlul(p, moduleName)
   } else {
     // "Matcha" memory layout
     p.m = Seq(

@@ -38,6 +38,19 @@ def contains(addr: UInt): Bool = {
 
 }
 
+object MemoryRegions {
+  val default = Seq(
+    new MemoryRegion(0x00000, 0x2000, MemoryRegionType.IMEM), // ITCM
+    new MemoryRegion(0x10000, 0x8000, MemoryRegionType.DMEM), // DTCM
+    new MemoryRegion(0x30000, 0x1000, MemoryRegionType.Peripheral), // CSR
+  )
+  val tcmHighmem = Seq(
+    new MemoryRegion(0x000000, 0x100000, MemoryRegionType.IMEM), // ITCM
+    new MemoryRegion(0x100000, 0x100000, MemoryRegionType.DMEM), // DTCM
+    new MemoryRegion(0x200000, 0x1000, MemoryRegionType.Peripheral), // CSR
+  )
+}
+
 object Parameters {
   def apply(): Parameters = {
     return new Parameters()

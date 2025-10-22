@@ -468,7 +468,7 @@ chisel_cc_library(
 )
 
 chisel_cc_library(
-    name = "core_mini_axi_highmem_cc_library",
+    name = "core_mini_highmem_axi_cc_library",
     chisel_lib = ":coralnpu",
     emit_class = "coralnpu.EmitCore",
     extra_outs = [
@@ -480,6 +480,7 @@ chisel_cc_library(
         "--fetchDataBits=128",
         "--lsuDataBits=128",
         "--enableVector=False",
+        "--enableFloat=True",
         "--moduleName=CoreMiniHighmem",
         "--useAxi",
         "--tcmHighmem",
@@ -488,6 +489,12 @@ chisel_cc_library(
     verilog_file_path = "CoreMiniHighmemAxi.sv",
     vopts = [
         "-DUSE_GENERIC",
+        # Warnings that we disable for fpnew
+        "-Wno-UNOPTFLAT",
+        "-Wno-ASCRANGE",
+        "-Wno-WIDTHEXPAND",
+        "-Wno-WIDTHTRUNC",
+        "-Wno-UNSIGNED",
     ],
 )
 

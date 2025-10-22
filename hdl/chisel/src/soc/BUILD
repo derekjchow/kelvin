@@ -116,3 +116,11 @@ verilator_cocotb_model(
     trace = True,
     verilog_source = ":coralnpu_chisel_subsystem_testharness_cc_library_emit_verilog",
 )
+
+chisel_cc_library(
+    name = "coralnpu_chisel_subsystem_highmem_cc_library",
+    chisel_lib = ":coralnpu_chisel_subsystem_lib",
+    emit_class = "coralnpu.soc.CoralNPUChiselSubsystemEmitter",
+    module_name = "CoralNPUChiselSubsystemHighmem",
+    gen_flags = ["--enableHighmem"],
+)

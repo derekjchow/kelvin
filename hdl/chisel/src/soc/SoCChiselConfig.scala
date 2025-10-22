@@ -1,6 +1,6 @@
 package coralnpu.soc
 
-import coralnpu.{MemoryRegion, MemoryRegionType}
+import coralnpu.{MemoryRegion, MemoryRegions}
 
 // --- External Port Definitions ---
 
@@ -43,7 +43,8 @@ case class CoreTlulParameters(
   fetchDataBits: Int,
   enableVector: Boolean,
   enableFloat: Boolean,
-  memoryRegions: Seq[MemoryRegion]
+  memoryRegions: Seq[MemoryRegion],
+  tcmHighmem: Boolean,
 ) extends ModuleParameters
 
 /** Parameters for the Spi2TLUL module. */
@@ -76,8 +77,13 @@ case class ChiselModuleConfig(
  * The single source of truth for the entire Chisel-based portion of the SoC.
  */
 object SoCChiselConfig {
-  val crossbar = CrossbarConfig
+  def apply(enableHighmem: Boolean = false): SoCChiselConfig = {
+    new SoCChiselConfig(enableHighmem)
+  }
+}
 
+class SoCChiselConfig(enableHighmem: Boolean) {
+  val crossbar = CrossbarConfig(enableHighmem)
   val modules = Seq(
     ChiselModuleConfig(
       name = "rvv_core",
@@ -89,11 +95,12 @@ object SoCChiselConfig {
         fetchDataBits = 128,
         enableVector = false,
         enableFloat = true,
-        memoryRegions = Seq(
-          new MemoryRegion(0x0000, 0x2000, MemoryRegionType.IMEM),
-          new MemoryRegion(0x10000, 0x8000, MemoryRegionType.DMEM),
-          new MemoryRegion(0x30000, 0x2000, MemoryRegionType.Peripheral)
-        )
+        memoryRegions = if (enableHighmem) {
+          MemoryRegions.tcmHighmem
+        } else {
+          MemoryRegions.default
+        },
+        tcmHighmem = enableHighmem,
       ),
       hostConnections = Map("io.tl_host" -> "coralnpu_core"),
       deviceConnections = Map("io.tl_device" -> "coralnpu_device"),

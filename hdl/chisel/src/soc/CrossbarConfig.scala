@@ -54,11 +54,13 @@ case class DeviceConfig(
   width: Int = 32
 )
 
-/**
- * This object contains the complete, concrete configuration for the CoralNPU SoC crossbar,
- * translated from the original tl_config.hjson file.
- */
 object CrossbarConfig {
+  def apply(enableHighmem: Boolean = false): CrossbarConfig = {
+    new CrossbarConfig(enableHighmem)
+  }
+}
+
+class CrossbarConfig(enableHighmem: Boolean) {
   // List of all host (master) interfaces.
   def hosts(enableTestHarness: Boolean): Seq[HostConfig] = {
     val baseHosts = Seq(
@@ -72,13 +74,23 @@ object CrossbarConfig {
     }
   }
 
-  // List of all device (slave) interfaces with their address maps.
-  val devices = Seq(
-    DeviceConfig("coralnpu_device", Seq(
+  val coralnpu_ranges = if (enableHighmem) {
+    Seq(
+      AddressRange(0x00000000, 0x100000),    // 1MB
+      AddressRange(0x00100000, 0x100000),    // 1MB
+      AddressRange(0x00200000, 0x1000)     // 4kB
+    )
+  } else {
+    Seq(
       AddressRange(0x00000000, 0x2000),    // 8kB
       AddressRange(0x00010000, 0x8000),    // 32kB
       AddressRange(0x00030000, 0x1000)     // 4kB
-    ), width = 128),
+    )
+  }
+
+  // List of all device (slave) interfaces with their address maps.
+  val devices = Seq(
+    DeviceConfig("coralnpu_device", coralnpu_ranges, width = 128),
     DeviceConfig("rom",  Seq(AddressRange(0x10000000, 0x8000))),      // 32kB
     DeviceConfig("sram", Seq(AddressRange(0x20000000, 0x400000))),    // 4MB
     DeviceConfig("uart0", Seq(AddressRange(0x40000000, 0x1000))),
@@ -108,7 +120,7 @@ object CrossbarConfig {
  * address ranges between devices.
  */
 object CrossbarConfigValidator extends App {
-  val devices = CrossbarConfig.devices
+  val devices = CrossbarConfig().devices
 
   println("Running CrossbarConfig validation...")
 
@@ -148,10 +160,10 @@ object CrossbarConfigValidator extends App {
   def printConfig(enableTestHarness: Boolean): Unit = {
     println(s"\n--- Crossbar Configuration (TestHarness: $enableTestHarness) ---")
     println("Hosts:")
-    CrossbarConfig.hosts(enableTestHarness).foreach(h => println(s"  - ${h.name}"))
+    CrossbarConfig().hosts(enableTestHarness).foreach(h => println(s"  - ${h.name}"))
 
     println("\nDevices:")
-    CrossbarConfig.devices.foreach {
+    CrossbarConfig().devices.foreach {
       d =>
         println(s"  - ${d.name} (${d.clockDomain} clock domain)")
         d.addr.foreach {
@@ -161,7 +173,7 @@ object CrossbarConfigValidator extends App {
     }
 
     println("\nConnections:")
-    CrossbarConfig.connections(enableTestHarness).foreach {
+    CrossbarConfig().connections(enableTestHarness).foreach {
       case (host, devices) =>
         println(s"  - ${host} -> [${devices.mkString(", ")}]")
     }

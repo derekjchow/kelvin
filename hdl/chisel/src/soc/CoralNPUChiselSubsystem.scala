@@ -9,8 +9,8 @@ import coralnpu.CoreTlul
 /**
  * This is the IO bundle for the unified Chisel subsystem.
  */
-class CoralNPUChiselSubsystemIO(val hostParams: Seq[bus.TLULParameters], val deviceParams: Seq[bus.TLULParameters], val enableTestHarness: Boolean) extends Bundle {
-  val cfg = SoCChiselConfig.crossbar
+class CoralNPUChiselSubsystemIO(val hostParams: Seq[bus.TLULParameters], val deviceParams: Seq[bus.TLULParameters], val enableTestHarness: Boolean, val enableHighmem: Boolean) extends Bundle {
+  val cfg = SoCChiselConfig(enableHighmem).crossbar
 
   // --- Clocks and Resets ---
   val clk_i = Input(Clock())
@@ -30,8 +30,8 @@ class CoralNPUChiselSubsystemIO(val hostParams: Seq[bus.TLULParameters], val dev
   }
 
   // --- Identify Internal vs. External Connections ---
-  val internalHosts = SoCChiselConfig.modules.flatMap(_.hostConnections.values).toSet
-  val internalDevices = SoCChiselConfig.modules.flatMap(_.deviceConnections.values).toSet
+  val internalHosts = SoCChiselConfig(enableHighmem).modules.flatMap(_.hostConnections.values).toSet
+  val internalDevices = SoCChiselConfig(enableHighmem).modules.flatMap(_.deviceConnections.values).toSet
 
   // These devices are handled specially within the subsystem (e.g., converted to AXI)
   // and should not have external TileLink ports created for them.
@@ -56,7 +56,7 @@ class CoralNPUChiselSubsystemIO(val hostParams: Seq[bus.TLULParameters], val dev
   }
 
   // --- Manually define peripheral ports for now ---
-  val allExternalPortsConfig = SoCChiselConfig.modules.flatMap(_.externalPorts)
+  val allExternalPortsConfig = SoCChiselConfig(enableHighmem).modules.flatMap(_.externalPorts)
   val external_ports = MixedVec(allExternalPortsConfig.map { p =>
     val port = p.portType match {
       case coralnpu.soc.Clk  => Clock()
@@ -82,10 +82,12 @@ import scala.collection.mutable
 /**
  * A generator for the entire Chisel-based subsystem of the CoralNPU SoC.
  */
-class CoralNPUChiselSubsystem(val hostParams: Seq[bus.TLULParameters], val deviceParams: Seq[bus.TLULParameters], val enableTestHarness: Boolean) extends RawModule {
-  override val desiredName = if (enableTestHarness) "CoralNPUChiselSubsystemTestHarness" else "CoralNPUChiselSubsystem"
-  val io = IO(new CoralNPUChiselSubsystemIO(hostParams, deviceParams, enableTestHarness))
-  val cfg = SoCChiselConfig.crossbar
+class CoralNPUChiselSubsystem(val hostParams: Seq[bus.TLULParameters], val deviceParams: Seq[bus.TLULParameters], val enableTestHarness: Boolean, val enableHighmem: Boolean) extends RawModule {
+  val testHarnessSuffix = if (enableTestHarness) "TestHarness" else ""
+  val highmemSuffix = if (enableHighmem) "Highmem" else ""
+  override val desiredName = "CoralNPUChiselSubsystem" + testHarnessSuffix + highmemSuffix
+  val io = IO(new CoralNPUChiselSubsystemIO(hostParams, deviceParams, enableTestHarness, enableHighmem))
+  val cfg = SoCChiselConfig(enableHighmem).crossbar
 
   /**
    * A helper function to recursively traverse a Chisel Bundle and populate a
@@ -108,7 +110,7 @@ class CoralNPUChiselSubsystem(val hostParams: Seq[bus.TLULParameters], val devic
 
   withClockAndReset(io.clk_i, (!io.rst_ni.asBool).asAsyncReset) {
     // --- Instantiate Core Chisel Components ---
-    val xbar = Module(new CoralNPUXbar(hostParams, deviceParams, enableTestHarness))
+    val xbar = Module(new CoralNPUXbar(hostParams, deviceParams, enableTestHarness, enableHighmem))
 
     // --- Dynamic Module Instantiation ---
     def instantiateModule(config: ChiselModuleConfig): BaseModule = {
@@ -122,6 +124,7 @@ class CoralNPUChiselSubsystem(val hostParams: Seq[bus.TLULParameters], val devic
           core_p.fetchDataBits = p.fetchDataBits
           core_p.enableVector = p.enableVector
           core_p.enableFloat = p.enableFloat
+          core_p.tcmHighmem = p.tcmHighmem
           Module(new CoreTlul(core_p, config.name))
 
         case p: Spi2TlulParameters =>
@@ -131,7 +134,7 @@ class CoralNPUChiselSubsystem(val hostParams: Seq[bus.TLULParameters], val devic
       }
     }
 
-    val instantiatedModules = SoCChiselConfig.modules.map {
+    val instantiatedModules = SoCChiselConfig(enableHighmem).modules.map {
       config =>
       config.name -> instantiateModule(config)
     }.toMap
@@ -158,7 +161,7 @@ class CoralNPUChiselSubsystem(val hostParams: Seq[bus.TLULParameters], val devic
     }
 
     // Connect all modules based on the configuration.
-    SoCChiselConfig.modules.foreach {
+    SoCChiselConfig(enableHighmem).modules.foreach {
       config =>
       config.hostConnections.foreach { case (modulePort, xbarPort) =>
         modulePorts(s"${config.name}.$modulePort") <> xbar.io.hosts(hostMap(xbarPort))
@@ -264,15 +267,19 @@ import java.nio.file.{Files, Paths, StandardOpenOption}
 
 object CoralNPUChiselSubsystemEmitter extends App {
   val enableTestHarness = args.contains("--enableTestHarness")
-  val chiselArgs = args.filterNot(a => a.startsWith("--enableTestHarness") || a.startsWith("--target-dir="))
+  val enableHighmem = args.contains("--enableHighmem")
+  val chiselArgs = args.filterNot(a =>
+      a.startsWith("--enableTestHarness") ||
+      a.startsWith("--enableHighmem") ||
+      a.startsWith("--target-dir="))
 
-  val hostParams = SoCChiselConfig.crossbar.hosts(enableTestHarness).map {
+  val hostParams = SoCChiselConfig(enableHighmem).crossbar.hosts(enableTestHarness).map {
     host =>
     val p = new Parameters
     p.lsuDataBits = host.width
     new bus.TLULParameters(p)
   }
-  val deviceParams = SoCChiselConfig.crossbar.devices.map {
+  val deviceParams = SoCChiselConfig(enableHighmem).crossbar.devices.map {
     device =>
     val p = new Parameters
     p.lsuDataBits = device.width
@@ -288,7 +295,7 @@ object CoralNPUChiselSubsystemEmitter extends App {
   }
 
   // The subsystem module must be created in the ChiselStage context.
-  lazy val subsystem = new CoralNPUChiselSubsystem(hostParams, deviceParams, enableTestHarness)
+  lazy val subsystem = new CoralNPUChiselSubsystem(hostParams, deviceParams, enableTestHarness, enableHighmem)
 
   val firtoolOpts = Array(
       // Disable `automatic logic =`, Suppress location comments
