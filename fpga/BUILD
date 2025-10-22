@@ -27,32 +27,42 @@ filegroup(
     srcs = glob(["**/*.sv"]) + glob(["**/*.core"]) + [
         "//fpga/ip/spi_dpi_master:rtl_files",
         "//fpga/ip/coralnpu_tlul:rtl_files",
-        "//fpga/ip/coralnpu_chisel_subsystem:rtl_files",
+        "//fpga/ip/coralnpu_chisel_subsystem_default:rtl_files",
+        "//fpga/ip/coralnpu_chisel_subsystem_highmem:rtl_files",
         "//fpga/ip/sram:rtl_files",
         "//fpga/rtl:rtl_files",
     ],
 )
 
+VERILATOR_OPTIONS_COMMON = [
+    "-Wno-ALWCOMBORDER",
+    "-Wno-WIDTHEXPAND",
+    "-Wno-WIDTHTRUNC",
+    "-Wno-UNUSEDSIGNAL",
+    "-Wno-UNUSEDPARAM",
+    "-Wno-VARHIDDEN",
+    # TODO: The MULTIDRIVEN warnings are caused by the `prim_arbiter_fixed`
+    # module and the `tlul_fifo_sync` module. We should investigate these
+    # modules and fix the underlying issues.
+    # "-Wno-MULTIDRIVEN",
+    "-Wno-UNOPTTHREADS",
+    "-Wno-GENUNNAMED",
+    "-Wno-DECLFILENAME",
+    "-Wno-ASCRANGE",
+    "-DRVFI",
+    "-DUSE_GENERIC",
+    "-DUSE_DPI_MEMORY",
+]
+
 string_list_flag(
-    name = "verilator_options",
+    name = "verilator_options_default",
+    build_setting_default = VERILATOR_OPTIONS_COMMON,
+)
+string_list_flag(
+    name = "verilator_options_highmem",
     build_setting_default = [
-        "-Wno-ALWCOMBORDER",
-        "-Wno-WIDTHEXPAND",
-        "-Wno-WIDTHTRUNC",
-        "-Wno-UNUSEDSIGNAL",
-        "-Wno-UNUSEDPARAM",
-        "-Wno-VARHIDDEN",
-        # TODO: The MULTIDRIVEN warnings are caused by the `prim_arbiter_fixed`
-        # module and the `tlul_fifo_sync` module. We should investigate these
-        # modules and fix the underlying issues.
-        # "-Wno-MULTIDRIVEN",
-        "-Wno-UNOPTTHREADS",
-        "-Wno-GENUNNAMED",
-        "-Wno-DECLFILENAME",
-        "-Wno-ASCRANGE",
-        "-DRVFI",
-        "-DUSE_GENERIC",
-    ],
+        "-CFLAGS \"-DCHISEL_SUBSYSTEM_HIGHMEM\"",
+    ] + VERILATOR_OPTIONS_COMMON,
 )
 
 string_list_flag(
@@ -81,7 +91,6 @@ filegroup(
 )
 
 CORALNPU_SOC_CORES = [
-    "//fpga/ip/coralnpu_chisel_subsystem:coralnpu_chisel_subsystem.core",
     ":coralnpu_soc.core",
     ":coralnpu_soc_pkg.core",
     ":racl_pkg.core",
@@ -120,6 +129,7 @@ fusesoc_build(
     ],
     cores = CORALNPU_SOC_CORES + [
         ":chip_verilator.core",
+        "//fpga/ip/coralnpu_chisel_subsystem_default:coralnpu_chisel_subsystem_default.core",
         "//fpga/ip/spi_dpi_master:spi_dpi_master.core",
         "@lowrisc_opentitan_gh//hw/dv:dpi/uartdpi/uartdpi.core",
         "@lowrisc_opentitan_gh//hw/dv:dpi/uartdpi/uartdpi_sv.core",
@@ -133,7 +143,33 @@ fusesoc_build(
     },
     systems = ["com.google.coralnpu:fpga:chip_verilator:0.1"],
     target = "sim",
-    verilator_options = ":verilator_options",
+    verilator_options = ":verilator_options_default",
+    tags = ["manual"],
+)
+
+fusesoc_build(
+    name = "build_chip_verilator_highmem",
+    srcs = CORALNPU_SOC_SRCS + [
+        "//fpga/ip/spi_dpi_master:dpi_files",
+        "@lowrisc_opentitan_gh//hw:dpi_files",
+    ],
+    cores = CORALNPU_SOC_CORES + [
+        ":chip_verilator.core",
+        "//fpga/ip/coralnpu_chisel_subsystem_highmem:coralnpu_chisel_subsystem_highmem.core",
+        "//fpga/ip/spi_dpi_master:spi_dpi_master.core",
+        "@lowrisc_opentitan_gh//hw/dv:dpi/uartdpi/uartdpi.core",
+        "@lowrisc_opentitan_gh//hw/dv:dpi/uartdpi/uartdpi_sv.core",
+    ],
+    flags = [
+        "--ClockFrequencyMhz=" + _CLOCK_FREQUENCY_MHZ,
+    ],
+    make_options = ":make_options",
+    output_groups = {
+        "binary": ["com.google.coralnpu_fpga_chip_verilator_0.1/sim-verilator/Vchip_verilator"],
+    },
+    systems = ["com.google.coralnpu:fpga:chip_verilator:0.1"],
+    target = "sim",
+    verilator_options = ":verilator_options_highmem",
     tags = ["manual"],
 )
 
@@ -151,6 +187,36 @@ fusesoc_build(
     ],
     cores = CORALNPU_SOC_CORES + [
         ":chip_nexus.core",
+        "//fpga/ip/coralnpu_chisel_subsystem_default:coralnpu_chisel_subsystem_default.core",
+        "//internal/fpga/ip/ddr4:ddr4.core",
+        "//internal/fpga/ip/ddr4_phy:ddr4_phy.core",
+    ],
+    flags = [
+        "--ClockFrequencyMhz=" + _NEXUS_CLOCK_FREQUENCY_MHZ,
+    ],
+    output_groups = {
+        "bitstream": ["com.google.coralnpu_fpga_chip_nexus_0.1/synth-vivado/com.google.coralnpu_fpga_chip_nexus_0.1.runs/impl_1/chip_nexus.bit"],
+        "logs": ["com.google.coralnpu_fpga_chip_nexus_0.1/synth-vivado/com.google.coralnpu_fpga_chip_nexus_0.1.runs/"],
+        "synth": ["com.google.coralnpu_fpga_chip_nexus_0.1/synth-vivado/"],
+        "all": ["com.google.coralnpu_fpga_chip_nexus_0.1/"],
+    },
+    systems = ["com.google.coralnpu:fpga:chip_nexus:0.1"],
+    target = "synth",
+    tags = ["manual"],
+)
+fusesoc_build(
+    name = "build_chip_nexus_bitstream_highmem",
+    srcs = CORALNPU_SOC_SRCS + [
+        "pins.xdc",
+        "vivado_setup_hooks.tcl",
+        "vivado_hook_write_bitstream_post.tcl",
+        "//internal/fpga/ip/ddr4:elf_files",
+        "//internal/fpga/ip/ddr4:rtl_files",
+        "//internal/fpga/ip/ddr4_phy:rtl_files",
+    ],
+    cores = CORALNPU_SOC_CORES + [
+        ":chip_nexus.core",
+        "//fpga/ip/coralnpu_chisel_subsystem_highmem:coralnpu_chisel_subsystem_highmem.core",
         "//internal/fpga/ip/ddr4:ddr4.core",
         "//internal/fpga/ip/ddr4_phy:ddr4_phy.core",
     ],

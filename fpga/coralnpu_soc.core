@@ -5,7 +5,7 @@ description: "The CoralNPU SoC for FPGA."
 filesets:
   rtl:
     depend:
-      - coralnpuv2:ip:coralnpu_chisel_subsystem:0.1
+      - coralnpuv2:virtual:coralnpu_chisel_subsystem
       - com.google.coralnpu:fpga:coralnpu_soc_pkg:0.1
       - com.google.coralnpu:fpga:racl_pkg:0.1
       - lowrisc:ip:uart:0.1

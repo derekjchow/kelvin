@@ -15,20 +15,20 @@
 package(default_visibility = ["//visibility:public"])
 
 genrule(
-    name = "coralnpu_chisel_subsystem_verilog",
-    srcs = ["//hdl/chisel/src/soc:CoralNPUChiselSubsystem.sv"],
-    outs = ["CoralNPUChiselSubsystem.sv"],
-    cmd = "cp $< $@",
+    name = "coralnpu_chisel_subsystem_highmem_verilog",
+    srcs = ["//hdl/chisel/src/soc:CoralNPUChiselSubsystemHighmem.sv"],
+    outs = ["CoralNPUChiselSubsystemHighmem.sv"],
+    cmd = "cp $< $@; sed -i -e 's/CoralNPUChiselSubsystemHighmem/CoralNPUChiselSubsystem/g' $@",
 )
 
 genrule(
     name = "generate_core_file",
     srcs = [
-        "coralnpu_chisel_subsystem.core.tpl",
-        ":coralnpu_chisel_subsystem_verilog",
+        "coralnpu_chisel_subsystem_highmem.core.tpl",
+        ":coralnpu_chisel_subsystem_highmem_verilog",
     ],
-    outs = ["coralnpu_chisel_subsystem.core"],
-    cmd = "sed 's|__VERILOG_FILE__|CoralNPUChiselSubsystem.sv|' $(location coralnpu_chisel_subsystem.core.tpl) > $@",
+    outs = ["coralnpu_chisel_subsystem_highmem.core"],
+    cmd = "sed 's|__VERILOG_FILE__|CoralNPUChiselSubsystemHighmem.sv|' $(location coralnpu_chisel_subsystem_highmem.core.tpl) > $@",
 )
 
 filegroup(
@@ -37,6 +37,6 @@ filegroup(
         "*.sv",
         "*.core",
     ]) + [
-        ":CoralNPUChiselSubsystem.sv",
+        ":CoralNPUChiselSubsystemHighmem.sv",
     ],
 )
