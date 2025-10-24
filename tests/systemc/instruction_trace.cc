@@ -13,8 +13,10 @@
 // limitations under the License.
 
 #include "tests/systemc/instruction_trace.h"
+
 #include <cassert>
 #include <cstdio>
+#include <vector>
 
 constexpr uint32_t kEcallInst = 0x00000073;
 
@@ -117,6 +119,7 @@ void InstructionTrace::TraceInstructionRaw(uint32_t pc, uint32_t inst,
 }
 
 void InstructionTrace::PrintTrace() const {
+  printf("PC,INST,REG,DATA\n");
   for (auto& inst : committed_insts_) {
     printf("0x%08x,0x%08x,0x%02x,0x", inst.pc, inst.inst, inst.reg);
     for (auto d : inst.data) {
