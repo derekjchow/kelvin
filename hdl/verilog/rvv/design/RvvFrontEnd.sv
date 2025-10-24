@@ -334,8 +334,11 @@ module RvvFrontEnd#(parameter N = 4,
       // All LSU instructions read from rs1
       lsu_requires_rs1_read[i] = (inst_q[i].opcode != RVV);
       // Non LSU rs1 check
-      non_lsu_requires_rs1_read[i] = (inst_q[i].opcode == RVV) &&
-          (inst_q[i].bits[7] && inst_q[i].bits[6:5] != 2'b11);
+      non_lsu_requires_rs1_read[i] = (inst_q[i].opcode == RVV) && (
+        (inst_q[i].bits[7:5] == 'b100) ||  // OPIVX
+        (inst_q[i].bits[7:5] == 'b110) ||  // OPMVX
+        ((inst_q[i].bits[7:5] == 'b111) && (inst_q[i].bits[24:23] != 2'b11))  // vsetvl and vsetvli
+      );
       requires_rs1_read[i] =
           lsu_requires_rs1_read[i] || non_lsu_requires_rs1_read[i];
 

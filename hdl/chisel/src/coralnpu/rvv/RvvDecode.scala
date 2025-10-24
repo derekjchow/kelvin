@@ -103,7 +103,10 @@ class RvvCompressedInstruction extends Bundle {
   }
 
   def readsRs1(): Bool = {
-    isLoadStore() || (bits(7) && (bits(24, 23) =/= "b11".U))
+    isLoadStore() ||
+    (funct3() === "b100".U) ||  // OPIVX
+    (funct3() === "b110".U) ||  // OPMVX
+    ((funct3() === "b111".U) && (bits(24, 23) =/= "b11".U))  // vsetvl and vsetvli
   }
 
   def readsRs2(): Bool = {
