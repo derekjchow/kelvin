@@ -218,9 +218,9 @@ class DebugModule(p: Parameters) extends Module {
 
     data0 := MuxCase(data0, Seq(
         (req.valid && req.bits.isAddrData0 && req.bits.isWrite) -> req.bits.data,
-        (io.halted(0) && req.valid && !req.bits.write && regnoIsCsr && io.csr_rd.valid) -> io.csr_rd.bits,
-        (io.halted(0) && req.valid && !req.bits.write && regnoIsScalar) -> io.scalar_rs.data,
-        (io.halted(0) && req.valid && !req.bits.write && regnoIsFloat) -> io.float_rs.map(_.data).getOrElse(Fp32.Zero(false.B)).asWord,
+        (abstractCmdComplete && cmdtypeIsAccessRegister && io.halted(0) && req.valid && !req.bits.write && regnoIsCsr && io.csr_rd.valid) -> io.csr_rd.bits,
+        (abstractCmdComplete && cmdtypeIsAccessRegister && io.halted(0) && req.valid && !req.bits.write && regnoIsScalar) -> io.scalar_rs.data,
+        (abstractCmdComplete && cmdtypeIsAccessRegister && io.halted(0) && req.valid && !req.bits.write && regnoIsFloat) -> io.float_rs.map(_.data).getOrElse(Fp32.Zero(false.B)).asWord,
         !dmactive -> 0.U(32.W),
     ))
 
