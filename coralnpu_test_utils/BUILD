@@ -142,3 +142,24 @@ py_library(
     ],
     visibility = ["//visibility:public"],
 )
+
+py_binary(
+    name = "rvv_cpp_util_header_generator",
+    srcs = [
+        "rvv_cpp_util_header_generator.py",
+    ],
+)
+
+genrule(
+    name = "rvv_cpp_util_header",
+    srcs = [],
+    outs = ["rvv_cpp_util.h"],
+    cmd = "./$(location rvv_cpp_util_header_generator) > \"$@\"",
+    tools = [":rvv_cpp_util_header_generator"],
+)
+
+cc_library(
+    name = "rvv_cpp_util",
+    hdrs = [":rvv_cpp_util.h"],
+    visibility = ["//visibility:public"],
+)

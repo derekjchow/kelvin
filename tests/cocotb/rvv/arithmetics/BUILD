@@ -153,6 +153,67 @@ template_rule(
     },
 )
 
+SAME_TYPE_BINARY_VX_CASES = [
+    ("vadd_vx_test", "Vadd", []),
+    ("vsadd_vx_test", "Vsadd", []),
+    ("vsub_vx_test", "Vsub", []),
+    ("vssub_vx_test", "Vssub", []),
+    ("vrsub_vx_test", "Vrsub", []),
+    ("vmul_vx_test", "Vmul", []),
+    ("vmulh_vx_test", "Vmulh", []),
+    ("vmin_vx_test", "Vmin", []),
+    ("vmax_vx_test", "Vmax", []),
+    ("vand_vx_test", "Vand", []),
+    ("vor_vx_test", "Vor", []),
+    ("vxor_vx_test", "Vxor", []),
+]
+
+[
+    coralnpu_v2_binary(
+        name = name,
+        srcs = ["rvv_vx_arithmetics.cc"],
+        defines = ["VX_FUNCTION={}".format(fn)] + extra_defines,
+        deps = [
+            "//coralnpu_test_utils:rvv_cpp_util"
+        ],
+    )
+    for name, fn, extra_defines in SAME_TYPE_BINARY_VX_CASES
+]
+
+filegroup(
+    name = "rvv_same_type_binary_vx_cases",
+    srcs = ["{}.elf".format(name) for name, _, _ in SAME_TYPE_BINARY_VX_CASES],
+)
+
+MIXED_SIGN_SAME_WIDTH_BINARY_CASES = [
+    ("Vsll", []),
+    ("Vsra", ["SIGNED_ONLY"]),
+    ("Vsrl", ["UNSIGNED_ONLY"]),
+    ("Vmulhsu", ["SIGNED_ONLY"]),
+]
+
+[
+    coralnpu_v2_binary(
+        name = "{}_vx_test".format(fn.lower()),
+        srcs = ["rvv_vx_arithmetics.cc"],
+        defines = [
+            "VX_FUNCTION={}".format(fn),
+            "FORCE_X_UNSIGNED",
+        ] + extra_defines,
+        deps = [
+            "//coralnpu_test_utils:rvv_cpp_util"
+        ],
+    )
+    for fn, extra_defines in MIXED_SIGN_SAME_WIDTH_BINARY_CASES
+]
+
+filegroup(
+    name = "rvv_mixed_sign_same_width_type_binary_vx_cases",
+    srcs = [
+        "{}_vx_test.elf".format(fn.lower())
+        for fn, _ in MIXED_SIGN_SAME_WIDTH_BINARY_CASES],
+)
+
 filegroup(
     name = "rvv_arith_tests",
     srcs = [
@@ -166,5 +227,7 @@ filegroup(
         "vnclipu_test.elf",
         "vnsra_test.elf",
         "vnsrl_test.elf",
+        ":rvv_same_type_binary_vx_cases",
+        ":rvv_mixed_sign_same_width_type_binary_vx_cases",
     ],
 )

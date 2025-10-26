@@ -255,6 +255,7 @@ RVV_ARITHMETIC_TESTCASES = [
     "vnclipu_test",
     "vnsra_test",
     "vnsrl_test",
+    "binary_op_vx",
 ]
 # END_TESTCASES_FOR_rvv_arithmetic_cocotb_test
 

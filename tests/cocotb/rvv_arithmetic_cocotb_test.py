@@ -683,3 +683,178 @@ async def vnclipu_test(dut):
             make_test_case('vnclipu_wx_u8m4', 63, np.uint16, vxs=True),
         ],
     )
+
+def reference_sadd(lhs, rhs):
+    dtype = lhs.dtype
+    return np.clip(lhs.astype(np.int64) + rhs,
+                   np.iinfo(dtype).min,
+                   np.iinfo(dtype).max)
+
+
+def reference_ssub(lhs, rhs):
+    dtype = lhs.dtype
+    return np.clip(lhs.astype(np.int64) - rhs,
+                   np.iinfo(dtype).min,
+                   np.iinfo(dtype).max)
+
+
+def reference_rsub(lhs, rhs):
+    return rhs - lhs
+
+
+def reference_mul(lhs, rhs):
+    return lhs * rhs
+
+
+def reference_vmulh(lhs, rhs):
+    dtype = lhs.dtype
+    bitwidth = np.iinfo(dtype).bits
+    return ((lhs.astype(np.int64) * rhs) >> bitwidth) & \
+            (~np.array([0], dtype=dtype))
+
+
+def reference_sll(lhs, rhs):
+    dtype = lhs.dtype
+    mask = ~np.array([0], dtype=dtype)
+    shift = rhs & ((np.dtype(dtype).itemsize * 8) - 1)
+    return ((lhs << shift) & mask).astype(dtype)
+
+
+def reference_srl(lhs, rhs):
+    dtype = lhs.dtype
+    mask = ~np.array([0], dtype=dtype)
+    shift = rhs & ((np.dtype(dtype).itemsize * 8) - 1)
+    return ((lhs >> shift) & mask).astype(dtype)
+
+
+def reference_sra(lhs, rhs):
+    shift = rhs & ((np.dtype(lhs.dtype).itemsize * 8) - 1)
+    divisor = 1 << shift
+    return lhs // divisor
+
+
+# Test name, vl, vs1 type, xs2 type, vd type
+SAME_TYPE_TEST_CASES = [
+    ("test_i8_mf4",   4, np.int8,  np.int8,  np.int8),
+    ("test_i8_mf2",   8, np.int8,  np.int8,  np.int8),
+    ("test_i8_m1",   16, np.int8,  np.int8,  np.int8),
+    ("test_i8_m2",   32, np.int8,  np.int8,  np.int8),
+    ("test_i8_m4",   64, np.int8,  np.int8,  np.int8),
+    ("test_i8_m8",  128, np.int8,  np.int8,  np.int8),
+    ("test_i16_mf2",  4, np.int16, np.int16, np.int16),
+    ("test_i16_m1",   8, np.int16, np.int16, np.int16),
+    ("test_i16_m2",  16, np.int16, np.int16, np.int16),
+    ("test_i16_m4",  32, np.int16, np.int16, np.int16),
+    ("test_i16_m8",  64, np.int16, np.int16, np.int16),
+    ("test_i32_m1",   4, np.int32, np.int32, np.int32),
+    ("test_i32_m2",   8, np.int32, np.int32, np.int32),
+    ("test_i32_m4",  16, np.int32, np.int32, np.int32),
+    ("test_i32_m8",  32, np.int32, np.int32, np.int32),
+    ("test_u8_mf4",   4, np.uint8,  np.uint8,  np.uint8),
+    ("test_u8_mf2",   8, np.uint8,  np.uint8,  np.uint8),
+    ("test_u8_m1",   16, np.uint8,  np.uint8,  np.uint8),
+    ("test_u8_m2",   32, np.uint8,  np.uint8,  np.uint8),
+    ("test_u8_m4",   64, np.uint8,  np.uint8,  np.uint8),
+    ("test_u8_m8",  128, np.uint8,  np.uint8,  np.uint8),
+    ("test_u16_mf2",  4, np.uint16, np.uint16, np.uint16),
+    ("test_u16_m1",   8, np.uint16, np.uint16, np.uint16),
+    ("test_u16_m2",  16, np.uint16, np.uint16, np.uint16),
+    ("test_u16_m4",  32, np.uint16, np.uint16, np.uint16),
+    ("test_u16_m8",  64, np.uint16, np.uint16, np.uint16),
+    ("test_u32_m1",   4, np.uint32, np.uint32, np.uint32),
+    ("test_u32_m2",   8, np.uint32, np.uint32, np.uint32),
+    ("test_u32_m4",  16, np.uint32, np.uint32, np.uint32),
+    ("test_u32_m8",  32, np.uint32, np.uint32, np.uint32),
+]
+
+
+def _force_unsigned(dtype):
+    bitdepth = np.dtype(dtype).itemsize * 8
+    return np.dtype(f'uint{bitdepth}')
+
+
+SAME_TYPE_RHS_FORCED_UNSIGNED_TEST_CASES = [
+    (name, vl, lhs_dtype, _force_unsigned(rhs_dtype), result_type)
+    for name, vl, lhs_dtype, rhs_dtype, result_type in SAME_TYPE_TEST_CASES
+]
+
+UNSIGNED_ONLY_TEST_CASES = [
+    (name, vl, lhs_dtype, rhs_dtype, result_type)
+    for name, vl, lhs_dtype, rhs_dtype, result_type in SAME_TYPE_TEST_CASES
+    if np.dtype(lhs_dtype).kind == 'u'
+]
+
+SIGNED_LHS_UNSIGNED_RHS_ONLY_TEST_CASES = [
+    (name, vl, lhs_dtype, _force_unsigned(rhs_dtype), result_type)
+    for name, vl, lhs_dtype, rhs_dtype, result_type in SAME_TYPE_TEST_CASES
+    if np.dtype(lhs_dtype).kind == 'i'
+]
+
+@cocotb.test()
+async def binary_op_vx(dut):
+    r = runfiles.Create()
+    fixture = await Fixture.Create(dut)
+    test_binaries = [
+        ("vadd_vx_test.elf", SAME_TYPE_TEST_CASES, np.add),
+        ("vsadd_vx_test.elf", SAME_TYPE_TEST_CASES, reference_sadd),
+        ("vsub_vx_test.elf", SAME_TYPE_TEST_CASES, np.subtract),
+        ("vssub_vx_test.elf", SAME_TYPE_TEST_CASES, reference_ssub),
+        # ("vrsub_vx_test.elf", SAME_TYPE_TEST_CASES, reference_rsub),
+        ("vmul_vx_test.elf", SAME_TYPE_TEST_CASES, np.multiply),
+        ("vmulh_vx_test.elf", SAME_TYPE_TEST_CASES, reference_vmulh),
+        ("vmin_vx_test.elf", SAME_TYPE_TEST_CASES, np.minimum),
+        ("vmax_vx_test.elf", SAME_TYPE_TEST_CASES, np.maximum),
+        ("vand_vx_test.elf", SAME_TYPE_TEST_CASES, np.bitwise_and),
+        ("vor_vx_test.elf", SAME_TYPE_TEST_CASES, np.bitwise_or),
+        ("vxor_vx_test.elf", SAME_TYPE_TEST_CASES, np.bitwise_xor),
+        ("vsll_vx_test.elf", SAME_TYPE_RHS_FORCED_UNSIGNED_TEST_CASES,
+                             reference_sll),
+        ("vsrl_vx_test.elf", UNSIGNED_ONLY_TEST_CASES, reference_srl),
+        ("vsra_vx_test.elf", SIGNED_LHS_UNSIGNED_RHS_ONLY_TEST_CASES,
+                             reference_sra),
+        ("vmulhsu_vx_test.elf", SIGNED_LHS_UNSIGNED_RHS_ONLY_TEST_CASES,
+                                reference_vmulh),
+    ]
+    with tqdm.tqdm(test_binaries) as pbar:
+        for test_binary_op_vx, test_cases, expected_fn in pbar:
+            pbar.set_postfix({'binary': test_binary_op_vx})
+            test_binary_path = r.Rlocation(
+                f"coralnpu_hw/tests/cocotb/rvv/arithmetics/{test_binary_op_vx}")
+
+            fn_names = list(set([x[0] for x in test_cases]))
+            await fixture.load_elf_and_lookup_symbols(
+                test_binary_path, ['vl', 'vs1', 'xs2', 'vd', 'impl'] + fn_names)
+
+            for test_fn_name, vlmax, vs1_dtype, xs2_dtype, vd_dtype in test_cases:
+                for vl in [1, vlmax-1, vlmax]:
+                    # Write random data to vs1 and xs2
+                    rng = np.random.default_rng()
+                    vs1_data = rng.integers(
+                        np.iinfo(vs1_dtype).min,
+                        np.iinfo(vs1_dtype).max + 1,
+                        size=vl,
+                        dtype=vs1_dtype)
+                    xs2_data = rng.integers(
+                        np.iinfo(xs2_dtype).min,
+                        np.iinfo(xs2_dtype).max + 1,
+                        size=1,
+                        dtype=xs2_dtype)
+
+                    await fixture.write('vl', np.array([vl], dtype=np.uint32))
+                    await fixture.write('vs1', vs1_data)
+                    await fixture.write('xs2', xs2_data.astype(np.uint32))
+                    await fixture.write('vd', np.zeros(128, dtype=np.uint8))
+
+                    # Execute the test function
+                    await fixture.write_ptr('impl', test_fn_name)
+                    await fixture.run_to_halt()
+
+                    # Read the result and assert
+                    expected_vd_data = expected_fn(vs1_data, xs2_data[0])
+                    actual_vd_data = (await fixture.read(
+                        'vd', vl*np.dtype(vd_dtype).itemsize)).view(vd_dtype)
+                    assert (actual_vd_data == expected_vd_data).all(), (
+                        f"binary: {test_binary_op_vx}, "
+                        f"test_fn_name: {test_fn_name}, "
+                        f"vs1: {vs1_data}, xs2: {xs2_data}, "
+                        f"expected: {expected_vd_data}, actual: {actual_vd_data}")
