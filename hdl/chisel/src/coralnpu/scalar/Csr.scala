@@ -296,6 +296,10 @@ class Csr(p: Parameters) extends Module {
 
   val fcsr = Cat(frm, fflags)
 
+  // TODO(b/452672880): Implement the dirty feature for fs and vs.
+  val fs = if (p.enableFloat) 1.U(2.W) else 0.U(2.W)
+  val vs = if (p.enableRvv) 1.U(2.W) else 0.U(2.W)
+
   // Decode the Index.
   val (csr_address, csr_address_valid) = CsrAddress.safe(req.bits.index)
   assert(!(req.valid && !csr_address_valid))
@@ -379,7 +383,7 @@ class Csr(p: Parameters) extends Module {
       fflagsEn    -> Cat(0.U(27.W), fflags),
       frmEn       -> Cat(0.U(29.W), frm),
       fcsrEn      -> Cat(0.U(24.W), fcsr),
-      mstatusEn   -> Cat(0.U(19.W), mpp, 0.U(11.W)),
+      mstatusEn   -> Cat(0.U(17.W), fs, mpp, vs, 0.U(9.W)),
       misaEn      -> misa,
       mieEn       -> Cat(0.U(31.W), mie),
       mtvecEn     -> mtvec,
