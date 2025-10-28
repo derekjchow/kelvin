@@ -16,6 +16,7 @@ load("@bazel_skylib//rules:common_settings.bzl", "string_list_flag")
 load("@lowrisc_opentitan_gh//rules:fusesoc.bzl", "fusesoc_build")
 load("//rules:coralnpu_v2.bzl", "coralnpu_v2_binary")
 load("//rules:utils.bzl", "cc_embed_data")
+load("@internal_check//:status.bzl", internal_exists = "FOLDER_EXISTS")
 
 package(default_visibility = ["//visibility:public"])
 
@@ -174,23 +175,31 @@ fusesoc_build(
 )
 
 _PREFIX = "../../../../../../../../.."
+DDR_CORES = [
+    "//internal/fpga/ip/ddr4:ddr4.core",
+    "//internal/fpga/ip/ddr4_phy:ddr4_phy.core",
+] if internal_exists else [
+    "//fpga/ip/ddr4_stub:ddr4_stub.core",
+]
+DDR_SRCS = [
+    "//internal/fpga/ip/ddr4:elf_files",
+    "//internal/fpga/ip/ddr4:rtl_files",
+    "//internal/fpga/ip/ddr4_phy:rtl_files",
+] if internal_exists else [
+    "//fpga/ip/ddr4_stub:rtl_files",
+]
 
 fusesoc_build(
     name = "build_chip_nexus_bitstream",
     srcs = CORALNPU_SOC_SRCS + [
-        "pins.xdc",
+        "pins_nexus.xdc",
         "vivado_setup_hooks.tcl",
         "vivado_hook_write_bitstream_post.tcl",
-        "//internal/fpga/ip/ddr4:elf_files",
-        "//internal/fpga/ip/ddr4:rtl_files",
-        "//internal/fpga/ip/ddr4_phy:rtl_files",
-    ],
+    ] + DDR_SRCS,
     cores = CORALNPU_SOC_CORES + [
         ":chip_nexus.core",
         "//fpga/ip/coralnpu_chisel_subsystem_default:coralnpu_chisel_subsystem_default.core",
-        "//internal/fpga/ip/ddr4:ddr4.core",
-        "//internal/fpga/ip/ddr4_phy:ddr4_phy.core",
-    ],
+    ] + DDR_CORES,
     flags = [
         "--ClockFrequencyMhz=" + _NEXUS_CLOCK_FREQUENCY_MHZ,
     ],
@@ -204,22 +213,18 @@ fusesoc_build(
     target = "synth",
     tags = ["manual"],
 )
+
 fusesoc_build(
     name = "build_chip_nexus_bitstream_highmem",
     srcs = CORALNPU_SOC_SRCS + [
-        "pins.xdc",
+        "pins_nexus.xdc",
         "vivado_setup_hooks.tcl",
         "vivado_hook_write_bitstream_post.tcl",
-        "//internal/fpga/ip/ddr4:elf_files",
-        "//internal/fpga/ip/ddr4:rtl_files",
-        "//internal/fpga/ip/ddr4_phy:rtl_files",
-    ],
+    ] + DDR_SRCS,
     cores = CORALNPU_SOC_CORES + [
         ":chip_nexus.core",
         "//fpga/ip/coralnpu_chisel_subsystem_highmem:coralnpu_chisel_subsystem_highmem.core",
-        "//internal/fpga/ip/ddr4:ddr4.core",
-        "//internal/fpga/ip/ddr4_phy:ddr4_phy.core",
-    ],
+    ] + DDR_CORES,
     flags = [
         "--ClockFrequencyMhz=" + _NEXUS_CLOCK_FREQUENCY_MHZ,
     ],

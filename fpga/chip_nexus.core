@@ -19,7 +19,7 @@ filesets:
   files_rtl:
     depend:
       - com.google.coralnpu:fpga:coralnpu_soc
-      - xilinx:ddr4_0:0.1
+      - xilinx:virtual:ddr4_0
     files:
       - rtl/chip_nexus.sv
       - rtl/clkgen_wrapper.sv
@@ -28,7 +28,7 @@ filesets:
 
   files_constraints:
     files:
-      - pins.xdc
+      - pins_nexus.xdc
     file_type: xdc
 
   files_tcl:

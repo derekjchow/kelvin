@@ -177,3 +177,10 @@ pip_parse(
 load("@tflm_pip_deps//:requirements.bzl", "install_deps")
 
 install_deps()
+
+load("@coralnpu_hw//rules:check_folder.bzl", "check_folder")
+check_folder(
+    name = "internal_check",
+    directory = "internal",
+    root_file = "//:BUILD.bazel",
+)
