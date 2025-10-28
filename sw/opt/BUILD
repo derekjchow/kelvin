@@ -16,11 +16,6 @@ package(default_visibility = ["//visibility:public"])
 
 cc_library(
     name = "rvv_opt",
-    hdrs = [
-        "rvv_opt.h",
-    ],
-    target_compatible_with = [
-        "//platforms/cpu:coralnpu_v2"
-        ],
-    alwayslink = True,
+    hdrs = ["rvv_opt.h"],
+    target_compatible_with = ["//platforms/cpu:coralnpu_v2"],
 )

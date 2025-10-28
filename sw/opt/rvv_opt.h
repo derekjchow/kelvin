@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef OPT_RVV_OPT_H
-#define OPT_RVV_OPT_H
+#ifndef SW_OPT_RVV_OPT_H_
+#define SW_OPT_RVV_OPT_H_
 
 #include <riscv_vector.h>
 
@@ -25,7 +25,7 @@ inline void* Memcpy(void* dst, const void* src, size_t n) {
   uint8_t* d = reinterpret_cast<uint8_t*>(dst);
   size_t vl = 0;
 
-  while (n > 64) {
+  while (n > 0) {
     vl = __riscv_vsetvl_e8m8(n);
     vuint8m8_t vload_data = __riscv_vle8_v_u8m8(s, vl);
     __riscv_vse8_v_u8m8(d, vload_data, vl);
@@ -34,33 +34,9 @@ inline void* Memcpy(void* dst, const void* src, size_t n) {
     n -= vl;
   }
 
-  switch ((n + 15) / 16) {
-    case 4:
-    case 3: {
-      // 64 - 30
-      vl = __riscv_vsetvl_e8m4(n);
-      vuint8m4_t vload_data = __riscv_vle8_v_u8m4(s, vl);
-      __riscv_vse8_v_u8m4(d, vload_data, vl);
-      break;
-    }
-    case 2: {
-      // 16 - 31
-      vl = __riscv_vsetvl_e8m2(n);
-      vuint8m2_t vload_data = __riscv_vle8_v_u8m2(s, vl);
-      __riscv_vse8_v_u8m2(d, vload_data, vl);
-      break;
-    }
-    case 1: {
-      vl = __riscv_vsetvl_e8m1(n);
-      vuint8m1_t vload_data = __riscv_vle8_v_u8m1(s, vl);
-      __riscv_vse8_v_u8m1(d, vload_data, vl);
-      break;
-    }
-  }
-
   return dst;
 }
 
 }  // namespace coralnpu_v2::opt
 
-#endif  // OPT_RVV_OPT_H
+#endif  // SW_OPT_RVV_OPT_H_
