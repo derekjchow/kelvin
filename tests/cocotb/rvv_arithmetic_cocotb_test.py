@@ -799,7 +799,7 @@ async def binary_op_vx(dut):
         ("vsadd_vx_test.elf", SAME_TYPE_TEST_CASES, reference_sadd),
         ("vsub_vx_test.elf", SAME_TYPE_TEST_CASES, np.subtract),
         ("vssub_vx_test.elf", SAME_TYPE_TEST_CASES, reference_ssub),
-        # ("vrsub_vx_test.elf", SAME_TYPE_TEST_CASES, reference_rsub),
+        ("vrsub_vx_test.elf", SAME_TYPE_TEST_CASES, reference_rsub),
         ("vmul_vx_test.elf", SAME_TYPE_TEST_CASES, np.multiply),
         ("vmulh_vx_test.elf", SAME_TYPE_TEST_CASES, reference_vmulh),
         ("vmin_vx_test.elf", SAME_TYPE_TEST_CASES, np.minimum),
