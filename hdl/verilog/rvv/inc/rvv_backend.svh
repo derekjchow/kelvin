@@ -50,6 +50,7 @@ typedef struct packed {
   logic [`VCSR_VXSAT_WIDTH-1:0] xsat;   // rvv dont need this bit, but output this to rvs
   RVVSEW                        sew;
   RVVLMUL                       lmul;
+  RVVLMUL                       lmul_orig;
 } RVVConfigState;
 
 // Enum to encode the major opcode of the instruction. See "Section 5. Vector

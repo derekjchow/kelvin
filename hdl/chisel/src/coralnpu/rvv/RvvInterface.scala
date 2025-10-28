@@ -25,7 +25,10 @@ class RvvConfigState(p: Parameters) extends Bundle {
   val ta = Output(Bool())
   val xrm = Output(UInt(2.W))
   val sew = Output(UInt(3.W))
+  // This may be reduced according to vl.
   val lmul = Output(UInt(3.W))
+  // This is the original one set in vset(i)vl(i)
+  val lmul_orig = Output(UInt(3.W))
   val vill = Output(Bool())
 
   /**
@@ -33,7 +36,7 @@ class RvvConfigState(p: Parameters) extends Bundle {
    * See section 3.4 of the RISC-V Vector Specification v1.0.
    */
   def vtype: UInt = {
-    Cat(vill, 0.U(23.W), ma, ta, sew, lmul)
+    Cat(vill, 0.U(23.W), ma, ta, sew, lmul_orig)
   }
 }
 

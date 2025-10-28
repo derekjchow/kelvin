@@ -22,7 +22,8 @@
 // module introduces one cycle of latency before putting the command into the
 // queue.
 module RvvFrontEnd#(parameter N = 4,
-                    parameter CAPACITYBITS=$clog2(2*N + 1))
+                    parameter CAPACITYBITS=$clog2(2*N + 1),
+                    parameter REDUCE_LMUL = 1)
 (
   input clk,
   input rstn,
@@ -133,6 +134,7 @@ module RvvFrontEnd#(parameter N = 4,
   logic [31:0] avl [N-1:0];
   logic [31:0] vlmax [N-1:0];
   logic is_setvl [N-1:0];
+  logic [`VL_WIDTH-1:0] vl_minus_one [N-1:0];
   always_comb begin
     inst_config_state[0] = config_state_q;
     inst_config_state[0].vstart = vstart_i;
@@ -157,7 +159,7 @@ module RvvFrontEnd#(parameter N = 4,
             default: avl[i] = reg_read_data_i[2*i];  // rs1 != x0
           endcase
 
-          inst_config_state[i+1].lmul = RVVLMUL'(inst_q[i].bits[15:13]);
+          inst_config_state[i+1].lmul_orig = RVVLMUL'(inst_q[i].bits[15:13]);
           inst_config_state[i+1].sew = RVVSEW'(inst_q[i].bits[18:16]);
           inst_config_state[i+1].ta = inst_q[i].bits[19];
           inst_config_state[i+1].ma = inst_q[i].bits[20];
@@ -165,7 +167,7 @@ module RvvFrontEnd#(parameter N = 4,
         end else if (inst_q[i].bits[24:23] == 2'b11) begin  // vsetivli
           avl[i] =
               {{(`VL_WIDTH - 5){1'b0}}, inst_q[i].bits[12:8]};
-          inst_config_state[i+1].lmul = RVVLMUL'(inst_q[i].bits[15:13]);
+          inst_config_state[i+1].lmul_orig = RVVLMUL'(inst_q[i].bits[15:13]);
           inst_config_state[i+1].sew = RVVSEW'(inst_q[i].bits[18:16]);
           inst_config_state[i+1].ta = inst_q[i].bits[19];
           inst_config_state[i+1].ma = inst_q[i].bits[20];
@@ -179,7 +181,7 @@ module RvvFrontEnd#(parameter N = 4,
             endcase
             default: avl[i] = reg_read_data_i[2*i];  // rs1 != x0
           endcase
-          inst_config_state[i+1].lmul =
+          inst_config_state[i+1].lmul_orig =
               RVVLMUL'(reg_read_data_i[(2*i) + 1][2:0]);
           inst_config_state[i+1].sew =
               RVVSEW'(reg_read_data_i[(2*i) + 1][5:3]);
@@ -193,20 +195,20 @@ module RvvFrontEnd#(parameter N = 4,
         // Compute legality of vtype.
         unique case (inst_config_state[i+1].sew)
           SEW8:
-            unique case(inst_config_state[i+1].lmul)
+            unique case(inst_config_state[i+1].lmul_orig)
               LMULRESERVED: inst_config_state[i+1].vill = 1;
               LMUL1_8: inst_config_state[i+1].vill = 1;
               default: inst_config_state[i+1].vill = 0;
             endcase
           SEW16:
-            unique case(inst_config_state[i+1].lmul)
+            unique case(inst_config_state[i+1].lmul_orig)
               LMULRESERVED: inst_config_state[i+1].vill = 1;
               LMUL1_8: inst_config_state[i+1].vill = 1;
               LMUL1_4: inst_config_state[i+1].vill = 1;
               default: inst_config_state[i+1].vill = 0;
             endcase
           SEW32:
-            unique case(inst_config_state[i+1].lmul)
+            unique case(inst_config_state[i+1].lmul_orig)
               LMULRESERVED: inst_config_state[i+1].vill = 1;
               LMUL1_8: inst_config_state[i+1].vill = 1;
               LMUL1_4: inst_config_state[i+1].vill = 1;
@@ -217,7 +219,7 @@ module RvvFrontEnd#(parameter N = 4,
         endcase
 
         // Compute vl to set (saturating with necessary)
-        unique case (inst_config_state[i+1].lmul)
+        unique case (inst_config_state[i+1].lmul_orig)
           LMUL1_8: vlmax[i] = ((`VLENB)/8) >> inst_config_state[i+1].sew;
           LMUL1_4: vlmax[i] = ((`VLENB)/4) >> inst_config_state[i+1].sew;
           LMUL1_2: vlmax[i] = ((`VLENB)/2) >> inst_config_state[i+1].sew;
@@ -236,6 +238,79 @@ module RvvFrontEnd#(parameter N = 4,
           inst_config_state[i+1].vl = vlmax[i];
         end else begin
           inst_config_state[i+1].vl = avl[i];
+        end
+
+        inst_config_state[i+1].lmul = inst_config_state[i+1].lmul_orig;
+
+        // TODO: filter out illegal lmul for widening ALU ops and non-indexed
+        // LSU ops where eew>sew.
+        if (REDUCE_LMUL) begin
+          // We use vl here, it's guaranteed to be <= vlmax. This operation
+          // should either reduce lmul or keep it untouched.
+          // We don't need to worry about eew&emul here:
+          // - the current sew&lmul is valid (does not lead to emul>8) and
+          //   we don't increase it, so we cannot generate emul>8.
+          // - we must keep lmul valid for the current sew, like lmul>=m1 for
+          //   sew=e32. The resulting enul must also be valid.
+          vl_minus_one[i] = (inst_config_state[i+1].vl == (`VL_WIDTH)'('b0)) ?
+              (`VL_WIDTH)'('b0) :
+              inst_config_state[i+1].vl - (`VL_WIDTH)'('b1);
+          unique case (inst_config_state[i+1].sew)
+            SEW8: begin
+              if (vl_minus_one[i][`VL_WIDTH-2+:2] != 'b00) begin
+                // vl from VLEN/2+1 to VLEN
+                inst_config_state[i+1].lmul = LMUL8;
+              end else if (vl_minus_one[i][`VL_WIDTH-3] == 'b1) begin
+                // vl from VLEN/4+1 to VLEN/2
+                inst_config_state[i+1].lmul = LMUL4;
+              end else if (vl_minus_one[i][`VL_WIDTH-4] == 'b1) begin
+                // vl from VLEN/8+1 to VLEN/4
+                inst_config_state[i+1].lmul = LMUL2;
+              end else if (vl_minus_one[i][`VL_WIDTH-5] == 'b1) begin
+                // vl from VLEN/16+1 to VLEN/8
+                inst_config_state[i+1].lmul = LMUL1;
+              end else if (vl_minus_one[i][`VL_WIDTH-6] == 'b1) begin
+                // vl from VLEN/32+1 to VLEN/16
+                inst_config_state[i+1].lmul = LMUL1_2;
+              end else begin
+                // vl from 0 to VLEN/32
+                inst_config_state[i+1].lmul = LMUL1_4;
+              end
+            end
+            SEW16: begin
+              if (vl_minus_one[i][`VL_WIDTH-3+:2] != 'b00) begin
+                // vl from VLEN/4+1 to VLEN/2
+                inst_config_state[i+1].lmul = LMUL8;
+              end else if (vl_minus_one[i][`VL_WIDTH-4] == 'b1) begin
+                // vl from VLEN/8+1 to VLEN/4
+                inst_config_state[i+1].lmul = LMUL4;
+              end else if (vl_minus_one[i][`VL_WIDTH-5] == 'b1) begin
+                // vl from VLEN/16+1 to VLEN/8
+                inst_config_state[i+1].lmul = LMUL2;
+              end else if (vl_minus_one[i][`VL_WIDTH-6] == 'b1) begin
+                // vl from VLEN/32+1 to VLEN/16
+                inst_config_state[i+1].lmul = LMUL1;
+              end else begin
+                // vl from 0 to VLEN/32
+                inst_config_state[i+1].lmul = LMUL1_2;
+              end
+            end
+            SEW32: begin
+              if (vl_minus_one[i][`VL_WIDTH-4+:2] != 'b00) begin
+                // vl from VLEN/8+1 to VLEN/4
+                inst_config_state[i+1].lmul = LMUL8;
+              end else if (vl_minus_one[i][`VL_WIDTH-5] == 'b1) begin
+                // vl from VLEN/16+1 to VLEN/8
+                inst_config_state[i+1].lmul = LMUL4;
+              end else if (vl_minus_one[i][`VL_WIDTH-6] == 'b1) begin
+                // vl from VLEN/32+1 to VLEN/16
+                inst_config_state[i+1].lmul = LMUL2;
+              end else begin
+                // vl from 0 to VLEN/32
+                inst_config_state[i+1].lmul = LMUL1;
+              end
+            end
+          endcase
         end
       end
     end
