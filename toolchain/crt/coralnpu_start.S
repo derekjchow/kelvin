@@ -109,9 +109,3 @@ success:
         .word 0x08000073 # mpause
 loop:
         j    loop
-
-        # Heap ptr for sbrk use
-        .section .data
-.globl _heap_ptr
-_heap_ptr:
-        .word __heap_start__

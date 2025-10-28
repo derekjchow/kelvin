@@ -124,8 +124,8 @@ extern "C" int _getpid(void) {
 }
 
 extern "C" void* _sbrk(int bytes) {
-  extern char* _heap_ptr;  // Set to __heap_start__ in coralnpu_start.S
-  extern char __heap_end__;
+  extern char __heap_start__, __heap_end__;
+  static char* _heap_ptr = &__heap_start__;
   char* prev_heap_end;
   if ((bytes < 0) || (_heap_ptr + bytes > &__heap_end__)) {
     errno = ENOMEM;
