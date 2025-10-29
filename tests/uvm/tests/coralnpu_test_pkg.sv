@@ -100,6 +100,33 @@ package coralnpu_test_pkg;
     endtask
   endclass
 
+  class coralnpu_pulse_irq_seq extends uvm_sequence #(irq_transaction);
+    `uvm_object_utils(coralnpu_pulse_irq_seq);
+
+    function new(string name = "coralnpu_pulse_irq_seq");
+        super.new(name);
+    endfunction
+
+    virtual task body();
+        irq_transaction req;
+        `uvm_info(get_type_name(), "Starting IRQ pulse", UVM_MEDIUM)
+
+        req = irq_transaction::type_id::create("req_irq_high");
+        start_item(req);
+        req.drive_irq = 1;
+        req.irq_level = 1;
+        finish_item(req);
+        `uvm_info(get_type_name(), "req_irq_high sent", UVM_LOW)
+
+        req = irq_transaction::type_id::create("req_irq_low");
+        start_item(req);
+        req.drive_irq = 1;
+        req.irq_level = 0;
+        finish_item(req);
+        `uvm_info(get_type_name(), "req_irq_low sent", UVM_LOW)
+    endtask
+  endclass
+
   //--------------------------------------------------------------------------
   // Class: coralnpu_base_test
   //--------------------------------------------------------------------------
@@ -172,6 +199,7 @@ package coralnpu_test_pkg;
 
     virtual task run_phase(uvm_phase phase);
       coralnpu_kickoff_write_seq kickoff_seq;
+      coralnpu_pulse_irq_seq pulse_irq_seq;
       phase.raise_objection(this, "Base test running");
 
       // Memory is loaded by $readmemh in tb_top before run phase starts.
@@ -194,6 +222,19 @@ package coralnpu_test_pkg;
           wait (irq_vif.halted == 1'b1 || irq_vif.fault == 1'b1);
           dut_halted_flag = irq_vif.halted;
           dut_faulted_flag = irq_vif.fault;
+        end
+        begin
+          forever begin
+            int delay;
+
+            wait (irq_vif.wfi == 1'b1);
+            if (!std::randomize(delay) with {delay inside {[0:1000]};}) begin
+              `uvm_error(get_type_name(), "Randomization of IRQ delay failed")
+            end
+            #(delay * 1ns);
+            pulse_irq_seq = coralnpu_pulse_irq_seq::type_id::create("pulse_irq_seq");
+            pulse_irq_seq.start(env.m_irq_agent.sequencer);
+          end
         end
         begin // Timeout mechanism
           #(test_timeout);
