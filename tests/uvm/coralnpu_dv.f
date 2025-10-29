@@ -28,12 +28,8 @@
 +incdir+./env
 +incdir+./tests
 +incdir+./tb
-+incdir+./rtl
 
 // --- Source Files ---
-
-// DUT RTL
-./rtl/RvvCoreMiniVerificationAxi.sv
 
 // Interfaces
 ./common/coralnpu_axi_master/coralnpu_axi_master_if.sv

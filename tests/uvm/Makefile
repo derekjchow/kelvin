@@ -19,12 +19,16 @@ ifndef CORALNPU_MPACT
     $(error CORALNPU_MPACT is not set. Please define it, e.g., export CORALNPU_MPACT=$(abspath ../../../coralnpu-mpact))
 endif
 
+# Generated RTL path
+BAZEL_BIN_DIR = $(shell bazel info bazel-bin)
+GENERATED_RTL_NAME = RvvCoreMiniVerificationAxi.sv
+GENERATED_RTL_SRC = $(BAZEL_BIN_DIR)/hdl/chisel/src/coralnpu/$(GENERATED_RTL_NAME)
+
 # User Configuration
 VCS = vcs
 CXX = clang++
 
 # UVM DV Directories
-RTL_DIR = ./rtl
 COMMON_DIR = ./common
 TB_DIR = ./tb
 ENV_DIR = ./env
@@ -92,10 +96,10 @@ endif
 
 # Targets
 
-.PHONY: all compile run clean dirs help build_mpact_lib gen_mem_files
+.PHONY: all compile run clean dirs help build_mpact_lib gen_mem_files rtl
 
-# Default target
-all: run
+# Default target, builds and then runs.
+all: compile run
 
 # Create necessary directories
 dirs:
@@ -112,14 +116,21 @@ gen_mem_files: dirs
 	@rm -f $(MEM_FILE_DIR)/*
 	python3 $(UTILS_DIR)/elf_to_mem.py --elf_file $(TEST_ELF) --out_dir $(MEM_FILE_DIR)
 
+# Generate the DUT RTL from Chisel source
+rtl:
+	@echo "--- Generating DUT RTL from Chisel ---"
+	bazel build //hdl/chisel/src/coralnpu:rvv_core_mini_verification_axi_cc_library_emit_verilog
+
 # Compile the design
-compile: dirs build_mpact_lib
+$(SIM_EXEC): $(FILE_LIST) dirs build_mpact_lib rtl
 	@echo "--- Compiling with VCS ---"
-	$(VCS) $(VCS_COMPILE_OPTS) -l $(LOG_DIR)/compile.log -f $(FILE_LIST)
+	$(VCS) $(VCS_COMPILE_OPTS) -l $(LOG_DIR)/compile.log -f $(FILE_LIST) $(GENERATED_RTL_SRC)
 	@echo "--- Compilation Finished ---"
 
+compile: $(SIM_EXEC)
+
 # Run the simulation
-run: compile gen_mem_files
+run: gen_mem_files
 	@echo "--- Running Simulation ---"
 	@echo "Test:      $(UVM_TESTNAME)"
 	@echo "ELF File:  $(TEST_ELF)"
@@ -137,15 +148,18 @@ endif
 clean:
 	@echo "--- Cleaning Simulation Files ---"
 	rm -rf $(SIM_DIR) simv* csrc* *.log* *.key *.vpd *.fsdb ucli.key DVEfiles/ verdiLog/ novas.*
+	bazel clean --expunge
 	@echo "--- Cleaning MPACT-Sim Bazel cache ---"
 	cd $(CORALNPU_MPACT) && bazel clean --expunge
 
 # Help
 help:
 	@echo "Makefile Targets:"
-	@echo "  make compile          : Builds MPACT lib and compiles DUT/testbench"
-	@echo "  make run              : Generates mem files, builds, and runs the simulation"
+	@echo "  make all              : Compiles and runs the default test (same as just 'make')."
+	@echo "  make compile          : Builds the simulator executable."
+	@echo "  make run              : Runs the simulation. Compiles first if the executable is missing or source files have changed."
 	@echo "                        :   Override defaults: make run UVM_TESTNAME=<test> TEST_ELF=<path> UVM_VERBOSITY=<level>"
+	@echo "  make rtl              : Generates the DUT Verilog from Chisel source"
 	@echo "  make build_mpact_lib  : Only builds the MPACT-Sim C++ library"
 	@echo "  make gen_mem_files    : Only generates ITCM/DTCM and run opt files"
 	@echo "  make clean            : Removes generated simulation and MPACT-Sim files"

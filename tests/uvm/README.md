@@ -26,24 +26,9 @@ This testbench provides a basic UVM environment to:
   source in the CoralNPU HW repository.
 * **RISC-V Toolchain:** A RISC-V toolchain compatible with the CoralNPU
   project is needed to generate the `.elf` file.
-
-## Generating the DUT (RvvCoreMiniVerificationAxi.sv)
-
-The Verilog file for the DUT needs to be generated from the Chisel source code
-located in the CoralNPU hardware repository.
-
-1.  Navigate to the root directory of your CoralNPU HW repository clone:
-    ```bash
-    cd /path/to/your/coralnpu/hw/repo
-    ```
-2.  Run the Bazel build command to emit the Verilog:
-    ```bash
-    bazel build //hdl/chisel/src/coralnpu:rvv_core_mini_verification_axi_cc_library_emit_verilog
-    ```
-3.  The Verilog file will be generated at:
-    `bazel-bin/hdl/chisel/src/coralnpu/RvvCoreMiniVerificationAxi.sv`
-4.  Copy this generated `RvvCoreMiniVerificationAxi.sv` file to the `rtl/`
-    directory within this testbench structure.
+* **CoralNPU MPACT Repository:** Set the `CORALNPU_MPACT` environment
+  variable to the absolute path of the `coralnpu-mpact` repository. This
+  is required for co-simulation.
 
 ## Generating the Test Binary (program.elf)
 
@@ -83,8 +68,6 @@ The testbench follows a standard UVM directory structure:
 │       └── transaction_item_pkg.sv
 ├── env/                     # UVM Environment definition
 │   └── coralnpu_env_pkg.sv
-├── rtl/                     # DUT RTL source file(s)
-│   └── RvvCoreMiniVerificationAxi.sv  # (Needs to be generated and copied)
 ├── tb/                      # Top-level testbench module
 │   └── coralnpu_tb_top.sv
 ├── tests/                   # UVM Tests and Sequences
@@ -99,14 +82,22 @@ The testbench follows a standard UVM directory structure:
 
 The provided `Makefile` simplifies the compilation and simulation process.
 
-**1. Compilation:**
+**1. Compiling the Simulator Executable:**
 
 * **Command:** `make compile`
-* **Action:** Creates necessary directories (`sim_work`, `logs`, `waves`), and
-  compiles the DUT and testbench using VCS based on `coralnpu_dv.f`. Creates
-  the `sim_work/simv` executable.
+* **Action:**
+    * Creates necessary directories (`sim_work`, `logs`, `waves`).
+    * Generates the DUT Verilog from Chisel sources.
+    * Builds the MPACT co-simulation C++ library.
+    * Compiles the DUT and testbench SystemVerilog files using VCS based on `coralnpu_dv.f`.
+    * Creates the `sim_work/simv` executable.
+*   Users should run `make compile` whenever modifying SystemVerilog (`.sv`),
+    Chisel (`.scala`), or C++ (`.cpp`) source files that are part of the
+    DUT or testbench.
 * **Expected Output:**
     ```
+    --- Checking MPACT-Sim Co-sim Library dependencies ---
+    --- Checking RTL source dependencies ---
     --- Compiling with VCS ---
     Chronologic VCS simulator copyright 1991-202X
     Contains Synopsys proprietary information.
@@ -132,8 +123,13 @@ The provided `Makefile` simplifies the compilation and simulation process.
              UVM_VERBOSITY=UVM_HIGH
     ```
     * Overrides the default test name, binary path, and verbosity level.
-* **Action:** Executes the compiled `simv` executable with the specified UVM
-  runtime options.
+* **Action:**
+  * Generates memory initialization files (`.mem`) and runtime options
+    (`elf_run_opts.f`) from the specified `TEST_ELF` (this always runs).
+  * Executes the *already compiled* `simv` executable with the specified UVM runtime options.
+  * Users should run `make run` after `make compile` has successfully
+    finished, or when only the `TEST_ELF` file changes and recompilation
+    is not needed.
 * **Expected Output:**
     ```
     --- Running Simulation ---
@@ -165,17 +161,26 @@ The provided `Makefile` simplifies the compilation and simulation process.
     * If enabled, a waveform file (`sim_work/waves/<testname>.fsdb`) will be
       generated.
 
-**3. Cleaning:**
+**3. Combined Compile and Run:**
+
+* **Command:** `make all` (or simply `make`)
+* **Action:** This command first runs `make compile` to ensure the simulator
+  executable is up-to-date, then runs `make run`. This is a convenient
+  way to perform a full build and run.
+
+**4. Cleaning:**
 
 * **Command:** `make clean`
 * **Action:** Removes the `sim_work` directory and other simulation-generated
-  files (`simv`, `csrc`, logs, waveforms, etc.). `coralnpu_dv.f` is *not*
-  removed if it's checked in.
+  files (`simv`, `csrc`, logs, waveforms, etc.). It also cleans Bazel
+  caches for the MPACT library and generated RTL.
 * **Expected Output:**
     ```
     --- Cleaning Simulation Files ---
     rm -rf sim_work simv* csrc* *.log* *.key *.vpd *.fsdb ucli.key DVEfiles/ \
            verdiLog/ novas.*
+    --- Cleaning MPACT-Sim Bazel cache ---
+    ... (Bazel clean messages) ...
     ```
 
 This README should help you get started with compiling and running the basic
