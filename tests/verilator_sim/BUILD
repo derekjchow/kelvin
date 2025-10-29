@@ -296,24 +296,6 @@ cc_binary(
     ],
 )
 
-cc_binary(
-    name = "chai_sim",
-    srcs = [
-        "chai/chai_if.h",
-        "chai/chai_tb.cc",
-    ],
-    deps = [
-        ":coralnpu_if",
-        ":sim_libs",
-        "//hdl/chisel/src/chai:chai_cc_library",
-        "@com_google_absl//absl/flags:flag",
-        "@com_google_absl//absl/flags:parse",
-        "@com_google_absl//absl/flags:usage",
-        "@com_google_absl//absl/log",
-        "@com_google_absl//absl/log:check",
-    ],
-)
-
 cc_test(
     name = "dbus2axi_tb",
     srcs = [

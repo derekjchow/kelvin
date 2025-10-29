@@ -33,9 +33,6 @@ verilog_library(
     name = "clock_gate",
     srcs = ["ClockGate.sv"],
     visibility = ["//visibility:public"],
-    deps = [
-        "//third_party/ip/lowrisc:prim_clock_gate",
-    ],
 )
 
 verilog_library(
@@ -63,23 +60,4 @@ verilog_library(
     name = "sram_1rw_256x288",
     srcs = ["Sram_1rwm_256x288.v"],
     visibility = ["//visibility:public"],
-)
-
-verilog_library(
-    name = "tlul_adapter_sram",
-    srcs = ["TlulAdapterSram.sv"],
-    visibility = ["//visibility:public"],
-    deps = [
-        "//third_party/ip/lowrisc:prim",
-        "//third_party/ip/lowrisc:tlul_adapter_sram",
-    ],
-)
-
-verilog_library(
-    name = "uart",
-    srcs = ["Uart.sv"],
-    visibility = ["//visibility:public"],
-    deps = [
-        "//third_party/ip/lowrisc:uart",
-    ],
 )
