@@ -316,6 +316,8 @@ module coralnpu_tb_top;
         .VLEN(128), .NHART(1), .RETIRE(8)))::set(null,
         "*.env.m_rvvi_agent*", "rvvi_vif", rvvi_vif);
 
+    uvm_config_db#(time)::set(null, "*", "clk_period", CLK_PERIOD);
+
     // Run the test
     run_test();
   end

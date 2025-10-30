@@ -118,6 +118,7 @@ package coralnpu_test_pkg;
 
     virtual coralnpu_irq_if.DUT_IRQ_PORT irq_vif;
     uvm_event tohost_written_event;
+    time clk_period;
 
     function new(string name = "coralnpu_base_test", uvm_component parent = null);
       super.new(name, parent);
@@ -163,6 +164,9 @@ package coralnpu_test_pkg;
       if (irq_vif == null)
         `uvm_fatal(get_type_name(), "IRQ VIF 'irq_vif' is null")
 
+      if (!uvm_config_db#(time)::get(this, "", "clk_period", clk_period))
+        `uvm_fatal(get_type_name(), "clk_period not found in config_db")
+
       `uvm_info(get_type_name(), "Build phase finished", UVM_MEDIUM)
     endfunction
 
@@ -198,7 +202,7 @@ package coralnpu_test_pkg;
       join_any
       disable fork;
 
-      #100ns;
+      #(clk_period/2);
 
       `uvm_info(get_type_name(), "Run phase finishing", UVM_MEDIUM)
       phase.drop_objection(this, "Base test finished");
