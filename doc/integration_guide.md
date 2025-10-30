@@ -214,3 +214,36 @@ uint32_t status = *coralnpu_status_csr;
 bool halted = status & 1;
 bool fault = status & 2;
 ```
+
+# CoralNPU CSRs
+Note: These are CSRs that are intended to be read or written externally
+to CoralNPU, e.g. by the host processor in a system.
+They are not the same as the RISC-V CSRs accessed via the Zicsr ISA extension.
+
+### Register: `RESET_CONTROL`
+*   **Offset**: `0x0`
+*   **Description**: Controls reset and clock gating for the CoralNPU core. On power-up, the core is held in reset with its clock gated. To start the core, the clock gate should be released first, followed by de-asserting reset.
+
+| Bits  | Name         | Description                                                                                             | Access | Reset Value |
+| :---- | :----------- | :------------------------------------------------------------------------------------------------------ | :----- | :---------- |
+| 0     | `RESET`      | When 1, the core is held in reset. When 0, the core is not in reset.                                    | R/W    | 1           |
+| 1     | `CLOCK_GATE` | When 1, the core's clock is gated. When 0, the core's clock is running.                                 | R/W    | 1           |
+| 31:2  | `RESERVED`   | Reserved, writes ignored, reads return 0.                                                               | R      | 0           |
+
+### Register: `PC_START`
+*   **Offset**: `0x4`
+*   **Description**: Sets the program counter for the CoralNPU core. This should be programmed before releasing the core from reset.
+
+| Bits  | Name            | Description                                         | Access | Reset Value |
+| :---- | :-------------- | :-------------------------------------------------- | :----- | :---------- |
+| 31:0  | `START_ADDRESS` | The address where the core will begin execution.    | R/W    | 0           |
+
+### Register: `STATUS`
+*   **Offset**: `0x8`
+*   **Description**: Provides status on the CoralNPU core. This is a read-only register.
+
+| Bits  | Name       | Description                                                              | Access | Reset Value |
+| :---- | :--------- | :----------------------------------------------------------------------- | :----- | :---------- |
+| 0     | `HALTED`   | When 1, the core has halted (e.g. after an `mpause` instruction).        | R      | 0           |
+| 1     | `FAULT`    | When 1, the core has encountered a fault.                                | R      | 0           |
+| 31:2  | `RESERVED` | Reserved, reads return 0.                                                | R      | 0           |
