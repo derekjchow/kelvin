@@ -71,8 +71,9 @@ async def core_mini_axi_basic_write_read_memory(dut):
 async def core_mini_axi_run_wfi_in_all_slots(dut):
     """Tests the WFI instruction in each of the 4 issue slots."""
     core_mini_axi = CoreMiniAxiInterface(dut)
-    cocotb.start_soon(core_mini_axi.clock.start())
     await core_mini_axi.init()
+    await core_mini_axi.reset()
+    cocotb.start_soon(core_mini_axi.clock.start())
     r = runfiles.Create()
 
     for slot in range(0,4):
@@ -182,6 +183,7 @@ async def core_mini_axi_finish_txn_before_halt_test(dut):
 async def core_mini_axi_riscv_tests(dut):
   core_mini_axi = CoreMiniAxiInterface(dut)
   await core_mini_axi.init()
+  await core_mini_axi.reset()
   cocotb.start_soon(core_mini_axi.clock.start())
   r = runfiles.Create()
 
@@ -199,6 +201,7 @@ async def core_mini_axi_riscv_tests(dut):
 async def core_mini_axi_riscv_dv(dut):
   core_mini_axi = CoreMiniAxiInterface(dut)
   await core_mini_axi.init()
+  await core_mini_axi.reset()
   cocotb.start_soon(core_mini_axi.clock.start())
   r = runfiles.Create()
 
@@ -295,8 +298,11 @@ async def core_mini_axi_coralnpu_isa_test(dut):
 async def core_mini_axi_rand_instr_test(dut):
   core_mini_axi = CoreMiniAxiInterface(dut)
   await core_mini_axi.init()
+  await core_mini_axi.reset()
   cocotb.start_soon(core_mini_axi.clock.start())
 
+  # Zero out memory to avoid xprop issues on jump instructions.
+  await core_mini_axi.write(0, np.ones(0x2000, dtype=np.uint8))
 
   for _ in tqdm.tqdm(range(1000)):
     instr = np.random.randint(0, 2**32, 1, dtype=np.uint32)
