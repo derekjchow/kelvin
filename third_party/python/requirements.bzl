@@ -55,9 +55,9 @@ def install_deps():
     http_archive(
         name = "coralnpu_pip_deps_cocotb",
         urls = [
-            "https://storage.googleapis.com/shodan-public-artifacts/cocotb-2.0.0.dev0-cp39-cp39-linux_x86_64.whl",
+            "https://files.pythonhosted.org/packages/bd/f7/a999492f0dc19af81b1214d8b4fd98159990062315771262d1dca39837ca/cocotb-2.0.0-cp311-cp311-manylinux_2_17_x86_64.manylinux2014_x86_64.whl",
         ],
-        sha256 = "a37aee75565a1bcb5a7398f5331703cc5891e8dd526156b621ea479c6f4ec507",
+        sha256 = "3b8f38037988e1b52e5f44547be748ccce2d8e955d349fb510434a27ad6230b2",
         type = "zip",
         build_file_content = _build_file_content(
             pypi_name = "cocotb",
@@ -82,9 +82,9 @@ def install_deps():
     http_archive(
         name = "coralnpu_pip_deps_numpy",
         urls = [
-            "https://files.pythonhosted.org/packages/87/d3/74e627205462a170f39e7d7ddd2b4166a0d8ab163377592c7f4fa935cc8c/numpy-2.0.0-cp39-cp39-manylinux_2_17_x86_64.manylinux2014_x86_64.whl",
+            "https://files.pythonhosted.org/packages/bb/32/67e3b0f07b0aba57a078c4ab777a9e8e6bc62f24fb53a2337f75f9691699/numpy-2.3.4-cp311-cp311-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl",
         ],
-        sha256 = "821eedb7165ead9eebdb569986968b541f9908979c2da8a4967ecac4439bae3d",
+        sha256 = "a7b2f9a18b5ff9824a6af80de4f37f4ec3c2aab05ef08f51c77a093f5b89adda",
         type = "zip",
         build_file_content = _build_file_content(pypi_name = "numpy", pypi_version = "2.0.0"),
     )
@@ -203,9 +203,9 @@ def install_deps():
     http_archive(
         name = "coralnpu_pip_deps_pyyaml",
         urls = [
-            "https://files.pythonhosted.org/packages/3d/32/e7bd8535d22ea2874cef6a81021ba019474ace0d13a4819c2a4bce79bd6a/PyYAML-6.0.2-cp39-cp39-manylinux_2_17_x86_64.manylinux2014_x86_64.whl",
+            "https://files.pythonhosted.org/packages/71/60/917329f640924b18ff085ab889a11c763e0b573da888e8404ff486657602/pyyaml-6.0.3-cp311-cp311-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl",
         ],
-        sha256 = "3b1fdb9dc17f5a7677423d508ab4f243a726dea51fa5e70992e59a7411c89d19",
+        sha256 = "b8bb0864c5a28024fac8a632c443c87c5aa6f215c0b126c449ae1a150412f31d",
         type = "zip",
         build_file_content = _build_file_content(pypi_name = "PyYAML", pypi_version = "6.0.2"),
     )
@@ -293,9 +293,9 @@ def install_deps():
     http_archive(
         name = "coralnpu_pip_deps_libusb_package",
         urls = [
-            "https://files.pythonhosted.org/packages/23/90/a5bd0f6b656e39177f1848192d54bda3b2f2c55ea36609f7ccc3f0425642/libusb_package-1.0.26.3-cp39-cp39-manylinux_2_17_x86_64.manylinux2014_x86_64.whl",
+            "https://files.pythonhosted.org/packages/c9/0f/fd203fb1fa5eda1d446f345d84205f23533767e6ef837a7c77a2599d5783/libusb_package-1.0.26.3-cp311-cp311-manylinux_2_17_x86_64.manylinux2014_x86_64.whl",
         ],
-        sha256 = "ba0f04df25340349137ac3e857a9221ecc189941c36cb103d988bf2cac8bb8d9",
+        sha256 = "80a2041331c087d5887969405837f86c8422120fe9ba3e6faa44bf4810f07b71",
         type = "zip",
         build_file_content = _build_file_content(pypi_name = "libusb_package", pypi_version = "1.0.26.3"),
     )

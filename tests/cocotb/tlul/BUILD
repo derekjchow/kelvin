@@ -405,6 +405,7 @@ cocotb_test_suite(
     tests_kwargs = {
         "hdl_toplevel": "CoralNPUChiselSubsystemTestHarness",
         "waves": True,
+        "size": "enormous",
         "seed": "42",
         "test_module": ["test_subsystem.py"],
         "deps": [

@@ -27,17 +27,17 @@ async def setup_dut(dut, spi_master):
     dut.io_spi_csb.value = 1  # Start with chip select inactive
     dut.reset.value = 1
     await spi_master.start_clock()
-    await ClockCycles(dut.clock, 5) # Ensure reset assertion is sampled
+    await ClockCycles(dut.clock, 6) # Ensure reset assertion is sampled
     dut.reset.value = 0
-    await ClockCycles(dut.clock, 5) # Ensure reset de-assertion is sampled
+    await ClockCycles(dut.clock, 6) # Ensure reset de-assertion is sampled
     await spi_master.stop_clock()
     await RisingEdge(dut.clock)
 
 @cocotb.test()
 async def test_register_read_write(dut):
     # Start the main clock
-    clock = Clock(dut.clock, 10)
-    cocotb.start_soon(clock.start())
+    clock = Clock(dut.clock, 10,  "ns")
+    clock.start()
 
     spi_master = SPIMaster(
         clk=dut.io_spi_clk,
@@ -63,8 +63,8 @@ async def test_register_read_write(dut):
 async def test_tlul_read(dut):
     """Tests back-to-back TileLink UL read transactions initiated via SPI."""
     # Start the main clock
-    clock = Clock(dut.clock, 10)
-    cocotb.start_soon(clock.start())
+    clock = Clock(dut.clock, 10,  "ns")
+    clock.start()
 
     spi_master = SPIMaster(
         clk=dut.io_spi_clk,
@@ -141,8 +141,8 @@ async def test_tlul_read(dut):
 async def test_tlul_multi_beat_read(dut):
     """Tests a multi-beat TileLink UL read transaction initiated via SPI."""
     # Start the main clock
-    clock = Clock(dut.clock, 10)
-    cocotb.start_soon(clock.start())
+    clock = Clock(dut.clock, 10,  "ns")
+    clock.start()
 
     spi_master = SPIMaster(
         clk=dut.io_spi_clk,
@@ -225,8 +225,8 @@ async def test_tlul_multi_beat_read(dut):
 async def test_tlul_write(dut):
     """Tests back-to-back TileLink UL write transactions initiated via SPI."""
     # Start the main clock
-    clock = Clock(dut.clock, 10)
-    cocotb.start_soon(clock.start())
+    clock = Clock(dut.clock, 10,  "ns")
+    clock.start()
 
     spi_master = SPIMaster(
         clk=dut.io_spi_clk,
@@ -305,8 +305,8 @@ async def test_tlul_write(dut):
 async def test_tlul_multi_beat_write(dut):
     """Tests a multi-beat TileLink UL write transaction initiated via SPI."""
     # Start the main clock
-    clock = Clock(dut.clock, 10)
-    cocotb.start_soon(clock.start())
+    clock = Clock(dut.clock, 10,  "ns")
+    clock.start()
 
     spi_master = SPIMaster(
         clk=dut.io_spi_clk,
@@ -383,8 +383,8 @@ async def test_tlul_multi_beat_write(dut):
 
 @cocotb.test()
 async def test_packed_write_transaction(dut):
-    clock = Clock(dut.clock, 10)
-    cocotb.start_soon(clock.start())
+    clock = Clock(dut.clock, 10,  "ns")
+    clock.start()
 
     spi_master = SPIMaster(
         clk=dut.io_spi_clk,
@@ -432,8 +432,8 @@ async def test_packed_write_transaction(dut):
 async def test_tlul_bulk_write(dut):
     """Tests a TileLink UL write transaction initiated via the new bulk SPI write."""
     # Start the main clock
-    clock = Clock(dut.clock, 10)
-    cocotb.start_soon(clock.start())
+    clock = Clock(dut.clock, 10,  "ns")
+    clock.start()
 
     spi_master = SPIMaster(
         clk=dut.io_spi_clk,
@@ -509,8 +509,8 @@ async def test_tlul_bulk_write(dut):
 async def test_tlul_bulk_read(dut):
     """Tests a TileLink UL read transaction initiated via SPI and read via the new bulk SPI read."""
     # Start the main clock
-    clock = Clock(dut.clock, 10)
-    cocotb.start_soon(clock.start())
+    clock = Clock(dut.clock, 10,  "ns")
+    clock.start()
 
     spi_master = SPIMaster(
         clk=dut.io_spi_clk,
@@ -591,8 +591,8 @@ async def test_tlul_bulk_read(dut):
 async def test_large_tlul_transfer(dut):
     """Verify increasingly large transfers (up to 16KB) via Spi2TLUL."""
     # Start the main clock
-    clock = Clock(dut.clock, 10)
-    cocotb.start_soon(clock.start())
+    clock = Clock(dut.clock, 10,  "ns")
+    clock.start()
 
     spi_master = SPIMaster(
         clk=dut.io_spi_clk,
@@ -730,8 +730,8 @@ async def test_large_tlul_transfer(dut):
 @cocotb.test(timeout_time=300, timeout_unit="sec")
 async def test_large_packed_write_transaction(dut):
     """Tests a single large (4KB) packed write transaction."""
-    clock = Clock(dut.clock, 10)
-    cocotb.start_soon(clock.start())
+    clock = Clock(dut.clock, 10,  "ns")
+    clock.start()
 
     spi_master = SPIMaster(
         clk=dut.io_spi_clk,
@@ -785,8 +785,8 @@ async def test_large_packed_write_transaction(dut):
 @cocotb.test(timeout_time=400, timeout_unit="sec")
 async def test_large_pipelined_read(dut):
     """Tests two back-to-back large (2KB) read transactions."""
-    clock = Clock(dut.clock, 10)
-    cocotb.start_soon(clock.start())
+    clock = Clock(dut.clock, 10,  "ns")
+    clock.start()
 
     spi_master = SPIMaster(
         clk=dut.io_spi_clk,
@@ -883,8 +883,8 @@ async def test_large_pipelined_read(dut):
 @cocotb.test(timeout_time=500, timeout_unit="sec")
 async def test_large_write_then_pipelined_read(dut):
     """Tests a large write (4KB) followed by two pipelined reads (2KB each)."""
-    clock = Clock(dut.clock, 10)
-    cocotb.start_soon(clock.start())
+    clock = Clock(dut.clock, 10,  "ns")
+    clock.start()
 
     spi_master = SPIMaster(
         clk=dut.io_spi_clk,

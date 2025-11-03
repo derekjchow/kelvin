@@ -68,7 +68,7 @@ cocotb_test_suite(
     testcases = RUN_MOBILENET_TEST,
     testcases_vname = "RUN_MOBILENET_TEST",
     tests_kwargs = {
-        "waves": True,
+        "waves": False,
         "tags" : ["manual"],
         "hdl_toplevel": "RvvCoreMiniHighmemAxi",
         "seed": "42",

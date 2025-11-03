@@ -43,7 +43,7 @@ cocotb_test_suite(
     testcases = TUTORIAL_TESTCASES,
     testcases_vname = "TUTORIAL_TESTCASES",
     tests_kwargs = {
-        "waves": True,
+        "waves": False,
         "hdl_toplevel": "CoreMiniAxi",
         "seed": "42",
         "test_module": ["tutorial.py"],
@@ -73,7 +73,7 @@ cocotb_test_suite(
     testcases = HELLO_WORLD_TESTCASES,
     testcases_vname = "HELLO_WORLD_TESTCASES",
     tests_kwargs = {
-        "waves": True,
+        "waves": False,
         "hdl_toplevel": "CoreMiniAxi",
         "seed": "42",
         "test_module": ["hello_world_float_core_mini_axi.py"],

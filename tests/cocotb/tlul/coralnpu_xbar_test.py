@@ -40,7 +40,7 @@ TIMEOUT_CYCLES = 500
 async def setup_dut(dut):
     """Common setup logic for all tests."""
     # Start the main clock
-    clock = Clock(dut.clock, 5)
+    clock = Clock(dut.clock, 6)
     cocotb.start_soon(clock.start())
 
     # Start the asynchronous test clock

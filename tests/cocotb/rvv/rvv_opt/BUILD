@@ -55,7 +55,7 @@ cocotb_test_suite(
     testcases = RUN_RVV_OPT_TESTS,
     testcases_vname = "RUN_RVV_OPT_TESTS",
     tests_kwargs = {
-        "waves": True,
+        "waves": False,
         "hdl_toplevel": "RvvCoreMiniAxi",
         "seed": "42",
         "test_module": ["cocotb_rvv_opt_test.py"],

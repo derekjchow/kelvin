@@ -26,7 +26,7 @@ class SPIMaster:
         self.miso = miso
         self.main_clk = main_clk
         self.log = log
-        self.spi_clk_driver = Clock(self.clk, 10)
+        self.spi_clk_driver = Clock(self.clk, 10, "ns")
         self.clock_task = None
 
         # Initialize signal values
@@ -36,11 +36,10 @@ class SPIMaster:
 
     async def start_clock(self):
         if self.clock_task is None:
-            self.clock_task = cocotb.start_soon(self.spi_clk_driver.start())
-
+            self.clock_task = self.spi_clk_driver.start()
     async def stop_clock(self):
-        if self.clock_task:
-            self.clock_task.kill()
+        if self.clock_task is not None:
+            self.spi_clk_driver.stop()
             self.clock_task = None
             self.clk.value = 0
 

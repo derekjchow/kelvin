@@ -43,6 +43,7 @@ COCOTB_TEST_BINARY_TARGETS = glob(["**/*.elf"]) + glob(["**/*.o"]) + [
 
 verilator_cocotb_model(
     name = "core_mini_axi_model",
+    trace = False,
     cflags = VERILATOR_BUILD_ARGS,
     hdl_toplevel = "CoreMiniAxi",
     verilog_source = "//hdl/chisel/src/coralnpu:CoreMiniAxi.sv",
@@ -50,6 +51,7 @@ verilator_cocotb_model(
 
 verilator_cocotb_model(
     name = "core_mini_debug_axi_model",
+    trace = False,
     cflags = VERILATOR_BUILD_ARGS,
     hdl_toplevel = "CoreMiniDebugAxi",
     verilog_source = "//hdl/chisel/src/coralnpu:CoreMiniDebugAxi.sv",
@@ -57,6 +59,7 @@ verilator_cocotb_model(
 
 verilator_cocotb_model(
     name = "rvv_core_mini_axi_model",
+    trace = False,
     cflags = VERILATOR_BUILD_ARGS,
     hdl_toplevel = "RvvCoreMiniAxi",
     verilog_source = "//hdl/chisel/src/coralnpu:RvvCoreMiniAxi.sv",
@@ -64,6 +67,7 @@ verilator_cocotb_model(
 
 verilator_cocotb_model(
     name = "rvv_core_mini_highmem_axi_model",
+    trace = False,
     cflags = VERILATOR_BUILD_ARGS,
     hdl_toplevel = "RvvCoreMiniHighmemAxi",
     verilog_source = "//hdl/chisel/src/coralnpu:RvvCoreMiniHighmemAxi.sv",
@@ -110,7 +114,7 @@ RVV_CORE_MINI_AXI_SIM_TESTCASES = [
 # END_TESTCASES_FOR_rvv_core_mini_axi_sim_cocotb
 
 CORE_MINI_AXI_SIM_COMMON_TEST_KWARGS = {
-    "waves": True,
+   "waves": False,
     "seed": "42",
     "test_module": ["core_mini_axi_sim.py"],
     "deps": [
@@ -279,7 +283,7 @@ cocotb_test_suite(
     testcases_vname = "CORE_MINI_AXI_DEBUG_TESTCASES",
     tests_kwargs = {
         "hdl_toplevel": "CoreMiniDebugAxi",
-        "waves": True,
+       "waves": False,
         "seed": "42",
         "test_module": ["core_mini_axi_debug.py"],
         "size": "enormous",
@@ -318,7 +322,7 @@ cocotb_test_suite(
     testcases_vname = "RVV_ASSEMBLY_TESTCASES",
     tests_kwargs = {
         "hdl_toplevel": "RvvCoreMiniAxi",
-        "waves": True,
+       "waves": False,
         "seed": "42",
         "test_module": ["rvv_assembly_cocotb_test.py"],
         "deps": [
@@ -451,7 +455,7 @@ cocotb_test_suite(
     testcases_vname = "RVV_LOAD_STORE_TESTCASES",
     tests_kwargs = {
         "hdl_toplevel": "RvvCoreMiniAxi",
-        "waves": True,
+       "waves": False,
         "seed": "42",
         "test_module": ["rvv_load_store_test.py"],
         "deps": [
@@ -482,7 +486,7 @@ cocotb_test_suite(
     testcases_vname = "RVV_ARITHMETIC_TESTCASES",
     tests_kwargs = {
         "hdl_toplevel": "RvvCoreMiniAxi",
-        "waves": True,
+       "waves": False,
         "seed": "42",
         "test_module": ["rvv_arithmetic_cocotb_test.py"],
         "deps": [
@@ -525,7 +529,7 @@ cocotb_test_suite(
     testcases_vname = "RVV_ML_OPS_TESTCASES",
     tests_kwargs = {
         "hdl_toplevel": "RvvCoreMiniAxi",
-        "waves": True,
+       "waves": False,
         "seed": "42",
         "test_module": ["rvv_ml_ops_cocotb_test.py"],
         "deps": [

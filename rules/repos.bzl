@@ -58,9 +58,27 @@ def coralnpu_repos():
 
     http_archive(
         name = "rules_python",
-        urls = ["https://github.com/bazelbuild/rules_python/archive/912a5051f51581784fd64094f6bdabf93f6d698f.zip"],
-        sha256 = "a3e4b4ade7c4a52e757b16a16e94d0b2640333062180cba577d81fac087a501d",
-        strip_prefix = "rules_python-912a5051f51581784fd64094f6bdabf93f6d698f",
+        sha256 = "9d04041ac92a0985e344235f5d946f71ac543f1b1565f2cdbc9a2aaee8adf55b",
+        strip_prefix = "rules_python-0.26.0",
+        url = "https://github.com/bazelbuild/rules_python/archive/refs/tags/0.26.0.tar.gz",
+    )
+
+    http_archive(
+        name = "pybind11_bazel",
+        urls = ["https://github.com/pybind/pybind11_bazel/releases/download/v2.11.1/pybind11_bazel-2.11.1.tar.gz"],
+        strip_prefix = "pybind11_bazel-2.11.1",
+        sha256 = "e8355ee56c2ff772334b4bfa22be17c709e5573f6d1d561c7176312156c27bd4",
+    )
+
+
+def coralnpu_repos2():
+    """Coralnpu repos are split into two functions; this is to import repositories in order"""
+
+    http_archive(
+        name = "pybind11",
+        build_file = "@pybind11_bazel//:pybind11.BUILD",
+        strip_prefix = "pybind11-3.0.1",
+        urls = ["https://github.com/pybind/pybind11/archive/v3.0.1.zip"],
     )
 
     http_archive(
@@ -209,20 +227,4 @@ def tflite_repos():
         sha256 = "bacabfe758676fdc19e4bea7c4a3ac99c7e7378d259a9f1054d341c6a6b44ff6",
         strip_prefix = "bazel-compile-commands-extractor-1266d6a25314d165ca78d0061d3399e909b7920e",
         url = "https://github.com/hedronvision/bazel-compile-commands-extractor/archive/1266d6a25314d165ca78d0061d3399e909b7920e.tar.gz",
-    )
-
-    maybe(
-        http_archive,
-        name = "rules_python",
-        sha256 = "9d04041ac92a0985e344235f5d946f71ac543f1b1565f2cdbc9a2aaee8adf55b",
-        strip_prefix = "rules_python-0.26.0",
-        url = "https://github.com/bazelbuild/rules_python/archive/refs/tags/0.26.0.tar.gz",
-    )
-
-    maybe(
-        http_archive,
-        name = "pybind11_bazel",
-        strip_prefix = "pybind11_bazel-faf56fb3df11287f26dbc66fdedf60a2fc2c6631",
-        urls = ["https://github.com/pybind/pybind11_bazel/archive/faf56fb3df11287f26dbc66fdedf60a2fc2c6631.zip"],
-        sha256 = "a185aa68c93b9f62c80fcb3aadc3c83c763854750dc3f38be1dadcb7be223837",
     )

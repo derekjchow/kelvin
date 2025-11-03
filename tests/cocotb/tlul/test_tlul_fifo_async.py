@@ -22,7 +22,7 @@ from coralnpu_test_utils.TileLinkULInterface import TileLinkULInterface, create_
 async def setup_dut(dut):
     """Common setup for all tests."""
     h_clock = Clock(dut.io_clk_h_i, 10)
-    d_clock = Clock(dut.io_clk_d_i, 13)  # Asymmetric clocks
+    d_clock = Clock(dut.io_clk_d_i, 14)  # Asymmetric clocks
     cocotb.start_soon(h_clock.start())
     cocotb.start_soon(d_clock.start())
 

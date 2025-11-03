@@ -21,6 +21,7 @@ load(
     "cvfpu_repos",
     "fpga_repos",
     "coralnpu_repos",
+    "coralnpu_repos2",
     "rvvi_repos",
     "tflite_repos",
 )
@@ -39,6 +40,24 @@ rules_cc_dependencies()
 rules_cc_toolchains()
 
 coralnpu_repos()
+
+load("@rules_python//python:repositories.bzl", "py_repositories")
+
+py_repositories()
+
+load("@rules_python//python:repositories.bzl", "python_register_toolchains")
+
+python_register_toolchains(
+    name = "python311",
+    python_version = "3.11.6",
+)
+load("@pybind11_bazel//:python_configure.bzl", "python_configure")
+python_configure(
+    name = "local_config_python",
+    python_version = "3",
+    python_interpreter_target = "@python311_x86_64-unknown-linux-gnu//:python",
+)
+coralnpu_repos2()
 
 # Scala setup
 load("@io_bazel_rules_scala//:scala_config.bzl", "scala_config")
@@ -75,13 +94,6 @@ cvfpu_repos()
 
 rvvi_repos()
 
-load("@rules_python//python:repositories.bzl", "python_register_toolchains")
-
-python_register_toolchains(
-    name = "python39",
-    python_version = "3.9",
-)
-
 fpga_repos()
 
 load("@lowrisc_opentitan_gh//rules:nonhermetic.bzl", "nonhermetic_repo")
@@ -92,7 +104,7 @@ load("@rules_python//python:pip.bzl", "pip_parse")
 
 pip_parse(
     name = "ot_python_deps",
-    python_interpreter_target = "@python39_x86_64-unknown-linux-gnu//:python",
+    python_interpreter_target = "@python311_x86_64-unknown-linux-gnu//:python",
     requirements_lock = "@lowrisc_opentitan_gh//:python-requirements.txt",
 )
 
@@ -155,7 +167,7 @@ tf_micro_workspace()
 
 pip_parse(
     name = "tflm_pip_deps",
-    python_interpreter_target = "@python39_x86_64-unknown-linux-gnu//:python",
+    python_interpreter_target = "@python311_x86_64-unknown-linux-gnu//:python",
     requirements_lock = "@tflite_micro//third_party:python_requirements.txt",
 )
 
