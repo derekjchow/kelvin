@@ -41,7 +41,6 @@ case class CoreTlulParameters(
   enableRvv: Boolean,
   enableFetchL0: Boolean,
   fetchDataBits: Int,
-  enableVector: Boolean,
   enableFloat: Boolean,
   memoryRegions: Seq[MemoryRegion],
   tcmHighmem: Boolean,
@@ -93,7 +92,6 @@ class SoCChiselConfig(enableHighmem: Boolean) {
         enableRvv = true,
         enableFetchL0 = false,
         fetchDataBits = 128,
-        enableVector = false,
         enableFloat = true,
         memoryRegions = if (enableHighmem) {
           MemoryRegions.tcmHighmem

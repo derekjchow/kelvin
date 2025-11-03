@@ -43,7 +43,6 @@ class Axi2Sram(p: coralnpu.Parameters) extends Module {
   assert(p.axiSysIdBits == 7)
   assert(p.axiSysAddrBits == 32)
   assert(p.axiSysDataBits == 256 || p.axiSysDataBits == 128)
-  assert(p.vectorBits == 256)
   assert(p.axi0DataBits == 256 || p.axi0DataBits == 128)
   assert(p.axi1DataBits == 256 || p.axi1DataBits == 128)
   assert(p.axi2DataBits == 256 || p.axi2DataBits == 128)

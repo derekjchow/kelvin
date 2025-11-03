@@ -257,7 +257,6 @@ chisel_library(
     name = "coralnpu_base",
     srcs = [
         "DBus2Axi.scala",
-        "DBusMux.scala",
         "IBus2Axi.scala",
         "Interfaces.scala",
         "L1DCache.scala",
@@ -270,33 +269,6 @@ chisel_library(
         "//hdl/chisel/src/bus",
         "//hdl/chisel/src/common",
         "//hdl/chisel/src/common:fp",
-    ],
-)
-
-chisel_library(
-    name = "coralnpu_vector",
-    srcs = [
-        "vector/VAlu.scala",
-        "vector/VAluInt.scala",
-        "vector/VCmdq.scala",
-        "vector/VCommon.scala",
-        "vector/VConvAlu.scala",
-        "vector/VConvCtrl.scala",
-        "vector/VCore.scala",
-        "vector/VDecode.scala",
-        "vector/VDecodeInstruction.scala",
-        "vector/VDecodeOp.scala",
-        "vector/VDot.scala",
-        "vector/VEncodeOp.scala",
-        "vector/VInst.scala",
-        "vector/VLdSt.scala",
-        "vector/VRegfile.scala",
-        "vector/VRegfileSegment.scala",
-    ],
-    deps = [
-        ":coralnpu_base",
-        "//hdl/chisel/src/bus",
-        "//hdl/chisel/src/common",
     ],
 )
 
@@ -370,7 +342,6 @@ chisel_library(
         ":coralnpu_float",
         ":coralnpu_rvv",
         ":coralnpu_scalar",
-        ":coralnpu_vector",
         ":srams",
         "//hdl/chisel/src/bus",
         "//hdl/chisel/src/common",
@@ -412,7 +383,6 @@ chisel_cc_library(
         "VCoreScalar_parameters.h",
     ],
     gen_flags = [
-        "--enableVector=False",
         "--moduleName=CoreScalar",
     ],
     module_name = "CoreScalar",
@@ -430,7 +400,6 @@ chisel_cc_library(
         "--enableFetchL0=False",
         "--fetchDataBits=128",
         "--lsuDataBits=128",
-        "--enableVector=False",
         "--moduleName=CoreMini",
     ],
     module_name = "CoreMini",
@@ -449,7 +418,6 @@ template_rule(
                 "--enableFetchL0=False",
                 "--fetchDataBits=128",
                 "--lsuDataBits=128",
-                "--enableVector=False",
                 "--enableFloat=True",
                 "--moduleName=CoreMini",
                 "--useAxi",
@@ -466,7 +434,6 @@ template_rule(
                 "--enableFetchL0=False",
                 "--fetchDataBits=128",
                 "--lsuDataBits=128",
-                "--enableVector=False",
                 "--enableFloat=True",
                 "--moduleName=CoreMiniVerification",
                 "--useAxi",
@@ -503,7 +470,6 @@ chisel_cc_library(
         "--enableFetchL0=False",
         "--fetchDataBits=128",
         "--lsuDataBits=128",
-        "--enableVector=False",
         "--enableFloat=True",
         "--moduleName=CoreMiniHighmem",
         "--useAxi",
@@ -534,7 +500,6 @@ chisel_cc_library(
         "--enableFetchL0=False",
         "--fetchDataBits=128",
         "--lsuDataBits=128",
-        "--enableVector=False",
         "--enableDispatchV2=True",
         "--enableDebug=True",
         "--enableFloat=True",
@@ -594,7 +559,6 @@ RVV_CORE_MINI_AXI_COMMON_GEN_FLAGS = [
     "--enableFetchL0=False",
     "--fetchDataBits=128",
     "--lsuDataBits=128",
-    "--enableVector=False",
     "--enableRvv=True",
     "--enableFloat=True",
     "--useAxi",
@@ -614,7 +578,6 @@ template_rule(
                 "--enableFetchL0=False",
                 "--fetchDataBits=128",
                 "--lsuDataBits=128",
-                "--enableVector=False",
                 "--enableRvv=True",
                 "--enableFloat=True",
                 "--useTlul=True",
@@ -748,74 +711,4 @@ chisel_cc_library(
     verilog_deps = [
         "//hdl/verilog:sram_1rw_256x256",
     ],
-)
-
-chisel_cc_library(
-    name = "valu_cc_library",
-    chisel_lib = ":coralnpu",
-    emit_class = "coralnpu.EmitVAlu",
-    module_name = "VAlu",
-)
-
-chisel_cc_library(
-    name = "valuint_cc_library",
-    chisel_lib = ":coralnpu",
-    emit_class = "coralnpu.EmitVAluInt",
-    module_name = "VAluInt",
-)
-
-chisel_cc_library(
-    name = "vcmdq_cc_library",
-    chisel_lib = ":coralnpu",
-    emit_class = "coralnpu.EmitVCmdq",
-    module_name = "VCmdq",
-)
-
-chisel_cc_library(
-    name = "vconvalu_cc_library",
-    chisel_lib = ":coralnpu",
-    emit_class = "coralnpu.EmitVConvAlu",
-    module_name = "VConvAlu",
-)
-
-chisel_cc_library(
-    name = "vconvctrl_cc_library",
-    chisel_lib = ":coralnpu",
-    emit_class = "coralnpu.EmitVConvCtrl",
-    module_name = "VConvCtrl",
-)
-
-chisel_cc_library(
-    name = "vdecode_cc_library",
-    chisel_lib = ":coralnpu",
-    emit_class = "coralnpu.EmitVDecode",
-    module_name = "VDecode",
-)
-
-chisel_cc_library(
-    name = "vdecodeinstruction_cc_library",
-    chisel_lib = ":coralnpu",
-    emit_class = "coralnpu.EmitVDecodeInstruction",
-    module_name = "VDecodeInstruction",
-)
-
-chisel_cc_library(
-    name = "vldst_cc_library",
-    chisel_lib = ":coralnpu",
-    emit_class = "coralnpu.EmitVLdSt",
-    module_name = "VLdSt",
-)
-
-chisel_cc_library(
-    name = "vregfile_cc_library",
-    chisel_lib = ":coralnpu",
-    emit_class = "coralnpu.EmitVRegfile",
-    module_name = "VRegfile",
-)
-
-chisel_cc_library(
-    name = "vregfilesegment_cc_library",
-    chisel_lib = ":coralnpu",
-    emit_class = "coralnpu.EmitVRegfileSegment",
-    module_name = "VRegfileSegment",
 )

@@ -143,13 +143,6 @@ class DecodedInstruction(p: Parameters) extends Bundle {
   val zexth = Bool()
   val rori = Bool()
 
-  // Vector instructions.
-  val getvl = Bool()
-  val getmaxvl = Bool()
-  val vld = Bool()
-  val vst = Bool()
-  val viop = Bool()
-
   // Core controls.
   val ebreak = Bool()
   val ecall  = Bool()
@@ -193,7 +186,7 @@ class DecodedInstruction(p: Parameters) extends Bundle {
     float.map(f => f.valid && f.bits.opcode === FloatOpcode.STOREFP).getOrElse(false.B)
   }
   def isLsu(): Bool = {
-      isScalarLoad() || isScalarStore() || vld || vst || flushat || flushall ||
+      isScalarLoad() || isScalarStore() || flushat || flushall ||
       isFloatLoad() || isFloatStore() || (if (p.enableRvv) {
         rvv.get.valid && rvv.get.bits.isLoadStore()
       } else {
@@ -202,7 +195,6 @@ class DecodedInstruction(p: Parameters) extends Bundle {
   }
   def isMul(): Bool = { mul || mulh || mulhsu || mulhu }
   def isDvu(): Bool = { div || divu || rem || remu }
-  def isVector(): Bool = { vld || vst || viop || getvl || getmaxvl }
   def isFency(): Bool = { fencei || ebreak || wfi || mpause || flushat || flushall }
 
   // Instructions that should dispatch out of slot 0, with no other instructions
@@ -233,12 +225,12 @@ class DecodedInstruction(p: Parameters) extends Bundle {
 
   def readsRs1(): Bool = {
     isCondBr() || isAluReg() || isAluImm() || isAlu1Bit() || isAlu2Bit() ||
-    isCsr() || isMul() || isDvu() || slog || getvl || vld || vst || jalr || floatReadsRs1() ||
+    isCsr() || isMul() || isDvu() || slog || jalr || floatReadsRs1() ||
     (if (p.enableRvv) { rvv.get.valid && rvv.get.bits.readsRs1() } else { false.B })
   }
   def readsRs2(): Bool = {
     isCondBr() || isAluReg() || isAlu2Bit() || isScalarStore() || isCsrReg() ||
-    isMul() || isDvu() || slog || getvl || vld || vst || viop ||
+    isMul() || isDvu() || slog ||
     (if (p.enableRvv) { rvv.get.valid && rvv.get.bits.readsRs2() } else { false.B })
   }
 
@@ -315,12 +307,6 @@ class Dispatch(p: Parameters) extends Module {
     val rvvIdle = Option.when(p.enableRvv)(Input(Bool()))
     val rvvQueueCapacity = Option.when(p.enableRvv)(Input(UInt(4.W)))
 
-    // Vector interface, to maintain interface compatibility with old dispatch
-    // unit.
-    val vinst = if (p.enableVector) {
-      Some(Vec(p.instructionLanes, Decoupled(new VInstCmd)))
-    } else { None }
-
     val float = if (p.enableFloat) {
       Some(Decoupled(new FloatInstruction))
     } else { None }
@@ -337,17 +323,6 @@ class Dispatch(p: Parameters) extends Module {
 }
 
 class DispatchV2(p: Parameters) extends Dispatch(p) {
-  assert(!p.enableVector, "DispatchV2 does not support legacy vector core")
-  // Still need guard to tie-off
-  if (p.enableVector) {
-    for (i <- 0 until p.instructionLanes) {
-      io.vinst.get(i).valid := false.B
-      io.vinst.get(i).bits.op := VInstOp.VIOP
-      io.vinst.get(i).bits.addr := 0.U
-      io.vinst.get(i).bits.inst := 0.U
-    }
-  }
-
   // Decode instructions
   val decodedInsts = (0 until p.instructionLanes).map(i =>
     DecodeInstruction(p, i, io.inst(i).bits.addr, io.inst(i).bits.inst)
@@ -914,9 +889,6 @@ class DispatchV1(p: Parameters) extends Dispatch(p) {
   io.lsu <> decode.map(_.io.lsu)
   io.mlu <> decode.map(_.io.mlu)
   io.dvu <> decode.map(_.io.dvu)
-  if (p.enableVector) {
-    io.vinst.get <> decode.map(_.io.vinst.get)
-  }
   if (p.enableRvv) {
     io.rvv.get <> decode.map(_.io.rvv.get)
   }
@@ -980,11 +952,6 @@ class Decode(p: Parameters, pipeline: Int) extends Module {
     // Divide interface.
     val dvu = Decoupled(new DvuCmd)
 
-    // Vector interface.
-    val vinst = if (p.enableVector) {
-      Some(Decoupled(new VInstCmd))
-    } else { None }
-
     // Rvv interface.
     val rvv = if (p.enableRvv) {
       Some(Decoupled(new RvvCompressedInstruction))
@@ -1013,28 +980,15 @@ class Decode(p: Parameters, pipeline: Int) extends Module {
 
   val wfi = d.wfi
 
-  val vldst = d.vld || d.vst
-  val vldst_wb = vldst && io.inst.bits.inst(28)
-
-  val rdAddr  = Mux(vldst, io.inst.bits.inst(19,15), io.inst.bits.inst(11,7))
+  val rdAddr  = io.inst.bits.inst(11,7)
   val rs1Addr = io.inst.bits.inst(19,15)
   val rs2Addr = io.inst.bits.inst(24,20)
   val rs3Addr = io.inst.bits.inst(31,27)
 
-  val isVIop = if (p.enableVector) {
-    io.vinst.get.bits.op === VInstOp.VIOP
-  } else { false.B }
-
-  val isVIopVs1 = isVIop
-  val isVIopVs2 = isVIop && io.inst.bits.inst(1,0) === 0.U  // exclude: .vv
-  val isVIopVs3 = isVIop && io.inst.bits.inst(2,0) === 1.U  // exclude: .vvv
-
   // Use the forwarded scoreboard to interlock on multicycle operations.
-  val aluRdEn  = !io.scoreboard.comb(rdAddr)  || isVIopVs1 || d.isScalarStore() || d.isCondBr()
-  val aluRs1En = !io.scoreboard.comb(rs1Addr) || isVIopVs1 || d.isLsu() || d.auipc || d.lui
-  val aluRs2En = !io.scoreboard.comb(rs2Addr) || isVIopVs2 || d.isLsu() || d.auipc || d.lui || d.isAluImm() || d.isAlu1Bit() || d.isFloat()
-  // val aluRs3En = !io.scoreboard.comb(rs3Addr) || isVIopVs3
-  // val aluEn = aluRdEn && aluRs1En && aluRs2En && aluRs3En  // TODO: is aluRs3En needed?
+  val aluRdEn  = !io.scoreboard.comb(rdAddr)  || d.isScalarStore() || d.isCondBr()
+  val aluRs1En = !io.scoreboard.comb(rs1Addr) || d.isLsu() || d.auipc || d.lui
+  val aluRs2En = !io.scoreboard.comb(rs2Addr) || d.isLsu() || d.auipc || d.lui || d.isAluImm() || d.isAlu1Bit() || d.isFloat()
   val aluEn = aluRdEn && aluRs1En && aluRs2En
 
   // Interlock jalr but special case return.
@@ -1047,20 +1001,10 @@ class Decode(p: Parameters, pipeline: Int) extends Module {
               (!d.isLsu() || !io.serializeIn.brcond) &&  // TODO: can this line be removed?
               !(Mux(io.busRead.bypass, io.scoreboard.comb(rs1Addr),
                     io.scoreboard.regd(rs1Addr)) ||
-                    io.scoreboard.comb(rs2Addr) && (d.isScalarStore() || vldst))
+                    io.scoreboard.comb(rs2Addr) && (d.isScalarStore()))
 
   // Interlock mul, only one lane accepted.
   val mulEn = (!d.isMul() || !io.serializeIn.mul) && !io.serializeIn.brcond
-
-  // Vector extension interlock.
-  val vinstEn = if (p.enableVector) {
-      !(io.serializeIn.vinst || isVIop && io.serializeIn.brcond) &&
-      !(d.isVector() && !io.vinst.get.ready)
-  } else {
-    // When vector is disabled, we never want to interlock due to it.
-    // Thus, always return true in that case.
-    true.B
-  }
 
   // Rvv extension interlock
   val rvvEn = if (p.enableRvv) {
@@ -1195,7 +1139,6 @@ class Decode(p: Parameters, pipeline: Int) extends Module {
     d.fencei         -> MakeValid(true.B, LsuOp.FENCEI),
     d.flushat        -> MakeValid(true.B, LsuOp.FLUSHAT),
     d.flushall       -> MakeValid(true.B, LsuOp.FLUSHALL),
-    (d.vld || d.vst) -> MakeValid(true.B, LsuOp.VLDST),
     (d.isFloatLoad() || d.isFloatStore()) -> MakeValid(true.B, LsuOp.FLOAT)
   ))
   io.lsu.valid := decodeEn && lsu.valid
@@ -1231,21 +1174,6 @@ class Decode(p: Parameters, pipeline: Int) extends Module {
   io.dvu.bits.addr := rdAddr
   io.dvu.bits.op := dvu.bits
   val dvuEn = !dvu.valid || io.dvu.ready
-
-  // Vector instructions.
-  val vinst = MuxCase(MakeValid(false.B, VInstOp.VLD), Seq(
-    d.vld      -> MakeValid(true.B, VInstOp.VLD),
-    d.vst      -> MakeValid(true.B, VInstOp.VST),
-    d.viop     -> MakeValid(true.B, VInstOp.VIOP),
-    d.getvl    -> MakeValid(true.B, VInstOp.GETVL),
-    d.getmaxvl -> MakeValid(true.B, VInstOp.GETMAXVL),
-  ))
-  if (p.enableVector) {
-    io.vinst.get.valid := decodeEn && vinst.valid
-    io.vinst.get.bits.addr := rdAddr
-    io.vinst.get.bits.inst := io.inst.bits.inst
-    io.vinst.get.bits.op := vinst.bits
-  }
 
   if (p.enableRvv) {
     io.rvv.get.valid := d.rvv.get.valid && !io.branchTaken &&
@@ -1286,7 +1214,6 @@ class Decode(p: Parameters, pipeline: Int) extends Module {
   val rdMark_valid =
       alu.valid || (csr.valid && io.csr.valid) || mlu.valid || dvu.valid && io.dvu.ready ||
       lsu.valid && d.isScalarLoad() ||
-      d.getvl || d.getmaxvl || vldst_wb ||
       d.rvv.map(x => x.valid && x.bits.writesRd()).getOrElse(false.B) ||
       d.float.map(x => x.valid && x.bits.scalar_rd).getOrElse(false.B) ||
       bru.valid && (bru.bits.isOneOf(BruOp.JAL, BruOp.JALR)) && rdAddr =/= 0.U
@@ -1323,7 +1250,7 @@ class Decode(p: Parameters, pipeline: Int) extends Module {
   // Decode ready signalling to fetch.
   // This must not factor branchTaken, which will be done directly in the
   // fetch unit. Note above decodeEn resolves for branch for execute usage.
-  io.inst.ready := aluEn && bruEn && lsuEn && mulEn && dvuEn && vinstEn && fenceEn &&
+  io.inst.ready := aluEn && bruEn && lsuEn && mulEn && dvuEn && fenceEn &&
                    rvvEn && !io.serializeIn.jump && !io.serializeIn.wfi &&
                    floatEn && csrEn &&
                    !io.serializeIn.undef &&
@@ -1333,8 +1260,6 @@ class Decode(p: Parameters, pipeline: Int) extends Module {
                    !(jal_fault || jalr_fault || csr_fault || bxx_fault)
 
   // Serialize Interface.
-  // io.serializeOut.lsu  := io.serializeIn.lsu || lsu.valid || vldst  // vldst interlock for address generation cycle in vinst
-  // io.serializeOut.lsu  := io.serializeIn.lsu || vldst  // vldst interlock for address generation cycle in vinst
   io.serializeOut.lsu  := io.serializeIn.lsu
   io.serializeOut.mul  := io.serializeIn.mul || mlu.valid
   io.serializeOut.fence := d.isFency() || io.serializeIn.fence
@@ -1440,36 +1365,6 @@ object DecodeInstruction {
     // Decode scalar log.
     val slog = op === BitPat("b01111_00_00000_?????_0??_00000_11101_11")
 
-    if (p.enableVector) {
-      // Vector length.
-      d.getvl    := op === BitPat("b0001?_??_?????_?????_000_?????_11101_11") && op(26,25) =/= 3.U && (op(24,20) =/= 0.U || op(19,15) =/= 0.U)
-      d.getmaxvl := op === BitPat("b0001?_??_00000_00000_000_?????_11101_11") && op(26,25) =/= 3.U
-
-      // Vector load/store.
-      d.vld := op === BitPat("b000???_0?????_?????0_??_??????_?_111_11")     // vld
-
-      d.vst := op === BitPat("b001???_0?????_?????0_??_??????_?_111_11") ||  // vst
-               op === BitPat("b011???_0?????_?????0_??_??????_?_111_11")     // vstq
-
-      // Convolution transfer accumulators to vregs. Also decodes acset/actr ops.
-      val vconv = op === BitPat("b010100_000000_000000_??_??????_?_111_11")
-
-      // Duplicate
-      val vdup = op === BitPat("b01000?_0?????_000000_??_??????_?_111_11") && op(13,12) <= 2.U
-      val vdupi = vdup && op(26) === 0.U
-
-      // Vector instructions.
-      d.viop := op(0) === 0.U ||     // .vv .vx
-                op(1,0) === 1.U ||  // .vvv .vxv
-                vconv || vdupi
-    } else {
-      d.getvl    := false.B
-      d.getmaxvl := false.B
-      d.vld      := false.B
-      d.vst      := false.B
-      d.viop     := false.B
-    }
-
     // [extensions] Core controls.
     d.ebreak := op === BitPat("b000000000001_00000_000_00000_11100_11")
     d.ecall  := op === BitPat("b000000000000_00000_000_00000_11100_11")
@@ -1538,8 +1433,6 @@ object DecodeInstruction {
                       d.clz, d.ctz, d.cpop, d.min, d.minu, d.max, d.maxu,
                       d.sextb, d.sexth, d.zexth,
                       d.rol, d.ror, d.orcb, d.rev8, d.rori,
-                      d.viop, d.vld, d.vst,
-                      d.getvl, d.getmaxvl,
                       d.ebreak, d.ecall, d.wfi,
                       d.mpause, d.mret, d.fencei, d.flushat, d.flushall, d.slog,
                       d.rvv.map(_.valid).getOrElse(false.B),

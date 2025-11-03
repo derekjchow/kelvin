@@ -18,38 +18,6 @@ import common.Fp32
 import chisel3._
 import chisel3.util._
 
-object VInstOp extends ChiselEnum {
-  val GETVL = Value
-  val GETMAXVL = Value
-  val VLD = Value
-  val VST = Value
-  val VIOP = Value
-}
-
-class VInstCmd extends Bundle {
-  val addr = UInt(5.W)
-  val inst = UInt(32.W)
-  val op = VInstOp()
-}
-
-class VCoreIO(p: Parameters) extends Bundle {
-  // Decode cycle.
-  val vinst = Vec(p.instructionLanes, Flipped(Decoupled(new VInstCmd)))
-
-  // Execute cycle.
-  val rs = Vec(p.instructionLanes * 2, Flipped(new RegfileReadDataIO))
-  val rd = Vec(p.instructionLanes, Valid(Flipped(new RegfileWriteDataIO)))
-
-  // Status.
-  val mactive = Output(Bool())
-
-  // Faults.
-  val undef = Output(Bool())
-
-  val vrfwriteCount = Output(UInt(3.W))
-  val vstoreCount = Output(UInt(2.W))
-}
-
 class CsrInIO(p: Parameters) extends Bundle {
   val value = Input(Vec(p.csrInCount, UInt(32.W)))
 }

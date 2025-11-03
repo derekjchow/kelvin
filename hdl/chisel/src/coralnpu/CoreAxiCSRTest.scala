@@ -20,7 +20,6 @@ import org.scalatest.freespec.AnyFreeSpec
 
 class CoreAxiCSRSpec extends AnyFreeSpec with ChiselSim {
   var p = new Parameters
-  p.enableVector = false
 
   "Initialization" in {
     simulate(new CoreAxiCSR(p)) { dut =>

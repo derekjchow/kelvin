@@ -59,7 +59,6 @@ class Core(p: Parameters, moduleName: String) extends Module with RequireAsyncRe
   })
 
   val score = SCore(p)
-  val vcore = Option.when(p.enableVector)(VCore(p))
   val rvvCore = Option.when(p.enableRvv)(RvvCore(p))
   if (p.enableRvv) {
     rvvCore.get.io <> score.io.rvvcore.get
@@ -85,23 +84,8 @@ class Core(p: Parameters, moduleName: String) extends Module with RequireAsyncRe
   io.debug  <> score.io.debug
 
   // ---------------------------------------------------------------------------
-  // Vector core.
-  if (p.enableVector) {
-    score.io.vcore.get <> vcore.get.io.score
-  }
-
-  // ---------------------------------------------------------------------------
   // Local Data Bus Port
-  if (p.enableVector) {
-    val dbusmux = DBusMux(p)
-    dbusmux.io.vldst := score.io.vldst.get
-    dbusmux.io.vlast := vcore.get.io.last
-    dbusmux.io.vcore <> vcore.get.io.dbus
-    dbusmux.io.score <> score.io.dbus
-    io.dbus <> dbusmux.io.dbus
-  } else {
-    io.dbus <> score.io.dbus
-  }
+  io.dbus <> score.io.dbus
 }
 
 object EmitCore extends App {
@@ -118,8 +102,6 @@ object EmitCore extends App {
       moduleName = arg.split("=")(1)
     } else if (arg.startsWith("--fetchDataBits")) {
       p.fetchDataBits = arg.split("=")(1).toInt
-    } else if (arg.startsWith("--enableVector")) {
-      p.enableVector = arg.split("=")(1).toBoolean
     } else if (arg.startsWith("--enableRvv")) {
       p.enableRvv = arg.split("=")(1).toBoolean
     } else if (arg.startsWith("--enableFloat")) {

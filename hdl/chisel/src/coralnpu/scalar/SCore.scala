@@ -42,9 +42,6 @@ class SCore(p: Parameters) extends Module {
     val dbus = new DBusIO(p)
     val ebus = new EBusIO(p)
 
-    val vldst = Option.when(p.enableVector)(Output(Bool()))
-    val vcore = Option.when(p.enableVector)(Flipped(new VCoreIO(p)))
-
     val rvvcore = Option.when(p.enableRvv)(Flipped(new RvvCoreIO(p)))
 
     val iflush = new IFlushIO(p)
@@ -126,7 +123,7 @@ class SCore(p: Parameters) extends Module {
   // Decode/Dispatch
   dispatch.io.inst <> fetch.io.inst.lanes
   dispatch.io.halted := csr.io.halted || csr.io.wfi || csr.io.dm.map(_.debug_mode).getOrElse(false.B)
-  dispatch.io.mactive := io.vcore.map(_.mactive).getOrElse(false.B)
+  dispatch.io.mactive := false.B
   dispatch.io.lsuActive := lsu.io.active
   dispatch.io.lsuQueueCapacity := lsu.io.queueCapacity
   dispatch.io.scoreboard.comb := regfile.io.scoreboard.comb
@@ -193,10 +190,6 @@ class SCore(p: Parameters) extends Module {
   csr.io.counters.rfwriteCount := regfile.io.rfwriteCount
   csr.io.counters.storeCount := lsu.io.storeCount
   csr.io.counters.branchCount := bru(0).io.taken.valid
-  if (p.enableVector) {
-    csr.io.counters.vrfwriteCount.get := io.vcore.get.vrfwriteCount
-    csr.io.counters.vstoreCount.get := io.vcore.get.vstoreCount
-  }
 
   // ---------------------------------------------------------------------------
   // Control Status Unit
@@ -235,10 +228,6 @@ class SCore(p: Parameters) extends Module {
     io.dm.get.debug_mode := csr.io.dm.get.debug_mode
   } else {
     csr.io.rs1 := regfile.io.readData(0)
-  }
-
-  if (p.enableVector) {
-    csr.io.vcore.get.undef := io.vcore.get.undef
   }
 
   // ---------------------------------------------------------------------------
@@ -304,42 +293,27 @@ class SCore(p: Parameters) extends Module {
 
     regfile.io.writeData(i).valid := csr0Valid ||
                                      alu(i).io.rd.valid || bru(i).io.rd.valid ||
-                                     (if (p.enableVector) {
-                                        io.vcore.get.rd(i).valid
-                                      } else { false.B }) ||
                                      rvvCoreRdValid
 
     regfile.io.writeData(i).bits.addr :=
         MuxOR(csr0Valid, csr0Addr) |
         MuxOR(alu(i).io.rd.valid, alu(i).io.rd.bits.addr) |
         MuxOR(bru(i).io.rd.valid, bru(i).io.rd.bits.addr) |
-        (if (p.enableVector) {
-           MuxOR(io.vcore.get.rd(i).valid, io.vcore.get.rd(i).bits.addr)
-         } else { false.B }) |
         rvvCoreRdAddr
 
     regfile.io.writeData(i).bits.data :=
         MuxOR(csr0Valid, csr0Data) |
         MuxOR(alu(i).io.rd.valid, alu(i).io.rd.bits.data) |
         MuxOR(bru(i).io.rd.valid, bru(i).io.rd.bits.data) |
-        (if (p.enableVector) {
-           MuxOR(io.vcore.get.rd(i).valid, io.vcore.get.rd(i).bits.data)
-         } else { false.B }) |
         rvvCoreRdData
 
-    if (p.enableVector) {
+    if (p.enableRvv) {
       assert((csr0Valid +&
               alu(i).io.rd.valid +& bru(i).io.rd.valid +&
-              io.vcore.get.rd(i).valid) <= 1.U)
+              io.rvvcore.get.rd(i).valid) <= 1.U)
     } else {
-      if (p.enableRvv) {
-        assert((csr0Valid +&
-                alu(i).io.rd.valid +& bru(i).io.rd.valid +&
-                io.rvvcore.get.rd(i).valid) <= 1.U)
-      } else {
-        assert((csr0Valid +&
-               alu(i).io.rd.valid +& bru(i).io.rd.valid) <= 1.U)
-      }
+      assert((csr0Valid +&
+             alu(i).io.rd.valid +& bru(i).io.rd.valid) <= 1.U)
     }
   }
 
@@ -438,13 +412,6 @@ class SCore(p: Parameters) extends Module {
   }
 
   // ---------------------------------------------------------------------------
-  // Vector Extension
-  if (p.enableVector) {
-    io.vcore.get.vinst <> dispatch.io.vinst.get
-    io.vcore.get.rs := regfile.io.readData
-  }
-
-  // ---------------------------------------------------------------------------
   // Rvv Extension
   if (p.enableRvv) {
     // Connect dispatch
@@ -500,10 +467,6 @@ class SCore(p: Parameters) extends Module {
   // Local Data Bus Port
   io.dbus <> lsu.io.dbus
   io.ebus <> lsu.io.ebus
-
-  if (p.enableVector) {
-    io.vldst.get := lsu.io.vldst
-  }
 
   // ---------------------------------------------------------------------------
   // Scalar logging interface

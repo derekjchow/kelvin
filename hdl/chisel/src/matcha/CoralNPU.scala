@@ -78,8 +78,6 @@ class CoralNPU(p: coralnpu.Parameters, moduleName: String) extends RawModule {
   // ---------------------------------------------------------------------------
   // Connect clock and reset.
   withClockAndReset(clk_g, rst_core.asAsyncReset) {
-    assert(p.vectorBits == 256)
-
     val core = coralnpu.Core(p)
     val l1d = coralnpu.L1DCache(p)
     val l1i = coralnpu.L1ICache(p)
@@ -157,10 +155,6 @@ object EmitCoralNPU extends App {
       core_p.enableFetchL0 = argval
     } else if (arg.startsWith("--moduleName")) {
       moduleName = arg.split("=")(1)
-    } else if (arg.startsWith("--enableVector")) {
-      val argval = arg.split("=")(1).toBoolean
-      p.enableVector = argval
-      core_p.enableVector = argval
     } else if (arg.startsWith("--fetchDataBits")) {
       val argval = arg.split("=")(1).toInt
       p.fetchDataBits = argval

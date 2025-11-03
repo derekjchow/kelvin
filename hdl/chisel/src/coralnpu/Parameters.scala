@@ -61,46 +61,15 @@ object Parameters {
 }
 
 class Parameters(var m: Seq[MemoryRegion] = Seq(), val hartId: Int = 0) {
-  case object Core {
-    val tiny = 0
-    val little = 1
-    val big = 2
-  }
-
-  // Vector Length (register-file and compute).
-  // 128 = faster builds, but not production.
-  val vectorBits = sys.env.get("CORALNPU_SIMD").getOrElse("256").toInt
-  assert(vectorBits == 512 || vectorBits == 256 || vectorBits == 128)
-
-  val core = vectorBits match {
-    case 128 => Core.tiny
-    case 256 => Core.little
-    case 512 => Core.big
-  }
-
   // Machine.
   val programCounterBits = 32
   val instructionBits = 32
   val instructionLanes = 4
 
-  val vectorCountBits = log2Ceil(vectorBits / 8) + 1 + 2  // +2 stripmine
-
-  // Enable Vector
-  var enableVector = true
-  val vectorAluCount = 2
-  val vectorReadPorts = (vectorAluCount * 3) + 1
-  val vectorWritePorts = 6
-  val vectorWhintPorts = 4
-  val vectorScalarPorts = 2
-
-  // Vector queue.
-  val vectorFifoDepth = 16
-
   // Enable extra logic for verification purposes.
   var enableVerification = false
 
-  // Enable RVV. This differs from "Vector" in that it conforms to the RVV1.0
-  // spec instead of the CoralNPU Custom vector ISA.
+  // Enable RVV. This conforms to the RVV1.0 specification.
   var enableRvv = false
   val rvvVlen = 128
   def rvvVlenb: Int = { rvvVlen / 8 }
@@ -145,7 +114,7 @@ class Parameters(var m: Seq[MemoryRegion] = Seq(), val hartId: Int = 0) {
 
   // Scalar Core Load Store Unit bus.
   val lsuAddrBits = 32  // do not change
-  var lsuDataBits = vectorBits
+  var lsuDataBits = 256
   def lsuDataBytes: Int = { lsuDataBits / 8 }
   val lsuDelayPipelineLen = 1
   def dbusSize: Int = { log2Ceil(lsuDataBits / 8) + 1 }

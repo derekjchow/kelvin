@@ -145,12 +145,6 @@ class CsrCounters(p: Parameters) extends Bundle {
   val rfwriteCount = UInt(3.W)
   val storeCount = UInt(2.W)
   val branchCount = UInt(1.W)
-  val vrfwriteCount = if (p.enableVector) {
-    Some(UInt(3.W))
-  } else { None }
-  val vstoreCount = if (p.enableVector) {
-    Some(UInt(2.W))
-  } else { None }
 }
 
 class CsrBruIO(p: Parameters) extends Bundle {
@@ -189,11 +183,6 @@ class Csr(p: Parameters) extends Module {
     val bru = Flipped(new CsrBruIO(p))
     val float = Option.when(p.enableFloat) { Flipped(new CsrFloatIO(p)) }
     val rvv = Option.when(p.enableRvv) { new CsrRvvIO(p) }
-
-    // Vector core.
-    val vcore = (if (p.enableVector) {
-      Some(Input(new Bundle { val undef = Bool() }))
-    } else { None })
 
     val counters = Input(new CsrCounters(p))
 
@@ -278,7 +267,6 @@ class Csr(p: Parameters) extends Module {
   // 32-bit MXLEN, I,M,X extensions
   val misa      = RegInit(((
       0x40001100 |
-      (if (p.enableVector) { 1 << 23 /* 'X' */ } else { 0 }) |
       (if (p.enableRvv) { 1 << 21 /* 'V' */ } else { 0 }) |
       (if (p.enableFloat) { 1 << 5 /* 'F' */ } else { 0 })
   ).U)(32.W))
@@ -359,12 +347,11 @@ class Csr(p: Parameters) extends Module {
   val kscm4En     = csr_address === CsrAddress.KSCM4
 
   // Pipeline Control.
-  val vcoreUndef = if (p.enableVector) { io.vcore.get.undef } else { false.B }
-  when (io.bru.in.halt || vcoreUndef) {
+  when (io.bru.in.halt) {
     halted := true.B
   }
 
-  when (io.bru.in.fault || vcoreUndef) {
+  when (io.bru.in.fault) {
     fault := true.B
   }
 
@@ -502,11 +489,7 @@ class Csr(p: Parameters) extends Module {
   val minstret_t = Cat(minstret_th, minstret_tl)
   val minstretThisCycle = io.counters.rfwriteCount +
     io.counters.storeCount +
-    io.counters.branchCount +
-    (if (p.enableVector) {
-      io.counters.vrfwriteCount.get +
-      io.counters.vstoreCount.get
-    } else { 0.U })
+    io.counters.branchCount
   minstret := MuxCase(minstret, Seq(
     req.valid -> minstret_t,
     (minstretThisCycle =/= 0.U) -> (minstret + minstretThisCycle),

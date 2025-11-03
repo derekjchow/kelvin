@@ -20,7 +20,6 @@ import org.scalatest.freespec.AnyFreeSpec
 
 class FabricArbiterSpec extends AnyFreeSpec with ChiselSim {
   var p = new Parameters
-  p.enableVector = false
 
   "CoralNPU Read - AXI Slave Any" in {
     simulate(new FabricArbiter(p)) { dut =>
@@ -155,7 +154,6 @@ class FabricArbiterSpec extends AnyFreeSpec with ChiselSim {
 
 class FabricMuxSpec extends AnyFreeSpec with ChiselSim {
   var p = new Parameters
-  p.enableVector = false
 
   val memoryRegions = Seq(
     new MemoryRegion(0x0000, 0x2000, MemoryRegionType.IMEM), // ITCM

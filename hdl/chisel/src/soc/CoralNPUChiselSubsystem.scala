@@ -122,7 +122,6 @@ class CoralNPUChiselSubsystem(val hostParams: Seq[bus.TLULParameters], val devic
           core_p.enableRvv = p.enableRvv
           core_p.enableFetchL0 = p.enableFetchL0
           core_p.fetchDataBits = p.fetchDataBits
-          core_p.enableVector = p.enableVector
           core_p.enableFloat = p.enableFloat
           core_p.tcmHighmem = p.tcmHighmem
           Module(new CoreTlul(core_p, config.name))

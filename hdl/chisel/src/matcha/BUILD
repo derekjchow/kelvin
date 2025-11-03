@@ -61,7 +61,6 @@ chisel_cc_library(
     ],
     verilog_file_path = "CoralNPUScalar.sv",
     gen_flags = [
-        "--enableVector=False",
         "--moduleName=CoralNPUScalar",
     ],
     extra_outs = [
@@ -86,7 +85,6 @@ chisel_cc_library(
         "--enableFetchL0=False",
         "--fetchDataBits=128",
         "--lsuDataBits=128",
-        "--enableVector=False",
         "--moduleName=CoralNPUMini",
     ],
     extra_outs = [
