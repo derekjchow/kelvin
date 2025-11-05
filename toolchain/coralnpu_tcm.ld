@@ -11,7 +11,6 @@ STACK_SIZE = DEFINED(__stack_size__) ? __stack_size__ : 0x80;
 __stack_size = STACK_SIZE;
 __stack_shift = 7;
 __boot_hart = 0;
-HEAP_SIZE = DEFINED(__heap_size__) ? __heap_size__ : 0x80;
 
 ENTRY(_start)
 
@@ -105,7 +104,7 @@ SECTIONS {
 
     .heap : ALIGN(16) {
       __heap_start__ = .;
-      . += HEAP_SIZE;
+      . = ORIGIN(DTCM) + LENGTH(DTCM) - STACK_SIZE;
       __heap_end__ = .;
       __heap_end = .;
     } > DTCM
