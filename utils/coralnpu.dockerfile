@@ -46,7 +46,7 @@ RUN ln -snf "/usr/share/zoneinfo/${TZ}" /etc/localtime && \
     mv /tmp/bazel-archive-keyring.gpg /usr/share/keyrings/ && \
     echo "deb [arch=$(dpkg-architecture -q DEB_HOST_ARCH) signed-by=/usr/share/keyrings/bazel-archive-keyring.gpg] https://storage.googleapis.com/bazel-apt stable jdk1.8" | sudo tee /etc/apt/sources.list.d/bazel.list && \
     apt update && \
-    apt install bazel bazel-6.2.1 && \
+    apt install bazel bazel-7.4.1 && \
     echo "${_USERNAME} ALL=(ALL) NOPASSWD:/usr/bin/apt" >> /etc/sudoers.d/${_USERNAME} && \
     echo "${_USERNAME} ALL=(ALL) NOPASSWD:/bin/mkdir" >> /etc/sudoers.d/${_USERNAME} && \
     echo "${_USERNAME} ALL=(ALL) NOPASSWD:/bin/chown" >> /etc/sudoers.d/${_USERNAME} && \

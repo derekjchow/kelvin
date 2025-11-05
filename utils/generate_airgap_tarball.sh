@@ -15,11 +15,10 @@
 
 # Generates a tar file containing required artifacts to build and test CoralNPU without
 # an internet connection.
-# To use the artifacts, extract them to a known location, and use the --distdir and --repository_cache
+# To use the artifacts, extract them to a known location, and use the --repository_cache
 # arguments for Bazel.
 # An example command which will build and test is as follows:
-# bazel test --distdir=coralnpu_airgap_7d188ddd04e3ecd80527a41889e0c6175102af8b/bazel-distdir \
-#            --repository_cache=coralnpu_airgap_7d188ddd04e3ecd80527a41889e0c6175102af8b/bazel-cachedir \
+# bazel test --repository_cache=coralnpu_airgap_7d188ddd04e3ecd80527a41889e0c6175102af8b/bazel-cachedir \
 #            --build_tag_filters="-verilator" --test_tag_filters="-verilator" //...
 # Additionally, the bazel binary is included in the tarball, in case
 # it is not available on your system.
@@ -40,62 +39,16 @@ trap clean EXIT
 
 mkdir ${WORKDIR}/bazel-distdir
 cd ${WORKDIR}
-curl --silent --location \
+curl --location \
     https://github.com/bazelbuild/bazel/releases/download/${BAZEL_VERSION}/bazel-${BAZEL_VERSION}-linux-x86_64 \
-    --output bazel
-chmod +x bazel
-git clone -b "${BAZEL_VERSION}" --depth 1 \
-    https://github.com/bazelbuild/bazel bazel-repo
-cd bazel-repo
-../bazel build @additional_distfiles//:archives.tar
-tar xvf bazel-bin/external/additional_distfiles/archives.tar \
-    -C "../bazel-distdir" \
-    --strip-components=2
-cd ..
-rm -rf bazel-repo
+    --output bazel-${BAZEL_VERSION}-linux-x86_64
+chmod +x bazel-${BAZEL_VERSION}-linux-x86_64
+ln -s bazel-${BAZEL_VERSION}-linux-x86_64 bazel
 
 cd ${REPO_TOP}
 mkdir ${WORKDIR}/bazel-cachedir
 ${WORKDIR}/bazel clean --expunge
-${WORKDIR}/bazel fetch \
-    --repository_cache=${WORKDIR}/bazel-cachedir \
-    //... \
-    @cmake-3.23.2-linux-x86_64//:all \
-    @gnumake_src//:all \
-    @io_bazel_rules_scala_scala_compiler//:all \
-    @io_bazel_rules_scala_scala_library//:all \
-    @io_bazel_rules_scala_scala_parser_combinators//:all \
-    @io_bazel_rules_scala_scala_reflect//:all \
-    @io_bazel_rules_scala_scala_xml//:all \
-    @io_bazel_rules_scala_scalactic//:all \
-    @io_bazel_rules_scala_scalatest//:all \
-    @io_bazel_rules_scala_scalatest_compatible//:all \
-    @io_bazel_rules_scala_scalatest_core//:all \
-    @io_bazel_rules_scala_scalatest_featurespec//:all \
-    @io_bazel_rules_scala_scalatest_flatspec//:all \
-    @io_bazel_rules_scala_scalatest_freespec//:all \
-    @io_bazel_rules_scala_scalatest_funspec//:all \
-    @io_bazel_rules_scala_scalatest_funsuite//:all \
-    @io_bazel_rules_scala_scalatest_matchers_core//:all \
-    @io_bazel_rules_scala_scalatest_mustmatchers//:all \
-    @io_bazel_rules_scala_scalatest_shouldmatchers//:all \
-    @ninja_1.11.0_linux//:all \
-    @python39//:all \
-    @remote_java_tools_linux//:all \
-    @remotejdk11_linux//:jdk \
-    @rules_hdl//:all \
-    @verilator//:all \
-    @coralnpu_pip_deps_cocotb//:all \
-    @coralnpu_pip_deps_find_libpython//:all \
-    @coralnpu_pip_deps_numpy//:all \
-    @coralnpu_pip_deps_pyelftools//:all \
-    @coralnpu_pip_deps_tqdm//:all \
-    @coralnpu_pip_deps_pytest//:all \
-    @coralnpu_pip_deps_pluggy//:all \
-    @coralnpu_pip_deps_iniconfig//:all \
-    @coralnpu_pip_deps_packaging//:all \
-    @coralnpu_pip_deps_exceptiongroup//:all \
-    @coralnpu_pip_deps_typing_extensions//:all
+${WORKDIR}/bazel sync --repository_cache=${WORKDIR}/bazel-cachedir
 
 cat <<EOF >${WORKDIR}/bazel.sh
 SCRIPT_DIR="\$(cd "\$(dirname "\${BASH_SOURCE[0]}")" && pwd)"

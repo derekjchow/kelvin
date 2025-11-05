@@ -77,6 +77,7 @@ def coralnpu_repos():
             "@coralnpu_hw//external:0004-More-jobs-for-cocotb.patch",
             "@coralnpu_hw//external:0005-Use-num_failed-for-exit-code.patch",
             "@coralnpu_hw//external:0006-Separate-build-from-test-for-Verilator.patch",
+            "@coralnpu_hw//external:0007-Suppress-skywater-pdk-loading.patch",
         ],
         patch_args = ["-p1"],
     )

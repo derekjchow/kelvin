@@ -1,3 +1,6 @@
+# Disable bzlmod and enable workspace while we migrate
+common --noenable_bzlmod --enable_workspace
+
 build --action_env=BAZEL_CXXOPTS="-std=c++17"
 build --cxxopt='-std=c++17'
 build --conlyopt='-std=gnu11'

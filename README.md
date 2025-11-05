@@ -24,7 +24,7 @@ Coral NPU offers the following top-level feature set:
 
 ## System Requirements
 
-* Bazel 6.2.1
+* Bazel 7.4.1
 * Python 3.9-3.12 (3.13 support is in progress)
 
 ## Quick Start
