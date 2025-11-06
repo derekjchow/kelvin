@@ -236,7 +236,6 @@ def _verilator_cocotb_test_suite(
         for tc in testcases:
             tc_tests_kwargs = dict(all_tests_kwargs)
             tags = list(tc_tests_kwargs.pop("tags", []))
-            tags.append("manual")
             tags.append("verilator_cocotb_single_test")
             verilator_cocotb_test(
                 name = "{}_{}".format(name, tc),
@@ -250,6 +249,7 @@ def _verilator_cocotb_test_suite(
     # Generate a meta-target for all tests.
     meta_target_kwargs = dict(all_tests_kwargs)
     tags = list(meta_target_kwargs.pop("tags", []))
+    tags.append("manual")
     tags.append("verilator_cocotb_test_suite")
     if testcases_vname:
         tags.append("testcases_vname={}".format(testcases_vname))
@@ -343,7 +343,6 @@ def _vcs_cocotb_test_suite(
         for tc in testcases:
             tc_tests_kwargs = dict(all_tests_kwargs)
             tags = list(tc_tests_kwargs.pop("tags", []))
-            tags.append("manual")
             tags.append("vcs_cocotb_single_test")
             test_args = tc_tests_kwargs.pop("test_args", [""])
             vcs_cocotb_test(
@@ -359,6 +358,7 @@ def _vcs_cocotb_test_suite(
     # Generate a meta-target for all tests.
     meta_target_kwargs = dict(all_tests_kwargs)
     tags = list(meta_target_kwargs.pop("tags", []))
+    tags.append("manual")
     tags.append("vcs_cocotb_test_suite")
     vcs_cocotb_test(
         name = name,
