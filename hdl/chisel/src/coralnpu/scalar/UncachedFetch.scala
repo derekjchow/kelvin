@@ -29,6 +29,7 @@ class PredecodeOutput(p: Parameters) extends Bundle {
 class FetchResponse(p: Parameters) extends Bundle {
     val addr = UInt(p.fetchAddrBits.W)
     val inst = Vec(p.fetchInstrSlots, UInt(p.instructionBits.W))
+    val fault = Bool()
 }
 
 class Instruction(p: Parameters) extends Bundle {
@@ -59,10 +60,12 @@ class Fetcher(p: Parameters) extends Module {
 
   // Address is buffered to accompany results.
   val ibusFired = io.ctrl.valid && io.ibus.ready
-  val ibusCmd = RegInit(MakeInvalid(UInt(32.W)))
-  ibusCmd := ForceZero(MakeValid(ibusFired, io.ctrl.bits))
+  val ibusCmd = RegNext(ForceZero(MakeValid(ibusFired, io.ctrl.bits)), MakeInvalid(UInt(32.W)))
+  // Fault is also buffered to accompany results.
+  val fault = RegNext(io.ibus.fault.valid, false.B)
   io.fetch.valid := ibusCmd.valid
   io.fetch.bits.addr := ibusCmd.bits
+  io.fetch.bits.fault := fault
   for (i <- 0 until p.fetchInstrSlots) {
     val offset = p.instructionBits * i
     io.fetch.bits.inst(i) := io.ibus.rdata(offset + p.instructionBits - 1, offset)
@@ -71,6 +74,7 @@ class Fetcher(p: Parameters) extends Module {
 
 class FetchControl(p: Parameters) extends Module {
     val io = IO(new Bundle {
+        val fetchFault = Bool()
         val csr = new CsrInIO(p)
         val iflush = Input(Valid(UInt(32.W)))
         val branch = Input(Valid(UInt(p.fetchAddrBits.W)))
@@ -159,10 +163,17 @@ class FetchControl(p: Parameters) extends Module {
     val currentBranchOrFlush = io.iflush.valid || io.branch.valid
     val ongoingBranchOrFlush = pastBranchOrFlush || currentBranchOrFlush
 
+    // If we have faulted we should stop making any new attempts until a branch resolves it.
+    val faulted = RegInit(false.B)
+    val fetchFault = (faulted || (io.fetchData.valid && io.fetchData.bits.fault)) &&
+        !io.branch.valid
+    io.fetchFault := fetchFault
+    faulted := fetchFault
+
     // Send out results. All branch or flush, current or past, will make us
     // discard results.
     // TODO(davidgao): ForceZero it when invalid?
-    val writeToBuffer = io.fetchData.valid && !ongoingBranchOrFlush
+    val writeToBuffer = io.fetchData.valid && !fetchFault && !ongoingBranchOrFlush
     val nValid = Mux(writeToBuffer, predecode.count, 0.U)
     io.bufferRequest.nValid := nValid
 
@@ -187,7 +198,8 @@ class FetchControl(p: Parameters) extends Module {
     // Past branch or flush doesn't block us from initiating new fetches.
     val blockNewFetch = !pc.valid ||  // We're stil in reset.
                         currentBranchOrFlush ||
-                        insufficientBuffer
+                        insufficientBuffer ||
+                        fetchFault
     val fetch = ForceZero(MakeValid(!blockNewFetch, pcNext))
 
     // All branch or flush are cleared once we're able to initiate a new fetch.
@@ -229,4 +241,5 @@ class UncachedFetch(p: Parameters) extends FetchUnit(p) {
   val pc = RegInit(0.U(p.fetchAddrBits.W))
   pc := Mux(instructionBuffer.io.out(0).valid, instructionBuffer.io.out(0).bits.addr, pc)
   io.pc := pc
+  io.fault := ctrl.io.fetchFault
 }

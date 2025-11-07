@@ -20,6 +20,7 @@ import tqdm
 import random
 
 from coralnpu_test_utils.core_mini_axi_interface import AxiBurst, AxiResp,CoreMiniAxiInterface
+from coralnpu_test_utils.sim_test_fixture import Fixture
 from bazel_tools.tools.python.runfiles import runfiles
 
 
@@ -367,3 +368,45 @@ async def core_mini_axi_float_csr_test(dut):
 
     await core_mini_axi.wait_for_halted()
     assert core_mini_axi.dut.io_fault.value == 0
+
+@cocotb.test()
+async def unreachable_prefetch_fault(dut):
+  fixture = await Fixture.Create(dut)
+  r = runfiles.Create()
+  cases = [
+    ('mpause', 0),
+    ('jalr', 0),
+    ('branch_forward', 0),
+    ('branch_backward', 0),
+    ('ebreak', 0),
+    ('ecall', 1),
+    # ('vill1', 1),
+    ('vill2', 1),
+    ('unimp', 1),
+    ('load', 1),
+    ('store', 1),
+    ('csrr', 1),
+    ('csrw', 1),
+  ]
+  await fixture.load_elf_and_lookup_symbols(
+      r.Rlocation('coralnpu_hw/tests/cocotb/unreachable_prefetch_fault.elf'),
+      ['impl', 'iaf_count', 'other_count'] + [c for c, _ in cases] + ['wfi'],
+  )
+
+  for c, expected_exceptions in tqdm.tqdm(cases):
+    await fixture.write_ptr('impl', c)
+    await fixture.run_to_halt()
+    iaf_count = (await fixture.read_word('iaf_count')).view(np.int32)[0]
+    other_count = (await fixture.read_word('other_count')).view(np.uint32)[0]
+    assert iaf_count == 0
+    assert other_count == expected_exceptions
+
+  for c in tqdm.tqdm(['wfi']):
+    await fixture.write_ptr('impl', c)
+    await fixture.core_mini_axi.execute_from(fixture.entry_point)
+    await fixture.core_mini_axi.wait_for_wfi()
+    iaf_count = (await fixture.read_word('iaf_count')).view(np.int32)[0]
+    other_count = (await fixture.read_word('other_count')).view(np.uint32)[0]
+    assert iaf_count == 0
+    assert other_count == 0
+

@@ -110,6 +110,7 @@ abstract class FetchUnit(p: Parameters) extends Module {
     val linkPort = Flipped(new RegfileLinkPortIO)
     val iflush = Flipped(new IFlushIO(p))
     val pc = UInt(p.fetchAddrBits.W)
+    val fault = Output(Bool())
   })
 }
 

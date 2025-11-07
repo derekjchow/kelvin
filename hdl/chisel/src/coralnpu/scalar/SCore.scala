@@ -465,6 +465,18 @@ class SCore(p: Parameters) extends Module {
     csr.io.rvv.get.vxrm := io.rvvcore.get.csr.vxrm
     csr.io.rvv.get.vxsat := io.rvvcore.get.csr.vxsat
   }
+  val isBranching = bru.map(_.io.taken.valid).reduce(_||_)
+  val hasFetchedInstructions = fetch.io.inst.lanes.map(_.valid).reduce(_||_)
+  val floatIdle = if (p.enableFloat) {fRegfile.get.io.scoreboard === 0.U} else {true.B}
+  val rvvIdle = if (p.enableRvv) {io.rvvcore.get.rvv_idle} else {true.B}
+  // Scalar and float arithmetics don't actually trap, we're just trying to be precise here.
+  fault_manager.io.in.fetchFault := fetch.io.fault &&
+      !isBranching &&  // Branches and jumps
+      (regfile.io.scoreboard.regd === 0.U) &&  // Pending scalar operation
+      floatIdle &&  // Pending float operation
+      rvvIdle &&  // Could have vill
+      !lsu.io.active &&  // Could fault
+      !hasFetchedInstructions
 
   // ---------------------------------------------------------------------------
   // Fetch Bus
@@ -475,12 +487,13 @@ class SCore(p: Parameters) extends Module {
   // Arbitrate ready
   lsu.io.ibus.ready := Mux(lsu.io.ibus.valid, io.ibus.ready, false.B)
   fetch.io.ibus.ready := Mux(lsu.io.ibus.valid, false.B, io.ibus.ready)
+  // Arbitrate error
+  fetch.io.ibus.fault := Mux(lsu.io.ibus.valid, MakeInvalid(new FaultInfo(p)), io.ibus.fault)
   // Broadcast rdata
   lsu.io.ibus.rdata := io.ibus.rdata
   fetch.io.ibus.rdata := io.ibus.rdata
 
-  // Tie-off ibus faults in fetch/lsu (unused)
-  fetch.io.ibus.fault := MakeInvalid(new FaultInfo(p))
+  // Tie-off ibus faults in lsu (unused)
   lsu.io.ibus.fault := MakeInvalid(new FaultInfo(p))
 
   // ---------------------------------------------------------------------------

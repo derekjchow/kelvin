@@ -44,6 +44,7 @@ class FaultManager(p: Parameters) extends Module {
       val jalr = Input(Vec(p.instructionLanes, new Bundle {
         val target = UInt(32.W)
       }))
+      val fetchFault = Input(Bool())
     }
     val out = Output(Valid(new FaultManagerOutput))
   })
@@ -69,18 +70,18 @@ class FaultManager(p: Parameters) extends Module {
   val bxx_fault_idx = PriorityEncoder(io.in.fault.map(_.bxx))
   val rvv_dispatch_fault = io.in.fault.map(_.rvv.getOrElse(false.B)).reduce(_|_)
   val rvv_dispatch_fault_idx = PriorityEncoder(io.in.fault.map(_.rvv.getOrElse(false.B)))
-  val instr_access_fault = io.in.memory_fault.valid && io.in.ibus_fault
+  val instr_access_fault = io.in.fetchFault
   val load_fault = io.in.memory_fault.valid && !io.in.memory_fault.bits.write && !io.in.ibus_fault
   val store_fault = io.in.memory_fault.valid && io.in.memory_fault.bits.write && !io.in.ibus_fault
   val rvv_fault = io.in.rvv_fault.map(_.valid).getOrElse(false.B)
 
-  io.out.valid := fault || io.in.memory_fault.valid || rvv_fault
+  io.out.valid := fault || instr_access_fault || load_fault || store_fault || rvv_fault
   io.out.bits.mepc := MuxCase(0.U(32.W), Seq(
     load_fault -> io.in.memory_fault.bits.epc,
     store_fault -> io.in.memory_fault.bits.epc,
-    instr_access_fault -> io.in.memory_fault.bits.epc,
     rvv_fault -> io.in.rvv_fault.map(_.bits.mepc).getOrElse(0.U),
     fault -> io.in.pc(first_fault).pc,
+    instr_access_fault -> io.in.memory_fault.bits.epc,
   ))
 
   val first_fault_is_csr          = (csr_fault && (csr_fault_idx === first_fault))
@@ -92,7 +93,6 @@ class FaultManager(p: Parameters) extends Module {
   io.out.bits.mcause := MuxCase(0.U(32.W), Seq(
     load_fault -> 5.U(32.W),
     store_fault -> 7.U(32.W),
-    instr_access_fault -> 1.U(32.W),
     rvv_fault -> io.in.rvv_fault.map(_.bits.mcause).getOrElse(2.U(32.W)),
     first_fault_is_csr -> 2.U(32.W),
     first_fault_is_jal -> 0.U(32.W),
@@ -100,11 +100,11 @@ class FaultManager(p: Parameters) extends Module {
     first_fault_is_bxx -> 0.U(32.W),
     first_fault_is_undef -> 2.U(32.W),
     first_fault_is_rvv_dispatch -> 2.U(32.W),
+    instr_access_fault -> 1.U(32.W),
   ))
   io.out.bits.mtval := MuxCase(0.U(32.W), Seq(
     load_fault -> io.in.memory_fault.bits.addr,
     store_fault -> io.in.memory_fault.bits.addr,
-    instr_access_fault -> 0.U(32.W),
     rvv_fault -> io.in.rvv_fault.map(_.bits.mtval).getOrElse(0.U),
     first_fault_is_csr -> 0.U,
     first_fault_is_jal -> io.in.jal(jal_fault_idx).target,
@@ -112,6 +112,7 @@ class FaultManager(p: Parameters) extends Module {
     first_fault_is_bxx -> 0.U(32.W),
     first_fault_is_undef -> io.in.undef(undef_fault_idx).inst,
     first_fault_is_rvv_dispatch -> io.in.undef(rvv_dispatch_fault_idx).inst,
+    instr_access_fault -> 0.U(32.W),
   ))
   io.out.bits.decode := MuxCase(false.B, Seq(
     first_fault_is_csr -> true.B,

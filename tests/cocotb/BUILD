@@ -32,6 +32,7 @@ COCOTB_TEST_BINARY_TARGETS = glob(["**/*.elf"]) + glob(["**/*.o"]) + [
     ":float_csr_interlock_test.elf",
     ":finish_txn_before_halt.elf",
     ":stress_test.elf",
+    ":unreachable_prefetch_fault.elf",
     ":wfi_slot_0.elf",
     ":wfi_slot_1.elf",
     ":wfi_slot_2.elf",
@@ -83,6 +84,7 @@ CORE_MINI_AXI_SIM_TESTCASES = [
     "core_mini_axi_rand_instr_test",
     "core_mini_axi_burst_types_test",
     "core_mini_axi_float_csr_test",
+    "unreachable_prefetch_fault",
 ]
 # END_TESTCASES_FOR_core_mini_axi_sim_cocotb
 
@@ -102,6 +104,7 @@ RVV_CORE_MINI_AXI_SIM_TESTCASES = [
     "core_mini_axi_rand_instr_test",
     "core_mini_axi_burst_types_test",
     "core_mini_axi_float_csr_test",
+    "unreachable_prefetch_fault",
 ]
 # END_TESTCASES_FOR_rvv_core_mini_axi_sim_cocotb
 
@@ -111,6 +114,7 @@ CORE_MINI_AXI_SIM_COMMON_TEST_KWARGS = {
     "test_module": ["core_mini_axi_sim.py"],
     "deps": [
         "//coralnpu_test_utils:core_mini_axi_sim_interface",
+        "//coralnpu_test_utils:sim_test_fixture",
         requirement("tqdm"),
         "@bazel_tools//tools/python/runfiles",
     ],
@@ -370,6 +374,13 @@ coralnpu_v2_binary(
     name = "finish_txn_before_halt",
     srcs = [
         "finish_txn_before_halt.cc",
+    ],
+)
+
+coralnpu_v2_binary(
+    name = "unreachable_prefetch_fault",
+    srcs = [
+        "unreachable_prefetch_fault.cc",
     ],
 )
 

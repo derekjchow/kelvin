@@ -529,7 +529,8 @@ class DispatchV2(p: Parameters) extends Dispatch(p) {
 
   // ---------------------------------------------------------------------------
   // MPAUSE
-  val mpauseInterlock = decodedInsts.map(x => (!x.mpause || coreIdle))
+  val mpauseInterlock = (0 until p.instructionLanes).map(i =>
+    !decodedInsts(i).mpause || ((i == 0).B && coreIdle))
 
   // ---------------------------------------------------------------------------
   // Combine above rules. This variable represents which instructions can be
