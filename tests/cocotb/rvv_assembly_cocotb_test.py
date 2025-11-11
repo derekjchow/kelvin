@@ -635,3 +635,307 @@ async def vsetvl_test(dut):
             assert(actual_vl1 == expected_vl)
             assert(actual_vl2 == expected_vl)
             assert(actual_vtype == vtype)
+
+
+async def vslide_test(dut, cases, expfunc, ignore_tail=False):
+    """Test slide[1]{up,down} usage accessible from intrinsics."""
+    # mask is not accessible from here.
+    fixture = await Fixture.Create(dut)
+    r = runfiles.Create()
+    await fixture.load_elf_and_lookup_symbols(
+        r.Rlocation('coralnpu_hw/tests/cocotb/rvv/vslide.elf'),
+        [
+            'impl',
+            'vl',
+            'offset',
+            'buf_dest8',
+            'buf_dest16',
+            'buf_dest32',
+            'buf_src8',
+            'buf_src16',
+            'buf_src32',
+            'scalar8',
+            'scalar16',
+            'scalar32',
+        ] + [c['impl'] for c in cases],
+    )
+    rng = np.random.default_rng()
+    for c in tqdm.tqdm(cases):
+        impl = c['impl']
+        vl = c['vl']
+        offset = c['offset']
+        dtype = c['dtype']
+
+        src_data = rng.integers(
+            low=np.iinfo(dtype).min,
+            high=np.iinfo(dtype).max+1, size=vl, dtype=dtype)
+        dest_data = rng.integers(
+            low=np.iinfo(dtype).min,
+            high=np.iinfo(dtype).max+1, size=vl, dtype=dtype)
+        scalar = rng.integers(
+            low=np.iinfo(dtype).min,
+            high=np.iinfo(dtype).max+1, size=1, dtype=dtype)
+        expected_output = expfunc(dest_data, src_data, scalar, vl, offset)
+
+        if dtype == np.int8:
+            dest_buf = 'buf_dest8'
+            src_buf = 'buf_src8'
+            scalar_sym = 'scalar8'
+        elif dtype == np.int16:
+            dest_buf = 'buf_dest16'
+            src_buf = 'buf_src16'
+            scalar_sym = 'scalar16'
+        elif dtype == np.int32:
+            dest_buf = 'buf_dest32'
+            src_buf = 'buf_src32'
+            scalar_sym = 'scalar32'
+
+        await fixture.write_ptr('impl', impl)
+        await fixture.write_word('vl', vl)
+        await fixture.write_word('offset', offset)
+        await fixture.write(dest_buf, dest_data)
+        await fixture.write(src_buf, src_data)
+        await fixture.write(scalar_sym, scalar)
+
+        await fixture.run_to_halt()
+
+        actual_output = (
+            await fixture.read(dest_buf, vl * np.dtype(dtype).itemsize)
+        ).view(dtype)
+
+        if ignore_tail:
+            expected_output = expected_output[0:max(vl-offset, 0)]
+            actual_output = actual_output[0:max(vl-offset, 0)]
+        debug_msg = str({
+            'impl': impl,
+            'vl': vl,
+            'offset': offset,
+            'src': src_data,
+            'dest': dest_data,
+            'expected': expected_output,
+            'actual': actual_output,
+        })
+        assert (actual_output == expected_output).all(), debug_msg
+
+
+@cocotb.test()
+async def vslideup_test(dut):
+    """Test slideup usage accessible from intrinsics."""
+    def expfunc(dest, src, scalar, vl, offset):
+        return np.concat((
+            dest[0:offset], src[0:max(vl-offset, 0)]))
+
+    cases = [
+        {'impl': 'vslideup_i8mf4', 'dtype': np.int8, 'vl': vl, 'offset': offset}
+        for vl in [4, 3] for offset in [0, 1, 2, 4]
+    ] + [
+        {'impl': 'vslideup_i8mf2', 'dtype': np.int8, 'vl': vl, 'offset': offset}
+        for vl in [8, 7] for offset in [0, 2, 6, 8]
+    ] + [
+        {'impl': 'vslideup_i8m1', 'dtype': np.int8, 'vl': vl, 'offset': offset}
+        for vl in [16, 15] for offset in [0, 3, 14, 16]
+    ] + [
+        {'impl': 'vslideup_i8m2', 'dtype': np.int8, 'vl': vl, 'offset': offset}
+        for vl in [32, 31] for offset in [0, 4, 30, 32]
+    ] + [
+        {'impl': 'vslideup_i8m4', 'dtype': np.int8, 'vl': vl, 'offset': offset}
+        for vl in [64, 63] for offset in [0, 5, 62, 64]
+    ] + [
+        {'impl': 'vslideup_i8m8', 'dtype': np.int8, 'vl': vl, 'offset': offset}
+        for vl in [128, 127] for offset in [0, 6, 126, 128]
+    ] + [
+        {'impl': 'vslideup_i16mf2', 'dtype': np.int16, 'vl': vl, 'offset': offset}
+        for vl in [4, 3] for offset in [0, 1, 2, 4]
+    ] + [
+        {'impl': 'vslideup_i16m1', 'dtype': np.int16, 'vl': vl, 'offset': offset}
+        for vl in [8, 7] for offset in [0, 2, 6, 8]
+    ] + [
+        {'impl': 'vslideup_i16m2', 'dtype': np.int16, 'vl': vl, 'offset': offset}
+        for vl in [16, 15] for offset in [0, 3, 14, 16]
+    ] + [
+        {'impl': 'vslideup_i16m4', 'dtype': np.int16, 'vl': vl, 'offset': offset}
+        for vl in [32, 31] for offset in [0, 4, 30, 32]
+    ] + [
+        {'impl': 'vslideup_i16m8', 'dtype': np.int16, 'vl': vl, 'offset': offset}
+        for vl in [64, 63] for offset in [0, 5, 62, 64]
+    ] + [
+        {'impl': 'vslideup_i32m1', 'dtype': np.int32, 'vl': vl, 'offset': offset}
+        for vl in [4, 3] for offset in [0, 1, 2, 4]
+    ] + [
+        {'impl': 'vslideup_i32m2', 'dtype': np.int32, 'vl': vl, 'offset': offset}
+        for vl in [8, 7] for offset in [0, 2, 6, 8]
+    ] + [
+        {'impl': 'vslideup_i32m4', 'dtype': np.int32, 'vl': vl, 'offset': offset}
+        for vl in [16, 15] for offset in [0, 3, 14, 16]
+    ] + [
+        {'impl': 'vslideup_i32m8', 'dtype': np.int32, 'vl': vl, 'offset': offset}
+        for vl in [32, 31] for offset in [0, 4, 30, 32]
+    ]
+    await vslide_test(dut, cases, expfunc)
+
+
+@cocotb.test()
+async def vslidedown_test(dut):
+    """Test slidedown usage accessible from intrinsics."""
+    def expfunc(dest, src, scalar, vl, offset):
+        return np.concat((
+            src[offset:max(vl, offset)],
+            np.zeros(max(offset, 0), dtype=src.dtype)))
+
+    cases = [
+        {'impl': 'vslidedown_i8mf4', 'dtype': np.int8, 'vl': vl, 'offset': offset}
+        for vl in [4, 3] for offset in [1, 2]
+    ] + [
+        {'impl': 'vslidedown_i8mf2', 'dtype': np.int8, 'vl': vl, 'offset': offset}
+        for vl in [8, 7] for offset in [0, 2, 6, 8]
+    ] + [
+        {'impl': 'vslidedown_i8m1', 'dtype': np.int8, 'vl': vl, 'offset': offset}
+        for vl in [16, 15] for offset in [0, 3, 14, 16]
+    ] + [
+        {'impl': 'vslidedown_i8m2', 'dtype': np.int8, 'vl': vl, 'offset': offset}
+        for vl in [32, 31] for offset in [0, 4, 30, 32]
+    ] + [
+        {'impl': 'vslidedown_i8m4', 'dtype': np.int8, 'vl': vl, 'offset': offset}
+        for vl in [64, 63] for offset in [0, 5, 62, 64]
+    ] + [
+        {'impl': 'vslidedown_i8m8', 'dtype': np.int8, 'vl': vl, 'offset': offset}
+        for vl in [128, 127] for offset in [0, 6, 126, 128]
+    ] + [
+        {'impl': 'vslidedown_i16mf2', 'dtype': np.int16, 'vl': vl, 'offset': offset}
+        for vl in [4, 3] for offset in [0, 1, 2, 4]
+    ] + [
+        {'impl': 'vslidedown_i16m1', 'dtype': np.int16, 'vl': vl, 'offset': offset}
+        for vl in [8, 7] for offset in [0, 2, 6, 8]
+    ] + [
+        {'impl': 'vslidedown_i16m2', 'dtype': np.int16, 'vl': vl, 'offset': offset}
+        for vl in [16, 15] for offset in [0, 3, 14, 16]
+    ] + [
+        {'impl': 'vslidedown_i16m4', 'dtype': np.int16, 'vl': vl, 'offset': offset}
+        for vl in [32, 31] for offset in [0, 4, 30, 32]
+    ] + [
+        {'impl': 'vslidedown_i16m8', 'dtype': np.int16, 'vl': vl, 'offset': offset}
+        for vl in [64, 63] for offset in [0, 5, 62, 64]
+    ] + [
+        {'impl': 'vslidedown_i32m1', 'dtype': np.int32, 'vl': vl, 'offset': offset}
+        for vl in [4, 3] for offset in [0, 1, 2, 4]
+    ] + [
+        {'impl': 'vslidedown_i32m2', 'dtype': np.int32, 'vl': vl, 'offset': offset}
+        for vl in [8, 7] for offset in [0, 2, 6, 8]
+    ] + [
+        {'impl': 'vslidedown_i32m4', 'dtype': np.int32, 'vl': vl, 'offset': offset}
+        for vl in [16, 15] for offset in [0, 3, 14, 16]
+    ] + [
+        {'impl': 'vslidedown_i32m8', 'dtype': np.int32, 'vl': vl, 'offset': offset}
+        for vl in [32, 31] for offset in [0, 4, 30, 32]
+    ]
+    await vslide_test(dut, cases, expfunc, ignore_tail=True)
+
+
+@cocotb.test()
+async def vslide1up_test(dut):
+    """Test slide1up usage accessible from intrinsics."""
+    def expfunc(dest, src, scalar, vl, offset):
+        return np.concat((scalar, src[0:max(vl-1, 0)]))
+
+    cases = [
+        {'impl': 'vslide1up_i8mf4', 'dtype': np.int8, 'vl': vl, 'offset': 0}
+        for vl in [4, 3]
+    ] + [
+        {'impl': 'vslide1up_i8mf2', 'dtype': np.int8, 'vl': vl, 'offset': 0}
+        for vl in [8, 7]
+    ] + [
+        {'impl': 'vslide1up_i8m1', 'dtype': np.int8, 'vl': vl, 'offset': 0}
+        for vl in [16, 15]
+    ] + [
+        {'impl': 'vslide1up_i8m2', 'dtype': np.int8, 'vl': vl, 'offset': 0}
+        for vl in [32, 31]
+    ] + [
+        {'impl': 'vslide1up_i8m4', 'dtype': np.int8, 'vl': vl, 'offset': 0}
+        for vl in [64, 63]
+    ] + [
+        {'impl': 'vslide1up_i8m8', 'dtype': np.int8, 'vl': vl, 'offset': 0}
+        for vl in [128, 127]
+    ] + [
+        {'impl': 'vslide1up_i16mf2', 'dtype': np.int16, 'vl': vl, 'offset': 0}
+        for vl in [4, 3]
+    ] + [
+        {'impl': 'vslide1up_i16m1', 'dtype': np.int16, 'vl': vl, 'offset': 0}
+        for vl in [8, 7]
+    ] + [
+        {'impl': 'vslide1up_i16m2', 'dtype': np.int16, 'vl': vl, 'offset': 0}
+        for vl in [16, 15]
+    ] + [
+        {'impl': 'vslide1up_i16m4', 'dtype': np.int16, 'vl': vl, 'offset': 0}
+        for vl in [32, 31]
+    ] + [
+        {'impl': 'vslide1up_i16m8', 'dtype': np.int16, 'vl': vl, 'offset': 0}
+        for vl in [64, 63]
+    ] + [
+        {'impl': 'vslide1up_i32m1', 'dtype': np.int32, 'vl': vl, 'offset': 0}
+        for vl in [4, 3]
+    ] + [
+        {'impl': 'vslide1up_i32m2', 'dtype': np.int32, 'vl': vl, 'offset': 0}
+        for vl in [8, 7]
+    ] + [
+        {'impl': 'vslide1up_i32m4', 'dtype': np.int32, 'vl': vl, 'offset': 0}
+        for vl in [16, 15]
+    ] + [
+        {'impl': 'vslide1up_i32m8', 'dtype': np.int32, 'vl': vl, 'offset': 0}
+        for vl in [32, 31]
+    ]
+    await vslide_test(dut, cases, expfunc)
+
+
+@cocotb.test()
+async def vslide1down_test(dut):
+    """Test slide1down usage accessible from intrinsics."""
+    def expfunc(dest, src, scalar, vl, offset):
+        return np.concat((src[1:max(vl, 1)], scalar))
+
+    cases = [
+        {'impl': 'vslide1down_i8mf4', 'dtype': np.int8, 'vl': vl, 'offset': 0}
+        for vl in [4, 3]
+    ] + [
+        {'impl': 'vslide1down_i8mf2', 'dtype': np.int8, 'vl': vl, 'offset': 0}
+        for vl in [8, 7]
+    ] + [
+        {'impl': 'vslide1down_i8m1', 'dtype': np.int8, 'vl': vl, 'offset': 0}
+        for vl in [16, 15]
+    ] + [
+        {'impl': 'vslide1down_i8m2', 'dtype': np.int8, 'vl': vl, 'offset': 0}
+        for vl in [32, 31]
+    ] + [
+        {'impl': 'vslide1down_i8m4', 'dtype': np.int8, 'vl': vl, 'offset': 0}
+        for vl in [64, 63]
+    ] + [
+        {'impl': 'vslide1down_i8m8', 'dtype': np.int8, 'vl': vl, 'offset': 0}
+        for vl in [128, 127]
+    ] + [
+        {'impl': 'vslide1down_i16mf2', 'dtype': np.int16, 'vl': vl, 'offset': 0}
+        for vl in [4, 3]
+    ] + [
+        {'impl': 'vslide1down_i16m1', 'dtype': np.int16, 'vl': vl, 'offset': 0}
+        for vl in [8, 7]
+    ] + [
+        {'impl': 'vslide1down_i16m2', 'dtype': np.int16, 'vl': vl, 'offset': 0}
+        for vl in [16, 15]
+    ] + [
+        {'impl': 'vslide1down_i16m4', 'dtype': np.int16, 'vl': vl, 'offset': 0}
+        for vl in [32, 31]
+    ] + [
+        {'impl': 'vslide1down_i16m8', 'dtype': np.int16, 'vl': vl, 'offset': 0}
+        for vl in [64, 63]
+    ] + [
+        {'impl': 'vslide1down_i32m1', 'dtype': np.int32, 'vl': vl, 'offset': 0}
+        for vl in [4, 3]
+    ] + [
+        {'impl': 'vslide1down_i32m2', 'dtype': np.int32, 'vl': vl, 'offset': 0}
+        for vl in [8, 7]
+    ] + [
+        {'impl': 'vslide1down_i32m4', 'dtype': np.int32, 'vl': vl, 'offset': 0}
+        for vl in [16, 15]
+    ] + [
+        {'impl': 'vslide1down_i32m8', 'dtype': np.int32, 'vl': vl, 'offset': 0}
+        for vl in [32, 31]
+    ]
+    await vslide_test(dut, cases, expfunc)

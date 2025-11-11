@@ -4236,23 +4236,14 @@ module rvv_backend_decode_unit_ari
               endcase
             end
 
-            VRSUB: begin
+            VRSUB,
+            VSLIDEDOWN: begin
               case(inst_funct3)
                 OPIVX,
                 OPIVI: begin
                   vd_offset[i] = uop_index_current[i][`UOP_INDEX_WIDTH-1:0];
                   vd_valid[i]  = 1'b1;
                 end
-              endcase
-            end
-
-            VSLIDEDOWN: begin
-              case(inst_funct3)
-                OPIVX,
-                OPIVI: begin  
-                  vd_offset[i] = 'b0;
-                  vd_valid[i]  = uop_index_current[i][`UOP_INDEX_WIDTH-1:0] == uop_index_max;
-                end 
               endcase
             end
 

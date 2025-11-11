@@ -59,6 +59,9 @@ template_rule(
         "vsetvl_test": {
             "srcs": ["vsetvl_test.cc"],
         },
+        "vslide": {
+            "srcs": ["vslide.cc"],
+        },
         "vstart_store": {
             "srcs": ["vstart_store.S"],
         },
@@ -81,6 +84,7 @@ filegroup(
         "vmsif_test.elf",
         "vmsof_test.elf",
         "vsetvl_test.elf",
+        "vslide.elf",
         "vstart_store.elf",
     ],
 )
