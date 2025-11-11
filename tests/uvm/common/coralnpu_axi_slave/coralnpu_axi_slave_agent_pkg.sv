@@ -21,6 +21,7 @@ package coralnpu_axi_slave_agent_pkg;
   import uvm_pkg::*;
   `include "uvm_macros.svh"
   import transaction_item_pkg::*;
+  import memory_map_pkg::*;
 
   //--------------------------------------------------------------------------
   // Class: coralnpu_axi_slave_model
@@ -28,6 +29,9 @@ package coralnpu_axi_slave_agent_pkg;
   class coralnpu_axi_slave_model extends uvm_component;
     `uvm_component_utils(coralnpu_axi_slave_model)
     virtual coralnpu_axi_slave_if.TB_SLAVE_MODEL vif;
+
+    // Simple memory model for DTCM
+    protected byte dtcm_mem[int];
 
     function new(string name = "coralnpu_axi_slave_model",
                  uvm_component parent = null);
@@ -49,19 +53,24 @@ package coralnpu_axi_slave_agent_pkg;
       vif.tb_slave_cb.arready <= 1'b0;
       vif.tb_slave_cb.bvalid  <= 1'b0;
       vif.tb_slave_cb.rvalid  <= 1'b0;
-      vif.tb_slave_cb.bresp   <= 2'b00; // OKAY
-      vif.tb_slave_cb.rresp   <= 2'b00; // OKAY
-      vif.tb_slave_cb.rdata   <= '0;    // Return 0 data
+      vif.tb_slave_cb.bresp   <= AXI_OKAY;
+      vif.tb_slave_cb.rresp   <= AXI_OKAY;
+      vif.tb_slave_cb.rdata   <= '0;
       fork
         handle_writes();
         handle_reads();
       join_none
     endtask
 
-    // Slave agent: No internal memory model implemented. Incoming write data
-    //              is not stored or processed by this agent.
+    // Slave agent: Handles AXI write transactions.
+    //              - Checks for write attempts to read-only ITCM region
+    //                and responds with AXI_SLVERR.
+    //              - For valid write addresses in the DTCM region, data is
+    //                stored in the internal `dtcm_mem` model.
+    //              - Responds with AXI_OKAY for valid writes.
     protected virtual task handle_writes();
-      logic [IDWIDTH-1:0] current_bid; // Store ID for response
+      logic [IDWIDTH-1:0] current_bid;
+      axi_resp_e resp;
       forever begin
         // Wait for write address
         vif.tb_slave_cb.awready <= 1'b0;
@@ -70,36 +79,65 @@ package coralnpu_axi_slave_agent_pkg;
         `uvm_info(get_type_name(),
                   $sformatf("Slave Rcvd AW: Addr=0x%h ID=%0d",
                             vif.tb_slave_cb.awaddr, current_bid), UVM_HIGH)
+
+        // Memory protection logic
+        if (vif.tb_slave_cb.awaddr >= ITCM_START_ADDR &&
+            vif.tb_slave_cb.awaddr <= ITCM_END_ADDR) begin
+          resp = AXI_SLVERR;
+          `uvm_info(get_type_name(),
+                       $sformatf("Write to Read-Only ITCM region: 0x%h",
+                                 vif.tb_slave_cb.awaddr), UVM_MEDIUM)
+        end else begin
+          resp = AXI_OKAY;
+        end
+
         vif.tb_slave_cb.awready <= 1'b1;
         @(vif.tb_slave_cb);
         vif.tb_slave_cb.awready <= 1'b0;
 
         vif.tb_slave_cb.wready <= 1'b0;
         @(vif.tb_slave_cb iff vif.tb_slave_cb.wvalid);
+
+        // Write to DTCM memory model
+        if (resp == AXI_OKAY &&
+            vif.tb_slave_cb.awaddr >= DTCM_START_ADDR &&
+            vif.tb_slave_cb.awaddr <= DTCM_END_ADDR) begin
+          for (int i = 0; i < (vif.DWIDTH / 8); i++) begin
+            if (vif.tb_slave_cb.wstrb[i]) begin
+              dtcm_mem[vif.tb_slave_cb.awaddr + i] =
+                  vif.tb_slave_cb.wdata[i*8 +: 8];
+            end
+          end
+        end
+
         vif.tb_slave_cb.wready <= 1'b1;
         @(vif.tb_slave_cb);
         vif.tb_slave_cb.wready <= 1'b0;
 
-        // Send write response (OKAY)
+        // Send write response
         @(vif.tb_slave_cb);
-        vif.tb_slave_cb.bvalid <= 1'b1; // Assert valid
-        vif.tb_slave_cb.bresp  <= 2'b00; // OKAY
-        vif.tb_slave_cb.bid    <= current_bid; // Respond with stored AWID
+        vif.tb_slave_cb.bvalid <= 1'b1;
+        vif.tb_slave_cb.bresp  <= resp;
+        vif.tb_slave_cb.bid    <= current_bid;
 
         do @(vif.tb_slave_cb); while (!vif.tb_slave_cb.bready);
 
         @(vif.tb_slave_cb);
         vif.tb_slave_cb.bvalid <= 1'b0;
         `uvm_info(get_type_name(),
-                  $sformatf("Slave Sent BResp OKAY ID=%0d", current_bid),
-                  UVM_HIGH)
+                  $sformatf("Slave Sent BResp %s ID=%0d",
+                            resp.name(), current_bid), UVM_HIGH)
       end
     endtask
 
-    // Slave agent: No internal memory model. Read operations will return a
-    //              fixed value of zero.
+    // Slave agent: Handles AXI read transactions.
+    //              - For valid read addresses in the DTCM region, data is
+    //                retrieved from the internal `dtcm_mem` model.
+    //              - For other regions, returns zero data.
+    //              - Responds with AXI_OKAY for all read transactions.
     protected virtual task handle_reads();
-      logic [IDWIDTH-1:0] current_rid; // Store ID for response
+      logic [IDWIDTH-1:0] current_rid;
+      logic [DWIDTH-1:0] read_data;
       forever begin
         // Wait for read address
         vif.tb_slave_cb.arready <= 1'b0;
@@ -112,22 +150,31 @@ package coralnpu_axi_slave_agent_pkg;
         @(vif.tb_slave_cb);
         vif.tb_slave_cb.arready <= 1'b0;
 
-        // Send read data/response (OKAY, Zero Data)
-        // TODO: Add burst handling based on ARLEN
+        // Read from DTCM memory model
+        read_data = 'X;
+        if (vif.tb_slave_cb.araddr >= DTCM_START_ADDR &&
+            vif.tb_slave_cb.araddr <= DTCM_END_ADDR) begin
+          for (int i = 0; i < (vif.DWIDTH / 8); i++) begin
+            if (dtcm_mem.exists(vif.tb_slave_cb.araddr + i)) begin
+              read_data[i*8 +: 8] = dtcm_mem[vif.tb_slave_cb.araddr + i];
+            end
+          end
+        end
+
         @(vif.tb_slave_cb);
-        vif.tb_slave_cb.rvalid <= 1'b1; // Assert valid
-        vif.tb_slave_cb.rresp  <= 2'b00; // OKAY
-        vif.tb_slave_cb.rdata  <= '0;    // Return 0 data
+        vif.tb_slave_cb.rvalid <= 1'b1;
+        vif.tb_slave_cb.rresp  <= AXI_OKAY;
+        vif.tb_slave_cb.rdata  <= read_data;
         vif.tb_slave_cb.rid    <= current_rid;
-        vif.tb_slave_cb.rlast  <= 1'b1; // Assume single beat
+        vif.tb_slave_cb.rlast  <= 1'b1;
 
         do @(vif.tb_slave_cb); while (!vif.tb_slave_cb.rready);
 
         @(vif.tb_slave_cb);
         vif.tb_slave_cb.rvalid <= 1'b0;
-        vif.tb_slave_cb.rlast  <= 1'b0; // Deassert RLAST
+        vif.tb_slave_cb.rlast  <= 1'b0;
         `uvm_info(get_type_name(),
-                  $sformatf("Slave Sent RData Zero OKAY ID=%0d", current_rid),
+                  $sformatf("Slave Sent RData OKAY ID=%0d", current_rid),
                   UVM_HIGH)
       end
     endtask

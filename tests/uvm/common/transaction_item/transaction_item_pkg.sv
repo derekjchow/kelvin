@@ -20,6 +20,7 @@ package transaction_item_pkg;
 
   import uvm_pkg::*;
   `include "uvm_macros.svh"
+  import memory_map_pkg::*;
 
   // Define parameters locally or assume they are globally defined/passed
   // These might ideally come from a central configuration package later
@@ -45,6 +46,14 @@ package transaction_item_pkg;
       AXI_BURST_WRAP  = 2'b10,
       AXI_BURST_RSVD  = 2'b11
   } axi_burst_type_e;
+
+  // Helper enum for AXI response types
+  typedef enum logic [1:0] {
+      AXI_OKAY  = 2'b00,
+      AXI_EXOKAY = 2'b01,
+      AXI_SLVERR = 2'b10,
+      AXI_DECERR = 2'b11
+  } axi_resp_e;
 
   class axi_transaction extends uvm_sequence_item;
 

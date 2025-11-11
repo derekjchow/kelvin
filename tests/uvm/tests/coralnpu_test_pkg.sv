@@ -272,6 +272,7 @@ package coralnpu_test_pkg;
         `uvm_info(get_type_name(), "Test ended on DUT halt.", UVM_LOW)
         test_passed = 1'b1;
       end else if (dut_faulted_flag) begin
+        // TODO: Compare mcause in RTL with mcause in MPACT when fault signal.
         `uvm_info(get_type_name(), "Test ended on DUT fault.", UVM_LOW)
         test_passed = 1'b0;
       end else if (test_timed_out) begin
