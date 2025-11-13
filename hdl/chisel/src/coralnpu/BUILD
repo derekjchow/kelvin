@@ -438,8 +438,6 @@ template_rule(
                 "--moduleName=CoreMiniVerification",
                 "--useAxi",
                 "--enableVerification=True",
-                # Verification requires DispatchV2 and LsuV2
-                "--enableDispatchV2=True",
             ],
             "module_name": "CoreMiniVerificationAxi",
             "verilog_file_path": "CoreMiniVerificationAxi.sv",
@@ -500,7 +498,6 @@ chisel_cc_library(
         "--enableFetchL0=False",
         "--fetchDataBits=128",
         "--lsuDataBits=128",
-        "--enableDispatchV2=True",
         "--enableDebug=True",
         "--enableFloat=True",
         "--moduleName=CoreMiniDebug",

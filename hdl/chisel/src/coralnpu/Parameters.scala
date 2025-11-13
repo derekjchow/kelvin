@@ -74,11 +74,7 @@ class Parameters(var m: Seq[MemoryRegion] = Seq(), val hartId: Int = 0) {
   val rvvVlen = 128
   def rvvVlenb: Int = { rvvVlen / 8 }
 
-  // Dispatch unit
-  var enableDispatchV2 = false
-  def useDispatchV2: Boolean = { enableRvv || enableDispatchV2 }
-
-  def useRetirementBuffer: Boolean = { useDispatchV2 && enableVerification }
+  def useRetirementBuffer: Boolean = { enableVerification }
 
   // Scalar Floating point
   var enableFloat = false
@@ -120,7 +116,7 @@ class Parameters(var m: Seq[MemoryRegion] = Seq(), val hartId: Int = 0) {
   def dbusSize: Int = { log2Ceil(lsuDataBits / 8) + 1 }
   def useLsuV2: Boolean = { enableRvv }
   var enableDebug = false
-  def useDebugModule: Boolean = { useDispatchV2 && enableDebug }
+  def useDebugModule: Boolean = { enableDebug }
 
   // TCM Size Configuration
   var tcmHighmem = false
@@ -190,7 +186,6 @@ object EmitParametersHeader {
     // TODO(atv): See if we can improve the reflection above to execute
     // the methods for our dynamic parameters.
     builder = builder.append(s"#define KP_dbusSize ${p.dbusSize}\n")
-    builder = builder.append(s"#define KP_useDispatchV2 ${p.useDispatchV2}\n")
     builder = builder.append(s"#define KP_useRetirementBuffer ${p.useRetirementBuffer}\n")
     builder = builder.append(s"#define KP_retirementBufferIdxWidth ${p.retirementBufferIdxWidth}\n")
     builder = builder.append(s"#define KP_useDebugModule ${p.useDebugModule}\n")

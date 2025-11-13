@@ -71,12 +71,8 @@ class FRegfile(p: Parameters, n_read: Int, n_write: Int) extends Module {
   // TOOD(atv): Generalize this a bit, such that if there is an incoming write on any port for the addr, we fwd it.
   io.busPort.data(0) := (if (n_read < 2) {
     0.U
-  } else if (p.useDispatchV2) {
-    fregfile(io.busPortAddr).asWord
   } else {
-    Mux(io.write_ports(0).valid && (io.write_ports(0).addr === io.read_ports(1).addr),
-            io.write_ports(0).data,
-            fregfile(io.busPortAddr)).asWord
+    fregfile(io.busPortAddr).asWord
   })
   for (i <- 1 until p.instructionLanes) {
     io.busPort.addr(i) := 0.U

@@ -31,7 +31,6 @@ coralnpu_v2_binary(
     srcs = ["instr_align_1.cc"],
 )
 
-# Works on DispatchV2, not DispatchV1.
 coralnpu_v2_binary(
     name = "instr_align_2",
     srcs = ["instr_align_2.cc"],
@@ -68,7 +67,7 @@ filegroup(
         ":illegal.elf",
         ":instr_align_0.elf",
         ":instr_align_1.elf",
-        # ":instr_align_2.elf",
+        ":instr_align_2.elf",
         ":instr_fault.elf",
         ":load_fault_0.elf",
         ":load_fault_1.elf",

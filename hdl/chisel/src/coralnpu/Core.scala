@@ -110,8 +110,6 @@ object EmitCore extends App {
       p.enableVerification = arg.split("=")(1).toBoolean
     } else if (arg.startsWith("--enableDebug")) {
       p.enableDebug = arg.split("=")(1).toBoolean
-    } else if (arg.startsWith("--enableDispatchV2")) {
-      p.enableDispatchV2 = arg.split("=")(1).toBoolean
     } else if (arg.startsWith("--lsuDataBits")) {
       p.lsuDataBits = arg.split("=")(1).toInt
     } else if (arg.startsWith("--tcmHighmem")) {
