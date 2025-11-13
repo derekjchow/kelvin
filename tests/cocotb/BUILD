@@ -38,6 +38,7 @@ COCOTB_TEST_BINARY_TARGETS = glob(["**/*.elf"]) + glob(["**/*.o"]) + [
     ":wfi_slot_2.elf",
     ":wfi_slot_3.elf",
     "//tests/cocotb/coralnpu_isa:coralnpu_isa_tests",
+    "//tests/cocotb/exceptions:elf_files",
 ]
 
 verilator_cocotb_model(
