@@ -25,6 +25,20 @@ class RWAxiAddress(p: Parameters) extends Bundle {
   val write = Bool()
 }
 
+class ReadResult(idBits: Int) extends Bundle {
+  val id = UInt(idBits.W)
+  val last = Bool()
+}
+
+object ReadResult {
+  def apply(idBits: Int, id: UInt, last: Bool): ReadResult = {
+    val result = Wire(new ReadResult(idBits))
+    result.id := id
+    result.last := last
+    result
+  }
+}
+
 class AxiSlave(p: Parameters) extends Module {
   val io = IO(new Bundle{
     val axi = Flipped(new AxiMasterIO(p.axi2AddrBits, p.axi2DataBits, p.axi2IdBits))
@@ -46,14 +60,14 @@ class AxiSlave(p: Parameters) extends Module {
   axiAddr.bits.write := (addrArbiter.io.chosen === 1.U)
 
   addrArbiter.io.out.ready := axiAddr.ready
-  val axiAddrCmd = Queue(axiAddr, 1)
+  val axiAddrCmd = Queue(axiAddr, 1, pipe=true)
   val writeActive = axiAddrCmd.valid && axiAddrCmd.bits.write
   val readActive = axiAddrCmd.valid && !axiAddrCmd.bits.write
   // This register tracks the address over multiple beats in a burst
   val cmdAddr = RegInit(0.U(p.axi2AddrBits.W))
 
   // Write
-  val writeData = Queue(io.axi.write.data, 2)
+  val writeData = Queue(io.axi.write.data, 3)
   val writeResponse = Wire(Decoupled(new AxiWriteResponse(p.axi2IdBits)))
   io.axi.write.resp <> Queue(writeResponse, 2)
 
@@ -77,24 +91,25 @@ class AxiSlave(p: Parameters) extends Module {
       AxiResponseType.OKAY.asUInt, AxiResponseType.SLVERR.asUInt)
 
   // Read
-  val readDataQueueSize = 2
+  val readDataQueueSize = 3
   val readDataQueue = Module(new Queue(
       new AxiReadData(p.axi2DataBits, p.axi2IdBits), readDataQueueSize))
   val readData = readDataQueue.io.enq
   io.axi.read.data <> readDataQueue.io.deq
 
-  val readIssued = RegInit(false.B)   // Tracks if a read was issued last cycle
+  val readIssued = RegInit(MakeInvalid(new ReadResult(p.axi2IdBits)))
   val readsIssued = RegInit(0.U((axiAddrCmd.bits.addr.len.getWidth + 1).W)) // Tracks number of readData issued
 
   /// Check if we can issue a read
-  val nextQueueCount = readDataQueue.io.count +& readIssued -&
-      readDataQueue.io.deq.fire
   val maybeIssueRead = readActive &&
-      ((readDataQueueSize.U - nextQueueCount) >= 1.U) &&
-      (readsIssued <= axiAddrCmd.bits.addr.len) // Don't issue if last transaction
+      ((readDataQueueSize.U - readDataQueue.io.count) >= 2.U)
   val issueRead = maybeIssueRead && !io.periBusy
-  readIssued := issueRead
-  readsIssued := Mux(axiAddr.fire, 0.U, readsIssued + issueRead)
+  val readsIssuedNext = Mux(axiAddrCmd.fire, 0.U, readsIssued + issueRead)
+  val lastRead = (readsIssued === axiAddrCmd.bits.addr.len)
+
+  readIssued := MakeValid(
+      issueRead, ReadResult(p.axi2IdBits, axiAddrCmd.bits.addr.id, lastRead))
+  readsIssued := readsIssuedNext
 
   /// Forward read command to SRAM
   /// Note: maybeIssueRead is used here instead of issue read so the downstream
@@ -104,15 +119,15 @@ class AxiSlave(p: Parameters) extends Module {
   io.fabric.readDataAddr.bits  := cmdAddr
 
   /// Response from SRAM, cycle later
-  readData.valid := readIssued
+  readData.valid := readIssued.valid
   readData.bits.data := io.fabric.readData.bits
-  readData.bits.id := axiAddrCmd.bits.addr.id
+  readData.bits.id := readIssued.bits.id
   readData.bits.resp := Mux(io.fabric.readData.valid,
       AxiResponseType.OKAY.asUInt, AxiResponseType.SLVERR.asUInt)
-  readData.bits.last := (readsIssued === (axiAddrCmd.bits.addr.len +& 1.U))
+  readData.bits.last := readIssued.bits.last
 
   /// Ensure read is enqueued
-  assert(!readIssued || readDataQueue.io.enq.ready)
+  assert(!readIssued.valid || readDataQueue.io.enq.ready)
 
   // Update address between beats
   val baseAddrMask = VecInit((0 until axiAddrCmd.bits.addr.addr.getWidth).map(
@@ -144,7 +159,7 @@ class AxiSlave(p: Parameters) extends Module {
   // Move to the next command when done
   axiAddrCmd.ready := MuxCase(false.B, Seq(
       writeActive -> writeResponse.fire,
-      readActive -> (readData.fire && readData.bits.last),
+      readActive -> (issueRead && lastRead),
   ))
 
   io.txnInProgress := axiAddrCmd.valid
