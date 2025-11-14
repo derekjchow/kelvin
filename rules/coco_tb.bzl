@@ -242,10 +242,19 @@ def _verilator_cocotb_test_suite(
     all_tests_kwargs = dict(tests_kwargs)
     all_tests_kwargs.update(kwargs)
 
+    default_tc_size = all_tests_kwargs.pop("default_testcase_size", "")
+
     if testcases:
         test_targets = []
         for tc in testcases:
+            tc_size = default_tc_size
+            if type(tc) == "tuple":
+                tc, tc_size = tc
+
             tc_tests_kwargs = dict(all_tests_kwargs)
+            if tc_size:
+                tc_tests_kwargs.update({"size": tc_size})
+                tc_tests_kwargs.pop("timeout", "")
             tags = list(tc_tests_kwargs.pop("tags", []))
             tags.append("verilator_cocotb_single_test")
             verilator_cocotb_test(
@@ -346,6 +355,8 @@ def _vcs_cocotb_test_suite(
     all_tests_kwargs = dict(tests_kwargs)
     all_tests_kwargs.update(kwargs)
 
+    default_tc_size = all_tests_kwargs.pop("default_testcase_size", "")
+
     hdl_toplevel = all_tests_kwargs.get("hdl_toplevel")
     if not hdl_toplevel:
         fail("hdl_toplevel must be specified in tests_kwargs")
@@ -353,7 +364,14 @@ def _vcs_cocotb_test_suite(
     if testcases:
         test_targets = []
         for tc in testcases:
+            tc_size = default_tc_size
+            if type(tc) == "tuple":
+                tc, tc_size = tc
+
             tc_tests_kwargs = dict(all_tests_kwargs)
+            if tc_size:
+                tc_tests_kwargs.update({"size": tc_size})
+                tc_tests_kwargs.pop("timeout", "")
             tags = list(tc_tests_kwargs.pop("tags", []))
             tags.append("vcs_cocotb_single_test")
             test_args = tc_tests_kwargs.pop("test_args", [""])

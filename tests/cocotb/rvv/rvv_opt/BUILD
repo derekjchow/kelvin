@@ -65,6 +65,7 @@ cocotb_test_suite(
             "@rules_python//python/runfiles",
         ],
         "data": [":rvv_memcpy_test"],
+        "size": "medium",
     },
     vcs_build_args = VCS_BUILD_ARGS,
     vcs_data = [":rvv_memcpy_test.elf"] + [

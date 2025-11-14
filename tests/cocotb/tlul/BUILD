@@ -44,6 +44,7 @@ cocotb_test_suite(
     tests_kwargs = {
         "hdl_toplevel": "TLUL2Axi",
         "test_module": ["tlul2axi_cocotb_test.py"],
+        "default_testcase_size": "small",
         "size": "large",
         "deps": [
             "@bazel_tools//tools/python/runfiles",
@@ -77,6 +78,7 @@ cocotb_test_suite(
     tests_kwargs = {
         "hdl_toplevel": "Axi2TLUL",
         "test_module": ["axi2tlul_cocotb_test.py"],
+        "default_testcase_size": "small",
         "size": "large",
         "deps": [
             "@bazel_tools//tools/python/runfiles",
@@ -109,6 +111,7 @@ cocotb_test_suite(
             "//coralnpu_test_utils:TileLinkULInterface",
         ],
         "waves": True,
+        "size": "small",
     },
     verilator_model = "//hdl/chisel/src/bus:tlul_fifo_async_128_model",
     vcs_verilog_sources = ["//hdl/chisel/src/bus:tlul_fifo_async_128_cc_library_verilog"],
@@ -135,6 +138,7 @@ cocotb_test_suite(
             "//coralnpu_test_utils:TileLinkULInterface",
         ],
         "waves": True,
+        "size": "small",
     },
     verilator_model = "//hdl/chisel/src/bus:tlul_fifo_sync_model",
     vcs_verilog_sources = ["//hdl/chisel/src/bus:tlul_fifo_sync_cc_library_verilog"],
@@ -162,6 +166,7 @@ cocotb_test_suite(
             "//coralnpu_test_utils:TileLinkULInterface",
         ],
         "waves": True,
+        "size": "small",
     },
     verilator_model = "//hdl/chisel/src/bus:tlul_socket_1n_128_model",
     vcs_verilog_sources = ["//hdl/chisel/src/bus:tlul_socket_1n_128_cc_library_verilog"],
@@ -188,6 +193,7 @@ cocotb_test_suite(
             "//coralnpu_test_utils:TileLinkULInterface",
         ],
         "waves": True,
+        "size": "small",
     },
     verilator_model = "//hdl/chisel/src/bus:tlul_socket_m1_2_128_model",
     vcs_verilog_sources = ["//hdl/chisel/src/bus:tlul_socket_m1_2_128_cc_library_verilog"],
@@ -218,6 +224,7 @@ cocotb_test_suite(
             "//coralnpu_test_utils:secded_golden",
         ],
         "waves": True,
+        "size": "small",
     },
     verilator_model = "//hdl/chisel/src/bus:tlul_integrity_testbench_model",
     vcs_verilog_sources = ["//hdl/chisel/src/bus:tlul_integrity_testbench_cc_library_verilog"],
@@ -244,6 +251,7 @@ cocotb_test_suite(
             "//coralnpu_test_utils:secded_golden",
         ],
         "waves": True,
+        "size": "small",
     },
     verilator_model = "//hdl/chisel/src/bus:secded_encoder_testbench_model",
     vcs_verilog_sources = ["//hdl/chisel/src/bus:secded_encoder_testbench_cc_library_verilog"],
@@ -269,6 +277,7 @@ cocotb_test_suite(
             "//coralnpu_test_utils:secded_golden",
         ],
         "waves": True,
+        "size": "small",
     },
     verilator_model = "//hdl/chisel/src/bus:secded_encoder_testbench_32_model",
     vcs_verilog_sources = ["//hdl/chisel/src/bus:secded_encoder_testbench_32_cc_library_verilog"],
@@ -294,6 +303,7 @@ cocotb_test_suite(
             "//coralnpu_test_utils:secded_golden",
         ],
         "waves": True,
+        "size": "small",
     },
     verilator_model = "//hdl/chisel/src/bus:secded_encoder_testbench_57_model",
     vcs_verilog_sources = ["//hdl/chisel/src/bus:secded_encoder_testbench_57_cc_library_verilog"],
@@ -339,6 +349,7 @@ cocotb_test_suite(
             "//coralnpu_test_utils:TileLinkULInterface",
             "//coralnpu_test_utils:secded_golden",
         ],
+        "size": "small",
     },
     verilator_model = "//hdl/chisel/src/soc:coralnpu_xbar_testharness_model",
     vcs_verilog_sources = ["//hdl/chisel/src/soc:coralnpu_xbar_testharness_cc_library_emit_verilog"],
@@ -357,7 +368,7 @@ SPI2TLUL_TESTCASES = [
     "test_packed_write_transaction",
     "test_tlul_bulk_write",
     "test_tlul_bulk_read",
-    "test_large_tlul_transfer",
+    ("test_large_tlul_transfer", "medium"),
     "test_large_packed_write_transaction",
     "test_large_pipelined_read",
     "test_large_write_then_pipelined_read",
@@ -379,6 +390,8 @@ cocotb_test_suite(
             "//coralnpu_test_utils:spi_master",
             "//coralnpu_test_utils:spi_constants",
         ],
+        "default_testcase_size": "small",
+        "size": "medium",
     },
     verilator_model = "//hdl/chisel/src/bus:spi2tlul_128_model",
     vcs_verilog_sources = ["//hdl/chisel/src/bus:Spi2TLUL.sv"],
@@ -391,9 +404,9 @@ cocotb_test_suite(
 CORALNPU_CHISEL_SUBSYSTEM_TESTCASES = [
     "test_tlul_passthrough",
     "test_program_execution_via_host",
-    "test_program_execution_via_spi",
+    ("test_program_execution_via_spi", "enormous"),
     "test_ddr_access",
-    "test_ddr_access_via_spi",
+    ("test_ddr_access_via_spi", "enormous"),
 ]
 # END_TESTCASES_FOR_coralnpu_chisel_subsystem_cocotb
 
@@ -405,7 +418,6 @@ cocotb_test_suite(
     tests_kwargs = {
         "hdl_toplevel": "CoralNPUChiselSubsystemTestHarness",
         "waves": True,
-        "size": "enormous",
         "seed": "42",
         "test_module": ["test_subsystem.py"],
         "deps": [
@@ -418,6 +430,8 @@ cocotb_test_suite(
         "data": [
             "//tests/cocotb/rvv/arithmetics:rvv_add_int32_m1.elf",
         ],
+        "default_testcase_size": "small",
+        "size": "enormous",
     },
     verilator_model = "//hdl/chisel/src/soc:coralnpu_chisel_subsystem_testharness_model",
     vcs_verilog_sources = ["//hdl/chisel/src/soc:coralnpu_chisel_subsystem_testharness_cc_library_emit_verilog"],
