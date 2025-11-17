@@ -68,7 +68,7 @@ def _verilator_cocotb_model_impl(ctx):
         trace = "--trace" if ctx.attr.trace else "",
     )
 
-    make_cmd = "PATH=`dirname {ld}`:$PATH make -j $(nproc) -C {outdir} -f Vtop.mk {trace} CXX={cxx} AR={ar} LINK={cxx} > {make_log} 2>&1".format(
+    make_cmd = "PATH=`dirname {ld}`:$PATH make -j {parallelism} -C {outdir} -f Vtop.mk {trace} CXX={cxx} AR={ar} LINK={cxx} > {make_log} 2>&1".format(
         outdir = outdir,
         cocotb_lib_path = cocotb_lib_path,
         make_log = make_log.path,
@@ -76,6 +76,7 @@ def _verilator_cocotb_model_impl(ctx):
         ar = ar_executable,
         ld = ld_executable,
         cxx = compiler_executable,
+        parallelism = ctx.attr.parallelism,
     )
 
     script = " && ".join([verilator_cmd.strip(), make_cmd])
@@ -94,6 +95,7 @@ def _verilator_cocotb_model_impl(ctx):
         ),
         command = script,
         mnemonic = "Verilate",
+        execution_requirements = {"cpu": str(ctx.attr.parallelism)},
     )
 
     return [
@@ -131,6 +133,7 @@ verilator_cocotb_model = rule(
             default = "@coralnpu_hw//rules:default.vlt.tpl",
             allow_single_file = True,
         ),
+        "parallelism": attr.int(default=8),
         "_verilator": attr.label(
             default = "@verilator//:verilator",
             executable = True,
