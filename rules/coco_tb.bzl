@@ -18,6 +18,12 @@ load("@coralnpu_hw//third_party/python:requirements.bzl", "requirement")
 load("@rules_hdl//cocotb:cocotb.bzl", "cocotb_test")
 load("@rules_python//python:defs.bzl", "py_library")
 
+# Max number of CPU to use when building the verilated simulator
+_verilator_make_parallelism = 8
+
+def _verilator_resource_estimator(os, input_size):
+    return {"cpu": _verilator_make_parallelism, "memory": 4096}
+
 def _verilator_cocotb_model_impl(ctx):
     """Implementation of the verilator_cocotb_model rule."""
     cc_toolchain = ctx.toolchains["@bazel_tools//tools/cpp:toolchain_type"].cc
@@ -76,7 +82,7 @@ def _verilator_cocotb_model_impl(ctx):
         ar = ar_executable,
         ld = ld_executable,
         cxx = compiler_executable,
-        parallelism = ctx.attr.parallelism,
+        parallelism = _verilator_make_parallelism,
     )
 
     script = " && ".join([verilator_cmd.strip(), make_cmd])
@@ -95,7 +101,7 @@ def _verilator_cocotb_model_impl(ctx):
         ),
         command = script,
         mnemonic = "Verilate",
-        execution_requirements = {"cpu": str(ctx.attr.parallelism)},
+        resource_set = _verilator_resource_estimator,
     )
 
     return [
@@ -133,7 +139,6 @@ verilator_cocotb_model = rule(
             default = "@coralnpu_hw//rules:default.vlt.tpl",
             allow_single_file = True,
         ),
-        "parallelism": attr.int(default=8),
         "_verilator": attr.label(
             default = "@verilator//:verilator",
             executable = True,
