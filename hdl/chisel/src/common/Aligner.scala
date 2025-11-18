@@ -88,6 +88,8 @@ object Aligner {
         val t = chiselTypeOf(in(0).bits)
         val aligner = Module(new Aligner(t, in.length))
         aligner.io.in := in.map(v => v.map(_.asUInt))
-        VecInit(aligner.io.out.map(v => v.map(_.asTypeOf(t))))
+        suppressEnumCastWarning {
+          VecInit(aligner.io.out.map(v => v.map(_.asTypeOf(t))))
+        }
     }
 }

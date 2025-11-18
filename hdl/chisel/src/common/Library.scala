@@ -145,7 +145,9 @@ object RotateVectorLeft {
   def apply[T <: Data](data: Vec[T], shift: UInt): Vec[T] = {
     val elemSize = data(0).asUInt.getWidth
     val rotated = data.asUInt.rotateLeft(shift * elemSize.U)
-    rotated.asTypeOf(chiselTypeOf(data))
+    suppressEnumCastWarning {
+      rotated.asTypeOf(chiselTypeOf(data))
+    }
   }
 }
 
@@ -155,7 +157,9 @@ object RotateVectorRight {
   def apply[T <: Data](data: Vec[T], shift: UInt): Vec[T] = {
     val elemSize = data(0).asUInt.getWidth
     val rotated = data.asUInt.rotateRight(shift * elemSize.U)
-    rotated.asTypeOf(chiselTypeOf(data))
+    suppressEnumCastWarning {
+      rotated.asTypeOf(chiselTypeOf(data))
+    }
   }
 }
 
