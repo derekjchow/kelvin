@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "VDBus2AxiV1.h"
+#include "VDBus2AxiV2.h"
 #include "tests/verilator_sim/sysc_tb.h"
 
 struct DBus2Axi_tb : Sysc_tb {
@@ -106,14 +106,18 @@ struct DBus2Axi_tb : Sysc_tb {
 
     if (io_dbus_valid && io_dbus_write && !dbus_write_active_) {
       dbus_write_active_ = true;
-      axi_write_addr_t w;
+      axi_write_addr_t a;
       sc_bv<256> data;
       sc_bv<32> strb;
-      w.addr = io_dbus_addr.read().get_word(0);
-      w.id = 0x00;  // from RTL
-      w.strb = io_dbus_wmask;
-      w.data = io_dbus_wdata;
-      axi_write_addr_.write(w);
+      a.addr = io_dbus_addr.read().get_word(0);
+      a.id = 0x00;  // from RTL
+      axi_write_addr_.write(a);
+
+      axi_write_data_t d;
+      d.strb = io_dbus_wmask;
+      d.data = io_dbus_wdata;
+      d.last = true;
+      axi_write_data_.write(d);
     }
 
     // *************************************************************************
@@ -184,24 +188,36 @@ struct DBus2Axi_tb : Sysc_tb {
     // *************************************************************************
     // AXI Write Addr.
     if (io_axi_write_addr_valid && io_axi_write_addr_ready && !dbus_write_resp_phase_) {
-      assert(io_axi_write_data_valid && io_axi_write_data_ready);
       axi_write_addr_t dut, ref;
       check(axi_write_addr_.read(ref), "axi write addr");
       dut.addr = io_axi_write_addr_bits_addr.read().get_word(0);
       dut.id = io_axi_write_addr_bits_id.read().get_word(0);
-      dut.data = io_axi_write_data_bits_data;
-      dut.strb = io_axi_write_data_bits_strb;
       if (ref != dut) {
         ref.print("ref::axi_write_addr");
         dut.print("dut::axi_write_addr");
         check(false);
       }
+    }
 
-      axi_write_resp_t resp;
-      resp.id = dut.id;
-      resp.resp = rand_int();
-      axi_write_resp_.write(resp);
-      dbus_write_resp_phase_ = true;
+    if (io_axi_write_data_valid && io_axi_write_data_ready && !dbus_write_resp_phase_) {
+      axi_write_data_t dut, ref;
+      check(axi_write_data_.read(ref), "axi write data");
+      dut.data = io_axi_write_data_bits_data;
+      dut.strb = io_axi_write_data_bits_strb;
+      dut.last = io_axi_write_data_bits_last;
+      if (ref != dut) {
+        ref.print("ref::axi_write_data");
+        dut.print("dut::axi_write_data");
+        check(false);
+      }
+
+      if (dut.last) {
+        axi_write_resp_t resp;
+        resp.id = rand_int(); // dut.id;
+        resp.resp = rand_int();
+        axi_write_resp_.write(resp);
+        dbus_write_resp_phase_ = true;
+      }
     }
 
     // *************************************************************************
@@ -257,22 +273,34 @@ struct DBus2Axi_tb : Sysc_tb {
   struct axi_write_addr_t {
     uint32_t addr;
     uint32_t id : 7;
-    sc_bv<256> data;
-    sc_bv<32> strb;
 
     bool operator!=(const axi_write_addr_t& rhs) const {
       if (addr != rhs.addr) return true;
       if (id != rhs.id) return true;
-      if (strb != rhs.strb) return true;
-      if (data != rhs.data) return true;
       return false;
     }
 
     void print(const char* name) {
-      printf("[%s]: id=%x addr=%08x strb=%08x data=", name, id, addr,
-             strb.get_word(0));
+      printf("[%s]: id=%x addr=%08x\n", name, id, addr);
+    }
+  };
+
+  struct axi_write_data_t {
+    sc_bv<256> data;
+    sc_bv<32> strb;
+    bool last;
+
+    bool operator!=(const axi_write_data_t& rhs) const {
+      if (data != rhs.data) return true;
+      if (strb != rhs.strb) return true;
+      if (last != rhs.last) return true;
+      return false;
+    }
+
+    void print(const char* name) {
+      printf("[%s]: strb=%08x data=", name, strb.get_word(0));
       for (int i = 0; i < 256 / 32; ++i) {
-        printf("%08x ", data.get_word(0));
+        printf("%08x ", data.get_word(i));
       }
       printf("\n");
     }
@@ -281,6 +309,9 @@ struct DBus2Axi_tb : Sysc_tb {
   struct axi_write_resp_t {
     uint32_t id : 7;
     uint32_t resp : 2;
+    void print(const char* name) {
+      printf("[%s]: id=%x resp=%x\n", name, id, resp);
+    }
   };
 
   struct dbus_read_data_t {
@@ -308,6 +339,7 @@ struct DBus2Axi_tb : Sysc_tb {
   fifo_t<axi_read_addr_t> axi_read_addr_;
   fifo_t<axi_read_data_t> axi_read_data_;
   fifo_t<axi_write_addr_t> axi_write_addr_;
+  fifo_t<axi_write_data_t> axi_write_data_;
   fifo_t<axi_write_resp_t> axi_write_resp_;
   fifo_t<dbus_read_data_t> dbus_read_data_;
 };
@@ -368,7 +400,7 @@ static void DBus2Axi_test(char* name, int loops, bool trace) {
   sc_signal<bool> io_axi_read_data_bits_last;
 
   DBus2Axi_tb tb("DBus2Axi_tb", loops, true /*random*/);
-  VDBus2AxiV1 d2a(name);
+  VDBus2AxiV2 d2a(name);
 
   d2a.clock(tb.clock);
   d2a.reset(tb.reset);

@@ -663,7 +663,7 @@ chisel_cc_library(
     name = "dbus2axi_cc_library",
     chisel_lib = ":coralnpu",
     emit_class = "coralnpu.EmitDBus2Axi",
-    module_name = "DBus2AxiV1",
+    module_name = "DBus2AxiV2",
 )
 
 chisel_cc_library(

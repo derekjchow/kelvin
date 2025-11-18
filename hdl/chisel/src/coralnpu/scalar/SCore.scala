@@ -395,9 +395,7 @@ class SCore(p: Parameters) extends Module {
   regfile.io.writeData(lsuOffset).valid := lsu.io.rd.valid
   regfile.io.writeData(lsuOffset).bits.addr  := lsu.io.rd.bits.addr
   regfile.io.writeData(lsuOffset).bits.data  := lsu.io.rd.bits.data
-  // Mask LSU based on fault for LsuV2 only
-  regfile.io.writeMask(lsuOffset).valid := (
-      if (p.useLsuV2) { lsu.io.fault.valid } else { false.B })
+  regfile.io.writeMask(lsuOffset).valid := lsu.io.fault.valid
 
   val writeMask = bru.map(_.io.taken.valid).scan(false.B)(_||_)
   for (i <- 0 until p.instructionLanes) {

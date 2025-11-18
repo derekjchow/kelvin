@@ -462,13 +462,9 @@ class DispatchV2(p: Parameters) extends Dispatch(p) {
   // LSU Interlock
   val isLsu = decodedInsts.map(x => x.isLsu())
   val isLsuCount = isLsu.scan(0.U(4.W))(_+_)
-  val lsuInterlock = if (p.useLsuV2) {
+  val lsuInterlock =
       (0 until p.instructionLanes).map(
           i => isLsuCount(i) < io.lsuQueueCapacity)
-  } else {
-    // For LSU V1, backpressure from ready/valid handshake to interlock LSU.
-    Seq.fill(p.instructionLanes)(true.B)
-  }
 
   // ---------------------------------------------------------------------------
   // Undef
