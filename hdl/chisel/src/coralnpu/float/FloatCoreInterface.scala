@@ -50,6 +50,7 @@ class FloatInstruction extends Bundle {
     val pc = UInt(32.W)
     val scalar_rd = Bool()
     val scalar_rs1 = Bool()
+    val float_rs1 = Bool()
     val rd = UInt(5.W)
     val uses_rs3 = Bool()
     val uses_rs2 = Bool()
@@ -103,6 +104,8 @@ object FloatInstruction {
       "b11010".U -> false.B, // FCVT.S.W
       "b01011".U -> false.B, // FSQRT.W
     )))
+    // All float instructions EXCEPT loads, stores, fmv.w.x, and fcvt.s.w, use float rs1.
+    val float_rs1 = !opcode.bits.isOneOf(FloatOpcode.STOREFP, FloatOpcode.LOADFP) && !scalar_rs1
 
     MakeWireBundle[ValidIO[FloatInstruction]](
       Valid(new FloatInstruction),
@@ -118,6 +121,7 @@ object FloatInstruction {
       _.bits.pc -> addr,
       _.bits.scalar_rd -> scalar_rd,
       _.bits.scalar_rs1 -> scalar_rs1,
+      _.bits.float_rs1 -> float_rs1,
       _.bits.rd -> rd,
       _.bits.uses_rs3 -> uses_rs3,
       _.bits.uses_rs2 -> uses_rs2,

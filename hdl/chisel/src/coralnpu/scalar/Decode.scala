@@ -205,7 +205,8 @@ class DecodedInstruction(p: Parameters) extends Bundle {
   }
 
   def floatWritesRd(): Bool = { float.map(f => f.valid && f.bits.scalar_rd).getOrElse(false.B) }
-  def floatReadsRs1(): Bool = { float.map(f => f.valid && f.bits.scalar_rs1).getOrElse(false.B) }
+  def floatReadsScalarRs1(): Bool = { float.map(f => f.valid && f.bits.scalar_rs1).getOrElse(false.B) }
+  def floatReadsFloatRs1(): Bool = { float.map(f => f.valid && f.bits.float_rs1).getOrElse(false.B) }
   def floatReadsRs2(): Bool = { float.map(f => f.valid && f.bits.uses_rs2).getOrElse(false.B) }
   def floatReadsRs3(): Bool = { float.map(f => f.valid && f.bits.uses_rs3).getOrElse(false.B) }
 
@@ -219,7 +220,7 @@ class DecodedInstruction(p: Parameters) extends Bundle {
 
   def readsRs1(): Bool = {
     isCondBr() || isAluReg() || isAluImm() || isAlu1Bit() || isAlu2Bit() ||
-    isCsr() || isMul() || isDvu() || slog || jalr || floatReadsRs1() ||
+    isCsr() || isMul() || isDvu() || slog || jalr || floatReadsScalarRs1() ||
     (if (p.enableRvv) { rvv.get.valid && rvv.get.bits.readsRs1() } else { false.B })
   }
   def readsRs2(): Bool = {
@@ -379,7 +380,7 @@ class DispatchV2(p: Parameters) extends Dispatch(p) {
   val rs3Addr = io.inst.map(_.bits.inst(31,27))
   val writesFloatRd = decodedInsts.map(d => d.isFloat() && !d.floatWritesRd())
   val floatReadScoreboard = if (p.enableFloat) { (0 until p.instructionLanes).map(i =>
-    MuxOR(decodedInsts(i).floatReadsRs1(), UIntToOH(rs1Addr(i), 32)) |
+    MuxOR(decodedInsts(i).floatReadsFloatRs1(), UIntToOH(rs1Addr(i), 32)) |
     MuxOR(decodedInsts(i).floatReadsRs2(), UIntToOH(rs2Addr(i), 32)) |
     MuxOR(decodedInsts(i).floatReadsRs3(), UIntToOH(rs3Addr(i), 32))
   ) } else { (0 until p.instructionLanes).map(_ => 0.U(32.W)) }
