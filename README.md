@@ -26,6 +26,7 @@ Coral NPU offers the following top-level feature set:
 
 * Bazel 7.4.1
 * Python 3.9-3.12 (3.13 support is in progress)
+* [SRecord](https://srecord.sourceforge.net/)
 
 ## Quick Start
 
