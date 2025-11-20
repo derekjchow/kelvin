@@ -1,0 +1,106 @@
+# Copyright 2025 Google LLC
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+load("@rules_foreign_cc//foreign_cc:defs.bzl", "configure_make")
+load("@coralnpu_hw//rules:utils.bzl", "template_rule")
+package(default_visibility = ["//visibility:public"])
+
+COMMON_ARGS = [
+    "RISCV_PREFIX=",
+    "RISCV_GCC_OPTS=\"-march=rv32imf_zve32x_zicsr_zifencei_zbb -mabi=ilp32 -mcmodel=medany -nostdlib\"",
+    "XLEN=32",
+]
+
+POSTFIX_SCRIPT = """
+mkdir -p ${{INSTALLDIR}}/isa
+cp isa/rv32{subset}-v-* ${{INSTALLDIR}}/isa
+cp isa/rv32{subset}-p-* ${{INSTALLDIR}}/isa
+"""
+
+exports_files(glob(["**"]))
+filegroup(
+    name = "all_srcs",
+    srcs = [
+        "@riscv-tests//:all_srcs",
+    ] + glob(["**"]),
+)
+
+template_rule(
+    configure_make,
+    {
+        "riscv_tests_rv32ui": {
+            "args": COMMON_ARGS + [
+                "RISCV_PREFIX_VAR=rv32ui",
+            ],
+            "out_binaries": [
+                "rv32ui-p-addi",
+            ],
+            "postfix_script": POSTFIX_SCRIPT.format(subset = "ui"),
+        },
+        "riscv_tests_rv32um": {
+            "args": COMMON_ARGS + [
+                "RISCV_PREFIX_VAR=rv32um",
+            ],
+            "out_binaries": [
+                "rv32um-p-mul",
+            ],
+            "postfix_script": POSTFIX_SCRIPT.format(subset = "um"),
+        },
+        "riscv_tests_rv32uzbb": {
+            "args": COMMON_ARGS + [
+                "RISCV_PREFIX_VAR=rv32uzbb",
+            ],
+            "out_binaries": [
+                "rv32uzbb-p-andn",
+            ],
+            "postfix_script": POSTFIX_SCRIPT.format(subset = "uzbb"),
+        },
+        "riscv_tests_rv32uf": {
+            "args": COMMON_ARGS + [
+                "RISCV_PREFIX_VAR=rv32uf",
+            ],
+            "out_binaries": [
+                "rv32uf-p-fadd",
+            ],
+            "postfix_script": POSTFIX_SCRIPT.format(subset = "uf"),
+        },
+    },
+    env = {
+        "PATH": "$$(dirname $(execpath //toolchain/wrappers:gcc)):$$PATH",
+        "RISCV_ENV_DIR": "$$(realpath $$(dirname $(location @coralnpu_hw//third_party/riscv-tests:env/p/riscv_test.h)))/../",
+    },
+    lib_source = ":all_srcs",
+    targets = ["isa"],
+    out_bin_dir = "isa",
+    build_data = [
+        "//toolchain/wrappers:all",
+        "//toolchain/wrappers:gcc",
+        "//toolchain:coralnpu_v2_toolchain",
+    ],
+    data = [
+        ":all_srcs",
+        ":env/p/riscv_test.h",
+    ],
+)
+
+filegroup(
+    name = "all_files",
+    srcs = [
+        ":riscv_tests_rv32ui",
+        ":riscv_tests_rv32um",
+        ":riscv_tests_rv32uzbb",
+        ":riscv_tests_rv32uf",
+    ],
+    output_group = "gen_dir",
+)

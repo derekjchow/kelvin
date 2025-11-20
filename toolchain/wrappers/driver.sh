@@ -27,7 +27,14 @@ case "${PROG}" in
         ;;
 esac
 
+if [[ ! -z "${EXT_BUILD_ROOT}" ]]; then
+exec "${EXT_BUILD_ROOT}/external/${TOOLCHAIN}/bin/${PREFIX}-${PROG}" \
+    "${ARGS[@]}" \
+    "$@"\
+    "${POSTARGS[@]}"
+else
 exec "external/${TOOLCHAIN}/bin/${PREFIX}-${PROG}" \
     "${ARGS[@]}" \
     "$@"\
     "${POSTARGS[@]}"
+fi

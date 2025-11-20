@@ -152,6 +152,27 @@ exports_files(["diplomacy/src/diplomacy/nodes/HeterogeneousBag.scala"])
         """,
     )
 
+    http_archive(
+        name = "riscv-tests",
+        urls = ["https://github.com/riscv-software-src/riscv-tests/archive/fd4e6cdd033d9075632be9dd207c848181ca474c.zip"],
+        sha256 = "e7d84eaa149b57c0e5ff69a76c80f35f4ee64c5dc985dbba5c287adf8b56ec5d",
+        strip_prefix = "riscv-tests-fd4e6cdd033d9075632be9dd207c848181ca474c",
+        patches = [
+            "@coralnpu_hw//third_party/riscv-tests:0001-Find-env-from-environment.patch",
+        ],
+        patch_args = ["-p1"],
+        build_file_content = """
+package(default_visibility = ["//visibility:public"])
+exports_files(glob(["**"]))
+filegroup(
+    name = "all_srcs",
+    srcs = glob([
+        "**/*",
+    ]),
+)
+        """,
+    )
+
 def cvfpu_repos():
     http_archive(
         name = "cvfpu",

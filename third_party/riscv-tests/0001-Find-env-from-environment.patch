@@ -1,0 +1,30 @@
+From 07e4f40c9aac75992b3db86e3676d33d894350ff Mon Sep 17 00:00:00 2001
+From: Alex Van Damme <atv@google.com>
+Date: Wed, 3 Dec 2025 14:04:08 -0800
+Subject: [PATCH] Find `env` from environment
+
+---
+ isa/Makefile | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/isa/Makefile b/isa/Makefile
+index b1f0c2a..5facc71 100644
+--- a/isa/Makefile
++++ b/isa/Makefile
+@@ -68,11 +68,11 @@ vpath %.S $(src_dir)
+ define compile_template
+ 
+ $$($(1)_p_tests): $(1)-p-%: $(1)/%.S
+-	$$(RISCV_GCC) $(2) $$(RISCV_GCC_OPTS) -I$(src_dir)/../env/p -I$(src_dir)/macros/scalar -T$(src_dir)/../env/p/link.ld $$< -o $$@
++	$$(RISCV_GCC) $(2) $$(RISCV_GCC_OPTS) -I$$(RISCV_ENV_DIR)/p -I$(src_dir)/macros/scalar -T$$(RISCV_ENV_DIR)/p/link.ld $$< -o $$@
+ $(1)_tests += $$($(1)_p_tests)
+ 
+ $$($(1)_v_tests): $(1)-v-%: $(1)/%.S
+-	$$(RISCV_GCC) $(2) $$(RISCV_GCC_OPTS) -DENTROPY=0x$$(shell echo \$$@ | md5sum | cut -c 1-7) -std=gnu99 -O2 -I$(src_dir)/../env/v -I$(src_dir)/macros/scalar -T$(src_dir)/../env/v/link.ld $(src_dir)/../env/v/entry.S $(src_dir)/../env/v/*.c $$< -o $$@
++	$$(RISCV_GCC) $(2) $$(RISCV_GCC_OPTS) -DENTROPY=0x$$(shell echo \$$@ | md5sum | cut -c 1-7) -std=gnu99 -O2 -I$$(RISCV_ENV_DIR)/v -I$(src_dir)/macros/scalar -T$$(RISCV_ENV_DIR)/v/link.ld $$(RISCV_ENV_DIR)/v/entry.S $$(RISCV_ENV_DIR)/v/*.c $$< -o $$@
+ $(1)_tests += $$($(1)_v_tests)
+ 
+ $(1)_tests_dump = $$(addsuffix .dump, $$($(1)_tests))
+-- 
+2.52.0.177.g9f829587af-goog
+

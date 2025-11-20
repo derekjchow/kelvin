@@ -1,0 +1,1 @@
+../../../../toolchain/coralnpu_tcm.ld

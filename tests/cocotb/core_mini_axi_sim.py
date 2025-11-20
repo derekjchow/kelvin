@@ -188,15 +188,22 @@ async def core_mini_axi_riscv_tests(dut):
   cocotb.start_soon(core_mini_axi.clock.start())
   r = runfiles.Create()
 
-  riscv_test_path = r.Rlocation("coralnpu_hw/tests/cocotb/riscv-tests")
-  riscv_test_elfs = [os.path.join(riscv_test_path, f) for f in os.listdir(riscv_test_path) if f.endswith(".elf")]
-  for elf in tqdm.tqdm(riscv_test_elfs):
-    with open(elf, "rb") as f:
-      await core_mini_axi.reset()
-      entry_point = await core_mini_axi.load_elf(f)
-      await core_mini_axi.execute_from(entry_point)
-      await core_mini_axi.wait_for_halted()
-      assert core_mini_axi.dut.io_fault.value == 0
+  riscv_test_path_template = "coralnpu_hw/third_party/riscv-tests/copy_riscv_tests_rv32{suffix}/riscv_tests_rv32{suffix}/isa"
+  riscv_test_suites = ['ui', 'um', 'uzbb', 'uf']
+  riscv_test_paths = [r.Rlocation(riscv_test_path_template.format(suffix=suffix)) for suffix in riscv_test_suites]
+  riscv_test_elfs = [os.path.join(riscv_test_path, f) for riscv_test_path in riscv_test_paths for f in os.listdir(riscv_test_path) if not f.endswith(".dump")]
+  with tqdm.tqdm(riscv_test_elfs) as t:
+    for elf in tqdm.tqdm(riscv_test_elfs):
+      t.set_postfix({"binary": os.path.basename(elf)})
+      if 'fence_i' in elf:
+        # This one likes to jump into DTCM. Can probably patch the ASM
+        continue
+      with open(elf, "rb") as f:
+        await core_mini_axi.reset()
+        entry_point = await core_mini_axi.load_elf(f)
+        await core_mini_axi.execute_from(entry_point)
+        await core_mini_axi.wait_for_halted(timeout_cycles=100_000)
+        assert core_mini_axi.dut.io_fault.value == 0
 
 @cocotb.test()
 async def core_mini_axi_riscv_dv(dut):
