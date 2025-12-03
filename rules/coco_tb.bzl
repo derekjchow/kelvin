@@ -184,6 +184,8 @@ def verilator_cocotb_test(
         data: Data dependencies for the test.
         **kwargs: Additional arguments to pass to the cocotb_test rule.
     """
+    tags = kwargs.pop("tags", [])
+    tags.append("cpu:2")
     kwargs.update(
         hdl_toplevel_lang = "verilog",
         sim_name = "verilator",
@@ -191,6 +193,7 @@ def verilator_cocotb_test(
             "@verilator//:verilator",
             "@verilator//:verilator_bin",
         ],
+        tags = tags,
     )
 
     # Wrap in py_library so we can forward data
@@ -290,6 +293,7 @@ def vcs_cocotb_test(
     """
     tags = list(kwargs.pop("tags", []))
     tags.append("vcs")
+    tags.append("cpu:2")
     kwargs.update(
         hdl_toplevel_lang = "verilog",
         sim_name = "vcs",
