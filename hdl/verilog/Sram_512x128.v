@@ -114,10 +114,9 @@ module Sram_512x128(
 
 `ifndef SYNTHESIS
   task randomMemoryAll;
-  for (int i = 0; i < 128; i++) begin
-    for (int j = 0; j < 512; j++) begin
-      mem[i][j] = $random;
-    end
+  for (int i = 0; i < 512; i++) begin
+    // $random returns a 32-bit value, so four are concatenated to fill the 128-bit register.
+    mem[i] = { $random, $random, $random, $random };
   end
   endtask
 
