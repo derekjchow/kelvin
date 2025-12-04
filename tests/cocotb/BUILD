@@ -146,7 +146,6 @@ template_rule(
             "tests_kwargs": dict(
                 CORE_MINI_AXI_SIM_COMMON_TEST_KWARGS,
                 hdl_toplevel = "RvvCoreMiniAxi",
-                tags = ["manual"],
                 default_testcase_size = "small",
                 size = "enormous",
             ),
