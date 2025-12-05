@@ -82,7 +82,7 @@ CORE_MINI_AXI_SIM_TESTCASES = [
     ("core_mini_axi_write_read_memory_stress_test", "medium"),
     "core_mini_axi_master_write_alignment",
     "core_mini_axi_finish_txn_before_halt_test",
-    "core_mini_axi_riscv_tests",
+    ("core_mini_axi_riscv_tests", "medium"),
     "core_mini_axi_riscv_dv",
     ("core_mini_axi_csr_test", "medium"),
     "core_mini_axi_exceptions_test",
