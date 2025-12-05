@@ -404,9 +404,9 @@ cocotb_test_suite(
 CORALNPU_CHISEL_SUBSYSTEM_TESTCASES = [
     "test_tlul_passthrough",
     "test_program_execution_via_host",
-    ("test_program_execution_via_spi", "enormous"),
+    "test_program_execution_via_spi",
     "test_ddr_access",
-    ("test_ddr_access_via_spi", "enormous"),
+    "test_ddr_access_via_spi",
 ]
 # END_TESTCASES_FOR_coralnpu_chisel_subsystem_cocotb
 

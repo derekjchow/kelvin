@@ -36,11 +36,11 @@ async def setup_dut(dut):
         getattr(dut, f"io_external_devices_ports_{i}_d_valid").value = 0
 
     # Start the main clock
-    clock = Clock(dut.io_clk_i, 10)
+    clock = Clock(dut.io_clk_i, 10, "ns")
     cocotb.start_soon(clock.start())
 
     # Start the asynchronous test clock
-    test_clock = Clock(dut.io_async_ports_hosts_clocks_0, 20)
+    test_clock = Clock(dut.io_async_ports_hosts_clocks_0, 20, "ns")
     cocotb.start_soon(test_clock.start())
 
     # Reset the DUT
@@ -418,7 +418,7 @@ async def test_ddr_access(dut):
     ddr_rst_signal = dut.io_async_ports_devices_resets_0
     ddr_rst_signal.value = 1
 
-    ddr_clock = Clock(ddr_clk_signal, 2)
+    ddr_clock = Clock(ddr_clk_signal, 2, "ns")
     cocotb.start_soon(ddr_clock.start())
 
     ddr_rst_signal.value = 0
@@ -455,7 +455,7 @@ async def test_ddr_access(dut):
     dut._log.info("Sending write to ddr_ctrl...")
     write_txn = create_a_channel_req(address=DDR_CTRL_BASE, data=TEST_DATA, mask=0xF, width=host_if.width)
     await host_if.host_put(write_txn)
-    resp = await with_timeout(host_if.host_get_response(), 10000)
+    resp = await with_timeout(host_if.host_get_response(), 10000, "ns")
     assert resp["error"] == 0, "ddr_ctrl write response indicated an error"
     dut._log.info("Write to ddr_ctrl successful.")
 
@@ -470,14 +470,14 @@ async def test_ddr_access(dut):
     dut._log.info("Sending read to ddr_ctrl...")
     read_txn = create_a_channel_req(address=DDR_CTRL_BASE, width=host_if.width, is_read=True)
     await host_if.host_put(read_txn)
-    resp = await with_timeout(host_if.host_get_response(), 10000)
+    resp = await with_timeout(host_if.host_get_response(), 10000, "ns")
     assert resp["error"] == 0, "ddr_ctrl read response had error"
     dut._log.info("Read from ddr_ctrl successful.")
 
     dut._log.info("Sending read to ddr_mem...")
     read_txn = create_a_channel_req(address=DDR_MEM_BASE, width=host_if.width, is_read=True)
     await host_if.host_put(read_txn)
-    resp = await with_timeout(host_if.host_get_response(), 10000)
+    resp = await with_timeout(host_if.host_get_response(), 10000, "ns")
     assert resp["error"] == 0, "ddr_mem read response had error"
     dut._log.info("Read from ddr_mem successful.")
 
@@ -502,7 +502,7 @@ async def test_ddr_access_via_spi(dut):
     ddr_rst_signal = dut.io_async_ports_devices_resets_0
     ddr_rst_signal.value = 1
 
-    ddr_clock = Clock(ddr_clk_signal, 2)
+    ddr_clock = Clock(ddr_clk_signal, 2, "ns")
     cocotb.start_soon(ddr_clock.start())
 
     ddr_rst_signal.value = 0
