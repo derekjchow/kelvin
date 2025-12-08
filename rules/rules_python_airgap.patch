@@ -1,0 +1,32 @@
+--- python/pip_install/pip_repository.bzl
++++ python/pip_install/pip_repository.bzl
+@@ -126,10 +126,19 @@
+     # Check for None so we use empty default types from our attrs.
+     # Some args want to be list, and some want to be dict.
+-    if rctx.attr.extra_pip_args != None:
+-        args += [
+-            "--extra_pip_args",
+-            json.encode(struct(arg = rctx.attr.extra_pip_args)),
+-        ]
++    extra_pip_args = []
++    if rctx.attr.extra_pip_args != None:
++        extra_pip_args.extend(rctx.attr.extra_pip_args)
++
++    if "PIP_NO_INDEX" in rctx.os.environ and rctx.os.environ["PIP_NO_INDEX"].lower() == "true":
++        extra_pip_args.append("--no-index")
++
++    if "PIP_FIND_LINKS" in rctx.os.environ:
++        extra_pip_args.append("--find-links=" + rctx.os.environ["PIP_FIND_LINKS"])
++
++    if extra_pip_args:
++        args += [
++            "--extra_pip_args",
++            json.encode(struct(arg = extra_pip_args)),
++        ]
+ 
+     if rctx.attr.download_only:
+@@ -702,3 +711,3 @@
+     implementation = _whl_library_impl,
+-    environ = common_env,
++    environ = common_env + ["PIP_NO_INDEX", "PIP_FIND_LINKS"],
+ )
