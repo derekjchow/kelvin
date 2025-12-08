@@ -123,6 +123,7 @@ class CoreMiniAxiInterface:
     self.dut.io_axi_slave_write_resp_ready.value = 0
     self.dut.io_axi_master_read_data_valid.value = 0
     self.dut.io_axi_master_write_resp_valid.value = 0
+    self.clock_ns = clock_ns
     self.clock = Clock(dut.io_aclk, clock_ns, unit="ns")
     self.csr_base_addr = csr_base_addr
     self.memory_base_addr = base_addr
@@ -411,11 +412,11 @@ class CoreMiniAxiInterface:
 
   async def reset(self):
     self.dut.io_aresetn.setimmediatevalue(1)
-    await Timer(1, unit="us")
+    await Timer(self.clock_ns, unit="ns")
     self.dut.io_aresetn.setimmediatevalue(0)
-    await Timer(1, unit="us")
+    await Timer(self.clock_ns, unit="ns")
     self.dut.io_aresetn.setimmediatevalue(1)
-    await Timer(1, unit="us")
+    await Timer(self.clock_ns, unit="ns")
 
   async def halt(self):
     coralnpu_reset_csr_addr = self.csr_base_addr
