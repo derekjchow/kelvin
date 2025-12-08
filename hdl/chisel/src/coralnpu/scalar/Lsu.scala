@@ -362,9 +362,9 @@ class LsuVectorLoop extends Bundle {
 }
 
 // bytesPerSlot is the number of bytes in a vector register
-// bytesPerLine is the number of bytes in the AXI bus
-class LsuSlot(bytesPerSlot: Int, bytesPerLine: Int) extends Bundle {
-  val elemBits = log2Ceil(bytesPerLine)
+// p.lsuDataBytes is the number of bytes in the AXI bus
+class LsuSlot(p: Parameters, bytesPerSlot: Int) extends Bundle {
+  val elemBits = log2Ceil(p.lsuDataBytes)
 
   val op = LsuOp()
   val rd = UInt(5.W)
@@ -419,7 +419,7 @@ class LsuSlot(bytesPerSlot: Int, bytesPerLine: Int) extends Bundle {
   }
 
   def vectorUpdate(updated: Bool, rvv2lsu: Rvv2Lsu): LsuSlot = {
-    val result = Wire(new LsuSlot(bytesPerSlot, bytesPerLine))
+    val result = Wire(new LsuSlot(p, bytesPerSlot))
     result.op := op
     result.rd := rd
     result.store := store
@@ -484,7 +484,7 @@ class LsuSlot(bytesPerSlot: Int, bytesPerLine: Int) extends Bundle {
     val lineDataVec = UIntToVec(lineData, 8)
     val gatheredData = Gather(elemAddresses(), lineDataVec)
 
-    val result = Wire(new LsuSlot(bytesPerSlot, bytesPerLine))
+    val result = Wire(new LsuSlot(p, bytesPerSlot))
     result.op := op
     result.rd := rd
     result.store := store
@@ -514,7 +514,7 @@ class LsuSlot(bytesPerSlot: Int, bytesPerLine: Int) extends Bundle {
 
   // Updates the slot if its result is written back to the regfile.
   def writebackUpdate(writeback: Bool): LsuSlot = {
-    val result = Wire(new LsuSlot(bytesPerSlot, bytesPerLine))
+    val result = Wire(new LsuSlot(p, bytesPerSlot))
     result.op := op
     result.store := store
     result.pc := pc
@@ -573,7 +573,7 @@ class LsuSlot(bytesPerSlot: Int, bytesPerLine: Int) extends Bundle {
 
   def storeUpdate(selected: Vec[Bool]): LsuSlot = {
     assert(selected.length == active.length)
-    val result = Wire(new LsuSlot(bytesPerSlot, bytesPerLine))
+    val result = Wire(new LsuSlot(p, bytesPerSlot))
     result.op := op
     result.rd := rd
     result.store := store
@@ -624,11 +624,11 @@ class LsuSlot(bytesPerSlot: Int, bytesPerLine: Int) extends Bundle {
 
 object LsuSlot {
   def inactive(p: Parameters, bytesPerSlot: Int): LsuSlot = {
-    0.U.asTypeOf(new LsuSlot(bytesPerSlot, p.lsuDataBytes))
+    0.U.asTypeOf(new LsuSlot(p, bytesPerSlot))
   }
 
   def fromLsuUOp(uop: LsuUOp, p: Parameters, bytesPerSlot: Int): LsuSlot = {
-    val result = Wire(new LsuSlot(bytesPerSlot, p.lsuDataBytes))
+    val result = Wire(new LsuSlot(p, bytesPerSlot))
     result.op := uop.op
     result.rd := uop.rd
     result.store := uop.store
