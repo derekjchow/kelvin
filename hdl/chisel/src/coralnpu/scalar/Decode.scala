@@ -302,9 +302,9 @@ class Dispatch(p: Parameters) extends Module {
     val rvvIdle = Option.when(p.enableRvv)(Input(Bool()))
     val rvvQueueCapacity = Option.when(p.enableRvv)(Input(UInt(4.W)))
 
-    val float = if (p.enableFloat) {
-      Some(Decoupled(new FloatInstruction))
-    } else { None }
+    // Float interface
+    val float = Option.when(p.enableFloat)(Decoupled(new FloatInstruction))
+    val csrFrm = Option.when(p.enableFloat)(Input(UInt(3.W)))
 
     val fbusPortAddr = Option.when(p.enableFloat)(Output(UInt(5.W)))
 
@@ -320,7 +320,8 @@ class Dispatch(p: Parameters) extends Module {
 class DispatchV2(p: Parameters) extends Dispatch(p) {
   // Decode instructions
   val decodedInsts = (0 until p.instructionLanes).map(i =>
-    DecodeInstruction(p, i, io.inst(i).bits.addr, io.inst(i).bits.inst)
+    DecodeInstruction(p, i, io.inst(i).bits.addr, io.inst(i).bits.inst,
+                      io.csrFrm.getOrElse(0.U))
   )
 
   // ---------------------------------------------------------------------------
@@ -634,7 +635,6 @@ class DispatchV2(p: Parameters) extends Dispatch(p) {
     io.dvu(i).bits.addr := rdAddr(i)
     io.dvu(i).bits.op := dvu.bits
 
-
     // -------------------------------------------------------------------------
     // Lsu
     val lsu = MuxCase(MakeValid(false.B, LsuOp.LB), Seq(
@@ -811,7 +811,8 @@ class DispatchV2(p: Parameters) extends Dispatch(p) {
 }
 
 object DecodeInstruction {
-  def apply(p: Parameters, pipeline: Int, addr: UInt, op: UInt): DecodedInstruction = {
+  def apply(p: Parameters, pipeline: Int, addr: UInt, op: UInt,
+            csrFrm: UInt): DecodedInstruction = {
     val d = Wire(new DecodedInstruction(p))
 
     d.inst := op
@@ -917,7 +918,9 @@ object DecodeInstruction {
 
 
     if (p.enableFloat) {
-      d.float.get := FloatInstruction.decode(op, addr)
+      val float = FloatInstruction.decode(op, addr)
+      val floatValid = float.valid && float.bits.validate_csrfrm(csrFrm)
+      d.float.get := MakeValid(floatValid, float.bits)
     }
 
     // Stub out decoder state not used beyond pipeline0.

@@ -65,7 +65,6 @@ object FpNewRoundingMode extends ChiselEnum {
   val RDN = Value(2.U(3.W)) // Round down (towards -inf)
   val RUP = Value(3.U(3.W)) // Round up (towards +inf)
   val RMM = Value(4.U(3.W)) // Round to nearest, ties to max magnitude
-  val ROD = Value(5.U(3.W)) // FPNEW-only, round to odd
   val DYN = Value(7.U(3.W)) // Dynamic rounding mode (embedded in instruction)
 }
 
@@ -308,8 +307,14 @@ class FloatCore(p: Parameters) extends Module {
     floatCoreWrapper.io.op_mod_i := op_mod_i
     val (inst_rm, inst_rm_valid) = FpNewRoundingMode.safe(inst.bits.rm)
     val (csr_rm, csr_rm_valid) = FpNewRoundingMode.safe(io.csr.out.frm)
-    assert(csr_rm_valid)
-    floatCoreWrapper.io.rnd_mode_i := Mux(inst_rm === FpNewRoundingMode.DYN, csr_rm, inst_rm).asUInt
+    val rnd_mode = MuxCase(MakeValid(false.B, inst_rm), Seq(
+        !inst_rm_valid -> MakeValid(false.B, inst_rm),
+        (inst_rm =/= FpNewRoundingMode.DYN) -> MakeValid(true.B, inst_rm),
+        !csr_rm_valid -> MakeValid(false.B, csr_rm),
+        (csr_rm_valid && (csr_rm === FpNewRoundingMode.DYN)) -> MakeValid(false.B, csr_rm),
+        csr_rm_valid -> MakeValid(true.B, csr_rm),
+    ))
+    floatCoreWrapper.io.rnd_mode_i := rnd_mode.bits.asUInt
 
     // Track whether an instruction has been accepted by the input side of fpnew.
     // This allows us to unblock dispatch immediately,
@@ -320,7 +325,7 @@ class FloatCore(p: Parameters) extends Module {
         (floatCoreWrapper.io.in_valid_i && floatCoreWrapper.io.in_ready_o) -> true.B,
     ))
     floatCoreWrapper.io.flush_i := false.B
-    floatCoreWrapper.io.in_valid_i := (inst.valid && !fmv) && !fpuActive
+    floatCoreWrapper.io.in_valid_i := (inst.valid && !fmv) && !fpuActive && rnd_mode.valid
 
     io.write_ports(0).valid := ((floatCoreWrapper.io.out_valid_o && inst.fire && !inst.bits.scalar_rd) || fmv_w_x) && !storefp
     io.write_ports(0).addr := inst.bits.rd

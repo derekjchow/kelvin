@@ -358,6 +358,7 @@ class SCore(p: Parameters) extends Module {
 
     floatCore.get.io.inst <> dispatch.io.float.get
     dispatch.io.fscoreboard.get := fRegfile.get.io.scoreboard
+    dispatch.io.csrFrm.get := csr.io.float.get.out.frm
     floatCore.get.io.csr <> csr.io.float.get
     floatCore.get.io.rs1 := regfile.io.readData(0)
     floatCore.get.io.rs2 := regfile.io.readData(1)

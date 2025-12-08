@@ -193,7 +193,7 @@ async def core_mini_axi_riscv_tests(dut):
   riscv_test_paths = [r.Rlocation(riscv_test_path_template.format(suffix=suffix)) for suffix in riscv_test_suites]
   riscv_test_elfs = [os.path.join(riscv_test_path, f) for riscv_test_path in riscv_test_paths for f in os.listdir(riscv_test_path) if not f.endswith(".dump")]
   with tqdm.tqdm(riscv_test_elfs) as t:
-    for elf in tqdm.tqdm(riscv_test_elfs):
+    for elf in t:
       t.set_postfix({"binary": os.path.basename(elf)})
       if 'fence_i' in elf:
         # This one likes to jump into DTCM. Can probably patch the ASM
@@ -417,3 +417,24 @@ async def unreachable_prefetch_fault(dut):
     assert iaf_count == 0
     assert other_count == 0
 
+@cocotb.test()
+async def core_mini_axi_frm_test(dut):
+  """Tests the FRM CSR with valid and invalid values."""
+  fixture = await Fixture.Create(dut)
+  r = runfiles.Create()
+
+  await fixture.load_elf_and_lookup_symbols(
+      r.Rlocation("coralnpu_hw/tests/cocotb/frm_test.elf"),
+      ['frm', 'result', 'faulted', 'mcause', 'mtval'],
+  )
+
+  for mode in range(8):
+    await fixture.write('frm', np.array([mode], dtype=np.uint32))
+    valid_mode = (mode <= 4)
+    await fixture.run_to_halt()
+    faulted = (await fixture.read('faulted', 4)).view(np.uint32)
+    mcause = (await fixture.read('mcause', 4)).view(np.uint32)
+    if valid_mode:
+      assert faulted == 0
+    else:
+      assert(mcause == 0x2)
