@@ -26,32 +26,6 @@ import common._
 import coralnpu.float.{FloatInstruction, FloatOpcode}
 import coralnpu.rvv._
 
-class DecodeSerializeIO extends Bundle {
-  val lsu = Output(Bool())
-  val mul = Output(Bool())
-  val jump = Output(Bool())
-  val brcond = Output(Bool())
-  val vinst = Output(Bool())     // all vector instructions
-  val wfi = Output(Bool())
-  val fence = Output(Bool())
-  val csr = Output(Bool())
-  val undef = Output(Bool())
-  val float = Output(Bool())
-
-  def defaults() = {
-    lsu := false.B
-    mul := false.B
-    jump := false.B
-    brcond := false.B
-    vinst := false.B
-    wfi := false.B
-    fence := false.B
-    csr := false.B
-    undef := false.B
-    float := false.B
-  }
-}
-
 class DecodedInstruction(p: Parameters) extends Bundle {
   // The original encoding
   val inst = UInt(32.W)
