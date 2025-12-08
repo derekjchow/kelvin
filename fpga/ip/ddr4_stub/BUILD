@@ -19,5 +19,6 @@ filegroup(
     srcs = glob([
         "**/*.sv",
         "*.core",
+        "*.xdc",
     ]),
 )

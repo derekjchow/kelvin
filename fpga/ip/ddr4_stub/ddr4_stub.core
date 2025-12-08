@@ -23,7 +23,13 @@ filesets:
       - rtl/ddr4_stub.sv
     file_type: systemVerilogSource
 
+  constraints:
+    files:
+      - pins_ddr_stub.xdc
+    file_type: xdc
+
 targets:
   default:
     filesets:
       - rtl
+      - constraints

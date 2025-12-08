@@ -204,9 +204,6 @@ fusesoc_build(
         "--ClockFrequencyMhz=" + _NEXUS_CLOCK_FREQUENCY_MHZ,
     ],
     output_groups = {
-        "bitstream": ["com.google.coralnpu_fpga_chip_nexus_0.1/synth-vivado/com.google.coralnpu_fpga_chip_nexus_0.1.runs/impl_1/chip_nexus.bit"],
-        "logs": ["com.google.coralnpu_fpga_chip_nexus_0.1/synth-vivado/com.google.coralnpu_fpga_chip_nexus_0.1.runs/"],
-        "synth": ["com.google.coralnpu_fpga_chip_nexus_0.1/synth-vivado/"],
         "all": ["com.google.coralnpu_fpga_chip_nexus_0.1/"],
     },
     systems = ["com.google.coralnpu:fpga:chip_nexus:0.1"],
@@ -229,9 +226,6 @@ fusesoc_build(
         "--ClockFrequencyMhz=" + _NEXUS_CLOCK_FREQUENCY_MHZ,
     ],
     output_groups = {
-        "bitstream": ["com.google.coralnpu_fpga_chip_nexus_0.1/synth-vivado/com.google.coralnpu_fpga_chip_nexus_0.1.runs/impl_1/chip_nexus.bit"],
-        "logs": ["com.google.coralnpu_fpga_chip_nexus_0.1/synth-vivado/com.google.coralnpu_fpga_chip_nexus_0.1.runs/"],
-        "synth": ["com.google.coralnpu_fpga_chip_nexus_0.1/synth-vivado/"],
         "all": ["com.google.coralnpu_fpga_chip_nexus_0.1/"],
     },
     systems = ["com.google.coralnpu:fpga:chip_nexus:0.1"],
