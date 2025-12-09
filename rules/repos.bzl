@@ -70,7 +70,6 @@ def coralnpu_repos():
         sha256 = "e8355ee56c2ff772334b4bfa22be17c709e5573f6d1d561c7176312156c27bd4",
     )
 
-
 def coralnpu_repos2():
     """Coralnpu repos are split into two functions; this is to import repositories in order"""
 
@@ -221,9 +220,9 @@ def rvvi_repos():
 def fpga_repos():
     http_archive(
         name = "lowrisc_opentitan_gh",
-        urls = ["https://github.com/lowRISC/opentitan/archive/1b1945fd76799666156f817e163222725c518c59.zip"],
-        sha256 = "b881378cdffee2284a88c2032c9fb13e68c889f1cac38cf715b0cff7b40fcf7e",
-        strip_prefix = "opentitan-1b1945fd76799666156f817e163222725c518c59",
+        urls = ["https://github.com/lowRISC/opentitan/archive/0e3cf62211004443d6d29f8f6120882376da499a.zip"],
+        sha256 = "5de3d4ba7a2d02ea58f189f0d9bc46051368dc138a7f8c0fb89af78dcd43a0f8",
+        strip_prefix = "opentitan-0e3cf62211004443d6d29f8f6120882376da499a",
         patches = [
             "@coralnpu_hw//fpga:0001-Export-hw-ip_templates.patch",
         ],
