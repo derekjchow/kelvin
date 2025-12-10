@@ -88,7 +88,7 @@ class RetirementBuffer(p: Parameters) extends Module {
     instr.idx := MuxCase(noWriteRegIdx, Seq(
       floatValid -> (floatAddr +& p.floatRegfileBaseAddr.U),
       (scalarValid && scalarAddr =/= 0.U) -> scalarAddr,
-      (vectorValid && vectorAddr =/= 0.U) -> (vectorAddr +& p.rvvRegfileBaseAddr.U),
+      (vectorValid) -> (vectorAddr +& p.rvvRegfileBaseAddr.U),
       store -> storeRegIdx,
     ))
     instr.trap := faultingInstr || noFireFault
