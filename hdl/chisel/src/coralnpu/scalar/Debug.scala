@@ -180,6 +180,7 @@ class DebugModule(p: Parameters) extends Module {
     io.csr.bits.addr := 0.U(5.W)
     io.csr.bits.index := req.bits.regno
     io.csr.bits.op := Mux(req.bits.write, CsrOp.CSRRW, CsrOp.CSRRC)
+    io.csr.bits.rs1 := 0.U
     io.csr_rs1 := MuxOR(req.bits.write, data0)
 
     val abstractcs_wvalid = (req.fire && req.bits.isAddrAbstractcs && req.bits.isWrite)

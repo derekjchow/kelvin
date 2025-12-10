@@ -230,6 +230,7 @@ object CsrOp extends ChiselEnum {
 class CsrCmd extends Bundle {
   val addr = UInt(5.W)
   val index = UInt(12.W)
+  val rs1 = UInt(5.W)
   val op = CsrOp()
 }
 

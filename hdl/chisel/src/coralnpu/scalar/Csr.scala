@@ -582,7 +582,7 @@ class Csr(p: Parameters) extends Module {
   io.rd.bits.data  := rdata
 
   if (p.useRetirementBuffer) {
-    io.trace.get.valid := req.valid
+    io.trace.get.valid := req.valid && !(req.bits.op.isOneOf(CsrOp.CSRRS, CsrOp.CSRRC) && req.bits.rs1 === 0.U)
     io.trace.get.addr := req.bits.index
     io.trace.get.data := wdata
   }
