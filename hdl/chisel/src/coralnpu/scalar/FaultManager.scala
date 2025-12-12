@@ -32,7 +32,6 @@ class FaultManager(p: Parameters) extends Module {
         val pc = UInt(32.W)
       }))
       val memory_fault = Input(Valid(new FaultInfo(p)))
-      val ibus_fault = Input(Bool())
       val rvv_fault = Option.when(p.enableRvv)(Input(
           Valid(new FaultManagerOutput)))
       val undef = Input(Vec(p.instructionLanes, new Bundle {
@@ -71,8 +70,8 @@ class FaultManager(p: Parameters) extends Module {
   val rvv_dispatch_fault = io.in.fault.map(_.rvv.getOrElse(false.B)).reduce(_|_)
   val rvv_dispatch_fault_idx = PriorityEncoder(io.in.fault.map(_.rvv.getOrElse(false.B)))
   val instr_access_fault = io.in.fetchFault
-  val load_fault = io.in.memory_fault.valid && !io.in.memory_fault.bits.write && !io.in.ibus_fault
-  val store_fault = io.in.memory_fault.valid && io.in.memory_fault.bits.write && !io.in.ibus_fault
+  val load_fault = io.in.memory_fault.valid && !io.in.memory_fault.bits.write
+  val store_fault = io.in.memory_fault.valid && io.in.memory_fault.bits.write
   val rvv_fault = io.in.rvv_fault.map(_.valid).getOrElse(false.B)
 
   io.out.valid := fault || instr_access_fault || load_fault || store_fault || rvv_fault

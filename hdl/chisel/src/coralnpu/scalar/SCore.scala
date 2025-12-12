@@ -143,11 +143,7 @@ class SCore(p: Parameters) extends Module {
     fault_manager.io.in.undef(i).inst := fetch.io.inst.lanes(i).bits.inst
     fault_manager.io.in.jal(i).target := dispatch.io.bruTarget(i)
   }
-  fault_manager.io.in.memory_fault := MuxCase(MakeInvalid(new FaultInfo(p)), Seq(
-    io.ibus.fault.valid -> io.ibus.fault,
-    lsu.io.fault.valid -> lsu.io.fault,
-  ))
-  fault_manager.io.in.ibus_fault := io.ibus.fault.valid
+  fault_manager.io.in.memory_fault := lsu.io.fault
   if (p.enableRvv) {
     fault_manager.io.in.rvv_fault.get.valid := io.rvvcore.get.trap.valid
     fault_manager.io.in.rvv_fault.get.bits.mepc := io.rvvcore.get.trap.bits.pc
