@@ -510,7 +510,7 @@ class DispatchV2(p: Parameters) extends Dispatch(p) {
 
     // -------------------------------------------------------------------------
     // Alu
-    val alu = MuxCase(MakeValid(false.B, AluOp.ADD), Seq(
+    val alu = MuxUpTo1H(MakeValid(false.B, AluOp.ADD), Seq(
         // RV32IM
         (d.auipc || d.addi || d.add) -> MakeValid(true.B, AluOp.ADD),
         d.sub                        -> MakeValid(true.B, AluOp.SUB),
@@ -549,7 +549,7 @@ class DispatchV2(p: Parameters) extends Dispatch(p) {
 
     // -------------------------------------------------------------------------
     // Bru
-    val bru = MuxCase(MakeValid(false.B, BruOp.JAL), Seq(
+    val bru = MuxUpTo1H(MakeValid(false.B, BruOp.JAL), Seq(
         d.jal    -> MakeValid(true.B, BruOp.JAL),
         d.jalr   -> MakeValid(true.B, BruOp.JALR),
         d.beq    -> MakeValid(true.B, BruOp.BEQ),
@@ -587,7 +587,7 @@ class DispatchV2(p: Parameters) extends Dispatch(p) {
 
     // -------------------------------------------------------------------------
     // Mlu
-    val mlu = MuxCase(MakeValid(false.B, MluOp.MUL), Seq(
+    val mlu = MuxUpTo1H(MakeValid(false.B, MluOp.MUL), Seq(
       d.mul     -> MakeValid(true.B, MluOp.MUL),
       d.mulh    -> MakeValid(true.B, MluOp.MULH),
       d.mulhsu  -> MakeValid(true.B, MluOp.MULHSU),
@@ -599,7 +599,7 @@ class DispatchV2(p: Parameters) extends Dispatch(p) {
 
     // -------------------------------------------------------------------------
     // Dvu
-    val dvu = MuxCase(MakeValid(false.B, DvuOp.DIV), Seq(
+    val dvu = MuxUpTo1H(MakeValid(false.B, DvuOp.DIV), Seq(
       d.div  -> MakeValid(true.B, DvuOp.DIV),
       d.divu -> MakeValid(true.B, DvuOp.DIVU),
       d.rem  -> MakeValid(true.B, DvuOp.REM),
@@ -611,7 +611,7 @@ class DispatchV2(p: Parameters) extends Dispatch(p) {
 
     // -------------------------------------------------------------------------
     // Lsu
-    val lsu = MuxCase(MakeValid(false.B, LsuOp.LB), Seq(
+    val lsu = MuxUpTo1H(MakeValid(false.B, LsuOp.LB), Seq(
       d.lb             -> MakeValid(true.B, LsuOp.LB),
       d.lh             -> MakeValid(true.B, LsuOp.LH),
       d.lw             -> MakeValid(true.B, LsuOp.LW),
@@ -656,7 +656,7 @@ class DispatchV2(p: Parameters) extends Dispatch(p) {
     // -------------------------------------------------------------------------
     // Csr
     if (i == 0) {
-      val csr = MuxCase(MakeValid(false.B, CsrOp.CSRRW), Seq(
+      val csr = MuxUpTo1H(MakeValid(false.B, CsrOp.CSRRW), Seq(
         d.csrrw -> MakeValid(true.B, CsrOp.CSRRW),
         d.csrrs -> MakeValid(true.B, CsrOp.CSRRS),
         d.csrrc -> MakeValid(true.B, CsrOp.CSRRC)
