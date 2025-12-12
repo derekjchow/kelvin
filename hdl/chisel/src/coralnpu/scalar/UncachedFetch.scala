@@ -241,5 +241,7 @@ class UncachedFetch(p: Parameters) extends FetchUnit(p) {
   val pc = RegInit(0.U(p.fetchAddrBits.W))
   pc := Mux(instructionBuffer.io.out(0).valid, instructionBuffer.io.out(0).bits.addr, pc)
   io.pc := pc
-  io.fault := ctrl.io.fetchFault
+  // Delay fault one cycle for timing
+  val faultPipe = RegNext(ctrl.io.fetchFault, false.B)
+  io.fault := faultPipe
 }
