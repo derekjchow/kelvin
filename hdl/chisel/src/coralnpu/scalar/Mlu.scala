@@ -102,7 +102,7 @@ class Mlu(p: Parameters) extends Module {
   val op3in = stage3Input.bits.op
   val prod3in = stage3Input.bits.prod
 
-  val mul = MuxCase(0.U(32.W), Seq(
+  val mul = MuxUpTo1H(0.U(32.W), Seq(
     (op3in === MluOp.MUL) -> prod3in(31, 0),
     op3in.isOneOf(MluOp.MULH, MluOp.MULHSU, MluOp.MULHU) -> prod3in(63,32),
   ))

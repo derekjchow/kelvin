@@ -16,7 +16,7 @@ package coralnpu.rvv
 
 import chisel3._
 import chisel3.util._
-import common.{ForceZero, MakeInvalid, MakeValid, MakeWireBundle}
+import common.{ForceZero, MakeInvalid, MakeValid, MakeWireBundle, MuxUpTo1H}
 
 
 object RvvCompressedOpcode extends ChiselEnum {
@@ -142,10 +142,10 @@ object RvvCompressedInstruction {
     // RVVLOAD and RVVSTORE op codes are shared with "f" extension. Use "width"
     // to discriminate between the two.
     val width = inst(14, 12)
-    val validWidth = !mew && MuxCase(false.B, Seq(
-      (width === "b000".U) -> true.B,  // 8b
-      (width === "b101".U) -> true.B,  // 16b
-      (width === "b110".U) -> true.B,  // 32b
+    val validWidth = !mew && MuxLookup(width, false.B)(Seq(
+      "b000".U -> true.B,  // 8b
+      "b101".U -> true.B,  // 16b
+      "b110".U -> true.B,  // 32b
       // "b111".U -> true.B,  // 64b, unused for coralnpu
     ))
 
@@ -171,7 +171,7 @@ class RvvS1DecodeInstructionBase {
 
   private def s1decode_opivv(f6vm: UInt, vs2: UInt, vs1: UInt, vd: UInt): Valid[RvvS1DecodedInstruction] = {
     val no_overlap = (vd =/= vs1 && vd =/= vs2)
-    val op = MuxCase(MakeInvalid(RvvAluOp()), Seq(
+    val op = MuxUpTo1H(MakeInvalid(RvvAluOp()), Seq(
       // We're assuming all instructions are mask-optional unless the spec says otherwise.
       (f6vm === BitPat("b000000_?")) -> MakeValid(RvvAluOp.VADD),
       (f6vm === BitPat("b000010_?")) -> MakeValid(RvvAluOp.VSUB),
@@ -230,7 +230,7 @@ class RvvS1DecodeInstructionBase {
 
   private def s1decode_opivx(f6vm: UInt, vs2: UInt, rs1: UInt, vd: UInt): Valid[RvvS1DecodedInstruction] = {
     val no_overlap = (vd =/= vs2)
-    val op = MuxCase(MakeInvalid(RvvAluOp()), Seq(
+    val op = MuxUpTo1H(MakeInvalid(RvvAluOp()), Seq(
       (f6vm === BitPat("b000000_?")) -> MakeValid(RvvAluOp.VADD),
       (f6vm === BitPat("b000010_?")) -> MakeValid(RvvAluOp.VSUB),
       (f6vm === BitPat("b000011_?")) -> MakeValid(RvvAluOp.VRSUB),
@@ -291,7 +291,7 @@ class RvvS1DecodeInstructionBase {
     val unary_align2 = (vd === BitPat("b????0")) && (vs2 === BitPat("b????0"))
     val unary_align4 = (vd === BitPat("b???00")) && (vs2 === BitPat("b???00"))
     val unary_align8 = (vd === BitPat("b??000")) && (vs2 === BitPat("b??000"))
-    val op = MuxCase(MakeInvalid(RvvAluOp()), Seq(
+    val op = MuxUpTo1H(MakeInvalid(RvvAluOp()), Seq(
       (f6vm === BitPat("b000000_?")) -> MakeValid(RvvAluOp.VADD),
       // No VSUB.
       (f6vm === BitPat("b000011_?")) -> MakeValid(RvvAluOp.VRSUB),

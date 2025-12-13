@@ -14,6 +14,7 @@
 
 package coralnpu
 
+import common.{MuxUpTo1H}
 import chisel3._
 import chisel3.util._
 import coralnpu.float.{CsrFloatIO}
@@ -366,7 +367,7 @@ class Csr(p: Parameters) extends Module {
   // Register state.
   val rs1 = io.rs1.data
 
-  val rdata = MuxCase(0.U(32.W), Seq(
+  val rdata = MuxUpTo1H(0.U(32.W), Seq(
       fflagsEn    -> Cat(0.U(27.W), fflags),
       frmEn       -> Cat(0.U(29.W), frm),
       fcsrEn      -> Cat(0.U(24.W), fcsr),

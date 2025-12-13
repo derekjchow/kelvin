@@ -135,7 +135,7 @@ class AxiSlave(p: Parameters) extends Module {
   val cmdAddrBase = axiAddrCmd.bits.addr.addr & baseAddrMask.asUInt
   val (burst, burstValid) = AxiBurstType.safe(axiAddrCmd.bits.addr.burst)
   val validBurst = axiAddrCmd.valid && burstValid
-  val addrNext = MuxCase(cmdAddr, Seq(
+  val addrNext = MuxUpTo1H(cmdAddr, Seq(
       (validBurst && (burst === AxiBurstType.FIXED)) -> cmdAddr,
       (validBurst && (burst === AxiBurstType.INCR)) ->
           (cmdAddr + (1.U << axiAddrCmd.bits.addr.size)),

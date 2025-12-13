@@ -70,7 +70,7 @@ class FabricMux(p: Parameters, regions: Seq[MemoryRegion]) extends Module {
   // Determine which port to forward command to
   val sourceValid = io.source.readDataAddr.valid ||
                     io.source.writeDataAddr.valid
-  val addr = MuxCase(0.U, Seq(
+  val addr = MuxUpTo1H(0.U, Seq(
     io.source.readDataAddr.valid -> io.source.readDataAddr.bits,
     io.source.writeDataAddr.valid -> io.source.writeDataAddr.bits,
   ))
@@ -83,7 +83,7 @@ class FabricMux(p: Parameters, regions: Seq[MemoryRegion]) extends Module {
       i => selected.valid && (selected.bits === i.U) && !io.periBusy(i))
   assert(PopCount(VecInit(portSelected)) <= 1.U)  // Should only select one port
 
-  io.fabricBusy := MuxCase(false.B, (0 until portCount).map(
+  io.fabricBusy := MuxUpTo1H(false.B, (0 until portCount).map(
     i => (selected.valid && (selected.bits === i.U)) -> io.periBusy(i)
   ))
 
@@ -107,18 +107,18 @@ class FabricMux(p: Parameters, regions: Seq[MemoryRegion]) extends Module {
   }
 
   // Pick writeResp from the correct port
-  io.source.writeResp := MuxCase(false.B, (0 until portCount).map(
+  io.source.writeResp := MuxUpTo1H(false.B, (0 until portCount).map(
       i => portSelected(i) -> io.ports(i).writeResp,
   ))
 
   // Pick readData from the correct port. Should be delayed by one cycle to
   // match behaviours of peripherals.
   val lastReadSelected = RegInit(MakeInvalid(portIdxType))
-  lastReadSelected := MuxCase(MakeInvalid(portIdxType), (0 until portCount).map(
+  lastReadSelected := MuxUpTo1H(MakeInvalid(portIdxType), (0 until portCount).map(
     i => (portSelected(i) && io.source.readDataAddr.valid) ->
         MakeValid(true.B, i.U(portIdxBits.W))
   ))
-  io.source.readData := MuxCase(MakeInvalid(UInt(p.axi2DataBits.W)),
+  io.source.readData := MuxUpTo1H(MakeInvalid(UInt(p.axi2DataBits.W)),
         (0 until portCount).map(i =>
             (lastReadSelected.valid && (lastReadSelected.bits === i.U)) ->
                 io.ports(i).readData
