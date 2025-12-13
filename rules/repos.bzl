@@ -31,9 +31,9 @@ def coralnpu_repos():
 
     http_archive(
         name = "com_google_absl",
-        urls = ["https://storage.googleapis.com/grpc-bazel-mirror/github.com/abseil/abseil-cpp/archive/20230802.0.tar.gz", "https://github.com/abseil/abseil-cpp/archive/20230802.0.tar.gz"],
-        sha256 = "59d2976af9d6ecf001a81a35749a6e551a335b949d34918cfade07737b9d93c5",
-        strip_prefix = "abseil-cpp-20230802.0",
+        urls = ["https://github.com/abseil/abseil-cpp/releases/download/20250127.1/abseil-cpp-20250127.1.tar.gz"],
+        sha256 = "b396401fd29e2e679cace77867481d388c807671dc2acc602a0259eeb79b7811",
+        strip_prefix = "abseil-cpp-20250127.1",
     )
 
     http_archive(
