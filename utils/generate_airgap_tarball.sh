@@ -59,7 +59,7 @@ TFLITE_REQS=$(${WORKDIR}/bazel query @tflite_micro//third_party:python_requireme
 if [[ -f "${OPENTITAN_REQS}" ]]; then
     echo "Downloading OpenTitan pip dependencies from ${OPENTITAN_REQS}..."
     # pass --no-deps to restrict download to only listed packages
-    python3.11 -m pip download --no-deps -r "${OPENTITAN_REQS}" -d ${WORKDIR}/pip-cache
+    python3.11 -m pip download --no-deps --require-hashes -r "${OPENTITAN_REQS}" -d ${WORKDIR}/pip-cache
 else
     echo "Warning: Could not find OpenTitan requirements file."
 fi
@@ -67,7 +67,7 @@ fi
 if [[ -f "${TFLITE_REQS}" ]]; then
     echo "Downloading TFLite Micro pip dependencies from ${TFLITE_REQS}..."
     # pass --no-deps to restrict download to only listed packages
-    python3.11 -m pip download --no-deps -r "${TFLITE_REQS}" -d ${WORKDIR}/pip-cache
+    python3.11 -m pip download --no-deps --require-hashes -r "${TFLITE_REQS}" -d ${WORKDIR}/pip-cache
 else
     echo "Warning: Could not find TFLite Micro requirements file."
 fi
