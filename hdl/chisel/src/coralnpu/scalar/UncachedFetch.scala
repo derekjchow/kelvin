@@ -197,10 +197,11 @@ class FetchControl(p: Parameters) extends Module {
     val insufficientBuffer = io.bufferSpaces < nValid +& p.fetchInstrSlots.U
     // Past branch or flush doesn't block us from initiating new fetches.
     val blockNewFetch = !pc.valid ||  // We're stil in reset.
+                        io.fetchData.valid || // Wait one cycle for next fetch.
                         currentBranchOrFlush ||
                         insufficientBuffer ||
                         fetchFault
-    val fetch = ForceZero(MakeValid(!blockNewFetch, pcNext))
+    val fetch = ForceZero(MakeValid(!blockNewFetch, pc.bits))
 
     // All branch or flush are cleared once we're able to initiate a new fetch.
     pastBranchOrFlush := ongoingBranchOrFlush && blockNewFetch
