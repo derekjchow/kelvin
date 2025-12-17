@@ -407,15 +407,9 @@ class LsuSlot(p: Parameters, bytesPerSlot: Int) extends Bundle {
     VecInit(addrs.map(x => x(elemBits-1, 0)))
   }
 
-  def targetAddress(lastRead: Valid[UInt]): Valid[UInt] = {
-    // Determine which lines are active. If a read was issued last cycle,
-    // supress those lines.
-    val lineAddrs = lineAddresses()
-    val lineActive = (0 until bytesPerSlot).map(i =>
-        active(i) && (!lastRead.valid || (lastRead.bits =/= lineAddrs(i))))
-
+  def targetAddress(): Valid[UInt] = {
     MuxCase(MakeInvalid(UInt(32.W)), (0 until bytesPerSlot).map(
-        i => lineActive(i) -> MakeValid(true.B, addrs(i))))
+        i => active(i) -> MakeValid(true.B, addrs(i))))
   }
 
   def vectorUpdate(updated: Bool, rvv2lsu: Rvv2Lsu): LsuSlot = {
@@ -471,16 +465,11 @@ class LsuSlot(p: Parameters, bytesPerSlot: Int) extends Bundle {
 
   // Updates the slot based on a previous read.
   def loadUpdate(valid: Bool,
-                 lineAddr: UInt,
+                 lineActive: UInt,
                  lineData: UInt): LsuSlot = {
     // TODO(derekjchow): Check ordering semantics
-    val lineAddrs = lineAddresses()
-    val lineActive = VecInit((0 until bytesPerSlot).map(i =>
-        !store &&     // Don't update if a store
-        (!LsuOp.isVector(op) || !pendingVector) &&  // Has vector data if needed
-        valid &&      // Update only if a valid read last cycle
-        active(i) &&  // Update only if active
-        (lineAddrs(i) === lineAddr)))  // Line must match read line
+    val readLineActive = lineActive.asBools.map(x => x && valid)
+
     val lineDataVec = UIntToVec(lineData, 8)
     val gatheredData = Gather(elemAddresses(), lineDataVec)
 
@@ -494,9 +483,9 @@ class LsuSlot(p: Parameters, bytesPerSlot: Int) extends Bundle {
     result.pendingWriteback := pendingWriteback
     result.pendingVector := pendingVector
     result.active := (0 until bytesPerSlot).map(
-        i => active(i) & ~lineActive(i))
+        i => active(i) & ~readLineActive(i))
     result.data := VecInit((0 until bytesPerSlot).map(
-        i => Mux(lineActive(i), gatheredData(i), data(i))))
+        i => Mux(readLineActive(i), gatheredData(i), data(i))))
     result.elemStride := elemStride
     result.segmentStride := segmentStride
     result.elemWidth := elemWidth
@@ -761,36 +750,23 @@ class LsuCtrl(p: Parameters) extends Bundle {
   val last = Bool()
 }
 
-class LsuReadData(p: Parameters) extends Bundle {
-  val addr = UInt(32.W)
-  val index = UInt(5.W)
-  val size = UInt((log2Ceil(p.lsuDataBits / 8) + 1).W)
-  val fullsize = UInt((log2Ceil(p.lsuDataBits / 8) + 1).W)
-  val sext = Bool()
-  val iload = Bool()
-  val sldst = Bool()
-  val fldst = Bool()
-  val regionType = MemoryRegionType()
-  val mask = UInt(p.lsuDataBytes.W)
-  val last = Bool()
-}
-
 object LsuBus extends ChiselEnum {
   val IBUS = Value
   val DBUS = Value
   val EXTERNAL = Value
 }
 
-class LsuRead(lineBits: Int) extends Bundle {
+class LsuRead(p: Parameters) extends Bundle {
   val bus = LsuBus()
-  val lineAddr = UInt(lineBits.W)
+  // TODO(derekjchow): Parameterize
+  val lineActive = UInt(16.W)
 }
 
 object LsuRead {
-  def apply(bus: LsuBus.Type, lineAddr: UInt): LsuRead = {
-    val result = Wire(new LsuRead(lineAddr.getWidth))
+  def apply(bus: LsuBus.Type, lineActive: UInt, p: Parameters): LsuRead = {
+    val result = Wire(new LsuRead(p))
     result.bus := bus
-    result.lineAddr := lineAddr
+    result.lineActive := lineActive
     result
   }
 }
@@ -860,7 +836,7 @@ class LsuV2(p: Parameters) extends Lsu(p) {
   val nextSlot = LsuSlot.fromLsuUOp(opQueue.io.dataOut(0), p, 16)
 
   // Tracks if a read has been fired last cycle.
-  val readFired = RegInit(MakeInvalid(new LsuRead(32 - nextSlot.elemBits)))
+  val readFired = RegInit(MakeInvalid(new LsuRead(p)))
   val slot = RegInit(LsuSlot.inactive(p, 16))
 
   val readData = MuxLookup(readFired.bits.bus, 0.U)(Seq(
@@ -885,11 +861,10 @@ class LsuV2(p: Parameters) extends Lsu(p) {
 
   // First stage of load update: Update results based on bus read
   val loadUpdatedSlot = slot.loadUpdate(
-      readFired.valid, readFired.bits.lineAddr, readData)
+      readFired.valid, readFired.bits.lineActive, readData)
 
   // Compute next target transaction
-  val targetAddress = loadUpdatedSlot.targetAddress(
-      MakeValid(readFired.valid, readFired.bits.lineAddr))
+  val targetAddress = loadUpdatedSlot.targetAddress()
   val targetLine = MakeValid(
       targetAddress.valid, targetAddress.bits(31, nextSlot.elemBits))
   val targetLineAddr = targetLine.bits << 4
@@ -942,11 +917,18 @@ class LsuV2(p: Parameters) extends Lsu(p) {
   val slotFired = ebusFired || dbusFired || ibusFired
 
   val readFiredValid = ibusFired || (dbusFired && !io.dbus.write) || (ebusFired && !io.ebus.dbus.write)
+  val readLineActive = VecInit((0 until loadUpdatedSlot.active.length).map(i =>
+      !loadUpdatedSlot.store &&
+      (!LsuOp.isVector(loadUpdatedSlot.op) || !loadUpdatedSlot.pendingVector) &&
+      loadUpdatedSlot.active(i) &&
+      (loadUpdatedSlot.lineAddresses()(i) === targetLine.bits)
+  )).asUInt
+
   readFired := MakeValid(readFiredValid,
     MuxCase(readFired.bits, Seq(
-      (ibusFired) -> LsuRead(LsuBus.IBUS, targetLine.bits),
-      (dbusFired && !io.dbus.write) -> LsuRead(LsuBus.DBUS, targetLine.bits),
-      (ebusFired && !io.ebus.dbus.write) -> LsuRead(LsuBus.EXTERNAL, targetLine.bits),
+      (ibusFired) -> LsuRead(LsuBus.IBUS, readLineActive, p),
+      (dbusFired && !io.dbus.write) -> LsuRead(LsuBus.DBUS, readLineActive, p),
+      (ebusFired && !io.ebus.dbus.write) -> LsuRead(LsuBus.EXTERNAL, readLineActive, p),
     )))
 
   // Fault handling
